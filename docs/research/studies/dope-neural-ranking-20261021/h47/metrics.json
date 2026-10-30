@@ -1,28 +1,2049 @@
 {
   "wave": "H47",
-  "status": "queued",
+  "status": "complete",
   "baseline": {
     "checkpoint": "round-785.pt",
-    "sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
-    "dl_val91_utility": 1.1375952947484103,
-    "train_utility": 1.425042,
-    "dope_sha256_prefix": "c51a56d0",
-    "trainable_params": 29211
+    "checkpoint_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+    "val_utility": 1.1375952947484103,
+    "train_utility": 1.425042
   },
-  "motivating_h46_interim": {
-    "H46-A_final_ema_val": [1.036767, 1.037759, 1.036767],
-    "H46-A_train_utility": [1.354527, 1.352207, 1.355108],
-    "H46-A_loss_first_last_seed0": [3.68987, 3.35932],
-    "H46-B_seed0_val_train": [1.053521, 1.358874],
-    "diagnosis": "loss falls while train and val argmin utility fall => objective mismatch"
-  },
-  "arms": ["H47-R", "H47-Z", "H47-PW", "H47-RP"],
-  "seeds": [0, 1, 2],
+  "arms": [
+    "H47-R",
+    "H47-Z",
+    "H47-PW",
+    "H47-RP"
+  ],
+  "seeds": [
+    0,
+    1,
+    2
+  ],
   "steps": 64,
   "eval_every": 8,
   "ema_decay": 0.98,
-  "host": "xbabe2",
   "device": "cuda:0",
-  "results": null,
-  "results_path": "xbabe2:~/jope-data/h47/runs/"
+  "selection_protocol": "H47 evaluated each EMA checkpoint on DL-Val and did not use inner family-grouped train CV; all trajectory/best-step findings are exploratory and no arm can qualify as a selected win.",
+  "seed_dependence_note": "Full 1,219-context batches make seeds near-pseudoreplicates; family-bootstrap intervals describe the 19 DL-Val families, not seed noise (effective seed count approximately 1 per arm).",
+  "winner_curse_note": "Four arms \u00d7 eight EMA checkpoints = 32 DL-Val looks. H47-PW seed2's maximum seen delta is selection-biased; report it only as exploratory.",
+  "red_team": {
+    "train_contexts": 1219,
+    "validation_contexts": 91,
+    "train_families": 205,
+    "validation_families": 19,
+    "context_overlap": 0,
+    "family_overlap": 0,
+    "source_manifest_sha256": "3eb4a62acea512f528500b043299a5968e1c9b1d1b1759bbf77a426b9fa1ecc3",
+    "excluded_dl_holdout_count": 93,
+    "excluded_payloads_opened": 0,
+    "outer_rows_delivered": 0,
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "checkpoint_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+    "trainable_params": 29211,
+    "in_wave_control": false,
+    "in_wave_control_reason": "The arm == '0' code path is dead. Compare H47 to H46-0's last proposal delta -0.004087 (accepted incumbent delta 0) and H46-A under the same EMA protocol.",
+    "train_utility_finding": "Every H47 surrogate arm lowers train utility relative to r785 (1.425042), consistent with surrogate/utility misalignment, not overfitting.",
+    "holdout_policy": "Only approved DL-Train/DL-Val regression copies used; no sealed/holdout/binary data.",
+    "median_seed_family_bootstrap_crosscheck_95_ci": {
+      "resamples": 10000,
+      "validation_families": 19,
+      "intervals_by_arm": {
+        "H47-R": [
+          -0.147,
+          -0.005
+        ],
+        "H47-Z": [
+          -0.15,
+          -0.01
+        ],
+        "H47-PW": [
+          -0.066,
+          0.005
+        ],
+        "H47-RP": [
+          -0.047,
+          0.001
+        ]
+      },
+      "source": "2026-10-30 09:05Z red-team cross-check; around median seed metric over per-family deltas"
+    }
+  },
+  "comparators": {
+    "H46-0_last_attempted_candidate_delta": -0.0040865,
+    "H46-0_accepted_incumbent_delta": 0.0,
+    "H46-A_median_final_delta": -0.10082829737359314,
+    "in_wave_control_present": false,
+    "control_limitation": "The H47 arm == \"0\" path is dead; H46 comparators are called out explicitly."
+  },
+  "verdict": "NO WIN: all arms have negative median final DL-Val delta; no H47 checkpoint was selected using inner family-grouped training CV.",
+  "results": {
+    "H47-R": {
+      "seeds": [
+        {
+          "seed": 0,
+          "final_ema_val_utility": 1.067773145877763,
+          "final_delta": -0.0698221488706471,
+          "family_bootstrap_95_ci": [
+            -0.15090117776491224,
+            -0.005737594620456758
+          ],
+          "improved_contexts": 21,
+          "worsened_contexts": 36,
+          "ties": 34,
+          "leave_one_context_out_min_delta": -0.07688146719056482,
+          "leave_one_context_out_max_delta": -0.04165236580220128,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": -0.17391129395392416,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.11310329998438937,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.008563255263717595,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.10276369962495839,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.03981940876482284,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.3278668597370811,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.07663840744432256,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.025422494711483157,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": -0.008018345162933116,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0029308361917569914,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0032356632123080598,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.004630420308011862,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.6057633048464318,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.14301110755783422,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.007200355002744718,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.03453769482622467,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0190480223329188,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.05829059233841712,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.037569081141995045
+          },
+          "train_utility": 1.3649360351832758,
+          "train_val_gap": 0.2971628893055127,
+          "best_dl_val_seen_delta_selection_biased": -0.0024475344639323104,
+          "best_step_selection_biased": 8,
+          "trajectory": [
+            {
+              "step": 8,
+              "ema_val_utility": 1.135147760284478,
+              "ema_delta": -0.0024475344639323104,
+              "ema_family_bootstrap_95_ci": [
+                -0.010309445352867815,
+                0.0027550480030579085
+              ],
+              "raw_val_utility": 1.072853706246517,
+              "raw_delta": -0.06474158850189315,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 16,
+              "ema_val_utility": 1.1335990498145387,
+              "ema_delta": -0.003996244933871518,
+              "ema_family_bootstrap_95_ci": [
+                -0.011204955969419115,
+                0.001711042012397505
+              ],
+              "raw_val_utility": 1.0529666161095996,
+              "raw_delta": -0.08462867863881063,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 24,
+              "ema_val_utility": 1.1218568840727305,
+              "ema_delta": -0.015738410675679715,
+              "ema_family_bootstrap_95_ci": [
+                -0.046611174396818944,
+                0.0037386180177945813
+              ],
+              "raw_val_utility": 0.9906857351287207,
+              "raw_delta": -0.14690955961968954,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 32,
+              "ema_val_utility": 1.1211924071891335,
+              "ema_delta": -0.01640288755927677,
+              "ema_family_bootstrap_95_ci": [
+                -0.052251171565611966,
+                0.012167099147981444
+              ],
+              "raw_val_utility": 1.0995044432582461,
+              "raw_delta": -0.03809085149016411,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 40,
+              "ema_val_utility": 1.074353832108581,
+              "ema_delta": -0.06324146263982922,
+              "ema_family_bootstrap_95_ci": [
+                -0.13420797254711483,
+                -0.011242912061408384
+              ],
+              "raw_val_utility": 1.0525670039228292,
+              "raw_delta": -0.08502829082558105,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 48,
+              "ema_val_utility": 1.070606837947067,
+              "ema_delta": -0.06698845680134324,
+              "ema_family_bootstrap_95_ci": [
+                -0.14339389684156667,
+                -0.0086173103157653
+              ],
+              "raw_val_utility": 0.9984155244084288,
+              "raw_delta": -0.1391797703399814,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 56,
+              "ema_val_utility": 1.0651026674800703,
+              "ema_delta": -0.07249262726833994,
+              "ema_family_bootstrap_95_ci": [
+                -0.158597635135739,
+                -0.0037710315654742536
+              ],
+              "raw_val_utility": 1.0349956917866372,
+              "raw_delta": -0.10259960296177306,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 64,
+              "ema_val_utility": 1.067773145877763,
+              "ema_delta": -0.0698221488706472,
+              "ema_family_bootstrap_95_ci": [
+                -0.15301016067466602,
+                -0.0042678000720097345
+              ],
+              "raw_val_utility": 1.0572726464222872,
+              "raw_delta": -0.08032264832612301,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            }
+          ],
+          "device": "cuda:0",
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+          "checkpoint_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+          "trainable_params": 29211,
+          "wall_seconds": 43.952556372852996
+        },
+        {
+          "seed": 1,
+          "final_ema_val_utility": 1.0683588040166638,
+          "final_delta": -0.0692364907317464,
+          "family_bootstrap_95_ci": [
+            -0.1507421186410774,
+            -0.00515763278637157
+          ],
+          "improved_contexts": 22,
+          "worsened_contexts": 36,
+          "ties": 33,
+          "leave_one_context_out_min_delta": -0.07628930173900966,
+          "leave_one_context_out_max_delta": -0.04106020035064611,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": -0.12904588404512216,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.11310329998438937,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.008563255263717595,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.10276369962495839,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.03981940876482284,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.3278668597370811,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.07663840744432256,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.03415421158723732,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": -0.008018345162933116,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0029308361917569914,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0032356632123080598,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.004630420308011862,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.6057633048464318,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.16848582246288898,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.007200355002744718,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.03453769482622467,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0190480223329188,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.05829059233841712,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.037569081141995045
+          },
+          "train_utility": 1.362742839339299,
+          "train_val_gap": 0.29438403532263524,
+          "best_dl_val_seen_delta_selection_biased": -0.0024475344639323104,
+          "best_step_selection_biased": 8,
+          "trajectory": [
+            {
+              "step": 8,
+              "ema_val_utility": 1.135147760284478,
+              "ema_delta": -0.0024475344639323104,
+              "ema_family_bootstrap_95_ci": [
+                -0.010155935684824723,
+                0.0026315210229412777
+              ],
+              "raw_val_utility": 1.072853706246517,
+              "raw_delta": -0.06474158850189315,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 16,
+              "ema_val_utility": 1.1335990498145387,
+              "ema_delta": -0.003996244933871518,
+              "ema_family_bootstrap_95_ci": [
+                -0.011181852813623399,
+                0.0017940523949151637
+              ],
+              "raw_val_utility": 1.0548690278488055,
+              "raw_delta": -0.08272626689960472,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 24,
+              "ema_val_utility": 1.1218568840727305,
+              "ema_delta": -0.015738410675679715,
+              "ema_family_bootstrap_95_ci": [
+                -0.04659197251873491,
+                0.0034994153438791713
+              ],
+              "raw_val_utility": 0.9942815880584738,
+              "raw_delta": -0.14331370668993648,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 32,
+              "ema_val_utility": 1.1211932999674286,
+              "ema_delta": -0.0164019947809817,
+              "ema_family_bootstrap_95_ci": [
+                -0.05159490486892176,
+                0.012325423833333574
+              ],
+              "raw_val_utility": 1.0971021024946603,
+              "raw_delta": -0.04049319225374992,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 40,
+              "ema_val_utility": 1.0662213698711396,
+              "ema_delta": -0.07137392487727068,
+              "ema_family_bootstrap_95_ci": [
+                -0.14595769702399572,
+                -0.015176329864263356
+              ],
+              "raw_val_utility": 1.053502187563816,
+              "raw_delta": -0.08409310718459428,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 48,
+              "ema_val_utility": 1.0662885583677726,
+              "ema_delta": -0.07130673638063767,
+              "ema_family_bootstrap_95_ci": [
+                -0.14438656456625545,
+                -0.014795720618347765
+              ],
+              "raw_val_utility": 0.9919944705155669,
+              "raw_delta": -0.14560082423284337,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 56,
+              "ema_val_utility": 1.0738785036945302,
+              "ema_delta": -0.06371679105388006,
+              "ema_family_bootstrap_95_ci": [
+                -0.13978584776364872,
+                -0.0026444999536517884
+              ],
+              "raw_val_utility": 1.1206554418500654,
+              "raw_delta": -0.016939852898344876,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 64,
+              "ema_val_utility": 1.0683588040166638,
+              "ema_delta": -0.06923649073174643,
+              "ema_family_bootstrap_95_ci": [
+                -0.15092668269211762,
+                -0.007063691786664969
+              ],
+              "raw_val_utility": 1.0773231404230528,
+              "raw_delta": -0.060272154325357485,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            }
+          ],
+          "device": "cuda:0",
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+          "checkpoint_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+          "trainable_params": 29211,
+          "wall_seconds": 43.11458245594986
+        },
+        {
+          "seed": 2,
+          "final_ema_val_utility": 1.0670200500338638,
+          "final_delta": -0.07057524471454625,
+          "family_bootstrap_95_ci": [
+            -0.15103606970832736,
+            -0.006038711514469025
+          ],
+          "improved_contexts": 21,
+          "worsened_contexts": 36,
+          "ties": 34,
+          "leave_one_context_out_min_delta": -0.07764293076606286,
+          "leave_one_context_out_max_delta": -0.042413829377699316,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": -0.17391129395392416,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.11310329998438937,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.008563255263717595,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.10276369962495839,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.03981940876482284,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.3278668597370811,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.07663840744432256,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.025422494711483157,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": -0.008018345162933116,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0029308361917569914,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0032356632123080598,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.004630420308011862,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.6057633048464318,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.14301110755783422,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": -0.0065059893562198655,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.03453769482622467,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0190480223329188,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.05829059233841712,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.037569081141995045
+          },
+          "train_utility": 1.3719240424269623,
+          "train_val_gap": 0.3049039923930985,
+          "best_dl_val_seen_delta_selection_biased": -0.0024475344639323104,
+          "best_step_selection_biased": 8,
+          "trajectory": [
+            {
+              "step": 8,
+              "ema_val_utility": 1.135147760284478,
+              "ema_delta": -0.0024475344639323104,
+              "ema_family_bootstrap_95_ci": [
+                -0.010437775170456891,
+                0.0026111365509942732
+              ],
+              "raw_val_utility": 1.0773283791520538,
+              "raw_delta": -0.06026691559635644,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 16,
+              "ema_val_utility": 1.1335990498145387,
+              "ema_delta": -0.003996244933871518,
+              "ema_family_bootstrap_95_ci": [
+                -0.010912184947939548,
+                0.0017945782493584044
+              ],
+              "raw_val_utility": 1.05132751325006,
+              "raw_delta": -0.08626778149835035,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 24,
+              "ema_val_utility": 1.1217714071206824,
+              "ema_delta": -0.015823887627727906,
+              "ema_family_bootstrap_95_ci": [
+                -0.0468956917597382,
+                0.0034482611231479304
+              ],
+              "raw_val_utility": 0.9931187573752126,
+              "raw_delta": -0.14447653737319766,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 32,
+              "ema_val_utility": 1.1211932999674286,
+              "ema_delta": -0.0164019947809817,
+              "ema_family_bootstrap_95_ci": [
+                -0.051444315304795506,
+                0.012685614205614974
+              ],
+              "raw_val_utility": 1.0980425337611877,
+              "raw_delta": -0.0395527609872226,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 40,
+              "ema_val_utility": 1.0742542054758695,
+              "ema_delta": -0.06334108927254078,
+              "ema_family_bootstrap_95_ci": [
+                -0.13362306664050755,
+                -0.010880504112073202
+              ],
+              "raw_val_utility": 1.084405298716567,
+              "raw_delta": -0.053189996031843156,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 48,
+              "ema_val_utility": 1.0662821024646734,
+              "ema_delta": -0.07131319228373689,
+              "ema_family_bootstrap_95_ci": [
+                -0.14351662960199832,
+                -0.014026039957736849
+              ],
+              "raw_val_utility": 0.9915218680377339,
+              "raw_delta": -0.14607342671067636,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 56,
+              "ema_val_utility": 1.0760608862131398,
+              "ema_delta": -0.06153440853527048,
+              "ema_family_bootstrap_95_ci": [
+                -0.13617440471684406,
+                -0.00014823094465641996
+              ],
+              "raw_val_utility": 1.1130827761100275,
+              "raw_delta": -0.024512518638382774,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 64,
+              "ema_val_utility": 1.0670200500338638,
+              "ema_delta": -0.07057524471454646,
+              "ema_family_bootstrap_95_ci": [
+                -0.15323548845173288,
+                -0.006187630175872855
+              ],
+              "raw_val_utility": 1.0748112863764963,
+              "raw_delta": -0.062784008371914,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            }
+          ],
+          "device": "cuda:0",
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+          "checkpoint_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+          "trainable_params": 29211,
+          "wall_seconds": 81.77036565705203
+        }
+      ],
+      "median_final_delta": -0.0698221488706471,
+      "family_bootstrap_95_ci_of_median_seed_delta": [
+        -0.15430588767341052,
+        -0.006981958174737423
+      ],
+      "median_final_val_utility": 1.067773145877763,
+      "family_bootstrap_95_ci_of_median_seed_utility": [
+        0.6197696528247172,
+        1.5770690510754648
+      ],
+      "minimum_leave_one_context_out_delta": -0.07764293076606286,
+      "median_train_utility": 1.3649360351832758,
+      "median_train_val_gap": 0.2971628893055127,
+      "effective_seed_replicates_approx": 1,
+      "seed_final_utilities": [
+        1.067773145877763,
+        1.0683588040166638,
+        1.0670200500338638
+      ],
+      "regression_elo": {
+        "ratings": {
+          "H47-R": 1459.59,
+          "r785": 1500.0
+        },
+        "n_datasets": 91,
+        "n_families": 19,
+        "pairwise_win_tie_loss_vs_anchor": {
+          "H47-R": {
+            "wins": 21,
+            "ties": 34,
+            "losses": 36,
+            "elo_delta_vs_anchor": -40.41
+          }
+        }
+      },
+      "beats_plateau": false,
+      "verdict": "NO WIN: final deltas are negative and checkpoint selection used DL-Val, not inner family-grouped train CV."
+    },
+    "H47-Z": {
+      "seeds": [
+        {
+          "seed": 0,
+          "final_ema_val_utility": 1.063197878378502,
+          "final_delta": -0.07439741636990795,
+          "family_bootstrap_95_ci": [
+            -0.15606594981672792,
+            -0.012073845722913206
+          ],
+          "improved_contexts": 22,
+          "worsened_contexts": 35,
+          "ties": 34,
+          "leave_one_context_out_min_delta": -0.08150757099537301,
+          "leave_one_context_out_max_delta": -0.04627846960700946,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": -0.17391129395392416,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.09712051401547481,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.018810130887156745,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.10276369962495839,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.03981940876482284,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.3393438888866921,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.0829122619595444,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.03415421158723732,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": -0.0005194585742389179,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0029308361917569914,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0032356632123080598,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.004630420308011862,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.5994635717267339,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.14301110755783422,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": -0.0065059893562198655,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.02886780528699271,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0190480223329188,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.02553497392823382,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.037569081141995045
+          },
+          "train_utility": 1.3643795651228827,
+          "train_val_gap": 0.3011816867443806,
+          "best_dl_val_seen_delta_selection_biased": -0.003262434602603337,
+          "best_step_selection_biased": 8,
+          "trajectory": [
+            {
+              "step": 8,
+              "ema_val_utility": 1.134332860145807,
+              "ema_delta": -0.003262434602603337,
+              "ema_family_bootstrap_95_ci": [
+                -0.010763541169910074,
+                0.0013044510830325434
+              ],
+              "raw_val_utility": 1.1126375200627026,
+              "raw_delta": -0.0249577746857077,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 16,
+              "ema_val_utility": 1.1335937276612114,
+              "ema_delta": -0.004001567087198898,
+              "ema_family_bootstrap_95_ci": [
+                -0.010873684349024032,
+                0.0016826556425212963
+              ],
+              "raw_val_utility": 1.0946949610358203,
+              "raw_delta": -0.042900333712589944,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 24,
+              "ema_val_utility": 1.1165577482201707,
+              "ema_delta": -0.021037546528239526,
+              "ema_family_bootstrap_95_ci": [
+                -0.052945033747415236,
+                -0.0007582448726862223
+              ],
+              "raw_val_utility": 0.9216771328106952,
+              "raw_delta": -0.21591816193771507,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 32,
+              "ema_val_utility": 1.1095970532875463,
+              "ema_delta": -0.027998241460863937,
+              "ema_family_bootstrap_95_ci": [
+                -0.06069898998769161,
+                -0.0028859996373467338
+              ],
+              "raw_val_utility": 0.9897660618793443,
+              "raw_delta": -0.1478292328690659,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 40,
+              "ema_val_utility": 1.0888933836530612,
+              "ema_delta": -0.04870191109534905,
+              "ema_family_bootstrap_95_ci": [
+                -0.12146904266939378,
+                0.003520590884711525
+              ],
+              "raw_val_utility": 1.0327482081531754,
+              "raw_delta": -0.1048470865952349,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 48,
+              "ema_val_utility": 1.0650274085202163,
+              "ema_delta": -0.07256788622819399,
+              "ema_family_bootstrap_95_ci": [
+                -0.15404714977036293,
+                -0.008192021523588531
+              ],
+              "raw_val_utility": 1.047075995709231,
+              "raw_delta": -0.09051929903917921,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 56,
+              "ema_val_utility": 1.0592728547122183,
+              "ema_delta": -0.07832244003619193,
+              "ema_family_bootstrap_95_ci": [
+                -0.16731835726262043,
+                -0.008154620998378768
+              ],
+              "raw_val_utility": 1.0553292834657473,
+              "raw_delta": -0.08226601128266298,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 64,
+              "ema_val_utility": 1.063197878378502,
+              "ema_delta": -0.07439741636990815,
+              "ema_family_bootstrap_95_ci": [
+                -0.15605443465180557,
+                -0.011032723325059883
+              ],
+              "raw_val_utility": 1.055285503660492,
+              "raw_delta": -0.08230979108791825,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            }
+          ],
+          "device": "cuda:0",
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+          "checkpoint_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+          "trainable_params": 29211,
+          "wall_seconds": 52.781478197779506
+        },
+        {
+          "seed": 1,
+          "final_ema_val_utility": 1.063197878378502,
+          "final_delta": -0.07439741636990795,
+          "family_bootstrap_95_ci": [
+            -0.1562097694683623,
+            -0.011591179616921896
+          ],
+          "improved_contexts": 22,
+          "worsened_contexts": 35,
+          "ties": 34,
+          "leave_one_context_out_min_delta": -0.08150757099537301,
+          "leave_one_context_out_max_delta": -0.04627846960700946,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": -0.17391129395392416,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.09712051401547481,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.018810130887156745,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.10276369962495839,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.03981940876482284,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.3393438888866921,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.0829122619595444,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.03415421158723732,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": -0.0005194585742389179,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0029308361917569914,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0032356632123080598,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.004630420308011862,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.5994635717267339,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.14301110755783422,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": -0.0065059893562198655,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.02886780528699271,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0190480223329188,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.02553497392823382,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.037569081141995045
+          },
+          "train_utility": 1.3642484126772598,
+          "train_val_gap": 0.3010505342987577,
+          "best_dl_val_seen_delta_selection_biased": -0.003262434602603337,
+          "best_step_selection_biased": 8,
+          "trajectory": [
+            {
+              "step": 8,
+              "ema_val_utility": 1.134332860145807,
+              "ema_delta": -0.003262434602603337,
+              "ema_family_bootstrap_95_ci": [
+                -0.010675411476084577,
+                0.001284871153716944
+              ],
+              "raw_val_utility": 1.1126375200627026,
+              "raw_delta": -0.0249577746857077,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 16,
+              "ema_val_utility": 1.1335937276612114,
+              "ema_delta": -0.004001567087198898,
+              "ema_family_bootstrap_95_ci": [
+                -0.010646278279390476,
+                0.0016718304655315012
+              ],
+              "raw_val_utility": 1.0868943406378797,
+              "raw_delta": -0.05070095411053055,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 24,
+              "ema_val_utility": 1.1165577482201707,
+              "ema_delta": -0.021037546528239526,
+              "ema_family_bootstrap_95_ci": [
+                -0.05159804612499067,
+                -0.0007566539368122135
+              ],
+              "raw_val_utility": 0.9216771328106952,
+              "raw_delta": -0.21591816193771507,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 32,
+              "ema_val_utility": 1.10944326332205,
+              "ema_delta": -0.028152031426360358,
+              "ema_family_bootstrap_95_ci": [
+                -0.062273496760853496,
+                -0.003394645256912632
+              ],
+              "raw_val_utility": 0.9340239314698882,
+              "raw_delta": -0.2035713632785221,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 40,
+              "ema_val_utility": 1.0888933836530612,
+              "ema_delta": -0.04870191109534905,
+              "ema_family_bootstrap_95_ci": [
+                -0.12161389763012001,
+                0.003377290159070055
+              ],
+              "raw_val_utility": 1.0797088102362242,
+              "raw_delta": -0.05788648451218603,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 48,
+              "ema_val_utility": 1.065136932336431,
+              "ema_delta": -0.07245836241197923,
+              "ema_family_bootstrap_95_ci": [
+                -0.1537732100457159,
+                -0.006345754403387289
+              ],
+              "raw_val_utility": 1.0492554691662361,
+              "raw_delta": -0.08833982558217413,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 56,
+              "ema_val_utility": 1.0592793106153173,
+              "ema_delta": -0.07831598413309293,
+              "ema_family_bootstrap_95_ci": [
+                -0.16723061780440832,
+                -0.010552390221825723
+              ],
+              "raw_val_utility": 1.053983100583207,
+              "raw_delta": -0.08361219416520327,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 64,
+              "ema_val_utility": 1.063197878378502,
+              "ema_delta": -0.07439741636990815,
+              "ema_family_bootstrap_95_ci": [
+                -0.15511612540444356,
+                -0.012344780045501146
+              ],
+              "raw_val_utility": 1.0589830323828933,
+              "raw_delta": -0.078612262365517,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            }
+          ],
+          "device": "cuda:0",
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+          "checkpoint_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+          "trainable_params": 29211,
+          "wall_seconds": 183.98448805790395
+        },
+        {
+          "seed": 2,
+          "final_ema_val_utility": 1.063197878378502,
+          "final_delta": -0.07439741636990795,
+          "family_bootstrap_95_ci": [
+            -0.15478374848800835,
+            -0.011694535375759542
+          ],
+          "improved_contexts": 22,
+          "worsened_contexts": 35,
+          "ties": 34,
+          "leave_one_context_out_min_delta": -0.08150757099537301,
+          "leave_one_context_out_max_delta": -0.04627846960700946,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": -0.17391129395392416,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.09712051401547481,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.018810130887156745,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.10276369962495839,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.03981940876482284,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.3393438888866921,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.0829122619595444,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.03415421158723732,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": -0.0005194585742389179,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0029308361917569914,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0032356632123080598,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.004630420308011862,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.5994635717267339,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.14301110755783422,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": -0.0065059893562198655,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.02886780528699271,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.0190480223329188,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.02553497392823382,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.037569081141995045
+          },
+          "train_utility": 1.3672736774155616,
+          "train_val_gap": 0.3040757990370595,
+          "best_dl_val_seen_delta_selection_biased": -0.0037021790053157755,
+          "best_step_selection_biased": 8,
+          "trajectory": [
+            {
+              "step": 8,
+              "ema_val_utility": 1.1338931157430945,
+              "ema_delta": -0.0037021790053157755,
+              "ema_family_bootstrap_95_ci": [
+                -0.011009628720736074,
+                0.000580293259532443
+              ],
+              "raw_val_utility": 1.1126375200627026,
+              "raw_delta": -0.0249577746857077,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 16,
+              "ema_val_utility": 1.1335937276612114,
+              "ema_delta": -0.004001567087198898,
+              "ema_family_bootstrap_95_ci": [
+                -0.010896786992523015,
+                0.0015444409040839008
+              ],
+              "raw_val_utility": 1.0946949610358203,
+              "raw_delta": -0.042900333712589944,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 24,
+              "ema_val_utility": 1.1196954709913638,
+              "ema_delta": -0.017899823757046462,
+              "ema_family_bootstrap_95_ci": [
+                -0.04913158994615551,
+                0.0014903613957170628
+              ],
+              "raw_val_utility": 0.9255398325097854,
+              "raw_delta": -0.21205546223862481,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 32,
+              "ema_val_utility": 1.1095026884847368,
+              "ema_delta": -0.028092606263673492,
+              "ema_family_bootstrap_95_ci": [
+                -0.060560117255626135,
+                -0.0026204486114059455
+              ],
+              "raw_val_utility": 0.9071677733558166,
+              "raw_delta": -0.2304275213925937,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 40,
+              "ema_val_utility": 1.0888103083550982,
+              "ema_delta": -0.04878498639331208,
+              "ema_family_bootstrap_95_ci": [
+                -0.1212028844322091,
+                0.0033463447678134884
+              ],
+              "raw_val_utility": 1.0239637444823653,
+              "raw_delta": -0.11363155026604499,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 48,
+              "ema_val_utility": 1.0668068060983675,
+              "ema_delta": -0.07078848865004272,
+              "ema_family_bootstrap_95_ci": [
+                -0.15128670761741414,
+                -0.005388841337924285
+              ],
+              "raw_val_utility": 1.0529788556530102,
+              "raw_delta": -0.08461643909540006,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 56,
+              "ema_val_utility": 1.0592793106153173,
+              "ema_delta": -0.07831598413309293,
+              "ema_family_bootstrap_95_ci": [
+                -0.1672727512029302,
+                -0.009313786341179063
+              ],
+              "raw_val_utility": 1.0562055243079391,
+              "raw_delta": -0.08138977044047113,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 64,
+              "ema_val_utility": 1.063197878378502,
+              "ema_delta": -0.07439741636990815,
+              "ema_family_bootstrap_95_ci": [
+                -0.1546122643622243,
+                -0.01154084855239318
+              ],
+              "raw_val_utility": 1.0289379209084704,
+              "raw_delta": -0.1086573738399399,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            }
+          ],
+          "device": "cuda:0",
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+          "checkpoint_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+          "trainable_params": 29211,
+          "wall_seconds": 455.1426424018573
+        }
+      ],
+      "median_final_delta": -0.07439741636990795,
+      "family_bootstrap_95_ci_of_median_seed_delta": [
+        -0.15341468199142314,
+        -0.012368444636448817
+      ],
+      "median_final_val_utility": 1.063197878378502,
+      "family_bootstrap_95_ci_of_median_seed_utility": [
+        0.6238838597053548,
+        1.5794528849148974
+      ],
+      "minimum_leave_one_context_out_delta": -0.08150757099537301,
+      "median_train_utility": 1.3643795651228827,
+      "median_train_val_gap": 0.3011816867443806,
+      "effective_seed_replicates_approx": 1,
+      "seed_final_utilities": [
+        1.063197878378502,
+        1.063197878378502,
+        1.063197878378502
+      ],
+      "regression_elo": {
+        "ratings": {
+          "H47-Z": 1466.99,
+          "r785": 1500.0
+        },
+        "n_datasets": 91,
+        "n_families": 19,
+        "pairwise_win_tie_loss_vs_anchor": {
+          "H47-Z": {
+            "wins": 22,
+            "ties": 34,
+            "losses": 35,
+            "elo_delta_vs_anchor": -33.01
+          }
+        }
+      },
+      "beats_plateau": false,
+      "verdict": "NO WIN: final deltas are negative and checkpoint selection used DL-Val, not inner family-grouped train CV."
+    },
+    "H47-PW": {
+      "seeds": [
+        {
+          "seed": 0,
+          "final_ema_val_utility": 1.1098269017534423,
+          "final_delta": -0.027768392994967875,
+          "family_bootstrap_95_ci": [
+            -0.06824970306872764,
+            0.0055219563244457365
+          ],
+          "improved_contexts": 19,
+          "worsened_contexts": 24,
+          "ties": 48,
+          "leave_one_context_out_min_delta": -0.030561049489856936,
+          "leave_one_context_out_max_delta": -0.01669178675520726,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": 0.06701204342069116,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": -0.10662864340052573,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.0013064396968373248,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.0,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.30119266334644296,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.03701107626109561,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.005495973918021035,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.0,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.004275190111327698,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.002577928840508781,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.0012778166946555425,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.15047479924706425,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.003629229718567317,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.009429465356749756,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.03763951691107703,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.03841191556012455,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.04589297250262079,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.04471413830900959
+          },
+          "train_utility": 1.4194603706917717,
+          "train_val_gap": 0.3096334689383293,
+          "best_dl_val_seen_delta_selection_biased": 0.0007715163300225925,
+          "best_step_selection_biased": 16,
+          "trajectory": [
+            {
+              "step": 8,
+              "ema_val_utility": 1.1374506857830633,
+              "ema_delta": -0.00014460896534695955,
+              "ema_family_bootstrap_95_ci": [
+                -0.001730405765986927,
+                0.0014402753863092586
+              ],
+              "raw_val_utility": 1.1289111374568677,
+              "raw_delta": -0.008684157291542594,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 16,
+              "ema_val_utility": 1.1383668110784328,
+              "ema_delta": 0.0007715163300225925,
+              "ema_family_bootstrap_95_ci": [
+                -0.0013120088562009957,
+                0.003155321439337433
+              ],
+              "raw_val_utility": 1.127576725627367,
+              "raw_delta": -0.010018569121043264,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 24,
+              "ema_val_utility": 1.1362591209445347,
+              "ema_delta": -0.0013361738038755178,
+              "ema_family_bootstrap_95_ci": [
+                -0.009133227624211699,
+                0.00604754278193118
+              ],
+              "raw_val_utility": 1.0646475949642147,
+              "raw_delta": -0.07294769978419557,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 32,
+              "ema_val_utility": 1.1349374798290497,
+              "ema_delta": -0.0026578149193605682,
+              "ema_family_bootstrap_95_ci": [
+                -0.014877020756408106,
+                0.006493402067401432
+              ],
+              "raw_val_utility": 1.086494343942209,
+              "raw_delta": -0.05110095080620125,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 40,
+              "ema_val_utility": 1.1339511877198438,
+              "ema_delta": -0.0036441070285664345,
+              "ema_family_bootstrap_95_ci": [
+                -0.02325539290657694,
+                0.00961824603340505
+              ],
+              "raw_val_utility": 1.0481442538943448,
+              "raw_delta": -0.08945104085406541,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 48,
+              "ema_val_utility": 1.127463626652669,
+              "ema_delta": -0.010131668095741286,
+              "ema_family_bootstrap_95_ci": [
+                -0.03293700483957505,
+                0.008539012733123017
+              ],
+              "raw_val_utility": 1.0710085878214306,
+              "raw_delta": -0.06658670692697966,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 56,
+              "ema_val_utility": 1.123293442921257,
+              "ema_delta": -0.014301851827153156,
+              "ema_family_bootstrap_95_ci": [
+                -0.03856218736128992,
+                0.006651887440922095
+              ],
+              "raw_val_utility": 1.0535712681218052,
+              "raw_delta": -0.08402402662660502,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 64,
+              "ema_val_utility": 1.1098269017534423,
+              "ema_delta": -0.027768392994967916,
+              "ema_family_bootstrap_95_ci": [
+                -0.07016191581674405,
+                0.004826599731059843
+              ],
+              "raw_val_utility": 1.0355721698726095,
+              "raw_delta": -0.10202312487580079,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            }
+          ],
+          "device": "cuda:0",
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+          "checkpoint_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+          "trainable_params": 29211,
+          "wall_seconds": 224.0817232078407
+        },
+        {
+          "seed": 1,
+          "final_ema_val_utility": 1.1069145680805692,
+          "final_delta": -0.030680726667840802,
+          "family_bootstrap_95_ci": [
+            -0.07235959681467295,
+            0.002092122640418847
+          ],
+          "improved_contexts": 18,
+          "worsened_contexts": 25,
+          "ties": 48,
+          "leave_one_context_out_min_delta": -0.03350574242576179,
+          "leave_one_context_out_max_delta": -0.01963647969111211,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": 0.06701204342069116,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": -0.10662864340052573,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.0013064396968373248,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.0,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.30119266334644296,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.03701107626109561,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.005495973918021035,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.0,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.004275190111327698,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.002577928840508781,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.0012778166946555425,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.15047479924706425,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.026520236194207604,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.009429465356749756,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.06049452384458944,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.03841191556012455,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.04589297250262079,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.04471413830900959
+          },
+          "train_utility": 1.4205984295284033,
+          "train_val_gap": 0.3136838614478341,
+          "best_dl_val_seen_delta_selection_biased": 0.0007715163300225925,
+          "best_step_selection_biased": 16,
+          "trajectory": [
+            {
+              "step": 8,
+              "ema_val_utility": 1.1374506857830633,
+              "ema_delta": -0.00014460896534695955,
+              "ema_family_bootstrap_95_ci": [
+                -0.0017378716995026249,
+                0.0014700744329730476
+              ],
+              "raw_val_utility": 1.1289111374568677,
+              "raw_delta": -0.008684157291542594,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 16,
+              "ema_val_utility": 1.1383668110784328,
+              "ema_delta": 0.0007715163300225925,
+              "ema_family_bootstrap_95_ci": [
+                -0.0012924115720253282,
+                0.0031423460480809987
+              ],
+              "raw_val_utility": 1.1294424415990012,
+              "raw_delta": -0.008152853149409056,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 24,
+              "ema_val_utility": 1.1362591209445347,
+              "ema_delta": -0.0013361738038755178,
+              "ema_family_bootstrap_95_ci": [
+                -0.00916383633329394,
+                0.006202878475931371
+              ],
+              "raw_val_utility": 1.067897115610083,
+              "raw_delta": -0.06969817913832732,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 32,
+              "ema_val_utility": 1.135424982163518,
+              "ema_delta": -0.002170312584892198,
+              "ema_family_bootstrap_95_ci": [
+                -0.01426653715866676,
+                0.006699530871583312
+              ],
+              "raw_val_utility": 1.0756998698719094,
+              "raw_delta": -0.061895424876500904,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 40,
+              "ema_val_utility": 1.13288078768559,
+              "ema_delta": -0.004714507062820283,
+              "ema_family_bootstrap_95_ci": [
+                -0.02417359467208162,
+                0.008307013501473086
+              ],
+              "raw_val_utility": 1.0728585742485393,
+              "raw_delta": -0.064736720499871,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 48,
+              "ema_val_utility": 1.1293859374414432,
+              "ema_delta": -0.008209357306967036,
+              "ema_family_bootstrap_95_ci": [
+                -0.03046608373578666,
+                0.009981938820757841
+              ],
+              "raw_val_utility": 1.0710810018249712,
+              "raw_delta": -0.06651429292343902,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 56,
+              "ema_val_utility": 1.1220823699252522,
+              "ema_delta": -0.015512924823158025,
+              "ema_family_bootstrap_95_ci": [
+                -0.04084835733584551,
+                0.006807823585115724
+              ],
+              "raw_val_utility": 1.052534621372639,
+              "raw_delta": -0.08506067337577128,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 64,
+              "ema_val_utility": 1.1069145680805692,
+              "ema_delta": -0.030680726667841052,
+              "ema_family_bootstrap_95_ci": [
+                -0.07361852878560224,
+                0.0022480758267779477
+              ],
+              "raw_val_utility": 1.0456741088248596,
+              "raw_delta": -0.0919211859235507,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            }
+          ],
+          "device": "cuda:0",
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+          "checkpoint_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+          "trainable_params": 29211,
+          "wall_seconds": 250.92617020499893
+        },
+        {
+          "seed": 2,
+          "final_ema_val_utility": 1.1098269017534423,
+          "final_delta": -0.027768392994967875,
+          "family_bootstrap_95_ci": [
+            -0.07085294294340196,
+            0.0044398195953535636
+          ],
+          "improved_contexts": 19,
+          "worsened_contexts": 24,
+          "ties": 48,
+          "leave_one_context_out_min_delta": -0.030561049489856936,
+          "leave_one_context_out_max_delta": -0.01669178675520726,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": 0.06701204342069116,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": -0.10662864340052573,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.0013064396968373248,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.0,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.30119266334644296,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.03701107626109561,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.005495973918021035,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.0,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.004275190111327698,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.002577928840508781,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.0012778166946555425,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.15047479924706425,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.003629229718567317,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.009429465356749756,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.03763951691107703,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.03841191556012455,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": -0.04589297250262079,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.04471413830900959
+          },
+          "train_utility": 1.4192380378596294,
+          "train_val_gap": 0.3094111361061871,
+          "best_dl_val_seen_delta_selection_biased": 0.0032356587454467345,
+          "best_step_selection_biased": 16,
+          "trajectory": [
+            {
+              "step": 8,
+              "ema_val_utility": 1.1374506857830633,
+              "ema_delta": -0.00014460896534695955,
+              "ema_family_bootstrap_95_ci": [
+                -0.0017351141095876715,
+                0.0014414651483118867
+              ],
+              "raw_val_utility": 1.132117463193069,
+              "raw_delta": -0.005477831555341206,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 16,
+              "ema_val_utility": 1.140830953493857,
+              "ema_delta": 0.0032356587454467345,
+              "ema_family_bootstrap_95_ci": [
+                -0.0005334624052243499,
+                0.00849345066362695
+              ],
+              "raw_val_utility": 1.127576725627367,
+              "raw_delta": -0.010018569121043264,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 24,
+              "ema_val_utility": 1.1362591209445347,
+              "ema_delta": -0.0013361738038755178,
+              "ema_family_bootstrap_95_ci": [
+                -0.009113900578494222,
+                0.006015458949898011
+              ],
+              "raw_val_utility": 1.0928502615183233,
+              "raw_delta": -0.04474503323008694,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 32,
+              "ema_val_utility": 1.135424982163518,
+              "ema_delta": -0.002170312584892198,
+              "ema_family_bootstrap_95_ci": [
+                -0.01479842586930689,
+                0.006726565396649969
+              ],
+              "raw_val_utility": 1.0852680924812397,
+              "raw_delta": -0.05232720226717058,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 40,
+              "ema_val_utility": 1.133356072988247,
+              "ema_delta": -0.004239221760163225,
+              "ema_family_bootstrap_95_ci": [
+                -0.023868313200204043,
+                0.00935991354993379
+              ],
+              "raw_val_utility": 1.0989323661064978,
+              "raw_delta": -0.03866292864191245,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 48,
+              "ema_val_utility": 1.1274639797813315,
+              "ema_delta": -0.010131314967078753,
+              "ema_family_bootstrap_95_ci": [
+                -0.03257001853100028,
+                0.00861715369799001
+              ],
+              "raw_val_utility": 1.0710764499199388,
+              "raw_delta": -0.06651884482847148,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 56,
+              "ema_val_utility": 1.12242493890698,
+              "ema_delta": -0.015170355841430228,
+              "ema_family_bootstrap_95_ci": [
+                -0.039981205494199874,
+                0.006797334849564854
+              ],
+              "raw_val_utility": 1.0528737935947063,
+              "raw_delta": -0.08472150115370392,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 64,
+              "ema_val_utility": 1.1098269017534423,
+              "ema_delta": -0.027768392994967916,
+              "ema_family_bootstrap_95_ci": [
+                -0.0693501651434211,
+                0.005032224915686238
+              ],
+              "raw_val_utility": 1.0311846406470422,
+              "raw_delta": -0.10641065410136807,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            }
+          ],
+          "device": "cuda:0",
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+          "checkpoint_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+          "trainable_params": 29211,
+          "wall_seconds": 169.2806892748922
+        }
+      ],
+      "median_final_delta": -0.027768392994967875,
+      "family_bootstrap_95_ci_of_median_seed_delta": [
+        -0.06876416731328147,
+        0.004966540771684036
+      ],
+      "median_final_val_utility": 1.1098269017534423,
+      "family_bootstrap_95_ci_of_median_seed_utility": [
+        0.6922963617978894,
+        1.6100149786419473
+      ],
+      "minimum_leave_one_context_out_delta": -0.03350574242576179,
+      "median_train_utility": 1.4194603706917717,
+      "median_train_val_gap": 0.3096334689383293,
+      "effective_seed_replicates_approx": 1,
+      "seed_final_utilities": [
+        1.1098269017534423,
+        1.1069145680805692,
+        1.1098269017534423
+      ],
+      "regression_elo": {
+        "ratings": {
+          "H47-PW": 1496.34,
+          "r785": 1500.0
+        },
+        "n_datasets": 91,
+        "n_families": 19,
+        "pairwise_win_tie_loss_vs_anchor": {
+          "H47-PW": {
+            "wins": 18,
+            "ties": 50,
+            "losses": 23,
+            "elo_delta_vs_anchor": -3.66
+          }
+        }
+      },
+      "beats_plateau": false,
+      "verdict": "NO WIN: final deltas are negative and checkpoint selection used DL-Val, not inner family-grouped train CV."
+    },
+    "H47-RP": {
+      "seeds": [
+        {
+          "seed": 0,
+          "final_ema_val_utility": 1.1189707107411067,
+          "final_delta": -0.018624584007303227,
+          "family_bootstrap_95_ci": [
+            -0.049503763199835425,
+            0.0006543224200026431
+          ],
+          "improved_contexts": 6,
+          "worsened_contexts": 11,
+          "ties": 74,
+          "leave_one_context_out_min_delta": -0.019655478414262708,
+          "leave_one_context_out_max_delta": -0.007446379889901898,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": 0.0,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.0,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.0043286316965262086,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.0,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.24848782598914582,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.034600954248614,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.008634187092004964,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.0,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.006231083739459198,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.06920585463417195,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.001928306544865599,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.0,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.0,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.014831182523810027,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": 0.0032994519194093686,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.0
+          },
+          "train_utility": 1.4056295740494433,
+          "train_val_gap": 0.2866588633083367,
+          "best_dl_val_seen_delta_selection_biased": 0.0006702911733236228,
+          "best_step_selection_biased": 24,
+          "trajectory": [
+            {
+              "step": 8,
+              "ema_val_utility": 1.1373631153243522,
+              "ema_delta": -0.00023217942405806546,
+              "ema_family_bootstrap_95_ci": [
+                -0.0007285630203199546,
+                0.0
+              ],
+              "raw_val_utility": 1.135147760284478,
+              "raw_delta": -0.0024475344639323104,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 16,
+              "ema_val_utility": 1.1370109413803509,
+              "ema_delta": -0.0005843533680593982,
+              "ema_family_bootstrap_95_ci": [
+                -0.0019595240102998385,
+                0.0006899748046610579
+              ],
+              "raw_val_utility": 1.133508523562618,
+              "raw_delta": -0.0040867711857921485,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 24,
+              "ema_val_utility": 1.1382655859217339,
+              "ema_delta": 0.0006702911733236228,
+              "ema_family_bootstrap_95_ci": [
+                -0.0014045012478799965,
+                0.0029916721397808673
+              ],
+              "raw_val_utility": 1.1276039018766473,
+              "raw_delta": -0.009991392871762983,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 32,
+              "ema_val_utility": 1.1352489854411765,
+              "ema_delta": -0.002346309307233785,
+              "ema_family_bootstrap_95_ci": [
+                -0.01011382922475919,
+                0.0027435983847689488
+              ],
+              "raw_val_utility": 1.1196575523521273,
+              "raw_delta": -0.017937742396282985,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 40,
+              "ema_val_utility": 1.133508523562618,
+              "ema_delta": -0.0040867711857921485,
+              "ema_family_bootstrap_95_ci": [
+                -0.01111221369461555,
+                0.001579809677026983
+              ],
+              "raw_val_utility": 1.093990271241879,
+              "raw_delta": -0.04360502350653128,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 48,
+              "ema_val_utility": 1.1302972995122618,
+              "ema_delta": -0.007297995236148491,
+              "ema_family_bootstrap_95_ci": [
+                -0.017625873593867143,
+                0.000655422835550677
+              ],
+              "raw_val_utility": 1.0872589690092873,
+              "raw_delta": -0.050336325739122945,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 56,
+              "ema_val_utility": 1.1302299606211013,
+              "ema_delta": -0.007365334127308998,
+              "ema_family_bootstrap_95_ci": [
+                -0.017394648177610994,
+                0.0007208525585048514
+              ],
+              "raw_val_utility": 1.0860519094764434,
+              "raw_delta": -0.05154338527196689,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 64,
+              "ema_val_utility": 1.1189707107411067,
+              "ema_delta": -0.018624584007303602,
+              "ema_family_bootstrap_95_ci": [
+                -0.049102444006014635,
+                0.0006982926457012685
+              ],
+              "raw_val_utility": 1.1047344243551944,
+              "raw_delta": -0.032860870393215835,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            }
+          ],
+          "device": "cuda:0",
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+          "checkpoint_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+          "trainable_params": 29211,
+          "wall_seconds": 176.8460856920574
+        },
+        {
+          "seed": 1,
+          "final_ema_val_utility": 1.1189707107411067,
+          "final_delta": -0.018624584007303227,
+          "family_bootstrap_95_ci": [
+            -0.04922653094846896,
+            0.000698880484549511
+          ],
+          "improved_contexts": 6,
+          "worsened_contexts": 11,
+          "ties": 74,
+          "leave_one_context_out_min_delta": -0.019655478414262708,
+          "leave_one_context_out_max_delta": -0.007446379889901898,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": 0.0,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.0,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.0043286316965262086,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.0,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.24848782598914582,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.034600954248614,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.008634187092004964,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.0,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.006231083739459198,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.06920585463417195,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.001928306544865599,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.0,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.0,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.014831182523810027,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": 0.0032994519194093686,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.0
+          },
+          "train_utility": 1.4056104676644285,
+          "train_val_gap": 0.2866397569233219,
+          "best_dl_val_seen_delta_selection_biased": 0.0006702911733236228,
+          "best_step_selection_biased": 24,
+          "trajectory": [
+            {
+              "step": 8,
+              "ema_val_utility": 1.1373631153243522,
+              "ema_delta": -0.00023217942405806546,
+              "ema_family_bootstrap_95_ci": [
+                -0.0007285630203199546,
+                0.0
+              ],
+              "raw_val_utility": 1.1352489854411765,
+              "raw_delta": -0.002346309307233785,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 16,
+              "ema_val_utility": 1.1370109413803509,
+              "ema_delta": -0.0005843533680593982,
+              "ema_family_bootstrap_95_ci": [
+                -0.0019201262809228155,
+                0.0007201376931546293
+              ],
+              "raw_val_utility": 1.133508523562618,
+              "raw_delta": -0.0040867711857921485,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 24,
+              "ema_val_utility": 1.1382655859217339,
+              "ema_delta": 0.0006702911733236228,
+              "ema_family_bootstrap_95_ci": [
+                -0.0014376151311316042,
+                0.0030484194929529334
+              ],
+              "raw_val_utility": 1.1276039018766473,
+              "raw_delta": -0.009991392871762983,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 32,
+              "ema_val_utility": 1.1352489854411765,
+              "ema_delta": -0.002346309307233785,
+              "ema_family_bootstrap_95_ci": [
+                -0.010192949247623281,
+                0.00279734663712533
+              ],
+              "raw_val_utility": 1.1196575523521273,
+              "raw_delta": -0.017937742396282985,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 40,
+              "ema_val_utility": 1.133508523562618,
+              "ema_delta": -0.0040867711857921485,
+              "ema_family_bootstrap_95_ci": [
+                -0.010925571297325057,
+                0.0014685888918997603
+              ],
+              "raw_val_utility": 1.0937344061764596,
+              "raw_delta": -0.043860888571950696,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 48,
+              "ema_val_utility": 1.1302972995122618,
+              "ema_delta": -0.007297995236148491,
+              "ema_family_bootstrap_95_ci": [
+                -0.017532953504439595,
+                0.0006088569183818873
+              ],
+              "raw_val_utility": 1.0933748396201834,
+              "raw_delta": -0.04422045512822681,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 56,
+              "ema_val_utility": 1.1302299606211013,
+              "ema_delta": -0.007365334127308998,
+              "ema_family_bootstrap_95_ci": [
+                -0.017405677298639326,
+                0.0008055919228371979
+              ],
+              "raw_val_utility": 1.1093084633688821,
+              "raw_delta": -0.028286831379528143,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 64,
+              "ema_val_utility": 1.1189707107411067,
+              "ema_delta": -0.018624584007303602,
+              "ema_family_bootstrap_95_ci": [
+                -0.049313308676270325,
+                0.0006485892967635063
+              ],
+              "raw_val_utility": 1.1047344243551944,
+              "raw_delta": -0.032860870393215835,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            }
+          ],
+          "device": "cuda:0",
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+          "checkpoint_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+          "trainable_params": 29211,
+          "wall_seconds": 165.0372926830314
+        },
+        {
+          "seed": 2,
+          "final_ema_val_utility": 1.1189707107411067,
+          "final_delta": -0.018624584007303227,
+          "family_bootstrap_95_ci": [
+            -0.0500192670057487,
+            0.0005397093920037442
+          ],
+          "improved_contexts": 6,
+          "worsened_contexts": 11,
+          "ties": 74,
+          "leave_one_context_out_min_delta": -0.019655478414262708,
+          "leave_one_context_out_max_delta": -0.007446379889901898,
+          "per_family_delta": {
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": 0.0,
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": 0.0,
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": -0.0043286316965262086,
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.0,
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.0,
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.24848782598914582,
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.034600954248614,
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.008634187092004964,
+            "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.0,
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": 0.0,
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.0,
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.006231083739459198,
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": -0.06920585463417195,
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.001928306544865599,
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": 0.0,
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.0,
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": 0.014831182523810027,
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": 0.0032994519194093686,
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": 0.0
+          },
+          "train_utility": 1.4055849322370548,
+          "train_val_gap": 0.2866142214959482,
+          "best_dl_val_seen_delta_selection_biased": 0.0006702911733236228,
+          "best_step_selection_biased": 24,
+          "trajectory": [
+            {
+              "step": 8,
+              "ema_val_utility": 1.1373631153243522,
+              "ema_delta": -0.00023217942405806546,
+              "ema_family_bootstrap_95_ci": [
+                -0.0007285630203199546,
+                0.0
+              ],
+              "raw_val_utility": 1.1352489854411765,
+              "raw_delta": -0.002346309307233785,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 16,
+              "ema_val_utility": 1.1370109413803509,
+              "ema_delta": -0.0005843533680593982,
+              "ema_family_bootstrap_95_ci": [
+                -0.0019767043721188662,
+                0.0007027978642614636
+              ],
+              "raw_val_utility": 1.1305918667231138,
+              "raw_delta": -0.00700342802529641,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 24,
+              "ema_val_utility": 1.1382655859217339,
+              "ema_delta": 0.0006702911733236228,
+              "ema_family_bootstrap_95_ci": [
+                -0.0014087810627526583,
+                0.0030590646824001835
+              ],
+              "raw_val_utility": 1.1276039018766473,
+              "raw_delta": -0.009991392871762983,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 32,
+              "ema_val_utility": 1.1352489854411765,
+              "ema_delta": -0.002346309307233785,
+              "ema_family_bootstrap_95_ci": [
+                -0.009983836962581545,
+                0.0028188905076921805
+              ],
+              "raw_val_utility": 1.1196575523521273,
+              "raw_delta": -0.017937742396282985,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 40,
+              "ema_val_utility": 1.133508523562618,
+              "ema_delta": -0.0040867711857921485,
+              "ema_family_bootstrap_95_ci": [
+                -0.010905356252509876,
+                0.0015225382522073044
+              ],
+              "raw_val_utility": 1.093990271241879,
+              "raw_delta": -0.04360502350653128,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 48,
+              "ema_val_utility": 1.1302972995122618,
+              "ema_delta": -0.007297995236148491,
+              "ema_family_bootstrap_95_ci": [
+                -0.017194167193891236,
+                0.0006664172697904694
+              ],
+              "raw_val_utility": 1.0933748396201834,
+              "raw_delta": -0.04422045512822681,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 56,
+              "ema_val_utility": 1.1302299606211013,
+              "ema_delta": -0.007365334127308998,
+              "ema_family_bootstrap_95_ci": [
+                -0.017351402805302844,
+                0.0007291603198304329
+              ],
+              "raw_val_utility": 1.0862774033113742,
+              "raw_delta": -0.05131789143703602,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            },
+            {
+              "step": 64,
+              "ema_val_utility": 1.1189707107411067,
+              "ema_delta": -0.018624584007303602,
+              "ema_family_bootstrap_95_ci": [
+                -0.049702798171132864,
+                0.0006490740519325022
+              ],
+              "raw_val_utility": 1.0814778704627555,
+              "raw_delta": -0.056117424285654804,
+              "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+              "selection_note": "Repeated DL-Val checkpoint look; exploratory and not a selected win."
+            }
+          ],
+          "device": "cuda:0",
+          "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+          "checkpoint_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+          "trainable_params": 29211,
+          "wall_seconds": 255.3476265699137
+        }
+      ],
+      "median_final_delta": -0.018624584007303227,
+      "family_bootstrap_95_ci_of_median_seed_delta": [
+        -0.04930870744436817,
+        0.0005481282095496768
+      ],
+      "median_final_val_utility": 1.1189707107411067,
+      "family_bootstrap_95_ci_of_median_seed_utility": [
+        0.696299731625042,
+        1.6171349077615
+      ],
+      "minimum_leave_one_context_out_delta": -0.019655478414262708,
+      "median_train_utility": 1.4056104676644285,
+      "median_train_val_gap": 0.2866397569233219,
+      "effective_seed_replicates_approx": 1,
+      "seed_final_utilities": [
+        1.1189707107411067,
+        1.1189707107411067,
+        1.1189707107411067
+      ],
+      "regression_elo": {
+        "ratings": {
+          "H47-RP": 1478.03,
+          "r785": 1500.0
+        },
+        "n_datasets": 91,
+        "n_families": 19,
+        "pairwise_win_tie_loss_vs_anchor": {
+          "H47-RP": {
+            "wins": 5,
+            "ties": 75,
+            "losses": 11,
+            "elo_delta_vs_anchor": -21.97
+          }
+        }
+      },
+      "beats_plateau": false,
+      "verdict": "NO WIN: final deltas are negative and checkpoint selection used DL-Val, not inner family-grouped train CV."
+    }
+  },
+  "next_wave": {
+    "H48": "Queued now: G diagnostic, 0 control, PF, ES. Use 3 real family-balanced minibatch seeds; inner family CV selection; DL-Val91 scored once at end.",
+    "H49": "Queued after H48 closes: 0, SAM, SWA, SEL; if H48 strict win, replace with three-seed confirmation."
+  },
+  "results_path": "~/jope-data/h47/runs/"
 }

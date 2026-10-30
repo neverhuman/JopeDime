@@ -2456,9 +2456,11 @@ dependencies = [
 name = "jope-api"
 version = "0.4.1"
 dependencies = [
+ "proptest",
  "schemars",
  "serde",
  "serde_json",
+ "ulid",
 ]
 
 [[package]]
