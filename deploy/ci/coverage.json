@@ -4615,6 +4615,16 @@
       "lanes": [],
       "scope": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline."
     },
+    "python:research/flywheel_selfplay/h47/test_analyze.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested pytest proofs for H47 family-row construction and deterministic family bootstrap analysis; offline research analysis outside the reviewed product baseline."
+    },
     "python:research/flywheel_selfplay/test_phase3_gates.py": {
       "discovery": {
         "kind": "python-family"

@@ -12,6 +12,10 @@ description = "Shared JopeDime v1 wire contract and JSON schemas"
 serde = { workspace = true }
 serde_json = { workspace = true }
 schemars = "=1.2.2"
+ulid = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
 
 [lints]
 workspace = true
