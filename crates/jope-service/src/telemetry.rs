@@ -58,7 +58,8 @@ pub trait Sensors: Send {
     fn gpus(&mut self) -> Result<Vec<GpuReading>, String>;
 }
 
-/// Producer-reported values without an OS sensor (§9.1 rows owned by other components).
+/// Producer-reported rates and durations without an OS sensor (§9.1 rows owned by other
+/// components). Exact byte counts use [`Counters::report_store_bytes`] instead.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Reported {
     RankerScoresPerS,
@@ -67,18 +68,16 @@ pub enum Reported {
     LandmarksMs,
     IoReadGbS,
     PredictRowsPerS,
-    StoreBytes,
 }
 
 impl Reported {
-    const ALL: [Self; 7] = [
+    const ALL: [Self; 6] = [
         Self::RankerScoresPerS,
         Self::RankerLatencyMs,
         Self::DopeEncodeMs,
         Self::LandmarksMs,
         Self::IoReadGbS,
         Self::PredictRowsPerS,
-        Self::StoreBytes,
     ];
 
     fn metric(self) -> (&'static str, &'static str, &'static str) {
@@ -89,7 +88,6 @@ impl Reported {
             Self::LandmarksMs => ("landmarks.ms", "ms", "engine"),
             Self::IoReadGbS => ("io.read_gb_s", "GB/s", "engine"),
             Self::PredictRowsPerS => ("predict.rows_per_s", "rows/s", "engine"),
-            Self::StoreBytes => ("store.bytes", "bytes", "store"),
         }
     }
 }
@@ -118,6 +116,7 @@ pub struct Counters {
     marks: Mutex<Marks>,
     tokens: Mutex<Option<TokenCounts>>,
     reported: Mutex<BTreeMap<Reported, (f64, Instant)>>,
+    store_bytes: Mutex<Option<(u64, Instant)>>,
     workers: Mutex<Vec<u32>>,
 }
 
@@ -153,8 +152,13 @@ impl Counters {
         total.all_tokens += counts.all_tokens;
         total.all_seconds += counts.all_seconds;
     }
+    /// A non-finite or negative value is published as `unavailable`, never as a measurement.
     pub fn report(&self, metric: Reported, value: f64, at: Instant) {
         lock(&self.reported).insert(metric, (value, at));
+    }
+    /// Exact bytes owned by the store (§4.1 exact counts, no float conversion).
+    pub fn report_store_bytes(&self, bytes: u64, at: Instant) {
+        *lock(&self.store_bytes) = Some((bytes, at));
     }
     /// The live worker PIDs; telemetry samples these alongside the engine.
     pub fn set_workers(&self, pids: &[u32]) {
@@ -268,29 +272,37 @@ impl Telemetry {
                 .copied()
                 .filter(|p| *p != self.engine_pid),
         );
-        let engine = sensors.process(self.engine_pid);
         let mut cpu_delta = 0.0;
         let mut rss = 0u64;
         let mut cpu_now = BTreeMap::new();
+        // A failed reading of any listed process makes the totals incomplete: publish them as
+        // unavailable rather than as a falsely complete measurement.
+        let mut incomplete: Option<String> = None;
         for pid in &pids {
-            let reading = if *pid == self.engine_pid {
-                engine.clone()
-            } else {
-                sensors.process(*pid)
-            };
-            if let Ok(reading) = reading {
-                if let Some(previous) = self.last_cpu.get(pid) {
-                    cpu_delta += (reading.cpu_seconds - previous).max(0.0);
+            match sensors.process(*pid) {
+                Ok(reading) => {
+                    if let Some(previous) = self.last_cpu.get(pid) {
+                        cpu_delta += (reading.cpu_seconds - previous).max(0.0);
+                    }
+                    cpu_now.insert(*pid, reading.cpu_seconds);
+                    rss = rss.saturating_add(reading.rss_bytes);
                 }
-                cpu_now.insert(*pid, reading.cpu_seconds);
-                rss = rss.saturating_add(reading.rss_bytes);
+                Err(reason) if incomplete.is_none() => {
+                    let who = if *pid == self.engine_pid {
+                        "engine"
+                    } else {
+                        "worker"
+                    };
+                    incomplete = Some(format!("{who}_{reason}"));
+                }
+                Err(_) => {}
             }
         }
         self.last_cpu = cpu_now;
-        let cores = match (&engine, seconds) {
-            (Err(reason), _) => Err(format!("engine_{reason}")),
-            (Ok(_), None) => Err(NO_PREVIOUS_SAMPLE.to_owned()),
-            (Ok(_), Some(seconds)) => Ok(cpu_delta / seconds),
+        let cores = match (&incomplete, seconds) {
+            (Some(reason), _) => Err(reason.clone()),
+            (None, None) => Err(NO_PREVIOUS_SAMPLE.to_owned()),
+            (None, Some(seconds)) => Ok(cpu_delta / seconds),
         };
         if let Ok(cores) = cores {
             self.cores_sum += cores;
@@ -330,13 +342,13 @@ impl Telemetry {
             zero,
             share(sensors.allowed_cpus()),
         ));
-        let rss = match &engine {
-            Ok(_) => {
+        let rss = match &incomplete {
+            None => {
                 self.summary.mem_rss_peak_bytes =
                     Some(self.summary.mem_rss_peak_bytes.map_or(rss, |p| p.max(rss)));
                 Ok(bytes(rss))
             }
-            Err(reason) => Err(format!("engine_{reason}")),
+            Some(reason) => Err(reason.clone()),
         };
         out.push(sample("mem.rss", "bytes", "engine", zero, zero, rss));
         out.push(sample(
@@ -403,14 +415,34 @@ impl Telemetry {
         for metric in Reported::ALL {
             let (name, unit, scope) = metric.metric();
             let value = match reported.get(&metric) {
-                Some((value, at)) if metric == Reported::StoreBytes && *value >= 0.0 => {
-                    (Ok(bytes(*value as u64)), now.saturating_duration_since(*at))
-                }
+                Some((value, at)) if *value < 0.0 => (
+                    Err("negative_value".to_owned()),
+                    now.saturating_duration_since(*at),
+                ),
                 Some((value, at)) => (number(*value), now.saturating_duration_since(*at)),
                 None => (Err(NOT_REPORTED.to_owned()), zero),
             };
             out.push(sample(name, unit, scope, zero, value.1, value.0));
         }
+        let store = *lock(&counters.store_bytes);
+        out.push(match store {
+            Some((value, at)) => sample(
+                "store.bytes",
+                "bytes",
+                "store",
+                zero,
+                now.saturating_duration_since(at),
+                Ok(bytes(value)),
+            ),
+            None => sample(
+                "store.bytes",
+                "bytes",
+                "store",
+                zero,
+                zero,
+                Err(NOT_REPORTED.to_owned()),
+            ),
+        });
 
         // Evaluation rate and failures.
         let rung0 = counters.rung0_completed.load(Ordering::Relaxed);
@@ -504,9 +536,12 @@ impl Telemetry {
             let marks = lock(&counters.marks);
             (marks.first_model, marks.best)
         };
-        let since = |mark: Option<Instant>| {
-            mark.map(|at| at.saturating_duration_since(self.started).as_secs_f64())
-                .ok_or_else(|| "no_model_yet".to_owned())
+        let since = |mark: Option<Instant>| -> Result<f64, String> {
+            let at = mark.ok_or_else(|| "no_model_yet".to_owned())?;
+            // A mark before the canonical run start is inconsistent input, never a measured 0.
+            at.checked_duration_since(self.started)
+                .map(|d| d.as_secs_f64())
+                .ok_or_else(|| "before_run_start".to_owned())
         };
         self.summary.time_first_model_s = since(first).ok();
         self.summary.time_best_s = since(best).ok();
@@ -571,11 +606,14 @@ pub struct TelemetryService {
 }
 
 impl TelemetryService {
+    /// `run_started` is the run's canonical start, so `time.*` metrics stay correct when
+    /// telemetry attaches after the run began (for example after an engine restart).
     pub fn spawn(
         run: RunId,
         log: Arc<EventLog>,
         mut sensors: Box<dyn Sensors>,
         counters: Arc<Counters>,
+        run_started: Instant,
         interval: Duration,
     ) -> Self {
         let stop = Arc::new(AtomicBool::new(false));
@@ -583,7 +621,7 @@ impl TelemetryService {
         let thread = thread::Builder::new()
             .name("jope-telemetry".to_owned())
             .spawn(move || {
-                let mut telemetry = Telemetry::new(std::process::id(), Instant::now());
+                let mut telemetry = Telemetry::new(std::process::id(), run_started);
                 while !flag.load(Ordering::Acquire) {
                     let samples = telemetry.tick(Instant::now(), sensors.as_mut(), &counters);
                     log.publish_telemetry(TelemetryEvent {
@@ -666,6 +704,43 @@ impl Sensors for SystemSensors {
     }
 }
 
+/// CPUs allowed by affinity, further limited by every cgroup v2 `cpu.max` quota from this
+/// process's own cgroup (from `/proc/self/cgroup`, line `0::<path>`) up to the root.
+/// `cpu_max(relative)` reads `<relative>/cpu.max` under the cgroup v2 mount; an absent file or
+/// `max` quota imposes no limit. Without a v2 membership line, affinity alone applies.
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+fn cgroup_allowed_cpus(
+    membership: &str,
+    affinity: f64,
+    cpu_max: impl Fn(&str) -> Option<String>,
+) -> f64 {
+    let Some(path) = membership
+        .lines()
+        .find_map(|line| line.strip_prefix("0::"))
+        .map(str::trim)
+    else {
+        return affinity;
+    };
+    let mut allowed = affinity;
+    let mut current = path.trim_matches('/').to_owned();
+    loop {
+        if let Some(limit) = cpu_max(&current).and_then(|line| {
+            let mut parts = line.split_whitespace();
+            let quota = parts.next()?.parse::<f64>().ok()?;
+            let period = parts.next()?.parse::<f64>().ok()?;
+            (quota > 0.0 && period > 0.0).then_some(quota / period)
+        }) {
+            allowed = allowed.min(limit);
+        }
+        if current.is_empty() {
+            return allowed;
+        }
+        current = current
+            .rsplit_once('/')
+            .map_or(String::new(), |(parent, _)| parent.to_owned());
+    }
+}
+
 #[cfg(target_os = "linux")]
 #[allow(unsafe_code)]
 mod platform {
@@ -691,16 +766,10 @@ mod platform {
         }
         // SAFETY: `set` was initialized by sched_getaffinity above.
         let affinity = unsafe { libc::CPU_COUNT(&set) } as f64;
-        // cgroup v2 quota: "<quota> <period>" or "max <period>".
-        let quota = fs::read_to_string("/sys/fs/cgroup/cpu.max")
-            .ok()
-            .and_then(|line| {
-                let mut parts = line.split_whitespace();
-                let quota = parts.next()?.parse::<f64>().ok()?;
-                let period = parts.next()?.parse::<f64>().ok()?;
-                (period > 0.0).then(|| quota / period)
-            });
-        Ok(quota.map_or(affinity, |q| q.min(affinity)))
+        let membership = fs::read_to_string("/proc/self/cgroup").unwrap_or_default();
+        Ok(super::cgroup_allowed_cpus(&membership, affinity, |path| {
+            fs::read_to_string(Path::new("/sys/fs/cgroup").join(path).join("cpu.max")).ok()
+        }))
     }
 
     pub(super) fn mem_available() -> Result<u64, String> {
@@ -847,7 +916,7 @@ mod tests {
         fake.process.remove(&2);
         fake.process.insert(3, reading(50.0, 20));
         fake.process.insert(ENGINE, reading(1.0, 100));
-        counters.set_workers(&[2, 3]);
+        counters.set_workers(&[3]);
         let s = telemetry.tick(t0 + Duration::from_secs(1), &mut fake, &counters);
         assert!((num(get(&s, "cpu.cores")) - 1.0).abs() < 1e-9);
         assert_eq!(get(&s, "mem.rss").value, Some(bytes(120)));
@@ -904,6 +973,86 @@ mod tests {
             "unavailable:nvml_not_linked"
         );
         assert_eq!(summary.tokens_per_s_rust, None);
+    }
+
+    #[test]
+    fn a_failed_live_worker_makes_totals_unavailable_not_falsely_complete() {
+        let t0 = Instant::now();
+        let counters = Counters::default();
+        let mut fake = Fake::default();
+        let mut telemetry = Telemetry::new(ENGINE, t0);
+        fake.process.insert(ENGINE, reading(0.0, 100));
+        fake.process.insert(2, reading(0.0, 10));
+        counters.set_workers(&[2]);
+        telemetry.tick(t0, &mut fake, &counters);
+        // Worker 2 is still listed as live but its reading fails.
+        fake.process.remove(&2);
+        fake.process.insert(ENGINE, reading(1.0, 100));
+        let s = telemetry.tick(t0 + Duration::from_secs(1), &mut fake, &counters);
+        for name in ["cpu.cores", "cpu.host_pct", "mem.rss"] {
+            let metric = get(&s, name);
+            assert_eq!(metric.value, None, "{name}");
+            assert_eq!(
+                metric.availability, "unavailable:worker_process_exited",
+                "{name}"
+            );
+        }
+        assert_eq!(telemetry.summary().mem_rss_peak_bytes, Some(110));
+    }
+
+    #[test]
+    fn store_bytes_are_exact_and_invalid_reports_are_unavailable() {
+        let t0 = Instant::now();
+        let counters = Counters::default();
+        let exact = (1u64 << 53) + 1; // not representable as f64
+        counters.report_store_bytes(exact, t0);
+        counters.report(Reported::RankerLatencyMs, -3.0, t0);
+        counters.report(Reported::IoReadGbS, f64::INFINITY, t0);
+        counters.report(Reported::PredictRowsPerS, f64::NAN, t0);
+        let mut fake = Fake::default();
+        let s = Telemetry::new(ENGINE, t0).tick(t0, &mut fake, &counters);
+        assert_eq!(get(&s, "store.bytes").value, Some(bytes(exact)));
+        assert_eq!(
+            get(&s, "ranker.latency_ms").availability,
+            "unavailable:negative_value"
+        );
+        assert_eq!(
+            get(&s, "io.read_gb_s").availability,
+            "unavailable:non_finite"
+        );
+        assert_eq!(
+            get(&s, "predict.rows_per_s").availability,
+            "unavailable:non_finite"
+        );
+        for name in ["ranker.latency_ms", "io.read_gb_s", "predict.rows_per_s"] {
+            assert_eq!(get(&s, name).value, None);
+        }
+    }
+
+    #[test]
+    fn allowed_cpus_follow_the_tightest_quota_on_the_processes_own_cgroup_path() {
+        let files: BTreeMap<&str, &str> = [
+            ("", "max 100000\n"),
+            ("system.slice", "800000 100000\n"),
+            ("system.slice/jope.service", "250000 100000\n"),
+            ("system.slice/jope.service/worker", "max 100000\n"),
+        ]
+        .into();
+        let read = |path: &str| files.get(path).map(|s| s.to_string());
+        let membership = "0::/system.slice/jope.service/worker\n";
+        assert_eq!(cgroup_allowed_cpus(membership, 64.0, read), 2.5);
+        // Affinity can be tighter than any quota.
+        assert_eq!(cgroup_allowed_cpus(membership, 2.0, read), 2.0);
+        // A sibling cgroup does not inherit an unrelated quota.
+        assert_eq!(cgroup_allowed_cpus("0::/user.slice\n", 64.0, read), 64.0);
+        // cgroup v1 only (no 0:: line): affinity alone.
+        assert_eq!(cgroup_allowed_cpus("4:cpu,cpuacct:/x\n", 12.0, read), 12.0);
+        // Root membership reads the root file only.
+        assert_eq!(
+            cgroup_allowed_cpus("0::/\n", 16.0, |p| (p.is_empty())
+                .then(|| "400000 100000".to_string())),
+            4.0
+        );
     }
 
     #[test]
@@ -978,11 +1127,7 @@ mod tests {
             1234.0,
             t0 + Duration::from_millis(2000),
         );
-        counters.report(
-            Reported::StoreBytes,
-            4096.0,
-            t0 + Duration::from_millis(2000),
-        );
+        counters.report_store_bytes(4096, t0 + Duration::from_millis(2000));
         let s = telemetry.tick(t0 + Duration::from_secs(3), &mut fake, &counters);
         assert_eq!(num(get(&s, "eval.per_s")), 2.0);
         assert_eq!(get(&s, "eval.failed").value, Some(bytes(3)));
@@ -1014,6 +1159,7 @@ mod tests {
             log.clone(),
             Box::new(fake),
             counters,
+            Instant::now(),
             Duration::from_millis(5),
         );
         let mut received = 0;
@@ -1033,6 +1179,62 @@ mod tests {
         assert!(received >= 3, "received {received} frames");
         assert!(summary.samples >= 3);
         assert_eq!(summary.mem_rss_peak_bytes, Some(4096));
+    }
+
+    #[test]
+    fn delayed_attachment_measures_times_from_the_canonical_run_start() {
+        let (_dir, log, snapshot) = crate::events::tests::fixture();
+        let mut frames = log.subscribe_telemetry();
+        let counters = Arc::new(Counters::default());
+        let run_started = Instant::now();
+        // The run started, a champion was committed, and only then telemetry attached.
+        let committed = run_started + Duration::from_millis(40);
+        counters.champion_committed(committed);
+        while Instant::now() < committed + Duration::from_millis(20) {
+            thread::sleep(Duration::from_millis(5));
+        }
+        let fake = Fake {
+            process: [(std::process::id(), reading(0.0, 1))].into(),
+            ..Fake::default()
+        };
+        let service = TelemetryService::spawn(
+            snapshot.run_id,
+            log,
+            Box::new(fake),
+            counters,
+            run_started,
+            Duration::from_millis(5),
+        );
+        let deadline = Instant::now() + Duration::from_secs(10);
+        let first = loop {
+            match frames.try_recv() {
+                Ok(frame) => break frame,
+                Err(_) if Instant::now() < deadline => thread::sleep(Duration::from_millis(2)),
+                Err(error) => panic!("no telemetry frame: {error:?}"),
+            }
+        };
+        let summary = service.stop();
+        let TelemetryBody::Telemetry(samples) = first.event;
+        let first_model = num(get(&samples, "time.first_model_s"));
+        assert!(
+            (first_model - 0.040).abs() < 1e-9,
+            "first_model_s {first_model}"
+        );
+        assert_eq!(summary.time_first_model_s, Some(first_model));
+
+        // A mark before the run start is refused rather than published as a measured 0.
+        let before = Counters::default();
+        before.champion_committed(run_started);
+        let mut fake = Fake::default();
+        let s = Telemetry::new(ENGINE, run_started + Duration::from_secs(1)).tick(
+            run_started + Duration::from_secs(2),
+            &mut fake,
+            &before,
+        );
+        assert_eq!(
+            get(&s, "time.first_model_s").availability,
+            "unavailable:before_run_start"
+        );
     }
 
     /// Gate T3: telemetry on or off yields the identical champion and committed history.
@@ -1073,6 +1275,7 @@ mod tests {
             log,
             Box::new(SystemSensors::new(std::env::temp_dir())),
             Arc::new(Counters::default()),
+            Instant::now(),
             Duration::from_millis(1),
         );
         let on = search();
@@ -1124,6 +1327,7 @@ mod tests {
             log,
             Box::new(SystemSensors::new(std::env::temp_dir())),
             Arc::new(Counters::default()),
+            Instant::now(),
             DEFAULT_INTERVAL,
         );
         let on: Duration = (0..3).map(|_| work()).min().unwrap();
