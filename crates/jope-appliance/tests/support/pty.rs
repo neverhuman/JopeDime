@@ -49,7 +49,9 @@ pub struct PtySession {
 impl PtySession {
     /// Spawn the package's `jopedime` binary with the requested arguments.
     pub fn spawn_jopedime(args: &[&str]) -> io::Result<Self> {
-        Self::spawn(env!("CARGO_BIN_EXE_jopedime"), args)
+        let binary = option_env!("CARGO_BIN_EXE_jopedime")
+            .ok_or_else(|| io::Error::other("jopedime binary path is integration-test only"))?;
+        Self::spawn(binary, args)
     }
 
     /// Spawn a program attached to a PTY. Kept public for other appliance integration tests.

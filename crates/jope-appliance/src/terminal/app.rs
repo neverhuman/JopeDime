@@ -176,6 +176,17 @@ impl Screen {
         }
         Ok(())
     }
+
+    fn reconcile_width(&mut self, guard: &TerminalGuard, width: &mut u16) -> io::Result<()> {
+        if matches!(self, Self::Inline(_)) {
+            // The OS size can change before crossterm delivers its queued resize event.
+            *width = ratatui::crossterm::terminal::size()?.0;
+            if *width < 40 {
+                self.downgrade(guard)?;
+            }
+        }
+        Ok(())
+    }
 }
 
 fn wrap_line(text: &str, width: u16) -> Vec<String> {
@@ -281,6 +292,7 @@ pub fn run(
         if let Some(signal) = guard.signal() {
             return Ok(Exit::Signal(signal));
         }
+        screen.reconcile_width(&guard, &mut width)?;
         if input && event::poll(Duration::ZERO)? {
             recent_activity = Some(Instant::now());
             match event::read()? {
@@ -325,6 +337,7 @@ pub fn run(
             || recent_activity
                 .is_some_and(|last| now.duration_since(last) < Duration::from_secs(1));
         if clock.remaining(now, active).is_zero() {
+            screen.reconcile_width(&guard, &mut width)?;
             screen.draw(&state)?;
             clock.drawn(Instant::now());
         }
@@ -629,7 +642,7 @@ mod tests {
         session
             .wait_for_text("JopeDime", Duration::from_secs(10))
             .unwrap();
-        session.type_text("check\n").unwrap();
+        session.type_text("check\r").unwrap();
         let marker = if inline {
             "PROBE_RAW raw=true changed=true"
         } else {
@@ -665,7 +678,7 @@ mod tests {
             ("hup", "hup"),
         ] {
             let mut session = spawn_probe(scenario, true);
-            session.type_text(&format!("{command}\n")).unwrap();
+            session.type_text(&format!("{command}\r")).unwrap();
             let screen = session
                 .wait_for_text(
                     "PROBE_RESTORED raw=false termios=true",
@@ -691,7 +704,7 @@ mod tests {
     fn linux_fallbacks_never_change_raw_mode_and_resize_preserves_draft() {
         for scenario in ["plain", "no-color", "dumb", "narrow"] {
             let mut session = spawn_probe(scenario, false);
-            session.type_text("\\quit\n").unwrap();
+            session.type_text("\\quit\r").unwrap();
             let screen = session
                 .wait_for_text(
                     "PROBE_RESTORED raw=false termios=true",
@@ -707,11 +720,11 @@ mod tests {
             .unwrap();
         session.resize(39, 24).unwrap();
         // The old live viewport is removed, then canonical line input continues the same draft.
-        session.type_text("\n").unwrap();
+        session.press_key(pty::Key::Enter).unwrap();
         session
             .wait_for_text("COMMAND draft", Duration::from_secs(10))
             .unwrap();
-        session.type_text("\\quit\n").unwrap();
+        session.type_text("\\quit\r").unwrap();
         let screen = session
             .wait_for_text(
                 "PROBE_RESTORED raw=false termios=true",
