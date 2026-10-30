@@ -31,6 +31,10 @@ DOPE_SHA = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
 MANIFEST_SHA = "3eb4a62acea512f528500b043299a5968e1c9b1d1b1759bbf77a426b9fa1ecc3"
 MAX_RSS = 6 * 1024**3
 
+# H48 is reused for its model/fold helpers; bind its checkpoint guard to this
+# preregistered offline source rather than its original r785 default.
+h48.CHECKPOINT_SHA = R882_SHA
+
 
 def verify_inputs(input_dir: Path, checkpoint: Path) -> dict:
     if h51.sha256(checkpoint) != R882_SHA:
