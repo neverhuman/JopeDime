@@ -364,6 +364,10 @@ pub enum FitnessCommand {
     Schema,
 }
 
+#[cfg(all(test, feature = "engine"))]
+#[path = "serve.rs"]
+mod serve_lifecycle_tests;
+
 #[cfg(test)]
 mod serve_tests {
     use super::{Cli, Command};
