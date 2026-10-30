@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "SVC-04 adds only already-locked chrono and futures-util edges to jope-service after actual main d60ec583 / tui07_rechain. Axum query support is already represented in the locked axum graph. All572 package/version/source/checksum records stay unchanged; no evaluator behavior fixture, lineage body or known identity changes. Events/SSE implementation and module wiring are outside the38 hashed evaluator inputs.",
+  "plan_reference": "SVC-04; lanes1420; ruling0810; ruling0840(a); ADR-0004; successor after merged523",
+  "source_commit": "afb9ea8ceda267e253adfaacc684b3ab18daa371",
+  "base_commit": "d60ec583c5fd12b357722f5fe6d30e9f8dc9b25d",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "5727762114e44c75b654caa4b566ad9ed733c8e6411cfd159bb3b132126b46f2",
+      "after": "7d98d5381dda7c16317632dbe9df741828bc70f29a10b44a9f555d9bd1251653"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "f6a58ecce49a06105fa452310802b0f637a45c20dba5c209ab3066aaa2d70f95",
+      "after": "4896e5dc0f66df01e096e759e781d08f2e4097ce7900d600e55b3d01b16ca480"
+    }
+  ],
+  "before_identity_digest": "ea72a331ffc5b0bae4dcfe48bf4ed2160f3eeb6348e8d6111ca04706e96db6f0",
+  "after_identity_digest": "5006601f514309a9680a626a74e4b43ef6b0222d60db9d5a544772e7edca9c72",
+  "before_implementation_sha256": "de589d75e8de5de2cde4716532cb40a511ce499c5d52eab0c3d5a855cee5c8cf",
+  "after_implementation_sha256": "99ce71a11dc2b726b264a8a90471df7da9b32adb173373591ed113d73acc0213",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
