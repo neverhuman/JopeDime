@@ -1,6 +1,5 @@
 name: lite-client
 on:
-  workflow_call:
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,12 +18,12 @@ jobs:
       OMP_NUM_THREADS: '1'
       OPENBLAS_NUM_THREADS: '1'
       MKL_NUM_THREADS: '1'
-      JOPE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      JOPE_SOURCE_SHA: ${{ github.sha }}
     steps:
       - name: Checkout exact source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
       - name: Persistent Cargo target
         uses: ./.github/actions/cargo-target
@@ -60,14 +59,13 @@ jobs:
           # its recorded normal dependency graph keep the client-only selection.
           nice -n 10 cargo nextest run -P pr --locked -p jope-client --features engine --test contract --build-jobs 8 --test-threads 1 --no-tests=fail 2>&1 | tee "$evidence/transport-contract.log"
           python3 - "$evidence" <<'PY'
-          import os
           import pathlib
           import re
           import shutil
           import sys
           import xml.etree.ElementTree as ET
           evidence = pathlib.Path(sys.argv[1])
-          source = pathlib.Path(os.environ["GITHUB_WORKSPACE"]) / "target/nextest/pr/junit.xml"
+          source = pathlib.Path("target/nextest/pr/junit.xml")
           log = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", (evidence / "transport-contract.log").read_text())
           runs = re.findall(r"Nextest run ID ([0-9a-f-]{36})", log)
           summary = re.findall(r"Summary[^\n]*?(\d+) tests? run: (\d+) passed, (\d+) skipped", log)

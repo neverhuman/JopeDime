@@ -13827,7 +13827,7 @@
         ".github/workflows/lite-client.yml",
         "crates/jope-client/tests/contract/operations.json"
       ],
-      "path_applicability": "manual dispatch or reusable workflow call; no automatic PR trigger",
+      "path_applicability": "manual dispatch only; no automatic PR trigger or reusable caller",
       "requires_nonzero_tests": true,
       "result_backend": "nextest",
       "stage": "execution"
