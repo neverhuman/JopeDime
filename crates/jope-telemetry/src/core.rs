@@ -447,13 +447,20 @@ impl Recorder {
     }
 
     fn finish_rollup_and_manifest(&self, outcome: &mut DrainOutcome) -> Result<()> {
-        let parquet_path = self.run_dir.join("metrics.parquet");
-        if let Err(error) = crate::sink::parquet::regenerate(&outcome.event_path, &parquet_path) {
-            outcome.manifest.sink_errors += 1;
-            outcome.manifest.sink_error = Some(format!("Parquet rollup failed: {error:#}"));
-            outcome.manifest.status = RunStatus::SinkFailed;
-            self.sink_errors.fetch_add(1, Ordering::Relaxed);
+        #[cfg(feature = "parquet")]
+        {
+            let parquet_path = self.run_dir.join("metrics.parquet");
+            if let Err(error) = crate::sink::parquet::regenerate(&outcome.event_path, &parquet_path)
+            {
+                outcome.manifest.sink_errors += 1;
+                outcome.manifest.sink_error = Some(format!("Parquet rollup failed: {error:#}"));
+                outcome.manifest.status = RunStatus::SinkFailed;
+                self.sink_errors.fetch_add(1, Ordering::Relaxed);
+            }
         }
+        #[cfg(not(feature = "parquet"))]
+        let _ = (&self, &outcome.event_path);
+
         outcome.manifest.write_atomic(&outcome.manifest_path)?;
         Ok(())
     }
@@ -798,6 +805,7 @@ mod tests {
         let manifest = recorder.interrupt().unwrap();
 
         assert!(matches!(manifest.status, RunStatus::Interrupted));
+        #[cfg(feature = "parquet")]
         assert!(dir.path().join("run/metrics.parquet").exists());
     }
 }
