@@ -7,6 +7,8 @@
 //!   slots (`h2d_*`, driven by `jope.telemetry.cuda_events`) and the round records.
 //! * `RecordSink`: a `Send + Sync` handle on a run's record queue for worker threads.
 //! * `EvalBatch`, `GenerationRecorder`, `ValidationRecorder`, `DopeGuard`, `LocalReads`.
+//! * `HardwareMonitor`, `gpu_snapshot`, `LiveMetricsWriter`, `RatchetLive`: the DIME score
+//!   trainers' NVML monitor, `live-metrics.jsonl` windows and `live.v2.json` snapshot.
 
 use crate::api::GpSession;
 use crate::collectors::SystemCollector;
@@ -14,15 +16,18 @@ use crate::core::{ProducerHandle, RecordHandle, Recorder, RecorderBuilder};
 use crate::hooks::dope::{self, DopeGuard, NamedParam, Observation, TensorDigest};
 use crate::hooks::eval::{self, EvalBatch};
 use crate::hooks::generation::{self, EvalResult, GenerationRecorder};
+use crate::hooks::hardware::{self, GpuReader, HardwareMonitor, RatchetLive};
 use crate::hooks::io::{self, BatchIo, H2dSampler, IoSample, QueueSample, ReadStats};
 use crate::hooks::json::J;
+use crate::hooks::live::{self, LiveMetricsWriter, LiveRow};
 use crate::hooks::step::{StepBatch, StepTimer};
 use crate::hooks::trainers::{self, MetricGroups};
 use crate::hooks::validation::{self, DatasetResult, ValidationError, ValidationRecorder};
 use crate::manifest::RunMetadata;
 use crate::record::RecordSink;
+use crate::train::Cadence;
 use pyo3::buffer::PyBuffer;
-use pyo3::exceptions::{PyRuntimeError, PyTypeError, PyValueError};
+use pyo3::exceptions::{PyKeyError, PyRuntimeError, PyTypeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString, PyTuple};
 use serde::Serialize;
@@ -131,6 +136,61 @@ fn to_json(obj: &Bound<'_, PyAny>) -> PyResult<String> {
     let mut out = String::new();
     write_json(obj, &mut out, 0)?;
     Ok(out)
+}
+
+/// `json.dumps(obj, sort_keys=True)` with the default separators, `repr` floats and `NaN`: the
+/// spelling `live-metrics.jsonl` had, for the fields a live row passes through.
+fn write_py_json(obj: &Bound<'_, PyAny>, out: &mut String, depth: u32) -> PyResult<()> {
+    if depth > MAX_JSON_DEPTH {
+        return Err(value_error("Circular reference detected"));
+    }
+    if obj.is_none() {
+        out.push_str("null");
+    } else if let Ok(b) = obj.cast::<PyBool>() {
+        out.push_str(if b.is_true() { "true" } else { "false" });
+    } else if obj.cast::<PyInt>().is_ok() {
+        out.push_str(&obj.str()?.to_cow()?);
+    } else if let Ok(f) = obj.cast::<PyFloat>() {
+        out.push_str(&live::py_float(f.value()));
+    } else if let Ok(s) = obj.cast::<PyString>() {
+        out.push_str(&live::py_str(&s.to_cow()?));
+    } else if let Ok(d) = obj.cast::<PyDict>() {
+        let mut items = Vec::with_capacity(d.len());
+        for (k, v) in d.iter() {
+            let key = k
+                .cast::<PyString>()
+                .map_err(|_| PyTypeError::new_err("live metrics dict keys must be str"))?
+                .to_cow()?
+                .into_owned();
+            items.push((key, v));
+        }
+        items.sort_by(|a, b| a.0.cmp(&b.0));
+        out.push('{');
+        for (i, (k, v)) in items.iter().enumerate() {
+            if i > 0 {
+                out.push_str(", ");
+            }
+            out.push_str(&live::py_str(k));
+            out.push_str(": ");
+            write_py_json(v, out, depth + 1)?;
+        }
+        out.push('}');
+    } else if obj.cast::<PyList>().is_ok() || obj.cast::<PyTuple>().is_ok() {
+        out.push('[');
+        for (i, item) in obj.try_iter()?.enumerate() {
+            if i > 0 {
+                out.push_str(", ");
+            }
+            write_py_json(&item?, out, depth + 1)?;
+        }
+        out.push(']');
+    } else {
+        return Err(PyTypeError::new_err(format!(
+            "Object of type {} is not JSON serializable",
+            obj.get_type().name()?
+        )));
+    }
+    Ok(())
 }
 
 /// Serialize in Rust, then `json.loads`, so the dict keeps the serialized key order.
@@ -496,6 +556,44 @@ impl PyRecorder {
         Ok(self
             .producer_mut(source)?
             .emit_unavailable(metric_id, group_id, step, reason_id, sampled))
+    }
+
+    /// One step's throughput from raw counters, divided and emitted here:
+    /// `throughput.tokens_per_s`, `throughput.samples_per_s`, `io.batch_bytes_per_s` with
+    /// `io.batch_gb_s`, and `io.h2d_gb_s` over `h2d_seconds`. Returns the events queued.
+    #[pyo3(signature = (
+        source, step, seconds, *, tokens=None, samples=None, batch_bytes=None, h2d_bytes=None,
+        h2d_seconds=None
+    ))]
+    #[allow(clippy::too_many_arguments)]
+    fn emit_rates(
+        &mut self,
+        source: usize,
+        step: u64,
+        seconds: f64,
+        tokens: Option<f64>,
+        samples: Option<f64>,
+        batch_bytes: Option<f64>,
+        h2d_bytes: Option<f64>,
+        h2d_seconds: Option<f64>,
+    ) -> PyResult<usize> {
+        let counters = io::RateCounters {
+            tokens,
+            samples,
+            batch_bytes,
+            h2d_bytes,
+            h2d_seconds,
+        };
+        let rates = io::rates(seconds, &counters).map_err(value_error)?;
+        let producer = self.producer_mut(source)?;
+        Ok(rates
+            .into_iter()
+            .filter(|&(metric, value)| {
+                let sampled = crate::train::metric(metric)
+                    .is_some_and(|m| matches!(m.cadence, Cadence::Sampled));
+                producer.emit_scalar(metric, 0, step, value, sampled)
+            })
+            .count())
     }
 
     /// Raw block submit of `rows` x layout-width float64 values (`array('d')` buffers).
@@ -1588,6 +1686,141 @@ impl PyDopeGuard {
     }
 }
 
+// ---- DIME score trainers ---------------------------------------------------------------------
+
+/// GPU 0 through NVML, read on a Rust thread; `snapshot()` is the `gpu_*` dict the DIME
+/// trainers merge into their progress and epoch records.
+#[pyclass(name = "HardwareMonitor", frozen)]
+struct PyHardwareMonitor {
+    inner: Mutex<HardwareMonitor>,
+    minimum_headroom_mib: f64,
+}
+
+#[pymethods]
+impl PyHardwareMonitor {
+    #[new]
+    fn new(py: Python<'_>, hz: f64, minimum_headroom_mib: f64) -> PyResult<Self> {
+        let inner = py
+            .detach(|| HardwareMonitor::new(hz))
+            .map_err(value_error)?;
+        Ok(Self {
+            inner: Mutex::new(inner),
+            minimum_headroom_mib,
+        })
+    }
+
+    fn start(&self) -> PyResult<()> {
+        lock(&self.inner).start().map_err(runtime_error)
+    }
+
+    fn snapshot<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        let reading = lock(&self.inner).reading();
+        to_py(
+            py,
+            &hardware::snapshot(reading.as_ref(), self.minimum_headroom_mib),
+        )
+    }
+
+    fn stop(&self, py: Python<'_>) {
+        py.detach(|| lock(&self.inner).stop());
+    }
+}
+
+/// One NVML reading of GPU 0, as `HardwareMonitor.snapshot()` reports it.
+#[pyfunction]
+fn gpu_snapshot(py: Python<'_>, minimum_headroom_mib: f64) -> PyResult<Bound<'_, PyAny>> {
+    let reading = py.detach(|| GpuReader::new().read());
+    to_py(
+        py,
+        &hardware::snapshot(reading.as_ref(), minimum_headroom_mib),
+    )
+}
+
+/// `live-metrics.jsonl` windows (`jope-prime.dime-live-metrics.v1`).
+#[pyclass(name = "LiveMetricsWriter", unsendable)]
+struct PyLiveMetricsWriter {
+    inner: LiveMetricsWriter,
+}
+
+#[pymethods]
+impl PyLiveMetricsWriter {
+    #[new]
+    #[pyo3(signature = (path, hz, rotate_bytes=live::ROTATE_BYTES))]
+    fn new(path: PathBuf, hz: f64, rotate_bytes: u64) -> PyResult<Self> {
+        let inner = LiveMetricsWriter::new(path, hz, rotate_bytes).map_err(value_error)?;
+        Ok(Self { inner })
+    }
+
+    /// One step's row; the window is written once it is `1 / hz` seconds old.
+    fn add(&mut self, row: &Bound<'_, PyDict>) -> PyResult<()> {
+        let row = live_row(row)?;
+        Ok(self.inner.add(row)?)
+    }
+
+    fn flush(&mut self) -> PyResult<()> {
+        Ok(self.inner.flush()?)
+    }
+
+    fn close(&mut self) -> PyResult<()> {
+        Ok(self.inner.close()?)
+    }
+}
+
+fn live_row(row: &Bound<'_, PyDict>) -> PyResult<LiveRow> {
+    let py = row.py();
+    let item = |key: &str| {
+        row.get_item(key)?
+            .ok_or_else(|| PyKeyError::new_err(key.to_owned()))
+    };
+    let int = |value: Bound<'_, PyAny>| -> PyResult<i64> {
+        py.get_type::<PyInt>().call1((value,))?.extract()
+    };
+    let mut means = [0.0; live::MEAN_FIELDS.len()];
+    for (slot, key) in means.iter_mut().zip(live::MEAN_FIELDS) {
+        *slot = item(key)?.extract::<f64>()?;
+    }
+    let queue_depth = match row.get_item("queue_depth")? {
+        Some(depth) if !depth.is_none() => Some(int(depth)?),
+        _ => None,
+    };
+    let mut latest: [String; live::LATEST_FIELDS.len()] = Default::default();
+    for (slot, key) in latest.iter_mut().zip(live::LATEST_FIELDS) {
+        match row.get_item(key)? {
+            Some(value) => write_py_json(&value, slot, 0)?,
+            None => slot.push_str("null"),
+        }
+    }
+    Ok(LiveRow {
+        batch_samples: int(item("batch_samples")?)?,
+        starved: item("starved")?.is_truthy()?,
+        means,
+        queue_depth,
+        latest,
+    })
+}
+
+/// The broad trainer's `live.v2.json` (`RatchetLiveTelemetry.v2`), from a `HardwareMonitor`.
+#[pyclass(name = "RatchetLive", unsendable)]
+struct PyRatchetLive {
+    inner: RatchetLive,
+}
+
+#[pymethods]
+impl PyRatchetLive {
+    #[new]
+    fn new(path: PathBuf, hardware: &Bound<'_, PyHardwareMonitor>, owner: &str) -> Self {
+        let reading = lock(&hardware.get().inner).shared();
+        Self {
+            inner: RatchetLive::new(path, reading, owner),
+        }
+    }
+
+    /// Rewrite the file unless it was written under 100 ms ago; `True` when it wrote.
+    fn tick(&mut self, best_known: bool) -> PyResult<bool> {
+        Ok(self.inner.tick(best_known)?)
+    }
+}
+
 #[pymodule]
 fn _telemetry(module: &Bound<'_, PyModule>) -> PyResult<()> {
     let py = module.py();
@@ -1600,11 +1833,15 @@ fn _telemetry(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<PyDopeGuard>()?;
     module.add_class::<PyLocalReads>()?;
     module.add_class::<PyReadSpan>()?;
+    module.add_class::<PyHardwareMonitor>()?;
+    module.add_class::<PyLiveMetricsWriter>()?;
+    module.add_class::<PyRatchetLive>()?;
     module.add_function(wrap_pyfunction!(metric_registry, module)?)?;
     module.add_function(wrap_pyfunction!(metric_id, module)?)?;
     module.add_function(wrap_pyfunction!(open_python_trainer, module)?)?;
     module.add_function(wrap_pyfunction!(open_flywheel_step, module)?)?;
     module.add_function(wrap_pyfunction!(check_partition_label, module)?)?;
+    module.add_function(wrap_pyfunction!(gpu_snapshot, module)?)?;
     module.add(
         "DopeFreezeViolationError",
         py.get_type::<DopeFreezeViolationError>(),

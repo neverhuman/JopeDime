@@ -5,8 +5,8 @@
   "python": 172
  },
  "rust": {
-  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.; telemetry addition: cargo nextest list --locked -P main -p jope-telemetry --message-format json (2026-10-29), 39 listed, 0 ignored; telemetry Rust port addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-29), 64 listed, 0 ignored",
-  "count": 6078,
+  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.; telemetry addition: cargo nextest list --locked -P main -p jope-telemetry --message-format json (2026-10-29), 39 listed, 0 ignored; telemetry Rust port addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-29), 64 listed, 0 ignored; telemetry P2 addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 73 listed, 0 ignored",
+  "count": 6087,
   "ignored": 81,
   "packages": {
    "battle-gpu": {
@@ -9000,12 +9000,12 @@
     }
    },
    "jope-telemetry": {
-    "count": 66,
+    "count": 75,
     "ignored": 0,
     "binaries": {
      "jope-telemetry": {
       "kind": "lib",
-      "count": 64,
+      "count": 73,
       "ignored": 0,
       "tests": [
        "alarm::tests::collapse_needs_consecutive_generations_per_context",
@@ -9038,10 +9038,19 @@
        "hooks::eval::tests::splits_latency_and_counts_rc",
        "hooks::generation::tests::helpers_match_the_python_hooks",
        "hooks::generation::tests::summarizes_a_generation_with_provenance",
+       "hooks::hardware::tests::monitor_rejects_bad_rates_and_stops",
+       "hooks::hardware::tests::ratchet_document_and_rate_limit",
+       "hooks::hardware::tests::snapshot_keys_and_headroom",
        "hooks::io::tests::evolution_sampler_never_writes_end_to_end",
        "hooks::io::tests::h2d_slots_stride_and_drops",
+       "hooks::io::tests::rates_from_raw_counters",
        "hooks::io::tests::read_span_is_union_not_sum",
        "hooks::json::tests::keeps_insertion_order_and_nulls_non_finite",
+       "hooks::live::tests::aggregate_writes_the_python_record",
+       "hooks::live::tests::float_repr_matches_python",
+       "hooks::live::tests::pairwise_sum_follows_numpy_blocks",
+       "hooks::live::tests::strings_escape_like_ensure_ascii",
+       "hooks::live::tests::writer_rotates_past_the_cap",
        "hooks::pipeline_tests::flywheel_round_writes_step_h2d_and_round_records",
        "hooks::step::tests::rejects_bad_layouts",
        "hooks::step::tests::timer_spans_sum_to_wall",
@@ -9314,10 +9323,10 @@
  "python": {
   "mode": "static-scan",
   "command": "explicit --static-python: stdlib AST scan of python/tests/**/test_*.py; not collection or execution",
-  "count": 198,
+  "count": 201,
   "packages": {
    "jope": {
-    "count": 198,
+    "count": 201,
     "files": {
      "tests/test_context_proposals.py": {
       "count": 6,
@@ -9525,9 +9534,12 @@
       ]
      },
      "tests/test_telemetry_smoke.py": {
-      "count": 5,
+      "count": 8,
       "tests": [
+       "tests/test_telemetry_smoke.py::test_dime_hardware_monitor_and_ratchet_live",
+       "tests/test_telemetry_smoke.py::test_dime_live_metrics_spell_like_json_dumps",
        "tests/test_telemetry_smoke.py::test_dope_guard_hashes_like_ns3_and_fails_closed",
+       "tests/test_telemetry_smoke.py::test_emit_rates_divides_in_rust",
        "tests/test_telemetry_smoke.py::test_flywheel_round_on_cpu",
        "tests/test_telemetry_smoke.py::test_python_trainer_step_rows",
        "tests/test_telemetry_smoke.py::test_records_and_fail_closed_guards",
@@ -9632,7 +9644,7 @@
   }
  },
  "totals": {
-  "rust": 6078,
-  "python": 198
+  "rust": 6087,
+  "python": 201
  }
 }

@@ -179,3 +179,105 @@ def test_dope_guard_hashes_like_ns3_and_fails_closed() -> None:
         net.dope_model[0].weight.add_(1.0)
     with pytest.raises(tel.DopeFreezeViolationError, match="DOPE hash changed: dope_model.0.weight"):
         guard.epoch_end(2)
+
+
+_GPU_KEYS = [
+    "gpu_utilization_pct",
+    "gpu_memory_used_mib",
+    "gpu_memory_total_mib",
+    "gpu_temperature_c",
+    "gpu_power_watts",
+    "gpu_graphics_clock_mhz",
+    "gpu_sm_clock_mhz",
+    "gpu_memory_clock_mhz",
+    "gpu_headroom_mib",
+    "gpu_headroom_ok",
+]
+_MEAN_FIELDS = (
+    "total_loss",
+    "huber_loss",
+    "bradley_terry_loss",
+    "validity_loss",
+    "loader_wait_ms",
+    "h2d_ms",
+    "compute_ms",
+    "optimizer_ms",
+    "gradient_norm",
+)
+
+
+def test_dime_live_metrics_spell_like_json_dumps(tmp_path: Path) -> None:
+    from jope.telemetry import LiveMetricsWriter
+
+    with pytest.raises(ValueError):
+        LiveMetricsWriter(tmp_path / "x.jsonl", 0.0)
+    live = LiveMetricsWriter(tmp_path / "live-metrics.jsonl", 1e-6)
+    rng = np.random.default_rng(3)
+    rows = []
+    for step in range(1, 38):
+        row = {name: float(rng.normal()) for name in _MEAN_FIELDS}
+        row.update(
+            epoch=0,
+            step=step,
+            steps=37,
+            global_step=step,
+            batch_samples=16,
+            batch_shape=[4, 4],
+            queue_depth=step % 5,
+            starved=step % 7 == 0,
+            learning_rate=3e-4 * 0.5**step,
+            eta_seconds=None,
+            step_wall_ms=1.0,
+        )
+        rows.append(row)
+        live.add(row)
+    live.close()
+    (line,) = (tmp_path / "live-metrics.jsonl").read_text().splitlines()
+    record = json.loads(line)
+    assert line == json.dumps(record, sort_keys=True)
+    for name in _MEAN_FIELDS:
+        assert record[name] == float(np.mean([row[name] for row in rows])), name
+    assert record["schema"] == "jope-prime.dime-live-metrics.v1"
+    assert (record["samples"], record["queue_starvations"], record["queue_depth"]) == (592, 5, 0)
+    assert record["learning_rate"] == rows[-1]["learning_rate"] and record["eta_seconds"] is None
+
+
+def test_dime_hardware_monitor_and_ratchet_live(tmp_path: Path) -> None:
+    from jope.telemetry import HardwareMonitor, RatchetLive, gpu_snapshot
+
+    snap = gpu_snapshot(4096.0)
+    assert list(snap) == _GPU_KEYS
+    with pytest.raises(ValueError):
+        HardwareMonitor(0.0, 4096.0)
+    hardware = HardwareMonitor(50.0, 4096.0)
+    hardware.start()
+    assert list(hardware.snapshot()) == _GPU_KEYS
+    ratchet = RatchetLive(tmp_path / "live.v2.json", hardware, "broad_shadow")
+    assert ratchet.tick(False) is True and ratchet.tick(True) is False
+    hardware.stop()
+    text = (tmp_path / "live.v2.json").read_text()
+    doc = json.loads(text)
+    assert text == json.dumps(doc, indent=2, sort_keys=True) + "\n"
+    assert doc["schema"] == "RatchetLiveTelemetry.v2" and doc["nodes"][0]["scq_owner"] == "broad_shadow"
+    assert doc["labels"]["time_to_best_seconds"] is None
+    if snap["gpu_memory_total_mib"] is None:
+        assert all(value is None for value in snap.values())
+    else:
+        assert snap["gpu_headroom_mib"] == snap["gpu_memory_total_mib"] - snap["gpu_memory_used_mib"]
+
+
+def test_emit_rates_divides_in_rust(tmp_path: Path) -> None:
+    rec = tel.Recorder(str(tmp_path / "f"), ["fused-phase2"], {"smoke": True})
+    counters = {"tokens": 9000.0, "samples": 64.0, "batch_bytes": 3e9, "h2d_bytes": 1e9, "h2d_seconds": 0.25}
+    assert rec.emit_rates(0, 1, 1.5, **counters) == 5
+    with pytest.raises(ValueError):
+        rec.emit_rates(0, 2, 0.0, tokens=1.0)
+    assert rec.close()["status"] == "complete"
+    ids = _ids()
+    got = {
+        e["event"]["metric_id"]: e["event"]["value"]
+        for e in _events(tmp_path / "f")
+        if e["kind"] == "event" and e["event"]["step"] == 1
+    }
+    assert got[ids["throughput.tokens_per_s"]] == 6000.0
+    assert got[ids["io.batch_gb_s"]] == 2.0 and got[ids["io.h2d_gb_s"]] == 4.0

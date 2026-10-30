@@ -4,12 +4,16 @@
 //! Everything here is plain Rust and unit-tested without Python. `python.rs` wraps it for the
 //! torch loops, which keep only one-line calls and the two things that must stay in Python: the
 //! CUDA event record/query on the torch stream, and the DOPE parameter walk.
+//!
+//! `hardware` and `live` are the DIME score trainers' GPU monitor and live-metrics writer.
 
 pub mod dope;
 pub mod eval;
 pub mod generation;
+pub mod hardware;
 pub mod io;
 pub mod json;
+pub mod live;
 pub mod step;
 pub mod trainers;
 pub mod validation;
