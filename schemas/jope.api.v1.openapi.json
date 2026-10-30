@@ -1119,6 +1119,12 @@
         ],
         "type": "string"
       }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "scheme": "bearer",
+        "type": "http"
+      }
     }
   },
   "info": {
@@ -1150,7 +1156,16 @@
                 }
               }
             },
-            "description": "Successful response"
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
           },
           "default": {
             "content": {
@@ -1160,7 +1175,16 @@
                 }
               }
             },
-            "description": "RFC 9457 problem"
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "x-jope-mutating": false,
@@ -1171,7 +1195,19 @@
     "/v1/predictions": {
       "post": {
         "operationId": "model_predict",
-        "parameters": [],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[ -~]{1,128}$",
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1192,7 +1228,16 @@
                 }
               }
             },
-            "description": "Successful response"
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
           },
           "default": {
             "content": {
@@ -1202,7 +1247,16 @@
                 }
               }
             },
-            "description": "RFC 9457 problem"
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "x-jope-mutating": true,
@@ -1213,7 +1267,19 @@
     "/v1/runs": {
       "post": {
         "operationId": "run_start",
-        "parameters": [],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[ -~]{1,128}$",
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1240,7 +1306,16 @@
                 }
               }
             },
-            "description": "Successful response"
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
           },
           "default": {
             "content": {
@@ -1250,7 +1325,16 @@
                 }
               }
             },
-            "description": "RFC 9457 problem"
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "x-jope-mutating": true,
@@ -1267,6 +1351,17 @@
             "name": "id",
             "required": true,
             "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[ -~]{1,128}$",
               "type": "string"
             }
           }
@@ -1290,7 +1385,16 @@
                 }
               }
             },
-            "description": "Successful response"
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
           },
           "default": {
             "content": {
@@ -1300,7 +1404,16 @@
                 }
               }
             },
-            "description": "RFC 9457 problem"
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "x-jope-mutating": true,
@@ -1321,7 +1434,16 @@
                 }
               }
             },
-            "description": "Successful response"
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
           },
           "default": {
             "content": {
@@ -1331,7 +1453,16 @@
                 }
               }
             },
-            "description": "RFC 9457 problem"
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "x-jope-mutating": false,
@@ -1340,6 +1471,11 @@
       }
     }
   },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
   "x-jope-pending-exchanges": [
     "AlgorithmPage",
     "DatasetPage",

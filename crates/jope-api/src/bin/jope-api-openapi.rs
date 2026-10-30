@@ -105,8 +105,14 @@ fn generate() -> Result<Value, Box<dyn Error>> {
     Ok(json!({
         "openapi": "3.1.0",
         "info": {"title": "JopeDime API", "version": "1"},
+        "security": [{"bearerAuth": []}],
         "paths": path_values,
-        "components": {"schemas": schemas},
+        "components": {
+            "schemas": schemas,
+            "securitySchemes": {
+                "bearerAuth": {"type": "http", "scheme": "bearer"}
+            }
+        },
         "x-jope-pending-exchanges": pending,
     }))
 }
@@ -136,10 +142,14 @@ fn operation_document(operation: &Operation) -> Result<Value, Box<dyn Error>> {
         "operationId": operation.name,
         "parameters": parameters,
         "responses": {
-            "200": {"description": "Successful response", "content": response_content(operation.response_types)?},
+            "200": {
+                "description": "Successful response",
+                "headers": api_version_header(),
+                "content": response_content(operation.response_types)?
+            },
             "default": {"description": "RFC 9457 problem", "content": {
                 "application/problem+json": {"schema": {"$ref": "#/components/schemas/Problem"}}
-            }}
+            }, "headers": api_version_header()}
         },
         "x-jope-operation-id": operation.id,
         "x-jope-mutating": operation.mutating,
@@ -151,7 +161,32 @@ fn operation_document(operation: &Operation) -> Result<Value, Box<dyn Error>> {
             "content": response_content(operation.request_types)?
         });
     }
+    if operation.requires_idempotency_key {
+        value["parameters"]
+            .as_array_mut()
+            .ok_or("operation parameters must be an array")?
+            .push(json!({
+                "name": "Idempotency-Key",
+                "in": "header",
+                "required": true,
+                "schema": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^[ -~]{1,128}$"
+                }
+            }));
+    }
     Ok(value)
+}
+
+fn api_version_header() -> Value {
+    json!({
+        "Jope-Api-Version": {
+            "required": true,
+            "schema": {"type": "string", "pattern": "^1\\.[0-9]+$"}
+        }
+    })
 }
 
 fn response_content(exchanges: &[PayloadTypeRef]) -> Result<Value, Box<dyn Error>> {
