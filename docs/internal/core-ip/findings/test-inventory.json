@@ -1843,6 +1843,10 @@
       "reason": "Owner-requested pytest proofs for H48 utility-alignment harness adapters, fold selection, and persisted checkpoint snapshots; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h49/test_run.py": {
+      "reason": "Owner-requested tests for H49 K=8 family-bootstrap margin admission and SWA cycle contract; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
       "reason": "Owner-requested pytest proof for flywheel automatic promotion, next-round targets, replay, and training-only parser adaptation; research flywheel outside the reviewed product baseline.",
       "role": "research"
