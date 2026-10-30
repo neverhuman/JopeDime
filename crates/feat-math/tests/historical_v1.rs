@@ -1101,18 +1101,25 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     assert_eq!(exp09_bundle["fixtures"].as_array().unwrap().len(), 2);
     assert_eq!(exp09_bundle["fixtures"][0]["path"], changed_fixtures[0]);
     assert_eq!(exp09_bundle["fixtures"][1]["path"], changed_fixtures[1]);
-    let svc09_engine = old_fixture("transitions/svc09_engine_lock_identity_rebaseline.v1.json");
+    let tel04f01_nvml =
+        old_fixture("transitions/tel04f01_nvml_lockfile_identity_rebaseline.v1.json");
     assert_eq!(
-        svc09_engine["source_commit"],
-        "51a7e2df44c1814bbd71e1eb1363956a87c02c3b"
+        tel04f01_nvml["source_commit"],
+        "decef104718a27e235d641bd2f5a91ec0bdced81"
     );
     assert_eq!(
-        svc09_engine["base_commit"],
+        tel04f01_nvml["base_commit"],
         "b22b932f869d1f9d87882ac7bf506299fd5dce35"
+    );
+    let svc09_engine = old_fixture("transitions/svc09_engine_lock_identity_rebaseline.v1.json");
+    assert_eq!(svc09_engine["source_commit"], "PENDING_SOURCE_COMMIT");
+    assert_eq!(
+        svc09_engine["base_commit"],
+        "9fe8c6753919cfaaac05ccb0d7ad125ff281dac4"
     );
     assert_eq!(
         svc09_engine["before_identity_digest"],
-        exp09_bundle["after_identity_digest"]
+        tel04f01_nvml["after_identity_digest"]
     );
     assert_eq!(svc09_engine["fixtures"].as_array().unwrap().len(), 2);
     assert_eq!(svc09_engine["fixtures"][0]["path"], changed_fixtures[0]);
@@ -1159,6 +1166,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &mcp02_rmcp,
         &clt03_files,
         &exp09_bundle,
+        &tel04f01_nvml,
         &svc09_engine,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
@@ -1238,6 +1246,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 mcp02_rmcp.clone(),
                 clt03_files.clone(),
                 exp09_bundle.clone(),
+                tel04f01_nvml.clone(),
                 svc09_engine.clone(),
             ],
         )
@@ -1303,6 +1312,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 mcp02_rmcp.clone(),
                 clt03_files.clone(),
                 exp09_bundle.clone(),
+                tel04f01_nvml.clone(),
                 svc09_engine.clone(),
             ],
         )
@@ -1361,6 +1371,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 mcp02_rmcp.clone(),
                 clt03_files.clone(),
                 exp09_bundle.clone(),
+                tel04f01_nvml.clone(),
                 svc09_engine.clone(),
             ],
         )
@@ -1450,6 +1461,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 mcp02_rmcp.clone(),
                 clt03_files.clone(),
                 exp09_bundle.clone(),
+                tel04f01_nvml.clone(),
                 svc09_engine.clone(),
             ],
         ),
@@ -1499,6 +1511,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 mcp02_rmcp.clone(),
                 clt03_files.clone(),
                 exp09_bundle.clone(),
+                tel04f01_nvml.clone(),
                 svc09_engine.clone(),
             ],
         ),
@@ -1596,6 +1609,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         mcp02_rmcp,
         clt03_files,
         exp09_bundle,
+        tel04f01_nvml,
         svc09_engine,
     ];
     assert_eq!(rows.len(), 49);

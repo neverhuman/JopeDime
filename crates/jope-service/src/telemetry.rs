@@ -10,6 +10,8 @@ use crate::events::EventLog;
 use jope_api::{
     decimal::DecimalU64, ids::RunId, MetricSample, MetricValue, TelemetryBody, TelemetryEvent,
 };
+use jope_telemetry::nvml_device::UnavailableReason;
+use nvml_wrapper::{error::NvmlError, Nvml};
 use serde::Serialize;
 use std::{
     collections::BTreeMap,
@@ -22,10 +24,8 @@ use std::{
     time::{Duration, Instant},
 };
 
-/// Registry names shared with `jope-telemetry` (`summary.rs` `TOK_S_*`); kept identical.
-pub const TOK_S_RUST: &str = "throughput.tokens_per_s.rust";
-pub const TOK_S_ALL_LANGUAGES: &str = "throughput.tokens_per_s.all_languages";
-pub const TOK_S_RUST_TIMED_ALONE: &str = "throughput.tokens_per_s.rust_timed_alone";
+/// Registry names from `jope-telemetry` (`summary.rs`), the single source of truth.
+pub use jope_telemetry::summary::{TOK_S_ALL_LANGUAGES, TOK_S_RUST, TOK_S_RUST_TIMED_ALONE};
 
 /// Hardware sampling rate (§9.1).
 pub const DEFAULT_INTERVAL: Duration = Duration::from_secs(1);
@@ -43,8 +43,9 @@ pub struct ProcessReading {
 #[derive(Clone, Debug, PartialEq)]
 pub struct GpuReading {
     pub uuid: String,
-    pub util_pct: Option<f64>,
-    pub mem_used_bytes: Option<u64>,
+    /// Device-wide utilization over NVML's sampling window, or the unavailable reason.
+    pub util_pct: Result<f64, String>,
+    pub mem_used_bytes: Result<u64, String>,
 }
 
 /// OS and device sources. A failure carries the reason published as `unavailable:<reason>`.
@@ -371,10 +372,7 @@ impl Telemetry {
                         &scope,
                         zero,
                         zero,
-                        device
-                            .util_pct
-                            .ok_or_else(|| NOT_REPORTED.to_owned())
-                            .and_then(number),
+                        device.util_pct.and_then(number),
                     ));
                     out.push(sample(
                         "gpu.mem_used",
@@ -382,10 +380,7 @@ impl Telemetry {
                         &scope,
                         zero,
                         zero,
-                        device
-                            .mem_used_bytes
-                            .map(bytes)
-                            .ok_or_else(|| NOT_REPORTED.to_owned()),
+                        device.mem_used_bytes.map(bytes),
                     ));
                 }
             }
@@ -660,16 +655,156 @@ impl Drop for TelemetryService {
     }
 }
 
+/// NVML device queries needed for the §9.1 `gpu.*` rows. The boundary keeps tests off real
+/// hardware; [`SystemGpu`] is the `nvml-wrapper` implementation.
+pub trait GpuQuery: Send {
+    fn initialize(&mut self) -> Result<(), NvmlError>;
+    fn reset(&mut self);
+    fn device_uuids(&self) -> Result<Vec<String>, NvmlError>;
+    fn utilization_pct(&self, uuid: &str) -> Result<u32, NvmlError>;
+    fn memory_used_bytes(&self, uuid: &str) -> Result<u64, NvmlError>;
+}
+
+/// `nvml-wrapper` loads the NVML library at runtime, so a host without the NVIDIA driver
+/// returns an error here rather than failing to start.
+#[derive(Default)]
+pub struct SystemGpu {
+    nvml: Option<Nvml>,
+}
+
+impl SystemGpu {
+    fn nvml(&self) -> Result<&Nvml, NvmlError> {
+        self.nvml.as_ref().ok_or(NvmlError::Uninitialized)
+    }
+}
+
+impl GpuQuery for SystemGpu {
+    fn initialize(&mut self) -> Result<(), NvmlError> {
+        self.nvml = None;
+        self.nvml = Some(Nvml::init()?);
+        Ok(())
+    }
+    fn reset(&mut self) {
+        self.nvml = None;
+    }
+    fn device_uuids(&self) -> Result<Vec<String>, NvmlError> {
+        let nvml = self.nvml()?;
+        (0..nvml.device_count()?)
+            .map(|index| nvml.device_by_index(index)?.uuid())
+            .collect()
+    }
+    fn utilization_pct(&self, uuid: &str) -> Result<u32, NvmlError> {
+        Ok(self.nvml()?.device_by_uuid(uuid)?.utilization_rates()?.gpu)
+    }
+    fn memory_used_bytes(&self, uuid: &str) -> Result<u64, NvmlError> {
+        Ok(self.nvml()?.device_by_uuid(uuid)?.memory_info()?.used)
+    }
+}
+
+/// Stable TEL-05 reason codes (`nvml_device::UnavailableReason`) for an NVML error.
+fn nvml_reason(error: &NvmlError) -> UnavailableReason {
+    match error {
+        NvmlError::LibraryNotFound | NvmlError::LibloadingError(_) => {
+            UnavailableReason::MissingLibrary
+        }
+        NvmlError::DriverNotLoaded => UnavailableReason::MissingDriver,
+        NvmlError::NoPermission => UnavailableReason::PermissionDenied,
+        NvmlError::GpuLost => UnavailableReason::DeviceLost,
+        _ => UnavailableReason::NvmlError,
+    }
+}
+
+const NVML_INITIAL_BACKOFF: Duration = Duration::from_millis(100);
+const NVML_MAX_BACKOFF: Duration = Duration::from_secs(5);
+
+/// Device-wide GPU readings with bounded exponential retry after NVML failures. It never
+/// panics and never synchronizes the device (§9.1 Rates).
+pub struct NvmlSensor<Q: GpuQuery> {
+    query: Q,
+    initialized: bool,
+    backoff: Duration,
+    retry_at: Option<Instant>,
+    last_reason: Option<UnavailableReason>,
+}
+
+impl<Q: GpuQuery> NvmlSensor<Q> {
+    pub fn new(query: Q) -> Self {
+        Self {
+            query,
+            initialized: false,
+            backoff: NVML_INITIAL_BACKOFF,
+            retry_at: None,
+            last_reason: None,
+        }
+    }
+
+    fn fail(&mut self, error: &NvmlError, now: Instant) -> String {
+        let reason = nvml_reason(error);
+        self.query.reset();
+        self.initialized = false;
+        self.last_reason = Some(reason);
+        self.retry_at = Some(now + self.backoff);
+        self.backoff = (self.backoff * 2).min(NVML_MAX_BACKOFF);
+        reason.as_str().to_owned()
+    }
+
+    pub fn readings(&mut self, now: Instant) -> Result<Vec<GpuReading>, String> {
+        if self.retry_at.is_some_and(|at| now < at) {
+            let reason = self.last_reason.unwrap_or(UnavailableReason::NvmlError);
+            return Err(reason.as_str().to_owned());
+        }
+        self.retry_at = None;
+        if !self.initialized {
+            if let Err(error) = self.query.initialize() {
+                return Err(self.fail(&error, now));
+            }
+            self.initialized = true;
+        }
+        let uuids = match self.query.device_uuids() {
+            Ok(uuids) => uuids,
+            Err(error) => return Err(self.fail(&error, now)),
+        };
+        self.backoff = NVML_INITIAL_BACKOFF;
+        self.last_reason = None;
+        Ok(uuids
+            .into_iter()
+            .map(|uuid| GpuReading {
+                util_pct: self
+                    .query
+                    .utilization_pct(&uuid)
+                    .map(f64::from)
+                    .map_err(|e| nvml_reason(&e).as_str().to_owned()),
+                mem_used_bytes: self
+                    .query
+                    .memory_used_bytes(&uuid)
+                    .map_err(|e| nvml_reason(&e).as_str().to_owned()),
+                uuid,
+            })
+            .collect())
+    }
+}
+
 /// Host sensors: WRK-03 per-PID sampling plus OS memory, CPU and disk queries.
 pub struct SystemSensors {
     store: PathBuf,
+    gpu: Option<NvmlSensor<SystemGpu>>,
 }
 
 impl SystemSensors {
-    /// `store` is the `$JOPEDIME_HOME` volume used for `disk.free`.
+    /// `store` is the `$JOPEDIME_HOME` volume used for `disk.free`. GPU metrics come from
+    /// NVML, loaded at runtime: no library, driver or device yields `unavailable:<reason>`.
     pub fn new(store: impl Into<PathBuf>) -> Self {
         Self {
             store: store.into(),
+            gpu: Some(NvmlSensor::new(SystemGpu::default())),
+        }
+    }
+
+    /// Host sensors without GPU sampling (`gpu.*` = `unavailable:gpu_sampling_disabled`).
+    pub fn without_gpu(store: impl Into<PathBuf>) -> Self {
+        Self {
+            store: store.into(),
+            gpu: None,
         }
     }
 }
@@ -699,8 +834,10 @@ impl Sensors for SystemSensors {
         platform::disk_free(&self.store)
     }
     fn gpus(&mut self) -> Result<Vec<GpuReading>, String> {
-        // NVML-backed sampling is TEL-04-F01 (pending the jope-service dependency patch).
-        Err("nvml_not_linked".to_owned())
+        match &mut self.gpu {
+            Some(gpu) => gpu.readings(Instant::now()),
+            None => Err("gpu_sampling_disabled".to_owned()),
+        }
     }
 }
 
@@ -855,7 +992,7 @@ mod tests {
         fn gpus(&mut self) -> Result<Vec<GpuReading>, String> {
             self.gpus
                 .clone()
-                .ok_or_else(|| "nvml_not_linked".to_owned())
+                .ok_or_else(|| "fake_gpu_absent".to_owned())
         }
     }
     fn get<'a>(samples: &'a [MetricSample], name: &str) -> &'a MetricSample {
@@ -957,7 +1094,7 @@ mod tests {
         assert_eq!(reason("mem.rss"), "unavailable:engine_process_exited");
         assert_eq!(reason("mem.available"), "unavailable:meminfo_unavailable");
         assert_eq!(reason("disk.free"), "unavailable:statvfs_failed");
-        assert_eq!(reason("gpu.util_pct"), "unavailable:nvml_not_linked");
+        assert_eq!(reason("gpu.util_pct"), "unavailable:fake_gpu_absent");
         assert_eq!(reason("ranker.scores_per_s"), "unavailable:not_reported");
         assert_eq!(reason("store.bytes"), "unavailable:not_reported");
         assert_eq!(reason(TOK_S_RUST), "unavailable:no_text_token_path");
@@ -974,7 +1111,7 @@ mod tests {
         let summary = telemetry.summary();
         assert_eq!(
             summary.unavailable["gpu.mem_used"],
-            "unavailable:nvml_not_linked"
+            "unavailable:fake_gpu_absent"
         );
         assert_eq!(summary.tokens_per_s_rust, None);
     }
@@ -1085,6 +1222,147 @@ mod tests {
         }
     }
 
+    /// (uuid, utilization, memory used) for one fake device.
+    type FakeDevice = (String, Result<u32, NvmlError>, Result<u64, NvmlError>);
+
+    #[derive(Default)]
+    struct FakeGpu {
+        init_error: Option<NvmlError>,
+        list_error: Option<NvmlError>,
+        devices: Vec<FakeDevice>,
+        inits: u32,
+        resets: u32,
+    }
+    impl GpuQuery for FakeGpu {
+        fn initialize(&mut self) -> Result<(), NvmlError> {
+            self.inits += 1;
+            match self.init_error.take() {
+                Some(error) => Err(error),
+                None => Ok(()),
+            }
+        }
+        fn reset(&mut self) {
+            self.resets += 1;
+        }
+        fn device_uuids(&self) -> Result<Vec<String>, NvmlError> {
+            match &self.list_error {
+                Some(_) => Err(NvmlError::GpuLost),
+                None => Ok(self.devices.iter().map(|d| d.0.clone()).collect()),
+            }
+        }
+        fn utilization_pct(&self, uuid: &str) -> Result<u32, NvmlError> {
+            match &self.devices.iter().find(|d| d.0 == uuid).unwrap().1 {
+                Ok(v) => Ok(*v),
+                Err(_) => Err(NvmlError::NoPermission),
+            }
+        }
+        fn memory_used_bytes(&self, uuid: &str) -> Result<u64, NvmlError> {
+            match &self.devices.iter().find(|d| d.0 == uuid).unwrap().2 {
+                Ok(v) => Ok(*v),
+                Err(_) => Err(NvmlError::GpuLost),
+            }
+        }
+    }
+
+    #[test]
+    fn missing_nvml_is_unavailable_with_bounded_retry_and_never_panics() {
+        let t0 = Instant::now();
+        let mut sensor = NvmlSensor::new(FakeGpu {
+            init_error: Some(NvmlError::LibraryNotFound),
+            ..FakeGpu::default()
+        });
+        assert_eq!(sensor.readings(t0), Err("missing_library".to_owned()));
+        // Within the backoff window NVML is not re-initialized.
+        assert_eq!(
+            sensor.readings(t0 + Duration::from_millis(50)),
+            Err("missing_library".to_owned())
+        );
+        assert_eq!(sensor.query.inits, 1);
+        // After the backoff it retries; the driver is now present but has no devices.
+        assert_eq!(sensor.readings(t0 + Duration::from_millis(150)), Ok(vec![]));
+        assert_eq!(sensor.query.inits, 2);
+
+        for (error, reason) in [
+            (NvmlError::DriverNotLoaded, "missing_driver"),
+            (NvmlError::NoPermission, "permission_denied"),
+            (NvmlError::Uninitialized, "nvml_error"),
+        ] {
+            let mut sensor = NvmlSensor::new(FakeGpu {
+                init_error: Some(error),
+                ..FakeGpu::default()
+            });
+            assert_eq!(sensor.readings(t0), Err(reason.to_owned()));
+        }
+    }
+
+    #[test]
+    fn nvml_readings_are_device_scoped_and_per_device_failures_carry_a_reason() {
+        let t0 = Instant::now();
+        let mut sensor = NvmlSensor::new(FakeGpu {
+            devices: vec![
+                ("GPU-a".into(), Ok(37), Ok(1 << 30)),
+                (
+                    "GPU-b".into(),
+                    Err(NvmlError::NoPermission),
+                    Err(NvmlError::GpuLost),
+                ),
+            ],
+            ..FakeGpu::default()
+        });
+        let readings = sensor.readings(t0).unwrap();
+        assert_eq!(readings[0].util_pct, Ok(37.0));
+        assert_eq!(readings[0].mem_used_bytes, Ok(1 << 30));
+        assert_eq!(readings[1].util_pct, Err("permission_denied".to_owned()));
+        assert_eq!(readings[1].mem_used_bytes, Err("device_lost".to_owned()));
+
+        let mut fake = Fake {
+            gpus: Some(readings),
+            ..Fake::default()
+        };
+        let s = Telemetry::new(ENGINE, t0).tick(t0, &mut fake, &Counters::default());
+        let device = |name: &str, scope: &str| {
+            s.iter()
+                .find(|m| m.name == name && m.scope == scope)
+                .unwrap()
+                .clone()
+        };
+        assert_eq!(num(&device("gpu.util_pct", "device:GPU-a")), 37.0);
+        assert_eq!(
+            device("gpu.util_pct", "device:GPU-b").availability,
+            "unavailable:permission_denied"
+        );
+        assert_eq!(
+            device("gpu.mem_used", "device:GPU-b").availability,
+            "unavailable:device_lost"
+        );
+    }
+
+    #[test]
+    fn a_lost_device_resets_nvml_and_reinitializes_after_backoff() {
+        let t0 = Instant::now();
+        let mut sensor = NvmlSensor::new(FakeGpu {
+            list_error: Some(NvmlError::GpuLost),
+            devices: vec![("GPU-a".into(), Ok(5), Ok(7))],
+            ..FakeGpu::default()
+        });
+        assert_eq!(sensor.readings(t0), Err("device_lost".to_owned()));
+        assert_eq!(sensor.query.resets, 1);
+        sensor.query.list_error = None;
+        assert_eq!(
+            sensor.readings(t0 + Duration::from_millis(10)),
+            Err("device_lost".to_owned())
+        );
+        let readings = sensor.readings(t0 + Duration::from_millis(150)).unwrap();
+        assert_eq!(sensor.query.inits, 2);
+        assert_eq!(readings[0].util_pct, Ok(5.0));
+    }
+
+    #[test]
+    fn gpu_less_system_sensors_report_a_reason() {
+        let mut sensors = SystemSensors::without_gpu(std::env::temp_dir());
+        assert_eq!(sensors.gpus(), Err("gpu_sampling_disabled".to_owned()));
+    }
+
     #[test]
     fn tokens_per_second_uses_tel07_counts_and_registry_names() {
         let t0 = Instant::now();
@@ -1115,18 +1393,13 @@ mod tests {
     }
 
     #[test]
-    fn registry_names_match_jope_telemetry() {
-        let summary = include_str!("../../jope-telemetry/src/summary.rs");
-        for (constant, value) in [
-            ("TOK_S_RUST", TOK_S_RUST),
-            ("TOK_S_ALL_LANGUAGES", TOK_S_ALL_LANGUAGES),
-            ("TOK_S_RUST_TIMED_ALONE", TOK_S_RUST_TIMED_ALONE),
-        ] {
-            assert!(
-                summary.contains(&format!("pub const {constant}: &str = \"{value}\";")),
-                "{constant} drifted from jope-telemetry"
-            );
-        }
+    fn registry_names_are_the_jope_telemetry_constants() {
+        assert_eq!(TOK_S_RUST, "throughput.tokens_per_s.rust");
+        assert_eq!(TOK_S_ALL_LANGUAGES, "throughput.tokens_per_s.all_languages");
+        assert_eq!(
+            TOK_S_RUST_TIMED_ALONE,
+            "throughput.tokens_per_s.rust_timed_alone"
+        );
     }
 
     #[test]
@@ -1137,8 +1410,8 @@ mod tests {
             process: [(ENGINE, reading(0.0, 1))].into(),
             gpus: Some(vec![GpuReading {
                 uuid: "GPU-abc".into(),
-                util_pct: Some(37.5),
-                mem_used_bytes: Some(1 << 30),
+                util_pct: Ok(37.5),
+                mem_used_bytes: Ok(1 << 30),
             }]),
             ..Fake::default()
         };
@@ -1304,7 +1577,7 @@ mod tests {
         let service = TelemetryService::spawn(
             snapshot.run_id,
             log,
-            Box::new(SystemSensors::new(std::env::temp_dir())),
+            Box::new(SystemSensors::without_gpu(std::env::temp_dir())),
             Arc::new(Counters::default()),
             Instant::now(),
             Duration::from_millis(1),
@@ -1329,7 +1602,7 @@ mod tests {
     fn real_sensor_tick_cost_is_below_two_percent_of_the_interval() {
         let counters = Counters::default();
         counters.set_workers(&[std::process::id()]);
-        let mut sensors = SystemSensors::new(std::env::temp_dir());
+        let mut sensors = SystemSensors::without_gpu(std::env::temp_dir());
         let mut telemetry = Telemetry::new(std::process::id(), Instant::now());
         let ticks = 200;
         let start = Instant::now();
@@ -1365,7 +1638,7 @@ mod tests {
         let service = TelemetryService::spawn(
             snapshot.run_id,
             log,
-            Box::new(SystemSensors::new(std::env::temp_dir())),
+            Box::new(SystemSensors::without_gpu(std::env::temp_dir())),
             Arc::new(Counters::default()),
             Instant::now(),
             DEFAULT_INTERVAL,
