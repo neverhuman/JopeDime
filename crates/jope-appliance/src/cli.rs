@@ -472,7 +472,9 @@ mod batch_run_tests {
                 "--out",
                 "feedback.jsonl",
             ],
-            vec!["jopedime", "code", run, "--alg", "alg_0001", "--lang", "python"],
+            vec![
+                "jopedime", "code", run, "--alg", "alg_0001", "--lang", "python",
+            ],
         ] {
             let cli = Cli::try_parse_from(args).unwrap();
             assert!(matches!(
