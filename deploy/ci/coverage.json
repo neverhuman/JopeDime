@@ -6935,6 +6935,22 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-appliance/test/e2e": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-appliance/tests/e2e/main.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Pre-stage surface projection comparator with synthetic bounded-run fixtures. Full multi-surface acceptance remains pending executable handlers, RNK-10 and TUI-09; ignored acceptance is not product qualification."
+    },
     "target:jope-appliance/test/single_file": {
       "discovery": {
         "doctest": false,
