@@ -6,23 +6,28 @@
 % does not yet support.
 \section{EurekaZero: Learning Taste}\label{sec:method}
 
-How does a model learn taste, the judgment that raises the win probability $q$ of
-\cref{eq:taste} before a move is tried? \EZ{} learns it as AlphaGo learned Go: a program writer proposes moves, a problem--program
-map judges them, and verified search during training teaches both. On game day the writer plays
-alone, once.
+How can evaluation feedback improve a proposal before it is tried?
+The design uses verified search as training experience for a program writer,
+with a separate problem--program map learning to rank scored programs.
+At deployment the writer submits one candidate. We describe the historical
+reference checkpoint below; the later adapter-training snapshot in
+\cref{sec:method-status} is separate evidence, not an evaluation of this
+checkpoint's one-proposal behavior. Learning to rank and learning to propose
+are distinct claims.
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
 In \cref{fig:network} a frozen encoder reads the board and the program writer $\writer$ writes one
-complete program, as AlphaGo's policy network proposed a move \citep{silver2016mastering}. The
-problem--program map $\mapv$ scores programs, as AlphaGo's value network judged positions, but only
-in training. A network that ranks a search's output is a value network guiding search;
+complete program, as AlphaGo's policy network proposed a move \citep{silver2016mastering}. The problem--program map $\mapv$ supplies a separate ranking score. In
+this reference checkpoint it does not condition or screen the writer's
+output, and is absent from deployment. Ranking a search's output does not
+by itself train or steer the proposer;
 \searchone{} rests on the writer's single draw.
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig5_network.pdf}
-  \caption{\textbf{A writer proposes, a map judges, and self-play trains both.} Schematic. Top:
+  \caption{\textbf{A writer and a separate ranking map learn from scored programs.} Schematic. Top:
   game day, the whole of \searchone{}. Dashed box: training only. Search seeded with the writer's
   drafts proposes more programs, the referee scores them against the incumbent, and the scored
   lists retrain the writer ($\theta$) and the map ($\psi$). Stillborn programs enter no list.}
@@ -31,17 +36,19 @@ in training. A network that ranks a search's output is a value network guiding s
 
 \subsection{Reading the board}\label{sub:method-board}
 
-A frozen encoder turns the board of \cref{sec:game} into 2,048 numbers, $z_p=\encP(p)$, in three
+The reference checkpoint uses a frozen encoder to turn the board of
+\cref{sec:game} into 2,048 numbers, $z_p=\encP(p)$, in three
 blocks. The first summarizes a pretrained row encoder's embeddings across rows, independent of row
 order (512 values). The second projects the hidden state of a pretrained third-party tabular
 regressor that reads the training rows and labels (1,024; \TBD{name, version, licence}). The third
-passes the scaled targets through two frozen windows (512). The encoder is
-leak-free: it never receives held-out rows, held-out labels or test outcomes, and each context
-records that no final test target was used. It is fixed, pinned by hash and never trained with the
-writer, so the player cannot reshape the board to suit its moves. It is bounded at 30 seconds per
+passes the scaled targets through two frozen windows (512). The encoding contract permits training-side task evidence only; final
+held-out labels and their derived statistics must stay outside the input
+closure. A context's recorded declaration that no final target was used is
+part of the audit trail, not a substitute for checking that closure. It is fixed and pinned by hash in the reference procedure, rather than
+jointly trained with the writer. It is bounded at 30 seconds per
 problem, and a context with any non-finite value is refused rather than imputed
-(\cref{app:training}). Whether problems with alike best programs sit together is measured in
-\cref{sec:results}, not assumed.
+(\cref{app:training}). Whether problems with similar best programs sit together requires a
+separate representation study; \cref{sub:results-ablation} reserves that test.
 
 \subsection{Describing the move}\label{sub:method-move}
 
@@ -68,11 +75,13 @@ for the best. The map's softmax over the list is trained toward a target concent
   \log\frac{e^{\mapv(z_p,z_w)}}{\sum_{u\in G_p}e^{\mapv(z_p,z_u)}},
   \label{eq:mapLoss}
 \end{equation}
-with $\tau=0.25$. As $\tau\to0$ the target falls on the winner $w^+$, and \cref{eq:mapLoss} becomes
-the InfoNCE loss \citep{oord2018cpc} that CLIP used to put images and text in one space
-\citep{radford2021clip}, here problems and programs, with a problem's also-rans as hard negatives.
+with $\tau=0.25$. With a unique best program, the low-temperature limit
+concentrates the target on that program. This is a listwise ranking
+objective over programs scored on the same problem; the analogy to
+contrastive learning \citep{oord2018cpc,radford2021clip} does not establish
+CLIP-style alignment across problems and programs.
 A Bradley--Terry term on the same lists sharpens the top \citep{bradley1952rank}. Stillborn moves
-have no score, so the map learns where not to go only among programs that run. A program-only head
+have no score, so this ranking objective covers only programs that run. A program-only head
 trained beside it tests whether the map reads the problem at all (\cref{sec:results}).
 
 \begin{keyidea}
@@ -82,7 +91,11 @@ writer.
 
 In this checkpoint the map never touches the writer's draw. It ranks the writer's drafts, a
 ranking we score against the referee, but drops none, and it does not condition, screen or steer
-the writer. The writer learns its taste from the verdicts directly.
+the writer. The writer's learning targets come from referee scores directly. Thus
+ranking agreement with the referee, including comparison with the
+program-only control, can assess the map; attributing an improvement in
+proposals to the map would require an implemented influence path and a
+matched ablation (\cref{sub:results-ablation}).
 
 \subsection{The self-play loop}\label{sub:method-selfplay}
 
@@ -118,11 +131,15 @@ program displaces a board's incumbent only by strictly beating it. A retrained w
 held-out cuts with three seeds each. It replaces the serving writer only if its mean log error ratio
 favors it, it wins at least as many cuts as it loses, and it fails no more often.
 
-\paragraph{The reported run.} The writer is a decoder-only transformer (six blocks, width 512)
+\paragraph{The historical reference.} The writer is a decoder-only transformer (six blocks, width 512)
 that reads the context as a prefix token and writes at most 128 tokens; with the map, the network
-has 27.8 million parameters. It trained on eight A100 GPUs in September 2026, on successive
-corpora; the corpus behind the reported checkpoint, step 60,000, holds about 10.2 million scored
-programs from 80 training datasets \TBD{acceptance record}. Details are in \cref{app:training}.
+has 27.8 million parameters. The supplied source notes describe training on eight A100 GPUs in
+September 2026, with a corpus of about 10.2 million scored programs from
+80 training datasets. \TBD{Provide the checkpoint acceptance record and
+pin the reference runtime before final evaluation.} These specifications
+identify the historical reference; they do not describe the later adapter
+snapshot or establish its deployment performance. Details belong in
+\cref{app:training}.
 
 \subsection{Keeping the referee honest}\label{sub:method-referee}
 
@@ -130,10 +147,12 @@ A learner paid by a referee will learn the referee's flaws. In February 2025 Sak
 claims after its AI CUDA Engineer exploited the evaluation code \citep{sakana2025walkback}. In June
 2025 METR reported frontier models patching their scorers \citep{metr2025rewardhacking}, and 16\% of
 1,968 agent-benchmark tasks can be passed without being solved \citep{zhong2026hackerfixer}. We
-build the referee to be attacked. Selection, promotion and final scores use separate data (inner
-folds, held-out cuts, a held fold scored once), and sealed meta-test families never reach the
-learner. Programs run in a seccomp and Landlock sandbox with memory, swap and time limits. A
-planted label leak and a sealed canary must both be caught, and every reported winner is re-run
+require the evaluation protocol to withstand such attacks. Selection,
+promotion and final scoring must use separate data (inner folds, held-out
+cuts, a final fold scored once), with sealed meta-test families outside the
+learner's inputs. The proposed comparisons require sandboxed execution
+using seccomp and Landlock, with memory, swap and time limits. A
+planted label leak and a sealed canary must both be caught, and every reported winner must be re-run
 from its emitted code, with native and emitted predictions agreeing within
 $10^{-9}\max(1,|\hat y|)$. One earlier leaderboard entry for our search took, per dataset, the best
 of 63,108 test-scored evaluations; we exclude it as test selection (\cref{app:incidents}).
@@ -159,6 +178,7 @@ stillborn and scores as a loss; it is not replaced. Reported costs count the enc
 with the fit, and any later search is reported apart, as \citet{silver2017mastering} reported
 AlphaGo Zero's raw network apart from its search (\cref{sec:results}).
 
-The method makes two testable promises: it learns, and it needs one try. \Cref{sec:results} checks
-both.
+The deployment budget is a protocol constraint. Whether training improves
+the quality of that single proposal is a separate empirical question for
+\cref{sec:results}.
 \input{sections/06_method/flywheel_status}
