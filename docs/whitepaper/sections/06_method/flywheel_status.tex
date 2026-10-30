@@ -31,8 +31,8 @@ utility tables do not establish either.
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_validation.pdf}
   \caption{\textbf{Recorded validation trajectory.} Grey: candidate adapter
-  utility. Blue: recorded best utility. Stars: the four rows flagged accepted;
-  only two increase the recorded best within the displayed interval.}
+  utility. Blue: recorded best utility. Stars: strict increases in the
+  recorded best; hollow diamonds: accepted ties at the existing best.}
   \label{fig:fw-validation}
 \end{figure}
 
@@ -40,8 +40,9 @@ utility tables do not establish either.
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_train_val.pdf}
   \caption{\textbf{Train and validation aggregates on retained summaries.}
-  The 25 observations span rounds 1342--1469. Missing rounds are unobserved;
-  the gap is reported only for these summaries.}
+  The 25 observations span rounds 1342--1469; a broken axis separates the
+  observed blocks. Missing rounds are unobserved, and the reported utility
+  gap covers only these summaries.}
   \label{fig:fw-trainval}
 \end{figure}
 
@@ -49,8 +50,11 @@ utility tables do not establish either.
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_telemetry.pdf}
   \caption{\textbf{Operating measurements from the retained snapshot.}
-  Throughput and promotion rate describe the logged training loop. They
-  do not establish the accuracy or cost of one-proposal deployment.}
+  Left: dataset throughput. Middle: filtered time between admission
+  timestamps (green) and logged round wall time (blue squares); longer
+  timestamp intervals are omitted as indicated in the legend. Right:
+  promotion rate. These measurements describe the training loop, rather
+  than the accuracy or cost of one-proposal deployment.}
   \label{fig:fw-telemetry}
 \end{figure*}
 
