@@ -1,0 +1,65 @@
+{
+  "authorizing_directive": "/home/ubuntu/.codex-screen-monitor/20261026T073143Z-jope-closeout-proof-correction.txt",
+  "authorizing_directive_sha256": "ccd0de9fa158f55726cf30f1307f667b7ef54f4f8491a0483653300232afa113",
+  "configured_h40_schedule_and_extrapolated_assumptions": {
+    "assumed_unmeasured_arm_round_evaluation_seconds_range": [
+      8.0,
+      12.0
+    ],
+    "assumed_unmeasured_replay_harvest_lofo_sos_seconds_range": [
+      6.0,
+      10.0
+    ],
+    "configured_arm_round_ranking_evaluations": 15,
+    "configured_rounds": 3,
+    "configured_step_schedule_breakdown": {
+      "round_0": "3 models x 16 micro-steps = 48 steps (fp_complete, fp_analytic, n0_ast)",
+      "round_1": "2 models x 16 micro-steps = 32 steps (fp_complete, fp_analytic)",
+      "round_2": "2 models x 16 micro-steps = 32 steps (fp_complete, fp_analytic)"
+    },
+    "configured_step_schedule_by_round": [
+      48,
+      32,
+      32
+    ],
+    "estimated_active_unmodified_h40_wall_seconds_range": [
+      166.04,
+      174.04
+    ],
+    "extrapolation_caveat": "152.04s is a linear extrapolation from 8 observed steps (112 x 1.3575s), not a measured 112-step execution time or a guaranteed upper bound.",
+    "linear_extrapolated_112_step_wall_seconds": 152.04,
+    "proposed_unmodified_h40_active_cutoff_seconds": 180.0,
+    "proposed_unmodified_h40_campaign_attempts_delta": 1,
+    "proposed_unmodified_h40_completion_reserve_seconds": 15.0,
+    "proposed_unmodified_h40_max_wall_seconds": 195.0,
+    "runner_function": "h38_h41_reconciliation_and_h40_runner.py:run_wave_h40_within_budget",
+    "runner_sha256": "485cdfee3c3565026ebf1101c650f7a386b55aa84566f9ccd865c62962e0e377",
+    "total_configured_adapter_steps": 112,
+    "unmodified_h40_rust_fits": 0,
+    "v2_sidecar_schedule_erratum": "The preserved v2 sidecar listed [32, 40, 40] from the older uncalled run_h40_online_flywheel() in run_h38_h40_owner_flywheel_waves.py; the actual Launch-1 runner run_wave_h40_within_budget() in h38_h41_reconciliation_and_h40_runner.py configures [48, 32, 32] = 112 steps."
+  },
+  "fixture_receipts": {
+    "v12_canonical_sha256": "36c2da563c4da32449af62a04b1d3769d23a3e2746f9aa7c6174f659cddaea84",
+    "v13_closeout_sha256": "d6f9aab0572fe4ca6fd1fd8a4ba73c96829deddf7584ac96159192ff6477b7aa",
+    "v14_crash_safe_closeout_sha256": "84e4e8a2530ffb8553c27fba06361df79870102b1c1f552c978402572a5e3693"
+  },
+  "hypothesis_id": "H40_wave6_successive_flywheel_online_loop",
+  "observed_launch1_timing_measurement": {
+    "observed_adapter_micro_steps_executed": 8,
+    "observed_aggregate_seconds_per_step": 1.3575,
+    "observed_in_guard_wall_seconds": 10.86,
+    "source_ledger": "h40_bounded_additive_budget_ledger.json",
+    "source_ledger_sha256": "9b61e8f51f9d050cf3ab3abf74fcfe1ec2717264baa82856867f2622b06242be",
+    "subcomponent_instrumentation_note": "Only aggregate in-guard step wall clock (10.860s for 8 steps = 1.3575s/step) was instrumented in Launch 1; per-subcomponent breakdowns inside _train_or_update_neural_adapter were not separately timed and are omitted."
+  },
+  "preserved_launch1_budget_ledger_sha256": "9b61e8f51f9d050cf3ab3abf74fcfe1ec2717264baa82856867f2622b06242be",
+  "preserved_launch1_results_sha256": "5d7e0d4034b12b1c7e284db7eed27c3984365f15ff263963c5dd5d356daf70c5",
+  "preserved_v2_sidecar_sha256": "682b74756f697b69aca67d42bc16321f1ebb24a2a04cb51df75ad98638f223e5",
+  "reconciled_at_utc": "2026-10-26T07:42:20Z",
+  "retracted_prior_estimate": {
+    "disposition": "RETRACTED_UNSUPPORTED",
+    "prior_claimed_wall_seconds": 45.0,
+    "reason": "An earlier v1 report line claimed +45.0s for H40's 112-step online loop. Observed H40 Launch 1 required 10.860s aggregate in-guard wall clock for 8 adapter optimizer micro-steps (1.3575s/step), showing that linear extrapolation across 112 steps alone is 152.04s."
+  },
+  "schema_version": "jopedime.dope_neural_ranking.h40.timing_and_resource_estimate.v3_closeout"
+}

@@ -1,0 +1,64 @@
+{
+  "authorizing_directive": "/home/ubuntu/.codex-screen-monitor/20261026T073143Z-jope-closeout-proof-correction.txt",
+  "authorizing_directive_sha256": "ccd0de9fa158f55726cf30f1307f667b7ef54f4f8491a0483653300232afa113",
+  "execution_status": "PREFLIGHT_PASSES_0PCT_CACHE_EVAL_AND_FIT_CAPS_BLOCKED_BY_CAMPAIGN_WALL_CLOCK_CEILING",
+  "fixture_receipts": {
+    "v12_canonical_sha256": "36c2da563c4da32449af62a04b1d3769d23a3e2746f9aa7c6174f659cddaea84",
+    "v13_closeout_sha256": "d6f9aab0572fe4ca6fd1fd8a4ba73c96829deddf7584ac96159192ff6477b7aa",
+    "v14_crash_safe_closeout_sha256": "84e4e8a2530ffb8553c27fba06361df79870102b1c1f552c978402572a5e3693"
+  },
+  "hypothesis_id": "H41_wave7_multi_round_compounded_flywheel_loop",
+  "preserved_v1_results_sha256": "57df980cef8423029f9e808a66d7d8155c22be4658e802673d0bcf349323439b",
+  "preserved_v2_sidecar_sha256": "4a02ed926ffffb6c61529b24f81f25979c8a14f51053556603c59d72f302b257",
+  "reconciled_at_utc": "2026-10-26T07:42:20Z",
+  "schema_version": "jopedime.dope_neural_ranking.h41.results.v3_closeout_reconciled",
+  "surfaced_resource_blocker_and_ceiling_base_reconciliation": {
+    "ceiling_base_accounting": {
+      "base_a_from_spent_upper_bound_3160_351s": {
+        "absorbed_existing_margin_seconds": 2.563,
+        "added_new_wave_max_wall_seconds": 435.0,
+        "net_ceiling_increment_above_3162_914s_seconds": 432.437,
+        "projected_cumulative_wall_clock_interval_seconds": [
+          3593.351,
+          3595.351
+        ],
+        "projected_cumulative_wall_clock_upper_bound_seconds": 3595.351,
+        "spent_upper_bound_seconds": 3160.351
+      },
+      "base_b_from_current_ceiling_3162_914s": {
+        "current_ceiling_seconds": 3162.914,
+        "gross_ceiling_increment_above_3162_914s_seconds": 435.0,
+        "projected_ceiling_preserving_2_563s_margin_seconds": 3597.914
+      }
+    },
+    "combined_new_wave_campaign_attempts_delta": 2,
+    "combined_new_wave_max_wall_allocation_seconds": 435.0,
+    "cumulative_spent_wall_clock_after_h40_launch1_interval_seconds": [
+      3158.351,
+      3160.351
+    ],
+    "current_approved_campaign_wall_clock_ceiling_seconds": 3162.914,
+    "current_campaign_attempts_used": 25,
+    "projected_campaign_attempts_if_both_authorized": 27,
+    "proposed_live_h41_allocation": {
+      "active_cutoff_seconds": 220.0,
+      "campaign_attempts_delta": 1,
+      "max_wall_seconds": 240.0,
+      "minimum_completion_wall_reserve_seconds": 20.0,
+      "worst_case_0pct_cache_actual_cv_fits": 2240,
+      "worst_case_0pct_cache_reserved_fits": 3840,
+      "worst_case_0pct_cache_uncached_evals": 640
+    },
+    "proposed_unmodified_h40_allocation": {
+      "active_cutoff_seconds": 180.0,
+      "campaign_attempts_delta": 1,
+      "max_wall_seconds": 195.0,
+      "minimum_completion_wall_reserve_seconds": 15.0,
+      "reserved_native_fits": 0,
+      "uncached_candidate_evals": 0
+    },
+    "remaining_campaign_wall_clock_margin_lower_bound_seconds": 4.563,
+    "remaining_campaign_wall_clock_margin_upper_bound_seconds": 2.563,
+    "retracted_prior_h40_wall_estimate_seconds": 45.0
+  }
+}

@@ -1,0 +1,3432 @@
+{
+  "schema_version": "jopedime.dope_neural_ranking.h38.results.v2_reconciled_noncompute",
+  "experiment_id": "h38_survivor_gate_audit_and_smart_svd_screen",
+  "started_at_utc": "2026-10-26T03:50:36Z",
+  "completed_at_utc": "2026-10-26T03:54:46Z",
+  "authorizing_directive": "/home/ubuntu/.codex-screen-monitor/20261026T025226Z-jope-proceed-owner-v2.txt",
+  "authorizing_directive_sha256": "3bd61a44bf613fd16a8446c5015b8cbdf3f712ca9245e3d05bd882c257baaa8a",
+  "prior_directive": "/home/ubuntu/.codex-screen-monitor/20261026T025226Z-jope-owner-autonomy-and-evidence.txt",
+  "prior_directive_sha256": "2725b692e30d05b5240891638275bb76936452a7deead5f560a210193c26ca1b",
+  "generalization_claim": false,
+  "selection_exposed_stage2_20": true,
+  "post_hoc_replay_only": true,
+  "bounded_guard_enforced": true,
+  "canonical_h36_encoder_block_erratum_and_reference": {
+    "h36_results_sha256": "aa8f143336b509578e3cd7011c5e42ef2aeeb7b7891b95ad10d8658140bb8891",
+    "note_on_turn10_chat_prose": "Turn-10 chat prose mistakenly wrote M4=TabPFN v2.5, M5=MiniRocket, M6=OpenML Meta22. The actual implemented and verified H36 encoder blocks are M0=LM_A0_H27_32D, M1=ANALYTIC_DOPE_V3_ROUTING_28D, M2=DOPE_HIGH_V3_629D_SVD32, M3=DOPE_NATIVE_280D_SVD32, M4=TABICL_V2_32D_SPREAD2 (bsd-3-clause), M5=KUMO_S_AND_L_64D_SPREAD4 (OpenMDW-1.1), and M6=MITRA_V2_32D_SPREAD2 (apache-2.0). Ridge Shapley OOF top-6 gain contributions for M4 (+0.018802), M5 (+0.000849), and M6 (+0.006567) are positive on strict_train_fit_881, whereas their dl_holdout_91 utility contributions are unfavorable (+0.001889, +0.000433, +0.001233) and neural arms N1..N7 tie on st_val_gate_32 (-1.736569).",
+    "exact_h36_provisional_first_party_references": {
+      "N3_FIRST_PARTY_COMPLETE_M0_M1_M2_M3": {
+        "blocks": [
+          "M0",
+          "M1",
+          "M2",
+          "M3"
+        ],
+        "status": "provisional_first_party_complete_research_reference",
+        "st_val_gate_32_weighted_utility": -1.736569,
+        "dl_val_71_all_71_utility": -1.258918,
+        "dl_val_71_dope_disjoint_43_utility": -1.498119,
+        "dl_holdout_91_all_91_utility": -1.137146,
+        "dl_holdout_91_dope_disjoint_50_utility": -1.476574,
+        "dl_holdout_91_dope_in_train_gradient_41_utility": -0.72321
+      },
+      "N1_FIRST_PARTY_ANALYTIC_FAST_M0_M1": {
+        "blocks": [
+          "M0",
+          "M1"
+        ],
+        "status": "provisional_checkpoint_free_first_party_apache2_research_reference",
+        "st_val_gate_32_weighted_utility": -1.736569,
+        "dl_val_71_all_71_utility": -1.258918,
+        "dl_val_71_dope_disjoint_43_utility": -1.498119,
+        "dl_holdout_91_all_91_utility": -1.137533,
+        "dl_holdout_91_dope_disjoint_50_utility": -1.476872,
+        "dl_holdout_91_dope_in_train_gradient_41_utility": -0.723705
+      }
+    }
+  },
+  "three_stage2_survivor_gate_bugs_and_hypothesis_audit": {
+    "hypothesis_framing_disclosure": "Attribution of the four H37 stage2_20 holdout30 regressions to specific mechanical survivor-gate bugs vs. heuristic fold-variance guards is treated as an explicit scientific hypothesis tested separately via the 6-gate ablation hierarchy (G0, G1A, G1B, G1C, G2, G3) in H38 replay and H39-H41 live reruns.",
+    "bug_1_key_mismatch_in_shrunken_nomination_score": {
+      "file": "research/flywheel_selfplay/run_phase10_fresh_gp_corrected_flywheel.py:441-450",
+      "root_cause": "compute_shrunken_inner_cv_nomination_score queried 'fold_logratios', 'std_fold_logratio', and 'max_fold_logratio', whereas rust_evaluator.py emits 'fold_log_ratios', 'cv_log_ratio_sd', and 'cv_tail_log_ratio'. Every lookup missed and defaulted to constant 0.20.",
+      "repaired_in_h38": true,
+      "isolated_by_gate_mode": "G1A_SCHEMA_KEY_FIX_ONLY"
+    },
+    "bug_2_unqualified_failed_cv_gate_challengers_promoted": {
+      "file": "research/flywheel_selfplay/run_h35_h37_encoder_and_flywheel_waves.py:3560,3852",
+      "root_cause": "Candidates with cv_gate_passed == False were appended to elites_by_arm_cid. When an incumbent had cv_gate_passed == False (fitness 101.431 on 03c4d094910c, 100.359 on 0cd637de21a9), degenerate challengers with fitness 100.000-100.014 sorted ahead of the incumbent.",
+      "repaired_in_h38": true,
+      "isolated_by_gate_mode": "G1B_SCHEMA_PLUS_CV_GATE_QUALIFICATION_ONLY"
+    },
+    "bug_3_discontinuous_100_cliff_and_unpaired_fold_scoring": {
+      "file": "research/flywheel_selfplay/rust_evaluator.py:1081 & run_h35_h37_encoder_and_flywheel_waves.py:3566",
+      "root_cause": "Sorting on penalized fitness (+100.0 cliff when 1 of 7 folds has tail_lr > 0.02) allowed a challenger with 3x worse 7-fold mean (-0.27 vs -0.84 on 087f69944563) to overwrite the incumbent (isolated by G1C_SCHEMA_CV_GATE_AND_CONTINUOUS_7F_ONLY), and ignored paired fold differences delta_f = fold_log_ratios_cand[f] - fold_log_ratios_inc[f] (tested by G2 and G3).",
+      "repaired_in_h38": true,
+      "isolated_by_gate_modes": [
+        "G1C_SCHEMA_CV_GATE_AND_CONTINUOUS_7F_ONLY",
+        "G2_PAIRED_FOLD_QUORUM_5OF7",
+        "G3_PAIRED_FOLD_HEURISTIC_GUARD"
+      ]
+    }
+  },
+  "part_a1_strict_train_16_inner70_split_half_gate_calibration": {
+    "selected_gate_mode": "G3_PAIRED_FOLD_HEURISTIC_GUARD",
+    "calibration_results_by_gate": {
+      "G0_LEGACY_BUGGY_RAW_FITNESS": {
+        "calibration_cohort": "strict_train_16_inner70_split_half_folds_0_3_to_4_6",
+        "diagnostic_function": "evaluate_split_half_4fold_inner70_diagnostic_gate",
+        "canonical_7fold_membership_verified_before_slice": true,
+        "holdout30_verify_touched": false,
+        "dl_val_4_touched": false,
+        "n_contexts": 16,
+        "promotions_count": 16,
+        "acceptance_rate": 1.0,
+        "candidate_level_pass_rate": 0.3659,
+        "true_inner3_wins": 7,
+        "false_inner3_losses": 9,
+        "promotion_precision_on_heldout_inner_folds": 0.4375,
+        "mean_heldout_inner3_gain": -0.410017,
+        "median_heldout_inner3_gain": -0.009357,
+        "worst_context_heldout_inner3_gain": -6.573398
+      },
+      "G1A_SCHEMA_KEY_FIX_ONLY": {
+        "calibration_cohort": "strict_train_16_inner70_split_half_folds_0_3_to_4_6",
+        "diagnostic_function": "evaluate_split_half_4fold_inner70_diagnostic_gate",
+        "canonical_7fold_membership_verified_before_slice": true,
+        "holdout30_verify_touched": false,
+        "dl_val_4_touched": false,
+        "n_contexts": 16,
+        "promotions_count": 16,
+        "acceptance_rate": 1.0,
+        "candidate_level_pass_rate": 0.3344,
+        "true_inner3_wins": 8,
+        "false_inner3_losses": 8,
+        "promotion_precision_on_heldout_inner_folds": 0.5,
+        "mean_heldout_inner3_gain": -0.404654,
+        "median_heldout_inner3_gain": 0.000308,
+        "worst_context_heldout_inner3_gain": -6.573398
+      },
+      "G1B_SCHEMA_PLUS_CV_GATE_QUALIFICATION_ONLY": {
+        "calibration_cohort": "strict_train_16_inner70_split_half_folds_0_3_to_4_6",
+        "diagnostic_function": "evaluate_split_half_4fold_inner70_diagnostic_gate",
+        "canonical_7fold_membership_verified_before_slice": true,
+        "holdout30_verify_touched": false,
+        "dl_val_4_touched": false,
+        "n_contexts": 16,
+        "promotions_count": 16,
+        "acceptance_rate": 1.0,
+        "candidate_level_pass_rate": 0.2787,
+        "true_inner3_wins": 8,
+        "false_inner3_losses": 8,
+        "promotion_precision_on_heldout_inner_folds": 0.5,
+        "mean_heldout_inner3_gain": -0.404654,
+        "median_heldout_inner3_gain": 0.000308,
+        "worst_context_heldout_inner3_gain": -6.573398
+      },
+      "G1C_SCHEMA_CV_GATE_AND_CONTINUOUS_7F_ONLY": {
+        "calibration_cohort": "strict_train_16_inner70_split_half_folds_0_3_to_4_6",
+        "diagnostic_function": "evaluate_split_half_4fold_inner70_diagnostic_gate",
+        "canonical_7fold_membership_verified_before_slice": true,
+        "holdout30_verify_touched": false,
+        "dl_val_4_touched": false,
+        "n_contexts": 16,
+        "promotions_count": 15,
+        "acceptance_rate": 0.9375,
+        "candidate_level_pass_rate": 0.2503,
+        "true_inner3_wins": 7,
+        "false_inner3_losses": 8,
+        "promotion_precision_on_heldout_inner_folds": 0.4667,
+        "mean_heldout_inner3_gain": 0.003249,
+        "median_heldout_inner3_gain": -0.000526,
+        "worst_context_heldout_inner3_gain": -0.240188
+      },
+      "G2_PAIRED_FOLD_QUORUM_5OF7": {
+        "calibration_cohort": "strict_train_16_inner70_split_half_folds_0_3_to_4_6",
+        "diagnostic_function": "evaluate_split_half_4fold_inner70_diagnostic_gate",
+        "canonical_7fold_membership_verified_before_slice": true,
+        "holdout30_verify_touched": false,
+        "dl_val_4_touched": false,
+        "n_contexts": 16,
+        "promotions_count": 13,
+        "acceptance_rate": 0.8125,
+        "candidate_level_pass_rate": 0.1714,
+        "true_inner3_wins": 6,
+        "false_inner3_losses": 7,
+        "promotion_precision_on_heldout_inner_folds": 0.4615,
+        "mean_heldout_inner3_gain": 0.0086,
+        "median_heldout_inner3_gain": 0.0,
+        "worst_context_heldout_inner3_gain": -0.240188
+      },
+      "G3_PAIRED_FOLD_HEURISTIC_GUARD": {
+        "calibration_cohort": "strict_train_16_inner70_split_half_folds_0_3_to_4_6",
+        "diagnostic_function": "evaluate_split_half_4fold_inner70_diagnostic_gate",
+        "canonical_7fold_membership_verified_before_slice": true,
+        "holdout30_verify_touched": false,
+        "dl_val_4_touched": false,
+        "n_contexts": 16,
+        "promotions_count": 5,
+        "acceptance_rate": 0.3125,
+        "candidate_level_pass_rate": 0.0715,
+        "true_inner3_wins": 3,
+        "false_inner3_losses": 2,
+        "promotion_precision_on_heldout_inner_folds": 0.6,
+        "mean_heldout_inner3_gain": 0.030549,
+        "median_heldout_inner3_gain": 0.0,
+        "worst_context_heldout_inner3_gain": -0.008545
+      }
+    }
+  },
+  "part_a2_post_hoc_replay_h35_and_h37": {
+    "post_hoc_replay_only": true,
+    "selection_exposed_stage2_20": true,
+    "generalization_claim": false,
+    "full_20_context_cohort_retained": true,
+    "h35_replay_by_gate": {
+      "G0_LEGACY_BUGGY_RAW_FITNESS": {
+        "DOPE629_SMART_SHUFFLE": {
+          "all_20": {
+            "n_contexts": 20,
+            "mean_gain": -0.01061,
+            "median_gain": -0.0,
+            "iqr_gain": 0.03046,
+            "q25_gain": -0.03046,
+            "q75_gain": 0.0,
+            "std_gain": 0.124372,
+            "cvar10_worst_decile_gain": -0.224652,
+            "worst_context_gain": -0.235569,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 3,
+            "ties_vs_incumbent": 9,
+            "losses_vs_incumbent": 8
+          },
+          "strict_train_16": {
+            "n_contexts": 16,
+            "mean_gain": 0.018951,
+            "median_gain": 0.0,
+            "iqr_gain": 0.001661,
+            "q25_gain": -0.001661,
+            "q75_gain": 0.0,
+            "std_gain": 0.112488,
+            "cvar10_worst_decile_gain": -0.110543,
+            "worst_context_gain": -0.151056,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 3,
+            "ties_vs_incumbent": 9,
+            "losses_vs_incumbent": 4
+          },
+          "val_holdout_4": {
+            "n_contexts": 4,
+            "mean_gain": -0.128857,
+            "median_gain": -0.125999,
+            "iqr_gain": 0.183532,
+            "q25_gain": -0.219194,
+            "q75_gain": -0.035662,
+            "std_gain": 0.096176,
+            "cvar10_worst_decile_gain": -0.235569,
+            "worst_context_gain": -0.235569,
+            "best_context_gain": -0.027859,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 0,
+            "losses_vs_incumbent": 4
+          },
+          "dope_disjoint": {
+            "n_contexts": 11,
+            "mean_gain": -0.014931,
+            "median_gain": -0.006645,
+            "iqr_gain": 0.110543,
+            "q25_gain": -0.110543,
+            "q75_gain": 0.0,
+            "std_gain": 0.16695,
+            "cvar10_worst_decile_gain": -0.224652,
+            "worst_context_gain": -0.235569,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 2,
+            "ties_vs_incumbent": 3,
+            "losses_vs_incumbent": 6
+          },
+          "dope_in_train_gradient": {
+            "n_contexts": 9,
+            "mean_gain": -0.005329,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.016035,
+            "cvar10_worst_decile_gain": -0.038263,
+            "worst_context_gain": -0.038263,
+            "best_context_gain": 0.018157,
+            "wins_vs_incumbent": 1,
+            "ties_vs_incumbent": 6,
+            "losses_vs_incumbent": 2
+          },
+          "inner70_unconstrained_all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.154149,
+            "median_gain": 0.000228,
+            "iqr_gain": 0.031236,
+            "q25_gain": 0.0,
+            "q75_gain": 0.031236,
+            "std_gain": 0.562068,
+            "cvar10_worst_decile_gain": -0.015963,
+            "worst_context_gain": -0.031926,
+            "best_context_gain": 2.593162,
+            "wins_vs_incumbent": 10,
+            "ties_vs_incumbent": 9,
+            "losses_vs_incumbent": 1
+          },
+          "acceptance_rate_all_20": 0.55,
+          "promotions_count_all_20": 11,
+          "exact_persisted_kh30_contexts_out_of_20": 20,
+          "candidate_level_pass_rate": 0.325
+        },
+        "DOPE629_UNIFORM_SHUFFLE": {
+          "all_20": {
+            "n_contexts": 20,
+            "mean_gain": -0.01061,
+            "median_gain": -0.0,
+            "iqr_gain": 0.03046,
+            "q25_gain": -0.03046,
+            "q75_gain": 0.0,
+            "std_gain": 0.124372,
+            "cvar10_worst_decile_gain": -0.224652,
+            "worst_context_gain": -0.235569,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 3,
+            "ties_vs_incumbent": 9,
+            "losses_vs_incumbent": 8
+          },
+          "strict_train_16": {
+            "n_contexts": 16,
+            "mean_gain": 0.018951,
+            "median_gain": 0.0,
+            "iqr_gain": 0.001661,
+            "q25_gain": -0.001661,
+            "q75_gain": 0.0,
+            "std_gain": 0.112488,
+            "cvar10_worst_decile_gain": -0.110543,
+            "worst_context_gain": -0.151056,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 3,
+            "ties_vs_incumbent": 9,
+            "losses_vs_incumbent": 4
+          },
+          "val_holdout_4": {
+            "n_contexts": 4,
+            "mean_gain": -0.128857,
+            "median_gain": -0.125999,
+            "iqr_gain": 0.183532,
+            "q25_gain": -0.219194,
+            "q75_gain": -0.035662,
+            "std_gain": 0.096176,
+            "cvar10_worst_decile_gain": -0.235569,
+            "worst_context_gain": -0.235569,
+            "best_context_gain": -0.027859,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 0,
+            "losses_vs_incumbent": 4
+          },
+          "dope_disjoint": {
+            "n_contexts": 11,
+            "mean_gain": -0.014931,
+            "median_gain": -0.006645,
+            "iqr_gain": 0.110543,
+            "q25_gain": -0.110543,
+            "q75_gain": 0.0,
+            "std_gain": 0.16695,
+            "cvar10_worst_decile_gain": -0.224652,
+            "worst_context_gain": -0.235569,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 2,
+            "ties_vs_incumbent": 3,
+            "losses_vs_incumbent": 6
+          },
+          "dope_in_train_gradient": {
+            "n_contexts": 9,
+            "mean_gain": -0.005329,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.016035,
+            "cvar10_worst_decile_gain": -0.038263,
+            "worst_context_gain": -0.038263,
+            "best_context_gain": 0.018157,
+            "wins_vs_incumbent": 1,
+            "ties_vs_incumbent": 6,
+            "losses_vs_incumbent": 2
+          },
+          "inner70_unconstrained_all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.154149,
+            "median_gain": 0.000228,
+            "iqr_gain": 0.031236,
+            "q25_gain": 0.0,
+            "q75_gain": 0.031236,
+            "std_gain": 0.562068,
+            "cvar10_worst_decile_gain": -0.015963,
+            "worst_context_gain": -0.031926,
+            "best_context_gain": 2.593162,
+            "wins_vs_incumbent": 10,
+            "ties_vs_incumbent": 9,
+            "losses_vs_incumbent": 1
+          },
+          "acceptance_rate_all_20": 0.55,
+          "promotions_count_all_20": 11,
+          "exact_persisted_kh30_contexts_out_of_20": 20,
+          "candidate_level_pass_rate": 0.325
+        }
+      },
+      "G1A_SCHEMA_KEY_FIX_ONLY": {
+        "DOPE629_SMART_SHUFFLE": {
+          "all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.011204,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": -0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.107052,
+            "cvar10_worst_decile_gain": -0.141882,
+            "worst_context_gain": -0.213735,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 3,
+            "ties_vs_incumbent": 13,
+            "losses_vs_incumbent": 4
+          },
+          "strict_train_16": {
+            "n_contexts": 16,
+            "mean_gain": 0.029104,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.103592,
+            "cvar10_worst_decile_gain": -0.038337,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 3,
+            "ties_vs_incumbent": 11,
+            "losses_vs_incumbent": 2
+          },
+          "val_holdout_4": {
+            "n_contexts": 4,
+            "mean_gain": -0.060399,
+            "median_gain": -0.013929,
+            "iqr_gain": 0.074328,
+            "q25_gain": -0.074328,
+            "q75_gain": 0.0,
+            "std_gain": 0.089256,
+            "cvar10_worst_decile_gain": -0.213735,
+            "worst_context_gain": -0.213735,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 2,
+            "losses_vs_incumbent": 2
+          },
+          "dope_disjoint": {
+            "n_contexts": 11,
+            "mean_gain": 0.021252,
+            "median_gain": 0.0,
+            "iqr_gain": 0.003322,
+            "q25_gain": -0.003322,
+            "q75_gain": 0.0,
+            "std_gain": 0.143223,
+            "cvar10_worst_decile_gain": -0.141882,
+            "worst_context_gain": -0.213735,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 2,
+            "ties_vs_incumbent": 6,
+            "losses_vs_incumbent": 3
+          },
+          "dope_in_train_gradient": {
+            "n_contexts": 9,
+            "mean_gain": -0.001078,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.011032,
+            "cvar10_worst_decile_gain": -0.027859,
+            "worst_context_gain": -0.027859,
+            "best_context_gain": 0.018157,
+            "wins_vs_incumbent": 1,
+            "ties_vs_incumbent": 7,
+            "losses_vs_incumbent": 1
+          },
+          "inner70_unconstrained_all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.113198,
+            "median_gain": 0.0,
+            "iqr_gain": 0.012608,
+            "q25_gain": 0.0,
+            "q75_gain": 0.012608,
+            "std_gain": 0.58706,
+            "cvar10_worst_decile_gain": -0.351426,
+            "worst_context_gain": -0.593226,
+            "best_context_gain": 2.593162,
+            "wins_vs_incumbent": 8,
+            "ties_vs_incumbent": 9,
+            "losses_vs_incumbent": 3
+          },
+          "acceptance_rate_all_20": 0.55,
+          "promotions_count_all_20": 11,
+          "exact_persisted_kh30_contexts_out_of_20": 16,
+          "candidate_level_pass_rate": 0.2875
+        },
+        "DOPE629_UNIFORM_SHUFFLE": {
+          "all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.011204,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": -0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.107052,
+            "cvar10_worst_decile_gain": -0.141882,
+            "worst_context_gain": -0.213735,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 3,
+            "ties_vs_incumbent": 13,
+            "losses_vs_incumbent": 4
+          },
+          "strict_train_16": {
+            "n_contexts": 16,
+            "mean_gain": 0.029104,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.103592,
+            "cvar10_worst_decile_gain": -0.038337,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 3,
+            "ties_vs_incumbent": 11,
+            "losses_vs_incumbent": 2
+          },
+          "val_holdout_4": {
+            "n_contexts": 4,
+            "mean_gain": -0.060399,
+            "median_gain": -0.013929,
+            "iqr_gain": 0.074328,
+            "q25_gain": -0.074328,
+            "q75_gain": 0.0,
+            "std_gain": 0.089256,
+            "cvar10_worst_decile_gain": -0.213735,
+            "worst_context_gain": -0.213735,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 2,
+            "losses_vs_incumbent": 2
+          },
+          "dope_disjoint": {
+            "n_contexts": 11,
+            "mean_gain": 0.021252,
+            "median_gain": 0.0,
+            "iqr_gain": 0.003322,
+            "q25_gain": -0.003322,
+            "q75_gain": 0.0,
+            "std_gain": 0.143223,
+            "cvar10_worst_decile_gain": -0.141882,
+            "worst_context_gain": -0.213735,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 2,
+            "ties_vs_incumbent": 6,
+            "losses_vs_incumbent": 3
+          },
+          "dope_in_train_gradient": {
+            "n_contexts": 9,
+            "mean_gain": -0.001078,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.011032,
+            "cvar10_worst_decile_gain": -0.027859,
+            "worst_context_gain": -0.027859,
+            "best_context_gain": 0.018157,
+            "wins_vs_incumbent": 1,
+            "ties_vs_incumbent": 7,
+            "losses_vs_incumbent": 1
+          },
+          "inner70_unconstrained_all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.113198,
+            "median_gain": 0.0,
+            "iqr_gain": 0.012608,
+            "q25_gain": 0.0,
+            "q75_gain": 0.012608,
+            "std_gain": 0.58706,
+            "cvar10_worst_decile_gain": -0.351426,
+            "worst_context_gain": -0.593226,
+            "best_context_gain": 2.593162,
+            "wins_vs_incumbent": 8,
+            "ties_vs_incumbent": 9,
+            "losses_vs_incumbent": 3
+          },
+          "acceptance_rate_all_20": 0.55,
+          "promotions_count_all_20": 11,
+          "exact_persisted_kh30_contexts_out_of_20": 16,
+          "candidate_level_pass_rate": 0.2875
+        }
+      },
+      "G1B_SCHEMA_PLUS_CV_GATE_QUALIFICATION_ONLY": {
+        "DOPE629_SMART_SHUFFLE": {
+          "all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.011204,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": -0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.107052,
+            "cvar10_worst_decile_gain": -0.141882,
+            "worst_context_gain": -0.213735,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 3,
+            "ties_vs_incumbent": 13,
+            "losses_vs_incumbent": 4
+          },
+          "strict_train_16": {
+            "n_contexts": 16,
+            "mean_gain": 0.029104,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.103592,
+            "cvar10_worst_decile_gain": -0.038337,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 3,
+            "ties_vs_incumbent": 11,
+            "losses_vs_incumbent": 2
+          },
+          "val_holdout_4": {
+            "n_contexts": 4,
+            "mean_gain": -0.060399,
+            "median_gain": -0.013929,
+            "iqr_gain": 0.074328,
+            "q25_gain": -0.074328,
+            "q75_gain": 0.0,
+            "std_gain": 0.089256,
+            "cvar10_worst_decile_gain": -0.213735,
+            "worst_context_gain": -0.213735,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 2,
+            "losses_vs_incumbent": 2
+          },
+          "dope_disjoint": {
+            "n_contexts": 11,
+            "mean_gain": 0.021252,
+            "median_gain": 0.0,
+            "iqr_gain": 0.003322,
+            "q25_gain": -0.003322,
+            "q75_gain": 0.0,
+            "std_gain": 0.143223,
+            "cvar10_worst_decile_gain": -0.141882,
+            "worst_context_gain": -0.213735,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 2,
+            "ties_vs_incumbent": 6,
+            "losses_vs_incumbent": 3
+          },
+          "dope_in_train_gradient": {
+            "n_contexts": 9,
+            "mean_gain": -0.001078,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.011032,
+            "cvar10_worst_decile_gain": -0.027859,
+            "worst_context_gain": -0.027859,
+            "best_context_gain": 0.018157,
+            "wins_vs_incumbent": 1,
+            "ties_vs_incumbent": 7,
+            "losses_vs_incumbent": 1
+          },
+          "inner70_unconstrained_all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.142859,
+            "median_gain": 0.0,
+            "iqr_gain": 0.012608,
+            "q25_gain": 0.0,
+            "q75_gain": 0.012608,
+            "std_gain": 0.565197,
+            "cvar10_worst_decile_gain": -0.077008,
+            "worst_context_gain": -0.109626,
+            "best_context_gain": 2.593162,
+            "wins_vs_incumbent": 8,
+            "ties_vs_incumbent": 10,
+            "losses_vs_incumbent": 2
+          },
+          "acceptance_rate_all_20": 0.5,
+          "promotions_count_all_20": 10,
+          "exact_persisted_kh30_contexts_out_of_20": 17,
+          "candidate_level_pass_rate": 0.275
+        },
+        "DOPE629_UNIFORM_SHUFFLE": {
+          "all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.011204,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": -0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.107052,
+            "cvar10_worst_decile_gain": -0.141882,
+            "worst_context_gain": -0.213735,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 3,
+            "ties_vs_incumbent": 13,
+            "losses_vs_incumbent": 4
+          },
+          "strict_train_16": {
+            "n_contexts": 16,
+            "mean_gain": 0.029104,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.103592,
+            "cvar10_worst_decile_gain": -0.038337,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 3,
+            "ties_vs_incumbent": 11,
+            "losses_vs_incumbent": 2
+          },
+          "val_holdout_4": {
+            "n_contexts": 4,
+            "mean_gain": -0.060399,
+            "median_gain": -0.013929,
+            "iqr_gain": 0.074328,
+            "q25_gain": -0.074328,
+            "q75_gain": 0.0,
+            "std_gain": 0.089256,
+            "cvar10_worst_decile_gain": -0.213735,
+            "worst_context_gain": -0.213735,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 2,
+            "losses_vs_incumbent": 2
+          },
+          "dope_disjoint": {
+            "n_contexts": 11,
+            "mean_gain": 0.021252,
+            "median_gain": 0.0,
+            "iqr_gain": 0.003322,
+            "q25_gain": -0.003322,
+            "q75_gain": 0.0,
+            "std_gain": 0.143223,
+            "cvar10_worst_decile_gain": -0.141882,
+            "worst_context_gain": -0.213735,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 2,
+            "ties_vs_incumbent": 6,
+            "losses_vs_incumbent": 3
+          },
+          "dope_in_train_gradient": {
+            "n_contexts": 9,
+            "mean_gain": -0.001078,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.011032,
+            "cvar10_worst_decile_gain": -0.027859,
+            "worst_context_gain": -0.027859,
+            "best_context_gain": 0.018157,
+            "wins_vs_incumbent": 1,
+            "ties_vs_incumbent": 7,
+            "losses_vs_incumbent": 1
+          },
+          "inner70_unconstrained_all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.142859,
+            "median_gain": 0.0,
+            "iqr_gain": 0.012608,
+            "q25_gain": 0.0,
+            "q75_gain": 0.012608,
+            "std_gain": 0.565197,
+            "cvar10_worst_decile_gain": -0.077008,
+            "worst_context_gain": -0.109626,
+            "best_context_gain": 2.593162,
+            "wins_vs_incumbent": 8,
+            "ties_vs_incumbent": 10,
+            "losses_vs_incumbent": 2
+          },
+          "acceptance_rate_all_20": 0.5,
+          "promotions_count_all_20": 10,
+          "exact_persisted_kh30_contexts_out_of_20": 17,
+          "candidate_level_pass_rate": 0.275
+        }
+      },
+      "G1C_SCHEMA_CV_GATE_AND_CONTINUOUS_7F_ONLY": {
+        "DOPE629_SMART_SHUFFLE": {
+          "all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.019408,
+            "median_gain": 0.0,
+            "iqr_gain": 0.001661,
+            "q25_gain": -0.001661,
+            "q75_gain": 0.0,
+            "std_gain": 0.094892,
+            "cvar10_worst_decile_gain": -0.054147,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 3,
+            "ties_vs_incumbent": 12,
+            "losses_vs_incumbent": 5
+          },
+          "strict_train_16": {
+            "n_contexts": 16,
+            "mean_gain": 0.028392,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.103829,
+            "cvar10_worst_decile_gain": -0.040708,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 3,
+            "ties_vs_incumbent": 10,
+            "losses_vs_incumbent": 3
+          },
+          "val_holdout_4": {
+            "n_contexts": 4,
+            "mean_gain": -0.016531,
+            "median_gain": -0.013929,
+            "iqr_gain": 0.03046,
+            "q25_gain": -0.03046,
+            "q75_gain": 0.0,
+            "std_gain": 0.016935,
+            "cvar10_worst_decile_gain": -0.038263,
+            "worst_context_gain": -0.038263,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 2,
+            "losses_vs_incumbent": 2
+          },
+          "dope_disjoint": {
+            "n_contexts": 11,
+            "mean_gain": 0.039647,
+            "median_gain": 0.0,
+            "iqr_gain": 0.003322,
+            "q25_gain": -0.003322,
+            "q75_gain": 0.0,
+            "std_gain": 0.123496,
+            "cvar10_worst_decile_gain": -0.040708,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 2,
+            "ties_vs_incumbent": 6,
+            "losses_vs_incumbent": 3
+          },
+          "dope_in_train_gradient": {
+            "n_contexts": 9,
+            "mean_gain": -0.005329,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.016035,
+            "cvar10_worst_decile_gain": -0.038263,
+            "worst_context_gain": -0.038263,
+            "best_context_gain": 0.018157,
+            "wins_vs_incumbent": 1,
+            "ties_vs_incumbent": 6,
+            "losses_vs_incumbent": 2
+          },
+          "inner70_unconstrained_all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.150495,
+            "median_gain": 0.0,
+            "iqr_gain": 0.012358,
+            "q25_gain": 0.0,
+            "q75_gain": 0.012358,
+            "std_gain": 0.562591,
+            "cvar10_worst_decile_gain": 0.0,
+            "worst_context_gain": 0.0,
+            "best_context_gain": 2.593162,
+            "wins_vs_incumbent": 8,
+            "ties_vs_incumbent": 12,
+            "losses_vs_incumbent": 0
+          },
+          "acceptance_rate_all_20": 0.4,
+          "promotions_count_all_20": 8,
+          "exact_persisted_kh30_contexts_out_of_20": 20,
+          "candidate_level_pass_rate": 0.1375
+        },
+        "DOPE629_UNIFORM_SHUFFLE": {
+          "all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.019408,
+            "median_gain": 0.0,
+            "iqr_gain": 0.001661,
+            "q25_gain": -0.001661,
+            "q75_gain": 0.0,
+            "std_gain": 0.094892,
+            "cvar10_worst_decile_gain": -0.054147,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 3,
+            "ties_vs_incumbent": 12,
+            "losses_vs_incumbent": 5
+          },
+          "strict_train_16": {
+            "n_contexts": 16,
+            "mean_gain": 0.028392,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.103829,
+            "cvar10_worst_decile_gain": -0.040708,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 3,
+            "ties_vs_incumbent": 10,
+            "losses_vs_incumbent": 3
+          },
+          "val_holdout_4": {
+            "n_contexts": 4,
+            "mean_gain": -0.016531,
+            "median_gain": -0.013929,
+            "iqr_gain": 0.03046,
+            "q25_gain": -0.03046,
+            "q75_gain": 0.0,
+            "std_gain": 0.016935,
+            "cvar10_worst_decile_gain": -0.038263,
+            "worst_context_gain": -0.038263,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 2,
+            "losses_vs_incumbent": 2
+          },
+          "dope_disjoint": {
+            "n_contexts": 11,
+            "mean_gain": 0.039647,
+            "median_gain": 0.0,
+            "iqr_gain": 0.003322,
+            "q25_gain": -0.003322,
+            "q75_gain": 0.0,
+            "std_gain": 0.123496,
+            "cvar10_worst_decile_gain": -0.040708,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.408025,
+            "wins_vs_incumbent": 2,
+            "ties_vs_incumbent": 6,
+            "losses_vs_incumbent": 3
+          },
+          "dope_in_train_gradient": {
+            "n_contexts": 9,
+            "mean_gain": -0.005329,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.016035,
+            "cvar10_worst_decile_gain": -0.038263,
+            "worst_context_gain": -0.038263,
+            "best_context_gain": 0.018157,
+            "wins_vs_incumbent": 1,
+            "ties_vs_incumbent": 6,
+            "losses_vs_incumbent": 2
+          },
+          "inner70_unconstrained_all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.150495,
+            "median_gain": 0.0,
+            "iqr_gain": 0.012358,
+            "q25_gain": 0.0,
+            "q75_gain": 0.012358,
+            "std_gain": 0.562591,
+            "cvar10_worst_decile_gain": 0.0,
+            "worst_context_gain": 0.0,
+            "best_context_gain": 2.593162,
+            "wins_vs_incumbent": 8,
+            "ties_vs_incumbent": 12,
+            "losses_vs_incumbent": 0
+          },
+          "acceptance_rate_all_20": 0.4,
+          "promotions_count_all_20": 8,
+          "exact_persisted_kh30_contexts_out_of_20": 20,
+          "candidate_level_pass_rate": 0.1375
+        }
+      },
+      "G2_PAIRED_FOLD_QUORUM_5OF7": {
+        "DOPE629_SMART_SHUFFLE": {
+          "all_20": {
+            "n_contexts": 20,
+            "mean_gain": -0.004894,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.016126,
+            "cvar10_worst_decile_gain": -0.048944,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 18,
+            "losses_vs_incumbent": 2
+          },
+          "strict_train_16": {
+            "n_contexts": 16,
+            "mean_gain": -0.004377,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.016952,
+            "cvar10_worst_decile_gain": -0.035015,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 15,
+            "losses_vs_incumbent": 1
+          },
+          "val_holdout_4": {
+            "n_contexts": 4,
+            "mean_gain": -0.006965,
+            "median_gain": 0.0,
+            "iqr_gain": 0.006965,
+            "q25_gain": -0.006965,
+            "q75_gain": 0.0,
+            "std_gain": 0.012063,
+            "cvar10_worst_decile_gain": -0.027859,
+            "worst_context_gain": -0.027859,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 3,
+            "losses_vs_incumbent": 1
+          },
+          "dope_disjoint": {
+            "n_contexts": 11,
+            "mean_gain": -0.006366,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.020132,
+            "cvar10_worst_decile_gain": -0.035015,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 10,
+            "losses_vs_incumbent": 1
+          },
+          "dope_in_train_gradient": {
+            "n_contexts": 9,
+            "mean_gain": -0.003095,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.008755,
+            "cvar10_worst_decile_gain": -0.027859,
+            "worst_context_gain": -0.027859,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 8,
+            "losses_vs_incumbent": 1
+          },
+          "inner70_unconstrained_all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.010648,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.033515,
+            "cvar10_worst_decile_gain": 0.0,
+            "worst_context_gain": 0.0,
+            "best_context_gain": 0.14964,
+            "wins_vs_incumbent": 4,
+            "ties_vs_incumbent": 16,
+            "losses_vs_incumbent": 0
+          },
+          "acceptance_rate_all_20": 0.2,
+          "promotions_count_all_20": 4,
+          "exact_persisted_kh30_contexts_out_of_20": 18,
+          "candidate_level_pass_rate": 0.05
+        },
+        "DOPE629_UNIFORM_SHUFFLE": {
+          "all_20": {
+            "n_contexts": 20,
+            "mean_gain": -0.004894,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.016126,
+            "cvar10_worst_decile_gain": -0.048944,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 18,
+            "losses_vs_incumbent": 2
+          },
+          "strict_train_16": {
+            "n_contexts": 16,
+            "mean_gain": -0.004377,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.016952,
+            "cvar10_worst_decile_gain": -0.035015,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 15,
+            "losses_vs_incumbent": 1
+          },
+          "val_holdout_4": {
+            "n_contexts": 4,
+            "mean_gain": -0.006965,
+            "median_gain": 0.0,
+            "iqr_gain": 0.006965,
+            "q25_gain": -0.006965,
+            "q75_gain": 0.0,
+            "std_gain": 0.012063,
+            "cvar10_worst_decile_gain": -0.027859,
+            "worst_context_gain": -0.027859,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 3,
+            "losses_vs_incumbent": 1
+          },
+          "dope_disjoint": {
+            "n_contexts": 11,
+            "mean_gain": -0.006366,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.020132,
+            "cvar10_worst_decile_gain": -0.035015,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 10,
+            "losses_vs_incumbent": 1
+          },
+          "dope_in_train_gradient": {
+            "n_contexts": 9,
+            "mean_gain": -0.003095,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.008755,
+            "cvar10_worst_decile_gain": -0.027859,
+            "worst_context_gain": -0.027859,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 8,
+            "losses_vs_incumbent": 1
+          },
+          "inner70_unconstrained_all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.010648,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.033515,
+            "cvar10_worst_decile_gain": 0.0,
+            "worst_context_gain": 0.0,
+            "best_context_gain": 0.14964,
+            "wins_vs_incumbent": 4,
+            "ties_vs_incumbent": 16,
+            "losses_vs_incumbent": 0
+          },
+          "acceptance_rate_all_20": 0.2,
+          "promotions_count_all_20": 4,
+          "exact_persisted_kh30_contexts_out_of_20": 18,
+          "candidate_level_pass_rate": 0.05
+        }
+      },
+      "G3_PAIRED_FOLD_HEURISTIC_GUARD": {
+        "DOPE629_SMART_SHUFFLE": {
+          "all_20": {
+            "n_contexts": 20,
+            "mean_gain": -0.003501,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": -0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.015263,
+            "cvar10_worst_decile_gain": -0.035015,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 19,
+            "losses_vs_incumbent": 1
+          },
+          "strict_train_16": {
+            "n_contexts": 16,
+            "mean_gain": -0.004377,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.016952,
+            "cvar10_worst_decile_gain": -0.035015,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 15,
+            "losses_vs_incumbent": 1
+          },
+          "val_holdout_4": {
+            "n_contexts": 4,
+            "mean_gain": 0.0,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.0,
+            "cvar10_worst_decile_gain": 0.0,
+            "worst_context_gain": 0.0,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 4,
+            "losses_vs_incumbent": 0
+          },
+          "dope_disjoint": {
+            "n_contexts": 11,
+            "mean_gain": -0.006366,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.020132,
+            "cvar10_worst_decile_gain": -0.035015,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 10,
+            "losses_vs_incumbent": 1
+          },
+          "dope_in_train_gradient": {
+            "n_contexts": 9,
+            "mean_gain": 0.0,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.0,
+            "cvar10_worst_decile_gain": 0.0,
+            "worst_context_gain": -0.0,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 9,
+            "losses_vs_incumbent": 0
+          },
+          "inner70_unconstrained_all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.007482,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.032613,
+            "cvar10_worst_decile_gain": 0.0,
+            "worst_context_gain": 0.0,
+            "best_context_gain": 0.14964,
+            "wins_vs_incumbent": 1,
+            "ties_vs_incumbent": 19,
+            "losses_vs_incumbent": 0
+          },
+          "acceptance_rate_all_20": 0.05,
+          "promotions_count_all_20": 1,
+          "exact_persisted_kh30_contexts_out_of_20": 20,
+          "candidate_level_pass_rate": 0.0125
+        },
+        "DOPE629_UNIFORM_SHUFFLE": {
+          "all_20": {
+            "n_contexts": 20,
+            "mean_gain": -0.003501,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": -0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.015263,
+            "cvar10_worst_decile_gain": -0.035015,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 19,
+            "losses_vs_incumbent": 1
+          },
+          "strict_train_16": {
+            "n_contexts": 16,
+            "mean_gain": -0.004377,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.016952,
+            "cvar10_worst_decile_gain": -0.035015,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 15,
+            "losses_vs_incumbent": 1
+          },
+          "val_holdout_4": {
+            "n_contexts": 4,
+            "mean_gain": 0.0,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.0,
+            "cvar10_worst_decile_gain": 0.0,
+            "worst_context_gain": 0.0,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 4,
+            "losses_vs_incumbent": 0
+          },
+          "dope_disjoint": {
+            "n_contexts": 11,
+            "mean_gain": -0.006366,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.020132,
+            "cvar10_worst_decile_gain": -0.035015,
+            "worst_context_gain": -0.07003,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 10,
+            "losses_vs_incumbent": 1
+          },
+          "dope_in_train_gradient": {
+            "n_contexts": 9,
+            "mean_gain": 0.0,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.0,
+            "cvar10_worst_decile_gain": 0.0,
+            "worst_context_gain": -0.0,
+            "best_context_gain": 0.0,
+            "wins_vs_incumbent": 0,
+            "ties_vs_incumbent": 9,
+            "losses_vs_incumbent": 0
+          },
+          "inner70_unconstrained_all_20": {
+            "n_contexts": 20,
+            "mean_gain": 0.007482,
+            "median_gain": 0.0,
+            "iqr_gain": 0.0,
+            "q25_gain": 0.0,
+            "q75_gain": 0.0,
+            "std_gain": 0.032613,
+            "cvar10_worst_decile_gain": 0.0,
+            "worst_context_gain": 0.0,
+            "best_context_gain": 0.14964,
+            "wins_vs_incumbent": 1,
+            "ties_vs_incumbent": 19,
+            "losses_vs_incumbent": 0
+          },
+          "acceptance_rate_all_20": 0.05,
+          "promotions_count_all_20": 1,
+          "exact_persisted_kh30_contexts_out_of_20": 20,
+          "candidate_level_pass_rate": 0.0125
+        }
+      }
+    },
+    "k7_cached_pool_replay_by_gate": {
+      "G0_LEGACY_BUGGY_RAW_FITNESS": {
+        "all_20": {
+          "n_contexts": 20,
+          "mean_gain": -0.0007,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.003051,
+          "cvar10_worst_decile_gain": -0.007,
+          "worst_context_gain": -0.014001,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 19,
+          "losses_vs_incumbent": 1
+        },
+        "strict_train_16": {
+          "n_contexts": 16,
+          "mean_gain": -0.000875,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.003389,
+          "cvar10_worst_decile_gain": -0.007,
+          "worst_context_gain": -0.014001,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 15,
+          "losses_vs_incumbent": 1
+        },
+        "val_holdout_4": {
+          "n_contexts": 4,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 4,
+          "losses_vs_incumbent": 0
+        },
+        "dope_disjoint": {
+          "n_contexts": 11,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 11,
+          "losses_vs_incumbent": 0
+        },
+        "dope_in_train_gradient": {
+          "n_contexts": 9,
+          "mean_gain": -0.001556,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0044,
+          "cvar10_worst_decile_gain": -0.014001,
+          "worst_context_gain": -0.014001,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 8,
+          "losses_vs_incumbent": 1
+        },
+        "acceptance_rate_all_20": 1.0,
+        "promotions_count_all_20": 20,
+        "candidate_level_pass_rate": 0.4217
+      },
+      "G1A_SCHEMA_KEY_FIX_ONLY": {
+        "all_20": {
+          "n_contexts": 20,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 20,
+          "losses_vs_incumbent": 0
+        },
+        "strict_train_16": {
+          "n_contexts": 16,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 16,
+          "losses_vs_incumbent": 0
+        },
+        "val_holdout_4": {
+          "n_contexts": 4,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 4,
+          "losses_vs_incumbent": 0
+        },
+        "dope_disjoint": {
+          "n_contexts": 11,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 11,
+          "losses_vs_incumbent": 0
+        },
+        "dope_in_train_gradient": {
+          "n_contexts": 9,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 9,
+          "losses_vs_incumbent": 0
+        },
+        "acceptance_rate_all_20": 1.0,
+        "promotions_count_all_20": 20,
+        "candidate_level_pass_rate": 0.3752
+      },
+      "G1B_SCHEMA_PLUS_CV_GATE_QUALIFICATION_ONLY": {
+        "all_20": {
+          "n_contexts": 20,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 20,
+          "losses_vs_incumbent": 0
+        },
+        "strict_train_16": {
+          "n_contexts": 16,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 16,
+          "losses_vs_incumbent": 0
+        },
+        "val_holdout_4": {
+          "n_contexts": 4,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 4,
+          "losses_vs_incumbent": 0
+        },
+        "dope_disjoint": {
+          "n_contexts": 11,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 11,
+          "losses_vs_incumbent": 0
+        },
+        "dope_in_train_gradient": {
+          "n_contexts": 9,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 9,
+          "losses_vs_incumbent": 0
+        },
+        "acceptance_rate_all_20": 1.0,
+        "promotions_count_all_20": 20,
+        "candidate_level_pass_rate": 0.3554
+      },
+      "G1C_SCHEMA_CV_GATE_AND_CONTINUOUS_7F_ONLY": {
+        "all_20": {
+          "n_contexts": 20,
+          "mean_gain": -0.0007,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.003051,
+          "cvar10_worst_decile_gain": -0.007,
+          "worst_context_gain": -0.014001,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 19,
+          "losses_vs_incumbent": 1
+        },
+        "strict_train_16": {
+          "n_contexts": 16,
+          "mean_gain": -0.000875,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.003389,
+          "cvar10_worst_decile_gain": -0.007,
+          "worst_context_gain": -0.014001,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 15,
+          "losses_vs_incumbent": 1
+        },
+        "val_holdout_4": {
+          "n_contexts": 4,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 4,
+          "losses_vs_incumbent": 0
+        },
+        "dope_disjoint": {
+          "n_contexts": 11,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 11,
+          "losses_vs_incumbent": 0
+        },
+        "dope_in_train_gradient": {
+          "n_contexts": 9,
+          "mean_gain": -0.001556,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0044,
+          "cvar10_worst_decile_gain": -0.014001,
+          "worst_context_gain": -0.014001,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 8,
+          "losses_vs_incumbent": 1
+        },
+        "acceptance_rate_all_20": 1.0,
+        "promotions_count_all_20": 20,
+        "candidate_level_pass_rate": 0.2986
+      },
+      "G2_PAIRED_FOLD_QUORUM_5OF7": {
+        "all_20": {
+          "n_contexts": 20,
+          "mean_gain": -0.000945,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.00412,
+          "cvar10_worst_decile_gain": -0.009451,
+          "worst_context_gain": -0.018903,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 19,
+          "losses_vs_incumbent": 1
+        },
+        "strict_train_16": {
+          "n_contexts": 16,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 16,
+          "losses_vs_incumbent": 0
+        },
+        "val_holdout_4": {
+          "n_contexts": 4,
+          "mean_gain": -0.004726,
+          "median_gain": 0.0,
+          "iqr_gain": 0.004726,
+          "q25_gain": -0.004726,
+          "q75_gain": 0.0,
+          "std_gain": 0.008185,
+          "cvar10_worst_decile_gain": -0.018903,
+          "worst_context_gain": -0.018903,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 3,
+          "losses_vs_incumbent": 1
+        },
+        "dope_disjoint": {
+          "n_contexts": 11,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 11,
+          "losses_vs_incumbent": 0
+        },
+        "dope_in_train_gradient": {
+          "n_contexts": 9,
+          "mean_gain": -0.0021,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.005941,
+          "cvar10_worst_decile_gain": -0.018903,
+          "worst_context_gain": -0.018903,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 8,
+          "losses_vs_incumbent": 1
+        },
+        "acceptance_rate_all_20": 0.8,
+        "promotions_count_all_20": 16,
+        "candidate_level_pass_rate": 0.148
+      },
+      "G3_PAIRED_FOLD_HEURISTIC_GUARD": {
+        "all_20": {
+          "n_contexts": 20,
+          "mean_gain": -0.000945,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.00412,
+          "cvar10_worst_decile_gain": -0.009451,
+          "worst_context_gain": -0.018903,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 19,
+          "losses_vs_incumbent": 1
+        },
+        "strict_train_16": {
+          "n_contexts": 16,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 16,
+          "losses_vs_incumbent": 0
+        },
+        "val_holdout_4": {
+          "n_contexts": 4,
+          "mean_gain": -0.004726,
+          "median_gain": 0.0,
+          "iqr_gain": 0.004726,
+          "q25_gain": -0.004726,
+          "q75_gain": 0.0,
+          "std_gain": 0.008185,
+          "cvar10_worst_decile_gain": -0.018903,
+          "worst_context_gain": -0.018903,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 3,
+          "losses_vs_incumbent": 1
+        },
+        "dope_disjoint": {
+          "n_contexts": 11,
+          "mean_gain": 0.0,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.0,
+          "cvar10_worst_decile_gain": 0.0,
+          "worst_context_gain": 0.0,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 11,
+          "losses_vs_incumbent": 0
+        },
+        "dope_in_train_gradient": {
+          "n_contexts": 9,
+          "mean_gain": -0.0021,
+          "median_gain": 0.0,
+          "iqr_gain": 0.0,
+          "q25_gain": 0.0,
+          "q75_gain": 0.0,
+          "std_gain": 0.005941,
+          "cvar10_worst_decile_gain": -0.018903,
+          "worst_context_gain": -0.018903,
+          "best_context_gain": 0.0,
+          "wins_vs_incumbent": 0,
+          "ties_vs_incumbent": 8,
+          "losses_vs_incumbent": 1
+        },
+        "acceptance_rate_all_20": 0.35,
+        "promotions_count_all_20": 7,
+        "candidate_level_pass_rate": 0.0835
+      }
+    },
+    "h37_bug_attribution_rows": [
+      {
+        "cid": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+        "short_cid": "002f7ead6468",
+        "family_id": "fam-dd54715b0bb4a21e2eab98623c1062286cce926a8040be9a2290b7ca442c9aea",
+        "stage2_role": "strict_train_16",
+        "incumbent_raw_7fold_fitness": -0.753455,
+        "incumbent_unconstrained_7fold_fitness": -0.753455,
+        "incumbent_cv_gate_passed": true,
+        "h37_first_party_c2_inner70_fitness": -0.758105,
+        "h37_first_party_c2_hold30_gain": -0.005151,
+        "h37_conditioned_c2_hold30_gain": -0.011063,
+        "h37_shared_c2_conditioned_hold30_gain": 0.0,
+        "hypothesized_mechanism": "Hypothesis Bug 1 & 3b: Inactive std_fold=0.20 shrinkage & unpaired fold variance spike"
+      },
+      {
+        "cid": "007781fa4cddf091367c1397a21295460daa418f8ac88284bb01ddfb4653eb2a",
+        "short_cid": "007781fa4cdd",
+        "family_id": "fam-f72ced8b1d81696bc004de89b364b20147896839136102d0e5241e700e32b37b",
+        "stage2_role": "strict_train_16",
+        "incumbent_raw_7fold_fitness": -0.777783,
+        "incumbent_unconstrained_7fold_fitness": -0.777783,
+        "incumbent_cv_gate_passed": true,
+        "h37_first_party_c2_inner70_fitness": -0.82324,
+        "h37_first_party_c2_hold30_gain": -0.017599,
+        "h37_conditioned_c2_hold30_gain": -0.058531,
+        "h37_shared_c2_conditioned_hold30_gain": -0.058531,
+        "hypothesized_mechanism": "Hypothesis Bug 1 & 3b: Inactive std_fold=0.20 shrinkage & unpaired fold variance spike"
+      },
+      {
+        "cid": "01d6b49328c17bc4fbf7e1252f29178de11a8b95cb9a6a5fb3dfac19d56b7fd3",
+        "short_cid": "01d6b49328c1",
+        "family_id": "fam-daf8cca3e42984804cb59d12b9b7802545644abef920443b2088c24cacb25ab5",
+        "stage2_role": "strict_train_16",
+        "incumbent_raw_7fold_fitness": -0.41319,
+        "incumbent_unconstrained_7fold_fitness": -0.41319,
+        "incumbent_cv_gate_passed": true,
+        "h37_first_party_c2_inner70_fitness": -0.416287,
+        "h37_first_party_c2_hold30_gain": -0.005492,
+        "h37_conditioned_c2_hold30_gain": 0.0,
+        "h37_shared_c2_conditioned_hold30_gain": -0.005492,
+        "hypothesized_mechanism": "Hypothesis Bug 1 & 3b: Inactive std_fold=0.20 shrinkage & unpaired fold variance spike"
+      },
+      {
+        "cid": "022382cdba780070fe2c689be00cbd84db37f9a349ca3b028bd50da019305447",
+        "short_cid": "022382cdba78",
+        "family_id": "fam-39432f3da372099de889463a6ef563dabfed66f25094f9f7dfe91d622b435c2e",
+        "stage2_role": "strict_train_16",
+        "incumbent_raw_7fold_fitness": -5.780321,
+        "incumbent_unconstrained_7fold_fitness": -5.780321,
+        "incumbent_cv_gate_passed": true,
+        "h37_first_party_c2_inner70_fitness": -6.039111,
+        "h37_first_party_c2_hold30_gain": -0.973055,
+        "h37_conditioned_c2_hold30_gain": -0.792186,
+        "h37_shared_c2_conditioned_hold30_gain": 0.0,
+        "hypothesized_mechanism": "Hypothesis Bug 1 & 3b: Inactive std_fold=0.20 shrinkage & unpaired fold variance spike"
+      },
+      {
+        "cid": "022aac25d53a30ab3ec973a1eca35585d26ebecca2f989d562fa05032b1db703",
+        "short_cid": "022aac25d53a",
+        "family_id": "fam-041175e1cd532c7b17b3341dd5d8c580f8fc295d6b5fe24dcd4ffde542a2cb8f",
+        "stage2_role": "strict_train_16",
+        "incumbent_raw_7fold_fitness": -0.768892,
+        "incumbent_unconstrained_7fold_fitness": -0.768892,
+        "incumbent_cv_gate_passed": true,
+        "h37_first_party_c2_inner70_fitness": -0.768892,
+        "h37_first_party_c2_hold30_gain": 0.0,
+        "h37_conditioned_c2_hold30_gain": -0.012803,
+        "h37_shared_c2_conditioned_hold30_gain": 0.0,
+        "hypothesized_mechanism": "Hypothesis Bug 1 & 3b: Inactive std_fold=0.20 shrinkage & unpaired fold variance spike"
+      },
+      {
+        "cid": "025eb526cc88c46b455c9e34f444d0f7c517795835112e25ab708f3ed0856d30",
+        "short_cid": "025eb526cc88",
+        "family_id": "fam-d95734c761e0f763d53f134ff916029df0fc5ab8abdfe018bf95291dae6f8efa",
+        "stage2_role": "strict_train_16",
+        "incumbent_raw_7fold_fitness": -0.180189,
+        "incumbent_unconstrained_7fold_fitness": -0.180189,
+        "incumbent_cv_gate_passed": true,
+        "h37_first_party_c2_inner70_fitness": -0.183104,
+        "h37_first_party_c2_hold30_gain": 0.003715,
+        "h37_conditioned_c2_hold30_gain": -0.020837,
+        "h37_shared_c2_conditioned_hold30_gain": -0.020837,
+        "hypothesized_mechanism": "Hypothesis Bug 1 & 3b: Inactive std_fold=0.20 shrinkage & unpaired fold variance spike"
+      },
+      {
+        "cid": "0386a636452f0667c127cfd1f56f0e15c1c5c330c587a13e7725805a5600bcfc",
+        "short_cid": "0386a636452f",
+        "family_id": "fam-7ffc5b26f669485d5887599c3f159ad4a8cb5af844c8dd090e058b58c46eb672",
+        "stage2_role": "strict_train_16",
+        "incumbent_raw_7fold_fitness": -2.316768,
+        "incumbent_unconstrained_7fold_fitness": -2.316768,
+        "incumbent_cv_gate_passed": true,
+        "h37_first_party_c2_inner70_fitness": -3.001543,
+        "h37_first_party_c2_hold30_gain": 0.841021,
+        "h37_conditioned_c2_hold30_gain": 0.8018,
+        "h37_shared_c2_conditioned_hold30_gain": 0.915847,
+        "hypothesized_mechanism": "Observed multi-fold inner70 & holdout30 improvement"
+      },
+      {
+        "cid": "03c4d094910cbd98e722e742489bbb41331bd466ff3c75ada486831e9ffd3808",
+        "short_cid": "03c4d094910c",
+        "family_id": "fam-ebdf0bb10b87cf025f2efbbd2c730fcf375393d3d7fb93d95c42562d927f53df",
+        "stage2_role": "strict_train_16",
+        "incumbent_raw_7fold_fitness": 101.431062,
+        "incumbent_unconstrained_7fold_fitness": 0.119214,
+        "incumbent_cv_gate_passed": false,
+        "h37_first_party_c2_inner70_fitness": 100.0138,
+        "h37_first_party_c2_hold30_gain": -0.609072,
+        "h37_conditioned_c2_hold30_gain": -0.609072,
+        "h37_shared_c2_conditioned_hold30_gain": -0.609072,
+        "hypothesized_mechanism": "Hypothesis Bug 2: Unqualified cv_gate_passed==False challenger beat >=100.0 incumbent"
+      },
+      {
+        "cid": "03da6aaf98b8cf5ddfc22effcff75e1759b13f7ed2d8af4df3c745faffbf5f9e",
+        "short_cid": "03da6aaf98b8",
+        "family_id": "fam-6e1e9c4fc764546aec8e4716742e6d12536a961b77ad6ed7b0dcf1af3d057071",
+        "stage2_role": "strict_train_16",
+        "incumbent_raw_7fold_fitness": -2.191925,
+        "incumbent_unconstrained_7fold_fitness": -2.191925,
+        "incumbent_cv_gate_passed": true,
+        "h37_first_party_c2_inner70_fitness": -2.258282,
+        "h37_first_party_c2_hold30_gain": -0.117012,
+        "h37_conditioned_c2_hold30_gain": -0.016773,
+        "h37_shared_c2_conditioned_hold30_gain": -0.117012,
+        "hypothesized_mechanism": "Hypothesis Bug 1 & 3b: Inactive std_fold=0.20 shrinkage & unpaired fold variance spike"
+      },
+      {
+        "cid": "03fe267990a5ed2d0f9b8a6baa4895d406a49e9babb5bdccbd9845d92e1b418f",
+        "short_cid": "03fe267990a5",
+        "family_id": "fam-6dc333006592f3999732f14ab3f219a15fc2a84ec031234cacb2492e4eb74840",
+        "stage2_role": "strict_train_16",
+        "incumbent_raw_7fold_fitness": -0.19771,
+        "incumbent_unconstrained_7fold_fitness": -0.19771,
+        "incumbent_cv_gate_passed": true,
+        "h37_first_party_c2_inner70_fitness": -0.197933,
+        "h37_first_party_c2_hold30_gain": 0.018892,
+        "h37_conditioned_c2_hold30_gain": 0.0,
+        "h37_shared_c2_conditioned_hold30_gain": 0.018892,
+        "hypothesized_mechanism": "Observed multi-fold inner70 & holdout30 improvement"
+      },
+      {
+        "cid": "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da",
+        "short_cid": "05264057bc22",
+        "family_id": "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+        "stage2_role": "dl_val_4",
+        "incumbent_raw_7fold_fitness": -0.389395,
+        "incumbent_unconstrained_7fold_fitness": -0.389395,
+        "incumbent_cv_gate_passed": true,
+        "h37_first_party_c2_inner70_fitness": -0.418404,
+        "h37_first_party_c2_hold30_gain": -0.051469,
+        "h37_conditioned_c2_hold30_gain": -0.010695,
+        "h37_shared_c2_conditioned_hold30_gain": -0.010695,
+        "hypothesized_mechanism": "Hypothesis Bug 1 & 3b: Inactive std_fold=0.20 shrinkage & unpaired fold variance spike"
+      },
+      {
+        "cid": "087f69944563f778a91d99894dbba6a9cdd339f5d0a93b4e58a4f0003765d920",
+        "short_cid": "087f69944563",
+        "family_id": "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02",
+        "stage2_role": "dl_val_4",
+        "incumbent_raw_7fold_fitness": 100.549623,
+        "incumbent_unconstrained_7fold_fitness": -0.45686,
+        "incumbent_cv_gate_passed": false,
+        "h37_first_party_c2_inner70_fitness": -0.265912,
+        "h37_first_party_c2_hold30_gain": -0.184077,
+        "h37_conditioned_c2_hold30_gain": -0.184077,
+        "h37_shared_c2_conditioned_hold30_gain": -0.184077,
+        "hypothesized_mechanism": "Hypothesis Bug 3a: Discontinuous +100.0 cliff challenger had worse continuous 7-fold mean than incumbent"
+      },
+      {
+        "cid": "0cd637de21a92fef5b8f0ab923205bc19c60d1afaf84d22cdff9a7fc933d4826",
+        "short_cid": "0cd637de21a9",
+        "family_id": "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345",
+        "stage2_role": "dl_val_4",
+        "incumbent_raw_7fold_fitness": 100.359455,
+        "incumbent_unconstrained_7fold_fitness": -0.029926,
+        "incumbent_cv_gate_passed": false,
+        "h37_first_party_c2_inner70_fitness": 100.0,
+        "h37_first_party_c2_hold30_gain": -0.227199,
+        "h37_conditioned_c2_hold30_gain": -0.424861,
+        "h37_shared_c2_conditioned_hold30_gain": -0.227199,
+        "hypothesized_mechanism": "Hypothesis Bug 2: Unqualified cv_gate_passed==False challenger beat >=100.0 incumbent"
+      }
+    ]
+  },
+  "part_b_smart_landmark_and_spectrum_svd_screen": {
+    "selected_first_party_svd_config": "F2_SMART_LM80_STD_SVD32",
+    "svd_screen_8_configs": {
+      "F0_BASELINE_STD_SVD32_LM48": {
+        "config_name": "F0_BASELINE_STD_SVD32_LM48",
+        "active_blocks": [
+          "M0",
+          "M1",
+          "M2",
+          "M3"
+        ],
+        "checkpoint_free_first_party": false,
+        "spectrum_alpha": 1.0,
+        "k_svd": 32,
+        "use_smart_landmarks_80d": false,
+        "strict_train_881_oof_spearman_rho": 0.483697,
+        "strict_train_881_oof_top1_gain_over_median": 0.919101,
+        "st_val_gate_32_mean_top6_gain": 0.812044,
+        "st_val_gate_32_mean_spearman_rho": 0.489945,
+        "svd_metadata": {
+          "active_block_indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "spectrum_alpha": 1.0,
+          "k_svd": 32,
+          "use_smart_landmarks": false,
+          "lm_smart_meta": {
+            "raw_dim": 48,
+            "engineered_contrast_dim": 32,
+            "total_dim": 80,
+            "fitted_strictly_on_train_count": 881
+          },
+          "m0_svd_meta": {
+            "input_dim": 152,
+            "active_input_cols": 150,
+            "k_use": 32,
+            "spectrum_alpha": 1.0,
+            "explained_variance_ratio_train881": 0.791499,
+            "top5_singular_values_train881": [
+              129.7068,
+              110.9196,
+              92.043,
+              81.5617,
+              76.5647
+            ]
+          },
+          "m1_svd_meta": {
+            "input_dim": 32,
+            "k_use": 32,
+            "spectrum_alpha": 1.0
+          },
+          "m2_svd_meta": {
+            "input_dim": 629,
+            "active_input_cols": 560,
+            "k_use": 32,
+            "spectrum_alpha": 1.0,
+            "explained_variance_ratio_train881": 0.957266,
+            "top5_singular_values_train881": [
+              396.9677,
+              284.3195,
+              223.0583,
+              183.9232,
+              156.6497
+            ]
+          },
+          "m3_svd_meta": {
+            "input_dim": 256,
+            "active_input_cols": 252,
+            "k_use": 16,
+            "spectrum_alpha": 1.0,
+            "explained_variance_ratio_train881": 0.766805,
+            "top5_singular_values_train881": [
+              170.3885,
+              142.748,
+              121.12,
+              114.6032,
+              93.8752
+            ]
+          }
+        }
+      },
+      "F1_WHITENED_SVD32_LM48": {
+        "config_name": "F1_WHITENED_SVD32_LM48",
+        "active_blocks": [
+          "M0",
+          "M1",
+          "M2",
+          "M3"
+        ],
+        "checkpoint_free_first_party": false,
+        "spectrum_alpha": 0.0,
+        "k_svd": 32,
+        "use_smart_landmarks_80d": false,
+        "strict_train_881_oof_spearman_rho": 0.478825,
+        "strict_train_881_oof_top1_gain_over_median": 0.917862,
+        "st_val_gate_32_mean_top6_gain": 0.81507,
+        "st_val_gate_32_mean_spearman_rho": 0.487089,
+        "svd_metadata": {
+          "active_block_indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "spectrum_alpha": 0.0,
+          "k_svd": 32,
+          "use_smart_landmarks": false,
+          "lm_smart_meta": {
+            "raw_dim": 48,
+            "engineered_contrast_dim": 32,
+            "total_dim": 80,
+            "fitted_strictly_on_train_count": 881
+          },
+          "m0_svd_meta": {
+            "input_dim": 152,
+            "active_input_cols": 150,
+            "k_use": 32,
+            "spectrum_alpha": 0.0,
+            "explained_variance_ratio_train881": 0.791499,
+            "top5_singular_values_train881": [
+              129.7068,
+              110.9196,
+              92.043,
+              81.5617,
+              76.5647
+            ]
+          },
+          "m1_svd_meta": {
+            "input_dim": 32,
+            "k_use": 32,
+            "spectrum_alpha": 1.0
+          },
+          "m2_svd_meta": {
+            "input_dim": 629,
+            "active_input_cols": 560,
+            "k_use": 32,
+            "spectrum_alpha": 0.0,
+            "explained_variance_ratio_train881": 0.957266,
+            "top5_singular_values_train881": [
+              396.9677,
+              284.3195,
+              223.0583,
+              183.9232,
+              156.6497
+            ]
+          },
+          "m3_svd_meta": {
+            "input_dim": 256,
+            "active_input_cols": 252,
+            "k_use": 16,
+            "spectrum_alpha": 0.0,
+            "explained_variance_ratio_train881": 0.766805,
+            "top5_singular_values_train881": [
+              170.3885,
+              142.748,
+              121.12,
+              114.6032,
+              93.8752
+            ]
+          }
+        }
+      },
+      "F2_SMART_LM80_STD_SVD32": {
+        "config_name": "F2_SMART_LM80_STD_SVD32",
+        "active_blocks": [
+          "M0",
+          "M1",
+          "M2",
+          "M3"
+        ],
+        "checkpoint_free_first_party": false,
+        "spectrum_alpha": 1.0,
+        "k_svd": 32,
+        "use_smart_landmarks_80d": true,
+        "strict_train_881_oof_spearman_rho": 0.485124,
+        "strict_train_881_oof_top1_gain_over_median": 0.925949,
+        "st_val_gate_32_mean_top6_gain": 0.851789,
+        "st_val_gate_32_mean_spearman_rho": 0.484546,
+        "svd_metadata": {
+          "active_block_indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "spectrum_alpha": 1.0,
+          "k_svd": 32,
+          "use_smart_landmarks": true,
+          "lm_smart_meta": {
+            "raw_dim": 48,
+            "engineered_contrast_dim": 32,
+            "total_dim": 80,
+            "fitted_strictly_on_train_count": 881
+          },
+          "m0_svd_meta": {
+            "input_dim": 184,
+            "active_input_cols": 182,
+            "k_use": 32,
+            "spectrum_alpha": 1.0,
+            "explained_variance_ratio_train881": 0.779712,
+            "top5_singular_values_train881": [
+              136.7354,
+              113.4725,
+              96.7859,
+              86.2408,
+              79.704
+            ]
+          },
+          "m1_svd_meta": {
+            "input_dim": 48,
+            "active_input_cols": 48,
+            "k_use": 32,
+            "spectrum_alpha": 1.0,
+            "explained_variance_ratio_train881": 0.982834,
+            "top5_singular_values_train881": [
+              99.6516,
+              61.9323,
+              47.6813,
+              42.9013,
+              41.2514
+            ]
+          },
+          "m2_svd_meta": {
+            "input_dim": 629,
+            "active_input_cols": 560,
+            "k_use": 32,
+            "spectrum_alpha": 1.0,
+            "explained_variance_ratio_train881": 0.957266,
+            "top5_singular_values_train881": [
+              396.9677,
+              284.3195,
+              223.0583,
+              183.9232,
+              156.6497
+            ]
+          },
+          "m3_svd_meta": {
+            "input_dim": 256,
+            "active_input_cols": 252,
+            "k_use": 16,
+            "spectrum_alpha": 1.0,
+            "explained_variance_ratio_train881": 0.766805,
+            "top5_singular_values_train881": [
+              170.3885,
+              142.748,
+              121.12,
+              114.6032,
+              93.8752
+            ]
+          }
+        }
+      },
+      "F3_SMART_LM80_SPECTRUM_ALPHA065_SVD32": {
+        "config_name": "F3_SMART_LM80_SPECTRUM_ALPHA065_SVD32",
+        "active_blocks": [
+          "M0",
+          "M1",
+          "M2",
+          "M3"
+        ],
+        "checkpoint_free_first_party": false,
+        "spectrum_alpha": 0.65,
+        "k_svd": 32,
+        "use_smart_landmarks_80d": true,
+        "strict_train_881_oof_spearman_rho": 0.483197,
+        "strict_train_881_oof_top1_gain_over_median": 0.921328,
+        "st_val_gate_32_mean_top6_gain": 0.850435,
+        "st_val_gate_32_mean_spearman_rho": 0.483864,
+        "svd_metadata": {
+          "active_block_indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "spectrum_alpha": 0.65,
+          "k_svd": 32,
+          "use_smart_landmarks": true,
+          "lm_smart_meta": {
+            "raw_dim": 48,
+            "engineered_contrast_dim": 32,
+            "total_dim": 80,
+            "fitted_strictly_on_train_count": 881
+          },
+          "m0_svd_meta": {
+            "input_dim": 184,
+            "active_input_cols": 182,
+            "k_use": 32,
+            "spectrum_alpha": 0.65,
+            "explained_variance_ratio_train881": 0.779712,
+            "top5_singular_values_train881": [
+              136.7354,
+              113.4725,
+              96.7859,
+              86.2408,
+              79.704
+            ]
+          },
+          "m1_svd_meta": {
+            "input_dim": 48,
+            "active_input_cols": 48,
+            "k_use": 32,
+            "spectrum_alpha": 0.65,
+            "explained_variance_ratio_train881": 0.982834,
+            "top5_singular_values_train881": [
+              99.6516,
+              61.9323,
+              47.6813,
+              42.9013,
+              41.2514
+            ]
+          },
+          "m2_svd_meta": {
+            "input_dim": 629,
+            "active_input_cols": 560,
+            "k_use": 32,
+            "spectrum_alpha": 0.65,
+            "explained_variance_ratio_train881": 0.957266,
+            "top5_singular_values_train881": [
+              396.9677,
+              284.3195,
+              223.0583,
+              183.9232,
+              156.6497
+            ]
+          },
+          "m3_svd_meta": {
+            "input_dim": 256,
+            "active_input_cols": 252,
+            "k_use": 16,
+            "spectrum_alpha": 0.65,
+            "explained_variance_ratio_train881": 0.766805,
+            "top5_singular_values_train881": [
+              170.3885,
+              142.748,
+              121.12,
+              114.6032,
+              93.8752
+            ]
+          }
+        }
+      },
+      "F4_SMART_LM80_SQRT_SPECTRUM_ALPHA050_SVD32": {
+        "config_name": "F4_SMART_LM80_SQRT_SPECTRUM_ALPHA050_SVD32",
+        "active_blocks": [
+          "M0",
+          "M1",
+          "M2",
+          "M3"
+        ],
+        "checkpoint_free_first_party": false,
+        "spectrum_alpha": 0.5,
+        "k_svd": 32,
+        "use_smart_landmarks_80d": true,
+        "strict_train_881_oof_spearman_rho": 0.482049,
+        "strict_train_881_oof_top1_gain_over_median": 0.920148,
+        "st_val_gate_32_mean_top6_gain": 0.850491,
+        "st_val_gate_32_mean_spearman_rho": 0.483503,
+        "svd_metadata": {
+          "active_block_indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "spectrum_alpha": 0.5,
+          "k_svd": 32,
+          "use_smart_landmarks": true,
+          "lm_smart_meta": {
+            "raw_dim": 48,
+            "engineered_contrast_dim": 32,
+            "total_dim": 80,
+            "fitted_strictly_on_train_count": 881
+          },
+          "m0_svd_meta": {
+            "input_dim": 184,
+            "active_input_cols": 182,
+            "k_use": 32,
+            "spectrum_alpha": 0.5,
+            "explained_variance_ratio_train881": 0.779712,
+            "top5_singular_values_train881": [
+              136.7354,
+              113.4725,
+              96.7859,
+              86.2408,
+              79.704
+            ]
+          },
+          "m1_svd_meta": {
+            "input_dim": 48,
+            "active_input_cols": 48,
+            "k_use": 32,
+            "spectrum_alpha": 0.5,
+            "explained_variance_ratio_train881": 0.982834,
+            "top5_singular_values_train881": [
+              99.6516,
+              61.9323,
+              47.6813,
+              42.9013,
+              41.2514
+            ]
+          },
+          "m2_svd_meta": {
+            "input_dim": 629,
+            "active_input_cols": 560,
+            "k_use": 32,
+            "spectrum_alpha": 0.5,
+            "explained_variance_ratio_train881": 0.957266,
+            "top5_singular_values_train881": [
+              396.9677,
+              284.3195,
+              223.0583,
+              183.9232,
+              156.6497
+            ]
+          },
+          "m3_svd_meta": {
+            "input_dim": 256,
+            "active_input_cols": 252,
+            "k_use": 16,
+            "spectrum_alpha": 0.5,
+            "explained_variance_ratio_train881": 0.766805,
+            "top5_singular_values_train881": [
+              170.3885,
+              142.748,
+              121.12,
+              114.6032,
+              93.8752
+            ]
+          }
+        }
+      },
+      "F5_SMART_LM80_SPECTRUM_ALPHA065_SVD24": {
+        "config_name": "F5_SMART_LM80_SPECTRUM_ALPHA065_SVD24",
+        "active_blocks": [
+          "M0",
+          "M1",
+          "M2",
+          "M3"
+        ],
+        "checkpoint_free_first_party": false,
+        "spectrum_alpha": 0.65,
+        "k_svd": 24,
+        "use_smart_landmarks_80d": true,
+        "strict_train_881_oof_spearman_rho": 0.483387,
+        "strict_train_881_oof_top1_gain_over_median": 0.923246,
+        "st_val_gate_32_mean_top6_gain": 0.853209,
+        "st_val_gate_32_mean_spearman_rho": 0.489013,
+        "svd_metadata": {
+          "active_block_indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "spectrum_alpha": 0.65,
+          "k_svd": 24,
+          "use_smart_landmarks": true,
+          "lm_smart_meta": {
+            "raw_dim": 48,
+            "engineered_contrast_dim": 32,
+            "total_dim": 80,
+            "fitted_strictly_on_train_count": 881
+          },
+          "m0_svd_meta": {
+            "input_dim": 184,
+            "active_input_cols": 182,
+            "k_use": 24,
+            "spectrum_alpha": 0.65,
+            "explained_variance_ratio_train881": 0.698827,
+            "top5_singular_values_train881": [
+              136.7354,
+              113.4725,
+              96.7859,
+              86.2408,
+              79.704
+            ]
+          },
+          "m1_svd_meta": {
+            "input_dim": 48,
+            "active_input_cols": 48,
+            "k_use": 24,
+            "spectrum_alpha": 0.65,
+            "explained_variance_ratio_train881": 0.919823,
+            "top5_singular_values_train881": [
+              99.6516,
+              61.9323,
+              47.6813,
+              42.9013,
+              41.2514
+            ]
+          },
+          "m2_svd_meta": {
+            "input_dim": 629,
+            "active_input_cols": 560,
+            "k_use": 24,
+            "spectrum_alpha": 0.65,
+            "explained_variance_ratio_train881": 0.93867,
+            "top5_singular_values_train881": [
+              396.9677,
+              284.3195,
+              223.0583,
+              183.9232,
+              156.6497
+            ]
+          },
+          "m3_svd_meta": {
+            "input_dim": 256,
+            "active_input_cols": 252,
+            "k_use": 12,
+            "spectrum_alpha": 0.65,
+            "explained_variance_ratio_train881": 0.709193,
+            "top5_singular_values_train881": [
+              170.3885,
+              142.748,
+              121.12,
+              114.6032,
+              93.8752
+            ]
+          }
+        }
+      },
+      "F6_SMART_LM80_SPECTRUM_ALPHA065_SVD16": {
+        "config_name": "F6_SMART_LM80_SPECTRUM_ALPHA065_SVD16",
+        "active_blocks": [
+          "M0",
+          "M1",
+          "M2",
+          "M3"
+        ],
+        "checkpoint_free_first_party": false,
+        "spectrum_alpha": 0.65,
+        "k_svd": 16,
+        "use_smart_landmarks_80d": true,
+        "strict_train_881_oof_spearman_rho": 0.481214,
+        "strict_train_881_oof_top1_gain_over_median": 0.92863,
+        "st_val_gate_32_mean_top6_gain": 0.807806,
+        "st_val_gate_32_mean_spearman_rho": 0.488928,
+        "svd_metadata": {
+          "active_block_indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "spectrum_alpha": 0.65,
+          "k_svd": 16,
+          "use_smart_landmarks": true,
+          "lm_smart_meta": {
+            "raw_dim": 48,
+            "engineered_contrast_dim": 32,
+            "total_dim": 80,
+            "fitted_strictly_on_train_count": 881
+          },
+          "m0_svd_meta": {
+            "input_dim": 184,
+            "active_input_cols": 182,
+            "k_use": 16,
+            "spectrum_alpha": 0.65,
+            "explained_variance_ratio_train881": 0.593754,
+            "top5_singular_values_train881": [
+              136.7354,
+              113.4725,
+              96.7859,
+              86.2408,
+              79.704
+            ]
+          },
+          "m1_svd_meta": {
+            "input_dim": 48,
+            "active_input_cols": 48,
+            "k_use": 16,
+            "spectrum_alpha": 0.65,
+            "explained_variance_ratio_train881": 0.762835,
+            "top5_singular_values_train881": [
+              99.6516,
+              61.9323,
+              47.6813,
+              42.9013,
+              41.2514
+            ]
+          },
+          "m2_svd_meta": {
+            "input_dim": 629,
+            "active_input_cols": 560,
+            "k_use": 16,
+            "spectrum_alpha": 0.65,
+            "explained_variance_ratio_train881": 0.903607,
+            "top5_singular_values_train881": [
+              396.9677,
+              284.3195,
+              223.0583,
+              183.9232,
+              156.6497
+            ]
+          },
+          "m3_svd_meta": {
+            "input_dim": 256,
+            "active_input_cols": 252,
+            "k_use": 8,
+            "spectrum_alpha": 0.65,
+            "explained_variance_ratio_train881": 0.616426,
+            "top5_singular_values_train881": [
+              170.3885,
+              142.748,
+              121.12,
+              114.6032,
+              93.8752
+            ]
+          }
+        }
+      },
+      "F7_ANALYTIC_NO_CKPT_M0_M1_SMART_LM80_ALPHA065": {
+        "config_name": "F7_ANALYTIC_NO_CKPT_M0_M1_SMART_LM80_ALPHA065",
+        "active_blocks": [
+          "M0",
+          "M1"
+        ],
+        "checkpoint_free_first_party": true,
+        "spectrum_alpha": 0.65,
+        "k_svd": 32,
+        "use_smart_landmarks_80d": true,
+        "strict_train_881_oof_spearman_rho": 0.478719,
+        "strict_train_881_oof_top1_gain_over_median": 0.899997,
+        "st_val_gate_32_mean_top6_gain": 0.85059,
+        "st_val_gate_32_mean_spearman_rho": 0.47845,
+        "svd_metadata": {
+          "active_block_indices": [
+            0,
+            1
+          ],
+          "spectrum_alpha": 0.65,
+          "k_svd": 32,
+          "use_smart_landmarks": true,
+          "lm_smart_meta": {
+            "raw_dim": 48,
+            "engineered_contrast_dim": 32,
+            "total_dim": 80,
+            "fitted_strictly_on_train_count": 881
+          },
+          "m0_svd_meta": {
+            "input_dim": 184,
+            "active_input_cols": 182,
+            "k_use": 32,
+            "spectrum_alpha": 0.65,
+            "explained_variance_ratio_train881": 0.779712,
+            "top5_singular_values_train881": [
+              136.7354,
+              113.4725,
+              96.7859,
+              86.2408,
+              79.704
+            ]
+          },
+          "m1_svd_meta": {
+            "input_dim": 48,
+            "active_input_cols": 48,
+            "k_use": 32,
+            "spectrum_alpha": 0.65,
+            "explained_variance_ratio_train881": 0.982834,
+            "top5_singular_values_train881": [
+              99.6516,
+              61.9323,
+              47.6813,
+              42.9013,
+              41.2514
+            ]
+          },
+          "m2_svd_meta": {
+            "input_dim": 629,
+            "active_input_cols": 560,
+            "k_use": 32,
+            "spectrum_alpha": 0.65,
+            "explained_variance_ratio_train881": 0.957266,
+            "top5_singular_values_train881": [
+              396.9677,
+              284.3195,
+              223.0583,
+              183.9232,
+              156.6497
+            ]
+          },
+          "m3_svd_meta": {
+            "input_dim": 256,
+            "active_input_cols": 252,
+            "k_use": 16,
+            "spectrum_alpha": 0.65,
+            "explained_variance_ratio_train881": 0.766805,
+            "top5_singular_values_train881": [
+              170.3885,
+              142.748,
+              121.12,
+              114.6032,
+              93.8752
+            ]
+          }
+        }
+      }
+    },
+    "round0_neural_training_telemetry": {
+      "SMART_SVD_FIRST_PARTY_COMPLETE": {
+        "arm_name": "SMART_SVD_FIRST_PARTY_COMPLETE",
+        "n_micro_steps_executed": 64,
+        "learning_rate_initial": 0.00075,
+        "initial_step_loss": 14.212051,
+        "final_step_loss": 20.489967,
+        "mean_grad_norm": 5.495856,
+        "max_grad_norm": 19.137869,
+        "final_step_l2_param_diff": 2.226383,
+        "selected_ckpt_l2_param_diff": 1.425666,
+        "selected_step": 32,
+        "best_st_val_gate_32_weighted_utility": -1.738844,
+        "checkpoint_curve": [
+          {
+            "step": 16,
+            "mean_train_loss_last_8": 32.225421,
+            "mean_grad_norm_last_8": 7.598627,
+            "st_val_gate_32_weighted_utility": -1.735677
+          },
+          {
+            "step": 32,
+            "mean_train_loss_last_8": 25.833986,
+            "mean_grad_norm_last_8": 3.242406,
+            "st_val_gate_32_weighted_utility": -1.738844
+          },
+          {
+            "step": 48,
+            "mean_train_loss_last_8": 33.91114,
+            "mean_grad_norm_last_8": 8.323567,
+            "st_val_gate_32_weighted_utility": -1.736298
+          },
+          {
+            "step": 64,
+            "mean_train_loss_last_8": 24.403829,
+            "mean_grad_norm_last_8": 5.804278,
+            "st_val_gate_32_weighted_utility": -1.736175
+          }
+        ],
+        "step_losses": [
+          14.212051,
+          45.897148,
+          23.408268,
+          80.719978,
+          14.511326,
+          24.184967,
+          31.22637,
+          32.881962,
+          45.513481,
+          35.722038,
+          7.791555,
+          55.659035,
+          30.068977,
+          23.720119,
+          31.453796,
+          27.874369,
+          35.735172,
+          31.725222,
+          23.687033,
+          14.730839,
+          15.448489,
+          22.26882,
+          10.278534,
+          32.988094,
+          8.713943,
+          14.042162,
+          51.529243,
+          18.649837,
+          15.37023,
+          32.317375,
+          42.88435,
+          23.164747,
+          19.588657,
+          21.376986,
+          17.251118,
+          12.211666,
+          8.450074,
+          26.368523,
+          16.753416,
+          22.139833,
+          15.820091,
+          30.032654,
+          33.777061,
+          21.684608,
+          100.66069,
+          27.331619,
+          18.138676,
+          23.843721,
+          66.207764,
+          26.991573,
+          15.138618,
+          25.746176,
+          61.702579,
+          12.832243,
+          12.309439,
+          24.832722,
+          45.89373,
+          7.884763,
+          8.376908,
+          11.793204,
+          60.920242,
+          17.51115,
+          22.36067,
+          20.489967
+        ]
+      },
+      "SMART_SVD_FIRST_PARTY_ANALYTIC_NO_CKPT": {
+        "arm_name": "SMART_SVD_FIRST_PARTY_ANALYTIC_NO_CKPT",
+        "n_micro_steps_executed": 64,
+        "learning_rate_initial": 0.00075,
+        "initial_step_loss": 14.212049,
+        "final_step_loss": 20.490952,
+        "mean_grad_norm": 5.495767,
+        "max_grad_norm": 19.136446,
+        "final_step_l2_param_diff": 2.172558,
+        "selected_ckpt_l2_param_diff": 1.402427,
+        "selected_step": 32,
+        "best_st_val_gate_32_weighted_utility": -1.738844,
+        "checkpoint_curve": [
+          {
+            "step": 16,
+            "mean_train_loss_last_8": 32.225431,
+            "mean_grad_norm_last_8": 7.598541,
+            "st_val_gate_32_weighted_utility": -1.735677
+          },
+          {
+            "step": 32,
+            "mean_train_loss_last_8": 25.834126,
+            "mean_grad_norm_last_8": 3.242078,
+            "st_val_gate_32_weighted_utility": -1.738844
+          },
+          {
+            "step": 48,
+            "mean_train_loss_last_8": 33.91201,
+            "mean_grad_norm_last_8": 8.323591,
+            "st_val_gate_32_weighted_utility": -1.736298
+          },
+          {
+            "step": 64,
+            "mean_train_loss_last_8": 24.404257,
+            "mean_grad_norm_last_8": 5.803877,
+            "st_val_gate_32_weighted_utility": -1.736178
+          }
+        ],
+        "step_losses": [
+          14.212049,
+          45.897118,
+          23.408253,
+          80.719986,
+          14.511329,
+          24.184963,
+          31.226357,
+          32.881966,
+          45.513481,
+          35.722061,
+          7.791561,
+          55.658981,
+          30.069012,
+          23.720154,
+          31.453869,
+          27.874332,
+          35.735226,
+          31.725262,
+          23.687138,
+          14.730869,
+          15.448399,
+          22.268826,
+          10.278584,
+          32.988045,
+          8.714005,
+          14.042208,
+          51.529255,
+          18.649921,
+          15.370129,
+          32.31781,
+          42.88475,
+          23.164928,
+          19.588903,
+          21.376694,
+          17.25135,
+          12.211593,
+          8.449912,
+          26.368252,
+          16.754585,
+          22.139494,
+          15.820416,
+          30.032661,
+          33.778282,
+          21.68557,
+          100.661179,
+          27.332369,
+          18.140015,
+          23.845589,
+          66.207993,
+          26.991886,
+          15.14028,
+          25.746338,
+          61.702774,
+          12.831795,
+          12.30983,
+          24.833742,
+          45.896812,
+          7.884977,
+          8.376909,
+          11.792336,
+          60.919754,
+          17.511314,
+          22.361004,
+          20.490952
+        ]
+      },
+      "N0_AST_PRIOR_ONLY": {
+        "arm_name": "N0_AST_PRIOR_ONLY",
+        "n_micro_steps_executed": 64,
+        "learning_rate_initial": 0.00075,
+        "initial_step_loss": 14.212049,
+        "final_step_loss": 20.490265,
+        "mean_grad_norm": 5.495524,
+        "max_grad_norm": 19.133614,
+        "final_step_l2_param_diff": 2.206868,
+        "selected_ckpt_l2_param_diff": 1.418113,
+        "selected_step": 32,
+        "best_st_val_gate_32_weighted_utility": -1.738844,
+        "checkpoint_curve": [
+          {
+            "step": 16,
+            "mean_train_loss_last_8": 32.225432,
+            "mean_grad_norm_last_8": 7.59854,
+            "st_val_gate_32_weighted_utility": -1.735668
+          },
+          {
+            "step": 32,
+            "mean_train_loss_last_8": 25.834056,
+            "mean_grad_norm_last_8": 3.241915,
+            "st_val_gate_32_weighted_utility": -1.738844
+          },
+          {
+            "step": 48,
+            "mean_train_loss_last_8": 33.911794,
+            "mean_grad_norm_last_8": 8.323537,
+            "st_val_gate_32_weighted_utility": -1.737245
+          },
+          {
+            "step": 64,
+            "mean_train_loss_last_8": 24.404071,
+            "mean_grad_norm_last_8": 5.803001,
+            "st_val_gate_32_weighted_utility": -1.736187
+          }
+        ],
+        "step_losses": [
+          14.212049,
+          45.897148,
+          23.408274,
+          80.719978,
+          14.511328,
+          24.184975,
+          31.226379,
+          32.881985,
+          45.513504,
+          35.722073,
+          7.791553,
+          55.659023,
+          30.069008,
+          23.720119,
+          31.453838,
+          27.87434,
+          35.735249,
+          31.725281,
+          23.687103,
+          14.73086,
+          15.448444,
+          22.26878,
+          10.278547,
+          32.988033,
+          8.713946,
+          14.042194,
+          51.529175,
+          18.649996,
+          15.370161,
+          32.317627,
+          42.884445,
+          23.164907,
+          19.588974,
+          21.376884,
+          17.251389,
+          12.211628,
+          8.450017,
+          26.368576,
+          16.75423,
+          22.13975,
+          15.820528,
+          30.033012,
+          33.777512,
+          21.685314,
+          100.66111,
+          27.33213,
+          18.139671,
+          23.845078,
+          66.207787,
+          26.992031,
+          15.140472,
+          25.746973,
+          61.703442,
+          12.832245,
+          12.309908,
+          24.833576,
+          45.896,
+          7.884815,
+          8.377071,
+          11.7929,
+          60.919266,
+          17.511198,
+          22.361055,
+          20.490265
+        ]
+      }
+    },
+    "round0_offline_rollout_evaluation": {
+      "SMART_SVD_FIRST_PARTY_COMPLETE": {
+        "st_val_gate_32_best_weighted_utility": -1.738844,
+        "dl_val_71": {
+          "all_contexts": {
+            "n_contexts": 71,
+            "weighted_20_25_25_30_mean_utility": -1.464371,
+            "unweighted_mean_utility": -1.460331,
+            "mean_oracle_gap": 0.143907,
+            "mean_best_F_by_budget": {
+              "8": -1.412781,
+              "16": -1.453156,
+              "32": -1.481823,
+              "64": -1.493565
+            }
+          },
+          "in_dope_checkpoint_train_gradient": {
+            "n_contexts": 25,
+            "weighted_20_25_25_30_mean_utility": -0.765737,
+            "unweighted_mean_utility": -0.763825,
+            "mean_oracle_gap": 0.045675,
+            "mean_best_F_by_budget": {
+              "8": -0.744314,
+              "16": -0.757329,
+              "32": -0.771102,
+              "64": -0.782554
+            }
+          },
+          "disjoint_from_dope_checkpoint_train_gradient": {
+            "n_contexts": 46,
+            "weighted_20_25_25_30_mean_utility": -1.844063,
+            "unweighted_mean_utility": -1.838868,
+            "mean_oracle_gap": 0.197294,
+            "mean_best_F_by_budget": {
+              "8": -1.776079,
+              "16": -1.831323,
+              "32": -1.868085,
+              "64": -1.879985
+            }
+          }
+        },
+        "dl_holdout_91": {
+          "all_contexts": {
+            "n_contexts": 91,
+            "weighted_20_25_25_30_mean_utility": -1.136593,
+            "unweighted_mean_utility": -1.133996,
+            "mean_oracle_gap": 0.048719,
+            "mean_best_F_by_budget": {
+              "8": -1.102318,
+              "16": -1.133497,
+              "32": -1.145899,
+              "64": -1.15427
+            }
+          },
+          "in_dope_checkpoint_train_gradient": {
+            "n_contexts": 41,
+            "weighted_20_25_25_30_mean_utility": -0.72215,
+            "unweighted_mean_utility": -0.719889,
+            "mean_oracle_gap": 0.057388,
+            "mean_best_F_by_budget": {
+              "8": -0.691365,
+              "16": -0.718892,
+              "32": -0.732719,
+              "64": -0.736582
+            }
+          },
+          "disjoint_from_dope_checkpoint_train_gradient": {
+            "n_contexts": 50,
+            "weighted_20_25_25_30_mean_utility": -1.476437,
+            "unweighted_mean_utility": -1.473563,
+            "mean_oracle_gap": 0.04161,
+            "mean_best_F_by_budget": {
+              "8": -1.4393,
+              "16": -1.473473,
+              "32": -1.484706,
+              "64": -1.496774
+            }
+          }
+        }
+      },
+      "SMART_SVD_FIRST_PARTY_ANALYTIC_NO_CKPT": {
+        "st_val_gate_32_best_weighted_utility": -1.738844,
+        "dl_val_71": {
+          "all_contexts": {
+            "n_contexts": 71,
+            "weighted_20_25_25_30_mean_utility": -1.464371,
+            "unweighted_mean_utility": -1.460331,
+            "mean_oracle_gap": 0.143907,
+            "mean_best_F_by_budget": {
+              "8": -1.412781,
+              "16": -1.453156,
+              "32": -1.481823,
+              "64": -1.493565
+            }
+          },
+          "in_dope_checkpoint_train_gradient": {
+            "n_contexts": 25,
+            "weighted_20_25_25_30_mean_utility": -0.765737,
+            "unweighted_mean_utility": -0.763825,
+            "mean_oracle_gap": 0.045675,
+            "mean_best_F_by_budget": {
+              "8": -0.744314,
+              "16": -0.757329,
+              "32": -0.771102,
+              "64": -0.782554
+            }
+          },
+          "disjoint_from_dope_checkpoint_train_gradient": {
+            "n_contexts": 46,
+            "weighted_20_25_25_30_mean_utility": -1.844063,
+            "unweighted_mean_utility": -1.838868,
+            "mean_oracle_gap": 0.197294,
+            "mean_best_F_by_budget": {
+              "8": -1.776079,
+              "16": -1.831323,
+              "32": -1.868085,
+              "64": -1.879985
+            }
+          }
+        },
+        "dl_holdout_91": {
+          "all_contexts": {
+            "n_contexts": 91,
+            "weighted_20_25_25_30_mean_utility": -1.136593,
+            "unweighted_mean_utility": -1.133996,
+            "mean_oracle_gap": 0.048719,
+            "mean_best_F_by_budget": {
+              "8": -1.102318,
+              "16": -1.133497,
+              "32": -1.145899,
+              "64": -1.15427
+            }
+          },
+          "in_dope_checkpoint_train_gradient": {
+            "n_contexts": 41,
+            "weighted_20_25_25_30_mean_utility": -0.72215,
+            "unweighted_mean_utility": -0.719889,
+            "mean_oracle_gap": 0.057388,
+            "mean_best_F_by_budget": {
+              "8": -0.691365,
+              "16": -0.718892,
+              "32": -0.732719,
+              "64": -0.736582
+            }
+          },
+          "disjoint_from_dope_checkpoint_train_gradient": {
+            "n_contexts": 50,
+            "weighted_20_25_25_30_mean_utility": -1.476437,
+            "unweighted_mean_utility": -1.473563,
+            "mean_oracle_gap": 0.04161,
+            "mean_best_F_by_budget": {
+              "8": -1.4393,
+              "16": -1.473473,
+              "32": -1.484706,
+              "64": -1.496774
+            }
+          }
+        }
+      },
+      "N0_AST_PRIOR_ONLY": {
+        "st_val_gate_32_best_weighted_utility": -1.738844,
+        "dl_val_71": {
+          "all_contexts": {
+            "n_contexts": 71,
+            "weighted_20_25_25_30_mean_utility": -1.470676,
+            "unweighted_mean_utility": -1.466277,
+            "mean_oracle_gap": 0.137961,
+            "mean_best_F_by_budget": {
+              "8": -1.412919,
+              "16": -1.462579,
+              "32": -1.488707,
+              "64": -1.500903
+            }
+          },
+          "in_dope_checkpoint_train_gradient": {
+            "n_contexts": 25,
+            "weighted_20_25_25_30_mean_utility": -0.764898,
+            "unweighted_mean_utility": -0.763128,
+            "mean_oracle_gap": 0.046372,
+            "mean_best_F_by_budget": {
+              "8": -0.745218,
+              "16": -0.757303,
+              "32": -0.769362,
+              "64": -0.780629
+            }
+          },
+          "disjoint_from_dope_checkpoint_train_gradient": {
+            "n_contexts": 46,
+            "weighted_20_25_25_30_mean_utility": -1.854251,
+            "unweighted_mean_utility": -1.848423,
+            "mean_oracle_gap": 0.187738,
+            "mean_best_F_by_budget": {
+              "8": -1.775801,
+              "16": -1.845882,
+              "32": -1.879656,
+              "64": -1.892356
+            }
+          }
+        },
+        "dl_holdout_91": {
+          "all_contexts": {
+            "n_contexts": 91,
+            "weighted_20_25_25_30_mean_utility": -1.136454,
+            "unweighted_mean_utility": -1.133872,
+            "mean_oracle_gap": 0.048843,
+            "mean_best_F_by_budget": {
+              "8": -1.104831,
+              "16": -1.131255,
+              "32": -1.142924,
+              "64": -1.156479
+            }
+          },
+          "in_dope_checkpoint_train_gradient": {
+            "n_contexts": 41,
+            "weighted_20_25_25_30_mean_utility": -0.721839,
+            "unweighted_mean_utility": -0.719462,
+            "mean_oracle_gap": 0.057815,
+            "mean_best_F_by_budget": {
+              "8": -0.694107,
+              "16": -0.71604,
+              "32": -0.726063,
+              "64": -0.741639
+            }
+          },
+          "disjoint_from_dope_checkpoint_train_gradient": {
+            "n_contexts": 50,
+            "weighted_20_25_25_30_mean_utility": -1.476439,
+            "unweighted_mean_utility": -1.473688,
+            "mean_oracle_gap": 0.041485,
+            "mean_best_F_by_budget": {
+              "8": -1.441625,
+              "16": -1.47173,
+              "32": -1.48475,
+              "64": -1.496647
+            }
+          }
+        }
+      }
+    }
+  },
+  "additive_launch_accounting": {
+    "total_launches_recorded": 3,
+    "launches": [
+      {
+        "launch_index": 1,
+        "owner_pid": 2558497,
+        "owner_hostname": "xbabe2",
+        "owner_starttime_ticks": 117029514,
+        "started_at_utc": "2026-10-26T03:22:16Z",
+        "completed_at_utc": "2026-10-26T03:22:20Z",
+        "status": "FAILED",
+        "last_phase_label": "h38_init",
+        "elapsed_wall_seconds": 3.9296,
+        "wall_seconds_lower_bound": 3.9296,
+        "wall_seconds_upper_bound": 3.9296,
+        "unknown_post_checkpoint_work": false,
+        "adapter_optimizer_micro_steps_executed": 0,
+        "adapter_steps_by_arm": {},
+        "encoder_optimizer_steps_executed": 0,
+        "uncached_candidate_evals_reserved": 0,
+        "reserved_native_fits_used": 0,
+        "actual_cv_fold_fits_used": 0,
+        "peak_whole_host_cpu_pct": 20.55,
+        "enforce_hard_caps": true,
+        "failure_reason": "KeyError: 'per_context_20_table'"
+      },
+      {
+        "launch_index": 2,
+        "owner_pid": 1668313,
+        "owner_hostname": "xbabe2",
+        "owner_starttime_ticks": 117165346,
+        "started_at_utc": "2026-10-26T03:44:56Z",
+        "completed_at_utc": "2026-10-26T03:45:54Z",
+        "status": "FAILED",
+        "last_phase_label": "adapter_train_SMART_SVD_FIRST_PARTY_COMPLETE_step_16",
+        "elapsed_wall_seconds": 57.1838,
+        "wall_seconds_lower_bound": 57.1838,
+        "wall_seconds_upper_bound": 57.1838,
+        "unknown_post_checkpoint_work": false,
+        "adapter_optimizer_micro_steps_executed": 16,
+        "adapter_steps_by_arm": {
+          "SMART_SVD_FIRST_PARTY_COMPLETE": 16
+        },
+        "encoder_optimizer_steps_executed": 0,
+        "uncached_candidate_evals_reserved": 0,
+        "reserved_native_fits_used": 0,
+        "actual_cv_fold_fits_used": 0,
+        "peak_whole_host_cpu_pct": 19.98,
+        "enforce_hard_caps": true,
+        "failure_reason": "TypeError: evaluate_episode_rollout_phase12_multimodal() got an unexpected keyword argument 'budgets'"
+      },
+      {
+        "launch_index": 3,
+        "owner_pid": 2589089,
+        "owner_hostname": "xbabe2",
+        "owner_starttime_ticks": 117201657,
+        "started_at_utc": "2026-10-26T03:50:36Z",
+        "completed_at_utc": "2026-10-26T03:54:46Z",
+        "status": "COMPLETED",
+        "last_phase_label": "adapter_train_N0_AST_PRIOR_ONLY_step_64",
+        "elapsed_wall_seconds": 249.3741,
+        "wall_seconds_lower_bound": 249.3741,
+        "wall_seconds_upper_bound": 249.3741,
+        "unknown_post_checkpoint_work": false,
+        "adapter_optimizer_micro_steps_executed": 192,
+        "adapter_steps_by_arm": {
+          "SMART_SVD_FIRST_PARTY_COMPLETE": 64,
+          "SMART_SVD_FIRST_PARTY_ANALYTIC_NO_CKPT": 64,
+          "N0_AST_PRIOR_ONLY": 64
+        },
+        "encoder_optimizer_steps_executed": 0,
+        "uncached_candidate_evals_reserved": 0,
+        "reserved_native_fits_used": 0,
+        "actual_cv_fold_fits_used": 0,
+        "peak_whole_host_cpu_pct": 33.89,
+        "enforce_hard_caps": true,
+        "failure_reason": null
+      }
+    ],
+    "cumulative_attempt_totals": {
+      "total_launches_recorded": 3,
+      "unresolved_abrupt_terminated_launches_count": 0,
+      "unknown_post_checkpoint_cost_state": false,
+      "cumulative_attempt_wall_clock_interval_seconds": [
+        310.488,
+        310.488
+      ],
+      "updated_cumulative_campaign_wall_clock_interval_seconds": [
+        2918.55,
+        2920.55
+      ],
+      "approved_attempt_max_wall_seconds": 480.0,
+      "approved_attempt_active_cutoff_seconds": 450.0,
+      "approved_cumulative_wall_clock_ceiling_seconds": 3162.914,
+      "remaining_attempt_active_wall_seconds": 139.512,
+      "remaining_attempt_total_wall_seconds": 169.512,
+      "remaining_campaign_wall_seconds_to_ceiling": 242.364,
+      "cumulative_adapter_optimizer_micro_steps_executed": 208,
+      "cumulative_encoder_optimizer_steps_executed": 0,
+      "cumulative_uncached_candidate_evaluations_reserved": 0,
+      "remaining_uncached_candidate_evaluations": 720,
+      "cumulative_reserved_native_fits_used": 0,
+      "remaining_reserved_native_fits": 4320,
+      "cumulative_actual_cv_fold_fits_used": 0
+    },
+    "preserved_v1_launch1_failed_ledger_path": "/mnt/jope-archive/flywheel-20261023/results/H38_wave4_survivor_gate_and_smart_svd/h38_bounded_additive_budget_ledger_v1_launch1_failed.json",
+    "preserved_v1_launch1_failed_ledger_sha256": "0c3a5a7074cde6e97b596b5569fcba4c9b1129ec998e10a78aa95731365117d6",
+    "preserved_v2_launch2_failed_ledger_path": "/mnt/jope-archive/flywheel-20261023/results/H38_wave4_survivor_gate_and_smart_svd/h38_bounded_additive_budget_ledger_v2_launch2_failed.json",
+    "preserved_v2_launch2_failed_ledger_sha256": "977655d2cc594914fc5b81fbc6a49cae56095c16ec0fd5670035799c0dbbff69"
+  },
+  "reconciled_at_utc": "2026-10-26T06:49:14Z",
+  "reconciling_directives": {
+    "cap_and_fold_directive": "/home/ubuntu/.codex-screen-monitor/20261026T041038Z-jope-cap-and-fold-evidence.txt",
+    "cap_and_fold_directive_sha256": "8fe02dc8d1a8d7d6e66de3d4ad5c0f38a856fc7a5c537e4ab3e5819b2e268ed0",
+    "followup_directive": "/home/ubuntu/.codex-screen-monitor/20261026T055143Z-jope-review-followup.txt",
+    "followup_directive_sha256": "00bdbcb60648533cbaee0bacf06e8f7516e8009e27a265df10924788bfe8e1d2"
+  },
+  "preserved_v1_launch3_evidence": {
+    "results_v1_path": "/mnt/jope-archive/flywheel-20261023/results/H38_wave4_survivor_gate_and_smart_svd/results.json",
+    "results_v1_sha256": "f0d4c413f0c4def25ae0ffbe40f19b089fa0177e4be079f044c3eea5c7849e9b",
+    "ledger_v1_path": "/mnt/jope-archive/flywheel-20261023/results/H38_wave4_survivor_gate_and_smart_svd/h38_bounded_additive_budget_ledger.json",
+    "ledger_v1_sha256": "8f48b6185eaa9c4a33129f8a58d86785ee0f4451657c30d522241cc12a4b2656",
+    "source_v1_script_sha256": "e8e60c7468d4d1798ff15a06a7b9809a2e2064eccbed84a440789d2580e35232",
+    "steps_v1_script_sha256": "859ca55addc9d1675a9277b5440e4f187833f8b47a5e077c2f84efc5a7b9c25b",
+    "additional_neural_steps_executed_in_v2": 0,
+    "additional_native_rust_fits_executed_in_v2": 0
+  },
+  "canonical_7fold_split_identity_audit": {
+    "contexts_verified": 20,
+    "k7_records_verified": 1214,
+    "missing_split_identities": 0,
+    "split_spec": "jtt1_canonical_inner70_7fold_360tr_60sc",
+    "per_context_canonical_membership_sha256": {
+      "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031": "5ce38f40b30221422cb06b7ed4fb3907b8e5fcbddc52dcacd4f4a56077186fe9",
+      "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d": "a616312c889f85e76b3aa5a248ebb625ba89947efb437a5c23486c71f50a0d45",
+      "007781fa4cddf091367c1397a21295460daa418f8ac88284bb01ddfb4653eb2a": "dc14446e328408fc5a0d542586b7da5191f64543f3fe0e03e22178c916042ba2",
+      "0190161e3ee3675b451cf64cbd00f7d426371417291d6f31b0beed7f70c4f486": "1772e4a68760ce7d2ead3276be9634db6a7d50dc7166f625311fee6db8b615f7",
+      "01d6b49328c17bc4fbf7e1252f29178de11a8b95cb9a6a5fb3dfac19d56b7fd3": "467ca86b5fbf0c1207fc2ed0f871c4bb072336cd3aa7c120e7530c9b22d4f771",
+      "022382cdba780070fe2c689be00cbd84db37f9a349ca3b028bd50da019305447": "6f17eca18f0db795e0a6aa5176041402b0a6cb8a672b9a45248c1cc4b6d282b7",
+      "022aac25d53a30ab3ec973a1eca35585d26ebecca2f989d562fa05032b1db703": "a37e126b1849c6e6a9b0fb719f83bc4e611e2dc339d3f829a03ed0edd375f450",
+      "025eb526cc88c46b455c9e34f444d0f7c517795835112e25ab708f3ed0856d30": "6901361ad47bd7cbfc49b9f237a9794da1a05dd3a97da96e3a13bd7494a298de",
+      "02f4d0e69cdf23e8ef227b9a35339a293021cdb4c114a047519d0516f9a7f36e": "0b779121b9d34ddc79598f9d526b609c9fdaf212955367274df8912d8f225378",
+      "0386a636452f0667c127cfd1f56f0e15c1c5c330c587a13e7725805a5600bcfc": "b6ad60c3143bd0bc5e91b367739a5b1e69dbe326d6e97c986a0af46108536841",
+      "03c4d094910cbd98e722e742489bbb41331bd466ff3c75ada486831e9ffd3808": "1756065ad96b3fd396eb3d4b80acd134ea3b1586057765168e8a064edb1e75f9",
+      "03da6aaf98b8cf5ddfc22effcff75e1759b13f7ed2d8af4df3c745faffbf5f9e": "47851ad74e607c424b16140b47f120e951c2840c9b6f3834d8079ba6ce331e37",
+      "03fe267990a5ed2d0f9b8a6baa4895d406a49e9babb5bdccbd9845d92e1b418f": "d51254c30ac138feb9e6e22e86f3cbbace722f9cf0064c0551a3494f0d039837",
+      "0411fbc1445973c4ee205339084f952291d4bed570c58b46ff6110c96c9d13c0": "46e0f292dc563e7eb1f42137383c20a8b6fb9f6b3a28282159f7bad23ce1cf6b",
+      "041d51e94eb233d843b15a8a3db22648e39076fac3463390e38d90dc665b5008": "097df1b66b9df70178ace880600add90769f072cd7a1829e41b353376a7ec1ed",
+      "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da": "09731f46dfa0614ecbd450d71c85d868e2ebed034af0b2375a8b1f173c535f6f",
+      "052e237a452b7d0c4034af27787799e7a3e3a3a7dd0aeccf97f5d528328f2bb7": "20a01c8a5d4746b4e515782a58d217b96a1ad010cb20e877eff49dceefd7bdff",
+      "087f69944563f778a91d99894dbba6a9cdd339f5d0a93b4e58a4f0003765d920": "10203ad6fb0693bd7618549ed00b335b2484d8a1466aa0fbeab1b269ed8e6b72",
+      "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd": "f728fce5c4b13f9a6a72bc423075c9087dcc6c9b92d4b7f3fb0088bd665dcdce",
+      "0cd637de21a92fef5b8f0ab923205bc19c60d1afaf84d22cdff9a7fc933d4826": "754a38e5632518bf681760a24a582a15f010fcd10142037b87143f44c0f4f074"
+    }
+  }
+}

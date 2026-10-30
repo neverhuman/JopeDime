@@ -1,0 +1,48 @@
+{
+  "authorizing_directive": "/home/ubuntu/.codex-screen-monitor/20261026T071210Z-jope-evidence-closeout.txt",
+  "authorizing_directive_sha256": "a8c26da718d1075ddc1138ddee2975700b4abc556bca639536c6cca7762eb28b",
+  "fixture_receipts": {
+    "v12_canonical_sha256": "36c2da563c4da32449af62a04b1d3769d23a3e2746f9aa7c6174f659cddaea84",
+    "v13_closeout_sha256": "d6f9aab0572fe4ca6fd1fd8a4ba73c96829deddf7584ac96159192ff6477b7aa"
+  },
+  "hypothesis_id": "H40_wave6_successive_flywheel_online_loop",
+  "preserved_launch1_budget_ledger_sha256": "9b61e8f51f9d050cf3ab3abf74fcfe1ec2717264baa82856867f2622b06242be",
+  "preserved_launch1_results_sha256": "5d7e0d4034b12b1c7e284db7eed27c3984365f15ff263963c5dd5d356daf70c5",
+  "reconciled_at_utc": "2026-10-26T07:27:53Z",
+  "retracted_prior_estimate": {
+    "disposition": "RETRACTED_UNSUPPORTED",
+    "prior_claimed_wall_seconds": 45.0,
+    "reason": "An earlier report line claimed +45.0s for H40's 112-step online loop. Observed H40 Launch 1 required 10.860s for 8 adapter optimizer steps (1.3575s/step), proving that 112 steps at ~1.3575s/step require ~152.04s for optimizer steps alone before replay harvest, LOFO/SoS diagnostics, and 15 arm-round ranking evaluations."
+  },
+  "source_bound_h40_timing_decomposition": {
+    "configured_arm_round_ranking_evaluations": 15,
+    "configured_rounds": 3,
+    "configured_step_schedule_by_round": [
+      32,
+      40,
+      40
+    ],
+    "estimated_active_unmodified_h40_wall_seconds_range": [
+      166.04,
+      174.04
+    ],
+    "estimated_arm_round_evaluation_seconds_range": [
+      8.0,
+      12.0
+    ],
+    "estimated_replay_harvest_lofo_sos_seconds_range": [
+      6.0,
+      10.0
+    ],
+    "linear_extrapolated_adapter_step_wall_seconds": 152.04,
+    "observed_launch1_adapter_steps": 8,
+    "observed_launch1_wall_seconds": 10.86,
+    "observed_seconds_per_adapter_step": 1.3575,
+    "recommended_unmodified_h40_active_cutoff_seconds": 180.0,
+    "recommended_unmodified_h40_completion_reserve_seconds": 15.0,
+    "recommended_unmodified_h40_max_wall_seconds": 195.0,
+    "shorter_step_schedule_note": "A ~45s H40 budget is only feasible if the online step schedule is explicitly shortened (e.g., 3x8 = 24 total adapter steps at ~1.3575s/step = ~32.58s + ~10s evaluation/diagnostics).",
+    "total_configured_adapter_steps": 112,
+    "unmodified_h40_rust_fits": 0
+  }
+}
