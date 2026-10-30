@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 
 pub const FITNESS_VERSION: &str = "jope.classification-fitness/v1";
 pub const MAX_SPEC_BYTES: usize = 32 * 1024;
+pub const DEFAULT_CLASSIFICATION_THRESHOLD: f64 = 0.5;
 /// Absolute tolerance for a probability pair's sum. Inputs are never renormalized.
 pub const PROBABILITY_SUM_TOLERANCE: f64 = 1e-12;
 
@@ -32,13 +33,18 @@ pub enum FitnessError {
 
 type Result<T> = std::result::Result<T, FitnessError>;
 
-/// OBJ-03 extension point: add the remaining binary metrics and their explicit parameters here,
-/// in `Metric::value`, and in the schema. Rank/threshold metrics must define aggregation themselves.
+/// Dataset-level binary metrics. `f1` accepts the optional top-level threshold; the other
+/// threshold metrics use the v1 default of 0.5. Cost-matrix loss accepts the top-level matrix.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Metric {
     Logloss,
     Brier,
+    RocAuc,
+    PrAuc,
+    F1,
+    BalancedAccuracy,
+    CostMatrixLoss,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -55,8 +61,8 @@ pub enum UndefinedPolicy {
     FailCandidate,
 }
 
-/// All fields are required and contribute to the objective identity; there are no hidden defaults.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+/// Core fields are required. Metric parameters are accepted only by their matching metric.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ClassificationFitness {
     pub schema: String,
@@ -64,6 +70,10 @@ pub struct ClassificationFitness {
     pub class_order: [String; 2],
     pub aggregation: Aggregation,
     pub undefined: UndefinedPolicy,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub threshold: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cost_matrix: Option<[[f64; 2]; 2]>,
 }
 
 /// Aligned held-out rows. Each probability pair follows `class_order`, which must match the
@@ -105,17 +115,78 @@ impl ClassificationFitness {
                 "class_order requires two distinct names of 1..256 characters".into(),
             ));
         }
+        match self.metric {
+            Metric::F1 => {
+                let threshold = self.threshold.unwrap_or(DEFAULT_CLASSIFICATION_THRESHOLD);
+                if !threshold.is_finite() || !(0.0..=1.0).contains(&threshold) {
+                    return Err(FitnessError::InvalidSpecification(
+                        "F1 threshold must be finite and in [0,1]".into(),
+                    ));
+                }
+                if self.cost_matrix.is_some() {
+                    return Err(FitnessError::InvalidSpecification(
+                        "cost_matrix is only valid for cost_matrix_loss".into(),
+                    ));
+                }
+            }
+            Metric::CostMatrixLoss => {
+                if self.threshold.is_some() {
+                    return Err(FitnessError::InvalidSpecification(
+                        "threshold is only valid for f1".into(),
+                    ));
+                }
+                let matrix = self.cost_matrix.ok_or_else(|| {
+                    FitnessError::InvalidSpecification(
+                        "cost_matrix is required for cost_matrix_loss".into(),
+                    )
+                })?;
+                if matrix
+                    .iter()
+                    .flatten()
+                    .any(|cost| !cost.is_finite() || *cost < 0.0)
+                {
+                    return Err(FitnessError::InvalidSpecification(
+                        "cost_matrix entries must be finite and non-negative".into(),
+                    ));
+                }
+            }
+            _ => {
+                if self.threshold.is_some() || self.cost_matrix.is_some() {
+                    return Err(FitnessError::InvalidSpecification(
+                        "threshold and cost_matrix are only valid for their matching metrics"
+                            .into(),
+                    ));
+                }
+            }
+        }
+        if matches!(
+            self.metric,
+            Metric::RocAuc
+                | Metric::PrAuc
+                | Metric::F1
+                | Metric::BalancedAccuracy
+                | Metric::CostMatrixLoss
+        ) && self.aggregation != Aggregation::Mean
+        {
+            return Err(FitnessError::InvalidSpecification(
+                "dataset-level metrics require mean aggregation".into(),
+            ));
+        }
         Ok(())
     }
 
     pub fn identity(&self) -> Result<String> {
         self.validate()?;
-        let bytes = serde_json::to_vec(self)
+        let mut canonical = self.clone();
+        if canonical.metric == Metric::F1 && canonical.threshold.is_none() {
+            canonical.threshold = Some(DEFAULT_CLASSIFICATION_THRESHOLD);
+        }
+        let bytes = serde_json::to_vec(&canonical)
             .map_err(|e| FitnessError::InvalidSpecification(e.to_string()))?;
         Ok(crate::sha256_hex(&bytes))
     }
 
-    /// Both supported metrics minimize. A single-class fold is defined for these losses.
+    /// Every metric minimizes. New dataset-level metrics require both classes in each fold.
     pub fn evaluate(&self, inputs: Inputs<'_>) -> Result<Score> {
         self.validate()?;
         if inputs.class_order != [self.class_order[0].as_str(), self.class_order[1].as_str()] {
@@ -148,9 +219,26 @@ impl ClassificationFitness {
             }
             labels.push(index);
         }
-        let value = self
-            .metric
-            .value(&labels, inputs.probabilities, self.aggregation)?;
+        let needs_both_classes = matches!(
+            self.metric,
+            Metric::RocAuc
+                | Metric::PrAuc
+                | Metric::F1
+                | Metric::BalancedAccuracy
+                | Metric::CostMatrixLoss
+        );
+        if needs_both_classes && (!labels.contains(&0) || !labels.contains(&1)) {
+            return Err(FitnessError::Undefined(
+                "metric requires both classes in the fold".into(),
+            ));
+        }
+        let value = self.metric.value(
+            &labels,
+            inputs.probabilities,
+            self.aggregation,
+            self.threshold.unwrap_or(DEFAULT_CLASSIFICATION_THRESHOLD),
+            self.cost_matrix,
+        )?;
         if !value.is_finite() {
             return Err(FitnessError::Undefined("non-finite objective value".into()));
         }
@@ -164,33 +252,189 @@ impl ClassificationFitness {
 }
 
 impl Metric {
-    // OBJ-03 extension point: dispatch dataset-level rank/threshold/cost metrics here, retaining
-    // validation above and returning FitnessError::Undefined for their undefined conditions.
     fn value(
         self,
         labels: &[usize],
         probabilities: &[[f64; 2]],
         aggregation: Aggregation,
+        threshold: f64,
+        cost_matrix: Option<[[f64; 2]; 2]>,
     ) -> Result<f64> {
-        let mut total = 0.0;
-        for (&label, p) in labels.iter().zip(probabilities) {
-            total += match self {
-                Self::Logloss => {
-                    if p[label] == 0.0 {
-                        return Err(FitnessError::Undefined(
-                            "logloss has zero true-class probability (no clipping)".into(),
-                        ));
-                    }
-                    -p[label].ln()
+        match self {
+            Self::Logloss | Self::Brier => {
+                let mut total = 0.0;
+                for (&label, p) in labels.iter().zip(probabilities) {
+                    total += match self {
+                        Self::Logloss => {
+                            if p[label] == 0.0 {
+                                return Err(FitnessError::Undefined(
+                                    "logloss has zero true-class probability (no clipping)".into(),
+                                ));
+                            }
+                            -p[label].ln()
+                        }
+                        Self::Brier => (p[1] - label as f64).powi(2),
+                        _ => unreachable!(),
+                    };
                 }
-                Self::Brier => (p[1] - label as f64).powi(2),
-            };
+                Ok(match aggregation {
+                    Aggregation::Mean => total / labels.len() as f64,
+                    Aggregation::Sum => total,
+                })
+            }
+            Self::RocAuc => roc_auc(labels, probabilities),
+            Self::PrAuc => average_precision(labels, probabilities),
+            Self::F1 => f1_score(labels, probabilities, threshold),
+            Self::BalancedAccuracy => balanced_accuracy(labels, probabilities),
+            Self::CostMatrixLoss => cost_matrix_loss(
+                labels,
+                probabilities,
+                cost_matrix.expect("validated cost matrix"),
+            ),
         }
-        Ok(match aggregation {
-            Aggregation::Mean => total / labels.len() as f64,
-            Aggregation::Sum => total,
-        })
     }
+}
+
+fn sorted_scores(
+    labels: &[usize],
+    probabilities: &[[f64; 2]],
+    descending: bool,
+) -> Vec<(f64, usize)> {
+    let mut rows: Vec<_> = labels
+        .iter()
+        .zip(probabilities)
+        .map(|(&label, probability)| (probability[1], label))
+        .collect();
+    rows.sort_by(|left, right| {
+        let ordering = left.0.total_cmp(&right.0);
+        if descending {
+            ordering.reverse()
+        } else {
+            ordering
+        }
+    });
+    rows
+}
+
+fn roc_auc(labels: &[usize], probabilities: &[[f64; 2]]) -> Result<f64> {
+    let positives = labels.iter().filter(|&&label| label == 1).count();
+    let negatives = labels.len() - positives;
+    if positives == 0 || negatives == 0 {
+        return Err(FitnessError::Undefined(
+            "roc_auc requires both classes".into(),
+        ));
+    }
+    let rows = sorted_scores(labels, probabilities, false);
+    let mut negatives_before = 0usize;
+    let mut concordant = 0.0;
+    let mut index = 0;
+    while index < rows.len() {
+        let mut end = index + 1;
+        while end < rows.len() && rows[end].0 == rows[index].0 {
+            end += 1;
+        }
+        let group_positives = rows[index..end]
+            .iter()
+            .filter(|(_, label)| *label == 1)
+            .count();
+        let group_negatives = end - index - group_positives;
+        concordant +=
+            group_positives as f64 * (negatives_before as f64 + group_negatives as f64 / 2.0);
+        negatives_before += group_negatives;
+        index = end;
+    }
+    Ok(concordant / (positives as f64 * negatives as f64))
+}
+
+fn average_precision(labels: &[usize], probabilities: &[[f64; 2]]) -> Result<f64> {
+    let positives = labels.iter().filter(|&&label| label == 1).count();
+    if positives == 0 || positives == labels.len() {
+        return Err(FitnessError::Undefined(
+            "pr_auc requires both classes".into(),
+        ));
+    }
+    let rows = sorted_scores(labels, probabilities, true);
+    let mut true_positives = 0usize;
+    let mut false_positives = 0usize;
+    let mut total = 0.0;
+    let mut index = 0;
+    while index < rows.len() {
+        let mut end = index + 1;
+        while end < rows.len() && rows[end].0 == rows[index].0 {
+            end += 1;
+        }
+        let new_positives = rows[index..end]
+            .iter()
+            .filter(|(_, label)| *label == 1)
+            .count();
+        true_positives += new_positives;
+        false_positives += end - index - new_positives;
+        total += (new_positives as f64 / positives as f64)
+            * (true_positives as f64 / (true_positives + false_positives) as f64);
+        index = end;
+    }
+    Ok(total)
+}
+
+fn f1_score(labels: &[usize], probabilities: &[[f64; 2]], threshold: f64) -> Result<f64> {
+    let mut true_positives = 0usize;
+    let mut false_positives = 0usize;
+    let mut false_negatives = 0usize;
+    for (&label, probability) in labels.iter().zip(probabilities) {
+        let predicted_positive = probability[1] >= threshold;
+        match (label == 1, predicted_positive) {
+            (true, true) => true_positives += 1,
+            (false, true) => false_positives += 1,
+            (true, false) => false_negatives += 1,
+            (false, false) => {}
+        }
+    }
+    let denominator = 2 * true_positives + false_positives + false_negatives;
+    if denominator == 0 {
+        return Err(FitnessError::Undefined(
+            "f1 is undefined for this fold".into(),
+        ));
+    }
+    Ok((2 * true_positives) as f64 / denominator as f64)
+}
+
+fn balanced_accuracy(labels: &[usize], probabilities: &[[f64; 2]]) -> Result<f64> {
+    let mut true_positives = 0usize;
+    let mut false_positives = 0usize;
+    let mut true_negatives = 0usize;
+    let mut false_negatives = 0usize;
+    for (&label, probability) in labels.iter().zip(probabilities) {
+        match (
+            label == 1,
+            probability[1] >= DEFAULT_CLASSIFICATION_THRESHOLD,
+        ) {
+            (true, true) => true_positives += 1,
+            (false, true) => false_positives += 1,
+            (false, false) => true_negatives += 1,
+            (true, false) => false_negatives += 1,
+        }
+    }
+    if true_positives + false_negatives == 0 || true_negatives + false_positives == 0 {
+        return Err(FitnessError::Undefined(
+            "balanced_accuracy requires both classes".into(),
+        ));
+    }
+    let sensitivity = true_positives as f64 / (true_positives + false_negatives) as f64;
+    let specificity = true_negatives as f64 / (true_negatives + false_positives) as f64;
+    Ok((sensitivity + specificity) / 2.0)
+}
+
+fn cost_matrix_loss(
+    labels: &[usize],
+    probabilities: &[[f64; 2]],
+    cost_matrix: [[f64; 2]; 2],
+) -> Result<f64> {
+    let mut total = 0.0;
+    for (&actual, probability) in labels.iter().zip(probabilities) {
+        let predicted = usize::from(probability[1] >= DEFAULT_CLASSIFICATION_THRESHOLD);
+        total += cost_matrix[actual][predicted];
+    }
+    Ok(total / labels.len() as f64)
 }
 
 #[cfg(test)]
@@ -198,12 +442,29 @@ mod tests {
     use super::*;
 
     fn spec(metric: &str, aggregation: &str) -> ClassificationFitness {
-        ClassificationFitness::parse(&format!(
-            r#"{{"schema":"jope.classification-fitness/v1","metric":"{metric}",
-            "class_order":["no","yes"],"aggregation":"{aggregation}",
-            "undefined":"fail_candidate"}}"#
-        ))
-        .unwrap()
+        spec_with_options(metric, aggregation, None, None)
+    }
+
+    fn spec_with_options(
+        metric: &str,
+        aggregation: &str,
+        threshold: Option<f64>,
+        cost_matrix: Option<[[f64; 2]; 2]>,
+    ) -> ClassificationFitness {
+        let mut value = serde_json::json!({
+            "schema": "jope.classification-fitness/v1",
+            "metric": metric,
+            "class_order": ["no", "yes"],
+            "aggregation": aggregation,
+            "undefined": "fail_candidate"
+        });
+        if let Some(threshold) = threshold {
+            value["threshold"] = serde_json::json!(threshold);
+        }
+        if let Some(cost_matrix) = cost_matrix {
+            value["cost_matrix"] = serde_json::json!(cost_matrix);
+        }
+        ClassificationFitness::parse(&value.to_string()).unwrap()
     }
 
     fn inputs<'a>(labels: &'a [&'a str], probabilities: &'a [[f64; 2]]) -> Inputs<'a> {
@@ -233,6 +494,120 @@ mod tests {
                 assert_eq!(score.fitness_sha256, objective.identity().unwrap());
             }
         }
+    }
+
+    #[test]
+    fn obj03_metrics_match_sklearn_goldens_with_score_ties() {
+        let labels = ["no", "no", "yes", "yes", "no", "yes"];
+        let probabilities = [
+            [0.9, 0.1],
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.1, 0.9],
+            [0.1, 0.9],
+            [0.9, 0.1],
+        ];
+        let cost_matrix = [[1.0, 4.0], [2.0, 0.0]];
+        let goldens = [
+            (spec("roc_auc", "mean"), 0.5),
+            (spec("pr_auc", "mean"), 0.5),
+            (spec("f1", "mean"), 4.0 / 7.0),
+            (spec("balanced_accuracy", "mean"), 0.5),
+            (
+                spec_with_options("cost_matrix_loss", "mean", None, Some(cost_matrix)),
+                11.0 / 6.0,
+            ),
+        ];
+        for (objective, expected) in goldens {
+            let score = objective.evaluate(inputs(&labels, &probabilities)).unwrap();
+            assert!((score.value - expected).abs() <= 1e-12);
+            assert_eq!(score.loss, score.value);
+            assert_eq!(score.direction, Direction::Minimize);
+        }
+
+        // The threshold comparison is inclusive, including ties exactly at the threshold.
+        let at_point_nine = spec_with_options("f1", "mean", Some(0.9), None)
+            .evaluate(inputs(&labels, &probabilities))
+            .unwrap();
+        assert!((at_point_nine.value - 0.4).abs() <= 1e-12);
+    }
+
+    #[test]
+    fn obj03_f1_default_threshold_is_canonical_in_objective_identity() {
+        let defaulted = spec("f1", "mean");
+        let explicit = spec_with_options("f1", "mean", Some(0.5), None);
+        assert_eq!(defaulted.identity().unwrap(), explicit.identity().unwrap());
+        assert_eq!(
+            defaulted
+                .evaluate(inputs(&["no", "yes"], &[[0.5, 0.5], [0.5, 0.5]]))
+                .unwrap()
+                .value,
+            2.0 / 3.0
+        );
+    }
+
+    #[test]
+    fn obj03_single_class_folds_are_undefined_for_new_metrics() {
+        let metrics = [
+            spec("roc_auc", "mean"),
+            spec("pr_auc", "mean"),
+            spec("f1", "mean"),
+            spec("balanced_accuracy", "mean"),
+            spec_with_options(
+                "cost_matrix_loss",
+                "mean",
+                None,
+                Some([[1.0, 4.0], [2.0, 0.0]]),
+            ),
+        ];
+        for objective in metrics {
+            for single_class in [
+                inputs(&["no"], &[[1.0, 0.0]]),
+                inputs(&["yes"], &[[0.0, 1.0]]),
+            ] {
+                assert!(matches!(
+                    objective.evaluate(single_class),
+                    Err(FitnessError::Undefined(_))
+                ));
+            }
+        }
+    }
+
+    #[test]
+    fn obj03_metric_parameters_and_aggregation_are_validated() {
+        for invalid in [
+            serde_json::json!({"metric":"f1","threshold":-0.1}),
+            serde_json::json!({"metric":"f1","threshold":1.1}),
+            serde_json::json!({"metric":"roc_auc","threshold":0.5}),
+            serde_json::json!({"metric":"brier","cost_matrix":[[0,1],[1,0]]}),
+            serde_json::json!({"metric":"cost_matrix_loss"}),
+            serde_json::json!({"metric":"cost_matrix_loss","cost_matrix":[[0,-1],[1,0]]}),
+        ] {
+            let mut value = serde_json::json!({
+                "schema":"jope.classification-fitness/v1",
+                "metric":"f1",
+                "class_order":["no","yes"],
+                "aggregation":"mean",
+                "undefined":"fail_candidate"
+            });
+            for (key, item) in invalid.as_object().unwrap() {
+                value[key] = item.clone();
+            }
+            assert!(matches!(
+                ClassificationFitness::parse(&value.to_string()),
+                Err(FitnessError::InvalidSpecification(_))
+            ));
+        }
+        assert!(ClassificationFitness::parse(
+            r#"{"schema":"jope.classification-fitness/v1","metric":"roc_auc","class_order":["no","yes"],"aggregation":"sum","undefined":"fail_candidate"}"#
+        )
+        .is_err());
+        let mut non_finite = spec("f1", "mean");
+        non_finite.threshold = Some(f64::NAN);
+        assert!(matches!(
+            non_finite.validate(),
+            Err(FitnessError::InvalidSpecification(_))
+        ));
     }
 
     #[test]
@@ -298,7 +673,7 @@ mod tests {
                 "schema",
                 serde_json::json!("jope.classification-fitness/v2"),
             ),
-            ("metric", serde_json::json!("roc_auc")),
+            ("metric", serde_json::json!("unknown_metric")),
             ("aggregation", serde_json::json!("median")),
             ("undefined", serde_json::json!("skip")),
             ("class_order", serde_json::json!(["yes", "yes"])),
