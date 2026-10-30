@@ -136,6 +136,7 @@ def run_control(args: argparse.Namespace) -> dict:
         "family_bootstrap_lb95": lower,
         "family_bootstrap_ub95": upper,
         "n_families": len(family_gains),
+        "inner_cv_mean_gain": float(result["inner_cv_selected_delta"]),
         "bootstrap_draws": BOOTSTRAP_DRAWS,
         "bootstrap_seed": 510_000 + args.seed,
         "strict_margin": STRICT_MARGIN,

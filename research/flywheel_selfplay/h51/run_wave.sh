@@ -86,3 +86,30 @@ PY
     exit "$rc"
   fi
 done
+
+python3 - "$OUTPUT" <<'PY'
+import json, sys
+from pathlib import Path
+
+root = Path(sys.argv[1]) / "CONTROL"
+rows = [json.loads((root / f"seed{seed}" / "candidate-summary.json").read_text()) for seed in (9, 10, 11)]
+shas = [row["adapter_sha256"] for row in rows]
+if len(set(shas)) != 3:
+    raise SystemExit(f"CONTROL adapter SHA pseudoreplication: {shas}")
+utilities = [row["inner_cv_mean_gain"] for row in rows]
+identical = len(set(utilities)) == 1
+device = json.loads((Path(sys.argv[1]) / "device-selection.json").read_text())
+Path(sys.argv[1], "control-seed-distinctness.json").write_text(json.dumps({
+    "schema": "jope.h51.seed-distinctness/v1",
+    "arm": "CONTROL",
+    "seeds": [9, 10, 11],
+    "adapter_sha256": shas,
+    "distinct_adapter_shas": True,
+    "inner_cv_mean_gains": utilities,
+    "identical_inner_cv_utilities": identical,
+    "utility_interpretation": "step-like utility; not seed agreement" if identical else "inner utilities differ",
+    "terminal_dl_val": "not read unless an admitted candidate is separately selected",
+    "device": device["device"],
+}, indent=2) + "\n")
+print(json.dumps({"distinct_adapter_shas": True, "inner_cv_mean_gains": utilities, "identical_inner_cv_utilities": identical}))
+PY
