@@ -788,11 +788,11 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/tui07_status_lines_lockfile_identity_rebaseline.v1.json");
     assert_eq!(
         tui07_lockfile["source_commit"],
-        "8d99105861284360439630a7162be6376684c877"
+        "7804bc3dcb898269572805722404c1dd8c026657"
     );
     assert_eq!(
         tui07_lockfile["base_commit"],
-        "0009d3603ce3f89d970afdb2d9d6fe3439952dc1"
+        "4158c237bcaf23ada68957206b417344ab1075a3"
     );
     assert_eq!(tui07_lockfile["fixtures"].as_array().unwrap().len(), 2);
     assert_eq!(tui07_lockfile["fixtures"][0]["path"], changed_fixtures[0]);

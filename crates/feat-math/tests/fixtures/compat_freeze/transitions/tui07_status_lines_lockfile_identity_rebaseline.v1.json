@@ -2,18 +2,18 @@
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
   "decision": "Announced TUI-07 adds only the existing jope-api workspace package edge to jope-appliance in Cargo.lock. Append this lockfile-only ADR-0004 identity and lineage fixture edge after SVC-07; preserve dependency versions, features, registry sources, behavior fixtures, known identities and prior transition records.",
   "plan_reference": "TUI-07; owner ruling 1030(q); ADR-0004",
-  "source_commit": "8d99105861284360439630a7162be6376684c877",
-  "base_commit": "0009d3603ce3f89d970afdb2d9d6fe3439952dc1",
+  "source_commit": "7804bc3dcb898269572805722404c1dd8c026657",
+  "base_commit": "4158c237bcaf23ada68957206b417344ab1075a3",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "5981f17baf2291b3bbd53574ab4aa26508f4957f83f14a38ab601df76a4879de",
-      "after": "565e6004ac4998dc4b652e8bec223b86b4ac828ecec0fc9d662be2cbd53d2c0b"
+      "after": "643519e6551db17ca119d73456783351a43a99d07df7b815cf5ea9153ae0e65e"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "a8d61dd9f0fa48636a6e82e80954a581ea3b0ed75be74132763b8a12a91d417c",
-      "after": "c95f2677919dd69d291963aa91f92e84a36fe7e471bf6a15b7926aca18b23936"
+      "after": "283c6d7f46b40d7c814b88d9aec6f6df15c7938278be80d747cd7a14feae4409"
     }
   ],
   "identity": {
