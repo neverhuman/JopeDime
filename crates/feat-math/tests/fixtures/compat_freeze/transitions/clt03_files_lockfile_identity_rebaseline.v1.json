@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "CLT-03 adds only the jope-client dependency edges sha2 and zip to Cargo.lock. No package versions, sources or checksums changed; evaluator behavior, known identity table and lineage sources are unchanged.",
+  "plan_reference": "CLT-03; owner ruling rnk11_clt03_1822; ADR-0004; successor after RNK-01 bundle loader",
+  "source_commit": "16d5515837971c26a1176284b2be5f55ed50d4e6",
+  "base_commit": "0757055e515d5293478e1315c47293516a5492c8",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "82f99b5e4c8f1774e082958c7bbb6ae3cfb3db973f90ee80bcd62c81f1419a0c",
+      "after": "8fb52d6460149dc1d6235a104a805eb435ec79d958e095dc13cd88ebbd64533f"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "36643024b3ebe16e448345aaeb43a5f67fc04442fc2532928e9bec0f5a2a6633",
+      "after": "1c7cfd68c85f408e1979179d63be6de3f2d0b402ee8db764fcd494b13bfc371f"
+    }
+  ],
+  "before_identity_digest": "2cbeefc0fe4fa27ab1d61c81be7b0e16dbfd8e90691af5e58304f0c1cab1ec2e",
+  "after_identity_digest": "0f5118ac291de301bcd6d4adad4c1f388ad99c5483e5e6a1a9a74499067aa1a4",
+  "before_implementation_sha256": "b36e7601865cafa5fa96b88e20c04509d7c109ec61bef0e10466443058a6282b",
+  "after_implementation_sha256": "26e5218391274d140049985fb7f4d98f3252d00c9ed85bea6eb24844b15e2f25",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}

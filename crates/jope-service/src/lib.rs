@@ -5,6 +5,7 @@ pub mod daemon_file;
 pub mod dataset;
 pub mod discover;
 pub mod events;
+pub mod export;
 pub mod http;
 pub mod idempotency;
 pub mod lex;
