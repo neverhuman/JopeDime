@@ -775,11 +775,11 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/wrk03_sampler_lockfile_identity_rebaseline.v1.json");
     assert_eq!(
         wrk03_lockfile["source_commit"],
-        "38a3a7575e7bbe9f7f9aaec11600497ccd1c8920"
+        "c3774bc36769443cd6f943715052e0c9bcc73a37"
     );
     assert_eq!(
         wrk03_lockfile["base_commit"],
-        "e0ae51daaeb53ea1496315b1a06b7ea88cebe2c9"
+        "4444374af032717cb48f3c63991d4e36f72fee70"
     );
     assert_eq!(wrk03_lockfile["fixtures"].as_array().unwrap().len(), 2);
     assert_eq!(wrk03_lockfile["fixtures"][0]["path"], changed_fixtures[0]);
