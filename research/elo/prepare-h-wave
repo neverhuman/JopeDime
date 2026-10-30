@@ -1,0 +1,203 @@
+#!/usr/bin/env python3
+"""Reproduce Golden45's existing ladder and verify available H-wave custody.
+
+CPU preparation only: this command never opens dataset tables or starts inference.
+"""
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import time
+
+H38 = {
+    "results.json": "f0d4c413f0c4def25ae0ffbe40f19b089fa0177e4be079f044c3eea5c7849e9b",
+    "results_v2_reconciled_noncompute.json": "0afee6439cd69f63edc1a827621b337c77120c9c03c092635b8663433cc4c545",
+    "h38_bounded_additive_budget_ledger.json": "8f48b6185eaa9c4a33129f8a58d86785ee0f4451657c30d522241cc12a4b2656",
+}
+DOPE = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+
+
+def sha(path):
+    h = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--repo", type=Path, required=True)
+    parser.add_argument("--checkpoint", type=Path, required=True)
+    parser.add_argument("--output-dir", type=Path, required=True)
+    args = parser.parse_args()
+    repo, out = args.repo.resolve(), args.output_dir.resolve()
+    out.mkdir(parents=True, exist_ok=False)
+    pin_path = repo / "research/flywheel_selfplay/custody/CHECKPOINT.json"
+    pin = json.loads(pin_path.read_text())
+    if (
+        pin["checkpoint"]["training_round"] != 782
+        or pin["dope"]["loaded_weights_sha256"] != DOPE
+    ):
+        raise ValueError("GOV-03 r782/DOPE selection mismatch")
+    checkpoint_sha = sha(args.checkpoint)
+    if checkpoint_sha != pin["checkpoint"]["sha256"]:
+        raise ValueError("candidate checkpoint differs from GOV-03")
+    h38_dir = repo / "docs/research/studies/dope-neural-ranking-20261021/h38"
+    for name, expected in H38.items():
+        if sha(h38_dir / name) != expected:
+            raise ValueError(f"H38 artifact differs from HWV-02 custody: {name}")
+
+    assets = repo / "assets/regression"
+    snapshot = assets / "elo-tabular-regression-v2.benchmark-valid.json"
+    baseline = json.loads(snapshot.read_text())
+    if (
+        baseline["methods"],
+        baseline["datasets_scored"],
+        baseline["rankable_rows"],
+        baseline["excluded_rows"],
+    ) != (304, 45, 8718, 45):
+        raise ValueError("reference ladder inventory changed")
+    corrections = assets / "protocol-corrections-tabular-regression-v2.json"
+    if sha(corrections) != baseline["corrections"]["sha256"]:
+        raise ValueError("protocol correction digest mismatch")
+    registry = (
+        assets
+        / "sotarena-tabular-regression-v2/registry/datasets.tabular-regression-v2.json"
+    )
+    datasets = json.loads(registry.read_text())["datasets"]
+    if len(datasets) != 45 or len({r["id"] for r in datasets}) != 45:
+        raise ValueError("Golden45 registry changed")
+    command = [
+        "cargo",
+        "run",
+        "--quiet",
+        "--locked",
+        "-p",
+        "jope-arena",
+        "--",
+        "elo",
+        "--track",
+        "tabular-regression-v2",
+        "--root",
+        str(assets / "sotarena-tabular-regression-v2"),
+        "--ladder",
+        "benchmark-valid",
+        "--corrections",
+        str(corrections),
+        "--out",
+        str(out / "reference.csv"),
+        "--json",
+        str(out / "reference.json"),
+        "--check",
+        "--committed",
+        str(assets / "leaderboard-tabular-regression-v2.benchmark-valid.csv"),
+    ]
+    while os.getloadavg()[0] > 85:
+        print("Waiting for host load <=85 before native recompute", flush=True)
+        time.sleep(30)
+    env = dict(
+        os.environ,
+        CARGO_BUILD_JOBS="4",
+        CARGO_INCREMENTAL="0",
+        CARGO_PROFILE_DEV_DEBUG="line-tables-only",
+    )
+    started = time.monotonic()
+    run = subprocess.run(command, cwd=repo, env=env, capture_output=True, text=True)
+    wall = time.monotonic() - started
+    (out / "recompute.log").write_text(run.stdout + run.stderr)
+    run.check_returncode()
+    actual = json.loads((out / "reference.json").read_text())
+    expected_rows = {r["method_id"]: r for r in baseline["rows"]}
+    if (
+        actual["scores_sha256"] != baseline["scores_sha256"]
+        or actual["excluded_rows"] != 45
+    ):
+        raise ValueError("source scores/exclusions drifted")
+    if len(actual["rows"]) != len(expected_rows):
+        raise ValueError("method inventory mismatch")
+    max_delta = max(
+        abs(float(r["elo"]) - float(expected_rows[r["method_id"]]["elo"]))
+        for r in actual["rows"]
+    )
+    if max_delta > 0.1:
+        raise ValueError("reference Elo does not reproduce to 0.1")
+    jope = next(r for r in actual["rows"] if r["method"] == "Jope Dime Regressor")
+    if (jope["elo_rank"], float(jope["elo"]), jope["datasets_scored"]) != (
+        31,
+        1687.0,
+        42,
+    ):
+        raise ValueError("reference Jope entry mismatch")
+    result = {
+        "schema": "jope.hwv01.golden45-cpu-preparation/v1",
+        "state": "CPU_PREPARED_CANDIDATE_SCORING_NOT_RUN",
+        "source_commit": subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=repo, text=True
+        ).strip(),
+        "command": command,
+        "exit_code": run.returncode,
+        "wall_seconds": wall,
+        "reference": {
+            "methods": 304,
+            "datasets": 45,
+            "rows": 8718,
+            "excluded_rows": 45,
+            "max_abs_elo_delta": max_delta,
+            "jope_dime_regressor": jope,
+        },
+        "sha256": {
+            "checkpoint": checkpoint_sha,
+            "checkpoint_pin": sha(pin_path),
+            "reference_snapshot": sha(snapshot),
+            "corrections": sha(corrections),
+            "registry": sha(registry),
+            "source": sha(Path(__file__)),
+        },
+        "h38_HWV02_verified": H38,
+        "dope_loaded_sha256_pin": DOPE,
+        "candidates": [
+            {
+                "name": "F2_SMART_LM80_STD_SVD32 (H38)",
+                "artifact_sha256": None,
+                "rank": None,
+                "elo": None,
+                "scored_datasets": 0,
+                "reason": "HWV-02 recovers result/ledger metadata, not an executable H38 candidate checkpoint plus fitted transforms.",
+            },
+            {
+                "name": "GOV-03 r782",
+                "artifact_sha256": checkpoint_sha,
+                "rank": None,
+                "elo": None,
+                "scored_datasets": 0,
+                "reason": "Golden45 inference/scoring has not run; GPU qualification must wait behind fused qualification and H53b.",
+            },
+        ],
+        "missing_dataset_ids": sorted(r["id"] for r in datasets),
+        "dataset_payloads_opened": 0,
+        "GPU_work": False,
+        "existing_ladder_rows_changed": 0,
+        "binary": "NOT_RUN",
+    }
+    (out / "receipt.json").write_text(
+        json.dumps(result, indent=2, allow_nan=False) + "\n"
+    )
+    print(
+        json.dumps(
+            {
+                "reference_methods": 304,
+                "datasets": 45,
+                "max_abs_elo_delta": max_delta,
+                "checkpoint_sha256": checkpoint_sha,
+                "candidate_scores": "NOT_RUN",
+            }
+        )
+    )
+
+
+if __name__ == "__main__":
+    main()
