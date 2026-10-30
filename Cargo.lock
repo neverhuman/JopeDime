@@ -2469,6 +2469,7 @@ version = "0.4.1"
 dependencies = [
  "anyhow",
  "clap",
+ "jope-api",
  "jope-assets",
  "jope-datasets",
  "jope-runtime",
