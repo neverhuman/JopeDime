@@ -2584,6 +2584,10 @@ dependencies = [
 [[package]]
 name = "jope-client"
 version = "0.4.1"
+dependencies = [
+ "jope-api",
+ "serde_json",
+]
 
 [[package]]
 name = "jope-datasets"

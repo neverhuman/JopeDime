@@ -1,0 +1,4 @@
+{"run_id":"run_01JBD8Q6N4V2T5Y8K3M7P9R1S0","sequence":"1","time":"2026-10-30T10:02:00.000Z","kind":"experiment.started","body":{"experiment_id":"exp_1","hypothesis":"Try a non-finite candidate"}}
+{"run_id":"run_01JBD8Q6N4V2T5Y8K3M7P9R1S0","sequence":"2","time":"2026-10-30T10:02:00.100Z","kind":"experiment.finished","body":{"experiment_id":"exp_1","outcome":"failed","metric":"rmse","value":null,"failure":{"code":"FITNESS_UNDEFINED","reason":"candidate predictions were non-finite"}}}
+{"run_id":"run_01JBD8Q6N4V2T5Y8K3M7P9R1S0","sequence":"3","time":"2026-10-30T10:02:00.200Z","kind":"experiment.started","body":{"experiment_id":"exp_2","hypothesis":"Try an invalid transform"}}
+{"run_id":"run_01JBD8Q6N4V2T5Y8K3M7P9R1S0","sequence":"4","time":"2026-10-30T10:02:00.300Z","kind":"experiment.finished","body":{"experiment_id":"exp_2","outcome":"failed","metric":"rmse","value":null,"failure":{"code":"FITNESS_UNDEFINED","reason":"candidate predictions were non-finite"}}}
