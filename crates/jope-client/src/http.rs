@@ -1,6 +1,6 @@
 //! Synchronous v1 loopback HTTP. No redirects, proxies, TLS or executor.
 use crate::transport::{header, Error, HeaderValue, Request, Response, Result, Transport};
-use std::{fmt, time::Duration};
+use std::{fmt, io::Read, time::Duration};
 use ureq::http::Uri;
 
 #[derive(Clone)]
@@ -82,6 +82,44 @@ impl Http {
             credentials,
             agent: ureq::Agent::new_with_config(config),
         })
+    }
+
+    pub(crate) fn execute_streaming(
+        &self,
+        request: Request,
+        reader: impl Read + Send + 'static,
+        content_type: &'static str,
+    ) -> Result<Response> {
+        request.validate()?;
+        let mut wire = ureq::http::Request::builder()
+            .method(request.method.as_str())
+            .uri(format!(
+                "http://{}{}",
+                self.credentials.authority, request.path
+            ))
+            .body(ureq::SendBody::from_owned_reader(reader))
+            .map_err(|_| Error::InvalidRequest("invalid HTTP request"))?;
+        *wire.headers_mut() = request.headers;
+        wire.headers_mut().insert(
+            header::HOST,
+            HeaderValue::from_str(&self.credentials.authority).unwrap(),
+        );
+        wire.headers_mut().insert(
+            header::AUTHORIZATION,
+            self.credentials.authorization.clone(),
+        );
+        wire.headers_mut()
+            .insert(header::CONTENT_TYPE, HeaderValue::from_static(content_type));
+        let response = self
+            .agent
+            .run(wire)
+            .map_err(|e| Error::Http(e.to_string()))?;
+        let (parts, body) = response.into_parts();
+        Ok(Response::new(
+            parts.status.as_u16(),
+            parts.headers,
+            body.into_reader(),
+        ))
     }
 }
 impl fmt::Debug for Http {
