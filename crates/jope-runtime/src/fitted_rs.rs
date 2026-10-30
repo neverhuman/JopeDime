@@ -15,9 +15,30 @@ use serde_json::{json, Value};
 
 pub const EMITTER_VERSION: &str = "jope-fitted-rust/v1";
 
+/// Engine output for one caller-supplied parity row.
+#[derive(Clone, Debug)]
+pub struct CheckRow {
+    pub inputs: Vec<f64>,
+    pub expected: f64,
+}
+
 /// Emit a single Rust module with `predict_numeric(&[Vec<f64>]) -> Result<Vec<f64>, String>`.
 /// Rows must have exactly `width` finite cells. Constants round-trip every fitted f64 bit.
 pub fn emit(genome: &GenomeIr, model: &Model, width: usize) -> Result<String> {
+    emit_with_checks(genome, model, width, &[])
+}
+
+/// Emit a predictor with up to 64 caller-supplied engine check rows.
+pub fn emit_with_checks(
+    genome: &GenomeIr,
+    model: &Model,
+    width: usize,
+    checks: &[CheckRow],
+) -> Result<String> {
+    ensure!(
+        checks.len() <= 64 && checks.iter().all(|row| row.inputs.len() == width),
+        "invalid Rust self-check rows"
+    );
     ensure!(width > 0, "fitted Rust requires a positive input width");
     feat_math::kernel::width::check_input_width(model, width).context("fitted Rust input width")?;
     let plan = spec::build_plan(genome)
@@ -94,6 +115,34 @@ pub fn emit(genome: &GenomeIr, model: &Model, width: usize) -> Result<String> {
          if predictions.len() != rows.len() || predictions.iter().any(|v| !v.is_finite()) {{ return Err(\"prediction failed: non-finite fitted prediction\".into()); }}\n\
          Ok(predictions)\n}}\n", fields.join(", ")
     ));
+    let rows = checks
+        .iter()
+        .map(|row| {
+            let inputs = row
+                .inputs
+                .iter()
+                .map(|v| format!("f64::from_bits(0x{:016x})", v.to_bits()))
+                .collect::<Vec<_>>()
+                .join(",");
+            format!(
+                "(vec![{inputs}],f64::from_bits(0x{:016x}))",
+                row.expected.to_bits()
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+    source.push_str(&format!(r#"
+const SELF_CHECK_ABS_TOL: f64 = 1e-12;
+const SELF_CHECK_REL_TOL: f64 = 1e-10;
+#[test]
+fn self_check() {{
+    let rows: Vec<(Vec<f64>, f64)> = vec![{rows}];
+    for (index, (inputs, expected)) in rows.iter().enumerate() {{
+        let actual = fitted_model().predict(std::slice::from_ref(inputs))[0];
+        assert!((expected.is_nan() && actual.is_nan()) || (actual.is_finite() && (actual-expected).abs() <= SELF_CHECK_ABS_TOL + SELF_CHECK_REL_TOL*expected.abs()), "self_check failed at row {{index}}");
+    }}
+}}
+"#));
     lint(&source)?;
     Ok(source)
 }
@@ -1040,5 +1089,117 @@ mod tests {
         }
         program.push_str(&format!("println!(\"{cases} trees: 0 golden / 0 randomized row decision flips ({} row-tree decisions)\");}}",cases*rows.len()));
         run_rust("tree-decisions", &program);
+    }
+
+    #[test]
+    fn emitted_self_checks_replay_caller_rows_and_reject_perturbed_outputs() {
+        let (train, targets) = training();
+        let genome = GenomeIr::parse("(pipe X (ridge))").unwrap();
+        let model = feat_math::model::fit(&genome, &train, &targets).unwrap();
+        let inputs = train[0].clone();
+        let expected = model.predict(&vec![inputs.clone()]).unwrap()[0];
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../target/fitted-self-check-proof");
+        std::fs::create_dir_all(&root).unwrap();
+
+        let js_checks = [crate::fitted_js::CheckRow {
+            inputs: inputs.clone(),
+            expected,
+        }];
+        let js = crate::fitted_js::emit_with_checks(&genome, &model, 12, &js_checks).unwrap();
+        let js_path = root.join("predictor.mjs");
+        std::fs::write(&js_path, js).unwrap();
+        assert!(Command::new("node")
+            .arg(&js_path)
+            .arg("--self-check")
+            .status()
+            .unwrap()
+            .success());
+        let bad_js = crate::fitted_js::emit_with_checks(
+            &genome,
+            &model,
+            12,
+            &[crate::fitted_js::CheckRow {
+                inputs: inputs.clone(),
+                expected: expected + 10.0,
+            }],
+        )
+        .unwrap();
+        std::fs::write(&js_path, bad_js).unwrap();
+        assert!(!Command::new("node")
+            .arg(&js_path)
+            .arg("--self-check")
+            .status()
+            .unwrap()
+            .success());
+
+        let py_checks = [crate::fitted_py::CheckRow {
+            inputs: inputs.clone(),
+            expected,
+        }];
+        let py = crate::fitted_py::emit_with_checks(&genome, &model, 12, &py_checks).unwrap();
+        let py_path = root.join("predictor.py");
+        std::fs::write(&py_path, py).unwrap();
+        assert!(Command::new("python3")
+            .arg(&py_path)
+            .arg("--self-check")
+            .status()
+            .unwrap()
+            .success());
+        let bad_py = crate::fitted_py::emit_with_checks(
+            &genome,
+            &model,
+            12,
+            &[crate::fitted_py::CheckRow {
+                inputs: inputs.clone(),
+                expected: expected + 10.0,
+            }],
+        )
+        .unwrap();
+        std::fs::write(&py_path, bad_py).unwrap();
+        assert!(!Command::new("python3")
+            .arg(&py_path)
+            .arg("--self-check")
+            .status()
+            .unwrap()
+            .success());
+
+        let rs_checks = [CheckRow {
+            inputs: inputs.clone(),
+            expected,
+        }];
+        let rs = emit_with_checks(&genome, &model, 12, &rs_checks).unwrap();
+        let rs_path = root.join("predictor.rs");
+        let rs_test = root.join("predictor-test");
+        std::fs::write(&rs_path, rs).unwrap();
+        assert!(Command::new("rustc")
+            .args(["--edition=2021", "--test"])
+            .arg(&rs_path)
+            .arg("-o")
+            .arg(&rs_test)
+            .status()
+            .unwrap()
+            .success());
+        assert!(Command::new(&rs_test).status().unwrap().success());
+        let bad_rs = emit_with_checks(
+            &genome,
+            &model,
+            12,
+            &[CheckRow {
+                inputs,
+                expected: expected + 10.0,
+            }],
+        )
+        .unwrap();
+        std::fs::write(&rs_path, bad_rs).unwrap();
+        assert!(Command::new("rustc")
+            .args(["--edition=2021", "--test"])
+            .arg(&rs_path)
+            .arg("-o")
+            .arg(&rs_test)
+            .status()
+            .unwrap()
+            .success());
+        assert!(!Command::new(&rs_test).status().unwrap().success());
     }
 }

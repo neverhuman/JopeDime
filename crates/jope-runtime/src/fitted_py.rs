@@ -22,11 +22,50 @@ use feat_math::ops::FittedOp;
 use feat_math::spec::{build_plan, Plan, PlannedHead, PlannedOp, PlannedStage};
 use feat_math::transpile::{emit as emit_recipe, lint_shipped_text, EmitOptions};
 
+/// Engine output for one caller-supplied parity row.
+#[derive(Clone, Debug)]
+pub struct CheckRow {
+    pub inputs: Vec<f64>,
+    pub expected: f64,
+}
+
 /// The recipe's script guard; the fitted state goes in front of it.
 const MAIN_GUARD: &str = "\n\n\nif __name__ == \"__main__\":";
 
+fn python_hex(value: f64) -> String {
+    if value.is_nan() {
+        return "\"nan\"".into();
+    }
+    let bits = value.to_bits();
+    let sign = if bits >> 63 == 0 { "" } else { "-" };
+    let exponent = ((bits >> 52) & 0x7ff) as i32;
+    let fraction = bits & ((1u64 << 52) - 1);
+    if exponent == 0 {
+        if fraction == 0 {
+            format!("{sign}\"0x0.0p+0\"")
+        } else {
+            format!("{sign}\"0x0.{fraction:013x}p-1022\"")
+        }
+    } else {
+        format!("{sign}\"0x1.{fraction:013x}p{:+}\"", exponent - 1023)
+    }
+}
+
 /// Emit standalone Python 3 that predicts with `model`, fitted from `genome` on rows `width` wide.
 pub fn emit(genome: &GenomeIr, model: &Model, width: usize) -> Result<String> {
+    emit_with_checks(genome, model, width, &[])
+}
+
+/// Emit a predictor with up to 64 caller-supplied engine check rows.
+pub fn emit_with_checks(
+    genome: &GenomeIr,
+    model: &Model,
+    width: usize,
+    checks: &[CheckRow],
+) -> Result<String> {
+    if checks.len() > 64 || checks.iter().any(|row| row.inputs.len() != width) {
+        return Err(Failure::integrity("invalid Python self-check rows"));
+    }
     let Model::Pipeline { target, ops, head } = model else {
         return Err(Failure::backend("fitted Python needs a pipeline model"));
     };
@@ -124,6 +163,46 @@ pub fn emit(genome: &GenomeIr, model: &Model, width: usize) -> Result<String> {
          return []\n    \
          return fitted_model().predict(rows)",
     );
+    let rows = if checks.is_empty() {
+        "()".to_owned()
+    } else {
+        format!(
+            "({},)",
+            checks
+                .iter()
+                .map(|row| {
+                    let inputs = row
+                        .inputs
+                        .iter()
+                        .map(|v| python_hex(*v))
+                        .collect::<Vec<_>>()
+                        .join(", ");
+                    format!("(({inputs}), {})", python_hex(row.expected))
+                })
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
+    };
+    block.push_str(&format!(r#"
+SELF_CHECK_ROWS = {rows}
+SELF_CHECK_ABS_TOL = 1e-12
+SELF_CHECK_REL_TOL = 1e-10
+def _self_check_f64(value):
+    return float("nan") if value == "nan" else float.fromhex(value)
+def self_check():
+    for index, (inputs, expected_hex) in enumerate(SELF_CHECK_ROWS):
+        expected = _self_check_f64(expected_hex)
+        actual = fitted_predict([[_self_check_f64(value) for value in inputs]])[0]
+        if not (math.isnan(expected) and math.isnan(actual)) and not (
+            math.isfinite(actual) and abs(actual-expected) <= SELF_CHECK_ABS_TOL + SELF_CHECK_REL_TOL*abs(expected)
+        ):
+            raise AssertionError("self_check failed at row %d" % index)
+    return True
+import sys as _self_check_sys
+if __name__ == "__main__" and _self_check_sys.argv[1:] == ["--self-check"]:
+    self_check()
+    raise SystemExit(0)
+"#));
     let mut source = String::with_capacity(recipe.len() + block.len());
     source.push_str(&recipe[..at]);
     source.push_str(&block);
