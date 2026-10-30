@@ -743,6 +743,15 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     assert_eq!(api06_lockfile["fixtures"].as_array().unwrap().len(), 2);
     assert_eq!(api06_lockfile["fixtures"][0]["path"], changed_fixtures[0]);
     assert_eq!(api06_lockfile["fixtures"][1]["path"], changed_fixtures[1]);
+    let tui10_identity =
+        old_fixture("transitions/tui10_portable_pty_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        tui10_identity["source_commit"],
+        "e1c814b5885f5993b101ddf9d6f4c4eb4822040a"
+    );
+    assert_eq!(tui10_identity["fixtures"].as_array().unwrap().len(), 2);
+    assert_eq!(tui10_identity["fixtures"][0]["path"], changed_fixtures[0]);
+    assert_eq!(tui10_identity["fixtures"][1]["path"], changed_fixtures[1]);
     let wrk02_identity =
         old_fixture("transitions/wrk02_frame_codec_lockfile_identity_rebaseline.v1.json");
     assert_eq!(
@@ -766,6 +775,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &api01_lockfile,
         &pub02_identity,
         &api06_lockfile,
+        &tui10_identity,
         &wrk02_identity,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
@@ -819,6 +829,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 dsc01_api.clone(),
                 pub02_identity.clone(),
                 api06_lockfile.clone(),
+                tui10_identity.clone(),
                 wrk02_identity.clone(),
             ],
         )
@@ -858,6 +869,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 dsc01_api.clone(),
                 pub02_identity.clone(),
                 api06_lockfile.clone(),
+                tui10_identity.clone(),
                 wrk02_identity.clone(),
             ],
         )
@@ -890,6 +902,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 dsc01_api.clone(),
                 pub02_identity.clone(),
                 api06_lockfile.clone(),
+                tui10_identity.clone(),
                 wrk02_identity.clone(),
             ],
         )
@@ -953,6 +966,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 dsc01_api.clone(),
                 pub02_identity.clone(),
                 api06_lockfile.clone(),
+                tui10_identity.clone(),
                 wrk02_identity.clone(),
             ],
         ),
@@ -976,6 +990,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 dsc01_api.clone(),
                 pub02_identity.clone(),
                 api06_lockfile.clone(),
+                tui10_identity.clone(),
                 wrk02_identity.clone(),
             ],
         ),
@@ -1047,6 +1062,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         dsc01_api,
         pub02_identity,
         api06_lockfile,
+        tui10_identity,
         wrk02_identity,
     ];
     assert_eq!(rows.len(), 49);
