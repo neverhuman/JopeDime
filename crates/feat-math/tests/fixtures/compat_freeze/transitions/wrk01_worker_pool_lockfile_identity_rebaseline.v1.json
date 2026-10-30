@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced WRK-01 lockfile-only successor under lanes_1545: one optional appliance-to-service edge, no package/version/checksum or evaluator semantics change. Windows features select APIs of the already-pinned windows-sys. Initial proof follows actual merged CLT-01; final merge-queue re-chain remains the merger responsibility.",
+  "plan_reference": "WRK-01; lanes_1545; ADR-0004",
+  "source_commit": "05e9704b6340ff3508d46da50357099d76a4f4ce",
+  "base_commit": "fc4e21b17f53896fa0773c3c0275948a155e3234",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "4ce5ae9699f03c4298d9bc49ccd28d74971816f4985fd40e5189eb491100cbaa",
+      "after": "f4676946cce63bc6a964adde500deca308f435c8bcebfc29921d247e5f7bb063"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "07e3cb4b57c17d824875b1af7cbc2eae76f5d82f0fc4aef8881b0185ce2a77aa",
+      "after": "e964d2c40110a26f95f17d29f84c4be85f0457bf4cc7b840772e1f1933c9b0a6"
+    }
+  ],
+  "before_identity_digest": "1828fa116db313f023ec63c0e1e5573835fd71b63e7029d7062475a44d6ae6c1",
+  "after_identity_digest": "0b0d46bc37deb8098ad6e6ca5a1032788e35435069b4c8ce31a37d8a5fcd6130",
+  "before_implementation_sha256": "a91a518baa5e558e158415c30c599752f60de45f1312558c60a8d550b9d1c66b",
+  "after_implementation_sha256": "e8f0fe8567205539dd8f02007a01f1a05e0901e2579b4ad1c6478e758a68ddb6",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
