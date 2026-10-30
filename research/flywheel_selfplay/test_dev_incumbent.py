@@ -75,6 +75,80 @@ def test_identity_change_refused():
         gate.decide(model, opt, {"mean": 3}, "different-dev", "bad.pt", 2)
 
 
+def test_round_step_batch_stream_advances_and_replays_without_best_round():
+    from dev_incumbent import batch_seed
+
+    seeds = [batch_seed(42, rnd, step) for rnd in range(926, 973) for step in range(2)]
+    assert len(set(seeds)) == 94
+    assert seeds == [
+        batch_seed(42, rnd, step) for rnd in range(926, 973) for step in range(2)
+    ]
+    assert batch_seed(43, 926, 0) != seeds[0]
+
+
+def test_rejected_parameter_bytes_never_reach_evaluator_again_after_resume():
+    import hashlib
+
+    from dev_incumbent import CandidateNovelty, RejectedCandidateError
+
+    model, opt = setup()
+    gate = DevIncumbent(model, opt, {"mean": 2}, "fixed-dev", "old.pt", 1)
+    novelty = CandidateNovelty("fixed-dev", [])
+    with torch.no_grad():
+        model.weight.add_(1)
+    candidate = copy.deepcopy(model.state_dict())
+    parameter_sha = hashlib.sha256(model.weight.detach().numpy().tobytes()).hexdigest()
+    calls = []
+
+    def evaluate():
+        calls.append(parameter_sha)
+        return {"mean": 1}
+
+    utility = novelty.evaluate(parameter_sha, evaluate)
+    decision = gate.decide(model, opt, utility, "fixed-dev", "rejected.pt", 2)
+    decision["candidate_parameter_sha256"] = parameter_sha
+    novelty.record(decision)
+    # Restore/rebuild the exact rejected candidate; journal-only resume must refuse it.
+    model.load_state_dict(candidate)
+    resumed = CandidateNovelty("fixed-dev", [decision])
+    with pytest.raises(RejectedCandidateError, match="first rejected round 2"):
+        resumed.evaluate(parameter_sha, evaluate)
+    assert calls == [parameter_sha]
+
+
+def test_legacy_rejection_records_and_identity_are_respected():
+    from dev_incumbent import CandidateNovelty, RejectedCandidateError
+
+    legacy = {
+        "candidate_parameter_sha256": "a" * 64,
+        "adapter_admission": {
+            "evaluation_identity": "fixed-dev",
+            "accepted": False,
+            "round": 2,
+        },
+    }
+    later = {
+        **legacy["adapter_admission"],
+        "round": 3,
+        "candidate_parameter_sha256": "a" * 64,
+    }
+    novelty = CandidateNovelty("fixed-dev", [later, legacy])
+    with pytest.raises(RejectedCandidateError, match="first rejected round 2"):
+        novelty.evaluate(
+            "a" * 64, lambda: pytest.fail("must not evaluate rejected bytes")
+        )
+    assert CandidateNovelty("other-dev", [legacy]).evaluate("a" * 64, lambda: 7) == 7
+    novelty.record(
+        {
+            "evaluation_identity": "fixed-dev",
+            "accepted": True,
+            "round": 3,
+            "candidate_parameter_sha256": "b" * 64,
+        }
+    )
+    assert novelty.evaluate("b" * 64, lambda: 8) == 8
+
+
 def test_repeated_rejections_never_mutate_saved_optimizer_state():
     model, opt = setup()
     original = copy.deepcopy(opt.state_dict())

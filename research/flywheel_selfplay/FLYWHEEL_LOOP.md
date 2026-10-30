@@ -174,6 +174,26 @@ identity and utility; `adapter_admissions.jsonl` records each acceptance/rollbac
 The pointer is published after a durable accepted-state checkpoint. Old files and
 rejected proposals are retained within the original10GiB campaign ceiling.
 
+The owner0950 candidate-diversity safeguard keeps this admission rule unchanged.
+Batch permutations now have a private `round-step/v1` seed derived from the root
+seed, logical round and optimizer step, never the retained best round. The existing
+Rust sampler preserves whole-family blocks and full1219 coverage. Every completed
+round records each batch seed, context count and order SHA; candidate parameter SHAs
+are also written to the admission journal. On resume, completed round receipts and
+the admission journal rebuild a rejected-hash index under the fixed evaluation
+identity. Previously rejected parameter bytes are refused **before** Train/Val
+candidate selection is evaluated. This unexpected integrity event restores the
+incumbent, writes `candidate_refusal_round-N.json`, and fails closed without another
+evaluation or optimizer update; it does not invent a completed round or cached score.
+
+Exact parameter duplication and discrete utility recurrence are separate measures:
+before this patch, rounds965..1024 had60 distinct parameter SHAs but59/60 utilities
+equal to an earlier rejection under the same evaluator identity (beginning775).
+The safeguard does not claim to fix this quality plateau. Report the same utility
+recurrence fraction and distinct parameter count for the first10 completed rounds
+after an authorized deployment; until then, the after result is unknown. H-wave
+copy experiments and H49-SEL acceptance-margin calibration remain separate work.
+
 Paired CPU replay at identical inputs reproduces the round41 regression exactly;
 all non-adapter tensors remain identical. See the committed dev-regression receipt.
 The static process command's round13 resume argument described one startup load,

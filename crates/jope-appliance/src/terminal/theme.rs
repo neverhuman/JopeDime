@@ -2,6 +2,8 @@
 
 use std::env;
 
+pub mod complete;
+
 #[path = "highlight.rs"]
 pub mod highlight;
 
