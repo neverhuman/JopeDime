@@ -1,9 +1,22 @@
 % Shared notation. One definition per symbol; sections must not redefine.
 \usepackage{xurl}
 \sisetup{group-separator={,},group-minimum-digits=4}
+\renewcommand{\bibpreamble}{\raggedright}
 \makeatletter
 \providecommand*{\theHalgorithm}{\thealgorithm}
 \providecommand*{\theHALG@line}{\theHalgorithm.\arabic{ALG@line}}
+\renewcommand\section{\@startsection {section}{1}{\z@}%
+  {-3.5ex \@plus -1ex \@minus -.2ex}%
+  {2.3ex \@plus.2ex}%
+  {\normalfont\Large\bfseries\raggedright}}
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+  {-3.25ex\@plus -1ex \@minus -.2ex}%
+  {1.5ex \@plus .2ex}%
+  {\normalfont\large\bfseries\raggedright}}
+\renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
+  {-3.25ex\@plus -1ex \@minus -.2ex}%
+  {1.5ex \@plus .2ex}%
+  {\normalfont\normalsize\bfseries\raggedright}}
 \makeatother
 \newcommand{\EZ}{EurekaZero}
 \newcommand{\searchone}{search\,$=$\,1}
