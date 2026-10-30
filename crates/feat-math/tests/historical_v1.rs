@@ -837,6 +837,95 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         dsc02_rechain["base_commit"],
         "009de907e9c1c829f8014aac7974e6c283460f56"
     );
+    let tui11_fake_transport =
+        old_fixture("transitions/tui11_fake_transport_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        tui11_fake_transport["source_commit"],
+        "b760efc14de92a14940851b767c0a3432f7173a9"
+    );
+    assert_eq!(
+        tui11_fake_transport["base_commit"],
+        "0462cd418f733269ba69270402fc7c97cf30eaa2"
+    );
+    let tui03_command_parser =
+        old_fixture("transitions/tui03_command_parser_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        tui03_command_parser["source_commit"],
+        "fb9925fe9c85294c80214625625abda19e31b891"
+    );
+    assert_eq!(
+        tui03_command_parser["base_commit"],
+        "13dfc08c15ae7e86a77229c6d429dffad7db5512"
+    );
+    let svc03_identity =
+        old_fixture("transitions/svc03_run_controller_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        svc03_identity["source_commit"],
+        "a1ba0f6cdda630c22d82146db24409232db61e8d"
+    );
+    assert_eq!(
+        svc03_identity["base_commit"],
+        "123349f752780968a8750e77c44ea4da4016c45a"
+    );
+    let wrk03_sampler =
+        old_fixture("transitions/wrk03_sampler_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        wrk03_sampler["source_commit"],
+        "eb170b9e22605de75bff6d5a0d6727a2509f394c"
+    );
+    assert_eq!(
+        wrk03_sampler["base_commit"],
+        "47a35eda5a2e87d2e46fea327f526d4a0857e4c9"
+    );
+    let obj01_runtime_fitness =
+        old_fixture("transitions/obj01_runtime_fitness_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        obj01_runtime_fitness["source_commit"],
+        "89b5ffe71abf9421f8b995ba3712d7765cc40f7e"
+    );
+    assert_eq!(
+        obj01_runtime_fitness["base_commit"],
+        "771755480af1d8c18ebe787f362262a70a343cfe"
+    );
+    let svc05_http_router =
+        old_fixture("transitions/svc05_http_router_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        svc05_http_router["source_commit"],
+        "899261ff31bd1be314e49dd18ea1b566f1cbb2ff"
+    );
+    assert_eq!(
+        svc05_http_router["base_commit"],
+        "80b954a2bf83e0ff3e8ed9fd6fbb72457b4d0940"
+    );
+    let bat05_cli_ulid =
+        old_fixture("transitions/bat05_cli_ulid_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        bat05_cli_ulid["source_commit"],
+        "942a9fd7e59022fbf0faedd14129818604bd5fcb"
+    );
+    assert_eq!(
+        bat05_cli_ulid["base_commit"],
+        "cd3bf1f432ece683eba47984e788225dc2a17ff9"
+    );
+    let svc06_daemon_file =
+        old_fixture("transitions/svc06_daemon_file_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        svc06_daemon_file["source_commit"],
+        "2012b7637a28f7252e84431a013a1ab1c2e7e68d"
+    );
+    assert_eq!(
+        svc06_daemon_file["base_commit"],
+        "0fb9dc3ab27714f42f3385d109d68be2bde5ccd5"
+    );
+    let svc01_store = old_fixture("transitions/svc01_store_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        svc01_store["source_commit"],
+        "f2baa1a33814ef92bb3623e32dc8b1aed1746ecb"
+    );
+    assert_eq!(
+        svc01_store["base_commit"],
+        "cf6078317fbcb8afdb5a235490521cb4c98e0566"
+    );
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -858,6 +947,15 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &wrk02_identity,
         &dsc04_lockfile,
         &dsc02_rechain,
+        &tui11_fake_transport,
+        &tui03_command_parser,
+        &svc03_identity,
+        &wrk03_sampler,
+        &obj01_runtime_fitness,
+        &svc05_http_router,
+        &bat05_cli_ulid,
+        &svc06_daemon_file,
+        &svc01_store,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -916,6 +1014,15 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 wrk02_identity.clone(),
                 dsc04_lockfile.clone(),
                 dsc02_rechain.clone(),
+                tui11_fake_transport.clone(),
+                tui03_command_parser.clone(),
+                svc03_identity.clone(),
+                wrk03_sampler.clone(),
+                obj01_runtime_fitness.clone(),
+                svc05_http_router.clone(),
+                bat05_cli_ulid.clone(),
+                svc06_daemon_file.clone(),
+                svc01_store.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -960,6 +1067,15 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 wrk02_identity.clone(),
                 dsc04_lockfile.clone(),
                 dsc02_rechain.clone(),
+                tui11_fake_transport.clone(),
+                tui03_command_parser.clone(),
+                svc03_identity.clone(),
+                wrk03_sampler.clone(),
+                obj01_runtime_fitness.clone(),
+                svc05_http_router.clone(),
+                bat05_cli_ulid.clone(),
+                svc06_daemon_file.clone(),
+                svc01_store.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -997,6 +1113,15 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 wrk02_identity.clone(),
                 dsc04_lockfile.clone(),
                 dsc02_rechain.clone(),
+                tui11_fake_transport.clone(),
+                tui03_command_parser.clone(),
+                svc03_identity.clone(),
+                wrk03_sampler.clone(),
+                obj01_runtime_fitness.clone(),
+                svc05_http_router.clone(),
+                bat05_cli_ulid.clone(),
+                svc06_daemon_file.clone(),
+                svc01_store.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1065,6 +1190,15 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 wrk02_identity.clone(),
                 dsc04_lockfile.clone(),
                 dsc02_rechain.clone(),
+                tui11_fake_transport.clone(),
+                tui03_command_parser.clone(),
+                svc03_identity.clone(),
+                wrk03_sampler.clone(),
+                obj01_runtime_fitness.clone(),
+                svc05_http_router.clone(),
+                bat05_cli_ulid.clone(),
+                svc06_daemon_file.clone(),
+                svc01_store.clone(),
             ],
         ),
         (
@@ -1093,6 +1227,15 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 wrk02_identity.clone(),
                 dsc04_lockfile.clone(),
                 dsc02_rechain.clone(),
+                tui11_fake_transport.clone(),
+                tui03_command_parser.clone(),
+                svc03_identity.clone(),
+                wrk03_sampler.clone(),
+                obj01_runtime_fitness.clone(),
+                svc05_http_router.clone(),
+                bat05_cli_ulid.clone(),
+                svc06_daemon_file.clone(),
+                svc01_store.clone(),
             ],
         ),
     ] {
@@ -1169,6 +1312,15 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         wrk02_identity,
         dsc04_lockfile,
         dsc02_rechain,
+        tui11_fake_transport,
+        tui03_command_parser,
+        svc03_identity,
+        wrk03_sampler,
+        obj01_runtime_fitness,
+        svc05_http_router,
+        bat05_cli_ulid,
+        svc06_daemon_file,
+        svc01_store,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

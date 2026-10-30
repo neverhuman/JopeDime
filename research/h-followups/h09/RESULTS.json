@@ -1,0 +1,107 @@
+{
+  "scope": "DEVELOPMENT_ONLY archived regression candidate selection; no new GP fits",
+  "train_receipt_sha": "7e2e44040aa9e1913b3d1954b5d5c46ca9178eedc78ab75f0fa98363388571b3",
+  "n_contexts": 91,
+  "n_components": 19,
+  "baseline_mean_fitness": -0.7899904387364635,
+  "residual_mean_fitness": 1.289807976043926,
+  "lift": -2.07979841478039,
+  "paired_97_5_ci": [
+    -5.329693987099044,
+    0.11920940108557204
+  ],
+  "per_component_lift": {
+    "catalog:041acec8b7b1a93c3b01d2db31e11590c6948324": 0.15046928221091,
+    "catalog:06378e5c4523875b03aaafbe2c13d79b980de138": 0.25442649231469316,
+    "catalog:383da6dcece1cfff90a5d5fbdc6f5126e515b313": -20.054483997921494,
+    "catalog:3de8d58693beecf982883331fdcccb0f6b8989d1": -0.04477735059679222,
+    "catalog:428bafd9ab489a17e18d54021a029f33eae27b85": 0.25935999897492756,
+    "catalog:5e6b45a9b05c4999e0a87e4d6f21477732fbe716": -0.32068652825636645,
+    "catalog:64522ca52b3a89a5536896a9e8d8cf07f758d679": -0.1579085883722533,
+    "catalog:7869ee5cd2fd6cbc93f09700f6dc4f872647ae3a": 0.02242513892557574,
+    "catalog:78750cd3ed346a7e2c18e1f18abb36bf6524a953": -0.017990979669579854,
+    "catalog:8540c76e898caeb706a406e6a25bc196c508233f": 0.002293662545846731,
+    "catalog:8a80346a00c45a5bf909e5758530705de6774aa2": -0.2730662701133487,
+    "catalog:949cc71526796838850d5db7410ea6f03ded94b9": -20.16237306956962,
+    "catalog:ac6037f990566402e982462325d4130812dd5e1b": 0.007069750313232148,
+    "catalog:b265c1361a87099e04f5dbd1b1f9f1fdc2829073": 0.7171778429457467,
+    "catalog:b9ad3e10c5457457ddd9ad3bc4aef21a32cfd4c7": 0.2921071784345033,
+    "catalog:cd7f714ee556c25049ca579e5b88eeb8046050cf": 0.2822169677195351,
+    "catalog:d54d5ef111b865d91fb0d250e13a2130a3a63eb6": -0.10271509698996295,
+    "catalog:e86d2be0bd9830edd1208581cff44cc00c46ccb9": -0.19333416559482852,
+    "catalog:faf1802ff9b5320ec86de7f76473ac01d97ca274": -0.17638014812812874
+  },
+  "dope_after": {
+    "composite": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "checkpoint_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a"
+  },
+  "terminal_val_evaluations": 1,
+  "regression_elo": null,
+  "elo_status": "no positive-CI handoff",
+  "binary_elo": null,
+  "holdout_sealed_payloads_opened": 0,
+  "source_commit": "1dfa5043459d43f7e01520421867aa37a7aaeefe",
+  "protocol_sha256": "956f55343d2b4ba7df8408993bd3efc5cbd757aca7301512df93f244d3a06d4c",
+  "catalog_sha256": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
+  "plan_sha256": "f16b087f7003f44946e5ce810e7a969d0b204db47d97b08049f143aaf4f9aff8",
+  "model_sha256": "6a13b629f9973cbcb3857f5ddee62b0cf64e2c07cad4abba1c7b07e8d932c251",
+  "selected_alpha": 100,
+  "train_selection": [
+    {
+      "alpha": 1,
+      "mean_fitness": 2.656783908844724
+    },
+    {
+      "alpha": 10,
+      "mean_fitness": 2.658267874410143
+    },
+    {
+      "alpha": 100,
+      "mean_fitness": 1.761900839062566
+    }
+  ],
+  "run_root": "/home/ubuntu/jope-data/hwv-04/run-v1",
+  "input_metadata_sha256": {
+    "selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
+  },
+  "complete_receipts": {
+    "score-start.json": "9764c8c7a4b1a32c7df3dc77a507cf2462b8a69f5ffe2f6bae67dee427ab0d23",
+    "trained.json": "7e2e44040aa9e1913b3d1954b5d5c46ca9178eedc78ab75f0fa98363388571b3",
+    "plan.json": "f16b087f7003f44946e5ce810e7a969d0b204db47d97b08049f143aaf4f9aff8",
+    "models.joblib": "6a13b629f9973cbcb3857f5ddee62b0cf64e2c07cad4abba1c7b07e8d932c251",
+    "results.json": "532e8d91e9cc5534dc9d23eef154a167522b05c9983cefb97739bb63b693eb9c",
+    "train-start.json": "d9c3ca0dd8d3e6fa4999f8849dff589cd5a152207aada3f0838ff1937b5796b9"
+  },
+  "environment": {
+    "python": "3.12.3",
+    "numpy": "1.26.4",
+    "scipy": "1.16.3",
+    "scikit_learn": "1.7.2",
+    "joblib": "1.3.2",
+    "platform": "Linux-6.8.0-146-generic-x86_64-with-glibc2.39",
+    "hardware": "x86_64"
+  },
+  "execution": {
+    "train": {
+      "phase": "train",
+      "source_commit": "1dfa5043459d43f7e01520421867aa37a7aaeefe",
+      "started_utc": "2026-10-30T12:33:27.288469+00:00",
+      "wall_seconds": 37.04558173986152,
+      "exit_code": 0,
+      "abort": null,
+      "host_cpu_peak_pct": 22.6,
+      "host_cpu_samples": 37
+    },
+    "score": {
+      "phase": "score",
+      "source_commit": "1dfa5043459d43f7e01520421867aa37a7aaeefe",
+      "started_utc": "2026-10-30T12:34:26.154225+00:00",
+      "wall_seconds": 6.013048993889242,
+      "exit_code": 0,
+      "abort": null,
+      "host_cpu_peak_pct": 17.4,
+      "host_cpu_samples": 6
+    }
+  }
+}

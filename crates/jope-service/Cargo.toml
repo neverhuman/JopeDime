@@ -8,14 +8,34 @@ license.workspace = true
 repository.workspace = true
 description = "JopeDime v1 engine service"
 
+[features]
+failpoints = []
+
 [dependencies]
+anyhow.workspace = true
+jope-runtime = { path = "../jope-runtime" }
+jope-api = { path = "../jope-api" }
+redb = { workspace = true }
 sha2 = { workspace = true }
 serde = { workspace = true }
+axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "tokio"] }
+subtle = "=2.6.1"
+tokio = { workspace = true }
 toml = { workspace = true }
 serde_json.workspace = true
+ulid = { workspace = true }
 
 [dev-dependencies]
 proptest.workspace = true
+tempfile = { workspace = true }
+tower = { version = "=0.5.3", default-features = false, features = ["util"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "=0.2.189"
+nix = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_System_ProcessStatus", "Win32_System_Threading"] }
 
 [lints]
 workspace = true

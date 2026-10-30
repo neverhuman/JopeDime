@@ -15,10 +15,12 @@ path = "src/main.rs"
 starforge = { path = "../jope-encoders", optional = true, features = ["dope"] }
 anyhow.workspace = true
 clap = { workspace = true, features = ["derive"] }
+jope-api = { path = "../jope-api" }
 jope-assets = { path = "../jope-assets" }
 jope-runtime = { path = "../jope-runtime" }
 serde.workspace = true
 serde_json.workspace = true
+ulid.workspace = true
 
 [dev-dependencies]
 # Test builds of `jopedime` pack fixture packages and trust the development key. Release builds

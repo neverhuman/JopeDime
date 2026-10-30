@@ -2,6 +2,8 @@
 
 use std::env;
 
+pub mod cards;
+pub mod commands;
 pub mod complete;
 
 #[path = "highlight.rs"]

@@ -433,7 +433,7 @@ stateDiagram-v2
 | State | Meaning | Notes |
 | --- | --- | --- |
 | `running` | Work is scheduled. `phase` ∈ `preparing`, `encoding`, `seeding`, `searching`, `finalizing`. | Validation happens before the run exists (dry-run logic), so there is no validating state. |
-| `pausing` | No new evaluations are admitted; in-flight evaluations finish or are discarded at the deadline; the round checkpoint is committed. | `pending` in the snapshot says what is awaited. |
+| `pausing` | No new evaluations are admitted; commit fully completed rounds in order. At the deadline, revoke outstanding attempts and roll back all uncommitted rounds to the last committed checkpoint, then pause. On continue, replay those rounds with the same seeds and captured round effort. | `pending` in the snapshot says what is awaited. |
 | `paused` | Quiescent and checkpointed. `interrupted: true` if reached through crash recovery. | `continue` resumes with remaining budget. |
 | `completed` | Terminal. `completion_reason` ∈ `budget_evaluations`, `budget_time`, `converged`, `effort_reduced`. `best` is null only with `NO_VALID_MODEL`. | `\restart` forks (optionally warm, §5.7). |
 | `cancelled` | Terminal. The best committed model stays available. | |
