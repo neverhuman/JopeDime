@@ -2,7 +2,7 @@
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
   "decision": "Announced identity-only successor for PUB-02 public stage-operation names and registry wiring, after the DSC-01 feat-math identity successor; that edge follows API-01 and RNK-11. The public-name catalog and its module declaration change the feat-math implementation identity; evaluation semantics, DSL ABI, Cargo.lock, behavior fixtures, lineage source hashes and shipped known-identity rows do not change.",
   "plan_reference": "JopeDime v1 PUB-02; Jepson-approved scope_2218 and pub02_0515 rulings; ADR-0004",
-  "pr_reference": "pending",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/490",
   "source_commit": "f606491e30f007786ac79975cd40c552f457b86d",
   "fixtures": [
     {
