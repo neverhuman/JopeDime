@@ -1,0 +1,26 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "TUI-07 identity successor after merging main eeabea7. The status renderer and module declaration do not change evaluator implementation inputs; the jope-api appliance edge is already present on main. Refresh the identity fixture provenance at the merged TUI-07 source commit and append this transition after the svc01_store identity tip. The identity digest, implementation hash and Cargo.lock hash remain unchanged.",
+  "plan_reference": "TUI-07; lanes_1420; ADR-0004",
+  "source_commit": "c23c022b9e6f9c266b70633a1c5d9bad3ed137fe",
+  "base_commit": "eeabea7fa8fb8f156296511459058b2677922263",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "068e52a486a98a469b45495d647ddc48c137919f5f0b56b6efaf1bdad6c01731",
+      "after": "5727762114e44c75b654caa4b566ad9ed733c8e6411cfd159bb3b132126b46f2"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "337c28e78722056da48379ff641489bf0fdfb10b2aa43b464ce466fd13f3073c",
+      "after": "f6a58ecce49a06105fa452310802b0f637a45c20dba5c209ab3066aaa2d70f95"
+    }
+  ],
+  "before_identity_digest": "ea72a331ffc5b0bae4dcfe48bf4ed2160f3eeb6348e8d6111ca04706e96db6f0",
+  "after_identity_digest": "ea72a331ffc5b0bae4dcfe48bf4ed2160f3eeb6348e8d6111ca04706e96db6f0",
+  "before_implementation_sha256": "de589d75e8de5de2cde4716532cb40a511ce499c5d52eab0c3d5a855cee5c8cf",
+  "after_implementation_sha256": "de589d75e8de5de2cde4716532cb40a511ce499c5d52eab0c3d5a855cee5c8cf",
+  "before_cargo_lock_sha256": "0cbb2c7fc025679f52256137b1ed45e9ae1002ce265f9dc43e60b4b4276e9704",
+  "after_cargo_lock_sha256": "0cbb2c7fc025679f52256137b1ed45e9ae1002ce265f9dc43e60b4b4276e9704",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}

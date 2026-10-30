@@ -8,6 +8,7 @@ pub mod complete;
 
 #[path = "highlight.rs"]
 pub mod highlight;
+pub mod status;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ThemeMode {
