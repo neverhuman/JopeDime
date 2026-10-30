@@ -6,9 +6,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: clean-host-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   linux-x86_64-prestage:
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     env:
       CARGO_BUILD_JOBS: 4
       CARGO_INCREMENTAL: 0
@@ -26,11 +31,13 @@ jobs:
   macos-arm64-pending:
     if: ${{ false }}
     runs-on: macos-14
+    timeout-minutes: 5
     steps:
       - run: echo "Pending owner-authorized macOS arm64 D1 qualification."
 
   windows-x86_64-pending:
     if: ${{ false }}
     runs-on: windows-2022
+    timeout-minutes: 5
     steps:
       - run: echo "Pending owner-authorized Windows x86-64 D1 qualification."
