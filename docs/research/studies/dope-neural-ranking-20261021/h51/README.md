@@ -1,6 +1,6 @@
 # H51 preregistration: seed diversity, step budget, data variety, and robust objectives
 
-Status: **preregistered; execution not started**. This file is the first H51 commit and records the protocol before any H51 training. H50 PR #537 was squash-merged at `22c83d184e2516f090c915401440512518a6ed17` on 2026-10-30.
+Status: **executing; all 18 STEPS cells complete, 15-cell paired closeout wave pending** (2026-10-30). This file began as the first H51 preregistration commit, before any H51 training. H50 PR #537 was squash-merged at `22c83d184e2516f090c915401440512518a6ed17` on 2026-10-30.
 
 ## Question and hypotheses
 
@@ -81,7 +81,7 @@ CONTROL produced three distinct adapter weight hashes. Their update L2 distances
 
 ### STEPS: larger r882 regression steps have hurt so far
 
-In the completed lr=3e-4 cells, increasing the step budget from k=2 to k=16 and k=64 produced increasingly negative family medians from the r882 baseline. At k=2, all three seeds had median and interval zero, mean gain about -0.010, and update L2 about 0.105. At k=16, medians were -0.026836, -0.025059, and -0.019407, all with bootstrap upper bounds below zero; means ranged from -0.081818 to -0.093824 and update L2 from 0.927 to 0.972. At k=64, medians were -0.036789, -0.033753, and -0.037672, again with upper bounds below zero; update L2 was 3.112–3.160 and means ranged approximately -0.068 to -0.110. These results are consistent with regression-loss gradient steps moving away from argmin utility, rather than a simple under-optimization plateau. The lr=1e-4 cells are still running, so this interpretation remains provisional until that factorial branch completes.
+In the completed lr=3e-4 cells, increasing the step budget from k=2 to k=16 and k=64 produced increasingly negative family medians from the r882 baseline. At k=2, all three seeds had median and interval zero, mean gain about -0.010, and update L2 about 0.105. At k=16, medians were -0.026836, -0.025059, and -0.019407, all with bootstrap upper bounds below zero; means ranged from -0.081818 to -0.093824 and update L2 from 0.927 to 0.972. At k=64, medians were -0.036789, -0.033753, and -0.037672, again with upper bounds below zero; update L2 was 3.112–3.160 and means ranged approximately -0.068 to -0.110. These are observed candidate-minus-r882 fold differences; the subsequent baseline-leakage finding below means they do not by themselves establish that regression steps intrinsically reduce argmin utility.
 
 ### Seed dependence and live-loop winner's curse
 
@@ -90,3 +90,17 @@ The overseer reports that k2 seed 9 and seed 10 utilities match to four decimals
 Separately, the overseer-supplied live-loop figures say that r882 utility 1.1377942 was the maximum across roughly 1,280 reads of the same 91 validation contexts, while later live candidates were 1.1344–1.1352. These figures have not been independently verified and the live loop was not inspected. If accurate, selection of the incumbent at that maximum creates winner's-curse bias and regression to the mean, which could contribute to the apparent plateau. This is a caveat, not a change to the offline H51 baseline or protocol.
 
 The preregistered remaining order is STEPS lr=1e-4, then DATA, CLIP + SMOOTH, and NULL. No additional H51 arms are being added. These findings are interim; the final verdict and compact metrics are reserved for closeout after all arms finish.
+
+## H51 completion amendment — 2026-10-30 15:30Z
+
+All 18 STEPS cells completed with strict admission false, no terminal DL-Val payloads opened, and the pinned DOPE identity unchanged before/after. For lr=1e-4, k=2 means were -0.000927/-0.000879/-0.001486, family medians and CIs were 0 [0,0], and update L2 was about 0.036; k=16 means were -0.0261/-0.0300/-0.0232, medians/CIs 0 [0,0], and L2 about 0.30; k=64 means were -0.0990/-0.112/-0.103, medians -0.039/-0.038/-0.039 with upper bounds about -0.017, and L2 about 1.44. These describe a monotone association between step size and held-fold utility relative to r882 across both learning rates, but the association is not a causal estimate that regression steps hurt.
+
+### Red-team limitation: the r882 fold baseline is contaminated
+
+The live-loop r882 and r785 checkpoints were trained using all 1,219 DL-Train contexts, including each family's later inner-CV held-out fold. Comparing an updated candidate against that already-exposed base therefore compares a model that has seen the held-out families with an update trained on only four of five folds. This can bias candidate-minus-base gains downward, with larger updates plausibly increasing the gap. The monotone STEPS pattern is consequently partly confounded by baseline leakage; in particular, k=2/lr=1e-4's mean change around -0.001 is not distinguishable from zero on this design. Do not conclude that the regression gradient intrinsically points away from argmin utility from these base-relative numbers alone.
+
+For the remaining H51 arms, report both (a) the original candidate-minus-r882 family gains for continuity and (b) paired per-family gains against the same-seed, same-fold, same-batch-order STEPS k=16/lr=1e-4 candidate. Use the paired result for arm comparison and strict admission; any claim of a win over r882 requires the single terminal DL-Val read for a paired-admitted candidate. As a sanity check, compare CONTROL seed replicas; a zero median and [0,0] interval indicates the expected step-like tie, not independent confirmation. This paired comparison removes the common starting checkpoint/fold offset but does not make the original r882 base an independent held-fold baseline.
+
+### Remaining 15-cell closeout wave
+
+The closeout wave fixes k=16, lr=1e-4, seeds 9–11: nested DATA subsets at 25%, 50%, and 100% (nine cells), a combined CLIP+SMOOTH recipe (three cells), and the preregistered best-of-16 random-direction NULL at L2 0.30 (three cells). This compact combined CLIP+SMOOTH arm is the 15-cell execution directed for closeout; it does not separately estimate CLIP and SMOOTH effects. DATA subset lists are written before training. NULL direction selection and all trained-arm comparisons use the same five folds and paired STEPS control. No new H51 arms are added.

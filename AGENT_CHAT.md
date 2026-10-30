@@ -2002,3 +2002,14 @@ Scope: text-only H51 preregistration first; then H51 harness/tests, offline 5-fo
 Pinned inputs: ~/jope-data/h50/input/source_manifest.json (manifest sha256 3eb4a62acea512f528500b043299a5968e1c9b1d1b1759bbf77a426b9fa1ecc3; 1,219 DL-Train / 205 families, 91 DL-Val / 19 families; holdout excluded); ~/jope-data/h50/ckpt/round-785.pt (sha256 ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a); DOPE sha256 c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814; S3 catalog ~/jope_plan/master/source/S3_DATASET_CATALOG.md. r882 adapter checkpoint not found in approved offline stores; H51-STEPS will not substitute r785 and stays gated until a verified offline r882 copy is staged.
 Frozen scope: real S3 regression contexts only; no sealed/holdout reads; no live-loop access; one terminal DL-Val read only for an admitted selected candidate; Elo vs r785 only on admitted terminal results. Arms CONTROL → STEPS → DATA → CLIP+SMOOTH → matched-compute NULL; seeds 9–11; five-fold family-grouped inner CV; admission only when family-bootstrap median lower bound is strictly >0.001 (ties fail). Candidate compact JSON persists family median, bootstrap LB/UB, and n_families; no checkpoints in Git.
 Resources/deadline: one RTX 3090, qualification.lock for all GPU work, MemAvailable ≥20 GiB, CPU ≤85% preflight, free VRAM ≥20 GiB; nice 15, OMP/MKL ≤8 (OpenBLAS ≤1); do not start an arm if guards fail. Campaign deadline 2026-10-31T14:00:00Z; record stopped/unfinished arms rather than exceed the deadline.
+
+## 2026-10-30T15:30:06Z — Codex H51 closeout / H52 amendment resume
+Checkout: /home/ubuntu/JopeDime/.agent/worktrees/h50-sensitivity
+Branch: research/h51-wave
+HEAD: 3785bde29c2f3cce775a92b7f61fe47ff1cc4c49
+Owner: Codex (explicit user reassignment/resume from nudge luna_ns_hbaseline_h51_1530.md)
+Observed state: clean branch, H51 STEPS coordinator stopped per nudge; external STEPS summaries are present; no H51 process appears active. Open PR queue checked: only unrelated draft #511, no H51 PR.
+Scope: incorporate complete STEPS results and inner-fold leakage caveat; run 15 remaining H51 DATA/CLIP+SMOOTH/NULL cells at k16/lr1e-4 seeds 9–11 under pinned guards; complete H51 compact metrics/index/README and one targeted-check PR; amend H52 prereg/draft with paired-control admission, Step0 CPU diagnostic, and offline-only selection-side winner-curse diagnostic. No live xbabe1/xbabe0/xbabe3 access, no sealed/holdout data, no extra H51 arms. Lock/GPU/RAM/CPU/RSS guards required. Deadline and pinned inputs in existing H51_STATUS; preserve original campaign budget.
+
+## 2026-10-30T15:31:04Z — H51 resume claim HEAD correction
+Correction to the immediately preceding claim: the exact observed HEAD is `3785bde295d34be8552ae3397cf862adb1b98292` (not the mistyped full SHA in that claim). Branch and dirty state are unchanged; the only dirty path is the new AGENT_CHAT claim record itself.
