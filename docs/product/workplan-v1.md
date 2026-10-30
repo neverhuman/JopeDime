@@ -161,7 +161,7 @@ Everything else runs beside it. M1 (native discovery) does not depend on the cus
 | SVC-13 | LUNA | S | W2 | SVC-01, SVC-11 | Delete operations and store GC | — | merged |
 | CLT-01 | COMPLEX | M | W1 | API-07, SVC-05 | Client transports: InProcess (oneshot) and Http (ureq), SSE reader | A1 | merged |
 | CLT-02 | COMPLEX | M | W2 | CLT-01, SVC-09 | Engine discovery and cross-platform auto-start | R4 | claimed |
-| CLT-03 | LUNA | S | W2 | CLT-01 | Upload/download and safe atomic extraction to `--out` | E3 | blocked |
+| CLT-03 | LUNA | S | W2 | CLT-01 | Upload/download and safe atomic extraction to `--out` | E3 | claimed |
 | CLT-04 | LUNA | S | W2 | CLT-01 | Contract test harness across transports | A1 | merged |
 | DSC-01 | COMPLEX | M | W0 | — | Public per-candidate API in `feat-math` | S2 | merged |
 | DSC-02 | LUNA | S | W0 | — | Random/stratified splits, k-fold, rung-0 subsample | S3 | merged |
