@@ -2854,6 +2854,10 @@ version = "0.4.1"
 dependencies = [
  "jope-api",
  "proptest",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "toml",
 ]
 
 [[package]]

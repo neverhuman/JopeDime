@@ -10,9 +10,13 @@ description = "JopeDime v1 engine service"
 
 [dependencies]
 jope-api = { path = "../jope-api" }
+sha2 = { workspace = true }
+serde = { workspace = true }
+toml = { workspace = true }
+serde_json.workspace = true
 
 [dev-dependencies]
-proptest = { workspace = true }
+proptest.workspace = true
 
 [lints]
 workspace = true
