@@ -2,6 +2,8 @@
 
 use std::env;
 
+pub mod cards;
+
 #[path = "highlight.rs"]
 pub mod highlight;
 
