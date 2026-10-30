@@ -42,6 +42,8 @@ tempfile.workspace = true
 default = ["engine", "mcp"]
 mcp = ["dep:rmcp", "dep:tokio"]
 engine = ["dep:jope-service"]
+# Build the client surface without the default engine feature.
+client = []
 dope-encoding = ["dep:starforge"]
 dope-cuda = ["dope-encoding", "starforge/dope-cuda"]
 # The executable refuses to run without its sealed package: every release build sets it, so a
