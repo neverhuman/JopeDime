@@ -36,7 +36,7 @@ provenance before becoming an empirical result.
   shared seeds, repeated contexts and unequal times prevent treating them
   as independent first proposals. Their source/protocol receipts remain
   explicit placeholders. The [earlier ranking claim](../paper/claims.json)
-  identifies fresh-program pairwise accuracy, while the
+  identifies fresh-program pairwise accuracy on development contexts, while the
   [model record](../performance.md#neural-inference-and-refinement)
   distinguishes its model from the historical reference and later studies.
   Its reported estimate and interval are kept with that earlier model;
