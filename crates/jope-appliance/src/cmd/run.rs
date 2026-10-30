@@ -118,7 +118,7 @@ pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
     match response {
         RunResult::Plan(plan) => write_json(&*plan),
         RunResult::Started(snapshot) if args.detach => {
-            eprintln!("{}", snapshot.run_id);
+            write_run_id(&mut std::io::stderr().lock(), &snapshot.run_id)?;
             write_json(&*snapshot)
         }
         RunResult::Started(snapshot) => {
@@ -132,7 +132,7 @@ pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
                 )?;
                 for event in events {
                     if interrupted.load(Ordering::Relaxed) {
-                        eprintln!("{}", current.run_id);
+                        write_run_id(&mut std::io::stderr().lock(), &current.run_id)?;
                         anyhow::bail!("interrupted");
                     }
                     let event = event?;
@@ -144,7 +144,7 @@ pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
                 RunState::Completed | RunState::Cancelled | RunState::Failed
             ) {
                 if interrupted.load(Ordering::Relaxed) {
-                    eprintln!("{}", current.run_id);
+                    write_run_id(&mut std::io::stderr().lock(), &current.run_id)?;
                     anyhow::bail!("interrupted");
                 }
                 let status: anyhow::Result<RunSnapshot> = if args.wait == 0 {
@@ -156,14 +156,14 @@ pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
                     Ok(snapshot) => snapshot,
                     Err(error) => {
                         if interrupted.load(Ordering::Relaxed) {
-                            eprintln!("{}", current.run_id);
+                            write_run_id(&mut std::io::stderr().lock(), &current.run_id)?;
                         }
                         return Err(error);
                     }
                 };
             }
             if interrupted.load(Ordering::Relaxed) {
-                eprintln!("{}", current.run_id);
+                write_run_id(&mut std::io::stderr().lock(), &current.run_id)?;
                 anyhow::bail!("interrupted");
             }
             let manifest = args
@@ -172,7 +172,7 @@ pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
                 .map(|directory| export_best(transport, &current, &spec, directory))
                 .transpose()?;
             if args.events.as_deref() == Some("ndjson") || manifest.is_some() {
-                write_json(&serde_json::json!({"kind":"receipt","run":current,"export":manifest}))
+                write_json(&receipt_value(&current, manifest))
             } else {
                 write_json(&current)
             }
@@ -246,6 +246,14 @@ fn write_json(value: &impl serde::Serialize) -> anyhow::Result<()> {
 
 fn encode_json_line(value: &impl serde::Serialize) -> anyhow::Result<String> {
     Ok(format!("{}\n", serde_json::to_string(value)?))
+}
+
+fn write_run_id(stderr: &mut impl Write, run_id: &impl std::fmt::Display) -> std::io::Result<()> {
+    writeln!(stderr, "{run_id}")
+}
+
+fn receipt_value(run: &impl serde::Serialize, export: Option<Value>) -> Value {
+    serde_json::json!({"kind":"receipt","run":run,"export":export})
 }
 
 #[cfg(test)]
@@ -327,6 +335,63 @@ mod tests {
             line,
             "{\"run_id\":\"run_01J00000000000000000000000\",\"state\":\"completed\"}\n"
         );
+    }
+
+    #[test]
+    fn events_and_export_receipt_is_one_final_golden_json_line() {
+        let receipt = receipt_value(
+            &json!({"run_id":"run_01J00000000000000000000000","state":"completed"}),
+            Some(json!({"artifact_id":"art_0123456789abcdef01234567"})),
+        );
+        assert_eq!(
+            encode_json_line(&receipt).unwrap(),
+            "{\"export\":{\"artifact_id\":\"art_0123456789abcdef01234567\"},\"kind\":\"receipt\",\"run\":{\"run_id\":\"run_01J00000000000000000000000\",\"state\":\"completed\"}}\n"
+        );
+    }
+
+    #[test]
+    fn detach_and_interrupt_report_run_id_on_stderr() {
+        let mut stderr = Vec::new();
+        write_run_id(&mut stderr, &"run_01J00000000000000000000000").unwrap();
+        assert_eq!(stderr, b"run_01J00000000000000000000000\n");
+    }
+
+    #[test]
+    fn noninteractive_modes_parse_without_prompting() {
+        let required = [
+            "--dataset",
+            "ds_0123456789abcdef01234567",
+            "--target",
+            "y",
+            "--task",
+            "regression",
+            "--split",
+            r#"{"kind":"random","holdout_fraction":0.2,"group_column":null,"time_column":null}"#,
+            "--objective",
+            "rmse",
+            "--effort",
+            "medium",
+            "--budget",
+            r#"{"evaluations":"100","wall_seconds":"60"}"#,
+            "--landmarks",
+            "full",
+            "--guidance",
+            "auto",
+            "--device",
+            "cpu",
+            "--seed",
+            "7",
+        ];
+        for mode in [
+            vec!["--detach"],
+            vec!["--events", "ndjson", "--after-event", "7"],
+            vec!["--out", "model-bundle"],
+        ] {
+            let mut argv = vec!["jopedime", "run"];
+            argv.extend(required);
+            argv.extend(mode);
+            Args::try_parse_from(argv).unwrap();
+        }
     }
 
     #[cfg(feature = "engine")]
