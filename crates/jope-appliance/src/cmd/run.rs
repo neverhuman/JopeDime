@@ -64,6 +64,14 @@ pub struct RunArgs {
     pub wait: u64,
     #[arg(long)]
     pub after_event: Option<String>,
+    /// Internal M1 probe using a prepared FIT-only service plan.
+    #[arg(
+        long,
+        hide = true,
+        requires = "json",
+        conflicts_with_all = ["dry_run", "detach", "out", "events", "plan_digest", "after_event", "wait"]
+    )]
+    pub m1_plan: Option<PathBuf>,
 }
 
 impl RunArgs {
@@ -109,6 +117,92 @@ fn parse_json<T: DeserializeOwned>(raw: &str) -> anyhow::Result<T> {
 fn parse_value<T: DeserializeOwned>(raw: &str) -> anyhow::Result<T> {
     let value = serde_json::from_str(raw).unwrap_or_else(|_| Value::String(raw.to_owned()));
     serde_json::from_value(value).map_err(Into::into)
+}
+
+/// Keep the hidden local probe ahead of the ordinary engine-client preflight.
+pub fn dispatch(args: RunArgs) -> anyhow::Result<()> {
+    if args.m1_plan.is_some() {
+        return run_m1(&args);
+    }
+    let client = super::client()?;
+    run(args, &client)
+}
+
+#[cfg(feature = "engine")]
+fn run_m1(args: &RunArgs) -> anyhow::Result<()> {
+    use jope_runtime::Failure;
+    // Authenticate before opening the input or creating a store/worker.
+    let _package = crate::bootstrap::open()?;
+    let path = args
+        .m1_plan
+        .as_deref()
+        .ok_or_else(|| Failure::input("M1 requires a prepared plan"))?;
+    let bytes =
+        std::fs::read(path).map_err(|error| Failure::input(format!("read M1 plan: {error}")))?;
+    let input: Value = serde_json::from_slice(&bytes)
+        .map_err(|error| Failure::input(format!("M1 plan JSON: {error}")))?;
+    let plan: jope_service::discover::r#loop::Plan = serde_json::from_value(input["plan"].clone())
+        .map_err(|error| Failure::input(format!("M1 prepared plan: {error}")))?;
+    let spec = args
+        .run_spec()
+        .map_err(|error| Failure::input(format!("M1 run options: {error}")))?;
+    validate_m1_spec(&spec, &plan)?;
+    let executable = std::env::current_exe()
+        .map_err(|error| Failure::backend(format!("M1 worker executable: {error}")))?;
+    let result = jope_service::discover::r#loop::run_m1(path, &executable)?;
+    write_json(&result).map_err(|error| Failure::output(format!("M1 JSON output: {error}")))
+}
+
+#[cfg(not(feature = "engine"))]
+fn run_m1(_args: &RunArgs) -> anyhow::Result<()> {
+    let _package = crate::bootstrap::open()?;
+    Err(jope_runtime::Failure::backend(
+        "M1 discovery requires a build with the engine feature",
+    ))
+}
+
+#[cfg(feature = "engine")]
+fn validate_m1_spec(
+    spec: &RunSpec,
+    plan: &jope_service::discover::r#loop::Plan,
+) -> anyhow::Result<()> {
+    use jope_api::{Guidance, LandmarkMode, ObjectiveSpec, SplitKind, Task};
+    use jope_runtime::Failure;
+    if spec.dataset != plan.dataset_id
+        || spec.target != plan.target
+        || spec.objective != ObjectiveSpec::Name(plan.objective.clone())
+        || spec.effort != plan.effort
+        || spec.seed.0 != plan.seed
+        || spec.budget.evaluations.map(|n| n.0) != Some(plan.evaluations)
+        || spec.budget.wall_seconds.map(|n| n.0) != Some(plan.wall_seconds)
+    {
+        return Err(Failure::input(
+            "M1 dataset, target, objective, effort, seed and budgets must match the prepared plan",
+        ));
+    }
+    // This probe consumes an already prepared FIT matrix; it does not perform
+    // public dataset registration, learned conditioning, finalization or export.
+    if spec.task != Task::Regression
+        || !spec.ignore_columns.is_empty()
+        || spec.test_dataset.is_some()
+        || spec.split.kind != SplitKind::Random
+        || spec.split.holdout_fraction != 0.2
+        || spec.split.group_column.is_some()
+        || spec.split.time_column.is_some()
+        || plan.groups.is_some()
+        || plan.times.is_some()
+        || plan.gap_rows != 0
+        || spec.landmarks != LandmarkMode::None
+        || !matches!(spec.guidance, Guidance::Auto | Guidance::Heuristic)
+        || !spec.languages.is_empty()
+        || spec.require_all_languages
+        || !matches!(spec.device.as_str(), "cpu" | "auto")
+    {
+        return Err(Failure::input(
+            "M1 supports prepared random 80/20 FIT regression, no landmarks, heuristic CPU selection and no test dataset or export languages",
+        ));
+    }
+    Ok(())
 }
 
 pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
@@ -266,6 +360,265 @@ mod tests {
     struct Args {
         #[command(subcommand)]
         command: crate::cli::Command,
+    }
+
+    fn m1_argv(path: &std::path::Path) -> Vec<String> {
+        [
+            "jopedime",
+            "run",
+            "--dataset",
+            "ds_21fbfe8b53dbcd605d79486b",
+            "--target",
+            "target",
+            "--task",
+            "regression",
+            "--split",
+            r#"{"kind":"random","holdout_fraction":0.2,"group_column":null,"time_column":null}"#,
+            "--objective",
+            "rmse",
+            "--effort",
+            "fast",
+            "--budget",
+            r#"{"evaluations":"1","wall_seconds":"60"}"#,
+            "--landmarks",
+            "none",
+            "--guidance",
+            "heuristic",
+            "--device",
+            "cpu",
+            "--seed",
+            "73",
+            "--json",
+            "--m1-plan",
+        ]
+        .into_iter()
+        .map(str::to_owned)
+        .chain(std::iter::once(path.to_string_lossy().into_owned()))
+        .collect()
+    }
+
+    #[test]
+    fn hidden_m1_requires_json_preserves_public_requirements_and_conflicts_with_transport_modes() {
+        use clap::CommandFactory;
+        let argv = m1_argv(std::path::Path::new("prepared.json"));
+        let parsed = Args::try_parse_from(&argv).unwrap();
+        let crate::cli::Command::Run(args) = parsed.command else {
+            panic!("run command")
+        };
+        assert_eq!(args.m1_plan, Some("prepared.json".into()));
+        assert!(!serde_json::to_string(&args.run_spec().unwrap())
+            .unwrap()
+            .contains("m1"));
+        let mut cli = crate::cli::Cli::command();
+        let help = cli.find_subcommand_mut("run").unwrap().render_long_help();
+        assert!(!help.to_string().contains("m1"));
+        let without_json: Vec<_> = argv.iter().filter(|a| a.as_str() != "--json").collect();
+        assert!(Args::try_parse_from(without_json).is_err());
+        assert!(Args::try_parse_from(["jopedime", "run", "--json"]).is_err());
+        for extra in [
+            vec!["--detach"],
+            vec!["--dry-run"],
+            vec!["--events", "ndjson"],
+            vec!["--wait", "0"],
+        ] {
+            let mut conflict = argv.clone();
+            conflict.extend(extra.into_iter().map(str::to_owned));
+            assert!(Args::try_parse_from(conflict).is_err());
+        }
+    }
+
+    #[cfg(feature = "engine")]
+    fn m1_fixture(directory: &std::path::Path) -> std::path::PathBuf {
+        use jope_service::discover::r#loop::Plan;
+        let raw = include_bytes!("../../../../test-support/datasets/v1/d2-regression/train.csv");
+        assert_eq!(
+            jope_runtime::sha256_hex(raw),
+            "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931"
+        );
+        let mut names: Vec<_> = (0..21).map(|j| format!("x{j}")).collect();
+        names.push("target".into());
+        let mut csv = names.join(",").into_bytes();
+        csv.push(b'\n');
+        csv.extend(raw);
+        let mut table =
+            jope_runtime::table::parse_csv(&csv, &jope_runtime::limits::Limits::default()).unwrap();
+        let (fit, _) = jope_service::discover::splits::random_split(
+            table.rows.len(),
+            table.rows.len() * 4 / 5,
+            73,
+            "dsc08/fit",
+        )
+        .unwrap();
+        let rows: Vec<_> = fit.into_iter().take(30).collect();
+        table.rows = rows.iter().map(|&r| table.rows[r].clone()).collect();
+        let bytes = jope_service::dataset::jmat::encode(&table).unwrap();
+        let matrix = directory.join("fit.jmat");
+        std::fs::write(&matrix, &bytes).unwrap();
+        std::fs::write(
+            directory.join("source-rows.json"),
+            serde_json::to_vec(&rows).unwrap(),
+        )
+        .unwrap();
+        let plan = Plan {
+            run_id: "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0".parse().unwrap(),
+            dataset_id: "ds_21fbfe8b53dbcd605d79486b".parse().unwrap(),
+            problem_digest: jope_runtime::sha256_hex(&bytes),
+            bundle_digest: jope_runtime::sha256_hex(b"DSC08 heuristic M1, no learned bundle"),
+            binary_version: "dsc08f01-cli-probe-v1".into(),
+            matrix_path: matrix,
+            matrix_sha256: jope_runtime::sha256_hex(&bytes),
+            target: "target".into(),
+            features: names[..21].to_vec(),
+            objective: "rmse".into(),
+            seed: 73,
+            planned_workers: 8,
+            effort: jope_api::Effort::Fast,
+            evaluations: 1,
+            wall_seconds: 60,
+            evaluation_wall_ms: 2000,
+            evaluation_rss_bytes: 128 * 1024 * 1024,
+            groups: None,
+            times: None,
+            gap_rows: 0,
+        };
+        let path = directory.join("m1.json");
+        std::fs::write(
+            &path,
+            serde_json::to_vec_pretty(
+                &json!({"home":directory.join("store"),"plan":plan,"live_workers":2}),
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        path
+    }
+
+    #[cfg(feature = "engine")]
+    #[test]
+    fn hidden_m1_refuses_malformed_or_contradictory_input_before_creating_a_store() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = m1_fixture(directory.path());
+        let mut argv = m1_argv(&path);
+        let objective = argv.iter().position(|a| a == "--objective").unwrap() + 1;
+        argv[objective] = "mse".into();
+        let crate::cli::Command::Run(args) = Args::try_parse_from(argv).unwrap().command else {
+            panic!("run")
+        };
+        let error = dispatch(args).unwrap_err();
+        assert_eq!(
+            jope_runtime::error::kind_of(&error),
+            jope_runtime::FailureKind::Input
+        );
+        assert!(!directory.path().join("store").exists());
+        std::fs::write(&path, b"not json").unwrap();
+        let crate::cli::Command::Run(args) = Args::try_parse_from(m1_argv(&path)).unwrap().command
+        else {
+            panic!("run")
+        };
+        assert_eq!(
+            jope_runtime::error::kind_of(&dispatch(args).unwrap_err()),
+            jope_runtime::FailureKind::Input
+        );
+        assert!(!directory.path().join("store").exists());
+    }
+
+    #[cfg(not(feature = "engine"))]
+    #[test]
+    fn hidden_m1_without_engine_refuses_as_backend_before_reading_a_plan() {
+        let crate::cli::Command::Run(args) =
+            Args::try_parse_from(m1_argv(std::path::Path::new("absent.json")))
+                .unwrap()
+                .command
+        else {
+            panic!("run")
+        };
+        assert_eq!(
+            jope_runtime::error::kind_of(&dispatch(args).unwrap_err()),
+            jope_runtime::FailureKind::Backend
+        );
+    }
+
+    #[cfg(feature = "engine")]
+    #[test]
+    #[ignore = "actual CLI gate; build the current jopedime with dev-keys, set JOPE_M1_CLI, and explicitly run this test"]
+    fn hidden_m1_actual_cli_runs_real_fit_without_a_daemon_and_refuses_damaged_package() {
+        use std::process::Command;
+        let executable = PathBuf::from(
+            std::env::var_os("JOPE_M1_CLI").expect("build/select the current CLI first"),
+        );
+        let directory = tempfile::tempdir().unwrap();
+        let input = m1_fixture(directory.path());
+        let argv = m1_argv(&input);
+        let output = Command::new(&executable)
+            .args(&argv[1..])
+            .env_clear()
+            .env("JOPEDIME_HOME", directory.path().join("absent-daemon"))
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let value: Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(output.stdout.iter().filter(|&&b| b == b'\n').count(), 1);
+        assert_eq!(value["stage"], "search_finished");
+        assert!(value["champion"]["cv_value"].as_f64().unwrap().is_finite());
+        assert_eq!(value["nondeterminism"]["count"], "0");
+        let text = String::from_utf8(output.stdout.clone()).unwrap();
+        for forbidden in [
+            "(pipe", "\"dsl\"", "admitted", "stalled", "round-", "slot-", "rung-",
+        ] {
+            assert!(!text.contains(forbidden), "public leak {forbidden}");
+        }
+        assert!(!directory.path().join("absent-daemon").exists());
+
+        use jope_assets::writer::{assemble_development, stage, write_new, StageOptions};
+        let code = std::fs::read(&executable).unwrap();
+        let staged = stage(
+            &code,
+            vec![],
+            &StageOptions {
+                product: "jopedime".into(),
+                product_version: env!("CARGO_PKG_VERSION").into(),
+                target: "x86_64-unknown-linux-gnu".into(),
+                profile: "fixture".into(),
+                scope: jope_assets::Scope::Development,
+                source: Default::default(),
+                methods: vec!["rust.ridge".into()],
+                key_id: jope_assets::verify::development_key().id,
+                frame_bytes: 1 << 20,
+                level: 3,
+            },
+        )
+        .unwrap();
+        let mut package = assemble_development(&code, &staged).unwrap();
+        // Change an executable-region byte while preserving the loader header.
+        package[code.len() - 1] ^= 1;
+        let damaged = directory.path().join("damaged-jopedime");
+        write_new(&package, &damaged).unwrap();
+        let refused = Command::new(&damaged)
+            .args(&argv[1..])
+            .env_clear()
+            .output()
+            .unwrap();
+        assert_eq!(
+            refused.status.code(),
+            Some(3),
+            "{}",
+            String::from_utf8_lossy(&refused.stderr)
+        );
+        assert!(refused.stdout.is_empty());
+        if let Some(root) = std::env::var_os("JOPE_M1_RECEIPTS") {
+            let root = PathBuf::from(root);
+            std::fs::create_dir_all(&root).unwrap();
+            std::fs::write(root.join("stdout.json"), &output.stdout).unwrap();
+            std::fs::write(root.join("integrity.stderr"), &refused.stderr).unwrap();
+            for name in ["fit.jmat", "source-rows.json", "m1.json"] {
+                std::fs::copy(directory.path().join(name), root.join(name)).unwrap();
+            }
+            std::fs::write(root.join("cli.json"), serde_json::to_vec_pretty(&json!({"executable":executable,"sha256":jope_runtime::sha256_hex(&code),"argv":argv,"success_exit":output.status.code(),"integrity_exit":refused.status.code()})).unwrap()).unwrap();
+        }
     }
 
     #[test]
