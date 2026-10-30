@@ -2,6 +2,7 @@
 //!
 //! CLI discovery/dispatch must opt into these helpers. They do not implement run,
 //! control, or export handlers; a refused control never counts as a committed pause.
+#![cfg(not(windows))] // signal-hook's iterator is unavailable on Windows.
 #![allow(dead_code)] // Thin CLI wiring is outside BAT-06's approved file ownership.
 
 use jope_api::{ids::RunId, RunSnapshot, RunState};
