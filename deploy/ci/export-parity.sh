@@ -566,6 +566,8 @@ try:
         "--edition=2021",
         "-C",
         "debuginfo=line-tables-only",
+        "-C",
+        "codegen-units=" + os.environ["CARGO_BUILD_JOBS"],
         "-L",
         "dependency=" + str(dependency_dir),
     ]
@@ -708,7 +710,7 @@ try:
             "rustc",
             "--edition=2021",
             "-C",
-            "codegen-units=8",
+            "codegen-units=" + os.environ["CARGO_BUILD_JOBS"],
             str(program),
             "-o",
             str(out / "rust-predictors"),
@@ -749,7 +751,7 @@ try:
             "--edition=2021",
             "--test",
             "-C",
-            "codegen-units=8",
+            "codegen-units=" + os.environ["CARGO_BUILD_JOBS"],
             str(program),
             "-o",
             str(out / "rust-self-checks"),
@@ -815,7 +817,15 @@ try:
                 + f'\nfn main(){{let rows={rows};let headers={columns};let actual=predict_cells(&rows).unwrap();assert_eq!(actual,predict_table(headers,&rows).unwrap());let reversed_headers:Vec<_>=headers.iter().rev().copied().collect();let reversed_rows:Vec<Vec<_>>=rows.iter().map(|r|r.iter().rev().copied().collect()).collect();assert_eq!(actual,predict_table(&reversed_headers,&reversed_rows).unwrap());for value in actual{{println!("{{:.17e}}",value);}}}}\n'
             )
             command(
-                ["rustc", "--edition=2021", str(p), "-o", str(out / "raw-run")],
+                [
+                    "rustc",
+                    "--edition=2021",
+                    "-C",
+                    "codegen-units=" + os.environ["CARGO_BUILD_JOBS"],
+                    str(p),
+                    "-o",
+                    str(out / "raw-run"),
+                ],
                 "compile-raw",
             )
             text = command([str(out / "raw-run")], "raw-rust")

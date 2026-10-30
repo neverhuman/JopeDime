@@ -1,28 +1,29 @@
 name: export-parity
 on:
-  # Called only by the existing admitted ci.yml context when its owner wires it.
-  # No direct dispatch/automatic event or new runner admission is introduced.
+  # The CI owner wires this later; EXP-08 runs the local harness only.
+  # Future qualification uses an isolated managed VM.
   workflow_call:
 permissions:
   contents: read
+concurrency:
+  group: export-parity-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   export-parity:
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    # Future qualification is restricted to this repository's manual main caller.
+    if: github.repository == 'neverhuman/JopeDime' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
       CARGO_INCREMENTAL: '0'
       CARGO_PROFILE_DEV_DEBUG: line-tables-only
-      CARGO_BUILD_JOBS: '8'
+      CARGO_BUILD_JOBS: '2'
     steps:
       - name: Checkout exact source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
-      - name: Persistent Cargo target
-        uses: ./.github/actions/cargo-target
-      - name: Runner provenance
-        uses: ./.github/actions/runner-provenance
       - name: Python 3.12.3
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
