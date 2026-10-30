@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://veox.ai/schemas/jope.fused-bundle.v1.schema.json",
+  "title": "jope.fused-bundle/v1",
+  "description": "Manifest for the deterministic fused ranker bundle.",
+  "type": "object",
+  "required": [
+    "schema",
+    "architecture",
+    "bundle_digest",
+    "dope_core_rev",
+    "dope_weights_sha256",
+    "jope_weights_sha256",
+    "reference_source_sha256",
+    "constants",
+    "surrogate_recipe",
+    "trained_objectives",
+    "landmark_recipe",
+    "landmark_sample_rows",
+    "qualified",
+    "asset_policy"
+  ],
+  "properties": {
+    "schema": { "const": "jope.fused-bundle/v1" },
+    "architecture": { "const": "dope-fused-ranker/h40b" },
+    "bundle_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "dope_core_rev": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "dope_weights_sha256": { "$ref": "#/$defs/sha256" },
+    "jope_weights_sha256": { "$ref": "#/$defs/sha256" },
+    "reference_source_sha256": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/sha256" }
+    },
+    "constants": {
+      "type": "object",
+      "required": [
+        "scale",
+        "ctx_feat_dim",
+        "revealed",
+        "proposals",
+        "proposals_explore",
+        "admit",
+        "elite_pool"
+      ],
+      "properties": {
+        "scale": { "type": "number" },
+        "ctx_feat_dim": { "type": "integer" },
+        "revealed": { "type": "integer" },
+        "proposals": { "type": "integer" },
+        "proposals_explore": { "type": "integer" },
+        "admit": { "type": "integer" },
+        "elite_pool": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "surrogate_recipe": { "type": "string" },
+    "trained_objectives": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "landmark_recipe": { "type": "string" },
+    "landmark_sample_rows": { "type": "integer" },
+    "qualified": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["task", "landmarks", "backend"],
+        "properties": {
+          "task": {
+            "type": "string",
+            "enum": ["regression", "binary", "multiclass"]
+          },
+          "landmarks": { "type": "string" },
+          "backend": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "asset_policy": { "type": "string" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}
