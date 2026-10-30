@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Resource-bounded coordinator for preregistered H53b cells."""
 from __future__ import annotations
-import fcntl, json, os, subprocess, sys, time
+import fcntl, json, os, shutil, subprocess, sys, time
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[3]
@@ -114,16 +114,28 @@ def main():
  note('H53b wave start; preregistration commit precedes all cells; six cells, seeds 12/13/14 × scales 1.0/0.1; 300 update units or 20m/cell; pilot <=10m')
  completed=[]
  if os.environ.get('H53B_TIMING_PILOT_DONE')=='1':
-  note('Continuing after two pre-training timing attempts; no adapter state carries forward. Run all six fresh cells at the 20-minute cap within the original fixed 2.5-hour deadline.')
+  prior_text=os.environ.get('H53B_PRIOR_CELL_SUMMARY')
+  if prior_text:
+   prior=Path(prior_text); d=json.loads(prior.read_text())
+   if d.get('status')!='complete' or d.get('seed')!=12 or d.get('initialization_scale')!=1.0: raise RuntimeError('prior timing cell identity/status mismatch')
+   dest=RUNS/'scale-1'/'seed12'/'summary.json'; dest.parent.mkdir(parents=True,exist_ok=False); shutil.copyfile(prior,dest)
+   import hashlib
+   if hashlib.sha256(prior.read_bytes()).digest()!=hashlib.sha256(dest.read_bytes()).digest(): raise RuntimeError('prior summary copy verification failed')
+   completed.append({'seed':12,'scale':1.0,'wall_seconds':d['wall_seconds'],'rounds':d['rounds_completed'],'device':d['device'],'status':d['status'],'prior_summary':str(prior)})
+   cells=CELLS[1:]; first_index=2
+   note(f'Continuing with five fresh cells after timing cell1; exact prior summary copied and verified from {prior}; fixed 2.5-hour deadline retained.')
+  else:
+   cells=CELLS; first_index=1
+   note('Continuing six fresh cells after pre-training attempts; no adapter state carries forward; original fixed deadline retained.')
   stop=None
-  for i,(seed,scale) in enumerate(CELLS,1):
+  for i,(seed,scale) in enumerate(cells,first_index):
    r=run_cell(i,seed,scale,deadline,CELL_LIMIT)
    if r is None: stop='cell stopped or failed'; break
    completed.append(r)
   result={'complete':len(completed)==6 and all(x['status']=='complete' for x in completed),
           'completed':completed,'planned':[{'seed':s,'scale':x} for s,x in CELLS],
           'stop_reason':stop,'wall_seconds':time.monotonic()-started,
-          'pilot_attempts':['~/jope-data/h53b/runs/wave.json','~/jope-data/h53b/attempt-02/wave.json']}
+          'pilot_attempts':['~/jope-data/h53b/runs/wave.json','~/jope-data/h53b/attempt-02/wave.json','~/jope-data/h53b/attempt-03/pilot-fixed/wave.json']}
  else:
   first=run_cell(1,12,1.0,deadline,PILOT_LIMIT)
   if first is None:
