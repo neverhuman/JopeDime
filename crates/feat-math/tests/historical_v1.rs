@@ -1085,9 +1085,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     assert_eq!(clt03_files["fixtures"].as_array().unwrap().len(), 2);
     assert_eq!(clt03_files["fixtures"][0]["path"], changed_fixtures[0]);
     assert_eq!(clt03_files["fixtures"][1]["path"], changed_fixtures[1]);
-    let exp09_bundle = old_fixture(
-        "transitions/exp09_bundle_lockfile_identity_rebaseline.v1.json",
-    );
+    let exp09_bundle = old_fixture("transitions/exp09_bundle_lockfile_identity_rebaseline.v1.json");
     assert_eq!(
         exp09_bundle["source_commit"],
         "acb0f4ef374498745a7ea9560ee98c2c11fc6521"
