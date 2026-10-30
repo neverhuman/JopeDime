@@ -1146,8 +1146,9 @@ fn main() -> ExitCode {
         }),
         #[cfg(feature = "mcp")]
         Command::Mcp => report(cmd::mcp_entry::run()),
+        // Without the shared client there is no discovery: serve in process, as before #656.
         #[cfg(not(feature = "mcp"))]
-        Command::Mcp => report(Err(anyhow::anyhow!("MCP is unavailable in this build"))),
+        Command::Mcp => report(serve(true)),
         Command::Api => report(serve(false)),
         Command::Serve {
             status,
