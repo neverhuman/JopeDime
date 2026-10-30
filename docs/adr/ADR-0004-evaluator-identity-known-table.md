@@ -51,3 +51,7 @@ digest `ea72a331ffc5b0bae4dcfe48bf4ed2160f3eeb6348e8d6111ca04706e96db6f0` advanc
 fixture's generation SHA is refreshed with the announced identity commit; its source hashes and
 semantics are unchanged. There is no shipped receipt proving this identity existed, so the
 append-only known-identity table gains no row.
+
+## Current identity transition: EXP-09 deterministic export bundles (2026-10-30)
+
+EXP-09 promotes `feat-math` to a normal `jope-service` dependency and adds the pinned `zip` dependency so the service can emit fitted language sources and publish deterministic ZIP bundles. These Cargo.lock edges advance implementation hash `a22a4aaa5d0a14da93376135f459d5bf041c683e248d1e4e811006e8b01412ce` to `bd94aff9d36165c43f9ddc91f835d5b8dd15b8714770e79d2106225cd8f5caf8`; Cargo.lock hash `13f796f7f7c025f5c759c8c1a93314e4c8ebc588c9eb748c1ebb575e3f6d6893` advances to `1add5155961c4df9751699019ec46d477f3fa4066f56e3b239c190c46e6455c8`; evaluator identity digest `37d8ae7cde8427da99c687fd34f12b8f99d3567f22ad6d7f2364dd14eb75d481` advances to `b74651b6f25d2276682af1a8c97636a44346c07a3ee3d46459282c41c4f36a2e`. Evaluator calculations and DSL ABI are unchanged. The identity transition is recorded in `exp09_bundle_lockfile_identity_rebaseline.v1.json`; no known-identity row is added because this change has no shipped historical receipt proving the new identity existed.
