@@ -537,6 +537,67 @@ impl Run {
         Ok(())
     }
 
+    /// Predict with a Platt-calibrated object through `ModelObject::predict`, which applies the
+    /// stored map to the native head. The receipt takes the method and task from the fitted
+    /// header; a bound head has none, so it records the format and genome and leaves the task unset.
+    fn predict_calibrated(
+        &mut self,
+        object: &jope_runtime::model_object::ModelObject,
+        model: &Path,
+        input: &Path,
+        output: &Path,
+        budget: &Budget,
+        started: Instant,
+    ) -> anyhow::Result<()> {
+        let contract = object
+            .calibrated_input()?
+            .ok_or_else(|| Failure::integrity("model object has no Platt calibration"))?;
+        self.receipt.inputs.push(FileRecord {
+            role: "model",
+            path: model.display().to_string(),
+            bytes: object.manifest_bytes().len() as u64,
+            sha256: jope_runtime::sha256_hex(object.manifest_bytes()),
+        });
+        self.receipt.timings.read_seconds += started.elapsed().as_secs_f64();
+        match &contract.header {
+            Some(header) => {
+                self.receipt.method = Some(MethodRecord {
+                    requested: "model".into(),
+                    selected: header.method.id.clone(),
+                    recipe_sha256: header.recipe_sha256.clone(),
+                });
+                self.receipt.task = Some(TaskRecord {
+                    task: header.task.clone(),
+                    reason: "from the model file".into(),
+                    target: header.target.clone(),
+                    classes: header.class_order.len(),
+                    rows: header.training_procedure.rows,
+                    features: header.input_schema.len(),
+                });
+            }
+            None => {
+                self.receipt.method = Some(MethodRecord {
+                    requested: "model".into(),
+                    selected: object.manifest().format.clone(),
+                    recipe_sha256: contract.genome_sha256.clone(),
+                });
+            }
+        }
+        let csv = self.read_csv("input", input)?;
+        let started = Instant::now();
+        let (rows, ignored) = contract.table(&csv)?;
+        self.receipt.ignored_columns = ignored;
+        let predictions = api::predict_object(object, &rows, budget)?;
+        self.receipt.timings.predict_seconds = started.elapsed().as_secs_f64();
+        let started = Instant::now();
+        let bytes = api::predictions_csv(&predictions)?;
+        self.receipt
+            .outputs
+            .push(io::write_atomic("predictions", output, &bytes)?);
+        self.receipt.timings.write_seconds += started.elapsed().as_secs_f64();
+        Ok(())
+    }
+
     /// Finish the receipt, write and print it, and return the exit status.
     fn finish(mut self, result: anyhow::Result<()>) -> ExitCode {
         if let Some(budget) = &self.budget {
@@ -682,11 +743,22 @@ fn run_predict(model: &Path, input: &Path, output: &Path, common: &CommonArgs) -
         let b = run.prepare(false)?;
         let started = Instant::now();
         let limit = Limits::default().max_model_bytes;
-        // Only the manifest's `format` is read here; `ModelObject::read` and `load_fitted` each
-        // verify every part, so the full read happens once, on the path that uses it.
-        if model.is_dir() && is_math_pipeline(model)? {
+        // Only the manifest's `format` and capabilities are read here; `ModelObject::read` and
+        // `load_fitted` each verify every part, so the full read happens once, on the path that
+        // uses it. A Platt-calibrated object predicts whole: `load_fitted` refuses it.
+        let route = if model.is_dir() {
+            object_route(model)?
+        } else {
+            ObjectRoute::Fitted
+        };
+        if route != ObjectRoute::Fitted {
             let object = jope_runtime::model_object::ModelObject::read(model, limit)?;
-            return run.predict_math_pipeline(&object, model, input, output, started);
+            return match route {
+                ObjectRoute::MathPipeline => {
+                    run.predict_math_pipeline(&object, model, input, output, started)
+                }
+                _ => run.predict_calibrated(&object, model, input, output, &b, started),
+            };
         }
         let fitted = jope_runtime::model_object::load_fitted(model, limit)?;
         let identity_path = if model.is_dir() {
@@ -721,16 +793,37 @@ fn run_predict(model: &Path, input: &Path, output: &Path, common: &CommonArgs) -
     run.finish(result)
 }
 
-fn is_math_pipeline(object_dir: &Path) -> anyhow::Result<bool> {
-    use jope_runtime::model_object::{read_bounded, MANIFEST, MATH_PIPELINE, MAX_MANIFEST_BYTES};
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ObjectRoute {
+    MathPipeline,
+    Calibrated,
+    Fitted,
+}
+
+fn object_route(object_dir: &Path) -> anyhow::Result<ObjectRoute> {
+    use jope_runtime::model_object::{
+        calibration_platt, read_bounded, MANIFEST, MATH_PIPELINE, MAX_MANIFEST_BYTES,
+    };
     #[derive(serde::Deserialize)]
     struct Format {
         format: String,
+        #[serde(default)]
+        required_capabilities: Vec<String>,
     }
     let bytes = read_bounded(&object_dir.join(MANIFEST), MAX_MANIFEST_BYTES)?;
     let manifest: Format = serde_json::from_slice(&bytes)
         .map_err(|e| Failure::integrity(format!("model manifest: {e}")))?;
-    Ok(manifest.format == MATH_PIPELINE)
+    Ok(if manifest.format == MATH_PIPELINE {
+        ObjectRoute::MathPipeline
+    } else if manifest
+        .required_capabilities
+        .iter()
+        .any(|c| c == calibration_platt::CAPABILITY)
+    {
+        ObjectRoute::Calibrated
+    } else {
+        ObjectRoute::Fitted
+    })
 }
 
 fn run_fit_predict(

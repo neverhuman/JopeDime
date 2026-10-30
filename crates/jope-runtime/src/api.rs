@@ -210,6 +210,16 @@ pub fn predict_with_narration(
     })?
 }
 
+/// Predict through a complete model object on the budget's pool, so a stored calibration is
+/// applied. No narration: the observer binds to a fitted model, and an object may have none.
+pub fn predict_object(
+    object: &crate::model_object::ModelObject,
+    table: &feat_math::advanced_v3::RawTable,
+    budget: &Budget,
+) -> Result<Predictions> {
+    budget.install(|| crate::error::contain("prediction", || object.predict(table)))?
+}
+
 /// Predictions as CSV: one `prediction` column for regression; one `p_<class>` column per class
 /// plus the argmax `prediction` for classification. Numbers use Rust's shortest round-trip form.
 pub fn predictions_csv(predictions: &Predictions) -> Result<Vec<u8>> {
