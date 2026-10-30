@@ -1,0 +1,47 @@
+//! Fitted, standard-library-only matrix inference.
+fn finite(value: f64) -> f64 { if value.is_finite() { value } else { 0.0 } }
+fn sigmoid(value: f64) -> f64 {
+    if value >= 0.0 { 1.0 / (1.0 + (-value.min(40.0)).exp()) }
+    else { let z=value.max(-40.0).exp(); z/(1.0+z) }
+}
+fn linear(row: &[f64], means: &[f64], scales: &[f64], weights: &[f64], bound: f64, finite_input: bool) -> f64 {
+    let mut value=weights[0];
+    for j in 0..means.len() {
+        let raw=if finite_input { finite(row[j]) } else { row[j] };
+        value += weights[j+1]*((raw-means[j])/scales[j]).clamp(-bound,bound);
+    }
+    value
+}
+fn softmax(scores: Vec<f64>) -> Vec<f64> {
+    let maximum=scores.iter().copied().fold(f64::NEG_INFINITY,f64::max);
+    let mut values=scores.iter().map(|value| (finite(*value)-maximum).clamp(-40.0,0.0).exp()).collect::<Vec<_>>();
+    let total=values.iter().sum::<f64>().max(1e-300);
+    for value in &mut values { *value /= total; } values
+}
+fn normalize(mut values: Vec<f64>) -> Vec<f64> {
+    for value in &mut values { *value=finite(*value).max(0.0); }
+    let total=values.iter().sum::<f64>();
+    if !total.is_finite() || total<=0.0 { let uniform=1.0/values.len() as f64; values.fill(uniform); }
+    else { for value in &mut values { *value /= total; } } values
+}
+fn distance(row: &[f64], center: &[f64], scales: &[f64], squared_scale: bool) -> f64 {
+    let mut total=0.0;
+    for j in 0..center.len() {
+        let mut delta=finite(row[j])-center[j];
+        if squared_scale { total += delta*delta/scales[j]; }
+        else { delta /= scales[j]; total += delta*delta; }
+    }
+    total
+}
+fn missing(raw: &str) -> bool { matches!(raw.trim().to_ascii_lowercase().as_str(), ""|"na"|"nan"|"null") }
+fn category(raw: &str) -> &str {
+    if matches!(raw.trim().to_ascii_lowercase().as_str(), ""|"na"|"null") { "\0MISSING" } else { raw }
+}
+fn encode(row: &[String]) -> Result<Vec<f64>, String> {
+    if row.len()!=__WIDTH__ { return Err("input shape differs".into()); }
+    __ENCODE__
+}
+fn predict(x: &[f64]) -> Vec<f64> { __PREDICT__ }
+pub fn predict_encoded(rows: &[Vec<String>]) -> Result<Vec<Vec<f64>>, String> {
+    rows.iter().map(|row| encode(row).map(|x| predict(&x))).collect()
+}

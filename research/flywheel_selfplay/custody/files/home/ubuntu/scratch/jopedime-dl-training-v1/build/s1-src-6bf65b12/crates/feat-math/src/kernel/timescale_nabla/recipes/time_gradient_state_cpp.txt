@@ -1,0 +1,48 @@
+struct TimeGradientRejection : OrderedError {TimeGradientRejection(const char* kind,std::uint32_t bits):OrderedError(kind,bits){}};
+struct TimeGradientState {
+    double minimum_gap;std::size_t width;std::string input,cut;std::size_t train_end,total_rows,ordinal=0;
+    std::map<OrderedGroup,std::tuple<double,std::size_t,std::size_t>> groups;
+    std::map<OrderedGroup,std::vector<double>> history;
+    TimeGradientState(double minimum_gap,std::size_t width,unsigned task,const std::string& input,const std::string& cut,std::size_t train,std::size_t total):minimum_gap(minimum_gap),width(width),input(input),cut(cut),train_end(train),total_rows(total) {
+        if(task!=1 && task!=2) throw OrderedError("unsupported");
+        if(!std::isfinite(minimum_gap) || minimum_gap<=0.0) throw OrderedError("domain");
+        if(width==0 || width>512) throw OrderedError("shape");
+        if(ordered_blank(cut) || train==0 || train>total) throw OrderedError("bounds");
+    }
+    OrderedBytes metadata() const {
+        OrderedBytes out;ordered_text(out,"{\"version\":1,\"axis\":\"sample_time\",\"causality\":\"causal\",\"fit_scope\":\"stateless\"}");ordered_text(out,input);
+        ordered_text(out,"{\"cut_id\":"+ordered_json_string(cut)+",\"train_end\":"+std::to_string(train_end)+",\"total_rows\":"+std::to_string(total_rows)+"}");return out;
+    }
+    std::pair<std::vector<double>,std::vector<std::uint32_t>> push(OrderedGroup group,double time,const std::vector<double>& row) {
+        if(row.size()!=width)throw OrderedError("shape");if(!std::isfinite(time))throw TimeGradientRejection("domain",@GAPFAULT@);group=ordered_group(std::move(group));
+        const auto previous=groups.find(group);double gap=0.0;if(previous!=groups.end()){gap=time-std::get<0>(previous->second);if(!std::isfinite(gap)||gap<minimum_gap)throw TimeGradientRejection("domain",@GAPFAULT@);}if(ordinal>=total_rows)throw OrderedError("bounds");
+        std::vector<double> values(width,0.0);std::vector<std::uint32_t> faults(width,0);
+        if(previous!=groups.end()){const auto& prior=history.at(group);for(std::size_t col=0;col<width;col++){const auto left=std::isfinite(prior[col])?prior[col]:0.0;const auto right=std::isfinite(row[col])?row[col]:0.0;if(!std::isfinite(prior[col])||!std::isfinite(row[col]))faults[col]|=@INPUTFAULT@;const auto delta=right-left;const auto value=std::isfinite(delta)?delta/gap:right/gap-left/gap;if(!std::isfinite(value)){faults[col]|=@SANITIZEDFAULT@;}else{if(std::abs(value)>1e12)faults[col]|=@CLAMPFAULT@;values[col]=std::clamp(value,-1e12,1e12);}}}
+        else{for(std::size_t col=0;col<width;col++)faults[col]=@BOUNDARYFAULT@|(std::isfinite(row[col])?0:@INPUTFAULT@);}
+        const auto prior=previous==groups.end()?0:std::get<1>(previous->second);const auto train=previous==groups.end()?0:std::get<2>(previous->second);groups[group]=std::make_tuple(time,prior+1,train+std::size_t(ordinal<train_end));history[group]=row;ordinal++;return {values,faults};
+    }
+    OrderedBytes to_bytes() const {
+        OrderedBytes cursor={'F','M','K','C','U','R',0,1};const auto meta=metadata();cursor.insert(cursor.end(),meta.begin(),meta.end());ordered_word(cursor,ordinal);ordered_word(cursor,groups.size());
+        for(const auto& item:groups) {ordered_write_group(cursor,item.first);ordered_word(cursor,ordered_bits(std::get<0>(item.second)));ordered_word(cursor,std::get<1>(item.second));ordered_word(cursor,std::get<2>(item.second));}
+        OrderedBytes out={'F','M','K','T','G','R',0,2};ordered_word(out,width);ordered_word(out,ordered_bits(minimum_gap));ordered_word(out,cursor.size());out.insert(out.end(),cursor.begin(),cursor.end());ordered_word(out,groups.size());
+        for(const auto& item:groups) {ordered_write_group(out,item.first);ordered_word(out,ordered_bits(std::get<0>(item.second)));const auto& saved=history.at(item.first);for(double v:saved) ordered_word(out,ordered_bits(v));}
+        if(out.size()>16*1024*1024) throw OrderedError("resource");return out;
+    }
+    static TimeGradientState from_bytes(const OrderedBytes& bytes,unsigned task,const std::string& input,const std::string& cut,std::size_t train,std::size_t total) {
+        OrderedReader reader(bytes);if(reader.take(8)!=OrderedBytes({'F','M','K','T','G','R',0,2})) throw OrderedError("unsupported");
+        const auto width=reader.size();if(width==0 || width>512) throw OrderedError("shape");const auto minimum_gap=ordered_float(reader.word());TimeGradientState state(minimum_gap,width,task,input,cut,train,total);
+        const auto cursor_bytes=reader.take(reader.count());OrderedReader cursor(cursor_bytes);if(cursor.take(8)!=OrderedBytes({'F','M','K','C','U','R',0,1})) throw OrderedError("unsupported");
+        const std::vector<std::string> metadata={cursor.text(),cursor.text(),cursor.text()};const std::vector<std::string> expected={"{\"version\":1,\"axis\":\"sample_time\",\"causality\":\"causal\",\"fit_scope\":\"stateless\"}",input,"{\"cut_id\":"+ordered_json_string(cut)+",\"train_end\":"+std::to_string(train)+",\"total_rows\":"+std::to_string(total)+"}"};
+        std::vector<std::vector<OrderedJson>> parsed,identities;for(unsigned i=0;i<3;i++) {parsed.push_back(ordered_metadata(metadata[i],i));identities.push_back(ordered_metadata(expected[i],i));}if(parsed!=identities) throw OrderedError("domain");
+        state.ordinal=cursor.size();if(state.ordinal>total) throw OrderedError("bounds");const auto count=cursor.count();if(count>state.ordinal) throw OrderedError("bounds");std::size_t rows=0,training=0;
+        for(std::size_t i=0;i<count;i++) {const auto group=cursor.group();const auto time=ordered_float(cursor.word());const auto prior=cursor.size();const auto trained=cursor.size();
+            if((!state.groups.empty() && !(state.groups.rbegin()->first<group)) || !std::isfinite(time) || prior==0 || prior>state.ordinal || trained>prior) throw OrderedError("domain");
+            if(prior>std::numeric_limits<std::size_t>::max()-rows || trained>std::numeric_limits<std::size_t>::max()-training) throw OrderedError("bounds");rows+=prior;training+=trained;state.groups[group]=std::make_tuple(time,prior,trained);}
+        cursor.finish();if(rows!=state.ordinal || training!=std::min(state.ordinal,train)) throw OrderedError("domain");if(metadata!=expected) throw OrderedError("syntax");if(reader.count()!=count) throw OrderedError("domain");
+        for(const auto& item:state.groups) {if(!(reader.group()==item.first) || reader.word()!=ordered_bits(std::get<0>(item.second))) throw OrderedError("domain");std::vector<double> raw;
+            for(std::size_t j=0;j<width;j++) raw.push_back(ordered_float(reader.word()));
+            state.history[item.first]=std::move(raw);}
+        reader.finish();if(state.to_bytes()!=bytes) throw OrderedError("syntax");return state;
+    }
+    void finish() const {if(ordinal!=total_rows) throw OrderedError("bounds");}
+};

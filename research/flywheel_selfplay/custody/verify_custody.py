@@ -4,6 +4,7 @@
 import hashlib
 import json
 import os
+import posixpath
 import stat
 import sys
 from pathlib import Path
@@ -12,21 +13,64 @@ CUSTODY_DIR = Path(__file__).resolve().parent
 MANIFEST_PATH = CUSTODY_DIR / "MANIFEST.json"
 FILES_DIR = CUSTODY_DIR / "files"
 CHUNK_SIZE = 1024 * 1024
-FILE_COLLECTIONS = ("import_files", "assets")
+FILE_COLLECTIONS = ("import_files", "assets", "evaluator.compiled_source_inputs")
 
 
 def _fail(message: str) -> None:
     print(f"custody verification failed: {message}", file=sys.stderr)
 
 
-def _manifest_entries(manifest: object) -> tuple[dict[Path, tuple[str, int]], int]:
+def _compiled_sources(manifest: dict) -> list[dict]:
+    evaluator = manifest.get("evaluator")
+    if not isinstance(evaluator, dict):
+        raise ValueError("evaluator must be an object")
+    root = evaluator.get("source_root")
+    if (
+        not isinstance(root, str)
+        or not root.startswith("/")
+        or any(part in ("", ".", "..") for part in root.split("/")[1:])
+    ):
+        raise ValueError("evaluator has an unsafe source_root")
+    rows = evaluator.get("compiled_source_inputs")
+    if not isinstance(rows, list) or not rows:
+        raise ValueError("evaluator.compiled_source_inputs must be a non-empty list")
+    sources = []
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError("compiled source entry must be an object")
+        relative = row.get("repo_path")
+        if not isinstance(relative, str) or any(
+            part in ("", ".", "..") for part in relative.split("/")
+        ):
+            raise ValueError("compiled source has an unsafe repo_path")
+        canonical = root + "/" + relative
+        original = row.get("path")
+        if not isinstance(original, str) or posixpath.normpath(original) != canonical:
+            raise ValueError("compiled source path disagrees with its repository path")
+        digest = row.get("actual_sha256")
+        if (
+            digest != row.get("revision_sha256")
+            or row.get("matches_revision") is not True
+        ):
+            raise ValueError("compiled source hash disagrees with its pinned revision")
+        sources.append({"path": canonical, "sha256": digest, "bytes": None})
+    return sources
+
+
+def _manifest_entries(
+    manifest: object,
+) -> tuple[dict[Path, tuple[str, int | None]], int]:
     if not isinstance(manifest, dict):
         raise ValueError("manifest root must be an object")
 
-    entries: dict[str, tuple[Path, str, int]] = {}
+    entries: dict[str, tuple[Path, str, int | None]] = {}
     references = 0
     for collection in FILE_COLLECTIONS:
-        rows = manifest.get(collection)
+        rows = (
+            _compiled_sources(manifest)
+            if collection == FILE_COLLECTIONS[2]
+            else manifest.get(collection)
+        )
         if not isinstance(rows, list) or not rows:
             raise ValueError(f"{collection} must be a non-empty list")
 
@@ -43,26 +87,41 @@ def _manifest_entries(manifest: object) -> tuple[dict[Path, tuple[str, int]], in
             path_parts = source_path.split("/")[1:]
             if not path_parts or any(part in ("", ".", "..") for part in path_parts):
                 raise ValueError(f"unsafe source path: {source_path}")
-            if not isinstance(expected_hash, str) or len(expected_hash) != 64 or any(
-                char not in "0123456789abcdef" for char in expected_hash
+            if (
+                not isinstance(expected_hash, str)
+                or len(expected_hash) != 64
+                or any(char not in "0123456789abcdef" for char in expected_hash)
             ):
                 raise ValueError(f"{collection}[{index}] has an invalid SHA-256")
-            if not isinstance(expected_size, int) or isinstance(expected_size, bool) or expected_size < 0:
+            if collection != FILE_COLLECTIONS[2] and (
+                not isinstance(expected_size, int)
+                or isinstance(expected_size, bool)
+                or expected_size < 0
+            ):
                 raise ValueError(f"{collection}[{index}] has an invalid byte count")
 
             relative = Path(*path_parts)
             value = (relative, expected_hash, expected_size)
             previous = entries.get(source_path)
-            if previous is not None and previous != value:
-                raise ValueError(f"manifest collections disagree on {source_path}")
+            if previous is not None:
+                if previous[1] != expected_hash or (
+                    previous[2] is not None
+                    and expected_size is not None
+                    and previous[2] != expected_size
+                ):
+                    raise ValueError(f"manifest collections disagree on {source_path}")
+                if expected_size is None:
+                    value = previous
             entries[source_path] = value
 
-    relative_entries: dict[Path, tuple[str, int]] = {}
+    relative_entries: dict[Path, tuple[str, int | None]] = {}
     for source_path, (relative, expected_hash, expected_size) in entries.items():
         previous = relative_entries.get(relative)
         value = (expected_hash, expected_size)
         if previous is not None and previous != value:
-            raise ValueError(f"distinct manifest paths map to conflicting custody path {relative}")
+            raise ValueError(
+                f"distinct manifest paths map to conflicting custody path {relative}"
+            )
         relative_entries[relative] = value
     return relative_entries, references
 
@@ -129,12 +188,17 @@ def main() -> int:
         if digest.hexdigest() != expected_hash:
             _fail(f"SHA-256 mismatch for {relative}: got {digest.hexdigest()}")
             errors += 1
-        if size != expected_size:
-            _fail(f"byte count mismatch for {relative}: expected {expected_size}, got {size}")
+        if expected_size is not None and size != expected_size:
+            _fail(
+                f"byte count mismatch for {relative}: expected {expected_size}, got {size}"
+            )
             errors += 1
 
     if errors:
-        print(f"checked {len(expected)} unique custody files; found {errors} error(s)", file=sys.stderr)
+        print(
+            f"checked {len(expected)} unique custody files; found {errors} error(s)",
+            file=sys.stderr,
+        )
         return 1
 
     print(

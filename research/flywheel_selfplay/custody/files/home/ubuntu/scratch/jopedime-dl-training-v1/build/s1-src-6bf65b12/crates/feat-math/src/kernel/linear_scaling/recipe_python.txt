@@ -1,0 +1,112 @@
+# Explicit calibrated training library, version 2.
+import struct as _scaling_struct
+_SCALING_TEMPLATE = bytes([@BYTES@])
+
+def _scaling_rows(rows):
+    if any(len(row) != @WIDTH@ for row in rows):
+        raise ValueError('linear-scaling row width')
+    if any(not math.isfinite(v) for row in rows for v in row):
+        raise ValueError('linear-scaling input')
+
+def _scaling_sum(values):
+    total, residual = 0.0, 0.0
+    for value in values:
+        nxt = total + value
+        residual += ((total - nxt) + value) if abs(total) >= abs(value) else ((value - nxt) + total)
+        total = nxt
+    return total + residual
+
+def _scaling_mean(values):
+    if all(v == values[0] for v in values):
+        return values[0]
+    total = _scaling_sum(values)
+    if math.isfinite(total):
+        return total / len(values)
+    scale = max(abs(v) for v in values)
+    return 0.0 if scale == 0.0 else (_scaling_sum(v / scale for v in values) / len(values)) * scale
+
+def _scaling_rescale(value, exponent):
+    while exponent > 512:
+        value *= math.ldexp(1.0, 512)
+        exponent -= 512
+    while exponent < -512:
+        value *= math.ldexp(1.0, -512)
+        exponent += 512
+    return value * math.ldexp(1.0, exponent)
+
+def _scaling_centered(values):
+    anchor = values[0]
+    offsets = [v - anchor for v in values]
+    if any(not math.isfinite(v) for v in offsets):
+        anchor, offsets = 0.0, list(values)
+    magnitude = max(abs(v) for v in offsets)
+    exponent = math.frexp(magnitude)[1] - 1 if magnitude else 0
+    scale = math.ldexp(1.0, exponent)
+    normalized = [v / scale for v in offsets]
+    mean = _scaling_sum(normalized) / len(values)
+    return anchor, exponent, mean, [v - mean for v in normalized]
+
+class ScaledModel:
+    __slots__ = ('_coefficients',)
+    def __init__(self, coefficients):
+        if len(coefficients) != 2 or any(not math.isfinite(v) for v in coefficients):
+            raise ValueError('linear-scaling coefficients')
+        self._coefficients = tuple(coefficients)
+    def coefficients(self):
+        return self._coefficients
+    def predict(self, rows):
+        _scaling_rows(rows)
+        a, b = self._coefficients
+        out = [a * expression_value(row) + b for row in rows]
+        if any(not math.isfinite(v) for v in out):
+            raise ValueError('linear-scaled prediction')
+        return out
+    def to_bytes(self):
+        out = bytearray(_SCALING_TEMPLATE)
+        out[26:42] = _scaling_struct.pack('<dd', *self._coefficients)
+        return bytes(out)
+    @classmethod
+    def from_bytes(cls, data):
+        if len(data) != len(_SCALING_TEMPLATE) or data[:26] != _SCALING_TEMPLATE[:26] or data[42:] != _SCALING_TEMPLATE[42:]:
+            raise ValueError('linear-scaling container')
+        return cls(_scaling_struct.unpack('<dd', data[26:42]))
+
+def scaled_train(rows, targets):
+    if not rows or len(rows) != len(targets):
+        raise ValueError('linear-scaling needs aligned nonempty training data')
+    if any(not math.isfinite(v) for v in targets):
+        raise ValueError('linear-scaling target')
+    _scaling_rows(rows)
+    values = [expression_value(row) for row in rows]
+    a, b = 0.0, _scaling_mean(targets)
+    if not all(v == values[0] for v in values) and not all(v == targets[0] for v in targets):
+        fa, fe, fm, df = _scaling_centered(values)
+        ya, ye, ym, dy = _scaling_centered(targets)
+        variance = _scaling_sum(d * d for d in df)
+        covariance = _scaling_sum(f * y for f, y in zip(df, dy))
+        if variance <= 0.0 or not math.isfinite(variance):
+            raise ValueError('linear-scaling variance not representable')
+        a = _scaling_rescale(covariance / variance, ye - fe)
+        if a == 0.0 and covariance != 0.0:
+            raise ValueError('linear-scaling coefficients')
+        b = (ya - a * fa) + (_scaling_rescale(ym, ye) - a * _scaling_rescale(fm, fe))
+    model = ScaledModel((a, b))
+    terms = []
+    for f, y in zip(values, targets):
+        prediction = a * f + b
+        if not math.isfinite(prediction):
+            raise ValueError('linear-scaled prediction')
+        difference = prediction - y
+        if not math.isfinite(difference):
+            raise ValueError('linear-scaling training loss')
+        terms.append(difference)
+    magnitude = max(abs(v) for v in terms)
+    if magnitude == 0.0:
+        return model, 0.0
+    exponent = math.frexp(magnitude)[1] - 1
+    scale = math.ldexp(1.0, exponent)
+    normalized = _scaling_sum((d / scale) * (d / scale) for d in terms) / len(values)
+    mse = _scaling_rescale(normalized, 2 * exponent)
+    if not math.isfinite(mse) or mse < 0.0 or (normalized > 0.0 and mse == 0.0):
+        raise ValueError('linear-scaling training loss')
+    return model, mse
