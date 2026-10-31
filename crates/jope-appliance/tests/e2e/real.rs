@@ -490,6 +490,86 @@ fn terminal(home: &Path, csv: &Path, id: &jope_api::ids::RunId) -> Result<String
     result
 }
 
+// A live SSE subscription remains open after completion. Batch must stop at
+// the committed terminal event, and a cursor already there must emit a receipt.
+fn ndjson_receipt(
+    home: &Path,
+    spec: &RunSpec,
+    completed: &RunSnapshot,
+    after: Option<DecimalU64>,
+) -> Result<()> {
+    let mut command = batch_command(home, spec);
+    command.args(["--events", "ndjson"]);
+    if let Some(after) = after {
+        command.args(["--after-event", &after.0.to_string()]);
+    }
+    let mut child = command
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?;
+    let deadline = Instant::now() + Duration::from_secs(8);
+    let mut expired = false;
+    while child.try_wait()?.is_none() {
+        if Instant::now() >= deadline {
+            expired = true;
+            child.kill()?;
+            break;
+        }
+        thread::sleep(Duration::from_millis(20));
+    }
+    let output = child.wait_with_output()?;
+    if let Some(root) = std::env::var_os("JOPE_INT01_RECEIPTS") {
+        let name = if after.is_some() {
+            "ndjson-after-final"
+        } else {
+            "ndjson-completed"
+        };
+        fs::write(
+            PathBuf::from(root).join(format!("{name}.stdout")),
+            &output.stdout,
+        )?;
+        fs::write(
+            PathBuf::from(root).join(format!("{name}.stderr")),
+            &output.stderr,
+        )?;
+    }
+    ensure!(
+        !expired,
+        "batch NDJSON stayed subscribed after durable completion"
+    );
+    ensure!(
+        output.status.success(),
+        "NDJSON batch failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let lines = std::str::from_utf8(&output.stdout)?
+        .lines()
+        .map(serde_json::from_str::<Value>)
+        .collect::<std::result::Result<Vec<_>, _>>()?;
+    let receipt = lines.last().context("NDJSON omitted final receipt")?;
+    ensure!(
+        receipt["kind"] == "receipt",
+        "NDJSON did not terminate in a receipt"
+    );
+    let run: RunSnapshot = serde_json::from_value(receipt["run"].clone())?;
+    ensure!(
+        &run == completed,
+        "NDJSON receipt differs from committed snapshot"
+    );
+    if after.is_some() {
+        ensure!(
+            lines.len() == 1,
+            "cursor at final watermark replayed events"
+        );
+    } else {
+        ensure!(
+            lines.len() > 1 && lines[lines.len() - 2]["kind"] == "run.finished",
+            "NDJSON omitted final durable event"
+        );
+    }
+    Ok(())
+}
+
 pub(super) fn shared_run_surfaces() -> Result<()> {
     let bytes = input()?;
     let (server, spec) = Server::start(&bytes)?;
@@ -497,6 +577,13 @@ pub(super) fn shared_run_surfaces() -> Result<()> {
     retain_execution(&server.engine, &output, "shared")?;
     let completed = snapshot(output)?;
     let id = &completed.run_id;
+    ndjson_receipt(server.home.path(), &spec, &completed, None)?;
+    ndjson_receipt(
+        server.home.path(),
+        &spec,
+        &completed,
+        Some(completed.event_watermark),
+    )?;
     let mut captures = vec![capture(&server.client, Surface::BatchCli, id)?];
     ensure!(
         captures[0].projection.champion == completed.best,
