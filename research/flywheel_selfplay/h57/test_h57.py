@@ -229,6 +229,7 @@ class H57Tests(unittest.TestCase):
             with mock.patch.object(wave, "LOCK", lock_path), \
                  mock.patch.object(wave, "safe_preflight", side_effect=preflight), \
                  mock.patch.object(wave, "gpu_free_mib", return_value=8192), \
+                 mock.patch.object(wave, "launch_disk_guard_error", return_value=None), \
                  mock.patch.object(wave.time, "sleep", side_effect=sleep):
                 handle, _, free_mib, _ = wave.acquire_lock(status_path, 0.0)
                 self.assertEqual(free_mib, 8192)
