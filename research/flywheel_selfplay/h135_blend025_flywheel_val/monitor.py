@@ -12,6 +12,7 @@ import subprocess
 import sys
 import time
 import psutil
+from launcher import worker_environment
 
 HERE = Path(__file__).resolve().parent
 ARROW_ALLOCATOR_CONF = "background_thread:false"
@@ -73,19 +74,21 @@ def main():
     root = c / "run"
     root.mkdir()  # single attempt, never resume implicitly
     shutil.copyfile(c / "reference.json", root / "reference.json")
-    env = dict(
-        os.environ,
-        GIT_DIR=launch["git_dir"],
-        JE_ARROW_MALLOC_CONF=ARROW_ALLOCATOR_CONF,
-        CUDA_VISIBLE_DEVICES="",
-        PYTHONDONTWRITEBYTECODE="1",
-        PYTHONPYCACHEPREFIX=str(root / "bytecode"),
-        OMP_NUM_THREADS="1",
-        MKL_NUM_THREADS="1",
-        OPENBLAS_NUM_THREADS="1",
-        NUMEXPR_NUM_THREADS="1",
-        NUMEXPR_MAX_THREADS="1",
-        TOKENIZERS_PARALLELISM="false",
+    env = worker_environment(
+        dict(
+            os.environ,
+            GIT_DIR=launch["git_dir"],
+            JE_ARROW_MALLOC_CONF=ARROW_ALLOCATOR_CONF,
+            CUDA_VISIBLE_DEVICES="",
+            PYTHONDONTWRITEBYTECODE="1",
+            PYTHONPYCACHEPREFIX=str(root / "bytecode"),
+            OMP_NUM_THREADS="1",
+            MKL_NUM_THREADS="1",
+            OPENBLAS_NUM_THREADS="1",
+            NUMEXPR_NUM_THREADS="1",
+            NUMEXPR_MAX_THREADS="1",
+            TOKENIZERS_PARALLELISM="false",
+        )
     )
     record = dict(
         source=launch,
@@ -97,6 +100,8 @@ def main():
                 "MKL_NUM_THREADS",
                 "OPENBLAS_NUM_THREADS",
                 "JE_ARROW_MALLOC_CONF",
+                "NUMEXPR_NUM_THREADS",
+                "RAYON_NUM_THREADS",
             ]
         },
         stages=[],
@@ -114,7 +119,10 @@ def main():
                 "-n",
                 "19",
                 sys.executable,
-                str(HERE / "runner.py"),
+                str(
+                    HERE
+                    / ("launcher.py" if stage in ("135", "136", "137") else "runner.py")
+                ),
                 "--root",
                 str(root),
                 "--stage",
