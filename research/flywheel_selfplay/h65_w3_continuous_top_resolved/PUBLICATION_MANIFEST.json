@@ -107,15 +107,16 @@
   },
   "dependencies": {
     "w1_winner_configuration": {
-      "status": "missing",
+      "status": "NO_ADVANCE_NO_WINNER",
       "path": null,
       "sha256": null,
-      "note": "No winner is inferred or selected. Existing CPU runner hashes an opaque JSON object; this document is not that configuration."
+      "note": "W1 is NO_ADVANCE. No accepted W1 winner or prior is supplied; W3 binds the strongest comparator separately and must not treat it as a prior."
     },
     "h59_outcome_disposition": {
-      "status": "not_supplied",
-      "path": null,
-      "note": "Incorporate completed clipping/normalization evidence before overlapping W3 work; source implementation/queued execution is not a completed result."
+      "status": "COMPLETED_NO_ADMISSION_INCORPORATED",
+      "path": "../h89_w3_completion_admission/metrics.json",
+      "sha256": "586e1e1104617dc412e3375ffc9dd69091dde3a0998c0303e4f57a44898aaf32",
+      "note": "H89 records H59 as completed with no admission; no W3 metric or target is inferred from that disposition."
     },
     "admitted_w3_outcome_export": {
       "status": "missing",
@@ -135,7 +136,16 @@
         "general-corpus smoke as a substitute for outcome provenance"
       ]
     },
-    "gpu_execution": "Not launched. W1 follows H57 under the qualification lock; W3 follows an accepted W1 winner and the other prerequisites."
+    "gpu_execution": "Not launched. W3 binds GBM_PROG412_CTX as the strongest comparator only; no W1 winner/prior is accepted. B1, B2, B4, B5 and separate qualification-lock admission remain open.",
+    "w3_strongest_comparator": {
+      "status": "BOUND_FOR_COMPARISON_ONLY",
+      "id": "GBM_PROG412_CTX",
+      "label": "context GBM (ungated)",
+      "source_metrics_path": "../h108_w1_prior_residual/metrics.json",
+      "source_metrics_sha256": "530e1cd634916c59b84dde9f93fae4988256c09f50c7e970f59491737b5d8903",
+      "accepted_w1_winner": null,
+      "w1_prior_binding": null
+    }
   },
   "budgets": {
     "gpu_hours_ceiling": 2,

@@ -31,6 +31,14 @@ less harmful but still below r882. See the [published H59 result](../../../docs/
 and [H89 disposition](../h89_w3_completion_admission/README.md). Do not inherit a
 new loss clipping or normalization default from H59 or relabel it unrun.
 
+H108's W1 disposition is NO_ADVANCE; there is no accepted W1 winner and no W1
+prior is bound. Following rd_opus's readout, W3's strongest comparator is
+GBM_PROG412_CTX (context GBM, ungated). The exact H108 metrics bytes are pinned
+by [H65's comparator binding](../h65_w3_continuous_top_resolved/comparator_binding.json).
+This selects the comparator for the preregistered comparisons only; it does not
+turn that comparator into a W1 winner/prior or authorize loading its model
+artifacts. The W1 prior remains null.
+
 Before importing actual numeric rows, H107 requires authoritative completion
 joins, original rows/cuts/evaluator/vocabulary, a complete census, current role
 and family/table/alias closure, and exact-version allowlisted objects. H86/H87
@@ -100,10 +108,11 @@ winner ID and claim scope, H65 fold identity, frozen DOPE and five held-fold pri
 objects with training-component hashes. JSON shape is not acceptance. Verify all
 versions/bytes, fold-excluded dependencies, matching history/normalization, source
 and weights, and the result review before binding. Keep `w1_prior_binding=null`
-until this exists. A search-only W1 claim must not silently become a legacy W3
-winner; record the explicit compatibility disposition. No checkpoint is loaded
-here. H108 completed with NO_ADVANCE and no accepted W1 winner; no fallback
-arm is selected. W3 remains blocked pending an explicit prior disposition.
+until an accepted prior exists. A search-only W1 claim must not silently become
+a legacy W3 winner. The owner-directed comparator binding does not alter this
+requirement. No checkpoint is loaded here. W3 remains blocked on
+completion/role admission, a registered trainer and matched controls, and
+resource/GPU admission; this preregistration does not authorize a launch.
 
 ## Readout and admission
 
