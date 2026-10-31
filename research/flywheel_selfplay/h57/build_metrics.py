@@ -204,6 +204,47 @@ def compact_cell(summary: dict, fold_b: dict, baseline: dict) -> dict:
     }
 
 
+def terminal_metrics(val_root: Path, admissions: dict) -> dict:
+    """Collect exactly the admitted terminal receipts, checking paths before reads."""
+    expected = {
+        val_root / arm / f"seed{seed}.json": (arm, seed)
+        for arm in ARMS
+        if admissions[arm]["admitted"]
+        for seed in SEEDS
+    }
+    result = {
+        "reads_allowed": len(expected),
+        "status": "pending admission-gated reads"
+        if expected
+        else "not run; no sigma arm admitted",
+        "reads": [],
+    }
+    if not val_root.exists():
+        return result
+    paths = sorted(val_root.glob("*/*.json"))
+    if set(paths) != set(expected):
+        raise SystemExit("H57 terminal DL-Val receipts differ from admitted arm/seed set")
+    for path in paths:
+        val = load(path)
+        if (
+            (val.get("arm"), val.get("seed")) != expected[path]
+            or val.get("terminal_dl_val_score_count") != 1
+        ):
+            raise SystemExit(f"H57 terminal DL-Val receipt identity/count mismatch: {path}")
+        result["reads"].append(
+            {
+                "arm": val["arm"],
+                "seed": val["seed"],
+                "family_utility": val["family_utility"],
+                "delta_vs_r882_harness": val["family_delta_vs_r882_harness"],
+                "terminal_dl_val_score_count": val["terminal_dl_val_score_count"],
+            }
+        )
+    if expected:
+        result["status"] = "complete"
+    return result
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -310,13 +351,9 @@ def main() -> None:
             "diagnostic_only": True,
             "not_admissible": True,
         },
-        "terminal_dl_val": {
-            "reads_allowed": terminal_allowed,
-            "status": "pending admission-gated reads"
-            if terminal_allowed
-            else "not run; no sigma arm admitted",
-            "reads": [],
-        },
+        "terminal_dl_val": terminal_metrics(
+            args.run_root / "outcomes/terminal-val", admissions
+        ),
         "interpretation": "Elo and W/T/L are diagnostics; fold-B family gains alone determine admission. No sigma is selected by comparing fold-B scores.",
         "wave_receipt": str(args.run_root / "outcomes/wave.json"),
     }
@@ -333,25 +370,6 @@ def main() -> None:
                 verification_path.read_bytes()
             ).hexdigest(),
             "verified_object_count": verification["verified_object_count"],
-        }
-    val_root = args.run_root / "outcomes/terminal-val"
-    if val_root.exists():
-        reads = []
-        for path in sorted(val_root.glob("*/*.json")):
-            val = load(path)
-            reads.append(
-                {
-                    "arm": val["arm"],
-                    "seed": val["seed"],
-                    "family_utility": val["family_utility"],
-                    "delta_vs_r882_harness": val["family_delta_vs_r882_harness"],
-                    "terminal_dl_val_score_count": val["terminal_dl_val_score_count"],
-                }
-            )
-        metrics["terminal_dl_val"] = {
-            "reads_allowed": terminal_allowed,
-            "status": "complete",
-            "reads": reads,
         }
     atomic_json(args.output, metrics)
     print(
