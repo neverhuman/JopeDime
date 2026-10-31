@@ -70,3 +70,20 @@ The source-file SHA-256 pins are:
 QLT-04 remains open. A later qualification must supply its real admitted plan,
 backend and cohort evidence plus OWNER authorization; this CPU audit consumes
 no study budget and grants no restart, qualification or default change.
+
+## Owner-granted CPU wrapper dry run — 2026-10-31
+
+The CPU-only wrapper now pins `deploy/qualification/q1/inputs-manifest.json` to
+the published QLT-02 candidate metadata. The manifest contains only 2,606 dataset
+IDs, canonical dataset SHA-256 values and S3 manifest SHA-256 values, plus source
+cohort/catalog hashes; it includes no rows, object keys, family/shape metadata or
+payload bytes. It is explicitly
+`qualification_eligible=false`: the candidate cohort is not an owner-approved Q1
+roster. No sealed or holdout payload was opened.
+
+`fifo_launch.py dry-run` checked the candidate-manifest and frozen-DOPE hashes, then
+created `/home/ubuntu/jope_plan/evidence/QLT-04/luna-qlt02-t0955/decision-record-candidate-metadata-rebased.json`.
+The record says `q1_status=NOT_RUN`, `decision=UNKNOWN_NOT_RUN`; effects, intervals,
+subgroups, failure inventory and Q1 compute remain unknown. It records no lock,
+FIFO ticket, backend, payload or default change. This validates CPU plumbing only;
+QLT-04 remains NOT_RUN/UNKNOWN and the existing report tables remain unfilled.
