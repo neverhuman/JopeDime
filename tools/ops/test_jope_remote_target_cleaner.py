@@ -27,6 +27,124 @@ class RemoteTargetCleanerTests(unittest.TestCase):
         (self.target / ".rustc_info.json").write_text("{}\n", encoding="utf-8")
         (self.target / "debug" / "deps" / "libsample.rlib").write_bytes(b"compiled")
 
+    def docker_result(self, returncode: int = 0, stdout: str = "") -> mock.Mock:
+        return mock.Mock(returncode=returncode, stdout=stdout)
+
+    def test_docker_prune_targets_only_dangling_jope_targets_without_running_mounts(self) -> None:
+        runner = mock.Mock(side_effect=[
+            self.docker_result(stdout="jope-pr-ci-target\njope-main-full-target\njope-sdk\nother-target\n"),
+            self.docker_result(stdout="runner-id\n"),
+            self.docker_result(),
+            self.docker_result(stdout="local /var/lib/docker/volumes/jope-pr-ci-target/_data"),
+            self.docker_result(stdout="jope-pr-ci-target"),
+        ])
+        lock = self.root / "lock" / "cleaner.lock"
+        audit = self.root / "audit.jsonl"
+        with mock.patch.object(cleaner, "append_audit") as append_audit:
+            removed = cleaner.prune_unmounted_jope_target_volumes(
+                free_bytes=1,
+                minimum_free_bytes=100,
+                audit=audit,
+                lock=lock,
+                runner=runner,
+            )
+        self.assertEqual(removed, ["jope-pr-ci-target"])
+        self.assertEqual(runner.call_count, 5)
+        self.assertEqual(
+            [call.args[0][1:3] for call in runner.call_args_list],
+            [["volume", "ls"], ["ps", "--quiet"], ["ps", "--quiet"], ["volume", "inspect"], ["volume", "rm"]],
+        )
+        self.assertEqual(
+            [call.args[0]["event"] for call in append_audit.call_args_list],
+            ["docker_target_volume_delete_intent", "docker_target_volume_deleted"],
+        )
+
+    def test_docker_prune_rejects_nonlocal_or_noncanonical_volume(self) -> None:
+        for inspection in (
+            "nfs /var/lib/docker/volumes/jope-pr-ci-target/_data",
+            "local /other/path",
+        ):
+            runner = mock.Mock(side_effect=[
+                self.docker_result(stdout="jope-pr-ci-target\n"),
+                self.docker_result(),
+                self.docker_result(stdout=inspection),
+            ])
+            with mock.patch.object(cleaner, "append_audit") as append_audit:
+                removed = cleaner.prune_unmounted_jope_target_volumes(
+                    free_bytes=1,
+                    minimum_free_bytes=100,
+                    audit=self.root / "audit.jsonl",
+                    lock=self.root / f"lock/{len(inspection)}.lock",
+                    runner=runner,
+                )
+            self.assertEqual(removed, [])
+            self.assertEqual(runner.call_count, 3)
+            append_audit.assert_not_called()
+
+    def test_docker_prune_refuses_race_and_stops_when_docker_unavailable(self) -> None:
+        runner = mock.Mock(side_effect=[
+            self.docker_result(stdout="jope-pr-ci-target\n"),
+            self.docker_result(),
+            self.docker_result(stdout="local /var/lib/docker/volumes/jope-pr-ci-target/_data"),
+            self.docker_result(returncode=1),
+        ])
+        with mock.patch.object(cleaner, "append_audit") as append_audit:
+            removed = cleaner.prune_unmounted_jope_target_volumes(
+                free_bytes=1, minimum_free_bytes=100, audit=self.root / "audit.jsonl",
+                lock=self.root / "lock/race.lock", runner=runner,
+            )
+        self.assertEqual(removed, [])
+        self.assertEqual(append_audit.call_args_list[-1].args[0]["event"], "docker_target_volume_remove_refused")
+
+        runner = mock.Mock(return_value=self.docker_result(returncode=1))
+        self.assertEqual(
+            cleaner.prune_unmounted_jope_target_volumes(
+                free_bytes=1, minimum_free_bytes=100, audit=self.root / "audit.jsonl",
+                lock=self.root / "lock/unavailable.lock", runner=runner,
+            ),
+            [],
+        )
+        runner.assert_called_once()
+
+    def test_docker_prune_skips_when_disk_floor_is_met(self) -> None:
+        runner = mock.Mock()
+        self.assertEqual(
+            cleaner.prune_unmounted_jope_target_volumes(
+                free_bytes=100, minimum_free_bytes=100, audit=self.root / "audit.jsonl",
+                lock=self.root / "lock/space-ok.lock", runner=runner,
+            ),
+            [],
+        )
+        runner.assert_not_called()
+
+    def test_x3_volume_reclaim_is_remeasured_before_target_cleanup(self) -> None:
+        with (
+            mock.patch.object(cleaner, "TARGET", self.target),
+            mock.patch.object(cleaner, "SCRATCH_ROOT", self.target.parent),
+            mock.patch.object(
+                cleaner.shutil,
+                "disk_usage",
+                side_effect=[mock.Mock(free=1), mock.Mock(free=cleaner.MIN_FREE_BYTES_BY_HOST["xbabe3"])],
+            ),
+            mock.patch.object(cleaner, "prune_unmounted_jope_target_volumes", return_value=["jope-ci-target"]) as prune,
+            mock.patch.object(cleaner, "process_references") as process_references,
+        ):
+            self.assertEqual(
+                cleaner.run(
+                    apply=True,
+                    target=self.target,
+                    scratch_root=self.target.parent,
+                    audit=self.root / "audit.jsonl",
+                    lock=self.root / "lock/cleaner.lock",
+                    owner_uid=os.getuid(),
+                    host="xbabe3",
+                ),
+                0,
+            )
+        prune.assert_called_once()
+        process_references.assert_not_called()
+        self.assertTrue((self.target / "debug" / "deps").exists())
+
     def test_cargo_tree_accepts_rebuildable_outputs(self) -> None:
         candidates = cleaner.cargo_output_candidates(self.target, os.getuid())
         self.assertIsNotNone(candidates)
@@ -94,6 +212,7 @@ class RemoteTargetCleanerTests(unittest.TestCase):
             mock.patch.object(cleaner, "SCRATCH_ROOT", self.target.parent),
             mock.patch.object(cleaner.shutil, "disk_usage", return_value=mock.Mock(free=1)),
             mock.patch.object(cleaner, "process_references", return_value=False),
+            mock.patch.object(cleaner, "prune_unmounted_jope_target_volumes", return_value=[]),
             mock.patch.object(cleaner.socket, "gethostname", return_value="xbabe3"),
         ):
             self.assertEqual(cleaner.run(apply=False, target=self.target, scratch_root=self.target.parent,
@@ -109,6 +228,7 @@ class RemoteTargetCleanerTests(unittest.TestCase):
             mock.patch.object(cleaner, "SCRATCH_ROOT", self.target.parent),
             mock.patch.object(cleaner.shutil, "disk_usage", return_value=mock.Mock(free=1)),
             mock.patch.object(cleaner, "process_references", return_value=True),
+            mock.patch.object(cleaner, "prune_unmounted_jope_target_volumes", return_value=[]),
             mock.patch.object(cleaner.socket, "gethostname", return_value="xbabe3"),
         ):
             self.assertEqual(cleaner.run(apply=True, target=self.target, scratch_root=self.target.parent,
@@ -124,6 +244,7 @@ class RemoteTargetCleanerTests(unittest.TestCase):
             mock.patch.object(cleaner, "SCRATCH_ROOT", self.target.parent),
             mock.patch.object(cleaner.shutil, "disk_usage", return_value=mock.Mock(free=1)),
             mock.patch.object(cleaner, "process_references", return_value=False),
+            mock.patch.object(cleaner, "prune_unmounted_jope_target_volumes", return_value=[]),
             mock.patch.object(cleaner.socket, "gethostname", return_value="xbabe3"),
         ):
             self.assertEqual(cleaner.run(apply=True, target=self.target, scratch_root=self.target.parent,
@@ -150,11 +271,13 @@ class RemoteTargetCleanerTests(unittest.TestCase):
             mock.patch.object(cleaner, "SCRATCH_ROOT", self.target.parent),
             mock.patch.object(cleaner.shutil, "disk_usage", return_value=mock.Mock(free=119 * 1024**3)),
             mock.patch.object(cleaner, "process_references", return_value=False),
+            mock.patch.object(cleaner, "prune_unmounted_jope_target_volumes") as prune,
             mock.patch.object(cleaner, "append_audit") as append_audit,
         ):
             self.assertEqual(cleaner.run(apply=True, target=self.target, scratch_root=self.target.parent,
                                          lock=lock, owner_uid=os.getuid(), host="xbabe1"), 0)
         self.assertEqual(append_audit.call_args_list[0].args[1], Path("/var/log/jope-diskd-xbabe1/remote-target-cleaner.jsonl"))
+        prune.assert_not_called()
         self.assertFalse((self.target / "debug" / "deps").exists())
         self.assertTrue(self.target.exists())
 

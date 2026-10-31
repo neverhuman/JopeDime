@@ -5,6 +5,7 @@ After=local-fs.target
 [Service]
 Type=oneshot
 ExecStart=/usr/local/sbin/jope-remote-target-cleaner --apply
+Environment=DOCKER_HOST=unix:///run/docker.sock
 Nice=10
 IOSchedulingClass=idle
 IOSchedulingPriority=7
@@ -15,4 +16,4 @@ ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectControlGroups=yes
 PrivateTmp=yes
-ReadWritePaths=-/home/ubuntu/remote_tests/target /var/log/jope-diskd-xbabe3 /run/lock
+ReadWritePaths=-/home/ubuntu/remote_tests/target /var/log/jope-diskd-xbabe3 /run/lock /run/docker.sock
