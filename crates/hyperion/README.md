@@ -36,7 +36,7 @@ The served bundle is a directory holding `model.safetensors` + `manifest.json`.
 
 ### Test gates
 
-`cargo test -p hyperion` runs 51 unit tests (encoder, sweeps, hvc2, router, lease queue) plus the
+`cargo test -p hyperion` runs 55 unit tests (encoder, sweeps, hvc2, router, lease queue) plus the
 two reference-CLI tests without any weights. One test is weight-bound and explicitly ignored by
 the source-only suite:
 

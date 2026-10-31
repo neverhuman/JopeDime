@@ -17,7 +17,7 @@ pub struct HgeWeights {
     pub bands_2: Vec<LinearWeights>,
 }
 
-/// Band for a patch scale: the first `ws_list` window ≥ p (v7 ws_list [4,7,11,15,19,23] →
+/// Band for a patch scale: the first `ws_list` window ≥ p (v7 ws_list \[4,7,11,15,19,23\] →
 /// scales 3,5,7,9 → bands 0,1,1,2). Isolated so the rule is a one-line change if the v7 training
 /// recipe surfaces a different mapping.
 pub fn band_for(p_val: usize, ws_list: &[usize]) -> usize {
