@@ -1,0 +1,639 @@
+{
+  "admission": {
+    "sigma001": {
+      "admission_thresholds": {
+        "bootstrap_draws": 10000,
+        "family_median_gte": 0.0,
+        "harm_fraction_lte": 0.1,
+        "mean_lcb95_strictly_gt": 0.001,
+        "ties_fail": true
+      },
+      "admitted": false,
+      "family_count": 41,
+      "harm_fraction_below_minus_0_01": 0.21951219512195122,
+      "mean_lcb95_one_sided": -0.027211983997684857,
+      "per_seed": [
+        {
+          "family_mean_gain": 0.018981143338379185,
+          "family_mean_lcb95_one_sided": -0.02830881655240777,
+          "family_median_gain": 0.0,
+          "harm_fraction_below_minus_0_01": 0.3170731707317073,
+          "seed": 15
+        },
+        {
+          "family_mean_gain": 0.030773267357296494,
+          "family_mean_lcb95_one_sided": -0.007916903222415306,
+          "family_median_gain": 0.0029545616561859056,
+          "harm_fraction_below_minus_0_01": 0.17073170731707318,
+          "seed": 16
+        },
+        {
+          "family_mean_gain": -0.003010132320273503,
+          "family_mean_lcb95_one_sided": -0.06601344119448153,
+          "family_median_gain": 0.0,
+          "harm_fraction_below_minus_0_01": 0.2926829268292683,
+          "seed": 17
+        }
+      ],
+      "pooled_family_median_gain": 0.0,
+      "pooled_mean_gain": 0.015581426125134057,
+      "pooled_median_ci95": [
+        0.0,
+        0.004099859328376976
+      ],
+      "seed_count": 3
+    },
+    "sigma003": {
+      "admission_thresholds": {
+        "bootstrap_draws": 10000,
+        "family_median_gte": 0.0,
+        "harm_fraction_lte": 0.1,
+        "mean_lcb95_strictly_gt": 0.001,
+        "ties_fail": true
+      },
+      "admitted": false,
+      "family_count": 41,
+      "harm_fraction_below_minus_0_01": 0.3170731707317073,
+      "mean_lcb95_one_sided": -0.027354107589092253,
+      "per_seed": [
+        {
+          "family_mean_gain": 0.033581434535323376,
+          "family_mean_lcb95_one_sided": -0.012612186972024587,
+          "family_median_gain": 0.0,
+          "harm_fraction_below_minus_0_01": 0.24390243902439024,
+          "seed": 15
+        },
+        {
+          "family_mean_gain": 0.003944718765337312,
+          "family_mean_lcb95_one_sided": -0.04302789975969152,
+          "family_median_gain": 0.0,
+          "harm_fraction_below_minus_0_01": 0.2926829268292683,
+          "seed": 16
+        },
+        {
+          "family_mean_gain": 0.004370589818856564,
+          "family_mean_lcb95_one_sided": -0.046969304852198884,
+          "family_median_gain": -1.981444661680598e-07,
+          "harm_fraction_below_minus_0_01": 0.3902439024390244,
+          "seed": 17
+        }
+      ],
+      "pooled_family_median_gain": 0.0,
+      "pooled_mean_gain": 0.013965581039839085,
+      "pooled_median_ci95": [
+        -0.004822953138991171,
+        0.0014118144100414565
+      ],
+      "seed_count": 3
+    }
+  },
+  "cells": [
+    {
+      "arm": "sigma001",
+      "candidate_adapter_sha256": "48d66e40f5c617b71c9e96b7f22de1c952fec73deeb7f0e01b216b2ebc9aec0a",
+      "es_gradient_l2": [
+        4982.62939453125,
+        5180.94140625,
+        5227.7705078125,
+        5544.18603515625,
+        5553.8212890625,
+        5465.5166015625,
+        5394.56689453125,
+        5094.943359375
+      ],
+      "evaluated_perturbations": 256,
+      "fold_b_elo_vs_r882_diagnostic": {
+        "delta_vs_r882": -0.71,
+        "interpretation": "diagnostic only; not an admission endpoint",
+        "losses": 35,
+        "rating": 1499.29,
+        "ties": 148,
+        "wins": 35
+      },
+      "fold_b_family_mean_gain": 0.018981143338379185,
+      "fold_b_family_mean_lcb95_one_sided": -0.02830881655240777,
+      "fold_b_family_median_gain": 0.0,
+      "fold_b_worst_five_family_gains": [
+        [
+          "fam-080d0150fe9b57e7f0dd910275d2e0fb297455bacac55b2e7b0bfb1fafe2139c",
+          -0.4782470410925508
+        ],
+        [
+          "fam-73335129ebdbf39d251b5a7bff3064bdb202e8947f328789216b6de72cf56962",
+          -0.28305886130574365
+        ],
+        [
+          "fam-7a021840777fdcf769b4f1e52d4b6bcc6b407c8d88dde00fc76a2deccded63c9",
+          -0.15721371150545538
+        ],
+        [
+          "fam-efa9a4eb58672dc60c978bfc1e99d9d9f698e41e619b3edf05efc79383f2fb05",
+          -0.10942621497908811
+        ],
+        [
+          "fam-b188b0edb66def92838f07aaa04802592b660f5450c4268d5ad0288ce8437652",
+          -0.07557759755333704
+        ]
+      ],
+      "generation_wall_seconds": [
+        68.76894512702711,
+        62.266291530104354,
+        64.64476628205739,
+        61.048995519056916,
+        63.89661286002956,
+        64.46544079110026,
+        62.8675386661198,
+        59.145939354086295
+      ],
+      "generations_completed": 8,
+      "mean_theta_update_l2": [
+        1.7090954780578613,
+        1.2132858037948608,
+        0.9946202635765076,
+        0.8642303347587585,
+        0.7774161100387573,
+        0.7121155858039856,
+        0.6621661186218262,
+        0.6188023090362549
+      ],
+      "pooled_family_mean_lcb95_one_sided": -0.027211983997684857,
+      "seed": 15,
+      "wall_seconds": 507.1508433849085
+    },
+    {
+      "arm": "sigma001",
+      "candidate_adapter_sha256": "7a45d100b92d67f5b4315c32b4551de1e138b804f752f1091411b0f88b07cf4d",
+      "es_gradient_l2": [
+        4525.53515625,
+        5071.3603515625,
+        5356.49267578125,
+        5819.8857421875,
+        4753.26904296875,
+        4252.3046875,
+        5235.15283203125,
+        5789.8916015625
+      ],
+      "evaluated_perturbations": 256,
+      "fold_b_elo_vs_r882_diagnostic": {
+        "delta_vs_r882": 37.72,
+        "interpretation": "diagnostic only; not an admission endpoint",
+        "losses": 26,
+        "rating": 1537.72,
+        "ties": 142,
+        "wins": 50
+      },
+      "fold_b_family_mean_gain": 0.030773267357296494,
+      "fold_b_family_mean_lcb95_one_sided": -0.007916903222415306,
+      "fold_b_family_median_gain": 0.0029545616561859056,
+      "fold_b_worst_five_family_gains": [
+        [
+          "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7",
+          -0.31777800983740123
+        ],
+        [
+          "fam-73335129ebdbf39d251b5a7bff3064bdb202e8947f328789216b6de72cf56962",
+          -0.2746447763884574
+        ],
+        [
+          "fam-86f4a6774e495a9b5ade2ea44951dcd0a405d5d227f040992a35229db723230f",
+          -0.044733913314308094
+        ],
+        [
+          "fam-6a7fd96029f91bfa7a72104090df21aa5ed2b15293bfb8b8b939f6bfcab63a8e",
+          -0.03048796913992957
+        ],
+        [
+          "fam-b188b0edb66def92838f07aaa04802592b660f5450c4268d5ad0288ce8437652",
+          -0.024042508462929768
+        ]
+      ],
+      "generation_wall_seconds": [
+        62.73809799202718,
+        62.193891054950655,
+        58.54099876713008,
+        61.14457019488327,
+        62.72038240893744,
+        62.69395021116361,
+        60.36163037107326,
+        62.07609403994866
+      ],
+      "generations_completed": 8,
+      "mean_theta_update_l2": [
+        1.7090952396392822,
+        1.2145180702209473,
+        0.9943364858627319,
+        0.8680492043495178,
+        0.7719627022743225,
+        0.6987998485565186,
+        0.6528307199478149,
+        0.6240383386611938
+      ],
+      "pooled_family_mean_lcb95_one_sided": -0.027211983997684857,
+      "seed": 16,
+      "wall_seconds": 492.50722439284436
+    },
+    {
+      "arm": "sigma001",
+      "candidate_adapter_sha256": "b9a6f379a96fc2b30de60e9f32bc4b686c922ae3c476c1fd2dbf327f7409987f",
+      "es_gradient_l2": [
+        4938.7705078125,
+        4487.29638671875,
+        5141.1728515625,
+        5206.16552734375,
+        5144.18310546875,
+        5318.07958984375,
+        5348.9140625,
+        5495.73779296875
+      ],
+      "evaluated_perturbations": 256,
+      "fold_b_elo_vs_r882_diagnostic": {
+        "delta_vs_r882": 7.91,
+        "interpretation": "diagnostic only; not an admission endpoint",
+        "losses": 37,
+        "rating": 1507.91,
+        "ties": 141,
+        "wins": 40
+      },
+      "fold_b_family_mean_gain": -0.003010132320273503,
+      "fold_b_family_mean_lcb95_one_sided": -0.06601344119448153,
+      "fold_b_family_median_gain": 0.0,
+      "fold_b_worst_five_family_gains": [
+        [
+          "fam-de0fe0b21dea79222688c4ce4ac02e67ee4b3f996947c151e9ed4208b0faac5d",
+          -0.7226385355278381
+        ],
+        [
+          "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7",
+          -0.5608463814539562
+        ],
+        [
+          "fam-8cb466b3ca3e577ec81863bfb335577b65a337c79eb48e5527262fb11a71ca1e",
+          -0.3343750477884935
+        ],
+        [
+          "fam-73335129ebdbf39d251b5a7bff3064bdb202e8947f328789216b6de72cf56962",
+          -0.28305886130574365
+        ],
+        [
+          "fam-fa876affd2eda55b92eac9ce9cb8e078434b969fd1638b2026610cd324893de4",
+          -0.22986176845217443
+        ]
+      ],
+      "generation_wall_seconds": [
+        62.49917420721613,
+        60.98353996803053,
+        64.96200230205432,
+        66.40146105806343,
+        62.68089789105579,
+        60.59705969807692,
+        63.71027816296555,
+        64.7611281350255
+      ],
+      "generations_completed": 8,
+      "mean_theta_update_l2": [
+        1.7090954780578613,
+        1.2105873823165894,
+        0.99660724401474,
+        0.8701118230819702,
+        0.7819710373878479,
+        0.719970166683197,
+        0.6752005815505981,
+        0.6370600461959839
+      ],
+      "pooled_family_mean_lcb95_one_sided": -0.027211983997684857,
+      "seed": 17,
+      "wall_seconds": 506.6615246948786
+    },
+    {
+      "arm": "sigma003",
+      "candidate_adapter_sha256": "bae10e2c1ac9a734301d5dd421664b92c793d88b3324a0f35d45bf40340b7a66",
+      "es_gradient_l2": [
+        1641.67724609375,
+        1918.9420166015625,
+        1679.8798828125,
+        1927.08251953125,
+        1618.719970703125,
+        1811.2003173828125,
+        1530.3436279296875,
+        1604.317138671875
+      ],
+      "evaluated_perturbations": 256,
+      "fold_b_elo_vs_r882_diagnostic": {
+        "delta_vs_r882": 0.56,
+        "interpretation": "diagnostic only; not an admission endpoint",
+        "losses": 36,
+        "rating": 1500.56,
+        "ties": 142,
+        "wins": 40
+      },
+      "fold_b_family_mean_gain": 0.033581434535323376,
+      "fold_b_family_mean_lcb95_one_sided": -0.012612186972024587,
+      "fold_b_family_median_gain": 0.0,
+      "fold_b_worst_five_family_gains": [
+        [
+          "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7",
+          -0.42902773611937617
+        ],
+        [
+          "fam-73335129ebdbf39d251b5a7bff3064bdb202e8947f328789216b6de72cf56962",
+          -0.28305886130574365
+        ],
+        [
+          "fam-7afaa04505f68d33b05b3d8c1cc293e14806e17b05fdd78fce1bc514a94f2597",
+          -0.1791792073159162
+        ],
+        [
+          "fam-86f4a6774e495a9b5ade2ea44951dcd0a405d5d227f040992a35229db723230f",
+          -0.045477911640438684
+        ],
+        [
+          "fam-48cf0347a7e50a00b70a452d6be52efea98bdc43bbed55d6ef769e0d430e7990",
+          -0.02639328884908676
+        ]
+      ],
+      "generation_wall_seconds": [
+        67.39174304995686,
+        67.22217420116067,
+        60.83100894186646,
+        62.808511739829555,
+        67.3632100559771,
+        69.9130336579401,
+        64.89998438581824,
+        66.40806845901534
+      ],
+      "generations_completed": 8,
+      "mean_theta_update_l2": [
+        1.7090954780578613,
+        1.2207008600234985,
+        0.9939672350883484,
+        0.8634248375892639,
+        0.7679371237754822,
+        0.7065844535827637,
+        0.6472687125205994,
+        0.6091097593307495
+      ],
+      "pooled_family_mean_lcb95_one_sided": -0.027354107589092253,
+      "seed": 15,
+      "wall_seconds": 527.0814250099938
+    },
+    {
+      "arm": "sigma003",
+      "candidate_adapter_sha256": "c2a42e1fe0e1942b5f29e9260eef75f959957d57861be970d62de0af06a9d30c",
+      "es_gradient_l2": [
+        1697.9290771484375,
+        1755.5858154296875,
+        1894.905517578125,
+        1797.2960205078125,
+        1704.2662353515625,
+        1946.9327392578125,
+        1363.8074951171875,
+        1586.857177734375
+      ],
+      "evaluated_perturbations": 256,
+      "fold_b_elo_vs_r882_diagnostic": {
+        "delta_vs_r882": 1.98,
+        "interpretation": "diagnostic only; not an admission endpoint",
+        "losses": 39,
+        "rating": 1501.98,
+        "ties": 139,
+        "wins": 40
+      },
+      "fold_b_family_mean_gain": 0.003944718765337312,
+      "fold_b_family_mean_lcb95_one_sided": -0.04302789975969152,
+      "fold_b_family_median_gain": 0.0,
+      "fold_b_worst_five_family_gains": [
+        [
+          "fam-37f9e67be184439511ba7b76d189201834b8e82476f44aeee864cd641398783a",
+          -0.43422296362072443
+        ],
+        [
+          "fam-efa9a4eb58672dc60c978bfc1e99d9d9f698e41e619b3edf05efc79383f2fb05",
+          -0.36377162121415174
+        ],
+        [
+          "fam-8cb466b3ca3e577ec81863bfb335577b65a337c79eb48e5527262fb11a71ca1e",
+          -0.33420071417146513
+        ],
+        [
+          "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7",
+          -0.20497838683550018
+        ],
+        [
+          "fam-7a021840777fdcf769b4f1e52d4b6bcc6b407c8d88dde00fc76a2deccded63c9",
+          -0.08534541787673144
+        ]
+      ],
+      "generation_wall_seconds": [
+        62.45967917400412,
+        64.78326563397422,
+        70.46254312922247,
+        66.80304253008217,
+        65.84417685307562,
+        64.1109759551473,
+        63.268095429986715,
+        60.642785074189305
+      ],
+      "generations_completed": 8,
+      "mean_theta_update_l2": [
+        1.7090954780578613,
+        1.2105931043624878,
+        0.9946659803390503,
+        0.8670084476470947,
+        0.7751487493515015,
+        0.7156329154968262,
+        0.6526516079902649,
+        0.6127197742462158
+      ],
+      "pooled_family_mean_lcb95_one_sided": -0.027354107589092253,
+      "seed": 16,
+      "wall_seconds": 518.5016057160683
+    },
+    {
+      "arm": "sigma003",
+      "candidate_adapter_sha256": "b151335cc930148aa0aee99afc64c20928a72861869343e4aaee2206accfeaed",
+      "es_gradient_l2": [
+        1550.9718017578125,
+        1758.864013671875,
+        1712.4964599609375,
+        1797.909423828125,
+        1471.2027587890625,
+        1677.841552734375,
+        1709.4373779296875,
+        1702.1580810546875
+      ],
+      "evaluated_perturbations": 256,
+      "fold_b_elo_vs_r882_diagnostic": {
+        "delta_vs_r882": -4.1,
+        "interpretation": "diagnostic only; not an admission endpoint",
+        "losses": 42,
+        "rating": 1495.9,
+        "ties": 134,
+        "wins": 42
+      },
+      "fold_b_family_mean_gain": 0.004370589818856564,
+      "fold_b_family_mean_lcb95_one_sided": -0.046969304852198884,
+      "fold_b_family_median_gain": -1.981444661680598e-07,
+      "fold_b_worst_five_family_gains": [
+        [
+          "fam-6e1e9c4fc764546aec8e4716742e6d12536a961b77ad6ed7b0dcf1af3d057071",
+          -0.47118430092390545
+        ],
+        [
+          "fam-8cb466b3ca3e577ec81863bfb335577b65a337c79eb48e5527262fb11a71ca1e",
+          -0.3276672791148254
+        ],
+        [
+          "fam-73335129ebdbf39d251b5a7bff3064bdb202e8947f328789216b6de72cf56962",
+          -0.28305886130574365
+        ],
+        [
+          "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7",
+          -0.2143422498321068
+        ],
+        [
+          "fam-f8d77f25147b1e9bac6e6f82d09b61c76d21ae0bc44642415d229c3893648e40",
+          -0.1923551456601057
+        ]
+      ],
+      "generation_wall_seconds": [
+        63.161529045086354,
+        62.508438277989626,
+        58.21152511402033,
+        60.31085707410239,
+        62.71285308199003,
+        56.535028871148825,
+        58.34447270608507,
+        62.556402761954814
+      ],
+      "generations_completed": 8,
+      "mean_theta_update_l2": [
+        1.7090954780578613,
+        1.2152248620986938,
+        0.9958990812301636,
+        0.864895761013031,
+        0.7672930359840393,
+        0.7058950066566467,
+        0.6582105755805969,
+        0.6195625066757202
+      ],
+      "pooled_family_mean_lcb95_one_sided": -0.027354107589092253,
+      "seed": 17,
+      "wall_seconds": 484.3835725458339
+    }
+  ],
+  "custody": {
+    "manifest_s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/h57/h57-outcomes-retry-20261031T0338Z-closeout/manifest.json",
+    "manifest_sha256": "1b977602d5b3e29f9439601d5c7f7e298b6b850ba21c1b8cc8d3d18283566eda",
+    "verification_s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/h57/h57-outcomes-retry-20261031T0338Z-closeout/custody-verification.json",
+    "verification_sha256": "88184be4f6a578972777a3a5ec534183db0dcca5f021954c67c48ef0103a5ce7",
+    "verified_object_count": 30
+  },
+  "elo_summary": {
+    "sigma001": {
+      "bootstrap_seed_count": 3,
+      "interpretation": "family-grouped Bradley-Terry Elo per seed; descriptive seed bootstrap, not admission",
+      "median_elo_delta_vs_r882": 7.91,
+      "median_seed_bootstrap_ci95": [
+        -0.71,
+        37.72
+      ],
+      "per_seed_elo_delta_vs_r882": [
+        -0.71,
+        37.72,
+        7.91
+      ]
+    },
+    "sigma003": {
+      "bootstrap_seed_count": 3,
+      "interpretation": "family-grouped Bradley-Terry Elo per seed; descriptive seed bootstrap, not admission",
+      "median_elo_delta_vs_r882": 0.56,
+      "median_seed_bootstrap_ci95": [
+        -4.1,
+        1.98
+      ],
+      "per_seed_elo_delta_vs_r882": [
+        0.56,
+        1.98,
+        -4.1
+      ]
+    }
+  },
+  "hypothesis": "Antithetic ES can improve the final r882 adapter mean theta on the family-held-out fifth DL-Train fold after fitness optimization on the other four folds.",
+  "interpretation": "Elo and W/T/L are diagnostics; fold-B family gains alone determine admission. No sigma is selected by comparing fold-B scores.",
+  "null": {
+    "arm": "null_sigma001",
+    "diagnostic_only": true,
+    "es_gradient_l2": [
+      4329.517578125,
+      3510.244384765625,
+      3968.878173828125,
+      4490.18798828125,
+      4886.73388671875,
+      4442.2568359375,
+      4631.26416015625,
+      2949.00634765625
+    ],
+    "final_adapter_sha256": "08fae7c1496e9c96476b1d0987e9e2bf66b5e184c90716014354e6b21bd8641d",
+    "fitness_scope": "in-sample fold-A population fitness; descriptive only, not final-theta fold-B admission",
+    "fold_a_generation8_population_fitness_mean": 1.4369012316452348,
+    "generation_wall_seconds": [
+      62.706778320949525,
+      62.0061304171104,
+      59.875213818857446,
+      60.40998320700601,
+      64.04498128010891,
+      67.32014930783771,
+      64.78219331405126,
+      64.0552818030119
+    ],
+    "mean_theta_update_l2": [
+      1.7090954780578613,
+      1.2018729448318481,
+      0.986181914806366,
+      0.8628014922142029,
+      0.7836374640464783,
+      0.7195830941200256,
+      0.6727724671363831,
+      0.6163639426231384
+    ],
+    "not_admissible": true,
+    "seed": 15
+  },
+  "protocol": {
+    "adam_lr": 0.01,
+    "admission_partition": "untouched fifth family fold (41 families)",
+    "antithetic_pairs": 16,
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "fold_seed": 4900,
+    "generations": 8,
+    "population": 32,
+    "r882_checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "seeds": [
+      15,
+      16,
+      17
+    ],
+    "selection": "final mean theta only; no generation/candidate selection",
+    "sigmas": {
+      "sigma001": 0.001,
+      "sigma003": 0.003
+    },
+    "source_manifest_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "terminal_dl_val_reads_allowed": 0,
+    "train_partition": "four family folds (164 families) of DL-Train"
+  },
+  "schema": "jope.h57.closeout/v1",
+  "study": "H57 direct-utility antithetic ES",
+  "terminal_dl_val": {
+    "reads": [],
+    "reads_allowed": 0,
+    "status": "not run; no sigma arm admitted"
+  },
+  "timing_only": {
+    "excluded_from_outcomes": true,
+    "generation_wall_seconds": 60.113566709915176,
+    "seed": 15,
+    "sigma": 0.001
+  },
+  "wave_receipt": "/home/ubuntu/jope-data/h57/h57-wave-retry-20261031T0338Z/outcomes/wave.json"
+}

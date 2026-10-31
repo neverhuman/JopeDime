@@ -8,9 +8,11 @@ import datetime as dt
 import fcntl
 import json
 import os
+import re
 import shutil
 import socket
 import stat
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -20,6 +22,9 @@ TARGET = Path("/home/ubuntu/remote_tests/target")
 SCRATCH_ROOT = Path("/home/ubuntu/remote_tests")
 AUDIT = Path("/var/log/jope-diskd-xbabe3/remote-target-cleaner.jsonl")
 LOCK = Path("/run/lock/jope-remote-target-cleaner.lock")
+DOCKER_BIN = "/usr/bin/docker"
+DOCKER_VOLUME_ROOT = Path("/var/lib/docker/volumes")
+TARGET_VOLUME_NAME = re.compile(r"jope-[a-z0-9][a-z0-9_.-]*-target\Z")
 DENIED_PARTS = {
     "checkpoint", "checkpoints", "dataset", "datasets", "evidence", "flywheel",
     "holdout", "jarambit_runs", "jope-evidence", "receipt", "receipts", "sealed",
@@ -192,6 +197,75 @@ def append_audit(event: dict[str, Any], audit: Path = AUDIT) -> None:
         os.fsync(stream.fileno())
 
 
+def prune_unmounted_jope_target_volumes(*, free_bytes: int, minimum_free_bytes: int,
+        audit: Path, lock: Path = LOCK, runner: Any = None, apply: bool = True) -> list[str]:
+    """Remove only dangling named target volumes, with a fresh live-mount check."""
+    if free_bytes >= minimum_free_bytes:
+        return []
+    actual_runner = runner or subprocess.run
+    try:
+        lock.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
+        with lock.open("a", encoding="utf-8") as lock_stream:
+            fcntl.flock(lock_stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            listed = actual_runner(
+                [DOCKER_BIN, "volume", "ls", "--quiet", "--filter", "dangling=true"],
+                capture_output=True, text=True, timeout=15, check=False,
+            )
+            if listed.returncode != 0:
+                print("SKIP Docker volume cleanup: cannot list dangling volumes")
+                return []
+            removed: list[str] = []
+            for name in sorted(set(listed.stdout.splitlines())):
+                if not TARGET_VOLUME_NAME.fullmatch(name):
+                    continue
+                running = actual_runner(
+                    [DOCKER_BIN, "ps", "--quiet", "--filter", f"volume={name}"],
+                    capture_output=True, text=True, timeout=15, check=False,
+                )
+                if running.returncode != 0:
+                    print(f"SKIP Docker volume {name}: running-container check failed")
+                    continue
+                if running.stdout.strip():
+                    print(f"SKIP Docker volume {name}: mounted by a running container")
+                    continue
+                inspected = actual_runner(
+                    [DOCKER_BIN, "volume", "inspect", "--format", "{{.Driver}} {{.Mountpoint}}", name],
+                    capture_output=True, text=True, timeout=15, check=False,
+                )
+                fields = inspected.stdout.strip().split(maxsplit=1)
+                expected_mountpoint = str(DOCKER_VOLUME_ROOT / name / "_data")
+                if inspected.returncode != 0 or len(fields) != 2 or fields != ["local", expected_mountpoint]:
+                    print(f"SKIP Docker volume {name}: driver or mountpoint is not approved")
+                    continue
+                if not apply:
+                    print(f"WOULD REMOVE Docker volume {name}")
+                    continue
+                intent = {
+                    "event": "docker_target_volume_delete_intent",
+                    "path": name,
+                    "mode": "rebuildable-only",
+                    "reason": "dangling_local_jope_target_volume_below_free_space_floor",
+                }
+                append_audit(intent, audit)
+                removed_result = actual_runner(
+                    [DOCKER_BIN, "volume", "rm", name],
+                    capture_output=True, text=True, timeout=30, check=False,
+                )
+                if removed_result.returncode == 0:
+                    append_audit({**intent, "event": "docker_target_volume_deleted"}, audit)
+                    removed.append(name)
+                else:
+                    append_audit({**intent, "event": "docker_target_volume_remove_refused"}, audit)
+                    print(f"SKIP Docker volume {name}: Docker refused removal (likely newly mounted)")
+            return removed
+    except BlockingIOError:
+        print("SKIP Docker volume cleanup: another cleaner run is active")
+        return []
+    except (OSError, subprocess.SubprocessError) as exc:
+        print(f"SKIP Docker volume cleanup: Docker or process state unavailable: {exc}")
+        return []
+
+
 def run(*, apply: bool, target: Path = TARGET, scratch_root: Path = SCRATCH_ROOT,
         audit: Path | None = None, lock: Path = LOCK, proc_root: Path = Path("/proc"),
         owner_uid: int = 1000, host: str | None = None) -> int:
@@ -204,6 +278,19 @@ def run(*, apply: bool, target: Path = TARGET, scratch_root: Path = SCRATCH_ROOT
         print("SKIP: target path does not match the owner-approved shared Cargo target")
         return 0
     audit = audit or Path(f"/var/log/jope-diskd-{actual_host}/remote-target-cleaner.jsonl")
+    free_bytes = shutil.disk_usage(scratch_root).free
+    if actual_host == "xbabe3":
+        prune_unmounted_jope_target_volumes(
+            free_bytes=free_bytes,
+            minimum_free_bytes=minimum_free_bytes,
+            audit=audit,
+            lock=lock,
+            apply=apply,
+        )
+        free_bytes = shutil.disk_usage(scratch_root).free
+    if free_bytes >= minimum_free_bytes:
+        print(f"OK: free space {free_bytes} is at/above the {minimum_free_bytes}-byte threshold")
+        return 0
     try:
         item = target.lstat()
     except FileNotFoundError:
@@ -214,10 +301,6 @@ def run(*, apply: bool, target: Path = TARGET, scratch_root: Path = SCRATCH_ROOT
         return 0
     if not stat.S_ISDIR(item.st_mode) or item.st_uid != owner_uid or target.resolve(strict=True) != target:
         print(f"SKIP: target is not an owned canonical directory: {target}")
-        return 0
-    free_bytes = shutil.disk_usage(scratch_root).free
-    if free_bytes >= minimum_free_bytes:
-        print(f"OK: free space {free_bytes} is at/above the {minimum_free_bytes}-byte threshold")
         return 0
     candidates = cargo_output_candidates(target, owner_uid)
     if candidates is None:
