@@ -1,0 +1,232 @@
+{
+  "run_id": "opus-h106-dryrun-20261031a",
+  "stage": "dry-run",
+  "source_sha256": "13730ebfdf1a451157799a7d4a639ccae61ed88361044006adb0ff548978f7da",
+  "h81_source_sha256": "9ad50be577a30c616f7668d52f621d5411e70019ba9f1d1960eb8a45a448c999",
+  "prog_models_sha256": "5938a35497ccde1a1489c4d6b13d122196aed16739a3272afea06d57d5fff692",
+  "reveal_logs": {
+    "h94": "18564293060da510364950c041c97cd717021337f0289956045d53beae509dd1",
+    "h103": "2e0757579d5effa82efc1a628b7172880c8e03f0c66d922e5bbb7e514a9cc205"
+  },
+  "gpu_seconds": 0,
+  "memory_rows": {
+    "ADAPTIVE": 439,
+    "CONTEXT": 437,
+    "PRIOR": 601,
+    "UNIFORM": 546
+  },
+  "memory_contexts": 50,
+  "memory_sha256": "601f19583f72b5e2b1124c48c1b5607a3f9cfea690ce849295debef6351de025",
+  "scorer_training": {
+    "UNIFORM/fold0": {
+      "rows": 338,
+      "contexts": 39
+    },
+    "UNIFORM/fold1": {
+      "rows": 351,
+      "contexts": 41
+    },
+    "UNIFORM/fold2": {
+      "rows": 361,
+      "contexts": 40
+    },
+    "UNIFORM/fold3": {
+      "rows": 312,
+      "contexts": 36
+    },
+    "UNIFORM/fold4": {
+      "rows": 385,
+      "contexts": 44
+    },
+    "PRIOR/fold0": {
+      "rows": 338,
+      "contexts": 39
+    },
+    "PRIOR/fold1": {
+      "rows": 351,
+      "contexts": 41
+    },
+    "PRIOR/fold2": {
+      "rows": 361,
+      "contexts": 40
+    },
+    "PRIOR/fold3": {
+      "rows": 312,
+      "contexts": 36
+    },
+    "PRIOR/fold4": {
+      "rows": 385,
+      "contexts": 44
+    },
+    "ADAPTIVE/fold0": {
+      "rows": 338,
+      "contexts": 39
+    },
+    "ADAPTIVE/fold1": {
+      "rows": 351,
+      "contexts": 41
+    },
+    "ADAPTIVE/fold2": {
+      "rows": 361,
+      "contexts": 40
+    },
+    "ADAPTIVE/fold3": {
+      "rows": 312,
+      "contexts": 36
+    },
+    "ADAPTIVE/fold4": {
+      "rows": 385,
+      "contexts": 44
+    },
+    "CONTEXT/fold0": {
+      "rows": 338,
+      "contexts": 39
+    },
+    "CONTEXT/fold1": {
+      "rows": 351,
+      "contexts": 41
+    },
+    "CONTEXT/fold2": {
+      "rows": 361,
+      "contexts": 40
+    },
+    "CONTEXT/fold3": {
+      "rows": 312,
+      "contexts": 36
+    },
+    "CONTEXT/fold4": {
+      "rows": 385,
+      "contexts": 44
+    },
+    "ALL/fold0": {
+      "rows": 933,
+      "contexts": 39
+    },
+    "ALL/fold1": {
+      "rows": 951,
+      "contexts": 41
+    },
+    "ALL/fold2": {
+      "rows": 963,
+      "contexts": 40
+    },
+    "ALL/fold3": {
+      "rows": 856,
+      "contexts": 36
+    },
+    "ALL/fold4": {
+      "rows": 1045,
+      "contexts": 44
+    }
+  },
+  "scorers_sha256": "c12c4c788b16043121f190b3055d7d5e1662e3e7779e869ca39849c8f4d76ab6",
+  "dry_run_contexts": [
+    "2931b4f52a86b1d296cde6e9bc90dcca996586ef8fd9698ce98dc49748598059",
+    "19eb5c0c9eec6e4bae8d52a26515f025c699a07a45a703e3583e34710c860f74",
+    "079653d75857a01699ab5c0314ca3c2ce165105e106e359b5c9b0161039e6eb6"
+  ],
+  "dry_run_rows": 24,
+  "dry_run_complete": 24,
+  "ledger": {
+    "fits": 48,
+    "settled": 48,
+    "failed": 0,
+    "timeouts": 0,
+    "cpu_s": 53.81599999999998,
+    "wall_s": 56.343,
+    "cap": 2400,
+    "deadline_utc": "2026-11-01T12:00:00Z"
+  },
+  "note": "DRY_RUN rows are integrity evidence only; never part of an H106 result",
+  "schema": "rd_breakthrough.dry-run-receipt/v1",
+  "wave": "W9 (non-neural replay) + W4/W6 scorer",
+  "h_folder": "H106",
+  "author": "rd_opus [OPUS]",
+  "execution": {
+    "host": "xbabe2",
+    "wall": "1:20.87",
+    "max_rss_kb": 170384,
+    "nice": 15,
+    "workers": 8
+  },
+  "data_scope": "DL-Train only; logged H94/H103 native reveals; dry-run contexts from non-roster families; 0 DL-Val/outer/sealed/holdout reads; DOPE not loaded",
+  "s3_objects": [
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h106-dryrun-20261031a/dry-run_receipt.json",
+      "version_id": "UmwqRhCcmVvtzmxAtJXLOGY9i0Iqss1o",
+      "sha256": "4ae3390ecef4eb721d0edf6b344273b1b3d788e766e28316cd07b63aee19f7bc",
+      "bytes": 2867,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h106-dryrun-20261031a/memory.jsonl",
+      "version_id": "90rYzwnNA3jfjmDYsBOn4swVNbsp1uF6",
+      "sha256": "601f19583f72b5e2b1124c48c1b5607a3f9cfea690ce849295debef6351de025",
+      "bytes": 973076,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h106-dryrun-20261031a/scorers.pkl",
+      "version_id": "nnd3TER0njGzWjb7mK04yM9JPGKglks5",
+      "sha256": "c12c4c788b16043121f190b3055d7d5e1662e3e7779e869ca39849c8f4d76ab6",
+      "bytes": 9657649,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h106-dryrun-20261031a/rows_dry_run.jsonl",
+      "version_id": "meUhZ1iopjLb.CZ2dxmKolroYsTPBZ2S",
+      "sha256": "f62b01de0d4c4f483296349303933c0f93ea83bd4655b0b58951351ebe67feb2",
+      "bytes": 12558,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h106-dryrun-20261031a/fits.jsonl",
+      "version_id": "M8GB58_ZK2y55J1lYYMcCF7clgUs1YNf",
+      "sha256": "a8111c630ca5ffb82dcced86d9feb02968b97bcfaf309f127a73ed59cc9c7b1b",
+      "bytes": 20803,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h106-dryrun-20261031a/ledger.json",
+      "version_id": "JI8XMLLMDqzdi6bTEjMMEsDC3nZ0Vn36",
+      "sha256": "94daf4c97f2320bde60b15c0ebc4941ae121648f48e05fa43590777cbd643f87",
+      "bytes": 164,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h106-dryrun-20261031a/shortfalls_dry_run.json",
+      "version_id": "q4xrUawa_5GqHCegWAUJizRafMQCfxKw",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "bytes": 2,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h106-dryrun-20261031a/run.log",
+      "version_id": "LtI3Ox1vJR_0DqCvmmTjR5P.FjLiRUYn",
+      "sha256": "eb19896d324b6acf478a12fc43ff8c3bb7e6e10be99e03a5fa393ecb8269227f",
+      "bytes": 1367,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h106-dryrun-20261031a/time.log",
+      "version_id": "xhAPl0d7Bk4Wodfu9eQFoso.MjkD47iE",
+      "sha256": "d3b9fd6e46ffedcac1b5bfb4002d15e9852e302abbfcf49d85ebd87309039414",
+      "bytes": 1094,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h106-dryrun-20261031a/run_h106.py",
+      "version_id": "QDLmQvubXRfsX5k6Zz84Q2hgUOCqSGqp",
+      "sha256": "13730ebfdf1a451157799a7d4a639ccae61ed88361044006adb0ff548978f7da",
+      "bytes": 19656,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h106-dryrun-20261031a/test_run_h106.py",
+      "version_id": "LSwxEpn.nKY3OT_m6x4DmJjyQN_7yIRZ",
+      "sha256": "12411d66c34c31f98133948e27f8208d480df54b80a993581f103bb7de11ff7d",
+      "bytes": 4789,
+      "write": "create-only if-none-match"
+    }
+  ]
+}

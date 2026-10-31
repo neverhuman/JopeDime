@@ -1,0 +1,114 @@
+{
+  "acquisition_rounds_per_fold": 20,
+  "actual_campaign_consumption": null,
+  "advance_gate": {
+    "adjusted_family_mean_lcb_strictly_above": 0.001,
+    "bootstrap_draws": 10000,
+    "bootstrap_seed": 20261031,
+    "contrasts": 2,
+    "execution_implemented": false,
+    "max_fraction_losing_over_0_01": 0.1,
+    "median_family_delta_at_least": 0,
+    "one_sided_alpha_per_contrast": 0.025
+  },
+  "archive": {
+    "capacity_per_cell": 32,
+    "descriptor": "canonical estimator operation ID x AST node-count bin [1..8,9..16,17..32,33+]",
+    "implementation_status": "design only; no archive scored/materialized",
+    "max_per_descriptor": 2,
+    "scope": "same finite capacity for all arms; archive is not the complete outcome ledger"
+  },
+  "arms": [
+    "current_2greedy_2uniform",
+    "uniform4",
+    "qd_2greedy_1diverse_1uniform"
+  ],
+  "authority_commit": "b2c04a846194bda01310d762d646c8a2a91d26cf",
+  "authority_proposals_sha256": "eb2447d014957222855ba374a71eb00747692581083b6613c5487135497e4ba1",
+  "common_learner": {
+    "initialization_sha256": null,
+    "matching": [
+      "row_count",
+      "completed_status_mix",
+      "family_exposure",
+      "optimizer_updates",
+      "native_fit_cost"
+    ],
+    "pending_receipts": 45,
+    "recipe_sha256": null,
+    "terminal_updates": 40,
+    "zero_common_support": "UNTESTED"
+  },
+  "contexts_per_round": 1,
+  "cpu_seconds_ceiling": 14400,
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "elo_contract": {
+    "anchor": "r882_continuity",
+    "anchor_elo": 1500,
+    "complete_contender_panel_required": true,
+    "function": "compute_family_grouped_bradley_terry_elo",
+    "iterations": 400,
+    "prior": 0.01,
+    "scope": "each track separately; r882 is not a fold-clean generalization control",
+    "source_sha256": null,
+    "tie_margin": 0.0001
+  },
+  "execution_admitted": false,
+  "expected_contexts": 1219,
+  "expected_families": 205,
+  "fold_count": 5,
+  "fold_manifest_sha256": "129002bcd6cfc4b2f3a0b9e0562967cd4510dcbf88364c2d11d0bbe8801c2c73",
+  "fold_manifest_source": {
+    "bytes": 395880,
+    "name": "fold_manifest.json",
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W6/w6-roster-prep-res03-20261031T0451Z-d4/fold_manifest.json",
+    "sha256": "129002bcd6cfc4b2f3a0b9e0562967cd4510dcbf88364c2d11d0bbe8801c2c73",
+    "version_id": "R1L8dcRZZzhDQz4XGpXyo02kHhHz6Dh2"
+  },
+  "fold_seed": 4900,
+  "gpu_seconds_ceiling": 7200,
+  "h69_refinement": "Uniform4 supplies the genuine fresh-label uniform-acquisition comparator required by H69 data-value gate; all three replay recipes/doses match. This concrete preparation interpretation requires recipe freeze before any execution.",
+  "launch_deadline_utc": null,
+  "launch_prerequisites": [
+    "strong fold-excluded learner and matching source/initialization pins",
+    "completed outcome/original-row/evaluator/cut/vocabulary/source lineage",
+    "current family/physical aliases and global role exclusion",
+    "fit-only timing/power pilot, cumulative cost ledger and explicit deadline",
+    "fixed common-support matching receipt and full panel",
+    "separate execution admission; prior wave decisions remain applicable"
+  ],
+  "metrics": {
+    "U4": null,
+    "family_elo": null,
+    "val_reg_inner": null
+  },
+  "native_fit_ceiling": 4800,
+  "new_fits_per_context_round": 4,
+  "planned_new_fits": 3600,
+  "primary_contrasts": [
+    "common_learner(QD_memory)-common_learner(uniform4_memory)",
+    "common_learner(QD_memory)-common_learner(current_memory)"
+  ],
+  "r882_continuity_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "remaining_authorized_budget": null,
+  "replay": {
+    "batch_size": 8,
+    "completed_outcomes_only": true,
+    "implementation_status": "design only; training sampler not implemented",
+    "missing_status": "REFUSE; no sentinel inference",
+    "per_family_per_batch_max": 1,
+    "per_family_records_per_cell_max": 4,
+    "recent_record_replays_per_epoch_max": 1,
+    "sampling": "identical family-uniform completed-record sampler for all arms/common learners"
+  },
+  "schema": "jope.h104.w7-config/v1",
+  "seeds": [
+    701,
+    702,
+    703
+  ],
+  "status": "CPU_PREPARATION_ONLY",
+  "terminal_updates": 40,
+  "v3_import_enabled": false,
+  "wave": "W7"
+}

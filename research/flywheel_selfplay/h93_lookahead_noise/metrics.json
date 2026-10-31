@@ -1,0 +1,67 @@
+{
+  "schema": "jope.h93.incomplete-closeout/v1",
+  "wave": "H93",
+  "status": "INCOMPLETE",
+  "verdict": "INCOMPLETE / not admitted",
+  "hypothesis_verdict": "unresolved",
+  "admitted_arms": [],
+  "completed_outcome_cells": [
+    {
+      "arm": "CONTROL",
+      "seed": 30,
+      "attempt": 1,
+      "wall_seconds": 66.26463035284542,
+      "wait_seconds": 166.18436535005458,
+      "receipt_sha256": "5d979ffc7ac4062ee0e57feff687333266e2e411446719cffa89aee635fa5bef"
+    }
+  ],
+  "timing_only_cells": [
+    {
+      "arm": "EB4",
+      "seed": 30,
+      "attempt": 1,
+      "wall_seconds": 60.18412414006889,
+      "wait_seconds": 106.14930092496797,
+      "receipt_sha256": "522dd8f170b1c9c3e426db99b283463dce280ecdf726028f2446cf1b03090e76",
+      "included_in_outcome_summary": false
+    }
+  ],
+  "infrastructure_voids": [
+    {
+      "arm": "LA",
+      "seed": 30,
+      "attempt": 1,
+      "wall_seconds": 32.77653184579685,
+      "wait_seconds": 256.62494442402385,
+      "outcome_started": false,
+      "stage": "loading",
+      "reason": "filesystem launch gate at 94.50% used",
+      "phase_sha256": "1aad8e9acbadf411b09180336bb02a5caf4eecd6a4d34af05989bb604bad4f18",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "arm": "LA",
+      "seed": 30,
+      "attempt": 2,
+      "wall_seconds": 3.184799365932122,
+      "wait_seconds": 241.55069212196395,
+      "outcome_started": false,
+      "stage": "loading",
+      "reason": "PermissionError staging r882 copy: prior read-only shared scratch file",
+      "phase_sha256": "cfe89971ae411f183927ed23bdbef0f587f6ed671e50a9f42f9e3e7e9d428363",
+      "log_sha256": "65cfa258ee500b7bac334b94b6585dbe7f417ed140e37a348bcdc35e4425ebe0"
+    }
+  ],
+  "panel": {
+    "required_outcome_cells": 12,
+    "completed_outcome_cells": 1,
+    "family_grouped_ci": null,
+    "elo": null,
+    "readout_reason": "paired panel incomplete; no candidate comparison or admission estimate"
+  },
+  "continuation": {
+    "authorized_attempts": 1,
+    "consumed": true,
+    "additional_gpu_attempts_authorized": 0
+  }
+}

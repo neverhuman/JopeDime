@@ -1,13 +1,13 @@
 # What Results still needs
 
-A checklist for Jepson and the team. Status: `main` after the owner decisions of `wp_opus_t0352`, 2026-10-31.
+A checklist for Jepson and the team. Status: `main` after the owner decisions of `wp_opus_t0352` and the licence wording of `wp_opus_layout_t0510`, 2026-10-31.
 
 The compiled paper has **28 `\TBD` markers**:
 - 25 in Results (§7);
 - 2 that wait on Results (the abstract and the Discussion);
 - 1 provenance item that every result inherits (§6.8).
 
-The regressor's name, version and licence (formerly §6.2 and Appendix C) were filled by owner decision. Writers cannot fill any remaining marker from the repository. Each one needs new evaluation outputs, receipts or a team decision. This file changes no claim or number in the paper. [`LAYOUT_REDTEAM.md`](LAYOUT_REDTEAM.md#needs-jepsonteam) holds the background, and its evidence-handoff table defines the packet components named below.
+The regressor's name, version and licence (formerly §6.2 and Appendix C) were filled by owner decision (t0352, licence wording refined t0510). Writers cannot fill any remaining marker from the repository. Each one needs new evaluation outputs, receipts or a team decision. This file changes no claim or number in the paper. [`LAYOUT_REDTEAM.md`](LAYOUT_REDTEAM.md#needs-jepsonteam) holds the background, and its evidence-handoff table defines the packet components named below.
 
 ## Order of work
 
@@ -78,7 +78,7 @@ The owner decisions of `wp_opus_t0352` settled four items:
   - **Dropped:** the Gemini-designed method, whose receipt records no served model (`crates/jope-automl/submissions/Gemini4_argon_high/authorship.json`), and KumoRFM, for which there is no receipt.
 
   The `GPT6_Astra_Max` receipt also notes that its session was not an isolated fresh session, so the authoring controls are not certified; state this when its result is reported.
-- **Regressor identity and licence. Decided.** "Foundation", version `foundation_enc.v1.tabpfn`; licence "proprietary, available on request". No LICENSE file on `main` covers the component. Note the tension: its bundle manifest (`crates/jope-encoders/artifacts/model-bundle.v1.json`) records `LicenseRef-Jain-ThirdParty-Provenance-Pending` with redistribution "prohibited", so "available on request" needs owner confirmation before any release.
+- **Regressor identity and licence. Decided (t0352; wording refined t0510).** "Foundation", version `foundation_enc.v1.tabpfn`; licence "proprietary, available on request; redistribution prohibited". No LICENSE file on `main` covers the component. The wording now matches its bundle manifest (`crates/jope-encoders/artifacts/model-bundle.v1.json`), which records `LicenseRef-Jain-ThirdParty-Provenance-Pending` with redistribution "prohibited".
 - **Disclosure boundary. Decided.** Disclose only material merged on `main` and backed by receipts, at method level, with no host names, IPs, S3 paths, sealed or holdout identities, unmerged experiments or kernel-level implementation detail.
 - **Venue-time formatting. Decided.** Black links, the current template, the appendix order as on `main` and the current bibliography style; revisit when a venue is chosen.
 

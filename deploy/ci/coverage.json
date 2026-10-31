@@ -160,6 +160,16 @@
     }
   },
   "items": {
+    "python:research/flywheel_selfplay/h104_w7_acquisition_replay_prep/test_runner.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H104 W7 CPU preparation: family/table fold exclusion, deterministic budget-preserving shards, pending common-support receipts, feature-only acquisition and uniform-support/refusal controls."
+    },
     "python:research/flywheel_selfplay/h102_w5_provenance_gaps/test_check.py": {
       "discovery": {
         "kind": "python-family"
@@ -13328,7 +13338,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H93 CPU-only Lookahead, annealed-gradient-noise and effective-batch update-plan fixtures, FIFO/H80/H90 launch barrier, paired family Elo/admission, and dev top-four overlap diagnostics; no corpus payloads or product qualification."
+      "scope": "H93 CPU-only Lookahead, annealed-gradient-noise and effective-batch update-plan fixtures, unique immutable per-attempt r882 scratch staging, FIFO/H80/H90 launch barrier, paired family Elo/admission, and dev top-four overlap diagnostics; no corpus payloads or product qualification."
     },
     "python:research/flywheel_selfplay/h76_sam_steps/test_h76.py": {
       "discovery": {
@@ -13534,6 +13544,16 @@
       ],
       "lanes": [],
       "scope": "H96 W4 two-plus-two harness fixtures using the merged H81 selection rule: reveal is called only on the first pair, zero residuals reduce two-plus-two to prior-top4, informative residuals change only the second pair, a first-pair execution error makes the adaptive arms INCOMPLETE, dry-run contexts avoid roster families, analyze refuses dry-run rows, and the merged-H81 loader refuses changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h106_w9_proposal_scorer_replay/test_run_h106.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H106 proposal-scorer / W9 memory-replay fixtures: centred within-context percentile targets with shared ties, matched-row memories that never include the held fold, memory build refusing unrecovered programs or changed reveal logs, score-only fixed picks with seeded random4, two Bonferroni primaries with the completeness gate and dry-run refusal, and the merged-H81 loader refusing changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
     }
   },
   "lanes": {
