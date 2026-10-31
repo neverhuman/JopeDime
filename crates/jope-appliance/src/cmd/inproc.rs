@@ -472,8 +472,8 @@ mod tests {
                     if index == 1 {
                         await_file(&home.join("pausing"), &mut child);
                     }
-                    assert!(Command::new("kill")
-                        .args(["-INT", &pid.to_string()])
+                    assert!(Command::new("sh")
+                        .args(["-c", "kill -INT \"$1\"", "sh", &pid.to_string()])
                         .status()
                         .unwrap()
                         .success());
@@ -494,12 +494,6 @@ mod tests {
                 fs::read_to_string(home.join("child.log")).unwrap()
             );
             assert!(!Path::new(&format!("/proc/{pid}")).exists());
-            let process_table = Command::new("ps")
-                .args(["-p", &pid.to_string(), "-o", "pid=,ppid=,comm="])
-                .output()
-                .unwrap();
-            assert_eq!(process_table.status.code(), Some(1));
-            assert!(process_table.stdout.is_empty());
             assert!(!home.join("daemon.json").exists());
             with_engine(&home, |store, _| {
                 let saved = store.get(&RecordKey::Run(snapshot().run_id))?.unwrap();
@@ -534,8 +528,7 @@ mod tests {
             .unwrap();
             receipts.push(
                 json!({"mode":mode,"child_pid":pid,"exit_code":status.code(),
-                "process_table_command":["ps","-p",pid.to_string(),"-o","pid=,ppid=,args="],
-                "process_table_exit":process_table.status.code(),"process_table_stdout":"",
+                "pid_absent_from_procfs":true,
                 "no_daemon_json":true,"store_reopened_under_same_lock":true,
                 "checkpoint_round":7,"control_backend":"injected fixture, not H2",
                 "child_log":fs::read_to_string(home.join("child.log")).unwrap()}),

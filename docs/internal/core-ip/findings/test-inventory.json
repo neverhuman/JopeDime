@@ -1591,8 +1591,20 @@
       "reason": "Q1 qualification harness protocol/statistical fixtures (QLT-01): owner-signature refusal, holdout guards and failure accounting; no learned model or sealed payload executes",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/v1.0/test_cpu_gates.py": {
+      "reason": "REL-07 v1.0 CPU qualification controller proofs (gate inventory, receipts and refusals); no Rust build, GPU, release or dataset job executes",
+      "role": "infrastructure"
+    },
     "python:ops/s3_shard_cache/test_s3_shard_cache.py": {
       "reason": "Operational S3 shard-cache unit test against an in-memory fake client; not collected by any CI lane (coverage disposition: maintenance).",
+      "role": "infrastructure"
+    },
+    "python:tools/ops/test_jope_diskd.py": {
+      "reason": "DISK-01 hermetic tests for jope-diskd's fail-closed cleanup boundaries (policy, dry-run, allowlisted caches, open-handle refusal); no real deletion",
+      "role": "infrastructure"
+    },
+    "python:tools/ops/test_jope_remote_target_cleaner.py": {
+      "reason": "DISK-01 tests for the rebuildable-only remote Cargo target and detached Docker target-volume cleaner (dry-run, host allowlist, live-mount refusal); no real deletion",
       "role": "infrastructure"
     },
     "python:python/src/jope/research/test_exact_accept.py": {
@@ -1855,6 +1867,82 @@
       "reason": "Owner-requested pytest proofs for the H58 multi-arm flywheel runner and cache preparation (Arms A/B/C/D); offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h57/test_h57.py": {
+      "reason": "Owner-requested pytest proofs for the H57 ES wave (data-free ES, identity and admission-boundary checks); offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h59/test_h59.py": {
+      "reason": "Owner-requested pytest proofs for the H59 loss, coordinator lock/disk guards and red-team checks (CPU-only, synthetic); offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h61/test_h61.py": {
+      "reason": "Owner-requested pytest proofs for the H61 selection-metric runner and FIFO coordinator (CPU-only fixtures and red-team cases); offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/golden/test_generate.py": {
+      "reason": "RES-07 CPU pre-stage proofs for golden fixture generation (model_prior subset); no qualification capture generation or GPU use; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h65_w3_continuous_top_resolved/test_runner.py": {
+      "reason": "Owner-requested pytest proofs for the H65 W3 continuous-outcome CPU runner (dry-run and fold manifest); offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h66_w6_cross_family_transfer/test_prepare_folds.py": {
+      "reason": "Owner-requested pytest proofs for the H66 W6 cross-family fold manifest builder; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h71_w5_parent_child_critic/test_runner.py": {
+      "reason": "Synthetic-only pytest proofs for the gated H71 W5 plan validator; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h72_w6_train_roster_prep/test_build_train_roster.py": {
+      "reason": "Owner-requested pytest proofs for the H72 W6 train-only roster and fold preparation; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h72_w8_control_prereg/test_w8_control.py": {
+      "reason": "Targeted pytest proofs for the H72 W8 equal-cost control runner (no native fits, no data payloads); offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h73_family_balanced_sampling/test_diagnostic.py": {
+      "reason": "Owner-requested pytest proofs for the H73 family-balance diagnostic; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h74_w3_readout_gate/test_w3_gate.py": {
+      "reason": "Owner-requested pytest proofs for the H74 paired-family W3 readout gate; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h75_closed_loop_evolution/feedback/test_feedback.py": {
+      "reason": "Tiny synthetic metadata controls for the provenance-bound H75 feedback writer, not H75 scientific evidence; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h75_closed_loop_evolution/scoring/test_bootstrap.py": {
+      "reason": "CPU-only H75 paired-family bootstrap proofs using the pinned Elo solver and tiny fixtures; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h75_closed_loop_evolution/scoring/test_score_panel.py": {
+      "reason": "Tiny CPU-only H75 complete-panel scoring fixtures; no dataset, model or experiment execution; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h76_sam_steps/test_h76.py": {
+      "reason": "CPU-only H76 SAM/ASAM numerical, leakage and budget tests; no real corpus payloads; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h77_long_es/test_h77.py": {
+      "reason": "CPU-only H77 long-ES unit, red-team, identity, FIFO-lock and admission-boundary tests; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h80_long_es/test_h80.py": {
+      "reason": "CPU-only H80 long-ES unit, red-team, identity, FIFO lock-fairness and admission-boundary tests; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h79_w4_prior_2plus2_cached/test_run_shard.py": {
+      "reason": "Owner-requested pytest proofs for the H79 W4 cached prior-top4 vs two-plus-two screen; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/rd_breakthrough/w5_provenance/test_verify.py": {
+      "reason": "Synthetic metadata controls for the W5 provenance verifier; none admits data or qualifies W5; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h55/test_h55.py": {
       "reason": "Owner-requested pytest proofs for the H55 adapter-averaging wave; offline research analysis outside the reviewed product baseline.",
       "role": "research"
@@ -1877,6 +1965,10 @@
     },
     "python:research/flywheel_selfplay/test_phase3_gates.py": {
       "reason": "Owner-requested pytest proofs for the flywheel Phase 3 fail-closed gatekeeper (#459): round qualification and comparison, deterministic verification sampling and miss-to-training-pair conversion; research flywheel outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/joint_regbin/test_study.py": {
+      "reason": "Synthetic CPU protocol fixtures for the joint regression/binary study (protected packet-root refusal); no learner, GPU, dataset or score history; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/test_rotate_flywheel_logs.py": {
@@ -2715,6 +2807,13 @@
       "role": "regression",
       "subsystems": [
         "orchestration"
+      ]
+    },
+    "target:jope-appliance/test/system": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration",
+        "storage"
       ]
     },
     "target:jope-arena/bin/jope-arena": {

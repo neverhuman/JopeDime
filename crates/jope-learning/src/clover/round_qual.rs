@@ -1856,18 +1856,22 @@ pub fn qualify_rounds_with_prereg(
 
         let included_in_paired_interval = rounds.len() >= 2
             && paired_log_ratio.is_some()
+            && paired_log_reduction.is_some()
             && candidate_parity_passed == Some(true)
             && reference_parity_passed == Some(true);
 
         if included_in_paired_interval {
-            cluster_log_ratios
-                .entry(parent_id.clone())
-                .or_default()
-                .push(paired_log_ratio.expect("checked Some"));
-            cluster_log_reductions
-                .entry(parent_id.clone())
-                .or_default()
-                .push(paired_log_reduction.expect("checked Some"));
+            if let (Some(log_ratio), Some(log_reduction)) = (paired_log_ratio, paired_log_reduction)
+            {
+                cluster_log_ratios
+                    .entry(parent_id.clone())
+                    .or_default()
+                    .push(log_ratio);
+                cluster_log_reductions
+                    .entry(parent_id.clone())
+                    .or_default()
+                    .push(log_reduction);
+            }
         }
 
         context_rows.push(ContextQualRow {

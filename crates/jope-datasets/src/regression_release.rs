@@ -898,7 +898,7 @@ fn bind_member(
     })
 }
 
-/// Inputs to [`derive`]. Every byte slice is the exact staged object.
+/// Inputs to [`derive()`]. Every byte slice is the exact staged object.
 pub struct ReleaseSources<'a> {
     pub panel: &'a [u8],
     pub preparation_source_path: &'a str,

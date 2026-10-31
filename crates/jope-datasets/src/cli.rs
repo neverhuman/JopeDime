@@ -41,7 +41,7 @@ pub enum Cmd {
         /// Hash and report only; upload nothing.
         #[arg(long)]
         dry_run: bool,
-        /// Report directory (default: $JOPE_HOME/datasets/ingest/<timestamp>).
+        /// Report directory (default: `$JOPE_HOME/datasets/ingest/<timestamp>`).
         #[arg(long)]
         out: Option<PathBuf>,
         /// Skip blobs the report directory's ledger already verified.
