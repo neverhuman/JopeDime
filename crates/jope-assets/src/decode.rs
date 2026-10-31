@@ -14,12 +14,16 @@
 use crate::{limits, sha256_hex, AssetError, Entry, Frame};
 use serde::{Deserialize, Serialize};
 
+/// Lossless storage codec recorded for each manifest entry.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Codec {
+    /// Reorder safetensors tensor bytes into byte planes, then compress with zstd.
     #[serde(rename = "shuffle+zstd")]
     ShuffleZstd,
+    /// Store the source bytes in a bounded zstd frame.
     #[serde(rename = "zstd")]
     Zstd,
+    /// Store the source bytes without compression.
     #[serde(rename = "raw")]
     Raw,
 }

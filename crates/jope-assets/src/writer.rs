@@ -1,7 +1,7 @@
 //! Build a package (feature `pack`, used by `jope-dist`). [`stage`] encodes the assets and fixes
 //! the manifest and footer; the [`signing_message`](crate::signing_message) over that footer is
 //! then signed (by `cosign sign-blob` on the release host, or the development key for fixtures);
-//! [`assemble`] or [`seal`] writes the final file. The same inputs give the same bytes: no
+//! [`assemble`] writes the final file. The same inputs give the same bytes: no
 //! timestamps, paths or random values enter the package.
 
 use crate::{
@@ -16,18 +16,26 @@ use std::path::Path;
 /// One asset to embed.
 #[derive(Clone, Debug)]
 pub struct EntryInput {
+    /// Manifest role, such as `model`, `config`, `manifest`, or `notice`.
     pub role: String,
+    /// Owning component name.
     pub component: String,
     /// The path inside the component, which ends the logical id.
     pub path: String,
+    /// Source identity or generated-content description.
     pub origin: String,
+    /// Redistribution terms carried into the manifest.
     pub license: License,
+    /// Backends qualified for this asset, such as `cpu` or `cuda`.
     pub backends: Vec<String>,
+    /// Requested storage codec; encoding may fall back to raw when compression is larger.
     pub codec: Codec,
+    /// Decoded asset bytes to package.
     pub bytes: Vec<u8>,
 }
 
 impl EntryInput {
+    /// Return the logical manifest id formed from role, component, and path.
     pub fn id(&self) -> String {
         format!("{}/{}/{}", self.role, self.component, self.path)
     }
@@ -36,25 +44,38 @@ impl EntryInput {
 /// Everything in the manifest that is not derived from the assets or the executable.
 #[derive(Clone, Debug)]
 pub struct StageOptions {
+    /// Product name written to the manifest.
     pub product: String,
+    /// Product version written to the manifest.
     pub product_version: String,
+    /// Rust target triple for the executable region.
     pub target: String,
+    /// Appliance profile path recorded in the manifest.
     pub profile: String,
+    /// Maximum redistribution scope of this package.
     pub scope: Scope,
+    /// Source commit and lock/profile hashes for this package.
     pub source: SourceIdentity,
+    /// Sorted method ids promised by this profile.
     pub methods: Vec<String>,
+    /// Key identity that the release signer must use.
     pub key_id: KeyId,
+    /// Target maximum size for each encoded frame.
     pub frame_bytes: usize,
+    /// Compression level passed to the selected codec.
     pub level: i32,
 }
 
 /// Everything but the signature.
 #[derive(Clone, Debug)]
 pub struct Staged {
+    /// Parsed manifest represented by `manifest_bytes`.
     pub manifest: Manifest,
+    /// Canonical manifest bytes that are signed into the footer.
     pub manifest_bytes: Vec<u8>,
     /// The bytes from the payload start to the manifest: aligned frames and zero gaps.
     pub frames: Vec<u8>,
+    /// Footer whose signature is still to be supplied.
     pub footer: Footer,
 }
 
