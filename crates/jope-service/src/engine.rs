@@ -25,6 +25,7 @@ use tokio::{
 };
 
 use crate::{
+    config::Config,
     daemon_file::{self, DaemonFile, DaemonFileStatus},
     http::{
         auth::{BearerToken, LocalAuth},
@@ -201,20 +202,32 @@ fn read_holder(path: &Path) -> (Option<u32>, String) {
 /// The same home lock and recovery path used by background engines, without daemon publication.
 pub struct InProcessEngine {
     // Fields drop in declaration order: close redb before releasing home ownership.
-    store: Store,
+    store: Arc<Store>,
     _lock: EngineLock,
+}
+
+/// Read-only request state lent from the one live engine/store instance.
+#[derive(Clone)]
+pub(crate) struct DatasetState {
+    pub store: Arc<Store>,
+    pub config: Config,
+    pub home: PathBuf,
 }
 
 impl InProcessEngine {
     pub fn open(home: impl AsRef<Path>) -> Result<Self, EngineError> {
         let home = home.as_ref();
         let lock = EngineLock::acquire(home)?;
-        let store = Store::open(home)?;
+        let store = Arc::new(Store::open(home)?);
         Ok(Self { store, _lock: lock })
     }
 
     pub fn store(&self) -> &Store {
         &self.store
+    }
+
+    pub(crate) fn store_handle(&self) -> Arc<Store> {
+        Arc::clone(&self.store)
     }
 }
 
@@ -447,10 +460,18 @@ async fn serve_locked(
 
 async fn serve_with_activity(
     home: PathBuf,
-    _engine: InProcessEngine,
+    engine: InProcessEngine,
     idle_exit: Duration,
     activity: Arc<EngineActivity>,
 ) -> Result<(), EngineError> {
+    let environment = std::env::vars().collect();
+    let config = Config::load(&home.join("config.toml"), &Default::default(), &environment)
+        .map_err(|error| EngineError::Runtime(error.to_string()))?;
+    let dataset_state = DatasetState {
+        store: engine.store_handle(),
+        config,
+        home: home.clone(),
+    };
     let listener = TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, 0)).await?;
     let address = listener.local_addr()?;
     // The socket is bound before the descriptor is atomically published.
@@ -471,7 +492,7 @@ async fn serve_with_activity(
         port: address.port(),
         shutdown,
     });
-    let app: Router = router::router(auth)
+    let app: Router = router::router_with_state(auth, dataset_state)
         .route(STOP_PATH, post(request_stop))
         .layer(Extension(state))
         .layer(Extension(Arc::clone(&activity)));

@@ -5,6 +5,8 @@ use super::{
     auth::{authenticate, problem, BearerToken, LocalAuth},
     system,
 };
+use crate::engine::DatasetState;
+use axum::extract::Extension;
 use axum::{
     extract::DefaultBodyLimit,
     http::{header, HeaderValue},
@@ -37,6 +39,15 @@ async fn get_openapi() -> Response {
 /// The same request boundary is used by a listener and by in-process clients.
 /// In-process clients configure their request authority without opening a socket.
 pub fn router(auth: LocalAuth) -> Router {
+    build_router(auth)
+}
+
+/// Engine-owned store/config state is passed by the live engine instance.
+pub(crate) fn router_with_state(auth: LocalAuth, state: DatasetState) -> Router {
+    build_router(auth).layer(Extension(state))
+}
+
+fn build_router(auth: LocalAuth) -> Router {
     let mut app = Router::new();
     for operation in OPERATIONS {
         let method = match operation.method {
