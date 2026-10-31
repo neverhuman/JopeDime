@@ -71,6 +71,7 @@ The before/after page comparisons are in [`redteam/`](redteam/):
 | O12 | Low | **Fixed in upgrade PR 9** (2 pt row spacing). In Table 9 (Appendix A) wrapped cells run together: "Matrix multiplication" sits directly on "Sorting", and "Machine-learning research" on "Code" (p. 17). | `\setlength{\extrarowheight}{2pt}` separates rows; the widths are unchanged, and no float or section moves. | format |
 | O13 | Low | **Fixed in upgrade PR 11** (2 pt row spacing). Table 4 (§4, p. 7) has the same run-together rows: "Legal move" spans three lines with "Illegal move" directly beneath it. | `\setlength{\extrarowheight}{2pt}`, as in Table 9; the widths are unchanged. After pass 10 the §7 float gap moves only from 2 to 3 (Figure 11 is one page after §7.4). A full-width `table*` still cascades. | format |
 | O14 | Low | **Fixed in upgrade PR 12** (2 pt row spacing). Table 2 (§2, p. 5) has the same run-together rows: "Judgment" sits directly on "Retention", and "Where taste lives" on "Deployment budget". | `\setlength{\extrarowheight}{2pt}`, as in Tables 4 and 9. Moving from `\footnotesize` to `\small` was tested and rejected: it creates a bad box. No float or section moves. | format |
+| O15 | Low | **Fixed in upgrade PR 13** (labels at 7.2 pt). Figure 2's 18 annotation spans printed at 6.3–6.4 pt, the smallest non-subscript text in any figure; Figures 3 and 4 print at 7.3–8.5 pt after L1. | `make_schematics.py`: Figure 2 labels at 7.2 pt; the incumbent label is split onto two lines and two boxes are nudged so nothing overlaps. Same figure size, so no reflow. | format |
 
 ## Clarity and structure (for the writer)
 
@@ -117,7 +118,8 @@ The owner widened the scope to a full upgrade, carried out in small sequential P
 | 9 | Appendix A: Table 9 rows separated with 2 pt row spacing (O12); no text change, every float and section stays on its page. Table 4 gets the same fix later (O13), because extra height above §7 currently cascades into the Results float placement. | merged (#931) |
 | 10 | §6.8 float order: Figures 5–7 defined at the top of §6.8 (numbers and text unchanged), so they are placed before §7 begins and the §7 floats stay with their subsections. Float-to-text gap 7 → 2 pages; under a +18 pt upstream change, 13 → 3. | merged (#940) |
 | 11 | §4: Table 4 rows separated with 2 pt row spacing (O13), the same fix as Table 9; no text change. §5 now starts on p. 9, and the §7 float gap moves from 2 to 3. | merged (#944) |
-| 12 | §2: Table 2 rows separated with 2 pt row spacing (O14). No text change; no float or section moves, and only p. 5 changes layout. Tables 2, 4 and 9, the single-column tables with multi-line cells outside Results, now all separate their rows. | this PR |
+| 12 | §2: Table 2 rows separated with 2 pt row spacing (O14). No text change; no float or section moves, and only p. 5 changes layout. Tables 2, 4 and 9, the single-column tables with multi-line cells outside Results, now all separate their rows. | merged (#949) |
+| 13 | Figure 2 legibility: annotation labels from 6.3–6.4 pt to 7.2 pt (O15), with no overlaps. Regenerated deterministically (`SOURCE_DATE_EPOCH` pinned to the committed figure's creation date; the unchanged script regenerates it byte-identical). Same figure size, no text change. | this PR |
 
 ## H56 paper-vs-code recheck (pass 8)
 
