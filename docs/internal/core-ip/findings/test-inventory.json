@@ -1970,7 +1970,7 @@
       "role": "research"
     },
     "python:research/flywheel_selfplay/h93_lookahead_noise/test_h93.py": {
-      "reason": "CPU-only H93 Lookahead/noise/effective-batch, paired Elo/admission, top-four overlap, and launch-barrier fixtures; offline research outside product qualification.",
+      "reason": "CPU-only H93 Lookahead/noise/effective-batch, unique per-attempt scratch-collision regression, paired Elo/admission, top-four overlap, and launch-barrier fixtures; offline research outside product qualification.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h83_w6_cross_family_cached/test_run_w6_cached.py": {

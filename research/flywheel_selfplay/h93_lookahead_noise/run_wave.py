@@ -201,6 +201,8 @@ def run_attempt(root, ledger, arm, seed, timing, attempt):
             str(phase_path),
             "--attempt-token",
             token,
+            "--attempt",
+            str(attempt),
             "--lock-fd",
             str(lease.fileno()),
         ]
