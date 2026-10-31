@@ -1,0 +1,76 @@
+{
+  "schema": "whitepaper.training-event-distribution/v1",
+  "windows": [
+    {
+      "round_window": [
+        2005,
+        2024
+      ],
+      "completed_rounds": 20,
+      "strict_program_events": 15,
+      "round_counts_by_event_bin": [
+        10,
+        5,
+        5,
+        0
+      ],
+      "source_csv": "docs/whitepaper/figures/data/recent_development.csv",
+      "source_csv_sha256": "86330546dae0f686132c422a4066f74ace1404287a372548e85f9b4609b2839a",
+      "parent_provenance_sha256": "91f16767cebf64edf62adff2c445594c115d5d43e5a5e11cda4d9cea9f599780",
+      "snapshot_at": "2026-10-31T10:53:44.770292+00:00"
+    },
+    {
+      "round_window": [
+        2082,
+        2101
+      ],
+      "completed_rounds": 20,
+      "strict_program_events": 10,
+      "round_counts_by_event_bin": [
+        14,
+        2,
+        4,
+        0
+      ],
+      "source_csv": "docs/whitepaper/figures/data/followup_development.csv",
+      "source_csv_sha256": "a5e5fbc19ac048b851b8b17640e50e59bfc5456234c706823b8df530f373bed1",
+      "parent_provenance_sha256": "4e63433f5b9c5e8ad0d1d03cf51a83237254bc60b5206d947bcbc8d22f248e2a",
+      "snapshot_at": "2026-10-31T12:57:56.148152+00:00"
+    },
+    {
+      "round_window": [
+        2343,
+        2362
+      ],
+      "completed_rounds": 20,
+      "strict_program_events": 22,
+      "round_counts_by_event_bin": [
+        8,
+        6,
+        4,
+        2
+      ],
+      "source_csv": "docs/whitepaper/figures/data/later_development.csv",
+      "source_csv_sha256": "1b4600aaf84769efb6f3b4c24db4a5d68d281480731d2f2a8d37d5459fae909f",
+      "parent_provenance_sha256": "cadea609f346d4d285e61408b7386f10a9b295637c12833d9828a09b41b67817",
+      "snapshot_at": "2026-10-31T20:19:04.541686+00:00"
+    }
+  ],
+  "bin_definition": [
+    "0 events",
+    "1 event",
+    "2 events",
+    "3 or more events"
+  ],
+  "source_columns_used": [
+    "round",
+    "program_promotions",
+    "cumulative_program_promotions"
+  ],
+  "scope": "Separate retained training-side event windows; no stitching of gaps, independent discovery, matched comparison or first-proposal benefit claim",
+  "source_binding": "Aggregate field interpretation only; exact loop/checkpoint qualification remains pending",
+  "generator_sha256": "d72ba49053072a7dad7f1bd59e0ac448d562066bc06046876b3070b80199466e",
+  "figure_sha256": "f1e063b9307efe474f8eae8fb43c6801342b0fd458da59faf95d580db374b82f",
+  "matplotlib_version": "3.10.8",
+  "reproduce": "python3 figures/scripts/make_event_distribution_figure.py"
+}

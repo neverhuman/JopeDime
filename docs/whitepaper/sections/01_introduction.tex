@@ -138,10 +138,10 @@ Zero analogy concerns the additional training feedback from the referee.
     \draw[flow] (df) -- (dy);
     \node[gloss] at (0,-21mm) {Frozen writer; one candidate committed before its score is known.};
   \end{tikzpicture}
-  \caption{\textbf{Training feedback and the single-candidate contract.} Schematic.
-  The writer updates during training; the emitted estimator fits during
-  deployment. Whether the learned writer improves the first proposal is
-  the empirical question in \cref{sec:results}.}
+  \caption{\textbf{Training feedback and the single-candidate contract.}
+  Schematic of the reference procedure. The writer updates during training;
+  the emitted estimator fits during deployment. Whether the learned writer
+  improves the first proposal is the empirical question in \cref{sec:results}.}
   \label{fig:emptysquare}
 \end{figure}
 
@@ -187,10 +187,12 @@ typed language of learning primitives.
 The paper separates three kinds of evidence. The game, the learner and the
 evaluation protocol are specified here. Retained admission and program-promotion
 logs from later adapter training describe development behavior
-(\cref{sec:method-status}). They do not measure first-proposal quality on
-unseen problem families. For deployment, \cref{sec:results} specifies the
-comparisons. Their outcomes are not yet reported; we claim no advantage
-until they are.
+(\cref{sec:method-status}). The inspected loop optimizes only a ranking
+adapter and has no neural program writer; binding that source to these
+records remains pending. These records do not measure first-proposal
+quality on unseen problem families. For deployment, \cref{sec:results}
+specifies the comparisons. Their outcomes are not yet reported; we claim no
+advantage until they are.
 
 \Cref{sec:anatomy} separates innovation's roles. We trace their AI building
 blocks (\cref{sec:road}), then define the game and learner.
