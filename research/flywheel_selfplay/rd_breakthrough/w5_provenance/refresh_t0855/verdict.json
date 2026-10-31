@@ -1,0 +1,20 @@
+{
+  "eligible_pair_count": null,
+  "gpu_seconds": 0,
+  "holdout_exposure": "UNKNOWN; no closure assertion",
+  "inventory_sha256": "c2934fc848a70a079988b1d0d1caf69b7e47c57e9117609dcfb85e470c50e4c1",
+  "native_fits": 0,
+  "pair_coverage": null,
+  "reasons": [
+    "admitted_parent_operator_child_export_missing",
+    "original_training_and_strat300_row_ledger_missing"
+  ],
+  "retention_receipts_verified": 3,
+  "row_closure": "UNKNOWN",
+  "schema": "jope.w5.admission-verdict/v1",
+  "scope": "Admission preflight only; counters are not outcomes or pair evidence.",
+  "verdict": "FAIL",
+  "verifier_sha256": "2189499e7c4c087f180f2552cb384657247ac7bc44b586b6d3b1f562775f648f",
+  "w5": "HELD",
+  "w5_training_started": false
+}
