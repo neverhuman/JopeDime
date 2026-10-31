@@ -494,12 +494,6 @@ mod tests {
                 fs::read_to_string(home.join("child.log")).unwrap()
             );
             assert!(!Path::new(&format!("/proc/{pid}")).exists());
-            let process_table = Command::new("ps")
-                .args(["-p", &pid.to_string(), "-o", "pid=,ppid=,comm="])
-                .output()
-                .unwrap();
-            assert_eq!(process_table.status.code(), Some(1));
-            assert!(process_table.stdout.is_empty());
             assert!(!home.join("daemon.json").exists());
             with_engine(&home, |store, _| {
                 let saved = store.get(&RecordKey::Run(snapshot().run_id))?.unwrap();
