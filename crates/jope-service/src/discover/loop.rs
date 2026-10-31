@@ -46,6 +46,17 @@ use std::{
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
 
+#[cfg(feature = "research")]
+use crate::research::capture::{
+    self, AuxiliaryAttempt, AuxiliaryResult, CaptureState, CapturedAttempt, CapturedRound,
+    Measured, Slate,
+};
+#[cfg(feature = "research")]
+use crate::research::{
+    BehaviorPolicy, CaptureContext, ObservedSlate, RecordedOutcome, RecordedPolicyKind,
+    ResearchRound, Rung0Measurement,
+};
+
 const CHECKPOINT_VERSION: u32 = 2;
 const NATIVE_FOLDS_VERSION: u32 = 1;
 const NATIVE_ARTIFACT_VERSION: u32 = 1;
@@ -239,10 +250,47 @@ pub struct Candidate {
 /// scheduler, worker protocol or transaction boundary.
 pub trait Admission {
     fn admit(&self, proposals: Vec<String>, explore: bool, rng: &mut ChaCha12Rng) -> Vec<String>;
+
+    #[cfg(feature = "research")]
+    fn admit_recorded(
+        &self,
+        _proposals: Vec<String>,
+        _explore: bool,
+        _rng: &mut ChaCha12Rng,
+        _observed: &ObservedSlate,
+    ) -> Result<BehaviorPolicy> {
+        bail!("same-invocation admission observations are unavailable")
+    }
 }
 
 pub struct HeuristicAdmission;
 impl Admission for HeuristicAdmission {
+    #[cfg(feature = "research")]
+    fn admit_recorded(
+        &self,
+        proposals: Vec<String>,
+        explore: bool,
+        rng: &mut ChaCha12Rng,
+        _observed: &ObservedSlate,
+    ) -> Result<BehaviorPolicy> {
+        let admitted = self.admit(proposals.clone(), explore, rng);
+        let indices = admitted
+            .iter()
+            .map(|dsl| {
+                proposals
+                    .iter()
+                    .position(|p| p == dsl)
+                    .context("admission returned an unknown proposal")
+            })
+            .collect::<Result<Vec<_>>>()?;
+        Ok(BehaviorPolicy {
+            kind: RecordedPolicyKind::Heuristic,
+            explore,
+            slate_costs: None,
+            admitted: indices,
+        })
+    }
+
     fn admit(
         &self,
         mut proposals: Vec<String>,
@@ -463,6 +511,9 @@ pub struct Champion {
 struct PendingRound {
     number: u64,
     candidates: Vec<Candidate>,
+    #[cfg(feature = "research")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    capture: Option<BlobRef>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -477,6 +528,9 @@ struct DiscardedEvaluation {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct Checkpoint {
     version: u32,
+    #[cfg(feature = "research")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    capture: Option<CaptureState>,
     plan: Plan,
     elites: ElitePool,
     programs: BTreeMap<String, String>,
@@ -521,6 +575,8 @@ impl Checkpoint {
 }
 
 pub struct Discovery {
+    #[cfg(feature = "research")]
+    capture_context: Option<Arc<CaptureContext>>,
     store: Arc<Store>,
     log: Arc<EventLog>,
     snapshot: RunSnapshot,
@@ -533,7 +589,40 @@ impl Discovery {
     /// The caller exclusively owns this run and supplies a fresh worker pool on
     /// reopen. Store::open verifies committed blobs and marks interrupted runs.
     pub fn open(store: Arc<Store>, plan: Plan) -> Result<Self> {
+        #[cfg(feature = "research")]
+        {
+            Self::open_inner(store, plan, None)
+        }
+        #[cfg(not(feature = "research"))]
+        {
+            Self::open_inner(store, plan)
+        }
+    }
+
+    /// Requires the opaque, reviewed capture context; no production resolver is registered.
+    #[cfg(feature = "research")]
+    pub fn open_research(
+        store: Arc<Store>,
+        plan: Plan,
+        context: Arc<CaptureContext>,
+    ) -> Result<Self> {
+        context.validate(&plan)?;
+        Self::open_inner(store, plan, Some(context))
+    }
+
+    fn open_inner(
+        store: Arc<Store>,
+        plan: Plan,
+        #[cfg(feature = "research")] capture_context: Option<Arc<CaptureContext>>,
+    ) -> Result<Self> {
         plan.validate()?;
+        let expected_version = CHECKPOINT_VERSION;
+        #[cfg(feature = "research")]
+        let expected_version = if capture_context.is_some() {
+            capture::CHECKPOINT_VERSION
+        } else {
+            expected_version
+        };
         let log = Arc::new(EventLog::new(Arc::clone(&store)));
         let old = log.snapshot(&plan.run_id)?;
         let (mut checkpoint, mut snapshot) = if let Some(snapshot) = &old {
@@ -542,9 +631,15 @@ impl Discovery {
                 .context("run missing")?;
             let saved: Checkpoint = serde_json::from_value(record.data["checkpoint"].clone())?;
             ensure!(
-                saved.version == CHECKPOINT_VERSION && saved.plan == plan,
+                saved.version == expected_version && saved.plan == plan,
                 "resume plan identity mismatch"
             );
+            #[cfg(feature = "research")]
+            match (&saved.capture, &capture_context) {
+                (Some(state), Some(context)) => state.check_binding(&store, context)?,
+                (None, None) => {}
+                _ => bail!("capture mode cannot change on reopen"),
+            }
             if let Some(c) = &saved.champion {
                 store.verify_blob(&c.model)?;
             }
@@ -561,7 +656,12 @@ impl Discovery {
             (saved, snapshot.clone())
         } else {
             let checkpoint = Checkpoint {
-                version: CHECKPOINT_VERSION,
+                version: expected_version,
+                #[cfg(feature = "research")]
+                capture: capture_context
+                    .as_deref()
+                    .map(|context| CaptureState::new(&store, context))
+                    .transpose()?,
                 plan: plan.clone(),
                 elites: ElitePool::new(ScoreOrder::Minimize, ScoreOrder::Minimize),
                 programs: BTreeMap::new(),
@@ -600,6 +700,17 @@ impl Discovery {
             };
             (checkpoint, snapshot)
         };
+        #[cfg(feature = "research")]
+        if let Some(state) = checkpoint.capture.as_mut() {
+            // A reserved request with no durable observation may have executed.
+            if state.unknown() {
+                state.tainted = true;
+            }
+        }
+        #[cfg(feature = "research")]
+        if let Some(capture) = &checkpoint.capture {
+            snapshot.budget_total.evaluations = DecimalU64(capture.config.max_attempts);
+        }
         let now = wall_clock_ms()?;
         checkpoint.elapsed_ms = checkpoint.elapsed_at(now)?;
         if checkpoint.completed.is_none()
@@ -625,11 +736,7 @@ impl Discovery {
                 .context("revision exhausted")?;
         }
         snapshot.state = RunState::Running;
-        let blobs = checkpoint
-            .champion
-            .iter()
-            .map(|c| c.model.clone())
-            .collect();
+        let blobs = checkpoint_blobs(&checkpoint)?;
         // Initialization/recovery is a control transaction, never a synthetic search event.
         let snapshot = log
             .commit(
@@ -644,6 +751,8 @@ impl Discovery {
             )?
             .snapshot;
         Ok(Self {
+            #[cfg(feature = "research")]
+            capture_context,
             store,
             log,
             snapshot,
@@ -729,6 +838,10 @@ impl Discovery {
             .checked_add(1)
             .context("revision exhausted")?;
         snapshot.budget_used.wall_seconds = format!("{:.3}", next.elapsed_ms as f64 / 1000.0);
+        #[cfg(feature = "research")]
+        if next.capture.is_some() {
+            snapshot.budget_used.evaluations = DecimalU64(rung0_budget_used(&next));
+        }
         if next.completed.is_some() {
             snapshot.phase = RunPhase::Finalizing;
         }
@@ -738,7 +851,7 @@ impl Discovery {
                 expected_revision: Some(self.snapshot.revision.0),
                 snapshot,
                 checkpoint: serde_json::to_value(&next)?,
-                blobs: next.champion.iter().map(|c| c.model.clone()).collect(),
+                blobs: checkpoint_blobs(&next)?,
             },
             vec![],
             |_| Ok(()),
@@ -784,16 +897,55 @@ impl Discovery {
             return Ok(vec![]);
         }
         let mut next = self.checkpoint.clone();
+        #[cfg(feature = "research")]
+        ensure!(
+            next.capture.as_ref().is_none_or(|s| !s.tainted),
+            "capture has unknown outcomes; retained for inspection only"
+        );
         if next.pending.is_empty() {
+            #[cfg(feature = "research")]
+            if let Some(context) = self.capture_context.as_deref() {
+                plan_wave_inner(&mut next, space, admission, Some((&self.store, context)))?;
+            } else {
+                plan_wave(&mut next, space, admission)?;
+            }
+            #[cfg(not(feature = "research"))]
             plan_wave(&mut next, space, admission)?;
         }
+        #[cfg(feature = "research")]
+        let capture_work = if self.capture_context.is_some() {
+            let result = self.evaluate_research_wave(&mut next, executor, live_workers);
+            if result.is_err() {
+                self.poisoned = true;
+            }
+            Some(result?)
+        } else {
+            None
+        };
         let mut work = vec![];
-        for round in &next.pending {
-            for (slot, candidate) in round.candidates.iter().enumerate() {
-                work.push(self.request(round.number, slot as u32, 0, candidate)?);
+        #[cfg(feature = "research")]
+        let captured = capture_work.is_some();
+        #[cfg(not(feature = "research"))]
+        let captured = false;
+        if !captured {
+            for round in &next.pending {
+                for (slot, candidate) in round.candidates.iter().enumerate() {
+                    work.push(self.request(round.number, slot as u32, 0, candidate)?);
+                }
             }
         }
-        let outcomes = parallel_evaluate(executor, &work, live_workers);
+        let outcomes;
+        #[cfg(feature = "research")]
+        if let Some((requests, responses)) = capture_work {
+            work = requests;
+            outcomes = responses;
+        } else {
+            outcomes = parallel_evaluate(executor, &work, live_workers);
+        }
+        #[cfg(not(feature = "research"))]
+        {
+            outcomes = parallel_evaluate(executor, &work, live_workers);
+        }
         let mut offset = 0;
         let mut published = vec![];
         for _ in 0..stop_after_rounds.min(next.pending.len()) {
@@ -828,6 +980,10 @@ impl Discovery {
                     .is_some_and(|rank| rank < 4)
             }) {
                 let request = self.request(round.number, 0, 1, candidate)?;
+                #[cfg(feature = "research")]
+                let mut response =
+                    self.evaluate_research_aux(&mut next, executor, request.clone())?;
+                #[cfg(not(feature = "research"))]
                 let mut response = checked_response(&request, executor.evaluate(&request));
                 let cv_response = response.clone();
                 let mut refit_failure = None;
@@ -841,7 +997,14 @@ impl Discovery {
                     // Numerical refit failure belongs to this candidate. Store IO
                     // failure below still aborts the round and requires recovery.
                     match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                        executor.fitted_model(&refit)
+                        #[cfg(feature = "research")]
+                        {
+                            self.fit_research_aux(&mut next, executor, refit.clone())
+                        }
+                        #[cfg(not(feature = "research"))]
+                        {
+                            executor.fitted_model(&refit)
+                        }
                     })) {
                         Ok(Ok(bytes)) if !bytes.is_empty() => Some(bytes),
                         Ok(Err(error)) if error.is::<RefitIoError>() => return Err(error),
@@ -912,7 +1075,9 @@ impl Discovery {
                 Some(CompletionReason::Converged)
             } else if next.elapsed_ms >= next.plan.wall_seconds.saturating_mul(1000) {
                 Some(CompletionReason::BudgetTime)
-            } else if next.pending.is_empty() && next.admitted >= next.plan.evaluations {
+            } else if next.pending.is_empty()
+                && rung0_budget_used(&next) >= rung0_budget_limit(&next)
+            {
                 Some(CompletionReason::BudgetEvaluations)
             } else {
                 None
@@ -925,7 +1090,22 @@ impl Discovery {
             } else {
                 None
             };
+            #[cfg(feature = "research")]
+            if let Some(capture) = next.capture.as_mut() {
+                if let Err(error) = capture.finish_round(&self.store, round.number) {
+                    self.poisoned = true;
+                    return Err(error);
+                }
+            }
+            #[cfg(all(test, feature = "research"))]
+            if next.capture.is_some() {
+                capture::boundary("before_round");
+            }
             let committed = self.commit_round(next.clone(), events, records)?;
+            #[cfg(all(test, feature = "research"))]
+            if next.capture.is_some() {
+                capture::boundary("after_round");
+            }
             published.extend(committed);
             offset = end;
             if self.completed().is_some() {
@@ -980,7 +1160,7 @@ impl Discovery {
             RunPhase::Searching
         };
         snapshot.budget_used = BudgetUsed {
-            evaluations: DecimalU64(next.admitted),
+            evaluations: DecimalU64(rung0_budget_used(&next)),
             wall_seconds: format!("{:.3}", next.elapsed_ms as f64 / 1000.0),
         };
         snapshot.best = next
@@ -1001,7 +1181,7 @@ impl Discovery {
         self.poisoned = true;
         let committed = self.log.commit(RunUpdate {
             expected_revision: Some(self.snapshot.revision.0), snapshot,
-            checkpoint: serde_json::to_value(&next)?, blobs: next.champion.iter().map(|c| c.model.clone()).collect(),
+            checkpoint: serde_json::to_value(&next)?, blobs: checkpoint_blobs(&next)?,
         }, events, |tx| {
             if let Some(champion) = champion {
                 let key = RecordKey::Artifact(format!("art_{}", &hex_blob(&champion.model)[..24]).parse()
@@ -1025,6 +1205,533 @@ impl Discovery {
         self.poisoned = false;
         Ok(committed.events)
     }
+}
+
+#[cfg(feature = "research")]
+impl Discovery {
+    // Publish only the capture journal over the last committed GP state. The
+    // local candidate may already contain uncommitted elite/promotion changes.
+    fn journal_research(&mut self, next: &mut Checkpoint) -> Result<()> {
+        let now = wall_clock_ms()?;
+        let mut durable = self.checkpoint.clone();
+        durable.capture = next.capture.clone();
+        durable.elapsed_ms = durable.elapsed_at(now)?;
+        durable.active_since_ms = Some(now);
+        next.elapsed_ms = durable.elapsed_ms;
+        next.active_since_ms = durable.active_since_ms;
+        self.commit_control(durable, RunState::Running)
+    }
+
+    fn evaluate_research_wave(
+        &mut self,
+        next: &mut Checkpoint,
+        executor: &impl Executor,
+        workers: usize,
+    ) -> Result<(Vec<Request>, Vec<Response>)> {
+        let context = Arc::clone(
+            self.capture_context
+                .as_ref()
+                .context("capture context missing")?,
+        );
+        let pending = next.pending.clone();
+        let mut fresh = vec![];
+        for round in &pending {
+            let captured = next
+                .capture
+                .as_ref()
+                .unwrap()
+                .rounds
+                .get(&round.number)
+                .context("pending capture round missing")?
+                .clone();
+            ensure!(
+                round.capture.as_ref() == Some(&captured.slate),
+                "pending capture slate mismatch"
+            );
+            let slate: Slate = CaptureState::read(&self.store, &captured.slate)?;
+            if !captured.attempts.is_empty() {
+                ensure!(
+                    captured.attempts.len() == slate.dispatch.len()
+                        && captured.attempts.iter().all(|a| a.result.is_some()),
+                    "unknown capture attempt; retry refused"
+                );
+                continue;
+            }
+            let mut admitted = BTreeMap::new();
+            for (slot, candidate) in round.candidates.iter().enumerate() {
+                let index = slate
+                    .dsls
+                    .iter()
+                    .position(|dsl| dsl == &candidate.dsl)
+                    .context("admitted candidate absent from slate")?;
+                admitted.insert(
+                    index,
+                    (slot, self.request(round.number, slot as u32, 0, candidate)?),
+                );
+            }
+            for index in &slate.dispatch {
+                let (admitted_slot, request) = if let Some((slot, request)) = admitted.remove(index)
+                {
+                    (Some(slot), request)
+                } else {
+                    ensure!(
+                        *index < 16 && round.number > 0,
+                        "label-only slot outside approved v1 bounds"
+                    );
+                    let state = next.capture.as_mut().unwrap();
+                    state.label_counter = state
+                        .label_counter
+                        .checked_add(1)
+                        .context("label attempt counter exhausted")?;
+                    let slot = 32 + *index as u32;
+                    let request = Request {
+                        attempt: Attempt {
+                            run: next.plan.run_id.clone(),
+                            round: round.number,
+                            slot,
+                            attempt: (u64::from(next.epoch) << 32) | u64::from(state.label_counter),
+                        },
+                        matrix_path: next.plan.matrix_path.clone(),
+                        fold_spec: next.plan.fold_spec(0)?,
+                        dsl: slate.dsls[*index].clone(),
+                        objective: json!(next.plan.objective),
+                        seed: context.provider.label_seed(round.number, *index)?,
+                        limits: worker::Limits {
+                            wall_ms: next.plan.evaluation_wall_ms,
+                            rss_bytes: next.plan.evaluation_rss_bytes,
+                        },
+                    };
+                    (None, request)
+                };
+                let capture = next.capture.as_mut().unwrap();
+                let reference = capture.publish(&self.store, &request)?;
+                let attempts = &mut capture.rounds.get_mut(&round.number).unwrap().attempts;
+                let position = attempts.len();
+                attempts.push(CapturedAttempt {
+                    proposal_index: *index,
+                    admitted_slot,
+                    request: reference,
+                    result: None,
+                });
+                fresh.push((round.number, position, request));
+            }
+            ensure!(
+                admitted.is_empty(),
+                "admitted request not reserved for capture"
+            );
+        }
+        if !fresh.is_empty() {
+            let now = wall_clock_ms()?;
+            next.elapsed_ms = next.elapsed_at(now)?;
+            next.active_since_ms = Some(now);
+            if next.elapsed_ms >= next.plan.wall_seconds.saturating_mul(1000) {
+                next.completed = Some(CompletionReason::BudgetTime);
+                next.active_since_ms = None;
+                discard_pending(next, None, &[], &[], &mut vec![])?;
+                self.commit_control(next.clone(), RunState::Running)?;
+                return Ok((vec![], vec![]));
+            }
+            // Slates, exact requests, roots and every reservation are durable
+            // before the first executor call. No GP result is installed here.
+            #[cfg(test)]
+            capture::boundary("before_reservation");
+            self.commit_control(next.clone(), RunState::Running)?;
+            #[cfg(test)]
+            capture::boundary("after_reservation");
+            let requests: Vec<_> = fresh.iter().map(|(_, _, r)| r.clone()).collect();
+            parallel_evaluate_research(
+                executor,
+                &requests,
+                workers,
+                next.plan
+                    .wall_seconds
+                    .saturating_mul(1000)
+                    .saturating_sub(next.elapsed_at(wall_clock_ms()?)?),
+                |index, response, wall_ms| {
+                    let (number, position, request) = &fresh[index];
+                    ensure!(
+                        response.failure != Some(WorkerFailure::StaleAttempt),
+                        "stale outcome is unknown, not a failed label"
+                    );
+                    let measurement = if let Some(code) = response.failure {
+                        Rung0Measurement::Failed { code }
+                    } else {
+                        let measurement = context.provider.measurement(request, &response)?;
+                        ensure!(
+                            matches!(&measurement, Rung0Measurement::Success { surrogate, objective, .. }
+                        if *surrogate == response.scores[0] && *objective == response.scores[1]),
+                            "actual surrogate/objective or gate unavailable"
+                        );
+                        measurement
+                    };
+                    let capture = next.capture.as_mut().unwrap();
+                    let attempt = &capture.rounds[number].attempts[*position];
+                    ensure!(attempt.result.is_none(), "duplicate capture outcome");
+                    let measured = Measured {
+                        response,
+                        outcome: RecordedOutcome {
+                            proposal_index: attempt.proposal_index,
+                            wall_ms,
+                            measurement,
+                        },
+                    };
+                    let reference = capture.publish(&self.store, &measured)?;
+                    capture.rounds.get_mut(number).unwrap().attempts[*position].result =
+                        Some(reference);
+                    self.journal_research(next)?;
+                    #[cfg(test)]
+                    capture::boundary("after_outcome");
+                    Ok(())
+                },
+            )?;
+        }
+        let capture = next.capture.as_ref().unwrap();
+        let mut requests = vec![];
+        let mut responses = vec![];
+        for pending in &next.pending {
+            let round = &capture.rounds[&pending.number];
+            let mut ordered = BTreeMap::new();
+            for attempt in &round.attempts {
+                let request: Request = CaptureState::read(&self.store, &attempt.request)?;
+                let measured: Measured = CaptureState::read(
+                    &self.store,
+                    attempt.result.as_ref().context("unknown capture outcome")?,
+                )?;
+                ensure!(
+                    request.attempt == measured.response.attempt
+                        && measured.response.valid()
+                        && (measured.response.failure.is_some()
+                            || measured.response.scores.len() == 3),
+                    "invalid saved capture response"
+                );
+                if let Some(slot) = attempt.admitted_slot {
+                    ordered.insert(slot, (request, measured.response));
+                }
+            }
+            ensure!(
+                ordered.len() == pending.candidates.len(),
+                "admitted capture inventory mismatch"
+            );
+            for (expected, (slot, (request, response))) in ordered.into_iter().enumerate() {
+                ensure!(
+                    slot == expected && request.dsl == pending.candidates[slot].dsl,
+                    "admitted capture order mismatch"
+                );
+                requests.push(request);
+                responses.push(response);
+            }
+        }
+        Ok((requests, responses))
+    }
+
+    fn prepare_research_aux(
+        &mut self,
+        next: &mut Checkpoint,
+        request: Request,
+    ) -> Result<(Request, Option<usize>)> {
+        let wall_available = next.capture.is_none()
+            || next.elapsed_at(wall_clock_ms()?)? < next.plan.wall_seconds.saturating_mul(1000);
+        let Some(capture) = next.capture.as_mut() else {
+            return Ok((request, None));
+        };
+        for (index, attempt) in capture.auxiliary.iter().enumerate() {
+            let saved: Request = CaptureState::read(&self.store, &attempt.request)?;
+            if saved.attempt.round == request.attempt.round
+                && saved.attempt.slot == request.attempt.slot
+            {
+                let mut old = serde_json::to_value(&saved)?;
+                let mut new = serde_json::to_value(&request)?;
+                old.as_object_mut().unwrap().remove("attempt");
+                new.as_object_mut().unwrap().remove("attempt");
+                ensure!(
+                    old == new && attempt.result.is_some(),
+                    "unknown or changed auxiliary request"
+                );
+                return Ok((saved, Some(index)));
+            }
+        }
+        ensure!(
+            capture.auxiliary.len() < capture.config.max_rounds.saturating_mul(2),
+            "auxiliary attempt bound exhausted"
+        );
+        ensure!(
+            wall_available,
+            "capture wall budget exhausted before auxiliary dispatch"
+        );
+        let reference = capture.publish(&self.store, &request)?;
+        let index = capture.auxiliary.len();
+        capture.auxiliary.push(AuxiliaryAttempt {
+            request: reference,
+            result: None,
+            model: None,
+        });
+        self.journal_research(next)?;
+        Ok((request, Some(index)))
+    }
+
+    fn finish_research_aux(
+        &mut self,
+        next: &mut Checkpoint,
+        index: usize,
+        result: AuxiliaryResult,
+        model: Option<Vec<u8>>,
+    ) -> Result<()> {
+        let capture = next.capture.as_mut().unwrap();
+        if let Some(bytes) = model {
+            let total = capture
+                .bytes
+                .checked_add(bytes.len() as u64)
+                .context("capture byte counter exhausted")?;
+            ensure!(
+                total <= capture.config.max_bytes,
+                "capture model-root budget exhausted"
+            );
+            capture.auxiliary[index].model =
+                Some(self.store.publish_blob(std::io::Cursor::new(bytes))?);
+            capture.bytes = total;
+        }
+        let reference = capture.publish(&self.store, &result)?;
+        capture.auxiliary[index].result = Some(reference);
+        self.journal_research(next)
+    }
+
+    fn evaluate_research_aux(
+        &mut self,
+        next: &mut Checkpoint,
+        executor: &impl Executor,
+        request: Request,
+    ) -> Result<Response> {
+        if next.capture.is_none() {
+            return Ok(checked_response(&request, executor.evaluate(&request)));
+        }
+        let result = self.evaluate_research_aux_inner(next, executor, request);
+        if result.is_err() {
+            self.poisoned = true;
+        }
+        result
+    }
+
+    fn evaluate_research_aux_inner(
+        &mut self,
+        next: &mut Checkpoint,
+        executor: &impl Executor,
+        request: Request,
+    ) -> Result<Response> {
+        let (request, index) = self.prepare_research_aux(next, request)?;
+        let Some(index) = index else {
+            return Ok(checked_response(&request, executor.evaluate(&request)));
+        };
+        if let Some(reference) = &next.capture.as_ref().unwrap().auxiliary[index].result {
+            let result: AuxiliaryResult = CaptureState::read(&self.store, reference)?;
+            if let AuxiliaryResult::Evaluation { response } = result {
+                ensure!(
+                    response.attempt == request.attempt && response.valid(),
+                    "auxiliary response identity mismatch"
+                );
+                return Ok(response);
+            }
+            bail!("wrong auxiliary result kind");
+        }
+        let response = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            research_response(&request, executor.evaluate(&request))
+        }))
+        .map_err(|_| anyhow::anyhow!("auxiliary evaluator aborted; outcome remains unknown"))??;
+        ensure!(
+            response.failure != Some(WorkerFailure::StaleAttempt),
+            "auxiliary stale response remains unknown"
+        );
+        self.finish_research_aux(
+            next,
+            index,
+            AuxiliaryResult::Evaluation {
+                response: response.clone(),
+            },
+            None,
+        )?;
+        Ok(response)
+    }
+
+    fn capture_io(&mut self, error: anyhow::Error) -> anyhow::Error {
+        self.poisoned = true;
+        RefitIoError(std::io::Error::other(error.to_string())).into()
+    }
+
+    fn fit_research_aux(
+        &mut self,
+        next: &mut Checkpoint,
+        executor: &impl Executor,
+        request: Request,
+    ) -> Result<Vec<u8>> {
+        let (request, index) = self
+            .prepare_research_aux(next, request)
+            .map_err(|error| self.capture_io(error))?;
+        let Some(index) = index else {
+            return executor.fitted_model(&request);
+        };
+        let attempt = next.capture.as_ref().unwrap().auxiliary[index].clone();
+        if let Some(reference) = attempt.result {
+            let result = CaptureState::read(&self.store, &reference)
+                .map_err(|error| self.capture_io(error))?;
+            return match result {
+                AuxiliaryResult::Fit => {
+                    let model = attempt
+                        .model
+                        .context("captured model root missing")
+                        .map_err(|error| self.capture_io(error))?;
+                    self.store
+                        .read_blob(&model)
+                        .map_err(|error| self.capture_io(error.into()))
+                }
+                AuxiliaryResult::Failure {
+                    worker: Some(response),
+                } => Err(RefitWorkerError(response).into()),
+                AuxiliaryResult::Failure { worker: None } => {
+                    bail!("retained numerical refit failure")
+                }
+                _ => Err(self.capture_io(anyhow::anyhow!("wrong auxiliary result kind"))),
+            };
+        }
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            executor.fitted_model(&request)
+        }));
+        match result {
+            Ok(Ok(bytes)) if !bytes.is_empty() => {
+                self.finish_research_aux(next, index, AuxiliaryResult::Fit, Some(bytes.clone()))
+                    .map_err(|error| self.capture_io(error))?;
+                Ok(bytes)
+            }
+            Ok(Err(error)) if error.is::<RefitIoError>() => {
+                self.poisoned = true;
+                Err(error)
+            }
+            Ok(Err(error)) => {
+                let worker = error
+                    .downcast_ref::<RefitWorkerError>()
+                    .map(|e| e.0.clone());
+                self.finish_research_aux(next, index, AuxiliaryResult::Failure { worker }, None)
+                    .map_err(|error| self.capture_io(error))?;
+                Err(error)
+            }
+            Ok(Ok(_)) => {
+                self.finish_research_aux(
+                    next,
+                    index,
+                    AuxiliaryResult::Failure { worker: None },
+                    None,
+                )
+                .map_err(|error| self.capture_io(error))?;
+                bail!("empty fitted model")
+            }
+            Err(_) => {
+                Err(self.capture_io(anyhow::anyhow!("refit aborted; outcome remains unknown")))
+            }
+        }
+    }
+}
+
+#[cfg(feature = "research")]
+fn parallel_evaluate_research(
+    executor: &impl Executor,
+    requests: &[Request],
+    workers: usize,
+    wall_ms: u64,
+    mut persist: impl FnMut(usize, Response, u64) -> Result<()>,
+) -> Result<()> {
+    use std::sync::{atomic::AtomicBool, mpsc};
+    let cursor = AtomicUsize::new(0);
+    let halted = AtomicBool::new(false);
+    let started = Instant::now();
+    let (sender, receiver) = mpsc::sync_channel(workers.max(1));
+    std::thread::scope(|scope| {
+        for _ in 0..workers.min(requests.len()) {
+            let sender = sender.clone();
+            let cursor = &cursor;
+            let halted = &halted;
+            scope.spawn(move || {
+                while !halted.load(Ordering::Acquire) {
+                    if started.elapsed().as_millis() >= u128::from(wall_ms) {
+                        break;
+                    }
+                    let index = cursor.fetch_add(1, Ordering::Relaxed);
+                    let Some(request) = requests.get(index) else {
+                        break;
+                    };
+                    let started = Instant::now();
+                    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        research_response(request, executor.evaluate(request))
+                    }))
+                    .map_err(|_| anyhow::anyhow!("evaluator aborted; outcome remains unknown"))
+                    .and_then(|result| result);
+                    let wall = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
+                    if sender.send((index, result, wall)).is_err() {
+                        break;
+                    }
+                }
+            });
+        }
+        drop(sender);
+        let mut error = None;
+        let mut received = 0;
+        for (index, response, wall) in receiver {
+            received += 1;
+            if error.is_none() {
+                let result = response.and_then(|response| persist(index, response, wall));
+                if let Err(failure) = result {
+                    halted.store(true, Ordering::Release);
+                    error = Some(failure);
+                }
+            }
+        }
+        if error.is_none() && received != requests.len() {
+            error = Some(anyhow::anyhow!(
+                "capture wall budget exhausted; undispatched reservations remain unknown"
+            ));
+        }
+        error.map_or(Ok(()), Err)
+    })
+}
+
+#[cfg(feature = "research")]
+fn research_response(request: &Request, response: Response) -> Result<Response> {
+    ensure!(
+        response.attempt == request.attempt
+            && response.failure != Some(WorkerFailure::StaleAttempt)
+            && response.valid()
+            && (response.failure.is_some() || response.scores.len() == 3),
+        "invalid or stale capture response; outcome remains unknown"
+    );
+    Ok(response)
+}
+
+fn checkpoint_blobs(state: &Checkpoint) -> Result<Vec<BlobRef>> {
+    let roots: Vec<_> = state.champion.iter().map(|c| c.model.clone()).collect();
+    #[cfg(feature = "research")]
+    if let Some(capture) = &state.capture {
+        let mut unique = BTreeMap::new();
+        for reference in roots.into_iter().chain(capture.roots()) {
+            if let Some(old) = unique.insert(reference.sha256, reference.clone()) {
+                ensure!(old == reference, "conflicting CAS root metadata");
+            }
+        }
+        return Ok(unique.into_values().collect());
+    }
+    Ok(roots)
+}
+
+fn rung0_budget_used(state: &Checkpoint) -> u64 {
+    #[cfg(feature = "research")]
+    if let Some(capture) = &state.capture {
+        return capture.charged;
+    }
+    state.admitted
+}
+
+fn rung0_budget_limit(state: &Checkpoint) -> u64 {
+    #[cfg(feature = "research")]
+    if let Some(capture) = &state.capture {
+        return capture.config.max_attempts;
+    }
+    state.plan.evaluations
 }
 
 fn hex_blob(blob: &BlobRef) -> String {
@@ -1153,6 +1860,22 @@ fn plan_wave(
     space: &impl SearchSpace,
     admission: &impl Admission,
 ) -> Result<()> {
+    #[cfg(feature = "research")]
+    {
+        plan_wave_inner(state, space, admission, None)
+    }
+    #[cfg(not(feature = "research"))]
+    {
+        plan_wave_inner(state, space, admission)
+    }
+}
+
+fn plan_wave_inner(
+    state: &mut Checkpoint,
+    space: &impl SearchSpace,
+    admission: &impl Admission,
+    #[cfg(feature = "research")] capture_context: Option<(&Store, &CaptureContext)>,
+) -> Result<()> {
     let mut parents: Vec<_> = state
         .elites
         .by_objective()
@@ -1182,12 +1905,123 @@ fn plan_wave(
         };
         let mut seen = state.memo.clone();
         let mut unique = vec![];
-        for source in proposals {
+        #[cfg(feature = "research")]
+        let mut source_indices = vec![];
+        #[cfg(feature = "research")]
+        let sources = proposals.into_iter().enumerate();
+        #[cfg(not(feature = "research"))]
+        let sources = proposals.into_iter().map(|source| ((), source));
+        for (_source_index, source) in sources {
             let dsl = space.canonical(&source)?;
             if seen.insert(digest(dsl.as_bytes())) {
+                #[cfg(feature = "research")]
+                source_indices.push(_source_index as u64);
                 unique.push(dsl);
             }
         }
+        #[cfg(feature = "research")]
+        let mut capture_ref = None;
+        #[cfg(feature = "research")]
+        let observed_admission = if let Some((store, context)) = capture_context {
+            let captured = state.capture.as_ref().context("capture state missing")?;
+            let remaining = captured.config.max_attempts - captured.charged;
+            if remaining == 0 {
+                break;
+            }
+            ensure!(
+                captured.rounds.len() < captured.config.max_rounds,
+                "capture round bound exhausted"
+            );
+            let keys = state
+                .elites
+                .by_objective()
+                .iter()
+                .map(|elite| {
+                    state
+                        .programs
+                        .get(&elite.algorithm_id)
+                        .map(|dsl| digest(dsl.as_bytes()))
+                        .context("elite program missing")
+                })
+                .collect::<Result<Vec<_>>>()?;
+            let measured = captured.measured_pool(store, &keys)?;
+            let observed = context.observe(number, &unique, &measured)?;
+            let policy = if number == 0 {
+                BehaviorPolicy {
+                    kind: RecordedPolicyKind::Heuristic,
+                    explore: false,
+                    slate_costs: None,
+                    admitted: (0..unique.len()).collect(),
+                }
+            } else {
+                admission.admit_recorded(unique.clone(), explore, &mut rng, &observed)?
+            };
+            let record = ResearchRound {
+                schema: crate::research::VERSION.into(),
+                identity: context.binding.identity.clone(),
+                round: number,
+                seed: state.plan.seed,
+                tokens: context.binding.tokens.clone(),
+                mask: context.binding.mask.clone(),
+                revealed: observed.revealed,
+                proposals: observed.programs,
+                source_indices,
+                policy,
+                evaluate_all_proposals: context.binding.config.evaluate_all_proposals,
+                dispatched: vec![],
+                capture_complete: false,
+                outcomes: vec![],
+            };
+            record.validate()?;
+            let mut dispatch = record.policy.admitted.clone();
+            if record.evaluate_all_proposals {
+                dispatch.extend((0..unique.len()).filter(|i| !record.policy.admitted.contains(i)));
+            }
+            dispatch.truncate(remaining.min(usize::MAX as u64) as usize);
+            let admitted = record
+                .policy
+                .admitted
+                .iter()
+                .filter(|i| dispatch.contains(i))
+                .map(|i| unique[*i].clone())
+                .collect::<Vec<_>>();
+            let slate = Slate {
+                record,
+                dsls: unique.clone(),
+                dispatch,
+            };
+            let captured = state.capture.as_mut().unwrap();
+            let reference = captured.publish(store, &slate)?;
+            captured.charged += slate.dispatch.len() as u64;
+            ensure!(
+                captured
+                    .rounds
+                    .insert(
+                        number,
+                        CapturedRound {
+                            slate: reference.clone(),
+                            attempts: vec![],
+                            committed: None,
+                            aborted: false
+                        }
+                    )
+                    .is_none(),
+                "capture round already planned"
+            );
+            capture_ref = Some(reference);
+            Some(admitted)
+        } else {
+            None
+        };
+        #[cfg(feature = "research")]
+        let admitted = if let Some(admitted) = observed_admission {
+            admitted
+        } else if number == 0 {
+            unique
+        } else {
+            admission.admit(unique, explore, &mut rng)
+        };
+        #[cfg(not(feature = "research"))]
         let admitted = if number == 0 {
             unique
         } else {
@@ -1204,8 +2038,13 @@ fn plan_wave(
             state.programs.insert(algorithm_id.clone(), dsl.clone());
             candidates.push(Candidate { algorithm_id, dsl });
         }
-        state.pending.push(PendingRound { number, candidates });
-        if state.admitted >= state.plan.evaluations {
+        state.pending.push(PendingRound {
+            number,
+            candidates,
+            #[cfg(feature = "research")]
+            capture: capture_ref,
+        });
+        if rung0_budget_used(state) >= rung0_budget_limit(state) {
             break;
         }
     }
@@ -1344,6 +2183,13 @@ fn discard_pending(
         .completed
         .context("discard requires a completion reason")?;
     for pending in std::mem::take(&mut state.pending) {
+        #[cfg(feature = "research")]
+        if let Some(capture) = state.capture.as_mut() {
+            if let Some(round) = capture.rounds.get_mut(&pending.number) {
+                round.aborted = true;
+            }
+            capture.tainted = true;
+        }
         for (slot, candidate) in pending.candidates.into_iter().enumerate() {
             let index = requests
                 .iter()
@@ -2866,6 +3712,960 @@ mod tests {
             )
             .unwrap();
             fs::write(receipt.join("quality.json"),serde_json::to_vec_pretty(&json!({"plan":p,"source_train_sha256":TRAIN_SHA,"ridge_scores":baseline.scores,"champion":champion,"admissions":d.admitted(),"completion_reason":d.completed(),"budget_bound_by":d.budget_bound_by(),"nondeterminism":d.nondeterminism(),"projection":d.projection().unwrap()})).unwrap()).unwrap();
+        }
+    }
+    #[cfg(feature = "research")]
+    mod durable_capture {
+        use super::*;
+        use crate::research::{
+            capture::{Binding, CaptureConfig, CaptureProvider, SlateObservation},
+            outbox::materialize_controls,
+            *,
+        };
+
+        struct Space {
+            seeds: usize,
+            duplicate: bool,
+        }
+        impl SearchSpace for Space {
+            fn canonical(&self, dsl: &str) -> Result<String> {
+                Ok(dsl.trim().into())
+            }
+            fn seeds(&self) -> Result<Vec<String>> {
+                Ok((0..self.seeds).map(|i| format!("seed-{i}")).collect())
+            }
+            fn propose(
+                &self,
+                _: &[String],
+                count: usize,
+                rng: &mut ChaCha12Rng,
+            ) -> Result<Vec<String>> {
+                let nonce = rng.next_u64();
+                let mut values: Vec<_> = (0..count).map(|i| format!("p-{nonce}-{i}")).collect();
+                if self.duplicate {
+                    values.insert(1, "seed-0".into());
+                    values.insert(3, format!(" {} ", values[0]));
+                }
+                Ok(values)
+            }
+        }
+        const SPACE: Space = Space {
+            seeds: 4,
+            duplicate: false,
+        };
+
+        struct Provider {
+            observations: AtomicUsize,
+            bad_gate: bool,
+        }
+        impl CaptureProvider for Provider {
+            fn validate_binding(&self, _: &Binding, _: &Plan) -> Result<()> {
+                ensure!(!self.bad_gate, "control gate unavailable before dispatch");
+                Ok(())
+            }
+
+            fn observe(
+                &self,
+                round: u64,
+                dsls: &[String],
+                _: &[RecordedReveal],
+            ) -> Result<SlateObservation> {
+                self.observations.fetch_add(1, Ordering::SeqCst);
+                Ok(SlateObservation {
+                    programs: dsls
+                        .iter()
+                        .enumerate()
+                        .map(|(i, dsl)| RecordedProgram {
+                            program_sha256: digest(dsl.as_bytes()),
+                            operator_family: "synthetic_control".into(),
+                            feat412: vec![i as f32; 412],
+                            proj16: vec![1.000_000_000_000_01 + i as f64; 16],
+                        })
+                        .collect(),
+                    revealed_indices: if round == 0 { vec![] } else { (0..4).collect() },
+                })
+            }
+            fn measurement(
+                &self,
+                request: &Request,
+                response: &Response,
+            ) -> Result<Rung0Measurement> {
+                ensure!(!self.bad_gate, "control gate unavailable");
+                Ok(Rung0Measurement::Success {
+                    surrogate: response.scores[0],
+                    objective: response.scores[1],
+                    gate: request.dsl.ends_with('0'),
+                })
+            }
+            fn label_seed(&self, round: u64, index: usize) -> Result<u64> {
+                Ok(9_000_000 + round * 16 + index as u64)
+            }
+        }
+        fn context(
+            p: &Plan,
+            attempts: u64,
+            all: bool,
+            bad_gate: bool,
+        ) -> (Arc<CaptureContext>, Arc<Provider>) {
+            let provider = Arc::new(Provider {
+                observations: AtomicUsize::new(0),
+                bad_gate,
+            });
+            let binding = Binding {
+                config: CaptureConfig {
+                    max_attempts: attempts,
+                    max_rounds: 16.min(attempts as usize),
+                    max_bytes: 8 * 1024 * 1024,
+                    evaluate_all_proposals: all,
+                    seed_protocol_sha256: digest(b"synthetic-control-extra-seeds-v1"),
+                },
+                identity: RecordIdentity {
+                    run_id: p.run_id.to_string(),
+                    task: RecordTask::Regression,
+                    evidence: RecordEvidence::SyntheticControl,
+                    partition: "train".into(),
+                    source_commit: "a".repeat(40),
+                    corpus_manifest_sha256: digest(b"control-corpus"),
+                    dataset_sha256: p.matrix_sha256.clone(),
+                    family_sha256: digest(b"control-family"),
+                    problem_sha256: p.problem_digest.clone(),
+                    bundle_sha256: p.bundle_digest.clone(),
+                    conditioning_sha256: digest(b"control-conditioning"),
+                    evaluator_sha256: digest(b"control-evaluator"),
+                    dope_weights_sha256: DOPE_SHA256.into(),
+                },
+                seed: p.seed,
+                tokens: vec![vec![0.25; 32]; 10],
+                mask: vec![true; 10],
+                matrix_sha256: p.matrix_sha256.clone(),
+            };
+            (
+                Arc::new(CaptureContext::control(binding, provider.clone()).unwrap()),
+                provider,
+            )
+        }
+        fn control_plan(home: &Path, budget: u64) -> Plan {
+            let csv = format!(
+                "x,target\n{}",
+                (0..40)
+                    .map(|i| format!("{i},{}\n", i * 2))
+                    .collect::<String>()
+            );
+            let table = jope_runtime::table::parse_csv(
+                csv.as_bytes(),
+                &jope_runtime::limits::Limits::default(),
+            )
+            .unwrap();
+            let bytes = crate::dataset::jmat::encode(&table).unwrap();
+            let matrix_path = home.join("control.jmat");
+            fs::write(&matrix_path, &bytes).unwrap();
+            Plan {
+                run_id: "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0".parse().unwrap(),
+                dataset_id: "ds_21fbfe8b53dbcd605d79486b".parse().unwrap(),
+                problem_digest: digest(&bytes),
+                bundle_digest: digest(b"synthetic-control-bundle"),
+                binary_version: "synthetic-control-v1".into(),
+                matrix_path,
+                matrix_sha256: digest(&bytes),
+                target: "target".into(),
+                features: vec!["x".into()],
+                objective: "rmse".into(),
+                seed: 73,
+                planned_workers: 8,
+                effort: Effort::Fast,
+                evaluations: budget,
+                wall_seconds: 60,
+                evaluation_wall_ms: 15000,
+                evaluation_rss_bytes: 1024 * 1024,
+                groups: None,
+                times: None,
+                gap_rows: 0,
+            }
+        }
+        struct Evaluator {
+            calls: Mutex<Vec<Request>>,
+            store: Arc<Store>,
+            fail_extra: bool,
+            panic_at: Option<usize>,
+        }
+        impl Evaluator {
+            fn new(store: Arc<Store>) -> Self {
+                Self {
+                    calls: Mutex::new(vec![]),
+                    store,
+                    fail_extra: false,
+                    panic_at: None,
+                }
+            }
+        }
+        impl Executor for Evaluator {
+            fn evaluate(&self, request: &Request) -> Response {
+                let count = {
+                    let mut calls = self.calls.lock().unwrap();
+                    calls.push(request.clone());
+                    calls.len()
+                };
+                if let Some(row) = self
+                    .store
+                    .get(&RecordKey::Run(request.attempt.run.clone()))
+                    .unwrap()
+                {
+                    if row.data["checkpoint"]["version"] == 3 {
+                        let state: CaptureState =
+                            serde_json::from_value(row.data["checkpoint"]["capture"].clone())
+                                .unwrap();
+                        state.validate_storage(&self.store).unwrap();
+                        assert!(
+                            state.roots().iter().all(|r| row.blobs.contains(r)),
+                            "request ran without durable roots"
+                        );
+                        let reservations = state
+                            .rounds
+                            .values()
+                            .map(|r| r.attempts.len())
+                            .sum::<usize>();
+                        assert_eq!(
+                            state.charged, reservations as u64,
+                            "all reservations must precede execution"
+                        );
+                    }
+                }
+                assert_ne!(self.panic_at, Some(count), "control evaluator abort");
+                let extra = (32..65536).contains(&request.attempt.slot);
+                if extra && self.fail_extra {
+                    return Response::failed(request.attempt.clone(), WorkerFailure::Timeout, 7);
+                }
+                let loss = if extra {
+                    -10000.0
+                } else if request.dsl.starts_with("seed") {
+                    100.0
+                } else {
+                    10.0
+                };
+                Response {
+                    attempt: request.attempt.clone(),
+                    scores: vec![loss, loss, 777.0],
+                    predictions_digest: digest(request.dsl.as_bytes()),
+                    wall_ms: 7,
+                    failure: None,
+                }
+            }
+            fn fitted_model(&self, request: &Request) -> Result<Vec<u8>> {
+                Ok(request.dsl.as_bytes().to_vec())
+            }
+        }
+        fn records(d: &Discovery) -> Vec<ResearchRound> {
+            d.checkpoint
+                .capture
+                .as_ref()
+                .unwrap()
+                .rounds
+                .values()
+                .filter_map(|r| r.committed.as_ref())
+                .map(|r| CaptureState::read(&d.store, r).unwrap())
+                .collect()
+        }
+        fn stored(d: &Discovery) -> Value {
+            d.store
+                .get(&RecordKey::Run(d.checkpoint.plan.run_id.clone()))
+                .unwrap()
+                .unwrap()
+                .data["checkpoint"]
+                .clone()
+        }
+        fn run_to_end(d: &mut Discovery, e: &Evaluator, workers: usize) {
+            for _ in 0..16 {
+                if d.completed().is_some() {
+                    return;
+                }
+                d.advance(&SPACE, &HeuristicAdmission, e, workers, usize::MAX)
+                    .unwrap();
+            }
+            panic!("control exceeded round bound");
+        }
+
+        #[test]
+        fn labels_are_private_and_one_eight_workers_preserve_normal_gp() {
+            let home = tempfile::tempdir().unwrap();
+            let p = control_plan(home.path(), 48);
+            let mut baseline = None;
+            for workers in [1, 8] {
+                let store =
+                    Arc::new(Store::open(home.path().join(format!("capture-{workers}"))).unwrap());
+                let (c, provider) = context(&p, 40, true, false);
+                let mut d = Discovery::open_research(store.clone(), p.clone(), c).unwrap();
+                let e = Evaluator::new(store);
+                for _ in 0..2 {
+                    d.advance(&SPACE, &HeuristicAdmission, &e, workers, usize::MAX)
+                        .unwrap();
+                }
+                assert_eq!(provider.observations.load(Ordering::SeqCst), 3);
+                assert_eq!(d.admitted(), 12);
+                assert_eq!(d.checkpoint.capture.as_ref().unwrap().charged, 20);
+                assert_eq!(
+                    d.attempt, 16,
+                    "extra slots must not consume admitted attempt counter"
+                );
+                let captured = records(&d);
+                assert_eq!(captured.len(), 3);
+                assert!(captured[1].outcomes.iter().any(|o| matches!(
+                    o.measurement,
+                    Rung0Measurement::Success {
+                        objective: -10000.0,
+                        ..
+                    }
+                )));
+                assert!(captured.iter().all(|r| r.policy.slate_costs.is_none()));
+                assert!(captured[1].revealed.iter().all(|r| r.surrogate == 100.0));
+                let label_keys: Vec<_> = captured
+                    .iter()
+                    .flat_map(|r| {
+                        r.proposals
+                            .iter()
+                            .enumerate()
+                            .filter(|(i, _)| !r.policy.admitted.contains(i))
+                            .map(|(_, p)| p.program_sha256.clone())
+                    })
+                    .collect();
+                assert!(label_keys.iter().all(|k| !d.checkpoint.memo.contains(k)));
+                let public = d.projection().unwrap();
+                let public_text = serde_json::to_string(&public).unwrap();
+                for private in [
+                    "feat412",
+                    "proj16",
+                    "conditioning_sha256",
+                    "slate_costs",
+                    "synthetic_control",
+                    "-10000",
+                ] {
+                    assert!(!public_text.contains(private));
+                }
+                let state = serde_json::to_value((
+                    &d.checkpoint.programs,
+                    &d.checkpoint.elites,
+                    &d.checkpoint.champion,
+                ))
+                .unwrap();
+                if let Some((old_state, old_public)) = &baseline {
+                    assert_eq!(&state, old_state);
+                    assert_eq!(&public, old_public);
+                } else {
+                    baseline = Some((state, public));
+                }
+            }
+            let store = Arc::new(Store::open(home.path().join("normal")).unwrap());
+            let mut normal = Discovery::open(store.clone(), p).unwrap();
+            let e = Evaluator::new(store);
+            for _ in 0..2 {
+                normal
+                    .advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
+                    .unwrap();
+            }
+            assert_eq!(
+                serde_json::to_value((
+                    &normal.checkpoint.programs,
+                    &normal.checkpoint.elites,
+                    &normal.checkpoint.champion
+                ))
+                .unwrap(),
+                baseline.as_ref().unwrap().0
+            );
+            assert_eq!(normal.projection().unwrap(), baseline.unwrap().1);
+            assert_eq!(stored(&normal)["version"], 2);
+            assert!(stored(&normal).get("capture").is_none());
+            assert!(stored(&normal)["pending"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|r| r.get("capture").is_none()));
+        }
+
+        #[test]
+        fn full_slates_keep_source_indices_and_original_precision() {
+            let home = tempfile::tempdir().unwrap();
+            let p = control_plan(home.path(), 40);
+            let store = Arc::new(Store::open(home.path().join("store")).unwrap());
+            let (c, _) = context(&p, 40, true, false);
+            let mut d = Discovery::open_research(store.clone(), p, c).unwrap();
+            let e = Evaluator::new(store);
+            let space = Space {
+                seeds: 4,
+                duplicate: true,
+            };
+            d.advance(&space, &HeuristicAdmission, &e, 1, usize::MAX)
+                .unwrap();
+            d.checkpoint.stalled = 100; // Explicit software control for the exploring policy branch.
+            d.commit_control(d.checkpoint.clone(), RunState::Running)
+                .unwrap();
+            d.advance(&space, &HeuristicAdmission, &e, 8, usize::MAX)
+                .unwrap();
+            let r = records(&d);
+            assert_eq!(r[1].proposals.len(), 16);
+            assert!(r[1].policy.explore);
+            assert_eq!(&r[1].source_indices[..3], &[0, 2, 4]);
+            assert_eq!(r[1].proposals[0].proj16[0], 1.000_000_000_000_01);
+            assert_eq!(r[1].revealed.len(), 4);
+            assert_eq!(r[1].outcomes.len(), 16);
+            let mut rng = round_rng(d.checkpoint.plan.seed, 1);
+            let raw = space.propose(&[], 16, &mut rng).unwrap();
+            let mut seen = (0..4)
+                .map(|i| digest(format!("seed-{i}").as_bytes()))
+                .collect::<BTreeSet<_>>();
+            let eligible = raw
+                .iter()
+                .map(|dsl| space.canonical(dsl).unwrap())
+                .filter(|dsl| seen.insert(digest(dsl.as_bytes())))
+                .collect();
+            let expected = HeuristicAdmission
+                .admit(eligible, true, &mut rng)
+                .into_iter()
+                .map(|dsl| digest(dsl.as_bytes()))
+                .collect::<Vec<_>>();
+            assert_eq!(
+                r[1].policy
+                    .admitted
+                    .iter()
+                    .map(|i| r[1].proposals[*i].program_sha256.clone())
+                    .collect::<Vec<_>>(),
+                expected
+            );
+        }
+
+        #[test]
+        fn materialization_reads_committed_state_and_python_counts_both_modes() {
+            for all in [false, true] {
+                let home = tempfile::tempdir().unwrap();
+                let p = control_plan(home.path(), 40);
+                let run = p.run_id.clone();
+                let store = Arc::new(Store::open(home.path().join("store")).unwrap());
+                let (c, _) = context(&p, if all { 20 } else { 12 }, all, false);
+                let mut d = Discovery::open_research(store.clone(), p, c).unwrap();
+                let mut e = Evaluator::new(store.clone());
+                e.fail_extra = true;
+                run_to_end(&mut d, &e, 8);
+                let output = home.path().join("records.jsonl");
+                assert!(
+                    materialize_committed(&store, &run, &output).is_err(),
+                    "controls cannot claim Engine evidence"
+                );
+                assert!(!output.exists());
+                assert_eq!(materialize_controls(&store, &run, &output).unwrap(), 3);
+                let bytes = fs::read(&output).unwrap();
+                assert!(materialize_controls(&store, &run, &output).is_err());
+                assert_eq!(fs::read(&output).unwrap(), bytes);
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::PermissionsExt;
+                    assert_eq!(
+                        fs::metadata(&output).unwrap().permissions().mode() & 0o777,
+                        0o600
+                    );
+                }
+                let script = Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("../../python/src/jope/north_star/record_reader.py");
+                let mut cmd = Command::new("python3");
+                cmd.arg(script).arg(&output).arg("--allow-synthetic");
+                if all {
+                    cmd.arg("--require-evaluate-all");
+                }
+                let result = cmd.output().unwrap();
+                assert!(
+                    result.status.success(),
+                    "{}",
+                    String::from_utf8_lossy(&result.stderr)
+                );
+                let counts: Value = serde_json::from_slice(&result.stdout).unwrap();
+                assert_eq!(
+                    counts,
+                    json!({"rounds":3,"proposals":20,"outcomes":if all{20}else{12},"failures":if all{8}else{0},"incomplete_rounds":0})
+                );
+                assert!(
+                    fs::read_dir(home.path())
+                        .unwrap()
+                        .filter_map(Result::ok)
+                        .filter(|e| e
+                            .file_name()
+                            .to_string_lossy()
+                            .starts_with(".jope-research-"))
+                        .count()
+                        >= 2,
+                    "staging evidence must remain"
+                );
+            }
+        }
+
+        #[test]
+        fn budget_truncation_is_retained_but_not_exported() {
+            let home = tempfile::tempdir().unwrap();
+            let p = control_plan(home.path(), 40);
+            let run = p.run_id.clone();
+            let store = Arc::new(Store::open(home.path().join("store")).unwrap());
+            let (c, _) = context(&p, 7, true, false);
+            let mut d = Discovery::open_research(store.clone(), p, c).unwrap();
+            let e = Evaluator::new(store.clone());
+            run_to_end(&mut d, &e, 1);
+            assert_eq!(d.checkpoint.capture.as_ref().unwrap().charged, 7);
+            let r = records(&d);
+            assert_eq!(r.len(), 2);
+            assert_eq!(r[1].outcomes.len(), 3);
+            assert!(!r[1].capture_complete);
+            assert!(materialize_controls(&store, &run, &home.path().join("records")).is_err());
+        }
+
+        #[test]
+        fn pause_reopen_reuses_known_wave_without_proposal_or_admission_replay() {
+            struct NoSpace;
+            impl SearchSpace for NoSpace {
+                fn canonical(&self, _: &str) -> Result<String> {
+                    panic!("recanonicalized")
+                }
+                fn seeds(&self) -> Result<Vec<String>> {
+                    panic!("reseeded")
+                }
+                fn propose(
+                    &self,
+                    _: &[String],
+                    _: usize,
+                    _: &mut ChaCha12Rng,
+                ) -> Result<Vec<String>> {
+                    panic!("reproposed")
+                }
+            }
+            let home = tempfile::tempdir().unwrap();
+            let p = control_plan(home.path(), 40);
+            let (c, provider) = context(&p, 20, true, false);
+            let store = Arc::new(Store::open(home.path().join("store")).unwrap());
+            let mut d = Discovery::open_research(store.clone(), p.clone(), c.clone()).unwrap();
+            let e = Evaluator::new(store.clone());
+            d.advance(&SPACE, &HeuristicAdmission, &e, 8, usize::MAX)
+                .unwrap();
+            d.advance(&SPACE, &HeuristicAdmission, &e, 8, 1).unwrap();
+            assert_eq!(d.checkpoint.pending.len(), 1);
+            assert_eq!(d.checkpoint.capture.as_ref().unwrap().charged, 20);
+            d.pause().unwrap();
+            drop(d);
+            let before = e.calls.lock().unwrap().len();
+            let mut d = Discovery::open_research(store, p, c).unwrap();
+            d.advance(&NoSpace, &HeuristicAdmission, &e, 1, usize::MAX)
+                .unwrap();
+            assert_eq!(provider.observations.load(Ordering::SeqCst), 3);
+            assert_eq!(
+                e.calls.lock().unwrap().len() - before,
+                0,
+                "known pending outcomes must not execute again"
+            );
+            assert_eq!(records(&d).len(), 3);
+            assert!(d.completed().is_some());
+        }
+
+        #[test]
+        fn missing_gate_or_aborted_executor_retains_unknown_and_never_retries() {
+            for bad_gate in [false, true] {
+                let home = tempfile::tempdir().unwrap();
+                let p = control_plan(home.path(), 40);
+                let run = p.run_id.clone();
+                let (c, _) = context(&p, 20, true, bad_gate);
+                let store = Arc::new(Store::open(home.path().join("store")).unwrap());
+                if bad_gate {
+                    assert!(Discovery::open_research(store.clone(), p.clone(), c.clone()).is_err());
+                    assert!(store.get(&RecordKey::Run(run)).unwrap().is_none());
+                    continue;
+                }
+                let mut d = Discovery::open_research(store.clone(), p.clone(), c.clone()).unwrap();
+                let mut e = Evaluator::new(store.clone());
+                if !bad_gate {
+                    e.panic_at = Some(2);
+                }
+                assert!(d
+                    .advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
+                    .is_err());
+                assert!(d.poisoned);
+                assert_eq!(stored(&d)["capture"]["charged"], 4);
+                assert!(d.projection().unwrap().as_array().unwrap().is_empty());
+                drop(d);
+                let mut d = Discovery::open_research(store.clone(), p, c).unwrap();
+                let calls = e.calls.lock().unwrap().len();
+                assert!(d
+                    .advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
+                    .is_err());
+                assert_eq!(calls, e.calls.lock().unwrap().len());
+                assert!(d.checkpoint.capture.as_ref().unwrap().tainted);
+                assert!(materialize_controls(&store, &run, &home.path().join("records")).is_err());
+            }
+        }
+
+        #[test]
+        fn empty_oversized_seed_and_unobserved_admission_refuse_before_dispatch() {
+            for seeds in [0, 17] {
+                let home = tempfile::tempdir().unwrap();
+                let p = control_plan(home.path(), 40);
+                let store = Arc::new(Store::open(home.path().join("store")).unwrap());
+                let (c, _) = context(&p, 20, true, false);
+                let mut d = Discovery::open_research(store.clone(), p, c).unwrap();
+                let e = Evaluator::new(store);
+                assert!(d
+                    .advance(
+                        &Space {
+                            seeds,
+                            duplicate: false
+                        },
+                        &HeuristicAdmission,
+                        &e,
+                        1,
+                        usize::MAX
+                    )
+                    .is_err());
+                assert!(e.calls.lock().unwrap().is_empty());
+                assert_eq!(stored(&d)["capture"]["charged"], 0);
+            }
+            struct Unobserved;
+            impl Admission for Unobserved {
+                fn admit(&self, _: Vec<String>, _: bool, _: &mut ChaCha12Rng) -> Vec<String> {
+                    panic!("must refuse, not invoke an unobserved policy")
+                }
+            }
+            let home = tempfile::tempdir().unwrap();
+            let p = control_plan(home.path(), 40);
+            let store = Arc::new(Store::open(home.path().join("store")).unwrap());
+            let (c, _) = context(&p, 20, true, false);
+            let mut d = Discovery::open_research(store.clone(), p, c).unwrap();
+            let e = Evaluator::new(store);
+            d.advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
+                .unwrap();
+            let calls = e.calls.lock().unwrap().len();
+            assert!(d.advance(&SPACE, &Unobserved, &e, 1, usize::MAX).is_err());
+            assert_eq!(e.calls.lock().unwrap().len(), calls);
+        }
+
+        #[test]
+        fn capture_roots_survive_gc_and_normal_open_or_binding_drift_refuse() {
+            let home = tempfile::tempdir().unwrap();
+            let p = control_plan(home.path(), 40);
+            let store = Arc::new(Store::open(home.path().join("store")).unwrap());
+            let (c, _) = context(&p, 20, true, false);
+            let mut d = Discovery::open_research(store.clone(), p.clone(), c).unwrap();
+            let e = Evaluator::new(store.clone());
+            run_to_end(&mut d, &e, 8);
+            let roots = d.checkpoint.capture.as_ref().unwrap().roots();
+            let orphan = store.publish_blob(&b"unreferenced-control"[..]).unwrap();
+            let gc = store.gc(true).unwrap();
+            assert_eq!(gc.blobs, vec![orphan]);
+            assert!(gc.blobs.iter().all(|r| !roots.contains(r)));
+            d.pause().unwrap();
+            drop(d);
+            assert!(Discovery::open(store.clone(), p.clone()).is_err());
+            let (mut changed, _) = context(&p, 20, true, false);
+            Arc::get_mut(&mut changed).unwrap().binding.tokens[0][0] = 0.5;
+            assert!(Discovery::open_research(store, p, changed).is_err());
+        }
+
+        #[test]
+        fn round_transaction_failure_never_installs_outbox_or_public_results() {
+            let home = tempfile::tempdir().unwrap();
+            let p = control_plan(home.path(), 40);
+            let store = Arc::new(Store::open(home.path().join("store")).unwrap());
+            let (c, _) = context(&p, 20, true, false);
+            let mut d = Discovery::open_research(store.clone(), p.clone(), c.clone()).unwrap();
+            let e = Evaluator::new(store.clone());
+            store
+                .transaction(|tx| {
+                    tx.put(
+                        &RecordKey::Evaluation {
+                            run: p.run_id.clone(),
+                            number: 0,
+                        },
+                        &Record::metadata(json!({"conflict-control":true}), vec![]),
+                    )
+                })
+                .unwrap();
+            assert!(d
+                .advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
+                .is_err());
+            assert!(d.poisoned);
+            let cp = stored(&d);
+            assert!(cp["elites"]["objective"].is_null() || cp["champion"].is_null());
+            assert!(cp["capture"]["rounds"]["0"]["committed"].is_null());
+            assert_eq!(cp["next_round"], 0);
+            assert!(d.projection().unwrap().as_array().unwrap().is_empty());
+            drop(d);
+            let resumed = Discovery::open_research(store, p, c).unwrap();
+            assert!(!resumed.checkpoint.capture.as_ref().unwrap().unknown());
+            assert!(records(&resumed).is_empty());
+        }
+
+        #[test]
+        fn corrupt_or_missing_capture_cas_never_materializes() {
+            let home = tempfile::tempdir().unwrap();
+            let p = control_plan(home.path(), 40);
+            let run = p.run_id.clone();
+            let (c, _) = context(&p, 20, true, false);
+            let store_home = home.path().join("store");
+            let store = Arc::new(Store::open(&store_home).unwrap());
+            let mut d = Discovery::open_research(store.clone(), p.clone(), c.clone()).unwrap();
+            let e = Evaluator::new(store.clone());
+            run_to_end(&mut d, &e, 1);
+            let reference = d.checkpoint.capture.as_ref().unwrap().rounds[&1]
+                .slate
+                .clone();
+            let name = hex_blob(&reference);
+            let path = store_home
+                .join("cas/sha256")
+                .join(&name[..2])
+                .join(&name[2..4])
+                .join(&name[4..]);
+            let saved = fs::read(&path).unwrap();
+            fs::write(&path, b"deliberately corrupted own control fixture").unwrap();
+            let output = home.path().join("records.jsonl");
+            assert!(materialize_controls(&store, &run, &output).is_err());
+            assert!(!output.exists());
+            assert!(Discovery::open_research(store.clone(), p.clone(), c.clone()).is_err());
+            fs::write(&path, &saved).unwrap();
+            let backup = home.path().join("retained-cas-control");
+            fs::rename(&path, &backup).unwrap();
+            assert!(materialize_controls(&store, &run, &output).is_err());
+            assert!(!output.exists());
+            fs::rename(backup, path).unwrap();
+            assert_eq!(materialize_controls(&store, &run, &output).unwrap(), 3);
+        }
+
+        #[test]
+        fn seed_endpoints_and_capture_input_bounds_are_explicit() {
+            for seeds in [1, 16] {
+                let home = tempfile::tempdir().unwrap();
+                let p = control_plan(home.path(), 48);
+                let (c, _) = context(&p, 16, true, false);
+                let store = Arc::new(Store::open(home.path().join("store")).unwrap());
+                let mut d = Discovery::open_research(store.clone(), p, c).unwrap();
+                let e = Evaluator::new(store);
+                d.advance(
+                    &Space {
+                        seeds,
+                        duplicate: false,
+                    },
+                    &HeuristicAdmission,
+                    &e,
+                    1,
+                    usize::MAX,
+                )
+                .unwrap();
+                assert_eq!(records(&d)[0].proposals.len(), seeds);
+                assert_eq!(records(&d)[0].outcomes.len(), seeds);
+            }
+            for case in 0..7 {
+                let home = tempfile::tempdir().unwrap();
+                let p = control_plan(home.path(), 40);
+                let (mut c, _) = context(&p, 20, true, false);
+                let b = &mut Arc::get_mut(&mut c).unwrap().binding;
+                match case {
+                    0 => b.config.max_attempts = 41,
+                    1 => b.config.max_rounds = 0,
+                    2 => b.config.max_bytes = 0,
+                    3 => b.config.seed_protocol_sha256.clear(),
+                    4 => b.identity.task = RecordTask::Binary,
+                    5 => b.matrix_sha256 = digest(b"changed"),
+                    _ => b.seed += 1,
+                }
+                let store = Arc::new(Store::open(home.path().join("store")).unwrap());
+                assert!(Discovery::open_research(store.clone(), p.clone(), c).is_err());
+                assert!(store.get(&RecordKey::Run(p.run_id)).unwrap().is_none());
+            }
+        }
+
+        #[test]
+        fn auxiliary_abort_or_stale_reply_stays_unknown() {
+            for mode in 0..3 {
+                struct AbortAux {
+                    inner: Evaluator,
+                    mode: usize,
+                }
+                impl Executor for AbortAux {
+                    fn evaluate(&self, r: &Request) -> Response {
+                        if r.attempt.slot == 65536 && self.mode < 2 {
+                            assert_ne!(self.mode, 0, "owned auxiliary panic control");
+                            let mut response = self.inner.evaluate(r);
+                            response.attempt.attempt += 1;
+                            return response;
+                        }
+                        self.inner.evaluate(r)
+                    }
+                    fn fitted_model(&self, _: &Request) -> Result<Vec<u8>> {
+                        panic!("owned refit panic control")
+                    }
+                }
+                let home = tempfile::tempdir().unwrap();
+                let p = control_plan(home.path(), 40);
+                let run = p.run_id.clone();
+                let (c, _) = context(&p, 20, true, false);
+                let store = Arc::new(Store::open(home.path().join("store")).unwrap());
+                let mut d = Discovery::open_research(store.clone(), p.clone(), c.clone()).unwrap();
+                let e = AbortAux {
+                    inner: Evaluator::new(store.clone()),
+                    mode,
+                };
+                assert!(d
+                    .advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
+                    .is_err());
+                assert!(d.poisoned);
+                assert!(stored(&d)["capture"]["rounds"]["0"]["committed"].is_null());
+                assert_eq!(stored(&d)["capture"]["charged"], 4);
+                assert!(d.projection().unwrap().as_array().unwrap().is_empty());
+                drop(d);
+                let mut d = Discovery::open_research(store.clone(), p, c).unwrap();
+                assert!(d.checkpoint.capture.as_ref().unwrap().tainted);
+                assert!(d
+                    .advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
+                    .is_err());
+                assert!(materialize_controls(&store, &run, &home.path().join("refused")).is_err());
+            }
+        }
+
+        #[test]
+        fn exhausted_wall_stops_new_dispatch_without_refunding_reservations() {
+            let home = tempfile::tempdir().unwrap();
+            let mut p = control_plan(home.path(), 40);
+            p.wall_seconds = 1;
+            let (c, _) = context(&p, 20, true, false);
+            let store = Arc::new(Store::open(home.path().join("store")).unwrap());
+            let mut d = Discovery::open_research(store.clone(), p.clone(), c.clone()).unwrap();
+            let mut checkpoint = d.checkpoint.clone();
+            checkpoint.elapsed_ms = 0;
+            checkpoint.active_since_ms = Some(wall_clock_ms().unwrap());
+            d.commit_control(checkpoint, RunState::Running).unwrap();
+            struct Slow(Evaluator);
+            impl Executor for Slow {
+                fn evaluate(&self, r: &Request) -> Response {
+                    std::thread::sleep(Duration::from_millis(1100));
+                    self.0.evaluate(r)
+                }
+                fn fitted_model(&self, _: &Request) -> Result<Vec<u8>> {
+                    unreachable!()
+                }
+            }
+            let e = Slow(Evaluator::new(store.clone()));
+            assert!(d
+                .advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
+                .is_err());
+            assert!(d.poisoned);
+            assert_eq!(e.0.calls.lock().unwrap().len(), 1);
+            assert_eq!(stored(&d)["capture"]["charged"], 4);
+            drop(d);
+            let d = Discovery::open_research(store.clone(), p.clone(), c).unwrap();
+            assert_eq!(d.completed(), Some(CompletionReason::BudgetTime));
+            assert!(d.checkpoint.capture.as_ref().unwrap().tainted);
+            assert!(materialize_controls(&store, &p.run_id, &home.path().join("refused")).is_err());
+        }
+
+        #[test]
+        #[ignore = "own child controlled by sigkill_at_capture_boundaries_preserves_committed_prefix"]
+        fn capture_kill_child() {
+            let home = PathBuf::from(std::env::var_os("QLT03_KILL_HOME").unwrap());
+            let p = control_plan(&home, 40);
+            let store = Arc::new(Store::open(home.join("store")).unwrap());
+            let (c, _) = context(&p, 20, true, false);
+            let mut d = Discovery::open_research(store.clone(), p.clone(), c).unwrap();
+            let e = Evaluator::new(store.clone());
+            run_to_end(&mut d, &e, 1);
+            materialize_controls(&store, &p.run_id, &home.join("published.jsonl")).unwrap();
+            panic!("requested process boundary was never reached");
+        }
+
+        #[cfg(unix)]
+        #[test]
+        fn sigkill_at_capture_boundaries_preserves_committed_prefix() {
+            for stage in [
+                "before_reservation",
+                "after_reservation",
+                "after_outcome",
+                "before_round",
+                "after_round",
+                "after_file_sync",
+                "after_file_publish",
+            ] {
+                let home = tempfile::tempdir().unwrap();
+                let mut child = Command::new(std::env::current_exe().unwrap())
+                    .args([
+                        "--exact",
+                        "discover::r#loop::tests::durable_capture::capture_kill_child",
+                        "--ignored",
+                        "--nocapture",
+                    ])
+                    .env("QLT03_KILL_HOME", home.path())
+                    .env("QLT03_CAPTURE_STOP", stage)
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .spawn()
+                    .unwrap();
+                let mut reader = BufReader::new(child.stdout.take().unwrap());
+                let (tx, rx) = std::sync::mpsc::sync_channel(1);
+                let thread = std::thread::spawn(move || {
+                    let mut line = String::new();
+                    while reader.read_line(&mut line).unwrap() > 0 {
+                        if line.contains("QLT03_CAPTURE_BOUNDARY:") {
+                            let _ = tx.send(());
+                            break;
+                        }
+                        line.clear();
+                    }
+                });
+                let ready = rx.recv_timeout(Duration::from_secs(20));
+                let _ = child.kill();
+                let status = child.wait().unwrap();
+                thread.join().unwrap();
+                let mut diagnostic = String::new();
+                child
+                    .stderr
+                    .take()
+                    .unwrap()
+                    .read_to_string(&mut diagnostic)
+                    .unwrap();
+                assert!(ready.is_ok(), "{stage}: {diagnostic}");
+                assert!(!status.success());
+                let p = control_plan(home.path(), 40);
+                let store = Arc::new(Store::open(home.path().join("store")).unwrap());
+                let (c, _) = context(&p, 20, true, false);
+                let mut d = Discovery::open_research(store.clone(), p.clone(), c).unwrap();
+                let e = Evaluator::new(store.clone());
+                let expected_records = match stage {
+                    "after_round" => 1,
+                    "after_file_sync" | "after_file_publish" => 3,
+                    _ => 0,
+                };
+                assert_eq!(records(&d).len(), expected_records, "{stage}");
+                if matches!(stage, "after_reservation" | "after_outcome") {
+                    let state = d.checkpoint.capture.as_ref().unwrap();
+                    assert!(state.tainted);
+                    assert_eq!(state.charged, 4);
+                    assert_eq!(
+                        state.rounds[&0]
+                            .attempts
+                            .iter()
+                            .filter(|a| a.result.is_some())
+                            .count(),
+                        usize::from(stage == "after_outcome")
+                    );
+                    assert!(d
+                        .advance(&SPACE, &HeuristicAdmission, &e, 8, usize::MAX)
+                        .is_err());
+                    assert!(e.calls.lock().unwrap().is_empty());
+                    assert!(materialize_controls(
+                        &store,
+                        &p.run_id,
+                        &home.path().join("refused.jsonl")
+                    )
+                    .is_err());
+                } else {
+                    assert!(!d.checkpoint.capture.as_ref().unwrap().tainted);
+                    run_to_end(&mut d, &e, 8);
+                    assert_eq!(records(&d).len(), 3);
+                    let output = home.path().join("recovered.jsonl");
+                    assert_eq!(materialize_controls(&store, &p.run_id, &output).unwrap(), 3);
+                    let published = home.path().join("published.jsonl");
+                    assert_eq!(published.exists(), stage == "after_file_publish");
+                    if published.exists() {
+                        assert_eq!(fs::read(published).unwrap(), fs::read(output).unwrap());
+                    }
+                }
+            }
         }
     }
 }
