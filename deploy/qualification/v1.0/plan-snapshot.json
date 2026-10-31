@@ -1,0 +1,20 @@
+{
+  "schema": "jope.release-plan-snapshot/v1",
+  "observed_utc": "2026-10-31T04:22:19.016716+00:00",
+  "driver_commit": "da5bc275ab8aefae7c290bac4567900451b63605",
+  "driver_sha256": "cdd7d0a6e553595711d6f80ad4aab6ca6ac6fa847e2524fc18a33f7814f5e5ac",
+  "inventory_main": "1d91947374c3bd31349a4ecab727af4ffb8c25a8",
+  "receipt_path": "/home/ubuntu/jope_plan/evidence/REL-07/t2210/frozen-release-plan/qualification_receipt.json",
+  "receipt_sha256": "a1bc83e8b33d933c0dae4fdfde707a41e323e91ff1d1a69a07eda9781cdc0d7f",
+  "plan_source_files": 243,
+  "release_gates": 28,
+  "capability_gates": 1,
+  "cpu_commands_inventoried": 19,
+  "commands_executed": 0,
+  "signed_candidate": null,
+  "owner_approval": null,
+  "release_qualified": false,
+  "gate_status": "not-qualified / not-run",
+  "qualification_schema_sha256": "8ed121be12f09d7cf414ccbf4bb569fa53caa200650f2e8cf7fabe0657fb1631",
+  "limits": "Dated metadata-only inventory; task headings are reported notes, not qualification evidence."
+}

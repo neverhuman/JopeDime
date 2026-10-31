@@ -10,18 +10,23 @@ use jope_datasets::hash::digest_content;
 use jope_datasets::paths::jope_home;
 use std::path::{Path, PathBuf};
 
+/// Local model bundle and content-addressed blob cache.
 #[derive(Clone, Debug)]
 pub struct ModelsCache {
+    /// Root directory containing the local bundle and content-addressed blob caches.
     pub root: PathBuf,
 }
 
+/// Result of checking the locally materialized files for one bundle.
 #[derive(Clone, Debug, Default)]
 pub struct VerifyReport {
+    /// Bundle identifier that was checked.
     pub bundle_id: String,
     /// Files listed by the manifest and present in the bundle directory.
     pub files_checked: usize,
     /// Files listed by the manifest but not fetched (e.g. `--component` fetches).
     pub files_absent: usize,
+    /// Verification problems found; an empty list means every present file checked successfully.
     pub errors: Vec<String>,
 }
 
@@ -33,30 +38,37 @@ impl ModelsCache {
         }
     }
 
+    /// Create a cache rooted at the supplied directory.
     pub fn at(root: impl Into<PathBuf>) -> ModelsCache {
         ModelsCache { root: root.into() }
     }
 
+    /// Return the shared content-addressed blob directory.
     pub fn blobs(&self) -> BlobDir {
         BlobDir::new(self.root.join("blobs").join("sha256"))
     }
 
+    /// Return the root directory for materialized bundles.
     pub fn bundles_dir(&self) -> PathBuf {
         self.root.join("bundles")
     }
 
+    /// Return the materialized directory for `bundle_id`.
     pub fn bundle_dir(&self, bundle_id: &str) -> PathBuf {
         self.bundles_dir().join(bundle_id)
     }
 
+    /// Return the directory containing cached bundle manifests.
     pub fn manifests_dir(&self) -> PathBuf {
         self.root.join("manifests")
     }
 
+    /// Return the cached manifest path for `bundle_id`.
     pub fn manifest_path(&self, bundle_id: &str) -> PathBuf {
         self.manifests_dir().join(format!("{bundle_id}.json"))
     }
 
+    /// Return the materialized path for a bundle-relative file.
     pub fn file_path(&self, bundle_id: &str, path: &str) -> PathBuf {
         self.bundle_dir(bundle_id).join(path)
     }
@@ -125,8 +137,10 @@ impl ModelsCache {
         Ok(dir)
     }
 
-    /// Re-hash every materialised file of a bundle (size check only with `quick`) against its
-    /// cached manifest, and check the notices.
+    /// Verify every materialized file and backing blob against the cached manifest, and check
+    /// notices.
+    ///
+    /// When `quick` is true, compare byte lengths only; otherwise compute SHA-256 digests.
     pub fn verify(&self, bundle_id: &str, quick: bool) -> Result<VerifyReport> {
         let (_, manifest) = self
             .read_manifest(bundle_id)?
