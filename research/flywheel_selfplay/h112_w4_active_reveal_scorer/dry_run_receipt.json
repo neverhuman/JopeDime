@@ -1,0 +1,160 @@
+{
+  "run_id": "opus-h112-dryrun-20261031a",
+  "stage": "dry-run",
+  "source_sha256": "de7d58826a70b9e5279488594bbc7cc7e7d38224a037f56204b04781b2815579",
+  "h106_source_sha256": "13730ebfdf1a451157799a7d4a639ccae61ed88361044006adb0ff548978f7da",
+  "h110_fits_sha256": "239b9d265e2cfe30ba48f42085f12009c497e04ba5eb0a695a2fe2689e67c00f",
+  "gpu_seconds": 0,
+  "memory_rows": 2306,
+  "memory_sha256": "389b28e720c33dcff27385de0c6503df483cb613fecc573a6fbb22c18715d7d1",
+  "fold_manifest_sha256": "a523c8b6406f89334ffbe91d29655763539eea928b034a4a8c50ee521cb09504",
+  "families_spanning_folds": 0,
+  "priors": {
+    "fold0": {
+      "train_rows": 1802,
+      "train_contexts": 39,
+      "slope": 0.8355995827917314
+    },
+    "fold1": {
+      "train_rows": 1850,
+      "train_contexts": 41,
+      "slope": 0.8953228902942555
+    },
+    "fold2": {
+      "train_rows": 1846,
+      "train_contexts": 40,
+      "slope": 0.9084361216362875
+    },
+    "fold3": {
+      "train_rows": 1669,
+      "train_contexts": 36,
+      "slope": 0.9016722651446014
+    },
+    "fold4": {
+      "train_rows": 2057,
+      "train_contexts": 44,
+      "slope": 0.8769360902807808
+    }
+  },
+  "priors_sha256": "326f349a794776efcd39e5983f8296082abdf068ff56590d3ec96aef9a219a74",
+  "dry_run_contexts": [
+    "2931b4f52a86b1d296cde6e9bc90dcca996586ef8fd9698ce98dc49748598059",
+    "19eb5c0c9eec6e4bae8d52a26515f025c699a07a45a703e3583e34710c860f74",
+    "079653d75857a01699ab5c0314ca3c2ce165105e106e359b5c9b0161039e6eb6"
+  ],
+  "dry_run_rows": 15,
+  "dry_run_complete": 15,
+  "ledger": {
+    "fits": 48,
+    "settled": 48,
+    "failed": 0,
+    "timeouts": 0,
+    "cpu_s": 55.21399999999999,
+    "wall_s": 59.236,
+    "cap": 2400,
+    "deadline_utc": "2026-11-01T18:00:00Z"
+  },
+  "note": "DRY_RUN rows are integrity evidence only; never part of an H112 result",
+  "schema": "rd_breakthrough.dry-run-receipt/v1",
+  "wave": "W4",
+  "h_folder": "H112",
+  "author": "rd_opus [OPUS]",
+  "execution": {
+    "host": "xbabe2",
+    "wall": "1:05.18",
+    "max_rss_kb": 183612,
+    "nice": 15,
+    "workers": 8
+  },
+  "selection_behaviour": {
+    "s_2plus2_equals_s_top4": "3/3 contexts",
+    "swap_differs_from_2plus2": "1/3 contexts"
+  },
+  "data_scope": "DL-Train only; dry-run contexts from non-roster families; 0 DL-Val/outer/sealed/holdout reads; DOPE not loaded",
+  "s3_objects": [
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h112-dryrun-20261031a/dry-run_receipt.json",
+      "version_id": "mTmLHPdSiUVIG76YVJEnMkEeLGEZ_NOz",
+      "sha256": "a7c9e36ecf20b5a05b5a53feaf2a7cdf0d7c3525caedd8a551c4e38034781dd2",
+      "bytes": 1719,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h112-dryrun-20261031a/memory.jsonl",
+      "version_id": "Sj_7gwyb35zfbzEWdBZljXma4VwmiZXN",
+      "sha256": "389b28e720c33dcff27385de0c6503df483cb613fecc573a6fbb22c18715d7d1",
+      "bytes": 1098572,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h112-dryrun-20261031a/fold_manifest.json",
+      "version_id": "cS2oRmQbpZ4IS21MnMYqgsvT.wm7hkAY",
+      "sha256": "a523c8b6406f89334ffbe91d29655763539eea928b034a4a8c50ee521cb09504",
+      "bytes": 7512,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h112-dryrun-20261031a/priors.pkl",
+      "version_id": "PVGWtDnSkUv0QouIhi.Fs417S9bDXb_I",
+      "sha256": "326f349a794776efcd39e5983f8296082abdf068ff56590d3ec96aef9a219a74",
+      "bytes": 2277326,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h112-dryrun-20261031a/rows_dry_run.jsonl",
+      "version_id": "DK7KXYKcv72rzOYdaosxVcPvx3icdETn",
+      "sha256": "1ec5c8ae25d3ae5e115f6f8fb83f5c5943424bc061a0791794ae2c06b2b1d6a5",
+      "bytes": 7554,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h112-dryrun-20261031a/fits.jsonl",
+      "version_id": "tiAStEpqr6yCBBiwzk8N1B3XPopazjFo",
+      "sha256": "037ca4cdb2dad59b00e6e3e8b3235f86b7dd762461eff87b00ef28ba273dbbc1",
+      "bytes": 20808,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h112-dryrun-20261031a/ledger.json",
+      "version_id": "c79wJ._7WZLNcucPmjZ5nQsPoswe4E7H",
+      "sha256": "7ab4efdaf616f0fadccbe41e0da40f13dd2d20d05e8d506636dacfcf198784c8",
+      "bytes": 164,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h112-dryrun-20261031a/shortfalls_dry_run.json",
+      "version_id": "9XEKaTQmgOJ3ZIpczFmZQzesAk7OG_rc",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "bytes": 2,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h112-dryrun-20261031a/run.log",
+      "version_id": "pyar0qIzqq8TLMEWAIhhLHUdvUjTUkkv",
+      "sha256": "17f7fb133bd1024f80a99b5f115ba0140fb3d253eb44477d2bbcbe7f3d63f0f9",
+      "bytes": 1219,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h112-dryrun-20261031a/time.log",
+      "version_id": "9RN2Qh8b0CbLyvwYlyzqI33FzgsMS9K7",
+      "sha256": "f7e9a601ea4169180bfdc5fe3cdec9a61af7d8ca46d147fe25c8398a8e3665a2",
+      "bytes": 1076,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h112-dryrun-20261031a/run_h112.py",
+      "version_id": "n2zE2tdyu.FcYnFH8SE08_vJYesRfGP_",
+      "sha256": "de7d58826a70b9e5279488594bbc7cc7e7d38224a037f56204b04781b2815579",
+      "bytes": 18459,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h112-dryrun-20261031a/test_run_h112.py",
+      "version_id": "DOTZ3Z5y1msOytuetmPf12eQjO_9z64g",
+      "sha256": "a8d16d21234937c20d1bb18b04b6684f593e4a13304ab0b6cae4da73d8fde866",
+      "bytes": 3686,
+      "write": "create-only if-none-match"
+    }
+  ]
+}

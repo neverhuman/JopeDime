@@ -13584,6 +13584,16 @@
       ],
       "lanes": [],
       "scope": "H109 family-balanced accumulation preregistration fixtures: exact family partition, staged r882 checkpoint hash and no-alias checks, increasing warmup, matched flat controls."
+    },
+    "python:research/flywheel_selfplay/h112_w4_active_reveal_scorer/test_run_h112.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H112 W4 scorer-prior two-plus-two fixtures: level-free update invariant to a common outcome shift with only the first pair revealed, equal residuals reduce two-plus-two to top4 and the swap negates the signal, first-pair execution errors make adaptive arms INCOMPLETE, within-context clipped OLS slope, analyze requiring gate + placebo + complete panel and refusing dry-run rows, and the merged-H106 loader refusing changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
     }
   },
   "lanes": {
