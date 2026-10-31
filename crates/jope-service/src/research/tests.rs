@@ -166,6 +166,22 @@ fn rust_stream_reads_in_python_with_exact_inventory() {
 }
 
 #[test]
+fn rust_float32_boundary_encodings_read_in_python() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("float-boundaries.jsonl");
+    let mut row = record(0, true);
+    row.tokens[0][0] = f32::MAX;
+    row.tokens[0][1] = -f32::MAX;
+    row.tokens[0][2] = f32::MIN_POSITIVE;
+    row.tokens[0][3] = f32::from_bits(1);
+    row.proposals[0].feat412[0] = f32::MAX;
+    row.proposals[0].proj16[0] = f64::MAX;
+    RecordWriter::create(&path).unwrap().append(&row).unwrap();
+    let output = reader(&path, true);
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+}
+
+#[test]
 fn missing_failure_or_unadmitted_label_cannot_be_accepted_as_complete() {
     let mut all = record(1, true);
     all.outcomes.remove(0); // A failed evaluation is still a required observation.
