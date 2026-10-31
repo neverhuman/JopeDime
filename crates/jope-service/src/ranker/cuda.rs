@@ -212,8 +212,11 @@ pub fn compare_stage(
 }
 
 /// Every M2 stage is mandatory; a costs-only trace cannot satisfy this checker.
+/// A trace contains exactly one context, and its identity travels with every
+/// supplied stage so reference/candidate rows cannot be paired across contexts.
 #[derive(Clone, Copy, Debug)]
 pub struct Trace<'a> {
+    pub context_id: &'a str,
     pub v256: TensorView<'a>,
     pub col: TensorView<'a>,
     pub dope629: TensorView<'a>,
@@ -224,6 +227,14 @@ pub struct Trace<'a> {
 }
 
 pub fn compare_trace(reference: Trace<'_>, actual: Trace<'_>) -> Result<Vec<StageComparison>> {
+    ensure!(
+        !reference.context_id.is_empty(),
+        "trace context identity must not be empty"
+    );
+    ensure!(
+        reference.context_id == actual.context_id,
+        "reference and actual trace context identities differ"
+    );
     [
         (Stage::V256, reference.v256, actual.v256),
         (Stage::Col, reference.col, actual.col),
@@ -518,28 +529,45 @@ mod tests {
         assert!(compare_stage(Stage::Costs, view(&[8], &[0.0; 8]), view(&[8], &[0.0; 8])).is_err());
     }
 
-    struct TraceFixture(Vec<Vec<f32>>);
+    struct TraceFixture {
+        context_id: &'static str,
+        stages: Vec<Vec<f32>>,
+    }
 
     impl TraceFixture {
         fn new() -> Self {
-            Self(
-                [256, 1088, 629, 48, 320, 10, 12]
+            Self {
+                context_id: "context-a",
+                stages: [256, 1088, 629, 48, 320, 10, 12]
                     .map(|n| vec![0.0; n])
                     .to_vec(),
-            )
+            }
         }
 
         fn trace(&self) -> Trace<'_> {
             Trace {
-                v256: view(&[256], &self.0[0]),
-                col: view(&[64, 17], &self.0[1]),
-                dope629: view(&[629], &self.0[2]),
-                lm48: view(&[48], &self.0[3]),
-                tokens: view(&[10, 32], &self.0[4]),
-                mask: view(&[10], &self.0[5]),
-                costs: view(&[12], &self.0[6]),
+                context_id: self.context_id,
+                v256: view(&[256], &self.stages[0]),
+                col: view(&[64, 17], &self.stages[1]),
+                dope629: view(&[629], &self.stages[2]),
+                lm48: view(&[48], &self.stages[3]),
+                tokens: view(&[10, 32], &self.stages[4]),
+                mask: view(&[10], &self.stages[5]),
+                costs: view(&[12], &self.stages[6]),
             }
         }
+    }
+
+    #[test]
+    fn rejects_reference_and_actual_traces_from_different_contexts() {
+        let reference = TraceFixture::new();
+        let mut actual = TraceFixture::new();
+        actual.context_id = "context-b";
+        let error = compare_trace(reference.trace(), actual.trace()).unwrap_err();
+        assert!(error.to_string().contains("context identities differ"));
+
+        actual.context_id = "";
+        assert!(compare_trace(actual.trace(), actual.trace()).is_err());
     }
 
     #[test]
@@ -553,7 +581,7 @@ mod tests {
         );
         for stage in 0..7 {
             let mut actual = TraceFixture::new();
-            actual.0[stage][0] = 1.0;
+            actual.stages[stage][0] = 1.0;
             assert!(
                 compare_trace(reference.trace(), actual.trace()).is_err(),
                 "stage {stage}"
