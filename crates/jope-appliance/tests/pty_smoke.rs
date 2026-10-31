@@ -163,8 +163,10 @@ fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io
         assert_output_clean(&output);
     }
 
-    let mut terminal =
-        pty::PtySession::spawn_jopedime_with_env(&[], &[("JOPEDIME_HOME", home_text)])?;
+    let mut terminal = pty::PtySession::spawn_jopedime_with_env(
+        &[],
+        &[("JOPEDIME_HOME", home_text), ("NO_COLOR", "1")],
+    )?;
     let screen = terminal.wait_for_text("engine background", Duration::from_secs(10))?;
     assert_no_internal_sentinels(&screen);
     terminal.type_text(&format!("\\open {}", csv.display()))?;
