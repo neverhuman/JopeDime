@@ -14,8 +14,11 @@ const MAX_ALIGNED_STAGES: usize = 128;
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ProgramSnapshot {
+    /// Versioned codec used for `lossless`.
     pub codec: String,
+    /// Stable identity of the parsed program.
     pub identity: String,
+    /// Reversible serialized program representation.
     pub lossless: String,
     /// `typed_capture` preserves the producer's values; `source_capture` preserves only
     /// values present in the supplied text, never precision already lost upstream.
@@ -129,7 +132,9 @@ impl ExactValue {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct StageView {
+    /// Registered stage operation name.
     pub op: String,
+    /// Exact parameter values keyed by parameter name.
     pub params: BTreeMap<String, ExactValue>,
 }
 impl StageView {
@@ -196,18 +201,26 @@ pub enum AtomicEdit {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct EditSite {
+    /// Stage index in the original parent, if this edit refers to one.
     pub before_index: Option<usize>,
+    /// Stage index in the final child, if this edit refers to one.
     pub after_index: Option<usize>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ProgramDelta {
+    /// Program snapshot from which replay starts.
     pub parent: ProgramSnapshot,
+    /// Expected program snapshot after replay.
     pub child: ProgramSnapshot,
+    /// Ordered reversible edits from `parent` to `child`.
     pub edits: Vec<AtomicEdit>,
+    /// Original-parent/final-child coordinates corresponding to `edits`.
     pub sites: Vec<EditSite>,
+    /// Coverage level of the structural comparison.
     pub coverage: String,
+    /// Source representation from which the difference was derived.
     pub provenance: String,
 }
 

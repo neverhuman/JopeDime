@@ -17,10 +17,15 @@ const ENVELOPE_HEADROOM_BYTES: usize = 4 * 1024;
 
 #[derive(Clone, Debug)]
 pub struct Limits {
+    /// Maximum facts admitted to the in-memory queue.
     pub max_facts: usize,
+    /// Maximum aggregate queued payload bytes.
     pub max_bytes: usize,
+    /// Maximum encoded size of an individual fact frame.
     pub max_frame_bytes: usize,
+    /// Maximum records written to one journal.
     pub max_records: u64,
+    /// Maximum bytes written to one journal.
     pub max_journal_bytes: u64,
 }
 impl Default for Limits {
@@ -54,10 +59,15 @@ impl Limits {
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Links {
+    /// Draw identifier associated with the fact, when available.
     pub draw_id: Option<String>,
+    /// Request identifier associated with the fact, when available.
     pub request_id: Option<String>,
+    /// Attempt identifier associated with the fact, when available.
     pub attempt_id: Option<String>,
+    /// Search-event identifier associated with the fact, when available.
     pub search_event_id: Option<String>,
+    /// Lowercase SHA-256 identity of the linked observation, when available.
     pub observation_sha256: Option<String>,
 }
 

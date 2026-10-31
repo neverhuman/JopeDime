@@ -28,22 +28,34 @@ static ENV_LIMIT_REPORTED: std::sync::atomic::AtomicBool =
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Cursor {
+    /// Identifier of the journal run containing the record.
     pub run_id: String,
+    /// Canonical decimal sequence number within the run, starting at one.
     pub sequence: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Envelope {
+    /// Versioned record schema (`jope.reasoning-event/v1`).
     pub schema: String,
+    /// Versioned renderer that produced `narration`.
     pub renderer: String,
+    /// Identifier shared by all records in this journal.
     pub run_id: String,
+    /// Canonical decimal record sequence, starting at one.
     pub sequence: String,
+    /// Run and sequence pair suitable for paging.
     pub cursor: Cursor,
+    /// Search-owned fact captured by this record.
     pub fact: LineageFact,
+    /// Optional source identifiers linking the fact to other records.
     pub links: Links,
+    /// Bounded commentary derived from `fact` and `links`.
     pub narration: Narration,
+    /// Hash-chain digest of the immediately preceding record; empty for the first record.
     pub previous_sha256: String,
+    /// Lowercase SHA-256 digest of this record with this field empty.
     pub sha256: String,
 }
 impl Envelope {
@@ -131,12 +143,19 @@ impl Envelope {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct JournalSummary {
+    /// Identifier of the journal run.
     pub run_id: String,
+    /// Canonical decimal count of durable records.
     pub records: String,
+    /// Canonical decimal count of facts dropped before journaling.
     pub dropped: String,
+    /// Hash-chain digest of the last durable record; empty when there are none.
     pub sha256: String,
+    /// Canonical decimal byte length of the journal file.
     pub bytes: String,
+    /// Capture closure state: `capturing`, `complete`, `incomplete`, `resource_limit`, or `failed`.
     pub status: String,
+    /// Stable error code when capture did not complete normally.
     pub error: Option<String>,
 }
 pub fn commit_path(path: &Path) -> PathBuf {
@@ -431,9 +450,13 @@ pub fn journal_from_env() -> Result<Option<(Tap, FactJournal)>> {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ReadPage {
+    /// Identifier of the journal run.
     pub run_id: String,
+    /// Validated records returned by this page.
     pub events: Vec<Envelope>,
+    /// Cursor to pass as `after` for the next page, if more records may exist.
     pub next: Option<Cursor>,
+    /// Whether the file ended in an incomplete trailing record.
     pub partial_tail: bool,
 }
 
