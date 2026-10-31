@@ -29,10 +29,15 @@ use super::{
     require_accepted_vocabulary, sha256_hex, CHECKPOINT_VOCABULARY_SHA256,
 };
 
+/// Schema identifier accepted by jope-dime's `search --seeds` reader.
 pub const SEED_SCHEMA: &str = "parallel.seed_population.v1";
+/// Number of candidates written: the ranked pool plus grammar-uniform exploration tail.
 pub const SEED_COUNT: usize = POOL_SIZE + EXPLORATION_SIZE;
+/// Origin label for a candidate sampled from the neural policy.
 pub const ORIGIN_NEURAL: &str = "neural_policy";
+/// Origin label for a pool candidate drawn by the grammar-uniform fallback.
 pub const ORIGIN_NEURAL_FALLBACK: &str = "neural_rejection_fallback";
+/// Origin label for a candidate drawn for random exploration.
 pub const ORIGIN_RANDOM: &str = "random_exploration";
 
 /// One seed. Fields are private; candidates are only created by sampling and the grammar-uniform
@@ -452,14 +457,17 @@ pub struct Proposal {
 }
 
 impl Proposal {
+    /// Return the seed population assembled for this proposal.
     pub fn population(&self) -> &SeedPopulation {
         &self.population
     }
 
+    /// Return the sampled policy pool before exploration candidates are appended.
     pub fn pool(&self) -> &PurePool {
         &self.pool
     }
 
+    /// Return the deterministic ranking of the sampled pool.
     pub fn ranking(&self) -> &Ranking {
         &self.ranking
     }
@@ -473,12 +481,16 @@ impl Proposal {
 /// Seeds for the three independent random streams of one proposal.
 #[derive(Clone, Debug)]
 pub struct ProposalSeeds {
+    /// Seed for neural-policy sampling.
     pub sampling: u64,
+    /// Seed for grammar-uniform pool fallback.
     pub fallback: u64,
+    /// Seed for the exploration tail.
     pub exploration: u64,
 }
 
 impl ProposalSeeds {
+    /// Derive independent sampling, fallback, and exploration streams from one run seed.
     pub fn derive(seed: u64) -> Self {
         use crate::hashing::mix64;
         Self {
