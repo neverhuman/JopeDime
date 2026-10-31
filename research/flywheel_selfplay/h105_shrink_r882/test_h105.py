@@ -475,3 +475,102 @@ def test_run_namespace_refuses_old_wave_and_symlinked_budget(tmp_path, monkeypat
     authorized.symlink_to(old, target_is_directory=True)
     with pytest.raises(RuntimeError):
         w.validate_run_root(authorized)
+
+
+def test_native_h99_completed_gpu_receipt_establishes_prior_start_without_ticket(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(
+        w,
+        "fair",
+        SimpleNamespace(fifo_lock=SimpleNamespace(parse_ticket_name=lambda _: None)),
+    )
+    native = {
+        "schema": "jope.h99.gpu-budget/v1",
+        "cap_seconds": 9000.0,
+        "in_progress": None,
+        "attempts": [
+            {
+                "status": "complete",
+                "wall_seconds": 100.0,
+                "gpu_free_mib": 24000,
+                "preflight": {"wave": "H99"},
+                "result": {
+                    "artifact_sha256": "a" * 64,
+                    "summary": str(
+                        Path.home()
+                        / "jope-data/h99/h99-wave/outcomes/cells/ESH-l2/seed36/attempt1/summary.json"
+                    ),
+                },
+            }
+        ],
+    }
+
+    def budget(wave):
+        return (
+            native
+            if wave == "H99"
+            else {
+                "wave": "H100",
+                "cap_seconds": 2700,
+                "attempts": [
+                    {
+                        "started_utc": "2026-10-31T00:00:00Z",
+                        "command": ["python", "runner.py"],
+                    }
+                ],
+                "in_progress": None,
+            }
+        )
+
+    def missing(_):
+        raise w.PredecessorPending("not closed")
+
+    proof = w.require_predecessors(
+        queue_dir=tmp_path, alive_fn=lambda _: False, read_fn=missing, budget_fn=budget
+    )
+    assert proof["H99"]["prior_gpu_start"]
+    for bad in [
+        dict(native, schema="jope.h99.cpu-plan/v1"),
+        dict(native, attempts=[]),
+        dict(native, attempts=[dict(native["attempts"][0], status="failed")]),
+    ]:
+        with pytest.raises(w.PredecessorPending):
+            w.require_predecessors(
+                queue_dir=tmp_path,
+                alive_fn=lambda _: False,
+                read_fn=missing,
+                budget_fn=lambda wave: bad if wave == "H99" else budget(wave),
+            )
+
+
+def test_execution_source_checks_actual_owned_and_shared_bytes_not_physical_head(
+    tmp_path, monkeypatch
+):
+    own, shared = tmp_path / "own", tmp_path / "shared"
+    own.mkdir()
+    shared.mkdir()
+    (own / "runner.py").write_bytes(b"owned code\n")
+    (shared / "shared.py").write_bytes(b"library code\n")
+    import hashlib
+
+    digest = hashlib.sha256(b"library code\n").hexdigest()
+    monkeypatch.setattr(r, "HERE", own)
+    monkeypatch.setattr(r, "SOURCE_ROOT", shared)
+    monkeypatch.setattr(r, "EXECUTION_FILES", ("runner.py",))
+    monkeypatch.setattr(r, "SOURCE_PINS", {"shared.py": digest})
+
+    def blob(ref, path):
+        assert ref == "a" * 40
+        return b"owned code\n" if path.endswith("/runner.py") else b"library code\n"
+
+    monkeypatch.setattr(r, "git_blob", blob)
+    proof = r.verify_execution_source("a" * 40)
+    assert proof["execution_commit"] == "a" * 40
+    (own / "runner.py").write_bytes(b"changed code\n")
+    with pytest.raises(RuntimeError, match="source"):
+        r.verify_execution_source("a" * 40)
+    (own / "runner.py").write_bytes(b"owned code\n")
+    (shared / "shared.py").write_bytes(b"changed library\n")
+    with pytest.raises(RuntimeError, match="source"):
+        r.verify_execution_source("a" * 40)
