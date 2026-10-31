@@ -166,17 +166,6 @@ for common programs is distinguishable from reading the problem.
   \label{fig:price}
 \end{figure}
 
-A ranking head can agree with a referee without improving the writer (\cref{tab:ablation}).
-In the checkpoint described in \cref{sub:method-map}, the map neither
-conditions nor screens the writer's draw. Its ranking accuracy therefore
-cannot establish a reduction in wasted proposals.
-
-In native search, the map's ranks weight parent selection.
-A causal ablation must bind this route to the evaluated checkpoint and
-vary the map's influence with the writer, training budget and deployment
-protocol otherwise matched.
-\TBD{Identify an implemented influence path or limit the study to ranking.}
-
 \begin{table}[t]
   \centering
   \caption{\textbf{Map evidence still required.} Ranking quality and a change
@@ -193,6 +182,17 @@ protocol otherwise matched.
     \bottomrule
   \end{tabularx}
 \end{table}
+
+A ranking head can agree with a referee without improving the writer (\cref{tab:ablation}).
+In the checkpoint described in \cref{sub:method-map}, the map neither
+conditions nor screens the writer's draw. Its ranking accuracy therefore
+cannot establish a reduction in wasted proposals.
+
+In native search, the map's ranks weight parent selection.
+A causal ablation must bind this route to the evaluated checkpoint and
+vary the map's influence with the writer, training budget and deployment
+protocol otherwise matched.
+\TBD{Identify an implemented influence path or limit the study to ranking.}
 
 \subsection{Failure cases and a worked example}\label{sub:results-failures}
 
