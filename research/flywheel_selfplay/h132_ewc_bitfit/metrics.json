@@ -17,7 +17,7 @@
     101,
     102
   ],
-  "prereg_sha256": "f47ab27d28d53484ffe1ccd7ca7c222601e74779aaed281989db1aac7bc0c659",
+  "prereg_sha256": "49f9cca4ad7d51e9e20605a60b76a05c2ee1d5ef2a5bca69ec129bc890c070df",
   "status": "NOT_RUN",
   "synthetic_smoke": {
     "assessment_read": false,

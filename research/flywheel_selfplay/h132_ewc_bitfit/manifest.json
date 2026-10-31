@@ -2,11 +2,11 @@
   "arms": {
     "BITFIT": {
       "frozen_adapter_parameters": 28520,
-      "frozen_adapter_tensors": 27,
+      "frozen_adapter_tensors": 26,
       "loss": "mean_context_loss",
       "trainable_parameters": 691,
-      "trainable_subset": "all 17 adapter .bias tensors (595 params) + mm_prior_out.2.weight (24) + traj_delta_head.2.weight (24) + parent_delta_net.3.weight (48)",
-      "trainable_tensors": 20
+      "trainable_subset": "all 18 adapter bias tensors (.bias and in_proj_bias) (595 params) + mm_prior_out.2.weight (24) + traj_delta_head.2.weight (24) + parent_delta_net.3.weight (48)",
+      "trainable_tensors": 21
     },
     "CONTROL": {
       "loss": "mean_context_loss",
@@ -58,7 +58,7 @@
     101,
     102
   ],
-  "prereg_sha256": "f47ab27d28d53484ffe1ccd7ca7c222601e74779aaed281989db1aac7bc0c659",
+  "prereg_sha256": "49f9cca4ad7d51e9e20605a60b76a05c2ee1d5ef2a5bca69ec129bc890c070df",
   "primary": {
     "admission": {
       "all_three_seeds_gain_strictly_gt_zero": true,
@@ -89,7 +89,7 @@
     "nice": 15,
     "qualification_lock": false
   },
-  "runner_sha256": "0c9b2a072864c69757a152ea87f921a105c1d9e223e79715e3003f5f858231bc",
+  "runner_sha256": "c1bb24c94d3ad7e83d8844d6fecd9076b5b078fe58c9bd6764282a4166c09f60",
   "schema": "jope.h132.preregistration/v1",
   "secondary": {
     "comparator": "CONTROL",
