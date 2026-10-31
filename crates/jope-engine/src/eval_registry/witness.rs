@@ -1432,6 +1432,8 @@ impl WitnessClient {
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
+        // SAFETY: the pre-exec callback only sets the child's process group
+        // with an integer-only syscall; it does not touch shared Rust state.
         unsafe {
             command.pre_exec(|| {
                 if libc::setpgid(0, 0) != 0 {
@@ -1467,6 +1469,8 @@ impl WitnessClient {
                 break Ok(status);
             }
             if remaining(deadline).is_err() {
+                // SAFETY: `pid` is this live child's pid and pre_exec made it
+                // the leader of its own process group before exec.
                 unsafe {
                     libc::kill(-(pid as i32), libc::SIGKILL);
                 }

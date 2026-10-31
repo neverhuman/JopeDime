@@ -78,7 +78,7 @@ with no search, rated 3,055 Elo. That is close to the 3,144 of AlphaGo Fan, the
 version that beat the European champion Fan Hui
 \citep{silver2016mastering,silver2017mastering}. This motivates an analogous
 goal for invention: learn from repeated program evaluations during training,
-then deploy a writer with a single candidate budget, \searchone{}
+then deploy a writer with a single-candidate budget, \searchone{}
 (\cref{box:searchone}). The budget is a test condition, not a
 promise that every first proposal wins. \Cref{fig:emptysquare} separates
 the training feedback path from the frozen writer and fitting procedure at
@@ -172,8 +172,8 @@ The paper contributes:
     iteration on referee scores, with safeguards against reward hacking
     (\cref{sec:method}).
   \item \textbf{An evaluation protocol for the single-proposal claim:}
-    paired comparisons with algorithms proposed by Claude, Codex and Gemini
-    and with KumoRFM \citep{kumorfm2025}, performance curves against agents
+    paired comparisons with frozen algorithms whose receipts record the
+    model that designed them, performance curves against agents
     allowed repeated attempts, and a test of the map's ranking against a
     program-only control (\cref{sec:results}).
 \end{enumerate}

@@ -71,7 +71,7 @@ later adapter snapshot in \cref{sec:method-status}):
   across training rows by mean, standard deviation, and 10th and 90th
   percentiles; (ii)~\num{1024} values from a projected third-party tabular
   regressor hidden state capped at \num{768} context rows and \num{256} query
-  rows, \TBD{name, version and license}; and (iii)~\num{512} values from two
+  rows (Foundation, version \texttt{foundation\_enc.v1.tabpfn}; license: proprietary, available on request); and (iii)~\num{512} values from two
   frozen target-summary windows initialized with fixed seed~17. Any context
   with a non-finite entry is refused rather than imputed. Encoding records
   report wall-clock latency from 11.7\,s to 20.8\,s across eight reference
@@ -79,7 +79,11 @@ later adapter snapshot in \cref{sec:method-status}):
   \item \textbf{Objective terms and parameter split (\cref{sub:method-map,sub:method-selfplay}).}
   Lists $G_p$ require at least eight valid scored programs per problem, with
   percentile $\rho_w = 1 - \mathrm{rank}/(|G_p|-1)$ and writer sequence weight
-  $0.05 + \rho_w^4$. The native sequence term applies label smoothing over
+  $0.05 + \rho_w^4$. The native trainer gives problem families equal mass and forms
+  each training comparison from one list: its best program plus one
+  program drawn from each of seven equal rank bands of the rest. Every
+  objective term is computed on these eight-program comparisons, so
+  \cref{eq:writerLoss,eq:mapLoss} show the list-level form. The native sequence term applies label smoothing over
   legal tokens and averages each program's token loss before taking the
   normalized weighted mean over programs. The displayed aggregate
   coefficients match the native objective; the checkpoint's objective

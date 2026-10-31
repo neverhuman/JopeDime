@@ -153,7 +153,7 @@ def read_policy(path: Path | None) -> dict[str, Any]:
         or not set(hosts).issubset(SUPPORTED_LOCAL_HOSTS)
     ):
         raise ValueError("allowed_hosts must be a unique subset of the exact supported local hosts")
-    if policy.get("repo_root") != "~/JopeDime" or policy.get("sccache_max_bytes") != 60 * GIB:
+    if policy.get("repo_root") != "~/JopeDime" or policy.get("sccache_max_bytes") != 50 * GIB:
         raise ValueError("repo root or sccache cap differs from the reviewed local policy")
     if policy.get("offload") != {
         "bucket": OFFLOAD_BUCKET,
@@ -566,8 +566,10 @@ def worktree_cleanup_inventory(
             main_ancestor = ancestry.returncode == 0
             clean = False
             if main_ancestor or stale_target or (include_closed_pr_worktrees and branch):
+                # A plain status refreshes another writer's index (and takes index.lock), which would reset
+                # the idle clock read below; inspect without optional locks, as ~/.agent/bin/lanes does.
                 status = subprocess.run(
-                    ["git", "-C", str(worktree), "status", "--porcelain", "--untracked-files=all"],
+                    ["git", "--no-optional-locks", "-C", str(worktree), "status", "--porcelain", "--untracked-files=all"],
                     capture_output=True, text=True, timeout=15, check=False,
                 )
                 clean = status.returncode == 0 and not status.stdout
@@ -626,7 +628,7 @@ def worktree_head_is_unchanged(
 ) -> bool:
     try:
         clean = subprocess.run(
-            ["git", "-C", str(worktree), "status", "--porcelain", "--untracked-files=all"],
+            ["git", "--no-optional-locks", "-C", str(worktree), "status", "--porcelain", "--untracked-files=all"],
             check=True, capture_output=True, text=True, timeout=15,
         )
         ignored_safe = not require_ignored_safe or worktree_has_only_rebuildable_ignored_files(worktree)

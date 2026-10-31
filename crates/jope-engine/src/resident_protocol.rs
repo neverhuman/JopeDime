@@ -504,10 +504,8 @@ impl WorkerIdentity {
 }
 
 pub fn peer_credentials(stream: &UnixStream) -> Result<libc::ucred> {
-    // SAFETY: every ucred field is an integer for which zero is valid. The
-    // initialized storage is overwritten by SO_PEERCRED before credentials are used.
-    let mut peer: libc::ucred = unsafe { std::mem::zeroed() };
-    let mut length = std::mem::size_of_val(&peer) as libc::socklen_t;
+    let mut peer = std::mem::MaybeUninit::<libc::ucred>::uninit();
+    let mut length = std::mem::size_of::<libc::ucred>() as libc::socklen_t;
     ensure!(
         // SAFETY: stream owns a live socket; peer is aligned writable ucred storage
         // and length advertises its exact capacity. Both success and returned size are
@@ -517,14 +515,15 @@ pub fn peer_credentials(stream: &UnixStream) -> Result<libc::ucred> {
                 stream.as_raw_fd(),
                 libc::SOL_SOCKET,
                 libc::SO_PEERCRED,
-                (&mut peer as *mut libc::ucred).cast(),
+                peer.as_mut_ptr().cast(),
                 &mut length,
             )
         } == 0
-            && length as usize == std::mem::size_of_val(&peer),
+            && length as usize == std::mem::size_of::<libc::ucred>(),
         "resident peer credentials unavailable"
     );
-    Ok(peer)
+    // SAFETY: getsockopt succeeded and returned the exact ucred size.
+    Ok(unsafe { peer.assume_init() })
 }
 
 pub fn connect_rank(

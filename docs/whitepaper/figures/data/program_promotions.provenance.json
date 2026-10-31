@@ -1,19 +1,15 @@
 {
   "schema": "whitepaper.development-program-promotions/v1",
-  "source_run": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030",
-  "source_host": "xbabe1",
+  "source_run": "run-20261030 (retained development run; host and path withheld)",
   "snapshot": {
-    "host": "xbabe1",
     "at": "2026-10-31T06:23:19.717660+00:00",
     "kind": "read-only complete-line development-log prefixes; no dataset or weight files read",
     "files": [
       {
         "name": "promotions.jsonl",
-        "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/promotions.jsonl",
         "observed_bytes": 7015835,
         "snapshot_bytes": 7015835,
         "trailing_incomplete_bytes_omitted": 0,
-        "inode": 62570216,
         "mtime_ns_before": 1793427786902487081,
         "bytes_after": 7015835,
         "mtime_ns_after": 1793427786902487081,
@@ -21,11 +17,9 @@
       },
       {
         "name": "summary.jsonl",
-        "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/summary.jsonl",
         "observed_bytes": 3358733,
         "snapshot_bytes": 3358733,
         "trailing_incomplete_bytes_omitted": 0,
-        "inode": 62570245,
         "mtime_ns_before": 1793427728820542767,
         "bytes_after": 3358733,
         "mtime_ns_after": 1793427728820542767,

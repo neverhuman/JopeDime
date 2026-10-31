@@ -429,6 +429,10 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
+    "python:research/flywheel_selfplay/h102_w5_provenance_gaps/test_check.py": {
+      "reason": "Owner-requested W5 provenance-gap and W9 CPU-preparation synthetic regression controls; offline research outside the product baseline.",
+      "role": "research"
+    },
     "python:benchmarks/test_prepare.py": {
       "role": "regression",
       "subsystems": [
@@ -2828,7 +2832,8 @@
       "subsystems": [
         "export",
         "fitting"
-      ]
+      ],
+      "reason": "Preserves the existing fitting/export regressions. QLT-03-F01 adds default feature-boundary and opt-in internal CLI parser/refusal controls in this same binary target; these do not qualify actual research capture or replace F02 producer integration."
     },
     "target:jope-appliance/test/e2e": {
       "role": "regression",

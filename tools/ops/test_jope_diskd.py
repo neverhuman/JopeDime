@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
+import subprocess
 import tempfile
+import time
 import unittest
 import gzip
 from contextlib import nullcontext
@@ -35,7 +38,7 @@ class DiskPolicyTests(unittest.TestCase):
             "allow_report_offload": False,
             "allowed_hosts": ["xbabe1", "xbabe2", "xbabe3"],
             "repo_root": "~/JopeDime",
-            "sccache_max_bytes": 60 * jope_diskd.GIB,
+            "sccache_max_bytes": 50 * jope_diskd.GIB,
             "offload": {
                 "bucket": jope_diskd.OFFLOAD_BUCKET,
                 "prefix": jope_diskd.OFFLOAD_PREFIX,
@@ -68,7 +71,7 @@ class DiskPolicyTests(unittest.TestCase):
             "allow_report_offload": False,
             "allowed_hosts": ["xbabe1", "xbabe2", "xbabe3", "xbabe0"],
             "repo_root": "~/JopeDime",
-            "sccache_max_bytes": 60 * jope_diskd.GIB,
+            "sccache_max_bytes": 50 * jope_diskd.GIB,
             "offload": {
                 "bucket": jope_diskd.OFFLOAD_BUCKET,
                 "prefix": jope_diskd.OFFLOAD_PREFIX,
@@ -519,6 +522,36 @@ class DiskPolicyTests(unittest.TestCase):
         self.assertTrue(found[0]["clean"])
         self.assertIsNone(found[0]["ignored_safe"])
         self.assertFalse(found[0]["target_exists"])
+
+    @unittest.skipUnless(shutil.which("git"), "git is required")
+    def test_inventory_does_not_refresh_a_stale_stat_index_or_reset_the_idle_clock(self) -> None:
+        repo = self.home / "JopeDime"
+        root = repo / ".agent" / "worktrees"
+        lane = root / "idle-lane"
+        env = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
+
+        def git(*args: str, cwd: Path = repo) -> None:
+            subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *args], cwd=cwd, env=env,
+                           check=True, capture_output=True)
+
+        repo.mkdir()
+        git("init", "-q", "-b", "main")
+        (repo / "tracked.txt").write_text("a\n", encoding="utf-8")
+        git("add", "tracked.txt")
+        git("commit", "-q", "-m", "init")
+        git("update-ref", "refs/remotes/origin/main", "HEAD")
+        git("worktree", "add", "-q", "--detach", str(lane), "main")
+        git_dir = repo / ".git" / "worktrees" / "idle-lane"
+        now = time.time()
+        # A build or checkout leaves the tracked file's stat newer than the index entry.
+        os.utime(lane / "tracked.txt", (now - 3600, now - 3600))
+        for name in ("index", "HEAD"):
+            os.utime(git_dir / name, (now - 3 * 3600, now - 3 * 3600))
+        index_mtime = (git_dir / "index").stat().st_mtime
+        found = jope_diskd.worktree_cleanup_inventory(repo, root, 2 * 3600, now=now, include_closed_pr_worktrees=False)
+        self.assertEqual((git_dir / "index").stat().st_mtime, index_mtime)
+        self.assertEqual([(c["worktree"], c["disposition"], c["idle"]) for c in found or []],
+                         [(lane.resolve(), "merged", True)])
 
     def test_cleanup_inventory_rejects_closed_pr_with_different_local_head(self) -> None:
         repo = self.home / "JopeDime"

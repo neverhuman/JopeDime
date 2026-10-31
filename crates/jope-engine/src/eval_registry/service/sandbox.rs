@@ -454,14 +454,17 @@ fn allow(ruleset: &OwnedFd, path: &Path, rights: u64, optional: bool) -> Result<
     }
     // SAFETY: a successful open returns a fresh descriptor owned here.
     let fd = unsafe { OwnedFd::from_raw_fd(fd) };
-    // SAFETY: fstat writes only into the zeroed stat buffer.
-    let mut stat: libc::stat = unsafe { std::mem::zeroed() };
+    let mut stat = std::mem::MaybeUninit::<libc::stat>::uninit();
     ensure!(
-        unsafe { libc::fstat(fd.as_raw_fd(), &mut stat) } == 0,
+        // SAFETY: `stat` is aligned writable storage for one result and `fd`
+        // owns a live descriptor for the opened allowlist path.
+        unsafe { libc::fstat(fd.as_raw_fd(), stat.as_mut_ptr()) } == 0,
         "allowlist {}: {}",
         path.display(),
         std::io::Error::last_os_error()
     );
+    // SAFETY: fstat returned 0, so it initialized every field of `stat`.
+    let stat = unsafe { stat.assume_init() };
     let allowed = if stat.st_mode & libc::S_IFMT == libc::S_IFDIR {
         rights
     } else {
