@@ -1,0 +1,114 @@
+{
+  "schema": "rd_breakthrough.audited-results/v1",
+  "wave": "W4",
+  "h_folder": "H81",
+  "stratum": "prospective new-program",
+  "run_id": "opus-h81-20261031a",
+  "author": "rd_opus [OPUS]",
+  "verdict": "BLOCKED_BEFORE_SCORING (preregistered comparator-strength guard failed; zero native fits spent)",
+  "scientific_verdict": null,
+  "advance_gate_evaluated": false,
+  "comparator_check": {
+    "contexts": 50,
+    "families": 44,
+    "cached_gbm_top4_family_mean": {
+      "refit": 1.8620278525037768,
+      "w1_stored": 1.9159280492786674
+    },
+    "tolerance": 0.02,
+    "held_rank_corr_with_true_u": {
+      "refit": 0.6999369397314728,
+      "w1_stored": 0.7025618098857032
+    },
+    "corr_refit_vs_w1_stored": {
+      "mean": 0.9519525216246381,
+      "min": 0.8502788884700333
+    },
+    "w1_models_retained": false,
+    "passed": false
+  },
+  "replication_vs_w1_stored": {
+    "contexts": 40,
+    "max_abs_diff": 3.046834243058716,
+    "min_corr": 0.750950903521592,
+    "median_abs_diff": 0.7025530801219515
+  },
+  "comparator_gap_bootstrap": {
+    "families": 44,
+    "mean_diff": -0.05390019677489077,
+    "median_diff": -0.003130648350644194,
+    "ci95": [
+      -0.1686705146077629,
+      0.047408618253114904
+    ],
+    "wtl": [
+      13,
+      5,
+      26
+    ],
+    "gate_failed_picks": {
+      "refit": 2,
+      "w1": 1
+    }
+  },
+  "models_pkl_sha256": "c8bfbe94f74d6ffe3f40b9848e43e22e832ada8672828d31f8ada647ee3096a1",
+  "root_cause": "W1 prep reused cached model shards from an earlier run (all shards cached_shards_reused=true, elapsed 0 s) and did not retain its fitted per-fold models; only their out-of-fold predictions on existing pool slots survive. New programs cannot be scored by the exact W1 comparator, and a W1-recipe refit is not byte-reproducible (corr with W1 stored mean 0.952, min 0.850).",
+  "unblock": [
+    "W1 owner (rd_argon) persists the fitted outer-fold context-aware models (pickles + sha256) to S3; H81 then scores proposals with the exact W1 comparator (no refit).",
+    "Or ASTRA/owner preregister acceptance of this refit (models.pkl sha256 c8bfbe94...) as the comparator before any outcome; the descriptive gap is -0.054 with family-bootstrap 95% CI [-0.169, +0.047], median -0.003."
+  ],
+  "native_fits": 0,
+  "gpu_seconds": 0,
+  "metrics": {
+    "elo": null,
+    "val_reg_inner": null,
+    "retained_best": null,
+    "reason": "no arm scored: comparator guard failed before proposals were evaluated"
+  },
+  "data_scope": "DL-Train only; H67 roster (50 fit-only contexts, 44 families); cached pool labels of those contexts (already admitted by H79) used only for the comparator check; 0 DL-Val/outer/sealed/holdout",
+  "s3_objects": [
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h81-20261031a/comparator_check.json",
+      "version_id": "owBgi4HDu0T93RM9VEQd7Odo8fjJrfwW",
+      "sha256": "d66f314080169795856c66c85d2ce296c2b145356b3b7d3863ec7e8b5e60ce23",
+      "bytes": 691,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h81-20261031a/comparator_gap_bootstrap.json",
+      "version_id": "uNjCzS.rdg5U1oH4SKgXYnVPb8SYY8sz",
+      "sha256": "0a830e3eb4ff810f83dbb4516e52aceccc4cd632684a0d5e264dcdc6b4a2d993",
+      "bytes": 237,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h81-20261031a/models.log",
+      "version_id": "7LyvjTbPhDe_Yr_rt70qdBnm.Xyrwhsb",
+      "sha256": "d12ba0f7481563cbb466d9ff6da4de39a37c45e82c04e6f5a5ef6457d2909c33",
+      "bytes": 342,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h81-20261031a/models.pkl",
+      "version_id": "kq7N7uwLUvj6hZC31oGLLzVzYzMST36h",
+      "sha256": "c8bfbe94f74d6ffe3f40b9848e43e22e832ada8672828d31f8ada647ee3096a1",
+      "bytes": 17495733,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h81-20261031a/run_prospective.py",
+      "version_id": "Hi1VJ1_sF2QPZb.IsIRoJP_syilYjBiA",
+      "sha256": "9ad50be577a30c616f7668d52f621d5411e70019ba9f1d1960eb8a45a448c999",
+      "bytes": 32201,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h81-20261031a/test_run_prospective.py",
+      "version_id": "fR8pZSHMT2R3Q2pCJwCLFCfSzRKVAn0i",
+      "sha256": "7d89dbfbf5adab5913247c1a337005757d750df5ed8aaeef66f0035cd702b88b",
+      "bytes": 5989,
+      "write": "create-only if-none-match"
+    }
+  ],
+  "hwm_candidates": "none"
+}

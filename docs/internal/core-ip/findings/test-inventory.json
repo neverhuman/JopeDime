@@ -1939,6 +1939,10 @@
       "reason": "Owner-requested pytest proofs for the H79 W4 cached prior-top4 vs two-plus-two screen; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h81_w4_prospective_2plus2/test_run_prospective.py": {
+      "reason": "Owner-requested pytest proofs for the H81 W4 prospective two-plus-two stratum and its preregistered comparator-strength guard; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/rd_breakthrough/w5_provenance/test_verify.py": {
       "reason": "Synthetic metadata controls for the W5 provenance verifier; none admits data or qualifies W5; offline research analysis outside the reviewed product baseline.",
       "role": "research"
