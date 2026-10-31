@@ -63,14 +63,15 @@ impl SurfaceCapture {
                 surface.name()
             ));
         }
-        let finished = events
-            .iter()
-            .rev()
-            .find_map(|event| match &event.event {
-                EventBody::RunFinished(finished) => Some(finished),
-                _ => None,
-            })
-            .ok_or_else(|| format!("{} omitted the durable run.finished event", surface.name()))?;
+        let finished = match events.last().map(|event| &event.event) {
+            Some(EventBody::RunFinished(finished)) => finished,
+            _ => {
+                return Err(format!(
+                    "{} did not end with the durable run.finished event",
+                    surface.name()
+                ));
+            }
+        };
         if snapshot.best != finished.champion {
             return Err(format!(
                 "{} snapshot champion differs from run.finished",
@@ -266,6 +267,31 @@ fn synthetic_surface_capture_harness_accepts_equal_projections_and_rejects_drift
     assert_eq!(
         assert_equivalent(&divergent).unwrap_err(),
         "loopback HTTP differs from batch CLI in champion, final scores, or durable events"
+    );
+}
+
+#[test]
+fn terminal_capture_rejects_durable_events_after_run_finished() {
+    let (snapshot, mut events) = synthetic_observation();
+    events.push(
+        serde_json::from_value(json!({
+            "run_id": snapshot.run_id,
+            "sequence": "3",
+            "time": "2026-01-01T00:00:00.002Z",
+            "kind": "run.state",
+            "body": {
+                "state": "completed",
+                "phase": "finalizing",
+                "pending": null,
+                "reason": null
+            }
+        }))
+        .expect("valid synthetic post-finish event"),
+    );
+
+    assert_eq!(
+        SurfaceCapture::from_observation(Surface::Terminal, snapshot, events).unwrap_err(),
+        "terminal did not end with the durable run.finished event"
     );
 }
 
