@@ -3,6 +3,7 @@ on:
   # The CI owner wires this later; EXP-08 runs the local harness only.
   # Future qualification uses an isolated managed VM.
   workflow_call:
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
@@ -11,7 +12,7 @@ concurrency:
 jobs:
   export-parity:
     # Future qualification is restricted to this repository's manual main caller.
-    if: github.repository == 'neverhuman/JopeDime' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    if: github.repository == 'neverhuman/JopeDime' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/qualification/exp08-emitter-fault-20261031-dsc01'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -35,10 +36,26 @@ jobs:
       - name: Pinned Rust
         run: rustup toolchain install 1.97.1 --profile minimal
       - name: Execute real emitted predictors
-        run: bash deploy/ci/export-parity.sh "target/export-parity/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+        run: bash deploy/ci/export-parity.sh --fault-emitter "target/export-parity/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
       - name: Retain source-bound parity report and generated predictors
         if: always()
+        env:
+          JOPE_LOCAL_EVIDENCE_ROOT: ${{ runner.temp }}/jope-ci-evidence
         uses: ./.github/actions/upload-ci-evidence
         with:
           name: export-parity-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/export-parity/${{ github.run_id }}/${{ github.run_attempt }}
+      - name: Retain complete qualification bytes in run log
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          report="target/export-parity/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+          test -f "$report/report.json"
+          archive="$RUNNER_TEMP/export-parity-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT.tar.zst"
+          tar -I 'zstd -3 -T1' -cf "$archive" -C "$report" .
+          digest=$(sha256sum "$archive" | cut -d ' ' -f 1)
+          bytes=$(stat -c %s "$archive")
+          echo "EXPORT_PARITY_ARCHIVE_BEGIN $digest $bytes"
+          base64 -w 4096 "$archive"
+          echo "EXPORT_PARITY_ARCHIVE_END"
