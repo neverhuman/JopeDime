@@ -1221,6 +1221,36 @@
       "lanes": [],
       "scope": "Opt-in Dope encoding; local focused qualification recorded with the draft PR. GPU execution requires CUDA hardware; default CI does not select this feature."
     },
+    "job:.github/workflows/clean-host.yml/linux-x86_64-prestage": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "REL-04 manual Linux synthetic pre-stage only; macOS arm64 and Windows x86-64 jobs explicitly disabled/pending. No signed release, cross-platform D1, real-data parity or successful GitHub execution is qualified."
+    },
+    "job:.github/workflows/clean-host.yml/macos-arm64-pending": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "REL-04 manual Linux synthetic pre-stage only; macOS arm64 and Windows x86-64 jobs explicitly disabled/pending. No signed release, cross-platform D1, real-data parity or successful GitHub execution is qualified."
+    },
+    "job:.github/workflows/clean-host.yml/windows-x86_64-pending": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "REL-04 manual Linux synthetic pre-stage only; macOS arm64 and Windows x86-64 jobs explicitly disabled/pending. No signed release, cross-platform D1, real-data parity or successful GitHub execution is qualified."
+    },
     "job:.github/workflows/ci.yml/aggregate": {
       "discovery": {
         "kind": "workflow-job"
@@ -12913,6 +12943,16 @@
         "aggregate"
       ],
       "scope": "Configured fast PR/manual lane; path-excluded jobs are not passes."
+    },
+    "workflow:.github/workflows/clean-host.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "REL-04 manual Linux synthetic pre-stage only; macOS arm64 and Windows x86-64 jobs explicitly disabled/pending. No signed release, cross-platform D1, real-data parity or successful GitHub execution is qualified."
     },
     "workflow:.github/workflows/full-main.yml": {
       "discovery": {
