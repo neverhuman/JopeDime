@@ -25,7 +25,9 @@ Language models retrieve existing solutions rather than find new ones,
 Yann LeCun argued in March 2025: ``in their purest form, they are incapable
 of inventing new things'' \citep{lecun2025bigtech}. Thomas Wolf
 warned that current trends will give us ``a country of yes-men on servers''
-\citep{wolf2025einstein}. Dwarkesh Patel had asked Dario Amodei in August 2023
+\citep{wolf2025einstein}.
+
+Dwarkesh Patel had asked Dario Amodei in August 2023
 what to make of models with ``basically the entire corpus of human knowledge
 memorized'' that had not made ``a single new connection that has led to a
 discovery'' \citep{patel2023question}. In January 2025, Demis Hassabis posed
@@ -61,7 +63,8 @@ Karpathy's autoresearch retains training changes that improve a measured
 objective \citep{karpathy2026autoresearch}. Socher's \emph{Eureka Machine}
 extends this vision to agents working with simulators and autonomous
 laboratories \citep{socher2026bookbite,socher2026eureka}. These systems make
-judgment executable. We ask what their evaluations can teach a proposer.
+judgment executable.
+
 Keeping a winning program preserves an output. Training a proposer on
 those outcomes may preserve a capability that
 transfers to a new problem.
@@ -78,7 +81,9 @@ AlphaGo learned from human expert games and searched heavily at every move
 AlphaGo Zero learned only from games against itself, and its network alone,
 with no search, rated 3,055 Elo. That is close to the 3,144 of AlphaGo Fan, the
 version that beat the European champion Fan Hui
-\citep{silver2016mastering,silver2017mastering}. This motivates an analogous
+\citep{silver2016mastering,silver2017mastering}.
+
+This motivates an analogous
 goal for invention: learn from repeated program evaluations during training,
 then deploy a writer with a single-candidate budget, \searchone{}
 (\cref{box:searchone}). The budget is a test condition, not a
@@ -158,7 +163,6 @@ system is rewarded for and how its improvement is checked.
 We formulate algorithm invention as a game and design a learner for it,
 instantiated for tabular prediction tasks whose moves are programs in a
 typed language of learning primitives.
-The paper contributes:
 \begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=3pt,label=\arabic*.]
   \item \textbf{The anatomy of innovation:} four pillars (aim, variation,
     judgment and retention), with an idealized relation between proposal
