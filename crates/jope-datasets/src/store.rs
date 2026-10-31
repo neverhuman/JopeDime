@@ -57,6 +57,12 @@ fn injected_registry() -> &'static std::sync::Mutex<InjectedRegistry> {
     REGISTRY.get_or_init(|| std::sync::Mutex::new(std::collections::BTreeMap::new()))
 }
 
+fn injected_registry_guard() -> std::sync::MutexGuard<'static, InjectedRegistry> {
+    injected_registry()
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
 /// Bytes and their precondition from the same GET. Keep this observation until
 /// the conditional write; a second GET would discard the original precondition.
 #[derive(Debug)]
@@ -291,9 +297,7 @@ impl Store {
     }
 
     fn injected_backend(&self) -> Option<std::sync::Arc<dyn InjectedBackend>> {
-        injected_registry()
-            .lock()
-            .unwrap()
+        injected_registry_guard()
             .get(&self.inner_id())
             .map(|(_, b)| b.clone())
     }
@@ -325,10 +329,7 @@ impl Store {
     ) -> Store {
         let inner: Box<dyn ObjectStore> = Box::new(object_store::memory::InMemory::new());
         let id = (&*inner as *const dyn ObjectStore).cast::<()>() as usize;
-        injected_registry()
-            .lock()
-            .unwrap()
-            .insert(id, (backend, injected));
+        injected_registry_guard().insert(id, (backend, injected));
         Store {
             inner,
             prefix,
@@ -339,7 +340,7 @@ impl Store {
 
     /// The classified [`ObjectStoreScheme`] for this store.
     pub fn backend(&self) -> ObjectStoreScheme {
-        if let Some((scheme, _)) = injected_registry().lock().unwrap().get(&self.inner_id()) {
+        if let Some((scheme, _)) = injected_registry_guard().get(&self.inner_id()) {
             return scheme.clone();
         }
         StoreLocation::parse(&self.url)
