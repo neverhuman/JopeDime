@@ -242,6 +242,9 @@ fn read_f32(bytes: &[u8]) -> Result<Vec<f32>> {
 }
 
 #[cfg(test)]
+use super::adapter::real_cpu_parity;
+
+#[cfg(test)]
 mod tests {
     use std::io::Write;
 
@@ -390,6 +393,3 @@ mod tests {
         );
     }
 }
-
-#[cfg(test)]
-use super::adapter::real_cpu_parity;

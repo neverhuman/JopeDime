@@ -920,6 +920,10 @@ fn proposal_kl(costs: &[f32], anchor: &[f32]) -> f64 {
 }
 
 #[cfg(test)]
+#[path = "../../tests/support/cpu_parity.rs"]
+pub(super) mod real_cpu_parity;
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -1534,7 +1538,3 @@ mod tests {
             "randomness":"same persisted ChaCha12 seed for both cost vectors; not NumPy RNG qualification"}));
     }
 }
-
-#[cfg(test)]
-#[path = "../../tests/support/cpu_parity.rs"]
-pub(super) mod real_cpu_parity;
