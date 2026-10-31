@@ -18,6 +18,12 @@ Status: committed before any H57 outcome cell or fold-B read. The only H57 GPU e
 - holdout_payloads_opened: 0
 - outer_rows_delivered: 0
 
+## Machine-readable budget fields
+total_gpu_cell_wall_cap_seconds: 5400
+fixed_generation_horizon: 8
+projected_total_seconds: 5220.746
+measured_generation_seconds: 60.113566709915176
+
 ## Fixed horizon and budget
 
 - fixed_generation_horizon: 8
