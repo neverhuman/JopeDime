@@ -1,0 +1,131 @@
+#!/usr/bin/env python3
+"""Manual CPU dispatcher controls; no Cargo build, gate matrix or GPU operation."""
+
+from pathlib import Path
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
+
+HERE = Path(__file__).resolve().parent
+ENTRYPOINT = Path(
+    os.environ.get("JOPE_QUALIFICATION_ENTRYPOINT", HERE / "cargo-qualification-cpu")
+)
+
+
+class Dispatch(unittest.TestCase):
+    def setUp(self):
+        base = Path(
+            os.environ.get(
+                "JOPE_QUALIFICATION_TEST_TMP",
+                HERE.parents[2] / "target/qualification-entrypoint-tests",
+            )
+        )
+        base.mkdir(parents=True, exist_ok=True)
+        self.temporary = tempfile.TemporaryDirectory(dir=base)
+        self.addCleanup(self.temporary.cleanup)
+        self.path = Path(self.temporary.name)
+        self.installed = self.path / "installed"
+        self.installed.mkdir()
+        self.launcher = self.installed / "cargo-qualification-cpu"
+        self.launcher.write_bytes(ENTRYPOINT.read_bytes())
+        self.selected = self.path / "selected checkout"
+        self.driver = self.selected / "deploy/qualification/v1.0/cpu_gates.py"
+        self.driver.parent.mkdir(parents=True)
+        self.controller(self.installed / "cpu_gates.py", "installed")
+        self.controller(self.driver, "selected")
+
+    def controller(self, path, origin):
+        path.write_text(
+            "import json,sys; from pathlib import Path; "
+            f"print(json.dumps(dict(origin={origin!r},argv=sys.argv[1:],file=str(Path(__file__).resolve())))); "
+            "raise SystemExit(7 if '--fixture-exit7' in sys.argv else 0)"
+        )
+
+    def invoke(self, args, cwd=None):
+        return subprocess.run(
+            [sys.executable, str(self.launcher), *args],
+            cwd=cwd or self.path,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+    def selected_result(self, result, argv, exit_status=0):
+        self.assertEqual(result.returncode, exit_status, result.stderr)
+        record = json.loads(result.stdout)
+        self.assertEqual(record["origin"], "selected")
+        self.assertEqual(record["file"], str(self.driver))
+        self.assertEqual(record["argv"], argv)
+
+    def test_explicit_checkout_overrides_installed_controller(self):
+        args = [
+            "run",
+            "--repo",
+            str(self.selected),
+            "--output",
+            str(self.path / "unused"),
+            "-j",
+            "8",
+        ]
+        self.selected_result(self.invoke(args), args)
+
+    def test_cargo_prefix_preserves_remaining_arguments(self):
+        args = ["plan", "--repo", str(self.selected), "-j", "8"]
+        result = self.invoke(["qualification-cpu", *args])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["argv"], args)
+
+    def test_default_checkout_is_current_working_directory(self):
+        self.selected_result(self.invoke(["plan"], cwd=self.selected), ["plan"])
+
+    def test_repo_argument_forms_select_the_same_checkout(self):
+        for repo_args in (
+            ["--repo=" + str(self.selected)],
+            ["--rep", str(self.selected)],
+        ):
+            with self.subTest(arguments=repo_args):
+                args = ["plan", *repo_args]
+                self.selected_result(self.invoke(args), args)
+
+    def test_selected_controller_exit_status_is_preserved(self):
+        args = ["run", "--repo", str(self.selected), "--fixture-exit7"]
+        self.selected_result(self.invoke(args), args, exit_status=7)
+
+    def test_unknown_arguments_are_forwarded_without_rewriting(self):
+        args = [
+            "plan",
+            "--repo",
+            str(self.selected),
+            "--unknown-fixture-flag",
+            "literal value",
+        ]
+        self.selected_result(self.invoke(args), args)
+
+    def test_missing_selected_controller_does_not_fall_back(self):
+        self.driver.unlink()
+        result = self.invoke(["plan", "--repo", str(self.selected)])
+        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("regular file inside", result.stderr)
+
+    def test_symlinked_controller_does_not_execute_outside_source(self):
+        self.driver.unlink()
+        self.driver.symlink_to(self.installed / "cpu_gates.py")
+        result = self.invoke(["plan", "--repo", str(self.selected)])
+        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.stdout, "")
+
+    def test_symlinked_parent_does_not_escape_checkout(self):
+        outside = self.path / "outside"
+        (self.selected / "deploy").rename(outside)
+        (self.selected / "deploy").symlink_to(outside, target_is_directory=True)
+        result = self.invoke(["plan", "--repo", str(self.selected)])
+        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.stdout, "")
+
+
+if __name__ == "__main__":
+    unittest.main()
