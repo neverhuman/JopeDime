@@ -246,6 +246,17 @@ def test_cpu_fake_wave_end_to_end_produces_preregistered_metrics_json(tmp_path, 
         return {"scratch": str(scratch), "fake": True}
 
     def fake_finalize(_staged, _scratch, _remaining, _attempt):
+        for cell in cells:
+            assert coordinator.completed_attempt(
+                tmp_path / "run", cell["arm"], cell["seed"],
+                allow_scoring_in_progress=True,
+            ) == 1
+        try:
+            coordinator.completed_attempt(tmp_path / "run", "ESH-l4", 38)
+        except RuntimeError as exc:
+            assert "unaccounted in-progress cell" in str(exc)
+        else:
+            raise AssertionError("default completed-attempt lookup accepted active scoring")
         candidates = []
         for cell in cells:
             if cell["arm"] == "NULL":
@@ -468,3 +479,42 @@ def test_resume_never_repeats_void_or_unknown_fold_b_scoring(tmp_path):
     else:
         raise AssertionError("retried a void-or-unknown H99 Fold-B scoring action")
     assert calls == []
+
+
+def test_scoring_metadata_lookup_rejects_cell_or_incomplete_in_progress(tmp_path):
+    plan = runner.execution_plan()
+    cells = [*plan["candidate_cells"], plan["null_cell"]]
+    complete_attempts = [
+        {
+            **cell, "attempt": 1,
+            "scratch": str(coordinator.attempt_scratch_path(tmp_path, cell["arm"], cell["seed"], 1)),
+            "wall_seconds": 1.0, "status": "complete",
+        }
+        for cell in cells
+    ]
+    base = {
+        "schema": "jope.h99.gpu-budget/v1", "cap_seconds": coordinator.CAP_SECONDS,
+        "attempts": complete_attempts, "in_progress": None,
+    }
+    cell_in_progress = dict(base, in_progress={
+        **cells[0], "attempt": 2,
+        "scratch": str(coordinator.attempt_scratch_path(tmp_path, cells[0]["arm"], cells[0]["seed"], 2)),
+    })
+    try:
+        coordinator._cell_histories(cell_in_progress, cells, allow_scoring_in_progress=True)
+    except RuntimeError as exc:
+        assert "unaccounted in-progress cell" in str(exc)
+    else:
+        raise AssertionError("scoring metadata lookup accepted an in-progress cell")
+
+    incomplete = [attempt for attempt in complete_attempts if attempt["arm"] != "NULL"]
+    scoring_in_progress = dict(base, attempts=incomplete, in_progress={
+        "action": "fold_b_scoring", "attempt": 1,
+        "scratch": str(tmp_path / "scratch/fold-b-scoring-attempt1"),
+    })
+    try:
+        coordinator._cell_histories(scoring_in_progress, cells, allow_scoring_in_progress=True)
+    except RuntimeError as exc:
+        assert "fixed cells remain incomplete" in str(exc)
+    else:
+        raise AssertionError("scoring metadata lookup accepted an incomplete fixed panel")

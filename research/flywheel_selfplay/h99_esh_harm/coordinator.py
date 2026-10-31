@@ -212,11 +212,23 @@ def _attempt_from_record(record: dict) -> int:
     return attempt
 
 
-def _cell_histories(budget: dict, cells: list[dict]) -> tuple[dict[tuple[str, int], list[dict]], list[dict]]:
+def _cell_histories(
+    budget: dict,
+    cells: list[dict],
+    *,
+    allow_scoring_in_progress: bool = False,
+) -> tuple[dict[tuple[str, int], list[dict]], list[dict]]:
     """Validate and index append-only cell/scoring attempts from a cumulative budget."""
     if budget.get("schema") != "jope.h99.gpu-budget/v1" or budget.get("cap_seconds") != CAP_SECONDS:
         raise RuntimeError("H99 cumulative budget schema or cap changed")
-    if budget.get("in_progress") is not None:
+    in_progress = budget.get("in_progress")
+    if in_progress is not None and not (
+        allow_scoring_in_progress
+        and isinstance(in_progress, dict)
+        and in_progress.get("action") == "fold_b_scoring"
+        and in_progress.get("attempt") == 1
+        and Path(in_progress.get("scratch", "")).name == "fold-b-scoring-attempt1"
+    ):
         raise RuntimeError("H99 has an unaccounted in-progress cell; refusing retry selection")
     expected = {(cell["arm"], int(cell["seed"])): cell for cell in cells}
     histories: dict[tuple[str, int], list[dict]] = {key: [] for key in expected}
@@ -261,20 +273,46 @@ def _cell_histories(budget: dict, cells: list[dict]) -> tuple[dict[tuple[str, in
         history.append(record)
     if len(scoring) > 1:
         raise RuntimeError("H99 Fold-B scoring is already recorded; refusing duplicate scoring")
+    if in_progress is not None and scoring:
+        raise RuntimeError("H99 Fold-B scoring is already recorded; refusing duplicate scoring")
     if scoring and any(not history or history[-1]["status"] != "complete" for history in histories.values()):
         raise RuntimeError("H99 Fold-B scoring was recorded before every fixed cell completed")
+    if in_progress is not None and any(
+        not history or history[-1]["status"] != "complete"
+        for history in histories.values()
+    ):
+        raise RuntimeError("H99 cannot read completed attempts while fixed cells remain incomplete")
     spent = sum(float(item["wall_seconds"]) for item in attempts)
     if spent > CAP_SECONDS:
         raise RuntimeError("H99 cumulative 9,000-second GPU cell-wall cap is already exhausted")
     return histories, scoring
 
 
-def completed_attempt(run_root: Path, arm: str, seed: int) -> int:
+def completed_attempt(
+    run_root: Path,
+    arm: str,
+    seed: int,
+    *,
+    allow_scoring_in_progress: bool = False,
+) -> int:
     """Return the sole successful attempt for a cell from its durable cumulative ledger."""
     plan = execution_plan()
     cells = [*plan["candidate_cells"], plan["null_cell"]]
     budget = json.loads((Path(run_root) / "budget.json").read_text())
-    histories, _ = _cell_histories(budget, cells)
+    active = budget.get("in_progress")
+    if active is not None and allow_scoring_in_progress:
+        expected_scoring_scratch = Path(run_root) / "scratch" / "fold-b-scoring-attempt1"
+        if (
+            not isinstance(active, dict)
+            or active.get("action") != "fold_b_scoring"
+            or type(active.get("attempt")) is not int
+            or active.get("attempt") != 1
+            or Path(active.get("scratch", "")) != expected_scoring_scratch
+        ):
+            raise RuntimeError("H99 active scoring ledger does not match its unique coordinator path")
+    histories, _ = _cell_histories(
+        budget, cells, allow_scoring_in_progress=allow_scoring_in_progress
+    )
     history = histories.get((arm, int(seed)))
     if not history or history[-1]["status"] != "complete":
         raise RuntimeError(f"H99 cell has no completed attempt: {arm}/seed{seed}")

@@ -191,7 +191,7 @@ def score_fold_b(staged_checkpoint: Path, scratch: Path, run_root: Path, input_d
     plan = h99.execution_plan()
     completed_attempts = {
         (cell["arm"], int(cell["seed"])): completed_attempt(
-            run_root, cell["arm"], cell["seed"]
+            run_root, cell["arm"], cell["seed"], allow_scoring_in_progress=True
         )
         for cell in [*plan["candidate_cells"], plan["null_cell"]]
     }
