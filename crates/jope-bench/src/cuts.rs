@@ -1,8 +1,9 @@
 //! Cuts: which training rows are held out, and a stable identity for each cut.
 //!
 //! Fold membership is `feat_math::fold_of(key, row, k)` with `key = "<dataset_hash>:<seed>"`,
-//! exactly what the product pipeline's `prepare::build` uses, so a cut here and a cut there are
-//! the same rows. What the pipeline lacks is an identity per cut; [`Cut::cut_id`] is the SHA-256
+//! exactly what the product pipeline's `jope_pipeline::prepare::build` uses, so a cut here and a
+//! cut there are the same rows. What the pipeline lacks is an identity per cut;
+//! [`crate::cuts::Cut::cut_id`] is the SHA-256
 //! of a canonical JSON record naming the dataset, the training bytes, the key, `k`, the fold and
 //! the held-out indices, so two runs that hold out the same rows of the same bytes agree, and any
 //! change to any of those changes the id.

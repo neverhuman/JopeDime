@@ -2,8 +2,9 @@
 //! track and registry files the ladder code needs, so `jope-arena elo` ranks the benchmark with
 //! the same Bradley–Terry fit that ranks the published one. Two tracks come out of one run:
 //! `<track>-screen` (every method, one cut) and `<track>-deep` (the finalists, every cut). The
-//! ladder metric and its direction follow the reports' task ([`Task::ladder_metric`]): RMSE
-//! (minimize) for regression, ROC AUC and macro-F1 (maximize) for binary and multiclass.
+//! ladder metric and its direction follow the reports' task
+//! ([`crate::task::Task::ladder_metric`]): RMSE (minimize) for regression, ROC AUC and macro-F1
+//! (maximize) for binary and multiclass.
 
 use std::path::{Path, PathBuf};
 

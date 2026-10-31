@@ -12,8 +12,9 @@
 //! ```
 //!
 //! The entrant sources live byte-for-byte under `crates/jope-bench/regressors/`, next to their
-//! manifest and design rationale. They are frozen: [`Entrant::source_sha256`] pins the bytes, and a
-//! test fails if the compiled file drifts from it. To keep them byte-identical, workspace lints the
+//! manifest and design rationale. They are frozen:
+//! [`crate::regressors::Entrant::source_sha256`] pins the bytes, and a test fails if the compiled
+//! file drifts from it. To keep them byte-identical, workspace lints the
 //! frozen code trips are allowed on the module declaration instead of being fixed in the source.
 //!
 //! Entrants are regressors: any other task exits with the usage code (2), so a binary or

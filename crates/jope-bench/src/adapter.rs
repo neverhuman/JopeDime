@@ -8,16 +8,17 @@
 //! directory and environment, and it may tune itself inside its own training rows (as the
 //! resampled search does), so "controller-scored" does not mean "untuned".
 //!
-//! Contract [`CONTRACT`]: `<command...> <train.csv> <predict.csv> <out.csv> <task>`. `train.csv`
-//! is headerless numeric with the target last; `predict.csv` is headerless numeric features only,
+//! Contract [`crate::adapter::CONTRACT`]:
+//! `<command...> <train.csv> <predict.csv> <out.csv> <task>`. `train.csv` is headerless numeric
+//! with the target last; `predict.csv` is headerless numeric features only,
 //! one row per held-out row in order; `out.csv` is one number per line in that order (a value for
 //! regression, the probability of the positive class for binary, an integer class code for
 //! multiclass); exit code 0 on success. `<command...> --version` must print one line naming the
 //! engine and its version; it is recorded on the method. Reference adapters for XGBoost,
 //! LightGBM, CatBoost and a scikit-learn random forest live under `crates/jope-bench/adapters/`
 //! (named `<engine>_adapter.py` so they never shadow the library they import). The
-//! dependency-free constant adapter the contract tests run is [`mean_adapter`], reached as the
-//! hidden `jope-bench mean-adapter` subcommand.
+//! dependency-free constant adapter the contract tests run is
+//! [`crate::adapter::mean_adapter`], reached as the hidden `jope-bench mean-adapter` subcommand.
 
 use std::path::Path;
 use std::process::{Command, Stdio};

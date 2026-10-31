@@ -3,9 +3,9 @@
 //! Each function names the absolute path the historical tree hard-coded
 //! (written `~/…`: the `ubuntu` account's home on the xbabe hosts) and the
 //! root it now hangs off. Source-tree inputs (scripts, manifests, seeds,
-//! built binaries) resolve under [`jope_home`]; mutable run state (runs,
-//! queues, sqlite stores, pointers, logs) under [`jope_state`]; retired
-//! per-host trees keep their names under [`legacy_root`]
+//! built binaries) resolve under [`crate::paths::jope_home`]; mutable run state (runs,
+//! queues, sqlite stores, pointers, logs) under [`crate::paths::jope_state`]; retired
+//! per-host trees keep their names under [`crate::paths::legacy_root`]
 //! (`<jope_state>/legacy`). Everything here is resolved at call time;
 //! binaries that need a `&'static str` wrap these in `jope_paths::once_str!`.
 

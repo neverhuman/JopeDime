@@ -771,7 +771,7 @@ fn read_spec(run_id: &str) -> SpecInfo {
     info
 }
 
-/// "warm-started 130/152 tensors from <path>"
+/// "warm-started 130/152 tensors from `<path>`"
 fn read_warm_start(run_id: &str, attempt: i64) -> Option<(i64, i64, String)> {
     let p = PathBuf::from(scq_runs_str())
         .join(run_id)
