@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Remove only the owner-approved shared xbabe3 Cargo target when idle."""
+"""Remove only owner-approved shared Cargo target output when idle."""
 
 from __future__ import annotations
 
@@ -15,12 +15,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
-HOST = "xbabe3"
+MIN_FREE_BYTES_BY_HOST = {"xbabe1": 120 * 1024**3, "xbabe3": 60 * 1024**3}
 TARGET = Path("/home/ubuntu/remote_tests/target")
 SCRATCH_ROOT = Path("/home/ubuntu/remote_tests")
 AUDIT = Path("/var/log/jope-diskd-xbabe3/remote-target-cleaner.jsonl")
 LOCK = Path("/run/lock/jope-remote-target-cleaner.lock")
-MIN_FREE_BYTES = 60 * 1024**3
 DENIED_PARTS = {
     "checkpoint", "checkpoints", "dataset", "datasets", "evidence", "flywheel",
     "holdout", "jarambit_runs", "jope-evidence", "receipt", "receipts", "sealed",
@@ -194,15 +193,17 @@ def append_audit(event: dict[str, Any], audit: Path = AUDIT) -> None:
 
 
 def run(*, apply: bool, target: Path = TARGET, scratch_root: Path = SCRATCH_ROOT,
-        audit: Path = AUDIT, lock: Path = LOCK, proc_root: Path = Path("/proc"),
+        audit: Path | None = None, lock: Path = LOCK, proc_root: Path = Path("/proc"),
         owner_uid: int = 1000, host: str | None = None) -> int:
     actual_host = host or socket.gethostname().split(".", 1)[0]
-    if actual_host != HOST:
-        print(f"SKIP: cleaner is pinned to {HOST}, not {actual_host}")
+    minimum_free_bytes = MIN_FREE_BYTES_BY_HOST.get(actual_host)
+    if minimum_free_bytes is None:
+        print(f"SKIP: cleaner is not approved for {actual_host}")
         return 0
     if target != TARGET or scratch_root != SCRATCH_ROOT:
-        print("SKIP: target path does not match the owner-approved xbabe3 path")
+        print("SKIP: target path does not match the owner-approved shared Cargo target")
         return 0
+    audit = audit or Path(f"/var/log/jope-diskd-{actual_host}/remote-target-cleaner.jsonl")
     try:
         item = target.lstat()
     except FileNotFoundError:
@@ -215,8 +216,8 @@ def run(*, apply: bool, target: Path = TARGET, scratch_root: Path = SCRATCH_ROOT
         print(f"SKIP: target is not an owned canonical directory: {target}")
         return 0
     free_bytes = shutil.disk_usage(scratch_root).free
-    if free_bytes >= MIN_FREE_BYTES:
-        print(f"OK: free space {free_bytes} is at/above the 60 GiB threshold")
+    if free_bytes >= minimum_free_bytes:
+        print(f"OK: free space {free_bytes} is at/above the {minimum_free_bytes}-byte threshold")
         return 0
     candidates = cargo_output_candidates(target, owner_uid)
     if candidates is None:
@@ -251,7 +252,7 @@ def run(*, apply: bool, target: Path = TARGET, scratch_root: Path = SCRATCH_ROOT
                     "bytes_estimate": allocated,
                     "files": files,
                     "mode": "rebuildable-only",
-                    "reason": "disk_free_below_60GiB_and_no_process_references",
+                    "reason": f"disk_free_below_{minimum_free_bytes}_bytes_and_no_process_references",
                 }
                 append_audit(intent, audit)
                 print(f"REMOVE {candidate} bytes_estimate={allocated} files={files}; audit={audit}", flush=True)

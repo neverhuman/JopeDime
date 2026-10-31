@@ -8,11 +8,11 @@
 - The only automatic cache root is the exact owned, non-symlink path `~/.cache/pip`; policy cannot retarget its allowlist ID. `uv-cache` is observe-only. Files must be regular, single-link, owned by the user, past TTL, and not found open by the process-handle scan. Cache marker/lock files and paths inside cached `.git` directories are retained. Nested symlinks, other-owner entries and special files are skipped without traversal; unknown process/metadata state fails closed. Each deletion records an intent and completion event in `~/.local/state/jope-diskd/audit.jsonl`, flushed to disk.
 - Remote per-job test scratch remains observe-only. The xbabe3 shared Cargo target has the separate exact-path owner exception documented below.
 - A registered worktree's `target/` is eligible only if GitHub confirms that the exact local branch/head was merged, the checkout is clean, the target is older than 24 hours, all target entries are ordinary files/directories owned by the user, no protected evidence/report/receipt family is present, `/proc/*/fd` is complete and empty for the tree, and no local process cwd or `CARGO_TARGET_DIR` refers to its target/worktree. Any uncertainty retains the entire target. Worktree targets are considered only above the 85% watermark and at most enough directories are removed to approach the configured low watermark (one full target can overshoot it). Docker storage and `/tmp` remain observe-only.
-- The daemon log rotates only after exceeding 256 MiB, gzip-verifies the archive, and retains local archives for 14 days. Older daemon logs and jankurai reports under the canonical repo/worktree target roots are uploaded to `s3://veox-jopedime-learning-use2/offload/<host>/<YYYYMMDD>/...`; a content SHA-256 is embedded in the key, downloaded and verified before local removal. Upload failures, unreadable handles, protected paths, and source changes retain local files. Checkpoints, datasets, receipts, evidence, and flywheel paths are excluded.
+- Log rotation and report offload are disabled by the shipped policy (`allow_log_maintenance: false`). Re-enabling either requires a separate reviewed policy change.
 - `jope-data`, `jope_plan`, rescue/custody, veox, jeryu, admiralty, checkpoints, datasets, receipts/evidence, sealed/holdout and flywheel paths are hard-denied. Live flywheel output changes remain proposal-only until an approved restart.
 - A single process lock prevents overlapping apply runs. The policy is the allowlist; unknown IDs or roots are never added to it automatically.
 
-The daemon does not reclaim Docker, arbitrary `/tmp`, or flywheel data. Remote-scratch cleanup remains disabled until the launcher PID mismatch is fixed in a separate change.
+The daemon does not reclaim Docker, arbitrary `/tmp`, or flywheel data. Shared-target cleanup is limited to the exact `~/remote_tests/target` on xbabe1 and xbabe3 via the root-scoped cleaner. It checks all process references and removes only known Cargo output below host-specific free-space floors; top-level `target/tmp`, unknown contents, and active or uncertain targets are retained.
 
 ## Local proof
 
@@ -22,7 +22,7 @@ python3 -m json.tool tools/ops/disk-policy.yaml >/dev/null
 python3 tools/ops/jope_diskd.py --config tools/ops/disk-policy.yaml --dry-run
 ```
 
-The main policy is deliberately host-bound to local Linux `xbabe2`. Do not use it for remote hosts. Run the dry-run on xbabe2 after merge, inspect every proposed path and handle decision, then let the merger/owner enable the user timer. The xbabe3 target exception uses its dedicated root-scoped cleaner, not the xbabe2 policy.
+The main policy is deliberately host-bound to local Linux `xbabe2`. Do not use it for remote hosts. Run the dry-run on xbabe2 after merge, inspect every proposed path and handle decision, then let the merger/owner enable the user timer. The shared target cleaner uses its dedicated root-scoped service, not the xbabe2 user policy.
 
 ## Install after merge
 
@@ -35,3 +35,16 @@ The source policy does not alter CI's Cargo target selection or incremental sett
 The 2026-10-31 xbabe3 owner call permits cleanup of exactly `~/remote_tests/target` while free space is below 60 GiB, after a complete all-process FD/cwd/`CARGO_TARGET_DIR` scan is clear. `tools/ops/remote_test.sh` is the tracked source for the host-local `~/bin/remote_test.sh`; its xbabe3 probe returns unavailable below 60 GiB, and it delegates x3 cleanup to the root-scoped `jope-remote-target-cleaner`. After merge, update the host-local launcher with `install_remote_test_guard.sh`. The cleaner removes only known Cargo output subtrees under `debug/` and `release/`, after verifying ownership, file type, evidence-name exclusions and internal hardlink counts. It retains `target/tmp`, test artifacts, marker files, unknown directories and all `src.<PID>` scratch. Each removed subtree gets flushed delete intent/completion records in `/var/log/jope-diskd-xbabe3/remote-target-cleaner.jsonl`. The cleaner has no cache, log rotation, or S3 capability. Install it only on xbabe3 from merged source with `install_jope_xbabe3_target_cleaner.sh`.
 
 This exception does not permit deleting or offloading `jarambit_runs`, checkpoints, datasets, receipts, `jope-evidence`, sealed/holdout material, per-job scratch, or any other target. `jarambit_runs` inventory is read-only; a retention/S3 proposal is recorded separately and requires that project's owner approval before action.
+# Disk cleanup deployment
+
+The local `jope-diskd` timer is installed on xbabe2. The separate shared-target
+cleaner is pinned to xbabe1 and xbabe3, checks every process reference before
+removing only verified Cargo output under `~/remote_tests/target`, and retains
+`target/tmp` and unknown contents. Its xbabe1 floor is 120 GiB free; xbabe3
+remains 60 GiB. Install only from a clean checkout contained in merged
+`origin/main` using the matching `install_jope_xbabe1_target_cleaner.sh` or
+`install_jope_xbabe3_target_cleaner.sh` script.
+
+The xbabe2 policy sets `allow_log_maintenance` to false. This keeps automatic
+work within rebuildable caches and merged-worktree Cargo targets; log rotation
+and report offload require a separately reviewed policy change.

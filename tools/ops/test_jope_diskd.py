@@ -7,6 +7,7 @@ import os
 import tempfile
 import unittest
 import gzip
+from contextlib import nullcontext
 from pathlib import Path
 from unittest import mock
 
@@ -29,6 +30,7 @@ class DiskPolicyTests(unittest.TestCase):
         policy = {
             "version": 1,
             "local_only": True,
+            "allow_log_maintenance": False,
             "allowed_host": "xbabe2",
             "repo_root": "~/JopeDime",
             "sccache_max_bytes": 60 * jope_diskd.GIB,
@@ -47,6 +49,7 @@ class DiskPolicyTests(unittest.TestCase):
         self.assertEqual(jope_diskd.read_policy(path), policy)
         self.assertTrue(policy["local_only"])
         self.assertEqual(policy["allowed_host"], "xbabe2")
+        self.assertFalse(policy["allow_log_maintenance"])
         policy["watermarks"]["soft_percent"] = 95
         path.write_text(json.dumps(policy), encoding="utf-8")
         with self.assertRaises(ValueError):
@@ -122,6 +125,34 @@ class DiskPolicyTests(unittest.TestCase):
         uv = next(entry for entry in policy["paths"] if entry["id"] == "uv-cache")
         self.assertEqual(uv["mode"], "observe")
         self.assertNotIn("kind", uv)
+        self.assertFalse(policy["allow_log_maintenance"])
+
+    def test_run_does_not_rotate_or_offload_logs_when_policy_disables_it(self) -> None:
+        policy = {
+            "version": 1,
+            "local_only": True,
+            "allowed_host": "xbabe2",
+            "allow_log_maintenance": False,
+            "repo_root": str(self.home / "JopeDime"),
+            "watermarks": {"soft_percent": 85, "aggressive_percent": 90, "alert_percent": 95, "low_percent": 80},
+            "paths": [],
+        }
+        usage = mock.Mock(used=95, free=5)
+        with (
+            mock.patch.object(jope_diskd, "read_policy", return_value=policy),
+            mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
+            mock.patch.object(jope_diskd.socket, "gethostname", return_value="xbabe2"),
+            mock.patch.object(jope_diskd.shutil, "disk_usage", return_value=usage),
+            mock.patch.object(jope_diskd, "run_lock", return_value=nullcontext()),
+            mock.patch.object(jope_diskd, "alert_if_needed"),
+            mock.patch.object(jope_diskd, "report_only_paths"),
+            mock.patch.object(jope_diskd, "audit_logger", return_value=lambda _event: None),
+            mock.patch.object(jope_diskd, "rotate_daemon_log") as rotate,
+            mock.patch.object(jope_diskd, "offload_jankurai_reports") as offload,
+        ):
+            self.assertEqual(jope_diskd.main(["--dry-run"]), 0)
+        rotate.assert_not_called()
+        offload.assert_not_called()
 
     def test_dry_run_reports_without_removing_or_auditing(self) -> None:
         root = self.cache()

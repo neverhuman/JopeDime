@@ -109,6 +109,8 @@ def read_policy(path: Path | None) -> dict[str, Any]:
         raise ValueError("deny_prefixes must be a list")
     if policy.get("local_only") is not True:
         raise ValueError("local-only mode is required")
+    if not isinstance(policy.get("allow_log_maintenance", False), bool):
+        raise ValueError("allow_log_maintenance must be a boolean")
     if not isinstance(policy.get("allowed_host"), str) or not policy["allowed_host"]:
         raise ValueError("an exact local-only host is required")
     if policy.get("repo_root") != "~/JopeDime" or policy.get("sccache_max_bytes") != 60 * GIB:
@@ -960,9 +962,12 @@ def main(argv: list[str] | None = None) -> int:
             now = time.time()
             repo = expand_path(policy.get("repo_root", "~/JopeDime"))
             worktrees_root = repo / ".agent" / "worktrees"
-            rotate_daemon_log(home, logger, dry_run=dry_run, now=now)
-            if percent >= policy["watermarks"]["soft_percent"]:
-                offload_jankurai_reports(repo, worktrees_root, logger, dry_run=dry_run, now=now)
+            if policy.get("allow_log_maintenance", False):
+                rotate_daemon_log(home, logger, dry_run=dry_run, now=now)
+                if percent >= policy["watermarks"]["soft_percent"]:
+                    offload_jankurai_reports(repo, worktrees_root, logger, dry_run=dry_run, now=now)
+            else:
+                print("log rotation and report offload disabled by policy")
             if percent < policy["watermarks"]["soft_percent"]:
                 print("below soft watermark; no automatic cleanup")
                 return 0
