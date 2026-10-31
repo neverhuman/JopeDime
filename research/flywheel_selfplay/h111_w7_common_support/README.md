@@ -91,3 +91,9 @@ controls preserve PENDING across all hosts. These are integrity proofs, not
 scientific observations. Actual fits, optimizer updates and GPU use are zero;
 Elo, val_reg_inner and U4 remain null. See the READY PR for exact-head checks,
 S3 custody and the separately disclosed unchanged-main source-inventory failure.
+
+## Acquisition, archive and replay receipt preregistration
+
+[PREREG.md](PREREG.md) binds the H104 design to eight required producer artifacts per arm/cell. [pending_manifest.json](pending_manifest.json) enumerates all 45 PENDING slots and exact source/S3 metadata identities; [manifest.schema.json](manifest.schema.json) describes this preparation format. Archive retention is separate from H104’s implemented acquisition rule. All receipt references remain null, costs/deadline remain unknown, and schema validity grants no execution or advancement. No new wave ID, fits, updates or GPU allocation is introduced.
+
+Validation for this continuation: the JSON Schema and pending manifest pass Draft 2020-12 validation. Four deterministic CPU host shards reconstruct the H104/H111 family/context bindings, cover all 45 unique arm slots exactly once and reconcile 3,600 planned fits with the full manifest. All 360 producer references remain null. Exact-version S3 fold metadata matches the committed copy. Measured worker CPU is 0.120360475 seconds; transport and local checks are not included. Actual fits/updates/GPU remain zero. The READY PR records exact-head checks and verified S3 custody.

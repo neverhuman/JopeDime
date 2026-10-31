@@ -1,0 +1,98 @@
+{
+ "schema": "jope.h114.plateau-lattice/v1",
+ "wave": "H114",
+ "kind": "CPU log-only diagnostic (no model, data, GPU or DL-Val payload read)",
+ "source": {
+  "file": "xbabe1:~/jope-data/flywheel-full-20261030/run-20261030/adapter_admissions.jsonl",
+  "sha256": "3093866b4f802704f158fedec1e4d0204d7af7f813776bb984114856d82a7c12",
+  "rows": 1306,
+  "rounds": [
+   775,
+   2080
+  ],
+  "read_at_utc": "2026-10-31T12:25Z"
+ },
+ "dope_sha256_in_loop_contract": "c51a56d0...",
+ "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+ "accepted_rows": [
+  {
+   "round": 782,
+   "utility": 1.1073772627425547,
+   "action": "accept_tie"
+  },
+  {
+   "round": 785,
+   "utility": 1.1375952947484103,
+   "action": "accept_improvement"
+  },
+  {
+   "round": 859,
+   "utility": 1.1377941898164525,
+   "action": "accept_improvement"
+  },
+  {
+   "round": 882,
+   "utility": 1.1377941898164525,
+   "action": "accept_tie"
+  }
+ ],
+ "best_utility": 1.1377941898164525,
+ "best_round": 882,
+ "post_r882": {
+  "n": 1198,
+  "distinct_utilities": 20,
+  "max": 1.1377131278566008,
+  "gap_max_to_best": 8.106195985169151e-05,
+  "median": 1.1344340853025057,
+  "p90": 1.1354387884248622,
+  "count_at_max": 21,
+  "count_ge_best": 0,
+  "share_on_top2_mass_points": 0.6085141903171953,
+  "top_values": [
+   [
+    1.137713,
+    21
+   ],
+   [
+    1.137552,
+    6
+   ],
+   [
+    1.136898,
+    6
+   ],
+   [
+    1.136493,
+    16
+   ],
+   [
+    1.135678,
+    5
+   ],
+   [
+    1.135534,
+    1
+   ],
+   [
+    1.135439,
+    94
+   ],
+   [
+    1.135249,
+    398
+   ],
+   [
+    1.134676,
+    3
+   ],
+   [
+    1.134624,
+    1
+   ]
+  ],
+  "min_nonzero_step": 2.487e-05,
+  "median_step_between_distinct": 0.0001898
+ },
+ "verdict": "DIAGNOSTIC_PLATEAU_IS_QUANTIZED",
+ "elo": "N/A (no new arm; log-only)"
+}
