@@ -6977,6 +6977,22 @@
       ],
       "scope": "A packaged copy alone in an empty directory with an empty environment: version, doctor, fit with bounded selection, predict, fit-predict parity, verify-self and licenses; every exit status 2-7; a damaged manifest, frame or executable region; a promised but unexecutable method; an unpackaged build."
     },
+    "target:jope-appliance/test/system": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-appliance/tests/system/main.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Pre-stage fixture reconnects and public store crash boundaries. Live terminal/MCP observation, discovery S2 determinism and internal CAS commit failpoint qualification remain pending executable run handlers."
+    },
     "target:jope-arena/bin/jope-arena": {
       "discovery": {
         "doctest": false,
