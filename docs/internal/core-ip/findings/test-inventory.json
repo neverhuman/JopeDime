@@ -2065,6 +2065,10 @@
       "reason": "DISK-01 hermetic tests for jope-diskd's fail-closed cleanup boundaries (policy, dry-run, allowlisted caches, open-handle refusal); no real deletion",
       "role": "infrastructure"
     },
+    "python:tools/ops/test_install_jope_diskd.py": {
+      "reason": "DISK-01 regression tests for the jope-diskd installer (print-only default, invalid-option refusal, dirty or unmerged checkout refusal); no real enable or deletion",
+      "role": "infrastructure"
+    },
     "python:tools/ops/test_jope_remote_target_cleaner.py": {
       "reason": "DISK-01 tests for the rebuildable-only remote Cargo target and detached Docker target-volume cleaner (dry-run, host allowlist, live-mount refusal); no real deletion",
       "role": "infrastructure"
