@@ -257,7 +257,7 @@ def make_fig5_network() -> None:
     # Row 2 inside training box: Writer update + explicit non-steering boundary note
     y_low, h_low = 0.045, 0.20
     _draw_box(ax, 0.03, y_low, 0.455, h_low, "Writer supervision $\\mathcal{L}_{\\mathrm{writer}}$\nWeights each sampled move by $0.05 + \\rho_w^4$\ndirectly from referee percentiles $\\rho_w$", "#ecfdf5", "#059669", "#065f46", fontsize=7.5)
-    _draw_box(ax, 0.515, y_low, 0.455, h_low, "Reference checkpoint boundary:\n$v_\\psi$ ranks drafts offline (vs. program-only control);\nnever screens, conditions, or steers $\\pi_\\theta$", "#fff1f2", "#e11d48", "#881337", fontsize=7.3, ls="--")
+    _draw_box(ax, 0.515, y_low, 0.455, h_low, "Reference checkpoint boundary:\n$v_\\psi$ ranks drafts; search weights parents by rank;\nnever screens or conditions $\\pi_\\theta$'s draws", "#fff1f2", "#e11d48", "#881337", fontsize=7.3, ls="--")
 
     # Arrow from Referee down to Writer supervision, and from Writer supervision straight up through vertical gap x=0.33 to Writer
     _draw_arrow(ax, 0.45, y_mid, 0.39, y_low + h_low, color="#059669", ls="--", lw=1.0)
