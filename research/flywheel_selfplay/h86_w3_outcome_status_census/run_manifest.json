@@ -1,0 +1,69 @@
+{
+  "cpu_seconds": 1.625894064,
+  "export_excludes": "fitness, logratio, gate, program features and every DL-Val, outer, sealed or holdout field",
+  "export_fields": [
+    "cids",
+    "offsets",
+    "status",
+    "pool_sha256",
+    "program_order_sha256"
+  ],
+  "finished_utc": "2026-10-31T07:09:23.491168+00:00",
+  "host": "xbabe1",
+  "input_packet_id": "3eb4a62acea512f528500b043299a5968e1c9b1d1b1759bbf77a426b9fa1ecc3",
+  "inputs": [
+    {
+      "local_path": "/home/ubuntu/jope-data/h86_scratch/input/source_manifest.json",
+      "s3_key": null,
+      "sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
+    },
+    {
+      "local_path": "/home/ubuntu/jope-data/h86_scratch/input/selected.json",
+      "s3_key": null,
+      "sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1"
+    },
+    {
+      "local_path": "/home/ubuntu/jope-data/h86_scratch/src/research/flywheel_selfplay/h65_w3_continuous_top_resolved/fold_manifest.json",
+      "s3_key": null,
+      "sha256": "cabcfc6f182ef3aeb77a10890d81de0c655f60b5bb3db2a56b70c44a58567067"
+    },
+    {
+      "pool_sha256_list_sha256": "18e8316ee16f0437031d1dc993a48f0f66f20036b52a8dcbb5c3fa4dd7786c42",
+      "pools": 1219
+    }
+  ],
+  "metrics": {
+    "Elo": null,
+    "U4": null,
+    "descriptive_metrics_file": "metrics.json",
+    "val_reg_inner": null
+  },
+  "run_id": "luna-tel-h86-20261031T0709Z-01",
+  "s3_output_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/luna-tel-h86-20261031T0709Z-01",
+  "s3_outputs": [
+    "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/luna-tel-h86-20261031T0709Z-01/metrics.json",
+    "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/luna-tel-h86-20261031T0709Z-01/manifest.json",
+    "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/luna-tel-h86-20261031T0709Z-01/status_mask.npz"
+  ],
+  "schema": "jopedime.h86-w3-outcome-status-census-run.v1",
+  "source_commit": "f760a88e68aa61db80a3a3b44a2cb02d1ab35f32",
+  "source_file_sha256": "fce4d9a61aee8914a3a0beb4340120f509e207b6b76e1233a2805c38ed1c21cf",
+  "started_utc": "2026-10-31T07:09:21.860769+00:00",
+  "status_codes": {
+    "0": "measured_pass",
+    "1": "measured_fail",
+    "2": "sentinel_shaped",
+    "3": "nonfinite",
+    "4": "anomalous"
+  },
+  "status_mask_sha256": "37a9271f92c1ab8f2e554c97e8a9cb414e50cb1362e263a41b1c93164868f4f6",
+  "status_rule": {
+    "anomalous": "gate pass with fitness >= 100, or gate fail with fitness < 50",
+    "measured": "codes 0 and 1 only",
+    "precedence": "nonfinite > sentinel_shaped > anomalous > gate",
+    "provenance": "inferred from value signatures; not recorded completion status",
+    "sentinel_shaped": "fitness == 100 and logratio == 0 exactly"
+  },
+  "verdict": "NO_STUDY_CLAIM; W3_INPUT_ADMISSION_CENSUS",
+  "wall_seconds": 1.6303715351969004
+}

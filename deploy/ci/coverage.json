@@ -13357,6 +13357,16 @@
       ],
       "lanes": [],
       "scope": "H81 W4 prospective-stratum runner fixtures: exact equivalence of the two-plus-two rule with merged H79, prior-top-two first stage and zero-residual reduction to top4, swap placebo, seeded random4, program-SHA tie-breaks, execution errors kept out of utility, analysis gate/INCOMPLETE verdicts, ledger reservation caps and fit-store no-recharge. No data, model or native calls; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h86_w3_outcome_status_census/test_census.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H86 W3 outcome-row status census fixture contracts: signature status rule and precedence (sentinel, nonfinite, anomalous), W3 top-resolved target paths (top16, last passer, no passer, .05 floor, clip 6) and program-order hash binding. Manual research diagnostics only; no W3 study, admission decision or release qualification."
     }
   },
   "lanes": {

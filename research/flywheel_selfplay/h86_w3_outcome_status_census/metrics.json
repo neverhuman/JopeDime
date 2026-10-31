@@ -1,0 +1,115 @@
+{
+  "contexts": 1219,
+  "contexts_with_any": {
+    "anomalous": 0,
+    "nonfinite": 0,
+    "sentinel_shaped": 366
+  },
+  "families": 205,
+  "rows": 1404287,
+  "schema": "jopedime.h86-w3-outcome-status-census-metrics.v1",
+  "scientific_verdict": null,
+  "scope": "Full-pool census of admitted DL-Train arrays. Training slates are 192-candidate subsets, so slate-level target statistics differ. Status is inferred from value signatures; the packet records no per-row completion status.",
+  "status": "CENSUS_ONLY",
+  "status_counts": {
+    "anomalous": 0,
+    "measured_fail": 58876,
+    "measured_pass": 1344468,
+    "nonfinite": 0,
+    "sentinel_shaped": 943
+  },
+  "status_counts_by_fold": {
+    "0": {
+      "anomalous": 0,
+      "measured_fail": 11351,
+      "measured_pass": 249951,
+      "nonfinite": 0,
+      "sentinel_shaped": 201
+    },
+    "1": {
+      "anomalous": 0,
+      "measured_fail": 10617,
+      "measured_pass": 258806,
+      "nonfinite": 0,
+      "sentinel_shaped": 145
+    },
+    "2": {
+      "anomalous": 0,
+      "measured_fail": 12783,
+      "measured_pass": 296928,
+      "nonfinite": 0,
+      "sentinel_shaped": 177
+    },
+    "3": {
+      "anomalous": 0,
+      "measured_fail": 13221,
+      "measured_pass": 298786,
+      "nonfinite": 0,
+      "sentinel_shaped": 185
+    },
+    "4": {
+      "anomalous": 0,
+      "measured_fail": 10904,
+      "measured_pass": 239997,
+      "nonfinite": 0,
+      "sentinel_shaped": 235
+    }
+  },
+  "status_fractions": {
+    "anomalous": 0.0,
+    "measured_fail": 0.04192590261107594,
+    "measured_pass": 0.9574025822356826,
+    "nonfinite": 0.0,
+    "sentinel_shaped": 0.0006715151532414671
+  },
+  "w3_arm_c_top_resolved": {
+    "clipped_fraction_of_passing_rows": 0.3884138558894671,
+    "clipped_passing_rows": 522210,
+    "context_paths": {
+      "last_passing_order_statistic": 0,
+      "no_passer": 0,
+      "top16": 1219
+    },
+    "floor_binds_contexts": 894,
+    "floor_binds_fraction_of_contexts_with_target": 0.7333880229696472,
+    "rule": "regret=(F-F(1))/max(F(16)-F(1),0.05), clip [0,6]; fewer than 16 passers uses the last passing order statistic"
+  },
+  "w3_arm_d_decomposed": {
+    "failing_fitness_minus_100": {
+      "q0": -0.21053273225220437,
+      "q0.01": -0.19799544829839277,
+      "q0.05": -0.18016491376519284,
+      "q0.25": -0.11456453353322615,
+      "q0.5": -0.019827880093885142,
+      "q0.75": 0.0661417018208752,
+      "q0.95": 2.0668364933517687,
+      "q0.99": 5.827115244985219,
+      "q1": 10.80800998245634
+    },
+    "failing_logratio": {
+      "q0": -5.344554701116456,
+      "q0.01": -0.7764084237093545,
+      "q0.05": -0.10534996163067953,
+      "q0.25": -0.08133845572090445,
+      "q0.5": -0.03500789874795374,
+      "q0.75": 0.006781554245801708,
+      "q0.95": 0.3360934611196907,
+      "q0.99": 1.7195405725609367,
+      "q1": 5.140259806444789
+    },
+    "measured_logratio_fraction": 0.9993284848467585,
+    "measured_logratio_rows": 1403344,
+    "passing_residual_F_minus_0p9_logratio": {
+      "q0": 0.0015000877376933897,
+      "q0.01": 0.002045644704543357,
+      "q0.05": 0.002763235271999795,
+      "q0.25": 0.004719807170408402,
+      "q0.5": 0.007607880799953615,
+      "q0.75": 0.0141177254709927,
+      "q0.95": 0.04444617913619444,
+      "q0.99": 0.12727555220248724,
+      "q1": 2.1051689477944002
+    }
+  },
+  "w3_study_run": false
+}
