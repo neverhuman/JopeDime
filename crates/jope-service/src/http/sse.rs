@@ -1,26 +1,26 @@
 //! Functional journal routes with the existing local-engine security boundary.
 //! Engine composition must mount these instead of the SVC05 capability stubs.
 
-use super::auth::{LocalAuth, authenticate, problem};
+use super::auth::{authenticate, problem, LocalAuth};
 use crate::{
-    events::{EVENT_KINDS, EventLog, EventPage, event_kind},
+    events::{event_kind, EventLog, EventPage, EVENT_KINDS},
     store::{Result, StoreError},
 };
 use axum::{
-    Json, Router,
     extract::{
-        Path, Query, State,
         rejection::{PathRejection, QueryRejection},
+        Path, Query, State,
     },
-    http::{HeaderMap, header},
+    http::{header, HeaderMap},
     middleware,
     response::{
-        IntoResponse, Response, Sse,
         sse::{Event, KeepAlive},
+        IntoResponse, Response, Sse,
     },
     routing::get,
+    Json, Router,
 };
-use jope_api::{PublicEvent, TelemetryEvent, decimal::DecimalU64, error::ErrorCode, ids::RunId};
+use jope_api::{decimal::DecimalU64, error::ErrorCode, ids::RunId, PublicEvent, TelemetryEvent};
 use serde::Deserialize;
 use std::{collections::VecDeque, sync::Arc, time::Duration};
 use tokio::{
@@ -322,11 +322,11 @@ mod tests {
         http::auth::BearerToken,
     };
     use axum::{
-        body::{Body, to_bytes},
+        body::{to_bytes, Body},
         http::{Method, Request, StatusCode},
     };
     use futures_util::StreamExt;
-    use jope_api::{RunSnapshot, TelemetryBody, error::Problem};
+    use jope_api::{error::Problem, RunSnapshot, TelemetryBody};
     use serde_json::Value;
     use tower::ServiceExt;
 
@@ -354,10 +354,8 @@ mod tests {
         serde_json::from_slice(&to_bytes(response.into_body(), 1 << 20).await.unwrap()).unwrap()
     }
     async fn frame(
-        stream: &mut (
-                 impl futures_util::Stream<Item = std::result::Result<axum::body::Bytes, axum::Error>>
-                 + Unpin
-             ),
+        stream: &mut (impl futures_util::Stream<Item = std::result::Result<axum::body::Bytes, axum::Error>>
+                  + Unpin),
     ) -> String {
         String::from_utf8(
             tokio::time::timeout(Duration::from_secs(2), stream.next())
@@ -404,12 +402,10 @@ mod tests {
             .oneshot(request(&root, true, None))
             .await
             .unwrap();
-        assert!(
-            response.headers()[header::CONTENT_TYPE]
-                .to_str()
-                .unwrap()
-                .starts_with("text/event-stream")
-        );
+        assert!(response.headers()[header::CONTENT_TYPE]
+            .to_str()
+            .unwrap()
+            .starts_with("text/event-stream"));
         let mut first = response.into_body().into_data_stream();
         let a = decoded_event(&frame(&mut first).await);
         let b = decoded_event(&frame(&mut first).await);
@@ -594,12 +590,10 @@ mod tests {
                 Problem::CONTENT_TYPE
             );
             assert_eq!(response.headers()["jope-api-version"], "1.0");
-            assert!(
-                !response
-                    .headers()
-                    .keys()
-                    .any(|h| h.as_str().starts_with("access-control-"))
-            );
+            assert!(!response
+                .headers()
+                .keys()
+                .any(|h| h.as_str().starts_with("access-control-")));
         }
         let missing = app(log)
             .oneshot(request(

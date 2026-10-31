@@ -2,18 +2,18 @@
 //! an explicit capability error; engine handlers use the live engine state.
 
 use super::{
-    auth::{BearerToken, LocalAuth, authenticate, problem},
+    auth::{authenticate, problem, BearerToken, LocalAuth},
     system,
 };
 use crate::engine::DatasetState;
 use axum::extract::Extension;
 use axum::{
-    Router,
     extract::DefaultBodyLimit,
-    http::{HeaderValue, header},
+    http::{header, HeaderValue},
     middleware,
     response::Response,
-    routing::{MethodFilter, get, on},
+    routing::{get, on, MethodFilter},
+    Router,
 };
 use jope_api::{
     error::ErrorCode,
@@ -144,8 +144,8 @@ pub async fn bind_loopback(token: BearerToken) -> io::Result<(TcpListener, Route
 mod tests {
     use super::*;
     use axum::{
-        body::{Body, to_bytes},
-        http::{Method, Request, StatusCode, header},
+        body::{to_bytes, Body},
+        http::{header, Method, Request, StatusCode},
     };
     use jope_api::error::Problem;
     use std::collections::BTreeSet;
@@ -177,12 +177,10 @@ mod tests {
         assert_eq!(response.status(), StatusCode::OK);
         assert_eq!(response.headers()[header::CONTENT_TYPE], "application/json");
         assert_eq!(response.headers()["jope-api-version"], "1.0");
-        assert!(
-            !response
-                .headers()
-                .keys()
-                .any(|key| key.as_str().starts_with("access-control-"))
-        );
+        assert!(!response
+            .headers()
+            .keys()
+            .any(|key| key.as_str().starts_with("access-control-")));
 
         let bytes = to_bytes(response.into_body(), 1024 * 1024).await.unwrap();
         assert_eq!(bytes.as_ref(), OPENAPI_DOCUMENT);
@@ -220,12 +218,10 @@ mod tests {
             let response = app().oneshot(request).await.unwrap();
             assert_eq!(response.status(), expected);
             assert_eq!(response.headers()["jope-api-version"], "1.0");
-            assert!(
-                !response
-                    .headers()
-                    .keys()
-                    .any(|key| key.as_str().starts_with("access-control-"))
-            );
+            assert!(!response
+                .headers()
+                .keys()
+                .any(|key| key.as_str().starts_with("access-control-")));
         }
     }
 
@@ -247,12 +243,10 @@ mod tests {
                     .await
                     .unwrap();
                 assert_eq!(response.headers()["jope-api-version"], "1.0");
-                assert!(
-                    !response
-                        .headers()
-                        .keys()
-                        .any(|k| k.as_str().starts_with("access-control-"))
-                );
+                assert!(!response
+                    .headers()
+                    .keys()
+                    .any(|k| k.as_str().starts_with("access-control-")));
                 if operation.name == "system_info" {
                     assert_eq!(response.status(), StatusCode::OK, "{method} {path}");
                     assert_eq!(response.headers()[header::CONTENT_TYPE], "application/json");
@@ -350,11 +344,9 @@ mod tests {
                 let response = String::from_utf8(response).unwrap();
                 if authorized {
                     assert!(response.starts_with("HTTP/1.1 200"));
-                    assert!(
-                        response
-                            .to_lowercase()
-                            .contains("content-type: application/json")
-                    );
+                    assert!(response
+                        .to_lowercase()
+                        .contains("content-type: application/json"));
                     let body = response.split_once("\r\n\r\n").unwrap().1;
                     let doc: jope_api::SystemInfo = serde_json::from_str(body).unwrap();
                     assert_eq!(doc.version, env!("CARGO_PKG_VERSION"));
@@ -365,11 +357,9 @@ mod tests {
                     assert!(doc.telemetry.is_empty());
                 } else {
                     assert!(response.starts_with("HTTP/1.1 401"));
-                    assert!(
-                        response
-                            .to_lowercase()
-                            .contains("content-type: application/problem+json")
-                    );
+                    assert!(response
+                        .to_lowercase()
+                        .contains("content-type: application/problem+json"));
                 }
                 assert!(response.to_lowercase().contains("jope-api-version: 1.0"));
                 assert!(!response.to_lowercase().contains("access-control-"));

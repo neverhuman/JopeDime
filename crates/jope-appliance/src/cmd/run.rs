@@ -1,9 +1,9 @@
 use clap::Args;
 use jope_api::{
-    ExportKind, ExportRequest, Language, Refit, RunSnapshot, RunSpec, RunState,
-    decimal::DecimalU64, ids::DatasetId,
+    decimal::DecimalU64, ids::DatasetId, ExportKind, ExportRequest, Language, Refit, RunSnapshot,
+    RunSpec, RunState,
 };
-use jope_client::{RunResult, Transport, transport::Request};
+use jope_client::{transport::Request, RunResult, Transport};
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 use std::{io::Write, path::PathBuf, str::FromStr};
@@ -519,8 +519,8 @@ mod tests {
     #[test]
     fn request_boundary_requires_acknowledged_pause_or_cancel_and_preserves_control_errors() {
         use jope_client::{
+            transport::{header, HeaderMap},
             Request, Response,
-            transport::{HeaderMap, header},
         };
         use std::{io::Cursor, sync::Mutex};
         struct Control {
@@ -675,11 +675,9 @@ mod tests {
             panic!("run command")
         };
         assert_eq!(args.m1_plan, Some("prepared.json".into()));
-        assert!(
-            !serde_json::to_string(&args.run_spec().unwrap())
-                .unwrap()
-                .contains("m1")
-        );
+        assert!(!serde_json::to_string(&args.run_spec().unwrap())
+            .unwrap()
+            .contains("m1"));
         let mut cli = crate::cli::Cli::command();
         let help = cli.find_subcommand_mut("run").unwrap().render_long_help();
         assert!(!help.to_string().contains("m1"));
@@ -844,7 +842,7 @@ mod tests {
         }
         assert!(!directory.path().join("absent-daemon").exists());
 
-        use jope_assets::writer::{StageOptions, assemble_development, stage, write_new};
+        use jope_assets::writer::{assemble_development, stage, write_new, StageOptions};
         let code = std::fs::read(&executable).unwrap();
         let staged = stage(
             &code,

@@ -14,27 +14,27 @@ use crate::{
     events::{EventLog, RunUpdate},
     governor::{Governor, Requirements},
     idempotency::{CommandOutcome, RequestIdentity},
-    ranker::admission::{GuidanceUnavailableReason, resolve_unqualified},
+    ranker::admission::{resolve_unqualified, GuidanceUnavailableReason},
     store::{RecordKey, Store},
     telemetry::SystemSensors,
 };
 use axum::{
-    Json,
     body::Body,
     extract::{Extension, FromRequest, Request},
     response::{IntoResponse, Response},
+    Json,
 };
 use jope_api::{
     decimal::DecimalU64,
     error::{ErrorCode, Problem},
     *,
 };
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::{
     num::NonZeroU32,
     path::PathBuf,
-    sync::{Arc, Mutex, mpsc},
+    sync::{mpsc, Arc, Mutex},
 };
 
 const WORKER_RAM: u64 = 1024 * 1024 * 1024;

@@ -3,9 +3,9 @@
 
 use crate::store::{Result as StoreResult, StoreError};
 use axum::{
-    Json,
-    http::{HeaderValue, StatusCode, header},
+    http::{header, HeaderValue, StatusCode},
     response::{IntoResponse, Response},
+    Json,
 };
 use jope_api::{
     error::{ErrorCode, Problem},
@@ -277,12 +277,10 @@ mod tests {
             assert_eq!(response.status().as_u16(), status);
             assert!(response.headers().get("content-type").is_none());
             assert_eq!(response.headers()["jope-api-version"], "1.0");
-            assert!(
-                axum::body::to_bytes(response.into_body(), 1024)
-                    .await
-                    .unwrap()
-                    .is_empty()
-            );
+            assert!(axum::body::to_bytes(response.into_body(), 1024)
+                .await
+                .unwrap()
+                .is_empty());
         }
     }
 

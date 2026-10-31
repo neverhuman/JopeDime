@@ -123,8 +123,8 @@ mod tests {
         fs,
         path::PathBuf,
         sync::{
-            Arc,
             atomic::{AtomicUsize, Ordering},
+            Arc,
         },
     };
 
@@ -298,11 +298,11 @@ mod tests {
     #[tokio::test]
     async fn request_boundary_replays_and_conflicts_without_reapplying_metadata() {
         use axum::{
-            Json, Router,
             body::Body,
             extract::State,
             http::{HeaderMap, Request},
             routing::post,
+            Json, Router,
         };
         use tower::ServiceExt;
         let dir = fixture();

@@ -5,9 +5,9 @@
 //! ordered durable event stream without rewriting any of those values.
 
 use jope_api::{
-    BestAlgorithm, EventBody, FinalScores, PublicEvent, RunSnapshot, RunSpec, decimal::DecimalU64,
+    decimal::DecimalU64, BestAlgorithm, EventBody, FinalScores, PublicEvent, RunSnapshot, RunSpec,
 };
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 
 const SURFACES: [Surface; 5] = [
     Surface::BatchCli,

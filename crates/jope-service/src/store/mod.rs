@@ -7,7 +7,7 @@ mod cas;
 pub mod commands;
 pub mod gc;
 mod record;
-use cas::{Cas, sync_dir};
+use cas::{sync_dir, Cas};
 use jope_api::RunState;
 pub use record::*;
 use redb::{Database, Durability, ReadableTable, TableDefinition, TableHandle};

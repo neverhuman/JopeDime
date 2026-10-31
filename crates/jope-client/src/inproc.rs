@@ -4,7 +4,7 @@ use crate::{
     http::Credentials,
     transport::{Error, Request, Response, Result, Transport},
 };
-use axum::{Router, body::Body};
+use axum::{body::Body, Router};
 use http_body_util::BodyExt;
 use std::{
     io::{self, Read},
@@ -233,14 +233,14 @@ impl Drop for BodyReader {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Http, transport::header};
+    use crate::{transport::header, Http};
     use axum::{
-        Json,
         http::{HeaderValue, StatusCode},
         routing::get,
+        Json,
     };
-    use jope_api::{SystemInfo, registry::OPERATIONS};
-    use serde_json::{Value, json};
+    use jope_api::{registry::OPERATIONS, SystemInfo};
+    use serde_json::{json, Value};
 
     struct Server {
         endpoint: String,
@@ -403,8 +403,8 @@ mod tests {
     #[test]
     fn response_headers_arrive_before_an_unfinished_stream_and_drop_cancels_it() {
         use std::sync::{
-            Arc,
             atomic::{AtomicBool, Ordering},
+            Arc,
         };
         struct Dropped(Arc<AtomicBool>);
         impl Drop for Dropped {

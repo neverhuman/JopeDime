@@ -14,21 +14,21 @@ use crate::{
     store::{BlobRef, Record, RecordKey, Store, StoreError},
     worker::{Attempt, Request, WorkerFailure},
 };
-use anyhow::{Context, Result, bail, ensure};
+use anyhow::{bail, ensure, Context, Result};
 use jope_api::{
+    ids::{ArtifactId, RunId},
     CompletionReason, EventBody, FinalScores, Refit, RunFinishedBody, RunPhase, RunSnapshot,
     RunState,
-    ids::{ArtifactId, RunId},
 };
 use jope_runtime::{
     math_pipeline::{
-        INPUT_PART, InputContract, NumericColumn, PIPELINE_PART, PipelineState, TargetScale,
+        InputContract, NumericColumn, PipelineState, TargetScale, INPUT_PART, PIPELINE_PART,
     },
-    model_object::{MATH_PIPELINE, Manifest, ModelObject, Part, Producer, SCHEMA},
+    model_object::{Manifest, ModelObject, Part, Producer, MATH_PIPELINE, SCHEMA},
     table::CsvTable,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::{collections::BTreeMap, fs, io::Read, path::PathBuf, sync::Arc};
 
@@ -742,12 +742,12 @@ fn publish(store: &Store, object: &ModelObject) -> Result<Vec<BlobRef>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::discover::r#loop::{Discovery, HeuristicAdmission, SearchSpace, evaluate_native};
+    use crate::discover::r#loop::{evaluate_native, Discovery, HeuristicAdmission, SearchSpace};
     use crate::worker::{Response, Scores};
     use rand_chacha::ChaCha12Rng;
     use std::sync::{
-        Mutex,
         atomic::{AtomicUsize, Ordering},
+        Mutex,
     };
     const TRAIN: &[u8] =
         include_bytes!("../../../../test-support/datasets/v1/d2-regression/train.csv");
@@ -923,14 +923,12 @@ mod tests {
             f.request.refit = kind;
             let native = Native::default();
             let selected = search(&f, &native);
-            assert!(
-                native
-                    .calls
-                    .lock()
-                    .unwrap()
-                    .iter()
-                    .all(|(_, _, path)| path == &f.plan.matrix_path)
-            );
+            assert!(native
+                .calls
+                .lock()
+                .unwrap()
+                .iter()
+                .all(|(_, _, path)| path == &f.plan.matrix_path));
             let finalizer = Finalizer::new(Arc::clone(&f.store));
             let receipt = finalizer.finalize(&f.request, &native).unwrap();
             assert_eq!(receipt.scores.cv, Some(selected.value));
@@ -1137,13 +1135,11 @@ mod tests {
             })
             .unwrap();
         let before = native.calls.lock().unwrap().len();
-        assert!(
-            Finalizer::new(Arc::clone(&f.store))
-                .finalize(&f.request, &native)
-                .unwrap_err()
-                .to_string()
-                .contains("unknown")
-        );
+        assert!(Finalizer::new(Arc::clone(&f.store))
+            .finalize(&f.request, &native)
+            .unwrap_err()
+            .to_string()
+            .contains("unknown"));
         assert_eq!(before, native.calls.lock().unwrap().len());
     }
 
@@ -1194,13 +1190,11 @@ mod tests {
             count: AtomicUsize::new(0),
         };
         let finalizer = Finalizer::new(Arc::clone(&f.store));
-        assert!(
-            finalizer
-                .finalize(&f.request, &executor)
-                .unwrap_err()
-                .to_string()
-                .contains("controller changed")
-        );
+        assert!(finalizer
+            .finalize(&f.request, &executor)
+            .unwrap_err()
+            .to_string()
+            .contains("controller changed"));
         assert_eq!(
             finalizer
                 .journal()

@@ -6,20 +6,20 @@ use crate::{
     idempotency::{CommandOutcome, RequestIdentity},
 };
 use axum::{
-    Json,
-    body::{Body, to_bytes},
+    body::{to_bytes, Body},
     extract::{Extension, Query},
-    http::{Request, StatusCode, header},
+    http::{header, Request, StatusCode},
     response::{IntoResponse, Response},
+    Json,
 };
 use jope_api::{
-    ColumnProfile, DatasetProfile, TargetSuggestion, Task, Warning,
     decimal::DecimalU64,
     error::{ErrorCode, Problem},
     registry::DatasetRegistration,
+    ColumnProfile, DatasetProfile, TargetSuggestion, Task, Warning,
 };
 use serde::Deserialize;
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::path::PathBuf;
 use tokio::io::AsyncWriteExt;
@@ -332,7 +332,7 @@ mod tests {
     use super::*;
     use crate::{config::Config, store::Store};
     use axum::{
-        body::{Body, to_bytes},
+        body::{to_bytes, Body},
         http::{Method, Request},
     };
     use std::{collections::BTreeMap, sync::Arc};
