@@ -6,55 +6,80 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use std::collections::BTreeSet;
 
+/// Bundle manifest schema identifier.
 pub const SCHEMA_ID: &str = "jope.model-bundle/v2";
+/// Per-file license metadata schema identifier.
 pub const LICENSE_SCHEMA_ID: &str = "jain.model-license/v1";
+/// Embedded JSON Schema document used to validate bundle manifests.
 pub const SCHEMA_JSON: &str = include_str!("../../../schemas/jope.model-bundle.v2.schema.json");
 
+/// Parse and return the embedded bundle manifest JSON Schema.
 pub fn schema() -> Value {
     serde_json::from_str(SCHEMA_JSON).expect("committed schema parses")
 }
 
+/// License metadata associated with one bundle file.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct License {
+    /// License schema identifier.
     pub schema: String,
+    /// SPDX expression describing the file license.
     pub spdx_expression: String,
+    /// License classification used by the bundle policy.
     pub license_class: String,
     /// `permitted` | `internal` | `prohibited` | `conditional`.
     pub redistribution: String,
+    /// Paths of notices embedded in the bundle manifest.
     #[serde(default)]
     pub notice_paths: Vec<String>,
+    /// Additional forward-compatible license fields.
     #[serde(flatten)]
     pub extra: Map<String, Value>,
 }
 
+/// One file referenced by a model bundle manifest.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct BundleFile {
     /// Bundle-relative path (`bundles/<id>/<path>` in the cache).
     pub path: String,
+    /// Lowercase SHA-256 digest of the file contents.
     pub sha256: String,
+    /// File size in bytes.
     pub bytes: u64,
     /// `blobs/sha256/<sha256>`.
     pub blob: String,
+    /// File kind label from the bundle manifest.
     pub kind: String,
+    /// Optional license metadata.
     #[serde(default)]
     pub license: Option<License>,
+    /// Additional forward-compatible file fields.
     #[serde(flatten)]
     pub extra: Map<String, Value>,
 }
 
+/// An embedded notice included with a bundle.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Notice {
+    /// Safe bundle-relative path where the notice is materialized.
     pub path: String,
+    /// Notice text.
     pub text: String,
 }
 
+/// Validated description of the files and notices in a model bundle.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct BundleManifest {
+    /// Bundle schema identifier.
     pub schema: String,
+    /// Stable bundle identifier.
     pub bundle_id: String,
+    /// Files included in the bundle.
     pub files: Vec<BundleFile>,
+    /// Notices embedded in the manifest.
     #[serde(default)]
     pub notices: Vec<Notice>,
+    /// Additional forward-compatible manifest fields.
     #[serde(flatten)]
     pub extra: Map<String, Value>,
 }
@@ -69,6 +94,7 @@ pub fn safe_relative(path: &str) -> bool {
             .all(|c| !c.is_empty() && c != "." && c != "..")
 }
 
+/// Return whether `s` is a 64-character lowercase hexadecimal SHA-256 digest.
 pub fn valid_sha256(s: &str) -> bool {
     s.len() == 64 && s.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
 }
@@ -107,6 +133,7 @@ impl BundleManifest {
         Self::validate_value(&value)
     }
 
+    /// Validate a JSON value against the schema and bundle invariants.
     pub fn validate_value(value: &Value) -> Result<BundleManifest, Vec<String>> {
         let mut errs = jope_datasets::schema::validate(&schema(), value);
         let doc: Option<BundleManifest> = match serde_json::from_value(value.clone()) {
@@ -125,6 +152,7 @@ impl BundleManifest {
         }
     }
 
+    /// Return manifest consistency violations not expressible in the JSON Schema.
     pub fn invariant_errors(&self) -> Vec<String> {
         let mut errs = Vec::new();
         if self.schema != SCHEMA_ID {
@@ -173,6 +201,7 @@ impl BundleManifest {
         errs
     }
 
+    /// Find a file by its exact bundle-relative path.
     pub fn file(&self, path: &str) -> Option<&BundleFile> {
         self.files.iter().find(|f| f.path == path)
     }
@@ -212,6 +241,7 @@ impl BundleManifest {
         Ok(out)
     }
 
+    /// Sum the declared byte lengths of all files.
     pub fn total_bytes(&self) -> u64 {
         self.files.iter().map(|f| f.bytes).sum()
     }

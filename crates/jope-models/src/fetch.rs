@@ -11,13 +11,18 @@ use jope_datasets::blobs::PARALLEL_GETS;
 use jope_datasets::store::Store;
 use std::io::Write;
 
+/// Where a fetched bundle manifest was resolved from.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ManifestSource {
+    /// The committed manifest in the repository checkout.
     Repo,
+    /// The local manifest cache.
     Cache,
+    /// The configured model store.
     Store,
 }
 
+/// Selection and license options for fetching a bundle.
 #[derive(Clone, Debug, Default)]
 pub struct FetchOptions {
     /// `--component` selectors (exact paths or directory prefixes); empty = every file.
@@ -25,19 +30,28 @@ pub struct FetchOptions {
     pub accept_restricted: bool,
 }
 
+/// Counts and failures produced while resolving and materializing a bundle.
 #[derive(Clone, Debug, Default)]
 pub struct FetchReport {
+    /// Bundle identifier requested.
     pub bundle_id: String,
+    /// Number of manifest files selected.
     pub files_selected: usize,
+    /// Number of files downloaded during this fetch.
     pub files_fetched: usize,
+    /// Number of files already present in the blob cache.
     pub files_cached: usize,
+    /// Total bytes downloaded during this fetch.
     pub bytes: u64,
     /// Restricted files that were fetched because `--accept-restricted` was given.
     pub restricted_accepted: Vec<String>,
+    /// Per-file download or materialization errors.
     pub errors: Vec<String>,
 }
 
+/// Resolves manifests and verified bundle blobs across repository, cache, and store.
 pub struct Fetcher<'a> {
+    /// Local bundle and content-addressed blob cache.
     pub cache: &'a ModelsCache,
     /// `None` = offline: only the cache is served.
     pub store: Option<&'a Store>,
