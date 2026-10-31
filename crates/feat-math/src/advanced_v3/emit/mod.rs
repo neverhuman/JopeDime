@@ -117,8 +117,8 @@ pub(crate) fn lint_shipped_masked(text: &str, user: &[String], portfolio: bool) 
 /// from `transpile::emit`: the latter remains the frozen artifact-v1 training
 /// program (pipeline artifacts are byte-identical across emitter versions
 /// 2.1 and 2.2; see `EMITTER_VERSION`). Every artifact is linted with the
-/// caller's column names and categorical vocabularies masked
-/// ([`lint_shipped_masked`]).
+/// caller's column names and categorical vocabularies masked before
+/// `lint_shipped_masked` runs.
 pub fn emit_bound(
     model: &BoundModel,
     options: &crate::transpile::EmitOptions,

@@ -27,3 +27,46 @@ An end-to-end `heuristic_smoke` driver exercise used three pinned **metadata ent
 ## Required before Q1 can be reported
 
 A stronger-model owner must first obtain and verify the OWNER authorization and exact frozen qualification plan/backend/cohort, then execute the signed qualification protocol under `qualification.lock` within its CPU-only run limits. Preserve all start/finish receipts and hashes, failures, compute, effect estimate, interval, subgroup counts/results, and the separately approved guidance-default decision. Until those gates are satisfied, Q1 remains **NOT RUN / UNKNOWN** and no default change is supported.
+
+## Current CPU admission audit — 2026-10-31, owner t0210
+
+The `overnight23_t0210` CPU-only assignment refreshed execution readiness at
+source `d0bfa72a6c8270653b277ebd87025089ee3ddeeb`. It did not execute Q1.
+The historical smoke receipt above remains a separate observation.
+
+| Requirement | Observed state at this source |
+|---|---|
+| OWNER authorization | Preregistration still says `UNSIGNED / NOT AUTHORIZED FOR QUALIFICATION`; allowed-signers digest is `PENDING`. No study signature was supplied or created. |
+| Product backend | `harness/production_backend.py` is absent. The reference native adapter remains smoke-only; no production backend was executed or qualified. |
+| Actual plan, cohort and candidate proofs | Not assessed by this audit. No real cohort metadata, payloads, model, M2/M3 receipts or persistent study ledger were opened. |
+| Q1 results and default decision | Not run: effect, interval, subgroup results, study failures and study compute remain unknown. No guidance-default decision is recorded here. |
+
+On local xbabe2, nice 10 and serial execution, the existing harness suite passed
+**12 tests, 0 failures, 0 skips**. Its temporary signing key is a software fixture,
+not an OWNER key or study authorization. Three additional CLI controls used only
+invented metadata from the existing unit fixture and a trapped, never-executed
+backend:
+
+- `run` refused with exit 1 and `OWNER_SIGNATURE_REQUIRED: preregistration is unsigned`.
+- `analyze` refused with the same exit and reason before reading a nonexistent
+  receipts file.
+- `approval-payload` returned exit 0 and the expected document/plan/backend digest
+  binding. Those bytes are an unsigned approval message, not a signature.
+
+The controls produced **0 backend calls**, no execution receipts, no analysis
+report and no ledger directory or consumption marker. They opened no actual
+cohort or dataset payload and performed no native fit, optimizer update or GPU
+work. Fixture result arithmetic is not an empirical effect estimate; these
+checks establish only the current software admission boundary.
+
+Command, exit, timing, fixture and input identities are retained in
+`/home/ubuntu/jope_plan/evidence/QLT-04/obj02-t0210/admission-verification.json`.
+The source-file SHA-256 pins are:
+
+- Preregistration: `067c123307ed6ad5ab5a699fbf31334ecb453af052290f25378f53609087c964`.
+- Driver: `40d4b153de279bb66cb689e4d61c610164598c4bf533705173f055c91372eecf`.
+- Harness tests: `07c06c01091b160ad6e2697c0cad050b51916b7f799d5a7489abb9cc3ff31628`.
+
+QLT-04 remains open. A later qualification must supply its real admitted plan,
+backend and cohort evidence plus OWNER authorization; this CPU audit consumes
+no study budget and grants no restart, qualification or default change.
