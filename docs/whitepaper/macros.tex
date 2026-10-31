@@ -1,6 +1,14 @@
 % Shared notation. One definition per symbol; sections must not redefine.
 \usepackage{xurl}
-\mathchardef\UrlBigBreakPenalty=10000% never break a URL right after its scheme colon ("https:" then "//...")
+% URL breaks: prefer breaking after / . - _ ? = & # (penalty 100, as before), break
+% after a letter or digit only when no such point fits (500), and never after the
+% scheme colon ("https:" then "//..."), which joins the no-break class.
+\makeatletter
+\def\UrlBigBreaks{\do\/\do\.\do\-\do\_\do\?\do\=\do\&\do\#\do@url@hyp}
+\g@addto@macro\UrlNoBreaks{\do\:}
+\makeatother
+\mathchardef\UrlBigBreakPenalty=100
+\mathchardef\UrlBreakPenalty=500
 \sisetup{group-separator={,},group-minimum-digits=4}
 \renewcommand{\bibpreamble}{\raggedright}
 \setlength{\textfloatsep}{16pt plus 10pt minus 4pt}
