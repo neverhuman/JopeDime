@@ -13022,6 +13022,16 @@
       "lanes": [],
       "scope": "Owner-requested H50 offline proofs for seeded unit directions, adapter flattening, antithetic population generation, deterministic rank shaping, and finite strict-JSON rejection metadata."
     },
+    "python:research/flywheel_selfplay/h55/test_h55.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H55 offline tests for strict family-bootstrap admission, resource guards, lock-wait accounting, terminal-read limits, and runner refusal boundaries; experimental research outside product qualification."
+    },
     "python:research/h-followups/h09/test_run.py": {
       "discovery": {
         "kind": "python-family"
