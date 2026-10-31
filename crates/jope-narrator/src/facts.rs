@@ -11,7 +11,7 @@
 
 use serde::{Deserialize, Serialize};
 
-/// The schema of one journaled fact envelope ([`Envelope`]).
+/// The schema of one journaled fact envelope ([`Envelope`](crate::journal::Envelope)).
 pub const FACT_SCHEMA: &str = "jope.lineage-fact/v1";
 
 /// A program by identity and canonical text.

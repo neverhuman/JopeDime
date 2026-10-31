@@ -86,7 +86,7 @@ pub struct Line {
     /// Held-out R^2 of the candidates the latest generation ended with (carried survivors and
     /// newly measured, every island): finite only, sorted descending, evenly downsampled to at
     /// most [`POPULATION_SAMPLES`] and further, halving, while the record would exceed
-    /// [`MAX_LINE_BYTES`]. `null` before the first generation ends.
+    /// `MAX_LINE_BYTES`. `null` before the first generation ends.
     pub population_r2: Option<Vec<f64>>,
 }
 

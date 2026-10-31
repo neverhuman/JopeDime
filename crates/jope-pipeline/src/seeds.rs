@@ -1,6 +1,6 @@
 //! `jope.pipeline-seeds/v1`: the genomes a search is asked to start from.
 //!
-//! A seeds file is the one input format [`crate::run`] accepts for seeding besides a verified
+//! A seeds file is the one input format [`crate::run()`] accepts for seeding besides a verified
 //! parent receipt (`--incumbent`). The learning store's champion bank exports it
 //! (`jope-learning bank export`), and `jope pipeline evolve` writes one per round from the previous
 //! round's champion and top-K. This crate only reads it: it never depends on the learning store.
