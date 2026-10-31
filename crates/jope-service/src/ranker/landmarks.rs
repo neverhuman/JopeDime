@@ -170,16 +170,15 @@ pub fn assemble_vector(
     building_blocks: &[f32; BUILDING_BLOCK_WIDTH],
 ) -> [f32; VECTOR_WIDTH] {
     let mut result = [0.0; VECTOR_WIDTH];
-    let mut offset = 0;
 
-    for value in report
+    for (offset, value) in report
         .iter()
         .chain(table)
         .chain(interactions)
         .chain(building_blocks)
+        .enumerate()
     {
         result[offset] = finite_or_zero(*value);
-        offset += 1;
     }
 
     result
