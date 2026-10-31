@@ -276,33 +276,69 @@ def closed_metric(_):
     }
 
 
-def test_precursor_closure_is_required_before_any_h100_ticket(tmp_path):
+def test_precursor_start_order_is_required_before_any_h100_ticket(tmp_path):
+    def empty(_):
+        return None
+
     assert set(
-        w.require_predecessors(read_fn=closed_metric, queue_dir=tmp_path, active_fn=set)
+        w.require_predecessors(
+            read_fn=closed_metric, budget_fn=empty, queue_dir=tmp_path
+        )
     ) == {"H93", "H97", "H99"}
-    for wave in ("H93", "H97", "H99"):
-        with pytest.raises(w.PredecessorPending, match="active"):
+
+    def missing(_):
+        raise w.PredecessorPending("not yet executed")
+
+    def started(wave):
+        return {
+            "wave": wave,
+            "cap_seconds": 2700,
+            "attempts": [{"started_utc": "fixture", "command": ["fixture-worker"]}],
+            "in_progress": None,
+        }
+
+    ticket = tmp_path / "1-123-H99"
+    ticket.write_text("epoch_ns=1\npid=123\nwave=H99\n")
+
+    def budgets(wave):
+        return None if wave == "H99" else started(wave)
+
+    proof = w.require_predecessors(
+        read_fn=missing, budget_fn=budgets, queue_dir=tmp_path, alive_fn=lambda _: True
+    )
+    assert proof["H99"]["older_live_ticket"] == ticket.name
+    assert proof["H93"]["prior_gpu_start"] and proof["H97"]["prior_gpu_start"]
+    with pytest.raises(w.PredecessorPending, match="H99"):
+        w.require_predecessors(
+            read_fn=missing,
+            budget_fn=budgets,
+            queue_dir=tmp_path,
+            alive_fn=lambda _: False,
+        )
+    with pytest.raises(w.PredecessorPending, match="H93"):
+        w.require_predecessors(
+            read_fn=missing,
+            budget_fn=empty,
+            queue_dir=tmp_path,
+            alive_fn=lambda _: True,
+        )
+    ticket.unlink()
+    assert (
+        len(
             w.require_predecessors(
-                read_fn=closed_metric, queue_dir=tmp_path, active_fn=lambda: {wave}
+                read_fn=missing, budget_fn=started, queue_dir=tmp_path
             )
-        ticket = tmp_path / f"1-123-{wave}"
-        ticket.write_text("epoch_ns=1\npid=123\nwave=" + wave + "\n")
-        with pytest.raises(w.PredecessorPending, match="ticket"):
-            w.require_predecessors(
-                read_fn=closed_metric,
-                queue_dir=tmp_path,
-                active_fn=set,
-                alive_fn=lambda _: True,
-            )
-        ticket.unlink()
+        )
+        == 3
+    )
 
     def cpu_plan(wave):
         data = closed_metric(wave)
         data["schema"] = "jope.h99.cpu-preparation/v1"
         return data
 
-    with pytest.raises(w.PredecessorPending, match="closed-ledger"):
-        w.require_predecessors(read_fn=cpu_plan, queue_dir=tmp_path, active_fn=set)
+    with pytest.raises(w.PredecessorPending, match="no older live ticket"):
+        w.require_predecessors(read_fn=cpu_plan, budget_fn=empty, queue_dir=tmp_path)
 
 
 def test_budget_rejects_unknown_nonfinite_and_exhausted_charges_and_no_retries():
