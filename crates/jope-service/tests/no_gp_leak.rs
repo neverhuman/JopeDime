@@ -474,7 +474,7 @@ async fn bounded_real_run_http_status_and_sse_do_not_leak_internal_sentinels() {
         .body(Body::from(serde_json::to_vec(&spec).unwrap()))
         .unwrap();
     let started = app.clone().oneshot(request).await.unwrap();
-    assert_eq!(started.status(), StatusCode::ACCEPTED);
+    assert_eq!(started.status(), StatusCode::CREATED);
     let start_headers = started
         .headers()
         .iter()
