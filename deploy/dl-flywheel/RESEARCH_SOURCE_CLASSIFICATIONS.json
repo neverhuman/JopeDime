@@ -3857,8 +3857,8 @@
       }
     },
     "python:research/flywheel_selfplay/h135_blend025_flywheel_val/monitor.py": {
-      "bytes": 6027,
-      "sha256": "c267f5e037ccce16faf2a146c8b863947200fde5fa8341f01e786e4c5be7e79a",
+      "bytes": 9634,
+      "sha256": "868ad9649f8b5c9e3b8dd02fc387cce3514cb8da98b5217e4761c5e901c3be26",
       "classification": {
         "role": "research",
         "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
