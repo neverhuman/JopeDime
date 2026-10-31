@@ -5102,6 +5102,10 @@
     "python:research/flywheel_selfplay/h117_w5_provenance/test_check_w5_identity.py": {
       "reason": "Owner-requested pytest proofs for the H117 W5 identity-only data-provenance re-check; offline research analysis outside the reviewed product baseline.",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h119_w4_offline_acquisition/test_run_h119.py": {
+      "reason": "Owner-requested pytest proofs for the H119 W4 offline acquisition screen CPU preparation (zero native fits); offline research analysis outside the reviewed product baseline.",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
