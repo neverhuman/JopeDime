@@ -22,6 +22,6 @@
   "matplotlib_version": "3.10.8",
   "csv_sha256": "ae68b108f55a57552f395e2035ab69b7f4cdda05f362605ab06f0869e3f940db",
   "figure_sha256": "c59565f1e4973e69fb007fe52100ba8e942926795bf18adbb47e399099b803f4",
-  "generator_sha256": "e1e47bec43a4e00b281f8d0146607684137eaba0d28fb6042aa6cc6fbe0b1849",
+  "generator_sha256": "cb14fcd2f4571475c879bdf1398dda2e26fde4dcac7e58a0f6dab36884b1f281",
   "reproduce": "python3 figures/scripts/make_flywheel_figs.py --admission-shortfall"
 }

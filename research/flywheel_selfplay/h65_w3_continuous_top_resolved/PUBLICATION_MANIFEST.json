@@ -136,7 +136,7 @@
         "general-corpus smoke as a substitute for outcome provenance"
       ]
     },
-    "gpu_execution": "Not launched. W3 binds GBM_PROG412_CTX as the strongest comparator only; no W1 winner/prior is accepted. B1, B2, B4, B5 and separate qualification-lock admission remain open.",
+    "gpu_execution": "Not launched. W3 binds GBM_PROG412_CTX as the strongest comparator only; no W1 winner/prior is accepted. B1, B2, B3, B4, B5 and separate qualification-lock admission remain open.",
     "w3_strongest_comparator": {
       "status": "BOUND_FOR_COMPARISON_ONLY",
       "id": "GBM_PROG412_CTX",

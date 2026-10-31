@@ -14,12 +14,11 @@
 
 \section{Can Machines Invent?}\label{sec:intro}
 
-Can a machine create knowledge that no human has written down? Within a
-fixed game, learning from a referee already offers a precedent. AlphaGo Zero
-went beyond the best human play without seeing a human game, learning from
-self-play under the rules of Go \citep{silver2017mastering}. We ask whether
-similar feedback can improve the first algorithm a system proposes for a new
-problem.
+We specify how to test whether feedback from execution improves the first
+algorithm a system proposes for a new problem. AlphaGo Zero supplies a
+precedent within a fixed game: it went beyond the best human play without
+seeing a human game, learning from self-play under the rules of Go
+\citep{silver2017mastering}.
 
 \paragraph{The skeptics' challenge.}
 In March 2025, Yann LeCun argued that language models retrieve existing
@@ -158,7 +157,7 @@ We formulate algorithm invention as a game and design a learner for it,
 instantiated for tabular prediction tasks whose moves are programs in a
 typed language of learning primitives.
 The paper contributes:
-\begin{enumerate}[leftmargin=*,nosep,label=\arabic*.]
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=3pt,label=\arabic*.]
   \item \textbf{The anatomy of innovation:} four pillars (aim, variation,
     judgment and retention), with an idealized relation between proposal
     quality and the number of attempts (\cref{sec:anatomy}).
@@ -186,8 +185,7 @@ logs from later adapter training describe development behavior
 deployment comparisons of \cref{sec:results} are specified, but their
 outcomes are not yet reported, and we claim no advantage until they are.
 
-\Cref{sec:road} traces each pillar through AI research.
-\Cref{sec:meaning} asks what a positive result would change and where the
-claim stops, and \cref{sec:conclusion} concludes. To see what the referee can
-teach, we first separate the parts
-of innovation.
+\Cref{sec:anatomy} separates the roles in innovation. We then trace their
+AI building blocks (\cref{sec:road}), define the game and learner, and
+specify the comparisons in \cref{sec:results}. The outcomes will bound
+the claims discussed in \cref{sec:meaning}.

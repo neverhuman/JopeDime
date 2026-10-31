@@ -1,6 +1,6 @@
 {
   "wave": "H125",
-  "status": "PREREGISTERED_NOT_RUN",
+  "status": "COMPLETE",
   "source_base": "002b92caeeb313456d6d05cd6049564eaa7d0980",
   "arms": [
     "CONTROL",
@@ -33,8 +33,39 @@
   "h50_selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
   "fused_sha256": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
   "prereg_sha256": "68723ea3fe689c4f41ae4a9188b7d8ff3aad5f1673c8169a677fdaddcd4eb419",
-  "calibration": null,
-  "regression": null,
-  "actual_training_updates": 0,
-  "execution_started": false
+  "calibration": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H125/astra-t0955/calibration.json",
+    "version_id": "yn_TCkWQYMm8w_lLfxNV35IO2VXgrrf9",
+    "sha256": "9f6d6b44e7078b35873cd3d22d1a14d29ff84ffa8926b6f892b4e38303877d61",
+    "bytes": 2330972,
+    "verified_utc": "2026-10-31T16:15:51.595620+00:00"
+  },
+  "regression": {
+    "status": "PASS",
+    "prediction_max_abs_error": 0.0,
+    "utility_max_abs_error": 0.0,
+    "control_loss_abs_error": 0.0,
+    "control_gradient_max_abs_error": 0.0,
+    "adapter_sha256": "b9ba619e7f13b2ac6beaeb22ca57d53308d180514080d9a8387ed0487c827454",
+    "assessment_families": 41,
+    "assessment_contexts": 241,
+    "optimizer_updates": 0
+  },
+  "actual_training_updates": 360,
+  "execution_started": true,
+  "scientific_verdict": "NO_ADVANCE",
+  "execution_source": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H125/astra-t0955/execution.tar.gz",
+    "version_id": "vMCIY53WN.oAvTo.20WVd6CFiQn4Cudr",
+    "sha256": "852115b4e684d1b81c84f54f0133e5655160547145b3d8cbeb949231816bf800",
+    "bytes": 20647,
+    "verified_utc": "2026-10-31T16:11:28.080643+00:00"
+  },
+  "closeout_custody": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H125/astra-t0955/manifest-v2.json",
+    "version_id": "YxMNr.xPc8JYEWyREIA7_a5IBNJXSyxN",
+    "sha256": "50cc7893b3d7285f968865f0700c3777c2f7a8d8023d5395d6542e71276cffb7",
+    "bytes": 42744,
+    "verified_utc": "2026-10-31T16:33:20.935509+00:00"
+  }
 }

@@ -10,6 +10,7 @@
 \makeatletter\patchcmd{\ALG@doentity}{\item[]\nointerlineskip}{}{}{\PackageError{main}{algorithmicx noend patch failed}{}}\makeatother
 \usepackage{flushend}% equal-height columns on the last page only
 \usepackage{placeins}% \FloatBarrier keeps section 7 floats out of section 8
+\setcounter{topnumber}{3}\setcounter{totalnumber}{4}% three top floats per column, so Tables 7-8 fit on their page ahead of the Section 8 barrier
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[hidelinks]{hyperref}% black links for print (owner decision t0352; revisit per venue)
 \usepackage[capitalise,noabbrev]{cleveref}

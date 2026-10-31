@@ -36,3 +36,14 @@ The validated round outbox reference is installed in the existing `EventLog::com
 `materialize_committed` loads the actual committed completed run, validates CAS content, accounting, binding/round continuity and journal agreement, and requires every round to be known and complete. Synthetic controls are refused by the public entry point. It creates a fresh0600 sibling staging stream in a canonical real output directory, syncs/validates all lines against the outbox, then hard-links without replacing an existing destination and syncs the directory. Store commit and filesystem publication remain separate transactions. Staging files remain as evidence on success or uncertain I/O; retry to a new path and never append to a partial prior output. No export acknowledgement removes roots.
 
 The feature tests use explicitly tagged synthetic programs/measurements and a synthetic matrix. They exercise normal/capture behavior and serialization,1/8 live workers at fixed Plan/R, both label modes, source dedup/exploring16, seed bounds, caps, per-outcome recovery, atomic round rollback, own-child SIGKILL before/after reservations/outcomes/round commit/file publication, CAS loss/corruption, GC roots, public projection privacy and actual Rust-to-Python controls. The ignored child entry point is launched only by its owning SIGKILL test. These are software proofs, not real engine/corpus qualification or optimizer evidence.
+
+
+If convergence or a wall deadline discards a pending wave suffix, complete export
+is refused even when every suffix outcome was already measured and a committed
+prefix is known. The private journal retains that prefix, the aborted suffix,
+all reservations/outcomes and their GC roots across reopen. It does not refund
+charges, rerun those workers or silently publish/renumber the prefix as a full
+training stream. Prefix export would require separately reviewed semantics.
+The CPU controls exercise both completion reasons at1/8 workers. Their scoped
+clock freezes controller wall anchors and dispatch spans without sleeping; real
+worker-call durations still use `Instant`, and production has no clock override.

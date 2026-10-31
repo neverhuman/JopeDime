@@ -260,11 +260,56 @@ def atomic_json(path: Path, value: dict) -> None:
 
 def mark_phase(args, stage: str, *, outcome_started: bool = False) -> None:
     old = json.loads(args.phase.read_text())
-    if old.get("attempt_token") != args.attempt_token or (
-        old.get("outcome_started") is True and not outcome_started
+    transitions = {
+        "loading": "launch",
+        "training": "loading",
+        "scoring": "training",
+        "complete": "scoring",
+    }
+    if (
+        old.get("stage") != transitions[stage]
+        or old.get("attempt_token") != args.attempt_token
+        or (old.get("outcome_started") is True and not outcome_started)
+        or (old.get("arm"), old.get("seed"), old.get("attempt"))
+        != (args.arm, args.seed, args.attempt)
     ):
         raise RuntimeError("H122 phase token/scoring boundary mismatch")
     atomic_json(args.phase, dict(old, stage=stage, outcome_started=outcome_started))
+
+
+def execute_updates(net, params, plan, arm, loss_for, *, optimizer_guard=None) -> dict:
+    """The fixed worker update path; also exercised with real CPU fixture tensors."""
+    if (
+        arm not in ARMS
+        or len(plan) != UPDATES
+        or any(len(batch) != 1 for batch in plan)
+    ):
+        raise RuntimeError("H122 requires a registered 40-update plan")
+    optimizer = torch.optim.AdamW(params, lr=1e-4, weight_decay=1e-4)
+    if optimizer_guard is not None:
+        optimizer_guard(optimizer)
+    lookahead = core.LookaheadState(params) if arm == "LA" else None
+    sync_steps = []
+    for update_index, microbatches in enumerate(plan):
+        if arm == "CONTROL":
+            core.optimizer_step(
+                net.named_parameters(),
+                optimizer,
+                lambda: loss_for(microbatches[0]),
+                "CONTROL",
+            )
+        else:
+            _, _, synced = core.accumulated_step(
+                params,
+                optimizer,
+                microbatches,
+                loss_for,
+                update_index=update_index,
+                lookahead=lookahead,
+            )
+            if synced:
+                sync_steps.append(update_index + 1)
+    return {"optimizer_updates": len(plan), "lookahead_sync_steps": sync_steps}
 
 
 def run_cell(args) -> dict:
@@ -333,38 +378,29 @@ def run_cell(args) -> dict:
     sampler = load("h122_sampler", h55.H53B_PATH)
     batches = core.batch_plan(pools, sampler.cached_training_indices, args.seed)
     plan = make_update_plan(batches, args.arm)
-    optimizer = torch.optim.AdamW(params, lr=1e-4, weight_decay=1e-4)
-    h48.base.guard.assert_optimizer_excludes_dope(optimizer, net)
-    lookahead = core.LookaheadState(params) if args.arm == "LA" else None
+    # build_model and verify_cell_integrity establish the exact adapter-only inventory.
+    if {id(p) for p in params} != {id(p) for p in net.parameters() if p.requires_grad}:
+        raise RuntimeError("H122 optimizer parameter inventory mismatch")
     mark_phase(args, "training")
-    for update_index, microbatches in enumerate(plan):
 
-        def loss_for(batch):
-            torch.manual_seed(batch.seed)
-            torch.cuda.manual_seed_all(batch.seed)
-            prediction = predict(list(batch.context_ids), list(batch.candidate_indices))
-            return h59.loss_by_arm(
-                "CONTROL",
-                prediction,
-                h59._batch_targets(pools, batch, prediction.device),
-            )
+    def loss_for(batch):
+        torch.manual_seed(batch.seed)
+        torch.cuda.manual_seed_all(batch.seed)
+        prediction = predict(list(batch.context_ids), list(batch.candidate_indices))
+        return h59.loss_by_arm(
+            "CONTROL", prediction, h59._batch_targets(pools, batch, prediction.device)
+        )
 
-        if args.arm == "CONTROL":
-            core.optimizer_step(
-                net.named_parameters(),
-                optimizer,
-                lambda: loss_for(microbatches[0]),
-                "CONTROL",
-            )
-        else:
-            core.accumulated_step(
-                params,
-                optimizer,
-                microbatches,
-                loss_for,
-                update_index=update_index,
-                lookahead=lookahead,
-            )
+    training = execute_updates(
+        net,
+        params,
+        plan,
+        args.arm,
+        loss_for,
+        optimizer_guard=lambda opt: h48.base.guard.assert_optimizer_excludes_dope(
+            opt, net
+        ),
+    )
     h59.verify_cell_integrity(context)
     candidate = h55.adapter_state(net)
     candidate_sha = h55.adapter_digest(candidate)
@@ -424,8 +460,10 @@ def run_cell(args) -> dict:
         "arm": args.arm,
         "seed": args.seed,
         "attempt": args.attempt,
+        "attempt_token": args.attempt_token,
         "timing_only": False,
         "updates": len(plan),
+        "training": training,
         "trainable_count": sum(p.numel() for p in params),
         "trainable_names": list(names),
         "dope_before": DOPE_SHA,
@@ -433,6 +471,7 @@ def run_cell(args) -> dict:
         "checkpoint_sha256": R882_SHA,
         "manifest_sha256": MANIFEST_SHA,
         "selected_sha256": SELECTED_SHA,
+        "fused_sha256": FUSED_SHA,
         "protocol_sha256": protocol_sha256(),
         "prereg_sha256": sha256(HERE / "PREREG.md"),
         "source_commit": subprocess.check_output(
@@ -459,6 +498,7 @@ def run_cell(args) -> dict:
             "threads": torch.get_num_threads(),
         },
     }
+    validate_cell(result)
     atomic_json(out, result)
     mark_phase(args, "complete", outcome_started=True)
     return result
@@ -496,12 +536,117 @@ def _elo(gains: np.ndarray, samples: np.ndarray) -> dict:
     }
 
 
+def validate_cell(cell: dict) -> None:
+    """Reject incomplete worker receipts before any confidence interval or admission."""
+
+    def digest(value, size=64):
+        return (
+            isinstance(value, str)
+            and len(value) == size
+            and all(ch in "0123456789abcdef" for ch in value)
+        )
+
+    fixed = {
+        "wave": "H122",
+        "fold_seed": FOLD_SEED,
+        "protocol_sha256": protocol_sha256(),
+        "prereg_sha256": sha256(HERE / "PREREG.md"),
+        "updates": UPDATES,
+        "trainable_count": 29211,
+        "checkpoint_sha256": R882_SHA,
+        "manifest_sha256": MANIFEST_SHA,
+        "selected_sha256": SELECTED_SHA,
+        "fused_sha256": FUSED_SHA,
+        "dope_before": DOPE_SHA,
+        "dope_after": DOPE_SHA,
+        "holdout_payloads_opened": 0,
+        "outer_rows_delivered": 0,
+    }
+    if any(cell.get(key) != value for key, value in fixed.items()) or (
+        cell.get("timing_only") is not False
+        or cell.get("arm") not in ARMS
+        or cell.get("seed") not in SEEDS
+        or type(cell.get("attempt")) is not int
+        or cell["attempt"] < 1
+        or not isinstance(cell.get("attempt_token"), str)
+        or not cell["attempt_token"]
+        or not digest(cell.get("source_commit"), 40)
+        or cell.get("source_hashes") != SOURCE_PINS
+    ):
+        raise RuntimeError("INCOMPLETE: H122 worker identity/boundary mismatch")
+    names = cell.get("trainable_names", [])
+    training = cell.get("training", {})
+    expected_sync = list(range(5, UPDATES + 1, 5)) if cell["arm"] == "LA" else []
+    if (
+        not names
+        or len(set(names)) != len(names)
+        or any(not n.startswith("adapter_10tok.") or ".anchor." in n for n in names)
+        or training.get("optimizer_updates") != UPDATES
+        or training.get("lookahead_sync_steps") != expected_sync
+        or not digest(cell.get("initial_adapter_sha256"))
+        or not digest(cell.get("final_adapter_sha256"))
+        or cell["initial_adapter_sha256"] == cell["final_adapter_sha256"]
+        or not math.isfinite(cell.get("adapter_l2", float("nan")))
+        or cell["adapter_l2"] <= 0
+    ):
+        raise RuntimeError("INCOMPLETE: H122 adapter update evidence missing")
+    split = dict(cell.get("split", {}))
+    split_hash = split.pop("sha256", None)
+    actual_hash = hashlib.sha256(
+        json.dumps(split, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    folds = split.get("folds", [])
+    if (
+        split.get("seed") != FOLD_SEED
+        or split_hash != actual_hash
+        or split_hash != cell.get("split_sha256")
+        or len(folds) != FOLD_COUNT
+        or any(len(fold) != 41 for fold in folds)
+        or len({fam for fold in folds for fam in fold}) != 205
+        or split.get("assessment_families") != folds[ASSESSMENT_FOLD]
+        or split.get("train_families") != sorted(set(sum(folds, [])) - set(folds[0]))
+    ):
+        raise RuntimeError("INCOMPLETE: H122 split identity mismatch")
+    families = set(split["assessment_families"])
+    rosters = []
+    for key in ("assessment", "r882_assessment"):
+        report = cell.get(key, {})
+        contexts = report.get("per_context", {})
+        mapping = report.get("family_by_context", {})
+        choices = report.get("chosen_indices", {})
+        utilities = report.get("per_family", {})
+        if (
+            report.get("eval_mode") != h61.EVAL_MODE_UNREV
+            or not contexts
+            or set(contexts) != set(mapping)
+            or set(contexts) != set(choices)
+            or any(not digest(cid) for cid in contexts)
+            or set(mapping.values()) != families
+            or set(utilities) != families
+            or any(type(index) is not int or index < 4 for index in choices.values())
+            or any(not math.isfinite(value) for value in contexts.values())
+            or any(not math.isfinite(value) for value in utilities.values())
+        ):
+            raise RuntimeError("INCOMPLETE: official assessment/context roster missing")
+        for family in families:
+            mean = float(
+                np.mean([v for cid, v in contexts.items() if mapping[cid] == family])
+            )
+            if not math.isclose(mean, utilities[family], rel_tol=0, abs_tol=1e-12):
+                raise RuntimeError("INCOMPLETE: family utility does not match contexts")
+        rosters.append(mapping)
+    if rosters[0] != rosters[1]:
+        raise RuntimeError("INCOMPLETE: candidate/reference context roster differs")
+
+
 def summarize(cells: list[dict], draws: int = BOOTSTRAP_DRAWS) -> dict:
     """Fail closed unless the six preregistered cells share one exact identity."""
     expected = {(arm, seed) for arm in ARMS for seed in SEEDS}
     indexed = {(cell.get("arm"), cell.get("seed")): cell for cell in cells}
     if draws != BOOTSTRAP_DRAWS or len(cells) != 6 or set(indexed) != expected:
         raise RuntimeError("INCOMPLETE: all six unique H122 paired cells required")
+    for cell in cells:
+        validate_cell(cell)
     control = np.asarray(
         [
             [
@@ -554,11 +699,13 @@ def summarize(cells: list[dict], draws: int = BOOTSTRAP_DRAWS) -> dict:
             base.get("source_commit"),
             base.get("split_sha256"),
             base.get("initial_adapter_sha256"),
+            base["assessment"]["family_by_context"],
         )
         la_identity = (
             la.get("source_commit"),
             la.get("split_sha256"),
             la.get("initial_adapter_sha256"),
+            la["assessment"]["family_by_context"],
         )
         if current_identity != la_identity or (
             identity is not None and identity != current_identity
@@ -669,10 +816,42 @@ def cpu_dry_run() -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--cpu-dry-run", action="store_true", required=True)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--cpu-dry-run", action="store_true")
+    mode.add_argument("--arm", choices=ARMS)
+    parser.add_argument("--seed", type=int, choices=SEEDS)
+    parser.add_argument("--input", type=Path, default=H50_INPUT)
+    parser.add_argument("--checkpoint", type=Path, default=R882_COPY)
+    parser.add_argument("--out", type=Path)
+    parser.add_argument("--phase", type=Path)
+    parser.add_argument("--attempt-token")
+    parser.add_argument("--attempt", type=int)
+    parser.add_argument("--lock-fd", type=int)
+    parser.add_argument("--parent-pid", type=int)
     args = parser.parse_args()
     if args.cpu_dry_run:
         print(json.dumps(cpu_dry_run(), sort_keys=True, allow_nan=False))
+        return
+    for name in (
+        "seed",
+        "out",
+        "phase",
+        "attempt_token",
+        "attempt",
+        "lock_fd",
+        "parent_pid",
+    ):
+        if getattr(args, name) is None:
+            parser.error(f"--{name.replace('_', '-')} is required for a worker")
+    # Bind worker lifetime before touching the input packet, checkpoint or CUDA.
+    import ctypes
+    import signal
+
+    if ctypes.CDLL(None, use_errno=True).prctl(1, signal.SIGTERM) != 0:
+        raise RuntimeError("cannot install worker parent-death signal")
+    if os.getppid() != args.parent_pid:
+        raise RuntimeError("worker coordinator is no longer its parent")
+    run_cell(args)
 
 
 if __name__ == "__main__":

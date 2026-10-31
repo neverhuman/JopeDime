@@ -552,7 +552,56 @@ struct Checkpoint {
     completed: Option<CompletionReason>,
 }
 
+// A monotonic span in production. The research-only unit-test clock also
+// controls durable wall anchors, so setup scheduling cannot consume fake budget.
+struct ElapsedSpan {
+    started: Instant,
+    #[cfg(all(test, feature = "research"))]
+    clock: Option<(Arc<std::sync::atomic::AtomicU64>, u64)>,
+}
+
+#[cfg(all(test, feature = "research"))]
+thread_local! {
+    static TEST_CLOCK: std::cell::RefCell<Option<Arc<std::sync::atomic::AtomicU64>>> = const { std::cell::RefCell::new(None) };
+}
+
+#[cfg(all(test, feature = "research"))]
+fn test_clock() -> Option<Arc<std::sync::atomic::AtomicU64>> {
+    TEST_CLOCK.with(|clock| clock.borrow().clone())
+}
+
+impl ElapsedSpan {
+    fn start() -> Self {
+        Self {
+            started: Instant::now(),
+            #[cfg(all(test, feature = "research"))]
+            clock: test_clock().map(|clock| {
+                let start = clock.load(Ordering::SeqCst);
+                (clock, start)
+            }),
+        }
+    }
+
+    fn millis(&self) -> u128 {
+        #[cfg(all(test, feature = "research"))]
+        if let Some((clock, start)) = &self.clock {
+            return u128::from(
+                clock
+                    .load(Ordering::SeqCst)
+                    .checked_sub(*start)
+                    .expect("test clock moved backwards"),
+            );
+        }
+        self.started.elapsed().as_millis()
+    }
+}
+
 fn wall_clock_ms() -> Result<u64> {
+    #[cfg(all(test, feature = "research"))]
+    if let Some(clock) = test_clock() {
+        return Ok(clock.load(Ordering::SeqCst));
+    }
+
     Ok(u64::try_from(
         SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis(),
     )?)
@@ -885,7 +934,7 @@ impl Discovery {
         if self.completed().is_some() {
             return Ok(vec![]);
         }
-        let started = Instant::now();
+        let started = ElapsedSpan::start();
         let elapsed_before = self.checkpoint.elapsed_at(wall_clock_ms()?)?;
         if elapsed_before >= self.checkpoint.plan.wall_seconds.saturating_mul(1000) {
             let mut next = self.checkpoint.clone();
@@ -1069,8 +1118,8 @@ impl Discovery {
                 .number
                 .checked_add(1)
                 .context("round counter exhausted")?;
-            next.elapsed_ms = elapsed_before
-                .saturating_add(started.elapsed().as_millis().min(u128::from(u64::MAX)) as u64);
+            next.elapsed_ms =
+                elapsed_before.saturating_add(started.millis().min(u128::from(u64::MAX)) as u64);
             next.completed = if next.stalled >= next.plan.limits().patience {
                 Some(CompletionReason::Converged)
             } else if next.elapsed_ms >= next.plan.wall_seconds.saturating_mul(1000) {
@@ -1640,16 +1689,17 @@ fn parallel_evaluate_research(
     use std::sync::{atomic::AtomicBool, mpsc};
     let cursor = AtomicUsize::new(0);
     let halted = AtomicBool::new(false);
-    let started = Instant::now();
+    let started = ElapsedSpan::start();
     let (sender, receiver) = mpsc::sync_channel(workers.max(1));
     std::thread::scope(|scope| {
         for _ in 0..workers.min(requests.len()) {
             let sender = sender.clone();
             let cursor = &cursor;
             let halted = &halted;
+            let started = &started;
             scope.spawn(move || {
                 while !halted.load(Ordering::Acquire) {
-                    if started.elapsed().as_millis() >= u128::from(wall_ms) {
+                    if started.millis() >= u128::from(wall_ms) {
                         break;
                     }
                     let index = cursor.fetch_add(1, Ordering::Relaxed);
@@ -3725,6 +3775,22 @@ mod tests {
             *,
         };
 
+        struct ClockScope(Option<Arc<std::sync::atomic::AtomicU64>>);
+        impl ClockScope {
+            fn frozen() -> (Self, Arc<std::sync::atomic::AtomicU64>) {
+                let clock = Arc::new(std::sync::atomic::AtomicU64::new(1_000_000));
+                let previous = TEST_CLOCK.with(|current| current.replace(Some(Arc::clone(&clock))));
+                (Self(previous), clock)
+            }
+        }
+        impl Drop for ClockScope {
+            fn drop(&mut self) {
+                TEST_CLOCK.with(|clock| {
+                    clock.replace(self.0.take());
+                });
+            }
+        }
+
         struct Space {
             seeds: usize,
             duplicate: bool,
@@ -4523,27 +4589,27 @@ mod tests {
 
         #[test]
         fn exhausted_wall_stops_new_dispatch_without_refunding_reservations() {
+            let (_scope, clock) = ClockScope::frozen();
             let home = tempfile::tempdir().unwrap();
             let mut p = control_plan(home.path(), 40);
             p.wall_seconds = 1;
             let (c, _) = context(&p, 20, true, false);
             let store = Arc::new(Store::open(home.path().join("store")).unwrap());
             let mut d = Discovery::open_research(store.clone(), p.clone(), c.clone()).unwrap();
-            let mut checkpoint = d.checkpoint.clone();
-            checkpoint.elapsed_ms = 0;
-            checkpoint.active_since_ms = Some(wall_clock_ms().unwrap());
-            d.commit_control(checkpoint, RunState::Running).unwrap();
-            struct Slow(Evaluator);
-            impl Executor for Slow {
+            struct Deadline(Evaluator, Arc<std::sync::atomic::AtomicU64>);
+            impl Executor for Deadline {
                 fn evaluate(&self, r: &Request) -> Response {
-                    std::thread::sleep(Duration::from_millis(1100));
+                    self.1.fetch_add(1000, Ordering::SeqCst);
                     self.0.evaluate(r)
                 }
                 fn fitted_model(&self, _: &Request) -> Result<Vec<u8>> {
                     unreachable!()
                 }
             }
-            let e = Slow(Evaluator::new(store.clone()));
+            let e = Deadline(Evaluator::new(store.clone()), clock);
+            // Work performed before advance leaves the frozen admission budget intact.
+            let before = d.checkpoint.elapsed_at(wall_clock_ms().unwrap()).unwrap();
+            assert_eq!(before, 0);
             assert!(d
                 .advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
                 .is_err());
@@ -4555,6 +4621,146 @@ mod tests {
             assert_eq!(d.completed(), Some(CompletionReason::BudgetTime));
             assert!(d.checkpoint.capture.as_ref().unwrap().tainted);
             assert!(materialize_controls(&store, &p.run_id, &home.path().join("refused")).is_err());
+        }
+
+        #[test]
+        fn terminated_pending_suffix_retains_known_prefix_but_refuses_complete_export() {
+            for timed_out in [false, true] {
+                for workers in [1, 8] {
+                    let (_scope, clock) = ClockScope::frozen();
+                    let home = tempfile::tempdir().unwrap();
+                    let mut p = control_plan(home.path(), 80);
+                    if timed_out {
+                        p.wall_seconds = 1;
+                    }
+                    let (context, _) = context(&p, 64, true, false);
+                    let store_home = home.path().join("store");
+                    let store = Arc::new(Store::open(&store_home).unwrap());
+                    let mut d = Discovery::open_research(store.clone(), p.clone(), context.clone())
+                        .unwrap();
+                    struct FinishAtDeadline {
+                        inner: Evaluator,
+                        clock: Arc<std::sync::atomic::AtomicU64>,
+                        timed_out: bool,
+                    }
+                    impl Executor for FinishAtDeadline {
+                        fn evaluate(&self, request: &Request) -> Response {
+                            self.inner.evaluate(request)
+                        }
+                        fn fitted_model(&self, request: &Request) -> Result<Vec<u8>> {
+                            let bytes = self.inner.fitted_model(request)?;
+                            if self.timed_out && request.attempt.round == 1 {
+                                self.clock.fetch_add(1000, Ordering::SeqCst);
+                            }
+                            Ok(bytes)
+                        }
+                    }
+                    let executor = FinishAtDeadline {
+                        inner: Evaluator::new(store.clone()),
+                        clock,
+                        timed_out,
+                    };
+                    for _ in 0..4 {
+                        if d.completed().is_some() {
+                            break;
+                        }
+                        d.advance(&SPACE, &HeuristicAdmission, &executor, workers, usize::MAX)
+                            .unwrap();
+                    }
+                    let reason = if timed_out {
+                        CompletionReason::BudgetTime
+                    } else {
+                        CompletionReason::Converged
+                    };
+                    assert_eq!(d.completed(), Some(reason));
+                    assert!(d.checkpoint.pending.is_empty());
+                    let captured = d.checkpoint.capture.as_ref().unwrap().clone();
+                    let prefix = records(&d);
+                    assert_eq!(prefix.len(), if timed_out { 2 } else { 4 });
+                    assert!(prefix.iter().all(|round| round.capture_complete));
+                    let (number, suffix) = captured.rounds.last_key_value().unwrap();
+                    assert_eq!(*number, prefix.len() as u64);
+                    assert!(suffix.aborted && suffix.committed.is_none());
+                    assert_eq!(suffix.attempts.len(), if timed_out { 8 } else { 16 });
+                    assert!(suffix
+                        .attempts
+                        .iter()
+                        .all(|attempt| attempt.result.is_some()));
+                    assert!(captured.tainted && captured.unknown());
+                    assert_eq!(captured.charged, if timed_out { 20 } else { 52 });
+                    let rung0_calls = executor
+                        .inner
+                        .calls
+                        .lock()
+                        .unwrap()
+                        .iter()
+                        .filter(|r| r.attempt.slot < 65536)
+                        .count();
+                    assert_eq!(rung0_calls as u64, captured.charged);
+                    assert_eq!(d.checkpoint.discarded.len(), 4);
+                    assert!(d
+                        .checkpoint
+                        .discarded
+                        .iter()
+                        .all(|r| r.reason == reason && r.response.is_some()));
+                    let before = store
+                        .get(&RecordKey::Run(p.run_id.clone()))
+                        .unwrap()
+                        .unwrap();
+                    assert!(captured
+                        .roots()
+                        .iter()
+                        .all(|root| before.blobs.contains(root)));
+                    let output = home.path().join("refused.jsonl");
+                    let error = materialize_controls(&store, &p.run_id, &output)
+                        .unwrap_err()
+                        .to_string();
+                    assert!(error.contains("unknown/aborted"), "{error}");
+                    assert!(
+                        error.contains("committed prefix is inspection-only"),
+                        "{error}"
+                    );
+                    assert!(!output.exists());
+                    assert!(!fs::read_dir(home.path()).unwrap().any(|entry| entry
+                        .unwrap()
+                        .file_name()
+                        .to_string_lossy()
+                        .starts_with(".jope-research-")));
+                    assert!(store
+                        .gc(true)
+                        .unwrap()
+                        .blobs
+                        .iter()
+                        .all(|root| !captured.roots().contains(root)));
+                    drop(d);
+                    drop(executor);
+                    drop(store);
+                    let store = Arc::new(Store::open(&store_home).unwrap());
+                    let mut resumed =
+                        Discovery::open_research(store.clone(), p.clone(), context).unwrap();
+                    assert_eq!(resumed.completed(), Some(reason));
+                    assert_eq!(
+                        serde_json::to_value(records(&resumed)).unwrap(),
+                        serde_json::to_value(prefix).unwrap()
+                    );
+                    assert_eq!(
+                        resumed.checkpoint.capture.as_ref().unwrap().charged,
+                        captured.charged
+                    );
+                    let no_work = Evaluator::new(store.clone());
+                    assert!(resumed
+                        .advance(&SPACE, &HeuristicAdmission, &no_work, workers, usize::MAX)
+                        .unwrap()
+                        .is_empty());
+                    assert!(no_work.calls.lock().unwrap().is_empty());
+                    assert!(materialize_controls(&store, &p.run_id, &output).is_err());
+                    let after = store
+                        .get(&RecordKey::Run(p.run_id.clone()))
+                        .unwrap()
+                        .unwrap();
+                    assert_eq!(before.blobs, after.blobs);
+                }
+            }
         }
 
         #[test]

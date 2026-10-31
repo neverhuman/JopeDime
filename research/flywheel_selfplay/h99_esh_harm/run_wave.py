@@ -18,6 +18,27 @@ from executor import INPUT, CHECKPOINT, run_cell, score_fold_b, validate_executi
 from build_metrics import build_metrics
 
 
+def select_one_cell(plan: dict, selector: str) -> list[dict]:
+    """Resolve an explicit ARM:SEED selector to exactly one frozen H99 cell."""
+    try:
+        arm, raw_seed = selector.rsplit(":", 1)
+        if (
+            not arm
+            or not raw_seed.isascii()
+            or not raw_seed.isdecimal()
+            or (raw_seed.startswith("0") and raw_seed != "0")
+        ):
+            raise ValueError
+        seed = int(raw_seed)
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise ValueError("--only-cell must be one frozen ARM:SEED pair") from exc
+    cells = [*plan["candidate_cells"], plan["null_cell"]]
+    selected = [cell for cell in cells if cell["arm"] == arm and int(cell["seed"]) == seed]
+    if len(selected) != 1:
+        raise ValueError(f"--only-cell is not a registered H99 cell: {selector}")
+    return selected
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     modes = parser.add_mutually_exclusive_group(required=True)
@@ -30,7 +51,11 @@ def main() -> None:
     parser.add_argument("--input", type=Path, default=INPUT)
     parser.add_argument("--checkpoint", type=Path, default=CHECKPOINT)
     parser.add_argument("--eta-utc", help="owner ETA recorded in qualification.queue while waiting")
+    parser.add_argument("--owner", default="luna_v1_res03", help="FIFO owner recorded in qualification.queue")
+    parser.add_argument("--only-cell", metavar="ARM:SEED", help="execute one frozen cell and skip Fold-B finalization")
     args = parser.parse_args()
+    if args.only_cell is not None and not args.execute_wave:
+        parser.error("--only-cell is valid only with --execute-wave")
     if args.cpu_dry_run:
         result = cpu_dry_run()
     elif args.launch_preflight:
@@ -53,27 +78,41 @@ def main() -> None:
         input_dir = args.input
         checkpoint = args.checkpoint
         validate_execution_paths(run_root, input_dir, checkpoint)
-        cells = [*execution_plan()["candidate_cells"], execution_plan()["null_cell"]]
-        def worker(cell, staged, scratch, _remaining):
-            return run_cell(cell, staged, scratch, run_root, input_dir=input_dir)
-        def finalize(staged, scratch, _remaining):
+        plan = execution_plan()
+        cells = (
+            select_one_cell(plan, args.only_cell)
+            if args.only_cell is not None
+            else [*plan["candidate_cells"], plan["null_cell"]]
+        )
+        def worker(cell, staged, scratch, _remaining, attempt):
+            return run_cell(cell, staged, scratch, run_root, input_dir=input_dir, attempt=attempt)
+        def finalize(staged, scratch, _remaining, _attempt):
             return score_fold_b(staged, scratch, run_root, input_dir=input_dir)
         def acquire(status_path, *, wait_total):
             return acquire_h99_fifo(
-                status_path, wait_total=wait_total, owner="luna_v1_res03", eta_utc=args.eta_utc
+                status_path, wait_total=wait_total, owner=args.owner, eta_utc=args.eta_utc
             )
         budget = run_fifo_cells(
             cells, run_root=run_root, checkpoint=checkpoint, worker=worker,
-            finalize_worker=finalize, setup_fn=apply_worker_limits, acquire_fn=acquire,
+            finalize_worker=None if args.only_cell is not None else finalize,
+            setup_fn=apply_worker_limits, acquire_fn=acquire,
+            allow_partial=args.only_cell is not None,
         )
-        fold_b = json.loads((run_root / "outcomes/fold_b.json").read_text())
-        metrics = build_metrics(fold_b)
-        out = run_root / "outcomes/admission.json"
-        out.parent.mkdir(parents=True, exist_ok=True)
-        temporary = out.with_suffix(out.suffix + ".new")
-        temporary.write_text(json.dumps(metrics, sort_keys=True, indent=2, allow_nan=False) + "\n")
-        temporary.replace(out)
-        result = {"schema": "jope.h99.wave/v1", "status": "complete", "budget_attempts": len(budget["attempts"]), "admission": str(out)}
+        if args.only_cell is not None:
+            result = {
+                "schema": "jope.h99.wave/v1", "status": "partial",
+                "selected_cell": cells[0], "budget_attempts": len(budget["attempts"]),
+                "fold_b_scored": False,
+            }
+        else:
+            fold_b = json.loads((run_root / "outcomes/fold_b.json").read_text())
+            metrics = build_metrics(fold_b)
+            out = run_root / "outcomes/admission.json"
+            out.parent.mkdir(parents=True, exist_ok=True)
+            temporary = out.with_suffix(out.suffix + ".new")
+            temporary.write_text(json.dumps(metrics, sort_keys=True, indent=2, allow_nan=False) + "\n")
+            temporary.replace(out)
+            result = {"schema": "jope.h99.wave/v1", "status": "complete", "budget_attempts": len(budget["attempts"]), "admission": str(out)}
     else:
         result = execution_plan()
     print(json.dumps(result, sort_keys=True, allow_nan=False), flush=True)

@@ -1,0 +1,14 @@
+{
+  "Elo": null,
+  "ci95": null,
+  "complete": false,
+  "gpu_seconds": 0,
+  "harm_fraction": null,
+  "holm": null,
+  "lcb95": null,
+  "median_gain": null,
+  "optimizer_updates": 0,
+  "status": "NOT_RUN",
+  "val_reg_inner": null,
+  "verdict": null
+}

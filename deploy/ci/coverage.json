@@ -13593,7 +13593,7 @@
         "cpu-qualification"
       ],
       "lanes": [],
-      "scope": "QLT-03-F01 optional internal CLI and F02 durable discovery capture hooks, private bounded CAS/outbox and synthetic crash/recovery/readback controls. No production provider resolver is registered; authenticated native recording remains unavailable pending the separately approved corpus/conditioning/R0/gate/seed contract. Absent from default/release selection. Local software-control receipts do not establish hosted feature coverage, real corpus/binary evaluator or Q1 qualification."
+      "scope": "QLT-03-F01 optional internal CLI and F02 durable discovery capture hooks, private bounded CAS/outbox and synthetic crash/recovery/readback controls. No production provider resolver is registered; authenticated native recording remains unavailable pending the separately approved corpus/conditioning/R0/gate/seed contract. Absent from default/release selection. Local software-control receipts do not establish hosted feature coverage, real corpus/binary evaluator or Q1 qualification. CPU follow-up: deterministic scoped-clock deadline control and1/8-worker convergence/time suffix retention and complete-export refusal. No prefix-export capability or hosted qualification is added."
     },
     "python:research/flywheel_selfplay/h96_w4_active_reveal/test_run_w4.py": {
       "discovery": {
@@ -13683,7 +13683,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H122 CPU-only Lookahead retest preparation: fresh whole-family fold, unique per-attempt r882 staging, launch disk gate before copying, preservation of read-only legacy scratch, exact six-cell admission/Elo readout and synthetic no-data CPU dry run. No corpus/checkpoint reads, FIFO ticket, GPU or experiment outcome."
+      "scope": "H122 CPU launch-readiness: lease-bound cell CLI, 40 real fixture optimizer steps per arm, frozen-parameter and Lookahead checks, exact six-cell coordinator, predecessor/FIFO/resource budgets, phase and byte-bound collection, official equal-family utility and strict Elo/admission controls. Software fixtures only; no real corpus/checkpoint, shared lock/ticket, GPU or study outcome."
     },
     "python:research/flywheel_selfplay/h124_gbm_shrink_blend/test_h124.py": {
       "discovery": {
