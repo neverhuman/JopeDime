@@ -1,3 +1,42 @@
+# H131b — family-bootstrap adapter soup, Amendment A1 outcome
+
+**NO_ADVANCE**, execution **COMPLETE**. [Amendment PR #1162](https://github.com/neverhuman/JopeDime/pull/1162) merged before this one authorized attempt. Original H131 remains INCOMPLETE with zero updates; its record and Amendment A1 are retained below.
+
+Hypothesis and setup: average eight whole-family-bootstrap adapters to cancel harmful fine-tuning directions; fixed half-soup and CONTROL, seeds 97–99, fold 131097, 948 fit / 271 assessment contexts, 164 / 41 families. All inputs are DL-Train. The plan is 27 fits and 1,080 optimizer updates; soup has eight times CONTROL compute. DOPE c51a56d0 and all non-adapter state remain frozen. No member selection, new fold, tuned weight or best-seed selection.
+
+| Arm | Median gain vs r882 | Family 95% CI | Median Elo and 95% CI | Family harm | Holm LCB | Verdict |
+|---|---:|---|---|---:|---:|---|
+| CONTROL | -0.027148016 | [-0.073965, 0.008560] | 1431.3 [1346.7, 1508.5] | 48.78% | -0.065683 | NO_ADVANCE |
+| SOUP8 | -0.022976076 | [-0.069395, 0.013138] | 1448.8 [1366.7, 1534.0] | 41.46% | -0.069395 | NO_ADVANCE |
+| SOUP8_HALF | -0.021520067 | [-0.069763, 0.014935] | 1483.0 [1404.4, 1568.7] | 31.71% | -0.074746 | NO_ADVANCE |
+
+Completed 1080 updates, 27 fits and nine assessment cells. Fresh r882 assessment utility 1.317514412634. All seed gains, family harm, Holm decisions and identical-vector flags are in [metrics.json](metrics.json).
+
+Verification reconstructed all six soup/half-soup snapshots bitwise, replayed the family bootstraps and statistics, checked 27 curves and 39 original-checkpoint copies, and verified candidate custody preceded assessment. The pre-update two-copy prediction/cache regression passed.
+
+Resources: monitor `WORKER_EXITED`, reason `None`, exit `0`, wall 1606.81s, peak RSS 3.708 GiB. Total-thread preflight: `{"after": 3, "before": 3, "contexts": ["004a7438dc815b62c821976ac64379b7bf9a1a138d3ca441a9fb5a5e0e5dfb24", "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d"], "native_workspace_threads": 1, "status": "PASS", "total_thread_limit": 4}`. Guard stays four total threads, 6 GiB RSS, at least 30 GiB available memory, load1 at most 86.7/102, disk below 94%, nice at least 15. CPU only; no GPU/qualification lock/live-loop action.
+
+Red-team assessment:
+
+- Leakage: the fit/assessment family split and candidate-before-assessment gate are fixed; prior r882 DL-Train exposure limits any generalization claim. A missing final runtime audit is not counted as complete coverage.
+- Seed noise: three seeds and one fold; 24 members are not independent assessment replications. Bootstrap intervals condition on these trained models.
+- Metric direction: higher H61 unrevealed-candidate utility is better; indices 0–3 are excluded. Elo is family W/T/L with r882=1500, not AUC.
+- Cherry-picking and compute: every fixed member/seed/arm is required. No survivor average, assessment-tuned weight or retry. Eightfold compute remains a confound without CONTROL_320.
+- Tie acceptance: median gain must exceed 0.001, every seed must improve, three-arm Holm adjusted LCB must exceed zero, and at most four of 41 families may have a strictly negative seed-mean gain. Ties never qualify; bootstrap tail areas remain exploratory.
+- DOPE freeze: only 29,211 non-anchor adapter parameters are allowed to train. Completed-run verification is required for all per-fit and per-assessment freeze claims; partial records cannot establish a whole-wave pass.
+
+Validation: 26 data-free tests and the five local records gates passed for Amendment A1. Closeout checks preserve source/prereg/fold identities, strict JSON, links and the complete diff at the publication head. These are same-agent checks, not independent human review; full CI remains deferred under the owner targeted-local policy.
+
+Next step: Retain r882; no soup qualified. Any further experiment requires a new protocol.
+
+Verified custody: `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H131b/astra-t1340/manifest.json`, VersionId `LoMO6QneloUYvpgQPtTQ38nTXu1oMBk7`, SHA256 `de0d027981f295fc213f880990f11c048eeac4087e5190fdca45ae3132742007`. Numerical archive `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H131b/astra-t1340/numerical-evidence.npz`, VersionId `4qFFo1yC_56yYu6rHovuf5E7DM7EboH0`, SHA256 `e8daa1a96fe0768631ce0952bcfe6bf7a9f385e16b983846951bc605a73751e4`; 142 member hashes restored and checked. Code stays in Git at `2b7049f4dd5907eb383b1debc3a807ecf9439dff`.
+
+Recover the exact NPZ version, verify SHA256, load with `allow_pickle=False` and verify each raw uint8 member against numerical-inventory.json. Original H50 derived inputs and r882 are local inputs whose exact S3 recovery versions were not established here.
+
+---
+
+The following H131 closeout and Amendment A1 text is the frozen historical record from before H131b execution. Its pending-status wording is superseded by the completed H131b result above.
+
 # H131 — family-bootstrap adapter soup
 
 **INCOMPLETE: resource guard stopped the worker before training.** The attempt made **0 optimizer updates**, completed **0/27 fits** and produced **0/9 assessment cells**. Gains, Elo, confidence intervals, family harm and statistical admission remain unknown. This is not evidence for or against the soup hypothesis and is not a NO_ADVANCE result.
