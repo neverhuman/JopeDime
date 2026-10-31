@@ -1,0 +1,188 @@
+{
+  "actual_campaign_consumption": null,
+  "conditional_budget_arithmetic": {
+    "H75_planned_native_calls": 7200,
+    "H75_planned_optimizer_updates": 3600,
+    "actual_campaign_consumption": null,
+    "assumptions": [
+      "Retain H75 exact context/seed/fold/cycle roster and 40 replay updates.",
+      "Collect one additional uniform fit-family memory per fold/seed; existing terminal R is held-context search only.",
+      "Use cached common-panel replay evaluation; no extra native evaluation counted.",
+      "No new timing, retries or confirmation beyond original allowance; actual all-in cost still requires a pilot."
+    ],
+    "conditional_neural_optimizer_updates": 5400,
+    "conditional_plan_total_native_calls": 7680,
+    "conditional_tree_replay_fits": 75,
+    "conditional_unallocated_calls": 1920,
+    "conditional_uniform_memory_additional_native_calls": 480,
+    "execution_admitted": false,
+    "remaining_authorized_budget": null
+  },
+  "created_utc": "2026-10-31T07:39:57.683676+00:00",
+  "execution_admitted": false,
+  "new_protocol_amendment": false,
+  "remaining_authorized_budget": null,
+  "replay_matrix": {
+    "H75_declared_replay_cells_per_fold_seed": [
+      {
+        "learner": "neural",
+        "memory": "B"
+      },
+      {
+        "learner": "neural",
+        "memory": "D"
+      }
+    ],
+    "W9_required_replay_cells_per_fold_seed": [
+      {
+        "learner": "neural",
+        "memory": "A"
+      },
+      {
+        "learner": "neural",
+        "memory": "B"
+      },
+      {
+        "learner": "neural",
+        "memory": "C"
+      },
+      {
+        "learner": "neural",
+        "memory": "D"
+      },
+      {
+        "learner": "neural",
+        "memory": "uniform"
+      },
+      {
+        "learner": "strongest_W1_tree",
+        "memory": "A"
+      },
+      {
+        "learner": "strongest_W1_tree",
+        "memory": "B"
+      },
+      {
+        "learner": "strongest_W1_tree",
+        "memory": "C"
+      },
+      {
+        "learner": "strongest_W1_tree",
+        "memory": "D"
+      },
+      {
+        "learner": "strongest_W1_tree",
+        "memory": "uniform"
+      }
+    ],
+    "W9_uncovered_replay_cells_per_fold_seed": [
+      {
+        "learner": "neural",
+        "memory": "A"
+      },
+      {
+        "learner": "neural",
+        "memory": "C"
+      },
+      {
+        "learner": "neural",
+        "memory": "uniform"
+      },
+      {
+        "learner": "strongest_W1_tree",
+        "memory": "A"
+      },
+      {
+        "learner": "strongest_W1_tree",
+        "memory": "B"
+      },
+      {
+        "learner": "strongest_W1_tree",
+        "memory": "C"
+      },
+      {
+        "learner": "strongest_W1_tree",
+        "memory": "D"
+      },
+      {
+        "learner": "strongest_W1_tree",
+        "memory": "uniform"
+      }
+    ],
+    "source_scope": "Declared protocol coverage; not executed runner capability.",
+    "strongest_tree_identity_supplied": false,
+    "uniform_search_control_is_not_uniform_training_memory": true
+  },
+  "requirements": [
+    {
+      "id": "recipe",
+      "required_evidence": "Freeze W1 selected development recipe and strongest non-neural policy with fold-excluded model/source/input hashes.",
+      "source_locator": "H68 upstream dependencies; H75 PREREG Four matched cells: fixed program412 G, not W1 selected.",
+      "status": "NOT_ESTABLISHED"
+    },
+    {
+      "id": "factorial",
+      "required_evidence": "Four cells, identical initial memory/budgets, frozen controls, shadow logs, two persistent cycles; prove isolation and actual updates.",
+      "source_locator": "H75 protocol cells, cycles; PREREG Two cycles.",
+      "status": "DECLARED_NOT_EXECUTED"
+    },
+    {
+      "id": "uniform_fit_memory",
+      "required_evidence": "Acquire uniform fit-family memory under the same candidate/row/fit budget. Held-family terminal R outcomes must not enter replay.",
+      "source_locator": "H75 PREREG Terminal evaluation and memory replay; R appears only as a terminal search control.",
+      "status": "NOT_IN_H75_PLAN"
+    },
+    {
+      "id": "replay_coverage",
+      "required_evidence": "Replay every cell-produced memory plus uniform memory into the same initialization/recipe within each learner class: neural and strongest W1 tree.",
+      "source_locator": "H75 protocol legacy_panel; common replay covers B and D neural only.",
+      "status": "PARTIAL_DESIGN"
+    },
+    {
+      "id": "replay_matching",
+      "required_evidence": "Freeze deterministic matching of row counts, completed status mix, static dose and within-class training budget across all memory sources. Report every exclusion and zero support as untested.",
+      "source_locator": "H75 PREREG Common-learner replay matches B/D only; H75 feedback statuses already distinguish unknown and completed gate failure.",
+      "status": "PARTIAL_DESIGN"
+    },
+    {
+      "id": "causal_conjunction",
+      "required_evidence": "Require D over both one-sided controls and strongest non-neural matched policy, plus D-memory over uniform-memory in the prescribed common-learner comparisons. Report interaction separately. Freeze all contrasts/adjustment before outcomes.",
+      "source_locator": "W9 PROPOSALS Metrics/success/kill; H75 seven contrasts use replay_D-replay_B, not replay_D-replay_uniform.",
+      "status": "NOT_FROZEN_FOR_W9"
+    },
+    {
+      "id": "endpoint_identity",
+      "required_evidence": "Keep legacy val_reg_inner, cycle-one U4, cycle-two increments and terminal search/confirmation identities separate; no U8-to-U4 relabel or cross-panel Elo subtraction.",
+      "source_locator": "H75 protocol confirmed_U8 primary panel; W9 PROPOSALS U4 and both-cycle reporting.",
+      "status": "RECONCILIATION_REQUIRED"
+    },
+    {
+      "id": "admission",
+      "required_evidence": "Exact source/evaluator/vocabulary/program/table/original-row/cut/family/alias closure and measured completion; no held-family feedback, protected payloads or raw mixed scores.",
+      "source_locator": "H75 INTERFACES admission manifest; H68 row closure; H75 protocol launch_manifest null.",
+      "status": "NOT_ESTABLISHED"
+    },
+    {
+      "id": "implementation",
+      "required_evidence": "Bind executable runner and support helper sources to the frozen execution manifest and test their integration before any model work.",
+      "source_locator": "H75 support helpers are on main; PR859 is closed unmerged at inspected API state, no runner.py in H75 main folder.",
+      "status": "NOT_QUALIFIED"
+    },
+    {
+      "id": "cost_and_deadline",
+      "required_evidence": "Reuse the one H75/W9 9600-call,14400-GPU-second,14400-CPU-second envelope and original deadline; reconcile all prior/pilot/retry costs, then run fit-only feasibility before allocating.",
+      "source_locator": "H75 protocol budgets, reservation=existing_W9_envelope_not_additive, deadline2026-10-31T14:00:00Z.",
+      "status": "RECONCILIATION_REQUIRED"
+    },
+    {
+      "id": "launch",
+      "required_evidence": "W9 remains downstream of upstream decisions, requires separately frozen settings/input proof/resource and GPU qualification; this CPU prep grants no slot or training launch.",
+      "source_locator": "overnight19_t0135 CPU-only; H68 Handoff; H75 schedule_authority H75_gpu_slot null.",
+      "status": "NOT_AUTHORIZED"
+    }
+  ],
+  "schema": "rd_breakthrough.h91-w9-readiness/v1",
+  "scientific_verdict": null,
+  "source_commit": "cd4505314844a03ebc52b0935d477ca15594b944",
+  "state": "PREPARATION_COMPLETE_EXECUTION_NOT_ADMITTED"
+}

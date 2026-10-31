@@ -1,0 +1,162 @@
+{
+  "assertion_breakdown": {
+    "contract_or_counterexample_assertions": 21,
+    "source_hash_assertions": 27,
+    "synthetic_algebra_counterexamples": 1,
+    "unique_source_files": 9
+  },
+  "assertions_executed": 48,
+  "assertions_failed": 0,
+  "data_outcome_payloads_read": 0,
+  "gpu_seconds": 0,
+  "hwm_candidate": false,
+  "measured_worker_cpu_seconds": 0.0020348090000000055,
+  "metrics": {
+    "Elo": null,
+    "U4": null,
+    "U8": null,
+    "val_reg_inner": null
+  },
+  "models_read": 0,
+  "native_fits": 0,
+  "optimizer_updates": 0,
+  "original_h75_science_fields_unchanged": [
+    "seeds",
+    "folds",
+    "fold_seed",
+    "cycles",
+    "cells",
+    "search_panel",
+    "legacy_panel",
+    "primary_contrasts",
+    "statistics",
+    "budgets",
+    "input_pins",
+    "optimizer",
+    "loss",
+    "updates_per_cycle",
+    "common_replay_updates"
+  ],
+  "overhead_cpu_seconds": null,
+  "overhead_scope": "Interpreter/import startup, Git/S3/SSH/Docker, review and publication are not included in worker clocks. Initial x4 PATH failure occurred before any worker; repaired without repeating successful shards.",
+  "protected_payloads_read": 0,
+  "real_s3_inputs": [
+    {
+      "local_name": "input-h75-manifest.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H75-closed-loop/astra-prereg-20261031T051500Z-0dd112c7/manifest.json",
+      "sha256": "f0588100c72ef2d6392b8c06a8a0e269304d27d13433d3891ed223df5182b59d",
+      "version_id": "Bi4rc.IuOV5k5wgaxqNnYKTfgMsQbiNP"
+    },
+    {
+      "local_name": "input-h75-protocol.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H75-closed-loop/astra-prereg-20261031T051500Z-0dd112c7/protocol.json",
+      "sha256": "d0083efb6dab8fa9ce2f065da37471b20a180b21119da2c3ea1d3c7b312c8c5f",
+      "version_id": "rA529CuT_OE9bFhZ4nTf8XnPcK7IXE2w"
+    },
+    {
+      "local_name": "input-w5-manifest.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/w5_provenance/gb2136-20261031T040010Z-ca549a23e/manifest.json",
+      "sha256": "0b48b708e0bd226d54351d724026bc48f689df4402e6f82fdd63c928ce0f69ad",
+      "version_id": "bGdZpgM9wroUQmfOObS2AX2yOKj6UlIp"
+    }
+  ],
+  "runner_pr_api": {
+    "headRefOid": "d1a785412e7d8acdcfcfbc30a87fd225398db152",
+    "mergedAt": null,
+    "number": 859,
+    "state": "CLOSED",
+    "url": "https://github.com/neverhuman/JopeDime/pull/859"
+  },
+  "schema": "rd_breakthrough.h91-audit-metrics/v1",
+  "scientific_verdict": null,
+  "shards": [
+    {
+      "checks_passed": 17,
+      "resource": {
+        "cores": 128,
+        "cpu_seconds": 0.0007892510000000047,
+        "home_free_bytes": 180668096512,
+        "host": "xbabe1",
+        "hostname": "xbabe1",
+        "load1": 4.49609375,
+        "machine": "x86_64",
+        "nice": 19,
+        "system": "Linux",
+        "wall_seconds": 0.0008197985589504242
+      },
+      "shard": "factorial"
+    },
+    {
+      "checks_passed": 15,
+      "resource": {
+        "cores": 128,
+        "cpu_seconds": 0.0007444750000000014,
+        "home_free_bytes": 59015368704,
+        "host": "xbabe3",
+        "hostname": "xbabe3",
+        "load1": 9.47900390625,
+        "machine": "x86_64",
+        "nice": 10,
+        "system": "Linux",
+        "wall_seconds": 0.0009032320231199265
+      },
+      "shard": "replay"
+    },
+    {
+      "checks_passed": 16,
+      "resource": {
+        "cores": 24,
+        "cpu_seconds": 0.0005010829999999994,
+        "home_free_bytes": 271644098560,
+        "host": "xbabe4",
+        "hostname": "88bd0a902433",
+        "load1": 0.0,
+        "machine": "aarch64",
+        "nice": 10,
+        "system": "Linux",
+        "wall_seconds": 0.0005339239723980427
+      },
+      "shard": "budget"
+    }
+  ],
+  "source_commit": "cd4505314844a03ebc52b0935d477ca15594b944",
+  "source_receipts": [
+    {
+      "path": "research/flywheel_selfplay/h68_w9_causal_closeout/README.md",
+      "sha256": "f0ff9c4ad95b79b4f6aa38acf1f42c74bf44467e4e053af7873014b37510066f"
+    },
+    {
+      "path": "research/flywheel_selfplay/h69_w7_informative_acquisition_qd_replay/README.md",
+      "sha256": "206c1b6e98fc47db8dc40a8631fe32c719f0405f3ce67cbe63ab35894bd32cdd"
+    },
+    {
+      "path": "research/flywheel_selfplay/h75_closed_loop_evolution/INTERFACES.md",
+      "sha256": "089cf9feefbd8016c4146c9f42a5e5436adbb92393e5bd6ae6c8718ba1b10362"
+    },
+    {
+      "path": "research/flywheel_selfplay/h75_closed_loop_evolution/PREREG.md",
+      "sha256": "06a98ba1129c1f5b11ca8e3ef66f418ebfbf2e8f470a1005d713098fcad815f1"
+    },
+    {
+      "path": "research/flywheel_selfplay/h75_closed_loop_evolution/protocol.json",
+      "sha256": "d9973e972e54db0fc814dd8999a20fefbc450446152939e4d4a42c914c3a8ef9"
+    },
+    {
+      "path": "research/flywheel_selfplay/h75_closed_loop_evolution/scoring/README.md",
+      "sha256": "f6a3f30e8778376ffe79b4e1bb8647936b729bd5203aaef76bb9468d36145836"
+    },
+    {
+      "path": "research/flywheel_selfplay/rd_breakthrough/PROPOSALS.md",
+      "sha256": "eb2447d014957222855ba374a71eb00747692581083b6613c5487135497e4ba1"
+    },
+    {
+      "path": "research/flywheel_selfplay/rd_breakthrough/w5_provenance/receipts/custody.json",
+      "sha256": "a82f89986601b4c34ed0b654bc574dde7c8b6e464d510d8938faeeb235f14217"
+    },
+    {
+      "path": "research/flywheel_selfplay/rd_breakthrough/w5_provenance/receipts/verdict.json",
+      "sha256": "07992fe34ae5fca644064d6a2cb6f58f83e06a02dc012de7ca60557a61808eae"
+    }
+  ],
+  "state": "H75_DESIGN_PARTIAL_FOR_W9"
+}
