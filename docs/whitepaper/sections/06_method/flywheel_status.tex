@@ -17,7 +17,7 @@ compare this snapshot with other models.
 In the inspected loop implementation, heuristic program edits, retrieval
 and grammar sampling supply candidate programs. A trainable adapter ranks
 proposals by predicted cost; this loop does not optimize a neural program
-writer. Its pool-utility calculation uses the fitness and gate outcomes of
+writer. Its pool-utility calculation uses the recorded scores and gate outcomes of
 the first four candidates as revealed history, then selects the minimum
 predicted-cost candidate from the pool, including those entries. This is a
 conditional ranking task, separate from a single new program drawn by the
@@ -66,11 +66,15 @@ utility tables do not establish either.
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_telemetry.pdf}
   \caption{\textbf{Operating measurements from the retained snapshot.}
-  Left: dataset throughput. Middle: filtered time between admission
-  timestamps (green) and logged round wall time (blue squares); longer
-  timestamp intervals are omitted as indicated in the legend. Right:
-  promotion rate. These measurements describe the training loop, rather
-  than the accuracy or cost of one-proposal deployment.}
+  Left: distinct training contexts divided by completed-round wall time.
+  Middle: filtered time between admission timestamps (green) and logged
+  round wall time (blue squares); longer timestamp intervals are omitted
+  as indicated in the legend. Right: program promotions per hour, computed
+  from strict improvements to training-program incumbents and accumulated
+  round wall time over up to twenty completed rounds in the reporting
+  process, including qualification waits. Program promotions and adapter
+  acceptances count different events. These measurements describe the
+  training loop, rather than the accuracy or cost of one-proposal deployment.}
   \label{fig:fw-telemetry}
 \end{figure*}
 
