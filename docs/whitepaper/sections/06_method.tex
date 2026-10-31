@@ -41,7 +41,7 @@ The reference checkpoint uses a frozen encoder to turn the board of
 The first summarizes a pretrained row encoder's embeddings across rows,
 independent of row order (512 values). The second projects the hidden
 state of a pretrained third-party tabular regressor that reads the training
-rows and labels (1,024; \TBD{name, version, licence}). The third passes the
+rows and labels (1,024; Foundation, version \texttt{foundation\_enc.v1.tabpfn}; licence: proprietary, available on request). The third passes the
 scaled targets through two frozen windows (512).
 
 The encoder is fixed and pinned by hash in the reference procedure,

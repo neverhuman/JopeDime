@@ -2,19 +2,19 @@
 
 What would better first proposals on independent new families establish,
 and where would that claim stop? This section states, for each outcome of
-\cref{sec:results}, which claim it would support. The answer depends on
-those independent results. The recorded training trajectory alone cannot
-establish transfer, useful new composition or autonomous scientific
-discovery.
+\cref{sec:results}, which claim it would support. The recorded training
+trajectory alone cannot establish transfer, useful new composition or
+autonomous scientific discovery.
+% Trace: §6.8 (sections/06_method/flywheel_status.tex; figures/data/admissions.csv, rounds.csv).
 \TBD{Reconcile every conclusion below with the completed evaluation.}
 
 \subsection{Learning to select and learning to invent}
 
 A better task-dependent choice from a fixed program archive demonstrates
 selection. A useful composition absent from the training archive is a stronger
-result, and requires an output space that permits it. Token-by-token decoding does not distinguish the two:
-report the admissible output space, the training archive and the relation
-of each proposed program to that archive. Absence from an archive establishes
+result, and requires an output space that permits it. Token-by-token
+decoding can produce either, so report the admissible output space, the
+training archive and the relation of each proposed program to that archive. Absence from an archive establishes
 novelty relative to that archive, rather than to the scientific literature.
 Different program spellings can also express the same computation. Claims
 of invention therefore need comparisons of program behavior and known
@@ -23,11 +23,11 @@ compared with its training archive, decide which of the two claims applies.
 
 \subsection{Moving judgment across problems}
 
-If learning improves first proposals on new families, it would support the
+If learning improved first proposals on new families, that would support the
 hypothesis that training evaluations can be retained as a transferable
 proposal capability. It would not show that one proposal wins on every
-problem. Test-time search may still improve a learned writer, and its value
-should be compared with the training cost it takes to improve that writer.
+problem. Test-time search may still improve a learned writer; its value
+should be weighed against the training cost of improving the writer itself.
 The measured search curves and full cost account of
 \cref{sub:results-search} bound how far this claim extends.
 
@@ -37,7 +37,12 @@ The framework optimizes what its referee measures. Repeated development
 comparisons can overfit that referee, while a restricted language can hide
 useful algorithms from the learner. An admission based on a higher
 development score records a selection decision. It does not quantify
-uncertainty or guarantee improvement in the target population. The independent evaluation must
+uncertainty or guarantee improvement in the target population.
+% Trace: overfitting a development referee: research/flywheel_selfplay/h56_audit/SUMMARY.md
+% (winner's curse on DL-Val contexts) and h95_w8_hwm_resplit_confirm/README.md (15 of 45 apparent
+% high-water marks fail on resplit). Selection score is not certified gain:
+% h80_long_es/README.md (positive median Elo, negative LCB95, not admitted).
+The independent evaluation must
 keep the chosen checkpoint fixed and report paired uncertainty, including
 failures and ties. Task representations, training families
 and runtime limits further bound the result. A referee for a new scientific
@@ -52,8 +57,9 @@ rate at which the proposer learns are distinct claims. Evidence for the
 first does not establish the others. An optimizer trace with verified
 parameter changes can establish that training occurred; a lower training
 objective measures the fitting criterion. Neither alone shows that first
-proposals improved on unseen families. People still choose the task, metric,
-representation and resource limits. The paper claims only the strongest
+proposals improved on unseen families.
+% Trace: AGENTS.md, "What counts as verification" (training evidence = optimizer updates and changed parameters).
+People still choose the task, metric, representation and resource limits. The paper claims only the strongest
 level that \cref{sec:results} supports; the others remain future work.
 
 \subsection{Limitations}\label{sub:meaning-limits}
@@ -69,12 +75,9 @@ The economics are modeled rather than measured: pilot costs, and the point
 at which training repays itself, are still to be reported
 (\cref{sec:price,sub:results-search}).
 
-The contribution to assess is concrete: whether retained evaluation
-experience improves the first executable proposal on a new problem, under
-a declared budget and an independently scored test.
-
 \section{Conclusion}\label{sec:conclusion}
 
+% Trace: AlphaGo Zero, cited in §1 and §3.3 (silver2017mastering).
 Within a game, a learner with a referee went beyond the best human play.
 We asked whether the same recipe can improve the first algorithm a system
 proposes for a new problem, and made the question testable. Invention
@@ -85,6 +88,8 @@ problem--program map, and to deploy one program per problem. The design,
 the cost model and the evaluation protocol are specified here. The
 retained development records show admission and search behavior, not
 transfer.
+% Trace: §6.8 (figures/data/admissions.csv, rounds.csv) and §7.7
+% (sections/06_method/sources/01M674E8XA0S4ZS5BT6FVH5QKX.md).
 
 The decisive experiment is a single comparison: the frozen reference
 writer against the same writer after a predeclared training intervention,

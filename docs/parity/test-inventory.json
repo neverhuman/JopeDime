@@ -9335,10 +9335,10 @@
  "python": {
   "mode": "static-scan",
   "command": "explicit --static-python: stdlib AST scan of python/tests/**/test_*.py; not collection or execution",
-  "count": 202,
+  "count": 209,
   "packages": {
    "jope": {
-    "count": 202,
+    "count": 209,
     "files": {
      "tests/test_context_proposals.py": {
       "count": 6,
@@ -9455,9 +9455,13 @@
       ]
      },
      "tests/test_north_star_flywheel_guards.py": {
-      "count": 4,
+      "count": 8,
       "tests": [
        "tests/test_north_star_flywheel_guards.py::test_ns3_dope_freeze_guard_and_counterexamples",
+       "tests/test_north_star_flywheel_guards.py::test_ns3_extra_trainable_dope_parameter_is_rejected",
+       "tests/test_north_star_flywheel_guards.py::test_ns3_missing_normalizer_buffer_is_rejected",
+       "tests/test_north_star_flywheel_guards.py::test_ns3_mutated_normalizer_buffer_is_detected",
+       "tests/test_north_star_flywheel_guards.py::test_ns3_reshaped_normalizer_buffer_is_detected",
        "tests/test_north_star_flywheel_guards.py::test_ns4_binary_clf_metrics_and_valid_mask_nan_counterexample",
        "tests/test_north_star_flywheel_guards.py::test_ns5_rust_fitness_target",
        "tests/test_north_star_flywheel_guards.py::test_ns7_elo_tracker_and_null_family_rejection"
@@ -9502,6 +9506,14 @@
        "tests/test_recipe_e.py::test_recipe_e_mix_is_exact_over_five_batches",
        "tests/test_recipe_e.py::test_recipe_e_packed_sidecar_is_deterministic_and_counts_unique_receipts",
        "tests/test_recipe_e.py::test_recipe_e_trigger_and_fixed_objective_contract"
+      ]
+     },
+     "tests/test_record_reader.py": {
+      "count": 3,
+      "tests": [
+       "tests/test_record_reader.py::test_reader_api_accepts_complete_all_proposal_capture",
+       "tests/test_record_reader.py::test_reader_api_rejects_complete_ordinary_capture_for_all_proposal_consumer",
+       "tests/test_record_reader.py::test_reader_api_rejects_partial_all_proposal_capture_even_for_inspection"
       ]
      },
      "tests/test_reward_ranked_dl_generate.py": {
@@ -9658,6 +9670,6 @@
  },
  "totals": {
   "rust": 6098,
-  "python": 202
+  "python": 209
  }
 }
