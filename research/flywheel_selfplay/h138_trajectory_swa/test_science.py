@@ -20,6 +20,51 @@ class Controls(unittest.TestCase):
         ]
         return rows, {"R882": np.zeros(1219), **{a: np.full(1219, 0.02) for a in ARMS}}
 
+    def test_imported_cache_reader_requires_full_identity_closure(self):
+        from pathlib import Path
+        import tempfile
+        import runner
+
+        helper = runner.load(
+            "h138_test_h124",
+            Path(__file__).resolve().parents[1] / "h124_gbm_shrink_blend/runner.py",
+        )
+        rows = [dict(context_sha256="train", n_candidates=2)]
+        excluded = [dict(context_sha256="val", n_candidates=3)]
+        with tempfile.TemporaryDirectory() as tmp:
+            helper.CACHE = Path(tmp)
+            features = {k: np.arange(4).reshape(2, 2) for k in helper.CONTEXT_MEMBERS}
+            np.savez(
+                helper.CACHE / "context_features.npz", cids=["train", "val"], **features
+            )
+            np.savez(
+                helper.CACHE / "pool_priors.npz",
+                cids=["train", "val"],
+                offsets=[0, 2, 5],
+                proj16=np.zeros((5, 16), dtype=np.float32),
+            )
+            with self.assertRaisesRegex(RuntimeError, "cache closure differs"):
+                runner.cache_inputs(helper, rows, [])
+            for allowed, denied in [(rows, excluded), (excluded, rows)]:
+                context, reads, projection = runner.cache_inputs(
+                    helper, allowed, denied
+                )
+                self.assertEqual(set(context), {allowed[0]["context_sha256"]})
+                self.assertTrue(
+                    all(
+                        r["rows_read"] == 1 and r["overlapping_reads"] == 0
+                        for r in reads.values()
+                    )
+                )
+                reader, spans, _ = projection
+                self.assertEqual(
+                    reader.rows(*spans[allowed[0]["context_sha256"]]).shape,
+                    (allowed[0]["n_candidates"], 16),
+                )
+                lo, hi = (0, 2) if denied is rows else (2, 5)
+                with self.assertRaisesRegex(RuntimeError, "forbidden split"):
+                    reader.rows(lo, hi)
+
     def test_partitions_cover_each_family_once(self):
         rows, _ = self.fixture()
         f = folds(rows)

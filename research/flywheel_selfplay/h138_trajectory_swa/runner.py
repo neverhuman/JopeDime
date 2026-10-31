@@ -160,12 +160,17 @@ def pools(h, rows):
     return result
 
 
-def evaluate(c, out, h, native, manifest, rows, arm):
+def cache_inputs(h, rows, excluded):
+    context, reads = h.train_context(rows, excluded)
+    projection = h.train_projection(rows, excluded)
+    return context, reads, projection
+
+
+def evaluate(c, out, h, native, manifest, rows, arm, excluded):
     import torch
 
     net, guard, names, frozen, receipt = build(c, h, manifest, arm)
-    context, reads = h.train_context(rows, [])
-    projection = h.train_projection(rows, [])
+    context, reads, projection = cache_inputs(h, rows, excluded)
     pool = pools(h, rows)
     setter = torch.set_num_threads
     with patch.object(torch, "set_num_threads", lambda requested: setter(1)):
@@ -323,7 +328,7 @@ def main():
             ]
             if contract["contexts"] != expected:
                 raise RuntimeError("91-context contract changed")
-            r = evaluate(c, out, h, native, manifest, val, "R882")
+            r = evaluate(c, out, h, native, manifest, val, "R882", train)
             sanity = native.sanity(r["values"], reference)
             if sanity["max_context_error"] != 0 or sanity["mean_error"] != 0:
                 raise RuntimeError("r882 exact91-context regression gate failed")
@@ -338,7 +343,7 @@ def main():
                 arm = stage.removeprefix("train_")
                 if arm not in ("R882", *ARMS):
                     raise ValueError("unregistered arm")
-                evaluate(c, out, h, native, manifest, train, arm)
+                evaluate(c, out, h, native, manifest, train, arm, val)
             elif stage == "primary":
                 values = {
                     a: json.loads((root / f"train_{a}/receipt.json").read_text())[
@@ -354,7 +359,7 @@ def main():
                         dict(status="NOT_RUN_PRIMARY_FAILED", arm_payload_reads=0),
                     )
                 else:
-                    r = evaluate(c, out, h, native, manifest, val, selected)
+                    r = evaluate(c, out, h, native, manifest, val, selected, train)
                     base = json.loads((root / "baseline/receipt.json").read_text())[
                         "values"
                     ]

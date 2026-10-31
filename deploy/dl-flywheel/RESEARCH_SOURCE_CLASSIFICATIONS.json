@@ -3929,8 +3929,8 @@
       }
     },
     "python:research/flywheel_selfplay/h138_trajectory_swa/runner.py": {
-      "bytes": 15150,
-      "sha256": "311d0799fd02a10986d81a638f030602408015360b54beaa36b9e836c7631954",
+      "bytes": 15333,
+      "sha256": "0963899439de0d3d1155789520d3202d05d37d70aa83a0da5c5b15834ff905ff",
       "classification": {
         "role": "research",
         "reason": "H138 owner-directed zero-update retained-trajectory averaging, native inference and bounded external CPU controls; not product qualification."

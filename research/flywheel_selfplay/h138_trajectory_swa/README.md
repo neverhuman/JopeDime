@@ -29,3 +29,9 @@ scratch < 2 GB, two-hour wall limit including pressure pauses. No GPU or lock.
 Next: central preregistration merge, actual-source verification, baseline gate,
 one bounded run and numerical S3 closeout. Selector-exposed validation cannot
 establish sealed-test performance or authorize serving promotion.
+
+Prelaunch review caught and repaired an imported cache-reader contract mismatch:
+pass the complementary context identities as forbidden rows, so the cache
+identity closure is complete while only the admitted split payload is decoded.
+A synthetic stored-cache test reproduces the original refusal and verifies both
+train-only and validation-only range access. No scored attempt preceded this fix.
