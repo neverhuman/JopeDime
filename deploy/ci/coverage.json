@@ -13108,6 +13108,16 @@
       "lanes": [],
       "scope": "Owner-requested H55 offline tests for strict family-bootstrap admission, resource guards, lock-wait accounting, terminal-read limits, and runner refusal boundaries; experimental research outside product qualification."
     },
+    "python:research/flywheel_selfplay/h76_sam_steps/test_h76.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H76 owner-requested CPU numerical SAM/ASAM, paired sampling, strict family-bootstrap admission, protected-path, inherited flock and durable wall-budget checks; experimental research outside product qualification."
+    },
     "python:research/h-followups/h09/test_run.py": {
       "discovery": {
         "kind": "python-family"
