@@ -623,7 +623,14 @@ impl Run {
                 self.receipt.error = Some(ErrorRecord {
                     kind,
                     exit_code: kind.exit_code(),
-                    message: format!("{error:#}"),
+                    message: if kind == FailureKind::Backend {
+                        format!(
+                            "{}: {error:#}",
+                            jope_api::error::ErrorCode::BackendUnavailable
+                        )
+                    } else {
+                        format!("{error:#}")
+                    },
                 });
                 kind.exit_code()
             }
@@ -650,7 +657,11 @@ impl Run {
         } else {
             match &result {
                 Ok(()) => summary_line(self.command, &self.receipt),
-                Err(error) => eprintln!("jopedime {}: {error:#}", self.command),
+                Err(_) => {
+                    if let Some(error) = &self.receipt.error {
+                        eprintln!("jopedime {}: {}", self.command, error.message);
+                    }
+                }
             }
         }
         ExitCode::from(code)

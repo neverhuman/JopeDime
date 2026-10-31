@@ -51,9 +51,9 @@ fn select(request: DeviceRequest) -> std::result::Result<Device, ErrorCode> {
 }
 
 fn selected_device(request: DeviceRequest) -> Result<Device> {
-    select(request).map_err(|_| {
+    select(request).map_err(|code| {
         jope_runtime::Failure::backend(format!(
-            "{} requested for fused ranker, but that backend is unavailable",
+            "{code}: {} requested for fused ranker, but that backend is unavailable",
             request.as_string()
         ))
     })
@@ -391,6 +391,20 @@ fn flat(t: &Tensor) -> Result<Vec<f32>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(not(feature = "fused-cuda"))]
+    #[test]
+    fn explicit_cuda_request_preserves_backend_error_code() {
+        let request = DeviceRequest::parse("cuda:0").unwrap();
+        let error = selected_device(request).unwrap_err();
+        assert_eq!(
+            jope_runtime::error::kind_of(&error),
+            jope_runtime::FailureKind::Backend
+        );
+        assert_eq!(jope_runtime::error::kind_of(&error).exit_code(), 4);
+        assert!(error.to_string().starts_with("BACKEND_UNAVAILABLE:"));
+        assert!(error.to_string().contains("cuda:0"));
+    }
+
     #[test]
     fn default_backend_is_explicit_and_cuda_never_falls_back() {
         assert!(select(DeviceRequest::Auto).unwrap().is_cpu());
