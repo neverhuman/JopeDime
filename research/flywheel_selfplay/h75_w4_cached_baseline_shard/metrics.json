@@ -1,0 +1,85 @@
+{
+  "Elo": null,
+  "U4": null,
+  "advance_gate_evaluated": false,
+  "cached_replay_reveals": 1200,
+  "context_count": 50,
+  "family_groups": 44,
+  "fold_count": 5,
+  "native_fits": 0,
+  "policies": [
+    "random4",
+    "hash_ordered4"
+  ],
+  "schema": "jopedime.w4-cached-baseline-shard-metrics.v1",
+  "scientific_verdict": null,
+  "seed_metrics": {
+    "701": {
+      "contexts": 50,
+      "families": 44,
+      "fold_context_counts": {
+        "0": 10,
+        "1": 10,
+        "2": 10,
+        "3": 10,
+        "4": 10
+      },
+      "hash_ordered4_minus_random4": {
+        "families_losing_more_than_0_01_fraction": 0.13636363636363635,
+        "family_mean": 0.3689863691804549,
+        "family_median": 0.029079048443256067
+      },
+      "mean_retained_best_utility": {
+        "hash_ordered4": 1.6157552296936757,
+        "random4": 1.2901369913045098
+      }
+    },
+    "702": {
+      "contexts": 50,
+      "families": 44,
+      "fold_context_counts": {
+        "0": 10,
+        "1": 10,
+        "2": 10,
+        "3": 10,
+        "4": 10
+      },
+      "hash_ordered4_minus_random4": {
+        "families_losing_more_than_0_01_fraction": 0.4318181818181818,
+        "family_mean": -0.032396405103371134,
+        "family_median": 0.001709753161104527
+      },
+      "mean_retained_best_utility": {
+        "hash_ordered4": 1.2541107304518597,
+        "random4": 1.2857904718681656
+      }
+    },
+    "703": {
+      "contexts": 50,
+      "families": 44,
+      "fold_context_counts": {
+        "0": 10,
+        "1": 10,
+        "2": 10,
+        "3": 10,
+        "4": 10
+      },
+      "hash_ordered4_minus_random4": {
+        "families_losing_more_than_0_01_fraction": 0.3409090909090909,
+        "family_mean": -0.049507048995962526,
+        "family_median": -0.0031599373398402963
+      },
+      "mean_retained_best_utility": {
+        "hash_ordered4": 1.4900171198048573,
+        "random4": 1.5420895277129782
+      }
+    }
+  },
+  "seeds": [
+    701,
+    702,
+    703
+  ],
+  "status": "DESCRIPTIVE_CACHED_POOL_SCREEN_ONLY",
+  "val_reg_inner": null
+}
