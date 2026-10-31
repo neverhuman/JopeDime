@@ -156,6 +156,14 @@ program displaces a board's incumbent only by strictly beating it. A retrained w
 held-out cuts with three seeds each. It replaces the serving writer only if its mean log error ratio
 favors it, it wins at least as many cuts as it loses, and it fails no more often.
 
+
+Here a cut is a held-out evaluation case fixed before the tournament.
+For each cut, the rule takes the natural log of paired best-error ratios
+(challenger divided by serving) and averages over matched seeds; it then
+averages across cuts. Negative values favor the challenger. This admission
+comparison is separate from the single-program comparison in
+\cref{sub:results-learning}.
+
 \paragraph{The historical reference.} The writer is a decoder-only transformer (six blocks, width 512)
 that reads the context as a prefix token and writes at most 128 tokens; with the map, the network
 has 27.8 million parameters. The supplied source notes describe training on eight A100 GPUs in
