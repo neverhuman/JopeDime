@@ -111,6 +111,27 @@ class Contracts(unittest.TestCase):
                     ]
                 )
             self.assertEqual(code, 2)
+        # The independent CPU replay mode also refuses partial authentication
+        # before opening a plan, touching the native capture path or publishing.
+        with mock.patch.object(capture_cpu, "capture") as native:
+            with contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as refused:
+                    capture_cpu.main(
+                        [
+                            "--plan",
+                            "/missing",
+                            "--expected-plan-sha256",
+                            "0" * 64,
+                            "--output",
+                            "/unused-output",
+                            "--regenerate-captures",
+                            "/missing",
+                            "--expected-captures-sha256",
+                            "0" * 64,
+                        ]
+                    )
+            self.assertEqual(refused.exception.code, 2)
+            native.assert_not_called()
 
 
 @unittest.skipUnless(
@@ -282,6 +303,42 @@ class CpuCaptureGuards(unittest.TestCase):
         plan["contexts"][1] = plan["contexts"][0]
         with self.assertRaises(ValueError):
             capture_cpu.validate_plan(plan)
+        # Refuse drift and a different captured population before model loading.
+        packet = dict(contexts=self.plan["contexts"], bundle_digest="sha256:unused")
+        captures = self.root / "captures.json"
+        captures.write_bytes(generate.canonical(packet))
+        self.plan.update(bundle_digest=packet["bundle_digest"], custody=str(self.root))
+        with mock.patch.dict(os.environ, CUDA_VISIBLE_DEVICES=""):
+            with mock.patch.object(os, "getpriority", return_value=10):
+                with mock.patch.object(
+                    torch.cuda, "is_initialized", return_value=False
+                ):
+                    with mock.patch.object(generate, "_generate_locked") as numerical:
+                        with self.assertRaisesRegex(
+                            ValueError, "input identity differs"
+                        ):
+                            capture_cpu.regenerate(
+                                self.plan,
+                                captures,
+                                "0" * 64,
+                                "f" * 64,
+                                self.root / "output",
+                            )
+                        packet["contexts"] = copy.deepcopy(packet["contexts"])
+                        packet["contexts"][0]["family_id"] = "different"
+                        captures.write_bytes(generate.canonical(packet))
+                        with self.assertRaisesRegex(
+                            ValueError, "reviewed plan population"
+                        ):
+                            capture_cpu.regenerate(
+                                self.plan,
+                                captures,
+                                generate.sha(captures.read_bytes()),
+                                "f" * 64,
+                                self.root / "output",
+                            )
+                        numerical.assert_not_called()
+        self.assertFalse((self.root / "output").exists())
 
     def test_original_resource_limits_cannot_expand(self):
         for field, value in [
@@ -296,6 +353,38 @@ class CpuCaptureGuards(unittest.TestCase):
             plan["budget"][field] = value
             with self.assertRaises(ValueError):
                 capture_cpu.validate_plan(plan)
+
+        # Re-packaging does not re-arm the native deadline or call its evaluator.
+        plan = dict(self.plan, cpu_deadline_epoch_seconds=0)
+        path = self.root / "plan.json"
+        path.write_bytes(generate.canonical(plan))
+        with mock.patch.object(capture_cpu, "regenerate", return_value={}) as replay:
+            with mock.patch.object(capture_cpu, "capture") as native:
+                with mock.patch.object(capture_cpu.signal, "alarm") as alarm:
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        self.assertEqual(
+                            capture_cpu.main(
+                                [
+                                    "--plan",
+                                    str(path),
+                                    "--expected-plan-sha256",
+                                    generate.sha(path.read_bytes()),
+                                    "--output",
+                                    str(self.root / "output"),
+                                    "--regenerate-captures",
+                                    str(self.root / "captures.json"),
+                                    "--expected-captures-sha256",
+                                    "a" * 64,
+                                    "--expected-index-sha256",
+                                    "b" * 64,
+                                ]
+                            ),
+                            0,
+                        )
+                    replay.assert_called_once()
+                    native.assert_not_called()
+                    alarm.assert_not_called()
+        self.assertEqual(path.read_bytes(), generate.canonical(plan))
 
     def test_native_transport_preserves_real_table_prefix_folds_and_labels(self):
         # Use the actual approved training table when running the real CPU lane.

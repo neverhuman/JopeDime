@@ -32,6 +32,32 @@ GPU qualification path. This explicitly CPU-only entry calls the same determinis
 packager without acquiring a GPU lease. Its index keeps full M2/M3/M5 flags false;
 only actual Rust CPU replay can qualify the two CPU consumers.
 
+CPU-only deterministic re-packaging of an existing reviewed capture is separate
+from native capture. It does not run S1, discover tables, reserve native calls,
+change the original budget/deadline, or acquire qualification.lock:
+
+```sh
+CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+ nice -n 10 python3 research/flywheel_selfplay/golden/capture_cpu.py \
+ --plan "$CPU_PLAN" --expected-plan-sha256 "$CPU_PLAN_SHA256" \
+ --regenerate-captures "$REVIEWED_CAPTURES" \
+ --expected-captures-sha256 "$CAPTURE_SHA256" \
+ --expected-index-sha256 "$PUBLISHED_INDEX_SHA256" --output "$NEW_EXTERNAL_ROOT"
+```
+
+Both new pins are required together. The capture must contain the plan's exact
+50 TRAIN context/family identities and bundle. The command recomputes frozen
+neural intermediates/costs, features/projections and preferred pools from saved
+landmark/surrogate captures, then requires the entire generated index to match
+the separately reviewed published index SHA256. Its report records zero native
+calls/fits, file count, total bytes and unchanged qualification flags. Use the same
+pinned CPU runtime for two fresh outputs; independently compare every payload and
+index byte against each other and the published packet. Input captures and bundle
+remain read-only. An index mismatch fails and leaves the new unqualified output
+for diagnosis; existing output directories refuse and are never overwritten.
+This proves regeneration only for the captured 50-context/model-prior subset;
+full historical corpus, consumer coverage, M2/M3/M5 and CUDA remain separate.
+
 Strict real replay (external fixture index SHA and the pinned real bundle required):
 
 ```sh
