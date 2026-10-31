@@ -1,9 +1,24 @@
-# Wave delivery record — owner t2320
+# Wave delivery record — owner t2335
 
 Dated publication audit, 2026-10-31. Source inventory: `a535e8a6d9d434b2aea9a6f25a6deef54da18011`.
 This is a status and scheduling record, not a new numerical experiment.
 
-## Current scheduling instruction
+## Current scheduling instruction — t2335
+
+After H57, the first **W1 or fixed-D2 signed CPU pre-review PASS** takes the
+qualification lock. D2 remains HOLD until its repair passes; the old D2-first
+wait is superseded. H75 has no new GPU slot in this pass. ASTRA/OPUS CPU shard
+order is W1/W3/W4/W6. Tests route to eligible xbabe1 or local xbabe2 JMAX<=8,
+not xbabe3/xbabe4. Scientific gates, budgets and deadlines remain unchanged.
+
+[H77 W1 artifact audit](../h77_w1_artifact_identity/README.md) is a completed
+read-only preparation shard: four files present with matching hashes/ID order,
+only baseline report absent at the recorded snapshot. NOT_READY is not a
+scientific W1 verdict or a signed launch review. Source and controls are in its
+verified S3 manifest. The metadata audit does not resolve producer lineage or
+outstanding W1 source-review findings.
+
+## Earlier scheduling instruction — t2320 (superseded)
 
 `~/nudges/owner_t2320.md`, SHA256 `a2860ba9164e4ac5728df679a14ccd7f0f1c36c1637a83918ec6fed6b0edea54`, explicitly orders
 **H57 → Fused D2 → W1** under the existing qualification lock, followed by

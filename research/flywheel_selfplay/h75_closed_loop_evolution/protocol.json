@@ -7,10 +7,9 @@
   "publication_owner": "rd_astra",
   "queue": [
     "H57",
-    "Fused D2",
-    "W1"
+    "FIRST_SIGNED_CPU_PASS:W1_OR_FIXED_D2"
   ],
-  "speed_work": "D2_CPU_PRE_REVIEW_THEN_QUEUED_LOCKED_GPU; E_NO_NEW_GPU_SLOT",
+  "speed_work": "D2_HOLD_UNTIL_SIGNED_CPU_PASS_THEN_FIRST_PASS_RACE_WITH_W1; E_NO_NEW_GPU_SLOT",
   "source_base": "f3a0f85e9ad0bb2efe049a40c0e76446f648bec3",
   "seeds": [
     701,
@@ -174,23 +173,42 @@
       "H75-closed-loop",
       "W1",
       "H71/W5"
+    ],
+    "owner_t2320": [
+      "H57",
+      "Fused D2",
+      "W1"
     ]
   },
   "schedule_authority": {
-    "file": "owner_t2320.md",
-    "sha256": "a2860ba9164e4ac5728df679a14ccd7f0f1c36c1637a83918ec6fed6b0edea54",
-    "research_order": [
+    "file": "owner_t2335.md",
+    "sha256": "f10271942d29434889adddbb19b9ae517c32def7bfe5393ff8f476593eca4639",
+    "after_h57": {
+      "candidates": [
+        "W1",
+        "fixed-D2"
+      ],
+      "selection": "first_signed_CPU_pre_review_PASS",
+      "D2_current_state": "HOLD",
+      "wait_for_failed_D2": false
+    },
+    "cpu_shard_order": [
       "W1",
       "W3",
       "W4",
-      "W6",
-      "W5",
-      "W7",
-      "W9"
+      "W6"
     ],
     "W5": "provenance_hold",
     "H75_gpu_slot": null,
-    "H75_status": "CPU_preparation_continues_no_slot_specified_in_t2320",
-    "interrupt_active_jobs": false
+    "H75_status": "CPU_preparation_continues_no_slot_specified_in_t2335",
+    "interrupt_active_jobs": false,
+    "test_hosts": [
+      "eligible_xbabe1_FORCE_XBABE1_1",
+      "xbabe2_JMAX_le_8"
+    ],
+    "test_hosts_excluded": [
+      "xbabe3",
+      "xbabe4"
+    ]
   }
 }
