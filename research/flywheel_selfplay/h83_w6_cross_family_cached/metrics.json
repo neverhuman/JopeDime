@@ -295,5 +295,105 @@
       "write": "create-only if-none-match"
     }
   ],
-  "hwm_candidates": "none (cached screen selects existing pool programs)"
+  "hwm_candidates": "none (cached screen selects existing pool programs)",
+  "family_bootstrap_median_and_mean_ci": {
+    "TREAT - PRIOR": {
+      "median": 0.0,
+      "median_ci95": [
+        0.0,
+        0.00023803510852937748
+      ],
+      "mean": 0.00847323068767444,
+      "mean_ci95": [
+        0.0028629463478746816,
+        0.014258658938957341
+      ],
+      "frac_families_exact_tie": 0.28780487804878047
+    },
+    "TREAT - RETR": {
+      "median": 0.00605888981547098,
+      "median_ci95": [
+        0.0026645898834632975,
+        0.009896943069223951
+      ],
+      "mean": 0.0991241488340252,
+      "mean_ci95": [
+        0.04035244496270442,
+        0.1793744728164237
+      ],
+      "frac_families_exact_tie": 0.024390243902439025
+    },
+    "TREAT - SHUF": {
+      "median": 0.0,
+      "median_ci95": [
+        0.0,
+        0.00010497312553270355
+      ],
+      "mean": 0.0034946138494100563,
+      "mean_ci95": [
+        -0.003011409241025071,
+        0.009967681928100342
+      ],
+      "frac_families_exact_tie": 0.18536585365853658
+    },
+    "KNN - PRIOR": {
+      "median": 0.0,
+      "median_ci95": [
+        0.0,
+        0.0
+      ],
+      "mean": 0.005772161879269223,
+      "mean_ci95": [
+        -0.00693763030549715,
+        0.024455738726193128
+      ],
+      "frac_families_exact_tie": 0.2682926829268293
+    },
+    "CTX - PRIOR": {
+      "median": 0.00398574353801856,
+      "median_ci95": [
+        0.0020749990507611393,
+        0.009882430927159902
+      ],
+      "mean": 0.030564397974835657,
+      "mean_ci95": [
+        0.006040271309313208,
+        0.05865152398960063
+      ],
+      "frac_families_exact_tie": 0.03902439024390244
+    },
+    "PRIOR - RANDOM4": {
+      "median": 0.0,
+      "median_ci95": [
+        -0.0017357540146880623,
+        0.0012214638807485079
+      ],
+      "mean": 0.07251724006273873,
+      "mean_ci95": [
+        0.03322286524515842,
+        0.11786047427617023
+      ],
+      "frac_families_exact_tie": 0.03414634146341464
+    }
+  },
+  "redteam": {
+    "families_spanning_more_than_one_fold": 0,
+    "families": 205,
+    "champions_featurized_rows": {
+      "DL-Train": 1219
+    },
+    "selected_json_dev_metadata_rows_loaded_unused": 91,
+    "dl_val_outcome_or_feature_reads": 0,
+    "dope_loaded": false,
+    "elo_tie_rule": "|delta|<=1e-4 scores 0.5 each side (elo_tracker.py:205-216); ties reported separately, never wins"
+  },
+  "next_wave": "H85",
+  "s3_addenda": [
+    {
+      "key": "experiments/rd_breakthrough_20261030/W6/opus-h83-20261031a/addendum-median_ci.json",
+      "version_id": "9Pt490EfpfgnAS0hI.SDB9vchkaZaNv2",
+      "sha256_prefix": "f9c876975f1db6ae",
+      "write": "create-only if-none-match"
+    }
+  ]
 }
