@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import os
 from pathlib import Path
 import stat
 import subprocess
@@ -445,7 +446,7 @@ def test_worker_cli_is_reachable_but_refuses_absent_lease_before_payloads(tmp_pa
             "--lock-fd",
             "99999",
             "--parent-pid",
-            str(__import__("os").getpid()),
+            str(os.getpid()),
         ],
         capture_output=True,
         text=True,
@@ -477,3 +478,79 @@ def test_phase_rejects_other_cell_and_reversed_boundary(tmp_path, monkeypatch):
     )
     with pytest.raises(RuntimeError, match="boundary"):
         r.mark_phase(args, "loading")
+
+
+def test_supervisor_cleans_owned_descendant_after_leader_exits(
+    wave, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(wave.fair, "process_rss_kib", lambda _pid: 0)
+    pid_path = tmp_path / "child.pid"
+    child_code = (
+        "import os,signal,time,pathlib; "
+        "signal.signal(signal.SIGTERM,signal.SIG_IGN); "
+        f"pathlib.Path({str(pid_path)!r}).write_text(str(os.getpid())); time.sleep(30)"
+    )
+    leader_code = (
+        "import subprocess,sys,time,pathlib; "
+        f"subprocess.Popen([sys.executable,'-c',{child_code!r}]); "
+        f"p=pathlib.Path({str(pid_path)!r}); "
+        "exec('while not p.exists(): time.sleep(.01)')"
+    )
+    with (tmp_path / "private-lease").open("a+") as lease:
+        wave.run_child(
+            [sys.executable, "-c", leader_code], tmp_path / "child.log", 10, lease, {}
+        )
+    pid = int(pid_path.read_text())
+    status = Path(f"/proc/{pid}/stat")
+    for _ in range(100):
+        if not status.exists() or status.read_text().split()[2] == "Z":
+            break
+        wave.time.sleep(0.01)
+    else:
+        pytest.fail("owned descendant survived coordinator cleanup")
+
+
+def test_cpu_gate_requires_two_bounded_observations(wave, monkeypatch):
+    # Recover the real function from an unpatched module; all clocks/loads are fixtures.
+    gate_module = r.load("h122_cpu_gate_test", HERE / "run_wave.py")
+    now = [0.0]
+    loads = iter([90.0, 80.0, 80.0])
+    sleeps = []
+    monkeypatch.setattr(gate_module.os, "cpu_count", lambda: 102)
+    monkeypatch.setattr(gate_module.os, "getloadavg", lambda: (next(loads), 0, 0))
+    monkeypatch.setattr(gate_module.time, "monotonic", lambda: now[0])
+
+    def sleep(seconds):
+        sleeps.append(seconds)
+        now[0] += seconds
+
+    monkeypatch.setattr(gate_module.time, "sleep", sleep)
+    assert gate_module.cpu_gate(100) == 60
+    assert sleeps == [30, 30]
+
+
+def test_source_identity_refuses_unmerged_source_before_launch(wave, monkeypatch):
+    monkeypatch.setattr(wave.r, "validate_source_pins", lambda: None)
+    monkeypatch.setattr(wave.subprocess, "check_output", lambda *_args, **_kwargs: "")
+    monkeypatch.setattr(
+        wave.subprocess, "run", lambda *_args, **_kwargs: SimpleNamespace(returncode=1)
+    )
+    with pytest.raises(RuntimeError, match="merged on origin/main"):
+        wave.source_identity()
+
+
+def test_cli_refuses_alternate_run_root_before_any_ledger_or_fifo(tmp_path):
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(HERE / "run_wave.py"),
+            "--execute",
+            "--root",
+            str(tmp_path / "reset"),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 2 and "no fresh-root budget reset" in result.stderr
+    assert not (tmp_path / "reset").exists()

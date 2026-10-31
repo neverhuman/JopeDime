@@ -28,6 +28,7 @@ CAP = 2700.0
 WAIT_CAP = 10800.0
 PREDECESSORS = ("H99", "H100", "H105", "H109", "H121")
 CELLS = tuple((arm, seed) for seed in r.SEEDS for arm in r.ARMS)
+RUN_ROOT = Path.home() / "jope-data/h122/h122-wave"
 fair = r.h61wave
 
 
@@ -39,6 +40,10 @@ def source_identity() -> dict:
     )
     if dirty:
         raise RuntimeError("H122 execution source must be clean")
+    if subprocess.run(
+        ["git", "merge-base", "--is-ancestor", "HEAD", "origin/main"], cwd=r.ROOT
+    ).returncode:
+        raise RuntimeError("H122 execution source must be merged on origin/main")
     return {
         "source_commit": subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=r.ROOT, text=True
@@ -305,22 +310,27 @@ def execute(root: Path, predecessors: dict, identity: dict) -> dict:
             "resource_wait_seconds": 0.0,
         }
         r.atomic_json(root / "budget.json", ledger)
-        deadline = time.monotonic() + WAIT_CAP
+        wait_started = time.monotonic()
+        deadline = wait_started + WAIT_CAP
         try:
             for arm, seed in CELLS:
-                before = time.monotonic()
                 run_attempt(root, ledger, arm, seed, deadline)
                 # GPU time is charged only to CAP, all other elapsed time to WAIT_CAP.
-                deadline += ledger["attempts"][-1]["wall_seconds"]
-                ledger["resource_wait_seconds"] += max(
-                    0.0,
-                    time.monotonic() - before - ledger["attempts"][-1]["wall_seconds"],
+                charged = sum(item["wall_seconds"] for item in ledger["attempts"])
+                deadline = wait_started + WAIT_CAP + charged
+                ledger["resource_wait_seconds"] = max(
+                    0.0, time.monotonic() - wait_started - charged
                 )
                 r.atomic_json(root / "budget.json", ledger)
             metrics = collect(root, identity)
             r.atomic_json(root / "metrics.json", metrics)
             return metrics
         except BaseException as exc:
+            charged = sum(item["wall_seconds"] for item in ledger["attempts"])
+            ledger["resource_wait_seconds"] = max(
+                0.0, time.monotonic() - wait_started - charged
+            )
+            r.atomic_json(root / "budget.json", ledger)
             r.atomic_json(
                 root / "incomplete.json", {"complete": False, "reason": repr(exc)}
             )
@@ -345,6 +355,10 @@ def main():
         return
     if args.root is None:
         parser.error("--root is required")
+    if args.root.resolve() != RUN_ROOT.resolve():
+        parser.error(
+            "only the canonical H122 run root is allowed; no fresh-root budget reset"
+        )
     identity = source_identity()
     if args.collect:
         print(json.dumps(collect(args.root, identity), sort_keys=True, allow_nan=False))

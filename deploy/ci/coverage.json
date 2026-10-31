@@ -13683,7 +13683,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H122 CPU-only Lookahead retest preparation: fresh whole-family fold, unique per-attempt r882 staging, launch disk gate before copying, preservation of read-only legacy scratch, exact six-cell admission/Elo readout and synthetic no-data CPU dry run. No corpus/checkpoint reads, FIFO ticket, GPU or experiment outcome."
+      "scope": "H122 CPU launch-readiness: lease-bound cell CLI, 40 real fixture optimizer steps per arm, frozen-parameter and Lookahead checks, exact six-cell coordinator, predecessor/FIFO/resource budgets, phase and byte-bound collection, official equal-family utility and strict Elo/admission controls. Software fixtures only; no real corpus/checkpoint, shared lock/ticket, GPU or study outcome."
     },
     "python:research/flywheel_selfplay/h124_gbm_shrink_blend/test_h124.py": {
       "discovery": {

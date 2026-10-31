@@ -1,0 +1,13 @@
+{
+  "status": "NOT_RUN",
+  "complete": false,
+  "Elo": null,
+  "val_reg_inner": null,
+  "median_gain": null,
+  "ci95": null,
+  "holm": null,
+  "harm_fraction": null,
+  "verdict": null,
+  "optimizer_updates": 0,
+  "gpu_seconds": 0
+}
