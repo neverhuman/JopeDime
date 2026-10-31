@@ -521,19 +521,27 @@ def run_cell_with_disk_guard_retries(
     void_wall = 0.0
     local_wait = 0.0
     while True:
+        attempt_timeout = timeout - void_wall
+        if attempt_timeout <= 0:
+            raise InfraVoid(
+                f"{key} cumulative GPU wall cap exhausted before attempt (void_wall={void_wall:.2f}s >= budget={timeout:.2f}s)",
+                local_wait,
+                void_wall,
+            )
         attempt_log = log if retries == 0 else log.with_name(f"{log.stem}.retry{retries}{log.suffix}")
         try:
             cell, waited, wall = run_locked_cell(
                 key,
                 command,
                 attempt_log,
-                timeout,
+                attempt_timeout,
                 status_path,
                 wait_total + local_wait,
                 after_release=(after_release or retries > 0),
             )
             cell["disk_guard_retry_count"] = retries
             cell["prior_void_cell_wall_seconds"] = void_wall
+            cell["total_charged_cell_wall_seconds"] = wall + void_wall
             cell["attempt_logs"] = [
                 str(log if index == 0 else log.with_name(f"{log.stem}.retry{index}{log.suffix}"))
                 for index in range(retries + 1)
@@ -661,7 +669,7 @@ def outcome_mode(args, *, prior_gpu_wall: float = 0.0, prior_wait: float = 0.0) 
                 after_release=(idx > 0 or prior_gpu_wall > 0),
             )
             wait_total += waited
-            gpu_wall += wall
+            gpu_wall += wall + void_wall
             void_gpu_wall += void_wall
             cells.append(cell)
             atomic_json(
@@ -679,6 +687,7 @@ def outcome_mode(args, *, prior_gpu_wall: float = 0.0, prior_wait: float = 0.0) 
         except Exception as exc:
             wait_total += float(getattr(exc, "wait_seconds", 0.0))
             failed_void_wall = float(getattr(exc, "cell_wall_seconds", 0.0))
+            gpu_wall += failed_void_wall
             void_gpu_wall += failed_void_wall
             reason = f"infra-void/stopped at {key}: {type(exc).__name__}: {exc}"
             cells.append(
@@ -706,32 +715,41 @@ def outcome_mode(args, *, prior_gpu_wall: float = 0.0, prior_wait: float = 0.0) 
             break
     complete = len(cells) == len(CELL_ORDER) and all(cell["status"] == "complete" for cell in cells)
     if complete:
-        score_out = RUN_ROOT / "outcomes/fold-b-score"
-        try:
-            score_cell, waited, wall = run_locked_cell(
-                "fold-b/admission",
-                child_command("fold-b", score_out, run_root=RUN_ROOT),
-                RUN_ROOT / "logs/fold-b.log",
-                timeout=max(1.0, cap - gpu_wall),
-                status_path=status,
-                wait_total=wait_total,
-                after_release=True,
-            )
-            wait_total += waited
-            gpu_wall += wall
-            cells.append(score_cell)
-        except Exception as exc:
-            wait_total += float(getattr(exc, "wait_seconds", 0.0))
+        remaining_fold_b = cap - gpu_wall
+        if remaining_fold_b <= 0:
             complete = False
-            reason = f"infra-void/stopped at fold-B scoring: {type(exc).__name__}: {exc}"
-            cells.append(
-                {
-                    "key": "fold-b/admission",
-                    "status": "infra_void",
-                    "error": reason,
-                    "lock_wait_seconds": float(getattr(exc, "wait_seconds", 0.0)),
-                }
-            )
+            reason = "fixed H77 total GPU cell-wall cap reached before fold-B scoring"
+        else:
+            score_out = RUN_ROOT / "outcomes/fold-b-score"
+            try:
+                score_cell, waited, wall = run_locked_cell(
+                    "fold-b/admission",
+                    child_command("fold-b", score_out, run_root=RUN_ROOT),
+                    RUN_ROOT / "logs/fold-b.log",
+                    timeout=remaining_fold_b,
+                    status_path=status,
+                    wait_total=wait_total,
+                    after_release=True,
+                )
+                wait_total += waited
+                gpu_wall += wall
+                cells.append(score_cell)
+            except Exception as exc:
+                wait_total += float(getattr(exc, "wait_seconds", 0.0))
+                failed_fb_wall = float(getattr(exc, "cell_wall_seconds", 0.0))
+                gpu_wall += failed_fb_wall
+                void_gpu_wall += failed_fb_wall
+                complete = False
+                reason = f"infra-void/stopped at fold-B scoring: {type(exc).__name__}: {exc}"
+                cells.append(
+                    {
+                        "key": "fold-b/admission",
+                        "status": "infra_void",
+                        "error": reason,
+                        "lock_wait_seconds": float(getattr(exc, "wait_seconds", 0.0)),
+                        "void_cell_wall_seconds": failed_fb_wall,
+                    }
+                )
     wave = {
         "schema": "jope.h77.outcome-wave/v1",
         "complete": complete,
@@ -746,7 +764,8 @@ def outcome_mode(args, *, prior_gpu_wall: float = 0.0, prior_wait: float = 0.0) 
         "total_gpu_cell_wall_seconds": gpu_wall,
         "total_gpu_cell_wall_cap_seconds": cap,
         "void_cell_wall_seconds": void_gpu_wall,
-        "void_wall_excluded_from_successful_outcome_cap": True,
+        "void_wall_included_in_total_gpu_cell_wall": True,
+        "void_wall_excluded_from_successful_outcome_cap": False,
         "candidate_and_null_cells": 7,
         "fold_b_candidate_reads": 6,
         "terminal_val_reads": 0,

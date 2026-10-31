@@ -1,0 +1,162 @@
+{
+  "schema": "jope.w1.baseline-readout-audit/v1",
+  "timestamp": "2026-10-31T05:52:47.122431+00:00",
+  "verdict": "AGGREGATE_CONSISTENCY_PASS_NO_LAUNCH_ADMISSION",
+  "launch_admitted": false,
+  "hwm_candidate": false,
+  "report_sha256": "38e9b4bc1345c5d82ded955ada7756a14ad296b9728826f59501990dee6d1baf",
+  "checks": {
+    "assertions_passed": 605,
+    "contrast_count": 11,
+    "contrasts": [
+      {
+        "track": "track1_legacy_selection_contrasts",
+        "contrast": "GBM_PROG412_CTX_vs_R882_CONTINUITY",
+        "mean_delta": -0.06797162236189594,
+        "lcb_adjusted_reported": -0.170348211214272,
+        "median_delta": -0.0003831705354235826,
+        "harmed_families": 91,
+        "common_gate_passed_reported": false
+      },
+      {
+        "track": "track1_legacy_selection_contrasts",
+        "contrast": "GBM_PROG412_ONLY_vs_R882_CONTINUITY",
+        "mean_delta": -0.20179373585910737,
+        "lcb_adjusted_reported": -0.3186240537295099,
+        "median_delta": -0.05610007147172813,
+        "harmed_families": 119,
+        "common_gate_passed_reported": false
+      },
+      {
+        "track": "track1_legacy_selection_contrasts",
+        "contrast": "GBM_RESIDUAL_STEP0_vs_R882_CONTINUITY",
+        "mean_delta": -0.15127070968382772,
+        "lcb_adjusted_reported": -0.25733410477926527,
+        "median_delta": -0.04683384548942793,
+        "harmed_families": 118,
+        "common_gate_passed_reported": false
+      },
+      {
+        "track": "track1_legacy_selection_contrasts",
+        "contrast": "ZERO_PRIOR_STEP0_vs_RIDGE_PRIOR10_STEP0",
+        "mean_delta": 0.6322349872580519,
+        "lcb_adjusted_reported": 0.4322103291324699,
+        "median_delta": 0.27320647557695366,
+        "harmed_families": 7,
+        "common_gate_passed_reported": true
+      },
+      {
+        "track": "track2_verified_u4_contrasts",
+        "contrast": "GBM_PROG412_CTX_vs_GBM_PROG412_ONLY",
+        "mean_delta": 0.03052397772317592,
+        "lcb_adjusted_reported": 0.002074241349371989,
+        "median_delta": 0.00398574353801856,
+        "harmed_families": 33,
+        "common_gate_passed_reported": false
+      },
+      {
+        "track": "track2_verified_u4_contrasts",
+        "contrast": "GBM_PROG412_CTX_vs_R882_CONTINUITY",
+        "mean_delta": 0.07110923696281483,
+        "lcb_adjusted_reported": 0.03140566619937179,
+        "median_delta": 0.005179960169580222,
+        "harmed_families": 35,
+        "common_gate_passed_reported": false
+      },
+      {
+        "track": "track2_verified_u4_contrasts",
+        "contrast": "GBM_PROG412_ONLY_vs_R882_CONTINUITY",
+        "mean_delta": 0.04058525923963893,
+        "lcb_adjusted_reported": 0.005257619647203533,
+        "median_delta": -0.0005200548585397313,
+        "harmed_families": 69,
+        "common_gate_passed_reported": false
+      },
+      {
+        "track": "track2_verified_u4_contrasts",
+        "contrast": "GBM_PROG412_ONLY_vs_RANDOM4",
+        "mean_delta": 0.07669960768101587,
+        "lcb_adjusted_reported": 0.026665060113165114,
+        "median_delta": -0.0005290914182058959,
+        "harmed_families": 58,
+        "common_gate_passed_reported": false
+      },
+      {
+        "track": "track2_verified_u4_contrasts",
+        "contrast": "GBM_PROG412_ONLY_vs_RIDGE_PRIOR10_ONLY",
+        "mean_delta": 0.13830953358501424,
+        "lcb_adjusted_reported": 0.06411142568967251,
+        "median_delta": 0.007371890321148156,
+        "harmed_families": 24,
+        "common_gate_passed_reported": false
+      },
+      {
+        "track": "track2_verified_u4_contrasts",
+        "contrast": "GBM_RESIDUAL_STEP0_vs_RIDGE_PRIOR10_STEP0",
+        "mean_delta": 0.12224798203700174,
+        "lcb_adjusted_reported": 0.06570742223490204,
+        "median_delta": 0.009774325362801761,
+        "harmed_families": 14,
+        "common_gate_passed_reported": true
+      },
+      {
+        "track": "track2_verified_u4_contrasts",
+        "contrast": "ZERO_PRIOR_STEP0_vs_RIDGE_PRIOR10_STEP0",
+        "mean_delta": 0.027650757656043794,
+        "lcb_adjusted_reported": 0.003433933782312075,
+        "median_delta": 0.0030484223683400202,
+        "harmed_families": 42,
+        "common_gate_passed_reported": false
+      }
+    ],
+    "passed_reported_contrasts": {
+      "track1_legacy_passed_contrasts": [
+        "ZERO_PRIOR_STEP0_vs_RIDGE_PRIOR10_STEP0"
+      ],
+      "track2_u4_passed_contrasts": [
+        "GBM_RESIDUAL_STEP0_vs_RIDGE_PRIOR10_STEP0"
+      ]
+    }
+  },
+  "source_inspection": {
+    "original_and_remediated_statistical_functions_identical": true,
+    "elo_bootstrap_draws": 1000,
+    "utility_bootstrap_draws": 10000,
+    "utility_seed": 20261031,
+    "elo_seeds": [
+      20261031,
+      20261032,
+      20261033
+    ],
+    "source_lines": {
+      "original_elo": [
+        217,
+        275
+      ],
+      "original_utility": [
+        163,
+        214
+      ]
+    }
+  },
+  "producer_elapsed_seconds_reported": 5057.18,
+  "producer_cpu_seconds": null,
+  "replay_limits": [
+    "No per-context/family score vectors in report: Elo/CI/median not independently recomputed",
+    "m=4 on each of 11 report comparisons does not establish joint W1 claim control",
+    "Inherited source/input/feature provenance not independently certified",
+    "Updated source object is later than result; statistical functions compared to original source"
+  ],
+  "audit_resources": {
+    "host": "xbabe2",
+    "workers": 1,
+    "nice": 15,
+    "load1_preflight": 48.43994140625,
+    "host_cores_contract": 102,
+    "wall_seconds": 0.04710598709061742,
+    "process_cpu_seconds": 0.046945943,
+    "gpu_seconds": 0,
+    "native_fits": 0,
+    "protected_payload_reads": 0
+  }
+}
