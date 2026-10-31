@@ -132,8 +132,8 @@ Here $\mathcal{L}_{\text{BT}}$ is a Bradley--Terry loss on the same lists,
 $\mathcal{L}_{\text{runtime}}$ a Huber loss for a head that estimates runtime cost, and
 $\mathcal{L}_{\text{prog}}$ the Bradley--Terry loss of the program-only control head.
 Losing moves still teach: a median-ranked program carries about a tenth of the top-ranked
-program's weight and is a
-negative for the map.
+program's weight in the writer loss. Its referee score also contributes
+to the map's ranking targets.
 
 \begin{algorithm*}[t]
 \caption{The self-play loop (training).}\label{alg:selfplay}
