@@ -13327,6 +13327,16 @@
       ],
       "lanes": [],
       "scope": "H75 CPU-only feedback writer controls for caller-pinned clean outcomes, fit-family/alias/source/row/program joins, complete execution IDs, failed-outcome masking, D-only loss eligibility, retry conflicts and immutable artifact creation. Synthetic fixtures do not qualify H75 data, training or lift."
+    },
+    "python:research/flywheel_selfplay/h81_w4_prospective_2plus2/test_run_prospective.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H81 W4 prospective-stratum runner fixtures: exact equivalence of the two-plus-two rule with merged H79, prior-top-two first stage and zero-residual reduction to top4, swap placebo, seeded random4, program-SHA tie-breaks, execution errors kept out of utility, analysis gate/INCOMPLETE verdicts, ledger reservation caps and fit-store no-recharge. No data, model or native calls; no experiment admission or release qualification."
     }
   },
   "lanes": {
