@@ -158,6 +158,7 @@ pub struct PredictedCosts {
 #[derive(Debug)]
 pub struct CpuAdapter {
     parameters: BTreeMap<String, Tensor>,
+    device: Device,
 }
 
 fn parameter_specs() -> Vec<(String, Vec<usize>)> {
@@ -268,6 +269,10 @@ impl CpuAdapter {
     }
 
     fn from_bytes(bytes: &[u8]) -> Result<Self> {
+        Self::from_bytes_on_device(bytes, &Device::Cpu)
+    }
+
+    pub(super) fn from_bytes_on_device(bytes: &[u8], device: &Device) -> Result<Self> {
         check_tensor_header(bytes, BundleLimits::default())?;
         let tensors = SafeTensors::deserialize(bytes).context("parse adapter tensors")?;
         let mut parameters = BTreeMap::new();
@@ -295,12 +300,12 @@ impl CpuAdapter {
                     "program standard deviations must be positive"
                 );
             }
-            parameters.insert(
-                name,
-                Tensor::from_vec(values, shape.as_slice(), &Device::Cpu)?,
-            );
+            parameters.insert(name, Tensor::from_vec(values, shape.as_slice(), device)?);
         }
-        Ok(Self { parameters })
+        Ok(Self {
+            parameters,
+            device: device.clone(),
+        })
     }
 
     fn p(&self, name: &str) -> &Tensor {
@@ -378,7 +383,7 @@ impl CpuAdapter {
                 .iter()
                 .map(|v| if *v < 0.5 { f32::NEG_INFINITY } else { 0.0 })
                 .collect::<Vec<_>>();
-            logits = logits.broadcast_add(&Tensor::from_vec(values, (1, 1, k), &Device::Cpu)?)?;
+            logits = logits.broadcast_add(&Tensor::from_vec(values, (1, 1, k), &self.device)?)?;
         }
         let exp = logits
             .broadcast_sub(&logits.max_keepdim(D::Minus1)?)?
@@ -475,7 +480,7 @@ impl CpuAdapter {
         let raw_tokens = Tensor::from_vec(
             inputs.tokens[b * 320..b * 320 + 320].to_vec(),
             (10, 32),
-            &Device::Cpu,
+            &self.device,
         )?;
         let mut mask = inputs.token_mask[b * 10..b * 10 + 10].to_vec();
         mask[0] = 1.0;
@@ -489,12 +494,12 @@ impl CpuAdapter {
                 &(&raw_tokens + self.p("modality_type_emb"))?,
                 "modality_norm",
             )?
-            .broadcast_mul(&Tensor::from_vec(gate, (10, 1), &Device::Cpu)?)?;
+            .broadcast_mul(&Tensor::from_vec(gate, (10, 1), &self.device)?)?;
         let ctx = tokens
             .sum_keepdim(0)?
             .affine(1.0 / f64::from(mask.iter().sum::<f32>()), 0.0)?;
         let sem = semantic_signature(prog);
-        let sem_t = Tensor::from_vec(sem.clone(), (n, 24), &Device::Cpu)?;
+        let sem_t = Tensor::from_vec(sem.clone(), (n, 24), &self.device)?;
         let centered = sem_t.broadcast_sub(&sem_t.mean_keepdim(0)?)?;
         let mean = flat(self.p("prog_mean"))?;
         let std = flat(self.p("prog_std"))?;
@@ -508,13 +513,13 @@ impl CpuAdapter {
         let bottleneck = self
             .norm(
                 &self.linear(
-                    &Tensor::from_vec(standardized, (n, 412), &Device::Cpu)?,
+                    &Tensor::from_vec(standardized, (n, 412), &self.device)?,
                     "prog_412_bottleneck.0",
                 )?,
                 "prog_412_bottleneck.1",
             )?
             .silu()?;
-        let zero2 = Tensor::zeros((n, 2), DType::F32, &Device::Cpu)?;
+        let zero2 = Tensor::zeros((n, 2), DType::F32, &self.device)?;
         let q = self
             .norm(
                 &self.linear(
@@ -588,7 +593,7 @@ impl CpuAdapter {
         let history = self
             .norm(
                 &self.linear(
-                    &Tensor::from_vec(history, (4, 60), &Device::Cpu)?,
+                    &Tensor::from_vec(history, (4, 60), &self.device)?,
                     "hist_token_proj.0",
                 )?,
                 "hist_token_proj.1",
@@ -611,7 +616,7 @@ impl CpuAdapter {
                 &self
                     .linear(
                         &Tensor::cat(
-                            &[&q, &attn, &Tensor::from_vec(extra, (n, 3), &Device::Cpu)?],
+                            &[&q, &attn, &Tensor::from_vec(extra, (n, 3), &self.device)?],
                             1,
                         )?,
                         "traj_delta_head.0",
@@ -637,7 +642,7 @@ impl CpuAdapter {
         gates: &[f32],
     ) -> Result<(Vec<f32>, Vec<f32>)> {
         let n = prog.len() / 412;
-        let zero = Tensor::zeros((1, 584), DType::F32, &Device::Cpu)?;
+        let zero = Tensor::zeros((1, 584), DType::F32, &self.device)?;
         let ctx = self.residual(
             &self
                 .linear(&self.norm(&zero, "anchor.ctx_in.0")?, "anchor.ctx_in.1")?
@@ -657,10 +662,10 @@ impl CpuAdapter {
             )?,
         )?;
         let clamped: Vec<f32> = prog.iter().map(|x| x.clamp(-15.0, 15.0)).collect();
-        let prog_t = Tensor::from_vec(clamped.clone(), (n, 412), &Device::Cpu)?;
-        let proj_t = Tensor::from_vec(proj.to_vec(), (n, 16), &Device::Cpu)?;
-        let kron = Tensor::zeros((n, 128), DType::F32, &Device::Cpu)?;
-        let sos = Tensor::zeros((n, 2), DType::F32, &Device::Cpu)?;
+        let prog_t = Tensor::from_vec(clamped.clone(), (n, 412), &self.device)?;
+        let proj_t = Tensor::from_vec(proj.to_vec(), (n, 16), &self.device)?;
+        let kron = Tensor::zeros((n, 128), DType::F32, &self.device)?;
+        let sos = Tensor::zeros((n, 2), DType::F32, &self.device)?;
         let input = Tensor::cat(&[&prog_t, &proj_t, &kron, &sos], 1)?;
         let emb = self.residual(
             &self
@@ -770,7 +775,7 @@ impl CpuAdapter {
         let history = self
             .norm(
                 &self.linear(
-                    &Tensor::from_vec(history, (4, 132), &Device::Cpu)?,
+                    &Tensor::from_vec(history, (4, 132), &self.device)?,
                     "anchor.history_token_in.0",
                 )?,
                 "anchor.history_token_in.1",
@@ -791,7 +796,7 @@ impl CpuAdapter {
             &[
                 &ctx_n,
                 &attention,
-                &Tensor::from_vec(summary, (n, 4), &Device::Cpu)?,
+                &Tensor::from_vec(summary, (n, 4), &self.device)?,
             ],
             1,
         )?;
@@ -812,7 +817,7 @@ impl CpuAdapter {
             &[
                 &ctx_n,
                 &emb,
-                &Tensor::from_vec(extra, (n, 2), &Device::Cpu)?,
+                &Tensor::from_vec(extra, (n, 2), &self.device)?,
             ],
             1,
         )?;

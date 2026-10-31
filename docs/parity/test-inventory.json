@@ -5,9 +5,9 @@
   "python": 172
  },
  "rust": {
-  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.; telemetry addition: cargo nextest list --locked -P main -p jope-telemetry --message-format json (2026-10-29), 39 listed, 0 ignored; telemetry Rust port addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-29), 64 listed, 0 ignored; telemetry P2 addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 73 listed, 0 ignored; telemetry two-tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 77 listed, 0 ignored; telemetry reasoning tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 80 listed, 0 ignored; QLT-03-F01 additive targeted collection: cargo test --locked -p jope-appliance --bin jopedime [--features research] research -- --list (2026-10-31); only the four new feature-boundary/parser/refusal IDs added, preserving all earlier feature cases. This union is collection, not execution; exact commands and receipts accompany the PR.; QLT-03-F02 additive targeted collection: cargo test --locked -p jope-service --features research --lib (2026-10-31); add only16 new feature-bound capture IDs including one ignored owned-process helper, preserving the complete historical union. Execution and software-control limits are reported separately.; QLT-03 CPU follow-up additive collection: cargo test --locked -p jope-service --features research --lib durable_capture (2026-10-31); one new parameterized suffix/export-refusal case, existing deadline case retains its ID. Collection is separate from final execution; no ignored case credited.",
-  "count": 6115,
-  "ignored": 82,
+  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.; telemetry addition: cargo nextest list --locked -P main -p jope-telemetry --message-format json (2026-10-29), 39 listed, 0 ignored; telemetry Rust port addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-29), 64 listed, 0 ignored; telemetry P2 addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 73 listed, 0 ignored; telemetry two-tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 77 listed, 0 ignored; telemetry reasoning tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 80 listed, 0 ignored; QLT-03-F01 additive targeted collection: cargo test --locked -p jope-appliance --bin jopedime [--features research] research -- --list (2026-10-31); only the four new feature-boundary/parser/refusal IDs added, preserving all earlier feature cases. This union is collection, not execution; exact commands and receipts accompany the PR.; QLT-03-F02 additive targeted collection: cargo test --locked -p jope-service --features research --lib (2026-10-31); add only16 new feature-bound capture IDs including one ignored owned-process helper, preserving the complete historical union. Execution and software-control limits are reported separately.; QLT-03 CPU follow-up additive collection: cargo test --locked -p jope-service --features research --lib durable_capture (2026-10-31); one new parameterized suffix/export-refusal case, existing deadline case retains its ID. Collection is separate from final execution; no ignored case credited.; RNK-12 additive targeted collection: cargo test --locked -p jope-service --lib ranker::cuda:: -- --list (2026-10-31); thirteen added inline IDs including two ignored external replay entry points; existing union preserved. Listings are not CUDA qualification or execution coverage.",
+  "count": 6128,
+  "ignored": 84,
   "packages": {
    "battle-gpu": {
     "count": 19,
@@ -9331,13 +9331,13 @@
     }
    },
    "jope-service": {
-    "count": 17,
-    "ignored": 1,
+    "count": 30,
+    "ignored": 3,
     "binaries": {
      "jope_service": {
       "kind": "lib",
-      "count": 17,
-      "ignored": 1,
+      "count": 30,
+      "ignored": 3,
       "tests": [
        "discover::r#loop::tests::durable_capture::auxiliary_abort_or_stale_reply_stays_unknown",
        "discover::r#loop::tests::durable_capture::budget_truncation_is_retained_but_not_exported",
@@ -9355,6 +9355,19 @@
        "discover::r#loop::tests::durable_capture::seed_endpoints_and_capture_input_bounds_are_explicit",
        "discover::r#loop::tests::durable_capture::sigkill_at_capture_boundaries_preserves_committed_prefix",
        "discover::r#loop::tests::durable_capture::terminated_pending_suffix_retains_known_prefix_but_refuses_complete_export",
+       "ranker::cuda::context_axis_regression::accepts_aligned_unbatched_or_single_context_on_both_slates",
+       "ranker::cuda::context_axis_regression::existing_bad_rank_nonfinite_mask_and_pair_shape_controls_remain_errors",
+       "ranker::cuda::context_axis_regression::existing_context_identity_checks_still_reject_mismatch_or_empty_id",
+       "ranker::cuda::context_axis_regression::one_identity_cannot_certify_fifty_contexts_even_when_all_stage_axes_match",
+       "ranker::cuda::context_axis_regression::rejects_different_context_axes_even_when_the_flattened_lengths_agree",
+       "ranker::cuda::context_axis_regression::rejects_forty_nine_contexts_in_any_one_stage_of_a_fifty_context_trace",
+       "ranker::cuda::context_axis_regression::rejects_implicit_single_context_broadcast_in_any_stage",
+       "ranker::cuda::fixture::inherited_lease_covers_callback_failure_without_relocking_a_new_description",
+       "ranker::cuda::fixture::inherited_lease_rejects_another_inode_before_callback",
+       "ranker::cuda::fixture::real_cuda_m2_fixture_replay",
+       "ranker::cuda::fixture::real_full_forward_cpu_fixture_replay",
+       "ranker::cuda::forward::tests::default_backend_is_explicit_and_cuda_never_falls_back",
+       "ranker::cuda::tests::rejects_reference_and_actual_traces_from_different_contexts",
        "research::tests::private_capture_envelope_refuses_unknown_fields_and_oversized_cas_references"
       ]
      }
@@ -9699,7 +9712,7 @@
   }
  },
  "totals": {
-  "rust": 6115,
+  "rust": 6128,
   "python": 209
  }
 }
