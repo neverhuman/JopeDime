@@ -1684,7 +1684,7 @@ e7efd0f0e37c45b5d57e07d1b97ee1f5f86350bf6439ac2819821dd931965b38	0:0.69314718055
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ranker::featurizer::{test_support, FEATURE_NAMES};
+    use crate::ranker::featurizer::test_support;
     use std::collections::BTreeSet;
 
     #[test]
@@ -1701,7 +1701,7 @@ mod tests {
         assert!((features["position1.ridge"] - (-1.098_612_288_668_109_6)).abs() <= 1e-15);
         assert!((features["position2.ridge"] - 0.693_147_180_559_945_3).abs() <= 1e-15);
         assert!((features["position2.q"] - 6.909_254_155_105_873).abs() <= 1e-15);
-        assert_eq!(features["position0.ridge"], 0.0);
+        assert!(!features.contains_key("position0.ridge"));
         assert_eq!(features["position0.bins"], 0.0);
         assert!(!features.contains_key("position2.mystery"));
         assert!(features.keys().all(|name| name.starts_with("position")));
