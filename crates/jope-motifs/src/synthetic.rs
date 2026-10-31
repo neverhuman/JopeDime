@@ -34,8 +34,10 @@ pub enum Shape {
 }
 
 impl Shape {
+    /// Every synthetic shape in declaration order.
     pub const ALL: [Self; 4] = [Self::S1, Self::S2, Self::S3, Self::S4];
 
+    /// Return the stable lowercase shape label.
     pub fn as_str(self) -> &'static str {
         match self {
             Self::S1 => "s1",
@@ -59,12 +61,19 @@ impl Shape {
 /// One synthetic training table with its probe and the three task targets.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Synthetic {
+    /// Shape used to construct this synthetic dataset.
     pub shape: Shape,
+    /// Column schema shared by the training and probe tables.
     pub schema: DataSchema,
+    /// Deterministic synthetic training rows.
     pub train: RawTable,
+    /// Deterministic synthetic rows used by probe checks.
     pub probe: RawTable,
+    /// Regression target aligned to training rows.
     pub regression: Vec<f64>,
+    /// Binary target aligned to training rows.
     pub binary: Vec<f64>,
+    /// Multiclass target aligned to training rows.
     pub multiclass: Vec<f64>,
 }
 

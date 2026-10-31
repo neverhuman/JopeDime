@@ -59,9 +59,11 @@ pub enum HostClass {
 /// A classified program and, for a host, its transform body.
 #[derive(Clone, Debug)]
 pub struct Classified {
+    /// Why the qualified program was used or skipped.
     pub class: HostClass,
     /// Absolute index of the first body stage: one for each present target or input stage.
     pub body_start: usize,
+    /// Transform stages extracted from the host program.
     pub body: Vec<Stage>,
 }
 
@@ -170,7 +172,9 @@ pub fn expansion_stages(expansion: &str) -> Result<Vec<Stage>> {
 /// A recorded host: its stage texts and the range of its transform body.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct HostBody {
+    /// Canonical text of every stage in the host.
     pub texts: Vec<String>,
+    /// Half-open range of transform stages within `texts`.
     pub body: Range<usize>,
 }
 

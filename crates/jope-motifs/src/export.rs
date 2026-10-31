@@ -16,51 +16,76 @@ use serde::Serialize;
 pub const OWNER_BANNED: [&str; 4] = ["search", "tree", "genome", "evolution"];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+/// Version tag for the allowlisted shareable fragment summary.
 pub enum PublicSchema {
     #[serde(rename = "jope.fragment-summary/v1")]
+    /// The first summary schema version.
     V1,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+/// Promotion status that can appear in a shareable summary.
 pub enum PromotionState {
     #[serde(rename = "required_not_run")]
+    /// Promotion requirements have not been run.
     RequiredNotRun,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
+/// Counts of checks that passed and failed.
 pub struct Tally {
+    /// Number of passing results.
     pub passed: u32,
+    /// Number of failing results.
     pub failed: u32,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
+/// Fragment counts grouped by expanded stage length.
 pub struct StageCounts {
+    /// Fragments with two expanded stages.
     pub s2: u32,
+    /// Fragments with three expanded stages.
     pub s3: u32,
+    /// Fragments with four expanded stages.
     pub s4: u32,
+    /// Fragments with five expanded stages.
     pub s5: u32,
+    /// Fragments with six expanded stages.
     pub s6: u32,
 }
 
 /// One pass/fail tally per check class; nothing per host or per control.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
 pub struct PublicChecks {
+    /// Results of exact rewrite and re-expansion checks.
     pub round_trip: Tally,
+    /// Results of repeated deterministic-engine checks.
     pub determinism: Tally,
+    /// Results of fitting in independent compatible contexts.
     pub context_compatibility: Tally,
+    /// Results of scanning artifacts for reserved reference names.
     pub name_absence: Tally,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+/// Allowlisted shareable counts and check outcomes; contains no private identities or text.
 pub struct PublicExport {
+    /// Summary schema version.
     pub schema: PublicSchema,
+    /// Total fragments represented by the table.
     pub fragments: u32,
+    /// Fragments still in quarantine.
     pub quarantined: u32,
     /// Always zero: no code path promotes an entry.
     pub promoted: u32,
+    /// Counts by expanded stage length.
     pub stage_counts: StageCounts,
+    /// Pass/fail totals for each public check class.
     pub checks: PublicChecks,
+    /// Whether validation verified the source identity against current source records.
     pub source_verified: bool,
+    /// Whether promotion requirements were run.
     pub promotion: PromotionState,
 }
 
