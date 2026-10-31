@@ -30,8 +30,8 @@ from .protocol import (
     verify_plan,
 )
 
-REPO = Path(__file__).resolve().parents[2]
 REAL_LOCK = Path.home() / "jope_plan/qualification.lock"
+CAMPAIGNS = Path.home() / "jope-data/jrb-01/campaigns"
 
 
 def write_new(path, value):
@@ -68,6 +68,35 @@ def output_location(output):
     ):
         raise ValueError("campaign output belongs outside working trees and /tmp")
     return output
+
+
+def reserve_campaign(plan, output, ledger_root=CAMPAIGNS):
+    """A different output directory cannot silently restart the same budget."""
+    ledger = Path(ledger_root) / (plan["sha256"] + ".json")
+    started = time.time()
+    try:
+        write_new(
+            ledger,
+            dict(
+                plan_sha256=plan["sha256"],
+                output=str(output),
+                started_unix=started,
+                deadline_unix=started + plan["config"]["wall_seconds"],
+                wall_seconds=plan["config"]["wall_seconds"],
+            ),
+        )
+    except FileExistsError as exc:
+        raise ValueError(
+            "campaign already reserved; no implicit retry or budget reset"
+        ) from exc
+    with ledger.open("rb") as stream:
+        os.fsync(stream.fileno())
+    directory = os.open(ledger.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+    return started + plan["config"]["wall_seconds"]
 
 
 def request(plan, job, phase, previous=None):
@@ -154,14 +183,18 @@ def execute(plan, packet, worker, checkpoint, output, store_module, store):
             raise ValueError("packet payload drift")
     check_headroom()
     with qualification_lock() as lock_fd:
+        start = time.monotonic()
+        absolute_deadline = reserve_campaign(plan, output)
         output.mkdir(parents=True)
         write_new(output / "plan.json", plan)
-        start = time.monotonic()
         for job in plan["jobs"]:
             train_receipt = None
             for phase in ("train", "evaluate"):
                 check_headroom()
-                remaining = plan["config"]["wall_seconds"] - (time.monotonic() - start)
+                remaining = min(
+                    plan["config"]["wall_seconds"] - (time.monotonic() - start),
+                    absolute_deadline - time.time(),
+                )
                 if remaining <= 0:
                     raise TimeoutError("shared campaign deadline exhausted")
                 if (

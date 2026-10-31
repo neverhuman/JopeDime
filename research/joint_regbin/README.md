@@ -99,6 +99,9 @@ nice -n 10 python3 -m research.joint_regbin.driver run PLAN.json --packet PACKET
 The dispatcher takes the real exclusive lock nonblocking. If busy, keep the same
 preregistration and queue normally; do not substitute a lock or reset budgets.
 There is one worker process at a time and one shared six-hour/10GiB campaign cap.
+A durable plan-keyed reservation under `~/jope-data/jrb-01/campaigns/` prevents
+changing the output path to reset that budget. Interrupted reservations remain;
+automatic resume is unsupported and never starts a second campaign implicitly.
 
 Admit results, append via the JRB-02 owning API and generate JSON/Markdown/raw
 curve JSONL plus a standalone SVG plot:

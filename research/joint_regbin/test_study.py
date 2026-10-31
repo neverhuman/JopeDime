@@ -240,6 +240,17 @@ def test_symlink_escape_rejected(tmp_path):
         safe_path(tmp_path, "link/unknown")
 
 
+def test_metadata_planning_does_not_resolve_payloads_against_cwd(
+    manifest, tmp_path, monkeypatch
+):
+    before = make_plan(manifest)
+    (tmp_path / "fixture-packet").symlink_to(tmp_path.parent)
+    monkeypatch.chdir(tmp_path)
+    assert make_plan(manifest) == before
+    with pytest.raises(ValueError, match="symlink"):
+        safe_path(tmp_path, manifest["contexts"][0]["payload"])
+
+
 def test_preregistration_tampering_and_weak_budget_refused(plan, manifest):
     plan["config"]["rounds"] = 10
     with pytest.raises(ValueError, match="changed"):
@@ -458,6 +469,19 @@ def test_production_output_paths_and_exclusive_lock(tmp_path):
         with pytest.raises(BlockingIOError):
             with qualification_lock(tmp_path / "fixture.lock"):
                 pytest.fail("exclusive lock was stolen")
+
+
+def test_new_output_path_cannot_reset_existing_campaign_budget(plan, tmp_path):
+    from research.joint_regbin.driver import reserve_campaign
+
+    reserve_campaign(plan, tmp_path / "fixture-attempt1", tmp_path / "fixture-ledger")
+    ledger = tmp_path / "fixture-ledger" / (plan["sha256"] + ".json")
+    before = ledger.read_bytes()
+    with pytest.raises(ValueError, match="budget reset"):
+        reserve_campaign(
+            plan, tmp_path / "fixture-attempt2", tmp_path / "fixture-ledger"
+        )
+    assert ledger.read_bytes() == before
 
 
 def test_report_produces_standalone_plot_from_explicit_synthetic_fixture(tmp_path):

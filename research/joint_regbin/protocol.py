@@ -56,7 +56,7 @@ def implementation_sha():
     )
 
 
-def safe_path(root, relative):
+def relative_payload(relative):
     path = Path(relative)
     if path.is_absolute() or ".." in path.parts or not path.parts:
         raise ValueError("payload path must remain inside the pinned packet")
@@ -65,6 +65,11 @@ def safe_path(root, relative):
         for token in ("holdout", "sealed", "meta_test", "outer_test")
     ):
         raise ValueError("protected payload refused before open")
+    return path
+
+
+def safe_path(root, relative):
+    path = relative_payload(relative)
     result = (Path(root) / path).resolve()
     if not result.is_relative_to(Path(root).resolve()):
         raise ValueError("payload symlink escapes packet")
@@ -144,9 +149,9 @@ def validate_manifest(manifest):
             raise ValueError("outside training-row closure")
         if row["has_meta_test"] is not False or row["origin"] != "real":
             raise ValueError("only unsealed real-S3 contexts accepted")
-        safe_path(
-            ".", row["payload"]
-        )  # Syntax/escape check only; never opens a payload.
+        relative_payload(
+            row["payload"]
+        )  # Never resolve metadata against the caller's cwd.
         check_sha(row["payload_sha256"])
         for key in ("id", "dataset", "family"):
             if not isinstance(row[key], str) or not row[key].strip():
