@@ -19,6 +19,11 @@ class RemoteTargetCleanerTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.target = self.root / "remote_tests" / "target"
+        self.volume_root = self.root / "docker-volumes"
+        (self.volume_root / "jope-pr-ci-target" / "_data").mkdir(parents=True)
+        patch = mock.patch.object(cleaner, "DOCKER_VOLUME_ROOT", self.volume_root)
+        patch.start()
+        self.addCleanup(patch.stop)
         self.marker_target()
 
     def marker_target(self) -> None:
@@ -28,6 +33,7 @@ class RemoteTargetCleanerTests(unittest.TestCase):
         (self.target / "debug" / "deps" / "libsample.rlib").write_bytes(b"compiled")
 
     def docker_result(self, returncode: int = 0, stdout: str = "") -> mock.Mock:
+        stdout = stdout.replace("/var/lib/docker/volumes/", str(self.volume_root) + "/")
         return mock.Mock(returncode=returncode, stdout=stdout)
 
     def test_docker_prune_targets_only_dangling_jope_targets_without_running_mounts(self) -> None:
@@ -40,7 +46,10 @@ class RemoteTargetCleanerTests(unittest.TestCase):
         ])
         lock = self.root / "lock" / "cleaner.lock"
         audit = self.root / "audit.jsonl"
-        with mock.patch.object(cleaner, "append_audit") as append_audit:
+        with (
+            mock.patch.object(cleaner, "append_audit") as append_audit,
+            mock.patch.object(cleaner, "process_references", return_value=False),
+        ):
             removed = cleaner.prune_unmounted_jope_target_volumes(
                 free_bytes=1,
                 minimum_free_bytes=100,
@@ -88,7 +97,10 @@ class RemoteTargetCleanerTests(unittest.TestCase):
             self.docker_result(stdout="local /var/lib/docker/volumes/jope-pr-ci-target/_data"),
             self.docker_result(returncode=1),
         ])
-        with mock.patch.object(cleaner, "append_audit") as append_audit:
+        with (
+            mock.patch.object(cleaner, "append_audit") as append_audit,
+            mock.patch.object(cleaner, "process_references", return_value=False),
+        ):
             removed = cleaner.prune_unmounted_jope_target_volumes(
                 free_bytes=1, minimum_free_bytes=100, audit=self.root / "audit.jsonl",
                 lock=self.root / "lock/race.lock", runner=runner,
@@ -149,6 +161,68 @@ class RemoteTargetCleanerTests(unittest.TestCase):
             [["volume", "ls"], ["ps", "--quiet"], ["volume", "inspect"]],
         )
         self.assertFalse(audit.exists())
+
+    def test_docker_prune_preserves_nonempty_source_and_evidence(self) -> None:
+        mount = self.volume_root / "jope-pr-ci-target" / "_data"
+        for relative in ("source.rs", "health/receipt.json", "debug/tmp/evidence.bin"):
+            file = mount / relative
+            file.parent.mkdir(parents=True, exist_ok=True)
+            file.write_bytes(b"unique fixture bytes")
+            runner = mock.Mock(side_effect=[
+                self.docker_result(stdout="jope-pr-ci-target\n"),
+                self.docker_result(),
+                self.docker_result(stdout=f"local {mount}"),
+                self.docker_result(stdout="jope-pr-ci-target\n"),
+            ])
+            removed = cleaner.prune_unmounted_jope_target_volumes(
+                free_bytes=1, minimum_free_bytes=100, audit=self.root / "audit.jsonl",
+                lock=self.root / "nonempty.lock", runner=runner, apply=True,
+            )
+            self.assertEqual(removed, [])
+            self.assertEqual(runner.call_count, 3)
+            self.assertEqual(file.read_bytes(), b"unique fixture bytes")
+            self.assertFalse((self.root / "audit.jsonl").exists())
+            file.unlink()
+
+    def test_empty_volume_requires_clear_process_state(self) -> None:
+        mount = self.volume_root / "jope-pr-ci-target" / "_data"
+        for references in (True, None):
+            with mock.patch.object(cleaner, "process_references", return_value=references):
+                self.assertFalse(cleaner.empty_unreferenced_volume(mount))
+        with mock.patch.object(cleaner, "process_references", return_value=False):
+            self.assertTrue(cleaner.empty_unreferenced_volume(mount))
+
+    def test_empty_volume_refuses_missing_linked_or_unreadable_directory(self) -> None:
+        mount = self.volume_root / "jope-pr-ci-target" / "_data"
+        link = self.root / "linked-volume"
+        link.symlink_to(mount, target_is_directory=True)
+        self.assertFalse(cleaner.empty_unreferenced_volume(link))
+        self.assertFalse(cleaner.empty_unreferenced_volume(self.root / "missing-volume"))
+        with mock.patch.object(Path, "iterdir", side_effect=PermissionError("fixture denied")):
+            self.assertFalse(cleaner.empty_unreferenced_volume(mount))
+
+    def test_docker_prune_rechecks_contents_after_delete_intent(self) -> None:
+        mount = self.volume_root / "jope-pr-ci-target" / "_data"
+        receipt = mount / "receipt.json"
+        runner = mock.Mock(side_effect=[
+            self.docker_result(stdout="jope-pr-ci-target\n"),
+            self.docker_result(),
+            self.docker_result(stdout=f"local {mount}"),
+        ])
+        def audit(record: dict, _path: Path) -> None:
+            if record["event"] == "docker_target_volume_delete_intent":
+                receipt.write_text("fixture appeared after intent")
+        with (
+            mock.patch.object(cleaner, "process_references", return_value=False),
+            mock.patch.object(cleaner, "append_audit", side_effect=audit),
+        ):
+            removed = cleaner.prune_unmounted_jope_target_volumes(
+                free_bytes=1, minimum_free_bytes=100, audit=self.root / "audit.jsonl",
+                lock=self.root / "race-content.lock", runner=runner, apply=True,
+            )
+        self.assertEqual(removed, [])
+        self.assertEqual(runner.call_count, 3)
+        self.assertEqual(receipt.read_text(), "fixture appeared after intent")
 
     def test_x3_volume_reclaim_is_remeasured_before_target_cleanup(self) -> None:
         with (

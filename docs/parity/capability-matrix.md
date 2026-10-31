@@ -24,7 +24,7 @@ you saw.
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 5 | 0 | 0 | 1 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
-| new-bin | 28 | 0 | 28 | 0 | 0 | 0 |
+| new-bin | 29 | 0 | 29 | 0 | 0 | 0 |
 | new-example | 10 | 0 | 10 | 0 | 0 | 0 |
 | ops-sh | 1 | 0 | 0 | 0 | 1 | 0 |
 | pipeline-subcommand | 3 | 0 | 3 | 0 | 0 | 0 |
@@ -42,9 +42,9 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **839** | **353** | **76** | **1** | **402** | **7** |
+| **total** | **840** | **353** | **77** | **1** | **402** | **7** |
 
-`moved`/`new` rows without a covering test: 302.
+`moved`/`new` rows without a covering test: 303.
 
 ## Rows
 
@@ -827,6 +827,7 @@ you saw.
 | new-bin | (new) | crates/hyperion/src/bin/hyperion-batch-worker.rs (hyperion-batch-worker) | none | new | Hyperion v5/v7 batch worker; from jain-core feat-core via `wp3/hyperion-policy` (landed as #19) |
 | new-bin | (new) | crates/hyperion/src/bin/hyperion-v5-reference.rs (hyperion-v5-reference) | none | new | Hyperion v5 reference encoder CLI; from jain-core feat-cli hyperion_vs.rs via `wp3/hyperion-policy` (landed as #19) |
 | new-bin | (new) | crates/jope-datasets/src/main.rs (jope-datasets) | jope-datasets::* (23 tests) | new | dataset catalog: ingest dry-run, fetch/verify/link over object_store (WP-D1/D5; re-land of #11); `regression-release derive/verify` (W1-T02); `staging-disposition derive/verify/attest` (W1-T07: `attest` emits the producer's corrected-run attestation that `jope benchmark inference-plan --corrected-run` requires; test `jope-datasets::staging_disposition the_attest_verb_emits_a_run_the_verifier_accepts`) |
+| new-bin | (new) | crates/jope-api/src/bin/jope-api-openapi.rs (jope-api-openapi) | none | new | Deterministically generate the OpenAPI 3.1 document from `jope-api::registry::OPERATIONS`; output defaults to `schemas/jope.api.v1.openapi.json` and is checked by `deploy/ci/check-api-schema.sh`. |
 | new-bin | (new) | crates/jope-models/src/main.rs (jope-models) | jope-models::* | new | model bundles: fetch / verify / publish / path over object_store (WP7; re-land of #15) |
 | new-bin | (new) | crates/jope-paths/src/bin/jope-units-render.rs (jope-units-render) | none | new | ADR-0003: renders the systemd unit templates under deploy/systemd; from `wp4/paths` |
 | new-bin | (new) | crates/jope-arena/src/main.rs (jope-arena) | jope-arena::* (34 tests) | new | SOTArena fetch, Elo ladders, family reports, score emission (WP12; ported from the SOTArena reporter tree recorded in assets/regression/SOURCES.md, now a crate) |
