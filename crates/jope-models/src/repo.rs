@@ -6,14 +6,18 @@ use anyhow::Result;
 use jope_datasets::hash::sha256_hex;
 use std::collections::BTreeSet;
 
+/// Summary and validation errors from checking committed model manifests.
 #[derive(Clone, Debug, Default)]
 pub struct ManifestsReport {
     /// `(bundle_id, files, bytes)` per indexed bundle.
     pub bundles: Vec<(String, usize, u64)>,
+    /// Bundle identifiers listed in `models/PINNED`.
     pub pinned: Vec<String>,
+    /// Validation errors found across the index, manifests, and pinned list.
     pub errors: Vec<String>,
 }
 
+/// Validate the committed model index, bundle manifests, and pinned list without network access.
 pub fn verify_manifests(repo: &Repo) -> Result<ManifestsReport> {
     let mut report = ManifestsReport::default();
     let index = repo.read_index()?;
