@@ -1981,6 +1981,10 @@
       "role": "research",
       "reason": "CPU-only H105 shrinkage, anchor, grouped-fold and strict full-panel Holm/harm/admission fixtures; no data, checkpoint, CUDA or GPU ticket in preparation; outside product qualification."
     },
+    "python:research/flywheel_selfplay/h119_gbm_ctx_confirm/test_h119.py": {
+      "role": "research",
+      "reason": "H119 GBM-vs-r882 prospective confirmation: synthetic CPU endpoint/fold/multiplicity/harm/tie/completeness/BT controls; no product qualification or hidden-data access."
+    },
     "python:research/flywheel_selfplay/h100_asam_confirm/test_h100.py": {
       "role": "research",
       "reason": "H100 synthetic CPU optimizer, scratch safety, drift, multiplicity/harm/readout and predecessor-FIFO guard tests; no actual study outcomes or serving qualification."
