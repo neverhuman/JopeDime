@@ -47,3 +47,5 @@ Original source HEAD at upload: `d5095432129d57cbd7cffa9fd6ceb77dfe86cd9e`. Runn
 - [metrics.json](metrics.json) contains exact object versions/hashes, statistics, resource limits and row-closure checks. Review commands/receipts are under `/home/ubuntu/jope-rescue-20260921/rd-verdicts-t2155/`.
 
 The stability-based stop condition is not supported for this sampled set. Retain W8 as an unfinished diagnostic/control study. Do not infer a reliability-policy advance, causal live improvement, or r882 development-panel selection bias. No HWM candidate was created and no serving change occurred.
+
+The reviewed result snapshot is preserved create-only at `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W8/astra-review-20261031T041309Z-483edd92/manifest.json` (version`kQaB7a1DbULpJVW2z7rIUsgPRXCW4IBr`, SHA256`539f0c2a3d5eb4d039ae8ab712015e41d8d85aec14f116b3ce6de0d4f83bf92e`), sourcea0a576b09. All seven review objects, including the manifest and row-closure checker/receipt, passed version-pinned downloaded-byte SHA256 checks. That snapshot precedes this pointer append.
