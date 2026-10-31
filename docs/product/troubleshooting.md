@@ -11,13 +11,13 @@ stopped
 
 This is a successful status query: the engine is not running. The example was captured with an isolated `JOPEDIME_HOME`, so it did not inspect or alter a user's normal engine state.
 
-## Dataset registration is unavailable
+## Dataset registration works; dataset listing is unavailable
 
-The current executable lists dataset management commands, but the local service build does not implement the `dataset_register` operation. A registration attempt currently returns an “Operation dataset_register is not implemented in this build” error. Do not treat the CLI command's presence as a successful registration.
+Use `jopedime dataset add` with a CSV file, a name, and an idempotency key. The local engine accepts the registration and returns its dataset ID and profile.
 
-**TODO(SVC-05-F01):** replace this limitation note with the supported registration procedure and its verified recovery steps after the service handler is available.
+The CLI also lists `dataset list` and `dataset show`, but those operations are not implemented yet. `jopedime dataset list --json` currently exits 2 and reports `Operation dataset_inspect is not implemented in this build.` Do not interpret a listed CLI command as a supported service operation.
 
-The same router currently reports `CAPABILITY_UNAVAILABLE` for dataset inspection/deletion, objective validation, run lifecycle, algorithm lookup, export, artifact download, prediction, feedback export, and store garbage collection. `GET /v1/system` is the only implemented operation; its empty capability lists describe this service build, not a configured learning engine.
+The router also reports `CAPABILITY_UNAVAILABLE` for dataset deletion, objective validation, run lifecycle, algorithm lookup, export, artifact download, prediction, feedback export, and store garbage collection. `GET /v1/system` and `POST /v1/datasets` are the implemented operations in this build.
 
 ## Check version and build features
 
