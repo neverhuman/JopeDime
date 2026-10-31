@@ -111,7 +111,8 @@ over learning primitives. The reference language uses a 401-token
 vocabulary, with up to six transforms chosen from 31 and one of 22 prediction
 heads (\cref{sub:method-move}). Types remove whole classes of stillborn
 programs before they run \citep{montana1995stgp}. Canonicalization can merge
-syntactic variants; it does not establish functional equivalence. AutoML-Zero
+syntactic variants; it need not identify every functionally equivalent
+implementation. AutoML-Zero
 reused scores when hashes of truncated predictions matched after a short
 training and validation probe \citep{real2020automlzero}. Matching a probe
 does not establish agreement on other inputs (\cref{sub:method-move}). The
