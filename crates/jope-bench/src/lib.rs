@@ -31,21 +31,31 @@
 
 /// Equal-budget comparison of search profiles (`jope-bench ablation`).
 pub mod ablation;
+/// Process adapters for external baseline engines and their prediction contract.
 pub mod adapter;
 /// Frozen original Rust learners and their AutoML comparison adapters.
 pub mod automl;
+/// Deterministic train and held-out fold construction for same-cut comparisons.
 pub mod cuts;
+/// Conversion of benchmark reports into arena tracks and score registries.
 pub mod emit;
+/// Task-specific metrics and robust fitness aggregation.
 pub mod eval;
+/// Dataset discovery, metadata validation and table loading.
 pub mod load;
+/// Registered benchmark methods and their same-cut fitting paths.
 pub mod methods;
 /// Original native AutoML candidates, evaluated with the same cuts and scorer.
 pub mod native;
 /// Frozen development panel: raw inputs, task metrics and fitted predictors.
 pub mod panel;
+/// Validation and representation of the benchmark's versioned protocol.
 pub mod protocol;
+/// Frozen challenge regressors and their benchmark adapter entry points.
 pub mod regressors;
+/// Versioned benchmark report records and their serialization helpers.
 pub mod report;
+/// Supported task kinds and task-specific metric definitions.
 pub mod task;
 
 /// Identity of the evaluator every score in a report was produced by. v2: regression on the

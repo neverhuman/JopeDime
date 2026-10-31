@@ -6,7 +6,7 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "ADR-0003 runtime-resolved roots: JOPE_HOME, JOPE_STATE, JOPE_REGISTRY, SOTARENA_ROOT, SOTARENA_REPORTER_ROOT (zero dependencies)"
+description = "Runtime-resolved JopeDime roots and systemd unit-template renderer (zero dependencies)"
 
 [dependencies]
 

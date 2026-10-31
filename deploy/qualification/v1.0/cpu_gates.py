@@ -327,13 +327,17 @@ def child_environment(folder, target, jobs, source):
 
 def validate_timeout(seconds):
     if not math.isfinite(seconds) or seconds <= 0 or seconds > 3600:
-        raise ValueError("gate timeout must be finite, positive and at most 3600 seconds")
+        raise ValueError(
+            "gate timeout must be finite, positive and at most 3600 seconds"
+        )
 
 
 def _wait_unreaped(process, seconds):
     # Keep the leader's PID reserved until cleanup has signalled its whole group.
     deadline = time.monotonic() + seconds
-    while os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT) is None:
+    while (
+        os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT) is None
+    ):
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             raise subprocess.TimeoutExpired(process.args, seconds)

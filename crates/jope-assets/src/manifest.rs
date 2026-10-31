@@ -12,21 +12,29 @@ use std::collections::BTreeMap;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+/// Canonical signed inventory of the executable and its packaged assets.
 pub struct Manifest {
+    /// Versioned schema identifier.
     pub schema: String,
+    /// Envelope format version supported by this package.
     pub format_version: u32,
     /// `jopedime`.
     pub product: String,
+    /// Product release version recorded by the packager.
     pub product_version: String,
     /// Rust target triple of the executable region.
     pub target: String,
     /// `deploy/appliance/profiles/<profile>.toml`.
     pub profile: String,
+    /// Maximum redistribution audience for all package assets.
     pub scope: Scope,
+    /// Length and digest of the executable region before the payload.
     pub code: CodeIdentity,
+    /// Source commit and lock/profile identities used for the package.
     pub source: SourceIdentity,
     /// Method ids the profile promises, sorted; every one must be executable in this build.
     pub methods: Vec<String>,
+    /// Assets included in the package, sorted by logical id.
     pub entries: Vec<Entry>,
 }
 
@@ -46,6 +54,7 @@ pub enum Scope {
 }
 
 impl Scope {
+    /// Return the canonical manifest spelling of this audience.
     pub fn as_str(self) -> &'static str {
         match self {
             Scope::Development => "development",
@@ -55,6 +64,7 @@ impl Scope {
         }
     }
 
+    /// Parse one canonical audience spelling.
     pub fn parse(text: &str) -> Option<Self> {
         Some(match text {
             "development" => Scope::Development,
@@ -70,7 +80,9 @@ impl Scope {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct CodeIdentity {
+    /// Executable region length in bytes.
     pub len: u64,
+    /// Lowercase SHA-256 digest of the executable region.
     pub sha256: String,
 }
 
@@ -80,29 +92,39 @@ pub struct CodeIdentity {
 pub struct SourceIdentity {
     /// Full source commit.
     pub sha40: String,
+    /// SHA-256 digest of the source tree's `Cargo.lock` bytes.
     pub cargo_lock_sha256: String,
+    /// SHA-256 digest of the selected appliance profile bytes.
     pub profile_sha256: String,
+    /// SHA-256 digest of the model lock bytes.
     pub models_lock_sha256: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+/// One logical asset and the frames that reconstruct its decoded bytes.
 pub struct Entry {
     /// Logical id, `<role>/<component>/<path>`; unique, the sort key.
     pub id: String,
     /// `model`, `config`, `manifest` or `notice`.
     pub role: String,
+    /// Component within the package that owns this asset.
     pub component: String,
     /// Where the bytes came from: `<bundle_id>/<path>` in the model store, or `generated:<what>`.
     pub origin: String,
     /// sha256 of the decoded bytes: the file exactly as its source manifest names it.
     pub sha256: String,
+    /// Decoded asset length in bytes.
     pub bytes: u64,
+    /// Storage codec used for the asset's frames.
     pub codec: Codec,
     /// sha256 of the stored frames, concatenated in order.
     pub stored_sha256: String,
+    /// Total stored frame bytes, excluding alignment gaps.
     pub stored_bytes: u64,
+    /// Ordered stored frames that reconstruct the decoded asset.
     pub frames: Vec<Frame>,
+    /// Redistribution terms that apply to this asset.
     pub license: License,
     /// Backends whose qualification covers this asset (`cpu`, `cuda`).
     pub backends: Vec<String>,
@@ -112,14 +134,19 @@ pub struct Entry {
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[serde(deny_unknown_fields)]
 pub struct Frame {
+    /// Byte offset relative to the payload start.
     pub offset: u64,
+    /// Stored frame length in bytes.
     pub len: u64,
+    /// Decoded frame length in bytes.
     pub raw_len: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+/// License and redistribution classification copied from the source inventory.
 pub struct License {
+    /// SPDX license identifier or declared license text.
     pub spdx: String,
     /// `permitted`, `internal`, `prohibited` or `conditional`, from the source manifest.
     pub redistribution: String,
@@ -145,6 +172,7 @@ pub fn is_name(text: &str) -> bool {
             .any(|part| part.is_empty() || part == "." || part == "..")
 }
 
+/// Return whether `text` is exactly 64 lowercase hexadecimal SHA-256 characters.
 pub fn is_sha256(text: &str) -> bool {
     text.len() == 64 && text.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
 }
@@ -160,6 +188,7 @@ pub fn zstd_bound(raw: u64) -> u64 {
 }
 
 impl Manifest {
+    /// Serialize this manifest into its canonical signed byte representation.
     pub fn to_bytes(&self) -> Vec<u8> {
         serde_json::to_vec(self).expect("manifest serializes")
     }
@@ -295,6 +324,7 @@ impl Manifest {
         Ok(())
     }
 
+    /// Find one entry by its logical id.
     pub fn entry(&self, id: &str) -> Option<&Entry> {
         self.entries
             .binary_search_by(|e| e.id.as_str().cmp(id))

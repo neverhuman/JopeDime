@@ -7,15 +7,21 @@ use std::{
     path::{Path, PathBuf},
 };
 
+/// Maximum encoded bytes in one journal record.
 pub const MAX_RECORD_BYTES: usize = 1024 * 1024;
+/// Maximum encoded bytes in one returned narration page.
 pub const MAX_PAGE_BYTES: usize = 4 * 1024 * 1024;
+/// Maximum events in one returned narration page.
 pub const MAX_PAGE_RECORDS: usize = 256;
 const PAGE_OVERHEAD_BYTES: usize = 8192;
 pub(super) const MIN_PAGE_BYTES: usize = MAX_RECORD_BYTES + 1 + PAGE_OVERHEAD_BYTES;
 
 #[derive(Clone, Debug)]
+/// Resource limits applied when opening and extending a journal index.
 pub struct Limits {
+    /// Maximum indexed event count, from 1 through 1,000,000.
     pub max_records: usize,
+    /// Maximum journal file size, from 1 byte through 16 GiB.
     pub max_journal_bytes: u64,
 }
 impl Default for Limits {
@@ -49,27 +55,44 @@ pub struct Index {
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// One validated, bounded page of retained narration events.
 pub struct Page {
+    /// Page schema identifier.
     pub schema: String,
+    /// Selected run identity.
     pub run_id: String,
+    /// Retained events in sequence order.
     pub events: Vec<Envelope>,
+    /// Exclusive cursor after the final returned event.
     pub next: Cursor,
+    /// Whether more committed events remain after this page.
     pub more: bool,
+    /// Whether the journal has an uncommitted trailing partial record.
     pub partial_tail: bool,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// Validated boundary and capture state for a selected narration journal.
 pub struct Status {
+    /// Status schema identifier.
     pub schema: String,
+    /// Selected run identity.
     pub run_id: String,
+    /// Last committed event sequence as a decimal string.
     pub last_sequence: String,
+    /// Number of indexed journal bytes as a decimal string.
     pub indexed_bytes: String,
+    /// Current journal file size as a decimal string.
     pub observed_bytes: String,
+    /// Whether uncommitted trailing bytes are present.
     pub partial_tail: bool,
+    /// Reader mode, currently `read-only`.
     pub mode: String,
+    /// Durable producer capture watermark summary.
     pub capture: JournalSummary,
 }
 
+/// Parse a canonical unsigned decimal cursor sequence.
 pub fn sequence(value: &str) -> Result<u64> {
     ensure!(
         !value.is_empty() && value.bytes().all(|b| b.is_ascii_digit()),
@@ -117,6 +140,7 @@ fn same_file(a: &Metadata, b: &Metadata) -> bool {
 }
 
 impl Index {
+    /// Open and validate the committed prefix of one operator-selected journal.
     pub fn open(path: &Path, run_id: &str, limits: Limits) -> Result<Self> {
         ensure!(
             !run_id.is_empty() && run_id.len() <= 256 && !run_id.chars().any(char::is_control),
@@ -155,6 +179,7 @@ impl Index {
         result.refresh()?;
         Ok(result)
     }
+    /// Index newly committed records and return the number added.
     pub fn refresh(&mut self) -> Result<usize> {
         ensure!(
             !self.poisoned,
@@ -236,6 +261,7 @@ impl Index {
         }
         Ok(added)
     }
+    /// Return the exclusive cursor at the current indexed boundary.
     pub fn cursor(&self) -> Cursor {
         Cursor {
             run_id: self.run_id.clone(),
@@ -248,6 +274,7 @@ impl Index {
         ensure!(n <= self.entries.len() as u64, "future cursor");
         usize::try_from(n).context("cursor range")
     }
+    /// Refresh the journal and return its validated status summary.
     pub fn status(&mut self) -> Result<Status> {
         self.refresh()?;
         Ok(Status {
@@ -261,6 +288,7 @@ impl Index {
             capture: self.capture.clone(),
         })
     }
+    /// Return a bounded page after the exclusive cursor, validating records on read.
     pub fn page(&mut self, after: &Cursor, limit: usize, max_bytes: usize) -> Result<Page> {
         ensure!(
             (1..=MAX_PAGE_RECORDS).contains(&limit),
