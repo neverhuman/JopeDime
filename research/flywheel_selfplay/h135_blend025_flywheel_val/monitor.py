@@ -8,6 +8,7 @@ import json
 import os
 import shutil
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -16,6 +17,9 @@ from launcher import worker_environment
 
 HERE = Path(__file__).resolve().parent
 ARROW_ALLOCATOR_CONF = "background_thread:false"
+WALL_SECONDS = 4 * 60 * 60
+RECOVERY_SECONDS = 60
+POLL_SECONDS = 0.25
 
 
 def save(p, v):
@@ -58,6 +62,125 @@ def sample(root, proc=None):
     )
 
 
+def pressure_reason(s):
+    if s["load1"] > 0.85 * s["cpus"]:
+        return "load>85%"
+    if s["available"] < 16 * 1024**3:
+        return "MemAvailable<16GiB"
+    return None
+
+
+def hard_reason(s):
+    bad = reason(s)
+    return None if bad in ("load>85%", "MemAvailable<16GiB") else bad
+
+
+class RecoveryGate:
+    def __init__(self):
+        self.paused = False
+        self.stable_since = None
+
+    def action(self, s, now):
+        if not self.paused and pressure_reason(s):
+            self.paused = True
+            self.stable_since = None
+            return "pause"
+        if self.paused:
+            if s["load1"] < 80 and s["available"] >= 16 * 1024**3:
+                if self.stable_since is None:
+                    self.stable_since = now
+                if now - self.stable_since >= RECOVERY_SECONDS:
+                    self.paused = False
+                    self.stable_since = None
+                    return "resume"
+            else:
+                self.stable_since = None
+        return None
+
+
+def terminate(child):
+    if child is not None and child.poll() is None:
+        # SIGTERM is queued while stopped; SIGCONT lets it terminate promptly.
+        try:
+            os.killpg(child.pid, signal.SIGTERM)
+            os.killpg(child.pid, signal.SIGCONT)
+        except ProcessLookupError:
+            pass
+        try:
+            child.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            os.killpg(child.pid, signal.SIGKILL)
+            child.wait()
+
+
+def watch(root, c, record, stage, deadline, child=None):
+    """Wait before launch or supervise the same live child; never restart a fit."""
+    gate, interval, peak = RecoveryGate(), None, 0
+    proc = psutil.Process(child.pid) if child is not None else None
+    try:
+        while child is None or child.poll() is None:
+            now = time.monotonic()
+            if now >= deadline:
+                raise RuntimeError("four-hour wall budget exhausted")
+            try:
+                s = sample(root, proc)
+            except psutil.NoSuchProcess:
+                break
+            peak = max(peak, s["rss"])
+            with (c / "resources.jsonl").open("a") as out:
+                out.write(
+                    json.dumps(
+                        dict(
+                            stage=stage, waiting=child is None, paused=gate.paused, **s
+                        )
+                    )
+                    + "\n"
+                )
+            bad = hard_reason(s)
+            if bad:
+                raise RuntimeError("guard: " + bad)
+            action = gate.action(s, now)
+            if action == "pause":
+                if child is not None:
+                    os.killpg(child.pid, signal.SIGSTOP)
+                interval = dict(
+                    stage=stage,
+                    kind="worker_pause" if child else "pre_stage_wait",
+                    pid=child.pid if child else None,
+                    reason=pressure_reason(s),
+                    start_utc=s["utc"],
+                    start_monotonic=now,
+                    end_utc=None,
+                )
+                record["pause_intervals"].append(interval)
+                save(c / "monitor.json", record)
+            elif action == "resume":
+                if child is not None:
+                    os.killpg(child.pid, signal.SIGCONT)
+                interval.update(
+                    end_utc=s["utc"],
+                    duration_seconds=now - interval["start_monotonic"],
+                    disposition="resumed" if child else "ready_after_wait",
+                )
+                interval = None
+                save(c / "monitor.json", record)
+            if child is None and not gate.paused:
+                return 0
+            time.sleep(POLL_SECONDS)
+    except BaseException:
+        terminate(child)
+        raise
+    finally:
+        if interval is not None:
+            interval.update(
+                end_utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                duration_seconds=time.monotonic() - interval["start_monotonic"],
+                disposition="terminal",
+            )
+            save(c / "monitor.json", record)
+    return peak
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--custody", type=Path, required=True)
@@ -92,6 +215,10 @@ def main():
     )
     record = dict(
         source=launch,
+        host=socket.gethostname(),
+        started_utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        wall_budget_seconds=WALL_SECONDS,
+        pause_intervals=[],
         worker_environment={
             k: env[k]
             for k in [
@@ -107,13 +234,12 @@ def main():
         stages=[],
         status="RUNNING",
     )
+    started = time.monotonic()
+    deadline = started + WALL_SECONDS
     child = None
     try:
         for stage in ["baseline", "135", "136", "137", "summary"]:
-            first = sample(root)
-            bad = reason(first)
-            if bad:
-                raise RuntimeError("preflight: " + bad)
+            watch(root, c, record, stage, deadline)
             cmd = [
                 "nice",
                 "-n",
@@ -136,27 +262,10 @@ def main():
                     stderr=subprocess.STDOUT,
                     start_new_session=True,
                 )
-                proc = psutil.Process(child.pid)
-                peak = 0
-                while child.poll() is None:
-                    try:
-                        s = sample(root, proc)
-                    except psutil.NoSuchProcess:
-                        break
-                    peak = max(peak, s["rss"])
-                    with (c / "resources.jsonl").open("a") as out:
-                        out.write(json.dumps(dict(stage=stage, **s)) + "\n")
-                    bad = reason(s)
-                    if bad:
-                        os.killpg(child.pid, signal.SIGTERM)
-                        try:
-                            child.wait(timeout=10)
-                        except subprocess.TimeoutExpired:
-                            os.killpg(child.pid, signal.SIGKILL)
-                            child.wait()
-                        raise RuntimeError("guard: " + bad)
-                    time.sleep(0.25)
+                peak = watch(root, c, record, stage, deadline, child)
                 code = child.wait()
+                if time.monotonic() >= deadline:
+                    raise RuntimeError("four-hour wall budget exhausted")
             record["stages"].append(
                 dict(stage=stage, exit_status=code, peak_rss=peak, command=cmd)
             )
@@ -169,13 +278,11 @@ def main():
         record["error"] = str(error)
         raise
     finally:
-        if child is not None and child.poll() is None:
-            os.killpg(child.pid, signal.SIGTERM)
-            try:
-                child.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                os.killpg(child.pid, signal.SIGKILL)
-                child.wait()
+        terminate(child)
+        record["wall_seconds"] = time.monotonic() - started
+        record["finished_utc"] = datetime.datetime.now(
+            datetime.timezone.utc
+        ).isoformat()
         save(c / "monitor.json", record)
 
 

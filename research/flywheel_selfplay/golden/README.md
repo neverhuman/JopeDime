@@ -96,6 +96,37 @@ arrays and ordered identities remain under `<fetched>/historical`.
 This covers only all captured rows for the reviewed 50 TRAIN contexts. Global
 historical DSL inventory, raw proposer snapshots and full qualification stay open.
 
+The next DSL-coverage mode authenticates delivered TRAIN program definitions,
+including the champion list and `all_90_qualified_novel_winner_records` dictionary.
+Each source needs an independent SHA pin; every DSL must hash to its exact program
+identity and bind to the reviewed TRAIN roster. Winner families are resolved only
+from that authenticated roster. Source row order/duplicate aliases are retained;
+unique canonical programs are sorted by SHA and tensor shards are bounded8192rows.
+
+```sh
+CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+ nice -n 10 python3 research/flywheel_selfplay/golden/capture_cpu.py \
+ --plan "$CPU_PLAN" --expected-plan-sha256 "$CPU_PLAN_SHA256" \
+ --dsl-records "$CHAMPIONS" --expected-dsl-sha256 "$CHAMPIONS_SHA256" \
+ --dsl-records "$WINNERS" --expected-dsl-sha256 "$WINNERS_SHA256" \
+ --historical-catalog-sha256 "$HISTORICAL_CATALOG_SHA256" \
+ --custody-store "$HASH_CUSTODY" --output "$NEW_CATALOG_ROOT"
+```
+
+The new catalog keeps every old historical/packet object unchanged and adds
+`dsl/programs.jsonl`, `dsl/programs-<shard>.safetensors` (canonical F32 feat412/raw
+F64 proj16), `dsl/source-rows.jsonl`, and `dsl/coverage.json` with the exact
+covered/missing historical hash partition and per-context row coverage. The parent
+catalog is retained as `sources/historical-custody-index.json`. Captured features
+for matching hashes must equal the canonical features; captured-F32 and raw-FP64
+projection domains remain separately named. No DSL is guessed from feature values.
+These outputs cover every delivered definition, not every historical program.
+All global historical/qualification flags stay false while missing hashes remain.
+Set `JOPE_RES07_DSL_CATALOG_SHA256` with the existing custody/bundle inputs to run
+the committed actual-fetch, complete-hash-partition and canonical numerical test.
+No product source/model exports are needed; the bundle-tamper control changes only
+in-memory metadata bytes. Missing DSL bodies remain an explicit input requirement.
+
 Strict real replay (external fixture index SHA and the pinned real bundle required):
 
 ```sh
