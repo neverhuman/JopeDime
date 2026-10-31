@@ -10,5 +10,6 @@ figs:
 	python3 figures/scripts/make_promotions_figure.py --target-history
 	python3 figures/scripts/make_recent_development_figure.py
 	python3 figures/scripts/make_recent_development_figure.py --follow-up
+	python3 figures/scripts/make_recent_development_figure.py --later-window
 clean:
 	latexmk -C
