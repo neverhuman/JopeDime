@@ -82,10 +82,10 @@ payload bytes. It is explicitly
 roster. No sealed or holdout payload was opened.
 
 `fifo_launch.py dry-run` checked the candidate-manifest and frozen-DOPE hashes, then
-created `/home/ubuntu/jope_plan/evidence/QLT-04/luna-qlt02-t0955/decision-record-candidate-metadata-latest.json`
-against source commit `db75e6457b6e834cddba7a06fb1f1a8d30916e2f`. The manifest SHA-256 is
+created `/home/ubuntu/jope_plan/evidence/QLT-04/luna-qlt02-t0955/decision-record-source-52379.json`
+against source commit `52379e482af435c198464c5696baa93c401a1ee5`. The manifest SHA-256 is
 `32e0abeba07e19c71e7e1b32c6959df14791e47dabbaf381e5983a0236c62e32`; the record SHA-256 is
-`241a090b06da0cd6af0dd421ad653ededffe65d9349dc39bfc21d6485d6043ef`.
+`1e68153d685d3d19c1ca18c21db149199a926b84a076a7399cd5cc3fd47f64e4`.
 The record says `q1_status=NOT_RUN`, `decision=UNKNOWN_NOT_RUN`; effects, intervals,
 subgroups, failure inventory and Q1 compute remain unknown. It records no lock,
 FIFO ticket, backend, payload or default change. This validates CPU plumbing only;
