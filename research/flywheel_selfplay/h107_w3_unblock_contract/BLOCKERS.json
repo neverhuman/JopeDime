@@ -1,0 +1,120 @@
+{
+  "schema": "jope.h107.w3-blockers/v1",
+  "source_commit": "59805aecd39c99592c3799e4075851c994712cc3",
+  "status": "BLOCKED",
+  "scope": "source-bound unblock draft; no real completion evidence produced",
+  "blockers": [
+    {
+      "id": "B1",
+      "requirement": "authoritative_completion",
+      "proposed_handoff": "producer/export owner",
+      "status": "OPEN",
+      "observed_gap": "H86 numeric signatures cannot establish execution completion; H87 only verifies mask/pool integrity.",
+      "required_artifact": "Run-bound event or verified producer-to-export derivation, complete row census and exact-version source bindings; see CONTRACT.md steps 1-3."
+    },
+    {
+      "id": "B2",
+      "requirement": "role_and_component_admission",
+      "proposed_handoff": "export reviewer",
+      "status": "OPEN",
+      "observed_gap": "Historical selected training metadata lacks per-row execution provenance. H107 does not refresh current aliases/role closure or admit components.",
+      "required_artifact": "Field-allowlisted training-only export, current family/table/alias exclusion receipt, exact join and component masks, revised cohort comparability if needed."
+    },
+    {
+      "id": "B3",
+      "requirement": "w1_winner_configuration",
+      "proposed_handoff": "W1 owner (ARGON)",
+      "status": "OPEN",
+      "observed_gap": "CPU preparation and launch direction are not a measured accepted W1 winner. H65 accepts an opaque JSON object. No qualified winner receipt was supplied to this audit.",
+      "required_artifact": "Measured eligible W1 selection and frozen policy/model/history/prior recipe, exact hash plus reviewer disposition; no substitute inferred from a file existing."
+    },
+    {
+      "id": "B4",
+      "requirement": "registered_training_implementation",
+      "proposed_handoff": "W3 implementation owner",
+      "status": "OPEN",
+      "observed_gap": "H65 is preparation-only; H74 is a caller-metadata/readout gate. Neither trains nor proves source provenance.",
+      "required_artifact": "Registered a/b/c/d models and matched scalar/shuffled controls, zero-update choice proof, optimizer/parameter-change receipts, fit-only calibration and complete execution manifest."
+    },
+    {
+      "id": "B5",
+      "requirement": "resource_and_gpu_admission",
+      "proposed_handoff": "campaign/qualification owner",
+      "status": "OPEN",
+      "observed_gap": "No remaining-budget or eligible W3 GPU-slot receipt inspected. Upstream W1 and current qualification scheduling remain separate.",
+      "required_artifact": "Reconcile cumulative spend and original deadline, freeze input/source/model hashes, obtain the separately authorized qualification lock; no reset or launch from this document."
+    }
+  ],
+  "resolved_dependencies": [
+    {
+      "id": "H59",
+      "status": "COMPLETED_NO_ADMISSION_INCORPORATED",
+      "meaning": "H89 incorporated H59; stale H65/H74 prose saying H59 not run is superseded. W3 recipe remains unchanged."
+    }
+  ],
+  "verified_prior_scope": {
+    "contexts": 1219,
+    "families": 205,
+    "pool_rows": 1404287,
+    "mask_pool_mismatches": 0,
+    "authoritatively_completed_rows": null
+  },
+  "sources": [
+    {
+      "path": "research/flywheel_selfplay/h65_w3_continuous_top_resolved/runner.py",
+      "commit": "59805aecd39c99592c3799e4075851c994712cc3",
+      "sha256": "93a72d8cb5a5c4ec8b2a95b4511a21d934d1d8292044b65d9de311492e03db13"
+    },
+    {
+      "path": "research/flywheel_selfplay/h65_w3_continuous_top_resolved/PUBLICATION_MANIFEST.json",
+      "commit": "59805aecd39c99592c3799e4075851c994712cc3",
+      "sha256": "e1ee8315e6c833d99d7eef803593b666a7451147fbcb31f44120bcc460e0b45f"
+    },
+    {
+      "path": "research/flywheel_selfplay/h74_w3_readout_gate/w3_gate.py",
+      "commit": "59805aecd39c99592c3799e4075851c994712cc3",
+      "sha256": "a1a9847fa524a931dfacc191cc0849f16b2890867d1619e1d272b1b98fe169ba"
+    },
+    {
+      "path": "research/flywheel_selfplay/h87_w3_status_mask_audit/README.md",
+      "commit": "59805aecd39c99592c3799e4075851c994712cc3",
+      "sha256": "efa0d689eca33b1b27ea84f09654d45f1f0cc76a874f4ba98439b65a4c940ac5"
+    },
+    {
+      "path": "research/flywheel_selfplay/h88_w3_source_status_trace/audit.json",
+      "commit": "59805aecd39c99592c3799e4075851c994712cc3",
+      "sha256": "b93bb9e2ac19942bca7b9fbd47a728e6453211540b66e80741e3da872eafe6ab"
+    },
+    {
+      "path": "research/flywheel_selfplay/h89_w3_completion_admission/README.md",
+      "commit": "59805aecd39c99592c3799e4075851c994712cc3",
+      "sha256": "fe2780618b915c6942b0b118400e808dfbba19479c6b0ab3fb1c2bd8521c7c06"
+    },
+    {
+      "path": "research/flywheel_selfplay/h89_w3_completion_admission/metrics.json",
+      "commit": "59805aecd39c99592c3799e4075851c994712cc3",
+      "sha256": "586e1e1104617dc412e3375ffc9dd69091dde3a0998c0303e4f57a44898aaf32"
+    },
+    {
+      "path": "docs/research/studies/dope-neural-ranking-20261021/h59/README.md",
+      "commit": "59805aecd39c99592c3799e4075851c994712cc3",
+      "sha256": "940496133082018b660e978e01bc53114b8eb1a6c1f7c697c9b3f13a817196fd"
+    },
+    {
+      "path": "research/flywheel_selfplay/rd_breakthrough/PROPOSALS.md",
+      "commit": "59805aecd39c99592c3799e4075851c994712cc3",
+      "sha256": "eb2447d014957222855ba374a71eb00747692581083b6613c5487135497e4ba1"
+    }
+  ],
+  "metrics": {
+    "Elo": null,
+    "val_reg_inner": null,
+    "U4": null
+  },
+  "execution": {
+    "native_fits": 0,
+    "optimizer_updates": 0,
+    "gpu_seconds": 0,
+    "launch_authorized": false
+  }
+}
