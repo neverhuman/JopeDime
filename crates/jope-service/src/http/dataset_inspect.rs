@@ -18,16 +18,16 @@ fn invalid(detail: &str) -> Response {
     )
 }
 
-fn unavailable() -> Response {
-    problem(
+fn unavailable() -> Box<Response> {
+    Box::new(problem(
         ErrorCode::IoFailure,
         "Stored dataset could not be profiled.",
         "Check the dataset store and its immutable CSV content.",
         None,
-    )
+    ))
 }
 
-fn profile(state: &DatasetState, id: &DatasetId) -> Result<DatasetProfile, Response> {
+fn profile(state: &DatasetState, id: &DatasetId) -> Result<DatasetProfile, Box<Response>> {
     let record = state
         .store
         .get(&RecordKey::Dataset(id.clone()))
@@ -50,12 +50,12 @@ fn profile(state: &DatasetState, id: &DatasetId) -> Result<DatasetProfile, Respo
     }
     let limit = state.config.limits.max_dataset_bytes.value;
     if dataset.csv.bytes > limit {
-        return Err(problem(
+        return Err(Box::new(problem(
             ErrorCode::DatasetInvalid,
             "Stored dataset exceeds max_dataset_bytes.",
             "Explicitly adjust the dataset byte limit before inspection.",
             Some("limits.max_dataset_bytes"),
-        ));
+        )));
     }
     let csv = state
         .store
@@ -86,8 +86,8 @@ pub(super) async fn get(
     };
     match tokio::task::spawn_blocking(move || profile(&state, &id)).await {
         Ok(Ok(profile)) => Json(profile).into_response(),
-        Ok(Err(response)) => response,
-        Err(_) => unavailable(),
+        Ok(Err(response)) => *response,
+        Err(_) => *unavailable(),
     }
 }
 
@@ -113,7 +113,7 @@ pub(super) async fn list(
         Ok(id) => id,
         Err(_) => return invalid("Invalid dataset list cursor."),
     };
-    match tokio::task::spawn_blocking(move || -> Result<DatasetPage, Response> {
+    match tokio::task::spawn_blocking(move || -> Result<DatasetPage, Box<Response>> {
         let mut ids = state
             .store
             .dataset_ids_after(after.as_ref(), limit + 1)
@@ -137,8 +137,8 @@ pub(super) async fn list(
     .await
     {
         Ok(Ok(page)) => Json(page).into_response(),
-        Ok(Err(response)) => response,
-        Err(_) => unavailable(),
+        Ok(Err(response)) => *response,
+        Err(_) => *unavailable(),
     }
 }
 
