@@ -1939,6 +1939,10 @@
       "reason": "Owner-requested pytest proofs for the H81 W4 prospective two-plus-two stratum and its preregistered comparator-strength guard; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h90_candidate_diversity/test_h90.py": {
+      "reason": "CPU-only H90 candidate-recipe, diversity, pseudoreplication, cumulative budget and H80-exclusion tests; offline research outside product qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h82_sam_steps/test_h82.py": {
       "reason": "CPU-only H82 fresh-seed retry-boundary, load/budget, frozen-reference and paired Elo/admission tests; offline research outside product qualification.",
       "role": "research"

@@ -13248,6 +13248,16 @@
       "lanes": [],
       "scope": "Owner-requested W5 provenance-preflight synthetic metadata controls: body reads refused before any S3 call, counter hashes over bytes, unknown counts kept null, and refusal of pair and row-closure shortcuts (strat300 nq=0, siblings, wrong cut or alias, sentinels, AST similarity, missing operator or evaluator provenance). None admits data or qualifies W5."
     },
+    "python:research/flywheel_selfplay/h90_candidate_diversity/test_h90.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H90 fixed r882 recipe CPU fixtures: inverse-family sampling, two-microbatch accumulation, target smoothing, warmup/cosine restart, top-four diversity, seed pseudoreplication, paired Elo/admission, cumulative budget and hard H80-closeout-before-FIFO refusal. Synthetic unit proof only; no corpus outcomes or product qualification."
+    },
     "python:research/flywheel_selfplay/h82_sam_steps/test_h82.py": {
       "discovery": {
         "kind": "python-family"
