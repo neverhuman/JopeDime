@@ -21,7 +21,7 @@ All gains are versus r882 (higher is better). Elo is family-grouped Bradley–Te
 
 ## Verdict
 
-No admission. Every arm is worse than r882 on all three seeds. CLIP consistently hurts least: about +0.066 seed-median utility and about +8 Elo over CONTROL on every seed. So clipping the loss does reduce the damage from extreme residuals, but no loss variant turns 40 updates from r882 into a gain. NORM alone does not help.
+No admission. Every arm is worse than r882 on all three seeds. CLIP consistently hurts least: its seed-median utility is about +0.066 higher than CONTROL, and its median Elo is about +8 higher (per-seed Elo differences range from about +4.2 to +14.9). So clipping the loss does reduce the damage from extreme residuals, but no loss variant turns 40 updates from r882 into a gain. NORM alone does not help.
 
 Red-team: seeds are paired and disjoint. The seed CIs are narrow, so the CLIP-vs-CONTROL ordering is not seed noise, but it is a less-harm result, not a win. There is no tie acceptance and no checkpoint pick on B. The update recipe here (lr 3e-4, batch 256) is more aggressive than the live loop (lr 1e-4, batch 16), so CONTROL harm partly reflects step size. The r882 exposure to fold B biases results against candidates.
 
