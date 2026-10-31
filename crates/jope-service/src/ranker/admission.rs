@@ -235,12 +235,8 @@ impl<'a> ServingAdmissionSlate<'a> {
                 .iter()
                 .flat_map(|p| p.projection16.iter().copied())
                 .collect(),
-            tokens: (0..candidates)
-                .flat_map(|_| conditioning.tokens.iter().flatten().copied())
-                .collect(),
-            token_mask: (0..candidates)
-                .flat_map(|_| conditioning.mask.iter().copied())
-                .collect(),
+            tokens: conditioning.tokens.iter().flatten().copied().collect(),
+            token_mask: conditioning.mask.to_vec(),
             revealed_fitness,
             revealed_gates: indices.map(|i| if measured[i].gate { 1.0 } else { 0.0 }),
             base_prior_cost: vec![0.0; candidates],
@@ -711,6 +707,10 @@ mod tests {
                 (inputs.batch, inputs.candidates),
                 (1, if explore { 20 } else { 12 })
             );
+            // Frozen cpu_exact_fused.py:1084 / serving caller:412-413:
+            // one conditioning row per context batch, independent of N.
+            assert_eq!(inputs.tokens, fixture.conditioning.tokens.as_flattened());
+            assert_eq!(inputs.token_mask, fixture.conditioning.mask);
             assert_eq!(inputs.revealed_indices, [0, 1, 2, 3]);
             assert_eq!(inputs.revealed_fitness, [0., 1., 2., 3.]);
             assert_eq!(inputs.revealed_gates, [0., 1., 0., 1.]);
@@ -735,14 +735,6 @@ mod tests {
                     &inputs.proj_16
                         [row * adapter::PROJ_FEATURES..(row + 1) * adapter::PROJ_FEATURES],
                     &fixture.projections[source]
-                );
-                assert_eq!(
-                    &inputs.tokens[row * 320..(row + 1) * 320],
-                    fixture.conditioning.tokens.as_flattened()
-                );
-                assert_eq!(
-                    &inputs.token_mask[row * 10..(row + 1) * 10],
-                    &fixture.conditioning.mask
                 );
             }
         }
