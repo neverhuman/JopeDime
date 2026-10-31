@@ -1,0 +1,59 @@
+{
+  "amendment_a1_sha256": "2721fcda10e6abb9957de86203fb9cde54a652856619f2209aca5b63a7031e87",
+  "arms": [
+    "CONTROL",
+    "TS-0.1",
+    "TS-0.3"
+  ],
+  "assessment_contexts": 212,
+  "assessment_families": 41,
+  "assessment_fold": 0,
+  "complete": false,
+  "dl_val_metadata_reads": 0,
+  "dl_val_reads": 0,
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "epsilon": {
+    "CONTROL": 0.0,
+    "TS-0.1": 0.1,
+    "TS-0.3": 0.3
+  },
+  "fit_contexts": 1007,
+  "fit_families": 164,
+  "fit_folds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "fold_manifest_sha256": "a5ef0a687c26ab0da527bd9bfd54ce4d831b81049493abc77a924b6ea8d97af9",
+  "fold_seed": 137171,
+  "gpu_seconds": 0.0,
+  "h121_prereg_sha256": "127e0481f06c0d9b42690b3091138b5a927af9fa7b90f10fbf88a80735e6b923",
+  "h121_runner_sha256": "36ef51730ebe9db21a59455c99fcb15580252c92bf296f2618911c1dc1624aec",
+  "live_loop_reads": 0,
+  "non_trainable_parameters": 1126777,
+  "optimizer_updates": 0,
+  "outer_test_reads": 0,
+  "owner": "rd_argon",
+  "planned_optimizer_updates": 360,
+  "prereg_sha256": "cd66d40bcd40a825b8ec4a679bc7aed9fe4f75908fe487dbebeac892d800ea79",
+  "primary_treatments": [
+    "TS-0.1",
+    "TS-0.3"
+  ],
+  "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "runner_path": "/home/ubuntu/jope-rescue-20260921/h137-target-smoothing-run/run_h137_cpu.py",
+  "runner_sha256": "23f221180129940a800ec5a0c275d7bcb03948a364d9f7783b3655cd0274ae70",
+  "schema": "jope.h137.manifest/v1",
+  "sealed_metatest_reads": 0,
+  "seeds": [
+    171,
+    172,
+    173
+  ],
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "trainable_parameters": 29211,
+  "trainable_tensors": 47,
+  "verdict": "PENDING",
+  "wave": "H137"
+}

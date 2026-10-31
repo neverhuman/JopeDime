@@ -2,7 +2,7 @@
 
 use super::auth::problem;
 use crate::{
-    dataset::register::{self, PreparedRegistration, RegistrationError, RegistrationLimits},
+    dataset::register::{self, RegistrationError, RegistrationLimits},
     idempotency::{CommandOutcome, RequestIdentity},
 };
 use axum::{
@@ -47,7 +47,7 @@ pub(super) async fn register(
         let Query(query) = match Query::<DatasetQuery>::try_from_uri(request.uri()) {
             Ok(query) => query,
             Err(_) => {
-                return invalid_input("Query must match dataset registration parameters.", "query")
+                return invalid_input("Query must match dataset registration parameters.", "query");
             }
         };
         let (temp, bytes, digest) =
@@ -141,7 +141,7 @@ pub(super) async fn register(
     if !admit_disk(&state.home, reserve, byte_count) {
         return disk_reserve_error();
     }
-    let profile = to_api_profile(&prepared, name);
+    let profile = to_api_profile(&prepared.dataset, &prepared.profile, name);
     let body = match serde_json::to_value(profile) {
         Ok(body) => body,
         Err(_) => return internal_error(),
@@ -212,10 +212,13 @@ async fn stage_csv(
     Ok((temp, bytes, hash.finalize().to_vec()))
 }
 
-fn to_api_profile(prepared: &PreparedRegistration, name: Option<String>) -> DatasetProfile {
-    let rows = prepared.profile.rows as u64;
-    let columns = prepared
-        .profile
+pub(super) fn to_api_profile(
+    dataset: &register::RegisteredDataset,
+    profile: &crate::dataset::profile::DatasetProfile,
+    name: Option<String>,
+) -> DatasetProfile {
+    let rows = profile.rows as u64;
+    let columns = profile
         .columns
         .iter()
         .map(|column| ColumnProfile {
@@ -229,8 +232,7 @@ fn to_api_profile(prepared: &PreparedRegistration, name: Option<String>) -> Data
             distinct: DecimalU64(column.distinct_count as u64),
         })
         .collect();
-    let target_suggestions = prepared
-        .profile
+    let target_suggestions = profile
         .suggested_targets
         .iter()
         .map(|column| TargetSuggestion {
@@ -240,9 +242,9 @@ fn to_api_profile(prepared: &PreparedRegistration, name: Option<String>) -> Data
         })
         .collect();
     DatasetProfile {
-        dataset_id: prepared.dataset.id.clone(),
-        name: name.unwrap_or_else(|| prepared.dataset.id.to_string()),
-        bytes: DecimalU64(prepared.dataset.csv.bytes),
+        dataset_id: dataset.id.clone(),
+        name: name.unwrap_or_else(|| dataset.id.to_string()),
+        bytes: DecimalU64(dataset.csv.bytes),
         rows: DecimalU64(rows),
         columns,
         target_suggestions,
@@ -356,6 +358,7 @@ mod tests {
                 config,
                 home: root.path().to_path_buf(),
             },
+            None,
         );
         (root, store, app)
     }
@@ -536,6 +539,7 @@ mod tests {
                 config,
                 home: limit_root.path().to_path_buf(),
             },
+            None,
         );
         let too_big = limited
             .oneshot(request("text/csv", "too-big", CSV))
@@ -558,6 +562,7 @@ mod tests {
                 config,
                 home: reserve_root.path().to_path_buf(),
             },
+            None,
         );
         let rejected = reserved
             .oneshot(request("text/csv", "disk-reserve", CSV))
