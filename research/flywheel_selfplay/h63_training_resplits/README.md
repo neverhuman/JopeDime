@@ -21,3 +21,7 @@ Once OPUS supplies the verdict, add a small `SUMMARY.md` and `metrics.json` here
 - Any protocol blocker, reviewer disposition bound to result hashes, ready PR URL and merger handoff.
 
 Stop if original gains are stable or reliability loses to equal-cost search, as specified in W8. An interval or incomplete run remains informative without authorizing a reliability head or a serving change. Bulk tables, predictions and receipts stay outside Git; retain only small summaries and immutable custody pointers here.
+
+## Verified preparation custody
+
+Preparation source: `ac86cd7ce93695dc626a27d96d2fdabb7091974c`. Manifest: `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W8/astra-prep-20261031T033326Z-3199084c/manifest.json`. Version: `x9.3OB8X5Pz.3Uv7sDJ31L6xS5IqdYNi`. SHA256: `75003769950ed92c7790255b5178a786895563b85cf647c9334b9c186276c003`. All listed objects and the manifest passed downloaded-byte SHA256 verification. This preserves instructions, folder setup, host preflight and documentation validation; it contains **no diagnostic result**, and all outcome metrics are null with reasons. No HWM candidate pointer was created.

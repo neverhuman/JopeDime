@@ -21,3 +21,7 @@ Once OPUS supplies the verdict, add a small `SUMMARY.md` and `metrics.json` here
 - Reviewer disposition bound to the result hashes, plus the ready PR URL in FINDINGS section 7 and the merger handoff.
 
 Bulk predictions and checkpoints stay outside Git. Never replace an incomplete diagnostic with a success-shaped placeholder or treat a preparation receipt as an experiment result.
+
+## Verified preparation custody
+
+Preparation source: `ac86cd7ce93695dc626a27d96d2fdabb7091974c`. Manifest: `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W2/astra-prep-20261031T033326Z-3199084c/manifest.json`. Version: `gCwZ3RDIhMWE4OHqME9hLDNOe8E9oPF8`. SHA256: `80f2df9c744088ca942eb403ef9d03c5875717d49529038f12853abb60ef90f3`. All listed objects and the manifest passed downloaded-byte SHA256 verification. This preserves instructions, folder setup, host preflight and documentation validation; it contains **no diagnostic result**, and all outcome metrics are null with reasons. No HWM candidate pointer was created.
