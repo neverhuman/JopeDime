@@ -585,7 +585,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "unignore only after RES-07 publishes its generated index and every fixture payload"]
     fn res07_fixture_inventory_loads_every_safetensors_shape() {
         let root = env::var_os(GOLDEN_DIR_ENV).map_or_else(
             || {
