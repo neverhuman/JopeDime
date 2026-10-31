@@ -10,6 +10,41 @@ import copy
 import math
 
 
+def admission_margin(value):
+    """Validate an explicitly supplied strict-admission utility margin."""
+    value = float(value)
+    if not math.isfinite(value) or value < 0:
+        raise ValueError("adapter admission margin must be finite and nonnegative")
+    return value
+
+
+def validate_admission_options(strict_enabled, min_gain):
+    """Keep the legacy policy unless strict admission and its margin are explicit."""
+    if strict_enabled:
+        if min_gain is None:
+            raise ValueError("--strict-adapter-admission requires --adapter-min-gain")
+        return admission_margin(min_gain)
+    if min_gain is not None:
+        raise ValueError("--adapter-min-gain requires --strict-adapter-admission")
+    return None
+
+
+def add_admission_arguments(parser):
+    """Add opt-in flags without changing existing command defaults."""
+    parser.add_argument(
+        "--strict-adapter-admission",
+        action="store_true",
+        help="opt in to strict candidate > incumbent + explicit margin admission",
+    )
+    parser.add_argument(
+        "--adapter-min-gain",
+        type=float,
+        default=None,
+        help="explicit nonnegative margin; requires --strict-adapter-admission",
+    )
+    return parser
+
+
 def publish_checkpoint_archive(path, s3_prefix, profile="veox-jepson-prod"):
     """Host AWS CLI only; deletion requires a version-pinned independent GET."""
     import hashlib
@@ -453,7 +488,12 @@ class DevIncumbent:
         identity: str,
         checkpoint: str,
         round_idx: int,
+        *,
+        strict_admission: bool = False,
+        min_gain: float | None = None,
     ):
+        self.min_gain = validate_admission_options(strict_admission, min_gain)
+        self.strict_admission = strict_admission
         self.identity = identity
         self.best_utility = self._mean(utility)
         self.best_stats = copy.deepcopy(utility)
@@ -473,6 +513,14 @@ class DevIncumbent:
         model.load_state_dict(self.model_state, strict=True)
         optimizer.load_state_dict(copy.deepcopy(self.optimizer_state))
 
+    def accepts(self, utility: dict, identity: str):
+        if identity != self.identity:
+            raise ValueError("development evaluation identity changed")
+        value = self._mean(utility)
+        if self.strict_admission:
+            return value > self.best_utility + self.min_gain
+        return value >= self.best_utility
+
     def decide(
         self,
         model,
@@ -486,8 +534,8 @@ class DevIncumbent:
             raise ValueError("development evaluation identity changed")
         value = self._mean(utility)
         old = self.best_utility
-        # Ties may advance training; only strictly worse dev utility is rolled back.
-        accepted = value >= old
+        # The default remains legacy tie acceptance; strict margin mode is opt-in.
+        accepted = value > old + self.min_gain if self.strict_admission else value >= old
         if accepted:
             self.best_utility = value
             self.best_stats = copy.deepcopy(utility)
@@ -497,21 +545,27 @@ class DevIncumbent:
             self.optimizer_state = copy.deepcopy(optimizer.state_dict())
         else:
             self.restore(model, optimizer)
-        return {
+        event = {
             "round": round_idx,
             "evaluation_identity": identity,
             "candidate_utility": value,
             "previous_best_utility": old,
             "accepted": accepted,
-            "action": "accept_improvement"
-            if value > old
-            else "accept_tie"
-            if accepted
-            else "restore_best_model_and_optimizer",
+            "action": (
+                "accept_improvement"
+                if accepted and value > old
+                else "accept_tie"
+                if accepted
+                else "restore_best_model_and_optimizer"
+            ),
             "best_utility": self.best_utility,
             "best_round": self.best_round,
             "best_checkpoint": self.best_checkpoint,
         }
+        if self.strict_admission:
+            event["admission_policy"] = "strict-margin/v1"
+            event["min_gain"] = self.min_gain
+        return event
 
 
 def proposal_plan(
