@@ -102,6 +102,8 @@ def receipt_for(plan, job):
                     baseline=1.0 if row["task"] == "regression" else 0.7,
                     curve=math.log(1.1) if row["task"] == "regression" else 0.4,
                     model_sha256=digest(["fixture-model", number]),
+                    evaluation_sha256=row["payload_sha256"],
+                    evaluation_protocol="cached-pool-jrb01/v1",
                 )
             )
     return dict(
@@ -289,6 +291,21 @@ def test_score_checkpoint_must_match_training_round(plan):
     receipt = receipt_for(plan, job)
     receipt["scores"][0]["model_sha256"] = "f" * 64
     with pytest.raises(ValueError, match="checkpoint"):
+        admit_result(plan, job, receipt)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("evaluation_sha256", "f" * 64),
+        ("evaluation_protocol", "different-evaluator/v2"),
+    ],
+)
+def test_evaluation_input_identity_must_match_frozen_context(plan, field, value):
+    job = plan["jobs"][0]
+    receipt = receipt_for(plan, job)
+    receipt["scores"][0][field] = value
+    with pytest.raises(ValueError, match="evaluation input"):
         admit_result(plan, job, receipt)
 
 

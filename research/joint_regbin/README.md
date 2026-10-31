@@ -69,7 +69,9 @@ parameter hashes before/after, frozen DOPE hash, and checkpoint hashes/locations
 For `phase:evaluate`, use those checkpoints under inference-only evaluation.
 Return source/job identities, actual budget, initial/final parameter hashes,
 `dope_before/after`, all round receipts and `scores`. Each score supplies
-`round,id,status,metric,value,baseline,curve,model_sha256`. Each score checkpoint hash must match its training round. Regression uses positive
+`round,id,status,metric,value,baseline,curve,model_sha256,evaluation_sha256,evaluation_protocol`.
+The input hash must match its frozen context, the protocol must be
+`cached-pool-jrb01/v1`, and the checkpoint hash must match its training round. Regression uses positive
 RMSE and ridge RMSE with exact log ratio; binary uses AUC for pairwise Elo and
 log-loss for curves. Labels/heads must be task-correct, not inferred from target
 cardinality in this driver. Scores must refer to the same frozen evaluation input

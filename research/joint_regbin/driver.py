@@ -86,6 +86,7 @@ def request(plan, job, phase, previous=None):
         learner_sha256=plan["learner_sha256"],
         initial_checkpoint_sha256=plan["initial_checkpoint_sha256"],
         dope_sha256=plan["dope_sha256"],
+        evaluation_protocol=plan["evaluation_protocol"],
     )
     if phase == "train":
         result["batches"] = list(batches(job, config))

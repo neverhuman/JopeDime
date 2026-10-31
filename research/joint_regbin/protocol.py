@@ -13,6 +13,7 @@ TASKS = ("regression", "binary")
 ARMS = ("joint-balanced", "joint-natural", "reg-only", "bin-only")
 DOPE = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
 SCHEMA = "jope.joint-regbin/v1"
+EVALUATION_PROTOCOL = "cached-pool-jrb01/v1"
 DEFAULTS = dict(
     rounds=50,
     steps=2,
@@ -256,6 +257,7 @@ def make_plan(manifest, config=None):
         folds=folds,
         jobs=jobs,
         protocol="cached-pool-selection; no raw outer rows; no live promotion",
+        evaluation_protocol=EVALUATION_PROTOCOL,
         dope_sha256=DOPE,
     )
     plan["sha256"] = digest(plan)
@@ -266,6 +268,8 @@ def verify_plan(plan):
     if plan["sha256"] != digest({k: v for k, v in plan.items() if k != "sha256"}):
         raise ValueError("plan changed after preregistration")
     validate_config(plan["config"])
+    if plan["evaluation_protocol"] != EVALUATION_PROTOCOL:
+        raise ValueError("evaluation protocol differs from preregistration")
     if plan["implementation_sha256"] != implementation_sha():
         raise ValueError("study implementation changed after preregistration")
     # Recheck closure semantics even if someone edits and rehashes a plan file.
@@ -398,6 +402,11 @@ def admit_result(plan, job, receipt):
             raise ValueError("unexpected/duplicate evaluation result")
         seen.add(key)
         context = by_id[row["id"]]
+        if (
+            row.get("evaluation_sha256") != context["payload_sha256"]
+            or row.get("evaluation_protocol") != EVALUATION_PROTOCOL
+        ):
+            raise ValueError("evaluation input/protocol differs from frozen context")
         metric = "rmse" if context["task"] == "regression" else "auc"
         if row["metric"] != metric or row["status"] != "ok":
             raise ValueError("failed or task-incomparable evaluation")
