@@ -791,6 +791,20 @@ mod resize_tests {
                 assert!(std::path::Path::new(&format!("/proc/{}", process.child.id())).exists());
             }
             drop(state);
+            if target > before.len() {
+                let restored = *after.iter().find(|pid| !before.contains(pid)).unwrap();
+                let response = pool.evaluate(&request(&matrix, 200 + target as u32));
+                assert!(response.failure.is_none(), "{response:?}");
+                assert_eq!(
+                    response.scores[0] as u32, restored,
+                    "restored child must answer with its original PID after creator caller exits"
+                );
+                assert_eq!(
+                    pids(&pool),
+                    after,
+                    "no silent replacement of a restored process"
+                );
+            }
             assert!(pool.set_live_workers(target).is_ok());
             assert_eq!(pids(&pool), after);
             inventory.push(serde_json::json!({"target":target,"pids":after}));
