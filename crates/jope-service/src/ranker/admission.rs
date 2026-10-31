@@ -16,6 +16,14 @@ use jope_api::{error::ErrorCode, Guidance, LandmarkMode, ResolvedGuidance, Warni
 use rand_chacha::{rand_core::RngCore, ChaCha12Rng};
 use std::{collections::BTreeSet, fmt};
 
+#[cfg(feature = "research")]
+use crate::{
+    discover::r#loop::RecordedAdmissionContext,
+    research::{BehaviorPolicy, RecordedPolicyKind},
+};
+#[cfg(feature = "research")]
+use sha2::{Digest, Sha256};
+
 const REVEALED: usize = 4;
 const ADMITTED: usize = 4;
 
@@ -62,6 +70,7 @@ pub struct CpuRoundAdmission<P> {
 
 pub struct RoundReadout {
     pub admitted: Vec<String>,
+    pub admitted_indices: [usize; ADMITTED],
     pub costs: PredictedCosts,
 }
 
@@ -109,6 +118,24 @@ impl<P: RoundInputProvider> CpuRoundAdmission<P> {
         proposals: &[String],
         explore: bool,
         rng: &mut ChaCha12Rng,
+    ) -> Result<RoundReadout> {
+        #[cfg(feature = "research")]
+        {
+            self.evaluate_round_inner(context, proposals, explore, rng, None)
+        }
+        #[cfg(not(feature = "research"))]
+        {
+            self.evaluate_round_inner(context, proposals, explore, rng)
+        }
+    }
+
+    fn evaluate_round_inner(
+        &self,
+        context: &RoundContext<'_>,
+        proposals: &[String],
+        explore: bool,
+        rng: &mut ChaCha12Rng,
+        #[cfg(feature = "research")] recorded: Option<&RecordedAdmissionContext<'_>>,
     ) -> Result<RoundReadout> {
         ensure!(
             context.plan == &self.plan,
@@ -159,17 +186,48 @@ impl<P: RoundInputProvider> CpuRoundAdmission<P> {
             self.rule,
             explore,
         )?;
+        #[cfg(feature = "research")]
+        if let Some(recorded) = recorded {
+            validate_recorded_inputs(&slate, context, recorded)?;
+        }
         let costs = self.adapter.predict_costs(slate.inputs()?)?;
         let values: Vec<_> = costs.total_cost.iter().map(|&v| f64::from(v)).collect();
         let indices = slate.select(&values, rng)?;
         Ok(RoundReadout {
             admitted: indices.into_iter().map(|i| proposals[i].clone()).collect(),
+            admitted_indices: indices,
             costs,
         })
     }
 }
 
 impl<P: RoundInputProvider> RoundAdmission for CpuRoundAdmission<P> {
+    #[cfg(feature = "research")]
+    fn admit_recorded_round(
+        &self,
+        context: &RoundContext<'_>,
+        proposals: Vec<String>,
+        explore: bool,
+        rng: &mut ChaCha12Rng,
+        recorded: &RecordedAdmissionContext<'_>,
+    ) -> Result<BehaviorPolicy> {
+        let readout =
+            self.evaluate_round_inner(context, &proposals, explore, rng, Some(recorded))?;
+        Ok(BehaviorPolicy {
+            kind: RecordedPolicyKind::Learned,
+            explore,
+            slate_costs: Some(
+                readout
+                    .costs
+                    .total_cost
+                    .into_iter()
+                    .map(f64::from)
+                    .collect(),
+            ),
+            admitted: readout.admitted_indices.into(),
+        })
+    }
+
     fn admit_round(
         &self,
         context: &RoundContext<'_>,
@@ -181,6 +239,77 @@ impl<P: RoundInputProvider> RoundAdmission for CpuRoundAdmission<P> {
             .evaluate_round(context, &proposals, explore, rng)?
             .admitted)
     }
+}
+
+/// Check the channels that the engine will persist against the exact prepared
+/// graph inputs. This grants no Engine evidence or capture capability itself.
+#[cfg(feature = "research")]
+fn validate_recorded_inputs(
+    slate: &ServingAdmissionSlate<'_>,
+    context: &RoundContext<'_>,
+    recorded: &RecordedAdmissionContext<'_>,
+) -> Result<()> {
+    fn same_f32(a: &[f32], b: &[f32]) -> bool {
+        a.len() == b.len() && a.iter().zip(b).all(|(a, b)| a.to_bits() == b.to_bits())
+    }
+    let observed = recorded.slate;
+    ensure!(
+        observed.revealed.len() == REVEALED
+            && observed.programs.len() == slate.proposal_keys().len(),
+        "recorded admission slate shape changed"
+    );
+    let input = slate.inputs()?;
+    let tokens: Vec<_> = recorded
+        .conditioning
+        .tokens
+        .iter()
+        .flatten()
+        .copied()
+        .collect();
+    ensure!(
+        same_f32(input.tokens, &tokens) && same_f32(input.token_mask, &recorded.conditioning.mask),
+        "recorded conditioning differs from model invocation"
+    );
+    for (i, program) in observed
+        .revealed
+        .iter()
+        .map(|r| &r.program)
+        .chain(&observed.programs)
+        .enumerate()
+    {
+        ensure!(
+            program.program_sha256
+                == format!("{:x}", Sha256::digest(slate.program_keys[i].as_bytes()))
+                && same_f32(
+                    &program.feat412,
+                    &input.prog_412[i * adapter::PROG_FEATURES..(i + 1) * adapter::PROG_FEATURES]
+                )
+                && program.proj16.len() == adapter::PROJ_FEATURES
+                && program.proj16.iter().all(|v| v.is_finite()),
+            "recorded program identity/features differ from model invocation"
+        );
+        // Recorded projections retain the original f64 values; the adapter graph
+        // consumes their documented f32 conversion, not a second projection.
+        let projection: Vec<_> = program.proj16.iter().map(|&v| v as f32).collect();
+        ensure!(
+            same_f32(
+                &projection,
+                &input.proj_16[i * adapter::PROJ_FEATURES..(i + 1) * adapter::PROJ_FEATURES]
+            ),
+            "recorded projection differs from model invocation"
+        );
+    }
+    for (i, reveal) in observed.revealed.iter().enumerate() {
+        ensure!(
+            reveal.surrogate.to_bits()
+                == context.measured[slate.revealed_pool_indices[i]]
+                    .surrogate_fitness
+                    .to_bits()
+                && slate.revealed_gates[i] == if reveal.gate { 1.0 } else { 0.0 },
+            "recorded revealed fitness/gate differs from committed context"
+        );
+    }
+    Ok(())
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

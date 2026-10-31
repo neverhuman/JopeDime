@@ -1,0 +1,146 @@
+{
+  "97-1": {
+    "rng_seed": 9701,
+    "context_count": 967,
+    "unique_families": 96,
+    "sha256": "b3757dabdf4ecac0b454a48c5d8d85db68fcf1ae1f89d1ede114320d45e23e18"
+  },
+  "97-2": {
+    "rng_seed": 9702,
+    "context_count": 957,
+    "unique_families": 98,
+    "sha256": "74f99ad955e1bcec878067f1a5209b9ce918b1e63273d658e030732af8ad0587"
+  },
+  "97-3": {
+    "rng_seed": 9703,
+    "context_count": 879,
+    "unique_families": 113,
+    "sha256": "7dd7daabb4a4baebba4c21ccde3a2ea21208e665f78aaf7d8c6b645970753126"
+  },
+  "97-4": {
+    "rng_seed": 9704,
+    "context_count": 1049,
+    "unique_families": 102,
+    "sha256": "8fc523ed37af2ccbedbc6213a077cb68740f501b5938bd5d2490ec3e487ab175"
+  },
+  "97-5": {
+    "rng_seed": 9705,
+    "context_count": 921,
+    "unique_families": 105,
+    "sha256": "0ead3733b190c0c22123ba1ecc140e9f2c328b0dcc84dfce286291e0f6202bab"
+  },
+  "97-6": {
+    "rng_seed": 9706,
+    "context_count": 913,
+    "unique_families": 103,
+    "sha256": "f7b38fdcaa69dbe247c237052061b5baa27ebfbb6628ee3e06b31b0874704bb0"
+  },
+  "97-7": {
+    "rng_seed": 9707,
+    "context_count": 950,
+    "unique_families": 101,
+    "sha256": "291454403a990745c97526113a2d82098e83dedbd8f2b73ace54f6a969fb66d3"
+  },
+  "97-8": {
+    "rng_seed": 9708,
+    "context_count": 1044,
+    "unique_families": 97,
+    "sha256": "55fe96b52de7609c1091bd3feadb5f9f125de9e153e357a06d23a994339e38bb"
+  },
+  "98-1": {
+    "rng_seed": 9801,
+    "context_count": 969,
+    "unique_families": 92,
+    "sha256": "f1e65accf35cdee16f448247116652fb17fb2429c16ff6358cfdf1b47a19d8f5"
+  },
+  "98-2": {
+    "rng_seed": 9802,
+    "context_count": 902,
+    "unique_families": 110,
+    "sha256": "5d2651480ecf8fc3f3dd16db9bc17c7a6ff468b8f7860c368edb8e1e241e638f"
+  },
+  "98-3": {
+    "rng_seed": 9803,
+    "context_count": 905,
+    "unique_families": 105,
+    "sha256": "0eb05f43e9d5b2616f885d85a21e96974a0a00ac98d9b4533aac24db7b2a2877"
+  },
+  "98-4": {
+    "rng_seed": 9804,
+    "context_count": 925,
+    "unique_families": 104,
+    "sha256": "9cf61e4e188c43d0875d19569138dfff9f59e5db31424ce8b37a38a046202c90"
+  },
+  "98-5": {
+    "rng_seed": 9805,
+    "context_count": 932,
+    "unique_families": 105,
+    "sha256": "a6cf4ab73a26cc5212698b6a6420a3adf44d46c5fd44ff9d1f2ef107e0928dc6"
+  },
+  "98-6": {
+    "rng_seed": 9806,
+    "context_count": 952,
+    "unique_families": 98,
+    "sha256": "9f6ca632746c571b8200bf92ff13bc24487fb9cbac30eff05261127c2a91edc4"
+  },
+  "98-7": {
+    "rng_seed": 9807,
+    "context_count": 993,
+    "unique_families": 104,
+    "sha256": "3ecca6f067671a6b862ea9c1d37d0a072c3c0749239abd9b46546020218e366a"
+  },
+  "98-8": {
+    "rng_seed": 9808,
+    "context_count": 1067,
+    "unique_families": 101,
+    "sha256": "e6c0ac40eb1243a01562bffc562491db5451ad4fffeb004ac15de240c493dc24"
+  },
+  "99-1": {
+    "rng_seed": 9901,
+    "context_count": 1020,
+    "unique_families": 109,
+    "sha256": "bca5061c9676fc6bf2c3e1b2445246ce590327d0931835d186169691b92f0549"
+  },
+  "99-2": {
+    "rng_seed": 9902,
+    "context_count": 898,
+    "unique_families": 103,
+    "sha256": "4861dc886e0e96a740799ed3d27bc5ea3100e5ef8acdcd0f48ec6d530d5de761"
+  },
+  "99-3": {
+    "rng_seed": 9903,
+    "context_count": 930,
+    "unique_families": 98,
+    "sha256": "ca1350b1fdb354a7c75e1651bcdec58a72de785285abc58cccd8f370b00d4675"
+  },
+  "99-4": {
+    "rng_seed": 9904,
+    "context_count": 892,
+    "unique_families": 101,
+    "sha256": "9e2aa50604544babb2f417d9cc48ef886c307a596dab4e6a3a82a16ab902ddbf"
+  },
+  "99-5": {
+    "rng_seed": 9905,
+    "context_count": 1035,
+    "unique_families": 99,
+    "sha256": "f70f34309b4964446b6fb68da50447ca0c1dbb83d7d619516a24c765808ea17a"
+  },
+  "99-6": {
+    "rng_seed": 9906,
+    "context_count": 929,
+    "unique_families": 101,
+    "sha256": "0539489f69fd7fdfe378b24239aa49f77599f4590e56b17b3876a855340a3cbe"
+  },
+  "99-7": {
+    "rng_seed": 9907,
+    "context_count": 927,
+    "unique_families": 101,
+    "sha256": "e4481e836aebf31c2d2015d52d8a573ac6215f2b210499389873748b99aa4674"
+  },
+  "99-8": {
+    "rng_seed": 9908,
+    "context_count": 902,
+    "unique_families": 97,
+    "sha256": "7f2fa6518a2ddf7ae012792ba99c3de1b59f4d63a2f35d6acaa710e16a813e8d"
+  }
+}

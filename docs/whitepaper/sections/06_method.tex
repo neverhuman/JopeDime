@@ -16,12 +16,12 @@ behavior requires the matched comparison in \cref{sub:results-learning}.
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
-In \cref{fig:network} a frozen encoder reads the board and the program writer $\writer$ writes one
-complete program, as AlphaGo's policy network proposed a move \citep{silver2016mastering}. The problem--program map $\mapv$ supplies a separate ranking score. In
-this reference checkpoint it does not condition or screen the writer's
-output, and is absent from deployment. Ranking a search's output does not
-by itself train or steer the proposer;
-\searchone{} rests on the writer's single draw.
+\Cref{fig:network} separates the roles: a frozen encoder reads the board and
+the program writer $\writer$ writes one complete program, as AlphaGo's policy
+network proposed a move \citep{silver2016mastering}. The problem--program map
+$\mapv$ supplies a separate ranking score. In this reference checkpoint it
+neither conditions nor screens the writer. It is absent from deployment,
+where \searchone{} permits only the writer's single draw.
 
 \begin{figure*}[t]
   \centering
@@ -43,8 +43,8 @@ state of a pretrained third-party tabular regressor that reads the training
 rows and labels (1,024; Foundation, version \texttt{foundation\_enc.v1.tabpfn}; license: proprietary, available on request; redistribution prohibited). The third passes the
 scaled targets through two frozen windows (512).
 
-The encoder is fixed and pinned by hash in the reference procedure,
-rather than jointly trained with the writer. Encoding is bounded at
+The reference encoder stays fixed during writer training and is pinned by
+hash. Encoding is bounded at
 30 seconds per problem, and a context with any non-finite value is refused
 rather than imputed (\cref{app:training}). The input contract permits
 training-side task evidence only; final held-out labels and their derived
@@ -100,20 +100,20 @@ The reference game-day protocol omits the ranking map. Its single proposal
 tests what the writer has learned.
 \end{keyidea}
 
-The writer and the map are separate branches, with separate context networks and token
-embeddings. In this checkpoint the map never touches the writer's draw. It ranks the draft pool, a
-ranking we score against the referee, but drops none, and it does not condition, screen or steer
-the writer. The writer's learning targets come from referee scores directly. Thus
-ranking agreement with the referee, including comparison with the
-program-only control, can assess the map; attributing an improvement in
-proposals to the map would require an implemented influence path and a
-matched ablation (\cref{sub:results-ablation}).
+In this checkpoint the writer and map use separate context networks and
+token embeddings. The map ranks the draft pool for comparison with the
+referee; it drops no draft and does not condition, screen or steer the
+writer. The writer learns directly from referee scores. Ranking agreement,
+including comparison with the program-only control, can therefore assess
+the map. Attributing better proposals to it would require an implemented
+influence path and a matched ablation (\cref{sub:results-ablation}).
 
 \subsection{The self-play loop}\label{sub:method-selfplay}
 
-The historical reference uses expert iteration \citep{anthony2017expert}: verified search is the teacher and the
-writer is the student (\cref{alg:selfplay}). The writer imitates scored programs sampled from the
-lists $G_p$, weighted by their rank among the referee's scores, inside a combined objective (\cref{app:training}):
+The historical reference uses expert iteration \citep{anthony2017expert}:
+the writer learns from verified search (\cref{alg:selfplay}). Programs
+sampled from the scored lists $G_p$ are weighted by their referee rank in
+the combined objective (\cref{app:training}):
 \begin{align}
   \mathcal{L}_{\text{writer}}(p) &= -\sum_{w\in G_p}\bigl(0.05+\rho_w^{4}\bigr)\log\writer(w\mid z_p),
   \label{eq:writerLoss}\\
