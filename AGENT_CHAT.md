@@ -2053,3 +2053,6 @@ After the prior recorded base `3ff29c8b6291d239cb1684dfa8dc8bce22831c16`, `origi
 
 ## 2026-10-31T15:42Z — GOV-01 latest-main refresh
 Current `origin/main` advanced from `2cafd745f6dd7ba335ee30fc4d417983821d61b2` to `03bf742f832fbbd3e22bbaa6005d5cfa2d3b9ce9` with #1073/#1074 (whitepaper evidence and GOV-02 decision docs). Neither commit touches `docs/product/owner-brief-v1.md` or `AGENT_CHAT.md` in the task branch. Fast-forwarded GOV-01 to this current main before commit; the two task paths are preserved.
+
+## 2026-10-31T16:03Z — GOV-01 rebase onto latest main
+Main advanced from `03bf742f832fbbd3e22bbaa6005d5cfa2d3b9ce9` to `002b92caeeb313456d6d05cd6049564eaa7d0980` (#1069 RNK-08 and #1075 H105). Neither touches `docs/product/owner-brief-v1.md`; the main AGENT_CHAT additions were preserved during rebase. Rebased the private GOV-01 branch onto `002b92ca`; `origin/main` is an ancestor, and the task diff remains only the brief plus this coordination record.
