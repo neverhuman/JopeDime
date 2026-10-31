@@ -1,0 +1,58 @@
+{
+  "schema": "jope.hwv05.execution-status/v1",
+  "state": "BLOCKED_INPUT_QUALIFICATION",
+  "scientific_execution": "NOT_RUN",
+  "scientific_success_criteria_met": false,
+  "cpu_preparation_pr": 774,
+  "preregistration_sha256": "7800becbb4c3cdd45420a9c8210ac871c3c135aeb569f2b8bd4e3c88abd2a124",
+  "required_h27_manifest_sha256": "5a7cc86298a9f82a68d0cb77465d5e61ae3d6d1d49e258df9254faa345f22d2e",
+  "required_fingerprints_aggregate_sha256": "c544d47f766b1dea941f7eb97d6d6bb035229b0a67b996ec51d280fe81d208db",
+  "approved_selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+  "catalog_metadata_sha256": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
+  "available_metadata": {
+    "DL-Train": {
+      "contexts": 1219,
+      "families": 205
+    },
+    "DL-Val": {
+      "contexts": 91,
+      "families": 19
+    },
+    "all_selected_dataset_ids_and_tasks_match_catalog": true,
+    "train_validation_family_overlap": 0
+  },
+  "inherited_coverage": {
+    "receipt": "INPUT-COVERAGE.json",
+    "recomputed_in_current_recovery": false,
+    "DL-Train": {
+      "matched": 728,
+      "required": 1219
+    },
+    "DL-Val": {
+      "matched": 67,
+      "required": 91
+    },
+    "unresolved_validation_contexts": 24,
+    "exact_missing_context_ids_recovered": false
+  },
+  "missing_inputs": [
+    "Hash-pinned H27 materialization manifest; not recovered in bounded metadata checks.",
+    "Qualified saved probe fingerprints, candidate descriptors/fitness and frozen-state encodings with complete approved validation coverage.",
+    "Qualified H27 feature/ranker source and frozen DOPE state closure; public source digests provide no private artifact locations."
+  ],
+  "execution": {
+    "ranker_fits": 0,
+    "ranker_optimizer_updates": 0,
+    "new_GP_probe_fits": 0,
+    "DOPE_optimizer_updates": 0,
+    "full_DOPE_state_qualified_for_this_execution": false,
+    "scientific_payloads_opened_in_current_recovery": 0,
+    "gpu_seconds": 0
+  },
+  "regression_relative_elo": null,
+  "ci975": null,
+  "verdict": null,
+  "binary": "NOT_RUN",
+  "resume": "Recover and hash-verify the pinned metadata; run qualify-inputs; complete full coverage, identity, exposure and source/state admission before the six preregistered fits. Raw catalog tables cannot substitute for saved probes. No silent new probes or historical TRAIN relabeling.",
+  "observed_at_utc": "2026-10-31T18:40:33.606510+00:00"
+}

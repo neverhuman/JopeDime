@@ -414,6 +414,28 @@ def h99(store, cells, scoring):
     return result, 41
 
 
+def h100_ledger_matches(snapshot, ledger):
+    """Permit only the last re-arm's post-publication administrative finalization."""
+    if snapshot == ledger:
+        return True
+    if not isinstance(snapshot, dict) or not isinstance(ledger, dict):
+        return False
+    before, after = snapshot.get("owner_rearms"), ledger.get("owner_rearms")
+    if (
+        not isinstance(before, list)
+        or not isinstance(after, list)
+        or not before
+        or len(before) != len(after)
+        or not isinstance(before[-1], dict)
+        or not isinstance(after[-1], dict)
+        or before[-1].get("state") != "FIFO_REARM"
+        or after[-1].get("state") != "COMPLETE"
+    ):
+        return False
+    finalized = [*before[:-1], {**before[-1], "state": "COMPLETE"}]
+    return {**snapshot, "owner_rearms": finalized} == ledger
+
+
 def h100(store, cells, timing, ledger):
     require(
         (timing["arm"], timing["seed"]) == ("ASAM10", 39),
@@ -431,7 +453,7 @@ def h100(store, cells, timing, ledger):
         "H100 native metrics identity mismatch",
     )
     require(
-        native.get("ledger") == ledger,
+        h100_ledger_matches(native.get("ledger"), ledger),
         "H100 aggregate is not bound to this FIFO ledger",
     )
     require(

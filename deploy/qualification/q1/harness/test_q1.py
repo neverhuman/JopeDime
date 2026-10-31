@@ -175,7 +175,9 @@ class ProtocolTests(unittest.TestCase):
             plan["backend_sha256"] = q1.sha_file(backend)
             with (
                 patch.object(
-                    q1.subprocess, "run", side_effect=AssertionError("backend launched")
+                    q1,
+                    "_invoke_backend",
+                    side_effect=AssertionError("backend launched"),
                 ),
                 patch.object(
                     q1, "smoke_payload", side_effect=AssertionError("payload opened")
@@ -249,7 +251,9 @@ class ProtocolTests(unittest.TestCase):
                 patch.object(q1, "verify_owner"),
                 patch.object(q1.os, "getloadavg", return_value=(0, 0, 0)),
                 patch.object(
-                    q1.subprocess, "run", side_effect=AssertionError("backend launched")
+                    q1,
+                    "_invoke_backend",
+                    side_effect=AssertionError("backend launched"),
                 ),
             ):
                 with self.assertRaises(FileExistsError):
@@ -294,8 +298,8 @@ class ProtocolTests(unittest.TestCase):
                 ),
                 patch.object(q1.os, "getloadavg", return_value=(0, 0, 0)),
                 patch.object(
-                    q1.subprocess,
-                    "run",
+                    q1,
+                    "_invoke_backend",
                     side_effect=subprocess.TimeoutExpired("fixture", 60),
                 ),
             ):
@@ -327,7 +331,9 @@ class ProtocolTests(unittest.TestCase):
             with (
                 patch.object(q1, "verify_owner"),
                 patch.object(
-                    q1.subprocess, "run", side_effect=AssertionError("backend launched")
+                    q1,
+                    "_invoke_backend",
+                    side_effect=AssertionError("backend launched"),
                 ),
             ):
                 with self.assertRaisesRegex(ValueError, "owner-signed plan"):
@@ -338,6 +344,167 @@ class ProtocolTests(unittest.TestCase):
                         ledger=root / "different_ledger",
                     )
             self.assertFalse((root / "different_ledger").exists())
+
+    def test_successful_backend_protocol_survives_group_cleanup(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            backend = root / "backend.py"
+            backend.write_text(
+                "#!/usr/bin/env python3\n"
+                "import json,sys\n"
+                "r=json.load(sys.stdin)\n"
+                "json.dump({'schema':'jope.q1-response/v1','request_sha256':r['request_sha256'],"
+                "'status':'complete','guidance':r['guidance'],'metric':'rmse','charged':r['budget'],"
+                "'completed':r['budget'],'loss':1.0,'fold_scores_completed':2*r['budget'],"
+                "'candidate_failures':[],'champion_program':'fixture','adapter':'fixture'},sys.stdout)\n"
+            )
+            backend.chmod(0o700)
+            plan = q1.make_smoke_plan(backend)
+            output = root / "receipts.jsonl"
+            with (
+                patch.object(
+                    q1, "smoke_payload", return_value={"folds": [], "x": [], "y": []}
+                ),
+                patch.object(q1.os, "getloadavg", return_value=(0, 0, 0)),
+            ):
+                q1.execute(plan, backend, output, backend_cleanup_grace=0.02)
+            finished = [
+                q1.decode(line)
+                for line in output.read_text().splitlines()
+                if q1.decode(line)["event"] == "finished"
+            ]
+            self.assertEqual(len(finished), 6)
+            self.assertTrue(
+                all(row["response"]["status"] == "complete" for row in finished)
+            )
+
+    def test_sequential_timeout_panel_cleans_inherited_and_redirected_children(self):
+        for redirect in (False, True):
+            with self.subTest(redirect=redirect), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                backend = root / "backend.py"
+                backend.write_text(
+                    "#!/usr/bin/env python3\n"
+                    "import json,os,signal,subprocess,sys,time\n"
+                    "from pathlib import Path\n"
+                    f"root=Path({str(root)!r})\n"
+                    "dispatch=root/'dispatches.txt'\n"
+                    "prior=[int(p.read_text()) for p in root.glob('child-*.pid')]\n"
+                    "def active(pid):\n"
+                    " try:\n"
+                    "  raw=Path('/proc',str(pid),'stat').read_text(); fields=raw[raw.rfind(')')+2:].split(); return fields[0] not in ('Z','X','x')\n"
+                    " except FileNotFoundError: return False\n"
+                    "with dispatch.open('a') as f: f.write(str(sum(active(p) for p in prior))+'\\n')\n"
+                    "index=len(prior)\n"
+                    "pidfile=root/f'child-{index}.pid'\n"
+                    "child_code=('import os,signal,time;from pathlib import Path;signal.signal(signal.SIGTERM,signal.SIG_IGN);Path('+repr(str(pidfile))+').write_text(str(os.getpid()));time.sleep(30)')\n"
+                    + (
+                        "redirect=open(root/'redirected-output.log','ab')\n"
+                        "subprocess.Popen([sys.executable,'-c',child_code],stdout=redirect,stderr=redirect)\n"
+                        "redirect.close()\n"
+                        if redirect
+                        else "subprocess.Popen([sys.executable,'-c',child_code])\n"
+                    )
+                    + "time.sleep(30)\n"
+                )
+                backend.chmod(0o700)
+                plan = q1.make_smoke_plan(backend)
+                output = root / "receipts.jsonl"
+                with (
+                    patch.object(
+                        q1,
+                        "smoke_payload",
+                        return_value={"folds": [], "x": [], "y": []},
+                    ),
+                    patch.object(q1.os, "getloadavg", return_value=(0, 0, 0)),
+                ):
+                    with self.assertRaisesRegex(
+                        ValueError, "incomplete execution panel"
+                    ):
+                        q1.execute(
+                            plan,
+                            backend,
+                            output,
+                            backend_timeout=0.15,
+                            backend_cleanup_grace=0.03,
+                        )
+                dispatches = [
+                    int(line)
+                    for line in (root / "dispatches.txt").read_text().splitlines()
+                ]
+                self.assertEqual(dispatches, [0] * 6)
+                finished = [
+                    q1.decode(line)
+                    for line in output.read_text().splitlines()
+                    if q1.decode(line)["event"] == "finished"
+                ]
+                self.assertEqual(len(finished), 6)
+                self.assertTrue(
+                    all(row["response"]["status"] == "failed" for row in finished)
+                )
+                self.assertTrue(
+                    all(
+                        row["response"]["charged"] is None
+                        and row["response"]["loss"] is None
+                        for row in finished
+                    )
+                )
+                for pidfile in root.glob("child-*.pid"):
+                    pid = int(pidfile.read_text())
+                    identity = q1._proc_identity(pid)
+                    self.assertTrue(
+                        identity is None or identity["state"] in ("Z", "X", "x")
+                    )
+
+    def test_spawn_or_unproven_cleanup_stops_later_dispatch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            backend = root / "backend"
+            backend.write_text("fixture")
+            plan = q1.make_smoke_plan(backend)
+            output = root / "spawn.jsonl"
+            with (
+                patch.object(
+                    q1, "smoke_payload", return_value={"folds": [], "x": [], "y": []}
+                ),
+                patch.object(q1.os, "getloadavg", return_value=(0, 0, 0)),
+                patch.object(
+                    q1.subprocess, "Popen", side_effect=OSError("fixture spawn failure")
+                ) as spawn,
+            ):
+                with self.assertRaisesRegex(
+                    q1.BackendSpawnError, "could not be started"
+                ):
+                    q1.execute(plan, backend, output, backend_timeout=0.1)
+            self.assertEqual(spawn.call_count, 1)
+            events = [
+                q1.decode(line)["event"] for line in output.read_text().splitlines()
+            ]
+            self.assertEqual(events, ["started"])
+
+            successful_backend = root / "exits.py"
+            successful_backend.write_text("#!/usr/bin/env python3\npass\n")
+            successful_backend.chmod(0o700)
+            plan = q1.make_smoke_plan(successful_backend)
+            output = root / "cleanup.jsonl"
+            with (
+                patch.object(
+                    q1, "smoke_payload", return_value={"folds": [], "x": [], "y": []}
+                ),
+                patch.object(q1.os, "getloadavg", return_value=(0, 0, 0)),
+                patch.object(
+                    q1,
+                    "_terminate_process_group",
+                    side_effect=q1.BackendCleanupError("fixture cleanup failure"),
+                ) as cleanup,
+            ):
+                with self.assertRaisesRegex(q1.BackendCleanupError, "no later request"):
+                    q1.execute(plan, successful_backend, output, backend_timeout=0.1)
+            self.assertEqual(cleanup.call_count, 1)
+            events = [
+                q1.decode(line)["event"] for line in output.read_text().splitlines()
+            ]
+            self.assertEqual(events, ["started"])
 
 
 class StatisticsTests(unittest.TestCase):

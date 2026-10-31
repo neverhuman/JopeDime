@@ -14,9 +14,9 @@
   "h50_selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
   "fused_sha256": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
   "output_source_sha256": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
-  "wave": "H131",
+  "wave": "H131b",
   "status": "PREREGISTERED_NOT_RUN",
-  "source_base": "26ed647ad71ccc3b1867962814fa1173528c1fe2",
+  "source_base": "6306506e333bee32adcc7939842c5f38565b9d4b",
   "seeds": [
     97,
     98,
@@ -63,12 +63,12 @@
   "bootstrap_manifest_sha256": "b2930c4da2f1f2342a99f7a3fb3b4b1aab975e08da4dd54a461a55370f539e68",
   "executor_sha256": {
     "anchor_cache.py": "67d0fbc05c8ef0b61f253c0fe77a59f7b0dfce2973e256d6645f9b4100c60d9f",
-    "custody.py": "46a56863fb3961c174d52f28000aa61814291761038d45bf7a265a914e062289",
-    "monitor.py": "61be2612e033444818de01c4d779395c7bf1a75c4825081aec66ea24482a3a5f",
-    "runner.py": "0b54b5a5e7ea3e044f3a0308b09eae1d201d8dbec463d659e7e32828028c864a",
+    "custody.py": "1522d9019b0b4265511ab9cc2a56b1d3d35df6765ffa4aee81438ade3c729b6c",
+    "monitor.py": "80b7d5a7787e7d49488e9fdd39ab51730f01f2fa3c4e8549b78df9f936cf926b",
+    "runner.py": "a3b0e5be9597b7680dd25e10675b8ef785ca75109041e0978a9cc5d9350e23f6",
     "science.py": "11cf7b2991fd0e46fe712ddad980f3005b4add4d6cd96461d6aa71313536f1ad",
     "test_cache.py": "a16004befc9059170193e2e11567b3044b908a359efd6f6552655fc4859cf2d3",
-    "test_science.py": "2d43eac0dc4728bb9d90bb58cc02ac5c5089d07554e273713010770a749efc1a",
+    "test_science.py": "c4efce0119f7ce7faec8d80b6866d702cdb4b3ec4d8dfcd49d5e26f89f596391",
     "train_reader.py": "f58f4c3290db5cd5b612fac7c55c620658364c98cbc7856a1297d91305b326ab"
   },
   "catalog_proof": {
@@ -82,5 +82,41 @@
     "scope": "catalog metadata admission; no claim of original-source-row lineage or cloud recovery of derived H50 inputs"
   },
   "actual_updates": 0,
-  "execution_started": false
+  "execution_started": false,
+  "scientific_verdict": null,
+  "prior_attempt": {
+    "wave": "H131",
+    "status": "INCOMPLETE",
+    "actual_updates": 0,
+    "execution_source_commit": "afb77155a8a6fac35c0b238330ff7b33cfc26d10",
+    "closeout_custody": {
+      "manifest": {
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H131/astra-t1235/manifest.json",
+        "version_id": "hsJSCL38idqNRqNod72q8oGb7ntin7LX",
+        "sha256": "ae60da96a1176117a3cf1e6d754a648f592034b42af050ae41246a82c1a11fc5",
+        "bytes": 39505,
+        "verified_utc": "2026-10-31T19:02:44.010370+00:00"
+      },
+      "archive": {
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H131/astra-t1235/numerical-evidence.npz",
+        "version_id": "2v3nBtklziUHavFJi7TCxo0RZQ1vd98Q",
+        "sha256": "453c563de272c8cb974bcd0e1a9caa62788e13d390506d5ae98ef30af7ce7d28",
+        "bytes": 1085667,
+        "verified_utc": "2026-10-31T19:02:40.893198+00:00"
+      },
+      "archive_members_verified": 12
+    }
+  },
+  "amendment_a1": {
+    "authorization_sha256": "d5facff55bf0fabf22451f9c793d3e86cacacdef4dbe93b35de2dabce9f29da1",
+    "maximum_attempts": 1,
+    "original_prereg_unchanged": true,
+    "readme_sha256": "456051daa35528797d7c3fb1631ce31545a0ad8adfb084cc30c7dfbed0f7d1c7",
+    "native_workspace_threads": 1,
+    "torch_threads": 2,
+    "torch_interop_threads": 1,
+    "total_thread_limit": 4,
+    "preflight_fit_contexts": 2,
+    "s3_prefix": "experiments/rd_breakthrough_20261030/H131b/astra-t1340/"
+  }
 }

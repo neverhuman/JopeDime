@@ -145,19 +145,23 @@ impl Transport for PersistedEventTransport {
                 .headers
                 .get("last-event-id")
                 .map(|value| DecimalU64(value.to_str().unwrap().parse().expect("decimal cursor")));
-            self.cursors.lock().unwrap().push(after);
+            let first = {
+                let mut cursors = self.cursors.lock().unwrap();
+                cursors.push(after);
+                cursors.len() == 1
+            };
             // Deliberately include the last acknowledged event so the public
             // stream must suppress a replay after reopening the store.
             let events = self.page(after.map_or(0, |cursor| cursor.0.saturating_sub(1)));
             let mut text = String::new();
-            for event in events.iter().take(if after.is_none() {
+            for event in events.iter().take(if first {
                 self.initial_cut
             } else {
                 events.len()
             }) {
                 text.push_str(&frame(event));
             }
-            if after.is_none() {
+            if first {
                 if let Some(event) = events.get(self.initial_cut) {
                     let partial = frame(event);
                     text.push_str(&partial[..partial.len() / 2]);
@@ -237,48 +241,50 @@ fn s2_fixture_champion_scores_and_ordered_events_survive_every_reconnect_schedul
 
 #[test]
 fn s2_durable_event_log_reopen_preserves_partial_reconnect_and_page_equivalence() {
-    let home = tempfile::tempdir().unwrap();
     let fixture = fixture_events();
     let run = fixture[0].run_id.clone();
-    let expected = {
-        let store = Arc::new(Store::open(home.path()).unwrap());
-        let log = EventLog::new(store);
-        log.commit(
-            RunUpdate {
-                expected_revision: None,
-                snapshot: snapshot(),
-                checkpoint: json!({"round": 1}),
-                blobs: vec![],
-            },
-            fixture.into_iter().map(|event| event.event).collect(),
-            |_| Ok(()),
-        )
-        .unwrap();
-        log.page(&run, 0, 256, &[]).unwrap().unwrap().events
-    };
+    for cut in 0..=fixture.len() {
+        let home = tempfile::tempdir().unwrap();
+        let expected = {
+            let store = Arc::new(Store::open(home.path()).unwrap());
+            let log = EventLog::new(store);
+            log.commit(
+                RunUpdate {
+                    expected_revision: None,
+                    snapshot: snapshot(),
+                    checkpoint: json!({"round": 1}),
+                    blobs: vec![],
+                },
+                fixture.iter().map(|event| event.event.clone()).collect(),
+                |_| Ok(()),
+            )
+            .unwrap();
+            log.page(&run, 0, 256, &[]).unwrap().unwrap().events
+        };
 
-    let transport = PersistedEventTransport {
-        home: home.path().to_path_buf(),
-        run: run.clone(),
-        initial_cut: 2,
-        cursors: Mutex::new(vec![]),
-    };
-    let mut stream = EventStream::new(&transport, run.clone(), None).unwrap();
-    let mut observed = stream.by_ref().map(durable).collect::<Vec<_>>();
-    assert_eq!(observed, expected[..2]);
-    let cursor = stream.last_event_id();
-    assert_eq!(cursor, Some(DecimalU64(2)));
-    drop(stream);
+        let transport = PersistedEventTransport {
+            home: home.path().to_path_buf(),
+            run: run.clone(),
+            initial_cut: cut,
+            cursors: Mutex::new(vec![]),
+        };
+        let mut stream = EventStream::new(&transport, run.clone(), None).unwrap();
+        let mut observed = stream.by_ref().map(durable).collect::<Vec<_>>();
+        assert_eq!(observed, expected[..cut], "first disconnect at frame {cut}");
+        let cursor = stream.last_event_id();
+        assert_eq!(cursor, (cut > 0).then_some(DecimalU64(cut as u64)));
+        drop(stream);
 
-    let stream = EventStream::new(&transport, run.clone(), cursor).unwrap();
-    observed.extend(stream.map(durable));
-    assert_eq!(observed, expected);
-    assert_eq!(*transport.cursors.lock().unwrap(), vec![None, cursor]);
+        let stream = EventStream::new(&transport, run.clone(), cursor).unwrap();
+        observed.extend(stream.map(durable));
+        assert_eq!(observed, expected, "reconnect at frame {cut}");
+        assert_eq!(*transport.cursors.lock().unwrap(), vec![None, cursor]);
 
-    let page =
-        serde_json::to_value(transport.run_events(&run, DecimalU64(0), 256).unwrap()).unwrap();
-    let page_events: Vec<PublicEvent> = serde_json::from_value(page["events"].clone()).unwrap();
-    assert_eq!(observed, page_events);
+        let page =
+            serde_json::to_value(transport.run_events(&run, DecimalU64(0), 256).unwrap()).unwrap();
+        let page_events: Vec<PublicEvent> = serde_json::from_value(page["events"].clone()).unwrap();
+        assert_eq!(observed, page_events, "stream and page at frame {cut}");
+    }
 }
 
 fn snapshot() -> RunSnapshot {

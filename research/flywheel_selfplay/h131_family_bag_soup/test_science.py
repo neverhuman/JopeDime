@@ -209,5 +209,113 @@ class Tests(unittest.TestCase):
         self.assertEqual(set(counts), {"0", "1"})
 
 
+class ThreadPreflightTests(unittest.TestCase):
+    def fake_builder(self, fail=False):
+        from types import SimpleNamespace
+
+        self.calls = []
+
+        def factory(*, num_threads):
+            self.calls.append(num_threads)
+
+        base = SimpleNamespace(FusedLandmarkWorkspace=factory)
+
+        def make_tokens(net, tables, device):
+            base.FusedLandmarkWorkspace(num_threads=4)
+            self.seen = list(tables)
+            if fail:
+                raise ValueError("token failure")
+            return "tokens", "masks"
+
+        return SimpleNamespace(base=base, make_tokens=make_tokens), factory
+
+    def test_tiny_tokens_bound_native_pool_and_restore_factory(self):
+        import monitor
+        from unittest.mock import patch
+
+        builder, factory = self.fake_builder()
+        with patch.object(monitor, "total_threads", side_effect=[2, 4]):
+            receipt = monitor.token_thread_preflight(
+                builder, None, {"c": 3, "a": 1, "b": 2}, None
+            )
+        self.assertEqual(self.calls, [1])
+        self.assertEqual(self.seen, ["a", "b"])
+        self.assertEqual(receipt["after"], 4)
+        self.assertIs(builder.base.FusedLandmarkWorkspace, factory)
+
+    def test_five_threads_after_tokens_refused(self):
+        import monitor
+        from unittest.mock import patch
+
+        builder, factory = self.fake_builder()
+        with patch.object(monitor, "total_threads", side_effect=[2, 5]):
+            with self.assertRaisesRegex(RuntimeError, "after tokens: 5>4"):
+                monitor.token_thread_preflight(builder, None, {"a": 1}, None)
+        self.assertIs(builder.base.FusedLandmarkWorkspace, factory)
+
+    def test_five_threads_before_tokens_refused_without_work(self):
+        import monitor
+        from unittest.mock import patch
+
+        builder, _ = self.fake_builder()
+        with patch.object(monitor, "total_threads", return_value=5):
+            with self.assertRaisesRegex(RuntimeError, "before tokens: 5>4"):
+                monitor.token_thread_preflight(builder, None, {"a": 1}, None)
+        self.assertEqual(self.calls, [])
+
+    def test_token_error_restores_original_factory(self):
+        import monitor
+
+        builder, factory = self.fake_builder(fail=True)
+        with self.assertRaisesRegex(ValueError, "token failure"):
+            monitor.single_thread_tokens(builder, None, {"a": 1}, None)
+        self.assertIs(builder.base.FusedLandmarkWorkspace, factory)
+
+    def test_proc_status_count_and_missing_field(self):
+        import monitor
+        from unittest.mock import patch
+
+        with patch.object(
+            Path, "read_text", return_value="Name: worker\nThreads:\t4\n"
+        ):
+            self.assertEqual(monitor.total_threads(), 4)
+        with patch.object(Path, "read_text", return_value="Name: worker\n"):
+            with self.assertRaises(RuntimeError):
+                monitor.total_threads()
+
+    def test_fresh_worker_configures_before_numerical_imports(self):
+        import subprocess
+        import json
+
+        source = Path(__file__).resolve().parent
+        script = "import runner, os, json; print(json.dumps(dict(env={k:os.environ[k] for k in ['OMP_NUM_THREADS','MKL_NUM_THREADS','OPENBLAS_NUM_THREADS','NUMEXPR_NUM_THREADS','TOKENIZERS_PARALLELISM']}, intra=runner.torch.get_num_threads(), inter=runner.torch.get_num_interop_threads())))"
+        env = dict(
+            os.environ,
+            PYTHONDONTWRITEBYTECODE="1",
+            OPENBLAS_NUM_THREADS="8",
+            NUMEXPR_NUM_THREADS="8",
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=source,
+            env=env,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+        value = json.loads(result.stdout)
+        self.assertEqual(
+            value["env"],
+            dict(
+                OMP_NUM_THREADS="1",
+                MKL_NUM_THREADS="1",
+                OPENBLAS_NUM_THREADS="1",
+                NUMEXPR_NUM_THREADS="1",
+                TOKENIZERS_PARALLELISM="false",
+            ),
+        )
+        self.assertEqual((value["intra"], value["inter"]), (2, 1))
+
+
 if __name__ == "__main__":
     unittest.main()

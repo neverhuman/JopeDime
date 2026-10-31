@@ -21,8 +21,8 @@ seeing a human game, learning from self-play under the rules of Go
 \citep{silver2017mastering}.
 
 \paragraph{The skeptics' challenge.}
-In March 2025, Yann LeCun argued that language models retrieve existing
-solutions rather than find new ones: ``in their purest form, they are incapable
+Language models retrieve existing solutions rather than find new ones,
+Yann LeCun argued in March 2025: ``in their purest form, they are incapable
 of inventing new things'' \citep{lecun2025bigtech}. Thomas Wolf
 warned that current trends will give us ``a country of yes-men on servers''
 \citep{wolf2025einstein}. Dwarkesh Patel had asked Dario Amodei in August 2023
@@ -34,35 +34,36 @@ the hardest version as a benchmark for general intelligence: today's systems
 Go?'' \citep{hassabis2025bigtech}. These challenges concern both proposing
 solutions and choosing new questions; our test concerns only algorithm
 proposals under human-defined tasks and metrics (\cref{sec:meaning}).
+
 Predicting historical text does not directly reward improvement over an
 incumbent. That motivates a different training signal; it does not establish
 a ceiling on what a pretrained model can discover (\cref{sec:anatomy}).
 
 \paragraph{The human challenge.}
-In their 2020 study, \citet{bloom2020ideas} reported rising research effort
-and declining productivity in the industries, products and firms they
-examined. Their Moore's law example required more than 18 times as many
+Research effort rose while productivity declined in the industries,
+products and firms examined in the 2020 study by \citet{bloom2020ideas}.
+Their Moore's law example required more than 18 times as many
 researchers as in the early 1970s to sustain chip-density growth.
 \citet{jones2009burden} found later first inventions and greater
 specialization in the inventor data he studied.
 \citet{park2023disruptive} reported declining disruption on citation-based
 measures of papers and patents. In life science, \citet{azoulay2019funeral}
 observed increased contributions from outsiders after the premature deaths
-of eminent scientists. Our question is whether feedback from execution can
+of eminent scientists. Our question is whether execution feedback can
 help a proposer depart usefully from familiar ideas.
 
 \paragraph{From search to learning.}
 Automated research systems already couple proposals to tests. The AI
 Scientist \citep{lu2024aiscientist} and the AI co-scientist
-\citep{gottweis2025coscientist} run agentic research loops; AlphaEvolve evolves
-programs against automated evaluators \citep{novikov2025alphaevolve}; and
+\citep{gottweis2025coscientist} run agentic research loops. AlphaEvolve evolves
+programs against automated evaluators \citep{novikov2025alphaevolve}.
 Karpathy's autoresearch retains training changes that improve a measured
 objective \citep{karpathy2026autoresearch}. Socher's \emph{Eureka Machine}
 extends this vision to agents working with simulators and autonomous
 laboratories \citep{socher2026bookbite,socher2026eureka}. These systems make
-judgment executable. Our question is what their evaluations can teach the
-system that proposes the next idea. Keeping a winning program preserves an
-output; training a proposer on those outcomes may preserve a capability that
+judgment executable. We ask what their evaluations can teach a proposer.
+Keeping a winning program preserves an output. Training a proposer on
+those outcomes may preserve a capability that
 transfers to a new problem.
 
 \begin{figure}[tb]% floats so the text above can fill the column
@@ -140,13 +141,12 @@ Zero analogy concerns the additional training feedback from the referee.
 \end{figure}
 
 \paragraph{Engineered intelligence.}
-\Cref{sec:anatomy} divides invention into four pillars: an aim, a source of
-variation, a means of judgment and a way to retain what survives. In \EZ{}
-each pillar is a specified component that can be inspected and tested. The
-aim is a declared task and metric. Variation comes from a
+Each of the four pillars in \cref{sec:anatomy} is a specified component of
+\EZ{} that can be inspected and tested: aim, variation, judgment and
+retention. The aim is a declared task and metric. Variation comes from a
 grammar-constrained program writer. Judgment is a referee that scores each
-program on folds withheld from its fit. Retention is a pair of ratchets: a
-board's incumbent changes only on strict improvement, and a retrained
+program on folds withheld from its fit. Retention uses two ratchets. A
+board's incumbent changes only on strict improvement. A retrained
 writer replaces the serving one only after a held-out admission test
 (\cref{tab:pillars}). We call this \emph{engineered intelligence}: a
 capability whose aim, judge and memory are designed to be audited,
@@ -183,11 +183,12 @@ The paper contributes:
 The paper separates three kinds of evidence. The game, the learner and the
 evaluation protocol are specified here. Retained admission and program-promotion
 logs from later adapter training describe development behavior
-(\cref{sec:method-status}); they do not measure first-proposal quality on unseen problem families. The
-deployment comparisons of \cref{sec:results} are specified, but their
-outcomes are not yet reported, and we claim no advantage until they are.
+(\cref{sec:method-status}). They do not measure first-proposal quality on
+unseen problem families. For deployment, \cref{sec:results} specifies the
+comparisons. Their outcomes are not yet reported; we claim no advantage
+until they are.
 
-\Cref{sec:anatomy} separates the roles in innovation. We then trace their
-AI building blocks (\cref{sec:road}), define the game and learner, and
-specify the comparisons in \cref{sec:results}. The outcomes will bound
-the claims discussed in \cref{sec:meaning}.
+\Cref{sec:anatomy} separates innovation's roles. We trace their AI building
+blocks (\cref{sec:road}), then define the game and learner.
+\Cref{sec:results} specifies the comparisons whose outcomes will bound the
+claims in \cref{sec:meaning}.
