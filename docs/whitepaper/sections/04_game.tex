@@ -1,3 +1,4 @@
+\begin{samepage}
 \section{Innovation Is a Game}\label{sec:game}
 % Reader question: Can invention be played like Go?
 % Core points advanced: 1 (primary: innovation is a game), 2 (novelty is free;
@@ -5,10 +6,12 @@
 % Exhibits: Table 4 (tab:go-vs-innovation), Figure 3 (fig:game-loop)
 
 Can algorithm invention be organized as a game? We propose a game in which
-the encoded problem is the board, an algorithm is the move, a verifier is
-the referee and a declared incumbent is the opponent. Making the problem
+the encoded problem is the board, a program is the move, the referee checks
+and scores it, and a declared incumbent is the opponent. Making the problem
 an input allows a shared interface; each task type still needs a qualified
 encoding, language and evaluation protocol (\cref{sub:game-boards}).
+
+\end{samepage}
 
 % ----------------------------------------------------------------------------
 \subsection{Why games came first}\label{sub:game-games}
@@ -108,9 +111,8 @@ in \cref{sub:method-board} uses a frozen 2,048-value summary with a
 A useful board should preserve distinctions relevant to algorithm choice,
 remain stable under irrelevant reorderings, exclude final evaluation
 information and have a measured cost. These are requirements to test, not
-properties guaranteed by naming an encoder. Whoever writes the board
-writes the aim. People still choose the problem, and the machine is trained to
-answer it.
+properties guaranteed by naming an encoder. People still choose the problem
+and define what counts as a useful solution.
 
 The move is where invention gets its language: one program in a typed language
 over learning primitives. The reference language uses a 401-token
@@ -133,8 +135,7 @@ quality must be measured (\cref{sec:results}).
 The reward is an ordering first and a number second. Validity is a gate: any
 stillborn program scores below any valid one. Past the gate, programs rank by
 improvement over the incumbent on hidden folds. The reference promotion
-rule requires strict improvement under the same evaluation protocol and
-keeps the existing incumbent on a tie. Novelty never pays for losing: any novelty
+rule keeps the existing incumbent on a tie. Novelty never pays for losing: any novelty
 bonus (\cref{sec:price}) must respect the order. For a stillborn program
 $\tilde{w}$, an also-ran $w^-$ and a win $w^+$ on board $p$,
 \[
@@ -142,7 +143,8 @@ $\tilde{w}$, an also-ran $w^-$ and a win $w^+$ on board $p$,
 \]
 
 The opponent is a ratcheting incumbent. In the reference procedure a program displaces a board's incumbent only
-by strict improvement on five inner folds. A retrained writer has a separate
+by strict improvement on five inner folds under the same evaluation protocol.
+A retrained writer has a separate
 admission test on 16 held-out cuts with three seeds each
 (\cref{sub:method-selfplay}). These are distinct ratchets, as AlphaGo Zero's
 network admission was distinct from choosing a move during play
