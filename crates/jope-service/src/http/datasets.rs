@@ -7,7 +7,7 @@ use crate::{
 };
 use axum::{
     body::{to_bytes, Body},
-    extract::Extension,
+    extract::{Extension, Query},
     http::{header, Request, StatusCode},
     response::{IntoResponse, Response},
     Json,
@@ -18,6 +18,7 @@ use jope_api::{
     registry::DatasetRegistration,
     ColumnProfile, DatasetProfile, TargetSuggestion, Task, Warning,
 };
+use serde::Deserialize;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::path::PathBuf;
@@ -43,6 +44,12 @@ pub(super) async fn register(
     let reserve = state.config.limits.disk_reserve.value;
 
     let parsed = if content_type.split(';').next().unwrap_or("").trim() == "text/csv" {
+        let Query(query) = match Query::<DatasetQuery>::try_from_uri(request.uri()) {
+            Ok(query) => query,
+            Err(_) => {
+                return invalid_input("Query must match dataset registration parameters.", "query")
+            }
+        };
         let (temp, bytes, digest) =
             match stage_csv(request.into_body(), &state.home, limit, reserve).await {
                 Ok(value) => value,
@@ -62,7 +69,7 @@ pub(super) async fn register(
             Ok(value) => value,
             Err(error) => return registration_error(error),
         };
-        (prepared, None, digest, bytes)
+        (prepared, query.name, digest, bytes)
     } else if content_type.split(';').next().unwrap_or("").trim() == "application/json" {
         let bytes = match to_bytes(request.into_body(), 8 * 1024 * 1024).await {
             Ok(value) => value,
@@ -165,6 +172,11 @@ pub(super) async fn register(
         Ok(receipt) => receipt.into_response(),
         Err(error) => error.into_response(),
     }
+}
+
+#[derive(Deserialize)]
+struct DatasetQuery {
+    name: Option<String>,
 }
 
 async fn stage_csv(
@@ -349,15 +361,70 @@ mod tests {
     }
 
     fn request(content_type: &str, key: &str, body: impl Into<Body>) -> Request<Body> {
+        request_to("/v1/datasets", content_type, key, body)
+    }
+
+    fn request_to(
+        uri: &str,
+        content_type: &str,
+        key: &str,
+        body: impl Into<Body>,
+    ) -> Request<Body> {
         Request::builder()
             .method(Method::POST)
-            .uri("/v1/datasets")
+            .uri(uri)
             .header(header::HOST, "127.0.0.1:31234")
             .header(header::AUTHORIZATION, format!("Bearer {}", "ab".repeat(32)))
             .header(header::CONTENT_TYPE, content_type)
             .header("Idempotency-Key", key)
             .body(body.into())
             .unwrap()
+    }
+
+    #[tokio::test]
+    async fn csv_query_name_is_returned_and_same_key_replay_matches() {
+        let (_root, _store, app) = fixture();
+        let first = app
+            .clone()
+            .oneshot(request_to(
+                "/v1/datasets?name=rel05-s3-catalog-30-row",
+                "text/csv",
+                "named-upload",
+                CSV,
+            ))
+            .await
+            .unwrap();
+        assert_eq!(first.status(), StatusCode::CREATED);
+        let profile: DatasetProfile =
+            serde_json::from_slice(&to_bytes(first.into_body(), 32 * 1024).await.unwrap()).unwrap();
+        assert_eq!(profile.name, "rel05-s3-catalog-30-row");
+
+        let replay = app
+            .clone()
+            .oneshot(request_to(
+                "/v1/datasets?name=rel05-s3-catalog-30-row",
+                "text/csv",
+                "named-upload",
+                CSV,
+            ))
+            .await
+            .unwrap();
+        assert_eq!(replay.status(), StatusCode::CREATED);
+        let replayed: DatasetProfile =
+            serde_json::from_slice(&to_bytes(replay.into_body(), 32 * 1024).await.unwrap())
+                .unwrap();
+        assert_eq!(replayed, profile);
+
+        let changed_name = app
+            .oneshot(request_to(
+                "/v1/datasets?name=another-name",
+                "text/csv",
+                "named-upload",
+                CSV,
+            ))
+            .await
+            .unwrap();
+        assert_eq!(changed_name.status(), StatusCode::CONFLICT);
     }
 
     #[tokio::test]
