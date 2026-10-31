@@ -7,6 +7,7 @@ import argparse
 import ast
 import ctypes
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -14,6 +15,7 @@ import signal
 import struct
 import subprocess
 import time
+import tempfile
 
 import numpy as np
 import torch
@@ -515,14 +517,254 @@ def capture(plan, output):
     return report
 
 
+def regenerate(plan, captures, capture_pin, index_pin, output):
+    """Repackage saved TRAIN captures on CPU; never rerun the native evaluator."""
+    generate.require(
+        os.environ.get("CUDA_VISIBLE_DEVICES") == ""
+        and not torch.cuda.is_initialized(),
+        "CPU regeneration requires hidden CUDA and no initialized CUDA",
+    )
+    generate.require(
+        os.getpriority(os.PRIO_PROCESS, 0) >= 10, "nice10 or lower priority required"
+    )
+    generate.require(
+        len(index_pin) == 64 and all(c in "0123456789abcdef" for c in index_pin),
+        "explicit published fixture index SHA256 required",
+    )
+    packet = generate.read_json(checked(captures, capture_pin))
+    expected = {row["context_sha256"]: row["family_id"] for row in plan["contexts"]}
+    generate.require(
+        len(packet["contexts"]) == len(expected)
+        and {row["context_sha256"]: row["family_id"] for row in packet["contexts"]}
+        == expected
+        and packet["bundle_digest"] == plan["bundle_digest"],
+        "regeneration capture differs from the reviewed plan population or bundle",
+    )
+    torch.set_num_threads(1)
+    generate.CUSTODY = Path(plan["custody"])
+    index = generate._generate_locked(
+        Path(plan["bundle"]), plan["bundle_digest"], captures, capture_pin, output
+    )
+    checked(output / "index.json", index_pin)
+    generate.require(
+        index["total_bytes"] <= generate.MAX_BYTES,
+        "regenerated packet exceeds byte bound",
+    )
+    generate.require(
+        not torch.cuda.is_initialized(), "CPU regeneration initialized CUDA"
+    )
+    return dict(
+        schema="jope.cpu-golden-regeneration/v1",
+        contexts=index["contexts"],
+        file_count=index["file_count"],
+        fixture_bytes=index["total_bytes"],
+        capture_manifest_sha256=capture_pin,
+        fixture_index_sha256=index_pin,
+        native_calls=0,
+        fold_fits=0,
+        cuda_initialized=False,
+        qualification=index["qualification"],
+    )
+
+
+def historical_packet(plan, plan_pin, pools, packet, index_pin, store, output):
+    """Export captured TRAIN feature rows and frozen projections, not guessed DSLs."""
+    generate.require(
+        os.environ.get("CUDA_VISIBLE_DEVICES") == ""
+        and not torch.cuda.is_initialized(),
+        "CPU historical export requires hidden CUDA",
+    )
+    generate.require(
+        os.getpriority(os.PRIO_PROCESS, 0) >= 10, "nice10 or lower priority required"
+    )
+    generate.require(
+        not output.exists() and not output.is_symlink(), "output must be new"
+    )
+    source_index = checked(packet / "index.json", index_pin)
+    original = generate.read_json(source_index)
+    contexts = {row["context_sha256"] for row in plan["contexts"]}
+    generate.require(
+        original["bundle_digest"] == plan["bundle_digest"]
+        and original["contexts"] == len(contexts)
+        and {
+            Path(name).stem
+            for name in original["files"]
+            if name.startswith("contexts/")
+        }
+        == contexts,
+        "packet differs from reviewed plan",
+    )
+    files = {"packet/index.json": source_index}
+    for name, spec in original["files"].items():
+        data = generate.captured(packet, dict(path=name, sha256=spec["sha256"]))
+        generate.require(len(data) == spec["bytes"], "source packet length differs")
+        files["packet/" + name] = data
+    generate.require(
+        sum(len(data) for data in files.values()) == original["total_bytes"],
+        "source packet size differs",
+    )
+    torch.set_num_threads(1)
+    generate.CUSTODY = Path(plan["custody"])
+    _, _, reference, _ = generate.validate_bundle(
+        Path(plan["bundle"]), plan["bundle_digest"]
+    )
+    matrix = np.asarray(reference.env["get_w1_sign_matrix"](), dtype=np.float64)
+    generate.require(
+        matrix.shape == (412, 16) and np.isfinite(matrix).all(),
+        "frozen projection matrix differs",
+    )
+    total_rows, programs = 0, set()
+    for row in sorted(plan["contexts"], key=lambda r: r["context_sha256"]):
+        cid = row["context_sha256"]
+        raw = checked(pools / (cid + ".npz"), row["pool_sha256"])
+        with np.load(io.BytesIO(raw), allow_pickle=False) as pool:
+            features = pool["program"]
+            identities = pool["program_sha256"]
+            generate.require(
+                features.dtype == np.float32
+                and features.shape == (row["n_candidates"], 412)
+                and np.isfinite(features).all()
+                and identities.shape == (len(features),),
+                "historical row count/feature contract differs",
+            )
+            hashes = [
+                value.decode() if isinstance(value, bytes) else str(value)
+                for value in identities.tolist()
+            ]
+        generate.require(
+            all(
+                len(key) == 64 and all(c in "0123456789abcdef" for c in key)
+                for key in hashes
+            ),
+            "invalid historical program hash",
+        )
+        projection = features.astype(np.float64) @ matrix / np.sqrt(412)
+        files[f"historical/{cid}.safetensors"] = generate.tensor_bytes(
+            dict(feat412=features, proj16=projection)
+        )
+        files[f"historical/{cid}.json"] = (
+            generate.canonical(
+                dict(
+                    context_sha256=cid,
+                    family_id=row["family_id"],
+                    dl_split="DL-Train",
+                    pool_sha256=row["pool_sha256"],
+                    program_sha256=hashes,
+                    feature_source="captured historical NPZ program F32; DSL strings absent",
+                )
+            )
+            + b"\n"
+        )
+        total_rows += len(features)
+        programs.update(hashes)
+    generate.require(
+        sum(len(data) for data in files.values()) <= 511 * 1024 * 1024,
+        "historical set exceeds byte bound",
+    )
+    specs = {
+        name: generate.custody_blob(store, data) for name, data in sorted(files.items())
+    }
+    index, encoded = generate.custody_index(
+        specs,
+        dict(
+            plan_sha256=plan_pin,
+            source_packet_index_sha256=index_pin,
+            bundle_digest=plan["bundle_digest"],
+            contexts=len(contexts),
+            historical_program_rows=total_rows,
+            historical_unique_program_hashes=len(programs),
+            historical_scope="reviewed 50-context TRAIN pool snapshot; all rows/order retained",
+            historical_corpus_complete=False,
+            features_regenerated_from_dsl=False,
+            projection_formula="program.astype(float64) @ get_w1_sign_matrix() / sqrt(412)",
+            reference_source_sha256=reference.source_hashes,
+            qualification=dict(M2=False, M3=False, M5=False, proposer_retrieval=False),
+        ),
+    )
+    generate.require(
+        index["total_bytes"] <= 512 * 1024 * 1024, "historical set exceeds byte bound"
+    )
+    catalog = generate.custody_blob(store, encoded)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(
+        prefix="golden-catalog-", dir=output.parent
+    ) as temp:
+        staged = Path(temp) / "catalog"
+        staged.mkdir()
+        (staged / "custody-index.json").write_bytes(encoded)
+        generate.exporter()._publish_directory(staged, output)
+    generate.require(
+        not torch.cuda.is_initialized(), "CPU historical export initialized CUDA"
+    )
+    return dict(
+        catalog_sha256=catalog["sha256"],
+        file_count=index["file_count"],
+        total_bytes=index["total_bytes"],
+        unique_custody_bytes=index["unique_custody_bytes"],
+        hash_custody_required=index["hash_custody_required"],
+        contexts=len(contexts),
+        historical_program_rows=total_rows,
+        historical_unique_program_hashes=len(programs),
+        native_calls=0,
+        fold_fits=0,
+    )
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--plan", type=Path, required=True)
     parser.add_argument("--expected-plan-sha256", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--regenerate-captures", type=Path)
+    parser.add_argument("--expected-captures-sha256")
+    parser.add_argument("--expected-index-sha256")
+    parser.add_argument("--historical-pools", type=Path)
+    parser.add_argument("--packet", type=Path)
+    parser.add_argument("--custody-store", type=Path)
     args = parser.parse_args(argv)
+    history = (args.historical_pools, args.packet, args.custody_store)
+    if any(history) and (
+        not all(history)
+        or not args.expected_index_sha256
+        or args.regenerate_captures
+        or args.expected_captures_sha256
+    ):
+        parser.error(
+            "historical pools, packet, custody store and expected index are required together; regeneration flags are separate"
+        )
+    replay = (
+        args.regenerate_captures,
+        args.expected_captures_sha256,
+        args.expected_index_sha256,
+    )
+    if not any(history) and any(replay) and not all(replay):
+        parser.error(
+            "regenerate-captures and both expected SHA256 pins are required together"
+        )
     plan = generate.read_json(checked(args.plan, args.expected_plan_sha256))
     validate_plan(plan)
+    if args.historical_pools is not None:
+        report = historical_packet(
+            plan,
+            args.expected_plan_sha256,
+            args.historical_pools,
+            args.packet,
+            args.expected_index_sha256,
+            args.custody_store,
+            args.output,
+        )
+        print(json.dumps(report, sort_keys=True))
+        return 0
+    if args.regenerate_captures is not None:
+        report = regenerate(
+            plan,
+            args.regenerate_captures,
+            args.expected_captures_sha256,
+            args.expected_index_sha256,
+            args.output,
+        )
+        print(json.dumps(report, sort_keys=True))
+        return 0
     signal.signal(
         signal.SIGALRM,
         lambda *_: (_ for _ in ()).throw(

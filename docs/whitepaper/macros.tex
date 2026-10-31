@@ -73,3 +73,16 @@
 % Missing figure files render as a labelled placeholder instead of failing.
 \let\EZincludegraphics\includegraphics
 \renewcommand{\includegraphics}[2][]{\IfFileExists{#2}{\EZincludegraphics[#1]{#2}}{\fbox{\parbox[c][1.2in][c]{0.9\linewidth}{\centering\small\textcolor{red}{Figure pending: \texttt{\detokenize{#2}}}}}}}
+% Hyphenation: break product names at their parts ("AlphaE-volve" became
+% "Alpha-Evolve"), and do not split the reference words Figure, Table and
+% Appendix that \cref prints before a number.
+\hyphenation{Alpha-Evolve Alpha-Geometry Alpha-Tensor Alpha-Proof Alpha-Fold Tensor-Game Eureka-Zero Figure Figures Table Tables Appendix}
+% Keep a numeric citation on the line of the word before it: when \citep
+% follows an interword space, a break there costs penalty 500 ("text [12]").
+% A hard tie (\nobreak) also held three lines at badness 700-1005, one of
+% them reported underfull; 500 keeps those lines as they are untied.
+% natbib's \citep is robust, so it is copied with \NewCommandCopy.
+\makeatletter
+\NewCommandCopy\EZ@citep\citep
+\DeclareRobustCommand{\citep}{\ifhmode\ifdim\lastskip>\z@\unskip\penalty500\ \fi\fi\EZ@citep}
+\makeatother
