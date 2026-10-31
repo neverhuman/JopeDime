@@ -365,7 +365,7 @@ pub fn robust_fitness_for(task: Task, oof_score: f64, fold_scores: &[f64]) -> f6
 pub struct FoldResult {
     /// Held-out fold.
     pub fold: usize,
-    /// [`Cut::cut_id`].
+    /// [`crate::cuts::Cut::cut_id`].
     pub cut_id: String,
     /// The program scored on this fold (differs per fold only when the search was re-run per
     /// cut; empty for an adapter, and when producing the program failed).

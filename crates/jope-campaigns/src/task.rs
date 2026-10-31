@@ -2,7 +2,7 @@
 //!
 //! `Task` is the only task vocabulary in this crate. `TaskKind` remains a
 //! type alias so frozen V1/V2 callers keep compiling, but new code should use
-//! `Task` and the registry returned by [`Task::semantics`].
+//! `Task` and the registry returned by [`crate::task::Task::semantics`].
 
 use anyhow::{ensure, Result};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};

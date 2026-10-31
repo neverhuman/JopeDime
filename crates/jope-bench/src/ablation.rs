@@ -13,23 +13,26 @@
 //!   `provenance` (paths, host and time). Neither is part of the digest.
 //!
 //! Replay rules. Every search runs with the largest seconds bound the search accepts
-//! ([`SEARCH_SECONDS`]), one worker and one island, so the evaluation budget ends every phase and
-//! the decisions replay from the seed alone. A run in which the seconds bound ended any phase is
-//! refused ([`check_replayable`]) rather than reported. Every (profile, dataset, seed) search
+//! ([`crate::ablation::SEARCH_SECONDS`]), one worker and one island, so the evaluation budget ends
+//! every phase and the decisions replay from the seed alone. A run in which the seconds bound ended
+//! any phase is refused ([`crate::ablation::check_replayable`]) rather than reported. Every (profile,
+//! dataset, seed) search
 //! writes into its own directory, and profile B is executed, never copied from profile A, so an
 //! A=A comparison runs the search twice.
 //!
 //! Data rules. Rows come from each dataset's `train.csv` only, through [`crate::load`]; the
-//! sealed `test.csv` is never opened. Cuts are the pipeline's own ([`prepare::build`], keyed on
-//! `<dataset_hash>:<fold seed>`), so M1 is a held-out score on a fold of the training rows.
+//! sealed `test.csv` is never opened. Cuts are the pipeline's own
+//! (`jope_pipeline::prepare::build`, keyed on `<dataset_hash>:<fold seed>`), so M1 is a held-out
+//! score on a fold of the training rows.
 //!
 //! Profiles: `legacy`, the shipping search unchanged, and the kernel2 route
 //! (`jope_pipeline::kernel2::search::run_cut`) with the shipped `kernel2-baseline` and
 //! `kernel2-experimental` profiles, an explicit refinement allowance shared by every kernel2
 //! search, one thread and one island. A comparison that involves a kernel2 profile also carries
-//! the paired comparison of M1 ([`Paired`], [`PAIRED_DEFINITIONS`]) in the body and each slot's
-//! wall seconds beside it in `timing`; a legacy-only document is unchanged. Later profiles are
-//! added as new [`Profile`] variants. `docs/internal/kernel2/ablation-protocol.md` states the
+//! the paired comparison of M1 ([`crate::ablation::Paired`],
+//! [`crate::ablation::PAIRED_DEFINITIONS`]) in the body and each slot's wall seconds beside it in
+//! `timing`; a legacy-only document is unchanged. Later profiles are added as new
+//! [`crate::ablation::Profile`] variants. `docs/internal/kernel2/ablation-protocol.md` states the
 //! metric, gate and paired definitions.
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -854,12 +857,12 @@ struct Spec {
 }
 
 /// Run the comparison. Every search writes its evidence under `scratch`, which is created when
-/// absent. The comparison holds an exclusive [`Reservation`] of `scratch` from before its first
+/// absent. The comparison holds an exclusive `Reservation` of `scratch` from before its first
 /// check of the scratch to its end, so a second comparison on the same scratch is refused while
 /// it runs. `scratch` must not already hold a search for the same (slot, dataset, seed), nor a
-/// kernel2 comparison's marker ([`check_not_kernel2`]); with a kernel2 profile it must be absent
-/// or an empty directory that is not a symbolic link ([`check_scratch_kind`],
-/// [`check_scratch_unused`]), which the comparison then marks for good ([`mark_kernel2`]).
+/// kernel2 comparison's marker (`check_not_kernel2`); with a kernel2 profile it must be absent
+/// or an empty directory that is not a symbolic link (`check_scratch_kind`,
+/// `check_scratch_unused`), which the comparison then marks for good (`mark_kernel2`).
 pub fn run(config: &Config, scratch: &Path) -> Result<Report> {
     config.check()?;
     let started = Instant::now();
@@ -2412,7 +2415,7 @@ pub const MAX_SIGN_TEST_PAIRS: u64 = 1 << 20;
 ///
 /// The probability is `S / 2^(n-1)` with `S` the sum of `C(n, k)` over `k` up to the smaller
 /// count. `S` is computed exactly in integers, and the probability is rounded once to the nearest
-/// f64, ties to even ([`round_scaled`]). So, for every split of at most [`MAX_SIGN_TEST_PAIRS`]
+/// f64, ties to even (`round_scaled`). So, for every split of at most [`MAX_SIGN_TEST_PAIRS`]
 /// untied pairs, the result is the correctly rounded exact probability, and it replays bit for
 /// bit on any host. A value under `2^-1022` is subnormal and carries fewer significant bits; the
 /// result is 0 only where the exact value is at most half of the smallest positive f64,
@@ -2542,7 +2545,7 @@ fn paired_timing(runs: &[RunTiming]) -> PairedTiming {
 
 /// Write the document as pretty JSON plus a newline; returns the file's sha256. An existing file
 /// at `path` is truncated and rewritten in place; [`execute`] writes through
-/// [`replace_document`] instead, which writes the same bytes without truncating anything.
+/// `replace_document` instead, which writes the same bytes without truncating anything.
 pub fn write_document(path: &Path, document: &Document) -> Result<String> {
     create_document_parent(path)?;
     let text = document_text(document)?;
@@ -2772,15 +2775,15 @@ fn paired_line(label: &str, c: &PairedCounts) -> String {
 }
 
 /// Run `jope-bench ablation`. Every refusal of the options, and of the `--out` destination
-/// ([`check_out`]), is made before the scratch directory is created. [`run`] then holds an
-/// exclusive [`Reservation`] of the scratch for the whole comparison, so a second comparison on
+/// (`check_out`), is made before the scratch directory is created. [`run`] then holds an
+/// exclusive `Reservation` of the scratch for the whole comparison, so a second comparison on
 /// the same `--scratch` is refused while this one runs, and refuses a scratch a kernel2
-/// comparison used ([`check_not_kernel2`]). A comparison with a kernel2 profile also needs an
+/// comparison used (`check_not_kernel2`). A comparison with a kernel2 profile also needs an
 /// unused `--scratch`: one created here, empty, or an existing empty directory; [`run`] refuses
-/// anything else before it writes ([`check_scratch_unused`]) and marks the scratch for good
-/// ([`mark_kernel2`]). The temporary scratch made without `--scratch` is always unused. After
+/// anything else before it writes (`check_scratch_unused`) and marks the scratch for good
+/// (`mark_kernel2`). The temporary scratch made without `--scratch` is always unused. After
 /// [`run`] returns, and so after its reservation is released, `--out`'s directory is created
-/// when missing, `--out` is checked again, and the document is written by [`replace_document`]:
+/// when missing, `--out` is checked again, and the document is written by `replace_document`:
 /// a new temporary file renamed over `--out`, so no existing file is truncated.
 pub fn execute(args: &AblationArgs) -> Result<()> {
     let config = config(args)?;

@@ -67,7 +67,7 @@ pub struct Report {
     pub task: String,
     /// The primary score every `score` / `oof_score` is ([`Task::score_metric`]).
     pub score_metric: String,
-    /// The metric a ladder built from this report ranks by ([`Task::ladder_metric`]).
+    /// The metric a ladder built from this report ranks by ([`crate::task::Task::ladder_metric`]).
     pub ladder_metric: String,
     /// `minimize` / `maximize`, for `ladder_metric`.
     pub metric_direction: String,

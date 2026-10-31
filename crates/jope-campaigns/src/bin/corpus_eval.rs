@@ -19,12 +19,12 @@
 //! the scheduling slot is reused. A child may never publish a receipt.
 //!
 //! Modes:
-//!   corpus_eval --manifest <shard.json> --output-dir <dir> [--threads N]
+//!   `corpus_eval --manifest <shard.json> --output-dir <dir> [--threads N]`
 //!               [--timeout-seconds 300]
-//!   corpus_eval eval-one --manifest <shard.json> --candidate-index N --result <path>
-//!   corpus_eval validate-manifest --manifest <shard.json>
-//!   corpus_eval rewrite-binary-heads --winners-dir <dir> \
-//!               --heads logit_ridge,gam_boost,tab_boost --output <jsonl>
+//!   `corpus_eval eval-one --manifest <shard.json> --candidate-index N --result <path>`
+//!   `corpus_eval validate-manifest --manifest <shard.json>`
+//!   `corpus_eval rewrite-binary-heads --winners-dir <dir> \
+//!               --heads logit_ridge,gam_boost,tab_boost --output <jsonl>`
 
 use anyhow::{bail, Context, Result};
 use feat_math::advanced_v3::validate_v3_genome;
