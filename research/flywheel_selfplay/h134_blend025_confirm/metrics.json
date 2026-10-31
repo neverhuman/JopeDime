@@ -1,0 +1,36 @@
+{
+ "DOPE_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+ "DOPE_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+ "GPU_used": false,
+ "first_source": "11fba6d037dfa77d051c37554e040914db9ace21",
+ "fits_completed": 42,
+ "fits_required": 45,
+ "fold_seed": 134141,
+ "h129_runner_sha256": "e34d4a3f7ecb82971fa303f05cca665bb1108509abb90021d1a54717fe02cb6c",
+ "outcomes_computed": false,
+ "partial_manifest_sha256": "f0205dba5795e91b09d9d5fa49625f21fdfd66b0bb90eb01a895d47e641a842e",
+ "prereg_commit": "7e4537dbfb008728bed255092912c01782b15fb0",
+ "read_boundary": {
+  "dl_val_cache_rows_decoded": 0,
+  "holdout_payloads_opened": 0,
+  "live_loop_paths": 0,
+  "meta_test_payloads_opened": 0,
+  "sealed_payloads_opened": 0
+ },
+ "reason": "preregistered hard disk guard (/ >= 93.8%) aborted the first attempt (39/45 fits, 93.97%) and the single Amendment A-resume (42/45 fits, 93.81%); no further retries",
+ "resume_source": "90b2db52f3777b7b1b222bacfcb502ea93c3c188",
+ "runner_sha256": "5f38be275788f542eacdcb55a72aff6ba6b50e7ff1a6ad046a91506c8c2dbf62",
+ "s3_prefixes": [
+  "H134/opus-h134-20261031a-partial/",
+  "H134/opus-h134-20261031a-final/"
+ ],
+ "sampling_seed": 134142,
+ "schema": "jope.h134.blend025-confirm/v1",
+ "seeds": [
+  141,
+  142,
+  143
+ ],
+ "status": "INCOMPLETE_CLOSED",
+ "verdict": null
+}
