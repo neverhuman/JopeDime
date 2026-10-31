@@ -525,11 +525,11 @@ fn ndjson_receipt(
             "ndjson-completed"
         };
         fs::write(
-            PathBuf::from(root).join(format!("{name}.stdout")),
+            PathBuf::from(&root).join(format!("{name}.stdout")),
             &output.stdout,
         )?;
         fs::write(
-            PathBuf::from(root).join(format!("{name}.stderr")),
+            PathBuf::from(&root).join(format!("{name}.stderr")),
             &output.stderr,
         )?;
     }
