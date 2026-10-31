@@ -6,5 +6,6 @@ figs:
 	python3 figures/scripts/make_flywheel_figs.py
 	python3 figures/scripts/make_schematics.py
 	python3 figures/scripts/make_promotions_figure.py
+	python3 figures/scripts/make_recent_development_figure.py
 clean:
 	latexmk -C

@@ -1,0 +1,61 @@
+{
+  "schema": "whitepaper.recent-development/v1",
+  "snapshot": {
+    "at": "2026-10-31T10:53:44.770292+00:00",
+    "kind": "Read-only stable complete-line development-log prefixes; no dataset or weight files read",
+    "files": [
+      {
+        "name": "summary.jsonl",
+        "observed_bytes": 3358806,
+        "snapshot_bytes": 3358806,
+        "trailing_incomplete_bytes_omitted": 0,
+        "mtime_ns_before": 1793443978891923184,
+        "mtime_ns_after": 1793443978891923184,
+        "sha256": "e875f05cc72c9ab2355aec03bdf79b53c53a394477c102eccd470a6652469a59"
+      },
+      {
+        "name": "promotions.jsonl",
+        "observed_bytes": 7566914,
+        "snapshot_bytes": 7566914,
+        "trailing_incomplete_bytes_omitted": 0,
+        "mtime_ns_before": 1793443920926023703,
+        "mtime_ns_after": 1793443920926023703,
+        "sha256": "9dd1b0be63d142f84c2d06ef29c983c71224eeaea5d92bdc40921f69515118c1"
+      }
+    ]
+  },
+  "input_sha256": {
+    "summary.jsonl": "e875f05cc72c9ab2355aec03bdf79b53c53a394477c102eccd470a6652469a59",
+    "promotions.jsonl": "9dd1b0be63d142f84c2d06ef29c983c71224eeaea5d92bdc40921f69515118c1"
+  },
+  "selection": "All complete consecutive summary rounds; journal kind=promotion in that window",
+  "round_window": [
+    2005,
+    2024
+  ],
+  "summary_rows": 20,
+  "strict_program_promotions": 15,
+  "promotion_CI_scope": {
+    "unavailable": 15
+  },
+  "evaluation_identities": [
+    "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83"
+  ],
+  "metric_definition": {
+    "program_promotions": "Strict training-program incumbent events, checked against summary counts",
+    "cumulative_program_promotions": "Running sum within this window only; starts from zero",
+    "candidate_validation_utility": "summary.val_reg = candidate_dev_utility.val_reg = adapter_admission.candidate_utility",
+    "recorded_best_validation_utility": "dev_utility.val_reg = adapter_admission.best_utility"
+  },
+  "code_references": [
+    "research/flywheel_selfplay/automatic_promotion.py:206-273",
+    "research/flywheel_selfplay/dev_incumbent.py:524-570",
+    "crates/jope-telemetry/src/hooks/flywheel.rs:362-365"
+  ],
+  "interpretation_source_commit": "b2c04a846194bda01310d762d646c8a2a91d26cf",
+  "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
+  "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
+  "csv_sha256": "86330546dae0f686132c422a4066f74ace1404287a372548e85f9b4609b2839a",
+  "extraction_script_sha256": "9c5cd869e8aa927e5c23338931d82f4a5cdbef64aeb568cdf14597e233722afb",
+  "reproduce": "python3 figures/scripts/make_recent_development_figure.py --logs SNAPSHOT_DIR"
+}
