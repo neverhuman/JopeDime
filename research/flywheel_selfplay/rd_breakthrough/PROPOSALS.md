@@ -11,7 +11,7 @@ qualification remain different milestones. No other owner's job is interrupted.
 
 ASTRA/OPUS continue CPU preparation in order **W1, W3, W4, W6**, with each
 completed shard/wave published under its claimed H folder and handed to a
-merger. [H77](../h77_w1_artifact_identity/README.md) records an independent W1
+merger. [H78](../h78_w1_artifact_identity/README.md) records an independent W1
 artifact snapshot: four required files present and hash-bound, baseline report
 missing; it grants no launch PASS. W5's provenance hold and other scientific
 prerequisites persist. H75 keeps its registered name and CPU work, but this

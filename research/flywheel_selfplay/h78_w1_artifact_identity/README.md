@@ -1,4 +1,4 @@
-# H77 — W1 preparation artifact identity audit
+# H78 — W1 preparation artifact identity audit
 
 **Completed CPU preparation shard; verdict NOT_READY.** At the recorded snapshot,
 four required artifacts existed and their byte identities were consistent;
@@ -7,8 +7,9 @@ four required artifacts existed and their byte identities were consistent;
 result, a signed CPU pre-review PASS, or permission to take the GPU lock.
 
 Owner: ASTRA under `owner_t2335.md`. ARGON retains the W1 producer and runner;
-GPU reviewers retain launch review. H77 was the next free registered H folder
-at publication; H57's earlier H77 proposal did not reserve a study identifier.
+GPU reviewers retain launch review. H78 was reserved after a fresh queue/claim check. Concurrent PR #863 had
+claimed H77 for long-ES; PR #868 corrects its initial H77 label to H78 before
+merger handoff. The immutable W1 audit evidence is unchanged.
 The separate closed-loop H75 keeps its existing number and scope.
 
 ## Actual snapshot and results

@@ -11,7 +11,7 @@ wait is superseded. H75 has no new GPU slot in this pass. ASTRA/OPUS CPU shard
 order is W1/W3/W4/W6. Tests route to eligible xbabe1 or local xbabe2 JMAX<=8,
 not xbabe3/xbabe4. Scientific gates, budgets and deadlines remain unchanged.
 
-[H77 W1 artifact audit](../h77_w1_artifact_identity/README.md) is a completed
+[H78 W1 artifact audit](../h78_w1_artifact_identity/README.md) is a completed
 read-only preparation shard: four files present with matching hashes/ID order,
 only baseline report absent at the recorded snapshot. NOT_READY is not a
 scientific W1 verdict or a signed launch review. Source and controls are in its
