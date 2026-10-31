@@ -1,0 +1,1317 @@
+{
+  "arms": {
+    "ANCHOR": {
+      "adapter_l2_per_seed": [
+        0.0463725137181056,
+        0.045576771115772484,
+        0.04236042924019386
+      ],
+      "admitted": false,
+      "any_negative_family_fraction": 0.2926829268292683,
+      "ci95": [
+        -0.07968062148710563,
+        0.018747944944176656
+      ],
+      "elo_vs_r882": {
+        "median_ci95": [
+          1376.4004298658974,
+          1516.9615394212349
+        ],
+        "median_elo": 1448.7880745658233,
+        "per_seed": [
+          {
+            "ci95": [
+              1395.2488513192668,
+              1534.0043158833396
+            ],
+            "elo": 1465.9956841166604,
+            "losses": 10,
+            "seed": 42,
+            "ties": 25,
+            "wins": 6
+          },
+          {
+            "ci95": [
+              1376.4004298658974,
+              1516.9615394212349
+            ],
+            "elo": 1448.7880745658233,
+            "losses": 12,
+            "seed": 43,
+            "ties": 23,
+            "wins": 6
+          },
+          {
+            "ci95": [
+              1376.4004298658974,
+              1516.9615394212349
+            ],
+            "elo": 1448.7880745658233,
+            "losses": 12,
+            "seed": 44,
+            "ties": 23,
+            "wins": 6
+          }
+        ]
+      },
+      "harm_fraction": 0.21951219512195122,
+      "harmed_families": [
+        "fam-0eac99bc03f2c05db7072200b0431036f48d404696acb298ff93766f6207b646",
+        "fam-4f51b7da0cd27665d76b526bc198568f7c7052a0f34bb6aa294694c25c8a4792",
+        "fam-7236df8f62604f9fd4f624a378619d64fa491eb8f06237123e9912fce79c3db0",
+        "fam-85ca69949bbbb573d4d29a0bd7159ab52c370a82261efc78c40397634e15067c",
+        "fam-c0387cd570ed363b76be94f93960ab0a8adbd89ffdb67ca115fa0770828142fa",
+        "fam-c9d79f1acf3213cd45ffc21994537daeeb5d304ed2fb411f725315ebec35ccef",
+        "fam-d216a45a1215ad97200bf7dcfd8a67fa83787b93428c6bf4a23550e8f8741882",
+        "fam-dd54715b0bb4a21e2eab98623c1062286cce926a8040be9a2290b7ca442c9aea",
+        "fam-e537aeee64087707f0f9a742ac6944ddefc885984717e553d59bdcdfc77b4583"
+      ],
+      "identical_seed_utility_flag": false,
+      "independent_seed_confirmations_claimed": 0,
+      "lcb95": -0.07160773543962719,
+      "median_gain": -0.030529060839166997,
+      "per_seed_gain_vs_r882": [
+        -0.04320976360157184,
+        -0.030529060839166997,
+        -0.029770563726408537
+      ],
+      "per_seed_harm_fraction": [
+        0.21951219512195122,
+        0.24390243902439024,
+        0.21951219512195122
+      ],
+      "seed_utility_groups": {
+        "context": [
+          [
+            42
+          ],
+          [
+            43
+          ],
+          [
+            44
+          ]
+        ],
+        "family": [
+          [
+            42
+          ],
+          [
+            43
+          ],
+          [
+            44
+          ]
+        ],
+        "scalar": [
+          [
+            42
+          ],
+          [
+            43
+          ],
+          [
+            44
+          ]
+        ]
+      },
+      "seeds": [
+        {
+          "assessment_reg": 1.1549365560926106,
+          "gap": -0.026631292420751462,
+          "seed": 42,
+          "train_reg": 1.1283052636718591
+        },
+        {
+          "assessment_reg": 1.1676172588550153,
+          "gap": -0.040373959710901186,
+          "seed": 43,
+          "train_reg": 1.1272432991441141
+        },
+        {
+          "assessment_reg": 1.1683757559677739,
+          "gap": -0.03645716548446121,
+          "seed": 44,
+          "train_reg": 1.1319185904833127
+        }
+      ]
+    },
+    "CONTROL": {
+      "adapter_l2_per_seed": [
+        0.44583873050925954,
+        0.42724485084668873,
+        0.44618600000690906
+      ],
+      "admitted": false,
+      "any_negative_family_fraction": 0.4634146341463415,
+      "ci95": [
+        -0.07790900365634791,
+        0.04262591928269169
+      ],
+      "elo_vs_r882": {
+        "median_ci95": [
+          1346.7132992594675,
+          1534.0043158833396
+        ],
+        "median_elo": 1448.7880745658233,
+        "per_seed": [
+          {
+            "ci95": [
+              1346.7132992594675,
+              1525.467631947751
+            ],
+            "elo": 1440.0950718666672,
+            "losses": 18,
+            "seed": 42,
+            "ties": 12,
+            "wins": 11
+          },
+          {
+            "ci95": [
+              1356.8260611998185,
+              1542.5821323657149
+            ],
+            "elo": 1448.7880745658233,
+            "losses": 18,
+            "seed": 43,
+            "ties": 11,
+            "wins": 12
+          },
+          {
+            "ci95": [
+              1356.8260611998185,
+              1542.5821323657149
+            ],
+            "elo": 1448.7880745658233,
+            "losses": 18,
+            "seed": 44,
+            "ties": 11,
+            "wins": 12
+          }
+        ]
+      },
+      "harm_fraction": 0.34146341463414637,
+      "harmed_families": [
+        "fam-0eac99bc03f2c05db7072200b0431036f48d404696acb298ff93766f6207b646",
+        "fam-43d51469e86f13dbff5975680ed8709053f611018cf34d4d286fc78227c2e7d9",
+        "fam-48cf0347a7e50a00b70a452d6be52efea98bdc43bbed55d6ef769e0d430e7990",
+        "fam-4f51b7da0cd27665d76b526bc198568f7c7052a0f34bb6aa294694c25c8a4792",
+        "fam-7236df8f62604f9fd4f624a378619d64fa491eb8f06237123e9912fce79c3db0",
+        "fam-85ca69949bbbb573d4d29a0bd7159ab52c370a82261efc78c40397634e15067c",
+        "fam-8cb466b3ca3e577ec81863bfb335577b65a337c79eb48e5527262fb11a71ca1e",
+        "fam-c0387cd570ed363b76be94f93960ab0a8adbd89ffdb67ca115fa0770828142fa",
+        "fam-c9d79f1acf3213cd45ffc21994537daeeb5d304ed2fb411f725315ebec35ccef",
+        "fam-d216a45a1215ad97200bf7dcfd8a67fa83787b93428c6bf4a23550e8f8741882",
+        "fam-d5bdedc95b609435f6abc4bf24e692cc79571a3e5d4485c7b9d2a88a06ab48e4",
+        "fam-d95734c761e0f763d53f134ff916029df0fc5ab8abdfe018bf95291dae6f8efa",
+        "fam-dd54715b0bb4a21e2eab98623c1062286cce926a8040be9a2290b7ca442c9aea",
+        "fam-e537aeee64087707f0f9a742ac6944ddefc885984717e553d59bdcdfc77b4583"
+      ],
+      "identical_seed_utility_flag": false,
+      "independent_seed_confirmations_claimed": 0,
+      "lcb95": -0.06881667611401045,
+      "median_gain": -0.021952485206363254,
+      "per_seed_gain_vs_r882": [
+        -0.021952485206363254,
+        0.0024295268277743825,
+        -0.02732038250981469
+      ],
+      "per_seed_harm_fraction": [
+        0.34146341463414637,
+        0.34146341463414637,
+        0.3170731707317073
+      ],
+      "seed_utility_groups": {
+        "context": [
+          [
+            42
+          ],
+          [
+            43
+          ],
+          [
+            44
+          ]
+        ],
+        "family": [
+          [
+            42
+          ],
+          [
+            43
+          ],
+          [
+            44
+          ]
+        ],
+        "scalar": [
+          [
+            42
+          ],
+          [
+            43
+          ],
+          [
+            44
+          ]
+        ]
+      },
+      "seeds": [
+        {
+          "assessment_reg": 1.1761938344878191,
+          "gap": -0.07470353948576625,
+          "seed": 42,
+          "train_reg": 1.1014902950020529
+        },
+        {
+          "assessment_reg": 1.2005758465219567,
+          "gap": -0.10092623248159538,
+          "seed": 43,
+          "train_reg": 1.0996496140403613
+        },
+        {
+          "assessment_reg": 1.1708259371843677,
+          "gap": -0.0660460256995743,
+          "seed": 44,
+          "train_reg": 1.1047799114847934
+        }
+      ]
+    },
+    "INTERP025": {
+      "adapter_l2_per_seed": [
+        0.11145967689091239,
+        0.10681121833651666,
+        0.11154650279908059
+      ],
+      "admitted": false,
+      "any_negative_family_fraction": 0.21951219512195122,
+      "ci95": [
+        -0.059983136292318405,
+        -0.0004656749292895104
+      ],
+      "elo_vs_r882": {
+        "median_ci95": [
+          1413.5166070945345,
+          1534.0043158833396
+        ],
+        "median_elo": 1474.532368052249,
+        "per_seed": [
+          {
+            "ci95": [
+              1404.4471644339453,
+              1525.467631947751
+            ],
+            "elo": 1465.9956841166604,
+            "losses": 9,
+            "seed": 42,
+            "ties": 27,
+            "wins": 5
+          },
+          {
+            "ci95": [
+              1422.4719895935548,
+              1551.2119254341767
+            ],
+            "elo": 1491.5242803720248,
+            "losses": 8,
+            "seed": 43,
+            "ties": 26,
+            "wins": 7
+          },
+          {
+            "ci95": [
+              1413.5166070945345,
+              1534.0043158833396
+            ],
+            "elo": 1474.532368052249,
+            "losses": 8,
+            "seed": 44,
+            "ties": 28,
+            "wins": 5
+          }
+        ]
+      },
+      "harm_fraction": 0.14634146341463414,
+      "harmed_families": [
+        "fam-7236df8f62604f9fd4f624a378619d64fa491eb8f06237123e9912fce79c3db0",
+        "fam-85ca69949bbbb573d4d29a0bd7159ab52c370a82261efc78c40397634e15067c",
+        "fam-c0387cd570ed363b76be94f93960ab0a8adbd89ffdb67ca115fa0770828142fa",
+        "fam-c9d79f1acf3213cd45ffc21994537daeeb5d304ed2fb411f725315ebec35ccef",
+        "fam-d216a45a1215ad97200bf7dcfd8a67fa83787b93428c6bf4a23550e8f8741882",
+        "fam-e537aeee64087707f0f9a742ac6944ddefc885984717e553d59bdcdfc77b4583"
+      ],
+      "identical_seed_utility_flag": false,
+      "independent_seed_confirmations_claimed": 0,
+      "lcb95": -0.05331275675461059,
+      "median_gain": -0.02522946404545066,
+      "per_seed_gain_vs_r882": [
+        -0.026475659111869186,
+        -0.011186070541889142,
+        -0.02522946404545066
+      ],
+      "per_seed_harm_fraction": [
+        0.14634146341463414,
+        0.12195121951219512,
+        0.12195121951219512
+      ],
+      "seed_utility_groups": {
+        "context": [
+          [
+            42
+          ],
+          [
+            43
+          ],
+          [
+            44
+          ]
+        ],
+        "family": [
+          [
+            42
+          ],
+          [
+            43
+          ],
+          [
+            44
+          ]
+        ],
+        "scalar": [
+          [
+            42
+          ],
+          [
+            43
+          ],
+          [
+            44
+          ]
+        ]
+      },
+      "seeds": [
+        {
+          "assessment_reg": 1.171670660582313,
+          "gap": -0.035870363660436944,
+          "seed": 42,
+          "train_reg": 1.1358002969218761
+        },
+        {
+          "assessment_reg": 1.1869602491522933,
+          "gap": -0.0478325699637272,
+          "seed": 43,
+          "train_reg": 1.139127679188566
+        },
+        {
+          "assessment_reg": 1.1729168556487317,
+          "gap": -0.034409256121945564,
+          "seed": 44,
+          "train_reg": 1.1385075995267862
+        }
+      ]
+    },
+    "INTERP050": {
+      "adapter_l2_per_seed": [
+        0.22291936341378252,
+        0.21362242988293637,
+        0.2230930075643821
+      ],
+      "admitted": false,
+      "any_negative_family_fraction": 0.34146341463414637,
+      "ci95": [
+        -0.1013861204226288,
+        -0.012175940368344422
+      ],
+      "elo_vs_r882": {
+        "median_ci95": [
+          1395.2488513192668,
+          1559.9049281333328
+        ],
+        "median_elo": 1474.532368052249,
+        "per_seed": [
+          {
+            "ci95": [
+              1395.2488513192668,
+              1568.6728560602505
+            ],
+            "elo": 1483.0384605787651,
+            "losses": 14,
+            "seed": 42,
+            "ties": 15,
+            "wins": 12
+          },
+          {
+            "ci95": [
+              1395.2488513192668,
+              1551.2119254341767
+            ],
+            "elo": 1474.532368052249,
+            "losses": 13,
+            "seed": 43,
+            "ties": 18,
+            "wins": 10
+          },
+          {
+            "ci95": [
+              1395.2488513192668,
+              1551.2119254341767
+            ],
+            "elo": 1474.532368052249,
+            "losses": 13,
+            "seed": 44,
+            "ties": 18,
+            "wins": 10
+          }
+        ]
+      },
+      "harm_fraction": 0.2682926829268293,
+      "harmed_families": [
+        "fam-0eac99bc03f2c05db7072200b0431036f48d404696acb298ff93766f6207b646",
+        "fam-48cf0347a7e50a00b70a452d6be52efea98bdc43bbed55d6ef769e0d430e7990",
+        "fam-4f51b7da0cd27665d76b526bc198568f7c7052a0f34bb6aa294694c25c8a4792",
+        "fam-7236df8f62604f9fd4f624a378619d64fa491eb8f06237123e9912fce79c3db0",
+        "fam-85ca69949bbbb573d4d29a0bd7159ab52c370a82261efc78c40397634e15067c",
+        "fam-c0387cd570ed363b76be94f93960ab0a8adbd89ffdb67ca115fa0770828142fa",
+        "fam-c9d79f1acf3213cd45ffc21994537daeeb5d304ed2fb411f725315ebec35ccef",
+        "fam-d216a45a1215ad97200bf7dcfd8a67fa83787b93428c6bf4a23550e8f8741882",
+        "fam-d5bdedc95b609435f6abc4bf24e692cc79571a3e5d4485c7b9d2a88a06ab48e4",
+        "fam-dd54715b0bb4a21e2eab98623c1062286cce926a8040be9a2290b7ca442c9aea",
+        "fam-e537aeee64087707f0f9a742ac6944ddefc885984717e553d59bdcdfc77b4583"
+      ],
+      "identical_seed_utility_flag": false,
+      "independent_seed_confirmations_claimed": 0,
+      "lcb95": -0.09255713810937798,
+      "median_gain": -0.05225778121588214,
+      "per_seed_gain_vs_r882": [
+        -0.05359374899460144,
+        -0.04116450509416314,
+        -0.05225778121588214
+      ],
+      "per_seed_harm_fraction": [
+        0.2682926829268293,
+        0.24390243902439024,
+        0.2682926829268293
+      ],
+      "seed_utility_groups": {
+        "context": [
+          [
+            42
+          ],
+          [
+            43
+          ],
+          [
+            44
+          ]
+        ],
+        "family": [
+          [
+            42
+          ],
+          [
+            43
+          ],
+          [
+            44
+          ]
+        ],
+        "scalar": [
+          [
+            42
+          ],
+          [
+            43
+          ],
+          [
+            44
+          ]
+        ]
+      },
+      "seeds": [
+        {
+          "assessment_reg": 1.144552570699581,
+          "gap": -0.01780652308302466,
+          "seed": 42,
+          "train_reg": 1.1267460476165563
+        },
+        {
+          "assessment_reg": 1.1569818146000193,
+          "gap": -0.03152828478112224,
+          "seed": 43,
+          "train_reg": 1.125453529818897
+        },
+        {
+          "assessment_reg": 1.1458885384783002,
+          "gap": -0.025776993438955564,
+          "seed": 44,
+          "train_reg": 1.1201115450393446
+        }
+      ]
+    }
+  },
+  "bootstrap_draws": 10000,
+  "bootstrap_rng": 105000,
+  "complete": true,
+  "families": [
+    "fam-0287dafa15cdbdcc1de09f4b5d7e79a6286320ffaf59d1c8d853a311d3adc011",
+    "fam-0eac99bc03f2c05db7072200b0431036f48d404696acb298ff93766f6207b646",
+    "fam-1aa2d092abae51975f0bb6dcb2bbe087204ddca3bde75a631d1a2f4d6c7a5bf2",
+    "fam-39432f3da372099de889463a6ef563dabfed66f25094f9f7dfe91d622b435c2e",
+    "fam-3c5701c65e9a85c642073937de46ed9bfa254cde9ed22e305480fab2f1609f9a",
+    "fam-3cd35051092ea6d71b2a415d708aa92642eb00f65215bc4744933e75d97e6a66",
+    "fam-43d51469e86f13dbff5975680ed8709053f611018cf34d4d286fc78227c2e7d9",
+    "fam-48cf0347a7e50a00b70a452d6be52efea98bdc43bbed55d6ef769e0d430e7990",
+    "fam-4f51b7da0cd27665d76b526bc198568f7c7052a0f34bb6aa294694c25c8a4792",
+    "fam-58fae1d2966cfa37b4db66e4b81100a3ac4f3ce7fc9814245781bfbcd6bbb8fa",
+    "fam-5bedf71581b2fe53dae607892c7f05c84b7b43fa76c0fec069d0b260e83a909d",
+    "fam-5db7578b81770605bbb292b76baaaf3d69413aa3887c0872f30bb397d1089e14",
+    "fam-67bd99040e868574d0a29cf28c4a0686dde56f2b1c6251051564681ce37c4146",
+    "fam-68aa5ae4593cb23fe9a0790da73a2425006abf316e6685c75e6ed14ca69b2ce9",
+    "fam-69405f7499b3af4517ea1fefa95323238eb2ab359adf5bb8ca003ec5559af8b1",
+    "fam-6a7fd96029f91bfa7a72104090df21aa5ed2b15293bfb8b8b939f6bfcab63a8e",
+    "fam-7236df8f62604f9fd4f624a378619d64fa491eb8f06237123e9912fce79c3db0",
+    "fam-825cd454ee48a7bb85fc56769bb00f6700acfff7fccf782c08e8307197c16a3e",
+    "fam-85ca69949bbbb573d4d29a0bd7159ab52c370a82261efc78c40397634e15067c",
+    "fam-871e23c39ba79f59609ef2cfc0e2aa78e0f60374bbfb1d8e25db08d183b65c24",
+    "fam-8cb466b3ca3e577ec81863bfb335577b65a337c79eb48e5527262fb11a71ca1e",
+    "fam-8cfdaf9e5e0d64a956a6ad5d79ef2e9aec66fe6c8d781c4e4e1b1a367248bd20",
+    "fam-9332973f77f0d73a632a0b6cab1af9edab10e59a85ae4d8e232ae766a3fc27c9",
+    "fam-a0b09887a6c3dfbdb010e6a310cae1fa792ed4d8b291d50298565afddb7eaef0",
+    "fam-a559743d80534db11a02f4e6e6c456e9604c06b19943bc26ee74eab600829aa0",
+    "fam-ab0a89209ed1aa2fc7accbd0c8ee58b28d1bf3b95c1ed0ed23dd5081edfb0f5c",
+    "fam-abe2d72e6117cfd4b80dd6512fd26c37303704600588cedeeed9b55490111b7f",
+    "fam-bf25cff285cdb21e0a61921447d2627d84727b63f5af36f20483ec60baf46dd3",
+    "fam-c0387cd570ed363b76be94f93960ab0a8adbd89ffdb67ca115fa0770828142fa",
+    "fam-c9d79f1acf3213cd45ffc21994537daeeb5d304ed2fb411f725315ebec35ccef",
+    "fam-d216a45a1215ad97200bf7dcfd8a67fa83787b93428c6bf4a23550e8f8741882",
+    "fam-d5bdedc95b609435f6abc4bf24e692cc79571a3e5d4485c7b9d2a88a06ab48e4",
+    "fam-d95734c761e0f763d53f134ff916029df0fc5ab8abdfe018bf95291dae6f8efa",
+    "fam-dd54715b0bb4a21e2eab98623c1062286cce926a8040be9a2290b7ca442c9aea",
+    "fam-e248cdbc660112705ea16b0e6049b97a95786923b4fd92b695a4ab49fc9e295e",
+    "fam-e537aeee64087707f0f9a742ac6944ddefc885984717e553d59bdcdfc77b4583",
+    "fam-e643af1140c852379145186a47403d9d750a16f3ee2f0a9be1691af3851e5b6b",
+    "fam-efa9cfb7f4985c4021c84c1649b4caa64f3dc4e15e4ad83135e2784999c08931",
+    "fam-f3dabbc88d07fc0ad26a29ae0a8df36750a5763d2bd8cd38c132604bb7ea9de9",
+    "fam-f73aa5fbde216835694c3ed451f328ceedbdc7e770dcf80037055504c51c2d79",
+    "fam-fbfb81c7a84f67486915ba2ff316aa396484bd9c8fab7764873b7afb10e0061b"
+  ],
+  "gpu_wall_seconds": 874.769581705099,
+  "holm": {
+    "ANCHOR": {
+      "holm_adjusted_tail_area": 1.0,
+      "holm_lcb": -0.08439808658986786,
+      "passes": false,
+      "rank": 2,
+      "raw_tail_area": 0.9067093290670933,
+      "tail_alpha": 0.016666666666666666
+    },
+    "CONTROL": {
+      "holm_adjusted_tail_area": 1.0,
+      "holm_lcb": -0.0863817447254498,
+      "passes": false,
+      "rank": 1,
+      "raw_tail_area": 0.7734226577342266,
+      "tail_alpha": 0.0125
+    },
+    "INTERP025": {
+      "holm_adjusted_tail_area": 1.0,
+      "holm_lcb": -0.059983136292318405,
+      "passes": false,
+      "rank": 3,
+      "raw_tail_area": 0.9894010598940106,
+      "tail_alpha": 0.025
+    },
+    "INTERP050": {
+      "holm_adjusted_tail_area": 1.0,
+      "holm_lcb": -0.09255713810937798,
+      "passes": false,
+      "rank": 4,
+      "raw_tail_area": 0.9983001699830018,
+      "tail_alpha": 0.05
+    }
+  },
+  "ledger": {
+    "attempts": [
+      {
+        "arm": "ANCHOR",
+        "attempt": 1,
+        "attempt_token": "3736944-1793467250191320262-timing-ANCHOR-seed42-attempt1",
+        "child_pid": 750145,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/research/flywheel_selfplay/h105_shrink_r882/runner.py",
+          "--arm",
+          "ANCHOR",
+          "--seed",
+          "42",
+          "--out",
+          "/home/ubuntu/jope-data/h105/h105-wave/timing-ANCHOR-seed42-attempt1.json",
+          "--attempt",
+          "1",
+          "--phase",
+          "/home/ubuntu/jope-data/h105/h105-wave/timing-ANCHOR-seed42-attempt1.phase.json",
+          "--attempt-token",
+          "3736944-1793467250191320262-timing-ANCHOR-seed42-attempt1",
+          "--lock-fd",
+          "5",
+          "--timing"
+        ],
+        "cpu_gate_seconds": 30.0850473260507,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 56.36334962939599,
+        "max_load1": 59.791015625,
+        "max_rss_kib": 4218244,
+        "min_mem_available_kib": 74208888,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 625995415552,
+          "disk_used_percent": 92.1121354348803,
+          "host_cpu_percent": 36.304520222045994,
+          "load1": 52.1435546875,
+          "mem_available_kib": 79871956,
+          "owner_authority": "/home/ubuntu/nudges/dsc08_t1025.md",
+          "owner_available_block_used_percent": 92.1121354348803,
+          "owner_disk_limit_percent": 94.0,
+          "owner_operator_sha256": "503b186f7e50616e46581542b7abf03a29c2fddff84ba38d1d2856f3c3a140e0"
+        },
+        "receipt_sha256": "efc4189436238be925339d11323430cf14a5802d3e354b03d86973cfaf5dd427",
+        "seed": 42,
+        "stage": "complete",
+        "started_utc": "2026-10-31T17:20:50.191324+00:00",
+        "timing": true,
+        "wait_seconds": 1071.1028392401058,
+        "wall_seconds": 60.25018993602134
+      },
+      {
+        "arm": "CONTROL",
+        "attempt": 1,
+        "attempt_token": "3736944-1793467344830115243-CONTROL-seed42-attempt1",
+        "child_pid": 814251,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/research/flywheel_selfplay/h105_shrink_r882/runner.py",
+          "--arm",
+          "CONTROL",
+          "--seed",
+          "42",
+          "--out",
+          "/home/ubuntu/jope-data/h105/h105-wave/CONTROL-seed42-attempt1.json",
+          "--attempt",
+          "1",
+          "--phase",
+          "/home/ubuntu/jope-data/h105/h105-wave/CONTROL-seed42-attempt1.phase.json",
+          "--attempt-token",
+          "3736944-1793467344830115243-CONTROL-seed42-attempt1",
+          "--lock-fd",
+          "5"
+        ],
+        "cpu_gate_seconds": 31.03242536005564,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 52.611464968152866,
+        "max_load1": 65.0546875,
+        "max_rss_kib": 4683720,
+        "min_mem_available_kib": 70043792,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 618941849600,
+          "disk_used_percent": 92.20101399780309,
+          "host_cpu_percent": 23.897290485192187,
+          "load1": 63.318359375,
+          "mem_available_kib": 77582928,
+          "owner_authority": "/home/ubuntu/nudges/dsc08_t1025.md",
+          "owner_available_block_used_percent": 92.20101399780309,
+          "owner_disk_limit_percent": 94.0,
+          "owner_operator_sha256": "503b186f7e50616e46581542b7abf03a29c2fddff84ba38d1d2856f3c3a140e0"
+        },
+        "receipt_sha256": "f94b54cc519441b6952cb752be26b8cd920b85c1c2e085c2cafef69569ca9e52",
+        "seed": 42,
+        "stage": "complete",
+        "started_utc": "2026-10-31T17:22:24.830119+00:00",
+        "timing": false,
+        "wait_seconds": 32.129666791064665,
+        "wall_seconds": 71.77850630111061
+      },
+      {
+        "arm": "INTERP025",
+        "attempt": 1,
+        "attempt_token": "3736944-1793467447708150618-INTERP025-seed42-attempt1",
+        "child_pid": 882191,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/research/flywheel_selfplay/h105_shrink_r882/runner.py",
+          "--arm",
+          "INTERP025",
+          "--seed",
+          "42",
+          "--out",
+          "/home/ubuntu/jope-data/h105/h105-wave/INTERP025-seed42-attempt1.json",
+          "--attempt",
+          "1",
+          "--phase",
+          "/home/ubuntu/jope-data/h105/h105-wave/INTERP025-seed42-attempt1.phase.json",
+          "--attempt-token",
+          "3736944-1793467447708150618-INTERP025-seed42-attempt1",
+          "--lock-fd",
+          "5"
+        ],
+        "cpu_gate_seconds": 30.015912126982585,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 49.45506239140736,
+        "max_load1": 45.91357421875,
+        "max_rss_kib": 4679300,
+        "min_mem_available_kib": 65150704,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 616070537216,
+          "disk_used_percent": 92.23719401229916,
+          "host_cpu_percent": 28.812480101878382,
+          "load1": 44.9521484375,
+          "mem_available_kib": 71980596,
+          "owner_authority": "/home/ubuntu/nudges/dsc08_t1025.md",
+          "owner_available_block_used_percent": 92.23719401229916,
+          "owner_disk_limit_percent": 94.0,
+          "owner_operator_sha256": "503b186f7e50616e46581542b7abf03a29c2fddff84ba38d1d2856f3c3a140e0"
+        },
+        "receipt_sha256": "a27489b42000fe084fd097fffc2d1220bd980618d0c20501d92eb41cde5eee64",
+        "seed": 42,
+        "stage": "complete",
+        "started_utc": "2026-10-31T17:24:07.708157+00:00",
+        "timing": false,
+        "wait_seconds": 31.05769767309539,
+        "wall_seconds": 64.67079083598219
+      },
+      {
+        "arm": "INTERP050",
+        "attempt": 1,
+        "attempt_token": "3736944-1793467543494273441-INTERP050-seed42-attempt1",
+        "child_pid": 976740,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/research/flywheel_selfplay/h105_shrink_r882/runner.py",
+          "--arm",
+          "INTERP050",
+          "--seed",
+          "42",
+          "--out",
+          "/home/ubuntu/jope-data/h105/h105-wave/INTERP050-seed42-attempt1.json",
+          "--attempt",
+          "1",
+          "--phase",
+          "/home/ubuntu/jope-data/h105/h105-wave/INTERP050-seed42-attempt1.phase.json",
+          "--attempt-token",
+          "3736944-1793467543494273441-INTERP050-seed42-attempt1",
+          "--lock-fd",
+          "5"
+        ],
+        "cpu_gate_seconds": 30.019289792049676,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 52.87066246056782,
+        "max_load1": 42.5732421875,
+        "max_rss_kib": 4681112,
+        "min_mem_available_kib": 65447324,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 615028535296,
+          "disk_used_percent": 92.25032377302482,
+          "host_cpu_percent": 28.239414199299585,
+          "load1": 42.013671875,
+          "mem_available_kib": 70738056,
+          "owner_authority": "/home/ubuntu/nudges/dsc08_t1025.md",
+          "owner_available_block_used_percent": 92.25032377302482,
+          "owner_disk_limit_percent": 94.0,
+          "owner_operator_sha256": "503b186f7e50616e46581542b7abf03a29c2fddff84ba38d1d2856f3c3a140e0"
+        },
+        "receipt_sha256": "991cd6a487a7953d0ebe351ffd854067b665b2c253d436cbe23675e5ccb2bb04",
+        "seed": 42,
+        "stage": "complete",
+        "started_utc": "2026-10-31T17:25:43.494277+00:00",
+        "timing": false,
+        "wait_seconds": 31.069089770084247,
+        "wall_seconds": 61.68266388401389
+      },
+      {
+        "arm": "ANCHOR",
+        "attempt": 1,
+        "attempt_token": "3736944-1793467636671903400-ANCHOR-seed42-attempt1",
+        "child_pid": 1048968,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/research/flywheel_selfplay/h105_shrink_r882/runner.py",
+          "--arm",
+          "ANCHOR",
+          "--seed",
+          "42",
+          "--out",
+          "/home/ubuntu/jope-data/h105/h105-wave/ANCHOR-seed42-attempt1.json",
+          "--attempt",
+          "1",
+          "--phase",
+          "/home/ubuntu/jope-data/h105/h105-wave/ANCHOR-seed42-attempt1.phase.json",
+          "--attempt-token",
+          "3736944-1793467636671903400-ANCHOR-seed42-attempt1",
+          "--lock-fd",
+          "5"
+        ],
+        "cpu_gate_seconds": 30.088200070895255,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 46.10164141414141,
+        "max_load1": 47.1962890625,
+        "max_rss_kib": 4740628,
+        "min_mem_available_kib": 68916832,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 613792096256,
+          "disk_used_percent": 92.26590354157942,
+          "host_cpu_percent": 25.641431738992715,
+          "load1": 43.14501953125,
+          "mem_available_kib": 70911840,
+          "owner_authority": "/home/ubuntu/nudges/dsc08_t1025.md",
+          "owner_available_block_used_percent": 92.26590354157942,
+          "owner_disk_limit_percent": 94.0,
+          "owner_operator_sha256": "503b186f7e50616e46581542b7abf03a29c2fddff84ba38d1d2856f3c3a140e0"
+        },
+        "receipt_sha256": "1eebb4a66f7cb1a3203444afdfaf74a09445b40c09c1ff0ee81e9b9b820152e1",
+        "seed": 42,
+        "stage": "complete",
+        "started_utc": "2026-10-31T17:27:16.671907+00:00",
+        "timing": false,
+        "wait_seconds": 31.128041229909286,
+        "wall_seconds": 64.8820946640335
+      },
+      {
+        "arm": "CONTROL",
+        "attempt": 1,
+        "attempt_token": "3736944-1793467732998690242-CONTROL-seed43-attempt1",
+        "child_pid": 1110688,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/research/flywheel_selfplay/h105_shrink_r882/runner.py",
+          "--arm",
+          "CONTROL",
+          "--seed",
+          "43",
+          "--out",
+          "/home/ubuntu/jope-data/h105/h105-wave/CONTROL-seed43-attempt1.json",
+          "--attempt",
+          "1",
+          "--phase",
+          "/home/ubuntu/jope-data/h105/h105-wave/CONTROL-seed43-attempt1.phase.json",
+          "--attempt-token",
+          "3736944-1793467732998690242-CONTROL-seed43-attempt1",
+          "--lock-fd",
+          "5"
+        ],
+        "cpu_gate_seconds": 30.32637682184577,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 55.059571088165214,
+        "max_load1": 56.62890625,
+        "max_rss_kib": 4678924,
+        "min_mem_available_kib": 67981132,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 612570136576,
+          "disk_used_percent": 92.28130086274251,
+          "host_cpu_percent": 21.058451816745656,
+          "load1": 46.5185546875,
+          "mem_available_kib": 76372172,
+          "owner_authority": "/home/ubuntu/nudges/dsc08_t1025.md",
+          "owner_available_block_used_percent": 92.28130086274251,
+          "owner_disk_limit_percent": 94.0,
+          "owner_operator_sha256": "503b186f7e50616e46581542b7abf03a29c2fddff84ba38d1d2856f3c3a140e0"
+        },
+        "receipt_sha256": "5bc1dedf3127adb500bbf31fb2726de0f2a7f6e33ec7bbef41e04c58db1646c1",
+        "seed": 43,
+        "stage": "complete",
+        "started_utc": "2026-10-31T17:28:52.998693+00:00",
+        "timing": false,
+        "wait_seconds": 31.36452255072072,
+        "wall_seconds": 70.70638029207475
+      },
+      {
+        "arm": "INTERP025",
+        "attempt": 1,
+        "attempt_token": "3736944-1793467835010666480-INTERP025-seed43-attempt1",
+        "child_pid": 1233198,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/research/flywheel_selfplay/h105_shrink_r882/runner.py",
+          "--arm",
+          "INTERP025",
+          "--seed",
+          "43",
+          "--out",
+          "/home/ubuntu/jope-data/h105/h105-wave/INTERP025-seed43-attempt1.json",
+          "--attempt",
+          "1",
+          "--phase",
+          "/home/ubuntu/jope-data/h105/h105-wave/INTERP025-seed43-attempt1.phase.json",
+          "--attempt-token",
+          "3736944-1793467835010666480-INTERP025-seed43-attempt1",
+          "--lock-fd",
+          "5"
+        ],
+        "cpu_gate_seconds": 30.06525502796285,
+        "gpu_free_mib": 24121,
+        "max_host_cpu_percent": 53.582256262964734,
+        "max_load1": 61.9921875,
+        "max_rss_kib": 4666124,
+        "min_mem_available_kib": 68653948,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 611803688960,
+          "disk_used_percent": 92.29095849735305,
+          "host_cpu_percent": 29.229787912613617,
+          "load1": 61.9921875,
+          "mem_available_kib": 76222800,
+          "owner_authority": "/home/ubuntu/nudges/dsc08_t1025.md",
+          "owner_available_block_used_percent": 92.29095849735305,
+          "owner_disk_limit_percent": 94.0,
+          "owner_operator_sha256": "503b186f7e50616e46581542b7abf03a29c2fddff84ba38d1d2856f3c3a140e0"
+        },
+        "receipt_sha256": "21d79fbbd11e0e71b3b09100324416c693696a286203f332a3e87739f7cb3d39",
+        "seed": 43,
+        "stage": "complete",
+        "started_utc": "2026-10-31T17:30:35.010669+00:00",
+        "timing": false,
+        "wait_seconds": 31.221751717152074,
+        "wall_seconds": 69.59261154290289
+      },
+      {
+        "arm": "INTERP050",
+        "attempt": 1,
+        "attempt_token": "3736944-1793467937943096929-INTERP050-seed43-attempt1",
+        "child_pid": 1370521,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/research/flywheel_selfplay/h105_shrink_r882/runner.py",
+          "--arm",
+          "INTERP050",
+          "--seed",
+          "43",
+          "--out",
+          "/home/ubuntu/jope-data/h105/h105-wave/INTERP050-seed43-attempt1.json",
+          "--attempt",
+          "1",
+          "--phase",
+          "/home/ubuntu/jope-data/h105/h105-wave/INTERP050-seed43-attempt1.phase.json",
+          "--attempt-token",
+          "3736944-1793467937943096929-INTERP050-seed43-attempt1",
+          "--lock-fd",
+          "5"
+        ],
+        "cpu_gate_seconds": 30.288437331095338,
+        "gpu_free_mib": 24121,
+        "max_host_cpu_percent": 50.58451816745656,
+        "max_load1": 55.0625,
+        "max_rss_kib": 4667820,
+        "min_mem_available_kib": 71998844,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 610269097984,
+          "disk_used_percent": 92.31029513382165,
+          "host_cpu_percent": 27.70334928229665,
+          "load1": 55.0625,
+          "mem_available_kib": 78686256,
+          "owner_authority": "/home/ubuntu/nudges/dsc08_t1025.md",
+          "owner_available_block_used_percent": 92.31029513382165,
+          "owner_disk_limit_percent": 94.0,
+          "owner_operator_sha256": "503b186f7e50616e46581542b7abf03a29c2fddff84ba38d1d2856f3c3a140e0"
+        },
+        "receipt_sha256": "d9a4ca3e76de904007742c10b7586ca49c1cce1908c0a520a3b8376226d839b4",
+        "seed": 43,
+        "stage": "complete",
+        "started_utc": "2026-10-31T17:32:17.943099+00:00",
+        "timing": false,
+        "wait_seconds": 31.331151479156688,
+        "wall_seconds": 63.25332868285477
+      },
+      {
+        "arm": "ANCHOR",
+        "attempt": 1,
+        "attempt_token": "3736944-1793469105981339652-ANCHOR-seed43-attempt1",
+        "child_pid": 3494063,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/research/flywheel_selfplay/h105_shrink_r882/runner.py",
+          "--arm",
+          "ANCHOR",
+          "--seed",
+          "43",
+          "--out",
+          "/home/ubuntu/jope-data/h105/h105-wave/ANCHOR-seed43-attempt1.json",
+          "--attempt",
+          "1",
+          "--phase",
+          "/home/ubuntu/jope-data/h105/h105-wave/ANCHOR-seed43-attempt1.phase.json",
+          "--attempt-token",
+          "3736944-1793469105981339652-ANCHOR-seed43-attempt1",
+          "--lock-fd",
+          "5"
+        ],
+        "cpu_gate_seconds": 30.260020211106166,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 29.514500881269026,
+        "max_load1": 42.447265625,
+        "max_rss_kib": 4737104,
+        "min_mem_available_kib": 67254064,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 576128954368,
+          "disk_used_percent": 92.74047852236816,
+          "host_cpu_percent": 12.964128382630586,
+          "load1": 42.115234375,
+          "mem_available_kib": 75752440,
+          "owner_authority": "/home/ubuntu/nudges/dsc08_t1025.md",
+          "owner_available_block_used_percent": 92.74047852236816,
+          "owner_disk_limit_percent": 94.0,
+          "owner_operator_sha256": "503b186f7e50616e46581542b7abf03a29c2fddff84ba38d1d2856f3c3a140e0"
+        },
+        "receipt_sha256": "1c5986717b76f67cd79261c8672898450454103b758a3cdb41d9aa14b15b4ebd",
+        "seed": 43,
+        "stage": "complete",
+        "started_utc": "2026-10-31T17:51:45.981344+00:00",
+        "timing": false,
+        "wait_seconds": 1103.3539714731742,
+        "wall_seconds": 80.90524700796232
+      },
+      {
+        "arm": "CONTROL",
+        "attempt": 1,
+        "attempt_token": "3736944-1793469293061682918-CONTROL-seed44-attempt1",
+        "child_pid": 3892992,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/research/flywheel_selfplay/h105_shrink_r882/runner.py",
+          "--arm",
+          "CONTROL",
+          "--seed",
+          "44",
+          "--out",
+          "/home/ubuntu/jope-data/h105/h105-wave/CONTROL-seed44-attempt1.json",
+          "--attempt",
+          "1",
+          "--phase",
+          "/home/ubuntu/jope-data/h105/h105-wave/CONTROL-seed44-attempt1.phase.json",
+          "--attempt-token",
+          "3736944-1793469293061682918-CONTROL-seed44-attempt1",
+          "--lock-fd",
+          "5"
+        ],
+        "cpu_gate_seconds": 30.01576345716603,
+        "gpu_free_mib": 24121,
+        "max_host_cpu_percent": 30.851917214824322,
+        "max_load1": 46.2490234375,
+        "max_rss_kib": 4665840,
+        "min_mem_available_kib": 63859776,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 574728491008,
+          "disk_used_percent": 92.75812508181198,
+          "host_cpu_percent": 26.438618925831204,
+          "load1": 38.8232421875,
+          "mem_available_kib": 75363252,
+          "owner_authority": "/home/ubuntu/nudges/dsc08_t1025.md",
+          "owner_available_block_used_percent": 92.75812508181198,
+          "owner_disk_limit_percent": 94.0,
+          "owner_operator_sha256": "503b186f7e50616e46581542b7abf03a29c2fddff84ba38d1d2856f3c3a140e0"
+        },
+        "receipt_sha256": "7df644d0cd53e5ecf69128de345aeb0215fb27c1a824c0222dd296bfa68bcf33",
+        "seed": 44,
+        "stage": "complete",
+        "started_utc": "2026-10-31T17:54:53.061687+00:00",
+        "timing": false,
+        "wait_seconds": 106.09137999010272,
+        "wall_seconds": 63.19747698609717
+      },
+      {
+        "arm": "INTERP025",
+        "attempt": 1,
+        "attempt_token": "3736944-1793469492632928562-INTERP025-seed44-attempt1",
+        "child_pid": 20932,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/research/flywheel_selfplay/h105_shrink_r882/runner.py",
+          "--arm",
+          "INTERP025",
+          "--seed",
+          "44",
+          "--out",
+          "/home/ubuntu/jope-data/h105/h105-wave/INTERP025-seed44-attempt1.json",
+          "--attempt",
+          "1",
+          "--phase",
+          "/home/ubuntu/jope-data/h105/h105-wave/INTERP025-seed44-attempt1.phase.json",
+          "--attempt-token",
+          "3736944-1793469492632928562-INTERP025-seed44-attempt1",
+          "--lock-fd",
+          "5"
+        ],
+        "cpu_gate_seconds": 30.02156024496071,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 28.24967824967825,
+        "max_load1": 50.8466796875,
+        "max_rss_kib": 4681916,
+        "min_mem_available_kib": 65343288,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 569401470976,
+          "disk_used_percent": 92.8252482771329,
+          "host_cpu_percent": 21.173836558451942,
+          "load1": 50.74609375,
+          "mem_available_kib": 69172672,
+          "owner_authority": "/home/ubuntu/nudges/dsc08_t1025.md",
+          "owner_available_block_used_percent": 92.8252482771329,
+          "owner_disk_limit_percent": 94.0,
+          "owner_operator_sha256": "503b186f7e50616e46581542b7abf03a29c2fddff84ba38d1d2856f3c3a140e0"
+        },
+        "receipt_sha256": "05774cf0236c3483ea5f30a8b306e036618d294f91caf4f4d37bc7f1b477f3ba",
+        "seed": 44,
+        "stage": "complete",
+        "started_utc": "2026-10-31T17:58:12.632931+00:00",
+        "timing": false,
+        "wait_seconds": 136.31131891580299,
+        "wall_seconds": 75.32105566794053
+      },
+      {
+        "arm": "INTERP050",
+        "attempt": 1,
+        "attempt_token": "3736944-1793469690230592852-INTERP050-seed44-attempt1",
+        "child_pid": 398194,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/research/flywheel_selfplay/h105_shrink_r882/runner.py",
+          "--arm",
+          "INTERP050",
+          "--seed",
+          "44",
+          "--out",
+          "/home/ubuntu/jope-data/h105/h105-wave/INTERP050-seed44-attempt1.json",
+          "--attempt",
+          "1",
+          "--phase",
+          "/home/ubuntu/jope-data/h105/h105-wave/INTERP050-seed44-attempt1.phase.json",
+          "--attempt-token",
+          "3736944-1793469690230592852-INTERP050-seed44-attempt1",
+          "--lock-fd",
+          "5"
+        ],
+        "cpu_gate_seconds": 30.31687603192404,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 43.71419478039466,
+        "max_load1": 49.16015625,
+        "max_rss_kib": 4681900,
+        "min_mem_available_kib": 66485728,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 569145720832,
+          "disk_used_percent": 92.82847086063472,
+          "host_cpu_percent": 28.011658031088082,
+          "load1": 38.76220703125,
+          "mem_available_kib": 68729848,
+          "owner_authority": "/home/ubuntu/nudges/dsc08_t1025.md",
+          "owner_available_block_used_percent": 92.82847086063472,
+          "owner_disk_limit_percent": 94.0,
+          "owner_operator_sha256": "503b186f7e50616e46581542b7abf03a29c2fddff84ba38d1d2856f3c3a140e0"
+        },
+        "receipt_sha256": "31a89512b274d0d82f864d05e4a732da5ef15a3b8a27d9537daac5ba39982152",
+        "seed": 44,
+        "stage": "complete",
+        "started_utc": "2026-10-31T18:01:30.230595+00:00",
+        "timing": false,
+        "wait_seconds": 122.15054186503403,
+        "wall_seconds": 64.68595773493871
+      },
+      {
+        "arm": "ANCHOR",
+        "attempt": 1,
+        "attempt_token": "3736944-1793469847591700371-ANCHOR-seed44-attempt1",
+        "child_pid": 682917,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/research/flywheel_selfplay/h105_shrink_r882/runner.py",
+          "--arm",
+          "ANCHOR",
+          "--seed",
+          "44",
+          "--out",
+          "/home/ubuntu/jope-data/h105/h105-wave/ANCHOR-seed44-attempt1.json",
+          "--attempt",
+          "1",
+          "--phase",
+          "/home/ubuntu/jope-data/h105/h105-wave/ANCHOR-seed44-attempt1.phase.json",
+          "--attempt-token",
+          "3736944-1793469847591700371-ANCHOR-seed44-attempt1",
+          "--lock-fd",
+          "5"
+        ],
+        "cpu_gate_seconds": 30.10560519504361,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 38.93371302009176,
+        "max_load1": 48.57177734375,
+        "max_rss_kib": 4733404,
+        "min_mem_available_kib": 62103260,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 566249869312,
+          "disk_used_percent": 92.86496008087975,
+          "host_cpu_percent": 17.674858223062383,
+          "load1": 47.74560546875,
+          "mem_available_kib": 65925336,
+          "owner_authority": "/home/ubuntu/nudges/dsc08_t1025.md",
+          "owner_available_block_used_percent": 92.86496008087975,
+          "owner_disk_limit_percent": 94.0,
+          "owner_operator_sha256": "503b186f7e50616e46581542b7abf03a29c2fddff84ba38d1d2856f3c3a140e0"
+        },
+        "receipt_sha256": "c1bcb5845e9cea45a4a22ecb82501c5d74b7ebbd4b729b3204e208307a290ac8",
+        "seed": 44,
+        "stage": "complete",
+        "started_utc": "2026-10-31T18:04:07.591703+00:00",
+        "timing": false,
+        "wait_seconds": 91.297718829941,
+        "wall_seconds": 63.8432781691663
+      }
+    ],
+    "cap_seconds": 2700.0,
+    "cpu_pr": 1075,
+    "execution_source_proof": {
+      "execution_commit": "002b92caeeb313456d6d05cd6049564eaa7d0980",
+      "own_sha256": {
+        "PREREG.md": "5c1aa0294e4d79cdcd4041f126ca936c3471da012f1ef0f92597879a42de8647",
+        "cpu_validate.py": "69bd038053b5b6887c56c4a7ae1163376b8ecef1e84bc3f933b1507b4a0db8c8",
+        "run_wave.py": "a1940b842dfd94ae71d6a58ba632f7dec9d4dc3451c12e76d59ea4ff625f9150",
+        "runner.py": "115fa78333613a3eb2f0b0d11a9c9bd2287060f89ec533f1d7c9c1cc3f8f934c",
+        "test_h105.py": "c5b85ae8f53257ada2e032a86425011762d0111f5043c7d19f4959efe879e243"
+      },
+      "shared_sha256": {
+        "research/flywheel_selfplay/automatic_promotion.py": "261d2d1865c2f50e1c7388dfd2ac404e85f599df3a5b7aaaab69415cf250d8a0",
+        "research/flywheel_selfplay/dev_incumbent.py": "81ebdafa5fe1accb1da56a424bee669f0e381fee2bd5e23c751c17618079523f",
+        "research/flywheel_selfplay/h46/run.py": "645bf1470789c4f5bcc97809f703b04d9a594a21dd9d3aa8c2fd4e98810d0320",
+        "research/flywheel_selfplay/h48/run.py": "756960a0e2bfdf23e75012fb347ce772fb6fdeaa4fb4fc2d4178dfaeb9eac9da",
+        "research/flywheel_selfplay/h53b/runner.py": "85aa59e9c4bee62805ed6c388364611b3a7cdb772a19017eeae848819c2cb318",
+        "research/flywheel_selfplay/h55/runner.py": "56fd220689805f07877ae403c2f00a4b34831cc4b2919f4bd69807ff3c21f4bc",
+        "research/flywheel_selfplay/h59/runner.py": "604d02ed72a6149284792cba315124efd1ffe8cac79e5ace22613db86c11b4c3",
+        "research/flywheel_selfplay/h61/run_wave.py": "b665589255015d6dcc014ef0b6dd86953d336849914fe5278361bd5d76cda426",
+        "research/flywheel_selfplay/h61/runner.py": "a1654add23b76e54b22afe5a7f42bf543420b12ca0d31d52b5c25c409498d037",
+        "research/flywheel_selfplay/h76_sam_steps/runner.py": "3556fe81fe654b148d301244d6d0460bf2363b5a97db0a0b644507168e97d24f",
+        "research/flywheel_selfplay/h97_reg_ema/runner.py": "4411ad39b85a2c3d568c03b70d358e40a4fdca7f4affa3315e2856f4f8660a67",
+        "research/flywheel_selfplay/qualification_lock_fifo.py": "8e3150a7ab9b53612f99db9757f8bfa32938afa5d90c9bbc9db60c6752e79a84",
+        "research/flywheel_selfplay/run_fused_closed_loop.py": "564c441a61654bfd2249d5003873a450f45abe31e15cc9fd704ffafd8b48b737"
+      },
+      "shared_source_root": "/home/ubuntu/JopeDime/.agent/worktrees/agy_h61"
+    },
+    "in_progress": null,
+    "predecessor_order": {
+      "H100": {
+        "older_live_ticket": "1793466148722093218-1762826-H100"
+      },
+      "H99": {
+        "prior_gpu_start": true,
+        "proof": "native-completed-GPU-cell"
+      }
+    },
+    "prereg_sha256": "5c1aa0294e4d79cdcd4041f126ca936c3471da012f1ef0f92597879a42de8647",
+    "wave": "H105"
+  },
+  "reference": "r882",
+  "schema": "jope.h105.metrics/v1"
+}
