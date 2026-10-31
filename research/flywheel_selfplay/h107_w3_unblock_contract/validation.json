@@ -1,0 +1,48 @@
+{
+  "schema": "jope.h107.contract-validation/v1",
+  "source_commit": "59805aecd39c99592c3799e4075851c994712cc3",
+  "source_pins_verified": 9,
+  "synthetic_schema_controls_passed": 17,
+  "synthetic_controls_failed": 0,
+  "semantic_admission_validator_implemented": false,
+  "real_completion_rows_validated": 0,
+  "host_shards": [
+    {
+      "host": "xbabe2",
+      "shard": "1",
+      "cpu_seconds": 0.0006225789999999981,
+      "exit_status": 0
+    },
+    {
+      "host": "xbabe3",
+      "shard": "2",
+      "cpu_seconds": 0.0005871910000000008,
+      "exit_status": 0
+    },
+    {
+      "host": "xbabe1",
+      "shard": "0",
+      "cpu_seconds": 0.0007249899999999983,
+      "exit_status": 0
+    },
+    {
+      "host": "xbabe4",
+      "shard": "3_4",
+      "cpu_seconds": 0.00038216599999999976,
+      "exit_status": 0
+    }
+  ],
+  "worker_sha256": "736233c00c89bca03fb59c33c6514dfcd067c9100202125421020eb9940a5447",
+  "input_packet_sha256": "0e7f662ecd8ddde6349aabd31c6d9901100a0f454af379566f2639b791e2714d",
+  "worker_cpu_seconds": 0.002316925999999997,
+  "overhead": "Local schema checks, imports, transport and publication overhead unmeasured; not asserted zero.",
+  "native_fits": 0,
+  "optimizer_updates": 0,
+  "gpu_seconds": 0,
+  "metrics": {
+    "Elo": null,
+    "val_reg_inner": null,
+    "U4": null
+  },
+  "verdict": "DRAFT_CONTRACT_VALIDATED_W3_STILL_BLOCKED"
+}

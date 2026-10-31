@@ -1,15 +1,6 @@
 \section{Results}\label{sec:results}
 
-Does training make the first proposed algorithm better on an unseen problem?
-The available training trajectory in \cref{sec:method-status} records
-validation behavior during learning. It does not answer the deployment
-question: those validation outcomes inform admission and are not an
-untouched test. This section specifies the comparisons still needed;
-\cref{tab:results-plan} summarizes them and their status.
-\TBD{Add independent evaluation evidence before making a performance claim.}
-\TBD{Supply a source-bound benchmark before claiming deployment throughput.}
-
-\begin{table*}[t]
+\begin{table*}[t]% defined before the opening paragraph so it can reach the next page top (LAYOUT_REDTEAM.md, pass 24)
   \caption{\textbf{Evaluation plan at a glance.} Each test is specified in the
   subsection named in the first column. No outcome is reported yet; the
   contract in \cref{sub:results-protocol} fixes inputs, budgets and splits
@@ -46,6 +37,15 @@ untouched test. This section specifies the comparisons still needed;
     \bottomrule
   \end{tabular}
 \end{table*}
+
+Does training make the first proposed algorithm better on an unseen problem?
+The available training trajectory in \cref{sec:method-status} records
+validation behavior during learning. It does not answer the deployment
+question: those validation outcomes inform admission and are not an
+untouched test. This section specifies the comparisons still needed;
+\cref{tab:results-plan} summarizes them and their status.
+\TBD{Add independent evaluation evidence before making a performance claim.}
+\TBD{Supply a source-bound benchmark before claiming deployment throughput.}
 
 \subsection{Evaluation contract}\label{sub:results-protocol}
 

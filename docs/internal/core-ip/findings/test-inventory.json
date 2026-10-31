@@ -429,6 +429,14 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
+    "python:research/flywheel_selfplay/h101_w6_proposer_transfer_prep/test_w6_transfer_prep.py": {
+      "reason": "Owner-requested pytest proofs for H101 W6 proposer transfer preparation and fail-closed completeness gates; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h111_w7_common_support/test_matching.py": {
+      "reason": "Owner-requested W7 common-support matcher synthetic controls; no measured outcomes, provenance authentication or execution admission.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h104_w7_acquisition_replay_prep/test_runner.py": {
       "reason": "Owner-requested W7 acquisition/QD/replay preparation controls; synthetic offline research, no scientific outcome or execution admission.",
       "role": "research"
@@ -1960,6 +1968,10 @@
     "python:research/flywheel_selfplay/h82_sam_steps/ops/test_recover.py": {
       "role": "research",
       "reason": "CPU-only H82 operator recovery fixtures for immutable checkpoint staging and exact-prefix refusal; no scientific outcomes or GPU execution."
+    },
+    "python:research/flywheel_selfplay/h105_shrink_r882/test_h105.py": {
+      "role": "research",
+      "reason": "CPU-only H105 shrinkage, anchor, grouped-fold and strict full-panel Holm/harm/admission fixtures; no data, checkpoint, CUDA or GPU ticket in preparation; outside product qualification."
     },
     "python:research/flywheel_selfplay/h100_asam_confirm/test_h100.py": {
       "role": "research",
@@ -5073,10 +5085,6 @@
     },
     "python:research/flywheel_selfplay/h109_family_balanced_accum/test_h109.py": {
       "reason": "Owner-requested pytest proofs for the H109 family-balanced accumulation preregistration; offline research analysis outside the reviewed product baseline.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h101_w6_proposer_transfer_prep/test_w6_transfer_prep.py": {
-      "reason": "Owner-requested pytest proofs for H101 W6 proposer transfer preparation and fail-closed completeness gates; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     }
   },

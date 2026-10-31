@@ -4,11 +4,14 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 import hashlib
+import json
+import time
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import runner  # noqa: E402
 import coordinator  # noqa: E402
+import build_metrics  # noqa: E402
 
 
 def test_fixed_paired_cells_and_h80_budget():
@@ -109,23 +112,49 @@ def test_launch_resource_limits_are_strict_at_boundaries():
             raise AssertionError(f"accepted unsafe launch snapshot: {snapshot}")
 
 
+def test_wall_deadline_interrupts_overlong_cell_action():
+    try:
+        with coordinator._wall_deadline(0.02):
+            time.sleep(0.2)
+    except TimeoutError as exc:
+        assert "9,000-second" in str(exc)
+    else:
+        raise AssertionError("H99 wall deadline failed to interrupt an overlong action")
+
+
 def test_h99_acquire_adapter_uses_shared_fifo_and_h99_wave_name(tmp_path):
     calls = []
+    markers = []
+
+    class Handle:
+        def close(self):
+            self.closed = True
 
     class FakeWave:
         @staticmethod
         def acquire_lock(status_path, wait_total, **kwargs):
+            marker = next((tmp_path / "queue").glob("H99-owner-*.json"))
+            markers.append(json.loads(marker.read_text()))
             calls.append((status_path, wait_total, kwargs))
-            return "handle", 3.0, 8192, {"load1": 4.0}
+            return Handle(), 3.0, 8192, {"load1": 4.0}
 
-    result = coordinator.acquire_h99_fifo(tmp_path / "H99_STATUS.log", wait_total=2.0, wave=FakeWave)
-    assert result[0] == "handle"
+    queue_dir = tmp_path / "queue"
+    result = coordinator.acquire_h99_fifo(
+        tmp_path / "H99_STATUS.log", wait_total=2.0, wave=FakeWave,
+        owner="luna_v1_res03", eta_utc="2026-10-31T16:00:00Z", queue_dir=queue_dir,
+    )
+    assert isinstance(result[0], coordinator.H99Lease)
     status_path, wait_total, kwargs = calls[0]
     assert status_path == tmp_path / "H99_STATUS.log"
     assert wait_total == 2.0
     assert kwargs["wave_name"] == "H99"
     assert kwargs["after_release"] is True
     assert callable(kwargs["preflight_fn"])
+    assert markers[0]["owner"] == "luna_v1_res03"
+    assert markers[0]["eta_utc"] == "2026-10-31T16:00:00Z"
+    assert list(queue_dir.glob("H99-owner-*.json"))
+    coordinator.release_lock(result[0], flock_fn=lambda *_args: None)
+    assert list(queue_dir.glob("H99-owner-*.json")) == []
 
 
 def test_cpu_gate_requires_two_consecutive_safe_load_samples():
@@ -188,3 +217,112 @@ def test_fifo_coordinator_charges_all_seven_cells_and_releases_each_lease(tmp_pa
         f"{cell['arm']}-seed{cell['seed']}-attempt1" for cell in cells
     ]
     assert sum(item["wall_seconds"] for item in result["attempts"]) == 7.0
+
+
+def test_cpu_fake_wave_end_to_end_produces_preregistered_metrics_json(tmp_path, monkeypatch):
+    checkpoint = tmp_path / "source-r882.pt"
+    checkpoint.write_bytes(b"fake pinned checkpoint")
+    def stage(_source, scratch):
+        scratch.mkdir(parents=True)
+        staged = scratch / "r882-copy.pt"
+        staged.write_bytes(b"fake staged checkpoint")
+        return staged
+    monkeypatch.setattr(coordinator, "stage_r882_copy", stage)
+    plan = runner.execution_plan()
+    cells = [*plan["candidate_cells"], plan["null_cell"]]
+    leases = []
+    released = []
+    clock_values = iter(range(20))
+
+    def acquire(status_path, *, wait_total):
+        handle = object()
+        leases.append((status_path, wait_total, handle))
+        return handle, 0.0, 8192, {"cpu": "fake-safe"}
+
+    def fake_worker(cell, _staged, scratch, _remaining):
+        out = tmp_path / "run" / "outcomes" / "cells" / cell["arm"] / f"seed{cell['seed']}" / "attempt1"
+        out.mkdir(parents=True)
+        (out / "summary.json").write_text(json.dumps({"arm": cell["arm"], "seed": cell["seed"], "status": "complete"}))
+        return {"scratch": str(scratch), "fake": True}
+
+    def fake_finalize(_staged, _scratch, _remaining):
+        candidates = []
+        for cell in cells:
+            if cell["arm"] == "NULL":
+                continue
+            gains = {
+                f"family-{family:02d}": 0.02 - 0.0005 * family + (0.0001 if cell["seed"] == 37 else 0.0)
+                for family in range(20)
+            }
+            candidates.append({"arm": cell["arm"], "seed": cell["seed"], "family_gain_vs_r882": gains, "fold_b_scoring_passes": 1})
+        fold_b = {
+            "schema": "jope.h99.fold-b/v1", "status": "complete", "fold_seed": 9900,
+            "fold_assignment_sha256": "a" * 64, "source_manifest_sha256": "b" * 64,
+            "fold_b_family_count": 20, "candidate_count": 6, "fold_b_read_count": 6,
+            "null_cell_complete": True, "null_fold_b_scored": False,
+            "candidates": candidates,
+        }
+        out = tmp_path / "run" / "outcomes" / "fold_b.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(fold_b))
+        return {"fake": True}
+
+    budget = coordinator.run_fifo_cells(
+        cells, run_root=tmp_path / "run", checkpoint=checkpoint, worker=fake_worker,
+        finalize_worker=fake_finalize, acquire_fn=acquire,
+        release_fn=lambda handle: released.append(handle), cpu_gate_fn=lambda: None,
+        setup_fn=lambda: None, clock_fn=clock_values.__next__,
+    )
+    assert len(budget["attempts"]) == 8  # seven cells plus one metered Fold-B scoring action
+    assert len(leases) == len(released) == 8
+    assert len({item["scratch"] for item in budget["attempts"]}) == 8
+    fold_b = json.loads((tmp_path / "run/outcomes/fold_b.json").read_text())
+    metrics = build_metrics.build_metrics(fold_b)
+    output = tmp_path / "run/outcomes/admission.json"
+    output.write_text(json.dumps(metrics, sort_keys=True, allow_nan=False))
+    decoded = json.loads(output.read_text())
+    assert decoded["schema"] == "jope.h99.admission-metrics/v1"
+    assert decoded["bootstrap_draws"] == 10_000
+    assert decoded["arms"]["ESH-l2"]["mean_lcb95_one_sided"] > 0.001
+    assert decoded["arms"]["ESH-l2"]["elo_vs_r882_median_across_seeds"] > 1500.0
+    assert decoded["null_diagnostic"]["admitted"] is False
+
+
+def test_metrics_reject_missing_duplicate_and_inexact_six_candidate_panels():
+    plan = runner.execution_plan()
+    cells = [*plan["candidate_cells"], plan["null_cell"]]
+    rows = [
+        {"arm": cell["arm"], "seed": cell["seed"], "family_gain_vs_r882": {"f0": 0.01, "f1": 0.02}, "fold_b_scoring_passes": 1}
+        for cell in cells
+        if cell["arm"] != "NULL"
+    ]
+    base = {
+        "schema": "jope.h99.fold-b/v1", "status": "complete", "fold_seed": 9900,
+        "fold_assignment_sha256": "a" * 64, "source_manifest_sha256": "b" * 64,
+        "fold_b_family_count": 2, "candidate_count": 6, "fold_b_read_count": 6,
+        "null_cell_complete": True, "null_fold_b_scored": False, "candidates": rows,
+    }
+    for invalid in (dict(base, candidates=rows[:-1]), dict(base, candidates=rows + [rows[0]])):
+        try:
+            build_metrics.build_metrics(invalid)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("accepted incomplete or duplicate H99 Fold-B panel")
+
+
+def test_exact_fold_b_ties_never_admit():
+    plan = runner.execution_plan()
+    rows = [
+        {"arm": cell["arm"], "seed": cell["seed"], "family_gain_vs_r882": {"f0": 0.0, "f1": 0.0}, "fold_b_scoring_passes": 1}
+        for cell in plan["candidate_cells"]
+    ]
+    fold_b = {
+        "schema": "jope.h99.fold-b/v1", "status": "complete", "fold_seed": 9900,
+        "fold_assignment_sha256": "a" * 64, "source_manifest_sha256": "b" * 64,
+        "fold_b_family_count": 2, "candidate_count": 6, "fold_b_read_count": 6,
+        "null_cell_complete": True, "null_fold_b_scored": False, "candidates": rows,
+    }
+    metrics = build_metrics.build_metrics(fold_b)
+    assert metrics["arms"]["ESH-l2"]["is_exact_tie"] is True
+    assert metrics["arms"]["ESH-l2"]["admitted"] is False

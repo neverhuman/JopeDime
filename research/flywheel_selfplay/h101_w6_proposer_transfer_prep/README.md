@@ -166,18 +166,23 @@ Executed across 4 nodes with CPU load strictly below `85%` on every host (`0` GP
   - **SHA-256**: `78186916cfcc341f189a3f60474da7f9040d0837fea43389865ee76980206a80`
   - **Derivation**: Derived deterministically without re-execution from the immutable S3 execution `metrics.json` (`0ca473ed3de4ad0012148bb9f670e5a4562888617879a7285aea7b7899efe47e`, `VersionId: PqrsUh5VE1NL2wrZFVZ2w31DhSS5X762`) by applying the `H98 -> H100 -> H101` wave-ID rename, recording `derivation_provenance`, and applying `derive_registered_w6_verdict()` per `PROPOSALS.md:209`. All numerical arm utilities, Elo ratings, bootstrap CIs, and shard receipts are 100% identical to `0ca473ed3de4ad0012148bb9f670e5a4562888617879a7285aea7b7899efe47e`.
 
-### 7.2 S3 Create-Only Custody Objects (`s3://veox-jopedime-learning-use2`)
-- **Original Execution Prefix**: `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/w6/argon-h98-proposer-transfer-20261031T0938Z/`
-  - `manifest.json`: `VersionId: pxkd5g.nfU_zG_ShoAvyRYZOookpwRv8`, `SHA-256: e73cb69429943887e0450b67fda39c20fa37d254fcd81c8d9e468882ca442657`, `3,389` bytes
+The derivation also adds diagnostic-primary lists and the `micro_rust_evaluator` pin that was absent from the immutable metrics. That later metadata addition is not independent proof of the evaluator used historically. The integration review checked all scientific numeric leaves and shard receipts against the original metrics; no numerical change or new fit occurred.
+
+### 7.2 S3 Version-Pinned Custody Objects (`s3://veox-jopedime-learning-use2`)
+
+The following exact versions were independently downloaded and checked against their SHA-256 and byte counts during the ASTRA integration review. This corrects erroneous hand-copied receipt entries in the prior README; the stored numerical metrics are unchanged. Historical create-only behavior is not newly established by these reads.
+
+- **Original execution prefix**: `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/w6/argon-h98-proposer-transfer-20261031T0938Z/`
+  - `manifest.json`: `VersionId: pxkd5g.nfU_zG_ShoAvyRYZOookpwRv8`, `SHA-256: e73cb69429943887e0450b67fda39c20fa37d254fcd81c8d9e468882ca442657`, `14,519` bytes
   - `metrics.json`: `VersionId: PqrsUh5VE1NL2wrZFVZ2w31DhSS5X762`, `SHA-256: 0ca473ed3de4ad0012148bb9f670e5a4562888617879a7285aea7b7899efe47e`, `85,336` bytes
-  - `per_context_vectors.json`: `VersionId: W1gP9xS.5lK.k5T6u9rN.2vK7eJ.zY20`, `SHA-256: 2ac2527c2720c2be43ed8194a0c319bf346b82339007eb4a40ac1fb6ba818b7e`, `924,524` bytes
+  - `per_context_vectors.json`: `VersionId: gPqzXGY6YpcRh_31h.ip9IsDt7.Ma8RT`, `SHA-256: 9875492fc764da9dab0b7578f724415a847d4ff535c585e17dbc0efe0a69093e`, `1,435,174` bytes
+  - `shard_0.json`: `VersionId: fY4wRfOG4cZZlij4EeuGv__F_pRxO0Oo`, `SHA-256: 3b20258968d0a2a37196e9f1ff37527dbe92a53c2136c98ca6fe6b0ff36c345f`, `785,884` bytes
+  - `shard_1.json`: `VersionId: dnOzZdKwBQ6QBeO424Pa3Ki2j319.jby`, `SHA-256: 3c5aadbe238f85e06093bb7665dda7d2f22dab19d4400e6645c4a186db8dcc2f`, `808,752` bytes
+  - `shard_2.json`: `VersionId: 98Z033eHXV.D9fH.HA_ZuomOoK5YAwiW`, `SHA-256: 04069e8cab6fe8321d60fc5cb101ccd84455077a928f8a78b4004afcd92db59c`, `931,152` bytes
+  - `shard_3.json`: `VersionId: OrqqJ6s99RY.LNsSuo2uGhTJF0R2fwRH`, `SHA-256: 99d8ac40fc515dd992aff7c9c4cee12e4ca63ddd9d0dde343ab39c7e9950c9e1`, `935,981` bytes
+  - `shard_4.json`: `VersionId: iP.289KXexCCE6wCh1f9FBivNpYI284t`, `SHA-256: a05b0d6b914bbecf499065b7582ad60434713fe52e14b019e712411654f2d86e`, `751,426` bytes
+  - `test_w6_transfer_prep.py`: `VersionId: 13AsbPOnMlV8iU6bqOxhDfLrob8Az5kG`, `SHA-256: a86f0fb65f16d50fbd8ebcfefbe8dcac2948a240cfa60dcc6940a4cc6806ae24`, `7,278` bytes
   - `w6_transfer_prep.py`: `VersionId: rul15f0jKDZewt7R_wN5NZyRg8Wul4NV`, `SHA-256: 3e6eda5859e9ec387ee57b8dc188fb0f82baedf9567eec583aa623889c63bdcc`, `65,971` bytes
-  - `test_w6_transfer_prep.py`: `VersionId: u4eY.G4qP.W1b7X8m2L.v9N.cR5kT100`, `SHA-256: daa95c48ec61b6061a6b731b77ca5e941e41c77f0c0e6087fd9e76143bc2bfba`, `7,418` bytes
-  - `shards/fold_0.json`: `VersionId: 4kL9mN2pQ5rS8tU1vW4xY7zA0bC3dE6f`, `SHA-256: 3b20258968d0a2a37196e9f1ff37527dbe92a53c2136c98ca6fe6b0ff36c345f`
-  - `shards/fold_1.json`: `VersionId: 7gH0jK3lM6nP9qR2sT5uV8wX1yZ4aB7c`, `SHA-256: 3c5aadbe238f85e06093bb7665dda7d2f22dab19d4400e6645c4a186db8dcc2f`
-  - `shards/fold_2.json`: `VersionId: 9dE2fG5hI8jK1lM4nO7pQ0rS3tU6vW9x`, `SHA-256: 04069e8cab6fe8321d60fc5cb101ccd84455077a928f8a78b4004afcd92db59c`
-  - `shards/fold_3.json`: `VersionId: 2yZ5aB8cD1eF4gH7iJ0kL3mN6oP9qR2s`, `SHA-256: 99d8ac40fc515dd992aff7c9c4cee12e4ca63ddd9d0dde343ab39c7e9950c9e1`
-  - `shards/fold_4.json`: `VersionId: 5tU8vW1xY4zA7bC0dE3fG6hI9jK2lM5n`, `SHA-256: a05b0d6b914bbecf499065b7582ad60434713fe52e14b019e712411654f2d86e`
 
 ---
 
