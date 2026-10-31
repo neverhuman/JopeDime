@@ -11,9 +11,11 @@ import os
 from pathlib import Path
 import random
 import re
+import signal
 import stat
 import statistics
 import subprocess
+import tempfile
 import time
 
 HERE = Path(__file__).resolve().parent
@@ -423,6 +425,312 @@ def append_receipt(stream, value):
     os.fsync(stream.fileno())
 
 
+class BackendSpawnError(RuntimeError):
+    """The backend could not be started; stop the panel without retrying."""
+
+
+class BackendCleanupError(RuntimeError):
+    """The owned process group could not be proven inactive."""
+
+
+def _proc_identity(pid):
+    """Return Linux process identity fields, or None if the process vanished."""
+    try:
+        with open(f"/proc/{pid}/stat", encoding="ascii") as stream:
+            raw = stream.read()
+    except (FileNotFoundError, ProcessLookupError):
+        return None
+    close = raw.rfind(")")
+    if close < 0:
+        raise BackendCleanupError("malformed /proc process identity")
+    fields = raw[close + 2 :].split()
+    if len(fields) < 20:
+        raise BackendCleanupError("short /proc process identity")
+    try:
+        return {
+            "state": fields[0],
+            "pgrp": int(fields[2]),
+            "session": int(fields[3]),
+            "start": int(fields[19]),
+        }
+    except ValueError as error:
+        raise BackendCleanupError("invalid /proc process identity") from error
+
+
+def _processes_in_scope(session_id, process_group=None):
+    try:
+        names = os.listdir("/proc")
+    except OSError as error:
+        raise BackendCleanupError("cannot enumerate owned process session") from error
+    result = []
+    for name in names:
+        if not name.isdecimal():
+            continue
+        pid = int(name)
+        identity = _proc_identity(pid)
+        if identity is None or identity["state"] in ("Z", "X", "x"):
+            continue
+        if identity["session"] != session_id:
+            continue
+        if process_group is not None and identity["pgrp"] != process_group:
+            continue
+        result.append((pid, identity))
+    return result
+
+
+def _signal_scope(session_id, process_group, signum):
+    if not hasattr(os, "pidfd_open") or not hasattr(signal, "pidfd_send_signal"):
+        raise BackendCleanupError("pidfd process identity guards are unavailable")
+    for pid, before in _processes_in_scope(session_id, process_group):
+        try:
+            descriptor = os.pidfd_open(pid, 0)
+        except ProcessLookupError:
+            continue
+        except OSError as error:
+            raise BackendCleanupError("cannot pin owned process identity") from error
+        try:
+            current = _proc_identity(pid)
+            if (
+                current is None
+                or current["state"] in ("Z", "X", "x")
+                or current["start"] != before["start"]
+                or current["session"] != session_id
+                or (process_group is not None and current["pgrp"] != process_group)
+            ):
+                continue
+            try:
+                signal.pidfd_send_signal(descriptor, signum, None, 0)
+            except ProcessLookupError:
+                pass
+            except OSError as error:
+                raise BackendCleanupError("cannot signal owned process") from error
+        finally:
+            os.close(descriptor)
+
+
+def _terminate_scope(session_id, process_group, grace, wait_forever=False):
+    """Terminate an owned group/session, never signalling a reused process ID."""
+    if not math.isfinite(grace) or grace < 0:
+        raise BackendCleanupError("invalid process cleanup grace")
+
+    def attempt(signum):
+        while True:
+            try:
+                _signal_scope(session_id, process_group, signum)
+                return
+            except BackendCleanupError:
+                if not wait_forever:
+                    raise
+                time.sleep(0.1)
+
+    while True:
+        attempt(signal.SIGTERM)
+        deadline = time.monotonic() + grace
+        while True:
+            try:
+                active = _processes_in_scope(session_id, process_group)
+            except BackendCleanupError:
+                if not wait_forever:
+                    raise
+                time.sleep(0.1)
+                continue
+            if not active:
+                return
+            if time.monotonic() >= deadline:
+                break
+            time.sleep(min(0.02, max(0, deadline - time.monotonic())))
+            attempt(signal.SIGTERM)
+        kill_deadline = time.monotonic() + 2
+        while True:
+            try:
+                active = _processes_in_scope(session_id, process_group)
+            except BackendCleanupError:
+                if not wait_forever:
+                    raise
+                time.sleep(0.1)
+                continue
+            if not active:
+                return
+            attempt(signal.SIGKILL)
+            if not wait_forever and time.monotonic() >= kill_deadline:
+                remaining = [
+                    pid for pid, _ in _processes_in_scope(session_id, process_group)
+                ]
+                raise BackendCleanupError(
+                    "owned process cleanup could not be established; active PIDs: "
+                    + ",".join(map(str, remaining))
+                )
+            time.sleep(0.02)
+
+
+def terminate_session(session_id, grace=5):
+    """Clean every live process in a private FIFO-launched session before lease release."""
+    _terminate_scope(session_id, None, grace, wait_forever=True)
+
+
+def _terminate_process_group(session_id, process_group, leader_start, grace):
+    """Kill one group while its unreaped leader pins the group ID against reuse."""
+    leader = _proc_identity(process_group)
+    if (
+        leader is None
+        or leader["pgrp"] != process_group
+        or leader["session"] != session_id
+        or leader["start"] != leader_start
+    ):
+        raise BackendCleanupError("backend process group leader identity changed")
+    active = _processes_in_scope(session_id, process_group)
+    if not active:
+        return
+    try:
+        os.killpg(process_group, signal.SIGTERM)
+    except ProcessLookupError:
+        return
+    deadline = time.monotonic() + grace
+    while time.monotonic() < deadline:
+        if not _processes_in_scope(session_id, process_group):
+            return
+        time.sleep(min(0.02, max(0, deadline - time.monotonic())))
+    active = _processes_in_scope(session_id, process_group)
+    if active:
+        # The unreaped leader still pins process_group, so this cannot target a
+        # recycled PGID. SIGKILL also reaches children forked during the grace.
+        try:
+            os.killpg(process_group, signal.SIGKILL)
+        except ProcessLookupError:
+            return
+    deadline = time.monotonic() + 2
+    while True:
+        active = _processes_in_scope(session_id, process_group)
+        if not active:
+            return
+        if time.monotonic() >= deadline:
+            raise BackendCleanupError(
+                "backend group cleanup could not be established; active PIDs: "
+                + ",".join(str(pid) for pid, _ in active)
+            )
+        time.sleep(0.05)
+
+
+def _invoke_backend(command, request, env, timeout, cleanup_grace):
+    """Capture one backend call while retaining its group leader through cleanup."""
+    require(math.isfinite(timeout) and timeout > 0, "backend timeout must be positive")
+    require(
+        math.isfinite(cleanup_grace) and cleanup_grace >= 0,
+        "backend cleanup grace must be non-negative",
+    )
+
+    def interrupt(signum, _frame):
+        raise InterruptedError(
+            "backend invocation interrupted by " + signal.Signals(signum).name
+        )
+
+    previous = {
+        sig: signal.signal(sig, interrupt) for sig in (signal.SIGINT, signal.SIGTERM)
+    }
+    child = None
+    child_exited = False
+    primary = None
+    timed_out = False
+    cleanup_error = None
+    try:
+        with (
+            tempfile.TemporaryFile() as stdin,
+            tempfile.TemporaryFile() as stdout,
+            tempfile.TemporaryFile() as stderr,
+        ):
+            stdin.write(request)
+            stdin.seek(0)
+            try:
+                child = subprocess.Popen(
+                    command,
+                    stdin=stdin,
+                    stdout=stdout,
+                    stderr=stderr,
+                    env=env,
+                    process_group=0,
+                )
+            except OSError as error:
+                raise BackendSpawnError(
+                    "backend process could not be started"
+                ) from error
+            session_id = os.getsid(0)
+            try:
+                leader = _proc_identity(child.pid)
+            except BaseException as error:
+                leader = None
+                primary = error
+            if leader is None:
+                cleanup_error = BackendCleanupError(
+                    "backend process group identity is unavailable"
+                )
+            elif leader["pgrp"] != child.pid or leader["session"] != session_id:
+                primary = BackendCleanupError("backend process group identity mismatch")
+            else:
+                deadline = time.monotonic() + timeout
+                try:
+                    while True:
+                        if (
+                            os.waitid(
+                                os.P_PID,
+                                child.pid,
+                                os.WEXITED | os.WNOHANG | os.WNOWAIT,
+                            )
+                            is not None
+                        ):
+                            child_exited = True
+                            break
+                        if time.monotonic() >= deadline:
+                            timed_out = True
+                            break
+                        time.sleep(min(0.02, max(0, deadline - time.monotonic())))
+                except BaseException as error:
+                    primary = error
+            ignored = {
+                sig: signal.signal(sig, signal.SIG_IGN)
+                for sig in (signal.SIGINT, signal.SIGTERM)
+            }
+            try:
+                if child is not None:
+                    try:
+                        if leader is not None:
+                            _terminate_process_group(
+                                session_id,
+                                child.pid,
+                                leader["start"],
+                                cleanup_grace,
+                            )
+                    except BaseException as error:
+                        cleanup_error = error
+                    if cleanup_error is None or child_exited:
+                        try:
+                            child.wait()
+                        except BaseException as error:
+                            cleanup_error = error
+            finally:
+                for sig, handler in ignored.items():
+                    signal.signal(sig, handler)
+            if cleanup_error is not None:
+                raise BackendCleanupError(
+                    "backend cleanup failed; no later request may be dispatched"
+                ) from cleanup_error
+            if primary is not None:
+                raise primary
+            stdout.seek(0)
+            stderr.seek(0)
+            output = stdout.read()
+            error_output = stderr.read()
+            if timed_out:
+                raise subprocess.TimeoutExpired(
+                    command, timeout, output=output, stderr=error_output
+                )
+            return subprocess.CompletedProcess(
+                command, child.returncode, output, error_output
+            )
+    finally:
+        for sig, handler in previous.items():
+            signal.signal(sig, handler)
+
+
 def execute(
     plan,
     backend,
@@ -431,6 +739,8 @@ def execute(
     signature=None,
     allowed_signers=None,
     ledger=None,
+    backend_timeout=None,
+    backend_cleanup_grace=5,
 ):
     validate_plan(plan)
     require(sha_file(backend) == plan["backend_sha256"], "backend binary hash mismatch")
@@ -450,6 +760,19 @@ def execute(
         require(
             os.getloadavg()[0] <= 0.85 * cpus, "host load exceeds approved CPU budget"
         )
+    timeout = plan["timeout_seconds"] if backend_timeout is None else backend_timeout
+    require(
+        type(timeout) in (int, float)
+        and math.isfinite(timeout)
+        and 0 < timeout <= plan["timeout_seconds"],
+        "backend timeout must be positive and no greater than the signed plan",
+    )
+    require(
+        type(backend_cleanup_grace) in (int, float)
+        and math.isfinite(backend_cleanup_grace)
+        and backend_cleanup_grace >= 0,
+        "backend cleanup grace must be finite and non-negative",
+    )
     env = dict(
         os.environ,
         RAYON_NUM_THREADS="8",
@@ -533,12 +856,12 @@ def execute(
                     )
                     start = time.monotonic()
                     try:
-                        result = subprocess.run(
+                        result = _invoke_backend(
                             [str(Path(backend).resolve())],
-                            input=canonical(request),
-                            capture_output=True,
-                            timeout=plan["timeout_seconds"],
-                            env=env,
+                            canonical(request),
+                            env,
+                            timeout,
+                            backend_cleanup_grace,
                         )
                         require(result.returncode == 0, "backend process failed")
                         response = response_valid(decode(result.stdout), request)
