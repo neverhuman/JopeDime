@@ -100,12 +100,17 @@ def atomic_json(path: Path, payload: dict) -> None:
     temporary.replace(path)
 
 
-def run_cell(cell: dict, staged_checkpoint: Path, scratch: Path, run_root: Path, input_dir: Path = INPUT) -> dict:
-    if not torch.cuda.is_available():
-        raise RuntimeError("H99 outcome cells require CUDA; use CPU fake-cell tests for local verification")
+def run_cell(cell: dict, staged_checkpoint: Path, scratch: Path, run_root: Path, input_dir: Path = INPUT, attempt: int = 1) -> dict:
     arm, seed = cell["arm"], int(cell["seed"])
     if cell not in [*h99.execution_plan()["candidate_cells"], h99.execution_plan()["null_cell"]]:
         raise ValueError("unregistered H99 cell")
+    if isinstance(attempt, bool) or not isinstance(attempt, int) or attempt < 1:
+        raise ValueError("H99 attempt number must be a positive integer")
+    output = run_root / "outcomes" / "cells" / arm / f"seed{seed}" / f"attempt{attempt}"
+    if output.exists() or output.is_symlink():
+        raise FileExistsError(f"refusing to overwrite H99 attempt output: {output}")
+    if not torch.cuda.is_available():
+        raise RuntimeError("H99 outcome cells require CUDA; use CPU fake-cell tests for local verification")
     h80 = configure_h80()
     validate_execution_paths(run_root, input_dir, staged_checkpoint)
     torch.set_num_threads(1)
@@ -142,7 +147,6 @@ def run_cell(cell: dict, staged_checkpoint: Path, scratch: Path, run_root: Path,
     after_dope = ctx["h48"].h46.checkpoint_guard(ctx["guard"], ctx["net"], expected=DOPE_SHA)
     if before_dope != DOPE_SHA or after_dope != DOPE_SHA:
         raise RuntimeError("H99 DOPE checksum changed during the cell")
-    output = run_root / "outcomes" / "cells" / arm / f"seed{seed}" / "attempt1"
     output.mkdir(parents=True, exist_ok=False)
     artifact = output / "candidate_adapter.pt"
     h80.check_disk_abort()
@@ -182,6 +186,15 @@ def score_fold_b(staged_checkpoint: Path, scratch: Path, run_root: Path, input_d
     """Score the seven fixed final adapters once on fresh seed-9900 Fold B only."""
     if not torch.cuda.is_available():
         raise RuntimeError("H99 Fold-B scoring requires CUDA; use fake-cell fixture tests locally")
+    from coordinator import completed_attempt
+
+    plan = h99.execution_plan()
+    completed_attempts = {
+        (cell["arm"], int(cell["seed"])): completed_attempt(
+            run_root, cell["arm"], cell["seed"]
+        )
+        for cell in [*plan["candidate_cells"], plan["null_cell"]]
+    }
     h80 = configure_h80()
     h80.safe_path(input_dir)
     h80.safe_path(staged_checkpoint)
@@ -207,9 +220,9 @@ def score_fold_b(staged_checkpoint: Path, scratch: Path, run_root: Path, input_d
     before = h48.h46.checkpoint_guard(guard, net, expected=DOPE_SHA)
     net.eval()
     baseline = h48.evaluate_utility(ids, pools, predictor)
-    plan = h99.execution_plan()
     null_cell = plan["null_cell"]
-    null_dir = run_root / "outcomes" / "cells" / null_cell["arm"] / f"seed{null_cell['seed']}" / "attempt1"
+    null_attempt = completed_attempts[(null_cell["arm"], int(null_cell["seed"]))]
+    null_dir = run_root / "outcomes" / "cells" / null_cell["arm"] / f"seed{null_cell['seed']}" / f"attempt{null_attempt}"
     null_summary = json.loads((null_dir / "summary.json").read_text())
     if (null_summary.get("arm"), null_summary.get("seed"), null_summary.get("status")) != ("NULL", 36, "complete"):
         raise RuntimeError("H99 NULL diagnostic cell is incomplete")
@@ -217,7 +230,8 @@ def score_fold_b(staged_checkpoint: Path, scratch: Path, run_root: Path, input_d
     candidates = []
     seen = set()
     for arm, seed in sorted(expected):
-        cell_dir = run_root / "outcomes" / "cells" / arm / f"seed{seed}" / "attempt1"
+        attempt = completed_attempts[(arm, seed)]
+        cell_dir = run_root / "outcomes" / "cells" / arm / f"seed{seed}" / f"attempt{attempt}"
         summary = json.loads((cell_dir / "summary.json").read_text())
         artifact_path = cell_dir / "candidate_adapter.pt"
         if (summary.get("arm"), summary.get("seed"), summary.get("status")) != (arm, seed, "complete"):

@@ -6,8 +6,10 @@ from contextlib import contextmanager
 import fcntl
 import importlib.util
 import json
+import math
 import os
 from pathlib import Path
+import re
 import shutil
 import signal
 import sys
@@ -19,7 +21,8 @@ from runner import H80_RUNNER, execution_plan
 CAP_SECONDS = 9_000.0
 MIN_MEM_AVAILABLE_KIB = 16 * 1024 * 1024
 MAX_LOAD = 85.0
-MAX_DISK_USED_PERCENT = 94.5
+# Resume launches require extra disk headroom; executor.py retains its 94.5% in-cell abort.
+MAX_LAUNCH_DISK_USED_PERCENT = 94.0
 POLL_SECONDS = 30.0
 
 
@@ -47,8 +50,8 @@ def check_resource_snapshot(*, load1: float, mem_available_kib: int, disk_used_p
         raise RuntimeError(f"host load {load1:.2f}/102 exceeds {MAX_LOAD:.0f}/102")
     if mem_available_kib < MIN_MEM_AVAILABLE_KIB:
         raise RuntimeError("MemAvailable is below 16 GiB")
-    if disk_used_percent >= MAX_DISK_USED_PERCENT:
-        raise RuntimeError("disk usage is at or above the 94.5% launch ceiling")
+    if disk_used_percent >= MAX_LAUNCH_DISK_USED_PERCENT:
+        raise RuntimeError("disk usage is not below the strict 94.0% launch ceiling")
 
 
 def wait_for_cpu_gate(*, load_fn=os.getloadavg, sleep_fn=time.sleep, max_wait_seconds=10_800) -> float:
@@ -197,6 +200,87 @@ def attempt_scratch_path(run_root: Path, arm: str, seed: int, attempt: int) -> P
     return Path(run_root) / "scratch" / f"{arm}-seed{seed}-attempt{attempt}"
 
 
+def _attempt_from_record(record: dict) -> int:
+    attempt = record.get("attempt")
+    if attempt is None:
+        match = re.search(r"-attempt([1-9][0-9]*)$", Path(record.get("scratch", "")).name)
+        if match is None:
+            raise RuntimeError("H99 budget attempt has no valid attempt number")
+        attempt = int(match.group(1))
+    if isinstance(attempt, bool) or not isinstance(attempt, int) or attempt < 1:
+        raise RuntimeError("H99 budget attempt number is invalid")
+    return attempt
+
+
+def _cell_histories(budget: dict, cells: list[dict]) -> tuple[dict[tuple[str, int], list[dict]], list[dict]]:
+    """Validate and index append-only cell/scoring attempts from a cumulative budget."""
+    if budget.get("schema") != "jope.h99.gpu-budget/v1" or budget.get("cap_seconds") != CAP_SECONDS:
+        raise RuntimeError("H99 cumulative budget schema or cap changed")
+    if budget.get("in_progress") is not None:
+        raise RuntimeError("H99 has an unaccounted in-progress cell; refusing retry selection")
+    expected = {(cell["arm"], int(cell["seed"])): cell for cell in cells}
+    histories: dict[tuple[str, int], list[dict]] = {key: [] for key in expected}
+    scoring = []
+    attempts = budget.get("attempts")
+    if not isinstance(attempts, list):
+        raise RuntimeError("H99 cumulative budget attempts must be a list")
+    for record in attempts:
+        if not isinstance(record, dict):
+            raise RuntimeError("H99 cumulative budget contains a malformed attempt")
+        wall = record.get("wall_seconds")
+        if isinstance(wall, bool) or not isinstance(wall, (int, float)) or not math.isfinite(float(wall)) or wall < 0:
+            raise RuntimeError("H99 cumulative budget contains an invalid wall charge")
+        wait = record.get("wait_seconds", 0.0)
+        if isinstance(wait, bool) or not isinstance(wait, (int, float)) or not math.isfinite(float(wait)) or wait < 0:
+            raise RuntimeError("H99 cumulative budget contains an invalid FIFO wait charge")
+        if record.get("action") == "fold_b_scoring":
+            if record.get("status") not in {"complete", "void-or-unknown"}:
+                raise RuntimeError("H99 Fold-B scoring ledger status is invalid")
+            scoring.append(record)
+            continue
+        key = (record.get("arm"), record.get("seed"))
+        if key not in expected:
+            raise RuntimeError(f"H99 budget contains an unregistered cell: {key}")
+        cell = expected[key]
+        if any(record.get(name) != value for name, value in cell.items()):
+            raise RuntimeError(f"H99 budget cell differs from the frozen plan: {key}")
+        if record.get("status") not in {"complete", "void-or-unknown"}:
+            raise RuntimeError(f"H99 budget cell status is invalid: {key}")
+        attempt = _attempt_from_record(record)
+        if Path(record.get("scratch", "")).name != attempt_scratch_path(
+            Path("scratch"), cell["arm"], cell["seed"], attempt
+        ).name:
+            raise RuntimeError(f"H99 budget scratch path does not match its attempt: {key}")
+        history = histories[key]
+        if history and attempt != _attempt_from_record(history[-1]) + 1:
+            raise RuntimeError(f"H99 attempts are not consecutive for {key}")
+        if history and history[-1]["status"] == "complete":
+            raise RuntimeError(f"H99 cell was retried after completion: {key}")
+        if record.get("attempt") is not None and record["attempt"] != attempt:
+            raise RuntimeError(f"H99 attempt number changed while validating {key}")
+        history.append(record)
+    if len(scoring) > 1:
+        raise RuntimeError("H99 Fold-B scoring is already recorded; refusing duplicate scoring")
+    if scoring and any(not history or history[-1]["status"] != "complete" for history in histories.values()):
+        raise RuntimeError("H99 Fold-B scoring was recorded before every fixed cell completed")
+    spent = sum(float(item["wall_seconds"]) for item in attempts)
+    if spent > CAP_SECONDS:
+        raise RuntimeError("H99 cumulative 9,000-second GPU cell-wall cap is already exhausted")
+    return histories, scoring
+
+
+def completed_attempt(run_root: Path, arm: str, seed: int) -> int:
+    """Return the sole successful attempt for a cell from its durable cumulative ledger."""
+    plan = execution_plan()
+    cells = [*plan["candidate_cells"], plan["null_cell"]]
+    budget = json.loads((Path(run_root) / "budget.json").read_text())
+    histories, _ = _cell_histories(budget, cells)
+    history = histories.get((arm, int(seed)))
+    if not history or history[-1]["status"] != "complete":
+        raise RuntimeError(f"H99 cell has no completed attempt: {arm}/seed{seed}")
+    return _attempt_from_record(history[-1])
+
+
 def stage_r882_copy(source: Path, scratch_dir: Path, *, expected_sha256: str | None = None) -> Path:
     """Copy a pinned read-only source into a fresh writable per-attempt scratch directory."""
     source = Path(source)
@@ -236,7 +320,7 @@ def run_fifo_cells(
     clock_fn=time.monotonic,
     finalize_worker=None,
 ) -> dict:
-    """Run a caller-supplied H99 cell worker one cell per FIFO lease, charging all wall time."""
+    """Resume incomplete cells in plan order, charging each attempt under its own FIFO lease."""
     expected = execution_plan()
     expected_cells = [*expected["candidate_cells"], expected["null_cell"]]
     if cells != expected_cells:
@@ -252,12 +336,18 @@ def run_fifo_cells(
         budget = {"schema": "jope.h99.gpu-budget/v1", "cap_seconds": CAP_SECONDS, "attempts": [], "in_progress": None}
     if budget.get("cap_seconds") != CAP_SECONDS:
         raise RuntimeError("H99 cumulative GPU cap changed")
-    if budget["attempts"]:
-        raise RuntimeError("H99 budget already has attempts; refusing to repeat or reset cells")
-    total_wait = 0.0
+    histories, scoring_attempts = _cell_histories(budget, expected_cells)
+    if scoring_attempts and scoring_attempts[0]["status"] == "void-or-unknown":
+        raise RuntimeError("H99 Fold-B scoring is void-or-unknown; refusing a duplicate protected-fold read")
+    total_wait = sum(float(item.get("wait_seconds", 0.0)) for item in budget["attempts"])
     setup_fn()
 
     for cell in cells:
+        key = (cell["arm"], int(cell["seed"]))
+        history = histories[key]
+        if history and history[-1]["status"] == "complete":
+            continue
+        attempt = _attempt_from_record(history[-1]) + 1 if history else 1
         spent = sum(float(item["wall_seconds"]) for item in budget["attempts"])
         remaining = CAP_SECONDS - spent
         if remaining <= 10.0:
@@ -265,35 +355,44 @@ def run_fifo_cells(
         cpu_gate_fn()
         handle, waited, gpu_free, preflight = acquire_fn(run_root / "H99_STATUS.log", wait_total=total_wait)
         total_wait += float(waited)
-        scratch = attempt_scratch_path(run_root, cell["arm"], cell["seed"], 1)
+        scratch = attempt_scratch_path(run_root, cell["arm"], cell["seed"], attempt)
         started = clock_fn()
         try:
             with _wall_deadline(remaining):
                 staged = stage_r882_copy(checkpoint, scratch)
-                budget["in_progress"] = {**cell, "scratch": str(scratch), "started_utc": datetime.now(timezone.utc).isoformat()}
+                budget["in_progress"] = {**cell, "attempt": attempt, "scratch": str(scratch), "started_utc": datetime.now(timezone.utc).isoformat()}
                 write_budget(budget_path, budget)
-                result = worker(cell, staged, scratch, remaining)
+                result = worker(cell, staged, scratch, remaining, attempt)
             wall = clock_fn() - started
             if wall > remaining:
                 raise RuntimeError("H99 cell exceeded the remaining cumulative GPU budget")
             budget["attempts"].append(
-                {**cell, "scratch": str(scratch), "wait_seconds": float(waited), "gpu_free_mib": int(gpu_free),
+                {**cell, "attempt": attempt, "scratch": str(scratch), "wait_seconds": float(waited), "gpu_free_mib": int(gpu_free),
                  "preflight": preflight, "wall_seconds": wall, "status": "complete", "result": result}
             )
             budget["in_progress"] = None
             write_budget(budget_path, budget)
+            history.append(budget["attempts"][-1])
         except BaseException as exc:
             wall = clock_fn() - started
             budget["attempts"].append(
-                {**cell, "scratch": str(scratch), "wait_seconds": float(waited), "wall_seconds": wall,
+                {**cell, "attempt": attempt, "scratch": str(scratch), "wait_seconds": float(waited), "wall_seconds": wall,
                  "status": "void-or-unknown", "error": f"{type(exc).__name__}: {exc}"}
             )
             budget["in_progress"] = None
             write_budget(budget_path, budget)
+            history.append(budget["attempts"][-1])
             raise
         finally:
             release_fn(handle)
     if finalize_worker is not None:
+        histories, scoring_attempts = _cell_histories(budget, expected_cells)
+        if any(not history or history[-1]["status"] != "complete" for history in histories.values()):
+            raise RuntimeError("H99 cannot score Fold B until all seven fixed cells are complete")
+        if scoring_attempts:
+            if scoring_attempts[0]["status"] == "complete":
+                return budget
+            raise RuntimeError("H99 Fold-B scoring is void-or-unknown; refusing a duplicate protected-fold read")
         spent = sum(float(item["wall_seconds"]) for item in budget["attempts"])
         remaining = CAP_SECONDS - spent
         if remaining <= 10.0:
@@ -301,15 +400,16 @@ def run_fifo_cells(
         cpu_gate_fn()
         handle, waited, gpu_free, preflight = acquire_fn(run_root / "H99_STATUS.log", wait_total=total_wait)
         total_wait += float(waited)
-        score_scratch = run_root / "scratch" / "fold-b-scoring-attempt1"
+        score_attempt = 1
+        score_scratch = run_root / "scratch" / f"fold-b-scoring-attempt{score_attempt}"
         started = clock_fn()
-        action = {"action": "fold_b_scoring", "scratch": str(score_scratch), "started_utc": datetime.now(timezone.utc).isoformat()}
+        action = {"action": "fold_b_scoring", "attempt": score_attempt, "scratch": str(score_scratch), "started_utc": datetime.now(timezone.utc).isoformat()}
         try:
             with _wall_deadline(remaining):
                 staged = stage_r882_copy(checkpoint, score_scratch)
                 budget["in_progress"] = action
                 write_budget(budget_path, budget)
-                result = finalize_worker(staged, score_scratch, remaining)
+                result = finalize_worker(staged, score_scratch, remaining, score_attempt)
             wall = clock_fn() - started
             if wall > remaining:
                 raise RuntimeError("H99 Fold-B scoring exceeded remaining cumulative GPU budget")
