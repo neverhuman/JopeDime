@@ -1,0 +1,194 @@
+{
+  "$defs": {
+    "fold_prior": {
+      "additionalProperties": false,
+      "properties": {
+        "fit_component_manifest_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "held_fold": {
+          "maximum": 4,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "prior_object": {
+          "$ref": "#/$defs/object_ref"
+        }
+      },
+      "required": [
+        "held_fold",
+        "prior_object",
+        "fit_component_manifest_sha256"
+      ],
+      "type": "object"
+    },
+    "object_ref": {
+      "additionalProperties": false,
+      "properties": {
+        "bucket": {
+          "const": "veox-jopedime-learning-use2"
+        },
+        "bytes": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "key": {
+          "pattern": "^experiments/rd_breakthrough_20261030/(W1|w1|W3)/[^\\s]+$",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "version_id": {
+          "minLength": 1,
+          "not": {
+            "enum": [
+              "null",
+              "None",
+              "latest"
+            ]
+          },
+          "type": "string"
+        }
+      },
+      "required": [
+        "bucket",
+        "key",
+        "version_id",
+        "sha256",
+        "bytes"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "claim_scope": {
+      "enum": [
+        "search_only",
+        "legacy_selection",
+        "both"
+      ]
+    },
+    "dope_sha256": {
+      "const": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+    },
+    "fold_manifest_sha256": {
+      "const": "cabcfc6f182ef3aeb77a10890d81de0c655f60b5bb3db2a56b70c44a58567067"
+    },
+    "legacy_w3_compatibility_review": {
+      "$ref": "#/$defs/object_ref"
+    },
+    "model_history_recipe": {
+      "$ref": "#/$defs/object_ref"
+    },
+    "per_fold_priors": {
+      "items": false,
+      "maxItems": 5,
+      "minItems": 5,
+      "prefixItems": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/fold_prior"
+            },
+            {
+              "properties": {
+                "held_fold": {
+                  "const": 0
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/fold_prior"
+            },
+            {
+              "properties": {
+                "held_fold": {
+                  "const": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/fold_prior"
+            },
+            {
+              "properties": {
+                "held_fold": {
+                  "const": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/fold_prior"
+            },
+            {
+              "properties": {
+                "held_fold": {
+                  "const": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/fold_prior"
+            },
+            {
+              "properties": {
+                "held_fold": {
+                  "const": 4
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "type": "array"
+    },
+    "result_manifest": {
+      "$ref": "#/$defs/object_ref"
+    },
+    "result_review": {
+      "$ref": "#/$defs/object_ref"
+    },
+    "schema": {
+      "const": "jope.h113.w1-prior-binding/v1"
+    },
+    "winner_id": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "winner_id",
+    "claim_scope",
+    "legacy_w3_compatibility_review",
+    "result_manifest",
+    "result_review",
+    "model_history_recipe",
+    "fold_manifest_sha256",
+    "dope_sha256",
+    "per_fold_priors"
+  ],
+  "title": "H113 reviewed W1 handoff shape only; not evidence authentication",
+  "type": "object"
+}

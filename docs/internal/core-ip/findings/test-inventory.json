@@ -429,6 +429,10 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
+    "python:research/flywheel_selfplay/h113_w3_continuous/test_losses.py": {
+      "reason": "Synthetic W3 loss/gradient and zero-update prior contracts; real outcome provenance and full trainer remain unqualified.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h101_w6_proposer_transfer_prep/test_w6_transfer_prep.py": {
       "reason": "Owner-requested pytest proofs for H101 W6 proposer transfer preparation and fail-closed completeness gates; offline research analysis outside the reviewed product baseline.",
       "role": "research"
