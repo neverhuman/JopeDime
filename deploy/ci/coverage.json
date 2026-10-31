@@ -4280,6 +4280,16 @@
       "lanes": [],
       "scope": "Hermetic fixture tests for the jope-diskd disk janitor's fail-closed boundaries: policy watermarks, explicit local-only apply, protected-prefix denial, symlink and open-handle retention, observe-only caches, merged-head-only Cargo target cleanup, audited deletion, verified offload and log rotation. Statically inventoried, not collected by any CI lane (the python lane collects python/tests); host deployment receipts are separate dated observations."
     },
+    "python:tools/ops/test_install_jope_diskd.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "maintenance"
+      ],
+      "lanes": [],
+      "scope": "Hermetic fixture tests for the jope-diskd installer's safety gates: default print-only preview, invalid-option refusal, and fail-closed enable from a dirty checkout or a checkout without a merged origin/main reference. No timer, cache or cleaner behavior is changed or exercised."
+    },
     "python:tools/ops/test_jope_remote_target_cleaner.py": {
       "discovery": {
         "kind": "python-family"
