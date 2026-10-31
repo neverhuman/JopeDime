@@ -13480,7 +13480,7 @@
       "lanes": [],
       "scope": "H99 ESH harm follow-up preregistration fixtures: fold assignment partitions whole train families exactly once, sealed meta-test inputs never opened."
     },
-    "python:research/flywheel_selfplay/h100_w6_proposer_transfer_prep/test_w6_transfer_prep.py": {
+    "python:research/flywheel_selfplay/h101_w6_proposer_transfer_prep/test_w6_transfer_prep.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -13488,7 +13488,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H100 W6 proposer transfer preparation fixtures: weighted bilinear SVD, empirical-Bayes shrinkage, top-2 prior hedging, and fail-closed panel completeness gates."
+      "scope": "H101 W6 proposer transfer preparation fixtures: weighted bilinear SVD, empirical-Bayes shrinkage, top-2 prior hedging, and fail-closed panel completeness gates."
     }
   },
   "lanes": {

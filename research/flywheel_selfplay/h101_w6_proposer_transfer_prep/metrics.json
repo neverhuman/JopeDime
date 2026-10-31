@@ -13,7 +13,7 @@
   },
   "family_mean_U0": 1.4582330723886736,
   "gpu_seconds": 0,
-  "h": "H100",
+  "h": "H101",
   "host_receipts": [
     {
       "cores": 102,
@@ -70,6 +70,7 @@
       "wall_s": 92.41380047798157
     }
   ],
+  "id_rename_note": "Renumbered H98 -> H101 per rd_argon_idfix_t0420.md (H98 taken by rd_astra #975 h98_w5_provenance; H100 reserved for ASAM confirmation wave)",
   "native_fits": 0,
   "pins": {
     "champions_featurized": "ea020d489ec9a813e4dfb2b6fe45c126ff9f8d8a1b59d0ff9f8242cfe5e6efc0",
@@ -335,6 +336,20 @@
         "version_id": "rggwL25qG51LmaUHGll3PXSSbB2IGLb4"
       }
     },
+    "h101_metrics_alias": {
+      "W6": {
+        "bytes": 93665,
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W6/argon-h101-proposer-transfer-20261031T1010Z/metrics.json",
+        "sha256": "f68b09f3306bc34771b51d38f4133bd4b7477ed4c4fbb8e25e3f6a9348f589c8",
+        "version_id": "_jhZI5R0WBW130wOjuZj3ZUmPpyKD64H"
+      },
+      "w6": {
+        "bytes": 93665,
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/w6/argon-h101-proposer-transfer-20261031T1010Z/metrics.json",
+        "sha256": "f68b09f3306bc34771b51d38f4133bd4b7477ed4c4fbb8e25e3f6a9348f589c8",
+        "version_id": "ugCOIVbPHdKNohNg_I0YWe723nO3UBnb"
+      }
+    },
     "manifest": {
       "W6": {
         "bytes": 14519,
@@ -464,7 +479,7 @@
       }
     }
   },
-  "schema": "jope.w6.h100-proposer-transfer-prep/v1",
+  "schema": "jope.w6.h101-proposer-transfer-prep/v1",
   "scope": "DL-Train only (1,219 contexts / 205 families + 50-context H94/H95 prospective audit); zero DL-Val, outer-test, sealed, or holdout reads; zero GPU",
   "shard_receipts": [
     {
@@ -573,7 +588,7 @@
       "wall_s": 92.41380047798157
     }
   ],
-  "source_sha256": "517488ed2a594cd58027d5b3cd94e273f018ee4bc7c22a371c746141a69f2ede",
+  "source_sha256": "e647bec91e802cb41ad484e2fd47bcca342f44a020aa7297d346db4d5a996069",
   "track1_legacy_val_reg_inner": {
     "completeness": {
       "complete": true,

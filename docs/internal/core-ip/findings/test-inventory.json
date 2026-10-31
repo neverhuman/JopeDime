@@ -5050,8 +5050,8 @@
       "reason": "Owner-requested pytest proofs for the H99 ESH harm follow-up preregistration; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/h100_w6_proposer_transfer_prep/test_w6_transfer_prep.py": {
-      "reason": "Owner-requested pytest proofs for H100 W6 proposer transfer preparation and fail-closed completeness gates; offline research analysis outside the reviewed product baseline.",
+    "python:research/flywheel_selfplay/h101_w6_proposer_transfer_prep/test_w6_transfer_prep.py": {
+      "reason": "Owner-requested pytest proofs for H101 W6 proposer transfer preparation and fail-closed completeness gates; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     }
   },

@@ -1,4 +1,4 @@
-"""Unit tests for H100 W6 cross-family outcome transfer preparation and fail-closed verdict gate."""
+"""Unit tests for H101 W6 cross-family outcome transfer preparation and fail-closed verdict gate."""
 
 from __future__ import annotations
 

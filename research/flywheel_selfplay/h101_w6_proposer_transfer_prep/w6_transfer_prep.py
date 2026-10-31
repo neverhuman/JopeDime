@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""H100 — W6 Cross-Family Outcome Transfer: Complete Registered Design & 4-Node Real-S3 CPU Smoke.
+"""H101 — W6 Cross-Family Outcome Transfer: Complete Registered Design & 4-Node Real-S3 CPU Smoke.
 
 Addresses the remaining W6 contract requirements in PROPOSALS.md (lines 143-151) and
 diagnoses the H94 cached-to-prospective reversal on real S3 data (DL-Train only; zero
@@ -1558,9 +1558,9 @@ def merge_and_analyze_shards(
     )
 
     metrics = {
-        "schema": "jope.w6.h100-proposer-transfer-prep/v1",
+        "schema": "jope.w6.h101-proposer-transfer-prep/v1",
         "wave": "W6",
-        "h": "H100",
+        "h": "H101",
         "run_id": run_id,
         "scope": "DL-Train only (1,219 contexts / 205 families + 50-context H94/H95 prospective audit); zero DL-Val, outer-test, sealed, or holdout reads; zero GPU",
         "pins": PINS,

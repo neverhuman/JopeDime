@@ -1,8 +1,10 @@
-# H100 — W6 Cross-Context Proposer Transfer Prep, Family-Balanced Bilinear Screen & Prospective True-W1 Audit (CPU-Only, 4-Node)
+# H101 — W6 Cross-Context Proposer Transfer Prep, Family-Balanced Bilinear Screen & Prospective True-W1 Audit (CPU-Only, 4-Node)
 
 ## 1. Executive Summary & Verdicts (Elo Reported First)
 
-`H100` completes the Wave 6 (`W6`, `RES-03`) CPU-only design, 4-node outer-fold smoke screen, and prospective true-`W1` re-scoring audit across all `1,219` `DL-Train` contexts (`205` families, `1,404,287` total pool slots, `1,399,411` unrevealed slots after the 4 hash-ordered anchors) and the `50`-context / `44`-family `H94`/`H95` prospective new-program panel. All inputs and outputs are strictly `DL-Train` only (`0` `DL-Val`, outer-test, sealed, or holdout reads; `0` GPU seconds; `<= 85%` CPU per host across `xbabe1`, `xbabe2`, `xbabe3`, `xbabe4`).
+`H101` completes the Wave 6 (`W6`, `RES-03`) CPU-only design, 4-node outer-fold smoke screen, and prospective true-`W1` re-scoring audit across all `1,219` `DL-Train` contexts (`205` families, `1,404,287` total pool slots, `1,399,411` unrevealed slots after the 4 hash-ordered anchors) and the `50`-context / `44`-family `H94`/`H95` prospective new-program panel. All inputs and outputs are strictly `DL-Train` only (`0` `DL-Val`, outer-test, sealed, or holdout reads; `0` GPU seconds; `<= 85%` CPU per host across `xbabe1`, `xbabe2`, `xbabe3`, `xbabe4`).
+
+> **ID Rename Receipt (`rd_argon_idfix_t0420.md`)**: Originally executed in scratch under run ID `argon-h98-proposer-transfer-20261031T0938Z`; renumbered to **`H101`** (`research/flywheel_selfplay/h101_w6_proposer_transfer_prep/`) because `H98` was taken on `main` by `rd_astra`'s W5 provenance gate (`#975`, `a470804b5`, `research/flywheel_selfplay/h98_w5_provenance/`) and `H100` is reserved for the new ASAM confirmation wave.
 
 ### Headline Family-Grouped Bradley-Terry Elo Summary (`1,219` Contexts / `205` Families)
 
@@ -33,15 +35,15 @@
 
 ---
 
-## 2. Why `H100` Was Needed & What It Adds Beyond `H83` / `H84` / `H92` / `H94`
+## 2. Why `H101` Was Needed & What It Adds Beyond `H83` / `H84` / `H92` / `H94`
 
 1. **Resolves the `H72`/`H84` vs `W1`/`H83` Fold-Manifest Discrepancy**:
    - `H72` and `H84` used `w6-roster-prep-res03-20261031T0451Z-d4/fold_manifest.json` (`SHA-256: 129002bc...`, generated via Python `random.Random(4900)`), whereas `W1`, `H83`, `H92`, and `H94` used `w1/fold_manifest.json` (`SHA-256: dd211134...`, generated via `np.random.default_rng(4900)`). The two manifests assign the same fold index `k` to only `261 / 1,219` contexts (`21.41%`).
-   - Because `W1`'s out-of-fold priors (`PRIOR` and `CTX`) are fit on `W1` folds, evaluating transfer models stacked on `PRIOR` under `H72` folds would leak cross-fold `W1` prior information. `H100` fits all stacked models strictly on `W1` folds (`dd211134...`) while simultaneously computing exact-ID coverage under both fold manifests:
+   - Because `W1`'s out-of-fold priors (`PRIOR` and `CTX`) are fit on `W1` folds, evaluating transfer models stacked on `PRIOR` under `H72` folds would leak cross-fold `W1` prior information. `H101` fits all stacked models strictly on `W1` folds (`dd211134...`) while simultaneously computing exact-ID coverage under both fold manifests:
      - **On `H72` folds (`129002bc...`, all slots)**: `21,783 + 18,793 + 23,126 + 18,728 + 16,390 = 98,820 / 1,404,287` (`7.0370%`), reproducing `H84`'s exact slot counts on every single fold (`0..4`).
      - **On `W1` folds (`dd211134...`, unrevealed slots `4..N`)**: `18,591 + 17,332 + 21,419 + 22,181 + 18,568 = 98,091 / 1,399,411` (`7.0094%`), reproducing `H83`'s exact unrevealed coverage.
 2. **Tests Registered Family-Balanced Bilinear Transfer (`TREAT_FAMBAL`) vs Equal-Context `TREAT`**:
-   - `PROPOSALS.md` (line 147) specified family-balanced weighting ($1/|F_g|$ per family) for the rank-8 bilinear residual model, whereas `H83` and `H92` used equal-context ridge weighting. `H100` implements both and proves that family-balanced weighting is the exact reason `TREAT_FAMBAL` clears the `<= 10%` family-harm gate on cached pools (`9.27%` vs `13.17%`).
+   - `PROPOSALS.md` (line 147) specified family-balanced weighting ($1/|F_g|$ per family) for the rank-8 bilinear residual model, whereas `H83` and `H92` used equal-context ridge weighting. `H101` implements both and proves that family-balanced weighting is the exact reason `TREAT_FAMBAL` clears the `<= 10%` family-harm gate on cached pools (`9.27%` vs `13.17%`).
 3. **Tests Structural AST-Template Transfer (`FIT_TEMPLATE_MEAN`) and the Seen-vs-Unseen Template Kill Rule**:
    - Canonicalizes all `1,404,287` DSL expressions by stripping numeric leaf literals (`1,316,986` unique exact SHAs $\to$ `1,305,507` unique structural AST templates) and evaluates within-context paired Seen-Template vs Unseen-Template `U_4` and `val_reg_inner` across all `1,219` contexts.
 4. **Re-Scores `H94` Prospective New-Program Proposals with Persisted `W1` Outer Models (`H85`) & Audits `H95` HWMs**:
@@ -105,7 +107,7 @@ All `1,219` `DL-Train` contexts (`205` families) contain at least 4 seen-templat
 
 `H94` evaluated new live-proposer candidates (`16` new programs per context-seed across `50` contexts / `44` families, seeds `701..703` = `150` context-seeds, `556` unique native evaluations) using in-script refits (`models.pkl` `c8bfbe94...`) because `W1`'s original fitted outer-fold models had not been persisted. `H85` subsequently remediated `W1` and persisted the exact calibrated outer-fold models (`w1_outer_fold_models.pkl`, `SHA-256: 2ebc4859...`, verified at `0.0` max absolute utility difference against `w1_train_only_priors.npz`).
 
-`H100` regenerates all `150` `H94` proposal streams (verifying 100% SHA parity on every revealed program) and re-scores all `2,400` prospective proposals with `H85`'s true persisted `W1` outer-fold models:
+`H101` regenerates all `150` `H94` proposal streams (verifying 100% SHA parity on every revealed program) and re-scores all `2,400` prospective proposals with `H85`'s true persisted `W1` outer-fold models:
 
 1. **Top-4 Selection Overlap (`True W1` vs `H94` Refits across `150` Context-Seeds)**:
    - `PRIOR_top4` mean top-4 set overlap: **`76.67%`**
@@ -158,6 +160,9 @@ Run ID: `argon-h98-proposer-transfer-20261031T0938Z`
   - `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/w6/argon-h100-proposer-transfer-20261031T1003Z/metrics.json`
     - `VersionId`: `rggwL25qG51LmaUHGll3PXSSbB2IGLb4`
     - `SHA-256`: `b3d7e2eae1d183a91f11b4b9dc5067811028a6e534dee5c5256ee202b6f9a6fa` (`92,786` bytes)
+  - `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/w6/argon-h101-proposer-transfer-20261031T1010Z/metrics.json`
+    - `VersionId`: `ugCOIVbPHdKNohNg_I0YWe723nO3UBnb`
+    - `SHA-256`: `f68b09f3306bc34771b51d38f4133bd4b7477ed4c4fbb8e25e3f6a9348f589c8` (`93,665` bytes)
 - **Uppercase `W6/` Prefix (per `rd_cpu_s3_t2101.md`)**:
   - `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W6/argon-h98-proposer-transfer-20261031T0938Z/manifest.json`
     - `VersionId`: `JUHdvdk4LnpDMBcK3hbpH7fkoNTqCZxL`
@@ -171,6 +176,9 @@ Run ID: `argon-h98-proposer-transfer-20261031T0938Z`
   - `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W6/argon-h100-proposer-transfer-20261031T1003Z/metrics.json`
     - `VersionId`: `aa1AWHQsHvGHqB2UUdDsLcJdkfdb1Hgl`
     - `SHA-256`: `b3d7e2eae1d183a91f11b4b9dc5067811028a6e534dee5c5256ee202b6f9a6fa` (`92,786` bytes)
+  - `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W6/argon-h101-proposer-transfer-20261031T1010Z/metrics.json`
+    - `VersionId`: `_jhZI5R0WBW130wOjuZj3ZUmPpyKD64H`
+    - `SHA-256`: `f68b09f3306bc34771b51d38f4133bd4b7477ed4c4fbb8e25e3f6a9348f589c8` (`93,665` bytes)
 
 ## 7. Reproduction & Verification Commands
 
@@ -178,8 +186,8 @@ Run ID: `argon-h98-proposer-transfer-20261031T0938Z`
 # Unit test suite (6 tests covering exact-ID shrinkage, AST template canonicalization,
 # family-balanced vs equal-context bilinear ridge, near-champion ridge, top-2 hedge,
 # and fail-closed completeness gates):
-nice -n 10 pytest -q research/flywheel_selfplay/h100_w6_proposer_transfer_prep/test_w6_transfer_prep.py
+nice -n 10 pytest -q research/flywheel_selfplay/h101_w6_proposer_transfer_prep/test_w6_transfer_prep.py
 
 # Lint check:
-nice -n 10 ruff check research/flywheel_selfplay/h100_w6_proposer_transfer_prep/
+nice -n 10 ruff check research/flywheel_selfplay/h101_w6_proposer_transfer_prep/
 ```
