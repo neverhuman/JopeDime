@@ -7,7 +7,9 @@ use super::{
 };
 use axum::{
     extract::DefaultBodyLimit,
+    http::{header, HeaderValue},
     middleware,
+    response::Response,
     routing::{get, on, MethodFilter},
     Router,
 };
@@ -17,6 +19,20 @@ use jope_api::{
 };
 use std::{io, net::Ipv4Addr};
 use tokio::net::TcpListener;
+
+const OPENAPI_DOCUMENT: &[u8] = include_bytes!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../schemas/jope.api.v1.openapi.json"
+));
+
+async fn get_openapi() -> Response {
+    let mut response = Response::new(axum::body::Body::from(OPENAPI_DOCUMENT));
+    response.headers_mut().insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static("application/json"),
+    );
+    response
+}
 
 /// The same request boundary is used by a listener and by in-process clients.
 /// In-process clients configure their request authority without opening a socket.
@@ -49,6 +65,7 @@ pub fn router(auth: LocalAuth) -> Router {
             };
         }
     }
+    app = app.route("/v1/openapi.json", get(get_openapi));
     app.fallback(|| async {
         problem(
             ErrorCode::NotFound,
@@ -86,6 +103,7 @@ mod tests {
         http::{header, Method, Request, StatusCode},
     };
     use jope_api::error::Problem;
+    use std::collections::BTreeSet;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tower::ServiceExt;
 
@@ -103,6 +121,63 @@ mod tests {
     }
     fn app() -> Router {
         router(LocalAuth::new(token(), 31234).unwrap())
+    }
+
+    #[tokio::test]
+    async fn openapi_route_returns_the_approved_document() {
+        let response = app()
+            .oneshot(request(Method::GET, "/v1/openapi.json"))
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(response.headers()[header::CONTENT_TYPE], "application/json");
+        assert_eq!(response.headers()["jope-api-version"], "1.0");
+        assert!(!response
+            .headers()
+            .keys()
+            .any(|key| key.as_str().starts_with("access-control-")));
+
+        let bytes = to_bytes(response.into_body(), 1024 * 1024).await.unwrap();
+        assert_eq!(bytes.as_ref(), OPENAPI_DOCUMENT);
+        let document: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert!(document.get("x-jope-pending-exchanges").is_none());
+        let operation_ids: BTreeSet<_> = document["paths"]
+            .as_object()
+            .unwrap()
+            .values()
+            .flat_map(|path| path.as_object().unwrap().values())
+            .filter_map(|operation| operation["operationId"].as_str())
+            .collect();
+        let registered: BTreeSet<_> = OPERATIONS.iter().map(|operation| operation.name).collect();
+        assert_eq!(operation_ids, registered);
+    }
+
+    #[tokio::test]
+    async fn openapi_route_keeps_auth_origin_and_host_rejections() {
+        let mut unauthorized = request(Method::GET, "/v1/openapi.json");
+        unauthorized.headers_mut().remove(header::AUTHORIZATION);
+        let mut browser = request(Method::GET, "/v1/openapi.json");
+        browser
+            .headers_mut()
+            .insert(header::ORIGIN, "https://example.invalid".parse().unwrap());
+        let mut hostile_host = request(Method::GET, "/v1/openapi.json");
+        hostile_host
+            .headers_mut()
+            .insert(header::HOST, "attacker.invalid:31234".parse().unwrap());
+
+        for (request, expected) in [
+            (unauthorized, StatusCode::UNAUTHORIZED),
+            (browser, StatusCode::BAD_REQUEST),
+            (hostile_host, StatusCode::BAD_REQUEST),
+        ] {
+            let response = app().oneshot(request).await.unwrap();
+            assert_eq!(response.status(), expected);
+            assert_eq!(response.headers()["jope-api-version"], "1.0");
+            assert!(!response
+                .headers()
+                .keys()
+                .any(|key| key.as_str().starts_with("access-control-")));
+        }
     }
 
     #[tokio::test]
