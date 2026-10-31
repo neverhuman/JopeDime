@@ -528,8 +528,7 @@ mod tests {
             .unwrap();
             receipts.push(
                 json!({"mode":mode,"child_pid":pid,"exit_code":status.code(),
-                "process_table_command":["ps","-p",pid.to_string(),"-o","pid=,ppid=,args="],
-                "process_table_exit":process_table.status.code(),"process_table_stdout":"",
+                "pid_absent_from_procfs":true,
                 "no_daemon_json":true,"store_reopened_under_same_lock":true,
                 "checkpoint_round":7,"control_backend":"injected fixture, not H2",
                 "child_log":fs::read_to_string(home.join("child.log")).unwrap()}),
