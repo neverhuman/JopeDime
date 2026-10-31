@@ -5,6 +5,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 description = "Model-synthesis kernel: pipeline-program DSL interpreter, Python/Rust/C++17/JavaScript/TypeScript code emitters, native C17 model exports, and in-process program synthesis"
+readme = "README.md"
 
 [features]
 # Dedicated Go qualification derives all cases from the unchanged native golden suite.
