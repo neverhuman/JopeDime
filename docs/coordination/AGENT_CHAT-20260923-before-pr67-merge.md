@@ -4,7 +4,7 @@ Flock `AGENT_CHAT.md.lock`, reread current claims, then append. This ledger belo
 to `veox-ai/JopeDime`; the research monorepo has separate ownership.
 
 Completed history through the foundation delivery is preserved verbatim in
-[docs/coordination/AGENT_CHAT-20260922-before-asm.md](docs/coordination/AGENT_CHAT-20260922-before-asm.md) (SHA-256 `c799879fbc194e36dd6b242af62f6c2fd26ae2824dcf0f324f0fb51eb5629158`).
+[AGENT_CHAT-20260922-before-asm.md](AGENT_CHAT-20260922-before-asm.md) (SHA-256 `c799879fbc194e36dd6b242af62f6c2fd26ae2824dcf0f324f0fb51eb5629158`).
 Receipt links, earlier objections and stopped-head handoffs remain in that archive.
 Current explicit user direction supersedes historical budgets and queue policies.
 

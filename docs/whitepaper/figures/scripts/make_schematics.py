@@ -4,7 +4,7 @@
 Contains zero fabricated empirical results:
 - fig2_novelty_judgment.pdf: Conceptual 2D schematic of Novelty vs. Referee Value,
   with EurekaZero's single proposal (B=1) explicitly shown as an unmeasured
-  vertical question-mark interval ('?', tested in Sec. 7).
+  vertical question-mark interval ('?', tested in Section 7).
 - fig3_game_loop.pdf: Schematic of the innovation game loop (top blue row:
   game-day search=1 deployment; dashed box: training-only referee & ratchets).
 - fig5_network.pdf: Architectural schematic of the 27.8M step-60,000 reference
@@ -89,7 +89,7 @@ def make_fig2_novelty_judgment() -> None:
     ax.scatter(srch_x[below], srch_y[below], s=17, color="#93c5fd", edgecolors="#2563eb", linewidths=0.6, zorder=3)
     ax.scatter(srch_x[above], srch_y[above], s=22, color="#2563eb", edgecolors="#1e3a8a", linewidths=0.6, zorder=4)
     ax.text(
-        0.32, 0.77,
+        0.295, 0.77,
         "Repeated search ($B \\gg 1$)\n(many tries; keep winners)",
         fontsize=7.2, color="#1e40af", ha="center", va="bottom",
         bbox=dict(boxstyle="round,pad=0.22", facecolor="#eff6ff", edgecolor="#93c5fd", lw=0.6),
@@ -103,7 +103,7 @@ def make_fig2_novelty_judgment() -> None:
     ax.text(ez_x, inc_y, "?", fontsize=8.0, fontweight="bold", color="#b45309", ha="center", va="center", zorder=6)
     ax.text(
         0.81, 0.79,
-        "Learned proposer ($B = 1$)\n(height tested in Sec. 7)",
+        "Learned proposer ($B = 1$)\n(height tested in Section 7)",
         fontsize=7.2, color="#92400e", ha="center", va="bottom",
         bbox=dict(boxstyle="round,pad=0.22", facecolor="#fffbeb", edgecolor="#fcd34d", lw=0.7),
     )

@@ -1603,6 +1603,10 @@
         "training"
       ]
     },
+    "python:deploy/qualification/q1/harness/test_fifo_launch.py": {
+      "reason": "QLT-04 FIFO launcher controls with private queue/key/backend fixtures; admission, lease, mutation, ledger and process cleanup proofs, not live qualification.",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/q1/harness/test_q1.py": {
       "reason": "Q1 qualification harness protocol/statistical fixtures (QLT-01): owner-signature refusal, holdout guards and failure accounting; no learned model or sealed payload executes",
       "role": "infrastructure"
@@ -5085,6 +5089,14 @@
     },
     "python:research/flywheel_selfplay/h109_family_balanced_accum/test_h109.py": {
       "reason": "Owner-requested pytest proofs for the H109 family-balanced accumulation preregistration; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h112_w4_active_reveal_scorer/test_run_h112.py": {
+      "reason": "Owner-requested pytest proofs for the H112 W4 two-plus-two re-test with the proposal-distribution scorer prior (CPU preparation); offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h115_w6_xfamily/test_run_h114.py": {
+      "reason": "Owner-requested pytest proofs for the H115 (renumbered from H114) W6 cross-family outcome-transfer CPU preparation; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     }
   },
