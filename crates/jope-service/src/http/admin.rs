@@ -121,10 +121,16 @@ fn store_failure(error: crate::store::StoreError) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::idempotency::RequestIdentity;
     use crate::store::{Record, RecordKey};
     use axum::body::to_bytes;
-    use jope_api::{error::Problem, ids::RunId, RunState};
-    use serde_json::json;
+    use jope_api::{
+        error::Problem,
+        ids::RunId,
+        registry::{HttpMethod, OPERATIONS},
+        RunState,
+    };
+    use serde_json::{json, Value};
     use std::io::Cursor;
     use tempfile::TempDir;
 
@@ -147,6 +153,63 @@ mod tests {
 
     fn run_id() -> RunId {
         "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0".parse().unwrap()
+    }
+
+    fn run_delete_identity(
+        principal: &str,
+        key: &str,
+        id: &RunId,
+        if_match: Option<&str>,
+    ) -> RequestIdentity {
+        let operation = OPERATIONS
+            .iter()
+            .find(|operation| operation.name == "run_delete")
+            .expect("run_delete is registered");
+        assert_eq!(operation.method, HttpMethod::Delete);
+        assert_eq!(operation.paths, &["/v1/runs/{id}"]);
+        assert!(operation.requires_idempotency_key);
+
+        RequestIdentity::new(
+            principal,
+            key,
+            operation.id,
+            &format!("/v1/runs/{id}"),
+            if_match,
+            &Value::Null,
+        )
+        .unwrap()
+    }
+
+    /// Pins request-identity inputs for the future run-delete adapter. This
+    /// scaffold does not claim that the detached handler is mounted or
+    /// idempotent yet; those boundaries remain owned by SVC-13/SVC-04.
+    #[test]
+    fn run_delete_identity_scaffold_binds_target_precondition_and_principal() {
+        let id = run_id();
+        let identity = run_delete_identity("local-principal", "delete-1", &id, Some("\"r7\""));
+        let retry = run_delete_identity("local-principal", "delete-1", &id, Some("\"r7\""));
+        let changed_precondition =
+            run_delete_identity("local-principal", "delete-1", &id, Some("\"r8\""));
+        let changed_target = run_delete_identity(
+            "local-principal",
+            "delete-1",
+            &"run_01JBD8Q6N4V2T5Y8K3M7P9R1S1".parse().unwrap(),
+            Some("\"r7\""),
+        );
+        let other_principal =
+            run_delete_identity("other-principal", "delete-1", &id, Some("\"r7\""));
+        let other_key = run_delete_identity("local-principal", "delete-2", &id, Some("\"r7\""));
+
+        assert_eq!(identity.operation_id, 10);
+        assert_eq!(identity.principal, "local-principal");
+        assert_eq!(identity.key, "delete-1");
+        assert_eq!(identity.digest, retry.digest);
+        assert_ne!(identity.digest, changed_precondition.digest);
+        assert_ne!(identity.digest, changed_target.digest);
+        assert_eq!(identity.digest, other_principal.digest);
+        assert_ne!(identity.principal, other_principal.principal);
+        assert_eq!(identity.digest, other_key.digest);
+        assert_ne!(identity.key, other_key.key);
     }
 
     #[tokio::test]
