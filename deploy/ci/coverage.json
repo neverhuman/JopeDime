@@ -13328,7 +13328,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H93 CPU-only Lookahead, annealed-gradient-noise and effective-batch update-plan fixtures, FIFO/H80/H90 launch barrier, paired family Elo/admission, and dev top-four overlap diagnostics; no corpus payloads or product qualification."
+      "scope": "H93 CPU-only Lookahead, annealed-gradient-noise and effective-batch update-plan fixtures, unique immutable per-attempt r882 scratch staging, FIFO/H80/H90 launch barrier, paired family Elo/admission, and dev top-four overlap diagnostics; no corpus payloads or product qualification."
     },
     "python:research/flywheel_selfplay/h76_sam_steps/test_h76.py": {
       "discovery": {

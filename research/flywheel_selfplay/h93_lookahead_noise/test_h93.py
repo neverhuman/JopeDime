@@ -25,6 +25,40 @@ r = load("test_h93_runner", HERE / "runner.py")
 w = load("test_h93_wave", HERE / "run_wave.py")
 
 
+def test_attempt_scratch_does_not_reuse_preexisting_readonly_copy(
+    tmp_path, monkeypatch
+):
+    root = tmp_path / "h93-wave"
+    legacy = root / "scratch" / "r882_adapter_copy.pt"
+    legacy.parent.mkdir(parents=True)
+    legacy.write_bytes(b"prior attempt evidence")
+    legacy.chmod(0o444)
+    old_mode = legacy.stat().st_mode & 0o777
+
+    checkpoint = tmp_path / "r882.pt"
+    checkpoint.write_bytes(b"synthetic checkpoint")
+    monkeypatch.setattr(r.h59, "R882_SHA", r.h59.sha256(checkpoint))
+
+    scratch = r.attempt_scratch_path(root, "LA", 30, 2)
+    assert scratch == root / "scratch" / "LA-seed30-attempt2"
+    staged = r.h59.stage_r882_copy(checkpoint, scratch)
+
+    assert staged == scratch / "r882_adapter_copy.pt"
+    assert staged.read_bytes() == checkpoint.read_bytes()
+    assert legacy.read_bytes() == b"prior attempt evidence"
+    assert legacy.stat().st_mode & 0o777 == old_mode == 0o444
+    with pytest.raises(RuntimeError, match="already exists"):
+        r.attempt_scratch_path(root, "LA", 30, 2)
+
+
+def test_timing_and_outcome_attempts_have_distinct_scratch_paths(tmp_path):
+    timing = r.attempt_scratch_path(tmp_path, "EB4", 30, 1, timing=True)
+    outcome = r.attempt_scratch_path(tmp_path, "EB4", 30, 1)
+    next_attempt = r.attempt_scratch_path(tmp_path, "EB4", 30, 2)
+    assert len({timing, outcome, next_attempt}) == 3
+    assert timing.name == "timing-EB4-seed30-attempt1"
+
+
 def test_fresh_seeds_share_the_actual_h76_optimizer_and_sampler():
     assert r.SEEDS == (30, 31, 32)
     assert not set(r.SEEDS) & set(range(12, 30))
