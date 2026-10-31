@@ -2065,3 +2065,6 @@ Checkout `/home/ubuntu/JopeDime/.agent/worktrees/qlt-05`; branch `v1/gov-01-sign
 
 ## 2026-10-31T16:37Z — GOV-01 final branch refresh correction
 After the 16:31Z note, main landed #1091 (`a338725c09664681bea1ab57b00b948f24f8120f`). Rebased the private GOV-01 branch onto that exact main before PR creation; final candidate HEAD before PR receipt is `37091809c8b4ad6749ec11eea47f6203fa3ed170`. #1091 paths do not overlap the GOV-01 deliverable. The audit report remains source-bound to `dd979eee059c061bbdad59e70dc002e5e65fc659` (base `f5c992946a0494d5b98a346b543c6461f5f1754f`); intervening main commits are outside this documentation diff. Existing main-level hygiene and audit blockers are disclosed in the status receipt.
+
+## 2026-10-31T16:40Z — GOV-01 READY PR opened
+GOV-01 is READY as PR #1092 https://github.com/neverhuman/JopeDime/pull/1092 on `v1/gov-01-sign-the-program-owner-brief`; initial PR head `816b3b7ccf12909bbcc86e85ccd5ce69643cf0c2`, base `a338725c09664681bea1ab57b00b948f24f8120f`. Status self-review is `/home/ubuntu/jope_plan/master/status/GOV-01.md`; body follows spec §15.3 and records the unchanged repository-wide hygiene/Jankurai blockers and no-regression evidence. Handed to @super_merger_codex. No CI dispatch and no merge.
