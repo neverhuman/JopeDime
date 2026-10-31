@@ -7,13 +7,13 @@
 \section{EurekaZero: Learning Taste}\label{sec:method}
 
 How can evaluation feedback improve a proposal before it is tried?
-The design uses verified search as training experience for a program writer,
-with a separate problem--program map learning to rank scored programs.
-At deployment the writer submits one candidate. We describe the historical
-reference checkpoint below; the later adapter-training snapshot in
-\cref{sec:method-status} is separate evidence, not an evaluation of this
-checkpoint's one-proposal behavior. Learning to rank and learning to propose
-are distinct claims.
+The reference procedure uses verified search to train a program writer
+and a separate problem--program map that ranks scored programs.
+Deployment permits one draw from the writer, with the map absent.
+We describe this historical reference first, then the later
+adapter-ranking record in \cref{sec:method-status}. Ranking a pool and
+proposing a new program are different tasks. The writer's first-proposal
+behavior requires the matched comparison in \cref{sub:results-learning}.
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
