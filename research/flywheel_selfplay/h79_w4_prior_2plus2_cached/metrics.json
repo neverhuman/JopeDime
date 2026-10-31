@@ -1,0 +1,159 @@
+{
+  "advance_gate_evaluated": false,
+  "anchor": "gbm_top4",
+  "arms": [
+    "random4",
+    "prior10_top4",
+    "gbm_top4",
+    "gbm_2plus2",
+    "gbm_2plus2_swap"
+  ],
+  "bootstrap": {
+    "draws": 10000,
+    "paired_shared_indices": true,
+    "seed": 20261031,
+    "unit": "family"
+  },
+  "cached_replay_reveals": 3000,
+  "context_count": 50,
+  "context_mean_retained_best_utility": {
+    "gbm_2plus2": 1.8448947810454943,
+    "gbm_2plus2_swap": 1.8102044079066624,
+    "gbm_top4": 1.8379414788924238,
+    "prior10_top4": 1.2734316902006368,
+    "random4": 1.372672330295218
+  },
+  "family_elo": {
+    "n_datasets": 50,
+    "n_families": 44,
+    "pairwise_win_tie_loss_vs_anchor": {
+      "gbm_2plus2": {
+        "elo_delta_vs_anchor": 23.04,
+        "losses": 12,
+        "ties": 23,
+        "wins": 15
+      },
+      "gbm_2plus2_swap": {
+        "elo_delta_vs_anchor": 14.79,
+        "losses": 13,
+        "ties": 23,
+        "wins": 14
+      },
+      "prior10_top4": {
+        "elo_delta_vs_anchor": -238.68,
+        "losses": 38,
+        "ties": 1,
+        "wins": 11
+      },
+      "random4": {
+        "elo_delta_vs_anchor": -191.27,
+        "losses": 35,
+        "ties": 0,
+        "wins": 15
+      }
+    },
+    "ratings": {
+      "gbm_2plus2": 1523.04,
+      "gbm_2plus2_swap": 1514.79,
+      "gbm_top4": 1500.0,
+      "prior10_top4": 1261.32,
+      "random4": 1308.73
+    }
+  },
+  "family_exclusion": {
+    "acquisition_contexts_whose_h67_fold_label_differs_from_w1": 40,
+    "acquisition_families_single_w1_fold": 44,
+    "all_families_single_w1_fold": 205,
+    "families": 205
+  },
+  "family_groups": 44,
+  "family_mean_retained_best_utility": {
+    "gbm_2plus2": 1.9227910984862389,
+    "gbm_2plus2_swap": 1.8980421653903898,
+    "gbm_top4": 1.9159280492786674,
+    "prior10_top4": 1.332942105795981,
+    "random4": 1.4129998569602737
+  },
+  "gpu_hours": 0,
+  "native_fits": 0,
+  "primary": {
+    "bootstrap_p2_5": -0.016923232123609255,
+    "bootstrap_p5": -0.013179014220081602,
+    "bootstrap_p97_5": 0.03410775864400839,
+    "contrast": "gbm_2plus2 - gbm_top4",
+    "families": 44,
+    "families_losing_more_than_0_01_fraction": 0.06818181818181818,
+    "family_mean": 0.006863049207571407,
+    "family_median": 0.0,
+    "family_win_tie_loss": [
+      14,
+      18,
+      12
+    ]
+  },
+  "random4_reproduction_delta_vs_h75_w4": {
+    "701": 0.0,
+    "702": 0.0,
+    "703": 0.0
+  },
+  "schema": "jopedime.h79-w4-prior-2plus2-cached-metrics.v1",
+  "scientific_verdict": null,
+  "secondary": {
+    "gbm_2plus2 - gbm_2plus2_swap": {
+      "bootstrap_p2_5": 0.0,
+      "bootstrap_p5": 0.0,
+      "bootstrap_p97_5": 0.06416981166270355,
+      "families": 44,
+      "families_losing_more_than_0_01_fraction": 0.0,
+      "family_mean": 0.024748933095849013,
+      "family_median": 0.0,
+      "family_win_tie_loss": [
+        2,
+        42,
+        0
+      ]
+    },
+    "gbm_top4 - prior10_top4": {
+      "bootstrap_p2_5": 0.23453987090508624,
+      "bootstrap_p5": 0.2757531944010344,
+      "bootstrap_p97_5": 1.0345719788077545,
+      "families": 44,
+      "families_losing_more_than_0_01_fraction": 0.1590909090909091,
+      "family_mean": 0.5829859434826866,
+      "family_median": 0.07183916205353277,
+      "family_win_tie_loss": [
+        34,
+        1,
+        9
+      ]
+    },
+    "gbm_top4 - random4": {
+      "bootstrap_p2_5": 0.14181545818106953,
+      "bootstrap_p5": 0.1669884812630867,
+      "bootstrap_p97_5": 1.0662551586249183,
+      "families": 44,
+      "families_losing_more_than_0_01_fraction": 0.11363636363636363,
+      "family_mean": 0.5029281923183938,
+      "family_median": 0.05464940894160103,
+      "family_win_tie_loss": [
+        32,
+        0,
+        12
+      ]
+    }
+  },
+  "seeds": [
+    701,
+    702,
+    703
+  ],
+  "selection_cpu_seconds": {
+    "gbm_2plus2": 0.15863747900004554,
+    "gbm_2plus2_swap": 0.15293090399999443,
+    "gbm_top4": 0.06587130700005162,
+    "prior10_top4": 0.07270998899994296,
+    "random4": 0.02309222199995986
+  },
+  "status": "DESCRIPTIVE_CACHED_POOL_SCREEN_ONLY",
+  "val_reg_inner": null
+}
