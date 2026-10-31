@@ -6180,7 +6180,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -13287,6 +13287,16 @@
       ],
       "lanes": [],
       "scope": "Owner-requested H75 CPU fixture contracts for frozen development score rosters, complete A-anchored legacy/confirmed_U8 point panels, seed/context/family averaging and incomplete/refusal boundaries. Manual research diagnostics only; no bootstrap, experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h72_w8_control_prereg/test_w8_control.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H72 W8 equal-cost control runner fixture contracts: training-only envelope resplits, policy budget simulation, common confirmation rule, frozen incumbent selection. Manual research diagnostics only; no experiment admission or release qualification."
     }
   },
   "lanes": {
