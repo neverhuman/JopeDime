@@ -1,0 +1,928 @@
+{
+  "bradley_terry_elo_vs_control_1500": {
+    "CONTROL": 1500.0,
+    "CVAR": 1510.82,
+    "HINGE": 1502.97,
+    "R882": 1530.48
+  },
+  "bradley_terry_elo_vs_r882_1500": {
+    "CONTROL": 1469.52,
+    "CVAR": 1480.33,
+    "HINGE": 1472.49,
+    "R882": 1500.0
+  },
+  "candidate_breakthrough": false,
+  "cells": {
+    "CONTROL_seed94": {
+      "adapter_l2_drift_from_r882": 0.4550652801990509,
+      "arm": "CONTROL",
+      "elapsed_seconds": 94.443,
+      "eligible_count_u0": 997,
+      "eligible_count_u39": 997,
+      "final_adapter_sha256": "29e6aa48b7d134412235900f6231443c25c351e7e375c3461c7df795ae8a4a1d",
+      "final_step_loss": 1.9313150644302368,
+      "first5_sampled_frozen_loss": 3.643127506226301,
+      "fold0_context_mean_utility": 1.3283573148065564,
+      "fold0_family_mean_utility": 1.3070627127372092,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 3.900656718760729,
+      "local_receipt": {
+        "bytes": 25841,
+        "path": "/home/ubuntu/jope-rescue-20260921/h130-harm-hinge/cells/CONTROL_seed94.json",
+        "relative_key": "cells/CONTROL_seed94.json",
+        "sha256": "4d5d9b96f4260512604b3308152ad1f77bc629e1632a2f8d6bc4a422d53081a8",
+        "status": "LOCAL_ONLY"
+      },
+      "mean_sampled_frozen_loss": 3.4747970354743303,
+      "mean_step_loss": 3.4594396710395814,
+      "median_post_clip_grad_norm": 0.4843733012676239,
+      "median_pre_clip_grad_norm": 0.4843733012676239,
+      "seed": 94,
+      "updates": 40
+    },
+    "CONTROL_seed95": {
+      "adapter_l2_drift_from_r882": 0.447381854057312,
+      "arm": "CONTROL",
+      "elapsed_seconds": 91.906,
+      "eligible_count_u0": 997,
+      "eligible_count_u39": 997,
+      "final_adapter_sha256": "734d796d5e4be295f02050c0815dda8717b746c1c58a037590fab46374101bc3",
+      "final_step_loss": 2.223313570022583,
+      "first5_sampled_frozen_loss": 2.7547047778964044,
+      "fold0_context_mean_utility": 1.3379398456672338,
+      "fold0_family_mean_utility": 1.317730263222162,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 2.9535373613238334,
+      "local_receipt": {
+        "bytes": 25839,
+        "path": "/home/ubuntu/jope-rescue-20260921/h130-harm-hinge/cells/CONTROL_seed95.json",
+        "relative_key": "cells/CONTROL_seed95.json",
+        "sha256": "ba38b7502af7d9fa56bb69abf9811b27e6211c181432079a9b9cc4df584ed03c",
+        "status": "LOCAL_ONLY"
+      },
+      "mean_sampled_frozen_loss": 3.127244337555021,
+      "mean_step_loss": 3.1165695250034333,
+      "median_post_clip_grad_norm": 0.4682082235813141,
+      "median_pre_clip_grad_norm": 0.4682082235813141,
+      "seed": 95,
+      "updates": 40
+    },
+    "CONTROL_seed96": {
+      "adapter_l2_drift_from_r882": 0.4484228491783142,
+      "arm": "CONTROL",
+      "elapsed_seconds": 93.494,
+      "eligible_count_u0": 997,
+      "eligible_count_u39": 997,
+      "final_adapter_sha256": "5221bef2db7ee8e3f4e73772ec3e0f2b266e3b4a6a3a2e3c422f00914c80f699",
+      "final_step_loss": 3.8816566467285156,
+      "first5_sampled_frozen_loss": 4.313581705838442,
+      "fold0_context_mean_utility": 1.3422293920934167,
+      "fold0_family_mean_utility": 1.3232995057847081,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 2.639693285524845,
+      "local_receipt": {
+        "bytes": 25849,
+        "path": "/home/ubuntu/jope-rescue-20260921/h130-harm-hinge/cells/CONTROL_seed96.json",
+        "relative_key": "cells/CONTROL_seed96.json",
+        "sha256": "cbd10995a8320d07a1c5997c5599d54a556717546645b757d791368d45e087c0",
+        "status": "LOCAL_ONLY"
+      },
+      "mean_sampled_frozen_loss": 3.6546793915331364,
+      "mean_step_loss": 3.63919115960598,
+      "median_post_clip_grad_norm": 0.5006894320249557,
+      "median_pre_clip_grad_norm": 0.5006894320249557,
+      "seed": 96,
+      "updates": 40
+    },
+    "CVAR_seed94": {
+      "adapter_l2_drift_from_r882": 0.38685935735702515,
+      "arm": "CVAR",
+      "elapsed_seconds": 89.968,
+      "eligible_count_u0": 997,
+      "eligible_count_u39": 997,
+      "final_adapter_sha256": "8ae75472cd971c4dc001c4700ca29654f6f43ef26caf93f5420d2ccef121683b",
+      "final_step_loss": 2.0609447956085205,
+      "first5_sampled_frozen_loss": 3.643127506226301,
+      "fold0_context_mean_utility": 1.3318284312096633,
+      "fold0_family_mean_utility": 1.311373260484747,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 3.900656718760729,
+      "local_receipt": {
+        "bytes": 25840,
+        "path": "/home/ubuntu/jope-rescue-20260921/h130-harm-hinge/cells/CVAR_seed94.json",
+        "relative_key": "cells/CVAR_seed94.json",
+        "sha256": "8f16de7b4b89455a42d49227e1f988f8eb1c9b0dae155979d6798bc46aad91b3",
+        "status": "LOCAL_ONLY"
+      },
+      "mean_sampled_frozen_loss": 3.4747970354743303,
+      "mean_step_loss": 4.4917293131351474,
+      "median_post_clip_grad_norm": 0.9999991059303284,
+      "median_pre_clip_grad_norm": 1.108620524406433,
+      "seed": 94,
+      "updates": 40
+    },
+    "CVAR_seed95": {
+      "adapter_l2_drift_from_r882": 0.3753133714199066,
+      "arm": "CVAR",
+      "elapsed_seconds": 91.259,
+      "eligible_count_u0": 997,
+      "eligible_count_u39": 997,
+      "final_adapter_sha256": "b8c0467db9439017883c8e684dfd7e2d04448a6e4a2b71c10060488f8791034c",
+      "final_step_loss": 2.512317657470703,
+      "first5_sampled_frozen_loss": 2.7547047778964044,
+      "fold0_context_mean_utility": 1.3484923142136818,
+      "fold0_family_mean_utility": 1.329344500383222,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 2.9535373613238334,
+      "local_receipt": {
+        "bytes": 25851,
+        "path": "/home/ubuntu/jope-rescue-20260921/h130-harm-hinge/cells/CVAR_seed95.json",
+        "relative_key": "cells/CVAR_seed95.json",
+        "sha256": "34df66d50375bfebc5d16f8fd44695e3fe55dcc61222ede04ef4e28a93a6accb",
+        "status": "LOCAL_ONLY"
+      },
+      "mean_sampled_frozen_loss": 3.127244337555021,
+      "mean_step_loss": 4.076452839374542,
+      "median_post_clip_grad_norm": 0.9999991059303284,
+      "median_pre_clip_grad_norm": 1.1367179155349731,
+      "seed": 95,
+      "updates": 40
+    },
+    "CVAR_seed96": {
+      "adapter_l2_drift_from_r882": 0.355599045753479,
+      "arm": "CVAR",
+      "elapsed_seconds": 92.341,
+      "eligible_count_u0": 997,
+      "eligible_count_u39": 997,
+      "final_adapter_sha256": "61b188bccc82226cacbbe1822512da68f39c62789607467a96c618127bda8ed6",
+      "final_step_loss": 5.007735252380371,
+      "first5_sampled_frozen_loss": 4.313581705838442,
+      "fold0_context_mean_utility": 1.3531529965113938,
+      "fold0_family_mean_utility": 1.3344245471830805,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 2.639693285524845,
+      "local_receipt": {
+        "bytes": 25839,
+        "path": "/home/ubuntu/jope-rescue-20260921/h130-harm-hinge/cells/CVAR_seed96.json",
+        "relative_key": "cells/CVAR_seed96.json",
+        "sha256": "c698acc260c6b94b084dea99973c18d59e30c57ce09e19cc6c6f83091b96a1b3",
+        "status": "LOCAL_ONLY"
+      },
+      "mean_sampled_frozen_loss": 3.6546793915331364,
+      "mean_step_loss": 5.6938660711050035,
+      "median_post_clip_grad_norm": 0.9999992251396179,
+      "median_pre_clip_grad_norm": 1.2103222012519836,
+      "seed": 96,
+      "updates": 40
+    },
+    "HINGE_seed94": {
+      "adapter_l2_drift_from_r882": 0.44372549653053284,
+      "arm": "HINGE",
+      "elapsed_seconds": 92.755,
+      "eligible_count_u0": 997,
+      "eligible_count_u39": 997,
+      "final_adapter_sha256": "1a0b7d20f93ec6afdd9406a486a37211219db7729a32ed87a789e9b0bf134363",
+      "final_step_loss": 1.9563144445419312,
+      "first5_sampled_frozen_loss": 3.643127506226301,
+      "fold0_context_mean_utility": 1.327948723910929,
+      "fold0_family_mean_utility": 1.3069106094177732,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 3.900656718760729,
+      "local_receipt": {
+        "bytes": 25847,
+        "path": "/home/ubuntu/jope-rescue-20260921/h130-harm-hinge/cells/HINGE_seed94.json",
+        "relative_key": "cells/HINGE_seed94.json",
+        "sha256": "7d2d704026ed8a6fd52b19cc376d08dfaf39f0c829c8c66cf661ded803c90c17",
+        "status": "LOCAL_ONLY"
+      },
+      "mean_sampled_frozen_loss": 3.4747970354743303,
+      "mean_step_loss": 3.679282137751579,
+      "median_post_clip_grad_norm": 0.688774824142456,
+      "median_pre_clip_grad_norm": 0.688774824142456,
+      "seed": 94,
+      "updates": 40
+    },
+    "HINGE_seed95": {
+      "adapter_l2_drift_from_r882": 0.4287469983100891,
+      "arm": "HINGE",
+      "elapsed_seconds": 92.791,
+      "eligible_count_u0": 997,
+      "eligible_count_u39": 997,
+      "final_adapter_sha256": "ad9983acc0e8038506c16455fb8f4e369b367cd5b649d6735c257f62cf8ab967",
+      "final_step_loss": 2.2856876850128174,
+      "first5_sampled_frozen_loss": 2.7547047778964044,
+      "fold0_context_mean_utility": 1.341776456040382,
+      "fold0_family_mean_utility": 1.3228595551204356,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 2.9535373613238334,
+      "local_receipt": {
+        "bytes": 25849,
+        "path": "/home/ubuntu/jope-rescue-20260921/h130-harm-hinge/cells/HINGE_seed95.json",
+        "relative_key": "cells/HINGE_seed95.json",
+        "sha256": "3a4c21dfcfaac710ca51c76596dc5c7a4de1b587a83d75bdfad6abc82b57baee",
+        "status": "LOCAL_ONLY"
+      },
+      "mean_sampled_frozen_loss": 3.127244337555021,
+      "mean_step_loss": 3.323915585875511,
+      "median_post_clip_grad_norm": 0.6825853288173676,
+      "median_pre_clip_grad_norm": 0.6825853288173676,
+      "seed": 95,
+      "updates": 40
+    },
+    "HINGE_seed96": {
+      "adapter_l2_drift_from_r882": 0.4323902726173401,
+      "arm": "HINGE",
+      "elapsed_seconds": 94.821,
+      "eligible_count_u0": 997,
+      "eligible_count_u39": 997,
+      "final_adapter_sha256": "4b4cff7e61afe69a685cadf981f615058bf55c9eea161cd5b3abf0edc7079637",
+      "final_step_loss": 4.121156215667725,
+      "first5_sampled_frozen_loss": 4.313581705838442,
+      "fold0_context_mean_utility": 1.3443735825615295,
+      "fold0_family_mean_utility": 1.3256560210406123,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 2.639693285524845,
+      "local_receipt": {
+        "bytes": 25857,
+        "path": "/home/ubuntu/jope-rescue-20260921/h130-harm-hinge/cells/HINGE_seed96.json",
+        "relative_key": "cells/HINGE_seed96.json",
+        "sha256": "84dfce6206c5e502f01291aaa811b6b23e8d44e91d3a0123197c9b49719182e0",
+        "status": "LOCAL_ONLY"
+      },
+      "mean_sampled_frozen_loss": 3.6546793915331364,
+      "mean_step_loss": 4.065827441215515,
+      "median_post_clip_grad_norm": 0.7215660512447357,
+      "median_pre_clip_grad_norm": 0.7215660512447357,
+      "seed": 96,
+      "updates": 40
+    }
+  },
+  "cells_completed": 9,
+  "complete": true,
+  "dl_val_reads": 0,
+  "elapsed_seconds": 1022.88,
+  "final_guards": {
+    "disk_free_gib": 477.34,
+    "disk_used_pct": 93.54,
+    "load1": 55.43,
+    "load5": 56.75,
+    "mem_available_gib": 71.25,
+    "rss_bytes": 5171019776,
+    "rss_mib": 4931.47,
+    "stage": "wave_complete",
+    "torch_threads": 4
+  },
+  "frozen_fit_family_r882_losses": {
+    "adapter_mutated": false,
+    "assessment_families_touched": 0,
+    "family_baseline_sha256": "4444da343898d793f4a778671628e0cfa802a4d16096d0ab9356df7fac163695",
+    "fit_family_count": 164,
+    "local_receipt": {
+      "bytes": 254895,
+      "path": "/home/ubuntu/jope-rescue-20260921/h130-harm-hinge/fit_family_baseline.json",
+      "relative_key": "fit_family_baseline.json",
+      "sha256": "0367146a1178ac811ff9e4d3154050acb113376e1beec094f6016ba01d59c4f8",
+      "status": "LOCAL_ONLY"
+    }
+  },
+  "gpu_seconds": 0.0,
+  "holm_step_down_vs_r882": {
+    "CVAR": {
+      "admitted": false,
+      "alpha_threshold": 0.05,
+      "gates": {
+        "family_harm_le_10pct": false,
+        "family_median_nonnegative": true,
+        "holm_pass": false,
+        "lcb95_gt_0_001": false
+      },
+      "p_value_one_sided": 0.9914008599140086,
+      "rank": 2
+    },
+    "HINGE": {
+      "admitted": false,
+      "alpha_threshold": 0.025,
+      "gates": {
+        "family_harm_le_10pct": false,
+        "family_median_nonnegative": false,
+        "holm_pass": false,
+        "lcb95_gt_0_001": false
+      },
+      "p_value_one_sided": 0.9908009199080092,
+      "rank": 1
+    }
+  },
+  "live_loop_reads": 0,
+  "local_summary_receipt": {
+    "bytes": 33651,
+    "path": "/home/ubuntu/jope-rescue-20260921/h130-harm-hinge/h130_summary.json",
+    "relative_key": "h130_summary_v2.json",
+    "sha256": "6b41618bd38a5fa2868e851f26eac1d39d610dd69352d7f895e01a2ddc0c19c9",
+    "status": "LOCAL_ONLY"
+  },
+  "optimizer_updates": 360,
+  "outer_test_reads": 0,
+  "primary_vs_r882": {
+    "CONTROL": {
+      "ci95_two_sided": [
+        -0.16121023661932085,
+        -0.011873285468187765
+      ],
+      "comparator": "R882",
+      "lcb95_one_sided": -0.14621197249202397,
+      "max_seed_harmed_context_fraction": 0.14414414414414414,
+      "max_seed_harmed_family_fraction": 0.36585365853658536,
+      "mean_seed_gain": -0.07639048439023344,
+      "median_seed_gain": -0.07469104841609803,
+      "median_seed_paired_elo": 1395.25,
+      "p_value_one_sided": 0.9933006699330067,
+      "per_seed": [
+        {
+          "arm_family_mean": 1.3070627127372092,
+          "comparator_family_mean": 1.3924213116382598,
+          "context_mean_delta": -0.07421730535371912,
+          "family_mean_delta": -0.08535859890105048,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.35365853658536583,
+          "family_wtl": [
+            8,
+            13,
+            20
+          ],
+          "harmed_contexts_count": 32,
+          "harmed_contexts_fraction": 0.14414414414414414,
+          "harmed_families_count": 14,
+          "harmed_families_fraction": 0.34146341463414637,
+          "paired_elo": 1395.25,
+          "seed": 94
+        },
+        {
+          "arm_family_mean": 1.317730263222162,
+          "comparator_family_mean": 1.3924213116382598,
+          "context_mean_delta": -0.06463477449304185,
+          "family_mean_delta": -0.07469104841609803,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.36585365853658536,
+          "family_wtl": [
+            9,
+            12,
+            20
+          ],
+          "harmed_contexts_count": 31,
+          "harmed_contexts_fraction": 0.13963963963963963,
+          "harmed_families_count": 15,
+          "harmed_families_fraction": 0.36585365853658536,
+          "paired_elo": 1404.45,
+          "seed": 95
+        },
+        {
+          "arm_family_mean": 1.3232995057847081,
+          "comparator_family_mean": 1.3924213116382598,
+          "context_mean_delta": -0.060345228066858755,
+          "family_mean_delta": -0.06912180585355181,
+          "family_median_delta": -0.0001248659518870987,
+          "family_win_rate": 0.34146341463414637,
+          "family_wtl": [
+            9,
+            10,
+            22
+          ],
+          "harmed_contexts_count": 31,
+          "harmed_contexts_fraction": 0.13963963963963963,
+          "harmed_families_count": 15,
+          "harmed_families_fraction": 0.36585365853658536,
+          "paired_elo": 1385.91,
+          "seed": 96
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        -0.08535859890105048,
+        -0.07469104841609803,
+        -0.06912180585355181
+      ],
+      "pooled_family_harm_fraction": 0.3902439024390244,
+      "pooled_family_median_gain": -0.0005604348968635264,
+      "pooled_family_win_rate": 0.35365853658536583,
+      "pooled_paired_elo": 1395.25,
+      "pooled_paired_elo_ci95": [
+        1303.46,
+        1480.21
+      ],
+      "seed_mean_harmed_context_fraction": 0.14864864864864866,
+      "seed_mean_harmed_family_fraction": 0.3902439024390244
+    },
+    "CVAR": {
+      "admitted": false,
+      "ci95_two_sided": [
+        -0.15154534975987852,
+        -0.006570646267624467
+      ],
+      "comparator": "R882",
+      "holm_alpha": 0.05,
+      "holm_pass": false,
+      "lcb95_one_sided": -0.13482876274418418,
+      "max_seed_harmed_context_fraction": 0.11261261261261261,
+      "max_seed_harmed_family_fraction": 0.34146341463414637,
+      "mean_seed_gain": -0.06737387562124338,
+      "median_seed_gain": -0.06307681125503782,
+      "median_seed_paired_elo": 1440.1,
+      "p_value_one_sided": 0.9914008599140086,
+      "per_seed": [
+        {
+          "arm_family_mean": 1.311373260484747,
+          "comparator_family_mean": 1.3924213116382598,
+          "context_mean_delta": -0.07074618895061228,
+          "family_mean_delta": -0.08104805115351293,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4146341463414634,
+          "family_wtl": [
+            10,
+            14,
+            17
+          ],
+          "harmed_contexts_count": 25,
+          "harmed_contexts_fraction": 0.11261261261261261,
+          "harmed_families_count": 14,
+          "harmed_families_fraction": 0.34146341463414637,
+          "paired_elo": 1440.1,
+          "seed": 94
+        },
+        {
+          "arm_family_mean": 1.329344500383222,
+          "comparator_family_mean": 1.3924213116382598,
+          "context_mean_delta": -0.0540823059465937,
+          "family_mean_delta": -0.06307681125503782,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.43902439024390244,
+          "family_wtl": [
+            11,
+            14,
+            16
+          ],
+          "harmed_contexts_count": 24,
+          "harmed_contexts_fraction": 0.10810810810810811,
+          "harmed_families_count": 13,
+          "harmed_families_fraction": 0.3170731707317073,
+          "paired_elo": 1457.42,
+          "seed": 95
+        },
+        {
+          "arm_family_mean": 1.3344245471830805,
+          "comparator_family_mean": 1.3924213116382598,
+          "context_mean_delta": -0.049421623648881814,
+          "family_mean_delta": -0.05799676445517938,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4024390243902439,
+          "family_wtl": [
+            10,
+            13,
+            18
+          ],
+          "harmed_contexts_count": 24,
+          "harmed_contexts_fraction": 0.10810810810810811,
+          "harmed_families_count": 12,
+          "harmed_families_fraction": 0.2926829268292683,
+          "paired_elo": 1431.33,
+          "seed": 96
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        -0.08104805115351293,
+        -0.06307681125503782,
+        -0.05799676445517938
+      ],
+      "pooled_family_harm_fraction": 0.34146341463414637,
+      "pooled_family_median_gain": 0.0,
+      "pooled_family_win_rate": 0.4186991869918699,
+      "pooled_paired_elo": 1443.0,
+      "pooled_paired_elo_ci95": [
+        1356.83,
+        1522.63
+      ],
+      "seed_mean_harmed_context_fraction": 0.12612612612612611,
+      "seed_mean_harmed_family_fraction": 0.34146341463414637
+    },
+    "HINGE": {
+      "admitted": false,
+      "ci95_two_sided": [
+        -0.15902791662561502,
+        -0.009227952464034898
+      ],
+      "comparator": "R882",
+      "holm_alpha": 0.025,
+      "holm_pass": false,
+      "lcb95_one_sided": -0.14350335828947672,
+      "max_seed_harmed_context_fraction": 0.13963963963963963,
+      "max_seed_harmed_family_fraction": 0.36585365853658536,
+      "mean_seed_gain": -0.07394591644531946,
+      "median_seed_gain": -0.06956175651782434,
+      "median_seed_paired_elo": 1413.52,
+      "p_value_one_sided": 0.9908009199080092,
+      "per_seed": [
+        {
+          "arm_family_mean": 1.3069106094177732,
+          "comparator_family_mean": 1.3924213116382598,
+          "context_mean_delta": -0.07462589624934657,
+          "family_mean_delta": -0.08551070222048655,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.35365853658536583,
+          "family_wtl": [
+            8,
+            13,
+            20
+          ],
+          "harmed_contexts_count": 31,
+          "harmed_contexts_fraction": 0.13963963963963963,
+          "harmed_families_count": 14,
+          "harmed_families_fraction": 0.34146341463414637,
+          "paired_elo": 1395.25,
+          "seed": 94
+        },
+        {
+          "arm_family_mean": 1.3228595551204356,
+          "comparator_family_mean": 1.3924213116382598,
+          "context_mean_delta": -0.06079816411989363,
+          "family_mean_delta": -0.06956175651782434,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.3902439024390244,
+          "family_wtl": [
+            10,
+            12,
+            19
+          ],
+          "harmed_contexts_count": 30,
+          "harmed_contexts_fraction": 0.13513513513513514,
+          "harmed_families_count": 15,
+          "harmed_families_fraction": 0.36585365853658536,
+          "paired_elo": 1422.47,
+          "seed": 95
+        },
+        {
+          "arm_family_mean": 1.3256560210406123,
+          "comparator_family_mean": 1.3924213116382598,
+          "context_mean_delta": -0.05820103759874605,
+          "family_mean_delta": -0.06676529059764753,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.3780487804878049,
+          "family_wtl": [
+            10,
+            11,
+            20
+          ],
+          "harmed_contexts_count": 30,
+          "harmed_contexts_fraction": 0.13513513513513514,
+          "harmed_families_count": 13,
+          "harmed_families_fraction": 0.3170731707317073,
+          "paired_elo": 1413.52,
+          "seed": 96
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        -0.08551070222048655,
+        -0.06956175651782434,
+        -0.06676529059764753
+      ],
+      "pooled_family_harm_fraction": 0.34146341463414637,
+      "pooled_family_median_gain": -3.249147369210892e-06,
+      "pooled_family_win_rate": 0.37398373983739835,
+      "pooled_paired_elo": 1410.51,
+      "pooled_paired_elo_ci95": [
+        1322.09,
+        1491.52
+      ],
+      "seed_mean_harmed_context_fraction": 0.14414414414414414,
+      "seed_mean_harmed_family_fraction": 0.34146341463414637
+    }
+  },
+  "provenance": {
+    "assessment_contexts": 222,
+    "assessment_families": 41,
+    "assessment_fold": 0,
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "fit_contexts": 997,
+    "fit_families": 164,
+    "fit_folds": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "fold_manifest_local_receipt": {
+      "bytes": 14566,
+      "path": "/home/ubuntu/jope-rescue-20260921/h130-harm-hinge/fold_manifest_130094.json",
+      "relative_key": "fold_manifest_130094.json",
+      "sha256": "98196cbc017c10d12db1f8c4390c163a11d3faddf1c457b79108a6386ed785ea",
+      "status": "LOCAL_ONLY"
+    },
+    "fold_manifest_sha256": "98196cbc017c10d12db1f8c4390c163a11d3faddf1c457b79108a6386ed785ea",
+    "fold_seed": 130094,
+    "fused_sha256": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "prereg_sha256": "3eefc25b4c873d27942e0c95e2264fd8357e6784d1ebf2ba401924cab8144491",
+    "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "seeds": [
+      94,
+      95,
+      96
+    ],
+    "selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "source_manifest_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
+  },
+  "regression_gate": {
+    "local_receipt": {
+      "bytes": 1129,
+      "path": "/home/ubuntu/jope-rescue-20260921/h130-harm-hinge/regression_receipt.json",
+      "relative_key": "regression_receipt.json",
+      "sha256": "1616ea5f88f6d58ef2ae37c137f651dc0accbe694e3d6568ed64421998cbde1b",
+      "status": "LOCAL_ONLY"
+    },
+    "r882_fold0_native_family_utility": 1.4166851669152178,
+    "r882_fold0_unrev_context_utility": 1.4025746201602753,
+    "r882_fold0_unrev_family_utility": 1.3924213116382598,
+    "status": "PASS",
+    "two_copy_control_grad_max_abs_diff": 0.0,
+    "two_copy_control_loss_abs_diff": 0.0,
+    "two_copy_fold0_pred_max_abs_diff": 0.0,
+    "two_copy_fold0_utility_max_abs_diff": 0.0
+  },
+  "schema": "jope.h130.metrics/v1",
+  "sealed_metatest_reads": 0,
+  "secondary_hinge_vs_cvar": {
+    "ci95_two_sided": [
+      -0.027428888188269662,
+      0.013376802073414148
+    ],
+    "comparator": "CVAR",
+    "lcb95_one_sided": -0.023497104676331083,
+    "max_seed_harmed_context_fraction": 0.036036036036036036,
+    "max_seed_harmed_family_fraction": 0.14634146341463414,
+    "mean_seed_gain": -0.006572040824076093,
+    "median_seed_gain": -0.0064849452627865145,
+    "median_seed_paired_elo": 1457.42,
+    "p_value_one_sided": 0.7370262973702629,
+    "per_seed": [
+      {
+        "arm_family_mean": 1.3069106094177732,
+        "comparator_family_mean": 1.311373260484747,
+        "context_mean_delta": -0.003879707298734266,
+        "family_mean_delta": -0.004462651066973604,
+        "family_median_delta": 0.0,
+        "family_win_rate": 0.4024390243902439,
+        "family_wtl": [
+          1,
+          31,
+          9
+        ],
+        "harmed_contexts_count": 8,
+        "harmed_contexts_fraction": 0.036036036036036036,
+        "harmed_families_count": 6,
+        "harmed_families_fraction": 0.14634146341463414,
+        "paired_elo": 1431.33,
+        "seed": 94
+      },
+      {
+        "arm_family_mean": 1.3228595551204356,
+        "comparator_family_mean": 1.329344500383222,
+        "context_mean_delta": -0.006715858173299934,
+        "family_mean_delta": -0.0064849452627865145,
+        "family_median_delta": 0.0,
+        "family_win_rate": 0.43902439024390244,
+        "family_wtl": [
+          3,
+          30,
+          8
+        ],
+        "harmed_contexts_count": 8,
+        "harmed_contexts_fraction": 0.036036036036036036,
+        "harmed_families_count": 5,
+        "harmed_families_fraction": 0.12195121951219512,
+        "paired_elo": 1457.42,
+        "seed": 95
+      },
+      {
+        "arm_family_mean": 1.3256560210406123,
+        "comparator_family_mean": 1.3344245471830805,
+        "context_mean_delta": -0.008779413949864243,
+        "family_mean_delta": -0.008768526142468163,
+        "family_median_delta": 0.0,
+        "family_win_rate": 0.45121951219512196,
+        "family_wtl": [
+          2,
+          33,
+          6
+        ],
+        "harmed_contexts_count": 8,
+        "harmed_contexts_fraction": 0.036036036036036036,
+        "harmed_families_count": 4,
+        "harmed_families_fraction": 0.0975609756097561,
+        "paired_elo": 1466.0,
+        "seed": 96
+      }
+    ],
+    "per_seed_family_mean_deltas": [
+      -0.004462651066973604,
+      -0.0064849452627865145,
+      -0.008768526142468163
+    ],
+    "pooled_family_harm_fraction": 0.17073170731707318,
+    "pooled_family_median_gain": 0.0,
+    "pooled_family_win_rate": 0.43089430894308944,
+    "pooled_paired_elo": 1451.67,
+    "pooled_paired_elo_ci95": [
+      1416.51,
+      1485.87
+    ],
+    "seed_mean_harmed_context_fraction": 0.05855855855855856,
+    "seed_mean_harmed_family_fraction": 0.17073170731707318
+  },
+  "secondary_vs_control": {
+    "CVAR": {
+      "ci95_two_sided": [
+        -0.011955563337114755,
+        0.030379509133847186
+      ],
+      "comparator": "CONTROL",
+      "lcb95_one_sided": -0.008536936857352264,
+      "max_seed_harmed_context_fraction": 0.02252252252252252,
+      "max_seed_harmed_family_fraction": 0.0975609756097561,
+      "mean_seed_gain": 0.009016608768990051,
+      "median_seed_gain": 0.011125041398372428,
+      "median_seed_paired_elo": 1559.9,
+      "p_value_one_sided": 0.20217978202179782,
+      "per_seed": [
+        {
+          "arm_family_mean": 1.311373260484747,
+          "comparator_family_mean": 1.3070627127372092,
+          "context_mean_delta": 0.003471116403106816,
+          "family_mean_delta": 0.004310547747537538,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.5853658536585366,
+          "family_wtl": [
+            9,
+            30,
+            2
+          ],
+          "harmed_contexts_count": 4,
+          "harmed_contexts_fraction": 0.018018018018018018,
+          "harmed_families_count": 1,
+          "harmed_families_fraction": 0.024390243902439025,
+          "paired_elo": 1559.9,
+          "seed": 94
+        },
+        {
+          "arm_family_mean": 1.329344500383222,
+          "comparator_family_mean": 1.317730263222162,
+          "context_mean_delta": 0.010552468546448153,
+          "family_mean_delta": 0.011614237161060189,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.5487804878048781,
+          "family_wtl": [
+            9,
+            27,
+            5
+          ],
+          "harmed_contexts_count": 5,
+          "harmed_contexts_fraction": 0.02252252252252252,
+          "harmed_families_count": 4,
+          "harmed_families_fraction": 0.0975609756097561,
+          "paired_elo": 1534.0,
+          "seed": 95
+        },
+        {
+          "arm_family_mean": 1.3344245471830805,
+          "comparator_family_mean": 1.3232995057847081,
+          "context_mean_delta": 0.010923604417976943,
+          "family_mean_delta": 0.011125041398372428,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.5853658536585366,
+          "family_wtl": [
+            9,
+            30,
+            2
+          ],
+          "harmed_contexts_count": 2,
+          "harmed_contexts_fraction": 0.009009009009009009,
+          "harmed_families_count": 1,
+          "harmed_families_fraction": 0.024390243902439025,
+          "paired_elo": 1559.9,
+          "seed": 96
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        0.004310547747537538,
+        0.011614237161060189,
+        0.011125041398372428
+      ],
+      "pooled_family_harm_fraction": 0.0975609756097561,
+      "pooled_family_median_gain": 0.0,
+      "pooled_family_win_rate": 0.573170731707317,
+      "pooled_paired_elo": 1551.21,
+      "pooled_paired_elo_ci95": [
+        1514.13,
+        1589.49
+      ],
+      "seed_mean_harmed_context_fraction": 0.03153153153153153,
+      "seed_mean_harmed_family_fraction": 0.0975609756097561
+    },
+    "HINGE": {
+      "ci95_two_sided": [
+        -0.0008502307147090457,
+        0.00826561868282572
+      ],
+      "comparator": "CONTROL",
+      "lcb95_one_sided": -0.0006811073092159572,
+      "max_seed_harmed_context_fraction": 0.009009009009009009,
+      "max_seed_harmed_family_fraction": 0.024390243902439025,
+      "mean_seed_gain": 0.002444567944913959,
+      "median_seed_gain": 0.002356515255904266,
+      "median_seed_paired_elo": 1500.0,
+      "p_value_one_sided": 0.300969903009699,
+      "per_seed": [
+        {
+          "arm_family_mean": 1.3069106094177732,
+          "comparator_family_mean": 1.3070627127372092,
+          "context_mean_delta": -0.00040859089562744955,
+          "family_mean_delta": -0.00015210331943606666,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.5,
+          "family_wtl": [
+            1,
+            39,
+            1
+          ],
+          "harmed_contexts_count": 1,
+          "harmed_contexts_fraction": 0.0045045045045045045,
+          "harmed_families_count": 1,
+          "harmed_families_fraction": 0.024390243902439025,
+          "paired_elo": 1500.0,
+          "seed": 94
+        },
+        {
+          "arm_family_mean": 1.3228595551204356,
+          "comparator_family_mean": 1.317730263222162,
+          "context_mean_delta": 0.003836610373148219,
+          "family_mean_delta": 0.005129291898273677,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4878048780487805,
+          "family_wtl": [
+            2,
+            36,
+            3
+          ],
+          "harmed_contexts_count": 2,
+          "harmed_contexts_fraction": 0.009009009009009009,
+          "harmed_families_count": 1,
+          "harmed_families_fraction": 0.024390243902439025,
+          "paired_elo": 1491.52,
+          "seed": 95
+        },
+        {
+          "arm_family_mean": 1.3256560210406123,
+          "comparator_family_mean": 1.3232995057847081,
+          "context_mean_delta": 0.002144190468112701,
+          "family_mean_delta": 0.002356515255904266,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.5365853658536586,
+          "family_wtl": [
+            3,
+            38,
+            0
+          ],
+          "harmed_contexts_count": 0,
+          "harmed_contexts_fraction": 0.0,
+          "harmed_families_count": 0,
+          "harmed_families_fraction": 0.0,
+          "paired_elo": 1525.47,
+          "seed": 96
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        -0.00015210331943606666,
+        0.005129291898273677,
+        0.002356515255904266
+      ],
+      "pooled_family_harm_fraction": 0.024390243902439025,
+      "pooled_family_median_gain": 0.0,
+      "pooled_family_win_rate": 0.508130081300813,
+      "pooled_paired_elo": 1505.65,
+      "pooled_paired_elo_ci95": [
+        1483.04,
+        1528.31
+      ],
+      "seed_mean_harmed_context_fraction": 0.013513513513513514,
+      "seed_mean_harmed_family_fraction": 0.024390243902439025
+    }
+  },
+  "status": "COMPLETE",
+  "timestamp_utc": "2026-10-31T18:39:27Z",
+  "verdict": "NO_ADMISSION",
+  "wave": "H130"
+}

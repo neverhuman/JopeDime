@@ -276,6 +276,15 @@ pub struct RoundContext<'a> {
     pub measured: Vec<RoundMeasurement<'a>>,
 }
 
+/// The immutable capture observation and conditioning that will be persisted
+/// with this same invocation. Learned policies must verify both against their
+/// actual model inputs before recording costs or consuming selection randomness.
+#[cfg(feature = "research")]
+pub struct RecordedAdmissionContext<'a> {
+    pub slate: &'a ObservedSlate,
+    pub conditioning: crate::ranker::stage1b::TokenProjection,
+}
+
 /// Fallible admission against the same committed context for every sibling in a
 /// wave. Failure aborts planning before any scheduler checkpoint is committed.
 pub trait RoundAdmission {
@@ -294,7 +303,7 @@ pub trait RoundAdmission {
         _proposals: Vec<String>,
         _explore: bool,
         _rng: &mut ChaCha12Rng,
-        _observed: &ObservedSlate,
+        _recorded: &RecordedAdmissionContext<'_>,
     ) -> Result<BehaviorPolicy> {
         bail!("same-invocation admission observations are unavailable")
     }
@@ -318,9 +327,9 @@ impl<T: Admission> RoundAdmission for T {
         proposals: Vec<String>,
         explore: bool,
         rng: &mut ChaCha12Rng,
-        observed: &ObservedSlate,
+        recorded: &RecordedAdmissionContext<'_>,
     ) -> Result<BehaviorPolicy> {
-        self.admit_recorded(proposals, explore, rng, observed)
+        self.admit_recorded(proposals, explore, rng, recorded.slate)
     }
 }
 
@@ -2150,7 +2159,24 @@ fn plan_wave_inner(
                     unique.clone(),
                     explore,
                     &mut rng,
-                    &observed,
+                    &RecordedAdmissionContext {
+                        slate: &observed,
+                        conditioning: crate::ranker::stage1b::TokenProjection {
+                            tokens: std::array::from_fn(|i| {
+                                context.binding.tokens[i]
+                                    .as_slice()
+                                    .try_into()
+                                    .expect("capture binding validated ten 32-wide rows")
+                            }),
+                            mask: std::array::from_fn(|i| {
+                                if context.binding.mask[i] {
+                                    1.0
+                                } else {
+                                    0.0
+                                }
+                            }),
+                        },
+                    },
                 )?
             };
             let record = ResearchRound {

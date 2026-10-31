@@ -16,7 +16,7 @@
   "h50_selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
   "fused_sha256": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
   "wave": "H127",
-  "status": "PREREGISTERED_NOT_RUN",
+  "status": "COMPLETE",
   "arms": [
     "CONTROL",
     "ES",
@@ -54,7 +54,43 @@
   },
   "output_source_sha256": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
   "prereg_sha256": "cfc5d368616a30b9202afe6f56ccd490fe6f1e4fa3a7a3be63a443ed742252bb",
-  "execution_started": false,
-  "actual_training_updates": 0,
-  "selected_steps": null
+  "execution_started": true,
+  "actual_training_updates": 3000,
+  "selected_steps": {
+    "ES": 0,
+    "ES_FREEZE": 0
+  },
+  "scientific_verdict": "NO_ADVANCE",
+  "regression": {
+    "status": "PASS",
+    "prediction_max_abs_error": 0.0,
+    "control_loss_abs_error": 0.0,
+    "control_gradient_max_abs_error": 0.0,
+    "adapter_sha256": "b9ba619e7f13b2ac6beaeb22ca57d53308d180514080d9a8387ed0487c827454",
+    "development_contexts": 932,
+    "assessment_payloads_opened": 0,
+    "optimizer_updates": 0,
+    "anchor_cache": {
+      "anchor_sha256": "1cca6db5bcece221f68489c3435adf94756073a6cb574e5860e789507f70b000",
+      "entries": 119,
+      "verified_keys": 119,
+      "hits": 119,
+      "misses": 119,
+      "bytes": 21473260
+    }
+  },
+  "execution_source": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H127/astra-t1105/execution.tar.gz",
+    "version_id": "Zm2f108FvXL4sN8JsaHtL.RbjWJbamQB",
+    "sha256": "8db828182de8f874d2cd0e590710b3f6b717c92816d9ce0e9ba2d0e4d58b5e45",
+    "bytes": 49521,
+    "verified_utc": "2026-10-31T17:14:14.007875+00:00"
+  },
+  "closeout_custody": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H127/astra-t1105/manifest.json",
+    "version_id": "eAFAm_AFDAxMeujJdwEujz4KZoDDoxG4",
+    "sha256": "9ebb1313671f485745c131d8548651dfecafbdf44f8f64ac0c7abc451344a428",
+    "bytes": 542495,
+    "verified_utc": "2026-10-31T18:19:45.043018+00:00"
+  }
 }

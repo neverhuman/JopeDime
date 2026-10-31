@@ -91,3 +91,92 @@ complete API schemas. Independent review still needs real client/version/source
 and input custody, the dry-run plan, polling/events, export/prediction and the
 persisted-store inventory. Synthetic self-tests are verifier controls only;
 they are never named-client runs or qualification evidence.
+
+## Reproducible stdio capture
+
+The historical capture producer lived only in host-local evidence. The repository
+now supplies `capture_stdio.py` for a fresh, bounded recording on a POSIX host
+with `poll`, `waitid` and `WNOWAIT` (tested on Linux). Configure a named client's
+temporary MCP server entry to run the equivalent of:
+
+```sh
+nice -n 10 python3 -B deploy/qualification/agents/transcripts/run-prep/capture_stdio.py \
+  --out-dir path/to/FRESH-client-capture --seconds 180 --max-bytes 16777216 \
+  -- /absolute/path/to/jopedime mcp
+python3 -B deploy/qualification/agents/transcripts/run-prep/capture_stdio.py --self-test
+```
+
+Use the admitted client invocation and isolated `JOPEDIME_HOME`; this recorder
+does not edit shared configuration, select a model, launch the named client or
+create an engine store. Server arguments are passed directly, without a shell.
+Keep credentials out of command arguments and the recorded MCP traffic. No
+environment dump is retained.
+
+The output directory must not exist. It is created privately (0700, with 0600
+files), and no old directory or evidence is deleted or overwritten:
+
+- `client.raw` and `server.raw` retain the received stream bytes, including invalid
+  or partial frames on a failed capture.
+- `wire.jsonl` contains only observed JSON-RPC frames with the existing
+  `at`/`direction`/`message` envelope. Forwarded valid frames retain their original
+  bytes and whitespace. No replies or exit-status frames are invented. Recording
+  enforces UTF-8 JSON-line framing and the `2.0` marker; request/reply semantics
+  remain the verifier's responsibility.
+- `server.stderr` is separate from protocol stdout.
+- `capture.json` records producer/parser/executable hashes, exact server argv,
+  time, actual server/relay exits, frame counts, stream hashes and limits.
+
+Bounds cover retained stream files (default 16 MiB), individual frames (1 MiB)
+and monotonic wall time (default 180 seconds). A failed/limited capture can retain
+only a prefix; its receipt reports `complete:false` and a nonzero relay exit.
+The fixed metadata receipt is additional to the stream-byte bound. Invalid
+framing is retained in raw files and refused, rather than forwarded as a tool
+reply. Normal nonzero server exits are preserved. Timeout, interrupt, broken
+consumer or capture failure terminates only the fresh server process group;
+the group leader's PID stays reserved until cleanup, including after normal
+leader exit. Descendants that deliberately leave that group are outside this
+recorder's cleanup guarantee.
+
+The recorder's receipt is **not** `<client>.execution.json`: it cannot observe
+the parent named client's final exit and records `client_exit_code:null`.
+Retain the actual client command/version/stdout/stderr and execution receipt
+separately. Package the wire as `<client>.mcp.jsonl` with its hash and retain the
+capture receipt/raw files as additional sidecars. `complete:true` describes
+transport capture, not tool success or AG1 completion. A5 is always `UNVERIFIED`.
+Self-tests use disposable synthetic child processes only, never a real engine
+or a named-client qualification run.
+
+### Child environment
+
+The server receives an explicit environment, rather than inheriting every caller
+variable. Defaults retain `PATH`, `HOME`, `LANG`, `LC_ALL`, `LC_CTYPE`, `TZ`,
+`TMPDIR`, `TMP`, `TEMP`, the four XDG config/data/state/cache home paths,
+`JOPEDIME_HOME`, `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `MKL_NUM_THREADS`,
+`RAYON_NUM_THREADS` and `CUDA_VISIBLE_DEVICES`. Empty values are preserved,
+including an empty CUDA visibility mask; the isolated engine-home and resource
+controls therefore remain effective. When `PATH` is absent, the OS default
+executable path is used for both lookup and child execution.
+
+Other variables, including ambient GitHub/AWS/API credentials, proxy settings,
+Python paths and loader options, are omitted by default. For additional required
+configuration, name each variable explicitly; its value comes from the caller's
+environment and is never placed in the command arguments:
+
+```sh
+# JOPE_DATASETS_URL must already exist in the caller's environment.
+nice -n 10 python3 -B deploy/qualification/agents/transcripts/run-prep/capture_stdio.py \
+  --out-dir path/to/FRESH-capture --env-allow JOPE_DATASETS_URL \
+  -- /absolute/path/to/jopedime mcp
+```
+
+`--env-allow NAME` is repeatable. Missing variables or names containing an
+assignment are refused before outputs or a child are created. There is no prefix
+or wildcard allowance. `capture.json` lists the selected `environment_names` and
+explicit `extra_environment_names`, without their values.
+
+Explicit opt-ins can still contain sensitive values, and a server can echo them
+into its output. Argv, wire traffic and stderr remain unredacted; keep secrets out
+of those channels. Environment selection does not sandbox filesystem access:
+the server retains the caller's normal file permissions, including the selected
+home/configuration paths. These controls limit ambient propagation and do not
+establish client provenance or qualify A5.
