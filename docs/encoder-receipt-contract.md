@@ -7,7 +7,7 @@ encoder item, not completion of the Jailgun P0.
 
 ## Source and problem
 
-Source: [Core IP Pipeline — Jailgun Battletest](../../xbabe2_kicker/docs/CORE_IP_PIPELINE_JAILGUN_BATTLETEST.md),
+Source: Core IP Pipeline — Jailgun Battletest,
 host path `/home/ubuntu/xbabe2_kicker/docs/CORE_IP_PIPELINE_JAILGUN_BATTLETEST.md`.
 This external audit is not shipped with a JopeDime clone. Its SHA-256 when consulted was
 `d54645e62597c7446b88d72522b8949e19961e924905af858fc3ff3c97060463`;

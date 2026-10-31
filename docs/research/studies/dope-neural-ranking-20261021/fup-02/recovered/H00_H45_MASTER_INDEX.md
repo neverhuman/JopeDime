@@ -1,9 +1,9 @@
 # Waves H00–H45 Master Index (`v4.7` Reconciled)
 
 - **Whitepaper**: [`H35_H45_PERPETUAL_CLUSTER_FLYWHEEL_REPORT.md`](H35_H45_PERPETUAL_CLUSTER_FLYWHEEL_REPORT.md)
-- **Visual Time-Series Plot**: [`h40_h45_self_improving_flywheel_timeseries_20261026.png`](h40_h45_self_improving_flywheel_timeseries_20261026.png) (`SHA-256: 31ccd01f5ee41cd399a411a6596c7e745b520d3851b496695ac6f927fb091c1e`) / [`h40_h45_self_improving_flywheel_timeseries_20261026.pdf`](h40_h45_self_improving_flywheel_timeseries_20261026.pdf)
-- **Global Additive Accounting & Qualification Receipt (`v3.0`)**: [`h40_h45_global_additive_accounting_reconciliation_v3.json`](h40_h45_global_additive_accounting_reconciliation_v3.json)
-- **Full-S3 7-Split & All-1,298-Splits Receipt**: [`h40_h45_full_s3_7split_and_all_1298_splits_receipt.json`](h40_h45_full_s3_7split_and_all_1298_splits_receipt.json) (`SHA-256: 9675ef12af46f2cb...`)
+- **Visual Time-Series Plot**: `h40_h45_self_improving_flywheel_timeseries_20261026.png` (`SHA-256: 31ccd01f5ee41cd399a411a6596c7e745b520d3851b496695ac6f927fb091c1e`) / `h40_h45_self_improving_flywheel_timeseries_20261026.pdf` (external payloads; see the [S3 custody receipt](h40_h45_s3_custody_receipt_v4_7_20261026.json) for object identity).
+- **Global Additive Accounting & Qualification Receipt (`v3.0`)**: `h40_h45_global_additive_accounting_reconciliation_v3.json` (external payload; see the [S3 custody receipt](h40_h45_s3_custody_receipt_v4_7_20261026.json) for object identity).
+- **Full-S3 7-Split & All-1,298-Splits Receipt**: `h40_h45_full_s3_7split_and_all_1298_splits_receipt.json` (`SHA-256: 9675ef12af46f2cb...`; external payload; see the [S3 custody receipt](h40_h45_s3_custody_receipt_v4_7_20261026.json) for object identity).
 - **S3 Custody Verification Receipt (`v4.7`)**: [`h40_h45_s3_custody_receipt_v4_7_20261026.json`](h40_h45_s3_custody_receipt_v4_7_20261026.json) (`s3://veox-jopedime-archive-use2/evidence/flywheel-h40-h45-20261026/`)
 - **Crash-Safe Synthetic Fixture Suite (`v15`, `32/32 PASS`)**: `flywheel_dope_high_only_fixture_verification_receipt_v15_20261026T141435Z.json` (`SHA-256: c29c4e85c255ef37eed9ba1dcd44cc5822ae5abfa63145dee2e84557658965fa`)
 
