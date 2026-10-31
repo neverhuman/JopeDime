@@ -1,0 +1,158 @@
+{
+  "schema": "jope.w6.exact-id-coverage/v1",
+  "verdict": "COVERAGE_DIAGNOSTIC_ONLY",
+  "scope": "H72 fixed five-fold DL-Train roster; exact program SHA identities, not templates or outcomes",
+  "context_count": 1219,
+  "family_count": 205,
+  "candidate_slots": 1404287,
+  "unique_programs": 1316986,
+  "fit_fold_seen_slots": 98820,
+  "unseen_slots": 1305467,
+  "slot_coverage_fraction": 0.07037023058676752,
+  "equal_context_coverage_fraction": 0.07037022997047504,
+  "equal_family_mean_context_coverage_fraction": 0.07123952270308842,
+  "context_fraction_min_median_max": [
+    0.024305555555555556,
+    0.0625,
+    0.2065972222222222
+  ],
+  "zero_coverage_contexts": 0,
+  "all_covered_contexts": 0,
+  "other_family_any_fold_seen_slots": 102003,
+  "other_context_any_family_seen_slots": 102206,
+  "within_family_only_repeat_slots": 203,
+  "cross_family_but_only_same_fold_slots": 3183,
+  "folds": [
+    {
+      "fold": 0,
+      "contexts": 263,
+      "families": 41,
+      "slots": 302976,
+      "seen_fit_folds": 21783,
+      "coverage_fraction": 0.07189678390367554
+    },
+    {
+      "fold": 1,
+      "contexts": 216,
+      "families": 41,
+      "slots": 248832,
+      "seen_fit_folds": 18793,
+      "coverage_fraction": 0.07552485210905349
+    },
+    {
+      "fold": 2,
+      "contexts": 277,
+      "families": 41,
+      "slots": 319104,
+      "seen_fit_folds": 23126,
+      "coverage_fraction": 0.07247167067789811
+    },
+    {
+      "fold": 3,
+      "contexts": 240,
+      "families": 41,
+      "slots": 276480,
+      "seen_fit_folds": 18728,
+      "coverage_fraction": 0.06773726851851852
+    },
+    {
+      "fold": 4,
+      "contexts": 223,
+      "families": 41,
+      "slots": 256895,
+      "seen_fit_folds": 16390,
+      "coverage_fraction": 0.06380038537145527
+    }
+  ],
+  "verification": {
+    "pool_hashes_verified": 1219,
+    "independent_direct_set_contexts": 1219,
+    "controls_passed": 8,
+    "controls_failed": 0,
+    "controls_skipped": 0,
+    "physical_table_and_family_fold_consistency": true,
+    "decoded_members": [
+      "program_sha256"
+    ],
+    "outcome_arrays_decoded": 0
+  },
+  "resources": {
+    "extraction": {
+      "contexts": 1219,
+      "families": 205,
+      "unique_programs": 1316986,
+      "slots": 1404287,
+      "hashed_pool_bytes": 162215175,
+      "decoded_pool_members": [
+        "program_sha256"
+      ],
+      "outcome_arrays_decoded": 0,
+      "source_selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+      "packet_sha256": "13376e15a33d210063ce8356538e2b5ea282fd1cfdf82d428884ab4a50193689",
+      "vocabulary_sha256": "356e96feceb83f71f85122599597319ff7fcc20de09942675e49d83469094c00",
+      "wall_seconds": 16.51377488905564,
+      "cpu_seconds": 8.904844802,
+      "load1_preflight": 43.88525390625,
+      "host": "xbabe2",
+      "nice": 10,
+      "peak_rss_kib": 655580
+    },
+    "shards": [
+      {
+        "host": "xbabe1",
+        "cpu_seconds": 0.585512574,
+        "wall_seconds": 0.5860781297087669,
+        "nice": 19,
+        "load1_preflight": 4.86328125,
+        "logical_cpus_observed": 128,
+        "peak_rss_kib": 89752,
+        "gpu_seconds": 0,
+        "native_fits": 0
+      },
+      {
+        "host": "xbabe3",
+        "cpu_seconds": 0.651560025,
+        "wall_seconds": 0.6516716424375772,
+        "nice": 10,
+        "load1_preflight": 9.2470703125,
+        "logical_cpus_observed": 128,
+        "peak_rss_kib": 89712,
+        "gpu_seconds": 0,
+        "native_fits": 0
+      },
+      {
+        "host": "xbabe4-colima-linux",
+        "cpu_seconds": 0.374408291,
+        "wall_seconds": 0.3817838969407603,
+        "nice": 10,
+        "load1_preflight": 0.0,
+        "logical_cpus_observed": 24,
+        "peak_rss_kib": 89536,
+        "gpu_seconds": 0,
+        "native_fits": 0
+      }
+    ],
+    "combination_wall_seconds": 3.841318105114624,
+    "combination_cpu_seconds": 3.796295685,
+    "measured_successful_compute_cpu_seconds": 14.312621377,
+    "ceiling_cpu_seconds": 300,
+    "failed_x4_start_cpu_seconds": null,
+    "overhead": "S3/network/interpreter-failure/test/publication overhead not in measured successful compute",
+    "native_fits": 0,
+    "gpu_seconds": 0
+  },
+  "metrics": {
+    "family_Elo": null,
+    "val_reg_inner": null,
+    "U4": null,
+    "reason": "No outcome values read, model fitted, or policy scored"
+  },
+  "launch_admitted": false,
+  "hwm_candidate": false,
+  "limits": [
+    "Coverage is only an upper bound on exact-ID outcome transfer; completed status/evaluator/cut/row admission still required",
+    "Full cross-fit fitting/scoring and W1 comparator remain unrun/unavailable",
+    "H72 family/table roster provenance inherited; no independent physical row re-audit",
+    "Results condition on fixed folds/pools and do not measure causal transfer or uncertainty intervals"
+  ]
+}
