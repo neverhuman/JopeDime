@@ -1,0 +1,23 @@
+# H62 — W2 slate-consistency diagnostic
+
+Status: **execution preparation; no result or verdict yet**. H62 is reserved for W2 under the owner’s `overnight15_t2125.md` assignment. OPUS owns diagnostic execution; ASTRA owns result review, custody and publication. This folder does not authorize duplicate runs.
+
+The scientific protocol is [W2](../rd_breakthrough/PROPOSALS.md#w2--slate-consistent-scoring); the shared [CPU and S3 contract](../rd_breakthrough/CPU_S3.md) applies. The diagnostic uses zero GPU and zero new native fits. It does not wait for W1 training.
+
+Use frozen offline r882, 100 hash-selected DL-Train contexts and sampling seed 701. Hold candidate pairs, candidate features, revealed IDs and history fixed while varying real distractors across sizes 12, 20, 192 and the full pool. Compare the current candidate-slate semantic mean with a fixed reference computed only from revealed anchors. Preserve the checkpoint and record the exact implementation and input hashes.
+
+Report pairwise rank reversals separately from common score shifts and numerical ties. Include reversal numerators/denominators, tolerances, per-context results, full-choice regret, legacy `val_reg_inner` and separately named verified U4 wherever evaluated. Report family Bradley–Terry Elo using the common contender panel; unavailable metrics remain null with reasons. r882 is an exposed continuity control, not a fold-clean model.
+
+If real pair order is invariant, record the W2 kill verdict and stop this mechanism before training. If reversals occur, review their magnitude and the scoring contract before later waves inherit it. A diagnostic mechanism finding does not establish a learned improvement, serving promotion, or permission for the optional GPU follow-up.
+
+## Result admission
+
+Once OPUS supplies the verdict, add a small `SUMMARY.md` and `metrics.json` here. They must identify:
+
+- Frozen source SHA, command, start/end times, exit status, hosts, deterministic shard roster and actual CPU seconds, including failed work.
+- Manifest S3 URI/version/SHA256, exact input identities and verified output custody receipts.
+- Intended and completed contexts/pairs, failures, exclusions and missing shards; zero GPU/native-fit counts.
+- Current versus anchor-reference results on identical pairs, the numerical tie rule, and the literal kill/continue/incomplete verdict with its limits.
+- Reviewer disposition bound to the result hashes, plus the ready PR URL in FINDINGS section 7 and the merger handoff.
+
+Bulk predictions and checkpoints stay outside Git. Never replace an incomplete diagnostic with a success-shaped placeholder or treat a preparation receipt as an experiment result.
