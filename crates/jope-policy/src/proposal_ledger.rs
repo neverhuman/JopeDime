@@ -45,7 +45,9 @@ use super::seeds::{
 };
 use super::sha256_hex;
 
+/// Schema identifier for a reconciled proposal ledger.
 pub const LEDGER_SCHEMA: &str = "jope.proposal-ledger/v1";
+/// Schema identifier for decision links attached to an existing proposal ledger.
 pub const DECISION_LINKS_SCHEMA: &str = "jope.proposal-decision-links/v1";
 
 // I02's codec is shared as source until the integrator serializes the Cargo dependency hook.
@@ -84,6 +86,7 @@ pub struct ProposalDrawLink {
 }
 
 impl ProposalDecisionLinks {
+    /// Serialize this companion using the canonical JSON codec.
     pub fn canonical_bytes(&self) -> Result<Vec<u8>> {
         Ok(
             event_wire::CanonicalPayload::parse_and_canonicalize(&serde_json::to_vec(self)?)?
@@ -92,6 +95,7 @@ impl ProposalDecisionLinks {
         )
     }
 
+    /// Verify that these decision joins exactly match the companion derived from `ledger`.
     pub fn verify(&self, ledger: &ProposalLedger) -> Result<()> {
         let mut joins = BTreeMap::new();
         for draw in &self.draws {

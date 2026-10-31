@@ -10,7 +10,10 @@ No H75 experiment, optimizer update or measured lift is claimed here.
 - [Source pins](SOURCE_PINS.json): owner ruling and local code evidence.
 - [Earlier proposal](../rd_breakthrough/PROPOSALS.md): common scientific contract.
 
-Queue: **H57 → H75 → W1 → H71/W5**. Fused D2/E remains CPU-only preparation.
+Latest schedule (owner t2320): **H57 → Fused D2 → W1**, then W3/W4/W6/W5
+(provenance hold)/W7/W9. This supersedes the t2250 queue. H75 CPU work continues;
+its GPU slot is not specified by t2320. D2 has CPU pre-review before its queued
+GPU run; E has no new GPU placement. See [delivery status](../rd_breakthrough/DELIVERY.md).
 ASTRA owns preregistration/publication; OPUS owns runner implementation.
 
 Use full ID `H75-closed-loop`: the unrelated, already published

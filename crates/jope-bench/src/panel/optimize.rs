@@ -1077,35 +1077,6 @@ pub fn pending(receipt: &neural_search::SearchReceipt) -> bool {
     )
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn distinct_classification_sampler_retains_typed_heads_and_eighty_unique_slots() -> Result<()> {
-        use feat_math::advanced_v3::{validate_v3_genome, ColumnSpec, DataSchema, RowSemantics};
-        let schema = DataSchema {
-            columns: vec![ColumnSpec::numeric("x")],
-            row_semantics: RowSemantics::Iid,
-        };
-        for task in [Task::Binary, Task::Multiclass] {
-            let mut seen = std::collections::BTreeSet::new();
-            for seed in 0..80 {
-                let source = classification_generic(task, seed)?;
-                let recipe = jope_pipeline::synthesized_recipe::SynthesizedRecipe::new(source)?;
-                validate_v3_genome(
-                    &feat_math::GenomeIr::parse(&recipe.executable_canonical)?,
-                    &super::super::methods::task_spec(task)?,
-                    &schema,
-                )?;
-                seen.insert(recipe.executable_sha256);
-            }
-            assert_eq!(seen.len(), 80);
-            assert_ne!(generic_policy(task), GENERIC_POLICY);
-        }
-        Ok(())
-    }
-}
-
 /// Shared native regression producer; this returns qualified context files only.
 /// Accepted and experimental policy consumers retain separate admission routes.
 #[allow(clippy::too_many_arguments)]
@@ -1244,4 +1215,33 @@ pub(crate) fn prepare_regression_context<B: Backend, V: Variation>(
         &serde_json::to_vec(&handoff)?,
     )?;
     Ok((files, outcome))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn distinct_classification_sampler_retains_typed_heads_and_eighty_unique_slots() -> Result<()> {
+        use feat_math::advanced_v3::{validate_v3_genome, ColumnSpec, DataSchema, RowSemantics};
+        let schema = DataSchema {
+            columns: vec![ColumnSpec::numeric("x")],
+            row_semantics: RowSemantics::Iid,
+        };
+        for task in [Task::Binary, Task::Multiclass] {
+            let mut seen = std::collections::BTreeSet::new();
+            for seed in 0..80 {
+                let source = classification_generic(task, seed)?;
+                let recipe = jope_pipeline::synthesized_recipe::SynthesizedRecipe::new(source)?;
+                validate_v3_genome(
+                    &feat_math::GenomeIr::parse(&recipe.executable_canonical)?,
+                    &super::super::methods::task_spec(task)?,
+                    &schema,
+                )?;
+                seen.insert(recipe.executable_sha256);
+            }
+            assert_eq!(seen.len(), 80);
+            assert_ne!(generic_policy(task), GENERIC_POLICY);
+        }
+        Ok(())
+    }
 }

@@ -21,7 +21,8 @@ feat-core bytes, and the private-field/`compile_fail` guarantees still hold (the
 ## Test gates
 
 `cargo test -p jope-policy` runs the unit tests and the 7 doctests; `--features testing` adds
-`tests/jope_dime.rs` (21 tests with the committed vocabularies and a tiny deterministic model;
+`tests/jope_dime.rs` (25 runnable tests and 5 fixture-gated ignored tests with the committed
+vocabularies and a tiny deterministic model;
 `required-features = ["testing"]`, so cargo skips the target visibly without the feature).
 Weight-bound tests are `#[ignore]`d and read their inputs from the environment
 (`-- --include-ignored`):
@@ -65,7 +66,7 @@ of carrying a second copy.
 - `tests/jope_dime.rs`: `feat_core::jope_dime::` → `jope_policy::`; grammar directory
   `artifacts/jope-dime/grammar` → `../jope-engine/assets/grammar`; header/command docs updated.
 - `Cargo.toml`: dependency lines copied from feat-core (candle 0.11.0 `default-features = false`,
-  `zip 8.6` deflate-only for the `.npz` projection, `feat-math` as a path dependency).
+  `zip 9.0.5` deflate-only for the `.npz` projection, `feat-math` as a path dependency).
 - `cargo fmt -p jope-policy` (no changes).
 
 ## Commands

@@ -24,6 +24,7 @@ const POLL_INTERVAL: Duration = Duration::from_millis(100);
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 
 #[derive(Clone)]
+/// Shared state for bounded, read-only narration HTTP delivery.
 pub struct App {
     index: Arc<Mutex<Index>>,
     authority: String,
@@ -31,6 +32,7 @@ pub struct App {
     jobs: Arc<tokio::sync::Semaphore>,
 }
 impl App {
+    /// Create an HTTP application bound to a selected journal and loopback authority.
     pub fn new(index: Index, authority: String, max_clients: usize) -> Result<Self> {
         ensure!(
             (1..=128).contains(&max_clients),
@@ -338,6 +340,7 @@ async fn style() -> impl IntoResponse {
         include_str!("monitor.css"),
     )
 }
+/// Build the loopback narration HTTP routes and their Host/Origin boundary.
 pub fn router(app: App) -> Router {
     Router::new()
         .route("/", get(monitor))
@@ -350,6 +353,7 @@ pub fn router(app: App) -> Router {
         .layer(middleware::from_fn_with_state(app.clone(), boundary))
         .with_state(app)
 }
+/// Reject non-loopback listener addresses.
 pub fn validate_listen(listen: SocketAddr) -> Result<()> {
     ensure!(
         listen.ip().is_loopback(),
@@ -357,6 +361,7 @@ pub fn validate_listen(listen: SocketAddr) -> Result<()> {
     );
     Ok(())
 }
+/// Serve read-only narration routes until Ctrl-C, requiring a loopback listener.
 pub async fn serve(index: Index, listen: SocketAddr, max_clients: usize) -> Result<()> {
     validate_listen(listen)?;
     let listener = tokio::net::TcpListener::bind(listen).await?;

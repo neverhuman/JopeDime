@@ -394,11 +394,11 @@ limits and client examples](docs/program-source-stream.md).
 | Emit targets | 10: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) opt-in [`go`](docs/go.md) and local/manual `cuda` (CUDA C++ with a native core) <sup>4</sup> |
 | Rust tests | 6,094 listed in 34 packages, 81 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 202, found by a static scan, not collected or run <sup>5</sup> |
-| CI | 13 jobs per pull request configured in `ci.yml` (automatic triggering paused; dispatch manually) (top-level declarations; 18 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
-| Coverage map | 937 items over 34 lanes <sup>7</sup> |
+| CI | 14 jobs per pull request configured in `ci.yml` (export parity executes only on manual main) (automatic triggering paused; dispatch manually) (top-level declarations; 19 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
+| Coverage map | 940 items over 34 lanes <sup>7</sup> |
 | Capability matrix | 839 rows: 353 moved, 76 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
-| Python still tracked | 2,419 `.py` files, 174 of them under `python/` <sup>10</sup> |
+| Python still tracked | 2,424 `.py` files, 174 of them under `python/` <sup>10</sup> |
 | Architecture decision records | 6 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
@@ -462,10 +462,11 @@ JOPE_PARITY_STRICT=1 cargo test --locked -p feat-math
 ```
 
 CI is temporarily manual under the owner-directed 2026-10-23 emergency integration.
-The configured pull-request CI is `.github/workflows/ci.yml`: thirteen jobs declared at the top
-level expand to eighteen jobs, including both Rust shards, both TypeScript runtimes,
+The configured pull-request CI is `.github/workflows/ci.yml`: fourteen jobs declared at the top
+level expand to nineteen jobs, including both Rust shards, both TypeScript runtimes,
 two Go versions and two native Go platform jobs. Existing lanes use self-hosted
-`jope-ci` runners; the Go matrix uses hosted Linux/macOS/Windows workers.
+`jope-ci` runners; the Go matrix uses hosted Linux/macOS/Windows workers. The manual-main
+export parity job uses an isolated hosted Ubuntu VM.
 Eight top-level jobs each run one lane of `deploy/ci/fast-lane.sh`, and `aggregate` validates their receipts
 CUDA qualification runs locally with the commands in the [handoff guide](docs/cuda-handoff.md).
 (`deploy/ci/aggregate.py`). The hygiene lane includes `deploy/ci/check.sh`

@@ -1,7 +1,7 @@
 //! Runtime-resolved roots (ADR-0003).
 //!
 //! Every absolute home-directory path the historical tree hard-coded is
-//! replaced by one of five roots, each resolved **at call time, environment
+//! replaced by runtime roots, each resolved **at call time, environment
 //! first**. Historical values below are written `~/…`, where `~` is the
 //! `ubuntu` account's home on the xbabe hosts (the README spells them out). Nothing here is cached, so a test may override a variable, call a
 //! resolver, and restore it (serialise such tests with a mutex: the process
