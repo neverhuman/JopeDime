@@ -185,9 +185,10 @@ AlphaEvolve cut Gemini's training time by 1\%
 Language models also play themselves. SPIN plays its previous iteration
 \citep{chen2024spin}, Absolute Zero proposes and solves coding tasks under a
 code executor \citep{zhao2025absolutezero}, and STP pairs a conjecturer with
-a Lean prover \citep{dong2025stp}. Such self-play plateaus as the
-conjecturer games its reward, \citet{bailey2026sgs} report, unless a guide
-keeps it on track. Our closest neighbors learn to discover. EvoTune
+a Lean prover \citep{dong2025stp}. \citet{bailey2026sgs} attribute plateaus
+in LLM self-play to reward hacking by the conjecturer and evaluate
+self-guidance in formal theorem proving. Our closest neighbors learn to
+discover. EvoTune
 fine-tunes on what its own evolutionary search finds \citep{evotune2025},
 and TTT-Discover trains on the one problem at hand, at a few hundred
 dollars per problem \citep{tttdiscover2026}. Evolution Fine-Tuning learns
