@@ -8,5 +8,6 @@
 4. The live fused-flywheel lane continues independently. v1 uses only the checkpoint frozen by GOV-03.
 5. This brief expires at v1.0 or on revocation. Jepson may revoke it at any time.
 
-**Signed:** VP-eng owner bot, on Jepson's standing authority under t586  
+**Signed:** VP-eng owner bot, on Jepson's standing authority under t586
+
 **Date:** 2026-10-31
