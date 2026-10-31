@@ -20,6 +20,9 @@ the historical fold assignment/hash for lineage, without claiming H59 replay.
 Only non-anchor adapter_10tok parameters train: exactly 29,211; verify inventory
 and frozen DOPE before/after each cell and after training. Abort on mismatch.
 Validate approved metadata paths, resolved paths and hashes before payload reads.
+Additional CPU-pinned packet files: selected roster
+`981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1`;
+fused model source `b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab`.
 
 ## Fixed intervention
 
@@ -97,7 +100,9 @@ First run one seed-12 K8 timing cell: all 20 rounds plus train-only evaluation,
 discard its scores/weights. Conservative projection = elapsed * 13 * 1.25
 (one timing plus 12 outcome cells with 25% reserve); abort before outcomes if
 projection exceeds 2,700 seconds. Then fixed order seeds 12,13,14, each CONTROL,
-K8,SAM,ASAM. Each child timeout is the remaining cumulative budget.
+K8,SAM,ASAM. Each child watchdog uses the remaining cumulative budget minus a ten-second
+shutdown reserve. Yield 30 seconds before every subsequent ticket; honor
+legacy backoff even on the first acquisition.
 
 nice >=10, OMP/MKL threads 4, BLAS/NumExpr 1; child RSS <6 GiB, available RAM
 >=16 GiB, host CPU and load <=85% of 102 cores. H59 disk guards: launch used
