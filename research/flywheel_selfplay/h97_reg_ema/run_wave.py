@@ -146,11 +146,19 @@ def run_attempt(root, ledger, arm, seed, timing, attempt):
     timeout = remaining(ledger) - 10
     status = root / "H97_STATUS.log"
     gated = cpu_gate(status)
-    waited_before = sum(a["wait_seconds"] for a in ledger["attempts"]) + gated
+    waited_before = (
+        sum(a["wait_seconds"] for a in ledger["attempts"])
+        + ledger.get("resume_wait_seconds", 0.0)
+        + gated
+    )
     if waited_before >= fair.MAX_LOCK_WAIT_SECONDS:
         raise RuntimeError("cumulative 3h resource/lock wait exhausted")
-    if not ledger["attempts"]:
-        # Recheck immediately before creating the first H97 FIFO ticket.
+    continuation = ledger.get("continuation")
+    needs_h93_barrier = not ledger["attempts"] or (
+        continuation is not None and not continuation.get("fifo_entered")
+    )
+    if needs_h93_barrier:
+        # A resumed coordinator rechecks before creating its first new ticket.
         launch_barrier = validate_launch_barrier()
         ledger["launch_barrier"] = launch_barrier
     lease, waited, free, snapshot = fair.acquire_lock(
@@ -160,6 +168,9 @@ def run_attempt(root, ledger, arm, seed, timing, attempt):
         wave_name="H97",
         preflight_fn=preflight,
     )
+    if continuation is not None and not continuation.get("fifo_entered"):
+        continuation["fifo_entered"] = True
+        r.atomic_json(root / "budget.json", ledger)
     started = time.monotonic()
     name = f"{'timing-' if timing else ''}{arm}-seed{seed}-attempt{attempt}"
     out = root / f"{name}.json"
@@ -262,8 +273,10 @@ def run_attempt(root, ledger, arm, seed, timing, attempt):
     return result, record
 
 
-def execute(root, ledger, arm, seed, timing=False, *, attempt_fn=run_attempt):
-    for attempt in range(1, MAX_RETRIES + 2):
+def execute(
+    root, ledger, arm, seed, timing=False, *, first_attempt=1, attempt_fn=run_attempt
+):
+    for attempt in range(first_attempt, MAX_RETRIES + 2):
         result, record = attempt_fn(root, ledger, arm, seed, timing, attempt)
         if result is not None:
             return result, record
@@ -272,6 +285,121 @@ def execute(root, ledger, arm, seed, timing=False, *, attempt_fn=run_attempt):
             f"INFRA_VOID pre-outcome load abort; retry at FIFO tail ({attempt}/{MAX_RETRIES} retries spent)",
         )
     raise RuntimeError("cell exhausted two pre-outcome host-load retries")
+
+
+def validate_stopped_prefix(root, ledger, prereg_sha):
+    """Accept only the owner-authorized H97 attempt1 scratch-collision prefix."""
+    if (
+        ledger.get("wave") != "H97"
+        or ledger.get("cap_seconds") != CAP
+        or ledger.get("cpu_pr") != 970
+        or ledger.get("prereg_sha256") != prereg_sha
+        or ledger.get("in_progress") is not None
+        or len(ledger.get("attempts", [])) != 4
+    ):
+        raise RuntimeError(
+            "H97 stopped prefix is not the authorized four-attempt state"
+        )
+
+    expected = [
+        ("DROP", 33, True, 1),
+        ("CONTROL", 33, False, 1),
+        ("WD", 33, False, 1),
+        ("DROP", 33, False, 1),
+    ]
+    cells = {}
+    for record, identity in zip(ledger["attempts"], expected, strict=True):
+        arm, seed, timing, attempt = identity
+        if (
+            record.get("arm"),
+            record.get("seed"),
+            record.get("timing"),
+            record.get("attempt"),
+        ) != identity:
+            raise RuntimeError("H97 stopped prefix attempt order changed")
+        name = f"{'timing-' if timing else ''}{arm}-seed{seed}-attempt{attempt}"
+        out = root / f"{name}.json"
+        phase_path = root / f"{name}.phase.json"
+        if timing or arm in ("CONTROL", "WD"):
+            if (
+                record.get("error") is not None
+                or record.get("outcome_started") is not True
+                or record.get("stage") != "complete"
+                or not out.is_file()
+                or r.h59.sha256(out) != record.get("receipt_sha256")
+            ):
+                raise RuntimeError(f"H97 completed prefix receipt invalid: {name}")
+            phase = json.loads(phase_path.read_text())
+            result = json.loads(out.read_text())
+            if (
+                phase.get("attempt_token") != record.get("attempt_token")
+                or phase.get("stage") != "complete"
+                or phase.get("outcome_started") is not True
+                or result.get("wave") != "H97"
+                or result.get("arm") != arm
+                or result.get("seed") != seed
+                or result.get("timing_only") is not timing
+            ):
+                raise RuntimeError(f"H97 completed prefix metadata invalid: {name}")
+            if not timing:
+                cells[(arm, seed)] = result
+            continue
+
+        if (
+            record.get("error_kind") != "fatal"
+            or record.get("outcome_started") is not False
+            or record.get("stage") != "loading"
+            or out.exists()
+            or not phase_path.is_file()
+        ):
+            raise RuntimeError("H97 DROP attempt1 is not a pre-scoring setup fault")
+        phase = json.loads(phase_path.read_text())
+        log_path = root / f"{name}.log"
+        if (
+            phase.get("attempt_token") != record.get("attempt_token")
+            or phase.get("stage") != "loading"
+            or phase.get("outcome_started") is not False
+            or not log_path.is_file()
+            or "H97 attempt scratch already exists" not in log_path.read_text()
+        ):
+            raise RuntimeError("H97 DROP attempt1 scratch-collision evidence changed")
+        if not (root / "scratch/DROP-seed33-attempt1").is_dir():
+            raise RuntimeError("H97 failed attempt scratch evidence is missing")
+
+    incomplete_path = root / "incomplete.json"
+    if not incomplete_path.is_file():
+        raise RuntimeError("H97 stopped-prefix incident receipt is missing")
+    incomplete = json.loads(incomplete_path.read_text())
+    if (
+        incomplete.get("complete") is not False
+        or incomplete.get("ledger") != ledger
+        or "cell exit 1" not in incomplete.get("reason", "")
+    ):
+        raise RuntimeError("H97 stopped-prefix incident receipt does not match ledger")
+    if (root / "continuation.json").exists() or (root / "metrics.json").exists():
+        raise RuntimeError("H97 stopped prefix was already resumed or completed")
+    status_path = root / "H97_STATUS.log"
+    if not status_path.is_file():
+        raise RuntimeError("H97 stopped-prefix status history is missing")
+    stops = [
+        line.split(" — ", 1)[0]
+        for line in status_path.read_text().splitlines()
+        if " — STOP cell exit 1" in line
+    ]
+    if len(stops) != 1:
+        raise RuntimeError("H97 stopped-prefix stop record is missing or ambiguous")
+    try:
+        stopped_at = datetime.fromisoformat(stops[0])
+    except ValueError as exc:
+        raise RuntimeError("H97 stopped-prefix timestamp is invalid") from exc
+    operator_wait = max(0.0, (datetime.now(timezone.utc) - stopped_at).total_seconds())
+    return {
+        "cells": cells,
+        "failed_cell": ("DROP", 33),
+        "next_attempt": 2,
+        "stopped_at": stopped_at.isoformat(),
+        "operator_wait_seconds": operator_wait,
+    }
 
 
 def validate_run_root(root):
@@ -354,6 +482,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--cpu-pr", type=int)
     parser.add_argument("--cpu-dry-run", action="store_true")
+    parser.add_argument("--resume-stopped-prefix", action="store_true")
     parser.add_argument(
         "--root", type=Path, default=Path.home() / "jope-data/h97/h97-wave"
     )
@@ -383,34 +512,83 @@ def main():
     status = args.root / "H97_STATUS.log"
     with (args.root / "coordinator.lock").open("a+") as handle:
         fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        if (args.root / "budget.json").exists():
-            raise RuntimeError(
-                "H97 already launched; do not reset its ledger or inspect H76/H82 outcomes"
-            )
-        ledger = {
-            "wave": "H97",
-            "cap_seconds": CAP,
-            "attempts": [],
-            "in_progress": None,
-            "cpu_pr": args.cpu_pr,
-            "launch_barrier": launch_barrier,
-            "prereg_sha256": r.h59.sha256(HERE / "PREREG.md"),
-        }
-        r.atomic_json(args.root / "budget.json", ledger)
+        budget_path = args.root / "budget.json"
+        prereg_sha = r.h59.sha256(HERE / "PREREG.md")
+        if args.resume_stopped_prefix:
+            if not budget_path.is_file():
+                raise RuntimeError(
+                    "H97 stopped-prefix resume requires the original ledger"
+                )
+            ledger = json.loads(budget_path.read_text())
+            resume = validate_stopped_prefix(args.root, ledger, prereg_sha)
+            source_commit = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=r.ROOT, text=True
+            ).strip()
+            continuation = {
+                "mode": "owner-authorized-stopped-prefix",
+                "source_commit": source_commit,
+                "prior_ledger_sha256": r.h59.sha256(budget_path),
+                "preserved_attempts": len(ledger["attempts"]),
+                "reused_scored_cells": sorted(
+                    f"{arm}-seed{seed}" for arm, seed in resume["cells"]
+                ),
+                "failed_cell": "DROP-seed33-attempt1",
+                "next_physical_attempt": resume["next_attempt"],
+                "stopped_at": resume["stopped_at"],
+                "operator_wait_seconds": resume["operator_wait_seconds"],
+                "started_utc": datetime.now(timezone.utc).isoformat(),
+            }
+            r.atomic_json(args.root / "continuation.json", continuation)
+            ledger["continuation"] = continuation
+            ledger["resume_wait_seconds"] = resume["operator_wait_seconds"]
+            ledger["launch_barrier"] = launch_barrier
+            r.atomic_json(budget_path, ledger)
+        else:
+            if budget_path.exists():
+                raise RuntimeError(
+                    "H97 already launched; do not reset its ledger; use only the reviewed stopped-prefix resume"
+                )
+            ledger = {
+                "wave": "H97",
+                "cap_seconds": CAP,
+                "attempts": [],
+                "in_progress": None,
+                "cpu_pr": args.cpu_pr,
+                "launch_barrier": launch_barrier,
+                "prereg_sha256": prereg_sha,
+            }
+            r.atomic_json(budget_path, ledger)
+            resume = None
         try:
-            timing, record = execute(args.root, ledger, "DROP", 33, True)
-            charged = sum(a["wall_seconds"] for a in ledger["attempts"])
-            prior_void = charged - record["wall_seconds"]
-            projected = prior_void + record["wall_seconds"] * 13 * 1.25
-            if projected > CAP:
-                raise RuntimeError(f"timing projection {projected:.2f}s exceeds2700s")
-            fair.note(
-                status, f"TIMING_PASS projected={projected:.2f}s including all voids"
-            )
-            cells = []
+            if resume is None:
+                timing, record = execute(args.root, ledger, "DROP", 33, True)
+                charged = sum(a["wall_seconds"] for a in ledger["attempts"])
+                prior_void = charged - record["wall_seconds"]
+                projected = prior_void + record["wall_seconds"] * 13 * 1.25
+                if projected > CAP:
+                    raise RuntimeError(
+                        f"timing projection {projected:.2f}s exceeds2700s"
+                    )
+                fair.note(
+                    status,
+                    f"TIMING_PASS projected={projected:.2f}s including all voids",
+                )
+                cells = []
+            else:
+                cells = list(resume["cells"].values())
             for seed in r.SEEDS:
                 for arm in r.ARMS:
-                    cell, record = execute(args.root, ledger, arm, seed)
+                    key = (arm, seed)
+                    if resume is not None and key in resume["cells"]:
+                        continue
+                    first_attempt = (
+                        resume["next_attempt"]
+                        if resume is not None and key == resume["failed_cell"]
+                        else 1
+                    )
+                    cell, record = execute(
+                        args.root, ledger, arm, seed, first_attempt=first_attempt
+                    )
                     cells.append(cell)
             metrics = r.summarize(cells)
             metrics.update(

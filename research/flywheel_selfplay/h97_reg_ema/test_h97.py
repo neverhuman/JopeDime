@@ -89,6 +89,130 @@ def test_stage_path_is_unique_per_cell_attempt_and_rejects_reuse(tmp_path):
             r.attempt_scratch_path(tmp_path, cell, attempt)
 
 
+def test_timing_and_outcome_staging_use_distinct_full_cell_ids(tmp_path):
+    timing_id = r.scratch_cell_id("DROP", 33, timing=True)
+    outcome_id = r.scratch_cell_id("DROP", 33)
+    assert timing_id == "timing-DROP-seed33"
+    assert outcome_id == "DROP-seed33"
+    timing = r.attempt_scratch_path(tmp_path, timing_id, 1)
+    outcome = r.attempt_scratch_path(tmp_path, outcome_id, 1)
+    assert timing != outcome
+    timing.mkdir(parents=True)
+    assert not outcome.exists()
+
+
+def _stopped_prefix_fixture(root, prereg_sha="prereg"):
+    attempts = []
+    for arm, seed, timing, name in (
+        ("DROP", 33, True, "timing-DROP-seed33-attempt1"),
+        ("CONTROL", 33, False, "CONTROL-seed33-attempt1"),
+        ("WD", 33, False, "WD-seed33-attempt1"),
+    ):
+        result_path = root / f"{name}.json"
+        phase_path = root / f"{name}.phase.json"
+        phase = {
+            "attempt_token": name,
+            "stage": "complete",
+            "outcome_started": True,
+        }
+        result = {
+            "wave": "H97",
+            "arm": arm,
+            "seed": seed,
+            "timing_only": timing,
+        }
+        result_path.write_text(json.dumps(result))
+        phase_path.write_text(json.dumps(phase))
+        attempts.append(
+            {
+                "arm": arm,
+                "seed": seed,
+                "timing": timing,
+                "attempt": 1,
+                "attempt_token": name,
+                "error": None,
+                "outcome_started": True,
+                "stage": "complete",
+                "receipt_sha256": w.r.h59.sha256(result_path),
+            }
+        )
+    failed = "DROP-seed33-attempt1"
+    (root / f"{failed}.phase.json").write_text(
+        json.dumps(
+            {
+                "attempt_token": failed,
+                "stage": "loading",
+                "outcome_started": False,
+            }
+        )
+    )
+    (root / f"{failed}.log").write_text("H97 attempt scratch already exists\n")
+    (root / "scratch/DROP-seed33-attempt1").mkdir(parents=True)
+    attempts.append(
+        {
+            "arm": "DROP",
+            "seed": 33,
+            "timing": False,
+            "attempt": 1,
+            "attempt_token": failed,
+            "error_kind": "fatal",
+            "outcome_started": False,
+            "stage": "loading",
+        }
+    )
+    ledger = {
+        "wave": "H97",
+        "cap_seconds": w.CAP,
+        "cpu_pr": 970,
+        "prereg_sha256": prereg_sha,
+        "in_progress": None,
+        "attempts": attempts,
+    }
+    (root / "incomplete.json").write_text(
+        json.dumps({"complete": False, "reason": "cell exit 1", "ledger": ledger})
+    )
+    (root / "H97_STATUS.log").write_text(
+        "2026-10-31T09:46:00+00:00 — STOP cell exit 1; synthetic setup fault\n"
+    )
+    return ledger
+
+
+def test_resume_accepts_only_exact_charged_scratch_collision_prefix(tmp_path):
+    root = tmp_path / "h97-wave"
+    root.mkdir()
+    ledger = _stopped_prefix_fixture(root)
+    resume = w.validate_stopped_prefix(root, ledger, "prereg")
+    assert set(resume["cells"]) == {("CONTROL", 33), ("WD", 33)}
+    assert resume["failed_cell"] == ("DROP", 33)
+    assert resume["next_attempt"] == 2
+    assert resume["operator_wait_seconds"] > 0
+    assert len(ledger["attempts"]) == 4
+
+    ledger["attempts"][1]["receipt_sha256"] = "changed"
+    with pytest.raises(RuntimeError, match="receipt invalid"):
+        w.validate_stopped_prefix(root, ledger, "prereg")
+
+
+def test_resume_execute_starts_failed_cell_at_physical_attempt_two(tmp_path):
+    calls = []
+
+    def attempt(_root, _ledger, arm, seed, timing, number):
+        calls.append((arm, seed, timing, number))
+        return {"arm": arm, "seed": seed}, {"attempt": number}
+
+    result, record = w.execute(
+        tmp_path,
+        {"attempts": []},
+        "DROP",
+        33,
+        first_attempt=2,
+        attempt_fn=attempt,
+    )
+    assert calls == [("DROP", 33, False, 2)]
+    assert result == {"arm": "DROP", "seed": 33}
+    assert record["attempt"] == 2
+
+
 def _cell(arm, seed, *, delta=0.002):
     contexts = [f"c{i:02}" for i in range(91)]
     families = [f"f{i:02}" for i in range(19)]
@@ -140,6 +264,13 @@ def test_summary_uses_95000_and_strict_lcb_admission():
     tie_summary = r.summarize(tied)
     assert abs(tie_summary["arms"]["WD"]["lcb95"] - r.MARGIN) <= r.LCB_TIE_TOL
     assert tie_summary["arms"]["WD"]["admitted"] is False
+
+
+def test_summary_records_mixed_source_commits_for_approved_continuation():
+    cells = [_cell(arm, seed) for seed in r.SEEDS for arm in r.ARMS]
+    cells[-1]["source_commit"] = "resumed-fix-commit"
+    summary = r.summarize(cells)
+    assert summary["source_commits"] == ["resumed-fix-commit", "source"]
 
 
 def test_h93_live_ticket_is_required_for_fifo_barrier(tmp_path):

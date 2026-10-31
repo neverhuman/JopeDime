@@ -117,6 +117,12 @@ def attempt_scratch_path(root, cell, attempt):
     return path
 
 
+def scratch_cell_id(arm, seed, *, timing=False):
+    if arm not in ARMS or seed not in SEEDS:
+        raise ValueError("unregistered H97 scratch cell")
+    return f"{'timing-' if timing else ''}{arm}-seed{seed}"
+
+
 def top4_indices(packet, predictions_by_cid):
     """Stable top four among unrevealed candidates 4..P-1 for each dev context."""
     result = {}
@@ -257,6 +263,7 @@ def summarize(cells, draws=10000):
     if len(cells) != 12 or set(indexed) != {(a, s) for a in ARMS for s in SEEDS}:
         raise RuntimeError("all twelve unique H97 paired cells required")
     identities = set()
+    source_commits = set()
     families = sorted(indexed["CONTROL", SEEDS[0]]["dev"]["per_family"])
     if len(families) != 19:
         raise RuntimeError("nineteen dev families required")
@@ -283,14 +290,14 @@ def summarize(cells, draws=10000):
             raise RuntimeError("H97 adapter-distance diagnostic is invalid")
         identities.add(
             (
-                cell["source_commit"],
                 cell["prereg_sha256"],
                 str(cell["folds"]),
                 cell["initial_adapter_sha256"],
             )
         )
+        source_commits.add(cell["source_commit"])
     if len(identities) != 1:
-        raise RuntimeError("source/prereg/fold/initial adapter mismatch")
+        raise RuntimeError("prereg/fold/initial adapter mismatch")
     reference = np.asarray(
         [
             [indexed["CONTROL", s]["r882_dev"]["per_family"][f] for f in families]
@@ -312,6 +319,7 @@ def summarize(cells, draws=10000):
         "seeds": list(SEEDS),
         "reference_elo": 1500,
         "nominal_comparisons": 3,
+        "source_commits": sorted(source_commits),
         "arms": {},
     }
     for arm in ARMS:
@@ -405,7 +413,7 @@ def run_cell(args):
     selected, train_rows, dev_rows = h55.input_metadata(args.input, h48)
     validate_paths(args.input, train_rows + dev_rows)
     folds = h55.family_folds(train_rows, h48)
-    cell = f"{args.arm}-seed{args.seed}"
+    cell = scratch_cell_id(args.arm, args.seed, timing=args.timing)
     scratch = attempt_scratch_path(args.out.parent, cell, args.attempt)
     staged = h59.stage_r882_copy(args.checkpoint, scratch)
     pools, tables = h55.load_rows(args.input, train_rows, h48)
