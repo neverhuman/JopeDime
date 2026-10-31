@@ -1,0 +1,23 @@
+[
+  "/home/ubuntu/.local/bin/claude",
+  "--restricted",
+  "--tools",
+  "",
+  "--allowedTools",
+  "mcp__jopedime__*",
+  "--strict-mcp-config",
+  "--mcp-config",
+  "/home/ubuntu/jope_plan/evidence/MCP-05/gb0145/claude_code/mcp-config.json",
+  "--settings",
+  "{\"disableAllHooks\":true}",
+  "--permission-mode",
+  "dontAsk",
+  "--no-session-persistence",
+  "--output-format",
+  "stream-json",
+  "--verbose",
+  "--max-budget-usd",
+  "2",
+  "-p",
+  "This is an authorized MCP-05 live qualification, not a coding task.\nUse ONLY the jopedime MCP server. Do not use shell, file, web, plugins or other tools.\nDo not read or alter configuration, credentials, source, test or holdout data.\nExecute AG1, preserving real tool errors:\n1. Call system_info with {}.\n2. Call dataset_register with path '/home/ubuntu/jope-data/mcp-05/gb0145/train-with-header.csv',\n   name 'mcp05-train-only', idempotency_key 'mcp05-gb0145-claude_code-register'.\n3. Force one retry: call dataset_register again with EXACTLY the same arguments/key.\n   Do this even if the first call returns a capability error. Two rejected requests\n   are not proof of successful mutation or run idempotency.\n4. If registration succeeded, use its real dataset_id, target 'target', task regression,\n   heuristic guidance, effort fast, seed 17 and bounded evaluation budget 8 to request\n   run_start dry_run true. Then run_start dry_run false with a new stable key.\n   Force one retry of that real run_start with IDENTICAL arguments/key. Verify equal\n   run_id and query run_status without run_id to check exactly one created run.\n5. Poll run_status (wait_seconds at most 30), read run_events, then model_export and\n   model_predict on the same training input. Never invent IDs or success fields.\nIf a backend capability blocks progress, STOP after the one required retry of that\nrejected mutation, state the actual error and which steps are unexecuted. Do not\nsubstitute legacy fit tools, mock servers, batch commands or fabricated results.\nFinish with a short JSON summary distinguishing partial calls from Gate A5 PASS.\n"
+]

@@ -1,0 +1,159 @@
+{
+  "schema": "jopedime.named-client-transcripts/v1",
+  "observed_at": "2026-10-31T01:52:21Z",
+  "engine": {
+    "source_sha40": "5ad6f5e05fc2161f5b62b0982169ead85e68751e",
+    "version": "0.4.1",
+    "sha256": "321ef9ed1332dec250521ea3edea31f07d37e5afd665fbac2636c34014791149",
+    "features": {
+      "cuda": false,
+      "dev_keys": false,
+      "dope_cuda": false,
+      "embedded": false
+    },
+    "profile": "dev",
+    "build_host": "xbabe3",
+    "execution_host": "xbabe2",
+    "build_exit_code": 0,
+    "source_archive": "remote_test.sh auto immutable git archive",
+    "model_or_serving_qualification": false
+  },
+  "input": {
+    "dataset_id": "b4c8807a75fc190f",
+    "fixture_sha256": "782acd17eed2bfc7acfa4438be076fb63026763e6578661cfc284c2f3f9a21e1",
+    "metadata_sha256": "99c8d3c38a0bb658334e8a48e0826f5a00f947967f305c5cf399013acbe18908",
+    "prepared_sha256": "153f24a64081035aaa97541e08bf0eb037a14dcb61eca355bafaa23ab62cbf7f",
+    "rows": 25,
+    "columns": 13,
+    "source_has_header": false,
+    "transformation": "Prepend exactly one header from hash-verified metadata feature_columns + target_column; preserve all original training CSV bytes. No row or numeric value changed; no test CSV read.",
+    "protected_test_data_opened": false
+  },
+  "clients": {
+    "claude_code": {
+      "version": "2.1.314 (Claude Code)",
+      "cli_exit_code": 0,
+      "engine_exit_code": 0,
+      "tool_calls": 3,
+      "system_info": "success",
+      "dataset_register": {
+        "attempts": 2,
+        "identical_arguments_and_key": true,
+        "error_code": "CAPABILITY_UNAVAILABLE",
+        "http_status": 422
+      },
+      "ag1": "BLOCKED",
+      "a5": "NOT_QUALIFIED",
+      "successful_run_retry_and_run_count": "NOT_EXECUTED",
+      "unexecuted": [
+        "run_start dry-run",
+        "run_start and same-key retry",
+        "run_id equality and persisted single-run count",
+        "run_status and run_events",
+        "model_export",
+        "model_predict"
+      ]
+    },
+    "codex_cli": {
+      "version": "codex-cli 0.165.0",
+      "cli_exit_code": 0,
+      "engine_exit_code": 0,
+      "tool_calls": 3,
+      "system_info": "success",
+      "dataset_register": {
+        "attempts": 2,
+        "identical_arguments_and_key": true,
+        "error_code": "CAPABILITY_UNAVAILABLE",
+        "http_status": 422
+      },
+      "ag1": "BLOCKED",
+      "a5": "NOT_QUALIFIED",
+      "successful_run_retry_and_run_count": "NOT_EXECUTED",
+      "unexecuted": [
+        "run_start dry-run",
+        "run_start and same-key retry",
+        "run_id equality and persisted single-run count",
+        "run_status and run_events",
+        "model_export",
+        "model_predict"
+      ]
+    }
+  },
+  "gemini_cli": {
+    "client": "Gemini CLI",
+    "version": null,
+    "result": "UNAVAILABLE",
+    "attempted": false,
+    "evidence": "Executable not found on PATH, standard local/system bin directories, or installed Node v26.1.0 bin/module tree; no install/login attempted.",
+    "a5": "NOT_QUALIFIED"
+  },
+  "a5": {
+    "status": "NOT_QUALIFIED",
+    "full_ag1_transcripts": 0,
+    "required": 3,
+    "live_partial_clients": 2,
+    "successful_run_mutations": 0,
+    "run_count_verification": "not executable; registered route is unavailable"
+  },
+  "capture": {
+    "method": "Transparent stdio relay logs actual JSON-RPC frames in each direction, including tool catalogs. No generated/mocked tool replies. Client stdout/stderr retained separately.",
+    "relay_sha256": "f98f82061cf2ca0a7921b6140c20d231457b1c37b41848fb94a70c91b29e11d3",
+    "external_evidence": "~/jope_plan/evidence/MCP-05/gb0145",
+    "stdio_frames": "all decoded as JSON-RPC 2.0",
+    "secrets": "No daemon credential record copied; MCP payloads contain no bearer token."
+  },
+  "files": {
+    "claude-code.client.jsonl": {
+      "sha256": "e5347f10e4727870af92e67baa65545c4b550dc6750c6de70b595a2e5341d476",
+      "bytes": 21116
+    },
+    "claude-code.mcp.jsonl": {
+      "sha256": "f28e119eba269548c891be5ef5a2cd136700da0f2e656dbfcbd136341782e068",
+      "bytes": 207197
+    },
+    "claude-code.stderr.txt": {
+      "sha256": "26e87d935eee9d185e6392c5992a13c84caa8e8d15cd5bd9e8bb05e6c8d794ee",
+      "bytes": 582
+    },
+    "claude-code.execution.json": {
+      "sha256": "9a08250bf1591772a8851b1c059033464696416bce54beecd4611cad4c6df676",
+      "bytes": 292
+    },
+    "claude-code.prompt.txt": {
+      "sha256": "fcd0f1f8ed3d9eba829ebb92305cf9a79d38d34dc9c6218427325c64786429df",
+      "bytes": 1624
+    },
+    "claude-code.command.json": {
+      "sha256": "b0df0f0144e77812dacb94efbac737a1a1820a52a6609d97190fed93c9af8c17",
+      "bytes": 2095
+    },
+    "codex-cli.client.jsonl": {
+      "sha256": "ea47539ad26af4fd6b443c75f1baf68c9577e812963b4b41fc6828e0f9f4cab9",
+      "bytes": 4410
+    },
+    "codex-cli.mcp.jsonl": {
+      "sha256": "8aa983ac40570030dd1d93aa19d589fb8ed52bdcb1763a699950779ff8fa70c0",
+      "bytes": 206577
+    },
+    "codex-cli.stderr.txt": {
+      "sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "bytes": 39
+    },
+    "codex-cli.execution.json": {
+      "sha256": "f904e17d7205c75b75fe9039f79077e5987e8fd81274d65f4bca86002b66016f",
+      "bytes": 288
+    },
+    "codex-cli.prompt.txt": {
+      "sha256": "3888684a61354f115d11b0bd808ed70db36d814d43daaef3fc8950ceaff32206",
+      "bytes": 1622
+    },
+    "codex-cli.command.json": {
+      "sha256": "3897c00ae91f59b83b1ddfdcf1f6694cb78724c951ec71c0c2e95142474f8961",
+      "bytes": 2641
+    },
+    "gemini-cli.json": {
+      "sha256": "d44c6277ebda18910e654c408f4e9e6ef9182cc49a7afee15d71b1b0b7876fe4",
+      "bytes": 279
+    }
+  }
+}
