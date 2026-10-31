@@ -130,7 +130,7 @@ pub fn select_revealed(
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum UnavailableReason {
+pub enum GuidanceUnavailableReason {
     Integrity,
     Parity,
     Quality,
@@ -138,7 +138,7 @@ pub enum UnavailableReason {
     RevealedDecision,
 }
 
-impl UnavailableReason {
+impl GuidanceUnavailableReason {
     fn message(self) -> &'static str {
         match self {
             Self::Integrity => "The ranker bundle failed integrity verification.",
@@ -156,13 +156,13 @@ impl UnavailableReason {
 pub fn resolve_unqualified(
     requested: Guidance,
     landmarks: LandmarkMode,
-    reason: UnavailableReason,
+    reason: GuidanceUnavailableReason,
 ) -> Result<(ResolvedGuidance, Vec<Warning>), ErrorCode> {
     if landmarks == LandmarkMode::Progressive {
         return Err(ErrorCode::CapabilityUnavailable);
     }
     if requested == Guidance::Learned {
-        return Err(if reason == UnavailableReason::Integrity {
+        return Err(if reason == GuidanceUnavailableReason::Integrity {
             ErrorCode::ModelIntegrityFailed
         } else {
             ErrorCode::CapabilityUnavailable
@@ -188,7 +188,7 @@ pub fn resolve_unqualified(
             )
             .expect("the warning has no numeric fields")]
     };
-    if !explicit && reason == UnavailableReason::Integrity {
+    if !explicit && reason == GuidanceUnavailableReason::Integrity {
         warnings.push(
             warnings::catalog("MODEL_INTEGRITY_FAILED")
                 .expect("warning is catalogued")
@@ -387,11 +387,11 @@ mod tests {
     #[test]
     fn unqualified_auto_is_heuristic_with_catalogued_warning_and_real_reason() {
         for reason in [
-            UnavailableReason::Integrity,
-            UnavailableReason::Parity,
-            UnavailableReason::Quality,
-            UnavailableReason::Capability,
-            UnavailableReason::RevealedDecision,
+            GuidanceUnavailableReason::Integrity,
+            GuidanceUnavailableReason::Parity,
+            GuidanceUnavailableReason::Quality,
+            GuidanceUnavailableReason::Capability,
+            GuidanceUnavailableReason::RevealedDecision,
         ] {
             let (plan, warnings) =
                 resolve_unqualified(Guidance::Auto, LandmarkMode::Full, reason).unwrap();
@@ -400,7 +400,7 @@ mod tests {
             assert_eq!(plan.reason, reason.message());
             assert_eq!(
                 warnings.len(),
-                if reason == UnavailableReason::Integrity {
+                if reason == GuidanceUnavailableReason::Integrity {
                     2
                 } else {
                     1
@@ -410,7 +410,7 @@ mod tests {
             assert_eq!(warnings[0].severity, Severity::Info);
             assert!(!warnings[0].host);
             assert_eq!(warnings[0].message, plan.reason);
-            if reason == UnavailableReason::Integrity {
+            if reason == GuidanceUnavailableReason::Integrity {
                 assert_eq!(warnings[1].code, "MODEL_INTEGRITY_FAILED");
                 assert_eq!(warnings[1].severity, Severity::Error);
             }
@@ -423,16 +423,16 @@ mod tests {
             resolve_unqualified(
                 Guidance::Learned,
                 LandmarkMode::Full,
-                UnavailableReason::Integrity
+                GuidanceUnavailableReason::Integrity
             )
             .unwrap_err(),
             ErrorCode::ModelIntegrityFailed
         );
         for reason in [
-            UnavailableReason::Parity,
-            UnavailableReason::Quality,
-            UnavailableReason::Capability,
-            UnavailableReason::RevealedDecision,
+            GuidanceUnavailableReason::Parity,
+            GuidanceUnavailableReason::Quality,
+            GuidanceUnavailableReason::Capability,
+            GuidanceUnavailableReason::RevealedDecision,
         ] {
             assert_eq!(
                 resolve_unqualified(Guidance::Learned, LandmarkMode::Full, reason).unwrap_err(),
@@ -444,7 +444,7 @@ mod tests {
                 resolve_unqualified(
                     requested,
                     LandmarkMode::Progressive,
-                    UnavailableReason::Integrity
+                    GuidanceUnavailableReason::Integrity
                 )
                 .unwrap_err(),
                 ErrorCode::CapabilityUnavailable
@@ -453,7 +453,7 @@ mod tests {
         let (plan, warnings) = resolve_unqualified(
             Guidance::Heuristic,
             LandmarkMode::None,
-            UnavailableReason::Integrity,
+            GuidanceUnavailableReason::Integrity,
         )
         .unwrap();
         assert_eq!(plan.value, Guidance::Heuristic);
