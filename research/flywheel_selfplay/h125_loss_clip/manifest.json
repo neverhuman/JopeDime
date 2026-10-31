@@ -1,0 +1,40 @@
+{
+  "wave": "H125",
+  "status": "PREREGISTERED_NOT_RUN",
+  "source_base": "002b92caeeb313456d6d05cd6049564eaa7d0980",
+  "arms": [
+    "CONTROL",
+    "CLIP",
+    "NORM"
+  ],
+  "seeds": [
+    67,
+    68,
+    69
+  ],
+  "fold_seed": 125067,
+  "assessment_fold": 0,
+  "family_folds": 5,
+  "bootstrap_seed": 125000,
+  "cells": 9,
+  "updates_per_cell": 40,
+  "source_sha256": {
+    "research/flywheel_selfplay/h97_reg_ema/runner.py": "4411ad39b85a2c3d568c03b70d358e40a4fdca7f4affa3315e2856f4f8660a67",
+    "research/flywheel_selfplay/h105_shrink_r882/runner.py": "115fa78333613a3eb2f0b0d11a9c9bd2287060f89ec533f1d7c9c1cc3f8f934c",
+    "research/flywheel_selfplay/h105_shrink_r882/cpu_validate.py": "69bd038053b5b6887c56c4a7ae1163376b8ecef1e84bc3f933b1507b4a0db8c8",
+    "research/flywheel_selfplay/h59/runner.py": "604d02ed72a6149284792cba315124efd1ffe8cac79e5ace22613db86c11b4c3",
+    "research/flywheel_selfplay/h55/runner.py": "56fd220689805f07877ae403c2f00a4b34831cc4b2919f4bd69807ff3c21f4bc",
+    "research/flywheel_selfplay/h61/runner.py": "a1654add23b76e54b22afe5a7f42bf543420b12ca0d31d52b5c25c409498d037",
+    "research/flywheel_selfplay/h76_sam_steps/runner.py": "3556fe81fe654b148d301244d6d0460bf2363b5a97db0a0b644507168e97d24f"
+  },
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "h50_source_manifest_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+  "h50_selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+  "fused_sha256": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+  "prereg_sha256": "68723ea3fe689c4f41ae4a9188b7d8ff3aad5f1673c8169a677fdaddcd4eb419",
+  "calibration": null,
+  "regression": null,
+  "actual_training_updates": 0,
+  "execution_started": false
+}

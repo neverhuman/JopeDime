@@ -13704,6 +13704,16 @@
       ],
       "lanes": [],
       "scope": "H123 continuous-regret tie-break preparation fixtures for the H114 plateau lattice; CPU prep only."
+    },
+    "python:research/flywheel_selfplay/h99_h100_readout/test_readout.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H99/H100 synthetic terminal FIFO publication: complete panels, unchanged native Elo/CI, wave-specific Holm/margin/harm gates, charged rearm prefixes, identity/digest/nonfinite/path/snapshot refusals, bounded no-Torch watcher and UNKNOWN timeout. Research only; no new test, corpus qualification, GPU or serving promotion."
     }
   },
   "lanes": {

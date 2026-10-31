@@ -5136,6 +5136,10 @@
     "python:research/flywheel_selfplay/h123_continuous_regret_tiebreak/test_runner.py": {
       "role": "research",
       "reason": "CPU-only H123 continuous-regret tie-break preparation fixtures for the H114 lattice; offline research analysis outside the reviewed product baseline."
+    },
+    "python:research/flywheel_selfplay/h99_h100_readout/test_readout.py": {
+      "role": "research",
+      "reason": "Synthetic H99/H100 terminal receipt publication and common-format Elo/gate controls; native CIs unchanged, no product qualification or live partial-outcome reads."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

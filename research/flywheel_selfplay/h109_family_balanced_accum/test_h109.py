@@ -1,6 +1,7 @@
 """Synthetic CPU-only controls for the H109 preparation contract."""
 
 import importlib.util
+import json
 from pathlib import Path
 
 import pytest
@@ -114,16 +115,34 @@ def test_schedule_contract_and_cpu_dry_run(tmp_path):
     assert receipt["gpu_ticket_created"] is False
 
 
-def test_readout_synthetic_bootstrap_elo_and_admission():
-    receipt = r.readout_cpu_dry_run()
+def test_readout_synthetic_bootstrap_elo_and_admission(tmp_path):
+    receipt_root = tmp_path / "dry-run"
+    receipt_root.mkdir()
+    receipt = r.readout_cpu_dry_run(receipt_root)
     assert receipt["status"] == "READOUT_DRY_RUN_PASS"
     assert receipt["synthetic_cells"] == len(r.ARMS) * len(r.SEEDS)
-    assert receipt["outcome_files_read"] == 0
+    assert receipt["real_outcome_files_read"] == 0
+    assert receipt["synthetic_receipts_emitted"] == 9
+    assert receipt["synthetic_receipts_read"] == 9
     assert receipt["synthetic_fb_admitted"] is True
     assert receipt["synthetic_control_admitted"] is False
     assert receipt["GPU_used"] is False
     assert receipt["qualification_lock_used"] is False
     assert receipt["FIFO_ticket_created"] is False
+    selected = {f"{arm}/seed{seed}": 1 for arm in r.ARMS for seed in r.SEEDS}
+    hashes = {
+        key: receipt["receipt_sha256"][
+            f"{key.split('/')[0].replace('+', 'plus')}-seed{key.split('/')[1][4:]}-attempt1.json"
+        ]
+        for key in selected
+    }
+    emitted = r.read_outcome_receipts(receipt_root, selected, hashes, synthetic=True)
+    assert len(emitted) == 9
+    assert emitted[0]["receipt_schema_version"] == "jope.h109.synthetic-cell-receipt/v1"
+    receipt_path = receipt_root / "cell-receipts" / "CONTROL-seed39-attempt1.json"
+    receipt_path.write_text(receipt_path.read_text() + " ")
+    with pytest.raises(RuntimeError, match="receipt hash mismatch"):
+        r.read_outcome_receipts(receipt_root, selected, hashes, synthetic=True)
 
 
 def _synthetic_outcome_cells():
@@ -138,6 +157,21 @@ def _synthetic_outcome_cells():
                     "wave": "H109",
                     "arm": arm,
                     "seed": seed,
+                    "attempt": 1,
+                    "cell_status": "COMPLETE",
+                    "trained_parameter_count": r.ADAPTER_PARAMS,
+                    "synthetic_fixture": True,
+                    "execution_provenance": {
+                        "gpu_used": False,
+                        "qualification_lock_held": False,
+                        "owner_authorized": False,
+                        "owner_authorization_ref": None,
+                        "qualification_lock_path": None,
+                        "fifo_ticket_id": None,
+                        "gpu_device": "synthetic",
+                    },
+                    "receipt_schema_version": "jope.h109.synthetic-cell-receipt/v1",
+                    "synthetic_receipt": True,
                     "prereg_sha256": r.prereg_sha256(),
                     "fold_seed": r.FOLD_SEED,
                     "source_commit": "fixture-source",
@@ -160,8 +194,8 @@ def test_readout_fails_closed_on_missing_cells_or_wrong_prereg():
     with pytest.raises(RuntimeError, match="all nine"):
         r.summarize_readout(cells[:-1])
     cells[0]["prereg_sha256"] = "wrong"
-    with pytest.raises(RuntimeError, match="identity/boundary"):
-        r.summarize_readout(cells)
+    with pytest.raises(ValueError, match="identity, completion, or boundary"):
+        r.summarize_readout(cells, synthetic=True)
 
 
 def test_readout_exact_margin_ties_do_not_advance():
@@ -171,7 +205,43 @@ def test_readout_exact_margin_ties_do_not_advance():
             cell["assessment"]["utility_by_family"] = {
                 family: 0.001 for family in cell["r882_utility_by_family"]
             }
-    metrics = r.summarize_readout(cells)
+    metrics = r.summarize_readout(cells, synthetic=True)
     assert metrics["arms"]["FBAL"]["family_mean_gain"] == pytest.approx(0.001)
     assert metrics["arms"]["FBAL"]["holm"]["passes"] is False
     assert metrics["arms"]["FBAL"]["admitted"] is False
+
+
+def test_outcome_receipt_emission_is_durable_and_attempt_scoped(tmp_path):
+    cell = _synthetic_outcome_cells()[0]
+    first = r.emit_outcome_receipt(cell, tmp_path, synthetic=True)
+    first_path = Path(first["path"])
+    assert first_path.is_file()
+    assert r._sha256(first_path) == first["sha256"]
+    emitted = json.loads(first_path.read_text())
+    assert emitted["receipt_schema_version"] == "jope.h109.synthetic-cell-receipt/v1"
+    with pytest.raises(FileExistsError, match="preserve it"):
+        r.emit_outcome_receipt(cell, tmp_path, synthetic=True)
+    retry = dict(cell, attempt=2)
+    second = r.emit_outcome_receipt(retry, tmp_path, synthetic=True)
+    assert Path(second["path"]) != first_path
+    assert Path(second["path"]).is_file()
+
+
+def test_real_emission_rejects_synthetic_cells_and_non_h109_root(tmp_path):
+    cell = _synthetic_outcome_cells()[0]
+    with pytest.raises(ValueError, match="synthetic fixture"):
+        r.emit_outcome_receipt(cell, tmp_path)
+    with pytest.raises(ValueError, match=r"run-\* H109 data root"):
+        r._safe_output_directory(tmp_path, synthetic=False)
+
+
+def test_real_cell_receipt_requires_owner_lock_and_fifo_provenance():
+    cell = _synthetic_outcome_cells()[0]
+    cell["synthetic_fixture"] = False
+    cell["source_commit"] = "a" * 40
+    cell["fold_assignment_sha256"] = "b" * 64
+    cell["runner_sha256"] = r._sha256(Path(r.__file__))
+    cell["candidate_adapter_sha256"] = "c" * 64
+    cell["execution_provenance"] = {}
+    with pytest.raises(ValueError, match="GPU, lock, owner, and FIFO evidence"):
+        r._validate_cell_receipt(cell, synthetic=False)
