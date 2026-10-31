@@ -55,20 +55,20 @@ struct ClassifyArgs {
     /// Plan time, RFC 3339 UTC (YYYY-MM-DDTHH:MM:SSZ); the live-writer window counts back from it.
     #[arg(long)]
     as_of: String,
-    /// S3 object ledger, PATH[@SHA256PREFIX].
+    /// S3 object ledger, `PATH[@SHA256PREFIX]`.
     #[arg(long)]
     ledger: String,
-    /// GP results index, PATH[@SHA256PREFIX].
+    /// GP results index, `PATH[@SHA256PREFIX]`.
     #[arg(long)]
     gp_index: String,
-    /// Extra input pinned in the lock only, ROLE=PATH[@SHA256PREFIX] (repeatable).
+    /// Extra input pinned in the lock only, `ROLE=PATH[@SHA256PREFIX]` (repeatable).
     #[arg(long = "pin")]
     pins: Vec<String>,
-    /// Reference file, ROLE=PATH[@SHA256PREFIX]; roles: val263 sealed prereg evidence
+    /// Reference file, `ROLE=PATH[@SHA256PREFIX]`; roles: val263 sealed prereg evidence
     /// main-manifest train frozen24 backlog seed (repeatable).
     #[arg(long = "refs")]
     refs: Vec<String>,
-    /// Roster manifest whose `members` pin the --refs files in its directory, PATH[@SHA256PREFIX].
+    /// Roster manifest whose `members` pin the --refs files in its directory, `PATH[@SHA256PREFIX]`.
     #[arg(long)]
     roster_manifest: Option<String>,
     /// Directory scanned best-effort for s3 references, ROLE=DIR (repeatable).
@@ -85,7 +85,7 @@ struct ClassifyArgs {
     #[arg(long)]
     lifecycle_dir: Option<PathBuf>,
     /// Local copy of an S3 Inventory report manifest.json (its manifest.checksum and data/ files
-    /// alongside), PATH[@SHA256PREFIX]; one per bucket (repeatable).
+    /// alongside), `PATH[@SHA256PREFIX]`; one per bucket (repeatable).
     #[arg(long = "inventory")]
     inventories: Vec<String>,
     /// Policy JSON (default: the embedded retention/policy.v1.json).
