@@ -83,7 +83,8 @@ def pair_errors(pair):
     parent, child = pair.get("parent", {}), pair.get("child", {})
     if not parent.get("program_sha256") or not child.get("program_sha256"):
         errors.append("program_identity_missing")
-    if not pair.get("operator") or child.get("parent_ids") != [parent.get("program_sha256")]:
+    if (not pair.get("operator") or child.get("operator") != pair["operator"]
+            or child.get("parent_ids") != [parent.get("program_sha256")]):
         errors.append("exact_parent_operator_join_missing")
     for field in ("context_sha256", "table_sha256", "cut_id", "evaluator", "metric", "gate", "vocabulary"):
         if not parent.get(field) or parent.get(field) != child.get(field):

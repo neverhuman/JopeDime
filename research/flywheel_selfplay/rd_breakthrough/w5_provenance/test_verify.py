@@ -28,7 +28,7 @@ def pair():
         source_version="version", source_sha256="source", collection_policy="selected",
         original_outcome_sha256="lossless", outcome_sha256="lossless",
     )
-    child = dict(parent, program_sha256="child", parent_ids=["parent"], gate_passed=False)
+    child = dict(parent, program_sha256="child", parent_ids=["parent"], operator="mutation", gate_passed=False)
     return {"parent": parent, "child": child, "operator": "mutation"}
 
 
@@ -107,6 +107,11 @@ class AdmissionTests(unittest.TestCase):
         candidate = pair()
         candidate["child"]["parent_ids"] = []
         candidate["child"]["similar_ast"] = "parent"
+        self.assertIn("exact_parent_operator_join_missing", verify.pair_errors(candidate))
+
+    def test_operator_must_match_child_provenance(self):
+        candidate = pair()
+        candidate["child"]["operator"] = "another-operator"
         self.assertIn("exact_parent_operator_join_missing", verify.pair_errors(candidate))
 
     def test_evaluator_table_cut_and_source_provenance_are_required(self):
