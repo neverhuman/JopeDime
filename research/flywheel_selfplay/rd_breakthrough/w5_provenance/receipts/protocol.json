@@ -1,0 +1,24 @@
+{
+  "admission_authority": "PROPOSALS.md common contract, S3 admission and row closure, W5; gb2136_lanes.md",
+  "admitted_original_row_ledgers": [],
+  "admitted_parent_child_exports": [],
+  "limitations": [
+    "No admitted export or ledger was supplied; no global absence-of-pairs claim.",
+    "No actual pair-label or row-set inspection; closure unknown/refused.",
+    "Metadata filenames and counter receipts do not establish training role or row closure."
+  ],
+  "owner_ruling": "~/nudges/gb2136_lanes.md",
+  "path": "research/flywheel_selfplay/rd_breakthrough/PROPOSALS.md",
+  "scope": "W5 admission/provenance only, W5 remainsHELD until actualPASS",
+  "sha256": "f0526f20699dea3fe5259d10eee30483ac3c52655249906fd1ce79dd8e193e50",
+  "source": "658c62b3b9d75676b43249ad82184d8bb6207e7a",
+  "source_schema_evidence": {
+    "mixed_outer_fields": [
+      "test_rmse_ratio",
+      "cv_test_agreed"
+    ],
+    "path": "research/flywheel_selfplay/s3_persistence.py",
+    "raw_body_read": false,
+    "sha256": "3e72363e87806f99774cc195f8623975b2f7df4ead8ad909f237d8bbfb7be86f"
+  }
+}

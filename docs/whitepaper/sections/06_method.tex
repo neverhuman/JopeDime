@@ -75,7 +75,7 @@ The map reads a program as $z_w=\encS(w)$, the mean of learned token
 embeddings. Pooling discards token order, limiting the map's ability to
 distinguish compositions built from the same tokens. It combines $z_w$
 with $z_p$ three ways (as is, gated by the problem, and as a distance from a projection of it) and
-averages four heads into a score $\mapv(z_p,z_w)$. It learns from lists: for each problem $p$ with
+averages four heads into a score $\mapv(z_p,z_w)$ with parameters $\psi$. It learns from lists: for each problem $p$ with
 at least eight scored programs, $G_p$ holds them and $\rho_w\in[0,1]$ is a program's percentile, 1
 for the best. The map's softmax over the list is trained toward a target concentrated on the best
 \citep{cao2007listnet}:
@@ -99,7 +99,8 @@ At \searchone{} there is nothing left for a value network to judge. Taste has to
 writer.
 \end{keyidea}
 
-In this checkpoint the map never touches the writer's draw. It ranks the writer's drafts, a
+The writer and the map are separate branches, with separate context networks and token
+embeddings. In this checkpoint the map never touches the writer's draw. It ranks the writer's drafts, a
 ranking we score against the referee, but drops none, and it does not condition, screen or steer
 the writer. The writer's learning targets come from referee scores directly. Thus
 ranking agreement with the referee, including comparison with the
@@ -110,8 +111,8 @@ matched ablation (\cref{sub:results-ablation}).
 \subsection{The self-play loop}\label{sub:method-selfplay}
 
 Training is expert iteration \citep{anthony2017expert}: verified search is the teacher and the
-writer is the student (\cref{alg:selfplay}). The writer imitates every scored program in proportion
-to the referee's verdict, inside a combined objective (\cref{app:training}):
+writer is the student (\cref{alg:selfplay}). The writer imitates every scored program, weighted by
+its rank among the referee's scores, inside a combined objective (\cref{app:training}):
 \begin{align}
   \mathcal{L}_{\text{writer}}(p) &= -\sum_{w\in G_p}\bigl(0.05+\rho_w^{4}\bigr)\log\writer(w\mid z_p),
   \label{eq:writerLoss}\\
@@ -120,7 +121,11 @@ to the referee's verdict, inside a combined objective (\cref{app:training}):
   &\quad + 0.1\,\mathcal{L}_{\text{runtime}} + 0.05\,\mathcal{L}_{\text{prog}}.
   \label{eq:totalLoss}
 \end{align}
-Losing moves still teach: a median also-ran carries about a tenth of a winner's weight and is a
+Here $\mathcal{L}_{\text{BT}}$ is a Bradley--Terry loss on the same lists,
+$\mathcal{L}_{\text{runtime}}$ a Huber loss for a head that estimates runtime cost, and
+$\mathcal{L}_{\text{prog}}$ the Bradley--Terry loss of the program-only control head.
+Losing moves still teach: a median-ranked program carries about a tenth of the top-ranked
+program's weight and is a
 negative for the map.
 
 \begin{algorithm*}[t]
@@ -130,7 +135,7 @@ negative for the map.
 \For{each round}
   \For{each sampled training problem $p$}
     \State $z_p \gets \encP(p)$; draw 64 distinct legal programs from $\writer(\cdot\mid z_p)$ \Comment{$T=1$}
-    \State verified search, seeded with the drafts, proposes more programs \Comment{the teacher}
+    \State verified search, seeded with the drafts and 16 random exploration programs, proposes more programs \Comment{the teacher}
     \State $\referee$ fits and scores each distinct program on 5 inner folds \Comment{stillborn: no score}
     \State \textbf{if} a program strictly beats $\inc{p}$ \textbf{then} it becomes $\inc{p}$ \Comment{board ratchet}
     \State add every scored program to the list $G_p$ \Comment{winners and also-rans}
@@ -148,11 +153,11 @@ favors it, it wins at least as many cuts as it loses, and it fails no more often
 
 \paragraph{The historical reference.} The writer is a decoder-only transformer (six blocks, width 512)
 that reads the context as a prefix token and writes at most 128 tokens; with the map, the network
-has 27.8 million parameters. The supplied source notes describe training on eight A100 GPUs in
+has 27.8 million parameters. The training records describe training on eight A100 GPUs in
 September 2026, with a corpus of about 10.2 million scored programs from
-80 training datasets. The checkpoint's acceptance record and a pinned
-runtime are inputs to the evaluation contract (\cref{sub:results-protocol})
-and are not reproduced here. These specifications
+80 training datasets. This paper does not document the evidence on which
+the checkpoint was accepted; that record and a pinned runtime are required
+inputs to the evaluation contract (\cref{sub:results-protocol}). These specifications
 identify the historical reference; they do not describe the later adapter
 snapshot or establish its deployment performance. Details belong in
 \cref{app:training}.

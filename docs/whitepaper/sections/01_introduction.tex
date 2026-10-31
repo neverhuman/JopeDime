@@ -143,16 +143,20 @@ Zero analogy concerns the additional training feedback from the referee.
 variation, a means of judgment and a way to retain what survives. In \EZ{}
 each pillar is a specified component that can be inspected and tested. The
 aim is a declared task and metric. Variation comes from a
-grammar-constrained program writer. Judgment is a referee that scores
-hidden folds. Retention is a pair of ratchets that admit only verified
-gains (\cref{tab:pillars}). We call this \emph{engineered intelligence}: a
-capability whose objective, judge and memory are designed and audited,
+grammar-constrained program writer. Judgment is a referee that scores each
+program on folds withheld from its fit. Retention is a pair of ratchets: a
+board's incumbent changes only on strict improvement, and a retrained
+writer replaces the serving one only after a held-out admission test
+(\cref{tab:pillars}). We call this \emph{engineered intelligence}: a
+capability whose objective, judge and memory are designed to be audited,
 rather than left implicit in a pretrained model. Pretrained components still
 supply prior knowledge (\cref{box:searchone}). Engineering fixes what the
 system is rewarded for and how its improvement is checked.
 
 \paragraph{Contributions.}
-We formulate algorithm invention as a game and design a learner for it.
+We formulate algorithm invention as a game and design a learner for it,
+instantiated for tabular prediction tasks whose moves are programs in a
+typed language of learning primitives.
 The paper contributes:
 \begin{enumerate}[leftmargin=*,nosep,label=\arabic*.]
   \item \textbf{The anatomy of innovation:} four pillars (aim, variation,
@@ -161,8 +165,8 @@ The paper contributes:
   \item \textbf{The innovation game:} a board, move, referee and opponent,
     with a reward ordering and two ratchets, that make invention playable
     on many boards (\cref{sec:game}).
-  \item \textbf{The economics of algorithmic self-play:} an accounting of
-    training cost and of the cost per verified improvement (\cref{sec:price}).
+  \item \textbf{The economics of algorithmic self-play:} a cost model for
+    training and for the cost per verified improvement (\cref{sec:price}).
   \item \textbf{\EZ{}:} a learner with a frozen problem encoder, a grammar-constrained
     program writer and a separate problem--program map, trained by expert
     iteration on referee scores, with safeguards against reward hacking
@@ -170,18 +174,20 @@ The paper contributes:
   \item \textbf{An evaluation protocol for the single-proposal claim:}
     paired comparisons with algorithms proposed by Claude, Codex and Gemini
     and with KumoRFM \citep{kumorfm2025}, performance curves against agents
-    allowed repeated attempts, and an ablation of the map (\cref{sec:results}).
+    allowed repeated attempts, and a test of the map's ranking against a
+    program-only control (\cref{sec:results}).
 \end{enumerate}
 
 \paragraph{What is and is not established.}
 The paper separates three kinds of evidence. The game, the learner and the
-evaluation protocol are specified here. A retained development record
-describes admission behavior during training (\cref{sec:method-status}); it
+evaluation protocol are specified here. A retained admission log from a
+later adapter run describes development behavior (\cref{sec:method-status}); it
 does not measure first-proposal quality on unseen problem families. The
 deployment comparisons of \cref{sec:results} are specified, but their
 outcomes are not yet reported, and we claim no advantage until they are.
 
-\Cref{sec:road} traces each pillar through AI research, and
-\cref{sec:meaning} asks what a positive result would change and where the
-claim stops. To see what the referee can teach, we first separate the parts
+\Cref{sec:road} traces each pillar through AI research.
+\Cref{sec:meaning} asks what a positive result would change and where the
+claim stops, and \cref{sec:conclusion} concludes. To see what the referee can
+teach, we first separate the parts
 of innovation.
