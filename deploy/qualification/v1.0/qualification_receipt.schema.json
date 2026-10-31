@@ -535,6 +535,29 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "passed"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "exit_status": {
+                "const": 0
+              },
+              "finished_utc": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
         }
       ]
     },
@@ -736,10 +759,18 @@
       "then": {
         "properties": {
           "checks": {
-            "minItems": 1
+            "minItems": 1,
+            "items": {
+              "properties": {
+                "status": {
+                  "const": "passed"
+                }
+              }
+            }
           },
           "finished_utc": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
         }
       }
