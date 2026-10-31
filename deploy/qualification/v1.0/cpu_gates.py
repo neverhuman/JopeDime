@@ -9,6 +9,7 @@ import datetime as dt
 import hashlib
 import importlib.util
 import json
+import math
 import os
 import platform
 import re
@@ -324,7 +325,39 @@ def child_environment(folder, target, jobs, source):
     return environment
 
 
+def validate_timeout(seconds):
+    if not math.isfinite(seconds) or seconds <= 0 or seconds > 3600:
+        raise ValueError("gate timeout must be finite, positive and at most 3600 seconds")
+
+
+def _wait_unreaped(process, seconds):
+    # Keep the leader's PID reserved until cleanup has signalled its whole group.
+    deadline = time.monotonic() + seconds
+    while os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT) is None:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise subprocess.TimeoutExpired(process.args, seconds)
+        time.sleep(min(0.05, remaining))
+
+
+def _stop_owned_group(process):
+    try:
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        time.sleep(5)
+    finally:
+        # The leader may have exited, but a descendant can still ignore SIGTERM.
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        process.wait()
+
+
 def invoke(command, root, log, environment, seconds):
+    validate_timeout(seconds)
     with log.open("xb") as stream:
         process = subprocess.Popen(
             ["nice", "-n", "10", *command],
@@ -335,28 +368,14 @@ def invoke(command, root, log, environment, seconds):
             start_new_session=True,
         )
         try:
-            return process.wait(timeout=seconds), False
+            _wait_unreaped(process, seconds)
         except subprocess.TimeoutExpired:
-            # Only the session created by this invocation is signalled.
-            if process.poll() is None:
-                os.killpg(process.pid, signal.SIGTERM)
-            try:
-                process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                if process.poll() is None:
-                    os.killpg(process.pid, signal.SIGKILL)
-                process.wait()
+            _stop_owned_group(process)
             return 124, True
         except BaseException:
-            if process.poll() is None:
-                os.killpg(process.pid, signal.SIGTERM)
-            try:
-                process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                if process.poll() is None:
-                    os.killpg(process.pid, signal.SIGKILL)
-                process.wait()
+            _stop_owned_group(process)
             raise
+        return process.wait(), False
 
 
 def execute_gate(
@@ -455,6 +474,7 @@ def execute_gate(
 
 
 def run(root, output, expected=None, jobs=4, seconds=1800, execute=False, target=None):
+    validate_timeout(seconds)
     root = root.resolve()
     if output.is_symlink():
         raise ValueError("evidence directory must not be a symlink")
@@ -601,8 +621,10 @@ def main():
     parser.add_argument("--plan-root", type=Path)
     parser.add_argument("--gate-timeout", type=float, default=1800)
     args = parser.parse_args()
-    if args.gate_timeout <= 0 or args.gate_timeout > 3600:
-        parser.error("gate timeout must be positive and at most 3600 seconds")
+    try:
+        validate_timeout(args.gate_timeout)
+    except ValueError as error:
+        parser.error(str(error))
     if args.command == "release-plan" and args.plan_root is None:
         parser.error(
             "release-plan requires --plan-root with master plan/task/spec metadata"

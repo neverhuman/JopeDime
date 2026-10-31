@@ -103,3 +103,9 @@ root escapes, and concurrent status changes. These fixtures are not gate reruns.
 Signing, signed-byte gate reruns, native clean-host matrices, named client runs,
 reference-laptop measurements, Q1 and OWNER release approval remain future work.
 This PR does not claim that the complete CPU matrix has already run.
+
+## Timeout and process ownership
+
+Gate timeouts must be finite, positive, and at most 3600 seconds, including for planning and direct execution calls. On timeout or interruption, only the new session created for that invocation is signalled. The leader remains unreaped while its group receives SIGTERM, a five-second cleanup grace, and SIGKILL; descendants are therefore stopped even if the leader exits first. The leader is then reaped before another gate starts. This Unix process control does not establish native Windows qualification.
+
+The committed plan snapshot is a dated inventory produced by its recorded historical driver commit/hash; the controller bounds corrected here are tested separately. No release gate is executed or promoted by these changes.

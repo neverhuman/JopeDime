@@ -195,6 +195,76 @@ class Controller(unittest.TestCase):
         self.assertEqual([x["exit_status"] for x in report["checks"]], [9, 0])
         self.assertEqual(report["checks"][1]["tests"]["passed"], 1)
 
+    def test_nonfinite_cli_timeouts_refuse_before_output(self):
+        head = self.source(
+            [("full-only", [sys.executable, "-c", ONE_TEST], "unittest")]
+        )
+        for value in ("nan", "inf", "-inf"):
+            with self.subTest(value=value):
+                output = self.path / ("invalid-" + value)
+                result = subprocess.run(
+                    [sys.executable, str(HERE / "cpu_gates.py"), "plan",
+                     "--repo", str(self.repo), "--expected-main-sha", head,
+                     "--output", str(output), "--gate-timeout=" + value],
+                    text=True, capture_output=True, timeout=10,
+                )
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn("gate timeout", result.stderr)
+                self.assertFalse(output.exists())
+
+    def test_nonfinite_execution_timeout_refuses_before_spawn(self):
+        for index, seconds in enumerate((float("nan"), float("inf"), -float("inf"))):
+            with self.subTest(seconds=seconds):
+                log = self.path / f"invalid-api-{index}.log"
+                with mock.patch.object(cpu.subprocess, "Popen") as spawn:
+                    with self.assertRaisesRegex(ValueError, "gate timeout"):
+                        cpu.invoke(["unused"], self.repo, log, {}, seconds)
+                    spawn.assert_not_called()
+                self.assertFalse(log.exists())
+
+    @unittest.skipUnless(sys.platform.startswith("linux"), "Linux process-state control")
+    def test_timeout_removes_descendants_after_leader_exits_and_continues(self):
+        state = self.path / "owned-descendant.json"
+        child = (
+            "import json,os,signal,sys,time; from pathlib import Path; "
+            "signal.signal(signal.SIGTERM,signal.SIG_IGN); "
+            "Path(sys.argv[1]).write_text(json.dumps(dict(pid=os.getpid(),"
+            "pgid=os.getpgrp(),start=Path('/proc/self/stat').read_text().split()[21]))); "
+            "time.sleep(60)"
+        )
+        leader = (
+            "import subprocess,sys,time; "
+            f"subprocess.Popen([sys.executable,'-c',{child!r},sys.argv[1]]); "
+            "time.sleep(60)"
+        )
+        self.source([
+            ("full-a-descendant", [sys.executable, "-c", leader, str(state)], "none"),
+            ("full-b-success", [sys.executable, "-c", ONE_TEST], "unittest"),
+        ])
+
+        def alive(info):
+            try:
+                fields = Path(f"/proc/{info['pid']}/stat").read_text().split()
+                return fields[21] == info["start"] and fields[2] != "Z"
+            except FileNotFoundError:
+                return False
+
+        try:
+            report = self.run_checks(seconds=2)
+            self.assertTrue(state.exists(), "owned descendant did not reach readiness")
+            info = json.loads(state.read_text())
+            self.assertEqual(report["checks"][0]["exit_status"], 124)
+            self.assertEqual(report["checks"][0]["status"], "timed-out")
+            self.assertEqual(report["checks"][1]["status"], "passed")
+            self.assertFalse(alive(info), "owned descendant survived timeout cleanup")
+        finally:
+            # On a regression failure, clean only the recorded fixture's own group.
+            if state.exists():
+                info = json.loads(state.read_text())
+                if alive(info) and info["pgid"] > 1 and info["pgid"] != os.getpgrp():
+                    if os.getpgid(info["pid"]) == info["pgid"]:
+                        os.killpg(info["pgid"], cpu.signal.SIGKILL)
+
     def test_timeout_is_not_pass_and_later_gate_runs(self):
         self.source(
             [
@@ -291,13 +361,21 @@ class Controller(unittest.TestCase):
         self,
     ):
         process = mock.Mock(pid=314159)
-        process.poll.return_value = None
-        process.wait.side_effect = [KeyboardInterrupt, 0]
+        process.wait.return_value = 0
         with mock.patch.object(cpu.subprocess, "Popen", return_value=process):
-            with mock.patch.object(cpu.os, "killpg") as stop:
-                with self.assertRaises(KeyboardInterrupt):
-                    cpu.invoke(["unused"], self.repo, self.path / "cancel.log", {}, 1)
-        stop.assert_called_once_with(process.pid, cpu.signal.SIGTERM)
+            with mock.patch.object(cpu, "_wait_unreaped", side_effect=KeyboardInterrupt):
+                with mock.patch.object(cpu.time, "sleep"):
+                    with mock.patch.object(cpu.os, "killpg") as stop:
+                        events = mock.Mock()
+                        events.attach_mock(stop, "signal")
+                        events.attach_mock(process.wait, "reap")
+                        with self.assertRaises(KeyboardInterrupt):
+                            cpu.invoke(["unused"], self.repo, self.path / "cancel.log", {}, 1)
+                        self.assertEqual(events.mock_calls, [
+                            mock.call.signal(process.pid, cpu.signal.SIGTERM),
+                            mock.call.signal(process.pid, cpu.signal.SIGKILL),
+                            mock.call.reap(),
+                        ])
         self.source([("full-only", [sys.executable, "-c", ONE_TEST], "unittest")])
         with mock.patch.object(cpu, "execute_gate", side_effect=KeyboardInterrupt):
             with self.assertRaises(KeyboardInterrupt):
