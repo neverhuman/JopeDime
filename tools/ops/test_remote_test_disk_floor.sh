@@ -13,4 +13,10 @@ test "$(auto_hosts)" = $'xbabe1\nxbabe4'
 host_is_disabled xbabe3
 host_is_disabled xbabe1 && exit 1
 host_is_disabled xbabe4 && exit 1
+test "$(grep -Fc 'CARGO_INCREMENTAL=0' "$SCRIPT")" -eq 3
+test "$(grep -Fc 'CARGO_PROFILE_DEV_DEBUG=line-tables-only' "$SCRIPT")" -eq 3
+grep -Fq "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CARGO_TARGET_DIR=\$HOME/remote_tests/target nice" "$SCRIPT"
+grep -Fq "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CUDA_VISIBLE_DEVICES='' CARGO_TARGET_DIR=\\\$HOME/remote_tests/target nice" "$SCRIPT"
+grep -Fq -- '-e CARGO_INCREMENTAL=0 -e CARGO_PROFILE_DEV_DEBUG=line-tables-only' "$SCRIPT"
 printf 'remote_test host config: PASS\n'
+printf 'remote_test Cargo write profile: PASS\n'
