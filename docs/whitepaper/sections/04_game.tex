@@ -4,10 +4,11 @@
 % judgment is the inventor), 3 (search = 1)
 % Exhibits: Table 4 (tab:go-vs-innovation), Figure 3 (fig:game-loop)
 
-Can invention be played like Go? It can. The encoded problem is the board, an
-algorithm is the move, a verifier is the referee and a declared incumbent
-is the opponent. Because the problem sits on the board rather than in the
-rules, one set of rules covers many kinds of problem.
+Can algorithm invention be organized as a game? We propose a game in which
+the encoded problem is the board, an algorithm is the move, a verifier is
+the referee and a declared incumbent is the opponent. Making the problem
+an input allows a shared interface; each task type still needs a qualified
+encoding, language and evaluation protocol (\cref{sub:game-boards}).
 
 % ----------------------------------------------------------------------------
 \subsection{Why games came first}\label{sub:game-games}
@@ -45,11 +46,11 @@ that writer input.
                    & Go                              & The innovation game \\
     \midrule
     Board          & Stones on a $19\times19$ grid   & The encoded problem \\
-    Move           & Place one stone                 & Write one complete program, or one edit \\
-    Legal move     & An empty point; no suicide      & Parses, type-checks, runs within limits \\
+    Move           & Place one stone, or pass        & Write one complete program, or one edit \\
+    Legal move     & Empty point; no suicide or forbidden repetition & Parses, type-checks, runs within limits \\
     Illegal move   & Not allowed                     & Stillborn: an automatic loss \\
     Referee        & The rules of Go                 & The verifier, on hidden folds \\
-    Win            & More territory                  & Valid, and beats the incumbent \\
+    Win            & Higher final score             & Valid, and beats the incumbent \\
     Opponent       & A past self                     & The incumbent, often a past self \\
     Rating         & Elo                             & Win rate and Elo across problems \\
     Moves per game & About 150, each cheap           & One, costly to judge \\
@@ -74,8 +75,9 @@ verdict as reward \citep{lattimore2020bandit}. It earns the name through an
 opponent that improves as the player does. The honest asymmetry is in the
 moves: Go offers about 250 legal moves per turn over about 150 turns, each free
 to check \citep{silver2016mastering}, while this game offers one move, costly to
-judge. Taste, which raises the chance $\winprob$ that one try wins (\cref{eq:taste}),
-therefore decides it.
+judge. Under a single-attempt budget, the chance $\winprob$ of a win matters
+directly (\cref{eq:taste}). Whether training raises that chance on new
+families is the test in \cref{sec:results}.
 
 \begin{figure}[t]
   \centering
