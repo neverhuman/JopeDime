@@ -64,8 +64,7 @@ was involved.
 
 The owner's t2335 context is H61's
 [closeout PR854](https://github.com/neverhuman/JopeDime/pull/854): 0/240 accepts
-under its selection rules, pointing toward candidate generation. H59's
-[closeout](../h59/README.md) reports CLIP as least harmful (median Elo 1487.4
+under its selection rules, pointing toward candidate generation. The [H59 index entry](../../../docs/research/studies/dope-neural-ranking-20261021/overnight-hwave-index.md) reports CLIP as least harmful (median Elo 1487.4
 versus CONTROL 1479.4, both below r882). Those H59 Elo values use an r882
 reference and are not H76's fresh-CONTROL comparison. This context changed no
 H76 arms or analysis choices.
