@@ -1,0 +1,8 @@
+unknown format "uint32" ignored in schema at path "#/properties/age_ms"
+unknown format "uint32" ignored in schema at path "#/properties/age_ms"
+unknown format "uint32" ignored in schema at path "#/properties/window_ms"
+unknown format "uint32" ignored in schema at path "#/properties/window_ms"
+unknown format "uint16" ignored in schema at path "#/properties/status"
+unknown format "uint16" ignored in schema at path "#/properties/status"
+unknown format "uint16" ignored in schema at path "#/properties/status"
+unknown format "uint16" ignored in schema at path "#/properties/status"
