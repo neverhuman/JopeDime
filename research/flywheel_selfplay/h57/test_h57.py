@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""Data-free H57 ES, identity, and admission-boundary tests."""
+from __future__ import annotations
+
+import importlib.util
+import fcntl
+import json
+from pathlib import Path
+import tempfile
+from types import SimpleNamespace
+import unittest
+from unittest import mock
+
+import numpy as np
+import torch
+
+HERE = Path(__file__).resolve().parent
+SPEC = importlib.util.spec_from_file_location("h57_runner_test", HERE / "runner.py")
+assert SPEC is not None and SPEC.loader is not None
+h57 = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(h57)
+METRICS_SPEC = importlib.util.spec_from_file_location("h57_metrics_test", HERE / "build_metrics.py")
+assert METRICS_SPEC is not None and METRICS_SPEC.loader is not None
+metrics = importlib.util.module_from_spec(METRICS_SPEC)
+METRICS_SPEC.loader.exec_module(metrics)
+AUDIT_SPEC = importlib.util.spec_from_file_location("h57_audit_test", HERE / "audit.py")
+assert AUDIT_SPEC is not None and AUDIT_SPEC.loader is not None
+audit = importlib.util.module_from_spec(AUDIT_SPEC)
+AUDIT_SPEC.loader.exec_module(audit)
+WAVE_SPEC = importlib.util.spec_from_file_location("h57_wave_test", HERE / "run_wave.py")
+assert WAVE_SPEC is not None and WAVE_SPEC.loader is not None
+wave = importlib.util.module_from_spec(WAVE_SPEC)
+WAVE_SPEC.loader.exec_module(wave)
+
+
+class H57Tests(unittest.TestCase):
+    def test_centered_rank_order_and_centering(self):
+        ranks = h57.centered_ranks(np.arange(32, dtype=np.float64))
+        self.assertAlmostEqual(float(ranks.sum()), 0.0)
+        self.assertTrue(np.all(np.diff(ranks) > 0))
+
+    def test_antithetic_population_is_exactly_paired_and_seeded(self):
+        center = torch.zeros(h57.TRAINABLE_PARAMS)
+        noise, population = h57.antithetic_population(
+            center, 0.001, h57.stream_seed(15, "sigma001", 1, False)
+        )
+        noise_null, population_null = h57.antithetic_population(
+            center, 0.001, h57.stream_seed(15, "sigma001", 1, True)
+        )
+        _, population_seeded = h57.antithetic_population(
+            center, 0.001, h57.stream_seed(15, "sigma001", 1, False)
+        )
+        self.assertEqual(len(noise), 16)
+        self.assertEqual(len(population), 32)
+        self.assertTrue(all(torch.equal(a, b) for a, b in zip(noise, noise_null, strict=True)))
+        self.assertTrue(all(torch.equal(a, b) for a, b in zip(population_null, population_seeded, strict=True)))
+        for positive, negative in zip(population[::2], population[1::2], strict=True):
+            self.assertTrue(torch.equal(positive, -negative))
+
+    def test_centered_rank_es_gradient_is_finite_and_deterministic(self):
+        noises = [torch.full((3,), float(i + 1)) for i in range(16)]
+        ranks = h57.centered_ranks(np.arange(32, dtype=np.float64))
+        first = h57.es_gradient(noises, ranks, 0.001)
+        second = h57.es_gradient(noises, ranks, 0.001)
+        self.assertTrue(torch.equal(first, second))
+        self.assertTrue(torch.isfinite(first).all())
+        self.assertGreater(float(torch.linalg.vector_norm(first)), 0.0)
+
+    def test_adapter_vector_round_trip_preserves_shapes_and_values(self):
+        template = {"b": torch.arange(4, dtype=torch.float32).reshape(2, 2),
+                    "a": torch.arange(3, dtype=torch.float32)}
+        names = tuple(sorted(template))
+        vector = h57.adapter_vector(template, names)
+        restored = h57.vector_state(vector, template, names)
+        self.assertEqual(tuple(restored), names)
+        self.assertTrue(torch.equal(restored["a"], template["a"]))
+        self.assertTrue(torch.equal(restored["b"], template["b"]))
+
+    def test_only_preregistered_null_cell_is_accepted(self):
+        args = SimpleNamespace(device="cuda:0", lock_held=True, arm="sigma003", seed=16,
+                               generations=8, null_arm=True, mode="outcome")
+        with self.assertRaisesRegex(RuntimeError, "only the sigma001 seed15"):
+            h57.run_train(args)
+
+    def test_timing_horizon_is_fixed_to_one_sigma001_seed15_generation(self):
+        args = SimpleNamespace(device="cuda:0", lock_held=True, arm="sigma003", seed=15,
+                               generations=1, null_arm=False, mode="timing")
+        with self.assertRaisesRegex(RuntimeError, "only sigma001 seed15"):
+            h57.run_train(args)
+
+    def test_pooled_admission_rejects_ties_and_nonpositive_lcb(self):
+        rows = [{"arm": "sigma001", "seed": seed,
+                 "family_gain_vs_r882": {f"f{i}": 0.0 for i in range(8)}}
+                for seed in (15, 16, 17)]
+        result = metrics.pooled_admission(rows, "sigma001")
+        self.assertEqual(result["mean_lcb95_one_sided"], 0.0)
+        self.assertFalse(result["admitted"])
+
+    def test_pooled_admission_requires_strict_margin(self):
+        rows = [{"arm": "sigma001", "seed": seed,
+                 "family_gain_vs_r882": {f"f{i}": 0.001 for i in range(8)}}
+                for seed in (15, 16, 17)]
+        result = metrics.pooled_admission(rows, "sigma001")
+        self.assertEqual(result["mean_lcb95_one_sided"], 0.001)
+        self.assertFalse(result["admitted"])
+
+    def test_positive_family_cluster_margin_and_no_harm_admit(self):
+        rows = [{"arm": "sigma003", "seed": seed,
+                 "family_gain_vs_r882": {f"f{i}": 0.02 for i in range(8)}}
+                for seed in (15, 16, 17)]
+        result = metrics.pooled_admission(rows, "sigma003")
+        self.assertGreater(result["mean_lcb95_one_sided"], 0.001)
+        self.assertTrue(result["admitted"])
+
+    def test_independent_admission_audit_rejects_tampered_decision(self):
+        candidates = []
+        for arm, gain in (("sigma001", 0.02), ("sigma003", 0.0)):
+            for seed in (15, 16, 17):
+                candidates.append({"arm": arm, "seed": seed,
+                                   "family_gain_vs_r882": {f"f{i}": gain for i in range(8)}})
+        computed = {arm: metrics.pooled_admission(candidates, arm)
+                    for arm in ("sigma001", "sigma003")}
+        fold_b = {"fold_assignment_sha256": "fold-hash", "candidates": candidates}
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "outcomes").mkdir()
+            (root / "outcomes/admission.json").write_text(json.dumps({
+                "schema": "jope.h57.admission/v1", "fold_seed": 4900,
+                "fold_assignment_sha256": "fold-hash", "arms": computed,
+                "terminal_dl_val_reads_allowed": 3,
+            }))
+            self.assertTrue(audit.audit_admission(root, fold_b)["sigma001"]["admitted"])
+            record = json.loads((root / "outcomes/admission.json").read_text())
+            record["arms"]["sigma001"]["admitted"] = False
+            (root / "outcomes/admission.json").write_text(json.dumps(record))
+            with self.assertRaisesRegex(SystemExit, "disagrees for sigma001"):
+                audit.audit_admission(root, fold_b)
+
+    def test_lock_is_released_when_under_lock_preflight_fails(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            lock_path = Path(temporary) / "qualification.lock"
+            status_path = Path(temporary) / "status.log"
+            checks = iter(({}, RuntimeError("host CPU pressure"), {}))
+            sleep_observed_unlocked = []
+
+            def preflight():
+                value = next(checks)
+                if isinstance(value, Exception):
+                    raise value
+                return value
+
+            def sleep(_seconds):
+                with lock_path.open("a+") as other:
+                    fcntl.flock(other, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    sleep_observed_unlocked.append(True)
+                    fcntl.flock(other, fcntl.LOCK_UN)
+
+            with mock.patch.object(wave, "LOCK", lock_path), \
+                 mock.patch.object(wave, "safe_preflight", side_effect=preflight), \
+                 mock.patch.object(wave, "gpu_free_mib", return_value=8192), \
+                 mock.patch.object(wave.time, "sleep", side_effect=sleep):
+                handle, _, free_mib, _ = wave.acquire_lock(status_path, 0.0)
+                self.assertEqual(free_mib, 8192)
+                self.assertEqual(sleep_observed_unlocked, [True])
+                fcntl.flock(handle, fcntl.LOCK_UN)
+                handle.close()
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
