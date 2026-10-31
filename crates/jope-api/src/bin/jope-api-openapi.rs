@@ -5,22 +5,6 @@ use std::path::PathBuf;
 use jope_api::registry::{MediaType, Operation, PayloadTypeRef, OPERATIONS};
 use serde_json::{json, Map, Value};
 
-const PENDING_EXCHANGES: &[&str] = &[
-    "AlgorithmPage",
-    "DatasetPage",
-    "DatasetRegistration",
-    "DeleteReceipt",
-    "EventPage",
-    "GcReport",
-    "GcRequest",
-    "ObjectiveValidation",
-    "ObjectiveValidationRequest",
-    "RunControlRequest",
-    "RunForkRequest",
-    "RunPage",
-    "TrainingFeedback",
-];
-
 fn main() -> Result<(), Box<dyn Error>> {
     let output = std::env::args_os()
         .nth(1)
@@ -32,7 +16,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn generate() -> Result<Value, Box<dyn Error>> {
-    let mut pending = BTreeSet::new();
     let mut emitted = BTreeSet::new();
     let mut schemas = Map::new();
     let mut paths: BTreeMap<String, Map<String, Value>> = BTreeMap::new();
@@ -43,21 +26,9 @@ fn generate() -> Result<Value, Box<dyn Error>> {
     )?;
 
     for operation in OPERATIONS {
-        let unresolved: BTreeSet<_> = operation
-            .request_types
-            .iter()
-            .chain(operation.response_types)
-            .filter(|exchange| {
-                exchange.json_schema.is_none() && exchange.media_type == MediaType::Json
-            })
-            .map(|exchange| exchange.name)
-            .collect();
-        if !unresolved.is_empty() {
-            pending.extend(unresolved);
-            continue;
+        if operation.paths.is_empty() {
+            return Err(format!("registry operation {} has no paths", operation.name).into());
         }
-
-        emitted.insert(operation.name);
         for exchange in operation
             .request_types
             .iter()
@@ -67,35 +38,23 @@ fn generate() -> Result<Value, Box<dyn Error>> {
         }
         for path in operation.paths {
             let path_item = paths.entry((*path).to_owned()).or_default();
-            path_item.insert(
-                operation.method.as_str().to_ascii_lowercase(),
-                operation_document(operation)?,
-            );
+            let method = operation.method.as_str().to_ascii_lowercase();
+            if path_item
+                .insert(method.clone(), operation_document(operation)?)
+                .is_some()
+            {
+                return Err(format!("multiple registry operations define {method} {path}").into());
+            }
         }
+        emitted.insert(operation.name);
     }
 
-    let expected: BTreeSet<_> = PENDING_EXCHANGES.iter().copied().collect();
-    if pending != expected {
+    let expected: BTreeSet<_> = OPERATIONS.iter().map(|operation| operation.name).collect();
+    if emitted != expected {
         return Err(format!(
-            "pending exchange allowlist drift: registry has {pending:?}, configured allowlist has {expected:?}"
+            "OpenAPI operation coverage mismatch: emitted {emitted:?}, registry has {expected:?}"
         )
         .into());
-    }
-    for operation in OPERATIONS {
-        let listed = pending.iter().any(|name| {
-            operation
-                .request_types
-                .iter()
-                .chain(operation.response_types)
-                .any(|exchange| exchange.name == *name && exchange.json_schema.is_none())
-        });
-        if emitted.contains(operation.name) == listed {
-            return Err(format!(
-                "registry operation {} is missing from both OpenAPI and pending coverage, or is emitted while pending",
-                operation.name
-            )
-            .into());
-        }
     }
 
     let mut path_values = Map::new();
@@ -112,8 +71,7 @@ fn generate() -> Result<Value, Box<dyn Error>> {
             "securitySchemes": {
                 "bearerAuth": {"type": "http", "scheme": "bearer"}
             }
-        },
-        "x-jope-pending-exchanges": pending,
+        }
     }))
 }
 
@@ -252,7 +210,9 @@ fn collect_named_schema(
     }
     for (name, schema) in additions {
         if let Some(existing) = schemas.get(&name) {
-            if existing != &schema {
+            if existing != &schema
+                && without_schema_metadata(existing) != without_schema_metadata(&schema)
+            {
                 return Err(format!("conflicting generated schema definition {name}").into());
             }
         } else {
@@ -260,6 +220,20 @@ fn collect_named_schema(
         }
     }
     Ok(())
+}
+
+fn without_schema_metadata(value: &Value) -> Value {
+    match value {
+        Value::Object(object) => Value::Object(
+            object
+                .iter()
+                .filter(|(key, _)| key.as_str() != "$schema" && key.as_str() != "title")
+                .map(|(key, value)| (key.clone(), without_schema_metadata(value)))
+                .collect(),
+        ),
+        Value::Array(items) => Value::Array(items.iter().map(without_schema_metadata).collect()),
+        _ => value.clone(),
+    }
 }
 
 fn rewrite_definition_refs(value: &mut Value) {
@@ -276,5 +250,30 @@ fn rewrite_definition_refs(value: &mut Value) {
         }
         Value::Array(items) => items.iter_mut().for_each(rewrite_definition_refs),
         _ => {}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generated_document_covers_registry_without_pending_exchanges() {
+        let document = generate().expect("all registered exchange schemas are materialized");
+        assert!(document.get("x-jope-pending-exchanges").is_none());
+
+        let emitted: BTreeSet<_> = document["paths"]
+            .as_object()
+            .expect("generated paths")
+            .values()
+            .flat_map(|path| {
+                path.as_object()
+                    .expect("generated path item")
+                    .values()
+                    .filter_map(|operation| operation["operationId"].as_str())
+            })
+            .collect();
+        let expected: BTreeSet<_> = OPERATIONS.iter().map(|operation| operation.name).collect();
+        assert_eq!(emitted, expected);
     }
 }
