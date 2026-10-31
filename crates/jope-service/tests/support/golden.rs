@@ -253,8 +253,9 @@ mod tests {
     }
 
     fn landmark_fixture_bytes() -> Vec<u8> {
-        let fit_x: Vec<f32> = (0..8).map(|value| value as f32).collect();
-        let fit_y = [0.0_f32, 1.0, 0.0, 1.0];
+        let input_x: Vec<f32> = (0..8).map(|value| value as f32).collect();
+        let input_y = [-0.5_f32, 0.5, -1.0, 1.0];
+        let input_row_ids = [10_i64, 11, 20, 21];
         let report: Vec<f32> = (0..REPORT_WIDTH).map(|value| value as f32).collect();
         let table: Vec<f32> = (0..TABLE_WIDTH)
             .map(|value| 1_000.0 + value as f32)
@@ -265,7 +266,7 @@ mod tests {
         let building_blocks: Vec<f32> = (0..BUILDING_BLOCK_WIDTH)
             .map(|value| 3_000.0 + value as f32)
             .collect();
-        let raw_columns: Vec<f32> = (0..2 * RAW_COLUMN_WIDTH)
+        let col_full: Vec<f32> = (0..2 * RAW_COLUMN_WIDTH)
             .map(|value| 4_000.0 + value as f32)
             .collect();
         let expected_vector: Vec<f32> = report
@@ -279,7 +280,7 @@ mod tests {
         for row in 0..2 {
             for column in 0..RANKER_COLUMN_WIDTH {
                 expected_columns[row * RANKER_COLUMN_WIDTH + column] =
-                    raw_columns[row * RAW_COLUMN_WIDTH + column];
+                    col_full[row * RAW_COLUMN_WIDTH + column];
             }
         }
         let sampled_rows = [2.0_f32];
@@ -292,15 +293,19 @@ mod tests {
                 .flat_map(|value| value.to_le_bytes())
                 .collect::<Vec<_>>()
         };
-        let fit_x = as_bytes(&fit_x);
-        let fit_y = as_bytes(&fit_y);
+        let input_x = as_bytes(&input_x);
+        let input_y = as_bytes(&input_y);
+        let input_row_ids = input_row_ids
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
         let report = as_bytes(&report);
         let table = as_bytes(&table);
         let interactions = as_bytes(&interactions);
         let building_blocks = as_bytes(&building_blocks);
-        let raw_columns = as_bytes(&raw_columns);
-        let expected_vector = as_bytes(&expected_vector);
-        let expected_columns = as_bytes(&expected_columns);
+        let col_full = as_bytes(&col_full);
+        let v256 = as_bytes(&expected_vector);
+        let col = as_bytes(&expected_columns);
         let sampled_rows = as_bytes(&sampled_rows);
         let full_rows = as_bytes(&full_rows);
         let latency_ms = as_bytes(&latency_ms);
@@ -308,12 +313,16 @@ mod tests {
         serialize(
             [
                 (
-                    "fit_x",
-                    TensorView::new(Dtype::F32, vec![4, 2], &fit_x).unwrap(),
+                    "input.X",
+                    TensorView::new(Dtype::F32, vec![4, 2], &input_x).unwrap(),
                 ),
                 (
-                    "fit_y",
-                    TensorView::new(Dtype::F32, vec![4], &fit_y).unwrap(),
+                    "input.y",
+                    TensorView::new(Dtype::F32, vec![4], &input_y).unwrap(),
+                ),
+                (
+                    "input.row_ids",
+                    TensorView::new(Dtype::I64, vec![4], &input_row_ids).unwrap(),
                 ),
                 (
                     "report",
@@ -333,19 +342,19 @@ mod tests {
                         .unwrap(),
                 ),
                 (
-                    "raw_columns",
-                    TensorView::new(Dtype::F32, vec![2, RAW_COLUMN_WIDTH], &raw_columns).unwrap(),
+                    "col_full",
+                    TensorView::new(Dtype::F32, vec![2, RAW_COLUMN_WIDTH], &col_full).unwrap(),
                 ),
                 (
-                    "expected_vector",
-                    TensorView::new(Dtype::F32, vec![VECTOR_WIDTH], &expected_vector).unwrap(),
+                    "v256",
+                    TensorView::new(Dtype::F32, vec![1, VECTOR_WIDTH], &v256).unwrap(),
                 ),
                 (
-                    "expected_columns",
+                    "col",
                     TensorView::new(
                         Dtype::F32,
-                        vec![RANKER_COLUMN_COUNT, RANKER_COLUMN_WIDTH],
-                        &expected_columns,
+                        vec![1, RANKER_COLUMN_COUNT, RANKER_COLUMN_WIDTH],
+                        &col,
                     )
                     .unwrap(),
                 ),
@@ -403,18 +412,16 @@ mod tests {
         .unwrap();
 
         let schema = [
-            TensorSpec::new("fit_x", vec![4, 2]),
-            TensorSpec::new("fit_y", vec![4]),
+            TensorSpec::new("input.X", vec![4, 2]),
+            TensorSpec::new("input.y", vec![4]),
+            TensorSpec::new("input.row_ids", vec![4]),
             TensorSpec::new("report", vec![REPORT_WIDTH]),
             TensorSpec::new("table", vec![TABLE_WIDTH]),
             TensorSpec::new("interactions", vec![INTERACTION_WIDTH]),
             TensorSpec::new("building_blocks", vec![BUILDING_BLOCK_WIDTH]),
-            TensorSpec::new("raw_columns", vec![2, RAW_COLUMN_WIDTH]),
-            TensorSpec::new("expected_vector", vec![VECTOR_WIDTH]),
-            TensorSpec::new(
-                "expected_columns",
-                vec![RANKER_COLUMN_COUNT, RANKER_COLUMN_WIDTH],
-            ),
+            TensorSpec::new("col_full", vec![2, RAW_COLUMN_WIDTH]),
+            TensorSpec::new("v256", vec![1, VECTOR_WIDTH]),
+            TensorSpec::new("col", vec![1, RANKER_COLUMN_COUNT, RANKER_COLUMN_WIDTH]),
             TensorSpec::new("sampled_rows", vec![1]),
             TensorSpec::new("full_rows", vec![1]),
             TensorSpec::new("latency_ms", vec![3]),
@@ -423,13 +430,16 @@ mod tests {
             .unwrap()
             .unwrap();
         let values = &fixture.values_f32;
-        assert_eq!(fixture.tensors["fit_x"].dims(), &[4, 2]);
-        assert_eq!(fixture.tensors["fit_y"].dims(), &[4]);
+        assert_eq!(fixture.tensors["input.X"].dims(), &[4, 2]);
+        assert_eq!(fixture.tensors["input.y"].dims(), &[4]);
+        assert_eq!(fixture.tensors["input.row_ids"].dims(), &[4]);
+        assert_eq!(fixture.tensors["input.row_ids"].dtype(), DType::I64);
+        assert_eq!(values["input.row_ids"], [10.0, 11.0, 20.0, 21.0]);
         let report = fixture_array::<REPORT_WIDTH>(&fixture, "report");
         let table = fixture_array::<TABLE_WIDTH>(&fixture, "table");
         let interactions = fixture_array::<INTERACTION_WIDTH>(&fixture, "interactions");
         let building_blocks = fixture_array::<BUILDING_BLOCK_WIDTH>(&fixture, "building_blocks");
-        let raw_column_values = &values["raw_columns"];
+        let raw_column_values = &values["col_full"];
         let raw_columns: Vec<[f32; RAW_COLUMN_WIDTH]> = raw_column_values
             .chunks_exact(RAW_COLUMN_WIDTH)
             .map(|row| row.try_into().unwrap())
@@ -444,11 +454,11 @@ mod tests {
         );
         assert_eq!(
             full.vector(),
-            &fixture_array::<VECTOR_WIDTH>(&fixture, "expected_vector")
+            &fixture_array::<VECTOR_WIDTH>(&fixture, "v256")
         );
         assert_eq!(
             full.columns().iter().flatten().copied().collect::<Vec<_>>(),
-            values["expected_columns"]
+            values["col"]
         );
 
         let mut sampled_report = report;
