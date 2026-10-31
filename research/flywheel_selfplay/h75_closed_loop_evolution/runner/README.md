@@ -111,3 +111,38 @@ real labels for new programs. All three phases ran, and the confirmed-U8 panel h
    `replay_D − replay_B` was exactly 0. The learner-to-data channel carries only 2 DL-chosen evaluations ×
    4 contexts × 1 later cycle. With small updates, contrast 3 may be structurally zero. This is a power and
    design question for the preregistration owner; this runner does not change it.
+
+## Review dispositions (BLOCKERS-PRELIMINARY at f96e9b58)
+
+1. **Confirmation status.** `confirmation_status()` makes a row `completed` only when all three cuts completed;
+   a completed gate failure is a measured −2. A failed or timed-out cut makes the row `failed`/`timeout` with
+   null utility, and a missing evaluation (no admitted anchor DSL) makes it `unknown`. `score_row()` refuses a
+   completed row without a finite utility and any status outside completed/failed/timeout/unknown.
+2. **Scorer contract.** Rows carry `confirmation_cut_sha256s`: the sha256 of each cut's exact evaluator input
+   bytes. The new `roster` stage writes `admission_legacy.json` and `admission_confirmed_U8.json` in the #846
+   admission schema. A test feeds runner-built rows through `scoring/score_panel.py`: complete rows give
+   `COMPLETE_POINT_DIAGNOSTICS`, and one timeout gives `INCOMPLETE`.
+3. **Ledger.**
+   - `reserve(n)` checks the deadline and every cap and charges the calls in one locked transaction before
+     launch. `settle()` then records each completion as it happens, so interrupted calls stay charged.
+   - `neural()` charges runner-process CPU and synchronized GPU time on every training step and every inference
+     call, and re-checks the caps and deadline each time. The CPU cap covers native child CPU plus runner CPU.
+4. **Fit cache.**
+   - Keys bind the execution scope (run, execution manifest, source commit, fold, seed, worker, protocol), the
+     exact input-byte sha256 and the program. Rows from another scope are refused, and an input-byte change
+     between planning and execution aborts the run.
+   - Each completion is appended and fsynced immediately. A later re-execution of an interrupted call is
+     charged again, because it is new work.
+5. Withdrawn by the reviewers (dropout); no change.
+6. **Resume.** After each cycle, an atomic checkpoint stores the C/D model and optimizer states, the cell
+   memories, the records and the training receipts, bound to the shard scope. Resume continues from the last
+   completed cycle and never resets a persistent learner to r882. Random streams are derived from the
+   fold/seed/cycle/step, so re-running a cycle is deterministic. A shard directory from another scope is refused.
+7. **Closure before loading.** `validate_closure()` runs before any payload load, model build or GPU allocation.
+   It requires:
+   - a 40-hex `H75_SOURCE_GIT_SHA`;
+   - an execution manifest whose bytes match `H75_EXECUTION_MANIFEST_SHA256` and which binds this runner's bytes,
+     PREREG.md and protocol.json;
+   - an authorized fold and seed.
+   Pilot seed 700 needs a pilot manifest and fit-only phases. GPU needs explicit `gpu_authorized`; H75 has no
+   GPU slot until one is granted.

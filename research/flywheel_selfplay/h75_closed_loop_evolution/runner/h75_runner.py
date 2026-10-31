@@ -189,8 +189,12 @@ def envelope(raw: bytes, seed: int | None) -> bytes:
 
 @dataclass
 class Ledger:
-    """Campaign-wide durable ledger shared by all shards (fcntl lock on every read-modify-write). Resume carries used
-    resources and the original deadline. cpu_s is native-evaluator child CPU; gpu_s is synchronized device time."""
+    """Campaign-wide durable ledger shared by every shard (one fcntl lock per transaction).
+
+    reserve(n) atomically checks the deadline and every cap and charges n native calls BEFORE launch, so two shards
+    cannot both admit the last call and interrupted work stays charged. settle(res) then adds that call's measured
+    child CPU, wall time and status. neural(...) charges runner-process CPU and synchronized GPU time for model work
+    and re-checks the caps and deadline. The CPU cap covers native child CPU plus runner-process CPU."""
     path: Path
     max_fits: int
     max_cpu_s: float
@@ -202,40 +206,48 @@ class Ledger:
         with open(self.path.with_suffix(".lock"), "a") as lk:
             fcntl.flock(lk, fcntl.LOCK_EX)
             state = json.loads(self.path.read_text()) if self.path.exists() else dict(
-                fits=0, failed=0, timeouts=0, cpu_s=0.0, wall_s=0.0, gpu_s=0.0, steps=0, deadline_utc=self.deadline_utc)
+                fits=0, settled=0, failed=0, timeouts=0, cpu_s=0.0, process_cpu_s=0.0, wall_s=0.0, gpu_s=0.0, steps=0,
+                deadline_utc=self.deadline_utc)
             if state["deadline_utc"] != self.deadline_utc:
                 raise SystemExit("deadline changed on resume")
             out = fn(state)
-            tmp = self.path.with_suffix(".tmp")
+            tmp = self.path.with_suffix(f".{os.getpid()}.tmp")
             tmp.write_text(json.dumps(state, indent=1))
             os.replace(tmp, self.path)
             return out
+
+    def _limits(self, s, fits_needed=0):
+        if time.time() >= calendar.timegm(time.strptime(self.deadline_utc, "%Y-%m-%dT%H:%M:%SZ")):
+            raise SystemExit("deadline reached")
+        if s["fits"] + fits_needed > self.max_fits:
+            raise SystemExit(f"native-call cap: {s['fits']} + {fits_needed} > {self.max_fits}")
+        if s["cpu_s"] + s["process_cpu_s"] > self.max_cpu_s or s["gpu_s"] > self.max_gpu_s:
+            raise SystemExit("CPU or GPU second cap reached")
 
     @property
     def state(self) -> dict:
         return self._locked(lambda s: dict(s))
 
     def check(self, fits_needed: int = 0):
-        def chk(s):
-            if time.time() >= calendar.timegm(time.strptime(self.deadline_utc, "%Y-%m-%dT%H:%M:%SZ")):
-                raise SystemExit("deadline reached")
-            if s["fits"] + fits_needed > self.max_fits:
-                raise SystemExit(f"native-call cap: {s['fits']} + {fits_needed} > {self.max_fits}")
-            if s["cpu_s"] > self.max_cpu_s or s["gpu_s"] > self.max_gpu_s:
-                raise SystemExit("CPU or GPU second cap reached")
-        self._locked(chk)
+        self._locked(lambda s: self._limits(s, fits_needed))
 
-    def charge(self, res: dict):
-        def ch(s):
-            s["fits"] += 1; s["cpu_s"] += res["cpu_s"]; s["wall_s"] += res["wall_s"]
+    def reserve(self, n: int):
+        def rs(s):
+            self._limits(s, n)
+            s["fits"] += n
+        self._locked(rs)
+
+    def settle(self, res: dict):
+        def st(s):
+            s["settled"] += 1; s["cpu_s"] += res["cpu_s"]; s["wall_s"] += res["wall_s"]
             s["failed"] += res["status"] == "failed"; s["timeouts"] += res["status"] == "timeout"
-        self._locked(ch)
+        self._locked(st)
 
-    def add(self, **kw):
-        def ad(s):
-            for k, v in kw.items():
-                s[k] = s.get(k, 0) + v
-        self._locked(ad)
+    def neural(self, process_cpu_s: float = 0.0, gpu_s: float = 0.0, steps: int = 0):
+        def nu(s):
+            s["process_cpu_s"] += process_cpu_s; s["gpu_s"] += gpu_s; s["steps"] += steps
+            self._limits(s)
+        self._locked(nu)
 
 
 def native_fit(context: str, dsl: str, seed: int | None, scratch: Path, timeout_s: int = 600) -> dict:
@@ -244,6 +256,7 @@ def native_fit(context: str, dsl: str, seed: int | None, scratch: Path, timeout_
     d.mkdir(parents=True, exist_ok=True)
     inp, cand, out = d / "input.jtt1", d / "candidate.json", d / "eval_s1.json"
     inp.write_bytes(envelope((INPUT / "tables" / f"{context}.jtt1").read_bytes(), seed))
+    out.unlink(missing_ok=True)
     cand.write_text(json.dumps({"dsl": dsl, "program_sha256": hashlib.sha256(dsl.encode()).hexdigest(),
                                 "birth_seq": 0, "parents": [], "operator": "h75"}, sort_keys=True))
     env = {"PATH": "/usr/bin:/bin", "RAYON_NUM_THREADS": "1", "OMP_NUM_THREADS": "1", "TMPDIR": str(d), "HOME": str(d)}
@@ -270,21 +283,9 @@ def native_fit(context: str, dsl: str, seed: int | None, scratch: Path, timeout_
     return res
 
 
-def fit_many(jobs: list[tuple], scratch: Path, ledger: Ledger, workers: int) -> list[dict]:
-    """jobs: (context, dsl, seed). Ledger-checked before launch, charged after each call; load-gated at 85%."""
-    from concurrent.futures import ThreadPoolExecutor
-    ledger.check(len(jobs))
-
-    def run(j):
-        while 100.0 * os.getloadavg()[0] / os.cpu_count() > 85.0:
-            time.sleep(15)
-        return native_fit(j[0], j[1], j[2], scratch)
-
-    with ThreadPoolExecutor(max(1, workers)) as ex:
-        results = list(ex.map(run, jobs))
-    for r in results:
-        ledger.charge(r)
-    return results
+def input_sha256(context: str, seed) -> str:
+    """Identity of the exact evaluator input bytes (table rows + fold assignment + padding) for one cut."""
+    return hashlib.sha256(envelope((INPUT / "tables" / f"{context}.jtt1").read_bytes(), seed)).hexdigest()
 
 
 # ----------------------------------------------------------------------------- data + model (heavy imports lazily)
@@ -443,8 +444,9 @@ def train_steps(world: World, opt, fit_cids: list[str], acq: list[str], fresh: d
     world.net.train(); world.guard.lock_dope_weights_and_eval_mode(world.net)
     others = [c for c in fit_cids if c not in acq]
     exposure, losses, gnorms = dict(fresh=0, static=0, fresh_winner=0, fresh_negative=0), [], []
-    t0 = time.monotonic()
+    ledger.check()
     for step in range(steps):
+        t0, c0 = time.monotonic(), time.process_time()
         rng = np.random.default_rng(hseed("batch", seq_seed, step))
         batch = list(rng.choice(acq, 2, replace=len(acq) < 2)) + list(rng.choice(others, 6, replace=len(others) < 6))
         slates = []
@@ -464,10 +466,10 @@ def train_steps(world: World, opt, fit_cids: list[str], acq: list[str], fresh: d
         gnorms.append(float(torch.nn.utils.clip_grad_norm_(params, 1.0)))
         opt.step()
         losses.append(float(loss.detach()))
-    gpu = 0.0
-    if world.device.type == "cuda":
-        torch.cuda.synchronize(); gpu = time.monotonic() - t0
-    ledger.add(steps=steps, gpu_s=gpu)
+        gpu = 0.0
+        if world.device.type == "cuda":
+            torch.cuda.synchronize(); gpu = time.monotonic() - t0
+        ledger.neural(process_cpu_s=time.process_time() - c0, gpu_s=gpu, steps=1)  # re-checks caps and deadline
     world.net.eval()
     world.check_dope()
     after = world.state_hash()
@@ -510,31 +512,65 @@ def history_slate(hist: list[dict], proposals: list[dict]) -> dict:
 # ----------------------------------------------------------------------------- fit cache (resume never re-charges)
 
 class FitCache:
-    def __init__(self, path: Path):
-        self.path = path
+    """Execution-scoped, durable fit store. A key binds the execution scope (run, execution manifest, worker,
+    evaluation protocol) and the exact evaluator input bytes and program. Rows from another scope are refused, not
+    reused. Each completion is appended and fsynced as soon as it finishes; the ledger is charged before launch, so an
+    interrupted call stays charged and a later re-execution is charged again as the new work it is."""
+
+    PROTOCOL = "s1main --fit-s1 two-fold training CV; training_cv_envelope nq=10 structural zeros; v1"
+
+    def __init__(self, path: Path, scope: dict):
+        self.path, self.scope = path, dict(scope, worker_sha256=PINS["worker"], evaluation_protocol=self.PROTOCOL)
+        self.scope_sha = hkey("fit-scope", json.dumps(self.scope, sort_keys=True))
         self.rows = {}
         if path.exists():
             for line in path.read_text().splitlines():
-                if line.strip():
-                    r = json.loads(line); self.rows[r["key"]] = r
+                if not line.strip():
+                    continue
+                r = json.loads(line)
+                if r.get("scope_sha256") != self.scope_sha:
+                    raise SystemExit(f"fit store {path} holds rows from another execution scope; refusing reuse")
+                if r["key"] != self.key(r["context"], r["program_sha256"], r["seed"], r["input_sha256"]):
+                    raise SystemExit("fit store row key does not match its own identity")
+                self.rows[r["key"]] = r
 
-    @staticmethod
-    def key(context: str, program_sha: str, seed) -> str:
-        return hkey("fitkey", context, program_sha, seed)
+    def key(self, context: str, program_sha: str, seed, inp_sha: str) -> str:
+        return hkey("fitkey", self.scope_sha, context, program_sha, seed, inp_sha)
 
     def run(self, jobs: list[tuple], scratch: Path, ledger: Ledger, workers: int) -> list[dict]:
-        """jobs: (context, dsl, seed). Cached results are reused without a new charge; misses are charged."""
-        keyed = [(self.key(c, hashlib.sha256(d.encode()).hexdigest(), s), (c, d, s)) for c, d, s in jobs]
+        """jobs: (context, dsl, seed). Cached results are reused without a new charge; misses are reserved, run,
+        and recorded one by one."""
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        inp_cache = {}
+        keyed = []
+        for c, d, s in jobs:
+            if (c, s) not in inp_cache:
+                inp_cache[c, s] = input_sha256(c, s)
+            keyed.append((self.key(c, hashlib.sha256(d.encode()).hexdigest(), s, inp_cache[c, s]), (c, d, s)))
         miss, seen = [], set()
         for k, j in keyed:
             if k not in self.rows and k not in seen:
                 miss.append((k, j)); seen.add(k)
         if miss:
-            res = fit_many([j for _, j in miss], scratch, ledger, workers)
-            with self.path.open("a") as f:
-                for (k, j), r in zip(miss, res):
-                    r = dict(r, key=k, context=j[0], program_sha256=hashlib.sha256(j[1].encode()).hexdigest(), seed=j[2])
-                    self.rows[k] = r; f.write(json.dumps(r, sort_keys=True) + "\n")
+            ledger.reserve(len(miss))
+
+            def run(j):
+                while 100.0 * os.getloadavg()[0] / os.cpu_count() > 85.0:
+                    time.sleep(15)
+                return native_fit(j[0], j[1], j[2], scratch)
+
+            with ThreadPoolExecutor(max(1, workers)) as ex, self.path.open("a") as f:
+                futs = {ex.submit(run, j): (k, j) for k, j in miss}
+                for fut in as_completed(futs):
+                    k, j = futs[fut]
+                    r = fut.result()
+                    if r["input_sha256"] != inp_cache[j[0], j[2]]:
+                        raise SystemExit("evaluator input bytes changed between planning and execution")
+                    r = dict(r, key=k, scope_sha256=self.scope_sha, context=j[0],
+                             program_sha256=hashlib.sha256(j[1].encode()).hexdigest(), seed=j[2])
+                    f.write(json.dumps(r, sort_keys=True) + "\n"); f.flush(); os.fsync(f.fileno())
+                    ledger.settle(r)
+                    self.rows[k] = r
         return [self.rows[k] for k, _ in keyed]
 
 
@@ -576,15 +612,58 @@ def static_best_fitness(ctx: dict) -> float:
 
 # ----------------------------------------------------------------------------- shard orchestration
 
+LEGACY_EVAL_ID = hkey("h75-legacy-eval", PINS["selected"], "full-pool-raw-argmin", "anchors-storage-0..3", "u=-fitness|-2")
+EXEC_STATUSES = ("completed", "failed", "timeout", "unknown")
+
+
+def score_row(meta: dict, panel: str, policy: str, fold: int, seed: int, cid: str, family: str, selected_sha: str,
+              eval_id: str, status: str, value, **extra) -> dict:
+    """jope.h75-closed-loop.score/v1 row as admitted by scoring/score_panel.py (#846). Utility is None unless the
+    status is completed; execution errors are never mapped to a scientific loss."""
+    if status not in EXEC_STATUSES:
+        raise ValueError(f"unknown execution status {status}")
+    if status == "completed" and (value is None or not math.isfinite(value)):
+        raise ValueError("completed score needs a finite utility")
+    return dict(schema="jope.h75-closed-loop.score/v1", run_id=meta["run_id"], source_git_sha=meta["source_git_sha"],
+                prereg_sha256=meta["prereg_sha256"], execution_manifest_sha256=meta["execution_manifest_sha256"],
+                panel=panel, policy_id=policy, fold=fold, seed=seed, context_sha256=cid, family_id=family,
+                role="DL-Train", selected_program_sha256=selected_sha, evaluation_identity_sha256=eval_id,
+                status=status, utility=float(value) if status == "completed" else None, **extra)
+
+
+def confirmation_status(results: list) -> tuple[str, float | None]:
+    """Common endpoint for one program: all three cuts must have completed native evaluations (a completed gate
+    failure is a measured -2); any failed/timeout cut makes the row that execution status with a null utility, and a
+    missing evaluation (e.g. no admitted DSL) makes it unknown."""
+    if any(r is None for r in results):
+        return "unknown", None
+    for bad in ("timeout", "failed"):
+        if any(r["status"] == bad for r in results):
+            return bad, None
+    return "completed", float(np.mean([utility("completed", r["gate"], r["fitness"]) for r in results]))
+
+
+def confirmation_cuts(cid: str) -> list[str]:
+    return [input_sha256(cid, s) for s in CONFIRM_SEEDS]
+
+
 class Shard:
     def __init__(self, world: World, protocol: dict, fold: int, seed: int, out: Path, ledger: Ledger, workers: int,
                  meta: dict):
         self.w, self.p, self.fold, self.seed, self.out, self.ledger, self.workers = world, protocol, fold, seed, out, ledger, workers
         self.meta = meta
         out.mkdir(parents=True, exist_ok=True)
-        self.cache = FitCache(out / "fits.jsonl")
+        self.scope = dict(run_id=meta["run_id"], execution_manifest_sha256=meta["execution_manifest_sha256"],
+                          source_git_sha=meta["source_git_sha"], fold=fold, seed=seed)
+        self.scope_sha = hkey("shard-scope", json.dumps(self.scope, sort_keys=True))
+        marker = out / "scope.json"
+        if marker.exists():
+            if json.loads(marker.read_text()).get("scope_sha256") != self.scope_sha:
+                raise SystemExit(f"{out} belongs to another execution scope; refusing to resume into it")
+        else:
+            marker.write_text(json.dumps(dict(self.scope, scope_sha256=self.scope_sha), indent=1))
+        self.cache = FitCache(out / "fits.jsonl", self.scope)
         self.scratch = out / "scratch"
-        f = world.fm["folds"][fold]
         held = set(world.fm_held[fold])
         self.held = sorted(held)
         self.fit = sorted(c for c in world.train if c not in held)
@@ -596,36 +675,43 @@ class Shard:
             fams_held.setdefault(world.train[c]["family_id"], []).append(c)
         if set(fams_fit) & held_fams:
             raise SystemExit("fit/held family overlap")
+        if world.fm["folds"][fold]["held_context_count"] != len(self.held):
+            raise SystemExit("held count mismatch vs fold manifest")
         self.acq = acquisition_roster(fold, fams_fit, "fit")
         self.prosp = acquisition_roster(fold, fams_held, "eval")
         self.bank = [r for r in world.bank_all if r["family_id"] not in held_fams]
         self.champ = {}
         for r in world.bank_all:
             self.champ.setdefault(r["context_sha256"], []).append({"dsl": r["dsl"], "program_sha256": r["program_sha256"]})
-        if f["held_context_count"] != len(self.held):
-            raise SystemExit("held count mismatch vs fold manifest")
 
     # -- records
     def outcome_record(self, cell, cycle, cid, prop, sel_policy, prob, res, apparent, phase="fit_acquisition"):
         ctx = self.w.ctx[cid]
-        return dict(schema="jope.h75-closed-loop.outcome/v1", **self.meta, cell=cell, fold=self.fold, seed=self.seed,
-                    cycle=cycle, phase=phase, role="DL-Train", context_sha256=cid, family_id=ctx["family"],
-                    table_sha256=self.w.train[cid].get("train_only_jtt1_sha256"),
+        return dict(schema="jope.h75-closed-loop.outcome/v1", **{k: self.meta[k] for k in IDENTITY_KEYS}, cell=cell,
+                    fold=self.fold, seed=self.seed, cycle=cycle, phase=phase, role="DL-Train", context_sha256=cid,
+                    family_id=ctx["family"], table_sha256=self.w.train[cid].get("train_only_jtt1_sha256"),
                     original_rows_sha256=self.w.table_sha[cid], cut_id=res["cut_id"], evaluator_sha256=PINS["worker"],
-                    vocabulary_sha256=self.w.vocab_sha, evaluation_protocol="s1main --fit-s1 two-fold training CV; training_cv_envelope (10 structural zero query rows)",
+                    vocabulary_sha256=self.w.vocab_sha, evaluation_protocol=FitCache.PROTOCOL,
                     evaluation_scope="full_train_cv", nq=0, dope_sha256=PINS["dope"], program_sha256=prop["program_sha256"],
                     dsl=prop["dsl"], parent_program_sha256s=list(prop.get("parents", [])), operator=prop.get("operator"),
                     proposal_seed=prop.get("proposal_seed"), selection_policy=sel_policy, selection_probability=prob,
                     status=res["status"], gate=res["gate"] if res["status"] == "completed" else None,
                     fitness=res["fitness"], logratio=res["logratio"], cpu_s=res["cpu_s"], wall_s=res["wall_s"],
-                    input_sha256=res["input_sha256"], apparent_hwm=bool(apparent),
-                    source_object=None,  # filled at publication with the S3 key/version/sha of this jsonl
-                    record_id=hkey("outcome", self.fold, self.seed, cell, cycle, cid, prop["program_sha256"], res["cut_id"]))
+                    input_sha256=res["input_sha256"], apparent_hwm=bool(apparent), source_object=None,
+                    record_id=hkey("outcome", self.scope_sha, cell, cycle, cid, prop["program_sha256"], res["cut_id"]))
 
     def write_jsonl(self, name: str, rows: list[dict]):
-        with (self.out / name).open("w") as f:
+        tmp = self.out / f".{name}.tmp"
+        with tmp.open("w") as f:
             for r in rows:
                 f.write(json.dumps(r, sort_keys=True, default=lambda o: o.tolist() if hasattr(o, "tolist") else str(o)) + "\n")
+            f.flush(); os.fsync(f.fileno())
+        os.replace(tmp, self.out / name)
+
+    def save_atomic(self, obj, name: str):
+        tmp = self.out / f".{name}.tmp"
+        self.w.torch.save(obj, tmp)
+        os.replace(tmp, self.out / name)
 
     # -- model state per cell
     def load_state(self, state):
@@ -634,7 +720,16 @@ class Shard:
     def snapshot(self):
         return {k: v.detach().clone() for k, v in self.w.net.state_dict().items()}
 
-    # -- one search step for a set of (policy, context) with a given model/history
+    def neural(self, fn, *a, **kw):
+        """Run model inference while charging runner CPU/GPU time to the ledger (which re-checks caps/deadline)."""
+        t0, c0 = time.monotonic(), time.process_time()
+        out = fn(*a, **kw)
+        gpu = 0.0
+        if self.w.device.type == "cuda":
+            self.w.torch.cuda.synchronize(); gpu = time.monotonic() - t0
+        self.ledger.neural(process_cpu_s=time.process_time() - c0, gpu_s=gpu)
+        return out
+
     def plan_search(self, policy, cid, hist, parents, known, cycle, scorer):
         stream_seed = hseed("stream", self.fold, self.seed, cycle, cid)
         props = propose(self.w, cid, parents, self.bank, known, stream_seed)
@@ -646,32 +741,59 @@ class Shard:
         if policy == "R":
             idx, prob = select_uniform(len(props), rng)
         else:
-            idx, prob = select_proposals(scorer(cid, hist, props), rng)
+            idx, prob = select_proposals(self.neural(scorer, cid, hist, props), rng)
         return props, idx, prob, {}
 
     def dl_scorer(self, cid, hist, props):
         s = history_slate(hist, props)
         return self.w.predict([cid], [s])[0].cpu().numpy()[4:]
 
-    # -- acquisition (cells A/B/C/D, two cycles) + training + replay
+    # -- acquisition with durable per-cycle checkpoints (resume never resets persistent learners to r882)
+    def _ckpt_name(self, cycle):
+        return f"acq_cycle{cycle}.pt"
+
+    def _save_cycle(self, cycle, states, opts, fresh, records, train_receipts):
+        payload = dict(scope_sha256=self.scope_sha, cycle=cycle, states={k: states[k] for k in ("C", "D")},
+                       opts=opts, fresh=fresh, records=records, train_receipts=train_receipts)
+        self.save_atomic(payload, self._ckpt_name(cycle))
+
+    def _load_cycle(self):
+        for cycle in (2, 1):
+            p = self.out / self._ckpt_name(cycle)
+            if p.exists():
+                payload = self.w.torch.load(p, map_location="cpu", weights_only=False)
+                if payload.get("scope_sha256") != self.scope_sha or payload.get("cycle") != cycle:
+                    raise SystemExit(f"{p} does not match this execution scope/cycle")
+                return payload
+        return None
+
     def acquisition(self):
         done = self.out / "acquisition.done.json"
         if done.exists():
-            return json.loads(done.read_text())
+            d = json.loads(done.read_text())
+            if d.get("scope_sha256") != self.scope_sha:
+                raise SystemExit("acquisition marker from another scope")
+            return d
         w, proto = self.w, self.p
         r882 = {k: v.clone() for k, v in w.r882_state["state_dict"].items()}
         states = {c: r882 for c in CELLS}
-        opts = {}
+        opts, records, train_receipts = {}, [], []
         fresh = {c: {cid: [] for cid in self.acq} for c in CELLS}  # B/D admitted memory; A/C shadow log
-        records, train_receipts = [], []
-        for cycle in (1, 2):
+        start = 1
+        ck = self._load_cycle()
+        if ck is not None:
+            states.update(ck["states"]); opts, fresh = ck["opts"], ck["fresh"]
+            records, train_receipts, start = ck["records"], ck["train_receipts"], ck["cycle"] + 1
+        for cycle in range(start, 3):
             plans = []
             for cell, (upd, fr) in CELLS.items():
                 self.load_state(states[cell])
                 for cid in self.acq:
                     base = anchor_rows(w.ctx[cid])
-                    hist = best_history(base + fresh[cell][cid]) if (fr and cycle > 1) else base
-                    parents = ([{"dsl": h["dsl"], "program_sha256": h["program_sha256"]} for h in hist if "dsl" in h] or self.champ.get(cid, [])) if (fr and cycle > 1) else self.champ.get(cid, [])
+                    adaptive = fr and cycle > 1
+                    hist = best_history(base + fresh[cell][cid]) if adaptive else base
+                    parents = ([{"dsl": h["dsl"], "program_sha256": h["program_sha256"]} for h in hist if "dsl" in h]
+                               or self.champ.get(cid, [])) if adaptive else self.champ.get(cid, [])
                     known = set(w.ctx[cid]["sha"]) | {r["program_sha256"] for r in fresh[cell][cid]}
                     props, idx, prob, short = self.plan_search(cell, cid, hist, parents, known, cycle, self.dl_scorer)
                     plans.append((cell, cid, props, idx, prob, short))
@@ -679,59 +801,63 @@ class Shard:
             results = iter(self.cache.run(jobs, self.scratch, self.ledger, self.workers))
             for cell, cid, props, idx, prob, short in plans:
                 ctx = w.ctx[cid]
-                pre_best = min([static_best_fitness(ctx)] + [r["fitness"] for r in fresh[cell][cid] if r["status"] == "completed" and r["gate"]])
+                pre_best = min([static_best_fitness(ctx)] + [r["fitness"] for r in fresh[cell][cid]
+                                                             if r["status"] == "completed" and r["gate"]])
                 for i, pr in zip(idx, prob):
                     res = next(results)
-                    u = utility(res["status"], res["gate"], res["fitness"] if res["fitness"] is not None else 100.0)
-                    apparent = res["status"] == "completed" and res["gate"] and res["fitness"] < pre_best - MARGIN
+                    done_ok = res["status"] == "completed"
+                    apparent = done_ok and res["gate"] and res["fitness"] < pre_best - MARGIN
                     rec = self.outcome_record(cell, cycle, cid, props[i], "dl_top2_plus_uniform2", pr, res, apparent)
                     records.append(rec)
-                    if res["status"] == "completed":
+                    if done_ok:  # failed/timeout outcomes stay audit-only; never labels
                         fresh[cell][cid].append(dict(feat412=props[i]["feat412"], fitness=res["fitness"], gate=res["gate"],
-                                                     status="completed", utility=u, program_sha256=props[i]["program_sha256"],
-                                                     dsl=props[i]["dsl"], record_id=rec["record_id"], apparent_hwm=bool(apparent)))
+                                                     status="completed", utility=utility("completed", res["gate"], res["fitness"]),
+                                                     program_sha256=props[i]["program_sha256"], dsl=props[i]["dsl"],
+                                                     record_id=rec["record_id"], apparent_hwm=bool(apparent)))
                 if short:
                     records.append(dict(schema="jope.h75-closed-loop.shortfall/v1", cell=cell, cycle=cycle, context_sha256=cid, **short))
-            # persistent training for C and D: identical context sequences (seed independent of cell)
-            for cell in ("C", "D"):
+            for cell in ("C", "D"):  # persistent training; identical context sequences (seed independent of cell)
                 self.load_state(states[cell])
-                if cell not in opts:
-                    opts[cell] = new_optimizer(w, proto)
-                else:
-                    o = new_optimizer(w, proto); o.load_state_dict(opts[cell]); opts[cell] = o
-                rec = train_steps(w, opts[cell], self.fit, self.acq, fresh[cell] if cell == "D" else {}, 48,
+                o = new_optimizer(w, proto)
+                if cell in opts:
+                    o.load_state_dict(opts[cell])
+                rec = train_steps(w, o, self.fit, self.acq, fresh[cell] if cell == "D" else {}, 48,
                                   hseed("train", self.fold, self.seed, cycle), proto["updates_per_cycle"], self.ledger)
                 train_receipts.append(dict(cell=cell, cycle=cycle, **rec))
-                states[cell] = self.snapshot(); opts[cell] = opts[cell].state_dict()
-        # common-learner replay from B and D logs
+                states[cell] = self.snapshot(); opts[cell] = o.state_dict()
+            self._save_cycle(cycle, states, opts, fresh, records, train_receipts)
         rb = [r for cid in self.acq for r in fresh["B"][cid]]
         rd = [r for cid in self.acq for r in fresh["D"][cid]]
         mb, md, match = stratified_match(rb, rd)
         replay = {}
-        for name, rows in (("replay_B", mb), ("replay_D", md)):
+        for name, rows, src in (("replay_B", mb, "B"), ("replay_D", md, "D")):
             if not rows:
                 replay[name] = dict(status="UNTESTED", reason="no common support"); continue
             w.reset_r882()
             o = new_optimizer(w, proto)
+            owner = {x["record_id"]: c for c in self.acq for x in fresh[src][c]}
             mem = {}
             for r in rows:
-                cid = next(c for c in self.acq if any(x["record_id"] == r["record_id"] for x in fresh["B" if name == "replay_B" else "D"][c]))
-                mem.setdefault(cid, []).append(r)
-            rec = train_steps(w, o, self.fit, self.acq, mem, 48, hseed("replay", self.fold, self.seed), proto["common_replay_updates"], self.ledger)
+                mem.setdefault(owner[r["record_id"]], []).append(r)
+            rec = train_steps(w, o, self.fit, self.acq, mem, 48, hseed("replay", self.fold, self.seed),
+                              proto["common_replay_updates"], self.ledger)
             states[name] = self.snapshot(); replay[name] = dict(status="trained", **rec)
         frozen = {}
         for name, st in states.items():
             self.load_state(st)
             frozen[name] = w.state_hash()
-            w.torch.save(st, self.out / f"state_{name}.pt") if name in ("C", "D", "replay_B", "replay_D") else None
+            if name in ("C", "D", "replay_B", "replay_D"):
+                self.save_atomic(st, f"state_{name}.pt")
         if frozen["A"] != frozen["B"]:
             raise SystemExit("A/B must stay bitwise frozen")
         self.write_jsonl("outcomes_acquisition.jsonl", records)
-        summary = dict(acq_contexts=self.acq, prospective_contexts=self.prosp, train=train_receipts, replay=replay,
-                       replay_match=match, frozen_state_hashes=frozen,
+        summary = dict(scope_sha256=self.scope_sha, acq_contexts=self.acq, prospective_contexts=self.prosp,
+                       train=train_receipts, replay=replay, replay_match=match, frozen_state_hashes=frozen,
                        fresh_counts={c: {cid: len(v) for cid, v in fresh[c].items()} for c in CELLS},
-                       apparent_hwm={c: sum(r.get("apparent_hwm", False) for cid in self.acq for r in fresh[c][cid]) for c in CELLS})
-        done.write_text(json.dumps(summary, indent=1, default=str))
+                       apparent_hwm={c: sum(r.get("apparent_hwm", False) for cid in self.acq for r in fresh[c][cid]) for c in CELLS},
+                       identical_BD_acquisition=sorted(r["program_sha256"] for r in rb) == sorted(r["program_sha256"] for r in rd))
+        tmp = self.out / ".acquisition.done.json.tmp"
+        tmp.write_text(json.dumps(summary, indent=1, default=str)); os.replace(tmp, done)
         return summary
 
     def frozen_states(self):
@@ -743,32 +869,32 @@ class Shard:
                 st[name] = self.w.torch.load(p, map_location="cpu", weights_only=True)
         return st
 
-    # -- terminal reads (only after acquisition.done exists: every learner frozen)
+    def require_frozen(self):
+        done = self.out / "acquisition.done.json"
+        if not done.exists() or json.loads(done.read_text()).get("scope_sha256") != self.scope_sha:
+            raise SystemExit("terminal read before this scope's learners were frozen")
+
+    # -- terminal reads
     def legacy_panel(self):
         done = self.out / "legacy.done.json"
         if done.exists():
             return
-        if not (self.out / "acquisition.done.json").exists():
-            raise SystemExit("terminal read before learners were frozen")
+        self.require_frozen()
         rows = []
         for name, st in self.frozen_states().items():
             self.load_state(st)
-            sh = self.w.state_hash()
             for cid in self.held:
                 ctx = self.w.ctx[cid]
-                pred = self.w.predict([cid], [dict(program=ctx["program"], fitness=ctx["fitness"], gate=ctx["gate"])])[0].cpu().numpy()
+                pred = self.neural(lambda: self.w.predict([cid], [dict(program=ctx["program"], fitness=ctx["fitness"], gate=ctx["gate"])])[0].cpu().numpy())
                 i = int(np.argmin(pred))
-                rows.append(dict(schema="jope.h75-closed-loop.score/v1", **self.meta, panel="legacy", policy_id=name,
-                                 fold=self.fold, seed=self.seed, context_sha256=cid, family_id=ctx["family"], role="DL-Train",
-                                 selected_program_sha256=ctx["sha"][i], evaluation_identity_sha256=hkey("legacy-eval", PINS["selected"], "full-pool-argmin", "anchors0-3"),
-                                 model_state_sha256=sh, status="completed",
-                                 utility=utility("completed", bool(ctx["gate"][i]), float(ctx["fitness"][i]))))
+                rows.append(score_row(self.meta, "legacy", name, self.fold, self.seed, cid, ctx["family"], ctx["sha"][i],
+                                      LEGACY_EVAL_ID, "completed", utility("completed", bool(ctx["gate"][i]), float(ctx["fitness"][i]))))
         a = {r["context_sha256"]: r["utility"] for r in rows if r["policy_id"] == "A"}
         b = {r["context_sha256"]: r["utility"] for r in rows if r["policy_id"] == "B"}
         if a != b:
             raise SystemExit("A and B disagree on the legacy panel")
         self.write_jsonl("scores_legacy.jsonl", rows)
-        done.write_text(json.dumps(dict(rows=len(rows)), indent=1))
+        (self.out / "legacy.done.json").write_text(json.dumps(dict(rows=len(rows), scope_sha256=self.scope_sha), indent=1))
 
     def tree_scorer(self):
         from sklearn.ensemble import HistGradientBoostingRegressor
@@ -786,12 +912,11 @@ class Shard:
         done = self.out / "prospective.done.json"
         if done.exists():
             return
-        if not (self.out / "acquisition.done.json").exists():
-            raise SystemExit("terminal read before learners were frozen")
+        self.require_frozen()
         states = self.frozen_states()
-        gscore = self.tree_scorer()
+        gscore = self.neural(self.tree_scorer)
         mem = {p: {cid: [] for cid in self.prosp} for p in SEARCH_POLICIES}
-        records, plans_log = [], []
+        records = []
         for cycle in (1, 2):
             plans = []
             for pol in SEARCH_POLICIES:
@@ -799,9 +924,10 @@ class Shard:
                     self.load_state(states[pol])
                 for cid in self.prosp:
                     base = anchor_rows(self.w.ctx[cid])
-                    adaptive = pol in ("B", "D", "G", "R")
-                    hist = best_history(base + mem[pol][cid]) if (adaptive and cycle > 1) else base
-                    parents = ([{"dsl": h["dsl"], "program_sha256": h["program_sha256"]} for h in hist if "dsl" in h] or self.champ.get(cid, [])) if (adaptive and cycle > 1) else self.champ.get(cid, [])
+                    adaptive = pol in ("B", "D", "G", "R") and cycle > 1
+                    hist = best_history(base + mem[pol][cid]) if adaptive else base
+                    parents = ([{"dsl": h["dsl"], "program_sha256": h["program_sha256"]} for h in hist if "dsl" in h]
+                               or self.champ.get(cid, [])) if adaptive else self.champ.get(cid, [])
                     known = set(self.w.ctx[cid]["sha"]) | {r["program_sha256"] for r in mem[pol][cid]}
                     scorer = gscore if pol == "G" else self.dl_scorer
                     props, idx, prob, short = self.plan_search(pol, cid, hist, parents, known, cycle, scorer)
@@ -811,15 +937,16 @@ class Shard:
             for pol, cid, props, idx, prob, short in plans:
                 for i, pr in zip(idx, prob):
                     res = next(results)
-                    u = utility(res["status"], res["gate"], res["fitness"] if res["fitness"] is not None else 100.0)
-                    rec = self.outcome_record(pol, cycle, cid, props[i], "uniform4" if pol == "R" else ("tree_top2_plus_uniform2" if pol == "G" else "dl_top2_plus_uniform2"), pr, res, False, phase="prospective_search")
+                    policy_name = "uniform4" if pol == "R" else ("tree_top2_plus_uniform2" if pol == "G" else "dl_top2_plus_uniform2")
+                    rec = self.outcome_record(pol, cycle, cid, props[i], policy_name, pr, res, False, phase="prospective_search")
                     records.append(rec)
                     if res["status"] == "completed":
                         mem[pol][cid].append(dict(feat412=props[i]["feat412"], fitness=res["fitness"], gate=res["gate"], status="completed",
-                                                  utility=u, program_sha256=props[i]["program_sha256"], dsl=props[i]["dsl"], record_id=rec["record_id"], cycle=cycle))
+                                                  utility=utility("completed", res["gate"], res["fitness"]),
+                                                  program_sha256=props[i]["program_sha256"], dsl=props[i]["dsl"],
+                                                  record_id=rec["record_id"], cycle=cycle))
                 if short:
                     records.append(dict(schema="jope.h75-closed-loop.shortfall/v1", policy=pol, cycle=cycle, context_sha256=cid, **short))
-        # final retained-best accumulator (anchors + all completed new evaluations), U4 after cycle 1, U8 after cycle 2
         selections = []
         for pol in SEARCH_POLICIES:
             for cid in self.prosp:
@@ -828,43 +955,106 @@ class Shard:
                 c2 = best_history(base + mem[pol][cid], 1)[0]
                 selections.append(dict(policy=pol, context=cid, u4_cycle1=c1["utility"], u8=c2["utility"], selected=c2,
                                        anchor_best=best_history(base, 1)[0]))
-        # common confirmation: each selected program and the initial best-known anchor on 801-803 (deduplicated)
         cjobs = {}
         for s in selections:
             for prog in (s["selected"], s["anchor_best"]):
-                dsl = prog.get("dsl")
-                if dsl is None:  # anchor without an admitted DSL export: confirmation unavailable -> INCOMPLETE
+                if prog.get("dsl") is None:  # anchor without an admitted DSL export -> status unknown (INCOMPLETE)
                     continue
                 for cs in CONFIRM_SEEDS:
-                    cjobs[(s["context"], prog["program_sha256"], cs)] = (s["context"], dsl, cs)
+                    cjobs[(s["context"], prog["program_sha256"], cs)] = (s["context"], prog["dsl"], cs)
         cres = dict(zip(cjobs, self.cache.run(list(cjobs.values()), self.scratch, self.ledger, self.workers)))
-        scores = []
+        scores, anchors_out = [], []
         for s in selections:
-            sel = s["selected"]
-            cu = [cres.get((s["context"], sel["program_sha256"], cs)) for cs in CONFIRM_SEEDS]
-            row = dict(schema="jope.h75-closed-loop.score/v1", **self.meta, panel="confirmed_U8", policy_id=s["policy"],
-                       fold=self.fold, seed=self.seed, context_sha256=s["context"], family_id=self.w.ctx[s["context"]]["family"],
-                       role="DL-Train", selected_program_sha256=sel["program_sha256"],
-                       evaluation_identity_sha256=hkey("confirm", *CONFIRM_SEEDS), u8_original_cut=s["u8"], u4_cycle1=s["u4_cycle1"],
-                       cut_ids=[f"resplit-{cs}" for cs in CONFIRM_SEEDS])
-            if all(c is not None for c in cu):
-                row.update(status="completed", utility=float(np.mean([utility(c["status"], c["gate"], c["fitness"] if c["fitness"] is not None else 100.0) for c in cu])))
-            else:
-                row.update(status="unavailable", utility=None,
-                           reason="selected program is a pool anchor without DSL in the admitted pool payload")
-            scores.append(row)
+            sel, cid = s["selected"], s["context"]
+            status, value = confirmation_status([cres.get((cid, sel["program_sha256"], cs)) for cs in CONFIRM_SEEDS])
+            scores.append(score_row(self.meta, "confirmed_U8", s["policy"], self.fold, self.seed, cid,
+                                    self.w.ctx[cid]["family"], sel["program_sha256"], hkey("h75-confirm-eval", *CONFIRM_SEEDS),
+                                    status, value, confirmation_cut_sha256s=confirmation_cuts(cid),
+                                    u8_original_cut=s["u8"], u4_cycle1=s["u4_cycle1"]))
+            a = s["anchor_best"]
+            ast, av = confirmation_status([cres.get((cid, a["program_sha256"], cs)) for cs in CONFIRM_SEEDS])
+            anchors_out.append(dict(policy=s["policy"], context_sha256=cid, anchor_program_sha256=a["program_sha256"],
+                                    status=ast, confirmed_utility=av))
         self.write_jsonl("outcomes_prospective.jsonl", records)
         self.write_jsonl("scores_confirmed_U8.jsonl", scores)
-        done.write_text(json.dumps(dict(selections=len(selections), confirm_jobs=len(cjobs)), indent=1))
+        self.write_jsonl("confirmation_anchor_reference.jsonl", anchors_out)
+        (self.out / "prospective.done.json").write_text(json.dumps(
+            dict(selections=len(selections), confirm_jobs=len(cjobs), scope_sha256=self.scope_sha,
+                 statuses={k: sum(r["status"] == k for r in scores) for k in EXEC_STATUSES}), indent=1))
+
+
+def admission_manifests(meta: dict, world: "World", fixture_only: bool = False) -> dict:
+    """Frozen scorer admission manifests (scoring/score_panel.py) for both panels: every context/seed cell of the
+    held folds (legacy) and the prospective contexts (confirmed_U8)."""
+    out = {}
+    for panel in ("legacy", "confirmed_U8"):
+        roster = []
+        for k in range(5):
+            held = sorted(world.fm_held[k])
+            if panel == "confirmed_U8":
+                fams = {}
+                for c in held:
+                    fams.setdefault(world.train[c]["family_id"], []).append(c)
+                held = acquisition_roster(k, fams, "eval")
+            for cid in held:
+                for seed in (701, 702, 703):
+                    cell = dict(context_sha256=cid, family_id=world.train[cid]["family_id"], fold=k, seed=seed, role="DL-Train",
+                                evaluation_identity_sha256=LEGACY_EVAL_ID if panel == "legacy" else hkey("h75-confirm-eval", *CONFIRM_SEEDS))
+                    if panel == "confirmed_U8":
+                        cell["confirmation_cut_sha256s"] = confirmation_cuts(cid)
+                    roster.append(cell)
+        out[panel] = dict(schema="jope.h75-closed-loop.score-admission/v1", fixture_only=fixture_only,
+                          **{k: meta[k] for k in IDENTITY_KEYS}, dope_sha256=PINS["dope"], panel=panel, roster=roster)
+    return out
 
 
 # ----------------------------------------------------------------------------- CLI
 
+IDENTITY_KEYS = ("run_id", "source_git_sha", "prereg_sha256", "execution_manifest_sha256")
+
+
+def validate_closure(a, protocol: dict) -> dict:
+    """Validate the frozen execution closure BEFORE any payload load, model build or GPU allocation."""
+    import re
+    src = os.environ.get("H75_SOURCE_GIT_SHA", "")
+    if not re.fullmatch(r"[0-9a-f]{40}", src):
+        raise SystemExit("H75_SOURCE_GIT_SHA must be a 40-hex merged source commit")
+    if a.execution_manifest is None or not a.execution_manifest.exists():
+        raise SystemExit("--execution-manifest is required")
+    em_sha = sha256_file(a.execution_manifest)
+    if os.environ.get("H75_EXECUTION_MANIFEST_SHA256") != em_sha:
+        raise SystemExit("H75_EXECUTION_MANIFEST_SHA256 does not match the execution manifest bytes")
+    em = json.loads(a.execution_manifest.read_text())
+    if em.get("schema") != "jope.h75-closed-loop.execution-manifest/v1" or em.get("run_id") != a.run_id:
+        raise SystemExit("execution manifest schema/run_id mismatch")
+    if em.get("source_git_sha") != src or em.get("runner_sha256") != sha256_file(Path(__file__)):
+        raise SystemExit("execution manifest does not bind this source commit and runner bytes")
+    if em.get("prereg_sha256") != sha256_file(WAVE_DIR / "PREREG.md") or em.get("protocol_sha256") != sha256_file(WAVE_DIR / "protocol.json"):
+        raise SystemExit("execution manifest does not bind the merged preregistration/protocol")
+    if a.stage == "shard":
+        allowed = {(c["fold"], c["seed"]) for c in em.get("cells", [])}
+        if (a.fold, a.seed) not in allowed:
+            raise SystemExit("fold/seed not authorized by the execution manifest")
+        if a.seed not in protocol["seeds"] and not (em.get("pilot") and a.seed == 700):
+            raise SystemExit("seed outside the protocol (pilot seed 700 needs an explicit pilot manifest)")
+        phases = set(a.phases.split(","))
+        if not phases <= {"acquisition", "legacy", "prospective"}:
+            raise SystemExit("unknown phase")
+        if em.get("pilot") and phases != {"acquisition"}:
+            raise SystemExit("a pilot manifest admits fit-only acquisition phases only (no held outcomes)")
+    if a.device.startswith("cuda") and not em.get("gpu_authorized"):
+        raise SystemExit("GPU use is not authorized by the execution manifest (H75 has no GPU slot unless granted)")
+    if a.anchor_dsl is not None and em.get("anchor_dsl_sha256") != sha256_file(a.anchor_dsl):
+        raise SystemExit("anchor DSL export not bound by the execution manifest")
+    return dict(run_id=a.run_id, source_git_sha=src, prereg_sha256=em["prereg_sha256"], execution_manifest_sha256=em_sha)
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("stage", choices=["plan", "shard"])
+    ap.add_argument("stage", choices=["plan", "roster", "shard"])
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--run-id", required=True)
+    ap.add_argument("--execution-manifest", type=Path)
     ap.add_argument("--fold", type=int)
     ap.add_argument("--seed", type=int)
     ap.add_argument("--device", default="cpu")
@@ -874,25 +1064,23 @@ def main():
     ap.add_argument("--anchor-dsl", type=Path, help="admitted anchor DSL export (required for a COMPLETE confirmation panel)")
     a = ap.parse_args()
     proto = load_protocol()
+    if a.stage == "shard":
+        if a.fold not in range(5):
+            raise SystemExit("fold must be 0..4")
+    meta = validate_closure(a, proto) if a.stage != "plan" else dict(
+        run_id=a.run_id, source_git_sha=None, prereg_sha256=sha256_file(WAVE_DIR / "PREREG.md"), execution_manifest_sha256=None)
     lock = None
     if a.device.startswith("cuda"):  # hold the shared GPU lock from before any CUDA allocation until teardown
         lock = open(QUAL_LOCK, "a")
         fcntl.flock(lock, fcntl.LOCK_EX)
     world = World(a.device, a.threads)
     world.fm_held = [f["held_contexts"] for f in world.fm["folds"]]
-    world.table_sha = {}
     world.vocab_sha = sha256_file(MICRO / "assets/projections/program-feature-names.json")
     anchor_export = load_anchor_dsl(a.anchor_dsl, world.ctx) if a.anchor_dsl else None
-    meta = dict(run_id=a.run_id, source_git_sha=os.environ.get("H75_SOURCE_GIT_SHA"),
-                anchor_dsl_export=anchor_export,
-                prereg_sha256=sha256_file(WAVE_DIR / "PREREG.md"),
-                execution_manifest_sha256=os.environ.get("H75_EXECUTION_MANIFEST_SHA256"))
+    a.out.mkdir(parents=True, exist_ok=True)
     if a.stage == "plan":
         rost = []
         for k in range(5):
-            world.table_sha = world.table_sha
-            sh = Shard.__new__(Shard)
-            sh.w, sh.fold = world, k
             held = set(world.fm_held[k]); fit = [c for c in world.train if c not in held]
             fams_fit, fams_held = {}, {}
             for c in fit:
@@ -901,12 +1089,17 @@ def main():
                 fams_held.setdefault(world.train[c]["family_id"], []).append(c)
             rost.append(dict(fold=k, held=len(held), fit=len(fit), acquisition=acquisition_roster(k, fams_fit, "fit"),
                              prospective=acquisition_roster(k, fams_held, "eval")))
-        a.out.mkdir(parents=True, exist_ok=True)
-        (a.out / "plan.json").write_text(json.dumps(dict(meta=meta, pins=PINS, rosters=rost, protocol_sha256=sha256_file(WAVE_DIR / "protocol.json")), indent=1))
+        (a.out / "plan.json").write_text(json.dumps(dict(meta=meta, pins=PINS, rosters=rost, runner_sha256=sha256_file(Path(__file__)),
+                                                         protocol_sha256=sha256_file(WAVE_DIR / "protocol.json")), indent=1))
         print(json.dumps(rost, indent=1)[:2000])
         return
-    for cid in list(world.train):
-        world.table_sha[cid] = sha256_file(INPUT / "tables" / f"{cid}.jtt1")
+    if a.stage == "roster":
+        for panel, m in admission_manifests(meta, world).items():
+            (a.out / f"admission_{panel}.json").write_text(json.dumps(m, indent=1))
+        print("admission manifests written")
+        return
+    world.table_sha = {cid: sha256_file(INPUT / "tables" / f"{cid}.jtt1") for cid in world.train}
+    meta = dict(meta, anchor_dsl_export=anchor_export)
     led = Ledger(a.out / "campaign_ledger.json", max_fits=9600, max_cpu_s=4 * 3600, max_gpu_s=4 * 3600,
                  deadline_utc="2026-10-31T14:00:00Z")
     shard = Shard(world, proto, a.fold, a.seed, a.out / f"fold{a.fold}-seed{a.seed}", led, a.workers, meta)

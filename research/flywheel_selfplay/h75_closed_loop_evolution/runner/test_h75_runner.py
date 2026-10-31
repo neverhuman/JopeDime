@@ -89,38 +89,141 @@ def test_envelope_original_and_resplit():
     assert s1[117:] == o[117:] and s1 != o
 
 
-def test_ledger_caps_deadline_and_shared_state(tmp_path):
+def test_ledger_reserves_atomically_caps_and_deadline(tmp_path):
     led = r.Ledger(tmp_path / "l.json", max_fits=3, max_cpu_s=100, max_gpu_s=100, deadline_utc="2099-01-01T00:00:00Z")
-    led.check(3)
-    for _ in range(2):
-        led.charge(dict(cpu_s=1.0, wall_s=2.0, status="completed"))
+    led.reserve(2)
     other = r.Ledger(tmp_path / "l.json", max_fits=3, max_cpu_s=100, max_gpu_s=100, deadline_utc="2099-01-01T00:00:00Z")
-    assert other.state["fits"] == 2  # a second process sees the same campaign ledger
+    other.reserve(1)  # a second shard takes the last call ...
     with pytest.raises(SystemExit):
-        other.check(2)
+        led.reserve(1)  # ... and the first cannot also admit it
+    led.settle(dict(cpu_s=1.0, wall_s=2.0, status="timeout"))
+    s = other.state
+    assert s["fits"] == 3 and s["settled"] == 1 and s["timeouts"] == 1 and s["cpu_s"] == 1.0
+    cpu = r.Ledger(tmp_path / "c.json", 10, 5.0, 100, "2099-01-01T00:00:00Z")
+    cpu.neural(process_cpu_s=4.0)
+    with pytest.raises(SystemExit):
+        cpu.neural(process_cpu_s=2.0)  # runner CPU counts toward the CPU cap
     with pytest.raises(SystemExit):
         r.Ledger(tmp_path / "l.json", 3, 100, 100, "2000-01-01T00:00:00Z").check()  # changed deadline refused
-    past = r.Ledger(tmp_path / "p.json", 3, 100, 100, "2000-01-01T00:00:00Z")
     with pytest.raises(SystemExit):
-        past.check()
+        r.Ledger(tmp_path / "p.json", 3, 100, 100, "2000-01-01T00:00:00Z").reserve(1)  # past deadline
 
 
-def test_fit_cache_never_recharges(tmp_path, monkeypatch):
+def fake_result(status="completed", gate=True, fitness=-1.0):
+    return dict(status=status, fitness=fitness if status == "completed" else None, gate=gate if status == "completed" else False,
+                logratio=-1.0, cpu_s=0.1, wall_s=0.1, rc=0 if status != "timeout" else "timeout", input_sha256="in", cut_id="original")
+
+
+def test_fit_cache_scope_binding_and_no_recharge(tmp_path, monkeypatch):
     calls = []
-
-    def fake_fit_many(jobs, scratch, ledger, workers):
-        calls.append(len(jobs))
-        return [dict(status="completed", fitness=-1.0, gate=True, logratio=-1.0, cpu_s=0.1, wall_s=0.1, rc=0,
-                     input_sha256="x", cut_id="original") for _ in jobs]
-    monkeypatch.setattr(r, "fit_many", fake_fit_many)
+    monkeypatch.setattr(r, "input_sha256", lambda c, s: "in")
+    monkeypatch.setattr(r, "native_fit", lambda c, d, s, scratch, timeout_s=600: (calls.append(1), fake_result())[1])
     led = r.Ledger(tmp_path / "l.json", 100, 100, 100, "2099-01-01T00:00:00Z")
-    fc = r.FitCache(tmp_path / "fits.jsonl")
+    scope = dict(run_id="run1", execution_manifest_sha256="e" * 64)
+    fc = r.FitCache(tmp_path / "fits.jsonl", scope)
     jobs = [("c1", "(pipe X (ridge))", None), ("c1", "(pipe X (ridge))", None), ("c1", "(pipe X (ridge))", 801)]
-    out = fc.run(jobs, tmp_path, led, 2)
-    assert calls == [2] and len(out) == 3  # duplicate job is executed once
-    fc2 = r.FitCache(tmp_path / "fits.jsonl")  # resume from disk
-    fc2.run(jobs, tmp_path, led, 2)
-    assert calls == [2]
+    assert len(fc.run(jobs, tmp_path, led, 2)) == 3 and len(calls) == 2  # duplicate executed once
+    assert led.state["fits"] == 2 and led.state["settled"] == 2
+    r.FitCache(tmp_path / "fits.jsonl", scope).run(jobs, tmp_path, led, 2)  # resume: no new call, no new charge
+    assert len(calls) == 2 and led.state["fits"] == 2
+    with pytest.raises(SystemExit):
+        r.FitCache(tmp_path / "fits.jsonl", dict(scope, run_id="run2"))  # foreign scope is refused, not reused
+
+
+META = dict(run_id="h75-fixture", source_git_sha="a" * 40, prereg_sha256="b" * 64, execution_manifest_sha256="c" * 64)
+
+
+def test_confirmation_status_keeps_errors_out_of_utility():
+    ok = [fake_result(gate=True, fitness=-1.0), fake_result(gate=False), fake_result(gate=True, fitness=-0.5)]
+    st, v = r.confirmation_status(ok)
+    assert st == "completed" and v == pytest.approx((1.0 - 2.0 + 0.5) / 3)  # a completed gate failure is a measured -2
+    assert r.confirmation_status(ok[:2] + [fake_result("timeout")]) == ("timeout", None)
+    assert r.confirmation_status([fake_result("failed")] + ok[:2]) == ("failed", None)
+    assert r.confirmation_status(ok[:2] + [None]) == ("unknown", None)
+    with pytest.raises(ValueError):
+        r.score_row(META, "legacy", "A", 0, 701, "c" * 64, "fam", "s" * 64, "e" * 64, "completed", None)
+    with pytest.raises(ValueError):
+        r.score_row(META, "legacy", "A", 0, 701, "c" * 64, "fam", "s" * 64, "e" * 64, "unavailable", None)
+
+
+class FakeWorld:
+    def __init__(self):
+        self.train, self.fm_held = {}, []
+        for k in range(5):
+            held = []
+            for j in range(5):  # five families per fold, one context each
+                cid = hashlib.sha256(f"ctx{k}{j}".encode()).hexdigest()
+                self.train[cid] = dict(family_id=f"fam-{5 * k + j:03d}")
+                held.append(cid)
+            self.fm_held.append(held)
+
+
+def scorer_module():
+    path = r.WAVE_DIR / "scoring" / "score_panel.py"
+    if not path.exists():
+        pytest.skip("merged scorer #846 not present in this tree")
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("h75_score_panel", path)
+    m = importlib.util.module_from_spec(spec); sys.modules["h75_score_panel"] = m; spec.loader.exec_module(m)
+    return m
+
+
+def test_runner_rows_and_admission_join_the_merged_scorer(monkeypatch):
+    sp = scorer_module()
+    monkeypatch.setattr(r, "confirmation_cuts", lambda cid: [hashlib.sha256(f"{cid}{s}".encode()).hexdigest() for s in r.CONFIRM_SEEDS])
+    adm = r.admission_manifests(META, FakeWorld(), fixture_only=True)
+    elo = r.REPO / "python/src/jope/north_star/elo_tracker.py"
+    for panel, policies in sp.PANELS.items():
+        man = adm[panel]
+        rows = []
+        for cell in man["roster"]:
+            extra = {"confirmation_cut_sha256s": cell["confirmation_cut_sha256s"]} if panel == "confirmed_U8" else {}
+            for pol in policies:
+                u = 1.0 + 0.01 * (pol == "D") + 0.001 * (cell["seed"] % 7)
+                rows.append(r.score_row(META, panel, pol, cell["fold"], cell["seed"], cell["context_sha256"], cell["family_id"],
+                                        "f" * 64, cell["evaluation_identity_sha256"], "completed", u, **extra))
+        sp.admit(dict(manifest=man, rows=rows))  # every runner row joins the frozen roster
+        bad = list(rows)
+        b0 = bad[0]
+        extra = {"confirmation_cut_sha256s": b0["confirmation_cut_sha256s"]} if panel == "confirmed_U8" else {}
+        bad[0] = r.score_row(META, panel, b0["policy_id"], b0["fold"], b0["seed"], b0["context_sha256"], b0["family_id"],
+                             "f" * 64, b0["evaluation_identity_sha256"], "timeout", None, **extra)
+        sp.admit(dict(manifest=man, rows=bad))  # an execution error is admitted as an error, not a loss
+        if elo.exists():
+            ref = sp.load_reference(elo)
+            assert sp.score(dict(manifest=man, rows=rows), ref)["status"] == "COMPLETE_POINT_DIAGNOSTICS"
+            assert sp.score(dict(manifest=man, rows=bad), ref)["status"] == "INCOMPLETE"
+
+
+def test_closure_validation_refuses_before_loading(tmp_path, monkeypatch):
+    proto = {"seeds": [701, 702, 703]}
+    real_sha = r.sha256_file
+    monkeypatch.setattr(r, "sha256_file", lambda p: {"PREREG.md": "p", "protocol.json": "q"}.get(Path(p).name) or real_sha(p))
+    em = dict(schema="jope.h75-closed-loop.execution-manifest/v1", run_id="run1", source_git_sha="a" * 40,
+              runner_sha256=real_sha(Path(r.__file__)), prereg_sha256="p", protocol_sha256="q",
+              cells=[{"fold": 0, "seed": 701}], gpu_authorized=False)
+    path = tmp_path / "em.json"; path.write_text(json.dumps(em))
+
+    class A:
+        stage, run_id, execution_manifest, fold, seed, device, phases, anchor_dsl = "shard", "run1", path, 0, 701, "cpu", "acquisition", None
+    monkeypatch.delenv("H75_SOURCE_GIT_SHA", raising=False)
+    with pytest.raises(SystemExit):
+        r.validate_closure(A, proto)  # absent source identity
+    monkeypatch.setenv("H75_SOURCE_GIT_SHA", "a" * 40)
+    monkeypatch.setenv("H75_EXECUTION_MANIFEST_SHA256", "0" * 64)
+    with pytest.raises(SystemExit):
+        r.validate_closure(A, proto)  # manifest hash mismatch
+    monkeypatch.setenv("H75_EXECUTION_MANIFEST_SHA256", real_sha(path))
+    assert r.validate_closure(A, proto)["execution_manifest_sha256"] == real_sha(path)
+    A.device = "cuda"
+    with pytest.raises(SystemExit):
+        r.validate_closure(A, proto)  # GPU not authorized
+    A.device, A.fold = "cpu", 1
+    with pytest.raises(SystemExit):
+        r.validate_closure(A, proto)  # fold/seed not in the manifest
+    A.fold, A.seed = 0, 700
+    with pytest.raises(SystemExit):
+        r.validate_closure(A, proto)  # pilot seed without a pilot manifest
 
 
 def test_utility_and_s1_metrics_match_live_formula():
