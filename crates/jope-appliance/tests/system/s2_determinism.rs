@@ -196,6 +196,15 @@ fn s2_seeded_cpu_rerun_reports_projection_after_persisted_stream_reconnect() {
     let projection_matches = first_projection == second_projection;
     let projection_without_model_matches = without_model_artifact_ids(first_projection.clone())
         == without_model_artifact_ids(second_projection.clone());
+    let champion_algorithm_matches = first_best.algorithm_id == second_best.algorithm_id;
+    let champion_metric_matches = first_best.metric == second_best.metric;
+    let champion_cv_matches = first_best.cv_value == second_best.cv_value;
+    let artifact_identity_matches = first_best.model_artifact == second_best.model_artifact;
+    let champion_matches = champion_algorithm_matches
+        && champion_metric_matches
+        && champion_cv_matches
+        && artifact_identity_matches;
+    let s2_qualified = projection_matches && champion_matches;
     let differing_events = first_projection
         .iter()
         .zip(&second_projection)
@@ -204,19 +213,23 @@ fn s2_seeded_cpu_rerun_reports_projection_after_persisted_stream_reconnect() {
         .collect::<Vec<_>>();
     let first_encoded = serde_json::to_vec(&first_projection).unwrap();
     let second_encoded = serde_json::to_vec(&second_projection).unwrap();
-    println!(
-        "INT02_S2_RERUN={{\"seed\":{SEED},\"event_count\":{},\"reconnect_cursor\":{},\"reconnect_stream_matches_journal\":true,\"first_projection_sha256\":\"{}\",\"second_projection_sha256\":\"{}\",\"projection_matches\":{},\"projection_matches_without_model_artifact_ids\":{},\"champion_algorithm_matches\":{},\"champion_metric_matches\":{},\"champion_cv_matches\":{},\"artifact_identity_matches\":{},\"differing_events\":{},\"s2_qualified\":{}}}",
-        first_projection.len(),
-        cursor.unwrap().0,
-        jope_runtime::sha256_hex(&first_encoded),
-        jope_runtime::sha256_hex(&second_encoded),
-        projection_matches,
-        projection_without_model_matches,
-        first_best.algorithm_id == second_best.algorithm_id,
-        first_best.metric == second_best.metric,
-        first_best.cv_value == second_best.cv_value,
-        first_best.model_artifact == second_best.model_artifact,
-        serde_json::to_string(&differing_events).unwrap(),
-        projection_matches
-    );
+    let report = serde_json::json!({
+        "seed": SEED.parse::<u64>().unwrap(),
+        "first_event_count": first_projection.len(),
+        "second_event_count": second_projection.len(),
+        "reconnect_cursor": cursor.unwrap().0,
+        "reconnect_stream_matches_journal": true,
+        "first_projection_sha256": jope_runtime::sha256_hex(&first_encoded),
+        "second_projection_sha256": jope_runtime::sha256_hex(&second_encoded),
+        "projection_matches": projection_matches,
+        "projection_matches_without_model_artifact_ids": projection_without_model_matches,
+        "champion_algorithm_matches": champion_algorithm_matches,
+        "champion_metric_matches": champion_metric_matches,
+        "champion_cv_matches": champion_cv_matches,
+        "artifact_identity_matches": artifact_identity_matches,
+        "champion_matches": champion_matches,
+        "differing_events": differing_events,
+        "s2_qualified": s2_qualified,
+    });
+    println!("INT02_S2_RERUN={}", serde_json::to_string(&report).unwrap());
 }
