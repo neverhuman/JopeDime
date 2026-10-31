@@ -37,7 +37,7 @@ pub enum Cmd {
     Fetch {
         /// Bundle identifier to fetch when `--pinned` is not set.
         bundle_id: Option<String>,
-        /// Fetch every bundle listed in <repo>/models/PINNED.
+        /// Fetch every bundle listed in the repository's models/PINNED file.
         #[arg(long, conflicts_with = "bundle_id")]
         pinned: bool,
         /// Only these files (exact bundle path or a directory prefix); repeatable.
@@ -60,7 +60,7 @@ pub enum Cmd {
         /// Check sizes instead of re-hashing.
         #[arg(long)]
         quick: bool,
-        /// Validate <repo>/models/{manifest.json,bundles/*.json,PINNED} against the schema and
+        /// Validate the repository's models/manifest.json, models/bundles/*.json, and models/PINNED against the schema and
         /// each other; touches no network and no cache.
         #[arg(long, conflicts_with_all = ["bundle_id", "all", "quick"])]
         manifests_only: bool,
