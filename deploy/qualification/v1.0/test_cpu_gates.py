@@ -75,6 +75,7 @@ class Controller(unittest.TestCase):
 
     def source(self, commands):
         (self.repo / "deploy/ci").mkdir(parents=True)
+        (self.repo / ".gitignore").write_text("__pycache__/\n")
         lanes = {}
         for name, command, backend in commands:
             lanes[name] = dict(
@@ -478,6 +479,89 @@ class Controller(unittest.TestCase):
         self.run_checks()
         with self.assertRaises(FileExistsError):
             self.run_checks()
+
+    def test_dirty_source_stops_before_the_next_gate(self):
+        marker = self.path / "later-ran"
+        head = self.source(
+            [
+                (
+                    "full-a-source-change",
+                    [
+                        sys.executable,
+                        "-c",
+                        "from pathlib import Path; Path('Cargo.lock').write_text('changed')",
+                    ],
+                    "none",
+                ),
+                (
+                    "full-b-later",
+                    [sys.executable, "-c", f"open({str(marker)!r},'w').close()"],
+                    "none",
+                ),
+            ]
+        )
+        original = (self.repo / "Cargo.lock").read_bytes()
+        original_identity = cpu.identity
+
+        def restore_after_refusal(*args, **kwargs):
+            try:
+                return original_identity(*args, **kwargs)
+            except ValueError:
+                # A later restoration must not erase observed source drift.
+                (self.repo / "Cargo.lock").write_bytes(original)
+                raise
+
+        with mock.patch.object(cpu, "identity", side_effect=restore_after_refusal):
+            report = self.run_checks(expected=head)
+        self.assertEqual(cpu.git(self.repo, "status", "--porcelain"), "")
+        self.assertEqual(report["status"], "failed")
+        self.assertIn("clean checkout", report["source_changed"])
+        self.assertEqual([x["id"] for x in report["checks"]], ["full-a-source-change"])
+        self.assertEqual(report["checks"][0]["exit_status"], 0)
+        self.assertEqual(report["source"]["main_sha"], head)
+        self.assertFalse(marker.exists())
+        self.assertFalse((self.path / "evidence/full-b-later").exists())
+        self.assertEqual(
+            json.loads((self.path / "evidence/qualification_receipt.json").read_text()),
+            report,
+        )
+        self.assertEqual(
+            json.loads(
+                (self.path / "evidence/full-a-source-change/receipt.json").read_text()
+            ),
+            report["checks"][0],
+        )
+        self.assertFalse(report["release_qualified"])
+
+    def test_changed_main_ref_stops_even_when_checkout_stays_clean(self):
+        marker = self.path / "later-ran"
+        advance = (
+            "import subprocess; "
+            "subprocess.run(['git','-c','user.name=Fixture',"
+            "'-c','user.email=fixture@example.invalid','commit','--allow-empty',"
+            "'-qm','controlled source advance'],check=True); "
+            "subprocess.run(['git','update-ref','refs/remotes/origin/main','HEAD'],check=True)"
+        )
+        head = self.source(
+            [
+                ("full-a-ref-change", [sys.executable, "-c", advance], "none"),
+                (
+                    "full-b-later",
+                    [sys.executable, "-c", f"open({str(marker)!r},'w').close()"],
+                    "none",
+                ),
+            ]
+        )
+        report = self.run_checks(expected=head)
+        self.assertEqual(cpu.git(self.repo, "status", "--porcelain"), "")
+        self.assertNotEqual(cpu.git(self.repo, "rev-parse", "HEAD"), head)
+        self.assertEqual(report["status"], "failed")
+        self.assertIn("explicitly expected source", report["source_changed"])
+        self.assertEqual([x["id"] for x in report["checks"]], ["full-a-ref-change"])
+        self.assertEqual(report["checks"][0]["exit_status"], 0)
+        self.assertFalse(marker.exists())
+        self.assertFalse((self.path / "evidence/full-b-later").exists())
+        self.assertFalse(report["release_qualified"])
 
     def test_inventory_mismatch_and_symlinked_output_refuse(self):
         self.source([("full-only", [sys.executable, "-c", ONE_TEST], "unittest")])
