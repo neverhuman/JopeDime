@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from contextlib import contextmanager
 import fcntl
 import importlib.util
 import json
 import os
 from pathlib import Path
 import shutil
+import signal
 import sys
 import tempfile
 import time
@@ -30,6 +32,14 @@ def load_h80_wave():
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
+
+
+class H99Lease:
+    """Keep the owner/ETA queue marker visible for the lifetime of one lock lease."""
+
+    def __init__(self, handle, marker: Path):
+        self.handle = handle
+        self.marker = marker
 
 
 def check_resource_snapshot(*, load1: float, mem_available_kib: int, disk_used_percent: float) -> None:
@@ -68,23 +78,64 @@ def launch_preflight(*, wave=None) -> dict:
     return {**snapshot, "load1": load1, "wave": "H99"}
 
 
-def acquire_h99_fifo(status_path: Path, *, wait_total: float = 0.0, wave=None):
+def acquire_h99_fifo(
+    status_path: Path,
+    *,
+    wait_total: float = 0.0,
+    wave=None,
+    owner: str = "luna_v1_res03",
+    eta_utc: str = "unknown",
+    queue_dir: Path | None = None,
+):
     """Queue at the shared FIFO tail and acquire the qualification lock as H99."""
     helper = wave or load_h80_wave()
-    return helper.acquire_lock(
-        status_path,
-        wait_total,
-        after_release=True,
-        wave_name="H99",
-        preflight_fn=launch_preflight,
-    )
+    queue_dir = Path(queue_dir or helper.fifo_lock.QUEUE_DIR)
+    queue_dir.mkdir(parents=True, exist_ok=True)
+    pid_is_alive = getattr(getattr(helper, "fifo_lock", None), "pid_is_alive", lambda _pid: True)
+    for stale in queue_dir.glob("H99-owner-*.json"):
+        try:
+            prior = json.loads(stale.read_text())
+            if isinstance(prior.get("pid"), int) and not pid_is_alive(prior["pid"]):
+                stale.unlink(missing_ok=True)
+        except (OSError, ValueError, TypeError):
+            continue
+    marker = queue_dir / f"H99-owner-{os.getpid()}.json"
+    payload = {
+        "schema": "jope.h99.fifo-owner/v1", "wave": "H99", "owner": owner,
+        "eta_utc": eta_utc, "pid": os.getpid(), "status_path": str(status_path),
+        "created_utc": datetime.now(timezone.utc).isoformat(),
+    }
+    fd = os.open(marker, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+    with os.fdopen(fd, "w") as stream:
+        json.dump(payload, stream, sort_keys=True)
+        stream.write("\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    acquired = False
+    try:
+        result = helper.acquire_lock(
+            status_path,
+            wait_total,
+            after_release=True,
+            wave_name="H99",
+            preflight_fn=launch_preflight,
+        )
+        acquired = True
+        return H99Lease(result[0], marker), *result[1:]
+    finally:
+        if not acquired:
+            marker.unlink(missing_ok=True)
 
 
 def release_lock(handle, *, flock_fn=fcntl.flock) -> None:
+    marker = getattr(handle, "marker", None)
+    raw_handle = getattr(handle, "handle", handle)
     try:
-        flock_fn(handle, fcntl.LOCK_UN)
+        flock_fn(raw_handle, fcntl.LOCK_UN)
     finally:
-        handle.close()
+        raw_handle.close()
+        if marker is not None:
+            marker.unlink(missing_ok=True)
 
 
 def apply_worker_limits() -> None:
@@ -113,6 +164,27 @@ def write_budget(path: Path, budget: dict) -> None:
         os.replace(name, path)
     finally:
         Path(name).unlink(missing_ok=True)
+
+
+@contextmanager
+def _wall_deadline(seconds: float):
+    """Interrupt a cell/scoring action at the remaining cumulative wall budget."""
+    if seconds <= 0 or not hasattr(signal, "setitimer"):
+        raise RuntimeError("H99 requires a positive remaining wall budget and interval timer support")
+    if signal.getitimer(signal.ITIMER_REAL)[0] > 0:
+        raise RuntimeError("refusing to replace an existing process wall timer")
+    previous = signal.getsignal(signal.SIGALRM)
+
+    def timeout(_signum, _frame):
+        raise TimeoutError("H99 cumulative 9,000-second GPU cell-wall cap reached")
+
+    signal.signal(signal.SIGALRM, timeout)
+    signal.setitimer(signal.ITIMER_REAL, seconds)
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous)
 
 
 def attempt_scratch_path(run_root: Path, arm: str, seed: int, attempt: int) -> Path:
@@ -162,6 +234,7 @@ def run_fifo_cells(
     cpu_gate_fn=wait_for_cpu_gate,
     setup_fn=apply_worker_limits,
     clock_fn=time.monotonic,
+    finalize_worker=None,
 ) -> dict:
     """Run a caller-supplied H99 cell worker one cell per FIFO lease, charging all wall time."""
     expected = execution_plan()
@@ -195,10 +268,11 @@ def run_fifo_cells(
         scratch = attempt_scratch_path(run_root, cell["arm"], cell["seed"], 1)
         started = clock_fn()
         try:
-            staged = stage_r882_copy(checkpoint, scratch)
-            budget["in_progress"] = {**cell, "scratch": str(scratch), "started_utc": datetime.now(timezone.utc).isoformat()}
-            write_budget(budget_path, budget)
-            result = worker(cell, staged, scratch, remaining)
+            with _wall_deadline(remaining):
+                staged = stage_r882_copy(checkpoint, scratch)
+                budget["in_progress"] = {**cell, "scratch": str(scratch), "started_utc": datetime.now(timezone.utc).isoformat()}
+                write_budget(budget_path, budget)
+                result = worker(cell, staged, scratch, remaining)
             wall = clock_fn() - started
             if wall > remaining:
                 raise RuntimeError("H99 cell exceeded the remaining cumulative GPU budget")
@@ -214,6 +288,37 @@ def run_fifo_cells(
                 {**cell, "scratch": str(scratch), "wait_seconds": float(waited), "wall_seconds": wall,
                  "status": "void-or-unknown", "error": f"{type(exc).__name__}: {exc}"}
             )
+            budget["in_progress"] = None
+            write_budget(budget_path, budget)
+            raise
+        finally:
+            release_fn(handle)
+    if finalize_worker is not None:
+        spent = sum(float(item["wall_seconds"]) for item in budget["attempts"])
+        remaining = CAP_SECONDS - spent
+        if remaining <= 10.0:
+            raise RuntimeError("H99 cumulative 9,000-second GPU cell-wall cap exhausted before Fold-B scoring")
+        cpu_gate_fn()
+        handle, waited, gpu_free, preflight = acquire_fn(run_root / "H99_STATUS.log", wait_total=total_wait)
+        total_wait += float(waited)
+        score_scratch = run_root / "scratch" / "fold-b-scoring-attempt1"
+        started = clock_fn()
+        action = {"action": "fold_b_scoring", "scratch": str(score_scratch), "started_utc": datetime.now(timezone.utc).isoformat()}
+        try:
+            with _wall_deadline(remaining):
+                staged = stage_r882_copy(checkpoint, score_scratch)
+                budget["in_progress"] = action
+                write_budget(budget_path, budget)
+                result = finalize_worker(staged, score_scratch, remaining)
+            wall = clock_fn() - started
+            if wall > remaining:
+                raise RuntimeError("H99 Fold-B scoring exceeded remaining cumulative GPU budget")
+            budget["attempts"].append({**action, "wait_seconds": float(waited), "gpu_free_mib": int(gpu_free), "preflight": preflight, "wall_seconds": wall, "status": "complete", "result": result})
+            budget["in_progress"] = None
+            write_budget(budget_path, budget)
+        except BaseException as exc:
+            wall = clock_fn() - started
+            budget["attempts"].append({**action, "wait_seconds": float(waited), "wall_seconds": wall, "status": "void-or-unknown", "error": f"{type(exc).__name__}: {exc}"})
             budget["in_progress"] = None
             write_budget(budget_path, budget)
             raise
