@@ -157,6 +157,7 @@ class H57Tests(unittest.TestCase):
                     fcntl.flock(other, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     sleep_observed_unlocked.append(True)
                     fcntl.flock(other, fcntl.LOCK_UN)
+                self.assertIn("WAIT host CPU pressure", status_path.read_text())
 
             with mock.patch.object(wave, "LOCK", lock_path), \
                  mock.patch.object(wave, "safe_preflight", side_effect=preflight), \
@@ -172,6 +173,24 @@ class H57Tests(unittest.TestCase):
         stats = SimpleNamespace(f_blocks=100 * 1024**3, f_bavail=5 * 1024**3, f_frsize=1)
         with mock.patch.object(wave.os, "statvfs", return_value=stats):
             self.assertRegex(wave.disk_guard_error(), "95% full")
+
+    def test_wait_reasons_include_lock_holder_gpu_and_disk_state(self):
+        lock_lines = "1: FLOCK ADVISORY WRITE 4242 103:07:108299230 0 EOF\n"
+        self.assertEqual(wave.lock_holder_pid_from_proc_locks(lock_lines, "103:07:108299230"), 4242)
+        self.assertIsNone(wave.lock_holder_pid_from_proc_locks(lock_lines, "103:07:999"))
+        self.assertEqual(wave.format_lock_wait_reason(4242), "qualification.lock busy; holder PID=4242")
+        self.assertEqual(wave.gpu_wait_reason(4096), "GPU free 4096 MiB below 6144 MiB")
+        stats = SimpleNamespace(f_blocks=100 * 1024**3, f_bavail=4 * 1024**3, f_frsize=1)
+        with mock.patch.object(wave.os, "statvfs", return_value=stats):
+            self.assertEqual(wave.preflight_wait_reason(RuntimeError("filesystem / is at or above 95% full")),
+                             "disk 96.00% vs 95% guard")
+
+    def test_preflight_snapshot_records_retryable_guard_instead_of_aborting(self):
+        with mock.patch.object(wave, "safe_preflight", side_effect=RuntimeError("MemAvailable below 16 GiB: 1")):
+            self.assertEqual(wave.preflight_snapshot(), {"blocked": "MemAvailable below 16 GiB: 1"})
+
+    def test_resource_floor_matches_owner_packet(self):
+        self.assertEqual(wave.MIN_MEM_AVAILABLE_KIB, 16 * 1024 * 1024)
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ RUNNER = ROOT / "research/flywheel_selfplay/h57/runner.py"
 LOCK = Path.home() / "jope_plan/qualification.lock"
 RUN_ROOT = Path(os.environ.get("H57_RUN_ROOT", str(Path.home() / "jope-data/h57/h57-wave")))
 MIN_GPU_FREE_MIB = 6144
-MIN_MEM_AVAILABLE_KIB = 20 * 1024 * 1024
+MIN_MEM_AVAILABLE_KIB = 16 * 1024 * 1024
 MAX_LOCK_WAIT_SECONDS = 3 * 60 * 60
 MAX_WAVE_GPU_WALL_SECONDS = 90 * 60
 RSS_LIMIT_KIB = 6 * 1024 * 1024
@@ -100,7 +100,7 @@ def safe_preflight() -> dict:
     if cpu > 85.0:
         raise RuntimeError(f"host CPU above 85%: {cpu:.1f}%")
     if available < MIN_MEM_AVAILABLE_KIB:
-        raise RuntimeError(f"MemAvailable below 20 GiB: {available} KiB")
+        raise RuntimeError(f"MemAvailable below 16 GiB: {available} KiB")
     disk = disk_usage_stats()
     return {"host_cpu_percent": cpu, "mem_available_kib": available,
             "disk_free_bytes": disk["available_bytes"],
@@ -121,6 +121,53 @@ def remaining_lock_wait(cumulative: float) -> float:
     return max(0.0, MAX_LOCK_WAIT_SECONDS - cumulative)
 
 
+def preflight_wait_reason(error: RuntimeError) -> str | None:
+    message = str(error)
+    if "filesystem /" in message or "less than 1 GiB available on /" in message:
+        usage = disk_usage_stats()
+        return f"disk {usage['used_percent']:.2f}% vs 95% guard"
+    if "MemAvailable" in message or "CPU" in message:
+        return message
+    return None
+
+
+def lock_holder_pid_from_proc_locks(contents: str, lock_key: str) -> int | None:
+    for line in contents.splitlines():
+        fields = line.split()
+        if (len(fields) >= 6 and fields[1] == "FLOCK" and fields[3] in ("READ", "WRITE")
+                and fields[5] == lock_key and fields[4].isdigit()):
+            return int(fields[4])
+    return None
+
+
+def lock_holder_pid(handle) -> int | None:
+    stat = os.fstat(handle.fileno())
+    lock_key = f"{os.major(stat.st_dev):x}:{os.minor(stat.st_dev):02x}:{stat.st_ino}"
+    return lock_holder_pid_from_proc_locks(Path("/proc/locks").read_text(), lock_key)
+
+
+def format_lock_wait_reason(holder: int | None) -> str:
+    return f"qualification.lock busy; holder PID={holder if holder is not None else 'unknown'}"
+
+
+def lock_busy_wait_reason(handle) -> str:
+    return format_lock_wait_reason(lock_holder_pid(handle))
+
+
+def gpu_wait_reason(free_mib: int) -> str:
+    return f"GPU free {free_mib} MiB below {MIN_GPU_FREE_MIB} MiB"
+
+
+def preflight_snapshot() -> dict:
+    try:
+        return safe_preflight()
+    except RuntimeError as exc:
+        reason = preflight_wait_reason(exc)
+        if reason is None:
+            raise
+        return {"blocked": reason}
+
+
 def acquire_lock(status_path: Path, wait_total: float) -> tuple[object, float, int, dict]:
     handle = LOCK.open("a+")
     started = time.monotonic()
@@ -130,24 +177,41 @@ def acquire_lock(status_path: Path, wait_total: float) -> tuple[object, float, i
         now = time.monotonic()
         acquired = False
         keep_locked = False
+        wait_reason = "preflight pending"
         try:
-            status = safe_preflight() if now - last_full_check >= 300 else None
-            if status is not None:
+            disk_error = disk_guard_error()
+            if disk_error:
+                raise RuntimeError(disk_error)
+            status = None
+            if now - last_full_check >= 300:
+                try:
+                    status = safe_preflight()
+                except RuntimeError:
+                    last_full_check = now
+                    raise
                 last_full_check = now
             fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
             acquired = True
             free = gpu_free_mib()
-            if free >= MIN_GPU_FREE_MIB:
+            if free < MIN_GPU_FREE_MIB:
+                wait_reason = gpu_wait_reason(free)
+            else:
                 # Recheck under the lock so pressure changes during acquisition
                 # cannot authorize a launch. The exception path below releases it.
-                status = safe_preflight()
+                try:
+                    status = safe_preflight()
+                except RuntimeError as exc:
+                    wait_reason = preflight_wait_reason(exc) or str(exc)
+                    raise
                 keep_locked = True
                 return handle, time.monotonic() - started, free, status
         except BlockingIOError:
-            pass
+            wait_reason = lock_busy_wait_reason(handle)
         except RuntimeError as exc:
-            if "filesystem /" not in str(exc) and "MemAvailable" not in str(exc) and "CPU" not in str(exc):
+            reason = preflight_wait_reason(exc)
+            if reason is None:
                 raise
+            wait_reason = reason
         except BaseException:
             if acquired:
                 fcntl.flock(handle, fcntl.LOCK_UN)
@@ -163,7 +227,7 @@ def acquire_lock(status_path: Path, wait_total: float) -> tuple[object, float, i
             raise InfraVoid(f"qualification.lock wait exceeded separate 3h limit; total={wait_total+waited:.1f}s",
                              wait_total + waited)
         if now - last_note >= 30:
-            note(status_path, f"WAIT qualification.lock / GPU >=6GiB; cumulative_wait={wait_total+waited:.1f}s")
+            note(status_path, f"WAIT {wait_reason}; cumulative_wait={wait_total+waited:.1f}s")
             last_note = now
         time.sleep(5)
 
@@ -183,7 +247,7 @@ def child_command(mode: str, out: Path, *, arm: str | None = None, seed: int | N
 
 def run_child(command: list[str], log_path: Path, timeout: float) -> tuple[int, float, int, float]:
     env = os.environ.copy()
-    env.update({"OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1",
+    env.update({"OMP_NUM_THREADS": "4", "MKL_NUM_THREADS": "4", "OPENBLAS_NUM_THREADS": "1",
                 "NUMEXPR_NUM_THREADS": "1", "CARGO_INCREMENTAL": "0",
                 "CARGO_PROFILE_DEV_DEBUG": "line-tables-only"})
     log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -226,7 +290,7 @@ def run_child(command: list[str], log_path: Path, timeout: float) -> tuple[int, 
 
 def run_locked_cell(key: str, command: list[str], log: Path, timeout: float,
                     status_path: Path, wait_total: float) -> tuple[dict, float, float]:
-    before = safe_preflight()
+    before = preflight_snapshot()
     handle, waited, free_mib, lock_preflight = acquire_lock(status_path, wait_total)
     try:
         post_lock = safe_preflight()
@@ -438,8 +502,6 @@ def main() -> None:
         raise RuntimeError("prior lock-wait carry is supported only for the one timing cell")
     if args.amendment is None and args.outcomes:
         raise RuntimeError("H57 outcomes require the committed dated resource amendment")
-    if disk_guard_error():
-        raise RuntimeError(disk_guard_error())
     if args.timing:
         mode, result = "timing", timing_mode(args)
     elif args.outcomes:
