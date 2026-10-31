@@ -13348,7 +13348,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H105 CPU-only shrinkage/interpolation, raw L2-to-r882 anchor, fresh DL-Train family split, four-way Holm/family-bootstrap/r882-reference/harm/tie/completeness guards, unique attempt scratch and data-free/no-ticket preparation controls. Synthetic unit fixtures only; no corpus outcomes or product qualification."
+      "scope": "H105 synthetic CPU controls for unchanged shrinkage/anchor/fold/full-panel Holm/harm/Elo protocol, native H99 GPU-start recognition, exact execution-source bytes, FIFO/retry/budget and data-free preparation. Real DL-Train forward/backward smoke is recorded separately in H105 CPU_VALIDATION.json; no GPU outcomes or product qualification."
     },
     "python:research/flywheel_selfplay/h119_gbm_ctx_confirm/test_h119.py": {
       "discovery": {

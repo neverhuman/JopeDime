@@ -34,6 +34,37 @@ class PredecessorPending(RuntimeError):
     pass
 
 
+def native_h99_started(ledger):
+    """H99's published ledger has no wave/command keys; a completed GPU cell proves start."""
+    if (
+        not isinstance(ledger, dict)
+        or ledger.get("schema") != "jope.h99.gpu-budget/v1"
+        or ledger.get("cap_seconds") != 9000.0
+    ):
+        return False
+    for cell in ledger.get("attempts", []):
+        if not isinstance(cell, dict):
+            continue
+        wall = cell.get("wall_seconds")
+        result = cell.get("result", {})
+        artifact = result.get("artifact_sha256", "")
+        summary = Path(result.get("summary", "/"))
+        if (
+            cell.get("status") == "complete"
+            and type(wall) in (int, float)
+            and math.isfinite(wall)
+            and wall > 0
+            and type(cell.get("gpu_free_mib")) in (int, float)
+            and cell["gpu_free_mib"] > 0
+            and cell.get("preflight", {}).get("wave") == "H99"
+            and len(artifact) == 64
+            and all(c in "0123456789abcdef" for c in artifact)
+            and summary.is_relative_to(Path.home() / "jope-data/h99/h99-wave/outcomes")
+        ):
+            return True
+    return False
+
+
 def merged_metric(wave):
     path = f"research/flywheel_selfplay/{PRECURSORS[wave]}/metrics.json"
     result = subprocess.run(
@@ -96,6 +127,12 @@ def require_predecessors(
             records[wave] = {"older_live_ticket": tickets[wave]}
             continue
         ledger = budget_fn(wave)
+        if wave == "H99" and native_h99_started(ledger):
+            records[wave] = {
+                "prior_gpu_start": True,
+                "proof": "native-completed-GPU-cell",
+            }
+            continue
         if (
             isinstance(ledger, dict)
             and ledger.get("wave") == wave
@@ -411,9 +448,9 @@ def validate_run_root(root):
         )
 
 
-def check_dependencies(cpu_pr):
+def check_dependencies(cpu_pr, source_commit):
     subprocess.run(["git", "fetch", "origin", "main"], cwd=r.ROOT, check=True)
-    for pr in (832, cpu_pr):
+    for pr in (832, 1017, cpu_pr):
         info = json.loads(
             subprocess.check_output(
                 [
@@ -432,26 +469,22 @@ def check_dependencies(cpu_pr):
         if not info["mergedAt"]:
             raise RuntimeError(f"PR {pr} must merge before FIFO launch")
         subprocess.run(
-            ["git", "merge-base", "--is-ancestor", info["mergeCommit"]["oid"], "HEAD"],
+            [
+                "git",
+                "merge-base",
+                "--is-ancestor",
+                info["mergeCommit"]["oid"],
+                source_commit,
+            ],
             cwd=r.ROOT,
             check=True,
         )
-    if subprocess.check_output(
-        ["git", "status", "--porcelain", "--", str(HERE)], cwd=r.ROOT, text=True
-    ):
-        raise RuntimeError("dirty H105 execution source")
-    pins = r.SOURCE_PINS
-    for relative, expected in pins.items():
-        source = r.safe_path(r.ROOT / relative)
-        if not source.is_relative_to(r.ROOT) or r.h59.sha256(source) != expected:
-            raise RuntimeError(f"reused science/FIFO source changed: {relative}")
-    for path in HERE.iterdir():
-        if path.is_file() and path.suffix in (".py", ".md", ".json"):
-            merged = subprocess.check_output(
-                ["git", "show", f"origin/main:{path.relative_to(r.ROOT)}"], cwd=r.ROOT
-            )
-            if merged != path.read_bytes():
-                raise RuntimeError("execution source is not the merged CPU protocol")
+    subprocess.run(
+        ["git", "merge-base", "--is-ancestor", source_commit, "origin/main"],
+        cwd=r.ROOT,
+        check=True,
+    )
+    return r.verify_execution_source(source_commit)
 
 
 def main():
@@ -466,6 +499,8 @@ def main():
         help="future owner-authorized merged-source execution only",
     )
     parser.add_argument("--cpu-pr", type=int)
+    parser.add_argument("--source-commit")
+    parser.add_argument("--shared-source-root", type=Path)
     parser.add_argument(
         "--root", type=Path, default=Path.home() / "jope-data/h105/h105-wave"
     )
@@ -491,10 +526,15 @@ def main():
         return
     if args.cpu_pr is None:
         parser.error("--execute requires the merged CPU PR number")
-    r.runtime()
-    fair = r.load("h105_fifo", HERE.parent / "h61/run_wave.py")
+    if args.source_commit is None:
+        parser.error("--execute requires an explicit merged source commit")
+    r.configure_source(args.source_commit, args.shared_source_root)
     validate_run_root(args.root)
-    check_dependencies(args.cpu_pr)
+    source_proof = check_dependencies(args.cpu_pr, args.source_commit)
+    r.runtime()
+    fair = r.load(
+        "h105_fifo", r.SOURCE_ROOT / "research/flywheel_selfplay/h61/run_wave.py"
+    )
     args.root.mkdir(parents=True, exist_ok=True)
     status = args.root / "H105_STATUS.log"
     with (args.root / "coordinator.lock").open("a+") as handle:
@@ -511,6 +551,7 @@ def main():
             "attempts": [],
             "in_progress": None,
             "cpu_pr": args.cpu_pr,
+            "execution_source_proof": source_proof,
             "prereg_sha256": r.h59.sha256(HERE / "PREREG.md"),
         }
         r.atomic_json(args.root / "budget.json", ledger)

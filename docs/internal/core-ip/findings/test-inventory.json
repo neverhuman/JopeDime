@@ -1979,7 +1979,7 @@
     },
     "python:research/flywheel_selfplay/h105_shrink_r882/test_h105.py": {
       "role": "research",
-      "reason": "CPU-only H105 shrinkage, anchor, grouped-fold and strict full-panel Holm/harm/admission fixtures; no data, checkpoint, CUDA or GPU ticket in preparation; outside product qualification."
+      "reason": "H105 synthetic CPU protocol and guarded-queue/source-provenance fixtures; separate real DL-Train CPU smoke has no optimizer update, assessment payload, CUDA or ticket. Research only; no GPU outcome or product qualification."
     },
     "python:research/flywheel_selfplay/h119_gbm_ctx_confirm/test_h119.py": {
       "role": "research",
