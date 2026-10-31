@@ -160,6 +160,16 @@
     }
   },
   "items": {
+    "python:research/flywheel_selfplay/h102_w5_provenance_gaps/test_check.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H102 offline W5 sealed-scope/lineage/source refusal controls and W9 fold/seed receipt-plan consistency; no execution or source admission."
+    },
     "job:.github/workflows/export-parity.yml/export-parity": {
       "discovery": {
         "kind": "workflow-job"

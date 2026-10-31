@@ -1,0 +1,229 @@
+{
+  "checker_sha256": "7d8af379cf3cbc8d5294700f85b090981c85ab3285dbd2daa7c7a1ca6a454160",
+  "controls": {
+    "checker_sha256": "7d8af379cf3cbc8d5294700f85b090981c85ab3285dbd2daa7c7a1ca6a454160",
+    "command": [
+      "nice",
+      "-n",
+      "15",
+      "python3",
+      "-m",
+      "pytest",
+      "-q",
+      "/home/ubuntu/jope-rescue-20260921/w5-gaps-t0352/candidate/research/flywheel_selfplay/h101_w5_provenance_gaps/test_check.py",
+      "--basetemp=/home/ubuntu/jope-rescue-20260921/w5-gaps-t0352/pytest-final",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "exit_status": 0,
+    "failed": 0,
+    "kind": "Synthetic controls only, not scientific evidence or independent source admission",
+    "passed": 33,
+    "skipped": 0,
+    "test_sha256": "79c94ec84c2db499e9795e3bf8ab24cbfcf0ecdc827ccc4889161a31bc871a7c",
+    "wall_seconds": 1.1009772601537406
+  },
+  "execution_admitted": false,
+  "hwm_candidate": false,
+  "input_packet_sha256": "c633a50e9cb2b32b8a0eb1216958edfc9aa81728722ac89265db124a7ff2b276",
+  "input_receipts": [
+    {
+      "bytes": 718858,
+      "name": "v3_manifest.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/flywheel-selfplay-20261023/corpus_v3_wider_strict_train_256/corpus_v3_manifest.json",
+      "sha256": "701affc61e14950bc5c890b6399a9d765f10e7f7f720a2ba8f1a16d93e1a7640",
+      "version_id": "gd.JxegwvXXxSr7SNt7qJNbEij97pO7L"
+    },
+    {
+      "bytes": 11895,
+      "name": "h98_s3_manifest.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W5/astra-h98-provenance-20261031T093300Z-dd7fed25/manifest.json",
+      "sha256": "86679a26544da2e81a5fa88426f3f95ef5644645ea1ed71575086dacc561cdc9",
+      "version_id": "K_87tbL0dazl0FgTSxmUszw4CWYMBDS."
+    },
+    {
+      "bytes": 29242,
+      "name": "h98_s3_metrics.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W5/astra-h98-provenance-20261031T093300Z-dd7fed25/metrics.json",
+      "sha256": "d02135857c6c9269683d8c56afa725d1f267ea00ce9b1b74dc02baa971240e14",
+      "version_id": "07.oje22oT0BMT7FahWI_n5QP6qBq_hH"
+    },
+    {
+      "bytes": 3946,
+      "name": "h75_s3_protocol.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H75-closed-loop/astra-prereg-20261031T051500Z-0dd112c7/protocol.json",
+      "sha256": "d0083efb6dab8fa9ce2f065da37471b20a180b21119da2c3ea1d3c7b312c8c5f",
+      "version_id": "rA529CuT_OE9bFhZ4nTf8XnPcK7IXE2w"
+    }
+  ],
+  "metrics": {
+    "Elo": null,
+    "U4": null,
+    "val_reg_inner": null
+  },
+  "preparation": {
+    "array_members_decoded": 0,
+    "child_count": 504,
+    "current_protocol_sha256": "d9973e972e54db0fc814dd8999a20fefbc450446152939e4d4a42c914c3a8ef9",
+    "families": 123,
+    "historical_s3_protocol_sha256": "d0083efb6dab8fa9ce2f065da37471b20a180b21119da2c3ea1d3c7b312c8c5f",
+    "input_packet_sha256": "c633a50e9cb2b32b8a0eb1216958edfc9aa81728722ac89265db124a7ff2b276",
+    "local_pool_bytes_hashed": 33919110,
+    "pool_count": 254,
+    "preparation_cpu_seconds": 0.32752685699999995,
+    "protected_payloads_read": 0,
+    "scientific_protocol_fields_unchanged": [
+      "seeds",
+      "folds",
+      "fold_seed",
+      "contexts",
+      "families",
+      "cycles",
+      "cells",
+      "budgets",
+      "optimizer",
+      "loss",
+      "statistics",
+      "input_pins",
+      "confirmation_cut_seeds",
+      "primary_contrasts",
+      "common_replay_updates"
+    ],
+    "source_commit": "5eac157157630951decc5c4bbc70424062bf016b",
+    "unique_zip_schemas": [
+      [
+        "birth_seq_max.npy",
+        "birth_seq_min.npy",
+        "delivery_count.npy",
+        "fitness.npy",
+        "gate.npy",
+        "generation_mask.npy",
+        "logratio.npy",
+        "program.npy",
+        "program_sha256.npy"
+      ]
+    ]
+  },
+  "protected_payloads_read": 0,
+  "resources": {
+    "hosts": [
+      {
+        "cpu_seconds": 0.010262503999999999,
+        "exit_status": 0,
+        "host_assignment": "xbabe1",
+        "hostname": "xbabe1",
+        "input_sha256": "865e02686c14fad0a27644a01c4d4203aaff19a0bcce197fa0a5d9736c224f9e",
+        "nice": 19,
+        "platform": "Linux-6.8.0-134-generic-x86_64-with-glibc2.39",
+        "result": {
+          "missing_artifact": "Complete authoritative identity-only sealed-family manifest, independent authority receipt, and matching alias-registry pin.",
+          "overlap_count": null,
+          "status": "FAIL"
+        },
+        "shard": "global_sealed_family_exclusion",
+        "transport_wall_seconds": 0.2546051349490881,
+        "worker_sha256": "b5ec10199f3ebc76f0c163396885fe3f5d7893e6e78781594a869b6a9d88a754"
+      },
+      {
+        "cpu_seconds": 0.011056882000000004,
+        "exit_status": 0,
+        "host_assignment": "xbabe2",
+        "hostname": "xbabe2",
+        "input_sha256": "865e02686c14fad0a27644a01c4d4203aaff19a0bcce197fa0a5d9736c224f9e",
+        "nice": 19,
+        "platform": "Linux-6.8.0-146-generic-x86_64-with-glibc2.39",
+        "result": {
+          "invalid_rows": 0,
+          "missing_rows": 504,
+          "required_artifact": "Exact context/child/parent/operator ledger bound to the actual pool-membership byte receipt and immutable lineage source.",
+          "status": "FAIL"
+        },
+        "shard": "parent_child_lineage",
+        "transport_wall_seconds": 0.04988427716307342,
+        "worker_sha256": "b5ec10199f3ebc76f0c163396885fe3f5d7893e6e78781594a869b6a9d88a754"
+      },
+      {
+        "cpu_seconds": 0.010355618,
+        "exit_status": 0,
+        "host_assignment": "xbabe3",
+        "hostname": "xbabe3",
+        "input_sha256": "865e02686c14fad0a27644a01c4d4203aaff19a0bcce197fa0a5d9736c224f9e",
+        "nice": 10,
+        "platform": "Linux-6.8.0-134-generic-x86_64-with-glibc2.39",
+        "result": {
+          "invalid_rows": 0,
+          "missing_rows": 504,
+          "required_artifact": "Per-child original source-row locator, S3 key/version/byte SHA, verified byte receipt and original-training-row ledger.",
+          "status": "FAIL"
+        },
+        "shard": "original_row_source",
+        "transport_wall_seconds": 0.24061894696205854,
+        "worker_sha256": "b5ec10199f3ebc76f0c163396885fe3f5d7893e6e78781594a869b6a9d88a754"
+      },
+      {
+        "cpu_seconds": 0.006975166000000001,
+        "exit_status": 0,
+        "host_assignment": "xbabe4",
+        "hostname": "7ceb20bbf267",
+        "input_sha256": "865e02686c14fad0a27644a01c4d4203aaff19a0bcce197fa0a5d9736c224f9e",
+        "nice": 10,
+        "platform": "Linux-6.8.0-117-generic-aarch64-with-glibc2.41",
+        "result": {
+          "execution_admitted": false,
+          "fit_fold_exclusion": true,
+          "pending_slots": 150,
+          "plan_sha256": "bc25c48e58c37f18a3627261eddc944b829d7b2b2a696780bdeff035d858d49d",
+          "unique_slots": 150
+        },
+        "shard": "w9",
+        "transport_wall_seconds": 0.40194580191746354,
+        "worker_sha256": "b5ec10199f3ebc76f0c163396885fe3f5d7893e6e78781594a869b6a9d88a754"
+      }
+    ],
+    "local_preparation_cpu_seconds": 0.32752685699999995,
+    "measured_four_host_cpu_seconds": 0.038650170000000005,
+    "other_overhead_cpu_seconds": null,
+    "other_overhead_note": "S3/SSH/test/publication overhead unmeasured; not zero. No fitted model or optimizer work.",
+    "worker_cpu_ceiling_seconds": 180
+  },
+  "result_sha256": "2a5cb412edd62eb8f2ce34429fb72e0f09fb8476c5e23b93083a37af97f8c6eb",
+  "schema": "jope.h101.evidence/v1",
+  "sealed_scope": {
+    "conclusion": "No authoritative global family-id manifest supplied by these records. This is a bounded evidence gap, not proof none exists elsewhere.",
+    "lines": [
+      {
+        "line": 1,
+        "text": "# S3_DATASET_CATALOG \u2014 JopeDime real-S3 dataset catalog (authoritative for dataset choices)"
+      },
+      {
+        "line": 29,
+        "text": "- **Family-grouped outer folds:** Phase 3 `~/jope_plan/evidence/phase3-go-20261030/keyed_subset_fold_manifest.json` (5 outer folds over 2,727 keyed datasets: 2,720 regression, 7 binary; `sealed_excluded_applied=false` because the authoritative sealed roster was never supplied)."
+      },
+      {
+        "line": 35,
+        "text": "- Recorded family key (`provenance.dedupe_fingerprint`): regression 2,619/3,502, binary **7/843**. Phase-3 roster: 2,720 reg / 7 bin."
+      },
+      {
+        "line": 37,
+        "text": "- To close it: (1) adopt `srcfile:<stem>` (plus URL parent for the 582 with URLs) as a provisional family key; (2) merge near-duplicate stems with the existing dedupe-fingerprint tool; (3) re-emit the Phase-3 fold manifest with those keys; (4) get the authoritative sealed roster from the owner so `sealed_excluded_applied` can be true."
+      },
+      {
+        "line": 105,
+        "text": "Sealed-matching catalog ids excluded: 0a8428ef25a69175, 24713c7f7bfa7807, 36ef1e99b0f383cb, 48bcaee521b95d1b, 525fc7ef6e7d6d64, 5d21a759a92617cb, 6a3edcd68b228f1f, a882d8b478db2ecb, c4b1f6dfb2a8605f, ca307077904135b9, d2cf9a9eddfd7d35, ee74ac8192a9f455, f2fa5e94ae02ab7c, 8366db9ae9698880. Also excluded: everything in `jopedime-\u2026-sealed` and every key under `research/BeyondArena/**/sealed/`. The match is on names only; the authoritative sealed roster was never supplied, so treat any BeyondArena-derived family as off-limits."
+      }
+    ],
+    "path": "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.md",
+    "sha256": "bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee"
+  },
+  "source_commit": "5eac157157630951decc5c4bbc70424062bf016b",
+  "source_prefix_census": {
+    "complete": true,
+    "listing_sha256": "53c115cdc1697e0fb4d50a3f1ab2d7ad6115470994aa830af4abf154efd72b9c",
+    "objects": 83,
+    "same_keys_as_h98": true,
+    "scope": "experiments/flywheel-selfplay-20261023/"
+  },
+  "test_sha256": "79c94ec84c2db499e9795e3bf8ab24cbfcf0ecdc827ccc4889161a31bc871a7c",
+  "utc": "2026-10-31T10:02:14.525658+00:00",
+  "w9_plan_sha256": "bc25c48e58c37f18a3627261eddc944b829d7b2b2a696780bdeff035d858d49d"
+}
