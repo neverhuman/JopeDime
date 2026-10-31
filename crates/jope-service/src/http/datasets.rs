@@ -47,7 +47,7 @@ pub(super) async fn register(
         let Query(query) = match Query::<DatasetQuery>::try_from_uri(request.uri()) {
             Ok(query) => query,
             Err(_) => {
-                return invalid_input("Query must match dataset registration parameters.", "query")
+                return invalid_input("Query must match dataset registration parameters.", "query");
             }
         };
         let (temp, bytes, digest) =
@@ -356,6 +356,7 @@ mod tests {
                 config,
                 home: root.path().to_path_buf(),
             },
+            None,
         );
         (root, store, app)
     }
@@ -536,6 +537,7 @@ mod tests {
                 config,
                 home: limit_root.path().to_path_buf(),
             },
+            None,
         );
         let too_big = limited
             .oneshot(request("text/csv", "too-big", CSV))
@@ -558,6 +560,7 @@ mod tests {
                 config,
                 home: reserve_root.path().to_path_buf(),
             },
+            None,
         );
         let rejected = reserved
             .oneshot(request("text/csv", "disk-reserve", CSV))

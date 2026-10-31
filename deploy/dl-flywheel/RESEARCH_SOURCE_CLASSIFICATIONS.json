@@ -3857,8 +3857,8 @@
       }
     },
     "python:research/flywheel_selfplay/h135_blend025_flywheel_val/monitor.py": {
-      "bytes": 5712,
-      "sha256": "aa3adf40f20712b765042a3f218e4518b1a10948c5d56a46a3408fa8698fcad1",
+      "bytes": 6027,
+      "sha256": "c267f5e037ccce16faf2a146c8b863947200fde5fa8341f01e786e4c5be7e79a",
       "classification": {
         "role": "research",
         "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
@@ -3883,6 +3883,22 @@
     "python:research/flywheel_selfplay/h135_blend025_flywheel_val/constructor_preflight.py": {
       "bytes": 5448,
       "sha256": "73f6105a8586e7f1101bf72587a2ce6e2c8ff4d1a1fe382ad4137f153c453d01",
+      "classification": {
+        "role": "research",
+        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/gbm_preflight.py": {
+      "bytes": 5769,
+      "sha256": "d6bacacb91f5bb05ecbd8e8cc2bf474ab22d1c1683f2f51f290241a72dbc31e6",
+      "classification": {
+        "role": "research",
+        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/launcher.py": {
+      "bytes": 1383,
+      "sha256": "3e101d24ba691812551784b1dada528ba4c63d3a262d69e036e7520e5a75bd82",
       "classification": {
         "role": "research",
         "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
