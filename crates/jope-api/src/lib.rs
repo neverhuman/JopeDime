@@ -1,15 +1,22 @@
 //! JopeDime v1 data contract (spec §4, §8.4 and Appendix B).
 //!
-//! This first landing supplies the schema skeleton before API-06 registers the
-//! crate. The inline compatibility modules below intentionally reserve the
-//! API-02/03/04 names without writing their owned files. Their string aliases
-//! preserve the example JSON; they do **not** validate IDs, catalog codes or
-//! canonical decimal integers. Replace these modules with external declarations
-//! when those tasks land, before claiming a frozen contract. See FOLLOW_UPS.md.
-//! No handler, runtime, store, tensor or transport dependency belongs here.
+//! Shared wire types for clients and service adapters. [`ids`] supplies validated
+//! identifier newtypes, [`decimal`] encodes `u64` values as canonical decimal
+//! strings, and [`error`] defines the closed error catalog and problem document.
+//! Run, artifact, metric, system, warning and event records derive JSON schemas;
+//! [`registry`] binds named payload types to the operation and terminal surfaces.
+//!
+//! The `jope-api-openapi` binary generates the OpenAPI document from that registry.
+//! Contract tests check JSON round trips and committed schema/exchange snapshots;
+//! the repository's API-schema drift check compares the generated OpenAPI bytes.
+//! See `FOLLOW_UPS.md` for maintenance commands and qualification boundaries.
+//!
+//! These types and checks describe the wire contract. They do not implement
+//! handlers, storage, transport, runtime state transitions or numerical behavior.
+//! Runtime semantic validation and release qualification remain separate gates.
 
 pub mod artifacts;
-/// API-04 supplies canonical string serialization and validation in `decimal.rs`.
+/// Canonical decimal-string serialization and validation for wire integers.
 pub mod decimal;
 pub mod events;
 pub mod metrics;
@@ -18,10 +25,10 @@ pub mod runs;
 pub mod system;
 pub mod warnings;
 
-/// API-02 supplies the closed catalog and RFC 9457 Problem in `error.rs`.
+/// Closed error catalog and RFC 9457 problem documents.
 pub mod error;
 
-/// API-03 supplies parsing, ordering and validated newtypes in `ids.rs`.
+/// Parsing, ordering and validated identifier newtypes.
 pub mod ids;
 
 pub use artifacts::*;
