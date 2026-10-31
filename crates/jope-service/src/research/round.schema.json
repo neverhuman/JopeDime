@@ -40,8 +40,8 @@
         "type": "array",
         "items": {
           "type": "number",
-          "minimum": -3.4028234663852886e+38,
-          "maximum": 3.4028234663852886e+38
+          "minimum": -3.4028235e+38,
+          "maximum": 3.4028235e+38
         },
         "minItems": 32,
         "maxItems": 32
@@ -116,7 +116,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:jope:research:round:v1",
   "title": "Private research round, software component v1",
-  "$comment": "Cross-field inventory, seed/proposal phase, behavior-policy shapes, finite numbers and stream identity/sequence rules are enforced by ResearchRound::validate and record_reader.validate_record/read_records. Identity pins are producer attestations, not model/corpus qualification. Policy admitted, original source and actual dispatch indices are distinct; incomplete captures require explicit reader inspection opt-in.",
+  "$comment": "Cross-field inventory, seed/proposal phase, behavior-policy shapes, finite numbers and stream identity/sequence rules are enforced by ResearchRound::validate and record_reader.validate_record/read_records. Identity pins are producer attestations, not model/corpus qualification. Policy admitted, original source and actual dispatch indices are distinct; incomplete captures require explicit reader inspection opt-in. Float32 limits include Rust serde_json shortest decimal encodings of the largest finite f32.",
   "$defs": {
     "identity": {
       "type": "object",
@@ -219,8 +219,8 @@
           "type": "array",
           "items": {
             "type": "number",
-            "minimum": -3.4028234663852886e+38,
-            "maximum": 3.4028234663852886e+38
+            "minimum": -3.4028235e+38,
+            "maximum": 3.4028235e+38
           },
           "minItems": 412,
           "maxItems": 412

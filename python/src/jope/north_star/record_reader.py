@@ -15,7 +15,8 @@ from pathlib import Path
 VERSION = "jope.research.round/v1"
 DOPE_SHA256 = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
 MAX_LINE_BYTES = 2 * 1024 * 1024
-F32_MAX = 3.4028234663852886e38
+# Largest finite f32 as emitted by Rust serde_json (shortest round-trip decimal).
+F32_MAX = 3.4028235e38
 F64_MAX = 1.7976931348623157e308
 U64_MAX = (1 << 64) - 1
 

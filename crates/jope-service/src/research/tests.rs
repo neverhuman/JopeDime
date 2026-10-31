@@ -178,7 +178,11 @@ fn rust_float32_boundary_encodings_read_in_python() {
     row.proposals[0].proj16[0] = f64::MAX;
     RecordWriter::create(&path).unwrap().append(&row).unwrap();
     let output = reader(&path, true);
-    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
 }
 
 #[test]
