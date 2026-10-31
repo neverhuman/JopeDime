@@ -10,6 +10,8 @@ description = "JopeDime v1 engine service"
 
 [features]
 failpoints = []
+# Internal research tooling; excluded from the default production graph.
+research = []
 
 [dependencies]
 p256.workspace = true

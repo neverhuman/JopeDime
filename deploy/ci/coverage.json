@@ -13480,6 +13480,31 @@
       "lanes": [],
       "scope": "H99 ESH harm follow-up preregistration fixtures: fold assignment partitions whole train families exactly once, sealed meta-test inputs never opened."
     },
+    "feature:jope-appliance/research": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "engine",
+          "jope-service/research"
+        ]
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "QLT-03-F01 opt-in internal research CLI and record-controller types. Targeted local feature/default parser, binary dispatch, package-authentication and unavailable-producer controls; absent from default/release feature selection. No committed discovery producer or corpus/Q1 qualification while F02 is deferred. No hosted feature lane is selected."
+    },
+    "feature:jope-service/research": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": []
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "QLT-03-F01 opt-in internal research CLI and record-controller types. Targeted local feature/default parser, binary dispatch, package-authentication and unavailable-producer controls; absent from default/release feature selection. No committed discovery producer or corpus/Q1 qualification while F02 is deferred. No hosted feature lane is selected."
+    },
     "python:research/flywheel_selfplay/h96_w4_active_reveal/test_run_w4.py": {
       "discovery": {
         "kind": "python-family"

@@ -34,6 +34,7 @@ pub mod public;
 /// Learned ranking, feature extraction, and candidate admission.
 pub mod ranker;
 /// Research-record mode types and serialization support.
+#[cfg(feature = "research")]
 pub mod research;
 /// Run orchestration and lifecycle state.
 pub mod run;

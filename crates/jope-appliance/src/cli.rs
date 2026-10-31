@@ -19,6 +19,9 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Command {
+    /// Internal research training-record tools.
+    #[cfg(feature = "research")]
+    Research(crate::research::ResearchArgs),
     /// Export a run's selected model and generated sources.
     #[cfg(feature = "mcp")]
     Export {
@@ -194,6 +197,24 @@ pub enum Command {
     VerifySelf(JsonFlag),
     /// Print the embedded licence and notice inventory.
     Licenses(JsonFlag),
+}
+
+#[cfg(all(test, not(feature = "research")))]
+mod research_feature_tests {
+    use super::Cli;
+    use clap::{CommandFactory, Parser};
+
+    #[test]
+    fn ordinary_build_has_no_research_help_or_dispatch() {
+        assert!(!Cli::command()
+            .render_help()
+            .to_string()
+            .contains("research"));
+        assert!(
+            Cli::try_parse_from(["jopedime", "research", "record", "--out", "unused.jsonl"])
+                .is_err()
+        );
+    }
 }
 
 #[cfg(feature = "client")]
