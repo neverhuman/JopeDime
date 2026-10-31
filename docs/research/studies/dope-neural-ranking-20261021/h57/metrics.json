@@ -521,6 +521,43 @@
       "wall_seconds": 484.3835725458339
     }
   ],
+  "custody": {
+    "manifest_s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/h57/h57-outcomes-retry-20261031T0338Z-closeout/manifest.json",
+    "manifest_sha256": "1b977602d5b3e29f9439601d5c7f7e298b6b850ba21c1b8cc8d3d18283566eda",
+    "verification_s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/h57/h57-outcomes-retry-20261031T0338Z-closeout/custody-verification.json",
+    "verification_sha256": "88184be4f6a578972777a3a5ec534183db0dcca5f021954c67c48ef0103a5ce7",
+    "verified_object_count": 30
+  },
+  "elo_summary": {
+    "sigma001": {
+      "bootstrap_seed_count": 3,
+      "interpretation": "family-grouped Bradley-Terry Elo per seed; descriptive seed bootstrap, not admission",
+      "median_elo_delta_vs_r882": 7.91,
+      "median_seed_bootstrap_ci95": [
+        -0.71,
+        37.72
+      ],
+      "per_seed_elo_delta_vs_r882": [
+        -0.71,
+        37.72,
+        7.91
+      ]
+    },
+    "sigma003": {
+      "bootstrap_seed_count": 3,
+      "interpretation": "family-grouped Bradley-Terry Elo per seed; descriptive seed bootstrap, not admission",
+      "median_elo_delta_vs_r882": 0.56,
+      "median_seed_bootstrap_ci95": [
+        -4.1,
+        1.98
+      ],
+      "per_seed_elo_delta_vs_r882": [
+        0.56,
+        1.98,
+        -4.1
+      ]
+    }
+  },
   "hypothesis": "Antithetic ES can improve the final r882 adapter mean theta on the family-held-out fifth DL-Train fold after fitness optimization on the other four folds.",
   "interpretation": "Elo and W/T/L are diagnostics; fold-B family gains alone determine admission. No sigma is selected by comparing fold-B scores.",
   "null": {
@@ -537,6 +574,8 @@
       2949.00634765625
     ],
     "final_adapter_sha256": "08fae7c1496e9c96476b1d0987e9e2bf66b5e184c90716014354e6b21bd8641d",
+    "fitness_scope": "in-sample fold-A population fitness; descriptive only, not final-theta fold-B admission",
+    "fold_a_generation8_population_fitness_mean": 1.4369012316452348,
     "generation_wall_seconds": [
       62.706778320949525,
       62.0061304171104,

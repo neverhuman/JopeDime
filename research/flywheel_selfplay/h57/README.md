@@ -47,7 +47,7 @@ H57 is closed with no admitted arm and no terminal validation. Follow the owner 
 
 ## Evidence
 
-- Compact metrics: [`metrics.json`](metrics.json) (19,722 bytes, below 50 KiB).
+- Compact metrics: [`metrics.json`](metrics.json) (20,290 bytes, below 50 KiB).
 - Retry-run custody manifest: `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/h57/h57-outcomes-retry-20261031T0338Z-closeout/manifest.json` (SHA-256 `1b977602d5b3e29f9439601d5c7f7e298b6b850ba21c1b8cc8d3d18283566eda`); verification receipt: `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/h57/h57-outcomes-retry-20261031T0338Z-closeout/custody-verification.json`.
 - Execution source: [`PREREGISTRATION.md`](PREREGISTRATION.md), [`amendment-2026-10-31.md`](amendment-2026-10-31.md), and [`infra-void-amendment-2026-10-31.md`](infra-void-amendment-2026-10-31.md).
 - Outcome root: `~/jope-data/h57/h57-wave-retry-20261031T0338Z/`; final wave receipt `outcomes/wave.json`, audit `outcomes/audit.json`, admission `outcomes/admission.json`.
