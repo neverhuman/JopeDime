@@ -63,6 +63,10 @@ printf 'x\n3\n17\n31\n' > "$work/predict.csv"
 
 echo "== Linux pre-stage clean-host run (network namespace, loopback only)"
 app --version --json > "$work/version.json"
+# Discover methods before starting the engine so both execution branches have measured evidence.
+app methods --task regression --json > "$work/methods.json"
+jq -e '[.methods[] | select(.id | ascii_downcase | contains("ridge"))] | length > 0' \
+  "$work/methods.json" >/dev/null
 app serve --idle-exit 10m > "$work/engine.log" 2>&1 &
 engine_pid=$!
 cleanup() {
@@ -130,9 +134,6 @@ else
   wait "$engine_pid" || true
   engine_pid=
 
-  app methods --task regression --json > "$work/methods.json"
-  jq -e '[.methods[] | select(.id | ascii_downcase | contains("ridge"))] | length > 0' \
-    "$work/methods.json" >/dev/null
   app fit --train "$work/train.csv" --target y --method auto --candidates ridge \
     --folds 2 --model-root "$work/models" --device cpu --threads 1 --json \
     > "$work/fit.json"
