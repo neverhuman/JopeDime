@@ -514,6 +514,47 @@ class DiskPolicyTests(unittest.TestCase):
             self.assertEqual(stream.read(), b"long enough to rotate")
         self.assertEqual(events[0]["event"], "log_rotated")
 
+    def test_log_rotation_preserves_existing_archive_paths_and_link_targets(
+        self,
+    ) -> None:
+        fixed = jope_diskd.dt.datetime(2020, 1, 1, tzinfo=jope_diskd.dt.timezone.utc)
+        for kind in ("regular", "symlink", "hardlink"):
+            with self.subTest(kind=kind):
+                home = self.home / kind
+                state = home / ".local" / "state" / "jope-diskd"
+                state.mkdir(parents=True)
+                active = state / "jope-diskd.log"
+                active.write_bytes(b"new daemon log that must remain available")
+                archive = state / "jope-diskd-20200101T000000Z.log.gz"
+                victim = home / "unrelated.bin"
+                victim.write_bytes(b"unrelated content must survive")
+                if kind == "regular":
+                    with gzip.open(archive, "wb") as stream:
+                        stream.write(b"older archived log must survive")
+                elif kind == "symlink":
+                    archive.symlink_to(victim)
+                else:
+                    os.link(victim, archive)
+                archive_before = archive.read_bytes()
+                victim_before = victim.read_bytes()
+                active_before = active.read_bytes()
+                events = []
+                with (
+                    mock.patch.object(jope_diskd, "LOG_LIMIT_BYTES", 1),
+                    mock.patch.object(jope_diskd, "utc_now", return_value=fixed),
+                    mock.patch.object(
+                        jope_diskd, "open_handles_under", return_value=set()
+                    ),
+                ):
+                    jope_diskd.rotate_daemon_log(
+                        home, events.append, dry_run=False, now=fixed.timestamp()
+                    )
+                self.assertEqual(archive.read_bytes(), archive_before)
+                self.assertEqual(victim.read_bytes(), victim_before)
+                self.assertEqual(active.read_bytes(), active_before)
+                self.assertEqual(archive.is_symlink(), kind == "symlink")
+                self.assertEqual(events, [])
+
     def test_log_rotation_does_not_offload_archives_by_default(self) -> None:
         state = self.home / ".local" / "state" / "jope-diskd"
         state.mkdir(parents=True)
