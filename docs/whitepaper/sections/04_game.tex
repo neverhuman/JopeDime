@@ -60,6 +60,17 @@ that writer input.
     \bottomrule
   \end{tabular}
 \end{table}
+% Figure 3 is defined here, ahead of its first reference, so that the
+% full-width float can reach the top of the page where it is cited.
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig3_game_loop.pdf}
+  \caption{\textbf{Training plays the whole game; game day plays one move.}
+  Schematic. Top row (blue): game day. Dashed box: training only. Outcomes
+  are recorded; valid scored programs can enter the learning lists, while
+  failed attempts still count against the budget.}
+  \label{fig:game-loop}
+\end{figure*}
 
 Formally, the game is a tuple of seven parts,
 \[
@@ -81,16 +92,6 @@ to check \citep{silver2016mastering}, while this game offers one move, costly to
 judge. Under a single-attempt budget, the chance $\winprob$ of a win matters
 directly (\cref{eq:taste}). Whether training raises that chance on new
 families is the test in \cref{sec:results}.
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\textwidth]{figures/fig3_game_loop.pdf}
-  \caption{\textbf{Training plays the whole game; game day plays one move.}
-  Schematic. Top row (blue): game day. Dashed box: training only. Outcomes
-  are recorded; valid scored programs can enter the learning lists, while
-  failed attempts still count against the budget.}
-  \label{fig:game-loop}
-\end{figure*}
 
 \Cref{fig:game-loop} draws the loop. Game day plays only its top row, so
 nothing can send a move back for another try; that is \searchone.
