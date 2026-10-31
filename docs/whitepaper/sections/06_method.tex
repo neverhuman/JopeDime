@@ -24,15 +24,15 @@ output, and is absent from deployment. Ranking a search's output does not
 by itself train or steer the proposer;
 \searchone{} rests on the writer's single draw.
 
-\begin{figure}[t]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=\linewidth]{figures/fig5_network.pdf}
+  \includegraphics[width=\textwidth]{figures/fig5_network.pdf}
   \caption{\textbf{A writer and a separate ranking map learn from scored programs.} Schematic. Top:
   game day, the whole of \searchone{}. Dashed box: training only. Search seeded with the writer's
   drafts proposes more programs, the referee scores them against the incumbent, and the scored
   lists retrain the writer ($\theta$) and the map ($\psi$). Stillborn programs enter no list.}
   \label{fig:network}
-\end{figure}
+\end{figure*}
 
 \subsection{Reading the board}\label{sub:method-board}
 
@@ -118,7 +118,7 @@ $\mathcal{L}_{\text{writer}}+0.1\,\mathcal{L}_{\text{map}}+0.25\,\mathcal{L}_{\t
 moves still teach: a median also-ran carries about a tenth of a winner's weight and is a negative for the
 map.
 
-\begin{algorithm}[tb]
+\begin{algorithm*}[t]
 \caption{The self-play loop (training).}\label{alg:selfplay}
 \begin{algorithmic}[1]
 \Require training problems; serving writer $\writer$ and map $\mapv$; incumbents $\inc{p}$
@@ -134,7 +134,7 @@ map.
   \State \textbf{if} it beats $\writer$ on held-out cuts \textbf{then} $(\theta,\psi)\gets(\theta',\psi')$ \Comment{player ratchet}
 \EndFor
 \end{algorithmic}
-\end{algorithm}
+\end{algorithm*}
 
 Two ratchets make this self-play rather than imitation of a fixed archive (\cref{sec:game}). A
 program displaces a board's incumbent only by strictly beating it. A retrained writer is tested on 16
