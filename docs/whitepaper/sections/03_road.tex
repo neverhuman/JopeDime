@@ -13,13 +13,14 @@
 
 \section{The Road to Zero: Five Building Blocks}\label{sec:road}
 
-Earlier AI work supplies the building blocks for the four pillars of
-\cref{sec:anatomy}. Deep learning supports proposals; program evolution
-and reinforcement learning built judgment loops, and games made judgment
-cheap. The race for self-improvement now scales search to swarms of agents.
-We trace these lines of work to ask whether experience across
-algorithm-discovery tasks can improve the first complete program proposed
-for a new family. The combination matters more than a claim that any one
+Five lines of AI research supply the building blocks for the four pillars
+of \cref{sec:anatomy}: deep learning, program search, reinforcement
+learning, games and the race for self-improvement.
+
+We trace how they connect proposal, judgment and retained experience. The
+question is whether experience across algorithm-discovery tasks can improve
+the first complete program proposed for a new family. The combination
+matters more than a claim that any one
 component is new.\footnote{Each history keeps only the
 milestones the argument needs; \cref{app:history} collects the referees
 those milestones rely on.}
@@ -34,7 +35,9 @@ modeled sequences with attention \citep{vaswani2017attention}, and empirical
 scaling laws related language model loss to model size, dataset size and
 training compute \citep{kaplan2020scaling,hoffmann2022chinchilla}.
 \citet{sutton2019bitter} drew the lesson: general methods that use
-computation win. Generative models then turned representations into
+computation win.
+
+Generative models then turned representations into
 proposals, from text to video \citep{brooks2024sora} and code. Codex solved
 28.8\% of the HumanEval programming problems with one sample, and 70.2\%
 with 100 samples, counting any that passed the unit tests
@@ -48,7 +51,9 @@ protein structures that rival experiment in most CASP14 cases
 2.2 million crystal structures predicted stable relative to the Materials Project
 \citep{merchant2023gnome}, and
 halicin, an antibiotic that then treated infections in mice
-\citep{stokes2020halicin}. CLIP put images and captions in one shared space
+\citep{stokes2020halicin}.
+
+CLIP put images and captions in one shared space
 \citep{radford2021clip}, an analogy for our problem--program ranking map
 (\cref{sec:method}).
 The reference map ranks scored programs within each problem; it does not
@@ -72,15 +77,17 @@ searched concepts and heuristics by measures of interest
 \citep{lenat1976am,lenat1983eurisko}. EURISKO takes its name from the Greek
 verb behind \emph{eureka}, as ours does. \citet{koza1992genetic} closed the
 loop with genetic programming: a population of programs, a fitness function
-as referee and selection as coach. A population retains useful programs; a learned proposer can also retain
-patterns that help construct programs for later tasks.
+as referee and selection as coach. Populations retain programs; learned
+proposers can also retain patterns for later tasks.
 
 Later work sharpened both halves: superoptimization
 \citep{massalin1987superoptimizer}, program synthesis from examples
 \citep{gulwani2011flashfill} guided by neural networks
 \citep{balog2017deepcoder}, neural architecture search \citep{zoph2017nas},
 and AutoML-Zero, which evolved learning algorithms from basic mathematical
-operations \citep{real2020automlzero}. Then language models became the
+operations \citep{real2020automlzero}.
+
+Then language models became the
 variation operator. FunSearch found cap-set constructions beyond the best
 known \citep{romeraparedes2024funsearch}: verified new solutions within a
 fixed task, bought with search. Lion, an optimizer found by program
@@ -180,7 +187,9 @@ families remains a result to establish.
 The race for self-improvement spans program search, agent scaffolds and learned policies.
 \citet{good1966speculations} foresaw an ``intelligence explosion'', and
 \citet{schmidhuber2003goedel} specified a G\"odel machine that rewrites its
-own code once it proves the rewrite useful. STOP improves the scaffold that calls a language model, including
+own code once it proves the rewrite useful.
+
+STOP improves the scaffold that calls a language model, including
 itself, and its authors note: ``Since the language models themselves are
 not altered, this is not full recursive self-improvement''
 \citep{zelikman2024stop}. The Darwin G\"odel Machine's self-editing agents
