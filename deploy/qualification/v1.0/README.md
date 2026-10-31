@@ -1,10 +1,36 @@
-# REL-07 CPU gate preparation
+# REL-07 CPU gate preparation and final-gate inventory
 
-This is the owner-approved gb2112 CPU step for spec §§11 and14. It runs source
+This carries forward gov03's owner-approved gb2112 CPU step and adds the
+`grok_t2210_lanes.md` planning-only scope for spec §§11 and14. It runs source
 diagnostics on one frozen origin/main commit and writes qualification_receipt.json.
 The receipt always leaves all28 release gates and Q1 not-qualified, the signed
 candidate and OWNER approval null, and release_qualified false. A successful
 unsigned CPU run does not approve release bytes, learned guidance or a platform.
+
+## Final-gate rerun skeleton (t2210)
+
+The metadata-only `release-plan` command enumerates all28 release gates and Q1
+from spec §14, traces them through the task cards indexed by `master_plan.md`, and
+records the current status-note paths, existence, reported headings and SHA256s.
+Master-plan task statuses and even a historical PASS heading are dated metadata,
+not signed-candidate evidence. Missing notes retain null hashes/statuses. Source
+metadata that changes during collection causes refusal.
+
+    nice -n 10 python3 deploy/qualification/v1.0/cpu_gates.py release-plan \
+      --repo "$OWNED_CHECKOUT" --expected-main-sha "$MAIN_SHA" \
+      --plan-root "$PLAN_ROOT" --output "$NEW_EXTERNAL_PLAN"
+
+`PLAN_ROOT` contains `master_plan.md`, `tasks/`, `status/` and `source/spec-v1.md`.
+The command writes `qualification_receipt.json` and a compact `gate-status.md`.
+It executes no gate. Each release gate remains `not-qualified / not-run`, with
+null rerun command and qualification evidence. The schema rejects passing release
+gate status, a signed candidate, OWNER approval or release qualification in this
+prep format. Q1 is recorded separately as default-selecting, not release-blocking.
+No default is selected from missing Q1 evidence.
+
+This assignment exercises only the planner and focused tests below. The retained
+CPU diagnostics runner is separate; no complete matrix, GPU qualification,
+signing, release publication, dataset access or GitHub CI is performed by prep.
 
 The design reuses each full CPU family's command from deploy/ci/coverage.json.
 The literal full-main.py GROUPS must partition those families exactly. Independent
@@ -34,7 +60,7 @@ owned main checkout. A missing or stale checkout refuses before gates run.
       --output "$NEW_EXTERNAL_EVIDENCE"
 
 The Cargo entry point accepts the dispatcher's appended -j argument and caps
-actual child jobs at8. It executes no Rust build itself. CUDA visibility is empty,
+actual child jobs at4 under t2210. It executes no Rust build itself. CUDA visibility is empty,
 only basic locale and toolchain paths are forwarded; ambient credentials, fixture routing and GPU settings are not inherited. Math threads are1, incremental is0, and dev debug is line-tables-only. It checks
 CPU load<=85% and disk use<95% before each command; declared family timeouts still
 apply and the controller caps an owned process group at30min by default.
@@ -69,6 +95,10 @@ zero/missing/skipped evidence, source/output refusal, inventory drift, complete
 schema validation and the schema's refusal to promote a CPU result to a release.
 Set JOPE_QUALIFICATION_TEST_TMP to external custody if desired; defaults reuse the
 lane target and never put Git fixtures or build output under /tmp.
+
+The added release-plan controls check all29 gate IDs, current path/hash metadata,
+missing evidence, historical PASS non-promotion, gate-inventory drift, metadata
+root escapes, and concurrent status changes. These fixtures are not gate reruns.
 
 Signing, signed-byte gate reruns, native clean-host matrices, named client runs,
 reference-laptop measurements, Q1 and OWNER release approval remain future work.

@@ -122,7 +122,12 @@
         },
         "CARGO_BUILD_JOBS": {
           "type": "string",
-          "pattern": "^[1-8]$"
+          "enum": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ]
         },
         "CARGO_INCREMENTAL": {
           "const": "0"
@@ -242,6 +247,17 @@
     },
     "interrupted": {
       "type": "boolean"
+    },
+    "plan_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "plan_sources": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "#/$defs/planMetadata"
+      }
     }
   },
   "$defs": {
@@ -536,8 +552,173 @@
         "reason": {
           "type": "string",
           "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "criterion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "release_blocking": {
+          "type": "boolean"
+        },
+        "rerun_status": {
+          "const": "not-run"
+        },
+        "rerun_command": {
+          "type": "null"
+        },
+        "qualification_evidence": {
+          "type": "null"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "task",
+              "task_card",
+              "reported_plan_status",
+              "status_note",
+              "qualifies_signed_bytes"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "task": {
+                "type": "string",
+                "pattern": "^[A-Z]+-[0-9]+$"
+              },
+              "task_card": {
+                "$ref": "#/$defs/planMetadata"
+              },
+              "reported_plan_status": {
+                "type": "string"
+              },
+              "status_note": {
+                "$ref": "#/$defs/statusNote"
+              },
+              "qualifies_signed_bytes": {
+                "const": false
+              }
+            }
+          }
         }
       }
+    },
+    "planMetadata": {
+      "type": "object",
+      "required": [
+        "path",
+        "exists",
+        "sha256"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exists": {
+          "type": "boolean"
+        },
+        "sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "exists": {
+                "const": true
+              }
+            },
+            "required": [
+              "exists"
+            ]
+          },
+          "then": {
+            "properties": {
+              "sha256": {
+                "type": "string"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "sha256": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "statusNote": {
+      "type": "object",
+      "required": [
+        "path",
+        "exists",
+        "sha256",
+        "reported_status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exists": {
+          "type": "boolean"
+        },
+        "sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "reported_status": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "exists": {
+                "const": true
+              }
+            },
+            "required": [
+              "exists"
+            ]
+          },
+          "then": {
+            "properties": {
+              "sha256": {
+                "type": "string"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "sha256": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
     }
   },
   "allOf": [
@@ -578,6 +759,33 @@
         "properties": {
           "checks": {
             "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "plan_sources"
+        ]
+      },
+      "then": {
+        "required": [
+          "plan_root"
+        ],
+        "properties": {
+          "release_gates": {
+            "additionalProperties": {
+              "required": [
+                "name",
+                "criterion",
+                "release_blocking",
+                "rerun_status",
+                "rerun_command",
+                "qualification_evidence",
+                "evidence"
+              ]
+            }
           }
         }
       }

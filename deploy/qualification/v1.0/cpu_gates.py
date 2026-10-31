@@ -26,7 +26,16 @@ CONTROLS = {
     "source-hygiene": ["just", "hygiene"],
     "source-format": ["cargo", "fmt", "--all", "--", "--check"],
     "source-check": ["cargo", "check", "--workspace", "--all-targets", "--locked"],
-    "source-clippy": ["cargo", "clippy", "--workspace", "--all-targets", "--locked", "--", "-D", "warnings"],
+    "source-clippy": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--",
+        "-D",
+        "warnings",
+    ],
     "source-python": ["just", "python-check"],
     "source-audit": ["just", "audit"],
     "source-paths": ["just", "lint-paths"],
@@ -87,24 +96,38 @@ def identity(root, expected=None, require_clean=False):
 
 def inventory(root, revision=None):
     def read(name):
-        return git(root, "show", revision + ":" + name) if revision else (root / name).read_text()
+        return (
+            git(root, "show", revision + ":" + name)
+            if revision
+            else (root / name).read_text()
+        )
 
     mapping = json.loads(read("deploy/ci/coverage.json"))
     syntax = ast.parse(read("deploy/ci/full-main.py"))
     definitions = [
         n
         for n in syntax.body
-        if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "GROUPS" for t in n.targets)
+        if isinstance(n, ast.Assign)
+        and any(isinstance(t, ast.Name) and t.id == "GROUPS" for t in n.targets)
     ]
     if len(definitions) != 1:
         raise ValueError("expected one literal full CPU GROUPS declaration")
     groups = ast.literal_eval(definitions[0].value)
     names = [name for entries in groups.values() for name in entries]
-    families = {name: lane for name, lane in mapping["lanes"].items() if name.startswith("full-")}
+    families = {
+        name: lane
+        for name, lane in mapping["lanes"].items()
+        if name.startswith("full-")
+    }
     if not names or len(names) != len(set(names)) or set(names) != set(families):
         raise ValueError("full CPU groups and coverage families must partition exactly")
     result = [
-        dict(id=name, command=command, result_backend="none", requires_nonzero_tests=False)
+        dict(
+            id=name,
+            command=command,
+            result_backend="none",
+            requires_nonzero_tests=False,
+        )
         for name, command in CONTROLS.items()
     ]
     for name in names:
@@ -135,20 +158,122 @@ def inventory(root, revision=None):
 
 
 def result_parser(root):
-    spec = importlib.util.spec_from_file_location("qualification_cpu_results", root / "deploy/ci/results.py")
+    spec = importlib.util.spec_from_file_location(
+        "qualification_cpu_results", root / "deploy/ci/results.py"
+    )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def release_inventory(plan_root):
+    """Inventory dated plan/status metadata; never infer signed-byte qualification."""
+    plan_root = plan_root.resolve()
+    sources = {}
+    texts = {}
+
+    def read(relative, required=True):
+        path = plan_root / relative
+        if not path.resolve().is_relative_to(plan_root):
+            raise ValueError("plan metadata escapes its declared root")
+        if relative not in sources:
+            exists = path.is_file()
+            if required and not exists:
+                raise ValueError("required plan metadata missing: " + relative)
+            data = path.read_bytes() if exists else None
+            sources[relative] = dict(
+                path=relative,
+                exists=exists,
+                sha256=hashlib.sha256(data).hexdigest() if data is not None else None,
+            )
+            texts[relative] = data.decode("utf-8") if data is not None else None
+        return texts[relative], sources[relative]
+
+    master, _ = read("master_plan.md")
+    specification, _ = read("source/spec-v1.md")
+    section = specification.split("## 14. Release gates", 1)[-1].split("\n## ", 1)[0]
+    rows = re.findall(r"^\| \*\*([A-Z][0-9]+)\*\* \| ([^|]+)\| (.+) \|$", section, re.M)
+    if [row[0] for row in rows] != GATE_IDS[:-1]:
+        raise ValueError("specification must enumerate every release gate exactly once")
+    q1 = re.search(r"\*\*Capability gate Q1 — learned guidance\.\*\* (.+)", section)
+    if q1 is None or "28" not in master or "Q1" not in master:
+        raise ValueError("master plan/specification capability-gate mapping missing")
+    rows.append(("Q1", "Learned guidance default", q1[1]))
+    gates = {
+        gate: dict(
+            status="not-qualified",
+            name=name.strip(),
+            criterion=criterion.strip(),
+            reason="Signed candidate and qualifying rerun receipts are unavailable; task notes are not qualification",
+            release_blocking=gate != "Q1",
+            rerun_status="not-run",
+            rerun_command=None,
+            qualification_evidence=None,
+            evidence=[],
+        )
+        for gate, name, criterion in rows
+    }
+    task_rows = re.findall(
+        r"^\| P[0-9]+ \| \[([A-Z]+-[0-9]+)\]\((tasks/[^/)]+\.md)\).*?\| ([^|]+) \|$",
+        master,
+        re.M,
+    )
+    if not task_rows:
+        raise ValueError("master plan task index missing")
+    for task_id, card_path, plan_status in task_rows:
+        card, card_source = read(card_path)
+        field = re.search(r"^\| Gates closed \| ([^|]+)\|", card, re.M)
+        if field is None:
+            raise ValueError("task gate mapping missing: " + task_id)
+        mapped = set(re.findall(r"\b[A-Z][0-9]+\b", field[1])) & set(GATE_IDS)
+        if not mapped:  # REL-07's aggregate 'all' is not per-gate proof.
+            continue
+        note, note_source = read("status/" + task_id + ".md", required=False)
+        evidence = dict(
+            task=task_id,
+            task_card=card_source,
+            reported_plan_status=plan_status.strip(),
+            status_note=dict(
+                **note_source,
+                reported_status=next(
+                    (x.strip() for x in (note or "").splitlines() if x.strip()), None
+                ),
+            ),
+            qualifies_signed_bytes=False,
+        )
+        for gate in mapped:
+            gates[gate]["evidence"].append(evidence)
+    # Catch a concurrently rewritten status/plan during this inventory, including
+    # an absent note appearing. Later changes require a fresh dated inventory.
+    for relative, source in sources.items():
+        path = plan_root / relative
+        if path.is_file() != source["exists"] or (
+            source["exists"] and digest(path) != source["sha256"]
+        ):
+            raise ValueError(
+                "plan/status metadata changed during inventory: " + relative
+            )
+    return dict(
+        plan_root=str(plan_root),
+        plan_sources=list(sources.values()),
+        release_gates=gates,
+    )
 
 
 def admission(root):
     capacity = os.statvfs(root)
     used = capacity.f_blocks - capacity.f_bfree
     percent = 100 * used / (used + capacity.f_bavail)
-    cores = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else os.cpu_count()
+    cores = (
+        len(os.sched_getaffinity(0))
+        if hasattr(os, "sched_getaffinity")
+        else os.cpu_count()
+    )
     load = os.getloadavg()[0] if hasattr(os, "getloadavg") else None
     if load is None or load > 0.85 * cores or percent >= 95:
-        raise ValueError("CPU/disk admission unavailable: load <=85%, disk <95% required")
+        raise ValueError(
+            "CPU/disk admission unavailable: load <=85%, disk <95% required"
+        )
     return dict(cpu_count=cores, load1=load, disk_used_percent=percent)
 
 
@@ -191,6 +316,8 @@ def child_environment(folder, target, jobs, source):
         JOPE_SOURCE_SHA=source,
         JOPE_PARITY_STRICT="1",
         JOPE_CPU_TEST_THREADS=str(jobs),
+        JOPE_BUILD_JOBS=str(jobs),
+        JOPE_CPU_BUILD_JOBS=str(jobs),
         PYTHONDONTWRITEBYTECODE="1",
         TMPDIR=str(folder / "scratch"),
     )
@@ -232,7 +359,9 @@ def invoke(command, root, log, environment, seconds):
             raise
 
 
-def execute_gate(gate, root, folder, target, jobs, source, parser, seconds, check=admission):
+def execute_gate(
+    gate, root, folder, target, jobs, source, parser, seconds, check=admission
+):
     folder.mkdir()
     (folder / "scratch").mkdir()
     record = dict(
@@ -257,24 +386,35 @@ def execute_gate(gate, root, folder, target, jobs, source, parser, seconds, chec
         record["status"] = (
             "timed-out"
             if timed_out or code == 124
-            else ("unavailable" if code in (78, 126, 127) else "failed" if code != 0 else "passed")
+            else (
+                "unavailable"
+                if code in (78, 126, 127)
+                else "failed"
+                if code != 0
+                else "passed"
+            )
         )
         if gate["result_backend"] != "none":
             if log.stat().st_size > MAX_LOG_BYTES:
-                raise ValueError("test log exceeds count-parser bound; complete log retained")
+                raise ValueError(
+                    "test log exceeds count-parser bound; complete log retained"
+                )
             junit = folder / "junit.xml"
             if log.is_symlink() or junit.is_symlink():
                 raise ValueError("test evidence must be regular files, never symlinks")
             if gate["result_backend"] in {"nextest", "pytest"} and not junit.is_file():
                 raise ValueError("fresh JUnit evidence is required")
             counts = parser.summarize(
-                log.read_text(errors="replace"), gate["result_backend"], junit if junit.exists() else None
+                log.read_text(errors="replace"),
+                gate["result_backend"],
+                junit if junit.exists() else None,
             )
             record["tests"] = counts
             if any(type(v) is not int or v < 0 for v in counts.values()):
                 raise ValueError("unknown or invalid test counts")
             if counts["executed"] != counts["passed"] + counts["failed"] or (
-                counts["collected"] != counts["executed"] + counts["skipped"] + counts["excluded"]
+                counts["collected"]
+                != counts["executed"] + counts["skipped"] + counts["excluded"]
             ):
                 raise ValueError("test counts do not reconcile")
             if counts["executed"] == 0:
@@ -284,12 +424,17 @@ def execute_gate(gate, root, folder, target, jobs, source, parser, seconds, chec
                 if collection_path.is_symlink():
                     raise ValueError("collection must not be a symlink")
                 collection = json.loads(collection_path.read_text())
-                listed = sum(len(suite["testcases"]) for suite in collection["rust-suites"].values())
+                listed = sum(
+                    len(suite["testcases"])
+                    for suite in collection["rust-suites"].values()
+                )
                 if collection["test-count"] != listed or listed != counts["collected"]:
                     raise ValueError("fresh Nextest collection and execution differ")
             if code == 0 and counts["failed"]:
                 record["status"] = "failed"
-            elif record["status"] == "passed" and (counts["skipped"] or counts["excluded"]):
+            elif record["status"] == "passed" and (
+                counts["skipped"] or counts["excluded"]
+            ):
                 record["status"] = "incomplete"
     except (OSError, ValueError, KeyError, TypeError) as error:
         record["diagnostic"] = str(error)
@@ -302,23 +447,29 @@ def execute_gate(gate, root, folder, target, jobs, source, parser, seconds, chec
         if path.is_symlink():
             record["omitted_symlinks"].append(relative)
         elif path.is_file():
-            record["outputs"][relative] = dict(sha256=digest(path), bytes=path.stat().st_size)
+            record["outputs"][relative] = dict(
+                sha256=digest(path), bytes=path.stat().st_size
+            )
     write(folder / "receipt.json", record)
     return record
 
 
-def run(root, output, expected=None, jobs=8, seconds=1800, execute=False, target=None):
+def run(root, output, expected=None, jobs=4, seconds=1800, execute=False, target=None):
     root = root.resolve()
     if output.is_symlink():
         raise ValueError("evidence directory must not be a symlink")
     output = output.resolve()
     target = (target or root / "target").resolve()
-    if output == root or output.is_relative_to(Path("/tmp")) or target.is_relative_to(Path("/tmp")):
+    if (
+        output == root
+        or output.is_relative_to(Path("/tmp"))
+        or target.is_relative_to(Path("/tmp"))
+    ):
         raise ValueError("evidence and builds require an explicit non-/tmp location")
     source = identity(root, expected, require_clean=execute)
     gates = inventory(root, source["main_sha"])
     output.mkdir(parents=True, exist_ok=False)
-    actual_jobs = min(max(jobs, 1), 8)
+    actual_jobs = min(max(jobs, 1), 4)
     document = dict(
         schema=SCHEMA,
         phase="cpu-prestage",
@@ -328,7 +479,9 @@ def run(root, output, expected=None, jobs=8, seconds=1800, execute=False, target
         source=source,
         driver_sha256=digest(Path(__file__)),
         machine=dict(
-            host=socket.gethostname(), platform=platform.platform(), python=platform.python_version()
+            host=socket.gethostname(),
+            platform=platform.platform(),
+            python=platform.python_version(),
         ),
         environment=dict(
             CUDA_VISIBLE_DEVICES="",
@@ -340,7 +493,9 @@ def run(root, output, expected=None, jobs=8, seconds=1800, execute=False, target
         ),
         inputs={
             path: hashlib.sha256(
-                subprocess.check_output(["git", "-C", str(root), "show", source["main_sha"] + ":" + path])
+                subprocess.check_output(
+                    ["git", "-C", str(root), "show", source["main_sha"] + ":" + path]
+                )
             ).hexdigest()
             for path in INPUTS
         },
@@ -348,7 +503,8 @@ def run(root, output, expected=None, jobs=8, seconds=1800, execute=False, target
         checks=[],
         release_gates={
             gate: dict(
-                status="not-qualified", reason="CPU source diagnostics do not qualify signed release bytes"
+                status="not-qualified",
+                reason="CPU source diagnostics do not qualify signed release bytes",
             )
             for gate in GATE_IDS
         },
@@ -399,18 +555,58 @@ def run(root, output, expected=None, jobs=8, seconds=1800, execute=False, target
     return document
 
 
+def release_plan(root, output, plan_root, expected=None, jobs=4):
+    catalog = release_inventory(plan_root)
+    document = run(root, output, expected=expected, jobs=jobs)
+    document.update(catalog)
+    write(output / "qualification_receipt.json", document)
+    # Compact reviewable current-state table; the JSON retains every byte pin.
+    lines = [
+        "# Release gate inventory — preparation only",
+        "",
+        "Observed "
+        + document["finished_utc"]
+        + "; source "
+        + document["source"]["main_sha"],
+        "",
+        "All statuses concern exact signed-byte qualification. No gates were rerun.",
+        "",
+        "| Gate | Name | Status | Current task/status evidence paths |",
+        "| --- | --- | --- | --- |",
+    ]
+    for gate, record in catalog["release_gates"].items():
+        refs = (
+            "; ".join(
+                ref["status_note"]["path"]
+                + (" (missing)" if not ref["status_note"]["exists"] else "")
+                for ref in record["evidence"]
+            )
+            or "No task-specific status note mapped"
+        )
+        lines.append(
+            f"| {gate} | {record['name']} | not-qualified / not-run | {refs} |"
+        )
+    (output / "gate-status.md").write_text("\n".join(lines) + "\n")
+    return document
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["plan", "run"])
+    parser.add_argument("command", choices=["plan", "run", "release-plan"])
     parser.add_argument("--repo", type=Path, default=Path.cwd())
     parser.add_argument("--expected-main-sha")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--target", type=Path)
-    parser.add_argument("-j", "--jobs", type=int, default=8)
+    parser.add_argument("-j", "--jobs", type=int, default=4)
+    parser.add_argument("--plan-root", type=Path)
     parser.add_argument("--gate-timeout", type=float, default=1800)
     args = parser.parse_args()
     if args.gate_timeout <= 0 or args.gate_timeout > 3600:
         parser.error("gate timeout must be positive and at most 3600 seconds")
+    if args.command == "release-plan" and args.plan_root is None:
+        parser.error(
+            "release-plan requires --plan-root with master plan/task/spec metadata"
+        )
     if args.command == "run":
 
         def interrupted(_signum, _frame):
@@ -418,14 +614,24 @@ def main():
 
         signal.signal(signal.SIGTERM, interrupted)
     try:
-        receipt = run(
-            args.repo,
-            args.output,
-            args.expected_main_sha,
-            args.jobs,
-            args.gate_timeout,
-            args.command == "run",
-            args.target,
+        receipt = (
+            release_plan(
+                args.repo,
+                args.output,
+                args.plan_root,
+                args.expected_main_sha,
+                args.jobs,
+            )
+            if args.command == "release-plan"
+            else run(
+                args.repo,
+                args.output,
+                args.expected_main_sha,
+                args.jobs,
+                args.gate_timeout,
+                args.command == "run",
+                args.target,
+            )
         )
         print(
             json.dumps(
@@ -439,9 +645,18 @@ def main():
         )
         return 0 if receipt["status"] in {"planned", "passed"} else 1
     except KeyboardInterrupt:
-        print("CPU qualification interrupted; incomplete checkpoint retained", file=sys.stderr)
+        print(
+            "CPU qualification interrupted; incomplete checkpoint retained",
+            file=sys.stderr,
+        )
         return 130
-    except (OSError, ValueError, KeyError, TypeError, subprocess.CalledProcessError) as error:
+    except (
+        OSError,
+        ValueError,
+        KeyError,
+        TypeError,
+        subprocess.CalledProcessError,
+    ) as error:
         print("CPU qualification refused: " + str(error), file=sys.stderr)
         return 2
 

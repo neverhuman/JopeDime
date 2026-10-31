@@ -16,7 +16,9 @@ import jsonschema
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
-spec = importlib.util.spec_from_file_location("cpu_gates_under_test", HERE / "cpu_gates.py")
+spec = importlib.util.spec_from_file_location(
+    "cpu_gates_under_test", HERE / "cpu_gates.py"
+)
 cpu = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(cpu)
 
@@ -32,7 +34,10 @@ ONE_TEST = (
 class Controller(unittest.TestCase):
     def setUp(self):
         base = Path(
-            os.environ.get("JOPE_QUALIFICATION_TEST_TMP", ROOT / "target/qualification-controller-tests")
+            os.environ.get(
+                "JOPE_QUALIFICATION_TEST_TMP",
+                ROOT / "target/qualification-controller-tests",
+            )
         )
         base.mkdir(parents=True, exist_ok=True)
         self.temporary = tempfile.TemporaryDirectory(dir=base)
@@ -44,21 +49,55 @@ class Controller(unittest.TestCase):
         self.controls.start()
         self.addCleanup(self.controls.stop)
 
+    def plan_metadata(self, status=True):
+        root = self.path / "master"
+        (root / "source").mkdir(parents=True)
+        (root / "tasks").mkdir()
+        (root / "status").mkdir()
+        (root / "master_plan.md").write_text(
+            "All 28 release gates + Q1\n"
+            "| P021 | [TEL-01](tasks/T021-TEL-01-cpu.md) | CPU math | done merged #1 |\n"
+        )
+        (root / "source/spec-v1.md").write_text(
+            "## 14. Release gates (28) and Q1\n"
+            + "\n".join(
+                f"| **{gate}** | Gate {gate} | Exact signed bytes |"
+                for gate in cpu.GATE_IDS[:-1]
+            )
+            + "\n**Capability gate Q1 — learned guidance.** Q1 chooses the default.\n"
+        )
+        (root / "tasks/T021-TEL-01-cpu.md").write_text("| Gates closed | T1 |\n")
+        if status:
+            (root / "status/TEL-01.md").write_text(
+                "# Historical PASS on a different source\n"
+            )
+        return root
+
     def source(self, commands):
         (self.repo / "deploy/ci").mkdir(parents=True)
         lanes = {}
         for name, command, backend in commands:
             lanes[name] = dict(
-                command=command, result_backend=backend, requires_nonzero_tests=backend != "none"
+                command=command,
+                result_backend=backend,
+                requires_nonzero_tests=backend != "none",
             )
         for name in cpu.INPUTS:
             path = self.repo / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("fixture\n")
-        (self.repo / "deploy/ci/coverage.json").write_text(json.dumps(dict(lanes=lanes)))
-        (self.repo / "deploy/ci/full-main.py").write_text("GROUPS = " + repr({"cpu": tuple(lanes)}) + "\n")
-        (self.repo / "deploy/ci/results.py").write_bytes((ROOT / "deploy/ci/results.py").read_bytes())
-        subprocess.run(["git", "init", "-q", "--initial-branch=main", str(self.repo)], check=True)
+        (self.repo / "deploy/ci/coverage.json").write_text(
+            json.dumps(dict(lanes=lanes))
+        )
+        (self.repo / "deploy/ci/full-main.py").write_text(
+            "GROUPS = " + repr({"cpu": tuple(lanes)}) + "\n"
+        )
+        (self.repo / "deploy/ci/results.py").write_bytes(
+            (ROOT / "deploy/ci/results.py").read_bytes()
+        )
+        subprocess.run(
+            ["git", "init", "-q", "--initial-branch=main", str(self.repo)], check=True
+        )
         subprocess.run(["git", "-C", str(self.repo), "add", "."], check=True)
         subprocess.run(
             [
@@ -77,39 +116,63 @@ class Controller(unittest.TestCase):
         )
         head = cpu.git(self.repo, "rev-parse", "HEAD")
         subprocess.run(
-            ["git", "-C", str(self.repo), "update-ref", "refs/remotes/origin/main", head], check=True
+            [
+                "git",
+                "-C",
+                str(self.repo),
+                "update-ref",
+                "refs/remotes/origin/main",
+                head,
+            ],
+            check=True,
         )
         return head
 
     def run_checks(self, **kwargs):
         with mock.patch.object(
-            cpu, "admission", return_value=dict(cpu_count=8, load1=0, disk_used_percent=1)
+            cpu,
+            "admission",
+            return_value=dict(cpu_count=8, load1=0, disk_used_percent=1),
         ):
             # execute_gate's default is bound at definition, so inject admission at the call seam.
             original = cpu.execute_gate
 
             def gate(*args, **options):
                 return original(
-                    *args, **options, check=lambda _: dict(cpu_count=8, load1=0, disk_used_percent=1)
+                    *args,
+                    **options,
+                    check=lambda _: dict(cpu_count=8, load1=0, disk_used_percent=1),
                 )
 
             with mock.patch.object(cpu, "execute_gate", side_effect=gate):
-                return cpu.run(self.repo, self.path / "evidence", execute=True, **kwargs)
+                return cpu.run(
+                    self.repo, self.path / "evidence", execute=True, **kwargs
+                )
 
     def test_real_successful_child_schema_hashes_and_no_release_promotion(self):
-        head = self.source([("full-positive", [sys.executable, "-c", ONE_TEST], "unittest")])
-        with mock.patch.dict(os.environ, {"AWS_ACCESS_KEY_ID": "unit-only", "GITHUB_TOKEN": "unit-only"}):
+        head = self.source(
+            [("full-positive", [sys.executable, "-c", ONE_TEST], "unittest")]
+        )
+        with mock.patch.dict(
+            os.environ, {"AWS_ACCESS_KEY_ID": "unit-only", "GITHUB_TOKEN": "unit-only"}
+        ):
             report = self.run_checks(expected=head, jobs=32)
         self.assertEqual(report["status"], "passed")
         self.assertEqual(report["checks"][0]["tests"]["executed"], 1)
-        self.assertEqual(report["environment"]["CARGO_BUILD_JOBS"], "8")
+        self.assertEqual(report["environment"]["CARGO_BUILD_JOBS"], "4")
         self.assertEqual(len(report["release_gates"]), 29)
-        self.assertTrue(all(x["status"] == "not-qualified" for x in report["release_gates"].values()))
+        self.assertTrue(
+            all(
+                x["status"] == "not-qualified" for x in report["release_gates"].values()
+            )
+        )
         self.assertIsNone(report["signed_candidate"])
         self.assertIsNone(report["owner_approval"])
         self.assertFalse(report["release_qualified"])
         log = self.path / "evidence/full-positive/command.log"
-        self.assertEqual(report["checks"][0]["outputs"]["command.log"]["sha256"], cpu.digest(log))
+        self.assertEqual(
+            report["checks"][0]["outputs"]["command.log"]["sha256"], cpu.digest(log)
+        )
         schema = json.loads((HERE / "qualification_receipt.schema.json").read_text())
         jsonschema.Draft202012Validator(schema).validate(report)
         report["release_qualified"] = True
@@ -119,7 +182,11 @@ class Controller(unittest.TestCase):
     def test_failure_continues_to_later_gate_and_keeps_original_exit(self):
         self.source(
             [
-                ("full-a-failure", [sys.executable, "-c", "raise SystemExit(9)"], "none"),
+                (
+                    "full-a-failure",
+                    [sys.executable, "-c", "raise SystemExit(9)"],
+                    "none",
+                ),
                 ("full-b-success", [sys.executable, "-c", ONE_TEST], "unittest"),
             ]
         )
@@ -131,7 +198,11 @@ class Controller(unittest.TestCase):
     def test_timeout_is_not_pass_and_later_gate_runs(self):
         self.source(
             [
-                ("full-a-timeout", [sys.executable, "-c", "import time; time.sleep(30)"], "none"),
+                (
+                    "full-a-timeout",
+                    [sys.executable, "-c", "import time; time.sleep(30)"],
+                    "none",
+                ),
                 ("full-b-success", [sys.executable, "-c", ONE_TEST], "unittest"),
             ]
         )
@@ -152,7 +223,11 @@ class Controller(unittest.TestCase):
                     ],
                     "unittest",
                 ),
-                ("full-b-missing", [sys.executable, "-c", "print('no execution summary')"], "unittest"),
+                (
+                    "full-b-missing",
+                    [sys.executable, "-c", "print('no execution summary')"],
+                    "unittest",
+                ),
                 (
                     "full-c-skip",
                     [
@@ -165,29 +240,39 @@ class Controller(unittest.TestCase):
             ]
         )
         report = self.run_checks()
-        self.assertEqual([x["status"] for x in report["checks"]], ["failed", "failed", "incomplete"])
+        self.assertEqual(
+            [x["status"] for x in report["checks"]], ["failed", "failed", "incomplete"]
+        )
         self.assertEqual(report["checks"][0]["exit_status"], 0)
         self.assertIn(report["checks"][0]["tests"]["executed"], (None, 0))
         self.assertTrue(report["checks"][0]["diagnostic"])
         self.assertIsNone(report["checks"][1]["tests"]["executed"])
         self.assertEqual(report["checks"][2]["tests"]["skipped"], 1)
 
-    def test_source_mismatch_dirty_source_and_reused_output_refuse_before_execution(self):
-        head = self.source([("full-only", [sys.executable, "-c", ONE_TEST], "unittest")])
+    def test_source_mismatch_dirty_source_and_reused_output_refuse_before_execution(
+        self,
+    ):
+        head = self.source(
+            [("full-only", [sys.executable, "-c", ONE_TEST], "unittest")]
+        )
         with self.assertRaisesRegex(ValueError, "explicitly expected"):
             cpu.run(self.repo, self.path / "wrong", expected="0" * 40, execute=True)
         (self.repo / "Cargo.lock").write_text("modified\n")
         with self.assertRaisesRegex(ValueError, "clean checkout"):
             cpu.run(self.repo, self.path / "dirty", expected=head, execute=True)
         self.assertFalse((self.path / "dirty").exists())
-        subprocess.run(["git", "-C", str(self.repo), "restore", "Cargo.lock"], check=True)
+        subprocess.run(
+            ["git", "-C", str(self.repo), "restore", "Cargo.lock"], check=True
+        )
         self.run_checks()
         with self.assertRaises(FileExistsError):
             self.run_checks()
 
     def test_inventory_mismatch_and_symlinked_output_refuse(self):
         self.source([("full-only", [sys.executable, "-c", ONE_TEST], "unittest")])
-        (self.repo / "deploy/ci/full-main.py").write_text("GROUPS = {'cpu': ('full-missing',)}\n")
+        (self.repo / "deploy/ci/full-main.py").write_text(
+            "GROUPS = {'cpu': ('full-missing',)}\n"
+        )
         with self.assertRaisesRegex(ValueError, "partition"):
             cpu.inventory(self.repo)
         link = self.path / "linked"
@@ -202,7 +287,9 @@ class Controller(unittest.TestCase):
         self.assertEqual(report["checks"][0]["exit_status"], 127)
         self.assertIsNone(report["checks"][0]["tests"]["executed"])
 
-    def test_interruption_reaps_only_owned_group_and_retains_unqualified_checkpoint(self):
+    def test_interruption_reaps_only_owned_group_and_retains_unqualified_checkpoint(
+        self,
+    ):
         process = mock.Mock(pid=314159)
         process.poll.return_value = None
         process.wait.side_effect = [KeyboardInterrupt, 0]
@@ -215,13 +302,17 @@ class Controller(unittest.TestCase):
         with mock.patch.object(cpu, "execute_gate", side_effect=KeyboardInterrupt):
             with self.assertRaises(KeyboardInterrupt):
                 cpu.run(self.repo, self.path / "cancelled", execute=True)
-        receipt = json.loads((self.path / "cancelled/qualification_receipt.json").read_text())
+        receipt = json.loads(
+            (self.path / "cancelled/qualification_receipt.json").read_text()
+        )
         self.assertEqual(receipt["status"], "failed")
         self.assertTrue(receipt["interrupted"])
         self.assertFalse(receipt["release_qualified"])
 
     def test_plan_uses_frozen_main_inventory_not_dirty_feature_files(self):
-        head = self.source([("full-only", [sys.executable, "-c", ONE_TEST], "unittest")])
+        head = self.source(
+            [("full-only", [sys.executable, "-c", ONE_TEST], "unittest")]
+        )
         path = self.repo / "deploy/ci/coverage.json"
         original = cpu.digest(path)
         path.write_text("{}")
@@ -233,7 +324,9 @@ class Controller(unittest.TestCase):
 
     def test_plan_has_every_family_and_runs_nothing(self):
         self.source([("full-only", [sys.executable, "-c", ONE_TEST], "unittest")])
-        with mock.patch.object(cpu, "invoke", side_effect=AssertionError("plan executed a command")):
+        with mock.patch.object(
+            cpu, "invoke", side_effect=AssertionError("plan executed a command")
+        ):
             report = cpu.run(self.repo, self.path / "planned")
         self.assertEqual(report["status"], "planned")
         self.assertEqual(report["checks"], [])
@@ -247,6 +340,69 @@ class Controller(unittest.TestCase):
         path.write_text(json.dumps(data))
         with self.assertRaisesRegex(ValueError, "requires a result backend"):
             cpu.inventory(self.repo)
+
+    def test_release_plan_enumerates_28_plus_q1_without_executing_gates(self):
+        self.source([("full-only", [sys.executable, "-c", ONE_TEST], "unittest")])
+        plan = self.plan_metadata()
+        with mock.patch.object(
+            cpu, "invoke", side_effect=AssertionError("plan executed gates")
+        ):
+            report = cpu.release_plan(self.repo, self.path / "release-plan", plan)
+        self.assertEqual(list(report["release_gates"]), cpu.GATE_IDS)
+        self.assertEqual(report["checks"], [])
+        self.assertFalse(report["release_gates"]["Q1"]["release_blocking"])
+        self.assertTrue(report["release_gates"]["D1"]["release_blocking"])
+        gate = report["release_gates"]["T1"]
+        self.assertEqual(gate["status"], "not-qualified")
+        self.assertIn(
+            "Historical PASS", gate["evidence"][0]["status_note"]["reported_status"]
+        )
+        self.assertEqual(
+            gate["evidence"][0]["status_note"]["sha256"],
+            cpu.digest(plan / "status/TEL-01.md"),
+        )
+        self.assertFalse(gate["evidence"][0]["qualifies_signed_bytes"])
+        schema = json.loads((HERE / "qualification_receipt.schema.json").read_text())
+        validator = jsonschema.Draft202012Validator(schema)
+        validator.validate(report)
+        gate["status"] = "passed"
+        with self.assertRaises(jsonschema.ValidationError):
+            validator.validate(report)
+        self.assertTrue((self.path / "release-plan/gate-status.md").is_file())
+
+    def test_missing_status_note_is_not_fabricated_or_qualified(self):
+        report = cpu.release_inventory(self.plan_metadata(status=False))
+        note = report["release_gates"]["T1"]["evidence"][0]["status_note"]
+        self.assertFalse(note["exists"])
+        self.assertIsNone(note["sha256"])
+        self.assertIsNone(note["reported_status"])
+        self.assertEqual(report["release_gates"]["T1"]["status"], "not-qualified")
+
+    def test_duplicate_or_missing_release_gate_refuses(self):
+        root = self.plan_metadata()
+        path = root / "source/spec-v1.md"
+        original = path.read_text()
+        for changed in (
+            original + "\n| **M1** | Duplicate | Same |\n",
+            original.replace("| **M1** | Gate M1 | Exact signed bytes |", ""),
+        ):
+            path.write_text(changed)
+            with self.assertRaisesRegex(ValueError, "every release gate"):
+                cpu.release_inventory(root)
+
+    def test_metadata_escape_is_rejected_before_reading_outside_plan(self):
+        root = self.plan_metadata(status=False)
+        outside = self.path / "unadmitted"
+        outside.write_text("fixture only")
+        (root / "status/TEL-01.md").symlink_to(outside)
+        with self.assertRaisesRegex(ValueError, "escapes"):
+            cpu.release_inventory(root)
+
+    def test_concurrently_changed_metadata_refuses_snapshot(self):
+        root = self.plan_metadata()
+        with mock.patch.object(cpu, "digest", return_value="0" * 64):
+            with self.assertRaisesRegex(ValueError, "changed during inventory"):
+                cpu.release_inventory(root)
 
 
 if __name__ == "__main__":
