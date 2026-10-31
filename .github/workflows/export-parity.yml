@@ -38,6 +38,8 @@ jobs:
         run: bash deploy/ci/export-parity.sh "target/export-parity/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
       - name: Retain source-bound parity report and generated predictors
         if: always()
+        env:
+          JOPE_LOCAL_EVIDENCE_ROOT: ${{ runner.temp }}/jope-ci-evidence
         uses: ./.github/actions/upload-ci-evidence
         with:
           name: export-parity-${{ github.run_id }}-${{ github.run_attempt }}
