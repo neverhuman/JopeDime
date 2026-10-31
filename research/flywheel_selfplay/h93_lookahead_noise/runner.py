@@ -408,6 +408,19 @@ def summarize(cells, draws=10000):
     return result
 
 
+def attempt_scratch_path(root, arm, seed, attempt, *, timing=False):
+    """Return fresh scratch for one physical cell attempt; never reuse another attempt's copy."""
+    if arm not in ARMS or seed not in SEEDS:
+        raise ValueError("unregistered H93 scratch cell")
+    if type(attempt) is not int or attempt < 1:
+        raise ValueError("H93 attempt must be a positive integer")
+    cell = f"{'timing-' if timing else ''}{arm}-seed{seed}-attempt{attempt}"
+    path = Path(root) / "scratch" / cell
+    if path.exists():
+        raise RuntimeError("H93 attempt scratch already exists")
+    return path
+
+
 def run_cell(args):
     assert_lease(args.lock_fd)
     if args.seed not in SEEDS or args.arm not in ARMS:
@@ -426,7 +439,10 @@ def run_cell(args):
     selected, train_rows, dev_rows = h55.input_metadata(args.input, h48)
     validate_paths(args.input, train_rows + dev_rows)
     folds = h55.family_folds(train_rows, h48)
-    staged = h59.stage_r882_copy(args.checkpoint, args.out.parent / "scratch")
+    scratch = attempt_scratch_path(
+        args.out.parent, args.arm, args.seed, args.attempt, timing=args.timing
+    )
+    staged = h59.stage_r882_copy(args.checkpoint, scratch)
     pools, tables = h55.load_rows(args.input, train_rows, h48)
     net, params, guard, checkpoint = h55.build_model(
         args.input, staged, torch.device("cuda:0"), h48
@@ -636,6 +652,7 @@ def main():
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--phase", type=Path, required=True)
     parser.add_argument("--attempt-token", required=True)
+    parser.add_argument("--attempt", type=int, required=True)
     parser.add_argument("--lock-fd", type=int, required=True)
     parser.add_argument("--timing", action="store_true")
     args = parser.parse_args()
