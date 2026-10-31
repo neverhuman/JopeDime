@@ -30,10 +30,10 @@ question of cost (\cref{sec:price}).
 \subsection{The rules}\label{sub:game-rules}
 
 \Cref{tab:go-vs-innovation} sets the game beside Go. An illegal move is
-counted as a failed attempt. The reference writer reads the encoded problem;
-the referee keeps the incumbent as a separate comparison standard
-(\cref{sub:method-board}). The incumbent's code and score are not part of
-that writer input.
+counted as a failed attempt. The reference writer reads the encoded problem.
+The referee keeps the incumbent as a separate comparison standard
+(\cref{sub:method-board}); its code and score stay outside the writer's
+input.
 
 \begin{table}[!htb]
   \caption{\textbf{Go and the innovation game, element by element.}
@@ -140,27 +140,28 @@ $\tilde{w}$, an also-ran $w^-$ and a win $w^+$ on board $p$,
   \reward(p, \tilde{w}) \;<\; \reward(p, w^-) \;<\; \reward(p, w^+).
 \]
 
-The opponent is a ratcheting incumbent. In the reference procedure a program displaces a board's incumbent only
-by strict improvement on five inner folds under the same evaluation protocol.
+The opponent is a ratcheting incumbent. In the reference procedure, only
+strict improvement on five inner folds under the same evaluation protocol
+can displace a board's incumbent.
 A retrained writer has a separate
 admission test on 16 held-out cuts with three seeds each
-(\cref{sub:method-selfplay}). These are distinct ratchets, as AlphaGo Zero's
-network admission was distinct from choosing a move during play
-\citep{silver2017mastering}. Together the two ratchets make this self-play:
+(\cref{sub:method-selfplay}). Together the two ratchets make this self-play:
 the player keeps facing a standard often set by its own earlier play.
+AlphaGo Zero likewise separated network admission from choosing a move
+during play \citep{silver2017mastering}.
 Subtracting the incumbent's score does not change which move is best; what
 matters is what promotion changes. It raises the bar, turns yesterday's winners
 into today's also-rans and shifts which problems are worth playing. The
-learning targets themselves use each program's rank within its scored list
+reference learning targets use each program's rank within its scored list
 (\cref{sub:method-map,sub:method-selfplay}).
 
 % ----------------------------------------------------------------------------
 \subsection{One game, many boards}\label{sub:game-boards}
 
 Binary and multiclass classification, regression, ranking, forecasting and
-relational prediction are prospective boards. Each needs a compatible
-encoding, program language, metric and validation protocol; a shared formal
-interface requires its own qualification for each task type. Beyond
+relational prediction are prospective boards. A shared formal interface
+still needs a compatible encoding, program language, metric and validation
+protocol qualified for each task type. Beyond
 machine learning, examples of referees include sorting tests
 \citep{mankowitz2023alphadev}, evaluators for mathematical constructions
 \citep{romeraparedes2024funsearch} and accelerator-kernel timers
