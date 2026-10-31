@@ -81,7 +81,7 @@ impl Http {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::InvalidRequest`](crate::transport::Error::InvalidRequest) if the endpoint
+    /// Returns [`Error::InvalidRequest`] if the endpoint
     /// or token does not satisfy the local-client contract.
     pub fn new(endpoint: &str, token: &str) -> Result<Self> {
         let credentials = Credentials::new(endpoint, token)?;
