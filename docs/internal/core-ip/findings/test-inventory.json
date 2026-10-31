@@ -5137,6 +5137,10 @@
       "reason": "Owner-requested H124 synthetic CPU controls for the fresh family split, fixed-lambda utility-score blend, complete-panel paired family bootstrap and harm gate, and no-data dry run; no corpus/checkpoint reads or estimator fits in the fixture suite; offline research only.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h129_gbm_blend_harm_gate/test_h129.py": {
+      "reason": "Owner-requested H129 synthetic CPU controls for the H124-follow-up blend arms, fit-fold harm-gate threshold, Holm readout and pre-write metrics size check; no corpus/checkpoint reads or estimator fits in the fixture suite; offline research only.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h123_continuous_regret_tiebreak/test_runner.py": {
       "role": "research",
       "reason": "CPU-only H123 continuous-regret tie-break preparation fixtures for the H114 lattice; offline research analysis outside the reviewed product baseline."
