@@ -1,0 +1,18 @@
+{
+  "canonical_sha256": "b3b41e3413953c73ee85d6b901dededd1ab905827012fb3126a9d8b454621ad0",
+  "dataset_id": "b3b41e3413953c73",
+  "manifest_key": "datasets/b3b41e3413953c73/manifest.json",
+  "manifest_sha256": "490d049643ad31d23338fe148e79515973ac4bcc6ab9d2e3efac32259c7ae095",
+  "mode": "dry-run",
+  "model_fit_or_scoring": false,
+  "observed_at_utc": "2026-10-31T03:44:59.921548+00:00",
+  "origin": "real",
+  "purpose": "input-plumbing-only; not a W9 row, outcome, fit, or result",
+  "task": "regression",
+  "test_blob_requested": false,
+  "train_blob_key": "blobs/sha256/fc765fe9d309884cebe08fb9e2be0d9a6df219f1407a05684badcfee609d1ccf",
+  "train_bytes": 183601,
+  "train_columns": 840,
+  "train_rows": 25,
+  "train_sha256": "fc765fe9d309884cebe08fb9e2be0d9a6df219f1407a05684badcfee609d1ccf"
+}
