@@ -3174,10 +3174,12 @@ mod tests {
         let executor = LateImprovement::new(true);
         d.advance(&WaveSpace, &HeuristicAdmission, &executor, 8, usize::MAX)
             .unwrap();
-        let mut checkpoint = d.checkpoint.clone();
-        checkpoint.elapsed_ms = 59_000;
-        checkpoint.active_since_ms = Some(wall_clock_ms().unwrap());
-        d.commit_control(checkpoint, RunState::Running).unwrap();
+        // Model time already spent before this call without charging time
+        // between the checkpoint setup and `advance`. The executor's deliberate
+        // 1.1s delay below is what deterministically carries this round past the
+        // 60s budget; scheduler load must not decide whether the round starts.
+        d.checkpoint.elapsed_ms = 59_000;
+        d.checkpoint.active_since_ms = None;
         d.advance(&WaveSpace, &HeuristicAdmission, &executor, 8, usize::MAX)
             .unwrap();
         assert_eq!(d.completed(), Some(CompletionReason::BudgetTime));
