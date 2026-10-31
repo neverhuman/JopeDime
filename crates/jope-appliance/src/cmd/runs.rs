@@ -78,7 +78,11 @@ mod tests {
     fn list_has_golden_api_json_and_registry_route() {
         let mock = Mock::default();
         let value = execute(&mock, RunsCommand::List).unwrap();
-        assert_eq!(serde_json::to_string(&value).unwrap(), r#"{"runs":[]}"#);
+        // The canonical RunPage (API-07-F02) always carries `next_after`; null ends the list.
+        assert_eq!(
+            serde_json::to_string(&value).unwrap(),
+            r#"{"next_after":null,"runs":[]}"#
+        );
         assert_eq!(mock.0.lock().unwrap()[0].target(), "/v1/runs");
     }
 
