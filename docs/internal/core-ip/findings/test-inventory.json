@@ -1599,6 +1599,10 @@
         "training"
       ]
     },
+    "python:deploy/qualification/q1/harness/test_fifo_launch.py": {
+      "reason": "QLT-04 FIFO launcher controls with private queue/key/backend fixtures; admission, lease, mutation, ledger and process cleanup proofs, not live qualification.",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/q1/harness/test_q1.py": {
       "reason": "Q1 qualification harness protocol/statistical fixtures (QLT-01): owner-signature refusal, holdout guards and failure accounting; no learned model or sealed payload executes",
       "role": "infrastructure"
