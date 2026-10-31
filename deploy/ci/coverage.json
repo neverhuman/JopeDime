@@ -13367,6 +13367,16 @@
       ],
       "lanes": [],
       "scope": "H86 W3 outcome-row status census fixture contracts: signature status rule and precedence (sentinel, nonfinite, anomalous), W3 top-resolved target paths (top16, last passer, no passer, .05 floor, clip 6) and program-order hash binding. Manual research diagnostics only; no W3 study, admission decision or release qualification."
+    },
+    "python:research/flywheel_selfplay/h83_w6_cross_family_cached/test_run_w6_cached.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H83 W6 cached cross-family screen fixtures: planted low-rank bilinear recovery, shuffled-context placebo loss of signal, within-context centring, verified-U4 anchors and SHA tie-breaks, Bonferroni-adjusted common gate and verdict paths. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
     }
   },
   "lanes": {
