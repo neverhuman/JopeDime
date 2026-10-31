@@ -1,3 +1,17 @@
+//! Tabular classifier/regressor inference and expert feature extraction.
+//!
+//! [`StarforgeModel`] accepts flat, row-major feature matrices: `ctx_x` has
+//! `ctx_y.len() * n_features` entries and `qx` has a whole number of query rows
+//! with the same feature width. Callers select the context/query split and supply
+//! the context labels; this module does not select or authorize dataset folds.
+//! Prediction methods require a positive feature width (see their panic contracts).
+//!
+//! Raw weight loaders parse safetensors but do not verify bundle identity or
+//! provenance. For the pinned bundle contract, use
+//! [`LoadedModelBundle::load`](crate::bundle::LoadedModelBundle::load) and
+//! [`read_verified`](crate::bundle::LoadedModelBundle::read_verified) before
+//! passing artifact bytes to [`StarforgeModel::load_buffer`].
+
 use anyhow::{bail, Context, Result};
 use candle_core::{DType, Device, Tensor};
 use std::collections::HashMap;
@@ -38,12 +52,16 @@ const MAX_CLASSES: usize = 160;
 const REGRESSION_BUCKETS: usize = 5000;
 const REGRESSION_MAX_TOTAL_ROWS: usize = 1024;
 
+/// Model family detected from checkpoint tensor names.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum StarforgeModelKind {
+    /// Classification checkpoint.
     Classifier,
+    /// Regression checkpoint.
     Regressor,
 }
 
+/// Loaded checkpoint and inference device; see the module's input/verification contracts.
 pub struct StarforgeModel {
     weights: HashMap<String, Tensor>,
     device: Device,
@@ -75,20 +93,28 @@ pub struct RegressionExpertFeatures {
 }
 
 impl StarforgeModel {
+    /// Load a safetensors file (optionally `.zst` compressed) with F32 inference.
+    /// Bundle identity and provenance remain the caller's responsibility.
     pub fn load(path: &Path, device: Device) -> Result<Self> {
         Self::load_dtype(path, device, DType::F32)
     }
 
+    /// Load uncompressed safetensors bytes with F32 inference.
+    /// Parsing these bytes does not verify their bundle identity or provenance.
     pub fn load_buffer(bytes: &[u8], device: Device) -> Result<Self> {
         Self::load_buffer_dtype(bytes, device, DType::F32)
     }
 
+    /// Load uncompressed safetensors bytes; `BF16` enables the BF16 inference path.
+    /// Parsing these bytes does not verify their bundle identity or provenance.
     pub fn load_buffer_dtype(bytes: &[u8], device: Device, dtype: DType) -> Result<Self> {
         let weights = candle_core::safetensors::load_buffer(bytes, &device)
             .context("loading verified safetensors buffer")?;
         Self::from_weights(weights, device, dtype)
     }
 
+    /// Load a safetensors file, decompressing `.zst` in memory.
+    /// `BF16` enables the BF16 inference path; bundle provenance is caller-owned.
     pub fn load_dtype(path: &Path, device: Device, dtype: DType) -> Result<Self> {
         let is_zst = path.extension().and_then(|e| e.to_str()) == Some("zst");
         let weights = if is_zst {
@@ -122,14 +148,20 @@ impl StarforgeModel {
         })
     }
 
+    /// Device selected when the checkpoint was loaded.
     pub fn device(&self) -> &Device {
         &self.device
     }
 
+    /// Family detected from the loaded checkpoint.
     pub fn kind(&self) -> StarforgeModelKind {
         self.kind
     }
 
+    /// Predict classification scores using one feature view.
+    ///
+    /// # Panics
+    /// Panics if `n_features` is zero for a classifier checkpoint.
     pub fn predict_single(
         &self,
         ctx_x: &[f32],
@@ -151,6 +183,11 @@ impl StarforgeModel {
         Ok(probs.into_iter().map(|v| v as f64).collect())
     }
 
+    /// Predict classification scores by taking each row's median across six views.
+    /// Despite the historical name, this returns predictions, not an AUC metric.
+    ///
+    /// # Panics
+    /// Panics if `n_features` is zero for a classifier checkpoint.
     pub fn predict_ensemble_auc(
         &self,
         ctx_x: &[f32],
@@ -186,6 +223,10 @@ impl StarforgeModel {
         Ok(median_of_views(&per_view, m))
     }
 
+    /// Extract classification expert features using one feature view.
+    ///
+    /// # Panics
+    /// Panics if `n_features` is zero for a classifier checkpoint.
     pub fn classification_fusion_features_single(
         &self,
         ctx_x: &[f32],
@@ -206,6 +247,11 @@ impl StarforgeModel {
         self.forward_classification_features(&x, &y, ctx_y, n, m)
     }
 
+    /// Predict regression values in the supplied context labels' original scale.
+    /// Requires at least one context row; labels are standardized internally.
+    ///
+    /// # Panics
+    /// Panics if `n_features` is zero for a regression checkpoint.
     pub fn predict_regression_single(
         &self,
         ctx_x: &[f32],
@@ -242,6 +288,11 @@ impl StarforgeModel {
         Ok(out)
     }
 
+    /// Extract regression expert features, standardizing context labels internally.
+    /// Requires at least one context row.
+    ///
+    /// # Panics
+    /// Panics if `n_features` is zero for a regression checkpoint.
     pub fn regression_fusion_features_single(
         &self,
         ctx_x: &[f32],
@@ -265,6 +316,8 @@ impl StarforgeModel {
 
     /// The caller supplies the frozen export's already standardized context labels.
     /// This avoids a second normalization and preserves the native FP64-to-FP32 seam.
+    /// Returns an error for zero feature width, empty context/query rows, inconsistent
+    /// matrix lengths, or non-finite input values.
     pub fn regression_fusion_features_standardized(
         &self,
         ctx_x: &[f32],
@@ -334,6 +387,10 @@ impl StarforgeModel {
         })
     }
 
+    /// Predict regression values by taking each row's median across six views.
+    ///
+    /// # Panics
+    /// Panics if `n_features` is zero for a regression checkpoint.
     pub fn predict_regression_ensemble(
         &self,
         ctx_x: &[f32],
