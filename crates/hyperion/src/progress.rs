@@ -375,7 +375,7 @@ pub struct SweepFrame {
     pub sweeps: u32,
     /// Fraction of THIS sweep completed.
     pub frac: f64,
-    /// Overall encode progress in [0,1] (rescaled across the train/hold share) — drives the UI %.
+    /// Overall encode progress in \[0,1\] (rescaled across the train/hold share) — drives the UI %.
     pub done_frac: f64,
     /// Original matrix dims (target column dropped).
     pub rows: u64,
@@ -383,7 +383,7 @@ pub struct SweepFrame {
     /// Coordinate space of `cells` (== rows/cols when small; UI-grid-binned for large matrices).
     pub grid_rows: u32,
     pub grid_cols: u32,
-    /// This chunk's running-mean confidence updates at ORIGINAL (or grid-binned) positions, in [0,1].
+    /// This chunk's running-mean confidence updates at ORIGINAL (or grid-binned) positions, in \[0,1\].
     pub cells: Vec<SweepCell>,
     /// Current running 1×128 dataset vector = mean over rows of the running row embeddings.
     pub vector: Vec<f32>,
