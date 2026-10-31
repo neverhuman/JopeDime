@@ -13297,6 +13297,16 @@
       ],
       "lanes": [],
       "scope": "H72 W8 equal-cost control runner fixture contracts: training-only envelope resplits, policy budget simulation, common confirmation rule, frozen incumbent selection. Manual research diagnostics only; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h75_closed_loop_evolution/scoring/test_bootstrap.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested CPU fixtures for H75 shared whole-family bootstrap, canonical batched Elo parity, seed averaging, incomplete execution and deterministic bounded resampling. Descriptive development intervals only; no experiment admission or release qualification."
     }
   },
   "lanes": {
