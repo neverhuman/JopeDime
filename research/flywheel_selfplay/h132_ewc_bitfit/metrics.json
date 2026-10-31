@@ -378,6 +378,43 @@
   "complete": true,
   "dl_val_reads": 0,
   "elapsed_seconds": 501.82,
+  "execution_accounting": {
+    "attempts": [
+      {
+        "attempt": "initial",
+        "new_completed_cells": 0,
+        "optimizer_updates": 0,
+        "task": "task-2357"
+      },
+      {
+        "attempt": "1a",
+        "new_completed_cells": 2,
+        "optimizer_updates": 80,
+        "task": "task-2366"
+      },
+      {
+        "attempt": "1b",
+        "new_completed_cells": 7,
+        "optimizer_updates": 280,
+        "task": "task-2381"
+      },
+      {
+        "attempt": "2",
+        "new_completed_cells": 3,
+        "optimizer_updates": 120,
+        "task": "task-2411"
+      }
+    ],
+    "basis": "Completed cells in the disclosed Amendment A1 chronology; 40 optimizer updates per cell. Existing optimizer_updates and cells_completed describe the final retained panel.",
+    "cumulative_disclosed_completed_cells": 12,
+    "cumulative_disclosed_optimizer_updates": 480,
+    "elapsed_seconds_scope": "task-2411 final invocation only; not cumulative wall time across all attempts",
+    "local_summary_receipt_scope": "Native summary serialized before insertion of its local_summary_receipt field; verified by removing only that field and serializing sorted keys with indent=2 and a final newline.",
+    "retained_panel_cells": 9,
+    "retained_panel_optimizer_updates": 360,
+    "superseded_attempt_1_ewc_cells": 3,
+    "superseded_attempt_1_ewc_optimizer_updates": 120
+  },
   "final_guards": {
     "disk_free_gib": 512.07,
     "disk_used_pct": 93.072,
@@ -459,7 +496,7 @@
     "path": "research/flywheel_selfplay/h132_ewc_bitfit/PREREG_AMENDMENT_A1.md",
     "prereg_runner_sha256": "c1bb24c94d3ad7e83d8844d6fecd9076b5b078fe58c9bd6764282a4166c09f60",
     "reason": "Step 2 fit-family Fisher in Attempt 1 lacked explicit np.random.seed(FOLD_SEED), causing Attempt 1a (seed 100, lambda=772275.3451) and Attempt 1b (seeds 101-102, lambda=770199.1457) to use two different unseeded fit-fold Fisher penalties across process restart; Step 4 also crashed on BITFIT seed 100/101 utility tie instead of recording seeds_not_identical=False. Attempt 2 seeded Step 2 with FOLD_SEED=132100 (lambda=773442.8941). Both Attempt 1 and Attempt 2 yield NO_ADMISSION.",
-    "sha256": "715548147a8ee7f1157c71ff5e13f2e838ac4a9524fc97ce31807805c3053826",
+    "sha256": "29605b9e107f06e6e98d09792b5e72a5a17dcb660858ea9c3b6e8f07538fc0e9",
     "zero_assessment_leakage_in_lambda": true
   },
   "primary_vs_r882": {

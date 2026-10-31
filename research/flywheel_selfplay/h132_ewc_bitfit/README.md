@@ -2,9 +2,9 @@
 
 - **Status**: `COMPLETE — NO_ADMISSION` (`0` arms admitted; unchanged `r882` remains the active serving adapter)
 - **Preregistration**: [`PREREG.md`](PREREG.md) (`sha256 = 49f9cca4ad7d51e9e20605a60b76a05c2ee1d5ef2a5bca69ec129bc890c070df`, merged in PR [#1155](https://github.com/neverhuman/JopeDime/pull/1155) at `6306506e333bee32adcc7939842c5f38565b9d4b`)
-- **Amendment A1 (Disclosed Runner Fixes & Attempt-1 / Attempt-2 Side-by-Side)**: [`PREREG_AMENDMENT_A1.md`](PREREG_AMENDMENT_A1.md) (`sha256 = 715548147a8ee7f1157c71ff5e13f2e838ac4a9524fc97ce31807805c3053826` — **runner SHA deviates from prereg; Amendment A1 included**)
+- **Amendment A1 (Disclosed Runner Fixes & Attempt-1 / Attempt-2 Side-by-Side)**: [`PREREG_AMENDMENT_A1.md`](PREREG_AMENDMENT_A1.md) (`sha256 = 29605b9e107f06e6e98d09792b5e72a5a17dcb660858ea9c3b6e8f07538fc0e9` — **runner SHA deviates from prereg; Amendment A1 included**)
 - **Fold Manifest**: [`fold_manifest_132100.json`](fold_manifest_132100.json) (`fold_seed = 132100`, `sha256 = a2a9dd147601ecca76e247576a4575970450d1facc77c332232a5899ac54f440`)
-- **Metrics Summary**: [`metrics.json`](metrics.json) (`42,325` bytes `< 100 KB`)
+- **Metrics Summary**: [`metrics.json`](metrics.json) (`43,719` bytes `< 100 KB`)
 
 ---
 
@@ -27,7 +27,7 @@ eliminates the catastrophic family harm of `CONTROL` (`48.78%` harmed families o
   - **Assessment fold (`fold 0`)**: `41` families, `263` contexts (never read during Fisher estimation, $\lambda$ calibration, or gradient updates).
   - **Fit folds (`folds 1..4`)**: `164` families, `956` contexts.
   - **Holdout isolation**: `0` `DL-Val`, outer-test, sealed, or meta-test reads.
-- **Design**: `3` arms (`CONTROL`, `EWC`, `BITFIT`) $\times$ `3` paired seeds (`100, 101, 102`) = `9` cells $\times$ `40` AdamW updates/cell (`lr = 1e-4`, `weight_decay = 1e-4`, `batch_size = 8`, `slate_size = 32`, `grad_clip = 1.0`) = `360` updates per full wave.
+- **Design**: `3` arms (`CONTROL`, `EWC`, `BITFIT`) $\times$ `3` paired seeds (`100, 101, 102`) = `9` cells $\times$ `40` AdamW updates/cell (`lr = 1e-4`, `weight_decay = 1e-4`, `batch_size = 16`, `slate_size = 192`, `grad_clip = 1.0`) = `360` updates in the final retained panel. The disclosed attempts completed `480` optimizer updates in total (`360` retained + `120` superseded Attempt-1 `EWC` updates); this is not a second 9-cell wave.
 
 ---
 
@@ -106,7 +106,7 @@ Per [`PREREG_AMENDMENT_A1.md`](PREREG_AMENDMENT_A1.md), three defects in `/home/
   1. **Massive Reduction in Harmed Families Relative to `CONTROL`**: Unconstrained 40-step `CONTROL` harmed **`48.78%`** (`20/41`) of held-out `fold 0` families relative to `r882` (per-seed `51.22%`, `51.22%`, `43.90%`, median seed delta `-0.031608`, paired Elo `1376.40`). Fit-fold Fisher anchoring (`EWC`) reduced the harmed family fraction by **20x** to **`2.44%`** (`1/41` families, passing the `<= 10%` harm gate on every seed) and cut Fisher-weighted parameter drift $\sum_i F_i \Delta\theta_i^2$ by **5,500x** (`1.62e-09 – 1.88e-09` vs `8.93e-06 – 1.00e-05`). `BITFIT` reduced harmed families by **10x** to **`4.88%`** (`2/41` families).
   2. **Consistent 3/3 Seed Dominance Over `CONTROL`**: Both `EWC` (`+0.044176`, `+0.029506`, `+0.011148`; paired Elo **`1617.24 [1534.00, 1716.27]`**) and `BITFIT` (`+0.029547`, `+0.029255`, `+0.010829`; paired Elo **`1592.52 [1505.65, 1688.97]`**) beat `CONTROL` on all 3 seeds, and `EWC` beat `BITFIT` on all 3 seeds with `0.00%` harmed families.
   3. **Why Neither Beats Unchanged `r882` Across All 3 Seeds**: `EWC` achieved a genuine `+0.012276` gain over `r882` on `seed=100` (`1.081732` vs `1.069456`, paired Elo `1508.48`), but on `seed=101` (`-0.002102` in Attempt-2 vs `+0.012115` in Attempt-1) and `seed=102` (`-0.002174` in both attempts) it suffered `1` net family loss (`34–35` ties out of `41` families). Because `r882` was already trained on the full `DL-Train` corpus, 40 gradient steps on a `4/5` subset (`956` fit contexts) under the standard smooth-L1 + KL surrogate loss can only prevent `CONTROL`'s forgetting when heavily Fisher-anchored; where it moves, discrete top-1 flips on `fold 0` remain sensitive to `0.42%` perturbations in $\lambda$.
-- **Next Step**: Any future fine-tuning wave from `r882` should keep fit-fold diagonal Fisher anchoring (`EWC`) as the baseline drift stabilizer (since it reduces `CONTROL`'s `48.78%` family harm to `2.44%`), while pairing it with a margin/contrastive ranking signal around `r882`'s current top-1 selections rather than the global 32-slate surrogate loss.
+- **Next Step**: Any future fine-tuning wave from `r882` should keep fit-fold diagonal Fisher anchoring (`EWC`) as the baseline drift stabilizer (since it reduces `CONTROL`'s `48.78%` family harm to `2.44%`), while pairing it with a margin/contrastive ranking signal around `r882`'s current top-1 selections rather than the global 192-candidate-slate surrogate loss.
 
 ---
 
@@ -127,7 +127,7 @@ Per [`PREREG_AMENDMENT_A1.md`](PREREG_AMENDMENT_A1.md), three defects in `/home/
    - Higher `unrev` normalized Top-1 utility and higher Elo are better.
    - Both family-paired Elo (with 95% bootstrap CI) and 4-player Bradley-Terry Elo anchored at `r882 = 1500` and `CONTROL = 1500` are reported; no AUC is used anywhere.
 5. **Cherry-Picking & Multiple-Testing Control (`PASS`)**:
-   - All `9` cells (`3` arms $\times$ `3` seeds) are reported with zero exclusions.
+   - All `9` final retained cells (`3` arms $\times$ `3` seeds) and the `3` superseded Attempt-1 `EWC` cells are disclosed. The completed-work accounting is `12` training cells / `480` updates, including the replaced evidence; `metrics.optimizer_updates = 360` refers only to the retained panel.
    - Two-arm Holm-Bonferroni step-down ($\alpha_1 = 0.025$ for rank 1 `EWC`, $\alpha_2 = 0.050$ for rank 2 `BITFIT`) was applied over `10,000` paired family-cluster bootstrap draws (`bootstrap_seed = 132100`).
 6. **DOPE Freeze & `BITFIT` Parameter Mask Verification (`PASS`)**:
    - Before and after every cell (`9/9`), `DOPE` composite SHA-256 equaled `c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814` and `guard.assert_optimizer_excludes_dope(optimizer, net)` passed.

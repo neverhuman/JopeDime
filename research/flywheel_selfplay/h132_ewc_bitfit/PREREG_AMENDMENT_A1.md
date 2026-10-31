@@ -44,7 +44,7 @@ During live CPU execution of `H132`, three defects in `/home/ubuntu/jope-rescue-
 
 | Metric / Cell | Attempt 1 (`task-2366` + `task-2381`, Unseeded Step-2 `np.random`) | Attempt 2 (`task-2411`, Deterministic Step-2 `FOLD_SEED = 132100`) | Material Difference / Scientific Note |
 | --- | --- | --- | --- |
-| Step-2 `mean_fit_family_loss_at_r882` | `3.975576` (`1a`) / `3.974131` (`1b`) | `3.975128` | `< 0.036%` variation from 32-candidate slate sampling on fit contexts (`0` assessment families touched). |
+| Step-2 `mean_fit_family_loss_at_r882` | `3.975576` (`1a`) / `3.974131` (`1b`) | `3.975128` | `< 0.036%` variation from 192-candidate slate sampling on fit contexts (`0` assessment families touched). |
 | Step-2 `fisher_diag_mean` ($\bar{F}$) | `2.542160e-05` (`1a`) / `2.548086e-05` (`1b`) | `2.538036e-05` | `< 0.40%` variation across fit-family gradient averages. |
 | Step-2 `ewc_lambda_a_priori` ($\lambda$) | `772,275.3451` (`seed 100`) / `770,199.1457` (`seeds 101, 102`) | `773,442.8941` (`all 3 seeds`) | Attempt 1 used two different $\lambda$ values across seeds (`0.27%` apart); Attempt 2 uses a single deterministic $\lambda$. |
 | Step-2 `fit_family_fisher.json` SHA-256 | `ea301a7a6100...` (`1a`) / `0b8d20460ddc...` (`1b`) | `1cd853ef0abc28ce533ad936664b587d4cea9d13969d8aa3c94a40ca414296a6` | Both computed strictly on `164` fit families (`956` fit contexts). |
@@ -66,7 +66,7 @@ During live CPU execution of `H132`, three defects in `/home/ubuntu/jope-rescue-
 @@ -1018,7 +1018,19 @@
                  fisher_list = [fisher_by_name[name] for name, _ in all_adapter_params]
                  all_adapter_tensors = [p for _, p in all_adapter_params]
- 
+
 -                dope_pre = h48.h46.checkpoint_guard(guard_a, net_a, expected=DOPE_SHA)
 +                snap_pre = guard_a.snapshot_dope_weights(net_a)
 +                if snap_pre.composite_sha256 != DOPE_SHA:
@@ -85,7 +85,7 @@ During live CPU execution of `H132`, three defects in `/home/ubuntu/jope-rescue-
 @@ -1078,7 +1090,19 @@
                      pre_clip_norms.append(pre_norm)
                      post_clip_norms.append(post_norm)
- 
+
 -                dope_post = h48.h46.checkpoint_guard(guard_a, net_a, expected=DOPE_SHA)
 +                snap_post = guard_a.snapshot_dope_weights(net_a)
 +                if snap_post.composite_sha256 != DOPE_SHA:
@@ -141,3 +141,19 @@ During live CPU execution of `H132`, three defects in `/home/ubuntu/jope-rescue-
   `if set(fit_cids_by_fam.keys()) != fit_fams or (set(fit_cids_by_fam.keys()) & assess_fams): raise RuntimeError(...)`.
 - `assessment_families_touched = 0` and `assessment_contexts_touched = 0` in Step 2.
 - The reference drift $D_{\text{ref}} = 0.45$ was fixed in `PREREG.md` (`49f9cca4...`) prior to execution, and $\lambda = \bar{L}_{\text{fit}}(\theta_0) / (D_{\text{ref}}^2 \cdot \bar{F})$ was computed in closed form strictly from fit-fold quantities at $\theta_0 = r882$. No assessment-fold (`fold 0`), `DL-Val`, outer-test, or sealed meta-test value ever entered $F$ or $\lambda$.
+
+---
+
+## 6. Closeout Documentation Corrections and Cumulative Work
+
+These are closeout documentation corrections, not additional runner edits or executions. The hash-pinned final runner uses `BATCH_SIZE = 16` and `SLATE_SIZE = 192`, matching the unchanged preregistration. The initial closeout README's `batch_size = 8`, `slate_size = 32` and this amendment's "32-candidate slate" wording were incorrect and have been corrected to `16` / `192`.
+
+| Invocation | Newly completed training cells | Optimizer updates | Retained or superseded |
+| --- | --- | --- | --- |
+| Initial (`task-2357`) | `0` | `0` | Pool-load failure before training. |
+| Attempt 1a (`task-2366`) | `2` | `80` | `CONTROL_seed100` retained; `EWC_seed100` superseded. `BITFIT_seed100` failed its pre-check before any updates. |
+| Attempt 1b (`task-2381`) | `7` | `280` | Five `CONTROL` / `BITFIT` cells retained; two `EWC` cells superseded. The two earlier cells were reused without retraining. |
+| Attempt 2 (`task-2411`) | `3` | `120` | Three replacement `EWC` cells retained; six `CONTROL` / `BITFIT` cells reused without retraining. |
+| **Cumulative disclosed completed work** | **`12`** | **`480`** | **Final retained panel: `9` cells / `360` updates; superseded Attempt-1 `EWC`: `3` cells / `120` updates.** |
+
+The existing native `metrics.optimizer_updates = 360` and `metrics.cells_completed = 9` describe the final retained panel, not cumulative work. `execution_accounting` records the attempt-level and cumulative counts; `manifest.total_optimizer_updates = 480` includes superseded work. The native `elapsed_seconds = 501.82` covers only the final `task-2411` invocation, not cumulative wall time. No new training, scoring, Fisher estimation, or admission decision was performed for these documentation corrections. Both attempts remain `NO_ADMISSION`.

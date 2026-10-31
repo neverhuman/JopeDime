@@ -33,6 +33,43 @@
   },
   "cells": 9,
   "custody": "/home/ubuntu/jope-rescue-20260921/h132-ewc-bitfit",
+  "execution_accounting": {
+    "attempts": [
+      {
+        "attempt": "initial",
+        "new_completed_cells": 0,
+        "optimizer_updates": 0,
+        "task": "task-2357"
+      },
+      {
+        "attempt": "1a",
+        "new_completed_cells": 2,
+        "optimizer_updates": 80,
+        "task": "task-2366"
+      },
+      {
+        "attempt": "1b",
+        "new_completed_cells": 7,
+        "optimizer_updates": 280,
+        "task": "task-2381"
+      },
+      {
+        "attempt": "2",
+        "new_completed_cells": 3,
+        "optimizer_updates": 120,
+        "task": "task-2411"
+      }
+    ],
+    "basis": "Completed cells in the disclosed Amendment A1 chronology; 40 optimizer updates per cell. Existing optimizer_updates and cells_completed describe the final retained panel.",
+    "cumulative_disclosed_completed_cells": 12,
+    "cumulative_disclosed_optimizer_updates": 480,
+    "elapsed_seconds_scope": "task-2411 final invocation only; not cumulative wall time across all attempts",
+    "local_summary_receipt_scope": "Native summary serialized before insertion of its local_summary_receipt field; verified by removing only that field and serializing sorted keys with indent=2 and a final newline.",
+    "retained_panel_cells": 9,
+    "retained_panel_optimizer_updates": 360,
+    "superseded_attempt_1_ewc_cells": 3,
+    "superseded_attempt_1_ewc_optimizer_updates": 120
+  },
   "execution_gate": "No real-data training or assessment scoring before preregistration PR merges into origin/main; runner enforces HEAD ancestry in origin/main.",
   "fold": {
     "assessment_context_count": 263,
@@ -61,8 +98,8 @@
     "regression_receipt_sha256": "12401be1cd799fa704256fd3903c72c30aa7b8cd8a45331248a247a35a22212d",
     "summary_receipt_sha256": "8dc9b6ce28b1cdb024178696e298810aecdbfe724b6b134ef51e49a7e5d5271e"
   },
-  "metrics_bytes": 42325,
-  "metrics_sha256": "b612fc285852577ab7d3563b94db5704bbfd9b19fb1df8d439e34c9ed7f2f659",
+  "metrics_bytes": 43719,
+  "metrics_sha256": "2bea885b09c848437c9f5e633f0b74d5b043e7cf5d7016ab6180b320763d3811",
   "output_limit_bytes": 100000,
   "paired_seeds": [
     100,
@@ -72,7 +109,7 @@
   "prereg_amendment_a1": {
     "file": "PREREG_AMENDMENT_A1.md",
     "flag": "runner sha deviates from prereg \u2014 amendment A1 included",
-    "sha256": "715548147a8ee7f1157c71ff5e13f2e838ac4a9524fc97ce31807805c3053826"
+    "sha256": "29605b9e107f06e6e98d09792b5e72a5a17dcb660858ea9c3b6e8f07538fc0e9"
   },
   "prereg_merge_commit": "6306506e333bee32adcc7939842c5f38565b9d4b",
   "prereg_runner_sha256": "c1bb24c94d3ad7e83d8844d6fecd9076b5b078fe58c9bd6764282a4166c09f60",
@@ -115,7 +152,8 @@
   },
   "source_base": "1da3c7556c859b23b2cef91429823dce4a3f2b57",
   "status": "COMPLETE",
-  "total_optimizer_updates": 360,
+  "total_optimizer_updates": 480,
+  "total_optimizer_updates_scope": "All completed optimizer updates disclosed in Amendment A1, including superseded Attempt-1 EWC cells; final retained panel remains 360 updates.",
   "updates_per_cell": 40,
   "verdict": "NO_ADMISSION",
   "wave": "H132"
