@@ -1,0 +1,52 @@
+{
+  "cpu_seconds": 2.895697463,
+  "finished_utc": "2026-10-31T07:19:13.107920+00:00",
+  "h86_artifacts": {
+    "manifest": {
+      "key": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/luna-tel-h86-20261031T0709Z-01/manifest.json",
+      "sha256": "d9e3ba44209b6e1425313fff282055b99d88c192638f91a05f0762fb93a74f84",
+      "version": "3d8Ty0jjfnXuZV3bkYiNIGx7Vk3XDJ9G"
+    },
+    "mask": {
+      "key": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/luna-tel-h86-20261031T0709Z-01/status_mask.npz",
+      "sha256": "37a9271f92c1ab8f2e554c97e8a9cb414e50cb1362e263a41b1c93164868f4f6",
+      "version": "wmp4LaFHHHLpuRQLpV3_byxY13smxE2z"
+    },
+    "metrics": {
+      "key": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/luna-tel-h86-20261031T0709Z-01/metrics.json",
+      "sha256": "500a9876d4a682e8e0e2de9f56670d7ac57a803d2de0ff5de1bef2756663168b",
+      "version": "GRzC6Wn0M_3SmMdIQ882Yub1aUGpewIU"
+    }
+  },
+  "host": "xbabe2",
+  "inputs": {
+    "excluded_roles_opened": [],
+    "fold_manifest_sha256": "cabcfc6f182ef3aeb77a10890d81de0c655f60b5bb3db2a56b70c44a58567067",
+    "opened_payload_count": 1219,
+    "opened_payload_roles": [
+      "DL-Train"
+    ],
+    "pool_sha256_list_sha256": "18e8316ee16f0437031d1dc993a48f0f66f20036b52a8dcbb5c3fa4dd7786c42",
+    "selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "source_manifest_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "train_context_count": 1219
+  },
+  "metrics": {
+    "Elo": null,
+    "U4": null,
+    "descriptive_metrics_file": "metrics.json",
+    "val_reg_inner": null
+  },
+  "run_id": "result",
+  "s3_output_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/luna-bat02-h87-mask-integrity-20261031T0718Z-01",
+  "s3_outputs": [
+    "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/luna-bat02-h87-mask-integrity-20261031T0718Z-01/metrics.json",
+    "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/luna-bat02-h87-mask-integrity-20261031T0718Z-01/manifest.json"
+  ],
+  "schema": "jopedime.h87-w3-status-mask-audit-run.v1",
+  "source_commit": "86ba2a170eba184466a7b0dd426c65e473e6f09f",
+  "source_file_sha256": "617baf28fa0b3ee7b38310cda4e592cb48ca136c19346ab3b69673da6b5ac573",
+  "started_utc": "2026-10-31T07:19:04.590223+00:00",
+  "verdict": "INTEGRITY_ONLY; NO_PROVENANCE_OR_W3_ADMISSION_CLAIM",
+  "wall_seconds": 8.517698661191389
+}

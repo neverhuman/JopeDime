@@ -22,4 +22,10 @@ The outputs are a compact `metrics.json` and `manifest.json`; upload both create
 
 ## Result
 
-The exact execution receipt and H86 artifact versions are recorded in `run_manifest.json` after the run. No Elo, utility, training, model-change or admission result is produced.
+Run `luna-bat02-h87-20261031T0717Z` (xbabe2, CPU, nice 19) against H86 run `luna-tel-h86-20261031T0709Z-01`. Compact outputs are committed here as `metrics.json` and `run_manifest.json`.
+
+- **Integrity: PASS.** Archive fields exact, offsets valid, per-pool hashes and program-order digests match, **0 mask/pool status mismatches** over 1,404,287 DL-Train rows (1,219 contexts, 205 families).
+- Status totals: 1,344,468 measured_pass, 58,876 measured_fail, 943 sentinel_shaped (366 contexts), 0 nonfinite, 0 anomalous. Arm-c: 522,210 clipped passing rows, 894 floor-bind contexts; arm-d: 1,403,344 measured log-ratio rows.
+- **Verdict:** the exported H86 inference mask is internally consistent with the pinned pools. This does **not** supply recorded completion status, so W3 stays blocked per H88/H89 until source event records exist. No training, no model change, Elo N/A.
+- **Red-team:** DL-Train only (no DL-Val/sealed/holdout reads), DOPE not loaded, no HWM pointer written, no metric direction involved.
+- **Next:** none for H87; W3 unblock requires source completion-event provenance (H88 follow-up).
