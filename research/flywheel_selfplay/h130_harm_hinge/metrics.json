@@ -1,0 +1,30 @@
+{
+  "arms": [
+    "CONTROL",
+    "HINGE",
+    "CVAR"
+  ],
+  "candidate_breakthrough": false,
+  "dl_val_outer_test_sealed_holdout_metatest_reads": 0,
+  "fold_manifest_sha256": "98196cbc017c10d12db1f8c4390c163a11d3faddf1c457b79108a6386ed785ea",
+  "fold_seed": 130094,
+  "gpu_seconds": 0.0,
+  "optimizer_updates": 0,
+  "paired_seeds": [
+    94,
+    95,
+    96
+  ],
+  "prereg_sha256": "3eefc25b4c873d27942e0c95e2264fd8357e6784d1ebf2ba401924cab8144491",
+  "status": "NOT_RUN",
+  "synthetic_smoke": {
+    "assessment_read": false,
+    "mode": "synthetic_only",
+    "optimizer_updates": 0,
+    "status": "PASS"
+  },
+  "total_updates_planned": 360,
+  "updates_per_cell_planned": 40,
+  "verdict": "NOT_RUN",
+  "wave": "H130"
+}
