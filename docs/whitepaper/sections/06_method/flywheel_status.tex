@@ -147,5 +147,24 @@ and admission of a new adapter are different events.
 \end{figure*}
 
 \Cref{fig:fw-followup-development} shows a separate subsequent window.
+
+Historical GP target scores provide a separate view in
+\cref{fig:fw-target-progress}. The 159 repeated dataset/cut/arm groups cover
+55 distinct dataset/cut pairs; the 64 groups with lower final scores cover
+23 pairs. Shared incumbent and teacher seeds make the arms dependent.
+These retained development outcomes do not establish that learning improved
+the proposal policy.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_target_progress.pdf}
+  \caption{\textbf{Historical GP target progress.} First-to-last reported
+  best development RMSE at 1,000 evaluations per search, grouped by search
+  arm. Lower is better; unchanged scores are included. The arms shared
+  incumbent and teacher seeds, and elapsed time varied. These counts do
+  not measure independent discoveries or a learned-policy advantage.}
+  \label{fig:fw-target-progress}
+\end{figure}
+
 \Cref{sec:results} separates this development record from the independent
 comparisons needed to evaluate the invention claim.

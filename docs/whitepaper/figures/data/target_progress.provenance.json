@@ -1,0 +1,27 @@
+{
+  "schema": "whitepaper.historical-target-progress/v1",
+  "source_commit": "569324b7760a95be26e817ce843b2430e32095fb",
+  "inputs": {
+    "docs/internal/asm-manual/data/target-history/target-quality-1000-comparisons.csv": "1a3e32526308ce26b4808b0a1a34a651a503f5419ba2343a06751e7bbec87ad9",
+    "docs/internal/asm-manual/data/target-history/target-quality-1000-summary.csv": "df0445e3f3b29a7aeac4fb54b5fa056fc5a7362c687be4617c6f73dd9f3b6d1d",
+    "docs/internal/asm-manual/data/target-history/carry-forward-audit.json": "3408b07474073fab456019a901afdc6d2e82cca96d711540b00dd28beb81e401"
+  },
+  "selection": "All 159 merged comparison rows; first versus last retained generation per arm group",
+  "score": "best_validation_rmse; historical featmath_training_fold_normalized_v1 units; lower is better",
+  "outcome_rule": "Exact parsed score comparisons (<, ==, >); no epsilon or added cumulative minimum",
+  "completed_evaluations_per_search": 1000,
+  "arm_groups": 159,
+  "distinct_dataset_cuts": 55,
+  "lower_arm_groups": 64,
+  "distinct_improved_dataset_cuts": 23,
+  "scope": "Historical adaptive development validation only; no sealed or holdout inputs",
+  "limitations": [
+    "Shared incumbent/teacher seeds make arms dependent",
+    "RNG and elapsed wall time vary; equal consumed compute is not established",
+    "Lower retained scores do not establish neural-policy causality or transfer",
+    "Original score/seed payloads were not reopened; seed audit is retained metadata"
+  ],
+  "csv_sha256": "339fc00f3a17cc7ebf2ee49d5c2899e3aa5ddf8b7e570fd4a7bae0a107084ee6",
+  "generator_sha256": "96886938e0d607b9a419594ad0bab9b7d45dd495a0d9788acadccaf7f4965ddc",
+  "reproduce": "python3 figures/scripts/make_promotions_figure.py --target-progress"
+}
