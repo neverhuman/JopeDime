@@ -1,0 +1,586 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:jope:qualification-cpu-prestage:v1",
+  "title": "REL-07 CPU pre-stage receipt; never signed release qualification",
+  "type": "object",
+  "required": [
+    "schema",
+    "phase",
+    "started_utc",
+    "finished_utc",
+    "status",
+    "source",
+    "driver_sha256",
+    "machine",
+    "environment",
+    "inputs",
+    "inventory",
+    "checks",
+    "release_gates",
+    "signed_candidate",
+    "owner_approval",
+    "release_qualified"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "jope.qualification-cpu-prestage/v1"
+    },
+    "phase": {
+      "const": "cpu-prestage"
+    },
+    "started_utc": {
+      "type": "string"
+    },
+    "finished_utc": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "enum": [
+        "planned",
+        "running",
+        "passed",
+        "incomplete",
+        "failed"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "main_sha",
+        "head_sha",
+        "tree_sha",
+        "clean_at_main",
+        "dirty_paths"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "main_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "head_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "tree_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "clean_at_main": {
+          "type": "boolean"
+        },
+        "dirty_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "driver_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "machine": {
+      "type": "object",
+      "required": [
+        "host",
+        "platform",
+        "python"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "python": {
+          "type": "string"
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": [
+        "CUDA_VISIBLE_DEVICES",
+        "CARGO_BUILD_JOBS",
+        "CARGO_INCREMENTAL",
+        "CARGO_PROFILE_DEV_DEBUG",
+        "CARGO_TARGET_DIR",
+        "math_threads"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "CUDA_VISIBLE_DEVICES": {
+          "const": ""
+        },
+        "CARGO_BUILD_JOBS": {
+          "type": "string",
+          "pattern": "^[1-8]$"
+        },
+        "CARGO_INCREMENTAL": {
+          "const": "0"
+        },
+        "CARGO_PROFILE_DEV_DEBUG": {
+          "const": "line-tables-only"
+        },
+        "CARGO_TARGET_DIR": {
+          "type": "string"
+        },
+        "math_threads": {
+          "const": 1
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      }
+    },
+    "inventory": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/gate"
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/check"
+      }
+    },
+    "release_gates": {
+      "type": "object",
+      "required": [
+        "M1",
+        "M2",
+        "M3",
+        "M4",
+        "M5",
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "A5",
+        "E1",
+        "E2",
+        "E3",
+        "U1",
+        "U2",
+        "T1",
+        "T2",
+        "T3",
+        "D1",
+        "D2",
+        "Q1"
+      ],
+      "propertyNames": {
+        "enum": [
+          "M1",
+          "M2",
+          "M3",
+          "M4",
+          "M5",
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "R1",
+          "R2",
+          "R3",
+          "R4",
+          "A1",
+          "A2",
+          "A3",
+          "A4",
+          "A5",
+          "E1",
+          "E2",
+          "E3",
+          "U1",
+          "U2",
+          "T1",
+          "T2",
+          "T3",
+          "D1",
+          "D2",
+          "Q1"
+        ]
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/releaseGate"
+      }
+    },
+    "signed_candidate": {
+      "type": "null"
+    },
+    "owner_approval": {
+      "type": "null"
+    },
+    "release_qualified": {
+      "const": false
+    },
+    "source_changed": {
+      "type": "string"
+    },
+    "interrupted": {
+      "type": "boolean"
+    }
+  },
+  "$defs": {
+    "gate": {
+      "type": "object",
+      "required": [
+        "id",
+        "command",
+        "result_backend",
+        "requires_nonzero_tests"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "command": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "result_backend": {
+          "enum": [
+            "none",
+            "nextest",
+            "rust",
+            "pytest",
+            "unittest"
+          ]
+        },
+        "requires_nonzero_tests": {
+          "type": "boolean"
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "required": [
+        "collected",
+        "executed",
+        "passed",
+        "failed",
+        "skipped",
+        "excluded"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "collected": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "executed": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "passed": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "failed": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "skipped": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "excluded": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "required": [
+        "sha256",
+        "bytes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "check": {
+      "type": "object",
+      "required": [
+        "id",
+        "command",
+        "result_backend",
+        "requires_nonzero_tests",
+        "started_utc",
+        "finished_utc",
+        "exit_status",
+        "status",
+        "tests",
+        "diagnostic",
+        "admission",
+        "outputs",
+        "omitted_symlinks",
+        "wall_seconds"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "command": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "result_backend": {
+          "enum": [
+            "none",
+            "nextest",
+            "rust",
+            "pytest",
+            "unittest"
+          ]
+        },
+        "requires_nonzero_tests": {
+          "type": "boolean"
+        },
+        "started_utc": {
+          "type": "string"
+        },
+        "finished_utc": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "exit_status": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "unavailable",
+            "timed-out",
+            "incomplete"
+          ]
+        },
+        "tests": {
+          "$ref": "#/$defs/counts"
+        },
+        "diagnostic": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "admission": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "required": [
+                "cpu_count",
+                "load1",
+                "disk_used_percent"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "cpu_count": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "load1": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "disk_used_percent": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              }
+            }
+          ]
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/artifact"
+          }
+        },
+        "omitted_symlinks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "wall_seconds": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "passed"
+              },
+              "result_backend": {
+                "not": {
+                  "const": "none"
+                }
+              }
+            },
+            "required": [
+              "status",
+              "result_backend"
+            ]
+          },
+          "then": {
+            "properties": {
+              "tests": {
+                "properties": {
+                  "executed": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "failed": {
+                    "const": 0
+                  },
+                  "skipped": {
+                    "const": 0
+                  },
+                  "excluded": {
+                    "const": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "releaseGate": {
+      "type": "object",
+      "required": [
+        "status",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "not-qualified"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "passed"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "checks": {
+            "minItems": 1
+          },
+          "finished_utc": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "planned"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "checks": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
+  ]
+}
