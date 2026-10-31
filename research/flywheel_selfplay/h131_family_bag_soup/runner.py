@@ -12,12 +12,23 @@ import sys
 import time
 import traceback
 
-import numpy as np
-import torch
+from monitor import (
+    configure_thread_environment,
+    single_thread_tokens,
+    token_thread_preflight,
+)
 
-from anchor_cache import AnchorCache, tensor_hash
-from custody import put, save, sha
-from science import (
+configure_thread_environment()
+
+import numpy as np  # noqa: E402
+import torch  # noqa: E402
+
+torch.set_num_threads(2)
+torch.set_num_interop_threads(1)
+
+from anchor_cache import AnchorCache, tensor_hash  # noqa: E402
+from custody import put, save, sha  # noqa: E402
+from science import (  # noqa: E402
     ARMS,
     SEEDS,
     MEMBERS,
@@ -29,7 +40,7 @@ from science import (
     average_adapters,
     summarize,
 )
-from train_reader import read_train_rows_only
+from train_reader import read_train_rows_only  # noqa: E402
 
 SOURCE = Path(__file__).resolve().parent
 ROOT = SOURCE.parents[2]
@@ -125,8 +136,6 @@ def main():
     ):
         raise RuntimeError("merged preregistration required")
     OUT.mkdir(exist_ok=False)
-    torch.set_num_threads(2)
-    torch.set_num_interop_threads(1)
 
     def no_cuda(*args, **kwargs):
         raise RuntimeError("H131 CPU only")
@@ -283,8 +292,13 @@ def main():
         dict(sha256=initial_sha, count=29211, frozen_state_sha256=frozen),
     )
     torch.save(dict(adapter=initial), OUT / "initial.adapter.pt")
+    event("thread_preflight")
+    with torch.random.fork_rng(devices=[]):
+        preflight = token_thread_preflight(h48.h46, net, tables, torch.device("cpu"))
+    save(OUT / "thread-preflight.json", preflight)
+    event("thread_preflight_passed", **preflight)
     event("fit_tokens")
-    tokens, masks = h48.h46.make_tokens(net, tables, torch.device("cpu"))
+    tokens, masks = single_thread_tokens(h48.h46, net, tables, torch.device("cpu"))
     del tables
     event("regression_scoring")
     baseline, predictions = score(net, pools, tokens, masks)
@@ -472,8 +486,8 @@ def main():
     event("assessment_opened")
     assessment, tables = runtime.h55.load_rows(INPUT, assessment_rows, h48)
     net, params, guard, initial, names, frozen = build("assessment-reference")
-    assessment_tokens, assessment_masks = h48.h46.make_tokens(
-        net, tables, torch.device("cpu")
+    assessment_tokens, assessment_masks = single_thread_tokens(
+        h48.h46, net, tables, torch.device("cpu")
     )
     reference, _ = score(net, assessment, assessment_tokens, assessment_masks)
     integrity(net, guard, names, frozen)
@@ -525,7 +539,7 @@ def main():
     for name, digest in manifest["executor_sha256"].items():
         assert sha(SOURCE / name) == digest, name
     report.update(
-        wave="H131",
+        wave="H131b",
         actual_updates=updates,
         fitted_members=24,
         control_fits=3,

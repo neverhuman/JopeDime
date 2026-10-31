@@ -6,6 +6,7 @@
 //! an ignored, lock-gated test with source/bundle/fixture/device receipts.
 //! The existing cpu_placement helper still describes CPU-only native evaluation.
 
+mod cpu;
 mod forward;
 pub use forward::{FusedForward, StageOutput};
 #[cfg(test)]

@@ -59,3 +59,13 @@ readbacks outside the checkout, and append PID/SHA to `gpu_chain_t1015.log`.
 The test compares every required stage and all100cost slates, retaining tie counts
 separately from admission agreement. M2 is open until this actual CUDA invocation
 passes on the declared GPU and driver. A CPU pass or compiled feature is not M2.
+
+CPU replay uses the frozen reference's deterministic f32 reduction boundaries:
+eight-lane Welford/cascade moments with explicit FMA, ordered dense/attention
+products, reference exp for SiLU/softmax, and f64 tanh rounded once to f32.
+Attention scales by the f32 square-root divisor. Keeping these boundaries matters
+because frozen SVD scalers amplify one-ULP upstream differences; promoting the
+whole graph or only SVD does not reproduce the frozen model. The small scalar
+exp port is attributed to SLEEF 3.6.1 with its Boost license alongside the code.
+CUDA tensors continue through device-native Candle kernels. The CPU arithmetic
+regressions and real CPU replay do not establish GPU M2 or serving promotion.

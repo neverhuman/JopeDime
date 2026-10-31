@@ -78,6 +78,12 @@
       "ttl_hours": 24
     },
     {
+      "id": "remote-source-scratch",
+      "kind": "remote-source-scratch",
+      "path": "~/lane_work",
+      "ttl_seconds": 3600
+    },
+    {
       "id": "docker-cache",
       "mode": "observe",
       "path": "/var/lib/docker",

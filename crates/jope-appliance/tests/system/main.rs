@@ -316,6 +316,10 @@ fn stop_at(home: &Path, wanted: &str, point: &str) {
     }
 }
 
+fn crash_artifact(round: u64) -> jope_api::ids::ArtifactId {
+    format!("art_{round:024x}").parse().unwrap()
+}
+
 #[test]
 #[ignore = "subprocess-only crash target"]
 fn crash_child() {
@@ -325,36 +329,44 @@ fn crash_child() {
     let store = Arc::new(Store::open(home).unwrap());
     let log = EventLog::new(Arc::clone(&store));
     let mut next = log.snapshot(&snapshot().run_id).unwrap().unwrap();
-    next.state = RunState::Running;
-    next.revision.0 += 1;
-    stop_at(home, &point, "before_blob_publish");
-    let blob = store
-        .publish_blob(Cursor::new(b"synthetic model fixture"))
-        .unwrap();
-    stop_at(home, &point, "after_blob_publish");
-    let artifact = fixture_events()[3].event.clone();
-    let EventBody::AlgorithmAccepted(artifact) = artifact else {
+    let mut roots = vec![];
+    let EventBody::AlgorithmAccepted(mut artifact) = fixture_events()[3].event.clone() else {
         unreachable!();
     };
-    log.commit(
-        RunUpdate {
-            expected_revision: Some(next.revision.0 - 1),
-            snapshot: next.clone(),
-            checkpoint: json!({"round": 1}),
-            blobs: vec![blob.clone()],
-        },
-        vec![state_body(&next)],
-        |write| {
-            write.put(
-                &RecordKey::Artifact(artifact.model_artifact.unwrap()),
-                &Record::metadata(json!({"fixture": true}), vec![blob]),
-            )?;
-            stop_at(home, &point, "before_journal_commit");
-            Ok(())
-        },
-    )
-    .unwrap();
-    stop_at(home, &point, "after_journal_commit");
+    for round in 1..=3 {
+        next.state = RunState::Running;
+        next.revision.0 += 1;
+        stop_at(home, &point, &format!("{round}:before_blob_publish"));
+        let bytes = format!("synthetic model fixture {round}");
+        let blob = store.publish_blob(Cursor::new(bytes.as_bytes())).unwrap();
+        stop_at(home, &point, &format!("{round}:after_blob_publish"));
+        roots.push(blob.clone());
+        artifact.model_artifact = Some(crash_artifact(round));
+        next = log
+            .commit(
+                RunUpdate {
+                    expected_revision: Some(next.revision.0 - 1),
+                    snapshot: next.clone(),
+                    checkpoint: json!({"round": round}),
+                    blobs: roots.clone(),
+                },
+                vec![
+                    state_body(&next),
+                    EventBody::AlgorithmAccepted(artifact.clone()),
+                ],
+                |write| {
+                    write.put(
+                        &RecordKey::Artifact(crash_artifact(round)),
+                        &Record::metadata(json!({"fixture": true, "round": round}), vec![blob]),
+                    )?;
+                    stop_at(home, &point, &format!("{round}:before_journal_commit"));
+                    Ok(())
+                },
+            )
+            .unwrap()
+            .snapshot;
+        stop_at(home, &point, &format!("{round}:after_journal_commit"));
+    }
     panic!("unknown crash boundary {point}");
 }
 
@@ -366,14 +378,119 @@ impl Drop for ChildGuard {
     }
 }
 
+/// Check all tables, including rows past the watermark that paging would hide.
+fn recovered_prefix(
+    home: &Path,
+    committed: u64,
+    point: &str,
+) -> (RunSnapshot, Record, Vec<PublicEvent>) {
+    let store = Arc::new(Store::open(home).unwrap());
+    let log = EventLog::new(Arc::clone(&store));
+    let recovered = log.snapshot(&snapshot().run_id).unwrap().unwrap();
+    assert_eq!(recovered.state, RunState::Paused, "{point}");
+    assert_eq!(
+        recovered.revision.0,
+        if committed == 0 { 1 } else { committed + 2 },
+        "{point}"
+    );
+    let watermark = 1 + 2 * committed;
+    assert_eq!(recovered.event_watermark.0, watermark, "{point}");
+    let record = store
+        .get(&RecordKey::Run(recovered.run_id.clone()))
+        .unwrap()
+        .unwrap();
+    let recovery = record.run.as_ref().unwrap();
+    assert_eq!(recovery.state, RunState::Paused, "{point}");
+    assert_eq!(recovery.revision, recovered.revision.0, "{point}");
+    assert_eq!(recovery.interrupted, committed > 0, "{point}");
+    assert_eq!(record.data["checkpoint"]["round"], committed, "{point}");
+    assert_eq!(record.blobs.len() as u64, committed, "{point}");
+    let events = log
+        .page(&recovered.run_id, 0, 256, &[])
+        .unwrap()
+        .unwrap()
+        .events;
+    assert_eq!(
+        events
+            .iter()
+            .map(|event| event.sequence.0)
+            .collect::<Vec<_>>(),
+        (1..=watermark).collect::<Vec<_>>(),
+        "{point}"
+    );
+    assert!(
+        events.iter().all(|event| event.run_id == recovered.run_id),
+        "{point}"
+    );
+    assert_eq!(events[0].event, state_body(&snapshot()), "{point}");
+    let mut running = snapshot();
+    running.state = RunState::Running;
+    for round in 1..=3 {
+        let artifact = store
+            .get(&RecordKey::Artifact(crash_artifact(round)))
+            .unwrap();
+        assert_eq!(
+            artifact.is_some(),
+            round <= committed,
+            "{point}, artifact {round}"
+        );
+        if let Some(artifact) = artifact {
+            assert_eq!(
+                artifact.data,
+                json!({"fixture": true, "round": round}),
+                "{point}"
+            );
+            assert_eq!(artifact.blobs.len(), 1, "{point}");
+            assert!(record.blobs.contains(&artifact.blobs[0]), "{point}");
+            assert_eq!(
+                store.read_blob(&artifact.blobs[0]).unwrap(),
+                format!("synthetic model fixture {round}").as_bytes(),
+                "{point}"
+            );
+            assert_eq!(
+                events[(2 * round - 1) as usize].event,
+                state_body(&running),
+                "{point}"
+            );
+            let EventBody::AlgorithmAccepted(mut accepted) = fixture_events()[3].event.clone()
+            else {
+                unreachable!()
+            };
+            accepted.model_artifact = Some(crash_artifact(round));
+            assert_eq!(
+                events[(2 * round) as usize].event,
+                EventBody::AlgorithmAccepted(accepted),
+                "{point}"
+            );
+        }
+    }
+    for sequence in watermark + 1..=7 {
+        assert!(
+            store
+                .get(&RecordKey::Event {
+                    run: recovered.run_id.clone(),
+                    sequence
+                })
+                .unwrap()
+                .is_none(),
+            "{point}, uncommitted event {sequence}"
+        );
+    }
+    (recovered, record, events)
+}
+
 #[test]
 fn r1_sigkill_at_public_blob_and_journal_boundaries_recovers_atomic_records_and_sequences() {
-    for point in [
-        "before_blob_publish",
-        "after_blob_publish",
-        "before_journal_commit",
-        "after_journal_commit",
-    ] {
+    for (round, boundary) in (1..=3).flat_map(|round| {
+        [
+            "before_blob_publish",
+            "after_blob_publish",
+            "before_journal_commit",
+            "after_journal_commit",
+        ]
+        .map(|boundary| (round, boundary))
+    }) {
+        let point = format!("{round}:{boundary}");
         let home = tempfile::tempdir().unwrap();
         {
             let store = Arc::new(Store::open(home.path()).unwrap());
@@ -395,13 +512,13 @@ fn r1_sigkill_at_public_blob_and_journal_boundaries_recovers_atomic_records_and_
             Command::new(std::env::current_exe().unwrap())
                 .args(["--exact", "crash_child", "--ignored", "--nocapture"])
                 .env("INT02_CRASH_HOME", home.path())
-                .env("INT02_CRASH_POINT", point)
+                .env("INT02_CRASH_POINT", &point)
                 .stdout(Stdio::null())
                 .spawn()
                 .unwrap(),
         );
         let deadline = Instant::now() + Duration::from_secs(15);
-        while !home.path().join("ready").exists() {
+        while !fs::read_to_string(home.path().join("ready")).is_ok_and(|marker| marker == point) {
             assert!(
                 child.0.try_wait().unwrap().is_none(),
                 "child exited: {point}"
@@ -417,37 +534,23 @@ fn r1_sigkill_at_public_blob_and_journal_boundaries_recovers_atomic_records_and_
             use std::os::unix::process::ExitStatusExt;
             assert_eq!(status.signal(), Some(9), "{point}");
         }
-
-        let committed = point == "after_journal_commit";
+        let committed = round - u64::from(boundary != "after_journal_commit");
+        let (mut recovered, record, prefix) = recovered_prefix(home.path(), committed, &point);
+        // A second automatic open must not recover the same run twice.
         let store = Arc::new(Store::open(home.path()).unwrap());
         let log = EventLog::new(Arc::clone(&store));
-        let mut recovered = log.snapshot(&snapshot().run_id).unwrap().unwrap();
-        assert_eq!(recovered.state, RunState::Paused, "{point}");
         assert_eq!(
-            recovered.revision.0,
-            if committed { 3 } else { 1 },
+            log.snapshot(&recovered.run_id).unwrap(),
+            Some(recovered.clone()),
             "{point}"
         );
-        assert_eq!(recovered.event_watermark.0, if committed { 2 } else { 1 });
-        let record = store
-            .get(&RecordKey::Run(recovered.run_id.clone()))
-            .unwrap()
-            .unwrap();
-        assert_eq!(record.run.unwrap().interrupted, committed, "{point}");
-        assert_eq!(record.data["checkpoint"]["round"], u64::from(committed));
-        let EventBody::AlgorithmAccepted(accepted) = fixture_events()[3].event.clone() else {
-            unreachable!();
-        };
-        let artifact = store
-            .get(&RecordKey::Artifact(accepted.model_artifact.unwrap()))
-            .unwrap();
-        assert_eq!(artifact.is_some(), committed, "{point}");
-        if let Some(artifact) = artifact {
-            assert_eq!(
-                store.read_blob(&artifact.blobs[0]).unwrap(),
-                b"synthetic model fixture"
-            );
-        }
+        assert_eq!(
+            store
+                .get(&RecordKey::Run(recovered.run_id.clone()))
+                .unwrap(),
+            Some(record.clone()),
+            "{point}"
+        );
         let expected_revision = recovered.revision.0;
         recovered.revision.0 += 1;
         let watermark = recovered.event_watermark.0;
@@ -469,9 +572,19 @@ fn r1_sigkill_at_public_blob_and_journal_boundaries_recovers_atomic_records_and_
             .unwrap()
             .unwrap()
             .events;
+        assert_eq!(events[..prefix.len()], prefix, "{point}");
+        assert_eq!(events.last().unwrap(), &appended.events[0], "{point}");
         assert_eq!(
-            events.iter().map(|e| e.sequence.0).collect::<Vec<_>>(),
-            (1..=watermark + 1).collect::<Vec<_>>()
+            events
+                .iter()
+                .map(|event| event.sequence.0)
+                .collect::<Vec<_>>(),
+            (1..=watermark + 1).collect::<Vec<_>>(),
+            "{point}"
+        );
+        eprintln!(
+            "INT02 cut={point} committed={committed} watermark={watermark} next={}",
+            appended.events[0].sequence.0
         );
     }
 }

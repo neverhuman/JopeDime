@@ -7,7 +7,7 @@ import json
 import subprocess
 
 BUCKET = "veox-jopedime-learning-use2"
-PREFIX = "experiments/rd_breakthrough_20261030/H131/astra-t1235/"
+PREFIX = "experiments/rd_breakthrough_20261030/H131b/astra-t1340/"
 
 
 def sha(path):

@@ -1,10 +1,10 @@
 \section{Discussion}\label{sec:meaning}
 
-The comparisons in \cref{sec:results} will decide whether training improves
-first proposals on independent new families. This section separates the
-claims that each outcome would support. The development record alone
-cannot establish transfer, useful new composition or autonomous
-scientific discovery.
+The comparisons in \cref{sec:results} test whether training improves
+first proposals on independent new families. Their outcomes will bound the
+claims in this section. Development records alone cannot establish
+transfer, useful new composition or autonomous scientific
+discovery.
 % Trace: §6.8 (sections/06_method/flywheel_status.tex; figures/data/admissions.csv, rounds.csv).
 \TBD{Reconcile every conclusion below with the completed evaluation.}
 
@@ -55,12 +55,12 @@ evaluation (\cref{sub:results-failures}).
 
 \subsection{A bounded claim about self-improvement}
 
-Improving an external algorithm, improving the proposer and improving the
-rate at which it learns are distinct claims. Evidence for the
-first does not establish the others. An optimizer trace with verified
-parameter changes can establish that training occurred. A lower training
-objective measures the fitting criterion. Neither alone shows that first
-proposals improved on unseen families.
+Improving an external algorithm, the proposer and the rate at which it
+learns are distinct claims. Evidence for the first does not establish the
+others. An optimizer trace with verified parameter changes can establish
+that training occurred. A lower training objective measures the fitting
+criterion. Neither alone shows that first proposals improved on unseen
+families.
 % Trace: AGENTS.md, "What counts as verification" (training evidence = optimizer updates and changed parameters).
 
 People still choose the task, metric, representation and resource limits.
@@ -77,29 +77,27 @@ and its primitives encode human prior knowledge (\cref{sub:game-board}).
 The referee is noisy and can be gamed. Strict improvement on inner folds
 does not quantify confidence (\cref{sub:game-played,sub:method-referee}).
 The economics are modeled rather than measured. Pilot costs and the point
-at which training repays itself are still to be reported
+at which training repays itself remain unreported
 (\cref{sec:price,sub:results-search}).
 
 \section{Conclusion}\label{sec:conclusion}
 
 % Trace: AlphaGo Zero, cited in §1 and §3.3 (silver2017mastering).
 Within a game, a learner with a referee went beyond the best human play.
-We asked whether the same recipe can improve the first algorithm a system
-proposes for a new problem, and made the question testable. Invention
-becomes a game with a board, a move, a referee and an incumbent opponent.
+We make the analogous question testable: can the same recipe improve the
+first algorithm a system proposes for a new problem? Invention becomes a
+game with a board, a move, a referee and an incumbent opponent.
 Its price is the cost of a verified win. \EZ{} is designed to train a
 grammar-constrained writer and a separate problem--program map on targets
-from verified search, and to deploy one program per problem. The design,
-the cost model and the evaluation protocol are specified here. The
-retained development records show admission and search behavior, not
-transfer.
+from verified search, and to deploy one program per problem. We specify
+the design, cost model and evaluation protocol. Retained development
+records show admission and search behavior, not transfer.
 % Trace: §6.8 (figures/data/admissions.csv, rounds.csv) and §7.7
 % (sections/06_method/sources/01M674E8XA0S4ZS5BT6FVH5QKX.md).
 
-The decisive experiment is a single comparison: the frozen reference
-writer against the same writer after a predeclared training intervention,
-one proposal each, on problem families held out from both
+The decisive experiment is a single comparison between the frozen reference
+writer and the same writer after a predeclared training intervention.
+Each would submit one proposal on problem families held out from both
 (\cref{sub:results-learning}). Engineered intelligence, in our sense, is a
-capability whose aim, judge and memory are designed to be audited. Whether
-experience can also make its first guess better is what \cref{sec:results}
-must show.
+capability whose aim, judge and memory are designed to be audited.
+\Cref{sec:results} must show whether experience improves the first guess.

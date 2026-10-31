@@ -28,12 +28,12 @@ expected cost per win is mean cost per attempt divided by that probability
   \label{eq:bill}
 \end{equation}
 $\Cattempt$ is the mean incurred cost per candidate attempt, including
-work spent on failures. A repair that emits a revised candidate is another
+failures. A repair that emits a revised candidate is another
 attempt; charge its work once. $\winprob$ is the probability that an
 attempt beats the incumbent.
 It factors as $\winprob = q_{\text{run}}\,q_{\text{beat}}$,
-the share of moves that run times the share of those that win. A move that
-runs and loses still costs money, so we divide by $\winprob$, not by the survival
+the share of moves that run times the share of those that win. Valid losses
+still cost money, so divide by $\winprob$, not by the survival
 rate. Generating a token costs about 2~FLOPs per active parameter, and
 training on one about~6 \citep{kaplan2020scaling}. Cost projections require reproducible inputs and calculations (\cref{sub:price-run}).
 
@@ -61,24 +61,26 @@ those stages and the compute spent before each failed attempt stops. If 90\% of 
 model requires ten attempts per improvement in expectation. A typed language
 can exclude invalid structures before fitting (\cref{sec:game}). Runtime,
 resource and output failures may consume part or all of the fit, and their
-incurred cost must be counted. Whether also-rans dominate is a pilot question. Learning, a changed search
-procedure or a changed opponent can affect the measured win rate; isolate
-the effect attributed to the writer.
+incurred cost must be counted. Whether also-rans dominate is a pilot question.
+Changes in learning, search or opponent can affect the measured win rate.
+Isolate the writer's contribution.
 
 \subsection{The correction tax and the reasoning dial}\label{sub:price-tax}
 
 Here and in \cref{sub:price-run}, we consider language-model writers and
 the agent comparators of \cref{sub:results-headtohead,sub:results-search}.
 The reference network of \cref{sec:method}, writer and map together, has
-27.8 million parameters and writes at most 128 grammar tokens. Small models are cheap per token and can be dear per win. For generation
+27.8 million parameters and writes at most 128 grammar tokens.
+
+Small models are cheap per token and can be dear per win. For generation
 alone, compute per token falls about 190-fold from a hypothetical dense 1.5T writer to
 an 8B one. With equal token counts and compute unit costs, the smaller
 writer can tolerate a win rate about 190 times lower before that
 component's cost per win matches. If it needs three times the tokens per
 attempt, the generation-only ratio falls to about 60. Repair turns also
-re-read a growing context. Encoding and referee costs further change the
-full-cost ratio, so the threshold for the complete bill in \cref{eq:bill}
-requires all components to be counted.
+re-read a growing context. Encoding and referee costs change the full-cost
+ratio; a threshold for the complete bill in \cref{eq:bill} requires
+counting every component.
 
 Reasoning is the second dial. Reasoning tokens may cut stillborn moves, but
 each is billed as output. The planned pilot (\cref{fig:price}, panel~b) compares
