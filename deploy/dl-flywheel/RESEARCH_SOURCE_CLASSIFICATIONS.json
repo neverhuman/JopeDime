@@ -3855,6 +3855,30 @@
         "role": "research",
         "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
       }
+    },
+    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/monitor.py": {
+      "bytes": 5712,
+      "sha256": "aa3adf40f20712b765042a3f218e4518b1a10948c5d56a46a3408fa8698fcad1",
+      "classification": {
+        "role": "research",
+        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/runner.py": {
+      "bytes": 12749,
+      "sha256": "2d3a159378ba7b94c52650b2b66b1f55485ded38e7a48f6a6637fcef0139c8d2",
+      "classification": {
+        "role": "research",
+        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/science.py": {
+      "bytes": 6019,
+      "sha256": "bba1dc69e228bac25e07cc1d0582eecfa6d9f15f1cfba53914201bd6fe0ad77e",
+      "classification": {
+        "role": "research",
+        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

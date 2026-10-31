@@ -54,8 +54,24 @@ impl PtySession {
         Self::spawn(binary, args)
     }
 
+    /// Spawn jopedime with selected environment overrides for isolated engine homes.
+    pub fn spawn_jopedime_with_env(args: &[&str], env: &[(&str, &str)]) -> io::Result<Self> {
+        let binary = option_env!("CARGO_BIN_EXE_jopedime")
+            .ok_or_else(|| io::Error::other("jopedime binary path is integration-test only"))?;
+        Self::spawn_with_env(binary, args, env)
+    }
+
     /// Spawn a program attached to a PTY. Kept public for other appliance integration tests.
     pub fn spawn(program: impl AsRef<OsStr>, args: &[&str]) -> io::Result<Self> {
+        Self::spawn_with_env(program, args, &[])
+    }
+
+    /// Spawn a program attached to a PTY with selected environment overrides.
+    pub fn spawn_with_env(
+        program: impl AsRef<OsStr>,
+        args: &[&str],
+        env: &[(&str, &str)],
+    ) -> io::Result<Self> {
         let pty_system = native_pty_system();
         let pair = pty_system
             .openpty(PtySize {
@@ -69,6 +85,9 @@ impl PtySession {
         let mut command = CommandBuilder::new(program);
         command.args(args);
         command.env("TERM", "xterm-256color");
+        for (key, value) in env {
+            command.env(key, value);
+        }
         let child = pair.slave.spawn_command(command).map_err(other)?;
         let mut reader = pair.master.try_clone_reader().map_err(other)?;
         let writer = pair.master.take_writer().map_err(other)?;
