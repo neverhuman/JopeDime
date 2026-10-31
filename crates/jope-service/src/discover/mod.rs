@@ -7,5 +7,6 @@ pub mod finalize;
 pub mod folds;
 pub mod landmark_pools;
 pub mod r#loop;
+pub mod propose;
 pub mod splits;
 pub mod warm;

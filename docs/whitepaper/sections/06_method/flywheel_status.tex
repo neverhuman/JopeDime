@@ -13,6 +13,18 @@ an acceptance flag and a timestamp. Neither CSV records the adapter's
 architecture, score normalization or evaluation population, so we do not
 compare this snapshot with other models.
 
+
+In the inspected loop implementation, heuristic program edits, retrieval
+and grammar sampling supply candidate programs. A trainable adapter ranks
+proposals by predicted cost; this loop does not optimize a neural program
+writer. Its pool-utility calculation uses the fitness and gate outcomes of
+the first four candidates as revealed history, then selects the minimum
+predicted-cost candidate from the pool, including those entries. This is a
+conditional ranking task, separate from a single new program drawn by the
+historical writer.
+\TBD{Bind the retained snapshot to the exact loop source, adapter, candidate
+pools, revealed-history inputs and utility normalization.}
+
 The admission log contains
 695 consecutive rounds. Four rows are marked accepted, but only two strictly
 increase the recorded best validation utility within this window. Its final
