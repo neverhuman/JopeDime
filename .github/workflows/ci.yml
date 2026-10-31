@@ -361,8 +361,14 @@ jobs:
     if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true'
     uses: ./.github/workflows/go.yml
 
+  export-parity:
+    if: github.repository == 'neverhuman/JopeDime' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/export-parity.yml
+
   aggregate:
-    needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui, paper, typescript, go]
+    needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui, paper, typescript, go, export-parity]
     if: always()
     runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 20
@@ -541,9 +547,85 @@ jobs:
             root="target/ci-typescript-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/typescript-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-$version"
             node deploy/ci/typescript/evidence.mjs verify "$root" "$version"
           done
+      - name: Collect hosted export parity evidence
+        if: github.repository == 'neverhuman/JopeDime' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        uses: ./.github/actions/download-ci-evidence
+        with:
+          name: export-parity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/export-parity/${{ github.run_id }}/${{ github.run_attempt }}
+          into: target/ci-export-parity/${{ github.run_id }}/${{ github.run_attempt }}
+      - name: Verify exact-source hosted export parity
+        if: always() && github.repository == 'neverhuman/JopeDime' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        env:
+          EXPORT_RESULT: ${{ needs.export-parity.result }}
+        run: |
+          set -euo pipefail
+          test "$EXPORT_RESULT" = success
+          python3 - <<'PYVERIFY'
+          import hashlib, json, os, pathlib
+          root = pathlib.Path('target/ci-export-parity') / os.environ['GITHUB_RUN_ID'] / os.environ['GITHUB_RUN_ATTEMPT']
+          paths = list(root.rglob('report.json'))
+          assert len(paths) == 1, 'one hosted parity report required'
+          path = paths[0]; r = json.loads(path.read_text())
+          assert r['schema'] == 'jope.export-parity/v1' and r['status'] == 'pass' and r['passed'] is True
+          assert r['ci_executed'] is True and r['source_stable'] is True and not r['source_dirty']
+          assert r['source_sha'] == r['source_end'] == os.environ['JOPE_SOURCE_SHA']
+          assert r['harness_sha256'] == hashlib.sha256(pathlib.Path('deploy/ci/export-parity.sh').read_bytes()).hexdigest()
+          assert r['cargo_lock_sha256'] == hashlib.sha256(pathlib.Path('Cargo.lock').read_bytes()).hexdigest()
+          c = r['ci_context']
+          assert c['GITHUB_REPOSITORY'] == os.environ['GITHUB_REPOSITORY'] == 'neverhuman/JopeDime'
+          assert c['GITHUB_EVENT_NAME'] == os.environ['GITHUB_EVENT_NAME'] == 'workflow_dispatch'
+          assert c['GITHUB_RUN_ID'] == os.environ['GITHUB_RUN_ID']
+          assert c['GITHUB_RUN_ATTEMPT'] == os.environ['GITHUB_RUN_ATTEMPT']
+          assert r['fault_injected'] is False
+          assert r['toolchains']['rustc'].startswith('rustc 1.97.1 ')
+          assert r['toolchains']['python'] == 'Python 3.12.3' and r['toolchains']['node'] == 'v26.1.0'
+          registry = json.loads((path.parent / 'registry.json').read_text())
+          assert hashlib.sha256((path.parent / 'registry.json').read_bytes()).hexdigest() == r['registry_sha256']
+          assert hashlib.sha256((path.parent / 'fixtures.json').read_bytes()).hexdigest() == r['fixture_sha256']
+          expected = {(x['kind'].capitalize() + '/' + x['name'], lang): admitted for x in registry['entries'] for lang, admitted in x['supported'].items()}
+          cells = r['cells']; supported = [x for x in cells if x['supported']]
+          assert {(x['key'], x['language']): x['supported'] for x in cells} == expected
+          assert len({(x['key'], x['language']) for x in cells}) == len(cells)
+          assert len(supported) > 0 and all(x['status'] == 'pass' for x in supported)
+          assert r['expected_supported_cells'] == r['executed_supported_cells'] == len(supported)
+          assert all(x['status'] == 'unsupported_registry' for x in cells if not x['supported'])
+          cases = r['cases']
+          assert r['expected_emitted_modules'] == r['executed_emitted_modules'] == len(cases) > 0
+          assert all(x['status'] == 'pass' and x['self_check_rows'] == 64 for x in cases)
+          assert {x['language'] for x in cases} == {'rust', 'python', 'javascript'}
+          routing = [x for x in cases if x.get('decision_measurement')]
+          assert routing and all(x['golden_flip_rate'] == 0 and x['randomized_flip_rate'] <= .001 for x in routing)
+          assert len(r['raw_numeric_contract']) == 3 and all(x['status'] == 'pass' and x['rows'] > 0 for x in r['raw_numeric_contract'])
+          commands = r['commands']; assert commands and all(type(x['exit']) is int for x in commands)
+          for command in commands:
+              assert {'argv', 'exit', 'stdout', 'stderr', 'seconds'} <= command.keys()
+              assert command['argv'] and command['stdout'] in r['files'] and command['stderr'] in r['files']
+          actual = {str(x.relative_to(path.parent)) for x in path.parent.rglob('*') if x.is_file() and x != path and x != path.parent / 'MANIFEST.sha256'}
+          assert actual == set(r['files']), 'complete generated predictor/model/subprocess inventory'
+          assert {'harness.sh', 'generate.rs', 'registry.json', 'fixtures.json'} <= r['files'].keys()
+          assert any(name.endswith('/model.json') for name in r['files'])
+          for extension in ('rs', 'py', 'mjs'):
+              assert any(name.endswith('/predictor.' + extension) for name in r['files'])
+          for name, item in r['files'].items():
+              member = path.parent / name
+              assert not pathlib.Path(name).is_absolute() and '..' not in pathlib.Path(name).parts
+              assert not member.is_symlink() and member.resolve().is_relative_to(path.parent.resolve())
+              assert member.stat().st_size == item['bytes']
+              assert hashlib.sha256(member.read_bytes()).hexdigest() == item['sha256']
+          print('Hosted export parity:', len(supported), 'supported cells;', len(cases), 'emitted modules; source/run/attempt and every file verified')
+          PYVERIFY
+      - name: Retain hosted export parity on aggregate runner
+        if: always() && github.repository == 'neverhuman/JopeDime' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        uses: ./.github/actions/upload-ci-evidence
+        with:
+          name: export-parity-verified-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/ci-export-parity/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Validate every required result
         if: always()
         env:
+          EXPORT_RESULT: ${{ needs.export-parity.result }}
+          EXPORT_REQUIRED: ${{ github.repository == 'neverhuman/JopeDime' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
           GO_RESULT: ${{ needs.go.result }}
           GO_REQUIRED: ${{ needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true' }}
           NEEDS_JSON: ${{ toJson(needs) }}
@@ -560,8 +642,11 @@ jobs:
           expected=skipped
           if [ "$TYPESCRIPT_REQUIRED" = true ]; then expected=success; fi
           test "$TYPESCRIPT_RESULT" = "$expected"
-          # UI, publication and language evidence are independently verified above.
-          python3 -c 'import json,os; n=json.loads(os.environ["NEEDS_JSON"]); n.pop("observatory-ui"); n.pop("paper"); n.pop("go"); n.pop("typescript"); print(json.dumps(n))' > "$output/needs.json"
+          expected=skipped
+          if [ "$EXPORT_REQUIRED" = true ]; then expected=success; fi
+          test "$EXPORT_RESULT" = "$expected"
+          # UI, publication, language and export evidence are independently verified above.
+          python3 -c 'import json,os; n=json.loads(os.environ["NEEDS_JSON"]); n.pop("observatory-ui"); n.pop("paper"); n.pop("go"); n.pop("typescript"); n.pop("export-parity"); print(json.dumps(n))' > "$output/needs.json"
           python3 deploy/ci/aggregate.py --receipts "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --needs "$output/needs.json" --output "$output/aggregate.json"
       # aggregate.py already fails on this; the separate report is the retained proof.
       - name: Rust test slices cover the unsharded rust-test set exactly once
