@@ -1,14 +1,13 @@
 \section{Referee Inventory}\label{app:history}
 
 \Cref{sec:road} traces the four pillars of \cref{sec:anatomy} through the
-milestones directly needed for our argument: algorithm selection
+milestones used here: algorithm selection
 \citep{rice1976algorithm}, typed genetic programming and evolutionary search
 \citep{koza1992genetic,montana1995stgp,real2020automlzero}, self-play and expert
 iteration \citep{samuel1959checkers,silver2017mastering,anthony2017expert}, and
 task-conditioned amortization across tabular problems
 \citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025}. Each of those
-systems depends on a referee. \Cref{tab:referees} collects, domain by domain,
-the referees that the main text relies on. A domain enters the innovation
+systems depends on a referee. \Cref{tab:referees} collects the main text's referees by domain. A domain enters the innovation
 game only when its referee is reliable and affordable (\cref{sub:game-boards}).
 
 \begin{table}[ht]
@@ -40,30 +39,27 @@ game only when its referee is reliable and affordable (\cref{sub:game-boards}).
 
 \section{Incident Log and Audit Safeguards}\label{app:incidents}
 
-\Cref{sub:method-referee} excludes a test-selected search baseline. This appendix records
-that exclusion and the audit safeguards the evaluation protocol requires, so that
-artifacts violating held-out isolation are recorded rather than silently dropped:
+\Cref{sub:method-referee} excludes a test-selected search baseline. The record below documents that exclusion and the required audit safeguards.
+Artifacts violating held-out isolation must be recorded rather than silently dropped:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Excluded test-selected search baseline.} An earlier internal
   leaderboard entry selected each dataset's best test-scored outcome from
-  \num{63108} evaluations in total across 42 datasets. Because selecting among candidates using
-  test-fold scores biases the reported metric upward
-  \citep{cawley2010overfitting}, that entry is excluded from
+  \num{63108} evaluations in total across 42 datasets. Selection using test-fold scores biases the reported metric upward
+  \citep{cawley2010overfitting}. The entry is therefore excluded from
   all comparative claims.
   \item \textbf{Input-closure and canary checks.} Before benchmark release,
-  the evaluation protocol requires passing receipts for: an inner-fold label-poison test,
+  the evaluation protocol requires passing receipts for an inner-fold label-poison test,
   a sealed canary check, and a train-only input-closure audit verifying that
   held-out test targets and their derived statistics do not enter board
-  encoding or candidate generation. The final pre-registration and these
-  audit receipts belong to the evaluation record of
-  \cref{sub:results-protocol} and are not reproduced here.
+  encoding or candidate generation. The final pre-registration and audit receipts belong to the evaluation
+  record in \cref{sub:results-protocol}; they are not reproduced here.
 \end{itemize}
 
 \section{Training Details}\label{app:training}
 
-This appendix records the implementation specifications referenced in
-\cref{sec:method} for the historical reference checkpoint (separate from the
-later adapter snapshot in \cref{sec:method-status}):
+These implementation specifications describe the historical reference
+checkpoint in \cref{sec:method}, separate from the later adapter snapshot
+in \cref{sec:method-status}:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Board encoder blocks (\cref{sub:method-board}).} The frozen
   \num{2048}-value context $z_p = \encP(p)$ concatenates three blocks:
@@ -82,8 +78,8 @@ later adapter snapshot in \cref{sec:method-status}):
   $0.05 + \rho_w^4$. The native trainer gives problem families equal mass and forms
   each training comparison from one list: its best program plus one
   program drawn from each of seven equal rank bands of the rest. Every
-  objective term is computed on these eight-program comparisons, so
-  \cref{eq:writerLoss,eq:mapLoss} show the list-level form. The native sequence term applies label smoothing over
+  objective term is computed on these eight-program comparisons.
+  Thus \cref{eq:writerLoss,eq:mapLoss} show the list-level form. The native sequence term applies label smoothing over
   legal tokens and averages each program's token loss before taking the
   normalized weighted mean over programs. The displayed aggregate
   coefficients match the native objective; the checkpoint's objective
@@ -97,7 +93,7 @@ later adapter snapshot in \cref{sec:method-status}):
   approximately \num{1.05} million parameters belong to training-time ranking
   and control heads that are absent at deployment.
   \item \textbf{Optimization notes (\cref{sub:method-selfplay}).}
-  The training records describe an AdamW run (learning rate $10^{-4}$,
+  The records describe AdamW training (learning rate $10^{-4}$,
   weight decay $0.01$, gradient-norm clip $1.0$, global batch size \num{2048})
   on eight A100 GPUs in September 2026 over \num{10214332} scored programs from
   80 training datasets (\num{7877} lists; \num{8894} contexts). These

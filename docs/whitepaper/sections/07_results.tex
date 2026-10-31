@@ -38,8 +38,8 @@
   \end{tabular}
 \end{table*}
 
-This section specifies independent tests of whether training improves the
-first proposal for an unseen problem. The development records in
+These independent tests ask whether training improves the first proposal
+for an unseen problem. The development records in
 \cref{sec:method-status} track program search and adapter admission; their
 scores inform those decisions. They cannot settle the deployment
 question. \Cref{tab:results-plan} summarizes the pending comparisons,
@@ -54,22 +54,24 @@ budgets before opening final outcomes. Pin dataset versions and content
 hashes, row splits and family assignments. Separate unseen problem
 families from training and development, and report which task types were
 actually tested.
+
 Report known training and pretraining exposure for the writer, encoders
 and learned comparators, with unresolved provenance marked explicitly.
 Bound unseen-family claims to the exclusions actually established.
+
 Each \EZ{} submission follows \cref{alg:gameday}; failed generations and
 executions remain in the denominator. Report paired results and uncertainty
 at the family level, alongside encoding, generation, fitting and prediction
-costs. Disclose any internal model or hyperparameter selection in the
-emitted procedure, even when the writer submits only one outer candidate.
+costs. Disclose internal model or hyperparameter selection within the emitted
+procedure, even when the writer submits only one outer candidate.
 \TBD{Document the final problem inventory, dataset identities, row splits,
 family assignments and exclusions, component provenance, evaluator,
 checkpoint, seeds, task metrics and failure accounting.}
 
 \subsection{The effect of training}\label{sub:results-learning}
 
-Test the learning claim with a frozen reference writer as the control.
-Predeclare that checkpoint and the evaluated training intervention before
+Use a frozen reference writer as the control.
+Predeclare its checkpoint and the evaluated training intervention before
 opening final outcomes. Hold the encoder, program grammar and output
 support, permitted task inputs, decoding rules, fitting protocol, referee
 and resource budgets constant; vary the writer checkpoint. Changes to the
@@ -83,8 +85,8 @@ comparison and training-update evidence before claiming transfer.}
 
 \subsection{One proposal against fixed methods}\label{sub:results-headtohead}
 
-The proposed comparison asks whether one task-conditioned program competes
-with methods that run unchanged across tasks. The comparators are frozen
+Compare one task-conditioned program with methods that run unchanged
+across tasks. The comparators are frozen
 algorithms whose receipts record the model that designed them: one designed
 by \texttt{claude-opus-5-5} and one by \texttt{gpt-6-astra-wm}, the latter
 identifier as reported by its authoring session. A comparator without a
@@ -125,7 +127,9 @@ Compare the single proposal with agents allowed successive attempts and
 development feedback. Keep final outcomes unavailable to those agents.
 Count every candidate attempt, including incomplete or invalid outputs
 and failed executions; a repair that emits a revised candidate is another
-attempt. Charge all task-time computation. Plot
+attempt. Charge all task-time computation.
+
+Plot
 performance against both attempts and cost (\cref{fig:searchone}); if an agent does not reach a
 reference performance within its budget, report that limit.
 \TBD{Supply attempt curves, matched budgets, repeated seeds and uncertainty.}
@@ -165,9 +169,12 @@ for common programs is distinguishable from reading the problem.
 A ranking head can agree with a referee without improving the writer (\cref{tab:ablation}).
 In the checkpoint described in \cref{sub:method-map}, the map neither
 conditions nor screens the writer's draw. Its ranking accuracy therefore
-cannot establish a reduction in wasted proposals. A causal ablation needs
-a declared route by which the map changes training, with the writer,
-training budget and deployment protocol otherwise matched.
+cannot establish a reduction in wasted proposals.
+
+In native search, the map's ranks weight parent selection.
+A causal ablation must bind this route to the evaluated checkpoint and
+vary the map's influence with the writer, training budget and deployment
+protocol otherwise matched.
 \TBD{Identify an implemented influence path or limit the study to ranking.}
 
 \begin{table}[t]
@@ -193,7 +200,7 @@ Describe unsuccessful proposals and coverage limits as well as wins.
 Assign each attempt one terminal status: incomplete generation, parse or
 type-checking refusal, execution
 or resource failure, invalid output under declared checks, and valid ties,
-losses and wins. Every attempted candidate contributes its incurred cost.
+losses and wins. Charge every attempted candidate its incurred cost.
 Unresolved outcomes retain an explicit unknown status; fix their treatment
 and the validity rules before opening final outcomes.
 \TBD{Supply attempt inventories and costs by outcome class, identifying
@@ -232,9 +239,9 @@ without updating the writer.
 \subsection{Earlier development diagnostics}\label{sub:results-diagnostics}
 
 The supplied method notes report 3,227 exact ties in
-3,268 paired policy-seeded versus generic final searches, plus a separate
-audit in which 98.84\% of reported winners were already in their starting
-seed populations. The paired searches shared seeds, repeated development
+3,268 paired policy-seeded versus generic final searches. A separate audit
+in those notes found that 98.84\% of reported winners were already in
+their starting seed populations. The paired searches shared seeds, repeated development
 contexts and had unequal wall times; they were not independent
 first-proposal draws. The two historical inventories differ.
 
@@ -247,5 +254,4 @@ matched first-proposal test in \cref{sub:results-learning} is still required.
 \TBD{Pin the inventories, checkpoints and seeding, timing and ranking
 protocols, separately from the final comparisons above.}
 
-The independent comparisons specified above will determine which claims
-\cref{sec:meaning} can support.
+The limits on interpreting those comparisons follow in \cref{sec:meaning}.
