@@ -78,6 +78,12 @@ fn build_router(
                     axum::routing::post(super::datasets::register)
                         .layer(DefaultBodyLimit::disable()),
                 )
+            } else if operation.name == "dataset_inspect" && dataset_enabled {
+                if path.ends_with("{id}") {
+                    app.route(path, get(super::dataset_inspect::get))
+                } else {
+                    app.route(path, get(super::dataset_inspect::list))
+                }
             } else if let ("run_start", Some(_)) = (operation.name, journal.as_ref()) {
                 app.route(path, axum::routing::post(super::runs::start))
             } else if let ("run_status", Some(log)) = (operation.name, journal.as_ref()) {

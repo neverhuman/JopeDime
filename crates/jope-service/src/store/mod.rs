@@ -259,6 +259,36 @@ impl Store {
             .transpose()
     }
 
+    /// Exclusive, bounded dataset-ID traversal in metadata key order.
+    pub(crate) fn dataset_ids_after(
+        &self,
+        after: Option<&jope_api::ids::DatasetId>,
+        limit: usize,
+    ) -> Result<Vec<jope_api::ids::DatasetId>> {
+        if !(1..=257).contains(&limit) {
+            return Err(StoreError::Invalid("dataset page size"));
+        }
+        let read = self.database.begin_read().map_err(db)?;
+        let table = read.open_table(definition(Table::Datasets)).map_err(db)?;
+        let start = after.map(ToString::to_string).unwrap_or_default();
+        let mut ids = Vec::new();
+        for row in table.range::<&[u8]>(start.as_bytes()..).map_err(db)? {
+            let (key, _) = row.map_err(db)?;
+            if key.value() == start.as_bytes() {
+                continue;
+            }
+            let id = std::str::from_utf8(key.value())
+                .map_err(|_| StoreError::Integrity("invalid dataset key"))?
+                .parse()
+                .map_err(|_| StoreError::Integrity("invalid dataset ID"))?;
+            ids.push(id);
+            if ids.len() == limit {
+                break;
+            }
+        }
+        Ok(ids)
+    }
+
     pub(crate) fn run_ids_after(
         &self,
         after: Option<&jope_api::ids::RunId>,

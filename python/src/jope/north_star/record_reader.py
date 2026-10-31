@@ -235,7 +235,7 @@ def read_records(path, *, allow_synthetic=False, allow_incomplete=False, require
         while line := stream.readline(MAX_LINE_BYTES + 1):
             _require(len(line) <= MAX_LINE_BYTES and line.endswith(b"\n"), "oversized or partial record line")
             record = validate_record(
-                json.loads(line, object_pairs_hook=_object, parse_constant=_constant),
+                json.loads(line.decode("utf-8"), object_pairs_hook=_object, parse_constant=_constant),
                 allow_synthetic=allow_synthetic,
                 allow_incomplete=allow_incomplete,
             )
