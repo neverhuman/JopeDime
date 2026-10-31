@@ -656,7 +656,8 @@
     "feature:jope-appliance/engine": {
       "discovery": {
         "dependencies": [
-          "dep:jope-service"
+          "dep:jope-service",
+          "jope-client?/engine"
         ],
         "kind": "feature"
       },
