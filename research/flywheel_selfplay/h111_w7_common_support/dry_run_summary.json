@@ -1,0 +1,94 @@
+{
+  "schema": "jope.h111.w7-dry-run-summary/v1",
+  "authority_commit": "9878fa354658fbf27d66bc20b5fff0db8a7fed10",
+  "source_pins": {
+    "runner.py": {
+      "path": "research/flywheel_selfplay/h104_w7_acquisition_replay_prep/runner.py",
+      "commit": "9878fa354658fbf27d66bc20b5fff0db8a7fed10",
+      "sha256": "c5c46036c3bf45f12a9912fe02f9b3c6ba8d0cb23f9ca27ba168a1704d8d4217"
+    },
+    "config.json": {
+      "path": "research/flywheel_selfplay/h104_w7_acquisition_replay_prep/config.json",
+      "commit": "9878fa354658fbf27d66bc20b5fff0db8a7fed10",
+      "sha256": "828838fe32777ee39d813029ac981d66748f04c7ea6f18073a1b939ab2012ec7"
+    },
+    "fold_manifest.json": {
+      "path": "research/flywheel_selfplay/h104_w7_acquisition_replay_prep/fold_manifest.json",
+      "commit": "9878fa354658fbf27d66bc20b5fff0db8a7fed10",
+      "sha256": "129002bcd6cfc4b2f3a0b9e0562967cd4510dcbf88364c2d11d0bbe8801c2c73"
+    },
+    "DESIGN.md": {
+      "path": "research/flywheel_selfplay/h104_w7_acquisition_replay_prep/DESIGN.md",
+      "commit": "9878fa354658fbf27d66bc20b5fff0db8a7fed10",
+      "sha256": "a21036a1521e1e0c8935d68d936b0f3efbcc9aecdbb756a8bf2303dddb236a9a"
+    }
+  },
+  "input_receipt": {
+    "bytes": 395880,
+    "name": "fold_manifest.json",
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W6/w6-roster-prep-res03-20261031T0451Z-d4/fold_manifest.json",
+    "sha256": "129002bcd6cfc4b2f3a0b9e0562967cd4510dcbf88364c2d11d0bbe8801c2c73",
+    "version_id": "R1L8dcRZZzhDQz4XGpXyo02kHhHz6Dh2",
+    "exact_version_sha_verified": true,
+    "byte_identical_main_copy": true
+  },
+  "contexts": 1219,
+  "families": 205,
+  "folds": 5,
+  "seeds": [
+    701,
+    702,
+    703
+  ],
+  "matching_cells": 15,
+  "pending_common_learner_slots": 45,
+  "real_acquisition_attempt_records": 0,
+  "real_completion_receipts": 0,
+  "synthetic_tests_passed": 32,
+  "empty_ledger_controls": 15,
+  "host_shards": [
+    {
+      "host": "xbabe2",
+      "shard": "1",
+      "cpu_seconds": 0.031461727,
+      "exit_status": 0
+    },
+    {
+      "host": "xbabe1",
+      "shard": "0",
+      "cpu_seconds": 0.030116564000000002,
+      "exit_status": 0
+    },
+    {
+      "host": "xbabe3",
+      "shard": "2",
+      "cpu_seconds": 0.030143264999999995,
+      "exit_status": 0
+    },
+    {
+      "host": "xbabe4",
+      "shard": "3_4",
+      "cpu_seconds": 0.018578124,
+      "exit_status": 0
+    }
+  ],
+  "worker_cpu_seconds": 0.11029968,
+  "other_overhead": "Unmeasured, not zero; prior campaign resource consumption remains unknown.",
+  "matching_plan_sha256": "ea2c40033005f344113ee87743da7e72f94505677f8ef6a34812a94ed43ada3c",
+  "h104_plan_file_sha256": "28481a3b4be7bc28bb5711b88eb370684b9a0a3263fe387c603edee483bd75d2",
+  "matching_source_sha256": "9c711e1e6b92ef03fa9b99404f5cf2fc4523fb53efb69a3f28742710c50e74c9",
+  "actual_fits": 0,
+  "actual_optimizer_updates": 0,
+  "gpu_seconds": 0,
+  "source_provenance_verified": false,
+  "execution_admitted": false,
+  "advance_admitted": false,
+  "metrics": {
+    "family_elo": null,
+    "val_reg_inner": null,
+    "U4": null
+  },
+  "verdict": "CPU_PREPARATION_ONLY_ALL_REAL_MATCHING_RECEIPTS_PENDING",
+  "initial_worker_cpu_seconds": 0.112828199,
+  "total_measured_worker_cpu_seconds": 0.223127879
+}
