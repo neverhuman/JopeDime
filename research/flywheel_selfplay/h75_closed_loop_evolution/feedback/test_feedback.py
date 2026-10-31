@@ -375,6 +375,20 @@ class FeedbackTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("frozen DOPE", result.stderr)
 
+    def test_cli_rejects_overflowing_metadata_before_outcome_read(self):
+        args, source, manifest = self.cli_inputs()
+        # 1e400 is a JSON number that the stdlib decoder maps to infinity.
+        data = manifest.read_text().rstrip()[:-1] + ',"extra_metadata":1e400}'
+        manifest.write_text(data)
+        args[args.index("--admission-sha256") + 1] = hashlib.sha256(
+            manifest.read_bytes()
+        ).hexdigest()
+        source.unlink()
+        result = subprocess.run(args, text=True, capture_output=True)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("Out of range float", result.stderr)
+        self.assertFalse((self.path / "output.json").exists())
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -72,6 +72,9 @@ def object_identity(value):
 
 def validate_admission(admission):
     require(type(admission) is dict, "admission must be an object")
+    canonical(
+        admission
+    )  # Reject overflow/nonfinite metadata before any outcome-file read.
     require(
         admission.get("schema") == "jope.h75-closed-loop.feedback-admission/v1",
         "admission schema invalid",
