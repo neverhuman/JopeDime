@@ -1,0 +1,23 @@
+{
+  "wave": "H135",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "seed_reservation_status": "H133_RESERVATION_DISCLOSED_NO_PRIOR_135_EXECUTION_RECORDED",
+  "seeds": [
+    135,
+    136,
+    137
+  ],
+  "reference_sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+  "checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "source_sha256": {
+    "research/flywheel_selfplay/h129_gbm_blend_harm_gate/runner.py": "e34d4a3f7ecb82971fa303f05cca665bb1108509abb90021d1a54717fe02cb6c",
+    "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a"
+  },
+  "executor_sha256": {
+    "science.py": "bba1dc69e228bac25e07cc1d0582eecfa6d9f15f1cfba53914201bd6fe0ad77e",
+    "test_science.py": "489fe724351a752c3761513019b8cdf8fc5e1fdb69fb72f99a10a3df84c6d209",
+    "monitor.py": "b70695a1fe0d6b0a7ceb2182672487a35ee2058c2379f68e6f2a0580ae57ae24",
+    "runner.py": "2d3a159378ba7b94c52650b2b66b1f55485ded38e7a48f6a6637fcef0139c8d2"
+  },
+  "prereg_sha256": "8c852852f2d97459c1981593a5ba7641d5056783298e1d51218c36c40f0372a7"
+}
