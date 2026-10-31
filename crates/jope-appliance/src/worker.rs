@@ -304,8 +304,10 @@ mod tests {
             .tempdir_in(profile)
             .unwrap();
         let executable = directory.path().join("jopedime");
-        fs::copy(profile.join("jopedime"), &executable)
-            .expect("first build jopedime at this source");
+        let built = std::env::var_os("JOPE_WRK01_EXECUTABLE")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| profile.join("jopedime"));
+        fs::copy(built, &executable).expect("first build and capture jopedime at this source");
         let version = Command::new(&executable)
             .args(["--version", "--json"])
             .output()
