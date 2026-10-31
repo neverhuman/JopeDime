@@ -116,7 +116,7 @@ fn measured(index: usize) -> Rung0Measurement {
         Rung0Measurement::Success {
             surrogate: index as f64,
             objective: -(index as f64),
-            gate: index % 2 == 0,
+            gate: index.is_multiple_of(2),
         }
     }
 }
