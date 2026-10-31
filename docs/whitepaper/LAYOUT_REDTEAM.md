@@ -69,7 +69,7 @@ The before/after page comparisons are in [`redteam/`](redteam/):
 | O10 | Low | The title block has no affiliation or contact, and the abstract is styled as a section heading. | The venue template will replace both. | — |
 | O11 | Low | **Fixed in upgrade PR 7** (`flushend`). The two columns of the last page are unbalanced: on p. 23 the left column reaches the bottom margin and the right column stops short, by an amount that shifts with every upstream edit. | Balance the last page only; `balance.sty` was rejected because it also shortens every full bibliography page. | format |
 | O12 | Low | **Fixed in upgrade PR 9** (2 pt row spacing). In Table 9 (Appendix A) wrapped cells run together: "Matrix multiplication" sits directly on "Sorting", and "Machine-learning research" on "Code" (p. 17). | `\setlength{\extrarowheight}{2pt}` separates rows; the widths are unchanged, and no float or section moves. | format |
-| O13 | Low | Table 4 (§4, p. 7) has the same run-together rows: "Legal move" spans three lines with "Illegal move" directly beneath it. | Apply the same row spacing. Pass 10 makes this safe: the extra height no longer cascades into the §7 float placement (float-pressure note below). A full-width `table*` still cascades. | format |
+| O13 | Low | **Fixed in upgrade PR 11** (2 pt row spacing). Table 4 (§4, p. 7) has the same run-together rows: "Legal move" spans three lines with "Illegal move" directly beneath it. | `\setlength{\extrarowheight}{2pt}`, as in Table 9; the widths are unchanged. After pass 10 the §7 float gap moves only from 2 to 3 (Figure 11 is one page after §7.4). A full-width `table*` still cascades. | format |
 
 ## Clarity and structure (for the writer)
 
@@ -114,7 +114,8 @@ The owner widened the scope to a full upgrade, carried out in small sequential P
 | 7 | Camera-ready preamble polish, no text change: equal-height columns on the last page (O11) and no blank line after a nested `\EndFor` in Algorithm 1 (O9). Algorithm 1 is two lines shorter, so text on pp. 13–17 moves up with every float on its original page, and p. 23 is rebalanced. The extracted text keeps the same words and characters. | merged (#896) |
 | 8 | H56 paper-vs-code recheck (below): all 12 dimensions are FIXED or ALREADY-OK. One §6.8 framing sentence states that the inspected loop source is not yet bound to the run behind the retained logs. `\brokenpenalty=10000` (in `macros.tex`) stops words hyphenating across a column or page break; this removes the one on main ("Sup-/ply", §7.4) and the one this reflow would otherwise create ("sec-/comp", Appendix C). The float-pressure note is updated with the layout fixes tested. | merged (#923) |
 | 9 | Appendix A: Table 9 rows separated with 2 pt row spacing (O12); no text change, every float and section stays on its page. Table 4 gets the same fix later (O13), because extra height above §7 currently cascades into the Results float placement. | merged (#931) |
-| 10 | §6.8 float order: Figures 5–7 defined at the top of §6.8 (numbers and text unchanged), so they are placed before §7 begins and the §7 floats stay with their subsections. Float-to-text gap 7 → 2 pages; under a +18 pt upstream change, 13 → 3. | this PR |
+| 10 | §6.8 float order: Figures 5–7 defined at the top of §6.8 (numbers and text unchanged), so they are placed before §7 begins and the §7 floats stay with their subsections. Float-to-text gap 7 → 2 pages; under a +18 pt upstream change, 13 → 3. | merged (#940) |
+| 11 | §4: Table 4 rows separated with 2 pt row spacing (O13), the same fix as Table 9; no text change. §5 now starts on p. 9, and the §7 float gap moves from 2 to 3. | this PR |
 
 ## H56 paper-vs-code recheck (pass 8)
 
