@@ -1,0 +1,37 @@
+# H125 — r882 context-loss clipping and normalization
+
+Preregistered before calibration, optimizer updates or H125 outcome reads under owner `h125_launch_t0955_rd_astra.md`. CPU-only offline candidate study; no serving or GPU authorization. This tests a different operation from H59: clipping the **complete per-context objective** at a frozen fit-context percentile and scaling by that context's **r882 baseline objective**, rather than clipping individual SmoothL1 elements or dividing by target MAD. Selection/utility semantics are unchanged.
+
+## Frozen design
+
+Use only the pinned real-S3 H50 **DL-Train** packet:1219 regression contexts/205 families. Stream only the train metadata array; refuse all other pool/table identities. The canonical S3 catalog supplies provenance/exclusions. No DL-Val, sealed/holdout/meta-test/outer-test or live-run payload reads. Retain dataset labels and evaluator definitions. Input/model/source SHA pins are in manifest.json.
+
+Seeds **67,68,69** are paired across CONTROL/CLIP/NORM. A bounded audit of77 registered H-wave runner/prereg/protocol files found no use of these seeds or split seed125067; this is not a global uniqueness claim. No unregistered retry seeds. Fresh partition: sorted205 family IDs, NumPy default_rng(125067).permutation, array_split into5 equal41-family folds. As in H105, assess **only fold0**, fit on the remaining164 families. This is a single preassigned family-grouped inner-CV assessment split, not five completed CV rotations. No hyperparameter search, validation-based checkpoint selection or early stopping. All three seeds use the same split. Freeze the actual roster/hash before data execution.
+
+Every cell starts from a unique SHA-verified COPY of r882; original never written. Only29211 non-anchor adapter parameters train. DOPE SHA c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814 before/after every cell. H97/H105 CONTROL recipe unchanged:20rounds x2 AdamW steps, batch16/slate192, lr1e-4, weight_decay1e-4, final gradient norm clip1. No scheduler. Preserve H76/H97 batch ordering, sampling, seed streams and model mode. All9 cells required; incomplete/aborted/invalid is not zero or NO_ADVANCE.
+
+Let L_c = mean SmoothL1(prediction,target;beta1) +0.1 KL(softmax(-target/.2) || softmax(-prediction/.2)) over the existing192-slot slate. Targets unchanged (passing fitness, genuine gate-failure cost2); no objective-target clipping. The existing revealed-slot treatment is preserved.
+
+- CONTROL: mean_c L_c, exact H59 CONTROL/H97/H105 loss.
+- CLIP: mean_c min(L_c,q90). q90 is the NumPy linear90th percentile of the frozen per-context r882 baseline losses from **fit families only**. Above-cap contexts have zero objective gradient; AdamW decay remains unchanged.
+- NORM: mean_c L_c/max(abs(L_c,r882),0.1). Denominators detached and frozen, never recomputed as training progresses. This minimizes a scaled loss; it is not a measured improvement claim.
+
+Baseline calibration uses one fixed192-slot slate per fit context, deterministic H53b cached_training_indices with NumPy seed derived from SHA256(`H125-calibration-v1:<context>`), first8bytes little-endian modulo2^32. No assessment family contributes to percentile/denominators. r882 is in the same mode as training; torch RNG125067 fixed for calibration. Record unrounded context losses, q90, denominators, slates, source/input/adapter/fold hashes and timestamp in immutable calibration.json and create-only S3 **before the first optimizer step**. The numeric calibration is a prereg addendum; its algorithm is fixed here before any run. A changed calibration invalidates the wave; no silent rerun or threshold tuning.
+
+## Regression first
+
+Before calibration/training, two independently staged unchanged r882 copies must produce the same prediction vectors and utility on the same assessment contexts (prediction atol1e-6, rtol0; utility atol1e-12). CONTROL objective value/gradient must match the pinned H59 CONTROL on identical tensors (atol1e-6, rtol1e-6), and the exact optimizer/update plan must be verified. Failure makes the wave **INVALID**, with no optimization. “Reproduce r882” means this unchanged-control regression on the new split; it does not require the trained40-step CONTROL to remain identical, nor compare new-fold utility to the historical live score1.13779.
+
+## Readout, frozen before outcomes
+
+Use unchanged H61/H105 terminal unrevealed-candidate selection/evaluator utility (`eval_mode="unrev"`, eligible indices4 through P−1; passing utility=clip(−fitness,−2,4), gate failures=−2). Report per-context and equal-family utility for every seed/arm and freshly scored r882. Primary: median across three seeds of the equal-family assessment utility difference versus r882. All41 assessment families/contexts and all9 terminal cells required. Ties are not wins.
+
+Use10000 common family-cluster bootstrap draws, RNG125000, with seeds paired together. For each arm, resample41 families, calculate each seed's family-mean gain and then its median. Report two-sided95% percentile CI and one-sided lower bound. Holm step-down across **CLIP and NORM only** at alpha.05: order smoothed bootstrap lower-tail areas `(1+count(boot<=0))/(10001)`, deterministic CLIP-before-NORM tie order; thresholds.025 then.05, stop after first failure. Require median gain>0 and two-sided95% CI LCB>0 strictly, Holm pass and **at most10% assessment contexts** worse than r882 by more than.01 using seed-mean context gain. Also report each seed's context harm fraction. CONTROL is a diagnostic comparator, not a third Holm test. Report CLIP/NORM vs CONTROL descriptively without redefining the primary.
+
+Report family-paired Elo with r882=1500: per-seed family wins/ties/losses from raw gain (>0/=0/<0), p=(wins+.5ties)/41 and Elo=1500+400log10(p/(1-p)); represent exact0/1 limits explicitly. Bootstrap the same families and report95% CI plus median seed Elo. Do not substitute AUC. Report repeated seed utility vectors and never count identical seeds as independent replications. Keep all precision, parameter hashes/L2, finite gradient checks, actual update count and refusal outcomes. No serving promotion from this study.
+
+## Resources and stopping
+
+xbabe2 CPU only, nice15, at most8 math/Torch threads (use4 initially), single cell at a time, RSS cap8,000,000,000bytes enforced by an external monitor plus per-stage checks; host MemAvailable must stay>=16GiB. Abort the owned worker if statvfs f_bavail disk usage>95.0%,1minute load>86.7 (85% of102cores), RSS exceeds cap or source/DOPE/input integrity fails. Swap is nearly full; do not infer memory safety from nominal free RAM. Recheck before launch and throughout work. No GPU, qualification.lock, xbabe0, job signals to peers or deletion of checkpoints/datasets/receipts.
+
+No extra native evaluations: use existing real training-pool outcomes only. No search/candidate generation. Preserve incomplete work and resource charges; no automatic same-cell retry after an outcome read. The owner did not specify a CPU-hour cap; do not introduce an undisclosed numerical stopping/selection rule. One finite9-cell wave, then stop. Write bulk outputs outside Git, preserve exact-version SHA-verified create-only S3 artifacts under experiments/rd_breakthrough_20261030/H125/. Prereg READY PR first; immutable numeric addendum before optimization; closeout PR afterwards, including INVALID/INCOMPLETE if stopped.

@@ -1,0 +1,17 @@
+{
+  "schema": "jope.h65.w3-comparator-binding/v1",
+  "w1_disposition": {
+    "status": "NO_ADVANCE",
+    "accepted_winner": null
+  },
+  "prior_binding": null,
+  "strongest_comparator": {
+    "id": "GBM_PROG412_CTX",
+    "label": "context GBM (ungated)",
+    "source_metrics": {
+      "path": "../h108_w1_prior_residual/metrics.json",
+      "sha256": "530e1cd634916c59b84dde9f93fae4988256c09f50c7e970f59491737b5d8903"
+    }
+  },
+  "interpretation": "The owner-directed strongest-comparator binding for W3 comparisons; this is not a W1 winner, accepted prior, or launch authorization."
+}

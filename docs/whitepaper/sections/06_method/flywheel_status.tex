@@ -183,6 +183,22 @@ Shared seeds prevent treating their matching outcomes as independent discoveries
   \label{fig:fw-target-history}
 \end{figure*}
 
+For the adapter record in \cref{fig:fw-validation},
+\cref{fig:fw-admission-shortfall} summarizes candidate gaps to each round's
+recorded best. Each retained round contributes once; the curve does not
+count independent tasks or distinct programs.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_admission_shortfall.pdf}
+  \caption{\textbf{Candidate gaps to the recorded best.} Cumulative share
+  of the same 695 admission rounds as \cref{fig:fw-validation}, against
+  recorded best minus candidate validation utility. The best is logged
+  after admission, so zero includes strict gains and ties. Repeated
+  adaptive rounds are not independent trials.}
+  \label{fig:fw-admission-shortfall}
+\end{figure}
+
 Program-incumbent gains, adapter admissions and historical target scores
 measure different outcomes. \Cref{sec:results} specifies the independent
 comparisons needed to test whether training improves the writer's first

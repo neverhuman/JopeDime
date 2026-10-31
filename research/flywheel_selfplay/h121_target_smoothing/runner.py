@@ -9,12 +9,50 @@ from pathlib import Path
 import numpy as np
 import torch
 
+
+def _load_h59():
+    import importlib.util
+    import sys
+
+    p = Path(__file__).resolve().parent.parent / "h97_reg_ema" / "runner.py"
+    spec = importlib.util.spec_from_file_location("h121_runner_contract", p)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod
+    spec.loader.exec_module(mod)
+    return mod.h59
+
+
+h59 = _load_h59()
+
+
+def atomic_json(path: Path, value: dict) -> None:
+    import os
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp = path.with_suffix(path.suffix + ".new")
+    with temp.open("w", encoding="utf-8") as stream:
+        stream.write(
+            json.dumps(value, sort_keys=True, indent=2, allow_nan=False) + "\n"
+        )
+        stream.flush()
+        os.fsync(stream.fileno())
+    temp.replace(path)
+    directory_fd = os.open(path.parent, os.O_DIRECTORY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+
+
 ARMS = ("CONTROL", "TS-0.1", "TS-0.3")
 SEEDS = (45, 46, 47)
 FOLD_SEED = 12100
 UPDATES = 40
 EPSILON = {"CONTROL": 0.0, "TS-0.1": 0.1, "TS-0.3": 0.3}
 DOPE_SHA256 = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[2]
+R882_SHA256 = "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
 
 
 def smooth_targets(targets: torch.Tensor, epsilon: float) -> torch.Tensor:
@@ -35,6 +73,7 @@ def family_folds(rows: list[dict]) -> dict:
             r.get("dl_split") != "DL-Train"
             or r.get("task") != "regression"
             or r.get("has_meta_test") is True
+            or r.get("source_split") not in (None, "train", "inner")
             or r.get("origin") not in (None, "real")
             or not isinstance(r.get("family_id"), str)
             or not r["family_id"]
@@ -120,6 +159,8 @@ def plan() -> dict:
         "adapter_only": True,
         "checkpoint": "fresh per-cell copy of ~/jope-data/h51/ckpt/round-882.pt",
         "scratch": "scratch/{arm}-seed{seed}-attemptN/ unique per attempt",
+        "executor": "H97 guarded training cell with H82 loss and H61 scoring; H50 DL-Train only",
+        "coordinator": "H97/H61 FIFO lease, H99/H100 closeout barrier, explicit --authorized-execution",
         "cpu_prep": {
             "synthetic_only": True,
             "optimizer_updates": 0,
@@ -149,25 +190,100 @@ def cpu_dry_run() -> dict:
     assert len(fold["score_families"]) == 5 and not set(fold["train_families"]) & set(
         fold["score_families"]
     )
+    from execution import build_runtime
+
+    h97, state, _loss, _atomic = build_runtime()
+    assert h97.ARMS == ARMS and h97.SEEDS == SEEDS
+    assert state["folds"] is None and state["score_rows"] is None
     return {
         "plan": plan(),
         "synthetic_smoothing": sm,
         "synthetic_fold_sha256": fold["assignment_sha256"],
         "synthetic_adapter_update_changed_parameter": True,
+        "runtime_adapter_loaded": True,
+        "runtime_arms": list(h97.ARMS),
+        "runtime_seeds": list(h97.SEEDS),
         "real_checkpoint_or_data_accessed": False,
+        "gpu_used": False,
+        "gpu_ticket_created": False,
     }
 
 
-if __name__ == "__main__":
+def run_cell(args):
+    """Execute one guarded H121 cell through the H97 CUDA/runtime path."""
+    from execution import run_cell as run_h121_cell
+
+    return run_h121_cell(args)
+
+
+def summarize(cells, draws=10000):
+    """Compute the registered family-bootstrap, Holm, Elo, and regret readouts."""
+    from execution import summarize as summarize_h121
+
+    return summarize_h121(cells, draws=draws)
+
+
+def main():
     import argparse
 
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--cpu-dry-run", action="store_true")
-    ap.add_argument("--output", type=Path)
-    a = ap.parse_args()
-    result = cpu_dry_run() if a.cpu_dry_run else plan()
-    blob = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
-    if a.output:
-        a.output.write_text(blob)
-    else:
-        print(blob, end="")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cpu-dry-run", action="store_true")
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--arm", choices=ARMS)
+    parser.add_argument("--seed", type=int, choices=SEEDS)
+    parser.add_argument(
+        "--input", type=Path, default=Path.home() / "jope-data/h50/input"
+    )
+    parser.add_argument(
+        "--checkpoint",
+        type=Path,
+        default=Path.home() / "jope-data/h51/ckpt/round-882.pt",
+    )
+    parser.add_argument("--out", type=Path)
+    parser.add_argument("--phase", type=Path)
+    parser.add_argument("--attempt-token")
+    parser.add_argument("--attempt", type=int, default=1)
+    parser.add_argument("--lock-fd", type=int)
+    parser.add_argument("--timing", action="store_true")
+    args = parser.parse_args()
+    if args.cpu_dry_run:
+        result = cpu_dry_run()
+        blob = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
+        if args.output:
+            args.output.write_text(blob)
+        else:
+            print(blob, end="")
+        return
+    if (
+        args.arm is None
+        or args.seed is None
+        or args.out is None
+        or args.phase is None
+        or args.attempt_token is None
+        or args.lock_fd is None
+    ):
+        parser.error(
+            "execution requires arm, seed, out, phase, attempt-token and inherited lock-fd"
+        )
+    if (
+        args.attempt < 1
+        or args.out.exists()
+        or args.phase != args.out.with_suffix(".phase.json")
+    ):
+        raise RuntimeError("repeated cell or unexpected phase path")
+    result = run_cell(args)
+    print(
+        json.dumps(
+            {
+                "wave": "H121",
+                "arm": result["arm"],
+                "seed": result["seed"],
+                "updates": result["updates"],
+            },
+            sort_keys=True,
+        )
+    )
+
+
+if __name__ == "__main__":
+    main()

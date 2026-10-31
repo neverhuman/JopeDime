@@ -17,3 +17,9 @@ Co-readout following H114(a): continuous mean regret over all candidate predicti
 ## Preparation boundary
 
 This change authorizes CPU protocol preparation and synthetic-only tests/dry run. It does not authorize GPU work, FIFO tickets/waiters, real checkpoint or S3 payload access, timing, fitting, scoring, or outcomes. Future execution remains separately gated after H99, H100, H105, and H109, with owner authorization and the queue pattern in the H121 nudge. No sealed/holdout/meta-test payloads and never the live xbabe1 loop.
+
+## Executor and FIFO implementation
+
+The executor adapts the reviewed H97 training cell path and H61 FIFO lease mechanism. It applies the registered smoothing transform to H82 batch targets and keeps H82's optimizer, candidate sampler, adapter-only trainable parameter inventory, frozen DOPE guard, 40 updates and official terminal argmin utility evaluation. It forms the fresh five-fold whole-family split from the H50 real DL-Train roster; the first four folds supply fit rows and only the fifth fold is loaded for primary scoring. H50 DL-Val payloads are not loaded by H121.
+
+Each arm/seed/attempt has distinct H97-compatible scratch. Coordinator accounting is cumulative under a 2,700 second GPU cell-wall cap, reserves shutdown time, retries only a confirmed pre-scoring host-load abort at a new FIFO tail, and refuses unknown/in-progress budget resumes. It checks merged CPU source dependencies and completed H99/H100 closeout records before starting the FIFO lease. Manual invocation requires `--authorized-execution` plus a durable owner receipt stored under `~/jope_plan/ns/receipts/`, approved for H121 and bound to the exact merged source SHA; CPU dry-run is data-free and creates no run root, ticket or waiter. These implementation guards do not grant execution authorization.
