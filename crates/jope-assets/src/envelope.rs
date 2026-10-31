@@ -46,11 +46,17 @@ fn sha256_region(file: &File, offset: u64, len: u64) -> Result<String, AssetErro
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// Parsed 128-byte package footer. Prefer [`Footer::decode`] for untrusted bytes.
 pub struct Footer {
+    /// Length of the executable bytes before alignment padding.
     pub base_executable_len: u64,
+    /// Byte offset of the canonical manifest in the package file.
     pub manifest_offset: u64,
+    /// Length of the canonical manifest bytes.
     pub manifest_len: u64,
+    /// Identity of the key that signed this footer.
     pub key_id: KeyId,
+    /// SHA-256 digest of the canonical manifest bytes.
     pub manifest_sha256: [u8; 32],
 }
 
@@ -59,16 +65,20 @@ fn footer_error(reason: &str) -> AssetError {
 }
 
 impl Footer {
+    /// End offset of the signed prefix (`manifest_offset + manifest_len`).
+    ///
+    /// Call this on a footer returned by [`Self::decode`] or otherwise known to have a checked
+    /// layout; the public fields allow callers to construct invalid layouts.
     pub fn signed_prefix_len(&self) -> u64 {
         self.manifest_offset + self.manifest_len
     }
 
-    /// Where the asset frames start.
+    /// Where the asset frames start. Requires a footer with a valid checked layout.
     pub fn payload_offset(&self) -> u64 {
         align_up(self.base_executable_len).expect("checked by decode")
     }
 
-    /// The file length this footer implies.
+    /// Total package length implied by this footer. Requires a valid checked layout.
     pub fn file_len(&self) -> u64 {
         self.signed_prefix_len() + SIGNATURE_LEN + FOOTER_LEN
     }
@@ -93,6 +103,8 @@ impl Footer {
         Ok(())
     }
 
+    /// Encode these field values as a footer. This writes the values as supplied; it does not
+    /// validate a caller-constructed layout. Use [`Self::decode`] to validate serialized bytes.
     pub fn encode(&self) -> [u8; FOOTER_LEN as usize] {
         let mut out = [0u8; FOOTER_LEN as usize];
         out[0..8].copy_from_slice(&MAGIC);
@@ -174,14 +186,23 @@ pub struct Package {
 /// What [`Package::verify_full`] checked.
 #[derive(Clone, Debug, serde::Serialize)]
 pub struct FullReport {
+    /// Lowercase SHA-256 digest of the complete package file.
     pub file_sha256: String,
+    /// Complete package file length in bytes.
     pub file_bytes: u64,
+    /// Executable region length in bytes.
     pub base_executable_bytes: u64,
+    /// Lowercase SHA-256 digest of the executable region.
     pub base_executable_sha256: String,
+    /// Payload length, including alignment padding and gaps.
     pub payload_bytes: u64,
+    /// Canonical manifest length in bytes.
     pub manifest_bytes: u64,
+    /// Number of manifest entries checked.
     pub entries: usize,
+    /// Total decoded asset bytes checked.
     pub decoded_bytes: u64,
+    /// Total stored frame bytes checked.
     pub stored_bytes: u64,
 }
 
@@ -197,6 +218,7 @@ impl Package {
         Self::open_with_keys(path, &verify::trusted_keys())
     }
 
+    /// Open a package using exactly `trusted`; `Ok(None)` means the file has no package footer.
     pub fn open_with_keys(path: &Path, trusted: &[TrustedKey]) -> Result<Option<Self>, AssetError> {
         let file = File::open(path)?;
         let file_len = file.metadata()?.len();
@@ -261,26 +283,32 @@ impl Package {
         }))
     }
 
+    /// Return the authenticated manifest.
     pub fn manifest(&self) -> &Manifest {
         &self.manifest
     }
 
+    /// Return the path used to open this package.
     pub fn path(&self) -> &Path {
         &self.path
     }
 
+    /// Return the trusted key that authenticated the package.
     pub fn signer(&self) -> &TrustedKey {
         &self.signer
     }
 
+    /// Return the validated package footer.
     pub fn footer(&self) -> &Footer {
         &self.footer
     }
 
+    /// Return the opened package length in bytes.
     pub fn file_len(&self) -> u64 {
         self.file_len
     }
 
+    /// Find one manifest entry by its logical id.
     pub fn entry(&self, id: &str) -> Option<&Entry> {
         self.manifest.entry(id)
     }
@@ -362,6 +390,7 @@ impl Package {
     }
 
     /// sha256 of the executable region alone (authenticated when the package was opened).
+    /// Recompute the executable-region digest from the already-opened package.
     pub fn base_executable_sha256(&self) -> Result<String, AssetError> {
         sha256_region(&self.file, 0, self.footer.base_executable_len)
     }

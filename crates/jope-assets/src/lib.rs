@@ -78,34 +78,60 @@ pub mod limits {
 /// Every way a package is refused. Each check has its own variant so tests prove which one fired.
 #[derive(Debug, thiserror::Error)]
 pub enum AssetError {
+    /// The package file could not be read or written.
     #[error("package I/O: {0}")]
     Io(#[from] std::io::Error),
+    /// The footer bytes are malformed or contain unsupported fields.
     #[error("package footer is malformed: {0}")]
     Footer(String),
+    /// Package offsets or lengths do not describe a valid layout.
     #[error("package layout is inconsistent: {0}")]
     Layout(String),
+    /// The manifest bytes do not match the digest stored in the footer.
     #[error("package manifest does not match the sha256 in the footer")]
     ManifestHash,
+    /// The manifest is malformed or violates a structural rule.
     #[error("package manifest is not valid: {0}")]
     Manifest(String),
+    /// The package format version is not supported by this build.
     #[error("package format version {0} is not supported (this build reads version 1)")]
     UnsupportedVersion(u32),
+    /// No supplied trusted key matches the footer's key identity.
     #[error("package signing key {0} is not trusted by this build")]
     UntrustedKey(String),
+    /// The package signature is malformed or does not verify.
     #[error("package signature does not verify")]
     Signature,
+    /// A declared size or count exceeds a configured package bound.
     #[error("package exceeds a bound: {0}")]
     Limit(String),
+    /// The requested logical asset id is absent from the manifest.
     #[error("package has no asset {0}")]
     EntryMissing(String),
+    /// Stored bytes for the named logical asset do not match their digest.
     #[error("package asset {id} stored bytes do not match their sha256")]
-    StoredHash { id: String },
+    StoredHash {
+        /// Logical id of the asset whose stored bytes failed verification.
+        id: String,
+    },
+    /// The named logical asset could not be decoded.
     #[error("package asset {id} could not be decoded: {reason}")]
-    Decode { id: String, reason: String },
+    Decode {
+        /// Logical id of the asset that failed decoding.
+        id: String,
+        /// Decoder failure detail.
+        reason: String,
+    },
+    /// Decoded bytes for the named logical asset do not match their digest.
     #[error("package asset {id} does not match its sha256")]
-    EntryHash { id: String },
+    EntryHash {
+        /// Logical id of the asset whose decoded bytes failed verification.
+        id: String,
+    },
+    /// Executable bytes do not match the manifest's executable digest.
     #[error("package executable bytes do not match the manifest")]
     CodeHash,
+    /// Executable padding or a payload gap contains nonzero bytes.
     #[error("package padding or gap bytes are not zero")]
     Padding,
 }

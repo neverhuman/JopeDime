@@ -35,7 +35,7 @@ fn warm_limits(resources: &Resources) -> Result<()> {
 // Warm plans preregister their own equal allowances. This does not shorten the
 // panel/proof default or reinterpret a partially available arm as matched.
 fn latency_target_met(execution_ok: bool, elapsed_seconds: f64) -> bool {
-    execution_ok && elapsed_seconds.is_finite() && elapsed_seconds >= 0. && elapsed_seconds < 60.
+    execution_ok && elapsed_seconds.is_finite() && (0. ..60.).contains(&elapsed_seconds)
 }
 
 fn warm_pair_limits(resources: &Resources, seconds_per_arm: u64) -> Result<()> {

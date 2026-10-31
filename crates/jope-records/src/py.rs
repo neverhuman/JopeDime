@@ -641,6 +641,12 @@ pub fn utf8_encode_error(name: &std::ffi::OsStr) -> Option<String> {
 /// and `str.isdecimal` (`Nd`), all as of Unicode 15.0. Those three escapes are rewritten, inside
 /// or outside a bracket class; `\S`, `\W`, `\D`, `\b` and `\B` are not supported (none of the
 /// ported patterns uses them).
+///
+/// # Panics
+///
+/// Panics if `pattern` ends with an incomplete escape, uses one of the unsupported escapes, or
+/// is not a valid regex after translation. This helper is intended for the fixed verifier patterns
+/// in this crate, not untrusted or arbitrary caller-provided patterns.
 pub fn regex(pattern: &str) -> regex::Regex {
     const SPACE: &str = r"\s\x1C-\x1F";
     const WORD: &str = r"[\p{L}\p{N}_&&\p{Age=V15_0}]";

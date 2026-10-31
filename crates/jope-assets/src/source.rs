@@ -9,8 +9,11 @@
 use crate::{AssetError, Entry, Manifest};
 use std::sync::Arc;
 
+/// Read authenticated assets by logical id without exposing package storage paths.
 pub trait VerifiedAssetSource: Send + Sync {
+    /// Return the authenticated manifest describing this source.
     fn manifest(&self) -> &Manifest;
+    /// Read an asset and verify its bytes against the manifest digest.
     fn read_verified(&self, id: &str) -> Result<VerifiedBytes, AssetError>;
 }
 
@@ -31,14 +34,17 @@ impl VerifiedBytes {
         }
     }
 
+    /// Borrow the authenticated decoded bytes.
     pub fn bytes(&self) -> &[u8] {
         &self.bytes
     }
 
+    /// Return the logical manifest id of these bytes.
     pub fn id(&self) -> &str {
         &self.id
     }
 
+    /// Return the lowercase SHA-256 digest verified for these bytes.
     pub fn sha256(&self) -> &str {
         &self.sha256
     }
