@@ -44,8 +44,14 @@ fn execute<T: Transport>(
             value
         }
     };
-    let result = transport
-        .run_fork(&id, &body, Some(&key))
+    // Keep the original JSON (including explicit nulls) for retry identity.
+    let result: jope_api::RunSnapshot = transport
+        .execute(
+            jope_client::Request::new(9, 0, &[("id", &id.to_string())])?
+                .key(Some(&key))?
+                .json(&body)?,
+        )?
+        .json()
         .context("restart run")?;
     serde_json::to_value(result).context("serialize restart response")
 }

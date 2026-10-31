@@ -36,7 +36,7 @@ pub fn run<T: Transport>(args: EventsArgs, transport: &T) -> anyhow::Result<()> 
     } else {
         let mut cursor = after.unwrap_or(DecimalU64(0));
         loop {
-            let page = transport.run_events(&run, cursor, 256)?;
+            let page = serde_json::to_value(transport.run_events(&run, cursor, 256)?)?;
             let events = page["events"].as_array().cloned().unwrap_or_default();
             if events.is_empty() {
                 break;
