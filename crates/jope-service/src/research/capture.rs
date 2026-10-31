@@ -74,6 +74,12 @@ pub struct ObservedSlate {
 }
 
 pub(crate) trait CaptureProvider: Send + Sync {
+    /// Engine observations require the authenticated native input adapter.
+    /// Synthetic controls keep their existing explicitly tagged input path.
+    fn native_inputs(&self) -> Option<&NativeCaptureInputs> {
+        None
+    }
+
     /// Refuse unavailable corpus, conditioning, evaluator, gate or seed inputs
     /// before any reservation or execution. This is not an identity-only check.
     fn validate_binding(&self, binding: &Binding, plan: &Plan) -> Result<()>;
@@ -102,7 +108,8 @@ pub(crate) struct Binding {
 ///
 /// There is intentionally no public constructor or JSON importer. Production
 /// resolution awaits the separately reviewed corpus/R0/gate/seed contract.
-/// Software controls construct only SyntheticControl bindings inside this crate.
+/// Capture execution controls use SyntheticControl bindings. Isolated input
+/// boundary tests never export an Engine record.
 pub struct CaptureContext {
     pub(crate) binding: Binding,
     pub(crate) provider: Arc<dyn CaptureProvider>,
@@ -160,6 +167,12 @@ impl CaptureContext {
             self.binding.identity.task == RecordTask::Regression,
             "binary capture requires its qualified evaluator adapter"
         );
+        if id.evidence == RecordEvidence::Engine {
+            self.provider
+                .native_inputs()
+                .context("native research input closure unavailable")?
+                .validate_binding(&self.binding, plan)?;
+        }
         self.provider.validate_binding(&self.binding, plan)?;
         Ok(())
     }
@@ -170,7 +183,22 @@ impl CaptureContext {
         dsls: &[String],
         measured: &[RecordedReveal],
     ) -> Result<ObservedSlate> {
+        let native = if self.binding.identity.evidence == RecordEvidence::Engine {
+            Some(
+                self.provider
+                    .native_inputs()
+                    .context("native research input closure unavailable")?,
+            )
+        } else {
+            None
+        };
+        if let Some(native) = native {
+            native.validate_record_binding(&self.binding)?;
+        }
         let observation = self.provider.observe(round, dsls, measured)?;
+        if let Some(native) = native {
+            native.validate_observation(&self.binding, dsls, &observation.programs)?;
+        }
         ensure!(
             observation.programs.len() == dsls.len(),
             "program feature inventory mismatch"
