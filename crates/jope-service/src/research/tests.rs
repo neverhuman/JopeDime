@@ -253,7 +253,12 @@ fn captured_rounds_read_in_python_and_complete_all_guard_refuses_biased_or_parti
     let script = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../python/src/jope/north_star/record_reader.py");
     for all in [false, true] {
-        for budget in [3, 16] {
+        for (budget, dispatches, failures, incomplete_rounds) in [
+            (0, 0, 0, 3),
+            (1, 3, 3, 3),
+            (3, 8, 3, 2),
+            (16, if all { 26 } else { 10 }, 3, 0),
+        ] {
             let dir = tempfile::tempdir().unwrap();
             let path = dir.path().join("capture.jsonl");
             let mut writer = RecordWriter::create(&path).unwrap();
@@ -265,7 +270,11 @@ fn captured_rounds_read_in_python_and_complete_all_guard_refuses_biased_or_parti
             let output = Command::new("python3")
                 .arg(&script)
                 .arg(&path)
-                .args(["--allow-synthetic", "--allow-incomplete"])
+                .args([
+                    "--allow-synthetic",
+                    "--allow-incomplete",
+                    "--detailed-counts",
+                ])
                 .output()
                 .unwrap();
             assert!(
@@ -277,8 +286,10 @@ fn captured_rounds_read_in_python_and_complete_all_guard_refuses_biased_or_parti
             assert_eq!(
                 counts,
                 json!({
-                    "rounds":3, "proposals":26, "outcomes": if budget==3 {8} else if all {26} else {10},
-                    "failures":3, "incomplete_rounds": if budget==3 {2} else {0}
+                    "rounds":3, "proposals":26, "admissions":10,
+                    "dispatches":dispatches, "outcomes":dispatches,
+                    "successes":dispatches-failures,
+                    "failures":failures, "incomplete_rounds":incomplete_rounds
                 })
             );
             let guarded = Command::new("python3")
@@ -306,7 +317,7 @@ fn reader(path: &Path, synthetic: bool) -> std::process::Output {
     let script = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../python/src/jope/north_star/record_reader.py");
     let mut command = Command::new("python3");
-    command.arg(script).arg(path);
+    command.arg(script).arg(path).arg("--detailed-counts");
     if synthetic {
         command.arg("--allow-synthetic");
     }
@@ -334,6 +345,23 @@ fn rust_stream_reads_in_python_with_exact_inventory() {
         let summary: Value = serde_json::from_slice(&output.stdout).unwrap();
         assert_eq!(
             summary,
+            json!({
+                "rounds":3, "proposals":26, "admissions":10,
+                "dispatches":if all {26} else {10}, "outcomes":if all {26} else {10},
+                "successes":if all {23} else {7}, "failures":3, "incomplete_rounds":0
+            })
+        );
+        let script = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../python/src/jope/north_star/record_reader.py");
+        let legacy = Command::new("python3")
+            .arg(script)
+            .arg(&path)
+            .arg("--allow-synthetic")
+            .output()
+            .unwrap();
+        assert!(legacy.status.success());
+        assert_eq!(
+            serde_json::from_slice::<Value>(&legacy.stdout).unwrap(),
             json!({"rounds":3,"proposals":26,"outcomes":if all {26} else {10},"failures":3,"incomplete_rounds":0})
         );
         assert!(
@@ -517,13 +545,22 @@ fn budget_truncation_preserves_policy_and_is_not_complete_training_data() {
     let output = Command::new("python3")
         .arg(script)
         .arg(&path)
-        .args(["--allow-synthetic", "--allow-incomplete"])
+        .args([
+            "--allow-synthetic",
+            "--allow-incomplete",
+            "--detailed-counts",
+        ])
         .output()
         .unwrap();
     assert!(output.status.success());
     let summary: Value = serde_json::from_slice(&output.stdout).unwrap();
-    assert_eq!(summary["incomplete_rounds"], 1);
-    assert_eq!(summary["outcomes"], 4);
+    assert_eq!(
+        summary,
+        json!({
+            "rounds":2, "proposals":10, "admissions":6, "dispatches":4,
+            "outcomes":4, "successes":2, "failures":2, "incomplete_rounds":1
+        })
+    );
     truncated.capture_complete = true;
     assert!(truncated.validate().is_err());
 }
@@ -566,9 +603,11 @@ fn python_rejects_malformed_or_truncated_streams() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("bad.jsonl");
         fs::write(&path, bytes).unwrap();
+        let output = reader(&path, true);
+        assert!(!output.status.success(), "Python negative case {i}");
         assert!(
-            !reader(&path, true).status.success(),
-            "Python negative case {i}"
+            output.stdout.is_empty(),
+            "no partial success summary: case {i}"
         );
     }
 }
