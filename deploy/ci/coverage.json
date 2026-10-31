@@ -13307,6 +13307,16 @@
       ],
       "lanes": [],
       "scope": "Owner-requested CPU fixtures for H75 shared whole-family bootstrap, canonical batched Elo parity, seed averaging, incomplete execution and deterministic bounded resampling. Descriptive development intervals only; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h79_w4_prior_2plus2_cached/test_run_shard.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H79 W4 cached-pool screen fixture contracts: four-reveal oracle, prior-top4 and two-plus-two GP selection, swap placebo, W1 family-exclusion refusal, paired family bootstrap and gbm_top4-anchored family Elo. Manual research diagnostics only; no native fits, W4 gate or release qualification."
     }
   },
   "lanes": {
