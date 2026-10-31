@@ -173,3 +173,36 @@ An arm `S_k` (`k in {0, 1, 2, 3}`) is admitted to a terminal `DL-Val` read if an
    - Enforce host CPU utilization `<= 85%` (`102` logical cores) and `/proc/meminfo` `MemAvailable >= 16 GiB` (`16,777,216 KiB`) floor before and during every cell so `xbabe2` never swaps.
 5. **Live Loop Non-Interference**:
    - Never touch `xbabe0` or the live `xbabe1` loop (`/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/`).
+
+---
+
+## 8. Pre-Outcome Timing & Red-Team Amendment — `2026-10-31` (`t2132`)
+
+Status: Recorded and committed **before** any H61 GPU cell, `fold_b` outcome read, or `DL-Val` read (`outcome_cells_started = 0`, `validation_read_count = 0`).
+
+### 8.1 Projected GPU Cell-Wall Budget from `H57` Timing Receipt
+Using the audited `H57` timing receipt (`~/jope-data/h57/h57-wave/timing/timing.json`):
+- `measured_generation_seconds`: `60.1135667 s` (`~60.1 s/gen`)
+- `timing_cell_wall_seconds` (cell setup + baseline overhead): `128.6147321 s` (`~128.6 s` cell overhead)
+- In `H61`, all four selection arms (`S0..S3`) share the same `r882` copy initialization, `fold_a` memory load, and paired `20`-round (`40`-step) update stream per seed (`12, 13, 14`), corresponding to `8` H57-equivalent timing units per seed cell (`3` seed cells total):
+  - **Per-seed cell wall**: `128.615 s + 8 * 60.114 s = 609.523 s` (`10.16 min`)
+  - **`3` seed outcome cells (`12, 13, 14`)**: `3 * 609.523 s = 1,828.570 s` (`30.48 min`)
+  - **`fold_b` / inner-CV scoring reserve**: `128.615 s` (`1` full H57 timing cell wall)
+  - **Maximum terminal `DL-Val` reserve (`3` seeds for an admitted arm)**: `3 * 128.615 s = 385.844 s`
+  - **Subtotal**: `2,343.029 s`
+  - **`+10%` contingency**: `234.303 s`
+  - **Projected Total GPU Cell Wall**: **`2,577.332 s` (`42.96 min`)** `<= 3,600.0 s` (`60.0 min` cap; slack `1,022.668 s` / `17.04 min`).
+
+### 8.2 Pre-Outcome Red-Team Safeguards Enforced in `runner.py` & `test_h61.py`
+1. **Unified leak-free evaluation mode (`unrev 4..P-1`) across all arms (`S0..S3`) and `r882`**:
+   - `S0` selects candidates during round updates using the legacy `native` (`0..P-1`, ties accepted) rule, but all reported utilities, `fold_b` admission contrasts, and family-grouped Bradley-Terry Elo scores for `S0, S1, S2, S3`, and `r882` are evaluated strictly in the **same leak-free `unrev` (`4..P-1`) mode** (`score_fold_b_arms(..., eval_mode="unrev")`).
+2. **Ties fail everywhere (`gain > m = 0.001546` AND `LCB95 > +0.001`)**:
+   - Both round-end selection for `S1..S3` and wave-level admission require `mean_gain > 0.001546` (`NULL_MARGIN_M`) **and** `mean_lcb95_one_sided > +0.001` (`ADMISSION_LCB`), with exact ties or identical utilities rejected.
+3. **Identical training updates per `(seed, round)` across arms**:
+   - `build_paired_batches` and `assert_identical_round_streams` verify that `S0..S3` share the exact same `round_rng_seed`, `step_stream_seed`, `context_ids`, `candidate_indices`, and `candidate_pool_sha256` at every round and step.
+4. **Strict `DL-Train` `fold_a` closure for `S2` inner CV**:
+   - `select_s2_hyperparameters_inner_cv` selects `(tau, m_S2)` solely on `DL-Train` `fold_a` family folds and fails closed (`RuntimeError`) if any `fold_b` or `DL-Val` context or family enters the inner CV.
+5. **H59-consistent per-context loss and utility clipping**:
+   - Training loss uses `preregistered_targets` (`u` clipped to `[-2.0, 4.0]`, gate failure `-2.0`) and `clipped_loss` (`ROBUST_CAP = 1.0` + detached slate MAD scale `SCALE_FLOOR = 0.05`). Evaluation and bootstrap clip per-context utility deltas to `[-ROBUST_CAP, +ROBUST_CAP]` (`[-1.0, +1.0]`) so `-2.0` gate-failure contexts cannot dominate the family-cluster bootstrap.
+6. **Hardened `< 94.5%` `statvfs` disk guard & retryable write-time `InfraVoid`**:
+   - Cells start only when `statvfs('/')` used percent is `< 94.5%` (`DISK_START_MAX_USED_PERCENT = 94.5`). Any cell-start or write-time disk guard violation raises `RetryableDiskInfraVoid(retryable=True, same_cell=True, stop_wave=False)`, which retries the **same cell** after disk clearance and never halts the wave.
