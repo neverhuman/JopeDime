@@ -77,13 +77,12 @@ version that beat the European champion Fan Hui
 \citep{silver2016mastering,silver2017mastering}. This motivates an analogous
 goal for invention: learn from repeated program evaluations during training,
 then deploy a writer with a single candidate budget, \searchone{}
-(\hyperref[box:searchone]{Box~1}). The budget is a test condition, not a
+(\cref{box:searchone}). The budget is a test condition, not a
 promise that every first proposal wins. \Cref{fig:emptysquare} separates
 the training feedback path from the frozen writer and fitting procedure at
 deployment.
 
-\begin{explainer}{Box 1: What ``search = 1'' means}
-\phantomsection\label{box:searchone}%
+\begin{explainer}[label=box:searchone]{What ``search = 1'' means}
 \begin{itemize}[leftmargin=*,nosep]
   \item \textbf{One inference, one candidate.} For a new problem, the program
     writer emits one complete program ($\budget = 1$), with no retries, repairs,

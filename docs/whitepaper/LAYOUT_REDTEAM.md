@@ -58,9 +58,9 @@ The before/after page comparisons are in [`redteam/`](redteam/):
 | # | Sev. | Finding | Recommendation | Owner |
 |---|---|---|---|---|
 | O1 | Med | Figure 1 is a two-row booktabs table captioned as a figure (p. 2). | Either draw it as a schematic or make it a table. A table renumbers every table, so it is a structural call. | writer |
-| O2 | Med | Box numbers are hard-coded in the box titles and in the text ("Box~1/2/3"). The labels `box:searchone` and `box:hallucination` exist but are not used for numbering, so reordering the boxes desyncs them silently. | Add a box counter inside the `explainer` environment and refer to boxes with `\cref`. | format |
+| O2 | Med | **Fixed in upgrade PR 1.** Box numbers are hard-coded in the box titles and in the text ("Box~1/2/3"). The labels `box:searchone` and `box:hallucination` exist but are not used for numbering, so reordering the boxes desyncs them silently. | Add a box counter inside the `explainer` environment and refer to boxes with `\cref`. | format |
 | O3 | Med | Figures 4, 9 and 10 are `\fbox` placeholders. The text cites "Figure 4a" and "Figure 4b" panels that do not exist yet. Page 14 stacks four pending floats. | Replace them with real figures before submission. Keep the panel letters in step with the final figure. | writer |
-| O4 | Low | `\date{Draft --- \today}` changes the committed PDF on every rebuild day. That defeats byte and text identity checks across days. | Pin the draft date, or drop it. | writer/format |
+| O4 | Low | **Fixed in upgrade PR 1** (date pinned to October 2026). `\date{Draft --- \today}` changes the committed PDF on every rebuild day. That defeats byte and text identity checks across days. | Pin the draft date, or drop it. | writer/format |
 | O5 | Low | The §6.5 writer objective, with $\sum_{w\in G_p}$, is inline math. It opens up the line spacing in that paragraph. | Make it a display equation; the wording is unchanged. | writer |
 | O6 | Low | Reference entries are inconsistent: DOI versus URL, "(NeurIPS 2017)" in some book titles but not others, and full author lists of up to about 58 names (refs [19], [66], [114]). | Pick one link policy. Consider truncating long author lists ("et al." beyond ~10), which needs a `.bst` or a biblatex switch. The Wolf month fix is still pending. | refs.bib owner |
 | O7 | Low | Links are coloured. That suits a draft, but camera-ready IEEE and ACM versions are normally black. | Use `hidelinks` at submission. | format |
@@ -81,3 +81,11 @@ The before/after page comparisons are in [`redteam/`](redteam/):
   through cleveref with consistent capitalisation ("Section", "Appendix",
   "Equation (n)"). The only references outside that chain are the hard-coded
   Box references (O2).
+
+## Full upgrade passes (owner addendum t2052)
+
+The owner widened the scope to a full upgrade, carried out in small sequential PRs. Results (Section 7) changes only in layout. Every claim elsewhere stays supported by the repository and research records.
+
+| Pass | Scope | Status |
+|---|---|---|
+| 1 | Title and subtitle ("EurekaZero: Engineered Intelligence for Algorithm Invention by Self-Play"), PDF metadata, pinned draft date (O4), numbered boxes referenced with `\cref` (O2) | this PR |
