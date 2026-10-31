@@ -13310,6 +13310,16 @@
       "lanes": [],
       "scope": "H82 bounded operator recovery proof: reproduce read-only checkpoint staging failure, preserve known immutable input before cleanup, seal the stopped prefix, retain budgets and reject scored/unknown/unaccounted states; no GPU/product qualification."
     },
+    "python:research/flywheel_selfplay/h105_shrink_r882/test_h105.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H105 CPU-only shrinkage/interpolation, raw L2-to-r882 anchor, fresh DL-Train family split, four-way Holm/family-bootstrap/r882-reference/harm/tie/completeness guards, unique attempt scratch and data-free/no-ticket preparation controls. Synthetic unit fixtures only; no corpus outcomes or product qualification."
+    },
     "python:research/flywheel_selfplay/h100_asam_confirm/test_h100.py": {
       "discovery": {
         "kind": "python-family"
