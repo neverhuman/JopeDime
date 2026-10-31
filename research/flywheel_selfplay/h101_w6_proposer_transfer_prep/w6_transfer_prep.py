@@ -7,13 +7,17 @@ DL-Val, outer-test, sealed, or holdout reads; zero GPU):
 
 1. Complete Registered W6 Arm Panel (1,219 DL-Train contexts / 205 families):
    - R882_CONTINUITY: frozen r882 continuity control (from S3 W1 remediation vectors)
-   - RETR: current raw-lm12 4-nearest fit-family champion retrieval
+   - RETR: current raw-lm12 4-nearest fit-family champion retrieval (Euclidean L2 distance on
+     raw first-12 lm48 coordinates; candidate scoring by negative L2 distance in proj16 to
+     the retrieved contexts' champion embeddings)
    - PRIOR: W1 generic program412 prior (-cal_cost_prog412)
    - FIT_PROG_MEAN: registered fit-family program mean (empirical-Bayes shrinkage on exact
      program_sha256 matches across fit families with physical-table-alias exclusion;
      falls back cleanly to PRIOR features on unseen IDs rather than fabricated zeros)
-   - FIT_TEMPLATE_MEAN: structural AST-template empirical-Bayes residual transfer across
-     fit families (75.02% unrevealed slot coverage; falls back to PRIOR on unseen templates)
+   - FIT_TEMPLATE_MEAN: structural-feature proxy empirical-Bayes residual transfer across
+     fit families (quantized SHA-256 hash of program412 excluding constant-magnitude columns
+     338..363; 8.0545% unrevealed slot coverage across W1 folds; falls back to PRIOR on
+     unseen proxy hashes)
    - TREAT: equal-context rank-8 ridge bilinear residual (lm48_z x proj16, H83 continuity)
    - TREAT_FAMBAL: registered family-balanced rank-8 ridge bilinear residual (PROPOSALS.md
      line 147: observed outcomes with family-balanced weights, rank 8 fixed before scoring)
@@ -26,24 +30,31 @@ DL-Val, outer-test, sealed, or holdout reads; zero GPU):
    - CTX: W1 context-aware GBM prior (-cal_cost_prog412_ctx)
    - HEDGE_CTX: PRIOR top-2 + CTX top-2 among remaining unrevealed slots
 
-2. Both Registered Decision Tracks & Template/Exact-ID Strata (PROPOSALS.md line 148):
+2. Both Registered Decision Tracks & Structural-Proxy / Exact-ID Strata (PROPOSALS.md line 148):
    - Track 2 Verified Search U4 + family-grouped Bradley-Terry Elo (10,000 draws, seed 20261031)
    - Track 1 Legacy Selection val_reg_inner + family-grouped Bradley-Terry Elo
-   - Within-context paired Seen-AST-Template vs Unseen-AST-Template U4 and val_reg_inner
-     across all 1,219 DL-Train contexts (205 families), testing the W6 template kill rule
-   - Separate reporting of Exact-Program transfer (7.04% covered slots) vs Feature-Neighbor
-     transfer (92.96% uncovered slots), reconciling H84's H72-fold census (98,820 / 1,404,287)
-     and H83's W1-fold unrevealed census (98,091 / 1,399,411)
+   - Within-context paired Seen-Template-Proxy vs Unseen-Template-Proxy U4 and val_reg_inner
+     across all 1,219 DL-Train contexts (205 families), testing the W6 unseen-template kill rule
+     via program412 structural-feature proxy hashes
+   - Separate reporting of Exact-Program transfer (7.0370% H72-fold / 7.0094% W1-fold unrevealed
+     covered slots) vs Feature-Neighbor transfer (92.9906% W1-fold unrevealed uncovered slots),
+     reconciling H84's H72-fold census (98,820 / 1,404,287) and H83's W1-fold unrevealed census
+     (98,091 / 1,399,411)
 
 3. Real-S3 Prospective New-Program Audit (H94 fits.jsonl.gz + H95 confirmed_hwm.json + H85 W1 models):
    - Scores H94's 150 context-seeds (50 contexts / 44 families) with the true persisted W1
      fold-grouped calibrated outer models (w1_outer_fold_models.pkl) vs H94's interleaved refits,
-     plus W6 cross-family transfer models, and measures recall on H95's 30 resplit-confirmed
-     and 27 material-confirmed high-water marks.
+     plus restricted evaluated-subset rankings on H94's 556 natively evaluated programs
+     (51 / 150 context-seeds with all 12 true-W1 top-4 picks covered), and measures recall on
+     H95's 30 resplit-confirmed and 27 material-confirmed high-water marks.
 
-4. Fail-Closed Verdict Completeness Gate:
+4. Fail-Closed Completeness & Registered W6 Verdict Gate (PROPOSALS.md line 209):
    - Rejects duplicate (context, seed, arm) rows, missing seeds, missing contexts/families,
      incomplete evaluations, or proposal shortfalls with verdict = "INCOMPLETE".
+   - Enforces the complete registered W6 advancement & kill rules: requires advancing over
+     BOTH generic prior (TREAT_FAMBAL - PRIOR) and current retrieval (TREAT_FAMBAL - RETR),
+     and kills if benefit disappears on unseen structural-feature proxy templates or if the
+     context-shuffle placebo matches (TREAT_FAMBAL - SHUF).
 """
 
 from __future__ import annotations
@@ -81,6 +92,7 @@ PINS = {
     "h94_fits_gz": "097c33f53e2ba04c6bf89982e2b43c4456c8d86e12b519f633db32c486bade71",
     "h94_rows_gz": "871aec0115119aaf4749c1374f2bf23a4137eb94aec79197ea6effd63722e0f7",
     "h95_confirmed_hwm": "8d5f1d2d5b95ea097640bc24a8a4331486d4478228e0ffeed6ea13f86afdce9a",
+    "micro_rust_evaluator": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
 }
 
 ARMS = (
@@ -133,7 +145,7 @@ TIE = 1e-4
 HARM_THRESHOLD = 0.01
 GATE_LCB = 0.001
 
-# Structural AST template feature columns in program412 (excluding numeric threshold quantiles 338..363)
+# Structural-feature proxy columns in program412 (excluding numeric threshold quantiles 338..363)
 STRUCTURAL_COLS = np.array(
     [i for i in range(412) if not (338 <= i < 364)], dtype=np.int64
 )
@@ -152,7 +164,7 @@ def hkey(*parts: Any) -> str:
 
 
 def compute_template_hashes(prog_matrix: np.ndarray) -> list[str]:
-    """Compute structural AST template hashes from program412 structural coordinates."""
+    """Compute program412 structural-feature proxy hashes (excluding columns 338..363)."""
     struct = np.ascontiguousarray(
         np.rint(prog_matrix[:, STRUCTURAL_COLS] * 1000.0).astype(np.int32)
     )
@@ -247,7 +259,11 @@ def ranked_unrevealed(
     score: np.ndarray, ids: list[Any], candidate_indices: list[int] | None = None
 ) -> list[int]:
     """Rank unrevealed slot indices (>= 4) by descending score with program-SHA tie-break."""
-    cand = list(range(4, len(ids))) if candidate_indices is None else list(candidate_indices)
+    cand = (
+        list(range(4, len(ids)))
+        if candidate_indices is None
+        else list(candidate_indices)
+    )
     if any(i < 4 or i >= len(ids) for i in cand):
         raise ValueError("candidate_indices must be valid unrevealed indices (>= 4)")
     return sorted(cand, key=lambda i: (-float(score[i]), ids[i]))
@@ -269,11 +285,13 @@ def hedge_picks(
     return keep + rest
 
 
-def eval_picks(
-    u: np.ndarray, picks: list[int]
-) -> tuple[float, float, float]:
+def eval_picks(u: np.ndarray, picks: list[int]) -> tuple[float, float, float]:
     """Return (U0, U4, val_reg_inner) for a 4-element ordered pick list in unrevealed slots."""
-    if len(picks) != 4 or len(set(picks)) != 4 or any(i < 4 or i >= len(u) for i in picks):
+    if (
+        len(picks) != 4
+        or len(set(picks)) != 4
+        or any(i < 4 or i >= len(u) for i in picks)
+    ):
         raise ValueError("picks must be 4 distinct unrevealed indices (>= 4)")
     u0 = float(np.max(u[:4]))
     u4_val = float(max(u0, float(np.max(u[picks]))))
@@ -370,7 +388,10 @@ def analyze_w6_panel(
     for c in expected_contexts:
         for a in expected_arms:
             observed_list = seeds_by_ctx_arm.get((c, a), [])
-            if len(observed_list) != len(expected_seeds) or set(observed_list) != expected_seeds:
+            if (
+                len(observed_list) != len(expected_seeds)
+                or set(observed_list) != expected_seeds
+            ):
                 missing_or_mismatched_seed_pairs += 1
 
     observed_contexts = {
@@ -441,9 +462,7 @@ def analyze_w6_panel(
     primary_out = {
         f"{a} - {b}": eval_pair(a, b, prim_pct) for a, b in primary_contrasts
     }
-    secondary_out = {
-        f"{a} - {b}": eval_pair(a, b, 5.0) for a, b in secondary_contrasts
-    }
+    secondary_out = {f"{a} - {b}": eval_pair(a, b, 5.0) for a, b in secondary_contrasts}
 
     out: dict[str, Any] = {
         "metric": metric_key,
@@ -473,21 +492,170 @@ def analyze_w6_panel(
             prior=0.01,
             n_iters=400,
         )
-        ratings_map = point_elo.get("ratings", point_elo) if isinstance(point_elo, dict) else point_elo
+        ratings_map = (
+            point_elo.get("ratings", point_elo)
+            if isinstance(point_elo, dict)
+            else point_elo
+        )
         out["family_elo"] = {k: float(v) for k, v in ratings_map.items()}
 
     if not complete:
         out["primaries_passing"] = []
+        out["diagnostic_primaries_passing"] = []
         out["verdict"] = "INCOMPLETE"
     else:
         passed = [k for k, v in primary_out.items() if v["common_gate_passed"]]
         out["primaries_passing"] = passed
-        out["verdict"] = (
-            f"ADVANCE_CACHED_SCREEN ({', '.join(passed)})"
-            if passed
-            else "NO_ADVANCE (primary gate not met)"
-        )
+        out["diagnostic_primaries_passing"] = passed
+        if (
+            "TREAT_FAMBAL - PRIOR" in primary_out
+            and "TREAT_FAMBAL - RETR" in primary_out
+        ):
+            prior_ok = bool(primary_out["TREAT_FAMBAL - PRIOR"]["common_gate_passed"])
+            retr_ok = bool(primary_out["TREAT_FAMBAL - RETR"]["common_gate_passed"])
+            shuf_ok = bool(
+                secondary_out.get("TREAT_FAMBAL - SHUF", {}).get(
+                    "common_gate_passed", True
+                )
+            )
+            if prior_ok and retr_ok and shuf_ok:
+                out["verdict"] = (
+                    "ADVANCE_CACHED_SCREEN (TREAT_FAMBAL passes prior, retrieval, and shuffle gates)"
+                )
+            else:
+                failed_gates = []
+                if not prior_ok:
+                    failed_gates.append("TREAT_FAMBAL - PRIOR")
+                if not retr_ok:
+                    failed_gates.append("TREAT_FAMBAL - RETR")
+                if "TREAT_FAMBAL - SHUF" in secondary_out and not shuf_ok:
+                    failed_gates.append("TREAT_FAMBAL - SHUF")
+                diag_str = ", ".join(passed) if passed else "none"
+                out["verdict"] = (
+                    f"KILL_NO_ADVANCE (fails registered W6 gates: {', '.join(failed_gates)}; "
+                    f"diagnostic primaries passing: {diag_str})"
+                )
+        else:
+            out["verdict"] = (
+                f"ADVANCE_CACHED_SCREEN ({', '.join(passed)})"
+                if passed
+                else "NO_ADVANCE (primary gate not met)"
+            )
     return out
+
+
+def derive_registered_w6_verdict(
+    track2_u4_panel: dict[str, Any],
+    track1_leg_panel: dict[str, Any],
+    unseen_tpl_u4_panel: dict[str, Any],
+    prospective_panel: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Derive the overall W6 verdict enforcing PROPOSALS.md line 209 advancement and kill rules.
+
+    Registered W6 rule (PROPOSALS.md:209):
+      - Advance over BOTH generic prior (TREAT_FAMBAL - PRIOR) and current retrieval (TREAT_FAMBAL - RETR).
+      - Kill if benefit disappears on unseen templates (unseen_tpl_u4_panel["primary"]["TREAT_FAMBAL - PRIOR"]).
+      - Kill if context-shuffle matches (track2_u4_panel["secondary"]["TREAT_FAMBAL - SHUF"]).
+    """
+    panels = [track2_u4_panel, track1_leg_panel, unseen_tpl_u4_panel]
+    if prospective_panel is not None:
+        panels.append(prospective_panel)
+    if any(not p.get("completeness", {}).get("complete", False) for p in panels):
+        return {
+            "overall_w6_study_verdict": "INCOMPLETE",
+            "registered_rule_summary": "INCOMPLETE (one or more required evaluation panels failed completeness)",
+            "registered_gate_checks": {
+                "advance_over_generic_prior_u4": False,
+                "advance_over_current_retrieval_u4": False,
+                "survives_unseen_template_proxy_u4": False,
+                "beats_context_shuffle_placebo_u4": False,
+                "prospective_new_programs_advance": False,
+            },
+            "diagnostic_only_cached_prior_contrast": "INCOMPLETE",
+            "cached_screen_track2_u4": track2_u4_panel.get("verdict", "INCOMPLETE"),
+            "cached_screen_track1_legacy": track1_leg_panel.get(
+                "verdict", "INCOMPLETE"
+            ),
+            "unseen_templates_track2_u4": unseen_tpl_u4_panel.get(
+                "verdict", "INCOMPLETE"
+            ),
+            "prospective_new_programs": (
+                prospective_panel.get("verdict", "INCOMPLETE")
+                if prospective_panel
+                else "NOT_RUN"
+            ),
+        }
+
+    prior_gate = bool(
+        track2_u4_panel["primary"]["TREAT_FAMBAL - PRIOR"]["common_gate_passed"]
+    )
+    retr_gate = bool(
+        track2_u4_panel["primary"]["TREAT_FAMBAL - RETR"]["common_gate_passed"]
+    )
+    unseen_gate = bool(
+        unseen_tpl_u4_panel["primary"]["TREAT_FAMBAL - PRIOR"]["common_gate_passed"]
+    )
+    shuf_gate = bool(
+        track2_u4_panel["secondary"]["TREAT_FAMBAL - SHUF"]["common_gate_passed"]
+    )
+    prosp_gate = bool(
+        prospective_panel is not None
+        and bool(prospective_panel.get("primaries_passing"))
+    )
+
+    all_cached_w6_gates_pass = prior_gate and retr_gate and unseen_gate and shuf_gate
+    overall_verdict = (
+        "ADVANCE_TO_PROSPECTIVE" if all_cached_w6_gates_pass else "KILL_NO_ADVANCE"
+    )
+
+    failed_clauses: list[str] = []
+    if not prior_gate:
+        failed_clauses.append("TREAT_FAMBAL - PRIOR fails Common Advance Gate")
+    if not retr_gate:
+        failed_clauses.append("TREAT_FAMBAL - RETR fails Common Advance Gate")
+    if not unseen_gate:
+        failed_clauses.append(
+            "unseen structural-feature proxy template stratum fails Common Advance Gate"
+        )
+    if not shuf_gate:
+        failed_clauses.append(
+            "context-shuffle placebo (TREAT_FAMBAL - SHUF) matches / fails Common Advance Gate"
+        )
+
+    if all_cached_w6_gates_pass:
+        rule_summary = (
+            "ADVANCE_TO_PROSPECTIVE (passes generic prior, current retrieval, unseen-template proxy, "
+            "and context-shuffle placebo gates)"
+        )
+    else:
+        rule_summary = (
+            f"KILL_NO_ADVANCE (registered PROPOSALS.md:209 kill conditions met: {'; '.join(failed_clauses)}; "
+            f"cached TREAT_FAMBAL - PRIOR pass={'YES' if prior_gate else 'NO'} retained as diagnostic only)"
+        )
+
+    return {
+        "overall_w6_study_verdict": overall_verdict,
+        "registered_rule_summary": rule_summary,
+        "registered_gate_checks": {
+            "advance_over_generic_prior_u4": prior_gate,
+            "advance_over_current_retrieval_u4": retr_gate,
+            "survives_unseen_template_proxy_u4": unseen_gate,
+            "beats_context_shuffle_placebo_u4": shuf_gate,
+            "prospective_new_programs_advance": prosp_gate,
+        },
+        "diagnostic_only_cached_prior_contrast": (
+            "PASS_DIAGNOSTIC_ONLY (TREAT_FAMBAL - PRIOR passes Common Advance Gate on cached U4, "
+            "but does not override retrieval, unseen-proxy, or context-shuffle kill conditions)"
+            if prior_gate
+            else "FAIL"
+        ),
+        "cached_screen_track2_u4": track2_u4_panel["verdict"],
+        "cached_screen_track1_legacy": track1_leg_panel["verdict"],
+        "unseen_templates_track2_u4": unseen_tpl_u4_panel["verdict"],
+        "prospective_new_programs": (
+            prospective_panel["verdict"] if prospective_panel else "NOT_RUN"
+        ),
+    }
 
 
 def load_elo() -> Any:
@@ -611,9 +779,9 @@ def pack_compact_bundle(
         gate_all[lo:hi] = gate
         all_shas.extend(sha_list)
         all_tpls.extend(tpl_list)
-        sl = sorted(range(4, hi - lo), key=lambda s_i: hkey("h83-slot", c, sha_list[s_i]))[
-            :FIT_SLOTS
-        ]
+        sl = sorted(
+            range(4, hi - lo), key=lambda s_i: hkey("h83-slot", c, sha_list[s_i])
+        )[:FIT_SLOTS]
         fit_slot_counts[i] = len(sl)
         fit_slot_indices[i, : len(sl)] = np.asarray(sl, dtype=np.int32)
 
@@ -856,22 +1024,18 @@ def run_fold_shard_from_bundle(
         shuf_sc = prior + xs_c @ (w_shuf.T @ zs_c)
         nc_sc = prior + xs_nc_c @ (w_near_champ.T @ zs_nc_c)
 
-        exact_adj = np.array(
-            [eb_exact_map.get(s, 0.0) for s in ids], dtype=np.float64
-        )
+        exact_adj = np.array([eb_exact_map.get(s, 0.0) for s in ids], dtype=np.float64)
         tpl_adj = np.array([eb_tpl_map.get(t, 0.0) for t in tpls], dtype=np.float64)
         fit_prog_sc = prior + exact_adj
         fit_tpl_sc = prior + tpl_adj
 
-        near = np.argsort(
-            np.sum((fit_lm12 - lm[i][:12]) ** 2, axis=1), kind="stable"
-        )[:RETR_CONTEXTS]
+        near = np.argsort(np.sum((fit_lm12 - lm[i][:12]) ** 2, axis=1), kind="stable")[
+            :RETR_CONTEXTS
+        ]
         cp = [v for j in near for v in champ_by_ctx[fit_i[int(j)]]]
         retr_sc = (
             -np.min(
-                np.linalg.norm(
-                    proj[lo:hi][:, None, :] - np.stack(cp)[None], axis=2
-                ),
+                np.linalg.norm(proj[lo:hi][:, None, :] - np.stack(cp)[None], axis=2),
                 axis=1,
             )
             if cp
@@ -922,9 +1086,13 @@ def run_fold_shard_from_bundle(
         per_ctx_u4[c] = u4_row
         per_ctx_leg[c] = leg_row
 
-        seen_idx = [idx_s for idx_s in range(4, len(ids)) if tpls[idx_s] in fit_seen_templates]
+        seen_idx = [
+            idx_s for idx_s in range(4, len(ids)) if tpls[idx_s] in fit_seen_templates
+        ]
         unseen_idx = [
-            idx_s for idx_s in range(4, len(ids)) if tpls[idx_s] not in fit_seen_templates
+            idx_s
+            for idx_s in range(4, len(ids))
+            if tpls[idx_s] not in fit_seen_templates
         ]
         if len(seen_idx) < 4 or len(unseen_idx) < 4:
             raise SystemExit(f"Context {c} has < 4 seen or unseen template slots")
@@ -1021,9 +1189,7 @@ def evaluate_prospective_h94_with_true_w1(
                 h94_rows.append(json.loads(line))
 
     h95_hwms = json.loads(h95_confirmed_hwm_path.read_text())
-    confirmed_set = {
-        (r["context_sha256"], r["program_sha256"]) for r in h95_hwms
-    }
+    confirmed_set = {(r["context_sha256"], r["program_sha256"]) for r in h95_hwms}
     material_set = {
         (r["context_sha256"], r["program_sha256"])
         for r in h95_hwms
@@ -1035,6 +1201,12 @@ def evaluate_prospective_h94_with_true_w1(
         by_cs[(r["context"], int(r["seed"]))][r["arm"]] = r
 
     micro_py = Path.home() / "JopeDimeMicro/python"
+    micro_eval_path = micro_py / "rust_evaluator.py"
+    if sha256_file(micro_eval_path) != PINS["micro_rust_evaluator"]:
+        raise SystemExit("micro_rust_evaluator SHA-256 mismatch")
+    champ_feat_path = Path.home() / "jope-data/h58/cache/champions_featurized.json"
+    if sha256_file(champ_feat_path) != PINS["champions_featurized"]:
+        raise SystemExit("champions_featurized SHA-256 mismatch")
     if str(micro_py) not in sys.path:
         sys.path.insert(0, str(micro_py))
     from rust_evaluator import featurize_dsl_412, propose_flywheel_candidates
@@ -1070,7 +1242,9 @@ def evaluate_prospective_h94_with_true_w1(
             16,
         )
 
-    def ranked_idx(sc: np.ndarray, ids: list[str], cand: list[int] | None = None) -> list[int]:
+    def ranked_idx(
+        sc: np.ndarray, ids: list[str], cand: list[int] | None = None
+    ) -> list[int]:
         pool_idx = list(range(len(ids))) if cand is None else cand
         return sorted(pool_idx, key=lambda i: (-float(sc[i]), ids[i]))
 
@@ -1114,44 +1288,44 @@ def evaluate_prospective_h94_with_true_w1(
                     )
 
         feats = np.stack(
-            [np.asarray(featurize_dsl_412(q["dsl"])[0], dtype=np.float32) for q in props]
+            [
+                np.asarray(featurize_dsl_412(q["dsl"])[0], dtype=np.float32)
+                for q in props
+            ]
         )
         k = fold_by_cid[c]
         m_entry = outer_models[f"fold_{k}"]
         raw_prog = m_entry["m_prog"].predict(feats).astype(np.float64)
-        mu_prog_true = (
-            float(m_entry["a_prog"]) + float(m_entry["b_prog"]) * raw_prog
-        )
+        mu_prog_true = float(m_entry["a_prog"]) + float(m_entry["b_prog"]) * raw_prog
 
         x_ctx = np.concatenate(
             [feats, np.repeat(ctxf[idx[c]][None], len(props), 0)], axis=1
         )
         raw_ctx = m_entry["m_ctx"].predict(x_ctx).astype(np.float64)
-        mu_ctx_true = (
-            float(m_entry["a_ctx"]) + float(m_entry["b_ctx"]) * raw_ctx
-        )
+        mu_ctx_true = float(m_entry["a_ctx"]) + float(m_entry["b_ctx"]) * raw_ctx
 
         true_prior_top4 = [ids[i] for i in ranked_idx(mu_prog_true, ids)[:4]]
         true_ctx_top4 = [ids[i] for i in ranked_idx(mu_ctx_true, ids)[:4]]
         keep2 = ranked_idx(mu_prog_true, ids)[:2]
         true_hedge_top4 = [
             ids[i]
-            for i in (keep2 + [j for j in ranked_idx(mu_ctx_true, ids) if j not in keep2][:2])
+            for i in (
+                keep2 + [j for j in ranked_idx(mu_ctx_true, ids) if j not in keep2][:2]
+            )
         ]
 
         h94_prior_top4 = arm_rows["PRIOR_top4"]["revealed"]
         h94_ctx_top4 = arm_rows["CTX_top4"]["revealed"]
         h94_hedge_top4 = arm_rows["HEDGE_CTX"]["revealed"]
 
-        top4_overlap_prior.append(
-            len(set(true_prior_top4) & set(h94_prior_top4)) / 4.0
-        )
+        top4_overlap_prior.append(len(set(true_prior_top4) & set(h94_prior_top4)) / 4.0)
         top4_overlap_ctx.append(len(set(true_ctx_top4) & set(h94_ctx_top4)) / 4.0)
-        top4_overlap_hedge.append(
-            len(set(true_hedge_top4) & set(h94_hedge_top4)) / 4.0
-        )
+        top4_overlap_hedge.append(len(set(true_hedge_top4) & set(h94_hedge_top4)) / 4.0)
 
-        if all((c, pid) in fits_map for pid in true_prior_top4 + true_ctx_top4 + true_hedge_top4):
+        if all(
+            (c, pid) in fits_map
+            for pid in true_prior_top4 + true_ctx_top4 + true_hedge_top4
+        ):
             true_w1_fully_evaluated_cs += 1
 
         for arm_label, picked_ids in [
@@ -1170,6 +1344,7 @@ def evaluate_prospective_h94_with_true_w1(
 
         eval_indices = [i for i, pid in enumerate(ids) if (c, pid) in fits_map]
         if len(eval_indices) >= 4:
+
             def best_of_4(pick_idx: list[int]) -> float:
                 vals = []
                 for idx_i in pick_idx:
@@ -1185,9 +1360,14 @@ def evaluate_prospective_h94_with_true_w1(
             p_true_idx = ranked_idx(mu_prog_true, ids, eval_indices)[:4]
             c_true_idx = ranked_idx(mu_ctx_true, ids, eval_indices)[:4]
             k2_eval = ranked_idx(mu_prog_true, ids, eval_indices)[:2]
-            h_true_idx = k2_eval + [
-                j for j in ranked_idx(mu_ctx_true, ids, eval_indices) if j not in k2_eval
-            ][:2]
+            h_true_idx = (
+                k2_eval
+                + [
+                    j
+                    for j in ranked_idx(mu_ctx_true, ids, eval_indices)
+                    if j not in k2_eval
+                ][:2]
+            )
 
             for a_lbl, val_u4 in [
                 ("H94_PRIOR_top4", float(arm_rows["PRIOR_top4"]["retained_best"])),
@@ -1413,8 +1593,7 @@ def merge_and_analyze_shards(
         n_iters=400,
     )
     track2_u4_panel["family_elo_r882_anchor1500"] = {
-        k: float(v)
-        for k, v in r882_u4_elo.get("ratings", r882_u4_elo).items()
+        k: float(v) for k, v in r882_u4_elo.get("ratings", r882_u4_elo).items()
     }
 
     track1_leg_panel = analyze_w6_panel(
@@ -1445,8 +1624,7 @@ def merge_and_analyze_shards(
         n_iters=400,
     )
     track1_leg_panel["family_elo_r882_anchor1500"] = {
-        k: float(v)
-        for k, v in r882_leg_elo.get("ratings", r882_leg_elo).items()
+        k: float(v) for k, v in r882_leg_elo.get("ratings", r882_leg_elo).items()
     }
 
     tpl_sec = tuple(
@@ -1578,16 +1756,16 @@ def merge_and_analyze_shards(
         "prospective_h94_h95_true_w1_audit": prospective_audit,
         "shard_receipts": shard_summaries,
         "host_receipts": host_receipts or [],
-        "verdict": {
-            "cached_screen_track2_u4": track2_u4_panel["verdict"],
-            "cached_screen_track1_legacy": track1_leg_panel["verdict"],
-            "unseen_templates_track2_u4": unseen_tpl_u4_panel["verdict"],
-            "prospective_new_programs": (
-                prospective_audit["evaluated_subset_panel"]["verdict"]
+        "verdict": derive_registered_w6_verdict(
+            track2_u4_panel=track2_u4_panel,
+            track1_leg_panel=track1_leg_panel,
+            unseen_tpl_u4_panel=unseen_tpl_u4_panel,
+            prospective_panel=(
+                prospective_audit["evaluated_subset_panel"]
                 if prospective_audit
-                else "NOT_RUN"
+                else None
             ),
-        },
+        ),
     }
     (out_dir / "metrics.json").write_text(json.dumps(metrics, indent=2, sort_keys=True))
     return metrics
@@ -1612,7 +1790,9 @@ def main() -> int:
     sp_shard.add_argument("--bundle", type=Path, required=True)
     sp_shard.add_argument("--out", type=Path, required=True)
 
-    sp_merge = sub.add_parser("merge", help="Merge 5 fold shards and run prospective audit")
+    sp_merge = sub.add_parser(
+        "merge", help="Merge 5 fold shards and run prospective audit"
+    )
     sp_merge.add_argument("--shards", type=Path, nargs=5, required=True)
     sp_merge.add_argument("--out-dir", type=Path, required=True)
     sp_merge.add_argument("--run-id", required=True)

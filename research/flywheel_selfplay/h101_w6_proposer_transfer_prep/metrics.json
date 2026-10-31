@@ -11,7 +11,23 @@
     "w1_folds_unrevealed_seen_template_slots": 112716,
     "w1_folds_unrevealed_slots": 1399411
   },
+  "derivation_provenance": {
+    "derivation_notes": "Derived from the immutable 2026-10-31T09:38Z 4-node S3 execution metrics (0ca473ed3de4ad0012148bb9f670e5a4562888617879a7285aea7b7899efe47e, VersionId PqrsUh5VE1NL2wrZFVZ2w31DhSS5X762) by (1) applying the H98 -> H100 -> H101 wave-ID rename, (2) appending the post-merge S3 custody receipt metadata, and (3) applying derive_registered_w6_verdict() per PROPOSALS.md:209 without re-running any fits or evaluations.",
+    "derived_without_reexecution": true,
+    "executed_run_id": "argon-h98-proposer-transfer-20261031T0938Z",
+    "executed_source_bytes": 65971,
+    "executed_source_s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/w6/argon-h98-proposer-transfer-20261031T0938Z/w6_transfer_prep.py",
+    "executed_source_s3_version_id": "rul15f0jKDZewt7R_wN5NZyRg8Wul4NV",
+    "executed_source_sha256": "3e6eda5859e9ec387ee57b8dc188fb0f82baedf9567eec583aa623889c63bdcc",
+    "formatted_h101_source_sha256": "d79358c7c668e72034df0595872749baaf0a45040487d023a04af1557dd6e802",
+    "immutable_s3_metrics_bytes": 85336,
+    "immutable_s3_metrics_sha256": "0ca473ed3de4ad0012148bb9f670e5a4562888617879a7285aea7b7899efe47e",
+    "immutable_s3_metrics_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/w6/argon-h98-proposer-transfer-20261031T0938Z/metrics.json",
+    "immutable_s3_metrics_version_id": "PqrsUh5VE1NL2wrZFVZ2w31DhSS5X762"
+  },
+  "executed_source_sha256": "3e6eda5859e9ec387ee57b8dc188fb0f82baedf9567eec583aa623889c63bdcc",
   "family_mean_U0": 1.4582330723886736,
+  "formatted_source_sha256": "d79358c7c668e72034df0595872749baaf0a45040487d023a04af1557dd6e802",
   "gpu_seconds": 0,
   "h": "H101",
   "host_receipts": [
@@ -82,6 +98,7 @@
     "h94_fits_gz": "097c33f53e2ba04c6bf89982e2b43c4456c8d86e12b519f633db32c486bade71",
     "h94_rows_gz": "871aec0115119aaf4749c1374f2bf23a4137eb94aec79197ea6effd63722e0f7",
     "h95_confirmed_hwm": "8d5f1d2d5b95ea097640bc24a8a4331486d4478228e0ffeed6ea13f86afdce9a",
+    "micro_rust_evaluator": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
     "selected": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
     "w1_context_features": "d9e2275f425cdac1107b1f010c75b69d64dd3f7d29b41f3e1d5fd91bf128fca6",
     "w1_fold_manifest": "dd211134bba127960b1612687478064969dca422e35dfa889790760f316961c1",
@@ -115,6 +132,7 @@
         "TRUE_W1_PRIOR_EVAL_SUBSET": 1.9931283304836749
       },
       "contexts": 50,
+      "diagnostic_primaries_passing": [],
       "families": 44,
       "family_elo": {
         "H94_CTX_top4": 1425.97,
@@ -588,7 +606,7 @@
       "wall_s": 92.41380047798157
     }
   ],
-  "source_sha256": "e647bec91e802cb41ad484e2fd47bcca342f44a020aa7297d346db4d5a996069",
+  "source_sha256": "3e6eda5859e9ec387ee57b8dc188fb0f82baedf9567eec583aa623889c63bdcc",
   "track1_legacy_val_reg_inner": {
     "completeness": {
       "complete": true,
@@ -620,6 +638,7 @@
       "TREAT_FAMBAL": 1.2634404316021222
     },
     "contexts": 1219,
+    "diagnostic_primaries_passing": [],
     "families": 205,
     "family_elo": {
       "CTX": 1573.99,
@@ -1002,7 +1021,7 @@
         ]
       }
     },
-    "verdict": "NO_ADVANCE (primary gate not met)"
+    "verdict": "KILL_NO_ADVANCE (fails registered W6 gates: TREAT_FAMBAL - PRIOR, TREAT_FAMBAL - RETR, TREAT_FAMBAL - SHUF; diagnostic primaries passing: none)"
   },
   "track2_verified_u4": {
     "completeness": {
@@ -1035,6 +1054,9 @@
       "TREAT_FAMBAL": 1.7050828706724934
     },
     "contexts": 1219,
+    "diagnostic_primaries_passing": [
+      "TREAT_FAMBAL - PRIOR"
+    ],
     "families": 205,
     "family_elo": {
       "CTX": 1569.76,
@@ -1419,13 +1441,23 @@
         ]
       }
     },
-    "verdict": "ADVANCE_CACHED_SCREEN (TREAT_FAMBAL - PRIOR)"
+    "verdict": "KILL_NO_ADVANCE (fails registered W6 gates: TREAT_FAMBAL - RETR, TREAT_FAMBAL - SHUF; diagnostic primaries passing: TREAT_FAMBAL - PRIOR)"
   },
   "verdict": {
-    "cached_screen_track1_legacy": "NO_ADVANCE (primary gate not met)",
-    "cached_screen_track2_u4": "ADVANCE_CACHED_SCREEN (TREAT_FAMBAL - PRIOR)",
+    "cached_screen_track1_legacy": "KILL_NO_ADVANCE (fails registered W6 gates: TREAT_FAMBAL - PRIOR, TREAT_FAMBAL - RETR, TREAT_FAMBAL - SHUF; diagnostic primaries passing: none)",
+    "cached_screen_track2_u4": "KILL_NO_ADVANCE (fails registered W6 gates: TREAT_FAMBAL - RETR, TREAT_FAMBAL - SHUF; diagnostic primaries passing: TREAT_FAMBAL - PRIOR)",
+    "diagnostic_only_cached_prior_contrast": "PASS_DIAGNOSTIC_ONLY (TREAT_FAMBAL - PRIOR passes Common Advance Gate on cached U4, but does not override retrieval, unseen-proxy, or context-shuffle kill conditions)",
+    "overall_w6_study_verdict": "KILL_NO_ADVANCE",
     "prospective_new_programs": "NO_ADVANCE (primary gate not met)",
-    "unseen_templates_track2_u4": "NO_ADVANCE (primary gate not met)"
+    "registered_gate_checks": {
+      "advance_over_current_retrieval_u4": false,
+      "advance_over_generic_prior_u4": true,
+      "beats_context_shuffle_placebo_u4": false,
+      "prospective_new_programs_advance": false,
+      "survives_unseen_template_proxy_u4": false
+    },
+    "registered_rule_summary": "KILL_NO_ADVANCE (registered PROPOSALS.md:209 kill conditions met: TREAT_FAMBAL - RETR fails Common Advance Gate; unseen structural-feature proxy template stratum fails Common Advance Gate; context-shuffle placebo (TREAT_FAMBAL - SHUF) matches / fails Common Advance Gate; cached TREAT_FAMBAL - PRIOR pass=YES retained as diagnostic only)",
+    "unseen_templates_track2_u4": "KILL_NO_ADVANCE (fails registered W6 gates: TREAT_FAMBAL - PRIOR, TREAT_FAMBAL - RETR, TREAT_FAMBAL - SHUF; diagnostic primaries passing: none)"
   },
   "wave": "W6",
   "within_context_seen_templates_u4": {
@@ -1458,6 +1490,7 @@
       "TREAT_FAMBAL": 1.6878003220844588
     },
     "contexts": 1219,
+    "diagnostic_primaries_passing": [],
     "families": 205,
     "family_elo": {
       "CTX": 1508.61,
@@ -1779,7 +1812,7 @@
         ]
       }
     },
-    "verdict": "NO_ADVANCE (primary gate not met)"
+    "verdict": "KILL_NO_ADVANCE (fails registered W6 gates: TREAT_FAMBAL - PRIOR, TREAT_FAMBAL - RETR, TREAT_FAMBAL - SHUF; diagnostic primaries passing: none)"
   },
   "within_context_seen_templates_val_reg_inner": {
     "completeness": {
@@ -1811,6 +1844,7 @@
       "TREAT_FAMBAL": 1.1586411374185648
     },
     "contexts": 1219,
+    "diagnostic_primaries_passing": [],
     "families": 205,
     "family_elo": {
       "CTX": 1522.92,
@@ -2132,7 +2166,7 @@
         ]
       }
     },
-    "verdict": "NO_ADVANCE (primary gate not met)"
+    "verdict": "KILL_NO_ADVANCE (fails registered W6 gates: TREAT_FAMBAL - PRIOR, TREAT_FAMBAL - RETR, TREAT_FAMBAL - SHUF; diagnostic primaries passing: none)"
   },
   "within_context_unseen_templates_u4": {
     "completeness": {
@@ -2164,6 +2198,7 @@
       "TREAT_FAMBAL": 1.7116472879564477
     },
     "contexts": 1219,
+    "diagnostic_primaries_passing": [],
     "families": 205,
     "family_elo": {
       "CTX": 1548.93,
@@ -2485,7 +2520,7 @@
         ]
       }
     },
-    "verdict": "NO_ADVANCE (primary gate not met)"
+    "verdict": "KILL_NO_ADVANCE (fails registered W6 gates: TREAT_FAMBAL - PRIOR, TREAT_FAMBAL - RETR, TREAT_FAMBAL - SHUF; diagnostic primaries passing: none)"
   },
   "within_context_unseen_templates_val_reg_inner": {
     "completeness": {
@@ -2517,6 +2552,7 @@
       "TREAT_FAMBAL": 1.2978428812013036
     },
     "contexts": 1219,
+    "diagnostic_primaries_passing": [],
     "families": 205,
     "family_elo": {
       "CTX": 1563.83,
@@ -2838,6 +2874,6 @@
         ]
       }
     },
-    "verdict": "NO_ADVANCE (primary gate not met)"
+    "verdict": "KILL_NO_ADVANCE (fails registered W6 gates: TREAT_FAMBAL - PRIOR, TREAT_FAMBAL - RETR, TREAT_FAMBAL - SHUF; diagnostic primaries passing: none)"
   }
 }
