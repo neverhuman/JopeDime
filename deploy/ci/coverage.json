@@ -13407,6 +13407,16 @@
       ],
       "lanes": [],
       "scope": "H92 W6 downside-controlled learner fixtures: hedge keeps the prior top-2 and adds two distinct scorer picks, shortlist never leaves the prior top-16, retained-best refuses anchors/duplicates, verdict and median-interval paths, and the merged-H83 loader refuses changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h94_w6_prospective_hedge/test_run_prospective_hedge.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H94 W6 prospective hedge fixtures: HEDGE_CTX keeps the prior top-2 and adds the context model top-2 of the rest, the three arms reveal at most eight distinct programs per unit, unknown arms are refused, incomplete context-seeds leave the paired panel, verdict and median-interval paths, and the merged-H81 loader refuses changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
     }
   },
   "lanes": {
