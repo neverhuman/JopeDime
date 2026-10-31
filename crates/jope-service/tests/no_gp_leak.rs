@@ -423,7 +423,7 @@ async fn bounded_real_run_http_status_and_sse_do_not_leak_internal_sentinels() {
     let home = tempfile::tempdir_in(&target_dir).unwrap();
     let worker = native_worker(home.path());
     let engine = InProcessEngine::open_with_worker(home.path(), worker).unwrap();
-    let raw = include_bytes!("../../../../test-support/datasets/v1/d2-regression/train.csv");
+    let raw = include_bytes!("../../../test-support/datasets/v1/d2-regression/train.csv");
     let mut headers: Vec<_> = (0..21).map(|index| format!("x{index}")).collect();
     headers.push("target".into());
     let mut csv = headers.join(",");
@@ -542,7 +542,7 @@ async fn bounded_real_run_http_status_and_sse_do_not_leak_internal_sentinels() {
         "{headers}\n{}",
         frames
             .iter()
-            .map(String::from_utf8_lossy)
+            .map(|frame| String::from_utf8_lossy(frame.as_ref()))
             .collect::<String>()
     );
     scan_surfaces(&[(Surface::Sse, output)]).unwrap();
