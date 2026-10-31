@@ -13457,6 +13457,16 @@
       ],
       "lanes": [],
       "scope": "H97 REG-EMA candidate-protocol fixtures: exact (arm, seed) cell set, 19 paired dev families and 91 contexts required, complete finite seed vectors retained."
+    },
+    "python:research/flywheel_selfplay/h99_esh_harm/test_h99.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H99 ESH harm follow-up preregistration fixtures: fold assignment partitions whole train families exactly once, sealed meta-test inputs never opened."
     }
   },
   "lanes": {
