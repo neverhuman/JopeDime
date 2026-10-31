@@ -1,25 +1,231 @@
 {
-  "wave": "H131",
-  "status": "INCOMPLETE",
-  "actual_updates": 0,
-  "arms": null,
-  "completed_fits": 0,
-  "completed_assessment_cells": 0,
-  "stop_reason": "worker_threads>4",
-  "last_phase": "fit_tokens",
-  "regression_status": "NOT_COMPLETED",
-  "read_audit_status": "NOT_FLUSHED_ON_SIGTERM",
-  "gain": null,
-  "Elo": null,
-  "family_harm": null,
-  "statistical_verdict": null,
-  "scientific_verdict": "INCOMPLETE",
+  "status": "COMPLETE",
+  "arms": {
+    "CONTROL": {
+      "median_gain": -0.02714801594883701,
+      "seed_gains": [
+        -0.0441445659535332,
+        -0.02714801594883701,
+        -0.02601962881422028
+      ],
+      "family_bootstrap_95_ci": [
+        -0.07396480824477514,
+        0.00855959500122507
+      ],
+      "ordinary_one_sided_95_lcb": -0.06568305960490187,
+      "bootstrap_lower_tail_area": 0.9206079392060794,
+      "seed_utilities": [
+        1.2733698466801708,
+        1.290366396684867,
+        1.291494783819484
+      ],
+      "family_harm_fraction": 0.4878048780487805,
+      "seed_family_harm_fractions": [
+        0.4146341463414634,
+        0.4634146341463415,
+        0.3902439024390244
+      ],
+      "family_wins": [
+        9,
+        8,
+        9
+      ],
+      "family_ties": [
+        15,
+        14,
+        16
+      ],
+      "family_losses": [
+        17,
+        19,
+        16
+      ],
+      "median_elo": 1431.3271439397495,
+      "seed_elo": [
+        1431.3271439397495,
+        1404.4471644339453,
+        1440.0950718666672
+      ],
+      "elo_95_ci": [
+        1346.7132992594675,
+        1508.4757196279752
+      ],
+      "identical_seed_gain_vectors": false,
+      "identical_to_reference_utilities": false,
+      "verdict": "NO_ADVANCE",
+      "holm_threshold": 0.05,
+      "holm_lcb95": -0.06568305960490187,
+      "holm_pass": false
+    },
+    "SOUP8": {
+      "median_gain": -0.02297607609471257,
+      "seed_gains": [
+        -0.028625742228561,
+        -0.022948852277707942,
+        -0.02297607609471257
+      ],
+      "family_bootstrap_95_ci": [
+        -0.06939497347485882,
+        0.013137588717764031
+      ],
+      "ordinary_one_sided_95_lcb": -0.061301682822789624,
+      "bootstrap_lower_tail_area": 0.8678132186781322,
+      "seed_utilities": [
+        1.288888670405143,
+        1.294565560355996,
+        1.2945383365389913
+      ],
+      "family_harm_fraction": 0.4146341463414634,
+      "seed_family_harm_fractions": [
+        0.4146341463414634,
+        0.3902439024390244,
+        0.3902439024390244
+      ],
+      "family_wins": [
+        8,
+        10,
+        11
+      ],
+      "family_ties": [
+        16,
+        15,
+        14
+      ],
+      "family_losses": [
+        17,
+        16,
+        16
+      ],
+      "median_elo": 1448.7880745658233,
+      "seed_elo": [
+        1422.4719895935548,
+        1448.7880745658233,
+        1457.4178676342854
+      ],
+      "elo_95_ci": [
+        1366.714128385847,
+        1534.0043158833396
+      ],
+      "identical_seed_gain_vectors": false,
+      "identical_to_reference_utilities": false,
+      "verdict": "NO_ADVANCE",
+      "holm_threshold": 0.025,
+      "holm_lcb95": -0.06939497347485882,
+      "holm_pass": false
+    },
+    "SOUP8_HALF": {
+      "median_gain": -0.021520066584973067,
+      "seed_gains": [
+        -0.024170601335058925,
+        -0.021249911861725007,
+        -0.021520066584973067
+      ],
+      "family_bootstrap_95_ci": [
+        -0.06976308472597784,
+        0.014934757422023572
+      ],
+      "ordinary_one_sided_95_lcb": -0.06127220352337379,
+      "bootstrap_lower_tail_area": 0.8418158184181582,
+      "seed_utilities": [
+        1.293343811298645,
+        1.2962645007719789,
+        1.2959943460487309
+      ],
+      "family_harm_fraction": 0.3170731707317073,
+      "seed_family_harm_fractions": [
+        0.3170731707317073,
+        0.3170731707317073,
+        0.3170731707317073
+      ],
+      "family_wins": [
+        10,
+        11,
+        11
+      ],
+      "family_ties": [
+        18,
+        17,
+        17
+      ],
+      "family_losses": [
+        13,
+        13,
+        13
+      ],
+      "median_elo": 1483.0384605787651,
+      "seed_elo": [
+        1474.532368052249,
+        1483.0384605787651,
+        1483.0384605787651
+      ],
+      "elo_95_ci": [
+        1404.4471644339453,
+        1568.6728560602505
+      ],
+      "identical_seed_gain_vectors": false,
+      "identical_to_reference_utilities": false,
+      "verdict": "NO_ADVANCE",
+      "holm_threshold": 0.016666666666666666,
+      "holm_lcb95": -0.07474565189142407,
+      "holm_pass": false
+    }
+  },
+  "reference_utility": 1.317514412633704,
+  "assessment_families": 41,
+  "assessment_contexts": 271,
+  "harm_definition": "fraction of families with strictly negative seed-mean gain; no tolerance",
+  "interpretation": "Additional fine-tuning of an already DL-Train-exposed r882; no unseen-family or serving qualification.",
+  "wave": "H131b",
+  "actual_updates": 1080,
+  "fitted_members": 24,
+  "control_fits": 3,
+  "source_commit": "2b7049f4dd5907eb383b1debc3a807ecf9439dff",
+  "CPU_only": true,
+  "CUDA_initialized": false,
+  "payload_paths_opened": 2438,
+  "refusals": [],
+  "anchor_cache": {
+    "anchor_sha256": "1cca6db5bcece221f68489c3435adf94756073a6cb574e5860e789507f70b000",
+    "entries": 154,
+    "verified_keys": 154,
+    "hits": 426,
+    "misses": 154,
+    "bytes": 28085740
+  },
+  "compute_mismatch": "SOUP8 uses8x CONTROL updates; SOUP8_HALF reuses SOUP8 without additional updates",
+  "scientific_verdict": "NO_ADVANCE",
   "prereg_pr": 1146,
+  "amendment_pr": 1162,
+  "prior_attempt": {
+    "wave": "H131",
+    "status": "INCOMPLETE",
+    "actual_updates": 0,
+    "arms": null,
+    "completed_fits": 0,
+    "completed_assessment_cells": 0,
+    "stop_reason": "worker_threads>4",
+    "last_phase": "fit_tokens",
+    "regression_status": "NOT_COMPLETED",
+    "read_audit_status": "NOT_FLUSHED_ON_SIGTERM",
+    "gain": null,
+    "Elo": null,
+    "family_harm": null,
+    "statistical_verdict": null,
+    "scientific_verdict": "INCOMPLETE",
+    "prereg_pr": 1146,
+    "custody": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H131/astra-t1235/manifest.json",
+      "version_id": "hsJSCL38idqNRqNod72q8oGb7ntin7LX",
+      "sha256": "ae60da96a1176117a3cf1e6d754a648f592034b42af050ae41246a82c1a11fc5",
+      "bytes": 39505,
+      "verified_utc": "2026-10-31T19:02:44.010370+00:00"
+    }
+  },
   "custody": {
-    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H131/astra-t1235/manifest.json",
-    "version_id": "hsJSCL38idqNRqNod72q8oGb7ntin7LX",
-    "sha256": "ae60da96a1176117a3cf1e6d754a648f592034b42af050ae41246a82c1a11fc5",
-    "bytes": 39505,
-    "verified_utc": "2026-10-31T19:02:44.010370+00:00"
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H131b/astra-t1340/manifest.json",
+    "version_id": "LoMO6QneloUYvpgQPtTQ38nTXu1oMBk7",
+    "sha256": "de0d027981f295fc213f880990f11c048eeac4087e5190fdca45ae3132742007",
+    "bytes": 46574,
+    "verified_utc": "2026-10-31T20:07:07.889219+00:00"
   }
 }

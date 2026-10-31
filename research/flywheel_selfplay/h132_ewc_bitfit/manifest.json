@@ -1,4 +1,5 @@
 {
+  "admitted_arms": [],
   "arms": {
     "BITFIT": {
       "frozen_adapter_parameters": 28520,
@@ -32,6 +33,43 @@
   },
   "cells": 9,
   "custody": "/home/ubuntu/jope-rescue-20260921/h132-ewc-bitfit",
+  "execution_accounting": {
+    "attempts": [
+      {
+        "attempt": "initial",
+        "new_completed_cells": 0,
+        "optimizer_updates": 0,
+        "task": "task-2357"
+      },
+      {
+        "attempt": "1a",
+        "new_completed_cells": 2,
+        "optimizer_updates": 80,
+        "task": "task-2366"
+      },
+      {
+        "attempt": "1b",
+        "new_completed_cells": 7,
+        "optimizer_updates": 280,
+        "task": "task-2381"
+      },
+      {
+        "attempt": "2",
+        "new_completed_cells": 3,
+        "optimizer_updates": 120,
+        "task": "task-2411"
+      }
+    ],
+    "basis": "Completed cells in the disclosed Amendment A1 chronology; 40 optimizer updates per cell. Existing optimizer_updates and cells_completed describe the final retained panel.",
+    "cumulative_disclosed_completed_cells": 12,
+    "cumulative_disclosed_optimizer_updates": 480,
+    "elapsed_seconds_scope": "task-2411 final invocation only; not cumulative wall time across all attempts",
+    "local_summary_receipt_scope": "Native summary serialized before insertion of its local_summary_receipt field; verified by removing only that field and serializing sorted keys with indent=2 and a final newline.",
+    "retained_panel_cells": 9,
+    "retained_panel_optimizer_updates": 360,
+    "superseded_attempt_1_ewc_cells": 3,
+    "superseded_attempt_1_ewc_optimizer_updates": 120
+  },
   "execution_gate": "No real-data training or assessment scoring before preregistration PR merges into origin/main; runner enforces HEAD ancestry in origin/main.",
   "fold": {
     "assessment_context_count": 263,
@@ -52,12 +90,29 @@
     "fold_seed": 132100
   },
   "hypothesis": "Protecting sensitive adapter directions via fit-fold diagonal empirical Fisher anchoring (EWC) or restricting training to the 691 bias + output-layer parameters (BITFIT) will yield a strict paired family gain (> +0.001) over unchanged r882 with <= 10% harmed families.",
+  "local_custody_receipts": {
+    "attempt_1_deleted_ewc_seed100_sha256": "304e9e8490b81458248652b8c5019191f3c5976df0f0ec55ac0ed724d2d4edca",
+    "attempt_1a_fisher_sha256": "ea301a7a61003ecb58806aeeb179d9a2f74f03e380793b311a18c1f0605921d6",
+    "attempt_1b_fisher_sha256": "0b8d20460ddcefacc8e945e330bbdffaa4a022fbb6d9ad070288eb40cf0ea7fb",
+    "attempt_2_fisher_sha256": "1cd853ef0abc28ce533ad936664b587d4cea9d13969d8aa3c94a40ca414296a6",
+    "regression_receipt_sha256": "12401be1cd799fa704256fd3903c72c30aa7b8cd8a45331248a247a35a22212d",
+    "summary_receipt_sha256": "8dc9b6ce28b1cdb024178696e298810aecdbfe724b6b134ef51e49a7e5d5271e"
+  },
+  "metrics_bytes": 43719,
+  "metrics_sha256": "2bea885b09c848437c9f5e633f0b74d5b043e7cf5d7016ab6180b320763d3811",
   "output_limit_bytes": 100000,
   "paired_seeds": [
     100,
     101,
     102
   ],
+  "prereg_amendment_a1": {
+    "file": "PREREG_AMENDMENT_A1.md",
+    "flag": "runner sha deviates from prereg \u2014 amendment A1 included",
+    "sha256": "29605b9e107f06e6e98d09792b5e72a5a17dcb660858ea9c3b6e8f07538fc0e9"
+  },
+  "prereg_merge_commit": "6306506e333bee32adcc7939842c5f38565b9d4b",
+  "prereg_runner_sha256": "c1bb24c94d3ad7e83d8844d6fecd9076b5b078fe58c9bd6764282a4166c09f60",
   "prereg_sha256": "49f9cca4ad7d51e9e20605a60b76a05c2ee1d5ef2a5bca69ec129bc890c070df",
   "primary": {
     "admission": {
@@ -89,15 +144,17 @@
     "nice": 15,
     "qualification_lock": false
   },
-  "runner_sha256": "c1bb24c94d3ad7e83d8844d6fecd9076b5b078fe58c9bd6764282a4166c09f60",
-  "schema": "jope.h132.preregistration/v1",
+  "runner_sha256": "4d3e8182e674410b179e13ec2cadba21e1715c65b677053fd776a2dfe4a65673",
+  "schema": "jope.h132.manifest/v1",
   "secondary": {
     "comparator": "CONTROL",
     "elo": "report family-paired Elo and Bradley-Terry Elo vs r882=1500 and vs CONTROL=1500; no AUC"
   },
   "source_base": "1da3c7556c859b23b2cef91429823dce4a3f2b57",
-  "status": "PREREGISTERED_NOT_RUN",
-  "total_optimizer_updates": 360,
+  "status": "COMPLETE",
+  "total_optimizer_updates": 480,
+  "total_optimizer_updates_scope": "All completed optimizer updates disclosed in Amendment A1, including superseded Attempt-1 EWC cells; final retained panel remains 360 updates.",
   "updates_per_cell": 40,
+  "verdict": "NO_ADMISSION",
   "wave": "H132"
 }

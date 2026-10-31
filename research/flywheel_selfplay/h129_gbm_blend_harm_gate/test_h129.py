@@ -163,3 +163,45 @@ def test_dry_run_is_data_free():
         and out["data_reads"] == 0
         and out["estimator_fits"] == 0
     )
+
+
+def _aborted_root(tmp_path, monkeypatch):
+    import hashlib
+    import json
+
+    root = tmp_path / r.RESUME_ROOT_NAME
+    root.mkdir()
+    files = {}
+    for name, body in (
+        ("split.json", b"{}"),
+        ("seed91-exclude0.npz", b"P"),
+        ("seed91-exclude0.json", b"{}"),
+    ):
+        (root / name).write_bytes(body)
+        files[name] = {"sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body)}
+    manifest = {
+        "status": "ABORTED_DISK_GUARD_INCOMPLETE",
+        "outcomes_computed": False,
+        "files": files,
+    }
+    (root / "manifest.json").write_text(json.dumps(manifest))
+    monkeypatch.setattr(r, "RESUME_MANIFEST_SHA", r.sha(root / "manifest.json"))
+    return root
+
+
+def test_resume_requires_the_pinned_manifest_and_unchanged_files(tmp_path, monkeypatch):
+    root = _aborted_root(tmp_path, monkeypatch)
+    assert r.verify_resume_root(root)["outcomes_computed"] is False
+    (root / "seed91-exclude0.npz").write_bytes(b"tampered")
+    with pytest.raises(RuntimeError, match="pinned file changed"):
+        r.verify_resume_root(root)
+
+
+def test_resume_is_allowed_once_and_only_for_the_pinned_manifest(tmp_path, monkeypatch):
+    root = _aborted_root(tmp_path, monkeypatch)
+    (root / "resume-identity.json").write_text("{}")
+    with pytest.raises(RuntimeError, match="already resumed"):
+        r.verify_resume_root(root)
+    monkeypatch.setattr(r, "RESUME_MANIFEST_SHA", "0" * 64)
+    with pytest.raises(RuntimeError, match="manifest differs"):
+        r.verify_resume_root(root)
