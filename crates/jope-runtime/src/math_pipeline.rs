@@ -5,7 +5,7 @@
 //! New producers use [`InputContract::new`] / `prediction_version: 2` for f64 encoding,
 //! prediction and target inversion, with numerical failures instead of non-finite replacement.
 //! No stored object is rewritten; legacy JavaScript and narration bindings are preserved.
-//! Both versions match columns by name, scale/clamp cells to [0,1], select the recorded columns
+//! Both versions match columns by name, scale/clamp cells to `[0,1]`, select the recorded columns
 //! and map predictions back to target units. Missing-cell and constant-target policies stay intact.
 
 use crate::error::Failure;

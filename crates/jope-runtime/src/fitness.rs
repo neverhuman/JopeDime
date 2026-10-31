@@ -124,7 +124,7 @@ pub enum Fitness {
         target: f64,
         periods_per_year: f64,
     },
-    /// Largest peak-to-trough loss of the compounded equity curve, as a fraction in [0,1].
+    /// Largest peak-to-trough loss of the compounded equity curve, as a fraction in `[0,1]`.
     MaxDrawdown {
         max_position: f64,
         cost: f64,
