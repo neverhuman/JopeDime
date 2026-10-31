@@ -114,6 +114,7 @@ def validate_admission(admission):
         )
     contexts = admission.get("fit_contexts")
     require(type(contexts) is dict and contexts, "fit-context roster missing")
+    family_folds, alias_folds = {}, {}
     for context, entry in contexts.items():
         require(is_hash(context), "context SHA256 invalid")
         require(type(entry) is dict, "context admission must be an object")
@@ -154,6 +155,22 @@ def validate_admission(admission):
             ),
             "context protocol identity missing",
         )
+        for key, declared in (
+            ("family_id", family_folds),
+            ("alias_component", alias_folds),
+        ):
+            identity = entry[key]
+            require(
+                identity.strip() == identity
+                and identity.lower()
+                not in {"", "none", "null", "unknown", "unresolved"},
+                "unresolved family/alias identity",
+            )
+            require(
+                identity not in declared or declared[identity] == entry["family_fold"],
+                "family/alias spans folds",
+            )
+            declared[identity] = entry["family_fold"]
         require(
             type(entry.get("programs")) is dict and entry["programs"],
             "admitted programs missing",

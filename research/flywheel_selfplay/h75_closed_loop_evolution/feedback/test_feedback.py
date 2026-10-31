@@ -299,6 +299,41 @@ class FeedbackTests(unittest.TestCase):
             with self.subTest(change=change), self.assertRaises(ValueError):
                 feedback.build_feedback(rows, admission)
 
+    def test_fit_family_and_alias_have_one_fold(self):
+        rows, admission = fixture()
+        entry = next(iter(admission["fit_contexts"].values()))
+        extra = digest("second fit context")
+        admission["fit_contexts"][extra] = copy.deepcopy(entry)
+        feedback.validate_admission(
+            admission
+        )  # Multiple contexts in one family remain valid.
+        for same_family in (True, False):
+            changed = copy.deepcopy(admission)
+            changed["fit_contexts"][extra]["family_fold"] = 2
+            if not same_family:
+                changed["fit_contexts"][extra]["family_id"] = "other-fit-family"
+            with (
+                self.subTest(same_family=same_family),
+                self.assertRaisesRegex(ValueError, "fold"),
+            ):
+                feedback.validate_admission(changed)
+
+    def test_unresolved_family_and_alias_identifiers_refuse(self):
+        for field in ("family_id", "alias_component"):
+            for value in ("unknown", "NONE", "null", "unresolved", " ", " fit-family "):
+                rows, admission = fixture()
+                entry = next(iter(admission["fit_contexts"].values()))
+                entry[field] = value
+                if field == "family_id":
+                    for row in rows:
+                        row[field] = value
+                bind(admission, rows)
+                with (
+                    self.subTest(field=field, value=value),
+                    self.assertRaisesRegex(ValueError, "identity"),
+                ):
+                    feedback.build_feedback(rows, admission)
+
     def test_json_duplicate_keys_and_nonfinite_constants_refuse(self):
         for value in ('{"a":1,"a":2}', '{"a":NaN}', '{"a":Infinity}'):
             with self.subTest(value=value), self.assertRaises(ValueError):
