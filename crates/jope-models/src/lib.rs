@@ -7,6 +7,8 @@
 //! (`jope.model-bundle/v2`), the index (`jope.model-index/v1`), the bundle cache layout and the
 //! `fetch` / `verify` / `publish` / `path` commands.
 
+#![warn(missing_docs)]
+
 pub mod cache;
 pub mod cli;
 pub mod fetch;

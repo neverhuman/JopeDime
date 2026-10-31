@@ -15,15 +15,20 @@ use jope_datasets::verified_object::{
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
+/// Verified outcome of publishing one model bundle.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PublishReport {
+    /// Bundle identifier published.
     pub bundle_id: String,
+    /// Number of newly created blob objects.
     pub blobs_created: usize,
+    /// Number of existing, content-verified blob objects reused.
     pub blobs_existing: usize,
+    /// Total bytes uploaded for newly created blobs.
     pub bytes_uploaded: u64,
     /// `created` or `identical` (already published with the same bytes).
     pub manifest: String,
-    /// Verified object references for each bundle file in manifest order.
+    /// Verified object references for each bundle file, in manifest order.
     pub verified_blobs: Vec<VerifiedObjectRef>,
     /// Verified object reference for the bundle manifest itself (`Some` on completed publish).
     pub verified_manifest: Option<VerifiedObjectRef>,
