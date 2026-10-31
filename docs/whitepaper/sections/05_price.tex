@@ -68,7 +68,10 @@ the effect attributed to the writer.
 
 \subsection{The correction tax and the reasoning dial}\label{sub:price-tax}
 
-Small models are cheap per token and can be dear per win. For generation
+This subsection and \cref{sub:price-run} concern language-model writers and
+the agent comparators of \cref{sub:results-headtohead,sub:results-search};
+the reference network of \cref{sec:method}, writer and map together, has
+27.8 million parameters and writes at most 128 grammar tokens. Small models are cheap per token and can be dear per win. For generation
 alone, compute per token falls about 190-fold from a hypothetical dense 1.5T writer to
 an 8B one. With equal token counts and compute unit costs, the smaller
 writer can tolerate a win rate about 190 times lower before that
@@ -93,8 +96,9 @@ and entropy schedules, a curriculum past known solutions, and
 quality-diversity archives \citep{lehman2011novelty,mouret2015mapelites}.
 Any novelty bonus must preserve the reward ordering in \cref{sec:game}.
 These are design options. In the reference procedure, exploration comes
-from sampling the writer at temperature~1 and from verified search seeded
-with its drafts (\cref{sub:method-selfplay}). A measured exploration study
+from 64 writer drafts sampled at temperature~1, 16 random exploration
+programs added to them, and verified search seeded with the result
+(\cref{sub:method-selfplay}). A measured exploration study
 must declare its controls and budget share and count unsuccessful attempts;
 its quality--cost trade-off belongs with the results (\cref{sec:results}).
 
@@ -102,9 +106,8 @@ its quality--cost trade-off belongs with the results (\cref{sec:results}).
   An unfamiliar program is a conjecture; the referee checks whether it
   runs and improves the declared score. Verification establishes that
   bounded result. A claim of discovery also needs comparison with known
-  methods (\cref{sec:meaning}). In March 2016, AlphaGo's own estimate put
-  the chance that a human would play its Move~37 against Lee Sedol at about one in ten
-  thousand \citep{metz2016twomoves}, and AlphaGo won the game. A referee does
+  methods (\cref{sec:meaning}). AlphaGo's Move~37 was unlikely by its own
+  estimate and won its game (\cref{sub:anatomy-history}). A referee does
   not make strange moves good. Its reliability and execution cost must be
   established for the task (\cref{sec:method}).
 \end{explainer}
@@ -122,8 +125,9 @@ and AlphaZero played 44 million games of chess in about nine hours
 \citep{silver2017chess,silver2018general}. An illustrative grid of 10,000
 problems, 100 rounds and 8 attempts per problem per round gives 8 million
 attempts, the same order.
-It counts work, not learning: problem families matter more, and pilot
-learning curves decide, read only within their measured range.
+The grid counts work, not learning: the number of problem families matters
+more, and pilot learning curves, read only within their measured range, must
+decide.
 \textbf{Precision to plan the test:} illustratively, 150 independent
 units at a win rate near 60\% give an approximate 95\% interval of
 $\pm 8$ points. The actual study must compute uncertainty over independent
@@ -140,10 +144,8 @@ floor is separate from the cost estimates omitted below.
 
 A cost projection needs a pinned model and hardware configuration, dated
 prices, measured or justified utilization, a reproducible calculation, and
-an explicit accounting boundary. Those inputs are not yet recorded for the
-supplied cost scenarios, so their per-writer totals, low/high bands,
-referee-cost estimates and API comparisons are omitted. They remain a
-measurement task, not observed costs.
+an explicit accounting boundary. Those inputs are not yet recorded, so this
+paper reports no cost projections; they remain a measurement task.
 
 \begin{keyidea}
   Cost per verified improvement depends on both the cost of an attempt

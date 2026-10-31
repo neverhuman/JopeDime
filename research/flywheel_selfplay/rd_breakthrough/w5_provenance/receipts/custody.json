@@ -1,0 +1,14 @@
+{
+  "bucket": "veox-jopedime-learning-use2",
+  "prefix": "experiments/rd_breakthrough_20261030/w5_provenance/gb2136-20261031T040010Z-ca549a23e/",
+  "manifest_key": "experiments/rd_breakthrough_20261030/w5_provenance/gb2136-20261031T040010Z-ca549a23e/manifest.json",
+  "manifest_version": "bGdZpgM9wroUQmfOObS2AX2yOKj6UlIp",
+  "manifest_sha256": "0b48b708e0bd226d54351d724026bc48f689df4402e6f82fdd63c928ce0f69ad",
+  "downloaded_manifest_sha256": "0b48b708e0bd226d54351d724026bc48f689df4402e6f82fdd63c928ce0f69ad",
+  "object_count": 9,
+  "all_create_only": true,
+  "all_readback_bytes_verified": true,
+  "manifest_written_last": true,
+  "finished_utc": "2026-10-31T04:01:07.446990+00:00",
+  "elapsed_seconds": 2.252404978033155
+}
