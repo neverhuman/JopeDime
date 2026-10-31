@@ -12699,7 +12699,7 @@
         "full-default",
         "full-doctests"
       ],
-      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. RNK-12 CPU arithmetic regressions execute in this existing default library target; no CUDA feature execution or hosted qualification is inferred."
     },
     "target:jope-service/test/no_gp_leak": {
       "dispositions": [],
