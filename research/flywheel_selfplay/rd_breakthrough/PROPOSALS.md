@@ -2,7 +2,26 @@
 
 **Phase C consolidated proposal — 2026-10-31. [ASTRA] synthesis; [OPUS]/[ARGON] peer critique and evidence.**
 Source investigation and source-line references are pinned to `ca4c64b36c38b9c3e3f450b09c93896c50d98ee0`. A later main-source readback found an opt-in strict-margin admission mode; default tie acceptance remains, and live activation was not inspected. See [source refresh](astra/CODE_TRUTH.md#source-refresh-before-publication).
-## Current owner priority — lift first (t2250)
+## Current owner pass — t2320
+
+The latest explicit user-delivered `owner_t2320.md` sets the lock order
+**H57 → Fused D2 → W1**, then the research order **W3 → W4 → W6 → W5
+(provenance hold) → W7 → W9**. This dated scheduling instruction supersedes
+the different t2250 queue below. Active jobs are not interrupted. D2 receives
+CPU pre-review before its queued, lock-protected GPU execution; E has no new
+GPU placement in this pass.
+
+H75's merged preregistration and CPU implementation remain valid work. The
+latest pass does not specify an H75 GPU slot, so its earlier placement before
+W1 must not be used as current launch authority. Its scientific contrasts,
+input restrictions, resource reservation and deadline are unchanged.
+
+[Wave delivery status](DELIVERY.md) distinguishes completed published
+experiments from CPU preparation and diagnostic shards. Each newly finished
+wave gets a source/receipt-bound result folder and ready PR handed to mergers;
+existing published waves do not need a duplicate result PR or a new H number.
+
+## Earlier owner priority — lift first (t2250; schedule superseded)
 
 The owner decision `owner_lift_t2250.md` supersedes the earlier queue:
 **H57 → [H75 closed-loop evolution](../h75_closed_loop_evolution/PREREG.md) → W1 → H71/W5**.
@@ -108,7 +127,7 @@ All nine waves have **no intended holdout exposure**, conditional on this admiss
 | 8 | W7 — informative acquisition and diverse replay | Requires a strong learner from the earlier learning waves. | 2 h | 4,800 | 24–40 h |
 | 9 | W9 — causal flywheel closeout | Does learned guidance create data that improve subsequent guidance? | 4 h | 9,600 | 24–40 h |
 
-The t2058 order authorizes the immediate CPU diagnostics and W1 preparation described above; it supersedes the earlier recommendation to start only with W1 preparation. Each native wave retains its four aggregate CPU-hour stop. The later t2101 rule replaces the four-worker cap with per-host ceilings: xbabe1≤50 at nice19 and≥150GB free; xbabe2≤45; xbabe3≤70; xbabe4≤20 inside Linux Docker/Colima jope-ci only. Other hosts use nice15, every host stays≤85% CPU, and current load can reduce these ceilings to zero. Fan-out does not multiply budgets; a timeout is an observed failure/cost, not a replacement sample. GPU work requires holding the existing `~/jope_plan/qualification.lock`; the t2250 H57 → H75 → W1 → H71/W5 queue above supersedes the earlier speed-first queue. Later waves retain the common advance gate and their stated dependencies; the schedule does not declare them passed. The original W9 full closeout uses frozen winning settings; H75 now tests its causal question earlier under a separate fixed preregistration and the shared reservation ledger. W2's proposed ≤1.5 GPU-hour training follow-up and W8's proposed ≤1 GPU-hour reliability head are not part of the immediate zero-GPU diagnostics and do not preempt W1's first GPU slot.
+The t2058 order authorizes the immediate CPU diagnostics and W1 preparation described above; it supersedes the earlier recommendation to start only with W1 preparation. Each native wave retains its four aggregate CPU-hour stop. The later t2101 rule replaces the four-worker cap with per-host ceilings: xbabe1≤50 at nice19 and≥150GB free; xbabe2≤45; xbabe3≤70; xbabe4≤20 inside Linux Docker/Colima jope-ci only. Other hosts use nice15, every host stays≤85% CPU, and current load can reduce these ceilings to zero. Fan-out does not multiply budgets; a timeout is an observed failure/cost, not a replacement sample. GPU work requires holding the existing `~/jope_plan/qualification.lock`; the latest t2320 H57 → Fused D2 → W1 lock order above supersedes the earlier schedules. Later waves retain the common advance gate and their stated dependencies; the schedule does not declare them passed. The original W9 full closeout uses frozen winning settings; H75 now tests its causal question earlier under a separate fixed preregistration and the shared reservation ledger. W2's proposed ≤1.5 GPU-hour training follow-up and W8's proposed ≤1 GPU-hour reliability head are not part of the immediate zero-GPU diagnostics and do not preempt W1's first GPU slot.
 
 Under overnight15, ASTRA prepares [H62/W2](../h62_slate_consistency/README.md) and [H63/W8](../h63_training_resplits/README.md) for result publication, coordinating OPUS's execution to avoid duplicate shards. Long-term outputs require unique run IDs, manifests and verified SHA256 custody under `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/<wave>/<run_id>/`; see the [CPU/S3 contract](CPU_S3.md). This output destination does not expand input admission. Ready result PRs follow actual verdicts; preparation is not a measured result.
 
