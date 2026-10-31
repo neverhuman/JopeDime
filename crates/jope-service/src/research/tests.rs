@@ -99,6 +99,208 @@ fn record(round: u64, all: bool) -> ResearchRound {
     }
 }
 
+fn capture_input(round: u64, all: bool) -> ResearchRound {
+    let mut input = record(round, all);
+    input.dispatched.clear();
+    input.outcomes.clear();
+    input.capture_complete = false;
+    input
+}
+
+fn measured(index: usize) -> Rung0Measurement {
+    if index == 0 {
+        Rung0Measurement::Failed {
+            code: WorkerFailure::NonFinite,
+        }
+    } else {
+        Rung0Measurement::Success {
+            surrogate: index as f64,
+            objective: -(index as f64),
+            gate: index % 2 == 0,
+        }
+    }
+}
+
+#[test]
+fn capture_preserves_policy_and_evaluates_the_selected_population_once() {
+    for round in 0..3 {
+        for all in [false, true] {
+            let mut input = capture_input(round, all);
+            input.policy.admitted.reverse();
+            let expected = if all {
+                (0..input.proposals.len()).collect()
+            } else {
+                input.policy.admitted.clone()
+            };
+            let before = serde_json::to_value(&input).unwrap();
+            let mut capture = RoundCapture::new(input, usize::MAX).unwrap();
+            let mut called = vec![];
+            while capture
+                .evaluate_next(|index, proposal| {
+                    assert_eq!(proposal.program_sha256, format!("{index:064x}"));
+                    called.push(index);
+                    Ok(measured(index))
+                })
+                .unwrap()
+            {}
+            assert_eq!(called, expected);
+            assert_eq!(capture.attempted_indices(), expected);
+            assert_eq!(capture.outcomes().len(), expected.len());
+            let output = capture.finish().unwrap();
+            assert!(output.capture_complete);
+            let after = serde_json::to_value(&output).unwrap();
+            for key in [
+                "identity",
+                "round",
+                "seed",
+                "tokens",
+                "mask",
+                "revealed",
+                "proposals",
+                "source_indices",
+                "policy",
+                "evaluate_all_proposals",
+            ] {
+                assert_eq!(after[key], before[key], "changed {key}");
+            }
+            assert!(output.outcomes.iter().any(|o| matches!(
+                o.measurement,
+                Rung0Measurement::Failed {
+                    code: WorkerFailure::NonFinite
+                }
+            )));
+        }
+    }
+}
+
+#[test]
+fn capture_attempt_budget_includes_failures_and_preserves_sixteen_seed_inputs() {
+    for budget in [0, 1, 3, 16, usize::MAX] {
+        let mut input = capture_input(0, true);
+        input.proposals = (0..16).map(program).collect();
+        input.source_indices = (0..16).collect();
+        input.policy.admitted = (0..16).collect();
+        let mut capture = RoundCapture::new(input, budget).unwrap();
+        while capture.evaluate_next(|i, _| Ok(measured(i))).unwrap() {}
+        let output = capture.finish().unwrap();
+        assert_eq!(output.proposals.len(), 16);
+        assert_eq!(output.policy.admitted.len(), 16);
+        assert_eq!(output.outcomes.len(), budget.min(16));
+        assert_eq!(output.capture_complete, budget >= 16);
+    }
+    let mut capture = RoundCapture::new(capture_input(1, true), 8).unwrap();
+    assert!(capture.evaluate_next(|i, _| Ok(measured(i))).unwrap());
+    assert!(!capture.finish().unwrap().capture_complete);
+}
+
+#[test]
+fn capture_refuses_invalid_inputs_and_retains_unknown_attempts_without_retry() {
+    let mut observed = record(1, true);
+    assert!(RoundCapture::new(observed.clone(), 8).is_err());
+    observed.dispatched.clear();
+    observed.outcomes.clear();
+    observed.capture_complete = false;
+    observed.tokens.clear();
+    assert!(RoundCapture::new(observed, 8).is_err());
+    for nonfinite in [false, true] {
+        let mut capture = RoundCapture::new(capture_input(1, true), 8).unwrap();
+        capture.evaluate_next(|i, _| Ok(measured(i))).unwrap();
+        assert!(capture
+            .evaluate_next(|_, _| {
+                if nonfinite {
+                    Ok(Rung0Measurement::Success {
+                        surrogate: f64::NAN,
+                        objective: 0.0,
+                        gate: true,
+                    })
+                } else {
+                    anyhow::bail!("unknown worker result")
+                }
+            })
+            .is_err());
+        assert_eq!(capture.attempted_indices(), [0, 1]);
+        assert_eq!(capture.outcomes().len(), 1);
+        assert!(capture
+            .evaluate_next(|_, _| panic!("must not retry"))
+            .is_err());
+        assert!(capture.finish().is_err());
+    }
+    let mut capture = RoundCapture::new(capture_input(1, true), 8).unwrap();
+    let unwind = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let _ = capture.evaluate_next(|_, _| panic!("aborted evaluator"));
+    }));
+    assert!(unwind.is_err());
+    assert_eq!(capture.attempted_indices(), [0]);
+    assert!(capture.outcomes().is_empty());
+    assert!(capture.finish().is_err());
+}
+
+#[test]
+fn capture_measures_evaluator_wall_time() {
+    let mut capture = RoundCapture::new(capture_input(0, false), 1).unwrap();
+    capture
+        .evaluate_next(|i, _| {
+            std::thread::sleep(std::time::Duration::from_millis(3));
+            Ok(measured(i))
+        })
+        .unwrap();
+    assert!(capture.outcomes()[0].wall_ms >= 3);
+}
+
+#[cfg(unix)]
+#[test]
+fn captured_rounds_read_in_python_and_complete_all_guard_refuses_biased_or_partial_streams() {
+    let script = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../python/src/jope/north_star/record_reader.py");
+    for all in [false, true] {
+        for budget in [3, 16] {
+            let dir = tempfile::tempdir().unwrap();
+            let path = dir.path().join("capture.jsonl");
+            let mut writer = RecordWriter::create(&path).unwrap();
+            for round in 0..3 {
+                let mut capture = RoundCapture::new(capture_input(round, all), budget).unwrap();
+                while capture.evaluate_next(|i, _| Ok(measured(i))).unwrap() {}
+                writer.append(&capture.finish().unwrap()).unwrap();
+            }
+            let output = Command::new("python3")
+                .arg(&script)
+                .arg(&path)
+                .args(["--allow-synthetic", "--allow-incomplete"])
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            let counts: Value = serde_json::from_slice(&output.stdout).unwrap();
+            assert_eq!(
+                counts,
+                json!({
+                    "rounds":3, "proposals":26, "outcomes": if budget==3 {8} else if all {26} else {10},
+                    "failures":3, "incomplete_rounds": if budget==3 {2} else {0}
+                })
+            );
+            let guarded = Command::new("python3")
+                .arg(&script)
+                .arg(&path)
+                .args([
+                    "--allow-synthetic",
+                    "--allow-incomplete",
+                    "--require-evaluate-all",
+                ])
+                .output()
+                .unwrap();
+            assert_eq!(guarded.status.success(), all && budget == 16);
+            if !guarded.status.success() {
+                assert!(String::from_utf8_lossy(&guarded.stderr)
+                    .contains("complete all-proposal capture required"));
+                assert!(guarded.stdout.is_empty(), "no partial success summary");
+            }
+        }
+    }
+}
+
 #[cfg(unix)]
 fn reader(path: &Path, synthetic: bool) -> std::process::Output {
     let script = Path::new(env!("CARGO_MANIFEST_DIR"))

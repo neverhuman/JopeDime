@@ -46,7 +46,10 @@ impl RoundCapture {
         &mut self,
         evaluator: impl FnOnce(usize, &RecordedProgram) -> Result<Rung0Measurement>,
     ) -> Result<bool> {
-        ensure!(!self.unresolved, "capture has an unresolved evaluation attempt");
+        ensure!(
+            !self.unresolved,
+            "capture has an unresolved evaluation attempt"
+        );
         let next = self.round.dispatched.len();
         if next >= self.max_attempts || next >= self.population.len() {
             return Ok(false);
@@ -93,7 +96,10 @@ impl RoundCapture {
     /// The result must be committed with the discovery checkpoint before it is
     /// appended to `RecordWriter`. Finishing alone does not establish that commit.
     pub fn finish(mut self) -> Result<ResearchRound> {
-        ensure!(!self.unresolved, "capture has an unresolved evaluation attempt");
+        ensure!(
+            !self.unresolved,
+            "capture has an unresolved evaluation attempt"
+        );
         self.round.capture_complete = self.round.dispatched.len() == self.population.len();
         self.round.validate()?;
         Ok(self.round)
