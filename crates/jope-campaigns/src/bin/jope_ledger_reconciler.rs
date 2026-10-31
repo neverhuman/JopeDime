@@ -853,6 +853,42 @@ mod tests {
         path
     }
 
+    #[test]
+    fn claim_state_filter_binds_sql_shaped_states_as_values() {
+        let backlog = Connection::open_in_memory().unwrap();
+        backlog
+            .execute_batch(
+                "CREATE TABLE claims(manifest_sha256 TEXT PRIMARY KEY,manifest TEXT NOT NULL UNIQUE,
+                   job_id TEXT NOT NULL UNIQUE,spec TEXT NOT NULL,state TEXT NOT NULL,
+                   attempts INTEGER NOT NULL DEFAULT 0,updated_at_ms INTEGER NOT NULL,
+                   reservation_owner TEXT);
+                 INSERT INTO claims VALUES('m1','/1.json','job-1','/s.toml','checked',0,1,NULL);
+                 INSERT INTO claims VALUES('m2','/2.json','job-2','/s.toml','submitting',0,1,NULL);
+                 INSERT INTO claims VALUES('m3','/3.json','job-3','/s.toml','x'' OR ''1''=''1',0,1,NULL);",
+            )
+            .unwrap();
+        let states = |values: &[&str]| values.iter().map(|v| (*v).to_owned()).collect::<Vec<_>>();
+        // Only the placeholder list is formatted into the SQL; a quote-bearing state matches
+        // its own literal row and cannot widen the filter.
+        assert_eq!(
+            active_claim_manifests(&backlog, &states(&["checked", "x' OR '1'='1"])).unwrap(),
+            ["m1", "m3"]
+        );
+        assert!(active_claim_manifests(&backlog, &states(&["') OR 1=1 --"]))
+            .unwrap()
+            .is_empty());
+        assert!(
+            active_claim_manifests(&backlog, &states(&["checked'); DROP TABLE claims; --"]))
+                .unwrap()
+                .is_empty()
+        );
+        let rows: i64 = backlog
+            .query_row("SELECT COUNT(*) FROM claims", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(rows, 3);
+        assert!(active_claim_manifests(&backlog, &[]).is_err());
+    }
+
     fn add_pair(registry: &Connection, semantic: &str, state: &str, manifest: Option<&str>) {
         registry
             .execute(
