@@ -71,6 +71,10 @@ nohup.out
 /models/sha256-*/
 /models/.import-*/
 
+# Copied package payloads belong in external custody, not Git. This only ignores
+# new files; the existing tracked receipts and package copies remain tracked.
+/research/flywheel_selfplay/custody/files/
+
 /models/sessions/
 
 # The TypeScript qualification SDK may be a local cache symlink or an npm directory.
