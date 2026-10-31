@@ -210,7 +210,7 @@ comparisons.
 
 ### Overnight research closeouts (H80–H97): candidates only
 
-These studies landed on `main` overnight on 2026-10-31. Each status below is quoted from the study's own README. **None supplies the §7.2 matched first-proposal comparison or any other `\TBD` in [`RESULTS_NEEDS.md`](RESULTS_NEEDS.md).** All are development-data studies of the adapter loop or its context models. If used at all, they belong with the development diagnostics (§6.8, §7.7), bound to their own populations and protocols.
+Snapshot: `main` at [a470804b](https://github.com/neverhuman/JopeDime/tree/a470804b5bc0e0d5f46f42d300ee4b70519f463f/research/flywheel_selfplay) (2026-10-31). Statuses summarize the study READMEs and protocol files present in that source tree. **None supplies the §7.2 matched first-proposal comparison or any other `\TBD` in [`RESULTS_NEEDS.md`](RESULTS_NEEDS.md).** All are development-data studies of the adapter loop or its context models. If used at all, they belong with the development diagnostics (§6.8, §7.7), bound to their own populations and protocols.
 
 | Study | What it tested | Status on `main` | Nearest paper slot | Why it cannot fill a marker |
 |---|---|---|---|---|
@@ -224,9 +224,9 @@ These studies landed on `main` overnight on 2026-10-31. Each status below is quo
 | [H92](../../research/flywheel_selfplay/h92_w6_downside_controlled/README.md) | W6 hedged context learner, cached held-family screen | ADVANCE_CACHED_SCREEN on adaptive development data (3 of 4 primaries clear the common gate) | §7.5 program-only control | Adaptive and cached; the prospective follow-up (H94) did not advance |
 | [H94](../../research/flywheel_selfplay/h94_w6_prospective_hedge/README.md) | The H92 learner on never-evaluated programs, against the program-only prior | NO_ADVANCE: −0.0105 U4 and −51.9 Elo against the program-only prior | §7.5 program-only control | Negative, on development families, and for the W1/W6 context model, not the reference map |
 | [H95](../../research/flywheel_selfplay/h95_w8_hwm_resplit_confirm/README.md) | Resplit confirmation of H94's 45 apparent high-water marks | 30 confirmed (27 material); none admitted or promoted | §6.8 / §7.7 | Training-program incumbents, not proposals by a frozen writer |
-| H82, H90, H93, H97 | SAM steps, candidate diversity, lookahead noise, regularization EMA | Preregistrations and runners only; no outcome on `main` | — | No outcome |
+| [H82](../../research/flywheel_selfplay/h82_sam_steps/PREREG.md), [H90](../../research/flywheel_selfplay/h90_candidate_diversity/PREREG.md), [H93](../../research/flywheel_selfplay/h93_lookahead_noise/PREREG.md), [H97](../../research/flywheel_selfplay/h97_reg_ema/PREREG.md) | SAM steps, candidate diversity, lookahead noise, regularization EMA | Preregistrations and runners only; no outcome on `main` | — | No outcome |
 
-H96, H98 and H99 were not on `main` at this pass.
+H96 was absent at this snapshot. H98 and H99 already had source on `main` and are outside the H80–H97 range covered by this table.
 
 
 ### Outside Results (provenance and receipts)
