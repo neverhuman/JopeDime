@@ -15,7 +15,7 @@
   "fused_sha256": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
   "output_source_sha256": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
   "wave": "H131b",
-  "status": "PREREGISTERED_NOT_RUN",
+  "status": "COMPLETE",
   "source_base": "6306506e333bee32adcc7939842c5f38565b9d4b",
   "seeds": [
     97,
@@ -81,9 +81,9 @@
     "verified_utc": "2026-10-31T18:39:22.505948+00:00",
     "scope": "catalog metadata admission; no claim of original-source-row lineage or cloud recovery of derived H50 inputs"
   },
-  "actual_updates": 0,
-  "execution_started": false,
-  "scientific_verdict": null,
+  "actual_updates": 1080,
+  "execution_started": true,
+  "scientific_verdict": "NO_ADVANCE",
   "prior_attempt": {
     "wave": "H131",
     "status": "INCOMPLETE",
@@ -118,5 +118,23 @@
     "total_thread_limit": 4,
     "preflight_fit_contexts": 2,
     "s3_prefix": "experiments/rd_breakthrough_20261030/H131b/astra-t1340/"
+  },
+  "execution_source_commit": "2b7049f4dd5907eb383b1debc3a807ecf9439dff",
+  "closeout_custody": {
+    "manifest": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H131b/astra-t1340/manifest.json",
+      "version_id": "LoMO6QneloUYvpgQPtTQ38nTXu1oMBk7",
+      "sha256": "de0d027981f295fc213f880990f11c048eeac4087e5190fdca45ae3132742007",
+      "bytes": 46574,
+      "verified_utc": "2026-10-31T20:07:07.889219+00:00"
+    },
+    "archive": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H131b/astra-t1340/numerical-evidence.npz",
+      "version_id": "4qFFo1yC_56yYu6rHovuf5E7DM7EboH0",
+      "sha256": "e8daa1a96fe0768631ce0952bcfe6bf7a9f385e16b983846951bc605a73751e4",
+      "bytes": 13082695,
+      "verified_utc": "2026-10-31T20:07:04.657959+00:00"
+    },
+    "archive_members_verified": 142
   }
 }

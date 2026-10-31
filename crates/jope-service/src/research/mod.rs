@@ -4,6 +4,9 @@
 //! This module does not reconstruct missing costs, run a model, qualify guidance,
 //! change discovery admission, or expose a public/release CLI command.
 
+mod native_inputs;
+pub use native_inputs::NativeCaptureInputs;
+
 mod producer;
 pub use producer::RoundCapture;
 pub(crate) mod capture;

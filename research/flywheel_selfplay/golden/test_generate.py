@@ -73,6 +73,25 @@ class Contracts(unittest.TestCase):
                 ),
                 b"{}",
             )
+            # Accounting uses logical bytes, including its own index, rather than
+            # compressed inputs or deduplicated physical content.
+            for size in (1, 50_000_001):
+                index, encoded = generate.custody_index(
+                    {"metadata.json": dict(sha256="0" * 64, bytes=size)}, {}
+                )
+                self.assertEqual(index["total_bytes"], size + len(encoded))
+                self.assertEqual(
+                    index["hash_custody_required"], index["total_bytes"] > 50_000_000
+                )
+            store = root / "store"
+            spec = generate.custody_blob(store, b"row-free metadata")
+            self.assertEqual(
+                (store / spec["sha256"]).read_bytes(), b"row-free metadata"
+            )
+            (store / spec["sha256"]).chmod(0o600)
+            (store / spec["sha256"]).write_bytes(b"changed")
+            with self.assertRaisesRegex(ValueError, "existing custody object differs"):
+                generate.custody_blob(store, b"row-free metadata")
 
     def test_lease_excludes_another_process_and_releases_without_touching_the_real_lock(
         self,
@@ -111,6 +130,27 @@ class Contracts(unittest.TestCase):
                     ]
                 )
             self.assertEqual(code, 2)
+        # The independent CPU replay mode also refuses partial authentication
+        # before opening a plan, touching the native capture path or publishing.
+        with mock.patch.object(capture_cpu, "capture") as native:
+            with contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as refused:
+                    capture_cpu.main(
+                        [
+                            "--plan",
+                            "/missing",
+                            "--expected-plan-sha256",
+                            "0" * 64,
+                            "--output",
+                            "/unused-output",
+                            "--regenerate-captures",
+                            "/missing",
+                            "--expected-captures-sha256",
+                            "0" * 64,
+                        ]
+                    )
+            self.assertEqual(refused.exception.code, 2)
+            native.assert_not_called()
 
 
 @unittest.skipUnless(
@@ -148,6 +188,29 @@ class RealBundle(unittest.TestCase):
         self.assertFalse(torch.cuda.is_initialized())
         # Constructor/alias wiring cannot modify even the in-memory frozen state.
         generate.exporter().validate_state(self.reference.state)
+        catalog = os.environ.get("JOPE_RES07_HISTORICAL_CATALOG_SHA256")
+        if catalog:
+            store = Path(os.environ["JOPE_RES07_CUSTODY_STORE"])
+            with tempfile.TemporaryDirectory() as temp:
+                output = Path(temp) / "fetched"
+                index = generate.materialize_custody(store, catalog, output)
+                self.assertEqual(index["contexts"], 50)
+                self.assertEqual(index["historical_program_rows"], 57600)
+                self.assertGreater(index["total_bytes"], 50_000_000)
+                self.assertTrue(index["hash_custody_required"])
+                self.assertFalse(index["historical_corpus_complete"])
+                self.assertFalse(index["features_regenerated_from_dsl"])
+                self.assertEqual(
+                    sum(p.stat().st_size for p in output.rglob("*") if p.is_file()),
+                    index["total_bytes"],
+                )
+                for name, spec in index["files"].items():
+                    self.assertEqual(
+                        generate.sha((output / name).read_bytes()), spec["sha256"]
+                    )
+                print(
+                    f"RES07_HASH_CUSTODY_FETCH files={index['file_count']} bytes={index['total_bytes']} rows={index['historical_program_rows']}"
+                )
 
     def test_model_prior_population_is_preserved_and_cannot_be_relabelled_as_proposer(
         self,
@@ -282,6 +345,42 @@ class CpuCaptureGuards(unittest.TestCase):
         plan["contexts"][1] = plan["contexts"][0]
         with self.assertRaises(ValueError):
             capture_cpu.validate_plan(plan)
+        # Refuse drift and a different captured population before model loading.
+        packet = dict(contexts=self.plan["contexts"], bundle_digest="sha256:unused")
+        captures = self.root / "captures.json"
+        captures.write_bytes(generate.canonical(packet))
+        self.plan.update(bundle_digest=packet["bundle_digest"], custody=str(self.root))
+        with mock.patch.dict(os.environ, CUDA_VISIBLE_DEVICES=""):
+            with mock.patch.object(os, "getpriority", return_value=10):
+                with mock.patch.object(
+                    torch.cuda, "is_initialized", return_value=False
+                ):
+                    with mock.patch.object(generate, "_generate_locked") as numerical:
+                        with self.assertRaisesRegex(
+                            ValueError, "input identity differs"
+                        ):
+                            capture_cpu.regenerate(
+                                self.plan,
+                                captures,
+                                "0" * 64,
+                                "f" * 64,
+                                self.root / "output",
+                            )
+                        packet["contexts"] = copy.deepcopy(packet["contexts"])
+                        packet["contexts"][0]["family_id"] = "different"
+                        captures.write_bytes(generate.canonical(packet))
+                        with self.assertRaisesRegex(
+                            ValueError, "reviewed plan population"
+                        ):
+                            capture_cpu.regenerate(
+                                self.plan,
+                                captures,
+                                generate.sha(captures.read_bytes()),
+                                "f" * 64,
+                                self.root / "output",
+                            )
+                        numerical.assert_not_called()
+        self.assertFalse((self.root / "output").exists())
 
     def test_original_resource_limits_cannot_expand(self):
         for field, value in [
@@ -296,6 +395,38 @@ class CpuCaptureGuards(unittest.TestCase):
             plan["budget"][field] = value
             with self.assertRaises(ValueError):
                 capture_cpu.validate_plan(plan)
+
+        # Re-packaging does not re-arm the native deadline or call its evaluator.
+        plan = dict(self.plan, cpu_deadline_epoch_seconds=0)
+        path = self.root / "plan.json"
+        path.write_bytes(generate.canonical(plan))
+        with mock.patch.object(capture_cpu, "regenerate", return_value={}) as replay:
+            with mock.patch.object(capture_cpu, "capture") as native:
+                with mock.patch.object(capture_cpu.signal, "alarm") as alarm:
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        self.assertEqual(
+                            capture_cpu.main(
+                                [
+                                    "--plan",
+                                    str(path),
+                                    "--expected-plan-sha256",
+                                    generate.sha(path.read_bytes()),
+                                    "--output",
+                                    str(self.root / "output"),
+                                    "--regenerate-captures",
+                                    str(self.root / "captures.json"),
+                                    "--expected-captures-sha256",
+                                    "a" * 64,
+                                    "--expected-index-sha256",
+                                    "b" * 64,
+                                ]
+                            ),
+                            0,
+                        )
+                    replay.assert_called_once()
+                    native.assert_not_called()
+                    alarm.assert_not_called()
+        self.assertEqual(path.read_bytes(), generate.canonical(plan))
 
     def test_native_transport_preserves_real_table_prefix_folds_and_labels(self):
         # Use the actual approved training table when running the real CPU lane.

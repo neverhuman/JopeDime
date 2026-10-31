@@ -38,12 +38,12 @@
   \end{tabular}
 \end{table*}
 
-This section specifies the independent comparisons needed to test
-whether training improves the first proposal for an unseen problem.
-The development records in \cref{sec:method-status} track program search
-and adapter admission; their scores inform those decisions. They cannot
-settle the deployment question. \Cref{tab:results-plan} summarizes the
-controls and status of the pending comparisons.
+This section specifies independent tests of whether training improves the
+first proposal for an unseen problem. The development records in
+\cref{sec:method-status} track program search and adapter admission; their
+scores inform those decisions. They cannot settle the deployment
+question. \Cref{tab:results-plan} summarizes the pending comparisons,
+controls and status.
 \TBD{Add independent evaluation evidence before making a performance claim.}
 \TBD{Supply a source-bound benchmark before claiming deployment throughput.}
 
@@ -90,7 +90,7 @@ by \texttt{claude-opus-5-5} and one by \texttt{gpt-6-astra-wm}, the latter
 identifier as reported by its authoring session. A comparator without a
 recorded model identity is excluded rather than guessed. Record prompts,
 dates and implementation checks, and compare under the same task metrics.
-\Cref{tab:headtohead} reserves the comparison; no winner is assumed.
+\Cref{tab:headtohead,fig:leaderboard} reserve the comparison; no winner is assumed.
 % Receipts: crates/jope-bench/regressors/README.md (Opus5p5_Extra);
 % crates/jope-bench/submissions/gpt6-astra-max/provenance.json (GPT6_Astra_Max).
 
@@ -126,10 +126,10 @@ development feedback. Keep final outcomes unavailable to those agents.
 Count every candidate attempt, including incomplete or invalid outputs
 and failed executions; a repair that emits a revised candidate is another
 attempt. Charge all task-time computation. Plot
-performance against both attempts and cost; if an agent does not reach a
+performance against both attempts and cost (\cref{fig:searchone}); if an agent does not reach a
 reference performance within its budget, report that limit.
 \TBD{Supply attempt curves, matched budgets, repeated seeds and uncertainty.}
-The pilot cost measurements planned in \cref{sub:price-waste,sub:price-tax}
+Pilot cost measurements from \cref{sub:price-waste,sub:price-tax}
 are planned for \cref{fig:price}.
 
 \begin{figure}[t]
@@ -162,7 +162,7 @@ should also be compared with the program-only head, so a global preference
 for common programs is distinguishable from reading the problem.
 \TBD{Supply problem-similarity and program-only-control evaluations.}
 
-A ranking head can agree with a referee without improving the writer.
+A ranking head can agree with a referee without improving the writer (\cref{tab:ablation}).
 In the checkpoint described in \cref{sub:method-map}, the map neither
 conditions nor screens the writer's draw. Its ranking accuracy therefore
 cannot establish a reduction in wasted proposals. A causal ablation needs
@@ -199,9 +199,9 @@ and the validity rules before opening final outcomes.
 \TBD{Supply attempt inventories and costs by outcome class, identifying
 unresolved cases.}
 
-Choose the worked example by a rule fixed before inspection, and show its emitted
-program, fitting procedure and comparison outcome; if the selected category
-is empty, report that fact. \TBD{Supply the example selection rule, actual
+Select the worked example by a rule fixed before inspection. Report its
+emitted program, fitting procedure and comparison outcome. If the selected
+category is empty, report that fact. \TBD{Supply the example selection rule, actual
 program and verified outcomes, with no replacement of failed attempts.}
 \Cref{tab:worked} lists the record for the selected game. The attempt
 permits no repair or second try, and its sealed verdict is reported
@@ -243,7 +243,7 @@ report fresh-program pairwise ranking accuracy of 0.506 with an interval
 of [0.441, 0.568], which includes chance. The reference checkpoint and later adapter snapshot in
 \cref{sec:method} require their own ranking evidence.
 These observations describe historical search and ranking behavior; the
-matched first-proposal test above is still required.
+matched first-proposal test in \cref{sub:results-learning} is still required.
 \TBD{Pin the inventories, checkpoints and seeding, timing and ranking
 protocols, separately from the final comparisons above.}
 

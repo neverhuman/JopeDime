@@ -441,6 +441,8 @@ fn missing_failure_or_unadmitted_label_cannot_be_accepted_as_complete() {
 
 #[test]
 fn malformed_slate_context_costs_and_partitions_are_refused() {
+    engine_provider_requires_native_inputs();
+    super::native_inputs::input_controls(record(0, false));
     let mut variants = vec![];
     let mut r = record(1, true);
     r.identity.partition = "validation".into();
@@ -832,5 +834,82 @@ fn auxiliary_journal_requires_readable_results_and_matching_attempts() {
     assert!(
         state.validate_storage(&store).is_err(),
         "request must belong to the bound run"
+    );
+}
+
+// Boundary-only control: never exports an Engine record or claims corpus evidence.
+fn engine_provider_requires_native_inputs() {
+    use super::capture::{Binding, CaptureProvider, SlateObservation};
+    use crate::{
+        discover::r#loop::Plan,
+        worker::{Request, Response},
+    };
+    use std::sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    };
+    struct Unbound(Arc<AtomicUsize>);
+    impl CaptureProvider for Unbound {
+        fn validate_binding(&self, _: &Binding, _: &Plan) -> Result<()> {
+            Ok(())
+        }
+        fn observe(
+            &self,
+            _: u64,
+            dsls: &[String],
+            _: &[RecordedReveal],
+        ) -> Result<SlateObservation> {
+            self.0.fetch_add(1, Ordering::SeqCst);
+            Ok(SlateObservation {
+                programs: dsls
+                    .iter()
+                    .map(|dsl| RecordedProgram {
+                        program_sha256: super::capture::digest(dsl.as_bytes()),
+                        operator_family: "seed".into(),
+                        feat412: vec![0.0; 412],
+                        proj16: vec![0.0; 16],
+                    })
+                    .collect(),
+                revealed_indices: vec![],
+            })
+        }
+        fn measurement(&self, _: &Request, _: &Response) -> Result<Rung0Measurement> {
+            anyhow::bail!("not executed")
+        }
+        fn label_seed(&self, _: u64, _: usize) -> Result<u64> {
+            anyhow::bail!("not executed")
+        }
+    }
+    let r = record(0, false);
+    let calls = Arc::new(AtomicUsize::new(0));
+    let mut identity = r.identity;
+    identity.evidence = RecordEvidence::Engine;
+    let context = CaptureContext {
+        binding: Binding {
+            config: CaptureConfig {
+                max_attempts: 2,
+                max_rounds: 1,
+                max_bytes: 1_000_000,
+                evaluate_all_proposals: false,
+                seed_protocol_sha256: "2".repeat(64),
+            },
+            identity,
+            seed: r.seed,
+            tokens: r.tokens,
+            mask: r.mask,
+            matrix_sha256: "2".repeat(64),
+        },
+        provider: Arc::new(Unbound(calls.clone())),
+    };
+    assert!(
+        context
+            .observe(0, &["(pipe X (ridge))".into()], &[])
+            .is_err(),
+        "Engine provider accepted fabricated features without a native input closure"
+    );
+    assert_eq!(
+        calls.load(Ordering::SeqCst),
+        0,
+        "refuse before provider observation"
     );
 }

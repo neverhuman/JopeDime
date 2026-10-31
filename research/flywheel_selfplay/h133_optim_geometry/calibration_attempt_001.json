@@ -1,0 +1,25 @@
+{
+  "schema": "jope.h133.fit_only_drift_calibration_attempt/v1",
+  "attempt": 1,
+  "status": "VOID_INCOMPLETE_RESOURCE_GUARD",
+  "seed": 133,
+  "fold_seed": 133100,
+  "fold_manifest_sha256": "322137e01ef0a6079284c0e907c8a5ce0db476d46eac1c6ea0fdce3315ea65fc",
+  "train_only_export_sha256": "ffe506f68d7aade13a7eef6f0cf55d6e79b200dd5e742f8f035dccd0ee27e3ff",
+  "completed_fit_only_updates": {
+    "CONTROL_AdamW_160": 160,
+    "SGDM_0.001_160": 160,
+    "SGDM_0.003": 159,
+    "SGDM_0.01": 0,
+    "SGDM_0.03": 0
+  },
+  "resource_stop": {
+    "guard": "load1 <= 86.7",
+    "observed_load1": 87.96,
+    "stage": "SGDM 0.003 before update 160"
+  },
+  "drift_values_persisted": false,
+  "assessment_payload_reads": 0,
+  "assessment_outcome_metrics_read": 0,
+  "notes": "The first two trajectories completed in memory, but the initial runner persisted values only after all five trajectories. No rates can be selected from this attempt. The partial SGDM 0.003 trajectory was discarded. No fold-0 payload was opened and no utility/outcome metric was computed."
+}
