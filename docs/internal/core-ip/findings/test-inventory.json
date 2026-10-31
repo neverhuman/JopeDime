@@ -1943,6 +1943,10 @@
       "reason": "CPU-only H82 fresh-seed retry-boundary, load/budget, frozen-reference and paired Elo/admission tests; offline research outside product qualification.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h83_w6_cross_family_cached/test_run_w6_cached.py": {
+      "reason": "Owner-requested pytest proofs for the H83 W6 cross-family cached screen; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h86_w3_outcome_status_census/test_census.py": {
       "role": "research",
       "reason": "H86 W3 outcome-row status census and status-mask export unit tests."
