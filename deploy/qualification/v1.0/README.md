@@ -109,3 +109,17 @@ This PR does not claim that the complete CPU matrix has already run.
 Gate timeouts must be finite, positive, and at most 3600 seconds, including for planning and direct execution calls. On timeout or interruption, only the new session created for that invocation is signalled. The leader remains unreaped while its group receives SIGTERM, a five-second cleanup grace, and SIGKILL; descendants are therefore stopped even if the leader exits first. The leader is then reaped before another gate starts. This Unix process control does not establish native Windows qualification.
 
 The committed plan snapshot and gate inventory are refreshed from the metadata-only `release-plan` command. `plan-snapshot.json` pins the source main, driver bytes, and external receipt hash. The t1235 inventory ran against `f8bfa45ef07401ac7da94ffabf48973f7eabea98`; it inventoried 243 plan/status files and 19 CPU commands, executed zero checks, and left all 28 release gates plus Q1 `not-qualified / not-run`. The full receipt is retained at the path recorded in `plan-snapshot.json`. No release gate is executed or promoted by this inventory.
+
+Every CPU control requires a retained regular `command.log`, including controls
+without a test-result backend. A zero child exit with a missing log, symlink,
+directory or FIFO is recorded as failed evidence while preserving exit0. An
+empty regular log from a silent source tool remains valid. This does not promote
+CPU diagnostics to signed-byte qualification. The focused controller suite
+exercises these refusals using only its own fixture children and files.
+
+A per-file error while hashing retained output is recorded in the gate diagnostic
+without claiming that output's hash. It fails a successful or incomplete gate,
+preserves existing failed/timed-out/unavailable classifications and the child's
+original exit, and allows later CPU gates to run. Each gate receipt and the
+aggregate diagnostic remain available. The controller tests inject read errors
+at that I/O boundary while real fixture children and other hashes still run.

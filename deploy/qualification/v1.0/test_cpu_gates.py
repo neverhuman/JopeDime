@@ -179,6 +179,128 @@ class Controller(unittest.TestCase):
         with self.assertRaises(jsonschema.ValidationError):
             jsonschema.Draft202012Validator(schema).validate(report)
 
+    def test_source_controls_require_regular_command_logs(self):
+        modes = ["regular", "missing", "symlink", "directory"]
+        if hasattr(os, "mkfifo"):
+            modes.append("fifo")
+        for mode in modes:
+            with self.subTest(mode=mode):
+                folder = self.path / ("log-" + mode)
+                command = (
+                    "import os,pathlib; "
+                    "p=pathlib.Path(os.environ['JOPE_LANE_EVIDENCE'])/'command.log'; "
+                )
+                if mode != "regular":
+                    command += "p.unlink(); "
+                if mode == "symlink":
+                    command += "p.symlink_to('scratch/sentinel.txt'); "
+                elif mode == "directory":
+                    command += "p.mkdir(); "
+                elif mode == "fifo":
+                    command += "os.mkfifo(p); "
+                command += (
+                    "(p.parent/'scratch'/'sentinel.txt').write_text('fixture only')"
+                )
+                gate = dict(
+                    id="source-log-" + mode,
+                    command=[sys.executable, "-c", command],
+                    result_backend="none",
+                    requires_nonzero_tests=False,
+                )
+                result = cpu.execute_gate(
+                    gate,
+                    self.repo,
+                    folder,
+                    self.path / "target",
+                    1,
+                    "a" * 40,
+                    None,
+                    5,
+                    check=lambda root: {},
+                )
+                self.assertEqual(result["exit_status"], 0)
+                if mode == "regular":
+                    self.assertEqual(result["status"], "passed")
+                    self.assertIsNone(result["diagnostic"])
+                    self.assertEqual(result["outputs"]["command.log"]["bytes"], 0)
+                    self.assertEqual(
+                        result["outputs"]["command.log"]["sha256"],
+                        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    )
+                    continue
+                self.assertEqual(result["status"], "failed")
+                self.assertIn(
+                    "command log must be a regular file", result["diagnostic"]
+                )
+                self.assertNotIn("command.log", result["outputs"])
+                if mode == "symlink":
+                    self.assertIn("command.log", result["omitted_symlinks"])
+
+    def test_artifact_read_errors_retain_receipts_and_continue(self):
+        artifact = (
+            "import os,pathlib; "
+            "(pathlib.Path(os.environ['JOPE_LANE_EVIDENCE'])/'artifact.txt')"
+            ".write_text('controlled fixture'); "
+        )
+        self.source(
+            [
+                ("full-a-log", [sys.executable, "-c", "pass"], "none"),
+                ("full-b-output", [sys.executable, "-c", artifact], "none"),
+                (
+                    "full-c-child-failure",
+                    [sys.executable, "-c", artifact + "raise SystemExit(9)"],
+                    "none",
+                ),
+                ("full-d-positive", [sys.executable, "-c", ONE_TEST], "unittest"),
+            ]
+        )
+        original_digest = cpu.digest
+        failures = {
+            "full-a-log": "command.log",
+            "full-b-output": "artifact.txt",
+            "full-c-child-failure": "artifact.txt",
+        }
+
+        def read_failure(path):
+            # Inject only the per-file I/O boundary; real children, other hashes
+            # and receipt persistence still execute, including when run as root.
+            if failures.get(path.parent.name) == path.name:
+                if path.parent.name == "full-c-child-failure":
+                    raise FileNotFoundError("controlled disappeared evidence")
+                raise PermissionError("controlled unreadable evidence")
+            return original_digest(path)
+
+        with mock.patch.object(cpu, "digest", side_effect=read_failure):
+            report = self.run_checks()
+        self.assertEqual(report["status"], "failed")
+        self.assertEqual(
+            [check["exit_status"] for check in report["checks"]], [0, 0, 9, 0]
+        )
+        self.assertEqual(
+            [check["status"] for check in report["checks"]],
+            ["failed", "failed", "failed", "passed"],
+        )
+        self.assertEqual(report["checks"][-1]["tests"]["passed"], 1)
+        for check in report["checks"][:3]:
+            self.assertIn("cannot capture output", check["diagnostic"])
+            self.assertIn(failures[check["id"]], check["diagnostic"])
+            self.assertNotIn(failures[check["id"]], check["outputs"])
+            receipt = self.path / "evidence" / check["id"] / "receipt.json"
+            self.assertEqual(json.loads(receipt.read_text()), check)
+        self.assertFalse(report["release_qualified"])
+        print(
+            "REL07_FIXTURE_ARTIFACT_FAILURES "
+            + json.dumps(
+                [
+                    {
+                        key: check[key]
+                        for key in ("id", "exit_status", "status", "diagnostic")
+                    }
+                    for check in report["checks"]
+                ]
+            )
+        )
+
     def test_failure_continues_to_later_gate_and_keeps_original_exit(self):
         self.source(
             [

@@ -340,9 +340,8 @@ def custody_index(files, metadata):
         index.update(sizes)
 
 
-def materialize_custody(store, expected_sha256, output):
-    """Fetch only authenticated objects into one new atomic fixture directory."""
-    require(not output.exists() and not output.is_symlink(), "output must be new")
+def read_custody_index(store, expected_sha256):
+    """Authenticate catalog metadata without copying any payloads."""
     require(
         store.is_dir() and not store.is_symlink(), "real custody directory required"
     )
@@ -391,6 +390,13 @@ def materialize_custody(store, expected_sha256, output):
             len(key) == 64 and all(c in "0123456789abcdef" for c in key),
             "invalid custody object SHA256",
         )
+    return index, encoded
+
+
+def materialize_custody(store, expected_sha256, output):
+    """Fetch only authenticated objects into one new atomic fixture directory."""
+    require(not output.exists() and not output.is_symlink(), "output must be new")
+    index, encoded = read_custody_index(store, expected_sha256)
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="golden-fetch-", dir=output.parent) as temp:
         staging = Path(temp) / "packet"

@@ -421,6 +421,8 @@ def execute_gate(
                 else "passed"
             )
         )
+        if log.is_symlink() or not log.is_file():
+            raise ValueError("command log must be a regular file")
         if gate["result_backend"] != "none":
             if log.stat().st_size > MAX_LOG_BYTES:
                 raise ValueError(
@@ -471,12 +473,19 @@ def execute_gate(
     record["wall_seconds"] = time.monotonic() - start
     for path in sorted(folder.rglob("*")):
         relative = str(path.relative_to(folder))
-        if path.is_symlink():
-            record["omitted_symlinks"].append(relative)
-        elif path.is_file():
-            record["outputs"][relative] = dict(
-                sha256=digest(path), bytes=path.stat().st_size
+        try:
+            if path.is_symlink():
+                record["omitted_symlinks"].append(relative)
+            elif path.is_file():
+                record["outputs"][relative] = dict(
+                    sha256=digest(path), bytes=path.stat().st_size
+                )
+        except OSError as error:
+            record["diagnostic"] = record["diagnostic"] or (
+                f"cannot capture output {relative}: {error}"
             )
+            if record["status"] in {"passed", "incomplete"}:
+                record["status"] = "failed"
     write(folder / "receipt.json", record)
     return record
 
