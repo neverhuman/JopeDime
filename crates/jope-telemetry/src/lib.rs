@@ -1,11 +1,19 @@
-//! `jope-telemetry`: low-overhead training and flywheel telemetry (TELEMETRY_SPEC.md).
+//! Bounded telemetry recording and training/flywheel reports.
 //!
-//! Module owners:
-//! - luna_tel_io: the event core, collectors, sinks, the PyO3 binding and `jtel tail`/`diff`
-//!   (not yet staged).
-//! - luna_tel_train: `train`, `gp`, `flywheel`, `alarm`, `import`, the `record` interface and
-//!   `hooks` (the trainer-side hooks ported from the former Python `jope.telemetry` package),
-//!   `summary` and `fleet` (the `jtel summary` and `jtel fleet` reports).
+//! [`core`] manages producer queues and the asynchronous event drain; [`event`],
+//! [`manifest`] and [`sink`] define the recorded events, run metadata and output sinks.
+//! [`record`] provides the low-rate typed record interface used by [`hooks`].
+//!
+//! [`train`], [`gp`], [`flywheel`] and [`alarm`] build training and evolutionary-search
+//! summaries. [`api`] exposes JSON entry points for these reports; [`summary`] and
+//! [`fleet`] read recorded runs. [`cpu_quota`], [`collectors`] and [`nvml_device`]
+//! supply CPU-capacity accounting and host/device probes.
+//!
+//! The `jtel` binary provides `tail`, `import`, `parquet`, `recover`, `summary`, `diff`
+//! and `fleet` commands. The default `parquet` feature enables the Parquet sink and
+//! the CLI's Parquet regeneration and recovery operations. Use `--no-default-features`
+//! for the JSONL-only build. The optional `python` feature adds the PyO3 bindings;
+//! the Rust interfaces and `jtel` do not require it.
 
 pub mod alarm;
 pub mod api;
