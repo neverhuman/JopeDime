@@ -1,0 +1,264 @@
+{
+ "best_of_four_differs_from_top4_batches": {
+  "GP_1PLUS3": 43,
+  "GP_2PLUS2": 7,
+  "UCB_2PLUS2": 11,
+  "random4": 222
+ },
+ "data_scope": {
+  "dl_train_only": true,
+  "dl_val_reads": 0,
+  "dope_loaded": false,
+  "gpu": false,
+  "holdout_reads": 0,
+  "outer_test_reads": 0,
+  "sealed_reads": 0
+ },
+ "elo_ci95_family_bootstrap": {
+  "ci95": {
+   "GP_1PLUS3": [
+    1402.37,
+    1525.42
+   ],
+   "GP_2PLUS2": [
+    1496.34,
+    1547.05
+   ],
+   "S_TOP4": [
+    1500.0,
+    1500.0
+   ],
+   "UCB_2PLUS2": [
+    1475.62,
+    1538.05
+   ],
+   "random4": [
+    1062.3,
+    1317.28
+   ]
+  },
+  "draws": 1000,
+  "method": "1,000 family-cluster resamples (44 families, contexts kept, repeated families relabelled) of the canonical tracker; point reproduced metrics exactly",
+  "preregistered": false,
+  "script_sha256": "a0b72db8f65d1f538b22ead388e753e1c2c623e5cae326c2129d03a170963899",
+  "seed": 20261031
+ },
+ "family_elo": {
+  "n_datasets": 50,
+  "n_families": 44,
+  "pairwise_win_tie_loss_vs_anchor": {
+   "GP_1PLUS3": {
+    "elo_delta_vs_anchor": -32.08,
+    "losses": 13,
+    "ties": 27,
+    "wins": 10
+   },
+   "GP_2PLUS2": {
+    "elo_delta_vs_anchor": 19.0,
+    "losses": 2,
+    "ties": 45,
+    "wins": 3
+   },
+   "UCB_2PLUS2": {
+    "elo_delta_vs_anchor": 4.66,
+    "losses": 4,
+    "ties": 42,
+    "wins": 4
+   },
+   "random4": {
+    "elo_delta_vs_anchor": -288.17,
+    "losses": 41,
+    "ties": 2,
+    "wins": 7
+   }
+  },
+  "ratings": {
+   "GP_1PLUS3": 1467.92,
+   "GP_2PLUS2": 1519.0,
+   "S_TOP4": 1500.0,
+   "UCB_2PLUS2": 1504.66,
+   "random4": 1211.83
+  }
+ },
+ "family_mean_best_of_four": {
+  "GP_1PLUS3": 1.9832594832645587,
+  "GP_2PLUS2": 2.030656448037615,
+  "ORACLE4": 2.0452052875067466,
+  "S_TOP4": 2.0305782302418747,
+  "UCB_2PLUS2": 2.0312656769583697,
+  "random4": 1.870936072598533
+ },
+ "gpu_seconds": 0,
+ "h112_source_sha256": "de7d58826a70b9e5279488594bbc7cc7e7d38224a037f56204b04781b2815579",
+ "hypothesis": "H120",
+ "integrity": {
+  "checked": 300,
+  "examples": [],
+  "mismatches": 0,
+  "passed": true
+ },
+ "memory_rows": 2306,
+ "native_fits": 0,
+ "panel": {
+  "batches": 300,
+  "contexts": 50,
+  "duplicate_keys": 0,
+  "families": 44,
+  "incomplete_contexts": 0,
+  "unscreened": 0
+ },
+ "prereg_merge_commit": "569324b7760a95be26e817ce843b2430e32095fb",
+ "primary": {
+  "GP_1PLUS3 - S_TOP4": {
+   "adjusted_one_sided_lcb": -0.1937926788216059,
+   "bootstrap_p2_5": -0.15238733372959298,
+   "bootstrap_p5_one_sided_lcb": -0.14932095770136805,
+   "bootstrap_p97_5": 0.008529006198703932,
+   "common_gate_passed": false,
+   "families": 44,
+   "families_losing_more_than_0_01_fraction": 0.09090909090909091,
+   "family_mean": -0.04731874697731606,
+   "family_median": 0.0,
+   "family_win_tie_loss": [
+    9,
+    24,
+    11
+   ]
+  },
+  "GP_2PLUS2 - S_TOP4": {
+   "adjusted_one_sided_lcb": -0.000620237724165337,
+   "bootstrap_p2_5": -0.0005083978029247589,
+   "bootstrap_p5_one_sided_lcb": -0.00041882057698559974,
+   "bootstrap_p97_5": 0.0006255739916055848,
+   "common_gate_passed": false,
+   "families": 44,
+   "families_losing_more_than_0_01_fraction": 0.0,
+   "family_mean": 7.821779574038053e-05,
+   "family_median": 0.0,
+   "family_win_tie_loss": [
+    3,
+    39,
+    2
+   ]
+  },
+  "UCB_2PLUS2 - S_TOP4": {
+   "adjusted_one_sided_lcb": -0.00046906343180318916,
+   "bootstrap_p2_5": -0.0004149302891953498,
+   "bootstrap_p5_one_sided_lcb": -0.0002659877262549105,
+   "bootstrap_p97_5": 0.0022017846528458976,
+   "common_gate_passed": false,
+   "families": 44,
+   "families_losing_more_than_0_01_fraction": 0.0,
+   "family_mean": 0.0006874467164950155,
+   "family_median": 0.0,
+   "family_win_tie_loss": [
+    4,
+    36,
+    4
+   ]
+  }
+ },
+ "run_id": "opus-h120-screen-20261031a",
+ "runner_sha256": "cc5219f5013ff6bd08ddfde66f3d06336677c471bdd0f6838287e222074e4d0c",
+ "runtime": {
+  "cpu_percent": 348,
+  "ended": "2026-10-31T15:03:48Z",
+  "host": "xbabe2",
+  "max_rss_kib": 190832,
+  "nice": 15,
+  "started": "2026-10-31T15:02:04Z",
+  "threads": 4,
+  "wall": "1:44"
+ },
+ "s3_objects": [
+  {
+   "bytes": 1911,
+   "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-screen-20261031a/manifest.json",
+   "sha256": "4526240ce7fadd5b83f05e27fab67c1cab38bd2b1660cf2979c95de8691c8657",
+   "version_id": "R1XJ80sSgUCaYlo2r24rEI.ejOpStF6Z",
+   "write": "create-only if-none-match"
+  },
+  {
+   "bytes": 3099,
+   "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-screen-20261031a/metrics.json",
+   "sha256": "9ad1709c4227dba41e5429cbcc4ae0f00e8234ada0849cac79eb628bff50f3b1",
+   "version_id": "zbRE.TZgr8d9_MH0ldp8HNdOGVNztXCk",
+   "write": "create-only if-none-match"
+  },
+  {
+   "bytes": 3099,
+   "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-screen-20261031a/screen_receipt.json",
+   "sha256": "9ad1709c4227dba41e5429cbcc4ae0f00e8234ada0849cac79eb628bff50f3b1",
+   "version_id": "aPYlSYanOPPt_gQxXTUjzDfS53e_Iu6s",
+   "write": "create-only if-none-match"
+  },
+  {
+   "bytes": 116491,
+   "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-screen-20261031a/rows_h120.jsonl",
+   "sha256": "f7177119e37e89578adc556598d8cceaec92721e631709ac79f3eef00145d071",
+   "version_id": "sHMSaBuqPfd5w3C8cbgrlCeQ.rErHLMn",
+   "write": "create-only if-none-match"
+  },
+  {
+   "bytes": 4140,
+   "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-screen-20261031a/screen.log",
+   "sha256": "6fab5a00ceaeab5d2a2d3dee118a871d6e5c435698392003d01091796645b0a8",
+   "version_id": "2J3kjdbgnO_TSxGt8Hwovf7Ay9pXjIjw",
+   "write": "create-only if-none-match"
+  },
+  {
+   "bytes": 1069,
+   "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-screen-20261031a/elo_ci.json",
+   "sha256": "c6d35c090c917527ee7d0b08361a4d36ee78d2c821007d51ba818079bbf1c4b7",
+   "version_id": "xsKvsGSrXlRzUKwfypgevRtki4bkIrZ0",
+   "write": "create-only if-none-match"
+  },
+  {
+   "bytes": 3158,
+   "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-screen-20261031a/elo_ci_h120.py",
+   "sha256": "a0b72db8f65d1f538b22ead388e753e1c2c623e5cae326c2129d03a170963899",
+   "version_id": "Dsauhf.q76MJ4qmzClj1LE20Gat.v1Yz",
+   "write": "create-only if-none-match"
+  },
+  {
+   "bytes": 17884,
+   "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-screen-20261031a/run_h120.py",
+   "sha256": "cc5219f5013ff6bd08ddfde66f3d06336677c471bdd0f6838287e222074e4d0c",
+   "version_id": "W4LFjPh8q.DGfjxYB6bzhxYGPGwDKE0R",
+   "write": "create-only if-none-match"
+  },
+  {
+   "bytes": 5505,
+   "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-screen-20261031a/test_run_h120.py",
+   "sha256": "9c2ac418e8e2bb2ccb785a81e958212d901fea059d17b00151567e9fdb87d0aa",
+   "version_id": "y2BRlLos053ZOKrXQbTD2V_3GF3lW4f2",
+   "write": "create-only if-none-match"
+  },
+  {
+   "bytes": 21,
+   "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-screen-20261031a/start.txt",
+   "sha256": "52d16bfbc3d3e750a7082b4bc17e70859f98ee441473d40205fb5a4febb220f3",
+   "version_id": "efWAoJGi2_0wUkhWz5Qy0aAU9Vb43SDa",
+   "write": "create-only if-none-match"
+  },
+  {
+   "bytes": 21,
+   "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-screen-20261031a/end.txt",
+   "sha256": "80aad40003b399a9d3ece5577abb5bdc675dcfcc71756f562748a8946ef3e8ad",
+   "version_id": "AzD4IeLuE8wMeaoC0TbZeCsjqcp1Rc2T",
+   "write": "create-only if-none-match"
+  }
+ ],
+ "schema": "jope.h120.w4-offline-screen/v1",
+ "slopes": {
+  "0": 0.8355995827917314,
+  "1": 0.8953228902942555,
+  "2": 0.9084361216362875,
+  "3": 0.9016722651446014,
+  "4": 0.8769360902807808
+ },
+ "source_commit": "9e46eea4cbc0e4a89e2bc6dd218d9bdaad694c8d",
+ "stage": "screen",
+ "verdict": "CLOSE W4 adaptive reveal at 4 of 16 (no rule passes the offline screen)",
+ "wave": "W4"
+}
