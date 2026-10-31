@@ -3162,7 +3162,6 @@ mod tests {
         }
 
         struct ReplayProvider {
-            dsls: Vec<String>,
             by_dsl: HashMap<String, usize>,
             slates: HashMap<u64, Slate>,
             calls: Arc<AtomicUsize>,
@@ -3309,7 +3308,6 @@ mod tests {
             let seed_fitness = slate12.revealed_fitness.clone();
             let slate20 = load_slate(root, index, cid, 20);
             let provider = ReplayProvider {
-                dsls: dsls.to_vec(),
                 by_dsl: dsls
                     .iter()
                     .enumerate()
