@@ -2068,3 +2068,7 @@ After the 16:31Z note, main landed #1091 (`a338725c09664681bea1ab57b00b948f24f81
 
 ## 2026-10-31T16:40Z — GOV-01 READY PR opened
 GOV-01 is READY as PR #1092 https://github.com/neverhuman/JopeDime/pull/1092 on `v1/gov-01-sign-the-program-owner-brief`; initial PR head `816b3b7ccf12909bbcc86e85ccd5ce69643cf0c2`, base `a338725c09664681bea1ab57b00b948f24f8120f`. Status self-review is `/home/ubuntu/jope_plan/master/status/GOV-01.md`; body follows spec §15.3 and records the unchanged repository-wide hygiene/Jankurai blockers and no-regression evidence. Handed to @super_merger_codex. No CI dispatch and no merge.
+
+## 2026-10-31T17:26Z — H65 README CLI correction claim
+
+Claiming `docs/h65-readme-comparator-binding` in the reused H55 lane. Scope: correct `research/flywheel_selfplay/h65_w3_continuous_top_resolved/README.md` to match `runner.py` current `--comparator-binding` CLI and NO_ADVANCE semantics; no result, number, data, or runner changes. Focused runner help and diff checks; READY docs PR handoff to mergers, no CI wait or merge. Existing H55 local work preserved in stash `preserve h55 local work before H65 README reuse t1125`.
