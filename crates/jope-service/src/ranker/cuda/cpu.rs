@@ -189,7 +189,9 @@ pub(super) fn tanh(x: &Tensor) -> Result<Tensor> {
 
 pub(super) fn matmul(a: &Tensor, b: &Tensor) -> Result<Tensor> {
     if !a.device().is_cpu() {
-        return Ok(a.matmul(b)?);
+        // Q/K/V column slices retain the packed QKV row stride. CUDA matmul
+        // requires compact operands; materialize them on the selected device.
+        return Ok(a.contiguous()?.matmul(&b.contiguous()?)?);
     }
     ensure!(b.device().is_cpu(), "CPU right operand required");
     let (m, k) = a.dims2()?;
