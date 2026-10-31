@@ -66,7 +66,7 @@ impl Featurizer {
     /// authenticated bundle order before the reference FP32 rounding step.
     pub fn featurize(&self, dsl: &str) -> Result<[f32; FEATURE_COUNT]> {
         let program = parse::parse(dsl)?;
-        Ok(self.project(&extract_all(&program)?).require_complete()?)
+        self.project(&extract_all(&program)?).require_complete()
     }
 }
 
