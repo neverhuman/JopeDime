@@ -245,11 +245,11 @@ def make_fig5_network() -> None:
 
     # Row 1 inside training box: Search -> Referee -> Scored list G_p
     y_mid, h_mid = 0.295, 0.195
-    _draw_box(ax, 0.03, y_mid, 0.275, h_mid, "64 writer drafts + search\nProposes candidates;\nstillborn excluded", "#ffffff", "#64748b", "#1e293b", fontsize=7.5)
+    _draw_box(ax, 0.03, y_mid, 0.275, h_mid, "64-draft pool + search\nUniform fill if short;\nstillborn excluded", "#ffffff", "#64748b", "#1e293b", fontsize=7.5)
     _draw_box(ax, 0.355, y_mid, 0.28, h_mid, "Referee $\\mathcal{R}$ (5 inner folds)\nScores valid moves vs. $\\mathrm{inc}(p)$;\nbuilds list $G_p$ ($\\geq 8$ moves)", "#ffffff", "#64748b", "#1e293b", fontsize=7.5)
     _draw_box(ax, 0.675, y_mid, 0.295, h_mid, "Map $v_\\psi(z_p, z_w)$\nProgram embed $z_w = \\phi_{\\mathrm{S}}(w)$;\n4-head scorer ($\\mathcal{L}_{\\mathrm{map}} + \\mathcal{L}_{\\mathrm{BT}}$)", "#fef3c7", "#d97706", "#78350f", fontsize=7.5)
 
-    # Arrow from writer to 64 writer drafts (cleanly left of title)
+    # Arrow from writer to the draft pool (cleanly left of title)
     _draw_arrow(ax, 0.38, y_top, 0.16, y_mid + h_mid, color="#475569", ls="--", lw=1.0)
     _draw_arrow(ax, 0.305, y_mid + h_mid / 2, 0.355, y_mid + h_mid / 2, color="#475569", ls="--", lw=1.0)
     _draw_arrow(ax, 0.635, y_mid + h_mid / 2, 0.675, y_mid + h_mid / 2, color="#b45309", ls="--", lw=1.0)
