@@ -5,7 +5,7 @@
 //! emits every genome itself, so what crosses the boundary is the canonical DSL string and the
 //! measurements that ranked it here, not predictions.
 //!
-//! The search is [`crate::run`]'s, minus everything a caller with its own data does not need: no
+//! The search is [`crate::run()`]'s, minus everything a caller with its own data does not need: no
 //! catalog row, no receipt, no emitted sources. Rows are partitioned by [`prepare::partition`]
 //! (keyed on the CSV's sha256), searched by [`search::run_cuts_with`] and ranked by
 //! [`select::ranking`], unchanged.
@@ -62,7 +62,7 @@ pub struct InventOptions {
     pub clock: Clock,
     /// Write `jope.invent.progress.v1` records to this file (created or truncated) while the
     /// search runs ([`crate::progress`]); `None` writes none. It may not alias `train` or lie
-    /// in `work_dir` ([`check_events`]).
+    /// in `work_dir` (`check_events`).
     pub events: Option<PathBuf>,
     /// Rank programs by this regression objective on held-out rows instead of RMSE.
     pub objective: Option<jope_runtime::fitness::Fitness>,

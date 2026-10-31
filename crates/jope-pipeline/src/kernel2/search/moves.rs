@@ -22,7 +22,7 @@
 //! measured score ranks it, never the line's error. Every considered subtree is recorded, offered
 //! or refused, with its fit, bound and reason.
 //!
-//! [`check`] re-derives the records against the published measurements. For each round and pass
+//! `check` re-derives the records against the published measurements. For each round and pass
 //! it ranks the measurements made before the pass, as the pass ranked them, and requires the
 //! records to follow that list of parents in order: all of it, or a prefix only in a run that
 //! ended in that round on its evaluations or seconds bound (exactly where the allowance ran out

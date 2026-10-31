@@ -4,10 +4,10 @@
 //! measurement of this machine, so two runs never agree on those bytes. Tests need to show that
 //! everything *else* a run writes is byte-identical — across thread counts in particular — and
 //! the only honest way to do that is to take the clock out of the comparison, not to scrub its
-//! readings afterwards. [`Clock::Frozen`] exists for that and only under `cfg(test)`: no command
+//! readings afterwards. `Clock::Frozen` exists for that and only under `cfg(test)`: no command
 //! line can reach it, and a frozen clock never reaches a seconds bound, so those comparisons
 //! cover runs the evaluation budget ends. Under a binding seconds bound the real clock decides
-//! which candidates start, and two real runs need not agree on them. [`Clock::Expired`] is its
+//! which candidates start, and two real runs need not agree on them. `Clock::Expired` is its
 //! opposite, also test-only: every seconds bound has already passed, which is what a slow fit on a
 //! loaded host looks like to the admission checks.
 
