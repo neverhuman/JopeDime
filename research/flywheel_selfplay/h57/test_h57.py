@@ -34,6 +34,9 @@ WAVE_SPEC.loader.exec_module(wave)
 
 
 class H57Tests(unittest.TestCase):
+    def test_metrics_default_output_stays_in_h57_research_directory(self):
+        self.assertEqual(metrics.DEFAULT_OUTPUT, HERE / "metrics.json")
+
     def test_centered_rank_order_and_centering(self):
         ranks = h57.centered_ranks(np.arange(32, dtype=np.float64))
         self.assertAlmostEqual(float(ranks.sum()), 0.0)
