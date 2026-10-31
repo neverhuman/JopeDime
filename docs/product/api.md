@@ -8,7 +8,7 @@ The current binary describes the dataset command as “Manage datasets registere
 
 ## HTTP routes in the current service build
 
-The router contract test exercises all 20 registered method/path pairs. `GET /v1/system` succeeds with HTTP 200. Every other pair currently returns HTTP 422 with `CAPABILITY_UNAVAILABLE`; the service has no engine listener wiring in this build, so these are router-level results rather than a runnable `curl` session.
+The router contract test exercises all 20 registered method/path pairs. `GET /v1/system` succeeds with HTTP 200. Every other pair currently returns HTTP 422 with `CAPABILITY_UNAVAILABLE`. The local engine serves this router on IPv4 loopback; the results below are from the router contract tests, not a live `curl` session.
 
 The successful system snapshot is:
 
