@@ -127,7 +127,7 @@ network can absorb search.\\
 algorithm quality, then distinguish improvement on training games from
 improvement on unseen families.
 
-\begin{explainer}{Box 2 --- Self-play in 90 seconds}
+\begin{explainer}{Box 2: Self-play in 90 seconds}
 A player starts with only the rules and plays itself. A short search
 before each move finds better moves than instinct would, and the referee
 scores each finished game. The network learns to propose the moves the
@@ -225,21 +225,21 @@ frozen proposer under the same deployment budget.
 % ---------------------------------------------------------------------
 \subsection{Where the roads meet}\label{sub:road-meet}
 
-\begin{table}[t]
+\begin{table*}[t]
 \caption{\textbf{Related approaches retain experience in different forms.}
 This qualitative comparison separates output, deployment budget and retained
 state. Exact budgets depend on each study's protocol. The last row states
 \EZ{}'s design; its proposal quality is still to be tested.}
 \label{tab:roads}
 \centering
-\footnotesize
-\setlength{\tabcolsep}{2.8pt}
+\small
+\setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.1}
-\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.21\linewidth}
-                >{\raggedright\arraybackslash}p{0.165\linewidth}
-                >{\raggedright\arraybackslash}p{0.165\linewidth}
-                >{\raggedright\arraybackslash}p{0.165\linewidth}
-                >{\raggedright\arraybackslash}p{0.195\linewidth}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.245\linewidth}
+                >{\raggedright\arraybackslash}p{0.17\linewidth}
+                >{\raggedright\arraybackslash}p{0.155\linewidth}
+                >{\raggedright\arraybackslash}p{0.19\linewidth}
+                >{\raggedright\arraybackslash}p{0.16\linewidth}@{}}
 \toprule
 System & Output & Deployment budget & Retained experience & Feedback source \\
 \midrule
@@ -272,7 +272,7 @@ Absolute Zero; STP
   & \textbf{Incumbent comparisons} \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \Cref{tab:roads} distinguishes what a system produces from how it retains
 experience. TabPFN, MotherNet and KumoRFM provide neighboring examples of

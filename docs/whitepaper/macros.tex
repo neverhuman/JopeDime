@@ -8,17 +8,24 @@
 \setlength{\dbltextfloatsep}{16pt plus 10pt minus 4pt}
 \setlength{\dblfloatsep}{10pt plus 6pt minus 2pt}
 \setlength{\parskip}{0pt plus 3pt}
+% twocolumn implies \flushbottom, which stretches gaps around floats and headings.
+\raggedbottom
+% Venue-style captions and a compact reference list.
+\captionsetup{font=small}
+\renewcommand{\bibfont}{\small}
+\setlength{\bibsep}{3pt plus 1pt minus 1pt}
+\urlstyle{same}
 \makeatletter
 \providecommand*{\theHalgorithm}{\thealgorithm}
 \providecommand*{\theHALG@line}{\theHalgorithm.\arabic{ALG@line}}
 \renewcommand\section{\@startsection {section}{1}{\z@}%
   {-3.2ex \@plus -1.8ex \@minus -.4ex}%
   {2.0ex \@plus .6ex \@minus .2ex}%
-  {\normalfont\Large\bfseries\raggedright}}
+  {\normalfont\large\bfseries\raggedright}}
 \renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
   {-2.8ex \@plus -1.5ex \@minus -.3ex}%
   {1.3ex \@plus .5ex \@minus .2ex}%
-  {\normalfont\large\bfseries\raggedright}}
+  {\normalfont\normalsize\bfseries\raggedright}}
 \renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
   {-2.5ex \@plus -1.2ex \@minus -.2ex}%
   {1.2ex \@plus .4ex \@minus .2ex}%

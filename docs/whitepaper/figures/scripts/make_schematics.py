@@ -141,7 +141,7 @@ def _draw_arrow(ax, x0, y0, x1, y1, color="#334155", ls="-", lw=1.05, rad=0.0):
 
 def make_fig3_game_loop() -> None:
     """Schematic: Training plays the whole game; game day plays one move."""
-    fig, ax = plt.subplots(figsize=(4.5, 2.55))
+    fig, ax = plt.subplots(figsize=(7.0, 2.3))
     fig.subplots_adjust(left=0.005, right=0.995, bottom=0.005, top=0.995)
     ax.set_xlim(0.0, 1.0)
     ax.set_ylim(0.0, 1.0)
@@ -156,16 +156,16 @@ def make_fig3_game_loop() -> None:
     ax.add_patch(top_bg)
     ax.text(
         0.03, 0.945,
-        "Game day (search $= 1$, $B = 1$): play one move, no retry or repair",
-        fontsize=7.3, fontweight="bold", color="#1e3a8a", va="top",
+        "Game day (search = 1, $B = 1$): play one move, no retry or repair",
+        fontsize=9.1, fontweight="bold", color="#1e3a8a", va="top",
     )
 
     # Top row boxes
     y_top, h_top = 0.60, 0.25
-    _draw_box(ax, 0.03, y_top, 0.195, h_top, "Board $p$\n$z_p = \\phi_{\\mathrm{P}}(p)$", "#ffffff", "#2563eb", "#1e3a8a", fontsize=6.8)
-    _draw_box(ax, 0.27, y_top, 0.225, h_top, "Writer $\\pi_\\theta$\n1 draw $w \\sim \\pi_\\theta$", "#dbeafe", "#1d4ed8", "#1e3a8a", fontsize=6.8, bold=True)
-    _draw_box(ax, 0.54, y_top, 0.195, h_top, "Fit $w$ on\ntraining rows", "#ffffff", "#2563eb", "#1e3a8a", fontsize=6.8)
-    _draw_box(ax, 0.78, y_top, 0.19, h_top, "Predict $\\hat{y}$\n(1 verdict)", "#ffffff", "#2563eb", "#1e3a8a", fontsize=6.8)
+    _draw_box(ax, 0.03, y_top, 0.195, h_top, "Board $p$\n$z_p = \\phi_{\\mathrm{P}}(p)$", "#ffffff", "#2563eb", "#1e3a8a", fontsize=8.5)
+    _draw_box(ax, 0.27, y_top, 0.225, h_top, "Writer $\\pi_\\theta$\n1 draw $w \\sim \\pi_\\theta$", "#dbeafe", "#1d4ed8", "#1e3a8a", fontsize=8.5, bold=True)
+    _draw_box(ax, 0.54, y_top, 0.195, h_top, "Fit $w$ on\ntraining rows", "#ffffff", "#2563eb", "#1e3a8a", fontsize=8.5)
+    _draw_box(ax, 0.78, y_top, 0.19, h_top, "Predict $\\hat{y}$\n(1 verdict)", "#ffffff", "#2563eb", "#1e3a8a", fontsize=8.5)
 
     _draw_arrow(ax, 0.225, y_top + h_top / 2, 0.27, y_top + h_top / 2, color="#1d4ed8", lw=1.1)
     _draw_arrow(ax, 0.495, y_top + h_top / 2, 0.54, y_top + h_top / 2, color="#1d4ed8", lw=1.1)
@@ -181,21 +181,21 @@ def make_fig3_game_loop() -> None:
     ax.text(
         0.50, 0.44,
         "Training only: self-play & expert iteration",
-        fontsize=6.9, fontweight="bold", color="#334155", va="top", ha="center",
+        fontsize=8.6, fontweight="bold", color="#334155", va="top", ha="center",
     )
 
     y_bot, h_bot = 0.055, 0.295
-    _draw_box(ax, 0.03, y_bot, 0.285, h_bot, "Player ratchet\nTrain challenger; admit on\n16 cuts $\\times$ 3 seeds", "#ffffff", "#64748b", "#1e293b", fontsize=6.4)
-    _draw_box(ax, 0.36, y_bot, 0.28, h_bot, "Board ratchet & lists\nStrict win updates $\\mathrm{inc}(p)$;\nvalid scored moves join $G_p$", "#ffffff", "#64748b", "#1e293b", fontsize=6.4)
-    _draw_box(ax, 0.685, y_bot, 0.285, h_bot, "Referee $\\mathcal{R}$ & opponent\n5 inner folds vs. $\\mathrm{inc}(p)$\nOrder: $\\tilde{w} < w^- < w^+$", "#ffffff", "#64748b", "#1e293b", fontsize=6.4)
+    _draw_box(ax, 0.03, y_bot, 0.285, h_bot, "Player ratchet\nTrain challenger; admit on\n16 cuts $\\times$ 3 seeds", "#ffffff", "#64748b", "#1e293b", fontsize=8.0)
+    _draw_box(ax, 0.36, y_bot, 0.28, h_bot, "Board ratchet & lists\nStrict win updates $\\mathrm{inc}(p)$;\nvalid scored moves join $G_p$", "#ffffff", "#64748b", "#1e293b", fontsize=8.0)
+    _draw_box(ax, 0.685, y_bot, 0.285, h_bot, "Referee $\\mathcal{R}$ & opponent\n5 inner folds vs. $\\mathrm{inc}(p)$\nOrder: $\\tilde{w} < w^- < w^+$", "#ffffff", "#64748b", "#1e293b", fontsize=8.0)
 
     # Arrows connecting top to bottom (passing outside the centered header)
     _draw_arrow(ax, 0.72, y_top, 0.85, y_bot + h_bot, color="#475569", ls="--", lw=1.05)
-    ax.text(0.84, 0.50, "evaluate moves", fontsize=6.2, color="#475569", fontstyle="italic")
+    ax.text(0.84, 0.50, "evaluate moves", fontsize=7.8, color="#475569", fontstyle="italic")
     _draw_arrow(ax, 0.685, y_bot + h_bot / 2, 0.64, y_bot + h_bot / 2, color="#475569", ls="--", lw=1.05)
     _draw_arrow(ax, 0.36, y_bot + h_bot / 2, 0.315, y_bot + h_bot / 2, color="#475569", ls="--", lw=1.05)
     _draw_arrow(ax, 0.14, y_bot + h_bot, 0.29, y_top, color="#0f766e", ls="--", lw=1.1)
-    ax.text(0.055, 0.50, "admitted $\\theta$", fontsize=6.4, color="#0f766e", fontweight="bold")
+    ax.text(0.055, 0.50, "admitted $\\theta$", fontsize=8.0, color="#0f766e", fontweight="bold")
 
     fig.savefig(OUT / "fig3_game_loop.pdf")
     plt.close(fig)
@@ -203,7 +203,7 @@ def make_fig3_game_loop() -> None:
 
 def make_fig5_network() -> None:
     """Schematic: Writer pi_theta and separate ranking map v_psi in step-60,000 checkpoint."""
-    fig, ax = plt.subplots(figsize=(4.5, 3.05))
+    fig, ax = plt.subplots(figsize=(7.0, 2.6))
     fig.subplots_adjust(left=0.005, right=0.995, bottom=0.005, top=0.995)
     ax.set_xlim(0.0, 1.0)
     ax.set_ylim(0.0, 1.0)
@@ -218,14 +218,14 @@ def make_fig5_network() -> None:
     ax.add_patch(top_bg)
     ax.text(
         0.03, 0.955,
-        "Game day (search $= 1$): frozen encoder + single writer draw (map $v_\\psi$ absent)",
-        fontsize=7.0, fontweight="bold", color="#1e3a8a", va="top",
+        "Game day (search = 1): frozen encoder + single writer draw (map $v_\\psi$ absent)",
+        fontsize=8.6, fontweight="bold", color="#1e3a8a", va="top",
     )
 
     y_top, h_top = 0.67, 0.215
-    _draw_box(ax, 0.03, y_top, 0.295, h_top, "Frozen encoder $\\phi_{\\mathrm{P}}(p)$\n2,048 values (512+1,024+512)\n30 s cap; hash-pinned", "#ffffff", "#2563eb", "#1e3a8a", fontsize=5.85)
-    _draw_box(ax, 0.365, y_top, 0.32, h_top, "Program writer $\\pi_\\theta(w \\mid z_p)$\n6-block causal Transformer\n$\\leq 128$ grammar tokens ($T=1$)", "#dbeafe", "#1d4ed8", "#1e3a8a", fontsize=5.85, bold=True)
-    _draw_box(ax, 0.725, y_top, 0.245, h_top, "1 program $w$\nLower to Python/Rust,\nfit & predict $\\hat{y}$", "#ffffff", "#2563eb", "#1e3a8a", fontsize=5.85)
+    _draw_box(ax, 0.03, y_top, 0.295, h_top, "Frozen encoder $\\phi_{\\mathrm{P}}(p)$\n2,048 values (512+1,024+512)\n30 s cap; hash-pinned", "#ffffff", "#2563eb", "#1e3a8a", fontsize=7.6)
+    _draw_box(ax, 0.365, y_top, 0.32, h_top, "Program writer $\\pi_\\theta(w \\mid z_p)$\n6-block causal Transformer\n$\\leq 128$ grammar tokens ($T=1$)", "#dbeafe", "#1d4ed8", "#1e3a8a", fontsize=7.6, bold=True)
+    _draw_box(ax, 0.725, y_top, 0.245, h_top, "1 program $w$\nLower to Python/Rust,\nfit & predict $\\hat{y}$", "#ffffff", "#2563eb", "#1e3a8a", fontsize=7.6)
 
     _draw_arrow(ax, 0.325, y_top + h_top / 2, 0.365, y_top + h_top / 2, color="#1d4ed8", lw=1.1)
     _draw_arrow(ax, 0.685, y_top + h_top / 2, 0.725, y_top + h_top / 2, color="#1d4ed8", lw=1.1)
@@ -240,14 +240,14 @@ def make_fig5_network() -> None:
     ax.text(
         0.66, 0.545,
         "Training only: 27.8M reference checkpoint",
-        fontsize=6.6, fontweight="bold", color="#334155", va="top", ha="center",
+        fontsize=8.2, fontweight="bold", color="#334155", va="top", ha="center",
     )
 
     # Row 1 inside training box: Search -> Referee -> Scored list G_p
     y_mid, h_mid = 0.295, 0.195
-    _draw_box(ax, 0.03, y_mid, 0.275, h_mid, "64 writer drafts + search\nProposes candidates;\nstillborn excluded", "#ffffff", "#64748b", "#1e293b", fontsize=5.75)
-    _draw_box(ax, 0.355, y_mid, 0.28, h_mid, "Referee $\\mathcal{R}$ (5 inner folds)\nScores valid moves vs. $\\mathrm{inc}(p)$;\nbuilds list $G_p$ ($\\geq 8$ moves)", "#ffffff", "#64748b", "#1e293b", fontsize=5.75)
-    _draw_box(ax, 0.675, y_mid, 0.295, h_mid, "Map $v_\\psi(z_p, z_w)$\nProgram embed $z_w = \\phi_{\\mathrm{S}}(w)$;\n4-head scorer ($\\mathcal{L}_{\\mathrm{map}} + \\mathcal{L}_{\\mathrm{BT}}$)", "#fef3c7", "#d97706", "#78350f", fontsize=5.75)
+    _draw_box(ax, 0.03, y_mid, 0.275, h_mid, "64 writer drafts + search\nProposes candidates;\nstillborn excluded", "#ffffff", "#64748b", "#1e293b", fontsize=7.5)
+    _draw_box(ax, 0.355, y_mid, 0.28, h_mid, "Referee $\\mathcal{R}$ (5 inner folds)\nScores valid moves vs. $\\mathrm{inc}(p)$;\nbuilds list $G_p$ ($\\geq 8$ moves)", "#ffffff", "#64748b", "#1e293b", fontsize=7.5)
+    _draw_box(ax, 0.675, y_mid, 0.295, h_mid, "Map $v_\\psi(z_p, z_w)$\nProgram embed $z_w = \\phi_{\\mathrm{S}}(w)$;\n4-head scorer ($\\mathcal{L}_{\\mathrm{map}} + \\mathcal{L}_{\\mathrm{BT}}$)", "#fef3c7", "#d97706", "#78350f", fontsize=7.5)
 
     # Arrow from writer to 64 writer drafts (cleanly left of title)
     _draw_arrow(ax, 0.38, y_top, 0.16, y_mid + h_mid, color="#475569", ls="--", lw=1.0)
@@ -256,8 +256,8 @@ def make_fig5_network() -> None:
 
     # Row 2 inside training box: Writer update + explicit non-steering boundary note
     y_low, h_low = 0.045, 0.20
-    _draw_box(ax, 0.03, y_low, 0.455, h_low, "Writer supervision $\\mathcal{L}_{\\mathrm{writer}}$\nWeights every scored move by $0.05 + \\rho_w^4$\ndirectly from referee percentiles $\\rho_w$", "#ecfdf5", "#059669", "#065f46", fontsize=5.75)
-    _draw_box(ax, 0.515, y_low, 0.455, h_low, "Reference checkpoint boundary:\n$v_\\psi$ ranks drafts offline (vs. program-only control);\nnever screens, conditions, or steers $\\pi_\\theta$", "#fff1f2", "#e11d48", "#881337", fontsize=5.6, ls="--")
+    _draw_box(ax, 0.03, y_low, 0.455, h_low, "Writer supervision $\\mathcal{L}_{\\mathrm{writer}}$\nWeights every scored move by $0.05 + \\rho_w^4$\ndirectly from referee percentiles $\\rho_w$", "#ecfdf5", "#059669", "#065f46", fontsize=7.5)
+    _draw_box(ax, 0.515, y_low, 0.455, h_low, "Reference checkpoint boundary:\n$v_\\psi$ ranks drafts offline (vs. program-only control);\nnever screens, conditions, or steers $\\pi_\\theta$", "#fff1f2", "#e11d48", "#881337", fontsize=7.3, ls="--")
 
     # Arrow from Referee down to Writer supervision, and from Writer supervision straight up through vertical gap x=0.33 to Writer
     _draw_arrow(ax, 0.45, y_mid, 0.39, y_low + h_low, color="#059669", ls="--", lw=1.0)
