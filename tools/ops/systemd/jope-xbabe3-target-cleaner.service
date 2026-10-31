@@ -1,0 +1,18 @@
+[Unit]
+Description=JopeDime rebuildable-only xbabe3 Cargo target cleanup
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/jope-remote-target-cleaner --apply
+Nice=10
+IOSchedulingClass=idle
+IOSchedulingPriority=7
+UMask=0077
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+PrivateTmp=yes
+ReadWritePaths=-/home/ubuntu/remote_tests/target /var/log/jope-diskd-xbabe3 /run/lock

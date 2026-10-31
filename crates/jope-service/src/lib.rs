@@ -14,6 +14,7 @@ pub mod lex;
 pub mod objective;
 pub mod public;
 pub mod ranker;
+pub mod research;
 pub mod run;
 pub mod sampler;
 pub mod store;

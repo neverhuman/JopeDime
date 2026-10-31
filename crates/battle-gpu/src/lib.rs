@@ -13,8 +13,11 @@
 //!   reference order. Determinism across runs on fixed hardware is therefore
 //!   trivial, and cross-backend replay only needs score bits, which match.
 //! - No CUDA crates and no build-time CUDA: the committed PTX is embedded and
-//!   `libcuda.so.1` is dlopen'd at first use. Hosts without a driver probe as
-//!   `None` and every call returns `Err`.
+//!   `libcuda.so.1` is dlopen'd only when a batch contains a GPU-eligible
+//!   problem. Hosts without a driver probe as `None`; CPU-only batches remain
+//!   usable, while batches that need a GPU return an error.
+
+#![warn(missing_docs)]
 
 mod driver;
 
@@ -44,11 +47,16 @@ const WAVE_MEM_FRACTION: f64 = 0.7;
 /// Fallback wave budget when cuMemGetInfo is unavailable.
 const WAVE_MEM_FALLBACK_BYTES: usize = 2 << 30;
 
+/// Basic information reported for CUDA device zero.
 #[derive(Clone, Debug)]
 pub struct GpuInfo {
+    /// Driver-reported name of CUDA device zero.
     pub name: String,
+    /// CUDA driver version encoded as an integer by the driver API.
     pub driver_version: i32,
+    /// Total memory on device zero, in bytes.
     pub total_mem_bytes: usize,
+    /// Number of streaming multiprocessors on device zero.
     pub multiprocessors: i32,
 }
 
@@ -412,8 +420,20 @@ fn logical_h2d(problem: &GpuRidgeScoreProblem) -> u64 {
 
 /// Order-preserving batched rung-0 ridge scorer: the drop-in backend for
 /// `feat_math::evolve::GpuRidgeScoreBatchFn`.
+///
+/// Problems that exceed the GPU's supported dimensions are scored with the
+/// CPU reference. A batch containing only such problems does not load or
+/// initialize CUDA, so this path works on hosts without a CUDA driver. A batch
+/// containing any GPU-eligible problem requires a usable CUDA backend.
 pub fn gpu_ridge_score_batch(
     problems: Vec<GpuRidgeScoreProblem>,
+) -> Result<GpuRidgeScoreBatch, String> {
+    gpu_ridge_score_batch_with_backend_initializer(problems, backend)
+}
+
+fn gpu_ridge_score_batch_with_backend_initializer(
+    problems: Vec<GpuRidgeScoreProblem>,
+    initialize_backend: impl FnOnce() -> Result<&'static Mutex<Gpu>, String>,
 ) -> Result<GpuRidgeScoreBatch, String> {
     let gpu_routes = problems
         .iter()
@@ -427,7 +447,6 @@ pub fn gpu_ridge_score_batch(
             ))
         })
         .collect::<Result<Vec<_>, String>>()?;
-    let gpu = backend()?;
     let mut scores = vec![0.0f64; problems.len()];
     let mut fold_bytes = vec![GpuRidgeScoreFoldBytes::default(); problems.len()];
     let mut timings = GpuRidgeScoreTimings::default();
@@ -443,6 +462,18 @@ pub fn gpu_ridge_score_batch(
         }
     }
     timings.pack_seconds += pack_start.elapsed().as_secs_f64();
+
+    // CPU-only batches have no CUDA dependency. In particular, do not attempt
+    // to initialize the backend when every problem is outside the GPU route.
+    if gpu_idx.is_empty() {
+        return Ok(GpuRidgeScoreBatch {
+            scores,
+            timings,
+            fold_bytes,
+        });
+    }
+
+    let gpu = initialize_backend()?;
 
     let guard = gpu
         .lock()
@@ -651,6 +682,10 @@ mod tests {
     use super::*;
     use feat_math::Pcg32;
 
+    // These tests can create a CUDA context and launch kernels. Keep them out
+    // of ordinary CPU test runs; invoke ignored tests only while holding the
+    // repository's qualification lock on a qualified CUDA host.
+
     /// Compile-time proof that the public fn satisfies the seam signature.
     #[test]
     fn backend_signature_matches_the_seam() {
@@ -737,6 +772,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires a qualified CUDA host and the qualification lock"]
     fn gpu_scores_match_cpu_reference_bitwise() {
         if !gpu_available() {
             return;
@@ -779,6 +815,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires a qualified CUDA host and the qualification lock"]
     fn same_wave_twice_is_bit_identical() {
         if !gpu_available() {
             return;
@@ -795,6 +832,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires a qualified CUDA host and the qualification lock"]
     fn wide_problems_route_to_cpu_and_preserve_order() {
         if !gpu_available() {
             return;
@@ -838,6 +876,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires a qualified CUDA host and the qualification lock"]
     fn wave_timing_snapshot() {
         if !gpu_available() {
             return;
@@ -887,6 +926,27 @@ mod shape_bounds_tests {
         problem.valid_x_rows.clear();
         problem.valid_y.clear();
         assert!(validate_shape(0, &problem).is_ok());
+    }
+
+    #[test]
+    fn cpu_only_batch_scores_wide_problem_without_initializing_cuda() {
+        let mut wide = problem();
+        wide.train_n = 2;
+        wide.p = MAX_RIDGE_P + 1;
+        wide.train_x_cols = vec![0.0; wide.train_n * wide.p];
+        wide.train_y = vec![1.0, 3.0];
+        wide.valid_n = 2;
+        wide.valid_x_rows = vec![0.0; wide.valid_n * wide.p];
+        wide.valid_y = vec![1.0, 3.0];
+
+        let expected = cpu_reference_score(&wide);
+        let batch = gpu_ridge_score_batch_with_backend_initializer(vec![wide], || {
+            panic!("CPU-only batch must not initialize CUDA")
+        })
+        .expect("CPU-only batch");
+
+        assert_eq!(batch.scores, vec![expected]);
+        assert_eq!(batch.fold_bytes, vec![GpuRidgeScoreFoldBytes::default()]);
     }
 
     #[test]
