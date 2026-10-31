@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+"""Metadata-only coverage check; never opens features, pools, tables or weights."""
+
+import argparse
+from collections import Counter, defaultdict
+import hashlib
+import json
+from pathlib import Path
+
+H27_MANIFEST = "5a7cc86298a9f82a68d0cb77465d5e61ae3d6d1d49e258df9254faa345f22d2e"
+SELECTED = "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1"
+FINGERPRINTS = "c544d47f766b1dea941f7eb97d6d6bb035229b0a67b996ec51d280fe81d208db"
+
+
+def read_metadata(path, expected):
+    raw = path.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != expected:
+        raise ValueError(f"metadata digest mismatch: {path}")
+    return json.loads(raw)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--h27-manifest", type=Path, required=True)
+    parser.add_argument("--selected", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    old = read_metadata(args.h27_manifest, H27_MANIFEST)
+    packet = read_metadata(args.selected, SELECTED)
+    rows = old["rows"]
+    by_context = {r["context_sha256"]: r for r in rows}
+    if len(rows) != 850 or len(by_context) != len(rows):
+        raise ValueError("H27 context inventory mismatch")
+    if any(r["feature_proof"]["fingerprints"]["sha256"] != FINGERPRINTS for r in rows):
+        raise ValueError("fingerprint proof mismatch")
+    linked_roles = defaultdict(set)
+    coverage = {}
+    for role, split in (("train", "DL-Train"), ("dev", "DL-Val")):
+        selected = packet[role]
+        if any(r["dl_split"] != split or not r["family_id"] for r in selected):
+            raise ValueError("packet role/family mismatch")
+        matched = [r for r in selected if r["context_sha256"] in by_context]
+        missing = [r for r in selected if r["context_sha256"] not in by_context]
+        for r in matched:
+            prior = by_context[r["context_sha256"]]
+            if prior["family_id"] != r["family_id"]:
+                raise ValueError("family identity mismatch")
+            linked_roles[prior["component"]].add(role)
+        coverage[split] = dict(
+            required=len(selected),
+            matched=len(matched),
+            missing=len(selected) - len(matched),
+        )
+        if role == "dev":
+            missing_dl_val_contexts = [
+                {
+                    "context_sha256": row["context_sha256"],
+                    "qualification_step": (
+                        "complete full input identity admission after metadata coverage"
+                    ),
+                }
+                for row in missing
+            ]
+    crossings = sum(len(roles) > 1 for roles in linked_roles.values())
+    result = dict(
+        schema="jope.hwv05.metadata-coverage/v1",
+        state="BLOCKED_INPUT_QUALIFICATION",
+        h27_manifest_sha256=H27_MANIFEST,
+        selected_sha256=SELECTED,
+        fingerprints_sha256=FINGERPRINTS,
+        h27_source_roles=dict(Counter(r["source_role"] for r in rows)),
+        coverage=coverage,
+        missing_dl_val_contexts=missing_dl_val_contexts,
+        historical_components_crossing_current_roles=crossings,
+        payload_files_opened=0,
+        new_GP_fits=0,
+        ranker_fits=0,
+        elo=None,
+        ci975=None,
+        verdict=None,
+        limits=[
+            "Context digest match alone does not qualify dataset/cut/evaluator/vocabulary or DOPE state.",
+            "Historical FIT exposure is retained; these rows are not newly independent validation.",
+            "No numerical arrays, models, fingerprints or outcomes were opened by this check.",
+        ],
+    )
+    with args.output.open("x") as out:
+        json.dump(result, out, indent=2, allow_nan=False)
+        out.write("\n")
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    main()

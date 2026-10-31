@@ -4,20 +4,22 @@
 % Reader question: Can an AI create knowledge no human wrote down?
 % One-sentence answer: Skeptics say models trained on history can only
 %   recombine it. AlphaGo Zero showed that a learner with a referee can go
-%   beyond history, and we test that for invention.
+%   beyond history within a game; we specify how to test that for invention.
 % Core points advanced: 4 (skeptics right about imitation, wrong about
-%   learning), 3 (search = 1), 1 (innovation is a game).
-% Exhibits: Figure 1 (front matter, label fig:emptysquare) and Box 1.
+%   learning), 3 (search = 1), 1 (innovation is a game), engineered
+%   intelligence (title), contributions and evidence status.
+% Exhibits: Figure 1 (label fig:emptysquare) and Box 1.
 % Budget: 1.5 pages. Editor notes: sections/01_introduction.notes.md
 % ===========================================================================
 
 \section{Can Machines Invent?}\label{sec:intro}
 
-Can a machine create knowledge that no human has written down? Learning
-from a referee offers a precedent within a fixed task. AlphaGo Zero went
-beyond the best human play without seeing a human game, learning from
+Can a machine create knowledge that no human has written down? Within a
+fixed game, learning from a referee already offers a precedent. AlphaGo Zero
+went beyond the best human play without seeing a human game, learning from
 self-play under the rules of Go \citep{silver2017mastering}. We ask whether
-similar feedback can improve the first algorithm proposal on a new problem.
+similar feedback can improve the first algorithm a system proposes for a new
+problem.
 
 \paragraph{The skeptics' challenge.}
 In March 2025, Yann LeCun argued that language models retrieve existing
@@ -31,11 +33,11 @@ discovery'' \citep{patel2023question}. In January 2025, Demis Hassabis posed
 the hardest version as a benchmark for general intelligence: today's systems
 ``can play a game of Go at a world champion level. But could a system invent
 Go?'' \citep{hassabis2025bigtech}. These challenges concern both proposing
-solutions and choosing new questions. Our test concerns algorithm proposals
-under human-defined tasks and metrics (\cref{sec:meaning}). Predicting
-historical text does not directly reward improvement over an incumbent.
-That motivates a different training signal; it does not establish a ceiling
-on what a pretrained model can discover (\cref{sec:anatomy}).
+solutions and choosing new questions; our test concerns only algorithm
+proposals under human-defined tasks and metrics (\cref{sec:meaning}).
+Predicting historical text does not directly reward improvement over an
+incumbent. That motivates a different training signal; it does not establish
+a ceiling on what a pretrained model can discover (\cref{sec:anatomy}).
 
 \paragraph{The human challenge.}
 In their 2020 study, \citet{bloom2020ideas} reported rising research effort
@@ -102,16 +104,33 @@ Zero analogy concerns the additional training feedback from the referee.
 
 \begin{figure}[t]
   \centering
-  \small
-  \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.23\linewidth}X@{}}
-    \toprule
-    \textbf{Training} & Propose $\rightarrow$ Evaluate $\rightarrow$ Update \\
-    & Repeated attempts; referee feedback can change the writer. \\
-    \midrule
-    \textbf{Deployment} & Encode $\rightarrow$ Propose $\rightarrow$ Fit $\rightarrow$ Predict \\
-    & Frozen writer; one candidate committed before its score is known. \\
-    \bottomrule
-  \end{tabularx}
+  \begin{tikzpicture}[
+      >=stealth,
+      stage/.style={draw=black!60, rounded corners=2pt, minimum height=5.5mm,
+        inner xsep=3.5pt, font=\small, fill=white},
+      once/.style={stage, draw=blue!50!black, fill=blue!8, font=\small\bfseries},
+      flow/.style={->, semithick},
+      row/.style={font=\small\bfseries, anchor=west},
+      gloss/.style={font=\footnotesize\itshape, text=black!75, anchor=west}]
+    \node[row] at (0,0) {Training};
+    \node[stage, anchor=west] (tp) at (1.95,0) {Propose};
+    \node[stage, right=4mm of tp] (te) {Evaluate};
+    \node[stage, right=4mm of te] (tu) {Update};
+    \draw[flow] (tp) -- (te);
+    \draw[flow] (te) -- (tu);
+    \draw[flow] (tu.north) -- ++(0,3mm) -| node[pos=0.25, above,
+      font=\footnotesize] {repeat with the updated writer} (tp.north);
+    \node[gloss] at (0,-6mm) {Many attempts; referee feedback can change the writer.};
+    \node[row] at (0,-15mm) {Deployment};
+    \node[stage, anchor=west] (de) at (1.95,-15mm) {Encode};
+    \node[once, right=4mm of de] (dp) {Propose once};
+    \node[stage, right=4mm of dp] (df) {Fit};
+    \node[stage, right=4mm of df] (dy) {Predict};
+    \draw[flow] (de) -- (dp);
+    \draw[flow] (dp) -- (df);
+    \draw[flow] (df) -- (dy);
+    \node[gloss] at (0,-21mm) {Frozen writer; one candidate committed before its score is known.};
+  \end{tikzpicture}
   \caption{\textbf{Training feedback and the single-candidate contract.}
   The writer updates during training; the emitted estimator fits during
   deployment. Whether the learned writer improves the first proposal is
@@ -119,36 +138,50 @@ Zero analogy concerns the additional training feedback from the referee.
   \label{fig:emptysquare}
 \end{figure}
 
-\paragraph{The proposal and its test.}
-We formulate algorithm invention as a game: the encoded problem is the board,
-a complete program is the move, a verifier is the referee and the incumbent
-algorithm is the opponent (\cref{sec:game}). \EZ{} combines a program writer
-with a problem--program map intended to guide learning from those contests
-(\cref{sec:method}). The central hypothesis is that this training improves
-first proposals on unseen problems. The current learning record is reported
-separately from the proposed deployment comparisons.
+\paragraph{Engineered intelligence.}
+\Cref{sec:anatomy} divides invention into four pillars: an aim, a source of
+variation, a means of judgment and a way to retain what survives. In \EZ{}
+each pillar is a specified component that can be inspected and tested. The
+aim is a declared task and metric. Variation comes from a
+grammar-constrained program writer. Judgment is a referee that scores
+hidden folds. Retention is a pair of ratchets that admit only verified
+gains (\cref{tab:pillars}). We call this \emph{engineered intelligence}: a
+capability whose objective, judge and memory are designed and audited,
+rather than left implicit in a pretrained model. Pretrained components still
+supply prior knowledge (\cref{box:searchone}). Engineering fixes what the
+system is rewarded for and how its improvement is checked.
 
-\Cref{sec:results} specifies the evidence needed to test that hypothesis:
-paired comparisons against algorithms proposed by Claude, Codex and Gemini;
-a comparison with KumoRFM \citep{kumorfm2025}; a performance curve against
-agents allowed repeated attempts; and an ablation of the problem--program
-map. \TBD{Complete these comparisons and document task coverage, model
-versions, prompts, budgets and uncertainty before claiming an advantage.}
-The paper develops five elements:
+\paragraph{Contributions.}
+We formulate algorithm invention as a game and design a learner for it.
+The paper contributes:
 \begin{enumerate}[leftmargin=*,nosep,label=\arabic*.]
   \item \textbf{The anatomy of innovation:} four pillars (aim, variation,
     judgment and retention), with an idealized relation between proposal
     quality and the number of attempts (\cref{sec:anatomy}).
-  \item \textbf{The innovation game:} rules that make invention playable on
-    many boards (\cref{sec:game}).
+  \item \textbf{The innovation game:} a board, move, referee and opponent,
+    with a reward ordering and two ratchets, that make invention playable
+    on many boards (\cref{sec:game}).
   \item \textbf{The economics of algorithmic self-play:} an accounting of
-    training cost and the cost per verified improvement (\cref{sec:price}).
-  \item \textbf{\EZ{}:} a writer and a problem--program map designed to learn
-    from referee feedback (\cref{sec:method}).
-  \item \textbf{An evaluation plan:} tests of first-proposal quality,
-    deployment search and the map's contribution (\cref{sec:results}).
+    training cost and of the cost per verified improvement (\cref{sec:price}).
+  \item \textbf{\EZ{}:} a learner with a frozen problem encoder, a grammar-constrained
+    program writer and a separate problem--program map, trained by expert
+    iteration on referee scores, with safeguards against reward hacking
+    (\cref{sec:method}).
+  \item \textbf{An evaluation protocol for the single-proposal claim:}
+    paired comparisons with algorithms proposed by Claude, Codex and Gemini
+    and with KumoRFM \citep{kumorfm2025}, performance curves against agents
+    allowed repeated attempts, and an ablation of the map (\cref{sec:results}).
 \end{enumerate}
-\Cref{sec:road} traces each pillar's history in AI; \cref{sec:meaning} asks
-what changes and where the claim stops.
 
-To see what the referee can teach, we first separate the parts of innovation.
+\paragraph{What is and is not established.}
+The paper separates three kinds of evidence. The game, the learner and the
+evaluation protocol are specified here. A retained development record
+describes admission behavior during training (\cref{sec:method-status}); it
+does not measure first-proposal quality on unseen problem families. The
+deployment comparisons of \cref{sec:results} are specified, but their
+outcomes are not yet reported, and we claim no advantage until they are.
+
+\Cref{sec:road} traces each pillar through AI research, and
+\cref{sec:meaning} asks what a positive result would change and where the
+claim stops. To see what the referee can teach, we first separate the parts
+of innovation.

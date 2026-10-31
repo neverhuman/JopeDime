@@ -188,15 +188,19 @@ pub fn emit_calibrated_with_checks(
                 && transform.lower.is_none_or(f64::is_finite),
             "non-finite regression output transform"
         );
+        // Debug keeps an f64 literal for integral values (`0.0`, not `0`), which rustc requires.
         let code = if let Some(lower) = transform.lower {
             format!(
                 "let predictions: Vec<f64> = predictions.into_iter().map(|pred| ({} + {} * pred).max({})).collect();",
-                transform.intercept, transform.slope, lower
+                rs_number(transform.intercept),
+                rs_number(transform.slope),
+                rs_number(lower)
             )
         } else {
             format!(
                 "let predictions: Vec<f64> = predictions.into_iter().map(|pred| {} + {} * pred).collect();",
-                transform.intercept, transform.slope
+                rs_number(transform.intercept),
+                rs_number(transform.slope)
             )
         };
         code
@@ -1536,6 +1540,88 @@ mod tests {
             .unwrap()
             .success());
         assert!(Command::new(&rs_test).status().unwrap().success());
+    }
+
+    #[test]
+    fn integral_calibration_constants_compile_and_match_engine() {
+        let (train, targets) = training();
+        let genome = GenomeIr::parse("(pipe X (ridge))").unwrap();
+        let model = feat_math::model::fit(&genome, &train, &targets).unwrap();
+        let raw = model.predict(&train).unwrap();
+        let mut sorted = raw.clone();
+        sorted.sort_by(f64::total_cmp);
+        // An integral intercept that puts the zero floor inside the prediction range.
+        let centre = -(4.0 * sorted[sorted.len() / 2]).round();
+        let transforms = [
+            // calibration::floor_only for a log-error objective: identity plus a zero floor.
+            OutputTransform {
+                intercept: 0.0,
+                slope: 1.0,
+                lower: Some(0.0),
+            },
+            // The shift family keeps a unit slope.
+            OutputTransform {
+                intercept: -1.0,
+                slope: 1.0,
+                lower: Some(-2.0),
+            },
+            OutputTransform {
+                intercept: centre,
+                slope: 4.0,
+                lower: Some(0.0),
+            },
+            OutputTransform {
+                intercept: 3.0,
+                slope: 1.0,
+                lower: None,
+            },
+            OutputTransform {
+                intercept: -0.0,
+                slope: 2.0,
+                lower: Some(-0.0),
+            },
+        ];
+        let binding = raw.iter().filter(|p| centre + 4.0 * **p < 0.0).count();
+        assert!(
+            binding > 0 && binding < raw.len(),
+            "zero floor must bind on some rows"
+        );
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../target/fitted-calibration-integral-proof");
+        std::fs::create_dir_all(&root).unwrap();
+        for (index, transform) in transforms.iter().enumerate() {
+            let checks: Vec<_> = train
+                .iter()
+                .zip(&raw)
+                .map(|(inputs, prediction)| CheckRow {
+                    inputs: inputs.clone(),
+                    expected: transform.apply(*prediction),
+                })
+                .collect();
+            let source =
+                emit_calibrated_with_checks(&genome, &model, 12, Some(transform), &checks).unwrap();
+            let rs_path = root.join(format!("predictor-{index}.rs"));
+            let rs_test = root.join(format!("predictor-{index}-test"));
+            std::fs::write(&rs_path, &source).unwrap();
+            assert!(
+                Command::new("rustc")
+                    .args(["--edition=2021", "--test"])
+                    .arg(&rs_path)
+                    .arg("-o")
+                    .arg(&rs_test)
+                    .status()
+                    .unwrap()
+                    .success(),
+                "{transform:?} does not compile"
+            );
+            assert!(
+                Command::new(&rs_test).status().unwrap().success(),
+                "{transform:?} self-check failed"
+            );
+            if index == 0 {
+                assert!(source.contains("(0.0 + 1.0 * pred).max(0.0)"));
+            }
+        }
     }
 
     #[test]

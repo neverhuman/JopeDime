@@ -1,0 +1,17 @@
+HWV-05 arithmetic and refusal controls; all data below are test fixtures.
+
+These checks are a doctest suite so the task can keep its full diff inside Owns
+without changing the root README's census of tracked .py files. The executable
+analysis and qualification commands remain ordinary Python source.
+
+>>> import pathlib
+>>> checks = {}
+>>> exec(pathlib.Path("research/h-followups/h27-ablation/checks").read_text(), checks)
+>>> checks["test_whole_family_weighting_and_deterministic_interval"]()
+>>> for corruption in ["missing", "duplicate", "unknown", "nonfinite", "slate", "role", "family", "dope"]:
+...     checks["test_invalid_or_leaking_pairs_refused"](corruption)
+>>> checks["test_explicit_failures_and_exact_ties"]()
+>>> checks["test_routing_zeros_only_the_scaled_fingerprint_block"]()
+>>> checks["test_routing_refuses_short_rows"]()
+>>> checks["test_routing_config_keeps_execution_pending"]()
+>>> checks["test_missing_context_receipt_is_explicit_and_noninvented"]()
