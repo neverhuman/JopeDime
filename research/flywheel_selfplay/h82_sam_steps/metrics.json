@@ -1,0 +1,1150 @@
+{
+  "arms": {
+    "ASAM": {
+      "admitted": false,
+      "bonferroni_lcb": -0.07355260157697995,
+      "ci95": [
+        -0.06270212998219356,
+        0.13260870673241937
+      ],
+      "elo_vs_control": {
+        "median_elo": 1634.3168407692774,
+        "median_elo_ci95": [
+          1500.0,
+          1790.799491174505
+        ],
+        "per_seed": [
+          {
+            "elo": 1593.6332824133472,
+            "elo_ci95": [
+              1463.2918506577419,
+              1758.5054615280064
+            ],
+            "seed": 24,
+            "win_rate": 0.631578947368421
+          },
+          {
+            "elo": 1634.3168407692774,
+            "elo_ci95": [
+              1500.0,
+              1827.8175742167475
+            ],
+            "seed": 25,
+            "win_rate": 0.6842105263157895
+          },
+          {
+            "elo": 1634.3168407692774,
+            "elo_ci95": [
+              1481.6970037757299,
+              1827.8175742167475
+            ],
+            "seed": 26,
+            "win_rate": 0.6842105263157895
+          }
+        ],
+        "pooled_elo": 1620.4119982655925,
+        "pooled_elo_ci95": [
+          1493.9040133773053,
+          1779.5880017344075
+        ]
+      },
+      "elo_vs_r882": {
+        "median_elo": 1518.30299622427,
+        "median_elo_ci95": [
+          1386.4013374539197,
+          1655.988431600305
+        ],
+        "per_seed": [
+          {
+            "elo": 1518.30299622427,
+            "elo_ci95": [
+              1386.4013374539197,
+              1655.988431600305
+            ],
+            "seed": 24,
+            "win_rate": 0.5263157894736842
+          },
+          {
+            "elo": 1500.0,
+            "elo_ci95": [
+              1365.6831592307226,
+              1634.3168407692774
+            ],
+            "seed": 25,
+            "win_rate": 0.5
+          },
+          {
+            "elo": 1555.3210792665127,
+            "elo_ci95": [
+              1425.7453692152353,
+              1703.2621953838525
+            ],
+            "seed": 26,
+            "win_rate": 0.5789473684210527
+          }
+        ],
+        "pooled_elo": 1524.4215861639912,
+        "pooled_elo_ci95": [
+          1399.7843986397118,
+          1655.988431600305
+        ]
+      },
+      "lcb95": -0.04602265099612725,
+      "median_gain": 0.03348796324554786,
+      "per_seed_val_reg_gain": [
+        0.03348796324554786,
+        0.016198963189828476,
+        0.04371762174263517
+      ],
+      "seeds": [
+        {
+          "gap": 0.015278733877913009,
+          "seed": 24,
+          "train_reg": 1.142864827103341,
+          "val_reg": 1.127586093225428
+        },
+        {
+          "gap": 0.04279642045005638,
+          "seed": 25,
+          "train_reg": 1.145940096437434,
+          "val_reg": 1.1031436759873776
+        },
+        {
+          "gap": 0.01585471281543227,
+          "seed": 26,
+          "train_reg": 1.145017281611703,
+          "val_reg": 1.1291625687962707
+        }
+      ]
+    },
+    "CONTROL": {
+      "admitted": false,
+      "bonferroni_lcb": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "elo_vs_control": {
+        "median_elo": 1500.0,
+        "median_elo_ci95": [
+          1500.0,
+          1500.0
+        ],
+        "per_seed": [
+          {
+            "elo": 1500.0,
+            "elo_ci95": [
+              1500.0,
+              1500.0
+            ],
+            "seed": 24,
+            "win_rate": 0.5
+          },
+          {
+            "elo": 1500.0,
+            "elo_ci95": [
+              1500.0,
+              1500.0
+            ],
+            "seed": 25,
+            "win_rate": 0.5
+          },
+          {
+            "elo": 1500.0,
+            "elo_ci95": [
+              1500.0,
+              1500.0
+            ],
+            "seed": 26,
+            "win_rate": 0.5
+          }
+        ],
+        "pooled_elo": 1500.0,
+        "pooled_elo_ci95": [
+          1500.0,
+          1500.0
+        ]
+      },
+      "elo_vs_r882": {
+        "median_elo": 1344.011568399695,
+        "median_elo_ci95": [
+          1209.200508825495,
+          1463.2918506577419
+        ],
+        "per_seed": [
+          {
+            "elo": 1365.6831592307226,
+            "elo_ci95": [
+              1241.4945384719936,
+              1481.6970037757299
+            ],
+            "seed": 24,
+            "win_rate": 0.3157894736842105
+          },
+          {
+            "elo": 1344.011568399695,
+            "elo_ci95": [
+              1209.200508825495,
+              1463.2918506577419
+            ],
+            "seed": 25,
+            "win_rate": 0.2894736842105263
+          },
+          {
+            "elo": 1296.7378046161475,
+            "elo_ci95": [
+              1128.232429714283,
+              1425.7453692152353
+            ],
+            "seed": 26,
+            "win_rate": 0.23684210526315788
+          }
+        ],
+        "pooled_elo": 1336.5344503744757,
+        "pooled_elo_ci95": [
+          1185.157562785372,
+          1450.9130893542633
+        ]
+      },
+      "lcb95": 0.0,
+      "median_gain": 0.0,
+      "per_seed_val_reg_gain": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "seeds": [
+        {
+          "gap": 0.020373611909714207,
+          "seed": 24,
+          "train_reg": 1.1144717418895944,
+          "val_reg": 1.0940981299798802
+        },
+        {
+          "gap": 0.02796474532056137,
+          "seed": 25,
+          "train_reg": 1.1149094581181105,
+          "val_reg": 1.0869447127975491
+        },
+        {
+          "gap": 0.020514190110755948,
+          "seed": 26,
+          "train_reg": 1.1059591371643915,
+          "val_reg": 1.0854449470536356
+        }
+      ]
+    },
+    "K8": {
+      "admitted": false,
+      "bonferroni_lcb": -0.20297430480081854,
+      "ci95": [
+        -0.1941757580579097,
+        -0.028665123382926882
+      ],
+      "elo_vs_control": {
+        "median_elo": 1321.1367874631123,
+        "median_elo_ci95": [
+          1128.232429714283,
+          1481.6970037757299
+        ],
+        "per_seed": [
+          {
+            "elo": 1321.1367874631123,
+            "elo_ci95": [
+              997.8909979586776,
+              1481.6970037757299
+            ],
+            "seed": 24,
+            "win_rate": 0.2631578947368421
+          },
+          {
+            "elo": 1406.3667175866528,
+            "elo_ci95": [
+              1209.200508825495,
+              1555.3210792665127
+            ],
+            "seed": 25,
+            "win_rate": 0.3684210526315789
+          },
+          {
+            "elo": 1321.1367874631123,
+            "elo_ci95": [
+              1128.232429714283,
+              1481.6970037757299
+            ],
+            "seed": 26,
+            "win_rate": 0.2631578947368421
+          }
+        ],
+        "pooled_elo": 1351.3555720201246,
+        "pooled_elo_ci95": [
+          1158.4512142712952,
+          1481.6970037757299
+        ]
+      },
+      "elo_vs_r882": {
+        "median_elo": 1321.1367874631123,
+        "median_elo_ci95": [
+          1128.232429714283,
+          1481.6970037757299
+        ],
+        "per_seed": [
+          {
+            "elo": 1321.1367874631123,
+            "elo_ci95": [
+              1128.232429714283,
+              1481.6970037757299
+            ],
+            "seed": 24,
+            "win_rate": 0.2631578947368421
+          },
+          {
+            "elo": 1365.6831592307226,
+            "elo_ci95": [
+              1128.232429714283,
+              1518.30299622427
+            ],
+            "seed": 25,
+            "win_rate": 0.3157894736842105
+          },
+          {
+            "elo": 1321.1367874631123,
+            "elo_ci95": [
+              1128.232429714283,
+              1481.6970037757299
+            ],
+            "seed": 26,
+            "win_rate": 0.2631578947368421
+          }
+        ],
+        "pooled_elo": 1336.5344503744757,
+        "pooled_elo_ci95": [
+          1158.4512142712952,
+          1469.4446616546181
+        ]
+      },
+      "lcb95": -0.1762016967895645,
+      "median_gain": -0.10677987879156507,
+      "per_seed_val_reg_gain": [
+        -0.10677987879156507,
+        -0.0943079140042353,
+        -0.12015813481800229
+      ],
+      "seeds": [
+        {
+          "gap": 0.04196229583176547,
+          "seed": 24,
+          "train_reg": 1.0292805470200803,
+          "val_reg": 0.9873182511883148
+        },
+        {
+          "gap": 0.028207619665962524,
+          "seed": 25,
+          "train_reg": 1.0208444184592764,
+          "val_reg": 0.9926367987933139
+        },
+        {
+          "gap": 0.043052472987583745,
+          "seed": 26,
+          "train_reg": 1.008339285223217,
+          "val_reg": 0.9652868122356332
+        }
+      ]
+    },
+    "SAM": {
+      "admitted": false,
+      "bonferroni_lcb": 0.0,
+      "ci95": [
+        0.0,
+        0.007452401335464726
+      ],
+      "elo_vs_control": {
+        "median_elo": 1536.7081493422581,
+        "median_elo_ci95": [
+          1500.0,
+          1555.3210792665127
+        ],
+        "per_seed": [
+          {
+            "elo": 1536.7081493422581,
+            "elo_ci95": [
+              1500.0,
+              1593.6332824133472
+            ],
+            "seed": 24,
+            "win_rate": 0.5526315789473685
+          },
+          {
+            "elo": 1518.30299622427,
+            "elo_ci95": [
+              1500.0,
+              1555.3210792665127
+            ],
+            "seed": 25,
+            "win_rate": 0.5263157894736842
+          },
+          {
+            "elo": 1536.7081493422581,
+            "elo_ci95": [
+              1444.6789207334873,
+              1634.3168407692774
+            ],
+            "seed": 26,
+            "win_rate": 0.5526315789473685
+          }
+        ],
+        "pooled_elo": 1530.5553383453819,
+        "pooled_elo_ci95": [
+          1500.0,
+          1567.9004324098648
+        ]
+      },
+      "elo_vs_r882": {
+        "median_elo": 1365.6831592307226,
+        "median_elo_ci95": [
+          1241.4945384719936,
+          1481.6970037757299
+        ],
+        "per_seed": [
+          {
+            "elo": 1386.4013374539197,
+            "elo_ci95": [
+              1241.4945384719936,
+              1500.0
+            ],
+            "seed": 24,
+            "win_rate": 0.34210526315789475
+          },
+          {
+            "elo": 1365.6831592307226,
+            "elo_ci95": [
+              1241.4945384719936,
+              1481.6970037757299
+            ],
+            "seed": 25,
+            "win_rate": 0.3157894736842105
+          },
+          {
+            "elo": 1344.011568399695,
+            "elo_ci95": [
+              1209.200508825495,
+              1463.2918506577419
+            ],
+            "seed": 26,
+            "win_rate": 0.2894736842105263
+          }
+        ],
+        "pooled_elo": 1365.6831592307226,
+        "pooled_elo_ci95": [
+          1220.4119982655925,
+          1481.6970037757299
+        ]
+      },
+      "lcb95": 0.0,
+      "median_gain": 0.0033765702208750927,
+      "per_seed_val_reg_gain": [
+        0.0033765702208750927,
+        0.0002216338582469139,
+        0.009591910326128252
+      ],
+      "seeds": [
+        {
+          "gap": 0.014268757286841405,
+          "seed": 24,
+          "train_reg": 1.1117434574875968,
+          "val_reg": 1.0974747002007554
+        },
+        {
+          "gap": 0.030405544455605726,
+          "seed": 25,
+          "train_reg": 1.1175718911114019,
+          "val_reg": 1.0871663466557961
+        },
+        {
+          "gap": 0.013047787720641413,
+          "seed": 26,
+          "train_reg": 1.1080846451004052,
+          "val_reg": 1.0950368573797638
+        }
+      ]
+    }
+  },
+  "complete": true,
+  "gpu_wall_seconds": 976.6159893556032,
+  "ledger": {
+    "attempts": [
+      {
+        "arm": "K8",
+        "attempt": 1,
+        "attempt_token": "2024228-1793430157630709340-timing-K8-seed24-attempt1",
+        "child_pid": 2267650,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/.agent/worktrees/h82/research/flywheel_selfplay/h82_sam_steps/runner.py",
+          "--arm",
+          "K8",
+          "--seed",
+          "24",
+          "--out",
+          "/home/ubuntu/jope-data/h82/h82-wave/timing-K8-seed24-attempt1.json",
+          "--phase",
+          "/home/ubuntu/jope-data/h82/h82-wave/timing-K8-seed24-attempt1.phase.json",
+          "--attempt-token",
+          "2024228-1793430157630709340-timing-K8-seed24-attempt1",
+          "--lock-fd",
+          "4",
+          "--timing"
+        ],
+        "cpu_gate_seconds": 30.520857210969552,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 33.905034143242816,
+        "max_load1": 41.0771484375,
+        "max_rss_kib": 4699520,
+        "min_mem_available_kib": 83883240,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 509162008576,
+          "disk_used_percent": 93.58429652106904,
+          "host_cpu_percent": 17.104430379746834,
+          "load1": 41.0771484375,
+          "mem_available_kib": 89310936
+        },
+        "receipt_sha256": "4a232b53eb234c2c6c19eeb8951977bb79fea56bf4cf6c94734f0e34061c87f7",
+        "seed": 24,
+        "stage": "complete",
+        "started_utc": "2026-10-31T07:02:37.630715+00:00",
+        "timing": true,
+        "wait_seconds": 213.3001658988651,
+        "wall_seconds": 75.29657667712308
+      },
+      {
+        "arm": "CONTROL",
+        "attempt": 1,
+        "attempt_token": "2024228-1793431335541877761-CONTROL-seed24-attempt1",
+        "child_pid": 3781080,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/.agent/worktrees/h82/research/flywheel_selfplay/h82_sam_steps/runner.py",
+          "--arm",
+          "CONTROL",
+          "--seed",
+          "24",
+          "--out",
+          "/home/ubuntu/jope-data/h82/h82-wave/CONTROL-seed24-attempt1.json",
+          "--phase",
+          "/home/ubuntu/jope-data/h82/h82-wave/CONTROL-seed24-attempt1.phase.json",
+          "--attempt-token",
+          "2024228-1793431335541877761-CONTROL-seed24-attempt1",
+          "--lock-fd",
+          "4"
+        ],
+        "cpu_gate_seconds": 30.22468013712205,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 33.05472322977448,
+        "max_load1": 58.85205078125,
+        "max_rss_kib": 4921444,
+        "min_mem_available_kib": 79367212,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 505642348544,
+          "disk_used_percent": 93.62864604976838,
+          "host_cpu_percent": 13.42483041489194,
+          "load1": 58.57763671875,
+          "mem_available_kib": 79304420
+        },
+        "receipt_sha256": "95ca9207c0323393e0e57762d932e3908da29ded9b7c0ef8a8867a95e02cb965",
+        "seed": 24,
+        "stage": "complete",
+        "started_utc": "2026-10-31T07:22:15.541881+00:00",
+        "timing": false,
+        "wait_seconds": 1102.2286947162356,
+        "wall_seconds": 93.45145336003043
+      },
+      {
+        "arm": "K8",
+        "attempt": 1,
+        "attempt_token": "2024228-1793432475986874809-K8-seed24-attempt1",
+        "child_pid": 971865,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/.agent/worktrees/h82/research/flywheel_selfplay/h82_sam_steps/runner.py",
+          "--arm",
+          "K8",
+          "--seed",
+          "24",
+          "--out",
+          "/home/ubuntu/jope-data/h82/h82-wave/K8-seed24-attempt1.json",
+          "--phase",
+          "/home/ubuntu/jope-data/h82/h82-wave/K8-seed24-attempt1.phase.json",
+          "--attempt-token",
+          "2024228-1793432475986874809-K8-seed24-attempt1",
+          "--lock-fd",
+          "4"
+        ],
+        "cpu_gate_seconds": 30.314042744925246,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 17.667675641229888,
+        "max_load1": 29.58447265625,
+        "max_rss_kib": 4908240,
+        "min_mem_available_kib": 76126396,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 541875105792,
+          "disk_used_percent": 93.17209465195812,
+          "host_cpu_percent": 12.111604311984781,
+          "load1": 28.39990234375,
+          "mem_available_kib": 86433544
+        },
+        "receipt_sha256": "b9992b12be266d13986fcfe6d8ac2a064a6db05126db9985a7a5b4bd4174690e",
+        "seed": 24,
+        "stage": "complete",
+        "started_utc": "2026-10-31T07:41:15.986879+00:00",
+        "timing": false,
+        "wait_seconds": 1046.8846539109945,
+        "wall_seconds": 66.21555381594226
+      },
+      {
+        "arm": "SAM",
+        "attempt": 1,
+        "attempt_token": "2024228-1793433677726610576-SAM-seed24-attempt1",
+        "child_pid": 2377787,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/.agent/worktrees/h82/research/flywheel_selfplay/h82_sam_steps/runner.py",
+          "--arm",
+          "SAM",
+          "--seed",
+          "24",
+          "--out",
+          "/home/ubuntu/jope-data/h82/h82-wave/SAM-seed24-attempt1.json",
+          "--phase",
+          "/home/ubuntu/jope-data/h82/h82-wave/SAM-seed24-attempt1.phase.json",
+          "--attempt-token",
+          "2024228-1793433677726610576-SAM-seed24-attempt1",
+          "--lock-fd",
+          "4"
+        ],
+        "cpu_gate_seconds": 30.023277399130166,
+        "error": "HostLoadAbort('host CPU above 85% load budget: 86.40/102 cores')",
+        "error_kind": "host_load",
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 72.53212159197744,
+        "max_load1": 78.07666015625,
+        "max_rss_kib": 4172836,
+        "min_mem_available_kib": 70765768,
+        "outcome_started": false,
+        "preflight": {
+          "disk_free_bytes": 485321469952,
+          "disk_used_percent": 93.88469958338187,
+          "host_cpu_percent": 16.735015772870664,
+          "load1": 68.77294921875,
+          "mem_available_kib": 76696564
+        },
+        "seed": 24,
+        "stage": "loading",
+        "started_utc": "2026-10-31T08:01:17.726615+00:00",
+        "timing": false,
+        "trigger_load1": 86.39697265625,
+        "wait_seconds": 1135.460512935184,
+        "wall_seconds": 90.17595265712589
+      },
+      {
+        "arm": "SAM",
+        "attempt": 2,
+        "attempt_token": "2024228-1793435374094160096-SAM-seed24-attempt2",
+        "child_pid": 19777,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/.agent/worktrees/h82/research/flywheel_selfplay/h82_sam_steps/runner.py",
+          "--arm",
+          "SAM",
+          "--seed",
+          "24",
+          "--out",
+          "/home/ubuntu/jope-data/h82/h82-wave/SAM-seed24-attempt2.json",
+          "--phase",
+          "/home/ubuntu/jope-data/h82/h82-wave/SAM-seed24-attempt2.phase.json",
+          "--attempt-token",
+          "2024228-1793435374094160096-SAM-seed24-attempt2",
+          "--lock-fd",
+          "4"
+        ],
+        "cpu_gate_seconds": 60.80704314610921,
+        "error": "RuntimeError('cell exit 1; inspect /home/ubuntu/jope-data/h82/h82-wave/SAM-seed24-attempt2.log')",
+        "error_kind": "fatal",
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 16.408717624763106,
+        "max_load1": 41.11181640625,
+        "max_rss_kib": 436372,
+        "min_mem_available_kib": 84140460,
+        "outcome_started": false,
+        "preflight": {
+          "disk_free_bytes": 444019240960,
+          "disk_used_percent": 94.40512893547094,
+          "host_cpu_percent": 10.341016735080517,
+          "load1": 41.11181640625,
+          "mem_available_kib": 84488060
+        },
+        "seed": 24,
+        "stage": "loading",
+        "started_utc": "2026-10-31T08:29:34.094165+00:00",
+        "timing": false,
+        "wait_seconds": 1604.6501436890103,
+        "wall_seconds": 5.621730362996459
+      },
+      {
+        "arm": "SAM",
+        "attempt": 3,
+        "attempt_token": "3342631-1793437845037597382-SAM-seed24-attempt3",
+        "child_pid": 3452768,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/.agent/worktrees/h82/research/flywheel_selfplay/h82_sam_steps/runner.py",
+          "--arm",
+          "SAM",
+          "--seed",
+          "24",
+          "--out",
+          "/home/ubuntu/jope-data/h82/h82-wave/SAM-seed24-attempt3.json",
+          "--phase",
+          "/home/ubuntu/jope-data/h82/h82-wave/SAM-seed24-attempt3.phase.json",
+          "--attempt-token",
+          "3342631-1793437845037597382-SAM-seed24-attempt3",
+          "--lock-fd",
+          "4"
+        ],
+        "cpu_gate_seconds": 30.075795585056767,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 21.122740247383444,
+        "max_load1": 26.12255859375,
+        "max_rss_kib": 4959832,
+        "min_mem_available_kib": 89368512,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 461334007808,
+          "disk_used_percent": 94.18695395769859,
+          "host_cpu_percent": 9.778481012658228,
+          "load1": 22.48583984375,
+          "mem_available_kib": 96921696
+        },
+        "receipt_sha256": "3d8203e31730ad187ac40b08213e26dadc42987f9f7d425e64c8e83e066dccd8",
+        "seed": 24,
+        "stage": "complete",
+        "started_utc": "2026-10-31T09:10:45.037602+00:00",
+        "timing": false,
+        "wait_seconds": 91.2381558639463,
+        "wall_seconds": 69.47452114894986
+      },
+      {
+        "arm": "ASAM",
+        "attempt": 1,
+        "attempt_token": "3342631-1793437990693156470-ASAM-seed24-attempt1",
+        "child_pid": 3651579,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/.agent/worktrees/h82/research/flywheel_selfplay/h82_sam_steps/runner.py",
+          "--arm",
+          "ASAM",
+          "--seed",
+          "24",
+          "--out",
+          "/home/ubuntu/jope-data/h82/h82-wave/ASAM-seed24-attempt1.json",
+          "--phase",
+          "/home/ubuntu/jope-data/h82/h82-wave/ASAM-seed24-attempt1.phase.json",
+          "--attempt-token",
+          "3342631-1793437990693156470-ASAM-seed24-attempt1",
+          "--lock-fd",
+          "4"
+        ],
+        "cpu_gate_seconds": 30.030716658802703,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 18.22222222222222,
+        "max_load1": 27.37158203125,
+        "max_rss_kib": 4964212,
+        "min_mem_available_kib": 90969544,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 459328679936,
+          "disk_used_percent": 94.21222212144234,
+          "host_cpu_percent": 10.46309467362099,
+          "load1": 27.37158203125,
+          "mem_available_kib": 93635656
+        },
+        "receipt_sha256": "612301aeee90e7ec8ec3417e637e8fd14c7464fc610533b8b5e3467350c78b18",
+        "seed": 24,
+        "stage": "complete",
+        "started_utc": "2026-10-31T09:13:10.693160+00:00",
+        "timing": false,
+        "wait_seconds": 76.10336042381823,
+        "wall_seconds": 63.19604299403727
+      },
+      {
+        "arm": "CONTROL",
+        "attempt": 1,
+        "attempt_token": "3342631-1793438160354657221-CONTROL-seed25-attempt1",
+        "child_pid": 3860848,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/.agent/worktrees/h82/research/flywheel_selfplay/h82_sam_steps/runner.py",
+          "--arm",
+          "CONTROL",
+          "--seed",
+          "25",
+          "--out",
+          "/home/ubuntu/jope-data/h82/h82-wave/CONTROL-seed25-attempt1.json",
+          "--phase",
+          "/home/ubuntu/jope-data/h82/h82-wave/CONTROL-seed25-attempt1.phase.json",
+          "--attempt-token",
+          "3342631-1793438160354657221-CONTROL-seed25-attempt1",
+          "--lock-fd",
+          "4"
+        ],
+        "cpu_gate_seconds": 30.07794505590573,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 16.716987128555537,
+        "max_load1": 27.01220703125,
+        "max_rss_kib": 4923948,
+        "min_mem_available_kib": 87974916,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 456512434176,
+          "disk_used_percent": 94.24770826812183,
+          "host_cpu_percent": 11.046420141620771,
+          "load1": 27.01220703125,
+          "mem_available_kib": 91418264
+        },
+        "receipt_sha256": "9efc262accf71f2af272929e54fd9b0c2c0530f3e92794b06047ceba36b95d43",
+        "seed": 25,
+        "stage": "complete",
+        "started_utc": "2026-10-31T09:16:00.354660+00:00",
+        "timing": false,
+        "wait_seconds": 106.1578664209228,
+        "wall_seconds": 60.18052585609257
+      },
+      {
+        "arm": "K8",
+        "attempt": 1,
+        "attempt_token": "3342631-1793438296683086119-K8-seed25-attempt1",
+        "child_pid": 4061941,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/.agent/worktrees/h82/research/flywheel_selfplay/h82_sam_steps/runner.py",
+          "--arm",
+          "K8",
+          "--seed",
+          "25",
+          "--out",
+          "/home/ubuntu/jope-data/h82/h82-wave/K8-seed25-attempt1.json",
+          "--phase",
+          "/home/ubuntu/jope-data/h82/h82-wave/K8-seed25-attempt1.phase.json",
+          "--attempt-token",
+          "3342631-1793438296683086119-K8-seed25-attempt1",
+          "--lock-fd",
+          "4"
+        ],
+        "cpu_gate_seconds": 30.020580301061273,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 27.220721436516765,
+        "max_load1": 31.435546875,
+        "max_rss_kib": 4903656,
+        "min_mem_available_kib": 88573728,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 452010725376,
+          "disk_used_percent": 94.30443211696135,
+          "host_cpu_percent": 11.738578680203046,
+          "load1": 30.43310546875,
+          "mem_available_kib": 95169144
+        },
+        "receipt_sha256": "a3d570bb7c9acc939ab716f77d3cb318e0e43af9808ad34c80d1113723968e78",
+        "seed": 25,
+        "stage": "complete",
+        "started_utc": "2026-10-31T09:18:16.683090+00:00",
+        "timing": false,
+        "wait_seconds": 76.0676187009085,
+        "wall_seconds": 64.69336532591842
+      },
+      {
+        "arm": "SAM",
+        "attempt": 1,
+        "attempt_token": "3342631-1793438468162176535-SAM-seed25-attempt1",
+        "child_pid": 120924,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/.agent/worktrees/h82/research/flywheel_selfplay/h82_sam_steps/runner.py",
+          "--arm",
+          "SAM",
+          "--seed",
+          "25",
+          "--out",
+          "/home/ubuntu/jope-data/h82/h82-wave/SAM-seed25-attempt1.json",
+          "--phase",
+          "/home/ubuntu/jope-data/h82/h82-wave/SAM-seed25-attempt1.phase.json",
+          "--attempt-token",
+          "3342631-1793438468162176535-SAM-seed25-attempt1",
+          "--lock-fd",
+          "4"
+        ],
+        "cpu_gate_seconds": 30.26245594304055,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 22.50318066157761,
+        "max_load1": 28.62158203125,
+        "max_rss_kib": 4961344,
+        "min_mem_available_kib": 87772308,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 453288153088,
+          "disk_used_percent": 94.28833587003422,
+          "host_cpu_percent": 11.430830039525691,
+          "load1": 27.21630859375,
+          "mem_available_kib": 93923728
+        },
+        "receipt_sha256": "76d2f91e5de67de2305950d303b939e487ba83d48551af358177ce233d0e7b12",
+        "seed": 25,
+        "stage": "complete",
+        "started_utc": "2026-10-31T09:21:08.162181+00:00",
+        "timing": false,
+        "wait_seconds": 106.74386374512687,
+        "wall_seconds": 63.268815957941115
+      },
+      {
+        "arm": "ASAM",
+        "attempt": 1,
+        "attempt_token": "3342631-1793438607577056620-ASAM-seed25-attempt1",
+        "child_pid": 379683,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/.agent/worktrees/h82/research/flywheel_selfplay/h82_sam_steps/runner.py",
+          "--arm",
+          "ASAM",
+          "--seed",
+          "25",
+          "--out",
+          "/home/ubuntu/jope-data/h82/h82-wave/ASAM-seed25-attempt1.json",
+          "--phase",
+          "/home/ubuntu/jope-data/h82/h82-wave/ASAM-seed25-attempt1.phase.json",
+          "--attempt-token",
+          "3342631-1793438607577056620-ASAM-seed25-attempt1",
+          "--lock-fd",
+          "4"
+        ],
+        "cpu_gate_seconds": 30.02013294189237,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 78.92613283674736,
+        "max_load1": 42.828125,
+        "max_rss_kib": 4960108,
+        "min_mem_available_kib": 87679908,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 452636684288,
+          "disk_used_percent": 94.29654471235979,
+          "host_cpu_percent": 24.433450367060324,
+          "load1": 27.13232421875,
+          "mem_available_kib": 94240020
+        },
+        "receipt_sha256": "78ab6d7d5366fcb0d07c85a18586f93cbf33138cc244a46a0fd3012728650c80",
+        "seed": 25,
+        "stage": "complete",
+        "started_utc": "2026-10-31T09:23:27.577061+00:00",
+        "timing": false,
+        "wait_seconds": 76.08063717978075,
+        "wall_seconds": 69.20568640111014
+      },
+      {
+        "arm": "CONTROL",
+        "attempt": 1,
+        "attempt_token": "3342631-1793438782924293617-CONTROL-seed26-attempt1",
+        "child_pid": 655584,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/.agent/worktrees/h82/research/flywheel_selfplay/h82_sam_steps/runner.py",
+          "--arm",
+          "CONTROL",
+          "--seed",
+          "26",
+          "--out",
+          "/home/ubuntu/jope-data/h82/h82-wave/CONTROL-seed26-attempt1.json",
+          "--phase",
+          "/home/ubuntu/jope-data/h82/h82-wave/CONTROL-seed26-attempt1.phase.json",
+          "--attempt-token",
+          "3342631-1793438782924293617-CONTROL-seed26-attempt1",
+          "--lock-fd",
+          "4"
+        ],
+        "cpu_gate_seconds": 30.018878823146224,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 19.891269587464024,
+        "max_load1": 29.60205078125,
+        "max_rss_kib": 4900476,
+        "min_mem_available_kib": 87127132,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 449835696128,
+          "disk_used_percent": 94.33183860542304,
+          "host_cpu_percent": 9.417537195314972,
+          "load1": 28.5224609375,
+          "mem_available_kib": 93892776
+        },
+        "receipt_sha256": "2a87fff28a4478be1a07414289d4b14456975e762c57cf09d075b6ac234828ce",
+        "seed": 26,
+        "stage": "complete",
+        "started_utc": "2026-10-31T09:26:22.924298+00:00",
+        "timing": false,
+        "wait_seconds": 106.07523330207914,
+        "wall_seconds": 61.662219206104055
+      },
+      {
+        "arm": "K8",
+        "attempt": 1,
+        "attempt_token": "3342631-1793439010811879863-K8-seed26-attempt1",
+        "child_pid": 1085312,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/.agent/worktrees/h82/research/flywheel_selfplay/h82_sam_steps/runner.py",
+          "--arm",
+          "K8",
+          "--seed",
+          "26",
+          "--out",
+          "/home/ubuntu/jope-data/h82/h82-wave/K8-seed26-attempt1.json",
+          "--phase",
+          "/home/ubuntu/jope-data/h82/h82-wave/K8-seed26-attempt1.phase.json",
+          "--attempt-token",
+          "3342631-1793439010811879863-K8-seed26-attempt1",
+          "--lock-fd",
+          "4"
+        ],
+        "cpu_gate_seconds": 30.020854394882917,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 22.791068580542266,
+        "max_load1": 27.4326171875,
+        "max_rss_kib": 4927712,
+        "min_mem_available_kib": 86375528,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 445138350080,
+          "disk_used_percent": 94.39102758432229,
+          "host_cpu_percent": 11.757229107086113,
+          "load1": 26.24951171875,
+          "mem_available_kib": 93522372
+        },
+        "receipt_sha256": "548f5dd217a00bddf8e19a5bcd61f3b0e698ee67eb453568c6a8a168a511c7fc",
+        "seed": 26,
+        "stage": "complete",
+        "started_utc": "2026-10-31T09:30:10.811883+00:00",
+        "timing": false,
+        "wait_seconds": 166.17639848194085,
+        "wall_seconds": 64.67926139407791
+      },
+      {
+        "arm": "SAM",
+        "attempt": 1,
+        "attempt_token": "3342631-1793439332213145196-SAM-seed26-attempt1",
+        "child_pid": 1576576,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/.agent/worktrees/h82/research/flywheel_selfplay/h82_sam_steps/runner.py",
+          "--arm",
+          "SAM",
+          "--seed",
+          "26",
+          "--out",
+          "/home/ubuntu/jope-data/h82/h82-wave/SAM-seed26-attempt1.json",
+          "--phase",
+          "/home/ubuntu/jope-data/h82/h82-wave/SAM-seed26-attempt1.phase.json",
+          "--attempt-token",
+          "3342631-1793439332213145196-SAM-seed26-attempt1",
+          "--lock-fd",
+          "4"
+        ],
+        "cpu_gate_seconds": 30.019789197016507,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 19.9554778184131,
+        "max_load1": 32.123046875,
+        "max_rss_kib": 4982580,
+        "min_mem_available_kib": 85491892,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 439703879680,
+          "disk_used_percent": 94.4595047096069,
+          "host_cpu_percent": 14.382696558257026,
+          "load1": 28.41748046875,
+          "mem_available_kib": 86724096
+        },
+        "receipt_sha256": "5339448a86d0488948b5cb0a4d465e125d61e91ca7d3d050981cb117612a281c",
+        "seed": 26,
+        "stage": "complete",
+        "started_utc": "2026-10-31T09:35:32.213151+00:00",
+        "timing": false,
+        "wait_seconds": 256.6521660499275,
+        "wall_seconds": 67.75086392997764
+      },
+      {
+        "arm": "ASAM",
+        "attempt": 1,
+        "attempt_token": "3342631-1793439657031536712-ASAM-seed26-attempt1",
+        "child_pid": 1954347,
+        "command": [
+          "/usr/bin/python3",
+          "/home/ubuntu/JopeDime/.agent/worktrees/h82/research/flywheel_selfplay/h82_sam_steps/runner.py",
+          "--arm",
+          "ASAM",
+          "--seed",
+          "26",
+          "--out",
+          "/home/ubuntu/jope-data/h82/h82-wave/ASAM-seed26-attempt1.json",
+          "--phase",
+          "/home/ubuntu/jope-data/h82/h82-wave/ASAM-seed26-attempt1.phase.json",
+          "--attempt-token",
+          "3342631-1793439657031536712-ASAM-seed26-attempt1",
+          "--lock-fd",
+          "4"
+        ],
+        "cpu_gate_seconds": 30.301878326106817,
+        "gpu_free_mib": 24124,
+        "max_host_cpu_percent": 17.88874841972187,
+        "max_load1": 26.47607421875,
+        "max_rss_kib": 4960976,
+        "min_mem_available_kib": 87277000,
+        "outcome_started": true,
+        "preflight": {
+          "disk_free_bytes": 441146998784,
+          "disk_used_percent": 94.44132066582496,
+          "host_cpu_percent": 8.89937106918239,
+          "load1": 26.47607421875,
+          "mem_available_kib": 92396820
+        },
+        "receipt_sha256": "77831adf8b9b2d7631253d0cb32b72bf9089c7ca33b4bb7291f14b73140de225",
+        "seed": 26,
+        "stage": "complete",
+        "started_utc": "2026-10-31T09:40:57.031539+00:00",
+        "timing": false,
+        "wait_seconds": 256.98298602411523,
+        "wall_seconds": 61.74342026817612
+      }
+    ],
+    "cap_seconds": 2700.0,
+    "cpu_pr": 897,
+    "in_progress": null,
+    "operator_recovery": {
+      "launcher_sha256": "a2b9ed230fe50e15f0e6856a46cfa642c567d5dce21a15d76f8033a1fb51c492",
+      "operator_downtime_seconds_charged_to_wait": 2373.987738609314,
+      "original_prefix_sha256": "a69d385a3887b3b4c4237bd1b129070275190a7c3515560ce1c43da069a0bb1c",
+      "reason": "verified read-only staged input prevented retry2 before model construction",
+      "sam24_final_attempt": 3,
+      "setup_log_sha256": "d711c58391ae879195e81f56872ed6c0772e30df75d964e09d963faeee9dfae6",
+      "source_commit": "614e15c09b25fd91c37eb125c06d3149616bda64",
+      "worker_commit": "037f914a59aabd34279000c40288315dc00500d8"
+    },
+    "prereg_sha256": "84a31489a1c9f34d54caab46dede529e4e88711ab2491351fbf6e63d02ca1164",
+    "wave": "H82"
+  },
+  "nominal_comparisons": 3,
+  "reference_elo": 1500,
+  "schema": "jope.h82.metrics/v1",
+  "seeds": [
+    24,
+    25,
+    26
+  ]
+}
