@@ -518,3 +518,31 @@ def test_report_produces_standalone_plot_from_explicit_synthetic_fixture(tmp_pat
     render(report, tmp_path)
     assert (tmp_path / "validation-curves.svg").stat().st_size > 1000
     assert (tmp_path / "curves.jsonl").read_text().count("\n") == 16
+
+
+@pytest.mark.parametrize(
+    "token",
+    ["holdout", "sealed", "meta-test", "outer_test"],
+    ids=["reserved-a", "reserved-b", "reserved-c", "reserved-d"],
+)
+@pytest.mark.parametrize("kind", ["direct", "resolved", "lexical"])
+def test_packet_root_guard(tmp_path, token, kind):
+    clean = tmp_path / "clean"
+    clean.mkdir()
+    public = tmp_path / "public"
+    public.symlink_to(clean, target_is_directory=True)
+    assert safe_path(clean, "rows.npz") == clean / "rows.npz"
+    assert safe_path(public, "rows.npz") == clean / "rows.npz"
+    # No payload is created or opened; all paths are synthetic fixture directories.
+    protected = tmp_path / token
+    protected.mkdir()
+    if kind == "direct":
+        root = protected
+    elif kind == "resolved":
+        root = tmp_path / "packet"
+        root.symlink_to(protected, target_is_directory=True)
+    else:
+        root = tmp_path / (token + "-alias")
+        root.symlink_to(clean, target_is_directory=True)
+    with pytest.raises(ValueError, match="protected"):
+        safe_path(root, "rows.npz")
