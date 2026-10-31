@@ -285,6 +285,8 @@ def verify_plan(plan):
     if plan["sha256"] != digest({k: v for k, v in plan.items() if k != "sha256"}):
         raise ValueError("plan changed after preregistration")
     validate_config(plan["config"])
+    if plan.get("dope_sha256") != DOPE:
+        raise ValueError("DOPE pin differs from frozen preregistration")
     if plan["evaluation_protocol"] != EVALUATION_PROTOCOL:
         raise ValueError("evaluation protocol differs from preregistration")
     if plan["implementation_sha256"] != implementation_sha():

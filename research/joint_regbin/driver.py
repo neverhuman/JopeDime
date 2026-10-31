@@ -164,6 +164,35 @@ def worker_call(argv, env, lock_fd, log, timeout, output, limit):
         raise RuntimeError("shared campaign output budget exhausted")
 
 
+def preflight(plan, packet, worker, checkpoint):
+    """Verify approved input identities without starting or reserving a study."""
+    verify_plan(plan)
+    # Resolve every path before opening any input. A later protected target must
+    # not be discovered only after an earlier permitted payload was hashed.
+    worker = safe_path(Path(worker).parent, Path(worker).name)
+    checkpoint = safe_path(Path(checkpoint).parent, Path(checkpoint).name)
+    payloads = [(row, safe_path(packet, row["payload"])) for row in plan["contexts"]]
+    if (
+        file_sha(worker) != plan["learner_sha256"]
+        or file_sha(checkpoint) != plan["initial_checkpoint_sha256"]
+    ):
+        raise ValueError("learner/initial checkpoint drift")
+    for row, path in payloads:
+        if file_sha(path) != row["payload_sha256"]:
+            raise ValueError(f"packet payload drift: {row['payload']}")
+    return dict(
+        schema="jope.joint-regbin.preflight/v1",
+        status="INPUTS_VERIFIED",
+        plan_sha256=plan["sha256"],
+        contexts=len(payloads),
+        jobs=len(plan["jobs"]),
+        learner_sha256=plan["learner_sha256"],
+        initial_checkpoint_sha256=plan["initial_checkpoint_sha256"],
+        qualification_status="NOT_QUALIFIED",
+        verdict=None,
+    )
+
+
 def execute(plan, packet, worker, checkpoint, output, store_module, store):
     os.nice(max(0, 10 - os.getpriority(os.PRIO_PROCESS, 0)))
     verify_plan(plan)
@@ -172,15 +201,7 @@ def execute(plan, packet, worker, checkpoint, output, store_module, store):
         raise ValueError(
             "new campaign directory required; no implicit restart/budget reset"
         )
-    if (
-        file_sha(worker) != plan["learner_sha256"]
-        or file_sha(checkpoint) != plan["initial_checkpoint_sha256"]
-    ):
-        raise ValueError("learner/initial checkpoint drift")
-    # Validate every permitted file before GPU acquisition; never load row content here.
-    for row in plan["contexts"]:
-        if file_sha(safe_path(packet, row["payload"])) != row["payload_sha256"]:
-            raise ValueError("packet payload drift")
+    preflight(plan, packet, worker, checkpoint)
     check_headroom()
     with qualification_lock() as lock_fd:
         start = time.monotonic()
@@ -341,10 +362,12 @@ def main():
     prepare.add_argument("--catalog", required=True, type=Path)
     prepare.add_argument("--out", required=True, type=Path)
     run = sub.add_parser("run")
-    run.add_argument("plan", type=Path)
-    run.add_argument("--packet", required=True, type=Path)
-    run.add_argument("--worker", required=True, type=Path)
-    run.add_argument("--checkpoint", required=True, type=Path)
+    check = sub.add_parser("preflight", help="verify inputs without starting a study")
+    for command in (run, check):
+        command.add_argument("plan", type=Path)
+        command.add_argument("--packet", required=True, type=Path)
+        command.add_argument("--worker", required=True, type=Path)
+        command.add_argument("--checkpoint", required=True, type=Path)
     run.add_argument("--out", required=True, type=Path)
     run.add_argument("--score-store-module", required=True, type=Path)
     run.add_argument("--score-store", required=True, type=Path)
@@ -353,6 +376,18 @@ def main():
         manifest = json.loads(args.manifest.read_text())
         verify_catalog(manifest, args.catalog)
         write_new(args.out, make_plan(manifest))
+    elif args.command == "preflight":
+        try:
+            plan_path = safe_path(args.plan.parent, args.plan.name)
+            result = preflight(
+                json.loads(plan_path.read_text()),
+                args.packet,
+                args.worker,
+                args.checkpoint,
+            )
+        except (OSError, ValueError, KeyError) as exc:
+            parser.error(str(exc))
+        print(json.dumps(result, sort_keys=True, allow_nan=False))
     else:
         execute(
             json.loads(args.plan.read_text()),
