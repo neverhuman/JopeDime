@@ -4957,8 +4957,14 @@
       "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
     },
     "target:jope-service/lib/jope_service": {
-      "reason": "Empty skeleton crate registered by API-06; no behaviour or tests yet",
-      "role": "infrastructure"
+      "role": "regression",
+      "source": "crates/jope-service/src/lib.rs",
+      "subsystems": [
+        "gp",
+        "storage",
+        "evidence"
+      ],
+      "reason": "QLT-03-F02 adds16 collected optional-research capture/outbox controls in this existing library target, including an ignored child exercised by its owning SIGKILL test. Synthetic software fixtures cover persistence, label isolation, bounds, privacy, CAS/GC and Rust-to-Python readback; no real corpus/evaluator/provider or Q1 qualification."
     },
     "target:jope-service/test/golden-fixture-loader": {
       "role": "regression",
