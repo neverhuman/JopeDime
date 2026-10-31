@@ -6,9 +6,12 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import shutil
 import stat
+import tempfile
+from datetime import datetime, timezone
 
 import numpy as np
 import torch
@@ -214,6 +217,7 @@ def execution_plan() -> dict:
             "holm_correction": "three candidate-vs-r882 comparisons",
         },
         "adapter_parameter_count": ADAPTER_PARAMS,
+        "runner_sha256": _sha256(Path(__file__)),
         "frozen_dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
         "r882_checkpoint_sha256": R882_SHA256,
         "fold_source": "real H50 DL-Train only; five whole-family folds, first four train / fifth score",
@@ -292,6 +296,260 @@ def prereg_sha256() -> str:
     return _sha256(Path(__file__).with_name("PREREG.md"))
 
 
+def _valid_sha(value: object, length: int) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == length
+        and all(character in "0123456789abcdef" for character in value)
+    )
+
+
+def _validate_cell_receipt(
+    cell: dict, *, synthetic: bool, emitted: bool = False
+) -> dict:
+    if not isinstance(cell, dict) or cell.get("schema") != "jope.h109.cell-outcome/v1":
+        raise ValueError("H109 cell outcome must use the registered receipt schema")
+    if (
+        cell.get("wave") != "H109"
+        or cell.get("arm") not in ARMS
+        or cell.get("seed") not in SEEDS
+        or type(cell.get("attempt")) is not int
+        or cell["attempt"] < 1
+        or cell.get("cell_status") != "COMPLETE"
+        or cell.get("prereg_sha256") != prereg_sha256()
+        or cell.get("fold_seed") != FOLD_SEED
+        or cell.get("checkpoint_sha256") != R882_SHA256
+        or cell.get("dope_before") != DOPE_SHA256
+        or cell.get("dope_after") != DOPE_SHA256
+        or cell.get("optimizer_updates") != UPDATES
+        or cell.get("trained_parameter_count") != ADAPTER_PARAMS
+        or cell.get("dl_val_reads") != 0
+        or cell.get("sealed_holdout_meta_test_reads") != 0
+    ):
+        raise ValueError("H109 cell receipt identity, completion, or boundary mismatch")
+    if synthetic:
+        if cell.get("synthetic_fixture") is not True:
+            raise ValueError("synthetic dry-run receipt must be explicitly marked")
+        execution = cell.get("execution_provenance")
+        if execution != {
+            "gpu_used": False,
+            "qualification_lock_held": False,
+            "owner_authorized": False,
+            "owner_authorization_ref": None,
+            "qualification_lock_path": None,
+            "fifo_ticket_id": None,
+            "gpu_device": "synthetic",
+        }:
+            raise ValueError("synthetic receipt cannot claim GPU or FIFO execution")
+    else:
+        if cell.get("synthetic_fixture") is True:
+            raise ValueError("synthetic fixture cannot be emitted as a real outcome")
+        if (
+            not _valid_sha(cell.get("source_commit"), 40)
+            or not _valid_sha(cell.get("fold_assignment_sha256"), 64)
+            or not _valid_sha(cell.get("runner_sha256"), 64)
+        ):
+            raise ValueError("H109 cell receipt source/fold/runner identity mismatch")
+        execution = cell.get("execution_provenance")
+        if (
+            not isinstance(execution, dict)
+            or execution.get("gpu_used") is not True
+            or execution.get("qualification_lock_held") is not True
+            or execution.get("owner_authorized") is not True
+            or not isinstance(execution.get("owner_authorization_ref"), str)
+            or not execution["owner_authorization_ref"].strip()
+            or execution.get("qualification_lock_path")
+            != str(Path.home() / "qualification.lock")
+            or not isinstance(execution.get("fifo_ticket_id"), str)
+            or not execution["fifo_ticket_id"].strip()
+            or not isinstance(execution.get("gpu_device"), str)
+            or not execution["gpu_device"].strip()
+        ):
+            raise ValueError(
+                "real H109 receipt requires GPU, lock, owner, and FIFO evidence"
+            )
+    candidate_sha = cell.get("candidate_adapter_sha256")
+    if not synthetic and not _valid_sha(candidate_sha, 64):
+        raise ValueError("H109 candidate adapter SHA256 is required")
+    if emitted:
+        expected_receipt_schema = (
+            "jope.h109.synthetic-cell-receipt/v1"
+            if synthetic
+            else "jope.h109.cell-receipt/v1"
+        )
+        if cell.get("receipt_schema_version") != expected_receipt_schema:
+            raise ValueError("H109 emitted receipt schema/version is missing")
+        if cell.get("synthetic_receipt") is not synthetic:
+            raise ValueError("H109 receipt synthetic marker/schema mismatch")
+    assessment = cell.get("assessment")
+    reference = cell.get("r882_utility_by_family")
+    utility = (
+        assessment.get("utility_by_family") if isinstance(assessment, dict) else None
+    )
+    if not isinstance(utility, dict) or not isinstance(reference, dict):
+        raise ValueError("H109 cell receipt requires per-family utility maps")
+    families = sorted(utility)
+    if len(families) < 5 or families != sorted(reference):
+        raise ValueError("H109 cell receipt family roster is incomplete or unpaired")
+    for mapping in (utility, reference):
+        for family, value in mapping.items():
+            if (
+                not isinstance(family, str)
+                or not family
+                or isinstance(value, bool)
+                or not isinstance(value, (int, float, np.number))
+                or not np.isfinite(value)
+            ):
+                raise ValueError("H109 per-family utilities must be finite numbers")
+    return cell
+
+
+def _safe_output_directory(root: Path, *, synthetic: bool) -> Path:
+    root = Path(root).expanduser()
+    if root.is_symlink() or not root.is_dir():
+        raise ValueError("H109 receipt root must be an existing real directory")
+    if synthetic:
+        return root
+    expected_parent = Path.home() / "jope-data" / "h109"
+    if root.parent != expected_parent or not root.name.startswith("run-"):
+        raise ValueError(
+            "real H109 receipts must be written inside a run-* H109 data root"
+        )
+    for path in (expected_parent, expected_parent.parent, Path.home()):
+        if path.is_symlink():
+            raise ValueError("H109 receipt path cannot traverse symlinked directories")
+    return root
+
+
+def emit_outcome_receipt(
+    cell: dict, output_root: Path, *, synthetic: bool = False
+) -> dict:
+    """Atomically emit one completed H109 cell receipt without replacing prior attempts."""
+    _validate_cell_receipt(cell, synthetic=synthetic)
+    if not synthetic and cell.get("runner_sha256") != _sha256(Path(__file__)):
+        raise ValueError("H109 outcome runner SHA256 does not match this source")
+    root = _safe_output_directory(Path(output_root), synthetic=synthetic)
+    receipt_dir = root / "cell-receipts"
+    if receipt_dir.is_symlink():
+        raise ValueError("H109 cell receipt directory cannot be a symlink")
+    receipt_dir.mkdir(mode=0o700, exist_ok=True)
+    if not receipt_dir.is_dir():
+        raise ValueError("H109 cell receipt path is not a directory")
+    receipt = dict(cell)
+    assessment = dict(cell["assessment"])
+    assessment["utility_by_family"] = {
+        family: float(value)
+        for family, value in assessment["utility_by_family"].items()
+    }
+    receipt["assessment"] = assessment
+    receipt["r882_utility_by_family"] = {
+        family: float(value) for family, value in cell["r882_utility_by_family"].items()
+    }
+    receipt["emitted_at_utc"] = datetime.now(timezone.utc).isoformat()
+    receipt["receipt_schema_version"] = (
+        "jope.h109.synthetic-cell-receipt/v1"
+        if synthetic
+        else "jope.h109.cell-receipt/v1"
+    )
+    if synthetic:
+        receipt["synthetic_receipt"] = True
+    filename = (
+        f"{cell['arm'].replace('+', 'plus')}-seed{cell['seed']}"
+        f"-attempt{cell['attempt']}.json"
+    )
+    destination = receipt_dir / filename
+    payload = json.dumps(
+        receipt, sort_keys=True, separators=(",", ":"), allow_nan=False
+    )
+    descriptor, temporary = tempfile.mkstemp(
+        prefix=f".{filename}.", suffix=".tmp", dir=receipt_dir
+    )
+    temporary_path = Path(temporary)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(payload + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        # A hard link atomically claims the final name and refuses to clobber it.
+        os.link(temporary_path, destination)
+        directory_fd = os.open(receipt_dir, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+    except FileExistsError:
+        raise FileExistsError(
+            f"H109 receipt already exists; preserve it: {destination}"
+        )
+    finally:
+        temporary_path.unlink(missing_ok=True)
+    raw = destination.read_bytes()
+    return {
+        "arm": cell["arm"],
+        "seed": cell["seed"],
+        "attempt": cell["attempt"],
+        "path": str(destination),
+        "bytes": len(raw),
+        "sha256": hashlib.sha256(raw).hexdigest(),
+        "synthetic": synthetic,
+    }
+
+
+def read_outcome_receipts(
+    output_root: Path,
+    selected_attempts: dict[str, int],
+    expected_sha256: dict[str, str],
+    *,
+    synthetic: bool = False,
+) -> list[dict]:
+    """Read exactly the selected 9 receipts and verify their externally recorded hashes."""
+    expected_keys = {f"{arm}/seed{seed}" for arm in ARMS for seed in SEEDS}
+    if set(selected_attempts) != expected_keys or set(expected_sha256) != expected_keys:
+        raise RuntimeError(
+            "INCOMPLETE: explicit attempt and receipt-hash maps required"
+        )
+    root = _safe_output_directory(Path(output_root), synthetic=synthetic)
+    receipt_dir = root / "cell-receipts"
+    if receipt_dir.is_symlink() or not receipt_dir.is_dir():
+        raise RuntimeError("H109 cell receipt directory is missing or unsafe")
+    cells = []
+    for arm in ARMS:
+        for seed in SEEDS:
+            key = f"{arm}/seed{seed}"
+            attempt = selected_attempts[key]
+            if type(attempt) is not int or attempt < 1:
+                raise ValueError("H109 selected attempt must be a positive integer")
+            digest = expected_sha256[key]
+            if not _valid_sha(digest, 64):
+                raise ValueError("H109 expected receipt SHA256 is malformed")
+            filename = f"{arm.replace('+', 'plus')}-seed{seed}-attempt{attempt}.json"
+            path = receipt_dir / filename
+            if path.is_symlink() or not path.is_file():
+                raise RuntimeError(
+                    f"H109 selected outcome receipt is missing/unsafe: {key}"
+                )
+            raw = path.read_bytes()
+            if hashlib.sha256(raw).hexdigest() != digest:
+                raise RuntimeError(
+                    f"H109 selected outcome receipt hash mismatch: {key}"
+                )
+            try:
+                cell = json.loads(raw)
+            except json.JSONDecodeError as exc:
+                raise RuntimeError(
+                    f"H109 selected outcome receipt is invalid JSON: {key}"
+                ) from exc
+            if (
+                cell.get("arm") != arm
+                or cell.get("seed") != seed
+                or cell.get("attempt") != attempt
+            ):
+                raise RuntimeError(f"H109 selected receipt identity mismatch: {key}")
+            _validate_cell_receipt(cell, synthetic=synthetic, emitted=True)
+            cells.append(cell)
+    return cells
+
+
 def _elo_rating(win_rate: float):
     if win_rate <= 0:
         return "-Infinity"
@@ -327,7 +585,9 @@ def _elo_readout(gain: np.ndarray, family_samples: np.ndarray) -> dict:
     }
 
 
-def summarize_readout(cells: list[dict], draws: int = READOUT_DRAWS) -> dict:
+def summarize_readout(
+    cells: list[dict], draws: int = READOUT_DRAWS, *, synthetic: bool = False
+) -> dict:
     """Summarize complete H109 cell receipts; this function never reads files/data."""
     expected = {(arm, seed) for arm in ARMS for seed in SEEDS}
     indexed = {(cell.get("arm"), cell.get("seed")): cell for cell in cells}
@@ -348,6 +608,7 @@ def summarize_readout(cells: list[dict], draws: int = READOUT_DRAWS) -> dict:
         seed_reference = None
         for arm in ARMS:
             cell = indexed[(arm, seed)]
+            _validate_cell_receipt(cell, synthetic=synthetic, emitted=True)
             if (
                 cell.get("schema") != "jope.h109.cell-outcome/v1"
                 or cell.get("wave") != "H109"
@@ -364,6 +625,13 @@ def summarize_readout(cells: list[dict], draws: int = READOUT_DRAWS) -> dict:
             current_identity = (
                 cell.get("source_commit"),
                 cell.get("fold_assignment_sha256"),
+                "synthetic" if synthetic else cell.get("runner_sha256"),
+                "synthetic"
+                if synthetic
+                else cell["execution_provenance"]["fifo_ticket_id"],
+                "synthetic"
+                if synthetic
+                else cell["execution_provenance"]["owner_authorization_ref"],
             )
             if not all(isinstance(value, str) and value for value in current_identity):
                 raise RuntimeError("INCOMPLETE: H109 source/fold identity missing")
@@ -489,6 +757,19 @@ def summarize_readout(cells: list[dict], draws: int = READOUT_DRAWS) -> dict:
         "fold_seed": FOLD_SEED,
         "source_commit": identity[0],
         "fold_assignment_sha256": identity[1],
+        "runner_sha256": None if synthetic else identity[2],
+        "fifo_ticket_id": None if synthetic else identity[3],
+        "owner_authorization_ref": None if synthetic else identity[4],
+        "cell_attempts": {
+            f"{arm}/seed{seed}": indexed[(arm, seed)]["attempt"]
+            for arm in ARMS
+            for seed in SEEDS
+        },
+        "candidate_adapter_sha256": {
+            f"{arm}/seed{seed}": indexed[(arm, seed)].get("candidate_adapter_sha256")
+            for arm in ARMS
+            for seed in SEEDS
+        },
         "families": families,
         "bootstrap_draws": READOUT_DRAWS,
         "bootstrap_seed": READOUT_SEED,
@@ -498,7 +779,7 @@ def summarize_readout(cells: list[dict], draws: int = READOUT_DRAWS) -> dict:
     }
 
 
-def readout_cpu_dry_run() -> dict:
+def readout_cpu_dry_run(receipt_root: Path) -> dict:
     """Exercise H109 readout statistics on synthetic arrays only."""
     families = [f"fixture-{i:02d}" for i in range(40)]
     reference = {family: 0.0 for family in families}
@@ -513,6 +794,19 @@ def readout_cpu_dry_run() -> dict:
                     "wave": "H109",
                     "arm": arm,
                     "seed": seed,
+                    "attempt": 1,
+                    "cell_status": "COMPLETE",
+                    "trained_parameter_count": ADAPTER_PARAMS,
+                    "synthetic_fixture": True,
+                    "execution_provenance": {
+                        "gpu_used": False,
+                        "qualification_lock_held": False,
+                        "owner_authorized": False,
+                        "owner_authorization_ref": None,
+                        "qualification_lock_path": None,
+                        "fifo_ticket_id": None,
+                        "gpu_device": "synthetic",
+                    },
                     "prereg_sha256": prereg_sha256(),
                     "fold_seed": FOLD_SEED,
                     "source_commit": "synthetic-source",
@@ -532,7 +826,21 @@ def readout_cpu_dry_run() -> dict:
                     "r882_utility_by_family": reference,
                 }
             )
-    metrics = summarize_readout(cells)
+    emission_receipts = [
+        emit_outcome_receipt(cell, receipt_root, synthetic=True) for cell in cells
+    ]
+    selected_attempts = {
+        f"{receipt['arm']}/seed{receipt['seed']}": receipt["attempt"]
+        for receipt in emission_receipts
+    }
+    expected_sha256 = {
+        f"{receipt['arm']}/seed{receipt['seed']}": receipt["sha256"]
+        for receipt in emission_receipts
+    }
+    emitted_cells = read_outcome_receipts(
+        receipt_root, selected_attempts, expected_sha256, synthetic=True
+    )
+    metrics = summarize_readout(emitted_cells, synthetic=True)
     if (
         not metrics["complete"]
         or metrics["input_files_opened_by_summarizer"] != 0
@@ -546,7 +854,13 @@ def readout_cpu_dry_run() -> dict:
         "status": "READOUT_DRY_RUN_PASS",
         "synthetic_families": len(families),
         "synthetic_cells": len(cells),
-        "outcome_files_read": 0,
+        "real_outcome_files_read": 0,
+        "synthetic_receipts_read": len(emission_receipts),
+        "synthetic_receipts_emitted": len(emission_receipts),
+        "receipt_sha256": {
+            Path(receipt["path"]).name: receipt["sha256"]
+            for receipt in emission_receipts
+        },
         "GPU_used": False,
         "qualification_lock_used": False,
         "FIFO_ticket_created": False,
@@ -562,12 +876,23 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--scratch-root", type=Path)
     parser.add_argument("--readout-cpu-dry-run", action="store_true")
+    parser.add_argument("--receipt-root", type=Path)
     args = parser.parse_args()
     if args.readout_cpu_dry_run:
+        if args.receipt_root is None:
+            parser.error("--readout-cpu-dry-run requires a fresh --receipt-root")
+        args.receipt_root.mkdir(parents=True, exist_ok=False)
         print(
-            json.dumps(readout_cpu_dry_run(), indent=2, sort_keys=True, allow_nan=False)
+            json.dumps(
+                readout_cpu_dry_run(args.receipt_root),
+                indent=2,
+                sort_keys=True,
+                allow_nan=False,
+            )
         )
         raise SystemExit(0)
+    if args.receipt_root is not None:
+        parser.error("--receipt-root is only valid with --readout-cpu-dry-run")
     print(
         json.dumps(
             cpu_dry_run(args.scratch_root), indent=2, sort_keys=True, allow_nan=False
