@@ -1947,6 +1947,10 @@
       "reason": "CPU-only H82 fresh-seed retry-boundary, load/budget, frozen-reference and paired Elo/admission tests; offline research outside product qualification.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h93_lookahead_noise/test_h93.py": {
+      "reason": "CPU-only H93 Lookahead/noise/effective-batch, paired Elo/admission, top-four overlap, and launch-barrier fixtures; offline research outside product qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h83_w6_cross_family_cached/test_run_w6_cached.py": {
       "reason": "Owner-requested pytest proofs for the H83 W6 cross-family cached screen; offline research analysis outside the reviewed product baseline.",
       "role": "research"
