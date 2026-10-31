@@ -45,7 +45,10 @@ def decode_json(raw: bytes) -> object:
 
     try:
         return json.loads(
-            raw, object_pairs_hook=unique, parse_constant=constant, parse_float=number
+            raw.decode("utf-8"),
+            object_pairs_hook=unique,
+            parse_constant=constant,
+            parse_float=number,
         )
     except (UnicodeDecodeError, ValueError) as exc:
         raise CaptureError("invalid JSON or UTF-8") from exc
@@ -444,6 +447,7 @@ def self_test() -> int:
                 b'{"id":1,"id":2}',
                 b'{"number":NaN}',
                 b'{"number":1e999}',
+                '{"number":1}'.encode("utf-16"),
                 b"\xff",
             ]:
                 with self.subTest(raw=raw), self.assertRaises(CaptureError):
