@@ -4,6 +4,11 @@
 \usepackage{mathptmx}\usepackage[protrusion=true,expansion=true]{microtype}
 \usepackage{amsmath,amssymb,booktabs,array,tabularx,graphicx,xcolor,enumitem,siunitx,caption,subcaption}
 \usepackage{algorithm}\usepackage[noend]{algpseudocode}
+% noend still emits an empty line where each End* would be (a visible gap after a nested
+% \EndFor); drop that empty item. Numbered lines are unaffected.
+\usepackage{etoolbox}
+\makeatletter\patchcmd{\ALG@doentity}{\item[]\nointerlineskip}{}{}{\PackageError{main}{algorithmicx noend patch failed}{}}\makeatother
+\usepackage{flushend}% equal-height columns on the last page only
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[colorlinks,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
 \usepackage[capitalise,noabbrev]{cleveref}
