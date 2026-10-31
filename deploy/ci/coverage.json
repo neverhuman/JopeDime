@@ -13248,6 +13248,16 @@
       "lanes": [],
       "scope": "Owner-requested W5 provenance-preflight synthetic metadata controls: body reads refused before any S3 call, counter hashes over bytes, unknown counts kept null, and refusal of pair and row-closure shortcuts (strat300 nq=0, siblings, wrong cut or alias, sentinels, AST similarity, missing operator or evaluator provenance). None admits data or qualifies W5."
     },
+    "python:research/flywheel_selfplay/h82_sam_steps/test_h82.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H82 prospective fresh-seed SAM/ASAM/K8 CPU fixtures for durable pre-scoring retry boundaries, two-retry/wall accounting, FIFO release, reference restoration and paired family Elo/admission; no real corpus payloads or product qualification."
+    },
     "python:research/flywheel_selfplay/h76_sam_steps/test_h76.py": {
       "discovery": {
         "kind": "python-family"
