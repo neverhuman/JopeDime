@@ -291,9 +291,12 @@ fn drains(body: &NativeRecoveryBody) -> Result<Value> {
     let path = std::ffi::CString::new(body.cgroup_root.as_os_str().as_encoded_bytes())?;
     let mut stats = std::mem::MaybeUninit::<libc::statfs>::uninit();
     ensure!(
+        // SAFETY: `path` is a live NUL-terminated CString and `stats` is aligned
+        // writable storage for one statfs result.
         unsafe { libc::statfs(path.as_ptr(), stats.as_mut_ptr()) } == 0,
         "cgroup filesystem unavailable"
     );
+    // SAFETY: statfs returned 0, so it initialized every field of `stats`.
     ensure!(
         unsafe { stats.assume_init() }.f_type == libc::CGROUP2_SUPER_MAGIC,
         "recovery cgroup is not kernel cgroup v2"
