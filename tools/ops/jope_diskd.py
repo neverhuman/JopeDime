@@ -159,6 +159,13 @@ def read_policy(path: Path | None) -> dict[str, Any]:
                 or entry["ttl_hours"] < 1
             ):
                 raise ValueError("jankurai source tar policy must use its exact canonical root and positive limits")
+        if kind == "remote-source-scratch" and (
+            entry.get("id") != "remote-source-scratch"
+            or entry.get("path") != "~/lane_work"
+            or type(entry.get("ttl_seconds")) is not int
+            or entry["ttl_seconds"] != 3600
+        ):
+            raise ValueError("remote source scratch policy must use ~/lane_work and an exact one-hour TTL")
     hosts = policy.get("allowed_hosts")
     if (
         not isinstance(hosts, list)
@@ -1048,12 +1055,251 @@ def handle_jankurai_source_tars(
         try:
             path.unlink()
         except OSError as exc:
-            logger({"event": "delete_file_failed", "path": str(path), "bytes": before.st_size, "policy": entry["id"], "error": str(exc)})
+            logger(
+                {
+                    "event": "delete_file_failed",
+                    "path": str(path),
+                    "bytes": before.st_size,
+                    "policy": entry["id"],
+                    "error": str(exc),
+                }
+            )
             print(f"SKIP {path}: unlink failed")
             continue
-        logger({"event": "deleted_file", "path": str(path), "bytes": before.st_size, "policy": entry["id"]})
+        logger(
+            {
+                "event": "deleted_file",
+                "path": str(path),
+                "bytes": before.st_size,
+                "policy": entry["id"],
+            }
+        )
         freed += before.st_size
     print(f"JANKURAI-SOURCE-TARS {entry['id']}: planned_bytes={freed}")
+    return freed
+
+
+def safe_remote_source_tree(
+    path: Path, lane: Path, *, now: float, ttl_seconds: int
+) -> bool:
+    """Accept only old, ordinary src-* trees with no protected or active content."""
+    try:
+        root_stat = path.lstat()
+        lane_stat = lane.lstat()
+        if (
+            not stat.S_ISDIR(root_stat.st_mode)
+            or root_stat.st_uid != current_uid()
+            or root_stat.st_dev != lane_stat.st_dev
+            or not path.name.startswith("src-")
+            or now - root_stat.st_mtime < ttl_seconds
+            or protected_path(path)
+        ):
+            return False
+        for directory, dirs, files in os.walk(
+            path, topdown=True, followlinks=False, onerror=fail_walk
+        ):
+            parent = Path(directory)
+            for name in dirs:
+                item_path = parent / name
+                item = item_path.lstat()
+                if (
+                    not stat.S_ISDIR(item.st_mode)
+                    or item.st_uid != current_uid()
+                    or item.st_dev != root_stat.st_dev
+                    or now - item.st_mtime < ttl_seconds
+                    or name.lower() in PROTECTED_PARTS
+                    or protected_path(item_path)
+                    or name.lower() == "target"
+                ):
+                    return False
+            for name in files:
+                item_path = parent / name
+                item = item_path.lstat()
+                if (
+                    not stat.S_ISREG(item.st_mode)
+                    or item.st_uid != current_uid()
+                    or item.st_dev != root_stat.st_dev
+                    or item.st_nlink != 1
+                    or now - item.st_mtime < ttl_seconds
+                    or protected_path(item_path)
+                    or Path(name).suffix.lower() in TARGET_EVIDENCE_SUFFIXES
+                    or any(
+                        term in name.lower()
+                        for term in (
+                            "receipt",
+                            "checkpoint",
+                            "dataset",
+                            "flywheel",
+                            "evidence",
+                        )
+                    )
+                ):
+                    return False
+        return True
+    except (OSError, RuntimeError, ValueError):
+        return False
+
+
+def remote_source_scratch_candidates(
+    root: Path, *, now: float, ttl_seconds: int
+) -> list[tuple[Path, Path, os.stat_result]] | None:
+    """Find direct lane_work/<lane>/src-* trees and old *source.tar files."""
+    expected_root = Path.home() / "lane_work"
+    try:
+        root_stat = root.lstat()
+        if (
+            root.absolute() != expected_root.absolute()
+            or not stat.S_ISDIR(root_stat.st_mode)
+            or root_stat.st_uid != current_uid()
+            or root.resolve(strict=True) != root.absolute()
+        ):
+            return None
+        candidates: list[tuple[Path, Path, os.stat_result]] = []
+        for lane in root.iterdir():
+            lane_stat = lane.lstat()
+            if (
+                not stat.S_ISDIR(lane_stat.st_mode)
+                or lane_stat.st_uid != current_uid()
+                or lane_stat.st_dev != root_stat.st_dev
+                or protected_path(lane)
+            ):
+                continue
+            for child in lane.iterdir():
+                if child.name.startswith("src-") and safe_remote_source_tree(
+                    child, lane, now=now, ttl_seconds=ttl_seconds
+                ):
+                    candidates.append((child, lane, child.lstat()))
+            for directory, dirs, files in os.walk(
+                lane, topdown=True, followlinks=False, onerror=fail_walk
+            ):
+                parent = Path(directory)
+                dirs[:] = [
+                    name
+                    for name in dirs
+                    if not (parent / name).is_symlink()
+                    and not name.startswith("src-")
+                    and not protected_path(parent / name)
+                ]
+                for name in files:
+                    if not name.endswith("source.tar"):
+                        continue
+                    path = parent / name
+                    item = path.lstat()
+                    if (
+                        stat.S_ISREG(item.st_mode)
+                        and item.st_uid == current_uid()
+                        and item.st_dev == root_stat.st_dev
+                        and item.st_nlink == 1
+                        and now - item.st_mtime >= ttl_seconds
+                        and not protected_path(path)
+                    ):
+                        candidates.append((path, lane, item))
+        return sorted(candidates, key=lambda item: item[2].st_mtime)
+    except (OSError, RuntimeError, ValueError):
+        return None
+
+
+def handle_remote_source_scratch(
+    entry: dict[str, Any], logger: Any, *, dry_run: bool, now: float, needed_bytes: int
+) -> int:
+    """Prune aged remote-test source scratch only under lane_work, on disk pressure."""
+    root = Path.home() / "lane_work"
+    if (
+        entry.get("id") != "remote-source-scratch"
+        or entry.get("path") != "~/lane_work"
+        or entry.get("ttl_seconds") != 3600
+        or needed_bytes <= 0
+    ):
+        print(
+            "SKIP remote source scratch: exact root, one-hour TTL, or disk-pressure budget unavailable"
+        )
+        return 0
+    candidates = remote_source_scratch_candidates(root, now=now, ttl_seconds=3600)
+    if candidates is None:
+        print("SKIP remote source scratch: lane_work inventory unavailable")
+        return 0
+    freed = 0
+    for path, lane, before in candidates:
+        opened = open_handles_under(path, all_users=True, allow_lsof_fallback=True)
+        referenced = local_process_references(path, path)
+        if opened is None or opened or referenced is not False:
+            print(f"SKIP {path}: process/open-handle scan is busy or incomplete")
+            continue
+        size = path_size(path) if stat.S_ISDIR(before.st_mode) else before.st_size
+        if size is None:
+            print(f"SKIP {path}: size could not be read")
+            continue
+        print(
+            f"{'WOULD REMOVE' if dry_run else 'REMOVE'} remote source scratch {path} ({size} bytes)"
+        )
+        if dry_run:
+            freed += size
+            if freed >= needed_bytes:
+                break
+            continue
+        opened = open_handles_under(path, all_users=True, allow_lsof_fallback=True)
+        referenced = local_process_references(path, path)
+        try:
+            after = path.lstat()
+        except OSError:
+            continue
+        still_safe = (
+            opened == set()
+            and referenced is False
+            and (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)
+            == (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns)
+            and (
+                safe_remote_source_tree(path, lane, now=time.time(), ttl_seconds=3600)
+                if stat.S_ISDIR(before.st_mode)
+                else stat.S_ISREG(after.st_mode)
+                and after.st_uid == current_uid()
+                and after.st_dev == before.st_dev
+                and after.st_nlink == 1
+                and time.time() - after.st_mtime >= 3600
+                and not protected_path(path)
+            )
+        )
+        if not still_safe:
+            print(f"SKIP {path}: scratch changed or became active before removal")
+            continue
+        logger(
+            {
+                "event": "delete_intent_tree"
+                if stat.S_ISDIR(before.st_mode)
+                else "delete_intent_file",
+                "path": str(path),
+                "bytes": size,
+                "policy": entry["id"],
+            }
+        )
+        try:
+            shutil.rmtree(path) if stat.S_ISDIR(before.st_mode) else path.unlink()
+        except OSError as exc:
+            logger(
+                {
+                    "event": "delete_scratch_failed",
+                    "path": str(path),
+                    "bytes": size,
+                    "policy": entry["id"],
+                    "error": str(exc),
+                }
+            )
+            print(f"SKIP {path}: removal failed")
+            continue
+        logger(
+            {
+                "event": "deleted_tree"
+                if stat.S_ISDIR(before.st_mode)
+                else "deleted_file",
+                "path": str(path),
+                "bytes": size,
+                "policy": entry["id"],
+            }
+        )
+        freed += size
+        if freed >= needed_bytes:
+            break
+    print(f"REMOTE-SOURCE-SCRATCH {entry['id']}: planned_bytes={freed}")
     return freed
 
 
@@ -1069,7 +1315,11 @@ def safe_state_dir(home: Path, *, create: bool) -> Path | None:
         if create:
             state.mkdir(mode=0o700, parents=True, exist_ok=True)
         item = state.lstat()
-        if not stat.S_ISDIR(item.st_mode) or item.st_uid != current_uid() or state.resolve(strict=True) != state.absolute():
+        if (
+            not stat.S_ISDIR(item.st_mode)
+            or item.st_uid != current_uid()
+            or state.resolve(strict=True) != state.absolute()
+        ):
             return None
         return state
     except (OSError, RuntimeError):
@@ -1549,6 +1799,14 @@ def main(argv: list[str] | None = None) -> int:
                         dry_run=dry_run,
                         now=now,
                         needed_bytes=required,
+                    )
+                elif kind == "remote-source-scratch":
+                    required = max(
+                        0,
+                        int(usage.used - (usage.used + usage.free) * policy["watermarks"]["low_percent"] / 100) - freed,
+                    )
+                    freed += handle_remote_source_scratch(
+                        entry, logger, dry_run=dry_run, now=now, needed_bytes=required
                     )
             print(f"planned_reclaim_bytes={freed} mode={'dry-run' if dry_run else 'apply'}")
         return 0
