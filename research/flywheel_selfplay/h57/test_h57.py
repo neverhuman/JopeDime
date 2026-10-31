@@ -174,6 +174,61 @@ class H57Tests(unittest.TestCase):
         with mock.patch.object(wave.os, "statvfs", return_value=stats):
             self.assertRegex(wave.disk_guard_error(), "95% full")
 
+    def test_cell_launch_uses_94_5_margin_without_changing_95_writer_guard(self):
+        stats = SimpleNamespace(f_blocks=100 * 1024**3, f_bavail=5.4 * 1024**3, f_frsize=1)
+        with mock.patch.object(wave.os, "statvfs", return_value=stats):
+            self.assertIsNone(wave.disk_guard_error())
+            self.assertRegex(wave.launch_disk_guard_error(), "below 94.5%")
+        stats = SimpleNamespace(f_blocks=100 * 1024**3, f_bavail=5.6 * 1024**3, f_frsize=1)
+        with mock.patch.object(wave.os, "statvfs", return_value=stats):
+            self.assertIsNone(wave.launch_disk_guard_error())
+
+    def test_disk_guard_infra_void_retries_same_cell_with_separate_logs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            log = root / "sigma001-seed15.log"
+            output = root / "out"
+            success = ({"key": "sigma001/seed15", "status": "complete"}, 3.0, 100.0)
+            with mock.patch.object(wave, "run_locked_cell", side_effect=[
+                    wave.DiskGuardInfraVoid("post-training disk guard", 2.0, 40.0), success]) as run:
+                cell, waited, wall, void_wall = wave.run_cell_with_disk_guard_retries(
+                    "sigma001/seed15", ["runner"], log, 1000.0, root / "status.log", 0.0, output)
+            self.assertEqual(run.call_count, 2)
+            self.assertEqual(run.call_args_list[0].args[2], log)
+            self.assertEqual(run.call_args_list[1].args[2], root / "sigma001-seed15.retry1.log")
+            self.assertEqual((waited, wall, void_wall), (5.0, 100.0, 40.0))
+            self.assertEqual(cell["disk_guard_retry_count"], 1)
+            self.assertEqual(cell["attempt_logs"], [str(log), str(root / "sigma001-seed15.retry1.log")])
+
+    def test_disk_guard_retry_refuses_to_overwrite_partial_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            output = root / "out"
+            output.mkdir()
+            evidence = output / "partial-evidence.bin"
+            evidence.write_bytes(b"preserve")
+            with mock.patch.object(wave, "run_locked_cell", side_effect=
+                                   wave.DiskGuardInfraVoid("post-training disk guard", 1.0, 10.0)) as run:
+                with self.assertRaisesRegex(wave.InfraVoid, "retry refused because prior output files exist"):
+                    wave.run_cell_with_disk_guard_retries(
+                        "sigma001/seed15", ["runner"], root / "cell.log", 1000.0,
+                        root / "status.log", 0.0, output)
+            self.assertEqual(run.call_count, 1)
+            self.assertEqual(evidence.read_bytes(), b"preserve")
+
+    def test_disk_guard_retry_limit_is_two_retries_and_tracks_void_wall(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            failure = wave.DiskGuardInfraVoid("post-training disk guard", 2.0, 40.0)
+            with mock.patch.object(wave, "run_locked_cell", side_effect=[failure, failure, failure]) as run:
+                with self.assertRaisesRegex(wave.DiskGuardInfraVoid, "exhausted 2 disk-guard retries") as raised:
+                    wave.run_cell_with_disk_guard_retries(
+                        "sigma001/seed15", ["runner"], root / "cell.log", 1000.0,
+                        root / "status.log", 0.0, root / "out")
+            self.assertEqual(run.call_count, 3)
+            self.assertEqual(raised.exception.wait_seconds, 6.0)
+            self.assertEqual(raised.exception.cell_wall_seconds, 120.0)
+
     def test_wait_reasons_include_lock_holder_gpu_and_disk_state(self):
         lock_lines = "1: FLOCK ADVISORY WRITE 4242 103:07:108299230 0 EOF\n"
         self.assertEqual(wave.lock_holder_pid_from_proc_locks(lock_lines, "103:07:108299230"), 4242)
