@@ -549,6 +549,8 @@ mod tests {
     fn res07_stage1b_tokens_and_mask_match_reference_on_50_contexts() {
         const ATOL: f32 = 1.0e-5;
         const RTOL: f32 = 1.0e-4;
+        const INDEX_SHA256: &str =
+            "27905f29703431bedacac90eed1bd54257fd0c59bdf24b56605d0b9416ae1393";
 
         let root = env::var_os("JOPE_GOLDEN_DIR").map_or_else(
             || {
@@ -559,6 +561,11 @@ mod tests {
         );
         let index_bytes = fs::read(root.join("index.json"))
             .expect("qualified RES-07 index.json is required for Stage-1B parity");
+        assert_eq!(
+            format!("{:x}", Sha256::digest(&index_bytes)),
+            INDEX_SHA256,
+            "unexpected RES-07 fixture index"
+        );
         let index: serde_json::Value =
             serde_json::from_slice(&index_bytes).expect("RES-07 index.json must be valid JSON");
         assert_eq!(index["schema"], "jope.golden-fixtures/v1");
