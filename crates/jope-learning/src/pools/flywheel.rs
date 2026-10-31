@@ -660,9 +660,12 @@ pub fn run_distilled_flywheel_with_s3_prior(
                 if folds[j] == k {
                     continue;
                 }
-                let idx_check = *pool_idx_by_ctx
-                    .get(pool.context_id.as_str())
-                    .expect("known context_id");
+                let idx_check =
+                    *pool_idx_by_ctx
+                        .get(pool.context_id.as_str())
+                        .with_context(|| {
+                            format!("missing pool index for context {}", pool.context_id)
+                        })?;
                 debug_assert_eq!(j, idx_check);
                 let mut members = by_ctx.remove(&pool.context_id).with_context(|| {
                     format!(
@@ -851,9 +854,21 @@ pub fn run_distilled_flywheel_with_s3_prior(
                 let outcomes = full_pool.outcomes();
                 for &b in &cfg.eval_budgets {
                     let m = score_context(&outcomes, refs[i], &scores, &view.programs, b);
-                    metrics_for_round.get_mut(&b).unwrap()[i] = m;
+                    *metrics_for_round
+                        .get_mut(&b)
+                        .with_context(|| format!("missing active metrics for budget {b}"))?
+                        .get_mut(i)
+                        .with_context(|| {
+                            format!("missing active metrics for budget {b}, context {i}")
+                        })? = m;
                     let pm = score_context(&outcomes, refs[i], &passive_scores, &view.programs, b);
-                    passive_metrics_for_round.get_mut(&b).unwrap()[i] = pm;
+                    *passive_metrics_for_round
+                        .get_mut(&b)
+                        .with_context(|| format!("missing passive metrics for budget {b}"))?
+                        .get_mut(i)
+                        .with_context(|| {
+                            format!("missing passive metrics for budget {b}, context {i}")
+                        })? = pm;
                 }
 
                 // Advance strictly out-of-fold held-out discovery trajectories on context `i`.
