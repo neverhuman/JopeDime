@@ -1,0 +1,387 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:jope:h107:w3-completion-row:v1",
+  "title": "W3 candidate completion row shape (not admission)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "context_sha256",
+    "program_sha256",
+    "pool_sha256",
+    "program_order_sha256",
+    "row_index",
+    "family_id",
+    "training_table_sha256",
+    "original_cut_sha256",
+    "role_closure_sha256",
+    "evaluator_sha256",
+    "vocabulary_sha256",
+    "metric_contract_sha256",
+    "producer_run_id",
+    "execution_state",
+    "completion_basis",
+    "components"
+  ],
+  "properties": {
+    "schema": {
+      "const": "jope.h107.w3-completion-row/v1"
+    },
+    "context_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "program_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "pool_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "program_order_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "row_index": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "family_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "training_table_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "original_cut_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "role_closure_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "evaluator_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "vocabulary_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "metric_contract_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "producer_run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "execution_state": {
+      "enum": [
+        "completed_pass",
+        "completed_gate_fail",
+        "timeout",
+        "error",
+        "unknown"
+      ]
+    },
+    "completion_basis": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "receipt",
+            "event_locator"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "producer_event",
+                "run_bound_derivation"
+              ]
+            },
+            "receipt": {
+              "$ref": "#/$defs/object_ref"
+            },
+            "event_locator": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    },
+    "components": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fitness",
+        "logratio",
+        "gate"
+      ],
+      "properties": {
+        "fitness": {
+          "$ref": "#/$defs/component"
+        },
+        "logratio": {
+          "$ref": "#/$defs/component"
+        },
+        "gate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "measured",
+            "value"
+          ],
+          "properties": {
+            "measured": {
+              "type": "boolean"
+            },
+            "value": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "object_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bucket",
+        "key",
+        "version_id",
+        "sha256"
+      ],
+      "properties": {
+        "bucket": {
+          "const": "veox-jopedime-learning-use2"
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "measured",
+        "value"
+      ],
+      "properties": {
+        "measured": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "measured": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "number"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "value": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "execution_state": {
+            "const": "completed_pass"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "completion_basis": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "receipt",
+              "event_locator"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "producer_event",
+                  "run_bound_derivation"
+                ]
+              },
+              "receipt": {
+                "$ref": "#/$defs/object_ref"
+              },
+              "event_locator": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "components": {
+            "properties": {
+              "gate": {
+                "properties": {
+                  "measured": {
+                    "const": true
+                  },
+                  "value": {
+                    "const": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "execution_state": {
+            "const": "completed_gate_fail"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "completion_basis": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "receipt",
+              "event_locator"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "producer_event",
+                  "run_bound_derivation"
+                ]
+              },
+              "receipt": {
+                "$ref": "#/$defs/object_ref"
+              },
+              "event_locator": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "components": {
+            "properties": {
+              "gate": {
+                "properties": {
+                  "measured": {
+                    "const": true
+                  },
+                  "value": {
+                    "const": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "execution_state": {
+            "enum": [
+              "timeout",
+              "error",
+              "unknown"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "components": {
+            "properties": {
+              "fitness": {
+                "properties": {
+                  "measured": {
+                    "const": false
+                  },
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "logratio": {
+                "properties": {
+                  "measured": {
+                    "const": false
+                  },
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "gate": {
+                "properties": {
+                  "measured": {
+                    "const": false
+                  },
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
