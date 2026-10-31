@@ -1,4 +1,6 @@
-# H63 / W8 — training-cut sensitivity; search control still pending
+# H63 / W8 — training-cut sensitivity and its equal-cost control
+
+> **Update 2026-10-31 (owner t2225):** the equal-cost control has now run; see [Both W8 arms side by side](#both-w8-arms-side-by-side-owner-decision-t2225). The review verdict immediately below predates it and is kept unchanged.
 
 **Review verdict: cut sensitivity is observed; the equal-cost acquisition comparison has not run.** Among11 candidate/champion pairs with positive original utility gains,19/33 fresh-cut comparisons retain the sign (57.58%), and3/11 retain it on all three cuts. Mean gain falls from+0.0244 to+0.0158. This motivates testing reliability; it does not establish that extra resplits beat spending those fits on new candidates, or authorize a reliability learner.
 
@@ -49,3 +51,39 @@ Original source HEAD at upload: `d5095432129d57cbd7cffa9fd6ceb77dfe86cd9e`. Runn
 The stability-based stop condition is not supported for this sampled set. Retain W8 as an unfinished diagnostic/control study. Do not infer a reliability-policy advance, causal live improvement, or r882 development-panel selection bias. No HWM candidate was created and no serving change occurred.
 
 The reviewed result snapshot is preserved create-only at `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W8/astra-review-20261031T041309Z-483edd92/manifest.json` (version`kQaB7a1DbULpJVW2z7rIUsgPRXCW4IBr`, SHA256`539f0c2a3d5eb4d039ae8ab712015e41d8d85aec14f116b3ce6de0d4f83bf92e`), sourcea0a576b09. All seven review objects, including the manifest and row-closure checker/receipt, passed version-pinned downloaded-byte SHA256 checks. That snapshot precedes this pointer append.
+
+## Both W8 arms side by side (owner decision t2225)
+
+The owner approved the equal-cost arm, and it has now run as preregistered in
+[H72](../h72_w8_control_prereg/PREREG.md) (PR #812, merged at `b6aaade3`). Both arms are shown below. The
+text above this section is unchanged.
+
+**In plain terms:** challengers that win on the original cut lose most of that advantage on new cuts of
+the same training rows. Their Elo against the champion falls from **+1138 to +25**, with a 95% interval of
+**−225 to +310**, which includes zero; on the new cuts they win 5 of 11 and lose 6, a coin flip. At equal
+cost, checking each apparent win on three resplits before promoting it removes almost all false
+promotions. The preregistered primary interval touches zero, so the control is formally inconclusive.
+
+| Arm | Question | Sample and cost | Result |
+|---|---|---|---|
+| **Original-split arm** (H63 diagnostic, run `w8-opus-20261031a`) | Do original-cut wins keep their sign on new training-only cuts? | 95 candidate/champion pairs; 760 evaluations (190 original-cut checks, 570 resplits) | Originally-winning challengers (n = 11): **+1138 Elo on the original cut → +25 Elo [−225, +310] on the 3-resplit mean, W/T/L 5/0/6**. Sign kept in 57.6% of resplit comparisons; mean gain +0.0244 → +0.0158. |
+| **Equal-cost arm** (H72 control, runs `w8c-h72-shard{A,B}-20261031a`, merged `w8c-h72-merged-20261031a`) | At an equal 40 fits per context, does P1 (search plus a 3-resplit check of each apparent win) yield more promotions that survive fresh cuts than P0 (search only, the live rule)? | 16 contexts / 13 families; 784 evaluations (640 search, 42 P1 verification, 102 common confirmation); 0 failed; 796 measured child CPU-seconds | **Primary, net = confirmed − false: P0 2, P1 7, P1 − P0 = +5, family-cluster 95% CI [0, 11]. The lower bound equals 0, so the result is INCONCLUSIVE under the preregistered rule.** Secondary: false promotions 8 → 1 (−7 [−13, −2]); confirmed 10 → 8 (−2 [−5, 0]); precision 10/18 = 56% → 8/9 = 89%; summed confirmation gain +0.073 [+0.001, +0.167]; family Bradley–Terry Elo P1 vs P0 **+115** (W/T/L 6/10/0). |
+
+**How the equal-cost arm is scored.**
+- Both policies read one deterministic stream from the live proposer and share the original-cut fits.
+- P1 pays 3 extra fits for each apparent win inside its 40-fit budget, so it evaluates fewer proposals (29–37 instead of 40 where it found wins).
+- Every program either policy promoted, and every incumbent, was refit on seeds 801–803, which no decision used. A promotion counts as confirmed iff its mean difference from the incumbent on those seeds is > 0.
+- Apparent wins were 18 of 640 proposals (2.8%) across 10 of the 16 contexts. Six contexts produced none.
+
+**What it does and does not show.**
+- Original-cut promotion at the live 1e-6 margin is noisy: 8 of P0's 18 promotions fail fresh cuts.
+- Spending the same budget partly on confirmation trades 2 true promotions for 7 fewer false ones.
+- With 16 contexts and 13 families, the primary interval reaches zero. This is not evidence that reliability does *not* help, and it does not authorise changing the live promotion rule; that needs its own approval and a larger preregistered sample.
+- Confirmation uses new cuts of the *same* training rows. It measures cut sensitivity, not held-family generalisation.
+- The incumbent was frozen, not ratcheting.
+
+**Execution and custody.**
+- Run on xbabe2, CPU only, nice 15, 8 workers per shard, load-gated. Earlier shard assignments to two luna lanes were superseded before they started, so no fits were duplicated.
+- The W8 evaluation ceiling of 2,400 has 760 + 784 = 1,544 used.
+- Exact object versions and hashes are in [metrics_equal_cost.json](metrics_equal_cost.json). All S3 writes after the H63 diagnostic are create-only (`If-None-Match: *`) with version-pinned readback.
+- The ten confirmed programs are recorded as training-CV development candidates, not serving claims, in `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/HWM_CANDIDATES.jsonl`. That file was created by this run; later appends must be conditional on its ETag.
