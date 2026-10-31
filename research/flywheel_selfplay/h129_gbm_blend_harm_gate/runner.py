@@ -59,6 +59,9 @@ ELO_BOOTSTRAP_SEED = 129001
 MEM_AVAILABLE_MIN_KIB = 30 * 1024**2
 DISK_USED_MAX = 0.94
 METRICS_LIMIT_BYTES = 100_000
+# Amendment A1 (README; owner decision rd_opus_t1340): one resume of run-20261031T1749Z after the host-disk abort.
+RESUME_ROOT_NAME = "run-20261031T1749Z"
+RESUME_MANIFEST_SHA = "35404656c40aa43ad60fd4eedcdac30b7f194622c1fae14f40a745cc1627a459"  # S3 partial manifest
 
 
 def sha(path):
@@ -357,10 +360,33 @@ def verify_prereg_committed(source_commit):
     return hashlib.sha256(expected).hexdigest()
 
 
-def run(root):
+def verify_resume_root(root):
+    """Amendment A1: every file of the aborted attempt must match its sha in the pinned partial manifest."""
+    manifest_path = root / "manifest.json"
+    if root.name != RESUME_ROOT_NAME or sha(manifest_path) != RESUME_MANIFEST_SHA:
+        raise RuntimeError("resume root or its pinned manifest differs")
+    manifest = json.loads(manifest_path.read_text())
+    if (
+        manifest["status"] != "ABORTED_DISK_GUARD_INCOMPLETE"
+        or manifest["outcomes_computed"] is not False
+    ):
+        raise RuntimeError("only the outcome-free disk-guard abort may be resumed")
+    for name, entry in manifest["files"].items():
+        if sha(root / name) != entry["sha256"]:
+            raise RuntimeError(f"pinned file changed: {name}")
+    if (root / "resume-identity.json").exists() or (root / "metrics.json").exists():
+        raise RuntimeError("the attempt was already resumed once (no further retries)")
+    return manifest
+
+
+def run(root, resume=False):
     root = Path(root)
     parent = Path.home() / "jope-data/h129"
-    if root.exists() or root.parent != parent or not root.name.startswith("run-"):
+    if resume:
+        if root.parent != parent:
+            raise RuntimeError("H129 resume root must be under ~/jope-data/h129")
+        manifest = verify_resume_root(root)
+    elif root.exists() or root.parent != parent or not root.name.startswith("run-"):
         raise RuntimeError("H129 requires a fresh run-* root under ~/jope-data/h129")
     h124 = load_h124()
     source_commit = subprocess.check_output(
@@ -369,10 +395,11 @@ def run(root):
     prereg_sha = verify_prereg_committed(source_commit)
     parent.mkdir(parents=True, exist_ok=True)
     launch = dict(h124.preflight(parent), **host_limits(parent))
-    root.mkdir()
+    if not resume:
+        root.mkdir()
     t0, cpu0, run_sha = time.monotonic(), time.process_time(), sha(Path(__file__))
     h124.write(
-        root / "execution-identity.json",
+        root / ("resume-identity.json" if resume else "execution-identity.json"),
         {
             "source_commit": source_commit,
             "prereg_commit": H129_PREREG_COMMIT,
@@ -382,6 +409,7 @@ def run(root):
             "protocol_sha256": protocol_sha256(),
             "command": sys.argv,
             "launch": launch,
+            "resume_of": RESUME_MANIFEST_SHA if resume else None,
             "environment": {
                 k: os.environ.get(k)
                 for k in (
@@ -399,22 +427,47 @@ def run(root):
         rows = selected["train"]
         if len(rows) != 1219 or len({r["family_id"] for r in rows}) != 205:
             raise RuntimeError("H129 full pinned DL-Train roster required")
-        projection = h124.train_projection(rows, selected["dev"])
-        baseline, net = h124.baseline(root, rows, context, pools, projection)
-        del net
-        h124.release_memory()
+        if resume:
+            # load_data rewrites split.json deterministically; it must be byte-identical to the pinned copy.
+            if sha(root / "split.json") != manifest["files"]["split.json"]["sha256"]:
+                raise RuntimeError("resumed split differs from the aborted attempt")
+            with np.load(root / "r882-train-costs.npz", allow_pickle=False) as z:
+                baseline = {r["context_sha256"]: z[r["context_sha256"]] for r in rows}
+        else:
+            projection = h124.train_projection(rows, selected["dev"])
+            baseline, net = h124.baseline(root, rows, context, pools, projection)
+            del net
+            h124.release_memory()
         tasks = [(seed, (fold,)) for seed in SEEDS for fold in range(5)] + [
             (seed, pair)
             for seed in SEEDS
             for pair in itertools.combinations(range(5), 2)
         ]
-        fits = []
+        fits, reused = [], 0
         for task in tasks:
+            seed, excluded = task
+            name = f"seed{seed}-exclude{''.join(map(str, excluded))}"
+            if resume and name + ".json" in manifest["files"]:
+                receipt = json.loads((root / (name + ".json")).read_text())
+                if (
+                    receipt["prediction_sha256"]
+                    != manifest["files"][name + ".npz"]["sha256"]
+                ):
+                    raise RuntimeError(
+                        f"{name}: prediction does not match its pinned receipt"
+                    )
+                fits.append(receipt)
+                reused += 1
+                continue
             host_limits(root)
             fits.append(
                 h124.fit_one(task, root, rows, context, pools, samples, mapping)
             )
             h124.headroom(root)
+        if resume and reused != sum(
+            1 for f in manifest["files"] if f.startswith("seed") and f.endswith(".json")
+        ):
+            raise RuntimeError("not every pinned completed fit was reused")
         if len(fits) != 45:
             raise RuntimeError("H129 requires 45 fit receipts")
         packets, gate_receipts = tree_packets(h124, root, rows, pools, baseline)
@@ -433,6 +486,16 @@ def run(root):
         metrics = {
             "schema": "jope.h129.gbm-blend-harm-gate/v1",
             "status": "COMPLETE",
+            "amendment_a1_resume": (
+                {
+                    "resumed_from_manifest_sha256": RESUME_MANIFEST_SHA,
+                    "fits_reused": reused,
+                    "fits_run_on_resume": 45 - reused,
+                    "baseline": "pinned r882-train-costs.npz of the aborted attempt",
+                }
+                if resume
+                else None
+            ),
             "verdict": result["verdict"],
             "candidate_breakthrough": result["candidate_breakthrough"],
             "protocol": protocol(),
@@ -530,6 +593,11 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--cpu-dry-run", action="store_true")
     group.add_argument("--run", action="store_true")
+    group.add_argument(
+        "--resume",
+        action="store_true",
+        help="Amendment A1: one resume of the disk-guard abort",
+    )
     parser.add_argument("--root", type=Path)
     args = parser.parse_args()
     if args.cpu_dry_run:
@@ -537,7 +605,7 @@ def main():
         return
     if args.root is None:
         parser.error("--root is required with --run")
-    print(json.dumps({"verdict": run(args.root)["verdict"]}))
+    print(json.dumps({"verdict": run(args.root, resume=args.resume)["verdict"]}))
 
 
 if __name__ == "__main__":
