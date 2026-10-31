@@ -23,6 +23,7 @@ pub enum AdmissionError {
     InvalidRevealed,
     InvalidProgram,
     InvalidConditioning,
+    InvalidAdapter,
 }
 
 impl fmt::Display for AdmissionError {
@@ -37,6 +38,7 @@ impl fmt::Display for AdmissionError {
             Self::InvalidConditioning => {
                 "conditioning must have finite tokens and binary mask values"
             }
+            Self::InvalidAdapter => "adapter shape contract does not accept canonical round inputs",
         })
     }
 }
@@ -245,7 +247,7 @@ impl<'a> ServingAdmissionSlate<'a> {
         })
     }
 
-    pub fn inputs(&self) -> PredictCostsInputs<'_> {
+    fn canonical_inputs(&self) -> PredictCostsInputs<'_> {
         PredictCostsInputs {
             batch: 1,
             candidates: self.program_keys.len(),
@@ -261,6 +263,15 @@ impl<'a> ServingAdmissionSlate<'a> {
             sos_prior: &self.sos_prior,
             scale: adapter::SCALE,
         }
+    }
+
+    /// Export only when the adapter accepts the frozen per-context layout.
+    /// Refuse an incompatible contract rather than repeat or reshape context
+    /// to satisfy it. Shape acceptance alone is not qualification.
+    pub fn inputs(&self) -> Result<PredictCostsInputs<'_>, adapter::InputShapeError> {
+        let inputs = self.canonical_inputs();
+        inputs.validate_shapes()?;
+        Ok(inputs)
     }
 
     pub fn revealed_pool_indices(&self) -> [usize; REVEALED] {
@@ -283,6 +294,7 @@ impl<'a> ServingAdmissionSlate<'a> {
         costs: &[f64],
         rng: &mut ChaCha12Rng,
     ) -> Result<[usize; ADMITTED], AdmissionError> {
+        self.inputs().map_err(|_| AdmissionError::InvalidAdapter)?;
         select_costs(costs, self.explore, rng)
     }
 }
@@ -685,7 +697,7 @@ mod tests {
     }
 
     #[test]
-    fn assembly_aligns_all_rows_and_real_adapter_channels_for_both_shapes() {
+    fn assembly_aligns_rows_and_frozen_context_channels_for_both_shapes() {
         let fixture = AdmissionSlateFixture::new();
         for explore in [false, true] {
             let slate = fixture
@@ -701,8 +713,7 @@ mod tests {
                 .map(String::as_str)
                 .collect();
             assert_eq!(slate.proposal_keys(), expected_proposals);
-            let inputs = slate.inputs();
-            assert_eq!(inputs.validate_shapes(), Ok(()));
+            let inputs = slate.canonical_inputs();
             assert_eq!(
                 (inputs.batch, inputs.candidates),
                 (1, if explore { 20 } else { 12 })
@@ -748,8 +759,8 @@ mod tests {
             .prepare(RevealedRule::SurrogateFitness, false)
             .unwrap();
         assert_eq!(stored.revealed_pool_indices(), [0, 1, 2, 3]);
-        assert_eq!(stored.inputs().revealed_fitness, [5., 4., 3., 2.]);
-        assert_eq!(stored.inputs().revealed_gates, [1., 0., 1., 0.]);
+        assert_eq!(stored.canonical_inputs().revealed_fitness, [5., 4., 3., 2.]);
+        assert_eq!(stored.canonical_inputs().revealed_gates, [1., 0., 1., 0.]);
         assert_eq!(stored.proposal_keys(), sorted.proposal_keys());
         assert_ne!(stored.revealed_keys(), sorted.revealed_keys());
     }
@@ -833,8 +844,14 @@ mod tests {
         fixture.features[0][0] = -0.0;
         fixture.projections[6][0] = f32::MAX;
         let slate = fixture.prepare(RevealedRule::StorageOrder, false).unwrap();
-        assert_eq!(slate.inputs().prog_412[0].to_bits(), (-0.0_f32).to_bits());
-        assert_eq!(slate.inputs().proj_16[4 * adapter::PROJ_FEATURES], f32::MAX);
+        assert_eq!(
+            slate.canonical_inputs().prog_412[0].to_bits(),
+            (-0.0_f32).to_bits()
+        );
+        assert_eq!(
+            slate.canonical_inputs().proj_16[4 * adapter::PROJ_FEATURES],
+            f32::MAX
+        );
     }
 
     #[test]
@@ -884,7 +901,7 @@ mod tests {
     }
 
     #[test]
-    fn assembled_selection_uses_original_proposal_indices_and_caller_rng_only() {
+    fn assembled_selection_checks_adapter_compatibility_before_rng_use() {
         let fixture = AdmissionSlateFixture::new();
         for explore in [false, true] {
             let prepared = fixture
@@ -897,7 +914,15 @@ mod tests {
             );
             let mut actual = rng(71);
             let mut control = rng(71);
-            let chosen = prepared.select(&costs, &mut actual).unwrap();
+            let selection = prepared.select(&costs, &mut actual);
+            if let Err(error) = prepared.inputs() {
+                assert!(matches!(error.field, "tokens" | "token_mask"));
+                assert!(error.expected > error.actual);
+                assert_eq!(selection, Err(AdmissionError::InvalidAdapter));
+                assert_eq!(actual.next_u64(), control.next_u64());
+                continue;
+            }
+            let chosen = selection.unwrap();
             assert_eq!(chosen, select_costs(&costs, explore, &mut control).unwrap());
             assert_eq!(actual.next_u64(), control.next_u64());
             assert_eq!(
