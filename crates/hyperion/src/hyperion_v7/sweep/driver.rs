@@ -92,7 +92,7 @@ pub struct ChunkReport<'a> {
 
 pub struct SweepOutput {
     /// DENSE per-cell encoding map, `h*w*EMB_KEEP` row-major. Each ORIGINAL cell holds the mean of
-    /// every window embedding that swept over it, then per-dim min-max normalized to [0,1] over the
+    /// every window embedding that swept over it, then per-dim min-max normalized to \[0,1\] over the
     /// covered cells. Uncovered cells are 0. This is the primary encoder output.
     pub cellmap: Vec<f32>,
     /// Grid dims for `cellmap` (`h` rows, `w` cols); the embedding dim is `EMB_KEEP`.
@@ -101,7 +101,7 @@ pub struct SweepOutput {
     /// `h × EMB_KEEP` row-major per-ROW features = col-mean of `cellmap` over covered cells
     /// (the `hyperion::v*` feature columns; now derived from the cell-map).
     pub row_emb: Vec<f32>,
-    /// `h × w` row-major final per-cell confidences = sigmoid(mean logit) ∈ [0,1]
+    /// `h × w` row-major final per-cell confidences = sigmoid(mean logit) ∈ \[0,1\]
     /// (0.5 for cells never written, which only happens on a cancelled partial run).
     pub confidence: Vec<f32>,
     /// The 1×EMB_KEEP dataset vector = mean over rows of `row_emb`.
