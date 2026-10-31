@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 import unittest
 
@@ -151,6 +152,27 @@ class RunnerTests(unittest.TestCase):
         manifest["launch_authorized"] = True
         with self.assertRaisesRegex(ValueError, "cannot authorize"):
             h65.validate_admission_manifest(manifest)
+
+    def test_publication_metadata_keeps_b3_open_without_a_w1_winner(self) -> None:
+        h65_dir = RUNNER_PATH.parent
+        publication = json.loads(
+            (h65_dir / "PUBLICATION_MANIFEST.json").read_text(encoding="utf-8")
+        )
+        gpu_execution = publication["dependencies"]["gpu_execution"]
+        for blocker in ("B1", "B2", "B3", "B4", "B5"):
+            with self.subTest(blocker=blocker):
+                self.assertIn(blocker, gpu_execution)
+
+        h113_manifest = json.loads(
+            (h65_dir.parent / "h113_w3_continuous" / "manifest.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        status = h113_manifest["w1_redteam_status"]
+        self.assertIn("NO_ADVANCE", status)
+        self.assertIn("B3", status)
+        self.assertIn("No accepted W1 winner/prior", status)
+        self.assertNotIn("pending explicit prior disposition", status)
 
     def test_plan_is_preparation_only_and_cpu_bounded(self) -> None:
         plan = h65.make_plan(
