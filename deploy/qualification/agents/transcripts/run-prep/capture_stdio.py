@@ -8,6 +8,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import selectors
 import shutil
 import signal
@@ -18,12 +19,57 @@ import time
 from verify_capture import CaptureError, decode_json, require
 
 
+_DEFAULT_ENV = frozenset(
+    {
+        "PATH",
+        "HOME",
+        "LANG",
+        "LC_ALL",
+        "LC_CTYPE",
+        "TZ",
+        "TMPDIR",
+        "TMP",
+        "TEMP",
+        "XDG_CONFIG_HOME",
+        "XDG_DATA_HOME",
+        "XDG_STATE_HOME",
+        "XDG_CACHE_HOME",
+        "JOPEDIME_HOME",
+        "OMP_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "RAYON_NUM_THREADS",
+        "CUDA_VISIBLE_DEVICES",
+    }
+)
+
+
+def child_environment(extra_names):
+    """Select names explicitly; never return credentials through prefix matching."""
+    requested = set()
+    for name in extra_names:
+        require(
+            isinstance(name, str)
+            and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name) is not None,
+            "--env-allow requires a variable name, not an assignment",
+        )
+        require(name in os.environ, f"requested environment variable is absent: {name}")
+        requested.add(name)
+    selected = {
+        name: os.environ[name]
+        for name in _DEFAULT_ENV | requested
+        if name in os.environ
+    }
+    selected.setdefault("PATH", os.defpath)
+    return selected
+
+
 def digest(path):
     with Path(path).open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def record(command, directory, seconds, max_bytes):
+def record(command, directory, seconds, max_bytes, env_allow=()):
     require(
         hasattr(os, "WNOWAIT")
         and hasattr(os, "waitid")
@@ -34,6 +80,7 @@ def record(command, directory, seconds, max_bytes):
         command and math.isfinite(seconds) and seconds > 0 and max_bytes > 0,
         "a server command and positive finite bounds are required",
     )
+    environment = child_environment(env_allow)
     directory.mkdir(mode=0o700)  # Exclusive: never reuse or delete capture evidence.
     paths = {
         name: directory / name
@@ -58,7 +105,7 @@ def record(command, directory, seconds, max_bytes):
     selector = selectors.PollSelector()
     blocking = {fd: os.get_blocking(fd) for fd in (0, 1)}
     old_handlers = {}
-    executable = shutil.which(command[0])
+    executable = shutil.which(command[0], path=environment["PATH"])
     executable_pin = None
     source_paths = {
         "producer_sha256": Path(__file__),
@@ -118,6 +165,7 @@ def record(command, directory, seconds, max_bytes):
             stderr=subprocess.PIPE,
             start_new_session=True,
             bufsize=0,
+            env=environment,
         )
         for fd in (
             0,
@@ -237,6 +285,8 @@ def record(command, directory, seconds, max_bytes):
         python_version=sys.version.split()[0],
         platform=sys.platform,
         nice=os.getpriority(os.PRIO_PROCESS, 0),
+        environment_names=sorted(environment),
+        extra_environment_names=sorted(set(env_allow)),
         executable=executable,
         executable_sha256=executable_pin,
         server_pid=child.pid if child else None,
@@ -524,6 +574,99 @@ def self_test():
             self.assertEqual(self.receipt()["producer_sha256"], expected)
             self.assertIn("source changed", self.receipt()["error"])
 
+        def test_default_environment_strips_secrets_and_keeps_runtime_controls(self):
+            from unittest.mock import patch
+
+            secret_names = [
+                "GH_TOKEN",
+                "AWS_SECRET_ACCESS_KEY",
+                "OPENAI_API_KEY",
+                "MCP_CAPTURE_TEST_SECRET",
+            ]
+            runtime = dict(
+                PATH=os.defpath,
+                HOME=self.temp.name,
+                LANG="C.UTF-8",
+                TMPDIR=self.temp.name,
+                JOPEDIME_HOME=str(Path(self.temp.name) / "isolated-store"),
+                OMP_NUM_THREADS="1",
+                OPENBLAS_NUM_THREADS="1",
+                MKL_NUM_THREADS="1",
+                RAYON_NUM_THREADS="1",
+                CUDA_VISIBLE_DEVICES="",
+            )
+            parent = {
+                **runtime,
+                **dict.fromkeys(secret_names, "synthetic-sentinel-not-a-credential"),
+            }
+            names = list(parent)
+            code = (
+                "import os,json;names="
+                + repr(names)
+                + ';print(json.dumps({"jsonrpc":"2.0","id":"env","result":{n:os.environ.get(n) for n in names}}))'
+            )
+            with patch.dict(os.environ, parent, clear=True):
+                result = self.run_capture(code)
+            self.assertEqual(result.returncode, 0)
+            observed = json.loads(result.stdout)["result"]
+            self.assertTrue(all(observed[name] is None for name in secret_names))
+            self.assertEqual({name: observed[name] for name in runtime}, runtime)
+            self.assertEqual(set(self.receipt()["environment_names"]), set(runtime))
+            with patch.dict(
+                os.environ,
+                {
+                    "LD_PRELOAD": "sentinel",
+                    "PYTHONPATH": "sentinel",
+                    "HTTPS_PROXY": "sentinel",
+                    "AWS_PROFILE": "sentinel",
+                },
+                clear=True,
+            ):
+                self.assertEqual(child_environment([]), {"PATH": os.defpath})
+
+        def test_explicit_environment_opt_in_records_names_only(self):
+            from unittest.mock import patch
+
+            name = "MCP_CAPTURE_TEST_CONFIG"
+            value = "synthetic-value-not-for-receipt"
+            # Use only synthetic configuration; no host credential values enter the child.
+            code = (
+                'import os,json;print(json.dumps(dict(jsonrpc="2.0",id="env",result=os.environ.get("'
+                + name
+                + '"))))'
+            )
+            with patch.dict(
+                os.environ,
+                {"PATH": os.defpath, "HOME": self.temp.name, name: value},
+                clear=True,
+            ):
+                result = self.run_capture(
+                    code, b"", "--env-allow", name, "--env-allow", name
+                )
+            self.assertEqual(result.returncode, 0)
+            self.assertEqual(json.loads(result.stdout)["result"], value)
+            self.assertEqual(self.receipt()["extra_environment_names"], [name])
+            self.assertIn(name, self.receipt()["environment_names"])
+            self.assertNotIn(value, (self.out / "capture.json").read_text())
+
+        def test_missing_or_invalid_environment_opt_in_refuses_before_launch(self):
+            from unittest.mock import patch
+
+            for name in ["UNSET_CAPTURE_CONFIG", "", "KEY=synthetic-value", "0BAD"]:
+                with (
+                    self.subTest(name=name),
+                    patch.dict(os.environ, {"PATH": os.defpath}, clear=True),
+                ):
+                    result = self.run_capture(
+                        'raise RuntimeError("must not launch")',
+                        b"",
+                        "--env-allow",
+                        name,
+                    )
+                    self.assertEqual(result.returncode, 125)
+                    self.assertFalse(self.out.exists())
+                    self.assertNotIn(b"synthetic-value", result.stderr)
+
     return (
         0
         if unittest.TextTestRunner(verbosity=2)
@@ -538,20 +681,30 @@ def main():
     parser.add_argument("--out-dir", type=Path)
     parser.add_argument("--seconds", type=float, default=180)
     parser.add_argument("--max-bytes", type=int, default=16 * 1024 * 1024)
+    parser.add_argument(
+        "--env-allow",
+        action="append",
+        default=[],
+        metavar="NAME",
+        help="forward one additional existing environment variable by name (repeatable)",
+    )
     parser.add_argument("--self-test", action="store_true")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
     if args.self_test:
-        if args.out_dir or args.command:
+        if args.out_dir or args.command or args.env_allow:
             parser.error("--self-test cannot record a server")
         return self_test()
     command = args.command[1:] if args.command[:1] == ["--"] else args.command
     if not args.out_dir or not command:
         parser.error("--out-dir and -- SERVER [ARGS] are required")
     try:
-        return record(command, args.out_dir, args.seconds, args.max_bytes)
+        return record(
+            command, args.out_dir, args.seconds, args.max_bytes, args.env_allow
+        )
     except (CaptureError, OSError) as exc:
-        print(f"MCP capture did not start: {type(exc).__name__}", file=sys.stderr)
+        detail = str(exc) if isinstance(exc, CaptureError) else type(exc).__name__
+        print(f"MCP capture did not start: {detail}", file=sys.stderr)
         return 125
 
 
