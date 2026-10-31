@@ -540,17 +540,18 @@ mod tests {
     ///   `0,1,2,4,5,7,9`, `{slot}.mean/std/active:[input_width]` plus
     ///   `{slot}.projection:[input_width,32]`, all F32 and row-major.
     ///
-    /// The RES-07 capture contains real context inputs and reference outputs,
-    /// but no frozen RNK-07 parameter sidecar. This test stays ignored until
-    /// that exact model input is published. Synthetic parameters are never
-    /// substituted for model values.
+    /// The original RES-07 capture contains real context inputs and reference
+    /// outputs but no RNK-07 sidecar. A CPU-only exporter derives the sidecar
+    /// from the hash-pinned GOV-03 frozen h40b bundle into a private packet
+    /// copy. This test stays ignored because the augmented owner packet is
+    /// held outside the repository. Synthetic parameters are never substituted.
     #[test]
-    #[ignore = "RES-07 is missing rnk07/stage1b-parameters.safetensors"]
+    #[ignore = "augmented RES-07 owner packet is external; set JOPE_GOLDEN_DIR"]
     fn res07_stage1b_tokens_and_mask_match_reference_on_50_contexts() {
         const ATOL: f32 = 1.0e-5;
         const RTOL: f32 = 1.0e-4;
         const INDEX_SHA256: &str =
-            "27905f29703431bedacac90eed1bd54257fd0c59bdf24b56605d0b9416ae1393";
+            "ce3d5f0b02784f5df980fa4a785c442041b11b23c0cd79d7a86a02ec10361a9d";
 
         let root = env::var_os("JOPE_GOLDEN_DIR").map_or_else(
             || {
