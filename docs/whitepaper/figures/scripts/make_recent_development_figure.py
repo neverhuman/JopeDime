@@ -17,6 +17,7 @@ from matplotlib.ticker import MaxNLocator
 FIGURES = Path(__file__).resolve().parent.parent
 DATA = FIGURES / "data" / "recent_development.csv"
 PROVENANCE = DATA.with_suffix(".provenance.json")
+OUTPUT = FIGURES / "fig_fw_recent_development.pdf"
 FIELDS = ["round", "program_promotions", "cumulative_program_promotions",
           "candidate_validation_utility", "recorded_best_validation_utility",
           "adapter_accepted"]
@@ -93,14 +94,20 @@ def extract(logs):
         "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
         "csv_sha256": hashlib.sha256(DATA.read_bytes()).hexdigest(),
         "extraction_script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-        "reproduce": "python3 figures/scripts/make_recent_development_figure.py --logs SNAPSHOT_DIR",
+        "reproduce": ("python3 figures/scripts/make_recent_development_figure.py"
+                      + (" --follow-up" if args.follow_up else "") + " --logs SNAPSHOT_DIR"),
     }
     PROVENANCE.write_text(json.dumps(provenance, indent=2) + "\n")
 
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--logs", type=Path, help="Stable complete-line development-log snapshot")
+parser.add_argument("--follow-up", action="store_true", help="Plot the separate follow-up snapshot")
 args = parser.parse_args()
+if args.follow_up:
+    DATA = FIGURES / "data" / "followup_development.csv"
+    PROVENANCE = DATA.with_suffix(".provenance.json")
+    OUTPUT = FIGURES / "fig_fw_followup_development.pdf"
 if args.logs:
     extract(args.logs)
 with DATA.open() as stream:
@@ -117,31 +124,40 @@ assert all(math.isfinite(v) for v in candidate + best)
 plt.rcParams.update({"font.family": "serif", "font.size": 8, "axes.labelsize": 8,
                      "xtick.labelsize": 7.2, "ytick.labelsize": 7.2, "pdf.fonttype": 42,
                      "axes.spines.top": False, "axes.spines.right": False})
-fig, axes = plt.subplots(2, 1, figsize=(3.4, 2.85), sharex=True)
-axes[0].step(rounds, cumulative, where="post", color="#5f3dc4", lw=1.1)
-axes[0].plot(rounds, cumulative, ".", color="#5f3dc4", ms=2.5)
-axes[0].set_title("Top: Training-program promotions", fontsize=8, loc="left", pad=3)
-axes[0].set_ylabel("cumulative\npromotions")
-axes[0].set_ylim(-0.5, max(cumulative) + max(1, max(cumulative) * 0.1))
+if args.follow_up:
+    fig, axes = plt.subplots(1, 2, figsize=(6.8, 1.9), sharex=True)
+    axes[0].bar(rounds, counts, color="#5f3dc4", width=0.7)
+    axes[0].set_title("Left: Training-program promotions", fontsize=8, loc="left", pad=3)
+    axes[0].set_ylabel("promotions / round")
+    axes[0].set_ylim(-0.1, max(counts) + 0.5)
+    axes[0].set_xlabel("round (follow-up retained window)")
+else:
+    fig, axes = plt.subplots(2, 1, figsize=(3.4, 2.85), sharex=True)
+    axes[0].step(rounds, cumulative, where="post", color="#5f3dc4", lw=1.1)
+    axes[0].plot(rounds, cumulative, ".", color="#5f3dc4", ms=2.5)
+    axes[0].set_title("Top: Training-program promotions", fontsize=8, loc="left", pad=3)
+    axes[0].set_ylabel("cumulative\npromotions")
+    axes[0].set_ylim(-0.5, max(cumulative) + max(1, max(cumulative) * 0.1))
 axes[0].yaxis.set_major_locator(MaxNLocator(nbins=4, integer=True))
 axes[1].plot(rounds, candidate, "o-", color="#6e7781", ms=2.5, lw=0.8,
              label="candidate adapter")
 axes[1].step(rounds, best, where="post", color="#0b5394", lw=1.15,
              label="recorded best")
-axes[1].set_title("Bottom: Adapter validation", fontsize=8, loc="left", pad=3)
+axes[1].set_title("Right: Adapter validation" if args.follow_up else "Bottom: Adapter validation",
+                  fontsize=8, loc="left", pad=3)
 axes[1].set_ylabel("validation\npool utility")
 axes[1].set_ylim(min(candidate + best) - 0.004, max(candidate + best) + 0.0013)
 axes[1].ticklabel_format(axis="y", style="plain", useOffset=False)
 axes[1].legend(loc="lower left", ncol=2, fontsize=7.2, frameon=False,
                handlelength=1.3, handletextpad=0.3, columnspacing=0.7, borderaxespad=0.3)
-axes[1].set_xlabel("round (additional retained window)")
+axes[1].set_xlabel("round (follow-up retained window)" if args.follow_up
+                   else "round (additional retained window)")
 axes[1].set_xticks([rounds[0], *rounds[5::5], rounds[-1]])
 for ax in axes:
     ax.set_xlim(rounds[0] - 0.4, rounds[-1] + 0.4)
     ax.grid(axis="y", alpha=0.22, linewidth=0.4)
     ax.set_axisbelow(True)
 fig.tight_layout(pad=0.4, h_pad=0.65)
-fig.savefig(FIGURES / "fig_fw_recent_development.pdf",
-            metadata={"CreationDate": None, "ModDate": None})
+fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
 print(f"{len(rows)} summary rounds; {sum(counts)} strict program promotions")

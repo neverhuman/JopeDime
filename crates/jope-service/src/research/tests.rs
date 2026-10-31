@@ -584,3 +584,37 @@ fn non_unix_private_file_creation_is_explicitly_unavailable() {
     }
     assert!(!path.exists());
 }
+
+#[test]
+fn private_capture_envelope_refuses_unknown_fields_and_oversized_cas_references() {
+    use capture::{Binding, CaptureState};
+    let home = tempfile::tempdir().unwrap();
+    let store = crate::store::Store::open(home.path()).unwrap();
+    let r = record(0, true);
+    let binding = Binding {
+        config: CaptureConfig {
+            max_attempts: 16,
+            max_rounds: 16,
+            max_bytes: 1024 * 1024,
+            evaluate_all_proposals: true,
+            seed_protocol_sha256: "2".repeat(64),
+        },
+        identity: r.identity,
+        seed: r.seed,
+        tokens: r.tokens,
+        mask: r.mask,
+        matrix_sha256: "3".repeat(64),
+    };
+    let mut value = serde_json::to_value(&binding).unwrap();
+    value["arbitrary_import"] = json!(true);
+    let reference = store
+        .publish_blob(std::io::Cursor::new(serde_json::to_vec(&value).unwrap()))
+        .unwrap();
+    assert!(CaptureState::read::<Binding>(&store, &reference).is_err());
+    let mut too_large = reference;
+    too_large.bytes = u64::MAX;
+    assert!(CaptureState::read::<Binding>(&store, &too_large)
+        .unwrap_err()
+        .to_string()
+        .contains("ceiling"));
+}

@@ -1,7 +1,10 @@
-# H119 — W4 offline acquisition screen: preregistration and CPU preparation (zero native fits)
+# H120 — W4 offline acquisition screen: preregistration and CPU preparation (zero native fits)
+
+> **Numbering.** Opened as H119 (#1046). sol_v1_dsc08 had claimed H119 first, so per the hwave overseer this is H120. The
+> content is unchanged, and the prep receipts were regenerated under the H120 runner.
 
 Status: **prep complete: preregistration, harness, integrity gate passed and dry run. No screen result.** The screen
-itself (`run_h119.py screen`) runs after this preregistration is on main. It costs **0 native fits**.
+itself (`run_h120.py screen`) runs after this preregistration is on main. It costs **0 native fits**.
 
 ## Budget disclosure
 
@@ -17,7 +20,7 @@ W4's cumulative cap in PROPOSALS is **≤ 2,400 native fits and four CPU-hours**
 
 That is **134 fits (5.6%) over the cap**; CPU use is 0.71 h, within four CPU-hours. Cause: H112's preregistration
 set a 2,400-fit cap for that run instead of the cumulative remainder (1,528). The error is rd_opus's and is recorded
-in `owner_decisions.md`. Any further W4 native fit needs an owner budget call. H119 spends none.
+in `owner_decisions.md`. Any further W4 native fit needs an owner budget call. H120 spends none.
 
 ## Hypothesis
 
@@ -53,17 +56,17 @@ rule's own picks.
 | **Integrity gate** | **300 of 300 values reproduced exactly** (150 batches × `S_TOP4`/`GP_2PLUS2`); passed |
 | Dry run | 3 H118 batches (non-roster panel, seed 1001), all rules screened; harness integrity only |
 | Native fits / GPU | **0 / 0** |
-| Wall | Integrity 118 s, dry run 92 s (xbabe2, nice 15) |
+| Wall | Integrity 138 s, dry run 105 s (xbabe2, nice 15) |
 
 ## Reproduce
 
 ```sh
-python3 -m pytest -q research/flywheel_selfplay/h119_w4_offline_acquisition/test_run_h119.py   # 6 synthetic tests
-cd research/flywheel_selfplay/h119_w4_offline_acquisition
+python3 -m pytest -q research/flywheel_selfplay/h120_w4_offline_acquisition/test_run_h120.py   # 6 synthetic tests
+cd research/flywheel_selfplay/h120_w4_offline_acquisition
 A="--out <dir> --h94-run ~/jope-data/h94/opus-h94-20261031a --h103-run ~/jope-data/h103/opus-h103-20261031a \
    --h110-run ~/jope-data/h110/opus-h110-20261031a --h112-run ~/jope-data/h112/opus-h112-20261031a \
    --h115-run ~/jope-data/h115/opus-h115-20261031a"
-nice -n 15 python3 -I run_h119.py integrity $A    # then dry-run; the screen stage follows the merge
+nice -n 15 python3 -I run_h120.py integrity $A    # then dry-run; the screen stage follows the merge
 ```
 
 ## Data scope and evidence
@@ -72,5 +75,5 @@ nice -n 15 python3 -I run_h119.py integrity $A    # then dry-run; the screen sta
   - DL-Train only.
   - Zero DL-Val, outer-test, sealed or holdout reads.
   - DOPE is not loaded, and no GPU is used.
-- **Evidence.** S3 `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h119-prep-20261031a/`
+- **Evidence.** S3 `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-prep-20261031a/`
   holds the receipts, logs and sources. Each was written create-only with a version-pinned readback hash.

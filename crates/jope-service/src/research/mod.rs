@@ -6,6 +6,10 @@
 
 mod producer;
 pub use producer::RoundCapture;
+pub(crate) mod capture;
+pub(crate) mod outbox;
+pub use capture::{CaptureConfig, CaptureContext, ObservedSlate};
+pub use outbox::materialize_committed;
 
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};

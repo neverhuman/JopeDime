@@ -1,0 +1,16 @@
+{
+  "schema": "jope.h121.metrics/v1",
+  "status": "cpu_preparation_only",
+  "outcomes": null,
+  "arms": ["CONTROL", "TS-0.1", "TS-0.3"],
+  "paired_seeds": [45, 46, 47],
+  "updates_per_cell": 40,
+  "fold_seed": 12100,
+  "fold_source": "real H50 DL-Train only; CPU proof used synthetic rows",
+  "h90_overlap": "epsilon 0.1 was tested in H90 and did not admit; H121 is a fresh-fold replication plus epsilon 0.3 dose",
+  "checkpoint_reads": 0,
+  "outcome_reads": 0,
+  "gpu_used": false,
+  "gpu_ticket_created": false,
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+}

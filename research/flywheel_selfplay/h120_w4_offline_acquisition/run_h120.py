@@ -1,8 +1,8 @@
-"""H119 — W4 offline acquisition screen on fully labelled proposal batches (CPU, ZERO native fits).
+"""H120 — W4 offline acquisition screen on fully labelled proposal batches (CPU, ZERO native fits).
 
 W4's cumulative native-fit budget (<= 2,400) is spent: H96/H103/H112/H116 used 2,534. Two prospective two-plus-two
 tests (H103, H116) were NO_ADVANCE; in H116 the update changed the revealed four in only 11 of 150 units. Before any
-further budget request, H119 screens other reveal rules OFFLINE on the 300 proposal batches whose 16 proposals were
+further budget request, H120 screens other reveal rules OFFLINE on the 300 proposal batches whose 16 proposals were
 ALL evaluated by H110 (H67 roster x seeds 801-803) and H116 (seeds 901-903). Every reveal reads a cached outcome of a
 program the rule asked for; no rule sees an unrevealed label.
 
@@ -210,7 +210,7 @@ def main():
         panel = json.loads((a.h115_run / "panel_manifest.json").read_text())["contexts"][:3]
         rows = screen(h112, h106, h81, prop, priors, inner, panel, DRY_SOURCE, fits)
         receipt.update(dry_run_contexts=panel, dry_run_rows=[{k: r[k] for k in ("seed", "status")} for r in rows],
-                       note="dry-run rows: integrity of the harness only; never part of an H119 result")
+                       note="dry-run rows: integrity of the harness only; never part of an H120 result")
     else:
         h116 = load_fits(a.h112_run / "fits.jsonl", BATCH_SOURCES["H116"][2])
         rows = screen(h112, h106, h81, prop, priors, inner, prop.roster, BATCH_SOURCES["H116"], h116)
@@ -224,7 +224,7 @@ def main():
         if a.stage == "screen":
             h110 = load_fits(a.h110_run / "fits.jsonl", BATCH_SOURCES["H110"][2])
             rows += screen(h112, h106, h81, prop, priors, inner, prop.roster, BATCH_SOURCES["H110"], h110)
-            with open(a.out / "rows_h119.jsonl", "w") as f:
+            with open(a.out / "rows_h120.jsonl", "w") as f:
                 for r in rows:
                     f.write(json.dumps(r, sort_keys=True) + "\n")
             receipt.update(analyze(h81, rows, h81.load_elo()))

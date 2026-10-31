@@ -9,6 +9,7 @@
 \usepackage{etoolbox}
 \makeatletter\patchcmd{\ALG@doentity}{\item[]\nointerlineskip}{}{}{\PackageError{main}{algorithmicx noend patch failed}{}}\makeatother
 \usepackage{flushend}% equal-height columns on the last page only
+\usepackage{placeins}% \FloatBarrier keeps section 7 floats out of section 8
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[hidelinks]{hyperref}% black links for print (owner decision t0352; revisit per venue)
 \usepackage[capitalise,noabbrev]{cleveref}
@@ -35,6 +36,7 @@
 \input{sections/05_price}
 \input{sections/06_method}
 \input{sections/07_results}
+\FloatBarrier
 \input{sections/08_meaning}
 \appendix
 \input{sections/appendix_stubs}
