@@ -1,6 +1,8 @@
 use super::*;
 use crate::worker::WorkerFailure;
+#[cfg(unix)]
 use serde_json::{json, Value};
+#[cfg(unix)]
 use std::{fs, process::Command};
 
 fn program(index: usize) -> RecordedProgram {
@@ -97,6 +99,7 @@ fn record(round: u64, all: bool) -> ResearchRound {
     }
 }
 
+#[cfg(unix)]
 fn reader(path: &Path, synthetic: bool) -> std::process::Output {
     let script = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../python/src/jope/north_star/record_reader.py");
@@ -110,6 +113,7 @@ fn reader(path: &Path, synthetic: bool) -> std::process::Output {
         .expect("Python3 is required for QLT-03 cross-language QA")
 }
 
+#[cfg(unix)]
 #[test]
 fn rust_stream_reads_in_python_with_exact_inventory() {
     for all in [false, true] {
@@ -165,6 +169,7 @@ fn rust_stream_reads_in_python_with_exact_inventory() {
     }
 }
 
+#[cfg(unix)]
 #[test]
 fn rust_float32_boundary_encodings_read_in_python() {
     let dir = tempfile::tempdir().unwrap();
@@ -245,6 +250,7 @@ fn malformed_slate_context_costs_and_partitions_are_refused() {
     }
 }
 
+#[cfg(unix)]
 #[test]
 fn writer_rejects_replays_and_input_changes_without_writing() {
     let dir = tempfile::tempdir().unwrap();
@@ -290,6 +296,7 @@ fn failed_io_poisoning_prevents_a_second_append() {
         .contains("poisoned"));
 }
 
+#[cfg(unix)]
 #[test]
 fn budget_truncation_preserves_policy_and_is_not_complete_training_data() {
     let dir = tempfile::tempdir().unwrap();
@@ -319,6 +326,7 @@ fn budget_truncation_preserves_policy_and_is_not_complete_training_data() {
     assert!(truncated.validate().is_err());
 }
 
+#[cfg(unix)]
 #[test]
 fn python_rejects_malformed_or_truncated_streams() {
     let zero = serde_json::to_value(record(0, true)).unwrap();
@@ -361,4 +369,16 @@ fn python_rejects_malformed_or_truncated_streams() {
             "Python negative case {i}"
         );
     }
+}
+
+#[cfg(not(unix))]
+#[test]
+fn non_unix_private_file_creation_is_explicitly_unavailable() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("records.jsonl");
+    match RecordWriter::create(&path) {
+        Err(error) => assert!(error.to_string().contains("not qualified")),
+        Ok(_) => panic!("unqualified private-file creation unexpectedly succeeded"),
+    }
+    assert!(!path.exists());
 }
