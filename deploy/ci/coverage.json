@@ -13350,6 +13350,16 @@
       "lanes": [],
       "scope": "H105 CPU-only shrinkage/interpolation, raw L2-to-r882 anchor, fresh DL-Train family split, four-way Holm/family-bootstrap/r882-reference/harm/tie/completeness guards, unique attempt scratch and data-free/no-ticket preparation controls. Synthetic unit fixtures only; no corpus outcomes or product qualification."
     },
+    "python:research/flywheel_selfplay/h119_gbm_ctx_confirm/test_h119.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H119 GBM confirmation CPU fixtures: fresh grouped folds, exact H85 parameters and calibration, Track2/legacy endpoints, two-primary Holm/strict margins, harm/completeness and canonical family-BT parity. Synthetic controls; actual corpus confirmation is recorded separately, not product qualification."
+    },
     "python:research/flywheel_selfplay/h100_asam_confirm/test_h100.py": {
       "discovery": {
         "kind": "python-family"

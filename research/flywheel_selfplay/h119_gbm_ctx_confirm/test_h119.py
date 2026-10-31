@@ -46,7 +46,10 @@ def test_split_is_fresh_stable_family_grouped_and_order_invariant():
     old = [
         sorted(x.tolist())
         for x in np.array_split(
-            np.random.default_rng(4900).permutation(sorted(mapping)), 5
+            np.random.default_rng(4900).permutation(
+                sorted({row["family_id"] for row in rows})
+            ),
+            5,
         )
     ]
     assert a != old
