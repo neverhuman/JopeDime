@@ -429,6 +429,10 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
+    "python:research/flywheel_selfplay/h102_w5_provenance_gaps/test_check.py": {
+      "reason": "Owner-requested W5 provenance-gap and W9 CPU-preparation synthetic regression controls; offline research outside the product baseline.",
+      "role": "research"
+    },
     "python:benchmarks/test_prepare.py": {
       "role": "regression",
       "subsystems": [

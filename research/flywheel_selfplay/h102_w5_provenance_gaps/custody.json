@@ -1,0 +1,31 @@
+{
+  "archive_members_verified": 49,
+  "create_only": true,
+  "exact_version_sha_verified": true,
+  "manifest": {
+    "bytes": 7476,
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W5/astra-h101-gaps-20261031T100245Z-b4b80aa5/manifest.json",
+    "sha256": "6b32becffa507b560b2226e4671ae4c176e6edaa68b069f8399243aad91faef4",
+    "version_id": "vbqVGowEZa65hvvQyh6QVG4fCgHeXB7w"
+  },
+  "objects": [
+    {
+      "bytes": 400625,
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W5/astra-h101-gaps-20261031T100245Z-b4b80aa5/evidence.tar.gz",
+      "sha256": "6295e003e2d670676dcdd9b14fc8e005c5deca30a923c31c6fd2143dfa458296",
+      "version_id": "yo4nQDgEI9eaRAgvEXiKg5uRII_9Q6hP"
+    },
+    {
+      "bytes": 10028,
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W5/astra-h101-gaps-20261031T100245Z-b4b80aa5/evidence.json",
+      "sha256": "9bb825318de6dbef22de2135c1a9dacd173d288feb1b0b64f6f8418609f51843",
+      "version_id": "fgrTfapKHMYI0uND_FKZMfJ8GcqWsAEo"
+    },
+    {
+      "bytes": 7476,
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W5/astra-h101-gaps-20261031T100245Z-b4b80aa5/manifest.json",
+      "sha256": "6b32becffa507b560b2226e4671ae4c176e6edaa68b069f8399243aad91faef4",
+      "version_id": "vbqVGowEZa65hvvQyh6QVG4fCgHeXB7w"
+    }
+  ]
+}

@@ -1,0 +1,2146 @@
+{
+  "actual_consumption": null,
+  "completed_replay_receipts": 0,
+  "execution_admitted": false,
+  "metrics": {
+    "Elo": null,
+    "U4": null,
+    "val_reg_inner": null
+  },
+  "original_budget": {
+    "aggregate_cpu_seconds_max": 14400,
+    "deadline_utc": "2026-10-31T14:00:00Z",
+    "gpu_seconds_max": 14400,
+    "native_calls_max": 9600,
+    "optimizer_updates_total": 3600,
+    "pilot_calls_max": 240,
+    "planned_acquisition_calls": 1920,
+    "planned_calls_total": 7200,
+    "planned_confirmation_calls": 2160,
+    "planned_terminal_search_calls": 2880,
+    "reservation": "existing_W9_envelope_not_additive",
+    "unallocated_calls": 2400
+  },
+  "pending_replay_receipts": 150,
+  "protocol_amended": false,
+  "protocol_sha256": "d9973e972e54db0fc814dd8999a20fefbc450446152939e4d4a42c914c3a8ef9",
+  "remaining_authorized_budget": null,
+  "required_receipt_fields": [
+    "slot_id",
+    "fit_family_roster_sha256",
+    "memory_source_key_version_sha256",
+    "completed_input_manifest_sha256",
+    "learner_recipe_sha256",
+    "initialization_sha256",
+    "exposure_receipt_sha256",
+    "cost_ledger_sha256",
+    "terminal_parameters_sha256",
+    "endpoint_identity"
+  ],
+  "schema": "jope.h101.w9-cpu-receipt-plan/v1",
+  "slots": [
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "neural",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold0/seed701/A/neural"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "strongest_W1_tree",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold0/seed701/A/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "neural",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold0/seed701/B/neural"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "strongest_W1_tree",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold0/seed701/B/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "neural",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold0/seed701/C/neural"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "strongest_W1_tree",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold0/seed701/C/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "neural",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold0/seed701/D/neural"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "strongest_W1_tree",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold0/seed701/D/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "neural",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold0/seed701/uniform_fit_family/neural"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "strongest_W1_tree",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold0/seed701/uniform_fit_family/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "neural",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold0/seed702/A/neural"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "strongest_W1_tree",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold0/seed702/A/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "neural",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold0/seed702/B/neural"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "strongest_W1_tree",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold0/seed702/B/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "neural",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold0/seed702/C/neural"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "strongest_W1_tree",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold0/seed702/C/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "neural",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold0/seed702/D/neural"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "strongest_W1_tree",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold0/seed702/D/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "neural",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold0/seed702/uniform_fit_family/neural"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "strongest_W1_tree",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold0/seed702/uniform_fit_family/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "neural",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold0/seed703/A/neural"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "strongest_W1_tree",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold0/seed703/A/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "neural",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold0/seed703/B/neural"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "strongest_W1_tree",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold0/seed703/B/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "neural",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold0/seed703/C/neural"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "strongest_W1_tree",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold0/seed703/C/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "neural",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold0/seed703/D/neural"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "strongest_W1_tree",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold0/seed703/D/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "neural",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold0/seed703/uniform_fit_family/neural"
+    },
+    {
+      "fit_folds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 0,
+      "learner": "strongest_W1_tree",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold0/seed703/uniform_fit_family/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "neural",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold1/seed701/A/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "strongest_W1_tree",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold1/seed701/A/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "neural",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold1/seed701/B/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "strongest_W1_tree",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold1/seed701/B/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "neural",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold1/seed701/C/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "strongest_W1_tree",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold1/seed701/C/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "neural",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold1/seed701/D/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "strongest_W1_tree",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold1/seed701/D/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "neural",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold1/seed701/uniform_fit_family/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "strongest_W1_tree",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold1/seed701/uniform_fit_family/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "neural",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold1/seed702/A/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "strongest_W1_tree",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold1/seed702/A/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "neural",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold1/seed702/B/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "strongest_W1_tree",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold1/seed702/B/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "neural",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold1/seed702/C/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "strongest_W1_tree",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold1/seed702/C/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "neural",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold1/seed702/D/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "strongest_W1_tree",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold1/seed702/D/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "neural",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold1/seed702/uniform_fit_family/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "strongest_W1_tree",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold1/seed702/uniform_fit_family/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "neural",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold1/seed703/A/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "strongest_W1_tree",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold1/seed703/A/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "neural",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold1/seed703/B/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "strongest_W1_tree",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold1/seed703/B/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "neural",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold1/seed703/C/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "strongest_W1_tree",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold1/seed703/C/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "neural",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold1/seed703/D/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "strongest_W1_tree",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold1/seed703/D/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "neural",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold1/seed703/uniform_fit_family/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "held_fold": 1,
+      "learner": "strongest_W1_tree",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold1/seed703/uniform_fit_family/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "neural",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold2/seed701/A/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "strongest_W1_tree",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold2/seed701/A/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "neural",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold2/seed701/B/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "strongest_W1_tree",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold2/seed701/B/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "neural",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold2/seed701/C/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "strongest_W1_tree",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold2/seed701/C/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "neural",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold2/seed701/D/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "strongest_W1_tree",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold2/seed701/D/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "neural",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold2/seed701/uniform_fit_family/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "strongest_W1_tree",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold2/seed701/uniform_fit_family/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "neural",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold2/seed702/A/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "strongest_W1_tree",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold2/seed702/A/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "neural",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold2/seed702/B/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "strongest_W1_tree",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold2/seed702/B/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "neural",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold2/seed702/C/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "strongest_W1_tree",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold2/seed702/C/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "neural",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold2/seed702/D/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "strongest_W1_tree",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold2/seed702/D/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "neural",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold2/seed702/uniform_fit_family/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "strongest_W1_tree",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold2/seed702/uniform_fit_family/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "neural",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold2/seed703/A/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "strongest_W1_tree",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold2/seed703/A/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "neural",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold2/seed703/B/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "strongest_W1_tree",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold2/seed703/B/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "neural",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold2/seed703/C/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "strongest_W1_tree",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold2/seed703/C/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "neural",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold2/seed703/D/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "strongest_W1_tree",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold2/seed703/D/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "neural",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold2/seed703/uniform_fit_family/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "held_fold": 2,
+      "learner": "strongest_W1_tree",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold2/seed703/uniform_fit_family/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "neural",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold3/seed701/A/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "strongest_W1_tree",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold3/seed701/A/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "neural",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold3/seed701/B/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "strongest_W1_tree",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold3/seed701/B/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "neural",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold3/seed701/C/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "strongest_W1_tree",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold3/seed701/C/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "neural",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold3/seed701/D/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "strongest_W1_tree",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold3/seed701/D/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "neural",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold3/seed701/uniform_fit_family/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "strongest_W1_tree",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold3/seed701/uniform_fit_family/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "neural",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold3/seed702/A/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "strongest_W1_tree",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold3/seed702/A/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "neural",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold3/seed702/B/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "strongest_W1_tree",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold3/seed702/B/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "neural",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold3/seed702/C/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "strongest_W1_tree",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold3/seed702/C/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "neural",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold3/seed702/D/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "strongest_W1_tree",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold3/seed702/D/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "neural",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold3/seed702/uniform_fit_family/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "strongest_W1_tree",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold3/seed702/uniform_fit_family/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "neural",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold3/seed703/A/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "strongest_W1_tree",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold3/seed703/A/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "neural",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold3/seed703/B/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "strongest_W1_tree",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold3/seed703/B/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "neural",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold3/seed703/C/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "strongest_W1_tree",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold3/seed703/C/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "neural",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold3/seed703/D/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "strongest_W1_tree",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold3/seed703/D/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "neural",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold3/seed703/uniform_fit_family/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "held_fold": 3,
+      "learner": "strongest_W1_tree",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold3/seed703/uniform_fit_family/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "neural",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold4/seed701/A/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "strongest_W1_tree",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold4/seed701/A/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "neural",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold4/seed701/B/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "strongest_W1_tree",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold4/seed701/B/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "neural",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold4/seed701/C/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "strongest_W1_tree",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold4/seed701/C/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "neural",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold4/seed701/D/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "strongest_W1_tree",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold4/seed701/D/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "neural",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold4/seed701/uniform_fit_family/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "strongest_W1_tree",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 701,
+      "slot_id": "fold4/seed701/uniform_fit_family/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "neural",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold4/seed702/A/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "strongest_W1_tree",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold4/seed702/A/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "neural",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold4/seed702/B/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "strongest_W1_tree",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold4/seed702/B/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "neural",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold4/seed702/C/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "strongest_W1_tree",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold4/seed702/C/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "neural",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold4/seed702/D/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "strongest_W1_tree",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold4/seed702/D/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "neural",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold4/seed702/uniform_fit_family/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "strongest_W1_tree",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 702,
+      "slot_id": "fold4/seed702/uniform_fit_family/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "neural",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold4/seed703/A/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "strongest_W1_tree",
+      "memory": "A",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold4/seed703/A/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "neural",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold4/seed703/B/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "strongest_W1_tree",
+      "memory": "B",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold4/seed703/B/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "neural",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold4/seed703/C/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "strongest_W1_tree",
+      "memory": "C",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold4/seed703/C/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "neural",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold4/seed703/D/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "strongest_W1_tree",
+      "memory": "D",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold4/seed703/D/strongest_W1_tree"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "neural",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold4/seed703/uniform_fit_family/neural"
+    },
+    {
+      "fit_folds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "held_fold": 4,
+      "learner": "strongest_W1_tree",
+      "memory": "uniform_fit_family",
+      "receipt_sha256": null,
+      "seed": 703,
+      "slot_id": "fold4/seed703/uniform_fit_family/strongest_W1_tree"
+    }
+  ],
+  "status": "CPU_PREPARATION_ONLY",
+  "strongest_W1_recipe_sha256": null,
+  "uniform_memory_source": "fit-family acquisition only; never terminal R held-context outcomes"
+}
