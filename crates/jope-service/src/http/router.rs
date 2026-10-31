@@ -78,23 +78,21 @@ fn build_router(
                     axum::routing::post(super::datasets::register)
                         .layer(DefaultBodyLimit::disable()),
                 )
-            } else if operation.name == "run_start" && journal.is_some() {
+            } else if let ("run_start", Some(_)) = (operation.name, journal.as_ref()) {
                 app.route(path, axum::routing::post(super::runs::start))
-            } else if operation.name == "run_status" && journal.is_some() {
+            } else if let ("run_status", Some(log)) = (operation.name, journal.as_ref()) {
                 if path.ends_with("{id}") {
                     app.route(
                         path,
-                        get(super::sse::long_poll_status)
-                            .with_state(Arc::clone(journal.as_ref().unwrap())),
+                        get(super::sse::long_poll_status).with_state(Arc::clone(log)),
                     )
                 } else {
                     app.route(path, get(super::runs::list))
                 }
-            } else if operation.name == "run_events" && journal.is_some() {
+            } else if let ("run_events", Some(log)) = (operation.name, journal.as_ref()) {
                 app.route(
                     path,
-                    get(super::sse::deliver_events)
-                        .with_state(Arc::clone(journal.as_ref().unwrap())),
+                    get(super::sse::deliver_events).with_state(Arc::clone(log)),
                 )
             } else {
                 app.route(

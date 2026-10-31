@@ -89,12 +89,43 @@ fn spec(dataset: jope_api::ids::DatasetId) -> RunSpec {
     spec
 }
 fn initialize(home: &Path, bytes: &[u8]) -> Result<(Arc<InProcessEngine>, RunSpec)> {
-    let engine = Arc::new(InProcessEngine::open_with_worker(home, BIN)?);
+    // Other Cargo jobs share a build cache. Pin this executable before starting
+    // a long-lived engine or spawning workers from it.
+    let pinned = home.join("jopedime");
+    fs::copy(BIN, &pinned)?;
+    let digest = jope_runtime::sha256_hex(&fs::read(&pinned)?);
+    ensure!(
+        digest == jope_runtime::sha256_hex(&fs::read(BIN)?),
+        "appliance changed while being pinned"
+    );
+    let version = Command::new(&pinned)
+        .args(["--version", "--json"])
+        .output()?;
+    ensure!(
+        version.status.success(),
+        "pinned appliance version check failed"
+    );
+    let version: Value = serde_json::from_slice(&version.stdout)?;
+    if let Ok(expected) = std::env::var("JOPE_INT01_SOURCE_HEAD") {
+        ensure!(
+            version["source_sha40"] == expected,
+            "appliance was built from another source commit"
+        );
+    }
+    if let Some(root) = std::env::var_os("JOPE_INT01_RECEIPTS") {
+        let root = PathBuf::from(root);
+        fs::create_dir_all(&root)?;
+        fs::write(
+            root.join(format!("executable-{digest}.json")),
+            serde_json::to_vec_pretty(&version)?,
+        )?;
+    }
+    let engine = Arc::new(InProcessEngine::open_with_worker(home, &pinned)?);
     let dataset = register::register(engine.store(), bytes, &Default::default())?;
     Ok((engine, spec(dataset.id)))
 }
 fn batch_command(home: &Path, spec: &RunSpec) -> Command {
-    let mut command = Command::new(BIN);
+    let mut command = Command::new(home.join("jopedime"));
     command
         .env("JOPEDIME_HOME", home)
         .env_remove("JOPEDIME_ENDPOINT")
@@ -331,7 +362,7 @@ struct Rpc {
 }
 impl Rpc {
     fn open(home: &Path) -> Result<Self> {
-        let mut child = Command::new(BIN)
+        let mut child = Command::new(home.join("jopedime"))
             .arg("mcp")
             .env("JOPEDIME_HOME", home)
             .env_remove("JOPEDIME_ENDPOINT")
@@ -414,7 +445,7 @@ fn terminal(home: &Path, csv: &Path, id: &jope_api::ids::RunId) -> Result<String
         pixel_width: 0,
         pixel_height: 0,
     })?;
-    let mut command = CommandBuilder::new(BIN);
+    let mut command = CommandBuilder::new(home.join("jopedime"));
     command.env("JOPEDIME_HOME", home);
     command.env("TERM", "dumb");
     command.env("NO_COLOR", "1");
@@ -504,6 +535,13 @@ pub(super) fn shared_run_surfaces() -> Result<()> {
         "PTY omitted actual run result"
     );
     captures.push(capture(&server.client, Surface::Terminal, id)?);
+    let inventory = server.client.runs()?;
+    ensure!(
+        inventory.runs.len() == 1
+            && &inventory.runs[0].run_id == id
+            && inventory.next_after.is_none(),
+        "surface retries created duplicate runs"
+    );
     assert_equivalent(&captures).map_err(anyhow::Error::msg)?;
     ensure!(
         captures[0]
@@ -536,7 +574,7 @@ pub(super) fn batch_fallback() -> Result<()> {
     let (engine, spec) = initialize(home.path(), &bytes)?;
     drop(engine);
     let output = batch_command(home.path(), &spec).output()?;
-    let engine = InProcessEngine::open_with_worker(home.path(), BIN)?;
+    let engine = InProcessEngine::open_with_worker(home.path(), home.path().join("jopedime"))?;
     retain_execution(&engine, &output, "batch")?;
     let completed = snapshot(output)?;
     ensure!(

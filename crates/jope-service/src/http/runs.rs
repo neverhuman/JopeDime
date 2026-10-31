@@ -19,7 +19,7 @@ use crate::{
     idempotency::{CommandOutcome, RequestIdentity},
     ranker::admission::{resolve_unqualified, GuidanceUnavailableReason},
     store::{RecordKey, Store},
-    telemetry::SystemSensors,
+    telemetry::{Sensors, SystemSensors},
 };
 use axum::{
     body::Body,
@@ -196,6 +196,26 @@ impl RunService {
         if dataset.csv.bytes > self.config.limits.max_dataset_bytes.value {
             return Err(invalid("Dataset exceeds configured maximum bytes."));
         }
+        let fit_estimate =
+            ((dataset.rows as f64) * (1.0 - spec.split.holdout_fraction)).floor() as u64;
+        if fit_estimate > self.config.limits.rung1_max_rows.value {
+            return Err(invalid("FIT exceeds limits.rung1_max_rows."));
+        }
+        let available = SystemSensors::without_gpu(&self.home)
+            .mem_available()
+            .map_err(|_| unavailable("Memory admission sensor unavailable."))?;
+        if dataset
+            .csv
+            .bytes
+            .saturating_mul(4)
+            .saturating_add(WORKER_RAM)
+            > available
+        {
+            return Err(issue(
+                ErrorCode::BackendUnavailable,
+                "Insufficient available memory for this bounded run.",
+            ));
+        }
         let source = self.store.read_blob(&dataset.csv).map_err(io)?;
         let mut table = jope_runtime::table::parse_csv(&source, &Default::default()).map_err(io)?;
         let matrix =
@@ -230,7 +250,7 @@ impl RunService {
             || table.rows.iter().any(|row| {
                 row[target]
                     .as_deref()
-                    .and_then(|v| v.parse::<f64>().ok())
+                    .and_then(|v| v.trim().parse::<f64>().ok())
                     .is_none_or(|v| !v.is_finite())
             })
         {
@@ -339,7 +359,8 @@ impl RunService {
         let search = SearchPlan {
             run_id: format!("run_{}", ulid::Ulid::new()).parse().map_err(io)?,
             dataset_id: spec.dataset.clone(),
-            problem_digest: hash(&serde_json::to_vec(&normalized).map_err(io)?),
+            problem_digest: hash(&serde_json::to_vec(&json!({"spec":normalized,"csv_sha256":dataset.csv.sha256,
+                "fit_sha256":hash(&fit),"objective_digest":public.objective.digest,"split":"public-run/fit-v1"})).map_err(io)?),
             bundle_digest: hash(b"cpu-native-no-learned-bundle/v1"),
             binary_version: self.binary.clone(),
             matrix_path: PathBuf::new(),
@@ -385,6 +406,12 @@ impl RunService {
             Ok(Some(receipt)) => return receipt.into_response(),
             Ok(None) => {}
             Err(error) => return error.into_response(),
+        }
+        if !spec.dry_run && self.activity.active_runs() != 0 {
+            return response(issue(
+                ErrorCode::BackendUnavailable,
+                "The bounded CPU run backend is busy; retry this key after the active run drains.",
+            ));
         }
         let mut prepared = match self.prepare(&spec) {
             Ok(value) => value,

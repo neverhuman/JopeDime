@@ -466,7 +466,7 @@ impl Session {
 
     fn start_run(&mut self, args: &[String]) -> anyhow::Result<Vec<String>> {
         anyhow::ensure!(
-            args.len() % 2 == 0,
+            args.len().is_multiple_of(2),
             "usage: \\run [--seed S] [--idempotency-key KEY]"
         );
         let mut key = None;

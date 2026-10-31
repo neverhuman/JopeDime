@@ -324,6 +324,12 @@ impl Default for EngineActivity {
 }
 
 impl EngineActivity {
+    pub(crate) fn active_runs(&self) -> usize {
+        self.counts
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .active_runs
+    }
     pub fn begin_run(self: &Arc<Self>) -> ActivityGuard {
         let mut counts = self
             .counts

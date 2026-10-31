@@ -1,4 +1,4 @@
-//! Pre-stage harness for spec §1.2 and §14/S1.
+//! Bounded real CPU transport tests and synthetic comparator controls (§1.2/S1).
 //!
 //! Adapter tests should turn each real surface's response into the same typed
 //! `SurfaceCapture`; this module compares the champion, final scores, and the
