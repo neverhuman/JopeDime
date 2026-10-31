@@ -1,0 +1,44 @@
+{
+  "schema": "jope.w1.artifact-audit-execution/v1",
+  "observed_at_utc": "2026-10-31T05:40:37.598388+00:00",
+  "source_git_base": "7c0dd66f58bff7eef718cef629afc6e9d8e17d8a",
+  "run_id": "astra-w1-artifact-identity-t2335",
+  "command": "nice -n 15 python3 audit.py --root /home/ubuntu/jope-data/w1 --output metrics.json",
+  "exit_status": 0,
+  "test_command": "nice -n 15 python3 test_audit.py",
+  "tests": {
+    "executed": 10,
+    "passed": 10,
+    "failed": 0,
+    "skipped": 0
+  },
+  "checker_sha256": "eb60aaad18bcd4b7c34839f93b4bbc1cd261f9a0d0d6b3fb676b460d4a033829",
+  "test_source_sha256": "2e0c9def90ca8017f9a6670e8b7a464466b6eee4dd758969fbe7a07c09e3588e",
+  "source_input_roots": [
+    "/home/ubuntu/jope-data/w1"
+  ],
+  "input_class": "Existing real-S3-derived W1 producer artifacts; no synthetic scientific input",
+  "cpu_work": "one local xbabe2 read-only metadata/hash shard; no independent shard on other hosts",
+  "routing": "t2335 excludes xbabe3/xbabe4 tests; no remote test needed for2.8second serial audit",
+  "resources": {
+    "wall_seconds": 2.7818308221176267,
+    "process_cpu_seconds": 0.318604194,
+    "host_cpu_preflight_pct": 16.08832807570978,
+    "peak_rss_kib": 655580,
+    "native_fits": 0,
+    "gpu_seconds": 0,
+    "workers": 1,
+    "nice": 15
+  },
+  "remaining_scope": [
+    "baseline report generation belongs ARGON",
+    "independent training/asset/alias provenance and signed CPU launch review not certified"
+  ],
+  "metrics": {
+    "Elo": null,
+    "val_reg_inner": null,
+    "U4": null,
+    "reason": "Artifact-identity preparation audit; no model scoring or training"
+  },
+  "audit_finished_at_utc_from_receipt_mtime": "2026-10-31T05:38:54.070645+00:00"
+}

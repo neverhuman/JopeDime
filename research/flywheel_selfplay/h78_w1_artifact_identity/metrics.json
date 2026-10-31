@@ -1,0 +1,207 @@
+{
+  "schema": "jope.w1.artifact-audit/v1",
+  "verdict": "NOT_READY",
+  "launch_admitted": false,
+  "issues": [
+    {
+      "kind": "MISSING",
+      "artifact": "w1_cpu_baselines_report.json"
+    }
+  ],
+  "artifacts": {
+    "fold_manifest.json": {
+      "exists": true,
+      "bytes": 136597,
+      "sha256": "dd211134bba127960b1612687478064969dca422e35dfa889790760f316961c1"
+    },
+    "cache/w1_prior_manifest.json": {
+      "exists": true,
+      "bytes": 3314,
+      "sha256": "a6510ba31490b0615f174bb92d6b53234e0207a85f40a5892057ded6fee1abb7"
+    },
+    "cache/train_only_context_features.npz": {
+      "exists": true,
+      "bytes": 8034720,
+      "sha256": "d9e2275f425cdac1107b1f010c75b69d64dd3f7d29b41f3e1d5fd91bf128fca6"
+    },
+    "cache/w1_train_only_priors.npz": {
+      "exists": true,
+      "bytes": 185695712,
+      "sha256": "5213faa8d0bcc906e1d3c3226d6104e3846cf11c9da9c222298e9f0dc2fb46d9"
+    },
+    "w1_cpu_baselines_report.json": {
+      "exists": false,
+      "bytes": null,
+      "sha256": null
+    }
+  },
+  "cache_headers": {
+    "context": {
+      "cids.npy": {
+        "descr": "<U64",
+        "fortran_order": false,
+        "shape": [
+          1219
+        ]
+      },
+      "tokens_10x32.npy": {
+        "descr": "<f4",
+        "fortran_order": false,
+        "shape": [
+          1219,
+          10,
+          32
+        ]
+      },
+      "mask_10.npy": {
+        "descr": "|b1",
+        "fortran_order": false,
+        "shape": [
+          1219,
+          10
+        ]
+      },
+      "dope629.npy": {
+        "descr": "<f4",
+        "fortran_order": false,
+        "shape": [
+          1219,
+          629
+        ]
+      },
+      "lm48_z.npy": {
+        "descr": "<f4",
+        "fortran_order": false,
+        "shape": [
+          1219,
+          48
+        ]
+      },
+      "ctx_feat_584.npy": {
+        "descr": "<f4",
+        "fortran_order": false,
+        "shape": [
+          1219,
+          584
+        ]
+      }
+    },
+    "prior": {
+      "cids.npy": {
+        "descr": "<U64",
+        "fortran_order": false,
+        "shape": [
+          1219
+        ]
+      },
+      "offsets.npy": {
+        "descr": "<i8",
+        "fortran_order": false,
+        "shape": [
+          1220
+        ]
+      },
+      "scale.npy": {
+        "descr": "<f4",
+        "fortran_order": false,
+        "shape": [
+          1219
+        ]
+      },
+      "proj16.npy": {
+        "descr": "<f4",
+        "fortran_order": false,
+        "shape": [
+          1404287,
+          16
+        ]
+      },
+      "sos_prior.npy": {
+        "descr": "<f4",
+        "fortran_order": false,
+        "shape": [
+          1404287,
+          2
+        ]
+      },
+      "prior10_cost.npy": {
+        "descr": "<f4",
+        "fortran_order": false,
+        "shape": [
+          1404287
+        ]
+      },
+      "oof_u_prog412.npy": {
+        "descr": "<f4",
+        "fortran_order": false,
+        "shape": [
+          1404287
+        ]
+      },
+      "oof_u_prog412_ctx.npy": {
+        "descr": "<f4",
+        "fortran_order": false,
+        "shape": [
+          1404287
+        ]
+      },
+      "oof_cost_prog412.npy": {
+        "descr": "<f4",
+        "fortran_order": false,
+        "shape": [
+          1404287
+        ]
+      },
+      "oof_cost_prog412_ctx.npy": {
+        "descr": "<f4",
+        "fortran_order": false,
+        "shape": [
+          1404287
+        ]
+      },
+      "cal_cost_prog412_by_fold.npy": {
+        "descr": "<f4",
+        "fortran_order": false,
+        "shape": [
+          5,
+          1404287
+        ]
+      },
+      "cal_cost_prog412_ctx_by_fold.npy": {
+        "descr": "<f4",
+        "fortran_order": false,
+        "shape": [
+          5,
+          1404287
+        ]
+      }
+    }
+  },
+  "folds": 5,
+  "unique_contexts": 1219,
+  "unique_families": 205,
+  "candidate_slots": 1404287,
+  "cache_cid_order_equal": true,
+  "metadata_roster_equal": true,
+  "offsets_strictly_increasing": true,
+  "producer_run_id": "w1_cpu_prep_20261031T0312Z",
+  "producer_s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W1/w1_cpu_prep_20261031T0312Z",
+  "resources": {
+    "wall_seconds": 2.7818308221176267,
+    "process_cpu_seconds": 0.318604194,
+    "host_cpu_preflight_pct": 16.08832807570978,
+    "peak_rss_kib": 655580,
+    "native_fits": 0,
+    "gpu_seconds": 0,
+    "workers": 1,
+    "nice": 15
+  },
+  "limitations": [
+    "Hashes bind current bytes to producer manifest, not training provenance.",
+    "Alias/zero-access claims are producer metadata, not independent row closure.",
+    "Only IDs, offsets and headers decoded; all cache bytes were hash-streamed.",
+    "No floating-point feature/outcome arrays decoded, no model/scoring run.",
+    "Baseline existence is inventoried; report semantics and GPU admission not certified.",
+    "Stable observed file stamps do not provide a producer transaction/lock."
+  ]
+}
