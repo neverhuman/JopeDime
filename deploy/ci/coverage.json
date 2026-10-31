@@ -13290,6 +13290,16 @@
       "lanes": [],
       "scope": "H82 bounded operator recovery proof: reproduce read-only checkpoint staging failure, preserve known immutable input before cleanup, seal the stopped prefix, retain budgets and reject scored/unknown/unaccounted states; no GPU/product qualification."
     },
+    "python:research/flywheel_selfplay/h100_asam_confirm/test_h100.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H100 synthetic CPU proof of H82 optimizer equivalence, ASAM radius/rollback, immutable per-attempt restaging, fixed drift calibration, unrevealed top-four overlap, complete-panel bootstrap/Holm/harm gates and precursor/cumulative-budget refusals; no GPU or product qualification."
+    },
     "python:research/flywheel_selfplay/h82_sam_steps/test_h82.py": {
       "discovery": {
         "kind": "python-family"
