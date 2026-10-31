@@ -13,7 +13,9 @@ pub fn run(command: RunsCommand) -> anyhow::Result<()> {
 
 fn execute<T: Transport>(transport: &T, command: RunsCommand) -> anyhow::Result<Value> {
     match command {
-        RunsCommand::List => transport.runs().context("list runs"),
+        RunsCommand::List => Ok(serde_json::to_value(
+            transport.runs().context("list runs")?,
+        )?),
         RunsCommand::Delete {
             run,
             idempotency_key,
@@ -22,14 +24,18 @@ fn execute<T: Transport>(transport: &T, command: RunsCommand) -> anyhow::Result<
                 .map_err(|_| jope_runtime::Failure::input("invalid run id"))?;
             let key = crate::common::resolve_idempotency_key(idempotency_key.as_deref());
             crate::common::announce_generated_key(idempotency_key.as_deref(), &key)?;
-            transport.run_delete(&id, &key).context("delete run")
+            Ok(serde_json::to_value(
+                transport.run_delete(&id, &key).context("delete run")?,
+            )?)
         }
         RunsCommand::ExportFeedback { run, out } => {
             let id = RunId::from_str(&run)
                 .map_err(|_| jope_runtime::Failure::input("invalid run id"))?;
-            let value = transport
-                .feedback_export(&id)
-                .context("export run feedback")?;
+            let value = serde_json::to_value(
+                transport
+                    .feedback_export(&id)
+                    .context("export run feedback")?,
+            )?;
             let bytes = serde_json::to_vec_pretty(&value).context("serialize feedback response")?;
             std::fs::write(&out, bytes)
                 .map_err(|error| jope_runtime::Failure::output(error.to_string()))?;
@@ -72,7 +78,10 @@ mod tests {
     fn list_has_golden_api_json_and_registry_route() {
         let mock = Mock::default();
         let value = execute(&mock, RunsCommand::List).unwrap();
-        assert_eq!(serde_json::to_string(&value).unwrap(), r#"{"runs":[]}"#);
+        assert_eq!(
+            serde_json::to_string(&value).unwrap(),
+            r#"{"next_after":null,"runs":[]}"#
+        );
         assert_eq!(mock.0.lock().unwrap()[0].target(), "/v1/runs");
     }
 

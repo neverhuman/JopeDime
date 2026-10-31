@@ -134,7 +134,8 @@ fn r4_fixture_reconnect_does_not_acknowledge_partial_frames_or_duplicate_replays
         observed.extend(stream.map(durable));
         assert_eq!(observed, expected, "reattach at {cut}");
         assert_eq!(*transport.cursors.lock().unwrap(), vec![None, cursor]);
-        let page = transport.run_events(&run, DecimalU64(0), 256).unwrap();
+        let page =
+            serde_json::to_value(transport.run_events(&run, DecimalU64(0), 256).unwrap()).unwrap();
         let page_events: Vec<PublicEvent> = serde_json::from_value(page["events"].clone()).unwrap();
         assert_eq!(observed, page_events, "stream and page observer at {cut}");
     }
