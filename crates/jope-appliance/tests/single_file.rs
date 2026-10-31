@@ -242,10 +242,10 @@ fn packaged_run_reports_device_refusals_and_actual_cpu_plan() {
             for (device, expected, kind) in [
                 ("cuda:0", 4, "BACKEND_UNAVAILABLE"),
                 ("cuda:7", 4, "BACKEND_UNAVAILABLE"),
-                ("cuda:", 2, "INVALID_INPUT"),
-                ("cuda:-1", 2, "INVALID_INPUT"),
-                ("cuda:4294967296", 2, "INVALID_INPUT"),
-                ("gpu", 2, "INVALID_INPUT"),
+                ("cuda:", 2, "Unknown device"),
+                ("cuda:-1", 2, "Unknown device"),
+                ("cuda:4294967296", 2, "Unknown device"),
+                ("gpu", 2, "Unknown device"),
             ] {
                 let output = invoke(device, dry_run, json);
                 assert_eq!(
