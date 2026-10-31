@@ -78,6 +78,11 @@ class H55PolicyTests(unittest.TestCase):
                                wave.MAX_LOCK_WAIT_SECONDS - prior)
         self.assertEqual(wave.remaining_lock_wait_seconds(wave.MAX_LOCK_WAIT_SECONDS), 0.0)
 
+    def test_long_lock_wait_does_not_reduce_gpu_cell_cap(self):
+        prior_wait = 2_279.0
+        self.assertGreater(prior_wait, 0.0)
+        self.assertEqual(wave.remaining_gpu_wall_seconds(1800.0, 5.330), 1794.670)
+
     def test_wait_accounting_preserves_post_lock_preflight_time(self):
         exc = wave.CellPreflightError("filesystem / at 95.2%", 963.4)
         self.assertEqual(wave.exception_wait_seconds(exc), 963.4)

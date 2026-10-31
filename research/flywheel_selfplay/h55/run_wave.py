@@ -59,6 +59,11 @@ def remaining_lock_wait_seconds(cumulative_wait_seconds: float) -> float:
     return max(0.0, MAX_LOCK_WAIT_SECONDS - cumulative_wait_seconds)
 
 
+def remaining_gpu_wall_seconds(cap_seconds: float, gpu_wall_seconds: float) -> float:
+    """Cell-wall budget is independent of time spent waiting for the lock."""
+    return max(0.0, cap_seconds - gpu_wall_seconds)
+
+
 def disk_guard_error(usage=None) -> str | None:
     usage = usage or shutil.disk_usage("/")
     used_percent = 100.0 * (usage.total - usage.free) / usage.total
@@ -400,7 +405,7 @@ def run_outcomes(amendment: Path, prior_lock_wait_seconds: float = 0.0,
     gpu_wall_total = prior_gpu_wall_seconds
     reason = None
     for index, (arm, seed) in enumerate(CELL_ORDER, 1):
-        remaining = cap - gpu_wall_total
+        remaining = remaining_gpu_wall_seconds(cap, gpu_wall_total)
         if remaining <= 10:
             reason = "preregistered total locked-cell GPU wall cap reached between cells"
             break
