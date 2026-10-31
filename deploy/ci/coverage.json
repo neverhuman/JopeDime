@@ -13268,6 +13268,16 @@
       "lanes": [],
       "scope": "H82 prospective fresh-seed SAM/ASAM/K8 CPU fixtures for durable pre-scoring retry boundaries, two-retry/wall accounting, FIFO release, reference restoration and paired family Elo/admission; no real corpus payloads or product qualification."
     },
+    "python:research/flywheel_selfplay/h93_lookahead_noise/test_h93.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H93 CPU-only Lookahead, annealed-gradient-noise and effective-batch update-plan fixtures, FIFO/H80/H90 launch barrier, paired family Elo/admission, and dev top-four overlap diagnostics; no corpus payloads or product qualification."
+    },
     "python:research/flywheel_selfplay/h76_sam_steps/test_h76.py": {
       "discovery": {
         "kind": "python-family"

@@ -554,7 +554,7 @@ def rotate_daemon_log(
                 rotated = state / f"jope-diskd-{utc_now():%Y%m%dT%H%M%SZ}.log.gz"
                 print(f"{'WOULD ROTATE' if dry_run else 'ROTATE'} {active} -> {rotated}")
                 if not dry_run:
-                    with active.open("rb") as source, gzip.open(rotated, "wb", compresslevel=6) as target:
+                    with active.open("rb") as source, gzip.open(rotated, "xb", compresslevel=6) as target:
                         shutil.copyfileobj(source, target)
                     if sha256_file(active) != sha256_file_gzip(rotated):
                         rotated.unlink(missing_ok=True)
