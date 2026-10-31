@@ -5,6 +5,7 @@
 
 pub mod parameters;
 pub mod parse;
+pub mod positions;
 pub mod structural;
 
 use anyhow::{ensure, Result};
