@@ -96,6 +96,26 @@ After input/learner review and when the real lock becomes available, dispatch:
 nice -n 10 python3 -m research.joint_regbin.driver run PLAN.json --packet PACKET --worker LEARNER.py --checkpoint INITIAL.pt --out "$HOME/jope-data/jrb-01/attempt1" --score-store-module "$HOME/jope_plan/scores/score_store.py" --score-store "$HOME/jope_plan/scores/history.jsonl"
 ```
 
+Before reserving compute, check the assembled inputs on CPU:
+
+```sh
+nice -n 10 python3 -m research.joint_regbin.driver preflight PLAN.json --packet PACKET --worker LEARNER.py --checkpoint INITIAL.pt
+```
+
+`preflight` verifies the frozen plan (including its fixed DOPE pin) and the worker, checkpoint and approved
+packet file hashes. It rejects protected paths before hashing any input and
+prints `INPUTS_VERIFIED` only when all identities match. It takes no GPU lock,
+starts no worker, reserves no campaign and writes no score history. Missing or
+changed inputs exit nonzero. The same checks run again at dispatch, so a passing
+preflight cannot hide later input drift.
+
+This verifies input identities, not a two-task learner or a scientific result:
+the response retains `qualification_status: NOT_QUALIFIED` and a null verdict.
+The task's sustained-regression-gains prerequisite and separate learner/input
+qualification still apply before learning. Plans pin implementation bytes;
+prepare a new plan after upgrading the driver, without resetting an existing
+campaign reservation.
+
 The dispatcher takes the real exclusive lock nonblocking. If busy, keep the same
 preregistration and queue normally; do not substitute a lock or reset budgets.
 There is one worker process at a time and one shared six-hour/10GiB campaign cap.
