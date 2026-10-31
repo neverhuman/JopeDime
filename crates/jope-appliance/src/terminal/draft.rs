@@ -271,4 +271,64 @@ mod tests {
         assert!(draft.apply(r"\lang rust,brainfuck").is_err());
         assert!(draft.apply(r"\objective {invalid}").is_err());
     }
+
+    #[test]
+    fn dataset_suggestions_and_draft_options_project_into_dry_run_spec() {
+        let profile: DatasetProfile = serde_json::from_value(serde_json::json!({
+            "dataset_id": "ds_0123456789abcdef01234567",
+            "name": "measurements.csv",
+            "bytes": "128",
+            "rows": "12",
+            "columns": [
+                {"name": "target", "data_type": "number", "missing": "0", "distinct": "8"},
+                {"name": "group", "data_type": "string", "missing": "0", "distinct": "3"}
+            ],
+            "target_suggestions": [
+                {"column": "target", "task": "regression", "reason": "numeric"}
+            ],
+            "warnings": []
+        }))
+        .unwrap();
+        let mut draft = Draft::default();
+        draft.set_dataset(profile);
+        draft
+            .apply(r"\target target --task regression --ignore group --group group")
+            .unwrap();
+        draft.apply(r"\effort medium --evals 64 --time 2m").unwrap();
+        draft.apply(r"\landmarks none").unwrap();
+        draft.apply(r"\lang rust,python --best-effort").unwrap();
+        draft.set_seed(DecimalU64(7));
+
+        let spec = draft.run_spec(true).unwrap();
+        assert_eq!(spec.dataset.to_string(), "ds_0123456789abcdef01234567");
+        assert_eq!(spec.target, "target");
+        assert_eq!(spec.task, Task::Regression);
+        assert_eq!(spec.ignore_columns, ["group"]);
+        assert_eq!(spec.split.kind, SplitKind::Grouped);
+        assert_eq!(spec.split.group_column.as_deref(), Some("group"));
+        assert_eq!(spec.effort, Effort::Medium);
+        assert_eq!(spec.budget.evaluations, Some(DecimalU64(64)));
+        assert_eq!(spec.budget.wall_seconds, Some(DecimalU64(120)));
+        assert_eq!(spec.landmarks, LandmarkMode::None);
+        assert_eq!(spec.languages, [Language::Rust, Language::Python]);
+        assert!(!spec.require_all_languages);
+        assert_eq!(spec.seed, DecimalU64(7));
+        assert!(spec.dry_run);
+        assert_eq!(draft.columns, ["target", "group"]);
+    }
+
+    #[test]
+    fn task_duration_and_effort_options_reject_invalid_boundaries() {
+        assert_eq!(parse_task("binary").unwrap(), Task::Binary);
+        assert!(parse_task("unsupported").is_err());
+        assert_eq!(parse_duration("9").unwrap(), DecimalU64(9));
+        assert_eq!(parse_duration("3s").unwrap(), DecimalU64(3));
+        assert_eq!(parse_duration("2m").unwrap(), DecimalU64(120));
+        assert!(parse_duration("18446744073709551615m").is_err());
+        assert!(parse_duration("-1s").is_err());
+
+        let mut draft = Draft::default();
+        assert!(draft.apply(r"\effort fast --evals -1").is_err());
+        assert!(draft.apply(r"\effort fast --time nope").is_err());
+    }
 }
