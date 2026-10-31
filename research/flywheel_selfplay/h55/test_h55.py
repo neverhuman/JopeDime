@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+"""Focused, data-free tests for H55 admission and resource guardrails."""
+from __future__ import annotations
+
+import importlib.util
+from pathlib import Path
+from types import SimpleNamespace
+import unittest
+from unittest import mock
+
+HERE = Path(__file__).resolve().parent
+
+
+def module(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot import {path}")
+    result = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(result)
+    return result
+
+
+audit = module("h55_test_audit", HERE / "audit.py")
+metrics = module("h55_test_metrics", HERE / "build_metrics.py")
+wave = module("h55_test_wave", HERE / "run_wave.py")
+runner = module("h55_test_runner", HERE / "runner.py")
+
+
+class H55PolicyTests(unittest.TestCase):
+    def test_tied_lcb_is_not_admitted(self):
+        rows = []
+        for arm in ("swa8", "ema25"):
+            for seed in (12, 13, 14):
+                rows.append({"arm": arm, "seed": seed,
+                             "family_gain_vs_r882": {"f1": 0.0, "f2": 0.0}})
+        result = metrics.family_cluster_admission(rows, "swa8")
+        self.assertEqual(result["mean_lcb95"], 0.0)
+        self.assertFalse(result["admitted"])
+
+    def test_positive_margin_and_no_harm_can_admit(self):
+        rows = [{"arm": "ema25", "seed": seed,
+                 "family_gain_vs_r882": {f"f{i}": 0.02 for i in range(8)}}
+                for seed in (12, 13, 14)]
+        result = metrics.family_cluster_admission(rows, "ema25")
+        self.assertGreater(result["mean_lcb95"], 0.001)
+        self.assertTrue(result["admitted"])
+
+    def test_cpu_rss_and_disk_limits_are_fail_closed(self):
+        good = {"coordinator_preflight": {
+            "child_max_rss_kib": audit.RSS_LIMIT_KIB - 1,
+            "child_max_host_cpu_observed_percent": 85.0,
+            "host_cpu_percent_before": 85.0,
+            "disk_used_percent": 94.99,
+            "disk_free_bytes": 2 * 1024**3,
+        }}
+        audit.audit_resources(good, "fixture")
+        for key, value in (("child_max_rss_kib", audit.RSS_LIMIT_KIB),
+                           ("child_max_host_cpu_observed_percent", 85.01),
+                           ("disk_used_percent", 95.0),
+                           ("disk_free_bytes", 1024**3 - 1)):
+            bad = {"coordinator_preflight": dict(good["coordinator_preflight"], **{key: value})}
+            with self.assertRaises(SystemExit, msg=key):
+                audit.audit_resources(bad, "fixture")
+
+    def test_terminal_read_limit_is_one_per_seed(self):
+        chosen = wave.terminal_arm_by_preregistered_order({
+            "arms": {"swa8": {"admitted": True}, "ema25": {"admitted": True}}
+        })
+        self.assertEqual(chosen, "swa8")
+        self.assertIsNone(wave.terminal_arm_by_preregistered_order({"arms": {}}))
+        reads = {(chosen, seed) for seed in (12, 13, 14)} if chosen else set()
+        self.assertEqual(len(reads), 3)
+        self.assertEqual({seed for _, seed in reads}, {12, 13, 14})
+
+    def test_prior_lock_wait_is_carried_across_attempts(self):
+        prior = 903.6
+        self.assertAlmostEqual(wave.remaining_lock_wait_seconds(prior),
+                               wave.MAX_LOCK_WAIT_SECONDS - prior)
+        self.assertEqual(wave.remaining_lock_wait_seconds(wave.MAX_LOCK_WAIT_SECONDS), 0.0)
+
+    def test_long_lock_wait_does_not_reduce_gpu_cell_cap(self):
+        prior_wait = 2_279.0
+        self.assertGreater(prior_wait, 0.0)
+        self.assertEqual(wave.remaining_gpu_wall_seconds(1800.0, 5.330), 1794.670)
+
+    def test_wait_accounting_preserves_post_lock_preflight_time(self):
+        exc = wave.CellPreflightError("filesystem / at 95.2%", 963.4)
+        self.assertEqual(wave.exception_wait_seconds(exc), 963.4)
+
+    def test_lock_poll_checks_disk_before_attempt(self):
+        usage = SimpleNamespace(total=1000 * 1024**3, free=49 * 1024**3)
+        self.assertIn("95% full", wave.disk_guard_error(usage))
+        safe = SimpleNamespace(total=1000 * 1024**3, free=51 * 1024**3)
+        self.assertIsNone(wave.disk_guard_error(safe))
+
+    def test_outcome_runner_has_no_unregistered_timing_flag(self):
+        args = SimpleNamespace(seed=12, arm="swa8", device="cuda:0", lock_held=True,
+                               mode="outcome", input=Path("unused"), checkpoint=Path("unused"))
+        with mock.patch.object(runner, "prepare_training", side_effect=LookupError("stop before data")):
+            with self.assertRaisesRegex(LookupError, "stop before data"):
+                runner.train_and_score(args)
+
+    def test_runner_checks_disk_before_writes(self):
+        usage = SimpleNamespace(total=1000, free=49)
+        with mock.patch.object(runner.shutil, "disk_usage", return_value=usage):
+            with self.assertRaisesRegex(RuntimeError, "unsafe filesystem / before H55 write"):
+                runner.check_disk_budget()
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
