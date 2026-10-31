@@ -8,7 +8,7 @@
 %   by win probability; full-run prices and deployment savings still need evidence.
 % Core points advanced: 3 (search = 1) and 2 (search length is the
 %   reciprocal of taste); supports 1 (cheap replay is what invention lacks).
-% Exhibits: Equation 2 (eq:bill), Figure 4 (fig:price), Box 3.
+% Exhibits: Equation 2 (eq:bill), Box 3. The pilot-cost figure (fig:price) lives in Results.
 % Unsupported supplied cost projections are omitted pending reproducible calculations.
 
 What would it cost to play the innovation game? A complete ledger counts
@@ -57,7 +57,7 @@ An attempt can fail before or after it becomes a valid competitor.
 A stillborn attempt fails to produce a usable program under the declared
 protocol: generation is incomplete, parsing or type-checking fails,
 execution exceeds its limits or crashes, or outputs fail predeclared
-validity checks. An also-ran is valid but does not beat the incumbent. The planned funnel in \cref{fig:price}a traces
+validity checks. An also-ran is valid but does not beat the incumbent. The pilot funnel planned for \cref{sec:results} (\cref{fig:price}, panel~a) traces
 those stages and the compute spent before each failed attempt stops. If 90\% of attempts fail to improve the incumbent, the independent-try
 model requires ten attempts per improvement in expectation. A typed language
 can exclude invalid structures before fitting (\cref{sec:game}). Runtime,
@@ -65,19 +65,6 @@ resource and output failures may consume part or all of the fit, and their
 incurred cost must be counted. Whether also-rans dominate is a pilot question. Learning, a changed search
 procedure or a changed opponent can affect the measured win rate; isolate
 the effect attributed to the writer.
-
-\begin{figure}[t]
-  \centering
-  \fbox{\parbox{0.88\linewidth}{\TBD{Pilot cost measurements: supply
-  per-stage failure shares and cost per verified win.}}}
-  \caption{\textbf{Pilot cost measurements pending.} Planned panels:
-  (a)~the share of development proposals that run, score, beat the incumbent
-  and survive re-verification, with the compute spent at each stage;
-  (b)~cost per verified win by writer size and reasoning effort.
-  \TBD{Supply pilot data, seeds and family-level uncertainty; identify
-  settings with no verified win without assigning a finite cost per win.}}
-  \label{fig:price}
-\end{figure}
 
 \subsection{The correction tax and the reasoning dial}\label{sub:price-tax}
 
@@ -92,7 +79,7 @@ full-cost ratio, so the threshold for the complete bill in \cref{eq:bill}
 requires all components to be counted.
 
 Reasoning is the second dial. Reasoning tokens may cut stillborn moves, but
-each is billed as output. The planned pilot in \cref{fig:price}b compares
+each is billed as output. The planned pilot (\cref{fig:price}, panel~b) compares
 cost per win over writer size and reasoning effort. A U-shaped curve is the hypothesis; the
 measurement decides where, and whether, the minimum sits.
 

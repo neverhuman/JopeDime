@@ -1,0 +1,39 @@
+{
+  "command": "nice -n 15 env OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 python3 research/flywheel_selfplay/h67_w4_active_reveal_2plus2/prepare.py --input ~/jope-data/h50/input --manifest research/flywheel_selfplay/h67_w4_active_reveal_2plus2/family_fold_manifest.json --smoke",
+  "cpu_thread_limits": {
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "family_fold_manifest_sha256": "823b0240d98c6ef11704c3fdfe853afdaca7074e13e84a9a2ddf8b82004c8a7b",
+  "finished_utc": "2026-10-31T03:47:15.876186+00:00",
+  "input_selected_train_file_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+  "input_source_manifest_file_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+  "input_task_metadata_file_sha256": "510fb1a0536766246564002b6d8186c260426f88a0f1ae9d16661b53dcda13f0",
+  "preparation_only": true,
+  "process_cpu_seconds": 0.022831182000000005,
+  "runner_sha256": "d06ecc33601e03c3b8a59b2841112faab8a04bd43c82c34087d2bd21e3b0c610",
+  "schema": "jopedime.w4-active-reveal-protocol-smoke.v1",
+  "scientific_verdict": null,
+  "smoke": {
+    "candidate_count": 1152,
+    "context_sha256": "4292759edd476dbdcc8f09721cc1f5b861328401ec819d6c9cf3dd9f884fa7e3",
+    "fit_count": 4,
+    "pool_outcome_arrays_loaded_for_smoke": true,
+    "pool_sha256": "f528fecdb707c9fb52453717481f544f6b3657e72fb5567154e0ff28da6e58f7",
+    "revealed_program_ids": [
+      "8aeb362c925b95672e7749a0063e043551e30b5b3d11daa8d2dd1867d676a923",
+      "b61025d02ab7732863b6b8612dec0be00eb0b0df17f5747f73d4733493f36673",
+      "72c2d89ea485fbd7a0d62f3f8f36825e1b2219ca61b210112659a165f35baa74",
+      "c6f8ed60e499ed8959c0e04ff6282d3b62d7c07fa74d12c76ce3fb373689ff8c"
+    ],
+    "scientific_verdict": null,
+    "status": "PASS_PROTOCOL_ONLY",
+    "unrevealed_outcomes_used_for_selection": 0,
+    "utility_comparison": null
+  },
+  "source_base_commit": "ecd92a36afb4ecd33f6cfd4b9fad64eb35a70cda",
+  "started_utc": "2026-10-31T03:47:15.835539+00:00",
+  "status": "PASS_PROTOCOL_ONLY",
+  "utility_comparison": null
+}

@@ -1,5 +1,5 @@
 use jope_client::Transport;
-use serde_json::{json, Value};
+use serde_json::Value;
 
 pub(crate) fn run(
     dry_run: bool,
@@ -12,7 +12,9 @@ pub(crate) fn run(
     if generated {
         super::common::write_idempotency_key(&mut std::io::stderr().lock(), &key)?;
     }
-    let mut value: Value = client.store_gc(&json!({"dry_run": dry_run}), Some(&key))?;
+    let mut value: Value = serde_json::to_value(
+        client.store_gc(&jope_api::registry::GcRequest { dry_run }, Some(&key))?,
+    )?;
     if let Some(object) = value.as_object_mut() {
         super::common::add_idempotency_key(object, &key);
     }
