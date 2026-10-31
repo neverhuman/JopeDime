@@ -13127,6 +13127,16 @@
       ],
       "lanes": [],
       "scope": "Owner gb1841 CPU-only JRB01 preregistration, isolation/budget admission and family-paired reporting fixtures. Local pytest receipt required; no GPU/learning/split-or-stay qualification."
+    },
+    "python:research/flywheel_selfplay/h75_closed_loop_evolution/scoring/test_score_panel.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H75 CPU fixture contracts for frozen development score rosters, complete A-anchored legacy/confirmed_U8 point panels, seed/context/family averaging and incomplete/refusal boundaries. Manual research diagnostics only; no bootstrap, experiment admission or release qualification."
     }
   },
   "lanes": {
