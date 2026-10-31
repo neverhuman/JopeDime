@@ -548,7 +548,7 @@ jobs:
             node deploy/ci/typescript/evidence.mjs verify "$root" "$version"
           done
       - name: Collect hosted export parity evidence
-        if: github.repository == 'neverhuman/JopeDime' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        if: always() && github.repository == 'neverhuman/JopeDime' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
         uses: ./.github/actions/download-ci-evidence
         with:
           name: export-parity-${{ github.run_id }}-${{ github.run_attempt }}
