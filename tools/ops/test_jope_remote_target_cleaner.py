@@ -117,6 +117,39 @@ class RemoteTargetCleanerTests(unittest.TestCase):
         )
         runner.assert_not_called()
 
+    def test_docker_prune_dry_run_skips_volume_rm_and_audits_nothing(self) -> None:
+        runner = mock.Mock(side_effect=[
+            self.docker_result(stdout="jope-pr-ci-target\n"),
+            self.docker_result(),
+            self.docker_result(stdout="local /var/lib/docker/volumes/jope-pr-ci-target/_data"),
+        ])
+        audit = self.root / "audit.jsonl"
+        lock = self.root / "lock" / "dry-run.lock"
+        with (
+            mock.patch.object(cleaner, "TARGET", self.target),
+            mock.patch.object(cleaner, "SCRATCH_ROOT", self.target.parent),
+            mock.patch.object(cleaner.shutil, "disk_usage", return_value=mock.Mock(free=1)),
+            mock.patch.object(cleaner, "process_references", return_value=False),
+            mock.patch.object(cleaner.subprocess, "run", runner),
+        ):
+            self.assertEqual(
+                cleaner.run(
+                    apply=False,
+                    target=self.target,
+                    scratch_root=self.target.parent,
+                    audit=audit,
+                    lock=lock,
+                    owner_uid=os.getuid(),
+                    host="xbabe3",
+                ),
+                0,
+            )
+        self.assertEqual(
+            [call.args[0][1:3] for call in runner.call_args_list],
+            [["volume", "ls"], ["ps", "--quiet"], ["volume", "inspect"]],
+        )
+        self.assertFalse(audit.exists())
+
     def test_x3_volume_reclaim_is_remeasured_before_target_cleanup(self) -> None:
         with (
             mock.patch.object(cleaner, "TARGET", self.target),

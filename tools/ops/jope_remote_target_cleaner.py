@@ -198,15 +198,16 @@ def append_audit(event: dict[str, Any], audit: Path = AUDIT) -> None:
 
 
 def prune_unmounted_jope_target_volumes(*, free_bytes: int, minimum_free_bytes: int,
-        audit: Path, lock: Path = LOCK, runner: Any = subprocess.run) -> list[str]:
+        audit: Path, lock: Path = LOCK, runner: Any = None, apply: bool = True) -> list[str]:
     """Remove only dangling named target volumes, with a fresh live-mount check."""
     if free_bytes >= minimum_free_bytes:
         return []
+    actual_runner = runner or subprocess.run
     try:
         lock.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
         with lock.open("a", encoding="utf-8") as lock_stream:
             fcntl.flock(lock_stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-            listed = runner(
+            listed = actual_runner(
                 [DOCKER_BIN, "volume", "ls", "--quiet", "--filter", "dangling=true"],
                 capture_output=True, text=True, timeout=15, check=False,
             )
@@ -217,7 +218,7 @@ def prune_unmounted_jope_target_volumes(*, free_bytes: int, minimum_free_bytes: 
             for name in sorted(set(listed.stdout.splitlines())):
                 if not TARGET_VOLUME_NAME.fullmatch(name):
                     continue
-                running = runner(
+                running = actual_runner(
                     [DOCKER_BIN, "ps", "--quiet", "--filter", f"volume={name}"],
                     capture_output=True, text=True, timeout=15, check=False,
                 )
@@ -227,7 +228,7 @@ def prune_unmounted_jope_target_volumes(*, free_bytes: int, minimum_free_bytes: 
                 if running.stdout.strip():
                     print(f"SKIP Docker volume {name}: mounted by a running container")
                     continue
-                inspected = runner(
+                inspected = actual_runner(
                     [DOCKER_BIN, "volume", "inspect", "--format", "{{.Driver}} {{.Mountpoint}}", name],
                     capture_output=True, text=True, timeout=15, check=False,
                 )
@@ -236,6 +237,9 @@ def prune_unmounted_jope_target_volumes(*, free_bytes: int, minimum_free_bytes: 
                 if inspected.returncode != 0 or len(fields) != 2 or fields != ["local", expected_mountpoint]:
                     print(f"SKIP Docker volume {name}: driver or mountpoint is not approved")
                     continue
+                if not apply:
+                    print(f"WOULD REMOVE Docker volume {name}")
+                    continue
                 intent = {
                     "event": "docker_target_volume_delete_intent",
                     "path": name,
@@ -243,7 +247,7 @@ def prune_unmounted_jope_target_volumes(*, free_bytes: int, minimum_free_bytes: 
                     "reason": "dangling_local_jope_target_volume_below_free_space_floor",
                 }
                 append_audit(intent, audit)
-                removed_result = runner(
+                removed_result = actual_runner(
                     [DOCKER_BIN, "volume", "rm", name],
                     capture_output=True, text=True, timeout=30, check=False,
                 )
@@ -281,6 +285,7 @@ def run(*, apply: bool, target: Path = TARGET, scratch_root: Path = SCRATCH_ROOT
             minimum_free_bytes=minimum_free_bytes,
             audit=audit,
             lock=lock,
+            apply=apply,
         )
         free_bytes = shutil.disk_usage(scratch_root).free
     if free_bytes >= minimum_free_bytes:
