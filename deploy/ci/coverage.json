@@ -160,6 +160,26 @@
     }
   },
   "items": {
+    "job:.github/workflows/export-parity.yml/export-parity": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "export-parity"
+      ],
+      "scope": "Configured reusable EXP-08 real-toolchain export parity. Local report is separate from hosted execution; unsupported registry cells are not passing coverage."
+    },
+    "workflow:.github/workflows/export-parity.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "dispositions": [],
+      "lanes": [
+        "export-parity"
+      ],
+      "scope": "Configured reusable EXP-08 real-toolchain export parity. Local report is separate from hosted execution; unsupported registry cells are not passing coverage."
+    },
     "benchmark:crates/feat-math/examples/expression_benchmark.rs": {
       "discovery": {
         "kind": "benchmark-source"
@@ -266,16 +286,6 @@
       "lanes": [],
       "scope": "Benchmark script/example source; not a collected test or performance proof."
     },
-    "benchmark:research/flywheel_selfplay/custody/files/usr/lib/python3/dist-packages/torch/utils/throughput_benchmark.py": {
-      "discovery": {
-        "kind": "benchmark-source"
-      },
-      "dispositions": [
-        "benchmark"
-      ],
-      "lanes": [],
-      "scope": "Vendored RES-02 custody source; not a collected test or performance proof."
-    },
     "benchmark:vendor/security/candle-core-0.11.0/benches/bench_main.rs": {
       "discovery": {
         "kind": "benchmark-source"
@@ -375,6 +385,16 @@
       ],
       "lanes": [],
       "scope": "Retained official upstream benchmark source, outside product workspace; source custody is checked in hygiene. No benchmark execution, model/GPU qualification or performance claim."
+    },
+    "benchmark:research/flywheel_selfplay/custody/files/usr/lib/python3/dist-packages/torch/utils/throughput_benchmark.py": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Vendored RES-02 custody source; not a collected test or performance proof."
     },
     "feature:feat-math/cuda-parity-tests": {
       "discovery": {
@@ -614,20 +634,6 @@
         "full-default"
       ],
       "scope": "Default-on registry-driven rmcp adapter over an injected shared client. Appliance protocol fixture tests cover lifecycle, tools, resources, framing and concurrent status/cancel; live CLI/daemon integration and named-client qualification are separate."
-    },
-    "feature:jope-appliance/research": {
-      "discovery": {
-        "kind": "feature",
-        "dependencies": [
-          "engine",
-          "jope-service/research"
-        ]
-      },
-      "dispositions": [
-        "cpu-qualification"
-      ],
-      "lanes": [],
-      "scope": "QLT-03-F01 opt-in internal research CLI and record-controller types. Targeted local feature/default parser, binary dispatch, package-authentication and unavailable-producer controls; absent from default/release feature selection. No committed discovery producer or corpus/Q1 qualification while F02 is deferred. No hosted feature lane is selected."
     },
     "feature:jope-arena/default": {
       "discovery": {
@@ -1117,17 +1123,6 @@
       "lanes": [],
       "scope": "SVC-01 opt-in process-crash hooks; absent from default production builds. Local exact-head failpoints suite supervises six abort/reopen boundaries. Hosted/manual feature qualification remains deferred; this mapping is not execution evidence."
     },
-    "feature:jope-service/research": {
-      "discovery": {
-        "kind": "feature",
-        "dependencies": []
-      },
-      "dispositions": [
-        "cpu-qualification"
-      ],
-      "lanes": [],
-      "scope": "QLT-03-F01 opt-in internal research CLI and record-controller types. Targeted local feature/default parser, binary dispatch, package-authentication and unavailable-producer controls; absent from default/release feature selection. No committed discovery producer or corpus/Q1 qualification while F02 is deferred. No hosted feature lane is selected."
-    },
     "feature:jope-telemetry/default": {
       "discovery": {
         "kind": "feature",
@@ -1226,6 +1221,36 @@
       "lanes": [],
       "scope": "Opt-in Dope encoding; local focused qualification recorded with the draft PR. GPU execution requires CUDA hardware; default CI does not select this feature."
     },
+    "job:.github/workflows/clean-host.yml/linux-x86_64-prestage": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "REL-04 manual Linux synthetic pre-stage only; macOS arm64 and Windows x86-64 jobs explicitly disabled/pending. No signed release, cross-platform D1, real-data parity or successful GitHub execution is qualified."
+    },
+    "job:.github/workflows/clean-host.yml/macos-arm64-pending": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "REL-04 manual Linux synthetic pre-stage only; macOS arm64 and Windows x86-64 jobs explicitly disabled/pending. No signed release, cross-platform D1, real-data parity or successful GitHub execution is qualified."
+    },
+    "job:.github/workflows/clean-host.yml/windows-x86_64-pending": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "REL-04 manual Linux synthetic pre-stage only; macOS arm64 and Windows x86-64 jobs explicitly disabled/pending. No signed release, cross-platform D1, real-data parity or successful GitHub execution is qualified."
+    },
     "job:.github/workflows/ci.yml/aggregate": {
       "discovery": {
         "kind": "workflow-job"
@@ -1265,16 +1290,6 @@
         "emitters"
       ],
       "scope": "Configured fast PR/manual lane; path-excluded jobs are not passes."
-    },
-    "job:.github/workflows/ci.yml/export-parity": {
-      "discovery": {
-        "kind": "workflow-job"
-      },
-      "dispositions": [],
-      "lanes": [
-        "export-parity"
-      ],
-      "scope": "Manual-main caller of isolated hosted export parity; aggregate requires exact-source/run/attempt nonzero supported-cell and complete file evidence. Configuration alone is not hosted qualification."
     },
     "job:.github/workflows/ci.yml/go": {
       "discovery": {
@@ -1365,46 +1380,6 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
-    },
-    "job:.github/workflows/clean-host.yml/linux-x86_64-prestage": {
-      "discovery": {
-        "kind": "workflow-job"
-      },
-      "dispositions": [
-        "release"
-      ],
-      "lanes": [],
-      "scope": "REL-04 manual Linux synthetic pre-stage only; macOS arm64 and Windows x86-64 jobs explicitly disabled/pending. No signed release, cross-platform D1, real-data parity or successful GitHub execution is qualified."
-    },
-    "job:.github/workflows/clean-host.yml/macos-arm64-pending": {
-      "discovery": {
-        "kind": "workflow-job"
-      },
-      "dispositions": [
-        "release"
-      ],
-      "lanes": [],
-      "scope": "REL-04 manual Linux synthetic pre-stage only; macOS arm64 and Windows x86-64 jobs explicitly disabled/pending. No signed release, cross-platform D1, real-data parity or successful GitHub execution is qualified."
-    },
-    "job:.github/workflows/clean-host.yml/windows-x86_64-pending": {
-      "discovery": {
-        "kind": "workflow-job"
-      },
-      "dispositions": [
-        "release"
-      ],
-      "lanes": [],
-      "scope": "REL-04 manual Linux synthetic pre-stage only; macOS arm64 and Windows x86-64 jobs explicitly disabled/pending. No signed release, cross-platform D1, real-data parity or successful GitHub execution is qualified."
-    },
-    "job:.github/workflows/export-parity.yml/export-parity": {
-      "discovery": {
-        "kind": "workflow-job"
-      },
-      "dispositions": [],
-      "lanes": [
-        "export-parity"
-      ],
-      "scope": "Configured reusable EXP-08 real-toolchain export parity. Local report is separate from hosted execution; unsupported registry cells are not passing coverage."
     },
     "job:.github/workflows/full-main.yml/aggregate": {
       "discovery": {
@@ -4225,16 +4200,6 @@
       "lanes": [],
       "scope": "Standalone pytest protocol/statistical fixtures for the Q1 qualification harness (QLT-01, #497): owner-signature refusal, sealed-holdout and smoke-scope guards, backend-failure accounting; no learned model or sealed payload executes. Not collected by a CI lane; owner-signed qualification runs are separate."
     },
-    "python:deploy/qualification/v1.0/test_cpu_gates.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "cpu-qualification"
-      ],
-      "lanes": [],
-      "scope": "REL-07 CPU-preparation controller and metadata-only release-plan controls; actual child success/failure/timeout, source/output/hash/count refusals, every release-gate/current-status inventory and prep non-promotion. These local tests and unsigned diagnostics do not qualify signed release bytes, GPU, Q1 or native platforms."
-    },
     "python:ops/s3_shard_cache/test_s3_shard_cache.py": {
       "discovery": {
         "kind": "python-family"
@@ -4244,6 +4209,26 @@
       ],
       "lanes": [],
       "scope": "Operational S3 shard-cache unit test against an in-memory fake client; statically inventoried, not collected by any CI lane (the python lane collects python/tests), pending operational qualification."
+    },
+    "python:tools/ops/test_jope_diskd.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "maintenance"
+      ],
+      "lanes": [],
+      "scope": "Hermetic fixture tests for the jope-diskd disk janitor's fail-closed boundaries: policy watermarks, explicit local-only apply, protected-prefix denial, symlink and open-handle retention, observe-only caches, merged-head-only Cargo target cleanup, audited deletion, verified offload and log rotation. Statically inventoried, not collected by any CI lane (the python lane collects python/tests); host deployment receipts are separate dated observations."
+    },
+    "python:tools/ops/test_jope_remote_target_cleaner.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "maintenance"
+      ],
+      "lanes": [],
+      "scope": "Hermetic fixture tests for the rebuildable-only remote Cargo target cleaner: Docker pruning of dangling jope target volumes without running mounts, rebuildable-output checks that keep protected, linked and target/tmp fixture content, live-process and open-fd detection, dry run, audited apply and host-specific free-space floors. Statically inventoried, not collected by any CI lane (the python lane collects python/tests); host deployment receipts are separate dated observations."
     },
     "python:python/src/jope/research/test_exact_accept.py": {
       "discovery": {
@@ -4778,6 +4763,26 @@
       ],
       "scope": "Tiny CPU fixtures for explicit optimizer-preserving corpus transitions and equal-update siblings; no real-corpus quality or serving qualification."
     },
+    "python:research/flywheel_selfplay/test_automatic_promotion.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested pytest proof for flywheel automatic promotion, next-round targets, replay, and training-only parser adaptation; research flywheel outside the reviewed product baseline."
+    },
+    "python:research/flywheel_selfplay/test_dev_incumbent.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested pytest regression proof for flywheel model/optimizer rollback, equal-score progress, and evaluation-identity refusal at the PyTorch boundary; research flywheel outside the reviewed product baseline."
+    },
     "python:research/flywheel_selfplay/golden/test_generate.py": {
       "dispositions": [
         "research"
@@ -4787,6 +4792,26 @@
       "discovery": {
         "kind": "python-family"
       }
+    },
+    "python:research/flywheel_selfplay/test_export_fused_bundle.py": {
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested pytest proofs for the RES-06 deterministic frozen fused-bundle exporter; research custody tooling outside the release lanes.",
+      "discovery": {
+        "kind": "python-family"
+      }
+    },
+    "python:research/flywheel_selfplay/test_device_pool_cache.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested pytest parity and promotion/replacement invalidation proofs for the device-resident pool cache training-input boundary; research flywheel outside the reviewed product baseline."
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
@@ -4818,392 +4843,12 @@
       "lanes": [],
       "scope": "Owner-requested tests for H48 deterministic family-fold assignment and family-balanced minibatch sampling; offline research diagnostic outside the reviewed product baseline."
     },
-    "python:research/flywheel_selfplay/h49/test_run.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested H49 offline tests for the strict-margin SEL admission rule, known-noise audit, and SWA cycle contract."
-    },
-    "python:research/flywheel_selfplay/h50/test_sensitivity.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested H50 offline proofs for seeded unit directions, adapter flattening, antithetic population generation, deterministic rank shaping, and finite strict-JSON rejection metadata."
-    },
-    "python:research/flywheel_selfplay/h55/test_h55.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested H55 offline tests for strict family-bootstrap admission, resource guards, lock-wait accounting, terminal-read limits, and runner refusal boundaries; experimental research outside product qualification."
-    },
-    "python:research/flywheel_selfplay/h57/test_h57.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested H57 data-free tests for centered-rank antithetic ES, adapter round-trip, null and timing cell identity, strict pooled family-cluster admission and its independent audit, and lock, disk and resource guards; experimental research outside product qualification."
-    },
     "python:research/flywheel_selfplay/h58/test_h58.py": {
       "dispositions": [
         "research"
       ],
       "lanes": [],
       "scope": "Owner-requested pytest proofs for the H58 multi-arm flywheel runner and cache preparation; offline research diagnostic outside the release lanes.",
-      "discovery": {
-        "kind": "python-family"
-      }
-    },
-    "python:research/flywheel_selfplay/h59/test_h59.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested H59 CPU synthetic tests for the four target/loss arms, shared batch replay, the DOPE pin and adapter-only inventory, the admission-gated single-use Fold-B read, strict LCB admission, family-grouped Elo anchored to r882, and coordinator lock and disk guards; experimental research outside product qualification."
-    },
-    "python:research/flywheel_selfplay/h61/test_h61.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested H61 CPU fixture and red-team tests for the S0-S3 selection-metric runner and FIFO coordinator: shared evaluation mode and training updates across arms, tie rejection, DL-Train inner-CV tuning only, DOPE and r882-copy guards, disk retry limits, FIFO order with dead-PID pruning and legacy backoff, and family-grouped Elo; experimental research outside product qualification."
-    },
-    "python:research/flywheel_selfplay/h65_w3_continuous_top_resolved/test_runner.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested H65 W3 preparation tests: family- and context-separated fold manifests with exact source counts, a hash-bound winner configuration, and a preparation-only CPU-bounded plan that rejects non-training manifests. No W3 execution or experiment admission."
-    },
-    "python:research/flywheel_selfplay/h66_w6_cross_family_transfer/test_prepare_folds.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested H66 W6 fold-preparation tests on a synthetic 205-family roster: deterministic complete assignment, family and physical-table aliases kept in one fold, and refusal of non-training rows, outcome fields, duplicate contexts and a wrong packet identity. No W6 fit or experiment admission."
-    },
-    "python:research/flywheel_selfplay/h71_w5_parent_child_critic/test_runner.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested H71 W5 synthetic-only plan tests: fixed arms, seeds and family folds, an explicitly non-executing dry run, and refusal of any non-dry-run execution while W5 is held. No W5 fit or experiment admission."
-    },
-    "python:research/flywheel_selfplay/h72_w6_train_roster_prep/test_build_train_roster.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested H72 W6 roster-preparation tests for train-only streaming JSON reads: the reader stops before the dev section, requires the train partition first, and skips unselected or nested values without decoding them. No outcome reads or W6 fit."
-    },
-    "python:research/flywheel_selfplay/h72_w8_control_prereg/test_w8_control.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H72 W8 equal-cost control runner fixture contracts: training-only envelope resplits, policy budget simulation, common confirmation rule, frozen incumbent selection. Manual research diagnostics only; no experiment admission or release qualification."
-    },
-    "python:research/flywheel_selfplay/h73_family_balanced_sampling/test_diagnostic.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested H73 CPU diagnostic tests: train-only reads that stop before dev values and require the train field first, family balance and the minus-two failure share, and the full-cohort family profile size limit. No optimizer update or W1 comparison."
-    },
-    "python:research/flywheel_selfplay/h74_w3_readout_gate/test_w3_gate.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested H74 W3 readout-gate tests on synthetic inputs: both primary contrasts required, the strict lower-bound boundary, harm-tail and gate-failure-rate blocks, the registered kill condition, and refusals for changed training closure, mismatched rosters and malformed seed values. No W3 execution or experiment admission."
-    },
-    "python:research/flywheel_selfplay/h75_closed_loop_evolution/feedback/test_feedback.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H75 CPU-only feedback writer controls for caller-pinned clean outcomes, fit-family/alias/source/row/program joins, complete execution IDs, failed-outcome masking, D-only loss eligibility, retry conflicts and immutable artifact creation. Synthetic fixtures do not qualify H75 data, training or lift."
-    },
-    "python:research/flywheel_selfplay/h75_closed_loop_evolution/scoring/test_bootstrap.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested CPU fixtures for H75 shared whole-family bootstrap, canonical batched Elo parity, seed averaging, incomplete execution and deterministic bounded resampling. Descriptive development intervals only; no experiment admission or release qualification."
-    },
-    "python:research/flywheel_selfplay/h75_closed_loop_evolution/scoring/test_score_panel.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested H75 CPU fixture contracts for frozen development score rosters, complete A-anchored legacy/confirmed_U8 point panels, seed/context/family averaging and incomplete/refusal boundaries. Manual research diagnostics only; no bootstrap, experiment admission or release qualification."
-    },
-    "python:research/flywheel_selfplay/h76_sam_steps/test_h76.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H76 owner-requested CPU numerical SAM/ASAM, paired sampling, strict family-bootstrap admission, protected-path, inherited flock and durable wall-budget checks; experimental research outside product qualification."
-    },
-    "python:research/flywheel_selfplay/h77_long_es/test_h77.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested H77 CPU unit, red-team and identity tests for long direct-utility ES: preregistered constants, pop-64 antithetic sampling shared by ES and ESH, harm-penalty fitness, null and timing cell identity, protected-path and trainable-inventory guards, the 2.5 h timing cap, pooled admission with per-seed and median Elo, the admission audit, FIFO queue order and the xbabe2 disk abort; experimental research outside product qualification."
-    },
-    "python:research/flywheel_selfplay/h79_w4_prior_2plus2_cached/test_run_shard.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H79 W4 cached-pool screen fixture contracts: four-reveal oracle, prior-top4 and two-plus-two GP selection, swap placebo, W1 family-exclusion refusal, paired family bootstrap and gbm_top4-anchored family Elo. Manual research diagnostics only; no native fits, W4 gate or release qualification."
-    },
-    "python:research/flywheel_selfplay/h80_long_es/test_h80.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested H80 CPU unit, red-team and identity tests for the long direct-utility ES successor: preregistered t0030 constants and H77 closeout, centered-rank pop-32 antithetic sampling shared by ES and ESH, harm-penalty fitness, null and timing cell identity, the a-priori 9000 s timing projection, pooled admission with per-seed and median Elo, the independent admission audit, FIFO lock release and tail requeue, and the disk-guard retry accounting; experimental research outside product qualification."
-    },
-    "python:research/flywheel_selfplay/h81_w4_prospective_2plus2/test_run_prospective.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H81 W4 prospective-stratum runner fixtures: exact equivalence of the two-plus-two rule with merged H79, prior-top-two first stage and zero-residual reduction to top4, swap placebo, seeded random4, program-SHA tie-breaks, execution errors kept out of utility, analysis gate/INCOMPLETE verdicts, ledger reservation caps and fit-store no-recharge. No data, model or native calls; no experiment admission or release qualification."
-    },
-    "python:research/flywheel_selfplay/h82_sam_steps/ops/test_recover.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H82 bounded operator recovery proof: reproduce read-only checkpoint staging failure, preserve known immutable input before cleanup, seal the stopped prefix, retain budgets and reject scored/unknown/unaccounted states; no GPU/product qualification."
-    },
-    "python:research/flywheel_selfplay/h82_sam_steps/test_h82.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H82 prospective fresh-seed SAM/ASAM/K8 CPU fixtures for durable pre-scoring retry boundaries, two-retry/wall accounting, FIFO release, reference restoration and paired family Elo/admission; no real corpus payloads or product qualification."
-    },
-    "python:research/flywheel_selfplay/h83_w6_cross_family_cached/test_run_w6_cached.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H83 W6 cached cross-family screen fixtures: planted low-rank bilinear recovery, shuffled-context placebo loss of signal, within-context centring, verified-U4 anchors and SHA tie-breaks, Bonferroni-adjusted common gate and verdict paths. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
-    },
-    "python:research/flywheel_selfplay/h85_w1_cpu_remediation_and_models/test_w1_remediation.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H85 W1 CPU remediation synthetic fixtures: import-time script hash immutability, shard sidecar SHA and positive process CPU accounting, inherited lock FD inode/flock verification, durable GPU budget ledger ceiling, paired family/context bootstrap, within-context seen-vs-unseen template pairing, H81 strength guard and 8-contrast joint W1 gate. Synthetic unit proof only; no corpus outcomes or product qualification."
-    },
-    "python:research/flywheel_selfplay/h86_w3_outcome_status_census/test_census.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H86 W3 outcome-row status census fixture contracts: signature status rule and precedence (sentinel, nonfinite, anomalous), W3 top-resolved target paths (top16, last passer, no passer, .05 floor, clip 6) and program-order hash binding. Manual research diagnostics only; no W3 study, admission decision or release qualification."
-    },
-    "python:research/flywheel_selfplay/h90_candidate_diversity/test_h90.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H90 fixed r882 recipe CPU fixtures: inverse-family sampling, two-microbatch accumulation, target smoothing, warmup/cosine restart, top-four diversity, seed pseudoreplication, paired Elo/admission, cumulative budget and hard H80-closeout-before-FIFO refusal. Synthetic unit proof only; no corpus outcomes or product qualification."
-    },
-    "python:research/flywheel_selfplay/h92_w6_downside_controlled/test_run_downside.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H92 W6 downside-controlled learner fixtures: hedge keeps the prior top-2 and adds two distinct scorer picks, shortlist never leaves the prior top-16, retained-best refuses anchors/duplicates, verdict and median-interval paths, and the merged-H83 loader refuses changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
-    },
-    "python:research/flywheel_selfplay/h93_lookahead_noise/test_h93.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H93 CPU-only Lookahead, annealed-gradient-noise and effective-batch update-plan fixtures, FIFO/H80/H90 launch barrier, paired family Elo/admission, and dev top-four overlap diagnostics; no corpus payloads or product qualification."
-    },
-    "python:research/flywheel_selfplay/h94_w6_prospective_hedge/test_run_prospective_hedge.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H94 W6 prospective hedge fixtures: HEDGE_CTX keeps the prior top-2 and adds the context model top-2 of the rest, the three arms reveal at most eight distinct programs per unit, unknown arms are refused, incomplete context-seeds leave the paired panel, verdict and median-interval paths, and the merged-H81 loader refuses changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
-    },
-    "python:research/flywheel_selfplay/h95_w8_hwm_resplit_confirm/test_run_resplit_confirm.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H95 W8 HWM resplit-confirmation fixtures: seven cuts per program with the incumbent deduplicated, DSL/sha mismatch refused, execution errors stay INCOMPLETE (never -2), confirmed/material/complexity-only flags and the verdict, and the merged-H72 loader refuses changed bytes. Synthetic only; no data or native calls; no experiment admission or release qualification."
-    },
-    "python:research/flywheel_selfplay/h97_reg_ema/test_h97.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H97 REG-EMA candidate-protocol fixtures: exact (arm, seed) cell set, 19 paired dev families and 91 contexts required, complete finite seed vectors retained."
-    },
-    "python:research/flywheel_selfplay/h99_esh_harm/test_h99.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H99 ESH harm follow-up preregistration fixtures: fold assignment partitions whole train families exactly once, sealed meta-test inputs never opened."
-    },
-    "python:research/flywheel_selfplay/rd_breakthrough/w5_provenance/test_verify.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested W5 provenance-preflight synthetic metadata controls: body reads refused before any S3 call, counter hashes over bytes, unknown counts kept null, and refusal of pair and row-closure shortcuts (strat300 nq=0, siblings, wrong cut or alias, sentinels, AST similarity, missing operator or evaluator provenance). None admits data or qualifies W5."
-    },
-    "python:research/flywheel_selfplay/test_automatic_promotion.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested pytest proof for flywheel automatic promotion, next-round targets, replay, and training-only parser adaptation; research flywheel outside the reviewed product baseline."
-    },
-    "python:research/flywheel_selfplay/test_dev_incumbent.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested pytest regression proof for flywheel model/optimizer rollback, equal-score progress, and evaluation-identity refusal at the PyTorch boundary; research flywheel outside the reviewed product baseline."
-    },
-    "python:research/flywheel_selfplay/test_device_pool_cache.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested pytest parity and promotion/replacement invalidation proofs for the device-resident pool cache training-input boundary; research flywheel outside the reviewed product baseline."
-    },
-    "python:research/flywheel_selfplay/test_export_fused_bundle.py": {
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner-requested pytest proofs for the RES-06 deterministic frozen fused-bundle exporter; research custody tooling outside the release lanes.",
       "discovery": {
         "kind": "python-family"
       }
@@ -5237,46 +4882,6 @@
         "python"
       ],
       "scope": "Executed offline CPU synthetic/stub unit checks for Phase 7 flywheel v3 comparator labels, fail-closed S3/checkpoint guards, and OS worker SIGKILL vs CPython ITIMER_REAL deadline boundaries in the Python lane; research flywheel outside the reviewed product baseline."
-    },
-    "python:research/h-followups/h09/test_run.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "HWV-04 H09 CPU experiment safety, family-role separation, DSL-preserving residual features, paired CI and append-only phase receipt fixture tests; run explicitly with pytest research/h-followups/h09 -q."
-    },
-    "python:research/joint_regbin/test_study.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Owner gb1841 CPU-only JRB01 preregistration, isolation/budget admission and family-paired reporting fixtures. Local pytest receipt required; no GPU/learning/split-or-stay qualification."
-    },
-    "python:tools/ops/test_jope_diskd.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "maintenance"
-      ],
-      "lanes": [],
-      "scope": "Hermetic fixture tests for the jope-diskd disk janitor's fail-closed boundaries: policy watermarks, explicit local-only apply, protected-prefix denial, symlink and open-handle retention, observe-only caches, merged-head-only Cargo target cleanup, audited deletion, verified offload and log rotation. Statically inventoried, not collected by any CI lane (the python lane collects python/tests); host deployment receipts are separate dated observations."
-    },
-    "python:tools/ops/test_jope_remote_target_cleaner.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "maintenance"
-      ],
-      "lanes": [],
-      "scope": "Hermetic fixture tests for the rebuildable-only remote Cargo target cleaner: Docker pruning of dangling jope target volumes without running mounts, rebuildable-output checks that keep protected, linked and target/tmp fixture content, live-process and open-fd detection, dry run, audited apply and host-specific free-space floors. Statically inventoried, not collected by any CI lane (the python lane collects python/tests); host deployment receipts are separate dated observations."
     },
     "target:battle-gpu/lib/battle_gpu": {
       "discovery": {
@@ -7374,22 +6979,6 @@
       ],
       "scope": "Build script executed by Cargo builds, not a standalone test family. Records the target triple."
     },
-    "target:jope-appliance/test/e2e": {
-      "discovery": {
-        "doctest": false,
-        "kind": "target",
-        "required_features": [],
-        "source": "crates/jope-appliance/tests/e2e/main.rs",
-        "test": true
-      },
-      "dispositions": [],
-      "lanes": [
-        "rust-check",
-        "rust-test",
-        "full-default"
-      ],
-      "scope": "Pre-stage surface projection comparator with synthetic bounded-run fixtures. Full multi-surface acceptance remains pending executable handlers, RNK-10 and TUI-09; ignored acceptance is not product qualification."
-    },
     "target:jope-appliance/test/pty_smoke": {
       "discovery": {
         "doctest": false,
@@ -7405,6 +6994,22 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-appliance/test/e2e": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-appliance/tests/e2e/main.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Pre-stage surface projection comparator with synthetic bounded-run fixtures. Full multi-surface acceptance remains pending executable handlers, RNK-10 and TUI-09; ignored acceptance is not product qualification."
     },
     "target:jope-appliance/test/single_file": {
       "discovery": {
@@ -13014,22 +12619,6 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
-    "target:jope-service/test/golden-fixture-loader": {
-      "dispositions": [],
-      "lanes": [
-        "rust-check",
-        "rust-test",
-        "full-default"
-      ],
-      "scope": "RES-09 SafeTensors golden-fixture loader: exact tensor names/shapes, strict/skip modes and synthetic fixture checks; real RES-07 goldens load only when present (skip diagnostic otherwise).",
-      "discovery": {
-        "kind": "target",
-        "source": "crates/jope-service/tests/support/golden.rs",
-        "test": true,
-        "doctest": false,
-        "required_features": []
-      }
-    },
     "target:jope-service/test/no_gp_leak": {
       "dispositions": [],
       "lanes": [
@@ -13041,6 +12630,22 @@
       "discovery": {
         "kind": "target",
         "source": "crates/jope-service/tests/no_gp_leak.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      }
+    },
+    "target:jope-service/test/golden-fixture-loader": {
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "RES-09 SafeTensors golden-fixture loader: exact tensor names/shapes, strict/skip modes and synthetic fixture checks; real RES-07 goldens load only when present (skip diagnostic otherwise).",
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-service/tests/support/golden.rs",
         "test": true,
         "doctest": false,
         "required_features": []
@@ -13369,16 +12974,6 @@
       "lanes": [],
       "scope": "REL-04 manual Linux synthetic pre-stage only; macOS arm64 and Windows x86-64 jobs explicitly disabled/pending. No signed release, cross-platform D1, real-data parity or successful GitHub execution is qualified."
     },
-    "workflow:.github/workflows/export-parity.yml": {
-      "discovery": {
-        "kind": "workflow"
-      },
-      "dispositions": [],
-      "lanes": [
-        "export-parity"
-      ],
-      "scope": "Configured reusable EXP-08 real-toolchain export parity. Local report is separate from hosted execution; unsupported registry cells are not passing coverage."
-    },
     "workflow:.github/workflows/full-main.yml": {
       "discovery": {
         "kind": "workflow"
@@ -13492,6 +13087,411 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
+    },
+    "python:research/flywheel_selfplay/h49/test_run.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H49 offline tests for the strict-margin SEL admission rule, known-noise audit, and SWA cycle contract."
+    },
+    "python:research/flywheel_selfplay/h50/test_sensitivity.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H50 offline proofs for seeded unit directions, adapter flattening, antithetic population generation, deterministic rank shaping, and finite strict-JSON rejection metadata."
+    },
+    "python:deploy/qualification/v1.0/test_cpu_gates.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 CPU-preparation controller and metadata-only release-plan controls; actual child success/failure/timeout, source/output/hash/count refusals, every release-gate/current-status inventory and prep non-promotion. These local tests and unsigned diagnostics do not qualify signed release bytes, GPU, Q1 or native platforms."
+    },
+    "python:research/flywheel_selfplay/h55/test_h55.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H55 offline tests for strict family-bootstrap admission, resource guards, lock-wait accounting, terminal-read limits, and runner refusal boundaries; experimental research outside product qualification."
+    },
+    "python:research/flywheel_selfplay/h57/test_h57.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H57 data-free tests for centered-rank antithetic ES, adapter round-trip, null and timing cell identity, strict pooled family-cluster admission and its independent audit, and lock, disk and resource guards; experimental research outside product qualification."
+    },
+    "python:research/flywheel_selfplay/h59/test_h59.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H59 CPU synthetic tests for the four target/loss arms, shared batch replay, the DOPE pin and adapter-only inventory, the admission-gated single-use Fold-B read, strict LCB admission, family-grouped Elo anchored to r882, and coordinator lock and disk guards; experimental research outside product qualification."
+    },
+    "python:research/flywheel_selfplay/h61/test_h61.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H61 CPU fixture and red-team tests for the S0-S3 selection-metric runner and FIFO coordinator: shared evaluation mode and training updates across arms, tie rejection, DL-Train inner-CV tuning only, DOPE and r882-copy guards, disk retry limits, FIFO order with dead-PID pruning and legacy backoff, and family-grouped Elo; experimental research outside product qualification."
+    },
+    "python:research/flywheel_selfplay/h65_w3_continuous_top_resolved/test_runner.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H65 W3 preparation tests: family- and context-separated fold manifests with exact source counts, a hash-bound winner configuration, and a preparation-only CPU-bounded plan that rejects non-training manifests. No W3 execution or experiment admission."
+    },
+    "python:research/flywheel_selfplay/h66_w6_cross_family_transfer/test_prepare_folds.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H66 W6 fold-preparation tests on a synthetic 205-family roster: deterministic complete assignment, family and physical-table aliases kept in one fold, and refusal of non-training rows, outcome fields, duplicate contexts and a wrong packet identity. No W6 fit or experiment admission."
+    },
+    "python:research/flywheel_selfplay/h71_w5_parent_child_critic/test_runner.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H71 W5 synthetic-only plan tests: fixed arms, seeds and family folds, an explicitly non-executing dry run, and refusal of any non-dry-run execution while W5 is held. No W5 fit or experiment admission."
+    },
+    "python:research/flywheel_selfplay/h72_w6_train_roster_prep/test_build_train_roster.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H72 W6 roster-preparation tests for train-only streaming JSON reads: the reader stops before the dev section, requires the train partition first, and skips unselected or nested values without decoding them. No outcome reads or W6 fit."
+    },
+    "python:research/flywheel_selfplay/h73_family_balanced_sampling/test_diagnostic.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H73 CPU diagnostic tests: train-only reads that stop before dev values and require the train field first, family balance and the minus-two failure share, and the full-cohort family profile size limit. No optimizer update or W1 comparison."
+    },
+    "python:research/flywheel_selfplay/h74_w3_readout_gate/test_w3_gate.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H74 W3 readout-gate tests on synthetic inputs: both primary contrasts required, the strict lower-bound boundary, harm-tail and gate-failure-rate blocks, the registered kill condition, and refusals for changed training closure, mismatched rosters and malformed seed values. No W3 execution or experiment admission."
+    },
+    "python:research/flywheel_selfplay/h77_long_es/test_h77.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H77 CPU unit, red-team and identity tests for long direct-utility ES: preregistered constants, pop-64 antithetic sampling shared by ES and ESH, harm-penalty fitness, null and timing cell identity, protected-path and trainable-inventory guards, the 2.5 h timing cap, pooled admission with per-seed and median Elo, the admission audit, FIFO queue order and the xbabe2 disk abort; experimental research outside product qualification."
+    },
+    "python:research/flywheel_selfplay/h80_long_es/test_h80.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H80 CPU unit, red-team and identity tests for the long direct-utility ES successor: preregistered t0030 constants and H77 closeout, centered-rank pop-32 antithetic sampling shared by ES and ESH, harm-penalty fitness, null and timing cell identity, the a-priori 9000 s timing projection, pooled admission with per-seed and median Elo, the independent admission audit, FIFO lock release and tail requeue, and the disk-guard retry accounting; experimental research outside product qualification."
+    },
+    "python:research/flywheel_selfplay/rd_breakthrough/w5_provenance/test_verify.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested W5 provenance-preflight synthetic metadata controls: body reads refused before any S3 call, counter hashes over bytes, unknown counts kept null, and refusal of pair and row-closure shortcuts (strat300 nq=0, siblings, wrong cut or alias, sentinels, AST similarity, missing operator or evaluator provenance). None admits data or qualifies W5."
+    },
+    "python:research/flywheel_selfplay/h90_candidate_diversity/test_h90.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H90 fixed r882 recipe CPU fixtures: inverse-family sampling, two-microbatch accumulation, target smoothing, warmup/cosine restart, top-four diversity, seed pseudoreplication, paired Elo/admission, cumulative budget and hard H80-closeout-before-FIFO refusal. Synthetic unit proof only; no corpus outcomes or product qualification."
+    },
+    "python:research/flywheel_selfplay/h82_sam_steps/ops/test_recover.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H82 bounded operator recovery proof: reproduce read-only checkpoint staging failure, preserve known immutable input before cleanup, seal the stopped prefix, retain budgets and reject scored/unknown/unaccounted states; no GPU/product qualification."
+    },
+    "python:research/flywheel_selfplay/h82_sam_steps/test_h82.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H82 prospective fresh-seed SAM/ASAM/K8 CPU fixtures for durable pre-scoring retry boundaries, two-retry/wall accounting, FIFO release, reference restoration and paired family Elo/admission; no real corpus payloads or product qualification."
+    },
+    "python:research/flywheel_selfplay/h85_w1_cpu_remediation_and_models/test_w1_remediation.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H85 W1 CPU remediation synthetic fixtures: import-time script hash immutability, shard sidecar SHA and positive process CPU accounting, inherited lock FD inode/flock verification, durable GPU budget ledger ceiling, paired family/context bootstrap, within-context seen-vs-unseen template pairing, H81 strength guard and 8-contrast joint W1 gate. Synthetic unit proof only; no corpus outcomes or product qualification."
+    },
+    "python:research/flywheel_selfplay/h93_lookahead_noise/test_h93.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H93 CPU-only Lookahead, annealed-gradient-noise and effective-batch update-plan fixtures, FIFO/H80/H90 launch barrier, paired family Elo/admission, and dev top-four overlap diagnostics; no corpus payloads or product qualification."
+    },
+    "python:research/flywheel_selfplay/h76_sam_steps/test_h76.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H76 owner-requested CPU numerical SAM/ASAM, paired sampling, strict family-bootstrap admission, protected-path, inherited flock and durable wall-budget checks; experimental research outside product qualification."
+    },
+    "python:research/h-followups/h09/test_run.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "HWV-04 H09 CPU experiment safety, family-role separation, DSL-preserving residual features, paired CI and append-only phase receipt fixture tests; run explicitly with pytest research/h-followups/h09 -q."
+    },
+    "python:research/joint_regbin/test_study.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner gb1841 CPU-only JRB01 preregistration, isolation/budget admission and family-paired reporting fixtures. Local pytest receipt required; no GPU/learning/split-or-stay qualification."
+    },
+    "job:.github/workflows/ci.yml/export-parity": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "export-parity"
+      ],
+      "scope": "Manual-main caller of isolated hosted export parity; aggregate requires exact-source/run/attempt nonzero supported-cell and complete file evidence. Configuration alone is not hosted qualification."
+    },
+    "python:research/flywheel_selfplay/h75_closed_loop_evolution/scoring/test_score_panel.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H75 CPU fixture contracts for frozen development score rosters, complete A-anchored legacy/confirmed_U8 point panels, seed/context/family averaging and incomplete/refusal boundaries. Manual research diagnostics only; no bootstrap, experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h72_w8_control_prereg/test_w8_control.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H72 W8 equal-cost control runner fixture contracts: training-only envelope resplits, policy budget simulation, common confirmation rule, frozen incumbent selection. Manual research diagnostics only; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h75_closed_loop_evolution/scoring/test_bootstrap.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested CPU fixtures for H75 shared whole-family bootstrap, canonical batched Elo parity, seed averaging, incomplete execution and deterministic bounded resampling. Descriptive development intervals only; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h79_w4_prior_2plus2_cached/test_run_shard.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H79 W4 cached-pool screen fixture contracts: four-reveal oracle, prior-top4 and two-plus-two GP selection, swap placebo, W1 family-exclusion refusal, paired family bootstrap and gbm_top4-anchored family Elo. Manual research diagnostics only; no native fits, W4 gate or release qualification."
+    },
+    "python:research/flywheel_selfplay/h75_closed_loop_evolution/feedback/test_feedback.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H75 CPU-only feedback writer controls for caller-pinned clean outcomes, fit-family/alias/source/row/program joins, complete execution IDs, failed-outcome masking, D-only loss eligibility, retry conflicts and immutable artifact creation. Synthetic fixtures do not qualify H75 data, training or lift."
+    },
+    "python:research/flywheel_selfplay/h81_w4_prospective_2plus2/test_run_prospective.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H81 W4 prospective-stratum runner fixtures: exact equivalence of the two-plus-two rule with merged H79, prior-top-two first stage and zero-residual reduction to top4, swap placebo, seeded random4, program-SHA tie-breaks, execution errors kept out of utility, analysis gate/INCOMPLETE verdicts, ledger reservation caps and fit-store no-recharge. No data, model or native calls; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h86_w3_outcome_status_census/test_census.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H86 W3 outcome-row status census fixture contracts: signature status rule and precedence (sentinel, nonfinite, anomalous), W3 top-resolved target paths (top16, last passer, no passer, .05 floor, clip 6) and program-order hash binding. Manual research diagnostics only; no W3 study, admission decision or release qualification."
+    },
+    "python:research/flywheel_selfplay/h83_w6_cross_family_cached/test_run_w6_cached.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H83 W6 cached cross-family screen fixtures: planted low-rank bilinear recovery, shuffled-context placebo loss of signal, within-context centring, verified-U4 anchors and SHA tie-breaks, Bonferroni-adjusted common gate and verdict paths. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h92_w6_downside_controlled/test_run_downside.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H92 W6 downside-controlled learner fixtures: hedge keeps the prior top-2 and adds two distinct scorer picks, shortlist never leaves the prior top-16, retained-best refuses anchors/duplicates, verdict and median-interval paths, and the merged-H83 loader refuses changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h94_w6_prospective_hedge/test_run_prospective_hedge.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H94 W6 prospective hedge fixtures: HEDGE_CTX keeps the prior top-2 and adds the context model top-2 of the rest, the three arms reveal at most eight distinct programs per unit, unknown arms are refused, incomplete context-seeds leave the paired panel, verdict and median-interval paths, and the merged-H81 loader refuses changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h95_w8_hwm_resplit_confirm/test_run_resplit_confirm.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H95 W8 HWM resplit-confirmation fixtures: seven cuts per program with the incumbent deduplicated, DSL/sha mismatch refused, execution errors stay INCOMPLETE (never -2), confirmed/material/complexity-only flags and the verdict, and the merged-H72 loader refuses changed bytes. Synthetic only; no data or native calls; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h97_reg_ema/test_h97.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H97 REG-EMA candidate-protocol fixtures: exact (arm, seed) cell set, 19 paired dev families and 91 contexts required, complete finite seed vectors retained."
+    },
+    "python:research/flywheel_selfplay/h99_esh_harm/test_h99.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H99 ESH harm follow-up preregistration fixtures: fold assignment partitions whole train families exactly once, sealed meta-test inputs never opened."
+    },
+    "feature:jope-appliance/research": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "engine",
+          "jope-service/research"
+        ]
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "QLT-03-F01 opt-in internal research CLI and record-controller types. Targeted local feature/default parser, binary dispatch, package-authentication and unavailable-producer controls; absent from default/release feature selection. No committed discovery producer or corpus/Q1 qualification while F02 is deferred. No hosted feature lane is selected."
+    },
+    "feature:jope-service/research": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": []
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "QLT-03-F01 opt-in internal research CLI and record-controller types. Targeted local feature/default parser, binary dispatch, package-authentication and unavailable-producer controls; absent from default/release feature selection. No committed discovery producer or corpus/Q1 qualification while F02 is deferred. No hosted feature lane is selected."
     }
   },
   "lanes": {
