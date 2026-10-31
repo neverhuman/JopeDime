@@ -306,6 +306,109 @@ mod tests {
         }
         assert_eq!(rows.len(), 1309);
     }
+
+    /// Exercise serialized Python outputs, independently of the Rust families.
+    /// This model-prior subset does not establish full historical M3 coverage.
+    #[test]
+    #[ignore = "requires pinned RES-07 model-prior program/feature fixtures"]
+    fn real_model_prior_structural_features_match_frozen_oracle() {
+        use safetensors::{Dtype, SafeTensors};
+        use std::{env, fs, path::PathBuf};
+
+        let root =
+            PathBuf::from(env::var_os("JOPE_GOLDEN_DIR").expect("JOPE_GOLDEN_DIR is required"));
+        let index_pin = env::var("JOPE_GOLDEN_INDEX_SHA256")
+            .expect("explicit trusted index SHA256 is required");
+        assert!(
+            index_pin.len() == 64
+                && index_pin
+                    .bytes()
+                    .all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase())
+        );
+        let read_pinned = |name: &str, pin: &str| {
+            let path = root.join(name);
+            let metadata = fs::symlink_metadata(&path).expect("required real fixture");
+            assert!(metadata.is_file() && metadata.len() <= 64 * 1024 * 1024);
+            let bytes = fs::read(path).unwrap();
+            assert_eq!(
+                jope_runtime::sha256_hex(&bytes),
+                pin,
+                "fixture pin differs: {name}"
+            );
+            bytes
+        };
+        let index: serde_json::Value =
+            serde_json::from_slice(&read_pinned("index.json", &index_pin)).unwrap();
+        assert_eq!(index["schema"], "jope.golden-fixtures/v1");
+        assert_eq!(
+            index["bundle_digest"],
+            "sha256:94fd9587675c7806bd0a0582b6e97540cd2fdc7ebbc51958411b905185cad85c"
+        );
+        assert_eq!(index["model_prior_programs"], 872);
+        let payload = |name: &str| {
+            let spec = &index["files"][name];
+            let bytes = read_pinned(name, spec["sha256"].as_str().expect("missing fixture pin"));
+            assert_eq!(bytes.len() as u64, spec["bytes"].as_u64().unwrap());
+            bytes
+        };
+        let programs = payload("programs.jsonl");
+        let programs: Vec<serde_json::Value> = std::str::from_utf8(&programs)
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+        assert_eq!(programs.len(), 872);
+        let oracle = payload("programs.safetensors");
+        let tensors = SafeTensors::deserialize(&oracle).unwrap();
+        let features = tensors.tensor("feat412").unwrap();
+        assert_eq!(features.dtype(), Dtype::F32);
+        assert_eq!(features.shape(), [programs.len(), FEATURE_COUNT]);
+        let featurizer = Featurizer::default();
+        let mut unique = BTreeSet::new();
+        let mut comparisons = 0;
+        for (row, program) in programs.iter().enumerate() {
+            let dsl = program["dsl"].as_str().expect("DSL required");
+            let pin = program["program_sha256"]
+                .as_str()
+                .expect("program identity required");
+            assert_eq!(jope_runtime::sha256_hex(dsl.as_bytes()), pin);
+            assert!(unique.insert(pin));
+            let actual = featurizer
+                .structural(dsl)
+                .unwrap_or_else(|e| panic!("{pin}: {e:#}"));
+            let mut per_program = 0;
+            for (column, name) in FEATURE_NAMES.iter().enumerate() {
+                if !structural::is_feature(name) {
+                    assert!(actual.values()[column].is_none());
+                    continue;
+                }
+                let offset = (row * FEATURE_COUNT + column) * 4;
+                let expected =
+                    f32::from_le_bytes(features.data()[offset..offset + 4].try_into().unwrap());
+                let observed =
+                    actual.values()[column].expect("missing structural coordinate") as f32;
+                assert!(expected.is_finite() && observed.is_finite());
+                assert_eq!(observed, expected, "program {row} {pin}: {name}");
+                per_program += 1;
+                comparisons += 1;
+            }
+            assert_eq!(per_program, 30);
+        }
+        assert_eq!(comparisons, 872 * 30);
+        println!(
+            "{}",
+            serde_json::json!({
+                "gate":"RNK-03 structural serialized-oracle parity", "scope":"frozen model_prior subset",
+                "programs":programs.len(),"coordinates_per_program":30,"comparisons":comparisons,"mismatches":0,
+                "index_sha256":index_pin,"full_historical_M3":false,
+                "compiled_source_sha256":{
+                    "mod.rs":jope_runtime::sha256_hex(include_str!("mod.rs").as_bytes()),
+                    "parse.rs":jope_runtime::sha256_hex(include_str!("parse.rs").as_bytes()),
+                    "structural.rs":jope_runtime::sha256_hex(include_str!("structural.rs").as_bytes())
+                }
+            })
+        );
+    }
 }
 
 /// Frozen name order, generated from the hash-pinned custody metadata above.

@@ -26,7 +26,7 @@ by itself train or steer the proposer;
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/fig5_network.pdf}
-  \caption{\textbf{A writer and a separate ranking map learn from scored programs.} Schematic. Top:
+  \caption{\textbf{A writer and a separate ranking map learn from scored programs.} Historical reference schematic. Top:
   game day, the whole of \searchone{}. Dashed box: training only. Search seeded with the writer's
   drafts proposes more programs, the referee scores them against the incumbent, and the scored
   lists retrain the writer ($\theta$) and the map ($\psi$). Stillborn programs enter no list.}
@@ -96,8 +96,8 @@ have no score, so this ranking objective covers only programs that run. A progra
 trained beside it tests whether the map reads the problem at all (\cref{sec:results}).
 
 \begin{keyidea}
-At \searchone{} there is nothing left for a value network to judge. Taste has to live in the
-writer.
+The reference game-day protocol omits the ranking map. Its single proposal
+tests what the writer has learned.
 \end{keyidea}
 
 The writer and the map are separate branches, with separate context networks and token
@@ -111,7 +111,7 @@ matched ablation (\cref{sub:results-ablation}).
 
 \subsection{The self-play loop}\label{sub:method-selfplay}
 
-Training is expert iteration \citep{anthony2017expert}: verified search is the teacher and the
+The historical reference uses expert iteration \citep{anthony2017expert}: verified search is the teacher and the
 writer is the student (\cref{alg:selfplay}). The writer imitates scored programs sampled from the
 lists $G_p$, weighted by their rank among the referee's scores, inside a combined objective (\cref{app:training}):
 \begin{align}
@@ -135,7 +135,7 @@ program's weight in the writer loss. Its referee score also contributes
 to the map's ranking targets.
 
 \begin{algorithm*}[t]
-\caption{The self-play loop (training).}\label{alg:selfplay}
+\caption{The reference self-play loop (training).}\label{alg:selfplay}
 \begin{algorithmic}[1]
 \Require training problems; serving writer $\writer$ and map $\mapv$; incumbents $\inc{p}$
 \For{each round}
@@ -194,7 +194,7 @@ test-scored outcome from a ledger of 63,108 evaluations; we exclude it as test s
 \subsection{Game day: \texorpdfstring{\searchone}{search = 1}}\label{sub:method-gameday}
 
 \begin{algorithm}[tb]
-\caption{Game day in five lines (\searchone).}\label{alg:gameday}
+\caption{Proposed game-day protocol (\searchone).}\label{alg:gameday}
 \begin{algorithmic}[1]
 \Require new problem $p$ with training rows and metric; frozen $\encP$ and $\writer$
 \State $z_p \gets \encP(p)$ \Comment{read the board}
@@ -205,7 +205,7 @@ test-scored outcome from a ledger of 63,108 evaluations; we exclude it as test s
 \end{algorithmic}
 \end{algorithm}
 
-\Cref{alg:gameday} is the whole of game day: one encoder pass, one draw of at most 128 tokens at
+The proposed protocol in \cref{alg:gameday} permits one encoder pass, one draw of at most 128 tokens at
 temperature 1 from a recorded seed, lowering to code, and the fit. The map is never run, and none of
 training's exploration programs is added. A draft that does not finish, crashes or times out is
 stillborn and scores as a loss; it is not replaced. Reported costs count the encoder and writer
