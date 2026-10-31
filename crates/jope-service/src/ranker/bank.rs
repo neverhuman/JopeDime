@@ -299,6 +299,22 @@ mod tests {
         format!("{:x}", Sha256::digest(bytes))
     }
 
+    #[test]
+    fn parity_harness_accepts_proposer_role() {
+        let mut row: Value = serde_json::from_str(&row('a', 0.0)).unwrap();
+        row["role"] = Value::String("proposer".to_owned());
+        assert_no_model_prior_rows(&compressed(&serde_json::to_string(&row).unwrap()));
+    }
+
+    #[test]
+    #[should_panic(expected = "line 1 is not tagged as the separate proposer asset")]
+    fn parity_harness_rejects_model_prior_role() {
+        let mut row: Value = serde_json::from_str(&row('a', 0.0)).unwrap();
+        row["role"] = Value::String("model_prior".to_owned());
+        row["coordinate_space"] = Value::String("standardized_lm48_l2_unit".to_owned());
+        assert_no_model_prior_rows(&compressed(&serde_json::to_string(&row).unwrap()));
+    }
+
     fn assert_no_model_prior_rows(bank_bytes: &[u8]) {
         let decoder = ruzstd::decoding::StreamingDecoder::new(Cursor::new(bank_bytes)).unwrap();
         for (index, line) in BufReader::new(decoder).lines().enumerate() {
