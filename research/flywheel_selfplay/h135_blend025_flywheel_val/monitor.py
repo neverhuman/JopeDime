@@ -14,6 +14,7 @@ import time
 import psutil
 
 HERE = Path(__file__).resolve().parent
+ARROW_ALLOCATOR_CONF = "background_thread:false"
 
 
 def save(p, v):
@@ -75,6 +76,7 @@ def main():
     env = dict(
         os.environ,
         GIT_DIR=launch["git_dir"],
+        JE_ARROW_MALLOC_CONF=ARROW_ALLOCATOR_CONF,
         CUDA_VISIBLE_DEVICES="",
         PYTHONDONTWRITEBYTECODE="1",
         PYTHONPYCACHEPREFIX=str(root / "bytecode"),
@@ -94,6 +96,7 @@ def main():
                 "OMP_NUM_THREADS",
                 "MKL_NUM_THREADS",
                 "OPENBLAS_NUM_THREADS",
+                "JE_ARROW_MALLOC_CONF",
             ]
         },
         stages=[],

@@ -132,6 +132,44 @@ class Controls(unittest.TestCase):
             captured["y"], np.arange(4, 196) - np.arange(200).mean()
         )
 
+    def test_native_histgb_total_thread_cap(self):
+        import json
+        import os
+        import subprocess
+        import sys
+        from monitor import ARROW_ALLOCATOR_CONF
+
+        code = """import json,psutil,numpy as np
+from sklearn.ensemble import HistGradientBoostingRegressor
+from threadpoolctl import threadpool_limits
+before=psutil.Process().num_threads()
+x=np.random.default_rng(0).normal(size=(500,10))
+with threadpool_limits(limits=1,user_api='blas'),threadpool_limits(limits=4,user_api='openmp'):
+    model=HistGradientBoostingRegressor(max_iter=3,random_state=135).fit(x,x[:,0])
+    print(json.dumps(dict(before=before,after=psutil.Process().num_threads())))
+"""
+        env = dict(
+            os.environ,
+            OMP_NUM_THREADS="1",
+            MKL_NUM_THREADS="1",
+            OPENBLAS_NUM_THREADS="1",
+            NUMEXPR_NUM_THREADS="1",
+            NUMEXPR_MAX_THREADS="1",
+            CUDA_VISIBLE_DEVICES="",
+            PYTHONDONTWRITEBYTECODE="1",
+            JE_ARROW_MALLOC_CONF=ARROW_ALLOCATOR_CONF,
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", code],
+            env=env,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+        counts = json.loads(result.stdout)
+        self.assertLessEqual(counts["before"], 4)
+        self.assertLessEqual(counts["after"], 4)
+
     def test_guard_boundaries(self):
         s = dict(
             rss=0,
