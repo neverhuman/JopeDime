@@ -472,8 +472,8 @@ mod tests {
                     if index == 1 {
                         await_file(&home.join("pausing"), &mut child);
                     }
-                    assert!(Command::new("kill")
-                        .args(["-INT", &pid.to_string()])
+                    assert!(Command::new("sh")
+                        .args(["-c", "kill -INT \"$1\"", "sh", &pid.to_string()])
                         .status()
                         .unwrap()
                         .success());
