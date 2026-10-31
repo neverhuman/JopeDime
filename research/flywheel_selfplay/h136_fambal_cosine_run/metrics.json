@@ -1,0 +1,23 @@
+{
+  "complete": false,
+  "dl_val_metadata_reads": 0,
+  "dl_val_reads": 0,
+  "fold_manifest_sha256": "6ff1a5c48564a2b13b83f3b50403bfa113f8e1d0361bd5f1c3cb3c83ce872496",
+  "fold_seed": 136161,
+  "gpu_seconds": 0.0,
+  "h109_runner_sha256": "68ed53d5ba80ce52b2450de526c54f2468129eb13d0cb93cba93a8562953866b",
+  "optimizer_updates": 0,
+  "outer_test_reads": 0,
+  "prereg_sha256": "a9bbce83d944ab1fab9d88a96b82ea01207fc093f85a08e7cfef117dfda1aa74",
+  "runner_sha256": "a8fa2908812964cfd5f33207a5bef2e3a2b5a9c2e23558888cd0e45e5b13e001",
+  "schema": "jope.h136.metrics/v1",
+  "sealed_metatest_reads": 0,
+  "seeds": [
+    161,
+    162,
+    163
+  ],
+  "status": "PREREGISTERED_NOT_RUN",
+  "verdict": "PENDING_EXECUTION",
+  "wave": "H136"
+}
