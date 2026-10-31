@@ -6,7 +6,6 @@ import argparse
 import fcntl
 import json
 import os
-import shutil
 import signal
 import subprocess
 import sys
@@ -74,13 +73,21 @@ def gpu_free_mib() -> int:
     return int(result.strip().splitlines()[0])
 
 
+def disk_usage_stats() -> dict[str, float | int]:
+    stats = os.statvfs("/")
+    total = stats.f_blocks * stats.f_frsize
+    available = stats.f_bavail * stats.f_frsize
+    used_percent = 100 * (stats.f_blocks - stats.f_bavail) / stats.f_blocks
+    return {"total_bytes": total, "available_bytes": available,
+            "used_percent": used_percent}
+
+
 def disk_guard_error() -> str | None:
-    usage = shutil.disk_usage("/")
-    used = 100 * (usage.total - usage.free) / usage.total
-    if usage.free < 1024**3:
-        return f"less than 1 GiB free on / ({usage.free} bytes)"
-    if used >= 95.0:
-        return f"filesystem / is at or above 95% full ({used:.2f}%)"
+    usage = disk_usage_stats()
+    if usage["available_bytes"] < 1024**3:
+        return f"less than 1 GiB available on / ({usage['available_bytes']} bytes)"
+    if usage["used_percent"] >= 95.0:
+        return f"filesystem / is at or above 95% full ({usage['used_percent']:.2f}%)"
     return None
 
 
@@ -94,10 +101,10 @@ def safe_preflight() -> dict:
         raise RuntimeError(f"host CPU above 85%: {cpu:.1f}%")
     if available < MIN_MEM_AVAILABLE_KIB:
         raise RuntimeError(f"MemAvailable below 20 GiB: {available} KiB")
+    disk = disk_usage_stats()
     return {"host_cpu_percent": cpu, "mem_available_kib": available,
-            "disk_free_bytes": shutil.disk_usage("/").free,
-            "disk_used_percent": 100 * (shutil.disk_usage("/").total - shutil.disk_usage("/").free)
-            / shutil.disk_usage("/").total}
+            "disk_free_bytes": disk["available_bytes"],
+            "disk_used_percent": disk["used_percent"]}
 
 
 def process_rss_kib(pid: int) -> int | None:
@@ -249,11 +256,14 @@ def timing_mode(args) -> dict:
         "timing/sigma001/seed15",
         child_command("timing", out, arm="sigma001", seed=15, generations=1),
         RUN_ROOT / "logs/timing.log", timeout=MAX_WAVE_GPU_WALL_SECONDS,
-        status_path=status, wait_total=0.0,
+        status_path=status, wait_total=args.prior_lock_wait_seconds,
     )
     receipt = json.loads((out / "timing.json").read_text())
     wave = {"schema": "jope.h57.timing-wave/v1", "status": "complete",
-            "timing_cell": receipt, "lock_wait_seconds": waited,
+            "timing_cell": receipt,
+            "prior_lock_wait_seconds": args.prior_lock_wait_seconds,
+            "attempt_lock_wait_seconds": waited,
+            "lock_wait_seconds": args.prior_lock_wait_seconds + waited,
             "coordinator_wall_seconds": wall, "outcome_cells_started": 0,
             "fold_b_scored": False, "dl_val_reads": 0}
     atomic_json(RUN_ROOT / "timing/timing_wave.json", wave)
@@ -420,7 +430,12 @@ def main() -> None:
     modes.add_argument("--outcomes", action="store_true")
     modes.add_argument("--terminal-val", action="store_true")
     parser.add_argument("--amendment", type=Path)
+    parser.add_argument("--prior-lock-wait-seconds", type=float, default=0.0)
     args = parser.parse_args()
+    if args.prior_lock_wait_seconds < 0:
+        raise RuntimeError("prior lock wait cannot be negative")
+    if args.prior_lock_wait_seconds and not args.timing:
+        raise RuntimeError("prior lock-wait carry is supported only for the one timing cell")
     if args.amendment is None and args.outcomes:
         raise RuntimeError("H57 outcomes require the committed dated resource amendment")
     if disk_guard_error():
