@@ -5,5 +5,6 @@ pdf:
 figs:
 	python3 figures/scripts/make_flywheel_figs.py
 	python3 figures/scripts/make_schematics.py
+	python3 figures/scripts/make_promotions_figure.py
 clean:
 	latexmk -C
