@@ -1,0 +1,38 @@
+{
+  "schema": "jopedime.h87-four-host-pointer.v1",
+  "manifest": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/astra-h87-four-host-20261031T083936Z-f4ea73fb/manifest.json",
+    "version_id": "3DCqOIeEAhypX9qmdBOYD.DZnzRKVKhb",
+    "sha256": "e46eee1ed044110aafe3e946d1a742f4c19090c418bc521b3cdc1dd2f37e37ac",
+    "bytes": 4923
+  },
+  "objects": [
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/astra-h87-four-host-20261031T083936Z-f4ea73fb/evidence.tar.gz",
+      "version_id": "U4k62QfX5mLm6pBB8tYcS4yedLr.tTe_",
+      "sha256": "cafe7084717d58421c272941926f8979465aa172d1b36bc2d43328a8c5914ba2",
+      "bytes": 158783030
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/astra-h87-four-host-20261031T083936Z-f4ea73fb/four_host_metrics.json",
+      "version_id": "kvyeErLuyVmJAZl5lO8mUDn8wN_lZNuK",
+      "sha256": "7c95c76cc9e475a5e39a1515e21c196aa311aa39a44cd5b82ba2c56199d4043f",
+      "bytes": 8668
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/astra-h87-four-host-20261031T083936Z-f4ea73fb/controls.json",
+      "version_id": "8.8wiI7pFUmqU64n55E33iJ0ajFU48JN",
+      "sha256": "06f782dfab858c5c6cfbade28bc9a03e14a0f9bde5aaf04a99ea46a5c1e1cbd6",
+      "bytes": 498
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/astra-h87-four-host-20261031T083936Z-f4ea73fb/manifest.json",
+      "version_id": "3DCqOIeEAhypX9qmdBOYD.DZnzRKVKhb",
+      "sha256": "e46eee1ed044110aafe3e946d1a742f4c19090c418bc521b3cdc1dd2f37e37ac",
+      "bytes": 4923
+    }
+  ],
+  "archive_members_verified": 36,
+  "all_objects_exact_version_sha_verified": true,
+  "original_pool_inputs_preserved": true
+}
