@@ -1,0 +1,298 @@
+{
+  "admission_lcb_threshold": 0.001,
+  "admitted_arms": [],
+  "arms": {
+    "S0": {
+      "admitted": false,
+      "auc_reported": false,
+      "bootstrap_draws": 10000,
+      "bootstrap_seed": 61000,
+      "elo_by_seed": {
+        "12": 1500.0,
+        "13": 1500.0,
+        "14": 1500.0
+      },
+      "elo_ci95_across_seeds": [
+        1500.0,
+        1500.0
+      ],
+      "elo_family_bootstrap_ci95": [
+        1500.0,
+        1500.0
+      ],
+      "elo_family_bootstrap_median": 1500.0,
+      "elo_median_across_seeds": 1500.0,
+      "family_count": 41,
+      "family_mean_gain": 0.0,
+      "family_median_ci95": [
+        0.0,
+        0.0
+      ],
+      "family_median_gain": 0.0,
+      "harm_fraction": 0.0,
+      "is_tie": true,
+      "mean_lcb95_one_sided": 0.0,
+      "nonzero_family_count": 0,
+      "null_margin_m": 0.001546,
+      "per_seed": {
+        "12": {
+          "family_mean_gain": 0.0,
+          "family_median_ci95": [
+            0.0,
+            0.0
+          ],
+          "family_median_gain": 0.0,
+          "harm_fraction": 0.0
+        },
+        "13": {
+          "family_mean_gain": 0.0,
+          "family_median_ci95": [
+            0.0,
+            0.0
+          ],
+          "family_median_gain": 0.0,
+          "harm_fraction": 0.0
+        },
+        "14": {
+          "family_mean_gain": 0.0,
+          "family_median_ci95": [
+            0.0,
+            0.0
+          ],
+          "family_median_gain": 0.0,
+          "harm_fraction": 0.0
+        }
+      },
+      "primary_ranking_metric": "bradley_terry_elo_family_grouped",
+      "seed_count": 3,
+      "seed_median_ci95": [
+        0.0,
+        0.0
+      ],
+      "seed_median_gain": 0.0
+    },
+    "S1": {
+      "admitted": false,
+      "auc_reported": false,
+      "bootstrap_draws": 10000,
+      "bootstrap_seed": 61000,
+      "elo_by_seed": {
+        "12": 1500.0,
+        "13": 1500.0,
+        "14": 1500.0
+      },
+      "elo_ci95_across_seeds": [
+        1500.0,
+        1500.0
+      ],
+      "elo_family_bootstrap_ci95": [
+        1500.0,
+        1500.0
+      ],
+      "elo_family_bootstrap_median": 1500.0,
+      "elo_median_across_seeds": 1500.0,
+      "family_count": 41,
+      "family_mean_gain": 0.0,
+      "family_median_ci95": [
+        0.0,
+        0.0
+      ],
+      "family_median_gain": 0.0,
+      "harm_fraction": 0.0,
+      "is_tie": true,
+      "mean_lcb95_one_sided": 0.0,
+      "nonzero_family_count": 0,
+      "null_margin_m": 0.001546,
+      "per_seed": {
+        "12": {
+          "family_mean_gain": 0.0,
+          "family_median_ci95": [
+            0.0,
+            0.0
+          ],
+          "family_median_gain": 0.0,
+          "harm_fraction": 0.0
+        },
+        "13": {
+          "family_mean_gain": 0.0,
+          "family_median_ci95": [
+            0.0,
+            0.0
+          ],
+          "family_median_gain": 0.0,
+          "harm_fraction": 0.0
+        },
+        "14": {
+          "family_mean_gain": 0.0,
+          "family_median_ci95": [
+            0.0,
+            0.0
+          ],
+          "family_median_gain": 0.0,
+          "harm_fraction": 0.0
+        }
+      },
+      "primary_ranking_metric": "bradley_terry_elo_family_grouped",
+      "seed_count": 3,
+      "seed_median_ci95": [
+        0.0,
+        0.0
+      ],
+      "seed_median_gain": 0.0
+    },
+    "S2": {
+      "admitted": false,
+      "auc_reported": false,
+      "bootstrap_draws": 10000,
+      "bootstrap_seed": 61000,
+      "elo_by_seed": {
+        "12": 1500.0,
+        "13": 1500.0,
+        "14": 1500.0
+      },
+      "elo_ci95_across_seeds": [
+        1500.0,
+        1500.0
+      ],
+      "elo_family_bootstrap_ci95": [
+        1500.0,
+        1500.0
+      ],
+      "elo_family_bootstrap_median": 1500.0,
+      "elo_median_across_seeds": 1500.0,
+      "family_count": 41,
+      "family_mean_gain": 0.0,
+      "family_median_ci95": [
+        0.0,
+        0.0
+      ],
+      "family_median_gain": 0.0,
+      "harm_fraction": 0.0,
+      "is_tie": true,
+      "mean_lcb95_one_sided": 0.0,
+      "nonzero_family_count": 0,
+      "null_margin_m": 0.001546,
+      "per_seed": {
+        "12": {
+          "family_mean_gain": 0.0,
+          "family_median_ci95": [
+            0.0,
+            0.0
+          ],
+          "family_median_gain": 0.0,
+          "harm_fraction": 0.0
+        },
+        "13": {
+          "family_mean_gain": 0.0,
+          "family_median_ci95": [
+            0.0,
+            0.0
+          ],
+          "family_median_gain": 0.0,
+          "harm_fraction": 0.0
+        },
+        "14": {
+          "family_mean_gain": 0.0,
+          "family_median_ci95": [
+            0.0,
+            0.0
+          ],
+          "family_median_gain": 0.0,
+          "harm_fraction": 0.0
+        }
+      },
+      "primary_ranking_metric": "bradley_terry_elo_family_grouped",
+      "seed_count": 3,
+      "seed_median_ci95": [
+        0.0,
+        0.0
+      ],
+      "seed_median_gain": 0.0
+    },
+    "S3": {
+      "admitted": false,
+      "auc_reported": false,
+      "bootstrap_draws": 10000,
+      "bootstrap_seed": 61000,
+      "elo_by_seed": {
+        "12": 1500.0,
+        "13": 1500.0,
+        "14": 1500.0
+      },
+      "elo_ci95_across_seeds": [
+        1500.0,
+        1500.0
+      ],
+      "elo_family_bootstrap_ci95": [
+        1500.0,
+        1500.0
+      ],
+      "elo_family_bootstrap_median": 1500.0,
+      "elo_median_across_seeds": 1500.0,
+      "family_count": 41,
+      "family_mean_gain": 0.0,
+      "family_median_ci95": [
+        0.0,
+        0.0
+      ],
+      "family_median_gain": 0.0,
+      "harm_fraction": 0.0,
+      "is_tie": true,
+      "mean_lcb95_one_sided": 0.0,
+      "nonzero_family_count": 0,
+      "null_margin_m": 0.001546,
+      "per_seed": {
+        "12": {
+          "family_mean_gain": 0.0,
+          "family_median_ci95": [
+            0.0,
+            0.0
+          ],
+          "family_median_gain": 0.0,
+          "harm_fraction": 0.0
+        },
+        "13": {
+          "family_mean_gain": 0.0,
+          "family_median_ci95": [
+            0.0,
+            0.0
+          ],
+          "family_median_gain": 0.0,
+          "harm_fraction": 0.0
+        },
+        "14": {
+          "family_mean_gain": 0.0,
+          "family_median_ci95": [
+            0.0,
+            0.0
+          ],
+          "family_median_gain": 0.0,
+          "harm_fraction": 0.0
+        }
+      },
+      "primary_ranking_metric": "bradley_terry_elo_family_grouped",
+      "seed_count": 3,
+      "seed_median_ci95": [
+        0.0,
+        0.0
+      ],
+      "seed_median_gain": 0.0
+    }
+  },
+  "auc_reported": false,
+  "bootstrap_draws": 10000,
+  "bootstrap_seed": 61000,
+  "eval_mode": "unrev",
+  "fold_seed": 4900,
+  "harm_threshold": -0.01,
+  "holdout_payloads_opened": 0,
+  "max_harm_fraction": 0.1,
+  "null_margin_m": 0.001546,
+  "outer_rows_delivered": 0,
+  "planned_terminal_reads": [],
+  "primary_ranking_metric": "bradley_terry_elo_family_grouped",
+  "schema": "jope.h61.admission/v1",
+  "source_commit": "db8faaa158c7f7460186a6b92805309e0f0b2cbe",
+  "status": "complete",
+  "validation_payloads_opened": false
+}
