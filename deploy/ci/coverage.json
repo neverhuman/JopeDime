@@ -4614,6 +4614,18 @@
       ],
       "scope": "Maintained North Star guard and metric fixtures for DOPE freeze, binary metrics, Rust fitness and grouped Elo; CPU synthetic fixtures do not qualify live training or overhead."
     },
+    "python:python/tests/test_record_reader.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-default",
+        "full-python"
+      ],
+      "scope": "Direct Python API regression controls for the QLT-03 complete-all reader guard; synthetic JSONL fixtures only, no corpus or engine qualification."
+    },
     "python:python/tests/test_optional_task_readiness.py": {
       "discovery": {
         "kind": "python-family"
