@@ -1,23 +1,1319 @@
 {
-  "complete": false,
+  "admitted_arms": [],
+  "bradley_terry_elo_vs_control_1500": {
+    "n_datasets": 735,
+    "n_families": 41,
+    "pairwise_win_tie_loss_vs_anchor": {
+      "COSWR": {
+        "elo_delta_vs_anchor": 4.57,
+        "losses": 30,
+        "ties": 650,
+        "wins": 55
+      },
+      "FAMBAL_ACC4": {
+        "elo_delta_vs_anchor": -4.41,
+        "losses": 31,
+        "ties": 688,
+        "wins": 16
+      },
+      "R882": {
+        "elo_delta_vs_anchor": 9.31,
+        "losses": 67,
+        "ties": 564,
+        "wins": 104
+      }
+    },
+    "ratings": {
+      "CONTROL": 1500.0,
+      "COSWR": 1504.57,
+      "FAMBAL_ACC4": 1495.59,
+      "R882": 1509.31
+    }
+  },
+  "bradley_terry_elo_vs_r882_1500": {
+    "n_datasets": 735,
+    "n_families": 41,
+    "pairwise_win_tie_loss_vs_anchor": {
+      "CONTROL": {
+        "elo_delta_vs_anchor": -9.31,
+        "losses": 104,
+        "ties": 564,
+        "wins": 67
+      },
+      "COSWR": {
+        "elo_delta_vs_anchor": -4.74,
+        "losses": 55,
+        "ties": 638,
+        "wins": 42
+      },
+      "FAMBAL_ACC4": {
+        "elo_delta_vs_anchor": -13.72,
+        "losses": 116,
+        "ties": 547,
+        "wins": 72
+      }
+    },
+    "ratings": {
+      "CONTROL": 1490.69,
+      "COSWR": 1495.26,
+      "FAMBAL_ACC4": 1486.28,
+      "R882": 1500.0
+    }
+  },
+  "candidate_breakthrough": false,
+  "cells": {
+    "CONTROL_seed161": {
+      "adapter_l2_drift_from_r882": 0.43980419635772705,
+      "arm": "CONTROL",
+      "dope_sha256_post": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_pre": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elapsed_seconds": 98.573,
+      "final_adapter_sha256": "ac5c28d4c68aee779f8c75236d5d9a543ca0fc02d1bde7373384e8f88ebb6c73",
+      "final_lr": 0.0001,
+      "final_step_loss": 7.192231178283691,
+      "fold0_context_mean_utility": 1.1996384526060186,
+      "fold0_family_mean_utility": 1.1282299242218072,
+      "fold0_mean_regret_all_candidates": 9.412037081299147,
+      "fold0_mean_softmax_expected_regret": 0.2982264900894508,
+      "fold0_mean_top1_oracle_regret": 0.2496857542686747,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 36676,
+        "path": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run/cells/CONTROL_seed161.json",
+        "relative_key": "cells/CONTROL_seed161.json",
+        "sha256": "20ad1bfc0402ba085ef2fa84653f0db5f2d5faedd4e9d4df42d1792d9838ea37",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 3.243373904814696,
+      "max_lr": 0.0001,
+      "mean_step_loss": 4.307716330885887,
+      "median_post_clip_grad_norm": 0.5132613182067871,
+      "median_pre_clip_grad_norm": 0.5132613182067871,
+      "microbatches_per_update": 1,
+      "min_lr": 0.0001,
+      "non_trainable_max_abs_diff": 0.0,
+      "non_trainable_parameter_count": 1126777,
+      "non_trainable_sha256_post": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "non_trainable_sha256_pre": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "schema": "jope.h136.cell_receipt/v1",
+      "seed": 161,
+      "total_microbatches": 40,
+      "trainable_parameter_count": 29211,
+      "trainable_tensor_count": 47,
+      "unique_fit_families_sampled": 155,
+      "updates": 40,
+      "wave": "H136"
+    },
+    "CONTROL_seed162": {
+      "adapter_l2_drift_from_r882": 0.440931499004364,
+      "arm": "CONTROL",
+      "dope_sha256_post": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_pre": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elapsed_seconds": 97.104,
+      "final_adapter_sha256": "978095ae6c8b7f528077125248e022b21ebe0793e4404148a449193d92bdd834",
+      "final_lr": 0.0001,
+      "final_step_loss": 5.514163970947266,
+      "fold0_context_mean_utility": 1.206531336430072,
+      "fold0_family_mean_utility": 1.1297075081942611,
+      "fold0_mean_regret_all_candidates": 9.412203113464699,
+      "fold0_mean_softmax_expected_regret": 0.2987817894343714,
+      "fold0_mean_top1_oracle_regret": 0.24616565182078973,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 36694,
+        "path": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run/cells/CONTROL_seed162.json",
+        "relative_key": "cells/CONTROL_seed162.json",
+        "sha256": "2402141a8d226638bd7f3c3e146e4b3d70b0a410f28dccbc75d8bf94a38fc93d",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 3.243373904814696,
+      "max_lr": 0.0001,
+      "mean_step_loss": 4.1017650187015535,
+      "median_post_clip_grad_norm": 0.5255469679832458,
+      "median_pre_clip_grad_norm": 0.5255469679832458,
+      "microbatches_per_update": 1,
+      "min_lr": 0.0001,
+      "non_trainable_max_abs_diff": 0.0,
+      "non_trainable_parameter_count": 1126777,
+      "non_trainable_sha256_post": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "non_trainable_sha256_pre": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "schema": "jope.h136.cell_receipt/v1",
+      "seed": 162,
+      "total_microbatches": 40,
+      "trainable_parameter_count": 29211,
+      "trainable_tensor_count": 47,
+      "unique_fit_families_sampled": 157,
+      "updates": 40,
+      "wave": "H136"
+    },
+    "CONTROL_seed163": {
+      "adapter_l2_drift_from_r882": 0.4365246295928955,
+      "arm": "CONTROL",
+      "dope_sha256_post": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_pre": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elapsed_seconds": 103.918,
+      "final_adapter_sha256": "e32e87c2e5ce39bf7dabea7f94cf4414f8c2d222023fbce97745d634d352c015",
+      "final_lr": 0.0001,
+      "final_step_loss": 3.8702173233032227,
+      "fold0_context_mean_utility": 1.2125810878101284,
+      "fold0_family_mean_utility": 1.144269318891224,
+      "fold0_mean_regret_all_candidates": 9.412184522683656,
+      "fold0_mean_softmax_expected_regret": 0.2983770498700083,
+      "fold0_mean_top1_oracle_regret": 0.2342390456677188,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 36682,
+        "path": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run/cells/CONTROL_seed163.json",
+        "relative_key": "cells/CONTROL_seed163.json",
+        "sha256": "81e619f55d37a1feebb6eecd112b8254a32b409e1a410cee3025af4412f7f926",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 2.4851225150058474,
+      "max_lr": 0.0001,
+      "mean_step_loss": 4.399697774648667,
+      "median_post_clip_grad_norm": 0.5068862587213516,
+      "median_pre_clip_grad_norm": 0.5068862587213516,
+      "microbatches_per_update": 1,
+      "min_lr": 0.0001,
+      "non_trainable_max_abs_diff": 0.0,
+      "non_trainable_parameter_count": 1126777,
+      "non_trainable_sha256_post": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "non_trainable_sha256_pre": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "schema": "jope.h136.cell_receipt/v1",
+      "seed": 163,
+      "total_microbatches": 40,
+      "trainable_parameter_count": 29211,
+      "trainable_tensor_count": 47,
+      "unique_fit_families_sampled": 156,
+      "updates": 40,
+      "wave": "H136"
+    },
+    "COSWR_seed161": {
+      "adapter_l2_drift_from_r882": 0.24530716240406036,
+      "arm": "COSWR",
+      "dope_sha256_post": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_pre": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elapsed_seconds": 97.295,
+      "final_adapter_sha256": "9888109bf2ac1804353892a63f7b15bfc457434a125661b69b5968ca145907d4",
+      "final_lr": 3.086582838174554e-05,
+      "final_step_loss": 7.204989433288574,
+      "fold0_context_mean_utility": 1.2257367648016897,
+      "fold0_family_mean_utility": 1.1482023029819404,
+      "fold0_mean_regret_all_candidates": 9.411018420916337,
+      "fold0_mean_softmax_expected_regret": 0.29662690636133415,
+      "fold0_mean_top1_oracle_regret": 0.23052207589448112,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 36741,
+        "path": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run/cells/COSWR_seed161.json",
+        "relative_key": "cells/COSWR_seed161.json",
+        "sha256": "9fb2c65290ca53482a698c61cb2ceb5c88f8295de81c6eb4e1bea196becd938c",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 0.4311314412430035,
+      "max_lr": 0.0001,
+      "mean_step_loss": 4.313041564822197,
+      "median_post_clip_grad_norm": 0.4957723766565323,
+      "median_pre_clip_grad_norm": 0.4957723766565323,
+      "microbatches_per_update": 1,
+      "min_lr": 1.5413331334360182e-07,
+      "non_trainable_max_abs_diff": 0.0,
+      "non_trainable_parameter_count": 1126777,
+      "non_trainable_sha256_post": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "non_trainable_sha256_pre": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "schema": "jope.h136.cell_receipt/v1",
+      "seed": 161,
+      "total_microbatches": 40,
+      "trainable_parameter_count": 29211,
+      "trainable_tensor_count": 47,
+      "unique_fit_families_sampled": 155,
+      "updates": 40,
+      "wave": "H136"
+    },
+    "COSWR_seed162": {
+      "adapter_l2_drift_from_r882": 0.2465822845697403,
+      "arm": "COSWR",
+      "dope_sha256_post": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_pre": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elapsed_seconds": 94.402,
+      "final_adapter_sha256": "b47c4a61be7d58a5aa8925941a841b1d919732439a78da60acdd0edff3dd16cc",
+      "final_lr": 3.086582838174554e-05,
+      "final_step_loss": 5.528336048126221,
+      "fold0_context_mean_utility": 1.2096508670950281,
+      "fold0_family_mean_utility": 1.1292250774508128,
+      "fold0_mean_regret_all_candidates": 9.411205312939762,
+      "fold0_mean_softmax_expected_regret": 0.2970176490150659,
+      "fold0_mean_top1_oracle_regret": 0.24611978403307397,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 36717,
+        "path": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run/cells/COSWR_seed162.json",
+        "relative_key": "cells/COSWR_seed162.json",
+        "sha256": "dfa77503f89f8355d2dbe4f1ec4106fff0abc239b81ea551372965af53aae93e",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 3.243373904814696,
+      "max_lr": 0.0001,
+      "mean_step_loss": 4.107122492790222,
+      "median_post_clip_grad_norm": 0.5209139883518219,
+      "median_pre_clip_grad_norm": 0.5209139883518219,
+      "microbatches_per_update": 1,
+      "min_lr": 1.5413331334360182e-07,
+      "non_trainable_max_abs_diff": 0.0,
+      "non_trainable_parameter_count": 1126777,
+      "non_trainable_sha256_post": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "non_trainable_sha256_pre": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "schema": "jope.h136.cell_receipt/v1",
+      "seed": 162,
+      "total_microbatches": 40,
+      "trainable_parameter_count": 29211,
+      "trainable_tensor_count": 47,
+      "unique_fit_families_sampled": 157,
+      "updates": 40,
+      "wave": "H136"
+    },
+    "COSWR_seed163": {
+      "adapter_l2_drift_from_r882": 0.245851069688797,
+      "arm": "COSWR",
+      "dope_sha256_post": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_pre": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elapsed_seconds": 96.654,
+      "final_adapter_sha256": "c62908c7c822056d09e34756c2a3d3a2437e3a6d893cc08d3b7252a8dc3d5495",
+      "final_lr": 3.086582838174554e-05,
+      "final_step_loss": 3.8804092407226562,
+      "fold0_context_mean_utility": 1.2250301491685367,
+      "fold0_family_mean_utility": 1.1476612801705257,
+      "fold0_mean_regret_all_candidates": 9.411056511266828,
+      "fold0_mean_softmax_expected_regret": 0.2967431109313465,
+      "fold0_mean_top1_oracle_regret": 0.23053055328363545,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 36740,
+        "path": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run/cells/COSWR_seed163.json",
+        "relative_key": "cells/COSWR_seed163.json",
+        "sha256": "18f1ed0f52296c30938b1a7bedcefeb84c6fc74f956fa141056a5e2cf714961b",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 0.3496256431060524,
+      "max_lr": 0.0001,
+      "mean_step_loss": 4.404841184616089,
+      "median_post_clip_grad_norm": 0.4873558282852173,
+      "median_pre_clip_grad_norm": 0.4873558282852173,
+      "microbatches_per_update": 1,
+      "min_lr": 1.5413331334360182e-07,
+      "non_trainable_max_abs_diff": 0.0,
+      "non_trainable_parameter_count": 1126777,
+      "non_trainable_sha256_post": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "non_trainable_sha256_pre": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "schema": "jope.h136.cell_receipt/v1",
+      "seed": 163,
+      "total_microbatches": 40,
+      "trainable_parameter_count": 29211,
+      "trainable_tensor_count": 47,
+      "unique_fit_families_sampled": 156,
+      "updates": 40,
+      "wave": "H136"
+    },
+    "FAMBAL_ACC4_seed161": {
+      "adapter_l2_drift_from_r882": 0.5062657594680786,
+      "arm": "FAMBAL_ACC4",
+      "dope_sha256_post": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_pre": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elapsed_seconds": 278.423,
+      "final_adapter_sha256": "70d5d5448186070ce0e0aaa737e547b080943aba7da5097cc72b47b4dd704ffc",
+      "final_lr": 0.0001,
+      "final_step_loss": 4.218988537788391,
+      "fold0_context_mean_utility": 1.1969098641351485,
+      "fold0_family_mean_utility": 1.1268873464976736,
+      "fold0_mean_regret_all_candidates": 9.412399414378944,
+      "fold0_mean_softmax_expected_regret": 0.29986573109964715,
+      "fold0_mean_top1_oracle_regret": 0.2505284310938776,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 36693,
+        "path": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run/cells/FAMBAL_ACC4_seed161.json",
+        "relative_key": "cells/FAMBAL_ACC4_seed161.json",
+        "sha256": "c2c2cf4235555fb85c46e551fa5f86956155554f46f0e2e1b6e060853e188e87",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 3.243373904814696,
+      "max_lr": 0.0001,
+      "mean_step_loss": 4.00210837572813,
+      "median_post_clip_grad_norm": 0.49828991293907166,
+      "median_pre_clip_grad_norm": 0.49828991293907166,
+      "microbatches_per_update": 4,
+      "min_lr": 0.0001,
+      "non_trainable_max_abs_diff": 0.0,
+      "non_trainable_parameter_count": 1126777,
+      "non_trainable_sha256_post": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "non_trainable_sha256_pre": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "schema": "jope.h136.cell_receipt/v1",
+      "seed": 161,
+      "total_microbatches": 160,
+      "trainable_parameter_count": 29211,
+      "trainable_tensor_count": 47,
+      "unique_fit_families_sampled": 164,
+      "updates": 40,
+      "wave": "H136"
+    },
+    "FAMBAL_ACC4_seed162": {
+      "adapter_l2_drift_from_r882": 0.5127755999565125,
+      "arm": "FAMBAL_ACC4",
+      "dope_sha256_post": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_pre": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elapsed_seconds": 190.87,
+      "final_adapter_sha256": "d807ff726e797294d1660118d32851c7802aef0a52d8d9534f9719746524e2ec",
+      "final_lr": 0.0001,
+      "final_step_loss": 3.576311409473419,
+      "fold0_context_mean_utility": 1.1948658355109176,
+      "fold0_family_mean_utility": 1.124690113449113,
+      "fold0_mean_regret_all_candidates": 9.412341055993945,
+      "fold0_mean_softmax_expected_regret": 0.3003512373176084,
+      "fold0_mean_top1_oracle_regret": 0.25052588098881073,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 36692,
+        "path": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run/cells/FAMBAL_ACC4_seed162.json",
+        "relative_key": "cells/FAMBAL_ACC4_seed162.json",
+        "sha256": "cba6ee7cc3948cdc1908d573cb083a230a61bddc0d34a814f95ad5cf0326adf6",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 3.243373904814696,
+      "max_lr": 0.0001,
+      "mean_step_loss": 3.8827168583869933,
+      "median_post_clip_grad_norm": 0.5039243400096893,
+      "median_pre_clip_grad_norm": 0.5039243400096893,
+      "microbatches_per_update": 4,
+      "min_lr": 0.0001,
+      "non_trainable_max_abs_diff": 0.0,
+      "non_trainable_parameter_count": 1126777,
+      "non_trainable_sha256_post": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "non_trainable_sha256_pre": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "schema": "jope.h136.cell_receipt/v1",
+      "seed": 162,
+      "total_microbatches": 160,
+      "trainable_parameter_count": 29211,
+      "trainable_tensor_count": 47,
+      "unique_fit_families_sampled": 164,
+      "updates": 40,
+      "wave": "H136"
+    },
+    "FAMBAL_ACC4_seed163": {
+      "adapter_l2_drift_from_r882": 0.5080591440200806,
+      "arm": "FAMBAL_ACC4",
+      "dope_sha256_post": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_pre": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elapsed_seconds": 196.405,
+      "final_adapter_sha256": "f68b375a783909bb357d007eba839951f43e2e0eb279e788feb63e46fafd6e1d",
+      "final_lr": 0.0001,
+      "final_step_loss": 3.153545916080475,
+      "fold0_context_mean_utility": 1.197196606646433,
+      "fold0_family_mean_utility": 1.1269862938744883,
+      "fold0_mean_regret_all_candidates": 9.412357118008432,
+      "fold0_mean_softmax_expected_regret": 0.299395379962698,
+      "fold0_mean_top1_oracle_regret": 0.25049658195920876,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 36693,
+        "path": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run/cells/FAMBAL_ACC4_seed163.json",
+        "relative_key": "cells/FAMBAL_ACC4_seed163.json",
+        "sha256": "aa872d28326f297ac4bbb22ebf8d1ec3207326edc975a60d8fefc4aa63c4565b",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 3.243373904814696,
+      "max_lr": 0.0001,
+      "mean_step_loss": 4.028370799124241,
+      "median_post_clip_grad_norm": 0.5201468467712402,
+      "median_pre_clip_grad_norm": 0.5201468467712402,
+      "microbatches_per_update": 4,
+      "min_lr": 0.0001,
+      "non_trainable_max_abs_diff": 0.0,
+      "non_trainable_parameter_count": 1126777,
+      "non_trainable_sha256_post": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "non_trainable_sha256_pre": "e56ea86fc9ef9148eeb32c6a3719c041ce3da6dea80bdc00c255c820d7d9b5f7",
+      "schema": "jope.h136.cell_receipt/v1",
+      "seed": 163,
+      "total_microbatches": 160,
+      "trainable_parameter_count": 29211,
+      "trainable_tensor_count": 47,
+      "unique_fit_families_sampled": 164,
+      "updates": 40,
+      "wave": "H136"
+    }
+  },
+  "cells_completed": 9,
+  "complete": true,
+  "continuous_regret_co_readout": {
+    "CONTROL": {
+      "mean_seed_adapter_l2_drift": 0.43908677498499554,
+      "mean_seed_regret_all_candidates": 9.4121415724825,
+      "median_seed_adapter_l2_drift": 0.43980419635772705,
+      "median_seed_regret_all_candidates": 9.412184522683656,
+      "median_seed_regret_delta_vs_control": 0.0,
+      "median_seed_regret_delta_vs_r882": 0.0029785884707305144,
+      "median_seed_softmax_expected_regret": 0.2983770498700083,
+      "median_seed_top1_oracle_regret": 0.24616565182078973,
+      "median_seed_top1_oracle_regret_delta_vs_r882": 0.015403627163329603,
+      "per_seed_adapter_l2_drift": [
+        0.43980419635772705,
+        0.440931499004364,
+        0.4365246295928955
+      ],
+      "per_seed_mean_regret_all_candidates": [
+        9.412037081299147,
+        9.412203113464699,
+        9.412184522683656
+      ],
+      "per_seed_softmax_expected_regret": [
+        0.2982264900894508,
+        0.2987817894343714,
+        0.2983770498700083
+      ],
+      "per_seed_top1_oracle_regret": [
+        0.2496857542686747,
+        0.24616565182078973,
+        0.2342390456677188
+      ]
+    },
+    "COSWR": {
+      "mean_seed_adapter_l2_drift": 0.24591350555419922,
+      "mean_seed_regret_all_candidates": 9.411093415040975,
+      "median_seed_adapter_l2_drift": 0.245851069688797,
+      "median_seed_regret_all_candidates": 9.411056511266828,
+      "median_seed_regret_delta_vs_control": -0.001018660382809955,
+      "median_seed_regret_delta_vs_r882": 0.001850577053902569,
+      "median_seed_softmax_expected_regret": 0.2967431109313465,
+      "median_seed_top1_oracle_regret": 0.23053055328363545,
+      "median_seed_top1_oracle_regret_delta_vs_r882": -0.00023147137382467653,
+      "per_seed_adapter_l2_drift": [
+        0.24530716240406036,
+        0.2465822845697403,
+        0.245851069688797
+      ],
+      "per_seed_mean_regret_all_candidates": [
+        9.411018420916337,
+        9.411205312939762,
+        9.411056511266828
+      ],
+      "per_seed_softmax_expected_regret": [
+        0.29662690636133415,
+        0.2970176490150659,
+        0.2967431109313465
+      ],
+      "per_seed_top1_oracle_regret": [
+        0.23052207589448112,
+        0.24611978403307397,
+        0.23053055328363545
+      ]
+    },
+    "FAMBAL_ACC4": {
+      "mean_seed_adapter_l2_drift": 0.5090335011482239,
+      "mean_seed_regret_all_candidates": 9.412365862793772,
+      "median_seed_adapter_l2_drift": 0.5080591440200806,
+      "median_seed_regret_all_candidates": 9.412357118008432,
+      "median_seed_regret_delta_vs_control": 0.00017259532477531536,
+      "median_seed_regret_delta_vs_r882": 0.0031511837955058297,
+      "median_seed_softmax_expected_regret": 0.29986573109964715,
+      "median_seed_top1_oracle_regret": 0.25052588098881073,
+      "median_seed_top1_oracle_regret_delta_vs_r882": 0.01976385633135061,
+      "per_seed_adapter_l2_drift": [
+        0.5062657594680786,
+        0.5127755999565125,
+        0.5080591440200806
+      ],
+      "per_seed_mean_regret_all_candidates": [
+        9.412399414378944,
+        9.412341055993945,
+        9.412357118008432
+      ],
+      "per_seed_softmax_expected_regret": [
+        0.29986573109964715,
+        0.3003512373176084,
+        0.299395379962698
+      ],
+      "per_seed_top1_oracle_regret": [
+        0.2505284310938776,
+        0.25052588098881073,
+        0.25049658195920876
+      ]
+    },
+    "R882": {
+      "mean_regret_all_candidates": 9.409205934212926,
+      "mean_softmax_expected_regret": 0.29524960559190483,
+      "mean_top1_oracle_regret": 0.23076202465746012
+    }
+  },
   "dl_val_metadata_reads": 0,
   "dl_val_reads": 0,
-  "fold_manifest_sha256": "6ff1a5c48564a2b13b83f3b50403bfa113f8e1d0361bd5f1c3cb3c83ce872496",
-  "fold_seed": 136161,
+  "elapsed_seconds": 1253.64,
+  "final_guards": {
+    "disk_free_gib": 498.72,
+    "disk_used_pct": 93.252,
+    "load1": 68.94,
+    "load5": 63.43,
+    "mem_available_gib": 70.3,
+    "nice": 19,
+    "rss_bytes": 1425178624,
+    "rss_mib": 1359.16,
+    "scratch_bytes": 0,
+    "stage": "wave_complete",
+    "torch_threads": 4
+  },
   "gpu_seconds": 0.0,
-  "h109_runner_sha256": "68ed53d5ba80ce52b2450de526c54f2468129eb13d0cb93cba93a8562953866b",
-  "optimizer_updates": 0,
+  "holm_step_down_vs_control": {
+    "COSWR": {
+      "admitted": false,
+      "alpha_threshold": 0.025,
+      "gates": {
+        "all_three_seeds_positive": false,
+        "family_harm_le_10pct": false,
+        "holm_lcb95_gt_0": false,
+        "median_seed_gain_gt_0_001": true,
+        "not_identical_to_r882": true,
+        "seeds_not_identical": true
+      },
+      "holm_lcb95": -0.0035543536771910056,
+      "p_value_one_sided": 0.11588841115888411,
+      "rank": 1
+    },
+    "FAMBAL_ACC4": {
+      "admitted": false,
+      "alpha_threshold": 0.05,
+      "gates": {
+        "all_three_seeds_positive": false,
+        "family_harm_le_10pct": true,
+        "holm_lcb95_gt_0": false,
+        "median_seed_gain_gt_0_001": false,
+        "not_identical_to_r882": true,
+        "seeds_not_identical": true
+      },
+      "holm_lcb95": -0.017959171125471417,
+      "p_value_one_sided": 0.9752024797520248,
+      "rank": 2
+    }
+  },
+  "holm_step_down_vs_r882": {
+    "COSWR": {
+      "admitted": false,
+      "alpha_threshold": 0.025,
+      "gates": {
+        "all_three_seeds_positive": false,
+        "family_harm_le_10pct": false,
+        "holm_lcb95_gt_0": false,
+        "median_seed_gain_gt_0_001": false,
+        "not_identical_to_r882": true,
+        "seeds_not_identical": true
+      },
+      "holm_lcb95": -0.02047356867964851,
+      "p_value_one_sided": 0.9046095390460954,
+      "rank": 1
+    },
+    "FAMBAL_ACC4": {
+      "admitted": false,
+      "alpha_threshold": 0.05,
+      "gates": {
+        "all_three_seeds_positive": false,
+        "family_harm_le_10pct": false,
+        "holm_lcb95_gt_0": false,
+        "median_seed_gain_gt_0_001": false,
+        "not_identical_to_r882": true,
+        "seeds_not_identical": true
+      },
+      "holm_lcb95": -0.05356233201699445,
+      "p_value_one_sided": 0.946005399460054,
+      "rank": 2
+    }
+  },
+  "live_loop_reads": 0,
+  "local_summary_receipt": {
+    "bytes": 49486,
+    "path": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run/h136_summary.json",
+    "relative_key": "h136_summary.json",
+    "sha256": "10720c102d3831639f2a162bb605f7da946476e1f70bd8b7818c6b3466aee6e5",
+    "status": "LOCAL_ONLY"
+  },
+  "optimizer_updates": 360,
   "outer_test_reads": 0,
-  "prereg_sha256": "a9bbce83d944ab1fab9d88a96b82ea01207fc093f85a08e7cfef117dfda1aa74",
-  "runner_sha256": "a8fa2908812964cfd5f33207a5bef2e3a2b5a9c2e23558888cd0e45e5b13e001",
+  "primary_vs_r882": {
+    "CONTROL": {
+      "all_three_seeds_positive": false,
+      "ci95_two_sided": [
+        -0.04125965827248035,
+        0.00401887599499851
+      ],
+      "comparator": "R882",
+      "lcb95_one_sided": -0.036222002416674906,
+      "lcb975_one_sided": -0.04125965827248035,
+      "max_seed_harmed_context_fraction": 0.11428571428571428,
+      "max_seed_harmed_family_fraction": 0.2682926829268293,
+      "mean_seed_gain": -0.014723646064145689,
+      "median_seed_gain": -0.019085054972315368,
+      "median_seed_paired_elo": 1448.79,
+      "p_value_one_sided": 0.9178082191780822,
+      "per_seed": [
+        {
+          "arm_family_mean": 1.1282299242218072,
+          "comparator_family_mean": 1.1487925631665765,
+          "context_mean_delta": -0.02872658650528687,
+          "family_mean_delta": -0.020562638944769274,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4268292682926829,
+          "family_wtl": [
+            11,
+            13,
+            17
+          ],
+          "harmed_contexts_count": 25,
+          "harmed_contexts_fraction": 0.10204081632653061,
+          "harmed_families_count": 11,
+          "harmed_families_fraction": 0.2682926829268293,
+          "paired_elo": 1448.79,
+          "seed": 161
+        },
+        {
+          "arm_family_mean": 1.1297075081942611,
+          "comparator_family_mean": 1.1487925631665765,
+          "context_mean_delta": -0.021833702681233632,
+          "family_mean_delta": -0.019085054972315368,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4146341463414634,
+          "family_wtl": [
+            11,
+            12,
+            18
+          ],
+          "harmed_contexts_count": 28,
+          "harmed_contexts_fraction": 0.11428571428571428,
+          "harmed_families_count": 11,
+          "harmed_families_fraction": 0.2682926829268293,
+          "paired_elo": 1440.1,
+          "seed": 162
+        },
+        {
+          "arm_family_mean": 1.144269318891224,
+          "comparator_family_mean": 1.1487925631665765,
+          "context_mean_delta": -0.01578395130117709,
+          "family_mean_delta": -0.004523244275352427,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.45121951219512196,
+          "family_wtl": [
+            12,
+            13,
+            16
+          ],
+          "harmed_contexts_count": 23,
+          "harmed_contexts_fraction": 0.09387755102040816,
+          "harmed_families_count": 10,
+          "harmed_families_fraction": 0.24390243902439024,
+          "paired_elo": 1466.0,
+          "seed": 163
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        -0.020562638944769274,
+        -0.019085054972315368,
+        -0.004523244275352427
+      ],
+      "pooled_family_harm_fraction": 0.2682926829268293,
+      "pooled_family_median_gain": 0.0,
+      "pooled_family_win_rate": 0.43089430894308944,
+      "pooled_family_wtl": [
+        34,
+        38,
+        51
+      ],
+      "pooled_paired_elo": 1451.67,
+      "pooled_paired_elo_ci95": [
+        1363.44,
+        1534.08
+      ],
+      "seed_mean_harmed_context_fraction": 0.11428571428571428,
+      "seed_mean_harmed_family_fraction": 0.2682926829268293
+    },
+    "COSWR": {
+      "admitted": false,
+      "all_three_seeds_positive": false,
+      "ci95_two_sided": [
+        -0.02047356867964851,
+        0.002469600248801948
+      ],
+      "comparator": "R882",
+      "holm_alpha": 0.025,
+      "holm_lcb95": -0.02047356867964851,
+      "holm_pass": false,
+      "lcb95_one_sided": -0.01787916116605283,
+      "lcb975_one_sided": -0.02047356867964851,
+      "max_seed_harmed_context_fraction": 0.0653061224489796,
+      "max_seed_harmed_family_fraction": 0.1951219512195122,
+      "mean_seed_gain": -0.007096342965483515,
+      "median_seed_gain": -0.0011312829960508052,
+      "median_seed_paired_elo": 1474.53,
+      "p_value_one_sided": 0.9046095390460954,
+      "per_seed": [
+        {
+          "arm_family_mean": 1.1482023029819404,
+          "comparator_family_mean": 1.1487925631665765,
+          "context_mean_delta": -0.002628274309615849,
+          "family_mean_delta": -0.0005902601846360635,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4634146341463415,
+          "family_wtl": [
+            9,
+            20,
+            12
+          ],
+          "harmed_contexts_count": 10,
+          "harmed_contexts_fraction": 0.04081632653061224,
+          "harmed_families_count": 4,
+          "harmed_families_fraction": 0.0975609756097561,
+          "paired_elo": 1474.53,
+          "seed": 161
+        },
+        {
+          "arm_family_mean": 1.1292250774508128,
+          "comparator_family_mean": 1.1487925631665765,
+          "context_mean_delta": -0.018714172016277394,
+          "family_mean_delta": -0.019567485715763677,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4146341463414634,
+          "family_wtl": [
+            9,
+            16,
+            16
+          ],
+          "harmed_contexts_count": 16,
+          "harmed_contexts_fraction": 0.0653061224489796,
+          "harmed_families_count": 8,
+          "harmed_families_fraction": 0.1951219512195122,
+          "paired_elo": 1440.1,
+          "seed": 162
+        },
+        {
+          "arm_family_mean": 1.1476612801705257,
+          "comparator_family_mean": 1.1487925631665765,
+          "context_mean_delta": -0.0033348899427684776,
+          "family_mean_delta": -0.0011312829960508052,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.47560975609756095,
+          "family_wtl": [
+            8,
+            23,
+            10
+          ],
+          "harmed_contexts_count": 10,
+          "harmed_contexts_fraction": 0.04081632653061224,
+          "harmed_families_count": 4,
+          "harmed_families_fraction": 0.0975609756097561,
+          "paired_elo": 1483.04,
+          "seed": 163
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        -0.0005902601846360635,
+        -0.019567485715763677,
+        -0.0011312829960508052
+      ],
+      "pooled_family_harm_fraction": 0.1951219512195122,
+      "pooled_family_median_gain": 0.0,
+      "pooled_family_win_rate": 0.45121951219512196,
+      "pooled_family_wtl": [
+        26,
+        59,
+        38
+      ],
+      "pooled_paired_elo": 1466.0,
+      "pooled_paired_elo_ci95": [
+        1395.25,
+        1534.0
+      ],
+      "seed_mean_harmed_context_fraction": 0.0653061224489796,
+      "seed_mean_harmed_family_fraction": 0.1951219512195122
+    },
+    "FAMBAL_ACC4": {
+      "admitted": false,
+      "all_three_seeds_positive": false,
+      "ci95_two_sided": [
+        -0.06090483947154742,
+        0.002730298170987407
+      ],
+      "comparator": "R882",
+      "holm_alpha": 0.05,
+      "holm_lcb95": -0.05356233201699445,
+      "holm_pass": false,
+      "lcb95_one_sided": -0.05356233201699445,
+      "lcb975_one_sided": -0.06090483947154742,
+      "max_seed_harmed_context_fraction": 0.12653061224489795,
+      "max_seed_harmed_family_fraction": 0.2926829268292683,
+      "mean_seed_gain": -0.02260464522615165,
+      "median_seed_gain": -0.02190521666890297,
+      "median_seed_paired_elo": 1448.79,
+      "p_value_one_sided": 0.946005399460054,
+      "per_seed": [
+        {
+          "arm_family_mean": 1.1268873464976736,
+          "comparator_family_mean": 1.1487925631665765,
+          "context_mean_delta": -0.0314551749761568,
+          "family_mean_delta": -0.02190521666890297,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4268292682926829,
+          "family_wtl": [
+            12,
+            11,
+            18
+          ],
+          "harmed_contexts_count": 29,
+          "harmed_contexts_fraction": 0.11836734693877551,
+          "harmed_families_count": 12,
+          "harmed_families_fraction": 0.2926829268292683,
+          "paired_elo": 1448.79,
+          "seed": 161
+        },
+        {
+          "arm_family_mean": 1.124690113449113,
+          "comparator_family_mean": 1.1487925631665765,
+          "context_mean_delta": -0.03349920360038802,
+          "family_mean_delta": -0.024102449717463663,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4268292682926829,
+          "family_wtl": [
+            12,
+            11,
+            18
+          ],
+          "harmed_contexts_count": 31,
+          "harmed_contexts_fraction": 0.12653061224489795,
+          "harmed_families_count": 12,
+          "harmed_families_fraction": 0.2926829268292683,
+          "paired_elo": 1448.79,
+          "seed": 162
+        },
+        {
+          "arm_family_mean": 1.1269862938744883,
+          "comparator_family_mean": 1.1487925631665765,
+          "context_mean_delta": -0.031168432464872338,
+          "family_mean_delta": -0.02180626929208831,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4024390243902439,
+          "family_wtl": [
+            11,
+            11,
+            19
+          ],
+          "harmed_contexts_count": 30,
+          "harmed_contexts_fraction": 0.12244897959183673,
+          "harmed_families_count": 11,
+          "harmed_families_fraction": 0.2682926829268293,
+          "paired_elo": 1431.33,
+          "seed": 163
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        -0.02190521666890297,
+        -0.024102449717463663,
+        -0.02180626929208831
+      ],
+      "pooled_family_harm_fraction": 0.2926829268292683,
+      "pooled_family_median_gain": 0.0,
+      "pooled_family_win_rate": 0.4186991869918699,
+      "pooled_family_wtl": [
+        35,
+        33,
+        55
+      ],
+      "pooled_paired_elo": 1443.0,
+      "pooled_paired_elo_ci95": [
+        1346.71,
+        1534.0
+      ],
+      "seed_mean_harmed_context_fraction": 0.12244897959183673,
+      "seed_mean_harmed_family_fraction": 0.2926829268292683
+    }
+  },
+  "provenance": {
+    "assessment_contexts": 245,
+    "assessment_families": 41,
+    "assessment_fold": 0,
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "executed_runner_sha256": "b0eda24a960f31c52fc308f5b667f1b76c9a6a55dd0ce031898beeda4fc21072",
+    "finalizer_sha256": "92e0b42540426c4cdeb8bcf6e0407c057040f74126f94b74e22510e4a16b1e1f",
+    "fit_contexts": 974,
+    "fit_families": 164,
+    "fit_folds": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "fold_manifest_local_receipt": {
+      "bytes": 14566,
+      "path": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run/fold_manifest_136161.json",
+      "relative_key": "fold_manifest_136161.json",
+      "sha256": "6ff1a5c48564a2b13b83f3b50403bfa113f8e1d0361bd5f1c3cb3c83ce872496",
+      "status": "LOCAL_ONLY"
+    },
+    "fold_manifest_sha256": "6ff1a5c48564a2b13b83f3b50403bfa113f8e1d0361bd5f1c3cb3c83ce872496",
+    "fold_seed": 136161,
+    "fused_sha256": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "h109_runner_sha256": "68ed53d5ba80ce52b2450de526c54f2468129eb13d0cb93cba93a8562953866b",
+    "prereg_sha256": "a9bbce83d944ab1fab9d88a96b82ea01207fc093f85a08e7cfef117dfda1aa74",
+    "preregistered_runner_sha256": "a8fa2908812964cfd5f33207a5bef2e3a2b5a9c2e23558888cd0e45e5b13e001",
+    "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "seeds": [
+      161,
+      162,
+      163
+    ],
+    "selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "source_manifest_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
+  },
+  "regression_gate": {
+    "local_receipt": {
+      "bytes": 1206,
+      "path": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run/regression_receipt.json",
+      "relative_key": "regression_receipt.json",
+      "sha256": "e30990a5e8b5e887b6b96d433152f2d43ad14f358b066644ed4964de7f5bec73",
+      "status": "LOCAL_ONLY"
+    },
+    "r882_fold0_mean_regret_all_candidates": 9.409205934212926,
+    "r882_fold0_mean_softmax_expected_regret": 0.29524960559190483,
+    "r882_fold0_mean_top1_oracle_regret": 0.23076202465746012,
+    "r882_fold0_native_family_utility": 1.1829669000847078,
+    "r882_fold0_unrev_context_utility": 1.2283650391113055,
+    "r882_fold0_unrev_family_utility": 1.1487925631665765,
+    "status": "PASS",
+    "two_copy_control_grad_max_abs_diff": 0.0,
+    "two_copy_control_loss_abs_diff": 0.0,
+    "two_copy_fold0_pred_max_abs_diff": 0.0,
+    "two_copy_fold0_utility_max_abs_diff": 0.0
+  },
   "schema": "jope.h136.metrics/v1",
   "sealed_metatest_reads": 0,
-  "seeds": [
-    161,
-    162,
-    163
-  ],
-  "status": "PREREGISTERED_NOT_RUN",
-  "verdict": "PENDING_EXECUTION",
+  "secondary_fambal_vs_coswr": {
+    "all_three_seeds_positive": false,
+    "ci95_two_sided": [
+      -0.04167660995595761,
+      0.0028047346885729033
+    ],
+    "comparator": "COSWR",
+    "lcb95_one_sided": -0.036686171510298474,
+    "lcb975_one_sided": -0.04167660995595761,
+    "max_seed_harmed_context_fraction": 0.08979591836734693,
+    "max_seed_harmed_family_fraction": 0.1951219512195122,
+    "mean_seed_gain": -0.015508302260668134,
+    "median_seed_gain": -0.020674986296037506,
+    "median_seed_paired_elo": 1466.0,
+    "p_value_one_sided": 0.9334066593340666,
+    "per_seed": [
+      {
+        "arm_family_mean": 1.1268873464976736,
+        "comparator_family_mean": 1.1482023029819404,
+        "context_mean_delta": -0.028826900666540943,
+        "family_mean_delta": -0.021314956484266907,
+        "family_median_delta": 0.0,
+        "family_win_rate": 0.45121951219512196,
+        "family_wtl": [
+          8,
+          21,
+          12
+        ],
+        "harmed_contexts_count": 19,
+        "harmed_contexts_fraction": 0.07755102040816327,
+        "harmed_families_count": 7,
+        "harmed_families_fraction": 0.17073170731707318,
+        "paired_elo": 1466.0,
+        "seed": 161
+      },
+      {
+        "arm_family_mean": 1.124690113449113,
+        "comparator_family_mean": 1.1292250774508128,
+        "context_mean_delta": -0.01478503158411063,
+        "family_mean_delta": -0.004534964001699988,
+        "family_median_delta": 0.0,
+        "family_win_rate": 0.47560975609756095,
+        "family_wtl": [
+          8,
+          23,
+          10
+        ],
+        "harmed_contexts_count": 18,
+        "harmed_contexts_fraction": 0.07346938775510205,
+        "harmed_families_count": 4,
+        "harmed_families_fraction": 0.0975609756097561,
+        "paired_elo": 1483.04,
+        "seed": 162
+      },
+      {
+        "arm_family_mean": 1.1269862938744883,
+        "comparator_family_mean": 1.1476612801705257,
+        "context_mean_delta": -0.02783354252210386,
+        "family_mean_delta": -0.020674986296037506,
+        "family_median_delta": 0.0,
+        "family_win_rate": 0.4268292682926829,
+        "family_wtl": [
+          9,
+          17,
+          15
+        ],
+        "harmed_contexts_count": 22,
+        "harmed_contexts_fraction": 0.08979591836734693,
+        "harmed_families_count": 8,
+        "harmed_families_fraction": 0.1951219512195122,
+        "paired_elo": 1448.79,
+        "seed": 163
+      }
+    ],
+    "per_seed_family_mean_deltas": [
+      -0.021314956484266907,
+      -0.004534964001699988,
+      -0.020674986296037506
+    ],
+    "pooled_family_harm_fraction": 0.1951219512195122,
+    "pooled_family_median_gain": 0.0,
+    "pooled_family_win_rate": 0.45121951219512196,
+    "pooled_family_wtl": [
+      25,
+      61,
+      37
+    ],
+    "pooled_paired_elo": 1466.0,
+    "pooled_paired_elo_ci95": [
+      1398.33,
+      1534.0
+    ],
+    "seed_mean_harmed_context_fraction": 0.08979591836734693,
+    "seed_mean_harmed_family_fraction": 0.1951219512195122
+  },
+  "secondary_vs_control": {
+    "COSWR": {
+      "admitted": false,
+      "all_three_seeds_positive": false,
+      "ci95_two_sided": [
+        -0.0035543536771910056,
+        0.02200901892280887
+      ],
+      "comparator": "CONTROL",
+      "holm_alpha": 0.025,
+      "holm_lcb95": -0.0035543536771910056,
+      "holm_pass": false,
+      "lcb95_one_sided": -0.00215097765387243,
+      "lcb975_one_sided": -0.0035543536771910056,
+      "max_seed_harmed_context_fraction": 0.04081632653061224,
+      "max_seed_harmed_family_fraction": 0.17073170731707318,
+      "mean_seed_gain": 0.007627303098662175,
+      "median_seed_gain": 0.0033919612793016215,
+      "median_seed_paired_elo": 1508.48,
+      "p_value_one_sided": 0.11588841115888411,
+      "per_seed": [
+        {
+          "arm_family_mean": 1.1482023029819404,
+          "comparator_family_mean": 1.1282299242218072,
+          "context_mean_delta": 0.02609831219567102,
+          "family_mean_delta": 0.019972378760133212,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.573170731707317,
+          "family_wtl": [
+            12,
+            23,
+            6
+          ],
+          "harmed_contexts_count": 9,
+          "harmed_contexts_fraction": 0.036734693877551024,
+          "harmed_families_count": 5,
+          "harmed_families_fraction": 0.12195121951219512,
+          "paired_elo": 1551.21,
+          "seed": 161
+        },
+        {
+          "arm_family_mean": 1.1292250774508128,
+          "comparator_family_mean": 1.1297075081942611,
+          "context_mean_delta": 0.003119530664956243,
+          "family_mean_delta": -0.0004824307434483075,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.5121951219512195,
+          "family_wtl": [
+            8,
+            26,
+            7
+          ],
+          "harmed_contexts_count": 8,
+          "harmed_contexts_fraction": 0.0326530612244898,
+          "harmed_families_count": 5,
+          "harmed_families_fraction": 0.12195121951219512,
+          "paired_elo": 1508.48,
+          "seed": 162
+        },
+        {
+          "arm_family_mean": 1.1476612801705257,
+          "comparator_family_mean": 1.144269318891224,
+          "context_mean_delta": 0.012449061358408613,
+          "family_mean_delta": 0.0033919612793016215,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.5121951219512195,
+          "family_wtl": [
+            11,
+            20,
+            10
+          ],
+          "harmed_contexts_count": 10,
+          "harmed_contexts_fraction": 0.04081632653061224,
+          "harmed_families_count": 7,
+          "harmed_families_fraction": 0.17073170731707318,
+          "paired_elo": 1508.48,
+          "seed": 163
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        0.019972378760133212,
+        -0.0004824307434483075,
+        0.0033919612793016215
+      ],
+      "pooled_family_harm_fraction": 0.14634146341463414,
+      "pooled_family_median_gain": 0.0,
+      "pooled_family_win_rate": 0.532520325203252,
+      "pooled_family_wtl": [
+        31,
+        69,
+        23
+      ],
+      "pooled_paired_elo": 1522.63,
+      "pooled_paired_elo_ci95": [
+        1463.14,
+        1583.49
+      ],
+      "seed_mean_harmed_context_fraction": 0.04081632653061224,
+      "seed_mean_harmed_family_fraction": 0.14634146341463414
+    },
+    "FAMBAL_ACC4": {
+      "admitted": false,
+      "all_three_seeds_positive": false,
+      "ci95_two_sided": [
+        -0.020505098156284807,
+        -9.406837227947265e-06
+      ],
+      "comparator": "CONTROL",
+      "holm_alpha": 0.05,
+      "holm_lcb95": -0.017959171125471417,
+      "holm_pass": false,
+      "lcb95_one_sided": -0.017959171125471417,
+      "lcb975_one_sided": -0.020505098156284807,
+      "max_seed_harmed_context_fraction": 0.04081632653061224,
+      "max_seed_harmed_family_fraction": 0.12195121951219512,
+      "mean_seed_gain": -0.007880999162005959,
+      "median_seed_gain": -0.005017394745148295,
+      "median_seed_paired_elo": 1457.42,
+      "p_value_one_sided": 0.9752024797520248,
+      "per_seed": [
+        {
+          "arm_family_mean": 1.1268873464976736,
+          "comparator_family_mean": 1.1282299242218072,
+          "context_mean_delta": -0.0027285884708699282,
+          "family_mean_delta": -0.0013425777241336946,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4878048780487805,
+          "family_wtl": [
+            5,
+            30,
+            6
+          ],
+          "harmed_contexts_count": 9,
+          "harmed_contexts_fraction": 0.036734693877551024,
+          "harmed_families_count": 4,
+          "harmed_families_fraction": 0.0975609756097561,
+          "paired_elo": 1491.52,
+          "seed": 161
+        },
+        {
+          "arm_family_mean": 1.124690113449113,
+          "comparator_family_mean": 1.1297075081942611,
+          "context_mean_delta": -0.011665500919154385,
+          "family_mean_delta": -0.005017394745148295,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.43902439024390244,
+          "family_wtl": [
+            2,
+            32,
+            7
+          ],
+          "harmed_contexts_count": 8,
+          "harmed_contexts_fraction": 0.0326530612244898,
+          "harmed_families_count": 3,
+          "harmed_families_fraction": 0.07317073170731707,
+          "paired_elo": 1457.42,
+          "seed": 162
+        },
+        {
+          "arm_family_mean": 1.1269862938744883,
+          "comparator_family_mean": 1.144269318891224,
+          "context_mean_delta": -0.015384481163695249,
+          "family_mean_delta": -0.017283025016735884,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4024390243902439,
+          "family_wtl": [
+            4,
+            25,
+            12
+          ],
+          "harmed_contexts_count": 10,
+          "harmed_contexts_fraction": 0.04081632653061224,
+          "harmed_families_count": 5,
+          "harmed_families_fraction": 0.12195121951219512,
+          "paired_elo": 1431.33,
+          "seed": 163
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        -0.0013425777241336946,
+        -0.005017394745148295,
+        -0.017283025016735884
+      ],
+      "pooled_family_harm_fraction": 0.0975609756097561,
+      "pooled_family_median_gain": 0.0,
+      "pooled_family_win_rate": 0.44308943089430897,
+      "pooled_family_wtl": [
+        11,
+        87,
+        25
+      ],
+      "pooled_paired_elo": 1460.28,
+      "pooled_paired_elo_ci95": [
+        1419.5,
+        1497.18
+      ],
+      "seed_mean_harmed_context_fraction": 0.044897959183673466,
+      "seed_mean_harmed_family_fraction": 0.0975609756097561
+    }
+  },
+  "seed_independence": {
+    "CONTROL": {
+      "max_pairwise_max_abs_context_utility_diff": 3.243373904814696,
+      "min_pairwise_max_abs_context_utility_diff": 2.417504242671291,
+      "seeds_not_identical": true,
+      "unique_final_adapter_shas": 3
+    },
+    "COSWR": {
+      "max_pairwise_max_abs_context_utility_diff": 3.243373904814696,
+      "min_pairwise_max_abs_context_utility_diff": 0.4311314412430035,
+      "seeds_not_identical": true,
+      "unique_final_adapter_shas": 3
+    },
+    "FAMBAL_ACC4": {
+      "max_pairwise_max_abs_context_utility_diff": 0.4509555464936532,
+      "min_pairwise_max_abs_context_utility_diff": 0.09993540603537487,
+      "seeds_not_identical": true,
+      "unique_final_adapter_shas": 3
+    }
+  },
+  "status": "COMPLETE",
+  "timestamp_utc": "2026-10-31T22:23:26Z",
+  "verdict": "NO_ADMISSION",
   "wave": "H136"
 }
