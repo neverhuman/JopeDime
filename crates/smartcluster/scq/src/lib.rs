@@ -1,4 +1,19 @@
 //! SCQ TOML v0 adapter shared by the `scq` CLI and its contract tests.
+//!
+//! This crate converts the single-node subset of an SCQ TOML v0 file into a
+//! [`jain_smartcluster_core::JobSpec`]. Use [`parse_scq_toml_v0`] to parse and
+//! validate text, or [`ScqTomlSpec::into_job_spec`] when the spec has already
+//! been deserialized. The returned job is an argv workload; this adapter does
+//! not submit or execute it.
+//!
+//! The v1 boundary is intentionally narrow: `resource.gang_size` must be one,
+//! placement must be `single_node`, `single`, or empty, and node affinity is
+//! unsupported. Preemption resumes by rerunning the workload. Dependency
+//! probes are rejected; place those checks in an allowlisted Jain worker image
+//! instead. Shell and SSH launchers are rejected rather than interpreted.
+//! Unsupported features return [`AdapterError::Unsupported`], invalid values
+//! return [`AdapterError::Invalid`], and malformed TOML returns
+//! [`AdapterError::Toml`].
 
 use std::{collections::BTreeMap, path::Path};
 
