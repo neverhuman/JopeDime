@@ -297,6 +297,8 @@ The new `run-restart.json` and outer exit code require all of the following:
 - The first complete inventories contain exactly 0, 1, 1 runs; the restarted
   inventories contain exactly 1, 1 with the same actual run ID. Equal counts with
   substituted IDs, failed/paginated lists and changed request types/keys fail.
+  All three successful mutation replies must retain the entire original outcome,
+  not only its run ID.
 - The completed snapshot watermark and full ordered durable events match across
   restart, including the terminal `run.finished` event.
 - The first engine has been stopped/reaped and a distinct owned engine PID opens

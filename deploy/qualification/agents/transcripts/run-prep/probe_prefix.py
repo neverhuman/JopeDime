@@ -635,6 +635,19 @@ def restart_proof(before_raw, after_raw):
         isinstance(retry["data"], dict) and retry["data"].get("run_id") == run,
         "restart retry failed or returned a different run",
     )
+    original_outcomes = [
+        call["data"]
+        for call in before
+        if call["name"] == "run_start" and call["arguments"].get("dry_run") is False
+    ]
+    require(
+        all(
+            json.dumps(data, sort_keys=True)
+            == json.dumps(retry["data"], sort_keys=True)
+            for data in original_outcomes
+        ),
+        "restart retry changed the original outcome",
+    )
     pages = [
         call
         for call in after
@@ -708,12 +721,14 @@ def restart_proof(before_raw, after_raw):
         )
         return watermark, json.dumps(events, sort_keys=True)
 
-    require(terminal(before) == terminal(after), "terminal watermark or events changed")
+    before_terminal, after_terminal = terminal(before), terminal(after)
+    require(before_terminal == after_terminal, "terminal watermark or events changed")
     return dict(
         run_id=run,
         inventory_counts=[0, 1, 1, 1, 1],
         successful_attempts=3,
-        event_watermark=terminal(after)[0],
+        event_watermark=after_terminal[0],
+        original_outcome_preserved=True,
         structural_contract="PASS",
     )
 
@@ -1002,6 +1017,7 @@ def self_test():
                 (1, 1, dict(body, idempotency_key="changed")),
                 (1, 1, dict(body, dry_run=0)),
                 (1, 2, dict(run_id=other)),
+                (1, 2, dict(run_id=run, state="changed")),
                 (
                     2,
                     2,
