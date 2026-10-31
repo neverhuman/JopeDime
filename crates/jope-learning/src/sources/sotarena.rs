@@ -10,6 +10,7 @@ use serde_json::{json, Value};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
+/// Constant identifying the columns.
 pub const COLUMNS: [&str; 13] = [
     "track_id",
     "dataset_id",
@@ -32,17 +33,25 @@ struct CutIdentity<'a> {
     protocol: &'a str,
 }
 
+/// Performs the cut ID operation and returns an error if it cannot be completed.
 pub fn cut_id(track: &str, protocol: &str) -> Result<String> {
     canonical_sha256(&CutIdentity { track, protocol })
 }
 
 #[derive(Clone, Debug, Serialize, Default)]
+/// SOTArena version metadata and the `scores.csv` file found for that version.
 pub struct TrackScan {
+    /// Version recorded for this track scan.
     pub version: String,
+    /// Scores csv recorded for this track scan.
     pub scores_csv: String,
+    /// SHA-256 digest identifying the associated scores.
     pub scores_sha256: String,
+    /// Number of rows represented by this value.
     pub rows: u64,
+    /// Mapped recorded for this track scan.
     pub mapped: u64,
+    /// Collection of rejects values carried by this track scan.
     pub rejects: Vec<(u64, String)>,
 }
 
@@ -166,6 +175,7 @@ pub fn git_sha_of(path: &Path) -> Option<String> {
     (s.len() == 40).then_some(s)
 }
 
+/// Performs the scan source operation and returns an error if it cannot be completed.
 pub fn scan_source(results: &Path, git_sha: &str, scans: &BTreeMap<String, TrackScan>) -> Value {
     crate::hwm::source_value(
         "sotarena",

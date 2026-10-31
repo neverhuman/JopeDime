@@ -12,14 +12,20 @@
 use anyhow::{bail, ensure, Result};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// `Tier` is an enum for the tier contract in this module: Write-time S3 object tags (strategy §4 "Tag at write time"): tier, runid, family, qualified, supersededby, kind.
 pub enum Tier {
+    /// The `T0` case of `Tier`.
     T0,
+    /// The `T1` case of `Tier`.
     T1,
+    /// The `T2` case of `Tier`.
     T2,
+    /// The `T3` case of `Tier`.
     T3,
 }
 
 impl Tier {
+    /// Returns the stable string representation of this value.
     pub fn as_str(self) -> &'static str {
         match self {
             Tier::T0 => "T0",
@@ -31,18 +37,28 @@ impl Tier {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// `ObjectKind` is an enum for the object kind contract in this module: Write-time S3 object tags (strategy §4 "Tag at write time"): tier, runid, family, qualified, supersededby, kind.
 pub enum ObjectKind {
+    /// The `Result` case of `ObjectKind`.
     Result,
+    /// The `Log` case of `ObjectKind`.
     Log,
+    /// The `Checkpoint` case of `ObjectKind`.
     Checkpoint,
+    /// The `Split` case of `ObjectKind`.
     Split,
+    /// The `Evidence` case of `ObjectKind`.
     Evidence,
+    /// The `Pack` case of `ObjectKind`.
     Pack,
+    /// The `PackIndex` case of `ObjectKind`.
     PackIndex,
+    /// The `Manifest` case of `ObjectKind`.
     Manifest,
 }
 
 impl ObjectKind {
+    /// Returns the stable string representation of this value.
     pub fn as_str(self) -> &'static str {
         match self {
             ObjectKind::Result => "result",
@@ -60,11 +76,14 @@ impl ObjectKind {
 /// The champion a result is superseded by; it only counts when the champion is qualified.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Supersession {
+    /// Identifier for the associated champion run.
     pub champion_run_id: String,
+    /// Champion qualified recorded for this supersession.
     pub champion_qualified: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+/// `WriteTags` is a record for the write tags contract in this module: Write-time S3 object tags (strategy §4 "Tag at write time"): tier, runid, family, qualified, supersededby, kind.
 pub struct WriteTags {
     pairs: Vec<(String, String)>,
 }
@@ -92,6 +111,7 @@ fn check_tag(k: &str, v: &str) -> Result<()> {
 }
 
 impl WriteTags {
+    /// Constructs or opens a new value from the supplied inputs.
     pub fn new(
         tier: Tier,
         run_id: &str,
@@ -146,6 +166,7 @@ impl WriteTags {
         Ok(WriteTags { pairs })
     }
 
+    /// Performs the pairs operation and returns an error if it cannot be completed.
     pub fn pairs(&self) -> &[(String, String)] {
         &self.pairs
     }

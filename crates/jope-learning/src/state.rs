@@ -10,9 +10,13 @@ use std::path::{Path, PathBuf};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `PointerKey` is a record for the pointer key contract in this module: The local $JOPESTATE tree: content-addressed blobs and the current.json pointers.
 pub struct PointerKey {
+    /// Task identity for the comparison represented by this record.
     pub task: String,
+    /// Hash identifying the dataset used by this record.
     pub dataset_hash: String,
+    /// Identifier for the data cut represented by this record.
     pub cut_id: String,
     /// Absent only for historical diagnostic pointers/events.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -20,6 +24,7 @@ pub struct PointerKey {
 }
 
 impl PointerKey {
+    /// Performs the of operation and returns an error if it cannot be completed.
     pub fn of(record: &HwmRecord) -> PointerKey {
         PointerKey {
             task: record.identity.task.clone(),
@@ -29,6 +34,7 @@ impl PointerKey {
         }
     }
 
+    /// Performs the rel operation and returns an error if it cannot be completed.
     pub fn rel(&self) -> String {
         let root = format!("hwm/{}/{}/{}", self.task, self.dataset_hash, self.cut_id);
         match &self.identity_sha256 {
@@ -37,6 +43,7 @@ impl PointerKey {
         }
     }
 
+    /// Performs the matches operation and returns an error if it cannot be completed.
     pub fn matches(&self, record: &HwmRecord) -> bool {
         self.task == record.identity.task
             && self.dataset_hash == record.identity.dataset_hash
@@ -48,10 +55,12 @@ impl PointerKey {
     }
 }
 
+/// `State` is a record for the state contract in this module: The local $JOPESTATE tree: content-addressed blobs and the current.json pointers.
 pub struct State {
     root: PathBuf,
 }
 
+/// Public type alias for readable pointers values.
 pub type ReadablePointers = (Vec<(PointerKey, HwmRecord)>, Vec<(String, String)>);
 
 /// One *plain* path component: non-empty, no separator, no `.`/`..`, and nothing outside
@@ -92,20 +101,24 @@ impl State {
         Ok(State { root })
     }
 
+    /// Performs the at operation and returns an error if it cannot be completed.
     pub fn at(root: &Path) -> State {
         State {
             root: root.to_path_buf(),
         }
     }
 
+    /// Performs the root operation and returns an error if it cannot be completed.
     pub fn root(&self) -> &Path {
         &self.root
     }
 
+    /// Performs the blob rel operation and returns an error if it cannot be completed.
     pub fn blob_rel(sha256: &str) -> String {
         format!("blobs/sha256/{sha256}")
     }
 
+    /// Performs the blob path operation and returns an error if it cannot be completed.
     pub fn blob_path(&self, sha256: &str) -> PathBuf {
         self.root.join(State::blob_rel(sha256))
     }
@@ -197,6 +210,7 @@ impl State {
         Ok(dir)
     }
 
+    /// Reads blob from the configured source.
     pub fn read_blob(&self, sha256: &str) -> Result<Option<Vec<u8>>> {
         let path = self.blob_path(sha256);
         if !path.exists() {
@@ -207,6 +221,7 @@ impl State {
         Ok(Some(bytes))
     }
 
+    /// Performs the pointer path operation and returns an error if it cannot be completed.
     pub fn pointer_path(&self, key: &PointerKey) -> Result<PathBuf> {
         ensure!(
             safe_segment(&key.task)
@@ -221,6 +236,7 @@ impl State {
         Ok(self.root.join(key.rel()))
     }
 
+    /// Reads pointer from the configured source.
     pub fn read_pointer(&self, key: &PointerKey) -> Result<Option<HwmRecord>> {
         let path = self.pointer_path(key)?;
         if !path.exists() {
@@ -314,6 +330,7 @@ impl State {
         Ok((records, errors))
     }
 
+    /// Performs the pointers operation and returns an error if it cannot be completed.
     pub fn pointers(&self) -> Result<Vec<(PointerKey, HwmRecord)>> {
         let hwm = self.root.join("hwm");
         let mut out = Vec::new();

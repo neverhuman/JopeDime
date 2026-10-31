@@ -71,21 +71,31 @@ fn requalification_refused(record: &HwmRecord) -> String {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `TargetRow` is a record for the target row contract in this module: Measured train-side OOF admission. A candidate supplies predictions, never eligibility policy or trusted metric values. The policy, targets and trivial baseline are persisted before optimization.
 pub struct TargetRow {
+    /// Stable identifier for this value.
     pub id: String,
+    /// Group recorded for this target row.
     pub group: String,
+    /// Fold recorded for this target row.
     pub fold: u8,
+    /// Target recorded for this target row.
     pub target: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `FreezePlan` is a record for the freeze plan contract in this module: Measured train-side OOF admission. A candidate supplies predictions, never eligibility policy or trusted metric values. The policy, targets and trivial baseline are persisted before optimization.
 pub struct FreezePlan {
+    /// Comparison recorded for this freeze plan.
     pub comparison: HwmIdentity,
     /// `test` observed by optimization is development data; sealed data is never eligible.
     pub original_label_role: String,
+    /// SHA-256 digest identifying the associated panel.
     pub panel_sha256: String,
+    /// Identifier for the associated dataset.
     pub dataset_id: String,
+    /// Evaluation seed recorded for this freeze plan.
     pub evaluation_seed: u64,
     /// Required for teaching admission; a freeze without it is diagnostic only.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -94,10 +104,15 @@ pub struct FreezePlan {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `FrozenFold` is a record for the frozen fold contract in this module: Measured train-side OOF admission. A candidate supplies predictions, never eligibility policy or trusted metric values. The policy, targets and trivial baseline are persisted before optimization.
 pub struct FrozenFold {
+    /// Fold recorded for this frozen fold.
     pub fold: u8,
+    /// SHA-256 digest identifying the associated training rows.
     pub training_rows_sha256: String,
+    /// SHA-256 digest identifying the associated scoring rows.
     pub scoring_rows_sha256: String,
+    /// SHA-256 digest identifying the associated baseline predictions.
     pub baseline_predictions_sha256: String,
 }
 
@@ -125,39 +140,62 @@ struct FrozenPolicy {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `FreezeReceipt` is a record for the freeze receipt contract in this module: Measured train-side OOF admission. A candidate supplies predictions, never eligibility policy or trusted metric values. The policy, targets and trivial baseline are persisted before optimization.
 pub struct FreezeReceipt {
+    /// SHA-256 digest identifying the associated comparison.
     pub comparison_sha256: String,
+    /// SHA-256 digest identifying the associated freeze.
     pub freeze_sha256: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `FoldPredictions` is a record for the fold predictions contract in this module: Measured train-side OOF admission. A candidate supplies predictions, never eligibility policy or trusted metric values. The policy, targets and trivial baseline are persisted before optimization.
 pub struct FoldPredictions {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// SHA-256 digest identifying the associated comparison.
     pub comparison_sha256: String,
+    /// SHA-256 digest of the canonical program source.
     pub program_sha256: String,
+    /// Fold recorded for this fold predictions.
     pub fold: u8,
+    /// SHA-256 digest identifying the associated training rows.
     pub training_rows_sha256: String,
+    /// SHA-256 digest identifying the associated scoring rows.
     pub scoring_rows_sha256: String,
+    /// Collection of row IDs values carried by this fold predictions.
     pub row_ids: Vec<String>,
+    /// SHA-256 digest identifying the associated predictions.
     pub predictions_sha256: String,
+    /// SHA-256 digest identifying the associated evaluation request.
     pub evaluation_request_sha256: String,
+    /// SHA-256 digest identifying the associated worker job.
     pub worker_job_sha256: String,
+    /// SHA-256 digest identifying the associated fitted artifact.
     pub fitted_artifact_sha256: String,
+    /// SHA-256 digest identifying the associated execution receipt.
     pub execution_receipt_sha256: String,
+    /// SHA-256 digest identifying the associated started receipt.
     pub started_receipt_sha256: String,
+    /// Fit started unix recorded for this fold predictions.
     pub fit_started_unix: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `OofEvidence` is a record for the OOF evidence contract in this module: Measured train-side OOF admission. A candidate supplies predictions, never eligibility policy or trusted metric values. The policy, targets and trivial baseline are persisted before optimization.
 pub struct OofEvidence {
+    /// Freeze recorded for this OOF evidence.
     pub freeze: FreezeReceipt,
+    /// SHA-256 digest identifying the associated experiment blob.
     pub experiment_blob_sha256: String,
+    /// SHA-256 digest identifying the associated window.
     pub window_sha256: String,
     /// Exactly one content-addressed FoldPredictions blob per fold, in fold order.
     pub fold_predictions_sha256: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Optional inner value; `None` means it is not available.
     pub inner: Option<InnerEvidence>,
     /// Mandatory for qualification; absent only on legacy/diagnostic submissions.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -166,28 +204,47 @@ pub struct OofEvidence {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `Qualification` is a record for the qualification contract in this module: Measured train-side OOF admission. A candidate supplies predictions, never eligibility policy or trusted metric values. The policy, targets and trivial baseline are persisted before optimization.
 pub struct Qualification {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Comparison recorded for this qualification.
     pub comparison: HwmIdentity,
+    /// Freeze recorded for this qualification.
     pub freeze: FreezeReceipt,
+    /// SHA-256 digest identifying the associated record.
     pub record_sha256: String,
+    /// SHA-256 digest of the canonical program source.
     pub program_sha256: String,
+    /// SHA-256 digest identifying the associated targets.
     pub targets_sha256: String,
+    /// SHA-256 digest identifying the associated baseline predictions.
     pub baseline_predictions_sha256: Vec<String>,
+    /// SHA-256 digest identifying the associated fold predictions.
     pub fold_predictions_sha256: Vec<String>,
+    /// Guard recorded for this qualification.
     pub guard: GuardPolicy,
+    /// Label role recorded for this qualification.
     pub label_role: String,
+    /// Original label role recorded for this qualification.
     pub original_label_role: String,
+    /// SHA-256 digest identifying the associated label burn.
     pub label_burn_sha256: Option<String>,
+    /// Candidate loss recorded for this qualification.
     pub candidate_loss: f64,
+    /// Baseline loss recorded for this qualification.
     pub baseline_loss: f64,
+    /// Improved folds recorded for this qualification.
     pub improved_folds: usize,
+    /// Collection of fold losses values carried by this qualification.
     pub fold_losses: Vec<(f64, f64)>,
     /// Scores were recomputed; process execution provenance still comes from the worker receipts.
     pub measurement: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// SHA-256 digest identifying the associated context fitting rows.
     pub context_fitting_rows_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Optional context outer fold value; `None` means it is not available.
     pub context_outer_fold: Option<u8>,
     /// Verified context receipt; stored legacy qualifications without one never revalidate.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -202,6 +259,7 @@ pub struct Qualification {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fitted_inputs_bound: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Optional diagnostics value; `None` means it is not available.
     pub diagnostics: Option<Diagnostics>,
 }
 
@@ -211,13 +269,19 @@ pub struct Qualification {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Diagnostics {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Number of fold rows represented here.
     pub fold_rows: Vec<usize>,
     /// Candidate minus train-only baseline loss per fold; positive is worse.
     pub fold_loss_deltas: Vec<f64>,
+    /// Adverse folds recorded for this diagnostics.
     pub adverse_folds: usize,
+    /// Worst fold loss delta recorded for this diagnostics.
     pub worst_fold_loss_delta: f64,
+    /// Optional pooled RMSE value; `None` means it is not available.
     pub pooled_rmse: Option<f64>,
+    /// Optional pooled baseline RMSE value; `None` means it is not available.
     pub pooled_baseline_rmse: Option<f64>,
     /// `1 - SSE/SST` about the pooled held-out target mean; uses held labels, never admits.
     pub pooled_r2: Option<f64>,
@@ -275,10 +339,15 @@ struct StoredQualification {
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `TeachingManifest` is a record for the teaching manifest contract in this module: Measured train-side OOF admission. A candidate supplies predictions, never eligibility policy or trusted metric values. The policy, targets and trivial baseline are persisted before optimization.
 pub struct TeachingManifest {
+    /// Schema identifier and version for the serialized value.
     pub schema: &'static str,
+    /// Excluded diagnostic recorded for this teaching manifest.
     pub excluded_diagnostic: usize,
+    /// Collection of exclusions values carried by this teaching manifest.
     pub exclusions: Vec<(String, String)>,
+    /// Collection of entries values carried by this teaching manifest.
     pub entries: Vec<Qualification>,
 }
 
@@ -286,12 +355,19 @@ pub struct TeachingManifest {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GuardPolicy {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Folds recorded for this guard policy.
     pub folds: usize,
+    /// Minimum improved folds recorded for this guard policy.
     pub minimum_improved_folds: usize,
+    /// Aggregation recorded for this guard policy.
     pub aggregation: String,
+    /// Baseline recorded for this guard policy.
     pub baseline: String,
+    /// Absolute gain recorded for this guard policy.
     pub absolute_gain: f64,
+    /// Relative gain recorded for this guard policy.
     pub relative_gain: f64,
 }
 impl GuardPolicy {

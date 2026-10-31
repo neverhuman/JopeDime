@@ -10,18 +10,29 @@ use serde::Serialize;
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
 
+/// Schema identifier for index values.
 pub const INDEX_SCHEMA: &str = "jopedime.gp-results-index/v1";
 
 #[derive(Clone, Debug, Default)]
+/// `GroupIndex` is a record for the group index contract in this module: The GP results index (jopedime.gp-results-index/v1), aggregated per object group.
 pub struct GroupIndex {
+    /// Number of rows represented by this value.
     pub rows: u64,
+    /// Number of scored rows represented here.
     pub scored_rows: u64,
+    /// Number of qualified rows represented here.
     pub qualified_rows: u64,
+    /// Number of consumer recorded rows represented here.
     pub consumer_recorded_rows: u64,
+    /// Mapping of by grain values carried by this group index.
     pub by_grain: BTreeMap<String, u64>,
+    /// Families recorded for this group index.
     pub families: BTreeSet<String>,
+    /// Score names recorded for this group index.
     pub score_names: BTreeSet<String>,
+    /// Programs recorded for this group index.
     pub programs: BTreeSet<String>,
+    /// Contexts recorded for this group index.
     pub contexts: BTreeSet<String>,
     /// context -> distinct scored programs (a context with two or more holds contrastive pairs).
     pub scored_by_context: BTreeMap<String, BTreeSet<String>>,
@@ -30,18 +41,28 @@ pub struct GroupIndex {
 /// The per-group summary written into a plan row.
 #[derive(Clone, Debug, Serialize, PartialEq)]
 pub struct IndexSummary {
+    /// Number of rows represented by this value.
     pub rows: u64,
+    /// Number of scored rows represented here.
     pub scored_rows: u64,
+    /// Number of qualified rows represented here.
     pub qualified_rows: u64,
+    /// Number of consumer recorded rows represented here.
     pub consumer_recorded_rows: u64,
+    /// Mapping of by grain values carried by this index summary.
     pub by_grain: BTreeMap<String, u64>,
+    /// Collection of score names values carried by this index summary.
     pub score_names: Vec<String>,
+    /// Distinct programs recorded for this index summary.
     pub distinct_programs: u64,
+    /// Distinct contexts recorded for this index summary.
     pub distinct_contexts: u64,
+    /// Contexts with alternatives recorded for this index summary.
     pub contexts_with_alternatives: u64,
 }
 
 impl GroupIndex {
+    /// Performs the summary operation and returns an error if it cannot be completed.
     pub fn summary(&self) -> IndexSummary {
         IndexSummary {
             rows: self.rows,
@@ -62,14 +83,21 @@ impl GroupIndex {
 }
 
 #[derive(Debug, Default)]
+/// `IndexAgg` is a record for the index agg contract in this module: The GP results index (jopedime.gp-results-index/v1), aggregated per object group.
 pub struct IndexAgg {
+    /// Mapping of per group values carried by this index agg.
     pub per_group: BTreeMap<usize, GroupIndex>,
     /// family -> scored rows across the whole index (diversity test).
     pub scored_by_family: BTreeMap<String, u64>,
+    /// Rows total recorded for this index agg.
     pub rows_total: u64,
+    /// Rows s3 recorded for this index agg.
     pub rows_s3: u64,
+    /// Rows local recorded for this index agg.
     pub rows_local: u64,
+    /// Collection of rows unmatched values carried by this index agg.
     pub rows_unmatched: Vec<String>,
+    /// Qualified total recorded for this index agg.
     pub qualified_total: u64,
 }
 
@@ -77,6 +105,7 @@ fn s(v: &Value, f: &str) -> Option<String> {
     v.get(f).and_then(Value::as_str).map(str::to_string)
 }
 
+/// Performs the aggregate operation and returns an error if it cannot be completed.
 pub fn aggregate(
     index: &Value,
     lookup: &GroupLookup,

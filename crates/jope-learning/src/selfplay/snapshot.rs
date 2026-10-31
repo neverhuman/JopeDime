@@ -7,13 +7,16 @@ use std::collections::BTreeSet;
 
 use super::pins::{CompatibilityPins, RetiredVersions};
 
+/// Schema identifier for snapshot values.
 pub const SNAPSHOT_SCHEMA: &str = "jope.learning-snapshot/v1";
 
 /// Hash of one immutable object in the execution-to-capsule chain.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ArtifactRef {
+    /// Sha-256 recorded for this artifact ref.
     pub sha256: String,
+    /// SHA-256 digest identifying the associated parent.
     pub parent_sha256: Option<String>,
 }
 
@@ -21,14 +24,20 @@ pub struct ArtifactRef {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CandidateArtifacts {
+    /// Execution recorded for this candidate artifacts.
     pub execution: ArtifactRef,
+    /// Raw result recorded for this candidate artifacts.
     pub raw_result: ArtifactRef,
+    /// Payload recorded for this candidate artifacts.
     pub payload: ArtifactRef,
+    /// Assessment recorded for this candidate artifacts.
     pub assessment: ArtifactRef,
+    /// Capsule recorded for this candidate artifacts.
     pub capsule: ArtifactRef,
 }
 
 impl CandidateArtifacts {
+    /// Validates this value against its invariants and returns an error when validation fails.
     pub fn validate(&self) -> Result<()> {
         let mut seen = BTreeSet::new();
         for (name, item, expected_parent) in [
@@ -63,12 +72,19 @@ impl CandidateArtifacts {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Snapshot {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Identifier for the associated candidate.
     pub candidate_id: String,
+    /// Expected generation recorded for this snapshot.
     pub expected_generation: u64,
+    /// Optional previous root value; `None` means it is not available.
     pub previous_root: Option<String>,
+    /// Provenance recorded for this snapshot.
     pub provenance: SnapshotProvenance,
+    /// Pins recorded for this snapshot.
     pub pins: CompatibilityPins,
+    /// Artifacts recorded for this snapshot.
     pub artifacts: CandidateArtifacts,
 }
 
@@ -77,8 +93,11 @@ pub struct Snapshot {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SnapshotProvenance {
+    /// Source commit recorded for this snapshot provenance.
     pub source_commit: String,
+    /// SHA-256 digest identifying the associated command identity.
     pub command_identity_sha256: String,
+    /// SHA-256 digest identifying the associated input root receipt.
     pub input_root_receipt_sha256: String,
 }
 
@@ -105,6 +124,7 @@ impl SnapshotProvenance {
 }
 
 impl Snapshot {
+    /// Validates this value against its invariants and returns an error when validation fails.
     pub fn validate(&self, retired: &RetiredVersions) -> Result<()> {
         ensure!(
             self.schema == SNAPSHOT_SCHEMA,
@@ -126,6 +146,7 @@ impl Snapshot {
         self.artifacts.validate()
     }
 
+    /// Computes the canonical SHA-256 digest of this value.
     pub fn digest(&self) -> Result<String> {
         let payload = crate::canon::canonical_json(self)?;
         let frame =
@@ -133,6 +154,7 @@ impl Snapshot {
         Ok(frame.own_id().sha256_hex().to_string())
     }
 
+    /// Encodes this value in its canonical serialized representation.
     pub fn encode(&self) -> Result<Vec<u8>> {
         let payload = crate::canon::canonical_json(self)?;
         let frame =
@@ -140,6 +162,7 @@ impl Snapshot {
         Ok(frame.to_canonical_bytes())
     }
 
+    /// Decodes the canonical representation and rejects malformed or noncanonical input.
     pub fn decode(bytes: &[u8]) -> Result<Self> {
         let frame = jope_records::wire_contract::StorageEnvelopeAdapter::open(bytes)?;
         ensure!(
@@ -159,14 +182,20 @@ impl Snapshot {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SnapshotRoot {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Generation recorded for this snapshot root.
     pub generation: u64,
+    /// SHA-256 digest identifying the associated root.
     pub root_sha256: String,
+    /// Optional previous root value; `None` means it is not available.
     pub previous_root: Option<String>,
+    /// SHA-256 digest identifying the associated pins.
     pub pins_sha256: String,
 }
 
 impl SnapshotRoot {
+    /// Validates this value against its invariants and returns an error when validation fails.
     pub fn validate(&self) -> Result<()> {
         ensure!(
             self.schema == "jope.learning-authority/v1",
@@ -188,6 +217,7 @@ impl SnapshotRoot {
         Ok(())
     }
 
+    /// Encodes this value in its canonical serialized representation.
     pub fn encode(&self) -> Result<Vec<u8>> {
         let payload = crate::canon::canonical_json(self)?;
         let frame =
@@ -195,6 +225,7 @@ impl SnapshotRoot {
         Ok(frame.to_canonical_bytes())
     }
 
+    /// Decodes the canonical representation and rejects malformed or noncanonical input.
     pub fn decode(bytes: &[u8]) -> Result<Self> {
         let frame = jope_records::wire_contract::StorageEnvelopeAdapter::open(bytes)?;
         ensure!(
@@ -210,6 +241,7 @@ impl SnapshotRoot {
         Ok(value)
     }
 
+    /// Performs the verify snapshot operation and returns an error if it cannot be completed.
     pub fn verify_snapshot(&self, snapshot: &Snapshot, retired: &RetiredVersions) -> Result<()> {
         self.validate()?;
         snapshot.validate(retired)?;
@@ -238,7 +270,9 @@ impl SnapshotRoot {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SnapshotRole {
+    /// The `ResearchParent` case of `SnapshotRole`.
     ResearchParent,
+    /// The `AcceptedServing` case of `SnapshotRole`.
     AcceptedServing,
 }
 
@@ -246,27 +280,41 @@ pub enum SnapshotRole {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CandidateState {
+    /// The `LocalCommitted` case of `CandidateState`.
     LocalCommitted,
+    /// The `RemotePending` case of `CandidateState`.
     RemotePending,
+    /// The `RemotePublished` case of `CandidateState`.
     RemotePublished,
+    /// The `Lost` case of `CandidateState`.
     Lost,
 }
 
 /// Result authority is explicit and is never encoded in a filename.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum CandidateOutcome {
+    /// The `LocalCommitted` case of `CandidateOutcome`.
     LocalCommitted {
+        /// Root recorded for this candidate outcome.
         root: SnapshotRoot,
     },
+    /// The `RemotePending` case of `CandidateOutcome`.
     RemotePending {
+        /// Root recorded for this candidate outcome.
         root: SnapshotRoot,
+        /// Explanation associated with the recorded disposition.
         reason: String,
     },
+    /// The `RemotePublished` case of `CandidateOutcome`.
     RemotePublished {
+        /// Root recorded for this candidate outcome.
         root: SnapshotRoot,
     },
+    /// The `Lost` case of `CandidateOutcome`.
     Lost {
+        /// SHA-256 digest identifying the associated candidate.
         candidate_sha256: String,
+        /// Winner recorded for this candidate outcome.
         winner: SnapshotRoot,
     },
 }

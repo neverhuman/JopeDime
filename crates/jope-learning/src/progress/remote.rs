@@ -100,6 +100,7 @@ pub fn open_publishing_store(url: &str) -> Result<Mirror> {
     })
 }
 
+/// Interface for the remote contract used by The remote side of W8 delivery and publication.
 pub trait Remote {
     /// The store URL, as recorded in acknowledgements (never credentials).
     fn url(&self) -> &str;
@@ -108,6 +109,7 @@ pub trait Remote {
     /// bytes, otherwise this fails and nothing is overwritten.
     fn put_immutable(&self, key: &str, bytes: &[u8]) -> Result<PutOutcome>;
 
+    /// Performs the get operation and returns an error if it cannot be completed.
     fn get(&self, key: &str) -> Result<Option<Vec<u8>>>;
 
     /// Bytes and the version that belongs to them, from one read.
@@ -118,6 +120,7 @@ pub trait Remote {
     fn put_pointer(&self, key: &str, bytes: &[u8], observed: Option<&ObservedObject>)
         -> Result<()>;
 
+    /// Performs the list operation and returns an error if it cannot be completed.
     fn list(&self, prefix: &str) -> Result<Vec<String>>;
 }
 

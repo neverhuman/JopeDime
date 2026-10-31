@@ -17,7 +17,9 @@ use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
+/// Schema identifier for pack values.
 pub const PACK_SCHEMA: &str = "jope.s3-pack/v1";
+/// Schema identifier for pack index values.
 pub const PACK_INDEX_SCHEMA: &str = "jope.s3-pack-index/v1";
 /// Production packs are at least this large before compression (strategy §4).
 pub const MIN_PACK_BYTES: u64 = 64 * 1024 * 1024;
@@ -26,44 +28,70 @@ pub const CHUNK_BYTES: usize = 1024 * 1024;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+/// `ChunkRef` is a record for the chunk ref contract in this module: Write-side packs (jope.s3-pack/v1): many small result objects become one >= 64 MiB pack plus an index, cutting PUTs about 2,600x (strategy §4 "Dedup/compaction", §8.3).
 pub struct ChunkRef {
+    /// Offset recorded for this chunk ref.
     pub offset: u64,
+    /// Length recorded for this chunk ref.
     pub length: u64,
+    /// Decoded recorded for this chunk ref.
     pub decoded: u64,
+    /// Sha-256 recorded for this chunk ref.
     pub sha256: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+/// `Entry` is a record for the entry contract in this module: Write-side packs (jope.s3-pack/v1): many small result objects become one >= 64 MiB pack plus an index, cutting PUTs about 2,600x (strategy §4 "Dedup/compaction", §8.3).
 pub struct Entry {
+    /// Key recorded for this entry.
     pub key: String,
+    /// Identifier for the associated version.
     pub version_id: Option<String>,
+    /// Sha-256 recorded for this entry.
     pub sha256: String,
+    /// Encoded byte count associated with this object or operation.
     pub bytes: u64,
+    /// Chunk recorded for this entry.
     pub chunk: u32,
+    /// Offset recorded for this entry.
     pub offset: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+/// `PackIndex` is a record for the pack index contract in this module: Write-side packs (jope.s3-pack/v1): many small result objects become one >= 64 MiB pack plus an index, cutting PUTs about 2,600x (strategy §4 "Dedup/compaction", §8.3).
 pub struct PackIndex {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Pack schema recorded for this pack index.
     pub pack_schema: String,
+    /// Family recorded for this pack index.
     pub family: String,
+    /// Identifier for the associated run.
     pub run_id: String,
+    /// Sequence recorded for this pack index.
     pub sequence: u32,
     /// True for packs below [`MIN_PACK_BYTES`] written by fixtures; never a production pack.
     pub fixture: bool,
+    /// SHA-256 digest identifying the associated pack.
     pub pack_sha256: String,
+    /// Byte count for the associated pack.
     pub pack_bytes: u64,
+    /// Byte count for the associated decoded.
     pub decoded_bytes: u64,
+    /// Records recorded for this pack index.
     pub records: u64,
+    /// Collection of tags values carried by this pack index.
     pub tags: Vec<(String, String)>,
+    /// Collection of chunks values carried by this pack index.
     pub chunks: Vec<ChunkRef>,
+    /// Collection of entries values carried by this pack index.
     pub entries: Vec<Entry>,
 }
 
 impl PackIndex {
+    /// Performs the pack key operation and returns an error if it cannot be completed.
     pub fn pack_key(&self) -> String {
         format!(
             "packs/v1/{}/{}/{:05}-{}.zst",
@@ -71,6 +99,7 @@ impl PackIndex {
         )
     }
 
+    /// Performs the index key operation and returns an error if it cannot be completed.
     pub fn index_key(&self) -> String {
         format!(
             "packs/v1/{}/{}/{:05}-{}.index.json",
@@ -79,8 +108,11 @@ impl PackIndex {
     }
 }
 
+/// `SealedPack` is a record for the sealed pack contract in this module: Write-side packs (jope.s3-pack/v1): many small result objects become one >= 64 MiB pack plus an index, cutting PUTs about 2,600x (strategy §4 "Dedup/compaction", §8.3).
 pub struct SealedPack {
+    /// Encoded byte count associated with this object or operation.
     pub bytes: Vec<u8>,
+    /// Index recorded for this sealed pack.
     pub index: PackIndex,
 }
 
@@ -277,9 +309,13 @@ pub fn read_entry(pack: &[u8], index: &PackIndex, i: usize) -> Result<Vec<u8>> {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+/// `PackVerify` is a record for the pack verify contract in this module: Write-side packs (jope.s3-pack/v1): many small result objects become one >= 64 MiB pack plus an index, cutting PUTs about 2,600x (strategy §4 "Dedup/compaction", §8.3).
 pub struct PackVerify {
+    /// Records recorded for this pack verify.
     pub records: u64,
+    /// Byte count for the associated decoded.
     pub decoded_bytes: u64,
+    /// Chunks recorded for this pack verify.
     pub chunks: u64,
 }
 

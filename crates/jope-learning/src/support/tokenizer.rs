@@ -66,10 +66,13 @@ const PIECES: [&str; 26] = [
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct Vocabulary {
+    /// Sha-256 recorded for this vocabulary.
     pub sha256: String,
+    /// Upper bound on seq.
     pub max_seq: usize,
 }
 
+/// Performs the fixed vocabulary SHA-256 operation and returns an error if it cannot be completed.
 pub fn fixed_vocabulary_sha256() -> Result<String> {
     let mut table = Vec::with_capacity(282);
     for (id, name) in NAMES.iter().enumerate() {
@@ -89,6 +92,7 @@ pub fn fixed_vocabulary_sha256() -> Result<String> {
 }
 
 impl Vocabulary {
+    /// Validates this value against its invariants and returns an error when validation fails.
     pub fn validate(&self) -> Result<()> {
         ensure!(
             self.sha256 == fixed_vocabulary_sha256()?,
@@ -101,6 +105,7 @@ impl Vocabulary {
         Ok(())
     }
 
+    /// Performs the detokenize operation and returns an error if it cannot be completed.
     pub fn detokenize(&self, tokens: &[u16]) -> Result<String> {
         let mut bytes = Vec::new();
         for &token in tokens {
@@ -172,6 +177,7 @@ impl Vocabulary {
         Ok(tokens)
     }
 
+    /// Performs the program operation and returns an error if it cannot be completed.
     pub fn program(&self, dsl: &str) -> Result<super::Program> {
         Ok(super::Program {
             dsl: dsl.into(),

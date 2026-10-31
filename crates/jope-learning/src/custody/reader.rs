@@ -8,18 +8,25 @@ use std::{
     time::{Duration, Instant},
 };
 
+/// `GetResponse` is a record for the get response contract in this module: Injected single-attempt read transport. The custody CLI supplies no live S3 adapter.
 pub struct GetResponse {
+    /// Identifier for the associated version.
     pub version_id: String,
+    /// Content length recorded for this get response.
     pub content_length: u64,
+    /// Body recorded for this get response.
     pub body: Box<dyn Read>,
 }
 
 /// Each invocation represents ONE physical send; retries must return through the guard.
 pub trait ReadTransport {
+    /// Performs the list versions operation and returns an error if it cannot be completed.
     fn list_versions(&mut self, params: &Value) -> Result<Value>;
+    /// Looks up version and returns the matching value when present.
     fn get_version(&mut self, params: &Value) -> Result<GetResponse>;
 }
 
+/// `Reader` is a record for the reader contract in this module: Injected single-attempt read transport. The custody CLI supplies no live S3 adapter.
 pub struct Reader {
     bucket: String,
     prefix: String,
@@ -33,6 +40,7 @@ pub struct Reader {
 }
 
 impl Reader {
+    /// Constructs or opens a new value from the supplied inputs.
     pub fn new(
         bucket: &str,
         prefix: &str,
@@ -110,6 +118,7 @@ impl Reader {
         Ok(())
     }
 
+    /// Performs the census operation and returns an error if it cannot be completed.
     pub fn census(&mut self, transport: &mut impl ReadTransport) -> Result<Value> {
         let mut params = json!({"Bucket":self.bucket,"Prefix":self.prefix,"MaxKeys":1000});
         let mut rows = Vec::new();
@@ -194,6 +203,7 @@ impl Reader {
         )
     }
 
+    /// Performs the capture operation and returns an error if it cannot be completed.
     pub fn capture(&mut self, transport: &mut impl ReadTransport, row: &Value) -> Result<Vec<u8>> {
         let id = identity(row)?;
         ensure!(
@@ -249,6 +259,7 @@ impl Reader {
         Ok(body)
     }
 
+    /// Performs the receipt operation and returns an error if it cannot be completed.
     pub fn receipt(&self) -> Value {
         json!({"http_requests":self.requests,"physical_request_count":self.requests.len(),
             "metadata_response_bytes":self.metadata_bytes,"object_body_bytes":self.body_bytes,

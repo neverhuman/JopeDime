@@ -13,19 +13,29 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::path::PathBuf;
 
+/// Schema identifier for  values.
 pub const SCHEMA: &str = "parallel.cut_champion.v1";
 
 /// `champions.rs:15-26`, same field order.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Identity {
+    /// Dataset recorded for this identity.
     pub dataset: String,
+    /// Family recorded for this identity.
     pub family: String,
+    /// Partition recorded for this identity.
     pub partition: String,
+    /// Cut recorded for this identity.
     pub cut: u64,
+    /// SHA-256 digest identifying the associated prepared.
     pub prepared_sha256: String,
+    /// SHA-256 digest identifying the associated training.
     pub training_sha256: String,
+    /// SHA-256 digest identifying the associated validation.
     pub validation_sha256: String,
+    /// SHA-256 digest identifying the evaluator used for this evidence.
     pub evaluator_sha256: String,
+    /// SHA-256 digest identifying the associated vocabulary.
     pub vocabulary_sha256: String,
 }
 
@@ -69,6 +79,7 @@ impl Identity {
         Ok(Some(result))
     }
 
+    /// Returns whether sealed.
     pub fn is_sealed(&self) -> bool {
         self.partition == "meta_test"
     }
@@ -77,15 +88,25 @@ impl Identity {
 /// `champions.rs:66-77`, same field order.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Champion {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Identity recorded for this champion.
     pub identity: Identity,
+    /// Observation recorded for this champion.
     pub observation: Value,
+    /// SHA-256 digest identifying the associated observation.
     pub observation_sha256: String,
+    /// Provenance source for this value.
     pub source: PathBuf,
+    /// Rmse original units recorded for this champion.
     pub rmse_original_units: f64,
+    /// SHA-256 digest identifying the associated previous event.
     pub previous_event_sha256: Option<String>,
+    /// Optional previous RMSE original units value; `None` means it is not available.
     pub previous_rmse_original_units: Option<f64>,
+    /// Improvement number recorded for this champion.
     pub improvement_number: u64,
+    /// Timestamp when this record or event was created.
     pub timestamp: u64,
 }
 
@@ -144,12 +165,14 @@ impl Champion {
         Ok(())
     }
 
+    /// Performs the genome operation and returns an error if it cannot be completed.
     pub fn genome(&self) -> Result<&str> {
         self.observation["genome"]
             .as_str()
             .context("champion genome absent")
     }
 
+    /// Performs the program SHA-256 operation and returns an error if it cannot be completed.
     pub fn program_sha256(&self) -> Result<&str> {
         self.observation["program_sha256"]
             .as_str()

@@ -40,6 +40,7 @@ use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
+/// Schema identifier for record values.
 pub const RECORD_SCHEMA: &str = "jope.revocation-record/v1";
 /// The ledger (under the state tree) that holds imported revocations.
 pub const LEDGER: &str = "revocations";
@@ -48,15 +49,21 @@ pub const LEDGER: &str = "revocations";
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RevocationRecord {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Node recorded for this revocation record.
     pub node: String,
     /// The digest the node's bytes were pinned at: what consumers match.
     pub sha256: String,
     /// The node the revocation names: this node, or its revoked ancestor.
     pub revoked_node: String,
+    /// Issuer recorded for this revocation record.
     pub issuer: String,
+    /// Cause recorded for this revocation record.
     pub cause: String,
+    /// Effective utc recorded for this revocation record.
     pub effective_utc: String,
+    /// Sequence recorded for this revocation record.
     pub sequence: i64,
     /// sha256 of the claims document bytes the record was imported from.
     pub claims_sha256: String,
@@ -103,10 +110,12 @@ impl Revocations {
         Ok(out)
     }
 
+    /// Performs the status operation and returns an error if it cannot be completed.
     pub fn status(&self) -> &Status {
         &self.status
     }
 
+    /// Returns whether empty.
     pub fn is_empty(&self) -> bool {
         self.by_digest.is_empty()
     }
@@ -154,6 +163,7 @@ impl Revocations {
 /// What an import would append, or appended.
 #[derive(Clone, Debug, Serialize)]
 pub struct Import {
+    /// SHA-256 digest identifying the associated claims.
     pub claims_sha256: String,
     /// Revoked nodes the document names, in total.
     pub revoked: u64,
@@ -162,7 +172,9 @@ pub struct Import {
     /// Nodes this host holds as revoked that the document no longer revokes. They stay revoked
     /// here: an edited document never un-revokes anything.
     pub no_longer_in_document: Vec<String>,
+    /// Applied recorded for this import.
     pub applied: bool,
+    /// Ledger batch receipt produced by the operation, if one was appended.
     pub batch: Option<BatchReceipt>,
 }
 

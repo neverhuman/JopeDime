@@ -15,10 +15,12 @@ pub const Z_ALPHA_95: f64 = 1.959_963_984_540_054;
 pub struct SplitMix64(u64);
 
 impl SplitMix64 {
+    /// Constructs or opens a new value from the supplied inputs.
     pub fn new(seed: u64) -> Self {
         Self(seed)
     }
 
+    /// Performs the next u64 operation and returns an error if it cannot be completed.
     pub fn next_u64(&mut self) -> u64 {
         self.0 = self.0.wrapping_add(0x9E37_79B9_7F4A_7C15);
         let mut z = self.0;
@@ -41,40 +43,65 @@ impl SplitMix64 {
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
+/// `ContextInterval` is a record for the context interval contract in this module: Parent-cluster paired intervals, following the merged GB-07 judge/cluster.py contract: cuts that share a parent are one cluster, the percentile interval resamples parents with replacement and a drawn parent.
 pub struct ContextInterval {
+    /// Number of n represented here.
     pub n: usize,
+    /// Mean recorded for this context interval.
     pub mean: f64,
+    /// Sd recorded for this context interval.
     pub sd: f64,
+    /// Se recorded for this context interval.
     pub se: f64,
+    /// Low recorded for this context interval.
     pub low: f64,
+    /// High recorded for this context interval.
     pub high: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
+/// `ClusterBootstrap` is a record for the cluster bootstrap contract in this module: Parent-cluster paired intervals, following the merged GB-07 judge/cluster.py contract: cuts that share a parent are one cluster, the percentile interval resamples parents with replacement and a drawn parent.
 pub struct ClusterBootstrap {
+    /// Number of draws included in the calculation.
     pub draws: usize,
+    /// Seed recorded for this cluster bootstrap.
     pub seed: u64,
+    /// Alpha recorded for this cluster bootstrap.
     pub alpha: f64,
+    /// Method recorded for this cluster bootstrap.
     pub method: &'static str,
+    /// Low recorded for this cluster bootstrap.
     pub low: f64,
+    /// High recorded for this cluster bootstrap.
     pub high: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
+/// `PairedInterval` is a record for the paired interval contract in this module: Parent-cluster paired intervals, following the merged GB-07 judge/cluster.py contract: cuts that share a parent are one cluster, the percentile interval resamples parents with replacement and a drawn parent.
 pub struct PairedInterval {
+    /// N contexts recorded for this paired interval.
     pub n_contexts: usize,
+    /// N clusters recorded for this paired interval.
     pub n_clusters: usize,
+    /// Mean recorded for this paired interval.
     pub mean: f64,
+    /// Context recorded for this paired interval.
     pub context: ContextInterval,
+    /// Cluster bootstrap recorded for this paired interval.
     pub cluster_bootstrap: ClusterBootstrap,
+    /// Verdict recorded for this paired interval.
     pub verdict: Verdict,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+/// `Verdict` is an enum for the verdict contract in this module: Parent-cluster paired intervals, following the merged GB-07 judge/cluster.py contract: cuts that share a parent are one cluster, the percentile interval resamples parents with replacement and a drawn parent.
 pub enum Verdict {
+    /// The `Greater` case of `Verdict`.
     Greater,
+    /// The `Less` case of `Verdict`.
     Less,
+    /// The `Inconclusive` case of `Verdict`.
     Inconclusive,
 }
 

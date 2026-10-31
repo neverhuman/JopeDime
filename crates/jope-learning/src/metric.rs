@@ -8,25 +8,44 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+#[cfg_attr(
+    doc,
+    doc = "`Metric` is an enum for the metric contract in this module: The metric-direction table (jopetaskelo.rs:31-36, 8a55c4fef:python/src/jope/tools/promotiongate.py:22-27, archived): r2, auc, macrof1 and negativemase improve upwards; rmse, logloss and mase improve downwards. oofr2."
+)]
 pub enum Metric {
+    #[cfg_attr(doc, doc = "The `R2` case of `Metric`.")]
     R2,
+    #[cfg_attr(doc, doc = "The `OofR2` case of `Metric`.")]
     OofR2,
+    #[cfg_attr(doc, doc = "The `Auc` case of `Metric`.")]
     Auc,
+    #[cfg_attr(doc, doc = "The `MacroF1` case of `Metric`.")]
     MacroF1,
+    #[cfg_attr(doc, doc = "The `NegativeMase` case of `Metric`.")]
     NegativeMase,
+    #[cfg_attr(doc, doc = "The `Rmse` case of `Metric`.")]
     Rmse,
+    #[cfg_attr(doc, doc = "The `Logloss` case of `Metric`.")]
     Logloss,
+    #[cfg_attr(doc, doc = "The `Mase` case of `Metric`.")]
     Mase,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
+#[cfg_attr(
+    doc,
+    doc = "`Direction` is an enum for the direction contract in this module: The metric-direction table (jopetaskelo.rs:31-36, 8a55c4fef:python/src/jope/tools/promotiongate.py:22-27, archived): r2, auc, macrof1 and negativemase improve upwards; rmse, logloss and mase improve downwards. oofr2."
+)]
 pub enum Direction {
+    #[cfg_attr(doc, doc = "The `Higher` case of `Direction`.")]
     Higher,
+    #[cfg_attr(doc, doc = "The `Lower` case of `Direction`.")]
     Lower,
 }
 
 impl Metric {
+    #[cfg_attr(doc, doc = "Constant identifying the all.")]
     pub const ALL: [Metric; 8] = [
         Metric::R2,
         Metric::OofR2,
@@ -38,6 +57,10 @@ impl Metric {
         Metric::Mase,
     ];
 
+    #[cfg_attr(
+        doc,
+        doc = "Performs the direction operation and returns an error if it cannot be completed."
+    )]
     pub fn direction(self) -> Direction {
         match self {
             Metric::R2 | Metric::OofR2 | Metric::Auc | Metric::MacroF1 | Metric::NegativeMase => {
@@ -47,6 +70,7 @@ impl Metric {
         }
     }
 
+    #[cfg_attr(doc, doc = "Returns the stable string representation of this value.")]
     pub fn as_str(self) -> &'static str {
         match self {
             Metric::R2 => "r2",
@@ -60,6 +84,10 @@ impl Metric {
         }
     }
 
+    #[cfg_attr(
+        doc,
+        doc = "Parses the supplied representation, returning an error when the input is invalid."
+    )]
     pub fn parse(s: &str) -> Option<Metric> {
         Metric::ALL.into_iter().find(|m| m.as_str() == s)
     }
@@ -83,6 +111,7 @@ impl Direction {
         }
     }
 
+    #[cfg_attr(doc, doc = "Returns the stable string representation of this value.")]
     pub fn as_str(self) -> &'static str {
         match self {
             Direction::Higher => "higher",

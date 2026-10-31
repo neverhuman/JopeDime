@@ -78,15 +78,31 @@ pub enum Refusal {
         "{action} refused: {} is {gate}, so the input was not read",
         gate::FLAG
     )]
-    GateOff { action: Action, gate: Gate },
+    /// Field value recorded by this public API type.
+    /// Field value recorded by this public API type.
+    GateOff {
+        /// Action recorded for this outcome.
+        action: Action,
+        /// Gate recorded for this outcome.
+        gate: Gate,
+    },
     /// The input could not be read as the declared schema.
     #[error("{action} refused: invalid input: {reason}")]
-    Invalid { action: Action, reason: String },
+    /// Field value recorded by this public API type.
+    /// Field value recorded by this public API type.
+    Invalid {
+        /// Action recorded for this outcome.
+        action: Action,
+        /// Explanation accompanying this outcome.
+        reason: String,
+    },
     /// The input was read and is not ready: defects, undecided owner parameters, or a verdict
     /// other than promote-eligible.
     #[error("{action} refused: not ready: {}", reasons.join("; "))]
     NotReady {
+        /// Action recorded for this refusal.
         action: Action,
+        /// Collection of reasons values carried by this refusal.
         reasons: Vec<String>,
     },
     /// The gate is on and every check passed, but the owner ruling is not in force.
@@ -95,7 +111,11 @@ pub enum Refusal {
         action.gap(),
         action.item()
     )]
-    RulingPending { action: Action },
+    /// Field value recorded by this public API type.
+    RulingPending {
+        /// Action recorded for this outcome.
+        action: Action,
+    },
 }
 
 /// Ask to adopt the sealed-family roster in `proposal` (a `jope.rlfw-sealed-roster-proposal/v1`

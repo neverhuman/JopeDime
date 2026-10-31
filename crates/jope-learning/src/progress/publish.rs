@@ -70,9 +70,13 @@ pub enum DefectKind {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, thiserror::Error)]
 #[error("{kind:?} {key}: {detail}")]
+/// `Defect` is a record for the defect contract in this module: W8-T03: dependency-first conditional publication.
 pub struct Defect {
+    /// Record kind or category represented by this value.
     pub kind: DefectKind,
+    /// Key recorded for this defect.
     pub key: String,
+    /// Detail recorded for this defect.
     pub detail: String,
 }
 
@@ -88,13 +92,16 @@ fn defect(kind: DefectKind, key: &str, detail: impl Into<String>) -> anyhow::Err
 /// A verified remote closure: every object's bytes and every blob reference.
 #[derive(Clone, Debug, Default)]
 pub struct Graph {
+    /// Number of objects represented by this value.
     pub objects: BTreeMap<ObjectRef, Vec<u8>>,
+    /// Blobs recorded for this graph.
     pub blobs: BTreeSet<BlobRef>,
     /// Remote reads made (request accounting).
     pub reads: u64,
 }
 
 impl Graph {
+    /// Performs the get operation and returns an error if it cannot be completed.
     pub fn get<T: Inventoried>(&self, digest: &str) -> Option<Decoded<T>> {
         let key = ObjectRef {
             kind: T::KIND,
@@ -105,6 +112,7 @@ impl Graph {
             .and_then(|bytes| decode_as::<T>(bytes, digest).ok())
     }
 
+    /// Performs the all operation and returns an error if it cannot be completed.
     pub fn all<T: Inventoried>(&self) -> Vec<Decoded<T>> {
         self.objects
             .iter()
@@ -113,6 +121,7 @@ impl Graph {
             .collect()
     }
 
+    /// Performs the digests operation and returns an error if it cannot be completed.
     pub fn digests(&self, kind: Kind) -> Vec<String> {
         self.objects
             .keys()
@@ -351,22 +360,39 @@ pub fn check_rules(graph: &Graph, root: &ObjectRef) -> Result<()> {
 pub enum Publication {
     /// The pointer moved from `from` to the commit.
     Advanced {
+        /// Commit recorded for this publication.
         commit: String,
+        /// Height recorded for this publication.
         height: u64,
+        /// Optional from value; `None` means it is not available.
         from: Option<String>,
     },
     /// The pointer already named this commit, as after a retry once a response was lost.
-    AlreadyPublished { commit: String },
+    /// Field value recorded by this public API type.
+    AlreadyPublished {
+        /// Commit recorded for this outcome.
+        commit: String,
+    },
     /// The pointer names something other than the commit's parent. Nothing was written. The
     /// commit stays on the remote and in the outbox for reconciliation.
     Conflict {
+        /// Commit recorded for this publication.
         commit: String,
+        /// Optional expected value; `None` means it is not available.
         expected: Option<String>,
+        /// Optional found value; `None` means it is not available.
         found: Option<String>,
     },
     /// The commit's closure is not durable and verified on the remote, or the pointer is not a
     /// valid pointer of this run. The pointer was not moved.
-    Blocked { commit: String, reason: String },
+    /// Field value recorded by this public API type.
+    /// Field value recorded by this public API type.
+    Blocked {
+        /// Commit recorded for this outcome.
+        commit: String,
+        /// Explanation accompanying this outcome.
+        reason: String,
+    },
 }
 
 /// Every digest `commit`'s closure reaches through this outbox's records: each item's reference
@@ -394,10 +420,15 @@ fn local_closure_digests(outbox: &Outbox, commit: &Encoded) -> Vec<String> {
 /// A publication that has done everything except move the pointer.
 #[derive(Debug)]
 pub struct Plan {
+    /// Identifier for the associated run.
     pub run_id: String,
+    /// Head key recorded for this plan.
     pub head_key: String,
+    /// Commit recorded for this plan.
     pub commit: String,
+    /// Height recorded for this plan.
     pub height: u64,
+    /// Optional parent value; `None` means it is not available.
     pub parent: Option<String>,
     /// Objects missing remotely that were uploaded again from the local outbox.
     pub reuploaded: Vec<String>,
@@ -407,8 +438,11 @@ pub struct Plan {
 }
 
 #[derive(Debug)]
+/// `Prepared` is an enum for the prepared contract in this module: W8-T03: dependency-first conditional publication.
 pub enum Prepared {
+    /// The `Ready` case of `Prepared`.
     Ready(Plan),
+    /// The `Done` case of `Prepared`.
     Done(Publication),
 }
 
@@ -642,7 +676,9 @@ pub fn publish(
 /// A run's remotely committed state, verified end to end.
 #[derive(Debug)]
 pub struct Reusable {
+    /// Head recorded for this reusable.
     pub head: Head,
+    /// Graph recorded for this reusable.
     pub graph: Graph,
 }
 

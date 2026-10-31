@@ -67,7 +67,9 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+/// Schema identifier for record values.
 pub const RECORD_SCHEMA: &str = "jope.progress.outbox-record/v1";
+/// Schema identifier for ack values.
 pub const ACK_SCHEMA: &str = "jope.progress.outbox-ack/v1";
 
 /// Bounds on pending (unacknowledged) entries.
@@ -76,9 +78,11 @@ pub const ACK_SCHEMA: &str = "jope.progress.outbox-ack/v1";
 pub struct Limits {
     /// At or above either pause threshold, new work is not admitted.
     pub pause_entries: u64,
+    /// Byte count for the associated pause.
     pub pause_bytes: u64,
     /// Nothing is appended that would exceed either maximum.
     pub max_entries: u64,
+    /// Upper bound on bytes.
     pub max_bytes: u64,
 }
 
@@ -92,6 +96,7 @@ impl Limits {
         max_bytes: 1 << 30,
     };
 
+    /// Performs the check operation and returns an error if it cannot be completed.
     pub fn check(&self) -> Result<()> {
         ensure!(
             self.max_entries > 0 && self.max_bytes > 0,
@@ -112,8 +117,11 @@ pub enum Refused {
         "outbox paused at its high-water mark ({pending_entries} entries, {pending_bytes} bytes \
          pending): no new work is admitted until delivery drains it. Nothing was written"
     )]
+    /// The `Paused` case of `Refused`.
     Paused {
+        /// Pending entries recorded for this refused.
         pending_entries: u64,
+        /// Byte count for the associated pending.
         pending_bytes: u64,
     },
     #[error(
@@ -121,9 +129,13 @@ pub enum Refused {
          {item_bytes} bytes): nothing was written and the item remains the caller's to append \
          again after delivery"
     )]
+    /// The `Full` case of `Refused`.
     Full {
+        /// Pending entries recorded for this refused.
         pending_entries: u64,
+        /// Byte count for the associated pending.
         pending_bytes: u64,
+        /// Byte count for the associated item.
         item_bytes: u64,
     },
 }
@@ -132,9 +144,13 @@ pub enum Refused {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "kebab-case", tag = "state")]
 pub enum Admission {
+    /// The `Open` case of `Admission`.
     Open,
+    /// The `Paused` case of `Admission`.
     Paused {
+        /// Pending entries recorded for this admission.
         pending_entries: u64,
+        /// Byte count for the associated pending.
         pending_bytes: u64,
     },
 }
@@ -143,11 +159,17 @@ pub enum Admission {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Record {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Monotone sequence number assigned to this event or row.
     pub seq: u64,
+    /// SHA-256 digest identifying the associated prev record.
     pub prev_record_sha256: Option<String>,
+    /// Item recorded for this record.
     pub item: Dependency,
+    /// Encoded byte count associated with this object or operation.
     pub bytes: u64,
+    /// SHA-256 digest of the encoded bytes.
     pub bytes_sha256: String,
     /// What the item names. Every one of them is an earlier record.
     pub dependencies: Vec<Dependency>,
@@ -155,6 +177,7 @@ pub struct Record {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
+/// `Outcome` is an enum for the outcome contract in this module: W8-T02: persist locally before acknowledging completion.
 pub enum Outcome {
     /// The remote created the object.
     Created,
@@ -166,27 +189,39 @@ pub enum Outcome {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Ack {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Monotone sequence number assigned to this event or row.
     pub seq: u64,
+    /// Key recorded for this ack.
     pub key: String,
+    /// SHA-256 digest identifying the associated record.
     pub record_sha256: String,
+    /// SHA-256 digest of the encoded bytes.
     pub bytes_sha256: String,
+    /// Remote recorded for this ack.
     pub remote: String,
+    /// Outcome recorded for this ack.
     pub outcome: Outcome,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// `Appended` is an enum for the appended contract in this module: W8-T02: persist locally before acknowledging completion.
 pub enum Appended {
+    /// The `Added` case of `Appended`.
     Added {
+        /// Monotone sequence number assigned to this event or row.
         seq: u64,
     },
     /// Already recorded (a producer re-appending after a crash): the original sequence number.
     Existing {
+        /// Monotone sequence number assigned to this event or row.
         seq: u64,
     },
 }
 
 impl Appended {
+    /// Performs the seq operation and returns an error if it cannot be completed.
     pub fn seq(self) -> u64 {
         match self {
             Appended::Added { seq } | Appended::Existing { seq } => seq,
@@ -197,9 +232,13 @@ impl Appended {
 /// What opening found.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 pub struct Recovery {
+    /// Records recorded for this recovery.
     pub records: u64,
+    /// Acknowledged recorded for this recovery.
     pub acknowledged: u64,
+    /// Pending recorded for this recovery.
     pub pending: u64,
+    /// Byte count for the associated pending.
     pub pending_bytes: u64,
     /// Temporary files of writes that never reached their rename. Uncommitted; never read.
     pub uncommitted: Vec<String>,
@@ -208,28 +247,41 @@ pub struct Recovery {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+/// `Pending` is a record for the pending contract in this module: W8-T02: persist locally before acknowledging completion.
 pub struct Pending {
+    /// Monotone sequence number assigned to this event or row.
     pub seq: u64,
+    /// Key recorded for this pending.
     pub key: String,
+    /// Encoded byte count associated with this object or operation.
     pub bytes: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+/// `DeliveryFailure` is a record for the delivery failure contract in this module: W8-T02: persist locally before acknowledging completion.
 pub struct DeliveryFailure {
+    /// Monotone sequence number assigned to this event or row.
     pub seq: u64,
+    /// Key recorded for this delivery failure.
     pub key: String,
+    /// Error recorded for this delivery failure.
     pub error: String,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+/// `Delivery` is a record for the delivery contract in this module: W8-T02: persist locally before acknowledging completion.
 pub struct Delivery {
     /// Remote writes attempted.
     pub attempted: u64,
+    /// Created recorded for this delivery.
     pub created: u64,
+    /// Existed recorded for this delivery.
     pub existed: u64,
     /// The first entry that could not be delivered. It and everything after it stay pending.
     pub failure: Option<DeliveryFailure>,
+    /// Pending recorded for this delivery.
     pub pending: u64,
+    /// Byte count for the associated pending.
     pub pending_bytes: u64,
 }
 
@@ -255,6 +307,7 @@ struct Entry {
     ack: Option<Ack>,
 }
 
+/// `Outbox` is a record for the outbox contract in this module: W8-T02: persist locally before acknowledging completion.
 pub struct Outbox {
     root: PathBuf,
     state: State,
@@ -554,6 +607,7 @@ impl Outbox {
         Ok(())
     }
 
+    /// Performs the root operation and returns an error if it cannot be completed.
     pub fn root(&self) -> &Path {
         &self.root
     }
@@ -564,6 +618,7 @@ impl Outbox {
         &self.state
     }
 
+    /// Performs the limits operation and returns an error if it cannot be completed.
     pub fn limits(&self) -> Limits {
         self.limits
     }
@@ -573,14 +628,17 @@ impl Outbox {
         &self.recovery
     }
 
+    /// Performs the records operation and returns an error if it cannot be completed.
     pub fn records(&self) -> u64 {
         self.entries.len() as u64
     }
 
+    /// Performs the pending entries operation and returns an error if it cannot be completed.
     pub fn pending_entries(&self) -> u64 {
         self.pending_entries
     }
 
+    /// Performs the pending bytes operation and returns an error if it cannot be completed.
     pub fn pending_bytes(&self) -> u64 {
         self.pending_bytes
     }
@@ -603,10 +661,12 @@ impl Outbox {
         self.by_key.get(&item.key()).copied()
     }
 
+    /// Performs the record operation and returns an error if it cannot be completed.
     pub fn record(&self, seq: u64) -> Option<&Record> {
         self.entry(seq).map(|e| &e.record)
     }
 
+    /// Performs the ack operation and returns an error if it cannot be completed.
     pub fn ack(&self, seq: u64) -> Option<&Ack> {
         self.entry(seq).and_then(|e| e.ack.as_ref())
     }

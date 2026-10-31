@@ -9,23 +9,32 @@ use anyhow::{bail, ensure, Context, Result};
 use serde_json::Value;
 use std::collections::{BTreeMap, HashMap};
 
+/// Schema identifier for ledger values.
 pub const LEDGER_SCHEMA: &str = "jopedime.s3-object-ledger/v1";
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+/// `Group` is a record for the group contract in this module: Object groups from the uncapped S3 object ledger (jopedime.s3-object-ledger/v1).
 pub struct Group {
+    /// Bucket recorded for this group.
     pub bucket: String,
+    /// Region recorded for this group.
     pub region: String,
     /// `""` for the bucket root, otherwise a prefix ending in `/`.
     pub prefix: String,
     /// True for objects directly under an internal prefix (or at the root), not in any child.
     pub direct: bool,
+    /// Number of objects represented by this value.
     pub objects: u64,
+    /// Encoded byte count associated with this object or operation.
     pub bytes: u64,
+    /// Lower bound on last modified.
     pub min_last_modified: Option<String>,
+    /// Upper bound on last modified.
     pub max_last_modified: Option<String>,
 }
 
 impl Group {
+    /// Performs the ID operation and returns an error if it cannot be completed.
     pub fn id(&self) -> String {
         format!(
             "s3://{}/{}{}",
@@ -37,12 +46,17 @@ impl Group {
 }
 
 #[derive(Clone, Debug)]
+/// `Ledger` is a record for the ledger contract in this module: Object groups from the uncapped S3 object ledger (jopedime.s3-object-ledger/v1).
 pub struct Ledger {
+    /// Timestamp at which the associated generated occurred.
     pub generated_at: String,
+    /// Collection of groups values carried by this ledger.
     pub groups: Vec<Group>,
     /// Bucket name -> storage class -> bytes (the ledger records classes per bucket only).
     pub bucket_classes: BTreeMap<String, BTreeMap<String, u64>>,
+    /// Total objects recorded for this ledger.
     pub total_objects: u64,
+    /// Byte count for the associated total.
     pub total_bytes: u64,
 }
 
@@ -257,6 +271,7 @@ pub struct BucketLookup {
 }
 
 impl BucketLookup {
+    /// Performs the find operation and returns an error if it cannot be completed.
     pub fn find(&self, key: &str) -> Option<usize> {
         for (i, _) in key.rmatch_indices('/') {
             let p = &key[..=i];
@@ -272,6 +287,7 @@ impl BucketLookup {
 }
 
 impl GroupLookup {
+    /// Constructs or opens a new value from the supplied inputs.
     pub fn new(groups: &[Group]) -> GroupLookup {
         let mut buckets: HashMap<String, BucketLookup> = HashMap::new();
         for (i, g) in groups.iter().enumerate() {
@@ -285,10 +301,12 @@ impl GroupLookup {
         GroupLookup { buckets }
     }
 
+    /// Performs the bucket operation and returns an error if it cannot be completed.
     pub fn bucket(&self, bucket: &str) -> Option<&BucketLookup> {
         self.buckets.get(bucket)
     }
 
+    /// Performs the find operation and returns an error if it cannot be completed.
     pub fn find(&self, bucket: &str, key: &str) -> Option<usize> {
         self.buckets.get(bucket)?.find(key)
     }

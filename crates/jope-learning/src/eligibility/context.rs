@@ -70,7 +70,9 @@ pub(super) fn verify_global_exposure(
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ContextPlan {
+    /// Source family recorded for this context plan.
     pub source_family: String,
+    /// Encoder recorded for this context plan.
     pub encoder: Encoder,
     /// The W2 context producer a teaching context must be handed off by (W3-T02, W2-T07).
     /// Absent on freezes made before producer authentication existed: such a freeze keeps its
@@ -100,8 +102,11 @@ impl ContextPlan {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ContextEvidence {
+    /// SHA-256 digest of the receipt that authenticates this result.
     pub receipt_sha256: String,
+    /// SHA-256 digest identifying the associated fitted state.
     pub fitted_state_sha256: String,
+    /// SHA-256 digest identifying the associated output.
     pub output_sha256: String,
     /// The W2 handoff of this context to teacher admission and the execution that produced it.
     /// Required for qualification; absent on submissions made before W3-T02, which stay
@@ -303,12 +308,19 @@ fn preregistered_producer(plan: &ContextPlan) -> Result<(&ProducerPlan, &[String
 /// little-endian f32 bytes.
 #[derive(Clone, Debug)]
 pub struct ContextRun {
+    /// Collection of handoff values carried by this context run.
     pub handoff: Vec<u8>,
+    /// Collection of job values carried by this context run.
     pub job: Vec<u8>,
+    /// Collection of outcome values carried by this context run.
     pub outcome: Vec<u8>,
+    /// Collection of experiment values carried by this context run.
     pub experiment: Vec<u8>,
+    /// Collection of window values carried by this context run.
     pub window: Vec<u8>,
+    /// Collection of artifact values carried by this context run.
     pub artifact: Vec<u8>,
+    /// Collection of context values carried by this context run.
     pub context: Vec<u8>,
 }
 
@@ -375,13 +387,21 @@ pub const TEACHER_ADMISSION: &str = "teacher_admission";
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct HandoffEncoder {
+    /// Hyperion weights recorded for this handoff encoder.
     pub hyperion_weights: String,
+    /// Hyperion manifest recorded for this handoff encoder.
     pub hyperion_manifest: String,
+    /// Component bundle recorded for this handoff encoder.
     pub component_bundle: String,
+    /// Foundation weights recorded for this handoff encoder.
     pub foundation_weights: String,
+    /// Target weights recorded for this handoff encoder.
     pub target_weights: String,
+    /// Frozen transforms recorded for this handoff encoder.
     pub frozen_transforms: String,
+    /// Assembly recorded for this handoff encoder.
     pub assembly: String,
+    /// Recipe recorded for this handoff encoder.
     pub recipe: String,
 }
 impl HandoffEncoder {
@@ -406,10 +426,15 @@ impl HandoffEncoder {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct HandoffRelease {
+    /// Encoder recorded for this handoff release.
     pub encoder: HandoffEncoder,
+    /// SHA-256 digest identifying the associated source.
     pub source_sha256: String,
+    /// SHA-256 digest identifying the associated producer.
     pub producer_sha256: String,
+    /// SHA-256 digest identifying the associated verification policy.
     pub verification_policy_sha256: String,
+    /// SHA-256 digest identifying the associated reference manifest.
     pub reference_manifest_sha256: String,
 }
 
@@ -420,9 +445,11 @@ pub struct HandoffRelease {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ProducerPlan {
+    /// Release recorded for this producer plan.
     pub release: HandoffRelease,
     /// `jope_policy::context_producer::transformation_chain()`, in execution order.
     pub transformations: Vec<String>,
+    /// SHA-256 digest identifying the associated qualification.
     pub qualification_sha256: String,
     /// The controller's admission pins fixed when the producer registered: its attestation of
     /// each W2 qualification case execution, in reference-manifest order
@@ -473,6 +500,7 @@ pub struct ContextExecution {
     /// The context job's `jope_pipeline::experiment::Experiment` and its original
     /// `ExecutionWindow`.
     pub experiment_sha256: String,
+    /// SHA-256 digest identifying the associated window.
     pub window_sha256: String,
 }
 
@@ -482,7 +510,9 @@ pub struct ContextExecution {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct HandoffEvidence {
+    /// SHA-256 digest identifying the associated handoff.
     pub handoff_sha256: String,
+    /// Execution recorded for this handoff evidence.
     pub execution: ContextExecution,
 }
 

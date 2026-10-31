@@ -7,6 +7,7 @@ use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
+/// Schema identifier for obligation plan values.
 pub const OBLIGATION_PLAN_SCHEMA: &str = "jope.retention-plan/v2";
 
 fn valid_digest(value: &str) -> bool {
@@ -15,9 +16,13 @@ fn valid_digest(value: &str) -> bool {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(tag = "state", content = "value", rename_all = "snake_case")]
+/// `VersionId` is an enum for the version ID contract in this module: Offline model of exact-version dependencies and retention promises.
 pub enum VersionId {
+    /// The `Explicit` case of `VersionId`.
     Explicit(String),
+    /// The `Null` case of `VersionId`.
     Null,
+    /// The `Unknown` case of `VersionId`.
     Unknown,
 }
 
@@ -25,15 +30,22 @@ pub enum VersionId {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(deny_unknown_fields)]
 pub struct StrongPhysicalRef {
+    /// Account recorded for this strong physical ref.
     pub account: String,
+    /// Bucket recorded for this strong physical ref.
     pub bucket: String,
+    /// Key recorded for this strong physical ref.
     pub key: String,
+    /// Identifier for the associated version.
     pub version_id: VersionId,
+    /// Sha-256 recorded for this strong physical ref.
     pub sha256: String,
+    /// Encoded byte count associated with this object or operation.
     pub bytes: u64,
 }
 
 impl StrongPhysicalRef {
+    /// Validates this value against its invariants and returns an error when validation fails.
     pub fn validate(&self) -> Result<()> {
         ensure!(
             !self.account.is_empty() && !self.bucket.is_empty() && !self.key.is_empty(),
@@ -62,9 +74,13 @@ impl StrongPhysicalRef {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(deny_unknown_fields)]
 pub struct ProvenanceRef {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Identity recorded for this provenance ref.
     pub identity: String,
+    /// Sha-256 recorded for this provenance ref.
     pub sha256: String,
+    /// Description recorded for this provenance ref.
     pub description: String,
 }
 
@@ -79,10 +95,15 @@ impl ProvenanceRef {
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "snake_case")]
+/// `PromiseKind` is an enum for the promise kind contract in this module: Offline model of exact-version dependencies and retention promises.
 pub enum PromiseKind {
+    /// The `ExactResume` case of `PromiseKind`.
     ExactResume,
+    /// The `Rollback` case of `PromiseKind`.
     Rollback,
+    /// The `ExactRetraining` case of `PromiseKind`.
     ExactRetraining,
+    /// The `ClaimReproduction` case of `PromiseKind`.
     ClaimReproduction,
 }
 
@@ -101,12 +122,19 @@ impl PromiseKind {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct RuntimeRestoreProof {
+    /// Provenance source for this value.
     pub source: StrongPhysicalRef,
+    /// Replacement recorded for this runtime restore proof.
     pub replacement: StrongPhysicalRef,
+    /// Capability recorded for this runtime restore proof.
     pub capability: String,
+    /// Runtime tested recorded for this runtime restore proof.
     pub runtime_tested: bool,
+    /// SHA-256 digest of the receipt that authenticates this result.
     pub receipt_sha256: String,
+    /// Pin generation recorded for this runtime restore proof.
     pub pin_generation: String,
+    /// Readers migrated recorded for this runtime restore proof.
     pub readers_migrated: bool,
 }
 
@@ -133,13 +161,21 @@ impl RuntimeRestoreProof {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct RecoveryPromise {
+    /// Stable identifier for this value.
     pub id: String,
+    /// Record kind or category represented by this value.
     pub kind: PromiseKind,
+    /// Identifier for the associated root.
     pub root_id: String,
+    /// Active recorded for this recovery promise.
     pub active: bool,
+    /// Collection of dependencies values carried by this recovery promise.
     pub dependencies: Vec<StrongPhysicalRef>,
+    /// Collection of restore proofs values carried by this recovery promise.
     pub restore_proofs: Vec<RuntimeRestoreProof>,
+    /// Optional released by transition value; `None` means it is not available.
     pub released_by_transition: Option<String>,
+    /// Optional released at generation value; `None` means it is not available.
     pub released_at_generation: Option<String>,
 }
 
@@ -182,8 +218,11 @@ impl RecoveryPromise {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+/// `RetiredVersion` is a record for the retired version contract in this module: Offline model of exact-version dependencies and retention promises.
 pub struct RetiredVersion {
+    /// Object recorded for this retired version.
     pub object: StrongPhysicalRef,
+    /// Retired at pin generation recorded for this retired version.
     pub retired_at_pin_generation: String,
 }
 
@@ -191,17 +230,29 @@ pub struct RetiredVersion {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct PinGeneration {
+    /// Root generation recorded for this pin generation.
     pub root_generation: String,
+    /// Pin generation recorded for this pin generation.
     pub pin_generation: String,
+    /// Observed root generation recorded for this pin generation.
     pub observed_root_generation: String,
+    /// Observed pin generation recorded for this pin generation.
     pub observed_pin_generation: String,
+    /// Closure complete recorded for this pin generation.
     pub closure_complete: bool,
+    /// Registered publishers recorded for this pin generation.
     pub registered_publishers: BTreeSet<String>,
+    /// Observed publishers recorded for this pin generation.
     pub observed_publishers: BTreeSet<String>,
+    /// Collection of unresolved values carried by this pin generation.
     pub unresolved: Vec<String>,
+    /// Mapping of strong dependencies values carried by this pin generation.
     pub strong_dependencies: BTreeMap<StrongPhysicalRef, BTreeSet<String>>,
+    /// Mapping of provenance values carried by this pin generation.
     pub provenance: BTreeMap<StrongPhysicalRef, BTreeSet<ProvenanceRef>>,
+    /// Collection of promises values carried by this pin generation.
     pub promises: Vec<RecoveryPromise>,
+    /// Mapping of retired versions values carried by this pin generation.
     pub retired_versions: BTreeMap<StrongPhysicalRef, RetiredVersion>,
 }
 
@@ -232,6 +283,7 @@ impl PinGeneration {
         gaps
     }
 
+    /// Performs the validate publish operation and returns an error if it cannot be completed.
     pub fn validate_publish(
         &self,
         publisher_id: &str,
@@ -304,56 +356,93 @@ impl PinGeneration {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(tag = "state", rename_all = "snake_case", deny_unknown_fields)]
+/// `TagAssessment` is an enum for the tag assessment contract in this module: Offline model of exact-version dependencies and retention promises.
 pub enum TagAssessment {
-    Verified { required_tags_present: bool },
-    Unknown { reason: String },
+    /// The `Verified` case of `TagAssessment`.
+    Verified {
+        /// Required tags present recorded for this outcome.
+        required_tags_present: bool,
+    },
+    /// The `Unknown` case of `TagAssessment`.
+    Unknown {
+        /// Explanation accompanying this outcome.
+        reason: String,
+    },
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+/// `LifecycleAssessment` is a record for the lifecycle assessment contract in this module: Offline model of exact-version dependencies and retention promises.
 pub struct LifecycleAssessment {
+    /// SHA-256 digest identifying the associated configuration.
     pub configuration_sha256: Option<String>,
+    /// Complete recorded for this lifecycle assessment.
     pub complete: bool,
+    /// Collection of matching current expiration rules values carried by this lifecycle assessment.
     pub matching_current_expiration_rules: Vec<String>,
+    /// Collection of matching noncurrent expiration rules values carried by this lifecycle assessment.
     pub matching_noncurrent_expiration_rules: Vec<String>,
+    /// Collection of unsupported fields values carried by this lifecycle assessment.
     pub unsupported_fields: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+/// `Candidate` is a record for the candidate contract in this module: Offline model of exact-version dependencies and retention promises.
 pub struct Candidate {
+    /// Object recorded for this candidate.
     pub object: StrongPhysicalRef,
+    /// Tags recorded for this candidate.
     pub tags: TagAssessment,
+    /// Lifecycle recorded for this candidate.
     pub lifecycle: LifecycleAssessment,
+    /// Collection of unknowns values carried by this candidate.
     pub unknowns: Vec<String>,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+/// `Disposition` is an enum for the disposition contract in this module: Offline model of exact-version dependencies and retention promises.
 pub enum Disposition {
+    /// The `Keep` case of `Disposition`.
     Keep,
+    /// The `Hold` case of `Disposition`.
     Hold,
+    /// The `ReviewAfterRootTransition` case of `Disposition`.
     ReviewAfterRootTransition,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+/// `ObligationRow` is a record for the obligation row contract in this module: Offline model of exact-version dependencies and retention promises.
 pub struct ObligationRow {
+    /// Object recorded for this obligation row.
     pub object: StrongPhysicalRef,
+    /// Disposition recorded for this obligation row.
     pub disposition: Disposition,
+    /// Collection of strong roots values carried by this obligation row.
     pub strong_roots: Vec<String>,
+    /// Collection of promises values carried by this obligation row.
     pub promises: Vec<String>,
+    /// Collection of provenance values carried by this obligation row.
     pub provenance: Vec<ProvenanceRef>,
+    /// Collection of unresolved values carried by this obligation row.
     pub unresolved: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+/// `ObligationPlanV2` is a record for the obligation plan v2 contract in this module: Offline model of exact-version dependencies and retention promises.
 pub struct ObligationPlanV2 {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Root generation recorded for this obligation plan v2.
     pub root_generation: String,
+    /// Pin generation recorded for this obligation plan v2.
     pub pin_generation: String,
+    /// Number of rows represented by this value.
     pub rows: Vec<ObligationRow>,
+    /// SHA-256 digest identifying the associated plan.
     pub plan_sha256: String,
 }
 

@@ -12,12 +12,19 @@ use std::collections::BTreeMap;
 use std::time::Instant;
 
 #[derive(Clone, Debug, Serialize)]
+/// `AppendReport` is a record for the append report contract in this module: The score ledger: jope.score/v1 rows appended in sealed batches, verified, queried.
 pub struct AppendReport {
+    /// Provenance source for this value.
     pub source: Value,
+    /// Number of rows represented by this value.
     pub rows: u64,
+    /// Duplicates skipped recorded for this append report.
     pub duplicates_skipped: u64,
+    /// Ledger batch receipt produced by the operation, if one was appended.
     pub batch: Option<crate::ledger::BatchReceipt>,
+    /// Optional mirror value; `None` means it is not available.
     pub mirror: Option<MirrorReport>,
+    /// Seconds recorded for this append report.
     pub seconds: f64,
 }
 
@@ -106,17 +113,24 @@ pub fn append(
 }
 
 #[derive(Clone, Debug, Serialize, Default)]
+/// `VerifyReport` is a record for the verify report contract in this module: The score ledger: jope.score/v1 rows appended in sealed batches, verified, queried.
 pub struct VerifyReport {
+    /// Ledger recorded for this verify report.
     pub ledger: LedgerReport,
+    /// Number of rows represented by this value.
     pub rows: u64,
+    /// Number of invalid rows represented here.
     pub invalid_rows: Vec<String>,
+    /// Number of duplicate rows represented here.
     pub duplicate_rows: u64,
 }
 
 impl VerifyReport {
+    /// Performs the ok operation and returns an error if it cannot be completed.
     pub fn ok(&self) -> bool {
         self.ledger.ok() && self.invalid_rows.is_empty() && self.duplicate_rows == 0
     }
+    /// Performs the total breaks operation and returns an error if it cannot be completed.
     pub fn total_breaks(&self) -> usize {
         self.ledger.breaks.len() + self.invalid_rows.len() + self.duplicate_rows as usize
     }
@@ -151,6 +165,7 @@ pub fn verify(state: &State) -> Result<VerifyReport> {
     Ok(report)
 }
 
+/// Performs the rows operation and returns an error if it cannot be completed.
 pub fn rows(state: &State) -> Result<Vec<ScoreRecord>> {
     Ledger::open(state.root(), "scores")
         .events()?
@@ -160,15 +175,25 @@ pub fn rows(state: &State) -> Result<Vec<ScoreRecord>> {
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `Best` is a record for the best contract in this module: The score ledger: jope.score/v1 rows appended in sealed batches, verified, queried.
 pub struct Best {
+    /// Hash identifying the dataset used by this record.
     pub dataset_hash: String,
+    /// Metric used to evaluate the represented result.
     pub metric: String,
+    /// Whether larger or smaller metric values represent improvement.
     pub direction: Direction,
+    /// Identifier for the associated method.
     pub method_id: String,
+    /// Measured or derived value carried by this result.
     pub value: f64,
+    /// Optional track value; `None` means it is not available.
     pub track: Option<String>,
+    /// Optional version value; `None` means it is not available.
     pub version: Option<String>,
+    /// Number of rows represented by this value.
     pub rows: u64,
+    /// Methods recorded for this best.
     pub methods: u64,
 }
 

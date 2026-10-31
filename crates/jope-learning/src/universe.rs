@@ -10,22 +10,34 @@ use jope_records::wire_contract::VerifiedMeasuredOutcome;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
+/// Schema identifier for universe values.
 pub const UNIVERSE_SCHEMA: &str = "jope.measured-universe/v1";
+/// Schema identifier for source view values.
 pub const SOURCE_VIEW_SCHEMA: &str = "jope.immutable-measurement-view/v1";
+/// Constant identifying the metric name.
 pub const METRIC_NAME: &str = "development_score";
 
 /// A complete evaluator identity. Every field participates in equality and table joins.
 #[derive(Clone, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct MeasurementScope {
+    /// SHA-256 digest identifying the associated context.
     pub context_sha256: String,
+    /// SHA-256 digest of the checkpoint bound to this evidence.
     pub checkpoint_sha256: String,
+    /// SHA-256 digest identifying the associated policy.
     pub policy_sha256: String,
+    /// SHA-256 digest identifying the evaluator used for this evidence.
     pub evaluator_sha256: String,
+    /// SHA-256 digest identifying the associated target.
     pub target_sha256: String,
+    /// SHA-256 digest identifying the associated profile.
     pub profile_sha256: String,
+    /// Fidelity recorded for this measurement scope.
     pub fidelity: String,
+    /// Data or authority role assigned to this value.
     pub role: String,
+    /// Metric name recorded for this measurement scope.
     pub metric_name: String,
 }
 
@@ -86,8 +98,11 @@ impl MeasurementScope {
 #[derive(Clone, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct OutcomeKey {
+    /// Scope label describing the population covered by this result.
     pub scope: MeasurementScope,
+    /// SHA-256 digest of the canonical program source.
     pub program_sha256: String,
+    /// Identifier for the associated replicate.
     pub replicate_id: Option<String>,
 }
 
@@ -113,10 +128,15 @@ impl OutcomeKey {
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum OutcomeStatus {
+    /// The `Complete` case of `OutcomeStatus`.
     Complete,
+    /// The `Failed` case of `OutcomeStatus`.
     Failed,
+    /// The `Timeout` case of `OutcomeStatus`.
     Timeout,
+    /// The `Rejected` case of `OutcomeStatus`.
     Rejected,
+    /// The `Unknown` case of `OutcomeStatus`.
     Unknown,
 }
 
@@ -124,10 +144,15 @@ pub enum OutcomeStatus {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ObservedOutcome {
+    /// Key recorded for this observed outcome.
     pub key: OutcomeKey,
+    /// Outcome or lifecycle status recorded for this value.
     pub status: OutcomeStatus,
+    /// Optional metric f64 bits value; `None` means it is not available.
     pub metric_f64_bits: Option<String>,
+    /// SHA-256 digest identifying the associated evidence receipt.
     pub evidence_receipt_sha256: String,
+    /// SHA-256 digest identifying the associated source locator.
     pub source_locator_sha256: String,
 }
 
@@ -163,15 +188,22 @@ impl ObservedOutcome {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ImmutableSourceView {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Source commit recorded for this immutable source view.
     pub source_commit: String,
+    /// SHA-256 digest identifying the associated source receipt.
     pub source_receipt_sha256: String,
+    /// SHA-256 digest identifying the associated revocation snapshot.
     pub revocation_snapshot_sha256: String,
+    /// SHA-256 digest identifying the associated observation locators.
     pub observation_locators_sha256: Vec<String>,
+    /// SHA-256 digest identifying the associated view.
     pub view_sha256: String,
 }
 
 impl ImmutableSourceView {
+    /// Performs the seal operation and returns an error if it cannot be completed.
     pub fn seal(&mut self) -> Result<()> {
         self.view_sha256.clear();
         self.view_sha256 = canonical_sha256(self)?;
@@ -223,8 +255,10 @@ impl ImmutableSourceView {
 /// receipts, exact source closure and revocation snapshot. Complete outcomes must return I02's
 /// sealed `VerifiedMeasuredOutcome`; unavailable outcomes must be authenticated and return None.
 pub trait UniverseEvidenceVerifier {
+    /// Performs the verify view operation and returns an error if it cannot be completed.
     fn verify_view(&self, view: &ImmutableSourceView) -> Result<()>;
 
+    /// Performs the verify observation operation and returns an error if it cannot be completed.
     fn verify_observation(
         &self,
         view: &ImmutableSourceView,
@@ -234,8 +268,11 @@ pub trait UniverseEvidenceVerifier {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
+/// `OutcomeCell` is a record for the outcome cell contract in this module: Exact measured outcomes for an explicitly requested development support.
 pub struct OutcomeCell {
+    /// Key recorded for this outcome cell.
     pub key: OutcomeKey,
+    /// Outcome or lifecycle status recorded for this value.
     pub status: CellStatus,
     /// Set only for a single, verified complete value.
     pub metric_f64_bits: Option<String>,
@@ -245,21 +282,33 @@ pub struct OutcomeCell {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
+/// `CellStatus` is an enum for the cell status contract in this module: Exact measured outcomes for an explicitly requested development support.
 pub enum CellStatus {
+    /// The `Complete` case of `CellStatus`.
     Complete,
+    /// The `Failed` case of `CellStatus`.
     Failed,
+    /// The `Censored` case of `CellStatus`.
     Censored,
+    /// The `Rejected` case of `CellStatus`.
     Rejected,
+    /// The `Unknown` case of `CellStatus`.
     Unknown,
+    /// The `Conflicting` case of `CellStatus`.
     Conflicting,
+    /// The `Missing` case of `CellStatus`.
     Missing,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
+/// `JoinRefusal` is a record for the join refusal contract in this module: Exact measured outcomes for an explicitly requested development support.
 pub struct JoinRefusal {
+    /// SHA-256 digest identifying the associated requested key.
     pub requested_key_sha256: Option<String>,
+    /// SHA-256 digest identifying the associated observed locator.
     pub observed_locator_sha256: String,
+    /// Collection of mismatched fields values carried by this join refusal.
     pub mismatched_fields: Vec<String>,
 }
 
@@ -268,32 +317,53 @@ pub struct JoinRefusal {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct UniverseCoverage {
+    /// SHA-256 digest identifying the associated context.
     pub context_sha256: String,
+    /// SHA-256 digest of the checkpoint bound to this evidence.
     pub checkpoint_sha256: String,
+    /// SHA-256 digest identifying the associated policy.
     pub policy_sha256: String,
+    /// Support cardinality recorded for this universe coverage.
     pub support_cardinality: usize,
+    /// Observed recorded for this universe coverage.
     pub observed: usize,
+    /// Complete measured recorded for this universe coverage.
     pub complete_measured: usize,
+    /// Failed recorded for this universe coverage.
     pub failed: usize,
+    /// Number of attempts whose outcomes were censored before completion.
     pub censored: usize,
+    /// Rejected recorded for this universe coverage.
     pub rejected: usize,
+    /// Unknown recorded for this universe coverage.
     pub unknown: usize,
+    /// Conflicting recorded for this universe coverage.
     pub conflicting: usize,
+    /// Missing recorded for this universe coverage.
     pub missing: usize,
+    /// Full support recorded for this universe coverage.
     pub full_support: bool,
+    /// Optional probability mass value; `None` means it is not available.
     pub probability_mass: Option<String>,
+    /// Probability mass reason recorded for this universe coverage.
     pub probability_mass_reason: String,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
+/// `Universe` is a record for the universe contract in this module: Exact measured outcomes for an explicitly requested development support.
 pub struct Universe {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// SHA-256 digest identifying the associated source view.
     pub source_view_sha256: String,
     /// The rows in this table are limited to this exact requested finite support.
     pub requested_support_sha256: String,
+    /// Collection of outcomes values carried by this universe.
     pub outcomes: Vec<OutcomeCell>,
+    /// Collection of join refusals values carried by this universe.
     pub join_refusals: Vec<JoinRefusal>,
+    /// Collection of coverage values carried by this universe.
     pub coverage: Vec<UniverseCoverage>,
 }
 
@@ -449,6 +519,7 @@ impl Universe {
         })
     }
 
+    /// Computes the canonical SHA-256 digest of this value.
     pub fn digest(&self) -> Result<String> {
         canonical_sha256(self)
     }

@@ -9,24 +9,39 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeSet;
 
+/// Schema identifier for coverage values.
 pub const COVERAGE_SCHEMA: &str = "jope.r22-lpi-scratch-coverage/v1";
+/// Constant identifying the roster feature dtype.
 pub const ROSTER_FEATURE_DTYPE: &str = "<f4";
 /// `q_grid` is micro-q; a row whose `q` disagrees with it by more than this is refused.
 const Q_GRID_TOLERANCE: f64 = 1e-6;
 
 #[derive(Debug, Serialize)]
+/// `CoverageReport` is a record for the coverage report contract in this module: Read-only source adapters. They translate existing evidence into MeasurementRows and feature lines without changing any value or grade, and refuse inputs they do not recognize.
 pub struct CoverageReport {
+    /// Schema identifier and version for the serialized value.
     pub schema: &'static str,
+    /// Source schema recorded for this coverage report.
     pub source_schema: String,
+    /// Source label recorded for this coverage report.
     pub source_label: String,
+    /// SHA-256 digest identifying the associated source receipt.
     pub source_receipt_sha256: String,
+    /// Partition recorded for this coverage report.
     pub partition: String,
+    /// Contexts in partition recorded for this coverage report.
     pub contexts_in_partition: usize,
+    /// Excluded by list recorded for this coverage report.
     pub excluded_by_list: usize,
+    /// Excluded pairs listed recorded for this coverage report.
     pub excluded_pairs_listed: usize,
+    /// Excluded pairs removed recorded for this coverage report.
     pub excluded_pairs_removed: usize,
+    /// Ineligible recorded for this coverage report.
     pub ineligible: usize,
+    /// Contexts emitted recorded for this coverage report.
     pub contexts_emitted: usize,
+    /// Number of rows represented by this value.
     pub rows: usize,
 }
 
@@ -158,9 +173,13 @@ pub fn coverage_rows(
 /// runtime or failure label can escape through this versioned adapter.
 #[derive(Debug, Serialize)]
 pub struct CoverageDescriptor {
+    /// Identifier for the associated context.
     pub context_id: String,
+    /// Identifier for the associated parent.
     pub parent_id: String,
+    /// SHA-256 digest of the canonical program source.
     pub program_sha256: String,
+    /// Optional tokens value; `None` means it is not available.
     pub tokens: Option<Vec<u32>>,
 }
 

@@ -61,14 +61,23 @@ pub const HEAD_SCHEMA: &str = "jope.progress.head/v1";
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Kind {
+    /// The `RunManifest` case of `Kind`.
     RunManifest,
+    /// The `Event` case of `Kind`.
     Event,
+    /// The `CandidateEvidence` case of `Kind`.
     CandidateEvidence,
+    /// The `HwmDecision` case of `Kind`.
     HwmDecision,
+    /// The `CorpusManifest` case of `Kind`.
     CorpusManifest,
+    /// The `Exposure` case of `Kind`.
     Exposure,
+    /// The `Checkpoint` case of `Kind`.
     Checkpoint,
+    /// The `Commit` case of `Kind`.
     Commit,
+    /// The `Summary` case of `Kind`.
     Summary,
 }
 
@@ -87,6 +96,7 @@ pub enum Class {
 }
 
 impl Kind {
+    /// Constant identifying the all.
     pub const ALL: [Kind; 9] = [
         Kind::RunManifest,
         Kind::Event,
@@ -129,6 +139,7 @@ impl Kind {
         }
     }
 
+    /// Performs the class operation and returns an error if it cannot be completed.
     pub fn class(self) -> Class {
         match self {
             Kind::CandidateEvidence | Kind::HwmDecision => Class::Evidence,
@@ -172,11 +183,14 @@ pub fn head_key(run_id: &str) -> Result<String> {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct BlobRef {
+    /// Sha-256 recorded for this blob ref.
     pub sha256: String,
+    /// Encoded byte count associated with this object or operation.
     pub bytes: u64,
 }
 
 impl BlobRef {
+    /// Performs the of operation and returns an error if it cannot be completed.
     pub fn of(bytes: &[u8]) -> BlobRef {
         BlobRef {
             sha256: crate::canon::sha256_hex(bytes),
@@ -189,7 +203,9 @@ impl BlobRef {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ObjectRef {
+    /// Record kind or category represented by this value.
     pub kind: Kind,
+    /// Digest recorded for this object ref.
     pub digest: String,
 }
 
@@ -198,7 +214,9 @@ pub struct ObjectRef {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub enum Dependency {
+    /// The `Blob` case of `Dependency`.
     Blob(BlobRef),
+    /// The `Object` case of `Dependency`.
     Object(ObjectRef),
 }
 
@@ -301,8 +319,11 @@ fn check_hexes(what: &str, digests: &[String]) -> Result<()> {
 
 /// An inventory object type.
 pub trait Inventoried: Serialize + DeserializeOwned {
+    /// Constant identifying the kind.
     const KIND: Kind;
+    /// Returns the schema identifier for this record kind.
     fn schema(&self) -> &str;
+    /// Performs the run ID operation and returns an error if it cannot be completed.
     fn run_id(&self) -> &str;
     /// Structural limits beyond what the types enforce.
     fn check(&self) -> Result<()>;
@@ -337,19 +358,25 @@ fn validate<T: Inventoried>(value: &T) -> Result<()> {
 /// One object in its canonical encoding, with its delivery identity and dependencies.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Encoded {
+    /// Record kind or category represented by this value.
     pub kind: Kind,
+    /// Identifier for the associated run.
     pub run_id: String,
+    /// Digest recorded for this encoded.
     pub digest: String,
+    /// Encoded byte count associated with this object or operation.
     pub bytes: Vec<u8>,
     /// Sorted and duplicate-free.
     pub dependencies: Vec<Dependency>,
 }
 
 impl Encoded {
+    /// Performs the key operation and returns an error if it cannot be completed.
     pub fn key(&self) -> String {
         object_key(self.kind, &self.digest)
     }
 
+    /// Performs the reference operation and returns an error if it cannot be completed.
     pub fn reference(&self) -> ObjectRef {
         ObjectRef {
             kind: self.kind,
@@ -398,18 +425,22 @@ impl<T: Inventoried> Decoded<T> {
         })
     }
 
+    /// Computes the canonical SHA-256 digest of this value.
     pub fn digest(&self) -> &str {
         &self.digest
     }
 
+    /// Performs the value operation and returns an error if it cannot be completed.
     pub fn value(&self) -> &T {
         &self.value
     }
 
+    /// Performs the into value operation and returns an error if it cannot be completed.
     pub fn into_value(self) -> T {
         self.value
     }
 
+    /// Performs the encoded operation and returns an error if it cannot be completed.
     pub fn encoded(&self) -> Result<Encoded> {
         encode(&self.value)
     }
@@ -525,12 +556,16 @@ impl WorkSpec {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `PlannedUnit` is a record for the planned unit contract in this module: W8-T01: the durable artifact and event inventory.
 pub struct PlannedUnit {
+    /// Identifier for the associated work.
     pub work_id: String,
+    /// Spec recorded for this planned unit.
     pub spec: WorkSpec,
 }
 
 impl PlannedUnit {
+    /// Constructs or opens a new value from the supplied inputs.
     pub fn new(run_id: &str, spec: WorkSpec) -> Result<PlannedUnit> {
         Ok(PlannedUnit {
             work_id: spec.work_id(run_id)?,
@@ -543,7 +578,9 @@ impl PlannedUnit {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RunManifest {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Identifier for the associated run.
     pub run_id: String,
     /// The sole publisher allowed to advance this run's committed pointer.
     pub publisher: String,
@@ -556,6 +593,7 @@ pub struct RunManifest {
 }
 
 impl RunManifest {
+    /// Constructs or opens a new value from the supplied inputs.
     pub fn new(
         run_id: &str,
         publisher: &str,
@@ -624,17 +662,26 @@ impl Inventoried for RunManifest {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum FailureClass {
+    /// The `Timeout` case of `FailureClass`.
     Timeout,
+    /// The `PreflightRefusal` case of `FailureClass`.
     PreflightRefusal,
+    /// The `ParseRejection` case of `FailureClass`.
     ParseRejection,
+    /// The `ValidationRejection` case of `FailureClass`.
     ValidationRejection,
+    /// The `WorkerError` case of `FailureClass`.
     WorkerError,
+    /// The `WorkerLost` case of `FailureClass`.
     WorkerLost,
+    /// The `MissingInput` case of `FailureClass`.
     MissingInput,
+    /// The `Cancelled` case of `FailureClass`.
     Cancelled,
 }
 
 impl FailureClass {
+    /// Returns the stable string representation of this value.
     pub fn as_str(self) -> &'static str {
         match self {
             FailureClass::Timeout => "timeout",
@@ -651,41 +698,67 @@ impl FailureClass {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "kebab-case", deny_unknown_fields)]
+/// `EventBody` is an enum for the event body contract in this module: W8-T01: the durable artifact and event inventory.
 pub enum EventBody {
     /// Attempt 1 was scheduled. Recorded before execution.
     Scheduled,
     /// Attempt `n ≥ 2` was scheduled as a retry of the failure event `failed_event` of attempt
     /// `n − 1`. The failure is a dependency of the retry, so it cannot disappear on its own.
-    Retry { failed_event: String },
+    /// Field value recorded by this public API type.
+    Retry {
+        /// Failed event recorded for this outcome.
+        failed_event: String,
+    },
     /// A worker took the attempt.
-    Started { worker: String },
+    /// Field value recorded by this public API type.
+    Started {
+        /// Worker recorded for this outcome.
+        worker: String,
+    },
     /// The attempt ended without a result.
     Failed {
+        /// Class recorded for this event body.
         class: FailureClass,
+        /// Retryable recorded for this event body.
         retryable: bool,
+        /// Detail recorded for this event body.
         detail: String,
     },
     /// The attempt produced a verified immutable result artifact. Workers submit results; they
     /// never publish pointers.
-    Completed { result: BlobRef },
+    /// Field value recorded by this public API type.
+    Completed {
+        /// Result recorded for this outcome.
+        result: BlobRef,
+    },
     /// The unit was excluded without being scheduled (attempt 0), with the reason.
-    Excluded { reason: String },
+    /// Field value recorded by this public API type.
+    Excluded {
+        /// Explanation accompanying this outcome.
+        reason: String,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `Event` is a record for the event contract in this module: W8-T01: the durable artifact and event inventory.
 pub struct Event {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Identifier for the associated run.
     pub run_id: String,
     /// Digest of the run manifest whose census this event accounts to.
     pub run_manifest: String,
+    /// Identifier for the associated work.
     pub work_id: String,
     /// 0 for an exclusion, otherwise the 1-based attempt number.
     pub attempt: u32,
+    /// Body recorded for this event.
     pub body: EventBody,
 }
 
 impl Event {
+    /// Constructs or opens a new value from the supplied inputs.
     pub fn new(
         manifest: &Decoded<RunManifest>,
         work_id: &str,
@@ -773,14 +846,19 @@ pub enum Retention {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CandidateEvidence {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Identifier for the associated run.
     pub run_id: String,
+    /// Identifier for the associated work.
     pub work_id: String,
+    /// Attempt recorded for this candidate evidence.
     pub attempt: u32,
     /// The `completed` event this candidate came from.
     pub completion: String,
     /// The candidate record blob (the bytes `hwm::ingest` would store).
     pub record: BlobRef,
+    /// Retention recorded for this candidate evidence.
     pub retention: Retention,
     /// Fitted artifacts, sorted; non-empty exactly when `retention` is `full`.
     pub artifacts: Vec<BlobRef>,
@@ -821,9 +899,13 @@ impl Inventoried for CandidateEvidence {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct HwmDecision {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Identifier for the associated run.
     pub run_id: String,
+    /// Identifier for the associated work.
     pub work_id: String,
+    /// Attempt recorded for this HWM decision.
     pub attempt: u32,
     /// The `completed` event whose candidate was decided.
     pub completion: String,
@@ -833,11 +915,15 @@ pub struct HwmDecision {
     pub identity_sha256: String,
     /// Ledger batch id, its path relative to the ledger directory, and its file sha256.
     pub ledger_batch: String,
+    /// Ledger path recorded for this HWM decision.
     pub ledger_path: String,
+    /// SHA-256 digest identifying the associated ledger batch.
     pub ledger_batch_sha256: String,
     /// Position of the event within the batch.
     pub seq: u64,
+    /// Transition recorded for this HWM decision.
     pub transition: Transition,
+    /// SHA-256 digest identifying the associated qualification.
     pub qualification_sha256: Option<String>,
 }
 
@@ -958,8 +1044,11 @@ impl HwmDecision {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CorpusManifest {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Identifier for the associated run.
     pub run_id: String,
+    /// Identifier for the associated corpus.
     pub corpus_id: String,
     /// The corpus manifest this one extends, if any.
     pub parent: Option<String>,
@@ -1004,13 +1093,17 @@ impl Inventoried for CorpusManifest {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Exposure {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Identifier for the associated run.
     pub run_id: String,
+    /// Update index recorded for this exposure.
     pub update_index: u64,
     /// The corpus manifest consumed.
     pub corpus: String,
     /// The checkpoint the update started from, if any.
     pub checkpoint_before: Option<String>,
+    /// Number of consumed rows represented here.
     pub consumed_rows: u64,
 }
 
@@ -1045,12 +1138,17 @@ impl Inventoried for Exposure {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Checkpoint {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Identifier for the associated run.
     pub run_id: String,
+    /// Update index recorded for this checkpoint.
     pub update_index: u64,
+    /// Optional parent value; `None` means it is not available.
     pub parent: Option<String>,
     /// The exposure (update) this checkpoint commits.
     pub exposure: String,
+    /// Corpus recorded for this checkpoint.
     pub corpus: String,
     /// Parameter and optimizer state, sorted, non-empty.
     pub state: Vec<BlobRef>,
@@ -1092,9 +1190,13 @@ impl Inventoried for Checkpoint {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Commit {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Identifier for the associated run.
     pub run_id: String,
+    /// Run manifest recorded for this commit.
     pub run_manifest: String,
+    /// Optional parent value; `None` means it is not available.
     pub parent: Option<String>,
     /// 0 for the first commit, otherwise the parent's height + 1.
     pub height: u64,
@@ -1148,18 +1250,24 @@ impl Inventoried for Commit {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Head {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Identifier for the associated run.
     pub run_id: String,
+    /// Commit recorded for this head.
     pub commit: String,
+    /// Height recorded for this head.
     pub height: u64,
 }
 
 impl Head {
+    /// Encodes this value in its canonical serialized representation.
     pub fn encode(&self) -> Result<Vec<u8>> {
         self.check()?;
         canonical_json(self)
     }
 
+    /// Decodes the canonical representation and rejects malformed or noncanonical input.
     pub fn decode(bytes: &[u8]) -> Result<Head> {
         ensure!(
             bytes.len() <= MAX_OBJECT_BYTES,
@@ -1185,7 +1293,9 @@ impl Head {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Fraction {
+    /// Numerator recorded for this fraction.
     pub numerator: u64,
+    /// Shared denominator used to interpret probability numerators in this law.
     pub denominator: u64,
 }
 
@@ -1200,10 +1310,13 @@ impl Fraction {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Summary {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Identifier for the associated run.
     pub run_id: String,
     /// The commit (and its height) the view was derived from: its freshness.
     pub derived_from: String,
+    /// Height recorded for this summary.
     pub height: u64,
     /// The census of the committed events and decisions: coverage, completion, failures by
     /// class, exclusions, decisions (refusals included) by transition, improvements, duplicate
@@ -1214,10 +1327,13 @@ pub struct Summary {
     /// Optimizer exposure: committed exposures, and the rows they consumed. Repeated
     /// consumption of one corpus counts every time.
     pub exposures: u64,
+    /// Number of consumed rows represented here.
     pub consumed_rows: u64,
+    /// Corpora recorded for this summary.
     pub corpora: u64,
     /// Distinct corpus member blobs across every committed corpus.
     pub unique_teachers: u64,
+    /// Checkpoints recorded for this summary.
     pub checkpoints: u64,
     /// The committed checkpoint with the highest update index.
     pub latest_checkpoint: Option<String>,

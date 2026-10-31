@@ -11,29 +11,41 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+/// `InputRecord` is a record for the input record contract in this module: Input files, each read once and pinned by sha256.
 pub struct InputRecord {
+    /// Data or authority role assigned to this value.
     pub role: String,
+    /// Filesystem path associated with this input or output.
     pub path: String,
+    /// Encoded byte count associated with this object or operation.
     pub bytes: u64,
+    /// Sha-256 recorded for this input record.
     pub sha256: String,
     /// `verified <sidecar path>`, `absent`, plus `expected-prefix <p> ok` when one was given.
     pub check: String,
 }
 
+/// `Loaded` is a record for the loaded contract in this module: Input files, each read once and pinned by sha256.
 pub struct Loaded {
+    /// Record recorded for this loaded.
     pub record: InputRecord,
+    /// Encoded byte count associated with this object or operation.
     pub bytes: Vec<u8>,
 }
 
 /// `ROLE=PATH[@SHA256PREFIX]`, as given on the command line.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct InputSpec {
+    /// Data or authority role assigned to this value.
     pub role: String,
+    /// Filesystem path associated with this input or output.
     pub path: PathBuf,
+    /// Optional expect prefix value; `None` means it is not available.
     pub expect_prefix: Option<String>,
 }
 
 impl InputSpec {
+    /// Parses the supplied representation, returning an error when the input is invalid.
     pub fn parse(s: &str) -> Result<InputSpec> {
         let (role, rest) = s
             .split_once('=')
@@ -120,6 +132,7 @@ pub fn load(role: &str, path: &Path, expect_prefix: Option<&str>) -> Result<Load
     })
 }
 
+/// Reads spec from the configured source.
 pub fn load_spec(spec: &InputSpec) -> Result<Loaded> {
     load(&spec.role, &spec.path, spec.expect_prefix.as_deref())
 }

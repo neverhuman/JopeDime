@@ -10,33 +10,50 @@ use crate::canon::{canonical_sha256, is_hex64};
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+/// `TrainEvidence` is a record for the train evidence contract in this module: Versioned extension of frozen CLOVER support.
 pub struct TrainEvidence {
+    /// Identifier for the associated context.
     pub context_id: String,
+    /// SHA-256 digest of the canonical program source.
     pub program_sha256: String,
+    /// SHA-256 digest identifying the associated source receipt.
     pub source_receipt_sha256: String,
+    /// SHA-256 digest identifying the associated parity receipt.
     pub parity_receipt_sha256: String,
+    /// SHA-256 digest identifying the associated execution receipt.
     pub execution_receipt_sha256: String,
 }
 
 /// Implemented by the I04 authenticated TRAIN capability issuer at integration time.
 pub trait AdmissionVerifier {
+    /// Performs the verify train evidence operation and returns an error if it cannot be completed.
     fn verify_train_evidence(&self, evidence: &TrainEvidence) -> Result<bool>;
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+/// `SupportTransition` is a record for the support transition contract in this module: Versioned extension of frozen CLOVER support.
 pub struct SupportTransition {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// SHA-256 digest identifying the associated from support.
     pub from_support_sha256: String,
+    /// SHA-256 digest identifying the associated to support.
     pub to_support_sha256: String,
+    /// From version recorded for this support transition.
     pub from_version: u32,
+    /// To version recorded for this support transition.
     pub to_version: u32,
+    /// SHA-256 digest identifying the associated admission evidence.
     pub admission_evidence_sha256: String,
+    /// SHA-256 digest identifying the associated admitted program.
     pub admitted_program_sha256: String,
+    /// SHA-256 digest identifying the associated transition.
     pub transition_sha256: String,
 }
 
 impl SupportTransition {
+    /// Verifies the bound evidence and returns an error when verification fails.
     pub fn verify(&self) -> Result<()> {
         ensure!(
             self.schema == "jope.support-transition/v1",
@@ -64,15 +81,27 @@ impl SupportTransition {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case", deny_unknown_fields)]
+/// `AdmissionDecision` is an enum for the admission decision contract in this module: Versioned extension of frozen CLOVER support.
 pub enum AdmissionDecision {
-    Admitted { transition: SupportTransition },
-    Refused { refusal: AdmissionRefusal },
+    /// The `Admitted` case of `AdmissionDecision`.
+    Admitted {
+        /// Transition recorded for this outcome.
+        transition: SupportTransition,
+    },
+    /// The `Refused` case of `AdmissionDecision`.
+    Refused {
+        /// Refusal recorded for this outcome.
+        refusal: AdmissionRefusal,
+    },
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+/// `AdmissionRefusal` is a record for the admission refusal contract in this module: Versioned extension of frozen CLOVER support.
 pub struct AdmissionRefusal {
+    /// SHA-256 digest identifying the associated observation.
     pub observation_sha256: String,
+    /// Explanation associated with the recorded disposition.
     pub reason: String,
 }
 
