@@ -334,6 +334,16 @@ class FeedbackTests(unittest.TestCase):
                 ):
                     feedback.build_feedback(rows, admission)
 
+        for field in ("forbidden_families", "forbidden_alias_components"):
+            for value in ("unknown", "null", " ", " fit-family "):
+                _, admission = fixture()
+                admission[field] = [value]
+                with (
+                    self.subTest(field=field, value=value),
+                    self.assertRaises(ValueError),
+                ):
+                    feedback.validate_admission(admission)
+
     def test_json_duplicate_keys_and_nonfinite_constants_refuse(self):
         for value in ('{"a":1,"a":2}', '{"a":NaN}', '{"a":Infinity}'):
             with self.subTest(value=value), self.assertRaises(ValueError):

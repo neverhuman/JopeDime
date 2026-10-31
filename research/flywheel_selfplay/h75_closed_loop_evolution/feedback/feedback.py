@@ -70,6 +70,14 @@ def object_identity(value):
     return tuple(value[k] for k in ("key", "version_id", "sha256"))
 
 
+def resolved_identity(value):
+    return (
+        type(value) is str
+        and value.strip() == value
+        and value.lower() not in {"", "none", "null", "unknown", "unresolved"}
+    )
+
+
 def validate_admission(admission):
     require(type(admission) is dict, "admission must be an object")
     canonical(
@@ -109,7 +117,7 @@ def validate_admission(admission):
         require(
             type(admission.get(field)) is list
             and admission[field]
-            and all(type(v) is str and v for v in admission[field]),
+            and all(resolved_identity(v) for v in admission[field]),
             field + " missing",
         )
     contexts = admission.get("fit_contexts")
