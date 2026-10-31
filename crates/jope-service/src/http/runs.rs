@@ -25,7 +25,6 @@ use axum::{
     Json,
 };
 use jope_api::{
-    decimal::DecimalU64,
     error::{ErrorCode, Problem},
     *,
 };
@@ -299,7 +298,7 @@ impl RunService {
         );
         if spec.plan_digest.as_ref().is_some_and(|v| v != &plan_digest) {
             return Err(issue(
-                ErrorCode::InvalidInput,
+                ErrorCode::PlanChanged,
                 "Plan digest changed; request a fresh dry-run plan.",
             ));
         }
@@ -534,5 +533,150 @@ pub(super) async fn start(
     match tokio::task::spawn_blocking(move || service.start(spec, identity)).await {
         Ok(value) => value,
         Err(error) => response(io(error)),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        dataset::register,
+        engine::InProcessEngine,
+        http::auth::{BearerToken, LocalAuth},
+    };
+    use axum::{
+        body::{to_bytes, Body},
+        http::{header, Request, StatusCode},
+    };
+    use tower::ServiceExt;
+
+    fn fixture() -> (tempfile::TempDir, InProcessEngine, RunSpec) {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/int01");
+        std::fs::create_dir_all(&root).unwrap();
+        let directory = tempfile::tempdir_in(root).unwrap();
+        let engine = InProcessEngine::open(directory.path()).unwrap();
+        let raw = include_bytes!("../../../../test-support/datasets/v1/d2-regression/train.csv");
+        assert_eq!(
+            hash(raw),
+            "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931"
+        );
+        let mut names: Vec<_> = (0..21).map(|i| format!("x{i}")).collect();
+        names.push("target".into());
+        let mut csv = names.join(",");
+        csv.push('\n');
+        for line in std::str::from_utf8(raw).unwrap().lines().take(96) {
+            csv.push_str(line);
+            csv.push('\n');
+        }
+        let dataset =
+            register::register(engine.store(), csv.as_bytes(), &Default::default()).unwrap();
+        let spec=serde_json::from_value(json!({"dataset":dataset.id,"target":"target","task":"regression",
+            "ignore_columns":[],"test_dataset":null,"split":{"kind":"random","holdout_fraction":0.2,"group_column":null,"time_column":null},
+            "objective":"rmse","effort":"fast","budget":{"evaluations":"4","wall_seconds":"30"},"landmarks":"none","guidance":"heuristic",
+            "languages":["rust"],"require_all_languages":true,"device":"cpu","seed":"73","dry_run":true,"plan_digest":null})).unwrap();
+        (directory, engine, spec)
+    }
+
+    fn app(engine: &InProcessEngine) -> axum::Router {
+        engine
+            .router(
+                LocalAuth::new(BearerToken::from_hex(&"ab".repeat(32)).unwrap(), 31234).unwrap(),
+            )
+            .unwrap()
+    }
+    fn request(spec: &RunSpec, key: &str) -> Request<Body> {
+        Request::builder()
+            .method("POST")
+            .uri("/v1/runs")
+            .header(header::HOST, "127.0.0.1:31234")
+            .header(header::AUTHORIZATION, format!("Bearer {}", "ab".repeat(32)))
+            .header(header::CONTENT_TYPE, "application/json")
+            .header("idempotency-key", key)
+            .body(Body::from(serde_json::to_vec(spec).unwrap()))
+            .unwrap()
+    }
+    async fn body(response: Response) -> Value {
+        serde_json::from_slice(&to_bytes(response.into_body(), 1 << 20).await.unwrap()).unwrap()
+    }
+
+    #[tokio::test]
+    async fn actual_store_bound_plan_retries_and_conflicts_without_starting_a_run() {
+        let (_directory, engine, spec) = fixture();
+        let app = app(&engine);
+        let first = app
+            .clone()
+            .oneshot(request(&spec, "plan-key"))
+            .await
+            .unwrap();
+        assert_eq!(first.status(), StatusCode::OK);
+        let first = body(first).await;
+        let plan: Plan = serde_json::from_value(first.clone()).unwrap();
+        assert_eq!(plan.rows.total.0, 96);
+        assert_eq!(plan.rows.fit.0, 76);
+        assert_eq!(plan.rows.holdout.0, 20);
+        assert_eq!(plan.placement.evaluation, "cpu");
+        assert_eq!(plan.placement.workers, 1);
+        assert_eq!(
+            body(
+                app.clone()
+                    .oneshot(request(&spec, "plan-key"))
+                    .await
+                    .unwrap()
+            )
+            .await,
+            first
+        );
+        let mut changed = spec.clone();
+        changed.seed.0 += 1;
+        let conflict = app
+            .clone()
+            .oneshot(request(&changed, "plan-key"))
+            .await
+            .unwrap();
+        assert_eq!(conflict.status(), StatusCode::CONFLICT);
+        assert_eq!(body(conflict).await["code"], "IDEMPOTENCY_CONFLICT");
+        let mut stale = spec.clone();
+        stale.plan_digest = Some("0".repeat(64));
+        assert_eq!(
+            body(app.oneshot(request(&stale, "stale-plan")).await.unwrap()).await["code"],
+            "PLAN_CHANGED"
+        );
+        assert!(!_directory.path().join("worker-scratch").exists());
+    }
+
+    #[tokio::test]
+    async fn actual_run_route_preserves_auth_host_origin_and_explicit_capability_refusals() {
+        let (_directory, engine, spec) = fixture();
+        let app = app(&engine);
+        for (header_name, value, status) in [
+            ("authorization", "Bearer wrong", StatusCode::UNAUTHORIZED),
+            ("host", "attacker.invalid:31234", StatusCode::BAD_REQUEST),
+            ("origin", "https://example.invalid", StatusCode::BAD_REQUEST),
+        ] {
+            let mut req = request(&spec, "denied");
+            req.headers_mut()
+                .insert(header_name, axum::http::HeaderValue::from_static(value));
+            let denied = app.clone().oneshot(req).await.unwrap();
+            assert_eq!(denied.status(), status);
+            assert_eq!(denied.headers()["jope-api-version"], "1.0");
+        }
+        let mut unsupported = spec.clone();
+        unsupported.guidance = Guidance::Learned;
+        let denied = app
+            .clone()
+            .oneshot(request(&unsupported, "learned"))
+            .await
+            .unwrap();
+        assert_eq!(denied.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body(denied).await["code"], "CAPABILITY_UNAVAILABLE");
+        let missing = Request::builder()
+            .uri("/v1/runs/run_01JBD8Q6N4V2T5Y8K3M7P9R1S0/events")
+            .header(header::HOST, "127.0.0.1:31234")
+            .header(header::AUTHORIZATION, format!("Bearer {}", "ab".repeat(32)))
+            .body(Body::empty())
+            .unwrap();
+        let missing = app.oneshot(missing).await.unwrap();
+        assert_eq!(missing.status(), StatusCode::NOT_FOUND);
+        assert_eq!(body(missing).await["code"], "NOT_FOUND");
     }
 }

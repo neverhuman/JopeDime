@@ -2538,7 +2538,7 @@ fn native_scores<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Resul
     feat_math::GenomeIr::parse(&request.dsl)?;
     match (&spec.refit_output, spec.refit_max_bytes) {
         (Some(path), Some(maximum)) => {
-            return native_refit(request, matrix, &spec, &objective, path, maximum);
+            return native_refit(request, matrix, &spec, &objective, path, maximum)
         }
         (None, None) => {}
         _ => bail!("incomplete private refit handoff"),
@@ -3642,15 +3642,10 @@ mod tests {
         let binary = directory.join("native-worker");
         let pids = directory.join("worker-pids");
         fs::create_dir_all(&pids).unwrap();
-        let fault = match fault {
-            "timeout" => {
-                "if request.fold_spec.get(\"refit_output\").is_some() { loop { std::hint::spin_loop(); } }"
-            }
-            "memory" => {
-                "if request.fold_spec.get(\"refit_output\").is_some() { let mut bytes=vec![0_u8;128*1024*1024]; for i in (0..bytes.len()).step_by(4096) { bytes[i]=1; } loop { std::hint::black_box(&bytes); std::thread::sleep(std::time::Duration::from_millis(10)); } }"
-            }
-            "" => "",
-            _ => panic!("unknown owned fixture fault"),
+        let fault=match fault {
+            "timeout"=>"if request.fold_spec.get(\"refit_output\").is_some() { loop { std::hint::spin_loop(); } }",
+            "memory"=>"if request.fold_spec.get(\"refit_output\").is_some() { let mut bytes=vec![0_u8;128*1024*1024]; for i in (0..bytes.len()).step_by(4096) { bytes[i]=1; } loop { std::hint::black_box(&bytes); std::thread::sleep(std::time::Duration::from_millis(10)); } }",
+            ""=>"",_=>panic!("unknown owned fixture fault"),
         };
         fs::write(&source,format!("fn main() {{ std::fs::write(std::path::Path::new({:?}).join(std::process::id().to_string()), b\"native\").unwrap(); jope_service::worker::serve(1, |request,matrix| {{ {} jope_service::discover::r#loop::evaluate_native(request,matrix) }}).unwrap(); }}",pids,fault)).unwrap();
         for library in libraries {
@@ -3670,9 +3665,7 @@ mod tests {
                 return binary;
             }
         }
-        panic!(
-            "current jope-service library could not link native worker; build the library first with cargo build -p jope-service --locked"
-        );
+        panic!("current jope-service library could not link native worker; build the library first with cargo build -p jope-service --locked");
     }
 
     fn pool(binary: &Path, workers: usize) -> ProcessExecutor {
@@ -3789,9 +3782,7 @@ mod tests {
                 .unwrap()
                 .iter()
                 .any(|e| e["kind"] == "algorithm.accepted"));
-            println!(
-                "bounded promoted refit {fault}: CV succeeded; isolated worker failed as {expected:?}; engine alive; limit receipt retained"
-            );
+            println!("bounded promoted refit {fault}: CV succeeded; isolated worker failed as {expected:?}; engine alive; limit receipt retained");
         }
     }
 
@@ -3954,9 +3945,7 @@ mod tests {
             )
             .unwrap();
         }
-        println!(
-            "DSC08 S2: real native CV; planned R=2; workers1/8, mid-wave pause, SIGKILL/recovery: identical champion/model/projection; zero limits"
-        );
+        println!("DSC08 S2: real native CV; planned R=2; workers1/8, mid-wave pause, SIGKILL/recovery: identical champion/model/projection; zero limits");
     }
 
     #[test]
@@ -4025,14 +4014,7 @@ mod tests {
         let champion = d
             .champion()
             .expect("medium search must produce a finite rung-1 model");
-        println!(
-            "DSC08 QLT05 source={TRAIN_SHA}, FIT=800, seed=73, folds=5, medium128/R2; ridge_cv_rmse={}, champion_cv_rmse={}, admissions={}, reason={:?}, nondeterminism={:?}",
-            baseline.scores[2],
-            champion.value,
-            d.admitted(),
-            d.completed(),
-            d.nondeterminism()
-        );
+        println!("DSC08 QLT05 source={TRAIN_SHA}, FIT=800, seed=73, folds=5, medium128/R2; ridge_cv_rmse={}, champion_cv_rmse={}, admissions={}, reason={:?}, nondeterminism={:?}",baseline.scores[2],champion.value,d.admitted(),d.completed(),d.nondeterminism());
         assert!(
             champion.loss < baseline.scores[1],
             "medium must strictly improve ridge on the same pinned CV folds"
@@ -5027,13 +5009,11 @@ mod tests {
                         "{error}"
                     );
                     assert!(!output.exists());
-                    assert!(!fs::read_dir(home.path()).unwrap().any(|entry| {
-                        entry
-                            .unwrap()
-                            .file_name()
-                            .to_string_lossy()
-                            .starts_with(".jope-research-")
-                    }));
+                    assert!(!fs::read_dir(home.path()).unwrap().any(|entry| entry
+                        .unwrap()
+                        .file_name()
+                        .to_string_lossy()
+                        .starts_with(".jope-research-")));
                     assert!(store
                         .gc(true)
                         .unwrap()
