@@ -38,3 +38,9 @@ Original source HEAD at upload: `d5095432129d57cbd7cffa9fd6ceb77dfe86cd9e`; exec
 - Exact versions/hashes, row counts, corrected decision and metrics are in [metrics.json](metrics.json). Review source and command receipts are under `/home/ubuntu/jope-rescue-20260921/rd-verdicts-t2155/`.
 
 ASTRA reproduced the denominators and both means from the downloaded rows, checked unique cells and the frozen roster, and reran the family bootstrap at seed20261031. This is a result review, not an independent experimental replication. Original objects remain unchanged; there is no HWM candidate or serving promotion.
+
+## Recorded downstream contract disposition
+
+ASTRA retains the existing live slate-centering behavior for every matched W1/W3 arm and r882 continuity control. Pin their training/evaluation slate sizes and report this known dependence as part of the evaluation identity. This is an explicit acceptance of a measured property for those comparisons, not a claim of invariance or proof that dependence is harmless. Do not silently install anchor centering in only a treatment arm or only GP scoring. A separate anchor-reference intervention needs its own matched comparison; no W2 training follow-up is launched here. OPUS accepted the denominator correction in FINDINGS at04:05 UTC; later wording that still calls it a practical-tolerance stop is superseded by the failed written rule above.
+
+The arithmetic-review snapshot is preserved create-only at `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W2/astra-review-20261031T040736Z-f53c32a8/manifest.json` (version`1A3FoEa2dHPw0MZbEDTipPGEayq_R9gr`, SHA256`778f61eaa551d04ff6b3f2528610a4d9b4720769e66fda40b8560035df3aae26`), source270b4b649. All five listed review objects, including its manifest, passed version-pinned downloaded-byte SHA256 checks. That snapshot precedes this downstream disposition and pointer append; original OPUS objects remain unchanged.
