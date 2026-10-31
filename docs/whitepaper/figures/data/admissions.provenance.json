@@ -1,0 +1,28 @@
+{
+  "schema": "whitepaper.retained-adapter-admissions/v1",
+  "source_commit": "3ff29c8b6291d239cb1684dfa8dc8bce22831c16",
+  "input": "docs/whitepaper/figures/data/admissions.csv",
+  "input_sha256": "fd64a540f48127f4475b9eda8adeba6ecdcc767757cfdbba118ede332995bf9e",
+  "round_window": [
+    775,
+    1469
+  ],
+  "logged_rounds": 695,
+  "accepted_rounds": 4,
+  "strict_best_increase_rounds": [
+    785,
+    859
+  ],
+  "accepted_tie_rounds": [
+    782,
+    882
+  ],
+  "classification": "Use logged accepted flags; compare each accepted best_val with the previous retained best_val using exact > or ==, with no epsilon",
+  "checks": "Consecutive rounds, finite utilities, nondecreasing best, accepted candidate equals best, rejected best unchanged; first row is not accepted",
+  "scope": "Retained development admission rounds only; no pre-window comparison, confidence interval, first-proposal or transfer claim",
+  "source_binding": "CSV interpretation only; installed loop/adapter/checkpoint qualification remains required",
+  "generator_sha256": "82745c740122bfe1273eac3957bad22c7b5ec5ef540f48e34492b8926765ea0a",
+  "figure_sha256": "e3e9225acfab1e36c24478553431e60ef59eaeef0ae56c92daeaef122924a789",
+  "matplotlib_version": "3.10.8",
+  "reproduce": "python3 figures/scripts/make_flywheel_figs.py --validation-only"
+}
