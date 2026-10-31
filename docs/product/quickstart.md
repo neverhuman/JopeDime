@@ -1,6 +1,6 @@
 # Quickstart
 
-These examples were run against a default-feature `jopedime` binary built from source commit `569324b7760a95be26e817ce843b2430e32095fb` (version 0.4.1, target `x86_64-unknown-linux-gnu`). `source_sha40` is `unknown` in a local development build. The binary is not a release-signed package.
+These examples were run against a default-feature `jopedime` binary built from source commit `75f5d704763c321f7586ea2db77cbdc771aa988e` (version 0.4.1, target `x86_64-unknown-linux-gnu`). `source_sha40` is `unknown` in a local development build. The binary is not a release-signed package.
 
 ## Check the executable
 
