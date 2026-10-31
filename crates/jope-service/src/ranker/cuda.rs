@@ -588,7 +588,7 @@ mod tests {
             );
         }
         let mut incomplete = TraceFixture::new();
-        incomplete.0[6].clear();
+        incomplete.stages[6].clear();
         assert!(compare_trace(reference.trace(), incomplete.trace()).is_err());
     }
 
