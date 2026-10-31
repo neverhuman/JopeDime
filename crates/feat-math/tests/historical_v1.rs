@@ -1168,8 +1168,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         clienttmp_tempfile["base_commit"],
         "4e6a834794d0bacb7d792a6ff3e1b9172fa435af"
     );
-    let rnk09_ruzstd =
-        old_fixture("transitions/rnk09_ruzstd_lockfile_identity_rebaseline.v1.json");
+    let rnk09_ruzstd = old_fixture("transitions/rnk09_ruzstd_lockfile_identity_rebaseline.v1.json");
     assert_eq!(
         rnk09_ruzstd["source_commit"],
         "d3b589181be62f2b99928be419f359c0b77e7626"
@@ -1178,8 +1177,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         rnk09_ruzstd["base_commit"],
         "31ba8225da6c8c0128dd8c58fbb2839920fb102f"
     );
-    let res09_candle =
-        old_fixture("transitions/res09_candle_lockfile_identity_rebaseline.v1.json");
+    let res09_candle = old_fixture("transitions/res09_candle_lockfile_identity_rebaseline.v1.json");
     assert_eq!(
         res09_candle["source_commit"],
         "27b292c7e76b28b15cddebea15f0683a5baab9ae"
