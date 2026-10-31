@@ -18,8 +18,15 @@
     "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
     "trainable_parameters": 29211
   },
+  "candidate_breakthrough": false,
   "cells": 9,
   "custody": "/home/ubuntu/jope-rescue-20260921/h130-harm-hinge",
+  "custody_receipts": {
+    "fit_family_baseline_sha256": "0367146a1178ac811ff9e4d3154050acb113376e1beec094f6016ba01d59c4f8",
+    "regression_receipt_sha256": "1616ea5f88f6d58ef2ae37c137f651dc0accbe694e3d6568ed64421998cbde1b",
+    "summary_sha256": "6b41618bd38a5fa2868e851f26eac1d39d610dd69352d7f895e01a2ddc0c19c9"
+  },
+  "executed_optimizer_updates": 360,
   "execution_gate": "No real-data training or assessment scoring before preregistration PR merges into origin/main; runner enforces HEAD ancestry in origin/main.",
   "fold": {
     "assessment_family_count": 41,
@@ -38,6 +45,7 @@
     "fold_manifest_sha256": "98196cbc017c10d12db1f8c4390c163a11d3faddf1c457b79108a6386ed785ea",
     "fold_seed": 130094
   },
+  "gpu_seconds": 0.0,
   "hypothesis": "Fit-fold family harm penalties will reduce assessment-family harm versus unchanged r882 while retaining a positive paired family gain.",
   "output_limit_bytes": 100000,
   "paired_seeds": [
@@ -45,6 +53,7 @@
     95,
     96
   ],
+  "prereg_merge_commit": "9e57ce36f4269ea0a1af7ffa6cc1c6c5d1566734",
   "prereg_sha256": "3eefc25b4c873d27942e0c95e2264fd8357e6784d1ebf2ba401924cab8144491",
   "primary": {
     "admission": {
@@ -84,9 +93,10 @@
     "report": "paired family gain and Elo vs CONTROL; no admission gate"
   },
   "source_base": "a6e1209e916bb1976e2e3292d437a986b77bd212",
-  "status": "PREREGISTERED_NOT_RUN",
+  "status": "COMPLETE_NO_ADMISSION",
   "template_runner_sha256": "e116de3eef5eb2af8db9bc30647f415380b2ff74007322a5e1e4d13f5b010269",
   "total_optimizer_updates": 360,
   "updates_per_cell": 40,
+  "verdict": "NO_ADMISSION",
   "wave": "H130"
 }
