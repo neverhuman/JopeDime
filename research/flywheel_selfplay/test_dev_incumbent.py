@@ -1,5 +1,7 @@
+import argparse
 import copy
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -7,7 +9,11 @@ import pytest
 import torch
 
 sys.path.insert(0, str(Path(__file__).parent))
-from dev_incumbent import DevIncumbent
+from dev_incumbent import (
+    DevIncumbent,
+    add_admission_arguments,
+    validate_admission_options,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -418,6 +424,82 @@ def test_tie_advances_training_without_lowering_dev_utility():
     event = gate.decide(model, opt, {"mean": 2}, "fixed-dev", "tie.pt", 2)
     assert event["accepted"] and event["action"] == "accept_tie"
     assert not torch.equal(model.weight, best)
+    assert json.dumps(event, separators=(",", ":")) == (
+        '{"round":2,"evaluation_identity":"fixed-dev","candidate_utility":2.0,'
+        '"previous_best_utility":2.0,"accepted":true,"action":"accept_tie",'
+        '"best_utility":2.0,"best_round":2,"best_checkpoint":"tie.pt"}'
+    )
+
+
+def test_unchanged_cli_defaults_to_legacy_admission_policy():
+    parser = add_admission_arguments(argparse.ArgumentParser())
+    args = parser.parse_args([])
+    assert args.strict_adapter_admission is False
+    assert args.adapter_min_gain is None
+    assert validate_admission_options(
+        args.strict_adapter_admission, args.adapter_min_gain
+    ) is None
+
+
+@pytest.mark.parametrize(
+    ("candidate", "accepted"),
+    [
+        (2.0, False),
+        (2.125, False),
+        (2.25, False),
+        (math.nextafter(2.25, math.inf), True),
+    ],
+)
+def test_opt_in_strict_margin_boundary_and_adamw_restore(candidate, accepted):
+    model, opt = setup()
+    before_model = copy.deepcopy(model.state_dict())
+    before_opt = copy.deepcopy(opt.state_dict())
+    gate = DevIncumbent(
+        model,
+        opt,
+        {"mean": 2},
+        "fixed-dev",
+        "old.pt",
+        1,
+        strict_admission=True,
+        min_gain=0.25,
+    )
+    model(torch.ones(1, 1)).sum().backward()
+    opt.step()
+    proposed_model = copy.deepcopy(model.state_dict())
+    proposed_opt = copy.deepcopy(opt.state_dict())
+    event = gate.decide(model, opt, {"mean": candidate}, "fixed-dev", "new.pt", 2)
+
+    assert event["accepted"] is accepted
+    assert event["admission_policy"] == "strict-margin/v1"
+    assert event["min_gain"] == 0.25
+    assert event["action"] == (
+        "accept_improvement" if accepted else "restore_best_model_and_optimizer"
+    )
+    expected_model, expected_opt = (
+        (proposed_model, proposed_opt) if accepted else (before_model, before_opt)
+    )
+    assert all(
+        torch.equal(value, expected_model[name])
+        for name, value in model.state_dict().items()
+    )
+    actual_opt = opt.state_dict()
+    assert actual_opt["param_groups"] == expected_opt["param_groups"]
+    for key, state in actual_opt["state"].items():
+        for name, value in state.items():
+            assert torch.equal(value, expected_opt["state"][key][name])
+    assert gate.best_checkpoint == ("new.pt" if accepted else "old.pt")
+    assert gate.best_round == (2 if accepted else 1)
+
+
+def test_strict_admission_requires_explicit_valid_margin():
+    with pytest.raises(ValueError, match="requires --adapter-min-gain"):
+        validate_admission_options(True, None)
+    with pytest.raises(ValueError, match="requires --strict-adapter-admission"):
+        validate_admission_options(False, 0.0)
+    for margin in (-1, math.nan, math.inf, -math.inf):
+        with pytest.raises(ValueError, match="finite and nonnegative"):
+            validate_admission_options(True, margin)
 
 
 @pytest.mark.parametrize("score", [float("nan"), float("inf")])
