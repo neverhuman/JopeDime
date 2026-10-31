@@ -41,6 +41,7 @@ REBUILDABLE_WORKTREE_IGNORED_FILES = {"AGENT_CHAT.lock", "AGENT_CHAT.md.lock"}
 LOG_LIMIT_BYTES = 256 * 1024**2
 LOG_RETENTION_SECONDS = 14 * 24 * 3600
 TARGET_RETENTION_SECONDS = 24 * 3600
+WORKTREE_IDLE_SECONDS = 2 * 3600
 OFFLOAD_BUCKET = "veox-jopedime-learning-use2"
 OFFLOAD_PREFIX = "offload"
 TARGET_EVIDENCE_PARTS = {
@@ -139,6 +140,10 @@ def read_policy(path: Path | None) -> dict[str, Any]:
                 raise ValueError(f"{key} must be a boolean")
         if "ttl_hours" in entry and (type(entry["ttl_hours"]) is not int or entry["ttl_hours"] < 1):
             raise ValueError("cargo-target ttl_hours must be a positive integer")
+        if "worktree_idle_hours" in entry and (
+            type(entry["worktree_idle_hours"]) is not int or entry["worktree_idle_hours"] < 1
+        ):
+            raise ValueError("cargo-target worktree_idle_hours must be a positive integer")
     hosts = policy.get("allowed_hosts")
     if (
         not isinstance(hosts, list)
@@ -192,13 +197,16 @@ def protected_path(path: Path) -> bool:
     )
 
 
-def lsof_open_paths(resolved_root: Path) -> set[Path] | None:
+def lsof_open_paths(resolved_root: Path, *, user_id: int | None = None) -> set[Path] | None:
     lsof = shutil.which("lsof")
     if not lsof:
         return None
     try:
         priority = ["/usr/bin/ionice", "-c3", "/usr/bin/nice", "-n", "10"] if sys.platform.startswith("linux") else ["/usr/bin/nice", "-n", "10"]
-        command = priority + [lsof, "-nP", "-F", "n", "+D", str(resolved_root)]
+        command = priority + [lsof, "-nP"]
+        if user_id is not None:
+            command.extend(["-a", "-u", str(user_id)])
+        command.extend(["-F", "n", "+D", str(resolved_root)])
         proc = subprocess.run(
             command,
             capture_output=True,
@@ -248,7 +256,8 @@ def open_handles_under(root: Path, *, all_users: bool = False, allow_lsof_fallba
                 except FileNotFoundError:
                     continue
                 uid_line = next(line for line in status.splitlines() if line.startswith("Uid:"))
-                if not all_users and int(uid_line.split()[1]) != current_uid():
+                uid_fields = uid_line.split()[1:]
+                if not all_users and (len(uid_fields) < 2 or int(uid_fields[1]) != current_uid()):
                     continue
                 fds = process / "fd"
                 try:
@@ -280,7 +289,7 @@ def open_handles_under(root: Path, *, all_users: bool = False, allow_lsof_fallba
             pass
         if not allow_lsof_fallback:
             return None
-    return lsof_open_paths(resolved_root)
+    return lsof_open_paths(resolved_root, user_id=None if all_users else current_uid())
 
 
 def path_contains(parent: Path, child: Path) -> bool:
@@ -300,15 +309,36 @@ def local_process_references(target: Path, worktree: Path, proc_root: Path = Pat
             if not process.name.isdigit():
                 continue
             try:
-                cwd = Path(os.readlink(process / "cwd"))
-                environ = (process / "environ").read_bytes().split(b"\0")
+                status = (process / "status").read_text(encoding="utf-8")
+                uid_line = next(line for line in status.splitlines() if line.startswith("Uid:"))
+                uid_fields = uid_line.split()[1:]
+                if len(uid_fields) < 2:
+                    return None
+                if int(uid_fields[1]) != current_uid():
+                    continue
             except FileNotFoundError:
                 continue
             except PermissionError:
                 return None
             except OSError:
                 return None
-            if path_contains(target, cwd) or path_contains(worktree, cwd):
+            try:
+                cwd = Path(os.readlink(process / "cwd"))
+            except FileNotFoundError:
+                continue
+            except PermissionError:
+                cwd = None
+            except OSError:
+                return None
+            try:
+                environ = (process / "environ").read_bytes().split(b"\0")
+            except FileNotFoundError:
+                continue
+            except PermissionError:
+                environ = []
+            except OSError:
+                return None
+            if cwd is not None and (path_contains(target, cwd) or path_contains(worktree, cwd)):
                 return True
             for entry in environ:
                 if not entry.startswith(b"CARGO_TARGET_DIR="):
@@ -319,8 +349,45 @@ def local_process_references(target: Path, worktree: Path, proc_root: Path = Pat
                 if path_contains(target, value) or path_contains(value, target):
                     return True
         return False
-    except (OSError, RuntimeError):
+    except (OSError, RuntimeError, StopIteration, ValueError):
         return None
+
+
+def worktree_idle_for_cleanup(worktree: Path, *, now: float, idle_seconds: int) -> bool:
+    """Require both per-worktree Git activity markers to be older than the idle window."""
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(worktree), "rev-parse", "--absolute-git-dir"],
+            check=True, capture_output=True, text=True, timeout=15,
+        )
+        git_dir = Path(result.stdout.strip())
+        activity = [git_dir / name for name in ("HEAD", "index")]
+        mtimes = [path.stat().st_mtime for path in activity]
+        return len(mtimes) == 2 and max(mtimes) <= now - idle_seconds
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return False
+
+
+def detached_worktree_reflog_is_on_main(repo: Path, worktree: Path) -> bool:
+    """Do not discard a detached worktree's only reference to non-main history."""
+    try:
+        reflog = subprocess.run(
+            ["git", "-C", str(worktree), "reflog", "show", "--format=%H", "HEAD"],
+            check=True, capture_output=True, text=True, timeout=15,
+        )
+        heads = {line.strip() for line in reflog.stdout.splitlines() if line.strip()}
+        if not heads:
+            return False
+        for head in heads:
+            merged = subprocess.run(
+                ["git", "-C", str(repo), "merge-base", "--is-ancestor", head, "origin/main"],
+                capture_output=True, text=True, timeout=15, check=False,
+            )
+            if merged.returncode != 0:
+                return False
+        return True
+    except (OSError, subprocess.SubprocessError):
+        return False
 
 
 def safe_target_tree(root: Path, *, now: float, ttl_seconds: int = TARGET_RETENTION_SECONDS) -> bool:
@@ -452,6 +519,7 @@ def worktree_cleanup_inventory(
     now: float,
     *,
     include_closed_pr_worktrees: bool = True,
+    idle_seconds: int = WORKTREE_IDLE_SECONDS,
 ) -> list[dict[str, Any]] | None:
     """Find stale build targets and clean merged/closed worktrees under the canonical root."""
     try:
@@ -522,7 +590,15 @@ def worktree_cleanup_inventory(
                 main_ancestor=main_ancestor, branch=branch, head=head, pr_states=pr_states,
             )
             ignored_safe: bool | None = None
-            if stale_target or (disposition and clean):
+            idle = (stale_target or (disposition and clean)) and worktree_idle_for_cleanup(
+                worktree, now=now, idle_seconds=idle_seconds,
+            )
+            history_safe = not (disposition and clean and not branch) or detached_worktree_reflog_is_on_main(
+                repo, worktree,
+            )
+            if disposition and clean and not branch and not history_safe:
+                print(f"SKIP {worktree}: detached HEAD reflog contains history outside origin/main")
+            if idle and (stale_target or (disposition and clean)):
                 candidates.append({
                     "worktree": worktree,
                     "target": target,
@@ -533,19 +609,27 @@ def worktree_cleanup_inventory(
                     "disposition": disposition,
                     "clean": clean,
                     "ignored_safe": ignored_safe,
+                    "idle": True,
+                    "history_safe": history_safe,
                 })
         except (OSError, ValueError, subprocess.SubprocessError):
             continue
     return candidates
 
 
-def worktree_head_is_unchanged(worktree: Path, expected_branch: str, expected_head: str) -> bool:
+def worktree_head_is_unchanged(
+    worktree: Path,
+    expected_branch: str,
+    expected_head: str,
+    *,
+    require_ignored_safe: bool = True,
+) -> bool:
     try:
         clean = subprocess.run(
             ["git", "-C", str(worktree), "status", "--porcelain", "--untracked-files=all"],
             check=True, capture_output=True, text=True, timeout=15,
         )
-        ignored_safe = worktree_has_only_rebuildable_ignored_files(worktree)
+        ignored_safe = not require_ignored_safe or worktree_has_only_rebuildable_ignored_files(worktree)
         branch = subprocess.run(
             ["git", "-C", str(worktree), "symbolic-ref", "--quiet", "--short", "HEAD"],
             check=False, capture_output=True, text=True, timeout=15,
@@ -1037,12 +1121,14 @@ def handle_cargo_targets(
         print(f"OK {entry['id']}: low watermark already reached")
         return 0
     ttl_seconds = int(entry.get("ttl_hours", TARGET_RETENTION_SECONDS // 3600)) * 3600
+    idle_seconds = int(entry.get("worktree_idle_hours", WORKTREE_IDLE_SECONDS // 3600)) * 3600
     candidates = worktree_cleanup_inventory(
         repo,
         root,
         ttl_seconds,
         now,
         include_closed_pr_worktrees=entry.get("remove_closed_pr_worktrees", False),
+        idle_seconds=idle_seconds,
     )
     if candidates is None:
         print(f"SKIP {entry['id']}: worktree cleanup inventory unavailable")
@@ -1055,6 +1141,7 @@ def handle_cargo_targets(
         head = candidate["head"]
         remove_worktree = bool(
             candidate["clean"]
+            and candidate.get("history_safe", True)
             and (
                 (candidate["disposition"] == "merged" and entry.get("remove_merged_worktrees", False))
                 or (candidate["disposition"] == "closed" and entry.get("remove_closed_pr_worktrees", False))
@@ -1087,7 +1174,7 @@ def handle_cargo_targets(
         if not remove_worktree and not remove_target_only:
             continue
         watched_path = worktree if remove_worktree else target
-        opened = open_handles_under(watched_path, all_users=True)
+        opened = open_handles_under(watched_path, all_users=False, allow_lsof_fallback=True)
         references = local_process_references(target, worktree)
         if opened is None or opened or references is not False:
             print(f"SKIP {watched_path}: open handles or process references are present/unknown")
@@ -1104,10 +1191,14 @@ def handle_cargo_targets(
         if not dry_run:
             # Repeat consumer, source, and evidence checks immediately before removal.
             if (
-                open_handles_under(watched_path, all_users=True) != set()
+                open_handles_under(watched_path, all_users=False, allow_lsof_fallback=True) != set()
                 or local_process_references(target, worktree) is not False
+                or not worktree_idle_for_cleanup(worktree, now=time.time(), idle_seconds=idle_seconds)
+                or not worktree_head_is_unchanged(
+                    worktree, branch, head, require_ignored_safe=remove_worktree,
+                )
+                or (remove_worktree and not branch and not detached_worktree_reflog_is_on_main(repo, worktree))
                 or (candidate["target_exists"] and not safe_target_tree(target, now=time.time(), ttl_seconds=ttl_seconds))
-                or (remove_worktree and not worktree_head_is_unchanged(worktree, branch, head))
             ):
                 print(f"SKIP {watched_path}: candidate changed before removal")
                 continue
@@ -1123,8 +1214,9 @@ def handle_cargo_targets(
                 # Git's non-force remove is the final guard against a lock, dirt, or
                 # a concurrent write. Never delete the local branch ref.
                 if (
-                    open_handles_under(worktree, all_users=True) != set()
+                    open_handles_under(worktree, all_users=False, allow_lsof_fallback=True) != set()
                     or local_process_references(target, worktree) is not False
+                    or not worktree_idle_for_cleanup(worktree, now=time.time(), idle_seconds=idle_seconds)
                     or not worktree_head_is_unchanged(worktree, branch, head)
                 ):
                     print(f"SKIP {worktree}: source became active after target removal")
