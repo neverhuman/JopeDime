@@ -257,14 +257,19 @@ The unchanged wire verifier checks the three ordered, complete run inventories:
 before creation, after creation and after retry. It requires the exact ID-set
 transition, including preservation of existing runs, rather than equal counts
 alone. Polling and paged events must retain the returned run ID and contiguous
-sequences through a completed snapshot's watermark. Failed/cancelled runs,
+sequences through `run.finished` at a completed snapshot's watermark. Status uses
+non-waiting requests with 250 ms between polls; this does not qualify long-poll
+latency or the full AG1 wait-seconds path. Failed/cancelled runs,
 different retry IDs, missing/paginated inventories, event gaps and capability
 errors cannot produce replay success. Existing inspection failures remain visible
 in the prefix results; AG1's run subpath does not require `dataset_inspect`.
 
 `run-replay.json` reports `run_replay_success`, the wire retry contract, terminal
 watermark and actual per-step replies separately from `prefix_success` and
-`transport_complete`. Exit 0 requires completed transport, a successful run and
+`transport_complete`. A verified retry subpath is retained even if later polling
+fails. Semantic refusals close recorder input and drain the capture normally, so
+a complete error exchange remains distinct from incomplete transport.
+Exit 0 requires completed transport, a successful run and
 the verified retry contract; exit 2 retains an incomplete/refused replay. Capture
 integrity alone cannot satisfy these conditions. The server must have implemented
 the selected operations; current-main and candidate build identities are distinct.

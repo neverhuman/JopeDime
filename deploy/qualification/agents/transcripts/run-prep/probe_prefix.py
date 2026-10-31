@@ -249,11 +249,12 @@ def run_replay(rpc, dataset, target, key, results):
     require(retry.get("run_id") == run, "retry changed run ID")
     call("run_inventory_retried", "run_status", {})
     cursor = 0
+    last_kind = None
     while True:
         status = call(
             "run_poll",
             "run_status",
-            dict(run_id=run, wait_seconds=1, after_event=str(cursor)),
+            dict(run_id=run, wait_seconds=0, after_event=str(cursor)),
         )
         require(status.get("run_id") == run, "status changed run ID")
         page = call(
@@ -269,15 +270,19 @@ def run_replay(rpc, dataset, target, key, results):
                 "event gap, duplicate or wrong run",
             )
             cursor += 1
+            last_kind = event.get("kind")
             require(cursor <= 1024, "run replay event bound exceeded")
         require(page.get("next_after") == str(cursor), "event cursor differs")
         if status.get("state") in {"completed", "failed", "cancelled"}:
             require(status["state"] == "completed", "run did not complete successfully")
             if status.get("event_watermark") == str(cursor):
-                require(cursor > 0, "completed run has no durable events")
+                require(
+                    cursor > 0 and last_kind == "run.finished",
+                    "completed run lacks its terminal event",
+                )
                 return dict(run_id=run, state="completed", event_watermark=str(cursor))
         require(time.monotonic() < rpc.deadline, "run replay deadline exceeded")
-        time.sleep(0.05)
+        time.sleep(0.25)
 
 
 def probe(args):
@@ -434,17 +439,19 @@ def probe(args):
                 "mcp05-run-" + args.out_dir.name,
                 results,
             )
-        relay.stdin.close()
-        until = min(deadline, time.monotonic() + 3)
-        while exited(relay) is None and time.monotonic() < until:
-            time.sleep(0.02)
     except (CaptureError, OSError, subprocess.SubprocessError) as exc:
         error = str(exc)
     finally:
         if relay:
-            relay_exit = stop_owned(relay, 7)
             if relay.stdin and not relay.stdin.closed:
-                relay.stdin.close()
+                try:
+                    relay.stdin.close()
+                except BrokenPipeError:
+                    pass
+            until = min(deadline, time.monotonic() + 3)
+            while exited(relay) is None and time.monotonic() < until:
+                time.sleep(0.02)
+            relay_exit = stop_owned(relay, 7)
             relay.stdout.close()
         relay_log.close()
         if engine:
@@ -479,17 +486,21 @@ def probe(args):
                 capture.get("executable_sha256") == args.binary_sha256,
                 "captured executable differs from the admitted binary",
             )
-        if args.run_target and replay is not None:
-            retry_contract = run_retry(
-                (args.out_dir / "capture/wire.jsonl").read_bytes()
-            )
-            require(
-                retry_contract["run_id"] == replay["run_id"],
-                "wire replay identity differs",
-            )
     except (CaptureError, OSError) as exc:
         error = error or str(exc)
         capture = {}
+    if args.run_target and capture.get("complete") is True:
+        try:
+            retry_contract = run_retry(
+                (args.out_dir / "capture/wire.jsonl").read_bytes()
+            )
+            if replay is not None:
+                require(
+                    retry_contract["run_id"] == replay["run_id"],
+                    "wire replay identity differs",
+                )
+        except (CaptureError, OSError) as exc:
+            error = error or str(exc)
     complete = relay_exit == 0 and capture.get("complete") is True
     prefix_success = prefix_complete(results[:6], repeated_id, complete)
     success = error is None and (
@@ -638,7 +649,12 @@ def self_test():
                 reply(dict(run_id=run)),
                 reply(page),
                 reply(dict(run_id=run, state="completed", event_watermark="1")),
-                reply(dict(events=[dict(run_id=run, sequence="1")], next_after="1")),
+                reply(
+                    dict(
+                        events=[dict(run_id=run, sequence="1", kind="run.finished")],
+                        next_after="1",
+                    )
+                ),
             ]
             rpc = Mock(deadline=time.monotonic() + 1)
             rpc.tool.side_effect = replies
@@ -695,6 +711,19 @@ def self_test():
                 (0, reply(dict(code="CAPABILITY_UNAVAILABLE"), True)),
                 (4, reply(dict(run_id="run_01ARZ3NDEKTSV4RRFFQ69G5FAW"))),
                 (6, reply(dict(run_id=run, state="failed", event_watermark="1"))),
+                (
+                    7,
+                    reply(
+                        dict(
+                            events=[
+                                dict(
+                                    run_id=run, sequence="1", kind="experiment.started"
+                                )
+                            ],
+                            next_after="1",
+                        )
+                    ),
+                ),
                 (
                     7,
                     reply(
