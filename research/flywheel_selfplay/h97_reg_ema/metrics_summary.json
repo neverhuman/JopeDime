@@ -1,0 +1,199 @@
+{
+  "admission": {
+    "admitted_arms": [],
+    "bootstrap_draws": 10000,
+    "exact_threshold_ties_admitted": false,
+    "interval_unit": "19 paired dev families; seeds are not independent replicates",
+    "primary": "median per-seed equal-family dev val_reg gain vs same-seed CONTROL",
+    "strict_lcb95_margin": 0.001546
+  },
+  "arms": {
+    "CONTROL": {
+      "adapter_l2_from_r882": {
+        "median": 0.44668105106975087,
+        "per_seed": {
+          "33": 0.4493346750439689,
+          "34": 0.4457284945010323,
+          "35": 0.44668105106975087
+        }
+      },
+      "admitted": false,
+      "bonferroni_lcb": 0.0,
+      "elo_vs_control": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median": 1500.0
+      },
+      "elo_vs_r882": {
+        "ci95": [
+          1128.232429714283,
+          1444.6789207334873
+        ],
+        "median": 1321.1367874631123
+      },
+      "family_ci95": [
+        0.0,
+        0.0
+      ],
+      "family_lcb95": 0.0,
+      "gain_per_seed": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gain_vs_control": 0.0
+    },
+    "DROP": {
+      "adapter_l2_from_r882": {
+        "median": 0.43104975171058785,
+        "per_seed": {
+          "33": 0.43580645958463815,
+          "34": 0.43104975171058785,
+          "35": 0.43089694723796673
+        }
+      },
+      "admitted": false,
+      "bonferroni_lcb": -0.004015963990740828,
+      "elo_vs_control": {
+        "ci95": [
+          1444.6789207334873,
+          1536.7081493422581
+        ],
+        "median": 1500.0
+      },
+      "elo_vs_r882": {
+        "ci95": [
+          1172.1824257832525,
+          1463.2918506577419
+        ],
+        "median": 1344.011568399695
+      },
+      "family_ci95": [
+        -0.0037425561884803795,
+        0.0008377741001965632
+      ],
+      "family_lcb95": -0.0031781898905442647,
+      "gain_per_seed": [
+        -0.0005008805633837128,
+        -0.0010652468613198275,
+        0.0003537584422668745
+      ],
+      "median_gain_vs_control": -0.0005008805633837128
+    },
+    "EMA": {
+      "adapter_l2_from_r882": {
+        "median": 0.34640736440899245,
+        "per_seed": {
+          "33": 0.3476401989935554,
+          "34": 0.34469107227050183,
+          "35": 0.34640736440899245
+        }
+      },
+      "admitted": false,
+      "bonferroni_lcb": 7.856547096221195e-06,
+      "elo_vs_control": {
+        "ci95": [
+          1481.6970037757299,
+          1634.3168407692774
+        ],
+        "median": 1536.7081493422581
+      },
+      "elo_vs_r882": {
+        "ci95": [
+          1296.7378046161475,
+          1536.7081493422581
+        ],
+        "median": 1425.7453692152353
+      },
+      "family_ci95": [
+        0.000147837678212403,
+        0.07505342219785746
+      ],
+      "family_lcb95": 0.0004509464695265504,
+      "gain_per_seed": [
+        0.027130780118559312,
+        0.025547778346929482,
+        0.026190668640217418
+      ],
+      "median_gain_vs_control": 0.026190668640217418
+    },
+    "WD": {
+      "adapter_l2_from_r882": {
+        "median": 0.4465073813739056,
+        "per_seed": {
+          "33": 0.44915989630037473,
+          "34": 0.4455544639911757,
+          "35": 0.4465073813739056
+        }
+      },
+      "admitted": false,
+      "bonferroni_lcb": 0.0,
+      "elo_vs_control": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median": 1500.0
+      },
+      "elo_vs_r882": {
+        "ci95": [
+          1128.232429714283,
+          1444.6789207334873
+        ],
+        "median": 1321.1367874631123
+      },
+      "family_ci95": [
+        0.0,
+        0.0
+      ],
+      "family_lcb95": 0.0,
+      "gain_per_seed": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gain_vs_control": 0.0
+    }
+  },
+  "charged_gpu_cell_wall_seconds": 825.9264855638612,
+  "complete": true,
+  "gpu_cell_wall_cap_seconds": 2700.0,
+  "integrity": {
+    "changed_adapter_digests": 12,
+    "dope_before_after_match_cells": 12,
+    "frozen_dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "trainable_name_count": 47,
+    "trainable_names_adapter_scoped": true,
+    "trainable_parameter_count": 29211,
+    "updates_per_cell": 40
+  },
+  "notes": [
+    "EMA gains were positive in all three seeds but its LCB95 did not reach the strict admission margin.",
+    "All arms have median family-grouped Elo point estimates below 1500 vs fresh r882; EMA CI includes 1500.",
+    "WD and CONTROL are numerically indistinguishable on utility and Elo; the 40-update run does not establish a useful stronger-WD effect.",
+    "No settings or weights are adopted; shrinkage/interpolation toward r882 is the next stated hypothesis (H105).",
+    "DROP seed33 attempt1 was a charged pre-scoring scratch fault; physical attempt2 completed. Existing timing/CONTROL/WD receipts were reused."
+  ],
+  "outcome_cells": 12,
+  "read_boundary": {
+    "holdout_payloads_opened": 0,
+    "outer_rows_delivered": 0,
+    "registered_dev_contexts": 91,
+    "registered_dev_families": 19,
+    "registered_dev_packet_used_for_scoring": true,
+    "sealed_holdout_meta_test_outer_live_loop_or_prior_wave_outcome_reads": 0,
+    "separate_terminal_dl_val_reads": 0
+  },
+  "schema": "jope.h97.metrics-summary/v1",
+  "seeds": [
+    33,
+    34,
+    35
+  ],
+  "source_commits": [
+    "13b91f036d18b5e6b6ed08d015329e50ea840208",
+    "6a5b8f74a6662fb78d8151dd229661a0a8c1b25c"
+  ]
+}
