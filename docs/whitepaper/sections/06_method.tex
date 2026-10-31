@@ -113,8 +113,8 @@ matched ablation (\cref{sub:results-ablation}).
 \subsection{The self-play loop}\label{sub:method-selfplay}
 
 Training is expert iteration \citep{anthony2017expert}: verified search is the teacher and the
-writer is the student (\cref{alg:selfplay}). The writer imitates every scored program, weighted by
-its rank among the referee's scores, inside a combined objective (\cref{app:training}):
+writer is the student (\cref{alg:selfplay}). The writer imitates scored programs sampled from the
+lists $G_p$, weighted by their rank among the referee's scores, inside a combined objective (\cref{app:training}):
 \begin{align}
   \mathcal{L}_{\text{writer}}(p) &= -\sum_{w\in G_p}\bigl(0.05+\rho_w^{4}\bigr)\log\writer(w\mid z_p),
   \label{eq:writerLoss}\\

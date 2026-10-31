@@ -79,7 +79,11 @@ later adapter snapshot in \cref{sec:method-status}):
   \item \textbf{Objective terms and parameter split (\cref{sub:method-map,sub:method-selfplay}).}
   Lists $G_p$ require at least eight valid scored programs per problem, with
   percentile $\rho_w = 1 - \mathrm{rank}/(|G_p|-1)$ and writer sequence weight
-  $0.05 + \rho_w^4$. The native sequence term applies label smoothing over
+  $0.05 + \rho_w^4$. The native trainer gives problem families equal mass and forms
+  each training comparison from one list: its best program plus one
+  program drawn from each of seven equal rank bands of the rest. Every
+  objective term is computed on these eight-program comparisons, so
+  \cref{eq:writerLoss,eq:mapLoss} show the list-level form. The native sequence term applies label smoothing over
   legal tokens and averages each program's token loss before taking the
   normalized weighted mean over programs. The displayed aggregate
   coefficients match the native objective; the checkpoint's objective
