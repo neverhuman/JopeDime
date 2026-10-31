@@ -18,8 +18,9 @@ use jope_service::public::{
 };
 use std::{
     fs,
+    io::Write,
     path::{Path, PathBuf},
-    process::Command,
+    process::{Command, Stdio},
     time::{Duration, Instant},
 };
 use tower::ServiceExt;
@@ -430,6 +431,11 @@ async fn bounded_real_run_http_status_and_sse_do_not_leak_internal_sentinels() {
     fs::create_dir_all(&target_dir).unwrap();
     let home = tempfile::tempdir_in(&target_dir).unwrap();
     let worker = native_worker(home.path());
+    let appliance = target_dir.parent().unwrap().join("jopedime");
+    assert!(
+        appliance.is_file(),
+        "build jope-appliance --bin jopedime before the run-surface test"
+    );
     let engine = InProcessEngine::open_with_worker(home.path(), worker).unwrap();
     let raw = include_bytes!("../../../test-support/datasets/v1/d2-regression/train.csv");
     let mut headers: Vec<_> = (0..21).map(|index| format!("x{index}")).collect();
@@ -461,9 +467,30 @@ async fn bounded_real_run_http_status_and_sse_do_not_leak_internal_sentinels() {
         "plan_digest": null
     }))
     .unwrap();
-    let app = engine
-        .router(LocalAuth::new(BearerToken::from_hex(&"ab".repeat(32)).unwrap(), 31234).unwrap())
-        .unwrap();
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    listener.set_nonblocking(true).unwrap();
+    let port = listener.local_addr().unwrap().port();
+    let daemon = jope_service::daemon_file::write_daemon_file(
+        home.path(),
+        format!("http://127.0.0.1:{port}"),
+        env!("CARGO_PKG_VERSION"),
+        "1.0",
+        "2026-10-31T00:00:00Z",
+    )
+    .unwrap();
+    let auth = LocalAuth::new(BearerToken::from_hex(&daemon.token).unwrap(), port).unwrap();
+    let app = engine.router(auth).unwrap();
+    let (shutdown, stopped) = tokio::sync::oneshot::channel();
+    let server_app = app.clone();
+    let server = tokio::spawn(async move {
+        let listener = tokio::net::TcpListener::from_std(listener).unwrap();
+        axum::serve(listener, server_app)
+            .with_graceful_shutdown(async {
+                let _ = stopped.await;
+            })
+            .await
+            .unwrap();
+    });
     let query = format!(
         "?dsl={}&operator={}&lineage={}&round={}",
         SENTINELS[0], SENTINELS[1], SENTINELS[2], SENTINELS[3]
@@ -471,8 +498,8 @@ async fn bounded_real_run_http_status_and_sse_do_not_leak_internal_sentinels() {
     let request = Request::builder()
         .method(Method::POST)
         .uri(format!("/v1/runs{query}"))
-        .header(header::HOST, "127.0.0.1:31234")
-        .header(header::AUTHORIZATION, format!("Bearer {}", "ab".repeat(32)))
+        .header(header::HOST, format!("127.0.0.1:{port}"))
+        .header(header::AUTHORIZATION, format!("Bearer {}", daemon.token))
         .header(header::CONTENT_TYPE, "application/json")
         .header("idempotency-key", "pub06-bounded-run")
         .header("x-internal-dsl", SENTINELS[0])
@@ -498,11 +525,15 @@ async fn bounded_real_run_http_status_and_sse_do_not_leak_internal_sentinels() {
         sleep(Duration::from_millis(25)).await;
         let response = app
             .clone()
-            .oneshot(authenticated_request(
-                Method::GET,
-                &format!("/v1/runs/{}", snapshot.run_id),
-                String::new(),
-            ))
+            .oneshot(
+                Request::builder()
+                    .method(Method::GET)
+                    .uri(format!("/v1/runs/{}", snapshot.run_id))
+                    .header(header::HOST, format!("127.0.0.1:{port}"))
+                    .header(header::AUTHORIZATION, format!("Bearer {}", daemon.token))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(response.status(), StatusCode::OK);
@@ -519,8 +550,8 @@ async fn bounded_real_run_http_status_and_sse_do_not_leak_internal_sentinels() {
             "/v1/runs/{}/events?after=0&limit=256",
             snapshot.run_id
         ))
-        .header(header::HOST, "127.0.0.1:31234")
-        .header(header::AUTHORIZATION, format!("Bearer {}", "ab".repeat(32)))
+        .header(header::HOST, format!("127.0.0.1:{port}"))
+        .header(header::AUTHORIZATION, format!("Bearer {}", daemon.token))
         .header(header::ACCEPT, "text/event-stream")
         .header("x-internal-dsl", SENTINELS[0])
         .header("x-internal-operator", SENTINELS[1])
@@ -554,4 +585,85 @@ async fn bounded_real_run_http_status_and_sse_do_not_leak_internal_sentinels() {
             .collect::<String>()
     );
     scan_surfaces(&[(Surface::Sse, output)]).unwrap();
+
+    let cli_home = home.path().to_path_buf();
+    let cli_binary = appliance.clone();
+    let cli_run = snapshot.run_id.to_string();
+    let cli = tokio::task::spawn_blocking(move || {
+        Command::new(cli_binary)
+            .args(["status", &cli_run, "--json"])
+            .env("JOPEDIME_HOME", cli_home)
+            .env_remove("JOPEDIME_ENDPOINT")
+            .output()
+            .unwrap()
+    })
+    .await
+    .unwrap();
+    assert!(
+        cli.status.success(),
+        "CLI status failed: {}",
+        String::from_utf8_lossy(&cli.stderr)
+    );
+    scan_surfaces(&[
+        (
+            Surface::CliStdout,
+            String::from_utf8_lossy(&cli.stdout).into_owned(),
+        ),
+        (
+            Surface::CliStderr,
+            String::from_utf8_lossy(&cli.stderr).into_owned(),
+        ),
+    ])
+    .unwrap();
+
+    let mcp_home = home.path().to_path_buf();
+    let mcp_binary = appliance;
+    let mcp_run = snapshot.run_id.to_string();
+    let mcp = tokio::task::spawn_blocking(move || {
+        let mut child = Command::new(mcp_binary)
+            .arg("mcp")
+            .env("JOPEDIME_HOME", mcp_home)
+            .env_remove("JOPEDIME_ENDPOINT")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        let mut input = child.stdin.take().unwrap();
+        for message in [
+            serde_json::json!({
+                "jsonrpc":"2.0", "id":1, "method":"initialize",
+                "params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"pub06-no-gp-leak","version":"1"}}
+            }),
+            serde_json::json!({"jsonrpc":"2.0","method":"notifications/initialized"}),
+            serde_json::json!({
+                "jsonrpc":"2.0", "id":2, "method":"tools/call",
+                "params":{"name":"run_status","arguments":{"run_id":mcp_run}}
+            }),
+        ] {
+            writeln!(input, "{message}").unwrap();
+        }
+        drop(input);
+        child.wait_with_output().unwrap()
+    })
+    .await
+    .unwrap();
+    assert!(
+        mcp.status.success(),
+        "MCP run_status failed: {}",
+        String::from_utf8_lossy(&mcp.stderr)
+    );
+    scan_surfaces(&[
+        (
+            Surface::Mcp,
+            String::from_utf8_lossy(&mcp.stdout).into_owned(),
+        ),
+        (
+            Surface::Mcp,
+            String::from_utf8_lossy(&mcp.stderr).into_owned(),
+        ),
+    ])
+    .unwrap();
+    let _ = shutdown.send(());
+    server.await.unwrap();
 }
