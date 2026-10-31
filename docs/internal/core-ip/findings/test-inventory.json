@@ -1923,6 +1923,10 @@
       "reason": "Tiny CPU-only H75 complete-panel scoring fixtures; no dataset, model or experiment execution; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h82_sam_steps/test_h82.py": {
+      "reason": "CPU-only H82 fresh-seed retry-boundary, load/budget, frozen-reference and paired Elo/admission tests; offline research outside product qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h76_sam_steps/test_h76.py": {
       "reason": "CPU-only H76 SAM/ASAM numerical, leakage and budget tests; no real corpus payloads; offline research analysis outside the reviewed product baseline.",
       "role": "research"
