@@ -90,9 +90,12 @@ pattern proves a unique causal mechanism. No adaptive follow-up is authorized.
 
 CPU preregistration/runner/tests/dry run and PR merge precede any H100 ticket or
 CUDA initialization. Dry run opens only pinned source/roster metadata, never dev
-payloads. A waiter stays outside FIFO until H93, H97 and H99 have merged terminal
-metrics with closed ledgers and no live coordinator/ticket; an inter-cell gap
-is insufficient. Then use qualification_lock_fifo.py, wave_name=H100, the actual
+payloads. AFTER H93/H97/H99 means FIFO start order, not a new closeout-approval gate.
+Before any H100 ticket, each precursor must have a validated older live FIFO
+ticket, a recorded actual GPU-cell start, or an already-merged complete result.
+An empty planned ledger or CPU-only preparation is insufficient. H100 then joins
+the tail behind H99 and every older ticket, releasing/requeuing after each cell.
+Use qualification_lock_fifo.py, wave_name=H100, the actual
 ~/jope_plan/qualification.lock, a new tail ticket per cell and release each time.
 
 Nice 19, OMP/MKL 4, BLAS 1; load <=85/102 twice 30 seconds apart before acquisition
@@ -104,7 +107,7 @@ may be reused read-only. Never chmod or overwrite the source checkpoint.
 Hard cumulative GPU-cell wall cap: **2700 seconds**, including setup, one discarded
 ASAM10/seed39 train-only timing cell, scoring, failures and shutdown. Timing
 projection must fit with 25% headroom. Separate lock/resource wait allowance is
-3 hours after precursor closure. No cell retries are authorized for H100; a failed
+3 hours after precursor start-order admission. No cell retries are authorized for H100; a failed
 attempt stops the wave with unknown missing outcomes and no admission. Never
 reset a ledger or deadline. Frozen source and this preregistration are recorded
 in every receipt. No outcome values are inspected before all twelve cells finish.

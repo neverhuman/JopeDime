@@ -35,8 +35,9 @@ OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1 nice -n 19 \
 
 After the CPU PR merges, launch `run_wave.py --cpu-pr PR_NUMBER` with the same
 thread caps and nice 19. Its exclusive coordinator waits outside FIFO until
-H93, H97 and H99 have merged terminal metrics, closed ledgers and no live
-coordinator/ticket. It then joins the H100 FIFO tail per cell, releases each
+H93, H97 and H99 each have an older live ticket, a recorded GPU start or a
+merged complete result. CPU preparation alone cannot release the gate. It then
+joins the H100 FIFO tail behind H99 and every older ticket per cell, releases each
 lease, and retains every charge against 2700 seconds. No retries or ledger
 reset; a failed attempt stops with missing outcomes unknown. Scratch copies
 are isolated per attempt, hash-verified and read-only; source r882 is untouched.
