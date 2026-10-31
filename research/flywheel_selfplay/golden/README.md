@@ -1,3 +1,64 @@
+# CPU real-fixture parity (owner unstick_t0955)
+
+The CPU capture route is `capture_cpu.py`. It uses an explicitly hash-pinned run
+plan and the original50 admitted DL-Train contexts (including authenticated inner
+training views), complete tables<=1024 rows, frozen native workspace and RES06
+bundle94fd9587. Every context measures exactly four real reveals with the pinned
+S1 two-fold evaluator; the unchanged first20 unique model-prior DSLs supply both
+4+8 and4+16 slates. Proposals need no oracle measurements. No synthetic numeric
+input, held-out rows, original checkpoint unpickling or CUDA is used.
+
+Run at nice10+ with CUDA_VISIBLE_DEVICES empty and math threads1:
+
+```sh
+CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+ nice -n 10 python3 research/flywheel_selfplay/golden/capture_cpu.py \
+ --plan "$CPU_PLAN" --expected-plan-sha256 "$CPU_PLAN_SHA256" --output "$NEW_EXTERNAL_ROOT"
+```
+
+The plan pins the selected metadata, training-only JTT tables, restored custody
+source/native bytes, bundle and an absolute deadline/cumulative native-call ledger.
+The original1799s/4CPU/math1/1000calls/2000fold/2GiB ceilings do not reset on retry.
+The old evaluator's S1 parser requires ten query slots but decodes only nt training
+rows. The wrapper fills those ignored slots with byte-exact copies of training
+rows0..9; it changes no training byte, label or fold assignment and supplies no
+outer-query row. Both input hashes, source row IDs and parser SHAe369e13b are
+recorded. Refused attempts remain charged; failed/unknown CV outcomes refuse.
+
+Outputs reuse the schema/layout below under generation-1 and generation-2, plus
+capture/native receipts. All generated file bytes and index inventories must match.
+The original generator's qualification.lock gate remains in place for its broader
+GPU qualification path. This explicitly CPU-only entry calls the same deterministic
+packager without acquiring a GPU lease. Its index keeps full M2/M3/M5 flags false;
+only actual Rust CPU replay can qualify the two CPU consumers.
+
+Strict real replay (external fixture index SHA and the pinned real bundle required):
+
+```sh
+JOPE_GOLDEN_DIR="$FIXTURES" JOPE_GOLDEN_INDEX_SHA256="$INDEX_SHA256" \
+ JOPE_PARITY_BUNDLE_DIR="$RES06_BUNDLE" JOPE_PARITY_REPORT_DIR="$REPORT_DIR" \
+ cargo test --locked -p jope-service --lib matches_t087_lm48_golden -- --ignored --nocapture
+# Same environment; run the RNK08 case:
+cargo test --locked -p jope-service --lib real_serving_slate_cost_and_admitted_set_m2_parity -- --ignored --nocapture
+```
+
+These existing tests are ignored in a data-free default run and fail if explicitly
+run without real pinned fixtures. They compare raw/standardized lm48 and every
+serving cost at atol1e-5/rtol1e-4. Admission compares the same production policy and
+persisted RNG state on reference versus Rust costs outside the conservative spec5.8
+cutoff band; ties and mismatches are counted, never relabelled as passes. This does
+not establish NumPy RNG parity. The readout records proposal KL and the0.35 flag;
+parity establishes implementation agreement, never guidance benefit.
+
+CPU fixtures are numeric test inputs, not a signed release. The adapter's public
+constructor still requires VerifiedBundle; only its internal test can consume the
+hash-pinned reference bytes. No public loader/trust boundary changes. The report
+must retain actual counts, maximum errors, excluded ties, source/fixture identities,
+bytes and timings. CUDA, Q1, full historical corpus, raw proposer retrieval,
+M3/M5 and serving promotion remain separate requirements.
+
+---
+
 # RES-07 CPU pre-stage + model_prior subset
 
 `generate.py` validates a RES-06 bundle and stages deterministic reference fixtures.

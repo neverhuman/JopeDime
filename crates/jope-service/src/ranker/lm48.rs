@@ -375,6 +375,22 @@ mod tests {
     #[test]
     #[ignore = "needs RES-07 real golden fixtures; do not invent expected values"]
     fn matches_t087_lm48_golden() {
-        panic!("RES-07 must publish real T087 inputs and expected lm48 outputs");
+        let fixtures = super::real_cpu_parity::Fixtures::open();
+        let transform = Lm48Transform::from_safetensors(&fixtures.weights).unwrap();
+        let mut stats = super::real_cpu_parity::Stats::default();
+        for cid in &fixtures.contexts {
+            let f = fixtures.load(&format!("contexts/{cid}.safetensors"));
+            let actual = transform.project(&f.f32("v256")).unwrap();
+            stats.compare(&actual.lm48, &f.numbers("lm48"));
+            stats.compare(&actual.lm48_z, &f.numbers("lm48_z"));
+        }
+        stats.finish(
+            "RNK-06",
+            serde_json::json!({"contexts":50,"outputs":["lm48","lm48_z"]}),
+        );
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/support/cpu_parity.rs"]
+mod real_cpu_parity;
