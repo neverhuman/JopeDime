@@ -197,9 +197,27 @@ def append_audit(event: dict[str, Any], audit: Path = AUDIT) -> None:
         os.fsync(stream.fileno())
 
 
+def empty_unreferenced_volume(mountpoint: Path) -> bool:
+    """A Docker target name never proves that non-empty contents are disposable."""
+    try:
+        before = mountpoint.lstat()
+        if not stat.S_ISDIR(before.st_mode) or mountpoint.resolve(strict=True) != mountpoint:
+            return False
+        if any(mountpoint.iterdir()) or process_references(mountpoint) is not False:
+            return False
+        after = mountpoint.lstat()
+        return (
+            stat.S_ISDIR(after.st_mode)
+            and (before.st_dev, before.st_ino) == (after.st_dev, after.st_ino)
+            and not any(mountpoint.iterdir())
+        )
+    except OSError:
+        return False
+
+
 def prune_unmounted_jope_target_volumes(*, free_bytes: int, minimum_free_bytes: int,
         audit: Path, lock: Path = LOCK, runner: Any = None, apply: bool = True) -> list[str]:
-    """Remove only dangling named target volumes, with a fresh live-mount check."""
+    """Remove only verified empty, unreferenced, dangling named target volumes."""
     if free_bytes >= minimum_free_bytes:
         return []
     actual_runner = runner or subprocess.run
@@ -237,6 +255,10 @@ def prune_unmounted_jope_target_volumes(*, free_bytes: int, minimum_free_bytes: 
                 if inspected.returncode != 0 or len(fields) != 2 or fields != ["local", expected_mountpoint]:
                     print(f"SKIP Docker volume {name}: driver or mountpoint is not approved")
                     continue
+                mountpoint = DOCKER_VOLUME_ROOT / name / "_data"
+                if not empty_unreferenced_volume(mountpoint):
+                    print(f"SKIP Docker volume {name}: contents or process state are non-empty/unknown")
+                    continue
                 if not apply:
                     print(f"WOULD REMOVE Docker volume {name}")
                     continue
@@ -247,6 +269,10 @@ def prune_unmounted_jope_target_volumes(*, free_bytes: int, minimum_free_bytes: 
                     "reason": "dangling_local_jope_target_volume_below_free_space_floor",
                 }
                 append_audit(intent, audit)
+                if not empty_unreferenced_volume(mountpoint):
+                    append_audit({**intent, "event": "docker_target_volume_retained"}, audit)
+                    print(f"SKIP Docker volume {name}: contents or process state changed before removal")
+                    continue
                 removed_result = actual_runner(
                     [DOCKER_BIN, "volume", "rm", name],
                     capture_output=True, text=True, timeout=30, check=False,

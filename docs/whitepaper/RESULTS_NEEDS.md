@@ -19,7 +19,7 @@ Writers cannot fill any of them from the repository. Each one needs new evaluati
 
 ## Every marker, by location
 
-Source lines are as of `5fed0c9f`; P3's and P2's lines were updated in layout passes 8 and 9. "Packet" names the component of the evidence-handoff table that supplies the item.
+Source lines are as of `5fed0c9f`; P2's and P3's lines were updated in layout passes 8–10. "Packet" names the component of the evidence-handoff table that supplies the item.
 
 ### Results (§7): 27 markers
 
@@ -56,7 +56,7 @@ Source lines are as of `5fed0c9f`; P3's and P2's lines were updated in layout pa
 |---|---|---|---|
 | P1 | §6.2 ([06_method.tex:44](sections/06_method.tex#L44)) | The name, version and licence of the pretrained tabular regressor behind the 1,024-value block. | An owner decision; see "Regressor licensing" in `LAYOUT_REDTEAM.md`. |
 | P2 | Appendix C ([appendix_stubs.tex:74](sections/appendix_stubs.tex#L74)) | The same component's name, version and licence. | One answer fills P1 and P2. The two markers spell it "licence" and "license"; use one spelling when filling them. |
-| P3 | §6.8 ([06_method/flywheel_status.tex:41](sections/06_method/flywheel_status.tex#L41)) | The retained snapshot bound to the exact loop source, adapter, candidate pools, revealed-history inputs and utility normalization. | Concerns the §6.8 development record (the retained adapter-loop snapshot), not the §7 comparisons. |
+| P3 | §6.8 ([06_method/flywheel_status.tex:78](sections/06_method/flywheel_status.tex#L78)) | The retained snapshot bound to the exact loop source, adapter, candidate pools, revealed-history inputs and utility normalization. | Concerns the §6.8 development record (the retained adapter-loop snapshot), not the §7 comparisons. |
 
 ## Evidence that exists but cannot fill these markers
 
