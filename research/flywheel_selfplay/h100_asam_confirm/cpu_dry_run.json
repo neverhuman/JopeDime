@@ -1,0 +1,27 @@
+{
+  "arms": [
+    "CONTROL",
+    "ASAM05",
+    "ASAM10",
+    "DRIFT_MATCH"
+  ],
+  "cuda_initialized": false,
+  "dev_metadata_contexts": 91,
+  "dev_metadata_families": 19,
+  "dev_payloads_opened": 0,
+  "drift_match_lr": 8.465252628604803e-05,
+  "gpu_ticket_created": false,
+  "optimizer_updates": 0,
+  "planned_outcome_cells": 12,
+  "prereg_sha256": "add6960e5edc1d1e334f865d40515f84fff721a0798bafb3eb2d9abd71c08991",
+  "schema": "jope.h100.cpu-dry-run/v1",
+  "seeds": [
+    39,
+    40,
+    41
+  ],
+  "status": "CPU prereg",
+  "train_contexts": 1219,
+  "train_families": 205,
+  "train_payloads_opened": 0
+}

@@ -1,0 +1,52 @@
+{
+  "schema": "jope.h100.h82-drift-calibration/v1",
+  "method": "arithmetic mean of full29211-parameter Euclidean drift per seed; one-shot LR ratio mean(ASAM)/mean(CONTROL), no H100 calibration",
+  "base_checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "h82_metrics_sha256": "9dc87f373780fde73897eddda0a5b82c1524a0d3ca0851e4e470c43c3c69a553",
+  "rows": [
+    {
+      "arm": "CONTROL",
+      "seed": 24,
+      "adapter_l2_from_r882": 0.45574017322003973,
+      "snapshot_sha256": "854b8cd72d7f5d3581fd2c4db68eb13a92988d72e778e21c738da57edc4f82ca"
+    },
+    {
+      "arm": "CONTROL",
+      "seed": 25,
+      "adapter_l2_from_r882": 0.4468150450336183,
+      "snapshot_sha256": "1fee027cb0fead6eeb3a32e81d6657eaa084cefedea313d0051a632235e3c5a3"
+    },
+    {
+      "arm": "CONTROL",
+      "seed": 26,
+      "adapter_l2_from_r882": 0.4430967724853872,
+      "snapshot_sha256": "94de776a9b0813c3e6b2414a170ebb4cdb3ff5b5a9da09967fa8823e785acc10"
+    },
+    {
+      "arm": "ASAM",
+      "seed": 24,
+      "adapter_l2_from_r882": 0.3878438247929015,
+      "snapshot_sha256": "ca638826280bbfa2e95e4756da199bd9833035c203062ae7b1870f562872403b"
+    },
+    {
+      "arm": "ASAM",
+      "seed": 25,
+      "adapter_l2_from_r882": 0.37490229664915387,
+      "snapshot_sha256": "56da62db3ca1d27fa692799653a9aa5865ba1795cc813104cc9824430c2b2cc0"
+    },
+    {
+      "arm": "ASAM",
+      "seed": 26,
+      "adapter_l2_from_r882": 0.37638228373704335,
+      "snapshot_sha256": "3d6d5fd782d2c4cf4639fe9282e94c5324155fe302772565852aa8f46a2bdf8e"
+    }
+  ],
+  "mean_l2": {
+    "CONTROL": 0.4485506635796817,
+    "ASAM": 0.3797094683930329
+  },
+  "lr_scale": 0.8465252628604802,
+  "drift_match_lr": 8.465252628604803e-05,
+  "dev_payloads_opened": 0,
+  "gpu_used": false
+}
