@@ -611,6 +611,24 @@ fn token_range(text: &str, cursor: usize) -> std::ops::Range<usize> {
     start..end
 }
 
+/// Take the history writer lock, failing if another writer holds it. A child that another
+/// thread forks can briefly hold a duplicate of the lock descriptor until it execs, which
+/// `flock` reports as contention; retry for a bounded time so that is not mistaken for a
+/// concurrent writer.
+fn acquire_history_lock(lock: &File) -> io::Result<()> {
+    use std::time::{Duration, Instant};
+    let deadline = Instant::now() + Duration::from_millis(250);
+    loop {
+        match lock.try_lock() {
+            Ok(()) => return Ok(()),
+            Err(fs::TryLockError::WouldBlock) if Instant::now() < deadline => {
+                std::thread::sleep(Duration::from_millis(5));
+            }
+            Err(error) => return Err(io::Error::other(error)),
+        }
+    }
+}
+
 /// JSONL strings retain multiline entries. The client supplies the canonical
 /// home path; this component does not guess a second home-resolution policy.
 pub struct HistoryFile {
@@ -648,7 +666,7 @@ impl HistoryFile {
         options.write(true).create(true);
         let lock = options.open(PathBuf::from(lock_name))?;
         regular(&lock)?;
-        lock.try_lock().map_err(io::Error::other)?;
+        acquire_history_lock(&lock)?;
         let mut entries = match regular_options().open(&self.path) {
             Ok(file) => {
                 regular(&file)?;
