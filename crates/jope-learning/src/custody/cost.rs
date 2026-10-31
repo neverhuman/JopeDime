@@ -142,6 +142,7 @@ impl Decimal {
     }
 }
 
+/// Performs the report operation and returns an error if it cannot be completed.
 pub fn report(rows: &[Value], requests: &[Value], rates: &Value, as_of: &str) -> Result<Value> {
     ensure!(
         rates["region"] == "us-east-2"

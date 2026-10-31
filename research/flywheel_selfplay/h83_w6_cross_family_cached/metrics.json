@@ -1,0 +1,299 @@
+{
+  "schema": "rd_breakthrough.audited-results/v1",
+  "wave": "W6",
+  "h_folder": "H83",
+  "stratum": "cached held-family screen",
+  "run_id": "opus-h83-20261031a",
+  "author": "rd_opus [OPUS]",
+  "verdict": "NO_ADVANCE (primary gate not met)",
+  "scientific_verdict": "cached screen only; no prospective W6 advance",
+  "contexts": 1219,
+  "families": 205,
+  "family_mean_U4": {
+    "PRIOR": 1.6497974956531192,
+    "TREAT": 1.6582707263407936,
+    "SHUF": 1.6547761124913836,
+    "KNN": 1.6555696575323884,
+    "RETR": 1.5591465775067683,
+    "CTX": 1.6803618936279547,
+    "RANDOM4": 1.5772802555903804
+  },
+  "family_mean_U0": 1.4582330723886736,
+  "context_mean_U4": {
+    "PRIOR": 1.6956094194514195,
+    "TREAT": 1.7010068552899036,
+    "SHUF": 1.7008250549594819,
+    "KNN": 1.6979955288303592,
+    "RETR": 1.5977115104830184,
+    "CTX": 1.7169257261795923,
+    "RANDOM4": 1.6033332367381457
+  },
+  "primary": {
+    "TREAT - PRIOR": {
+      "families": 205,
+      "family_mean": 0.00847323068767444,
+      "family_median": 0.0,
+      "families_losing_more_than_0_01_fraction": 0.13170731707317074,
+      "family_win_tie_loss": [
+        90,
+        59,
+        56
+      ],
+      "adjusted_one_sided_lcb": 0.0028629463478746816,
+      "lcb_percentile": 2.5,
+      "bootstrap_p2_5": 0.0028629463478746816,
+      "bootstrap_p97_5": 0.014258658938957341,
+      "common_gate_passed": false
+    },
+    "TREAT - RETR": {
+      "families": 205,
+      "family_mean": 0.0991241488340252,
+      "family_median": 0.00605888981547098,
+      "families_losing_more_than_0_01_fraction": 0.17560975609756097,
+      "family_win_tie_loss": [
+        138,
+        5,
+        62
+      ],
+      "adjusted_one_sided_lcb": 0.04035244496270442,
+      "lcb_percentile": 2.5,
+      "bootstrap_p2_5": 0.04035244496270442,
+      "bootstrap_p97_5": 0.1793744728164237,
+      "common_gate_passed": false
+    }
+  },
+  "secondary": {
+    "TREAT - SHUF": {
+      "families": 205,
+      "family_mean": 0.0034946138494100563,
+      "family_median": 0.0,
+      "families_losing_more_than_0_01_fraction": 0.18048780487804877,
+      "family_win_tie_loss": [
+        90,
+        38,
+        77
+      ],
+      "adjusted_one_sided_lcb": -0.0020631615584411527,
+      "lcb_percentile": 5.0,
+      "bootstrap_p2_5": -0.003011409241025071,
+      "bootstrap_p97_5": 0.009967681928100342,
+      "common_gate_passed": false
+    },
+    "KNN - PRIOR": {
+      "families": 205,
+      "family_mean": 0.005772161879269223,
+      "family_median": 0.0,
+      "families_losing_more_than_0_01_fraction": 0.1902439024390244,
+      "family_win_tie_loss": [
+        70,
+        55,
+        80
+      ],
+      "adjusted_one_sided_lcb": -0.005560999709129268,
+      "lcb_percentile": 5.0,
+      "bootstrap_p2_5": -0.00693763030549715,
+      "bootstrap_p97_5": 0.024455738726193128,
+      "common_gate_passed": false
+    },
+    "CTX - PRIOR": {
+      "families": 205,
+      "family_mean": 0.030564397974835657,
+      "family_median": 0.00398574353801856,
+      "families_losing_more_than_0_01_fraction": 0.16097560975609757,
+      "family_win_tie_loss": [
+        134,
+        8,
+        63
+      ],
+      "adjusted_one_sided_lcb": 0.009644907899849753,
+      "lcb_percentile": 5.0,
+      "bootstrap_p2_5": 0.006040271309313208,
+      "bootstrap_p97_5": 0.05865152398960063,
+      "common_gate_passed": false
+    },
+    "PRIOR - RANDOM4": {
+      "families": 205,
+      "family_mean": 0.07251724006273873,
+      "family_median": 0.0,
+      "families_losing_more_than_0_01_fraction": 0.3170731707317073,
+      "family_win_tie_loss": [
+        101,
+        7,
+        97
+      ],
+      "adjusted_one_sided_lcb": 0.03863441033586649,
+      "lcb_percentile": 5.0,
+      "bootstrap_p2_5": 0.03322286524515842,
+      "bootstrap_p97_5": 0.11786047427617023,
+      "common_gate_passed": false
+    }
+  },
+  "family_elo": {
+    "ratings": {
+      "CTX": 1566.39,
+      "KNN": 1490.92,
+      "PRIOR": 1500.0,
+      "RANDOM4": 1489.78,
+      "RETR": 1457.38,
+      "SHUF": 1509.04,
+      "TREAT": 1523.25
+    },
+    "n_datasets": 1219,
+    "n_families": 205,
+    "pairwise_win_tie_loss_vs_anchor": {
+      "CTX": {
+        "wins": 490,
+        "ties": 473,
+        "losses": 256,
+        "elo_delta_vs_anchor": 66.39
+      },
+      "KNN": {
+        "wins": 170,
+        "ties": 852,
+        "losses": 197,
+        "elo_delta_vs_anchor": -9.08
+      },
+      "RANDOM4": {
+        "wins": 382,
+        "ties": 425,
+        "losses": 412,
+        "elo_delta_vs_anchor": -10.22
+      },
+      "RETR": {
+        "wins": 303,
+        "ties": 484,
+        "losses": 432,
+        "elo_delta_vs_anchor": -42.62
+      },
+      "SHUF": {
+        "wins": 135,
+        "ties": 977,
+        "losses": 107,
+        "elo_delta_vs_anchor": 9.04
+      },
+      "TREAT": {
+        "wins": 196,
+        "ties": 906,
+        "losses": 117,
+        "elo_delta_vs_anchor": 23.25
+      }
+    }
+  },
+  "exact_program_coverage": {
+    "held_slots": 1399411,
+    "slots_seen_in_fit_family": 98091
+  },
+  "fit_receipts": [
+    {
+      "fold": 0,
+      "fit_contexts": 992,
+      "held_contexts": 227,
+      "fit_rows": 190464,
+      "w_treat_fro": 2.3202298368721763,
+      "w_shuf_fro": 1.4025263732973294
+    },
+    {
+      "fold": 1,
+      "fit_contexts": 985,
+      "held_contexts": 234,
+      "fit_rows": 189120,
+      "w_treat_fro": 2.6328101328762967,
+      "w_shuf_fro": 1.6261351279034504
+    },
+    {
+      "fold": 2,
+      "fit_contexts": 950,
+      "held_contexts": 269,
+      "fit_rows": 182400,
+      "w_treat_fro": 2.382474073562103,
+      "w_shuf_fro": 1.246269506843205
+    },
+    {
+      "fold": 3,
+      "fit_contexts": 948,
+      "held_contexts": 271,
+      "fit_rows": 182016,
+      "w_treat_fro": 2.2802635699950353,
+      "w_shuf_fro": 1.7217544228192159
+    },
+    {
+      "fold": 4,
+      "fit_contexts": 1001,
+      "held_contexts": 218,
+      "fit_rows": 192192,
+      "w_treat_fro": 2.5949667083720076,
+      "w_shuf_fro": 1.5594135960979107
+    }
+  ],
+  "config": {
+    "rank": 8,
+    "ridge": 10.0,
+    "knn_k": 32,
+    "fit_slots_per_context": 192,
+    "retrieval_contexts": 4
+  },
+  "source_sha256": "92178e4b0ce04ab73b43eb5e1835902081d062457b628e12314549d7b2e40068",
+  "pins": {
+    "selected": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "w1_fold_manifest": "dd211134bba127960b1612687478064969dca422e35dfa889790760f316961c1",
+    "w1_priors": "5213faa8d0bcc906e1d3c3226d6104e3846cf11c9da9c222298e9f0dc2fb46d9",
+    "w1_context_features": "d9e2275f425cdac1107b1f010c75b69d64dd3f7d29b41f3e1d5fd91bf128fca6",
+    "champions_featurized": "ea020d489ec9a813e4dfb2b6fe45c126ff9f8d8a1b59d0ff9f8242cfe5e6efc0",
+    "elo_tracker": "9ece98326c32453179b0c765eb45944b68ca9de944d2828a1d42dee1401d1835"
+  },
+  "native_fits": 0,
+  "gpu_seconds": 0,
+  "execution": {
+    "host": "xbabe2",
+    "wall": "22:57",
+    "max_rss_kb": 2478956,
+    "nice": 15,
+    "threads": 8
+  },
+  "data_scope": "DL-Train only (1219 contexts / 205 families, W1 folds); W1 stored out-of-fold priors + train-only context features; admitted training pools; 0 DL-Val/outer/sealed/holdout",
+  "s3_objects": [
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W6/opus-h83-20261031a/metrics.json",
+      "version_id": "TQdgOZr3vDV7wFPw2lAVfZwoKstZIB._",
+      "sha256": "79d514af44b78cf7865aa9699af3506757e15df46d48c8b219b7c99cc22cc9d8",
+      "bytes": 5917,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W6/opus-h83-20261031a/per_context.json.gz",
+      "version_id": "DtiuLUl8qjmAh.1GV_oU1d.JrB2LEVJQ",
+      "sha256": "928c0be09c60d03736c24d21ecd7d14e49c564fc3da5ecfe9a32dbdf2ff9eaf3",
+      "bytes": 178784,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W6/opus-h83-20261031a/run.log",
+      "version_id": "4fMYS5oHVU9QaAAZ6B4nro2VLEkwjj_V",
+      "sha256": "bdc6866562938877b6a285d1504c38510af0dc99f3c117c7dc70d4bf69b2975c",
+      "bytes": 1252,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W6/opus-h83-20261031a/time.log",
+      "version_id": "lET2a2PcUwW9iUdIp1X7p9SkMcVwNLS8",
+      "sha256": "9975138ade75a377df7f3beca3478b3f1341c062fd1001c6b2537933f857ab5f",
+      "bytes": 875,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W6/opus-h83-20261031a/run_w6_cached.py",
+      "version_id": "K58Be9ptiHwwhNdQ9ASHnZxeHtiRvKU3",
+      "sha256": "92178e4b0ce04ab73b43eb5e1835902081d062457b628e12314549d7b2e40068",
+      "bytes": 14739,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W6/opus-h83-20261031a/test_run_w6_cached.py",
+      "version_id": "_Iu6mtgH2jypbXpWfBuVvMlsrbdtROmj",
+      "sha256": "945ab0230dccb74cfbc8f953d7dfefa18dd77f7169fc86cc9b4d3e154b2ffc02",
+      "bytes": 3198,
+      "write": "create-only if-none-match"
+    }
+  ],
+  "hwm_candidates": "none (cached screen selects existing pool programs)"
+}

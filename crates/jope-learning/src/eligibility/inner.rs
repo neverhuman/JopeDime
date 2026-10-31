@@ -8,29 +8,49 @@ pub const SEED_POLICY: &str =
     "asm.candidate-request-seed/v1:scheduling-only:DSL-and-engine-randomness-pinned";
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `InnerPartition` is a record for the inner partition contract in this module: Explicit inner-OOF partition and execution binding. Original development folds remain a different protocol; no old receipt is retroactively upgraded.
 pub struct InnerPartition {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// SHA-256 digest identifying the associated dataset.
     pub dataset_sha256: String,
+    /// SHA-256 digest identifying the associated original split.
     pub original_split_sha256: String,
+    /// SHA-256 digest identifying the associated development.
     pub development_sha256: String,
+    /// Outer fold recorded for this inner partition.
     pub outer_fold: u8,
+    /// Number of fitting rows represented here.
     pub fitting_rows: Vec<String>,
+    /// Number of hold rows represented here.
     pub hold_rows: Vec<String>,
+    /// Collection of fitting groups values carried by this inner partition.
     pub fitting_groups: Vec<String>,
+    /// Collection of hold groups values carried by this inner partition.
     pub hold_groups: Vec<String>,
+    /// Number of inner validation rows represented here.
     pub inner_validation_rows: Vec<Vec<String>>,
+    /// Assignment policy recorded for this inner partition.
     pub assignment_policy: String,
+    /// Evaluation seed recorded for this inner partition.
     pub evaluation_seed: u64,
+    /// Request seed policy recorded for this inner partition.
     pub request_seed_policy: String,
+    /// SHA-256 digest identifying the associated executor program.
     pub executor_program_sha256: String,
+    /// SHA-256 digest identifying the associated runtime inventory.
     pub runtime_inventory_sha256: String,
+    /// Fit randomness policy recorded for this inner partition.
     pub fit_randomness_policy: String,
+    /// Raw input policy recorded for this inner partition.
     pub raw_input_policy: String,
 }
 impl InnerPartition {
+    /// Performs the identity operation and returns an error if it cannot be completed.
     pub fn identity(&self) -> Result<String> {
         canonical_sha256(self)
     }
+    /// Performs the fitting rows SHA-256 operation and returns an error if it cannot be completed.
     pub fn fitting_rows_sha256(&self) -> Result<String> {
         canonical_sha256(&self.fitting_rows)
     }
@@ -86,6 +106,7 @@ fn data(state: &State, panel_sha: &str, id: &str) -> Result<DevelopmentData> {
         .context("inner prepared bytes absent")?;
     parse_development(&bytes, dataset)
 }
+/// Performs the derive inner partition operation and returns an error if it cannot be completed.
 pub fn derive_inner_partition(
     state: &State,
     panel_sha: &str,
@@ -154,6 +175,7 @@ pub(super) fn authenticated_inner_rows(
     );
     Ok((source.dataset, rows))
 }
+/// Performs the freeze inner optimization operation and returns an error if it cannot be completed.
 pub fn freeze_inner_optimization(
     state: &State,
     plan: &FreezePlan,
@@ -163,13 +185,21 @@ pub fn freeze_inner_optimization(
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `InnerEvidence` is a record for the inner evidence contract in this module: Explicit inner-OOF partition and execution binding. Original development folds remain a different protocol; no old receipt is retroactively upgraded.
 pub struct InnerEvidence {
+    /// SHA-256 digest identifying the associated selection.
     pub selection_sha256: String,
+    /// SHA-256 digest identifying the associated frozen recipe.
     pub frozen_recipe_sha256: String,
+    /// SHA-256 digest identifying the associated search receipt.
     pub search_receipt_sha256: String,
+    /// SHA-256 digest identifying the associated runtime.
     pub runtime_sha256: String,
+    /// SHA-256 digest identifying the associated arm window.
     pub arm_window_sha256: String,
+    /// SHA-256 digest identifying the associated memory policy.
     pub memory_policy_sha256: String,
+    /// SHA-256 digest identifying the associated candidate freeze.
     pub candidate_freeze_sha256: String,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]

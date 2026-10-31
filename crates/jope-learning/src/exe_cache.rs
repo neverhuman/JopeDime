@@ -11,17 +11,26 @@ use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `ExecutableCacheKey` is a record for the executable cache key contract in this module: Deterministic executable cache identities and immutable packed evidence metadata.
 pub struct ExecutableCacheKey {
+    /// SHA-256 digest of the canonical program source.
     pub program_sha256: String,
+    /// Emitter recorded for this executable cache key.
     pub emitter: String,
+    /// Emitter version recorded for this executable cache key.
     pub emitter_version: String,
+    /// Toolchain recorded for this executable cache key.
     pub toolchain: String,
+    /// Target recorded for this executable cache key.
     pub target: String,
+    /// Numeric profile recorded for this executable cache key.
     pub numeric_profile: String,
+    /// Fitted identity recorded for this executable cache key.
     pub fitted_identity: String,
 }
 
 impl ExecutableCacheKey {
+    /// Validates this value against its invariants and returns an error when validation fails.
     pub fn validate(&self) -> Result<()> {
         ensure!(
             is_sha256(&self.program_sha256),
@@ -56,22 +65,35 @@ fn is_sha256(value: &str) -> bool {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `PackMemberRange` is a record for the pack member range contract in this module: Deterministic executable cache identities and immutable packed evidence metadata.
 pub struct PackMemberRange {
+    /// Key recorded for this pack member range.
     pub key: String,
+    /// Identifier for the associated version.
     pub version_id: String,
+    /// Sha-256 recorded for this pack member range.
     pub sha256: String,
+    /// Offset recorded for this pack member range.
     pub offset: u64,
+    /// Length recorded for this pack member range.
     pub length: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `PackManifest` is a record for the pack manifest contract in this module: Deterministic executable cache identities and immutable packed evidence metadata.
 pub struct PackManifest {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Pack key recorded for this pack manifest.
     pub pack_key: String,
+    /// Identifier for the associated pack version.
     pub pack_version_id: String,
+    /// SHA-256 digest identifying the associated pack.
     pub pack_sha256: String,
+    /// Byte count for the associated pack.
     pub pack_bytes: u64,
+    /// Collection of members values carried by this pack manifest.
     pub members: Vec<PackMemberRange>,
 }
 
@@ -180,6 +202,7 @@ pub struct PackCatalog {
 }
 
 impl PackCatalog {
+    /// Performs the admit operation and returns an error if it cannot be completed.
     pub fn admit(&mut self, manifest: &PackManifest, bytes: &[u8]) -> Result<()> {
         manifest.verify_bytes(bytes)?;
         if let Some(existing) = self.packs.get(&manifest.pack_key) {
@@ -213,18 +236,23 @@ impl PackCatalog {
 /// Whether the caller has declared every obligation needed to omit nonkeeper evidence.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct KeeperPolicy {
+    /// Whether this keeper policy is keeper.
     pub is_keeper: bool,
+    /// Proof obligation allows omission recorded for this keeper policy.
     pub proof_obligation_allows_omission: bool,
+    /// Retention obligation allows omission recorded for this keeper policy.
     pub retention_obligation_allows_omission: bool,
 }
 
 impl KeeperPolicy {
+    /// Performs the may omit operation and returns an error if it cannot be completed.
     pub fn may_omit(self) -> bool {
         !self.is_keeper
             && self.proof_obligation_allows_omission
             && self.retention_obligation_allows_omission
     }
 
+    /// Performs the require keep or permitted omission operation and returns an error if it cannot be completed.
     pub fn require_keep_or_permitted_omission(self) -> Result<()> {
         ensure!(
             self.is_keeper || self.may_omit(),
@@ -235,9 +263,13 @@ impl KeeperPolicy {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+/// `CachedExecutable` is a record for the cached executable contract in this module: Deterministic executable cache identities and immutable packed evidence metadata.
 pub struct CachedExecutable {
+    /// Key digest recorded for this cached executable.
     pub key_digest: String,
+    /// SHA-256 digest identifying the associated executable.
     pub executable_sha256: String,
+    /// Encoded byte count associated with this object or operation.
     pub bytes: Vec<u8>,
 }
 
@@ -280,6 +312,7 @@ impl ExecutableCache {
         Ok(self.entries.get(&digest).expect("entry inserted above"))
     }
 
+    /// Performs the get operation and returns an error if it cannot be completed.
     pub fn get(&self, key: &ExecutableCacheKey) -> Result<Option<&CachedExecutable>> {
         Ok(self.entries.get(&key.digest()?))
     }

@@ -33,13 +33,20 @@ pub trait LocalSnapshotAuthority: Send + Sync {
 /// check checkpoint/replay/support compatibility, and authenticate the I27 input-root receipt.
 /// There is intentionally no permissive default implementation.
 pub trait SnapshotEvidenceVerifier: Send + Sync {
+    /// Performs the verify candidate operation and returns an error if it cannot be completed.
     fn verify_candidate(&self, snapshot: &Snapshot) -> Result<()>;
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+/// `LocalCas` is an enum for the local cas contract in this module: One adapter for local root CAS and conditional remote publication.
 pub enum LocalCas {
+    /// The `Won` case of `LocalCas`.
     Won,
-    Lost { winner: SnapshotRoot },
+    /// The `Lost` case of `LocalCas`.
+    Lost {
+        /// Winner recorded for this outcome.
+        winner: SnapshotRoot,
+    },
 }
 
 /// Routes existing immutable and conditional-pointer primitives through one snapshot authority.
@@ -51,6 +58,7 @@ pub struct AuthorityAdapter<'a, L> {
 }
 
 impl<'a, L: LocalSnapshotAuthority> AuthorityAdapter<'a, L> {
+    /// Constructs or opens a new value from the supplied inputs.
     pub fn new(
         local: &'a L,
         remote: Option<&'a dyn Remote>,
@@ -65,6 +73,7 @@ impl<'a, L: LocalSnapshotAuthority> AuthorityAdapter<'a, L> {
         }
     }
 
+    /// Performs the publish operation and returns an error if it cannot be completed.
     pub fn publish(&mut self, snapshot: &Snapshot) -> Result<CandidateOutcome> {
         snapshot.validate(self.retired)?;
         if let Some(parent_root) = &snapshot.previous_root {

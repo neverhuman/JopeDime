@@ -9,12 +9,19 @@ use serde_json::Value;
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ProducerSpec {
+    /// Optional source commit value; `None` means it is not available.
     pub source_commit: Option<String>,
+    /// Optional code version value; `None` means it is not available.
     pub code_version: Option<String>,
+    /// Optional command value; `None` means it is not available.
     pub command: Option<Vec<String>>,
+    /// Optional collection cut value; `None` means it is not available.
     pub collection_cut: Option<String>,
+    /// Timestamp at which the associated collected occurred.
     pub collected_at: Option<String>,
+    /// Input uri recorded for this producer spec.
     pub input_uri: String,
+    /// Identifier for the associated input version.
     pub input_version_id: Option<String>,
     /// Other immutable roots consumed by the producer (including source/code receipts).
     pub input_roots: Vec<InputRoot>,
@@ -22,18 +29,25 @@ pub struct ProducerSpec {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `InputRoot` is a record for the input root contract in this module: Pure, deterministic census of supplied immutable index bytes. No estate discovery.
 pub struct InputRoot {
+    /// Uri recorded for this input root.
     pub uri: String,
+    /// Identifier for the associated version.
     pub version_id: Option<String>,
+    /// Sha-256 recorded for this input root.
     pub sha256: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `RowIdentity` is a record for the row identity contract in this module: Pure, deterministic census of supplied immutable index bytes. No estate discovery.
 pub struct RowIdentity {
+    /// Locator recorded for this row identity.
     pub locator: String,
     /// Hash of the parsed row's compact JSON; the input hash preserves its exact original bytes.
     pub row_sha256: String,
+    /// Identifier for the associated occurrence.
     pub occurrence_id: String,
 }
 
@@ -41,14 +55,21 @@ pub struct RowIdentity {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ProducerManifest {
+    /// Archive version recorded for this producer manifest.
     pub archive_version: u32,
+    /// Producer recorded for this producer manifest.
     pub producer: ProducerSpec,
+    /// SHA-256 digest identifying the associated input.
     pub input_sha256: String,
+    /// Index schema recorded for this producer manifest.
     pub index_schema: String,
+    /// Ordering recorded for this producer manifest.
     pub ordering: String,
+    /// Number of rows represented by this value.
     pub rows: Vec<RowIdentity>,
 }
 
+/// Performs the parse index operation and returns an error if it cannot be completed.
 pub fn parse_index(bytes: &[u8]) -> Result<Value> {
     let index =
         crate::clover::round_qual::parse_strict_json_value(bytes, "supplied observation index")?;
@@ -60,6 +81,7 @@ pub fn parse_index(bytes: &[u8]) -> Result<Value> {
     Ok(index)
 }
 
+/// Performs the row identities operation and returns an error if it cannot be completed.
 pub fn row_identities(index: &Value, input_sha256: &str) -> Result<Vec<RowIdentity>> {
     index["runs"]
         .as_array()
@@ -86,6 +108,7 @@ pub fn row_identities(index: &Value, input_sha256: &str) -> Result<Vec<RowIdenti
         .collect()
 }
 
+/// Performs the produce manifest operation and returns an error if it cannot be completed.
 pub fn produce_manifest(bytes: &[u8], producer: ProducerSpec) -> Result<ProducerManifest> {
     let index = parse_index(bytes)?;
     let input_sha256 = sha256_hex(bytes);
@@ -103,15 +126,26 @@ pub fn produce_manifest(bytes: &[u8], producer: ProducerSpec) -> Result<Producer
 /// manifest itself. A self-asserted commit, hash or success Boolean is insufficient.
 #[derive(Clone, Copy, Debug)]
 pub struct ProducerInput<'a> {
+    /// Byte count for the associated manifest.
     pub manifest_bytes: &'a [u8],
+    /// SHA-256 digest identifying the associated authenticated manifest.
     pub authenticated_manifest_sha256: Option<&'a str>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "state", rename_all = "snake_case")]
+/// `ProducerClosure` is an enum for the producer closure contract in this module: Pure, deterministic census of supplied immutable index bytes. No estate discovery.
 pub enum ProducerClosure {
-    Bound { manifest_sha256: String },
-    Held { reasons: Vec<String> },
+    /// The `Bound` case of `ProducerClosure`.
+    Bound {
+        /// SHA-256 digest identifying the associated manifest.
+        manifest_sha256: String,
+    },
+    /// The `Held` case of `ProducerClosure`.
+    Held {
+        /// Reasons recorded for this outcome.
+        reasons: Vec<String>,
+    },
 }
 
 /// Authentication and immutable binding are separate from observation retention. Any refusal
@@ -197,20 +231,41 @@ pub fn verify_producer(bytes: &[u8], input: Option<ProducerInput<'_>>) -> Produc
 /// 18,380 is only the dated task-card target. It never supplies today's estate denominator.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct HistoricalFixture {
+    /// Date recorded for this historical fixture.
     pub date: String,
+    /// Number of expected rows represented here.
     pub expected_rows: usize,
+    /// SHA-256 digest identifying the associated input.
     pub input_sha256: String,
+    /// SHA-256 digest identifying the associated manifest.
     pub manifest_sha256: String,
+    /// Expected dispositions recorded for this historical fixture.
     pub expected_dispositions: std::collections::BTreeMap<String, usize>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "state", rename_all = "snake_case")]
+/// `HistoricalStatus` is an enum for the historical status contract in this module: Pure, deterministic census of supplied immutable index bytes. No estate discovery.
 pub enum HistoricalStatus {
-    VerifiedDatedFixture { date: String, rows: usize },
-    Held { dated_target: usize, reason: String },
+    /// Field value recorded by this public API type.
+    /// The `VerifiedDatedFixture` case of `HistoricalStatus`.
+    VerifiedDatedFixture {
+        /// Date recorded for this outcome.
+        date: String,
+        /// Rows recorded for this outcome.
+        rows: usize,
+    },
+    /// Field value recorded by this public API type.
+    /// The `Held` case of `HistoricalStatus`.
+    Held {
+        /// Dated target recorded for this outcome.
+        dated_target: usize,
+        /// Explanation accompanying this outcome.
+        reason: String,
+    },
 }
 
+/// Performs the verify historical operation and returns an error if it cannot be completed.
 pub fn verify_historical(
     expected: Option<&HistoricalFixture>,
     input_sha256: &str,

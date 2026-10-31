@@ -53,6 +53,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
+/// Schema identifier for config values.
 pub const CONFIG_SCHEMA: &str = "jope.progress.config/v1";
 
 /// The approval state of the default [`Config`] values: the outbox limits (W8-T02) and the
@@ -68,6 +69,7 @@ pub const OVERRIDDEN: &str = "operator-configured-not-the-adopted-defaults";
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
     /// Outbox capacity: pause new work, then refuse everything (W8-T02).
     pub limits: Limits,
@@ -89,6 +91,7 @@ impl Config {
         }
     }
 
+    /// Performs the check operation and returns an error if it cannot be completed.
     pub fn check(&self) -> Result<()> {
         ensure!(
             self.schema == CONFIG_SCHEMA,
@@ -134,9 +137,13 @@ impl Config {
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `ConfigReport` is a record for the config report contract in this module: W8 product integration: the publisher that turns the engine's durable events into committed W8 progress.
 pub struct ConfigReport {
+    /// Values recorded for this config report.
     pub values: Config,
+    /// Adopted defaults recorded for this config report.
     pub adopted_defaults: bool,
+    /// Approval recorded for this config report.
     pub approval: &'static str,
 }
 
@@ -159,12 +166,23 @@ pub enum CheckpointStep {
     Nothing,
     /// Not due: the engine's newer optimizer steps are counted and wait for the next W8
     /// checkpoint.
-    Deferred { step: u64, uncheckpointed: u64 },
+    /// Field value recorded by this public API type.
+    /// Field value recorded by this public API type.
+    Deferred {
+        /// Step recorded for this outcome.
+        step: u64,
+        /// Uncheckpointed recorded for this outcome.
+        uncheckpointed: u64,
+    },
     /// Mapped as the next W8 update.
     Mapped {
+        /// Step recorded for this checkpoint step.
         step: u64,
+        /// Update index recorded for this checkpoint step.
         update_index: u64,
+        /// Number of consumed rows represented here.
         consumed_rows: u64,
+        /// Due recorded for this checkpoint step.
         due: CheckpointDue,
     },
 }
@@ -176,16 +194,20 @@ pub struct Step {
     pub appended: Vec<String>,
     /// Keys it offered that the outbox already held (a replay after a crash, or the same bytes).
     pub existing: Vec<String>,
+    /// Optional checkpoint value; `None` means it is not available.
     pub checkpoint: Option<CheckpointStep>,
     /// Why a flush was due, if one was.
     pub due: Option<FlushDue>,
+    /// Optional publication value; `None` means it is not available.
     pub publication: Option<Publication>,
+    /// Optional tick value; `None` means it is not available.
     pub tick: Option<Tick>,
     /// A flush was due and left nothing staged and nothing pending: everything appended so far
     /// is committed and acknowledged.
     pub flushed: bool,
     /// Objects appended but not yet committed after this operation.
     pub staged: u64,
+    /// Optional head value; `None` means it is not available.
     pub head: Option<Head>,
 }
 
@@ -408,30 +430,37 @@ impl<'r> Driver<'r> {
         )
     }
 
+    /// Performs the manifest operation and returns an error if it cannot be completed.
     pub fn manifest(&self) -> &Decoded<RunManifest> {
         &self.manifest
     }
 
+    /// Performs the outbox operation and returns an error if it cannot be completed.
     pub fn outbox(&self) -> &Outbox {
         &self.outbox
     }
 
+    /// Performs the config operation and returns an error if it cannot be completed.
     pub fn config(&self) -> &Config {
         &self.config
     }
 
+    /// Performs the head operation and returns an error if it cannot be completed.
     pub fn head(&self) -> Option<&Head> {
         self.head.as_ref()
     }
 
+    /// Performs the staged operation and returns an error if it cannot be completed.
     pub fn staged(&self) -> u64 {
         self.staged.len() as u64
     }
 
+    /// Performs the previous operation and returns an error if it cannot be completed.
     pub fn previous(&self) -> Option<&Previous> {
         self.previous.as_ref()
     }
 
+    /// Performs the uncheckpointed operation and returns an error if it cannot be completed.
     pub fn uncheckpointed(&self) -> u64 {
         self.checkpoints.uncheckpointed()
     }

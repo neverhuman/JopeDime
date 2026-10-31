@@ -26,6 +26,7 @@ struct CutIdentity<'a> {
     validation_sha256: &'a str,
 }
 
+/// Performs the cut ID operation and returns an error if it cannot be completed.
 pub fn cut_id(identity: &crate::champion::Identity) -> Result<String> {
     canonical_sha256(&CutIdentity {
         family: &identity.family,
@@ -38,16 +39,24 @@ pub fn cut_id(identity: &crate::champion::Identity) -> Result<String> {
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `ChampionReject` is a record for the champion reject contract in this module: parallel.cutchampion.v1 → jope.hwm/v1 (11,030 training/validation winners + 873 sealed).
 pub struct ChampionReject {
+    /// File recorded for this champion reject.
     pub file: String,
+    /// Explanation associated with the recorded disposition.
     pub reason: String,
 }
 
 #[derive(Clone, Debug, Serialize, Default)]
+/// `ChampionScan` is a record for the champion scan contract in this module: parallel.cutchampion.v1 → jope.hwm/v1 (11,030 training/validation winners + 873 sealed).
 pub struct ChampionScan {
+    /// Files recorded for this champion scan.
     pub files: u64,
+    /// Mapped recorded for this champion scan.
     pub mapped: u64,
+    /// Sealed recorded for this champion scan.
     pub sealed: u64,
+    /// Collection of rejects values carried by this champion scan.
     pub rejects: Vec<ChampionReject>,
 }
 
@@ -195,6 +204,7 @@ pub fn scan(dir: &Path, bundle_id: &str) -> Result<(Vec<Candidate>, ChampionScan
     Ok((out, scan))
 }
 
+/// Performs the scan source operation and returns an error if it cannot be completed.
 pub fn scan_source(dir: &Path, bundle_id: &str, scan: &ChampionScan) -> serde_json::Value {
     crate::hwm::source_value(
         "champions",

@@ -7,105 +7,176 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 
+/// Schema identifier for  values.
 pub const SCHEMA: &str = "jope.wave-evidence/v1";
+/// Configured upper or lower bound for max events.
 pub const MAX_EVENTS: usize = 16_384;
+/// Configured upper or lower bound for max shard rows.
 pub const MAX_SHARD_ROWS: usize = 512;
+/// Configured upper or lower bound for max decoded bytes.
 pub const MAX_DECODED_BYTES: usize = 8 * 1024 * 1024;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "state", content = "value", rename_all = "snake_case")]
+/// `Known` is an enum for the known contract in this module: Content-addressed local archive for typed wave telemetry. This module does not publish remotely.
 pub enum Known<T> {
+    /// The `Known` case of `Known`.
     Known(T),
-    Missing { reason: String },
+    /// The `Missing` case of `Known`.
+    Missing {
+        /// Explanation accompanying this outcome.
+        reason: String,
+    },
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "snake_case")]
+/// `Disposition` is an enum for the disposition contract in this module: Content-addressed local archive for typed wave telemetry. This module does not publish remotely.
 pub enum Disposition {
+    /// The `Success` case of `Disposition`.
     Success,
+    /// The `RejectedChild` case of `Disposition`.
     RejectedChild,
+    /// The `Aborted` case of `Disposition`.
     Aborted,
+    /// The `TimeoutOnly` case of `Disposition`.
     TimeoutOnly,
+    /// The `Inconclusive` case of `Disposition`.
     Inconclusive,
+    /// The `InterruptedResumed` case of `Disposition`.
     InterruptedResumed,
+    /// The `ZeroUpdate` case of `Disposition`.
     ZeroUpdate,
+    /// The `HistoricalPartial` case of `Disposition`.
     HistoricalPartial,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
+/// `Metric` is a record for the metric contract in this module: Content-addressed local archive for typed wave telemetry. This module does not publish remotely.
 pub struct Metric {
+    /// Measured or derived value carried by this result.
     pub value: Option<f64>,
+    /// Unit recorded for this metric.
     pub unit: String,
+    /// Shared denominator used to interpret probability numerators in this law.
     pub denominator: Option<u64>,
+    /// Outcome or lifecycle status recorded for this value.
     pub status: String,
+    /// Source field recorded for this metric.
     pub source_field: String,
+    /// Optional missing reason value; `None` means it is not available.
     pub missing_reason: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
+/// `Event` is a record for the event contract in this module: Content-addressed local archive for typed wave telemetry. This module does not publish remotely.
 pub struct Event {
+    /// Sequence recorded for this event.
     pub sequence: u64,
+    /// Attempt recorded for this event.
     pub attempt: u32,
+    /// Rank recorded for this event.
     pub rank: u32,
+    /// Record kind or category represented by this value.
     pub kind: String,
+    /// Mapping of fields values carried by this event.
     pub fields: BTreeMap<String, Known<String>>,
+    /// Mapping of counters values carried by this event.
     pub counters: BTreeMap<String, Known<u64>>,
+    /// Mapping of metrics values carried by this event.
     pub metrics: BTreeMap<String, Metric>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
+/// `WaveInput` is a record for the wave input contract in this module: Content-addressed local archive for typed wave telemetry. This module does not publish remotely.
 pub struct WaveInput {
+    /// Identifier for the associated wave.
     pub wave_id: String,
+    /// Version recorded for this wave input.
     pub version: String,
+    /// Disposition recorded for this wave input.
     pub disposition: Disposition,
+    /// New wave recorded for this wave input.
     pub new_wave: bool,
+    /// Mapping of identity values carried by this wave input.
     pub identity: BTreeMap<String, Known<String>>,
+    /// Collection of events values carried by this wave input.
     pub events: Vec<Event>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+/// `ShardRef` is a record for the shard ref contract in this module: Content-addressed local archive for typed wave telemetry. This module does not publish remotely.
 pub struct ShardRef {
+    /// Ordinal recorded for this shard ref.
     pub ordinal: u32,
+    /// Sha-256 recorded for this shard ref.
     pub sha256: String,
+    /// Blob key recorded for this shard ref.
     pub blob_key: String,
+    /// Codec recorded for this shard ref.
     pub codec: String,
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Number of rows represented by this value.
     pub rows: u64,
+    /// Byte count for the associated decoded.
     pub decoded_bytes: u64,
+    /// Byte count for the associated compressed.
     pub compressed_bytes: u64,
+    /// SHA-256 digest identifying the associated member.
     pub member_sha256: String,
+    /// Optional physical version value; `None` means it is not available.
     pub physical_version: Option<String>,
+    /// First sequence recorded for this shard ref.
     pub first_sequence: u64,
+    /// Last sequence recorded for this shard ref.
     pub last_sequence: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+/// `Manifest` is a record for the manifest contract in this module: Content-addressed local archive for typed wave telemetry. This module does not publish remotely.
 pub struct Manifest {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Identifier for the associated wave.
     pub wave_id: String,
+    /// Version recorded for this manifest.
     pub version: String,
+    /// Disposition recorded for this manifest.
     pub disposition: Disposition,
+    /// Archive status recorded for this manifest.
     pub archive_status: String,
+    /// Capture status recorded for this manifest.
     pub capture_status: String,
+    /// Mapping of identity values carried by this manifest.
     pub identity: BTreeMap<String, Known<String>>,
+    /// Mapping of missing fields values carried by this manifest.
     pub missing_fields: BTreeMap<String, String>,
+    /// Expected events recorded for this manifest.
     pub expected_events: u64,
+    /// Collection of shards values carried by this manifest.
     pub shards: Vec<ShardRef>,
+    /// SHA-256 digest identifying the associated manifest.
     pub manifest_sha256: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+/// `ArchiveReceipt` is a record for the archive receipt contract in this module: Content-addressed local archive for typed wave telemetry. This module does not publish remotely.
 pub struct ArchiveReceipt {
+    /// Manifest recorded for this archive receipt.
     pub manifest: Manifest,
+    /// Manifest blob recorded for this archive receipt.
     pub manifest_blob: String,
+    /// Byte count for the associated manifest.
     pub manifest_bytes: Vec<u8>,
 }
 
+/// Performs the archive operation and returns an error if it cannot be completed.
 pub fn archive(state: &State, input: &WaveInput) -> anyhow::Result<ArchiveReceipt> {
     validate(input)?;
     let mut events = input.events.clone();
@@ -255,6 +326,7 @@ pub fn archive(state: &State, input: &WaveInput) -> anyhow::Result<ArchiveReceip
     })
 }
 
+/// Performs the reconstruct operation and returns an error if it cannot be completed.
 pub fn reconstruct(state: &State, manifest: &Manifest) -> anyhow::Result<Vec<Event>> {
     anyhow::ensure!(
         manifest.schema == SCHEMA,

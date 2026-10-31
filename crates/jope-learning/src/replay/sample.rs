@@ -13,6 +13,7 @@ use std::collections::{BTreeMap, BTreeSet};
 pub const BOTTOM_K_HASH_DOMAIN: &str = "jopedime.replay.bottom-k/v1";
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+/// `ReplayDesign` is a record for the replay design contract in this module: Deterministic, bounded replay snapshots.
 pub struct ReplayDesign {
     /// Uniformly sampled, caller-provided seed, committed before inspecting this frame. It
     /// must remain unchanged across restart and merge. Reported probabilities are design-based
@@ -25,6 +26,7 @@ pub struct ReplayDesign {
 }
 
 impl ReplayDesign {
+    /// Validates this value against its invariants and returns an error when validation fails.
     pub fn validate(&self) -> Result<()> {
         ensure!(!self.seed.is_empty(), "replay seed must not be empty");
         ensure!(self.capacity > 0, "replay capacity must be positive");
@@ -37,9 +39,13 @@ impl ReplayDesign {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum ReplayRole {
+    /// The `General` case of `ReplayRole`.
     General,
+    /// The `RareFailure` case of `ReplayRole`.
     RareFailure,
+    /// The `AcceptedParent` case of `ReplayRole`.
     AcceptedParent,
+    /// The `AcceptedExposure` case of `ReplayRole`.
     AcceptedExposure,
 }
 
@@ -47,8 +53,11 @@ pub enum ReplayRole {
 /// by the byte budget; payload bodies remain in their existing custody store.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ReplayRecord {
+    /// Stable identifier for this value.
     pub id: String,
+    /// Data or authority role assigned to this value.
     pub role: ReplayRole,
+    /// Byte count for the associated payload.
     pub payload_bytes: u64,
     /// Direct accepted-parent/source lineage required to reconstruct this record.
     #[serde(default)]
@@ -80,11 +89,20 @@ impl ReplayRecord {
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "kebab-case")]
 pub enum InclusionProbability {
-    Known { numerator: u64, denominator: u64 },
+    /// Field value recorded by this public API type.
+    /// The `Known` case of `InclusionProbability`.
+    Known {
+        /// Numerator recorded for this outcome.
+        numerator: u64,
+        /// Denominator recorded for this outcome.
+        denominator: u64,
+    },
+    /// The `Unknown` case of `InclusionProbability`.
     Unknown,
 }
 
 impl InclusionProbability {
+    /// Performs the as f64 operation and returns an error if it cannot be completed.
     pub fn as_f64(self) -> Option<f64> {
         match self {
             Self::Known {
@@ -103,19 +121,24 @@ impl InclusionProbability {
 /// frames as disjoint. Protected records and their transitive parents are always retained.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BottomKSnapshot {
+    /// Design recorded for this bottom ksnapshot.
     pub design: ReplayDesign,
+    /// Identifier for the associated partition.
     pub partition_id: String,
+    /// Number of population represented here.
     pub population_count: u64,
     /// The per-partition bottom-k candidates. This remains bounded by capacity.
     pub records: Vec<ReplayRecord>,
     /// Exact selected identities, ordered by stable rank and then ID.
     pub selected_ids: Vec<String>,
+    /// Byte count for the associated selected.
     pub selected_bytes: u64,
     /// False when protected records or their ancestors exceed the fixed candidate capacity.
     pub complete: bool,
 }
 
 impl BottomKSnapshot {
+    /// Performs the build operation and returns an error if it cannot be completed.
     pub fn build(
         design: ReplayDesign,
         partition_id: impl Into<String>,

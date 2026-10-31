@@ -14,19 +14,28 @@ use super::parquet::{self, Cell, ColumnSpec, ColumnType, Table};
 use anyhow::{bail, ensure, Context, Result};
 use std::collections::{BTreeMap, BTreeSet};
 
+/// Schema identifier for distilled values.
 pub const DISTILLED_SCHEMA: &str = "gp_distilled/v1";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+/// `SplitRole` is an enum for the split role contract in this module: gpdistilled/v1: the permanent (T0) table that keeps every GP result's training signal after its raw bodies are packed and archived (strategy §8.3).
 pub enum SplitRole {
+    /// The `Train` case of `SplitRole`.
     Train,
+    /// The `Val263` case of `SplitRole`.
     Val263,
+    /// The `Sealed` case of `SplitRole`.
     Sealed,
+    /// The `TestExposed` case of `SplitRole`.
     TestExposed,
+    /// The `None` case of `SplitRole`.
     None,
+    /// The `Unknown` case of `SplitRole`.
     Unknown,
 }
 
 impl SplitRole {
+    /// Returns the stable string representation of this value.
     pub fn as_str(self) -> &'static str {
         match self {
             SplitRole::Train => "train",
@@ -37,6 +46,7 @@ impl SplitRole {
             SplitRole::Unknown => "unknown",
         }
     }
+    /// Parses the supplied representation, returning an error when the input is invalid.
     pub fn parse(s: &str) -> Result<SplitRole> {
         Ok(match s {
             "train" => SplitRole::Train,
@@ -51,14 +61,20 @@ impl SplitRole {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+/// `Outcome` is an enum for the outcome contract in this module: gpdistilled/v1: the permanent (T0) table that keeps every GP result's training signal after its raw bodies are packed and archived (strategy §8.3).
 pub enum Outcome {
+    /// The `Ok` case of `Outcome`.
     Ok,
+    /// The `Failed` case of `Outcome`.
     Failed,
+    /// The `Timeout` case of `Outcome`.
     Timeout,
+    /// Only part of the outcome mass is supported by measured outcomes.
     Partial,
 }
 
 impl Outcome {
+    /// Returns the stable string representation of this value.
     pub fn as_str(self) -> &'static str {
         match self {
             Outcome::Ok => "ok",
@@ -79,31 +95,57 @@ impl Outcome {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+/// `DistilledRow` is a record for the distilled row contract in this module: gpdistilled/v1: the permanent (T0) table that keeps every GP result's training signal after its raw bodies are packed and archived (strategy §8.3).
 pub struct DistilledRow {
+    /// Program sha recorded for this distilled row.
     pub program_sha: String,
+    /// Optional program value; `None` means it is not available.
     pub program: Option<String>,
+    /// Dataset recorded for this distilled row.
     pub dataset: String,
+    /// SHA-256 digest identifying the associated context.
     pub context_sha256: Option<String>,
+    /// Optional fold value; `None` means it is not available.
     pub fold: Option<i64>,
+    /// Split role recorded for this distilled row.
     pub split_role: SplitRole,
+    /// Outcome recorded for this distilled row.
     pub outcome: Outcome,
+    /// Measured score for this outcome; absence denotes a failed draw.
     pub score: Option<f64>,
+    /// Optional score name value; `None` means it is not available.
     pub score_name: Option<String>,
+    /// Optional rank ctx value; `None` means it is not available.
     pub rank_ctx: Option<i64>,
+    /// Identifier for the associated champion.
     pub champion_id: Option<String>,
+    /// Optional superseded by value; `None` means it is not available.
     pub superseded_by: Option<String>,
+    /// Optional seed packet value; `None` means it is not available.
     pub seed_packet: Option<String>,
+    /// Optional policylm ckpt value; `None` means it is not available.
     pub policylm_ckpt: Option<String>,
+    /// Optional campaign value; `None` means it is not available.
     pub campaign: Option<String>,
+    /// Identifier for the associated run.
     pub run_id: String,
+    /// Family recorded for this distilled row.
     pub family: String,
+    /// Qualified recorded for this distilled row.
     pub qualified: bool,
+    /// Optional l6 delta value; `None` means it is not available.
     pub l6_delta: Option<f64>,
+    /// Source bucket recorded for this distilled row.
     pub source_bucket: String,
+    /// Source key recorded for this distilled row.
     pub source_key: String,
+    /// Identifier for the associated source version.
     pub source_version_id: Option<String>,
+    /// SHA-256 digest identifying the associated source.
     pub source_sha256: String,
+    /// Optional pack key value; `None` means it is not available.
     pub pack_key: Option<String>,
+    /// Optional pack entry value; `None` means it is not available.
     pub pack_entry: Option<i64>,
 }
 
@@ -417,31 +459,47 @@ pub fn score_direction(score_name: &str) -> Result<ScoreDirection> {
 /// One self-play or GP inner-cut observation to be distilled into `gp_distilled/v1`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SelfPlayDistillObservation {
+    /// Program sha recorded for this self play distill observation.
     pub program_sha: String,
+    /// Optional program value; `None` means it is not available.
     pub program: Option<String>,
+    /// Outcome recorded for this self play distill observation.
     pub outcome: Outcome,
     /// Measured score under `spec.score_name`, oriented according to
     /// [`score_direction`]`(&spec.score_name)` (required iff `outcome == Outcome::Ok`).
     pub score: Option<f64>,
     /// Seed provenance label (e.g. `"ordinary_gp"`, `"bootstrap_warm_start"`, `"selfplay_archive_r1"`).
     pub seed_packet: Option<String>,
+    /// Source key recorded for this self play distill observation.
     pub source_key: String,
+    /// Identifier for the associated source version.
     pub source_version_id: Option<String>,
+    /// SHA-256 digest identifying the associated source.
     pub source_sha256: String,
 }
 
 /// Context-level metadata for distilling a self-play / GP evaluation batch into `gp_distilled/v1`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SelfPlayDistillSpec {
+    /// Dataset recorded for this self play distill spec.
     pub dataset: String,
+    /// SHA-256 digest identifying the associated context.
     pub context_sha256: String,
+    /// Optional fold value; `None` means it is not available.
     pub fold: Option<i64>,
+    /// Split role recorded for this self play distill spec.
     pub split_role: SplitRole,
+    /// Score name recorded for this self play distill spec.
     pub score_name: String,
+    /// Optional policylm ckpt value; `None` means it is not available.
     pub policylm_ckpt: Option<String>,
+    /// Optional campaign value; `None` means it is not available.
     pub campaign: Option<String>,
+    /// Identifier for the associated run.
     pub run_id: String,
+    /// Family recorded for this self play distill spec.
     pub family: String,
+    /// Source bucket recorded for this self play distill spec.
     pub source_bucket: String,
 }
 
@@ -673,10 +731,15 @@ pub fn distilled_rows_to_measurement_rows(
 /// Accounting summary for [`distill_gp_results_index_with_stats`].
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct GpIndexDistillStats {
+    /// Total index runs recorded for this GP index distill stats.
     pub total_index_runs: usize,
+    /// Number of distilled rows represented here.
     pub distilled_rows: usize,
+    /// Skipped unscored runs recorded for this GP index distill stats.
     pub skipped_unscored_runs: usize,
+    /// Skipped incomplete provenance runs recorded for this GP index distill stats.
     pub skipped_incomplete_provenance_runs: usize,
+    /// Reconciled s3 keys recorded for this GP index distill stats.
     pub reconciled_s3_keys: usize,
 }
 

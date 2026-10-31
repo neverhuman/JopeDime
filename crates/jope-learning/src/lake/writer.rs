@@ -4,22 +4,33 @@ use anyhow::{bail, ensure, Result};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
+/// Schema identifier for view values.
 pub const VIEW_SCHEMA: &str = "jope.lake-view/v1";
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
+/// `ManifestCommit` is a record for the manifest commit contract in this module: Disposable analytical projection publication using create-only objects and CAS head moves.
 pub struct ManifestCommit {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Generation recorded for this manifest commit.
     pub generation: u64,
+    /// SHA-256 digest identifying the associated parent.
     pub parent_sha256: Option<String>,
+    /// SHA-256 digest identifying the associated source manifest.
     pub source_manifest_sha256: String,
+    /// SHA-256 digest identifying the associated view.
     pub view_sha256: String,
+    /// Requested recorded for this manifest commit.
     pub requested: u64,
+    /// Observed recorded for this manifest commit.
     pub observed: u64,
+    /// Excluded recorded for this manifest commit.
     pub excluded: u64,
 }
 
 impl ManifestCommit {
+    /// Validates this value against its invariants and returns an error when validation fails.
     pub fn validate(&self) -> Result<()> {
         ensure!(self.schema == VIEW_SCHEMA, "unsupported lake view schema");
         ensure!(
@@ -36,33 +47,44 @@ impl ManifestCommit {
         Ok(())
     }
 
+    /// Computes the canonical SHA-256 digest of this value.
     pub fn digest(&self) -> Result<String> {
         self.validate()?;
         Ok(hex::encode(Sha256::digest(serde_json::to_vec(self)?)))
     }
 }
 
+/// Interface for the head observation contract used by Disposable analytical projection publication using create-only objects and CAS head moves.
 pub trait HeadObservation {
+    /// Performs the bytes operation and returns an error if it cannot be completed.
     fn bytes(&self) -> &[u8];
 }
 
 /// Minimal draft interface over immutable writes and the existing observed-version CAS. A stale
 /// listing is intentionally absent: it can discover objects but cannot authorize publication.
 pub trait ProjectionStore {
+    /// Public type alias for head values.
     type Head: HeadObservation;
+    /// Looks up head and returns the matching value when present.
     fn get_head(&self) -> Result<Option<Self::Head>>;
+    /// Looks up immutable and returns the matching value when present.
     fn get_immutable(&self, key: &str) -> Result<Option<Vec<u8>>>;
     /// Must create if absent and verify byte equality when already present (Mirror semantics).
     fn put_immutable_verified(&self, key: &str, bytes: &[u8]) -> Result<()>;
+    /// Performs the put head if unchanged operation and returns an error if it cannot be completed.
     fn put_head_if_unchanged(&self, observed: Option<&Self::Head>, bytes: &[u8]) -> Result<()>;
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+/// `PublishResult` is a record for the publish result contract in this module: Disposable analytical projection publication using create-only objects and CAS head moves.
 pub struct PublishResult {
+    /// SHA-256 digest identifying the associated commit.
     pub commit_sha256: String,
+    /// Manifest key recorded for this publish result.
     pub manifest_key: String,
 }
 
+/// Performs the publish operation and returns an error if it cannot be completed.
 pub fn publish<S: ProjectionStore>(
     store: &S,
     commit: &ManifestCommit,
@@ -170,6 +192,7 @@ fn is_sha(value: &str) -> bool {
             .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
 }
 
+/// Performs the reject listing as authority operation and returns an error if it cannot be completed.
 pub fn reject_listing_as_authority() -> Result<()> {
     bail!("object listings are discovery only; an observed head is required")
 }

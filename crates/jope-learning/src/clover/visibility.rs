@@ -5,34 +5,55 @@ use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `Visibility` is a public visibility record.
 pub struct Visibility {
+    /// Task identity for the comparison represented by this record.
     pub task: String,
+    /// Family recorded for this visibility.
     pub family: String,
+    /// SHA-256 digest identifying the associated split.
     pub split_sha256: String,
+    /// Fold recorded for this visibility.
     pub fold: u8,
+    /// Available through recorded for this visibility.
     pub available_through: u64,
+    /// Number of fitting rows represented here.
     pub fitting_rows: Vec<String>,
+    /// Number of forbidden rows represented here.
     pub forbidden_rows: BTreeSet<String>,
     /// Target-supervised encoders may see only the declared fitting labels.
     pub training_labels: bool,
 }
 
 #[derive(Clone, Debug)]
+/// `Observation` is a public observation record.
 pub struct Observation {
+    /// Task identity for the comparison represented by this record.
     pub task: String,
+    /// Family recorded for this observation.
     pub family: String,
+    /// Data or authority role assigned to this value.
     pub role: String,
+    /// SHA-256 digest identifying the associated split.
     pub split_sha256: String,
+    /// Fold recorded for this observation.
     pub fold: u8,
+    /// Timestamp at which the associated available occurred.
     pub available_at: u64,
+    /// Collection of features values carried by this observation.
     pub features: Vec<f64>,
+    /// Label recorded for this observation.
     pub label: f64,
 }
 
 #[derive(Debug, Serialize)]
+/// `EncoderInput` is a public encoder input record.
 pub struct EncoderInput {
+    /// Collection of features values carried by this encoder input.
     pub features: Vec<Vec<f64>>,
+    /// Optional labels value; `None` means it is not available.
     pub labels: Option<Vec<f64>>,
+    /// SHA-256 digest identifying the associated visibility.
     pub visibility_sha256: String,
 }
 

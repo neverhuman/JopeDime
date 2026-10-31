@@ -9,7 +9,9 @@ use std::collections::BTreeSet;
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PhysicalVersion {
+    /// Resource recorded for this physical version.
     pub resource: String,
+    /// Identifier for the associated version.
     pub version_id: String,
 }
 
@@ -17,21 +19,34 @@ pub struct PhysicalVersion {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CompatibilityPins {
+    /// SHA-256 digest identifying the associated vocabulary.
     pub vocabulary_sha256: String,
+    /// SHA-256 digest identifying the associated support.
     pub support_sha256: String,
+    /// SHA-256 digest identifying the associated critic.
     pub critic_sha256: String,
+    /// SHA-256 digest identifying the associated replay.
     pub replay_sha256: String,
+    /// SHA-256 digest identifying the associated library.
     pub library_sha256: String,
+    /// SHA-256 digest of the checkpoint bound to this evidence.
     pub checkpoint_sha256: String,
+    /// SHA-256 digest identifying the associated lineage.
     pub lineage_sha256: String,
+    /// SHA-256 digest identifying the associated training intent.
     pub training_intent_sha256: String,
+    /// SHA-256 digest identifying the associated witness source.
     pub witness_source_sha256: String,
+    /// SHA-256 digest identifying the associated authority source.
     pub authority_source_sha256: String,
+    /// Optimizer epoch recorded for this compatibility pins.
     pub optimizer_epoch: u64,
+    /// Collection of physical versions values carried by this compatibility pins.
     pub physical_versions: Vec<PhysicalVersion>,
 }
 
 impl CompatibilityPins {
+    /// Validates this value against its invariants and returns an error when validation fails.
     pub fn validate(&self, retired: &RetiredVersions) -> Result<()> {
         for (name, digest) in [
             ("vocabulary", &self.vocabulary_sha256),
@@ -80,6 +95,7 @@ impl CompatibilityPins {
         Ok(())
     }
 
+    /// Performs the ensure compatible operation and returns an error if it cannot be completed.
     pub fn ensure_compatible(&self, parent: &Self) -> Result<()> {
         ensure!(
             self == parent,
@@ -88,6 +104,7 @@ impl CompatibilityPins {
         Ok(())
     }
 
+    /// Computes the canonical SHA-256 digest of this value.
     pub fn digest(&self) -> Result<String> {
         #[derive(Serialize)]
         struct Payload<'a> {
@@ -108,16 +125,19 @@ impl CompatibilityPins {
 pub struct RetiredVersions(BTreeSet<(String, String)>);
 
 impl RetiredVersions {
+    /// Constructs or opens a new value from the supplied inputs.
     pub fn new(entries: impl IntoIterator<Item = (String, String)>) -> Self {
         Self(entries.into_iter().collect())
     }
 
+    /// Performs the contains operation and returns an error if it cannot be completed.
     pub fn contains(&self, resource: &str, version_id: &str) -> bool {
         self.0
             .contains(&(resource.to_owned(), version_id.to_owned()))
     }
 }
 
+/// Returns whether SHA-256.
 pub fn is_sha256(value: &str) -> bool {
     value.len() == 64
         && value

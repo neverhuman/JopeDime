@@ -35,14 +35,18 @@ use serde::Serialize;
 use serde_json::json;
 use std::path::Path;
 
+/// Constant identifying the source.
 pub const SOURCE: &str = "pipeline";
 /// The measurement: fit on a cut's training folds, score RMSE on its held-out fold, mean over
 /// the requested cuts, complete coverage required.
 pub const PROTOCOL: &str = "jope.pipeline-holdout/v1";
 /// How the search derives every random stream (`search::stream`, `islands::island_seed`).
 pub const RNG_PROTOCOL: &str = "splitmix64-coordinate/v1";
+/// Constant identifying the stage.
 pub const STAGE: &str = "pipeline_holdout";
+/// Constant identifying the aggregation.
 pub const AGGREGATION: &str = "mean_over_requested_cuts";
+/// Constant identifying the numerical policy.
 pub const NUMERICAL_POLICY: &str =
     "feat_math::fit f64 in-process; held-out RMSE in the dataset's original target units";
 
@@ -125,14 +129,23 @@ pub fn identity(receipt: &jope_pipeline::Receipt) -> Result<HwmIdentity> {
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `PipelineScan` is a record for the pipeline scan contract in this module: A verified CPU pipeline run (jope.pipeline-receipt/v2 or v3) → jope.hwm/v1.
 pub struct PipelineScan {
+    /// Receipt recorded for this pipeline scan.
     pub receipt: String,
+    /// SHA-256 digest of the receipt that authenticates this result.
     pub receipt_sha256: String,
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Hash identifying the dataset used by this record.
     pub dataset_hash: String,
+    /// Selected genome recorded for this pipeline scan.
     pub selected_genome: String,
+    /// Validation rmse recorded for this pipeline scan.
     pub validation_rmse: f64,
+    /// Collection of cuts values carried by this pipeline scan.
     pub cuts: Vec<u64>,
+    /// SHA-256 digest identifying the associated parent receipt.
     pub parent_receipt_sha256: Option<String>,
 }
 
@@ -241,6 +254,7 @@ pub fn scan(
     ))
 }
 
+/// Performs the scan source operation and returns an error if it cannot be completed.
 pub fn scan_source(path: &Path, scan: &PipelineScan) -> serde_json::Value {
     crate::hwm::source_value(
         SOURCE,

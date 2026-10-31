@@ -19,10 +19,15 @@ const MAGIC: &[u8; 4] = b"PAR1";
 const MAX_PAGE: usize = 1 << 30;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// `ColumnType` is an enum for the column type contract in this module: A minimal Apache Parquet writer and reader for flat tables (the gpdistilled/v1 table).
 pub enum ColumnType {
+    /// The `Boolean` case of `ColumnType`.
     Boolean,
+    /// The `Int64` case of `ColumnType`.
     Int64,
+    /// The `Double` case of `ColumnType`.
     Double,
+    /// The `Utf8` case of `ColumnType`.
     Utf8,
     /// INT64 milliseconds since the epoch (ConvertedType TIMESTAMP_MILLIS).
     TimestampMillis,
@@ -51,34 +56,52 @@ impl ColumnType {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+/// `ColumnSpec` is a record for the column spec contract in this module: A minimal Apache Parquet writer and reader for flat tables (the gpdistilled/v1 table).
 pub struct ColumnSpec {
+    /// Name recorded for this column spec.
     pub name: String,
+    /// Ty recorded for this column spec.
     pub ty: ColumnType,
+    /// Required recorded for this column spec.
     pub required: bool,
 }
 
 #[derive(Clone, Debug, PartialEq)]
+/// `Cell` is an enum for the cell contract in this module: A minimal Apache Parquet writer and reader for flat tables (the gpdistilled/v1 table).
 pub enum Cell {
+    /// The `Null` case of `Cell`.
     Null,
+    /// The `Bool` case of `Cell`.
     Bool(bool),
+    /// The `I64` case of `Cell`.
     I64(i64),
+    /// The `F64` case of `Cell`.
     F64(f64),
+    /// The `Str` case of `Cell`.
     Str(String),
 }
 
 #[derive(Clone, Debug, PartialEq)]
+/// `Table` is a record for the table contract in this module: A minimal Apache Parquet writer and reader for flat tables (the gpdistilled/v1 table).
 pub struct Table {
+    /// Collection of columns values carried by this table.
     pub columns: Vec<ColumnSpec>,
+    /// Number of rows represented by this value.
     pub rows: Vec<Vec<Cell>>,
+    /// Collection of metadata values carried by this table.
     pub metadata: Vec<(String, String)>,
 }
 
 /// Footer values use physical types; BYTE_ARRAY order is unsigned lexicographic bytes.
 #[derive(Clone, Debug, PartialEq)]
 pub enum StatisticValue {
+    /// The `Bool` case of `StatisticValue`.
     Bool(bool),
+    /// The `I64` case of `StatisticValue`.
     I64(i64),
+    /// The `F64` case of `StatisticValue`.
     F64(f64),
+    /// The `Bytes` case of `StatisticValue`.
     Bytes(Vec<u8>),
 }
 
@@ -94,15 +117,21 @@ impl StatisticValue {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+/// `ColumnStatistics` is a record for the column statistics contract in this module: A minimal Apache Parquet writer and reader for flat tables (the gpdistilled/v1 table).
 pub struct ColumnStatistics {
     /// Number of occurrences, including nulls (ColumnMetaData.num_values).
     pub value_count: u64,
     /// Absent in a legacy/external footer means unknown, not zero.
     pub null_count: Option<u64>,
+    /// Number of nan represented here.
     pub nan_count: Option<u64>,
+    /// Optional min value; `None` means it is not available.
     pub min: Option<StatisticValue>,
+    /// Optional max value; `None` means it is not available.
     pub max: Option<StatisticValue>,
+    /// Lower bound on is exact.
     pub min_is_exact: Option<bool>,
+    /// Upper bound on is exact.
     pub max_is_exact: Option<bool>,
 }
 
@@ -383,8 +412,11 @@ fn plain(ty: ColumnType, cells: &[&Cell]) -> Result<Vec<u8>> {
 /// Page compression for [`write_with`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Codec {
+    /// The `Uncompressed` case of `Codec`.
     Uncompressed,
+    /// The `Zstd` case of `Codec`.
     Zstd,
+    /// The `Snappy` case of `Codec`.
     Snappy,
 }
 
@@ -410,6 +442,7 @@ impl Codec {
 /// `gp_distilled/v1` uses; the others exist so fixtures can look like S3 Inventory files.
 #[derive(Clone, Copy, Debug)]
 pub struct WriteOptions {
+    /// Codec recorded for this write options.
     pub codec: Codec,
     /// Rows per row group (0: one row group).
     pub row_group_rows: usize,
@@ -508,6 +541,7 @@ pub fn write(table: &Table, zstd: bool, created_by: &str) -> Result<Vec<u8>> {
     )
 }
 
+/// Writes with to the configured destination.
 pub fn write_with(table: &Table, opts: &WriteOptions, created_by: &str) -> Result<Vec<u8>> {
     write_table(table, opts, created_by, false)
 }
@@ -1189,9 +1223,11 @@ const ENC_RLE_DICTIONARY: i64 = 8;
 /// One leaf column of a flat schema.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ColumnMeta {
+    /// Name recorded for this column meta.
     pub name: String,
     /// Parquet physical type (0 BOOLEAN, 1 INT32, 2 INT64, 4 FLOAT, 5 DOUBLE, 6 BYTE_ARRAY).
     pub physical: i64,
+    /// Required recorded for this column meta.
     pub required: bool,
     /// For INT64 timestamps: divide by this to get milliseconds (1 millis, 1000 micros, 10^6
     /// nanos); `None` when the column is not a timestamp.
@@ -1208,7 +1244,9 @@ struct ChunkMeta {
 }
 
 #[derive(Clone, Debug)]
+/// `RowGroupMeta` is a record for the row group meta contract in this module: A minimal Apache Parquet writer and reader for flat tables (the gpdistilled/v1 table).
 pub struct RowGroupMeta {
+    /// Number of rows represented by this value.
     pub rows: u64,
     chunks: Vec<ChunkMeta>,
 }
@@ -1216,13 +1254,18 @@ pub struct RowGroupMeta {
 /// Decoded values of one column chunk.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Values {
+    /// The `Bool` case of `Values`.
     Bool(Vec<Option<bool>>),
+    /// The `I64` case of `Values`.
     I64(Vec<Option<i64>>),
+    /// The `F64` case of `Values`.
     F64(Vec<Option<f64>>),
+    /// The `Bytes` case of `Values`.
     Bytes(Vec<Option<Vec<u8>>>),
 }
 
 impl Values {
+    /// Performs the len operation and returns an error if it cannot be completed.
     pub fn len(&self) -> usize {
         match self {
             Values::Bool(v) => v.len(),
@@ -1232,6 +1275,7 @@ impl Values {
         }
     }
 
+    /// Returns whether empty.
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -1240,15 +1284,22 @@ impl Values {
 /// What a chunk's pages looked like (for receipts: which decoder paths real files used).
 #[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize)]
 pub struct PageCounts {
+    /// Dictionary recorded for this page counts.
     pub dictionary: u64,
+    /// Data v1 recorded for this page counts.
     pub data_v1: u64,
+    /// Data v2 recorded for this page counts.
     pub data_v2: u64,
+    /// Index recorded for this page counts.
     pub index: u64,
+    /// Encodings recorded for this page counts.
     pub encodings: std::collections::BTreeSet<i64>,
+    /// Codecs recorded for this page counts.
     pub codecs: std::collections::BTreeSet<i64>,
 }
 
 impl PageCounts {
+    /// Performs the add operation and returns an error if it cannot be completed.
     pub fn add(&mut self, o: &PageCounts) {
         self.dictionary += o.dictionary;
         self.data_v1 += o.data_v1;
@@ -1263,9 +1314,13 @@ impl PageCounts {
 /// not implement (nested columns, INT96, DELTA encodings, other codecs) is an error.
 pub struct FileReader<'a> {
     bytes: &'a [u8],
+    /// Collection of columns values carried by this file reader.
     pub columns: Vec<ColumnMeta>,
+    /// Number of num rows represented here.
     pub num_rows: u64,
+    /// Collection of row groups values carried by this file reader.
     pub row_groups: Vec<RowGroupMeta>,
+    /// Optional created by value; `None` means it is not available.
     pub created_by: Option<String>,
 }
 
@@ -1420,6 +1475,7 @@ fn append(acc: &mut Option<Values>, v: Values) -> Result<()> {
 }
 
 impl<'a> FileReader<'a> {
+    /// Constructs or opens a open value from the supplied inputs.
     pub fn open(bytes: &'a [u8]) -> Result<FileReader<'a>> {
         ensure!(
             bytes.len() >= 12 && &bytes[..4] == MAGIC && &bytes[bytes.len() - 4..] == MAGIC,
@@ -1568,6 +1624,7 @@ impl<'a> FileReader<'a> {
         })
     }
 
+    /// Performs the column index operation and returns an error if it cannot be completed.
     pub fn column_index(&self, name: &str) -> Option<usize> {
         self.columns.iter().position(|c| c.name == name)
     }

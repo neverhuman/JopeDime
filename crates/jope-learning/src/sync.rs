@@ -41,6 +41,7 @@ pub struct Plan {
     pub missing: Vec<(String, PathBuf)>,
 }
 
+/// Performs the head rel operation and returns an error if it cannot be completed.
 pub fn head_rel(ledger: &Ledger) -> String {
     format!("{}/ledger/HEAD.json", ledger.name())
 }

@@ -12,15 +12,23 @@ use std::fs;
 use std::path::Path;
 
 #[derive(Clone, Debug, Serialize, PartialEq)]
+/// `Rule` is a record for the rule contract in this module: Bucket lifecycle configurations (as returned by get-bucket-lifecycle-configuration).
 pub struct Rule {
+    /// Stable identifier for this value.
     pub id: String,
+    /// Enabled recorded for this rule.
     pub enabled: bool,
+    /// Prefix recorded for this rule.
     pub prefix: String,
     /// Tag-filtered rules apply only to tagged objects; untagged groups are not covered.
     pub tagged: bool,
+    /// Lower bound on size.
     pub min_size: Option<u64>,
+    /// Collection of transitions values carried by this rule.
     pub transitions: Vec<(u64, String)>,
+    /// Optional expiration days value; `None` means it is not available.
     pub expiration_days: Option<u64>,
+    /// Optional noncurrent days value; `None` means it is not available.
     pub noncurrent_days: Option<u64>,
 }
 
@@ -85,7 +93,9 @@ fn rule_from(v: &Value) -> Rule {
 /// Bucket -> rules, plus the file hashes for the inputs lock.
 #[derive(Debug, Default)]
 pub struct Lifecycles {
+    /// Mapping of rules values carried by this lifecycles.
     pub rules: BTreeMap<String, Vec<Rule>>,
+    /// Collection of files values carried by this lifecycles.
     pub files: Vec<(String, String, u64)>,
 }
 
@@ -140,6 +150,7 @@ pub struct Coverage {
     pub cold_class: Option<String>,
     /// Untagged full or partial rules that expire current versions.
     pub expires_current: Vec<String>,
+    /// Optional noncurrent days value; `None` means it is not available.
     pub noncurrent_days: Option<u64>,
 }
 
@@ -173,6 +184,7 @@ fn coldness(class: &str) -> u8 {
     }
 }
 
+/// Performs the coverage operation and returns an error if it cannot be completed.
 pub fn coverage(l: &Lifecycles, bucket: &str, prefix: &str, direct: bool) -> Coverage {
     let Some(rules) = l.rules.get(bucket) else {
         return Coverage::default();

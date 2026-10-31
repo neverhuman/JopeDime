@@ -8,87 +8,135 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 
+/// Schema identifier for archive values.
 pub const ARCHIVE_SCHEMA: &str = "jope.qd-archive/v1";
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+/// `ArchiveScope` is an enum for the archive scope contract in this module: Bounded quality-diversity proposal memory.
 pub enum ArchiveScope {
+    /// The `PerContext` case of `ArchiveScope`.
     PerContext,
+    /// The `PerFamily` case of `ArchiveScope`.
     PerFamily,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+/// `Fidelity` is an enum for the fidelity contract in this module: Bounded quality-diversity proposal memory.
 pub enum Fidelity {
+    /// The `Low` case of `Fidelity`.
     Low,
+    /// The `Final` case of `Fidelity`.
     Final,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+/// `CandidateRole` is an enum for the candidate role contract in this module: Bounded quality-diversity proposal memory.
 pub enum CandidateRole {
+    /// The `General` case of `CandidateRole`.
     General,
+    /// The `Specialist` case of `CandidateRole`.
     Specialist,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+/// `ArchiveConfig` is a record for the archive config contract in this module: Bounded quality-diversity proposal memory.
 pub struct ArchiveConfig {
     /// SHA-256 identity emitted by the frozen descriptor-space definition.
     pub descriptor_version: String,
+    /// SHA-256 digest identifying the associated descriptor identity.
     pub descriptor_identity_sha256: String,
+    /// Scope label describing the population covered by this result.
     pub scope: ArchiveScope,
+    /// Upper bound on cells.
     pub max_cells: usize,
+    /// Upper bound on bytes.
     pub max_bytes: usize,
+    /// Upper bound on events.
     pub max_events: usize,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+/// `Candidate` is a record for the candidate contract in this module: Bounded quality-diversity proposal memory.
 pub struct Candidate {
+    /// SHA-256 digest identifying the associated evaluator identity.
     pub evaluator_identity_sha256: String,
+    /// Fidelity recorded for this candidate.
     pub fidelity: Fidelity,
+    /// Data or authority role assigned to this value.
     pub role: CandidateRole,
+    /// Identifier for the associated context.
     pub context_id: String,
+    /// Identifier for the associated family.
     pub family_id: String,
+    /// Identifier for the associated lineage.
     pub lineage_id: String,
+    /// Exposure ancestry recorded for this candidate.
     pub exposure_ancestry: BTreeSet<String>,
+    /// SHA-256 digest identifying the associated observation.
     pub observation_sha256: String,
+    /// Quality recorded for this candidate.
     pub quality: f64,
+    /// Collection of descriptor bins values carried by this candidate.
     pub descriptor_bins: Vec<u32>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+/// `Elite` is a record for the elite contract in this module: Bounded quality-diversity proposal memory.
 pub struct Elite {
+    /// Candidate recorded for this elite.
     pub candidate: Candidate,
+    /// SHA-256 digest identifying the associated descriptor identity.
     pub descriptor_identity_sha256: String,
+    /// Collection of bins values carried by this elite.
     pub bins: Vec<u32>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+/// `Decision` is an enum for the decision contract in this module: Bounded quality-diversity proposal memory.
 pub enum Decision {
+    /// The `Inserted` case of `Decision`.
     Inserted,
-    Replaced { old_observation_sha256: String },
+    /// The `Replaced` case of `Decision`.
+    Replaced {
+        /// SHA-256 digest identifying the associated old observation.
+        old_observation_sha256: String,
+    },
+    /// The `RejectedLowerQuality` case of `Decision`.
     RejectedLowerQuality,
+    /// The `RejectedCapacity` case of `Decision`.
     RejectedCapacity,
+    /// The `RejectedByteLimit` case of `Decision`.
     RejectedByteLimit,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+/// `ArchiveEvent` is a record for the archive event contract in this module: Bounded quality-diversity proposal memory.
 pub struct ArchiveEvent {
+    /// SHA-256 digest identifying the associated observation.
     pub observation_sha256: String,
+    /// Decision recorded for this archive event.
     pub decision: Decision,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+/// `Archive` is a record for the archive contract in this module: Bounded quality-diversity proposal memory.
 pub struct Archive {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// SHA-256 digest identifying the associated identity.
     pub identity_sha256: String,
+    /// Config recorded for this archive.
     pub config: ArchiveConfig,
     cells: BTreeMap<String, Elite>,
     events: Vec<ArchiveEvent>,
 }
 
 impl Archive {
+    /// Constructs or opens a new value from the supplied inputs.
     pub fn new(config: ArchiveConfig) -> Result<Self> {
         validate_config(&config)?;
         let identity_sha256 = archive_identity(&config)?;
@@ -106,6 +154,7 @@ impl Archive {
         Ok(archive)
     }
 
+    /// Performs the from bytes operation and returns an error if it cannot be completed.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
         let archive: Self = serde_json::from_slice(bytes).context("decode QD archive")?;
         archive.validate()?;
@@ -116,6 +165,7 @@ impl Archive {
         Ok(archive)
     }
 
+    /// Performs the to bytes operation and returns an error if it cannot be completed.
     pub fn to_bytes(&self) -> Result<Vec<u8>> {
         self.validate()?;
         let bytes = serde_json::to_vec(self).context("serialize QD archive")?;
@@ -126,6 +176,7 @@ impl Archive {
         Ok(bytes)
     }
 
+    /// Validates this value against its invariants and returns an error when validation fails.
     pub fn validate(&self) -> Result<()> {
         validate_config(&self.config)?;
         ensure!(self.schema == ARCHIVE_SCHEMA, "unknown archive schema");
@@ -178,18 +229,22 @@ impl Archive {
         Ok(())
     }
 
+    /// Performs the identity SHA-256 operation and returns an error if it cannot be completed.
     pub fn identity_sha256(&self) -> &str {
         &self.identity_sha256
     }
 
+    /// Performs the cells operation and returns an error if it cannot be completed.
     pub fn cells(&self) -> &BTreeMap<String, Elite> {
         &self.cells
     }
 
+    /// Performs the events operation and returns an error if it cannot be completed.
     pub fn events(&self) -> &[ArchiveEvent] {
         &self.events
     }
 
+    /// Performs the encoded bytes operation and returns an error if it cannot be completed.
     pub fn encoded_bytes(&self) -> Result<usize> {
         Ok(serde_json::to_vec(self)
             .context("serialize QD archive")?
@@ -343,15 +398,21 @@ fn archive_identity(config: &ArchiveConfig) -> Result<String> {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+/// `RetrievalRequest` is a record for the retrieval request contract in this module: Bounded quality-diversity proposal memory.
 pub struct RetrievalRequest {
+    /// Identifier for the associated context.
     pub context_id: String,
+    /// Identifier for the associated family.
     pub family_id: String,
+    /// Identifier for the associated lineage.
     pub lineage_id: String,
+    /// Forbidden exposure ids recorded for this retrieval request.
     pub forbidden_exposure_ids: BTreeSet<String>,
 }
 
 /// I04 adapter must bind this decision to the authenticated requester and its current capabilities.
 pub trait RetrievalPolicy {
+    /// Performs the allows operation and returns an error if it cannot be completed.
     fn allows(&self, request: &RetrievalRequest, candidate: &Candidate) -> bool;
 }
 

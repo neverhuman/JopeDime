@@ -43,9 +43,13 @@ use serde_json::Value;
 use std::fs;
 use std::path::{Component, Path, PathBuf};
 
+/// Schema identifier for corpus values.
 pub const CORPUS_SCHEMA: &str = "parallel.teaching_corpus.v1";
+/// Schema identifier for corpus publication values.
 pub const CORPUS_PUBLICATION_SCHEMA: &str = "parallel.corpus_publication.v1";
+/// Schema identifier for checkpoint values.
 pub const CHECKPOINT_SCHEMA: &str = "parallel.checkpoint.v1";
+/// Schema identifier for recovery values.
 pub const RECOVERY_SCHEMA: &str = "parallel.checkpoint_recovery.v1";
 
 /// The files of a published corpus directory, every one of them a corpus member.
@@ -70,7 +74,9 @@ pub const CHECKPOINT_OBJECTS: [(&str, &str); 4] = [
 /// What one engine event becomes: blobs first, then the objects that name them, in order.
 #[derive(Clone, Debug, Default)]
 pub struct Mapped {
+    /// Collection of blobs values carried by this mapped.
     pub blobs: Vec<Vec<u8>>,
+    /// Number of objects represented by this value.
     pub objects: Vec<Encoded>,
 }
 
@@ -159,10 +165,12 @@ fn planned(manifest: &Decoded<RunManifest>, work_id: &str) -> Result<()> {
 /// A published engine corpus as a W8 corpus manifest.
 #[derive(Clone, Debug)]
 pub struct EngineCorpus {
+    /// Manifest recorded for this engine corpus.
     pub manifest: Decoded<CorpusManifest>,
     /// sha256 of the corpus `index.json`: the identity every checkpoint trained on it binds
     /// (`corpus_sha256` in its `state.json`).
     pub index_sha256: String,
+    /// Mapped recorded for this engine corpus.
     pub mapped: Mapped,
 }
 
@@ -274,9 +282,11 @@ pub fn corpus(
 /// What a run's `latest.json` names.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Published {
+    /// Step recorded for this published.
     pub step: u64,
     /// `<run>/checkpoints/step-<step>`, relative to the engine root.
     pub checkpoint: PathBuf,
+    /// SHA-256 digest identifying the associated state.
     pub state_sha256: String,
     /// The `latest.json` bytes that said so.
     pub latest: Vec<u8>,
@@ -314,16 +324,22 @@ pub fn published(root: &Path, run: &Path) -> Result<Option<Published>> {
 /// The last W8 checkpoint mapped for the run and the engine step it was taken at.
 #[derive(Clone, Debug)]
 pub struct Previous {
+    /// Checkpoint recorded for this previous.
     pub checkpoint: Decoded<Checkpoint>,
+    /// Step recorded for this previous.
     pub step: u64,
 }
 
 /// A published engine checkpoint as the next W8 update.
 #[derive(Clone, Debug)]
 pub struct EngineCheckpoint {
+    /// Step recorded for this engine checkpoint.
     pub step: u64,
+    /// Exposure recorded for this engine checkpoint.
     pub exposure: Decoded<Exposure>,
+    /// Checkpoint recorded for this engine checkpoint.
     pub checkpoint: Decoded<Checkpoint>,
+    /// Mapped recorded for this engine checkpoint.
     pub mapped: Mapped,
 }
 
@@ -538,14 +554,20 @@ pub fn result(
 /// the original run/attempt identity. This is observation, not I04 replay eligibility.
 #[derive(Clone, Debug)]
 pub struct SearchWorkBinding {
+    /// Identifier for the associated request.
     pub request_id: String,
+    /// Identifier for the associated work.
     pub work_id: String,
 }
 
 #[derive(Clone, Debug)]
+/// `SearchMapped` is a record for the search mapped contract in this module: W8 product integration: the engine's durable events as W8 progress objects.
 pub struct SearchMapped {
+    /// Mapped recorded for this search mapped.
     pub mapped: Mapped,
+    /// Collection of events values carried by this search mapped.
     pub events: Vec<Decoded<Event>>,
+    /// Reconciliation recorded for this search mapped.
     pub reconciliation: jope_pipeline::search_events::Reconciliation,
 }
 

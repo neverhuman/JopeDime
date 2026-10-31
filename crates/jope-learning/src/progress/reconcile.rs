@@ -45,6 +45,7 @@ use std::collections::{BTreeMap, BTreeSet};
 /// What reconciliation found, and with `--apply`, what it did.
 #[derive(Clone, Debug, Serialize)]
 pub struct Plan {
+    /// Identifier for the associated run.
     pub run_id: String,
     /// The run pointer: the winner.
     pub head: Option<Head>,
@@ -64,8 +65,11 @@ pub struct Plan {
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `Applied` is a record for the applied contract in this module: W8-T04: reconcile a run publication that lost a race.
 pub struct Applied {
+    /// Optional restored value; `None` means it is not available.
     pub restored: Option<Restored>,
+    /// Optional publication value; `None` means it is not available.
     pub publication: Option<Publication>,
 }
 

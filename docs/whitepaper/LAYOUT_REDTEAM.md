@@ -71,17 +71,23 @@ The before/after page comparisons are in [`redteam/`](redteam/):
 
 ## Clarity and structure (for the writer)
 
-- **Float pressure on pp. 13–14.** Figures 6–8 belong to §6.8, but Figure 8
-  floats into the Results pages. Together with the four pending Results floats,
-  pp. 13–14 hold seven floats. Once the real Results exist, consider moving
-  Figure 8 to an appendix or merging it with Figure 7.
+- **Float pressure on pp. 13–15.** Figures 5–8 belong to §6.8, but §6.8 ends
+  on p. 13, so Figure 6 lands on p. 14 and Figures 7–8 on p. 15, among the
+  §7 tables and placeholders. Two layout-only fixes were tested in pass 8 and
+  rejected:
+  - a `\FloatBarrier` after §6.8 adds two pages and leaves pp. 14–15 as
+    half-empty float pages;
+  - `[tb]` placement leaves every float where it was.
+
+  Once the real Results exist, consider moving the development telemetry
+  (Figures 6–8) to an appendix or merging Figures 7 and 8. Their captions
+  already mark them as development measurements.
 - **Section 3 length.** It runs about 3 pages, longer than §4–§6. Each road has
   the same "What EurekaZero takes / The question carried forward" coda, which
   works. A reader looking for the method reaches §6 only on p. 10.
 - **References outside the cleveref chain.** Every cross-reference resolves
   through cleveref with consistent capitalisation ("Section", "Appendix",
-  "Equation (n)"). The only references outside that chain are the hard-coded
-  Box references (O2).
+  "Equation (n)"). Box references joined the chain when O2 was fixed (#770).
 
 ## Full upgrade passes (owner addendum t2052)
 
@@ -95,7 +101,31 @@ The owner widened the scope to a full upgrade, carried out in small sequential P
 | 4 | Results presentation only, with every sentence, number and TBD of §7 preserved:<br>• "Evaluation plan at a glance" table (Table 5).<br>• Earlier diagnostics moved into their own closing subsection (§7.7).<br>• Worked-game fields moved from §4.6 into a §7.6 record table; §4.6 becomes "The analogy's limits".<br>• Pilot-cost figure moved from §5.2 into §7.4.<br>All results-dependent placeholders now sit in §7. | merged (#786) |
 | 5 | Discussion, Conclusion and appendices:<br>• §8 becomes "Discussion", with each subsection ending in an explicit outcome-to-claim rule. Four per-subsection TBDs become pointers to the §7 subsections that will settle them; the opening TBD stays as the single tracked marker.<br>• New "Limitations" subsection (§8.5) and a §9 Conclusion.<br>• Appendix A becomes a domain-by-domain referee inventory (Table 9), restating referees already cited in §3–§4.<br>• Receipt TBDs in Appendices B and C point to the §7.1 evaluation record.<br>The regressor licence TBD stays. | merged (#789) |
 | 6 | Fixes from an independent camera-ready review (dispositions below): scope stated in the abstract and introduction; honest evidence status; ratchet, map and loss wording matched to §6 and the code-level records; exploration programs added; drafting-process language removed; pointer, typography and Results-presentation slips fixed. | merged (#792) |
-| 7 | Camera-ready preamble polish, no text change: equal-height columns on the last page (O11) and no blank line after a nested `\EndFor` in Algorithm 1 (O9). Algorithm 1 is two lines shorter, so text on pp. 13–17 moves up with every float on its original page, and p. 23 is rebalanced. The extracted text keeps the same words and characters. | this PR |
+| 7 | Camera-ready preamble polish, no text change: equal-height columns on the last page (O11) and no blank line after a nested `\EndFor` in Algorithm 1 (O9). Algorithm 1 is two lines shorter, so text on pp. 13–17 moves up with every float on its original page, and p. 23 is rebalanced. The extracted text keeps the same words and characters. | merged (#896) |
+| 8 | H56 paper-vs-code recheck (below): all 12 dimensions are FIXED or ALREADY-OK. One §6.8 framing sentence states that the inspected loop source is not yet bound to the run behind the retained logs. `\brokenpenalty=10000` (in `macros.tex`) stops words hyphenating across a column or page break; this removes the one on main ("Sup-/ply", §7.4) and the one this reflow would otherwise create ("sec-/comp", Appendix C). The float-pressure note is updated with the layout fixes tested. | this PR |
+
+## H56 paper-vs-code recheck (pass 8)
+
+[`h56_audit/SUMMARY.md`](../../research/flywheel_selfplay/h56_audit/SUMMARY.md) (#608, merged at `db20a45a`) compares the paper with the code in 12 dimensions. Each one was rechecked against the current paper and code:
+- **ALREADY-OK** means the paper already avoided the overclaim when the audit merged. Some audit rows describe source drafts or earlier text, not the merged paper.
+- **FIXED** means a PR after the audit resolved it.
+
+None of the 12 leaves the paper overclaiming the writer or the map relative to the live loop.
+
+| # | Dimension | Status | Where the paper stands now |
+|---|---|---|---|
+| 1 | Neural writer | FIXED (#791; §5 scope #639, #792) | §6.8: "this loop does not optimize a neural program writer"; heuristic edits, retrieval and grammar sampling supply candidates. §5.3 confines the 8B–1.5T writer figures to language-model writers and comparators; the reference network has 27.8M parameters and at most 128 tokens. |
+| 2 | Compiler repair | FIXED (#688) | §5.1 counts a repair that emits a revised candidate as another attempt, with no separate repair term. Box 1, §5.1 and §5.6 state that the single-candidate protocol has no repair; §5.3's repair turns concern language-model writers. |
+| 3 | Problem encoder | FIXED (#814); §6.2 ALREADY-OK | §6.2's 2,048-value encoder belongs to the reference checkpoint. §6.8 states that the inspected loop zeroes separate context and prior inputs. |
+| 4 | Map / value network | ALREADY-OK in §6 (#590); FIXED in §4 (#792) | §6.1, §6.4 and §7.5: the map does not condition, screen or steer the writer. #792 removed §4's claim that also-rans become hard negatives for the map. |
+| 5 | Training objective | ALREADY-OK (#590); live adapter FIXED (#814) | Eq. 4's rank weights $0.05+\rho^4$ match the native `Σ (0.05 + p⁴)` (`crates/jope-engine/src/training/objective.rs`); #824 adds the native smoothing and normalization. The audit's three-tier RL reward appears only in a source draft. §6.8 describes the adapter's regression-plus-listwise objective. |
+| 6 | Revealed trajectory | FIXED (#791) | §6.8: the pool utility uses the recorded scores and gate outcomes of the first four candidates as revealed history, and selects from the pool including those entries. |
+| 7 | Referee folds | FIXED (#814) | §6.8: two training-side folds in the loop; the historical reference procedure specifies five. |
+| 8 | Pool admission | FIXED (#814) | §6.8: ordinary admission keeps only programs that pass the gates and strictly improve their context's incumbent; evaluations are logged separately. |
+| 9 | Incumbent ratchet | ALREADY-OK (#602) | Figure 5 marks accepted ties. §6.8 reports 4 acceptances, of which 2 are strict gains, in 695 rounds and a late plateau, and claims no continuous improvement. The audit's rollback-on-reject observation is not described in the paper. It was not re-verified against the current loop source, so no sentence was added. |
+| 10 | Diversity archive | FIXED (#634) | §5.4 lists quality-diversity archives only among possible exploration controls. The reference procedure's exploration is 64 drafts, 16 random programs and seeded verified search. |
+| 11 | Deployment budget | ALREADY-OK (#599); FIXED (#792, #791) | §6.7: $B=1$ is a protocol constraint, and its quality is an empirical question. §5.4 and Algorithm 1 show the training-side 64 + 16 candidates. §6.8 calls the loop's pool selection "a conditional ranking task", separate from a single new program. |
+| 12 | Telemetry continuity | ALREADY-OK | At the audit's merge the plotted data already covered one run only: rounds 775–1469 (695 admission rows) and 1342–1469 (25 summaries). The audit's "rounds 1–1332" row describes an earlier draft. The later promotions slice (rounds 1838–1857, #892) is shown separately. |
 
 ## Needs Jepson/team
 

@@ -1,0 +1,60 @@
+{
+  "schema": "jope.h88.w3-source-status-trace/v1",
+  "decision": "REJECT_SIGNATURE_AS_COMPLETED_STATUS_PROVENANCE",
+  "purpose": "CPU-only source and allowlisted training-metadata trace; not a W3 study run",
+  "source_main": "b34075ef64ad5d28d4766ae40f55c542125b9f9c",
+  "input": {
+    "packet": "H50 admitted packet",
+    "source_manifest_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "selected_train_prefix_sha256": "7f13cec92705851386346b84e75008aaa0e299b6ff10e1dd809c9eddcd5a4499",
+    "training_rows": 1219,
+    "training_role": "DL-Train",
+    "fields_per_row": [
+      "context_sha256",
+      "dataset_id",
+      "dl_split",
+      "family_id",
+      "n_candidates",
+      "n_gate_pass",
+      "pool_sha256",
+      "source_split",
+      "task",
+      "train_only_jtt1_sha256",
+      "view_id"
+    ],
+    "completion_or_status_fields": []
+  },
+  "upstream_h86": {
+    "run_id": "luna-tel-h86-20261031T0709Z-01",
+    "status_mask_sha256": "37a9271f92c1ab8f2e554c97e8a9cb414e50cb1362e263a41b1c93164868f4f6",
+    "status_rule": "value-signature inference; not recorded completion status",
+    "audit_scope": "H86 report/code metadata only; H86 status_mask.npz and outcome arrays were not opened"
+  },
+  "ruling": {
+    "h86_mask_satisfies_completed_status_provenance": false,
+    "w3_status_admission": "BLOCKED",
+    "w3_launch_authorized": false,
+    "required_upstream_evidence": [
+      "per-row source event record bound to context_sha256 and program_sha256",
+      "explicit completion state distinguishing execution failure, completed gate failure, and completed pass",
+      "metric/evaluator and gate identity for the recorded result",
+      "source object version and hash plus a verified join/order binding to the H50 pool row"
+    ],
+    "other_w3_prerequisites_still_open": [
+      "accepted W1 winner configuration",
+      "registered W3 implementation and matched execution manifest",
+      "approved GPU lock slot before any GPU work"
+    ]
+  },
+  "exclusions": {
+    "dl_val_payloads_opened": 0,
+    "outer_payloads_opened": 0,
+    "sealed_or_holdout_payloads_opened": 0,
+    "fitness_logratio_gate_arrays_opened": 0,
+    "models_fitted_or_updated": 0,
+    "gpu_hours": 0,
+    "elo": null,
+    "auc": null,
+    "dope_digest": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+  }
+}

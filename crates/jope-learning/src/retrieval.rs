@@ -10,64 +10,105 @@ use std::collections::BTreeSet;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `Candidate` is a record for the candidate contract in this module: Frozen, source-separated retrieval selection. Archive loading belongs to the caller; this module accepts an immutable candidate snapshot and returns materialized seed data.
 pub struct Candidate {
+    /// Identifier for the associated candidate.
     pub candidate_id: String,
+    /// Canonical program or genome representation.
     pub genome: String,
+    /// SHA-256 digest of the canonical program source.
     pub program_sha256: String,
+    /// Collection of parent families values carried by this candidate.
     pub parent_families: Vec<String>,
+    /// Collection of dataset families values carried by this candidate.
     pub dataset_families: Vec<String>,
+    /// Collection of context values carried by this candidate.
     pub context: Vec<f64>,
+    /// Data or authority role assigned to this value.
     pub role: String,
+    /// SHA-256 digest identifying the associated role manifest.
     pub role_manifest_sha256: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `RetrievalRequest` is a record for the retrieval request contract in this module: Frozen, source-separated retrieval selection. Archive loading belongs to the caller; this module accepts an immutable candidate snapshot and returns materialized seed data.
 pub struct RetrievalRequest {
+    /// Identifier for the associated request.
     pub request_id: String,
+    /// Collection of own parent families values carried by this retrieval request.
     pub own_parent_families: Vec<String>,
+    /// Collection of own dataset families values carried by this retrieval request.
     pub own_dataset_families: Vec<String>,
+    /// SHA-256 digest identifying the associated own program.
     pub own_program_sha256: Vec<String>,
     /// Digest of the caller-verified frozen role roster.
     pub role_manifest_sha256: String,
+    /// Collection of context values carried by this retrieval request.
     pub context: Vec<f64>,
+    /// Collection of eligible support values carried by this retrieval request.
     pub eligible_support: Vec<String>,
+    /// Cap recorded for this retrieval request.
     pub cap: usize,
+    /// Requested by source recorded for this retrieval request.
     pub requested_by_source: std::collections::BTreeMap<SeedSourceV2, usize>,
+    /// SHA-256 digest identifying the associated snapshot.
     pub snapshot_sha256: String,
+    /// Cold cost ms recorded for this retrieval request.
     pub cold_cost_ms: u64,
+    /// Warm cost ms recorded for this retrieval request.
     pub warm_cost_ms: u64,
+    /// Cache warmup ms recorded for this retrieval request.
     pub cache_warmup_ms: u64,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+/// `RetrievalMode` is an enum for the retrieval mode contract in this module: Frozen, source-separated retrieval selection. Archive loading belongs to the caller; this module accepts an immutable candidate snapshot and returns materialized seed data.
 pub enum RetrievalMode {
+    /// The `Cold` case of `RetrievalMode`.
     Cold,
+    /// The `Warm` case of `RetrievalMode`.
     Warm,
+    /// The `ShuffledContext` case of `RetrievalMode`.
     ShuffledContext,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `RetrievalResult` is a record for the retrieval result contract in this module: Frozen, source-separated retrieval selection. Archive loading belongs to the caller; this module accepts an immutable candidate snapshot and returns materialized seed data.
 pub struct RetrievalResult {
+    /// Mode recorded for this retrieval result.
     pub mode: RetrievalMode,
+    /// Seeds recorded for this retrieval result.
     pub seeds: SeedSetV2,
+    /// SHA-256 digest identifying the associated eligible support.
     pub eligible_support_sha256: String,
+    /// Resource cost ms recorded for this retrieval result.
     pub resource_cost_ms: u64,
+    /// Cache warmup ms recorded for this retrieval result.
     pub cache_warmup_ms: u64,
+    /// Collection of selected candidate IDs values carried by this retrieval result.
     pub selected_candidate_ids: Vec<String>,
+    /// Candidate counts recorded for this retrieval result.
     pub candidate_counts: CandidateCounts,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `CandidateCounts` is a record for the candidate counts contract in this module: Frozen, source-separated retrieval selection. Archive loading belongs to the caller; this module accepts an immutable candidate snapshot and returns materialized seed data.
 pub struct CandidateCounts {
+    /// Offered recorded for this candidate counts.
     pub offered: usize,
+    /// Outside frozen support recorded for this candidate counts.
     pub outside_frozen_support: usize,
+    /// Non train role recorded for this candidate counts.
     pub non_train_role: usize,
+    /// Missing ancestry recorded for this candidate counts.
     pub missing_ancestry: usize,
+    /// Own lineage recorded for this candidate counts.
     pub own_lineage: usize,
+    /// Eligible recorded for this candidate counts.
     pub eligible: usize,
 }
 

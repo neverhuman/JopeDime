@@ -14,12 +14,16 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
+/// Schema identifier for event values.
 pub const EVENT_SCHEMA: &str = "jope.hwm-event/v1";
+/// Schema identifier for freeze values.
 pub const FREEZE_SCHEMA: &str = "jope.hwm-freeze/v1";
 
 /// One record proposed to the ledger with the bytes that become its blob.
 pub struct Candidate {
+    /// Record recorded for this candidate.
     pub record: HwmRecord,
+    /// Collection of blob values carried by this candidate.
     pub blob: Vec<u8>,
     /// True when `prev_event_sha256`/`improvement_number` are copied from the source's own chain
     /// (champions); false when the ledger assigns them from the record it displaces.
@@ -28,13 +32,17 @@ pub struct Candidate {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "kebab-case", tag = "outcome", content = "reason")]
+/// `Decision` is an enum for the decision contract in this module: The high-water-mark ledger: admission rules, ingest, show, verify and freeze.
 pub enum Decision {
+    /// The `Accepted` case of `Decision`.
     Accepted,
+    /// The `Rejected` case of `Decision`.
     Rejected(RejectReason),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
+/// `RejectReason` is an enum for the reject reason contract in this module: The high-water-mark ledger: admission rules, ingest, show, verify and freeze.
 pub enum RejectReason {
     /// Same score as the incumbent: the older record stays.
     Tie,
@@ -55,6 +63,7 @@ pub enum RejectReason {
 }
 
 impl RejectReason {
+    /// Returns the stable string representation of this value.
     pub fn as_str(self) -> &'static str {
         match self {
             RejectReason::Tie => "tie",
@@ -78,6 +87,7 @@ pub enum Transition {
     Initialized,
     /// Strictly better than the comparable incumbent it displaced.
     Improved,
+    /// The `Tie` case of `Transition`.
     Tie,
     /// Comparable with the incumbent and not better.
     NotImproved,
@@ -85,6 +95,7 @@ pub enum Transition {
     Noncomparable,
     /// Train-side OOF record without a recomputable measured qualification.
     Ineligible,
+    /// The `Invalid` case of `Transition`.
     Invalid,
     /// A record this pointer already accepted, delivered again: never another improvement.
     Duplicate,
@@ -93,6 +104,7 @@ pub enum Transition {
 }
 
 impl Transition {
+    /// Performs the of operation and returns an error if it cannot be completed.
     pub fn of(incumbent: Option<&HwmRecord>, decision: &Decision) -> Self {
         match decision {
             Decision::Accepted if incumbent.is_none() => Self::Initialized,
@@ -110,6 +122,7 @@ impl Transition {
         }
     }
 
+    /// Returns the stable string representation of this value.
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Initialized => "initialized",
@@ -154,17 +167,24 @@ pub fn decide(incumbent: Option<&HwmRecord>, candidate: &HwmRecord) -> Decision 
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `HwmEvent` is a record for the HWM event contract in this module: The high-water-mark ledger: admission rules, ingest, show, verify and freeze.
 pub struct HwmEvent {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
     /// Position within the batch.
     pub seq: u64,
+    /// Outcome recorded for this HWM event.
     pub outcome: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Explanation associated with the recorded disposition.
     pub reason: Option<String>,
+    /// State pointer associated with this record.
     pub pointer: PointerKey,
+    /// Record recorded for this HWM event.
     pub record: HwmRecord,
     /// The record this one replaced at the pointer (accepted events only).
     pub displaced_record_sha256: Option<String>,
+    /// Unix timestamp when this event was recorded.
     pub ts_unix: u64,
     /// Absent on events written before transitions were recorded; `verify` rederives it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -175,31 +195,49 @@ pub struct HwmEvent {
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `Reject` is a record for the reject contract in this module: The high-water-mark ledger: admission rules, ingest, show, verify and freeze.
 pub struct Reject {
+    /// SHA-256 digest identifying the associated identity.
     pub identity_sha256: String,
+    /// SHA-256 digest identifying the associated legacy identity.
     pub legacy_identity_sha256: Option<String>,
+    /// State pointer associated with this record.
     pub pointer: String,
+    /// Explanation associated with the recorded disposition.
     pub reason: String,
+    /// Measured or derived value carried by this result.
     pub value: f64,
+    /// Optional incumbent value value; `None` means it is not available.
     pub incumbent_value: Option<f64>,
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `IngestReport` is a record for the ingest report contract in this module: The high-water-mark ledger: admission rules, ingest, show, verify and freeze.
 pub struct IngestReport {
+    /// Provenance source for this value.
     pub source: Value,
+    /// Candidates recorded for this ingest report.
     pub candidates: u64,
+    /// Accepted recorded for this ingest report.
     pub accepted: u64,
+    /// Rejected recorded for this ingest report.
     pub rejected: u64,
     /// Every candidate's [`Transition`]; `accepted` = `initialized` + `improved`.
     pub transitions: BTreeMap<String, u64>,
+    /// Pointers written recorded for this ingest report.
     pub pointers_written: u64,
     /// Pointers that lagged their ledger tip (a crash before a pointer write) and were rolled
     /// forward; included in `pointers_written`.
     pub pointers_recovered: u64,
+    /// Blobs written recorded for this ingest report.
     pub blobs_written: u64,
+    /// Ledger batch receipt produced by the operation, if one was appended.
     pub batch: Option<crate::ledger::BatchReceipt>,
+    /// Optional mirror value; `None` means it is not available.
     pub mirror: Option<MirrorReport>,
+    /// Collection of rejects values carried by this ingest report.
     pub rejects: Vec<Reject>,
+    /// Seconds recorded for this ingest report.
     pub seconds: f64,
 }
 
@@ -600,11 +638,13 @@ fn resolve<'a>(
 }
 
 #[derive(Clone, Debug, Default, Serialize)]
+/// `RecoverReport` is a record for the recover report contract in this module: The high-water-mark ledger: admission rules, ingest, show, verify and freeze.
 pub struct RecoverReport {
     /// False for a plan ([`recover_plan`]): nothing was written and no lock was taken.
     pub applied: bool,
     /// The ledger batch a lagging `HEAD.json` was (or would be) rolled forward to.
     pub ledger_head: Option<String>,
+    /// Pointers recorded for this recover report.
     pub pointers: u64,
     /// Pointers rolled forward (or, in a plan, that would be) to their ledger tip.
     pub recovered: Vec<String>,
@@ -858,6 +898,7 @@ fn settle_owed(
     Ok(())
 }
 
+/// Schema identifier for owed values.
 pub const OWED_SCHEMA: &str = "jope.hwm-mirror-owed/v1";
 
 /// `<state>/progress/mirror-owed/hwm-<sha256(url)>.json`: the `current.json` pointers this host
@@ -875,12 +916,16 @@ pub fn owed_path(state: &State, url: &str) -> PathBuf {
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Owed {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Url recorded for this owed.
     pub url: String,
+    /// Pointers recorded for this owed.
     pub pointers: BTreeSet<PointerKey>,
 }
 
 impl Owed {
+    /// Performs the load operation and returns an error if it cannot be completed.
     pub fn load(state: &State, url: &str) -> Result<Owed> {
         let path = owed_path(state, url);
         let bytes = match fs::read(&path) {
@@ -910,6 +955,7 @@ impl Owed {
         Ok(owed)
     }
 
+    /// Performs the save operation and returns an error if it cannot be completed.
     pub fn save(&self, state: &State) -> Result<()> {
         atomic_write(
             &owed_path(state, &self.url),
@@ -973,8 +1019,11 @@ pub fn events(state: &State) -> Result<Vec<HwmEvent>> {
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `ShowEntry` is a record for the show entry contract in this module: The high-water-mark ledger: admission rules, ingest, show, verify and freeze.
 pub struct ShowEntry {
+    /// State pointer associated with this record.
     pub pointer: PointerKey,
+    /// Record recorded for this show entry.
     pub record: HwmRecord,
 }
 
@@ -1019,37 +1068,56 @@ pub fn find_identity(state: &State, id: &str) -> Result<Option<HwmEvent>> {
 }
 
 #[derive(Clone, Debug, Serialize, Default)]
+/// `VerifyReport` is a record for the verify report contract in this module: The high-water-mark ledger: admission rules, ingest, show, verify and freeze.
 pub struct VerifyReport {
+    /// Ledger recorded for this verify report.
     pub ledger: LedgerReport,
+    /// Events recorded for this verify report.
     pub events: u64,
+    /// Accepted recorded for this verify report.
     pub accepted: u64,
+    /// Rejected recorded for this verify report.
     pub rejected: u64,
     /// Rederived from ledger order, never from a recorded flag: `accepted` split into
     /// pointer bootstraps and committed improvements.
     pub initialized: u64,
+    /// Improved recorded for this verify report.
     pub improved: u64,
+    /// Identities recorded for this verify report.
     pub identities: u64,
+    /// Pointers on disk recorded for this verify report.
     pub pointers_on_disk: u64,
+    /// Blobs checked recorded for this verify report.
     pub blobs_checked: u64,
+    /// Champion records recorded for this verify report.
     pub champion_records: u64,
+    /// Champion chain links walked recorded for this verify report.
     pub champion_chain_links_walked: u64,
+    /// Champion chain links unresolved recorded for this verify report.
     pub champion_chain_links_unresolved: u64,
+    /// Collection of breaks values carried by this verify report.
     pub breaks: Vec<VerifyBreak>,
 }
 
 impl VerifyReport {
+    /// Performs the ok operation and returns an error if it cannot be completed.
     pub fn ok(&self) -> bool {
         self.breaks.is_empty() && self.ledger.ok()
     }
+    /// Performs the total breaks operation and returns an error if it cannot be completed.
     pub fn total_breaks(&self) -> usize {
         self.breaks.len() + self.ledger.breaks.len()
     }
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `VerifyBreak` is a record for the verify break contract in this module: The high-water-mark ledger: admission rules, ingest, show, verify and freeze.
 pub struct VerifyBreak {
+    /// Record kind or category represented by this value.
     pub kind: String,
+    /// Subject recorded for this verify break.
     pub subject: String,
+    /// Detail recorded for this verify break.
     pub detail: String,
 }
 
@@ -1427,31 +1495,52 @@ fn verify_champion(
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `FreezeEntry` is a record for the freeze entry contract in this module: The high-water-mark ledger: admission rules, ingest, show, verify and freeze.
 pub struct FreezeEntry {
+    /// State pointer associated with this record.
     pub pointer: PointerKey,
+    /// SHA-256 digest identifying the associated identity.
     pub identity_sha256: String,
+    /// SHA-256 digest identifying the associated legacy identity.
     pub legacy_identity_sha256: Option<String>,
+    /// SHA-256 digest identifying the associated record.
     pub record_sha256: String,
+    /// SHA-256 digest of the canonical program source.
     pub program_sha256: String,
+    /// Metric used to evaluate the represented result.
     pub metric: String,
+    /// Measured or derived value carried by this result.
     pub value: f64,
+    /// SHA-256 digest identifying the evaluator used for this evidence.
     pub evaluator_sha256: String,
+    /// Blob recorded for this freeze entry.
     pub blob: String,
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `FreezeManifest` is a record for the freeze manifest contract in this module: The high-water-mark ledger: admission rules, ingest, show, verify and freeze.
 pub struct FreezeManifest {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
     /// Archive snapshots do not establish train-side OOF teaching eligibility.
     pub scope: String,
+    /// Teaching eligible recorded for this freeze manifest.
     pub teaching_eligible: bool,
+    /// Optional ledger head value; `None` means it is not available.
     pub ledger_head: Option<crate::ledger::Head>,
+    /// Include unbound recorded for this freeze manifest.
     pub include_unbound: bool,
+    /// Pointers recorded for this freeze manifest.
     pub pointers: u64,
+    /// Included recorded for this freeze manifest.
     pub included: u64,
+    /// Excluded sealed recorded for this freeze manifest.
     pub excluded_sealed: u64,
+    /// Excluded unbound recorded for this freeze manifest.
     pub excluded_unbound: u64,
+    /// Unix timestamp when this event was recorded.
     pub ts_unix: u64,
+    /// Collection of entries values carried by this freeze manifest.
     pub entries: Vec<FreezeEntry>,
 }
 
@@ -1577,6 +1666,7 @@ pub fn tree_size(root: &Path) -> Result<(u64, u64)> {
     Ok((bytes, files))
 }
 
+/// Performs the source value operation and returns an error if it cannot be completed.
 pub fn source_value(kind: &str, path: &Path, extra: Value) -> Value {
     let mut v =
         json!({"kind": kind, "path": path.display().to_string(), "tool": crate::TOOL_VERSION});
@@ -1588,6 +1678,7 @@ pub fn source_value(kind: &str, path: &Path, extra: Value) -> Value {
     v
 }
 
+/// Performs the fail if operation and returns an error if it cannot be completed.
 pub fn fail_if(cond: bool, msg: &str) -> Result<()> {
     if cond {
         bail!("{msg}");

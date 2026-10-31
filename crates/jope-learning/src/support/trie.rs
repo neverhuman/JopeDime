@@ -4,13 +4,17 @@ use anyhow::{ensure, Result};
 /// Sorted complete leaves use O(total token bytes) storage. Prefix child queries
 /// skip subtrees by binary search, with no eager node cap or cross-context KV.
 pub struct Trie<'a> {
+    /// SHA-256 digest identifying the associated support.
     pub support_sha256: &'a str,
+    /// SHA-256 digest identifying the associated vocabulary.
     pub vocabulary_sha256: &'a str,
+    /// Upper bound on seq.
     pub max_seq: usize,
     leaves: Vec<&'a Program>,
 }
 
 impl<'a> Trie<'a> {
+    /// Constructs or opens a new value from the supplied inputs.
     pub fn new(support: &'a FrozenSupport) -> Result<Self> {
         support.verify()?;
         let mut leaves: Vec<_> = support.programs.iter().collect();
@@ -40,16 +44,19 @@ impl<'a> Trie<'a> {
         Ok(())
     }
 
+    /// Performs the leaf count operation and returns an error if it cannot be completed.
     pub fn leaf_count(&self) -> usize {
         self.leaves.len()
     }
 
+    /// Performs the contains operation and returns an error if it cannot be completed.
     pub fn contains(&self, tokens: &[u16]) -> bool {
         self.leaves
             .binary_search_by(|p| p.tokens.as_slice().cmp(tokens))
             .is_ok()
     }
 
+    /// Performs the children operation and returns an error if it cannot be completed.
     pub fn children(&self, prefix: &[u16]) -> Result<Vec<u16>> {
         ensure!(
             prefix.first() == Some(&1) && !prefix[1..].contains(&1),

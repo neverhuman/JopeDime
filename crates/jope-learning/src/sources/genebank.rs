@@ -9,7 +9,9 @@ use serde::Serialize;
 use serde_json::json;
 use std::path::Path;
 
+/// Constant identifying the protocol.
 pub const PROTOCOL: &str = "genebank-gen1";
+/// Constant identifying the evaluator version.
 pub const EVALUATOR_VERSION: &str = "genebank-legacy";
 
 #[derive(Serialize)]
@@ -18,6 +20,7 @@ struct CutIdentity<'a> {
     protocol: &'a str,
 }
 
+/// Performs the cut ID operation and returns an error if it cannot be completed.
 pub fn cut_id(tier: &str) -> Result<String> {
     canonical_sha256(&CutIdentity {
         tier,
@@ -28,24 +31,38 @@ pub fn cut_id(tier: &str) -> Result<String> {
 /// The row as read; its canonical JSON is the record blob.
 #[derive(Clone, Debug, Serialize)]
 pub struct Row {
+    /// Task identity for the comparison represented by this record.
     pub task: String,
+    /// Hash identifying the dataset used by this record.
     pub dataset_hash: String,
+    /// Score tier recorded for this row.
     pub score_tier: String,
+    /// Metric used to evaluate the represented result.
     pub metric: String,
+    /// Measured score for this outcome; absence denotes a failed draw.
     pub score: f64,
+    /// SHA-256 digest identifying the associated semantic.
     pub semantic_sha256: Option<String>,
+    /// Canonical genome recorded for this row.
     pub canonical_genome: String,
+    /// Achieved at ms recorded for this row.
     pub achieved_at_ms: i64,
+    /// Optional receipt ref value; `None` means it is not available.
     pub receipt_ref: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Default)]
+/// `GenebankScan` is a record for the genebank scan contract in this module: genebank bestscores (SQLite, read-only) → jope.hwm/v1, evaluator unbound.
 pub struct GenebankScan {
+    /// Number of rows represented by this value.
     pub rows: u64,
+    /// Mapped recorded for this genebank scan.
     pub mapped: u64,
+    /// Collection of rejects values carried by this genebank scan.
     pub rejects: Vec<(String, String)>,
 }
 
+/// Performs the map row operation and returns an error if it cannot be completed.
 pub fn map_row(row: &Row, bundle_id: &str) -> Result<Candidate> {
     let metric = Metric::parse(&row.metric)
         .with_context(|| format!("unknown genebank metric {}", row.metric))?;
@@ -140,6 +157,7 @@ pub fn read_rows(db: &Path) -> Result<Vec<Row>> {
     Ok(rows)
 }
 
+/// Performs the scan operation and returns an error if it cannot be completed.
 pub fn scan(db: &Path, bundle_id: &str) -> Result<(Vec<Candidate>, GenebankScan)> {
     let rows = read_rows(db)?;
     if rows.is_empty() {
@@ -163,6 +181,7 @@ pub fn scan(db: &Path, bundle_id: &str) -> Result<(Vec<Candidate>, GenebankScan)
     Ok((out, scan))
 }
 
+/// Performs the scan source operation and returns an error if it cannot be completed.
 pub fn scan_source(db: &Path, bundle_id: &str, scan: &GenebankScan) -> serde_json::Value {
     crate::hwm::source_value(
         "genebank",

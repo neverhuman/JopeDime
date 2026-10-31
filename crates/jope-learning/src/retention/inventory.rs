@@ -51,18 +51,28 @@ pub fn rfc3339_ms(ms: i64) -> String {
 }
 
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+/// `DataFile` is a record for the data file contract in this module: S3 Inventory reports (daily Parquet, all versions): the brain's object-level input (§7.1).
 pub struct DataFile {
+    /// Filesystem path associated with this input or output.
     pub path: String,
+    /// Encoded byte count associated with this object or operation.
     pub bytes: u64,
+    /// Md5 recorded for this data file.
     pub md5: String,
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `Report` is a record for the report contract in this module: S3 Inventory reports (daily Parquet, all versions): the brain's object-level input (§7.1).
 pub struct Report {
+    /// Source bucket recorded for this report.
     pub source_bucket: String,
+    /// Creation ms recorded for this report.
     pub creation_ms: i64,
+    /// Timestamp at which the associated created occurred.
     pub created_at: String,
+    /// Manifest recorded for this report.
     pub manifest: InputRecord,
+    /// Collection of files values carried by this report.
     pub files: Vec<DataFile>,
 }
 
@@ -178,21 +188,34 @@ pub fn load_report(path: &Path, expect_prefix: Option<&str>) -> Result<Report> {
 
 /// One object version as listed by the inventory.
 pub struct Row<'a> {
+    /// Key recorded for this row.
     pub key: &'a str,
+    /// Identifier for the associated version.
     pub version_id: Option<&'a str>,
+    /// Whether this row is latest.
     pub is_latest: bool,
+    /// Whether this row is delete marker.
     pub is_delete_marker: bool,
+    /// Size recorded for this row.
     pub size: u64,
+    /// Last modified ms recorded for this row.
     pub last_modified_ms: i64,
+    /// Optional e tag value; `None` means it is not available.
     pub e_tag: Option<&'a str>,
+    /// Optional storage class value; `None` means it is not available.
     pub storage_class: Option<&'a str>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, PartialEq, Eq)]
+/// `ReadStats` is a record for the read stats contract in this module: S3 Inventory reports (daily Parquet, all versions): the brain's object-level input (§7.1).
 pub struct ReadStats {
+    /// Files recorded for this read stats.
     pub files: u64,
+    /// Row groups recorded for this read stats.
     pub row_groups: u64,
+    /// Number of rows represented by this value.
     pub rows: u64,
+    /// Pages recorded for this read stats.
     pub pages: PageCounts,
 }
 
@@ -324,16 +347,25 @@ pub fn for_each_row(report: &Report, mut f: impl FnMut(&Row) -> Result<()>) -> R
 /// Inventory facts for one ledger group.
 #[derive(Clone, Debug, Default, Serialize, PartialEq, Eq)]
 pub struct GroupInv {
+    /// Current objects recorded for this group inv.
     pub current_objects: u64,
+    /// Byte count for the associated current.
     pub current_bytes: u64,
+    /// Noncurrent versions recorded for this group inv.
     pub noncurrent_versions: u64,
+    /// Byte count for the associated noncurrent.
     pub noncurrent_bytes: u64,
+    /// Delete markers latest recorded for this group inv.
     pub delete_markers_latest: u64,
+    /// Delete markers noncurrent recorded for this group inv.
     pub delete_markers_noncurrent: u64,
     /// Current objects' bytes by storage class.
     pub class_bytes: BTreeMap<String, u64>,
+    /// Byte count for the associated noncurrent class.
     pub noncurrent_class_bytes: BTreeMap<String, u64>,
+    /// Lower bound on last modified.
     pub min_last_modified: Option<String>,
+    /// Upper bound on last modified.
     pub max_last_modified: Option<String>,
     #[serde(skip)]
     min_ms: Option<i64>,
@@ -414,39 +446,66 @@ pub enum PinState {
 /// Key/size/ETag overlap of one E1 candidate pair (both buckets inventoried).
 #[derive(Clone, Debug, Default, Serialize, PartialEq, Eq)]
 pub struct E1Overlap {
+    /// Bucket recorded for this e1 overlap.
     pub bucket: String,
+    /// Prefix recorded for this e1 overlap.
     pub prefix: String,
+    /// Counterpart bucket recorded for this e1 overlap.
     pub counterpart_bucket: String,
+    /// Counterpart prefix recorded for this e1 overlap.
     pub counterpart_prefix: String,
+    /// Number of objects represented by this value.
     pub objects: u64,
+    /// Counterpart objects recorded for this e1 overlap.
     pub counterpart_objects: u64,
+    /// Same key size etag recorded for this e1 overlap.
     pub same_key_size_etag: u64,
+    /// Byte count for the associated same key size etag.
     pub same_key_size_etag_bytes: u64,
+    /// Same key different recorded for this e1 overlap.
     pub same_key_different: u64,
+    /// Only here recorded for this e1 overlap.
     pub only_here: u64,
+    /// Only counterpart recorded for this e1 overlap.
     pub only_counterpart: u64,
+    /// Multipart etags recorded for this e1 overlap.
     pub multipart_etags: u64,
 }
 
 #[derive(Clone, Debug, Default, Serialize)]
+/// `BucketTotals` is a record for the bucket totals contract in this module: S3 Inventory reports (daily Parquet, all versions): the brain's object-level input (§7.1).
 pub struct BucketTotals {
+    /// Timestamp at which the associated report created occurred.
     pub report_created_at: String,
+    /// Number of rows represented by this value.
     pub rows: u64,
+    /// Current objects recorded for this bucket totals.
     pub current_objects: u64,
+    /// Byte count for the associated current.
     pub current_bytes: u64,
+    /// Noncurrent versions recorded for this bucket totals.
     pub noncurrent_versions: u64,
+    /// Byte count for the associated noncurrent.
     pub noncurrent_bytes: u64,
+    /// Delete markers recorded for this bucket totals.
     pub delete_markers: u64,
+    /// Rows outside ledger groups recorded for this bucket totals.
     pub rows_outside_ledger_groups: u64,
+    /// Read recorded for this bucket totals.
     pub read: ReadStats,
 }
 
+/// `Inventory` is a record for the inventory contract in this module: S3 Inventory reports (daily Parquet, all versions): the brain's object-level input (§7.1).
 pub struct Inventory {
+    /// Collection of reports values carried by this inventory.
     pub reports: Vec<Report>,
     /// Indexed like the ledger groups; `None` for groups in buckets without a report.
     pub per_group: Vec<Option<GroupInv>>,
+    /// Mapping of buckets values carried by this inventory.
     pub buckets: BTreeMap<String, BucketTotals>,
+    /// Mapping of pins values carried by this inventory.
     pub pins: HashMap<(String, String), PinState>,
+    /// Collection of e1 values carried by this inventory.
     pub e1: Vec<E1Overlap>,
 }
 

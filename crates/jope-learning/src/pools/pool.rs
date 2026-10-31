@@ -12,7 +12,9 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 
+/// Schema identifier for pool values.
 pub const POOL_SCHEMA: &str = "jope.j9-pool/v1";
+/// Schema identifier for manifest values.
 pub const MANIFEST_SCHEMA: &str = "jope.j9-pool-manifest/v1";
 
 /// Roles whose outcomes may be read by this shadow evaluation. Validation, development, sealed
@@ -24,9 +26,13 @@ pub const ALLOWED_ROLES: &[&str] = &["train", "train_fit"];
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Status {
+    /// The `Complete` case of `Status`.
     Complete,
+    /// The `ProgramFailed` case of `Status`.
     ProgramFailed,
+    /// The `Timeout` case of `Status`.
     Timeout,
+    /// The `Unknown` case of `Status`.
     Unknown,
 }
 
@@ -34,11 +40,15 @@ pub enum Status {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MeasurementRow {
+    /// Identifier for the associated context.
     pub context_id: String,
     /// Parent / lineage cluster: cuts sharing a parent are one bootstrap unit.
     pub parent_id: String,
+    /// Data or authority role assigned to this value.
     pub role: String,
+    /// SHA-256 digest of the canonical program source.
     pub program_sha256: String,
+    /// Outcome or lifecycle status recorded for this value.
     pub status: Status,
     /// Measured reward, higher is better; required exactly when `status` is complete.
     pub q: Option<f64>,
@@ -52,10 +62,15 @@ pub struct MeasurementRow {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `Member` is a record for the member contract in this module: Frozen candidate pools (CLOVER §4.1).
 pub struct Member {
+    /// SHA-256 digest of the canonical program source.
     pub program_sha256: String,
+    /// Outcome or lifecycle status recorded for this value.
     pub status: Status,
+    /// Optional q value; `None` means it is not available.
     pub q: Option<f64>,
+    /// Optional tokens value; `None` means it is not available.
     pub tokens: Option<Vec<u32>>,
 }
 
@@ -71,12 +86,19 @@ impl Member {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `Pool` is a record for the pool contract in this module: Frozen candidate pools (CLOVER §4.1).
 pub struct Pool {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Identifier for the associated context.
     pub context_id: String,
+    /// Identifier for the associated parent.
     pub parent_id: String,
+    /// Data or authority role assigned to this value.
     pub role: String,
+    /// SHA-256 digest identifying the associated protocol.
     pub protocol_sha256: String,
+    /// Optional incumbent q value; `None` means it is not available.
     pub incumbent_q: Option<f64>,
     /// Sorted by program sha256; distinct.
     pub members: Vec<Member>,
@@ -95,6 +117,7 @@ pub enum Reference {
 }
 
 impl Pool {
+    /// Computes the canonical SHA-256 digest of this value.
     pub fn sha256(&self) -> Result<String> {
         canonical_sha256(self)
     }
@@ -114,10 +137,12 @@ impl Pool {
         }
     }
 
+    /// Performs the outcomes operation and returns an error if it cannot be completed.
     pub fn outcomes(&self) -> Vec<Option<f64>> {
         self.members.iter().map(Member::outcome).collect()
     }
 
+    /// Performs the reference operation and returns an error if it cannot be completed.
     pub fn reference(&self, mode: Reference) -> Result<f64> {
         match mode {
             Reference::Incumbent => self
@@ -136,13 +161,19 @@ impl Pool {
 /// The outcome-free projection of a pool handed to selectors.
 #[derive(Clone, Debug)]
 pub struct PoolView<'a> {
+    /// Identifier for the associated context.
     pub context_id: &'a str,
+    /// Identifier for the associated parent.
     pub parent_id: &'a str,
+    /// Optional incumbent q value; `None` means it is not available.
     pub incumbent_q: Option<f64>,
+    /// Collection of programs values carried by this pool view.
     pub programs: Vec<&'a str>,
+    /// Collection of tokens values carried by this pool view.
     pub tokens: Vec<Option<&'a [u32]>>,
 }
 
+/// Schema identifier for view values.
 pub const VIEW_SCHEMA: &str = "jope.j9-pool-view/v1";
 
 /// The serialized outcome-free view handed to external scorers (the torch q-head adapter): it
@@ -150,17 +181,25 @@ pub const VIEW_SCHEMA: &str = "jope.j9-pool-view/v1";
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ExportedView {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Identifier for the associated context.
     pub context_id: String,
+    /// Identifier for the associated parent.
     pub parent_id: String,
+    /// SHA-256 digest identifying the associated pool.
     pub pool_sha256: String,
+    /// Collection of programs values carried by this exported view.
     pub programs: Vec<ExportedProgram>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `ExportedProgram` is a record for the exported program contract in this module: Frozen candidate pools (CLOVER §4.1).
 pub struct ExportedProgram {
+    /// SHA-256 digest of the canonical program source.
     pub program_sha256: String,
+    /// Optional tokens value; `None` means it is not available.
     pub tokens: Option<Vec<u32>>,
 }
 
@@ -195,6 +234,7 @@ pub struct FreezeRule {
     pub min_pool: usize,
     /// When set, keep the first `max_pool` members by `sha256(salt ‖ context ‖ program)`.
     pub max_pool: Option<usize>,
+    /// Salt recorded for this freeze rule.
     pub salt: String,
     /// Contexts need at least this many complete members with distinct `q`.
     pub min_distinct_measured: usize,
@@ -204,36 +244,54 @@ pub struct FreezeRule {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `Exclusion` is a record for the exclusion contract in this module: Frozen candidate pools (CLOVER §4.1).
 pub struct Exclusion {
+    /// Identifier for the associated context.
     pub context_id: String,
+    /// Explanation associated with the recorded disposition.
     pub reason: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `ManifestEntry` is a record for the manifest entry contract in this module: Frozen candidate pools (CLOVER §4.1).
 pub struct ManifestEntry {
+    /// Identifier for the associated context.
     pub context_id: String,
+    /// Identifier for the associated parent.
     pub parent_id: String,
+    /// SHA-256 digest identifying the associated pool.
     pub pool_sha256: String,
+    /// Members recorded for this manifest entry.
     pub members: usize,
+    /// Measured recorded for this manifest entry.
     pub measured: usize,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `Manifest` is a record for the manifest contract in this module: Frozen candidate pools (CLOVER §4.1).
 pub struct Manifest {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Shadow only recorded for this manifest.
     pub shadow_only: bool,
+    /// Qualified claim recorded for this manifest.
     pub qualified_claim: bool,
+    /// Rule recorded for this manifest.
     pub rule: FreezeRule,
     /// sha256 of the exact input bytes the pools were built from.
     pub input_sha256: String,
+    /// Number of input rows represented here.
     pub input_rows: usize,
+    /// Collection of pools values carried by this manifest.
     pub pools: Vec<ManifestEntry>,
+    /// Collection of excluded values carried by this manifest.
     pub excluded: Vec<Exclusion>,
 }
 
 impl Manifest {
+    /// Computes the canonical SHA-256 digest of this value.
     pub fn sha256(&self) -> Result<String> {
         canonical_sha256(self)
     }

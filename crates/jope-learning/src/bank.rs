@@ -28,8 +28,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::path::Path;
 
+/// Schema identifier for entry values.
 pub const ENTRY_SCHEMA: &str = "jope.pipeline-bank-entry/v1";
+/// Schema identifier for event values.
 pub const EVENT_SCHEMA: &str = "jope.pipeline-bank-event/v1";
+/// Ledger name used in bank entries and events.
 pub const LEDGER: &str = "bank";
 
 /// The HWM decision an entry rests on.
@@ -38,11 +41,13 @@ pub const LEDGER: &str = "bank";
 pub struct HwmDecision {
     /// The HWM ledger batch (ULID) and the event's position in it.
     pub batch: String,
+    /// Monotone sequence number assigned to this event or row.
     pub seq: u64,
     /// sha256 of the event's canonical JSON as the ledger holds it.
     pub event_sha256: String,
     /// Always `improved`.
     pub transition: String,
+    /// State pointer associated with this record.
     pub pointer: String,
     /// The record the improvement displaced.
     pub displaced_record_sha256: String,
@@ -50,14 +55,21 @@ pub struct HwmDecision {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `BankEntry` is a record for the bank entry contract in this module: The champion bank ("future targets"): pipeline champions the HWM ledger accepted as improvements, kept content-addressed and append-only, and exported, ranked within one HWM comparison identity at a time, as the.
 pub struct BankEntry {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Task identity for the comparison represented by this record.
     pub task: String,
+    /// Hash identifying the dataset used by this record.
     pub dataset_hash: String,
     /// The HWM comparison identity the champion improved under.
     pub identity_sha256: String,
+    /// Identifier for the data cut represented by this record.
     pub cut_id: String,
+    /// Canonical program or genome representation.
     pub genome: String,
+    /// SHA-256 digest of the canonical program source.
     pub program_sha256: String,
     /// Mean held-out RMSE on that identity's cuts.
     pub validation_rmse: f64,
@@ -65,24 +77,34 @@ pub struct BankEntry {
     pub receipt_sha256: String,
     /// sha256 of the `jope.pipeline-lineage/v1` that produced it, when given.
     pub lineage_sha256: Option<String>,
+    /// High-water-mark decision associated with this candidate.
     pub hwm: HwmDecision,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `BankEvent` is a record for the bank event contract in this module: The champion bank ("future targets"): pipeline champions the HWM ledger accepted as improvements, kept content-addressed and append-only, and exported, ranked within one HWM comparison identity at a time, as the.
 pub struct BankEvent {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
     /// The entry's content address: sha256 of its canonical JSON.
     pub entry_sha256: String,
+    /// Bank entry represented by this event.
     pub entry: BankEntry,
+    /// Unix timestamp when this event was recorded.
     pub ts_unix: u64,
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `AddReport` is a record for the add report contract in this module: The champion bank ("future targets"): pipeline champions the HWM ledger accepted as improvements, kept content-addressed and append-only, and exported, ranked within one HWM comparison identity at a time, as the.
 pub struct AddReport {
+    /// SHA-256 digest identifying the associated entry.
     pub entry_sha256: String,
+    /// Whether the entry was already present before this operation.
     pub already_banked: bool,
+    /// Bank entry represented by this event.
     pub entry: BankEntry,
+    /// Ledger batch receipt produced by the operation, if one was appended.
     pub batch: Option<crate::ledger::BatchReceipt>,
 }
 
@@ -267,13 +289,19 @@ pub fn add(state: &State, receipt_path: &Path, lineage_path: Option<&Path>) -> R
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `ExportReport` is a record for the export report contract in this module: The champion bank ("future targets"): pipeline champions the HWM ledger accepted as improvements, kept content-addressed and append-only, and exported, ranked within one HWM comparison identity at a time, as the.
 pub struct ExportReport {
+    /// Destination path for the generated output.
     pub out: String,
+    /// SHA-256 digest identifying the associated seeds.
     pub seeds_sha256: String,
+    /// Hash identifying the dataset used by this record.
     pub dataset_hash: String,
     /// The one HWM comparison identity the exported champions were ranked within.
     pub identity_sha256: String,
+    /// Genomes recorded for this export report.
     pub genomes: usize,
+    /// SHA-256 digest identifying the associated bank head.
     pub bank_head_sha256: Option<String>,
 }
 
@@ -285,9 +313,11 @@ pub struct GlobalBankExport {
     entries: Vec<(BankEntry, crate::replay::admission::ReplayAdmission)>,
 }
 impl GlobalBankExport {
+    /// Performs the purpose operation and returns an error if it cannot be completed.
     pub fn purpose(&self) -> crate::replay::admission::Purpose {
         self.purpose
     }
+    /// Performs the entries operation and returns an error if it cannot be completed.
     pub fn entries(&self) -> &[(BankEntry, crate::replay::admission::ReplayAdmission)] {
         &self.entries
     }

@@ -6,32 +6,48 @@ use serde::{Deserialize, Serialize};
 use super::{tokenizer::validate_program, Vocabulary};
 use crate::canon::{canonical_sha256, is_hex64};
 
+/// Constant identifying the v1 trie SHA-256.
 pub const V1_TRIE_SHA256: &str = "116154767f2df56fb065c9b6bc3ce07df38c3672843c0eb4b944d84e8e8473bd";
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+/// `Program` is a public program record.
 pub struct Program {
+    /// Dsl recorded for this program.
     pub dsl: String,
+    /// SHA-256 digest of the canonical program source.
     pub program_sha256: String,
+    /// Collection of tokens values carried by this program.
     pub tokens: Vec<u16>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
+/// `Catalog` is a public catalog record.
 pub struct Catalog {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// SHA-256 digest identifying the associated vocabulary.
     pub vocabulary_sha256: String,
+    /// Upper bound on seq.
     pub max_seq: usize,
+    /// Collection of programs values carried by this catalog.
     pub programs: Vec<Program>,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+/// `Role` is a public role enum.
 pub enum Role {
+    /// The `Train` case of `Role`.
     Train,
+    /// The `Validation` case of `Role`.
     Validation,
+    /// The `Heldout` case of `Role`.
     Heldout,
+    /// The `Sealed` case of `Role`.
     Sealed,
+    /// The `Unknown` case of `Role`.
     Unknown,
 }
 
@@ -39,41 +55,69 @@ pub enum Role {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Candidate {
+    /// Identifier for the associated context.
     pub context_id: String,
+    /// Program recorded for this candidate.
     pub program: Program,
+    /// SHA-256 digest identifying the associated source receipt.
     pub source_receipt_sha256: String,
+    /// SHA-256 digest identifying the associated parity receipt.
     pub parity_receipt_sha256: Option<String>,
+    /// Optional inner loss value; `None` means it is not available.
     pub inner_loss: Option<f64>,
+    /// Optional incumbent inner loss value; `None` means it is not available.
     pub incumbent_inner_loss: Option<f64>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
+/// `FreezeRequest` is a public freeze request record.
 pub struct FreezeRequest {
+    /// Catalog recorded for this freeze request.
     pub catalog: Catalog,
+    /// SHA-256 digest identifying the associated expected catalog.
     pub expected_catalog_sha256: String,
+    /// Require v1 catalog recorded for this freeze request.
     pub require_v1_catalog: bool,
+    /// Mapping of role map values carried by this freeze request.
     pub role_map: BTreeMap<String, Role>,
+    /// SHA-256 digest identifying the associated expected role map.
     pub expected_role_map_sha256: String,
+    /// Collection of candidates values carried by this freeze request.
     pub candidates: Vec<Candidate>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
+/// `FrozenSupport` is a public frozen support record.
 pub struct FrozenSupport {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Qualified recorded for this frozen support.
     pub qualified: bool,
+    /// Qualified use recorded for this frozen support.
     pub qualified_use: String,
+    /// Version recorded for this frozen support.
     pub version: u32,
+    /// SHA-256 digest identifying the associated parent support.
     pub parent_support_sha256: String,
+    /// SHA-256 digest identifying the associated catalog trie.
     pub catalog_trie_sha256: String,
+    /// Vocabulary recorded for this frozen support.
     pub vocabulary: Vocabulary,
+    /// Mapping of role map values carried by this frozen support.
     pub role_map: BTreeMap<String, Role>,
+    /// SHA-256 digest identifying the associated role map.
     pub role_map_sha256: String,
+    /// SHA-256 digest identifying the associated catalog program.
     pub catalog_program_sha256: Vec<String>,
+    /// Collection of programs values carried by this frozen support.
     pub programs: Vec<Program>,
+    /// Collection of provenance values carried by this frozen support.
     pub provenance: Vec<Candidate>,
+    /// Availability grants context outcome eligibility recorded for this frozen support.
     pub availability_grants_context_outcome_eligibility: bool,
+    /// SHA-256 digest identifying the associated support.
     pub support_sha256: String,
 }
 
@@ -85,6 +129,7 @@ impl FrozenSupport {
             .any(|existing| existing.program_sha256 == program.program_sha256)
     }
 
+    /// Performs the freeze operation and returns an error if it cannot be completed.
     pub fn freeze(request: FreezeRequest) -> Result<Self> {
         let hash = canonical_sha256(&request.catalog)?;
         ensure!(
@@ -230,6 +275,7 @@ impl FrozenSupport {
         Ok(())
     }
 
+    /// Verifies the bound evidence and returns an error when verification fails.
     pub fn verify(&self) -> Result<()> {
         ensure!(
             self.schema == "jope.rlfw-successor-support/v2"
@@ -320,6 +366,7 @@ impl FrozenSupport {
         Ok(())
     }
 
+    /// Performs the from bytes operation and returns an error if it cannot be completed.
     pub fn from_bytes(bytes: &[u8], expected_support_sha256: &str) -> Result<Self> {
         let value: Self = serde_json::from_slice(bytes)?;
         ensure!(

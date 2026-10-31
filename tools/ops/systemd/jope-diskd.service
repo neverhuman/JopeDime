@@ -7,8 +7,6 @@ Type=oneshot
 Environment=PATH=/home/ubuntu/.local/bin:/usr/local/bin:/usr/bin:/bin
 Environment=JOPE_DISKD_LOCAL_ONLY=1
 Environment=SCCACHE_CACHE_SIZE=60G
-Environment=AWS_PROFILE=veox-jepson-prod
-Environment=AWS_EC2_METADATA_DISABLED=true
 ExecStart=/usr/bin/env python3 %h/.local/bin/jope-diskd --config %h/.config/jope-diskd/policy.yaml --apply
 Nice=10
 IOSchedulingClass=idle
@@ -17,6 +15,5 @@ UMask=0077
 NoNewPrivileges=yes
 ProtectSystem=full
 ProtectKernelTunables=yes
-ProtectKernelModules=yes
 ProtectControlGroups=yes
 PrivateTmp=yes

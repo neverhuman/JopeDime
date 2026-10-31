@@ -9,6 +9,7 @@ use anyhow::Result;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 
+/// Performs the SHA-256 hex operation and returns an error if it cannot be completed.
 pub fn sha256_hex(bytes: &[u8]) -> String {
     hex::encode(Sha256::digest(bytes))
 }
@@ -24,6 +25,7 @@ pub fn canonical_sha256<T: Serialize>(value: &T) -> Result<String> {
     Ok(sha256_hex(&canonical_json(value)?))
 }
 
+/// Returns whether hex64.
 pub fn is_hex64(s: &str) -> bool {
     s.len() == 64 && s.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
 }

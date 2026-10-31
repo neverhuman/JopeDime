@@ -530,6 +530,10 @@ impl Default for MicroAdmission {
 impl MicroAdmission {
     /// The pre-breadth policy: no cap, no retirement, no spread ordering.
     /// Kept so the change is reversible in one flag without a redeploy.
+    ///
+    /// "Unbounded" lifts only the per-dataset caps; it creates no channel or task.
+    /// [`select_micro_cohort`] still returns exactly [`MICRO_WAVE_SIZE`] datasets per
+    /// wave, so the work a wave admits stays fixed (`unbounded_policy_admits_everything`).
     pub fn unbounded() -> Self {
         Self {
             eval_cap: u64::MAX,

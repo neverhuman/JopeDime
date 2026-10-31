@@ -7,7 +7,9 @@ use anyhow::{ensure, Result};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+#[cfg_attr(doc, doc = "Schema identifier for HWM values.")]
 pub const HWM_SCHEMA: &str = "jope.hwm/v1";
+#[cfg_attr(doc, doc = "Schema identifier for score values.")]
 pub const SCORE_SCHEMA: &str = "jope.score/v1";
 /// The evaluator marker for records whose scoring binary is not bound by hash.
 pub const UNBOUND: &str = "unbound";
@@ -17,13 +19,24 @@ pub const UNBOUND: &str = "unbound";
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ComparisonContext {
+    #[cfg_attr(doc, doc = "Numerical policy recorded for this comparison context.")]
     pub numerical_policy: String,
+    #[cfg_attr(doc, doc = "Stage recorded for this comparison context.")]
     pub stage: String,
+    #[cfg_attr(doc, doc = "Aggregation recorded for this comparison context.")]
     pub aggregation: String,
+    #[cfg_attr(doc, doc = "Label role recorded for this comparison context.")]
     pub label_role: String,
+    #[cfg_attr(doc, doc = "Sealed recorded for this comparison context.")]
     pub sealed: bool,
+    #[cfg_attr(doc, doc = "Benchmark valid recorded for this comparison context.")]
     pub benchmark_valid: bool,
+    #[cfg_attr(doc, doc = "Recipe encoding recorded for this comparison context.")]
     pub recipe_encoding: String,
+    #[cfg_attr(
+        doc,
+        doc = "Collection of class order values carried by this comparison context."
+    )]
     pub class_order: Vec<String>,
     /// Proposal/checkpoint lineage when applicable; None when no proposal checkpoint applies.
     pub checkpoint_sha256: Option<String>,
@@ -49,10 +62,15 @@ pub struct HwmIdentity {
     /// Scoring protocol the score was measured under.
     pub protocol: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        doc,
+        doc = "Optional comparison value; `None` means it is not available."
+    )]
     pub comparison: Option<ComparisonContext>,
 }
 
 impl HwmIdentity {
+    #[cfg_attr(doc, doc = "Computes the canonical SHA-256 digest of this value.")]
     pub fn sha256(&self) -> Result<String> {
         canonical_sha256(self)
     }
@@ -60,6 +78,10 @@ impl HwmIdentity {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+#[cfg_attr(
+    doc,
+    doc = "`Genome` is a record for the genome contract in this module: The two committed records: jope.hwm/v1 (one high-water mark per exact cut + evaluator identity) and jope.score/v1 (one row per evaluation, never edited)."
+)]
 pub struct Genome {
     /// The program in its source DSL.
     pub dsl: String,
@@ -74,8 +96,14 @@ pub struct Genome {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+#[cfg_attr(
+    doc,
+    doc = "`Score` is a record for the score contract in this module: The two committed records: jope.hwm/v1 (one high-water mark per exact cut + evaluator identity) and jope.score/v1 (one row per evaluation, never edited)."
+)]
 pub struct Score {
+    #[cfg_attr(doc, doc = "Metric used to evaluate the represented result.")]
     pub metric: Metric,
+    #[cfg_attr(doc, doc = "Measured or derived value carried by this result.")]
     pub value: f64,
     /// Redundant with the metric table; recorded so a ledger reader needs no code to rank.
     pub direction: Direction,
@@ -85,6 +113,10 @@ pub struct Score {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+#[cfg_attr(
+    doc,
+    doc = "`Cost` is a record for the cost contract in this module: The two committed records: jope.hwm/v1 (one high-water mark per exact cut + evaluator identity) and jope.score/v1 (one row per evaluation, never edited)."
+)]
 pub struct Cost {
     /// Fit/evaluate wall seconds of the winning program.
     #[serde(default)]
@@ -96,6 +128,10 @@ pub struct Cost {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+#[cfg_attr(
+    doc,
+    doc = "`Evaluator` is a record for the evaluator contract in this module: The two committed records: jope.hwm/v1 (one high-water mark per exact cut + evaluator identity) and jope.score/v1 (one row per evaluation, never edited)."
+)]
 pub struct Evaluator {
     /// sha256 of the evaluator binary, or `unbound`.
     #[schemars(regex(pattern = r"^(unbound|[0-9a-f]{64})$"))]
@@ -105,6 +141,7 @@ pub struct Evaluator {
 }
 
 impl Evaluator {
+    #[cfg_attr(doc, doc = "Returns whether bound.")]
     pub fn is_bound(&self) -> bool {
         self.sha256 != UNBOUND
     }
@@ -112,6 +149,10 @@ impl Evaluator {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+#[cfg_attr(
+    doc,
+    doc = "`Provenance` is a record for the provenance contract in this module: The two committed records: jope.hwm/v1 (one high-water mark per exact cut + evaluator identity) and jope.score/v1 (one row per evaluation, never edited)."
+)]
 pub struct Provenance {
     /// `champions`, `champions-sealed`, `genebank`, `snapshot-<watermark>`, `sotarena`, ...
     pub source: String,
@@ -153,6 +194,7 @@ impl Cost {
 pub struct HwmRecord {
     /// Always `jope.hwm/v1`.
     pub schema: String,
+    #[cfg_attr(doc, doc = "Identity recorded for this HWM record.")]
     pub identity: HwmIdentity,
     /// sha256 of the canonical JSON of `identity`.
     #[schemars(regex(pattern = r"^[0-9a-f]{64}$"))]
@@ -161,9 +203,16 @@ pub struct HwmRecord {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schemars(regex(pattern = r"^[0-9a-f]{64}$"))]
     pub legacy_identity_sha256: Option<String>,
+    #[cfg_attr(doc, doc = "Canonical program or genome representation.")]
     pub genome: Genome,
+    #[cfg_attr(
+        doc,
+        doc = "Measured score for this outcome; absence denotes a failed draw."
+    )]
     pub score: Score,
+    #[cfg_attr(doc, doc = "Cost recorded for this HWM record.")]
     pub cost: Cost,
+    #[cfg_attr(doc, doc = "Evaluator recorded for this HWM record.")]
     pub evaluator: Evaluator,
     /// True only for scores measured under a benchmark protocol (never for HWM search scores).
     pub benchmark_valid: bool,
@@ -171,6 +220,7 @@ pub struct HwmRecord {
     pub sealed: bool,
     /// True when the bound evaluator can reproduce the score (`hwm replay`); unbound = false.
     pub replayable: bool,
+    #[cfg_attr(doc, doc = "Provenance recorded for this HWM record.")]
     pub provenance: Provenance,
     /// sha256 of the event/record this one improved on in its chain, null for the first.
     #[schemars(required, schema_with = "nullable_hex64")]
@@ -276,12 +326,25 @@ pub struct ScoreSource {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        doc,
+        doc = "Optional source kind value; `None` means it is not available."
+    )]
     pub source_kind: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        doc,
+        doc = "Optional source revision value; `None` means it is not available."
+    )]
     pub source_revision: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        doc,
+        doc = "Optional source URI value; `None` means it is not available."
+    )]
     pub source_uri: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(doc, doc = "Optional notes value; `None` means it is not available.")]
     pub notes: Option<String>,
 }
 
@@ -291,26 +354,45 @@ pub struct ScoreSource {
 pub struct ScoreRecord {
     /// Always `jope.score/v1`.
     pub schema: String,
+    #[cfg_attr(doc, doc = "Hash identifying the dataset used by this record.")]
     pub dataset_hash: String,
     /// sha256 of the canonical JSON naming the evaluation cut/protocol.
     #[schemars(regex(pattern = r"^[0-9a-f]{64}$"))]
     pub cut_id: String,
+    #[cfg_attr(doc, doc = "Identifier for the associated method.")]
     pub method_id: String,
     #[schemars(regex(pattern = r"^(unbound|[0-9a-f]{64})$"))]
+    #[cfg_attr(
+        doc,
+        doc = "SHA-256 digest identifying the evaluator used for this evidence."
+    )]
     pub evaluator_sha256: String,
+    #[cfg_attr(doc, doc = "Protocol recorded for this score record.")]
     pub protocol: String,
+    #[cfg_attr(doc, doc = "Metric used to evaluate the represented result.")]
     pub metric: Metric,
+    #[cfg_attr(doc, doc = "Measured or derived value carried by this result.")]
     pub value: f64,
+    #[cfg_attr(
+        doc,
+        doc = "Whether larger or smaller metric values represent improvement."
+    )]
     pub direction: Direction,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(doc, doc = "Optional cost value; `None` means it is not available.")]
     pub cost: Option<Cost>,
+    #[cfg_attr(doc, doc = "Benchmark valid recorded for this score record.")]
     pub benchmark_valid: bool,
     /// sha256 of the receipt/report the value was read from.
     #[schemars(regex(pattern = r"^[0-9a-f]{64}$"))]
     pub receipt_sha256: String,
+    #[cfg_attr(doc, doc = "Identifier for the associated run.")]
     pub run_id: String,
+    #[cfg_attr(doc, doc = "Git sha recorded for this score record.")]
     pub git_sha: String,
+    #[cfg_attr(doc, doc = "Unix timestamp when this event was recorded.")]
     pub ts_unix: u64,
+    #[cfg_attr(doc, doc = "Provenance source for this value.")]
     pub source: ScoreSource,
     /// sha256 of the canonical JSON of this record without `row_sha256`.
     #[schemars(regex(pattern = r"^[0-9a-f]{64}$"))]
@@ -325,6 +407,10 @@ impl ScoreRecord {
         canonical_sha256(&v)
     }
 
+    #[cfg_attr(
+        doc,
+        doc = "Validates this value against its invariants and returns an error when validation fails."
+    )]
     pub fn validate(&self) -> Result<()> {
         ensure!(self.schema == SCORE_SCHEMA, "schema is not {SCORE_SCHEMA}");
         ensure!(is_hex64(&self.cut_id), "cut_id is not 64 hex");

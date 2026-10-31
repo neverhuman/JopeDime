@@ -12,27 +12,41 @@ use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+/// `ObservedOutcome` is an enum for the observed outcome contract in this module: Lossless archival observations. Retention does not issue replay capabilities.
 pub enum ObservedOutcome {
+    /// The `Ok` case of `ObservedOutcome`.
     Ok,
+    /// The `Failed` case of `ObservedOutcome`.
     Failed,
+    /// The `Timeout` case of `ObservedOutcome`.
     Timeout,
+    /// Only part of the outcome mass is supported by measured outcomes.
     Partial,
+    /// The `Unknown` case of `ObservedOutcome`.
     Unknown,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "availability", rename_all = "snake_case")]
+/// `Measurement` is an enum for the measurement contract in this module: Lossless archival observations. Retention does not issue replay capabilities.
 pub enum Measurement {
+    /// The `Missing` case of `Measurement`.
     Missing,
+    /// The `Finite` case of `Measurement`.
     Finite {
+        /// F64 bits recorded for this measurement.
         f64_bits: String,
+        /// Optional score name value; `None` means it is not available.
         score_name: Option<String>,
     },
+    /// The `Rejected` case of `Measurement`.
     Rejected {
+        /// Explanation associated with the recorded disposition.
         reason: String,
     },
 }
 impl Measurement {
+    /// Performs the value operation and returns an error if it cannot be completed.
     pub fn value(&self) -> Option<f64> {
         match self {
             Self::Finite { f64_bits, .. } => {
@@ -45,9 +59,20 @@ impl Measurement {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "observation_type", rename_all = "snake_case")]
+/// `DurationObservation` is an enum for the duration observation contract in this module: Lossless archival observations. Retention does not issue replay capabilities.
 pub enum DurationObservation {
-    Exact { milliseconds: u64 },
-    RightCensored { lower_bound_ms: u64 },
+    /// Field value recorded by this public API type.
+    /// All supported outcome mass is evaluated exactly.
+    Exact {
+        /// Milliseconds recorded for this outcome.
+        milliseconds: u64,
+    },
+    /// The `RightCensored` case of `DurationObservation`.
+    RightCensored {
+        /// Lower bound ms recorded for this outcome.
+        lower_bound_ms: u64,
+    },
+    /// The `Unknown` case of `DurationObservation`.
     Unknown,
 }
 
@@ -55,10 +80,13 @@ pub enum DurationObservation {
 /// interfaces are integrated by the controller; neither JSON nor a copied role issues a grant.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct DependencyEvidence {
+    /// Optional i04 admission value; `None` means it is not available.
     pub i04_admission: Option<Value>,
+    /// Optional i05 events value; `None` means it is not available.
     pub i05_events: Option<Value>,
 }
 impl DependencyEvidence {
+    /// Performs the from records operation and returns an error if it cannot be completed.
     pub fn from_records<A: Serialize, E: Serialize>(
         admission: Option<&A>,
         events: Option<&E>,
@@ -74,31 +102,49 @@ impl DependencyEvidence {
 /// per-label global mask remains held. This type cannot be passed to any training export.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LabelHold {
+    /// Observed recorded for this label hold.
     pub observed: bool,
+    /// Collection of reasons values carried by this label hold.
     pub reasons: Vec<String>,
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+/// `LabelMasks` is a record for the label masks contract in this module: Lossless archival observations. Retention does not issue replay capabilities.
 pub struct LabelMasks {
+    /// Quality recorded for this label masks.
     pub quality: LabelHold,
+    /// Runtime recorded for this label masks.
     pub runtime: LabelHold,
+    /// Failure recorded for this label masks.
     pub failure: LabelHold,
+    /// Policy recorded for this label masks.
     pub policy: LabelHold,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+/// `Disposition` is an enum for the disposition contract in this module: Lossless archival observations. Retention does not issue replay capabilities.
 pub enum Disposition {
+    /// The `Scored` case of `Disposition`.
     Scored,
+    /// The `Failed` case of `Disposition`.
     Failed,
+    /// The `Timeout` case of `Disposition`.
     Timeout,
+    /// Only part of the outcome mass is supported by measured outcomes.
     Partial,
+    /// The `Unscored` case of `Disposition`.
     Unscored,
+    /// The `Unknown` case of `Disposition`.
     Unknown,
+    /// The `RejectedMeasurement` case of `Disposition`.
     RejectedMeasurement,
+    /// The `DuplicateDelivery` case of `Disposition`.
     DuplicateDelivery,
+    /// The `Conflict` case of `Disposition`.
     Conflict,
 }
 impl Disposition {
+    /// Returns the stable string representation of this value.
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Scored => "scored",
@@ -115,35 +161,57 @@ impl Disposition {
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+/// `Observation` is a record for the observation contract in this module: Lossless archival observations. Retention does not issue replay capabilities.
 pub struct Observation {
+    /// Archive version recorded for this observation.
     pub archive_version: u32,
+    /// Identity recorded for this observation.
     pub identity: RowIdentity,
+    /// Original row recorded for this observation.
     pub original_row: Value,
+    /// Outcome recorded for this observation.
     pub outcome: ObservedOutcome,
+    /// Optional failure reason value; `None` means it is not available.
     pub failure_reason: Option<String>,
+    /// Measurement recorded for this observation.
     pub measurement: Measurement,
+    /// Duration recorded for this observation.
     pub duration: DurationObservation,
+    /// Optional original role value; `None` means it is not available.
     pub original_role: Option<String>,
+    /// Collection of provenance holds values carried by this observation.
     pub provenance_holds: Vec<String>,
+    /// Disposition recorded for this observation.
     pub disposition: Disposition,
+    /// Collection of related occurrences values carried by this observation.
     pub related_occurrences: Vec<String>,
     /// References are opaque: row counts are never physical-attempt or logical-success rates.
     pub event_references: BTreeMap<String, Value>,
+    /// Dependencies recorded for this observation.
     pub dependencies: DependencyEvidence,
+    /// Labels recorded for this observation.
     pub labels: LabelMasks,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+/// `ObservationArchive` is a record for the observation archive contract in this module: Lossless archival observations. Retention does not issue replay capabilities.
 pub struct ObservationArchive {
+    /// Archive version recorded for this observation archive.
     pub archive_version: u32,
+    /// SHA-256 digest identifying the associated input.
     pub input_sha256: String,
     /// Exact original UTF-8 bytes, including numeric spelling, malformed measurement strings,
     /// whitespace and unknown fields. Row locators refer to this immutable input.
     pub original_index: String,
+    /// Optional producer manifest value; `None` means it is not available.
     pub producer_manifest: Option<Vec<u8>>,
+    /// Producer closure recorded for this observation archive.
     pub producer_closure: ProducerClosure,
+    /// Collection of observations values carried by this observation archive.
     pub observations: Vec<Observation>,
+    /// Mapping of primary counts values carried by this observation archive.
     pub primary_counts: BTreeMap<String, usize>,
+    /// Historical recorded for this observation archive.
     pub historical: HistoricalStatus,
 }
 

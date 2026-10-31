@@ -15,10 +15,15 @@ use std::{
     sync::Arc,
 };
 
+/// Configured upper or lower bound for max manifest.
 pub const MAX_MANIFEST: u64 = 4 * 1024 * 1024;
+/// Constant identifying the byte cap.
 pub const BYTE_CAP: u64 = 25_000_000_000;
+/// Constant identifying the hot cap.
 pub const HOT_CAP: u64 = 1_000_000_000_000;
+/// Constant identifying the put cap.
 pub const PUT_CAP: u64 = 1_500_000;
+/// Constant identifying the keeper facts.
 pub const KEEPER_FACTS: [&str; 4] = [
     "new_context_best",
     "parity_failure",
@@ -26,11 +31,13 @@ pub const KEEPER_FACTS: [&str; 4] = [
     "sealed_salt_audit",
 ];
 
+/// Performs the unsigned operation and returns an error if it cannot be completed.
 pub fn unsigned(value: &Value, name: &str) -> Result<u64> {
     value
         .as_u64()
         .with_context(|| format!("{name} must be a nonnegative integer"))
 }
+/// Performs the identity operation and returns an error if it cannot be completed.
 pub fn identity(row: &Value) -> Result<[String; 3]> {
     let mut result = [String::new(), String::new(), String::new()];
     for (i, field) in ["bucket", "key", "version_id"].iter().enumerate() {
@@ -43,6 +50,7 @@ pub fn identity(row: &Value) -> Result<[String; 3]> {
     Ok(result)
 }
 
+/// Performs the classify operation and returns an error if it cannot be completed.
 pub fn classify(row: &Value, facts: Option<&Value>) -> Result<Value> {
     let id = identity(row)?;
     unsigned(&row["bytes"], "object bytes")?;
@@ -142,6 +150,7 @@ pub fn budget_status(values: &Value) -> Result<Value> {
     )
 }
 
+/// Performs the bounded read operation and returns an error if it cannot be completed.
 pub fn bounded_read(path: &Path, limit: u64) -> Result<Vec<u8>> {
     let mut raw = Vec::new();
     File::open(path)?.take(limit + 1).read_to_end(&mut raw)?;
@@ -231,6 +240,7 @@ pub fn verify_manifest_bytes(raw: &[u8], directory: &Path) -> Result<Value> {
     )
 }
 
+/// Performs the verify pack operation and returns an error if it cannot be completed.
 pub fn verify_pack(path: &Path, raw: &[u8]) -> Result<Value> {
     let (index, roster) = manifest(raw)?;
     verify_parsed(File::open(path)?, raw, &index, &roster)
@@ -248,25 +258,33 @@ fn verify_parsed(file: File, raw: &[u8], index: &Value, roster: &[Blob]) -> Resu
         "manifest_sha256":sha256_hex(raw),"qualified":false,"remote_calls":0}),
     )
 }
+/// Performs the verify saved operation and returns an error if it cannot be completed.
 pub fn verify_saved(path: &Path) -> Result<Value> {
     let raw = bounded_read(path, MAX_MANIFEST).context("bounded manifest bytes")?;
     verify_manifest_bytes(&raw, path.parent().context("manifest directory")?)
 }
 
 #[derive(Clone)]
+/// `CapturedMember` is a record for the captured member contract in this module: Local, nonqualifying custody-v2 observations. No S3 client or retention executor.
 pub struct CapturedMember {
+    /// Row recorded for this captured member.
     pub row: Value,
+    /// Body recorded for this captured member.
     pub body: Arc<[u8]>,
 }
 
 /// Fault hooks run before the real operation; they cannot skip persistence.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PersistStep {
+    /// The `Write` case of `PersistStep`.
     Write,
+    /// The `FileSync` case of `PersistStep`.
     FileSync,
+    /// The `ParentSync` case of `PersistStep`.
     ParentSync,
 }
 
+/// Performs the durable file operation and returns an error if it cannot be completed.
 pub fn durable_file(
     path: &Path,
     raw: &[u8],
@@ -286,6 +304,7 @@ pub fn durable_file(
     Ok(())
 }
 
+/// Performs the pack local operation and returns an error if it cannot be completed.
 pub fn pack_local(destination: &Path, members: &[CapturedMember]) -> Result<Value> {
     pack_with(destination, members, &mut |_, _| Ok(()))
 }
@@ -306,6 +325,7 @@ fn durable_directory(
     result
 }
 
+/// Performs the pack with operation and returns an error if it cannot be completed.
 pub fn pack_with(
     destination: &Path,
     members: &[CapturedMember],
@@ -412,19 +432,30 @@ pub fn verify_complete(directory: &Path, receipt_sha: &str) -> Result<Value> {
 
 /// Local capture only. Budget status is reported and never authorizes scoring or storage policy.
 pub struct Pricing<'a> {
+    /// Requests recorded for this pricing.
     pub requests: &'a [Value],
+    /// Rates recorded for this pricing.
     pub rates: &'a Value,
+    /// As of recorded for this pricing.
     pub as_of: &'a str,
 }
+/// `DryRunRequest` is a record for the dry run request contract in this module: Local, nonqualifying custody-v2 observations. No S3 client or retention executor.
 pub struct DryRunRequest<'a> {
+    /// Number of rows represented by this value.
     pub rows: &'a [Value],
+    /// Facts recorded for this dry run request.
     pub facts: &'a [Value],
+    /// Budgets recorded for this dry run request.
     pub budgets: &'a Value,
+    /// Members recorded for this dry run request.
     pub members: &'a [CapturedMember],
+    /// Optional input sha value; `None` means it is not available.
     pub input_sha: Option<&'a str>,
+    /// Optional pricing value; `None` means it is not available.
     pub pricing: Option<Pricing<'a>>,
 }
 
+/// Performs the dry run operation and returns an error if it cannot be completed.
 pub fn dry_run(
     destination: &Path,
     request: &DryRunRequest<'_>,
