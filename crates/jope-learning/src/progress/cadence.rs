@@ -44,15 +44,21 @@ use std::collections::BTreeSet;
 
 /// Milliseconds on a monotonic, injected clock.
 pub trait Clock {
+    /// Performs the now ms operation and returns an error if it cannot be completed.
     fn now_ms(&self) -> u64;
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `Policy` is a record for the policy contract in this module: W8-T05: cadence and retention classes.
 pub struct Policy {
+    /// Flush interval ms recorded for this policy.
     pub flush_interval_ms: u64,
+    /// Byte count for the associated flush.
     pub flush_bytes: u64,
+    /// Checkpoint updates recorded for this policy.
     pub checkpoint_updates: u64,
+    /// Checkpoint interval ms recorded for this policy.
     pub checkpoint_interval_ms: u64,
 }
 
@@ -71,10 +77,15 @@ impl Policy {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Urgent {
+    /// The `HwmChange` case of `Urgent`.
     HwmChange,
+    /// The `CorpusFreeze` case of `Urgent`.
     CorpusFreeze,
+    /// The `CheckpointCommit` case of `Urgent`.
     CheckpointCommit,
+    /// The `TerminalFailure` case of `Urgent`.
     TerminalFailure,
+    /// The `Shutdown` case of `Urgent`.
     Shutdown,
     /// A restarted process found pending entries.
     Restart,
@@ -84,9 +95,21 @@ pub enum Urgent {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "kebab-case", tag = "reason")]
 pub enum FlushDue {
-    Urgent { requests: Vec<Urgent> },
-    Size { pending_bytes: u64 },
-    Interval { waited_ms: u64 },
+    /// The `Urgent` case of `FlushDue`.
+    Urgent {
+        /// Requests recorded for this outcome.
+        requests: Vec<Urgent>,
+    },
+    /// The `Size` case of `FlushDue`.
+    Size {
+        /// Pending bytes recorded for this outcome.
+        pending_bytes: u64,
+    },
+    /// The `Interval` case of `FlushDue`.
+    Interval {
+        /// Waited ms recorded for this outcome.
+        waited_ms: u64,
+    },
 }
 
 /// The durable watermark: the highest `n` such that outbox records `1..=n` are all
@@ -99,18 +122,22 @@ pub fn durable_through(outbox: &Outbox) -> u64 {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+/// `Tick` is a record for the tick contract in this module: W8-T05: cadence and retention classes.
 pub struct Tick {
+    /// Optional due value; `None` means it is not available.
     pub due: Option<FlushDue>,
     /// `None` when nothing was due.
     pub delivery: Option<Delivery>,
     /// True only when the flush left nothing pending.
     pub flushed: bool,
+    /// Durable through recorded for this tick.
     pub durable_through: u64,
 }
 
 /// Flush scheduling state.
 #[derive(Clone, Debug)]
 pub struct Cadence {
+    /// Policy recorded for this cadence.
     pub policy: Policy,
     last_flush_ms: u64,
     urgent: BTreeSet<Urgent>,
@@ -137,10 +164,12 @@ impl Cadence {
         }
     }
 
+    /// Performs the request operation and returns an error if it cannot be completed.
     pub fn request(&mut self, why: Urgent) {
         self.urgent.insert(why);
     }
 
+    /// Performs the pending urgent operation and returns an error if it cannot be completed.
     pub fn pending_urgent(&self) -> Vec<Urgent> {
         self.urgent.iter().copied().collect()
     }
@@ -214,20 +243,34 @@ impl Cadence {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "kebab-case", tag = "reason")]
 pub enum CheckpointDue {
-    Updates { uncheckpointed: u64 },
-    Interval { waited_ms: u64 },
-    Shutdown { uncheckpointed: u64 },
+    /// The `Updates` case of `CheckpointDue`.
+    Updates {
+        /// Uncheckpointed recorded for this outcome.
+        uncheckpointed: u64,
+    },
+    /// The `Interval` case of `CheckpointDue`.
+    Interval {
+        /// Waited ms recorded for this outcome.
+        waited_ms: u64,
+    },
+    /// The `Shutdown` case of `CheckpointDue`.
+    Shutdown {
+        /// Uncheckpointed recorded for this outcome.
+        uncheckpointed: u64,
+    },
 }
 
 /// Checkpoint scheduling at committed updates.
 #[derive(Clone, Debug)]
 pub struct Checkpoints {
+    /// Policy recorded for this checkpoints.
     pub policy: Policy,
     last_ms: u64,
     uncheckpointed: u64,
 }
 
 impl Checkpoints {
+    /// Constructs or opens a new value from the supplied inputs.
     pub fn new(policy: Policy, now_ms: u64) -> Checkpoints {
         Checkpoints {
             policy,
@@ -274,6 +317,7 @@ impl Checkpoints {
         self.last_ms = now_ms;
     }
 
+    /// Performs the uncheckpointed operation and returns an error if it cannot be completed.
     pub fn uncheckpointed(&self) -> u64 {
         self.uncheckpointed
     }
@@ -285,6 +329,7 @@ impl Checkpoints {
 pub enum Role {
     /// Initialized or improved an HWM.
     Winner,
+    /// The `AdmittedTeacher` case of `Role`.
     AdmittedTeacher,
     /// A declared diagnostic sample.
     DiagnosticSample,

@@ -34,20 +34,30 @@ use std::path::Path;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Role {
+    /// The `Val263` case of `Role`.
     Val263,
+    /// The `Sealed` case of `Role`.
     Sealed,
+    /// The `Prereg` case of `Role`.
     Prereg,
+    /// The `Evidence` case of `Role`.
     Evidence,
+    /// The `MainManifest` case of `Role`.
     MainManifest,
+    /// The `Train` case of `Role`.
     Train,
+    /// The `Frozen24` case of `Role`.
     Frozen24,
+    /// The `Backlog` case of `Role`.
     Backlog,
+    /// The `Seed` case of `Role`.
     Seed,
     /// Derived by a scan (D1), never accepted as a declared role.
     ProseMention,
 }
 
 impl Role {
+    /// Parses the supplied representation, returning an error when the input is invalid.
     pub fn parse(s: &str) -> Result<Role> {
         Ok(match s {
             "val263" => Role::Val263,
@@ -63,6 +73,7 @@ impl Role {
         })
     }
 
+    /// Returns the stable string representation of this value.
     pub fn as_str(self) -> &'static str {
         match self {
             Role::Val263 => "val263",
@@ -101,32 +112,46 @@ impl Role {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+/// `ObjRef` is a record for the obj ref contract in this module: References that pin object groups: rosters, seed packets, the main tree and the evidence store.
 pub struct ObjRef {
+    /// Data or authority role assigned to this value.
     pub role: Role,
+    /// Bucket recorded for this obj ref.
     pub bucket: String,
+    /// Key recorded for this obj ref.
     pub key: String,
     /// The file the reference came from (relative to its scan root for scans).
     pub source: String,
 }
 
 #[derive(Clone, Debug, Default, Serialize)]
+/// `ScanStats` is a record for the scan stats contract in this module: References that pin object groups: rosters, seed packets, the main tree and the evidence store.
 pub struct ScanStats {
+    /// Data or authority role assigned to this value.
     pub role: String,
+    /// Root recorded for this scan stats.
     pub root: String,
+    /// Files seen recorded for this scan stats.
     pub files_seen: u64,
+    /// Files read recorded for this scan stats.
     pub files_read: u64,
     /// Files over the size cap, streamed and found to name no in-scope bucket.
     pub files_over_cap: u64,
     /// Files skipped because their extension is not a text format in [`SCAN_EXTENSIONS`].
     pub files_not_text: u64,
+    /// Files mentioning buckets recorded for this scan stats.
     pub files_mentioning_buckets: u64,
+    /// Files unreadable recorded for this scan stats.
     pub files_unreadable: u64,
     /// JSON files or JSONL lines skipped because they are inventories, not pins.
     pub inventory_skipped: u64,
+    /// Bytes read recorded for this scan stats.
     pub bytes_read: u64,
+    /// Object refs recorded for this scan stats.
     pub object_refs: u64,
     /// Of `object_refs`, those found in prose files and recorded as [`Role::ProseMention`].
     pub prose_refs: u64,
+    /// Prefix mentions recorded for this scan stats.
     pub prefix_mentions: u64,
     /// sha256 over the sorted `relative path \t size \t sha256` lines of the files that mention
     /// an in-scope bucket: identifies what the scan actually used.
@@ -134,11 +159,17 @@ pub struct ScanStats {
 }
 
 #[derive(Debug, Default)]
+/// `RefSet` is a record for the ref set contract in this module: References that pin object groups: rosters, seed packets, the main tree and the evidence store.
 pub struct RefSet {
+    /// Number of objects represented by this value.
     pub objects: BTreeSet<ObjRef>,
+    /// Mapping of contexts values carried by this ref set.
     pub contexts: BTreeMap<String, BTreeSet<Role>>,
+    /// Mapping of programs values carried by this ref set.
     pub programs: BTreeMap<String, BTreeSet<Role>>,
+    /// Prefix mentions recorded for this ref set.
     pub prefix_mentions: u64,
+    /// Collection of scans values carried by this ref set.
     pub scans: Vec<ScanStats>,
     /// Source label stamped on references while one file is being read.
     source: String,

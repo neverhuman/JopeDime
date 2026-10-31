@@ -3,12 +3,14 @@ use jope_records::research::{EvidenceLocator, EvidenceResolver, EvidenceValue};
 use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Clone, Debug, Default)]
+/// `EvidenceView` is a record for the evidence view contract in this module: Adapter for callers that already hold an immutable verified evidence snapshot.
 pub struct EvidenceView {
     values: BTreeMap<EvidenceLocator, EvidenceValue>,
     revoked: BTreeSet<EvidenceLocator>,
 }
 
 impl EvidenceView {
+    /// Constructs or opens a new value from the supplied inputs.
     pub fn new(
         values: impl IntoIterator<Item = EvidenceValue>,
         revoked: impl IntoIterator<Item = EvidenceLocator>,

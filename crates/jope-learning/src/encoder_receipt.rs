@@ -12,15 +12,20 @@ use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
+/// Schema identifier for  values.
 pub const SCHEMA: &str = "jope.encoder_receipt/v1";
 
 /// Semantic identity, not just vector width. All spike outputs are LE f32 vectors.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Product {
+    /// The `RowEmbedding128` case of `Product`.
     RowEmbedding128,
+    /// The `DatasetSignature512` case of `Product`.
     DatasetSignature512,
+    /// The `TargetEmbedding512` case of `Product`.
     TargetEmbedding512,
+    /// The `TeachingContext2048` case of `Product`.
     TeachingContext2048,
 }
 impl Product {
@@ -35,8 +40,11 @@ impl Product {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `Member` is a record for the member contract in this module: Encoder/admission binding. Teaching admission (eligibility::qualify and every revalidating consumer) derives the scope and encoder pins from the preoptimization freeze and requires checkteachingbinding before any.
 pub struct Member {
+    /// Row recorded for this member.
     pub row: String,
+    /// Group recorded for this member.
     pub group: String,
 }
 
@@ -46,20 +54,31 @@ pub struct Member {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Scope {
+    /// Comparison recorded for this scope.
     pub comparison: HwmIdentity,
+    /// Source family recorded for this scope.
     pub source_family: String,
+    /// Optional outer fold value; `None` means it is not available.
     pub outer_fold: Option<u8>,
+    /// Optional inner fold value; `None` means it is not available.
     pub inner_fold: Option<u8>,
+    /// Collection of fitting values carried by this scope.
     pub fitting: Vec<Member>,
+    /// Collection of forbidden values carried by this scope.
     pub forbidden: Vec<Member>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `Encoder` is a record for the encoder contract in this module: Encoder/admission binding. Teaching admission (eligibility::qualify and every revalidating consumer) derives the scope and encoder pins from the preoptimization freeze and requires checkteachingbinding before any.
 pub struct Encoder {
+    /// SHA-256 digest identifying the associated artifact.
     pub artifact_sha256: String,
+    /// SHA-256 digest identifying the associated configuration.
     pub configuration_sha256: String,
+    /// Seed recorded for this encoder.
     pub seed: u64,
+    /// Product recorded for this encoder.
     pub product: Product,
 }
 
@@ -68,8 +87,11 @@ pub struct Encoder {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Inputs {
+    /// SHA-256 digest identifying the associated features.
     pub features_sha256: String,
+    /// SHA-256 digest identifying the associated labels.
     pub labels_sha256: Option<String>,
+    /// Collection of parent receipts values carried by this inputs.
     pub parent_receipts: Vec<String>,
 }
 
@@ -87,6 +109,7 @@ pub struct EncoderCapability {
     inputs: Inputs,
 }
 impl EncoderCapability {
+    /// Performs the bind operation and returns an error if it cannot be completed.
     pub fn bind(scope: Scope, encoder: Encoder, inputs: Inputs) -> Result<Self> {
         ensure!(
             !scope.source_family.trim().is_empty()
@@ -221,16 +244,27 @@ fn members(rows: &[Member]) -> Result<BTreeSet<&str>> {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `EncoderReceipt` is a record for the encoder receipt contract in this module: Encoder/admission binding. Teaching admission (eligibility::qualify and every revalidating consumer) derives the scope and encoder pins from the preoptimization freeze and requires checkteachingbinding before any.
 pub struct EncoderReceipt {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// SHA-256 digest identifying the associated capability.
     pub capability_sha256: String,
+    /// SHA-256 digest identifying the associated scope.
     pub scope_sha256: String,
+    /// SHA-256 digest identifying the associated comparison.
     pub comparison_sha256: String,
+    /// SHA-256 digest identifying the associated ordered fitting rows.
     pub ordered_fitting_rows_sha256: String,
+    /// SHA-256 digest identifying the associated permitted label rows.
     pub permitted_label_rows_sha256: String,
+    /// Encoder recorded for this encoder receipt.
     pub encoder: Encoder,
+    /// Inputs recorded for this encoder receipt.
     pub inputs: Inputs,
+    /// SHA-256 digest identifying the associated fitted state.
     pub fitted_state_sha256: String,
+    /// SHA-256 digest identifying the associated output.
     pub output_sha256: String,
 }
 
@@ -238,9 +272,13 @@ pub struct EncoderReceipt {
 /// Program binding belongs here: an encoder may be shared by several candidates.
 #[derive(Clone, Debug)]
 pub struct TeachingBinding {
+    /// SHA-256 digest identifying the associated comparison.
     pub comparison_sha256: String,
+    /// SHA-256 digest of the canonical program source.
     pub program_sha256: String,
+    /// SHA-256 digest identifying the associated encoder receipt.
     pub encoder_receipt_sha256: String,
+    /// Product recorded for this teaching binding.
     pub product: Product,
 }
 

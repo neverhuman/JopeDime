@@ -55,6 +55,7 @@ impl StateSnapshotAuthority {
         Ok(store)
     }
 
+    /// Performs the root operation and returns an error if it cannot be completed.
     pub fn root(&self) -> Result<Option<SnapshotRoot>> {
         let _lock = self.files.lock()?;
         Ok(self.current_locked()?.0)
@@ -64,6 +65,7 @@ impl StateSnapshotAuthority {
         let _lock = self.files.lock()?;
         self.snapshot_locked(digest)
     }
+    /// Performs the candidate state operation and returns an error if it cannot be completed.
     pub fn candidate_state(&self, digest: &str) -> Result<Option<CandidateState>> {
         let _lock = self.files.lock()?;
         let (_, history) = self.current_locked()?;

@@ -15,6 +15,7 @@ pub struct EvidenceStore {
 }
 
 impl EvidenceStore {
+    /// Constructs or opens a open value from the supplied inputs.
     pub fn open(root: &Path) -> Result<Self> {
         fs::create_dir_all(root.join("objects"))?;
         Ok(Self {
@@ -22,6 +23,7 @@ impl EvidenceStore {
         })
     }
 
+    /// Performs the read operation and returns an error if it cannot be completed.
     pub fn read(&self, digest: &str) -> Result<Vec<u8>> {
         ensure!(is_hex64(digest), "invalid evidence digest");
         let bytes = fs::read(self.root.join("objects").join(digest))?;
@@ -29,6 +31,7 @@ impl EvidenceStore {
         Ok(bytes)
     }
 
+    /// Performs the put operation and returns an error if it cannot be completed.
     pub fn put(&self, bytes: &[u8]) -> Result<String> {
         let digest = sha256_hex(bytes);
         let objects = self.root.join("objects");
@@ -98,6 +101,7 @@ impl EvidenceStore {
         Ok(digest)
     }
 
+    /// Performs the verify manifest operation and returns an error if it cannot be completed.
     pub fn verify_manifest(&self, digest: &str, experiment: &ExperimentIdentity) -> Result<()> {
         #[derive(Deserialize)]
         #[serde(deny_unknown_fields)]
@@ -123,11 +127,17 @@ impl EvidenceStore {
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+/// `AttemptOutcome` is a public attempt outcome enum.
 pub enum AttemptOutcome {
+    /// The `Qualified` case of `AttemptOutcome`.
     Qualified,
+    /// The `Failed` case of `AttemptOutcome`.
     Failed,
+    /// The `Timeout` case of `AttemptOutcome`.
     Timeout,
+    /// The `ParityUnqualified` case of `AttemptOutcome`.
     ParityUnqualified,
+    /// The `Unknown` case of `AttemptOutcome`.
     Unknown,
 }
 
@@ -155,6 +165,7 @@ impl RunStore {
         Self::bind(path, lane, identity, true)
     }
 
+    /// Constructs or opens a open value from the supplied inputs.
     pub fn open(path: &Path, lane: &str, identity: ExperimentIdentity) -> Result<Self> {
         Self::bind(path, lane, identity, false)
     }
@@ -207,6 +218,7 @@ impl RunStore {
         })
     }
 
+    /// Performs the hold operation and returns an error if it cannot be completed.
     pub fn hold(&self, reason: &str) -> Result<()> {
         ensure!(!reason.trim().is_empty(), "empty HOLD reason");
         self.db.execute(
@@ -251,6 +263,7 @@ impl RunStore {
         Ok(())
     }
 
+    /// Performs the start attempt operation and returns an error if it cannot be completed.
     pub fn start_attempt(&mut self, id: &str) -> Result<()> {
         ensure!(!id.trim().is_empty(), "empty attempt id");
         let tx = self
@@ -271,6 +284,7 @@ impl RunStore {
         Ok(())
     }
 
+    /// Performs the finish attempt operation and returns an error if it cannot be completed.
     pub fn finish_attempt(
         &self,
         id: &str,
@@ -303,6 +317,7 @@ impl RunStore {
         Ok(count)
     }
 
+    /// Performs the hold generation operation and returns an error if it cannot be completed.
     pub fn hold_generation(&self) -> Result<u64> {
         Ok(self.db.query_row(
             "SELECT generation FROM holds WHERE digest=?1",

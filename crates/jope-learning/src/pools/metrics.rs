@@ -145,17 +145,22 @@ fn normalized(oracle: f64, realized: f64) -> Option<f64> {
 /// Per-context metrics of one selector on one pool.
 #[derive(Clone, Debug, PartialEq, serde::Serialize)]
 pub struct ContextMetrics {
+    /// Realized gain recorded for this context metrics.
     pub realized_gain: f64,
+    /// Top1 gain recorded for this context metrics.
     pub top1_gain: f64,
+    /// Regret recorded for this context metrics.
     pub regret: f64,
     /// `regret / oracle_gain`, in [0, 1]; `None` when the pool offers no gain at all.
     pub normalized_regret: Option<f64>,
     /// Probability that the selected `B` include a member strictly above the reference: 0 or 1
     /// for a deterministic selector, the exact draw probability for `uniform_exact`.
     pub beats_reference: f64,
+    /// Optional pairwise accuracy value; `None` means it is not available.
     pub pairwise_accuracy: Option<f64>,
 }
 
+/// Performs the score context operation and returns an error if it cannot be completed.
 pub fn score_context(
     outcomes: &[Option<f64>],
     incumbent: f64,

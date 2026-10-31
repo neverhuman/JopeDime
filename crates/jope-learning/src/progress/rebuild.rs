@@ -46,6 +46,7 @@ use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
+/// Schema identifier for index values.
 pub const INDEX_SCHEMA: &str = "jope.progress.summary-index/v1";
 
 /// `progress/runs/<run>/summary.json`: the disposable derived index.
@@ -58,11 +59,15 @@ pub fn index_key(run_id: &str) -> Result<String> {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Index {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Identifier for the associated run.
     pub run_id: String,
     /// Digest of the [`Summary`] object.
     pub summary: String,
+    /// Derived from recorded for this index.
     pub derived_from: String,
+    /// Height recorded for this index.
     pub height: u64,
 }
 
@@ -155,14 +160,19 @@ pub fn publish_summary(remote: &dyn Remote, run_id: &str) -> Result<Option<Summa
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "kebab-case", tag = "state")]
+/// `Freshness` is an enum for the freshness contract in this module: W8-T04/T06: views rebuilt from committed records, and state reconstructed from the remote committed graph.
 pub enum Freshness {
     /// Derived from the commit the run pointer names now.
     Fresh,
     /// Derived from another commit than the one the pointer names now.
     Stale {
+        /// Derived from recorded for this freshness.
         derived_from: String,
+        /// Derived height recorded for this freshness.
         derived_height: u64,
+        /// Optional head value; `None` means it is not available.
         head: Option<String>,
+        /// Optional head height value; `None` means it is not available.
         head_height: Option<u64>,
     },
     /// No summary has been derived.
@@ -218,7 +228,9 @@ pub fn read_summary(remote: &dyn Remote, run_id: &str) -> Result<(Freshness, Opt
 /// What the remote and a surviving outbox hold for a run, by store key.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 pub struct Reconstruction {
+    /// Identifier for the associated run.
     pub run_id: String,
+    /// Optional head value; `None` means it is not available.
     pub head: Option<Head>,
     /// The committed closure: remotely acknowledged, committed and verified. The only progress
     /// recoverable from the remote.
@@ -339,7 +351,9 @@ pub fn reconstruct(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+/// `Restored` is a record for the restored contract in this module: W8-T04/T06: views rebuilt from committed records, and state reconstructed from the remote committed graph.
 pub struct Restored {
+    /// Head recorded for this restored.
     pub head: Head,
     /// Items appended to the outbox, in dependency order.
     pub appended: u64,

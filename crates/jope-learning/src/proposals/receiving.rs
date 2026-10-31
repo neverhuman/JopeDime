@@ -6,23 +6,34 @@ use anyhow::{Context, Result};
 /// Outcome returned by a pipeline-owned fenced release implementation.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ReleaseOutcome {
+    /// The `Released` case of `ReleaseOutcome`.
     Released {
+        /// Identifier for the associated physical attempt.
         physical_attempt_id: String,
+        /// Physical cost units recorded for this release outcome.
         physical_cost_units: u64,
     },
+    /// The `Refused` case of `ReleaseOutcome`.
     Refused {
+        /// SHA-256 digest identifying the associated reason.
         reason_sha256: String,
     },
+    /// The `Failed` case of `ReleaseOutcome`.
     Failed {
+        /// SHA-256 digest of the receipt that authenticates this result.
         receipt_sha256: String,
+        /// Physical cost units recorded for this release outcome.
         physical_cost_units: u64,
+        /// Retryable recorded for this release outcome.
         retryable: bool,
     },
+    /// The `Unknown` case of `ReleaseOutcome`.
     Unknown,
 }
 
 /// The integrator supplies this trait at `ExecutionPool::run`; it owns actual fit authority.
 pub trait FencedRelease {
+    /// Performs the authorize and release operation and returns an error if it cannot be completed.
     fn authorize_and_release(&mut self, request_key: &str, lease: &Lease)
         -> Result<ReleaseOutcome>;
 }

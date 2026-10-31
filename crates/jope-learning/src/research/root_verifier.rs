@@ -8,24 +8,40 @@ use std::fs;
 use std::path::Path;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+/// `ProspectiveCohortRootsSummary` is a record for the prospective cohort roots summary contract in this module: Fail-closed root and training-artifact-registry verifiers for committed research waves (MR03).
 pub struct ProspectiveCohortRootsSummary {
+    /// Identifier for the associated wave.
     pub wave_id: String,
+    /// SHA-256 digest identifying the associated manifest.
     pub manifest_sha256: String,
+    /// SHA-256 digest identifying the associated card.
     pub card_sha256: String,
+    /// SHA-256 digest identifying the associated context.
     pub context_sha256: String,
+    /// SHA-256 digest identifying the associated metrics.
     pub metrics_sha256: String,
+    /// SHA-256 digest identifying the associated archive manifest.
     pub archive_manifest_sha256: String,
+    /// Number of evidence root represented here.
     pub evidence_root_count: usize,
+    /// Number of assertion represented here.
     pub assertion_count: usize,
+    /// Scored contexts total recorded for this prospective cohort roots summary.
     pub scored_contexts_total: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+/// `ArtifactRegistryRootsSummary` is a record for the artifact registry roots summary contract in this module: Fail-closed root and training-artifact-registry verifiers for committed research waves (MR03).
 pub struct ArtifactRegistryRootsSummary {
+    /// SHA-256 digest identifying the associated registry.
     pub registry_sha256: String,
+    /// SHA-256 digest identifying the associated runbook.
     pub runbook_sha256: String,
+    /// Number of artifact represented here.
     pub artifact_count: usize,
+    /// Declared shards recorded for this artifact registry roots summary.
     pub declared_shards: u64,
+    /// Shard member keys located recorded for this artifact registry roots summary.
     pub shard_member_keys_located: u64,
 }
 

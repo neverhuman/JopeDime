@@ -28,6 +28,7 @@ pub fn file_sha256(path: &Path) -> Result<String> {
     Ok(hex::encode(h.finalize()))
 }
 
+/// Performs the bytes SHA-256 operation and returns an error if it cannot be completed.
 pub fn bytes_sha256(bytes: &[u8]) -> String {
     sha256_hex(bytes)
 }

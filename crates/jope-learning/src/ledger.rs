@@ -34,65 +34,102 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+/// Schema identifier for seal values.
 pub const SEAL_SCHEMA: &str = "jope.ledger-seal/v1";
+/// Schema identifier for head values.
 pub const HEAD_SCHEMA: &str = "jope.ledger-head/v1";
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
+/// `Seal` is a record for the seal contract in this module: Append-only, hash-chained JSONL ledgers.
 pub struct Seal {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Ledger recorded for this seal.
     pub ledger: String,
+    /// Ledger batch receipt produced by the operation, if one was appended.
     pub batch: String,
+    /// Events recorded for this seal.
     pub events: u64,
+    /// SHA-256 digest identifying the associated events.
     pub events_sha256: String,
+    /// Optional prev batch value; `None` means it is not available.
     pub prev_batch: Option<String>,
+    /// SHA-256 digest identifying the associated prev batch.
     pub prev_batch_sha256: Option<String>,
+    /// Provenance source for this value.
     pub source: Value,
+    /// Tool recorded for this seal.
     pub tool: String,
+    /// Unix timestamp when this event was recorded.
     pub ts_unix: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
+/// `Head` is a record for the head contract in this module: Append-only, hash-chained JSONL ledgers.
 pub struct Head {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Ledger recorded for this head.
     pub ledger: String,
+    /// Ledger batch receipt produced by the operation, if one was appended.
     pub batch: String,
     /// Batch file path relative to the ledger directory.
     pub path: String,
+    /// Sha-256 recorded for this head.
     pub sha256: String,
+    /// Batches recorded for this head.
     pub batches: u64,
+    /// Events total recorded for this head.
     pub events_total: u64,
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `BatchReceipt` is a record for the batch receipt contract in this module: Append-only, hash-chained JSONL ledgers.
 pub struct BatchReceipt {
+    /// Ledger batch receipt produced by the operation, if one was appended.
     pub batch: String,
+    /// Filesystem path associated with this input or output.
     pub path: String,
+    /// Sha-256 recorded for this batch receipt.
     pub sha256: String,
+    /// Events recorded for this batch receipt.
     pub events: u64,
+    /// SHA-256 digest identifying the associated prev batch.
     pub prev_batch_sha256: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Default)]
+/// `LedgerReport` is a record for the ledger report contract in this module: Append-only, hash-chained JSONL ledgers.
 pub struct LedgerReport {
+    /// Ledger recorded for this ledger report.
     pub ledger: String,
+    /// Batches recorded for this ledger report.
     pub batches: u64,
+    /// Events recorded for this ledger report.
     pub events: u64,
+    /// Optional head value; `None` means it is not available.
     pub head: Option<Head>,
+    /// Collection of breaks values carried by this ledger report.
     pub breaks: Vec<Break>,
 }
 
 impl LedgerReport {
+    /// Performs the ok operation and returns an error if it cannot be completed.
     pub fn ok(&self) -> bool {
         self.breaks.is_empty()
     }
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `Break` is a record for the break contract in this module: Append-only, hash-chained JSONL ledgers.
 pub struct Break {
+    /// Ledger batch receipt produced by the operation, if one was appended.
     pub batch: String,
+    /// Record kind or category represented by this value.
     pub kind: String,
+    /// Detail recorded for this break.
     pub detail: String,
 }
 
@@ -105,16 +142,26 @@ pub enum MirrorPosition {
     /// The mirror's tip is a batch of this chain, or the mirror has no `HEAD.json` at all.
     /// `missing` is every local batch after it, oldest first — the gap to upload before the
     /// pointer moves.
-    Behind { missing: Vec<(String, PathBuf)> },
+    /// Field value recorded by this public API type.
+    Behind {
+        /// Missing recorded for this outcome.
+        missing: Vec<(String, PathBuf)>,
+    },
     /// The mirror names a chain this host cannot continue. Refuse; do not overwrite.
-    Diverged { detail: String },
+    /// Field value recorded by this public API type.
+    Diverged {
+        /// Explanation accompanying this outcome.
+        detail: String,
+    },
 }
 
+/// `Ledger` is a record for the ledger contract in this module: Append-only, hash-chained JSONL ledgers.
 pub struct Ledger {
     root: PathBuf,
     name: String,
 }
 
+/// Performs the now unix operation and returns an error if it cannot be completed.
 pub fn now_unix() -> u64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -154,14 +201,17 @@ impl Ledger {
         }
     }
 
+    /// Performs the root operation and returns an error if it cannot be completed.
     pub fn root(&self) -> &Path {
         &self.root
     }
 
+    /// Performs the name operation and returns an error if it cannot be completed.
     pub fn name(&self) -> &str {
         &self.name
     }
 
+    /// Performs the head operation and returns an error if it cannot be completed.
     pub fn head(&self) -> Result<Option<Head>> {
         let p = self.root.join("HEAD.json");
         if !p.exists() {
@@ -703,6 +753,7 @@ impl Ledger {
     }
 }
 
+/// Performs the map err walk operation and returns an error if it cannot be completed.
 pub fn map_err_walk(e: walkdir::Error) -> anyhow::Error {
     anyhow!("{e}")
 }

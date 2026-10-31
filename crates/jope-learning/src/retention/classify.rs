@@ -62,18 +62,28 @@ pub fn expire_allowed(tv: &Tv, e_rule_proven: bool, independent_check_agrees: bo
 }
 
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+/// `Tv` is a record for the tv contract in this module: Classification of one object group: T0 checks, the training-value test TV(g) (§8.1), E-rule status (§8.2), the action, list-price costs and the reason string (§8.7).
 pub struct Tv {
+    /// Measured or derived value carried by this result.
     pub value: bool,
+    /// Collection of uses values carried by this tv.
     pub uses: Vec<&'static str>,
 }
 
 #[derive(Clone, Debug, Serialize, PartialEq)]
+/// `Cost` is a record for the cost contract in this module: Classification of one object group: T0 checks, the training-value test TV(g) (§8.1), E-rule status (§8.2), the action, list-price costs and the reason string (§8.7).
 pub struct Cost {
+    /// Class now recorded for this cost.
     pub class_now: String,
+    /// Class after recorded for this cost.
     pub class_after: String,
+    /// Now usd mo recorded for this cost.
     pub now_usd_mo: f64,
+    /// After usd mo recorded for this cost.
     pub after_usd_mo: f64,
+    /// Delta usd mo recorded for this cost.
     pub delta_usd_mo: f64,
+    /// One time in region usd recorded for this cost.
     pub one_time_in_region_usd: f64,
     /// The same work run from the xbabe hosts: adds internet egress for every byte read.
     pub one_time_off_aws_usd: f64,
@@ -86,14 +96,23 @@ pub struct Cost {
 
 /// Everything known about one group before deciding.
 pub struct Facts<'a> {
+    /// Group recorded for this facts.
     pub group: &'a Group,
+    /// Storage class recorded for this facts.
     pub storage_class: String,
+    /// Mapping of refs by role values carried by this facts.
     pub refs_by_role: BTreeMap<Role, u64>,
+    /// Mapping of ctx roles values carried by this facts.
     pub ctx_roles: BTreeMap<Role, u64>,
+    /// Mapping of prog roles values carried by this facts.
     pub prog_roles: BTreeMap<Role, u64>,
+    /// Optional index value; `None` means it is not available.
     pub index: Option<&'a GroupIndex>,
+    /// Number of family scored rows represented here.
     pub family_scored_rows: Option<u64>,
+    /// Coverage recorded for this facts.
     pub coverage: Coverage,
+    /// As of unix recorded for this facts.
     pub as_of_unix: u64,
     /// S3 Inventory facts for this group, when its bucket has a report.
     pub inv: Option<&'a GroupInv>,
@@ -108,16 +127,27 @@ pub struct Facts<'a> {
 }
 
 #[derive(Clone, Debug, Serialize, PartialEq)]
+/// `Decision` is a record for the decision contract in this module: Classification of one object group: T0 checks, the training-value test TV(g) (§8.1), E-rule status (§8.2), the action, list-price costs and the reason string (§8.7).
 pub struct Decision {
+    /// Action recorded for this decision.
     pub action: Action,
+    /// Record kind or category represented by this value.
     pub kind: Option<&'static str>,
+    /// Optional family value; `None` means it is not available.
     pub family: Option<String>,
+    /// Rule recorded for this decision.
     pub rule: String,
+    /// Optional t0 value; `None` means it is not available.
     pub t0: Option<String>,
+    /// Live recorded for this decision.
     pub live: bool,
+    /// Tv recorded for this decision.
     pub tv: Tv,
+    /// Collection of e candidates values carried by this decision.
     pub e_candidates: Vec<String>,
+    /// Cost recorded for this decision.
     pub cost: Cost,
+    /// Explanation associated with the recorded disposition.
     pub reason: String,
 }
 
@@ -336,6 +366,7 @@ fn cost(f: &Facts, action: Action, p: &Policy) -> Result<Cost> {
     })
 }
 
+/// Performs the decide operation and returns an error if it cannot be completed.
 pub fn decide(f: &Facts, p: &Policy) -> Result<Decision> {
     let g = f.group;
     let rule = p.rule_for(&g.bucket, &g.prefix);

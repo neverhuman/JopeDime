@@ -23,26 +23,40 @@ use std::collections::BTreeMap;
 /// v3 uses strict nested/v3 fitting and records unavailable CV without a numeric substitute.
 /// Historical v1/v2 receipts retain their recorded procedure and probability semantics.
 pub const RECEIPT_SCHEMA: &str = "jope.j9-selection-receipt/v3";
+/// Constant identifying the uniform.
 pub const UNIFORM: &str = "uniform_exact";
 
 #[derive(Clone, Debug, Serialize)]
+/// `Config` is a record for the config contract in this module: Parent-grouped cross-fitted selector evaluation on frozen pools, and its shadow receipt.
 pub struct Config {
+    /// Reference recorded for this config.
     pub reference: Reference,
+    /// Budget recorded for this config.
     pub budget: usize,
+    /// Folds recorded for this config.
     pub folds: usize,
+    /// Fold salt recorded for this config.
     pub fold_salt: String,
+    /// Prior weight recorded for this config.
     pub prior_weight: f64,
+    /// Knn k recorded for this config.
     pub knn_k: usize,
+    /// Ridge lambda recorded for this config.
     pub ridge_lambda: f64,
+    /// Bootstrap draws recorded for this config.
     pub bootstrap_draws: usize,
+    /// Bootstrap seed recorded for this config.
     pub bootstrap_seed: u64,
+    /// Alpha recorded for this config.
     pub alpha: f64,
 }
 
 /// Inputs that fitted baselines may read. Absent features disable the selector that needs them;
 /// the receipt lists what ran.
 pub struct Inputs<'a> {
+    /// Optional context features value; `None` means it is not available.
     pub context_features: Option<&'a Features>,
+    /// Optional program features value; `None` means it is not available.
     pub program_features: Option<&'a Features>,
     /// Externally scored selectors (PolicyLM q-head, native GP ranking, learned candidates).
     pub external: Vec<&'a dyn Selector>,
@@ -50,6 +64,7 @@ pub struct Inputs<'a> {
     pub unavailable: Vec<Unavailable>,
 }
 
+/// Performs the fold of operation and returns an error if it cannot be completed.
 pub fn fold_of(salt: &str, parent: &str, folds: usize) -> usize {
     let mut h = Sha256::new();
     h.update((salt.len() as u64).to_le_bytes());
@@ -60,91 +75,144 @@ pub fn fold_of(salt: &str, parent: &str, folds: usize) -> usize {
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `Unavailable` is a record for the unavailable contract in this module: Parent-grouped cross-fitted selector evaluation on frozen pools, and its shadow receipt.
 pub struct Unavailable {
+    /// Name recorded for this unavailable.
     pub name: String,
+    /// Explanation associated with the recorded disposition.
     pub reason: String,
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `SelectorRecord` is a record for the selector record contract in this module: Parent-grouped cross-fitted selector evaluation on frozen pools, and its shadow receipt.
 pub struct SelectorRecord {
+    /// Name recorded for this selector record.
     pub name: String,
+    /// Class recorded for this selector record.
     pub class: Class,
+    /// Rule recorded for this selector record.
     pub rule: String,
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `ContextRecord` is a record for the context record contract in this module: Parent-grouped cross-fitted selector evaluation on frozen pools, and its shadow receipt.
 pub struct ContextRecord {
+    /// Identifier for the associated context.
     pub context_id: String,
+    /// Identifier for the associated parent.
     pub parent_id: String,
+    /// Fold recorded for this context record.
     pub fold: usize,
+    /// SHA-256 digest identifying the associated pool.
     pub pool_sha256: String,
+    /// Members recorded for this context record.
     pub members: usize,
+    /// Oracle gain recorded for this context record.
     pub oracle_gain: f64,
+    /// Mapping of metrics values carried by this context record.
     pub metrics: BTreeMap<String, ContextMetrics>,
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `Summary` is a record for the summary contract in this module: Parent-grouped cross-fitted selector evaluation on frozen pools, and its shadow receipt.
 pub struct Summary {
+    /// Contexts recorded for this summary.
     pub contexts: usize,
+    /// Mean realized gain recorded for this summary.
     pub mean_realized_gain: f64,
+    /// Mean top1 gain recorded for this summary.
     pub mean_top1_gain: f64,
+    /// Mean regret recorded for this summary.
     pub mean_regret: f64,
+    /// Optional mean normalized regret value; `None` means it is not available.
     pub mean_normalized_regret: Option<f64>,
     /// Mean probability that the selection includes a member strictly above the reference.
     pub beats_reference_rate: f64,
+    /// Pairwise contexts recorded for this summary.
     pub pairwise_contexts: usize,
+    /// Optional mean pairwise accuracy value; `None` means it is not available.
     pub mean_pairwise_accuracy: Option<f64>,
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `Comparison` is a record for the comparison contract in this module: Parent-grouped cross-fitted selector evaluation on frozen pools, and its shadow receipt.
 pub struct Comparison {
+    /// Candidate recorded for this comparison.
     pub candidate: String,
+    /// Baseline recorded for this comparison.
     pub baseline: String,
     /// Paired `candidate - baseline` per context; positive favours the candidate.
     pub realized_gain: PairedInterval,
+    /// Optional pairwise accuracy value; `None` means it is not available.
     pub pairwise_accuracy: Option<PairedInterval>,
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `FoldCvRecord` is a record for the fold cross-validation record contract in this module: Parent-grouped cross-fitted selector evaluation on frozen pools, and its shadow receipt.
 pub struct FoldCvRecord {
+    /// Fold recorded for this fold cross-validation record.
     pub fold: usize,
+    /// Estimate recorded for this fold cross-validation record.
     pub estimate: CvEstimate,
+    /// Collection of fits values carried by this fold cross-validation record.
     pub fits: Vec<super::selectors::InnerFoldFit>,
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `SelectorCoverage` is a record for the selector coverage contract in this module: Parent-grouped cross-fitted selector evaluation on frozen pools, and its shadow receipt.
 pub struct SelectorCoverage {
     /// Unit: frozen outer contexts. Whole-selector refusal removes every partial score.
     pub attempted: usize,
+    /// Scored recorded for this selector coverage.
     pub scored: usize,
+    /// Excluded recorded for this selector coverage.
     pub excluded: usize,
+    /// Failed recorded for this selector coverage.
     pub failed: usize,
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// `Receipt` is a record for the receipt contract in this module: Parent-grouped cross-fitted selector evaluation on frozen pools, and its shadow receipt.
 pub struct Receipt {
+    /// Schema identifier and version for the serialized value.
     pub schema: &'static str,
+    /// Shadow only recorded for this receipt.
     pub shadow_only: bool,
+    /// Qualified claim recorded for this receipt.
     pub qualified_claim: bool,
+    /// L6 claim recorded for this receipt.
     pub l6_claim: bool,
+    /// SHA-256 digest identifying the associated manifest.
     pub manifest_sha256: String,
+    /// Config recorded for this receipt.
     pub config: Config,
+    /// Collection of selectors values carried by this receipt.
     pub selectors: Vec<SelectorRecord>,
+    /// Collection of unavailable selectors values carried by this receipt.
     pub unavailable_selectors: Vec<Unavailable>,
+    /// Collection of surrogate cross-validation values carried by this receipt.
     pub surrogate_cv: Vec<FoldCvRecord>,
+    /// Mapping of selector coverage values carried by this receipt.
     pub selector_coverage: BTreeMap<String, SelectorCoverage>,
+    /// Program features recorded for this receipt.
     pub program_features: String,
+    /// Collection of fold training pools values carried by this receipt.
     pub fold_training_pools: Vec<usize>,
+    /// Mapping of summaries values carried by this receipt.
     pub summaries: BTreeMap<String, Summary>,
+    /// Strongest baseline recorded for this receipt.
     pub strongest_baseline: String,
+    /// Collection of comparisons values carried by this receipt.
     pub comparisons: Vec<Comparison>,
     /// `ESTABLISHED_SHADOW` only when a candidate's realized-gain cluster CI against the
     /// strongest baseline lies above zero; otherwise `NOT_ESTABLISHED`. Never a qualification.
     pub ranking_learnability: String,
+    /// Collection of contexts values carried by this receipt.
     pub contexts: Vec<ContextRecord>,
 }
 
 impl Receipt {
+    /// Computes the canonical SHA-256 digest of this value.
     pub fn sha256(&self) -> Result<String> {
         canonical_sha256(self)
     }
@@ -196,6 +264,7 @@ fn paired(
     )?))
 }
 
+/// Performs the evaluate operation and returns an error if it cannot be completed.
 pub fn evaluate(
     pools: &[Pool],
     manifest: &Manifest,
@@ -205,6 +274,7 @@ pub fn evaluate(
     evaluate_with_fold_train_pools(pools, None, manifest, inputs, cfg)
 }
 
+/// Performs the evaluate with fold train pools operation and returns an error if it cannot be completed.
 pub fn evaluate_with_fold_train_pools(
     pools: &[Pool],
     fold_train_pools: Option<&[Vec<Pool>]>,
@@ -215,6 +285,7 @@ pub fn evaluate_with_fold_train_pools(
     evaluate_with_fold_train_pools_and_priors(pools, fold_train_pools, None, manifest, inputs, cfg)
 }
 
+/// Performs the evaluate with fold train pools and priors operation and returns an error if it cannot be completed.
 pub fn evaluate_with_fold_train_pools_and_priors(
     pools: &[Pool],
     fold_train_pools: Option<&[Vec<Pool>]>,

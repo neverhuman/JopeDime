@@ -90,13 +90,17 @@ struct Closure {
 /// What [`check`] found in one proposal.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct RosterReport {
+    /// Schema identifier and version for the serialized value.
     pub schema: &'static str,
     /// SHA-256 of the exact proposal bytes.
     pub proposal_sha256: String,
     /// Distinct families per declared role.
     pub families: BTreeMap<String, usize>,
+    /// Collection of defects values carried by this roster report.
     pub defects: Vec<String>,
+    /// Collection of owner decisions values carried by this roster report.
     pub owner_decisions: Vec<String>,
+    /// Collection of limitations values carried by this roster report.
     pub limitations: Vec<String>,
     /// Always false: a check adopts nothing.
     pub adopted: bool,

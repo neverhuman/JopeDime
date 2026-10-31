@@ -45,8 +45,11 @@ pub mod value;
 
 use serde::Serialize;
 
+/// Schema identifier for plan row values.
 pub const PLAN_ROW_SCHEMA: &str = "jopedime.retention-plan-row/v1";
+/// Schema identifier for plan summary values.
 pub const PLAN_SUMMARY_SCHEMA: &str = "jopedime.retention-plan-summary/v1";
+/// Schema identifier for inputs lock values.
 pub const INPUTS_LOCK_SCHEMA: &str = "jopedime.retention-brain-inputs/v1";
 
 /// The one action a group gets. Serialized names follow strategy §8.4 and §8.7.
@@ -76,6 +79,7 @@ pub enum Action {
 }
 
 impl Action {
+    /// Constant identifying the all.
     pub const ALL: [Action; 7] = [
         Action::KeepT0,
         Action::KeepHot,
@@ -86,6 +90,7 @@ impl Action {
         Action::Expire,
     ];
 
+    /// Returns the stable string representation of this value.
     pub fn as_str(self) -> &'static str {
         match self {
             Action::KeepT0 => "KEEP_T0",
@@ -98,6 +103,7 @@ impl Action {
         }
     }
 
+    /// Performs the tier operation and returns an error if it cannot be completed.
     pub fn tier(self) -> &'static str {
         match self {
             Action::KeepT0 => "T0",

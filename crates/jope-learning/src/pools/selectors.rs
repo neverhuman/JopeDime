@@ -16,12 +16,17 @@ use std::collections::{BTreeMap, BTreeSet};
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Class {
+    /// The `Baseline` case of `Class`.
     Baseline,
+    /// The `Candidate` case of `Class`.
     Candidate,
 }
 
+/// Interface for the selector contract used by Selectors over a frozen pool (CLOVER §6 Experiment A).
 pub trait Selector {
+    /// Performs the name operation and returns an error if it cannot be completed.
     fn name(&self) -> &str;
+    /// Performs the class operation and returns an error if it cannot be completed.
     fn class(&self) -> Class;
     /// Exact rule and version, recorded in the receipt.
     fn rule(&self) -> String;
@@ -73,6 +78,7 @@ pub struct ProgramPrior {
 }
 
 impl ProgramPrior {
+    /// Performs the fit operation and returns an error if it cannot be completed.
     pub fn fit(train: &[&Pool], prior_weight: f64) -> Self {
         Self {
             means: program_means(train),
@@ -112,7 +118,9 @@ impl Selector for ProgramPrior {
 /// Dense per-key feature vectors (context encodings or program descriptors).
 #[derive(Clone, Debug, Default)]
 pub struct Features {
+    /// Dim recorded for this features.
     pub dim: usize,
+    /// Number of rows represented by this value.
     pub rows: BTreeMap<String, Vec<f64>>,
 }
 
@@ -123,6 +131,7 @@ pub struct Features {
 pub const CONTEXT_DESCRIPTOR: &str = "context-id-bytes/v1";
 
 impl Features {
+    /// Performs the context ID vector operation and returns an error if it cannot be completed.
     pub fn context_id_vector(id: &str, dim: usize) -> Result<Vec<f64>> {
         ensure!(
             dim > 0 && id.len() == 64 && id.bytes().all(|b| b.is_ascii_hexdigit()),
@@ -139,6 +148,7 @@ impl Features {
             .collect()
     }
 
+    /// Performs the context ID descriptors operation and returns an error if it cannot be completed.
     pub fn context_id_descriptors(pools: &[Pool], dim: usize) -> Result<Self> {
         Ok(Self {
             dim,
@@ -154,6 +164,7 @@ impl Features {
         })
     }
 
+    /// Performs the verify context descriptor operation and returns an error if it cannot be completed.
     pub fn verify_context_descriptor(&self) -> Result<()> {
         ensure!(!self.rows.is_empty(), "context descriptor has no rows");
         for (id, vector) in &self.rows {
@@ -166,6 +177,7 @@ impl Features {
     }
 }
 
+/// Constant identifying the nested procedure.
 pub const NESTED_PROCEDURE: &str = "contextual-surrogate-parent-nested/v3";
 const INNER_FOLDS: usize = 5;
 const INNER_SALT: &str = "jope.j9-inner-ridge-folds/v1";
@@ -173,27 +185,45 @@ const INNER_SALT: &str = "jope.j9-inner-ridge-folds/v1";
 /// Denominator unit: pool-member rows. A refused whole procedure scores none of its rows.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 pub struct CvCounts {
+    /// Attempted units recorded for this cross-validation counts.
     pub attempted_units: usize,
+    /// Scored units recorded for this cross-validation counts.
     pub scored_units: usize,
+    /// Excluded units recorded for this cross-validation counts.
     pub excluded_units: usize,
+    /// Failed units recorded for this cross-validation counts.
     pub failed_units: usize,
+    /// Parents recorded for this cross-validation counts.
     pub parents: usize,
+    /// Folds recorded for this cross-validation counts.
     pub folds: usize,
+    /// Failed candidates recorded for this cross-validation counts.
     pub failed_candidates: usize,
+    /// Collection of failure details values carried by this cross-validation counts.
     pub failure_details: Vec<String>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
+/// `CvUnavailableReason` is an enum for the cross-validation unavailable reason contract in this module: Selectors over a frozen pool (CLOVER §6 Experiment A).
 pub enum CvUnavailableReason {
+    /// The `InsufficientParents` case of `CvUnavailableReason`.
     InsufficientParents,
+    /// The `EmptyUsableFolds` case of `CvUnavailableReason`.
     EmptyUsableFolds,
+    /// The `ShapeMismatch` case of `CvUnavailableReason`.
     ShapeMismatch,
+    /// The `NonfiniteSystem` case of `CvUnavailableReason`.
     NonfiniteSystem,
+    /// The `SingularSystem` case of `CvUnavailableReason`.
     SingularSystem,
+    /// The `ComponentFit` case of `CvUnavailableReason`.
     ComponentFit,
+    /// The `UnboundContextProvenance` case of `CvUnavailableReason`.
     UnboundContextProvenance,
+    /// The `ExternalPriorProvenance` case of `CvUnavailableReason`.
     ExternalPriorProvenance,
+    /// The `NoFiniteCandidate` case of `CvUnavailableReason`.
     NoFiniteCandidate,
 }
 
@@ -202,25 +232,36 @@ pub enum CvUnavailableReason {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum CvEstimate {
+    /// The `Supported` case of `CvEstimate`.
     Supported {
+        /// Procedure recorded for this cross-validation estimate.
         procedure: String,
+        /// Metric used to evaluate the represented result.
         metric: ExactCvLoss,
+        /// Counts recorded for this cross-validation estimate.
         counts: CvCounts,
     },
+    /// Required evidence is unavailable, so no exact result can be reported.
     Unavailable {
+        /// Procedure recorded for this cross-validation estimate.
         procedure: String,
+        /// Explanation associated with the recorded disposition.
         reason: CvUnavailableReason,
+        /// Detail recorded for this cross-validation estimate.
         detail: String,
+        /// Counts recorded for this cross-validation estimate.
         counts: CvCounts,
     },
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
+/// `ExactCvLoss` is a record for the exact cross-validation loss contract in this module: Selectors over a frozen pool (CLOVER §6 Experiment A).
 pub struct ExactCvLoss {
     f64_bits: String,
 }
 
 impl CvEstimate {
+    /// Performs the loss operation and returns an error if it cannot be completed.
     pub fn loss(&self) -> Option<f64> {
         match self {
             Self::Supported { metric, .. } => Some(f64::from_bits(
@@ -230,6 +271,7 @@ impl CvEstimate {
         }
     }
 
+    /// Performs the counts operation and returns an error if it cannot be completed.
     pub fn counts(&self) -> &CvCounts {
         match self {
             Self::Supported { counts, .. } | Self::Unavailable { counts, .. } => counts,
@@ -238,6 +280,7 @@ impl CvEstimate {
 }
 
 #[derive(Clone, Debug)]
+/// `CvUnavailable` is a record for the cross-validation unavailable contract in this module: Selectors over a frozen pool (CLOVER §6 Experiment A).
 pub struct CvUnavailable(pub CvEstimate);
 
 impl std::fmt::Display for CvUnavailable {
@@ -248,17 +291,27 @@ impl std::fmt::Display for CvUnavailable {
 impl std::error::Error for CvUnavailable {}
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
+/// `InnerFoldFit` is a record for the inner fold fit contract in this module: Selectors over a frozen pool (CLOVER §6 Experiment A).
 pub struct InnerFoldFit {
+    /// Fold recorded for this inner fold fit.
     pub fold: usize,
+    /// Collection of training parents values carried by this inner fold fit.
     pub training_parents: Vec<String>,
+    /// Collection of held parents values carried by this inner fold fit.
     pub held_parents: Vec<String>,
+    /// SHA-256 digest identifying the associated training input.
     pub training_input_sha256: String,
+    /// SHA-256 digest identifying the associated training features.
     pub training_features_sha256: String,
+    /// SHA-256 digest identifying the associated split.
     pub split_sha256: String,
+    /// SHA-256 digest identifying the associated state.
     pub state_sha256: String,
+    /// SHA-256 digest identifying the associated held design.
     pub held_design_sha256: String,
     /// One digest per locally finite candidate in grid order, independent of other folds failing.
     pub prediction_sha256: Vec<String>,
+    /// Collection of selected prediction bits values carried by this inner fold fit.
     pub selected_prediction_bits: Vec<Vec<String>>,
 }
 
@@ -303,7 +356,9 @@ fn unavailable(
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FeatureLine {
+    /// Stable identifier for this value.
     pub id: String,
+    /// Collection of vector values carried by this feature line.
     pub vector: Vec<f64>,
 }
 
@@ -393,6 +448,7 @@ pub struct RetrievalKnn<'a> {
 }
 
 impl<'a> RetrievalKnn<'a> {
+    /// Performs the fit operation and returns an error if it cannot be completed.
     pub fn fit(
         train: &[&'a Pool],
         context_features: &'a Features,
@@ -524,6 +580,7 @@ fn cholesky_solve(mut a: Vec<f64>, mut b: Vec<f64>, n: usize) -> Result<Vec<f64>
 }
 
 impl<'a> RidgeProgram<'a> {
+    /// Performs the fit operation and returns an error if it cannot be completed.
     pub fn fit(train: &[&Pool], program_features: &'a Features, lambda: f64) -> Result<Self> {
         ensure!(
             lambda > 0.0 && lambda.is_finite(),
@@ -595,13 +652,18 @@ impl Selector for RidgeProgram<'_> {
     }
 }
 
+/// Schema identifier for external values.
 pub const EXTERNAL_SCHEMA: &str = "jope.j9-external-scores/v1";
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `ExternalScore` is a record for the external score contract in this module: Selectors over a frozen pool (CLOVER §6 Experiment A).
 pub struct ExternalScore {
+    /// Identifier for the associated context.
     pub context_id: String,
+    /// SHA-256 digest of the canonical program source.
     pub program_sha256: String,
+    /// Measured score for this outcome; absence denotes a failed draw.
     pub score: f64,
 }
 
@@ -611,11 +673,17 @@ pub struct ExternalScore {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ExternalDocument {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Name recorded for this external document.
     pub name: String,
+    /// Class recorded for this external document.
     pub class: Class,
+    /// Rule recorded for this external document.
     pub rule: String,
+    /// Provenance recorded for this external document.
     pub provenance: serde_json::Value,
+    /// Collection of scores values carried by this external document.
     pub scores: Vec<ExternalScore>,
 }
 
@@ -628,6 +696,7 @@ pub struct External {
 }
 
 impl External {
+    /// Performs the from document operation and returns an error if it cannot be completed.
     pub fn from_document(doc: &ExternalDocument) -> Result<Self> {
         ensure!(
             doc.schema == EXTERNAL_SCHEMA,
@@ -693,7 +762,9 @@ impl Selector for External {
 /// Cross-family S3 `gp_distilled/v1` program prior statistics restricted to an outer training split.
 #[derive(Clone, Debug, Default)]
 pub struct ExternalProgramPrior {
+    /// Mapping of tot stats values carried by this external program prior.
     pub tot_stats: BTreeMap<String, (f64, usize)>,
+    /// Mapping of parent stats values carried by this external program prior.
     pub parent_stats: BTreeMap<(String, String), (f64, usize)>,
 }
 
@@ -763,8 +834,11 @@ pub struct ContextualSurrogateQHat<'a> {
     weights: Vec<f64>,
 }
 
+/// Configured upper or lower bound for max surrogate design dim.
 pub const MAX_SURROGATE_DESIGN_DIM: usize = 512;
+/// Configured upper or lower bound for max bilinear ctx dim.
 pub const MAX_BILINEAR_CTX_DIM: usize = 8;
+/// Configured upper or lower bound for max bilinear prog dim.
 pub const MAX_BILINEAR_PROG_DIM: usize = 8;
 const SURROGATE_BASE_FEATURES: usize = 13;
 
@@ -780,10 +854,12 @@ impl<'a> ContextualSurrogateQHat<'a> {
         self.inner_cv.loss()
     }
 
+    /// Performs the inner cross-validation estimate operation and returns an error if it cannot be completed.
     pub fn inner_cv_estimate(&self) -> &CvEstimate {
         &self.inner_cv
     }
 
+    /// Performs the inner fold fits operation and returns an error if it cannot be completed.
     pub fn inner_fold_fits(&self) -> &[InnerFoldFit] {
         &self.inner_fold_fits
     }
@@ -1073,6 +1149,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
         self.view_design_rows_with_ridge(view, &ridge_scores)
     }
 
+    /// Performs the fit operation and returns an error if it cannot be completed.
     pub fn fit(
         train: &[&'a Pool],
         context_features: &'a Features,
@@ -1330,6 +1407,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
         ))
     }
 
+    /// Performs the fit with prior operation and returns an error if it cannot be completed.
     pub fn fit_with_prior(
         train: &[&'a Pool],
         context_features: &'a Features,
@@ -1689,14 +1767,21 @@ impl Selector for ContextualSurrogateQHat<'_> {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FunnelAllocation {
+    /// Identifier for the associated context.
     pub context_id: String,
+    /// Selector name recorded for this funnel allocation.
     pub selector_name: String,
+    /// Proposal pool k recorded for this funnel allocation.
     pub proposal_pool_k: usize,
+    /// Eval budget b recorded for this funnel allocation.
     pub eval_budget_b: usize,
+    /// SHA-256 digest identifying the associated selected program.
     pub selected_program_sha256: Vec<String>,
+    /// Collection of selected scores values carried by this funnel allocation.
     pub selected_scores: Vec<f64>,
 }
 
+/// Performs the pre screen funnel operation and returns an error if it cannot be completed.
 pub fn pre_screen_funnel(
     view: &PoolView<'_>,
     selector: &dyn Selector,

@@ -28,17 +28,24 @@ use anyhow::Result;
 use jope_datasets::store::{ObservedObject, PutOutcome, Store};
 use serde::Serialize;
 
+/// `Mirror` is a record for the mirror contract in this module: The durable copy: an objectstore URL (file:// in tests, s3:// via JOPELEARNINGURL in production) written through jopedatasets::store::Store.
 pub struct Mirror {
     store: Store,
     rt: tokio::runtime::Runtime,
+    /// Url recorded for this mirror.
     pub url: String,
 }
 
 #[derive(Clone, Debug, Default, Serialize)]
+/// `MirrorReport` is a record for the mirror report contract in this module: The durable copy: an objectstore URL (file:// in tests, s3:// via JOPELEARNINGURL in production) written through jopedatasets::store::Store.
 pub struct MirrorReport {
+    /// Url recorded for this mirror report.
     pub url: String,
+    /// Created recorded for this mirror report.
     pub created: u64,
+    /// Existed recorded for this mirror report.
     pub existed: u64,
+    /// Pointers recorded for this mirror report.
     pub pointers: u64,
     /// Ledger batch objects this push uploaded. More than one means the mirror was behind and has
     /// been caught up; `created` vs `existed` says how many of them were genuinely new.
@@ -49,6 +56,7 @@ pub struct MirrorReport {
 }
 
 impl MirrorReport {
+    /// Performs the count operation and returns an error if it cannot be completed.
     pub fn count(&mut self, outcome: PutOutcome) {
         match outcome {
             PutOutcome::Created => self.created += 1,
@@ -64,6 +72,7 @@ pub fn mirror_url(arg: Option<String>) -> Option<String> {
 }
 
 impl Mirror {
+    /// Constructs or opens a open value from the supplied inputs.
     pub fn open(url: &str) -> Result<Mirror> {
         let rt = tokio::runtime::Builder::new_current_thread()
             .enable_all()
@@ -113,14 +122,17 @@ impl Mirror {
             .block_on(self.store.put_conditional(rel, bytes.to_vec(), observed))
     }
 
+    /// Looks up observed and returns the matching value when present.
     pub fn get_observed(&self, rel: &str) -> Result<Option<ObservedObject>> {
         self.rt.block_on(self.store.get_observed(rel))
     }
 
+    /// Performs the get operation and returns an error if it cannot be completed.
     pub fn get(&self, rel: &str) -> Result<Option<Vec<u8>>> {
         self.rt.block_on(self.store.get_bytes(rel))
     }
 
+    /// Performs the list operation and returns an error if it cannot be completed.
     pub fn list(&self, prefix: &str) -> Result<Vec<String>> {
         self.rt.block_on(self.store.list(prefix))
     }

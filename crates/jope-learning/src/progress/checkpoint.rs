@@ -9,17 +9,23 @@ use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
+/// Schema identifier for checkpoint values.
 pub const CHECKPOINT_SCHEMA: &str = "jope.progress.segment-checkpoint/v1";
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `ProofReference` is a record for the proof reference contract in this module: Proof-bound checkpoints for deterministic derived progress reconstruction.
 pub struct ProofReference {
+    /// Record kind or category represented by this value.
     pub kind: String,
+    /// Key recorded for this proof reference.
     pub key: String,
+    /// Sha-256 recorded for this proof reference.
     pub sha256: String,
 }
 
 impl ProofReference {
+    /// Validates this value against its invariants and returns an error when validation fails.
     pub fn validate(&self) -> Result<()> {
         ensure!(
             !self.kind.is_empty() && self.kind.len() <= 96,
@@ -36,19 +42,30 @@ impl ProofReference {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `CommittedUpdate` is a record for the committed update contract in this module: Proof-bound checkpoints for deterministic derived progress reconstruction.
 pub struct CommittedUpdate {
+    /// Update key recorded for this committed update.
     pub update_key: String,
+    /// Source commit recorded for this committed update.
     pub source_commit: String,
+    /// SHA-256 digest identifying the associated source root.
     pub source_root_sha256: String,
+    /// Checkpoint recorded for this committed update.
     pub checkpoint: ProofReference,
+    /// Intent recorded for this committed update.
     pub intent: ProofReference,
+    /// Occurrence recorded for this committed update.
     pub occurrence: ProofReference,
+    /// Rank recorded for this committed update.
     pub rank: u64,
+    /// Attempt recorded for this committed update.
     pub attempt: u64,
+    /// Epoch recorded for this committed update.
     pub epoch: u64,
 }
 
 impl CommittedUpdate {
+    /// Validates this value against its invariants and returns an error when validation fails.
     pub fn validate(&self) -> Result<()> {
         ensure!(
             !self.update_key.is_empty() && self.update_key.len() <= 512,
@@ -75,53 +92,87 @@ impl CommittedUpdate {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", tag = "state", content = "receipt")]
+/// `CheckpointEvidence` is an enum for the checkpoint evidence contract in this module: Proof-bound checkpoints for deterministic derived progress reconstruction.
 pub enum CheckpointEvidence {
     /// Boxed: a committed update is ~3x the size of every other variant, and
     /// evidence lists are held whole while a segment is rebuilt. Serde encodes
     /// `Box<T>` exactly as `T`, so the receipt bytes are unchanged.
     Committed(Box<CommittedUpdate>),
+    /// The `Proposed` case of `CheckpointEvidence`.
     Proposed {
+        /// Key recorded for this checkpoint evidence.
         key: String,
+        /// Provenance source for this value.
         source: ProofReference,
     },
+    /// The `Computed` case of `CheckpointEvidence`.
     Computed {
+        /// Key recorded for this checkpoint evidence.
         key: String,
+        /// Provenance source for this value.
         source: ProofReference,
     },
+    /// The `Applied` case of `CheckpointEvidence`.
     Applied {
+        /// Key recorded for this checkpoint evidence.
         key: String,
+        /// Provenance source for this value.
         source: ProofReference,
     },
+    /// The `Uncommitted` case of `CheckpointEvidence`.
     Uncommitted {
+        /// Key recorded for this checkpoint evidence.
         key: String,
+        /// Provenance source for this value.
         source: ProofReference,
     },
+    /// The `Failed` case of `CheckpointEvidence`.
     Failed {
+        /// Key recorded for this checkpoint evidence.
         key: String,
+        /// Provenance source for this value.
         source: ProofReference,
     },
+    /// The `Unknown` case of `CheckpointEvidence`.
     Unknown {
+        /// Key recorded for this checkpoint evidence.
         key: String,
+        /// Provenance source for this value.
         source: ProofReference,
     },
+    /// The `Inconclusive` case of `CheckpointEvidence`.
     Inconclusive {
+        /// Key recorded for this checkpoint evidence.
         key: String,
+        /// Provenance source for this value.
         source: ProofReference,
     },
+    /// The `Divergent` case of `CheckpointEvidence`.
     Divergent {
+        /// Key recorded for this checkpoint evidence.
         key: String,
+        /// Provenance source for this value.
         source: ProofReference,
     },
+    /// The `Quarantined` case of `CheckpointEvidence`.
     Quarantined {
+        /// Key recorded for this checkpoint evidence.
         key: String,
+        /// Provenance source for this value.
         source: ProofReference,
     },
+    /// The `LocalOnly` case of `CheckpointEvidence`.
     LocalOnly {
+        /// Key recorded for this checkpoint evidence.
         key: String,
+        /// Provenance source for this value.
         source: ProofReference,
     },
+    /// The `RemotePending` case of `CheckpointEvidence`.
     RemotePending {
+        /// Key recorded for this checkpoint evidence.
         key: String,
+        /// Provenance source for this value.
         source: ProofReference,
     },
 }
@@ -144,6 +195,7 @@ impl CheckpointEvidence {
         }
     }
 
+    /// Validates this value against its invariants and returns an error when validation fails.
     pub fn validate(&self) -> Result<()> {
         ensure!(
             !self.identity().is_empty() && self.identity().len() <= 512,
@@ -168,16 +220,24 @@ impl CheckpointEvidence {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `SegmentCheckpoint` is a record for the segment checkpoint contract in this module: Proof-bound checkpoints for deterministic derived progress reconstruction.
 pub struct SegmentCheckpoint {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Generation recorded for this segment checkpoint.
     pub generation: u64,
+    /// Source commit recorded for this segment checkpoint.
     pub source_commit: String,
+    /// SHA-256 digest identifying the associated source root.
     pub source_root_sha256: String,
+    /// Collection of evidence values carried by this segment checkpoint.
     pub evidence: Vec<CheckpointEvidence>,
+    /// Digest recorded for this segment checkpoint.
     pub digest: String,
 }
 
 impl SegmentCheckpoint {
+    /// Constructs or opens a new value from the supplied inputs.
     pub fn new(
         generation: u64,
         source_commit: String,
@@ -215,6 +275,7 @@ impl SegmentCheckpoint {
         Ok(checkpoint)
     }
 
+    /// Verifies the bound evidence and returns an error when verification fails.
     pub fn verify(&self) -> Result<()> {
         ensure!(
             self.schema == CHECKPOINT_SCHEMA,
@@ -248,24 +309,39 @@ impl SegmentCheckpoint {
 
 /// Coordinator/owner-supplied check against actual committed source receipts. False means held.
 pub trait CommittedUpdateVerifier {
+    /// Performs the verify committed update operation and returns an error if it cannot be completed.
     fn verify_committed_update(&self, update: &CommittedUpdate) -> Result<bool>;
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `RebuiltProgress` is a record for the rebuilt progress contract in this module: Proof-bound checkpoints for deterministic derived progress reconstruction.
 pub struct RebuiltProgress {
+    /// Committed updates recorded for this rebuilt progress.
     pub committed_updates: u64,
+    /// Proposed recorded for this rebuilt progress.
     pub proposed: u64,
+    /// Computed recorded for this rebuilt progress.
     pub computed: u64,
+    /// Applied recorded for this rebuilt progress.
     pub applied: u64,
+    /// Uncommitted recorded for this rebuilt progress.
     pub uncommitted: u64,
+    /// Failed recorded for this rebuilt progress.
     pub failed: u64,
+    /// Unknown recorded for this rebuilt progress.
     pub unknown: u64,
+    /// Inconclusive recorded for this rebuilt progress.
     pub inconclusive: u64,
+    /// Divergent recorded for this rebuilt progress.
     pub divergent: u64,
+    /// Quarantined recorded for this rebuilt progress.
     pub quarantined: u64,
+    /// Local only recorded for this rebuilt progress.
     pub local_only: u64,
+    /// Remote pending recorded for this rebuilt progress.
     pub remote_pending: u64,
+    /// Held committed recorded for this rebuilt progress.
     pub held_committed: u64,
 }
 

@@ -12,28 +12,42 @@ pub mod config;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `DiscoveryContext` is a record for the discovery context contract in this module: GB-06: frozen training inputs, PolicyLM seed ingestion and scratch GP comparison.
 pub struct DiscoveryContext {
+    /// SHA-256 digest identifying the associated context.
     pub context_sha256: String,
+    /// Parent family recorded for this discovery context.
     pub parent_family: String,
     /// Must be issued by the frozen role manifest, never inferred from a dataset name.
     pub role: String,
+    /// SHA-256 digest identifying the associated dataset.
     pub dataset_sha256: String,
+    /// Cut recorded for this discovery context.
     pub cut: usize,
+    /// SHA-256 digest identifying the associated training.
     pub training_sha256: String,
+    /// SHA-256 digest identifying the associated inner holdout.
     pub inner_holdout_sha256: String,
+    /// SHA-256 digest identifying the associated preprocessing.
     pub preprocessing_sha256: String,
+    /// SHA-256 digest identifying the associated encoder input.
     pub encoder_input_sha256: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `TrainingRoster` is a record for the training roster contract in this module: GB-06: frozen training inputs, PolicyLM seed ingestion and scratch GP comparison.
 pub struct TrainingRoster {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// SHA-256 digest identifying the associated role manifest.
     pub role_manifest_sha256: String,
+    /// Collection of contexts values carried by this training roster.
     pub contexts: Vec<DiscoveryContext>,
 }
 
 impl TrainingRoster {
+    /// Validates this value against its invariants and returns an error when validation fails.
     pub fn validate(&self) -> Result<()> {
         ensure!(
             self.schema == "clover.discovery-roster/v1",
@@ -76,11 +90,13 @@ impl TrainingRoster {
         Ok(())
     }
 
+    /// Computes the canonical SHA-256 digest of this value.
     pub fn digest(&self) -> Result<String> {
         self.validate()?;
         canonical_sha256(self)
     }
 
+    /// Verifies the bound evidence and returns an error when verification fails.
     pub fn verify_roles(&self, role_manifest: &[u8]) -> Result<()> {
         self.validate()?;
         ensure!(
@@ -137,18 +153,28 @@ pub fn rows_digest(x: &[Vec<f64>], y: &[f64]) -> Result<String> {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `PolicySnapshot` is a record for the policy snapshot contract in this module: GB-06: frozen training inputs, PolicyLM seed ingestion and scratch GP comparison.
 pub struct PolicySnapshot {
+    /// Model class recorded for this policy snapshot.
     pub model_class: String,
+    /// Context width recorded for this policy snapshot.
     pub context_width: usize,
+    /// SHA-256 digest identifying the associated parameter.
     pub parameter_sha256: String,
+    /// SHA-256 digest of the checkpoint bound to this evidence.
     pub checkpoint_sha256: String,
+    /// SHA-256 digest identifying the associated code.
     pub code_sha256: String,
+    /// SHA-256 digest identifying the associated tokenizer.
     pub tokenizer_sha256: String,
+    /// SHA-256 digest identifying the associated support.
     pub support_sha256: String,
+    /// SHA-256 digest identifying the associated normalizer.
     pub normalizer_sha256: String,
 }
 
 impl PolicySnapshot {
+    /// Validates this value against its invariants and returns an error when validation fails.
     pub fn validate(&self) -> Result<()> {
         ensure!(
             self.model_class == "PolicyLM" && self.context_width == 2051,
@@ -173,43 +199,64 @@ impl PolicySnapshot {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `PolicyProposal` is a record for the policy proposal contract in this module: GB-06: frozen training inputs, PolicyLM seed ingestion and scratch GP comparison.
 pub struct PolicyProposal {
+    /// Canonical program or genome representation.
     pub genome: String,
+    /// SHA-256 digest of the canonical program source.
     pub program_sha256: String,
+    /// Draw seed recorded for this policy proposal.
     pub draw_seed: u64,
     /// Likelihood of the original draw under the declared behavior sampler.
     /// It is retained as provenance, never assigned to evolved descendants.
     pub behavior_logprob: f64,
 }
 
+/// Constant identifying the sampling trie temperature v1.
 pub const SAMPLING_TRIE_TEMPERATURE_V1: &str = "trie_children_temperature_v1";
+/// Constant identifying the sampling surrogate funnel topb v1.
 pub const SAMPLING_SURROGATE_FUNNEL_TOPB_V1: &str = "surrogate_funnel_topb_v1";
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `SurrogateFunnelProvenance` is a record for the surrogate funnel provenance contract in this module: GB-06: frozen training inputs, PolicyLM seed ingestion and scratch GP comparison.
 pub struct SurrogateFunnelProvenance {
+    /// Selector name recorded for this surrogate funnel provenance.
     pub selector_name: String,
+    /// Selector rule recorded for this surrogate funnel provenance.
     pub selector_rule: String,
+    /// SHA-256 digest identifying the associated candidate catalog.
     pub candidate_catalog_sha256: String,
+    /// Allocation recorded for this surrogate funnel provenance.
     pub allocation: crate::pools::selectors::FunnelAllocation,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `PolicySeeds` is a record for the policy seeds contract in this module: GB-06: frozen training inputs, PolicyLM seed ingestion and scratch GP comparison.
 pub struct PolicySeeds {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Snapshot recorded for this policy seeds.
     pub snapshot: PolicySnapshot,
+    /// SHA-256 digest identifying the associated context.
     pub context_sha256: String,
+    /// SHA-256 digest identifying the associated encoder input.
     pub encoder_input_sha256: String,
+    /// Sampling protocol recorded for this policy seeds.
     pub sampling_protocol: String,
+    /// SHA-256 digest identifying the associated batch protocol.
     pub batch_protocol_sha256: String,
+    /// Temperature recorded for this policy seeds.
     pub temperature: f64,
     /// Original draws in order; duplicates remain here for honest draw accounting.
     pub proposals: Vec<PolicyProposal>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Optional surrogate funnel value; `None` means it is not available.
     pub surrogate_funnel: Option<SurrogateFunnelProvenance>,
 }
 
+/// Performs the canonical genome operation and returns an error if it cannot be completed.
 pub fn canonical_genome(raw: &str) -> Result<String> {
     // The production pipeline's parser/canonicalizer. One item avoids its top-K cap
     // skipping validation of later inputs.
@@ -222,6 +269,7 @@ pub fn canonical_genome(raw: &str) -> Result<String> {
 }
 
 impl PolicySeeds {
+    /// Validates this value against its invariants and returns an error when validation fails.
     pub fn validate(&self, context: &DiscoveryContext) -> Result<()> {
         ensure!(
             self.schema == "clover.policy-seeds/v1",
@@ -403,9 +451,13 @@ impl PolicySeeds {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `RetrievalSeed` is a record for the retrieval seed contract in this module: GB-06: frozen training inputs, PolicyLM seed ingestion and scratch GP comparison.
 pub struct RetrievalSeed {
+    /// Canonical program or genome representation.
     pub genome: String,
+    /// SHA-256 digest identifying the associated source context.
     pub source_context_sha256: String,
+    /// SHA-256 digest identifying the associated measurement receipt.
     pub measurement_receipt_sha256: String,
 }
 
@@ -414,6 +466,7 @@ pub struct RetrievalSeed {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RetrievalSeeds {
+    /// Collection of seeds values carried by this retrieval seeds.
     pub seeds: Vec<RetrievalSeed>,
 }
 
@@ -451,20 +504,32 @@ impl RetrievalSeeds {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `ScratchBudget` is a record for the scratch budget contract in this module: GB-06: frozen training inputs, PolicyLM seed ingestion and scratch GP comparison.
 pub struct ScratchBudget {
+    /// Evaluations per arm recorded for this scratch budget.
     pub evaluations_per_arm: usize,
+    /// Seconds per arm recorded for this scratch budget.
     pub seconds_per_arm: u64,
+    /// Rng seed recorded for this scratch budget.
     pub rng_seed: u64,
 }
 
 #[derive(Clone, Copy)]
+/// `ScratchRequest` is a record for the scratch request contract in this module: GB-06: frozen training inputs, PolicyLM seed ingestion and scratch GP comparison.
 pub struct ScratchRequest<'a> {
+    /// Roster recorded for this scratch request.
     pub roster: &'a TrainingRoster,
+    /// Role manifest recorded for this scratch request.
     pub role_manifest: &'a [u8],
+    /// SHA-256 digest identifying the associated context.
     pub context_sha256: &'a str,
+    /// Cut recorded for this scratch request.
     pub cut: &'a Cut,
+    /// Policy recorded for this scratch request.
     pub policy: &'a PolicySeeds,
+    /// Retrieval recorded for this scratch request.
     pub retrieval: &'a RetrievalSeeds,
+    /// Budget recorded for this scratch request.
     pub budget: &'a ScratchBudget,
 }
 
@@ -610,12 +675,19 @@ pub fn novelty(
 }
 
 #[derive(Clone, Copy)]
+/// `SurrogateSeedRequest` is a record for the surrogate seed request contract in this module: GB-06: frozen training inputs, PolicyLM seed ingestion and scratch GP comparison.
 pub struct SurrogateSeedRequest<'a> {
+    /// Context recorded for this surrogate seed request.
     pub context: &'a DiscoveryContext,
+    /// Snapshot recorded for this surrogate seed request.
     pub snapshot: &'a PolicySnapshot,
+    /// Candidate genomes recorded for this surrogate seed request.
     pub candidate_genomes: &'a [String],
+    /// Selector recorded for this surrogate seed request.
     pub selector: &'a dyn crate::pools::selectors::Selector,
+    /// Proposal pool k recorded for this surrogate seed request.
     pub proposal_pool_k: usize,
+    /// Eval budget b recorded for this surrogate seed request.
     pub eval_budget_b: usize,
 }
 
@@ -720,6 +792,7 @@ pub struct MeasuredTiltPolicyConfig {
 }
 
 impl MeasuredTiltPolicyConfig {
+    /// Validates this value against its invariants and returns an error when validation fails.
     pub fn validate(&self) -> Result<()> {
         ensure!(
             self.temperature_tau.is_finite() && self.temperature_tau > 0.0,
@@ -854,58 +927,106 @@ pub fn measured_tilt_leaf_log_probs(
 pub type RoundLeafLogProbFn<'a> = &'a dyn Fn(usize, &[String], &[String]) -> (Vec<f64>, Vec<f64>);
 
 #[derive(Clone, Copy)]
+/// `SelfPlayRatchetRequest` is a record for the self play ratchet request contract in this module: GB-06: frozen training inputs, PolicyLM seed ingestion and scratch GP comparison.
 pub struct SelfPlayRatchetRequest<'a> {
+    /// Roster recorded for this self play ratchet request.
     pub roster: &'a TrainingRoster,
+    /// Role manifest recorded for this self play ratchet request.
     pub role_manifest: &'a [u8],
+    /// SHA-256 digest identifying the associated context.
     pub context_sha256: &'a str,
+    /// Cut recorded for this self play ratchet request.
     pub cut: &'a Cut,
+    /// Initial policy recorded for this self play ratchet request.
     pub initial_policy: &'a PolicySeeds,
+    /// Initial retrieval recorded for this self play ratchet request.
     pub initial_retrieval: &'a RetrievalSeeds,
+    /// Round budgets recorded for this self play ratchet request.
     pub round_budgets: &'a [ScratchBudget],
+    /// Seed cap b recorded for this self play ratchet request.
     pub seed_cap_b: usize,
+    /// Upper bound on conditional base KL.
     pub max_conditional_base_kl: f64,
+    /// Upper bound on new support mass.
     pub max_new_support_mass: f64,
+    /// Optional round leaf log prob fn value; `None` means it is not available.
     pub round_leaf_log_prob_fn: Option<RoundLeafLogProbFn<'a>>,
+    /// Optional measured tilt policy value; `None` means it is not available.
     pub measured_tilt_policy: Option<MeasuredTiltPolicyConfig>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `SelfPlayRoundReceipt` is a record for the self play round receipt contract in this module: GB-06: frozen training inputs, PolicyLM seed ingestion and scratch GP comparison.
 pub struct SelfPlayRoundReceipt {
+    /// Round recorded for this self play round receipt.
     pub round: usize,
+    /// Evaluations per arm recorded for this self play round receipt.
     pub evaluations_per_arm: usize,
+    /// Rng seed recorded for this self play round receipt.
     pub rng_seed: u64,
+    /// Bootstrap anchor source recorded for this self play round receipt.
     pub bootstrap_anchor_source: String,
+    /// Active support leaves recorded for this self play round receipt.
     pub active_support_leaves: usize,
+    /// Collection of base leaf genomes values carried by this self play round receipt.
     pub base_leaf_genomes: Vec<String>,
+    /// Collection of archive leaf genomes values carried by this self play round receipt.
     pub archive_leaf_genomes: Vec<String>,
+    /// Newly admitted winners recorded for this self play round receipt.
     pub newly_admitted_winners: usize,
+    /// Collection of seeded genomes values carried by this self play round receipt.
     pub seeded_genomes: Vec<String>,
+    /// Collection of seed consumption values carried by this self play round receipt.
     pub seed_consumption: Vec<Value>,
+    /// Ordinary best rmse recorded for this self play round receipt.
     pub ordinary_best_rmse: f64,
+    /// Ordinary best q recorded for this self play round receipt.
     pub ordinary_best_q: f64,
     #[serde(default, skip_serializing_if = "String::is_empty")]
+    /// Ordinary champion genome recorded for this self play round receipt.
     pub ordinary_champion_genome: String,
+    /// Ordinary evals to best recorded for this self play round receipt.
     pub ordinary_evals_to_best: usize,
+    /// SHA-256 digest identifying the associated ordinary search.
     pub ordinary_search_sha256: String,
+    /// SHA-256 digest identifying the associated ordinary observations.
     pub ordinary_observations_sha256: String,
+    /// Ratchet best rmse recorded for this self play round receipt.
     pub ratchet_best_rmse: f64,
+    /// Ratchet best q recorded for this self play round receipt.
     pub ratchet_best_q: f64,
+    /// Ratchet champion genome recorded for this self play round receipt.
     pub ratchet_champion_genome: String,
+    /// SHA-256 digest identifying the associated ratchet search.
     pub ratchet_search_sha256: String,
+    /// SHA-256 digest identifying the associated ratchet observations.
     pub ratchet_observations_sha256: String,
+    /// Surplus q vs ordinary recorded for this self play round receipt.
     pub surplus_q_vs_ordinary: f64,
+    /// Optional evals to match ordinary final value; `None` means it is not available.
     pub evals_to_match_ordinary_final: Option<usize>,
+    /// Optional speedup vs ordinary value; `None` means it is not available.
     pub speedup_vs_ordinary: Option<f64>,
+    /// Equal attempts in round recorded for this self play round receipt.
     pub equal_attempts_in_round: bool,
+    /// Within wall cap recorded for this self play round receipt.
     pub within_wall_cap: bool,
+    /// Cumulative prior rounds recorded for this self play round receipt.
     pub cumulative_prior_rounds: usize,
+    /// Equal resource across rounds recorded for this self play round receipt.
     pub equal_resource_across_rounds: bool,
+    /// Kl source recorded for this self play round receipt.
     pub kl_source: String,
+    /// Optional KL malformed reason value; `None` means it is not available.
     pub kl_malformed_reason: Option<String>,
+    /// Optional policy archive CE loss value; `None` means it is not available.
     pub policy_archive_ce_loss: Option<f64>,
+    /// Optional decomposed KL value; `None` means it is not available.
     pub decomposed_kl: Option<crate::support::DecomposedSupportKl>,
+    /// Optional seed update frozen by KL guard value; `None` means it is not available.
     pub seed_update_frozen_by_kl_guard: Option<bool>,
+    /// Next round seed selector recorded for this self play round receipt.
     pub next_round_seed_selector: String,
 }
 

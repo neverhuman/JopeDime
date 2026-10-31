@@ -18,7 +18,9 @@ use std::collections::BTreeMap;
 use std::io::{BufRead, BufReader, Read};
 use std::path::Path;
 
+/// Schema identifier for  values.
 pub const SCHEMA: &str = "JopeTestOnlyTrainingCorpus.v1";
+/// Constant identifying the tier.
 pub const TIER: &str = "test_exact";
 
 #[derive(Serialize)]
@@ -27,6 +29,7 @@ struct CutIdentity<'a> {
     protocol: &'a str,
 }
 
+/// Performs the cut ID operation and returns an error if it cannot be completed.
 pub fn cut_id(protocol: &str) -> Result<String> {
     canonical_sha256(&CutIdentity {
         tier: TIER,
@@ -35,81 +38,130 @@ pub fn cut_id(protocol: &str) -> Result<String> {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+/// `Manifest` is a record for the manifest contract in this module: Lineage-A corpus snapshots (JopeTestOnlyTrainingCorpus.v1): the per-(task, datasethash) testexact maximum of the strict rows, evaluator unbound.
 pub struct Manifest {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Source label watermark recorded for this manifest.
     pub source_label_watermark: u64,
+    /// Mapping of counts values carried by this manifest.
     pub counts: BTreeMap<String, u64>,
+    /// Strict filter recorded for this manifest.
     pub strict_filter: Value,
+    /// SHA-256 digest identifying the associated train.
     pub train_sha256: String,
+    /// SHA-256 digest identifying the associated validation.
     pub validation_sha256: String,
     #[serde(default)]
+    /// SHA-256 digest identifying the associated source db.
     pub source_db_sha256: Option<String>,
     #[serde(default)]
+    /// SHA-256 digest identifying the associated catalog.
     pub catalog_sha256: Option<String>,
 }
 
 /// The score-bearing part of a corpus row (embeddings are skipped, not stored).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Row {
+    /// Identifier for the associated dataset.
     pub dataset_id: String,
+    /// Provenance source for this value.
     pub source: String,
+    /// Canonical program or genome representation.
     pub genome: String,
+    /// Canonical genome recorded for this row.
     pub canonical_genome: String,
+    /// Valid recorded for this row.
     pub valid: bool,
+    /// Metric used to evaluate the represented result.
     pub metric: String,
+    /// Measured score for this outcome; absence denotes a failed draw.
     pub score: f64,
     #[serde(default)]
+    /// Optional cost ms value; `None` means it is not available.
     pub cost_ms: Option<f64>,
     #[serde(default)]
+    /// Optional engine value; `None` means it is not available.
     pub engine: Option<String>,
+    /// Metadata recorded for this row.
     pub metadata: RowMeta,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+/// `RowMeta` is a record for the row meta contract in this module: Lineage-A corpus snapshots (JopeTestOnlyTrainingCorpus.v1): the per-(task, datasethash) testexact maximum of the strict rows, evaluator unbound.
 pub struct RowMeta {
+    /// Task type recorded for this row meta.
     pub task_type: String,
+    /// Hash identifying the dataset used by this record.
     pub dataset_hash: String,
+    /// Split recorded for this row meta.
     pub split: String,
+    /// Score tier recorded for this row meta.
     pub score_tier: String,
     #[serde(default)]
+    /// Optional selection bias value; `None` means it is not available.
     pub selection_bias: Option<String>,
     #[serde(default)]
+    /// Optional benchmark valid value; `None` means it is not available.
     pub benchmark_valid: Option<bool>,
     #[serde(default)]
+    /// Optional generation value; `None` means it is not available.
     pub generation: Option<String>,
     #[serde(default)]
+    /// Hash identifying the associated semantic plan.
     pub semantic_plan_hash: Option<String>,
     #[serde(default)]
+    /// SHA-256 digest of the receipt that authenticates this result.
     pub receipt_sha256: Option<String>,
     #[serde(default)]
+    /// SHA-256 digest identifying the associated model checkpoint.
     pub model_checkpoint_sha256: Option<String>,
     #[serde(default)]
+    /// Optional label created at ms value; `None` means it is not available.
     pub label_created_at_ms: Option<u64>,
 }
 
 #[derive(Clone, Debug, Serialize, Default)]
+/// `SplitStats` is a record for the split stats contract in this module: Lineage-A corpus snapshots (JopeTestOnlyTrainingCorpus.v1): the per-(task, datasethash) testexact maximum of the strict rows, evaluator unbound.
 pub struct SplitStats {
+    /// Number of rows represented by this value.
     pub rows: u64,
+    /// Encoded byte count associated with this object or operation.
     pub bytes: u64,
+    /// Sha-256 recorded for this split stats.
     pub sha256: String,
+    /// SHA-256 digest identifying the associated expected.
     pub expected_sha256: String,
+    /// Sha-256 matches recorded for this split stats.
     pub sha256_matches: bool,
+    /// Mapping of counts values carried by this split stats.
     pub counts: BTreeMap<String, u64>,
+    /// Skipped invalid recorded for this split stats.
     pub skipped_invalid: u64,
+    /// Skipped tier recorded for this split stats.
     pub skipped_tier: u64,
+    /// Skipped metric recorded for this split stats.
     pub skipped_metric: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Default)]
+/// `SnapshotScan` is a record for the snapshot scan contract in this module: Lineage-A corpus snapshots (JopeTestOnlyTrainingCorpus.v1): the per-(task, datasethash) testexact maximum of the strict rows, evaluator unbound.
 pub struct SnapshotScan {
+    /// Watermark recorded for this snapshot scan.
     pub watermark: u64,
+    /// SHA-256 digest identifying the associated manifest.
     pub manifest_sha256: String,
+    /// Protocol recorded for this snapshot scan.
     pub protocol: String,
+    /// Mapping of splits values carried by this snapshot scan.
     pub splits: BTreeMap<String, SplitStats>,
+    /// Counts match manifest recorded for this snapshot scan.
     pub counts_match_manifest: bool,
+    /// Maxima recorded for this snapshot scan.
     pub maxima: u64,
 }
 
+/// Reads manifest from the configured source.
 pub fn read_manifest(path: &Path) -> Result<(Manifest, String)> {
     let bytes = std::fs::read(path).with_context(|| format!("read {}", path.display()))?;
     let m: Manifest = serde_json::from_slice(&bytes)?;
@@ -208,6 +260,7 @@ fn scan_split<R: Read>(
     Ok(stats)
 }
 
+/// Performs the map best operation and returns an error if it cannot be completed.
 pub fn map_best(
     manifest: &Manifest,
     manifest_sha256: &str,
@@ -337,6 +390,7 @@ pub fn scan(
     Ok((out, scan))
 }
 
+/// Performs the scan source operation and returns an error if it cannot be completed.
 pub fn scan_source(manifest: &Path, scan: &SnapshotScan) -> Value {
     crate::hwm::source_value(
         "snapshot",

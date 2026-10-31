@@ -5,23 +5,35 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
+/// `LogitsRow` is a public logits row record.
 pub struct LogitsRow {
+    /// Collection of prefix values carried by this logits row.
     pub prefix: Vec<u16>,
+    /// Collection of logits values carried by this logits row.
     pub logits: Vec<f64>,
 }
 
 #[derive(Debug, Serialize)]
+/// `Distribution` is a public distribution record.
 pub struct Distribution {
+    /// Collection of choices values carried by this distribution.
     pub choices: Vec<u16>,
+    /// Collection of probabilities values carried by this distribution.
     pub probabilities: Vec<f64>,
+    /// Collection of log probabilities values carried by this distribution.
     pub log_probabilities: Vec<f64>,
 }
 
 #[derive(Debug, Serialize)]
+/// `Likelihood` is a public likelihood record.
 pub struct Likelihood {
+    /// SHA-256 digest identifying the associated support.
     pub support_sha256: String,
+    /// Aggregation recorded for this likelihood.
     pub aggregation: &'static str,
+    /// Log probability recorded for this likelihood.
     pub log_probability: f64,
+    /// Collection of per token values carried by this likelihood.
     pub per_token: Vec<f64>,
 }
 
@@ -34,6 +46,7 @@ pub struct CloverBehaviorLaw {
 }
 
 impl CloverBehaviorLaw {
+    /// Constructs or opens a new value from the supplied inputs.
     pub fn new(trie: &Trie<'_>, vocabulary_sha256: &str, temperature: f64) -> Result<Self> {
         ensure!(
             is_hex64(trie.support_sha256)
@@ -52,6 +65,7 @@ impl CloverBehaviorLaw {
         })
     }
 
+    /// Performs the distribution operation and returns an error if it cannot be completed.
     pub fn distribution(
         &self,
         trie: &Trie<'_>,
@@ -62,6 +76,7 @@ impl CloverBehaviorLaw {
         Distribution::from_logits(trie, prefix, logits, self.temperature)
     }
 
+    /// Performs the teacher forced operation and returns an error if it cannot be completed.
     pub fn teacher_forced(
         &self,
         trie: &Trie<'_>,
@@ -83,6 +98,7 @@ impl CloverBehaviorLaw {
 }
 
 impl Distribution {
+    /// Performs the from logits operation and returns an error if it cannot be completed.
     pub fn from_logits(
         trie: &Trie<'_>,
         prefix: &[u16],
@@ -141,6 +157,7 @@ impl Distribution {
 }
 
 impl Likelihood {
+    /// Performs the teacher forced operation and returns an error if it cannot be completed.
     pub fn teacher_forced(
         trie: &Trie<'_>,
         tokens: &[u16],
@@ -177,6 +194,7 @@ impl Likelihood {
     }
 }
 
+/// Performs the weighted archive CE operation and returns an error if it cannot be completed.
 pub fn weighted_archive_ce(log_probabilities: &[f64], weights: &[f64]) -> Result<f64> {
     ensure!(
         !weights.is_empty() && weights.len() == log_probabilities.len(),
@@ -225,6 +243,7 @@ pub struct DecomposedSupportKl {
 
 const DECOMPOSED_KL_BOUND_TOL: f64 = 1e-12;
 
+/// Performs the decomposed support KL operation and returns an error if it cannot be completed.
 pub fn decomposed_support_kl(
     policy_leaf_logprobs: &[f64],
     ref_leaf_logprobs: &[f64],

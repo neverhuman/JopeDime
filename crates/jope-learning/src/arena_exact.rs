@@ -9,17 +9,25 @@ use std::collections::BTreeMap;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+/// `SamplingMode` is an enum for the sampling mode contract in this module: Development-only exact calculations for finite discrete outcome laws.
 pub enum SamplingMode {
+    /// Draws are independent, and an action may be selected more than once.
     IidWithReplacement,
+    /// Each action can be selected at most once in the draw sequence.
     WithoutReplacement,
+    /// Later selections may depend on earlier observations.
     Adaptive,
+    /// Draws are correlated rather than independent.
     Correlated,
+    /// Repeated action identities are collapsed before evaluation.
     Deduplicated,
+    /// The draw set was selected through an explicit handoff.
     SelectedHandoff,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `Atom` is a record for the atom contract in this module: Development-only exact calculations for finite discrete outcome laws.
 pub struct Atom {
     /// Canonical measured action identity. Equal identities have their masses aggregated.
     pub action_sha256: String,
@@ -31,49 +39,79 @@ pub struct Atom {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// `DiscreteLaw` is a record for the discrete law contract in this module: Development-only exact calculations for finite discrete outcome laws.
 pub struct DiscreteLaw {
+    /// Schema identifier and version for the serialized value.
     pub schema: String,
+    /// Shared denominator used to interpret probability numerators in this law.
     pub denominator: u64,
+    /// SHA-256 digest of the frozen action universe summarized by this law.
     pub universe_sha256: String,
+    /// SHA-256 digest of the checkpoint bound to this evidence.
     pub checkpoint_sha256: String,
+    /// SHA-256 digest identifying the evaluator used for this evidence.
     pub evaluator_sha256: String,
+    /// SHA-256 digest of the receipt that authenticates this result.
     pub receipt_sha256: String,
+    /// Sampling design used to produce the draws summarized here.
     pub sampling: SamplingMode,
+    /// Measured outcomes and their probability masses.
     pub atoms: Vec<Atom>,
 }
 
+/// Interface for verifying law evidence before it is used.
 pub trait LawVerifier {
+    /// Verifies the bound evidence and returns an error when verification fails.
     fn verify(&self, law: &DiscreteLaw) -> Result<()>;
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+/// `ExactStatus` is an enum for the exact status contract in this module: Development-only exact calculations for finite discrete outcome laws.
 pub enum ExactStatus {
+    /// All supported outcome mass is evaluated exactly.
     Exact,
+    /// Only part of the outcome mass is supported by measured outcomes.
     Partial,
+    /// The input design is outside the exact evaluator’s supported cases.
     Unsupported,
+    /// Required evidence is unavailable, so no exact result can be reported.
     Unavailable,
+    /// Every requested draw failed to produce a measured score.
     AllDrawsFailed,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+/// `BestAtom` is a record for the best atom contract in this module: Development-only exact calculations for finite discrete outcome laws.
 pub struct BestAtom {
+    /// Measured score for this outcome; absence denotes a failed draw.
     pub score: f64,
+    /// Probability mass assigned to this outcome.
     pub probability: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+/// `ExactResult` is a record for the exact result contract in this module: Development-only exact calculations for finite discrete outcome laws.
 pub struct ExactResult {
+    /// Outcome or lifecycle status recorded for this value.
     pub status: ExactStatus,
+    /// Number of draws included in the calculation.
     pub draws: u64,
+    /// Probability mass represented by measured outcomes.
     pub covered_mass: f64,
+    /// Probability mass not represented by measured outcomes.
     pub missing_mass: f64,
+    /// Probability mass assigned to failed outcomes.
     pub failure_mass: f64,
     /// Probability every draw fails, retained separately from score atoms.
     pub all_draws_fail_probability: f64,
+    /// Existing comparison score, when an incumbent is available.
     pub incumbent: Option<f64>,
+    /// Measured outcomes and their probability masses.
     pub atoms: Vec<BestAtom>,
+    /// Number of positive-probability outcomes whose computed mass underflowed.
     pub underflowed_atoms: usize,
+    /// Scope label describing the population covered by this result.
     pub scope: &'static str,
 }
 
@@ -264,21 +302,35 @@ fn is_sha256(s: &str) -> bool {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+/// `CostClock` is an enum for the cost clock contract in this module: Development-only exact calculations for finite discrete outcome laws.
 pub enum CostClock {
+    /// Cost is used without a transform.
     Linear,
+    /// Cost is transformed with `ln(1 + cost)`.
     Log1p,
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+/// `DiscoveryAuc` is a record for the discovery AUC contract in this module: Development-only exact calculations for finite discrete outcome laws.
 pub struct DiscoveryAuc {
+    /// Cost transformation used to place observations on the discovery curve.
     pub clock: CostClock,
+    /// Unit used for the cost values on the discovery curve.
     pub cost_unit: String,
+    /// Maximum cost value included in the discovery-curve calculation.
     pub horizon: f64,
+    /// Area under the discovery curve through the configured horizon.
     pub area: f64,
+    /// Existing comparison score, when an incumbent is available.
     pub incumbent: f64,
+    /// Ordered cost and incumbent-score observations used to form the curve.
     pub points: Vec<(f64, Option<f64>)>,
+    /// Number of attempts with a measured failure disposition.
     pub failures: u64,
+    /// Number of attempts whose outcomes were censored before completion.
     pub censored: u64,
+    /// Interpolation rule used between observed discovery points.
     pub interpolation: &'static str,
+    /// Adoption rule associated with the reported discovery result.
     pub adoption: &'static str,
 }
 impl DiscoveryAuc {
