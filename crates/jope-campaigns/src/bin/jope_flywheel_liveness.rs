@@ -439,7 +439,8 @@ mod tests {
 
     #[test]
     fn disk_used_percent_reads_a_real_filesystem_and_rejects_a_missing_path() {
-        let used = disk_used_percent(&std::env::temp_dir()).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let used = disk_used_percent(temp.path()).unwrap();
         assert!(used <= 100);
         assert!(disk_used_percent(Path::new("/nonexistent/jope-liveness-probe")).is_err());
     }
