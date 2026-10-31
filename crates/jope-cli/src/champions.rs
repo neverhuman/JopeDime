@@ -11,6 +11,7 @@ use std::{fs, path::Path};
 const S3_CLOSED: &str = "live S3 champion pull/push is not implemented for this command; host credentials do not enable this route. Use --local.";
 
 #[derive(Debug, Serialize, Clone)]
+/// One admitted dataset's selected genome and validation score.
 pub struct ChampionRow {
     pub dataset_id: String,
     pub task: String,
@@ -29,6 +30,7 @@ pub struct UnsupportedDataset {
 }
 
 #[derive(Debug, Serialize)]
+/// Local search results for every admitted fixture, including unsupported cases.
 pub struct ChampionBank {
     pub schema: &'static str,
     pub ok: bool,
@@ -42,6 +44,7 @@ pub struct ChampionBank {
 }
 
 #[derive(Debug, Serialize)]
+/// Local labels and centroid router fitted from the same admitted fixture snapshot.
 pub struct TrainStepReport {
     pub schema: &'static str,
     pub ok: bool,
@@ -55,6 +58,7 @@ pub struct TrainStepReport {
     pub note: &'static str,
 }
 
+/// Return the current explicit refusal for unsupported live S3 champion operations.
 pub fn refuse_s3() -> Result<ChampionBank> {
     bail!("{S3_CLOSED}")
 }
@@ -147,6 +151,7 @@ fn train_step(
     })
 }
 
+/// Serialize `value` as pretty JSON, creating parent directories as needed.
 pub fn write_json(path: &Path, value: &impl Serialize) -> Result<()> {
     if let Some(parent) = path.parent() {
         if !parent.as_os_str().is_empty() {

@@ -1,7 +1,8 @@
 //! Appendix D error catalog and the JopeDime v1 problem document (§4.1).
 //!
-//! HTTP adapters send [`Problem::CONTENT_TYPE`] and use the same status in the
-//! response and document. Batch clients use [`ErrorCode::exit_code`].
+//! HTTP adapters send [`Problem::CONTENT_TYPE`](crate::error::Problem::CONTENT_TYPE)
+//! and use the same status in the response and document. Batch clients use
+//! [`ErrorCode::exit_code`](crate::error::ErrorCode::exit_code).
 //! This module contains data only; transport and occurrence-specific retry
 //! decisions belong to the caller.
 

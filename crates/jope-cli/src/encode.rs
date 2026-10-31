@@ -13,6 +13,7 @@ use serde::Serialize;
 use std::{path::Path, time::Instant};
 
 #[derive(Debug, Serialize)]
+/// Summary of encoding one admitted dataset with the configured Hyperion weights.
 pub struct EncodeReport {
     pub schema: &'static str,
     pub ok: bool,
@@ -24,6 +25,7 @@ pub struct EncodeReport {
     pub weights: String,
 }
 
+/// Encode a dataset file using the served CPU Hyperion path; this does not download weights.
 pub fn encode_dataset(path: &Path) -> Result<EncodeReport> {
     // Bounded, no-symlink read plus full schema validation, as for fit/search/route.
     let data = read_dataset(path)?;

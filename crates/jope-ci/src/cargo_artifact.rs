@@ -375,16 +375,25 @@ pub fn nextest_config(source: &Path, output: &Path, target: &Value) -> Result<()
 
 /// `build`: compile one bin/example and return its executable (never one from a failed build).
 pub struct Build<'a> {
+    /// Cargo manifest path passed to `cargo metadata` and `cargo build`.
     pub manifest_path: &'a str,
+    /// Optional explicit Cargo target directory.
     pub target_dir: Option<&'a str>,
+    /// Package name to build.
     pub package: &'a str,
+    /// Cargo target kind, either `bin` or `example`.
     pub kind: &'a str,
+    /// Name of the selected binary or example target.
     pub name: &'a str,
+    /// Cargo profile used for the build.
     pub profile: &'a str,
+    /// Feature names enabled for the build.
     pub features: &'a [String],
+    /// Whether to disable the package's default features.
     pub no_default_features: bool,
 }
 
+/// Build the selected binary or example and return its resolved executable path.
 pub fn build(request: &Build<'_>) -> Result<String, Failure> {
     let meta = metadata(request.manifest_path, request.target_dir)?;
     let mut command = cargo_command(request.target_dir);

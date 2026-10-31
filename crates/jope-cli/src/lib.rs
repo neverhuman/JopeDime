@@ -1,4 +1,7 @@
-//! Offline fixtures, CPU Hyperion encode, feat-math fit/emit/search, local router.
+//! Offline synthetic fixtures, CPU Hyperion encoding, GP fit/emit/search, and a local router.
+//!
+//! The library exposes the bounded operations behind the `jope` command-line tool. Fixture
+//! admission verifies deterministic generator identity before consumers use the admitted data.
 
 mod admission;
 mod champions;

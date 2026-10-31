@@ -1,5 +1,5 @@
-//! The ADR-0003 relocation roots this crate needs, with the same names, variables and defaults as
-//! `jope_paths` (WP4) so the two can be swapped by one `pub use` once that crate lands on `main`.
+//! The crate's SOTArena-specific roots, alongside the shared `JOPE_HOME` and `JOPE_STATE`
+//! resolution rules from `jope_paths`. The benchmark and reporter overrides remain distinct.
 
 use std::env;
 use std::path::{Path, PathBuf};

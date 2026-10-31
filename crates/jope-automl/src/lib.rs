@@ -13,8 +13,22 @@ mod submission;
 #[path = "Gemini4_argon_high.rs"]
 mod gemini4_argon_high;
 
-pub use gemini4_argon_high::{Regressor as Gemini4ArgonHigh, RegressorApi as Gemini4ArgonHighApi};
-pub use submission::{Regressor as Gpt6p1SolMax, RegressorApi};
+/// The owner-supplied Gemini candidate's immutable model state.
+pub use gemini4_argon_high::Regressor as Gemini4ArgonHigh;
+/// Lifecycle API for [`Gemini4ArgonHigh`].
+///
+/// `fit` receives a row-major matrix whose final column is the target; `predict`
+/// receives row-major feature columns only. Both methods validate dimensions and
+/// return errors rather than changing the frozen submission.
+pub use gemini4_argon_high::RegressorApi as Gemini4ArgonHighApi;
+/// The frozen GPT-6.1 candidate's immutable model state.
+pub use submission::Regressor as Gpt6p1SolMax;
+/// Lifecycle API for [`Gpt6p1SolMax`].
+///
+/// `fit` receives a row-major matrix whose final column is the target; `predict`
+/// receives row-major feature columns only. Both methods validate dimensions and
+/// return errors rather than changing the frozen submission.
+pub use submission::RegressorApi;
 
 /// Frozen candidate identifier. This is a regressor, not a GP grammar operator.
 pub const GPT6P1_SOL_MAX: &str = "GPT6p1_Sol_Max";
@@ -35,8 +49,11 @@ pub const GEMINI4_ARGON_HIGH_SOURCE: &str = include_str!("Gemini4_argon_high.rs"
 /// One immutable, selectable native algorithm.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Definition {
+    /// Stable identifier accepted by [`definition`] and [`fit_rows`].
     pub id: &'static str,
+    /// SHA-256 digest of the standalone source registered for this candidate.
     pub source_sha256: &'static str,
+    /// Source filename included in this crate.
     pub source_file: &'static str,
 }
 
