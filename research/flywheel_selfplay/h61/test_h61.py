@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""CPU-only fixture and red-team unit tests for the H61 selection-metric runner and coordinator."""
+"""CPU-only fixture and red-team unit tests for the H61 selection-metric runner and FIFO coordinator."""
 from __future__ import annotations
 
 from collections import namedtuple
-import fcntl
+from datetime import datetime, timedelta, timezone
 import importlib.util
 from pathlib import Path
 import sys
@@ -28,6 +28,8 @@ if wave_spec is None or wave_spec.loader is None:
 h61_wave = importlib.util.module_from_spec(wave_spec)
 sys.modules[wave_spec.name] = h61_wave
 wave_spec.loader.exec_module(h61_wave)
+
+fifo_mod = h61_wave.fifo_lock
 
 FakeStatvfs = namedtuple("FakeStatvfs", ["f_blocks", "f_bavail", "f_frsize"])
 
@@ -226,9 +228,6 @@ class H61RedTeamTests(unittest.TestCase):
         clipped_delta = h61.clip_context_gain(-2.0, 3.5)
         self.assertAlmostEqual(clipped_delta, -h61.ROBUST_CAP, places=7)
 
-        # On a 41-family fold-B panel (2 contexts/family), 1 outlier context in f0 drops from +4.0 to -2.0
-        # (raw delta -6.0 -> clipped delta -1.0 -> family f0 mean delta -0.46 vs unclipped -2.96),
-        # while the remaining 40 families have +0.05 gain.
         pools = make_synthetic_pools(num_families=41, contexts_per_family=2, pool_size=10)
         cids = sorted(pools)
         inc_ctx = {cid: (4.0 if cid == "ctx_00_00" else 0.20) for cid in cids}
@@ -243,20 +242,21 @@ class H61RedTeamTests(unittest.TestCase):
 
     def test_redteam_f_disk_guard_94_5_percent_and_write_time_retryable_infra_void(self):
         """(f) Start cells only when statvfs < 94.5%; write-time disk guard is a retryable infra-void (same cell)."""
-        # 94.5% used (55 free of 1000 blocks) must block cell start
-        stat_945 = lambda _: FakeStatvfs(f_blocks=1000, f_bavail=55, f_frsize=1024**3)
+        def stat_945(_):
+            return FakeStatvfs(f_blocks=1000, f_bavail=55, f_frsize=1024**3)
+
         with self.assertRaises(h61.RetryableDiskInfraVoid) as ctx_err:
             h61.check_disk_guard(stage="cell_start", statvfs_fn=stat_945)
         self.assertTrue(ctx_err.exception.retryable)
         self.assertTrue(ctx_err.exception.same_cell)
         self.assertFalse(ctx_err.exception.stop_wave)
 
-        # 94.4% used (56 free of 1000 blocks) passes cell start
-        stat_944 = lambda _: FakeStatvfs(f_blocks=1000, f_bavail=56, f_frsize=1024**3)
+        def stat_944(_):
+            return FakeStatvfs(f_blocks=1000, f_bavail=56, f_frsize=1024**3)
+
         usage = h61.check_disk_guard(stage="cell_start", statvfs_fn=stat_944)
         self.assertLess(usage["used_percent"], 94.5)
 
-        # Write-time disk-guard failure during cell execution retries the SAME cell without stopping the wave
         cells = [("S1", 12), ("S1", 13)]
         call_log: list[tuple[str, int, int]] = []
 
@@ -265,7 +265,6 @@ class H61RedTeamTests(unittest.TestCase):
 
             def run_cell(arm: str, seed: int, attempt: int) -> dict:
                 call_log.append((arm, seed, attempt))
-                # Simulate write-time disk spike to 94.7% on first attempt of (S1, 12)
                 write_stat = stat_945 if (arm == "S1" and seed == 12 and attempt == 1) else stat_944
                 out_file = tmp_path / f"{arm}_{seed}.json"
                 h61.atomic_json(out_file, {"arm": arm, "seed": seed, "attempt": attempt}, statvfs_fn=write_stat)
@@ -293,7 +292,6 @@ class H61RedTeamTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "only non-anchor"):
             h61.validate_trainable_inventory([("dope.backbone.weight", FakeParam(h61.TRAINABLE_PARAMS))])
 
-        # Live xbabe1 path must be refused by stage_r882_copy
         with tempfile.TemporaryDirectory() as tmpdir:
             fake_live = Path(tmpdir) / "flywheel-full-20261030" / "ckpt.pt"
             fake_live.parent.mkdir(parents=True)
@@ -310,62 +308,155 @@ class H61RedTeamTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "exceeds cap"):
             h61.project_gpu_budget_from_h57_timing(cap_seconds=1000.0)
 
-    def test_coordinator_fairness_fix_immediate_first_retry_no_sleep(self):
-        """Verify run_wave.py fairness fix retries immediately (0s sleep before first retry) after lock contention."""
+    def test_fifo_queue_two_waiters_and_requeuing_holder_served_in_arrival_order_and_dead_pid_pruned(self):
+        """Two simulated waiters + one re-queuing holder -> served in arrival order; dead-PID ticket pruned; no starvation."""
+        self.assertEqual(h61_wave.LOCK_POLL_SECONDS, 30.0)
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
-            lock_file = tmp_path / "test_qualification.lock"
-            status_log = tmp_path / "H61_STATUS.log"
+            lock_file = tmp_path / "qualification.lock"
+            queue_dir = tmp_path / "qualification.queue"
+            data_root = tmp_path / "jope-data"
+            status_log = data_root / "h61/h61-wave/H61_STATUS.log"
 
-            # Fast pre-lock snapshot does not call cpu_percent
-            with mock.patch.object(h61_wave, "disk_usage_stats", return_value={"available_bytes": 100 * 1024**3, "used_percent": 90.0}):
-                snap = h61_wave.preflight_snapshot(immediate_first_retry=True)
-                self.assertEqual(snap["mode"], "fast_statvfs_only")
+            live_pids = {1001, 2002, 3003}
 
-                # First flock attempt raises BlockingIOError, second succeeds -> zero sleep with immediate_first_retry=True
-                flock_attempts = {"count": 0}
-                sleep_calls: list[float] = []
+            def is_alive(pid: int) -> bool:
+                return pid in live_pids
 
-                def fake_flock(handle, flags):
-                    if flags == fcntl.LOCK_UN:
-                        return
-                    flock_attempts["count"] += 1
-                    if flock_attempts["count"] == 1:
-                        raise BlockingIOError("temporarily busy")
+            def preflight_ok() -> dict:
+                return {
+                    "disk_used_percent": 90.0,
+                    "host_cpu_percent": 15.0,
+                    "mem_available_kib": 64 * 1024 * 1024,
+                }
 
-                with mock.patch.object(h61_wave, "lock_busy_wait_reason", return_value="qualification.lock busy; holder PID=999"):
-                    handle, waited, free_mib, status = h61_wave.acquire_lock(
-                        status_log,
-                        0.0,
-                        immediate_first_retry=True,
-                        lock_path=lock_file,
-                        flock_fn=fake_flock,
-                        sleep_fn=sleep_calls.append,
-                        gpu_free_fn=lambda: 24_000,
-                        preflight_fn=lambda: {"disk_used_percent": 90.0, "host_cpu_percent": 15.0, "mem_available_kib": 64 * 1024 * 1024},
-                    )
-                    handle.close()
-                self.assertEqual(flock_attempts["count"], 2)
-                self.assertEqual(sleep_calls, [])
-                self.assertEqual(free_mib, 24_000)
+            with mock.patch.object(h61_wave, "launch_disk_guard_error", return_value=None):
+                # 1. Enqueue a dead-PID ticket at epoch_ns=50 (older than everyone) -> must be pruned automatically
+                dead_ticket = fifo_mod.enqueue_ticket(queue_dir, pid=999999, wave="DEAD", epoch_ns=50)
+                self.assertTrue(dead_ticket.exists())
 
-                # With immediate_first_retry=False, the first contention sleeps LOCK_POLL_SECONDS
-                flock_attempts["count"] = 0
-                sleep_calls_disabled: list[float] = []
-                with mock.patch.object(h61_wave, "lock_busy_wait_reason", return_value="qualification.lock busy; holder PID=999"):
-                    handle2, _, _, _ = h61_wave.acquire_lock(
-                        status_log,
-                        0.0,
-                        immediate_first_retry=False,
-                        lock_path=lock_file,
-                        flock_fn=fake_flock,
-                        sleep_fn=sleep_calls_disabled.append,
-                        gpu_free_fn=lambda: 24_000,
-                        preflight_fn=lambda: {"disk_used_percent": 90.0, "host_cpu_percent": 15.0, "mem_available_kib": 64 * 1024 * 1024},
-                    )
-                    handle2.close()
-                self.assertEqual(flock_attempts["count"], 2)
-                self.assertEqual(sleep_calls_disabled, [h61_wave.LOCK_POLL_SECONDS])
+                # 2. Holder (PID=1001, wave=H61) arrives at epoch_ns=100 and acquires lock for cell 1
+                service_order: list[str] = []
+                holder_sleeps_1: list[float] = []
+                h1, _, _, _ = h61_wave.acquire_lock(
+                    status_log,
+                    0.0,
+                    after_release=False,
+                    wave_name="H61",
+                    pid=1001,
+                    epoch_ns=100,
+                    lock_path=lock_file,
+                    queue_dir=queue_dir,
+                    data_root=data_root,
+                    flock_fn=lambda handle, flags: None,
+                    sleep_fn=holder_sleeps_1.append,
+                    gpu_free_fn=lambda: 24_000,
+                    preflight_fn=preflight_ok,
+                    is_alive_fn=is_alive,
+                )
+                h1.close()
+                service_order.append("holder_cell1")
+                self.assertFalse(dead_ticket.exists(), "dead-PID ticket must be pruned")
+                self.assertEqual(holder_sleeps_1, [])
+
+                # 3. While holder_cell1 was running, waiter_1 (PID=2002, epoch_ns=200) and waiter_2 (PID=3003, epoch_ns=300)
+                #    enqueued tickets in qualification.queue.
+                t_waiter1 = fifo_mod.enqueue_ticket(queue_dir, pid=2002, wave="H57", epoch_ns=200)
+                t_waiter2 = fifo_mod.enqueue_ticket(queue_dir, pid=3003, wave="H59", epoch_ns=300)
+
+                # 4. Holder releases cell 1 and re-queues for cell 2 at the tail (epoch_ns=400).
+                #    While waiter_1 and waiter_2 are still in queue ahead of epoch_ns=400, holder MUST wait (30s poll)
+                #    until waiter_1 and waiter_2 are served in arrival order!
+                holder_sleeps_2: list[float] = []
+
+                def simulate_queue_progression(sleep_sec: float) -> None:
+                    holder_sleeps_2.append(sleep_sec)
+                    if len(holder_sleeps_2) == 1:
+                        # On poll 1, waiter_1 is oldest live ticket -> waiter_1 acquires lock and removes its ticket
+                        ok1, oldest1 = fifo_mod.is_oldest_live_ticket(t_waiter1, queue_dir, is_alive_fn=is_alive)
+                        self.assertTrue(ok1)
+                        self.assertEqual(oldest1[1], 2002)
+                        service_order.append("waiter_1")
+                        fifo_mod.remove_ticket(t_waiter1)
+                    elif len(holder_sleeps_2) == 2:
+                        # On poll 2, waiter_2 is oldest live ticket -> waiter_2 acquires lock and removes its ticket
+                        ok2, oldest2 = fifo_mod.is_oldest_live_ticket(t_waiter2, queue_dir, is_alive_fn=is_alive)
+                        self.assertTrue(ok2)
+                        self.assertEqual(oldest2[1], 3003)
+                        service_order.append("waiter_2")
+                        fifo_mod.remove_ticket(t_waiter2)
+
+                h2, _, _, _ = h61_wave.acquire_lock(
+                    status_log,
+                    0.0,
+                    after_release=True,
+                    wave_name="H61",
+                    pid=1001,
+                    epoch_ns=400,
+                    lock_path=lock_file,
+                    queue_dir=queue_dir,
+                    data_root=data_root,
+                    flock_fn=lambda handle, flags: None,
+                    sleep_fn=simulate_queue_progression,
+                    gpu_free_fn=lambda: 24_000,
+                    preflight_fn=preflight_ok,
+                    is_alive_fn=is_alive,
+                )
+                h2.close()
+                service_order.append("holder_cell2")
+
+                self.assertEqual(
+                    service_order,
+                    ["holder_cell1", "waiter_1", "waiter_2", "holder_cell2"],
+                )
+                self.assertEqual(holder_sleeps_2, [30.0, 30.0])
+                self.assertEqual(list(queue_dir.iterdir()), [])
+
+    def test_legacy_waiter_status_log_backoff_at_least_45_seconds(self):
+        """After releasing a cell, if another *_STATUS.log has WAIT qualification.lock in the last 90s, back off >=45s."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir)
+            lock_file = tmp_path / "qualification.lock"
+            queue_dir = tmp_path / "qualification.queue"
+            data_root = tmp_path / "jope-data"
+            h57_log = data_root / "h57/h57-wave/H57_STATUS.log"
+            h61_log = data_root / "h61/h61-wave/H61_STATUS.log"
+            h57_log.parent.mkdir(parents=True, exist_ok=True)
+            h61_log.parent.mkdir(parents=True, exist_ok=True)
+
+            fixed_now = datetime(2026, 10, 31, 4, 55, 0, tzinfo=timezone.utc)
+            recent_wait_ts = (fixed_now - timedelta(seconds=20)).isoformat()
+            h57_log.write_text(
+                f"{recent_wait_ts} — WAIT qualification.lock busy; holder PID=3178624; cumulative_wait=490.0s\n"
+            )
+
+            sleeps: list[float] = []
+            with mock.patch.object(h61_wave, "launch_disk_guard_error", return_value=None):
+                handle, _, _, _ = h61_wave.acquire_lock(
+                    h61_log,
+                    0.0,
+                    after_release=True,
+                    wave_name="H61",
+                    pid=3178624,
+                    epoch_ns=500,
+                    lock_path=lock_file,
+                    queue_dir=queue_dir,
+                    data_root=data_root,
+                    flock_fn=lambda h, flags: None,
+                    sleep_fn=sleeps.append,
+                    gpu_free_fn=lambda: 24_000,
+                    preflight_fn=lambda: {
+                        "disk_used_percent": 90.0,
+                        "host_cpu_percent": 15.0,
+                        "mem_available_kib": 64 * 1024 * 1024,
+                    },
+                    is_alive_fn=lambda _: True,
+                    now_utc_fn=lambda: fixed_now,
+                )
+                handle.close()
+
+            self.assertEqual(len(sleeps), 1)
+            self.assertGreaterEqual(sleeps[0], 45.0)
 
     def test_coordinator_disk_guard_same_cell_retry_limit_two(self):
         """Verify run_wave.py retries DiskGuardInfraVoid on the SAME cell up to MAX_DISK_GUARD_RETRIES=2."""
@@ -376,7 +467,7 @@ class H61RedTeamTests(unittest.TestCase):
             log_path = tmp_path / "logs/S1-seed12.log"
             calls = {"count": 0}
 
-            def fake_run_locked_cell(key, command, log, timeout, status_path, wait_total, *, immediate_first_retry=True):
+            def fake_run_locked_cell(key, command, log, timeout, status_path, wait_total):
                 calls["count"] += 1
                 out_dir.mkdir(parents=True, exist_ok=True)
                 if calls["count"] <= 2:

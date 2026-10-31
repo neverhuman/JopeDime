@@ -10,19 +10,28 @@ pub const RENDERER: &str = "controlled-search-commentary/1";
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Claim {
+    /// Kind of fact asserted by this claim.
     pub category: String,
+    /// Stable machine-readable claim identifier.
     pub predicate: String,
+    /// Evidence identifiers supporting the claim.
     pub evidence: Vec<String>,
+    /// Predicate-specific structured evidence details.
     pub details: Value,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Narration {
+    /// Human-readable bounded commentary.
     pub text: String,
+    /// Overall category of the commentary.
     pub category: String,
+    /// Machine-readable claims supporting the commentary.
     pub claims: Vec<Claim>,
+    /// Exact structural difference when the source facts support one.
     pub delta: Option<ProgramDelta>,
+    /// Renderer wording variant used for replay, when applicable.
     pub variant: Option<u8>,
 }
 
@@ -31,9 +40,13 @@ pub struct Narration {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Metric {
+    /// Name of the measured quantity.
     pub name: String,
+    /// Comparison direction: `minimize` or `maximize`.
     pub direction: String,
+    /// Explicit scope that must match before comparing metrics.
     pub scope: String,
+    /// Finite `f64` value encoded as 16 lowercase hexadecimal bits.
     pub value_bits: String,
 }
 impl Metric {
