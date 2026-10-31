@@ -1,0 +1,490 @@
+{
+  "bucket": "veox-jopedime-learning-use2",
+  "counters": [
+    {
+      "body_utf8": "{\n  \"round\": 1,\n  \"local_round_dir\": \"/mnt/jope-archive/flywheel-20261023/s3_mirror/round-01\",\n  \"scores_jsonl_path\": \"/mnt/jope-archive/flywheel-20261023/s3_mirror/round-01/scores/retained_scores_round_01.jsonl\",\n  \"distilled_path\": \"/mnt/jope-archive/flywheel-20261023/s3_mirror/round-01/gp_distilled/distilled_round_01.json\",\n  \"retention_summary\": {\n    \"total_evaluated\": 128,\n    \"pruned_failed\": 0,\n    \"pruned_duplicates\": 19,\n    \"pruned_dominated\": 71,\n    \"retained_top_k\": 32,\n    \"retained_hard_negatives\": 6,\n    \"total_retained\": 38,\n    \"new_hwm_count\": 0,\n    \"pruned_garbage_total\": 90,\n    \"storage_reduction_pct\": 70.31\n  },\n  \"s3_sync\": {\n    \"uploaded\": true,\n    \"s3_uri\": \"s3://veox-jopedime-learning-use2/experiments/flywheel-selfplay-20261023/round-01/\",\n    \"returncode\": 0\n  }\n}",
+      "key": "experiments/flywheel-selfplay-20261023/round-01/persistence_receipt.json",
+      "sha256": "4cdc11dcf994b105614055237afda2847310190dadd289ba79f2f34951683128",
+      "size": 806,
+      "use": "retention_only",
+      "version": "75H4Wf31_uKWdyh39Ap9iY_yBvfW1KP5"
+    },
+    {
+      "body_utf8": "{\n  \"round\": 2,\n  \"local_round_dir\": \"/mnt/jope-archive/flywheel-20261023/s3_mirror/round-02\",\n  \"scores_jsonl_path\": \"/mnt/jope-archive/flywheel-20261023/s3_mirror/round-02/scores/retained_scores_round_02.jsonl\",\n  \"distilled_path\": \"/mnt/jope-archive/flywheel-20261023/s3_mirror/round-02/gp_distilled/distilled_round_02.json\",\n  \"retention_summary\": {\n    \"total_evaluated\": 127,\n    \"pruned_failed\": 0,\n    \"pruned_duplicates\": 12,\n    \"pruned_dominated\": 76,\n    \"retained_top_k\": 32,\n    \"retained_hard_negatives\": 7,\n    \"total_retained\": 39,\n    \"new_hwm_count\": 1,\n    \"pruned_garbage_total\": 88,\n    \"storage_reduction_pct\": 69.29\n  },\n  \"s3_sync\": {\n    \"uploaded\": true,\n    \"s3_uri\": \"s3://veox-jopedime-learning-use2/experiments/flywheel-selfplay-20261023/round-02/\",\n    \"returncode\": 0\n  }\n}",
+      "key": "experiments/flywheel-selfplay-20261023/round-02/persistence_receipt.json",
+      "sha256": "563ecdad1f2d30288f47370a8c05dde93c9bb4dc6abd0806667f9246b4e0d72e",
+      "size": 806,
+      "use": "retention_only",
+      "version": "UyMRjyqasrO3DKM0viJVr7Cc5Si_iDOz"
+    },
+    {
+      "body_utf8": "{\n  \"round\": 3,\n  \"local_round_dir\": \"/mnt/jope-archive/flywheel-20261023/s3_mirror/round-03\",\n  \"scores_jsonl_path\": \"/mnt/jope-archive/flywheel-20261023/s3_mirror/round-03/scores/retained_scores_round_03.jsonl\",\n  \"distilled_path\": \"/mnt/jope-archive/flywheel-20261023/s3_mirror/round-03/gp_distilled/distilled_round_03.json\",\n  \"retention_summary\": {\n    \"total_evaluated\": 128,\n    \"pruned_failed\": 0,\n    \"pruned_duplicates\": 13,\n    \"pruned_dominated\": 77,\n    \"retained_top_k\": 32,\n    \"retained_hard_negatives\": 6,\n    \"total_retained\": 38,\n    \"new_hwm_count\": 4,\n    \"pruned_garbage_total\": 90,\n    \"storage_reduction_pct\": 70.31\n  },\n  \"s3_sync\": {\n    \"uploaded\": true,\n    \"s3_uri\": \"s3://veox-jopedime-learning-use2/experiments/flywheel-selfplay-20261023/round-03/\",\n    \"returncode\": 0\n  }\n}",
+      "key": "experiments/flywheel-selfplay-20261023/round-03/persistence_receipt.json",
+      "sha256": "ef5e1ace35b5ab298e259dbae4117493b8b7847703902a76fe916726550d3de0",
+      "size": 806,
+      "use": "retention_only",
+      "version": "5e06unUgEx6YBaC1bABOLmMujxBWfI7N"
+    }
+  ],
+  "elapsed_seconds": 1.1,
+  "errors": [],
+  "heads": [
+    {
+      "body_admitted": false,
+      "key": "experiments/flywheel-selfplay-20261023/round-01/scores/retained_scores_round_01.jsonl",
+      "size": 27134,
+      "version": "XQX5fbSZKWYcJBr1oShS.09zDdP4Ht7c"
+    },
+    {
+      "body_admitted": false,
+      "key": "experiments/flywheel-selfplay-20261023/round-02/scores/retained_scores_round_02.jsonl",
+      "size": 27603,
+      "version": "C55qrAUn5.jLlRpEKP2AIQBlwdwhhVgS"
+    },
+    {
+      "body_admitted": false,
+      "key": "experiments/flywheel-selfplay-20261023/round-03/scores/retained_scores_round_03.jsonl",
+      "size": 26973,
+      "version": "qnKW.uXWUm4a_2kX9lm1XbKZFfn_CFu9"
+    },
+    {
+      "body_admitted": false,
+      "key": "experiments/flywheel-selfplay-20261023/corpus_v2_train_winner_integrated/corpus_v2_manifest.json",
+      "size": 244173,
+      "version": "lJR0EgDs0GGjxEtMX4qEbPcl2PoJNSRu"
+    },
+    {
+      "body_admitted": false,
+      "key": "experiments/flywheel-selfplay-20261023/corpus_v3_wider_strict_train_256/corpus_v3_manifest.json",
+      "size": 718858,
+      "version": "gd.JxegwvXXxSr7SNt7qJNbEij97pO7L"
+    }
+  ],
+  "host": "xbabe2",
+  "listing_complete": true,
+  "metadata_calls": 6,
+  "objects": [
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_baseline_frozen_pool_train_only_430_reconstructed.pt",
+      "last_modified": "2026-10-24T16:47:33+00:00",
+      "size": 2107237
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_multicycle_7fold_closed_loop_430.pt",
+      "last_modified": "2026-10-24T16:47:45+00:00",
+      "size": 2105804
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_p9_baseline_frozen_pool_train_only_430_preimport1.pt",
+      "last_modified": "2026-10-24T17:24:00+00:00",
+      "size": 2107237
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_p9_cycle_1_q25gate_carried_adamw.pt",
+      "last_modified": "2026-10-24T17:24:03+00:00",
+      "size": 2105804
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_p9_cycle_2_q25gate_carried_adamw.pt",
+      "last_modified": "2026-10-24T17:24:06+00:00",
+      "size": 2105804
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_p9_cycle_3_q25gate_carried_adamw.pt",
+      "last_modified": "2026-10-24T17:24:09+00:00",
+      "size": 2105804
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_p9_cycle_4_q25gate_carried_adamw.pt",
+      "last_modified": "2026-10-24T17:24:12+00:00",
+      "size": 2105804
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_p9_q25gate45_foldsafe_prior_430_preimport1.pt",
+      "last_modified": "2026-10-24T17:24:21+00:00",
+      "size": 2106534
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_p9_unfiltered117_foldsafe_prior_430_preimport1.pt",
+      "last_modified": "2026-10-24T17:24:18+00:00",
+      "size": 2107018
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_p9_unfiltered117_leaked_prior_430_preimport1.pt",
+      "last_modified": "2026-10-24T17:24:15+00:00",
+      "size": 2106680
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_p9_v3a_plus_q25gate45_foldsafe_430_preimport1.pt",
+      "last_modified": "2026-10-24T17:24:24+00:00",
+      "size": 2106817
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_part3_cycle_1_policy.pt",
+      "last_modified": "2026-10-24T16:47:38+00:00",
+      "size": 2104800
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_part3_cycle_2_policy.pt",
+      "last_modified": "2026-10-24T16:47:40+00:00",
+      "size": 2104800
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_part3_cycle_3_policy.pt",
+      "last_modified": "2026-10-24T16:47:42+00:00",
+      "size": 2104800
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_part3_cycle_4_policy.pt",
+      "last_modified": "2026-10-24T16:47:44+00:00",
+      "size": 2104800
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_phase10_guided_cycle_1_policy.pt",
+      "last_modified": "2026-10-24T19:07:23+00:00",
+      "size": 2105457
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_phase10_guided_cycle_2_policy.pt",
+      "last_modified": "2026-10-24T19:07:27+00:00",
+      "size": 2105457
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_phase10_guided_cycle_3_policy.pt",
+      "last_modified": "2026-10-24T19:07:29+00:00",
+      "size": 2105457
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_winner_pool_v3a_q25_train_only_430.pt",
+      "last_modified": "2026-10-24T10:09:58+00:00",
+      "size": 2105950
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_winner_pool_v3a_q25_train_only_430_repro_check.pt",
+      "last_modified": "2026-10-24T16:47:35+00:00",
+      "size": 2107018
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_winner_pool_v3b_median_train_only_430.pt",
+      "last_modified": "2026-10-24T10:10:02+00:00",
+      "size": 2106169
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/checkpoints/flywheel_winner_pool_v3b_median_train_only_430_repro_check.pt",
+      "last_modified": "2026-10-24T16:47:37+00:00",
+      "size": 2107237
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/corpus_v2_train_winner_integrated/corpus_v2_manifest.json",
+      "last_modified": "2026-10-24T09:06:27+00:00",
+      "size": 244173
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/corpus_v3_wider_strict_train_256/corpus_v3_manifest.json",
+      "last_modified": "2026-10-24T10:09:51+00:00",
+      "size": 718858
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_audit_verification.json",
+      "last_modified": "2026-10-24T07:57:31+00:00",
+      "size": 38339
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_audit_verification.v1_070947Z_38171B.json",
+      "last_modified": "2026-10-24T08:14:06+00:00",
+      "size": 38171
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_audit_verification.v2_0710Z_38339B.json",
+      "last_modified": "2026-10-24T08:14:09+00:00",
+      "size": 38339
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_closure_and_next_phase_report.json",
+      "last_modified": "2026-10-24T08:31:13+00:00",
+      "size": 69197
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_experiments_whitepaper_20261024.pdf",
+      "last_modified": "2026-10-24T19:06:31+00:00",
+      "size": 497714
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_experiments_whitepaper_20261024_complete_v2.pdf",
+      "last_modified": "2026-10-24T16:47:32+00:00",
+      "size": 432586
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_experiments_whitepaper_20261024_phase10_v4.pdf",
+      "last_modified": "2026-10-24T19:06:29+00:00",
+      "size": 497714
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_experiments_whitepaper_20261024_phase9_v3.pdf",
+      "last_modified": "2026-10-24T17:23:56+00:00",
+      "size": 444551
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_phase10_fresh_gp_corrected_report.json",
+      "last_modified": "2026-10-24T19:06:27+00:00",
+      "size": 137052
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_phase10_fresh_gp_durable_ledger.json",
+      "last_modified": "2026-10-24T19:06:22+00:00",
+      "size": 21902720
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_phase10_fresh_gp_durable_ledger_task3087_cycles_and_holdout30.json",
+      "last_modified": "2026-10-24T19:06:18+00:00",
+      "size": 19405244
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_phase10_per_cycle_stream_ledger.json",
+      "last_modified": "2026-10-24T19:06:25+00:00",
+      "size": 11437
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_phase10_preflight_startup_receipt.json",
+      "last_modified": "2026-10-24T19:06:16+00:00",
+      "size": 3658
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_phase10_task2955_startup_failure_receipt.json",
+      "last_modified": "2026-10-24T19:06:14+00:00",
+      "size": 1303
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_phase7_and_multifold_complete_report_task2521_raw.json",
+      "last_modified": "2026-10-24T16:47:26+00:00",
+      "size": 119446
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_phase7_and_multifold_complete_report_v1.json",
+      "last_modified": "2026-10-24T16:47:24+00:00",
+      "size": 128336
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_phase7_and_multifold_complete_report_v2.json",
+      "last_modified": "2026-10-24T17:23:49+00:00",
+      "size": 129176
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_phase7_partial_and_expired_deadline_receipt.json",
+      "last_modified": "2026-10-24T10:10:06+00:00",
+      "size": 9168
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_phase7_partial_and_expired_deadline_receipt_addendum_v2.json",
+      "last_modified": "2026-10-24T10:32:19+00:00",
+      "size": 9343
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_phase7_partial_and_expired_deadline_receipt_addendum_v3.json",
+      "last_modified": "2026-10-24T11:02:19+00:00",
+      "size": 14178
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_phase7_partial_and_expired_deadline_receipt_addendum_v4.json",
+      "last_modified": "2026-10-24T11:50:16+00:00",
+      "size": 7825
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_phase8_part1_substage_cache_v1.json",
+      "last_modified": "2026-10-24T16:47:30+00:00",
+      "size": 1789942
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_phase8_part3_durable_ledger_v1.json",
+      "last_modified": "2026-10-24T16:47:28+00:00",
+      "size": 25737655
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_phase9_per_cycle_stream_ledger_v1.json",
+      "last_modified": "2026-10-24T17:23:54+00:00",
+      "size": 20458
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_phase9_pool_vs_optimizer_separation_addendum_v1.json",
+      "last_modified": "2026-10-24T17:23:51+00:00",
+      "size": 88292
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_qualified_next_phase_audit.json",
+      "last_modified": "2026-10-24T07:54:49+00:00",
+      "size": 154779
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_selfplay_report.json",
+      "last_modified": "2026-10-24T06:53:14+00:00",
+      "size": 63236
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/flywheel_winner_pool_integration_v2_report.json",
+      "last_modified": "2026-10-24T09:06:31+00:00",
+      "size": 101467
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/run_phase10_fresh_gp_corrected_flywheel_task2955_failed_attempt1.py",
+      "last_modified": "2026-10-24T19:06:12+00:00",
+      "size": 98175
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/task-1153-expired-deadline-stop.log",
+      "last_modified": "2026-10-24T10:09:55+00:00",
+      "size": 2232
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/task-565-failure-receipt.log",
+      "last_modified": "2026-10-24T06:53:14+00:00",
+      "size": 6629
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/task-865-cancelled-before-s3-delete-receipt.json",
+      "last_modified": "2026-10-24T07:57:32+00:00",
+      "size": 785
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/results/verify_flywheel_wider_train_extension_v3_unit_tests_v4.json",
+      "last_modified": "2026-10-24T11:50:19+00:00",
+      "size": 5918
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-01/gp_distilled/distilled_round_01.json",
+      "last_modified": "2026-10-24T05:52:18+00:00",
+      "size": 1713
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-01/hwm/00b7692ce5e864f099ac12b387892cd6d223478677c0aa6673d99a3ccc1b1b94.json",
+      "last_modified": "2026-10-24T01:04:07+00:00",
+      "size": 824
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-01/hwm/025eb526cc88c46b455c9e34f444d0f7c517795835112e25ab708f3ed0856d30.json",
+      "last_modified": "2026-10-24T01:04:07+00:00",
+      "size": 831
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-01/hwm/03da6aaf98b8cf5ddfc22effcff75e1759b13f7ed2d8af4df3c745faffbf5f9e.json",
+      "last_modified": "2026-10-24T01:04:07+00:00",
+      "size": 776
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-01/hwm/0c3fe4873dc8eda36cf45f9c4891b4583e741b5bef351ac5df375b1c38013057.json",
+      "last_modified": "2026-10-24T01:04:06+00:00",
+      "size": 786
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-01/persistence_receipt.json",
+      "last_modified": "2026-10-24T07:57:30+00:00",
+      "size": 806
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-01/persistence_receipt.post_sync_806B.json",
+      "last_modified": "2026-10-24T08:14:02+00:00",
+      "size": 806
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-01/persistence_receipt.pre_sync_800B.json",
+      "last_modified": "2026-10-24T08:13:59+00:00",
+      "size": 800
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-01/scores/retained_scores_round_01.jsonl",
+      "last_modified": "2026-10-24T05:52:19+00:00",
+      "size": 27134
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-02/gp_distilled/distilled_round_02.json",
+      "last_modified": "2026-10-24T06:15:13+00:00",
+      "size": 2755
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-02/hwm/06f153275b07b4fb0910b5d52064c494f9dee502819388905776bdcdced047ff.json",
+      "last_modified": "2026-10-24T06:15:13+00:00",
+      "size": 871
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-02/persistence_receipt.json",
+      "last_modified": "2026-10-24T07:53:52+00:00",
+      "size": 806
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-02/scores/retained_scores_round_02.jsonl",
+      "last_modified": "2026-10-24T06:15:13+00:00",
+      "size": 27603
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-03/gp_distilled/distilled_round_03.json",
+      "last_modified": "2026-10-24T06:42:50+00:00",
+      "size": 5552
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-03/hwm/044c8b2650ce60be2122b493fbc10ba3c50dbb06bfbe7a75bf1b505a42590f4c.json",
+      "last_modified": "2026-10-24T06:42:50+00:00",
+      "size": 765
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-03/hwm/06f153275b07b4fb0910b5d52064c494f9dee502819388905776bdcdced047ff.json",
+      "last_modified": "2026-10-24T06:42:50+00:00",
+      "size": 876
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-03/hwm/08a778ed43141256dd7591245ca41443463a9e0f556ab34213c7b04234bd1d4b.json",
+      "last_modified": "2026-10-24T06:42:50+00:00",
+      "size": 763
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-03/hwm/0b1f79eb273902df39ec01d9b8027598383b153c6fcb033839bf8681231ab352.json",
+      "last_modified": "2026-10-24T06:42:50+00:00",
+      "size": 756
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-03/persistence_receipt.json",
+      "last_modified": "2026-10-24T07:53:54+00:00",
+      "size": 806
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-03/scores/retained_scores_round_03.jsonl",
+      "last_modified": "2026-10-24T06:42:50+00:00",
+      "size": 26973
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/terminal_manifest_20261024.json",
+      "last_modified": "2026-10-24T08:31:18+00:00",
+      "size": 33767
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/terminal_manifest_v2_20261024.json",
+      "last_modified": "2026-10-24T09:06:35+00:00",
+      "size": 14842
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/terminal_manifest_v3_partial_20261024.json",
+      "last_modified": "2026-10-24T10:10:11+00:00",
+      "size": 4798
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/terminal_manifest_v3_partial_addendum_v2_20261024.json",
+      "last_modified": "2026-10-24T10:32:24+00:00",
+      "size": 1569
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/terminal_manifest_v3_partial_addendum_v3_20261024.json",
+      "last_modified": "2026-10-24T11:02:26+00:00",
+      "size": 1864
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/terminal_manifest_v3_partial_addendum_v4_20261024.json",
+      "last_modified": "2026-10-24T11:50:29+00:00",
+      "size": 5356
+    }
+  ],
+  "outcome_table_pool_checkpoint_body_gets": 0,
+  "prefix": "experiments/flywheel-selfplay-20261023/",
+  "profile": "veox-jepson-prod",
+  "schema": "jope.w5.metadata-inventory/v1",
+  "source_commit": "ca549a23e34b0338ff238d806bc65be990e43102",
+  "utc": "2026-10-31T04:00:10.326137+00:00",
+  "verifier_sha256": "2189499e7c4c087f180f2552cb384657247ac7bc44b586b6d3b1f562775f648f"
+}
