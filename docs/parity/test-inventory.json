@@ -5,9 +5,9 @@
   "python": 172
  },
  "rust": {
-  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.; telemetry addition: cargo nextest list --locked -P main -p jope-telemetry --message-format json (2026-10-29), 39 listed, 0 ignored; telemetry Rust port addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-29), 64 listed, 0 ignored; telemetry P2 addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 73 listed, 0 ignored; telemetry two-tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 77 listed, 0 ignored; telemetry reasoning tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 80 listed, 0 ignored; QLT-03-F01 additive targeted collection: cargo test --locked -p jope-appliance --bin jopedime [--features research] research -- --list (2026-10-31); only the four new feature-boundary/parser/refusal IDs added, preserving all earlier feature cases. This union is collection, not execution; exact commands and receipts accompany the PR.",
-  "count": 6098,
-  "ignored": 81,
+  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.; telemetry addition: cargo nextest list --locked -P main -p jope-telemetry --message-format json (2026-10-29), 39 listed, 0 ignored; telemetry Rust port addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-29), 64 listed, 0 ignored; telemetry P2 addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 73 listed, 0 ignored; telemetry two-tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 77 listed, 0 ignored; telemetry reasoning tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 80 listed, 0 ignored; QLT-03-F01 additive targeted collection: cargo test --locked -p jope-appliance --bin jopedime [--features research] research -- --list (2026-10-31); only the four new feature-boundary/parser/refusal IDs added, preserving all earlier feature cases. This union is collection, not execution; exact commands and receipts accompany the PR.; QLT-03-F02 additive targeted collection: cargo test --locked -p jope-service --features research --lib (2026-10-31); add only16 new feature-bound capture IDs including one ignored owned-process helper, preserving the complete historical union. Execution and software-control limits are reported separately.",
+  "count": 6114,
+  "ignored": 82,
   "packages": {
    "battle-gpu": {
     "count": 19,
@@ -9329,6 +9329,35 @@
       ]
      }
     }
+   },
+   "jope-service": {
+    "count": 16,
+    "ignored": 1,
+    "binaries": {
+     "jope_service": {
+      "kind": "lib",
+      "count": 16,
+      "ignored": 1,
+      "tests": [
+       "discover::r#loop::tests::durable_capture::auxiliary_abort_or_stale_reply_stays_unknown",
+       "discover::r#loop::tests::durable_capture::budget_truncation_is_retained_but_not_exported",
+       "discover::r#loop::tests::durable_capture::capture_kill_child",
+       "discover::r#loop::tests::durable_capture::capture_roots_survive_gc_and_normal_open_or_binding_drift_refuse",
+       "discover::r#loop::tests::durable_capture::corrupt_or_missing_capture_cas_never_materializes",
+       "discover::r#loop::tests::durable_capture::empty_oversized_seed_and_unobserved_admission_refuse_before_dispatch",
+       "discover::r#loop::tests::durable_capture::exhausted_wall_stops_new_dispatch_without_refunding_reservations",
+       "discover::r#loop::tests::durable_capture::full_slates_keep_source_indices_and_original_precision",
+       "discover::r#loop::tests::durable_capture::labels_are_private_and_one_eight_workers_preserve_normal_gp",
+       "discover::r#loop::tests::durable_capture::materialization_reads_committed_state_and_python_counts_both_modes",
+       "discover::r#loop::tests::durable_capture::missing_gate_or_aborted_executor_retains_unknown_and_never_retries",
+       "discover::r#loop::tests::durable_capture::pause_reopen_reuses_known_wave_without_proposal_or_admission_replay",
+       "discover::r#loop::tests::durable_capture::round_transaction_failure_never_installs_outbox_or_public_results",
+       "discover::r#loop::tests::durable_capture::seed_endpoints_and_capture_input_bounds_are_explicit",
+       "discover::r#loop::tests::durable_capture::sigkill_at_capture_boundaries_preserves_committed_prefix",
+       "research::tests::private_capture_envelope_refuses_unknown_fields_and_oversized_cas_references"
+      ]
+     }
+    }
    }
   }
  },
@@ -9669,7 +9698,7 @@
   }
  },
  "totals": {
-  "rust": 6098,
+  "rust": 6114,
   "python": 209
  }
 }
