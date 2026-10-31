@@ -123,3 +123,10 @@ preserves existing failed/timed-out/unavailable classifications and the child's
 original exit, and allows later CPU gates to run. Each gate receipt and the
 aggregate diagnostic remain available. The controller tests inject read errors
 at that I/O boundary while real fixture children and other hashes still run.
+
+Before each CPU gate starts, the runner rechecks the frozen origin/main, HEAD and
+clean working tree. Source drift stops the remaining commands and fails the
+aggregate receipt while retaining completed gate receipts and original exits.
+Unstarted gates stay in the inventory without fabricated execution records. The
+final source check remains in place; this is a boundary check, not a checkout
+lock or protection against changes during a running child.

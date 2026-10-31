@@ -555,6 +555,15 @@ def run(root, output, expected=None, jobs=4, seconds=1800, execute=False, target
         parser = result_parser(root)
         try:
             for gate in gates:
+                try:
+                    current = identity(
+                        root, expected=source["main_sha"], require_clean=True
+                    )
+                    if current != source:
+                        raise ValueError("source identity changed during CPU checks")
+                except (ValueError, subprocess.CalledProcessError) as error:
+                    document["source_changed"] = str(error)
+                    break
                 document["checks"].append(
                     execute_gate(
                         gate,
@@ -575,7 +584,7 @@ def run(root, output, expected=None, jobs=4, seconds=1800, execute=False, target
         statuses = {x["status"] for x in document["checks"]}
         document["status"] = (
             "failed"
-            if statuses & {"failed", "timed-out"}
+            if "source_changed" in document or statuses & {"failed", "timed-out"}
             else "passed"
             if statuses == {"passed"}
             else "incomplete"
