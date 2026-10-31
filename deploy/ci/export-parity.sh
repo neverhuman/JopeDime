@@ -3,11 +3,16 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 fault=0
+strict_calibration=0
 case ${1:-} in
   --fault-emitter) fault=1; shift ;;
   --fault-routing) fault=2; shift ;;
+  # A mutated emitted Platt map must fail the calibration goldens, admitted or not.
+  --fault-calibration) fault=3; strict_calibration=1; shift ;;
+  # Before admitting a calibration row: every calibration golden must pass.
+  --require-calibration) strict_calibration=1; shift ;;
 esac
-[[ $# -le 1 ]] || { echo 'usage: export-parity.sh [--fault-emitter|--fault-routing] [NEW_REPORT_DIR]' >&2; exit 2; }
+[[ $# -le 1 ]] || { echo 'usage: export-parity.sh [--fault-emitter|--fault-routing|--fault-calibration|--require-calibration] [NEW_REPORT_DIR]' >&2; exit 2; }
 report=${1:-"$PWD/target/export-parity/$(date -u +%Y%m%dT%H%M%SZ)-$$"}
 [[ ! -e "$report" && ! -L "$report" ]] || { echo 'report directory must be new' >&2; exit 2; }
 mkdir -p -- "$report"
@@ -19,6 +24,7 @@ export CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS:-8} RAYON_NUM_THREADS=1
 export TMPDIR="${CARGO_TARGET_DIR:-$PWD/target}/tmp"
 mkdir -p -- "$TMPDIR"
 export JOPE_EXPORT_PARITY_REPORT="$report" JOPE_EXPORT_PARITY_FAULT="$fault"
+export JOPE_EXPORT_PARITY_STRICT_CALIBRATION="$strict_calibration"
 cat > "$report/generate.rs" <<'RUST'
 use feat_math::{
     evolve::api::capability::{CapabilityKind, Language, Registry},
@@ -29,6 +35,8 @@ use jope_runtime::{fitted_js, fitted_py, fitted_rs};
 use serde_json::{json, Value};
 use std::{collections::BTreeMap, fs, path::Path};
 const WIDTH: usize = 12;
+/// Calibration rows with dedicated goldens below; they run whether or not they are admitted.
+const CALIBRATION_GOLDENS: [&str; 2] = ["affine_floor", "platt"];
 fn rows(n: usize, mut seed: u64) -> Vec<Vec<f64>> {
     (0..n)
         .map(|_| {
@@ -160,6 +168,97 @@ fn save_case(
     cases.push(json!({"key":key,"dsl":dsl,"directory":format!("case-{index}"),"rows":test,"expected":expected,"decision":decision,"golden_rows":64,"emissions":emissions}));
     Ok(())
 }
+/// Emit one calibrated golden in every primary language. `fixture` carries the native
+/// reference; `admitted` records the registry row, which decides qualification only.
+#[allow(clippy::too_many_arguments)]
+fn save_calibrated(
+    out: &Path,
+    calibrated: &mut Vec<Value>,
+    key: &str,
+    registry: &Registry,
+    name: &str,
+    genome: &GenomeIr,
+    model: &Model,
+    calibration: &fitted_js::ExportCalibration,
+    checks: &[(Vec<f64>, f64)],
+    mut fixture: Value,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let index = calibrated.len();
+    let dir = out.join(format!("calibration-{index}"));
+    fs::create_dir(&dir)?;
+    let mut emissions = Vec::new();
+    for language in [Language::Rust, Language::Python, Language::Javascript] {
+        let (lang, ext) = match language {
+            Language::Rust => ("rust", "rs"),
+            Language::Python => ("python", "py"),
+            _ => ("javascript", "mjs"),
+        };
+        let emit = || -> Result<String, String> {
+            match language {
+                Language::Rust => fitted_rs::emit_with_checks_and_platt(
+                    genome,
+                    model,
+                    WIDTH,
+                    calibration,
+                    &checks
+                        .iter()
+                        .map(|(inputs, expected)| fitted_rs::CheckRow {
+                            inputs: inputs.clone(),
+                            expected: *expected,
+                        })
+                        .collect::<Vec<_>>(),
+                )
+                .map_err(|e| format!("{e:#}")),
+                Language::Python => fitted_py::emit_with_checks_and_platt(
+                    genome,
+                    model,
+                    WIDTH,
+                    calibration,
+                    &checks
+                        .iter()
+                        .map(|(inputs, expected)| fitted_py::CheckRow {
+                            inputs: inputs.clone(),
+                            expected: *expected,
+                        })
+                        .collect::<Vec<_>>(),
+                )
+                .map_err(|e| format!("{e:#}")),
+                _ => fitted_js::emit_with_checks_and_platt(
+                    genome,
+                    model,
+                    WIDTH,
+                    calibration,
+                    &checks
+                        .iter()
+                        .map(|(inputs, expected)| fitted_js::CheckRow {
+                            inputs: inputs.clone(),
+                            expected: *expected,
+                        })
+                        .collect::<Vec<_>>(),
+                )
+                .map_err(|e| format!("{e:#}")),
+            }
+        };
+        let admitted = registry.supports(CapabilityKind::Calibration, name, language);
+        match emit() {
+            Ok(source) => {
+                assert_eq!(source, emit()?, "nondeterministic emitter: {key}");
+                fs::write(dir.join(format!("predictor.{ext}")), source)?;
+                emissions.push(json!({"language":lang,"admitted":admitted,"status":"generated","file":format!("calibration-{index}/predictor.{ext}")}));
+            }
+            Err(error) => emissions.push(
+                json!({"language":lang,"admitted":admitted,"status":"emit_error","error":error}),
+            ),
+        }
+    }
+    fixture["key"] = json!(key);
+    fixture["capability"] = json!(name);
+    fixture["directory"] = json!(format!("calibration-{index}"));
+    fixture["golden_rows"] = json!(checks.len());
+    fixture["emissions"] = json!(emissions);
+    calibrated.push(fixture);
+    Ok(())
+}
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let directory = std::env::args().nth(1).expect("report directory");
     let out = Path::new(&directory);
@@ -189,6 +288,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let key = format!("{:?}/{}", entry.kind, entry.name);
         for language in Language::ALL {
             cells.push(json!({"key":key,"language":language,"supported":entry.supported[&language],"status":if entry.supported[&language]{"pending"}else{"unsupported_registry"}}));
+        }
+        if entry.kind == CapabilityKind::Calibration && CALIBRATION_GOLDENS.contains(&entry.name)
+        {
+            continue;
         }
         let languages: Vec<_> = [Language::Rust, Language::Python, Language::Javascript]
             .into_iter()
@@ -331,6 +434,191 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             cases.last_mut().unwrap()["golden_threshold_margin"] = json!(margin);
         }
     }
+    // Calibration maps, fitted through the production APIs. The registry row decides only
+    // whether a passing golden qualifies a cell; unadmitted rows stay unqualified.
+    use jope_runtime::{
+        calibration::{self as output, OutputTransform},
+        fitness::{Columns, Fitness},
+        model_object::calibration_platt,
+    };
+    let mut calibrated = Vec::new();
+    let genome = GenomeIr::parse("(pipe X (ridge))")?;
+    let model = fit(&genome, &train, &y)?;
+    let raw_train = model.predict(&train)?;
+    let raw_golden = model.predict(&golden)?;
+    // Wider than the training range, so the learned floors are reached on held-out rows.
+    let mut floor_rows = golden.clone();
+    floor_rows.extend(
+        rows(400, 4242)
+            .into_iter()
+            .map(|r| r.into_iter().map(|v| v * 4.0 - 1.5).collect()),
+    );
+    let raw_floor = model.predict(&floor_rows)?;
+    // A nonnegative target the raw predictions overshoot: the map is learned and its floor binds.
+    let shifted: Vec<f64> = y.iter().map(|v| (1.7 * v - 4.0).max(0.0)).collect();
+    let positive: Vec<f64> = y.iter().map(|v| (v - 2.5).max(0.0)).collect();
+    let columns = Columns::new();
+    let maps: [(&str, OutputTransform); 4] = [
+        (
+            "Calibration/affine_floor",
+            output::fit(
+                &Fitness::Msle {},
+                output::Calibration::Affine,
+                &shifted,
+                &raw_train,
+                &columns,
+            ),
+        ),
+        // What a model keeps when its raw predictions win under a log-error objective.
+        (
+            "calibration/affine_floor/floor_only",
+            output::floor_only(&Fitness::Msle {}, &shifted).expect("log errors need a floor"),
+        ),
+        // The shift family keeps a unit slope; deviances need a strictly positive floor.
+        (
+            "calibration/affine_floor/shift_positive",
+            output::fit(
+                &Fitness::PoissonDeviance {},
+                output::Calibration::Shift,
+                &positive,
+                &raw_train,
+                &columns,
+            ),
+        ),
+        (
+            "calibration/affine_floor/affine_unfloored",
+            output::fit(
+                &Fitness::Mae {},
+                output::Calibration::Affine,
+                &shifted,
+                &raw_train,
+                &columns,
+            ),
+        ),
+    ];
+    for (key, map) in maps {
+        map.validate()?;
+        assert!(!map.is_identity(), "identity calibration golden: {key}");
+        let expected = map.apply_all(&raw_floor);
+        assert!(
+            expected.iter().all(|v| v.is_finite()),
+            "non-finite calibrated golden: {key}"
+        );
+        let binding: Vec<usize> = raw_floor
+            .iter()
+            .enumerate()
+            .filter(|(_, p)| map.lower.is_some_and(|lower| map.intercept + map.slope * **p < lower))
+            .map(|(i, _)| i)
+            .collect();
+        if key == "Calibration/affine_floor" {
+            assert!(
+                map.slope != 1.0 && map.intercept != 0.0,
+                "primary affine golden must move both coefficients"
+            );
+        }
+        if map.lower.is_some() {
+            assert!(
+                !binding.is_empty() && binding.len() < floor_rows.len(),
+                "floor must bind on some golden rows but not all: {key}"
+            );
+        }
+        let checks: Vec<_> = golden[..64]
+            .iter()
+            .cloned()
+            .zip(expected.iter().copied())
+            .collect();
+        save_calibrated(
+            out,
+            &mut calibrated,
+            key,
+            &registry,
+            "affine_floor",
+            &genome,
+            &model,
+            &fitted_js::ExportCalibration {
+                output: Some(map),
+                platt: None,
+            },
+            &checks,
+            json!({"kind":"affine_floor","rows":floor_rows,"expected":expected,"decision":false,"transform":map,"floor_binding_rows":binding}),
+        )?;
+    }
+    // Binary Platt maps, cross-fitted on explicit native positive probabilities. Math-pipeline
+    // predictors have no probability head, so the emitted map is checked on scores directly.
+    let fit_rows = rows(200, 31);
+    let scores: Vec<f64> = fit_rows.iter().map(|r| r[0]).collect();
+    let folds: Vec<usize> = (0..scores.len()).map(|i| i % 5).collect();
+    let mut grid = vec![
+        0.0,
+        -0.0,
+        f64::from_bits(1),
+        1e-300,
+        1e-9,
+        0.25,
+        0.5,
+        0.75,
+        1.0 - f64::EPSILON / 2.0,
+        1.0,
+    ];
+    grid.extend(rows(54, 77).iter().map(|r| r[0]));
+    let refused = [
+        f64::NAN,
+        f64::INFINITY,
+        f64::NEG_INFINITY,
+        -f64::from_bits(1),
+        -1.0,
+        1.0 + f64::EPSILON,
+        2.0,
+    ];
+    for (key, order) in [
+        ("Calibration/platt", ["no", "yes"]),
+        ("calibration/platt/class_order", ["cold \"0\" \\ é", "hot 🔥"]),
+    ] {
+        let labels: Vec<&str> = fit_rows
+            .iter()
+            .map(|r| order[usize::from(r[0] + 0.35 * (r[1] - 0.5) > 0.55)])
+            .collect();
+        let calibration = calibration_platt::cross_fit(&scores, &labels, order, &folds)?.calibration;
+        let sigmoid = &calibration.sigmoid;
+        assert!(sigmoid.slope > 0.0, "flat Platt golden: {key}");
+        let mut test = grid.clone();
+        // The score where the map crosses one half, where a class label is decided.
+        let half = sigmoid.scale * (sigmoid.center - sigmoid.intercept / sigmoid.slope);
+        if (0.0..=1.0).contains(&half) {
+            test.push(half);
+        }
+        let mut expected = Vec::new();
+        let mut decided = Vec::new();
+        for score in &test {
+            let p = calibration.apply(*score)?;
+            // The runtime's label rule: the later class only when strictly more probable.
+            decided.push(order[usize::from(p > 1.0 - p)]);
+            expected.extend([1.0 - p, p]);
+        }
+        for score in refused {
+            assert!(calibration.apply(score).is_err(), "runtime accepted {score:?}");
+        }
+        let checks: Vec<_> = golden[..64]
+            .iter()
+            .cloned()
+            .zip(raw_golden.iter().copied())
+            .collect();
+        save_calibrated(
+            out,
+            &mut calibrated,
+            key,
+            &registry,
+            "platt",
+            &genome,
+            &model,
+            &fitted_js::ExportCalibration {
+                output: None,
+                platt: Some(calibration.clone()),
+            },
+            &checks,
+            json!({"kind":"platt","scores":test,"score_bits":test.iter().map(|v| format!("{:016x}", v.to_bits())).collect::<Vec<_>>(),"expected":expected,"labels":decided,"class_order":order,"refused_bits":refused.iter().map(|v| format!("{:016x}", v.to_bits())).collect::<Vec<_>>(),"sigmoid":sigmoid,"decision":false}),
+        )?;
+    }
     // Raw numeric encoding is a distinct contract, not categorical support.
     use jope_runtime::math_pipeline::{
         InputContract, MathPipeline, NumericColumn, PipelineState, TargetScale, INPUT_PART,
@@ -397,14 +685,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     fs::write(
         out.join("fixtures.json"),
         serde_json::to_vec(
-            &json!({"cells":cells,"cases":cases,"raw":{"rows":raw,"expected":expected,"columns":pipeline.input.columns.iter().map(|c|&c.name).collect::<Vec<_>>()}}),
+            &json!({"cells":cells,"cases":cases,"calibration":calibrated,"raw":{"rows":raw,"expected":expected,"columns":pipeline.input.columns.iter().map(|c|&c.name).collect::<Vec<_>>()}}),
         )?,
     )?;
     Ok(())
 }
 RUST
 nice -n 10 python3 -I -B - "$report" <<'PY'
-import datetime, hashlib, json, math, os, pathlib, platform, subprocess, sys, time, traceback
+import datetime, hashlib, json, math, os, pathlib, platform, struct, subprocess, sys, time, traceback
 
 root = pathlib.Path.cwd()
 out = pathlib.Path(sys.argv[1])
@@ -437,7 +725,7 @@ report = {
             "GITHUB_EVENT_NAME",
         ]
     },
-    "scope": "Advertised primary-language registry cells. Unsupported calibration, categorical and class-label contracts remain unqualified.",
+    "scope": "Advertised primary-language registry cells. Unsupported calibration, categorical and class-label contracts remain unqualified; calibration goldens for unadmitted rows are evidence, not qualification.",
 }
 
 
@@ -598,8 +886,29 @@ try:
     assert not errors, f"advertised support lacks fitted export: {errors}"
     fault = os.environ["JOPE_EXPORT_PARITY_FAULT"]
     report["fault_injected"] = fault != "0"
-    report["fault_scope"] = {"0": None, "1": "primary", "2": "routing"}[fault]
-    if fault != "0":
+    report["fault_scope"] = {
+        "0": None,
+        "1": "primary",
+        "2": "routing",
+        "3": "calibration",
+    }[fault]
+    if fault == "3":
+        victim = next(
+            e
+            for c in fixtures["calibration"]
+            if c["key"] == "Calibration/platt"
+            for e in c["emissions"]
+            if e["language"] == "python"
+        )
+        p = out / victim["file"]
+        text = p.read_text()
+        old = "    return [1 - p, p]\n"
+        assert text.count(old) == 1
+        report["fault_original_sha256"] = digest(p)
+        p.write_text(text.replace(old, "    return [1 - p, p * (1 + 1e-6)]\n"))
+        report["fault_file"] = victim["file"]
+        report["fault_mutated_sha256"] = digest(p)
+    elif fault != "0":
         victim = next(
             e
             for c in cases
@@ -842,11 +1151,183 @@ try:
         record["self_check_rows"] = 0
         raw_results.append(record)
     report["raw_numeric_contract"] = raw_results
+    # Calibration goldens. Each emitted module runs on its own, so one defect cannot hide
+    # another, with the same pinned toolchains and tolerances as the advertised cells.
+    strict_calibration = os.environ["JOPE_EXPORT_PARITY_STRICT_CALIBRATION"] == "1"
+    rust_helpers = (
+        "fn read_rows(path:&str)->Vec<Vec<f64>>{std::fs::read_to_string(path).unwrap().lines().map(|line|line.split_whitespace().map(|v|v.parse::<f64>().unwrap()).collect()).collect()}\n"
+        "fn read_bits(path:&str)->Vec<f64>{std::fs::read_to_string(path).unwrap().lines().map(|v|f64::from_bits(u64::from_str_radix(v,16).unwrap())).collect()}\n"
+        'fn hex(s:&str)->String{s.bytes().map(|b|format!("{b:02x}")).collect()}\n'
+    )
+    python_driver = """import json, runpy, struct, sys
+m = runpy.run_path(sys.argv[1])
+c = json.load(open(sys.argv[2]))["calibration"][int(sys.argv[3])]
+bits = lambda b: struct.unpack(">d", bytes.fromhex(b))[0]
+if c["kind"] == "platt":
+    refused = []
+    for b in c["refused_bits"]:
+        try:
+            m["fitted_platt"](bits(b))
+            refused.append(False)
+        except ValueError:
+            refused.append(True)
+    result = {"values": [v for b in c["score_bits"] for v in m["fitted_platt"](bits(b))], "class_order": list(m["PLATT_CLASS_ORDER"]), "refused": refused}
+else:
+    result = {"values": m["fitted_predict"](c["rows"])}
+print(json.dumps(result, allow_nan=False))
+"""
+    javascript_driver = """function goldenBits(b){const v=new DataView(new ArrayBuffer(8));v.setBigUint64(0,BigInt("0x"+b));return v.getFloat64(0);}
+let goldenResult;
+if(GOLDEN_CASE.kind==="platt"){
+  const values=[];for(const b of GOLDEN_CASE.score_bits){const p=fittedPlatt(goldenBits(b));values.push(p[0],p[1]);}
+  const refused=GOLDEN_CASE.refused_bits.map(b=>{try{fittedPlatt(goldenBits(b));return false;}catch(_error){return true;}});
+  goldenResult={values,class_order:Array.from(PLATT_CLASS_ORDER),refused};
+}else{
+  const rows=GOLDEN_CASE.rows,h=modelFittedHandle(),out=new Float64Array(rows.length),flat=Float64Array.from(rows.flat());
+  if(modelPredictNumericBatch(h,flat,flat.length,rows.length,rows[0].length,null,0,out,out.length)!==0)throw Error("status");
+  goldenResult={values:Array.from(out)};
+}
+console.log(JSON.stringify(goldenResult));
+"""
+
+    def run_calibrated(index, case, language, file):
+        directory = file.parent
+        stem = f"calibration-{index}-{language}"
+        if language == "python":
+            command(["python3", "-I", "-B", str(file), "--self-check"], stem + "-self-check")
+            driver = directory / "run.py"
+            driver.write_text(python_driver)
+            argv = [str(driver), str(file), str(out / "fixtures.json"), str(index)]
+            return json.loads(command(["python3", "-I", "-B", *argv], stem))
+        if language == "javascript":
+            command(["node", str(file), "--self-check"], stem + "-self-check")
+            driver = directory / "run.mjs"
+            driver.write_text(
+                file.read_text()
+                + "\nconst GOLDEN_CASE="
+                + json.dumps(case)
+                + ";\n"
+                + javascript_driver
+            )
+            return json.loads(command(["node", str(driver)], stem))
+        if case["kind"] == "platt":
+            for name in ["score_bits", "refused_bits"]:
+                (directory / (name + ".hex")).write_text("".join(b + "\n" for b in case[name]))
+            body = (
+                "for name in m::PLATT_CLASS_ORDER{println!(\"class {}\",hex(name));}"
+                'for score in read_bits(&format!("{root}/score_bits.hex")){for value in m::fitted_platt(score).unwrap(){println!("value {:016x}",value.to_bits());}}'
+                'for score in read_bits(&format!("{root}/refused_bits.hex")){println!("refused {}",m::fitted_platt(score).is_err());}'
+            )
+        else:
+            (directory / "rows.tsv").write_text(
+                "".join(" ".join(repr(v) for v in row) + "\n" for row in case["rows"])
+            )
+            body = 'for value in m::predict_numeric(&read_rows(&format!("{root}/rows.tsv"))).unwrap(){println!("value {:016x}",value.to_bits());}'
+        program = directory / "run.rs"
+        program.write_text(
+            "#![allow(dead_code)]\nmod m {\n"
+            + file.read_text()
+            + "\n}\n"
+            + rust_helpers
+            + 'fn main(){let root=std::env::args().nth(1).expect("case directory");'
+            + body
+            + "}\n"
+        )
+        for flags, binary in [([], "run"), (["--test"], "self-check")]:
+            command(
+                ["rustc", "--edition=2021", *flags, "-C"]
+                + ["codegen-units=" + os.environ["CARGO_BUILD_JOBS"], str(program)]
+                + ["-o", str(directory / ("rust-" + binary))],
+                stem + "-compile-" + binary,
+            )
+        checked = command(
+            [str(directory / "rust-self-check"), "--test-threads=1"], stem + "-self-check"
+        )
+        assert "1 passed; 0 failed" in checked, "zero/missing Rust self-check"
+        lines = command([str(directory / "rust-run"), str(directory)], stem).splitlines()
+        field = lambda tag: [line.split()[1] for line in lines if line.startswith(tag + " ")]
+        result = {"values": [struct.unpack(">d", bytes.fromhex(v))[0] for v in field("value")]}
+        if case["kind"] == "platt":
+            result["class_order"] = [bytes.fromhex(v).decode() for v in field("class")]
+            result["refused"] = [v == "true" for v in field("refused")]
+        return result
+
+    def check_calibrated(case, language, result):
+        record = compare(
+            {"key": case["key"], "expected": case["expected"], "decision": False},
+            language,
+            result["values"],
+        )
+        record["self_check_rows"] = case["golden_rows"]
+        if case["kind"] == "platt":
+            assert result["class_order"] == case["class_order"], (
+                f"{case['key']}/{language}: class order differs"
+            )
+            assert len(result["refused"]) == len(case["refused_bits"]) and all(
+                result["refused"]
+            ), f"{case['key']}/{language}: accepted an invalid score"
+            values = result["values"]
+            # The runtime's label rule: the later class only when strictly more probable.
+            labels = [
+                case["class_order"][int(values[2 * i + 1] > values[2 * i])]
+                for i in range(len(values) // 2)
+            ]
+            flips = [i for i, (a, b) in enumerate(zip(labels, case["labels"])) if a != b]
+            assert not flips, f"{case['key']}/{language}: class label flips at scores {flips}"
+            record.update(
+                scores=len(labels), class_label_flips=0, refused_scores=len(result["refused"])
+            )
+        else:
+            lower = case["transform"].get("lower")
+            loose = [i for i in case["floor_binding_rows"] if result["values"][i] != lower]
+            assert not loose, f"{case['key']}/{language}: floor not exact at rows {loose}"
+            record.update(
+                floor_binding_rows=len(case["floor_binding_rows"]), transform=case["transform"]
+            )
+        return record
+
+    calibration_records = []
+    for index, case in enumerate(fixtures["calibration"]):
+        for emission in case["emissions"]:
+            record = {
+                "key": case["key"],
+                "capability": case["capability"],
+                "language": emission["language"],
+                "status": "fail",
+            }
+            try:
+                assert emission["status"] == "generated", "emit error: " + emission["error"]
+                file = out / emission["file"]
+                record["emitted_sha256"] = digest(file)
+                result = run_calibrated(index, case, emission["language"], file)
+                record.update(check_calibrated(case, emission["language"], result))
+            except Exception as error:
+                record["error"] = str(error)
+            record["admitted"] = emission["admitted"]
+            calibration_records.append(record)
+    assert {c["capability"] for c in fixtures["calibration"]} == {"affine_floor", "platt"}
+    assert all(len(c["emissions"]) == 3 for c in fixtures["calibration"])
+    report["calibration"] = {
+        "scope": "Calibrated golden predictors for affine_floor and platt, fitted with the production calibration APIs. A row the registry does not admit stays unqualified even when its golden passes.",
+        "strict": strict_calibration,
+        "expected_modules": 3 * len(fixtures["calibration"]),
+        "executed_modules": len(calibration_records),
+        "passed_modules": sum(r["status"] == "pass" for r in calibration_records),
+        "failed": [
+            (r["key"], r["language"]) for r in calibration_records if r["status"] != "pass"
+        ],
+        "cases": calibration_records,
+    }
+    blocking = [
+        (r["key"], r["language"])
+        for r in calibration_records
+        if r["status"] != "pass" and (strict_calibration or r["admitted"])
+    ]
     for cell in report["cells"]:
         if cell["supported"]:
             matches = [
                 c
-                for c in report["cases"]
+                for c in report["cases"] + calibration_records
                 if c["key"] == cell["key"] and c["language"] == cell["language"]
             ]
             assert len(matches) == 1, cell
@@ -874,6 +1355,7 @@ try:
         if case["status"] != "pass"
     ]
     assert not failed, f"emitted predictors failed: {failed}"
+    assert not blocking, f"calibration goldens failed: {blocking}"
     report.update(
         status="pass",
         passed=True,
@@ -919,6 +1401,11 @@ finally:
         )
     (out / "summary.md").write_text(
         f"Export parity: **{report['status']}**\n\nSource: {report.get('source_sha', 'unavailable')}\n\nSupported cells: {report.get('executed_supported_cells', 0)}/{report.get('expected_supported_cells', 'unavailable')}\n\n{report.get('error', 'All advertised supported cells executed with real pinned toolchains. Unsupported registry cells remain unqualified; hosted E2 is not claimed.')}\n"
+        + (
+            f"\nCalibration goldens: {report['calibration']['passed_modules']}/{report['calibration']['expected_modules']} emitted modules passed ({'strict' if report['calibration']['strict'] else 'unadmitted rows stay unqualified'}); failed: {report['calibration']['failed']}\n"
+            if "calibration" in report
+            else ""
+        )
     )
     report["files"] = {
         str(p.relative_to(out)): {"bytes": p.stat().st_size, "sha256": digest(p)}
