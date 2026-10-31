@@ -1,0 +1,132 @@
+"""Arithmetic and refusal controls only; these fixtures are not scientific data."""
+
+import copy
+import importlib.machinery
+import importlib.util
+import json
+import math
+from pathlib import Path
+
+import pytest
+
+route_loader = importlib.machinery.SourceFileLoader(
+    "h27_routing", "research/h-followups/h27-ablation/routing.py"
+)
+route_spec = importlib.util.spec_from_loader(route_loader.name, route_loader)
+routing = importlib.util.module_from_spec(route_spec)
+route_loader.exec_module(routing)
+route_scaled_features = routing.route_scaled_features
+
+loader = importlib.machinery.SourceFileLoader(
+    "h27_analysis", "research/h-followups/h27-ablation/analyze"
+)
+spec = importlib.util.spec_from_loader(loader.name, loader)
+analysis = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(analysis)
+
+
+def fixture():
+    contexts, pairs = [], []
+    # Nine contexts in one family, one in another: families still have equal weight.
+    for i in range(10):
+        c = dict(
+            context_sha256=str(i),
+            family_id="a" if i < 9 else "b",
+            dl_split="DL-Val",
+            slate_sha256="slate",
+            evaluator_sha256="eval",
+            cut_id="cut",
+            vocabulary_sha256="vocab",
+        )
+        contexts.append(c)
+        for seed in analysis.SEEDS:
+            pairs.append(
+                dict(
+                    c,
+                    seed=seed,
+                    with_fingerprint=dict(status="ok", fitness=0 if i < 9 else 2),
+                    without_fingerprint=dict(status="ok", fitness=1),
+                )
+            )
+    return dict(
+        dope_loaded_sha256=analysis.DOPE,
+        seeds=list(analysis.SEEDS),
+        train_families=["train"],
+        validation_contexts=contexts,
+    ), pairs
+
+
+def test_whole_family_weighting_and_deterministic_interval():
+    manifest, pairs = fixture()
+    result = analysis.analyze(manifest, pairs, draws=1000)
+    assert result["elo"] == 0  # Context weighting would produce +381.7 Elo.
+    assert result["ci975"] == [-math.inf, math.inf]
+    assert result["verdict"] == "REJECT"
+    assert result == analysis.analyze(manifest, list(reversed(pairs)), draws=1000)
+    assert analysis.json_safe(result)["ci975"] == ["-Infinity", "+Infinity"]
+
+
+@pytest.mark.parametrize(
+    "corruption",
+    ["missing", "duplicate", "unknown", "nonfinite", "slate", "role", "family", "dope"],
+)
+def test_invalid_or_leaking_pairs_refused(corruption):
+    manifest, pairs = copy.deepcopy(fixture())
+    if corruption == "missing":
+        pairs.pop()
+    elif corruption == "duplicate":
+        pairs.append(pairs[0])
+    elif corruption == "unknown":
+        pairs[0]["with_fingerprint"]["status"] = "unknown"
+    elif corruption == "nonfinite":
+        pairs[0]["with_fingerprint"]["fitness"] = math.nan
+    elif corruption == "slate":
+        pairs[0]["slate_sha256"] = "other"
+    elif corruption == "role":
+        manifest["validation_contexts"][0]["dl_split"] = "DL-Holdout"
+    elif corruption == "family":
+        manifest["train_families"].append("a")
+    else:
+        manifest["dope_loaded_sha256"] = "other"
+    with pytest.raises(ValueError):
+        analysis.analyze(manifest, pairs, draws=1000)
+
+
+def test_explicit_failures_and_exact_ties():
+    assert analysis.outcome(None, 0) == 0
+    assert analysis.outcome(0, None) == 1
+    assert analysis.outcome(None, None) == 0.5
+    assert analysis.outcome(1, 1) == 0.5
+    assert analysis.elo(0.5) == 0
+    assert analysis.elo(0.75) == pytest.approx(190.84850188786498)
+
+
+def test_routing_zeros_only_the_scaled_fingerprint_block():
+    fixture = [float(i - 4) for i in range(12)]
+    original = fixture.copy()
+    assert route_scaled_features(fixture, include_fingerprint=True) == fixture
+    routed = route_scaled_features(fixture, include_fingerprint=False)
+    assert routed[:4] == fixture[:4]
+    assert routed[4:] == [0.0] * 8
+    assert fixture == original
+
+
+def test_routing_refuses_short_rows():
+    with pytest.raises(ValueError, match="shorter"):
+        route_scaled_features([1.0] * 7, include_fingerprint=False)
+
+
+def test_routing_config_keeps_execution_pending():
+    path = Path("research/h-followups/h27-ablation/routing-config.json")
+    config = json.loads(path.read_text())
+    assert config["state"] == "CPU_PREP_ONLY_ANALYSIS_PENDING"
+    assert config["execution"]["analysis_admitted"] is False
+    assert config["execution"]["new_gp_fits"] == 0
+
+
+def test_missing_context_receipt_is_explicit_and_noninvented():
+    path = Path("research/h-followups/h27-ablation/MISSING-DL-VAL-CONTEXTS.json")
+    receipt = json.loads(path.read_text())
+    assert len(receipt["missing_contexts"]) == 24
+    assert all(row["context_sha256"] is None for row in receipt["missing_contexts"])
+    assert receipt["qualification_step"] == "recover-and-verify-H27-materialization-manifest; run qualify-inputs; complete full input identity admission"
