@@ -7,6 +7,11 @@ from pathlib import Path
 import sqlite3
 import time
 
+_SNAPSHOT_PROBE_SQL = {
+    'outbox': 'SELECT * FROM config LIMIT 1',
+    'queue': 'SELECT * FROM jobs LIMIT 1',
+}
+
 
 def need(value, message):
     if not value:
@@ -29,7 +34,7 @@ def readonly_snapshot(path, *, deadline, kind='outbox', max_bytes=256 * 1024**2)
     overhead is additional; the external 1GiB process ceiling remains mandatory.
     """
     path = source_path(path)
-    need(kind in ('outbox', 'queue') and type(max_bytes) is int and
+    need(type(kind) is str and kind in _SNAPSHOT_PROBE_SQL and type(max_bytes) is int and
          1024 <= max_bytes <= 256 * 1024**2, 'bounded snapshot kind/pages')
     start = time.monotonic()
     remaining = deadline - time.time()
@@ -46,7 +51,7 @@ def readonly_snapshot(path, *, deadline, kind='outbox', max_bytes=256 * 1024**2)
     try:
         source.execute('PRAGMA query_only=ON')
         source.execute('BEGIN')
-        source.execute('SELECT * FROM ' + ('config' if kind == 'outbox' else 'jobs') + ' LIMIT 1').fetchone()
+        source.execute(_SNAPSHOT_PROBE_SQL[kind]).fetchone()
         pages = source.execute('PRAGMA page_count').fetchone()[0]
         size = source.execute('PRAGMA page_size').fetchone()[0]
         need(pages * size <= max_bytes, 'snapshot byte ceiling')

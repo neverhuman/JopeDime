@@ -133,7 +133,8 @@ class SuccessorTests(unittest.TestCase):
         self.emit()
         alias = self.root / 'alias.sqlite';alias.symlink_to(self.root / 'outbox0.sqlite')
         for path, kwargs in [(alias, {}), (self.root/'outbox0.sqlite', {'max_bytes': 1024}),
-                             (self.root/'outbox0.sqlite', {'deadline': time.time()-1})]:
+                             (self.root/'outbox0.sqlite', {'deadline': time.time()-1}),
+                             (self.root/'outbox0.sqlite', {'kind': 'outbox; DROP TABLE config;--'})]:
             with self.assertRaises(ValueError):
                 readonly_snapshot(path, **{'deadline': time.time()+10, **kwargs})
         self.boxes[0].db.execute("UPDATE emissions SET state='unknown_attempt'")

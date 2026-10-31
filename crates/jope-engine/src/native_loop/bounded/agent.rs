@@ -192,8 +192,8 @@ impl<S: Supervisor> Agent<S> {
     ///
     /// Every blocking step is bounded by an absolute deadline, so `stop` is seen within a
     /// bounded time however a peer paces its bytes: an accept by the handshake allowance, an idle
-    /// wait by [`IDLE_POLL`], a started request by the plan's I/O timeout from its first byte, a
-    /// reply by [`REPLY_WRITE`], and a dropped stream's close by [`transport::CLOSE_TIMEOUT`].
+    /// wait by `IDLE_POLL`, a started request by the plan's I/O timeout from its first byte, a
+    /// reply by `REPLY_WRITE`, and a dropped stream's close by [`transport::CLOSE_TIMEOUT`].
     pub fn serve(&mut self, acceptor: &TlsAcceptor, stop: &AtomicBool) -> Result<()> {
         use super::rendezvous::ControlStream;
         let request_within = Duration::from_millis(self.contract.rendezvous.heartbeat_timeout_ms);
