@@ -1187,14 +1187,14 @@ Next owner: <PR id and role>
 
 | ID | Decision | Recommended default | Why it matters |
 | --- | --- | --- | --- |
-| **OD1** | Which DOPE weights are the v1 pin | Exactly the weights h40b was trained against (expected `d0b69603…`; R0 confirms). The mask-aware candidate becomes v1.x with a retrained head | The repo records an owner addendum requiring a mask-aware checkpoint; the shipped head was trained without one. Both cannot hold for v1.0 without retraining |
-| **OD2** | Tasks with learned guidance in v1 | Regression only; binary with heuristic guidance; multiclass via native selection | Only regression has training evidence for h40b |
-| **OD3** | v1 export languages | Rust, Python, JavaScript (+ TypeScript declarations) | Python and Rust fitted glue is new work |
+| **OD1** | Which DOPE weights are the v1 pin | **DECIDED 2026-10-31 by owner (Jepson):** Pin v1 to exactly the weights h40b was trained against (frozen DOPE `c51a56d0`; expected weights `d0b69603…`). The mask-aware candidate is v1.x and requires a retrained head | The repo records an owner addendum requiring a mask-aware checkpoint; the shipped head was trained without one. Both cannot hold for v1.0 without retraining |
+| **OD2** | Tasks with learned guidance in v1 | **DECIDED 2026-10-31 by owner (Jepson):** Regression only; binary with heuristic guidance; multiclass via native selection | Only regression has training evidence for h40b |
+| **OD3** | v1 export languages | **DECIDED 2026-10-31 by owner (Jepson):** Rust, Python, JavaScript (+ TypeScript declarations) | Python and Rust fitted glue is new work |
 | **OD4** | Store location | User-level OS data directory, overridable with `JOPEDIME_HOME` | One store lets the terminal and agents share runs |
-| **OD5** | Interactive engine hosting | Shared background engine, auto-started, 30-minute idle exit | Runs survive closed terminals and agent sessions without a permanent background process |
-| **OD6** | Remote telemetry or uploads | None in v1 | Enterprise data residency |
+| **OD5** | Interactive engine hosting | **DECIDED 2026-10-31 by owner (Jepson):** Shared background engine, auto-started, 30-minute idle exit | Runs survive closed terminals and agent sessions without a permanent background process |
+| **OD6** | Remote telemetry or uploads | **DECIDED 2026-10-31 by owner (Jepson):** None in v1 | Enterprise data residency |
 | **OD7** | Q1 cohort and margin | ≥ 40 held-out regression families; subgroup regression margin 2% of normalized loss | Must be frozen before the study |
-| **OD8** | Ship the champion bank in the binary | Yes, if it contains only programs and features (no rows) and rights are cleared | It is part of the trained serving contract |
+| **OD8** | Ship the champion bank in the binary | **DECIDED 2026-10-31 by owner (Jepson):** Ship only programs and features, never rows; shipping is gated on a rights receipt clearing the rights | It is part of the trained serving contract |
 | **OD9** | MCP implementation and `2026-07-28` | `rmcp` 3.x if it passes conformance for every listed version; ship `2026-07-28` in v1 only if conformance passes, otherwise v1.1 | One implementation either way |
 | **OD10** | Name of the lite client | `jopedime` (same name; `--version` shows `engine: absent`) | One command to learn |
 | **OD11** | Cloud auth (post-v1) | API keys first; OAuth later | Shapes the remote client, not v1 code |
