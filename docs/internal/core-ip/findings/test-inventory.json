@@ -5112,6 +5112,10 @@
     "python:research/flywheel_selfplay/h120_w4_offline_acquisition/test_run_h120.py": {
       "reason": "Owner-requested pytest proofs for the H120 (renumbered from H119) W4 offline acquisition screen CPU preparation (zero native fits); offline research analysis outside the reviewed product baseline.",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h121_target_smoothing/test_h121.py": {
+      "reason": "Owner-requested pytest proofs for the H121 target-smoothing preregistration; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

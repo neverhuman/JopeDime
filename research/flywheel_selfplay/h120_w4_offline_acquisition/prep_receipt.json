@@ -6,7 +6,10 @@
   "author": "rd_opus [OPUS]",
   "native_fits": 0,
   "gpu_seconds": 0,
-  "source_sha256": "d54dee6a63d43de72f088a5924252880cba6448c54127bbd7521207b34aafc2b",
+  "source_sha256": "cc5219f5013ff6bd08ddfde66f3d06336677c471bdd0f6838287e222074e4d0c",
+  "executed_source_sha256": "d54dee6a63d43de72f088a5924252880cba6448c54127bbd7521207b34aafc2b",
+  "test_source_sha256": "9c2ac418e8e2bb2ccb785a81e958212d901fea059d17b00151567e9fdb87d0aa",
+  "executed_test_source_sha256": "06fe467851292692baca14ef3ddd1b23644e8d944cad8ee5516bb526316de5a7",
   "h112_source_sha256": "de7d58826a70b9e5279488594bbc7cc7e7d38224a037f56204b04781b2815579",
   "memory_rows": 2306,
   "slopes": {

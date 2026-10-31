@@ -61,7 +61,7 @@ rule's own picks.
 ## Reproduce
 
 ```sh
-python3 -m pytest -q research/flywheel_selfplay/h120_w4_offline_acquisition/test_run_h120.py   # 6 synthetic tests
+python3 -m pytest -q research/flywheel_selfplay/h120_w4_offline_acquisition/test_run_h120.py   # 8 synthetic tests
 cd research/flywheel_selfplay/h120_w4_offline_acquisition
 A="--out <dir> --h94-run ~/jope-data/h94/opus-h94-20261031a --h103-run ~/jope-data/h103/opus-h103-20261031a \
    --h110-run ~/jope-data/h110/opus-h110-20261031a --h112-run ~/jope-data/h112/opus-h112-20261031a \
