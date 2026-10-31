@@ -126,6 +126,94 @@ def target_progress():
           f"{sum(row['lower'] for row in rows)} lower groups on {len(improved_contexts)} dataset/cuts")
 
 
+def target_history():
+    """Plot every retained generation of the published post-hoc development example."""
+    root = FIGURES.parents[2]
+    source = root / "docs/internal/asm-manual/data/target-history"
+    names = ["target-quality-pine-chromium-cut1.csv", "target-quality-1000-comparisons.csv",
+             "carry-forward-audit.json"]
+    inputs = {name: (source / name).read_bytes() for name in names}
+    history = list(csv.DictReader(inputs[names[0]].decode().splitlines()))
+    comparisons = list(csv.DictReader(inputs[names[1]].decode().splitlines()))
+    identity_fields = ["run", "dataset", "cut", "comparison_identity_sha256",
+                       "prepared_sha256", "vocabulary_sha256", "evaluator_sha256",
+                       "evaluator_protocol", "execution_order_protocol", "completed_evaluations"]
+    assert len(history) == 213
+    assert all(len({row[key] for row in history}) == 1 for key in identity_fields)
+    assert all(int(row["completed_evaluations"]) == 1000 for row in history)
+    assert {row["arm"] for row in history} == {"neural", "generic", "shuffled"}
+    selected = max((row for row in comparisons if row["arm"] == "neural"),
+                   key=lambda row: float(row["last_relative_improvement"]))
+    assert (selected["dataset"], selected["cut"]) == (history[0]["dataset"], history[0]["cut"])
+    rows, first_final_generation = [], {}
+    for arm, label in [("neural", "Policy-seeded"), ("generic", "Generic"),
+                       ("shuffled", "Shuffled")]:
+        group = sorted((row for row in history if row["arm"] == arm),
+                       key=lambda row: int(row["generation"]))
+        assert [int(row["generation"]) for row in group] == list(range(71))
+        assert all(math.isfinite(float(row["score"])) and float(row["score"]) > 0
+                   for row in group)
+        comparison = next(row for row in comparisons if row["arm"] == arm
+                          and row["dataset"] == selected["dataset"] and row["cut"] == selected["cut"])
+        assert float(group[0]["score"]) == float(comparison["first_score"])
+        assert float(group[-1]["score"]) == float(comparison["last_score"])
+        first_final_generation[label] = next(int(row["generation"]) for row in group
+                                             if float(row["score"]) == float(group[-1]["score"]))
+        rows.extend({"generation": row["generation"], "arm": label,
+                     "reported_best_development_rmse": row["score"]} for row in group)
+    output = FIGURES / "data/target_history.csv"
+    with output.open("w", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(rows[0]), lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(rows)
+    provenance = {
+        "schema": "whitepaper.historical-target-history/v1",
+        "source_commit": "54f1023225364cefbb49ba7ee12ad967dddf3ce8",
+        "inputs": {str((source / name).relative_to(root)): hashlib.sha256(data).hexdigest()
+                   for name, data in inputs.items()},
+        "selection": "Post-hoc example: largest first-to-last relative reduction in the policy-seeded 1000-evaluation comparison subset",
+        "rows": len(rows), "generations_per_arm": 71,
+        "completed_evaluations_per_search": 1000,
+        "comparison_identity_sha256": history[0]["comparison_identity_sha256"],
+        "score": "best_validation_rmse; historical featmath_training_fold_normalized_v1 units; lower is better",
+        "transformation": "All raw reported scores retained; no cumulative minimum, smoothing or interpolation",
+        "first_generation_reporting_final_value": first_final_generation,
+        "scope": "Historical adaptive development validation only; no sealed or holdout inputs",
+        "limitations": ["Example selected after inspection; not a representative random sample",
+                        "Shared incumbent/teacher seeds make arms dependent; RNG and elapsed time vary",
+                        "Matching final scores does not establish independent discovery or learned-policy gain",
+                        "Seed audit is retained metadata; original score/seed payloads were not reopened",
+                        "Checkpoint exposure of improved targets to later optimizer batches remains unjoined"],
+        "csv_sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
+        "generator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "reproduce": "python3 figures/scripts/make_promotions_figure.py --target-history",
+    }
+    output.with_suffix(".provenance.json").write_text(json.dumps(provenance, indent=2) + "\n")
+    plt.rcParams.update({"font.family": "serif", "font.size": 8, "axes.labelsize": 8,
+                         "xtick.labelsize": 7.5, "ytick.labelsize": 7.5, "pdf.fonttype": 42,
+                         "axes.spines.top": False, "axes.spines.right": False})
+    fig, axes = plt.subplots(1, 3, figsize=(6.8, 2.05), sharex=True, sharey=True)
+    for ax, label, color in zip(axes, first_final_generation, ["#0b5394", "#2b8a3e", "#d95f02"]):
+        group = [row for row in rows if row["arm"] == label]
+        ax.plot([int(row["generation"]) for row in group],
+                [float(row["reported_best_development_rmse"]) for row in group],
+                ".-", ms=2.5, lw=0.9, color=color)
+        ax.set_title(label, fontsize=8, loc="left", pad=3)
+        ax.set_xlabel("Generation")
+        ax.set_xticks([0, 20, 40, 60, 70])
+        ax.set_xlim(-1, 71)
+        ax.set_ylim(0.0025, 0.0105)
+        ax.ticklabel_format(axis="y", style="plain", useOffset=False)
+        ax.grid(alpha=0.22, linewidth=0.4)
+        ax.set_axisbelow(True)
+    axes[0].set_ylabel("Reported best\ndevelopment RMSE")
+    fig.tight_layout(pad=0.4, w_pad=0.7)
+    fig.savefig(FIGURES / "fig_fw_target_history.pdf",
+                metadata={"CreationDate": None, "ModDate": None})
+    plt.close(fig)
+    print(f"{len(rows)} historical scores; first final-value generations {first_final_generation}")
+
+
 def extract(logs):
     inputs = {name: (logs / name).read_bytes()
               for name in ("promotions.jsonl", "summary.jsonl")}
@@ -188,7 +276,12 @@ selection = parser.add_mutually_exclusive_group()
 selection.add_argument("--logs", type=Path, help="Read-only complete-line snapshot of the two logs")
 selection.add_argument("--target-progress", action="store_true",
                        help="Plot historical GP target progress from the merged publication tables")
+selection.add_argument("--target-history", action="store_true",
+                       help="Plot all generations of the merged historical GP target example")
 args = parser.parse_args()
+if args.target_history:
+    target_history()
+    raise SystemExit(0)
 if args.target_progress:
     target_progress()
     raise SystemExit(0)
