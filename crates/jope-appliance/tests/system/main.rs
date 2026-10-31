@@ -354,45 +354,87 @@ fn crash_child() {
     let store = Arc::new(Store::open(home).unwrap());
     let log = EventLog::new(Arc::clone(&store));
     let mut next = log.snapshot(&snapshot().run_id).unwrap().unwrap();
-    let mut roots = vec![];
-    let EventBody::AlgorithmAccepted(mut artifact) = fixture_events()[3].event.clone() else {
-        unreachable!();
+    let committed = if point.starts_with("cas:") {
+        std::env::var("INT02_CAS_COMMITTED")
+            .map(|value| value.parse::<u64>().unwrap())
+            .unwrap_or(0)
+    } else {
+        0
     };
-    for round in 1..=3 {
+    assert!(committed <= 2);
+    let mut roots = store
+        .get(&RecordKey::Run(next.run_id.clone()))
+        .unwrap()
+        .unwrap()
+        .blobs;
+    assert_eq!(roots.len() as u64, committed);
+    if committed > 0 {
+        // Store::open has recovered the seeded running prefix. Persist an actual
+        // resume before the next CAS write so the killed child owns a running run.
+        assert_eq!(next.state, RunState::Paused);
         next.state = RunState::Running;
         next.revision.0 += 1;
-        stop_at(home, &point, &format!("{round}:before_blob_publish"));
-        let bytes = format!("synthetic model fixture {round}");
-        let blob = store.publish_blob(Cursor::new(bytes.as_bytes())).unwrap();
-        stop_at(home, &point, &format!("{round}:after_blob_publish"));
-        roots.push(blob.clone());
-        artifact.model_artifact = Some(crash_artifact(round));
         next = log
             .commit(
                 RunUpdate {
                     expected_revision: Some(next.revision.0 - 1),
                     snapshot: next.clone(),
-                    checkpoint: json!({"round": round}),
+                    checkpoint: json!({"round": committed}),
                     blobs: roots.clone(),
                 },
-                vec![
-                    state_body(&next),
-                    EventBody::AlgorithmAccepted(artifact.clone()),
-                ],
-                |write| {
-                    write.put(
-                        &RecordKey::Artifact(crash_artifact(round)),
-                        &Record::metadata(json!({"fixture": true, "round": round}), vec![blob]),
-                    )?;
-                    stop_at(home, &point, &format!("{round}:before_journal_commit"));
-                    Ok(())
-                },
+                vec![state_body(&next)],
+                |_| Ok(()),
             )
             .unwrap()
             .snapshot;
-        stop_at(home, &point, &format!("{round}:after_journal_commit"));
+    }
+    for round in committed + 1..=3 {
+        publish_crash_round(&store, &mut next, &mut roots, round, home, &point);
     }
     panic!("unknown crash boundary {point}");
+}
+
+fn publish_crash_round(
+    store: &Arc<Store>,
+    next: &mut RunSnapshot,
+    roots: &mut Vec<jope_service::store::BlobRef>,
+    round: u64,
+    home: &Path,
+    point: &str,
+) {
+    let log = EventLog::new(Arc::clone(store));
+    let EventBody::AlgorithmAccepted(mut artifact) = fixture_events()[3].event.clone() else {
+        unreachable!();
+    };
+    next.state = RunState::Running;
+    next.revision.0 += 1;
+    stop_at(home, point, &format!("{round}:before_blob_publish"));
+    let bytes = format!("synthetic model fixture {round}");
+    let blob = store.publish_blob(Cursor::new(bytes.as_bytes())).unwrap();
+    stop_at(home, point, &format!("{round}:after_blob_publish"));
+    roots.push(blob.clone());
+    artifact.model_artifact = Some(crash_artifact(round));
+    *next = log
+        .commit(
+            RunUpdate {
+                expected_revision: Some(next.revision.0 - 1),
+                snapshot: next.clone(),
+                checkpoint: json!({"round": round}),
+                blobs: roots.clone(),
+            },
+            vec![state_body(next), EventBody::AlgorithmAccepted(artifact)],
+            |write| {
+                write.put(
+                    &RecordKey::Artifact(crash_artifact(round)),
+                    &Record::metadata(json!({"fixture": true, "round": round}), vec![blob]),
+                )?;
+                stop_at(home, point, &format!("{round}:before_journal_commit"));
+                Ok(())
+            },
+        )
+        .unwrap()
+        .snapshot;
+    stop_at(home, point, &format!("{round}:after_journal_commit"));
 }
 
 struct ChildGuard(Child);
@@ -409,16 +451,21 @@ fn recovered_prefix(
     committed: u64,
     point: &str,
 ) -> (RunSnapshot, Record, Vec<PublicEvent>) {
+    let resumed = point.starts_with("cas:") && committed > 0;
     let store = Arc::new(Store::open(home).unwrap());
     let log = EventLog::new(Arc::clone(&store));
     let recovered = log.snapshot(&snapshot().run_id).unwrap().unwrap();
     assert_eq!(recovered.state, RunState::Paused, "{point}");
     assert_eq!(
         recovered.revision.0,
-        if committed == 0 { 1 } else { committed + 2 },
+        if committed == 0 {
+            1
+        } else {
+            committed + 2 + 2 * u64::from(resumed)
+        },
         "{point}"
     );
-    let watermark = 1 + 2 * committed;
+    let watermark = 1 + 2 * committed + u64::from(resumed);
     assert_eq!(recovered.event_watermark.0, watermark, "{point}");
     let record = store
         .get(&RecordKey::Run(recovered.run_id.clone()))
@@ -466,7 +513,11 @@ fn recovered_prefix(
                 "{point}"
             );
             assert_eq!(artifact.blobs.len(), 1, "{point}");
-            assert!(record.blobs.contains(&artifact.blobs[0]), "{point}");
+            assert_eq!(
+                record.blobs[(round - 1) as usize],
+                artifact.blobs[0],
+                "{point}"
+            );
             assert_eq!(
                 store.read_blob(&artifact.blobs[0]).unwrap(),
                 format!("synthetic model fixture {round}").as_bytes(),
@@ -489,7 +540,14 @@ fn recovered_prefix(
             );
         }
     }
-    for sequence in watermark + 1..=7 {
+    if resumed {
+        assert_eq!(
+            events.last().unwrap().event,
+            state_body(&running),
+            "{point}"
+        );
+    }
+    for sequence in watermark + 1..=8 {
         assert!(
             store
                 .get(&RecordKey::Event {
@@ -519,6 +577,19 @@ fn prepare_crash_fixture(home: &Path) {
         |_| Ok(()),
     )
     .unwrap();
+}
+
+fn prepare_crash_prefix(home: &Path, committed: u64) {
+    prepare_crash_fixture(home);
+    if committed > 0 {
+        let store = Arc::new(Store::open(home).unwrap());
+        let log = EventLog::new(Arc::clone(&store));
+        let mut next = log.snapshot(&snapshot().run_id).unwrap().unwrap();
+        let mut roots = vec![];
+        for round in 1..=committed {
+            publish_crash_round(&store, &mut next, &mut roots, round, home, "no cut");
+        }
+    }
 }
 
 fn verify_crash_continuation(home: &Path, committed: u64, point: &str) {
@@ -580,85 +651,95 @@ fn verify_crash_continuation(home: &Path, committed: u64, point: &str) {
 /// Selecting these cuts without the hooks must fail, never silently skip.
 #[cfg(unix)]
 fn internal_cas_sigkill_cuts() {
-    let bytes = b"synthetic model fixture 1";
-    let hash = jope_assets::sha256_hex(bytes);
-    let reference = jope_service::store::BlobRef {
-        sha256: std::array::from_fn(|i| u8::from_str_radix(&hash[2 * i..2 * i + 2], 16).unwrap()),
-        bytes: bytes.len() as u64,
-    };
-    for cut in [
-        "after_write",
-        "after_file_sync",
-        "after_hash_verify",
-        "after_rename",
-        "after_directory_sync",
-    ] {
-        let point = format!("cas:{cut}");
-        let home = tempfile::tempdir().unwrap();
-        prepare_crash_fixture(home.path());
-        let stderr = home.path().join("child.stderr");
-        let mut child = ChildGuard(
-            Command::new(std::env::current_exe().unwrap())
-                .args(["--exact", "crash_child", "--ignored", "--nocapture"])
-                .env("INT02_CRASH_HOME", home.path())
-                .env("INT02_CRASH_POINT", &point)
-                .env("JOPE_STORE_FAILPOINT", cut)
-                .stdout(Stdio::null())
-                .stderr(Stdio::from(fs::File::create(&stderr).unwrap()))
-                .spawn()
-                .unwrap(),
-        );
-        let marker = format!("JOPE_STORE_CRASH:{cut}");
-        let deadline = Instant::now() + Duration::from_secs(15);
-        loop {
-            let output = fs::read_to_string(&stderr).unwrap();
-            if output.lines().any(|line| line == marker) {
-                break;
+    for round in 1..=3 {
+        let committed = round - 1;
+        let bytes = format!("synthetic model fixture {round}");
+        let hash = jope_assets::sha256_hex(bytes.as_bytes());
+        let reference = jope_service::store::BlobRef {
+            sha256: std::array::from_fn(|i| {
+                u8::from_str_radix(&hash[2 * i..2 * i + 2], 16).unwrap()
+            }),
+            bytes: bytes.len() as u64,
+        };
+        for cut in [
+            "after_write",
+            "after_file_sync",
+            "after_hash_verify",
+            "after_rename",
+            "after_directory_sync",
+        ] {
+            let point = format!("cas:{round}:{cut}");
+            let home = tempfile::tempdir().unwrap();
+            prepare_crash_prefix(home.path(), committed);
+            let stderr = home.path().join("child.stderr");
+            let mut child = ChildGuard(
+                Command::new(std::env::current_exe().unwrap())
+                    .args(["--exact", "crash_child", "--ignored", "--nocapture"])
+                    .env("INT02_CRASH_HOME", home.path())
+                    .env("INT02_CRASH_POINT", &point)
+                    .env("INT02_CAS_COMMITTED", committed.to_string())
+                    .env("JOPE_STORE_FAILPOINT", cut)
+                    .stdout(Stdio::null())
+                    .stderr(Stdio::from(fs::File::create(&stderr).unwrap()))
+                    .spawn()
+                    .unwrap(),
+            );
+            let marker = format!("JOPE_STORE_CRASH:{cut}");
+            let deadline = Instant::now() + Duration::from_secs(15);
+            loop {
+                let output = fs::read_to_string(&stderr).unwrap();
+                if output.lines().any(|line| line == marker) {
+                    break;
+                }
+                assert!(child.0.try_wait().unwrap().is_none(), "{point}: child exited before hook; build with --features jope-service/failpoints: {output}");
+                assert!(
+                    Instant::now() < deadline,
+                    "{point}: hook not reached: {output}"
+                );
+                std::thread::sleep(Duration::from_millis(10));
             }
-            assert!(child.0.try_wait().unwrap().is_none(), "{point}: child exited before hook; build with --features jope-service/failpoints: {output}");
-            assert!(
-                Instant::now() < deadline,
-                "{point}: hook not reached: {output}"
-            );
-            std::thread::sleep(Duration::from_millis(10));
-        }
-        child.0.kill().unwrap();
-        let status = child.0.wait().unwrap();
-        assert!(!status.success(), "{point}");
-        #[cfg(unix)]
-        {
-            use std::os::unix::process::ExitStatusExt;
-            assert_eq!(
-                status.signal(),
-                Some(9),
-                "{point}: must be supervisor SIGKILL, not abort"
-            );
-        }
-        let renamed = matches!(cut, "after_rename" | "after_directory_sync");
-        let staged = fs::read_dir(home.path().join("tmp"))
-            .unwrap()
-            .map(|entry| entry.unwrap().path())
-            .collect::<Vec<_>>();
-        assert_eq!(staged.len(), usize::from(!renamed), "{point}");
-        if let Some(staged) = staged.first() {
-            assert_eq!(fs::read(staged).unwrap(), bytes, "{point}");
-        }
-        {
-            let store = Store::open(home.path()).unwrap();
-            assert_eq!(store.verify_blob(&reference).is_ok(), renamed, "{point}");
-            if renamed {
-                assert_eq!(store.read_blob(&reference).unwrap(), bytes, "{point}");
+            child.0.kill().unwrap();
+            let status = child.0.wait().unwrap();
+            assert!(!status.success(), "{point}");
+            #[cfg(unix)]
+            {
+                use std::os::unix::process::ExitStatusExt;
+                assert_eq!(
+                    status.signal(),
+                    Some(9),
+                    "{point}: must be supervisor SIGKILL, not abort"
+                );
             }
-            assert!(
-                fs::read_dir(home.path().join("tmp"))
-                    .unwrap()
-                    .next()
-                    .is_none(),
-                "{point}: staging not recovered"
-            );
+            let renamed = matches!(cut, "after_rename" | "after_directory_sync");
+            let staged = fs::read_dir(home.path().join("tmp"))
+                .unwrap()
+                .map(|entry| entry.unwrap().path())
+                .collect::<Vec<_>>();
+            assert_eq!(staged.len(), usize::from(!renamed), "{point}");
+            if let Some(staged) = staged.first() {
+                assert_eq!(fs::read(staged).unwrap(), bytes.as_bytes(), "{point}");
+            }
+            {
+                let store = Store::open(home.path()).unwrap();
+                assert_eq!(store.verify_blob(&reference).is_ok(), renamed, "{point}");
+                if renamed {
+                    assert_eq!(
+                        store.read_blob(&reference).unwrap(),
+                        bytes.as_bytes(),
+                        "{point}"
+                    );
+                }
+                assert!(
+                    fs::read_dir(home.path().join("tmp"))
+                        .unwrap()
+                        .next()
+                        .is_none(),
+                    "{point}: staging not recovered"
+                );
+            }
+            verify_crash_continuation(home.path(), committed, &point);
+            eprintln!("INT02 CAS round={round} committed={committed} hook={cut} signal=9 renamed={renamed} staging_recovered=true");
         }
-        verify_crash_continuation(home.path(), 0, &point);
-        eprintln!("INT02 CAS hook={cut} signal=9 renamed={renamed} staging_recovered=true");
     }
 }
 
