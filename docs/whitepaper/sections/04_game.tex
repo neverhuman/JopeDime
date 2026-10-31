@@ -6,7 +6,9 @@
 
 We define one attempt at algorithm invention as a game: the encoded
 problem is the board, a program is the move, the referee checks and
-scores it, and a declared incumbent is the opponent. Encoding the problem
+scores it, and a declared incumbent is the opponent.
+
+Encoding the problem
 provides a shared interface; each task type still needs its own qualified
 encoding, language and evaluation protocol (\cref{sub:game-boards}).
 
@@ -19,6 +21,7 @@ rules, an impartial referee, a clear winner and cheap replay. Chess was chosen
 because it is ``sharply defined both in allowed operations (the moves) and in
 the ultimate goal (checkmate)'' \citep{shannon1950chess}, and checkers showed
 that a program could improve by playing itself \citep{samuel1959checkers}.
+
 Together these properties support repeated, reproducible evaluation. People
 scale judgment the same way, through prizes, leaderboards and the common task
 framework's ``scoring referee'' \citep{donoho2017fifty} (\cref{sec:road}).
@@ -84,10 +87,10 @@ supplies the incumbent $\inc{p}$. The tuple extends Rice's model of algorithm
 selection \citep{rice1976algorithm}: the player writes the algorithm instead of
 picking it, and a declared incumbent sets the comparison standard.
 
-A skeptic might ask whether a one-move game is a game at all. Formally it is a
-contextual bandit, with the board as context, the program as action and the
+Formally, a one-move game is a contextual bandit, with the board as context, the
+program as action and the
 verdict as reward \citep{lattimore2020bandit}. It earns the name through an
-opponent that improves as the player does. The honest asymmetry is in the
+opponent that improves as the player does. The asymmetry is in the
 moves: Go offers about 250 legal moves per turn over about 150 turns, each free
 to check \citep{silver2016mastering}, while this game offers one move, costly to
 judge. Under a single-attempt budget, the chance $\winprob$ of a win matters
@@ -112,17 +115,20 @@ information and have a measured cost. These are requirements to test, not
 properties guaranteed by naming an encoder. People still choose the problem
 and define what counts as a useful solution.
 
-The move is where invention gets its language: one program in a typed language
-over learning primitives. The reference language uses a 401-token
+A move is one program in a typed language over learning primitives.
+The reference language uses a 401-token
 vocabulary, with up to six transforms chosen from 31 and one of 22 prediction
-heads (\cref{sub:method-move}). Types remove whole classes of stillborn
+heads (\cref{sub:method-move}).
+
+Types remove whole classes of stillborn
 programs before they run \citep{montana1995stgp}. Canonicalization can merge
 syntactic variants; it need not identify every functionally equivalent
 implementation. AutoML-Zero
 reused scores when hashes of truncated predictions matched after a short
 training and validation probe \citep{real2020automlzero}. Matching a probe
-does not establish agreement on other inputs (\cref{sub:method-move}). The
-language bounds what can be expressed; changing its primitives changes
+does not establish agreement on other inputs (\cref{sub:method-move}).
+
+The language bounds what can be expressed; changing its primitives changes
 that space \citep{boden1990creative}. The reference grammar also bounds
 composition depth. Structural constraints can prevent invalid programs; their effect on useful proposal
 quality must be measured (\cref{sec:results}).
@@ -149,8 +155,9 @@ admission test on 16 held-out cuts with three seeds each
 the player keeps facing a standard often set by its own earlier play.
 AlphaGo Zero likewise separated network admission from choosing a move
 during play \citep{silver2017mastering}.
-Subtracting the incumbent's score does not change which move is best; what
-matters is what promotion changes. It raises the bar, turns yesterday's winners
+
+Subtracting the incumbent's score does not change which move is best.
+Promotion raises the bar, turns yesterday's winners
 into today's also-rans and shifts which problems are worth playing. The
 reference learning targets use each program's rank within its scored list
 (\cref{sub:method-map,sub:method-selfplay}).
@@ -161,8 +168,9 @@ reference learning targets use each program's rank within its scored list
 Binary and multiclass classification, regression, ranking, forecasting and
 relational prediction are prospective boards. A shared formal interface
 still needs a compatible encoding, program language, metric and validation
-protocol qualified for each task type. Beyond
-machine learning, examples of referees include sorting tests
+protocol qualified for each task type.
+
+Beyond machine learning, examples of referees include sorting tests
 \citep{mankowitz2023alphadev}, evaluators for mathematical constructions
 \citep{romeraparedes2024funsearch} and accelerator-kernel timers
 \citep{novikov2025alphaevolve}. These motivate extensions of the recipe,
@@ -185,16 +193,26 @@ to that discipline still needs evidence.
 \subsection{The analogy's limits}\label{sub:game-played}
 
 A worked game, chosen by a rule fixed before inspection, is to be reported with
-the results (\cref{sub:results-failures}). The analogy breaks in four places. \textbf{The referee is noisy}: picking a
+the results (\cref{sub:results-failures}). The analogy breaks in four places.
+
+\textbf{The referee is noisy}: picking a
 winner by a noisy validation score biases that score upward
 \citep{cawley2010overfitting}. Strict numerical improvement alone does not
 quantify confidence; independent evaluation and an uncertainty protocol are
-needed to interpret it. \textbf{Moves are expensive}, each a fit and a cross-validation
-(\cref{sec:price}). \textbf{Judges can be gamed}, as METR documented for
+needed to interpret it.
+
+\textbf{Moves are expensive}, each a fit and a cross-validation
+(\cref{sec:price}).
+
+\textbf{Judges can be gamed}, as METR documented for
 frontier models in June 2025 \citep{metr2025rewardhacking}; \cref{sec:method}
-lists our safeguards. And \textbf{no algorithm wins everywhere}: averaged
+lists our safeguards.
+
+And \textbf{no algorithm wins everywhere}: averaged
 uniformly over all problems, no learner has lower error off the training set
-than another, ours included \citep{wolpert1996nfl}. Real problems are structured, though, and a player that
+than another, ours included \citep{wolpert1996nfl}.
+
+Real problems are structured, though, and a player that
 reads the board can choose its bias board by board. \Cref{sec:results} reserves the tests of that hypothesis against fixed
 frontier-designed algorithms, with paired outcomes beside Elo summaries
 \citep{elo1978rating}. Non-transitive comparisons are one reason not to
