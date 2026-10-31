@@ -153,7 +153,7 @@ def read_policy(path: Path | None) -> dict[str, Any]:
         or not set(hosts).issubset(SUPPORTED_LOCAL_HOSTS)
     ):
         raise ValueError("allowed_hosts must be a unique subset of the exact supported local hosts")
-    if policy.get("repo_root") != "~/JopeDime" or policy.get("sccache_max_bytes") != 60 * GIB:
+    if policy.get("repo_root") != "~/JopeDime" or policy.get("sccache_max_bytes") != 50 * GIB:
         raise ValueError("repo root or sccache cap differs from the reviewed local policy")
     if policy.get("offload") != {
         "bucket": OFFLOAD_BUCKET,

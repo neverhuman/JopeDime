@@ -99,9 +99,9 @@ case "$(uname -s)" in
     if [[ ! -d "$ENV_DIR" ]]; then
       install -d -m 0700 "$ENV_DIR"
     fi
-    if [[ ! -f "$ENV_FILE" ]] || [[ "$(cat -- "$ENV_FILE")" != 'SCCACHE_CACHE_SIZE=60G' ]]; then
+    if [[ ! -f "$ENV_FILE" ]] || [[ "$(cat -- "$ENV_FILE")" != 'SCCACHE_CACHE_SIZE=50G' ]]; then
       backup_existing "$ENV_FILE"
-      printf 'SCCACHE_CACHE_SIZE=60G\n' > "$ENV_FILE"
+      printf 'SCCACHE_CACHE_SIZE=50G\n' > "$ENV_FILE"
       chmod 0644 "$ENV_FILE"
     fi
     PROFILE="$HOME/.profile"
@@ -109,12 +109,12 @@ case "$(uname -s)" in
       printf 'Refusing to write through a symlinked %s.\n' "$PROFILE" >&2
       exit 1
     fi
-    PROFILE_LINE='export SCCACHE_CACHE_SIZE=60G'
+    PROFILE_LINE='export SCCACHE_CACHE_SIZE=50G'
     if ! grep -Fqx -- "$PROFILE_LINE" "$PROFILE" 2>/dev/null; then
       backup_existing "$PROFILE"
       printf '\n# JopeDime DISK-01 sccache cap\n%s\n' "$PROFILE_LINE" >> "$PROFILE"
     fi
-    systemctl --user set-environment SCCACHE_CACHE_SIZE=60G
+    systemctl --user set-environment SCCACHE_CACHE_SIZE=50G
     UNIT_DIR="$HOME/.config/systemd/user"
     install -d -m 0700 "$UNIT_DIR"
     backup_existing "$UNIT_DIR/jope-diskd.service"

@@ -35,7 +35,7 @@ class DiskPolicyTests(unittest.TestCase):
             "allow_report_offload": False,
             "allowed_hosts": ["xbabe1", "xbabe2", "xbabe3"],
             "repo_root": "~/JopeDime",
-            "sccache_max_bytes": 60 * jope_diskd.GIB,
+            "sccache_max_bytes": 50 * jope_diskd.GIB,
             "offload": {
                 "bucket": jope_diskd.OFFLOAD_BUCKET,
                 "prefix": jope_diskd.OFFLOAD_PREFIX,
@@ -68,7 +68,7 @@ class DiskPolicyTests(unittest.TestCase):
             "allow_report_offload": False,
             "allowed_hosts": ["xbabe1", "xbabe2", "xbabe3", "xbabe0"],
             "repo_root": "~/JopeDime",
-            "sccache_max_bytes": 60 * jope_diskd.GIB,
+            "sccache_max_bytes": 50 * jope_diskd.GIB,
             "offload": {
                 "bucket": jope_diskd.OFFLOAD_BUCKET,
                 "prefix": jope_diskd.OFFLOAD_PREFIX,
