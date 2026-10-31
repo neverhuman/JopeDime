@@ -77,7 +77,7 @@ FILES = {
     ): "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
 }
 MODEL = dict(max_iter=300, learning_rate=0.08, max_leaf_nodes=63, l2_regularization=1.0)
-# Amendment 1 (operational, PREREG.md): worker RSS ceiling, enforced continuously, and a train-row-only cache read.
+# Operational amendments (PREREG.md): sampled peak-RSS abort and train-only cache reads.
 RSS_LIMIT_KIB = 6 * 1024 * 1024
 WATCH_SECONDS = 0.25
 CONTEXT_MEMBERS = ("tokens_10x32", "mask_10", "lm48_z", "dope629")
@@ -235,29 +235,44 @@ class RssWatchdog:
 
     def _run(self):
         while not self.stop.wait(WATCH_SECONDS):
+            self._sample()
+
+    def _abort(self, peak, reason, error=None):
+        try:
+            write(
+                self.root / "rss-abort.json",
+                {
+                    "peak_kib": peak,
+                    "limit_kib": RSS_LIMIT_KIB,
+                    "reason": reason,
+                    "error": error,
+                    "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                },
+            )
+        finally:
+            # Receipt I/O must never turn a failed monitor into an unguarded job.
+            os._exit(86)
+
+    def _sample(self):
+        try:
             peak = max(
                 resource.getrusage(resource.RUSAGE_SELF).ru_maxrss, current_rss_kib()
             )
-            self.peak_seen, self.samples = max(self.peak_seen, peak), self.samples + 1
-            if peak >= RSS_LIMIT_KIB:
-                write(
-                    self.root / "rss-abort.json",
-                    {
-                        "peak_kib": peak,
-                        "limit_kib": RSS_LIMIT_KIB,
-                        "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                    },
-                )
-                print("ABORT worker RSS", peak, flush=True)
-                os._exit(86)
+        except Exception as error:
+            self._abort(None, "monitor_error", str(error))
+        self.peak_seen, self.samples = max(self.peak_seen, peak), self.samples + 1
+        if peak >= RSS_LIMIT_KIB:
+            self._abort(peak, "rss_limit")
 
     def __enter__(self):
+        self._sample()
         self.thread.start()
         return self
 
     def __exit__(self, *exc):
         self.stop.set()
         self.thread.join()
+        self._sample()  # Catch peaks from work shorter than one polling interval.
 
     def receipt(self):
         return {
@@ -273,15 +288,16 @@ class StoredRows:
 
     Only the requested rows are copied into the process, so rows of other splits are never decoded."""
 
-    def __init__(self, path, member):
-        with zipfile.ZipFile(path) as archive:
+    def __init__(self, path, member, forbidden=()):
+        with open(path, "rb", buffering=0) as raw, zipfile.ZipFile(raw) as archive:
             info = archive.getinfo(member + ".npy")
         if info.compress_type != zipfile.ZIP_STORED:
             raise RuntimeError(
                 f"{member} is compressed; row-range reads need a stored member"
             )
         self.member, self.ranges = member, []
-        with open(path, "rb") as f:
+        self.forbidden = tuple(forbidden)
+        with open(path, "rb", buffering=0) as f:
             f.seek(info.header_offset)
             local = f.read(30)
             if local[:4] != b"PK\x03\x04":
@@ -296,10 +312,10 @@ class StoredRows:
             }
             shape, fortran, dtype = reader[version](f)
             self.data = f.tell()
-        if fortran or dtype.hasobject or not shape:
+        if fortran or dtype.hasobject or not shape or any(d < 0 for d in shape):
             raise RuntimeError(f"{member}: unsupported array layout")
         self.path, self.shape, self.dtype = Path(path), tuple(shape), dtype
-        self.row_bytes = int(np.prod(self.shape[1:], dtype=np.int64)) * dtype.itemsize
+        self.row_bytes = math.prod(self.shape[1:]) * dtype.itemsize
         if info.file_size != self.data - start + self.shape[0] * self.row_bytes:
             raise RuntimeError(f"{member}: size does not match its header")
         self.header_bytes = self.data - start
@@ -307,8 +323,10 @@ class StoredRows:
     def rows(self, lo, hi):
         if not 0 <= lo <= hi <= self.shape[0]:
             raise IndexError("row range outside the member")
+        if lo != hi and any(lo < b and a < hi for a, b in self.forbidden):
+            raise RuntimeError("requested feature rows overlap a forbidden split")
         size = (hi - lo) * self.row_bytes
-        with open(self.path, "rb") as f:
+        with open(self.path, "rb", buffering=0) as f:
             f.seek(self.data + lo * self.row_bytes)
             raw = f.read(size)
         if len(raw) != size:
@@ -318,10 +336,15 @@ class StoredRows:
             np.frombuffer(raw, self.dtype).reshape((hi - lo,) + self.shape[1:]).copy()
         )
 
-    def receipt(self, forbidden):
+    def receipt(self, forbidden=None):
         """Bytes read and a proof that no read range overlaps a forbidden row range."""
+        if forbidden is None:
+            forbidden = self.forbidden
         overlap = sum(
-            1 for lo, hi in self.ranges for a, b in forbidden if lo < b and a < hi
+            1
+            for lo, hi in self.ranges
+            for a, b in forbidden
+            if lo != hi and lo < b and a < hi
         )
         return {
             "member": self.member,
@@ -336,57 +359,91 @@ class StoredRows:
 
 def cache_ids(path):
     """Identity-only: the context-id column of a pinned cache (no feature payload)."""
-    with np.load(path, allow_pickle=False) as z:
-        return [str(x) for x in z["cids"]]
+    reader = StoredRows(path, "cids")
+    if len(reader.shape) != 1 or reader.dtype.kind not in "US":
+        raise RuntimeError("cache identity column must be a string vector")
+    return [str(x) for x in reader.rows(0, reader.shape[0])]
+
+
+def cache_positions(path, rows, dev_rows):
+    cids = cache_ids(path)
+    train = [row["context_sha256"] for row in rows]
+    dev = [row["context_sha256"] for row in dev_rows]
+    if (
+        set(cids) != set(train + dev)
+        or len(cids) != len(set(cids))
+        or len(train + dev) != len(set(train + dev))
+    ):
+        raise RuntimeError("cache closure differs or train/dev identities overlap")
+    return cids, {cid: i for i, cid in enumerate(cids)}
 
 
 def train_context(rows, dev_rows):
     """Train-row-only features from the mixed H58 cache (Amendment 1); DL-Val rows are never decoded."""
-    cids = cache_ids(CACHE / "context_features.npz")
-    if set(cids) != {r["context_sha256"] for r in rows + dev_rows} or len(cids) != len(
-        set(cids)
-    ):
-        raise RuntimeError("cache closure differs")
-    position = {cid: i for i, cid in enumerate(cids)}
+    cids, position = cache_positions(CACHE / "context_features.npz", rows, dev_rows)
+    forbidden = [
+        (position[row["context_sha256"]], position[row["context_sha256"]] + 1)
+        for row in dev_rows
+    ]
     readers = {
-        k: StoredRows(CACHE / "context_features.npz", k) for k in CONTEXT_MEMBERS
+        k: StoredRows(CACHE / "context_features.npz", k, forbidden)
+        for k in CONTEXT_MEMBERS
     }
+    for reader in readers.values():
+        if reader.shape[0] != len(cids):
+            raise RuntimeError("cache feature row count differs from identities")
     context = {}
     for row in rows:
         i = position[row["context_sha256"]]
         context[row["context_sha256"]] = {
             k: reader.rows(i, i + 1)[0] for k, reader in readers.items()
         }
-    forbidden = [
-        (position[r["context_sha256"]], position[r["context_sha256"]] + 1)
-        for r in dev_rows
-    ]
-    return context, {k: reader.receipt(forbidden) for k, reader in readers.items()}
+    return context, {k: reader.receipt() for k, reader in readers.items()}
 
 
 def train_projection(rows, dev_rows):
     """Per-train-context proj16 spans in the mixed H58 pool-prior cache (Amendment 1).
 
-    Only train rows' offsets are read. Each span must equal its pool length and the spans must be pairwise
-    disjoint, so the proj16 rows later read are exactly the train pools' rows."""
-    cids = cache_ids(CACHE / "pool_priors.npz")
-    if set(cids) != {r["context_sha256"] for r in rows + dev_rows} or len(cids) != len(
-        set(cids)
-    ):
-        raise RuntimeError("pool-prior closure differs")
-    position = {cid: i for i, cid in enumerate(cids)}
+    Offsets are identity/layout metadata, read without prefetch. Validate every boundary before any
+    projection payload read, then forbid DL-Val spans in the projection reader itself."""
+    cids, position = cache_positions(CACHE / "pool_priors.npz", rows, dev_rows)
     offsets = StoredRows(CACHE / "pool_priors.npz", "offsets")
+    reader = StoredRows(CACHE / "pool_priors.npz", "proj16")
+    if offsets.shape != (len(cids) + 1,) or offsets.dtype.kind not in "iu":
+        raise RuntimeError("projection offsets must be an integer boundary vector")
+    boundaries = offsets.rows(0, len(cids) + 1)
+    if (
+        boundaries[0] != 0
+        or boundaries[-1] != reader.shape[0]
+        or np.any(boundaries[1:] <= boundaries[:-1])
+    ):
+        raise RuntimeError("projection offsets are not a complete monotone layout")
+    if (
+        len(reader.shape) != 2
+        or reader.shape[1] != 16
+        or reader.dtype != np.dtype("float32")
+    ):
+        raise RuntimeError("projection feature shape/dtype differs")
+    reader.forbidden = tuple(
+        (
+            int(boundaries[position[row["context_sha256"]]]),
+            int(boundaries[position[row["context_sha256"]] + 1]),
+        )
+        for row in dev_rows
+    )
     spans = {}
     for row in rows:
         i = position[row["context_sha256"]]
-        lo, hi = (int(v) for v in offsets.rows(i, i + 2))
+        lo, hi = (int(v) for v in boundaries[i : i + 2])
+        if hi - lo != row["n_candidates"]:
+            raise RuntimeError("train projection span differs from its pool metadata")
         spans[row["context_sha256"]] = (lo, hi)
     ordered = sorted(spans.values())
     if any(a[1] > b[0] for a, b in zip(ordered, ordered[1:])) or any(
         lo >= hi for lo, hi in ordered
     ):
         raise RuntimeError("train proj16 spans overlap or are empty")
-    return StoredRows(CACHE / "pool_priors.npz", "proj16"), spans, offsets
+    return reader, spans, offsets
 
 
 def load_data(root):
@@ -1127,7 +1184,7 @@ def _run_h124(root, source_commit, prereg_sha, t0, cpu0, run_sha, watchdog):
     del net  # Amendment 1: the r882 network is not kept alive through the GBM fits
     release_memory()
     proj_reader, proj_spans, offsets_reader = projection
-    proj_receipt = proj_reader.receipt([])
+    proj_receipt = proj_reader.receipt()
     proj_receipt.update(
         train_spans=len(proj_spans),
         train_rows_expected=int(

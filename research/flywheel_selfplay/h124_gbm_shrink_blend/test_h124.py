@@ -1,8 +1,13 @@
 """Synthetic CPU controls for the H124 fixed-lambda shrink protocol."""
 
 import importlib.util
+import builtins
+import io
+import os
 from pathlib import Path
+import subprocess
 import sys
+import time
 
 import numpy as np
 import pytest
@@ -154,7 +159,7 @@ def _cache(tmp_path, n_ctx=6, dev=(1, 4)):
         proj16=rng.standard_normal((int(offsets[-1]), 16)).astype(np.float32),
     )
     rows = [
-        {"context_sha256": c, "family_id": f"f{i}"}
+        {"context_sha256": c, "family_id": f"f{i}", "n_candidates": int(sizes[i])}
         for i, c in enumerate(cids)
         if i not in dev
     ]
@@ -342,3 +347,200 @@ def test_median_seed_elo_agrees_with_canonical_helper_on_mixed_families():
         )
     lo, hi = result["median_seed_elo"]["ci95"]
     assert lo <= result["median_seed_elo"]["rating"] <= hi
+
+
+def _observe_raw_reads(monkeypatch, path):
+    """Observe actual reads, including BufferedReader prefetch, not requested rows."""
+    reads = []
+    original_open = builtins.open
+
+    class Observed(io.RawIOBase):
+        def __init__(self, raw):
+            super().__init__()
+            self.raw = raw
+
+        def readable(self):
+            return True
+
+        def seekable(self):
+            return True
+
+        def seek(self, *args):
+            return self.raw.seek(*args)
+
+        def tell(self):
+            return self.raw.tell()
+
+        def readinto(self, buffer):
+            start = self.raw.tell()
+            size = self.raw.readinto(buffer)
+            if size:
+                reads.append((start, start + size))
+            return size
+
+        def close(self):
+            try:
+                super().close()
+            finally:
+                self.raw.close()
+
+    def observed_open(file, mode="r", buffering=-1, **kwargs):
+        if isinstance(file, (str, os.PathLike)) and Path(file) == path and mode == "rb":
+            raw = Observed(original_open(file, mode, buffering=0))
+            return raw if buffering == 0 else io.BufferedReader(raw)
+        return original_open(file, mode, buffering=buffering, **kwargs)
+
+    monkeypatch.setattr(builtins, "open", observed_open)
+    monkeypatch.setattr(io, "open", observed_open)
+    return reads
+
+
+def test_row_reads_never_prefetch_adjacent_dev_payload(tmp_path, monkeypatch):
+    arrays, _, _, _ = _cache(tmp_path)
+    path = tmp_path / "context_features.npz"
+    identity = r.StoredRows(path, "mask_10")
+    forbidden = [
+        (
+            identity.data + i * identity.row_bytes,
+            identity.data + (i + 1) * identity.row_bytes,
+        )
+        for i in (1, 4)
+    ]
+    reads = _observe_raw_reads(monkeypatch, path)
+    reader = r.StoredRows(path, "mask_10")
+    np.testing.assert_array_equal(reader.rows(0, 1), arrays["mask_10"][:1])
+    assert not any(a < hi and lo < b for a, b in reads for lo, hi in forbidden)
+
+
+def test_identity_reads_never_prefetch_feature_payload(tmp_path, monkeypatch):
+    _, _, _, _ = _cache(tmp_path)
+    path = tmp_path / "context_features.npz"
+    forbidden = []
+    for member in r.CONTEXT_MEMBERS:
+        reader = r.StoredRows(path, member)
+        forbidden.append(
+            (reader.data, reader.data + reader.shape[0] * reader.row_bytes)
+        )
+    reads = _observe_raw_reads(monkeypatch, path)
+    assert r.cache_ids(path) == [f"{i:064x}" for i in range(6)]
+    assert not any(a < hi and lo < b for a, b in reads for lo, hi in forbidden)
+
+
+def test_context_layout_refuses_before_any_feature_read(tmp_path, monkeypatch):
+    arrays, _, rows, dev = _cache(tmp_path)
+    arrays["mask_10"] = arrays["mask_10"][:-1]
+    np.savez(tmp_path / "context_features.npz", **arrays)
+    monkeypatch.setattr(r, "CACHE", tmp_path)
+    calls = []
+    original = r.StoredRows.rows
+
+    def observe(self, *args):
+        if self.member != "cids":
+            calls.append(self.member)
+        return original(self, *args)
+
+    monkeypatch.setattr(r.StoredRows, "rows", observe)
+    with pytest.raises(RuntimeError, match="row count"):
+        r.train_context(rows, dev)
+    assert calls == []
+
+
+def test_projection_refuses_bad_offsets_and_forbidden_rows(tmp_path, monkeypatch):
+    _, offsets, rows, dev = _cache(tmp_path)
+    monkeypatch.setattr(r, "CACHE", tmp_path)
+    reader, _, _ = r.train_projection(rows, dev)
+    with pytest.raises(RuntimeError, match="forbidden"):
+        reader.rows(int(offsets[1]), int(offsets[2]))
+    assert reader.receipt()["forbidden_ranges"] == 2
+    with np.load(tmp_path / "pool_priors.npz", allow_pickle=False) as archive:
+        arrays = {key: archive[key] for key in archive.files}
+    arrays["offsets"][-1] += 1
+    np.savez(tmp_path / "pool_priors.npz", **arrays)
+    with pytest.raises(RuntimeError, match="offset"):
+        r.train_projection(rows, dev)
+
+
+@pytest.mark.parametrize("mode", ["rss", "short", "monitor", "receipt"])
+def test_watchdog_stops_only_its_owned_child_even_on_guard_io_failure(tmp_path, mode):
+    code = """
+import importlib.util, resource, sys, time
+from pathlib import Path
+spec = importlib.util.spec_from_file_location('owned_watchdog_fixture', sys.argv[1])
+r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+mode = sys.argv[3]
+r.WATCH_SECONDS = 1 if mode == 'short' else .01
+r.RSS_LIMIT_KIB = max(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss, r.current_rss_kib()) + 8192
+if mode == 'monitor':
+    def broken(): raise OSError('synthetic monitor failure')
+    r.current_rss_kib = broken
+if mode == 'receipt':
+    r.RSS_LIMIT_KIB = 1
+    def broken(*args): raise OSError('synthetic receipt write failure')
+    r.write = broken
+with r.RssWatchdog(Path(sys.argv[2])):
+    # A fork/exec child may inherit its parent's higher peak RSS. Cross the
+    # selected ceiling, rather than assuming a fixed allocation will do so.
+    if mode in ('rss', 'short'):
+        payload = bytearray((r.RSS_LIMIT_KIB - r.current_rss_kib() + 8192) * 1024)
+    if mode != 'short': time.sleep(.15)
+print('unsafe-survived')
+"""
+    result = subprocess.run(
+        [sys.executable, "-B", "-c", code, str(r.__file__), str(tmp_path), mode],
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    assert result.returncode == 86, result.stdout + result.stderr
+    assert "unsafe-survived" not in result.stdout
+    if mode != "receipt":
+        import json
+
+        receipt = json.loads((tmp_path / "rss-abort.json").read_text())
+        assert receipt["limit_kib"] > 0
+        if mode != "monitor":
+            assert receipt["peak_kib"] >= receipt["limit_kib"]
+
+
+def test_healthy_watchdog_returns_without_abort(tmp_path, monkeypatch):
+    monkeypatch.setattr(r, "WATCH_SECONDS", 0.01)
+    with r.RssWatchdog(tmp_path) as watchdog:
+        time.sleep(0.03)
+    assert watchdog.receipt()["samples"] >= 1
+    assert not (tmp_path / "rss-abort.json").exists()
+
+
+def test_median_seed_interval_replays_with_paired_unequal_family_weights():
+    rows = _rows() + [
+        {"context_sha256": f"{205 + i:064x}", "family_id": "family-000"}
+        for i in range(20)
+    ]
+    rng = np.random.default_rng(39)
+    packets = {
+        str(seed): {
+            row["context_sha256"]: {
+                "r882": {"u4": 0.0},
+                "blend": {"u4": float(rng.choice([-0.02, 0, 0.02]))},
+            }
+            for row in rows
+        }
+        for seed in r.SEEDS
+    }
+    weights = []
+    for seed in r.SEEDS:
+        families = {}
+        for row in rows:
+            delta = packets[str(seed)][row["context_sha256"]]["blend"]["u4"]
+            families.setdefault(row["family_id"], []).append(
+                1 if delta > 1e-4 else 0 if delta < -1e-4 else 0.5
+            )
+        weights.append([sum(values) / len(values) for values in families.values()])
+    samples = np.random.default_rng(124001).integers(0, 205, size=(1000, 205))
+    wins = np.asarray(weights)[:, samples].sum(axis=2)
+    expected = np.median(
+        1500 + 400 * np.log10((wins + 0.01) / (205 - wins + 0.01)), axis=0
+    )
+    result = r.median_seed_elo(rows, packets, "blend", samples)
+    np.testing.assert_allclose(
+        result["ci95"], np.quantile(expected, [0.025, 0.975]), atol=0.005
+    )

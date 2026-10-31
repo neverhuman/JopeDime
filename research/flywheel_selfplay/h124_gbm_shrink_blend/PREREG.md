@@ -92,3 +92,40 @@ The amendment responds to the stopped attempt (7,052,092 KiB peak RSS over the 6
 
 Admission still requires all three preregistered gates; Elo is report-only. Resource limits are unchanged: CPU only,
 nice 15, at most 4 threads, load ≤ 85/102, scratch < 2 GB, no GPU and no S3 write.
+
+## Amendment 2 — owner t0955 audit corrections (sol_v1_obj02)
+
+This amendment applies to future executions of the corrected source. It preserves
+Amendment 1 and its authorship, the statistical protocol, all input pins, DOPE,
+folds/seeds, fixed lambda, admission gates and bootstrap RNGs. It does not change
+the source or disposition of the already running OPUS attempt, authorize a
+duplicate fit, or reset any budget. Commit and publish this amendment before
+scoring with the new source; bind each run to its actual source/preregistration.
+
+- **A1:** archive-directory, NPY-header, identity-column and feature-row reads use
+  unbuffered files. This avoids buffered prefetch of adjacent DL-Val feature bytes.
+  Context row counts and the full monotone projection layout are checked before
+  feature reads. Context and projection readers reject forbidden DL-Val spans;
+  projection receipts use those actual exclusions instead of an empty list.
+  All context IDs and projection offsets are layout metadata. The latter are now
+  read in full to validate the span partition; feature payload reads remain
+  train-only. As disclosed in Amendment 1, whole-file identity hashing still
+  streams opaque archive bytes, including validation bytes, without decoding
+  validation features. No new cache or input pin is substituted.
+- **A2:** retain the registered median seed Elo and its jointly paired family
+  interval from Amendment 1. Independent unequal-family bootstrap replay checks
+  it; pooled-score Elo remains explicitly additional, never the headline.
+- **A3:** retain lazy pools, streamed baseline and the in-place fit matrix. The
+  watchdog checks current/peak RSS at entry, exit and nominal 0.25-second
+  intervals. A breach, an unreadable monitor or failed abort-receipt write exits
+  the worker with code 86; receipt I/O cannot disable termination. Exit checking
+  catches a peak from work shorter than one polling interval. This is a sampled
+  abort guard with a final peak check, not a kernel allocation limit: transient
+  overshoot can occur before detection. A breached or nonzero-exit attempt is
+  incomplete even if partial outputs exist. Preserve its receipts and actual
+  source identity; it cannot establish an admitted outcome.
+
+The default remains 6 GiB. The previously authorized single 10 GiB fallback and
+its prior-abort/memory conditions remain unchanged; this correction starts no
+fallback. Synthetic tests launch only owned, bounded child processes and do not
+fit estimators or read study feature/table/pool payloads.
