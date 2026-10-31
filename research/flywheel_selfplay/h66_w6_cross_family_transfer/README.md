@@ -51,16 +51,35 @@ v2 manifest in memory to inspect its envelope. It emitted only envelope keys, ro
 count, and field names; the schema contains an `outer_test` field. No individual
 values were emitted or used for folds, model work, or metrics. This was a body
 read, so it is not described as zero-read. The manifest is disqualified as a W6
-roster. No safe training-only S3 roster was available for this prep pass, so no
-real fold map or real-data smoke is claimed. The approved S3 persistence receipts
-are provenance counters only and are not substituted for training data. Owner
-input still needed: a field-allowlisted, role-verified training-only roster/source
-key within the approved S3 prefix.
+roster. No safe training-only S3 roster was available during this original prep
+pass, so that pass produced no real fold map or real-data smoke. The approved S3
+persistence receipts are provenance counters only and are not substituted for
+training data.
+
+### H72 roster follow-up (2026-10-31)
+
+H72 now supplies the narrow W6 roster from the already admitted H50 packet's
+top-level `DL-Train` partition and per-dataset canonical physical-table hashes.
+It contains 1,219 contexts, 205 families, 257 version-pinned source-object
+references, and the seed-4900 fold manifest. The builder stops parsing before
+the DL-Val array and decodes metadata only for training-referenced dataset IDs.
+The full source files were hashed for identity, but rows after the train array
+were not parsed and metadata values for unselected IDs were not decoded or used.
+No S3 source object bodies, outcome values, pools, tables,
+checkpoints, or scores were opened. See
+[`H72 W6 roster preparation`](../h72_w6_train_roster_prep/README.md) for the
+create-only S3 custody keys and readback hashes.
+
+This closes roster preparation only. It does not provide W1 model outputs, W6
+outcome history, fit evidence, or a scientific verdict; the H66 numerical study
+remains unstarted and its registered budgets are untouched.
 
 ## CPU checks
 
-Use only the folder's synthetic unit tests to verify deterministic grouping and
-fail-closed role/schema handling until an admitted roster is available:
+Use the folder's synthetic unit tests to verify deterministic grouping and
+fail-closed role/schema handling. H72 provides the admitted roster; the study
+remains preparation-only until its outcome inputs and W1 comparator are
+available:
 
 ```sh
 nice -n 10 python3 -m unittest discover \
