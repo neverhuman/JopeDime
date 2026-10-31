@@ -236,6 +236,71 @@ class Controller(unittest.TestCase):
                 if mode == "symlink":
                     self.assertIn("command.log", result["omitted_symlinks"])
 
+    def test_artifact_read_errors_retain_receipts_and_continue(self):
+        artifact = (
+            "import os,pathlib; "
+            "(pathlib.Path(os.environ['JOPE_LANE_EVIDENCE'])/'artifact.txt')"
+            ".write_text('controlled fixture'); "
+        )
+        self.source(
+            [
+                ("full-a-log", [sys.executable, "-c", "pass"], "none"),
+                ("full-b-output", [sys.executable, "-c", artifact], "none"),
+                (
+                    "full-c-child-failure",
+                    [sys.executable, "-c", artifact + "raise SystemExit(9)"],
+                    "none",
+                ),
+                ("full-d-positive", [sys.executable, "-c", ONE_TEST], "unittest"),
+            ]
+        )
+        original_digest = cpu.digest
+        failures = {
+            "full-a-log": "command.log",
+            "full-b-output": "artifact.txt",
+            "full-c-child-failure": "artifact.txt",
+        }
+
+        def read_failure(path):
+            # Inject only the per-file I/O boundary; real children, other hashes
+            # and receipt persistence still execute, including when run as root.
+            if failures.get(path.parent.name) == path.name:
+                if path.parent.name == "full-c-child-failure":
+                    raise FileNotFoundError("controlled disappeared evidence")
+                raise PermissionError("controlled unreadable evidence")
+            return original_digest(path)
+
+        with mock.patch.object(cpu, "digest", side_effect=read_failure):
+            report = self.run_checks()
+        self.assertEqual(report["status"], "failed")
+        self.assertEqual(
+            [check["exit_status"] for check in report["checks"]], [0, 0, 9, 0]
+        )
+        self.assertEqual(
+            [check["status"] for check in report["checks"]],
+            ["failed", "failed", "failed", "passed"],
+        )
+        self.assertEqual(report["checks"][-1]["tests"]["passed"], 1)
+        for check in report["checks"][:3]:
+            self.assertIn("cannot capture output", check["diagnostic"])
+            self.assertIn(failures[check["id"]], check["diagnostic"])
+            self.assertNotIn(failures[check["id"]], check["outputs"])
+            receipt = self.path / "evidence" / check["id"] / "receipt.json"
+            self.assertEqual(json.loads(receipt.read_text()), check)
+        self.assertFalse(report["release_qualified"])
+        print(
+            "REL07_FIXTURE_ARTIFACT_FAILURES "
+            + json.dumps(
+                [
+                    {
+                        key: check[key]
+                        for key in ("id", "exit_status", "status", "diagnostic")
+                    }
+                    for check in report["checks"]
+                ]
+            )
+        )
+
     def test_failure_continues_to_later_gate_and_keeps_original_exit(self):
         self.source(
             [
