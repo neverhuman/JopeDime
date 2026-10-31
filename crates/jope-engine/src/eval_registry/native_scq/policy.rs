@@ -526,6 +526,8 @@ mod tests {
         std::fs::create_dir(&path).unwrap();
         let fifo = path.join("fifo");
         let c = std::ffi::CString::new(fifo.as_os_str().as_encoded_bytes()).unwrap();
+        // SAFETY: `c` is a live NUL-terminated path in this private test directory;
+        // mkfifo borrows it for the call and receives ordinary permission bits.
         assert_eq!(unsafe { libc::mkfifo(c.as_ptr(), 0o600) }, 0);
         assert!(read_file(&fifo).is_err());
         let regular = path.join("regular");

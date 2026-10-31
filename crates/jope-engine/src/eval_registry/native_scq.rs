@@ -297,6 +297,8 @@ fn monotonic_ns() -> Result<u64> {
         tv_nsec: 0,
     };
     ensure!(
+        // SAFETY: `t` is a live writable timespec and CLOCK_MONOTONIC has no
+        // pointer preconditions beyond that output buffer.
         unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut t) } == 0,
         "monotonic clock unavailable"
     );
@@ -856,6 +858,7 @@ mod tests {
             let result = runtime.block_on(async {
                 authenticated_exchange(
                     &socket,
+                    // SAFETY: geteuid has no preconditions and returns a scalar.
                     unsafe { libc::geteuid() },
                     &digest,
                     Some(&identity),
@@ -893,6 +896,7 @@ mod tests {
             });
             assert!(authenticated_exchange(
                 &socket,
+                // SAFETY: geteuid has no preconditions and returns a scalar.
                 unsafe { libc::geteuid() },
                 &"0".repeat(64),
                 None,
