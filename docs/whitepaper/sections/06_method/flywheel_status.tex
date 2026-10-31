@@ -40,18 +40,18 @@
   \label{fig:fw-telemetry}
 \end{figure*}
 
-What does the retained training record establish? These CSVs describe a
-later adapter-training snapshot, separate from the historical reference
-checkpoint above. Here an adapter is the trainable adjustment evaluated by
-the admission loop; the utilities alone do not identify its relationship to
-the historical writer and map. Utility denotes the logged scalar score,
-with larger values treated as better in the admission record.
-The admission CSV records each round, its candidate and best validation utilities,
-an acceptance flag and a timestamp. Neither CSV records the adapter's
-architecture, score normalization or evaluation population, so we do not
-compare this snapshot with other models. The loop description that follows
-comes from source inspection; it is not yet bound to the run that produced
-these logs.
+The retained CSVs describe a later adapter-training snapshot, separate
+from the historical reference above. An adapter is the trainable
+adjustment evaluated by this admission loop. Utility is the logged
+scalar score, with larger values treated as better.
+The admission CSV records rounds, candidate and best validation
+utilities, acceptance flags and timestamps. The tables omit the
+adapter architecture, score normalization and evaluation population,
+so they do not support comparisons with other models.
+The source inspection that follows describes the loop implementation.
+It does not yet bind that source or the adapter's identity to the
+recorded run. Logged utilities alone do not identify the snapshot's
+relationship to the historical writer or map.
 
 In the inspected loop implementation, heuristic program edits, retrieval
 and grammar sampling supply candidate programs. A trainable adapter ranks
@@ -183,5 +183,7 @@ Shared seeds prevent treating their matching outcomes as independent discoveries
   \label{fig:fw-target-history}
 \end{figure*}
 
-\Cref{sec:results} separates this development record from the independent
-comparisons needed to evaluate the invention claim.
+Program-incumbent gains, adapter admissions and historical target scores
+measure different outcomes. \Cref{sec:results} specifies the independent
+comparisons needed to test whether training improves the writer's first
+proposal on new families.
