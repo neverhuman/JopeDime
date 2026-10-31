@@ -1,0 +1,164 @@
+#!/usr/bin/env python3
+"""The preregistered HWV-05 endpoint, for qualified paired DL-Val selections.
+
+This does not train rankers or certify the provenance of a producer's selections.
+See README.md for the input qualification that must precede its use.
+"""
+
+import argparse
+from collections import defaultdict
+import hashlib
+import json
+import math
+from pathlib import Path
+
+import numpy as np
+
+SEEDS = (20261030, 20261031, 20261032)
+DOPE = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+
+
+def digest(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def elo(probability):
+    if probability == 0:
+        return -math.inf
+    if probability == 1:
+        return math.inf
+    return 400 * math.log10(probability / (1 - probability))
+
+
+def outcome(with_fingerprint, without_fingerprint):
+    """None is an explicit failed selection; absent/unknown is refused upstream."""
+    if with_fingerprint is None:
+        return 0.5 if without_fingerprint is None else 0.0
+    if without_fingerprint is None:
+        return 1.0
+    return float(with_fingerprint < without_fingerprint) + 0.5 * float(
+        with_fingerprint == without_fingerprint
+    )
+
+
+def fitness(row, arm):
+    value = row[arm]
+    if value["status"] == "failed":
+        if value.get("fitness") is not None:
+            raise ValueError("failed selection must not carry finite fitness")
+        return None
+    if value["status"] != "ok":
+        raise ValueError("missing/unknown evaluation outcome")
+    score = value["fitness"]
+    if (
+        isinstance(score, bool)
+        or not isinstance(score, (int, float))
+        or not math.isfinite(score)
+    ):
+        raise ValueError("successful selection needs finite raw constrained fitness")
+    return score
+
+
+def analyze(manifest, pairs, draws=100000):
+    """Validate full paired coverage, then resample whole authoritative families."""
+    if manifest["dope_loaded_sha256"] != DOPE:
+        raise ValueError("DOPE identity mismatch")
+    if manifest["seeds"] != list(SEEDS):
+        raise ValueError("preregistered seed inventory mismatch")
+    train = manifest["train_families"]
+    contexts = manifest["validation_contexts"]
+    if not train or not contexts or any(not f for f in train):
+        raise ValueError("missing authoritative family roster")
+    expected = {}
+    for context in contexts:
+        cid, family = context["context_sha256"], context["family_id"]
+        if context["dl_split"] != "DL-Val" or not family or family in train:
+            raise ValueError("validation role/family is inadmissible")
+        if cid in expected:
+            raise ValueError("duplicate validation context")
+        expected[cid] = context
+    observations = defaultdict(list)
+    seen = set()
+    failures = {"with_fingerprint": 0, "without_fingerprint": 0}
+    for row in pairs:
+        cid, seed = row["context_sha256"], row["seed"]
+        key = (cid, seed)
+        if cid not in expected or seed not in SEEDS or key in seen:
+            raise ValueError("unexpected or duplicate context/seed pair")
+        context = expected[cid]
+        for field in (
+            "family_id",
+            "slate_sha256",
+            "evaluator_sha256",
+            "cut_id",
+            "vocabulary_sha256",
+        ):
+            if not context[field] or row[field] != context[field]:
+                raise ValueError(f"mismatched {field}")
+        seen.add(key)
+        scores = [fitness(row, arm) for arm in failures]
+        for arm, score in zip(failures, scores):
+            failures[arm] += score is None
+        observations[context["family_id"]].append(outcome(*scores))
+    if seen != {(cid, seed) for cid in expected for seed in SEEDS}:
+        raise ValueError("incomplete paired context/seed inventory")
+    means = np.array([np.mean(observations[f]) for f in sorted(observations)])
+    if len(means) < 2:
+        raise ValueError("need multiple validation families for clustered inference")
+    rng = np.random.default_rng(20261030)
+    boot = np.empty(draws)
+    for start in range(0, draws, 1000):
+        count = min(1000, draws - start)
+        boot[start : start + count] = means[
+            rng.integers(len(means), size=(count, len(means)))
+        ].mean(axis=1)
+    # Transform finite probability quantiles; interpolating infinite Elo samples is invalid.
+    bounds = [elo(float(p)) for p in np.quantile(boot, [0.0125, 0.9875])]
+    return {
+        "schema": "jope.hwv05.paired-routing-elo/v1",
+        "task": "regression",
+        "scope": "paired relative routing Elo; not Golden45 absolute Elo",
+        "elo": elo(float(means.mean())),
+        "ci975": bounds,
+        "verdict": "ADOPT" if bounds[0] > 0 else "REJECT",
+        "families": len(means),
+        "contexts": len(expected),
+        "paired_selections": len(seen),
+        "failures": failures,
+        "bootstrap_draws": draws,
+        "bootstrap_seed": 20261030,
+        "binary": "NOT_RUN",
+    }
+
+
+def json_safe(value):
+    """Preserve infinite Elo boundaries without nonstandard JSON number literals."""
+    if isinstance(value, float) and math.isinf(value):
+        return "+Infinity" if value > 0 else "-Infinity"
+    if isinstance(value, dict):
+        return {k: json_safe(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [json_safe(v) for v in value]
+    return value
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--manifest", type=Path, required=True)
+    parser.add_argument("--pairs", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    manifest = json.loads(args.manifest.read_text())
+    if digest(args.pairs) != manifest["paired_selections_sha256"]:
+        raise ValueError("paired selections digest mismatch")
+    result = analyze(manifest, json.loads(args.pairs.read_text()))
+    result["manifest_sha256"] = digest(args.manifest)
+    result["pairs_sha256"] = digest(args.pairs)
+    result["source_sha256"] = digest(__file__)
+    with args.output.open("x") as out:
+        json.dump(json_safe(result), out, indent=2, allow_nan=False)
+        out.write("\n")
+
+
+if __name__ == "__main__":
+    main()
