@@ -1,0 +1,22 @@
+{
+  "schema": "jope.h122.cpu-preparation/v1",
+  "wave": "H122",
+  "status": "CPU_PREP_ONLY",
+  "complete": false,
+  "admission": null,
+  "verdict": "not assessed",
+  "hypothesis_verdict": null,
+  "required_cells": 6,
+  "observed_outcome_cells": 0,
+  "arms": ["CONTROL", "LA"],
+  "seeds": [48, 49, 50],
+  "fold_seed": 122042,
+  "elo": null,
+  "family_bootstrap_ci": null,
+  "data_reads": 0,
+  "checkpoint_reads": 0,
+  "optimizer_updates": 0,
+  "fifo_ticket_created": false,
+  "qualification_lock_acquired": false,
+  "gpu_cells_run": 0
+}

@@ -5116,6 +5116,10 @@
     "python:research/flywheel_selfplay/h121_target_smoothing/test_h121.py": {
       "reason": "Owner-requested pytest proofs for the H121 target-smoothing preregistration; offline research analysis outside the reviewed product baseline.",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h122_lookahead_retest/test_h122.py": {
+      "reason": "Owner-requested H122 CPU-only Lookahead retest preparation fixtures: fresh family fold, unique per-attempt checkpoint staging, pre-copy disk barrier, read-only legacy scratch preservation, complete-panel strict admission/Elo summary, and no-data/no-ticket dry run; no experiment outcomes or product qualification.",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

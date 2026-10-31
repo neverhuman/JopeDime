@@ -13654,6 +13654,16 @@
       ],
       "lanes": [],
       "scope": "H121 target-smoothing preregistration fixtures: target smoothing (eps 0.1/0.3) and continuous mean-regret co-readout vs r882, CPU prep only."
+    },
+    "python:research/flywheel_selfplay/h122_lookahead_retest/test_h122.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H122 CPU-only Lookahead retest preparation: fresh whole-family fold, unique per-attempt r882 staging, launch disk gate before copying, preservation of read-only legacy scratch, exact six-cell admission/Elo readout and synthetic no-data CPU dry run. No corpus/checkpoint reads, FIFO ticket, GPU or experiment outcome."
     }
   },
   "lanes": {
