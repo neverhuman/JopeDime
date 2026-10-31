@@ -160,6 +160,16 @@
     }
   },
   "items": {
+    "python:research/flywheel_selfplay/h104_w7_acquisition_replay_prep/test_runner.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H104 W7 CPU preparation: family/table fold exclusion, deterministic budget-preserving shards, pending common-support receipts, feature-only acquisition and uniform-support/refusal controls."
+    },
     "python:research/flywheel_selfplay/h102_w5_provenance_gaps/test_check.py": {
       "discovery": {
         "kind": "python-family"
@@ -6202,7 +6212,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -13328,7 +13338,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H93 CPU-only Lookahead, annealed-gradient-noise and effective-batch update-plan fixtures, FIFO/H80/H90 launch barrier, paired family Elo/admission, and dev top-four overlap diagnostics; no corpus payloads or product qualification."
+      "scope": "H93 CPU-only Lookahead, annealed-gradient-noise and effective-batch update-plan fixtures, unique immutable per-attempt r882 scratch staging, FIFO/H80/H90 launch barrier, paired family Elo/admission, and dev top-four overlap diagnostics; no corpus payloads or product qualification."
     },
     "python:research/flywheel_selfplay/h76_sam_steps/test_h76.py": {
       "discovery": {
@@ -13500,16 +13510,6 @@
       "lanes": [],
       "scope": "H99 ESH harm follow-up preregistration fixtures: fold assignment partitions whole train families exactly once, sealed meta-test inputs never opened."
     },
-    "python:research/flywheel_selfplay/h101_w6_proposer_transfer_prep/test_w6_transfer_prep.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H101 W6 proposer transfer preparation fixtures: weighted bilinear SVD, empirical-Bayes shrinkage, top-2 prior hedging, and fail-closed panel completeness gates."
-    },
     "feature:jope-appliance/research": {
       "discovery": {
         "kind": "feature",
@@ -13544,6 +13544,36 @@
       ],
       "lanes": [],
       "scope": "H96 W4 two-plus-two harness fixtures using the merged H81 selection rule: reveal is called only on the first pair, zero residuals reduce two-plus-two to prior-top4, informative residuals change only the second pair, a first-pair execution error makes the adaptive arms INCOMPLETE, dry-run contexts avoid roster families, analyze refuses dry-run rows, and the merged-H81 loader refuses changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h106_w9_proposal_scorer_replay/test_run_h106.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H106 proposal-scorer / W9 memory-replay fixtures: centred within-context percentile targets with shared ties, matched-row memories that never include the held fold, memory build refusing unrecovered programs or changed reveal logs, score-only fixed picks with seeded random4, two Bonferroni primaries with the completeness gate and dry-run refusal, and the merged-H81 loader refusing changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h109_family_balanced_accum/test_h109.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H109 family-balanced accumulation preregistration fixtures: exact family partition, staged r882 checkpoint hash and no-alias checks, increasing warmup, matched flat controls."
+    },
+    "python:research/flywheel_selfplay/h101_w6_proposer_transfer_prep/test_w6_transfer_prep.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H101 W6 proposer transfer preparation fixtures: weighted bilinear SVD, empirical-Bayes shrinkage, top-2 prior hedging, and fail-closed panel completeness gates."
     }
   },
   "lanes": {

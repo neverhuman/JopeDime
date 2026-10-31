@@ -1,0 +1,247 @@
+{
+  "actual_campaign_consumption": null,
+  "actual_native_fits": 0,
+  "actual_optimizer_updates": 0,
+  "advance_admitted": false,
+  "authority_base": "b2c04a846194bda01310d762d646c8a2a91d26cf",
+  "authority_source_pins": {
+    "research/flywheel_selfplay/h66_w6_cross_family_transfer/prepare_folds.py": {
+      "bytes": 6819,
+      "local_name": "source_h66_w6_cross_family_transfer_prepare_folds.py",
+      "sha256": "d14fa2a7a511f0eaf1c721bab60dc684f6b12578d520dcdb682837785f05558d"
+    },
+    "research/flywheel_selfplay/h69_w7_informative_acquisition_qd_replay/README.md": {
+      "bytes": 6416,
+      "local_name": "source_h69_w7_informative_acquisition_qd_replay_README.md",
+      "sha256": "206c1b6e98fc47db8dc40a8631fe32c719f0405f3ce67cbe63ab35894bd32cdd"
+    },
+    "research/flywheel_selfplay/h72_w6_train_roster_prep/README.md": {
+      "bytes": 4839,
+      "local_name": "source_h72_w6_train_roster_prep_README.md",
+      "sha256": "84d4534b32a7a48d9e8911d62855d52596e817bd68c2bea6072e7d1b2f31874d"
+    },
+    "research/flywheel_selfplay/rd_breakthrough/PROPOSALS.md": {
+      "bytes": 44201,
+      "local_name": "source_rd_breakthrough_PROPOSALS.md",
+      "sha256": "eb2447d014957222855ba374a71eb00747692581083b6613c5487135497e4ba1"
+    }
+  },
+  "checks": [
+    {
+      "command": [
+        "nice",
+        "-n",
+        "15",
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "/home/ubuntu/jope-rescue-20260921/w7-prep-t0455/candidate/research/flywheel_selfplay/h104_w7_acquisition_replay_prep/test_runner.py",
+        "--basetemp=/home/ubuntu/jope-rescue-20260921/w7-prep-t0455/pytest-final",
+        "-p",
+        "no:cacheprovider"
+      ],
+      "exit_status": 0,
+      "name": "pytest",
+      "wall_seconds": 1.136899869889021
+    },
+    {
+      "command": [
+        "nice",
+        "-n",
+        "15",
+        "python3",
+        "-m",
+        "ruff",
+        "check",
+        "/home/ubuntu/jope-rescue-20260921/w7-prep-t0455/candidate/research/flywheel_selfplay/h104_w7_acquisition_replay_prep"
+      ],
+      "exit_status": 0,
+      "name": "ruff",
+      "wall_seconds": 0.046237726928666234
+    },
+    {
+      "command": [
+        "nice",
+        "-n",
+        "15",
+        "python3",
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "/home/ubuntu/jope-rescue-20260921/w7-prep-t0455/candidate/research/flywheel_selfplay/h104_w7_acquisition_replay_prep"
+      ],
+      "exit_status": 0,
+      "name": "format",
+      "wall_seconds": 0.043055745074525476
+    }
+  ],
+  "config_sha256": "828838fe32777ee39d813029ac981d66748f04c7ea6f18073a1b939ab2012ec7",
+  "execution_admitted": false,
+  "fold_manifest_sha256": "129002bcd6cfc4b2f3a0b9e0562967cd4510dcbf88364c2d11d0bbe8801c2c73",
+  "fold_reconstruction": {
+    "builder_source_sha256": "d14fa2a7a511f0eaf1c721bab60dc684f6b12578d520dcdb682837785f05558d",
+    "contexts": 1219,
+    "exact_object_equal": true,
+    "families": 205,
+    "fold_manifest_sha256": "129002bcd6cfc4b2f3a0b9e0562967cd4510dcbf88364c2d11d0bbe8801c2c73",
+    "roster_sha256": "9d3656d9817239d07ac27d1cb4f90d688bf3421b492e15b62ac078a9d183190d",
+    "training_metadata_only": true
+  },
+  "folds": [
+    {
+      "fit_context_ids_sha256": "a9e27927d5924f1b7b8dcd28296e83bd21846ef7a06f45edf183e94dfca5f4fa",
+      "fit_contexts": 956,
+      "fit_families": 164,
+      "held_fold": 0,
+      "score_context_ids_sha256": "bfea803543c44c069fe4d8930463dd7b04d1a20d49902889d46c90ead7d4d1ba",
+      "score_contexts": 263,
+      "score_families": 41
+    },
+    {
+      "fit_context_ids_sha256": "8a8f7da7abf7cb2cc9b0ae47a52fedcd9da261b1d21ee4be84afda8e8a222390",
+      "fit_contexts": 1003,
+      "fit_families": 164,
+      "held_fold": 1,
+      "score_context_ids_sha256": "e0e0dcb64431f5f9f75d52bf7dd47504f9c2cabd0b9c9908b349fac066f2b5cb",
+      "score_contexts": 216,
+      "score_families": 41
+    },
+    {
+      "fit_context_ids_sha256": "9d21f20db5269ccaf381d3be2a20eabba76bdd986ceabe5570458ed0f6cc8bbd",
+      "fit_contexts": 942,
+      "fit_families": 164,
+      "held_fold": 2,
+      "score_context_ids_sha256": "00fb7456a8da3481b15c40eb1f7d02f3ce63588063452a84b0b515e662d1fd14",
+      "score_contexts": 277,
+      "score_families": 41
+    },
+    {
+      "fit_context_ids_sha256": "71e79512cc11ba2d49b8108eed1713f1afe6a722b589d57ef84b02f698f41d1b",
+      "fit_contexts": 979,
+      "fit_families": 164,
+      "held_fold": 3,
+      "score_context_ids_sha256": "99d048c56893cdcd39850a63a97265b97dbb4443fc339645c9e27c36829d3c90",
+      "score_contexts": 240,
+      "score_families": 41
+    },
+    {
+      "fit_context_ids_sha256": "d07de50beab06ac3c9f092a5595d67deeead16821a211d710e21737387131e6c",
+      "fit_contexts": 996,
+      "fit_families": 164,
+      "held_fold": 4,
+      "score_context_ids_sha256": "dfe8b5e8885be1f7f6b7020082e86d4882df7e6a0572d6ea0a64c553a6ba1d7e",
+      "score_contexts": 223,
+      "score_families": 41
+    }
+  ],
+  "four_host_schedule_panel_fold_reconciliation": "exact ordered equality",
+  "full_plan_bytes": 184765,
+  "full_plan_sha256": "28481a3b4be7bc28bb5711b88eb370684b9a0a3263fe387c603edee483bd75d2",
+  "gpu_seconds": 0,
+  "hwm_candidate": false,
+  "input_receipts": [
+    {
+      "bytes": 109813,
+      "name": "manifest.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W6/w6-roster-prep-res03-20261031T0451Z-d4/manifest.json",
+      "sha256": "75fd0a63370ee235a165fa842bf4a3a773eff3f2b38ff2c3e636896dd663009f",
+      "version_id": "ZerRr5DdgXIBhJEdmt_oMzZTH1fCteGT"
+    },
+    {
+      "bytes": 429343,
+      "name": "train_roster.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W6/w6-roster-prep-res03-20261031T0451Z-d4/train_roster.json",
+      "sha256": "9d3656d9817239d07ac27d1cb4f90d688bf3421b492e15b62ac078a9d183190d",
+      "version_id": "n5uFqKsIE1lL8bIwF4iwhJBUpc.ikG7T"
+    },
+    {
+      "bytes": 395880,
+      "name": "fold_manifest.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W6/w6-roster-prep-res03-20261031T0451Z-d4/fold_manifest.json",
+      "sha256": "129002bcd6cfc4b2f3a0b9e0562967cd4510dcbf88364c2d11d0bbe8801c2c73",
+      "version_id": "R1L8dcRZZzhDQz4XGpXyo02kHhHz6Dh2"
+    }
+  ],
+  "launch_deadline_utc": null,
+  "matched_discarded_excluded_counts": null,
+  "metrics": {
+    "U4": null,
+    "family_elo": null,
+    "val_reg_inner": null
+  },
+  "native_fit_ceiling": 4800,
+  "numeric_outcome_arrays_read": 0,
+  "pending_common_learner_receipts": 45,
+  "planned_new_fits": 3600,
+  "protected_payloads_read": 0,
+  "remaining_authorized_budget": null,
+  "resources": {
+    "hosts": [
+      {
+        "cpu_seconds": 0.01615806,
+        "exit_status": 0,
+        "host_assignment": "xbabe1",
+        "hostname": "xbabe1",
+        "input_sha256": "e034aeca70c6c0be60afb15216df97ea5e36fcdc71b8e978e5f6b9d9dda6e8ad",
+        "nice": 19,
+        "platform": "Linux-6.8.0-134-generic-x86_64-with-glibc2.39",
+        "shard": "0",
+        "transport_wall_seconds": 0.27113106404431164,
+        "worker_sha256": "cb6120ae2ae3b2d58a88e9c4aa84d5bf3ce71e87e2845e6fd7013380311ac661"
+      },
+      {
+        "cpu_seconds": 0.016815602,
+        "exit_status": 0,
+        "host_assignment": "xbabe2",
+        "hostname": "xbabe2",
+        "input_sha256": "e034aeca70c6c0be60afb15216df97ea5e36fcdc71b8e978e5f6b9d9dda6e8ad",
+        "nice": 19,
+        "platform": "Linux-6.8.0-146-generic-x86_64-with-glibc2.39",
+        "shard": "1",
+        "transport_wall_seconds": 0.058162791887298226,
+        "worker_sha256": "cb6120ae2ae3b2d58a88e9c4aa84d5bf3ce71e87e2845e6fd7013380311ac661"
+      },
+      {
+        "cpu_seconds": 0.016008779,
+        "exit_status": 0,
+        "host_assignment": "xbabe3",
+        "hostname": "xbabe3",
+        "input_sha256": "e034aeca70c6c0be60afb15216df97ea5e36fcdc71b8e978e5f6b9d9dda6e8ad",
+        "nice": 10,
+        "platform": "Linux-6.8.0-134-generic-x86_64-with-glibc2.39",
+        "shard": "2",
+        "transport_wall_seconds": 0.24663617182523012,
+        "worker_sha256": "cb6120ae2ae3b2d58a88e9c4aa84d5bf3ce71e87e2845e6fd7013380311ac661"
+      },
+      {
+        "cpu_seconds": 0.010154084,
+        "exit_status": 0,
+        "host_assignment": "xbabe4",
+        "hostname": "ab09b8819cd4",
+        "input_sha256": "e034aeca70c6c0be60afb15216df97ea5e36fcdc71b8e978e5f6b9d9dda6e8ad",
+        "nice": 10,
+        "platform": "Linux-6.8.0-117-generic-aarch64-with-glibc2.41",
+        "shard": "3_4",
+        "transport_wall_seconds": 0.4029275740031153,
+        "worker_sha256": "cb6120ae2ae3b2d58a88e9c4aa84d5bf3ce71e87e2845e6fd7013380311ac661"
+      }
+    ],
+    "measured_worker_cpu_seconds": 0.059136524999999995,
+    "other_overhead_cpu_seconds": null,
+    "overhead_note": "Collection, local dry-run, tests, S3/SSH and publication overhead not measured; not zero. No data/model fitting performed.",
+    "worker_cpu_ceiling_seconds": 120
+  },
+  "runner_sha256": "c5c46036c3bf45f12a9912fe02f9b3c6ba8d0cb23f9ca27ba168a1704d8d4217",
+  "scheduled_context_rounds_shared_by_arms": 300,
+  "schema": "jope.h104.w7-preparation-summary/v1",
+  "source_commit": "e3f63a49899f50333f629cc6c4c92bc098a47df5",
+  "status": "PREPARATION_ONLY",
+  "synthetic_controls": {
+    "failed": 0,
+    "passed": 32,
+    "skipped": 0
+  },
+  "test_sha256": "bcd988fe612ddb42c624dedafd50a6793552d4a58923efcfa7ccf31953c95b5e"
+}
