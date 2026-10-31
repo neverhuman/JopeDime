@@ -143,18 +143,19 @@ impl Lm48Transform {
             .with_context(|| format!("read lm48 parameters from {}", path.display()))?;
         let tensors = SafeTensors::deserialize(&bytes).context("parse lm48 parameters")?;
         let step2_lm_mean: [f32; V256_DIM] =
-            read_parameter(&tensors, "step2_lm_mean", &[V256_DIM])?
+            read_parameter(&tensors, "step2_lm_mean_1x256", &[1, V256_DIM])?
                 .try_into()
                 .expect("validated lm48 mean width");
-        let step2_lm_std: [f32; V256_DIM] = read_parameter(&tensors, "step2_lm_std", &[V256_DIM])?
-            .try_into()
-            .expect("validated lm48 std width");
+        let step2_lm_std: [f32; V256_DIM] =
+            read_parameter(&tensors, "step2_lm_std_1x256", &[1, V256_DIM])?
+                .try_into()
+                .expect("validated lm48 std width");
         let step2_svd_basis_48 =
-            read_parameter(&tensors, "step2_svd_basis_48", &[V256_DIM, LM48_DIM])?;
-        let mu_lm48: [f32; LM48_DIM] = read_parameter(&tensors, "mu_lm48", &[LM48_DIM])?
+            read_parameter(&tensors, "step2_svd_basis_256x48", &[V256_DIM, LM48_DIM])?;
+        let mu_lm48: [f32; LM48_DIM] = read_parameter(&tensors, "mu_lm48", &[1, LM48_DIM])?
             .try_into()
             .expect("validated lm48 center width");
-        let sd_lm48: [f32; LM48_DIM] = read_parameter(&tensors, "sd_lm48", &[LM48_DIM])?
+        let sd_lm48: [f32; LM48_DIM] = read_parameter(&tensors, "sd_lm48", &[1, LM48_DIM])?
             .try_into()
             .expect("validated lm48 scale width");
 
@@ -290,11 +291,11 @@ mod tests {
         let mut output_std = vec![2.0; LM48_DIM];
         output_std[0] = first_output_std;
         let tensors = [
-            ("step2_lm_mean", vec![V256_DIM], mean),
-            ("step2_lm_std", vec![V256_DIM], input_std),
-            ("step2_svd_basis_48", vec![V256_DIM, LM48_DIM], basis),
-            ("mu_lm48", vec![LM48_DIM], center),
-            ("sd_lm48", vec![LM48_DIM], output_std),
+            ("step2_lm_mean_1x256", vec![1, V256_DIM], mean),
+            ("step2_lm_std_1x256", vec![1, V256_DIM], input_std),
+            ("step2_svd_basis_256x48", vec![V256_DIM, LM48_DIM], basis),
+            ("mu_lm48", vec![1, LM48_DIM], center),
+            ("sd_lm48", vec![1, LM48_DIM], output_std),
         ];
 
         let mut entries = Vec::new();
