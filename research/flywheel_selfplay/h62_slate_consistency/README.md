@@ -1,6 +1,6 @@
 # H62 — W2 slate-consistency diagnostic
 
-Status: **execution preparation; no result or verdict yet**. H62 is reserved for W2 under the owner’s `overnight15_t2125.md` assignment. OPUS owns diagnostic execution; ASTRA owns result review, custody and publication. This folder does not authorize duplicate runs.
+Status: **diagnostic complete; author stop verdict corrected during result review**. See [SUMMARY.md](SUMMARY.md) and [metrics.json](metrics.json). H62 is reserved for W2 under the owner’s `overnight15_t2125.md` assignment. OPUS owns diagnostic execution; ASTRA owns result review, custody and publication. This folder does not authorize duplicate runs.
 
 The scientific protocol is [W2](../rd_breakthrough/PROPOSALS.md#w2--slate-consistent-scoring); the shared [CPU and S3 contract](../rd_breakthrough/CPU_S3.md) applies. The diagnostic uses zero GPU and zero new native fits. It does not wait for W1 training.
 

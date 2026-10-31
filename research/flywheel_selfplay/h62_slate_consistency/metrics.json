@@ -1,0 +1,424 @@
+{
+  "schema": "rd_breakthrough.audited-results/v1",
+  "wave": "W2",
+  "h_folder": "H62",
+  "reviewer": "ASTRA",
+  "provenance": {
+    "run_id": "w2-opus-20261031a",
+    "source_git_sha": "d5095432129d57cbd7cffa9fd6ceb77dfe86cd9e",
+    "source_note": "checkout HEAD at upload; scripts are untracked research scratch pinned by sha256 and stored in this run folder",
+    "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W2/w2-opus-20261031a/",
+    "objects": [
+      {
+        "key": "experiments/rd_breakthrough_20261030/W2/w2-opus-20261031a/analysis.txt",
+        "version_id": "y0y8fgRVAATdrFpubH4D9FEu94hvtInX",
+        "sha256": "b02fd98928a75a48d8d0d645eaf84a3b5f75824cf512ce8374fc10d8f7dd35ee",
+        "bytes": 1754,
+        "metadata_sha256_match": true
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W2/w2-opus-20261031a/manifest.json",
+        "version_id": "JsTrvmdneOVCMaKAIR4TQDiW6jbKSa0l",
+        "sha256": "272e6c70f093258ac24b532226d7c7bab55653fd9904cbf5363ad5489e7e6cc0",
+        "bytes": 14628,
+        "metadata_sha256_match": true
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W2/w2-opus-20261031a/manifest_pre.json",
+        "version_id": "mD3_xwKWE9GjoOZ5IaV19ljDVl0HYM3t",
+        "sha256": "307a64310b75b9113a1e43ac43c9ca6fe8fa495e3eca1d399be257752c7c7979",
+        "bytes": 9213,
+        "metadata_sha256_match": true
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W2/w2-opus-20261031a/parity_1219.txt",
+        "version_id": "n6TG76Dl4wyY.2xX.RF5CJARhO5twtb_",
+        "sha256": "1a9b6d0d8b3745bd2088c090cc2b954d4dd9cc556c60b858c07aeb9dc38d67fa",
+        "bytes": 121,
+        "metadata_sha256_match": true
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W2/w2-opus-20261031a/parity_check.py",
+        "version_id": "0AwwXRfmDfQpcaMF51PCndHw9SqBG59Z",
+        "sha256": "3946f83691d8006666012197a091563611951c745b88802362ed3e321a2050f6",
+        "bytes": 766,
+        "metadata_sha256_match": true
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W2/w2-opus-20261031a/rows.jsonl",
+        "version_id": "51SxmewuI2SjHBsE79Qe8ZPzeHX2J9AI",
+        "sha256": "b261544eb451d300825464a683266b1d3a61e8bf7d77c037dc6715b28dc93bd1",
+        "bytes": 2214704,
+        "metadata_sha256_match": true
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W2/w2-opus-20261031a/run.log",
+        "version_id": "8rdk_ryVmi10QU_uTlnuJh3okfM8xqPG",
+        "sha256": "99ff8488162c20b52871bb85540890fccd6d8c3e046258139dd3c879d624f7b5",
+        "bytes": 2655,
+        "metadata_sha256_match": true
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W2/w2-opus-20261031a/w2_analyze.py",
+        "version_id": "ZNygjtXLhdd7toShLMVbTJqafgNqB1LR",
+        "sha256": "b577cf1940134bba9e6321a0b3ad1d2563d01e6df51171ca148d9dc13f05cad5",
+        "bytes": 2324,
+        "metadata_sha256_match": true
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W2/w2-opus-20261031a/w2_common.py",
+        "version_id": "DZDu8cwXwi59i0Bu2J_CnGd.16Ra7H5c",
+        "sha256": "e9a7776f13249df18082df2833c7371941e36793a0c0b0464fc3aeef2d1528a6",
+        "bytes": 5118,
+        "metadata_sha256_match": true
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W2/w2-opus-20261031a/w2_slate_diag.py",
+        "version_id": "tBRBPgAtz3tMJ0FBmpMa6HHmsETQgYUf",
+        "sha256": "ad81a7ae5a857a157fac47b672e28d65cc71c2b74005d55907e1fe79ef5fae19",
+        "bytes": 8716,
+        "metadata_sha256_match": true
+      }
+    ],
+    "addenda_objects": [
+      {
+        "key": "experiments/rd_breakthrough_20261030/W2/w2-opus-20261031a/addendum-admission_check.txt",
+        "version_id": "LK5FBScdd8yfHpLOyxAtEMOnwl3HlX2q",
+        "sha256": "2516c6eebf4a604c0acfa70832c300c60996c8cffa5df122362ea2958e936cf5",
+        "bytes": 101
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W2/w2-opus-20261031a/addendum-elo_w2_w8.json",
+        "version_id": "Qww7CA7uXyZ0nJ.8oXILtqpu2rHLhzIq",
+        "sha256": "3556d0128a460219e12c4a48b354ede1b9fa173655b5234000826b17e0ac0a42",
+        "bytes": 2129
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W2/w2-opus-20261031a/addendum-elo_w2_w8.py",
+        "version_id": "3IcixgDcM3EzpTKc5F2.QPQDNVxMBcGZ",
+        "sha256": "e92c5960ee6e6b0406abca26f11b8b677a0e1835f38b4acc49f7af4ae3ccebf6",
+        "bytes": 3969
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W2/w2-opus-20261031a/addendum-w2_admission_check.py",
+        "version_id": "MoQorEe2ztxBm3aOI9kv18cj4quS.yVc",
+        "sha256": "d82c6ee05e888a6aafcd8ca898594cef0b8e13268546bd8325948970c5cd863f",
+        "bytes": 1746
+      }
+    ]
+  },
+  "counts": {
+    "rows": 4800,
+    "contexts": 100,
+    "families": 79,
+    "native_fits": 0,
+    "gpu_seconds": 0
+  },
+  "seeds": {
+    "sample": 701,
+    "bootstrap": 20261031
+  },
+  "cells": [
+    {
+      "arm": "live",
+      "slate_size": 12,
+      "context_draws": 800,
+      "contexts": 100,
+      "families": 79,
+      "choice_changed_count": 24,
+      "legacy_choice_changed_count": 32,
+      "context_draw_mean": {
+        "reversal": 0.006428571428571428,
+        "choice_changed": 0.03,
+        "legacy_changed": 0.04,
+        "du_choice": 0.0003918948769569397
+      },
+      "family_mean": {
+        "reversal": 0.0051989150090415905,
+        "choice_changed": 0.0189873417721519,
+        "du_choice": 0.00024803473225122765
+      },
+      "family_mean_ci95": {
+        "reversal": [
+          0.0029385171790235077,
+          0.00791139240506329
+        ],
+        "choice_changed": [
+          0.0,
+          0.04430379746835443
+        ],
+        "du_choice": [
+          0.0,
+          0.0006932785993889918
+        ]
+      },
+      "pair_reversal_denominator_note": "Rows store per-draw reversal proportions after removing reference ties; valid-pair counts were not retained, so no pooled pair denominator is invented."
+    },
+    {
+      "arm": "live",
+      "slate_size": 20,
+      "context_draws": 800,
+      "contexts": 100,
+      "families": 79,
+      "choice_changed_count": 15,
+      "legacy_choice_changed_count": 17,
+      "context_draw_mean": {
+        "reversal": 0.004553571428571428,
+        "choice_changed": 0.01875,
+        "legacy_changed": 0.02125,
+        "du_choice": 0.00014816399663686753
+      },
+      "family_mean": {
+        "reversal": 0.0038520946353224838,
+        "choice_changed": 0.011867088607594937,
+        "du_choice": 9.377468141573894e-05
+      },
+      "family_mean_ci95": {
+        "reversal": [
+          0.0022789990204942737,
+          0.0056415762507534654
+        ],
+        "choice_changed": [
+          0.0,
+          0.027689873417721517
+        ],
+        "du_choice": [
+          0.0,
+          0.000236851646553112
+        ]
+      },
+      "pair_reversal_denominator_note": "Rows store per-draw reversal proportions after removing reference ties; valid-pair counts were not retained, so no pooled pair denominator is invented."
+    },
+    {
+      "arm": "live",
+      "slate_size": 192,
+      "context_draws": 800,
+      "contexts": 100,
+      "families": 79,
+      "choice_changed_count": 2,
+      "legacy_choice_changed_count": 2,
+      "context_draw_mean": {
+        "reversal": 0.0009374999999999997,
+        "choice_changed": 0.0025,
+        "legacy_changed": 0.0025,
+        "du_choice": 4.087299108505249e-05
+      },
+      "family_mean": {
+        "reversal": 0.0008759041591320071,
+        "choice_changed": 0.0031645569620253164,
+        "du_choice": 5.173796339880062e-05
+      },
+      "family_mean_ci95": {
+        "reversal": [
+          0.0003390596745027124,
+          0.001582278481012658
+        ],
+        "choice_changed": [
+          0.0,
+          0.00949367088607595
+        ],
+        "du_choice": [
+          0.0,
+          0.00015521389019640186
+        ]
+      },
+      "pair_reversal_denominator_note": "Rows store per-draw reversal proportions after removing reference ties; valid-pair counts were not retained, so no pooled pair denominator is invented."
+    },
+    {
+      "arm": "anchor",
+      "slate_size": 12,
+      "context_draws": 800,
+      "contexts": 100,
+      "families": 79,
+      "choice_changed_count": 0,
+      "legacy_choice_changed_count": 0,
+      "context_draw_mean": {
+        "reversal": 0.0,
+        "choice_changed": 0.0,
+        "legacy_changed": 0.0,
+        "du_choice": 0.0
+      },
+      "family_mean": {
+        "reversal": 0.0,
+        "choice_changed": 0.0,
+        "du_choice": 0.0
+      },
+      "family_mean_ci95": {
+        "reversal": [
+          0.0,
+          0.0
+        ],
+        "choice_changed": [
+          0.0,
+          0.0
+        ],
+        "du_choice": [
+          0.0,
+          0.0
+        ]
+      },
+      "pair_reversal_denominator_note": "Rows store per-draw reversal proportions after removing reference ties; valid-pair counts were not retained, so no pooled pair denominator is invented."
+    },
+    {
+      "arm": "anchor",
+      "slate_size": 20,
+      "context_draws": 800,
+      "contexts": 100,
+      "families": 79,
+      "choice_changed_count": 0,
+      "legacy_choice_changed_count": 0,
+      "context_draw_mean": {
+        "reversal": 0.0,
+        "choice_changed": 0.0,
+        "legacy_changed": 0.0,
+        "du_choice": 0.0
+      },
+      "family_mean": {
+        "reversal": 0.0,
+        "choice_changed": 0.0,
+        "du_choice": 0.0
+      },
+      "family_mean_ci95": {
+        "reversal": [
+          0.0,
+          0.0
+        ],
+        "choice_changed": [
+          0.0,
+          0.0
+        ],
+        "du_choice": [
+          0.0,
+          0.0
+        ]
+      },
+      "pair_reversal_denominator_note": "Rows store per-draw reversal proportions after removing reference ties; valid-pair counts were not retained, so no pooled pair denominator is invented."
+    },
+    {
+      "arm": "anchor",
+      "slate_size": 192,
+      "context_draws": 800,
+      "contexts": 100,
+      "families": 79,
+      "choice_changed_count": 0,
+      "legacy_choice_changed_count": 0,
+      "context_draw_mean": {
+        "reversal": 0.0,
+        "choice_changed": 0.0,
+        "legacy_changed": 0.0,
+        "du_choice": 0.0
+      },
+      "family_mean": {
+        "reversal": 0.0,
+        "choice_changed": 0.0,
+        "du_choice": 0.0
+      },
+      "family_mean_ci95": {
+        "reversal": [
+          0.0,
+          0.0
+        ],
+        "choice_changed": [
+          0.0,
+          0.0
+        ],
+        "du_choice": [
+          0.0,
+          0.0
+        ]
+      },
+      "pair_reversal_denominator_note": "Rows store per-draw reversal proportions after removing reference ties; valid-pair counts were not retained, so no pooled pair denominator is invented."
+    }
+  ],
+  "full_pool_permutation_max_abs_prediction_delta": 9.5367431640625e-07,
+  "verdict": "WRITTEN_CONTEXT_DRAW_TOLERANCE_FAILED",
+  "original_author_verdict": "INVARIANT / kill mechanism",
+  "verdict_correction": "The prescoring rule requires <=2% changed (context,draw) choices at every size. Size12 is24/800=3%, whereas the equal-family mean is1.8987%. The author used the latter to decide. No literal invariance, kill result or automatic downstream scoring clearance is established.",
+  "next_action": "Disposition scoring contract before downstream use; no GPU follow-up launched or authorized by this receipt.",
+  "metrics": {
+    "Elo": {
+      "live": {
+        "ratings": {
+          "full_pool": 1500.0,
+          "slate12": 1505.5,
+          "slate192": 1504.4,
+          "slate20": 1503.3
+        },
+        "n_datasets": 100,
+        "n_families": 79,
+        "pairwise_win_tie_loss_vs_anchor": {
+          "slate12": {
+            "wins": 2,
+            "ties": 98,
+            "losses": 0,
+            "elo_delta_vs_anchor": 5.5
+          },
+          "slate192": {
+            "wins": 1,
+            "ties": 99,
+            "losses": 0,
+            "elo_delta_vs_anchor": 4.4
+          },
+          "slate20": {
+            "wins": 2,
+            "ties": 98,
+            "losses": 0,
+            "elo_delta_vs_anchor": 3.3
+          }
+        }
+      },
+      "anchor": {
+        "ratings": {
+          "full_pool": 1500.0,
+          "slate12": 1500.0,
+          "slate192": 1500.0,
+          "slate20": 1500.0
+        },
+        "n_datasets": 100,
+        "n_families": 79,
+        "pairwise_win_tie_loss_vs_anchor": {
+          "slate12": {
+            "wins": 0,
+            "ties": 100,
+            "losses": 0,
+            "elo_delta_vs_anchor": 0.0
+          },
+          "slate192": {
+            "wins": 0,
+            "ties": 100,
+            "losses": 0,
+            "elo_delta_vs_anchor": 0.0
+          },
+          "slate20": {
+            "wins": 0,
+            "ties": 100,
+            "losses": 0,
+            "elo_delta_vs_anchor": 0.0
+          }
+        }
+      }
+    },
+    "U4": null,
+    "val_reg_inner": 1.423073,
+    "note": "val_reg_inner is rounded in-sample offline r882 parity-check utility over1219 train contexts, not an intervention effect or bitwise live parity. Verified U4 not computed.",
+    "Elo_scope": "Exploratory post-run addendum: W2 choices in C relative to each arm own full-pool C reference; W8 challenger/incumbent pair ranking across cuts. Not common policy-admission Elo or a rescue of failed primary.",
+    "Elo_protocol": {
+      "anchor": 1500,
+      "tie_margin": 0.0001,
+      "prior": 0.01,
+      "iterations": 400,
+      "source_sha256": "9ece98326c32453179b0c765eb45944b68ca9de944d2828a1d42dee1401d1835",
+      "point_and_WTL_recomputed": true,
+      "W8_bootstrap_draws": 1000,
+      "W8_bootstrap_seed": 20261031,
+      "W8_intervals": "Author intervals retained after source review, not independently rerun; differs from10000-draw common primary gate."
+    }
+  },
+  "limits": [
+    "Exposed r882; development-only contexts.",
+    "Cached features include mixed train/dev arrays materialized before train indexing; no dev outcome evaluation is claimed.",
+    "Original manifest did not embed per-pool hashes/order proof; author addendum checks all1219 pool hashes against selected.json and rowwise proj16 vs live formula (max error9.537e-7). Context tokens are trusted via cache provenance, not recomputed; inherited fold exposure remains unqualified.",
+    "Family intervals are exploratory diagnostics, not confidence of meeting the context/draw tolerance.",
+    "Each arm uses its own full-pool reference; zero anchor reversals alone does not prove utility improvement over live."
+  ]
+}
