@@ -642,11 +642,11 @@ impl SegmentStore {
         })
     }
 
-    /// Performs the usage operation and returns an error if it cannot be completed.
+    /// Performs the usage operation.
     pub fn usage(&self) -> &Usage {
         &self.usage
     }
-    /// Performs the root digest operation and returns an error if it cannot be completed.
+    /// Performs the root digest operation.
     pub fn root_digest(&self) -> &str {
         &self.current.root_sha256
     }

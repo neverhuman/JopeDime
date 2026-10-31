@@ -265,7 +265,7 @@ pub enum HistoricalStatus {
     },
 }
 
-/// Performs the verify historical operation and returns an error if it cannot be completed.
+/// Performs the verify historical operation.
 pub fn verify_historical(
     expected: Option<&HistoricalFixture>,
     input_sha256: &str,

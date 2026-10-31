@@ -44,12 +44,12 @@ impl<'a> Trie<'a> {
         Ok(())
     }
 
-    /// Performs the leaf count operation and returns an error if it cannot be completed.
+    /// Performs the leaf count operation.
     pub fn leaf_count(&self) -> usize {
         self.leaves.len()
     }
 
-    /// Performs the contains operation and returns an error if it cannot be completed.
+    /// Performs the contains operation.
     pub fn contains(&self, tokens: &[u16]) -> bool {
         self.leaves
             .binary_search_by(|p| p.tokens.as_slice().cmp(tokens))

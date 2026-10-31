@@ -149,3 +149,19 @@ def test_dangling_staging_symlink_is_rejected_before_worker_can_follow_it(tmp_pa
     with pytest.raises(RuntimeError):
         r.clear_staging(root, tmp_path / "custody")
     assert staged.is_symlink()
+
+
+def test_symlinked_staging_directory_cannot_remove_checkpoint_file(tmp_path):
+    root = tmp_path / "run"
+    checkpoints = root / "checkpoints"
+    checkpoints.mkdir(parents=True)
+    checkpoint = checkpoints / "r882_adapter_copy.pt"
+    checkpoint.write_bytes(b"synthetic pinned adapter")
+    (root / "scratch").symlink_to(checkpoints, target_is_directory=True)
+    with pytest.raises(RuntimeError, match="staging directory"):
+        r.clear_staging(
+            root,
+            tmp_path / "custody",
+            expected_sha=hashlib.sha256(checkpoint.read_bytes()).hexdigest(),
+        )
+    assert checkpoint.read_bytes() == b"synthetic pinned adapter"

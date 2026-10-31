@@ -57,10 +57,7 @@ impl Metric {
         Metric::Mase,
     ];
 
-    #[cfg_attr(
-        doc,
-        doc = "Performs the direction operation and returns an error if it cannot be completed."
-    )]
+    #[cfg_attr(doc, doc = "Performs the direction operation.")]
     pub fn direction(self) -> Direction {
         match self {
             Metric::R2 | Metric::OofR2 | Metric::Auc | Metric::MacroF1 | Metric::NegativeMase => {

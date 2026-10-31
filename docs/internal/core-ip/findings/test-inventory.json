@@ -1951,12 +1951,20 @@
       "reason": "CPU-only H82 fresh-seed retry-boundary, load/budget, frozen-reference and paired Elo/admission tests; offline research outside product qualification.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h85_w1_cpu_remediation_and_models/test_w1_remediation.py": {
+      "reason": "CPU-only H85 W1 pre-review remediation, shard sidecar, lock FD, GPU budget ledger, within-context template pairing and H81 strength-guard tests; offline research outside product qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h93_lookahead_noise/test_h93.py": {
       "reason": "CPU-only H93 Lookahead/noise/effective-batch, paired Elo/admission, top-four overlap, and launch-barrier fixtures; offline research outside product qualification.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h83_w6_cross_family_cached/test_run_w6_cached.py": {
       "reason": "Owner-requested pytest proofs for the H83 W6 cross-family cached screen; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h95_w8_hwm_resplit_confirm/test_run_resplit_confirm.py": {
+      "reason": "Owner-requested pytest proofs for the H95 W8 resplit confirmation of H94 apparent high-water marks; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h92_w6_downside_controlled/test_run_downside.py": {

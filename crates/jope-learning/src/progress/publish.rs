@@ -101,7 +101,7 @@ pub struct Graph {
 }
 
 impl Graph {
-    /// Performs the get operation and returns an error if it cannot be completed.
+    /// Performs the get operation.
     pub fn get<T: Inventoried>(&self, digest: &str) -> Option<Decoded<T>> {
         let key = ObjectRef {
             kind: T::KIND,
@@ -112,7 +112,7 @@ impl Graph {
             .and_then(|bytes| decode_as::<T>(bytes, digest).ok())
     }
 
-    /// Performs the all operation and returns an error if it cannot be completed.
+    /// Performs the all operation.
     pub fn all<T: Inventoried>(&self) -> Vec<Decoded<T>> {
         self.objects
             .iter()
@@ -121,7 +121,7 @@ impl Graph {
             .collect()
     }
 
-    /// Performs the digests operation and returns an error if it cannot be completed.
+    /// Performs the digests operation.
     pub fn digests(&self, kind: Kind) -> Vec<String> {
         self.objects
             .keys()

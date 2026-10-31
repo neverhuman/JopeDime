@@ -62,7 +62,7 @@ pub struct IndexSummary {
 }
 
 impl GroupIndex {
-    /// Performs the summary operation and returns an error if it cannot be completed.
+    /// Performs the summary operation.
     pub fn summary(&self) -> IndexSummary {
         IndexSummary {
             rows: self.rows,

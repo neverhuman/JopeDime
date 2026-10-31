@@ -344,6 +344,34 @@ class DiskPolicyTests(unittest.TestCase):
             os.utime(path, (1, 1))
         self.assertFalse(jope_diskd.safe_target_tree(target, now=10**12))
 
+    def test_target_model_and_dataset_artifacts_are_not_rebuildable_caches(self) -> None:
+        for name in (
+            "model.pt", "model.pth", "checkpoint.ckpt", "weights.safetensors",
+            "dataset.bin", "array.npy", "model.h5", "training.pkl", "model.onnx",
+            "rows.tfrecord",
+        ):
+            with self.subTest(name=name):
+                target = self.home / name / "target"
+                artifact = target / "debug" / "deps" / name
+                artifact.parent.mkdir(parents=True)
+                artifact.write_bytes(b"synthetic protected artifact")
+                for path in (artifact, artifact.parent, artifact.parent.parent, target):
+                    os.utime(path, (1, 1))
+                self.assertFalse(jope_diskd.safe_target_tree(target, now=10**12))
+
+    def test_cargo_incremental_binary_cache_remains_rebuildable(self) -> None:
+        target = self.home / "incremental" / "target"
+        artifact = target / "debug" / "incremental" / "crate-hash" / "dep-graph.bin"
+        artifact.parent.mkdir(parents=True)
+        artifact.write_bytes(b"synthetic Cargo incremental cache")
+        for path in (artifact, artifact.parent, artifact.parent.parent, artifact.parent.parent.parent, target):
+            os.utime(path, (1, 1))
+        self.assertTrue(jope_diskd.safe_target_tree(target, now=10**12))
+        payload = artifact.parent / "training-data.bin"
+        payload.write_bytes(b"synthetic non-Cargo binary payload")
+        os.utime(payload, (1, 1))
+        self.assertFalse(jope_diskd.safe_target_tree(target, now=10**12))
+
     def test_disk_policy_enables_closed_worktree_and_open_target_rules(self) -> None:
         policy_path = Path(__file__).with_name("disk-policy.yaml")
         policy = json.loads(policy_path.read_text(encoding="utf-8"))
@@ -552,6 +580,47 @@ class DiskPolicyTests(unittest.TestCase):
             [event["event"] for event in events],
             ["delete_intent_tree", "deleted_tree", "remove_worktree_intent", "removed_worktree"],
         )
+
+    def test_cargo_target_cleanup_preserves_checkpoint_artifact(self) -> None:
+        repo = self.home / "JopeDime"
+        worktree = repo / ".agent" / "worktrees" / "merged-lane"
+        target = worktree / "target"
+        checkpoint = target / "debug" / "deps" / "model.pt"
+        checkpoint.parent.mkdir(parents=True)
+        checkpoint.write_bytes(b"synthetic checkpoint")
+        for path in (checkpoint, checkpoint.parent, checkpoint.parent.parent, target):
+            os.utime(path, (1, 1))
+        candidate = {
+            "worktree": worktree,
+            "target": target,
+            "target_exists": True,
+            "stale_target": True,
+            "branch": "merged-lane",
+            "head": "abc123",
+            "disposition": "merged",
+            "clean": True,
+            "ignored_safe": True,
+        }
+        with (
+            mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
+            mock.patch.object(jope_diskd, "expand_path", return_value=self.home / ".agent" / "worktrees"),
+            mock.patch.object(jope_diskd, "worktree_cleanup_inventory", return_value=[candidate]),
+            mock.patch.object(jope_diskd, "open_handles_under", return_value=set()),
+            mock.patch.object(jope_diskd, "local_process_references", return_value=False),
+            mock.patch.object(jope_diskd.shutil, "rmtree") as remove_tree,
+        ):
+            freed = jope_diskd.handle_cargo_targets(
+                {"id": "cargo-targets", "path": "~/JopeDime/.agent/worktrees", "remove_merged_worktrees": True},
+                repo,
+                {"local_only": True},
+                lambda _event: None,
+                dry_run=False,
+                now=10**12,
+                needed_bytes=1,
+            )
+        self.assertEqual(freed, 0)
+        self.assertTrue(checkpoint.is_file())
+        remove_tree.assert_not_called()
 
     def test_stale_target_in_open_pr_worktree_is_removed_without_removing_source(self) -> None:
         repo = self.home / "JopeDime"

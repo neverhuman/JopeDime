@@ -231,7 +231,7 @@ impl<T> UnpinnedOr<T> {
         matches!(self, Self::Unpinned)
     }
 
-    /// Performs the as pinned operation and returns an error if it cannot be completed.
+    /// Performs the as pinned operation.
     pub fn as_pinned(&self) -> Option<&T> {
         match self {
             Self::Unpinned => None,

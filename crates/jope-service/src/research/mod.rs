@@ -4,6 +4,9 @@
 //! This module does not reconstruct missing costs, run a model, qualify guidance,
 //! change discovery admission, or expose a public/release CLI command.
 
+mod producer;
+pub use producer::RoundCapture;
+
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeSet, fs::File, io::Write, path::Path};

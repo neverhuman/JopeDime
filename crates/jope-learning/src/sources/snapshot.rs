@@ -390,7 +390,7 @@ pub fn scan(
     Ok((out, scan))
 }
 
-/// Performs the scan source operation and returns an error if it cannot be completed.
+/// Performs the scan source operation.
 pub fn scan_source(manifest: &Path, scan: &SnapshotScan) -> Value {
     crate::hwm::source_value(
         "snapshot",

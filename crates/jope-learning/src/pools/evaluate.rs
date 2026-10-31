@@ -64,7 +64,7 @@ pub struct Inputs<'a> {
     pub unavailable: Vec<Unavailable>,
 }
 
-/// Performs the fold of operation and returns an error if it cannot be completed.
+/// Performs the fold of operation.
 pub fn fold_of(salt: &str, parent: &str, folds: usize) -> usize {
     let mut h = Sha256::new();
     h.update((salt.len() as u64).to_le_bytes());

@@ -184,7 +184,7 @@ fn coldness(class: &str) -> u8 {
     }
 }
 
-/// Performs the coverage operation and returns an error if it cannot be completed.
+/// Performs the coverage operation.
 pub fn coverage(l: &Lifecycles, bucket: &str, prefix: &str, direct: bool) -> Coverage {
     let Some(rules) = l.rules.get(bucket) else {
         return Coverage::default();

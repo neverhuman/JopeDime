@@ -103,7 +103,7 @@ impl Action {
         }
     }
 
-    /// Performs the tier operation and returns an error if it cannot be completed.
+    /// Performs the tier operation.
     pub fn tier(self) -> &'static str {
         match self {
             Action::KeepT0 => "T0",

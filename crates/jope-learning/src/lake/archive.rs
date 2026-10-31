@@ -229,17 +229,17 @@ impl Archive {
         Ok(())
     }
 
-    /// Performs the identity SHA-256 operation and returns an error if it cannot be completed.
+    /// Performs the identity SHA-256 operation.
     pub fn identity_sha256(&self) -> &str {
         &self.identity_sha256
     }
 
-    /// Performs the cells operation and returns an error if it cannot be completed.
+    /// Performs the cells operation.
     pub fn cells(&self) -> &BTreeMap<String, Elite> {
         &self.cells
     }
 
-    /// Performs the events operation and returns an error if it cannot be completed.
+    /// Performs the events operation.
     pub fn events(&self) -> &[ArchiveEvent] {
         &self.events
     }
@@ -412,7 +412,7 @@ pub struct RetrievalRequest {
 
 /// I04 adapter must bind this decision to the authenticated requester and its current capabilities.
 pub trait RetrievalPolicy {
-    /// Performs the allows operation and returns an error if it cannot be completed.
+    /// Performs the allows operation.
     fn allows(&self, request: &RetrievalRequest, candidate: &Candidate) -> bool;
 }
 
