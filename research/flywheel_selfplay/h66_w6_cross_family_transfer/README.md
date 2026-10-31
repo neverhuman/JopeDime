@@ -63,8 +63,9 @@ top-level `DL-Train` partition and per-dataset canonical physical-table hashes.
 It contains 1,219 contexts, 205 families, 257 version-pinned source-object
 references, and the seed-4900 fold manifest. The builder stops parsing before
 the DL-Val array and decodes metadata only for training-referenced dataset IDs.
-The full source files were hashed for identity, but unselected rows were not
-parsed or used. No S3 source object bodies, outcome values, pools, tables,
+The full source files were hashed for identity, but rows after the train array
+were not parsed and metadata values for unselected IDs were not decoded or used.
+No S3 source object bodies, outcome values, pools, tables,
 checkpoints, or scores were opened. See
 [`H72 W6 roster preparation`](../h72_w6_train_roster_prep/README.md) for the
 create-only S3 custody keys and readback hashes.

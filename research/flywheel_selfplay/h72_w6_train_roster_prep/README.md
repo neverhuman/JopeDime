@@ -13,8 +13,10 @@ The committed builder reads only the packet's first top-level `train` array,
 stops before the following DL-Val section, and decodes task metadata only for
 dataset IDs referenced by those training rows. It projects exactly the schema
 accepted by [H66's fold builder](../h66_w6_cross_family_transfer/prepare_folds.py).
-The full selected and task-metadata files are SHA-pinned for source identity;
-their unselected records are not parsed or used. The inventory records the 257
+The full selected and task-metadata files are SHA-pinned for identity. The
+selected-row parser stops before DL-Val, and the metadata scanner decodes values
+only for training-referenced dataset IDs; unselected row/value records are not
+parsed or used. The inventory records the 257
 unique, version-pinned real S3 training table references and their canonical
 physical-table hashes. No dataset object, pool, checkpoint, score, or outcome
 body was opened.
