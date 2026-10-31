@@ -14,6 +14,8 @@ failpoints = []
 research = []
 
 [dependencies]
+# Registry declaration patched to the vendored copy by [patch.crates-io], exactly like starforge.
+candle_core_0_11_0 = { package = "candle-core", version = "0.11.0" }
 p256.workspace = true
 safetensors = "=0.8.0"
 chrono = "=0.4.45"
@@ -41,8 +43,6 @@ ulid = { workspace = true }
 zip = { version = "=9.0.5", default-features = false, features = ["deflate"] }
 
 [dev-dependencies]
-# Registry declaration patched to the vendored copy by [patch.crates-io], exactly like starforge.
-candle_core_0_11_0 = { package = "candle-core", version = "0.11.0" }
 proptest.workspace = true
 tempfile = { workspace = true }
 tower = { version = "=0.5.3", default-features = false, features = ["util"] }
