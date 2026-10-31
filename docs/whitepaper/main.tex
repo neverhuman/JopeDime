@@ -11,6 +11,7 @@
 \usepackage{flushend}% equal-height columns on the last page only
 \usepackage{placeins}% \FloatBarrier keeps section 7 floats out of section 8
 \setcounter{topnumber}{3}\setcounter{totalnumber}{4}% three top floats per column, so Tables 7-8 fit on their page ahead of the Section 8 barrier
+\renewcommand{\textfraction}{0.1}\renewcommand{\topfraction}{0.85}% let a column top hold a tall figure, so the Section 6.8 and 7 figures keep pace with their text
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[hidelinks]{hyperref}% black links for print (owner decision t0352; revisit per venue)
 \usepackage[capitalise,noabbrev]{cleveref}

@@ -62,6 +62,243 @@ class DiskPolicyTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             jope_diskd.read_policy(path)
 
+    def test_disk_policy_sets_target_cap_and_exact_source_tar_prune(self) -> None:
+        policy = json.loads((Path(__file__).with_name("disk-policy.yaml")).read_text(encoding="utf-8"))
+        cargo = next(entry for entry in policy["paths"] if entry["id"] == "cargo-targets")
+        source_tars = next(entry for entry in policy["paths"] if entry["id"] == "jankurai-source-tars")
+        self.assertEqual(cargo["per_target_cap_bytes"], 20 * jope_diskd.GIB)
+        self.assertEqual(source_tars["kind"], "jankurai-source-tar")
+        self.assertEqual(source_tars["path"], "~/JopeDime")
+        self.assertEqual(source_tars["max_file_bytes"], 512 * 1024**2)
+        self.assertEqual(source_tars["ttl_hours"], 24)
+        config = self.home / "policy.yaml"
+        config.write_text(json.dumps(policy), encoding="utf-8")
+        self.assertEqual(jope_diskd.read_policy(config), policy)
+        cargo["per_target_cap_bytes"] = 0
+        config.write_text(json.dumps(policy), encoding="utf-8")
+        with self.assertRaises(ValueError):
+            jope_diskd.read_policy(config)
+        cargo["per_target_cap_bytes"] = 20 * jope_diskd.GIB
+        source_tars["path"] = "~/other-repo"
+        config.write_text(json.dumps(policy), encoding="utf-8")
+        with self.assertRaises(ValueError):
+            jope_diskd.read_policy(config)
+
+    def test_cleanup_inventory_uses_per_worktree_target_cap(self) -> None:
+        repo = self.home / "JopeDime"
+        worktrees_root = repo / ".agent" / "worktrees"
+        worktree = worktrees_root / "open-lane"
+        target = worktree / "target"
+        target.mkdir(parents=True)
+        os.utime(target, (1, 1))
+        worktree_list = jope_diskd.subprocess.CompletedProcess(
+            [], 0, f"worktree {worktree}\nHEAD abc123\nbranch refs/heads/open-lane\n", ""
+        )
+        not_merged = jope_diskd.subprocess.CompletedProcess([], 1, "", "")
+        clean = jope_diskd.subprocess.CompletedProcess([], 0, "", "")
+
+        def inventory(cap: int):
+            with (
+                mock.patch.object(jope_diskd.subprocess, "run", side_effect=[worktree_list, not_merged, clean]),
+                mock.patch.object(jope_diskd, "path_size", return_value=100),
+                mock.patch.object(jope_diskd, "worktree_idle_for_cleanup", return_value=True),
+            ):
+                return jope_diskd.worktree_cleanup_inventory(
+                    repo,
+                    worktrees_root,
+                    ttl_seconds=3600,
+                    now=100_000,
+                    include_closed_pr_worktrees=False,
+                    idle_seconds=3600,
+                    per_target_cap_bytes=cap,
+                )
+
+        self.assertEqual(inventory(101), [])
+        over_cap = inventory(99)
+        self.assertEqual(len(over_cap or []), 1)
+        self.assertTrue(over_cap[0]["target_over_cap"])
+
+    def source_tar_fixture(self) -> tuple[Path, Path, Path, dict[str, object], str]:
+        repo = self.home / "JopeDime"
+        worktrees_root = repo / ".agent" / "worktrees"
+        worktree = worktrees_root / "lane"
+        report_root = worktree / "target" / "jankurai" / "reports"
+        source_tar = report_root / "run-1" / "input" / "source.tar"
+        source_tar.parent.mkdir(parents=True)
+        with source_tar.open("wb") as stream:
+            stream.truncate(600 * 1024**2)
+        os.utime(source_tar, (1, 1))
+        worktrees_root.mkdir(parents=True, exist_ok=True)
+        outside_checkout = repo.parent / "external-checkout"
+        outside_checkout.mkdir(parents=True)
+        listing = (
+            f"worktree {repo}\nHEAD mainhead\n\n"
+            f"worktree {worktree}\nHEAD lanehead\nbranch refs/heads/lane\n\n"
+            f"worktree {outside_checkout}\nHEAD externalhead\nbranch refs/heads/external\n"
+        )
+        entry: dict[str, object] = {
+            "id": "jankurai-source-tars",
+            "kind": "jankurai-source-tar",
+            "path": "~/JopeDime",
+            "max_file_bytes": 512 * 1024**2,
+            "ttl_hours": 24,
+        }
+        return repo, worktrees_root, source_tar, entry, listing
+
+    def test_jankurai_source_tar_dry_run_preserves_file_and_does_not_log(self) -> None:
+        repo, worktrees_root, source_tar, entry, listing = self.source_tar_fixture()
+        report_root = source_tar.parents[2]
+        summary = report_root / "run-1" / "summary.json"
+        summary.write_text("{}\n", encoding="utf-8")
+        small_source = report_root / "run-2" / "input" / "source.tar"
+        small_source.parent.mkdir(parents=True)
+        with small_source.open("wb") as stream:
+            stream.truncate(int(entry["max_file_bytes"]))
+        os.utime(small_source, (1, 1))
+        events: list[dict[str, object]] = []
+        with (
+            mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
+            mock.patch.object(
+                jope_diskd.subprocess,
+                "run",
+                return_value=jope_diskd.subprocess.CompletedProcess([], 0, listing, ""),
+            ),
+            mock.patch.object(jope_diskd, "open_handles_under", return_value=set()),
+            mock.patch.object(jope_diskd, "local_process_references", return_value=False),
+        ):
+            freed = jope_diskd.handle_jankurai_source_tars(
+                entry, repo, worktrees_root, events.append, dry_run=True, now=100_000_000, needed_bytes=1
+            )
+        self.assertEqual(freed, source_tar.stat().st_size)
+        self.assertTrue(source_tar.exists())
+        self.assertTrue(summary.exists())
+        self.assertTrue(small_source.exists())
+        self.assertEqual(events, [])
+
+    def test_jankurai_source_tar_apply_unlinks_exact_file_and_logs_both_events(self) -> None:
+        repo, worktrees_root, source_tar, entry, listing = self.source_tar_fixture()
+        events: list[dict[str, object]] = []
+        with (
+            mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
+            mock.patch.object(
+                jope_diskd.subprocess,
+                "run",
+                return_value=jope_diskd.subprocess.CompletedProcess([], 0, listing, ""),
+            ),
+            mock.patch.object(jope_diskd, "open_handles_under", return_value=set()),
+            mock.patch.object(jope_diskd, "local_process_references", return_value=False),
+        ):
+            freed = jope_diskd.handle_jankurai_source_tars(
+                entry, repo, worktrees_root, events.append, dry_run=False, now=100_000_000, needed_bytes=1
+            )
+        self.assertEqual(freed, 600 * 1024**2)
+        self.assertFalse(source_tar.exists())
+        self.assertEqual([event["event"] for event in events], ["delete_intent_file", "deleted_file"])
+
+    def test_jankurai_source_tar_pruner_skips_open_or_unreadable_inputs(self) -> None:
+        repo, worktrees_root, source_tar, entry, listing = self.source_tar_fixture()
+        events: list[dict[str, object]] = []
+        with (
+            mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
+            mock.patch.object(
+                jope_diskd.subprocess,
+                "run",
+                return_value=jope_diskd.subprocess.CompletedProcess([], 0, listing, ""),
+            ),
+            mock.patch.object(jope_diskd, "open_handles_under", return_value=None),
+            mock.patch.object(jope_diskd, "local_process_references", return_value=False),
+        ):
+            freed = jope_diskd.handle_jankurai_source_tars(
+                entry, repo, worktrees_root, events.append, dry_run=False, now=100_000_000, needed_bytes=1
+            )
+        self.assertEqual(freed, 0)
+        self.assertTrue(source_tar.exists())
+        self.assertEqual(events, [])
+
+    def test_jankurai_source_tar_pruner_skips_open_file(self) -> None:
+        repo, worktrees_root, source_tar, entry, listing = self.source_tar_fixture()
+        events: list[dict[str, object]] = []
+        with (
+            mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
+            mock.patch.object(
+                jope_diskd.subprocess,
+                "run",
+                return_value=jope_diskd.subprocess.CompletedProcess([], 0, listing, ""),
+            ),
+            mock.patch.object(jope_diskd, "open_handles_under", return_value={source_tar.resolve()}),
+            mock.patch.object(jope_diskd, "local_process_references", return_value=False),
+        ):
+            freed = jope_diskd.handle_jankurai_source_tars(
+                entry, repo, worktrees_root, events.append, dry_run=False, now=100_000_000, needed_bytes=1
+            )
+        self.assertEqual(freed, 0)
+        self.assertTrue(source_tar.exists())
+        self.assertEqual(events, [])
+
+    def test_jankurai_source_tar_pruner_skips_recent_file(self) -> None:
+        repo, worktrees_root, source_tar, entry, listing = self.source_tar_fixture()
+        os.utime(source_tar, (99_999_000, 99_999_000))
+        events: list[dict[str, object]] = []
+        with (
+            mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
+            mock.patch.object(
+                jope_diskd.subprocess,
+                "run",
+                return_value=jope_diskd.subprocess.CompletedProcess([], 0, listing, ""),
+            ),
+            mock.patch.object(jope_diskd, "open_handles_under", return_value=set()),
+            mock.patch.object(jope_diskd, "local_process_references", return_value=True),
+        ):
+            freed = jope_diskd.handle_jankurai_source_tars(
+                entry, repo, worktrees_root, events.append, dry_run=False, now=100_000_000, needed_bytes=1
+            )
+        self.assertEqual(freed, 0)
+        self.assertTrue(source_tar.exists())
+        self.assertEqual(events, [])
+
+    def test_jankurai_source_tar_pruner_skips_active_checkout(self) -> None:
+        repo, worktrees_root, source_tar, entry, listing = self.source_tar_fixture()
+        events: list[dict[str, object]] = []
+        with (
+            mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
+            mock.patch.object(
+                jope_diskd.subprocess,
+                "run",
+                return_value=jope_diskd.subprocess.CompletedProcess([], 0, listing, ""),
+            ),
+            mock.patch.object(jope_diskd, "open_handles_under", return_value=set()),
+            mock.patch.object(jope_diskd, "local_process_references", return_value=True),
+        ):
+            freed = jope_diskd.handle_jankurai_source_tars(
+                entry, repo, worktrees_root, events.append, dry_run=False, now=100_000_000, needed_bytes=1
+            )
+        self.assertEqual(freed, 0)
+        self.assertTrue(source_tar.exists())
+        self.assertEqual(events, [])
+
+    def test_jankurai_source_tar_pruner_skips_hardlink(self) -> None:
+        repo, worktrees_root, source_tar, entry, listing = self.source_tar_fixture()
+        second_link = self.home / "second-link.tar"
+        os.link(source_tar, second_link)
+        events: list[dict[str, object]] = []
+        with (
+            mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
+            mock.patch.object(
+                jope_diskd.subprocess,
+                "run",
+                return_value=jope_diskd.subprocess.CompletedProcess([], 0, listing, ""),
+            ),
+            mock.patch.object(jope_diskd, "open_handles_under", return_value=set()),
+            mock.patch.object(jope_diskd, "local_process_references", return_value=False),
+        ):
+            freed = jope_diskd.handle_jankurai_source_tars(
+                entry, repo, worktrees_root, events.append, dry_run=False, now=100_000_000, needed_bytes=1
+            )
+        self.assertEqual(freed, 0)
+        self.assertTrue(source_tar.exists())
+        self.assertTrue(second_link.exists())
+        self.assertEqual(events, [])
+
     def test_policy_rejects_hosts_outside_the_exact_allowlist(self) -> None:
         policy = {
             "version": 1,
