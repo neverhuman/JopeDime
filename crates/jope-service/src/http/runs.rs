@@ -561,9 +561,14 @@ pub(super) async fn start(
     request: Request<Body>,
 ) -> Response {
     let headers = request.headers().clone();
-    let Some(key) = headers.get("idempotency-key").and_then(|v| v.to_str().ok()) else {
+    let target = request.uri().to_string();
+    let mut keys = headers.get_all("idempotency-key").iter();
+    let Some(key) = keys.next().and_then(|v| v.to_str().ok()) else {
         return response(&invalid("Idempotency-Key is required."));
     };
+    if keys.next().is_some() {
+        return response(&invalid("Idempotency-Key must occur once."));
+    }
     let Json(spec) = match Json::<RunSpec>::from_request(request, &()).await {
         Ok(value) => value,
         Err(_) => return response(&invalid("Expected a valid JSON RunSpec.")),
@@ -576,7 +581,7 @@ pub(super) async fn start(
         "local-engine-owner",
         key,
         6,
-        "/v1/runs",
+        &target,
         headers.get("if-match").and_then(|v| v.to_str().ok()),
         &body,
     ) {

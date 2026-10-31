@@ -515,8 +515,9 @@ pub(super) fn shared_run_surfaces() -> Result<()> {
     let snapshot: RunSnapshot =
         serde_json::from_value(rpc.tool("run_status", json!({"run_id":id}))?)?;
     let page = rpc.tool("run_events", json!({"run_id":id,"after":"0","limit":256}))?;
+    let next_after: DecimalU64 = serde_json::from_value(page["next_after"].clone())?;
     ensure!(
-        page["next_after"] == snapshot.event_watermark.0.to_string(),
+        next_after == snapshot.event_watermark,
         "MCP event page truncated"
     );
     captures.push(
