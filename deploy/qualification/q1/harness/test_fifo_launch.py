@@ -166,6 +166,46 @@ else:
         self.assertEqual(sentinel.read_bytes(), before)
         self.assertEqual(list(self.queue.iterdir()), [sentinel])
 
+    def test_synthetic_dry_run_writes_unknown_decision_without_lock_or_payload(self):
+        sentinel = self.queue / "w1-owner.json"
+        sentinel.write_text('{"owner":"fixture-W1"}')
+        before = sentinel.read_bytes()
+        output = self.root / "decision-record.json"
+        with patch.object(fcntl, "flock", side_effect=AssertionError("lock touched")):
+            manifest = launch.load_input_manifest(self.paths.input_manifest, self.paths)
+            record = launch.dry_run(self.paths.input_manifest, output, self.paths)
+        self.assertTrue(manifest["datasets"])
+        self.assertEqual(
+            set(manifest["datasets"][0]),
+            {"dataset_id", "sha256", "s3_manifest_sha256"},
+        )
+        self.assertEqual(record["schema"], "jope.q1-decision-record/v1")
+        self.assertEqual(record["q1_status"], "NOT_RUN")
+        self.assertEqual(record["decision"], "UNKNOWN_NOT_RUN")
+        self.assertIsNone(record["primary_effect"])
+        self.assertEqual(record["failure_inventory"], "NOT_RUN")
+        self.assertFalse(record["controls"]["qualification_lock_acquired"])
+        self.assertFalse(record["controls"]["fifo_ticket_created"])
+        self.assertFalse(record["controls"]["backend_invoked"])
+        self.assertFalse(record["controls"]["dataset_payloads_opened"])
+        self.assertFalse(record["controls"]["default_changed"])
+        self.assertEqual(q1.load(output), record)
+        self.assertEqual(sentinel.read_bytes(), before)
+        self.assertEqual(list(self.queue.iterdir()), [sentinel])
+        with self.assertRaises(FileExistsError):
+            launch.dry_run(self.paths.input_manifest, output, self.paths)
+
+    def test_synthetic_dry_run_refuses_a_changed_dope_manifest(self):
+        source = q1.load(self.paths.input_manifest)
+        source["dope_sha256"] = "f" * 64
+        manifest = self.root / "bad-input-manifest.json"
+        manifest.write_bytes(q1.canonical(source))
+        output = self.root / "must-not-exist.json"
+        with self.assertRaisesRegex(ValueError, "frozen DOPE differs"):
+            launch.dry_run(manifest, output, self.paths)
+        self.assertFalse(output.exists())
+        self.assertEqual(list(self.queue.iterdir()), [])
+
     def test_unsigned_preregistration_refuses_before_queue_output_or_ledger(self):
         self.prereg.write_text("Owner allowed-signers SHA-256: PENDING\n")
         self.plan["preregistration_sha256"] = q1.sha_file(self.prereg)

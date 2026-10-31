@@ -160,3 +160,52 @@ becomes zero counts. A completed analysis can still say `FAIL`. This wrapper
 never changes the guidance default or promotes a model. The launcher tests use
 private queues, locks, fixture signing keys and benign child processes; they are
 software control proofs, not a Q1 study.
+
+## Owner-granted CPU dry run — metadata only
+
+`../inputs-manifest.json` contains only dataset IDs, canonical dataset SHA-256
+values, and S3 manifest SHA-256 values from the already-published QLT-02 candidate
+metadata, plus source-file/catalog hashes. It contains no rows, family/shape
+details, object keys or payload bytes.
+Its `qualification_eligible=false` flag is intentional: the source describes a
+candidate cohort, not an owner-approved authoritative Q1 roster. The manifest is
+for this synthetic dry run only; it is not passed to `launch` or sufficient to
+admit a Q1 plan. No sealed or holdout payload is opened here.
+
+The CPU-only command below checks the manifest against its pinned cohort metadata,
+checks frozen DOPE `c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814`,
+and writes a create-only decision-record skeleton:
+
+```sh
+mkdir -p "$Q1_DRY_RUN_DIR"
+PYTHONDONTWRITEBYTECODE=1 python3 -B deploy/qualification/q1/harness/fifo_launch.py dry-run \
+  --inputs-manifest deploy/qualification/q1/inputs-manifest.json \
+  --out "$Q1_DRY_RUN_DIR/q1-decision-record.json"
+```
+
+The record says `q1_status=NOT_RUN` and `decision=UNKNOWN_NOT_RUN`; effects,
+intervals, subgroups, failures and study compute stay unknown. It records that no
+FIFO ticket, backend, qualification lock, dataset payload or default change was
+used. An existing output is refused; this command cannot execute a backend.
+
+This is a preparation dry run, not a Q1 result or approval. For an actual launch,
+use only the guarded `launch` command above after the complete owner-signed gates
+are satisfied. Do not pre-acquire the lock outside the FIFO launcher: `lease()`
+opens the existing `qualification.lock` with `O_NOFOLLOW`, takes the exclusive
+flock only at its FIFO turn, validates the locked inode, and passes that exact
+open descriptor to the child via `pass_fds`. The `launch` admission also checks
+the exact frozen DOPE hash before it creates a ticket. This CPU extension does not
+change the signed plan schema or relax those admission checks.
+
+### Design note
+
+The dry run extends the existing FIFO launcher rather than adding a second lock
+path. A shell wrapper that acquired `qualification.lock` before queueing would
+bypass FIFO order and could deadlock the existing launcher. The manifest is
+candidate metadata only and deliberately marked ineligible for qualification;
+reading payloads during preparation or letting a synthetic record produce
+PASS/FAIL were rejected. Risks are stale/non-authoritative cohort metadata and
+confusion between the candidate list and a signed Q1 roster; the command binds the
+cohort and catalog hashes and refuses to emit a result. This is limited to CPU
+preparation under spec §§13.1, 13.3 and 14; actual Q1, the guidance default and
+the frozen protocol remain unchanged.

@@ -12,6 +12,7 @@ import math
 import os
 from pathlib import Path
 import platform
+import re
 import signal
 import stat
 import subprocess
@@ -31,6 +32,8 @@ class Paths:
     driver: Path = ROOT / "deploy/qualification/q1/harness/q1.py"
     prereg: Path = ROOT / "deploy/qualification/q1/PREREGISTRATION.md"
     fifo: Path = ROOT / "research/flywheel_selfplay/qualification_lock_fifo.py"
+    cohort: Path = ROOT / "deploy/qualification/q1/cohort.json"
+    input_manifest: Path = ROOT / "deploy/qualification/q1/inputs-manifest.json"
     lock: Path = Path.home() / "jope_plan/qualification.lock"
     queue: Path = Path.home() / "jope_plan/qualification.queue"
 
@@ -99,6 +102,116 @@ def prepare(paths, owner):
         in paths.prereg.read_text(),
         "study_started": False,
     }
+
+
+def build_input_manifest(paths):
+    cohort = q1.load(paths.cohort)
+    q1.require(
+        isinstance(cohort, dict)
+        and cohort.get("schema") == "jope.q1.held-out-cohort/v1",
+        "unsupported QLT-02 candidate cohort metadata",
+    )
+    datasets = []
+    seen_ids = set()
+    rows = cohort.get("datasets")
+    q1.require(isinstance(rows, list), "invalid QLT-02 candidate dataset list")
+    for row in rows:
+        q1.require(isinstance(row, dict), "invalid QLT-02 candidate dataset entry")
+        dataset_id = row.get("dataset_id")
+        canonical_sha = row.get("sha256")
+        manifest_sha = row.get("s3_manifest_sha256")
+        q1.require(
+            isinstance(dataset_id, str)
+            and re.fullmatch(r"[0-9a-f]{16}", dataset_id) is not None
+            and isinstance(canonical_sha, str)
+            and canonical_sha.startswith(dataset_id)
+            and q1.sha(canonical_sha)
+            and q1.sha(manifest_sha),
+            "invalid QLT-02 candidate dataset identity or hash",
+        )
+        q1.require(
+            dataset_id not in seen_ids, "duplicate QLT-02 candidate dataset identity"
+        )
+        seen_ids.add(dataset_id)
+        datasets.append(
+            {
+                "dataset_id": dataset_id,
+                "sha256": canonical_sha,
+                "s3_manifest_sha256": manifest_sha,
+            }
+        )
+    q1.require(datasets, "no QLT-02 candidate metadata in the source cohort")
+    q1.require(
+        cohort.get("dataset_count") == len(datasets)
+        and len(datasets) >= 40
+        and isinstance(cohort.get("source"), dict)
+        and q1.sha(cohort["source"].get("catalog_sha256")),
+        "incomplete QLT-02 candidate cohort metadata",
+    )
+    return {
+        "schema": "jope.q1-cpu-input-manifest/v1",
+        "purpose": "candidate-cohort-identities-only; synthetic dry-run only",
+        "source_cohort_sha256": q1.sha_file(paths.cohort),
+        "source_catalog_sha256": cohort["source"]["catalog_sha256"],
+        "dope_sha256": DOPE,
+        "qualification_eligible": False,
+        "payloads_included": False,
+        "datasets": datasets,
+    }
+
+
+def load_input_manifest(path, paths):
+    source = Path(path)
+    q1.require(not source.is_symlink(), "input manifest must not be a symlink")
+    manifest = q1.load(source.resolve(strict=True))
+    q1.require(
+        isinstance(manifest, dict)
+        and manifest.get("schema") == "jope.q1-cpu-input-manifest/v1",
+        "unsupported Q1 CPU input manifest",
+    )
+    q1.require(manifest.get("dope_sha256") == DOPE, "frozen DOPE differs")
+    q1.require(
+        manifest.get("source_cohort_sha256") == q1.sha_file(paths.cohort),
+        "QLT-02 candidate source hash differs",
+    )
+    q1.require(
+        manifest == build_input_manifest(paths),
+        "candidate input manifest differs from its pinned cohort metadata",
+    )
+    return manifest
+
+
+def dry_run(input_manifest, output, paths=Paths()):
+    """Write an unknown Q1 decision skeleton without data, lock or queue access."""
+    manifest = load_input_manifest(input_manifest, paths)
+    source = subprocess.check_output(
+        ["git", "-C", str(paths.root), "rev-parse", "HEAD"], text=True
+    ).strip()
+    record = {
+        "schema": "jope.q1-decision-record/v1",
+        "run_type": "synthetic_cpu_dry_run",
+        "source_commit": source,
+        "inputs_manifest_sha256": q1.sha_file(input_manifest),
+        "dope_sha256": manifest["dope_sha256"],
+        "q1_status": "NOT_RUN",
+        "decision": "UNKNOWN_NOT_RUN",
+        "primary_effect": None,
+        "paired_interval_95": None,
+        "subgroups": {name: None for name in ("small", "large", "narrow", "wide")},
+        "failure_inventory": "NOT_RUN",
+        "compute": {"q1_runs": "NOT_RUN", "cpu_seconds": None, "gpu_hours": None},
+        "controls": {
+            "qualification_lock_acquired": False,
+            "fifo_ticket_created": False,
+            "backend_invoked": False,
+            "dataset_payloads_opened": False,
+            "default_changed": False,
+        },
+        "real_s3_metadata_entries": len(manifest["datasets"]),
+        "qualification_eligible": False,
+    }
+    write_new(output, record)
+    return record
 
 
 def source_identity(paths, source):
@@ -483,6 +596,9 @@ def main():
     prep = modes.add_parser("prepare")
     prep.add_argument("--out", type=Path, required=True)
     prep.add_argument("--owner", default="sol_v1_obj02")
+    dry = modes.add_parser("dry-run")
+    dry.add_argument("--inputs-manifest", type=Path, default=Paths().input_manifest)
+    dry.add_argument("--out", type=Path, required=True)
     run = modes.add_parser("launch")
     for key in ("plan", "backend", "signature", "allowed-signers", "ledger", "run-dir"):
         run.add_argument("--" + key, type=Path, required=True)
@@ -494,6 +610,8 @@ def main():
         if args.mode == "prepare":
             result = prepare(Paths(), args.owner)
             write_new(args.out, result)
+        elif args.mode == "dry-run":
+            result = dry_run(args.inputs_manifest, args.out)
         else:
             result = launch(args)
         print(json.dumps(result, sort_keys=True, allow_nan=False))

@@ -88,20 +88,27 @@ never invent Elo from these loss calculations. Preserve receipts and input hashe
 
 ## Owner signature and single-use enforcement
 
-OWNER first replaces PENDING above with the SHA-256 of their independently supplied
-OpenSSH allowed-signers file (identity `jepson`).
+The digest above is the SHA-256 of the OpenSSH allowed-signers file for identity
+`jepson`. It was originally to be an owner-supplied file. On 2026-10-31 it was
+instead filled in for the owner-delegated key described next, replacing `PENDING`.
 
 **Owner delegation, Q1 only.** Jepson approved on 2026-10-31 at 10:32 MDT that a
 bot-held ed25519 key may sign Q1 as principal `jepson`. The committed file
 `owner/allowed_signers` (public key only, namespace-restricted to `jopedime-q1`,
-fingerprint `SHA256:2KNNiZS7c+YbwsAMt2x0Q9gIdRCd2Yi6CR3k/d1N6LY`) is that key; its
-SHA-256 is the value above. It is an **owner-delegated agent key, not a key Jepson
-holds personally**, and authorizes nothing outside Q1. The canonical signature path
-is `/home/ubuntu/jope_plan/ns/qualification/q1_approval/<plan_sha256>.sig`; the
+fingerprint `SHA256:2KNNiZS7c+YbwsAMt2x0Q9gIdRCd2Yi6CR3k/d1N6LY`, no expiry) is that
+key. It is an **owner-delegated agent key, not a key Jepson holds personally**, and
+authorizes nothing outside Q1. Its private half is a 0600 file on xbabe2 under the
+shared `ubuntu` account, so **any agent process running as that user can produce a
+valid Q1 signature as `jepson`**. The owner accepted this risk; a signature still
+binds one exact document, plan and backend. To revoke the key, replace
+`owner/allowed_signers` and the digest above in a reviewed PR. The canonical
+signature path is
+`/home/ubuntu/jope_plan/ns/qualification/q1_approval/<plan_digest>.sig`, where
+`<plan_digest>` is `q1.digest(plan)`, the SHA-256 of the canonical plan JSON. The
 canonical ledger root a signed plan must name is
-`/home/ubuntu/jope_plan/ns/qualification/q1_ledger`. No plan is signed by this
-amendment: the signature must still bind the final preregistration, full plan and
-qualified backend hash, and every other gate below still applies. The signature is external to this
+`/home/ubuntu/jope_plan/ns/qualification/q1_ledger`. This amendment signs no plan:
+the signature must still bind the final preregistration, full plan and qualified
+backend hash, and every other gate below still applies. The signature is external to this
 file. Sign the exact bytes emitted by `q1.py approval-payload` with namespace
 `jopedime-q1`; these bind this preregistration, the entire frozen plan and the backend
 binary hash. Verification checks the pinned allowed-signers digest and OpenSSH
