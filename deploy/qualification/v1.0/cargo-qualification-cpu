@@ -1,0 +1,9 @@
+#!/usr/bin/env python3
+"""Cargo external entry point for the owner's remote CPU dispatcher."""
+from pathlib import Path
+import runpy
+import sys
+
+if len(sys.argv) > 1 and sys.argv[1] == "qualification-cpu":
+    del sys.argv[1]
+runpy.run_path(str(Path(__file__).resolve().with_name("cpu_gates.py")), run_name="__main__")
