@@ -13715,6 +13715,16 @@
       "lanes": [],
       "scope": "H129 synthetic CPU controls for the pinned H124 module rebinding (fresh fold/seeds), fixed blend lambdas, rank-disagreement statistic, fit-fold harm-gate threshold rule, Holm step-down, gated readout and pre-write metrics size check. No H50/H58/H51 reads or model fits in the fixture suite; offline research only."
     },
+    "python:research/flywheel_selfplay/h134_blend025_confirm/test_h134.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H134 synthetic CPU controls for the pinned H129 runner rebinding (fresh fold/seeds only), the single-primary BLEND_025 admission gates (median margin, bootstrap LCB, all seeds, harm cap, trimmed mean) and tail checks. No H50/H58/H51 reads or model fits in the fixture suite; offline research only."
+    },
     "python:research/flywheel_selfplay/h123_continuous_regret_tiebreak/test_runner.py": {
       "discovery": {
         "kind": "python-family"

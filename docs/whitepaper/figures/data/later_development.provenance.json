@@ -1,42 +1,50 @@
 {
   "schema": "whitepaper.recent-development/v1",
   "snapshot": {
-    "at": "2026-10-31T17:22:03.288017+00:00",
+    "at": "2026-10-31T20:19:04.541686+00:00",
     "kind": "Read-only stable complete-line development-log prefixes; no dataset or weight files read",
     "files": [
       {
         "name": "summary.jsonl",
-        "observed_bytes": 3526760,
-        "snapshot_bytes": 3526760,
+        "observed_bytes": 3358751,
+        "snapshot_bytes": 3358751,
         "trailing_incomplete_bytes_omitted": 0,
-        "mtime_ns_before": 1793467299208317998,
-        "mtime_ns_after": 1793467299208317998,
-        "sha256": "2d4f3c4b166b903cbe0881f641d9294cc468609e7de8ba234d1f8c3b0ddc2fa2"
+        "mtime_ns_before": 1793477879159641952,
+        "mtime_ns_after": 1793477879159641952,
+        "sha256": "912d2bfbee7105e076e4f6aaacacb4ccacef8bbf90b79a1fdaae12602d7e7881"
       },
       {
         "name": "promotions.jsonl",
-        "observed_bytes": 8274793,
-        "snapshot_bytes": 8274793,
+        "observed_bytes": 8630599,
+        "snapshot_bytes": 8630599,
         "trailing_incomplete_bytes_omitted": 0,
-        "mtime_ns_before": 1793466897752259382,
-        "mtime_ns_after": 1793466897752259382,
-        "sha256": "366a2c568f9a9e09474aced60828775136aedb805ba498ad556bf59049314fcd"
+        "mtime_ns_before": 1793477838687989009,
+        "mtime_ns_after": 1793477838687989009,
+        "sha256": "e21938254723ee9366e58c6580a5ba4f2a296918b476ab3000a258b48e72fc53"
       }
     ]
   },
   "input_sha256": {
-    "summary.jsonl": "2d4f3c4b166b903cbe0881f641d9294cc468609e7de8ba234d1f8c3b0ddc2fa2",
-    "promotions.jsonl": "366a2c568f9a9e09474aced60828775136aedb805ba498ad556bf59049314fcd"
+    "summary.jsonl": "912d2bfbee7105e076e4f6aaacacb4ccacef8bbf90b79a1fdaae12602d7e7881",
+    "promotions.jsonl": "e21938254723ee9366e58c6580a5ba4f2a296918b476ab3000a258b48e72fc53"
   },
   "selection": "All complete consecutive summary rounds; journal kind=promotion in that window",
   "round_window": [
-    2239,
-    2259
+    2343,
+    2362
   ],
-  "summary_rows": 21,
-  "strict_program_promotions": 12,
+  "summary_rows": 20,
+  "strict_program_promotions": 22,
+  "adapter_admissions": 0,
+  "reported_best_rounds": [
+    882
+  ],
+  "completed_round_wall_seconds": 1730.129982604,
+  "rounds_per_hour": 41.61537036173061,
+  "program_promotions_per_hour": 45.77690739790368,
+  "rate_scope": "Retained completed rounds; logged wall time includes qualification waits; not deployment throughput",
   "promotion_CI_scope": {
-    "unavailable": 12
+    "unavailable": 22
   },
   "evaluation_identities": [
     "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83"
@@ -45,17 +53,21 @@
     "program_promotions": "Strict training-program incumbent events, checked against summary counts",
     "cumulative_program_promotions": "Running sum within this window only; starts from zero",
     "candidate_validation_utility": "summary.val_reg = candidate_dev_utility.val_reg = adapter_admission.candidate_utility",
-    "recorded_best_validation_utility": "dev_utility.val_reg = adapter_admission.best_utility"
+    "recorded_best_validation_utility": "dev_utility.val_reg = adapter_admission.best_utility",
+    "completed_round_wall_seconds": "summary.wall_seconds; rates divide total completed rounds or strict program promotions by their summed wall time",
+    "reported_best_round": "adapter_admission.best_round; a logged identity, not the first strict increase in utility"
   },
   "code_references": [
     "research/flywheel_selfplay/automatic_promotion.py:206-273",
     "research/flywheel_selfplay/dev_incumbent.py:524-570",
-    "crates/jope-telemetry/src/hooks/flywheel.rs:362-365"
+    "crates/jope-telemetry/src/hooks/flywheel.rs:316-338,362-365"
   ],
-  "interpretation_source_commit": "16609e73f13bd36b895a33008e7db3230b1d6857",
+  "interpretation_source_commit": "a13afb4fe8f98b5f9b17fbd8c77650b4c8ba9343",
   "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
   "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
-  "csv_sha256": "0a490154ba7ca0f9c7a4b0fcc239c987117370fca80774145bf7895c476f5358",
-  "extraction_script_sha256": "c319ec407fb06b0f839a1270239dda41beb50c77b76c119e852a45c36bbb88ec",
-  "reproduce": "python3 figures/scripts/make_recent_development_figure.py --later-window --logs SNAPSHOT_DIR"
+  "csv_sha256": "1b4600aaf84769efb6f3b4c24db4a5d68d281480731d2f2a8d37d5459fae909f",
+  "extraction_script_sha256": "7df1b7c9f1351defec4c6643c10056568d3e20c6c46c868b0ac12e2c2d6eeeb6",
+  "reproduce": "python3 figures/scripts/make_recent_development_figure.py --later-window --logs SNAPSHOT_DIR",
+  "figure_sha256": "0e7eb24a1eea488cc530ed3f75f56f4a33d4530365902b44bb7befe57e4ed95a",
+  "matplotlib_version": "3.10.8"
 }
