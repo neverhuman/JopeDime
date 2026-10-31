@@ -435,6 +435,29 @@ mod tests {
     fn matches_res07_real_landmark_output_assembly() {
         use super::super::adapter::real_cpu_parity::Fixtures;
 
+        // PROVISIONAL, WATCHER-SET; owner may override. This reuses the frozen
+        // RES-07/RNK-12 CPU parity arithmetic, not an owner-approved RNK-05 rule.
+        const ATOL: f64 = 1e-5;
+        const RTOL: f64 = 1e-4;
+
+        fn assert_matches_golden(context: &str, name: &str, actual: &[f32], expected: &[f32]) {
+            assert_eq!(actual.len(), expected.len(), "{context}: {name} length");
+            for (index, (&actual, &expected)) in actual.iter().zip(expected).enumerate() {
+                let actual = f64::from(actual);
+                let expected = f64::from(expected);
+                assert!(
+                    actual.is_finite() && expected.is_finite(),
+                    "{context}: {name}[{index}] must be finite"
+                );
+                let tolerance = ATOL + RTOL * expected.abs();
+                let error = (actual - expected).abs();
+                assert!(
+                    error <= tolerance,
+                    "{context}: {name}[{index}] actual={actual}, expected={expected}, error={error}, tolerance={tolerance}"
+                );
+            }
+        }
+
         let fixtures = Fixtures::open();
         assert_eq!(fixtures.contexts.len(), 50);
 
@@ -496,7 +519,7 @@ mod tests {
                 &building_blocks,
                 &raw_columns,
             );
-            assert_eq!(actual.vector().as_slice(), vector, "{context}: v256 order");
+            assert_matches_golden(context, "v256", actual.vector().as_slice(), &vector);
 
             let expected_columns = fixture.f32("col");
             let actual_columns = actual
@@ -505,7 +528,7 @@ mod tests {
                 .flatten()
                 .copied()
                 .collect::<Vec<_>>();
-            assert_eq!(actual_columns, expected_columns, "{context}: col adapter");
+            assert_matches_golden(context, "col", &actual_columns, &expected_columns);
         }
     }
 

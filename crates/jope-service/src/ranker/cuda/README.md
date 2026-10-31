@@ -69,3 +69,14 @@ whole graph or only SVD does not reproduce the frozen model. The small scalar
 exp port is attributed to SLEEF 3.6.1 with its Boost license alongside the code.
 CUDA tensors continue through device-native Candle kernels. The CPU arithmetic
 regressions and real CPU replay do not establish GPU M2 or serving promotion.
+
+CPU-only refusal and placement controls also exercise the packaged `jopedime fit`
+command: explicit `--device cuda:0` reports `BACKEND_UNAVAILABLE` / exit4 with
+`device.selected=none`, before input reads or fitting, and produces no model.
+Both JSON and text output are checked. Positive `--device cpu` / `auto` fits
+report their actual CPU selection and requested thread count. The separate real
+CPU forward replay asserts all four existing `placement` fields against the
+instantiated neural device, CPU evaluation and configured worker count. These
+controls neither initialize CUDA nor open the qualification lock. Native-fit
+receipts and ranker replay output do not establish live v1 API Plan wiring;
+that producer/adapter and declared-GPU M2 qualification remain separate work.
