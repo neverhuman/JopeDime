@@ -18,7 +18,7 @@ CONFIG="$CONFIG_DIR/policy.yaml"
 
 printf 'Install jope-diskd to %s and policy to %s\n' "$BIN" "$CONFIG"
 if [[ $ENABLE -eq 0 ]]; then
-  printf 'Dry run only. Re-run with --enable on xbabe2 after the reviewed PR merges and its local dry-run passes.\n'
+  printf 'Dry run only. Re-run with --enable on xbabe1, xbabe2, or xbabe3 after the reviewed PR merges and its local dry-run passes.\n'
   exit 0
 fi
 
@@ -39,12 +39,24 @@ fi
 
 case "$(uname -s)" in
   Linux)
-    if [[ "$(hostname -s)" != xbabe2 ]]; then
-      printf 'Refusing to enable local-only disk policy on host %s; expected xbabe2.\n' "$(hostname -s)" >&2
-      exit 1
-    fi
+    case "$(hostname -s)" in
+      xbabe1|xbabe2|xbabe3) ;;
+      *)
+        printf 'Refusing to enable local-only disk policy on unsupported host %s.\n' "$(hostname -s)" >&2
+        exit 1
+        ;;
+    esac
     command -v systemctl >/dev/null
     command -v loginctl >/dev/null
+    python3 - "$ROOT/disk-policy.yaml" "$(hostname -s)" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+policy = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+if sys.argv[2] not in policy.get("allowed_hosts", []):
+    raise SystemExit(f"Refusing to install policy that does not include this host: {sys.argv[2]}")
+PY
     linger=$(loginctl show-user "$(id -un)" -p Linger --value)
     if [[ "$linger" != yes ]]; then
       printf 'Refusing to enable timer: user linger is not enabled. Ask the host owner to provision linger.\n' >&2
@@ -52,7 +64,7 @@ case "$(uname -s)" in
     fi
     ;;
   Darwin)
-    printf 'Refusing to enable a policy pinned to Linux xbabe2 on Darwin.\n' >&2
+    printf 'Refusing to enable the Linux-only local disk policy on Darwin.\n' >&2
     exit 1
     ;;
   *)
