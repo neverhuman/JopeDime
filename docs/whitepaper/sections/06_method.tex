@@ -175,8 +175,8 @@ learner's inputs. The proposed comparisons require sandboxed execution
 using seccomp and Landlock, with memory, swap and time limits. A
 planted label leak and a sealed canary must both be caught, and every reported winner must be re-run
 from its emitted code, with native and emitted predictions agreeing within
-$10^{-9}\max(1,|\hat y|)$. One earlier leaderboard entry for our search took, per dataset, the best
-of 63,108 test-scored evaluations; we exclude it as test selection (\cref{app:incidents}).
+$10^{-9}\max(1,|\hat y|)$. One earlier leaderboard entry for our search selected each dataset's best
+test-scored outcome from a ledger of 63,108 evaluations; we exclude it as test selection (\cref{app:incidents}).
 
 \subsection{Game day: \texorpdfstring{\searchone}{search = 1}}\label{sub:method-gameday}
 
