@@ -27,6 +27,7 @@ pub enum ManifestSource {
 pub struct FetchOptions {
     /// `--component` selectors (exact paths or directory prefixes); empty = every file.
     pub components: Vec<String>,
+    /// Permit fetching files marked `redistribution: prohibited` in their license metadata.
     pub accept_restricted: bool,
 }
 
