@@ -6,6 +6,8 @@ import importlib.util
 import json
 import math
 from pathlib import Path
+import sys
+import tempfile
 
 import pytest
 
@@ -129,4 +131,138 @@ def test_missing_context_receipt_is_explicit_and_noninvented():
     receipt = json.loads(path.read_text())
     assert len(receipt["missing_contexts"]) == 24
     assert all(row["context_sha256"] is None for row in receipt["missing_contexts"])
-    assert receipt["qualification_step"] == "recover-and-verify-H27-materialization-manifest; run qualify-inputs; complete full input identity admission"
+    assert (
+        receipt["qualification_step"]
+        == "recover-and-verify-H27-materialization-manifest; run qualify-inputs; complete full input identity admission"
+    )
+
+
+def metadata_fixture():
+    """Invented metadata only, never a recovered H27 artifact or experiment."""
+    manifest, pairs = fixture()
+    train = dict(context_sha256="10", family_id="train", dl_split="DL-Train")
+    packet = dict(train=[train], dev=copy.deepcopy(manifest["validation_contexts"]))
+    rows = []
+    for i in range(850):
+        family = "a" if i < 9 else "b" if i == 9 else "train"
+        rows.append(
+            dict(
+                context_sha256=str(i),
+                family_id=family,
+                component=family,
+                source_role="FIT",
+                feature_proof=dict(
+                    fingerprints=dict(sha256=analysis.qualification.FINGERPRINTS)
+                ),
+            )
+        )
+    return manifest, pairs, dict(rows=rows), packet
+
+
+def test_roster_gate_accepts_complete_metadata_and_refuses_subsets():
+    manifest, _, old, packet = metadata_fixture()
+    coverage = analysis.qualification.metadata_coverage(old, packet)
+    analysis.validate_input_roster(manifest, packet, coverage)
+    for corruption in (
+        "subset",
+        "family",
+        "train",
+        "empty-train",
+        "role",
+        "duplicate",
+        "component",
+        "missing",
+    ):
+        candidate, prior = copy.deepcopy(manifest), copy.deepcopy(old)
+        if corruption == "subset":
+            candidate["validation_contexts"].pop()
+        elif corruption == "family":
+            candidate["validation_contexts"][0]["family_id"] = "unapproved"
+        elif corruption == "train":
+            candidate["train_families"] = ["unapproved"]
+        elif corruption == "empty-train":
+            candidate["train_families"] = []
+        elif corruption == "role":
+            candidate["validation_contexts"][0]["dl_split"] = "DL-Holdout"
+        elif corruption == "duplicate":
+            candidate["validation_contexts"].append(candidate["validation_contexts"][0])
+        elif corruption == "component":
+            prior["rows"][0]["component"] = "train"
+        else:
+            prior["rows"][0]["context_sha256"] = "absent-from-approved-roster"
+        coverage = analysis.qualification.metadata_coverage(prior, packet)
+        with pytest.raises(ValueError):
+            analysis.validate_input_roster(candidate, packet, coverage)
+
+
+def test_cli_requires_pinned_metadata_before_outcomes_and_can_run_valid_fixtures():
+    manifest, pairs, old, packet = metadata_fixture()
+    with tempfile.TemporaryDirectory(prefix="hwv05-metadata-") as directory:
+        root = Path(directory)
+        files = {
+            name: root / f"{name}.json"
+            for name in ("manifest", "pairs", "old", "selected")
+        }
+        values = dict(manifest=manifest, pairs=pairs, old=old, selected=packet)
+        for name, value in values.items():
+            files[name].write_text(json.dumps(value))
+        manifest["paired_selections_sha256"] = analysis.digest(files["pairs"])
+        files["manifest"].write_text(json.dumps(manifest))
+        output = root / "fixture-result.json"
+        argv = [
+            "analyze",
+            "--manifest",
+            str(files["manifest"]),
+            "--pairs",
+            str(files["pairs"]),
+            "--output",
+            str(output),
+        ]
+        with pytest.MonkeyPatch.context() as patch:
+            patch.setattr(sys, "argv", argv)
+            with pytest.raises(SystemExit) as error:
+                analysis.main()
+            assert error.value.code == 2
+            assert not output.exists()
+            argv += [
+                "--h27-manifest",
+                str(files["old"]),
+                "--selected",
+                str(files["selected"]),
+            ]
+            patch.setattr(sys, "argv", argv)
+            patch.setattr(
+                analysis.qualification, "H27_MANIFEST", analysis.digest(files["old"])
+            )
+            patch.setattr(
+                analysis.qualification, "SELECTED", analysis.digest(files["selected"])
+            )
+            # Exercise a valid path with test-only metadata pins. No production pin changes.
+            analysis.main()
+            assert json.loads(output.read_text())["elo"] == 0
+            output.unlink()
+            # Changing an admitted metadata file must refuse its new bytes.
+            files["old"].write_text("{}")
+            with pytest.raises(ValueError, match="metadata digest mismatch"):
+                analysis.main()
+            assert not output.exists()
+            # Hash-valid but incomplete metadata must stop before paired outcomes open.
+            old["rows"][0]["context_sha256"] = "missing-validation-context"
+            files["old"].write_text(json.dumps(old))
+            patch.setattr(
+                analysis.qualification, "H27_MANIFEST", analysis.digest(files["old"])
+            )
+            original_read = Path.read_bytes
+
+            def guarded_read(path):
+                assert path != files["pairs"], (
+                    "paired outcomes opened before metadata admission"
+                )
+                return original_read(path)
+
+            patch.setattr(Path, "read_bytes", guarded_read)
+            with pytest.raises(
+                ValueError, match="complete DL-Val fingerprint coverage"
+            ):
+                analysis.main()
+            assert not output.exists()
