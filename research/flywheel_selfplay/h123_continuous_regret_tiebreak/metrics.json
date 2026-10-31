@@ -1,0 +1,157 @@
+{
+  "admission_gate": {
+    "bootstrap_draws": 10000,
+    "bootstrap_seed": 12300,
+    "co_readout": "family_grouped_bradley_terry_elo_vs_r882_1500",
+    "harm_family_threshold": -0.01,
+    "max_harmed_family_fraction": 0.1,
+    "max_harmed_scoring_families": 4,
+    "min_lcb95_delta": 0.001,
+    "min_median_seed_delta": 0.0,
+    "paired_eval_seeds": [
+      61,
+      62,
+      63
+    ],
+    "strict_inequality": true
+  },
+  "branch_taken": "no_xbabe1_artifact_prereg_and_proposal",
+  "elo_vs_r882": null,
+  "execution_mode": "cpu_only_prereg_and_feasibility_census",
+  "gpu_seconds_used": 0.0,
+  "hypothesis_id": "H123",
+  "outcomes_evaluated": false,
+  "owner": "rd_argon",
+  "preregistered_split": {
+    "calibration_contexts": 986,
+    "calibration_families": 164,
+    "calibration_folds": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "fold_context_counts": {
+      "0": 263,
+      "1": 228,
+      "2": 245,
+      "3": 250,
+      "4": 233
+    },
+    "fold_family_counts": {
+      "0": 41,
+      "1": 41,
+      "2": 41,
+      "3": 41,
+      "4": 41
+    },
+    "fold_manifest_sha256": "877dcb227b34dfc2306d597824f04d90368473df765683031f6e6e128731df53",
+    "fold_seed": 12300,
+    "n_folds": 5,
+    "partition": "DL-Train",
+    "scoring_contexts": 233,
+    "scoring_families": 41,
+    "scoring_fold": "4",
+    "total_contexts": 1219,
+    "total_families": 205
+  },
+  "prospective_proposal": {
+    "calibration_regret_min_improvement": 0.0005,
+    "local_ring_buffer_max_checkpoints": 32,
+    "s3_create_only_prefix": "s3://veox-jopedime-learning-use2/experiments/<campaign>/<run_id>/top_cluster/",
+    "softmax_regret_temperature": 0.1,
+    "top_cluster_epsilon_below_best": 0.0001
+  },
+  "provenance": {
+    "dope_buffers_sha256": "ca8cc329fa495679564112e54f2e1717b98aa050a2854be2f04fbdf2c3504be6",
+    "dope_frozen_sha256_post": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "dope_frozen_sha256_pre": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "dope_params_sha256": "75084b2c4e31e9a87a6a12eb14942ca4e8c92dd7a820bd9e77fc2dc97a6e004f",
+    "dl_val_terminal_reads": 0,
+    "outer_test_reads": 0,
+    "r882_checkpoint_path": "/home/ubuntu/jope-data/h51/ckpt/round-882.pt",
+    "r882_checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "sealed_metatest_reads": 0,
+    "selected_json_path": "/home/ubuntu/jope-data/h50/input/selected.json",
+    "selected_json_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "xbabe1_admissions_h114_prefix_lines": 1306,
+    "xbabe1_admissions_h114_prefix_sha256": "3093866b4f802704f158fedec1e4d0204d7af7f813776bb984114856d82a7c12",
+    "xbabe1_admissions_snapshot_lines": 1366,
+    "xbabe1_admissions_snapshot_max_round": 2140,
+    "xbabe1_admissions_snapshot_sha256": "1d1ce39e710c52642538587b52d2fdc0b718dd80f3a7bb7cd15fdaf3f4f5ea72"
+  },
+  "s3_receipt": {
+    "bucket": "veox-jopedime-learning-use2",
+    "etag": "\"3834713fb73164016adaa02d6e262230\"",
+    "key": "experiments/rd_breakthrough_20261030/H123/h123_prereg_census_20261031T1607Z/H123_feasibility_census.json",
+    "local_receipt_path": "/home/ubuntu/jope_plan/ns/receipts/H123_feasibility_census.json",
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H123/h123_prereg_census_20261031T1607Z/H123_feasibility_census.json",
+    "verified_sha256": "49f2938504725279766cdf9a25bdddf15ecf3d6944db86b79590ac3d558de685",
+    "version_id": "unoe4daW1iSezdnzQj1sbLIzYDmfbbAc"
+  },
+  "status": "complete_prereg_and_proposal",
+  "tied_at_max_census": {
+    "gap_below_r882": 8.10619598517016e-05,
+    "h114_prefix_tied_rounds_count": 17,
+    "post_h114_tied_rounds_count": 4,
+    "post_r882_tied_max_utility": 1.1377131278566008,
+    "r882_val_utility": 1.1377941898164525,
+    "s3_rejected_pt_retained_count": 9,
+    "s3_rejected_pt_rounds": [
+      899,
+      907,
+      931,
+      935,
+      1003,
+      1039,
+      1043,
+      1091,
+      1119
+    ],
+    "s3_retention_bundle_retained_count": 4,
+    "s3_retention_bundle_rounds": [
+      1639,
+      1690,
+      1745,
+      1964
+    ],
+    "tied_rounds": [
+      899,
+      907,
+      931,
+      935,
+      1003,
+      1039,
+      1043,
+      1091,
+      1119,
+      1171,
+      1183,
+      1215,
+      1223,
+      1247,
+      1255,
+      1283,
+      1291,
+      1639,
+      1690,
+      1745,
+      1964
+    ],
+    "total_tied_rounds": 21,
+    "unretained_missing_count": 8,
+    "unretained_missing_rounds": [
+      1171,
+      1183,
+      1215,
+      1223,
+      1247,
+      1255,
+      1283,
+      1291
+    ],
+    "xbabe1_retained_count": 0
+  },
+  "timestamp_utc": "2026-10-31T16:07:00Z",
+  "verdict": "PREREG_AND_PROPOSAL_ONLY_NO_XBABE1_TIED_ARTIFACTS"
+}
