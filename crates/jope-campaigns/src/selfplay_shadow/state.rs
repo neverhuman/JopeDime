@@ -255,13 +255,21 @@ impl AcceptedFront {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
+/// The schema-v2 accepted-checkpoint pointers for binary and regression tasks.
+///
+/// New task families require a later schema; this type intentionally keeps only
+/// the two fronts represented by the current wire format.
 pub struct AcceptedByTaskV2 {
+    /// Wire-format schema identifier.
     pub schema: String,
+    /// Accepted checkpoint and promotion metadata for the binary task.
     pub binary: AcceptedFront,
+    /// Accepted checkpoint and promotion metadata for the regression task.
     pub regression: AcceptedFront,
 }
 
 impl AcceptedByTaskV2 {
+    /// Builds and validates a schema-v2 pointer from its two supported fronts.
     pub fn new(binary: AcceptedFront, regression: AcceptedFront) -> Result<Self> {
         let value = Self {
             schema: ACCEPTED_BY_TASK_SCHEMA.to_owned(),
@@ -272,6 +280,7 @@ impl AcceptedByTaskV2 {
         Ok(value)
     }
 
+    /// Checks the schema identifier and each task-specific accepted front.
     pub fn validate(&self) -> Result<()> {
         ensure!(
             self.schema == ACCEPTED_BY_TASK_SCHEMA,
@@ -282,6 +291,11 @@ impl AcceptedByTaskV2 {
         Ok(())
     }
 
+    /// Returns the accepted front for a binary or regression task.
+    ///
+    /// # Panics
+    /// Panics for timeseries and multiclass tasks because schema v2 has no
+    /// corresponding accepted-front fields. Use a newer schema for those tasks.
     pub fn front(&self, task: Task) -> &AcceptedFront {
         match task {
             Task::Binary => &self.binary,
@@ -296,6 +310,8 @@ impl AcceptedByTaskV2 {
         }
     }
 
+    /// Replaces one supported task front if its current checkpoint matches the
+    /// expected parent, recording the child and its evidence.
     pub fn compare_and_swap(
         &mut self,
         task: Task,
