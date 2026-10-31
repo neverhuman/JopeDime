@@ -1,0 +1,23 @@
+{
+  "schema": "jope.h88.w3-source-status-trace-s3-receipt/v1",
+  "run_id": "luna-hwv03-h88-source-status-20261031T0720Z-01",
+  "prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/luna-hwv03-h88-source-status-20261031T0720Z-01/",
+  "objects": [
+    {
+      "key": "audit.json",
+      "version_id": "kONB8Vbj5GQ3qCQR1YJt3Cb8qkMpsmkz",
+      "sha256": "b93bb9e2ac19942bca7b9fbd47a728e6453211540b66e80741e3da872eafe6ab"
+    },
+    {
+      "key": "README.md",
+      "version_id": "yk9NR4vmi.b63MSOTKXIHLQ.wPR4Y77F",
+      "sha256": "b084e7ff041ab3bd6e43c1a88dd7b087e70cb2580beffcccdc491c79b9321496"
+    },
+    {
+      "key": "manifest.json",
+      "version_id": "YkMe.WjkW1MIKhO_p0eTzRZK917x7.W1",
+      "sha256": "28376295c6f0811efbfab714709af401e642c50c05d3c0dbf58820e242575060"
+    }
+  ],
+  "readback": "All three versions were downloaded by VersionId; downloaded SHA-256 matched each local file."
+}
