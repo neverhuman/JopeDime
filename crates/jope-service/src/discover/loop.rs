@@ -2030,7 +2030,7 @@ fn plan_wave_inner(
                 unique.push(dsl);
             }
         }
-        let context = RoundContext {
+        let round_context = RoundContext {
             plan: &state.plan,
             round: number,
             measured: state
@@ -2085,7 +2085,7 @@ fn plan_wave_inner(
                 }
             } else {
                 admission.admit_recorded_round(
-                    &context,
+                    &round_context,
                     unique.clone(),
                     explore,
                     &mut rng,
@@ -2155,13 +2155,13 @@ fn plan_wave_inner(
         } else if number == 0 {
             unique
         } else {
-            admission.admit_round(&context, unique, explore, &mut rng)?
+            admission.admit_round(&round_context, unique, explore, &mut rng)?
         };
         #[cfg(not(feature = "research"))]
         let admitted = if number == 0 {
             unique
         } else {
-            admission.admit_round(&context, unique, explore, &mut rng)?
+            admission.admit_round(&round_context, unique, explore, &mut rng)?
         };
         let mut candidates = vec![];
         for dsl in admitted
