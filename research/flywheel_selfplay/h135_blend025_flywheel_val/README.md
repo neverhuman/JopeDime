@@ -1,3 +1,13 @@
+# H135 — prospective A3 GBM thread continuation
+
+**A3 preregistered; not executed.** The explicit owner directive `rd_astra_t1605_h135a3.md` authorizes one continuation after [PREREG_AMENDMENT_A3.md](PREREG_AMENDMENT_A3.md) merges. The earlier incomplete results below remain unchanged.
+
+The eight-thread synthetic failure is reproduced in HistGB binning (joblib n_jobs4). A launcher now sets thread environments before interpreter startup and caps native pools and nested limit requests at one. The same 300-iteration HistGB recipe on 2,048 × 1,089 synthetic inputs completed with maximum one thread under external sampling. This corrects the earlier pre/post-only fixture, which missed transient threads. Scientific runner, imported recipes, sampling, seeds, baseline parity and statistical gates stay byte-identical.
+
+Next: central review/merge, verify actual source, repeat synthetic preflight, refresh seed-use receipts, then one continuation starting with the 91-context r882 parity gate. No outcome has been used to change the recipe. Report original unknown partial fit progress honestly. A further execution failure stops; no automatic fourth attempt. CPU and all original resource/data guards remain in force.
+
+---
+
 # H135 — fixed BLEND_025 on flywheel validation
 
 **INCOMPLETE; blend outcome unmeasured.** This is the single prospective continuation authorized by [Amendment A2](AMENDMENT_A2.md), merged in [PR #1200](https://github.com/neverhuman/JopeDime/pull/1200) before execution. The original incomplete attempt and its custody remain in [metrics.json](metrics.json) and the historical record below.

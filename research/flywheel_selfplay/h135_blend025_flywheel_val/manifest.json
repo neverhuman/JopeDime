@@ -1,6 +1,6 @@
 {
   "wave": "H135",
-  "status": "INCOMPLETE",
+  "status": "ATTEMPTS1_2_INCOMPLETE_A3_NOT_EXECUTED",
   "seed_reservation_status": "H133_RESERVATION_DISCLOSED_NO_PRIOR_135_EXECUTION_RECORDED",
   "seeds": [
     135,
@@ -15,15 +15,17 @@
   },
   "executor_sha256": {
     "science.py": "bba1dc69e228bac25e07cc1d0582eecfa6d9f15f1cfba53914201bd6fe0ad77e",
-    "test_science.py": "9a2cad5327370bdb9911467aa42a59d96ecf68b414a4edda80a0e9b40802ebe0",
-    "monitor.py": "aa3adf40f20712b765042a3f218e4518b1a10948c5d56a46a3408fa8698fcad1",
+    "test_science.py": "a8af9da12d2ff60e9d981a0f1136328d58712bc00c3dbec3d97bee4a4631b3a3",
+    "monitor.py": "c267f5e037ccce16faf2a146c8b863947200fde5fa8341f01e786e4c5be7e79a",
     "runner.py": "aa73463c9866cf8e4ae50ebef64ebe78a06d25c29cdc95d399999462fc8c9ac9",
-    "constructor_preflight.py": "73f6105a8586e7f1101bf72587a2ce6e2c8ff4d1a1fe382ad4137f153c453d01"
+    "constructor_preflight.py": "73f6105a8586e7f1101bf72587a2ce6e2c8ff4d1a1fe382ad4137f153c453d01",
+    "gbm_preflight.py": "d6bacacb91f5bb05ecbd8e8cc2bf474ab22d1c1683f2f51f290241a72dbc31e6",
+    "launcher.py": "3e101d24ba691812551784b1dada528ba4c63d3a262d69e036e7520e5a75bd82"
   },
   "prereg_sha256": "8c852852f2d97459c1981593a5ba7641d5056783298e1d51218c36c40f0372a7",
   "amendment": "A2 baseline Torch1 and one prospective continuation after attempt1 incomplete",
   "amendment_a1_sha256": "07898ed79df20244920d5f59ab0000aa74940042698ed6b65332f98874f708a4",
-  "amendment_sha256": "c55211c12c9c1a1bc0447a972ea218e7c4e5ca10c824e3a7975ae47733db7d8b",
+  "amendment_sha256": "369bfab2d83534ec2dabe62aa304eacccddc4019f1f26a26243232040f008cee",
   "attempt1_custody": {
     "manifest": {
       "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-t1505/manifest.json",
@@ -62,5 +64,13 @@
     },
     "archive_members_verified": 17
   },
-  "continuation_attempt": 2
+  "continuation_attempt": 3,
+  "amendment_a2_sha256": "c55211c12c9c1a1bc0447a972ea218e7c4e5ca10c824e3a7975ae47733db7d8b",
+  "continuation_budget_fits": 3,
+  "prior_closeout_merge": "40f4dfff971e90bcca0a95d83981bd2c6d5aa150",
+  "a3_synthetic_preflight": {
+    "receipt_sha256": "cbdb067327d33cdbbef2940715f8f29ac19f50fb3838f2ef04bd2ed8479ef443",
+    "maximum_threads": 1,
+    "iterations": 300
+  }
 }
