@@ -19,6 +19,15 @@ import torch
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
+SOURCE_ROOT = Path(os.environ.get("H105_SHARED_SOURCE_ROOT", ROOT))
+SOURCE_PREFIX = "research/flywheel_selfplay/h105_shrink_r882"
+EXECUTION_FILES = (
+    "PREREG.md",
+    "runner.py",
+    "run_wave.py",
+    "test_h105.py",
+    "cpu_validate.py",
+)
 ARMS = ("CONTROL", "INTERP025", "INTERP050", "ANCHOR")
 SEEDS = (42, 43, 44)
 FOLD_SEED = 105042
@@ -68,14 +77,62 @@ def sha256(path):
     return digest.hexdigest()
 
 
+def execution_commit():
+    return (
+        os.environ.get("H105_SOURCE_COMMIT")
+        or subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+        ).strip()
+    )
+
+
+def configure_source(commit, shared_root=None):
+    global SOURCE_ROOT
+    if len(commit) != 40 or any(c not in "0123456789abcdef" for c in commit):
+        raise RuntimeError("full execution source commit required")
+    SOURCE_ROOT = safe_path(shared_root or SOURCE_ROOT).resolve()
+    os.environ["H105_SOURCE_COMMIT"] = commit
+    os.environ["H105_SHARED_SOURCE_ROOT"] = str(SOURCE_ROOT)
+    os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+    sys.dont_write_bytecode = True
+
+
+def git_blob(commit, relative):
+    return subprocess.check_output(["git", "show", f"{commit}:{relative}"], cwd=ROOT)
+
+
+def verify_execution_source(commit):
+    """Bind actual code bytes to a commit; never pretend the physical HEAD moved."""
+    own = {}
+    for name in EXECUTION_FILES:
+        actual = (HERE / name).read_bytes()
+        if actual != git_blob(commit, f"{SOURCE_PREFIX}/{name}"):
+            raise RuntimeError(f"owned execution source changed: {name}")
+        own[name] = hashlib.sha256(actual).hexdigest()
+    for relative, expected in SOURCE_PINS.items():
+        actual = safe_path(SOURCE_ROOT / relative).read_bytes()
+        if hashlib.sha256(actual).hexdigest() != expected or actual != git_blob(
+            commit, relative
+        ):
+            raise RuntimeError(f"shared execution source changed: {relative}")
+    return {
+        "execution_commit": commit,
+        "own_sha256": own,
+        "shared_sha256": dict(SOURCE_PINS),
+        "shared_source_root": str(SOURCE_ROOT),
+    }
+
+
 def runtime():
     """Lazy source-only import; the data-free dry-run never calls this."""
     global h97, h59, h55, science
     if "h97" not in globals():
         for relative, expected in SOURCE_PINS.items():
-            if sha256(ROOT / relative) != expected:
+            if sha256(SOURCE_ROOT / relative) != expected:
                 raise RuntimeError(f"shared scientific source changed: {relative}")
-        h97 = load("h105_h97", HERE.parent / "h97_reg_ema/runner.py")
+        h97 = load(
+            "h105_h97", SOURCE_ROOT / "research/flywheel_selfplay/h97_reg_ema/runner.py"
+        )
         h59, h55, science = h97.h59, h97.h55, h97.science
     return h97
 
@@ -619,6 +676,7 @@ def cpu_dry_run():
 def run_cell(args):
     shared = runtime()
     shared.assert_lease(args.lock_fd)
+    source_proof = verify_execution_source(execution_commit())
     if args.arm not in ARMS or args.seed not in SEEDS:
         raise RuntimeError("unregistered H105 cell")
     mark_phase(args, "loading")
@@ -721,7 +779,7 @@ def run_cell(args):
     for p in params:
         p.requires_grad_(False)
     net.eval()
-    h61 = load("h105_h61", HERE.parent / "h61/runner.py")
+    h61 = load("h105_h61", SOURCE_ROOT / "research/flywheel_selfplay/h61/runner.py")
 
     def evaluate(packet, predictor):
         scores = h61.predict_pool_scores(packet, packet, predictor)
@@ -770,10 +828,12 @@ def run_cell(args):
         "selected_sha256": SELECTED_SHA,
         "protocol_sha256": protocol_hash(),
         "prereg_sha256": sha256(HERE / "PREREG.md"),
-        "source_commit": subprocess.check_output(
+        "source_commit": execution_commit(),
+        "source_hashes": {p: sha256(SOURCE_ROOT / p) for p in SOURCE_PINS},
+        "execution_source_proof": source_proof,
+        "physical_repository_HEAD": subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
         ).strip(),
-        "source_hashes": {p: sha256(ROOT / p) for p in SOURCE_PINS},
         "split": split,
         "initial_adapter_sha256": initial_sha,
         "fine_tuned_adapter_sha256": fine_sha,
@@ -791,6 +851,8 @@ def run_cell(args):
     }
     if not args.timing:
         result.update(train=train, assessment=assessment, r882_assessment=reference)
+    if verify_execution_source(execution_commit()) != source_proof:
+        raise RuntimeError("execution source changed during cell")
     atomic_json(args.out, result)
     mark_phase(args, "complete", outcome_started=True)
     return result
