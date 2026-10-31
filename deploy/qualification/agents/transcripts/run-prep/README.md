@@ -279,3 +279,35 @@ retains zero named-client/LLM calls and `a5_status: NOT_QUALIFIED`. It does not
 inject response loss, restart the engine to prove on-disk uniqueness, or invoke
 export/prediction. Those steps and all three pinned actual clients remain required
 for full AG1/A5. Embedded positive/negative controls are synthetic harness checks.
+
+### Completed-run retry across an engine restart
+
+Add `--restart-retry --run-target TARGET_COLUMN` to the bounded CPU command
+above. This opt-in first completes the existing one-evaluation run/retry replay,
+closes its recorder and stops/reaps its owned engine. A new engine process opens
+**the same private engine home**, and a second captured MCP session lists the
+persisted run, repeats the exact original mutation arguments/key, lists again,
+and reads completed status and durable events. It never re-registers the dataset
+or creates another store during recovery.
+
+The new `run-restart.json` and outer exit code require all of the following:
+
+- Both recorder captures complete successfully and their four streams match the
+  declared byte lengths/hashes and admitted executable digest.
+- The first complete inventories contain exactly 0, 1, 1 runs; the restarted
+  inventories contain exactly 1, 1 with the same actual run ID. Equal counts with
+  substituted IDs, failed/paginated lists and changed request types/keys fail.
+- The completed snapshot watermark and full ordered durable events match across
+  restart, including the terminal `run.finished` event.
+- The first engine has been stopped/reaped and a distinct owned engine PID opens
+  the same home. Both phases share one monotonic deadline (`--seconds`, max120),
+  with bounded owned-process cleanup. The initial host CPU capacity is retained
+  for admission after the probe restricts itself to two affinity slots.
+
+The original `run-replay.json` remains a first-stage component result; it does
+not establish successful restart. A failed first stage never starts recovery.
+The new result retains zero named-client/LLM calls and A5 `NOT_QUALIFIED`.
+This tests completed-run persistence and idempotent replay on the recorded CPU
+build. SIGKILL at internal cuts, response loss between commit and delivery,
+actual named clients, full AG1, export and prediction remain separate acceptance
+requirements. Source/build identities and a passing subset must stay explicit.
