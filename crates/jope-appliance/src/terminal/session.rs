@@ -13,7 +13,7 @@ use jope_client::{
 use ratatui::{
     backend::CrosstermBackend,
     crossterm::{
-        event::{self},
+        event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
         terminal,
     },
     layout::{Constraint, Layout},
@@ -246,6 +246,8 @@ impl Session {
             "JopeDime {} · engine {}",
             self.version, self.engine_mode
         )])?;
+        let width = terminal::size().map(|size| size.0).unwrap_or(80);
+        output.transcript(&pending_composer_lines(&self.composer, width))?;
         loop {
             if guard.signal().is_some() {
                 self.leave();
@@ -257,7 +259,10 @@ impl Session {
             }
             match receiver.recv_timeout(INPUT_LATENCY) {
                 Ok(Input::Line(line)) => {
-                    output.transcript(&self.execute(line.trim_end_matches(['\r', '\n'])))?;
+                    let line = line.trim_end_matches(['\r', '\n']);
+                    if let Some(input) = accept_line(&mut self.composer, line)? {
+                        output.transcript(&self.execute(&input))?;
+                    }
                 }
                 Ok(Input::Eof) => {
                     self.leave();
@@ -640,6 +645,51 @@ impl Session {
     }
 }
 
+fn pending_composer_lines(
+    composer: &crate::terminal::composer::Composer,
+    width: u16,
+) -> Vec<String> {
+    if composer.text().is_empty() {
+        return Vec::new();
+    }
+    let view = composer.view(width.max(1), 6);
+    let mut lines = vec![
+        "interactive draft retained; press Enter to submit it or type a replacement command:"
+            .into(),
+    ];
+    lines.extend(view.lines);
+    lines.push(format!(
+        "cursor at row {}, column {}",
+        view.cursor.1 + 1,
+        view.cursor.0 + 1
+    ));
+    lines
+}
+
+fn accept_line(
+    composer: &mut crate::terminal::composer::Composer,
+    line: &str,
+) -> io::Result<Option<String>> {
+    if line.is_empty() && composer.text().is_empty() {
+        return Ok(None);
+    }
+    if !line.is_empty() {
+        composer.set_text(line)?;
+    }
+    match composer.handle(
+        Event::Key(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE)),
+        &crate::terminal::complete::CompletionData::default(),
+    )? {
+        crate::terminal::composer::ComposerAction::Submit(text) => Ok(Some(text)),
+        crate::terminal::composer::ComposerAction::Interrupt
+        | crate::terminal::composer::ComposerAction::ExitRequested
+        | crate::terminal::composer::ComposerAction::Redraw
+        | crate::terminal::composer::ComposerAction::None => {
+            unreachable!("plain line Enter submits the current composer text")
+        }
+    }
+}
+
 fn update_snapshot_from_event(snapshot: &mut Option<RunSnapshot>, event: &PublicEvent) {
     let Some(snapshot) = snapshot.as_mut() else {
         return;
@@ -783,5 +833,55 @@ mod tests {
         let snapshot = snapshot.unwrap();
         assert_eq!(snapshot.event_watermark, DecimalU64(1));
         assert_eq!(snapshot.state, RunState::Running);
+    }
+
+    #[test]
+    fn narrow_line_mode_keeps_pending_composer_state_until_submit_or_replace() {
+        let mut composer = crate::terminal::composer::Composer::default();
+        composer.set_text("\\he xyz").unwrap();
+        for _ in 0..4 {
+            composer
+                .handle(
+                    Event::Key(KeyEvent::new(KeyCode::Left, KeyModifiers::NONE)),
+                    &crate::terminal::complete::CompletionData::default(),
+                )
+                .unwrap();
+        }
+        composer
+            .handle(
+                Event::Key(KeyEvent::new(KeyCode::Tab, KeyModifiers::NONE)),
+                &crate::terminal::complete::CompletionData::default(),
+            )
+            .unwrap();
+        let text = composer.text().to_owned();
+        let cursor = composer.cursor_byte();
+        let completion = composer.completion().map(|(_, selected)| selected);
+        assert!(completion.is_some());
+
+        let notice = pending_composer_lines(&composer, 24);
+        assert!(notice[0].contains("press Enter to submit"));
+        assert!(notice.iter().any(|line| line.contains("help")));
+        assert_eq!(composer.text(), text);
+        assert_eq!(composer.cursor_byte(), cursor);
+        assert_eq!(
+            composer.completion().map(|(_, selected)| selected),
+            completion
+        );
+
+        assert_eq!(accept_line(&mut composer, "").unwrap(), Some(text));
+        assert!(composer.text().is_empty());
+        assert!(composer.completion().is_none());
+    }
+
+    #[test]
+    fn narrow_line_mode_replaces_pending_composer_only_for_nonempty_input() {
+        let mut composer = crate::terminal::composer::Composer::default();
+        composer.set_text("unfinished draft").unwrap();
+        assert_eq!(
+            accept_line(&mut composer, "\\help history").unwrap(),
+            Some("\\help history".into())
+        );
+        assert!(composer.text().is_empty());
+        assert_eq!(accept_line(&mut composer, "").unwrap(), None);
     }
 }
