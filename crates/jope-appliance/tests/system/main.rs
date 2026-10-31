@@ -3,6 +3,8 @@
 //! internal CAS failpoint matrix required by release gates R4, S2, and R1.
 #![cfg(feature = "engine")]
 
+mod r4_event_parity;
+
 use jope_api::{decimal::DecimalU64, EventBody, PublicEvent, RunSnapshot, RunState, RunStateBody};
 use jope_client::{
     transport::{header, HeaderMap, HeaderValue},
