@@ -87,6 +87,49 @@ class H57Tests(unittest.TestCase):
             self.assertEqual(result["reads_allowed"], 3)
             self.assertEqual([row["seed"] for row in result["reads"]], list(metrics.SEEDS))
 
+    def test_terminal_metrics_rejects_symlinked_receipts_before_any_read(self):
+        admissions = {arm: {"admitted": arm == "sigma001"} for arm in metrics.ARMS}
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            val_root = root / "terminal-val"
+            outside = root / "outside"
+            outside.mkdir()
+            arm_dir = val_root / "sigma001"
+            arm_dir.mkdir(parents=True)
+            for seed in metrics.SEEDS:
+                target = outside / f"seed{seed}.json"
+                target.write_text(json.dumps({
+                    "arm": "sigma001", "seed": seed,
+                    "family_utility": {"synthetic": 1.0},
+                    "family_delta_vs_r882_harness": {"synthetic": 0.1},
+                    "terminal_dl_val_score_count": 1,
+                }))
+                (arm_dir / target.name).symlink_to(target)
+            with mock.patch.object(metrics, "load_terminal_receipt") as read:
+                with self.assertRaisesRegex(SystemExit, "H57 terminal DL-Val"):
+                    metrics.terminal_metrics(val_root, admissions)
+                read.assert_not_called()
+
+    def test_terminal_metrics_rejects_symlinked_root_and_arm_directories(self):
+        admissions = {arm: {"admitted": arm == "sigma001"} for arm in metrics.ARMS}
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            outside = root / "outside"
+            outside.mkdir()
+            for seed in metrics.SEEDS:
+                (outside / f"seed{seed}.json").write_text("{}")
+
+            linked_root = root / "linked-root"
+            linked_root.symlink_to(outside, target_is_directory=True)
+            with self.assertRaisesRegex(SystemExit, "root must be a real directory"):
+                metrics.terminal_metrics(linked_root, admissions)
+
+            val_root = root / "terminal-val"
+            val_root.mkdir()
+            (val_root / "sigma001").symlink_to(outside, target_is_directory=True)
+            with self.assertRaises(SystemExit):
+                metrics.terminal_metrics(val_root, admissions)
+
     def test_terminal_metrics_preserves_pending_and_not_run(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

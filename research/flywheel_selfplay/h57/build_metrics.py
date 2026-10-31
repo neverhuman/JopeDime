@@ -7,7 +7,9 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
+import stat
 
 import numpy as np
 
@@ -219,18 +221,50 @@ def terminal_metrics(val_root: Path, admissions: dict) -> dict:
         else "not run; no sigma arm admitted",
         "reads": [],
     }
-    if not val_root.exists():
+    try:
+        root_stat = val_root.lstat()
+    except FileNotFoundError:
         return result
+    if not stat.S_ISDIR(root_stat.st_mode) or val_root.is_symlink():
+        raise SystemExit("H57 terminal DL-Val root must be a real directory")
+    try:
+        root = val_root.resolve(strict=True)
+        if root != val_root.absolute():
+            raise SystemExit("H57 terminal DL-Val root resolves through a symlink")
+    except OSError as exc:
+        raise SystemExit("H57 terminal DL-Val root cannot be resolved safely") from exc
     paths = sorted(val_root.glob("*/*.json"))
     if set(paths) != set(expected):
-        raise SystemExit("H57 terminal DL-Val receipts differ from admitted arm/seed set")
+        raise SystemExit(
+            "H57 terminal DL-Val receipts differ from admitted arm/seed set"
+        )
     for path in paths:
-        val = load(path)
+        try:
+            parent_stat = path.parent.lstat()
+            receipt_stat = path.lstat()
+            resolved = path.resolve(strict=True)
+            resolved.relative_to(root)
+        except (OSError, ValueError) as exc:
+            raise SystemExit(
+                "H57 terminal DL-Val receipt escapes or cannot be resolved"
+            ) from exc
         if (
-            (val.get("arm"), val.get("seed")) != expected[path]
-            or val.get("terminal_dl_val_score_count") != 1
+            not stat.S_ISDIR(parent_stat.st_mode)
+            or not stat.S_ISREG(receipt_stat.st_mode)
+            or path.parent.is_symlink()
+            or path.is_symlink()
+            or resolved != path.absolute()
         ):
-            raise SystemExit(f"H57 terminal DL-Val receipt identity/count mismatch: {path}")
+            raise SystemExit(
+                "H57 terminal DL-Val receipt must be a regular in-root file"
+            )
+        val = load_terminal_receipt(val_root, path)
+        if (val.get("arm"), val.get("seed")) != expected[path] or val.get(
+            "terminal_dl_val_score_count"
+        ) != 1:
+            raise SystemExit(
+                f"H57 terminal DL-Val receipt identity/count mismatch: {path}"
+            )
         result["reads"].append(
             {
                 "arm": val["arm"],
@@ -243,6 +277,32 @@ def terminal_metrics(val_root: Path, admissions: dict) -> dict:
     if expected:
         result["status"] = "complete"
     return result
+
+
+def load_terminal_receipt(val_root: Path, path: Path) -> dict:
+    """Open a receipt without following symlinked root, arm directory, or file."""
+    if not hasattr(os, "O_NOFOLLOW") or not hasattr(os, "O_DIRECTORY"):
+        raise SystemExit("H57 terminal DL-Val no-follow opens are unavailable")
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    root_fd = os.open(val_root, directory_flags)
+    try:
+        arm_fd = os.open(path.parent.name, directory_flags, dir_fd=root_fd)
+        try:
+            receipt_fd = os.open(
+                path.name,
+                os.O_RDONLY | os.O_NOFOLLOW,
+                dir_fd=arm_fd,
+            )
+            with os.fdopen(receipt_fd, "r", encoding="utf-8") as stream:
+                if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                    raise SystemExit(
+                        "H57 terminal DL-Val receipt is not a regular file"
+                    )
+                return json.load(stream)
+        finally:
+            os.close(arm_fd)
+    finally:
+        os.close(root_fd)
 
 
 def main() -> None:
