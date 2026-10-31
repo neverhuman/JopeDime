@@ -320,12 +320,37 @@ fn crash_artifact(round: u64) -> jope_api::ids::ArtifactId {
     format!("art_{round:024x}").parse().unwrap()
 }
 
+// Only the supervised Unix test child installs this handler. It never returns
+// to abort's default action; the parent must observe the exact hook marker and
+// deliver SIGKILL, or its existing deadline/ChildGuard fails and reaps the child.
+#[cfg(unix)]
+#[expect(
+    unsafe_code,
+    reason = "test-only registration of an async-signal-safe SIGSTOP handler"
+)]
+fn hold_store_abort_for_supervisor() {
+    // SAFETY: this capture-free callback only calls signal-hook's documented
+    // async-signal-safe raise wrapper. It allocates nothing and takes no locks.
+    let _handler = unsafe {
+        signal_hook::low_level::register(signal_hook::consts::SIGABRT, || loop {
+            let _ = signal_hook::low_level::raise(signal_hook::consts::SIGSTOP);
+        })
+    }
+    .unwrap();
+}
+
 #[test]
 #[ignore = "subprocess-only crash target"]
 fn crash_child() {
     let home = std::env::var_os("INT02_CRASH_HOME").expect("supervisor sets isolated home");
     let home = Path::new(&home);
     let point = std::env::var("INT02_CRASH_POINT").unwrap();
+    if point.starts_with("cas:") {
+        #[cfg(unix)]
+        hold_store_abort_for_supervisor();
+        #[cfg(not(unix))]
+        panic!("internal CAS SIGKILL controls require native Unix signals");
+    }
     let store = Arc::new(Store::open(home).unwrap());
     let log = EventLog::new(Arc::clone(&store));
     let mut next = log.snapshot(&snapshot().run_id).unwrap().unwrap();
@@ -479,6 +504,164 @@ fn recovered_prefix(
     (recovered, record, events)
 }
 
+fn prepare_crash_fixture(home: &Path) {
+    let store = Arc::new(Store::open(home).unwrap());
+    let log = EventLog::new(store);
+    let initial = snapshot();
+    log.commit(
+        RunUpdate {
+            expected_revision: None,
+            snapshot: initial.clone(),
+            checkpoint: json!({"round": 0}),
+            blobs: vec![],
+        },
+        vec![state_body(&initial)],
+        |_| Ok(()),
+    )
+    .unwrap();
+}
+
+fn verify_crash_continuation(home: &Path, committed: u64, point: &str) {
+    let (mut recovered, record, prefix) = recovered_prefix(home, committed, point);
+    // A second automatic open must not recover the same run twice.
+    let store = Arc::new(Store::open(home).unwrap());
+    let log = EventLog::new(Arc::clone(&store));
+    assert_eq!(
+        log.snapshot(&recovered.run_id).unwrap(),
+        Some(recovered.clone()),
+        "{point}"
+    );
+    assert_eq!(
+        store
+            .get(&RecordKey::Run(recovered.run_id.clone()))
+            .unwrap(),
+        Some(record.clone()),
+        "{point}"
+    );
+    let expected_revision = recovered.revision.0;
+    recovered.revision.0 += 1;
+    let watermark = recovered.event_watermark.0;
+    let appended = log
+        .commit(
+            RunUpdate {
+                expected_revision: Some(expected_revision),
+                snapshot: recovered.clone(),
+                checkpoint: record.data["checkpoint"].clone(),
+                blobs: record.blobs,
+            },
+            vec![state_body(&recovered)],
+            |_| Ok(()),
+        )
+        .unwrap();
+    assert_eq!(appended.events[0].sequence.0, watermark + 1, "{point}");
+    let events = log
+        .page(&recovered.run_id, 0, 256, &[])
+        .unwrap()
+        .unwrap()
+        .events;
+    assert_eq!(events[..prefix.len()], prefix, "{point}");
+    assert_eq!(events.last().unwrap(), &appended.events[0], "{point}");
+    assert_eq!(
+        events
+            .iter()
+            .map(|event| event.sequence.0)
+            .collect::<Vec<_>>(),
+        (1..=watermark + 1).collect::<Vec<_>>(),
+        "{point}"
+    );
+    eprintln!(
+        "INT02 cut={point} committed={committed} watermark={watermark} next={}",
+        appended.events[0].sequence.0
+    );
+}
+
+/// Explicit opt-in: dependency features are not visible as this crate's cfgs.
+/// Run with INT02_INTERNAL_CAS_CUTS=1 and --features jope-service/failpoints.
+/// Selecting these cuts without the hooks must fail, never silently skip.
+fn internal_cas_sigkill_cuts() {
+    assert!(cfg!(unix), "internal CAS cuts require native Unix signals");
+    let bytes = b"synthetic model fixture 1";
+    let hash = jope_assets::sha256_hex(bytes);
+    let reference = jope_service::store::BlobRef {
+        sha256: std::array::from_fn(|i| u8::from_str_radix(&hash[2 * i..2 * i + 2], 16).unwrap()),
+        bytes: bytes.len() as u64,
+    };
+    for cut in [
+        "after_write",
+        "after_file_sync",
+        "after_hash_verify",
+        "after_rename",
+        "after_directory_sync",
+    ] {
+        let point = format!("cas:{cut}");
+        let home = tempfile::tempdir().unwrap();
+        prepare_crash_fixture(home.path());
+        let stderr = home.path().join("child.stderr");
+        let mut child = ChildGuard(
+            Command::new(std::env::current_exe().unwrap())
+                .args(["--exact", "crash_child", "--ignored", "--nocapture"])
+                .env("INT02_CRASH_HOME", home.path())
+                .env("INT02_CRASH_POINT", &point)
+                .env("JOPE_STORE_FAILPOINT", cut)
+                .stdout(Stdio::null())
+                .stderr(Stdio::from(fs::File::create(&stderr).unwrap()))
+                .spawn()
+                .unwrap(),
+        );
+        let marker = format!("JOPE_STORE_CRASH:{cut}");
+        let deadline = Instant::now() + Duration::from_secs(15);
+        loop {
+            let output = fs::read_to_string(&stderr).unwrap();
+            if output.lines().any(|line| line == marker) {
+                break;
+            }
+            assert!(child.0.try_wait().unwrap().is_none(), "{point}: child exited before hook; build with --features jope-service/failpoints: {output}");
+            assert!(
+                Instant::now() < deadline,
+                "{point}: hook not reached: {output}"
+            );
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        child.0.kill().unwrap();
+        let status = child.0.wait().unwrap();
+        assert!(!status.success(), "{point}");
+        #[cfg(unix)]
+        {
+            use std::os::unix::process::ExitStatusExt;
+            assert_eq!(
+                status.signal(),
+                Some(9),
+                "{point}: must be supervisor SIGKILL, not abort"
+            );
+        }
+        let renamed = matches!(cut, "after_rename" | "after_directory_sync");
+        let staged = fs::read_dir(home.path().join("tmp"))
+            .unwrap()
+            .map(|entry| entry.unwrap().path())
+            .collect::<Vec<_>>();
+        assert_eq!(staged.len(), usize::from(!renamed), "{point}");
+        if let Some(staged) = staged.first() {
+            assert_eq!(fs::read(staged).unwrap(), bytes, "{point}");
+        }
+        {
+            let store = Store::open(home.path()).unwrap();
+            assert_eq!(store.verify_blob(&reference).is_ok(), renamed, "{point}");
+            if renamed {
+                assert_eq!(store.read_blob(&reference).unwrap(), bytes, "{point}");
+            }
+            assert!(
+                fs::read_dir(home.path().join("tmp"))
+                    .unwrap()
+                    .next()
+                    .is_none(),
+                "{point}: staging not recovered"
+            );
+        }
+        verify_crash_continuation(home.path(), 0, &point);
+        eprintln!("INT02 CAS hook={cut} signal=9 renamed={renamed} staging_recovered=true");
+    }
+}
+
 #[test]
 fn r1_sigkill_at_public_blob_and_journal_boundaries_recovers_atomic_records_and_sequences() {
     for (round, boundary) in (1..=3).flat_map(|round| {
@@ -492,22 +675,7 @@ fn r1_sigkill_at_public_blob_and_journal_boundaries_recovers_atomic_records_and_
     }) {
         let point = format!("{round}:{boundary}");
         let home = tempfile::tempdir().unwrap();
-        {
-            let store = Arc::new(Store::open(home.path()).unwrap());
-            let log = EventLog::new(store);
-            let initial = snapshot();
-            log.commit(
-                RunUpdate {
-                    expected_revision: None,
-                    snapshot: initial.clone(),
-                    checkpoint: json!({"round": 0}),
-                    blobs: vec![],
-                },
-                vec![state_body(&initial)],
-                |_| Ok(()),
-            )
-            .unwrap();
-        }
+        prepare_crash_fixture(home.path());
         let mut child = ChildGuard(
             Command::new(std::env::current_exe().unwrap())
                 .args(["--exact", "crash_child", "--ignored", "--nocapture"])
@@ -535,57 +703,12 @@ fn r1_sigkill_at_public_blob_and_journal_boundaries_recovers_atomic_records_and_
             assert_eq!(status.signal(), Some(9), "{point}");
         }
         let committed = round - u64::from(boundary != "after_journal_commit");
-        let (mut recovered, record, prefix) = recovered_prefix(home.path(), committed, &point);
-        // A second automatic open must not recover the same run twice.
-        let store = Arc::new(Store::open(home.path()).unwrap());
-        let log = EventLog::new(Arc::clone(&store));
-        assert_eq!(
-            log.snapshot(&recovered.run_id).unwrap(),
-            Some(recovered.clone()),
-            "{point}"
-        );
-        assert_eq!(
-            store
-                .get(&RecordKey::Run(recovered.run_id.clone()))
-                .unwrap(),
-            Some(record.clone()),
-            "{point}"
-        );
-        let expected_revision = recovered.revision.0;
-        recovered.revision.0 += 1;
-        let watermark = recovered.event_watermark.0;
-        let appended = log
-            .commit(
-                RunUpdate {
-                    expected_revision: Some(expected_revision),
-                    snapshot: recovered.clone(),
-                    checkpoint: record.data["checkpoint"].clone(),
-                    blobs: record.blobs,
-                },
-                vec![state_body(&recovered)],
-                |_| Ok(()),
-            )
-            .unwrap();
-        assert_eq!(appended.events[0].sequence.0, watermark + 1, "{point}");
-        let events = log
-            .page(&recovered.run_id, 0, 256, &[])
-            .unwrap()
-            .unwrap()
-            .events;
-        assert_eq!(events[..prefix.len()], prefix, "{point}");
-        assert_eq!(events.last().unwrap(), &appended.events[0], "{point}");
-        assert_eq!(
-            events
-                .iter()
-                .map(|event| event.sequence.0)
-                .collect::<Vec<_>>(),
-            (1..=watermark + 1).collect::<Vec<_>>(),
-            "{point}"
-        );
-        eprintln!(
-            "INT02 cut={point} committed={committed} watermark={watermark} next={}",
-            appended.events[0].sequence.0
-        );
+        verify_crash_continuation(home.path(), committed, &point);
+    }
+    if std::env::var("INT02_INTERNAL_CAS_CUTS").as_deref() == Ok("1") {
+        internal_cas_sigkill_cuts();
+    } else {
+        eprintln!("INT02 internal CAS cuts not selected; require INT02_INTERNAL_CAS_CUTS=1 and --features jope-service/failpoints");
     }
 }
 
