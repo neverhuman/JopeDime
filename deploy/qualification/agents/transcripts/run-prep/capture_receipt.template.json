@@ -1,0 +1,36 @@
+{
+  "schema": "jopedime.named-client-capture-plan/v1",
+  "status": "NOT_RUN",
+  "captured_at": null,
+  "source": {
+    "git_sha": null,
+    "engine_version": null,
+    "engine_sha256": null
+  },
+  "input": {
+    "dataset_id": null,
+    "training_fixture_sha256": null,
+    "protected_test_data_opened": false
+  },
+  "clients": {
+    "claude_code": {"version": null, "status": "NOT_RUN", "manifest": null},
+    "gemini_cli": {"version": null, "status": "NOT_RUN", "manifest": null},
+    "codex_cli": {"version": null, "status": "NOT_RUN", "manifest": null}
+  },
+  "acceptance": {
+    "system_info": "NOT_RUN",
+    "dataset_register": "NOT_RUN",
+    "run_start_dry_run": "NOT_RUN",
+    "run_start_same_key_retry": "NOT_RUN",
+    "retry_returns_same_run_id": null,
+    "persisted_run_count": null,
+    "run_status_and_events": "NOT_RUN",
+    "model_export": "NOT_RUN",
+    "model_predict": "NOT_RUN"
+  },
+  "a5": {
+    "status": "NOT_QUALIFIED",
+    "full_ag1_transcripts": 0,
+    "required": 3
+  }
+}
