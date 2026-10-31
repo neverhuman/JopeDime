@@ -138,9 +138,30 @@ class RemoteTargetCleanerTests(unittest.TestCase):
         with mock.patch.object(cleaner, "TARGET", self.target), mock.patch.object(cleaner, "SCRATCH_ROOT", self.target.parent):
             self.assertEqual(cleaner.run(apply=True, target=self.target, scratch_root=self.target.parent,
                                          owner_uid=os.getuid(), host="xbabe2"), 0)
-            with mock.patch.object(cleaner.shutil, "disk_usage", return_value=mock.Mock(free=cleaner.MIN_FREE_BYTES)):
+            with mock.patch.object(cleaner.shutil, "disk_usage", return_value=mock.Mock(free=cleaner.MIN_FREE_BYTES_BY_HOST["xbabe3"])):
                 self.assertEqual(cleaner.run(apply=True, target=self.target, scratch_root=self.target.parent,
                                              owner_uid=os.getuid(), host="xbabe3"), 0)
+        self.assertTrue(self.target.exists())
+
+    def test_xbabe1_requires_120_gib_and_uses_host_specific_audit(self) -> None:
+        lock = self.root / "lock" / "cleaner.lock"
+        with (
+            mock.patch.object(cleaner, "TARGET", self.target),
+            mock.patch.object(cleaner, "SCRATCH_ROOT", self.target.parent),
+            mock.patch.object(cleaner.shutil, "disk_usage", return_value=mock.Mock(free=119 * 1024**3)),
+            mock.patch.object(cleaner, "process_references", return_value=False),
+            mock.patch.object(cleaner, "append_audit") as append_audit,
+        ):
+            self.assertEqual(cleaner.run(apply=True, target=self.target, scratch_root=self.target.parent,
+                                         lock=lock, owner_uid=os.getuid(), host="xbabe1"), 0)
+        self.assertEqual(append_audit.call_args_list[0].args[1], Path("/var/log/jope-diskd-xbabe1/remote-target-cleaner.jsonl"))
+        self.assertFalse((self.target / "debug" / "deps").exists())
+        self.assertTrue(self.target.exists())
+
+    def test_unapproved_host_is_fail_closed(self) -> None:
+        with mock.patch.object(cleaner, "TARGET", self.target), mock.patch.object(cleaner, "SCRATCH_ROOT", self.target.parent):
+            self.assertEqual(cleaner.run(apply=True, target=self.target, scratch_root=self.target.parent,
+                                         owner_uid=os.getuid(), host="xbabe2"), 0)
         self.assertTrue(self.target.exists())
 
 

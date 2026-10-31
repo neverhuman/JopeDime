@@ -1,0 +1,259 @@
+{
+  "admission_lcb_threshold": 0.001,
+  "admitted_arms": [],
+  "arms": {
+    "CLIP": {
+      "admitted": false,
+      "bootstrap_draws": 10000,
+      "bootstrap_seed": 59000,
+      "clears_h61_null_margin_diagnostic": false,
+      "elo_by_seed": {
+        "12": 1492.65,
+        "13": 1487.42,
+        "14": 1484.45
+      },
+      "elo_ci95_across_seeds": [
+        1484.45,
+        1492.65
+      ],
+      "elo_median_across_seeds": 1487.42,
+      "family_count": 41,
+      "family_mean_gain": -0.03325661243336442,
+      "family_median_ci95": [
+        -0.03417958262227172,
+        0.008744686181900052
+      ],
+      "family_median_gain": -0.002098485143833262,
+      "h61_null_margin_m": 0.001546,
+      "harm_fraction": 0.4634146341463415,
+      "is_tie": false,
+      "mean_lcb95_one_sided": -0.09840608727103956,
+      "nonzero_family_count": 37,
+      "per_seed": {
+        "12": {
+          "family_mean_gain": -0.02246659027111926,
+          "family_median_ci95": [
+            -0.030872810925771238,
+            0.010626687194686513
+          ],
+          "family_median_gain": 0.0
+        },
+        "13": {
+          "family_mean_gain": -0.03258692278992291,
+          "family_median_ci95": [
+            -0.03647523559355759,
+            0.008744686181900052
+          ],
+          "family_median_gain": -0.002098485143833262
+        },
+        "14": {
+          "family_mean_gain": -0.04471632423905107,
+          "family_median_ci95": [
+            -0.03417958262227172,
+            0.010626687194686513
+          ],
+          "family_median_gain": 0.0
+        }
+      },
+      "seed_count": 3,
+      "seed_median_ci95": [
+        -0.04471632423905107,
+        -0.02246659027111926
+      ],
+      "seed_median_gain": -0.03258692278992291
+    },
+    "CLIP+NORM": {
+      "admitted": false,
+      "bootstrap_draws": 10000,
+      "bootstrap_seed": 59000,
+      "clears_h61_null_margin_diagnostic": false,
+      "elo_by_seed": {
+        "12": 1475.53,
+        "13": 1481.91,
+        "14": 1473.82
+      },
+      "elo_ci95_across_seeds": [
+        1473.82,
+        1481.91
+      ],
+      "elo_median_across_seeds": 1475.53,
+      "family_count": 41,
+      "family_mean_gain": -0.0835365524841817,
+      "family_median_ci95": [
+        -0.07350601062514195,
+        0.0027503664929211524
+      ],
+      "family_median_gain": -0.0058793761546261925,
+      "h61_null_margin_m": 0.001546,
+      "harm_fraction": 0.4878048780487805,
+      "is_tie": false,
+      "mean_lcb95_one_sided": -0.13544672028633056,
+      "nonzero_family_count": 39,
+      "per_seed": {
+        "12": {
+          "family_mean_gain": -0.09426808075410784,
+          "family_median_ci95": [
+            -0.07350601062514195,
+            0.0027503664929211524
+          ],
+          "family_median_gain": -0.0058793761546261925
+        },
+        "13": {
+          "family_mean_gain": -0.08226389616486124,
+          "family_median_ci95": [
+            -0.04209632887039061,
+            0.007787692557966047
+          ],
+          "family_median_gain": -0.007270250278473833
+        },
+        "14": {
+          "family_mean_gain": -0.074077680533576,
+          "family_median_ci95": [
+            -0.07350601062514195,
+            0.0027503664929211524
+          ],
+          "family_median_gain": -0.0058793761546261925
+        }
+      },
+      "seed_count": 3,
+      "seed_median_ci95": [
+        -0.09426808075410784,
+        -0.074077680533576
+      ],
+      "seed_median_gain": -0.08226389616486124
+    },
+    "CONTROL": {
+      "admitted": false,
+      "bootstrap_draws": 10000,
+      "bootstrap_seed": 59000,
+      "clears_h61_null_margin_diagnostic": false,
+      "elo_by_seed": {
+        "12": 1479.36,
+        "13": 1472.54,
+        "14": 1480.21
+      },
+      "elo_ci95_across_seeds": [
+        1472.54,
+        1480.21
+      ],
+      "elo_median_across_seeds": 1479.36,
+      "family_count": 41,
+      "family_mean_gain": -0.10392058855900108,
+      "family_median_ci95": [
+        -0.07135603404162638,
+        0.005752428351269601
+      ],
+      "family_median_gain": -0.012233794605800208,
+      "h61_null_margin_m": 0.001546,
+      "harm_fraction": 0.5365853658536586,
+      "is_tie": false,
+      "mean_lcb95_one_sided": -0.20731300492708712,
+      "nonzero_family_count": 39,
+      "per_seed": {
+        "12": {
+          "family_mean_gain": -0.0986189434421534,
+          "family_median_ci95": [
+            -0.08437411434412323,
+            0.005752428351269601
+          ],
+          "family_median_gain": -0.012233794605800208
+        },
+        "13": {
+          "family_mean_gain": -0.11487698477487242,
+          "family_median_ci95": [
+            -0.07350601062514195,
+            0.005752428351269601
+          ],
+          "family_median_gain": -0.020755644699308906
+        },
+        "14": {
+          "family_mean_gain": -0.09826583745997737,
+          "family_median_ci95": [
+            -0.03417958262227172,
+            0.005752428351269601
+          ],
+          "family_median_gain": -0.008483888607574652
+        }
+      },
+      "seed_count": 3,
+      "seed_median_ci95": [
+        -0.11487698477487242,
+        -0.09826583745997737
+      ],
+      "seed_median_gain": -0.0986189434421534
+    },
+    "NORM": {
+      "admitted": false,
+      "bootstrap_draws": 10000,
+      "bootstrap_seed": 59000,
+      "clears_h61_null_margin_diagnostic": false,
+      "elo_by_seed": {
+        "12": 1475.53,
+        "13": 1469.98,
+        "14": 1477.65
+      },
+      "elo_ci95_across_seeds": [
+        1469.98,
+        1477.65
+      ],
+      "elo_median_across_seeds": 1475.53,
+      "family_count": 41,
+      "family_mean_gain": -0.09616102442269052,
+      "family_median_ci95": [
+        -0.07350601062514195,
+        0.007787692557966047
+      ],
+      "family_median_gain": -0.020755644699308906,
+      "h61_null_margin_m": 0.001546,
+      "harm_fraction": 0.5365853658536586,
+      "is_tie": false,
+      "mean_lcb95_one_sided": -0.16667066198544558,
+      "nonzero_family_count": 39,
+      "per_seed": {
+        "12": {
+          "family_mean_gain": -0.08883937847706488,
+          "family_median_ci95": [
+            -0.07350601062514195,
+            0.005704928149107502
+          ],
+          "family_median_gain": -0.020157720309813
+        },
+        "13": {
+          "family_mean_gain": -0.11027652810423792,
+          "family_median_ci95": [
+            -0.08978169224561583,
+            0.0024055651623240415
+          ],
+          "family_median_gain": -0.028581113138585357
+        },
+        "14": {
+          "family_mean_gain": -0.08936716668676872,
+          "family_median_ci95": [
+            -0.04209632887039061,
+            0.010626687194686513
+          ],
+          "family_median_gain": -0.011850776266693064
+        }
+      },
+      "seed_count": 3,
+      "seed_median_ci95": [
+        -0.11027652810423792,
+        -0.08883937847706488
+      ],
+      "seed_median_gain": -0.08936716668676872
+    }
+  },
+  "bootstrap_draws": 10000,
+  "bootstrap_seed": 59000,
+  "fold_seed": 4900,
+  "h61_null_margin_m_diagnostic": 0.001546,
+  "harm_threshold": -0.01,
+  "holdout_payloads_opened": 0,
+  "max_harm_fraction": 0.1,
+  "outer_rows_delivered": 0,
+  "planned_terminal_reads": [],
+  "schema": "jope.h59.admission/v1",
+  "source_commit": "cce86a22a27aa788176b74889d1bf9d090056d8c",
+  "status": "complete",
+  "validation_payloads_opened": false
+}

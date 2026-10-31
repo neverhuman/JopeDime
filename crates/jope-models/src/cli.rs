@@ -9,6 +9,7 @@ use jope_datasets::paths::offline_env;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
+/// Parsed command-line options for `jope-models`.
 #[derive(Parser)]
 #[command(
     name = "jope-models",
@@ -21,17 +22,20 @@ $JOPE_HOME/models (default ${XDG_CACHE_HOME:-~/.cache}/jope/models); JOPE_OFFLIN
 only the cache."
 )]
 pub struct Cli {
-    /// Checkout whose models/ directory holds committed manifests and PINNED.
+    /// Checkout whose `models/` directory contains committed manifests and `PINNED`.
     #[arg(long, global = true, default_value = ".")]
     pub repo: PathBuf,
+    /// Command to execute.
     #[command(subcommand)]
     pub cmd: Cmd,
 }
 
+/// Supported `jope-models` commands.
 #[derive(Subcommand)]
 pub enum Cmd {
     /// Download a bundle (or every bundle in models/PINNED) into the cache, verifying sha256.
     Fetch {
+        /// Bundle identifier to fetch when `--pinned` is not set.
         bundle_id: Option<String>,
         /// Fetch every bundle listed in <repo>/models/PINNED.
         #[arg(long, conflicts_with = "bundle_id")]
@@ -48,6 +52,7 @@ pub enum Cmd {
     },
     /// Re-hash a populated cache; or check the committed manifests without any download.
     Verify {
+        /// Bundle identifier to verify when `--all` is not set.
         bundle_id: Option<String>,
         /// Every cached bundle plus the blob directory.
         #[arg(long, conflicts_with = "bundle_id")]
@@ -79,7 +84,9 @@ pub enum Cmd {
     },
     /// Print the cache path of a bundle (or of one file in it); fails when it is not fetched.
     Path {
+        /// Bundle identifier whose cached path is requested.
         bundle_id: String,
+        /// Optional bundle-relative file path within the cached bundle.
         path: Option<String>,
     },
 }
@@ -110,6 +117,7 @@ fn status(failed: bool) -> ExitCode {
     }
 }
 
+/// Execute a parsed command and return its process exit status.
 pub fn run(cli: Cli) -> Result<ExitCode> {
     let repo = Repo::detect(&cli.repo);
     match cli.cmd {

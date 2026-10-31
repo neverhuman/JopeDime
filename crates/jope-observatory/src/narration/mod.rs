@@ -8,6 +8,7 @@ pub use index::{
     sequence, Index, Limits, Page, Status, MAX_PAGE_BYTES, MAX_PAGE_RECORDS, MAX_RECORD_BYTES,
 };
 use jope_narrator::Cursor;
+/// Serve the selected narration index over newline-delimited MCP JSON-RPC.
 pub use mcp::mcp;
 use std::io::Write;
 
@@ -24,6 +25,7 @@ pub fn terminal_text(text: &str) -> String {
     output
 }
 
+/// Write one validated page as JSONL or terminal-safe narration text.
 pub fn print_page(
     index: &mut Index,
     after: &Cursor,

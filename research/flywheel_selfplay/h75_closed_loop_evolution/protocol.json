@@ -1,0 +1,196 @@
+{
+  "schema": "jope.h75-closed-loop.protocol/v1",
+  "status": "PREREGISTRATION_ONLY",
+  "owner_ruling": "owner_lift_t2250.md",
+  "wave_id": "H75-closed-loop",
+  "runner_owner": "rd_opus",
+  "publication_owner": "rd_astra",
+  "queue": [
+    "H57",
+    "Fused D2",
+    "W1"
+  ],
+  "speed_work": "D2_CPU_PRE_REVIEW_THEN_QUEUED_LOCKED_GPU; E_NO_NEW_GPU_SLOT",
+  "source_base": "f3a0f85e9ad0bb2efe049a40c0e76446f648bec3",
+  "seeds": [
+    701,
+    702,
+    703
+  ],
+  "folds": 5,
+  "fold_seed": 4900,
+  "contexts": 1219,
+  "families": 205,
+  "cycles": 2,
+  "fit_contexts_per_fold": 4,
+  "prospective_contexts_per_fold": 4,
+  "native_calls_per_cycle_context": 4,
+  "proposal_count": 8,
+  "training_slate_size": 192,
+  "proposal_slate_size": 12,
+  "updates_per_cycle": 40,
+  "common_replay_updates": 40,
+  "batch_size": 8,
+  "optimizer": {
+    "name": "AdamW",
+    "lr": 0.0001,
+    "weight_decay": 0.01,
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "eps": 1e-08,
+    "grad_clip_norm": 1,
+    "persistent_between_cycles": true,
+    "warm_restart": false,
+    "rollback": false
+  },
+  "loss": {
+    "name": "SmoothL1_plus_KL",
+    "kl_weight": 0.1,
+    "temperature": 0.2,
+    "revealed_slots_masked": true,
+    "gate_failure_target": 2
+  },
+  "cells": {
+    "A": {
+      "updates": false,
+      "fresh_memory": false
+    },
+    "B": {
+      "updates": false,
+      "fresh_memory": true
+    },
+    "C": {
+      "updates": true,
+      "fresh_memory": false
+    },
+    "D": {
+      "updates": true,
+      "fresh_memory": true
+    }
+  },
+  "search_panel": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "G",
+    "R"
+  ],
+  "legacy_panel": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "replay_B",
+    "replay_D"
+  ],
+  "primary_contrasts": [
+    {
+      "panel": "legacy",
+      "contrast": "D-C"
+    },
+    {
+      "panel": "legacy",
+      "contrast": "D-A"
+    },
+    {
+      "panel": "legacy",
+      "contrast": "replay_D-replay_B"
+    },
+    {
+      "panel": "confirmed_U8",
+      "contrast": "D-B"
+    },
+    {
+      "panel": "confirmed_U8",
+      "contrast": "D-C"
+    },
+    {
+      "panel": "confirmed_U8",
+      "contrast": "D-G"
+    },
+    {
+      "panel": "confirmed_U8",
+      "contrast": "D-R"
+    }
+  ],
+  "statistics": {
+    "unit": "family_after_context_and_seed_averaging",
+    "bootstrap_draws": 10000,
+    "bootstrap_seed": 20261031,
+    "one_sided_alpha": 0.0071428571428571435,
+    "utility_lcb_threshold": 0.001,
+    "median_min": 0,
+    "max_fraction_losing_more_than_0_01": 0.1,
+    "practical_elo_target": 5,
+    "elo": {
+      "anchor": "A",
+      "anchor_rating": 1500,
+      "tie_margin": 0.0001,
+      "prior": 0.01,
+      "iterations": 400
+    }
+  },
+  "confirmation_cut_seeds": [
+    801,
+    802,
+    803
+  ],
+  "budgets": {
+    "reservation": "existing_W9_envelope_not_additive",
+    "gpu_seconds_max": 14400,
+    "aggregate_cpu_seconds_max": 14400,
+    "native_calls_max": 9600,
+    "planned_acquisition_calls": 1920,
+    "planned_terminal_search_calls": 2880,
+    "planned_confirmation_calls": 2160,
+    "pilot_calls_max": 240,
+    "planned_calls_total": 7200,
+    "unallocated_calls": 2400,
+    "optimizer_updates_total": 3600,
+    "deadline_utc": "2026-10-31T14:00:00Z"
+  },
+  "input_pins": {
+    "dope": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "r882": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "fold_manifest": "dd211134bba127960b1612687478064969dca422e35dfa889790760f316961c1",
+    "evaluator": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8"
+  },
+  "qualification_lock": "/home/ubuntu/jope_plan/qualification.lock",
+  "output_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H75-closed-loop/",
+  "launch_manifest": null,
+  "metrics": {
+    "Elo": null,
+    "val_reg_inner": null,
+    "U4": null,
+    "U8": null
+  },
+  "reason_unmeasured": "Preregistration only. Runner and frozen execution manifest are separate prerequisites.",
+  "queue_history": {
+    "owner_lift_t2250": [
+      "H57",
+      "H75-closed-loop",
+      "W1",
+      "H71/W5"
+    ]
+  },
+  "schedule_authority": {
+    "file": "owner_t2320.md",
+    "sha256": "a2860ba9164e4ac5728df679a14ccd7f0f1c36c1637a83918ec6fed6b0edea54",
+    "research_order": [
+      "W1",
+      "W3",
+      "W4",
+      "W6",
+      "W5",
+      "W7",
+      "W9"
+    ],
+    "W5": "provenance_hold",
+    "H75_gpu_slot": null,
+    "H75_status": "CPU_preparation_continues_no_slot_specified_in_t2320",
+    "interrupt_active_jobs": false
+  }
+}

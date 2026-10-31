@@ -352,6 +352,11 @@ fn verify_context(
     }
 }
 
+/// Prepare a verified proposal worker and context from an admitted pair.
+///
+/// Keep these provenance inputs explicit: each identifies an independently
+/// verified part of proposal admission and worker execution.
+#[allow(clippy::too_many_arguments)]
 pub fn prepare<B: Backend, V: Variation>(
     backend: &mut B,
     pair: &PairInputPlan,

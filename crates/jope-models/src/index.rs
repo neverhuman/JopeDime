@@ -7,28 +7,42 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use std::path::{Path, PathBuf};
 
+/// Schema identifier for `models/manifest.json`.
 pub const INDEX_SCHEMA_ID: &str = "jope.model-index/v1";
 
+/// One bundle entry in the committed model index.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct IndexRow {
+    /// Stable bundle identifier.
     pub bundle_id: String,
     /// Repository-relative path of the bundle manifest (`models/bundles/<id>.json`).
     pub manifest: String,
+    /// SHA-256 of the committed bundle manifest bytes.
     pub manifest_sha256: String,
+    /// Object-store key for the published bundle manifest.
     pub s3_key: String,
+    /// Number of files in the bundle manifest.
     pub files: usize,
+    /// Sum of file sizes in bytes.
     pub bytes: u64,
+    /// SPDX license expressions represented in the bundle.
     #[serde(default)]
     pub licenses: Vec<String>,
+    /// Additional forward-compatible index fields.
     #[serde(flatten)]
     pub extra: Map<String, Value>,
 }
 
+/// Committed index of model bundle manifests.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Index {
+    /// Index schema identifier.
     pub schema: String,
+    /// Default object-store bucket URL recorded by the index.
     pub bucket: String,
+    /// Indexed bundle manifests.
     pub bundles: Vec<IndexRow>,
+    /// Additional forward-compatible index fields.
     #[serde(flatten)]
     pub extra: Map<String, Value>,
 }
@@ -36,10 +50,12 @@ pub struct Index {
 /// A checkout whose `models/` directory holds the committed manifests.
 #[derive(Clone, Debug)]
 pub struct Repo {
+    /// Checkout root containing the `models/` directory.
     pub root: PathBuf,
 }
 
 impl Repo {
+    /// Create a repository view rooted at `root` without checking its contents.
     pub fn at(root: impl Into<PathBuf>) -> Repo {
         Repo { root: root.into() }
     }
@@ -51,26 +67,32 @@ impl Repo {
             .then(|| Repo::at(root))
     }
 
+    /// Return the `models/` directory.
     pub fn models_dir(&self) -> PathBuf {
         self.root.join("models")
     }
 
+    /// Return the directory containing committed bundle manifests.
     pub fn bundles_dir(&self) -> PathBuf {
         self.models_dir().join("bundles")
     }
 
+    /// Return the committed model index path.
     pub fn index_path(&self) -> PathBuf {
         self.models_dir().join("manifest.json")
     }
 
+    /// Return the committed pinned-bundle list path.
     pub fn pinned_path(&self) -> PathBuf {
         self.models_dir().join("PINNED")
     }
 
+    /// Return the expected committed manifest path for `bundle_id`.
     pub fn manifest_path(&self, bundle_id: &str) -> PathBuf {
         self.bundles_dir().join(format!("{bundle_id}.json"))
     }
 
+    /// Read and validate the committed model index schema identifier.
     pub fn read_index(&self) -> Result<Index> {
         let p = self.index_path();
         let bytes = std::fs::read(&p).with_context(|| format!("read {}", p.display()))?;

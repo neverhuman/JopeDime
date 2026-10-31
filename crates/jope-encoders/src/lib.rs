@@ -1,3 +1,11 @@
+//! Verified model-bundle handling and encoder APIs for JopeDime.
+//!
+//! This crate groups model bundle validation and loading, foundation and target
+//! encoders, JOPE policy inference, and the optional DOPE training/session APIs.
+//! The `dope` feature gates the latter module. Encoder and inference behavior is
+//! defined by the repository's frozen contracts and parity fixtures; exposing an
+//! API here does not by itself qualify a complete learning or serving loop.
+
 pub mod bundle;
 pub mod cli;
 pub mod data;

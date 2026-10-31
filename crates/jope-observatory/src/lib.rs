@@ -12,52 +12,78 @@ use std::{
     time::UNIX_EPOCH,
 };
 
+/// Schema identifier emitted by the read-only observatory snapshot.
 pub const SCHEMA: &str = "jope.observatory/v1";
 const MAX_JSON: u64 = 16 * 1024 * 1024;
+/// Maximum number of campaign directories included in one observation.
 pub const MAX_RUNS: usize = 32;
 
+/// Operator-supplied paths and network binding for the observatory server.
 #[derive(Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
+    /// Repository root used for catalogs and training-wave records.
     pub repo_root: PathBuf,
+    /// Campaign roots to inspect, in configured order.
     #[serde(default)]
     pub campaign_roots: Vec<PathBuf>,
+    /// Hash-pinned GP catalog inputs.
     #[serde(default)]
     pub gp_catalogs: Vec<GpInput>,
+    /// Optional current storage observation file.
     pub storage_snapshot: Option<PathBuf>,
+    /// Optional code identity observation file.
     pub code_identity: Option<PathBuf>,
+    /// Optional current dataset observation file.
     pub dataset_snapshot: Option<PathBuf>,
+    /// Optional fleet snapshot files.
     #[serde(default)]
     pub fleet_snapshots: Vec<PathBuf>,
+    /// Static dashboard asset directory.
     pub static_dir: PathBuf,
+    /// Socket address for the loopback dashboard; defaults to `127.0.0.1:18894`.
     #[serde(default = "listen_default")]
     pub listen: String,
 }
 fn listen_default() -> String {
     "127.0.0.1:18894".into()
 }
+/// One operator-selected GP catalog with an expected content digest and public labels.
 #[derive(Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GpInput {
+    /// Path to the catalog JSON file.
     pub path: PathBuf,
+    /// Expected lowercase SHA-256 digest of the file bytes.
     pub sha256: String,
+    /// Label shown with observed catalog rows.
     pub label: String,
+    /// Declared scope of this catalog input.
     pub scope: String,
 }
 
+/// Bounded observation of one evidence source; missing or invalid values remain unknown.
 #[derive(Serialize, Clone)]
 pub struct Observation {
+    /// `observed`, `unavailable`, or a more specific qualification state.
     pub status: String,
+    /// Display path or source identifier.
     pub source: String,
+    /// Source modification time in Unix seconds, when available.
     pub observed_at: Option<f64>,
+    /// SHA-256 of the observed bytes, when the source was accepted.
     pub sha256: Option<String>,
+    /// Non-sensitive refusal reason, when the source could not be read.
     pub error: Option<String>,
+    /// Parsed source value, or JSON null when unavailable.
     pub value: Value,
 }
 
+/// Current UTC wall-clock time as seconds since the Unix epoch.
 pub fn now() -> f64 {
     Utc::now().timestamp_millis() as f64 / 1000.
 }
+/// Return the lowercase SHA-256 digest of `bytes`.
 pub fn digest(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
@@ -89,6 +115,7 @@ pub fn read_bounded(path: &Path, limit: u64) -> Result<Vec<u8>> {
     }
     Ok(bytes)
 }
+/// Read and parse one bounded JSON evidence file without converting failures to zero values.
 pub fn observe(path: &Path) -> Observation {
     let result = read_bounded(path, MAX_JSON).and_then(|b| {
         let value = serde_json::from_slice(&b).context("invalid JSON")?;
@@ -137,6 +164,7 @@ fn finite(v: &Value) -> Option<f64> {
     v.as_f64().filter(|n| n.is_finite())
 }
 
+/// Extract up to 10,000 finite fixed-panel, non-dropout train/validation points.
 pub fn curve(progress: &Value) -> Vec<Value> {
     let mut rows = vec![];
     for r in progress["loss_history"]
@@ -173,6 +201,7 @@ fn directory_names(root: &Path, max: usize) -> Vec<String> {
         .collect()
 }
 
+/// Build a bounded, identity-checked observation of one campaign directory.
 pub fn campaign(root: &Path) -> Value {
     let cfg = observe(&root.join("config.json"));
     let mut evidence = observe(&root.join("training/progress.json"));
@@ -296,6 +325,7 @@ pub fn campaign(root: &Path) -> Value {
     json!({"id":root.file_name().unwrap_or_default().to_string_lossy(),"config":cfg_public,"config_sha256":cfg.sha256,"progress":evidence,"identity_matches":identity_matches,"curve":if recognized {curve(&p)} else {vec![]},"counts":selected(&loaded.value["counts"], &["partitions","loaded_kumo_contexts","current_eligible_views","pending_contexts","refused_rows","native_detail_records_declared"]),"membership_sha256":loaded.value["membership_sha256"],"checkpoints":checkpoints,"checkpoint_count_observed":count,"checkpoint_list_truncated":count>24,"source_identity":selected(&source_map.value,&["source_commit","source_main_sha","commit","verified_files"]),"terminal_receipt":terminal_receipt})
 }
 
+/// Observe configured storage evidence, falling back to the dated catalog when needed.
 pub fn storage(c: &Config) -> Value {
     let catalog = observe(&c.repo_root.join("catalogs/s3.json"));
     if let Some(path) = &c.storage_snapshot {
@@ -321,6 +351,7 @@ pub fn storage(c: &Config) -> Value {
     json!({"evidence":{"status":if buckets.is_empty(){"unavailable"}else{"historical"},"source":catalog.source,"sha256":catalog.sha256,"observed_at":catalog.value["inventoried"],"value":{"schema":"jope.storage-observation/v1","buckets":buckets,"observed_bytes":if buckets.iter().any(|b|b["bytes"].is_u64()) {json!(bytes)}else{Value::Null},"observed_objects":if buckets.iter().any(|b|b["objects"].is_u64()){json!(objects)}else{Value::Null},"complete":false,"scope":"last catalog snapshot; not a current fleet total","errors":[]}},"catalog_fallback":true})
 }
 
+/// Summarize up to eight hash-pinned GP catalog inputs without inferring HWM admission.
 pub fn gp_catalog(inputs: &[GpInput]) -> Value {
     let mut programs: BTreeMap<String, Value> = BTreeMap::new();
     let mut families: BTreeMap<String, usize> = BTreeMap::new();
@@ -372,6 +403,7 @@ pub fn gp_catalog(inputs: &[GpInput]) -> Value {
     json!({"status":if all_valid{"observed"}else if programs.is_empty(){"unavailable"}else{"partial"},"unique_programs":if programs.is_empty()&&!all_valid{Value::Null}else{json!(programs.len())},"scope":"unique declared program identities in the configured, hash-pinned library snapshots; not a census of every fleet library; no HWM admission inferred","global_complete":false,"families":families,"sources":sources,"programs":programs.into_values().collect::<Vec<_>>()})
 }
 
+/// Read compact, recorded assertions for training waves under `repo`.
 pub fn waves(repo: &Path) -> Value {
     let artifacts = observe(&repo.join("catalogs/training-artifacts.json"));
     let root = repo.join("docs/research/waves");
@@ -442,6 +474,7 @@ pub fn waves(repo: &Path) -> Value {
     json!({"waves":result,"scope":"compact recorded assertions, not raw result rows or verified scientific wins"})
 }
 
+/// Assemble the configured read-only observatory snapshot.
 pub fn snapshot(c: &Config) -> Value {
     let s3 = storage(c);
     let catalog = observe(&c.repo_root.join("catalogs/s3.json"));
