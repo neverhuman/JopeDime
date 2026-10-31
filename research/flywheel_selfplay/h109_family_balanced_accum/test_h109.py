@@ -162,3 +162,16 @@ def test_readout_fails_closed_on_missing_cells_or_wrong_prereg():
     cells[0]["prereg_sha256"] = "wrong"
     with pytest.raises(RuntimeError, match="identity/boundary"):
         r.summarize_readout(cells)
+
+
+def test_readout_exact_margin_ties_do_not_advance():
+    cells = _synthetic_outcome_cells()
+    for cell in cells:
+        if cell["arm"] == "FBAL":
+            cell["assessment"]["utility_by_family"] = {
+                family: 0.001 for family in cell["r882_utility_by_family"]
+            }
+    metrics = r.summarize_readout(cells)
+    assert metrics["arms"]["FBAL"]["family_mean_gain"] == pytest.approx(0.001)
+    assert metrics["arms"]["FBAL"]["holm"]["passes"] is False
+    assert metrics["arms"]["FBAL"]["admitted"] is False
