@@ -1,10 +1,11 @@
 //! Closed, typed workload handler launcher.
 //!
 //! The daemon invokes this binary with a template enum and typed, bounded
-//! arguments.  Each supported template is implemented by a direct Rust
-//! handler in this binary; there is no executable path, shell payload, or
-//! request-controlled working directory.  Downstream services can consume the
-//! structured application receipt and durable daemon events.
+//! arguments. Template names currently classify requests only; this binary
+//! validates the request and emits progress plus an application receipt, but
+//! does not execute the named workload. There is no arbitrary executable path,
+//! shell payload, or request-controlled working directory. Downstream services
+//! can consume the structured launcher receipt and durable daemon events.
 
 use std::{collections::BTreeMap, env, io, os::fd::RawFd, str::FromStr};
 
@@ -260,7 +261,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn every_production_template_has_a_direct_handler() {
+    fn every_production_template_is_allowlisted_and_receiptable() {
         for template in [
             "dataset-profile",
             "feature-expansion",
