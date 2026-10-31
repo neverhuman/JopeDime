@@ -54,14 +54,17 @@ recorded run. Logged utilities alone do not identify the snapshot's
 relationship to the historical writer or map.
 
 In the inspected loop implementation, heuristic program edits, retrieval
-and grammar sampling supply candidate programs. A trainable adapter ranks
-proposals by a predicted evaluation score; this loop does not optimize a
-neural program writer. Its pool-utility calculation uses the recorded
-scores and gate outcomes of
+and grammar sampling supply candidate programs. Only an adapter that ranks
+proposals by predicted score is optimized; the encoder and other modules
+stay frozen. This loop has no neural program writer. Its pool-utility
+calculation uses the recorded scores and gate outcomes of
 the first four candidates as revealed history, then selects the candidate
 with the lowest predicted score from the pool, including those entries.
 This is a conditional ranking task, separate from a single new program drawn by the
 historical writer.
+Training puts the lowest recorded scores first in its slates; utility
+evaluation uses stored pool order. The two calls can therefore reveal
+different examples.
 
 The inspected caller supplies modality tokens and a mask while zeroing
 separate context and prior inputs. Its objective combines scalar
@@ -74,6 +77,8 @@ reference procedure specifies five. Evaluations are logged separately from
 training-pool admission: ordinary admission retains only programs that pass
 the gates and strictly improve the incumbent for their training context.
 Historical programs have a separate admission path.
+The adapter's default gate can accept equal utility; rejection restores
+model and optimizer states.
 
 \TBD{Bind the retained snapshot to the exact loop source, adapter, candidate
 pools, revealed-history inputs and utility normalization.}
