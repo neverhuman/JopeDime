@@ -395,16 +395,11 @@ def run_owned(command, log, environment, seconds, lock_fd, load, grace=5):
                 for sig in (signal.SIGINT, signal.SIGTERM)
             }
             try:
-                try:
-                    os.killpg(child.pid, signal.SIGTERM)
-                except ProcessLookupError:
-                    pass
-                if not exited:
-                    time.sleep(grace)
-                try:
-                    os.killpg(child.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
+                # Backend invocations use their own process groups in this
+                # session. Clean the whole private session before the lease
+                # can unwind, while child.pid remains unreaped and pins the
+                # session identity against reuse.
+                q1.terminate_session(child.pid, grace if not exited else 0)
                 child.wait()
             finally:
                 for sig, handler in previous.items():

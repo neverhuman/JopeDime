@@ -12,6 +12,8 @@ description = "JopeDime v1 engine service"
 failpoints = []
 # Internal research tooling; excluded from the default production graph.
 research = []
+# Optional frozen fused-ranker execution; defaults and native evaluation stay CPU.
+fused-cuda = ["candle_core_0_11_0/cuda"]
 
 [dependencies]
 # Registry declaration patched to the vendored copy by [patch.crates-io], exactly like starforge.

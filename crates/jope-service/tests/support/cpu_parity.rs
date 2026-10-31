@@ -187,3 +187,388 @@ impl Stats {
         );
     }
 }
+
+// RNK-10 composition consumes the same hash-pinned real packets as RNK-08.
+// Counterfactual perturbations below are controls, not measured quality results.
+#[test]
+#[ignore = "requires hash-pinned RES-07 CPU packets and frozen RES06 weights"]
+fn real_round_admission_composition() {
+    use crate::discover::r#loop::{Plan, RoundAdmission, RoundContext, RoundMeasurement};
+    use crate::ranker::admission::{
+        select_costs, CpuRoundAdmission, RevealedRule, RoundInputProvider, RoundInputs,
+        RoundProgram,
+    };
+    use crate::ranker::stage1b::TokenProjection;
+    use rand_chacha::{
+        rand_core::{RngCore, SeedableRng},
+        ChaCha12Rng,
+    };
+    use std::cell::Cell;
+
+    struct Provider<'a> {
+        dsls: &'a [String],
+        prog: Vec<f32>,
+        proj: Vec<f32>,
+        tokens: Vec<f32>,
+        mask: Vec<f32>,
+        gates: Vec<f32>,
+        mode: &'a Cell<u8>,
+    }
+    impl RoundInputProvider for Provider<'_> {
+        fn observe(
+            &self,
+            _: &RoundContext<'_>,
+            proposals: &[String],
+        ) -> anyhow::Result<RoundInputs> {
+            let program = |i: usize| RoundProgram {
+                dsl: self.dsls[i].clone(),
+                features412: self.prog[i * 412..(i + 1) * 412].try_into().unwrap(),
+                projection16: self.proj[i * 16..(i + 1) * 16].try_into().unwrap(),
+            };
+            let mut result = RoundInputs {
+                pool: (0..4).map(program).collect(),
+                pool_gates: self
+                    .gates
+                    .iter()
+                    .map(|&g| {
+                        assert!(g == 0.0 || g == 1.0);
+                        g == 1.0
+                    })
+                    .collect(),
+                proposals: (4..4 + proposals.len()).map(program).collect(),
+                conditioning: TokenProjection {
+                    tokens: std::array::from_fn(|i| {
+                        self.tokens[i * 32..(i + 1) * 32].try_into().unwrap()
+                    }),
+                    mask: self.mask.as_slice().try_into().unwrap(),
+                },
+            };
+            match self.mode.get() {
+                1 => {
+                    result.conditioning.tokens = [[0.0; 32]; 10];
+                    result.conditioning.mask = [0.0; 10];
+                }
+                2 => result.proposals.swap(0, 1),
+                3 => result.pool.swap(0, 1),
+                4 => {
+                    result.pool_gates.pop();
+                }
+                _ => {}
+            }
+            Ok(result)
+        }
+    }
+    let fixtures = Fixtures::open();
+    let spec = &fixtures.index["files"]["programs.jsonl"];
+    let bytes = hashed(
+        &fixtures.root.join("programs.jsonl"),
+        spec["sha256"].as_str().unwrap(),
+    );
+    let dsls: Vec<String> = std::str::from_utf8(&bytes)
+        .unwrap()
+        .lines()
+        .map(|line| {
+            serde_json::from_str::<Value>(line).unwrap()["dsl"]
+                .as_str()
+                .unwrap()
+                .to_owned()
+        })
+        .take(20)
+        .collect();
+    assert_eq!(dsls.len(), 20);
+    let plan = Plan {
+        run_id: "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0".parse().unwrap(),
+        dataset_id: "ds_21fbfe8b53dbcd605d79486b".parse().unwrap(),
+        problem_digest: "a".repeat(64),
+        bundle_digest: BUNDLE.strip_prefix("sha256:").unwrap().into(),
+        binary_version: "RNK10-real-CPU-replay".into(),
+        matrix_path: "FIT-only-not-opened-by-replay".into(),
+        matrix_sha256: "b".repeat(64),
+        target: "target".into(),
+        features: vec![],
+        objective: "rmse".into(),
+        seed: 73,
+        planned_workers: 8,
+        effort: jope_api::Effort::Fast,
+        evaluations: 24,
+        wall_seconds: 60,
+        evaluation_wall_ms: 15_000,
+        evaluation_rss_bytes: 2 * 1024 * 1024 * 1024,
+        groups: None,
+        times: None,
+        gap_rows: 0,
+    };
+    let mut stats = Stats::default();
+    #[cfg(feature = "research")]
+    let (mut recorded_slates, mut recording_refusals) = (0, 0);
+    let (mut decisive, mut ties, mut mismatches) = (0, 0, 0);
+    let (mut landmark_changes, mut fitness_changes, mut disconnected_changes) = (0, 0, 0);
+    let mut max_kl = 0.0_f64;
+    let weights = fixtures.weights();
+    for cid in &fixtures.contexts {
+        for width in [12, 20] {
+            let f = fixtures.load(&format!("slates/{cid}-{width}.safetensors"));
+            assert_eq!(f.i64("input.revealed_indices"), vec![0, 1, 2, 3]);
+            let fitness = f.f32("input.revealed_raw_f");
+            let mode = Cell::new(0);
+            let provider = Provider {
+                dsls: &dsls,
+                prog: f.f32("input.prog_412"),
+                proj: f.f32("input.proj_16"),
+                tokens: f.f32("input.mm_tokens_10x32"),
+                mask: f.f32("input.mm_mask_10"),
+                gates: f.f32("input.revealed_gate"),
+                mode: &mode,
+            };
+            let admission = CpuRoundAdmission::for_cpu_replay(
+                super::CpuAdapter::from_bytes(&weights).unwrap(),
+                plan.clone(),
+                provider,
+                RevealedRule::StorageOrder,
+            );
+            let ids: Vec<_> = (0..4).map(|i| format!("alg_{i:08}")).collect();
+            let mut context = RoundContext {
+                plan: &plan,
+                round: 1,
+                measured: (0..4)
+                    .map(|i| RoundMeasurement {
+                        algorithm_id: &ids[i],
+                        dsl: &dsls[i],
+                        surrogate_fitness: f64::from(fitness[i]),
+                    })
+                    .collect(),
+            };
+            let proposals = dsls[4..width].to_vec();
+            let rng = ChaCha12Rng::from_seed([42; 32]);
+            let mut actual_rng = rng.clone();
+            let actual = admission
+                .evaluate_round(&context, &proposals, width == 20, &mut actual_rng)
+                .unwrap();
+            let expected = f.numbers("output.total_cost");
+            stats.compare(&actual.costs.total_cost, &expected);
+            max_kl = max_kl.max(actual.costs.proposal_kl_to_anchor[0]);
+            let mut reference_rng = rng.clone();
+            let indices = select_costs(&expected, width == 20, &mut reference_rng).unwrap();
+            let reference: Vec<_> = indices.iter().map(|&i| proposals[i].clone()).collect();
+            assert_eq!(
+                actual_rng.next_u64(),
+                reference_rng.next_u64(),
+                "same round RNG consumption"
+            );
+            let mut order: Vec<_> = expected[4..].to_vec();
+            order.sort_by(f64::total_cmp);
+            let cutoff = if width == 12 { 4 } else { 2 };
+            let (a, b) = (order[cutoff - 1], order[cutoff]);
+            if b - a > 2.0 * (1e-5 + 1e-4 * a.abs().max(b.abs())) {
+                decisive += 1;
+                mismatches += usize::from(actual.admitted != reference);
+            } else {
+                ties += 1;
+            }
+            disconnected_changes += usize::from(actual.admitted != proposals[..4]);
+            mode.set(1);
+            let changed = admission
+                .evaluate_round(&context, &proposals, width == 20, &mut rng.clone())
+                .unwrap();
+            landmark_changes += usize::from(changed.admitted != actual.admitted);
+            mode.set(0);
+            for (i, m) in context.measured.iter_mut().enumerate() {
+                m.surrogate_fitness = f64::from(fitness[3 - i]);
+            }
+            let changed = admission
+                .evaluate_round(&context, &proposals, width == 20, &mut rng.clone())
+                .unwrap();
+            fitness_changes += usize::from(changed.admitted != actual.admitted);
+            for (i, m) in context.measured.iter_mut().enumerate() {
+                m.surrogate_fitness = f64::from(fitness[i]);
+            }
+            assert_eq!(
+                admission
+                    .admit_round(&context, proposals.clone(), width == 20, &mut rng.clone())
+                    .unwrap(),
+                actual.admitted
+            );
+            #[cfg(feature = "research")]
+            {
+                use crate::discover::r#loop::RecordedAdmissionContext;
+                use crate::research::{
+                    ObservedSlate, RecordedPolicyKind, RecordedProgram, RecordedReveal,
+                };
+                let prog = f.f32("input.prog_412");
+                let proj = f.f32("input.proj_16");
+                let gates = f.f32("input.revealed_gate");
+                let tokens = f.f32("input.mm_tokens_10x32");
+                let mask = f.f32("input.mm_mask_10");
+                let program = |i: usize| RecordedProgram {
+                    program_sha256: format!("{:x}", Sha256::digest(dsls[i].as_bytes())),
+                    // Record metadata is a software control, not an Engine evidence grant.
+                    operator_family: "fixture_observation".into(),
+                    feat412: prog[i * 412..(i + 1) * 412].to_vec(),
+                    proj16: proj[i * 16..(i + 1) * 16]
+                        .iter()
+                        .map(|&v| f64::from(v))
+                        .collect(),
+                };
+                let observed = ObservedSlate {
+                    programs: (4..width).map(program).collect(),
+                    revealed: (0..4)
+                        .map(|i| RecordedReveal {
+                            program: program(i),
+                            surrogate: f64::from(fitness[i]),
+                            gate: gates[i] == 1.0,
+                        })
+                        .collect(),
+                };
+                let conditioning = TokenProjection {
+                    tokens: std::array::from_fn(|i| {
+                        tokens[i * 32..(i + 1) * 32].try_into().unwrap()
+                    }),
+                    mask: mask.as_slice().try_into().unwrap(),
+                };
+                let mut recorded_rng = rng.clone();
+                let policy = admission
+                    .admit_recorded_round(
+                        &context,
+                        proposals.clone(),
+                        width == 20,
+                        &mut recorded_rng,
+                        &RecordedAdmissionContext {
+                            slate: &observed,
+                            conditioning: TokenProjection {
+                                tokens: conditioning.tokens,
+                                mask: conditioning.mask,
+                            },
+                        },
+                    )
+                    .unwrap();
+                assert_eq!(policy.kind, RecordedPolicyKind::Learned);
+                assert_eq!(policy.explore, width == 20);
+                assert_eq!(policy.admitted, actual.admitted_indices);
+                let actual_costs: Vec<_> = actual
+                    .costs
+                    .total_cost
+                    .iter()
+                    .map(|&v| f64::from(v))
+                    .collect();
+                assert_eq!(policy.slate_costs.as_ref().unwrap(), &actual_costs);
+                let mut expected_rng = rng.clone();
+                select_costs(&actual_costs, width == 20, &mut expected_rng).unwrap();
+                assert_eq!(recorded_rng.next_u64(), expected_rng.next_u64());
+                recorded_slates += 1;
+                for bad in 0..15 {
+                    let mut changed = ObservedSlate {
+                        programs: observed.programs.clone(),
+                        revealed: observed.revealed.clone(),
+                    };
+                    let mut changed_conditioning = TokenProjection {
+                        tokens: conditioning.tokens,
+                        mask: conditioning.mask,
+                    };
+                    match bad {
+                        0 => changed.programs[0].program_sha256 = "c".repeat(64),
+                        1 => changed.programs[0].feat412[0] += 1.0,
+                        2 => changed.programs[0].proj16[0] += 1.0,
+                        3 => changed.revealed.swap(0, 1),
+                        // One f64 ULP can survive as the same graph f32: raw recorded
+                        // fitness still must equal the committed measurement exactly.
+                        4 => {
+                            changed.revealed[0].surrogate =
+                                f64::from_bits(changed.revealed[0].surrogate.to_bits() ^ 1)
+                        }
+                        5 => changed.revealed[0].gate = !changed.revealed[0].gate,
+                        6 => changed_conditioning.tokens[0][0] += 1.0,
+                        7 => changed_conditioning.mask[0] = 1.0 - changed_conditioning.mask[0],
+                        8 => {
+                            changed.revealed.pop();
+                        }
+                        9 => {
+                            changed.programs.pop();
+                        }
+                        10 => changed.revealed[0].program.feat412[0] += 1.0,
+                        11 => changed.revealed[0].program.proj16[0] += 1.0,
+                        12 => changed.revealed[0].program.program_sha256 = "d".repeat(64),
+                        13 => changed.programs[0].proj16[0] = f64::INFINITY,
+                        _ => changed_conditioning.mask[0] = f32::NAN,
+                    }
+                    let mut refused_rng = rng.clone();
+                    assert!(
+                        admission
+                            .admit_recorded_round(
+                                &context,
+                                proposals.clone(),
+                                width == 20,
+                                &mut refused_rng,
+                                &RecordedAdmissionContext {
+                                    slate: &changed,
+                                    conditioning: changed_conditioning
+                                },
+                            )
+                            .is_err(),
+                        "accepted different recorded graph inputs, case {bad}"
+                    );
+                    assert_eq!(refused_rng.next_u64(), rng.clone().next_u64());
+                    recording_refusals += 1;
+                }
+            }
+            // Alignment and identity failures must not advance the caller's RNG.
+            for bad in [2, 3, 4] {
+                mode.set(bad);
+                let mut refused_rng = rng.clone();
+                assert!(admission
+                    .evaluate_round(&context, &proposals, width == 20, &mut refused_rng)
+                    .is_err());
+                assert_eq!(refused_rng.next_u64(), rng.clone().next_u64());
+            }
+            mode.set(0);
+            for field in 0..6 {
+                let mut wrong = plan.clone();
+                match field {
+                    0 => wrong.problem_digest = "c".repeat(64),
+                    1 => wrong.bundle_digest = "d".repeat(64),
+                    2 => wrong.matrix_sha256 = "e".repeat(64),
+                    3 => wrong.binary_version.push('x'),
+                    4 => wrong.objective = "mae".into(),
+                    _ => wrong.seed += 1,
+                }
+                let wrong_context = RoundContext {
+                    plan: &wrong,
+                    round: context.round,
+                    measured: context
+                        .measured
+                        .iter()
+                        .map(|m| RoundMeasurement {
+                            algorithm_id: m.algorithm_id,
+                            dsl: m.dsl,
+                            surrogate_fitness: m.surrogate_fitness,
+                        })
+                        .collect(),
+                };
+                let mut refused_rng = rng.clone();
+                assert!(admission
+                    .evaluate_round(&wrong_context, &proposals, width == 20, &mut refused_rng)
+                    .is_err());
+                assert_eq!(refused_rng.next_u64(), rng.clone().next_u64());
+            }
+        }
+    }
+    assert!(decisive > 0, "no decisive reference admission comparisons");
+    assert!(landmark_changes > 0, "disconnected landmark control");
+    assert!(fitness_changes > 0, "disconnected measured-fitness control");
+    assert!(
+        disconnected_changes > 0,
+        "heuristic disconnected control must fail"
+    );
+    #[cfg(feature = "research")]
+    let recorded_summary = json!({"executed":true,"slates":recorded_slates,"input_mismatch_refusals":recording_refusals,"same_costs_indices_and_RNG":true});
+    #[cfg(not(feature = "research"))]
+    let recorded_summary = json!({"executed":false,"reason":"research feature required"});
+    stats.failures += mismatches;
+    stats.finish("RNK-10-composition", json!({
+        "contexts":50,"slates":100,"recorded_admission":recorded_summary,"decisive_admission_slates":decisive,"tie_band_slates":ties,
+        "admitted_order_mismatches":mismatches,"landmark_perturbation_changed_admission":landmark_changes,
+        "fitness_perturbation_changed_admission":fitness_changes,"disconnected_heuristic_mismatches":disconnected_changes,
+        "max_proposal_KL":max_kl,"quality_gate_granted":false,"Q1_ready":false,
+        "reveal_rule":"explicit StorageOrder matching captured first four; not an OD13 grant",
+        "identity_scope":"packet and weights hash-pinned; dummy Plan used only to exercise binding refusals"
+    }));
+}

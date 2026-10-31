@@ -253,7 +253,12 @@ fn captured_rounds_read_in_python_and_complete_all_guard_refuses_biased_or_parti
     let script = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../python/src/jope/north_star/record_reader.py");
     for all in [false, true] {
-        for budget in [3, 16] {
+        for (budget, dispatches, failures, incomplete_rounds) in [
+            (0, 0, 0, 3),
+            (1, 3, 3, 3),
+            (3, 8, 3, 2),
+            (16, if all { 26 } else { 10 }, 3, 0),
+        ] {
             let dir = tempfile::tempdir().unwrap();
             let path = dir.path().join("capture.jsonl");
             let mut writer = RecordWriter::create(&path).unwrap();
@@ -265,7 +270,11 @@ fn captured_rounds_read_in_python_and_complete_all_guard_refuses_biased_or_parti
             let output = Command::new("python3")
                 .arg(&script)
                 .arg(&path)
-                .args(["--allow-synthetic", "--allow-incomplete"])
+                .args([
+                    "--allow-synthetic",
+                    "--allow-incomplete",
+                    "--detailed-counts",
+                ])
                 .output()
                 .unwrap();
             assert!(
@@ -277,8 +286,10 @@ fn captured_rounds_read_in_python_and_complete_all_guard_refuses_biased_or_parti
             assert_eq!(
                 counts,
                 json!({
-                    "rounds":3, "proposals":26, "outcomes": if budget==3 {8} else if all {26} else {10},
-                    "failures":3, "incomplete_rounds": if budget==3 {2} else {0}
+                    "rounds":3, "proposals":26, "admissions":10,
+                    "dispatches":dispatches, "outcomes":dispatches,
+                    "successes":dispatches-failures,
+                    "failures":failures, "incomplete_rounds":incomplete_rounds
                 })
             );
             let guarded = Command::new("python3")
@@ -306,7 +317,7 @@ fn reader(path: &Path, synthetic: bool) -> std::process::Output {
     let script = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../python/src/jope/north_star/record_reader.py");
     let mut command = Command::new("python3");
-    command.arg(script).arg(path);
+    command.arg(script).arg(path).arg("--detailed-counts");
     if synthetic {
         command.arg("--allow-synthetic");
     }
@@ -334,6 +345,23 @@ fn rust_stream_reads_in_python_with_exact_inventory() {
         let summary: Value = serde_json::from_slice(&output.stdout).unwrap();
         assert_eq!(
             summary,
+            json!({
+                "rounds":3, "proposals":26, "admissions":10,
+                "dispatches":if all {26} else {10}, "outcomes":if all {26} else {10},
+                "successes":if all {23} else {7}, "failures":3, "incomplete_rounds":0
+            })
+        );
+        let script = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../python/src/jope/north_star/record_reader.py");
+        let legacy = Command::new("python3")
+            .arg(script)
+            .arg(&path)
+            .arg("--allow-synthetic")
+            .output()
+            .unwrap();
+        assert!(legacy.status.success());
+        assert_eq!(
+            serde_json::from_slice::<Value>(&legacy.stdout).unwrap(),
             json!({"rounds":3,"proposals":26,"outcomes":if all {26} else {10},"failures":3,"incomplete_rounds":0})
         );
         assert!(
@@ -517,13 +545,22 @@ fn budget_truncation_preserves_policy_and_is_not_complete_training_data() {
     let output = Command::new("python3")
         .arg(script)
         .arg(&path)
-        .args(["--allow-synthetic", "--allow-incomplete"])
+        .args([
+            "--allow-synthetic",
+            "--allow-incomplete",
+            "--detailed-counts",
+        ])
         .output()
         .unwrap();
     assert!(output.status.success());
     let summary: Value = serde_json::from_slice(&output.stdout).unwrap();
-    assert_eq!(summary["incomplete_rounds"], 1);
-    assert_eq!(summary["outcomes"], 4);
+    assert_eq!(
+        summary,
+        json!({
+            "rounds":2, "proposals":10, "admissions":6, "dispatches":4,
+            "outcomes":4, "successes":2, "failures":2, "incomplete_rounds":1
+        })
+    );
     truncated.capture_complete = true;
     assert!(truncated.validate().is_err());
 }
@@ -566,9 +603,11 @@ fn python_rejects_malformed_or_truncated_streams() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("bad.jsonl");
         fs::write(&path, bytes).unwrap();
+        let output = reader(&path, true);
+        assert!(!output.status.success(), "Python negative case {i}");
         assert!(
-            !reader(&path, true).status.success(),
-            "Python negative case {i}"
+            output.stdout.is_empty(),
+            "no partial success summary: case {i}"
         );
     }
 }
@@ -617,4 +656,181 @@ fn private_capture_envelope_refuses_unknown_fields_and_oversized_cas_references(
         .unwrap_err()
         .to_string()
         .contains("ceiling"));
+}
+
+#[test]
+fn auxiliary_journal_requires_readable_results_and_matching_attempts() {
+    use crate::worker::{Attempt, Limits, Request, Response};
+    use capture::{AuxiliaryAttempt, AuxiliaryResult, Binding, CaptureState};
+
+    let home = tempfile::tempdir().unwrap();
+    let store = crate::store::Store::open(home.path()).unwrap();
+    let mut row = record(0, true);
+    row.identity.run_id = jope_api::ids::RunId::new().to_string();
+    let binding = Binding {
+        config: CaptureConfig {
+            max_attempts: 16,
+            max_rounds: 16,
+            max_bytes: 1024 * 1024,
+            evaluate_all_proposals: true,
+            seed_protocol_sha256: "2".repeat(64),
+        },
+        identity: row.identity,
+        seed: row.seed,
+        tokens: row.tokens,
+        mask: row.mask,
+        matrix_sha256: "3".repeat(64),
+    };
+    let bytes = serde_json::to_vec(&binding).unwrap();
+    let mut state = CaptureState {
+        version: 1,
+        binding: store.publish_blob(std::io::Cursor::new(&bytes)).unwrap(),
+        config: binding.config.clone(),
+        charged: 0,
+        bytes: bytes.len() as u64,
+        label_counter: 0,
+        tainted: false,
+        rounds: Default::default(),
+        auxiliary: vec![],
+    };
+    let request = Request {
+        attempt: Attempt {
+            run: binding.identity.run_id.parse().unwrap(),
+            round: 0,
+            slot: 0,
+            attempt: 0,
+        },
+        matrix_path: "synthetic.jmat".into(),
+        fold_spec: serde_json::json!({}),
+        dsl: "synthetic_control".into(),
+        objective: serde_json::json!("rmse"),
+        seed: 29,
+        limits: Limits {
+            wall_ms: 100,
+            rss_bytes: 1024,
+        },
+    };
+    let response = Response {
+        attempt: request.attempt.clone(),
+        scores: vec![1.0, 1.0, 1.0],
+        predictions_digest: "4".repeat(64),
+        wall_ms: 2,
+        failure: None,
+    };
+    let request_ref = state.publish(&store, &request).unwrap();
+    state.auxiliary.push(AuxiliaryAttempt {
+        request: request_ref,
+        result: None,
+        model: None,
+    });
+    state.validate_storage(&store).unwrap();
+    assert!(
+        state.unknown(),
+        "pending attempts remain available for inspection"
+    );
+
+    let valid = state
+        .publish(
+            &store,
+            &AuxiliaryResult::Evaluation {
+                response: response.clone(),
+            },
+        )
+        .unwrap();
+    state.auxiliary[0].result = Some(valid);
+    state.validate_storage(&store).unwrap();
+    assert!(!state.unknown());
+
+    let unreadable = state.publish(&store, &serde_json::Value::Null).unwrap();
+    state.auxiliary[0].result = Some(unreadable);
+    assert!(
+        state.validate_storage(&store).is_err(),
+        "valid-hash null is not a known result"
+    );
+
+    let mut wrong_attempt = response.clone();
+    wrong_attempt.attempt.attempt += 1;
+    let reference = state
+        .publish(
+            &store,
+            &AuxiliaryResult::Evaluation {
+                response: wrong_attempt,
+            },
+        )
+        .unwrap();
+    state.auxiliary[0].result = Some(reference);
+    assert!(
+        state.validate_storage(&store).is_err(),
+        "response must match its reservation"
+    );
+
+    for failure in [WorkerFailure::Timeout, WorkerFailure::StaleAttempt] {
+        let reference = state
+            .publish(
+                &store,
+                &AuxiliaryResult::Evaluation {
+                    response: Response::failed(request.attempt.clone(), failure, 2),
+                },
+            )
+            .unwrap();
+        state.auxiliary[0].result = Some(reference);
+        assert_eq!(
+            state.validate_storage(&store).is_ok(),
+            failure == WorkerFailure::Timeout
+        );
+    }
+
+    for worker in [
+        None,
+        Some(Response::failed(
+            request.attempt.clone(),
+            WorkerFailure::Timeout,
+            2,
+        )),
+    ] {
+        let reference = state
+            .publish(&store, &AuxiliaryResult::Failure { worker })
+            .unwrap();
+        state.auxiliary[0].result = Some(reference);
+        state.validate_storage(&store).unwrap();
+    }
+    for worker in [
+        response.clone(),
+        Response::failed(request.attempt.clone(), WorkerFailure::StaleAttempt, 2),
+    ] {
+        let reference = state
+            .publish(
+                &store,
+                &AuxiliaryResult::Failure {
+                    worker: Some(worker),
+                },
+            )
+            .unwrap();
+        state.auxiliary[0].result = Some(reference);
+        assert!(state.validate_storage(&store).is_err());
+    }
+    let mut invalid = response.clone();
+    invalid.scores.clear();
+    let reference = state
+        .publish(&store, &AuxiliaryResult::Evaluation { response: invalid })
+        .unwrap();
+    state.auxiliary[0].result = Some(reference);
+    assert!(state.validate_storage(&store).is_err());
+
+    let fit = state.publish(&store, &AuxiliaryResult::Fit).unwrap();
+    state.auxiliary[0].result = Some(fit);
+    assert!(
+        state.validate_storage(&store).is_err(),
+        "successful fit requires its model root"
+    );
+    state.auxiliary[0].model = Some(state.publish(&store, &vec![1_u8, 2, 3]).unwrap());
+    state.validate_storage(&store).unwrap();
+
+    let mut foreign = request;
+    foreign.attempt.run = jope_api::ids::RunId::new();
+    state.auxiliary[0].request = state.publish(&store, &foreign).unwrap();
+    assert!(
+        state.validate_storage(&store).is_err(),
+        "request must belong to the bound run"
+    );
 }

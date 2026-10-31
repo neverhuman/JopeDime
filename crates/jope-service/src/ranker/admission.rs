@@ -1,20 +1,316 @@
 //! CPU admission-policy primitives for spec §5.5 and §5.8.
 //!
-//! These functions do not invoke or qualify a ranker, choose OD13, or replace the
-//! discovery loop's admission implementation. Real adapter/fixture integration
-//! must separately establish M5, S4, S2 and the preregistered quality gates.
+//! Explicit CPU round composition and admission-policy primitives. Composition
+//! invokes the real adapter; it does not grant qualification, choose OD13 or
+//! enable guidance defaults. M5/S4/S2 and quality gates remain separate evidence.
 
 use super::{
-    adapter::{self, PredictCostsInputs},
+    adapter::{self, CpuAdapter, PredictCostsInputs, PredictedCosts},
+    bundle::VerifiedBundle,
     stage1b::TokenProjection,
 };
+use crate::discover::r#loop::{Plan, RoundAdmission, RoundContext};
 use crate::{discover::elites::ELITE_CAPACITY, warnings};
+use anyhow::{ensure, Result};
 use jope_api::{error::ErrorCode, Guidance, LandmarkMode, ResolvedGuidance, Warning, WarningState};
 use rand_chacha::{rand_core::RngCore, ChaCha12Rng};
 use std::{collections::BTreeSet, fmt};
 
+#[cfg(feature = "research")]
+use crate::{
+    discover::r#loop::RecordedAdmissionContext,
+    research::{BehaviorPolicy, RecordedPolicyKind},
+};
+#[cfg(feature = "research")]
+use sha2::{Digest, Sha256};
+
 const REVEALED: usize = 4;
 const ADMITTED: usize = 4;
+
+/// Provider-owned feature channels, aligned to canonical programs. Fitness is
+/// taken from the scheduler, never supplied or replaced by this provider.
+pub struct RoundProgram {
+    pub dsl: String,
+    pub features412: [f32; adapter::PROG_FEATURES],
+    pub projection16: [f32; adapter::PROJ_FEATURES],
+}
+
+impl RoundProgram {
+    fn borrowed(&self) -> AdmissionProgram<'_> {
+        AdmissionProgram {
+            key: &self.dsl,
+            features412: &self.features412,
+            projection16: &self.projection16,
+        }
+    }
+}
+
+pub struct RoundInputs {
+    pub pool: Vec<RoundProgram>,
+    pub pool_gates: Vec<bool>,
+    pub proposals: Vec<RoundProgram>,
+    pub conditioning: TokenProjection,
+}
+
+/// Featurization/landmark providers must use the bound problem and the actual
+/// rung-0 gate measurements. This interface accepts no precomputed model costs.
+pub trait RoundInputProvider {
+    fn observe(&self, context: &RoundContext<'_>, proposals: &[String]) -> Result<RoundInputs>;
+}
+
+/// Explicit composition primitive for CPU replay/integration. The qualified
+/// guidance resolver remains responsible for accepted capability/quality evidence;
+/// constructing this object alone must never enable Auto or Learned serving.
+pub struct CpuRoundAdmission<P> {
+    adapter: CpuAdapter,
+    provider: P,
+    plan: Plan,
+    rule: RevealedRule,
+}
+
+pub struct RoundReadout {
+    pub admitted: Vec<String>,
+    pub admitted_indices: [usize; ADMITTED],
+    pub costs: PredictedCosts,
+}
+
+impl<P: RoundInputProvider> CpuRoundAdmission<P> {
+    /// Preserve the signed release boundary. A declaration in a bundle is not a
+    /// parity or quality receipt; callers still need the qualified resolver.
+    pub fn from_bundle(
+        bundle: &VerifiedBundle,
+        plan: &Plan,
+        provider: P,
+        rule: RevealedRule,
+    ) -> Result<Self> {
+        ensure!(
+            format!("sha256:{}", plan.bundle_digest) == bundle.digest().to_string(),
+            "admission bundle does not match discovery plan"
+        );
+        Ok(Self {
+            adapter: CpuAdapter::from_bundle(bundle)?,
+            provider,
+            plan: plan.clone(),
+            rule,
+        })
+    }
+
+    #[cfg(test)]
+    pub(crate) fn for_cpu_replay(
+        adapter: CpuAdapter,
+        plan: Plan,
+        provider: P,
+        rule: RevealedRule,
+    ) -> Self {
+        Self {
+            adapter,
+            provider,
+            plan,
+            rule,
+        }
+    }
+
+    /// Run once on the complete revealed/proposal slate, then select using the
+    /// caller's round RNG. All binding, alignment and model errors precede RNG use.
+    pub fn evaluate_round(
+        &self,
+        context: &RoundContext<'_>,
+        proposals: &[String],
+        explore: bool,
+        rng: &mut ChaCha12Rng,
+    ) -> Result<RoundReadout> {
+        #[cfg(feature = "research")]
+        {
+            self.evaluate_round_inner(context, proposals, explore, rng, None)
+        }
+        #[cfg(not(feature = "research"))]
+        {
+            self.evaluate_round_inner(context, proposals, explore, rng)
+        }
+    }
+
+    fn evaluate_round_inner(
+        &self,
+        context: &RoundContext<'_>,
+        proposals: &[String],
+        explore: bool,
+        rng: &mut ChaCha12Rng,
+        #[cfg(feature = "research")] recorded: Option<&RecordedAdmissionContext<'_>>,
+    ) -> Result<RoundReadout> {
+        ensure!(
+            context.plan == &self.plan,
+            "admission plan identity changed"
+        );
+        ensure!(
+            context.round > 0,
+            "seed round does not use learned admission"
+        );
+        let observed = self.provider.observe(context, proposals)?;
+        ensure!(
+            observed.pool.len() == context.measured.len()
+                && observed.pool_gates.len() == context.measured.len()
+                && observed
+                    .pool
+                    .iter()
+                    .zip(&context.measured)
+                    .all(|(p, m)| p.dsl == m.dsl)
+                && observed.proposals.len() == proposals.len()
+                && observed
+                    .proposals
+                    .iter()
+                    .zip(proposals)
+                    .all(|(p, dsl)| &p.dsl == dsl),
+            "admission feature/gate programs do not match committed round"
+        );
+        let measured: Vec<_> = context
+            .measured
+            .iter()
+            .zip(&observed.pool_gates)
+            .map(|(m, &gate)| MeasuredAlgorithm {
+                id: m.dsl,
+                surrogate_fitness: m.surrogate_fitness,
+                gate,
+            })
+            .collect();
+        let pool: Vec<_> = observed.pool.iter().map(RoundProgram::borrowed).collect();
+        let candidates: Vec<_> = observed
+            .proposals
+            .iter()
+            .map(RoundProgram::borrowed)
+            .collect();
+        let slate = ServingAdmissionSlate::prepare(
+            &measured,
+            &pool,
+            &candidates,
+            &observed.conditioning,
+            self.rule,
+            explore,
+        )?;
+        #[cfg(feature = "research")]
+        if let Some(recorded) = recorded {
+            validate_recorded_inputs(&slate, context, recorded)?;
+        }
+        let costs = self.adapter.predict_costs(slate.inputs()?)?;
+        let values: Vec<_> = costs.total_cost.iter().map(|&v| f64::from(v)).collect();
+        let indices = slate.select(&values, rng)?;
+        Ok(RoundReadout {
+            admitted: indices.into_iter().map(|i| proposals[i].clone()).collect(),
+            admitted_indices: indices,
+            costs,
+        })
+    }
+}
+
+impl<P: RoundInputProvider> RoundAdmission for CpuRoundAdmission<P> {
+    #[cfg(feature = "research")]
+    fn admit_recorded_round(
+        &self,
+        context: &RoundContext<'_>,
+        proposals: Vec<String>,
+        explore: bool,
+        rng: &mut ChaCha12Rng,
+        recorded: &RecordedAdmissionContext<'_>,
+    ) -> Result<BehaviorPolicy> {
+        let readout =
+            self.evaluate_round_inner(context, &proposals, explore, rng, Some(recorded))?;
+        Ok(BehaviorPolicy {
+            kind: RecordedPolicyKind::Learned,
+            explore,
+            slate_costs: Some(
+                readout
+                    .costs
+                    .total_cost
+                    .into_iter()
+                    .map(f64::from)
+                    .collect(),
+            ),
+            admitted: readout.admitted_indices.into(),
+        })
+    }
+
+    fn admit_round(
+        &self,
+        context: &RoundContext<'_>,
+        proposals: Vec<String>,
+        explore: bool,
+        rng: &mut ChaCha12Rng,
+    ) -> Result<Vec<String>> {
+        Ok(self
+            .evaluate_round(context, &proposals, explore, rng)?
+            .admitted)
+    }
+}
+
+/// Check the channels that the engine will persist against the exact prepared
+/// graph inputs. This grants no Engine evidence or capture capability itself.
+#[cfg(feature = "research")]
+fn validate_recorded_inputs(
+    slate: &ServingAdmissionSlate<'_>,
+    context: &RoundContext<'_>,
+    recorded: &RecordedAdmissionContext<'_>,
+) -> Result<()> {
+    fn same_f32(a: &[f32], b: &[f32]) -> bool {
+        a.len() == b.len() && a.iter().zip(b).all(|(a, b)| a.to_bits() == b.to_bits())
+    }
+    let observed = recorded.slate;
+    ensure!(
+        observed.revealed.len() == REVEALED
+            && observed.programs.len() == slate.proposal_keys().len(),
+        "recorded admission slate shape changed"
+    );
+    let input = slate.inputs()?;
+    let tokens: Vec<_> = recorded
+        .conditioning
+        .tokens
+        .iter()
+        .flatten()
+        .copied()
+        .collect();
+    ensure!(
+        same_f32(input.tokens, &tokens) && same_f32(input.token_mask, &recorded.conditioning.mask),
+        "recorded conditioning differs from model invocation"
+    );
+    for (i, program) in observed
+        .revealed
+        .iter()
+        .map(|r| &r.program)
+        .chain(&observed.programs)
+        .enumerate()
+    {
+        ensure!(
+            program.program_sha256
+                == format!("{:x}", Sha256::digest(slate.program_keys[i].as_bytes()))
+                && same_f32(
+                    &program.feat412,
+                    &input.prog_412[i * adapter::PROG_FEATURES..(i + 1) * adapter::PROG_FEATURES]
+                )
+                && program.proj16.len() == adapter::PROJ_FEATURES
+                && program.proj16.iter().all(|v| v.is_finite()),
+            "recorded program identity/features differ from model invocation"
+        );
+        // Recorded projections retain the original f64 values; the adapter graph
+        // consumes their documented f32 conversion, not a second projection.
+        let projection: Vec<_> = program.proj16.iter().map(|&v| v as f32).collect();
+        ensure!(
+            same_f32(
+                &projection,
+                &input.proj_16[i * adapter::PROJ_FEATURES..(i + 1) * adapter::PROJ_FEATURES]
+            ),
+            "recorded projection differs from model invocation"
+        );
+    }
+    for (i, reveal) in observed.revealed.iter().enumerate() {
+        ensure!(
+            reveal.surrogate.to_bits()
+                == context.measured[slate.revealed_pool_indices[i]]
+                    .surrogate_fitness
+                    .to_bits()
+                && slate.revealed_gates[i] == if reveal.gate { 1.0 } else { 0.0 },
+            "recorded revealed fitness/gate differs from committed context"
+        );
+    }
+    Ok(())
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AdmissionError {

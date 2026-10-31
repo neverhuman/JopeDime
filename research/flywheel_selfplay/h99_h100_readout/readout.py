@@ -70,6 +70,22 @@ def sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def h99_fold_assignment_matches(cell, fold):
+    cell_assignment = cell.get("fold_assignment")
+    fold_assignment = fold.get("fold_assignment")
+    if not isinstance(cell_assignment, dict) or not isinstance(fold_assignment, dict):
+        return False
+    if cell_assignment.get("seed") != 9900 or fold_assignment.get("seed") != 9900:
+        return False
+    keys = ("fold_a_families", "fold_b_families", "folds")
+    return all(
+        isinstance(cell_assignment.get(key), list)
+        and isinstance(fold_assignment.get(key), list)
+        and cell_assignment[key] == fold_assignment[key]
+        for key in keys
+    )
+
+
 class Receipts:
     def __init__(self, root):
         self.root = safe_path(root)
@@ -304,7 +320,7 @@ def h99(store, cells, scoring):
         )
         require(
             summary["fold_seed"] == 9900
-            and summary["fold_assignment_sha256"] == fold["fold_assignment_sha256"]
+            and h99_fold_assignment_matches(summary, fold)
             and summary["fold_b_scored"] is False,
             "H99 cell fold/scoring mismatch",
         )
@@ -398,6 +414,28 @@ def h99(store, cells, scoring):
     return result, 41
 
 
+def h100_ledger_matches(snapshot, ledger):
+    """Permit only the last re-arm's post-publication administrative finalization."""
+    if snapshot == ledger:
+        return True
+    if not isinstance(snapshot, dict) or not isinstance(ledger, dict):
+        return False
+    before, after = snapshot.get("owner_rearms"), ledger.get("owner_rearms")
+    if (
+        not isinstance(before, list)
+        or not isinstance(after, list)
+        or not before
+        or len(before) != len(after)
+        or not isinstance(before[-1], dict)
+        or not isinstance(after[-1], dict)
+        or before[-1].get("state") != "FIFO_REARM"
+        or after[-1].get("state") != "COMPLETE"
+    ):
+        return False
+    finalized = [*before[:-1], {**before[-1], "state": "COMPLETE"}]
+    return {**snapshot, "owner_rearms": finalized} == ledger
+
+
 def h100(store, cells, timing, ledger):
     require(
         (timing["arm"], timing["seed"]) == ("ASAM10", 39),
@@ -415,7 +453,7 @@ def h100(store, cells, timing, ledger):
         "H100 native metrics identity mismatch",
     )
     require(
-        native.get("ledger") == ledger,
+        h100_ledger_matches(native.get("ledger"), ledger),
         "H100 aggregate is not bound to this FIFO ledger",
     )
     require(

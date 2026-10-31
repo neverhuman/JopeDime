@@ -8,6 +8,8 @@ See README.md for the input qualification that must precede its use.
 import argparse
 from collections import defaultdict
 import hashlib
+import importlib.machinery
+import importlib.util
 import json
 import math
 from pathlib import Path
@@ -16,6 +18,13 @@ import numpy as np
 
 SEEDS = (20261030, 20261031, 20261032)
 DOPE = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+
+loader = importlib.machinery.SourceFileLoader(
+    "h27_input_qualification", str(Path(__file__).with_name("qualify-inputs"))
+)
+spec = importlib.util.spec_from_loader(loader.name, loader)
+qualification = importlib.util.module_from_spec(spec)
+loader.exec_module(qualification)
 
 
 def digest(path):
@@ -142,19 +151,51 @@ def json_safe(value):
     return value
 
 
+def validate_input_roster(manifest, packet, coverage):
+    """Refuse partial DL-Val cohorts before opening any paired outcomes."""
+    if coverage["coverage"]["DL-Val"]["missing"]:
+        raise ValueError("complete DL-Val fingerprint coverage is required")
+    if coverage["historical_components_crossing_current_roles"]:
+        raise ValueError("historical component crosses train/validation roles")
+    approved_train = {row["family_id"] for row in packet["train"]}
+    if (
+        not manifest["train_families"]
+        or not set(manifest["train_families"]) <= approved_train
+    ):
+        raise ValueError("training family roster is missing or unapproved")
+    expected = {row["context_sha256"]: row["family_id"] for row in packet["dev"]}
+    contexts = manifest["validation_contexts"]
+    actual = {row["context_sha256"]: row["family_id"] for row in contexts}
+    if (
+        len(contexts) != len(expected)
+        or actual != expected
+        or any(row["dl_split"] != "DL-Val" for row in contexts)
+    ):
+        raise ValueError("analysis must cover the complete approved DL-Val roster")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, required=True)
+    parser.add_argument("--h27-manifest", type=Path, required=True)
+    parser.add_argument("--selected", type=Path, required=True)
     parser.add_argument("--pairs", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
+    old = qualification.read_metadata(args.h27_manifest, qualification.H27_MANIFEST)
+    packet = qualification.read_metadata(args.selected, qualification.SELECTED)
+    coverage = qualification.metadata_coverage(old, packet)
     manifest = json.loads(args.manifest.read_text())
+    validate_input_roster(manifest, packet, coverage)
     if digest(args.pairs) != manifest["paired_selections_sha256"]:
         raise ValueError("paired selections digest mismatch")
     result = analyze(manifest, json.loads(args.pairs.read_text()))
     result["manifest_sha256"] = digest(args.manifest)
     result["pairs_sha256"] = digest(args.pairs)
     result["source_sha256"] = digest(__file__)
+    result["qualification_source_sha256"] = digest(qualification.__file__)
+    result["h27_manifest_sha256"] = qualification.H27_MANIFEST
+    result["selected_sha256"] = qualification.SELECTED
     with args.output.open("x") as out:
         json.dump(json_safe(result), out, indent=2, allow_nan=False)
         out.write("\n")

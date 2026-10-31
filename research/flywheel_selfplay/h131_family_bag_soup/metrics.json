@@ -1,0 +1,25 @@
+{
+  "wave": "H131",
+  "status": "INCOMPLETE",
+  "actual_updates": 0,
+  "arms": null,
+  "completed_fits": 0,
+  "completed_assessment_cells": 0,
+  "stop_reason": "worker_threads>4",
+  "last_phase": "fit_tokens",
+  "regression_status": "NOT_COMPLETED",
+  "read_audit_status": "NOT_FLUSHED_ON_SIGTERM",
+  "gain": null,
+  "Elo": null,
+  "family_harm": null,
+  "statistical_verdict": null,
+  "scientific_verdict": "INCOMPLETE",
+  "prereg_pr": 1146,
+  "custody": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H131/astra-t1235/manifest.json",
+    "version_id": "hsJSCL38idqNRqNod72q8oGb7ntin7LX",
+    "sha256": "ae60da96a1176117a3cf1e6d754a648f592034b42af050ae41246a82c1a11fc5",
+    "bytes": 39505,
+    "verified_utc": "2026-10-31T19:02:44.010370+00:00"
+  }
+}

@@ -19,6 +19,7 @@
 \setlength{\parskip}{0pt plus 3pt}
 % twocolumn implies \flushbottom, which stretches gaps around floats and headings.
 \raggedbottom
+\makeatletter\@secpenalty=0\makeatother% under \raggedbottom a short column has zero badness, so the default -300 ended columns before headings that fit; the club penalty still keeps two lines under each heading
 \brokenpenalty=10000% never hyphenate across a column or page break
 \clubpenalty=10000 \widowpenalty=10000 \displaywidowpenalty=10000% no single first or last paragraph lines at a column break
 \doublehyphendemerits=100000% discourage hyphen ladders (consecutive lines ending in a hyphen)

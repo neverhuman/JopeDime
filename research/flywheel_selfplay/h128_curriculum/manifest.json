@@ -1,0 +1,107 @@
+{
+  "actual_training_updates": 360,
+  "arms": [
+    "CONTROL",
+    "CURRIC",
+    "ANTI"
+  ],
+  "assessment_contexts": 244,
+  "assessment_families": 41,
+  "assessment_fold": 0,
+  "batch_size": 16,
+  "bootstrap_draws": 10000,
+  "bootstrap_seed": 128076,
+  "calibration": {
+    "adapter_mutated": false,
+    "assessment_contexts_touched": 0,
+    "bytes": 233857,
+    "curriculum_q_end": 1.0,
+    "curriculum_q_start": 0.5,
+    "fit_contexts_count": 975,
+    "max_fit_loss": 53.56858825683594,
+    "mean_fit_loss": 4.216280245291881,
+    "median_fit_loss": 1.5341137647628784,
+    "min_fit_loss": 0.6299000978469849,
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/curriculum_ranking_manifest.json",
+    "sha256": "c89d492eeac65d550b865b259294a61fd23f5019f3eb706829d81582d9d6fc48",
+    "sorted_fit_by_loss_sha256": "434b109f3d7639084c75bb2daec67373a57b47ba48fd0ff043eea95411401d92",
+    "version_id": "XV6RsMqY6jycYK5QrYlPpWgho2I.0P0l"
+  },
+  "cells": 9,
+  "closeout_custody": {
+    "bytes": 37630,
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/h128_summary_v2.json",
+    "sha256": "faaf55c6850bb84ddb92adb0293118b941909fb2e2450a3973ed791c5d1defdd",
+    "version_id": "WU2whfsEHRO8IIwWqy4Z7RIdql8maSAd"
+  },
+  "curriculum_q_end": 1.0,
+  "curriculum_q_start": 0.5,
+  "custody_root": "/home/ubuntu/jope-rescue-20260921/h128-curriculum",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "execution_source": {
+    "bytes": 52700,
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/run_h128_cpu.py",
+    "sha256": "e116de3eef5eb2af8db9bc30647f415380b2ff74007322a5e1e4d13f5b010269",
+    "version_id": "6vHP3u3GKo4DQkPHr8CmJRFdApLO1G9B"
+  },
+  "execution_started": true,
+  "family_folds": 5,
+  "fit_contexts": 975,
+  "fit_families": 164,
+  "fit_folds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "fold_manifest_s3": {
+    "bytes": 14566,
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/fold_manifest_128076.json",
+    "sha256": "010e5c3857acf7b7e62ed2da10bc5f332bf7e65fcd62f82a7d80ea995e5b7e8c",
+    "version_id": "24gh0dt0l0BcCDTjlByu0DbDn4pE2IPr"
+  },
+  "fold_manifest_sha256": "010e5c3857acf7b7e62ed2da10bc5f332bf7e65fcd62f82a7d80ea995e5b7e8c",
+  "fold_seed": 128076,
+  "fused_sha256": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+  "h50_selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+  "h50_source_manifest_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+  "prereg_pr": 1116,
+  "prereg_sha256": "7cecc7fd36978dd27caddde708ef926f8679f3cd67b8a23ef8366fdf792f4dac",
+  "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "regression": {
+    "adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+    "assessment_contexts": 244,
+    "assessment_families": 41,
+    "bytes": 1129,
+    "control_gradient_max_abs_error": 0.0,
+    "control_loss_abs_error": 0.0,
+    "optimizer_updates": 0,
+    "prediction_max_abs_error": 0.0,
+    "r882_fold0_native_family_utility": 0.9999631313937318,
+    "r882_fold0_unrev_context_utility": 0.9367919941743982,
+    "r882_fold0_unrev_family_utility": 0.9504139093545181,
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/regression_receipt.json",
+    "sha256": "68c8cc7750583e05419fe3c858f71a2bc6293da31fba9b80a1a8cf5c8347838b",
+    "status": "PASS",
+    "utility_max_abs_error": 0.0,
+    "version_id": "HgNsGca0hOL8pXxKhIs4CzlQglyLr_DL"
+  },
+  "scientific_verdict": "NO_ADMISSION",
+  "seeds": [
+    76,
+    77,
+    78
+  ],
+  "slate_size": 192,
+  "source_base": "ce80f37a5dfd67306f851c56c6452bd4f1ffefeb",
+  "source_sha256": {
+    "research/flywheel_selfplay/h55/runner.py": "56fd220689805f07877ae403c2f00a4b34831cc4b2919f4bd69807ff3c21f4bc",
+    "research/flywheel_selfplay/h59/runner.py": "604d02ed72a6149284792cba315124efd1ffe8cac79e5ace22613db86c11b4c3",
+    "research/flywheel_selfplay/h61/runner.py": "a1654add23b76e54b22afe5a7f42bf543420b12ca0d31d52b5c25c409498d037",
+    "research/flywheel_selfplay/h76_sam_steps/runner.py": "3556fe81fe654b148d301244d6d0460bf2363b5a97db0a0b644507168e97d24f",
+    "research/flywheel_selfplay/h97_reg_ema/runner.py": "4411ad39b85a2c3d568c03b70d358e40a4fdca7f4affa3315e2856f4f8660a67"
+  },
+  "status": "COMPLETE",
+  "updates_per_cell": 40,
+  "wave": "H128"
+}

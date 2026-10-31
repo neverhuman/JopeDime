@@ -19,14 +19,8 @@ def read_metadata(path, expected):
     return json.loads(raw)
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--h27-manifest", type=Path, required=True)
-    parser.add_argument("--selected", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
-    args = parser.parse_args()
-    old = read_metadata(args.h27_manifest, H27_MANIFEST)
-    packet = read_metadata(args.selected, SELECTED)
+def metadata_coverage(old, packet):
+    """Join only metadata; this does not admit payloads or scientific execution."""
     rows = old["rows"]
     by_context = {r["context_sha256"]: r for r in rows}
     if len(rows) != 850 or len(by_context) != len(rows):
@@ -84,6 +78,18 @@ def main():
             "No numerical arrays, models, fingerprints or outcomes were opened by this check.",
         ],
     )
+    return result
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--h27-manifest", type=Path, required=True)
+    parser.add_argument("--selected", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    old = read_metadata(args.h27_manifest, H27_MANIFEST)
+    packet = read_metadata(args.selected, SELECTED)
+    result = metadata_coverage(old, packet)
     with args.output.open("x") as out:
         json.dump(result, out, indent=2, allow_nan=False)
         out.write("\n")

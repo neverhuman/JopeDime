@@ -2,6 +2,8 @@
 
 CPU preparation; the requested new DL-Val experiment has **not run**. No new Elo,
 confidence interval, ADOPT/REJECT verdict or ranker fit is claimed by this directory.
+The current [execution closeout](EXECUTION-STATUS.json) is
+**BLOCKED_INPUT_QUALIFICATION**, not a scientific rejection or completed study.
 
 ## Design note
 
@@ -43,13 +45,15 @@ historical TRAIN rows cannot be relabeled as validation. Missing coverage blocks
 execution. Do not create replacement probes without a documented, prospective
 change to the zero-new-probe preregistration.
 
-The recovered materialization manifest now provides a concrete coverage check:
-[INPUT-COVERAGE.json](INPUT-COVERAGE.json) records 728/1,219 matching DL-Train
+The retained metadata receipt [INPUT-COVERAGE.json](INPUT-COVERAGE.json) records
+728/1,219 matching DL-Train
 contexts and 67/91 matching DL-Val contexts, with 24 validation contexts absent.
 Historical source roles are 690 FIT and 160 SELECT; none of the matched historical
 components crosses the current train/dev boundary. No feature/pool/table payload
 was opened. This is metadata coverage, not numerical or source qualification.
-`qualify-inputs` reproduces the receipt from the pinned materialization manifest
+The pinned manifest itself was not recovered in the current bounded metadata
+search; these inherited coverage counts have not been recomputed.
+`qualify-inputs` can reproduce the receipt from that materialization manifest
 and the current packet's `selected.json`, without opening any referenced payload.
 When those pinned files are available, its receipt lists each unmatched DL-Val
 context digest and the next identity-admission step. Execution remains
@@ -79,6 +83,15 @@ it does not train models or independently verify the producer's input provenance
 gradient isolation, matched schedules, model hashes or optimizer updates. Review
 those receipts before interpreting its verdict. No analysis output is present yet.
 
+Its CLI first hash-verifies the H27 materialization manifest and selected roster,
+recomputes metadata coverage, rejects missing validation fingerprints or connected
+components crossing train/validation, and requires the complete approved DL-Val
+context/family roster. A caller cannot obtain a result for a chosen subset of
+validation contexts. These checks precede paired-outcome reads and output creation.
+They do not certify the producer's optimizer, numerical features or historical
+exposure; the scientific qualification requirements above still apply. The pure
+arithmetic function used by tests is not an execution-admission interface.
+
 The input manifest has `dope_loaded_sha256`, the fixed `seeds`, `train_families`,
 `paired_selections_sha256`, and `validation_contexts`. Each context supplies
 `context_sha256`, `family_id`, `dl_split`, `slate_sha256`, `evaluator_sha256`,
@@ -89,6 +102,7 @@ Each object has `status: ok` with finite raw constrained `fitness`, or explicit
 
 ```sh
 research/h-followups/h27-ablation/analyze \
+  --h27-manifest H27_MATERIALIZATION_MANIFEST.json --selected SELECTED.json \
   --manifest QUALIFIED_MANIFEST.json --pairs PAIRED_SELECTIONS.json --output NEW_RESULT.json
 pytest research/h-followups/h27-ablation -q
 just hygiene

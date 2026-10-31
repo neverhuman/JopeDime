@@ -37,6 +37,37 @@ def fixture(wave, root, harmed=0):
     }
     metrics = {"arms": {}}
     if wave == "H99":
+        folds = [
+            [f"fit-family-{fold * 41 + i:03}" for i in range(41)] for fold in range(4)
+        ] + [[f"family-{i:02}" for i in range(41)]]
+        fold_a_families = sorted(family for fold in folds[:4] for family in fold)
+        fold_b_families = folds[4]
+        cell_assignment = {
+            "seed": 9900,
+            "folds": folds,
+            "fold_a_families": fold_a_families,
+            "fold_b_families": fold_b_families,
+            "train_contexts_a": 4,
+            "train_contexts_b": 1,
+        }
+        fold_assignment = {
+            "seed": 9900,
+            "folds": folds,
+            "fold_a_families": fold_a_families,
+            "fold_b_families": fold_b_families,
+            "source_split": "DL-Train",
+            "sealed_meta_test_inputs_opened": False,
+        }
+        cell_digest = r.sha(
+            json.dumps(cell_assignment, sort_keys=True, separators=(",", ":")).encode()
+        )
+        fold_digest = r.sha(
+            json.dumps(
+                {"seed": 9900, "folds": folds},
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+        )
         ledger["schema"] = "jope.h99.gpu-budget/v1"
         candidates = []
         for arm, seed in [(a, s) for a in r.ARMS[wave] for s in r.SEEDS[wave]] + [
@@ -52,7 +83,8 @@ def fixture(wave, root, harmed=0):
                     "arm": arm,
                     "seed": seed,
                     "fold_seed": 9900,
-                    "fold_assignment_sha256": "f" * 64,
+                    "fold_assignment": cell_assignment,
+                    "fold_assignment_sha256": cell_digest,
                     "fold_b_scored": False,
                     "dope_sha256_before": r.DOPE,
                     "dope_sha256_after": r.DOPE,
@@ -101,7 +133,8 @@ def fixture(wave, root, harmed=0):
             "validation_payloads_opened": False,
             "holdout_payloads_opened": 0,
             "outer_rows_delivered": 0,
-            "fold_assignment_sha256": "f" * 64,
+            "fold_assignment": fold_assignment,
+            "fold_assignment_sha256": fold_digest,
             "baseline_family_utility": baseline,
             "candidates": candidates,
         }
@@ -124,7 +157,7 @@ def fixture(wave, root, harmed=0):
             bootstrap_draws=10000,
             strict_margin=0.001,
             source_manifest_sha256=r.MANIFEST,
-            fold_assignment_sha256="f" * 64,
+            fold_assignment_sha256=fold_digest,
         )
         for arm in r.ARMS[wave]:
             metrics["arms"][arm] = {
@@ -272,6 +305,30 @@ def test_complete_panel_publishes_native_elo_ci_and_wave_specific_common_gate(
     assert (
         "Median Elo vs r882" in (tmp_path / f"published/{wave}-readout.md").read_text()
     )
+
+
+def test_h99_accepts_different_hashes_when_fold_family_lists_match(tmp_path):
+    fixture("H99", tmp_path)
+    summary_path = next((tmp_path / "outcomes/cells").glob("**/summary.json"))
+    summary = load(summary_path)
+    fold = load(tmp_path / "outcomes/fold_b.json")
+
+    assert summary["fold_assignment_sha256"] != fold["fold_assignment_sha256"]
+    assert r.h99_fold_assignment_matches(summary, fold)
+    result = r.readout("H99", tmp_path)
+    assert result["status"] == "COMPLETE", result
+
+
+def test_h99_rejects_cell_fold_family_list_mismatch(tmp_path):
+    fixture("H99", tmp_path)
+    summary_path = next((tmp_path / "outcomes/cells").glob("**/summary.json"))
+    summary = load(summary_path)
+    summary["fold_assignment"]["fold_b_families"].append("unassigned-family")
+    write(summary_path, summary)
+
+    result = r.readout("H99", tmp_path)
+    assert result["status"] == "INVALID", result
+    assert "fold/scoring mismatch" in result["reason"]
 
 
 @pytest.mark.parametrize("wave,harmed", [("H99", 5), ("H100", 2)])
@@ -446,6 +503,109 @@ def test_h100_pre_scoring_rearm_charge_is_retained_without_repeating_the_cell(tm
     result = r.readout("H100", tmp_path)
     assert result["status"] == "COMPLETE", result
     assert result["gpu_wall_seconds"] == 28.0
+
+
+def finalized_owner_rearm_fixture(root):
+    path = fixture("H100", root)
+    budget = load(root / "budget.json")
+    row = next(
+        x for x in budget["attempts"] if x["arm"] == "CONTROL" and x["seed"] == 39
+    )
+    row["attempt"] = 2
+    (root / "CONTROL-seed39-attempt1.json").rename(
+        root / "CONTROL-seed39-attempt2.json"
+    )
+    budget["attempts"].insert(
+        1,
+        {
+            "arm": "CONTROL",
+            "seed": 39,
+            "attempt": 1,
+            "timing": False,
+            "wall_seconds": 15.0,
+            "wait_seconds": 0.0,
+            "error": "pre-scoring disk abort",
+            "outcome_started": False,
+            "stage": "loading",
+        },
+    )
+    budget["owner_rearms"] = [
+        {
+            "state": "FIFO_REARM",
+            "authority_sha256": "a" * 64,
+            "operator_sha256": "o" * 64,
+            "stopped_prefix_sha256": "s" * 64,
+        }
+    ]
+    native = load(path)
+    native["ledger"] = copy.deepcopy(budget)
+    native["gpu_wall_seconds"] = 28.0
+    # The authorized operator publishes metrics before this administrative transition.
+    write(path, native)
+    budget["owner_rearms"][-1]["state"] = "COMPLETE"
+    write(root / "budget.json", budget)
+    return path
+
+
+def test_h100_completed_owner_rearm_keeps_all_charges_and_raw_receipts(tmp_path):
+    path = finalized_owner_rearm_fixture(tmp_path)
+    before = {p: p.read_bytes() for p in (path, tmp_path / "budget.json")}
+    result = r.readout("H100", tmp_path)
+    assert result["status"] == "COMPLETE", result
+    assert result["gpu_wall_seconds"] == 28.0
+    assert len(load(tmp_path / "budget.json")["attempts"]) == 14
+    assert load(path)["ledger"]["owner_rearms"][-1]["state"] == "FIFO_REARM"
+    assert all(p.read_bytes() == raw for p, raw in before.items())
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "wall",
+        "wait",
+        "receipt",
+        "cap",
+        "prereg",
+        "authority",
+        "operator",
+        "previous_state",
+        "new_state",
+        "earlier_rearm",
+        "extra_field",
+        "in_progress",
+    ],
+)
+def test_h100_owner_finalization_does_not_hide_other_ledger_changes(tmp_path, mutation):
+    path = finalized_owner_rearm_fixture(tmp_path)
+    native, budget = load(path), load(tmp_path / "budget.json")
+    if mutation == "wall":
+        budget["attempts"][2]["wall_seconds"] += 1
+    elif mutation == "wait":
+        budget["attempts"][2]["wait_seconds"] += 1
+    elif mutation == "receipt":
+        budget["attempts"][2]["receipt_sha256"] = "changed"
+    elif mutation == "cap":
+        budget["cap_seconds"] += 1
+    elif mutation == "prereg":
+        budget["prereg_sha256"] = "changed"
+    elif mutation in ("authority", "operator"):
+        budget["owner_rearms"][-1][mutation + "_sha256"] = "changed"
+    elif mutation == "previous_state":
+        native["ledger"]["owner_rearms"][-1]["state"] = "ARMED_OUTSIDE_FIFO"
+    elif mutation == "new_state":
+        budget["owner_rearms"][-1]["state"] = "STOPPED"
+    elif mutation == "earlier_rearm":
+        native["ledger"]["owner_rearms"].insert(0, {"state": "FIFO_REARM"})
+        budget["owner_rearms"].insert(0, {"state": "COMPLETE"})
+    elif mutation == "extra_field":
+        budget["owner_rearms"][-1]["unapproved_metadata"] = True
+    else:
+        native["ledger"]["in_progress"] = {"arm": "CONTROL"}
+    write(path, native)
+    write(tmp_path / "budget.json", budget)
+    result = r.readout("H100", tmp_path)
+    assert result["status"] == "INVALID", result
+    assert result["verdict"] == "UNKNOWN" and result["arms"] == {}
 
 
 def test_holm_preserves_each_native_boundary_and_step_down_stop():
