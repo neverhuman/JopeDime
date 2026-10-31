@@ -1,4 +1,5 @@
 {
+  "admitted_arms": [],
   "arms": {
     "BITFIT": {
       "frozen_adapter_parameters": 28520,
@@ -52,12 +53,29 @@
     "fold_seed": 132100
   },
   "hypothesis": "Protecting sensitive adapter directions via fit-fold diagonal empirical Fisher anchoring (EWC) or restricting training to the 691 bias + output-layer parameters (BITFIT) will yield a strict paired family gain (> +0.001) over unchanged r882 with <= 10% harmed families.",
+  "local_custody_receipts": {
+    "attempt_1_deleted_ewc_seed100_sha256": "304e9e8490b81458248652b8c5019191f3c5976df0f0ec55ac0ed724d2d4edca",
+    "attempt_1a_fisher_sha256": "ea301a7a61003ecb58806aeeb179d9a2f74f03e380793b311a18c1f0605921d6",
+    "attempt_1b_fisher_sha256": "0b8d20460ddcefacc8e945e330bbdffaa4a022fbb6d9ad070288eb40cf0ea7fb",
+    "attempt_2_fisher_sha256": "1cd853ef0abc28ce533ad936664b587d4cea9d13969d8aa3c94a40ca414296a6",
+    "regression_receipt_sha256": "12401be1cd799fa704256fd3903c72c30aa7b8cd8a45331248a247a35a22212d",
+    "summary_receipt_sha256": "8dc9b6ce28b1cdb024178696e298810aecdbfe724b6b134ef51e49a7e5d5271e"
+  },
+  "metrics_bytes": 42325,
+  "metrics_sha256": "b612fc285852577ab7d3563b94db5704bbfd9b19fb1df8d439e34c9ed7f2f659",
   "output_limit_bytes": 100000,
   "paired_seeds": [
     100,
     101,
     102
   ],
+  "prereg_amendment_a1": {
+    "file": "PREREG_AMENDMENT_A1.md",
+    "flag": "runner sha deviates from prereg \u2014 amendment A1 included",
+    "sha256": "715548147a8ee7f1157c71ff5e13f2e838ac4a9524fc97ce31807805c3053826"
+  },
+  "prereg_merge_commit": "6306506e333bee32adcc7939842c5f38565b9d4b",
+  "prereg_runner_sha256": "c1bb24c94d3ad7e83d8844d6fecd9076b5b078fe58c9bd6764282a4166c09f60",
   "prereg_sha256": "49f9cca4ad7d51e9e20605a60b76a05c2ee1d5ef2a5bca69ec129bc890c070df",
   "primary": {
     "admission": {
@@ -89,15 +107,16 @@
     "nice": 15,
     "qualification_lock": false
   },
-  "runner_sha256": "c1bb24c94d3ad7e83d8844d6fecd9076b5b078fe58c9bd6764282a4166c09f60",
-  "schema": "jope.h132.preregistration/v1",
+  "runner_sha256": "4d3e8182e674410b179e13ec2cadba21e1715c65b677053fd776a2dfe4a65673",
+  "schema": "jope.h132.manifest/v1",
   "secondary": {
     "comparator": "CONTROL",
     "elo": "report family-paired Elo and Bradley-Terry Elo vs r882=1500 and vs CONTROL=1500; no AUC"
   },
   "source_base": "1da3c7556c859b23b2cef91429823dce4a3f2b57",
-  "status": "PREREGISTERED_NOT_RUN",
+  "status": "COMPLETE",
   "total_optimizer_updates": 360,
   "updates_per_cell": 40,
+  "verdict": "NO_ADMISSION",
   "wave": "H132"
 }
