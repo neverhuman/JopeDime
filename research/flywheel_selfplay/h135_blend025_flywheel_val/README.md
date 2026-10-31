@@ -1,3 +1,52 @@
+# H135 — fixed BLEND_025 on flywheel validation
+
+**NO_ADVANCE**, execution **COMPLETE**. This is the single prospective continuation authorized by [Amendment A4](PREREG_AMENDMENT_A4.md), merged in [PR #1215](https://github.com/neverhuman/JopeDime/pull/1215) before execution. The earlier incomplete attempts and their custody remain in [metrics.json](metrics.json) and the historical record below.
+
+Hypothesis: the fixed H129 BLEND_025 recipe improves the flywheel’s own 91-context regression validation utility over r882. The primary weight is 0.25; PURE_GBM and BLEND_050 are report-only. Native protocol is `fixed-dev-cost-argmin-negative-fitness/v1`: full-pool first argmin, utility negative fitness when valid and −2 otherwise, with no U4 clipping.
+
+Setup: 1,219 DL-Train contexts / 205 families; 91 DL-Val contexts / 19 families; zero family overlap and zero validation training rows. Each of seeds 135–137 samples 192 candidates per training context using sampling seed 135000+seed and an independent HistGB random_state. The unchanged imported H124/H129 model recipe is used. Calibration is the explicitly preregistered full-train within-context adaptation, not H129 nested family cross-fitting. There is no weight search or best-seed selection.
+
+Baseline gate **PASS** before any fit or blend: mean **1.1377941898164525**, maximum per-context error **0.0**, mean error **0.0** against the pinned 91-context reference.
+
+| Arm | Median gain | Utility gain 95% CI | One-sided 95% LCB | Median Elo | Harmed families | Trimmed mean |
+|---|---:|---|---:|---:|---:|---:|
+| BLEND_025 | -0.004073444 | [-0.029420330, 0.009865014] | -0.026278202 | 1496.35 | 8/19 | -0.005902412 |
+| PURE_GBM | -0.136173446 | [-0.287175929, 0.015194807] | -0.262156074 | 1521.95 | 9/19 | -0.038217621 |
+| BLEND_050 | -0.082427506 | [-0.181494536, 0.005495279] | -0.162567034 | 1503.65 | 10/19 | 0.000263643 |
+
+| Arm | Mean utilities (seeds 135, 136, 137) | Failure counts (utility −2) |
+|---|---|---|
+| BLEND_025 | 1.134531061, 1.133720746, 1.072679933 | 0, 0, 2 |
+| PURE_GBM | 1.055718336, 0.927737217, 1.001620744 | 3, 5, 4 |
+| BLEND_050 | 1.055366684, 1.072211420, 1.038685356 | 3, 2, 3 |
+
+Primary descriptive Elo 95% family-bootstrap interval: [1459.63, 1536.67], r882=1500. This supplementary postprocessing does not alter the preregistered utility gates.
+
+Primary gains by seeds 135, 136, 137: `[-0.0032631288336168853, -0.0040734436626415245, -0.06511425711105273]`. Primary gates: `{"all_seeds_positive": false, "harm_le_10pct": false, "lcb_gt_zero": false, "median_gt_001": false, "seed_independence": true, "trim_gt_zero": false}`. All three fits and nine fixed arm/seed panels completed. Each fit completed 300 boosting iterations. GBM fitting performs no neural optimizer updates. Elo counts comparison signs, so a report-only arm can have Elo above 1500 while losing mean utility through larger losses; that does not rescue the primary.
+
+Verification replayed all saved raw predictions, first-argmin choices and native utilities exactly, reconstructed all reported statistics, checked fit row counts and model parameters, baseline parity, independent sampling hashes, DOPE pre/post identity and every stage read audit. Confidence intervals cluster 19 validation families but retain the context-weighted estimand; they condition on these three fitted models. Exact ties are zero gain. Elo is equal-family pairwise Elo anchored at r882=1500, not AUC.
+
+Resources: 5272 external samples, peak RSS 6,061,096,960 bytes, maximum worker thread count 1, peak scratch 10,241,699 bytes, maximum root usage 92.5964%. Host xbabe1, 0 recorded pause/wait intervals, wall 1512.07 seconds. CPU only, nice 19; hard limits are four total threads, RSS below 8 GB, scratch below 2 GB, root below 93.8%, host pressure pauses above 86.7 load or below 16 GiB available memory, with resume only after load<80 and memory>=16GiB continuously for 60 seconds, and a global four-hour wall limit. No GPU, qualification lock or live-loop writes.
+
+Interpretation and limitations:
+
+- r882 was selected as the maximum over approximately 2,385 rounds on this same validation metric. That selection favors r882, while the selector-exposed validation set cannot establish sealed-test generalization. A pass is only CANDIDATE_REVIEW_ONLY; it never authorizes serving promotion.
+- The primary requires every preregistered gate: median gain strictly above 0.001, positive one-sided 95% family-bootstrap LCB, all three seeds positive, at most 10% of families harmed below −0.01, positive top-10-trimmed gain and distinct utility vectors. Report-only arm success cannot rescue a failed primary.
+- Seed audit was refreshed immediately before launch. H133 prospectively replaced 135 with 138 and reported no 135 use; H136 uses 161–163 and H137 uses 171–173. H135 A2/A3 partial seed 135 fit progress remains unknown and is explicitly disclosed; A4 retains the owner-authorized fixed seeds. This bounded local audit is not an exhaustive external or S3 history. Synthetic fixture fits are separate.
+- Training excludes validation families. The selected train+validation packet and explicit validation pools are authorized; protected sealed, holdout and meta-test inputs are not. Missing runtime audits from the first aborted attempt remain a documented limitation, not a zero-read proof.
+
+Validation: A4 passed 17 data-free tests, merged-source native one-thread full-recipe GBM and constructor preflights on xbabe1, and five local records gates. Exact remote input-copy closure was 1,315 files/306,360,743 bytes; model assets and package versions matched. Closeout validation checks JSON, links, source/prereg pins and the complete documentation diff. These are same-agent checks; full CI remains deferred under the owner targeted-local policy.
+
+Next step: Retain r882; the fixed primary did not qualify. Any new experiment needs a new protocol.
+
+Verified numerical custody: `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a4/manifest.json`, VersionId `Sw41ZGk4mtvsqG4zwVWAxnR5dSVPs5Fx`, SHA256 `fc99e90a0e0cbf9e4af95263afef93cfc56ae36817e044cf51c949701c8c64c8`. Archive `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a4/numerical-evidence.npz`, VersionId `LVo0roOIU2RU5omWZ4M6gOKxDkYgNBrO`, SHA256 `28f645808000bb6bdb869bef1200104ce7081f8ae7417a43ca3444ab879786da`; 46 members restored and hash-checked. Code stays in Git at `224bd1c43819188a450fe23dab1ab18598634e62`.
+
+Recovery: GET the exact archive version, verify SHA256, load NPZ with `allow_pickle=False`, then verify each uint8 member against numerical-inventory.json. Original H50/H58 derived inputs and r882 remain pinned local inputs; their exact S3 recovery versions were not established by H135.
+
+---
+
+## Historical preregistration and earlier attempts (superseded)
+
 # H135 — prospective A4 pressure-aware continuation on xbabe1
 
 **A4 preregistered; not executed.** [PREREG_AMENDMENT_A4.md](PREREG_AMENDMENT_A4.md) records the explicit owner authorization, verified 306 MB input transfer and unchanged scientific identities. Earlier incomplete attempts remain below and in metrics.json.
