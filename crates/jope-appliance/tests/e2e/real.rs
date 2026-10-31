@@ -205,7 +205,7 @@ impl Server {
             endpoint.clone(),
             env!("CARGO_PKG_VERSION"),
             "1.0",
-            "2026-10-31T00:00:00Z".into(),
+            "2026-10-31T00:00:00Z",
         )?;
         let auth = LocalAuth::new(BearerToken::from_hex(&daemon.token)?, port)?;
         let app = engine.router(auth)?;
