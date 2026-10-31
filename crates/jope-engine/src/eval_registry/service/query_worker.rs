@@ -26,7 +26,17 @@ pub fn execute_query_worker() -> Result<()> {
         .context("original query custody channel absent")?
         .parse()?;
     ensure!(fd > 2, "invalid query custody channel");
-    let mut channel = unsafe { UnixStream::from_raw_fd(fd) };
+    // The environment value can name any open descriptor. Duplicate it before
+    // transfer so this worker cannot create a second Rust owner for that number.
+    // SAFETY: F_DUPFD_CLOEXEC returns a fresh descriptor with one owner here.
+    let channel_fd = unsafe { libc::fcntl(fd, libc::F_DUPFD_CLOEXEC, 3) };
+    ensure!(
+        channel_fd >= 0,
+        "query custody channel descriptor is not open"
+    );
+    // SAFETY: `channel_fd` is the fresh descriptor returned above and has not
+    // been wrapped or otherwise given another owner.
+    let mut channel = unsafe { UnixStream::from_raw_fd(channel_fd) };
     let parent = ProcessIdentity::read(crate::host_os::parent_pid())?;
     ensure!(
         authenticated_peer(&channel)? == parent,
@@ -128,6 +138,9 @@ pub(super) fn predict(
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::inherit());
+    // SAFETY: the child callback runs before exec and uses only the inherited
+    // channel number, integer process controls, and Confinement::enter's
+    // syscall-only setup; it does not access parent-owned Rust state.
     unsafe {
         command.pre_exec(move || {
             if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL) != 0

@@ -235,10 +235,8 @@ pub fn shared(path: &Path, expected: &str, length: usize) -> Result<Option<fs::F
         socket,
         std::time::Duration::from_millis((deadline - now).try_into()?),
     )?;
-    // SAFETY: the all-zero bit pattern is valid for ucred's pid, uid and gid
-    // integer fields; getsockopt fills them before the peer identity is checked.
-    let mut peer: libc::ucred = unsafe { std::mem::zeroed() };
-    let mut size = std::mem::size_of_val(&peer) as libc::socklen_t;
+    let mut peer = std::mem::MaybeUninit::<libc::ucred>::uninit();
+    let mut size = std::mem::size_of::<libc::ucred>() as libc::socklen_t;
     // SAFETY: peer and size are live writable objects; size advertises exactly
     // sizeof(ucred). getsockopt writes within that capacity for SO_PEERCRED.
     ensure!(
@@ -247,13 +245,16 @@ pub fn shared(path: &Path, expected: &str, length: usize) -> Result<Option<fs::F
                 stream.as_raw_fd(),
                 libc::SOL_SOCKET,
                 libc::SO_PEERCRED,
-                (&mut peer as *mut libc::ucred).cast(),
+                peer.as_mut_ptr().cast(),
                 &mut size,
             )
         } == 0
-            && peer.uid == uid,
+            && size as usize == std::mem::size_of::<libc::ucred>(),
         "cache socket peer identity changed"
     );
+    // SAFETY: getsockopt succeeded and returned the exact ucred size.
+    let peer = unsafe { peer.assume_init() };
+    ensure!(peer.uid == uid, "cache socket peer identity changed");
     let connected = fs::symlink_metadata(socket)?;
     ensure!(
         connected.dev() == metadata.dev() && connected.ino() == metadata.ino(),

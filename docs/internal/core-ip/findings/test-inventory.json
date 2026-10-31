@@ -1777,6 +1777,12 @@
       "reason": "historical campaign tooling retained for replay; not a maintained regression control",
       "role": "historical"
     },
+    "python:python/tests/test_record_reader.py": {
+      "role": "regression",
+      "subsystems": [
+        "evidence"
+      ]
+    },
     "python:python/tests/test_reward_ranked_dl_generate.py": {
       "reason": "historical campaign tooling retained for replay; not a maintained regression control",
       "role": "historical"
@@ -5035,6 +5041,14 @@
       "subsystems": [
         "encoders"
       ]
+    },
+    "python:research/flywheel_selfplay/h97_reg_ema/test_h97.py": {
+      "reason": "Owner-requested pytest proofs for the H97 REG-EMA candidate protocol; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h99_esh_harm/test_h99.py": {
+      "reason": "Owner-requested pytest proofs for the H99 ESH harm follow-up preregistration; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

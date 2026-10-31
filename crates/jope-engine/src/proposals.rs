@@ -15,7 +15,7 @@ use serde_json::{json, Value};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
-    path::Path,
+    path::{Path, PathBuf},
 };
 use tch::{nn, Device, Kind, Tensor};
 
@@ -57,8 +57,23 @@ pub fn rank(
         );
     }
     crate::gpu_worker::require_accepted_task(root, &task)?;
+    let champion_snapshot = PathBuf::from(
+        std::env::var_os("JOPE_CHAMPION_SNAPSHOT")
+            .context("proposal rank requires the shared champion snapshot")?,
+    );
     rank_impl(
-        root, corpus, checkpoint, output, rank, world, cuts, cut_start, shuffled, None, None,
+        root,
+        corpus,
+        checkpoint,
+        output,
+        &champion_snapshot,
+        rank,
+        world,
+        cuts,
+        cut_start,
+        shuffled,
+        None,
+        None,
     )
 }
 
@@ -85,14 +100,13 @@ pub(crate) fn smartcluster_rank(
     );
     let root = task.root();
     let output = resolve(root, output)?;
-    unsafe {
-        std::env::set_var("JOPE_CHAMPION_SNAPSHOT", resolve(root, champion_snapshot)?);
-    }
+    let champion_snapshot = resolve(root, champion_snapshot)?;
     rank_impl(
         root,
         &resolve(root, corpus)?,
         &resolve(root, checkpoint)?,
         &output,
+        &champion_snapshot,
         0,
         1,
         *cuts,
@@ -115,6 +129,7 @@ fn rank_impl(
     corpus: &Path,
     checkpoint: &Path,
     output: &Path,
+    champion_path: &Path,
     rank: usize,
     world: usize,
     cuts: usize,
@@ -244,11 +259,7 @@ fn rank_impl(
     let mut generated_jobs = Vec::new();
     let started = std::time::Instant::now();
     let checkpoint_sha = file_hash(&checkpoint.join("state.json"))?;
-    let champion_path = std::path::PathBuf::from(
-        std::env::var_os("JOPE_CHAMPION_SNAPSHOT")
-            .context("proposal rank requires the shared champion snapshot")?,
-    );
-    let champion_sha = file_hash(&champion_path)?;
+    let champion_sha = file_hash(champion_path)?;
     let champion_snapshot: crate::champions::Snapshot = read_json(&champion_path)?;
     ensure!(
         champion_snapshot.schema == "parallel.champion_snapshot.v1"

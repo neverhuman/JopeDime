@@ -35,7 +35,7 @@ class DiskPolicyTests(unittest.TestCase):
             "allow_report_offload": False,
             "allowed_hosts": ["xbabe1", "xbabe2", "xbabe3"],
             "repo_root": "~/JopeDime",
-            "sccache_max_bytes": 60 * jope_diskd.GIB,
+            "sccache_max_bytes": 50 * jope_diskd.GIB,
             "offload": {
                 "bucket": jope_diskd.OFFLOAD_BUCKET,
                 "prefix": jope_diskd.OFFLOAD_PREFIX,
@@ -68,7 +68,7 @@ class DiskPolicyTests(unittest.TestCase):
             "allow_report_offload": False,
             "allowed_hosts": ["xbabe1", "xbabe2", "xbabe3", "xbabe0"],
             "repo_root": "~/JopeDime",
-            "sccache_max_bytes": 60 * jope_diskd.GIB,
+            "sccache_max_bytes": 50 * jope_diskd.GIB,
             "offload": {
                 "bucket": jope_diskd.OFFLOAD_BUCKET,
                 "prefix": jope_diskd.OFFLOAD_PREFIX,
@@ -288,6 +288,19 @@ class DiskPolicyTests(unittest.TestCase):
         self.assertIsNotNone(opened)
         self.assertIn(item.resolve(), opened)
 
+    def test_lsof_fallback_is_scoped_to_the_janitor_uid(self) -> None:
+        root = self.cache()
+        completed = jope_diskd.subprocess.CompletedProcess([], 1, "", "")
+        with (
+            mock.patch.object(jope_diskd.shutil, "which", return_value="/usr/bin/lsof"),
+            mock.patch.object(jope_diskd.subprocess, "run", return_value=completed) as run,
+        ):
+            self.assertEqual(jope_diskd.lsof_open_paths(root.resolve(), user_id=jope_diskd.current_uid()), set())
+        command = run.call_args.args[0]
+        self.assertIn("-a", command)
+        self.assertIn("-u", command)
+        self.assertIn(str(jope_diskd.current_uid()), command)
+
     def test_dry_run_does_not_remove_empty_directories(self) -> None:
         root = self.cache()
         empty = root / "empty"
@@ -314,6 +327,12 @@ class DiskPolicyTests(unittest.TestCase):
         self.assertNotIn("kind", remote)
         self.assertFalse(hasattr(jope_diskd, "remote_scratch_candidates"))
 
+    def test_disk_policy_uses_two_hour_target_ttl_and_worktree_idle_gate(self) -> None:
+        policy = json.loads((Path(__file__).with_name("disk-policy.yaml")).read_text(encoding="utf-8"))
+        cargo = next(entry for entry in policy["paths"] if entry["id"] == "cargo-targets")
+        self.assertEqual(cargo["ttl_hours"], 2)
+        self.assertEqual(cargo["worktree_idle_hours"], 2)
+
     def test_process_reference_scan_checks_cargo_target_and_worktree_cwd(self) -> None:
         proc_root = self.home / "proc"
         process = proc_root / "123"
@@ -321,6 +340,8 @@ class DiskPolicyTests(unittest.TestCase):
         worktree = self.home / "JopeDime" / ".agent" / "worktrees" / "lane"
         target = worktree / "target"
         target.mkdir(parents=True)
+        uid = jope_diskd.current_uid()
+        (process / "status").write_text(f"Uid:\t{uid}\t{uid}\t{uid}\t{uid}\n", encoding="utf-8")
         (process / "cwd").symlink_to(self.home)
         (process / "environ").write_bytes(f"CARGO_TARGET_DIR={target}\0".encode())
         self.assertTrue(jope_diskd.local_process_references(target, worktree, proc_root))
@@ -329,6 +350,35 @@ class DiskPolicyTests(unittest.TestCase):
         (process / "cwd").unlink()
         (process / "cwd").symlink_to(worktree)
         self.assertTrue(jope_diskd.local_process_references(target, worktree, proc_root))
+
+    def test_process_reference_scan_skips_other_users_before_reading_process_data(self) -> None:
+        proc_root = self.home / "proc"
+        process = proc_root / "456"
+        process.mkdir(parents=True)
+        worktree = self.home / "JopeDime" / ".agent" / "worktrees" / "lane"
+        target = worktree / "target"
+        target.mkdir(parents=True)
+        uid = jope_diskd.current_uid()
+        (process / "status").write_text(f"Uid:\t{uid}\t1234\t1234\t1234\n", encoding="utf-8")
+        self.assertFalse(jope_diskd.local_process_references(target, worktree, proc_root))
+
+    def test_worktree_idle_gate_requires_old_index_and_head(self) -> None:
+        worktree = self.home / "JopeDime" / ".agent" / "worktrees" / "lane"
+        git_dir = self.home / "gitdir"
+        git_dir.mkdir()
+        head = git_dir / "HEAD"
+        index = git_dir / "index"
+        head.touch()
+        index.touch()
+        with mock.patch.object(
+            jope_diskd.subprocess,
+            "run",
+            return_value=jope_diskd.subprocess.CompletedProcess([], 0, f"{git_dir}\n", ""),
+        ):
+            self.assertFalse(jope_diskd.worktree_idle_for_cleanup(worktree, now=1000, idle_seconds=7200))
+            os.utime(head, (1, 1))
+            os.utime(index, (1, 1))
+            self.assertTrue(jope_diskd.worktree_idle_for_cleanup(worktree, now=10_000, idle_seconds=7200))
 
     def test_target_evidence_families_are_not_recursively_deleted(self) -> None:
         target = self.home / "target"
@@ -376,7 +426,8 @@ class DiskPolicyTests(unittest.TestCase):
         policy_path = Path(__file__).with_name("disk-policy.yaml")
         policy = json.loads(policy_path.read_text(encoding="utf-8"))
         entry = next(entry for entry in policy["paths"] if entry["id"] == "cargo-targets")
-        self.assertEqual(entry["ttl_hours"], 24)
+        self.assertEqual(entry["ttl_hours"], 2)
+        self.assertEqual(entry["worktree_idle_hours"], 2)
         self.assertTrue(entry["remove_merged_worktrees"])
         self.assertTrue(entry["remove_closed_pr_worktrees"])
         self.assertTrue(entry["remove_stale_targets_on_open_worktrees"])
@@ -457,7 +508,10 @@ class DiskPolicyTests(unittest.TestCase):
                 "headRefName": "closed-lane", "headRefOid": "deadbeef", "state": "CLOSED", "mergedAt": None,
             }]), ""),
         ]
-        with mock.patch.object(jope_diskd.subprocess, "run", side_effect=calls):
+        with (
+            mock.patch.object(jope_diskd.subprocess, "run", side_effect=calls),
+            mock.patch.object(jope_diskd, "worktree_idle_for_cleanup", return_value=True),
+        ):
             found = jope_diskd.worktree_cleanup_inventory(repo, root, 24 * 3600, now=10**12)
         self.assertEqual(len(found or []), 1)
         self.assertEqual(found[0]["worktree"], lane.resolve())
@@ -481,9 +535,61 @@ class DiskPolicyTests(unittest.TestCase):
                 "headRefName": "closed-lane", "headRefOid": "closedhead", "state": "CLOSED", "mergedAt": None,
             }]), ""),
         ]
-        with mock.patch.object(jope_diskd.subprocess, "run", side_effect=calls):
+        with (
+            mock.patch.object(jope_diskd.subprocess, "run", side_effect=calls),
+            mock.patch.object(jope_diskd, "worktree_idle_for_cleanup", return_value=True),
+        ):
             found = jope_diskd.worktree_cleanup_inventory(repo, root, 24 * 3600, now=10**12)
         self.assertEqual(found, [])
+
+    def test_cleanup_inventory_skips_recently_touched_merged_worktree(self) -> None:
+        repo = self.home / "JopeDime"
+        root = repo / ".agent" / "worktrees"
+        lane = root / "recent-lane"
+        lane.mkdir(parents=True)
+        inventory = jope_diskd.subprocess.CompletedProcess(
+            [], 0, f"worktree {lane}\nHEAD mergedhead\nbranch refs/heads/recent-lane\n", "",
+        )
+        with (
+            mock.patch.object(
+                jope_diskd.subprocess,
+                "run",
+                side_effect=[
+                    inventory,
+                    jope_diskd.subprocess.CompletedProcess([], 0, "", ""),
+                    jope_diskd.subprocess.CompletedProcess([], 0, "", ""),
+                ],
+            ),
+            mock.patch.object(jope_diskd, "worktree_idle_for_cleanup", return_value=False),
+        ):
+            found = jope_diskd.worktree_cleanup_inventory(repo, root, 2 * 3600, now=10**12)
+        self.assertEqual(found, [])
+
+    def test_cleanup_inventory_skips_detached_worktree_with_non_main_reflog_commit(self) -> None:
+        repo = self.home / "JopeDime"
+        root = repo / ".agent" / "worktrees"
+        lane = root / "detached-lane"
+        lane.mkdir(parents=True)
+        with (
+            mock.patch.object(
+                jope_diskd.subprocess,
+                "run",
+                side_effect=[
+                    jope_diskd.subprocess.CompletedProcess(
+                        [], 0, f"worktree {lane}\nHEAD mainhead\ndetached\n", "",
+                    ),
+                    jope_diskd.subprocess.CompletedProcess([], 0, "", ""),
+                    jope_diskd.subprocess.CompletedProcess([], 0, "", ""),
+                    jope_diskd.subprocess.CompletedProcess([], 0, "mainhead\nlocalonly\n", ""),
+                    jope_diskd.subprocess.CompletedProcess([], 0, "", ""),
+                    jope_diskd.subprocess.CompletedProcess([], 1, "", ""),
+                ],
+            ),
+            mock.patch.object(jope_diskd, "worktree_idle_for_cleanup", return_value=True),
+        ):
+            found = jope_diskd.worktree_cleanup_inventory(repo, root, 2 * 3600, now=10**12)
+        self.assertEqual(len(found or []), 1)
+        self.assertFalse(found[0]["history_safe"])
 
     def test_cargo_target_cleanup_skips_any_live_or_unknown_consumer(self) -> None:
         repo = self.home / "JopeDime"
@@ -523,6 +629,44 @@ class DiskPolicyTests(unittest.TestCase):
             )
         self.assertEqual(freed, 0)
         self.assertTrue(target.exists())
+
+    def test_merged_worktree_is_not_removed_if_idle_window_closes_before_mutation(self) -> None:
+        repo = self.home / "JopeDime"
+        worktree = repo / ".agent" / "worktrees" / "merged-lane"
+        worktree.mkdir(parents=True)
+        candidate = {
+            "worktree": worktree,
+            "target": worktree / "target",
+            "target_exists": False,
+            "stale_target": False,
+            "branch": "merged-lane",
+            "head": "abc123",
+            "disposition": "merged",
+            "clean": True,
+            "ignored_safe": True,
+        }
+        with (
+            mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
+            mock.patch.object(jope_diskd, "expand_path", return_value=repo / ".agent" / "worktrees"),
+            mock.patch.object(jope_diskd, "worktree_cleanup_inventory", return_value=[candidate]),
+            mock.patch.object(jope_diskd, "open_handles_under", return_value=set()),
+            mock.patch.object(jope_diskd, "local_process_references", return_value=False),
+            mock.patch.object(jope_diskd, "worktree_idle_for_cleanup", return_value=False),
+            mock.patch.object(jope_diskd, "path_size", return_value=1024),
+            mock.patch.object(jope_diskd.subprocess, "run") as run,
+        ):
+            freed = jope_diskd.handle_cargo_targets(
+                {"id": "cargo-targets", "path": "~/JopeDime/.agent/worktrees", "remove_merged_worktrees": True},
+                repo,
+                {"local_only": True},
+                lambda _event: None,
+                dry_run=False,
+                now=10**12,
+                needed_bytes=1,
+            )
+        self.assertEqual(freed, 0)
+        self.assertTrue(worktree.exists())
+        run.assert_not_called()
 
     def test_cargo_target_deletes_exact_merged_head_after_all_gates(self) -> None:
         repo = self.home / "JopeDime"
@@ -568,6 +712,7 @@ class DiskPolicyTests(unittest.TestCase):
             mock.patch.object(jope_diskd, "open_handles_under", return_value=set()),
             mock.patch.object(jope_diskd, "local_process_references", return_value=False),
             mock.patch.object(jope_diskd, "worktree_head_is_unchanged", return_value=True),
+            mock.patch.object(jope_diskd, "worktree_idle_for_cleanup", return_value=True),
             mock.patch.object(jope_diskd, "path_size", return_value=4096),
         ):
             freed = jope_diskd.handle_cargo_targets(
@@ -651,6 +796,8 @@ class DiskPolicyTests(unittest.TestCase):
             mock.patch.object(jope_diskd, "worktree_cleanup_inventory", return_value=[candidate]),
             mock.patch.object(jope_diskd, "open_handles_under", return_value=set()),
             mock.patch.object(jope_diskd, "local_process_references", return_value=False),
+            mock.patch.object(jope_diskd, "worktree_head_is_unchanged", return_value=True),
+            mock.patch.object(jope_diskd, "worktree_idle_for_cleanup", return_value=True),
             mock.patch.object(jope_diskd, "path_size", return_value=4096),
         ):
             freed = jope_diskd.handle_cargo_targets(

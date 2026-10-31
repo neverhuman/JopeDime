@@ -4614,6 +4614,18 @@
       ],
       "scope": "Maintained North Star guard and metric fixtures for DOPE freeze, binary metrics, Rust fitness and grouped Elo; CPU synthetic fixtures do not qualify live training or overhead."
     },
+    "python:python/tests/test_record_reader.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-default",
+        "full-python"
+      ],
+      "scope": "Direct Python API regression controls for the QLT-03 complete-all reader guard; synthetic JSONL fixtures only, no corpus or engine qualification."
+    },
     "python:python/tests/test_optional_task_readiness.py": {
       "discovery": {
         "kind": "python-family"
@@ -13447,6 +13459,26 @@
       ],
       "lanes": [],
       "scope": "H95 W8 HWM resplit-confirmation fixtures: seven cuts per program with the incumbent deduplicated, DSL/sha mismatch refused, execution errors stay INCOMPLETE (never -2), confirmed/material/complexity-only flags and the verdict, and the merged-H72 loader refuses changed bytes. Synthetic only; no data or native calls; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h97_reg_ema/test_h97.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H97 REG-EMA candidate-protocol fixtures: exact (arm, seed) cell set, 19 paired dev families and 91 contexts required, complete finite seed vectors retained."
+    },
+    "python:research/flywheel_selfplay/h99_esh_harm/test_h99.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H99 ESH harm follow-up preregistration fixtures: fold assignment partitions whole train families exactly once, sealed meta-test inputs never opened."
     },
     "python:research/flywheel_selfplay/h96_w4_active_reveal/test_run_w4.py": {
       "discovery": {
