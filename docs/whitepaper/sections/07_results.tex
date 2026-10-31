@@ -4,26 +4,48 @@ Does training make the first proposed algorithm better on an unseen problem?
 The available training trajectory in \cref{sec:method-status} records
 validation behavior during learning. It does not answer the deployment
 question: those validation outcomes inform admission and are not an
-untouched test. This section specifies the comparisons still needed.
+untouched test. This section specifies the comparisons still needed;
+\cref{tab:results-plan} summarizes them and their status.
 \TBD{Add independent evaluation evidence before making a performance claim.}
 \TBD{Supply a source-bound benchmark before claiming deployment throughput.}
 
-\paragraph{Earlier search diagnostics.}
-The supplied method notes report 3,227 exact ties in 3,268 paired
-policy-seeded versus generic final searches, plus a separate audit in which
-98.84\% of reported winners were already in their starting seed populations.
-The paired searches shared seeds, repeated development contexts and had
-unequal wall times; they were not independent first-proposal draws. The two
-historical inventories differ.
-
-For a separate earlier model evaluated on development contexts, the notes
-report fresh-program pairwise ranking accuracy of 0.506 with an interval
-of [0.441, 0.568], which includes chance. The reference checkpoint and later adapter snapshot in
-\cref{sec:method} require their own ranking evidence.
-These observations describe historical search and ranking behavior; the
-matched first-proposal test below is still required.
-\TBD{Pin the inventories, checkpoints and seeding, timing and ranking
-protocols, separately from the final comparisons below.}
+\begin{table*}[t]
+  \caption{\textbf{Evaluation plan at a glance.} Each test is specified in the
+  subsection named in the first column. No outcome is reported yet; the
+  contract in \cref{sub:results-protocol} fixes inputs, budgets and splits
+  before outcomes are opened.}
+  \label{tab:results-plan}
+  \centering
+  \small
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.29\linewidth}>{\raggedright\arraybackslash}p{0.27\linewidth}>{\raggedright\arraybackslash}p{0.13\linewidth}>{\raggedright\arraybackslash}p{0.075\linewidth}@{}}
+    \toprule
+    Test & Question & Comparison or control & Reported in & Status \\
+    \midrule
+    Effect of training (\cref{sub:results-learning})
+      & Does training improve the first proposal on unseen families?
+      & A frozen reference writer under the same budget, paired first draws
+      & Paired family-level outcomes & Pending \\
+    One proposal against fixed methods (\cref{sub:results-headtohead})
+      & Does one task-conditioned program compete with methods that run
+        unchanged across tasks?
+      & Algorithms designed by Claude, Codex and Gemini; KumoRFM
+      & \Cref{tab:headtohead,fig:leaderboard} & Pending \\
+    The cost of more attempts (\cref{sub:results-search})
+      & What do successive attempts buy, per attempt and per unit of cost?
+      & Agents allowed successive attempts; the pilot cost funnel
+      & \Cref{fig:searchone,fig:price} & Pending \\
+    What the map contributes (\cref{sub:results-ablation})
+      & Does the map read the problem, and does it change the writer?
+      & The program-only head; a matched causal ablation
+      & \Cref{tab:ablation} & Pending \\
+    Failures and a worked example (\cref{sub:results-failures})
+      & How do attempts fail, and what does one game look like?
+      & Terminal outcome classes; a rule-selected example
+      & \Cref{tab:worked} & Pending \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
 
 \subsection{Evaluation contract}\label{sub:results-protocol}
 
@@ -106,6 +128,8 @@ attempt. Charge all task-time computation. Plot
 performance against both attempts and cost; if an agent does not reach a
 reference performance within its budget, report that limit.
 \TBD{Supply attempt curves, matched budgets, repeated seeds and uncertainty.}
+The pilot cost measurements planned in \cref{sub:price-waste,sub:price-tax}
+are reported in \cref{fig:price}.
 
 \begin{figure}[t]
   \centering
@@ -114,6 +138,19 @@ reference performance within its budget, report that limit.
   \caption{\textbf{Deployment search comparison pending.} The single-candidate
   condition fixes a budget; its measured quality remains to be established.}
   \label{fig:searchone}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \fbox{\parbox{0.88\linewidth}{\TBD{Pilot cost measurements: supply
+  per-stage failure shares and cost per verified win.}}}
+  \caption{\textbf{Pilot cost measurements pending.} Planned panels:
+  (a)~the share of development proposals that run, score, beat the incumbent
+  and survive re-verification, with the compute spent at each stage;
+  (b)~cost per verified win by writer size and reasoning effort.
+  \TBD{Supply pilot data, seeds and family-level uncertainty; identify
+  settings with no verified win without assigning a finite cost per win.}}
+  \label{fig:price}
 \end{figure}
 
 \subsection{What the map contributes}\label{sub:results-ablation}
@@ -165,5 +202,49 @@ Choose the worked example by a rule fixed before inspection, and show its emitte
 program, fitting procedure and comparison outcome; if the selected category
 is empty, report that fact. \TBD{Supply the example selection rule, actual
 program and verified outcomes, with no replacement of failed attempts.}
+\Cref{tab:worked} lists the record for the selected game. The attempt
+permits no repair or second try, and its sealed verdict is reported
+without updating the writer.
+
+\begin{table}[t]
+  \centering
+  \caption{\textbf{Worked-game record.} Fields reported for the game selected
+  by the rule above. An empty selected outcome category is reported rather
+  than replaced.}
+  \label{tab:worked}
+  \small
+  \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.42\linewidth}>{\raggedright\arraybackslash}X@{}}
+    \toprule
+    Field & Record \\
+    \midrule
+    Problem, task and metric & \TBD{Identify the problem, task and metric.} \\
+    Encoding time & \TBD{time} \\
+    Emitted output & \TBD{program or unfinished draft and size} \\
+    Check and fitting outcomes & \TBD{outcomes and time} \\
+    Hidden-fold score of a valid fit & \TBD{score} \\
+    Incumbent's score & \TBD{score} \\
+    If no valid fit & The failure and its incurred cost, in place of the scores \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Earlier development diagnostics}\label{sub:results-diagnostics}
+
+The supplied method notes report 3,227 exact ties in
+3,268 paired policy-seeded versus generic final searches, plus a separate
+audit in which 98.84\% of reported winners were already in their starting
+seed populations. The paired searches shared seeds, repeated development
+contexts and had unequal wall times; they were not independent
+first-proposal draws. The two historical inventories differ.
+
+For a separate earlier model evaluated on development contexts, the notes
+report fresh-program pairwise ranking accuracy of 0.506 with an interval
+of [0.441, 0.568], which includes chance. The reference checkpoint and later adapter snapshot in
+\cref{sec:method} require their own ranking evidence.
+These observations describe historical search and ranking behavior; the
+matched first-proposal test above is still required.
+\TBD{Pin the inventories, checkpoints and seeding, timing and ranking
+protocols, separately from the final comparisons above.}
+
 These results will determine which interpretations in \cref{sec:meaning}
 the evidence can support.

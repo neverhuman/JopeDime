@@ -120,7 +120,7 @@ pub(crate) fn run(command: DatasetCommand) -> anyhow::Result<()> {
             if generated {
                 super::common::write_idempotency_key(&mut std::io::stderr().lock(), &key)?;
             }
-            let mut value = client.dataset_delete(&id, &key)?;
+            let mut value = serde_json::to_value(client.dataset_delete(&id, &key)?)?;
             if let Some(object) = value.as_object_mut() {
                 super::common::add_idempotency_key(object, &key);
             }

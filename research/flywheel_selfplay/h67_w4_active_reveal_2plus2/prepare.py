@@ -198,7 +198,8 @@ def smoke_one_real_train_pool(input_dir: Path, record: dict) -> dict:
         return float(-fitness[index] if gate[index] else -2.0)
 
     seed = 701
-    choose_first = lambda remaining: sorted(remaining, key=lambda item: hashlib.sha256(f"{seed}:{item}".encode()).hexdigest())[:2]
+    def choose_first(remaining: list[str]) -> list[str]:
+        return sorted(remaining, key=lambda item: hashlib.sha256(f"{seed}:{item}".encode()).hexdigest())[:2]
 
     def choose_second(remaining: list[str], history: dict[str, float]) -> list[str]:
         # Deterministic protocol stand-in: history affects the candidate ordering,
