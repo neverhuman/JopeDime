@@ -2822,7 +2822,8 @@
       "subsystems": [
         "export",
         "fitting"
-      ]
+      ],
+      "reason": "Preserves the existing fitting/export regressions. QLT-03-F01 adds default feature-boundary and opt-in internal CLI parser/refusal controls in this same binary target; these do not qualify actual research capture or replace F02 producer integration."
     },
     "target:jope-appliance/test/e2e": {
       "role": "regression",

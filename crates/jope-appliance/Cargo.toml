@@ -43,6 +43,8 @@ tempfile.workspace = true
 default = ["engine", "mcp", "client"]
 mcp = ["client", "dep:rmcp", "dep:tokio"]
 engine = ["dep:jope-service"]
+# Internal research CLI; ordinary and embedded release builds do not select it.
+research = ["engine", "jope-service/research"]
 # Build service client commands without requiring the embedded engine.
 client = ["dep:jope-client"]
 dope-encoding = ["dep:starforge"]
