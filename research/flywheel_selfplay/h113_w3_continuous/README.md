@@ -1,6 +1,6 @@
 # H113 — W3 continuous loss CPU preparation
 
-**Preparation only; W1 binding and real-row admission remain pending.**
+**Preparation only; strongest comparator is bound, while the W1 prior and real-row admission remain pending.**
 [PREREG.md](PREREG.md) carries forward H65/H107, incorporates H59's completed
 no-admission result, and specifies the limits of this implementation.
 
@@ -28,4 +28,4 @@ cannot authenticate caller-supplied rows. All dataset, checkpoint, optimizer,
 calibration, matched-control-model and runtime integration work remains outside
 this preparation. No result or W3 advance is claimed.
 
-[validation.json](validation.json) records 32 passing synthetic tests, four prior-binding shape controls and 60 loss probes across the 15 fold/seed assignments on all four hosts. No optimiser step or scientific evaluation was performed. Initial and final probe CPU are both included; other overhead is unmeasured. H108 completed with NO_ADVANCE and no accepted W1 winner. W3 stays blocked pending an explicit prior disposition. The historical 32-test receipt is retained; the t0800 dtype regression suite now has 45 cases.
+[validation.json](validation.json) records 32 passing synthetic tests, four prior-binding shape controls and 60 loss probes across the 15 fold/seed assignments on all four hosts. No optimiser step or scientific evaluation was performed. Initial and final probe CPU are both included; other overhead is unmeasured. H108 completed with NO_ADVANCE and no accepted W1 winner. Per rd_opus, W3 binds GBM_PROG412_CTX (context GBM, ungated) as its strongest comparator only; the W1 prior remains null. W3 stays blocked on real-row admission, a registered trainer and matched controls, and resource/GPU admission. The historical 32-test receipt is retained; the t0800 dtype regression suite now has 45 cases.

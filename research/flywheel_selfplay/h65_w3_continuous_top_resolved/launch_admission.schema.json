@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jopedime.invalid/schemas/jope.h65.w3-launch-admission.v1.json",
+  "title": "W3 CPU preparation launch admission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "status",
+    "launch_authorized",
+    "device",
+    "w1_disposition",
+    "accepted_w1_winner",
+    "w1_prior_binding",
+    "strongest_comparator",
+    "h59_disposition",
+    "h59_disposition_sha256",
+    "fold_manifest_sha256",
+    "preregistration_sha256",
+    "outcome_export_sha256",
+    "blockers",
+    "metrics",
+    "native_fits",
+    "optimizer_updates",
+    "gpu_seconds"
+  ],
+  "properties": {
+    "schema": {"const": "jope.h65.w3-launch-admission/v1"},
+    "status": {"const": "BLOCKED"},
+    "launch_authorized": {"const": false},
+    "device": {"const": "cpu"},
+    "w1_disposition": {"const": "NO_ADVANCE"},
+    "accepted_w1_winner": {"type": "null"},
+    "w1_prior_binding": {"type": "null"},
+    "strongest_comparator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "metrics_sha256", "binding_sha256", "status"],
+      "properties": {
+        "id": {"const": "GBM_PROG412_CTX"},
+        "label": {"const": "context GBM (ungated)"},
+        "metrics_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "binding_sha256": {"const": "23d177302d23cdfeb665de4922f2b966284c151e44e1c89c3b3d1c80c36c4f71"},
+        "status": {"const": "BOUND_FOR_COMPARISON_ONLY"}
+      }
+    },
+    "h59_disposition": {"const": "COMPLETED_NO_ADMISSION_INCORPORATED"},
+    "h59_disposition_sha256": {"const": "586e1e1104617dc412e3375ffc9dd69091dde3a0998c0303e4f57a44898aaf32"},
+    "fold_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "preregistration_sha256": {"const": "c1fee49929ea039f4c06ede165d24af694e0e310ad07aab4052e26cc64c1c1a1"},
+    "outcome_export_sha256": {"type": ["string", "null"]},
+    "blockers": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "status", "evidence_sha256"],
+        "properties": {
+          "id": {"enum": ["B1", "B2", "B3", "B4", "B5"]},
+          "status": {"const": "OPEN"},
+          "evidence_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["Elo", "val_reg_inner", "U4"],
+      "properties": {
+        "Elo": {"type": "null"},
+        "val_reg_inner": {"type": "null"},
+        "U4": {"type": "null"}
+      }
+    },
+    "native_fits": {"const": 0},
+    "optimizer_updates": {"const": 0},
+    "gpu_seconds": {"const": 0}
+  }
+}
