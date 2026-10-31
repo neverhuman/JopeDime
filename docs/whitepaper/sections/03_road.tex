@@ -115,7 +115,7 @@ exploiting agents reached Grandmaster level in StarCraft~II
 The key concept is expert iteration \citep{anthony2017expert}: search is the
 teacher, the network is the student, and in the end the student alone plays
 strongly. AlphaGo Zero's raw network, with no search, nearly matched the
-version that had beaten a professional (\cref{sec:intro}); Box~2 shows how.
+version that had beaten a professional (\cref{sec:intro}); \cref{box:selfplay} shows how.
 Language models also learn from feedback: human preferences
 \citep{christiano2017preferences,ouyang2022instructgpt} and rule-based
 checks of answers, as in DeepSeek-R1 \citep{guo2025deepseekr1}.
@@ -127,7 +127,7 @@ network can absorb search.\\
 algorithm quality, then distinguish improvement on training games from
 improvement on unseen families.
 
-\begin{explainer}{Box 2: Self-play in 90 seconds}
+\begin{explainer}[label=box:selfplay]{Self-play in 90 seconds}
 A player starts with only the rules and plays itself. A short search
 before each move finds better moves than instinct would, and the referee
 scores each finished game. The network learns to propose the moves the

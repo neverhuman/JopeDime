@@ -101,7 +101,7 @@ measurement decides where, and whether, the minimum sits.
 A familiar solution can be a useful prior. Matching the incumbent's score
 earns a tie; promotion requires improvement under the same protocol. A
 \emph{useful hallucination} here is an unfamiliar proposal whose value the
-referee verifies (Box~3). Possible exploration controls include temperature
+referee verifies (\cref{box:hallucination}). Possible exploration controls include temperature
 and entropy schedules, a curriculum past known solutions, and
 quality-diversity archives \citep{lehman2011novelty,mouret2015mapelites}.
 Any novelty bonus must preserve the reward ordering in \cref{sec:game}.
@@ -110,8 +110,7 @@ procedure. A measured exploration study must declare its controls and
 budget share and count unsuccessful attempts. \TBD{Supply the exploration
 configuration and its measured quality--cost trade-off.}
 
-\begin{explainer}{Box 3: What a referee verifies}
-  \label{box:hallucination}
+\begin{explainer}[label=box:hallucination]{What a referee verifies}
   An unfamiliar program is a conjecture; the referee checks whether it
   runs and improves the declared score. Verification establishes that
   bounded result. A claim of discovery also needs comparison with known

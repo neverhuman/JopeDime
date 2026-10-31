@@ -53,7 +53,8 @@
 \newcommand{\winprob}{q}
 \newcommand{\budget}{B}
 \newtcolorbox{keyidea}{colback=blue!4,colframe=blue!40!black,boxrule=0.4pt,arc=1pt,left=4pt,right=4pt,beforeafter skip=8pt plus 6pt minus 2pt,title=Key idea,fonttitle=\bfseries\small}
-\newtcolorbox{explainer}[1]{colback=gray!5,colframe=gray!50!black,boxrule=0.4pt,arc=1pt,left=4pt,right=4pt,beforeafter skip=8pt plus 6pt minus 2pt,title={#1},fonttitle=\bfseries\small}
+% Numbered boxes: \begin{explainer}[label=box:...]{Title}, referenced with \cref.
+\newtcolorbox[auto counter,crefname={Box}{Boxes}]{explainer}[2][]{colback=gray!5,colframe=gray!50!black,boxrule=0.4pt,arc=1pt,left=4pt,right=4pt,beforeafter skip=8pt plus 6pt minus 2pt,title={Box~\thetcbcounter: #2},fonttitle=\bfseries\small,#1}
 % Missing figure files render as a labelled placeholder instead of failing.
 \let\EZincludegraphics\includegraphics
 \renewcommand{\includegraphics}[2][]{\IfFileExists{#2}{\EZincludegraphics[#1]{#2}}{\fbox{\parbox[c][1.2in][c]{0.9\linewidth}{\centering\small\textcolor{red}{Figure pending: \texttt{\detokenize{#2}}}}}}}
