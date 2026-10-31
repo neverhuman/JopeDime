@@ -11,5 +11,6 @@ figs:
 	python3 figures/scripts/make_recent_development_figure.py
 	python3 figures/scripts/make_recent_development_figure.py --follow-up
 	python3 figures/scripts/make_recent_development_figure.py --later-window
+	python3 figures/scripts/make_completed_time_figure.py
 clean:
 	latexmk -C

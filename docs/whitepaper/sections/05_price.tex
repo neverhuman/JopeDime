@@ -11,8 +11,7 @@
 % Exhibits: Equation 2 (eq:bill), Box 3. The pilot-cost figure (fig:price) lives in Results.
 % Unsupported supplied cost projections are omitted pending reproducible calculations.
 
-We relate the cost of a program attempt to the cost of a verified
-improvement. The ledger counts
+We relate attempt cost to the cost of a verified improvement. The ledger counts
 encoding, input tokens, generation, repairs, referee execution, updates and
 operating costs. A reproducible full-run price remains pending
 (\cref{sub:price-run}). We distinguish planning assumptions from the
@@ -31,10 +30,13 @@ $\Cattempt$ is the mean incurred cost per candidate attempt, including
 failures. A repair that emits a revised candidate is another
 attempt; charge its work once. $\winprob$ is the probability that an
 attempt beats the incumbent.
+
 It factors as $\winprob = q_{\text{run}}\,q_{\text{beat}}$,
 the share of moves that run times the share of those that win. Valid losses
 still cost money, so divide by $\winprob$, not by the survival
-rate. Generating a token costs about 2~FLOPs per active parameter, and
+rate.
+
+Generating a token costs about 2~FLOPs per active parameter, and
 training on one about~6 \citep{kaplan2020scaling}. Cost projections require reproducible inputs and calculations (\cref{sub:price-run}).
 
 For an observed batch, cost per verified win is the total ledger divided
@@ -56,8 +58,12 @@ The ledger distinguishes stillborn attempts from valid losses.
 A stillborn attempt fails to produce a usable program under the declared
 protocol: generation is incomplete, parsing or type-checking fails,
 execution exceeds its limits or crashes, or outputs fail predeclared
-validity checks. An also-ran is valid but does not beat the incumbent. The pilot funnel planned for \cref{sec:results} (\cref{fig:price}, panel~a) traces
-those stages and the compute spent before each failed attempt stops. If 90\% of attempts fail to improve the incumbent, the independent-try
+validity checks. An also-ran is valid but does not beat the incumbent.
+
+The pilot funnel planned for \cref{sec:results} (\cref{fig:price}, panel~a) traces
+those stages and the compute spent before each failed attempt stops.
+
+If 90\% of attempts fail to improve the incumbent, the independent-try
 model requires ten attempts per improvement in expectation. A typed language
 can exclude invalid structures before fitting (\cref{sec:game}). Runtime,
 resource and output failures may consume part or all of the fit, and their
@@ -76,7 +82,9 @@ Small models are cheap per token and can be dear per win. For generation
 alone, compute per token falls about 190-fold from a hypothetical dense 1.5T writer to
 an 8B one. With equal token counts and compute unit costs, the smaller
 writer can tolerate a win rate about 190 times lower before that
-component's cost per win matches. If it needs three times the tokens per
+component's cost per win matches.
+
+If it needs three times the tokens per
 attempt, the generation-only ratio falls to about 60. Repair turns also
 re-read a growing context. Encoding and referee costs change the full-cost
 ratio; a threshold for the complete bill in \cref{eq:bill} requires
@@ -96,7 +104,9 @@ referee verifies (\cref{box:hallucination}). Possible exploration controls inclu
 and entropy schedules, a curriculum past known solutions, and
 quality-diversity archives \citep{lehman2011novelty,mouret2015mapelites}.
 Any novelty bonus must preserve the reward ordering in \cref{sec:game}.
-These are design options. The reference procedure keeps up to 64 distinct
+These are design options.
+
+The reference procedure keeps up to 64 distinct
 valid policy draws at temperature~1, filling a short pool with
 grammar-uniform samples. Another 16 random exploration programs join that
 pool to seed verified search
@@ -116,11 +126,12 @@ its quality--cost trade-off belongs with the results (\cref{sec:results}).
 
 \subsection{How many games?}\label{sub:price-games}
 
-Three quantities differ by orders of magnitude.
+Keep three quantities separate.
 \textbf{Tries to find one improvement:} $1/\winprob$ on average (\cref{eq:taste}).
 For independent tries with fixed $\winprob = 1\%$, 69 attempts reach even
 odds and 299 reach a 95\% probability of at least one win in that model.
 Report empirical attempt curves for adaptive or correlated proposals.
+
 \textbf{Experience to train a transferable player:} AlphaGo Zero generated
 4.9 million self-play games in about three days \citep{silver2017mastering},
 and AlphaZero played 44 million games of chess in about nine hours
@@ -130,6 +141,7 @@ attempts, the same order.
 The grid counts work, not learning: the number of problem families matters
 more, and pilot learning curves, read only within their measured range, must
 decide.
+
 \textbf{Precision to plan the test:} illustratively, 150 independent
 units at a win rate near 60\% give an approximate 95\% interval of
 $\pm 8$ points. The actual study must compute uncertainty over independent
