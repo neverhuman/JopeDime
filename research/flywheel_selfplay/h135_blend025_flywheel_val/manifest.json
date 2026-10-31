@@ -15,9 +15,11 @@
   },
   "executor_sha256": {
     "science.py": "bba1dc69e228bac25e07cc1d0582eecfa6d9f15f1cfba53914201bd6fe0ad77e",
-    "test_science.py": "489fe724351a752c3761513019b8cdf8fc5e1fdb69fb72f99a10a3df84c6d209",
-    "monitor.py": "b70695a1fe0d6b0a7ceb2182672487a35ee2058c2379f68e6f2a0580ae57ae24",
+    "test_science.py": "6c7aaf62000d7aae63a5f2960901d0e72de35d42caffe9136a846fe317a7b24e",
+    "monitor.py": "aa3adf40f20712b765042a3f218e4518b1a10948c5d56a46a3408fa8698fcad1",
     "runner.py": "2d3a159378ba7b94c52650b2b66b1f55485ded38e7a48f6a6637fcef0139c8d2"
   },
-  "prereg_sha256": "8c852852f2d97459c1981593a5ba7641d5056783298e1d51218c36c40f0372a7"
+  "prereg_sha256": "8c852852f2d97459c1981593a5ba7641d5056783298e1d51218c36c40f0372a7",
+  "amendment": "A1 allocator background-thread suppression before first scientific attempt",
+  "amendment_sha256": "07898ed79df20244920d5f59ab0000aa74940042698ed6b65332f98874f708a4"
 }
