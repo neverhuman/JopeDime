@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""CPU-only fixture and red-team unit tests for the H61 selection-metric runner."""
+"""CPU-only fixture and red-team unit tests for the H61 selection-metric runner and FIFO coordinator."""
 from __future__ import annotations
 
 from collections import namedtuple
+from datetime import datetime, timedelta, timezone
 import hashlib
 import importlib.util
 from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 import numpy as np
 import torch
@@ -20,6 +22,15 @@ if spec is None or spec.loader is None:
 h61 = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = h61
 spec.loader.exec_module(h61)
+
+wave_spec = importlib.util.spec_from_file_location("h61_wave_under_test", HERE / "run_wave.py")
+if wave_spec is None or wave_spec.loader is None:
+    raise RuntimeError("cannot import H61 run_wave")
+h61_wave = importlib.util.module_from_spec(wave_spec)
+sys.modules[wave_spec.name] = h61_wave
+wave_spec.loader.exec_module(h61_wave)
+
+fifo_mod = h61_wave.fifo_lock
 
 FakeStatvfs = namedtuple("FakeStatvfs", ["f_blocks", "f_bavail", "f_frsize"])
 
@@ -218,9 +229,6 @@ class H61RedTeamTests(unittest.TestCase):
         clipped_delta = h61.clip_context_gain(-2.0, 3.5)
         self.assertAlmostEqual(clipped_delta, -h61.ROBUST_CAP, places=7)
 
-        # On a 41-family fold-B panel (2 contexts/family), 1 outlier context in f0 drops from +4.0 to -2.0
-        # (raw delta -6.0 -> clipped delta -1.0 -> family f0 mean delta -0.46 vs unclipped -2.96),
-        # while the remaining 40 families have +0.05 gain.
         pools = make_synthetic_pools(num_families=41, contexts_per_family=2, pool_size=10)
         cids = sorted(pools)
         inc_ctx = {cid: (4.0 if cid == "ctx_00_00" else 0.20) for cid in cids}
@@ -235,20 +243,21 @@ class H61RedTeamTests(unittest.TestCase):
 
     def test_redteam_f_disk_guard_94_5_percent_and_write_time_retryable_infra_void(self):
         """(f) Start cells only when statvfs < 94.5%; write-time disk guard is a retryable infra-void (same cell)."""
-        # 94.5% used (55 free of 1000 blocks) must block cell start
-        stat_945 = lambda _: FakeStatvfs(f_blocks=1000, f_bavail=55, f_frsize=1024**3)
+        def stat_945(_):
+            return FakeStatvfs(f_blocks=1000, f_bavail=55, f_frsize=1024**3)
+
         with self.assertRaises(h61.RetryableDiskInfraVoid) as ctx_err:
             h61.check_disk_guard(stage="cell_start", statvfs_fn=stat_945)
         self.assertTrue(ctx_err.exception.retryable)
         self.assertTrue(ctx_err.exception.same_cell)
         self.assertFalse(ctx_err.exception.stop_wave)
 
-        # 94.4% used (56 free of 1000 blocks) passes cell start
-        stat_944 = lambda _: FakeStatvfs(f_blocks=1000, f_bavail=56, f_frsize=1024**3)
+        def stat_944(_):
+            return FakeStatvfs(f_blocks=1000, f_bavail=56, f_frsize=1024**3)
+
         usage = h61.check_disk_guard(stage="cell_start", statvfs_fn=stat_944)
         self.assertLess(usage["used_percent"], 94.5)
 
-        # Write-time disk-guard failure during cell execution retries the SAME cell without stopping the wave
         cells = [("S1", 12), ("S1", 13)]
         call_log: list[tuple[str, int, int]] = []
 
@@ -257,7 +266,6 @@ class H61RedTeamTests(unittest.TestCase):
 
             def run_cell(arm: str, seed: int, attempt: int) -> dict:
                 call_log.append((arm, seed, attempt))
-                # Simulate write-time disk spike to 94.7% on first attempt of (S1, 12)
                 write_stat = stat_945 if (arm == "S1" and seed == 12 and attempt == 1) else stat_944
                 out_file = tmp_path / f"{arm}_{seed}.json"
                 h61.atomic_json(out_file, {"arm": arm, "seed": seed, "attempt": attempt}, statvfs_fn=write_stat)
@@ -285,7 +293,6 @@ class H61RedTeamTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "only non-anchor"):
             h61.validate_trainable_inventory([("dope.backbone.weight", FakeParam(h61.TRAINABLE_PARAMS))])
 
-        # Live xbabe1 path must be refused by stage_r882_copy
         with tempfile.TemporaryDirectory() as tmpdir:
             fake_live = Path(tmpdir) / "flywheel-full-20261030" / "ckpt.pt"
             fake_live.parent.mkdir(parents=True)
@@ -301,6 +308,252 @@ class H61RedTeamTests(unittest.TestCase):
         self.assertAlmostEqual(proj["projected_total_seconds"], 2577.332, places=2)
         with self.assertRaisesRegex(RuntimeError, "exceeds cap"):
             h61.project_gpu_budget_from_h57_timing(cap_seconds=1000.0)
+
+    def test_fifo_queue_two_waiters_and_requeuing_holder_served_in_arrival_order_and_dead_pid_pruned(self):
+        """Two simulated waiters + one re-queuing holder -> served in arrival order; dead-PID ticket pruned; no starvation."""
+        self.assertEqual(h61_wave.LOCK_POLL_SECONDS, 30.0)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir)
+            lock_file = tmp_path / "qualification.lock"
+            queue_dir = tmp_path / "qualification.queue"
+            data_root = tmp_path / "jope-data"
+            status_log = data_root / "h61/h61-wave/H61_STATUS.log"
+
+            live_pids = {1001, 2002, 3003}
+
+            def is_alive(pid: int) -> bool:
+                return pid in live_pids
+
+            def preflight_ok() -> dict:
+                return {
+                    "disk_used_percent": 90.0,
+                    "host_cpu_percent": 15.0,
+                    "mem_available_kib": 64 * 1024 * 1024,
+                }
+
+            with mock.patch.object(h61_wave, "launch_disk_guard_error", return_value=None):
+                # 1. Enqueue a dead-PID ticket at epoch_ns=50 (older than everyone) -> must be pruned automatically
+                dead_ticket = fifo_mod.enqueue_ticket(queue_dir, pid=999999, wave="DEAD", epoch_ns=50)
+                self.assertTrue(dead_ticket.exists())
+
+                # 2. Holder (PID=1001, wave=H61) arrives at epoch_ns=100 and acquires lock for cell 1
+                service_order: list[str] = []
+                holder_sleeps_1: list[float] = []
+                h1, _, _, _ = h61_wave.acquire_lock(
+                    status_log,
+                    0.0,
+                    after_release=False,
+                    wave_name="H61",
+                    pid=1001,
+                    epoch_ns=100,
+                    lock_path=lock_file,
+                    queue_dir=queue_dir,
+                    data_root=data_root,
+                    flock_fn=lambda handle, flags: None,
+                    sleep_fn=holder_sleeps_1.append,
+                    gpu_free_fn=lambda: 24_000,
+                    preflight_fn=preflight_ok,
+                    is_alive_fn=is_alive,
+                )
+                h1.close()
+                service_order.append("holder_cell1")
+                self.assertFalse(dead_ticket.exists(), "dead-PID ticket must be pruned")
+                self.assertEqual(holder_sleeps_1, [])
+
+                # 3. While holder_cell1 was running, waiter_1 (PID=2002, epoch_ns=200) and waiter_2 (PID=3003, epoch_ns=300)
+                #    enqueued tickets in qualification.queue.
+                t_waiter1 = fifo_mod.enqueue_ticket(queue_dir, pid=2002, wave="H57", epoch_ns=200)
+                t_waiter2 = fifo_mod.enqueue_ticket(queue_dir, pid=3003, wave="H59", epoch_ns=300)
+
+                # 4. Holder releases cell 1 and re-queues for cell 2 at the tail (epoch_ns=400).
+                #    While waiter_1 and waiter_2 are still in queue ahead of epoch_ns=400, holder MUST wait (30s poll)
+                #    until waiter_1 and waiter_2 are served in arrival order!
+                holder_sleeps_2: list[float] = []
+
+                def simulate_queue_progression(sleep_sec: float) -> None:
+                    holder_sleeps_2.append(sleep_sec)
+                    if len(holder_sleeps_2) == 1:
+                        # On poll 1, waiter_1 is oldest live ticket -> waiter_1 acquires lock and removes its ticket
+                        ok1, oldest1 = fifo_mod.is_oldest_live_ticket(t_waiter1, queue_dir, is_alive_fn=is_alive)
+                        self.assertTrue(ok1)
+                        self.assertEqual(oldest1[1], 2002)
+                        service_order.append("waiter_1")
+                        fifo_mod.remove_ticket(t_waiter1)
+                    elif len(holder_sleeps_2) == 2:
+                        # On poll 2, waiter_2 is oldest live ticket -> waiter_2 acquires lock and removes its ticket
+                        ok2, oldest2 = fifo_mod.is_oldest_live_ticket(t_waiter2, queue_dir, is_alive_fn=is_alive)
+                        self.assertTrue(ok2)
+                        self.assertEqual(oldest2[1], 3003)
+                        service_order.append("waiter_2")
+                        fifo_mod.remove_ticket(t_waiter2)
+
+                h2, _, _, _ = h61_wave.acquire_lock(
+                    status_log,
+                    0.0,
+                    after_release=True,
+                    wave_name="H61",
+                    pid=1001,
+                    epoch_ns=400,
+                    lock_path=lock_file,
+                    queue_dir=queue_dir,
+                    data_root=data_root,
+                    flock_fn=lambda handle, flags: None,
+                    sleep_fn=simulate_queue_progression,
+                    gpu_free_fn=lambda: 24_000,
+                    preflight_fn=preflight_ok,
+                    is_alive_fn=is_alive,
+                )
+                h2.close()
+                service_order.append("holder_cell2")
+
+                self.assertEqual(
+                    service_order,
+                    ["holder_cell1", "waiter_1", "waiter_2", "holder_cell2"],
+                )
+                self.assertEqual(holder_sleeps_2, [30.0, 30.0])
+                self.assertEqual(list(queue_dir.iterdir()), [])
+
+    def test_legacy_waiter_status_log_backoff_at_least_45_seconds(self):
+        """After releasing a cell, if another *_STATUS.log has WAIT qualification.lock in the last 90s, back off >=45s."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir)
+            lock_file = tmp_path / "qualification.lock"
+            queue_dir = tmp_path / "qualification.queue"
+            data_root = tmp_path / "jope-data"
+            h57_log = data_root / "h57/h57-wave/H57_STATUS.log"
+            h61_log = data_root / "h61/h61-wave/H61_STATUS.log"
+            h57_log.parent.mkdir(parents=True, exist_ok=True)
+            h61_log.parent.mkdir(parents=True, exist_ok=True)
+
+            fixed_now = datetime(2026, 10, 31, 4, 55, 0, tzinfo=timezone.utc)
+            recent_wait_ts = (fixed_now - timedelta(seconds=20)).isoformat()
+            h57_log.write_text(
+                f"{recent_wait_ts} — WAIT qualification.lock busy; holder PID=3178624; cumulative_wait=490.0s\n"
+            )
+
+            sleeps: list[float] = []
+            with mock.patch.object(h61_wave, "launch_disk_guard_error", return_value=None):
+                handle, _, _, _ = h61_wave.acquire_lock(
+                    h61_log,
+                    0.0,
+                    after_release=True,
+                    wave_name="H61",
+                    pid=3178624,
+                    epoch_ns=500,
+                    lock_path=lock_file,
+                    queue_dir=queue_dir,
+                    data_root=data_root,
+                    flock_fn=lambda h, flags: None,
+                    sleep_fn=sleeps.append,
+                    gpu_free_fn=lambda: 24_000,
+                    preflight_fn=lambda: {
+                        "disk_used_percent": 90.0,
+                        "host_cpu_percent": 15.0,
+                        "mem_available_kib": 64 * 1024 * 1024,
+                    },
+                    is_alive_fn=lambda _: True,
+                    now_utc_fn=lambda: fixed_now,
+                )
+                handle.close()
+
+            self.assertEqual(len(sleeps), 1)
+            self.assertGreaterEqual(sleeps[0], 45.0)
+
+    def test_coordinator_disk_guard_same_cell_retry_limit_two(self):
+        """Verify run_wave.py retries DiskGuardInfraVoid on the SAME cell up to MAX_DISK_GUARD_RETRIES=2."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir)
+            status_log = tmp_path / "H61_STATUS.log"
+            out_dir = tmp_path / "outcomes/cells/S1/seed12"
+            log_path = tmp_path / "logs/S1-seed12.log"
+            calls = {"count": 0}
+
+            def fake_run_locked_cell(key, command, log, timeout, status_path, wait_total):
+                calls["count"] += 1
+                out_dir.mkdir(parents=True, exist_ok=True)
+                if calls["count"] <= 2:
+                    raise h61_wave.DiskGuardInfraVoid("writer disk guard tripped", wait_seconds=0.5, cell_wall_seconds=10.0)
+                return {"key": key, "status": "complete"}, 1.0, 25.0
+
+            with mock.patch.object(h61_wave, "run_locked_cell", side_effect=fake_run_locked_cell):
+                cell, total_wait, wall, void_wall = h61_wave.run_cell_with_disk_guard_retries(
+                    "S1/seed12",
+                    ["python3"],
+                    log_path,
+                    timeout=300.0,
+                    status_path=status_log,
+                    wait_total=0.0,
+                    output_path=out_dir,
+                )
+            self.assertEqual(calls["count"], 3)
+            self.assertEqual(cell["disk_guard_retry_count"], 2)
+            self.assertAlmostEqual(void_wall, 20.0, places=5)
+            self.assertAlmostEqual(wall, 25.0, places=5)
+
+    def test_bradley_terry_elo_3_seeds_family_grouped_median_and_ci95_no_auc(self):
+        """Verify 3-seed family-grouped Bradley-Terry Elo vs r882 reports median + 95% CI, never AUC, and ties fail."""
+        pools = make_synthetic_pools(num_families=8, contexts_per_family=2, pool_size=10)
+        cids = sorted(pools)
+        inc_preds = {cid: np.linspace(1.0, 2.0, 10) for cid in cids}
+        cand_preds = {}
+        for cid in cids:
+            row = np.linspace(1.0, 2.0, 10)
+            row[9] = -1.0  # best unrevealed candidate -> +0.5 gain
+            cand_preds[cid] = row
+
+        scores_by_seed = {}
+        for seed in h61.SEEDS:
+            arm_preds = {
+                "S0": inc_preds,   # exact tie with r882 -> must fail admission
+                "S1": cand_preds,  # positive gain -> admitted
+                "S2": cand_preds,
+                "S3": cand_preds,
+            }
+            scores_by_seed[seed] = h61.score_fold_b_arms(pools, inc_preds, arm_preds, eval_mode="unrev")
+
+        decisions = h61.admit_arms(scores_by_seed)
+        self.assertFalse(decisions["S0"]["admitted"])
+        self.assertTrue(decisions["S0"]["is_tie"])
+        self.assertEqual(decisions["S0"]["elo_median_across_seeds"], 1500.0)
+
+        for arm in ("S1", "S2", "S3"):
+            adm = decisions[arm]
+            self.assertTrue(adm["admitted"])
+            self.assertEqual(adm["primary_ranking_metric"], "bradley_terry_elo_family_grouped")
+            self.assertFalse(adm["auc_reported"])
+            self.assertGreater(adm["elo_median_across_seeds"], 1500.0)
+            self.assertEqual(len(adm["elo_ci95_across_seeds"]), 2)
+            self.assertGreater(adm["elo_family_bootstrap_median"], 1500.0)
+            self.assertEqual(len(adm["elo_family_bootstrap_ci95"]), 2)
+
+        planned = h61.plan_terminal_reads(arm for arm in h61.ARMS if decisions[arm]["admitted"])
+        self.assertEqual(planned, tuple((arm, s) for arm in ("S1", "S2", "S3") for s in h61.SEEDS))
+        with self.assertRaisesRegex(RuntimeError, "forbidden unless the arm is admitted"):
+            h61.terminal_read_allowed("S0", 12, ("S1", "S2", "S3"), ())
+        with self.assertRaisesRegex(RuntimeError, "duplicate H61 terminal DL-Val"):
+            h61.terminal_read_allowed("S1", 12, ("S1", "S2", "S3"), (("S1", 12),))
+
+    def test_frozen_amendment_byte_identical_and_addendum_pins_db8faaa(self):
+        """Ensure frozen amendment-2026-10-31.md is untouched and addendum + README pin db8faaa."""
+        amendment_path = HERE / "amendment-2026-10-31.md"
+        addendum_path = HERE / "addendum-lock-fairness-t2258.md"
+        readme_path = HERE / "README.md"
+        self.assertEqual(
+            hashlib.sha256(amendment_path.read_bytes()).hexdigest(),
+            "3edfad892b40f60909af0c05c8a6c75c6c39c7e4291bc6451541b3f23ec6fe62",
+        )
+        self.assertTrue(addendum_path.exists())
+        required_statement = (
+            "H61 outcome run used PR #816 immediate retry at db8faaa; "
+            "fairness fix applies to later runs only; "
+            "lock policy does not touch any outcome computation"
+        )
+        addendum_text = addendum_path.read_text(encoding="utf-8")
+        readme_text = readme_path.read_text(encoding="utf-8")
+        self.assertIn("db8faaa158c7f7460186a6b92805309e0f0b2cbe", addendum_text)
+        self.assertIn(required_statement, addendum_text)
+        self.assertIn("db8faaa158c7f7460186a6b92805309e0f0b2cbe", readme_text)
+        self.assertIn(required_statement, readme_text)
 
 
 if __name__ == "__main__":

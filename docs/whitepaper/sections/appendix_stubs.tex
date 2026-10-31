@@ -44,8 +44,8 @@ that exclusion and the audit safeguards the evaluation protocol requires, so tha
 artifacts violating held-out isolation are recorded rather than silently dropped:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Excluded test-selected search baseline.} An earlier internal
-  leaderboard entry took, per dataset, the best of \num{63108} test-scored
-  evaluations across 42 datasets. Because selecting among candidates using
+  leaderboard entry selected each dataset's best test-scored outcome from
+  \num{63108} evaluations in total across 42 datasets. Because selecting among candidates using
   test-fold scores biases the reported metric upward
   \citep{cawley2010overfitting}, that entry is excluded from
   all comparative claims.
@@ -78,7 +78,12 @@ later adapter snapshot in \cref{sec:method-status}):
   \item \textbf{Objective terms and parameter split (\cref{sub:method-map,sub:method-selfplay}).}
   Lists $G_p$ require at least eight valid scored programs per problem, with
   percentile $\rho_w = 1 - \mathrm{rank}/(|G_p|-1)$ and writer sequence weight
-  $0.05 + \rho_w^4$. In the combined objective of \cref{eq:totalLoss}, the
+  $0.05 + \rho_w^4$. The native sequence term applies label smoothing over
+  legal tokens and averages each program's token loss before taking the
+  normalized weighted mean over programs. The displayed aggregate
+  coefficients match the native objective; the checkpoint's objective
+  identity and configuration still belong in its evaluation record.
+  In the combined objective of \cref{eq:totalLoss}, the
   pairwise Bradley--Terry term weights
   pairs by their score gap, doubled when either program is at or above the
   90th percentile. The network has \num{27796494} parameters in total (six

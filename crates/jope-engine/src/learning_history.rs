@@ -557,6 +557,10 @@ fn one_line(text: &str, width: u16) -> String {
 }
 /// Keep first/last and each horizontal bucket's extrema; never discard a spike
 /// merely because the full recorded history exceeds the terminal width.
+///
+/// The input is not modified. Empty input returns an empty vector; `columns == 0`
+/// still uses one bucket when reduction is needed. `bounds` controls bucket
+/// placement and should describe the x range shown by the chart.
 pub fn envelope(points: &[(f64, f64)], columns: usize, bounds: [f64; 2]) -> Vec<(f64, f64)> {
     if points.len() <= columns.saturating_mul(2) {
         return points.to_vec();
@@ -593,7 +597,11 @@ pub fn envelope(points: &[(f64, f64)], columns: usize, bounds: [f64; 2]) -> Vec<
     result.dedup();
     result
 }
-/// Centered time-window mean so the line shows global trend, not per-step noise.
+/// Smooth a series with a centered time-window mean.
+///
+/// The window spans ten percent of the observed x range. Inputs with fewer than
+/// three points are returned unchanged; other inputs are sorted by x before
+/// smoothing. The returned points therefore need not retain the input order.
 pub fn moving_average(points: &[(f64, f64)]) -> Vec<(f64, f64)> {
     if points.len() < 3 {
         return points.to_vec();
@@ -1012,4 +1020,24 @@ pub fn render(
         Line::raw(one_line(&notice,area.width))]
     };
     f.render_widget(Paragraph::new(lines).wrap(Wrap { trim: true }), layout[2]);
+}
+
+#[cfg(test)]
+mod chart_series_tests {
+    use super::{envelope, moving_average};
+
+    #[test]
+    fn empty_chart_series_are_empty() {
+        assert!(envelope(&[], 0, [0.0, 1.0]).is_empty());
+        assert!(moving_average(&[]).is_empty());
+    }
+
+    #[test]
+    fn moving_average_sorts_long_series_by_x() {
+        let points = [(2.0, 2.0), (0.0, 0.0), (1.0, 1.0)];
+        let smoothed = moving_average(&points);
+        assert!(smoothed.windows(2).all(|pair| pair[0].0 <= pair[1].0));
+        assert_eq!(smoothed.first().map(|point| point.0), Some(0.0));
+        assert_eq!(smoothed.last().map(|point| point.0), Some(2.0));
+    }
 }

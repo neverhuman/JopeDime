@@ -1,0 +1,162 @@
+{
+  "schema": "rd_breakthrough.w3-publication-prep/v1",
+  "wave": "W3",
+  "h_folder": "H65",
+  "state": "PREPARATION_READY_LAUNCH_PREREQUISITES_MISSING",
+  "prepared_utc": "2026-10-31T04:14:34.223057+00:00",
+  "owner": "ASTRA publication manifest; API06 existing CPU runner/fold preparation",
+  "source_git_sha_at_preparation": "a0a576b09b509357c7dd27071abe95484b248246",
+  "owner_ruling": "overnight15_t2155.md",
+  "proposal_sha256": "f0526f20699dea3fe5259d10eee30483ac3c52655249906fd1ce79dd8e193e50",
+  "implementation_pr": "https://github.com/neverhuman/JopeDime/pull/796",
+  "fold_manifest": {
+    "path": "fold_manifest.json",
+    "sha256": "cabcfc6f182ef3aeb77a10890d81de0c655f60b5bb3db2a56b70c44a58567067",
+    "upstream_w1_sha256": "dd211134bba127960b1612687478064969dca422e35dfa889790760f316961c1",
+    "contexts": 1219,
+    "families": 205,
+    "folds": 5,
+    "seed": 4900,
+    "review": {
+      "source_sha256": "dd211134bba127960b1612687478064969dca422e35dfa889790760f316961c1",
+      "roster_contexts": 1219,
+      "families": 205,
+      "five_disjoint_held_folds": true,
+      "fit_count_checks": true,
+      "pilot_held_disjoint": true,
+      "alias_counts_reported": {
+        "dataset": 0,
+        "table": 0
+      },
+      "limit": "Metadata consistency verified; original physical-table alias detection is source-reported, not independently rerun; no data payloads read."
+    }
+  },
+  "experiment_seeds": [
+    701,
+    702,
+    703
+  ],
+  "bootstrap": {
+    "seed": 20261031,
+    "draws": 10000,
+    "unit": "family; keep all experiment seeds together",
+    "within_wave_adjustment": "two registered primary contrasts; fixed before scoring"
+  },
+  "arms": [
+    "r882 continuity (exposed)",
+    "a: matched current SmoothL1/KL",
+    "b: matched H58-D loss",
+    "c: top-resolved listwise",
+    "d: decomposed quality/feasibility",
+    "width/compute-matched scalar control",
+    "shuffled auxiliary control"
+  ],
+  "primary_contrasts": [
+    "c-b",
+    "d-a"
+  ],
+  "endpoints": {
+    "primary": "legacy-selection family raw utility",
+    "reported": [
+      "family Bradley-Terry Elo",
+      "context-mean val_reg_inner",
+      "verified U4 as separate track",
+      "gate-failure rate"
+    ],
+    "Elo_protocol": {
+      "anchor": "r882=1500 within declared complete panel",
+      "tie_margin": 0.0001,
+      "prior": 0.01,
+      "iterations": 400
+    }
+  },
+  "advance_gate": {
+    "adjusted_family_mean_lcb_gt": 0.001,
+    "family_median_delta_gte": 0,
+    "max_fraction_families_losing_gt_0_01": 0.1,
+    "no_excess_gate_failure": true
+  },
+  "protocol": {
+    "terminal_updates": 40,
+    "same_history_prior_contract_across_arms": true,
+    "top_spread_floor": 0.05,
+    "top_spread_order": 16,
+    "normalized_target_clip": [
+      0,
+      6
+    ],
+    "fewer_than16_pass": "last passing order statistic",
+    "no_passer": "must be explicit in registered implementation",
+    "decomposed_targets": [
+      "measured logratio on completed rows",
+      "fitness - 0.9*logratio on passing rows only",
+      "gate label"
+    ],
+    "mask": [
+      "missing status or values",
+      "unreconstructable components",
+      "ambiguous fitness100/logratio0 sentinel-shaped rows"
+    ],
+    "calibration": "fit-family-only mapping to unchanged original utility",
+    "zero_update_choices_preserved_for_loss_only_change": true
+  },
+  "scoring_disposition": {
+    "source_pr": "https://github.com/neverhuman/JopeDime/pull/799",
+    "rule": "Retain current live slate-centering for every matched arm and r882 continuity; freeze exact slate sizes in execution manifest. No silent anchor-reference treatment-only/GP-only patch.",
+    "reason": "W2 small-slate dependence is an accepted measured contract property, not invariance; written stop rule failed24/800 context/draw choices."
+  },
+  "dependencies": {
+    "w1_winner_configuration": {
+      "status": "missing",
+      "path": null,
+      "sha256": null,
+      "note": "No winner is inferred or selected. Existing CPU runner hashes an opaque JSON object; this document is not that configuration."
+    },
+    "h59_outcome_disposition": {
+      "status": "not_supplied",
+      "path": null,
+      "note": "Incorporate completed clipping/normalization evidence before overlapping W3 work; source implementation/queued execution is not a completed result."
+    },
+    "admitted_w3_outcome_export": {
+      "status": "missing",
+      "s3_uri": null,
+      "sha256": null,
+      "required": [
+        "DL-Train role and current family/physical-table alias closure",
+        "original context training-row/table/cut hashes",
+        "program identity and evaluator/vocabulary identity",
+        "completed-status provenance plus program/fitness/logratio/gate",
+        "input S3 key/version/SHA256 or approved mirrored provenance"
+      ],
+      "excluded": [
+        "raw mixed retained-score bodies",
+        "sibling-view row/outcome transfer",
+        "DL-Val/outer-test/sealed/holdout payloads",
+        "general-corpus smoke as a substitute for outcome provenance"
+      ]
+    },
+    "gpu_execution": "Not launched. W1 follows H57 under the qualification lock; W3 follows an accepted W1 winner and the other prerequisites."
+  },
+  "budgets": {
+    "gpu_hours_ceiling": 2,
+    "native_evaluations": 0,
+    "spent_gpu_seconds": 0,
+    "spent_native_evaluations": 0,
+    "CPU_policy": "rd_breakthrough/CPU_S3.md; dynamic host<=85%, deterministic shards, no new large local targets"
+  },
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dataset_payloads_read_by_this_preparation": 0,
+  "metrics": {
+    "Elo": null,
+    "val_reg_inner": null,
+    "U4": null,
+    "reason": "Manifest preparation only; no model fit or outcome scoring."
+  },
+  "hwm_candidate": false,
+  "output_policy": {
+    "prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/<unique_run_id>/",
+    "create_only": true,
+    "verify": "version-pinned downloaded-byte SHA256 before own bulk removal",
+    "manifest_required": true
+  }
+}

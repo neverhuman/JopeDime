@@ -6,6 +6,7 @@ import json
 import os
 import tempfile
 import unittest
+import gzip
 from pathlib import Path
 from unittest import mock
 
@@ -27,6 +28,16 @@ class DiskPolicyTests(unittest.TestCase):
     def test_policy_is_json_yaml_and_watermarks_are_ordered(self) -> None:
         policy = {
             "version": 1,
+            "local_only": True,
+            "allowed_host": "xbabe2",
+            "repo_root": "~/JopeDime",
+            "sccache_max_bytes": 60 * jope_diskd.GIB,
+            "offload": {
+                "bucket": jope_diskd.OFFLOAD_BUCKET,
+                "prefix": jope_diskd.OFFLOAD_PREFIX,
+                "retention_days": 14,
+                "sha256_verify_before_remove": True,
+            },
             "watermarks": {"soft_percent": 85, "aggressive_percent": 90, "alert_percent": 95, "low_percent": 80},
             "deny_prefixes": [],
             "paths": [],
@@ -34,10 +45,24 @@ class DiskPolicyTests(unittest.TestCase):
         path = self.home / "policy.yaml"
         path.write_text(json.dumps(policy), encoding="utf-8")
         self.assertEqual(jope_diskd.read_policy(path), policy)
+        self.assertTrue(policy["local_only"])
+        self.assertEqual(policy["allowed_host"], "xbabe2")
         policy["watermarks"]["soft_percent"] = 95
         path.write_text(json.dumps(policy), encoding="utf-8")
         with self.assertRaises(ValueError):
             jope_diskd.read_policy(path)
+
+    def test_apply_requires_explicit_local_only_environment(self) -> None:
+        with mock.patch.dict(os.environ, {"JOPE_DISKD_LOCAL_ONLY": "0"}):
+            self.assertEqual(jope_diskd.main(["--apply"]), 2)
+
+    def test_state_directory_symlink_is_rejected(self) -> None:
+        outside = self.home / "outside"
+        outside.mkdir()
+        state = self.home / ".local" / "state" / "jope-diskd"
+        state.parent.mkdir(parents=True)
+        state.symlink_to(outside, target_is_directory=True)
+        self.assertIsNone(jope_diskd.safe_state_dir(self.home, create=True))
 
     def test_cache_root_rejects_outside_home_and_deny_prefix(self) -> None:
         root = self.cache()
@@ -179,42 +204,213 @@ class DiskPolicyTests(unittest.TestCase):
         self.assertTrue(git_dir.is_dir())
         self.assertTrue(empty_subdir.is_dir())
 
-    def test_remote_scratch_requires_dead_pid_and_age(self) -> None:
-        root = self.home / "remote_tests"
-        root.mkdir()
-        scratch = root / "src.123456"
-        scratch.mkdir()
-        os.utime(scratch, (1, 1))
-        with (
-            mock.patch.object(jope_diskd, "safe_cache_root", return_value=True),
-            mock.patch.object(jope_diskd, "pid_is_live", return_value=False),
-            mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
-        ):
-            found = jope_diskd.remote_scratch_candidates(root, self.policy, 24 * 3600, now=10**12)
-        self.assertEqual(found, [scratch])
-        with (
-            mock.patch.object(jope_diskd, "pid_is_live", return_value=True),
-            mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
-        ):
-            self.assertEqual(jope_diskd.remote_scratch_candidates(root, self.policy, 24 * 3600, now=10**12), [])
+    def test_remote_tests_are_observe_only_without_cleanup_kind(self) -> None:
+        policy = json.loads((Path(__file__).with_name("disk-policy.yaml")).read_text(encoding="utf-8"))
+        remote = next(entry for entry in policy["paths"] if entry["id"] == "remote-tests")
+        self.assertEqual(remote["mode"], "observe")
+        self.assertTrue(remote["manual_only"])
+        self.assertNotIn("kind", remote)
+        self.assertFalse(hasattr(jope_diskd, "remote_scratch_candidates"))
 
-    def test_remote_scratch_rejects_retargeted_root(self) -> None:
-        root = self.home / "other"
-        root.mkdir()
-        scratch = root / "src.123456"
-        scratch.mkdir()
-        os.utime(scratch, (1, 1))
+    def test_process_reference_scan_checks_cargo_target_and_worktree_cwd(self) -> None:
+        proc_root = self.home / "proc"
+        process = proc_root / "123"
+        process.mkdir(parents=True)
+        worktree = self.home / "JopeDime" / ".agent" / "worktrees" / "lane"
+        target = worktree / "target"
+        target.mkdir(parents=True)
+        (process / "cwd").symlink_to(self.home)
+        (process / "environ").write_bytes(f"CARGO_TARGET_DIR={target}\0".encode())
+        self.assertTrue(jope_diskd.local_process_references(target, worktree, proc_root))
+        (process / "environ").write_bytes(b"PATH=/usr/bin\0")
+        self.assertFalse(jope_diskd.local_process_references(target, worktree, proc_root))
+        (process / "cwd").unlink()
+        (process / "cwd").symlink_to(worktree)
+        self.assertTrue(jope_diskd.local_process_references(target, worktree, proc_root))
+
+    def test_target_evidence_families_are_not_recursively_deleted(self) -> None:
+        target = self.home / "target"
+        (target / "debug" / "deps").mkdir(parents=True)
+        (target / "debug" / "deps" / "libbuild.rlib").write_bytes(b"build")
+        for path in (target, target / "debug", target / "debug" / "deps", target / "debug" / "deps" / "libbuild.rlib"):
+            os.utime(path, (1, 1))
+        self.assertTrue(jope_diskd.safe_target_tree(target, now=10**12))
+        report = target / "jankurai" / "reports" / "receipt.json"
+        report.parent.mkdir(parents=True)
+        report.write_text("{}", encoding="utf-8")
+        for path in (target / "jankurai", report.parent, report):
+            os.utime(path, (1, 1))
+        self.assertFalse(jope_diskd.safe_target_tree(target, now=10**12))
+
+    def test_cargo_target_candidates_require_exact_merged_pr_head(self) -> None:
+        repo = self.home / "JopeDime"
+        worktrees = repo / ".agent" / "worktrees"
+        worktree = worktrees / "merged-lane"
+        target = worktree / "target"
+        (target / "debug" / "deps").mkdir(parents=True)
+        (target / "debug" / "deps" / "libbuild.rlib").write_bytes(b"build")
+        os.utime(target, (1, 1))
+        calls = [
+            jope_diskd.subprocess.CompletedProcess([], 0, f"worktree {worktree}\nbranch refs/heads/merged-lane\n", ""),
+            jope_diskd.subprocess.CompletedProcess([], 0, json.dumps([{
+                "headRefName": "merged-lane", "headRefOid": "abc123", "mergedAt": "2026-10-30T00:00:00Z"
+            }]), ""),
+            jope_diskd.subprocess.CompletedProcess([], 0, "", ""),
+            jope_diskd.subprocess.CompletedProcess([], 0, "merged-lane\n", ""),
+            jope_diskd.subprocess.CompletedProcess([], 0, "abc123\n", ""),
+        ]
+        with mock.patch.object(jope_diskd.subprocess, "run", side_effect=calls):
+            found = jope_diskd.merged_worktree_targets(repo, worktrees, 24 * 3600, now=10**12)
+        self.assertEqual(found, [(worktree.resolve(), target, "merged-lane", "abc123")])
+
+    def test_cargo_target_cleanup_skips_any_live_or_unknown_consumer(self) -> None:
+        repo = self.home / "JopeDime"
+        worktrees = repo / ".agent" / "worktrees"
+        worktree = worktrees / "merged-lane"
+        target = worktree / "target"
+        (target / "debug" / "deps").mkdir(parents=True)
+        (target / "debug" / "deps" / "libbuild.rlib").write_bytes(b"build")
+        os.utime(target, (1, 1))
+        entry = {"id": "cargo-targets", "path": "~/JopeDime/.agent/worktrees"}
+        policy = {"local_only": True}
+        calls = [
+            jope_diskd.subprocess.CompletedProcess([], 0, f"worktree {worktree}\nbranch refs/heads/merged-lane\n", ""),
+            jope_diskd.subprocess.CompletedProcess([], 0, json.dumps([{
+                "headRefName": "merged-lane", "headRefOid": "abc123", "mergedAt": "2026-10-30T00:00:00Z"
+            }]), ""),
+            jope_diskd.subprocess.CompletedProcess([], 0, "", ""),
+            jope_diskd.subprocess.CompletedProcess([], 0, "merged-lane\n", ""),
+            jope_diskd.subprocess.CompletedProcess([], 0, "abc123\n", ""),
+        ]
         with (
-            mock.patch.object(jope_diskd, "safe_cache_root", return_value=True),
-            mock.patch.object(jope_diskd, "pid_is_live", return_value=False),
+            mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
+            mock.patch.object(jope_diskd, "expand_path", side_effect=lambda value: self.home / value.removeprefix("~/")),
+            mock.patch.object(jope_diskd.subprocess, "run", side_effect=calls),
+            mock.patch.object(jope_diskd, "open_handles_under", return_value=set()),
+            mock.patch.object(jope_diskd, "local_process_references", return_value=None),
+            mock.patch.object(jope_diskd, "path_size", return_value=4096),
+        ):
+            freed = jope_diskd.handle_cargo_targets(
+                entry, repo, policy, lambda _event: None, dry_run=False, now=10**12, needed_bytes=1
+            )
+        self.assertEqual(freed, 0)
+        self.assertTrue(target.exists())
+
+    def test_cargo_target_deletes_exact_merged_head_after_all_gates(self) -> None:
+        repo = self.home / "JopeDime"
+        worktrees = repo / ".agent" / "worktrees"
+        worktree = worktrees / "merged-lane"
+        target = worktree / "target"
+        deps = target / "debug" / "deps"
+        deps.mkdir(parents=True)
+        artifact = deps / "libbuild.rlib"
+        artifact.write_bytes(b"build")
+        for path in (target, target / "debug", deps, artifact):
+            os.utime(path, (1, 1))
+        entry = {"id": "cargo-targets", "path": "~/JopeDime/.agent/worktrees"}
+        policy = {"local_only": True}
+        branch = "merged-lane"
+        head = "abc123"
+        calls = [
+            jope_diskd.subprocess.CompletedProcess([], 0, f"worktree {worktree}\nbranch refs/heads/{branch}\n", ""),
+            jope_diskd.subprocess.CompletedProcess([], 0, json.dumps([{
+                "headRefName": branch, "headRefOid": head, "mergedAt": "2026-10-30T00:00:00Z"
+            }]), ""),
+            jope_diskd.subprocess.CompletedProcess([], 0, "", ""),
+            jope_diskd.subprocess.CompletedProcess([], 0, f"{branch}\n", ""),
+            jope_diskd.subprocess.CompletedProcess([], 0, f"{head}\n", ""),
+            jope_diskd.subprocess.CompletedProcess([], 0, "", ""),
+            jope_diskd.subprocess.CompletedProcess([], 0, f"{branch}\n", ""),
+            jope_diskd.subprocess.CompletedProcess([], 0, f"{head}\n", ""),
+        ]
+        events: list[dict[str, object]] = []
+        with (
+            mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
+            mock.patch.object(jope_diskd, "expand_path", side_effect=lambda value: self.home / value.removeprefix("~/")),
+            mock.patch.object(jope_diskd.subprocess, "run", side_effect=calls),
+            mock.patch.object(jope_diskd, "open_handles_under", return_value=set()),
+            mock.patch.object(jope_diskd, "local_process_references", return_value=False),
+            mock.patch.object(jope_diskd, "path_size", return_value=4096),
+        ):
+            freed = jope_diskd.handle_cargo_targets(
+                entry, repo, policy, events.append, dry_run=False, now=10**12, needed_bytes=1
+            )
+        self.assertEqual(freed, 4096)
+        self.assertFalse(target.exists())
+        self.assertEqual([event["event"] for event in events], ["delete_intent_tree", "deleted_tree"])
+
+    def test_s3_key_is_host_day_hash_scoped(self) -> None:
+        root = self.home / "reports"
+        root.mkdir()
+        path = root / "summary.json"
+        path.write_text("{}", encoding="utf-8")
+        key = jope_diskd.s3_key(path, root, "xbabe2", jope_diskd.dt.date(2026, 10, 31), "abc123")
+        self.assertEqual(key, "offload/xbabe2/20261031/abc123/summary.json")
+
+    def test_offload_removes_only_after_upload_verification(self) -> None:
+        state = self.home / ".local" / "state" / "jope-diskd"
+        state.mkdir(parents=True)
+        path = state / "old.log.gz"
+        path.write_bytes(b"verified log")
+        os.utime(path, (1, 1))
+        events: list[dict[str, object]] = []
+        with (
+            mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
+            mock.patch.object(jope_diskd, "open_handles_under", return_value=set()),
+            mock.patch.object(jope_diskd, "upload_and_verify", return_value=False),
+        ):
+            self.assertFalse(jope_diskd.offload_file(path, state, events.append, dry_run=False, now=10**12))
+            self.assertTrue(path.exists())
+            self.assertEqual(events[-1]["event"], "offload_verify_failed")
+        with (
+            mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
+            mock.patch.object(jope_diskd, "open_handles_under", return_value=set()),
+            mock.patch.object(jope_diskd, "upload_and_verify", return_value=True),
+        ):
+            self.assertTrue(jope_diskd.offload_file(path, state, events.append, dry_run=False, now=10**12))
+            self.assertFalse(path.exists())
+            self.assertEqual(events[-1]["event"], "offload_local_removed")
+
+    def test_jankurai_report_tree_offloads_old_files_and_removes_empty_dirs(self) -> None:
+        repo = self.home / "JopeDime"
+        worktrees = repo / ".agent" / "worktrees"
+        worktrees.mkdir(parents=True)
+        root = repo / "target" / "jankurai" / "reports"
+        nested = root / "old" / "run"
+        nested.mkdir(parents=True)
+        report = nested / "summary.csv"
+        report.write_text("score\n1\n", encoding="utf-8")
+        for path in (repo / "target", repo / "target" / "jankurai", root, root / "old", nested, report):
+            os.utime(path, (1, 1))
+        events: list[dict[str, object]] = []
+        with (
+            mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
+            mock.patch.object(jope_diskd, "open_handles_under", return_value=set()),
+            mock.patch.object(jope_diskd, "upload_and_verify", return_value=True),
+        ):
+            jope_diskd.offload_jankurai_reports(repo, worktrees, events.append, dry_run=False, now=10**12)
+        self.assertFalse(report.exists())
+        self.assertFalse(root.exists())
+        self.assertEqual(events[-1]["event"], "offload_empty_dir_removed")
+
+    def test_log_rotation_compresses_and_verifies_before_removal(self) -> None:
+        state = self.home / ".local" / "state" / "jope-diskd"
+        state.mkdir(parents=True)
+        active = state / "jope-diskd.log"
+        active.write_bytes(b"long enough to rotate")
+        events: list[dict[str, object]] = []
+        with (
+            mock.patch.object(jope_diskd, "LOG_LIMIT_BYTES", 4),
+            mock.patch.object(jope_diskd, "open_handles_under", return_value=set()),
             mock.patch.object(jope_diskd.Path, "home", return_value=self.home),
         ):
-            self.assertEqual(jope_diskd.remote_scratch_candidates(root, self.policy, 24 * 3600, now=10**12), [])
-
-    def test_process_identity_names_are_strict(self) -> None:
-        self.assertIsNotNone(jope_diskd.SCRATCH_NAME.fullmatch("src.123"))
-        self.assertIsNone(jope_diskd.SCRATCH_NAME.fullmatch("src.123.backup"))
-        self.assertIsNone(jope_diskd.SCRATCH_NAME.fullmatch("src.current"))
+            jope_diskd.rotate_daemon_log(self.home, events.append, dry_run=False, now=jope_diskd.time.time())
+        self.assertFalse(active.exists())
+        archives = list(state.glob("jope-diskd-*.log.gz"))
+        self.assertEqual(len(archives), 1)
+        with gzip.open(archives[0], "rb") as stream:
+            self.assertEqual(stream.read(), b"long enough to rotate")
+        self.assertEqual(events[0]["event"], "log_rotated")
 
     def test_alert_is_preview_only_then_idempotent_per_host_day(self) -> None:
         policy = {"watermarks": {"alert_percent": 95}}

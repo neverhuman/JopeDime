@@ -1,0 +1,12 @@
+[Unit]
+Description=Check the idle xbabe3 remote Cargo target every 10 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=10min
+AccuracySec=1min
+Persistent=true
+Unit=jope-xbabe3-target-cleaner.service
+
+[Install]
+WantedBy=timers.target

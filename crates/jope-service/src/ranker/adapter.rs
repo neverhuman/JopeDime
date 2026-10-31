@@ -1,10 +1,9 @@
 //! Pre-stage input contract for the h40b `adapter_10tok.predict_costs` ranker.
 //!
-//! This module deliberately contains no tensor backend yet. RES-09 must land the
-//! shared SafeTensors/Candle fixture support before the parameterized forward
-//! pass and golden parity checks can be staged. Until then, this module validates
-//! the F12 serving-shaped input dimensions only; it does not produce costs or
-//! establish M2 parity.
+//! RES-09 has supplied shared SafeTensors/Candle loader support, but the RES-07
+//! real-tensor fixtures needed for parity are still pending. This pre-stage
+//! validates only F12 flattened input dimensions; it does not load adapter
+//! weights, produce costs, or establish M2 parity.
 
 use std::fmt;
 
@@ -187,12 +186,35 @@ mod tests {
     }
 
     #[test]
-    fn reports_the_first_mismatched_input_shape() {
-        let mut fixture = Fixture::serving(1, 8);
-        fixture.tokens.pop();
-        let error = fixture.inputs(1, 8).validate_shapes().unwrap_err();
-        assert_eq!(error.field, "tokens");
-        assert_eq!(error.expected, 12 * TOKENS * TOKEN_WIDTH);
-        assert_eq!(error.actual, error.expected - 1);
+    fn reports_a_mismatch_for_every_flattened_f12_input_shape() {
+        for proposals in [8, 16] {
+            let fixture = Fixture::serving(2, proposals);
+            let valid = fixture.inputs(2, proposals);
+
+            macro_rules! assert_one_short {
+                ($field:ident, $name:literal) => {{
+                    let actual = fixture.$field.len() - 1;
+                    let malformed = PredictCostsInputs {
+                        $field: &fixture.$field[..actual],
+                        ..valid
+                    };
+                    let error = malformed.validate_shapes().unwrap_err();
+                    assert_eq!(error.field, $name);
+                    assert_eq!(error.expected, fixture.$field.len());
+                    assert_eq!(error.actual, actual);
+                }};
+            }
+
+            assert_one_short!(prog_412, "prog_412");
+            assert_one_short!(proj_16, "proj_16");
+            assert_one_short!(tokens, "tokens");
+            assert_one_short!(token_mask, "token_mask");
+            assert_one_short!(revealed_indices, "revealed_indices");
+            assert_one_short!(revealed_fitness, "revealed_fitness");
+            assert_one_short!(revealed_gates, "revealed_gates");
+            assert_one_short!(ctx_feat, "ctx_feat");
+            assert_one_short!(base_prior_cost, "base_prior_cost");
+            assert_one_short!(sos_prior, "sos_prior");
+        }
     }
 }
