@@ -1,11 +1,15 @@
-//! CPU preparation for RNK-12, spec §5.8/M2.
+//! Frozen fused forward and parity/placement for RNK-12, spec §5.8/M2.
 //!
-//! This module runs the existing CPU projection primitives, resolves placement
-//! for the current CPU-only backend, and checks supplied backend traces. It does
-//! not implement DOPE, adapter inference, a CUDA backend, or GPU qualification.
-//! A future GPU run must hold qualification.lock and bind real goldens, source,
-//! bundle, device and driver identities for at least 50 contexts. Arithmetic
-//! unit controls below are not those goldens. Plan/CLI integration remains open.
+//! The native DOPE/router, projections and adapter use the selected Candle device.
+//! Scalar recipe preprocessing and admission remain CPU operations; learned dense
+//! and attention tensors run on the selected backend. Real CUDA qualification is
+//! an ignored, lock-gated test with source/bundle/fixture/device receipts.
+//! The existing cpu_placement helper still describes CPU-only native evaluation.
+
+mod forward;
+pub use forward::{FusedForward, StageOutput};
+#[cfg(test)]
+mod fixture;
 
 use super::{
     admission,
@@ -212,8 +216,11 @@ pub fn compare_stage(
 }
 
 /// Every M2 stage is mandatory; a costs-only trace cannot satisfy this checker.
+/// A trace contains exactly one context, and its identity travels with every
+/// supplied stage so reference/candidate rows cannot be paired across contexts.
 #[derive(Clone, Copy, Debug)]
 pub struct Trace<'a> {
+    pub context_id: &'a str,
     pub v256: TensorView<'a>,
     pub col: TensorView<'a>,
     pub dope629: TensorView<'a>,
@@ -224,7 +231,15 @@ pub struct Trace<'a> {
 }
 
 pub fn compare_trace(reference: Trace<'_>, actual: Trace<'_>) -> Result<Vec<StageComparison>> {
-    [
+    ensure!(
+        !reference.context_id.is_empty(),
+        "trace context identity must not be empty"
+    );
+    ensure!(
+        reference.context_id == actual.context_id,
+        "reference and actual trace context identities differ"
+    );
+    let stages = [
         (Stage::V256, reference.v256, actual.v256),
         (Stage::Col, reference.col, actual.col),
         (Stage::Dope629, reference.dope629, actual.dope629),
@@ -232,10 +247,28 @@ pub fn compare_trace(reference: Trace<'_>, actual: Trace<'_>) -> Result<Vec<Stag
         (Stage::Tokens, reference.tokens, actual.tokens),
         (Stage::Mask, reference.mask, actual.mask),
         (Stage::Costs, reference.costs, actual.costs),
-    ]
-    .into_iter()
-    .map(|(stage, reference, actual)| compare_stage(stage, reference, actual))
-    .collect()
+    ];
+    // Validate pairs first, including rank/suffix checks, before slicing shapes.
+    let comparisons = stages
+        .iter()
+        .map(|&(stage, reference, actual)| compare_stage(stage, reference, actual))
+        .collect::<Result<Vec<_>>>()?;
+    let context_shape = &reference.v256.shape[..reference.v256.shape.len() - 1];
+    ensure!(
+        context_shape.is_empty() || context_shape == [1],
+        "a trace identity must name exactly one context"
+    );
+    for (stage, reference, _) in stages {
+        let trailing_axes = match stage {
+            Stage::Col | Stage::Tokens => 2,
+            _ => 1,
+        };
+        ensure!(
+            &reference.shape[..reference.shape.len() - trailing_axes] == context_shape,
+            "{stage:?} context/batch axes differ from V256"
+        );
+    }
+    Ok(comparisons)
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -518,28 +551,45 @@ mod tests {
         assert!(compare_stage(Stage::Costs, view(&[8], &[0.0; 8]), view(&[8], &[0.0; 8])).is_err());
     }
 
-    struct TraceFixture(Vec<Vec<f32>>);
+    struct TraceFixture {
+        context_id: &'static str,
+        stages: Vec<Vec<f32>>,
+    }
 
     impl TraceFixture {
         fn new() -> Self {
-            Self(
-                [256, 1088, 629, 48, 320, 10, 12]
+            Self {
+                context_id: "context-a",
+                stages: [256, 1088, 629, 48, 320, 10, 12]
                     .map(|n| vec![0.0; n])
                     .to_vec(),
-            )
+            }
         }
 
         fn trace(&self) -> Trace<'_> {
             Trace {
-                v256: view(&[256], &self.0[0]),
-                col: view(&[64, 17], &self.0[1]),
-                dope629: view(&[629], &self.0[2]),
-                lm48: view(&[48], &self.0[3]),
-                tokens: view(&[10, 32], &self.0[4]),
-                mask: view(&[10], &self.0[5]),
-                costs: view(&[12], &self.0[6]),
+                context_id: self.context_id,
+                v256: view(&[256], &self.stages[0]),
+                col: view(&[64, 17], &self.stages[1]),
+                dope629: view(&[629], &self.stages[2]),
+                lm48: view(&[48], &self.stages[3]),
+                tokens: view(&[10, 32], &self.stages[4]),
+                mask: view(&[10], &self.stages[5]),
+                costs: view(&[12], &self.stages[6]),
             }
         }
+    }
+
+    #[test]
+    fn rejects_reference_and_actual_traces_from_different_contexts() {
+        let reference = TraceFixture::new();
+        let mut actual = TraceFixture::new();
+        actual.context_id = "context-b";
+        let error = compare_trace(reference.trace(), actual.trace()).unwrap_err();
+        assert!(error.to_string().contains("context identities differ"));
+
+        actual.context_id = "";
+        assert!(compare_trace(actual.trace(), actual.trace()).is_err());
     }
 
     #[test]
@@ -553,14 +603,14 @@ mod tests {
         );
         for stage in 0..7 {
             let mut actual = TraceFixture::new();
-            actual.0[stage][0] = 1.0;
+            actual.stages[stage][0] = 1.0;
             assert!(
                 compare_trace(reference.trace(), actual.trace()).is_err(),
                 "stage {stage}"
             );
         }
         let mut incomplete = TraceFixture::new();
-        incomplete.0[6].clear();
+        incomplete.stages[6].clear();
         assert!(compare_trace(reference.trace(), incomplete.trace()).is_err());
     }
 
@@ -633,5 +683,151 @@ mod tests {
             assert!(compare_admission(&good, &bad, false, [0; 32]).is_err());
             assert!(compare_admission(&bad, &good, false, [0; 32]).is_err());
         }
+    }
+}
+
+#[cfg(test)]
+mod context_axis_regression {
+    use super::*;
+
+    struct Fixture {
+        shapes: [Vec<usize>; 7],
+        values: [Vec<f32>; 7],
+    }
+
+    impl Fixture {
+        fn new(prefix: &[usize], slate: usize) -> Self {
+            let suffixes = [
+                vec![256],
+                vec![64, 17],
+                vec![629],
+                vec![48],
+                vec![10, 32],
+                vec![10],
+                vec![slate],
+            ];
+            let shapes = suffixes.map(|suffix| {
+                let mut shape = prefix.to_vec();
+                shape.extend(suffix);
+                shape
+            });
+            let values = shapes
+                .each_ref()
+                .map(|shape| vec![0.0; shape.iter().product()]);
+            Self { shapes, values }
+        }
+
+        fn set_prefix(&mut self, stage: usize, prefix: &[usize]) {
+            let trailing = if stage == 1 || stage == 4 { 2 } else { 1 };
+            let mut shape = prefix.to_vec();
+            shape.extend_from_slice(&self.shapes[stage][self.shapes[stage].len() - trailing..]);
+            self.values[stage] = vec![0.0; shape.iter().product()];
+            self.shapes[stage] = shape;
+        }
+
+        fn trace(&self) -> Trace<'_> {
+            let v = |i: usize| TensorView {
+                shape: self.shapes[i].as_slice(),
+                values: self.values[i].as_slice(),
+            };
+            Trace {
+                context_id: "synthetic-context",
+                v256: v(0),
+                col: v(1),
+                dope629: v(2),
+                lm48: v(3),
+                tokens: v(4),
+                mask: v(5),
+                costs: v(6),
+            }
+        }
+    }
+
+    #[test]
+    fn accepts_aligned_unbatched_or_single_context_on_both_slates() {
+        for prefix in [&[][..], &[1][..]] {
+            for slate in [12, 20] {
+                let valid = Fixture::new(prefix, slate);
+                assert_eq!(
+                    compare_trace(valid.trace(), valid.trace()).unwrap().len(),
+                    7
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn rejects_forty_nine_contexts_in_any_one_stage_of_a_fifty_context_trace() {
+        for stage in 0..7 {
+            let mut wrong = Fixture::new(&[50], 12);
+            wrong.set_prefix(stage, &[49]);
+            assert!(
+                compare_trace(wrong.trace(), wrong.trace()).is_err(),
+                "stage {stage} accepted different context inventory"
+            );
+        }
+    }
+
+    #[test]
+    fn rejects_different_context_axes_even_when_the_flattened_lengths_agree() {
+        for stage in 0..7 {
+            let mut wrong = Fixture::new(&[50], 20);
+            let old_len = wrong.values[stage].len();
+            wrong.set_prefix(stage, &[2, 25]);
+            assert_eq!(wrong.values[stage].len(), old_len);
+            assert!(
+                compare_trace(wrong.trace(), wrong.trace()).is_err(),
+                "stage {stage} accepted incompatible context axes"
+            );
+        }
+    }
+
+    #[test]
+    fn rejects_implicit_single_context_broadcast_in_any_stage() {
+        for stage in 0..7 {
+            let mut wrong = Fixture::new(&[], 12);
+            wrong.set_prefix(stage, &[1]);
+            assert!(
+                compare_trace(wrong.trace(), wrong.trace()).is_err(),
+                "stage {stage} accepted an implicit context axis"
+            );
+        }
+    }
+
+    #[test]
+    fn existing_bad_rank_nonfinite_mask_and_pair_shape_controls_remain_errors() {
+        let valid = Fixture::new(&[1], 12);
+        let mut bad = Fixture::new(&[1], 12);
+        bad.shapes[0].clear();
+        assert!(compare_trace(valid.trace(), bad.trace()).is_err());
+        bad = Fixture::new(&[1], 12);
+        bad.values[5][0] = 0.5;
+        assert!(compare_trace(valid.trace(), bad.trace()).is_err());
+        bad = Fixture::new(&[1], 12);
+        bad.values[3][0] = f32::NAN;
+        assert!(compare_trace(valid.trace(), bad.trace()).is_err());
+        bad = Fixture::new(&[1], 12);
+        bad.set_prefix(6, &[2]);
+        assert!(compare_trace(valid.trace(), bad.trace()).is_err());
+    }
+
+    #[test]
+    fn one_identity_cannot_certify_fifty_contexts_even_when_all_stage_axes_match() {
+        for slate in [12, 20] {
+            let wrong = Fixture::new(&[50], slate);
+            assert!(compare_trace(wrong.trace(), wrong.trace()).is_err());
+        }
+    }
+
+    #[test]
+    fn existing_context_identity_checks_still_reject_mismatch_or_empty_id() {
+        let valid = Fixture::new(&[1], 12);
+        let reference = valid.trace();
+        let mut actual = valid.trace();
+        actual.context_id = "another-context";
+        assert!(compare_trace(reference, actual).is_err());
+        let mut reference = valid.trace();
+        reference.context_id = "";
+        assert!(compare_trace(reference, reference).is_err());
     }
 }

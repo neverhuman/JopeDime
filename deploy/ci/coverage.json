@@ -13724,6 +13724,19 @@
       ],
       "lanes": [],
       "scope": "H99/H100 synthetic terminal FIFO publication: complete panels, unchanged native Elo/CI, wave-specific Holm/margin/harm gates, charged rearm prefixes, identity/digest/nonfinite/path/snapshot refusals, bounded no-Torch watcher and UNKNOWN timeout. Research only; no new test, corpus qualification, GPU or serving promotion."
+    },
+    "feature:jope-service/fused-cuda": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "candle_core_0_11_0/cuda"
+        ]
+      },
+      "dispositions": [
+        "gpu"
+      ],
+      "lanes": [],
+      "scope": "RNK-12 optional native frozen DOPE/router, Stage-1B projections and shared adapter on CUDA; explicit device placement and no CPU fallback. CPU unit/refusal/trace/lease controls are separate from ignored external real CPU/CUDA M2 replay. CUDA qualification requires an exclusive existing qualification.lock and declared source/bundle/50-context fixture/device/driver evidence. No hosted feature lane or serving/Q1 promotion; numeric qualification remains a separate observed gate."
     }
   },
   "lanes": {
