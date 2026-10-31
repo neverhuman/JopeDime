@@ -396,6 +396,77 @@ mod tests {
         parameters
     }
 
+    #[test]
+    #[ignore = "RES-07 payloads are held outside the repository; set JOPE_GOLDEN_DIR to run"]
+    fn res07_stage1b_reference_packet_has_50_hash_pinned_contexts() {
+        const INDEX_SHA256: &str =
+            "27905f29703431bedacac90eed1bd54257fd0c59bdf24b56605d0b9416ae1393";
+
+        let root = env::var_os("JOPE_GOLDEN_DIR").map_or_else(
+            || {
+                Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("../../research/flywheel_selfplay/golden")
+            },
+            std::path::PathBuf::from,
+        );
+        let index_bytes = fs::read(root.join("index.json"))
+            .expect("RES-07 index.json is required for Stage-1B fixture preflight");
+        assert_eq!(
+            format!("{:x}", Sha256::digest(&index_bytes)),
+            INDEX_SHA256,
+            "unexpected RES-07 fixture index"
+        );
+        let index: serde_json::Value =
+            serde_json::from_slice(&index_bytes).expect("RES-07 index.json must be valid JSON");
+        assert_eq!(index["schema"], "jope.golden-fixtures/v1");
+
+        let files = index["files"]
+            .as_object()
+            .expect("RES-07 index must contain a files object");
+        let mut contexts = files
+            .keys()
+            .filter_map(|name| {
+                let id = name
+                    .strip_prefix("contexts/")?
+                    .strip_suffix(".safetensors")?;
+                (id.len() == 64
+                    && id
+                        .bytes()
+                        .all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase()))
+                .then_some((id.to_owned(), name.clone()))
+            })
+            .collect::<Vec<_>>();
+        contexts.sort();
+        assert!(
+            contexts.len() >= 50,
+            "RNK-07 parity requires at least 50 RES-07 contexts"
+        );
+
+        for (context, name) in contexts {
+            for (tensor, shape) in [
+                ("v256", vec![1, 256]),
+                ("lm48", vec![1, LM48_FEATURES]),
+                ("dope629", vec![1, DOPE_FEATURES]),
+                ("tokens", vec![1, TOKEN_COUNT, TOKEN_WIDTH]),
+                ("mask", vec![1, TOKEN_COUNT]),
+            ] {
+                assert_index_tensor_shape(&index, &name, tensor, &shape);
+            }
+            let bytes = indexed_file(&root, &index, &name);
+            let fixture = SafeTensors::deserialize(&bytes)
+                .unwrap_or_else(|error| panic!("invalid RES-07 context `{context}`: {error}"));
+            fixture_tensor(&fixture, "v256", &[1, 256]);
+            fixture_tensor(&fixture, "lm48", &[1, LM48_FEATURES]);
+            fixture_tensor(&fixture, "dope629", &[1, DOPE_FEATURES]);
+            fixture_tensor(&fixture, "tokens", &[1, TOKEN_COUNT, TOKEN_WIDTH]);
+            let mask = fixture_tensor(&fixture, "mask", &[1, TOKEN_COUNT]);
+            assert!(
+                mask.iter().all(|value| *value == 0.0 || *value == 1.0),
+                "RES-07 mask must be binary for `{context}`"
+            );
+        }
+    }
+
     struct CapturedLm48(Vec<f32>);
 
     impl TokenProjector for CapturedLm48 {
@@ -469,11 +540,12 @@ mod tests {
     ///   `0,1,2,4,5,7,9`, `{slot}.mean/std/active:[input_width]` plus
     ///   `{slot}.projection:[input_width,32]`, all F32 and row-major.
     ///
-    /// Current RES-07 source has no qualified fixture payloads or parameter
-    /// sidecar, so this test stays ignored until the owner publishes that exact
-    /// contract. Synthetic parameters are never substituted for model values.
+    /// The RES-07 capture contains real context inputs and reference outputs,
+    /// but no frozen RNK-07 parameter sidecar. This test stays ignored until
+    /// that exact model input is published. Synthetic parameters are never
+    /// substituted for model values.
     #[test]
-    #[ignore = "RES-07 has not published qualified RNK-07 context and parameter fixtures"]
+    #[ignore = "RES-07 is missing rnk07/stage1b-parameters.safetensors"]
     fn res07_stage1b_tokens_and_mask_match_reference_on_50_contexts() {
         const ATOL: f32 = 1.0e-5;
         const RTOL: f32 = 1.0e-4;
