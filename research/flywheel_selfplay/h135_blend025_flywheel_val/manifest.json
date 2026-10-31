@@ -1,7 +1,7 @@
 {
   "wave": "H135",
-  "status": "ATTEMPTS1_2_3_INCOMPLETE_A4_NOT_EXECUTED",
-  "seed_reservation_status": "H133_RESERVATION_DISCLOSED_NO_PRIOR_135_EXECUTION_RECORDED",
+  "status": "COMPLETE",
+  "seed_reservation_status": "H133_MOVED_TO_138; H135_A2_A3_PARTIAL_135_WORK_DISCLOSED; A4_COMPLETE_135_136_137",
   "seeds": [
     135,
     136,
@@ -23,7 +23,7 @@
     "launcher.py": "3e101d24ba691812551784b1dada528ba4c63d3a262d69e036e7520e5a75bd82"
   },
   "prereg_sha256": "8c852852f2d97459c1981593a5ba7641d5056783298e1d51218c36c40f0372a7",
-  "amendment": "A2 baseline Torch1 and one prospective continuation after attempt1 incomplete",
+  "amendment": "A4 bounded host-pressure pauses and one xbabe1 continuation after A3 incomplete",
   "amendment_a1_sha256": "07898ed79df20244920d5f59ab0000aa74940042698ed6b65332f98874f708a4",
   "amendment_sha256": "609a24b3ccfca99aa3f389722700d297620ddcbc2c35bd8c8989b5adbd725993",
   "attempt1_custody": {
@@ -44,30 +44,30 @@
     "archive_members_verified": 9
   },
   "attempt1_source_commit": "cd00c99cc4adb85d495b5c12906e4884fc989b62",
-  "scientific_verdict": "UNMEASURED",
+  "scientific_verdict": "NO_ADVANCE",
   "execution_started": true,
-  "execution_source_commit": "8383e8cd5ceb1fc7dc6041635576edf40c605f1b",
+  "execution_source_commit": "224bd1c43819188a450fe23dab1ab18598634e62",
   "closeout_custody": {
     "manifest": {
-      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/manifest.json",
-      "version_id": "ZEvQ9kPnLHcT_6WV_1lV3sN0qAA6kowL",
-      "sha256": "e4cb583932bc3c68ac9049b9924060d17b922b223a9a678af8905dc0f643c717",
-      "bytes": 21751,
-      "verified_utc": "2026-10-31T22:27:32.506279+00:00"
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a4/manifest.json",
+      "version_id": "Sw41ZGk4mtvsqG4zwVWAxnR5dSVPs5Fx",
+      "sha256": "fc99e90a0e0cbf9e4af95263afef93cfc56ae36817e044cf51c949701c8c64c8",
+      "bytes": 35675,
+      "verified_utc": "2026-10-31T23:12:07.757438+00:00"
     },
     "archive": {
-      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz",
-      "version_id": "LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R",
-      "sha256": "5c4d99295ba815c47503aca4971b5cae4505119a439f5b7b6a0d7302d02f8913",
-      "bytes": 1078302,
-      "verified_utc": "2026-10-31T22:27:28.133556+00:00"
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a4/numerical-evidence.npz",
+      "version_id": "LVo0roOIU2RU5omWZ4M6gOKxDkYgNBrO",
+      "sha256": "28f645808000bb6bdb869bef1200104ce7081f8ae7417a43ca3444ab879786da",
+      "bytes": 2660947,
+      "verified_utc": "2026-10-31T23:12:04.713786+00:00"
     },
-    "archive_members_verified": 19
+    "archive_members_verified": 46
   },
   "continuation_attempt": 4,
   "amendment_a2_sha256": "c55211c12c9c1a1bc0447a972ea218e7c4e5ca10c824e3a7975ae47733db7d8b",
   "continuation_budget_fits": 3,
-  "prior_closeout_merge": "40f4dfff971e90bcca0a95d83981bd2c6d5aa150",
+  "prior_closeout_merge": "3df2979abf861502f69f3fa70e7871952bbf0c06",
   "a3_synthetic_preflight": {
     "receipt_sha256": "cbdb067327d33cdbbef2940715f8f29ac19f50fb3838f2ef04bd2ed8479ef443",
     "maximum_threads": 1,
@@ -82,5 +82,7 @@
     "continuous_seconds": 60
   },
   "portable_input_manifest_sha256": "0ab9bee1b76d4e2556386b933af59254bd6c0d2efd8025c1d2647790a5515fb3",
-  "host_selection_sha256": "66482ec5afce9fe8e482dd420e1551aa090c865d8cf0decbc7bcb389af33c210"
+  "host_selection_sha256": "66482ec5afce9fe8e482dd420e1551aa090c865d8cf0decbc7bcb389af33c210",
+  "amendment_a4_sha256": "609a24b3ccfca99aa3f389722700d297620ddcbc2c35bd8c8989b5adbd725993",
+  "prior_closeout_merge_a2": "40f4dfff971e90bcca0a95d83981bd2c6d5aa150"
 }
