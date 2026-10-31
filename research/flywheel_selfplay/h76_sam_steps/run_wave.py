@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import ctypes
+from datetime import datetime, timezone
 import fcntl
 import json
 import os
@@ -126,6 +127,10 @@ def execute(root, ledger, arm, seed, timing, wait_total):
                    '--out', str(out), '--lock-fd', str(lease.fileno())]
         if timing:
             command.append('--timing')
+        ledger['in_progress']['command'] = command
+        ledger['in_progress']['started_utc'] = datetime.now(timezone.utc).isoformat()
+        h59.atomic_json(root / 'budget.json', ledger)
+        record.update(command=command, started_utc=ledger['in_progress']['started_utc'])
         fair.note(status, f'RUN {name}; remaining_gpu_wall={timeout:.2f}s')
         started = time.monotonic()
         record.update(run_child(command, root / f'{name}.log', timeout, lease))

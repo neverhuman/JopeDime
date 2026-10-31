@@ -294,6 +294,8 @@ def run_cell(args):
               'prereg_sha256': h59.sha256(HERE / 'PREREG.md'),
               'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
               'source_hashes': h55.source_hashes(args.input),
+              'environment': {'python': sys.version, 'torch': torch.__version__, 'numpy': np.__version__,
+                              'cuda': torch.version.cuda, 'threads': torch.get_num_threads()},
               'folds': [sorted(f) for f in folds], 'initial_adapter_sha256': initial,
               'final_adapter_sha256': final, 'final_loss': losses[-1],
               'holdout_payloads_opened': 0, 'outer_rows_delivered': 0}
