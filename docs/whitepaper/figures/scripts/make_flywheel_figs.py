@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Build vector PDF figures from the derived flywheel CSVs in ../data.
 Usage: python3 make_flywheel_figs.py   (run from any dir)"""
-import csv, os
+import csv
+import os
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
 
 H = os.path.dirname(os.path.abspath(__file__))
 D = os.path.join(H, "..", "data")
-O = os.path.join(H, "..")
+FIGURES_DIR = os.path.join(H, "..")
 
 plt.rcParams.update({
     "font.family": "serif",
@@ -18,7 +18,7 @@ plt.rcParams.update({
     "axes.titlesize": 8,
     "xtick.labelsize": 7,
     "ytick.labelsize": 7,
-    "legend.fontsize": 6.5,
+    "legend.fontsize": 7.1,
     "axes.spines.top": False,
     "axes.spines.right": False,
     "pdf.fonttype": 42,
@@ -29,7 +29,8 @@ plt.rcParams.update({
     "axes.linewidth": 0.6,
 })
 
-f = lambda x: float(x) if x not in ("", "None", None) else None
+def f(x):
+    return float(x) if x not in ("", "None", None) else None
 with open(f"{D}/rounds.csv") as fh:
     R = list(csv.DictReader(fh))
 with open(f"{D}/admissions.csv") as fh:
@@ -68,7 +69,7 @@ ax.set_xlim(min(r) - 10, max(r) + 10)
 ax.legend(frameon=True, facecolor="white", framealpha=0.85, edgecolor="none",
           loc="lower right", handletextpad=0.3, borderpad=0.25)
 fig.tight_layout(pad=0.4)
-fig.savefig(f"{O}/fig_fw_validation.pdf")
+fig.savefig(f"{FIGURES_DIR}/fig_fw_validation.pdf")
 plt.close(fig)
 
 # 2. Train vs validation on the 25 retained summary rounds (broken x-axis for 1342-1345 and 1449-1469)
@@ -108,13 +109,13 @@ kwargs.update(transform=axR.transAxes)
 axR.plot((-d, +d), (-d, +d), **kwargs)
 
 axR.text(0.04, 0.50, f"train–val gap\n{min(gaps):.3f}–{max(gaps):.3f}\n(n = {len(R)} rounds)",
-         transform=axR.transAxes, fontsize=6.5,
+         transform=axR.transAxes, fontsize=7.1,
          bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.8))
 axR.legend(frameon=True, facecolor="white", framealpha=0.85, edgecolor="none",
-           loc="center right", handletextpad=0.3, borderpad=0.25)
+           loc="center right", bbox_to_anchor=(1.0, 0.35), handletextpad=0.3, borderpad=0.25)
 fig.supxlabel("round (25 retained summary rounds; 1346–1448 not retained)", fontsize=7.5, y=0.02)
 fig.subplots_adjust(left=0.16, right=0.98, bottom=0.20, top=0.96, wspace=0.08)
-fig.savefig(f"{O}/fig_fw_train_val.pdf")
+fig.savefig(f"{FIGURES_DIR}/fig_fw_train_val.pdf")
 plt.close(fig)
 
 # 3. Telemetry across the two summary windows and inter-admission intervals
@@ -123,7 +124,8 @@ dt = [(rd2, t2 - t1) for (rd1, t1), (rd2, t2) in zip(ts, ts[1:]) if rd2 == rd1 +
 wall_pts = [(int(x["round"]), f(x["wall_s"])) for x in R if f(x["wall_s"]) is not None]
 
 GAP_SHIFT = 98  # compresses the 103-round gap in retained summaries (1346-1448) to 5 display units
-x_comp = lambda rd: rd if rd <= 1345 else rd - GAP_SHIFT
+def x_comp(rd):
+    return rd if rd <= 1345 else rd - GAP_SHIFT
 comp_ticks = [1343.5, 1449 - GAP_SHIFT, 1455 - GAP_SHIFT, 1462 - GAP_SHIFT, 1469 - GAP_SHIFT]
 comp_labels = ["1342–45", "1449", "1455", "1462", "1469"]
 
@@ -160,6 +162,6 @@ axs[1].legend(frameon=True, facecolor="white", framealpha=0.88, edgecolor="none"
 plot_compressed_series(axs[2], R, "promotions_per_hr", "#5f3dc4", "program promotions / hour", (56.5, 79.5))
 
 fig.tight_layout(pad=0.45)
-fig.savefig(f"{O}/fig_fw_telemetry.pdf")
+fig.savefig(f"{FIGURES_DIR}/fig_fw_telemetry.pdf")
 plt.close(fig)
 print("ok")
