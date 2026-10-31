@@ -3,7 +3,6 @@
 import json
 import math
 from collections import Counter
-from pathlib import Path
 
 import pytest
 
@@ -460,8 +459,11 @@ def test_decision_rule_strict_25_boundary_and_two_consecutive_same_task():
 
 
 def test_production_output_paths_and_exclusive_lock(tmp_path):
+    checkout = tmp_path / "fixture-checkout"
+    checkout.mkdir()
+    (checkout / ".git").write_text("synthetic marker, not a working copy")
     with pytest.raises(ValueError):
-        output_location(Path(__file__).parent / "output")
+        output_location(checkout / "output")
     with pytest.raises(ValueError):
         output_location("/tmp/jrb01-output")
     # This is a unit lock, never used for GPU execution or substituted in the CLI.
