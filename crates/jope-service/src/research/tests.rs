@@ -612,6 +612,49 @@ fn python_rejects_malformed_or_truncated_streams() {
             "no partial success summary: case {i}"
         );
     }
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("encoded.jsonl");
+    reject_non_utf8_jsonl(&path, &line(&zero), &line(&one));
+}
+
+#[cfg(unix)]
+fn reject_non_utf8_jsonl(path: &Path, seed_line: &str, next_line: &str) {
+    for valid in [seed_line.to_owned(), format!("{seed_line}{next_line}")] {
+        fs::write(path, valid).unwrap();
+        let output = reader(path, true);
+        assert!(output.status.success(), "valid UTF-8 JSONL");
+        assert!(!output.stdout.is_empty());
+    }
+    for suffix in [false, true] {
+        let raw = if suffix { next_line } else { seed_line };
+        assert!(raw.is_ascii(), "these byte-padding fixtures require ASCII");
+        let mut bom = b"\xef\xbb\xbf".to_vec();
+        bom.extend_from_slice(raw.as_bytes());
+        let utf16: Vec<u8> = raw.bytes().flat_map(|byte| [0, byte]).collect();
+        let utf32: Vec<u8> = raw.bytes().flat_map(|byte| [0, 0, 0, byte]).collect();
+        for (encoding, invalid) in [
+            ("UTF-8 BOM", bom),
+            ("UTF-16 BE", utf16),
+            ("UTF-32 BE", utf32),
+        ] {
+            let mut bytes = if suffix {
+                seed_line.as_bytes().to_vec()
+            } else {
+                vec![]
+            };
+            bytes.extend(invalid);
+            fs::write(path, bytes).unwrap();
+            let output = reader(path, true);
+            assert!(
+                !output.status.success(),
+                "accepted {encoding}, suffix={suffix}"
+            );
+            assert!(
+                output.stdout.is_empty(),
+                "partial success for {encoding}, suffix={suffix}"
+            );
+        }
+    }
 }
 
 #[cfg(not(unix))]
