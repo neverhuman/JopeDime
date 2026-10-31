@@ -47,6 +47,13 @@ TARGET_EVIDENCE_PARTS = {
     "checkpoint", "checkpoints", "evidence", "health", "receipt", "receipts",
     "report", "reports", "score", "scores", "sealed", "holdout", "flywheel",
 }
+TARGET_EVIDENCE_SUFFIXES = {
+    ".bin", ".ckpt", ".h5", ".hdf5", ".joblib", ".npy", ".onnx", ".pkl",
+    ".pickle", ".pt", ".pth", ".safetensors", ".tfrecord", ".tfrecords",
+}
+CARGO_INCREMENTAL_BINARY_CACHE_NAMES = {
+    "dep-graph.bin", "query-cache.bin", "work-products.bin",
+}
 PROTECTED_PARTS = {
     "admiralty",
     "checkpoints",
@@ -353,6 +360,13 @@ def safe_target_tree(root: Path, *, now: float, ttl_seconds: int = TARGET_RETENT
                     or now - item.st_mtime < ttl_seconds
                     or any(term in lowered for term in ("receipt", "report", "evidence", "score", "checkpoint"))
                     or Path(name).suffix.lower() in {".csv", ".db", ".html", ".jsonl", ".md", ".npz", ".parquet", ".png", ".sqlite", ".svg", ".txt", ".yaml", ".yml"}
+                    or (
+                        Path(name).suffix.lower() in TARGET_EVIDENCE_SUFFIXES
+                        and not (
+                            name.lower() in CARGO_INCREMENTAL_BINARY_CACHE_NAMES
+                            and "incremental" in relative_parent.parts
+                        )
+                    )
                     or (Path(name).suffix.lower() == ".json" and ".fingerprint" not in relative_parent.parts)
                 ):
                     return False

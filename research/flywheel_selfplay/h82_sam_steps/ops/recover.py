@@ -89,7 +89,14 @@ def validate_prefix(root, *, expected_sha=PREFIX_SHA, expected_log_sha=LOG_SHA):
 
 
 def clear_staging(root, custody, *, expected_sha=R882_SHA):
-    staged = root / "scratch/r882_adapter_copy.pt"
+    scratch = root / "scratch"
+    try:
+        scratch_stat = scratch.lstat()
+    except FileNotFoundError:
+        return False
+    if not stat.S_ISDIR(scratch_stat.st_mode) or scratch.is_symlink():
+        raise RuntimeError("staging directory is not a real directory")
+    staged = scratch / "r882_adapter_copy.pt"
     if not staged.exists() and not staged.is_symlink():
         return False
     if (
