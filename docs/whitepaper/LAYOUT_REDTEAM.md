@@ -125,7 +125,8 @@ The owner widened the scope to a full upgrade, carried out in small sequential P
 | 12 | §2: Table 2 rows separated with 2 pt row spacing (O14). No text change; no float or section moves, and only p. 5 changes layout. Tables 2, 4 and 9, the single-column tables with multi-line cells outside Results, now all separate their rows. | merged (#949) |
 | 13 | Figure 2 legibility: annotation labels from 6.3–6.4 pt to 7.2 pt (O15), with no overlaps. Regenerated deterministically (`SOURCE_DATE_EPOCH` pinned to the committed figure's creation date; the unchanged script regenerates it byte-identical). Same figure size, no text change. | merged (#955) |
 | 14 | Figure 7 legibility: legend text from 6.0 to 7.0 pt (O16), so all of Figure 7's text is at least 7 pt. A narrower middle legend uncovers the round-1322 point. Regenerated deterministically (`SOURCE_DATE_EPOCH` pinned; the unchanged script reproduces all three flywheel figures byte-identical); data, values, axes and figure size unchanged. | merged (#959) |
-| 15 | Whole-paper layout audit on main `b2f271ce`. Fixed: the unreferenced Figure 7 (O18) and the widow/orphan lines (O19). Checked, nothing to fix: 0 overfull or underfull boxes; every float is on its first reference's page or the next, except Table 1 (2 pages after an introduction forward reference) and Figure 11 (§5's forward references to the Results figure, by design); all tables use consistent left-aligned `p`/`X` columns. `refs.bib`: no two keys share a DOI, arXiv id, URL or normalized title. The only near-pair, the AlphaZero preprint (`silver2017chess`) and Science paper (`silver2018general`), is co-cited once on purpose: the preprint's Table S3 is the recorded source of "44 million games" and the paper of "about nine hours", so both are kept. | this PR |
+| 15 | Whole-paper layout audit on main `b2f271ce`. Fixed: the unreferenced Figure 7 (O18) and the widow/orphan lines (O19). Checked, nothing to fix: 0 overfull or underfull boxes; every float is on its first reference's page or the next, except Table 1 (2 pages after an introduction forward reference) and Figure 11 (§5's forward references to the Results figure, by design); all tables use consistent left-aligned `p`/`X` columns. `refs.bib`: no two keys share a DOI, arXiv id, URL or normalized title. The only near-pair, the AlphaZero preprint (`silver2017chess`) and Science paper (`silver2018general`), is co-cited once on purpose: the preprint's Table S3 is the recorded source of "44 million games" and the paper of "about nine hours", so both are kept. | merged (#971) |
+| 16 | Camera-ready prose pass on §8–§9: a redundant sentence and the Limitations closing paragraph (which restated the Conclusion) cut, §8.2 tense and wording fixed, and source comments trace uncited claims to repository paths. No new numbers; TBDs unchanged. "Needs Jepson/team" gains the overnight H80–H97 closeouts as candidates only. | this PR |
 
 ## H56 paper-vs-code recheck (pass 8)
 
@@ -202,6 +203,27 @@ comparisons.
   - 98.84% of reported winners were already in their seed populations.
   - An earlier model's ranking accuracy, 0.506 [0.441, 0.568], includes chance.
 - **§7.2 has no comparison at all yet.** Until it does, the abstract, the introduction and §8 can only state what would be tested.
+
+### Overnight research closeouts (H80–H97): candidates only
+
+These studies landed on `main` overnight on 2026-10-31. Each status below is quoted from the study's own README. **None supplies the §7.2 matched first-proposal comparison or any other `\TBD` in [`RESULTS_NEEDS.md`](RESULTS_NEEDS.md).** All are development-data studies of the adapter loop or its context models. If used at all, they belong with the development diagnostics (§6.8, §7.7), bound to their own populations and protocols.
+
+| Study | What it tested | Status on `main` | Nearest paper slot | Why it cannot fill a marker |
+|---|---|---|---|---|
+| [H80](../../research/flywheel_selfplay/h80_long_es/README.md) | Long direct-utility ES on the r882 adapter: plain (ES) and harm-penalized (ESH) | Not admitted, either arm. Median Elo vs r882: ESH +60 (harm 19.5%), ES +17 (harm 29.3%); both mean LCB95 negative | §6.8 / §7.7 | Adapter training on development folds, scored against r882; not a first proposal from the reference writer |
+| [H81](../../research/flywheel_selfplay/h81_w4_prospective_2plus2/README.md) | W4 active reveal, prospective 2+2 | Blocked before scoring: comparator-strength guard failed; no fits spent | — | No outcome |
+| [H83](../../research/flywheel_selfplay/h83_w6_cross_family_cached/README.md) | W6 cross-family transfer, cached screen | NO_ADVANCE: both primaries fail the harm-tail rule; no native fits | §7.5 similarity | Cached screen of a W6 context model, not the reference map |
+| [H84](../../research/flywheel_selfplay/h84_w6_exact_id_coverage/README.md) | W6 exact program-id coverage | Coverage metadata; Elo and U4 null | — | No outcome |
+| [H85](../../research/flywheel_selfplay/h85_w1_cpu_remediation_and_models/README.md) | W1 CPU remediation; step-0 Elo panel against r882 continuity | Gate calculator at step 0: NO_ADVANCE | — | No optimizer update |
+| [H86](../../research/flywheel_selfplay/h86_w3_outcome_status_census/README.md)–[H89](../../research/flywheel_selfplay/h89_w3_completion_admission/README.md) | Completed-status provenance for W3 inputs | Signature status mask not accepted as completed-status provenance; W3 input admission blocked | §7.6 outcome classes | Shows the admitted packet lacks per-row completion status |
+| [H91](../../research/flywheel_selfplay/h91_w9_closeout_readiness/README.md) | W9 causal-closeout readiness | CPU preparation complete; W9 unadmitted | — | No execution |
+| [H92](../../research/flywheel_selfplay/h92_w6_downside_controlled/README.md) | W6 hedged context learner, cached held-family screen | ADVANCE_CACHED_SCREEN on adaptive development data (3 of 4 primaries clear the common gate) | §7.5 program-only control | Adaptive and cached; the prospective follow-up (H94) did not advance |
+| [H94](../../research/flywheel_selfplay/h94_w6_prospective_hedge/README.md) | The H92 learner on never-evaluated programs, against the program-only prior | NO_ADVANCE: −0.0105 U4 and −51.9 Elo against the program-only prior | §7.5 program-only control | Negative, on development families, and for the W1/W6 context model, not the reference map |
+| [H95](../../research/flywheel_selfplay/h95_w8_hwm_resplit_confirm/README.md) | Resplit confirmation of H94's 45 apparent high-water marks | 30 confirmed (27 material); none admitted or promoted | §6.8 / §7.7 | Training-program incumbents, not proposals by a frozen writer |
+| H82, H90, H93, H97 | SAM steps, candidate diversity, lookahead noise, regularization EMA | Preregistrations and runners only; no outcome on `main` | — | No outcome |
+
+H96, H98 and H99 were not on `main` at this pass.
+
 
 ### Outside Results (provenance and receipts)
 
