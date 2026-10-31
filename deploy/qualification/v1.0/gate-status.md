@@ -1,6 +1,6 @@
 # Release gate inventory — preparation only
 
-Observed 2026-10-31T18:59:09.496124+00:00; source 9831d220733448faf36cc83370876af47c3e7c96
+Observed 2026-10-31T19:12:50.570128+00:00; source 1da3c7556c859b23b2cef91429823dce4a3f2b57
 
 All statuses concern exact signed-byte qualification. No gates were rerun.
 
