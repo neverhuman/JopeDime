@@ -1,15 +1,17 @@
 # Q1 preregistration — draft for OWNER signature
 
-Status: **UNSIGNED / NOT AUTHORIZED FOR QUALIFICATION**. This document proposes
-OD7; neither this commit nor a passing smoke test is an owner signature or Q1 pass.
-Owner allowed-signers SHA-256: PENDING
+Status: **OWNER-DELEGATED KEY INSTALLED / NO PLAN SIGNED / NOT AUTHORIZED FOR
+QUALIFICATION**. This document proposes OD7; neither this commit nor a passing smoke
+test is an owner signature over a plan or a Q1 pass.
+Owner allowed-signers SHA-256: 6bc05cef59ee45376fe77fcaf27074edac2f7bd390faac3f193c466175313235
 
 ## Question and decision
 
 Does the frozen regression bundle improve over heuristic guidance at equal rung-0
 admission budgets? Q1 determines the regression `auto` default; it does not block
 release. No binary or multiclass training, blended headline, or promotion is included.
-The implementing agent must never sign on behalf of OWNER.
+The implementing agent must never sign on behalf of OWNER, except through the
+owner-delegated Q1 key recorded below.
 
 ## Cohort and data boundary
 
@@ -87,14 +89,26 @@ never invent Elo from these loss calculations. Preserve receipts and input hashe
 ## Owner signature and single-use enforcement
 
 OWNER first replaces PENDING above with the SHA-256 of their independently supplied
-OpenSSH allowed-signers file (identity `jepson`). The signature is external to this
+OpenSSH allowed-signers file (identity `jepson`).
+
+**Owner delegation, Q1 only.** Jepson approved on 2026-10-31 at 10:32 MDT that a
+bot-held ed25519 key may sign Q1 as principal `jepson`. The committed file
+`owner/allowed_signers` (public key only, namespace-restricted to `jopedime-q1`,
+fingerprint `SHA256:2KNNiZS7c+YbwsAMt2x0Q9gIdRCd2Yi6CR3k/d1N6LY`) is that key; its
+SHA-256 is the value above. It is an **owner-delegated agent key, not a key Jepson
+holds personally**, and authorizes nothing outside Q1. The canonical signature path
+is `/home/ubuntu/jope_plan/ns/qualification/q1_approval/<plan_sha256>.sig`; the
+canonical ledger root a signed plan must name is
+`/home/ubuntu/jope_plan/ns/qualification/q1_ledger`. No plan is signed by this
+amendment: the signature must still bind the final preregistration, full plan and
+qualified backend hash, and every other gate below still applies. The signature is external to this
 file. Sign the exact bytes emitted by `q1.py approval-payload` with namespace
 `jopedime-q1`; these bind this preregistration, the entire frozen plan and the backend
 binary hash. Verification checks the pinned allowed-signers digest and OpenSSH
 signature before any qualification subprocess is launched, including its heuristic
 arm. A changed document, cohort, plan, backend or signature invalidates authorization.
-The harness has no signature-generation or approval-creation command. Owner keys,
-actual signature, cohort closure and selected bundle remain PENDING at authoring.
+The harness has no signature-generation or approval-creation command. The actual
+signature, cohort closure and selected bundle remain PENDING.
 
 ## Development smoke acceptance and limits
 

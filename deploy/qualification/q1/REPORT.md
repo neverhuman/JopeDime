@@ -70,3 +70,44 @@ The source-file SHA-256 pins are:
 QLT-04 remains open. A later qualification must supply its real admitted plan,
 backend and cohort evidence plus OWNER authorization; this CPU audit consumes
 no study budget and grants no restart, qualification or default change.
+
+## Owner-delegated key and remaining blocker — 2026-10-31, Jepson GO 10:32 MDT
+
+Jepson approved, for Q1 only, at 10:32 MDT on 2026-10-31: (1) Q1 may use the sealed
+meta-test holdout only through its pinned evaluator; (2) a bot-held ed25519 key may
+sign as principal `jepson`; (3) an `--admin` merge of the Q1 PR(s). This section
+records item (2) as required.
+
+**The Q1 signing key is an owner-delegated agent key, not a key Jepson holds
+personally.** It was generated on xbabe2 by the `qlt04_sign_claude` session at
+16:37Z. The private key stays outside Git. The public half is committed as
+`owner/allowed_signers`, restricted to namespace `jopedime-q1`, with fingerprint
+`SHA256:2KNNiZS7c+YbwsAMt2x0Q9gIdRCd2Yi6CR3k/d1N6LY` and file SHA-256
+`6bc05cef59ee45376fe77fcaf27074edac2f7bd390faac3f193c466175313235`. That digest now
+replaces `PENDING` in the preregistration. The canonical ledger root,
+`/home/ubuntu/jope_plan/ns/qualification/q1_ledger`, exists and is empty. Signatures
+will go in `/home/ubuntu/jope_plan/ns/qualification/q1_approval/`.
+
+**No qualification plan is signed and Q1 is still NOT RUN.** A signature has to bind
+`q1.py approval-payload` for a final plan, and that plan needs the SHA-256 of a
+qualified `production_backend.py`. That backend cannot be built honestly on current
+main:
+
+- No caller outside `crates/jope-service/src/ranker/` uses the learned ranker
+  (`ServingAdmissionSlate`, `select_costs`, adapter costs).
+- `resolve_unqualified` refuses `Guidance::Learned`.
+- RNK-10-F01, which composes qualified learned admission into the discovery loop, is
+  blocked on its dependency interfaces and on qualification. RNK-12 M2 parity and the
+  M3 quality receipts are not admitted.
+- QLT-01-F01, the card that owns this backend, says to stop and ask for a COMPLEX or
+  OWNER ruling when no suitable engine interface exists, not to invent one.
+
+Running Q1 on an improvised learned path would consume the sealed cohort for that
+bundle permanently, because the ledger is single-use, and would produce an
+unqualified default decision.
+
+A materialized roster is also still needed. Owner ruling t2300 defines the sealed
+group by reference as all P3 `sealed_excluded` families (293 production + 470
+catalog). The plan also needs a cut identity per dataset, and that identity depends
+on the evaluator protocol the backend freezes. The published `cohort.json` is the
+non-sealed candidate set and is not the Q1 cohort.
