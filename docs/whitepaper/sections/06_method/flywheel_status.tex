@@ -92,5 +92,23 @@ utility tables do not establish either.
   \label{fig:fw-telemetry}
 \end{figure*}
 
+A separate later log slice aligns journaled training-program promotions
+with candidate validation summaries in \cref{fig:fw-program-promotions}.
+These events record numerical improvements to training-program incumbents;
+the journal supplies no confidence interval for them. Program promotions
+and neural adapter admissions remain distinct events. The later slice is
+shown separately from the earlier trajectory.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_program_promotions.pdf}
+  \caption{\textbf{Program-incumbent events and validation summaries.}
+  Top: logged strict improvements to training-program incumbents per round.
+  Bottom: candidate adapter validation pool utility. Both panels cover the
+  same later retained summary window. These are development measurements;
+  independent first-proposal comparisons remain required.}
+  \label{fig:fw-program-promotions}
+\end{figure}
+
 \Cref{sec:results} separates this development record from the independent
 comparisons needed to evaluate the invention claim.
