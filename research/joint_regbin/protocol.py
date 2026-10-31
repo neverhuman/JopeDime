@@ -56,23 +56,33 @@ def implementation_sha():
     )
 
 
+PROTECTED_TOKENS = ("holdout", "sealed", "meta_test", "outer_test")
+
+
+def _is_protected(path):
+    text = str(path).lower().replace("-", "_")
+    return any(token in text for token in PROTECTED_TOKENS)
+
+
 def relative_payload(relative):
     path = Path(relative)
     if path.is_absolute() or ".." in path.parts or not path.parts:
         raise ValueError("payload path must remain inside the pinned packet")
-    if any(
-        token in str(path).lower().replace("-", "_")
-        for token in ("holdout", "sealed", "meta_test", "outer_test")
-    ):
+    if _is_protected(path):
         raise ValueError("protected payload refused before open")
     return path
 
 
 def safe_path(root, relative):
     path = relative_payload(relative)
+    packet = Path(root).resolve()
     result = (Path(root) / path).resolve()
-    if not result.is_relative_to(Path(root).resolve()):
+    if not result.is_relative_to(packet):
         raise ValueError("payload symlink escapes packet")
+    # A symlink inside the packet may still point at a protected file; check
+    # the resolved in-packet components too, before anything opens or hashes it.
+    if _is_protected(result.relative_to(packet)):
+        raise ValueError("protected payload refused before open (resolved symlink)")
     return result
 
 
