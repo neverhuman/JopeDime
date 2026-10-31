@@ -1959,6 +1959,10 @@
       "reason": "Owner-requested pytest proofs for the H92 W6 downside-controlled cached screen (hedge and shortlist pickers, retained-best, H83 reproduction integrity); offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h94_w6_prospective_hedge/test_run_prospective_hedge.py": {
+      "reason": "Owner-requested pytest proofs for the H94 W6 prospective HEDGE_CTX evaluation on new proposer programs; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h86_w3_outcome_status_census/test_census.py": {
       "role": "research",
       "reason": "H86 W3 outcome-row status census and status-mask export unit tests."
