@@ -4220,6 +4220,16 @@
       ],
       "scope": "Direct stdlib unittest execution of fixed-equal S1 continuation, attempt reservation, failure accounting, deadline and recovery; synthetic only."
     },
+    "python:deploy/qualification/q1/harness/test_fifo_launch.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "QLT-04 FIFO launch software fixtures: private queue/lock, fixture signature verification, admission rechecks, persistent-ledger refusal and owned process cleanup. Not collected by a CI lane; no live Q1 study, model or sealed payload executes."
+    },
     "python:deploy/qualification/q1/harness/test_q1.py": {
       "discovery": {
         "kind": "python-family"

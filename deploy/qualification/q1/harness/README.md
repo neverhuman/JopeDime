@@ -97,3 +97,66 @@ paired panel with corresponding starts. It averages seeds within datasets, then
 computes the median relative improvement and 10,000 paired bootstrap resamples,
 with the prespecified subgroup checks. Unknown/failed/missing results never become
 zero or an apparent Q1 pass. It writes a new report and refuses overwrites.
+
+## QLT-04 FIFO launch preparation
+
+Prepare a create-only intent descriptor without acquiring the shared lock,
+starting a waiter or reserving a live FIFO position:
+
+```sh
+python3 -B deploy/qualification/q1/harness/fifo_launch.py prepare \
+  --out "$Q1_INTENT" --owner sol_v1_obj02
+```
+
+The descriptor says `prepared_not_enqueued`, with `active_ticket=null`. Use a
+descriptive JSON filename, not the numeric PID ticket format. Preparation can
+record the current unsigned state; it grants no execution authority. W1 must
+release `qualification.lock` before Q1 can run, and all admission gates still
+apply after that release.
+
+Only after the production backend, actual authoritative cohort, model and M2/M3
+proofs are admitted and OWNER signs the final protocol/plan/backend, launch from
+a clean merged checkout at the plan's exact `source_commit`:
+
+```sh
+nice -n 10 python3 -B deploy/qualification/q1/harness/fifo_launch.py launch \
+  --plan "$Q1_PLAN" --backend "$Q1_BACKEND" \
+  --signature "$Q1_SIGNATURE" --allowed-signers "$Q1_ALLOWED_SIGNERS" \
+  --ledger "$Q1_LEDGER" --run-dir "$Q1_RUN_DIR" \
+  --wait-seconds "$Q1_WAIT_SECONDS" --wall-seconds "$Q1_WALL_SECONDS" \
+  --authorized-launch
+```
+
+The operator flag supplements the real OWNER signature. Before creating a live
+ticket, the wrapper verifies admission, frozen DOPE, executable backend hash,
+clean merged source and the canonical owner-signed persistent ledger. It refuses
+any existing started or finished marker for this bundle. It repeats admission
+and compares input hashes after taking the existing exclusive lock. The backend's
+scientific qualification and private input closure remain separate prerequisites;
+a signature check alone does not prove them.
+
+The launcher joins the existing numeric PID FIFO with a 45-second courtesy delay,
+then polls every 30 seconds. The finite wait cap is at most three hours. It reads
+other tickets without pruning them, never replaces the lock, and removes only its
+own ticket. The CPU-only child environment uses eight Rayon threads and one
+OpenMP/BLAS thread, with niceness 10; dispatch refuses host load above 85 and
+xbabe0. Admission is checked again before analysis. No GPU qualification occurs.
+
+Expected wall time is **unknown** until qualified backend timing exists. The
+current Q1 driver runs policies serially: `N` datasets produce `6*N` policy runs,
+`144*N` planned charged admissions and `3600*N` timeout-seconds. At the minimum
+40 families, that is 240 runs, 5,760 planned admissions and a **40-hour timeout-only
+bound**, not an ETA. Eight backend threads do not divide that bound by eight.
+The caller must choose a finite whole-job wall cap no larger than that arithmetic
+bound. It covers post-lock admission, run and analysis; queue wait is separate,
+and abort cleanup may add a five-second grace interval. A shorter wall cap may
+leave the candidate consumed with an unknown outcome; no retry is automatic.
+
+The driver inherits the lock descriptor. The wrapper retains the child leader
+until it signals the owned process group, including descendants, on completion,
+cancellation or timeout. It preserves original ledgers, logs and receipts and
+writes a create-only `launch-receipt.json`; failed or incomplete execution never
+becomes zero counts. A completed analysis can still say `FAIL`. This wrapper
+never changes the guidance default or promotes a model. The launcher tests use
+private queues, locks, fixture signing keys and benign child processes; they are
+software control proofs, not a Q1 study.
