@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
-ROOT = HERE.parents[3]
+ROOT = HERE.parents[2]
 SEEDS = (15, 16, 17)
 ARMS = ("sigma001", "sigma003")
 STRICT_MARGIN = 0.001
