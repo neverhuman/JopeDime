@@ -349,34 +349,58 @@ pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
             let mut current = *snapshot;
             let interrupts = RunInterrupts::install()?;
             if args.events.as_deref() == Some("ndjson") {
-                let mut events = transport.follow_events(
-                    current.run_id.clone(),
-                    parse_after(args.after_event.as_deref())?,
-                )?;
-                loop {
-                    if interrupts.requested() {
-                        // Drop the response reader before requesting committed control.
-                        drop(events);
-                        finish_interrupt(
-                            transport,
-                            &current,
-                            &interrupts,
-                            &mut std::io::stderr().lock(),
-                        )?;
-                        break;
-                    }
-                    let Some(event) = events.next() else { break };
-                    let event = match event {
-                        Ok(event) => event,
-                        Err(error) => {
-                            if interrupts.requested() {
-                                let _ =
-                                    write_run_id(&mut std::io::stderr().lock(), &current.run_id);
-                            }
-                            return Err(error.into());
+                let after = parse_after(args.after_event.as_deref())?;
+                // The original idempotent response may predate completion. SSE
+                // remains live, so use the committed watermark to avoid waiting
+                // forever when the caller has already consumed the final event.
+                current = transport.run_status(&current.run_id)?;
+                let drained = matches!(
+                    current.state,
+                    RunState::Completed | RunState::Cancelled | RunState::Failed
+                ) && after
+                    .is_some_and(|cursor| cursor.0 >= current.event_watermark.0);
+                if !drained {
+                    let mut events = transport.follow_events(current.run_id.clone(), after)?;
+                    loop {
+                        if interrupts.requested() {
+                            // Drop the response reader before requesting committed control.
+                            drop(events);
+                            finish_interrupt(
+                                transport,
+                                &current,
+                                &interrupts,
+                                &mut std::io::stderr().lock(),
+                            )?;
+                            break;
                         }
-                    };
-                    println!("{}", serde_json::to_string(&event_json(&event)?)?);
+                        let Some(event) = events.next() else { break };
+                        let event = match event {
+                            Ok(event) => event,
+                            Err(error) => {
+                                if interrupts.requested() {
+                                    let _ = write_run_id(
+                                        &mut std::io::stderr().lock(),
+                                        &current.run_id,
+                                    );
+                                }
+                                return Err(error.into());
+                            }
+                        };
+                        let finished = match &event {
+                            jope_client::StreamEvent::Durable(event) => match &event.event {
+                                jope_api::EventBody::RunFinished(_) => true,
+                                jope_api::EventBody::RunState(body) => {
+                                    matches!(body.state, RunState::Failed | RunState::Cancelled)
+                                }
+                                _ => false,
+                            },
+                            _ => false,
+                        };
+                        println!("{}", serde_json::to_string(&event_json(&event)?)?);
+                        if finished {
+                            break;
+                        }
+                    }
                 }
             }
             while !matches!(
