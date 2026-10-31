@@ -19,7 +19,7 @@ use jope_api::{
     error::ErrorCode,
     registry::{HttpMethod, OPERATIONS},
 };
-use std::{io, net::Ipv4Addr};
+use std::{io, net::Ipv4Addr, sync::Arc};
 use tokio::net::TcpListener;
 
 const OPENAPI_DOCUMENT: &[u8] = include_bytes!(concat!(
@@ -39,15 +39,29 @@ async fn get_openapi() -> Response {
 /// The same request boundary is used by a listener and by in-process clients.
 /// In-process clients configure their request authority without opening a socket.
 pub fn router(auth: LocalAuth) -> Router {
-    build_router(auth, false)
+    build_router(auth, false, None)
 }
 
 /// Engine-owned store/config state is passed by the live engine instance.
-pub(crate) fn router_with_state(auth: LocalAuth, state: DatasetState) -> Router {
-    build_router(auth, true).layer(Extension(state))
+pub(crate) fn router_with_state(
+    auth: LocalAuth,
+    state: DatasetState,
+    runs: Option<Arc<super::runs::RunService>>,
+) -> Router {
+    let app = build_router(auth, true, runs.as_ref().map(|s| Arc::clone(&s.journal)))
+        .layer(Extension(state));
+    if let Some(runs) = runs {
+        app.layer(Extension(runs))
+    } else {
+        app
+    }
 }
 
-fn build_router(auth: LocalAuth, dataset_enabled: bool) -> Router {
+fn build_router(
+    auth: LocalAuth,
+    dataset_enabled: bool,
+    journal: Option<Arc<crate::events::EventLog>>,
+) -> Router {
     let mut app = Router::new();
     for operation in OPERATIONS {
         let method = match operation.method {
@@ -63,6 +77,22 @@ fn build_router(auth: LocalAuth, dataset_enabled: bool) -> Router {
                     path,
                     axum::routing::post(super::datasets::register)
                         .layer(DefaultBodyLimit::disable()),
+                )
+            } else if let ("run_start", Some(_)) = (operation.name, journal.as_ref()) {
+                app.route(path, axum::routing::post(super::runs::start))
+            } else if let ("run_status", Some(log)) = (operation.name, journal.as_ref()) {
+                if path.ends_with("{id}") {
+                    app.route(
+                        path,
+                        get(super::sse::long_poll_status).with_state(Arc::clone(log)),
+                    )
+                } else {
+                    app.route(path, get(super::runs::list))
+                }
+            } else if let ("run_events", Some(log)) = (operation.name, journal.as_ref()) {
+                app.route(
+                    path,
+                    get(super::sse::deliver_events).with_state(Arc::clone(log)),
                 )
             } else {
                 app.route(
@@ -306,7 +336,10 @@ mod tests {
                 } else {
                     String::new()
                 };
-                let request = format!("GET /v1/system HTTP/1.1\r\nHost: localhost:{}\r\n{auth}Connection: close\r\n\r\n", address.port());
+                let request = format!(
+                    "GET /v1/system HTTP/1.1\r\nHost: localhost:{}\r\n{auth}Connection: close\r\n\r\n",
+                    address.port()
+                );
                 socket.write_all(request.as_bytes()).await.unwrap();
                 let mut response = Vec::new();
                 socket.read_to_end(&mut response).await.unwrap();

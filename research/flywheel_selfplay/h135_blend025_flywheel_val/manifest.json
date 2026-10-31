@@ -1,6 +1,6 @@
 {
   "wave": "H135",
-  "status": "PREREGISTERED_NOT_EXECUTED",
+  "status": "INCOMPLETE",
   "seed_reservation_status": "H133_RESERVATION_DISCLOSED_NO_PRIOR_135_EXECUTION_RECORDED",
   "seeds": [
     135,
@@ -15,11 +15,52 @@
   },
   "executor_sha256": {
     "science.py": "bba1dc69e228bac25e07cc1d0582eecfa6d9f15f1cfba53914201bd6fe0ad77e",
-    "test_science.py": "6c7aaf62000d7aae63a5f2960901d0e72de35d42caffe9136a846fe317a7b24e",
+    "test_science.py": "9a2cad5327370bdb9911467aa42a59d96ecf68b414a4edda80a0e9b40802ebe0",
     "monitor.py": "aa3adf40f20712b765042a3f218e4518b1a10948c5d56a46a3408fa8698fcad1",
-    "runner.py": "2d3a159378ba7b94c52650b2b66b1f55485ded38e7a48f6a6637fcef0139c8d2"
+    "runner.py": "aa73463c9866cf8e4ae50ebef64ebe78a06d25c29cdc95d399999462fc8c9ac9",
+    "constructor_preflight.py": "73f6105a8586e7f1101bf72587a2ce6e2c8ff4d1a1fe382ad4137f153c453d01"
   },
   "prereg_sha256": "8c852852f2d97459c1981593a5ba7641d5056783298e1d51218c36c40f0372a7",
-  "amendment": "A1 allocator background-thread suppression before first scientific attempt",
-  "amendment_sha256": "07898ed79df20244920d5f59ab0000aa74940042698ed6b65332f98874f708a4"
+  "amendment": "A2 baseline Torch1 and one prospective continuation after attempt1 incomplete",
+  "amendment_a1_sha256": "07898ed79df20244920d5f59ab0000aa74940042698ed6b65332f98874f708a4",
+  "amendment_sha256": "c55211c12c9c1a1bc0447a972ea218e7c4e5ca10c824e3a7975ae47733db7d8b",
+  "attempt1_custody": {
+    "manifest": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-t1505/manifest.json",
+      "version_id": "FOH8vg.wIYiXFVltILnQP2SuSZIgRpHB",
+      "sha256": "2e657bc0c4451613869f4518d660a184e63919897a98973fb3045b5d996cf1f9",
+      "bytes": 15232,
+      "verified_utc": "2026-10-31T21:38:02.418209+00:00"
+    },
+    "archive": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-t1505/numerical-evidence.npz",
+      "version_id": "4B3kBLJYqmn_ZT.8U1eWt18ZVAmFf32d",
+      "sha256": "0e26e3170ada50afced6a0e20c3ebf87c3c60086b4eb3463c9590575ca009b69",
+      "bytes": 38071,
+      "verified_utc": "2026-10-31T21:37:57.716843+00:00"
+    },
+    "archive_members_verified": 9
+  },
+  "attempt1_source_commit": "cd00c99cc4adb85d495b5c12906e4884fc989b62",
+  "scientific_verdict": "UNMEASURED",
+  "execution_started": true,
+  "execution_source_commit": "b6d4c6b232a741c2328535fd856b89e1871e6ad3",
+  "closeout_custody": {
+    "manifest": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/manifest.json",
+      "version_id": "unhuGh1cUZNOWybJazyaZQEC5.lYyZeh",
+      "sha256": "b0e17eee25e915855035f01fca3a44a761583d81b9c2e7746e5913f543928313",
+      "bytes": 19827,
+      "verified_utc": "2026-10-31T21:57:16.753329+00:00"
+    },
+    "archive": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz",
+      "version_id": "gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi",
+      "sha256": "38836aef288e4b1ccde5473f4b0f6db4a5af9e80bae94b7166ccd4a6e5e8b07b",
+      "bytes": 1011407,
+      "verified_utc": "2026-10-31T21:57:14.005847+00:00"
+    },
+    "archive_members_verified": 17
+  },
+  "continuation_attempt": 2
 }

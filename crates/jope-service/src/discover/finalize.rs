@@ -86,6 +86,9 @@ pub struct Finalizer {
     journal: Arc<EventLog>,
 }
 impl Finalizer {
+    pub(crate) fn with_journal(store: Arc<Store>, journal: Arc<EventLog>) -> Self {
+        Self { store, journal }
+    }
     pub fn new(store: Arc<Store>) -> Self {
         Self {
             journal: Arc::new(EventLog::new(Arc::clone(&store))),

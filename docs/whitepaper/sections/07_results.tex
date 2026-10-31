@@ -141,6 +141,14 @@ are planned for \cref{fig:price}.
   \label{fig:searchone}
 \end{figure}
 
+\subsection{What the map contributes}\label{sub:results-ablation}
+
+A representation study should test whether nearby problem encodings share
+useful programs, with data disjoint from fitting the map. Ranking agreement
+should also be compared with the program-only head, so a global preference
+for common programs is distinguishable from reading the problem.
+\TBD{Supply problem-similarity and program-only-control evaluations.}
+
 \begin{figure}[t]
   \centering
   \fbox{\parbox{0.88\linewidth}{\TBD{Pilot cost measurements: supply
@@ -153,14 +161,6 @@ are planned for \cref{fig:price}.
   settings with no verified win without assigning a finite cost per win.}}
   \label{fig:price}
 \end{figure}
-
-\subsection{What the map contributes}\label{sub:results-ablation}
-
-A representation study should test whether nearby problem encodings share
-useful programs, with data disjoint from fitting the map. Ranking agreement
-should also be compared with the program-only head, so a global preference
-for common programs is distinguishable from reading the problem.
-\TBD{Supply problem-similarity and program-only-control evaluations.}
 
 A ranking head can agree with a referee without improving the writer (\cref{tab:ablation}).
 In the checkpoint described in \cref{sub:method-map}, the map neither

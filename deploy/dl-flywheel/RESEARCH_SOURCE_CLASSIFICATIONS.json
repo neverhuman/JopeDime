@@ -3865,8 +3865,8 @@
       }
     },
     "python:research/flywheel_selfplay/h135_blend025_flywheel_val/runner.py": {
-      "bytes": 12749,
-      "sha256": "2d3a159378ba7b94c52650b2b66b1f55485ded38e7a48f6a6637fcef0139c8d2",
+      "bytes": 13105,
+      "sha256": "aa73463c9866cf8e4ae50ebef64ebe78a06d25c29cdc95d399999462fc8c9ac9",
       "classification": {
         "role": "research",
         "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
@@ -3875,6 +3875,14 @@
     "python:research/flywheel_selfplay/h135_blend025_flywheel_val/science.py": {
       "bytes": 6019,
       "sha256": "bba1dc69e228bac25e07cc1d0582eecfa6d9f15f1cfba53914201bd6fe0ad77e",
+      "classification": {
+        "role": "research",
+        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/constructor_preflight.py": {
+      "bytes": 5448,
+      "sha256": "73f6105a8586e7f1101bf72587a2ce6e2c8ff4d1a1fe382ad4137f153c453d01",
       "classification": {
         "role": "research",
         "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."

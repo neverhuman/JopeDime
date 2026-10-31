@@ -656,7 +656,8 @@
     "feature:jope-appliance/engine": {
       "discovery": {
         "dependencies": [
-          "dep:jope-service"
+          "dep:jope-service",
+          "jope-client?/engine"
         ],
         "kind": "feature"
       },
@@ -13786,7 +13787,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H135 data-free controls for native utility, ordered baseline sanity, context-weighted family bootstrap, seed identity, harm/trim and resource refusal. No real scoring or scientific qualification."
+      "scope": "H135 data-free native utility, sanity, bootstrap, seed/harm/trim/resource controls; native HistGB thread ceiling and scoped baseline setter restoration. Manual constructor preflight reads pretrained assets only, no datasets/r882/predictions; not a product qualification."
     }
   },
   "lanes": {
