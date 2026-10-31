@@ -3817,24 +3817,24 @@
       }
     },
     "python:research/flywheel_selfplay/h131_family_bag_soup/custody.py": {
-      "bytes": 2548,
-      "sha256": "46a56863fb3961c174d52f28000aa61814291761038d45bf7a265a914e062289",
+      "bytes": 2549,
+      "sha256": "1522d9019b0b4265511ab9cc2a56b1d3d35df6765ffa4aee81438ade3c729b6c",
       "classification": {
         "role": "research",
         "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
       }
     },
     "python:research/flywheel_selfplay/h131_family_bag_soup/monitor.py": {
-      "bytes": 4703,
-      "sha256": "61be2612e033444818de01c4d779395c7bf1a75c4825081aec66ea24482a3a5f",
+      "bytes": 6392,
+      "sha256": "80b7d5a7787e7d49488e9fdd39ab51730f01f2fa3c4e8549b78df9f936cf926b",
       "classification": {
         "role": "research",
         "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
       }
     },
     "python:research/flywheel_selfplay/h131_family_bag_soup/runner.py": {
-      "bytes": 21172,
-      "sha256": "0b54b5a5e7ea3e044f3a0308b09eae1d201d8dbec463d659e7e32828028c864a",
+      "bytes": 21676,
+      "sha256": "a3b0e5be9597b7680dd25e10675b8ef785ca75109041e0978a9cc5d9350e23f6",
       "classification": {
         "role": "research",
         "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."

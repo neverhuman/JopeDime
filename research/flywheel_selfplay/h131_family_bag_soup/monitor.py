@@ -13,6 +13,65 @@ import time
 import psutil
 
 
+THREAD_ENV = dict(
+    OMP_NUM_THREADS="1",
+    MKL_NUM_THREADS="1",
+    OPENBLAS_NUM_THREADS="1",
+    NUMEXPR_NUM_THREADS="1",
+    NUMEXPR_MAX_THREADS="1",
+    TOKENIZERS_PARALLELISM="false",
+)
+
+
+def configure_thread_environment():
+    # Called before importing numerical libraries, also inherited by child processes.
+    os.environ.update(THREAD_ENV)
+
+
+def total_threads():
+    for line in Path("/proc/self/status").read_text().splitlines():
+        if line.startswith("Threads:"):
+            return int(line.split()[1])
+    raise RuntimeError("Linux total-thread count unavailable")
+
+
+def single_thread_tokens(builder, net, tables, device):
+    # The pinned H46 builder otherwise explicitly requests four native threads.
+    factory = builder.base.FusedLandmarkWorkspace
+
+    def bounded_workspace(*args, **kwargs):
+        kwargs["num_threads"] = 1
+        return factory(*args, **kwargs)
+
+    builder.base.FusedLandmarkWorkspace = bounded_workspace
+    try:
+        return builder.make_tokens(net, tables, device)
+    finally:
+        builder.base.FusedLandmarkWorkspace = factory
+
+
+def token_thread_preflight(builder, net, tables, device):
+    before = total_threads()
+    if before > 4:
+        raise RuntimeError(f"thread preflight before tokens: {before}>4")
+    ids = sorted(tables)[:2]
+    if not ids:
+        raise RuntimeError("thread preflight requires fit contexts")
+    tiny = {key: tables[key] for key in ids}
+    single_thread_tokens(builder, net, tiny, device)
+    after = total_threads()
+    if after > 4:
+        raise RuntimeError(f"thread preflight after tokens: {after}>4")
+    return dict(
+        status="PASS",
+        contexts=ids,
+        before=before,
+        after=after,
+        total_thread_limit=4,
+        native_workspace_threads=1,
+    )
+
+
 def sample(proc=None):
     stat = os.statvfs("/")
     rss = cpu = threads = 0
@@ -82,13 +141,10 @@ def main():
         result.update(status="NOT_LAUNCHED_RESOURCE_REFUSAL", reason=bad)
         (root / "monitor.json").write_text(json.dumps(result, indent=2) + "\n")
         return 2
+    configure_thread_environment()
     env = dict(
         os.environ,
         CUDA_VISIBLE_DEVICES="",
-        OMP_NUM_THREADS="2",
-        OPENBLAS_NUM_THREADS="1",
-        MKL_NUM_THREADS="2",
-        NUMEXPR_NUM_THREADS="2",
         PYTHONDONTWRITEBYTECODE="1",
         H131_MONITORED="1",
     )
