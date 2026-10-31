@@ -39,7 +39,19 @@ fn replay(device: Device) {
         dope_sha,
         "0f5e98fa29cf9c45bfaac5a3cf001b13a0de37d7b6e154c582d7ec689b21a84d"
     );
+    let selected = match device.location() {
+        candle_core_0_11_0::DeviceLocation::Cpu => "cpu".to_owned(),
+        candle_core_0_11_0::DeviceLocation::Cuda { gpu_id } => format!("cuda:{gpu_id}"),
+        other => panic!("unsupported replay device: {other:?}"),
+    };
     let graph = FusedForward::from_bytes(&dope, &fixtures.weights(), device, 8).unwrap();
+    assert_eq!(
+        serde_json::to_value(graph.placement()).unwrap(),
+        serde_json::json!({
+            "dope": selected, "ranker": selected, "evaluation": "cpu", "workers": 8
+        }),
+        "placement must describe the instantiated neural device and CPU evaluation"
+    );
     let cpu_reference =
         CpuAdapter::from_bytes_on_device(&fixtures.weights(), &Device::Cpu).unwrap();
     let mut stages: BTreeMap<&str, Stats> = BTreeMap::new();

@@ -53,6 +53,140 @@ fn serve_requires_an_engine_in_client_only_builds() {
     );
 }
 
+#[test]
+fn cuda_without_a_backend_reports_refusal_and_cpu_output_placement() {
+    let dir = tempfile::tempdir().unwrap();
+    let d = dir.path();
+    let exe = package(d, &["ridge"]);
+    train_csv(d);
+    let original = std::fs::read(d.join("train.csv")).unwrap();
+    for json in [false, true] {
+        let mut args = vec![
+            "fit",
+            "--train",
+            "train.csv",
+            "--target",
+            "y",
+            "--method",
+            "ridge",
+            "--output",
+            "refused.jope",
+            "--device",
+            "cuda:0",
+            "--threads",
+            "1",
+            "--receipt",
+            "refusal.json",
+        ];
+        if json {
+            args.push("--json");
+        }
+        let output = Command::new(&exe)
+            .args(args)
+            .current_dir(d)
+            .env_clear()
+            .env("CUDA_VISIBLE_DEVICES", "")
+            .output()
+            .unwrap();
+        assert_eq!(code(&output), 4, "{output:?}");
+        let receipt: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(d.join("refusal.json")).unwrap()).unwrap();
+        assert_eq!(run_receipt_errors(&receipt), Vec::<String>::new());
+        assert_eq!(receipt["outcome"], "failed");
+        assert_eq!(receipt["error"]["kind"], "backend");
+        assert_eq!(receipt["error"]["exit_code"], 4);
+        assert!(receipt["error"]["message"]
+            .as_str()
+            .unwrap()
+            .starts_with("BACKEND_UNAVAILABLE:"));
+        assert_eq!(
+            receipt["error"]["message"]
+                .as_str()
+                .unwrap()
+                .matches("BACKEND_UNAVAILABLE:")
+                .count(),
+            1,
+            "the specific device error code must be emitted exactly once"
+        );
+        assert_eq!(receipt["device"]["requested"], "cuda:0");
+        assert_eq!(receipt["device"]["selected"], "none");
+        assert_eq!(receipt["task"], serde_json::Value::Null);
+        assert_eq!(receipt["method"], serde_json::Value::Null);
+        assert_eq!(receipt["inputs"], serde_json::json!([]));
+        assert_eq!(receipt["outputs"], serde_json::json!([]));
+        assert_eq!(receipt["selection"], serde_json::Value::Null);
+        assert_eq!(receipt["timings"]["fit_seconds"], 0.0);
+        assert!(!d.join("refused.jope").exists());
+        assert_eq!(std::fs::read(d.join("train.csv")).unwrap(), original);
+        println!(
+            "RNK12_CLI_REFUSAL {}",
+            serde_json::json!({
+                "json": json, "exit": 4, "device": receipt["device"],
+                "error": receipt["error"], "inputs": receipt["inputs"],
+                "outputs": receipt["outputs"], "fit_seconds": receipt["timings"]["fit_seconds"]
+            })
+        );
+        if json {
+            assert_eq!(
+                serde_json::from_slice::<serde_json::Value>(&output.stdout).unwrap(),
+                receipt
+            );
+        } else {
+            assert_eq!(
+                String::from_utf8_lossy(&output.stderr)
+                    .matches("BACKEND_UNAVAILABLE:")
+                    .count(),
+                1
+            );
+            assert!(output.stdout.is_empty());
+        }
+    }
+    // Execute the authorized native path as well; CPU is selected before fitting.
+    for device in ["cpu", "auto"] {
+        let model = format!("{device}.jope");
+        let output = Command::new(&exe)
+            .args([
+                "fit",
+                "--train",
+                "train.csv",
+                "--target",
+                "y",
+                "--method",
+                "ridge",
+                "--folds",
+                "2",
+                "--output",
+                &model,
+                "--device",
+                device,
+                "--threads",
+                "1",
+                "--json",
+            ])
+            .current_dir(d)
+            .env_clear()
+            .env("CUDA_VISIBLE_DEVICES", "")
+            .output()
+            .unwrap();
+        assert_eq!(code(&output), 0, "{output:?}");
+        let receipt: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(run_receipt_errors(&receipt), Vec::<String>::new());
+        assert_eq!(receipt["outcome"], "succeeded");
+        assert_eq!(receipt["device"]["requested"], device);
+        assert_eq!(receipt["device"]["selected"], "cpu");
+        assert_eq!(receipt["budget"]["threads"], 1);
+        assert_eq!(receipt["method"]["selected"], "rust.ridge");
+        assert!(d.join(model).is_file());
+        println!(
+            "RNK12_CLI_CPU_PLACEMENT {}",
+            serde_json::json!({
+                "outcome": receipt["outcome"], "device": receipt["device"],
+                "threads": receipt["budget"]["threads"], "method": receipt["method"]["selected"]
+            })
+        );
+    }
+}
+
 fn package(dir: &Path, methods: &[&str]) -> PathBuf {
     let code = std::fs::read(BIN).unwrap();
     let notice = EntryInput {
@@ -1964,6 +2098,13 @@ fn platt_calibrated_objects_predict_whole_through_the_cli_and_model_tool() {
             code(&refused),
             0,
             "{format}: fitted export must not drop the calibration"
+        );
+        assert_eq!(code(&refused), 4);
+        let message = String::from_utf8_lossy(&refused.stderr);
+        assert!(message.contains("standalone fitted export would drop Platt calibration"));
+        assert!(
+            !message.contains("BACKEND_UNAVAILABLE"),
+            "a calibration-preservation refusal is not unavailable device selection"
         );
         assert!(!dir.path().join(format!("{format}.jope")).exists());
     }
