@@ -392,5 +392,4 @@ mod tests {
 }
 
 #[cfg(test)]
-#[path = "../../tests/support/cpu_parity.rs"]
-mod real_cpu_parity;
+use super::adapter::real_cpu_parity;

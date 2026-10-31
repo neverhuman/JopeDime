@@ -1537,4 +1537,4 @@ mod tests {
 
 #[cfg(test)]
 #[path = "../../tests/support/cpu_parity.rs"]
-mod real_cpu_parity;
+pub(super) mod real_cpu_parity;
