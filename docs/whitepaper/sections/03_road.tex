@@ -49,12 +49,15 @@ protein structures that rival experiment in most CASP14 cases
 \citep{merchant2023gnome}, and
 halicin, an antibiotic that then treated infections in mice
 \citep{stokes2020halicin}. CLIP put images and captions in one shared space
-\citep{radford2021clip}, the template for our problem--program map
+\citep{radford2021clip}, an analogy for our problem--program ranking map
 (\cref{sec:method}).
+The reference map ranks scored programs within each problem; it does not
+condition or screen the writer. Ranking accuracy and proposal quality
+therefore need separate tests.
 
 \smallskip
 \noindent\textbf{What \EZ{} takes:} representations that read a problem,
-models that write code, and one space for two kinds of object.\\
+models that write code, and a separate ranking map.\\
 \textbf{The question carried forward:} how to train a code proposer directly
 on verified algorithm quality, and test transfer beyond its training tasks.
 
@@ -282,9 +285,9 @@ Their prediction or network-generation interfaces differ from the proposed
 readable-program output of \EZ{}, but a common candidate budget alone
 would not make their computation or task assumptions equivalent. Absolute Zero and
 STP learn by self-play, with correctness as feedback. Our proposed
-comparison standard is improvement against a declared incumbent, which is
-why the game needs an opponent
-(\cref{sec:game}). Next come the board, move, referee and incumbent.
+comparison measures improvement against a declared incumbent. That standard
+supplies the opponent; the next section specifies the board, program,
+referee and promotion rules needed to judge a move (\cref{sec:game}).
 
 \begin{keyidea}
 The test is whether experience on earlier discovery tasks improves the first

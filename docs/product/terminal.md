@@ -15,7 +15,9 @@ The command exits with status 0 when it reads the engine state. In this example 
 
 The current CLI exposes `run`, `status`, and `events`. The captured help shows that `run` requires `--dataset`, `--target`, `--task`, `--split`, `--objective`, `--effort`, `--budget`, `--landmarks`, `--guidance`, `--device`, and `--seed`. `status` and `events` take a run identifier.
 
-**TODO(SVC-05-F01):** execute and document the end-to-end dataset add, run, status, and events workflow once the service implements `dataset_register`.
+The HTTP service currently implements only `system_info`; run planning, starting, status, control, events, and algorithm lookup return `CAPABILITY_UNAVAILABLE`. The CLI command names therefore describe available syntax, not a working engine workflow in this build.
+
+**TODO(SVC-05-F01):** execute and document the end-to-end dataset add, run, status, and events workflow after the dataset and run handlers are available.
 
 ## Exit statuses
 

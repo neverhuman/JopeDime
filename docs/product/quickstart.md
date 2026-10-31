@@ -40,3 +40,5 @@ This was run with a fresh, isolated `JOPEDIME_HOME`. It reports the engine state
 `jopedime run` requires a dataset identifier and a complete run configuration. A complete example depends on registering or otherwise provisioning a dataset in the engine.
 
 **TODO(SVC-05-F01):** document and execute dataset registration, then add a complete run example with a real, permitted catalog dataset and its resulting run ID.
+
+The current HTTP router serves `GET /v1/system` and returns an empty capability matrix. The other registered API operations, including run planning and lifecycle routes, return `CAPABILITY_UNAVAILABLE` until their handlers are connected. See [Local API and run commands](api.md) for the route inventory and the current dataset-registration stub.

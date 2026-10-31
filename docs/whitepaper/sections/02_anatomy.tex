@@ -77,7 +77,8 @@ Skill in invention is judgment that arrives before the try. For Poincaré, creat
 
 Chess masters show the same economy: in de Groot's think-aloud studies they considered about as many moves as weaker players but found the right ones \citep{degroot1965thought}. Chase and Simon studied chunks through perception and recall tasks \citep{chase1973perception}. Much of that knowledge is tacit; experts know more than they can say \citep{polanyi1966tacit}.
 
-That judgment, learned in advance, is taste. AlphaGo's policy network is taste made explicit: a network that selects which moves are worth playing, trained first on human expert games and then refined by self-play \citep{silver2016mastering}. Its first teacher was history.
+AlphaGo's policy network learned to select moves from human expert games,
+then refined that judgment through self-play \citep{silver2016mastering}.
 
 Taste has a price we can state. Suppose each try beats the incumbent with a fixed, nonzero probability
 $\winprob$, independently of the others. The number of tries up to and including the first win is then geometric, with mean
@@ -156,5 +157,5 @@ people still set the aim.}
   \end{tabular}
 \end{table}
 
-The next section traces these parts through AI research, asking how earlier
-systems connected evaluation to the ability to propose new solutions.
+The four pillars describe the roles; the next section traces the methods
+that connect them.

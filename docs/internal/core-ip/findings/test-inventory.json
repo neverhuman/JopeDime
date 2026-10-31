@@ -433,6 +433,10 @@
       "reason": "Synthetic W3 loss/gradient and zero-update prior contracts; real outcome provenance and full trainer remain unqualified.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h101_w6_proposer_transfer_prep/test_w6_transfer_prep.py": {
+      "reason": "Owner-requested pytest proofs for H101 W6 proposer transfer preparation and fail-closed completeness gates; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h111_w7_common_support/test_matching.py": {
       "reason": "Owner-requested W7 common-support matcher synthetic controls; no measured outcomes, provenance authentication or execution admission.",
       "role": "research"
@@ -5093,6 +5097,10 @@
     },
     "python:research/flywheel_selfplay/h112_w4_active_reveal_scorer/test_run_h112.py": {
       "reason": "Owner-requested pytest proofs for the H112 W4 two-plus-two re-test with the proposal-distribution scorer prior (CPU preparation); offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h115_w6_xfamily/test_run_h114.py": {
+      "reason": "Owner-requested pytest proofs for the H115 (renumbered from H114) W6 cross-family outcome-transfer CPU preparation; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     }
   },
