@@ -99,6 +99,15 @@ fn cuda_without_a_backend_reports_refusal_and_cpu_output_placement() {
             .as_str()
             .unwrap()
             .starts_with("BACKEND_UNAVAILABLE:"));
+        assert_eq!(
+            receipt["error"]["message"]
+                .as_str()
+                .unwrap()
+                .matches("BACKEND_UNAVAILABLE:")
+                .count(),
+            1,
+            "the specific device error code must be emitted exactly once"
+        );
         assert_eq!(receipt["device"]["requested"], "cuda:0");
         assert_eq!(receipt["device"]["selected"], "none");
         assert_eq!(receipt["task"], serde_json::Value::Null);
@@ -123,7 +132,12 @@ fn cuda_without_a_backend_reports_refusal_and_cpu_output_placement() {
                 receipt
             );
         } else {
-            assert!(String::from_utf8_lossy(&output.stderr).contains("BACKEND_UNAVAILABLE:"));
+            assert_eq!(
+                String::from_utf8_lossy(&output.stderr)
+                    .matches("BACKEND_UNAVAILABLE:")
+                    .count(),
+                1
+            );
             assert!(output.stdout.is_empty());
         }
     }
@@ -2084,6 +2098,13 @@ fn platt_calibrated_objects_predict_whole_through_the_cli_and_model_tool() {
             code(&refused),
             0,
             "{format}: fitted export must not drop the calibration"
+        );
+        assert_eq!(code(&refused), 4);
+        let message = String::from_utf8_lossy(&refused.stderr);
+        assert!(message.contains("standalone fitted export would drop Platt calibration"));
+        assert!(
+            !message.contains("BACKEND_UNAVAILABLE"),
+            "a calibration-preservation refusal is not unavailable device selection"
         );
         assert!(!dir.path().join(format!("{format}.jope")).exists());
     }

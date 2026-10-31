@@ -180,3 +180,53 @@ of those channels. Environment selection does not sandbox filesystem access:
 the server retains the caller's normal file permissions, including the selected
 home/configuration paths. These controls limit ambient propagation and do not
 establish client provenance or qualify A5.
+
+## Bounded system/dataset prefix probe
+
+`probe_prefix.py` is a deterministic protocol test client for preparation while the
+run lifecycle is unavailable. It reuses the unchanged recorder above and identifies
+itself as `jope-prefix-probe`, not Claude Code, Gemini CLI or Codex CLI. It launches
+no named client or LLM. Its only tool calls are `system_info`, `dataset_inspect`
+(list/profile), and `dataset_register` with an identical-key registration retry.
+Initialization is protocol lifecycle traffic. The send path rejects every other
+method/tool before writing; it never invokes `run_*`, `model_*` or control tools.
+
+Use a source-bound CPU executable and an approved, hash-pinned training-only CSV.
+Both source SHAs below are full 40-character values: the executing harness commit
+and the actual executable's build source. Keep a scoped compatibility comparison
+when these differ; a passing prefix is not proof that the executable was built at
+the harness commit. Binary/input digests are lowercase SHA256 values.
+
+```sh
+nice -n 10 python3 -B deploy/qualification/agents/transcripts/run-prep/probe_prefix.py \
+  --binary "$CPU_BINARY" --binary-sha256 "$BINARY_SHA256" \
+  --binary-source-sha "$BUILD_SOURCE_SHA" --harness-source-sha "$HARNESS_SHA" \
+  --csv "$APPROVED_TRAIN_CSV" --csv-sha256 "$TRAIN_SHA256" \
+  --out-dir "$PRIVATE_CUSTODY/FRESH-prefix" --seconds 45
+python3 -B deploy/qualification/agents/transcripts/run-prep/probe_prefix.py --self-test
+```
+
+The output must be new, outside Git and `/tmp`. Input is limited to 1 MiB. The
+probe uses private HOME/XDG/engine storage, a cleared explicit child environment,
+one-thread settings and an empty CUDA mask. It reserves at most two allowed CPUs
+under the host's 85% ceiling; no existing engine/store is reused. It terminates
+only its own fresh process groups, reserving each leader PID through cleanup.
+MCP capture is limited to 1 MiB and the supplied monotonic deadline (at most 120s);
+owned-process cleanup has additional bounded grace periods. Engine diagnostics
+retain at most 64 KiB and explicitly report truncation. Retain underlying build
+receipts and input custody separately; source/digest fields are caller-supplied
+pins checked against executable/input bytes, not build attestations.
+
+`capture/` contains the real recorder's raw/wire bytes, stderr and receipt.
+`prefix.json` records actual per-step replies, source/digest identities, exits,
+transport completeness and semantic success separately. Exit 0 requires all six
+prefix steps plus the repeated dataset ID; exit 2 retains partial/refused tool
+outcomes, and 125 reports a preflight/start failure. Listing errors do not prevent
+independent registration probes. Profile inspection is `not_run` if registration
+returned no successful ID; no ID is invented. A same-ID registration retry does
+not prove persisted uniqueness or successful run-start idempotency.
+
+Every result reports zero named-client runs and `a5_status: NOT_QUALIFIED`.
+Synthetic embedded controls are client/cleanup tests only. Full AG1, actual pinned
+named clients, run retries/inventory, export/prediction and A5 remain outstanding.
+The private fixture/store/raw transcripts are never committed by this probe.

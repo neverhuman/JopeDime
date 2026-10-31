@@ -352,7 +352,14 @@ impl Run {
                 reason: "Dope initialization pending; native fitting uses CPU".into(),
             }
         } else {
-            backend::select(request)?
+            // Only device selection establishes that a backend is unavailable.
+            // Preserve all other backend failures' own messages in finish().
+            backend::select(request).map_err(|error| {
+                Failure::backend(format!(
+                    "{}: {error:#}",
+                    jope_api::error::ErrorCode::BackendUnavailable
+                ))
+            })?
         };
         let budget = self.budget()?;
         self.receipt.budget = budget.record();
@@ -623,14 +630,7 @@ impl Run {
                 self.receipt.error = Some(ErrorRecord {
                     kind,
                     exit_code: kind.exit_code(),
-                    message: if kind == FailureKind::Backend {
-                        format!(
-                            "{}: {error:#}",
-                            jope_api::error::ErrorCode::BackendUnavailable
-                        )
-                    } else {
-                        format!("{error:#}")
-                    },
+                    message: format!("{error:#}"),
                 });
                 kind.exit_code()
             }

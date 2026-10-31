@@ -73,6 +73,25 @@ class Contracts(unittest.TestCase):
                 ),
                 b"{}",
             )
+            # Accounting uses logical bytes, including its own index, rather than
+            # compressed inputs or deduplicated physical content.
+            for size in (1, 50_000_001):
+                index, encoded = generate.custody_index(
+                    {"metadata.json": dict(sha256="0" * 64, bytes=size)}, {}
+                )
+                self.assertEqual(index["total_bytes"], size + len(encoded))
+                self.assertEqual(
+                    index["hash_custody_required"], index["total_bytes"] > 50_000_000
+                )
+            store = root / "store"
+            spec = generate.custody_blob(store, b"row-free metadata")
+            self.assertEqual(
+                (store / spec["sha256"]).read_bytes(), b"row-free metadata"
+            )
+            (store / spec["sha256"]).chmod(0o600)
+            (store / spec["sha256"]).write_bytes(b"changed")
+            with self.assertRaisesRegex(ValueError, "existing custody object differs"):
+                generate.custody_blob(store, b"row-free metadata")
 
     def test_lease_excludes_another_process_and_releases_without_touching_the_real_lock(
         self,
@@ -169,6 +188,29 @@ class RealBundle(unittest.TestCase):
         self.assertFalse(torch.cuda.is_initialized())
         # Constructor/alias wiring cannot modify even the in-memory frozen state.
         generate.exporter().validate_state(self.reference.state)
+        catalog = os.environ.get("JOPE_RES07_HISTORICAL_CATALOG_SHA256")
+        if catalog:
+            store = Path(os.environ["JOPE_RES07_CUSTODY_STORE"])
+            with tempfile.TemporaryDirectory() as temp:
+                output = Path(temp) / "fetched"
+                index = generate.materialize_custody(store, catalog, output)
+                self.assertEqual(index["contexts"], 50)
+                self.assertEqual(index["historical_program_rows"], 57600)
+                self.assertGreater(index["total_bytes"], 50_000_000)
+                self.assertTrue(index["hash_custody_required"])
+                self.assertFalse(index["historical_corpus_complete"])
+                self.assertFalse(index["features_regenerated_from_dsl"])
+                self.assertEqual(
+                    sum(p.stat().st_size for p in output.rglob("*") if p.is_file()),
+                    index["total_bytes"],
+                )
+                for name, spec in index["files"].items():
+                    self.assertEqual(
+                        generate.sha((output / name).read_bytes()), spec["sha256"]
+                    )
+                print(
+                    f"RES07_HASH_CUSTODY_FETCH files={index['file_count']} bytes={index['total_bytes']} rows={index['historical_program_rows']}"
+                )
 
     def test_model_prior_population_is_preserved_and_cannot_be_relabelled_as_proposer(
         self,

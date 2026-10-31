@@ -402,6 +402,7 @@ mod tests {
         );
         assert_eq!(jope_runtime::error::kind_of(&error).exit_code(), 4);
         assert!(error.to_string().starts_with("BACKEND_UNAVAILABLE:"));
+        assert_eq!(error.to_string().matches("BACKEND_UNAVAILABLE:").count(), 1);
         assert!(error.to_string().contains("cuda:0"));
     }
 
