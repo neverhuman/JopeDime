@@ -5,9 +5,12 @@ from __future__ import annotations
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor
+import ctypes
+import gc
 from collections import defaultdict
 import hashlib
 import importlib.util
+import io
 import itertools
 import json
 import math
@@ -19,8 +22,10 @@ import shutil
 import struct
 import subprocess
 import sys
+import threading
 import time
 import types
+import zipfile
 
 import numpy as np
 
@@ -72,6 +77,10 @@ FILES = {
     ): "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
 }
 MODEL = dict(max_iter=300, learning_rate=0.08, max_leaf_nodes=63, l2_regularization=1.0)
+# Amendment 1 (operational, PREREG.md): worker RSS ceiling, enforced continuously, and a train-row-only cache read.
+RSS_LIMIT_KIB = 6 * 1024 * 1024
+WATCH_SECONDS = 0.25
+CONTEXT_MEMBERS = ("tokens_10x32", "mask_10", "lm48_z", "dope629")
 
 
 def sha(path):
@@ -183,13 +192,201 @@ def headroom(root):
     }
     if mem["MemAvailable"] < 16 * 1024**2:
         raise RuntimeError("MemAvailable below16GiB")
-    rss_kib = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    if rss_kib >= 6 * 1024 * 1024:
-        raise RuntimeError(f"worker RSS limit reached: {rss_kib} KiB")
+    check_rss()
     if sum(p.stat().st_size for p in root.rglob("*") if p.is_file()) >= 2_000_000_000:
         raise RuntimeError("own scratch reached2GB")
     if shutil.disk_usage(root).free < 2_000_000_000:
         raise RuntimeError("insufficient disk headroom")
+
+
+def current_rss_kib():
+    for line in Path("/proc/self/status").read_text().splitlines():
+        if line.startswith("VmRSS:"):
+            return int(line.split()[1])
+    raise RuntimeError("VmRSS unavailable")
+
+
+def check_rss():
+    """Fail closed when the peak (ru_maxrss) or current RSS reaches the ceiling."""
+    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    now = current_rss_kib()
+    if max(peak, now) >= RSS_LIMIT_KIB:
+        raise RuntimeError(
+            f"worker RSS limit reached: peak {peak} KiB, current {now} KiB"
+        )
+    return peak
+
+
+def release_memory():
+    gc.collect()
+    try:
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except OSError:
+        pass
+
+
+class RssWatchdog:
+    """Samples current and peak RSS every WATCH_SECONDS; on a breach it writes a receipt and exits the worker."""
+
+    def __init__(self, root):
+        self.root, self.peak_seen, self.samples = Path(root), 0, 0
+        self.stop = threading.Event()
+        self.thread = threading.Thread(target=self._run, daemon=True)
+
+    def _run(self):
+        while not self.stop.wait(WATCH_SECONDS):
+            peak = max(
+                resource.getrusage(resource.RUSAGE_SELF).ru_maxrss, current_rss_kib()
+            )
+            self.peak_seen, self.samples = max(self.peak_seen, peak), self.samples + 1
+            if peak >= RSS_LIMIT_KIB:
+                write(
+                    self.root / "rss-abort.json",
+                    {
+                        "peak_kib": peak,
+                        "limit_kib": RSS_LIMIT_KIB,
+                        "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    },
+                )
+                print("ABORT worker RSS", peak, flush=True)
+                os._exit(86)
+
+    def __enter__(self):
+        self.thread.start()
+        return self
+
+    def __exit__(self, *exc):
+        self.stop.set()
+        self.thread.join()
+
+    def receipt(self):
+        return {
+            "limit_kib": RSS_LIMIT_KIB,
+            "sample_seconds": WATCH_SECONDS,
+            "samples": self.samples,
+            "peak_seen_kib": self.peak_seen,
+        }
+
+
+class StoredRows:
+    """Byte-range reader for one stored (uncompressed) member of a pinned .npz.
+
+    Only the requested rows are copied into the process, so rows of other splits are never decoded."""
+
+    def __init__(self, path, member):
+        with zipfile.ZipFile(path) as archive:
+            info = archive.getinfo(member + ".npy")
+        if info.compress_type != zipfile.ZIP_STORED:
+            raise RuntimeError(
+                f"{member} is compressed; row-range reads need a stored member"
+            )
+        self.member, self.ranges = member, []
+        with open(path, "rb") as f:
+            f.seek(info.header_offset)
+            local = f.read(30)
+            if local[:4] != b"PK\x03\x04":
+                raise RuntimeError("bad zip local header")
+            name_length, extra_length = struct.unpack_from("<HH", local, 26)
+            start = info.header_offset + 30 + name_length + extra_length
+            f.seek(start)
+            version = np.lib.format.read_magic(f)
+            reader = {
+                (1, 0): np.lib.format.read_array_header_1_0,
+                (2, 0): np.lib.format.read_array_header_2_0,
+            }
+            shape, fortran, dtype = reader[version](f)
+            self.data = f.tell()
+        if fortran or dtype.hasobject or not shape:
+            raise RuntimeError(f"{member}: unsupported array layout")
+        self.path, self.shape, self.dtype = Path(path), tuple(shape), dtype
+        self.row_bytes = int(np.prod(self.shape[1:], dtype=np.int64)) * dtype.itemsize
+        if info.file_size != self.data - start + self.shape[0] * self.row_bytes:
+            raise RuntimeError(f"{member}: size does not match its header")
+        self.header_bytes = self.data - start
+
+    def rows(self, lo, hi):
+        if not 0 <= lo <= hi <= self.shape[0]:
+            raise IndexError("row range outside the member")
+        size = (hi - lo) * self.row_bytes
+        with open(self.path, "rb") as f:
+            f.seek(self.data + lo * self.row_bytes)
+            raw = f.read(size)
+        if len(raw) != size:
+            raise RuntimeError("short read")
+        self.ranges.append((int(lo), int(hi)))
+        return (
+            np.frombuffer(raw, self.dtype).reshape((hi - lo,) + self.shape[1:]).copy()
+        )
+
+    def receipt(self, forbidden):
+        """Bytes read and a proof that no read range overlaps a forbidden row range."""
+        overlap = sum(
+            1 for lo, hi in self.ranges for a, b in forbidden if lo < b and a < hi
+        )
+        return {
+            "member": self.member,
+            "rows_read": sum(hi - lo for lo, hi in self.ranges),
+            "rows_total": self.shape[0],
+            "bytes_read": self.header_bytes
+            + self.row_bytes * sum(hi - lo for lo, hi in self.ranges),
+            "forbidden_ranges": len(forbidden),
+            "overlapping_reads": overlap,
+        }
+
+
+def cache_ids(path):
+    """Identity-only: the context-id column of a pinned cache (no feature payload)."""
+    with np.load(path, allow_pickle=False) as z:
+        return [str(x) for x in z["cids"]]
+
+
+def train_context(rows, dev_rows):
+    """Train-row-only features from the mixed H58 cache (Amendment 1); DL-Val rows are never decoded."""
+    cids = cache_ids(CACHE / "context_features.npz")
+    if set(cids) != {r["context_sha256"] for r in rows + dev_rows} or len(cids) != len(
+        set(cids)
+    ):
+        raise RuntimeError("cache closure differs")
+    position = {cid: i for i, cid in enumerate(cids)}
+    readers = {
+        k: StoredRows(CACHE / "context_features.npz", k) for k in CONTEXT_MEMBERS
+    }
+    context = {}
+    for row in rows:
+        i = position[row["context_sha256"]]
+        context[row["context_sha256"]] = {
+            k: reader.rows(i, i + 1)[0] for k, reader in readers.items()
+        }
+    forbidden = [
+        (position[r["context_sha256"]], position[r["context_sha256"]] + 1)
+        for r in dev_rows
+    ]
+    return context, {k: reader.receipt(forbidden) for k, reader in readers.items()}
+
+
+def train_projection(rows, dev_rows):
+    """Per-train-context proj16 spans in the mixed H58 pool-prior cache (Amendment 1).
+
+    Only train rows' offsets are read. Each span must equal its pool length and the spans must be pairwise
+    disjoint, so the proj16 rows later read are exactly the train pools' rows."""
+    cids = cache_ids(CACHE / "pool_priors.npz")
+    if set(cids) != {r["context_sha256"] for r in rows + dev_rows} or len(cids) != len(
+        set(cids)
+    ):
+        raise RuntimeError("pool-prior closure differs")
+    position = {cid: i for i, cid in enumerate(cids)}
+    offsets = StoredRows(CACHE / "pool_priors.npz", "offsets")
+    spans = {}
+    for row in rows:
+        i = position[row["context_sha256"]]
+        lo, hi = (int(v) for v in offsets.rows(i, i + 2))
+        spans[row["context_sha256"]] = (lo, hi)
+    ordered = sorted(spans.values())
+    if any(a[1] > b[0] for a, b in zip(ordered, ordered[1:])) or any(
+        lo >= hi for lo, hi in ordered
+    ):
+        raise RuntimeError("train proj16 spans overlap or are empty")
+    return StoredRows(CACHE / "pool_priors.npz", "proj16"), spans, offsets
 
 
 def load_data(root):
@@ -221,15 +418,7 @@ def load_data(root):
         raise RuntimeError("H124 only admits real DL-Train rows")
     if {x["family_id"] for x in rows} & {x["family_id"] for x in selected["dev"]}:
         raise RuntimeError("train/secondary family alias")
-    with np.load(CACHE / "context_features.npz", allow_pickle=False) as z:
-        cids = [str(x) for x in z["cids"]]
-        arrays = {k: z[k] for k in ["tokens_10x32", "mask_10", "lm48_z", "dope629"]}
-        context = {
-            cid: {k: array[i] for k, array in arrays.items()}
-            for i, cid in enumerate(cids)
-        }
-    if set(cids) != {r["context_sha256"] for r in rows + selected["dev"]}:
-        raise RuntimeError("cache closure differs")
+    context, context_reads = train_context(rows, selected["dev"])
     # Primary phase loads only DL-Train payloads; DL-Val stays unopened until sealed.
     pools = load_pools(rows)
     rng = np.random.default_rng(SAMPLE_SEED)
@@ -253,7 +442,20 @@ def load_data(root):
             "sampling_seed": SAMPLE_SEED,
         },
     )
-    return selected, context, pools, samples, mapping
+    return selected, context, pools, samples, mapping, context_reads
+
+
+def program(pools, cid):
+    """Lazy float32 program matrix of one pool (Amendment 1: pools are not all held in memory)."""
+    p = pools[cid]
+    raw = p["path"].read_bytes()
+    if hashlib.sha256(raw).hexdigest() != p["pool_sha256"]:
+        raise RuntimeError("pool identity mismatch")
+    with np.load(io.BytesIO(raw), allow_pickle=False) as z:
+        out = z["program"].astype(np.float32)
+    if out.shape != (len(p["u"]), 412):
+        raise RuntimeError("program shape mismatch")
+    return out
 
 
 def load_pools(rows):
@@ -280,7 +482,8 @@ def load_pools(rows):
         with np.load(path, allow_pickle=False) as z:
             fit, gate = z["fitness"].astype(np.float64), z["gate"].astype(bool)
             pools[cid] = {
-                "program": z["program"].astype(np.float32),
+                "path": path,
+                "pool_sha256": row["pool_sha256"],
                 "fitness": fit,
                 "gate": gate,
                 "u": np.where(gate, -fit, -2.0),
@@ -312,23 +515,26 @@ def fit_one(task, root, rows, context, pools, samples, mapping):
         for r in rows
         if mapping[r["context_sha256"]] == k
     ]
-    parts, targets = [], []
-    for row in fit_rows:
+    # Amendment 1: one float64 design matrix filled in place. scikit-learn converts float32 input to float64
+    # before fitting, so the values it sees are bit-identical to the original float32 concatenation.
+    x = np.empty((len(fit_rows) * 192, 1089), dtype=np.float64)
+    targets = []
+    for i, row in enumerate(fit_rows):
         cid = row["context_sha256"]
         p, index = pools[cid], samples[cid]
         cf = np.concatenate([context[cid]["lm48_z"], context[cid]["dope629"]]).astype(
             np.float32
         )
-        parts.append(
-            np.concatenate(
-                [p["program"][index], np.repeat(cf[None], 192, axis=0)], axis=1
-            )
-        )
+        x[i * 192 : (i + 1) * 192, :412] = program(pools, cid)[index]
+        x[i * 192 : (i + 1) * 192, 412:] = cf
         targets.append((p["u"][index] - p["u"].mean()).astype(np.float32))
-    x, y = np.concatenate(parts), np.concatenate(targets)
-    del parts, targets
+    y = np.concatenate(targets)
+    del targets
+    check_rss()
     model = HistGradientBoostingRegressor(**MODEL, random_state=seed).fit(x, y)
     del x, y
+    release_memory()
+    check_rss()
     predictions = {}
     target_rows = [r for r in rows if mapping[r["context_sha256"]] in excluded]
     for row in target_rows:
@@ -336,7 +542,7 @@ def fit_one(task, root, rows, context, pools, samples, mapping):
         cf = np.concatenate([context[cid]["lm48_z"], context[cid]["dope629"]]).astype(
             np.float32
         )
-        xp = pools[cid]["program"]
+        xp = program(pools, cid)
         predictions[cid] = model.predict(
             np.concatenate([xp, np.repeat(cf[None], len(xp), axis=0)], axis=1)
         ).astype(np.float32)
@@ -521,13 +727,70 @@ def elo_h124(rows, packets, method, rng_seed=ELO_BOOTSTRAP_SEED):
         )
         gamma = updated / updated[:, 1:2]
     rating_draws = (1500 + 400 * np.log10(gamma[:, 0].clip(1e-9))).round(2)
+    median_seed = median_seed_elo(rows, packets, method, samples)
+    for seed in SEEDS:
+        if (
+            abs(median_seed["per_seed_point"][str(seed)] - per_seed[str(seed)]["H124"])
+            > 0.05
+        ):
+            raise RuntimeError(
+                "closed-form seed Elo disagrees with the canonical helper"
+            )
     return {
-        "ratings": point["ratings"],
-        "candidate_ci95": np.quantile(rating_draws, [0.025, 0.975]).round(2).tolist(),
+        "registered_estimator": "median_seed_elo",
+        "median_seed_elo": median_seed,
+        "pooled_score_elo_additional": {
+            "note": "Elo after averaging each context's U4 across seeds; an additional estimate, not the registered median seed Elo",
+            "ratings": point["ratings"],
+            "candidate_ci95": np.quantile(rating_draws, [0.025, 0.975])
+            .round(2)
+            .tolist(),
+        },
         "reference_elo": 1500,
         "per_seed_ratings": per_seed,
         "bootstrap_draws": ELO_BOOTSTRAP_DRAWS,
         "bootstrap_seed": rng_seed,
+    }
+
+
+def median_seed_elo(rows, packets, method, samples):
+    """Registered estimator (PREREG; audit H124-A2): the median of the three per-seed family-grouped Elo ratings.
+
+    Per seed, each context is a win/tie/loss at margin 1e-4, contexts are averaged within family and each family
+    has total weight one; with prior 0.01 the two-contender Bradley-Terry rating is closed-form. The interval
+    resamples families jointly across seeds (family pairing kept) with the same draws as the pooled interval."""
+    families = sorted({row["family_id"] for row in rows})
+    index = {family: i for i, family in enumerate(families)}
+    wins = np.zeros((len(SEEDS), len(families)))
+    counts = np.zeros(len(families))
+    for row in rows:
+        counts[index[row["family_id"]]] += 1
+    for s, seed in enumerate(SEEDS):
+        for row in rows:
+            cell = packets[str(seed)][row["context_sha256"]]
+            delta = cell[method]["u4"] - cell["r882"]["u4"]
+            wins[s, index[row["family_id"]]] += (
+                1.0 if delta > 1e-4 else 0.0 if delta < -1e-4 else 0.5
+            )
+    wins /= counts
+
+    def elo(total, n):
+        return 1500 + 400 * np.log10((total + 0.01) / (n - total + 0.01))
+
+    point = {
+        str(seed): float(elo(wins[s].sum(), len(families)))
+        for s, seed in enumerate(SEEDS)
+    }
+    draws = elo(wins[:, samples].sum(axis=2), len(families))  # (seeds, draws)
+    median_draws = np.median(draws, axis=0)
+    return {
+        "rating": round(float(np.median(list(point.values()))), 2),
+        "ci95": np.quantile(median_draws, [0.025, 0.975]).round(2).tolist(),
+        "per_seed_point": {k: round(v, 2) for k, v in point.items()},
+        "per_seed_ci95": {
+            str(seed): np.quantile(draws[s], [0.025, 0.975]).round(2).tolist()
+            for s, seed in enumerate(SEEDS)
+        },
     }
 
 
@@ -582,7 +845,7 @@ def h124_summary(rows, packets):
     }
 
 
-def baseline(root, rows, context, pools, *, net=None):
+def baseline(root, rows, context, pools, projection=None, *, net=None):
     import torch
 
     guard = source_module(
@@ -629,19 +892,22 @@ def baseline(root, rows, context, pools, *, net=None):
     before = guard.snapshot_dope_weights(net).composite_sha256
     if before != DOPE:
         raise RuntimeError("DOPE hash mismatch before")
-    with np.load(CACHE / "pool_priors.npz", allow_pickle=False) as z:
-        positions = {str(c): i for i, c in enumerate(z["cids"])}
-        offsets, projection = z["offsets"], z["proj16"]
+    # Amendment 1: proj16 rows are read per train context by byte range; programs are loaded lazily.
+    reader, spans, _ = (
+        projection if projection is not None else train_projection(rows, [])
+    )
     predictions = {}
     with torch.no_grad():
-        for row in rows:
+        for count, row in enumerate(rows, 1):
             cid = row["context_sha256"]
             p = pools[cid]
-            n, idx = len(p["u"]), positions[cid]
-            proj = projection[int(offsets[idx]) : int(offsets[idx + 1])]
+            n = len(p["u"])
+            proj = reader.rows(*spans[cid])
+            if proj.shape != (n, 16):
+                raise RuntimeError("proj16 span does not match its pool")
             result = net.adapter_10tok.predict_costs(
                 ctx_feat=torch.zeros((1, 584)),
-                prog_412=torch.from_numpy(p["program"])[None],
+                prog_412=torch.from_numpy(program(pools, cid))[None],
                 proj_16=torch.from_numpy(proj)[None],
                 base_prior_cost=torch.zeros((1, n)),
                 scale=torch.tensor([0.4208]),
@@ -655,6 +921,10 @@ def baseline(root, rows, context, pools, *, net=None):
                 revealed_gate=torch.as_tensor(p["gate"][:4], dtype=torch.float32)[None],
             )
             predictions[cid] = result["total_cost"][0].numpy().astype(np.float64)
+            del result, proj
+            if count % 50 == 0:
+                release_memory()
+            check_rss()
     after = guard.snapshot_dope_weights(net).composite_sha256
     if after != DOPE or before != after or sha(R882) != FILES[R882]:
         raise RuntimeError("DOPE/checkpoint changed")
@@ -780,8 +1050,28 @@ def cpu_dry_run() -> dict:
     }
 
 
-def run_h124(root: Path) -> dict:
+def set_rss_limit(gib: int) -> None:
+    """Amendment 1: 6 GiB by default; 10 GiB only for a relaunch after a 6 GiB RSS abort, with MemAvailable
+    >= 24 GiB at launch (and >= 16 GiB between fits, as always)."""
+    global RSS_LIMIT_KIB
+    if gib not in (6, 10):
+        raise ValueError(
+            "H124 worker RSS ceiling is 6 GiB, or 10 GiB under Amendment 1"
+        )
+    if gib == 10:
+        available = next(
+            int(part[1])
+            for line in Path("/proc/meminfo").read_text().splitlines()
+            if (part := line.split()) and part[0] == "MemAvailable:"
+        )
+        if available < 24 * 1024**2:
+            raise RuntimeError("10 GiB ceiling needs MemAvailable >= 24 GiB at launch")
+    RSS_LIMIT_KIB = gib * 1024 * 1024
+
+
+def run_h124(root: Path, rss_limit_gib: int = 6) -> dict:
     root = Path(root)
+    set_rss_limit(rss_limit_gib)
     expected_parent = Path.home() / "jope-data/h124"
     if (
         root.exists()
@@ -809,6 +1099,7 @@ def run_h124(root: Path) -> dict:
             "command": sys.argv,
             "nice": os.getpriority(os.PRIO_PROCESS, 0),
             "launch_preflight": launch,
+            "rss_limit_kib": RSS_LIMIT_KIB,
             "environment": {
                 key: os.environ.get(key)
                 for key in (
@@ -820,13 +1111,35 @@ def run_h124(root: Path) -> dict:
             },
         },
     )
+    with RssWatchdog(root) as watchdog:
+        return _run_h124(root, source_commit, prereg_sha, t0, cpu0, run_sha, watchdog)
+
+
+def _run_h124(root, source_commit, prereg_sha, t0, cpu0, run_sha, watchdog):
     headroom(root)
-    selected, context, pools, samples, mapping = load_data(root)
+    selected, context, pools, samples, mapping, context_reads = load_data(root)
     rows = selected["train"]
     if len(rows) != 1219 or len({row["family_id"] for row in rows}) != 205:
         raise RuntimeError("H124 full pinned DL-Train roster required")
     headroom(root)
-    r882, net = baseline(root, rows, context, pools)
+    projection = train_projection(rows, selected["dev"])
+    r882, net = baseline(root, rows, context, pools, projection)
+    del net  # Amendment 1: the r882 network is not kept alive through the GBM fits
+    release_memory()
+    proj_reader, proj_spans, offsets_reader = projection
+    proj_receipt = proj_reader.receipt([])
+    proj_receipt.update(
+        train_spans=len(proj_spans),
+        train_rows_expected=int(
+            sum(len(pools[r["context_sha256"]]["u"]) for r in rows)
+        ),
+    )
+    if proj_receipt["rows_read"] != proj_receipt["train_rows_expected"]:
+        raise RuntimeError("proj16 rows read differ from the train pools")
+    cache_reads = dict(
+        context_reads, offsets=offsets_reader.receipt([]), proj16=proj_receipt
+    )
+    write(root / "cache-read-receipt.json", cache_reads)
     tasks = [(seed, (fold,)) for seed in SEEDS for fold in range(5)] + [
         (seed, pair) for seed in SEEDS for pair in itertools.combinations(range(5), 2)
     ]
@@ -881,6 +1194,15 @@ def run_h124(root: Path) -> dict:
             "process_cpu_seconds": time.process_time() - cpu0,
             "max_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
             "scratch_bytes": scratch_bytes(root),
+            "rss_watchdog": watchdog.receipt(),
+        },
+        "amendment_1": {
+            "kind": "operational; statistical protocol unchanged",
+            "rss_limit_kib": RSS_LIMIT_KIB,
+            "train_only_cache_reads": cache_reads,
+            "dl_val_feature_rows_decoded": sum(
+                v["overlapping_reads"] for v in context_reads.values()
+            ),
         },
         "versions": {
             "numpy": np.__version__,
@@ -896,6 +1218,9 @@ def run_h124(root: Path) -> dict:
             "sealed_payloads_opened": 0,
             "meta_test_payloads_opened": 0,
             "outer_rows_delivered": 0,
+            "dl_val_cache_rows_decoded": sum(
+                v["overlapping_reads"] for v in context_reads.values()
+            ),
             "S3_requests": 0,
         },
         "DOPE_sha256_before": dope_receipt["before"],
@@ -927,13 +1252,14 @@ def main() -> None:
     actions.add_argument("--cpu-dry-run", action="store_true")
     actions.add_argument("--run", action="store_true")
     parser.add_argument("--root", type=Path)
+    parser.add_argument("--rss-limit-gib", type=int, default=6, choices=(6, 10))
     args = parser.parse_args()
     if args.cpu_dry_run:
         print(json.dumps(cpu_dry_run(), sort_keys=True, allow_nan=False))
         return
     if args.root is None:
         parser.error("--root is required with --run")
-    result = run_h124(args.root)
+    result = run_h124(args.root, args.rss_limit_gib)
     print(
         json.dumps(
             {"verdict": result["verdict"], "metrics": str(args.root / "metrics.json")},
