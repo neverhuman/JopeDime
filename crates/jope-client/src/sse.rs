@@ -3,12 +3,19 @@ use crate::transport::{header, Error, HeaderValue, Request, Result, Transport, M
 use jope_api::{decimal::DecimalU64, ids::RunId, PublicEvent, TelemetryEvent};
 use std::io::{BufRead, BufReader, Read};
 
+/// A validated event from an SSE subscription.
 #[derive(Clone, Debug, PartialEq)]
 pub enum StreamEvent {
+    /// A durable event with a decimal sequence cursor.
     Durable(Box<PublicEvent>),
+    /// A telemetry event, which does not advance the durable cursor.
     Telemetry(TelemetryEvent),
 }
 
+/// Incrementally decodes one SSE response and validates its event envelopes.
+///
+/// Replayed durable events at or before `after` are skipped. An incomplete or malformed frame
+/// produces an error and terminates iteration; callers decide whether and when to reconnect.
 pub struct SseReader<R: Read> {
     reader: BufReader<R>,
     run: RunId,
@@ -18,6 +25,7 @@ pub struct SseReader<R: Read> {
     done: bool,
 }
 impl<R: Read> SseReader<R> {
+    /// Start reading events for `run`, optionally resuming after a durable sequence.
     pub fn new(reader: R, run: RunId, after: Option<DecimalU64>) -> Self {
         Self {
             reader: BufReader::new(reader),
@@ -28,6 +36,7 @@ impl<R: Read> SseReader<R> {
             done: false,
         }
     }
+    /// Return the last accepted durable event sequence, if one has been read.
     pub fn last_event_id(&self) -> Option<DecimalU64> {
         self.cursor
     }
@@ -158,12 +167,17 @@ impl<R: Read> Iterator for SseReader<R> {
     }
 }
 
+/// An explicit-reconnect event stream over a [`Transport`].
+///
+/// The stream does not reconnect automatically and does not retry requests. Call
+/// [`reconnect`](Self::reconnect) after handling an iteration error or end of stream.
 pub struct EventStream<'a, T: Transport + ?Sized> {
     transport: &'a T,
     run: RunId,
     reader: SseReader<Box<dyn Read + Send>>,
 }
 impl<'a, T: Transport + ?Sized> EventStream<'a, T> {
+    /// Subscribe to events for `run`, resuming after `after` when provided.
     pub fn new(transport: &'a T, run: RunId, after: Option<DecimalU64>) -> Result<Self> {
         let reader = Self::connect(transport, &run, after)?;
         Ok(Self {
@@ -191,6 +205,7 @@ impl<'a, T: Transport + ?Sized> EventStream<'a, T> {
         let response = transport.execute(request)?.checked("text/event-stream")?;
         Ok(SseReader::new(response.body, run.clone(), after))
     }
+    /// Return the last accepted durable event sequence, if one has been read.
     pub fn last_event_id(&self) -> Option<DecimalU64> {
         self.reader.last_event_id()
     }
