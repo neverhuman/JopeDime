@@ -1,58 +1,84 @@
-name: export-parity
+name: export-parity-evidence-control
 on:
-  # The CI owner wires this later; EXP-08 runs the local harness only.
-  # Future qualification uses an isolated managed VM.
-  workflow_call:
   workflow_dispatch:
+    inputs:
+      parity_run:
+        type: string
+        required: true
+      parity_attempt:
+        type: string
+        required: true
+      parity_source:
+        type: string
+        required: true
 permissions:
   contents: read
 concurrency:
-  group: export-parity-${{ github.ref }}
-  cancel-in-progress: true
+  group: export-parity-evidence-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
-  export-parity:
-    # Future qualification is restricted to this repository's manual main caller.
-    if: github.repository == 'neverhuman/JopeDime' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/qualification/exp08-emitter-fault-20261031-dsc01'
+  collect:
+    if: github.repository == 'neverhuman/JopeDime' && github.ref == 'refs/heads/qualification/exp08-emitter-fault-20261031-dsc01'
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
-    env:
-      CARGO_INCREMENTAL: '0'
-      CARGO_PROFILE_DEV_DEBUG: line-tables-only
-      CARGO_BUILD_JOBS: '2'
+    timeout-minutes: 15
     steps:
-      - name: Checkout exact source
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: false
-      - name: Python 3.12.3
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
-        with:
-          python-version: '3.12.3'
-      - name: Node 26.1.0
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
-        with:
-          node-version: '26.1.0'
-      - name: Pinned Rust
-        run: rustup toolchain install 1.97.1 --profile minimal
-      - name: Execute real emitted predictors
-        run: bash deploy/ci/export-parity.sh --fault-emitter "target/export-parity/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
-      - name: Retain source-bound parity report and generated predictors
-        if: always()
+      - name: Validate exact requested evidence identity
         env:
-          JOPE_LOCAL_EVIDENCE_ROOT: ${{ runner.temp }}/jope-ci-evidence
-        uses: ./.github/actions/upload-ci-evidence
+          PARITY_RUN: ${{ inputs.parity_run }}
+          PARITY_ATTEMPT: ${{ inputs.parity_attempt }}
+          PARITY_SOURCE: ${{ inputs.parity_source }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          assert re.fullmatch(r'[1-9][0-9]{0,19}', os.environ['PARITY_RUN'])
+          assert re.fullmatch(r'[1-9][0-9]{0,4}', os.environ['PARITY_ATTEMPT'])
+          assert re.fullmatch(r'[0-9a-f]{40}', os.environ['PARITY_SOURCE'])
+          PY
+      - name: Restore exact publication 1
+        id: first
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
-          name: export-parity-${{ github.run_id }}-${{ github.run_attempt }}
-          path: target/export-parity/${{ github.run_id }}/${{ github.run_attempt }}
-      - name: Retain complete qualification bytes in run log
-        if: always()
+          key: export-parity-${{ inputs.parity_run }}-${{ inputs.parity_attempt }}-pub-1
+          path: target/export-parity/${{ inputs.parity_run }}/${{ inputs.parity_attempt }}
+      - name: Restore exact publication 2
+        if: steps.first.outputs.cache-matched-key == ''
+        id: second
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          key: export-parity-${{ inputs.parity_run }}-${{ inputs.parity_attempt }}-pub-2
+          path: target/export-parity/${{ inputs.parity_run }}/${{ inputs.parity_attempt }}
+      - name: Restore exact publication 3
+        if: steps.first.outputs.cache-matched-key == '' && steps.second.outputs.cache-matched-key == ''
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          key: export-parity-${{ inputs.parity_run }}-${{ inputs.parity_attempt }}-pub-3
+          path: target/export-parity/${{ inputs.parity_run }}/${{ inputs.parity_attempt }}
+          fail-on-cache-miss: true
+      - name: Verify source and retain complete evidence bytes
+        env:
+          PARITY_RUN: ${{ inputs.parity_run }}
+          PARITY_ATTEMPT: ${{ inputs.parity_attempt }}
+          PARITY_SOURCE: ${{ inputs.parity_source }}
         shell: bash
         run: |
           set -euo pipefail
-          report="target/export-parity/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
-          test -f "$report/report.json"
-          archive="$RUNNER_TEMP/export-parity-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT.tar.zst"
+          report="target/export-parity/$PARITY_RUN/$PARITY_ATTEMPT"
+          python3 - "$report" <<'PY'
+          import hashlib, json, os, pathlib, sys
+          root = pathlib.Path(sys.argv[1]); r = json.loads((root / 'report.json').read_text())
+          assert r['schema'] == 'jope.export-parity/v1' and r['ci_executed'] is True
+          assert r['source_sha'] == os.environ['PARITY_SOURCE']
+          assert r['ci_context']['GITHUB_RUN_ID'] == os.environ['PARITY_RUN']
+          assert r['ci_context']['GITHUB_RUN_ATTEMPT'] == os.environ['PARITY_ATTEMPT']
+          for name, item in r['files'].items():
+              member = root / name
+              assert not pathlib.Path(name).is_absolute() and '..' not in pathlib.Path(name).parts
+              assert not member.is_symlink() and member.resolve().is_relative_to(root.resolve())
+              assert member.stat().st_size == item['bytes']
+              assert hashlib.sha256(member.read_bytes()).hexdigest() == item['sha256']
+          print(json.dumps({k:r.get(k) for k in ['source_sha','status','passed','expected_supported_cells','executed_supported_cells']}))
+          PY
+          archive="$RUNNER_TEMP/export-parity-$PARITY_RUN-$PARITY_ATTEMPT.tar.zst"
           tar -I 'zstd -3 -T1' -cf "$archive" -C "$report" .
           digest=$(sha256sum "$archive" | cut -d ' ' -f 1)
           bytes=$(stat -c %s "$archive")
