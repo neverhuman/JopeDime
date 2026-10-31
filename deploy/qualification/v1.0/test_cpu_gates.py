@@ -508,6 +508,75 @@ class Controller(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "changed during inventory"):
                 cpu.release_inventory(root)
 
+    def test_normal_exit_stops_descendants_and_preserves_exit_status(self):
+        import time
+
+        def alive(info):
+            try:
+                fields = (
+                    Path(f"/proc/{info['pid']}/stat")
+                    .read_text()
+                    .rsplit(")", 1)[1]
+                    .split()
+                )
+                return fields[19] == info["start"] and fields[0] not in {"Z", "X"}
+            except FileNotFoundError:
+                return False
+
+        for expected_exit in (0, 7):
+            with self.subTest(exit_status=expected_exit):
+                state = self.path / f"normal-exit-{expected_exit}.json"
+                child = (
+                    "import json,os,signal,sys,time; from pathlib import Path; "
+                    "signal.signal(signal.SIGTERM,signal.SIG_IGN); "
+                    "Path(sys.argv[1]).write_text(json.dumps(dict(pid=os.getpid(),"
+                    "start=Path('/proc/self/stat').read_text().rsplit(')',1)[1].split()[19]))); "
+                    "time.sleep(60)"
+                )
+                leader = (
+                    "import subprocess,sys,time; from pathlib import Path; "
+                    f"subprocess.Popen([sys.executable,'-c',{child!r},sys.argv[1]]); "
+                    "deadline=time.monotonic()+5; "
+                    'exec("while not Path(sys.argv[1]).exists():\\n'
+                    " if time.monotonic()>deadline: raise RuntimeError('child readiness')\\n"
+                    ' time.sleep(0.01)"); '
+                    f"raise SystemExit({expected_exit})"
+                )
+                try:
+                    code, timed_out = cpu.invoke(
+                        [sys.executable, "-c", leader, str(state)],
+                        self.repo,
+                        self.path / f"normal-exit-{expected_exit}.log",
+                        cpu.child_environment(
+                            self.path, self.path / "unused-target", 1, "fixture"
+                        ),
+                        10,
+                    )
+                    self.assertTrue(state.exists(), "owned child did not become ready")
+                    info = json.loads(state.read_text())
+                    deadline = time.monotonic() + 1
+                    while alive(info) and time.monotonic() < deadline:
+                        time.sleep(0.01)
+                    self.assertEqual(code, expected_exit)
+                    self.assertFalse(timed_out)
+                    self.assertFalse(
+                        alive(info), "owned child survived normal gate exit"
+                    )
+                finally:
+                    if state.exists():
+                        info = json.loads(state.read_text())
+                        if alive(info):
+                            descriptor = os.pidfd_open(info["pid"])
+                            try:
+                                if alive(info):
+                                    cpu.signal.pidfd_send_signal(
+                                        descriptor, cpu.signal.SIGKILL
+                                    )
+                            except ProcessLookupError:
+                                pass
+                            finally:
+                                os.close(descriptor)
+
 
 if __name__ == "__main__":
     unittest.main()

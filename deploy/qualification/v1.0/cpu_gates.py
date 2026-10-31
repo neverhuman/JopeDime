@@ -379,7 +379,11 @@ def invoke(command, root, log, environment, seconds):
         except BaseException:
             _stop_owned_group(process)
             raise
-        return process.wait(), False
+        # The exited leader remains unreaped, reserving its PID/PGID while
+        # owned descendants are stopped before receipt/log hashing. Preserve
+        # the leader's original exit status rather than treating cleanup as success.
+        _stop_owned_group(process)
+        return process.returncode, False
 
 
 def execute_gate(
