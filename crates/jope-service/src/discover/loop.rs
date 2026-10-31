@@ -3092,7 +3092,6 @@ mod tests {
     #[ignore = "requires the hash-pinned RES-07 CPU packet and frozen RES-06 bundle"]
     fn learned_cpu_admission_recovery_matches_uninterrupted_execution() {
         use crate::ranker::{
-            adapter::CpuAdapter,
             admission::{
                 CpuRoundAdmission, RevealedRule, RoundInputProvider, RoundInputs, RoundProgram,
             },
@@ -3319,12 +3318,13 @@ mod tests {
                 slates: [(1, slate12), (2, slate20)].into_iter().collect(),
                 calls: calls.clone(),
             };
-            let admission = CpuRoundAdmission::for_cpu_replay(
-                CpuAdapter::from_bytes(weights).unwrap(),
+            let admission = CpuRoundAdmission::for_cpu_replay_weights(
+                weights,
                 p.clone(),
                 provider,
                 RevealedRule::StorageOrder,
-            );
+            )
+            .unwrap();
             let executor = ReplayExecutor {
                 indices: dsls
                     .iter()
