@@ -34,6 +34,10 @@ SAFE_CACHE_PATHS = {
 }
 SUPPORTED_LOCAL_HOSTS = frozenset({"xbabe1", "xbabe2", "xbabe3"})
 CACHE_METADATA_NAMES = {"cachedir.tag", ".gitignore", ".lock", "lock"}
+REBUILDABLE_WORKTREE_IGNORED_DIRS = {
+    "__pycache__", ".mypy_cache", ".nox", ".pytest_cache", ".ruff_cache", ".tox", ".venv", "node_modules", "venv",
+}
+REBUILDABLE_WORKTREE_IGNORED_FILES = {"AGENT_CHAT.lock", "AGENT_CHAT.md.lock"}
 LOG_LIMIT_BYTES = 256 * 1024**2
 LOG_RETENTION_SECONDS = 14 * 24 * 3600
 TARGET_RETENTION_SECONDS = 24 * 3600
@@ -116,6 +120,18 @@ def read_policy(path: Path | None) -> dict[str, Any]:
         raise ValueError("allow_report_offload must be a boolean")
     if not isinstance(policy.get("allow_log_offload", False), bool):
         raise ValueError("allow_log_offload must be a boolean")
+    for entry in policy["paths"]:
+        if entry.get("kind") != "cargo-target":
+            continue
+        for key in (
+            "remove_merged_worktrees",
+            "remove_closed_pr_worktrees",
+            "remove_stale_targets_on_open_worktrees",
+        ):
+            if key in entry and not isinstance(entry[key], bool):
+                raise ValueError(f"{key} must be a boolean")
+        if "ttl_hours" in entry and (type(entry["ttl_hours"]) is not int or entry["ttl_hours"] < 1):
+            raise ValueError("cargo-target ttl_hours must be a positive integer")
     hosts = policy.get("allowed_hosts")
     if (
         not isinstance(hosts, list)
@@ -300,7 +316,7 @@ def local_process_references(target: Path, worktree: Path, proc_root: Path = Pat
         return None
 
 
-def safe_target_tree(root: Path, *, now: float) -> bool:
+def safe_target_tree(root: Path, *, now: float, ttl_seconds: int = TARGET_RETENTION_SECONDS) -> bool:
     try:
         root_stat = root.lstat()
         if not stat.S_ISDIR(root_stat.st_mode) or root_stat.st_uid != current_uid():
@@ -312,7 +328,7 @@ def safe_target_tree(root: Path, *, now: float) -> bool:
             if any(part.lower() in TARGET_EVIDENCE_PARTS for part in relative_parent.parts):
                 return False
             parent_stat = parent.lstat()
-            if parent_stat.st_dev != device or parent_stat.st_uid != current_uid() or now - parent_stat.st_mtime < TARGET_RETENTION_SECONDS:
+            if parent_stat.st_dev != device or parent_stat.st_uid != current_uid() or now - parent_stat.st_mtime < ttl_seconds:
                 return False
             if not relative_parent.parts:
                 if any(name not in {"debug", "release", "tmp"} for name in dirs) or any(name not in {"CACHEDIR.TAG", ".rustc_info.json"} for name in files):
@@ -334,7 +350,7 @@ def safe_target_tree(root: Path, *, now: float) -> bool:
                     or item.st_dev != device
                     or item.st_uid != current_uid()
                     or item.st_nlink != 1
-                    or now - item.st_mtime < TARGET_RETENTION_SECONDS
+                    or now - item.st_mtime < ttl_seconds
                     or any(term in lowered for term in ("receipt", "report", "evidence", "score", "checkpoint"))
                     or Path(name).suffix.lower() in {".csv", ".db", ".html", ".jsonl", ".md", ".npz", ".parquet", ".png", ".sqlite", ".svg", ".txt", ".yaml", ".yml"}
                     or (Path(name).suffix.lower() == ".json" and ".fingerprint" not in relative_parent.parts)
@@ -345,59 +361,165 @@ def safe_target_tree(root: Path, *, now: float) -> bool:
         return False
 
 
-def merged_worktree_targets(repo: Path, worktrees_root: Path, ttl_seconds: int, now: float) -> list[tuple[Path, Path, str, str]] | None:
-    """Select old target dirs only from clean registered worktrees merged into origin/main."""
+def parse_worktree_list(output: str) -> list[dict[str, str | bool]]:
+    """Parse git's porcelain worktree inventory without inferring missing fields."""
+    entries: list[dict[str, str | bool]] = []
+    current: dict[str, str | bool] = {}
+    for line in output.splitlines() + [""]:
+        if not line:
+            if current:
+                entries.append(current)
+                current = {}
+            continue
+        key, _, value = line.partition(" ")
+        if key == "worktree":
+            current["path"] = value
+        elif key == "HEAD":
+            current["head"] = value
+        elif key == "branch":
+            current["branch"] = value.removeprefix("refs/heads/")
+        elif key == "locked":
+            current["locked"] = True
+    return entries
+
+
+def cleanup_disposition(
+    *,
+    main_ancestor: bool,
+    branch: str,
+    head: str,
+    pr_states: dict[tuple[str, str], str],
+) -> str | None:
+    if main_ancestor:
+        return "merged"
+    state = pr_states.get((branch, head), "").upper()
+    if state == "MERGED":
+        return "merged"
+    if state == "CLOSED" and branch:
+        return "closed"
+    return None
+
+
+def worktree_has_only_rebuildable_ignored_files(worktree: Path) -> bool:
+    """Allow only the target and known disposable caches among ignored entries."""
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(worktree), "ls-files", "--others", "--ignored", "--exclude-standard", "--directory", "-z", "--", "."],
+            capture_output=True, text=True, timeout=15, check=False,
+        )
+        if result.returncode != 0:
+            return False
+        device = worktree.stat().st_dev
+        for raw in result.stdout.split("\0"):
+            relative = raw.rstrip("/")
+            if not relative or relative == "target":
+                continue
+            path = worktree / relative
+            item = path.lstat()
+            if item.st_uid != current_uid() or item.st_dev != device or stat.S_ISLNK(item.st_mode):
+                return False
+            if relative in REBUILDABLE_WORKTREE_IGNORED_FILES:
+                if not stat.S_ISREG(item.st_mode) or item.st_nlink != 1:
+                    return False
+            elif Path(relative).name in REBUILDABLE_WORKTREE_IGNORED_DIRS:
+                if not stat.S_ISDIR(item.st_mode):
+                    return False
+            else:
+                return False
+        return True
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def worktree_cleanup_inventory(
+    repo: Path,
+    worktrees_root: Path,
+    ttl_seconds: int,
+    now: float,
+    *,
+    include_closed_pr_worktrees: bool = True,
+) -> list[dict[str, Any]] | None:
+    """Find stale build targets and clean merged/closed worktrees under the canonical root."""
     try:
         root = worktrees_root.resolve(strict=True)
         result = subprocess.run(
             ["git", "-C", str(repo), "worktree", "list", "--porcelain"],
             check=True, capture_output=True, text=True, timeout=15,
         )
-        worktrees = [Path(line.removeprefix("worktree ")) for line in result.stdout.splitlines() if line.startswith("worktree ")]
+        worktrees = parse_worktree_list(result.stdout)
     except (OSError, subprocess.SubprocessError):
         return None
-    try:
-        merged_prs = subprocess.run(
-            ["gh", "pr", "list", "--repo", "neverhuman/JopeDime", "--state", "merged", "--limit", "100", "--json", "headRefName,headRefOid,mergedAt"],
-            check=True, capture_output=True, text=True, timeout=30,
-        )
-        merged_heads = {
-            (item["headRefName"], item["headRefOid"])
-            for item in json.loads(merged_prs.stdout)
-            if item.get("mergedAt") and item.get("headRefName") and item.get("headRefOid")
-        }
-    except (OSError, subprocess.SubprocessError, ValueError, KeyError, TypeError):
-        return None
-    candidates: list[tuple[Path, Path, str, str]] = []
-    for worktree in worktrees:
+
+    candidates: list[dict[str, Any]] = []
+    pr_states: dict[tuple[str, str], str] = {}
+    queried_branches: set[str] = set()
+    for item in worktrees:
         try:
-            resolved_worktree = worktree.resolve(strict=True)
-            relative = resolved_worktree.relative_to(root)
-            if len(relative.parts) != 1 or resolved_worktree == Path(repo).resolve(strict=True):
+            worktree = Path(str(item["path"])).resolve(strict=True)
+            relative = worktree.relative_to(root)
+            if len(relative.parts) != 1 or worktree == Path(repo).resolve(strict=True):
                 continue
-            clean = subprocess.run(
-                ["git", "-C", str(worktree), "status", "--porcelain"],
-                check=True, capture_output=True, text=True, timeout=15,
+            if item.get("locked"):
+                continue
+            head = str(item.get("head", ""))
+            if not head:
+                continue
+            branch = str(item.get("branch", ""))
+            target = worktree / "target"
+            target_exists = target.exists() or target.is_symlink()
+            stale_target = False
+            if target_exists:
+                target_stat = target.lstat()
+                stale_target = (
+                    stat.S_ISDIR(target_stat.st_mode)
+                    and target_stat.st_uid == current_uid()
+                    and target_stat.st_dev == worktree.stat().st_dev
+                    and target.resolve(strict=True) == target
+                    and now - target_stat.st_mtime >= ttl_seconds
+                )
+            ancestry = subprocess.run(
+                ["git", "-C", str(repo), "merge-base", "--is-ancestor", head, "origin/main"],
+                capture_output=True, text=True, timeout=15, check=False,
             )
-            if clean.stdout:
-                continue
-            branch = subprocess.run(
-                ["git", "-C", str(worktree), "symbolic-ref", "--quiet", "--short", "HEAD"],
-                check=True, capture_output=True, text=True, timeout=15,
+            main_ancestor = ancestry.returncode == 0
+            clean = False
+            if main_ancestor or stale_target or (include_closed_pr_worktrees and branch):
+                status = subprocess.run(
+                    ["git", "-C", str(worktree), "status", "--porcelain", "--untracked-files=all"],
+                    capture_output=True, text=True, timeout=15, check=False,
+                )
+                clean = status.returncode == 0 and not status.stdout
+            if not main_ancestor and clean and branch and include_closed_pr_worktrees and branch not in queried_branches:
+                queried_branches.add(branch)
+                try:
+                    pr_result = subprocess.run(
+                        [
+                            "gh", "pr", "list", "--repo", "neverhuman/JopeDime", "--state", "all",
+                            "--head", branch, "--limit", "20", "--json", "headRefName,headRefOid,state",
+                        ],
+                        check=True, capture_output=True, text=True, timeout=15,
+                    )
+                    for pr in json.loads(pr_result.stdout):
+                        if pr.get("headRefName") and pr.get("headRefOid") and pr.get("state"):
+                            pr_states[(pr["headRefName"], pr["headRefOid"])] = pr["state"].upper()
+                except (OSError, subprocess.SubprocessError, ValueError, KeyError, TypeError):
+                    pass
+            disposition = cleanup_disposition(
+                main_ancestor=main_ancestor, branch=branch, head=head, pr_states=pr_states,
             )
-            head = subprocess.run(
-                ["git", "-C", str(worktree), "rev-parse", "HEAD"],
-                check=True, capture_output=True, text=True, timeout=15,
-            )
-            if (branch.stdout.strip(), head.stdout.strip()) not in merged_heads:
-                continue
-            target = resolved_worktree / "target"
-            item = target.lstat()
-            if not stat.S_ISDIR(item.st_mode) or item.st_uid != current_uid() or now - item.st_mtime < ttl_seconds:
-                continue
-            if target.resolve(strict=True) != target or item.st_dev != resolved_worktree.stat().st_dev:
-                continue
-            candidates.append((resolved_worktree, target, branch.stdout.strip(), head.stdout.strip()))
+            ignored_safe: bool | None = None
+            if stale_target or (disposition and clean):
+                candidates.append({
+                    "worktree": worktree,
+                    "target": target,
+                    "target_exists": target_exists,
+                    "stale_target": stale_target,
+                    "branch": branch,
+                    "head": head,
+                    "disposition": disposition,
+                    "clean": clean,
+                    "ignored_safe": ignored_safe,
+                })
         except (OSError, ValueError, subprocess.SubprocessError):
             continue
     return candidates
@@ -406,18 +528,25 @@ def merged_worktree_targets(repo: Path, worktrees_root: Path, ttl_seconds: int, 
 def worktree_head_is_unchanged(worktree: Path, expected_branch: str, expected_head: str) -> bool:
     try:
         clean = subprocess.run(
-            ["git", "-C", str(worktree), "status", "--porcelain"],
+            ["git", "-C", str(worktree), "status", "--porcelain", "--untracked-files=all"],
             check=True, capture_output=True, text=True, timeout=15,
         )
+        ignored_safe = worktree_has_only_rebuildable_ignored_files(worktree)
         branch = subprocess.run(
             ["git", "-C", str(worktree), "symbolic-ref", "--quiet", "--short", "HEAD"],
-            check=True, capture_output=True, text=True, timeout=15,
+            check=False, capture_output=True, text=True, timeout=15,
         )
         head = subprocess.run(
             ["git", "-C", str(worktree), "rev-parse", "HEAD"],
             check=True, capture_output=True, text=True, timeout=15,
         )
-        return not clean.stdout and branch.stdout.strip() == expected_branch and head.stdout.strip() == expected_head
+        return (
+            clean.returncode == 0
+            and not clean.stdout
+            and ignored_safe
+            and branch.stdout.strip() == expected_branch
+            and head.stdout.strip() == expected_head
+        )
     except (OSError, subprocess.SubprocessError):
         return False
 
@@ -893,38 +1022,110 @@ def handle_cargo_targets(
     if needed_bytes <= 0:
         print(f"OK {entry['id']}: low watermark already reached")
         return 0
-    candidates = merged_worktree_targets(repo, root, TARGET_RETENTION_SECONDS, now)
+    ttl_seconds = int(entry.get("ttl_hours", TARGET_RETENTION_SECONDS // 3600)) * 3600
+    candidates = worktree_cleanup_inventory(
+        repo,
+        root,
+        ttl_seconds,
+        now,
+        include_closed_pr_worktrees=entry.get("remove_closed_pr_worktrees", False),
+    )
     if candidates is None:
-        print(f"SKIP {entry['id']}: merged-worktree inventory unavailable")
+        print(f"SKIP {entry['id']}: worktree cleanup inventory unavailable")
         return 0
     freed = 0
-    for worktree, target, branch, head in candidates:
-        opened = open_handles_under(target, all_users=True)
+    for candidate in candidates:
+        worktree = candidate["worktree"]
+        target = candidate["target"]
+        branch = candidate["branch"]
+        head = candidate["head"]
+        remove_worktree = bool(
+            candidate["clean"]
+            and (
+                (candidate["disposition"] == "merged" and entry.get("remove_merged_worktrees", False))
+                or (candidate["disposition"] == "closed" and entry.get("remove_closed_pr_worktrees", False))
+            )
+        )
+        if remove_worktree:
+            ignored_safe = candidate.get("ignored_safe")
+            if ignored_safe is None:
+                ignored_safe = worktree_has_only_rebuildable_ignored_files(worktree)
+            remove_worktree = bool(ignored_safe)
+        remove_stale_target = bool(
+            candidate["stale_target"]
+            and candidate["clean"]
+            and (
+                candidate["disposition"] in {"merged", "closed"}
+                or entry.get("remove_stale_targets_on_open_worktrees", False)
+            )
+        )
+        if not remove_worktree and not remove_stale_target:
+            if candidate["stale_target"] and not candidate["clean"]:
+                print(f"SKIP {target}: worktree has uncommitted changes")
+            continue
+        if remove_worktree and candidate["target_exists"] and not candidate["stale_target"]:
+            print(f"SKIP {worktree}: target is newer than the {ttl_seconds // 3600}h retention")
+            remove_worktree = False
+        if remove_worktree and candidate["target_exists"] and not safe_target_tree(target, now=now, ttl_seconds=ttl_seconds):
+            print(f"SKIP {worktree}: target contains recent, evidence-like, or non-rebuildable content")
+            remove_worktree = False
+        remove_target_only = remove_stale_target and not remove_worktree
+        if not remove_worktree and not remove_target_only:
+            continue
+        watched_path = worktree if remove_worktree else target
+        opened = open_handles_under(watched_path, all_users=True)
         references = local_process_references(target, worktree)
         if opened is None or opened or references is not False:
-            print(f"SKIP {target}: open handles or process references are present/unknown")
+            print(f"SKIP {watched_path}: open handles or process references are present/unknown")
             continue
-        if not safe_target_tree(target, now=now):
+        if candidate["target_exists"] and not safe_target_tree(target, now=now, ttl_seconds=ttl_seconds):
             print(f"SKIP {target}: evidence marker, recent entry, special file, or non-user-owned entry")
             continue
-        size = path_size(target)
+        size = path_size(worktree if remove_worktree else target)
         if size is None:
-            print(f"SKIP {target}: cannot measure")
+            print(f"SKIP {watched_path}: cannot measure")
             continue
-        print(f"{'WOULD REMOVE' if dry_run else 'REMOVE'} merged-worktree target {target} ({size} bytes)")
+        action = f"merged/closed worktree {worktree}" if remove_worktree else f"stale Cargo target {target}"
+        print(f"{'WOULD REMOVE' if dry_run else 'REMOVE'} {action} ({size} bytes)")
         if not dry_run:
-            # Repeat every consumer/evidence check immediately before the tree removal.
+            # Repeat consumer, source, and evidence checks immediately before removal.
             if (
-                open_handles_under(target, all_users=True) != set()
+                open_handles_under(watched_path, all_users=True) != set()
                 or local_process_references(target, worktree) is not False
-                or not safe_target_tree(target, now=time.time())
-                or not worktree_head_is_unchanged(worktree, branch, head)
+                or (candidate["target_exists"] and not safe_target_tree(target, now=time.time(), ttl_seconds=ttl_seconds))
+                or (remove_worktree and not worktree_head_is_unchanged(worktree, branch, head))
             ):
-                print(f"SKIP {target}: candidate changed before removal")
+                print(f"SKIP {watched_path}: candidate changed before removal")
                 continue
-            logger({"event": "delete_intent_tree", "path": str(target), "bytes": size, "policy": entry["id"]})
-            shutil.rmtree(target)
-            logger({"event": "deleted_tree", "path": str(target), "bytes": size, "policy": entry["id"]})
+            if candidate["target_exists"]:
+                target_size = path_size(target)
+                if target_size is None:
+                    print(f"SKIP {target}: cannot remeasure target")
+                    continue
+                logger({"event": "delete_intent_tree", "path": str(target), "bytes": target_size, "policy": entry["id"]})
+                shutil.rmtree(target)
+                logger({"event": "deleted_tree", "path": str(target), "bytes": target_size, "policy": entry["id"]})
+            if remove_worktree:
+                # Git's non-force remove is the final guard against a lock, dirt, or
+                # a concurrent write. Never delete the local branch ref.
+                if (
+                    open_handles_under(worktree, all_users=True) != set()
+                    or local_process_references(target, worktree) is not False
+                    or not worktree_head_is_unchanged(worktree, branch, head)
+                ):
+                    print(f"SKIP {worktree}: source became active after target removal")
+                    continue
+                logger({"event": "remove_worktree_intent", "path": str(worktree), "head": head, "disposition": candidate["disposition"], "policy": entry["id"]})
+                try:
+                    subprocess.run(
+                        ["git", "-C", str(repo), "worktree", "remove", str(worktree)],
+                        check=True, capture_output=True, text=True, timeout=30,
+                    )
+                except (OSError, subprocess.SubprocessError) as exc:
+                    logger({"event": "remove_worktree_failed", "path": str(worktree), "head": head, "error": str(exc), "policy": entry["id"]})
+                    print(f"SKIP {worktree}: git worktree remove refused; source retained")
+                    continue
+                logger({"event": "removed_worktree", "path": str(worktree), "head": head, "disposition": candidate["disposition"], "policy": entry["id"]})
         freed += size
         if freed >= needed_bytes:
             break
@@ -953,7 +1154,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, help="JSON-syntax YAML policy")
     parser.add_argument("--dry-run", action="store_true", help="preview only (the default)")
-    parser.add_argument("--apply", action="store_true", help="apply only the safe cache policy")
+    parser.add_argument("--apply", action="store_true", help="apply the approved local cleanup policy")
     args = parser.parse_args(argv)
     if args.dry_run and args.apply:
         parser.error("choose only one of --dry-run or --apply")
