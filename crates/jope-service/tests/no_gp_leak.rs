@@ -262,3 +262,72 @@ async fn current_dataset_route_refusals_do_not_echo_private_payloads() {
         }
     }
 }
+
+#[tokio::test]
+async fn current_run_and_model_responses_do_not_echo_private_payloads() {
+    let operations = jope_api::registry::OPERATIONS.iter().filter(|operation| {
+        operation.name.starts_with("run_")
+            || operation.name.starts_with("model_")
+            || matches!(
+                operation.name,
+                "algorithm_get" | "artifact_download" | "feedback_export"
+            )
+    });
+    let mut checked_paths = 0;
+
+    for operation in operations {
+        for path in operation.paths {
+            let path = path.replace("{id}", "run_01J00000000000000000000000");
+            let query = format!(
+                "?dsl={}&operator={}&lineage={}&round={}",
+                SENTINELS[0], SENTINELS[1], SENTINELS[2], SENTINELS[3]
+            );
+            let body = serde_json::json!({
+                "internal": {
+                    "dsl": SENTINELS[0],
+                    "operator": SENTINELS[1],
+                    "lineage": SENTINELS[2],
+                    "round": SENTINELS[3]
+                }
+            })
+            .to_string();
+            let method: Method = operation.method.as_str().parse().unwrap();
+            let mut request = authenticated_request(method, &format!("{path}{query}"), body);
+            if operation.name == "run_events" {
+                request.headers_mut().insert(
+                    header::ACCEPT,
+                    "text/event-stream".parse().expect("static Accept header"),
+                );
+            }
+            let response = local_router().oneshot(request).await.unwrap();
+            let status = response.status();
+            let is_sse = response
+                .headers()
+                .get(header::CONTENT_TYPE)
+                .and_then(|value| value.to_str().ok())
+                .is_some_and(|value| value.starts_with("text/event-stream"));
+            let response_headers = response
+                .headers()
+                .iter()
+                .map(|(name, value)| {
+                    format!("{}: {}", name, String::from_utf8_lossy(value.as_bytes()))
+                })
+                .collect::<Vec<_>>()
+                .join("\n");
+            let bytes = to_bytes(response.into_body(), 64 * 1024).await.unwrap();
+            let output = format!("{response_headers}\n{}", String::from_utf8_lossy(&bytes));
+            let surface = if is_sse {
+                Surface::Sse
+            } else if status.is_success() {
+                Surface::Http
+            } else {
+                Surface::Error
+            };
+            scan_surfaces(&[(surface, output)])
+                .unwrap_or_else(|leak| panic!("{} {path} leaked {leak:?}", operation.name));
+            checked_paths += 1;
+        }
+    }
+
+    assert!(checked_paths >= 10, "run/model operation inventory changed");
+}
