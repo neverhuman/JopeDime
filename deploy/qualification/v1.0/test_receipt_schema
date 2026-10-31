@@ -1,0 +1,174 @@
+#!/usr/bin/env python3
+"""Receipt status controls; no release, dataset, model or campaign execution."""
+
+import copy
+import importlib.util
+import json
+import os
+from pathlib import Path
+import sys
+import tempfile
+import unittest
+from unittest import mock
+
+import jsonschema
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[2]
+spec = importlib.util.spec_from_file_location(
+    "schema_cpu_control", HERE / "cpu_gates.py"
+)
+cpu = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(cpu)
+
+
+class ReceiptStatusTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        base = Path(
+            os.environ.get(
+                "JOPE_QUALIFICATION_TEST_TMP", ROOT / "target/receipt-schema-tests"
+            )
+        )
+        base.mkdir(parents=True, exist_ok=True)
+        cls.temporary = tempfile.TemporaryDirectory(dir=base)
+        cls.addClassCleanup(cls.temporary.cleanup)
+        folder = Path(cls.temporary.name)
+        target = Path(os.environ.get("CARGO_TARGET_DIR", ROOT / "target"))
+        cls.validator = jsonschema.Draft202012Validator(
+            json.loads((HERE / "qualification_receipt.schema.json").read_text())
+        )
+        jsonschema.Draft202012Validator.check_schema(cls.validator.schema)
+        command = (
+            "import unittest; "
+            "r=unittest.TextTestRunner().run(unittest.TestSuite([unittest.FunctionTestCase(lambda:None)])); "
+            "raise SystemExit(not r.wasSuccessful())"
+        )
+        gate = dict(
+            id="schema-control",
+            command=[sys.executable, "-c", command],
+            result_backend="unittest",
+            requires_nonzero_tests=True,
+        )
+        # Only a one-child software control is inventoried; none of the real gates run.
+        with mock.patch.object(cpu, "inventory", return_value=[gate]):
+            cls.planned = cpu.run(ROOT, folder / "plan", target=target)
+        parser = cpu.result_parser(ROOT)
+
+        def child(name, control):
+            return cpu.execute_gate(
+                control,
+                ROOT,
+                folder / name,
+                target,
+                1,
+                cls.planned["source"]["main_sha"],
+                parser,
+                10,
+                # Synthetic admission seam, as in the existing controller unit tests.
+                check=lambda _: dict(cpu_count=1, load1=0, disk_used_percent=0),
+            )
+
+        cls.success = child("success", gate)
+        cls.failed = child(
+            "failed",
+            dict(
+                gate,
+                command=[sys.executable, "-c", "raise SystemExit(9)"],
+                result_backend="none",
+                requires_nonzero_tests=False,
+            ),
+        )
+        cls.non_test = child(
+            "non-test",
+            dict(
+                gate,
+                command=[sys.executable, "-c", "print('schema control')"],
+                result_backend="none",
+                requires_nonzero_tests=False,
+            ),
+        )
+        if (
+            cls.success["status"] != "passed"
+            or cls.failed["exit_status"] != 9
+            or cls.non_test["status"] != "passed"
+        ):
+            raise AssertionError("software child controls did not execute as expected")
+        cls.passed = cls.report("passed", cls.success)
+
+    @classmethod
+    def report(cls, status, check):
+        result = copy.deepcopy(cls.planned)
+        result.update(
+            status=status, finished_utc=cpu.utc(), checks=[copy.deepcopy(check)]
+        )
+        return result
+
+    def test_real_child_receipts_and_planned_state_remain_valid(self):
+        for report in [
+            self.planned,
+            self.passed,
+            self.report("failed", self.failed),
+            self.report("passed", self.non_test),
+        ]:
+            with self.subTest(status=report["status"]):
+                self.validator.validate(report)
+                self.assertFalse(report["release_qualified"])
+                self.assertIsNone(report["signed_candidate"])
+                self.assertIsNone(report["owner_approval"])
+        self.assertEqual(self.success["tests"]["executed"], 1)
+        self.assertIsNone(self.non_test["tests"]["executed"])
+
+    def test_failed_child_cannot_be_labeled_aggregate_passed(self):
+        report = self.report("passed", self.failed)
+        self.assertEqual(report["checks"][0]["exit_status"], 9)
+        with self.assertRaises(jsonschema.ValidationError):
+            self.validator.validate(report)
+
+    def test_passed_check_requires_zero_exit(self):
+        for code in [None, 9, 124, -9]:
+            report = copy.deepcopy(self.passed)
+            report["checks"][0]["exit_status"] = code
+            with self.subTest(code=code), self.assertRaises(jsonschema.ValidationError):
+                self.validator.validate(report)
+
+    def test_passed_check_requires_finish(self):
+        for finish in [None, ""]:
+            report = copy.deepcopy(self.passed)
+            report["checks"][0]["finished_utc"] = finish
+            with (
+                self.subTest(finish=finish),
+                self.assertRaises(jsonschema.ValidationError),
+            ):
+                self.validator.validate(report)
+
+    def test_passed_aggregate_requires_finish(self):
+        report = copy.deepcopy(self.passed)
+        report["finished_utc"] = ""
+        with self.assertRaises(jsonschema.ValidationError):
+            self.validator.validate(report)
+
+    def test_nonpassing_checks_cannot_hide_under_aggregate_passed(self):
+        for status in ["failed", "unavailable", "timed-out", "incomplete"]:
+            report = copy.deepcopy(self.passed)
+            report["checks"][0]["status"] = status
+            with (
+                self.subTest(status=status),
+                self.assertRaises(jsonschema.ValidationError),
+            ):
+                self.validator.validate(report)
+
+    def test_partial_unknown_outcomes_remain_representable(self):
+        report = copy.deepcopy(self.passed)
+        report.update(status="incomplete", finished_utc=None)
+        report["checks"][0].update(
+            status="unavailable",
+            exit_status=None,
+            finished_utc=None,
+            tests=dict.fromkeys(cpu.FIELDS),
+        )
+        self.validator.validate(report)
+
+
+if __name__ == "__main__":
+    unittest.main()
