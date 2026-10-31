@@ -6,6 +6,8 @@ H109 preregisters a paired comparison of context-uniform CONTROL, family-balance
 
 The captured synthetic CPU dry-run receipt is stored outside the repository at `/home/ubuntu/jope_plan/ns/receipts/H109_cpu_dry_run.json`.
 
+The follow-up readout is prepared in `runner.py`: `summarize_readout(cells)` accepts only the complete nine-arm/seed receipt set in the schema described by `cell-outcome/v1`, checks the preregistration, frozen DOPE/r882, fold/source identity and train-only boundary, then computes all-seed family-paired utility summaries, 10,000 family-bootstrap draws, Holm-adjusted bounds, harm fractions, and Bradley–Terry Elo against r882. It consumes already-aggregated per-family utility maps and does not open files. `python runner.py --readout-cpu-dry-run` exercises the calculations using synthetic cells only; it does not read H109 outcomes or authorize execution.
+
 This is CPU preparation only. No data payload, checkpoint, timing cell, outcome, GPU, or FIFO ticket was used. GPU execution is separately gated until H99, H100, and H105 clear FIFO and the owner explicitly authorizes it. The result is not a model outcome, qualification, or serving promotion.
 
 ## CPU acceptance
