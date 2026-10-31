@@ -11,6 +11,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import tempfile
 import time
 import unittest
 
@@ -20,6 +21,29 @@ HERE = Path(__file__).resolve().parent
 SELECTED = "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1"
 CATALOG = "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba"
 EVALUATOR = "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900"
+JOURNAL_INDEX_SHA256 = "37c022236710166a88419a4e96a91f3366864baa92d7ea98ea7e0bd001dd1e51"
+APPROVED_JOURNAL_ROOT = Path.home() / "jope-data/res-05/journals"
+SCORE_ROW_KEYS = frozenset(
+    {
+        "complexity_open_parens",
+        "cv_fold_wins",
+        "cv_gate_passed",
+        "cv_geomean_rmse_ratio",
+        "cv_log_ratio_sd",
+        "cv_mean_log_ratio",
+        "cv_tail_log_ratio",
+        "cv_test_agreed",
+        "dsl",
+        "fitness",
+        "logratio",
+        "operator",
+        "parents",
+        "program_sha256",
+        "status",
+        "test_rmse_ratio",
+        "wall_s",
+    }
+)
 
 
 def sha(path):
@@ -31,9 +55,46 @@ def sha(path):
 
 
 def checked_json(path, expected=None):
-    if expected is not None and sha(path) != expected:
+    data = Path(path).read_bytes()
+    if expected is not None and hashlib.sha256(data).hexdigest() != expected:
         raise ValueError(f"hash mismatch: {path}")
-    return json.loads(Path(path).read_text())
+    return json.loads(data)
+
+
+def load_journal_index(path):
+    data = Path(path).read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    if digest != JOURNAL_INDEX_SHA256:
+        raise ValueError("journal index identity is not the approved RES-05 index")
+    return json.loads(data), digest
+
+
+def read_approved_journal(path, root=APPROVED_JOURNAL_ROOT):
+    """Read one pinned journal only from the approved training-journal directory."""
+    if not isinstance(path, str) or not Path(path).is_absolute():
+        raise ValueError("journal path must be an absolute approved training path")
+    if any(part in ("", ".", "..") for part in path.split("/")[1:]):
+        raise ValueError("journal path is not canonical")
+    candidate = Path(path)
+    approved_root = Path(root).resolve(strict=True)
+    resolved = candidate.resolve(strict=True)
+    if not resolved.is_relative_to(approved_root):
+        raise ValueError("journal path is outside approved training artifacts")
+    current = Path(candidate.anchor)
+    for part in candidate.parts[1:]:
+        current /= part
+        if current.is_symlink():
+            raise ValueError("symlink in approved journal path")
+    if not resolved.is_file():
+        raise ValueError("approved journal path is not a file")
+    return resolved.read_bytes()
+
+
+def validate_score_row(row):
+    if not isinstance(row, dict) or set(row) != SCORE_ROW_KEYS:
+        raise ValueError("unexpected score row schema")
+    if row["test_rmse_ratio"] is not None:
+        raise ValueError("forbidden outer score")
 
 
 def finite(value):
@@ -121,22 +182,22 @@ def replay(index, allowed):
         ]
         if any(cid not in allowed for cid, _ in expected):
             raise ValueError("non-training journal context")
-        path = Path(item["local_scores_path"])
-        if sha(path) != item["scores_sha256"]:
+        data = read_approved_journal(item["local_scores_path"])
+        if hashlib.sha256(data).hexdigest() != item["scores_sha256"]:
             raise ValueError("journal digest mismatch")
         rows = [
-            json.loads(line) for line in path.read_text().splitlines() if line.strip()
+            json.loads(line) for line in data.decode("utf-8").splitlines() if line.strip()
         ]
         if len(rows) != len(expected) or len(rows) != item["GP_counts"]["evaluated"]:
             raise ValueError("journal/round inventory mismatch")
         for r, (_, pid) in zip(rows, expected):
             counts["evaluations"] += 1
+            validate_score_row(r)
             if (
                 r["program_sha256"] != pid
                 or hashlib.sha256(r["dsl"].encode()).hexdigest() != pid
-                or r.get("test_rmse_ratio") is not None
             ):
-                raise ValueError("program identity or forbidden outer score")
+                raise ValueError("program identity mismatch")
             recorded = finite(r["fitness"])
             if type(r["cv_gate_passed"]) is not bool:
                 raise ValueError("gate must be boolean")
@@ -265,10 +326,13 @@ def pool_census(packet, allowed):
 def proposal_census(packet, allowed, index):
     """Replay the closed promotion prefix before each observed proposal group."""
     meta = index["promotions"]
-    if meta["first_later_round"] <= 782 or sha(meta["local_path"]) != meta["sha256"]:
+    if meta["first_later_round"] <= 782:
+        raise ValueError("incomplete/corrupted promotion prefix")
+    event_bytes = read_approved_journal(meta["local_path"])
+    if hashlib.sha256(event_bytes).hexdigest() != meta["sha256"]:
         raise ValueError("incomplete/corrupted promotion prefix")
     events = [
-        json.loads(line) for line in Path(meta["local_path"]).read_text().splitlines()
+        json.loads(line) for line in event_bytes.decode("utf-8").splitlines()
     ]
     if len(events) != meta["entries"] or [e["round"] for e in events] != sorted(
         e["round"] for e in events
@@ -377,6 +441,47 @@ class Controls(unittest.TestCase):
         with self.assertRaises(ValueError):
             replay({"rounds": [], "evaluator_source_sha256": EVALUATOR}, {})
 
+    def test_journal_index_must_match_approved_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "index.json"
+            path.write_text("{}")
+            with self.assertRaisesRegex(ValueError, "approved RES-05 index"):
+                load_journal_index(path)
+
+    def test_journal_path_must_be_under_approved_root_and_link_free(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            root = base / "approved"
+            root.mkdir()
+            allowed = root / "scores.jsonl"
+            allowed.write_text("training")
+            self.assertEqual(read_approved_journal(str(allowed), root), b"training")
+
+            outside = base / "outside.jsonl"
+            outside.write_text("not admitted")
+            with self.assertRaisesRegex(ValueError, "outside approved"):
+                read_approved_journal(str(outside), root)
+
+            inside_target = root / "target.jsonl"
+            inside_target.write_text("target")
+            link = root / "linked.jsonl"
+            link.symlink_to(inside_target)
+            with self.assertRaisesRegex(ValueError, "symlink"):
+                read_approved_journal(str(link), root)
+
+    def test_score_row_rejects_unknown_or_missing_fields(self):
+        row = {key: None for key in SCORE_ROW_KEYS}
+        validate_score_row(row)
+        with self.assertRaisesRegex(ValueError, "unexpected score row schema"):
+            validate_score_row(dict(row, outer_rmse=0.0))
+        missing = dict(row)
+        missing.pop("wall_s")
+        with self.assertRaisesRegex(ValueError, "unexpected score row schema"):
+            validate_score_row(missing)
+        leaked = dict(row, test_rmse_ratio=0.5)
+        with self.assertRaisesRegex(ValueError, "forbidden outer score"):
+            validate_score_row(leaked)
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -399,13 +504,13 @@ def main():
         parser.error("bulk receipt must be outside the working tree")
     started = time.monotonic()
     allowed = admit(args.packet, args.catalog)
-    index = checked_json(args.journal_index)
+    index, index_digest = load_journal_index(args.journal_index)
     result = dict(
         schema="jope.res05.surrogate-reference/v1",
         source_sha256=sha(__file__),
         selected_sha256=SELECTED,
         catalog_sha256=CATALOG,
-        index_sha256=sha(args.journal_index),
+        index_sha256=index_digest,
         surrogate=replay(index, allowed),
         initial_pools=pool_census(args.packet, allowed),
         proposal_snapshots=proposal_census(args.packet, allowed, index),

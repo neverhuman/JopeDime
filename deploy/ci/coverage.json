@@ -4733,6 +4733,16 @@
       "lanes": [],
       "scope": "Owner-requested pytest regression proof for flywheel model/optimizer rollback, equal-score progress, and evaluation-identity refusal at the PyTorch boundary; research flywheel outside the reviewed product baseline."
     },
+    "python:research/flywheel_selfplay/golden/test_generate.py": {
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-approved gb1915 RES-07 CPU pre-stage and tagged model_prior subset validation; numerical qualification remains gated and outside release lanes.",
+      "discovery": {
+        "kind": "python-family"
+      }
+    },
     "python:research/flywheel_selfplay/test_export_fused_bundle.py": {
       "dispositions": [
         "research"
@@ -6966,6 +6976,22 @@
         "full-default"
       ],
       "scope": "A packaged copy alone in an empty directory with an empty environment: version, doctor, fit with bounded selection, predict, fit-predict parity, verify-self and licenses; every exit status 2-7; a damaged manifest, frame or executable region; a promised but unexecutable method; an unpackaged build."
+    },
+    "target:jope-appliance/test/system": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-appliance/tests/system/main.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Pre-stage fixture reconnects and public store crash boundaries. Live terminal/MCP observation, discovery S2 determinism and internal CAS commit failpoint qualification remain pending executable run handlers."
     },
     "target:jope-arena/bin/jope-arena": {
       "discovery": {
@@ -12543,6 +12569,38 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-service/test/no_gp_leak": {
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Pre-stage T2 public-leak sentinel scanner over synthetic HTTP/SSE/MCP/CLI/error/export/log wire shapes, with a positive control; the PTY transcript case is ignored pending TUI-09. Not a full discovery-run qualification.",
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-service/tests/no_gp_leak.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      }
+    },
+    "target:jope-service/test/golden-fixture-loader": {
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "RES-09 SafeTensors golden-fixture loader: exact tensor names/shapes, strict/skip modes and synthetic fixture checks; real RES-07 goldens load only when present (skip diagnostic otherwise).",
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-service/tests/support/golden.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      }
+    },
     "target:jope-telemetry/bin/jtel": {
       "discovery": {
         "kind": "target",
@@ -12989,6 +13047,16 @@
       ],
       "lanes": [],
       "scope": "Owner-requested H50 offline proofs for seeded unit directions, adapter flattening, antithetic population generation, deterministic rank shaping, and finite strict-JSON rejection metadata."
+    },
+    "python:research/flywheel_selfplay/h55/test_h55.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H55 offline tests for strict family-bootstrap admission, resource guards, lock-wait accounting, terminal-read limits, and runner refusal boundaries; experimental research outside product qualification."
     },
     "python:research/h-followups/h09/test_run.py": {
       "discovery": {

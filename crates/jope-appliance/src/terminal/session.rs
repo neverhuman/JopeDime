@@ -603,16 +603,7 @@ impl Session {
     }
 
     fn handle_event(&mut self, event: PublicEvent, width: usize) -> Vec<String> {
-        if let Some(snapshot) = &mut self.snapshot {
-            if event.run_id == snapshot.run_id {
-                snapshot.event_watermark = event.sequence;
-                if let EventBody::RunState(body) = &event.event {
-                    snapshot.state = body.state;
-                    snapshot.phase = body.phase;
-                    snapshot.pending = body.pending.clone();
-                }
-            }
-        }
+        update_snapshot_from_event(&mut self.snapshot, &event);
         crate::terminal::cards::render_transcript(
             &[event],
             width,
@@ -646,6 +637,21 @@ impl Session {
                 snapshot.run_id
             );
         }
+    }
+}
+
+fn update_snapshot_from_event(snapshot: &mut Option<RunSnapshot>, event: &PublicEvent) {
+    let Some(snapshot) = snapshot.as_mut() else {
+        return;
+    };
+    if event.run_id != snapshot.run_id {
+        return;
+    }
+    snapshot.event_watermark = event.sequence;
+    if let EventBody::RunState(body) = &event.event {
+        snapshot.state = body.state;
+        snapshot.phase = body.phase;
+        snapshot.pending = body.pending.clone();
     }
 }
 
@@ -695,5 +701,87 @@ mod tests {
             request.target(),
             "/v1/runs/run_01J00000000000000000000000/control"
         );
+    }
+
+    #[test]
+    fn matching_run_state_event_advances_replay_watermark_and_snapshot() {
+        let mut snapshot = Some(
+            serde_json::from_value(serde_json::json!({
+                "run_id": "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0",
+                "revision": "1",
+                "state": "running",
+                "phase": "searching",
+                "pending": null,
+                "effort": "fast",
+                "budget_used": {"evaluations": "0", "wall_seconds": "0.0"},
+                "budget_total": {"evaluations": "10", "wall_seconds": "60"},
+                "best": null,
+                "event_watermark": "1",
+                "warnings": [],
+                "completion_reason": null
+            }))
+            .unwrap(),
+        );
+        let event: PublicEvent = serde_json::from_value(serde_json::json!({
+            "run_id": "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0",
+            "sequence": "4",
+            "time": "2026-10-30T10:03:02.000Z",
+            "kind": "run.state",
+            "body": {
+                "state": "paused",
+                "phase": "searching",
+                "pending": null,
+                "reason": "paused by user"
+            }
+        }))
+        .unwrap();
+
+        update_snapshot_from_event(&mut snapshot, &event);
+
+        let snapshot = snapshot.unwrap();
+        assert_eq!(snapshot.event_watermark, DecimalU64(4));
+        assert_eq!(snapshot.state, RunState::Paused);
+        assert_eq!(snapshot.phase, jope_api::RunPhase::Searching);
+        assert_eq!(snapshot.pending, None);
+    }
+
+    #[test]
+    fn event_from_another_run_does_not_advance_attached_replay_cursor() {
+        let mut snapshot = Some(
+            serde_json::from_value(serde_json::json!({
+                "run_id": "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0",
+                "revision": "1",
+                "state": "running",
+                "phase": "searching",
+                "pending": null,
+                "effort": "fast",
+                "budget_used": {"evaluations": "0", "wall_seconds": "0.0"},
+                "budget_total": {"evaluations": "10", "wall_seconds": "60"},
+                "best": null,
+                "event_watermark": "1",
+                "warnings": [],
+                "completion_reason": null
+            }))
+            .unwrap(),
+        );
+        let event: PublicEvent = serde_json::from_value(serde_json::json!({
+            "run_id": "run_01JBD8Q6N4V2T5Y8K3M7P9R1S1",
+            "sequence": "9",
+            "time": "2026-10-30T10:03:02.000Z",
+            "kind": "run.state",
+            "body": {
+                "state": "cancelled",
+                "phase": "finalizing",
+                "pending": null,
+                "reason": "cancelled"
+            }
+        }))
+        .unwrap();
+
+        update_snapshot_from_event(&mut snapshot, &event);
+
+        let snapshot = snapshot.unwrap();
+        assert_eq!(snapshot.event_watermark, DecimalU64(1));
+        assert_eq!(snapshot.state, RunState::Running);
     }
 }

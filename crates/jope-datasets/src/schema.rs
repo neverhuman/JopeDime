@@ -101,7 +101,9 @@ impl Ctx<'_> {
         if let Some(r) = self.regexes.get(pattern) {
             return Some(r.clone());
         }
-        match regex::Regex::new(pattern) {
+        // ECMA-262 has no `\z`; schemas spell "end of input" as the lookahead `(?![\s\S])`,
+        // which the `regex` crate cannot parse. It is exactly `\z`, so translate that one idiom.
+        match regex::Regex::new(&pattern.replace("(?![\\s\\S])", "\\z")) {
             Ok(r) => {
                 self.regexes.insert(pattern.to_string(), r.clone());
                 Some(r)
@@ -316,6 +318,16 @@ fn kind(v: &Value) -> &'static str {
 mod tests {
     use super::validate;
     use serde_json::json;
+
+    #[test]
+    fn ecma_end_of_input_lookahead_validates_exactly() {
+        // The `DecimalU64` wire pattern ends `$(?![\s\S])`; the regex crate lacks lookahead.
+        let schema =
+            serde_json::json!({"type": "string", "pattern": "^(?:0|[1-9][0-9]*)$(?![\\s\\S])"});
+        assert!(validate(&schema, &serde_json::json!("123")).is_empty());
+        assert!(!validate(&schema, &serde_json::json!("123\n")).is_empty());
+        assert!(!validate(&schema, &serde_json::json!("0123")).is_empty());
+    }
 
     #[test]
     fn basic_keywords() {

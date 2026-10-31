@@ -2906,6 +2906,7 @@ version = "0.4.1"
 dependencies = [
  "anyhow",
  "axum",
+ "candle-core",
  "chrono",
  "feat-math",
  "futures-util",
@@ -2921,6 +2922,7 @@ dependencies = [
  "proptest",
  "rand_chacha 0.3.1",
  "redb",
+ "ruzstd",
  "safetensors 0.8.0",
  "serde",
  "serde_json",

@@ -10,12 +10,15 @@ use super::types::text_hash;
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+#[cfg(unix)]
 use std::ffi::{c_char, c_int, c_void, CString};
 use std::fs;
 use std::io::Write;
+#[cfg(unix)]
 use std::os::fd::AsRawFd;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+#[cfg(unix)]
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -152,15 +155,20 @@ pub struct FittedCppRuntime {
     work_root: PathBuf,
     // Loaded native handles are confined to their owning thread. Neither the
     // runtime nor its models promise cross-thread access to the C++ ABI.
+    #[cfg(unix)]
     api: Rc<RuntimeApi>,
 }
 
 pub struct FittedCppModel {
+    #[cfg(unix)]
     model: *mut c_void,
+    #[cfg(unix)]
     api: Rc<RuntimeApi>,
+    #[cfg(unix)]
     directory: PathBuf,
 }
 
+#[cfg(unix)]
 type RuntimeLoad = unsafe extern "C" fn(
     *const u8,
     usize,
@@ -168,6 +176,7 @@ type RuntimeLoad = unsafe extern "C" fn(
     *mut *mut c_void,
     *mut CppRuntimeError,
 ) -> c_int;
+#[cfg(unix)]
 type RuntimePredict = unsafe extern "C" fn(
     *mut c_void,
     *const f64,
@@ -180,8 +189,10 @@ type RuntimePredict = unsafe extern "C" fn(
     usize,
     *mut CppRuntimeError,
 ) -> c_int;
+#[cfg(unix)]
 type RuntimeFree = unsafe extern "C" fn(*mut c_void);
 
+#[cfg(unix)]
 struct RuntimeApi {
     library: *mut c_void,
     // Retain the descriptor until dlclose, so another image cannot reuse its
@@ -193,12 +204,14 @@ struct RuntimeApi {
 }
 
 #[repr(C)]
+#[cfg(unix)]
 struct CppRuntimeError {
     code: i32,
     stage: [c_char; 32],
     message: [c_char; 256],
 }
 
+#[cfg(unix)]
 impl Default for CppRuntimeError {
     fn default() -> Self {
         Self {
@@ -218,6 +231,7 @@ impl std::fmt::Debug for FittedCppRuntime {
     }
 }
 
+#[cfg(unix)]
 impl RuntimeApi {
     /// The pinned image must export the three functions with the ABI below.
     unsafe fn open(bytes: &[u8], expected_sha256: &str) -> Result<Self> {
@@ -260,6 +274,7 @@ impl RuntimeApi {
     }
 }
 
+#[cfg(unix)]
 impl Drop for RuntimeApi {
     fn drop(&mut self) {
         // SAFETY: this is the sole owner of a successful dlopen reference.
@@ -270,6 +285,7 @@ impl Drop for RuntimeApi {
     }
 }
 
+#[cfg(unix)]
 impl FittedCppRuntime {
     pub fn new(work_root: impl Into<PathBuf>) -> Result<Self> {
         let work_root = work_root.into();
@@ -337,6 +353,7 @@ impl FittedCppRuntime {
     }
 }
 
+#[cfg(unix)]
 impl FittedCppModel {
     pub fn predict(&self, table: &EncodedTable) -> Result<Vec<f64>> {
         let cells = table
@@ -372,6 +389,7 @@ impl FittedCppModel {
     }
 }
 
+#[cfg(unix)]
 impl Drop for FittedCppModel {
     fn drop(&mut self) {
         // SAFETY: model is the unique successful-load handle, freed exactly once
@@ -381,6 +399,34 @@ impl Drop for FittedCppModel {
         }
         let _ = fs::remove_dir_all(&self.directory);
     }
+}
+
+#[cfg(not(unix))]
+impl FittedCppRuntime {
+    pub fn new(work_root: impl Into<PathBuf>) -> Result<Self> {
+        let _ = work_root.into();
+        Err(unsupported_runtime())
+    }
+
+    pub fn load(&self, _codec: &[u8]) -> Result<FittedCppModel> {
+        Err(unsupported_runtime())
+    }
+}
+
+#[cfg(not(unix))]
+impl FittedCppModel {
+    pub fn predict(&self, _table: &EncodedTable) -> Result<Vec<f64>> {
+        Err(unsupported_runtime())
+    }
+}
+
+#[cfg(not(unix))]
+fn unsupported_runtime() -> anyhow::Error {
+    std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        "fitted C++ runtime is supported only on Unix platforms",
+    )
+    .into()
 }
 
 pub fn encode_fitted_cpp17(model: &BoundModel) -> Result<FittedModelCodec> {
@@ -608,6 +654,7 @@ fn category_is_missing(raw: &str) -> bool {
     text.is_empty() || text.eq_ignore_ascii_case("null") || text.eq_ignore_ascii_case("na")
 }
 
+#[cfg(unix)]
 fn cpp_error(error: &CppRuntimeError, fallback_code: i32) -> anyhow::Error {
     fn text(buffer: &[c_char]) -> String {
         let bytes = buffer
@@ -680,9 +727,12 @@ fn read_u64(bytes: &[u8], at: usize) -> Result<u64> {
     ))
 }
 
+#[cfg(unix)]
 const RTLD_NOW: c_int = 2;
+#[cfg(unix)]
 const RTLD_LOCAL: c_int = 0;
 
+#[cfg(unix)]
 #[link(name = "dl")]
 unsafe extern "C" {
     fn dlopen(filename: *const c_char, flags: c_int) -> *mut c_void;
@@ -691,6 +741,7 @@ unsafe extern "C" {
     fn dlerror() -> *const c_char;
 }
 
+#[cfg(unix)]
 unsafe fn load_symbol(handle: *mut c_void, name: &[u8]) -> Result<*mut c_void> {
     // SAFETY: the caller supplies a live dlopen handle and a fixed, live,
     // NUL-terminated symbol name; the returned address is used while it stays open.
@@ -701,6 +752,7 @@ unsafe fn load_symbol(handle: *mut c_void, name: &[u8]) -> Result<*mut c_void> {
     Ok(pointer)
 }
 
+#[cfg(unix)]
 fn dl_error() -> String {
     // SAFETY: dlerror takes no arguments and returns a thread-local pointer.
     let pointer = unsafe { dlerror() };
@@ -715,7 +767,7 @@ fn dl_error() -> String {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, unix))]
 mod tests {
     use super::*;
     use crate::advanced_v3::{fit_table, ColumnSpec, DataSchema, RowSemantics};

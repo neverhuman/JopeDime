@@ -14,9 +14,11 @@ population before comparing this snapshot with other models.}
 The admission log contains
 695 consecutive rounds. Four rows are marked accepted, but only two strictly
 increase the recorded best validation utility within this window. Its final
-value is 1.1378, with no later increase in the retained interval
-(\cref{fig:fw-validation}). Acceptance flags and improvements in that value
-are therefore distinct counts.
+recorded best-validation value is 1.1378, with no later increase in the
+retained interval (\cref{fig:fw-validation}). Acceptance flags and
+improvements in this value are therefore distinct counts. Comparing these
+utilities across harnesses requires matched data, normalization and scoring
+protocols.
 
 The more detailed summaries cover only 25 of those rounds. In that subset,
 training utility exceeds validation utility by 0.282--0.290

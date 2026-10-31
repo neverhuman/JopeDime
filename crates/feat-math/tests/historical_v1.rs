@@ -1168,6 +1168,26 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         clienttmp_tempfile["base_commit"],
         "4e6a834794d0bacb7d792a6ff3e1b9172fa435af"
     );
+    let rnk09_ruzstd =
+        old_fixture("transitions/rnk09_ruzstd_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        rnk09_ruzstd["source_commit"],
+        "d3b589181be62f2b99928be419f359c0b77e7626"
+    );
+    assert_eq!(
+        rnk09_ruzstd["base_commit"],
+        "31ba8225da6c8c0128dd8c58fbb2839920fb102f"
+    );
+    let res09_candle =
+        old_fixture("transitions/res09_candle_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        res09_candle["source_commit"],
+        "27b292c7e76b28b15cddebea15f0683a5baab9ae"
+    );
+    assert_eq!(
+        res09_candle["base_commit"],
+        "b452594f63fb44d607d558a5116643a2db51c3a2"
+    );
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -1215,6 +1235,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &bat02_jope_paths,
         &dsc08_heuristic,
         &clienttmp_tempfile,
+        &rnk09_ruzstd,
+        &res09_candle,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -1298,6 +1320,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 bat02_jope_paths.clone(),
                 dsc08_heuristic.clone(),
                 clienttmp_tempfile.clone(),
+                rnk09_ruzstd.clone(),
+                res09_candle.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1367,6 +1391,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 bat02_jope_paths.clone(),
                 dsc08_heuristic.clone(),
                 clienttmp_tempfile.clone(),
+                rnk09_ruzstd.clone(),
+                res09_candle.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1429,6 +1455,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 bat02_jope_paths.clone(),
                 dsc08_heuristic.clone(),
                 clienttmp_tempfile.clone(),
+                rnk09_ruzstd.clone(),
+                res09_candle.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1522,6 +1550,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 bat02_jope_paths.clone(),
                 dsc08_heuristic.clone(),
                 clienttmp_tempfile.clone(),
+                rnk09_ruzstd.clone(),
+                res09_candle.clone(),
             ],
         ),
         (
@@ -1575,6 +1605,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 bat02_jope_paths.clone(),
                 dsc08_heuristic.clone(),
                 clienttmp_tempfile.clone(),
+                rnk09_ruzstd.clone(),
+                res09_candle.clone(),
             ],
         ),
     ] {
@@ -1676,6 +1708,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         bat02_jope_paths,
         dsc08_heuristic,
         clienttmp_tempfile,
+        rnk09_ruzstd,
+        res09_candle,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
