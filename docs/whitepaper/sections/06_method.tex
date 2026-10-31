@@ -111,12 +111,17 @@ matched ablation (\cref{sub:results-ablation}).
 
 Training is expert iteration \citep{anthony2017expert}: verified search is the teacher and the
 writer is the student (\cref{alg:selfplay}). The writer imitates every scored program in proportion
-to the referee's verdict,
-$\mathcal{L}_{\text{writer}}(p)=-\sum_{w\in G_p}(0.05+\rho_w^{4})\log\writer(w\mid z_p)$, inside
-$\mathcal{L}_{\text{writer}}+0.1\,\mathcal{L}_{\text{map}}+0.25\,\mathcal{L}_{\text{BT}}
-+0.1\,\mathcal{L}_{\text{runtime}}+0.05\,\mathcal{L}_{\text{prog}}$ (\cref{app:training}). Losing
-moves still teach: a median also-ran carries about a tenth of a winner's weight and is a negative for the
-map.
+to the referee's verdict, inside a combined objective (\cref{app:training}):
+\begin{align}
+  \mathcal{L}_{\text{writer}}(p) &= -\sum_{w\in G_p}\bigl(0.05+\rho_w^{4}\bigr)\log\writer(w\mid z_p),
+  \label{eq:writerLoss}\\
+  \mathcal{L} &= \mathcal{L}_{\text{writer}} + 0.1\,\mathcal{L}_{\text{map}}
+  + 0.25\,\mathcal{L}_{\text{BT}} \nonumber\\
+  &\quad + 0.1\,\mathcal{L}_{\text{runtime}} + 0.05\,\mathcal{L}_{\text{prog}}.
+  \label{eq:totalLoss}
+\end{align}
+Losing moves still teach: a median also-ran carries about a tenth of a winner's weight and is a
+negative for the map.
 
 \begin{algorithm*}[t]
 \caption{The self-play loop (training).}\label{alg:selfplay}
@@ -145,8 +150,9 @@ favors it, it wins at least as many cuts as it loses, and it fails no more often
 that reads the context as a prefix token and writes at most 128 tokens; with the map, the network
 has 27.8 million parameters. The supplied source notes describe training on eight A100 GPUs in
 September 2026, with a corpus of about 10.2 million scored programs from
-80 training datasets. \TBD{Provide the checkpoint acceptance record and
-pin the reference runtime before final evaluation.} These specifications
+80 training datasets. The checkpoint's acceptance record and a pinned
+runtime are inputs to the evaluation contract (\cref{sub:results-protocol})
+and are not reproduced here. These specifications
 identify the historical reference; they do not describe the later adapter
 snapshot or establish its deployment performance. Details belong in
 \cref{app:training}.
