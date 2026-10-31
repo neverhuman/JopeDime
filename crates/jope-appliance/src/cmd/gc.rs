@@ -12,7 +12,9 @@ pub(crate) fn run(
     if generated {
         super::common::write_idempotency_key(&mut std::io::stderr().lock(), &key)?;
     }
-    let mut value: Value = client.store_gc(&json!({"dry_run": dry_run}), Some(&key))?;
+    let request: jope_api::registry::GcRequest =
+        serde_json::from_value(json!({"dry_run": dry_run}))?;
+    let mut value: Value = serde_json::to_value(client.store_gc(&request, Some(&key))?)?;
     if let Some(object) = value.as_object_mut() {
         super::common::add_idempotency_key(object, &key);
     }

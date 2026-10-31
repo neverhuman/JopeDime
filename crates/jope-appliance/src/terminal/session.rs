@@ -524,7 +524,7 @@ impl Session {
     }
 
     fn latest_active_run(&self) -> anyhow::Result<RunId> {
-        let value = self.client.runs()?;
+        let value = serde_json::to_value(self.client.runs()?)?;
         let runs = value
             .get("runs")
             .and_then(serde_json::Value::as_array)

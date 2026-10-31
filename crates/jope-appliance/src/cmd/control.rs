@@ -43,6 +43,8 @@ fn execute<T: Transport>(
             }
         },
     };
+    let body: jope_api::registry::RunControlRequest =
+        serde_json::from_value(body).context("control request")?;
     let result = transport
         .run_control(&id, &body, Some(&key))
         .context("control run")?;

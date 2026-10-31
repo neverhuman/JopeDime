@@ -44,6 +44,8 @@ fn execute<T: Transport>(
             value
         }
     };
+    let body: jope_api::registry::RunForkRequest =
+        serde_json::from_value(body).context("restart request")?;
     let result = transport
         .run_fork(&id, &body, Some(&key))
         .context("restart run")?;

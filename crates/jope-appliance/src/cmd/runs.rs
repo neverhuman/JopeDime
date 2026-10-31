@@ -13,7 +13,9 @@ pub fn run(command: RunsCommand) -> anyhow::Result<()> {
 
 fn execute<T: Transport>(transport: &T, command: RunsCommand) -> anyhow::Result<Value> {
     match command {
-        RunsCommand::List => transport.runs().context("list runs"),
+        RunsCommand::List => {
+            serde_json::to_value(transport.runs().context("list runs")?).context("serialize runs")
+        }
         RunsCommand::Delete {
             run,
             idempotency_key,
@@ -22,14 +24,18 @@ fn execute<T: Transport>(transport: &T, command: RunsCommand) -> anyhow::Result<
                 .map_err(|_| jope_runtime::Failure::input("invalid run id"))?;
             let key = crate::common::resolve_idempotency_key(idempotency_key.as_deref());
             crate::common::announce_generated_key(idempotency_key.as_deref(), &key)?;
-            transport.run_delete(&id, &key).context("delete run")
+            serde_json::to_value(transport.run_delete(&id, &key).context("delete run")?)
+                .context("serialize delete receipt")
         }
         RunsCommand::ExportFeedback { run, out } => {
             let id = RunId::from_str(&run)
                 .map_err(|_| jope_runtime::Failure::input("invalid run id"))?;
-            let value = transport
-                .feedback_export(&id)
-                .context("export run feedback")?;
+            let value = serde_json::to_value(
+                transport
+                    .feedback_export(&id)
+                    .context("export run feedback")?,
+            )
+            .context("serialize feedback response")?;
             let bytes = serde_json::to_vec_pretty(&value).context("serialize feedback response")?;
             std::fs::write(&out, bytes)
                 .map_err(|error| jope_runtime::Failure::output(error.to_string()))?;
