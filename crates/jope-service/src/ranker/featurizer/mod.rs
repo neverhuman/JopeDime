@@ -3,6 +3,7 @@
 //! RNK-03 implements structural features only. Missing families remain explicit;
 //! a partial extraction cannot be converted into a complete ranker input.
 
+pub mod parameters;
 pub mod parse;
 pub mod structural;
 
