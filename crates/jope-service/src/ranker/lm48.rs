@@ -134,8 +134,8 @@ mod tests {
 
     impl Fixture {
         fn new(weight_shape: &[usize], weights: &[f32], bias: &[f32]) -> Self {
-            let mut file = tempfile::NamedTempFile::new()
-                .expect("create synthetic safetensors fixture");
+            let mut file =
+                tempfile::NamedTempFile::new().expect("create synthetic safetensors fixture");
             let mut header = format!(
                 "{{\"proj.weight\":{{\"dtype\":\"F32\",\"shape\":{weight_shape:?},\"data_offsets\":[0,{}]}},\"proj.bias\":{{\"dtype\":\"F32\",\"shape\":[{}],\"data_offsets\":[{},{}]}}}}",
                 weights.len() * 4,
