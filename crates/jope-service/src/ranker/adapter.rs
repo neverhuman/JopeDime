@@ -61,57 +61,52 @@ impl std::error::Error for InputShapeError {}
 impl PredictCostsInputs<'_> {
     /// Check the F12 flattened dimensions before converting them to backend tensors.
     pub fn validate_shapes(&self) -> Result<(), InputShapeError> {
-        let bn = self
-            .batch
-            .checked_mul(self.candidates)
-            .unwrap_or(usize::MAX);
+        let bn = self.batch.saturating_mul(self.candidates);
         let expected = [
             (
                 "prog_412",
-                bn.checked_mul(PROG_FEATURES).unwrap_or(usize::MAX),
+                bn.saturating_mul(PROG_FEATURES),
                 self.prog_412.len(),
             ),
             (
                 "proj_16",
-                bn.checked_mul(PROJ_FEATURES).unwrap_or(usize::MAX),
+                bn.saturating_mul(PROJ_FEATURES),
                 self.proj_16.len(),
             ),
             (
                 "tokens",
-                bn.checked_mul(TOKENS * TOKEN_WIDTH).unwrap_or(usize::MAX),
+                bn.saturating_mul(TOKENS * TOKEN_WIDTH),
                 self.tokens.len(),
             ),
             (
                 "token_mask",
-                bn.checked_mul(TOKENS).unwrap_or(usize::MAX),
+                bn.saturating_mul(TOKENS),
                 self.token_mask.len(),
             ),
             (
                 "revealed_indices",
-                self.batch.checked_mul(REVEALED).unwrap_or(usize::MAX),
+                self.batch.saturating_mul(REVEALED),
                 self.revealed_indices.len(),
             ),
             (
                 "revealed_fitness",
-                self.batch.checked_mul(REVEALED).unwrap_or(usize::MAX),
+                self.batch.saturating_mul(REVEALED),
                 self.revealed_fitness.len(),
             ),
             (
                 "revealed_gates",
-                self.batch.checked_mul(REVEALED).unwrap_or(usize::MAX),
+                self.batch.saturating_mul(REVEALED),
                 self.revealed_gates.len(),
             ),
             (
                 "ctx_feat",
-                self.batch
-                    .checked_mul(CONTEXT_FEATURES)
-                    .unwrap_or(usize::MAX),
+                self.batch.saturating_mul(CONTEXT_FEATURES),
                 self.ctx_feat.len(),
             ),
             ("base_prior_cost", bn, self.base_prior_cost.len()),
             (
                 "sos_prior",
-                bn.checked_mul(SOS_FEATURES).unwrap_or(usize::MAX),
+                bn.saturating_mul(SOS_FEATURES),
                 self.sos_prior.len(),
             ),
         ];
