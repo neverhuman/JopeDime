@@ -1066,7 +1066,7 @@ fn read_plain(ty: ColumnType, data: &[u8], n: usize) -> Result<Vec<Cell>> {
     Ok(out)
 }
 
-/// Reads a file written by [`write`] (one row group, PLAIN, UNCOMPRESSED or ZSTD pages).
+/// Reads a file written by [`write()`] (one row group, PLAIN, UNCOMPRESSED or ZSTD pages).
 pub fn read(bytes: &[u8]) -> Result<Table> {
     ensure!(
         bytes.len() >= 12 && &bytes[..4] == MAGIC && &bytes[bytes.len() - 4..] == MAGIC,
