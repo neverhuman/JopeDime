@@ -1,6 +1,6 @@
 # H63 — W8 original-training-row resplit diagnostic
 
-Status: **execution preparation; no result or verdict yet**. H63 is reserved for W8 under the owner’s `overnight15_t2125.md` assignment. OPUS owns diagnostic execution; ASTRA owns result review, custody and publication. This folder does not authorize duplicate runs.
+Status: **cut-sensitivity diagnostic published; equal-cost search comparison unrun**. See [SUMMARY.md](SUMMARY.md) and [metrics.json](metrics.json). H63 is reserved for W8 under the owner’s `overnight15_t2125.md` assignment. OPUS owns diagnostic execution; ASTRA owns result review, custody and publication. This folder does not authorize duplicate runs.
 
 The scientific protocol is [W8](../rd_breakthrough/PROPOSALS.md#w8--robust-outcomes-on-training-only-resplits); the shared [CPU and S3 contract](../rd_breakthrough/CPU_S3.md) applies. The diagnostic uses zero GPU, at most **2,400 native evaluations and four aggregate CPU-hours**, including pilots, failed attempts and acquisition controls. Fan-out does not multiply these budgets.
 

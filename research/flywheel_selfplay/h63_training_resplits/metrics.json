@@ -1,0 +1,308 @@
+{
+  "schema": "rd_breakthrough.audited-results/v1",
+  "wave": "W8",
+  "h_folder": "H63",
+  "reviewer": "ASTRA",
+  "provenance": {
+    "run_id": "w8-opus-20261031a",
+    "source_git_sha": "d5095432129d57cbd7cffa9fd6ceb77dfe86cd9e",
+    "source_note": "checkout HEAD at upload; runner/analysis scripts are untracked research scratch, pinned by sha256 below and stored in this S3 run folder",
+    "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W8/w8-opus-20261031a/",
+    "objects": [
+      {
+        "key": "experiments/rd_breakthrough_20261030/W8/w8-opus-20261031a/analysis.txt",
+        "version_id": "uXC42x3P5fewoNKqrILxDmisYQAYSEvA",
+        "sha256": "5a0fb7d1e73e856d1b13fa55b50fb03ae2b883b2c727936976a60919a9b877fa",
+        "bytes": 1303,
+        "metadata_sha256_match": true
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W8/w8-opus-20261031a/manifest.json",
+        "version_id": "Xks4o2sKl6Yacety9YKA9.luCO5InQR0",
+        "sha256": "9510a32e45bbafd3423d3d2a14acb6410fd1a1f6ca9821fc2a2cad8794339c50",
+        "bytes": 7365,
+        "metadata_sha256_match": true
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W8/w8-opus-20261031a/pair_deltas.json",
+        "version_id": "EEh0mbpctqK0MGotTfiY2sHqVLw9f2Ws",
+        "sha256": "686fb6bbd8fc567566ff4d52666e72da0f01cf6b21eae906860c4c2461fb5acc",
+        "bytes": 20006,
+        "metadata_sha256_match": true
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W8/w8-opus-20261031a/plan-shard0.json",
+        "version_id": "EpM.C.7C4Pmo_5e0L525RS.ZmDBwqfi_",
+        "sha256": "ec90ca128db1f8bbcf84125b8b887085e563520fdd6a3033a37924ca5f4f7c6c",
+        "bytes": 78094,
+        "metadata_sha256_match": true
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W8/w8-opus-20261031a/results-shard0.jsonl",
+        "version_id": "D9mk5188sX5ecIuVE.qjbzoD7z_za1Y7",
+        "sha256": "f802fc43f3f03f9dacd0e9875b9735a205f8febce83cf16594b4a535fe4d8ac6",
+        "bytes": 234008,
+        "metadata_sha256_match": true
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W8/w8-opus-20261031a/run.log",
+        "version_id": "ZL5I6YkL929rN6TL8KYQ1TTKM7K24PxH",
+        "sha256": "414a24fc45a8b06861d5f7ccfd43c15499f01f7c453cc688c69c771046f9147e",
+        "bytes": 848,
+        "metadata_sha256_match": true
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W8/w8-opus-20261031a/w8_analyze.py",
+        "version_id": "BuglTL5X0bVC7f5DVojHuoDxMwffNr2D",
+        "sha256": "be4ad71962ec3cfaf73dd53f8330d3161c58b7003cdc7b8d42197b83fd2b4678",
+        "bytes": 3876,
+        "metadata_sha256_match": true
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W8/w8-opus-20261031a/w8_resplit.py",
+        "version_id": "GuQDlqL5OTkaGRMJqoK8zPiTJXgKwnhU",
+        "sha256": "817a814ab3cd822d9753dae8fcefed5e5c2959cacd06b9d7477988eb690dea7d",
+        "bytes": 9559,
+        "metadata_sha256_match": true
+      }
+    ],
+    "addenda_objects": [
+      {
+        "key": "experiments/rd_breakthrough_20261030/W8/w8-opus-20261031a/addendum-elo_w2_w8.json",
+        "version_id": "Cbc3BZF7IMdhjqEmBpzpJbgZkaD3lLS6",
+        "sha256": "3556d0128a460219e12c4a48b354ede1b9fa173655b5234000826b17e0ac0a42",
+        "bytes": 2129
+      },
+      {
+        "key": "experiments/rd_breakthrough_20261030/W8/w8-opus-20261031a/addendum-elo_w2_w8.py",
+        "version_id": "0JMuVbbRcAWQWUGrx1yxM1kw4AbDnD_T",
+        "sha256": "e92c5960ee6e6b0406abca26f11b8b677a0e1835f38b4acc49f7af4ae3ccebf6",
+        "bytes": 3969
+      }
+    ]
+  },
+  "counts": {
+    "pairs": 95,
+    "contexts": 16,
+    "families": 13,
+    "unique_context_programs": 111,
+    "native_evaluations": 760,
+    "original_fold_evaluations": 190,
+    "additional_resplit_evaluations": 570,
+    "failed_evaluations": 0,
+    "equal_cost_acquisition_evaluations": 0,
+    "remaining_native_evaluation_ceiling": 1640,
+    "original_challenger_wins": 11,
+    "original_challenger_losses": 84,
+    "original_challenger_ties": 0,
+    "challenger_original_exact_refits": 95,
+    "sources": {
+      "winners90": 90,
+      "fused20261029_promotion": 5
+    }
+  },
+  "resources": {
+    "host": "xbabe2",
+    "workers": 12,
+    "nice": 15,
+    "gpu_seconds": 0,
+    "summed_fit_wall_seconds": 1053.334,
+    "measured_cpu_seconds": null,
+    "note": "Summed per-evaluation wall time is not measured process CPU time. Host gate used load/os.cpu_count, not sampled utilization; no continuous resource receipt retained."
+  },
+  "seeds": [
+    701,
+    702,
+    703
+  ],
+  "stability": {
+    "sign_agreement_count": 208,
+    "sign_replicates": 285,
+    "sign_agreement": 0.7298245614035088,
+    "context_cluster_ci95": [
+      0.632996632996633,
+      0.8297101449275363
+    ],
+    "winning_challengers_sign_agreement_count": 19,
+    "winning_challengers_replicates": 33,
+    "winning_challengers_sign_agreement": 0.5757575757575758,
+    "winning_challengers_all_three_count": 3,
+    "winning_challengers_all_three_fraction": 0.2727272727272727,
+    "winning_challengers_mean_original_delta": 0.02435528649405784,
+    "winning_challengers_mean_resplit_delta": 0.01583938616669328,
+    "winning_challengers_fraction_shrinkage": 0.34965305497195664,
+    "by_margin": [
+      {
+        "margin_interval": [
+          0,
+          0.005
+        ],
+        "pairs": 27,
+        "agree_count": 54,
+        "replicates": 81,
+        "sign_agreement": 0.6666666666666666
+      },
+      {
+        "margin_interval": [
+          0.005,
+          0.02
+        ],
+        "pairs": 21,
+        "agree_count": 37,
+        "replicates": 63,
+        "sign_agreement": 0.5873015873015873
+      },
+      {
+        "margin_interval": [
+          0.02,
+          0.05
+        ],
+        "pairs": 5,
+        "agree_count": 8,
+        "replicates": 15,
+        "sign_agreement": 0.5333333333333333
+      },
+      {
+        "margin_interval": [
+          0.05,
+          0.2
+        ],
+        "pairs": 29,
+        "agree_count": 75,
+        "replicates": 87,
+        "sign_agreement": 0.8620689655172413
+      },
+      {
+        "margin_interval": [
+          0.2,
+          99
+        ],
+        "pairs": 13,
+        "agree_count": 34,
+        "replicates": 39,
+        "sign_agreement": 0.8717948717948718
+      }
+    ],
+    "program_role_instance_sd_percentiles": [
+      0.01831475002423487,
+      0.03864934851479081,
+      0.0714228874067445
+    ],
+    "pair_delta_sd_percentiles": [
+      0.019184821537886542,
+      0.040808109520411945,
+      0.061415227324293914
+    ]
+  },
+  "metrics": {
+    "Elo": {
+      "all_pairs/original_cut": {
+        "challenger_elo": 1126.48,
+        "ci95": [
+          965.08,
+          1222.54775
+        ],
+        "wtl": {
+          "wins": 11,
+          "ties": 0,
+          "losses": 84,
+          "elo_delta_vs_anchor": -373.52
+        },
+        "n_pairs": 95,
+        "n_families": 13
+      },
+      "all_pairs/resplit_mean": {
+        "challenger_elo": 1268.32,
+        "ci95": [
+          1079.04625,
+          1390.422
+        ],
+        "wtl": {
+          "wins": 19,
+          "ties": 1,
+          "losses": 75,
+          "elo_delta_vs_anchor": -231.68
+        },
+        "n_pairs": 95,
+        "n_families": 13
+      },
+      "originally_winning/original_cut": {
+        "challenger_elo": 2638.29,
+        "ci95": [
+          2638.29,
+          2638.29
+        ],
+        "wtl": {
+          "wins": 11,
+          "ties": 0,
+          "losses": 0,
+          "elo_delta_vs_anchor": 1138.29
+        },
+        "n_pairs": 11,
+        "n_families": 7
+      },
+      "originally_winning/resplit_mean": {
+        "challenger_elo": 1524.79,
+        "ci95": [
+          1275.13,
+          1809.82
+        ],
+        "wtl": {
+          "wins": 5,
+          "ties": 0,
+          "losses": 6,
+          "elo_delta_vs_anchor": 24.79
+        },
+        "n_pairs": 11,
+        "n_families": 7
+      }
+    },
+    "val_reg_inner": null,
+    "U4": null,
+    "unavailable_reason": "val_reg_inner and U4 not computed: no ranker/policy scored. Elo describes candidate/champion pair choices, not learned policy performance.",
+    "Elo_scope": "Exploratory post-run addendum: W2 choices in C relative to each arm own full-pool C reference; W8 challenger/incumbent pair ranking across cuts. Not common policy-admission Elo or a rescue of failed primary.",
+    "Elo_protocol": {
+      "anchor": 1500,
+      "tie_margin": 0.0001,
+      "prior": 0.01,
+      "iterations": 400,
+      "source_sha256": "9ece98326c32453179b0c765eb45944b68ca9de944d2828a1d42dee1401d1835",
+      "point_and_WTL_recomputed": true,
+      "W8_bootstrap_draws": 1000,
+      "W8_bootstrap_seed": 20261031,
+      "W8_intervals": "Author intervals retained after source review, not independently rerun; differs from10000-draw common primary gate."
+    }
+  },
+  "verdict": "CUT_SENSITIVITY_OBSERVED_CONTROL_ARM_NOT_RUN",
+  "next_action": "Equal-cost acquisition and source/provenance closure remain prerequisites to a reliability-policy claim. No training or promotion from this diagnostic.",
+  "limits": [
+    "95 candidate/champion pairs, not95 original HWM promotions; only11 originally beat the current champion.",
+    "16 contexts from13 families; context-cluster interval does not account for same-family dependence across contexts.",
+    "Program-role-instance SD repeats shared incumbents (190 instances,111 unique context/programs); it is not a distinct-program population estimate.",
+    "No inference about r882 dev-panel selection bias or live progress.",
+    "Local admitted mirrors were used; exact upstream S3 input keys absent from original manifest.",
+    "Full native outputs were parsed to obtain inner_cv; no claim that the process never materialized other output fields. Structural zero query padding is not real held-out data."
+  ],
+  "row_closure_review": {
+    "original_tables": 16,
+    "original_row_instances": 24031,
+    "original_table_hashes_match": true,
+    "original_nq_all_zero": true,
+    "reconstructed_input_hashes_matched": 760,
+    "feature_label_bytes_unchanged": true,
+    "fold_assignment_only_changed": true,
+    "zero_query_padding_rows": 10,
+    "worker_hash_verified": true,
+    "worker_elf_machine": 62,
+    "limit": "Checks real admitted local training bytes against run manifest and every executed envelope hash; does not establish upstream S3 object locations, original promotion lineage, or inherited feature exposure."
+  },
+  "host_allocation": {
+    "executed": [
+      "xbabe2"
+    ],
+    "xbabe1": "Saturated; no shard",
+    "xbabe3": "Saturated; no shard",
+    "xbabe4": "Pinned evaluator ELF machine62=x86-64; jope-ci observed aarch64. No same-identity native shard established; no rebuild or emulation qualification performed.",
+    "owner_t2155": "Arrived after completed run; no duplicate fits spent to change host allocation."
+  }
+}
