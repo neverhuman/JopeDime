@@ -110,9 +110,11 @@ The move is where invention gets its language: one program in a typed language
 over learning primitives. The reference language uses a 401-token
 vocabulary, with up to six transforms chosen from 31 and one of 22 prediction
 heads (\cref{sub:method-move}). Types remove whole classes of stillborn
-programs before they run \citep{montana1995stgp}. A canonical form makes two
-spellings of one idea count once, as AutoML-Zero reused the score of any program
-whose outputs matched one already scored \citep{real2020automlzero}. The
+programs before they run \citep{montana1995stgp}. Canonicalization can merge
+syntactic variants; it does not establish functional equivalence. AutoML-Zero
+reused scores when hashes of truncated predictions matched after a short
+training and validation probe \citep{real2020automlzero}. Matching a probe
+does not establish agreement on other inputs (\cref{sub:method-move}). The
 language bounds what can be expressed; changing its primitives changes
 that space \citep{boden1990creative}. The reference grammar also bounds
 composition depth. Structural constraints can prevent invalid programs; their effect on useful proposal
