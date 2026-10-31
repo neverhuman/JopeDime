@@ -393,7 +393,7 @@
     "d_shuffled"
   ],
   "w1_prior_binding": null,
-  "w1_redteam_status": "H108 completed NO_ADVANCE; no accepted W1 winner. W3 remains blocked pending explicit prior disposition.",
+  "w1_redteam_status": "H108 completed NO_ADVANCE; W3 binds GBM_PROG412_CTX as a comparison-only comparator. No accepted W1 winner/prior exists, so blocker B3 remains open.",
   "wave": "W3",
   "w1_disposition": {
     "status": "NO_ADVANCE",
