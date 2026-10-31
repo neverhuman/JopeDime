@@ -70,6 +70,22 @@ def sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def h99_fold_assignment_matches(cell, fold):
+    cell_assignment = cell.get("fold_assignment")
+    fold_assignment = fold.get("fold_assignment")
+    if not isinstance(cell_assignment, dict) or not isinstance(fold_assignment, dict):
+        return False
+    if cell_assignment.get("seed") != 9900 or fold_assignment.get("seed") != 9900:
+        return False
+    keys = ("fold_a_families", "fold_b_families", "folds")
+    return all(
+        isinstance(cell_assignment.get(key), list)
+        and isinstance(fold_assignment.get(key), list)
+        and cell_assignment[key] == fold_assignment[key]
+        for key in keys
+    )
+
+
 class Receipts:
     def __init__(self, root):
         self.root = safe_path(root)
@@ -304,7 +320,7 @@ def h99(store, cells, scoring):
         )
         require(
             summary["fold_seed"] == 9900
-            and summary["fold_assignment_sha256"] == fold["fold_assignment_sha256"]
+            and h99_fold_assignment_matches(summary, fold)
             and summary["fold_b_scored"] is False,
             "H99 cell fold/scoring mismatch",
         )

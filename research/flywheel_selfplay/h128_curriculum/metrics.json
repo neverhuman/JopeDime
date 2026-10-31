@@ -1,0 +1,988 @@
+{
+  "bradley_terry_elo_vs_control_1500": {
+    "ANTI": 1507.68,
+    "CONTROL": 1500.0,
+    "CURRIC": 1496.28,
+    "R882": 1525.57
+  },
+  "bradley_terry_elo_vs_r882_1500": {
+    "ANTI": 1482.11,
+    "CONTROL": 1474.43,
+    "CURRIC": 1470.7,
+    "R882": 1500.0
+  },
+  "candidate_breakthrough": false,
+  "cells": {
+    "ANTI_seed76": {
+      "adapter_l2_drift_from_r882": 0.4091970920562744,
+      "arm": "ANTI",
+      "elapsed_seconds": 101.721,
+      "eligible_count_u0": 488,
+      "eligible_count_u39": 975,
+      "final_adapter_sha256": "174090153c5819694922f3cfe762db5bc385371c90c302126a1ac06af7b03040",
+      "final_step_loss": 2.9243907928466797,
+      "first5_sampled_frozen_loss": 8.128638650476933,
+      "fold0_context_mean_utility": 0.9061112358857372,
+      "fold0_family_mean_utility": 0.9244888768327474,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 3.606014288216829,
+      "mean_sampled_frozen_loss": 5.129413464386016,
+      "mean_step_loss": 5.120088875293732,
+      "median_post_clip_grad_norm": 0.5836309492588043,
+      "median_pre_clip_grad_norm": 0.5836309492588043,
+      "s3_receipt": {
+        "bucket": "veox-jopedime-learning-use2",
+        "etag": "\"612654547f9035763c8c459e6c8e41c2\"",
+        "key": "experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/ANTI_seed76.json",
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/ANTI_seed76.json",
+        "sha256": "ec6b02e225c741657d75406d31b66f5ccfaf9280138dacd003034412de798938",
+        "size_bytes": 27999,
+        "version_id": "XUj2oqeN5tDAVjTBPy96_DzOwZfec3SL"
+      },
+      "seed": 76,
+      "updates": 40
+    },
+    "ANTI_seed77": {
+      "adapter_l2_drift_from_r882": 0.4202040135860443,
+      "arm": "ANTI",
+      "elapsed_seconds": 97.723,
+      "eligible_count_u0": 488,
+      "eligible_count_u39": 975,
+      "final_adapter_sha256": "d367d9b29707d6100c724a7aea345fad760bc5bcd8349d56f4866c56298b168f",
+      "final_step_loss": 4.531060695648193,
+      "first5_sampled_frozen_loss": 8.727109099924565,
+      "fold0_context_mean_utility": 0.9118146927860434,
+      "fold0_family_mean_utility": 0.9308337636238992,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 5.412722188234329,
+      "mean_sampled_frozen_loss": 6.00636115539819,
+      "mean_step_loss": 5.983497941493988,
+      "median_post_clip_grad_norm": 0.6041865050792694,
+      "median_pre_clip_grad_norm": 0.6041865050792694,
+      "s3_receipt": {
+        "bucket": "veox-jopedime-learning-use2",
+        "etag": "\"abd46730c39d9ae4db8efcbfb257253f\"",
+        "key": "experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/ANTI_seed77.json",
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/ANTI_seed77.json",
+        "sha256": "a71d36a887e6bd52a3a748fd8a51f3f383cd7ce721e72193bfd7d4ae33f071c0",
+        "size_bytes": 28015,
+        "version_id": "A9aE2sT2cx51LsbLfuPR1wXaJMSf6sgb"
+      },
+      "seed": 77,
+      "updates": 40
+    },
+    "ANTI_seed78": {
+      "adapter_l2_drift_from_r882": 0.3926141858100891,
+      "arm": "ANTI",
+      "elapsed_seconds": 96.408,
+      "eligible_count_u0": 488,
+      "eligible_count_u39": 975,
+      "final_adapter_sha256": "6925e1d127448b6b26b036ad0482937384f23c9bf536cb3b148e519111355035",
+      "final_step_loss": 6.600437641143799,
+      "first5_sampled_frozen_loss": 9.178885187208653,
+      "fold0_context_mean_utility": 0.9126172891247254,
+      "fold0_family_mean_utility": 0.9317458777631388,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 4.960587956011295,
+      "mean_sampled_frozen_loss": 5.806091461703181,
+      "mean_step_loss": 5.79581778049469,
+      "median_post_clip_grad_norm": 0.6322827637195587,
+      "median_pre_clip_grad_norm": 0.6322827637195587,
+      "s3_receipt": {
+        "bucket": "veox-jopedime-learning-use2",
+        "etag": "\"70d645f0a170049f8d410681e7913d4d\"",
+        "key": "experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/ANTI_seed78.json",
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/ANTI_seed78.json",
+        "sha256": "1588be33e8e49eb46eca1ef62902d67c3214c2303147b623f3941719de7f3131",
+        "size_bytes": 28013,
+        "version_id": "nHWghFwX0uCJ0qB1Y7vXIS8dmAGnSI9u"
+      },
+      "seed": 78,
+      "updates": 40
+    },
+    "CONTROL_seed76": {
+      "adapter_l2_drift_from_r882": 0.44006142020225525,
+      "arm": "CONTROL",
+      "elapsed_seconds": 102.219,
+      "eligible_count_u0": 975,
+      "eligible_count_u39": 975,
+      "final_adapter_sha256": "8ab6f8ee36dadd3f0669eb751e6ef70f412f3088c20fc99866c1942bcca62955",
+      "final_step_loss": 2.9231536388397217,
+      "first5_sampled_frozen_loss": 5.20714616253972,
+      "fold0_context_mean_utility": 0.8736368158120686,
+      "fold0_family_mean_utility": 0.8970076981452154,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 3.9338093318045138,
+      "mean_sampled_frozen_loss": 4.33657936854288,
+      "mean_step_loss": 4.320929303765297,
+      "median_post_clip_grad_norm": 0.5300724804401398,
+      "median_pre_clip_grad_norm": 0.5300724804401398,
+      "s3_receipt": {
+        "bucket": "veox-jopedime-learning-use2",
+        "etag": "\"3bfd91de4821fd761c017d463a1d1b03\"",
+        "key": "experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/CONTROL_seed76.json",
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/CONTROL_seed76.json",
+        "sha256": "303712be60ee7389978ffb63854d2ba0b5fa84237a23c5f7d17dd134c75a146b",
+        "size_bytes": 27979,
+        "version_id": "qslnKBeynms9637NDiMqpJjHXhD4IF5b"
+      },
+      "seed": 76,
+      "updates": 40
+    },
+    "CONTROL_seed77": {
+      "adapter_l2_drift_from_r882": 0.44036486744880676,
+      "arm": "CONTROL",
+      "elapsed_seconds": 95.491,
+      "eligible_count_u0": 975,
+      "eligible_count_u39": 975,
+      "final_adapter_sha256": "4feaeb8f757c07127d40a685ec29b722c9838f030acef6c19708c315c1d76823",
+      "final_step_loss": 4.528384685516357,
+      "first5_sampled_frozen_loss": 2.8464496500790117,
+      "fold0_context_mean_utility": 0.872803349977858,
+      "fold0_family_mean_utility": 0.8983755100015041,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 4.976612661778927,
+      "mean_sampled_frozen_loss": 4.230684239137918,
+      "mean_step_loss": 4.214112085103989,
+      "median_post_clip_grad_norm": 0.5415281355381012,
+      "median_pre_clip_grad_norm": 0.5415281355381012,
+      "s3_receipt": {
+        "bucket": "veox-jopedime-learning-use2",
+        "etag": "\"835063582abd78b8fadff8cdced83f17\"",
+        "key": "experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/CONTROL_seed77.json",
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/CONTROL_seed77.json",
+        "sha256": "19a5c53b954183c512309e3f90441608b6c9a7b6e6f0b83e65cb3a55566b6b3a",
+        "size_bytes": 27983,
+        "version_id": "PbtqttOFXf.tILSqO37gJZ1ROUQe0Owy"
+      },
+      "seed": 77,
+      "updates": 40
+    },
+    "CONTROL_seed78": {
+      "adapter_l2_drift_from_r882": 0.4410337507724762,
+      "arm": "CONTROL",
+      "elapsed_seconds": 98.068,
+      "eligible_count_u0": 975,
+      "eligible_count_u39": 975,
+      "final_adapter_sha256": "cad4208d42d598f9dd3c028fa5cfb9ad62d9519c5e27c017d3f1342486b3bbd1",
+      "final_step_loss": 6.599680423736572,
+      "first5_sampled_frozen_loss": 4.2546019241213795,
+      "fold0_context_mean_utility": 0.8746561091884779,
+      "fold0_family_mean_utility": 0.8993745773290707,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 4.347610503435135,
+      "mean_sampled_frozen_loss": 3.846895600762218,
+      "mean_step_loss": 3.836001268029213,
+      "median_post_clip_grad_norm": 0.5087698698043823,
+      "median_pre_clip_grad_norm": 0.5087698698043823,
+      "s3_receipt": {
+        "bucket": "veox-jopedime-learning-use2",
+        "etag": "\"d3090f6f945383a5407d0bc43342ea12\"",
+        "key": "experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/CONTROL_seed78.json",
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/CONTROL_seed78.json",
+        "sha256": "55815593a6295dcafc683fd4de4e41c258a6d543da06a29b88187893a12e14ad",
+        "size_bytes": 27979,
+        "version_id": "qFO0oy9BQC2zf7s5htIo6R.QtuJQqNN6"
+      },
+      "seed": 78,
+      "updates": 40
+    },
+    "CURRIC_seed76": {
+      "adapter_l2_drift_from_r882": 0.4646817147731781,
+      "arm": "CURRIC",
+      "elapsed_seconds": 98.163,
+      "eligible_count_u0": 488,
+      "eligible_count_u39": 975,
+      "final_adapter_sha256": "2befceb8173c756c74bbdeca26d4eb2687e93160174e3e731f1314d8b5a5148a",
+      "final_step_loss": 2.9207773208618164,
+      "first5_sampled_frozen_loss": 1.0110023573040963,
+      "fold0_context_mean_utility": 0.8674479135362595,
+      "fold0_family_mean_utility": 0.8903349102480356,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 3.0838401466608047,
+      "mean_sampled_frozen_loss": 1.738173863105476,
+      "mean_step_loss": 1.7211096256971359,
+      "median_post_clip_grad_norm": 0.4692407548427582,
+      "median_pre_clip_grad_norm": 0.4692407548427582,
+      "s3_receipt": {
+        "bucket": "veox-jopedime-learning-use2",
+        "etag": "\"77918871000da4fd1afce2c1fe796999\"",
+        "key": "experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/CURRIC_seed76.json",
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/CURRIC_seed76.json",
+        "sha256": "36cdbf1b486a6b61181e21289282977ac5c319660730e347195003b4ae134be5",
+        "size_bytes": 27991,
+        "version_id": "tdEsfRsy_bgLqwrsgsGUhtOf9xn7cqAN"
+      },
+      "seed": 76,
+      "updates": 40
+    },
+    "CURRIC_seed77": {
+      "adapter_l2_drift_from_r882": 0.4643239676952362,
+      "arm": "CURRIC",
+      "elapsed_seconds": 102.226,
+      "eligible_count_u0": 488,
+      "eligible_count_u39": 975,
+      "final_adapter_sha256": "0825c800f7659fbd750f7a2c073e7415fb95a21faeaf56679c49bf0d9ca34388",
+      "final_step_loss": 4.526253700256348,
+      "first5_sampled_frozen_loss": 1.0545739598572255,
+      "fold0_context_mean_utility": 0.873500825459863,
+      "fold0_family_mean_utility": 0.8975104724412706,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 3.6788192979991434,
+      "mean_sampled_frozen_loss": 1.8508564700372516,
+      "mean_step_loss": 1.830338542163372,
+      "median_post_clip_grad_norm": 0.47209399938583374,
+      "median_pre_clip_grad_norm": 0.47209399938583374,
+      "s3_receipt": {
+        "bucket": "veox-jopedime-learning-use2",
+        "etag": "\"97e8087b09c5a2c6bd6044024d839588\"",
+        "key": "experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/CURRIC_seed77.json",
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/CURRIC_seed77.json",
+        "sha256": "ad359ea1d719e64d109a296b64758300fa5bed58f0ea464256523342dd67f6b1",
+        "size_bytes": 27986,
+        "version_id": "j1cIjdb7A_HK5OpgzrfWJGWQIMkgyJ9M"
+      },
+      "seed": 77,
+      "updates": 40
+    },
+    "CURRIC_seed78": {
+      "adapter_l2_drift_from_r882": 0.4675915539264679,
+      "arm": "CURRIC",
+      "elapsed_seconds": 97.862,
+      "eligible_count_u0": 488,
+      "eligible_count_u39": 975,
+      "final_adapter_sha256": "436674535958b17a0d0a4250a6ee950042d62e5e535a59f88e5c43c593d4ce84",
+      "final_step_loss": 6.598071575164795,
+      "first5_sampled_frozen_loss": 1.0383816473186016,
+      "fold0_context_mean_utility": 0.8672431414951365,
+      "fold0_family_mean_utility": 0.8900481294072545,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "last5_sampled_frozen_loss": 3.6984887301921843,
+      "mean_sampled_frozen_loss": 1.8697636895813048,
+      "mean_step_loss": 1.8510826766490935,
+      "median_post_clip_grad_norm": 0.4753485918045044,
+      "median_pre_clip_grad_norm": 0.4753485918045044,
+      "s3_receipt": {
+        "bucket": "veox-jopedime-learning-use2",
+        "etag": "\"8232f710665befb87a72dae4659de92f\"",
+        "key": "experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/CURRIC_seed78.json",
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/cells/CURRIC_seed78.json",
+        "sha256": "e7b352b9d4677e906fc900102010a9dcbb380ace561b0d01c54c73f8f3221809",
+        "size_bytes": 27992,
+        "version_id": "mYGkpwLfIqaV36nSMmb5jQPiuXUL74TU"
+      },
+      "seed": 78,
+      "updates": 40
+    }
+  },
+  "cells_completed": 9,
+  "co_readout_vs_r882": {
+    "ANTI": {
+      "admitted": false,
+      "ci95_two_sided": [
+        -0.05087662071227736,
+        0.00860004720706818
+      ],
+      "comparator": "R882",
+      "comparator_gate_pass": false,
+      "holm_alpha": 0.025,
+      "holm_pass": false,
+      "lcb95_one_sided": -0.04607318157439837,
+      "max_seed_harmed_context_fraction": 0.15163934426229508,
+      "max_seed_harmed_family_fraction": 0.4878048780487805,
+      "mean_seed_gain": -0.02139106994792297,
+      "median_seed_gain": -0.019580145730618913,
+      "median_seed_paired_elo": 1366.71,
+      "p_value_one_sided": 0.921007899210079,
+      "per_seed": [
+        {
+          "arm_family_mean": 0.9244888768327474,
+          "comparator_family_mean": 0.9504139093545181,
+          "context_mean_delta": -0.03068075828866087,
+          "family_mean_delta": -0.025925032521770634,
+          "family_median_delta": -0.0005269257650397097,
+          "family_win_rate": 0.34146341463414637,
+          "family_wtl": [
+            9,
+            10,
+            22
+          ],
+          "harmed_contexts_count": 34,
+          "harmed_contexts_fraction": 0.13934426229508196,
+          "harmed_families_count": 17,
+          "harmed_families_fraction": 0.4146341463414634,
+          "paired_elo": 1385.91,
+          "seed": 76
+        },
+        {
+          "arm_family_mean": 0.9308337636238992,
+          "comparator_family_mean": 0.9504139093545181,
+          "context_mean_delta": -0.024977301388354686,
+          "family_mean_delta": -0.019580145730618913,
+          "family_median_delta": -0.004817372945135484,
+          "family_win_rate": 0.3170731707317073,
+          "family_wtl": [
+            8,
+            10,
+            23
+          ],
+          "harmed_contexts_count": 37,
+          "harmed_contexts_fraction": 0.15163934426229508,
+          "harmed_families_count": 18,
+          "harmed_families_fraction": 0.43902439024390244,
+          "paired_elo": 1366.71,
+          "seed": 77
+        },
+        {
+          "arm_family_mean": 0.9317458777631388,
+          "comparator_family_mean": 0.9504139093545181,
+          "context_mean_delta": -0.02417470504967272,
+          "family_mean_delta": -0.018668031591379364,
+          "family_median_delta": -0.005914182859650008,
+          "family_win_rate": 0.3048780487804878,
+          "family_wtl": [
+            7,
+            11,
+            23
+          ],
+          "harmed_contexts_count": 34,
+          "harmed_contexts_fraction": 0.13934426229508196,
+          "harmed_families_count": 20,
+          "harmed_families_fraction": 0.4878048780487805,
+          "paired_elo": 1356.83,
+          "seed": 78
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        -0.025925032521770634,
+        -0.019580145730618913,
+        -0.018668031591379364
+      ],
+      "pooled_family_win_rate": 0.32113821138211385,
+      "pooled_paired_elo": 1369.96,
+      "pooled_paired_elo_ci95": [
+        1271.28,
+        1454.55
+      ],
+      "seed_mean_harmed_context_fraction": 0.1557377049180328,
+      "seed_mean_harmed_family_fraction": 0.43902439024390244
+    },
+    "CONTROL": {
+      "ci95_two_sided": [
+        -0.0885637215959593,
+        -0.020636632404905125
+      ],
+      "comparator": "R882",
+      "lcb95_one_sided": -0.08242769973221764,
+      "max_seed_harmed_context_fraction": 0.20081967213114754,
+      "max_seed_harmed_family_fraction": 0.5853658536585366,
+      "mean_seed_gain": -0.05216131419592146,
+      "median_seed_gain": -0.05203839935301399,
+      "median_seed_paired_elo": 1385.91,
+      "p_value_one_sided": 0.9991000899910009,
+      "per_seed": [
+        {
+          "arm_family_mean": 0.8970076981452154,
+          "comparator_family_mean": 0.9504139093545181,
+          "context_mean_delta": -0.0631551783623295,
+          "family_mean_delta": -0.05340621120930279,
+          "family_median_delta": -0.016447584591802067,
+          "family_win_rate": 0.2926829268292683,
+          "family_wtl": [
+            8,
+            8,
+            25
+          ],
+          "harmed_contexts_count": 48,
+          "harmed_contexts_fraction": 0.19672131147540983,
+          "harmed_families_count": 24,
+          "harmed_families_fraction": 0.5853658536585366,
+          "paired_elo": 1346.71,
+          "seed": 76
+        },
+        {
+          "arm_family_mean": 0.8983755100015041,
+          "comparator_family_mean": 0.9504139093545181,
+          "context_mean_delta": -0.06398864419654028,
+          "family_mean_delta": -0.05203839935301399,
+          "family_median_delta": -0.014703823330637356,
+          "family_win_rate": 0.34146341463414637,
+          "family_wtl": [
+            10,
+            8,
+            23
+          ],
+          "harmed_contexts_count": 49,
+          "harmed_contexts_fraction": 0.20081967213114754,
+          "harmed_families_count": 21,
+          "harmed_families_fraction": 0.5121951219512195,
+          "paired_elo": 1385.91,
+          "seed": 77
+        },
+        {
+          "arm_family_mean": 0.8993745773290707,
+          "comparator_family_mean": 0.9504139093545181,
+          "context_mean_delta": -0.06213588498592025,
+          "family_mean_delta": -0.0510393320254476,
+          "family_median_delta": -0.019063548681973463,
+          "family_win_rate": 0.34146341463414637,
+          "family_wtl": [
+            11,
+            6,
+            24
+          ],
+          "harmed_contexts_count": 48,
+          "harmed_contexts_fraction": 0.19672131147540983,
+          "harmed_families_count": 22,
+          "harmed_families_fraction": 0.5365853658536586,
+          "paired_elo": 1385.91,
+          "seed": 78
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        -0.05340621120930279,
+        -0.05203839935301399,
+        -0.0510393320254476
+      ],
+      "pooled_family_win_rate": 0.3252032520325203,
+      "pooled_paired_elo": 1373.19,
+      "pooled_paired_elo_ci95": [
+        1262.69,
+        1466.0
+      ],
+      "seed_mean_harmed_context_fraction": 0.20901639344262296,
+      "seed_mean_harmed_family_fraction": 0.5365853658536586
+    },
+    "CURRIC": {
+      "admitted": false,
+      "ci95_two_sided": [
+        -0.09344242499674248,
+        -0.027525428221505797
+      ],
+      "comparator": "R882",
+      "comparator_gate_pass": false,
+      "holm_alpha": 0.05,
+      "holm_pass": false,
+      "lcb95_one_sided": -0.08688621273377306,
+      "max_seed_harmed_context_fraction": 0.22950819672131148,
+      "max_seed_harmed_family_fraction": 0.5853658536585366,
+      "mean_seed_gain": -0.057782738655664474,
+      "median_seed_gain": -0.06007899910648244,
+      "median_seed_paired_elo": 1356.83,
+      "p_value_one_sided": 1.0,
+      "per_seed": [
+        {
+          "arm_family_mean": 0.8903349102480356,
+          "comparator_family_mean": 0.9504139093545181,
+          "context_mean_delta": -0.06934408063813867,
+          "family_mean_delta": -0.06007899910648244,
+          "family_median_delta": -0.015597937190862221,
+          "family_win_rate": 0.3048780487804878,
+          "family_wtl": [
+            9,
+            7,
+            25
+          ],
+          "harmed_contexts_count": 55,
+          "harmed_contexts_fraction": 0.22540983606557377,
+          "harmed_families_count": 24,
+          "harmed_families_fraction": 0.5853658536585366,
+          "paired_elo": 1356.83,
+          "seed": 76
+        },
+        {
+          "arm_family_mean": 0.8975104724412706,
+          "comparator_family_mean": 0.9504139093545181,
+          "context_mean_delta": -0.06329116871453522,
+          "family_mean_delta": -0.05290343691324744,
+          "family_median_delta": -0.01419867338712999,
+          "family_win_rate": 0.2682926829268293,
+          "family_wtl": [
+            8,
+            6,
+            27
+          ],
+          "harmed_contexts_count": 55,
+          "harmed_contexts_fraction": 0.22540983606557377,
+          "harmed_families_count": 23,
+          "harmed_families_fraction": 0.5609756097560976,
+          "paired_elo": 1325.71,
+          "seed": 77
+        },
+        {
+          "arm_family_mean": 0.8900481294072545,
+          "comparator_family_mean": 0.9504139093545181,
+          "context_mean_delta": -0.06954885267926178,
+          "family_mean_delta": -0.060365779947263554,
+          "family_median_delta": -0.015597937190862221,
+          "family_win_rate": 0.3170731707317073,
+          "family_wtl": [
+            10,
+            6,
+            25
+          ],
+          "harmed_contexts_count": 56,
+          "harmed_contexts_fraction": 0.22950819672131148,
+          "harmed_families_count": 24,
+          "harmed_families_fraction": 0.5853658536585366,
+          "paired_elo": 1366.71,
+          "seed": 78
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        -0.06007899910648244,
+        -0.05290343691324744,
+        -0.060365779947263554
+      ],
+      "pooled_family_win_rate": 0.2967479674796748,
+      "pooled_paired_elo": 1350.11,
+      "pooled_paired_elo_ci95": [
+        1235.24,
+        1445.9
+      ],
+      "seed_mean_harmed_context_fraction": 0.2336065573770492,
+      "seed_mean_harmed_family_fraction": 0.5853658536585366
+    }
+  },
+  "complete": true,
+  "directionality_curric_vs_anti": {
+    "ci95_two_sided": [
+      -0.06850114094429899,
+      -0.009787184705118952
+    ],
+    "comparator": "ANTI",
+    "lcb95_one_sided": -0.06251799257652076,
+    "max_seed_harmed_context_fraction": 0.13934426229508196,
+    "max_seed_harmed_family_fraction": 0.3902439024390244,
+    "mean_seed_gain": -0.03639166870774151,
+    "median_seed_gain": -0.0341539665847118,
+    "median_seed_paired_elo": 1431.33,
+    "p_value_one_sided": 0.9972002799720028,
+    "per_seed": [
+      {
+        "arm_family_mean": 0.8903349102480356,
+        "comparator_family_mean": 0.9244888768327474,
+        "context_mean_delta": -0.0386633223494778,
+        "family_mean_delta": -0.0341539665847118,
+        "family_median_delta": 0.0,
+        "family_win_rate": 0.4024390243902439,
+        "family_wtl": [
+          9,
+          15,
+          17
+        ],
+        "harmed_contexts_count": 32,
+        "harmed_contexts_fraction": 0.13114754098360656,
+        "harmed_families_count": 14,
+        "harmed_families_fraction": 0.34146341463414637,
+        "paired_elo": 1431.33,
+        "seed": 76
+      },
+      {
+        "arm_family_mean": 0.8975104724412706,
+        "comparator_family_mean": 0.9308337636238992,
+        "context_mean_delta": -0.03831386732618053,
+        "family_mean_delta": -0.03332329118262853,
+        "family_median_delta": 0.0,
+        "family_win_rate": 0.4146341463414634,
+        "family_wtl": [
+          10,
+          14,
+          17
+        ],
+        "harmed_contexts_count": 31,
+        "harmed_contexts_fraction": 0.12704918032786885,
+        "harmed_families_count": 16,
+        "harmed_families_fraction": 0.3902439024390244,
+        "paired_elo": 1440.1,
+        "seed": 77
+      },
+      {
+        "arm_family_mean": 0.8900481294072545,
+        "comparator_family_mean": 0.9317458777631388,
+        "context_mean_delta": -0.04537414762958905,
+        "family_mean_delta": -0.0416977483558842,
+        "family_median_delta": 0.0,
+        "family_win_rate": 0.3902439024390244,
+        "family_wtl": [
+          9,
+          14,
+          18
+        ],
+        "harmed_contexts_count": 34,
+        "harmed_contexts_fraction": 0.13934426229508196,
+        "harmed_families_count": 14,
+        "harmed_families_fraction": 0.34146341463414637,
+        "paired_elo": 1422.47,
+        "seed": 78
+      }
+    ],
+    "per_seed_family_mean_deltas": [
+      -0.0341539665847118,
+      -0.03332329118262853,
+      -0.0416977483558842
+    ],
+    "pooled_family_win_rate": 0.4024390243902439,
+    "pooled_paired_elo": 1431.33,
+    "pooled_paired_elo_ci95": [
+      1346.71,
+      1511.3
+    ],
+    "seed_mean_harmed_context_fraction": 0.14344262295081966,
+    "seed_mean_harmed_family_fraction": 0.36585365853658536
+  },
+  "dl_val_reads": 0,
+  "elapsed_seconds": 223.28,
+  "final_guards": {
+    "disk_free_gib": 522.84,
+    "disk_used_pct": 91.92,
+    "load1": 37.62,
+    "load5": 43.08,
+    "mem_available_gib": 66.38,
+    "rss_bytes": 5086527488,
+    "rss_mib": 4850.89,
+    "stage": "wave_complete",
+    "torch_threads": 4
+  },
+  "frozen_curriculum_ranking": {
+    "adapter_mutated": false,
+    "assessment_contexts_touched": 0,
+    "curriculum_q_end": 1.0,
+    "curriculum_q_start": 0.5,
+    "final_eligible_count_u39": 975,
+    "fit_contexts_count": 975,
+    "initial_eligible_count_u0": 488,
+    "loss_quantiles": {
+      "max": 53.56858825683594,
+      "mean": 4.216280245291881,
+      "median_q50": 1.5341137647628784,
+      "min": 0.6299000978469849,
+      "q10": 0.8314505100250245,
+      "q25": 0.9416592717170715,
+      "q75": 4.276988744735718,
+      "q90": 9.290836524963378
+    },
+    "s3_receipt": {
+      "bucket": "veox-jopedime-learning-use2",
+      "etag": "\"d6133ea0cad42ad2f38d5dca0a56e502\"",
+      "key": "experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/curriculum_ranking_manifest.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/curriculum_ranking_manifest.json",
+      "sha256": "c89d492eeac65d550b865b259294a61fd23f5019f3eb706829d81582d9d6fc48",
+      "size_bytes": 233857,
+      "version_id": "XV6RsMqY6jycYK5QrYlPpWgho2I.0P0l"
+    },
+    "sorted_fit_by_loss_sha256": "434b109f3d7639084c75bb2daec67373a57b47ba48fd0ff043eea95411401d92"
+  },
+  "gpu_seconds": 0.0,
+  "holm_step_down_vs_control": {
+    "ANTI": {
+      "admitted": false,
+      "alpha_threshold": 0.025,
+      "comparator_gate_pass": true,
+      "directionality_curric_gt_anti": false,
+      "holm_pass": true,
+      "p_value_one_sided": 0.0025997400259974,
+      "rank": 1,
+      "role": "direction_placebo_control",
+      "vs_r882_gate_pass": false
+    },
+    "CURRIC": {
+      "admitted": false,
+      "alpha_threshold": 0.05,
+      "comparator_gate_pass": false,
+      "directionality_curric_gt_anti": false,
+      "holm_pass": false,
+      "p_value_one_sided": 0.8517148285171483,
+      "rank": 2,
+      "role": "treatment_curriculum",
+      "vs_r882_gate_pass": false
+    }
+  },
+  "holm_step_down_vs_r882": {
+    "ANTI": {
+      "admitted": false,
+      "alpha_threshold": 0.025,
+      "comparator_gate_pass": false,
+      "directionality_curric_gt_anti": false,
+      "holm_pass": false,
+      "p_value_one_sided": 0.921007899210079,
+      "rank": 1,
+      "role": "direction_placebo_control",
+      "vs_r882_gate_pass": false
+    },
+    "CURRIC": {
+      "admitted": false,
+      "alpha_threshold": 0.05,
+      "comparator_gate_pass": false,
+      "directionality_curric_gt_anti": false,
+      "holm_pass": false,
+      "p_value_one_sided": 1.0,
+      "rank": 2,
+      "role": "treatment_curriculum",
+      "vs_r882_gate_pass": false
+    }
+  },
+  "live_loop_reads": 0,
+  "optimizer_updates": 360,
+  "outer_test_reads": 0,
+  "primary_vs_control": {
+    "ANTI": {
+      "admitted": false,
+      "ci95_two_sided": [
+        0.006985969109433859,
+        0.06054265227446621
+      ],
+      "comparator": "CONTROL",
+      "comparator_gate_pass": true,
+      "holm_alpha": 0.025,
+      "holm_pass": true,
+      "lcb95_one_sided": 0.00996266594906563,
+      "max_seed_harmed_context_fraction": 0.04918032786885246,
+      "max_seed_harmed_family_fraction": 0.07317073170731707,
+      "mean_seed_gain": 0.030770244247998485,
+      "median_seed_gain": 0.03237130043406824,
+      "median_seed_paired_elo": 1551.21,
+      "p_value_one_sided": 0.0025997400259974,
+      "per_seed": [
+        {
+          "arm_family_mean": 0.9244888768327474,
+          "comparator_family_mean": 0.8970076981452154,
+          "context_mean_delta": 0.032474420073668644,
+          "family_mean_delta": 0.027481178687532137,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.5121951219512195,
+          "family_wtl": [
+            11,
+            20,
+            10
+          ],
+          "harmed_contexts_count": 12,
+          "harmed_contexts_fraction": 0.04918032786885246,
+          "harmed_families_count": 3,
+          "harmed_families_fraction": 0.07317073170731707,
+          "paired_elo": 1508.48,
+          "seed": 76
+        },
+        {
+          "arm_family_mean": 0.9308337636238992,
+          "comparator_family_mean": 0.8983755100015041,
+          "context_mean_delta": 0.039011342808185585,
+          "family_mean_delta": 0.032458253622395086,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.573170731707317,
+          "family_wtl": [
+            12,
+            23,
+            6
+          ],
+          "harmed_contexts_count": 10,
+          "harmed_contexts_fraction": 0.040983606557377046,
+          "harmed_families_count": 3,
+          "harmed_families_fraction": 0.07317073170731707,
+          "paired_elo": 1551.21,
+          "seed": 77
+        },
+        {
+          "arm_family_mean": 0.9317458777631388,
+          "comparator_family_mean": 0.8993745773290707,
+          "context_mean_delta": 0.03796117993624753,
+          "family_mean_delta": 0.03237130043406824,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.573170731707317,
+          "family_wtl": [
+            13,
+            21,
+            7
+          ],
+          "harmed_contexts_count": 11,
+          "harmed_contexts_fraction": 0.045081967213114756,
+          "harmed_families_count": 3,
+          "harmed_families_fraction": 0.07317073170731707,
+          "paired_elo": 1551.21,
+          "seed": 78
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        0.027481178687532137,
+        0.032458253622395086,
+        0.03237130043406824
+      ],
+      "pooled_family_win_rate": 0.5528455284552846,
+      "pooled_paired_elo": 1536.86,
+      "pooled_paired_elo_ci95": [
+        1480.21,
+        1595.55
+      ],
+      "seed_mean_harmed_context_fraction": 0.05737704918032787,
+      "seed_mean_harmed_family_fraction": 0.0975609756097561
+    },
+    "CURRIC": {
+      "admitted": false,
+      "ci95_two_sided": [
+        -0.017536927533722137,
+        0.0044994273545221125
+      ],
+      "comparator": "CONTROL",
+      "comparator_gate_pass": false,
+      "holm_alpha": 0.05,
+      "holm_pass": false,
+      "lcb95_one_sided": -0.015151929259935838,
+      "max_seed_harmed_context_fraction": 0.0778688524590164,
+      "max_seed_harmed_family_fraction": 0.1951219512195122,
+      "mean_seed_gain": -0.005621424459743021,
+      "median_seed_gain": -0.006672787897179658,
+      "median_seed_paired_elo": 1448.79,
+      "p_value_one_sided": 0.8517148285171483,
+      "per_seed": [
+        {
+          "arm_family_mean": 0.8903349102480356,
+          "comparator_family_mean": 0.8970076981452154,
+          "context_mean_delta": -0.006188902275809161,
+          "family_mean_delta": -0.006672787897179658,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4268292682926829,
+          "family_wtl": [
+            8,
+            19,
+            14
+          ],
+          "harmed_contexts_count": 19,
+          "harmed_contexts_fraction": 0.0778688524590164,
+          "harmed_families_count": 8,
+          "harmed_families_fraction": 0.1951219512195122,
+          "paired_elo": 1448.79,
+          "seed": 76
+        },
+        {
+          "arm_family_mean": 0.8975104724412706,
+          "comparator_family_mean": 0.8983755100015041,
+          "context_mean_delta": 0.0006974754820050599,
+          "family_mean_delta": -0.0008650375602334457,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4024390243902439,
+          "family_wtl": [
+            7,
+            19,
+            15
+          ],
+          "harmed_contexts_count": 17,
+          "harmed_contexts_fraction": 0.06967213114754098,
+          "harmed_families_count": 7,
+          "harmed_families_fraction": 0.17073170731707318,
+          "paired_elo": 1431.33,
+          "seed": 77
+        },
+        {
+          "arm_family_mean": 0.8900481294072545,
+          "comparator_family_mean": 0.8993745773290707,
+          "context_mean_delta": -0.007412967693341522,
+          "family_mean_delta": -0.009326447921815962,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4634146341463415,
+          "family_wtl": [
+            8,
+            22,
+            11
+          ],
+          "harmed_contexts_count": 15,
+          "harmed_contexts_fraction": 0.06147540983606557,
+          "harmed_families_count": 7,
+          "harmed_families_fraction": 0.17073170731707318,
+          "paired_elo": 1474.53,
+          "seed": 78
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        -0.006672787897179658,
+        -0.0008650375602334457,
+        -0.009326447921815962
+      ],
+      "pooled_family_win_rate": 0.43089430894308944,
+      "pooled_paired_elo": 1451.67,
+      "pooled_paired_elo_ci95": [
+        1379.59,
+        1519.79
+      ],
+      "seed_mean_harmed_context_fraction": 0.0942622950819672,
+      "seed_mean_harmed_family_fraction": 0.1951219512195122
+    }
+  },
+  "provenance": {
+    "assessment_contexts": 244,
+    "assessment_families": 41,
+    "assessment_fold": 0,
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "fit_contexts": 975,
+    "fit_families": 164,
+    "fit_folds": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "fold_manifest_s3_receipt": {
+      "bucket": "veox-jopedime-learning-use2",
+      "etag": "\"df00d63d0f7a2b843309240a9b8a6bdd\"",
+      "key": "experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/fold_manifest_128076.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/fold_manifest_128076.json",
+      "sha256": "010e5c3857acf7b7e62ed2da10bc5f332bf7e65fcd62f82a7d80ea995e5b7e8c",
+      "size_bytes": 14566,
+      "version_id": "24gh0dt0l0BcCDTjlByu0DbDn4pE2IPr"
+    },
+    "fold_manifest_sha256": "010e5c3857acf7b7e62ed2da10bc5f332bf7e65fcd62f82a7d80ea995e5b7e8c",
+    "fold_seed": 128076,
+    "fused_sha256": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "prereg_sha256": "7cecc7fd36978dd27caddde708ef926f8679f3cd67b8a23ef8366fdf792f4dac",
+    "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "seeds": [
+      76,
+      77,
+      78
+    ],
+    "selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "source_manifest_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
+  },
+  "regression_gate": {
+    "r882_fold0_native_family_utility": 0.9999631313937318,
+    "r882_fold0_unrev_context_utility": 0.9367919941743982,
+    "r882_fold0_unrev_family_utility": 0.9504139093545181,
+    "s3_receipt": {
+      "bucket": "veox-jopedime-learning-use2",
+      "etag": "\"8fa273fbda95f18c310832b1cb55c962\"",
+      "key": "experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/regression_receipt.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/regression_receipt.json",
+      "sha256": "68c8cc7750583e05419fe3c858f71a2bc6293da31fba9b80a1a8cf5c8347838b",
+      "size_bytes": 1129,
+      "version_id": "HgNsGca0hOL8pXxKhIs4CzlQglyLr_DL"
+    },
+    "status": "PASS",
+    "two_copy_control_grad_max_abs_diff": 0.0,
+    "two_copy_control_loss_abs_diff": 0.0,
+    "two_copy_fold0_pred_max_abs_diff": 0.0,
+    "two_copy_fold0_utility_max_abs_diff": 0.0
+  },
+  "s3_summary_receipt": {
+    "bucket": "veox-jopedime-learning-use2",
+    "etag": "\"1e2f0a9b532e752324afcb772ec7b67f\"",
+    "key": "experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/h128_summary_v2.json",
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H128/h128_cpu_run_20261031T1735Z/h128_summary_v2.json",
+    "sha256": "faaf55c6850bb84ddb92adb0293118b941909fb2e2450a3973ed791c5d1defdd",
+    "size_bytes": 37630,
+    "version_id": "WU2whfsEHRO8IIwWqy4Z7RIdql8maSAd"
+  },
+  "schema": "jope.h128.metrics/v1",
+  "sealed_metatest_reads": 0,
+  "status": "COMPLETE",
+  "timestamp_utc": "2026-10-31T18:06:53Z",
+  "verdict": "NO_ADMISSION",
+  "wave": "H128"
+}

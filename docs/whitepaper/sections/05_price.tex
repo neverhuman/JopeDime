@@ -11,12 +11,12 @@
 % Exhibits: Equation 2 (eq:bill), Box 3. The pilot-cost figure (fig:price) lives in Results.
 % Unsupported supplied cost projections are omitted pending reproducible calculations.
 
-What would it cost to play the innovation game? A complete ledger counts
+We relate the cost of a program attempt to the cost of a verified
+improvement. The ledger counts
 encoding, input tokens, generation, repairs, referee execution, updates and
-operating costs. Replay cost constrains the game (\cref{sec:game}), but a
-reproducible full-run price is still pending (\cref{sub:price-run}).
-We separate planning assumptions from the measurements required in
-\cref{sec:results}.
+operating costs. A reproducible full-run price remains pending
+(\cref{sub:price-run}). We distinguish planning assumptions from the
+measurements required in \cref{sec:results}.
 
 \subsection{The bill in one line}\label{sub:price-bill}
 
@@ -27,11 +27,10 @@ expected cost per win is mean cost per attempt divided by that probability
   \Cwin = \frac{\Cattempt}{\winprob}.
   \label{eq:bill}
 \end{equation}
-Here $\Cattempt$ is the mean incurred cost of one candidate attempt,
-including input processing, reasoning, generation, checks and referee
-execution. Work spent on failures remains in the mean. A repair that emits
-a revised candidate is another attempt; charge its work once. The
-$\winprob$ is the probability that one attempt beats the incumbent.
+$\Cattempt$ is the mean incurred cost per candidate attempt, including
+work spent on failures. A repair that emits a revised candidate is another
+attempt; charge its work once. $\winprob$ is the probability that an
+attempt beats the incumbent.
 It factors as $\winprob = q_{\text{run}}\,q_{\text{beat}}$,
 the share of moves that run times the share of those that win. A move that
 runs and loses still costs money, so we divide by $\winprob$, not by the survival
@@ -53,7 +52,7 @@ requires a measured crossover, still pending in \cref{sec:results}.
 
 \subsection{Wasted moves}\label{sub:price-waste}
 
-An attempt can fail before or after it becomes a valid competitor.
+The ledger distinguishes stillborn attempts from valid losses.
 A stillborn attempt fails to produce a usable program under the declared
 protocol: generation is incomplete, parsing or type-checking fails,
 execution exceeds its limits or crashes, or outputs fail predeclared
@@ -68,9 +67,9 @@ the effect attributed to the writer.
 
 \subsection{The correction tax and the reasoning dial}\label{sub:price-tax}
 
-This subsection and \cref{sub:price-run} concern language-model writers and
-the agent comparators of \cref{sub:results-headtohead,sub:results-search};
-the reference network of \cref{sec:method}, writer and map together, has
+Here and in \cref{sub:price-run}, we consider language-model writers and
+the agent comparators of \cref{sub:results-headtohead,sub:results-search}.
+The reference network of \cref{sec:method}, writer and map together, has
 27.8 million parameters and writes at most 128 grammar tokens. Small models are cheap per token and can be dear per win. For generation
 alone, compute per token falls about 190-fold from a hypothetical dense 1.5T writer to
 an 8B one. With equal token counts and compute unit costs, the smaller

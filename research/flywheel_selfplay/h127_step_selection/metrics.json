@@ -1,10 +1,222 @@
 {
+  "status": "COMPLETE",
+  "arms": {
+    "CONTROL": {
+      "median_gain": -0.029169639127468474,
+      "family_bootstrap_95_ci": [
+        -0.0773908416497673,
+        0.007187965775146639
+      ],
+      "one_sided_95_lcb": -0.06878004931470387,
+      "bootstrap_lower_tail_area": 0.9254074592540746,
+      "seed_utilities": [
+        1.065818855874625,
+        1.064864777884046,
+        1.067737611540319
+      ],
+      "seed_gains": [
+        -0.029169639127468474,
+        -0.03012371711804755,
+        -0.02725088346177491
+      ],
+      "context_harm_fraction": 0.14634146341463414,
+      "seed_harm_fractions": [
+        0.13937282229965156,
+        0.12195121951219512,
+        0.13240418118466898
+      ],
+      "seed_elo": [
+        1483.0384605787651,
+        1483.0384605787651,
+        1491.5242803720248
+      ],
+      "median_elo": 1483.0384605787651,
+      "elo_95_ci": [
+        1395.2488513192668,
+        1577.5280104064452
+      ],
+      "family_wins": [
+        15,
+        14,
+        15
+      ],
+      "family_ties": [
+        9,
+        11,
+        10
+      ],
+      "family_losses": [
+        17,
+        16,
+        16
+      ],
+      "identical_seed_gain_vectors": false,
+      "holm_pass": null,
+      "verdict": "DIAGNOSTIC"
+    },
+    "ES": {
+      "median_gain": 0.0,
+      "family_bootstrap_95_ci": [
+        0.0,
+        0.0
+      ],
+      "one_sided_95_lcb": 0.0,
+      "bootstrap_lower_tail_area": 1.0,
+      "seed_utilities": [
+        1.0949884950020936,
+        1.0949884950020936,
+        1.0949884950020936
+      ],
+      "seed_gains": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "context_harm_fraction": 0.0,
+      "seed_harm_fractions": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "seed_elo": [
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      "median_elo": 1500.0,
+      "elo_95_ci": [
+        1500.0,
+        1500.0
+      ],
+      "family_wins": [
+        0,
+        0,
+        0
+      ],
+      "family_ties": [
+        41,
+        41,
+        41
+      ],
+      "family_losses": [
+        0,
+        0,
+        0
+      ],
+      "identical_seed_gain_vectors": true,
+      "holm_pass": false,
+      "verdict": "NO_ADVANCE",
+      "holm_threshold": 0.025
+    },
+    "ES_FREEZE": {
+      "median_gain": 0.0,
+      "family_bootstrap_95_ci": [
+        0.0,
+        0.0
+      ],
+      "one_sided_95_lcb": 0.0,
+      "bootstrap_lower_tail_area": 1.0,
+      "seed_utilities": [
+        1.0949884950020936,
+        1.0949884950020936,
+        1.0949884950020936
+      ],
+      "seed_gains": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "context_harm_fraction": 0.0,
+      "seed_harm_fractions": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "seed_elo": [
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      "median_elo": 1500.0,
+      "elo_95_ci": [
+        1500.0,
+        1500.0
+      ],
+      "family_wins": [
+        0,
+        0,
+        0
+      ],
+      "family_ties": [
+        41,
+        41,
+        41
+      ],
+      "family_losses": [
+        0,
+        0,
+        0
+      ],
+      "identical_seed_gain_vectors": true,
+      "holm_pass": false,
+      "verdict": "NO_ADVANCE",
+      "holm_threshold": 0.05
+    }
+  },
+  "reference_utility": 1.0949884950020936,
+  "assessment_families": 41,
+  "assessment_contexts": 287,
+  "actual_final_updates": 120,
+  "interpretation": "Inner assessment families were excluded from H127 updates/selection, but r882 had prior DL-Train exposure. Not novel-family generalization or serving qualification.",
   "wave": "H127",
-  "status": "NOT_RUN",
-  "gain": null,
-  "CI": null,
-  "Elo": null,
-  "harm": null,
-  "selected_steps": null,
-  "actual_updates": 0
+  "actual_updates": 3000,
+  "inner_updates": 2880,
+  "selected_steps": {
+    "ES": 0,
+    "ES_FREEZE": 0
+  },
+  "selection_sha256": "4a855c063cd4b4bafb0a429f9d3b13174acb525e21cd50df403b3bf0aa0b1e82",
+  "prereg_commit": "3e04ffa66fc0221456a94611e8df7ed757c6cf0f",
+  "roster_sha256": "6b73eafa4903adf41e8713b9a5c8bffa69df27d3bf67c5e44859d6c9ef9bcdee",
+  "CPU_only": true,
+  "CUDA_initialized": false,
+  "payload_paths_opened": 2438,
+  "refusals": [],
+  "anchor_cache": {
+    "anchor_sha256": "1cca6db5bcece221f68489c3435adf94756073a6cb574e5860e789507f70b000",
+    "entries": 155,
+    "verified_keys": 155,
+    "hits": 4727,
+    "misses": 155,
+    "bytes": 28085740
+  },
+  "scientific_verdict": "NO_ADVANCE",
+  "descriptive_vs_CONTROL": {
+    "ES": {
+      "seed_gains": [
+        0.029169639127468505,
+        0.03012371711804751,
+        0.027250883461774622
+      ],
+      "median_gain": 0.029169639127468505,
+      "scope": "descriptive only; primary comparator remains r882"
+    },
+    "ES_FREEZE": {
+      "seed_gains": [
+        0.029169639127468505,
+        0.03012371711804751,
+        0.027250883461774622
+      ],
+      "median_gain": 0.029169639127468505,
+      "scope": "descriptive only; primary comparator remains r882"
+    }
+  },
+  "prereg_pr": 1108,
+  "custody": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H127/astra-t1105/manifest.json",
+    "version_id": "eAFAm_AFDAxMeujJdwEujz4KZoDDoxG4",
+    "sha256": "9ebb1313671f485745c131d8548651dfecafbdf44f8f64ac0c7abc451344a428",
+    "bytes": 542495,
+    "verified_utc": "2026-10-31T18:19:45.043018+00:00"
+  }
 }

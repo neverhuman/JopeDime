@@ -1,0 +1,220 @@
+{
+  "status": "SELECTION_FROZEN",
+  "arms": {
+    "ES": {
+      "selected_k": 0,
+      "checkpoints": {
+        "0": {
+          "median_gain": 0.0,
+          "seed_gains": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "ordinary_95_ci": [
+            0.0,
+            0.0
+          ],
+          "simultaneous_one_sided_95_lcb": 0.0,
+          "eligible": false
+        },
+        "5": {
+          "median_gain": 0.0008168313123101419,
+          "seed_gains": [
+            0.013000388458605064,
+            0.0008168313123101419,
+            -0.0023626873524986384
+          ],
+          "ordinary_95_ci": [
+            -0.004711855222717206,
+            0.00613152321735541
+          ],
+          "simultaneous_one_sided_95_lcb": -0.005979303265716274,
+          "eligible": false
+        },
+        "10": {
+          "median_gain": 0.005366123627275201,
+          "seed_gains": [
+            0.005366123627275201,
+            -0.002255812091117518,
+            0.007263317066274562
+          ],
+          "ordinary_95_ci": [
+            -0.013004327229824789,
+            0.024140566327037184
+          ],
+          "simultaneous_one_sided_95_lcb": -0.0167270100557958,
+          "eligible": false
+        },
+        "20": {
+          "median_gain": -0.019465744398987843,
+          "seed_gains": [
+            -0.019465744398987843,
+            -0.020745064682815326,
+            -0.013745746926956605
+          ],
+          "ordinary_95_ci": [
+            -0.044812818888524036,
+            0.007986991074379
+          ],
+          "simultaneous_one_sided_95_lcb": -0.05119880904905865,
+          "eligible": false
+        },
+        "40": {
+          "median_gain": -0.03138433546262162,
+          "seed_gains": [
+            -0.03138433546262162,
+            -0.03150599998550619,
+            -0.026579160487985806
+          ],
+          "ordinary_95_ci": [
+            -0.06384793147262717,
+            0.002173896611206531
+          ],
+          "simultaneous_one_sided_95_lcb": -0.07178325512757952,
+          "eligible": false
+        },
+        "80": {
+          "median_gain": -0.07399052926987085,
+          "seed_gains": [
+            -0.07997367393003176,
+            -0.07399052926987085,
+            -0.07127161941913465
+          ],
+          "ordinary_95_ci": [
+            -0.12218974548876432,
+            -0.03090202154358418
+          ],
+          "simultaneous_one_sided_95_lcb": -0.13503904484573434,
+          "eligible": false
+        },
+        "120": {
+          "median_gain": -0.0980593681661474,
+          "seed_gains": [
+            -0.0942748819734088,
+            -0.0980593681661474,
+            -0.09890849848719298
+          ],
+          "ordinary_95_ci": [
+            -0.1471848874919394,
+            -0.04929885702722898
+          ],
+          "simultaneous_one_sided_95_lcb": -0.1585391428457314,
+          "eligible": false
+        }
+      },
+      "rule": "strict Bonferroni-six inner LCB>0 then maximum median gain; ties choose smaller k; otherwise0"
+    },
+    "ES_FREEZE": {
+      "selected_k": 0,
+      "checkpoints": {
+        "0": {
+          "median_gain": 0.0,
+          "seed_gains": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "ordinary_95_ci": [
+            0.0,
+            0.0
+          ],
+          "simultaneous_one_sided_95_lcb": 0.0,
+          "eligible": false
+        },
+        "5": {
+          "median_gain": -0.00010351898646938951,
+          "seed_gains": [
+            -0.00010351898646938951,
+            -0.00010351898646938951,
+            -0.00010351898646938951
+          ],
+          "ordinary_95_ci": [
+            -0.0003384616400006398,
+            2.7904680592471275e-05
+          ],
+          "simultaneous_one_sided_95_lcb": -0.0004368630429341792,
+          "eligible": false
+        },
+        "10": {
+          "median_gain": 0.00015662019116166907,
+          "seed_gains": [
+            0.00015662019116166907,
+            0.00015662019116166907,
+            0.00015662019116166907
+          ],
+          "ordinary_95_ci": [
+            -0.0002397174459941945,
+            0.0005957565382759969
+          ],
+          "simultaneous_one_sided_95_lcb": -0.000336964477171958,
+          "eligible": false
+        },
+        "20": {
+          "median_gain": -0.0026376054654735784,
+          "seed_gains": [
+            -0.0026319861825544718,
+            -0.0026376054654735784,
+            -0.0026376054654735784
+          ],
+          "ordinary_95_ci": [
+            -0.009141049391524774,
+            0.0008509114261111784
+          ],
+          "simultaneous_one_sided_95_lcb": -0.012040252269835041,
+          "eligible": false
+        },
+        "40": {
+          "median_gain": 0.00048230903318309944,
+          "seed_gains": [
+            0.00048230903318309944,
+            0.00048230903318309944,
+            0.00048230903318309944
+          ],
+          "ordinary_95_ci": [
+            -0.008669474381779835,
+            0.009458023872324074
+          ],
+          "simultaneous_one_sided_95_lcb": -0.01100473319693032,
+          "eligible": false
+        },
+        "80": {
+          "median_gain": 0.007380179743656888,
+          "seed_gains": [
+            0.007380179743656888,
+            0.007424878947501,
+            0.00730118206931425
+          ],
+          "ordinary_95_ci": [
+            -0.008264594367072298,
+            0.027294509118534902
+          ],
+          "simultaneous_one_sided_95_lcb": -0.01126495247384158,
+          "eligible": false
+        },
+        "120": {
+          "median_gain": 0.004841101076872414,
+          "seed_gains": [
+            0.00483962386980064,
+            0.004841101076872414,
+            0.004841101076872414
+          ],
+          "ordinary_95_ci": [
+            -0.012327762849745919,
+            0.025446985732219898
+          ],
+          "simultaneous_one_sided_95_lcb": -0.01604398180116509,
+          "eligible": false
+        }
+      },
+      "rule": "strict Bonferroni-six inner LCB>0 then maximum median gain; ties choose smaller k; otherwise0"
+    }
+  },
+  "inner_families": 164,
+  "assessment_payloads_opened": 0,
+  "prereg_commit": "3e04ffa66fc0221456a94611e8df7ed757c6cf0f",
+  "prereg_sha256": "cfc5d368616a30b9202afe6f56ccd490fe6f1e4fa3a7a3be63a443ed742252bb",
+  "roster_sha256": "6b73eafa4903adf41e8713b9a5c8bffa69df27d3bf67c5e44859d6c9ef9bcdee",
+  "actual_updates": 2880,
+  "utc": "2026-10-31T18:12:24.513047+00:00"
+}

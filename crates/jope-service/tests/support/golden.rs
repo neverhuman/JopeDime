@@ -585,9 +585,12 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "unignore only after RES-07 publishes its generated index and every fixture payload"]
     fn res07_fixture_inventory_loads_every_safetensors_shape() {
-        let root = env::var_os(GOLDEN_DIR_ENV).map_or_else(
+        let explicit_root = env::var_os(GOLDEN_DIR_ENV);
+        let strict = [STRICT_ENV, "JOPE_GOLDEN_STRICT"]
+            .iter()
+            .any(|key| env::var(key).is_ok_and(|value| value == "1"));
+        let root = explicit_root.as_ref().map_or_else(
             || {
                 Path::new(env!("CARGO_MANIFEST_DIR"))
                     .join("../../research/flywheel_selfplay/golden")
@@ -595,14 +598,26 @@ mod tests {
             std::path::PathBuf::from,
         );
         let index_path = root.join("index.json");
-        let index: serde_json::Value =
-            serde_json::from_slice(&fs::read(&index_path).unwrap_or_else(|error| {
-                panic!(
-                    "RES-07 fixture inventory is unavailable at {}: {error}",
+        let index_bytes = match fs::read(&index_path) {
+            Ok(bytes) => bytes,
+            Err(error)
+                if error.kind() == std::io::ErrorKind::NotFound
+                    && explicit_root.is_none()
+                    && !strict =>
+            {
+                eprintln!(
+                    "skipping RES-07 fixture inventory smoke: default inventory is absent at {}; set {GOLDEN_DIR_ENV} to run it",
                     index_path.display()
-                )
-            }))
-            .expect("RES-07 index.json must be valid JSON");
+                );
+                return;
+            }
+            Err(error) => panic!(
+                "RES-07 fixture inventory is unavailable at {}: {error}",
+                index_path.display()
+            ),
+        };
+        let index: serde_json::Value =
+            serde_json::from_slice(&index_bytes).expect("RES-07 index.json must be valid JSON");
         assert_eq!(index["schema"], "jope.golden-fixtures/v1");
 
         let files = index["files"]

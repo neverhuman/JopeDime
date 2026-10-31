@@ -1,0 +1,62 @@
+{
+  "schema": "jope.h99.closeout-metrics/v1",
+  "status": "complete",
+  "verdict": "NO_ADVANCE",
+  "admitted": false,
+  "panel": {
+    "complete_cells": 7,
+    "expected_cells": 7,
+    "fold_b_candidate_reads": 6,
+    "null_fold_b_scored": false
+  },
+  "protocol": {
+    "fold_seed": 9900,
+    "fold_b_family_count": 41,
+    "bootstrap_draws": 10000,
+    "strict_mean_lcb95_margin": 0.001,
+    "holm_family_alpha": 0.05,
+    "holdout_payloads_opened": 0,
+    "validation_payloads_opened": false,
+    "outer_rows_delivered": 0
+  },
+  "source": {
+    "source_manifest_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "fold_assignment_sha256": "c03cb0c0db55faf744fdf4d050c72594a4c598ef6eb5ab39f65f201dcf75267c",
+    "admission_sha256": "8e285e377011938076bdc62c45fc239ff89aefe8539a00790a374cddbdfdc14f",
+    "fold_b_sha256": "5eb469944c76ce1700cbd633761d9a3851d6a1a4167aea63da2e75c3bc8215d9"
+  },
+  "arms": {
+    "ESH-l2": {
+      "seed_count": 3,
+      "family_count": 41,
+      "pooled_family_median_gain": 0.0,
+      "family_median_ci95": [-0.010548626754372403, 0.0023213557025479337],
+      "pooled_mean_gain": -0.005341126077199409,
+      "mean_lcb95_one_sided": -0.047456290525805946,
+      "holm_adjusted_p": 1.0,
+      "harm_fraction_below_minus_0_01": 0.3902439024390244,
+      "elo_vs_r882_median_across_seeds": 1483.04,
+      "elo_vs_r882_median_ci95_family_cluster": [1395.2488513192668, 1568.6728560602505],
+      "admitted": false
+    },
+    "ESH-l4": {
+      "seed_count": 3,
+      "family_count": 41,
+      "pooled_family_median_gain": -0.0002881307479014328,
+      "family_median_ci95": [-0.01655062450567013, 0.0004130681735304842],
+      "pooled_mean_gain": -0.015543677917208329,
+      "mean_lcb95_one_sided": -0.0483875368565104,
+      "holm_adjusted_p": 1.0,
+      "harm_fraction_below_minus_0_01": 0.3902439024390244,
+      "elo_vs_r882_median_across_seeds": 1448.79,
+      "elo_vs_r882_median_ci95_family_cluster": [1366.714128385847, 1534.0043158833396],
+      "admitted": false
+    }
+  },
+  "readout_red_team": {
+    "prior_readout_status": "INVALID",
+    "reason": "H99 cell fold/scoring mismatch",
+    "finding": "Hash comparison covers differently shaped assignment objects; fold_a_families, fold_b_families, and folds match in all seven cells and Fold B.",
+    "interpretation": "readout-contract bug; no evidence of fold-list mismatch or leakage"
+  }
+}
