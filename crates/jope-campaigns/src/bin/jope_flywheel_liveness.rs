@@ -71,13 +71,14 @@ fn scheduler_job_active(scheduler: &Value, exact_id: Option<&str>, prefixes: &[&
 
 fn disk_used_percent(path: &Path) -> Result<u8> {
     let material = std::ffi::CString::new(path.to_string_lossy().as_bytes())?;
-    let mut status = std::mem::MaybeUninit::<libc::statvfs>::uninit();
+    // Zeroed, not uninit: statvfs holds only integer fields, so all-zero is a valid value and
+    // the read below never depends on libc writing every field.
+    let mut status = std::mem::MaybeUninit::<libc::statvfs>::zeroed();
     // SAFETY: `material` is a CString that outlives the call, so the path is NUL-terminated;
-    // `status` is a writable, aligned MaybeUninit<statvfs> that statvfs may fully overwrite.
+    // `status` is a writable, aligned MaybeUninit<statvfs> that statvfs may overwrite.
     let result = unsafe { libc::statvfs(material.as_ptr(), status.as_mut_ptr()) };
     ensure!(result == 0, "statvfs failed for {}", path.display());
-    // SAFETY: ensure! returned early unless statvfs succeeded, and a successful statvfs fills
-    // every field of the struct, so `status` is initialized.
+    // SAFETY: `status` started as a valid all-zero statvfs and statvfs only writes integers.
     let status = unsafe { status.assume_init() };
     let blocks = status.f_blocks as u128;
     let available = status.f_bavail as u128;
@@ -435,6 +436,13 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn disk_used_percent_reads_a_real_filesystem_and_rejects_a_missing_path() {
+        let used = disk_used_percent(&std::env::temp_dir()).unwrap();
+        assert!(used <= 100);
+        assert!(disk_used_percent(Path::new("/nonexistent/jope-liveness-probe")).is_err());
+    }
 
     #[test]
     fn supply_target_has_runway_floor_and_dynamic_growth() {
