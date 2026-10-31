@@ -35,6 +35,7 @@ use std::collections::BTreeMap;
 pub const VALIDATION_SCHEMA: &str = "jope.motif-validation/v1";
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+/// Options controlling how many recorded hosts are fitted for each fragment.
 pub struct ValidateOptions {
     /// Distinct recorded hosts fitted per fragment, in provenance order.
     pub hosts_per_fragment: u32,
@@ -51,8 +52,11 @@ impl Default for ValidateOptions {
 /// The private validation report.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// Private validation result bound to a table and, optionally, a fresh source read.
 pub struct Validation {
+    /// Validation report schema identifier.
     pub schema: String,
+    /// Digest of the table that was checked.
     pub table_sha256: String,
     /// True only when a fresh read of the source (`validate --state`) confirmed every recorded
     /// occurrence ([`verify_source`]). False when the source was not read, when nothing was
@@ -61,37 +65,55 @@ pub struct Validation {
     /// `Some` exactly when the source was read: whether its digest is unchanged. The digest
     /// covers the source's exclusion reasons too, so it is recorded, never relied on.
     pub source_digest_equal: Option<bool>,
+    /// Results for each fragment in table order.
     pub motifs: Vec<MotifResult>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// Validation outcomes for one fragment.
 pub struct MotifResult {
+    /// Zero-based index of the fragment in table order.
     pub index: u32,
+    /// Whether rewriting and re-expanding its recorded host is exact.
     pub round_trip: CheckResult,
+    /// Whether repeated evaluation is deterministic.
     pub determinism: CheckResult,
+    /// Whether independent compatible contexts were fitted successfully.
     pub context_compatibility: CheckResult,
+    /// Whether emitted artifacts omit the reserved fragment reference name.
     pub name_absence: CheckResult,
     /// Hosts whose fit was refused on every table. Never counted as a pass.
     pub not_exercised: u32,
+    /// Backend capability observations for the attempted contexts and tasks.
     pub backend: Vec<BackendRow>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// Aggregate outcome for one validation check class.
 pub struct CheckResult {
+    /// True only when at least one case was exercised and none failed.
     pub passed: bool,
+    /// Number of cases examined by the check.
     pub exercised: u32,
+    /// Fixed-code failures observed while running the check.
     pub failures: Vec<Failure>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// A fixed validation failure and its optional local context.
 pub struct Failure {
+    /// Fixed failure code; it contains no private source value.
     pub code: String,
+    /// Host recipe digest associated with the failure, when available.
     pub recipe_sha256: Option<String>,
+    /// Context label associated with the failure, when available.
     pub context: Option<String>,
+    /// Table label associated with the failure, when available.
     pub table: Option<String>,
+    /// Task associated with the failure, when available.
     pub task: Option<TaskLabel>,
 }
 
@@ -99,7 +121,9 @@ pub struct Failure {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct BackendRow {
+    /// Synthetic context label used for this observation.
     pub context: String,
+    /// Task evaluated in the context.
     pub task: TaskLabel,
     /// False when the context text, as fitted or with the task's default head written out,
     /// equals a recorded host. Such a fit repeats a host and never satisfies context
@@ -110,9 +134,13 @@ pub struct BackendRow {
     /// Q3 only: whether the legacy fit on S2's numeric rows succeeded. `None` when no legacy
     /// fit was attempted: on the Q1 and Q2 rows, or when the planner refused the text.
     pub legacy_fit: Option<bool>,
+    /// Whether the legacy C++17 emitter accepted the context.
     pub legacy_cpp17: bool,
+    /// Whether the legacy JavaScript emitter accepted the context.
     pub legacy_javascript: bool,
+    /// Whether the bound artifact emitter accepted the context.
     pub bound_emit: bool,
+    /// Whether fitted C++17 emission succeeded.
     pub fitted_cpp17: bool,
 }
 

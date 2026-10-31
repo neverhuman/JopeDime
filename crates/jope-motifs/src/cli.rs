@@ -101,12 +101,15 @@ pub const CHECK_CODES: [(&str, &str); 17] = [
     version,
     about = "Reusable program fragments kept in a private table, with exact expansion checks."
 )]
+/// Arguments for the private `jope motifs` command group.
 pub struct Cli {
     #[command(subcommand)]
+    /// The requested mining or validation operation.
     pub cmd: Cmd,
 }
 
 #[derive(Subcommand)]
+/// Supported private motif commands.
 pub enum Cmd {
     /// Build a new private fragment table.
     Mine {
@@ -198,6 +201,7 @@ fn standard_opener() -> StateOpener {
     Box::new(crate::learning::open)
 }
 
+/// Run a command and map failures to the tool's fixed stderr message and exit status.
 pub fn exec(cli: Cli) -> ExitCode {
     match run(cli) {
         Ok(code) => code,
@@ -208,6 +212,7 @@ pub fn exec(cli: Cli) -> ExitCode {
     }
 }
 
+/// Run a command with the standard state opener and process streams.
 pub fn run(cli: Cli) -> Result<ExitCode> {
     let stdout = std::io::stdout();
     let stderr = std::io::stderr();

@@ -447,7 +447,8 @@ pub fn validate_for_search(
 }
 
 /// Everything a proposal run produced, for the caller's receipt. Fields are private: only
-/// [`propose`] and [`propose_challenger`] (and the `testing` [`propose_unbound`]) construct it.
+/// [`propose`] and [`propose_challenger`] (and `propose_unbound` with the `testing` feature)
+/// construct it.
 #[derive(Clone, Debug)]
 pub struct Proposal {
     population: SeedPopulation,

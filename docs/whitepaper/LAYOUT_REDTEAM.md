@@ -99,6 +99,8 @@ The owner widened the scope to a full upgrade, carried out in small sequential P
 
 ## Needs Jepson/team
 
+[`RESULTS_NEEDS.md`](RESULTS_NEEDS.md) is the per-marker checklist: every compiled `\TBD`, its location, what resolves it and the order of work.
+
 Everything below needs data, receipts or decisions from the team. None of it was invented or changed. Unless a row says otherwise, it lives in §7.
 
 ### Evidence handoff for Results

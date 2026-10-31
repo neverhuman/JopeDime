@@ -1923,6 +1923,10 @@
       "reason": "Tiny CPU-only H75 complete-panel scoring fixtures; no dataset, model or experiment execution; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h82_sam_steps/test_h82.py": {
+      "reason": "CPU-only H82 fresh-seed retry-boundary, load/budget, frozen-reference and paired Elo/admission tests; offline research outside product qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h76_sam_steps/test_h76.py": {
       "reason": "CPU-only H76 SAM/ASAM numerical, leakage and budget tests; no real corpus payloads; offline research analysis outside the reviewed product baseline.",
       "role": "research"
@@ -1937,6 +1941,10 @@
     },
     "python:research/flywheel_selfplay/h79_w4_prior_2plus2_cached/test_run_shard.py": {
       "reason": "Owner-requested pytest proofs for the H79 W4 cached prior-top4 vs two-plus-two screen; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h81_w4_prospective_2plus2/test_run_prospective.py": {
+      "reason": "Owner-requested pytest proofs for the H81 W4 prospective two-plus-two stratum and its preregistered comparator-strength guard; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/rd_breakthrough/w5_provenance/test_verify.py": {
