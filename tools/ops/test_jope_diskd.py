@@ -84,6 +84,15 @@ class DiskPolicyTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             jope_diskd.read_policy(path)
 
+    def test_user_service_avoids_unsupported_kernel_module_sandbox(self) -> None:
+        unit = Path(__file__).with_name("systemd").joinpath("jope-diskd.service").read_text(encoding="utf-8")
+        self.assertNotIn("ProtectKernelModules", unit)
+        self.assertIn("NoNewPrivileges=yes", unit)
+        self.assertIn("ProtectSystem=full", unit)
+        self.assertIn("ProtectKernelTunables=yes", unit)
+        self.assertIn("ProtectControlGroups=yes", unit)
+        self.assertIn("PrivateTmp=yes", unit)
+
     def test_apply_requires_explicit_local_only_environment(self) -> None:
         with mock.patch.dict(os.environ, {"JOPE_DISKD_LOCAL_ONLY": "0"}):
             self.assertEqual(jope_diskd.main(["--apply"]), 2)
