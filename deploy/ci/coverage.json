@@ -13258,6 +13258,16 @@
       "lanes": [],
       "scope": "H90 fixed r882 recipe CPU fixtures: inverse-family sampling, two-microbatch accumulation, target smoothing, warmup/cosine restart, top-four diversity, seed pseudoreplication, paired Elo/admission, cumulative budget and hard H80-closeout-before-FIFO refusal. Synthetic unit proof only; no corpus outcomes or product qualification."
     },
+    "python:research/flywheel_selfplay/h82_sam_steps/ops/test_recover.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H82 bounded operator recovery proof: reproduce read-only checkpoint staging failure, preserve known immutable input before cleanup, seal the stopped prefix, retain budgets and reject scored/unknown/unaccounted states; no GPU/product qualification."
+    },
     "python:research/flywheel_selfplay/h82_sam_steps/test_h82.py": {
       "discovery": {
         "kind": "python-family"
