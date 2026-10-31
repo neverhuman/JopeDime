@@ -1,0 +1,35 @@
+{
+  "schema": "jope.hwv05.metadata-coverage/v1",
+  "state": "BLOCKED_INPUT_QUALIFICATION",
+  "h27_manifest_sha256": "5a7cc86298a9f82a68d0cb77465d5e61ae3d6d1d49e258df9254faa345f22d2e",
+  "selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+  "fingerprints_sha256": "c544d47f766b1dea941f7eb97d6d6bb035229b0a67b996ec51d280fe81d208db",
+  "h27_source_roles": {
+    "FIT": 690,
+    "SELECT": 160
+  },
+  "coverage": {
+    "DL-Train": {
+      "required": 1219,
+      "matched": 728,
+      "missing": 491
+    },
+    "DL-Val": {
+      "required": 91,
+      "matched": 67,
+      "missing": 24
+    }
+  },
+  "historical_components_crossing_current_roles": 0,
+  "payload_files_opened": 0,
+  "new_GP_fits": 0,
+  "ranker_fits": 0,
+  "elo": null,
+  "ci975": null,
+  "verdict": null,
+  "limits": [
+    "Context digest match alone does not qualify dataset/cut/evaluator/vocabulary or DOPE state.",
+    "Historical FIT exposure is retained; these rows are not newly independent validation.",
+    "No numerical arrays, models, fingerprints or outcomes were opened by this check."
+  ]
+}

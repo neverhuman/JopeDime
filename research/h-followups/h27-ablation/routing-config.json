@@ -1,0 +1,40 @@
+{
+  "schema": "jope.hwv05.routing-config/v1",
+  "state": "CPU_PREP_ONLY_ANALYSIS_PENDING",
+  "ranker": {
+    "architecture": "H27-style M0 candidate/context interaction",
+    "width": 64,
+    "common_features": 240,
+    "candidate_features": 412,
+    "fingerprint_coordinates": 8
+  },
+  "arms": {
+    "with_fingerprint": {
+      "fingerprint_transform": "DL-Train-only fitted scaling"
+    },
+    "without_fingerprint": {
+      "fingerprint_transform": "zero eight scaled fingerprint coordinates after scaling"
+    }
+  },
+  "paired_recipe": {
+    "ranker_fits": 6,
+    "optimizer_updates": 2400,
+    "seeds": [20261030, 20261031, 20261032],
+    "updates_per_fit": 400,
+    "optimizer": "AdamW",
+    "learning_rate": 0.0003,
+    "weight_decay": 0.1,
+    "dropout": 0.3,
+    "gradient_clip": 1.0,
+    "batch_queries": 128,
+    "microbatch_queries": 16,
+    "selection": "fixed final-400 endpoint"
+  },
+  "execution": {
+    "new_gp_fits": 0,
+    "dope_optimizer_updates": 0,
+    "dope_pin": "c51a56d0",
+    "gpu": false,
+    "analysis_admitted": false
+  }
+}

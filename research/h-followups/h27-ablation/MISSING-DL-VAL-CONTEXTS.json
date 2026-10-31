@@ -1,0 +1,41 @@
+{
+  "schema": "jope.hwv05.missing-dl-val-contexts/v1",
+  "state": "IDENTITIES_UNAVAILABLE_ANALYSIS_PENDING",
+  "coverage_source": {
+    "receipt": "INPUT-COVERAGE.json",
+    "required_dl_val_contexts": 91,
+    "matched_existing_fingerprints": 67,
+    "missing_count": 24,
+    "selected_roster_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "required_h27_manifest_sha256": "5a7cc86298a9f82a68d0cb77465d5e61ae3d6d1d49e258df9254faa345f22d2e",
+    "h27_manifest_recovered": false
+  },
+  "qualification_step": "recover-and-verify-H27-materialization-manifest; run qualify-inputs; complete full input identity admission",
+  "identity_note": "The authorized selected roster and aggregate coverage receipt are available, but the pinned H27 materialization manifest is not. Therefore the exact 24 absent context digests cannot be determined from retained evidence. Entries below enumerate the 24 unresolved slots only; null is not a context digest. Do not infer identities or treat these placeholders as contexts.",
+  "missing_contexts": [
+    {"unresolved_slot": 1, "context_sha256": null},
+    {"unresolved_slot": 2, "context_sha256": null},
+    {"unresolved_slot": 3, "context_sha256": null},
+    {"unresolved_slot": 4, "context_sha256": null},
+    {"unresolved_slot": 5, "context_sha256": null},
+    {"unresolved_slot": 6, "context_sha256": null},
+    {"unresolved_slot": 7, "context_sha256": null},
+    {"unresolved_slot": 8, "context_sha256": null},
+    {"unresolved_slot": 9, "context_sha256": null},
+    {"unresolved_slot": 10, "context_sha256": null},
+    {"unresolved_slot": 11, "context_sha256": null},
+    {"unresolved_slot": 12, "context_sha256": null},
+    {"unresolved_slot": 13, "context_sha256": null},
+    {"unresolved_slot": 14, "context_sha256": null},
+    {"unresolved_slot": 15, "context_sha256": null},
+    {"unresolved_slot": 16, "context_sha256": null},
+    {"unresolved_slot": 17, "context_sha256": null},
+    {"unresolved_slot": 18, "context_sha256": null},
+    {"unresolved_slot": 19, "context_sha256": null},
+    {"unresolved_slot": 20, "context_sha256": null},
+    {"unresolved_slot": 21, "context_sha256": null},
+    {"unresolved_slot": 22, "context_sha256": null},
+    {"unresolved_slot": 23, "context_sha256": null},
+    {"unresolved_slot": 24, "context_sha256": null}
+  ]
+}
