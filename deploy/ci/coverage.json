@@ -13397,6 +13397,16 @@
       ],
       "lanes": [],
       "scope": "H83 W6 cached cross-family screen fixtures: planted low-rank bilinear recovery, shuffled-context placebo loss of signal, within-context centring, verified-U4 anchors and SHA tie-breaks, Bonferroni-adjusted common gate and verdict paths. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h92_w6_downside_controlled/test_run_downside.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H92 W6 downside-controlled learner fixtures: hedge keeps the prior top-2 and adds two distinct scorer picks, shortlist never leaves the prior top-16, retained-best refuses anchors/duplicates, verdict and median-interval paths, and the merged-H83 loader refuses changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
     }
   },
   "lanes": {
