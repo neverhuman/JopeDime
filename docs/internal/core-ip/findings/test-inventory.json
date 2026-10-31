@@ -5090,6 +5090,10 @@
     "python:research/flywheel_selfplay/h112_w4_active_reveal_scorer/test_run_h112.py": {
       "reason": "Owner-requested pytest proofs for the H112 W4 two-plus-two re-test with the proposal-distribution scorer prior (CPU preparation); offline research analysis outside the reviewed product baseline.",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h115_w6_xfamily/test_run_h114.py": {
+      "reason": "Owner-requested pytest proofs for the H115 (renumbered from H114) W6 cross-family outcome-transfer CPU preparation; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
