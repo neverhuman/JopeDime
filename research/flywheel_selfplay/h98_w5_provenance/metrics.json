@@ -1,0 +1,581 @@
+{
+  "checks": {
+    "custody": {
+      "added_objects": 0,
+      "current_source_objects": 83,
+      "five_heads_same_version": true,
+      "prior_source_objects": 83,
+      "removed_objects": 0,
+      "s3_objects_byte_verified": 14,
+      "v2_body_read": false,
+      "v2_outer_fields_source_present": true,
+      "v3_pool_payload_keys_in_source_prefix": 0,
+      "v3_prefix_object_count": 1,
+      "verdict": "PASS_CHECKED_CUSTODY"
+    },
+    "leakage": {
+      "candidate_alias_components": 123,
+      "candidate_contexts": 254,
+      "candidate_recorded_families": 123,
+      "global_sealed_roster_available": false,
+      "interpretation": "Identity-only metadata anti-join; no protected payloads. Global unknown is not zero. Physical/role alias overlaps are distinct from direct sealed markers.",
+      "known_protected_components": {
+        "DL-Holdout": 39,
+        "DL-Val": 31,
+        "evaluation_physical_alias": 1389,
+        "sealed_meta_test": 86,
+        "st_val_gate_32": 32
+      },
+      "observed_context_overlaps": {
+        "DL-Holdout": 0,
+        "DL-Val": 0,
+        "evaluation_physical_alias": 55,
+        "sealed_meta_test": 0,
+        "st_val_gate_32": 66
+      },
+      "overlap_context_hashes": {
+        "DL-Holdout": [],
+        "DL-Val": [],
+        "evaluation_physical_alias": [
+          "022382cdba780070fe2c689be00cbd84db37f9a349ca3b028bd50da019305447",
+          "025eb526cc88c46b455c9e34f444d0f7c517795835112e25ab708f3ed0856d30",
+          "0411fbc1445973c4ee205339084f952291d4bed570c58b46ff6110c96c9d13c0",
+          "1261ee49d52cba0c5e466d9ae9021f56f4bcbb044ed0a6c29e59035a238d7475",
+          "172ab9a8816010e904cd9da15c1ee36a1aeb4c73da6d7f26cc3c779f07a7fd69",
+          "18cb7a88ccb02dd08d0fc2661674b857806be89f788fb8a44daa2d2a0debc3a7",
+          "1a8ee6beca939efebb328b105f4ffb309eaa2eb288b7ba88063e3e39cb8ec386",
+          "1d8baa6019feb191a46e390a93df0428b404596040ea90c4557af988bcc6a2aa",
+          "253d8a683b7abae832efe2f23db5180ac88532aa3e0a2731961058a103a992c9",
+          "26b2103b6dde38309b147ef91586100a2e689970ad753ebc51b651bad702c73e",
+          "29c8293edaf7a492b12929a89a41462424b3398e8204d552d056050158ec3899",
+          "2dcb91fa3da16e753aa04efe5ba2b0145fbb509f4afb9a121b423dca19a97aad",
+          "325efcbbd82a6d66bddd12acf11ece29e81a7a550281c3c2c10d814c1d25ff68",
+          "35a2c27acbf593c3569435288a811e1e065c6f1cf0b17c9b3822be48f7ebed2e",
+          "3defa5e2cf024d70072ced8fa67008bdcb8fcd9a791bb5b9ac084c6f34614761",
+          "443754ec7d4121e124eefa1e4271263f5b14a362a77c24cb87938e37ede83b59",
+          "47d2fe7fc670f56585233b39e2d73c5a6f15bd54ebacd96a874b98a1c4040705",
+          "53e44260857d3dca3a141e77a156498ea58ef5e1d02582e699a81f821ac11949",
+          "5cac5d3363a54251430a6b0f041e85db2e6293eb29d9fef0d46082cb0170b64f",
+          "5f850153a12038b2f99e1a74577609123d254e1a1f225b640465eaf1366623e6",
+          "619086d8a592ad64c7683fcd92272ba20180ae1f57c0abab58472c9ac0169f11",
+          "655acdf7fb4df04c853a1e5d402ef09ada309dfbd150e7882bf84c8d7321c6ea",
+          "68a5d53baa94f129abc28a22aaa77e55a715ac26e2d61108b9aa22edcfd0c031",
+          "6df257d010c0d509147e440f9b0a1499218b7635c37ab8582fab3b954582f884",
+          "725af9373511844d7ff887bd37a49029ff86ddb2c32cb2f9797f4ead530f6c8f",
+          "7d3e30f33f54eca6558aedd56bfa66e62036e4ba573fd4496e8ad7940a191e05",
+          "80577e971ed47d515eb27d3f43f12b4425b25f28b751a80ff8bdf08f38be3286",
+          "84363e2fc6007a65f63428588f79d5494efe0bf5dd123a97ec6ee8c0615ae3b0",
+          "8524a6d5b4d8c85de09b43fcdb66da9763ebc59980087cc716c87c38b68e82cd",
+          "85bb36aa0122151832a6d71242a1fa1cb3281c1c8d561e715ee040da00032076",
+          "91c9c99d1014fa61045f3f2ee4843b25a7429957ed9f704894b1ee86a370fdcb",
+          "96ed297d76da0de7b3a82b306f6a87a8444f428598616527bd9f16fd052560d7",
+          "9b1912aafeeaf39e82b3045953034851ffc42eb0f589ed286ee180221cb44b92",
+          "9fbf46d3e761a76946c269ca7a8789cbe4b2974f322b1e60d83a67fce97787e2",
+          "9fe7b4ebc6bc0d1fdb5880af3b32e82189a3452d41022145c371eda738e93dd3",
+          "a196a6b1b8eacfbfe90457cbc195701abf9c393b2ca53eef872ab8c956ad3b57",
+          "a57ad3c8d36e9621b0e78b901bf357b452aae9a7193ac6a18915e4d0f78b629d",
+          "a8ef43c7cd8d47532343a6b9d8acc0a011b2082b31f56481999a7bd49bb4ebad",
+          "a90907a61d375ec18ef82e1634698349dcf0c0c574a5a85a608e1b6dd833b4fb",
+          "ab1d315ed9d0d5fcb92a7e61ecae6b0218ddc73d8b9e085d5349b318b197bcf0",
+          "b53d9a90bc49ab15e11bb02f9940068a3c45728545105a34a64f33ac82063b19",
+          "b5c41c51d0418bd15e6d1529c2385512292f40554d4a902464949136fe2d70a7",
+          "b6761ead74095156dd5b2118a210cf42fefb3c2779df9ae9dda42d11cd5fb7a6",
+          "beea3ad1bb3202e9ff62134c252eca14040ac24add27e5a5113f2d909929dcac",
+          "c5b12025599cd2d8e2a7055a2bf8eb374f6a7e38b2b1c4e25971f49485dae1a7",
+          "c7eae21bd95b00d1a84fc5430830a8a1acf4c5d8eeb5e492fa2084f38c78511b",
+          "ce51aaf9588dae3851d198d74c5eda4b4603a739286801e0c773e227e2742a7c",
+          "d8aed748cd72fc1612deab17ccf5c0f5ad8fff16337dfb843ff7c5b39a2974c7",
+          "db9bf3237f8d284927f1756aad80b6866922d18ca92e2c00549f50c4405fe258",
+          "e48b514eb26c2d553638cc39be62cf6c932c9b541959b221c5fbd7664e05eeea",
+          "e5c914c8535e38af4c464ca89e35f000aab2c75600aeb7d3de367a522a12d987",
+          "eda78687896b238f47f3a7ea5be57df0fb43eae397fcf64247a1ef5609f2dcf9",
+          "f44f18402c168c7acc46bef9c569e54fcaa14b313e5b366847dac5fd539f2d70",
+          "faf755764656508c075063be3919c66cb0f80a189dcf617eeb8ba7f7b2989502",
+          "fbd6d1865d2d2a846836dbd1b0d59edc5e934569812cfdf396f6714383bdf2ba"
+        ],
+        "sealed_meta_test": [],
+        "st_val_gate_32": [
+          "08142b7ca8f302ba3225ea4016a4bfb5a6231bb340cb8e397f4c26c7b02e8d04",
+          "0b0598e5e5ec6ef75ed04305d5d477534308824d742122dda39b40ce12065554",
+          "1a8ee6beca939efebb328b105f4ffb309eaa2eb288b7ba88063e3e39cb8ec386",
+          "1addbad5397633f1b99507a1d153813777d0543a9b54eff00a67244d16fee195",
+          "1bf07c8fa1dc28f29d0adcc24703085b07a731cc8d508bb565d81952b742f67c",
+          "1bfc5c4bedeaa135e0ac9139a896a0281b95db3fe9d78c9828f9296d7da9994e",
+          "1e70c3cf1c7ac6d54d2481a801be258507a193483da96fd3a23987a340474821",
+          "2040cb9addd01e70ec5644d03e50da057d6f0235da6f9043100ee560b3494d5b",
+          "253d8a683b7abae832efe2f23db5180ac88532aa3e0a2731961058a103a992c9",
+          "26ffeefc93a186eed1a2b433bcfd7030a74d6c76a40cc704316acd6695060b75",
+          "2d6d63831f7dbd25084cac36652bd088e2f41f672bef6b7790cd3d142d87432e",
+          "3467f5733ce7828d78de5cae79884377020f1e8e62fafaba22a7b3e19fe85ee0",
+          "36476ed4fb71fd74fb9c90d2c56253d6314b2f61f7c8bcb7d8ba9adab7631820",
+          "385509316caea6bb0dfc3044e8304f94b89570f5ee5aceb7d882c273d49be352",
+          "395e698a18b239fa8d7e256014abab5a3c26e8a27b555b98611f306a80cea78c",
+          "3c6e6184300ed251bd4a2fee66d2e606b5fe3cd2a5bf7859cbb41c9fdfdd2a7e",
+          "42c945ced35799353643d4f80b28d71d42e9f70de60934b020bf3709f84e9ac6",
+          "43afde0f8781aca33a98cf27d94b265040fbf61b12d1841ec7c9f212f3b8c0a2",
+          "47ad4efaf6fcfd56c2c60c5023e4c796488ed1763c6b86f8fa91db3cce61464e",
+          "47e0fc3f38d6e7f547e3a437568e3a4e47c29f9362ef9a1fe2efa8fb1dfac012",
+          "4b5c8cb98b94744348e1e5cdb87aa8a0a6ca624647720d17be25b3858737dc20",
+          "4dadb257a88d3411f29262d418f7d8d56699b1425fa08aebc6c25b220b2932d1",
+          "5162b96884a8ed61d12e8bd7b989776057e0fec20a9a5b3992c1ea76e891f551",
+          "5c0d177df5010aca1a18ceaff07e560f05b5da2cb0767433de587e42423ca1f3",
+          "627d2b79c79d4350e18e5bdc7c05757605fd7008d5f7590cd6f82407faee7df1",
+          "62dc7d731fd5222abd74bc08d4d193521d2021ce4e63b174417f6d886b33f600",
+          "6f61b30b494cb8bd07cfeb54d9b6123758d1ab17f5c0cc393d3dee5319dd8fa6",
+          "6f62157bb2c1c7c0584516a5caafaa177049d35b3b786817acfa03fa79f5e786",
+          "713c2d1b6d1ca7482f6d5494a79fe26ecb2196ba9841b2a1f7b5cfdfaf5aec12",
+          "725af9373511844d7ff887bd37a49029ff86ddb2c32cb2f9797f4ead530f6c8f",
+          "727775bd332385afdf46c7df04c1a78566b0f41f1f1566c8a86b500da56d2228",
+          "744749b0fc29c211b90b65904b7c1242b9ad97068f752a7aee793af7740f2635",
+          "7af398ffbe5b26873e9de05417303e0a925c14f347f166fc1b27cb20f5235ae4",
+          "80577e971ed47d515eb27d3f43f12b4425b25f28b751a80ff8bdf08f38be3286",
+          "82e83de4cf3a7feb6fe3a064f70ae9d55f8491aa42f9419413e7e0fc63fc4c81",
+          "8463e4531b449a99031d414f02853e3eb0e6abd2a9c6e44f7516a5e5e98529a3",
+          "8528566135b158a97ca87471f66f3304f22e255b0e4d9bd8a4c563b42bfcb39e",
+          "8dac4e942caafd9819e87a419cf6bd457d2b81e31b13551aa70613bb668b36b2",
+          "96ed297d76da0de7b3a82b306f6a87a8444f428598616527bd9f16fd052560d7",
+          "983c00877fa9709bd20e54a0eb38a21e9422c2a129ec4840f1a73c7732bd014f",
+          "9fcd56c6e2c2b213effca392fba7753ac47f607f98b0139fe45cf542076e4275",
+          "a0e1af81eee547917123dff2156f8dfc2c1cc0090bd1d36eccc51922d232b030",
+          "a366fd0b019578936a6e45b529d5e8f8ce9bf4a5d0841dad15822834d4761f26",
+          "a57ad3c8d36e9621b0e78b901bf357b452aae9a7193ac6a18915e4d0f78b629d",
+          "ab1d315ed9d0d5fcb92a7e61ecae6b0218ddc73d8b9e085d5349b318b197bcf0",
+          "ae50b511a9044bdc7d09f6bbaa432f12d2cab773f6f4a3a8b0baf1f7b2ae8d8b",
+          "afb267a7d0c30055c936625385d7ed3fe53e024f54f936ad28060fced2255c73",
+          "b3cfb18abddd28c3e114d10c7b7f4aa77d20389e1830daa23ea563333828057c",
+          "b6761ead74095156dd5b2118a210cf42fefb3c2779df9ae9dda42d11cd5fb7a6",
+          "b9ff39cf648ad689bba9d057c2e8ee338c8a5f69c1d3e852cb869d0fcb898653",
+          "bc32614d45e65958d5420fa280675c63812c220b3e3ad8bf2495f53bdf803d1f",
+          "bd551638e1db98ff2ab0ee7e77f27ecfa57e2ce259c9f181ddce7940d29da71a",
+          "bda2b405edfbad30f6eb6b267df7a7c805a1208eefffae4dbaeb4d36ae1ec13f",
+          "c1feacda8c2cad82278903953d66394ce523eeedec2116c8158b0d1ae988d0f9",
+          "c5b12025599cd2d8e2a7055a2bf8eb374f6a7e38b2b1c4e25971f49485dae1a7",
+          "c84c24c5e8c93dbe70a7a53a9e8401f946cb4eb61f6c7fbb8cfaee8ab96f074d",
+          "c8d1ae50b4022098c288861183b13b4b24997d8a3a131b4675cc3e8f36c8694a",
+          "cdc09b48097a71587eb7863a34f47635580c29d30bdac9dcf2e0ef6c328fae44",
+          "d1cbeffcc21b7fdff3cf5d762b3cf58cb65956ab29709e035f14b400b3b8dfa5",
+          "d8c15d6c9164ae5895771812512ba382b44f98beb77a0d89ed8499834063ed44",
+          "daf1ce9f37b62534c5ed2c1a306fc06572b265a0440be77da34b8d23407efdde",
+          "db9bf3237f8d284927f1756aad80b6866922d18ca92e2c00549f50c4405fe258",
+          "e8096899a169098051627bacd6de3faa2942d248597ad6cb812fcac534acae66",
+          "eda78687896b238f47f3a7ea5be57df0fb43eae397fcf64247a1ef5609f2dcf9",
+          "f0b1fe8f00b414c851ed140f93e46dceaebd6c7c40dc67d3f7b7690ca1520c5e",
+          "f44f18402c168c7acc46bef9c569e54fcaa14b313e5b366847dac5fd539f2d70"
+        ]
+      },
+      "scope": "pinned input_manifest.py build_inventory receipt: global_sealed_roster_available=False; catalog/H15 marker scope only",
+      "sealed_overlap_gate": "FAIL_ZERO_OVERLAP_UNPROVEN",
+      "sealed_overlap_global": null,
+      "unknown_candidate_identity_count": 0
+    },
+    "pair_rows": {
+      "eligible_pair_count": null,
+      "original_row_containment_verified": false,
+      "pool_manifest_fields": [
+        "admitted_winner_count",
+        "admitted_winner_program_shas",
+        "context_sha256",
+        "dataset_id",
+        "dl_split",
+        "family_id",
+        "new_incumbent_best_f",
+        "new_n_candidates",
+        "new_pool_path",
+        "new_pool_sha256",
+        "parent_incumbent_best_f",
+        "parent_n_candidates",
+        "parent_pool_path",
+        "parent_pool_sha256",
+        "revision",
+        "source_split",
+        "view_id"
+      ],
+      "required_pair_or_row_fields_not_in_pool_records": [
+        "parent_program_sha256",
+        "operator",
+        "completed_status",
+        "original_training_row_ids",
+        "screen_row_ids",
+        "source_version",
+        "original_outcome_sha256",
+        "cut_id",
+        "vocabulary",
+        "evaluator_sha256"
+      ],
+      "scope": "Source trace is not a run-bound original-row receipt. No parenthood inferred from parent_pool_sha256; no actual table opened or contamination claimed.",
+      "source_trace": {
+        "cache_key_contains_source_content_hash": false,
+        "strat300_can_keep_outer_features_with_zeroed_targets": true,
+        "strat300_selects_training_indices": true,
+        "strat300_serializes_row_id_ledger": false,
+        "v3_imports_phase6_v2_winners": true,
+        "v3_phase7_outer_test_flag_false": true
+      },
+      "strat300_row_ledger_available": false,
+      "verdict": "FAIL_PAIR_AND_ROW_PROVENANCE"
+    },
+    "pool_identity": {
+      "arrays_decoded": 0,
+      "local_pools_hashed": 495,
+      "revisions": {
+        "v3a_strict_train_q25": {
+          "families": 122,
+          "h50_parent_hash_mismatches": 0,
+          "identity_mismatches": 0,
+          "pool_hash_mismatches": 0,
+          "pools": 241,
+          "winner_count_mismatches": 0,
+          "winner_occurrences": 430
+        },
+        "v3b_strict_train_median": {
+          "families": 123,
+          "h50_parent_hash_mismatches": 0,
+          "identity_mismatches": 0,
+          "pool_hash_mismatches": 0,
+          "pools": 254,
+          "winner_count_mismatches": 0,
+          "winner_occurrences": 504
+        }
+      },
+      "scope": "Byte identity and training-roster joins only; materialized pool ancestry is not AST parent-child lineage.",
+      "unique_contexts": 254,
+      "verdict": "PASS_CHECKED_POOL_IDENTITIES"
+    }
+  },
+  "controls": {
+    "additional_controls": [
+      "transitive_physical_alias",
+      "zero_observed_incomplete_global_refused",
+      "known_overlap_refused",
+      "empty_cohort_not_vacuous_pass",
+      "unresolved_identity_refused",
+      "complete_synthetic_disjoint_control",
+      "source_hash_tamper_refused"
+    ],
+    "failed": 0,
+    "kind": "synthetic validator controls, not observed scientific outcomes",
+    "prior_unit_controls": 12,
+    "skipped": 0,
+    "total_passed": 19
+  },
+  "execution_admitted": false,
+  "gates": [
+    {
+      "evidence": "14 exact-version objects byte-verified; source census83 unchanged; all five HEAD versions unchanged.",
+      "gate": "source_and_prior_custody",
+      "status": "PASS_CHECKED_SCOPE"
+    },
+    {
+      "evidence": "495 local pool hashes and H50 parent hashes match;254 unique DL-Train contexts/123 recorded families.",
+      "gate": "v3_materialized_pool_identity",
+      "status": "PASS_CHECKED_SCOPE"
+    },
+    {
+      "evidence": "Six pinned metadata sources support the checked marker/alias scope; authoritative global sealed-family roster is not supplied.",
+      "gate": "sealed_meta_test_global_zero_overlap",
+      "global_overlap_count": null,
+      "observed_known_marker_overlaps": 0,
+      "status": "FAIL_UNPROVEN"
+    },
+    {
+      "context_overlaps": {
+        "DL-Holdout": 0,
+        "DL-Val": 0,
+        "evaluation_physical_alias": 55,
+        "sealed_meta_test": 0,
+        "st_val_gate_32": 66
+      },
+      "evidence": "Non-training-role alias matches are conservative quarantine triggers, not evidence of actual protected-outcome use.",
+      "gate": "other_protected_role_aliases",
+      "status": "FAIL_REQUIRES_RECONCILIATION"
+    },
+    {
+      "eligible_pairs": null,
+      "evidence": "Pool ancestry and child program IDs do not supply exact same-context AST parent/operator joins and original completed outcome receipts.",
+      "gate": "exact_parent_operator_child_completed_outcomes",
+      "status": "FAIL_UNPROVEN"
+    },
+    {
+      "evidence": "No run-bound original-row/strat300 ledger. Source can retain outer feature rows with zeroed targets and caches by source path/row limit, not source content hash. Actual tables were not opened.",
+      "gate": "strat300_original_training_rows",
+      "status": "FAIL_UNPROVEN"
+    }
+  ],
+  "input_receipts": [
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 806,
+      "key": "experiments/flywheel-selfplay-20261023/round-01/persistence_receipt.json",
+      "name": "counter-1.json",
+      "sha256": "4cdc11dcf994b105614055237afda2847310190dadd289ba79f2f34951683128",
+      "version_id": "75H4Wf31_uKWdyh39Ap9iY_yBvfW1KP5"
+    },
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 806,
+      "key": "experiments/flywheel-selfplay-20261023/round-02/persistence_receipt.json",
+      "name": "counter-2.json",
+      "sha256": "563ecdad1f2d30288f47370a8c05dde93c9bb4dc6abd0806667f9246b4e0d72e",
+      "version_id": "UyMRjyqasrO3DKM0viJVr7Cc5Si_iDOz"
+    },
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 806,
+      "key": "experiments/flywheel-selfplay-20261023/round-03/persistence_receipt.json",
+      "name": "counter-3.json",
+      "sha256": "ef5e1ace35b5ab298e259dbae4117493b8b7847703902a76fe916726550d3de0",
+      "version_id": "5e06unUgEx6YBaC1bABOLmMujxBWfI7N"
+    },
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 718858,
+      "key": "experiments/flywheel-selfplay-20261023/corpus_v3_wider_strict_train_256/corpus_v3_manifest.json",
+      "name": "v3_manifest.json",
+      "sha256": "701affc61e14950bc5c890b6399a9d765f10e7f7f720a2ba8f1a16d93e1a7640",
+      "version_id": "gd.JxegwvXXxSr7SNt7qJNbEij97pO7L"
+    },
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 4638,
+      "key": "experiments/rd_breakthrough_20261030/w5_provenance/gb2136-20261031T040010Z-ca549a23e/manifest.json",
+      "name": "prior_s3_manifest.json",
+      "sha256": "0b48b708e0bd226d54351d724026bc48f689df4402e6f82fdd63c928ce0f69ad",
+      "version_id": "bGdZpgM9wroUQmfOObS2AX2yOKj6UlIp"
+    },
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 10189,
+      "key": "experiments/rd_breakthrough_20261030/w5_provenance/gb2136-20261031T040010Z-ca549a23e/verify.py",
+      "name": "prior_custody_objects/0-verify.py",
+      "sha256": "2189499e7c4c087f180f2552cb384657247ac7bc44b586b6d3b1f562775f648f",
+      "version_id": "TaFlfFmC4J5ax67lPeWGgbgHhOcN9xBs"
+    },
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 6180,
+      "key": "experiments/rd_breakthrough_20261030/w5_provenance/gb2136-20261031T040010Z-ca549a23e/test_verify.py",
+      "name": "prior_custody_objects/1-test_verify.py",
+      "sha256": "8ef8a77ab3649f13f1aa74b2a9bde36edc560b2e3a954adaaf645fee581da117",
+      "version_id": "pvmCWKVrUYyLTMERFM1VQVNN3vVKMOe8"
+    },
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 21810,
+      "key": "experiments/rd_breakthrough_20261030/w5_provenance/gb2136-20261031T040010Z-ca549a23e/receipts/inventory.json",
+      "name": "prior_custody_objects/2-inventory.json",
+      "sha256": "f0baf9845fffd2f9d79405dda5a3e8e31357d28ae7ebb4acc0184138e9cd92c7",
+      "version_id": ".iPrB4651VfY4cmNSR9WorflxUsUjH8."
+    },
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 723,
+      "key": "experiments/rd_breakthrough_20261030/w5_provenance/gb2136-20261031T040010Z-ca549a23e/receipts/verdict.json",
+      "name": "prior_custody_objects/3-verdict.json",
+      "sha256": "07992fe34ae5fca644064d6a2cb6f58f83e06a02dc012de7ca60557a61808eae",
+      "version_id": "yulRxlJsMsCJuyAZgqY4sjTmUTce3gUl"
+    },
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 860,
+      "key": "experiments/rd_breakthrough_20261030/w5_provenance/gb2136-20261031T040010Z-ca549a23e/receipts/execution.json",
+      "name": "prior_custody_objects/4-execution.json",
+      "sha256": "162e7ae4cd86cf110c2e19f44bc41cb67ac0d9c08d86b1719a26017c0db2fdce",
+      "version_id": "JNO5gXkJKZbutWark394a68oXxk9w7hy"
+    },
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 1080,
+      "key": "experiments/rd_breakthrough_20261030/w5_provenance/gb2136-20261031T040010Z-ca549a23e/receipts/protocol.json",
+      "name": "prior_custody_objects/5-protocol.json",
+      "sha256": "60d5b8cc802dd672e4b3bbd87400dc3927b6b0aaeb2585d09bfdb264c0f9e3a9",
+      "version_id": "8KdMok4_BAEmaHKlnaT3kA3ampHOP8Ah"
+    },
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 486,
+      "key": "experiments/rd_breakthrough_20261030/w5_provenance/gb2136-20261031T040010Z-ca549a23e/controls/unit-execution.json",
+      "name": "prior_custody_objects/6-unit-execution.json",
+      "sha256": "f635e9f64b4999b3570a9d5f44a0c297f3bc20fd3c8797376e0fe6357afa6b8d",
+      "version_id": "VEB1Qmcm_xpB3hE57CwEX4yuvgR_RDQZ"
+    },
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 1195,
+      "key": "experiments/rd_breakthrough_20261030/w5_provenance/gb2136-20261031T040010Z-ca549a23e/controls/replay-execution.json",
+      "name": "prior_custody_objects/7-replay-execution.json",
+      "sha256": "6cd64fce4dbb1bdb4bf0fd85bfe3f5ade1e30d2f8c5d04e83ce8d5539bfbcf73",
+      "version_id": "6qqjRXGTEfjQuFw6i.8NyTiZkqKh8IQX"
+    },
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 228,
+      "key": "experiments/rd_breakthrough_20261030/w5_provenance/gb2136-20261031T040010Z-ca549a23e/controls/operator-reproducer.json",
+      "name": "prior_custody_objects/8-operator-reproducer.json",
+      "sha256": "87be21e38eb209f4fc585e781293bc1f5dd2a406f92387e0db789d6fc1922112",
+      "version_id": "avqdjD6nQG_olDu9ZAf1OUxTEp0ZxXcm"
+    }
+  ],
+  "metadata_scope": "Identity-only catalog, H15, historical roles, corpus identity and Track2 manifests; global sealed roster unavailable. No metadata-only check establishes original numeric-row admission.",
+  "metadata_source_pins": {
+    "schema": "jope.hwv06.metadata-pins/v1",
+    "sources": {
+      "S3_DATASET_CATALOG.json": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
+      "corpus-identities.json": "140466733b8c3b2d37833454278bc1892aec72ed2ee2f23cfd0d8f2c4a4ce5e4",
+      "h15-admission-ledger.jsonl": "8417fa8e34972b52fd53e3b98224c16deefb8ef322bfd18177895da6fe1a2f50",
+      "h15-independent-verification.json": "1d6109361e2cf7302c3fc0f9732506e635b1bcef43630861fa4ebe1bf1a4460a",
+      "historical-role-identities.json": "62bd4cc21bd9635013d9f59bbbba5a7488d4246849e70ba0bc57957501e1112a",
+      "track2-eligible-manifest.json": "9717c550a719ae7bff20007816bfbb00da69562d3083140418d2aea04a5c093e"
+    }
+  },
+  "metrics": {
+    "Elo": null,
+    "U4": null,
+    "val_reg_inner": null
+  },
+  "reason_no_smoke_plan": "Owner requests a W5 CPU smoke plan only after provenance PASS. That prerequisite did not pass.",
+  "required_to_reopen": [
+    "Provide an authoritative complete identity-only sealed family/alias registry or independently signed complete exclusion receipt bound to the exact candidate roster.",
+    "Reconcile every candidate alias with protected/non-training roles; freeze any revised cohort before scoring.",
+    "Provide a clean immutable parent/operator/child export with same-context/table/cut/evaluator/vocabulary identity and original completed full outcomes, independently verified against source receipts.",
+    "Provide exact original-training and strat300 row-ID/content-hash ledgers, with no forbidden row use; bind caches to source bytes and actual run identities.",
+    "Preserve input artifacts under approved immutable custody; rerun these admission checks before preparing the CPU smoke plan."
+  ],
+  "resources": {
+    "final_worker_cpu_seconds": 0.270875856,
+    "gpu_seconds": 0,
+    "hosts": [
+      {
+        "cpu_seconds": 0.060608300000000004,
+        "exit_status": 0,
+        "folds": [],
+        "host": "xbabe1",
+        "host_assignment": "xbabe1",
+        "input_sha256": "b92a2a7aa713a59aef3ef94734da4c7f71456554fa65c17aa20fd6727aabb934",
+        "nice": 19,
+        "no_seed_fold_reason": "Deterministic complete metadata prerequisite check; no experiment sampling/fitting",
+        "seed": null,
+        "shard": "custody",
+        "transport_wall_seconds": 0.4381793150678277,
+        "wall_seconds": 0.19107294082641602,
+        "worker_sha256": "1c52d617714ef3e915cc556369b6e5f55363101dfc30414f777afc7a42da9d73"
+      },
+      {
+        "cpu_seconds": 0.063866684,
+        "exit_status": 0,
+        "folds": [],
+        "host": "xbabe2",
+        "host_assignment": "xbabe2",
+        "input_sha256": "b92a2a7aa713a59aef3ef94734da4c7f71456554fa65c17aa20fd6727aabb934",
+        "nice": 19,
+        "no_seed_fold_reason": "Deterministic complete metadata prerequisite check; no experiment sampling/fitting",
+        "seed": null,
+        "shard": "pool_identity",
+        "transport_wall_seconds": 0.11529100988991559,
+        "wall_seconds": 0.07001418806612492,
+        "worker_sha256": "1c52d617714ef3e915cc556369b6e5f55363101dfc30414f777afc7a42da9d73"
+      },
+      {
+        "cpu_seconds": 0.10672598,
+        "exit_status": 0,
+        "folds": [],
+        "host": "xbabe3",
+        "host_assignment": "xbabe3",
+        "input_sha256": "b92a2a7aa713a59aef3ef94734da4c7f71456554fa65c17aa20fd6727aabb934",
+        "nice": 10,
+        "no_seed_fold_reason": "Deterministic complete metadata prerequisite check; no experiment sampling/fitting",
+        "seed": null,
+        "shard": "leakage",
+        "transport_wall_seconds": 0.8123772460967302,
+        "wall_seconds": 0.5703026354312897,
+        "worker_sha256": "1c52d617714ef3e915cc556369b6e5f55363101dfc30414f777afc7a42da9d73"
+      },
+      {
+        "cpu_seconds": 0.039674892,
+        "exit_status": 0,
+        "folds": [],
+        "host": "1ea28df917ab",
+        "host_assignment": "xbabe4",
+        "input_sha256": "b92a2a7aa713a59aef3ef94734da4c7f71456554fa65c17aa20fd6727aabb934",
+        "nice": 10,
+        "no_seed_fold_reason": "Deterministic complete metadata prerequisite check; no experiment sampling/fitting",
+        "seed": null,
+        "shard": "pair_rows",
+        "transport_wall_seconds": 0.6643585171550512,
+        "wall_seconds": 0.2513693900546059,
+        "worker_sha256": "1c52d617714ef3e915cc556369b6e5f55363101dfc30414f777afc7a42da9d73"
+      }
+    ],
+    "initial_replay_reason": "Historical st_val/DL role map was added to the alias check before finalization; initial receipts retained, no experimental fitting repeated.",
+    "initial_worker_cpu_seconds": 0.273336677,
+    "native_fits": 0,
+    "optimizer_updates": 0,
+    "other_cpu_seconds": null,
+    "preparation_python_cpu_seconds": 0.930870824,
+    "total_worker_cpu_seconds": 0.544212533,
+    "worker_cpu_ceiling": 120
+  },
+  "schema": "jopedime.h98-w5-provenance/v1",
+  "scope": {
+    "dope_loaded": false,
+    "folds": [],
+    "frozen_dope": "c51a56d0",
+    "local_training_pool_bytes_hashed": 495,
+    "numeric_tables_opened": 0,
+    "pool_arrays_decoded": 0,
+    "protected_payloads_opened": 0,
+    "seed": null,
+    "v2_body_opened": false,
+    "v3_manifest_body_byte_verified": true
+  },
+  "smoke_plan_added": false,
+  "source_commit": "433e50a2c6486d4edcc7173b4b2c6552c1621f8b",
+  "source_pins": {
+    "input_manifest.py": {
+      "commit": "433e50a2c6486d4edcc7173b4b2c6552c1621f8b",
+      "path": "research/flywheel_selfplay/input_manifest.py",
+      "sha256": "69c188684ebeeb8c8fe9b3140956e11cdc43e49d74e26972f923f9710546f661"
+    },
+    "prior_custody.json": {
+      "commit": "433e50a2c6486d4edcc7173b4b2c6552c1621f8b",
+      "path": "research/flywheel_selfplay/rd_breakthrough/w5_provenance/receipts/custody.json",
+      "sha256": "a82f89986601b4c34ed0b654bc574dde7c8b6e464d510d8938faeeb235f14217"
+    },
+    "prior_inventory.json": {
+      "commit": "433e50a2c6486d4edcc7173b4b2c6552c1621f8b",
+      "path": "research/flywheel_selfplay/rd_breakthrough/w5_provenance/receipts/inventory.json",
+      "sha256": "f0baf9845fffd2f9d79405dda5a3e8e31357d28ae7ebb4acc0184138e9cd92c7"
+    },
+    "prior_test_verify.py": {
+      "commit": "433e50a2c6486d4edcc7173b4b2c6552c1621f8b",
+      "path": "research/flywheel_selfplay/rd_breakthrough/w5_provenance/test_verify.py",
+      "sha256": "8ef8a77ab3649f13f1aa74b2a9bde36edc560b2e3a954adaaf645fee581da117"
+    },
+    "prior_verify.py": {
+      "commit": "433e50a2c6486d4edcc7173b4b2c6552c1621f8b",
+      "path": "research/flywheel_selfplay/rd_breakthrough/w5_provenance/verify.py",
+      "sha256": "2189499e7c4c087f180f2552cb384657247ac7bc44b586b6d3b1f562775f648f"
+    },
+    "protocol.md": {
+      "commit": "433e50a2c6486d4edcc7173b4b2c6552c1621f8b",
+      "path": "research/flywheel_selfplay/rd_breakthrough/PROPOSALS.md",
+      "sha256": "eb2447d014957222855ba374a71eb00747692581083b6613c5487135497e4ba1"
+    },
+    "rust_evaluator.py": {
+      "commit": "433e50a2c6486d4edcc7173b4b2c6552c1621f8b",
+      "path": "research/flywheel_selfplay/rust_evaluator.py",
+      "sha256": "7b0cb0ecb98c7836b16a781f632a9fc74683c2ab9facee820790ceebc759cb45"
+    },
+    "v2_builder.py": {
+      "commit": "433e50a2c6486d4edcc7173b4b2c6552c1621f8b",
+      "path": "research/flywheel_selfplay/verify_flywheel_winner_pool_integration_v2.py",
+      "sha256": "15e0476ef50cebbe33421627c2a4a0292b14d0d8df6b60cd7c6331e23c23379f"
+    },
+    "v3_builder.py": {
+      "commit": "433e50a2c6486d4edcc7173b4b2c6552c1621f8b",
+      "path": "research/flywheel_selfplay/verify_flywheel_wider_train_extension_v3.py",
+      "sha256": "feabff0733e68662bd7d871ec51a530e8deedf8c86bce1911fb4bdb35ec394e1"
+    }
+  },
+  "verdict": "FAIL",
+  "w5": "HELD"
+}
