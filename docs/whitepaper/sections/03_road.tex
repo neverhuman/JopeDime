@@ -29,11 +29,12 @@ extended account.}
 % ---------------------------------------------------------------------
 \subsection{Deep learning gave variation a voice}\label{sub:road-deep}
 
-Deep learning built the variation pillar: machines that propose. Learned
-representations replaced hand-written rules \citep{lecun2015deep}. AlexNet
-made the case on images \citep{krizhevsky2012imagenet}, the transformer
-made it general \citep{vaswani2017attention}, and scaling laws made progress
-predictable \citep{kaplan2020scaling,hoffmann2022chinchilla}.
+Deep learning built the variation pillar: machines that propose. Models
+learned representations from data \citep{lecun2015deep}. AlexNet
+made the case on images \citep{krizhevsky2012imagenet}, the Transformer
+modeled sequences with attention \citep{vaswani2017attention}, and empirical
+scaling laws related language model loss to model size, dataset size and
+training compute \citep{kaplan2020scaling,hoffmann2022chinchilla}.
 \citet{sutton2019bitter} drew the lesson: general methods that use
 computation win. Generative models then turned representations into
 proposals, from text to video \citep{brooks2024sora} and code. Codex solved
@@ -43,10 +44,11 @@ with 100 samples, counting any that passed the unit tests
 a direct estimate of the geometric model in \cref{eq:taste}: pass rates
 and the probability of beating an incumbent measure different outcomes.
 
-Networks already propose outputs assessed by task-specific tests:
-protein structures that rival experiment in most cases
+Learned prediction and selection also support scientific discovery:
+protein structures that rival experiment in most CASP14 cases
 \citep{jumper2021alphafold},
-2.2 million crystals predicted to be stable \citep{merchant2023gnome}, and
+2.2 million crystal structures predicted stable relative to the Materials Project
+\citep{merchant2023gnome}, and
 halicin, an antibiotic that then treated infections in mice
 \citep{stokes2020halicin}. CLIP put images and captions in one shared space
 \citep{radford2021clip}, the template for our problem--program map
@@ -156,9 +158,10 @@ matrix-multiplication algorithms for several sizes
 \citep{fawzi2022alphatensor}, and AlphaDev's AssemblyGame found sorting
 routines now in the LLVM C++ library \citep{mankowitz2023alphadev}.
 AlphaGeometry learned olympiad geometry without human demonstrations
-\citep{trinh2024alphageometry}. AlphaProof, refereed by the Lean proof
-checker, reached silver-medal standard at the 2024 International
-Mathematical Olympiad alongside AlphaGeometry~2 \citep{hubert2026alphaproof}.
+\citep{trinh2024alphageometry}. AlphaProof, using the Lean proof
+checker, and AlphaGeometry~2 jointly reached silver-medal standard on the
+2024 International Mathematical Olympiad problems, using computation over
+multiple days \citep{hubert2026alphaproof}.
 
 \smallskip
 \noindent\textbf{What \EZ{} takes:} the recipe for a game: rules, a referee,
@@ -185,9 +188,10 @@ AlphaEvolve cut Gemini's training time by 1\%
 Language models also play themselves. SPIN plays its previous iteration
 \citep{chen2024spin}, Absolute Zero proposes and solves coding tasks under a
 code executor \citep{zhao2025absolutezero}, and STP pairs a conjecturer with
-a Lean prover \citep{dong2025stp}. Such self-play plateaus as the
-conjecturer games its reward, \citet{bailey2026sgs} report, unless a guide
-keeps it on track. Our closest neighbors learn to discover. EvoTune
+a Lean prover \citep{dong2025stp}. \citet{bailey2026sgs} attribute plateaus
+in LLM self-play to reward hacking by the conjecturer and evaluate
+self-guidance in formal theorem proving. Our closest neighbors learn to
+discover. EvoTune
 fine-tunes on what its own evolutionary search finds \citep{evotune2025},
 and TTT-Discover trains on the one problem at hand, at a few hundred
 dollars per problem \citep{tttdiscover2026}. Evolution Fine-Tuning learns
