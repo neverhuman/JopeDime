@@ -325,6 +325,52 @@ class H77LongESTests(unittest.TestCase):
         with mock.patch.object(wave.os, "statvfs", return_value=stats_95):
             self.assertRegex(wave.disk_guard_error(), "95% full")
 
+    def test_disk_guard_retries_reduce_timeout_and_charge_void_wall_against_cumulative_cap(self):
+        """Regression test for qlt05 finding: retry timeout is reduced by void_wall and void_wall counts toward cap."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            observed_timeouts: list[float] = []
+
+            def fake_run_locked_cell(key, command, log, timeout, status_path, wait_total, *, after_release=False):
+                observed_timeouts.append(timeout)
+                if len(observed_timeouts) == 1:
+                    raise wave.DiskGuardInfraVoid("disk guard on attempt 1", wait_seconds=2.0, cell_wall_seconds=400.0)
+                return {"key": key, "status": "complete"}, 3.0, 500.0
+
+            with mock.patch.object(wave, "run_locked_cell", side_effect=fake_run_locked_cell):
+                cell, waited, wall, void_wall = wave.run_cell_with_disk_guard_retries(
+                    "ES/seed18",
+                    ["runner"],
+                    root / "ES-seed18.log",
+                    1000.0,
+                    root / "H77_STATUS.log",
+                    0.0,
+                    root / "out",
+                )
+            # Attempt 1 got 1000.0s; attempt 2 got 1000.0 - 400.0 = 600.0s
+            self.assertEqual(observed_timeouts, [1000.0, 600.0])
+            self.assertEqual(waited, 5.0)
+            self.assertEqual(wall, 500.0)
+            self.assertEqual(void_wall, 400.0)
+            self.assertEqual(cell["total_charged_cell_wall_seconds"], 900.0)
+
+            # If void_wall exhausts the remaining budget, retry is refused before launching another attempt
+            def exhaust_on_first(key, command, log, timeout, status_path, wait_total, *, after_release=False):
+                raise wave.DiskGuardInfraVoid("disk guard exhausted budget", wait_seconds=1.0, cell_wall_seconds=1000.0)
+
+            with mock.patch.object(wave, "run_locked_cell", side_effect=exhaust_on_first) as mocked_run:
+                with self.assertRaisesRegex(wave.InfraVoid, "cumulative GPU wall cap exhausted before attempt"):
+                    wave.run_cell_with_disk_guard_retries(
+                        "ES/seed18",
+                        ["runner"],
+                        root / "ES-seed18-b.log",
+                        1000.0,
+                        root / "H77_STATUS.log",
+                        0.0,
+                        root / "out2",
+                    )
+                self.assertEqual(mocked_run.call_count, 1)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
