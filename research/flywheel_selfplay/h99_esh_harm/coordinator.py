@@ -357,11 +357,25 @@ def run_fifo_cells(
     setup_fn=apply_worker_limits,
     clock_fn=time.monotonic,
     finalize_worker=None,
+    allow_partial: bool = False,
 ) -> dict:
     """Resume incomplete cells in plan order, charging each attempt under its own FIFO lease."""
     expected = execution_plan()
     expected_cells = [*expected["candidate_cells"], expected["null_cell"]]
-    if cells != expected_cells:
+    if allow_partial:
+        expected_by_key = {(cell["arm"], int(cell["seed"])): cell for cell in expected_cells}
+        keys = [(cell.get("arm"), cell.get("seed")) for cell in cells]
+        if (
+            not cells
+            or len(keys) != len(set(keys))
+            or cells != [expected_by_key.get(key) for key in keys]
+            or [expected_cells.index(cell) for cell in cells]
+            != sorted(expected_cells.index(cell) for cell in cells)
+        ):
+            raise ValueError("H99 partial wave must be a non-empty ordered subset of the frozen plan")
+        if finalize_worker is not None:
+            raise ValueError("H99 partial wave cannot run Fold-B finalization")
+    elif cells != expected_cells:
         raise ValueError("H99 wave cell list differs from the frozen seven-cell plan")
     run_root = Path(run_root)
     run_root.mkdir(parents=True, exist_ok=True)
