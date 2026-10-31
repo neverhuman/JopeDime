@@ -1,4 +1,4 @@
-name: Clean-host D1 pre-stage
+name: Clean-host D1 Linux and macOS
 
 on:
   workflow_dispatch:
@@ -13,34 +13,46 @@ concurrency:
 jobs:
   linux-x86_64-prestage:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 90
     env:
-      CARGO_BUILD_JOBS: 4
+      CARGO_BUILD_JOBS: 8
       CARGO_INCREMENTAL: 0
       CARGO_PROFILE_DEV_DEBUG: line-tables-only
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Build local engine candidate
-        run: nice -n 10 cargo build --locked -p jope-appliance --bin jopedime
-      - name: Exercise synthetic Linux clean-host pre-stage
+      - name: Build and package Linux fixture
         run: |
-          # Ubuntu restricts unprivileged user namespaces. Keep the output private to namespace root.
-          sudo install -d -m 0700 target/rel-04
+          set -euo pipefail
+          out=target/rel04/linux
+          mkdir -p "$out/models"
+          source_sha=$(git rev-parse HEAD)
+          code=$(JOPE_BUILD_SOURCE_SHA="$source_sha" nice -n 10 cargo run -q --locked -p jope-ci -- cargo-artifact build --package jope-appliance --bin jopedime --profile dist-ci --no-default-features --features embedded,dev-keys)
+          nice -n 10 cargo run -q --locked -p jope-dist -- fixture --models "$out/models"
+          nice -n 10 cargo run -q --locked -p jope-dist -- notices --out "$out/notices.json" --features embedded,dev-keys
+          nice -n 10 cargo run -q --locked -p jope-dist -- pack --profile deploy/appliance/profiles/fixture.toml --code "$code" --models "$out/models" --notices "$out/notices.json" --source-sha "$source_sha" --target x86_64-unknown-linux-gnu --receipt "$out/pack-receipt.json" --out "$out/jopedime"
+          nice -n 10 cargo run -q --locked -p jope-dist -- verify --file "$out/jopedime" --development-key --no-release-key > "$out/verify.json"
+      - name: Exercise isolated Linux clean-host D1
+        run: |
           sudo env GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory \
             "GIT_CONFIG_VALUE_0=$GITHUB_WORKSPACE" \
             bash deploy/appliance/test-clean-host.sh \
-            target/debug/jopedime target/rel-04/clean-host --prestage
+            target/rel04/linux/jopedime target/rel04/linux-clean-host --require-isolation
 
   macos-arm64-pending:
-    if: ${{ false }}
     runs-on: macos-14
-    timeout-minutes: 5
+    timeout-minutes: 90
+    env:
+      CARGO_BUILD_JOBS: 8
+      CARGO_INCREMENTAL: 0
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
     steps:
-      - run: echo "Pending owner-authorized macOS arm64 D1 qualification."
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build, package and exercise native macOS arm64 D1
+        run: nice -n 10 bash deploy/appliance/test-clean-host-macos.sh --build-fixture
 
   windows-x86_64-pending:
     if: ${{ false }}
-    runs-on: windows-2022
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - run: echo "Pending owner-authorized Windows x86-64 D1 qualification."
+      - run: echo "Windows support waived by the owner; this disabled mapping is retained for coverage inventory compatibility."
