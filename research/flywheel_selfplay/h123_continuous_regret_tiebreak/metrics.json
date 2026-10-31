@@ -15,11 +15,75 @@
     ],
     "strict_inequality": true
   },
+  "argon_status": "complete_prereg_and_proposal",
   "branch_taken": "no_xbabe1_artifact_prereg_and_proposal",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "elo": null,
   "elo_vs_r882": null,
+  "evidence": {
+    "candidate_rounds": [
+      899,
+      907,
+      931,
+      935,
+      1003,
+      1039,
+      1043,
+      1091,
+      1119,
+      1171,
+      1183,
+      1215,
+      1223,
+      1247,
+      1255,
+      1283,
+      1291,
+      1639,
+      1690,
+      1745,
+      1964
+    ],
+    "h114_admission_log_sha256": "3093866b4f802704f158fedec1e4d0204d7af7f813776bb984114856d82a7c12",
+    "h114_summary_commit": "002b92caeeb313456d6d05cd6049564eaa7d0980",
+    "inventory_basis": "owner directive /home/ubuntu/nudges/h123_unstick_t0955_rd_argon.md reports 0 of 21 tied-at-maximum checkpoints retained; this lane did not access xbabe1 or the raw admission log",
+    "reported_top_tie_count": 21,
+    "required_read_only_log_copy_found": false,
+    "s3_rejected_pt_rounds": [
+      899,
+      907,
+      931,
+      935,
+      1003,
+      1039,
+      1043,
+      1091,
+      1119
+    ],
+    "s3_retention_bundle_rounds": [
+      1639,
+      1690,
+      1745,
+      1964
+    ],
+    "unretained_missing_rounds": [
+      1171,
+      1183,
+      1215,
+      1223,
+      1247,
+      1255,
+      1283,
+      1291
+    ],
+    "verified_adapter_artifacts": 0
+  },
   "execution_mode": "cpu_only_prereg_and_feasibility_census",
   "gpu_seconds_used": 0.0,
+  "gpu_used": false,
+  "hypothesis": "Continuous mean regret can break H114's top-utility tie without changing official argmin admission.",
   "hypothesis_id": "H123",
+  "observed_outcomes": null,
   "outcomes_evaluated": false,
   "owner": "rd_argon",
   "preregistered_split": {
@@ -62,12 +126,29 @@
     "softmax_regret_temperature": 0.1,
     "top_cluster_epsilon_below_best": 0.0001
   },
+  "protocol": {
+    "admission_lcb95_strictly_above": 0.001,
+    "auc": false,
+    "candidate_pick": "minimum equally-family-weighted continuous mean regret on the four training folds among verified candidates tied at H114 maximum; ties by round then SHA-256",
+    "data": "real S3 H50 DL-Train only",
+    "elo": "family-grouped vs r882=1500 with 95% CI",
+    "fold_seed": 12300,
+    "harm_definition": "family delta < -0.01",
+    "harm_fraction_max": 0.1,
+    "median_delta_strictly_positive": true,
+    "paired_seeds": [
+      61,
+      62,
+      63
+    ],
+    "primary": "median paired equal-family candidate-minus-r882 utility delta over seeds"
+  },
   "provenance": {
+    "dl_val_terminal_reads": 0,
     "dope_buffers_sha256": "ca8cc329fa495679564112e54f2e1717b98aa050a2854be2f04fbdf2c3504be6",
     "dope_frozen_sha256_post": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
     "dope_frozen_sha256_pre": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
     "dope_params_sha256": "75084b2c4e31e9a87a6a12eb14942ca4e8c92dd7a820bd9e77fc2dc97a6e004f",
-    "dl_val_terminal_reads": 0,
     "outer_test_reads": 0,
     "r882_checkpoint_path": "/home/ubuntu/jope-data/h51/ckpt/round-882.pt",
     "r882_checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
@@ -80,6 +161,8 @@
     "xbabe1_admissions_snapshot_max_round": 2140,
     "xbabe1_admissions_snapshot_sha256": "1d1ce39e710c52642538587b52d2fdc0b718dd80f3a7bb7cd15fdaf3f4f5ea72"
   },
+  "qualification_lock_used": false,
+  "s3_payloads_opened": 0,
   "s3_receipt": {
     "bucket": "veox-jopedime-learning-use2",
     "etag": "\"3834713fb73164016adaa02d6e262230\"",
@@ -89,7 +172,8 @@
     "verified_sha256": "49f2938504725279766cdf9a25bdddf15ecf3d6944db86b79590ac3d558de685",
     "version_id": "unoe4daW1iSezdnzQj1sbLIzYDmfbbAc"
   },
-  "status": "complete_prereg_and_proposal",
+  "schema": "jope.h123.metrics/v1",
+  "status": "NO_ARTIFACTS_PROPOSAL_ONLY",
   "tied_at_max_census": {
     "gap_below_r882": 8.10619598517016e-05,
     "h114_prefix_tied_rounds_count": 17,
