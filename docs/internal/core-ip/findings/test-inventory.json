@@ -2701,6 +2701,12 @@
         "evidence"
       ]
     },
+    "target:jope-service/test/golden-fixture-loader": {
+      "role": "regression",
+      "subsystems": [
+        "evidence"
+      ]
+    },
     "target:jope-appliance/test/e2e": {
       "role": "regression",
       "subsystems": [

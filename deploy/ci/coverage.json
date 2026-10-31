@@ -12559,6 +12559,22 @@
         "required_features": []
       }
     },
+    "target:jope-service/test/golden-fixture-loader": {
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "RES-09 SafeTensors golden-fixture loader: exact tensor names/shapes, strict/skip modes and synthetic fixture checks; real RES-07 goldens load only when present (skip diagnostic otherwise).",
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-service/tests/support/golden.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      }
+    },
     "target:jope-telemetry/bin/jtel": {
       "discovery": {
         "kind": "target",

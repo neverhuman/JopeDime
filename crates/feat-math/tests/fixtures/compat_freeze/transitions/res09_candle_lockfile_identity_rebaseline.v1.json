@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Lockfile identity successor: RES-09 gives jope-service a candle-core dev-dependency edge through the existing registry+[patch.crates-io] vendored copy (no new packages); no evaluator input version/feature or evaluator behavior changed. Declared by super_merge_claude under owner_711_ruling_t1830.",
+  "plan_reference": "RES-09 (#711); owner_711_ruling_t1830; ADR-0004",
+  "source_commit": "27b292c7e76b28b15cddebea15f0683a5baab9ae",
+  "base_commit": "b452594f63fb44d607d558a5116643a2db51c3a2",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "bb54d15cf027983df9612670a71535cb7a8b01d35135dd4b3f28d8e37cb4d26a",
+      "after": "4dbb8b9c8e36ea1703a872f0f6a3740d8aad097c91734b9df708aeca91158747"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "c31e974aac472f4ffd15c8bb34116133bb140761d872079cb2a2dbcc067a9cec",
+      "after": "bd42197dfdfc46c03e1040ce91cd63784e82ee6c987a34219f98629f5dfa88f1"
+    }
+  ],
+  "before_identity_digest": "9ff7dccc6320e8ea9f0528c22157b4ee877f6ae7fa90a10a4a4eeb021ce59990",
+  "after_identity_digest": "464fb7086cbd37eaf1356c13335b41a14e1502fe955850d68c4db680452ba565",
+  "before_implementation_sha256": "9b291248ed50341fe1cc982b4be9a38dbbf46c13091227b8f093ddd694e57fe7",
+  "after_implementation_sha256": "408032c1357692348e5de8cd1ecb5fc349b0a2e1599329b2990b78fd961094d2",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
