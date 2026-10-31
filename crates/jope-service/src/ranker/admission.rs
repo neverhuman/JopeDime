@@ -110,6 +110,23 @@ impl<P: RoundInputProvider> CpuRoundAdmission<P> {
         }
     }
 
+    /// Construct the same CPU replay adapter from a caller-verified test fixture.
+    /// Production bundle loading continues to require `from_bundle`.
+    #[cfg(test)]
+    pub(crate) fn for_cpu_replay_weights(
+        weights: &[u8],
+        plan: Plan,
+        provider: P,
+        rule: RevealedRule,
+    ) -> Result<Self> {
+        Ok(Self {
+            adapter: CpuAdapter::from_bytes_on_device(weights, &candle_core_0_11_0::Device::Cpu)?,
+            provider,
+            plan,
+            rule,
+        })
+    }
+
     /// Run once on the complete revealed/proposal slate, then select using the
     /// caller's round RNG. All binding, alignment and model errors precede RNG use.
     pub fn evaluate_round(
