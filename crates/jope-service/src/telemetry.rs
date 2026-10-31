@@ -1,7 +1,8 @@
 //! Engine telemetry service (spec §9.1, card TEL-04).
 //!
 //! Samples the engine and its workers at 1 Hz, computes the §9.1 metrics and publishes each
-//! sample as an ephemeral SSE telemetry frame through [`EventLog::publish_telemetry`]. Sensors
+//! sample as an ephemeral SSE telemetry frame through
+//! [`crate::events::EventLog::publish_telemetry`]. Sensors
 //! and producer counters are injected, so a missing source is explicit: `value: null` with
 //! `availability: "unavailable:<reason>"`, never zero. Telemetry only reads counters and OS
 //! state; nothing here can reach the search, so it cannot change the champion (gate T3).
