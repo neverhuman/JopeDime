@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""H100 FIFO cells: precursor closure first, no retries or budget resets."""
+"""H100 FIFO cells: precursor start order first, no retries or budget resets."""
 
 from __future__ import annotations
 
@@ -34,28 +34,6 @@ class PredecessorPending(RuntimeError):
     pass
 
 
-def live_precursor_processes():
-    """Inspect scheduling metadata only; never signal another process."""
-    active = set()
-    for proc in Path("/proc").iterdir():
-        if not proc.name.isdigit() or int(proc.name) == os.getpid():
-            continue
-        try:
-            if proc.stat().st_uid != os.geteuid():
-                continue
-            args = (proc / "cmdline").read_bytes().decode(errors="replace").lower()
-            for wave, folder in PRECURSORS.items():
-                if folder in args or f"/{wave.lower()}/" in args:
-                    active.add(wave)
-        except (FileNotFoundError, ProcessLookupError):
-            continue
-        except PermissionError as exc:
-            raise PredecessorPending(
-                "cannot inspect precursor process metadata"
-            ) from exc
-    return active
-
-
 def merged_metric(wave):
     path = f"research/flywheel_selfplay/{PRECURSORS[wave]}/metrics.json"
     result = subprocess.run(
@@ -72,42 +50,84 @@ def merged_metric(wave):
         raise PredecessorPending(f"{wave} terminal metadata invalid") from exc
 
 
+def started_budget(wave):
+    path = Path.home() / f"jope-data/{wave.lower()}/{wave.lower()}-wave/budget.json"
+    if not path.exists():
+        return None
+    if path.is_symlink():
+        raise PredecessorPending(f"{wave} scheduling ledger is a symlink")
+    try:
+        return json.loads(path.read_text())
+    except (ValueError, OSError) as exc:
+        raise PredecessorPending(f"{wave} scheduling ledger unreadable") from exc
+
+
 def require_predecessors(
     *,
     read_fn=merged_metric,
+    budget_fn=started_budget,
     queue_dir=None,
-    active_fn=live_precursor_processes,
     alive_fn=fair.fifo_lock.pid_is_alive,
 ):
+    """AFTER is FIFO start order: do not impose another closeout approval gate."""
     queue_dir = queue_dir or Path.home() / "jope_plan/qualification.queue"
     if queue_dir.is_symlink():
         raise PredecessorPending("FIFO queue directory is a symlink")
-    active = active_fn()
-    if active & PRECURSORS.keys():
-        raise PredecessorPending(f"active precursor coordinators: {sorted(active)}")
+    tickets = {}
     for ticket in queue_dir.iterdir() if queue_dir.exists() else ():
         parsed = fair.fifo_lock.parse_ticket_name(ticket.name)
-        if parsed is not None and parsed[2] in PRECURSORS and alive_fn(parsed[1]):
-            raise PredecessorPending(f"{parsed[2]} ticket still present")
+        if parsed is None or parsed[2] not in PRECURSORS or not alive_fn(parsed[1]):
+            continue
+        if ticket.is_symlink() or not ticket.is_file():
+            raise PredecessorPending("precursor ticket is not a regular file")
+        fields = dict(
+            line.split("=", 1)
+            for line in ticket.read_text().splitlines()
+            if "=" in line
+        )
+        epoch, pid, wave = parsed
+        if fields != {"epoch_ns": str(epoch), "pid": str(pid), "wave": wave}:
+            raise PredecessorPending(f"{wave} FIFO ticket metadata mismatch")
+        tickets[wave] = ticket.name
     records = {}
     for wave in PRECURSORS:
-        data = read_fn(wave)
-        ledger = data.get("ledger", {})
+        if wave in tickets:
+            records[wave] = {"older_live_ticket": tickets[wave]}
+            continue
+        ledger = budget_fn(wave)
         if (
-            type(data.get("complete")) is not bool
-            or not str(data.get("schema", "")).startswith(f"jope.{wave.lower()}.")
-            or "cpu" in str(data.get("schema", "")).lower()
-            or ledger.get("in_progress", "unknown") is not None
-            or not isinstance(ledger.get("attempts"), list)
-            or not ledger["attempts"]
+            isinstance(ledger, dict)
+            and ledger.get("wave") == wave
+            and ledger.get("cap_seconds") == 2700
         ):
-            raise PredecessorPending(
-                f"{wave} has no merged terminal closed-ledger evidence"
-            )
-        records[wave] = {
-            "complete": data["complete"],
-            "attempts": len(ledger["attempts"]),
-        }
+            attempts = ledger.get("attempts", [])
+            pending = ledger.get("in_progress")
+            launched = [
+                a
+                for a in attempts
+                if isinstance(a, dict) and a.get("started_utc") and a.get("command")
+            ]
+            if launched or (
+                isinstance(pending, dict)
+                and pending.get("started_utc")
+                and pending.get("command")
+            ):
+                records[wave] = {"prior_gpu_start": True}
+                continue
+        try:
+            terminal = read_fn(wave)
+        except PredecessorPending:
+            terminal = {}
+        if (
+            terminal.get("complete") is True
+            and str(terminal.get("schema", "")).startswith(f"jope.{wave.lower()}.")
+            and "cpu" not in str(terminal.get("schema", "")).lower()
+        ):
+            records[wave] = {"merged_complete": True}
+            continue
+        raise PredecessorPending(
+            f"{wave} has no older live ticket, prior GPU start or merged complete result"
+        )
     return records
 
 
@@ -117,8 +137,10 @@ def wait_predecessors(root, *, sleep_fn=time.sleep, check_fn=require_predecessor
         subprocess.run(["git", "fetch", "origin", "main"], cwd=r.ROOT, check=True)
         try:
             proof = check_fn()
-            r.atomic_json(root / "precursor-closure.json", proof)
-            fair.note(status, "PRECURSORS_CLOSED H93/H97/H99; H100 may join FIFO tail")
+            r.atomic_json(root / "precursor-order.json", proof)
+            fair.note(
+                status, "PRECURSOR_ORDER H93/H97/H99 preceded H100; join FIFO tail"
+            )
             return proof
         except PredecessorPending as error:
             fair.note(
