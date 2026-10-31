@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # deploy/appliance/test-clean-host.sh — run a packaged `jopedime` as the only file in an empty
-# directory with an empty environment (SPECIFICATION.md §14.2).
+# directory with an empty environment (SPECIFICATION.md §14.2), or the Linux REL-04 pre-stage.
 #
 #   test-clean-host.sh PACKAGE WORKDIR [--require-isolation]
+#   test-clean-host.sh JOPEDIME WORKDIR --prestage
 #
 # Every command class runs: version, doctor, methods, fit (bounded selection), predict,
 # fit-predict, verify-self, licenses, and the documented exit statuses. When `unshare` can drop
@@ -14,6 +15,11 @@ set -euo pipefail
 package=${1:?usage: $0 PACKAGE WORKDIR [--require-isolation]}
 work=${2:?usage: $0 PACKAGE WORKDIR [--require-isolation]}
 require=${3:-}
+if [[ $require == --prestage ]]; then
+  [[ $# -eq 3 ]] || { echo "$0: --prestage takes no extra arguments" >&2; exit 2; }
+  script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+  exec bash "$script_dir/test-clean-host-prestage.sh" "$package" "$work"
+fi
 case $work in /tmp | /tmp/*) echo "$0: never under /tmp (AGENTS.md)" >&2; exit 2 ;; esac
 [ ! -e "$work" ] || { echo "$0: $work exists" >&2; exit 2; }
 mkdir -p "$work"
