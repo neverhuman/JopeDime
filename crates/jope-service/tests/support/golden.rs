@@ -585,11 +585,80 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "needs RES-07 to publish fixture names and shape schema"]
-    fn real_documented_fixture_smoke_test() {
-        // RES-07 must replace this placeholder with its README inventory before
-        // removing the ignore, so a missing fixture cannot become a false pass.
-        assert!(load_named("<RES-07 fixture name>", &[]).unwrap().is_some());
+    #[ignore = "unignore only after RES-07 publishes its generated index and every fixture payload"]
+    fn res07_fixture_inventory_loads_every_safetensors_shape() {
+        let root = env::var_os(GOLDEN_DIR_ENV).map_or_else(
+            || {
+                Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("../../research/flywheel_selfplay/golden")
+            },
+            std::path::PathBuf::from,
+        );
+        let index_path = root.join("index.json");
+        let index: serde_json::Value =
+            serde_json::from_slice(&fs::read(&index_path).unwrap_or_else(|error| {
+                panic!(
+                    "RES-07 fixture inventory is unavailable at {}: {error}",
+                    index_path.display()
+                )
+            }))
+            .expect("RES-07 index.json must be valid JSON");
+        assert_eq!(index["schema"], "jope.golden-fixtures/v1");
+
+        let files = index["files"]
+            .as_object()
+            .expect("RES-07 index.json must contain a files object");
+        let fixtures = files
+            .iter()
+            .filter(|(name, _)| name.ends_with(".safetensors"))
+            .collect::<Vec<_>>();
+        assert!(
+            !fixtures.is_empty(),
+            "RES-07 index lists no SafeTensors fixtures"
+        );
+
+        for (name, metadata) in fixtures {
+            let tensor_metadata = metadata["tensors"]
+                .as_object()
+                .unwrap_or_else(|| panic!("RES-07 inventory entry `{name}` has no tensor schema"));
+            let schema = tensor_metadata
+                .iter()
+                .map(|(tensor, spec)| {
+                    let shape = spec["shape"]
+                        .as_array()
+                        .unwrap_or_else(|| {
+                            panic!("RES-07 tensor `{tensor}` in `{name}` has no shape")
+                        })
+                        .iter()
+                        .map(|dimension| {
+                            usize::try_from(
+                                dimension
+                                    .as_u64()
+                                    .expect("tensor dimensions must be unsigned"),
+                            )
+                            .expect("tensor dimension must fit usize")
+                        })
+                        .collect::<Vec<_>>();
+                    TensorSpec::new(tensor, shape)
+                })
+                .collect::<Vec<_>>();
+            let fixture_name = name
+                .strip_suffix(".safetensors")
+                .expect("filtered SafeTensors name must have its extension");
+            let fixture = load_named(fixture_name, &schema)
+                .unwrap_or_else(|error| {
+                    panic!("RES-07 fixture `{name}` failed validation: {error}")
+                })
+                .unwrap_or_else(|| panic!("RES-07 fixture `{name}` was skipped"));
+
+            for (tensor, spec) in schema.iter().map(|spec| (&spec.name, &spec.shape)) {
+                assert_eq!(
+                    fixture.tensors[tensor].dims(),
+                    spec,
+                    "shape mismatch in `{name}` tensor `{tensor}`"
+                );
+            }
+        }
     }
 
     fn rnk07_output_schema() -> [TensorSpec; 2] {
