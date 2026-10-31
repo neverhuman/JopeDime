@@ -1951,6 +1951,10 @@
       "reason": "CPU-only H82 fresh-seed retry-boundary, load/budget, frozen-reference and paired Elo/admission tests; offline research outside product qualification.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h85_w1_cpu_remediation_and_models/test_w1_remediation.py": {
+      "reason": "CPU-only H85 W1 pre-review remediation, shard sidecar, lock FD, GPU budget ledger, within-context template pairing and H81 strength-guard tests; offline research outside product qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h93_lookahead_noise/test_h93.py": {
       "reason": "CPU-only H93 Lookahead/noise/effective-batch, paired Elo/admission, top-four overlap, and launch-barrier fixtures; offline research outside product qualification.",
       "role": "research"
