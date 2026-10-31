@@ -1,7 +1,7 @@
 //! Build a package (feature `pack`, used by `jope-dist`). [`stage`] encodes the assets and fixes
 //! the manifest and footer; the [`signing_message`](crate::signing_message) over that footer is
 //! then signed (by `cosign sign-blob` on the release host, or the development key for fixtures);
-//! [`assemble`] or [`seal`] writes the final file. The same inputs give the same bytes: no
+//! [`assemble`] writes the final file. The same inputs give the same bytes: no
 //! timestamps, paths or random values enter the package.
 
 use crate::{
