@@ -5,7 +5,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Pure Rust Starforge tabular classifier inference"
+description = "JopeDime model bundles, tabular encoders, policy inference, and optional DOPE workflows"
 
 [[bin]]
 name = "starforge"
