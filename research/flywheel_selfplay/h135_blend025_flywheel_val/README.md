@@ -1,3 +1,13 @@
+# H135 — prospective A4 pressure-aware continuation on xbabe1
+
+**A4 preregistered; not executed.** [PREREG_AMENDMENT_A4.md](PREREG_AMENDMENT_A4.md) records the explicit owner authorization, verified 306 MB input transfer and unchanged scientific identities. Earlier incomplete attempts remain below and in metrics.json.
+
+A4 uses the isolated xbabe1 sparse worktree, retains the A3 one-thread launcher and changes only monitoring: pause on load/memory pressure, require 60 continuous recovery seconds before resuming the same worker, retain hard thread/RSS/disk/scratch aborts, and enforce a four-hour wall deadline including pauses. Every interval is recorded. Native signal controls exercise actual stop/resume, hard abort and termination of a stopped worker at deadline; all17 data-free tests pass.
+
+Next: central merge, actual-source and remote-input verification, synthetic preflight and fresh seed audit, then one continuation beginning with exact91-context r882 parity. No live flywheel changes, GPU, qualification lock, science edits or automatic fifth attempt.
+
+---
+
 # H135 — fixed BLEND_025 on flywheel validation
 
 **INCOMPLETE; blend outcome unmeasured.** This is the single prospective continuation authorized by [Amendment A3](PREREG_AMENDMENT_A3.md), merged in [PR #1207](https://github.com/neverhuman/JopeDime/pull/1207) before execution. The earlier incomplete attempts and its custody remain in [metrics.json](metrics.json) and the historical record below.

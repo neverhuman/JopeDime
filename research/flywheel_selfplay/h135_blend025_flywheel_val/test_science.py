@@ -242,6 +242,152 @@ with threadpool_limits(limits=1,user_api='blas'),threadpool_limits(limits=4,user
                 runner.baseline_one_thread(helper, "root")
             self.assertIs(torch.set_num_threads, setter)
 
+    def test_a4_recovery_requires_continuous_load_and_memory(self):
+        import monitor
+
+        s = dict(
+            rss=0,
+            threads=1,
+            disk_percent=90,
+            scratch=0,
+            load1=87,
+            cpus=102,
+            available=32 * 1024**3,
+        )
+        gate = monitor.RecoveryGate()
+        self.assertEqual(gate.action(s, 0), "pause")
+        self.assertIsNone(monitor.hard_reason(s))
+        self.assertIsNone(gate.action(dict(s, load1=79), 1))
+        self.assertIsNone(gate.action(dict(s, load1=79), 60.99))
+        self.assertIsNone(gate.action(dict(s, load1=80), 61))
+        self.assertIsNone(gate.action(dict(s, load1=79), 62))
+        self.assertIsNone(gate.action(dict(s, load1=79, available=15 * 1024**3), 121))
+        self.assertIsNone(gate.action(dict(s, load1=79), 122))
+        self.assertEqual(gate.action(dict(s, load1=79), 182), "resume")
+        self.assertEqual(
+            gate.action(dict(s, load1=0, available=15 * 1024**3), 183), "pause"
+        )
+        self.assertEqual(monitor.hard_reason(dict(s, threads=5)), "threads>4")
+        self.assertEqual(monitor.WALL_SECONDS, 14400)
+
+    def test_a4_native_pause_resume_and_hard_abort(self):
+        import json
+        import subprocess
+        import sys
+        import time
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from unittest.mock import patch
+        import monitor
+
+        # Existing temporary-test policy: this holds receipts only, no source/build copies.
+        with TemporaryDirectory() as folder:
+            root = Path(folder)
+            child = subprocess.Popen(
+                [sys.executable, "-c", "import time; time.sleep(30)"],
+                start_new_session=True,
+            )
+            record = dict(pause_intervals=[])
+            original_sample = monitor.sample
+            stopped_seen = []
+            sample_count = [0]
+
+            def synthetic_pressure(path, proc=None):
+                row = original_sample(path, proc)
+                sample_count[0] += 1
+                row.update(
+                    load1=100 if sample_count[0] <= 2 else 0,
+                    cpus=102,
+                    available=32 * 1024**3,
+                    disk_percent=90,
+                    scratch=0,
+                )
+                state = (
+                    Path(f"/proc/{child.pid}/status")
+                    .read_text()
+                    .split("State:")[1]
+                    .splitlines()[0]
+                )
+                if "T" in state:
+                    stopped_seen.append(sample_count[0])
+                if (
+                    record["pause_intervals"]
+                    and record["pause_intervals"][0].get("disposition") == "resumed"
+                ):
+                    row["disk_percent"] = 94
+                return row
+
+            try:
+                with (
+                    patch.object(monitor, "sample", synthetic_pressure),
+                    patch.object(monitor, "RECOVERY_SECONDS", 0.05),
+                    patch.object(monitor, "POLL_SECONDS", 0.01),
+                ):
+                    with self.assertRaisesRegex(RuntimeError, "disk>=93.8%"):
+                        monitor.watch(
+                            root, root, record, "fixture", time.monotonic() + 3, child
+                        )
+                self.assertTrue(stopped_seen)
+                self.assertIsNotNone(child.poll())
+                self.assertEqual(len(record["pause_intervals"]), 1)
+                self.assertEqual(record["pause_intervals"][0]["disposition"], "resumed")
+                self.assertGreaterEqual(
+                    record["pause_intervals"][0]["duration_seconds"], 0.05
+                )
+                rows = [
+                    json.loads(x)
+                    for x in (root / "resources.jsonl").read_text().splitlines()
+                ]
+                self.assertTrue(any(x["paused"] for x in rows))
+            finally:
+                monitor.terminate(child)
+
+    def test_a4_deadline_terminates_stopped_worker(self):
+        import subprocess
+        import sys
+        import time
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from unittest.mock import patch
+        import monitor
+
+        with TemporaryDirectory() as folder:
+            root = Path(folder)
+            child = subprocess.Popen(
+                [sys.executable, "-c", "import time; time.sleep(30)"],
+                start_new_session=True,
+            )
+            record = dict(pause_intervals=[])
+            original_sample = monitor.sample
+
+            def pressure(path, proc=None):
+                row = original_sample(path, proc)
+                row.update(
+                    load1=100,
+                    cpus=102,
+                    available=32 * 1024**3,
+                    disk_percent=90,
+                    scratch=0,
+                )
+                return row
+
+            try:
+                with (
+                    patch.object(monitor, "sample", pressure),
+                    patch.object(monitor, "POLL_SECONDS", 0.01),
+                ):
+                    with self.assertRaisesRegex(RuntimeError, "wall budget"):
+                        monitor.watch(
+                            root, root, record, "fixture", time.monotonic() + 0.1, child
+                        )
+                self.assertIsNotNone(child.poll())
+                self.assertEqual(
+                    record["pause_intervals"][0]["disposition"], "terminal"
+                )
+                self.assertIsNotNone(record["pause_intervals"][0]["end_utc"])
+            finally:
+                monitor.terminate(child)
+
     def test_guard_boundaries(self):
         s = dict(
             rss=0,
