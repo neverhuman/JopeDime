@@ -245,7 +245,7 @@ pub struct KeeperPolicy {
 }
 
 impl KeeperPolicy {
-    /// Performs the may omit operation and returns an error if it cannot be completed.
+    /// Performs the may omit operation.
     pub fn may_omit(self) -> bool {
         !self.is_keeper
             && self.proof_obligation_allows_omission

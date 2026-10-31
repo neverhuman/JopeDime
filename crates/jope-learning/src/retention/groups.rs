@@ -34,7 +34,7 @@ pub struct Group {
 }
 
 impl Group {
-    /// Performs the ID operation and returns an error if it cannot be completed.
+    /// Performs the ID operation.
     pub fn id(&self) -> String {
         format!(
             "s3://{}/{}{}",
@@ -271,7 +271,7 @@ pub struct BucketLookup {
 }
 
 impl BucketLookup {
-    /// Performs the find operation and returns an error if it cannot be completed.
+    /// Performs the find operation.
     pub fn find(&self, key: &str) -> Option<usize> {
         for (i, _) in key.rmatch_indices('/') {
             let p = &key[..=i];
@@ -301,12 +301,12 @@ impl GroupLookup {
         GroupLookup { buckets }
     }
 
-    /// Performs the bucket operation and returns an error if it cannot be completed.
+    /// Performs the bucket operation.
     pub fn bucket(&self, bucket: &str) -> Option<&BucketLookup> {
         self.buckets.get(bucket)
     }
 
-    /// Performs the find operation and returns an error if it cannot be completed.
+    /// Performs the find operation.
     pub fn find(&self, bucket: &str, key: &str) -> Option<usize> {
         self.buckets.get(bucket)?.find(key)
     }

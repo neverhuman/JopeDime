@@ -137,7 +137,7 @@ impl Pool {
         }
     }
 
-    /// Performs the outcomes operation and returns an error if it cannot be completed.
+    /// Performs the outcomes operation.
     pub fn outcomes(&self) -> Vec<Option<f64>> {
         self.members.iter().map(Member::outcome).collect()
     }

@@ -160,7 +160,7 @@ pub struct ContextMetrics {
     pub pairwise_accuracy: Option<f64>,
 }
 
-/// Performs the score context operation and returns an error if it cannot be completed.
+/// Performs the score context operation.
 pub fn score_context(
     outcomes: &[Option<f64>],
     incumbent: f64,

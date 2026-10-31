@@ -60,7 +60,7 @@ impl RoleFilter {
     }
 }
 
-/// Performs the role matches operation and returns an error if it cannot be completed.
+/// Performs the role matches operation.
 pub fn role_matches(purpose: Purpose, row_role: RowRole) -> bool {
     matches!(
         (purpose, row_role),

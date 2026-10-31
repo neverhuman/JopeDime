@@ -56,7 +56,7 @@ pub struct MirrorReport {
 }
 
 impl MirrorReport {
-    /// Performs the count operation and returns an error if it cannot be completed.
+    /// Performs the count operation.
     pub fn count(&mut self, outcome: PutOutcome) {
         match outcome {
             PutOutcome::Created => self.created += 1,

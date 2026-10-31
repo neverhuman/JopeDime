@@ -332,7 +332,7 @@ pub struct ProposalOutbox {
 }
 
 impl ProposalOutbox {
-    /// Performs the dir operation and returns an error if it cannot be completed.
+    /// Performs the dir operation.
     pub fn dir(state_root: &Path) -> PathBuf {
         state_root.join("proposals").join("delivery-v1")
     }

@@ -126,11 +126,11 @@ pub struct VerifyReport {
 }
 
 impl VerifyReport {
-    /// Performs the ok operation and returns an error if it cannot be completed.
+    /// Performs the ok operation.
     pub fn ok(&self) -> bool {
         self.ledger.ok() && self.invalid_rows.is_empty() && self.duplicate_rows == 0
     }
-    /// Performs the total breaks operation and returns an error if it cannot be completed.
+    /// Performs the total breaks operation.
     pub fn total_breaks(&self) -> usize {
         self.ledger.breaks.len() + self.invalid_rows.len() + self.duplicate_rows as usize
     }

@@ -139,7 +139,7 @@ impl Kind {
         }
     }
 
-    /// Performs the class operation and returns an error if it cannot be completed.
+    /// Performs the class operation.
     pub fn class(self) -> Class {
         match self {
             Kind::CandidateEvidence | Kind::HwmDecision => Class::Evidence,
@@ -190,7 +190,7 @@ pub struct BlobRef {
 }
 
 impl BlobRef {
-    /// Performs the of operation and returns an error if it cannot be completed.
+    /// Performs the of operation.
     pub fn of(bytes: &[u8]) -> BlobRef {
         BlobRef {
             sha256: crate::canon::sha256_hex(bytes),
@@ -323,7 +323,7 @@ pub trait Inventoried: Serialize + DeserializeOwned {
     const KIND: Kind;
     /// Returns the schema identifier for this record kind.
     fn schema(&self) -> &str;
-    /// Performs the run ID operation and returns an error if it cannot be completed.
+    /// Performs the run ID operation.
     fn run_id(&self) -> &str;
     /// Structural limits beyond what the types enforce.
     fn check(&self) -> Result<()>;
@@ -371,12 +371,12 @@ pub struct Encoded {
 }
 
 impl Encoded {
-    /// Performs the key operation and returns an error if it cannot be completed.
+    /// Performs the key operation.
     pub fn key(&self) -> String {
         object_key(self.kind, &self.digest)
     }
 
-    /// Performs the reference operation and returns an error if it cannot be completed.
+    /// Performs the reference operation.
     pub fn reference(&self) -> ObjectRef {
         ObjectRef {
             kind: self.kind,
@@ -430,12 +430,12 @@ impl<T: Inventoried> Decoded<T> {
         &self.digest
     }
 
-    /// Performs the value operation and returns an error if it cannot be completed.
+    /// Performs the value operation.
     pub fn value(&self) -> &T {
         &self.value
     }
 
-    /// Performs the into value operation and returns an error if it cannot be completed.
+    /// Performs the into value operation.
     pub fn into_value(self) -> T {
         self.value
     }

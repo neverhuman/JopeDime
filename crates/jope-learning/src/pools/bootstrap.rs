@@ -20,7 +20,7 @@ impl SplitMix64 {
         Self(seed)
     }
 
-    /// Performs the next u64 operation and returns an error if it cannot be completed.
+    /// Performs the next u64 operation.
     pub fn next_u64(&mut self) -> u64 {
         self.0 = self.0.wrapping_add(0x9E37_79B9_7F4A_7C15);
         let mut z = self.0;

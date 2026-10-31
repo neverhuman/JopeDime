@@ -430,37 +430,37 @@ impl<'r> Driver<'r> {
         )
     }
 
-    /// Performs the manifest operation and returns an error if it cannot be completed.
+    /// Performs the manifest operation.
     pub fn manifest(&self) -> &Decoded<RunManifest> {
         &self.manifest
     }
 
-    /// Performs the outbox operation and returns an error if it cannot be completed.
+    /// Performs the outbox operation.
     pub fn outbox(&self) -> &Outbox {
         &self.outbox
     }
 
-    /// Performs the config operation and returns an error if it cannot be completed.
+    /// Performs the config operation.
     pub fn config(&self) -> &Config {
         &self.config
     }
 
-    /// Performs the head operation and returns an error if it cannot be completed.
+    /// Performs the head operation.
     pub fn head(&self) -> Option<&Head> {
         self.head.as_ref()
     }
 
-    /// Performs the staged operation and returns an error if it cannot be completed.
+    /// Performs the staged operation.
     pub fn staged(&self) -> u64 {
         self.staged.len() as u64
     }
 
-    /// Performs the previous operation and returns an error if it cannot be completed.
+    /// Performs the previous operation.
     pub fn previous(&self) -> Option<&Previous> {
         self.previous.as_ref()
     }
 
-    /// Performs the uncheckpointed operation and returns an error if it cannot be completed.
+    /// Performs the uncheckpointed operation.
     pub fn uncheckpointed(&self) -> u64 {
         self.checkpoints.uncheckpointed()
     }

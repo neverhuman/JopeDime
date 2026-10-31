@@ -221,7 +221,7 @@ pub enum Appended {
 }
 
 impl Appended {
-    /// Performs the seq operation and returns an error if it cannot be completed.
+    /// Performs the seq operation.
     pub fn seq(self) -> u64 {
         match self {
             Appended::Added { seq } | Appended::Existing { seq } => seq,
@@ -607,7 +607,7 @@ impl Outbox {
         Ok(())
     }
 
-    /// Performs the root operation and returns an error if it cannot be completed.
+    /// Performs the root operation.
     pub fn root(&self) -> &Path {
         &self.root
     }
@@ -618,7 +618,7 @@ impl Outbox {
         &self.state
     }
 
-    /// Performs the limits operation and returns an error if it cannot be completed.
+    /// Performs the limits operation.
     pub fn limits(&self) -> Limits {
         self.limits
     }
@@ -628,17 +628,17 @@ impl Outbox {
         &self.recovery
     }
 
-    /// Performs the records operation and returns an error if it cannot be completed.
+    /// Performs the records operation.
     pub fn records(&self) -> u64 {
         self.entries.len() as u64
     }
 
-    /// Performs the pending entries operation and returns an error if it cannot be completed.
+    /// Performs the pending entries operation.
     pub fn pending_entries(&self) -> u64 {
         self.pending_entries
     }
 
-    /// Performs the pending bytes operation and returns an error if it cannot be completed.
+    /// Performs the pending bytes operation.
     pub fn pending_bytes(&self) -> u64 {
         self.pending_bytes
     }
@@ -661,12 +661,12 @@ impl Outbox {
         self.by_key.get(&item.key()).copied()
     }
 
-    /// Performs the record operation and returns an error if it cannot be completed.
+    /// Performs the record operation.
     pub fn record(&self, seq: u64) -> Option<&Record> {
         self.entry(seq).map(|e| &e.record)
     }
 
-    /// Performs the ack operation and returns an error if it cannot be completed.
+    /// Performs the ack operation.
     pub fn ack(&self, seq: u64) -> Option<&Ack> {
         self.entry(seq).and_then(|e| e.ack.as_ref())
     }
