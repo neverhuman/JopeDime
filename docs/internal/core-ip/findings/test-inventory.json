@@ -1777,6 +1777,12 @@
       "reason": "historical campaign tooling retained for replay; not a maintained regression control",
       "role": "historical"
     },
+    "python:python/tests/test_record_reader.py": {
+      "role": "regression",
+      "subsystems": [
+        "evidence"
+      ]
+    },
     "python:python/tests/test_reward_ranked_dl_generate.py": {
       "reason": "historical campaign tooling retained for replay; not a maintained regression control",
       "role": "historical"
