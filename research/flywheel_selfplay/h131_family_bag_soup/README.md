@@ -10,20 +10,20 @@ Hypothesis and setup: average eight whole-family-bootstrap adapters to cancel ha
 | SOUP8 | -0.022976076 | [-0.069395, 0.013138] | 1448.8 [1366.7, 1534.0] | 41.46% | -0.069395 | NO_ADVANCE |
 | SOUP8_HALF | -0.021520067 | [-0.069763, 0.014935] | 1483.0 [1404.4, 1568.7] | 31.71% | -0.074746 | NO_ADVANCE |
 
-Completed 1080 updates, 27 fits and nine assessment cells. Fresh r882 assessment utility 1.317514412634. All seed gains, family harm, Holm decisions and identical-vector flags are in [metrics.json](metrics.json).
+Completed 1,080 updates, 27 fits and nine assessment cells. Every arm had negative gain on all three seeds; no arm passed Holm or the 10% family-harm cap. Fresh r882 assessment utility 1.317514412634. All seed gains, family harm, Holm decisions and identical-vector flags are in [metrics.json](metrics.json).
 
 Verification reconstructed all six soup/half-soup snapshots bitwise, replayed the family bootstraps and statistics, checked 27 curves and 39 original-checkpoint copies, and verified candidate custody preceded assessment. The pre-update two-copy prediction/cache regression passed.
 
-Resources: monitor `WORKER_EXITED`, reason `None`, exit `0`, wall 1606.81s, peak RSS 3.708 GiB. Total-thread preflight: `{"after": 3, "before": 3, "contexts": ["004a7438dc815b62c821976ac64379b7bf9a1a138d3ca441a9fb5a5e0e5dfb24", "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d"], "native_workspace_threads": 1, "status": "PASS", "total_thread_limit": 4}`. Guard stays four total threads, 6 GiB RSS, at least 30 GiB available memory, load1 at most 86.7/102, disk below 94%, nice at least 15. CPU only; no GPU/qualification lock/live-loop action.
+Resources: monitor `WORKER_EXITED`, exit 0, no resource abort; wall 1,606.81 seconds, peak RSS 3.708 GiB. The two-fit-context token preflight passed with three total threads before and after construction; the maximum sampled worker count during the full attempt was four. Guards remained four total threads, 6 GiB RSS, at least 30 GiB available memory, load1 at most 86.7/102, disk below 94%, and nice at least 15. CPU only; no GPU, qualification lock or live-loop action.
 
 Red-team assessment:
 
-- Leakage: the fit/assessment family split and candidate-before-assessment gate are fixed; prior r882 DL-Train exposure limits any generalization claim. A missing final runtime audit is not counted as complete coverage.
+- Leakage: the final runtime read audit recorded 2,438 permitted pool/table paths and zero refusals; candidate custody was verified before assessment admission. Prior r882 DL-Train exposure still limits any generalization claim.
 - Seed noise: three seeds and one fold; 24 members are not independent assessment replications. Bootstrap intervals condition on these trained models.
 - Metric direction: higher H61 unrevealed-candidate utility is better; indices 0–3 are excluded. Elo is family W/T/L with r882=1500, not AUC.
 - Cherry-picking and compute: every fixed member/seed/arm is required. No survivor average, assessment-tuned weight or retry. Eightfold compute remains a confound without CONTROL_320.
 - Tie acceptance: median gain must exceed 0.001, every seed must improve, three-arm Holm adjusted LCB must exceed zero, and at most four of 41 families may have a strictly negative seed-mean gain. Ties never qualify; bootstrap tail areas remain exploratory.
-- DOPE freeze: only 29,211 non-anchor adapter parameters are allowed to train. Completed-run verification is required for all per-fit and per-assessment freeze claims; partial records cannot establish a whole-wave pass.
+- DOPE freeze: all 27 fits and nine candidate readouts passed their non-adapter parameter/buffer and frozen DOPE c51a56d0 before/after checks. Each fit started at the same pinned adapter identity and finished with changed parameters; only the 29,211 non-anchor adapter parameters were trainable.
 
 Validation: 26 data-free tests and the five local records gates passed for Amendment A1. Closeout checks preserve source/prereg/fold identities, strict JSON, links and the complete diff at the publication head. These are same-agent checks, not independent human review; full CI remains deferred under the owner targeted-local policy.
 
