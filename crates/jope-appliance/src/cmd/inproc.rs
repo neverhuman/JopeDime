@@ -3,14 +3,16 @@
 //! CLI discovery/dispatch must opt into these helpers. They do not implement run,
 //! control, or export handlers; a refused control never counts as a committed pause.
 #![cfg(not(windows))] // signal-hook's iterator is unavailable on Windows.
-#![allow(dead_code)] // Thin CLI wiring is outside BAT-06's approved file ownership.
+#![allow(dead_code)] // Store-bound transport wiring awaits the shared engine owner.
 
 use jope_api::{ids::RunId, RunSnapshot, RunState};
 use jope_client::{Request, Transport};
+#[cfg(feature = "engine")]
 use jope_service::{engine::InProcessEngine, store::Store};
 use signal_hook::iterator::{Handle, Signals};
+#[cfg(feature = "engine")]
+use std::path::Path;
 use std::{
-    path::Path,
     sync::{
         atomic::{AtomicUsize, Ordering},
         Arc,
@@ -21,12 +23,15 @@ use std::{
 
 /// Scope the store and its advisory lock to this command, on both success and error.
 /// The borrowed store cannot escape the operation. No listener or child is started.
+#[cfg(feature = "engine")]
 pub fn with_engine<R>(
     home: &Path,
     operation: impl FnOnce(&Store, &Interrupts) -> anyhow::Result<R>,
 ) -> anyhow::Result<R> {
-    let interrupts = Interrupts::install()?;
     let engine = InProcessEngine::open(home)?;
+    // Reverse local drop order joins/unregisters the signal owner before the
+    // engine closes its Store and releases the advisory lock, including unwind.
+    let interrupts = Interrupts::install()?;
     operation(engine.store(), &interrupts)
 }
 
@@ -42,6 +47,18 @@ impl Interrupted {
         130
     }
 }
+
+impl std::fmt::Display for Interrupted {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "run {} acknowledged {:?} after SIGINT",
+            self.run_id, self.state
+        )
+    }
+}
+
+impl std::error::Error for Interrupted {}
 
 /// Safe signal delivery; API calls and store IO never run in a signal handler.
 pub struct Interrupts {
@@ -76,6 +93,13 @@ impl Interrupts {
 
     pub fn requested(&self) -> bool {
         self.count.load(Ordering::SeqCst) != 0
+    }
+
+    #[cfg(test)]
+    pub(crate) fn delivered_for_test(count: usize) -> Self {
+        let interrupts = Self::install().unwrap();
+        interrupts.count.store(count.min(2), Ordering::SeqCst);
+        interrupts
     }
 
     /// Called by the command at a request boundary after SIGINT. Wait for the
@@ -150,7 +174,7 @@ impl Drop for Interrupts {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "engine"))]
 mod tests {
     use super::*;
     use jope_client::{transport::header, Response};
@@ -471,7 +495,7 @@ mod tests {
             );
             assert!(!Path::new(&format!("/proc/{pid}")).exists());
             let process_table = Command::new("ps")
-                .args(["-p", &pid.to_string(), "-o", "pid=,ppid=,args="])
+                .args(["-p", &pid.to_string(), "-o", "pid=,ppid=,comm="])
                 .output()
                 .unwrap();
             assert_eq!(process_table.status.code(), Some(1));
