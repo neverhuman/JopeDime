@@ -3,7 +3,7 @@
 //! These operations are intentionally detached from the HTTP router. The next
 //! router-state task supplies the engine-owned `Store` and dispatches requests.
 
-use super::{db, definition, BlobRef, Record, RecordKey, Store, StoreError, Table};
+use super::{db, definition, BlobRef, Record, RecordKey, Store, StoreError, Table, Write};
 use jope_api::{ids::DatasetId, ids::RunId, RunState};
 use redb::ReadableTable;
 use serde_json::Value;
@@ -25,6 +25,7 @@ pub enum DeleteRun {
     Deleted,
     NotFound,
     Active,
+    RevisionConflict,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -96,35 +97,18 @@ impl Store {
             .map_err(|_| StoreError::Integrity("writer lock poisoned"))?;
         let mut transaction = self.database.begin_write().map_err(db)?;
         transaction.set_durability(redb::Durability::Immediate);
-        let run_key = RecordKey::Run(id.clone()).bytes()?;
-        let record = {
-            let runs = transaction
-                .open_table(definition(Table::Runs))
-                .map_err(db)?;
-            let Some(value) = runs.get(run_key.as_slice()).map_err(db)? else {
-                return Ok(DeleteRun::NotFound);
-            };
-            serde_json::from_slice::<Record>(value.value())?
+        let mut write = Write {
+            inner: transaction,
+            cas: &self.cas,
         };
-        let Some(run) = record.run.as_ref() else {
-            return Err(StoreError::Integrity("run table record has no run state"));
-        };
-        if matches!(run.state, RunState::Running | RunState::Pausing) {
-            return Ok(DeleteRun::Active);
+        let result = delete_run_in(&mut write, id, None)?;
+        let transaction = write.inner;
+        if result != DeleteRun::Deleted {
+            return Ok(result);
         }
-
-        transaction
-            .open_table(definition(Table::Runs))
-            .map_err(db)?
-            .remove(run_key.as_slice())
-            .map_err(db)?;
-        let mut prefix = id.to_string().into_bytes();
-        prefix.push(0);
-        remove_children(&mut transaction, Table::Events, &prefix)?;
-        remove_children(&mut transaction, Table::Evaluations, &prefix)?;
         transaction.commit().map_err(db)?;
         super::boundary("after_commit");
-        Ok(DeleteRun::Deleted)
+        Ok(result)
     }
 
     /// List or remove unreferenced regular CAS files under one writer lock.
@@ -168,6 +152,47 @@ impl Store {
             bytes,
         })
     }
+}
+
+/// Apply run deletion inside the caller's write transaction. This lets the
+/// handler commit the deletion and its idempotency receipt as one effect.
+pub(crate) fn delete_run_in(
+    write: &mut Write<'_>,
+    id: &RunId,
+    expected_revision: Option<u64>,
+) -> super::Result<DeleteRun> {
+    let run_key = RecordKey::Run(id.clone()).bytes()?;
+    let record = {
+        let runs = write
+            .inner
+            .open_table(definition(Table::Runs))
+            .map_err(db)?;
+        let Some(value) = runs.get(run_key.as_slice()).map_err(db)? else {
+            return Ok(DeleteRun::NotFound);
+        };
+        serde_json::from_slice::<Record>(value.value())?
+    };
+    let Some(run) = record.run.as_ref() else {
+        return Err(StoreError::Integrity("run table record has no run state"));
+    };
+    if expected_revision.is_some_and(|revision| revision != run.revision) {
+        return Ok(DeleteRun::RevisionConflict);
+    }
+    if matches!(run.state, RunState::Running | RunState::Pausing) {
+        return Ok(DeleteRun::Active);
+    }
+
+    write
+        .inner
+        .open_table(definition(Table::Runs))
+        .map_err(db)?
+        .remove(run_key.as_slice())
+        .map_err(db)?;
+    let mut prefix = id.to_string().into_bytes();
+    prefix.push(0);
+    remove_children(&mut write.inner, Table::Events, &prefix)?;
+    remove_children(&mut write.inner, Table::Evaluations, &prefix)?;
+    Ok(DeleteRun::Deleted)
 }
 
 fn references_dataset(value: &Value, id: &DatasetId) -> bool {

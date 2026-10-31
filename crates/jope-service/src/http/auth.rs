@@ -17,6 +17,21 @@ use subtle::ConstantTimeEq;
 #[derive(Clone)]
 pub struct BearerToken(Arc<[u8; 64]>);
 
+/// Stable identity for the single authenticated local-engine authority.
+/// It deliberately does not contain or derive from the bearer credential.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AuthenticatedPrincipal(Arc<str>);
+
+impl AuthenticatedPrincipal {
+    fn local_engine() -> Self {
+        Self(Arc::from("local-engine"))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
 impl BearerToken {
     pub fn from_hex(value: &str) -> Result<Self, InvalidLocalAuth> {
         if value.len() != 64 || !value.bytes().all(|b| b.is_ascii_hexdigit()) {
@@ -126,6 +141,10 @@ pub(super) async fn authenticate(
             None,
         )
     } else {
+        let mut request = request;
+        request
+            .extensions_mut()
+            .insert(AuthenticatedPrincipal::local_engine());
         next.run(request).await
     };
     response

@@ -4,17 +4,22 @@
 //! a global store or start background work.
 
 use super::auth::problem;
-use crate::store::{gc::DeleteDataset, gc::DeleteRun, Store};
+use crate::{
+    idempotency::{CommandOutcome, RequestIdentity},
+    store::{gc::DeleteDataset, gc::DeleteRun, Store},
+};
 use axum::{
-    http::StatusCode,
+    http::{header, HeaderMap, HeaderName, HeaderValue, StatusCode, Uri},
     response::{IntoResponse, Response},
     Json,
 };
 use jope_api::{
-    error::ErrorCode,
+    error::{ErrorCode, Problem},
     ids::{DatasetId, RunId},
+    registry::OPERATIONS,
 };
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 /// Delete a dataset's metadata. Its blobs remain until explicit store GC.
 pub fn delete_dataset(store: &Store, id: &str) -> Response {
@@ -74,8 +79,192 @@ pub fn delete_run(store: &Store, id: &str) -> Response {
             "Wait for the run to pause or finish, then retry.",
             None,
         ),
+        Ok(DeleteRun::RevisionConflict) => problem(
+            ErrorCode::RevisionConflict,
+            "If-Match does not match the current run revision.",
+            "Read the current run revision and retry with a new idempotency key.",
+            Some("If-Match"),
+        ),
         Err(error) => store_failure(error),
     }
+}
+
+/// Execute the mounted run-delete request with the supplied identity and
+/// precondition. The effect and its response receipt share one Store write.
+pub(crate) fn delete_run_idempotent(
+    store: &Store,
+    id: &str,
+    identity: &RequestIdentity,
+    expected_revision: Option<u64>,
+) -> Response {
+    let result = store.execute_idempotent(identity, |write| {
+        let id = match id.parse::<RunId>() {
+            Ok(id) => id,
+            Err(_) => {
+                return CommandOutcome::json(
+                    StatusCode::BAD_REQUEST.as_u16(),
+                    stored_problem(
+                        ErrorCode::InvalidInput,
+                        "The run ID is invalid.",
+                        "Supply a run ID returned by the engine.",
+                        Some("id"),
+                    ),
+                );
+            }
+        };
+        let result = crate::store::gc::delete_run_in(write, &id, expected_revision)?;
+        match result {
+            DeleteRun::Deleted => {
+                CommandOutcome::json(StatusCode::NO_CONTENT.as_u16(), Value::Null)
+            }
+            DeleteRun::NotFound => CommandOutcome::json(
+                StatusCode::NOT_FOUND.as_u16(),
+                stored_problem(
+                    ErrorCode::NotFound,
+                    "The run does not exist.",
+                    "List runs and retry with an existing ID.",
+                    None,
+                ),
+            ),
+            DeleteRun::Active => CommandOutcome::json(
+                StatusCode::CONFLICT.as_u16(),
+                stored_problem(
+                    ErrorCode::ImmutableField,
+                    "An active run cannot be deleted.",
+                    "Wait for the run to pause or finish, then retry.",
+                    None,
+                ),
+            ),
+            DeleteRun::RevisionConflict => CommandOutcome::json(
+                StatusCode::CONFLICT.as_u16(),
+                stored_problem(
+                    ErrorCode::RevisionConflict,
+                    "If-Match does not match the current run revision.",
+                    "Read the current run revision and retry with a new idempotency key.",
+                    Some("If-Match"),
+                ),
+            ),
+        }
+    });
+    match result {
+        Ok(receipt) => {
+            let is_problem = receipt.outcome.status() >= 400;
+            let mut response = receipt.into_response();
+            if is_problem {
+                response.headers_mut().insert(
+                    header::CONTENT_TYPE,
+                    HeaderValue::from_static(Problem::CONTENT_TYPE),
+                );
+            }
+            response
+        }
+        Err(error) => error.into_response(),
+    }
+}
+
+/// Construct the actual HTTP request identity before dispatching to the shared
+/// adapter. Duplicate or non-ASCII identity headers are rejected.
+pub(crate) fn delete_run_http(
+    store: &Store,
+    id: &str,
+    uri: &Uri,
+    headers: &HeaderMap,
+    principal: &str,
+) -> Response {
+    let key = match single_text_header(headers, HeaderName::from_static("idempotency-key")) {
+        Ok(Some(value)) => value,
+        Ok(None) => {
+            return problem(
+                ErrorCode::InvalidInput,
+                "Idempotency-Key is required for run deletion.",
+                "Supply one printable ASCII Idempotency-Key header.",
+                Some("Idempotency-Key"),
+            );
+        }
+        Err(()) => {
+            return problem(
+                ErrorCode::InvalidInput,
+                "Idempotency-Key must appear once and contain valid header text.",
+                "Supply one printable ASCII Idempotency-Key header.",
+                Some("Idempotency-Key"),
+            );
+        }
+    };
+    let if_match = match single_text_header(headers, header::IF_MATCH) {
+        Ok(value) => value,
+        Err(()) => {
+            return problem(
+                ErrorCode::InvalidInput,
+                "If-Match must appear at most once and contain valid header text.",
+                "Supply one quoted decimal run revision or omit If-Match.",
+                Some("If-Match"),
+            );
+        }
+    };
+    let expected_revision = match if_match.map(parse_revision).transpose() {
+        Ok(value) => value,
+        Err(()) => {
+            return problem(
+                ErrorCode::InvalidInput,
+                "If-Match must be a quoted decimal run revision.",
+                "Supply the current revision as If-Match: \"<revision>\".",
+                Some("If-Match"),
+            );
+        }
+    };
+    let operation = OPERATIONS
+        .iter()
+        .find(|operation| operation.name == "run_delete")
+        .expect("run_delete is registered");
+    let target = uri
+        .path_and_query()
+        .map(|value| value.as_str())
+        .unwrap_or_else(|| uri.path());
+    let identity =
+        match RequestIdentity::new(principal, key, operation.id, target, if_match, &Value::Null) {
+            Ok(identity) => identity,
+            Err(error) => return error.into_response(),
+        };
+    delete_run_idempotent(store, id, &identity, expected_revision)
+}
+
+fn single_text_header(headers: &HeaderMap, name: HeaderName) -> Result<Option<&str>, ()> {
+    let mut values = headers.get_all(name).iter();
+    let Some(value) = values.next() else {
+        return Ok(None);
+    };
+    if values.next().is_some() {
+        return Err(());
+    }
+    value.to_str().map(Some).map_err(|_| ())
+}
+
+fn parse_revision(value: &str) -> Result<u64, ()> {
+    let revision = value
+        .strip_prefix('"')
+        .and_then(|value| value.strip_suffix('"'))
+        .ok_or(())?;
+    if revision.is_empty() || !revision.bytes().all(|byte| byte.is_ascii_digit()) {
+        return Err(());
+    }
+    revision.parse().map_err(|_| ())
+}
+
+fn stored_problem(code: ErrorCode, detail: &str, remedy: &str, field: Option<&str>) -> Value {
+    let status = StatusCode::from_u16(code.http_status().expect("HTTP catalog code"))
+        .expect("valid catalog status");
+    serde_json::to_value(Problem {
+        r#type: "about:blank".into(),
+        title: status.canonical_reason().unwrap_or("Request failed").into(),
+        status: status.as_u16(),
+        detail: detail.into(),
+        instance: None,
+        code,
+        retriable: false,
+        remedy: remedy.into(),
+        field: field.map(str::to_owned),
+    })
+    .expect("problem document serializes")
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]

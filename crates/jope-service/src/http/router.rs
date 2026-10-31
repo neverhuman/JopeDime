@@ -1,12 +1,14 @@
-//! Registry-driven local router (spec §3.1, §4). Engine handlers are separate
-//! integrations; registered operations currently return an explicit capability error.
+//! Registry-driven local router (spec §3.1, §4). Operations without an
+//! engine-owned implementation remain explicit capability errors.
 
 use super::{
-    auth::{authenticate, problem, BearerToken, LocalAuth},
+    admin,
+    auth::{authenticate, problem, AuthenticatedPrincipal, BearerToken, LocalAuth},
     system,
 };
+use crate::store::Store;
 use axum::{
-    extract::DefaultBodyLimit,
+    extract::{DefaultBodyLimit, Extension, Path, Request},
     http::{header, HeaderValue},
     middleware,
     response::Response,
@@ -17,7 +19,7 @@ use jope_api::{
     error::ErrorCode,
     registry::{HttpMethod, OPERATIONS},
 };
-use std::{io, net::Ipv4Addr};
+use std::{io, net::Ipv4Addr, sync::Arc};
 use tokio::net::TcpListener;
 
 const OPENAPI_DOCUMENT: &[u8] = include_bytes!(concat!(
@@ -37,6 +39,16 @@ async fn get_openapi() -> Response {
 /// The same request boundary is used by a listener and by in-process clients.
 /// In-process clients configure their request authority without opening a socket.
 pub fn router(auth: LocalAuth) -> Router {
+    router_with_optional_store(auth, None)
+}
+
+/// Build the engine-owned router with the shared store available to selected
+/// implemented operations. In-process transports use this same constructor.
+pub fn router_with_store(auth: LocalAuth, store: Arc<Store>) -> Router {
+    router_with_optional_store(auth, Some(store))
+}
+
+fn router_with_optional_store(auth: LocalAuth, store: Option<Arc<Store>>) -> Router {
     let mut app = Router::new();
     for operation in OPERATIONS {
         let method = match operation.method {
@@ -47,6 +59,28 @@ pub fn router(auth: LocalAuth) -> Router {
         for path in operation.paths {
             app = if operation.name == "system_info" {
                 app.route(path, get(system::get))
+            } else if operation.name == "run_delete" && store.is_some() {
+                let store = Arc::clone(store.as_ref().expect("store checked"));
+                app.route(
+                    path,
+                    on(
+                        method,
+                        move |Extension(principal): Extension<AuthenticatedPrincipal>,
+                              Path(id): Path<String>,
+                              request: Request| {
+                            let store = Arc::clone(&store);
+                            async move {
+                                admin::delete_run_http(
+                                    &store,
+                                    &id,
+                                    request.uri(),
+                                    request.headers(),
+                                    principal.as_str(),
+                                )
+                            }
+                        },
+                    ),
+                )
             } else {
                 app.route(
                     path,
@@ -98,12 +132,19 @@ pub async fn bind_loopback(token: BearerToken) -> io::Result<(TcpListener, Route
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::store::{Record, RecordKey};
     use axum::{
         body::{to_bytes, Body},
         http::{header, Method, Request, StatusCode},
     };
-    use jope_api::error::Problem;
+    use jope_api::{
+        error::{ErrorCode, Problem},
+        ids::RunId,
+        RunState,
+    };
+    use serde_json::json;
     use std::collections::BTreeSet;
+    use tempfile::TempDir;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tower::ServiceExt;
 
@@ -121,6 +162,28 @@ mod tests {
     }
     fn app() -> Router {
         router(LocalAuth::new(token(), 31234).unwrap())
+    }
+
+    fn delete_request(
+        path: &str,
+        token: Option<&str>,
+        key: Option<&str>,
+        if_match: Option<&str>,
+    ) -> Request<Body> {
+        let mut builder = Request::builder()
+            .method(Method::DELETE)
+            .uri(path)
+            .header(header::HOST, "127.0.0.1:31234");
+        if let Some(token) = token {
+            builder = builder.header(header::AUTHORIZATION, token);
+        }
+        if let Some(key) = key {
+            builder = builder.header("idempotency-key", key);
+        }
+        if let Some(if_match) = if_match {
+            builder = builder.header(header::IF_MATCH, if_match);
+        }
+        builder.body(Body::empty()).unwrap()
     }
 
     #[tokio::test]
@@ -321,5 +384,225 @@ mod tests {
         server.abort();
         let _ = server.await;
         result.unwrap();
+    }
+
+    #[tokio::test]
+    async fn mounted_run_delete_uses_stable_principal_and_replays_atomic_outcome() {
+        let home = TempDir::new().unwrap();
+        let store = Arc::new(Store::open(home.path()).unwrap());
+        let id: RunId = "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0".parse().unwrap();
+        let other_id: RunId = "run_01JBD8Q6N4V2T5Y8K3M7P9R1S1".parse().unwrap();
+        store
+            .transaction(|write| {
+                write.put(
+                    &RecordKey::Run(id.clone()),
+                    &Record::run(json!({}), vec![], RunState::Completed, 7),
+                )?;
+                write.put(
+                    &RecordKey::Event {
+                        run: id.clone(),
+                        sequence: 1,
+                    },
+                    &Record::metadata(json!({"kind":"started"}), vec![]),
+                )?;
+                write.put(
+                    &RecordKey::Evaluation {
+                        run: id.clone(),
+                        number: 1,
+                    },
+                    &Record::metadata(json!({"score":1}), vec![]),
+                )?;
+                write.put(
+                    &RecordKey::Run(other_id.clone()),
+                    &Record::run(json!({}), vec![], RunState::Completed, 7),
+                )
+            })
+            .unwrap();
+
+        let app = router_with_store(LocalAuth::new(token(), 31234).unwrap(), Arc::clone(&store));
+        let good = format!("Bearer {}", "ab".repeat(32));
+        let unauthorized = app
+            .clone()
+            .oneshot(delete_request(
+                &format!("/v1/runs/{id}"),
+                None,
+                Some("delete-key"),
+                Some("\"7\""),
+            ))
+            .await
+            .unwrap();
+        assert_eq!(unauthorized.status(), StatusCode::UNAUTHORIZED);
+        assert_eq!(unauthorized.headers()["jope-api-version"], "1.0");
+        assert!(store.get(&RecordKey::Run(id.clone())).unwrap().is_some());
+
+        let mut hostile_host = delete_request(
+            &format!("/v1/runs/{id}"),
+            Some(&good),
+            Some("host-key"),
+            None,
+        );
+        hostile_host
+            .headers_mut()
+            .insert(header::HOST, "attacker.invalid:31234".parse().unwrap());
+        let response = app.clone().oneshot(hostile_host).await.unwrap();
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+        let mut browser_origin = delete_request(
+            &format!("/v1/runs/{id}"),
+            Some(&good),
+            Some("origin-key"),
+            None,
+        );
+        browser_origin
+            .headers_mut()
+            .insert(header::ORIGIN, "https://example.invalid".parse().unwrap());
+        let response = app.clone().oneshot(browser_origin).await.unwrap();
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+        let missing_key = app
+            .clone()
+            .oneshot(delete_request(
+                &format!("/v1/runs/{id}"),
+                Some(&good),
+                None,
+                None,
+            ))
+            .await
+            .unwrap();
+        assert_eq!(missing_key.status(), StatusCode::BAD_REQUEST);
+        assert!(store.get(&RecordKey::Run(id.clone())).unwrap().is_some());
+
+        let stale = app
+            .clone()
+            .oneshot(delete_request(
+                &format!("/v1/runs/{id}"),
+                Some(&good),
+                Some("stale-key"),
+                Some("\"6\""),
+            ))
+            .await
+            .unwrap();
+        assert_eq!(stale.status(), StatusCode::CONFLICT);
+        assert_eq!(stale.headers()[header::CONTENT_TYPE], Problem::CONTENT_TYPE);
+        let stale_problem: Problem =
+            serde_json::from_slice(&to_bytes(stale.into_body(), 8192).await.unwrap()).unwrap();
+        assert_eq!(stale_problem.code, ErrorCode::RevisionConflict);
+        assert!(store.get(&RecordKey::Run(id.clone())).unwrap().is_some());
+
+        let first = app
+            .clone()
+            .oneshot(delete_request(
+                &format!("/v1/runs/{id}?source=client"),
+                Some(&good),
+                Some("delete-key"),
+                Some("\"7\""),
+            ))
+            .await
+            .unwrap();
+        assert_eq!(first.status(), StatusCode::NO_CONTENT);
+        drop(to_bytes(first.into_body(), 16).await.unwrap());
+
+        let replay = app
+            .clone()
+            .oneshot(delete_request(
+                &format!("/v1/runs/{id}?source=client"),
+                Some(&good),
+                Some("delete-key"),
+                Some("\"7\""),
+            ))
+            .await
+            .unwrap();
+        assert_eq!(replay.status(), StatusCode::NO_CONTENT);
+        assert!(to_bytes(replay.into_body(), 16).await.unwrap().is_empty());
+        assert!(store.get(&RecordKey::Run(id.clone())).unwrap().is_none());
+        assert!(store
+            .get(&RecordKey::Event {
+                run: id.clone(),
+                sequence: 1,
+            })
+            .unwrap()
+            .is_none());
+        assert!(store
+            .get(&RecordKey::Evaluation {
+                run: id.clone(),
+                number: 1,
+            })
+            .unwrap()
+            .is_none());
+        assert!(store
+            .get(&RecordKey::Command {
+                principal: "local-engine".into(),
+                idempotency_key: "delete-key".into(),
+            })
+            .unwrap()
+            .is_some());
+
+        let changed_target = app
+            .clone()
+            .oneshot(delete_request(
+                &format!("/v1/runs/{other_id}?source=client"),
+                Some(&good),
+                Some("delete-key"),
+                Some("\"7\""),
+            ))
+            .await
+            .unwrap();
+        assert_eq!(changed_target.status(), StatusCode::CONFLICT);
+        let conflict: Problem =
+            serde_json::from_slice(&to_bytes(changed_target.into_body(), 8192).await.unwrap())
+                .unwrap();
+        assert_eq!(conflict.code, ErrorCode::IdempotencyConflict);
+        assert!(store
+            .get(&RecordKey::Run(other_id.clone()))
+            .unwrap()
+            .is_some());
+
+        let changed_query = app
+            .clone()
+            .oneshot(delete_request(
+                &format!("/v1/runs/{id}?source=another-client"),
+                Some(&good),
+                Some("delete-key"),
+                Some("\"7\""),
+            ))
+            .await
+            .unwrap();
+        assert_eq!(changed_query.status(), StatusCode::CONFLICT);
+        assert_eq!(
+            changed_query.headers()[header::CONTENT_TYPE],
+            Problem::CONTENT_TYPE
+        );
+        let conflict: Problem =
+            serde_json::from_slice(&to_bytes(changed_query.into_body(), 8192).await.unwrap())
+                .unwrap();
+        assert_eq!(conflict.code, ErrorCode::IdempotencyConflict);
+
+        let changed_precondition = app
+            .clone()
+            .oneshot(delete_request(
+                &format!("/v1/runs/{id}?source=client"),
+                Some(&good),
+                Some("delete-key"),
+                Some("\"6\""),
+            ))
+            .await
+            .unwrap();
+        assert_eq!(changed_precondition.status(), StatusCode::CONFLICT);
+
+        let rotated =
+            LocalAuth::new(BearerToken::from_hex(&"cd".repeat(32)).unwrap(), 31234).unwrap();
+        let rotated_app = router_with_store(rotated, Arc::clone(&store));
+        let rotated_token = format!("Bearer {}", "cd".repeat(32));
+        let token_independent_replay = rotated_app
+            .oneshot(delete_request(
+                &format!("/v1/runs/{id}?source=client"),
+                Some(&rotated_token),
+                Some("delete-key"),
+                Some("\"7\""),
+            ))
+            .await
+            .unwrap();
+        assert_eq!(token_independent_replay.status(), StatusCode::NO_CONTENT);
+        assert!(store.get(&RecordKey::Run(other_id)).unwrap().is_some());
     }
 }

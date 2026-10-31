@@ -201,7 +201,7 @@ fn read_holder(path: &Path) -> (Option<u32>, String) {
 /// The same home lock and recovery path used by background engines, without daemon publication.
 pub struct InProcessEngine {
     // Fields drop in declaration order: close redb before releasing home ownership.
-    store: Store,
+    store: Arc<Store>,
     _lock: EngineLock,
 }
 
@@ -209,12 +209,16 @@ impl InProcessEngine {
     pub fn open(home: impl AsRef<Path>) -> Result<Self, EngineError> {
         let home = home.as_ref();
         let lock = EngineLock::acquire(home)?;
-        let store = Store::open(home)?;
+        let store = Arc::new(Store::open(home)?);
         Ok(Self { store, _lock: lock })
     }
 
     pub fn store(&self) -> &Store {
-        &self.store
+        self.store.as_ref()
+    }
+
+    fn shared_store(&self) -> Arc<Store> {
+        Arc::clone(&self.store)
     }
 }
 
@@ -447,7 +451,7 @@ async fn serve_locked(
 
 async fn serve_with_activity(
     home: PathBuf,
-    _engine: InProcessEngine,
+    engine: InProcessEngine,
     idle_exit: Duration,
     activity: Arc<EngineActivity>,
 ) -> Result<(), EngineError> {
@@ -471,7 +475,7 @@ async fn serve_with_activity(
         port: address.port(),
         shutdown,
     });
-    let app: Router = router::router(auth)
+    let app: Router = router::router_with_store(auth, engine.shared_store())
         .route(STOP_PATH, post(request_stop))
         .layer(Extension(state))
         .layer(Extension(Arc::clone(&activity)));
@@ -638,6 +642,9 @@ fn _active_run(activity: &Arc<EngineActivity>) -> ActivityGuard {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::store::{Record, RecordKey};
+    use jope_api::{ids::RunId, RunState};
+    use serde_json::json;
     use std::sync::Barrier;
 
     #[test]
@@ -701,6 +708,16 @@ mod tests {
     async fn bound_engine_publishes_then_authenticated_stop_shuts_it_down() {
         let home = tempfile::tempdir().unwrap();
         let engine = InProcessEngine::open(home.path()).unwrap();
+        let run_id: RunId = "run_01JBD8Q6N4V2T5Y8K3M7P9R1S2".parse().unwrap();
+        engine
+            .store()
+            .transaction(|write| {
+                write.put(
+                    &RecordKey::Run(run_id.clone()),
+                    &Record::run(json!({}), vec![], RunState::Completed, 1),
+                )
+            })
+            .unwrap();
         let server_home = home.path().to_path_buf();
         let server = tokio::spawn(serve_locked(
             server_home.clone(),
@@ -724,6 +741,35 @@ mod tests {
         })
         .await
         .unwrap();
+        let authority = record.url.strip_prefix("http://").unwrap();
+        let port = authority
+            .rsplit(':')
+            .next()
+            .unwrap()
+            .parse::<u16>()
+            .unwrap();
+        for _ in 0..2 {
+            let mut stream = TcpStream::connect((std::net::Ipv4Addr::LOCALHOST, port))
+                .await
+                .unwrap();
+            stream
+                .write_all(
+                    format!(
+                        "DELETE /v1/runs/{run_id}?source=engine HTTP/1.1\r\nHost: {authority}\r\nAuthorization: Bearer {}\r\nIdempotency-Key: engine-delete\r\nIf-Match: \"1\"\r\nConnection: close\r\n\r\n",
+                        record.token
+                    )
+                    .as_bytes(),
+                )
+                .await
+                .unwrap();
+            let mut response = Vec::new();
+            stream.read_to_end(&mut response).await.unwrap();
+            assert!(
+                String::from_utf8_lossy(&response).starts_with("HTTP/1.1 204"),
+                "{}",
+                String::from_utf8_lossy(&response)
+            );
+        }
         request_daemon_async(&record, "POST", STOP_PATH)
             .await
             .unwrap();
