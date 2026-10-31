@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -166,6 +167,26 @@ def main() -> None:
             cells.append(compact_cell(summary, fold_b, baseline))
     null = load(args.run_root / "outcomes/null/seed15/summary.json")
     timing = load(args.run_root / "timing/timing.json")
+    elo_summary = {}
+    for arm in ARMS:
+        deltas = np.asarray([
+            next(row for row in cells if row["arm"] == arm and row["seed"] == seed)
+            ["fold_b_elo_vs_r882_diagnostic"]["delta_vs_r882"]
+            for seed in SEEDS
+        ], dtype=np.float64)
+        rng = np.random.default_rng(57_7900 + (1 if arm == "sigma003" else 0))
+        indexes = rng.integers(0, len(deltas), size=(BOOTSTRAP_DRAWS, len(deltas)))
+        elo_summary[arm] = {
+            "per_seed_elo_delta_vs_r882": deltas.tolist(),
+            "median_elo_delta_vs_r882": float(np.median(deltas)),
+            "median_seed_bootstrap_ci95": [
+                float(np.quantile(np.median(deltas[indexes], axis=1), .025)),
+                float(np.quantile(np.median(deltas[indexes], axis=1), .975)),
+            ],
+            "bootstrap_seed_count": len(deltas),
+            "interpretation": "family-grouped Bradley-Terry Elo per seed; descriptive seed bootstrap, not admission",
+        }
+    null_generation_eight = null["generations"][-1]
     metrics = {
         "schema": "jope.h57.closeout/v1", "study": "H57 direct-utility antithetic ES",
         "hypothesis": "Antithetic ES can improve the final r882 adapter mean theta on the family-held-out fifth DL-Train fold after fitness optimization on the other four folds.",
@@ -182,11 +203,13 @@ def main() -> None:
         "timing_only": {"seed": 15, "sigma": .001,
                         "generation_wall_seconds": timing["generations"][0]["generation_wall_seconds"],
                         "excluded_from_outcomes": True},
-        "admission": admissions, "cells": cells,
+        "admission": admissions, "cells": cells, "elo_summary": elo_summary,
         "null": {"arm": "null_sigma001", "seed": 15,
                  "generation_wall_seconds": null["generation_wall_seconds"],
                  "es_gradient_l2": null["gradient_norms"],
                  "mean_theta_update_l2": null["update_norms"],
+                 "fold_a_generation8_population_fitness_mean": null_generation_eight["fitness_mean"],
+                 "fitness_scope": "in-sample fold-A population fitness; descriptive only, not final-theta fold-B admission",
                  "final_adapter_sha256": null["adapter_sha256"],
                  "diagnostic_only": True, "not_admissible": True},
         "terminal_dl_val": {"reads_allowed": terminal_allowed,
@@ -195,6 +218,18 @@ def main() -> None:
         "interpretation": "Elo and W/T/L are diagnostics; fold-B family gains alone determine admission. No sigma is selected by comparing fold-B scores.",
         "wave_receipt": str(args.run_root / "outcomes/wave.json"),
     }
+    manifest_path = args.run_root / "custody/manifest.json"
+    verification_path = args.run_root / "custody/verification.json"
+    if manifest_path.exists() and verification_path.exists():
+        custody_manifest = load(manifest_path)
+        verification = load(verification_path)
+        metrics["custody"] = {
+            "manifest_s3_uri": f"s3://veox-jopedime-learning-use2/{custody_manifest['manifest_s3_key']}",
+            "manifest_sha256": verification["manifest_sha256"],
+            "verification_s3_uri": f"s3://veox-jopedime-learning-use2/{custody_manifest['manifest_s3_key'].rsplit('/', 1)[0]}/custody-verification.json",
+            "verification_sha256": hashlib.sha256(verification_path.read_bytes()).hexdigest(),
+            "verified_object_count": verification["verified_object_count"],
+        }
     val_root = args.run_root / "outcomes/terminal-val"
     if val_root.exists():
         reads = []
