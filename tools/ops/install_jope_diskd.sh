@@ -18,7 +18,7 @@ CONFIG="$CONFIG_DIR/policy.yaml"
 
 printf 'Install jope-diskd to %s and policy to %s\n' "$BIN" "$CONFIG"
 if [[ $ENABLE -eq 0 ]]; then
-  printf 'Dry run only. Re-run with --enable after the reviewed PR is merged and all host dry-runs pass.\n'
+  printf 'Dry run only. Re-run with --enable on xbabe2 after the reviewed PR merges and its local dry-run passes.\n'
   exit 0
 fi
 
@@ -26,6 +26,12 @@ REPO_ROOT=$(git -C "$ROOT" rev-parse --show-toplevel) || {
   printf 'Refusing enable: installer must run from the merged JopeDime repository.\n' >&2
   exit 1
 }
+for path in "$HOME/.local" "$HOME/.local/bin" "$HOME/.local/state" "$STATE_DIR" "$HOME/.config" "$CONFIG_DIR" "$BIN" "$CONFIG" "$HOME/.config/environment.d" "$HOME/.config/environment.d/99-jope-sccache.conf" "$HOME/.profile" "$HOME/.config/systemd" "$HOME/.config/systemd/user" "$HOME/.config/systemd/user/jope-diskd.service" "$HOME/.config/systemd/user/jope-diskd.timer"; do
+  if [[ -L "$path" ]]; then
+    printf 'Refusing to install through symlinked path %s.\n' "$path" >&2
+    exit 1
+  fi
+done
 if [[ -n "$(git -C "$REPO_ROOT" status --porcelain -- "$ROOT")" ]] || ! git -C "$REPO_ROOT" merge-base --is-ancestor HEAD origin/main; then
   printf 'Refusing enable: tools/ops is dirty or HEAD is not contained in origin/main. Deploy only the merged implementation.\n' >&2
   exit 1
@@ -33,6 +39,10 @@ fi
 
 case "$(uname -s)" in
   Linux)
+    if [[ "$(hostname -s)" != xbabe2 ]]; then
+      printf 'Refusing to enable local-only disk policy on host %s; expected xbabe2.\n' "$(hostname -s)" >&2
+      exit 1
+    fi
     command -v systemctl >/dev/null
     command -v loginctl >/dev/null
     linger=$(loginctl show-user "$(id -un)" -p Linger --value)
@@ -42,7 +52,8 @@ case "$(uname -s)" in
     fi
     ;;
   Darwin)
-    command -v crontab >/dev/null
+    printf 'Refusing to enable a policy pinned to Linux xbabe2 on Darwin.\n' >&2
+    exit 1
     ;;
   *)
     printf 'Unsupported scheduler host: %s\n' "$(uname -s)" >&2
@@ -67,6 +78,31 @@ install -m 0600 "$ROOT/disk-policy.yaml" "$CONFIG"
 
 case "$(uname -s)" in
   Linux)
+    ENV_DIR="$HOME/.config/environment.d"
+    ENV_FILE="$ENV_DIR/99-jope-sccache.conf"
+    if [[ -L "$HOME/.config" || -L "$ENV_DIR" || -L "$ENV_FILE" ]]; then
+      printf 'Refusing to write through a symlinked sccache environment path.\n' >&2
+      exit 1
+    fi
+    if [[ ! -d "$ENV_DIR" ]]; then
+      install -d -m 0700 "$ENV_DIR"
+    fi
+    if [[ ! -f "$ENV_FILE" ]] || [[ "$(cat -- "$ENV_FILE")" != 'SCCACHE_CACHE_SIZE=60G' ]]; then
+      backup_existing "$ENV_FILE"
+      printf 'SCCACHE_CACHE_SIZE=60G\n' > "$ENV_FILE"
+      chmod 0644 "$ENV_FILE"
+    fi
+    PROFILE="$HOME/.profile"
+    if [[ -L "$PROFILE" ]]; then
+      printf 'Refusing to write through a symlinked %s.\n' "$PROFILE" >&2
+      exit 1
+    fi
+    PROFILE_LINE='export SCCACHE_CACHE_SIZE=60G'
+    if ! grep -Fqx -- "$PROFILE_LINE" "$PROFILE" 2>/dev/null; then
+      backup_existing "$PROFILE"
+      printf '\n# JopeDime DISK-01 sccache cap\n%s\n' "$PROFILE_LINE" >> "$PROFILE"
+    fi
+    systemctl --user set-environment SCCACHE_CACHE_SIZE=60G
     UNIT_DIR="$HOME/.config/systemd/user"
     install -d -m 0700 "$UNIT_DIR"
     backup_existing "$UNIT_DIR/jope-diskd.service"
@@ -76,15 +112,5 @@ case "$(uname -s)" in
     systemctl --user daemon-reload
     systemctl --user enable --now jope-diskd.timer
     systemctl --user status jope-diskd.timer --no-pager
-    ;;
-  Darwin)
-    LOG_DIR="$HOME/Library/Logs"
-    install -d -m 0700 "$LOG_DIR"
-    old_crontab=$(crontab -l 2>/dev/null || true)
-    if ! printf '%s\n' "$old_crontab" | grep -Fq "$BIN --config $CONFIG --apply"; then
-      line="*/10 * * * * /usr/bin/nice -n 10 $BIN --config $CONFIG --apply >> $LOG_DIR/jope-diskd.log 2>&1 # jope-diskd managed"
-      { printf '%s\n' "$old_crontab"; printf '%s\n' "$line"; } | crontab -
-    fi
-    crontab -l
     ;;
 esac

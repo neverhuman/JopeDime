@@ -1,5 +1,15 @@
 {
   "version": 1,
+  "local_only": true,
+  "allowed_host": "xbabe2",
+  "repo_root": "~/JopeDime",
+  "sccache_max_bytes": 64424509440,
+  "offload": {
+    "bucket": "veox-jopedime-learning-use2",
+    "prefix": "offload",
+    "retention_days": 14,
+    "sha256_verify_before_remove": true
+  },
   "watermarks": {
     "soft_percent": 85,
     "aggressive_percent": 90,
@@ -18,6 +28,7 @@
     {
       "id": "uv-cache",
       "mode": "observe",
+      "manual_only": true,
       "path": "~/.cache/uv",
       "max_bytes": 21474836480,
       "soft_ttl_hours": 720,
@@ -33,22 +44,22 @@
     },
     {
       "id": "remote-tests",
-      "kind": "remote-tests",
+      "mode": "observe",
+      "manual_only": true,
       "path": "~/remote_tests",
       "max_bytes": 64424509440,
       "ttl_hours": 24
     },
     {
       "id": "cargo-targets",
-      "mode": "observe",
+      "kind": "cargo-target",
       "path": "~/JopeDime/.agent/worktrees",
-      "manual_only": true,
-      "per_target_cap_bytes": 42949672960,
-      "ttl_hours": 48
+      "ttl_hours": 24
     },
     {
       "id": "cargo-cache",
       "mode": "observe",
+      "manual_only": true,
       "path": "~/.cargo"
     },
     {
@@ -58,6 +69,13 @@
       "manual_only": true,
       "max_bytes": 21474836480,
       "ttl_hours": 168
+    },
+    {
+      "id": "sccache",
+      "mode": "observe",
+      "manual_only": true,
+      "path": "~/.cache/sccache",
+      "max_bytes": 64424509440
     },
     {
       "id": "tmp",
