@@ -43,12 +43,12 @@ fn materialize(store: &Store, run: &RunId, output: &Path, allow_synthetic: bool)
     let state: CaptureState = serde_json::from_value(checkpoint["capture"].clone())?;
     state.validate_storage(store)?;
     ensure!(
-        checkpoint["next_round"].as_u64() == Some(state.rounds.len() as u64),
-        "capture/GP round progress mismatch"
+        !state.rounds.is_empty() && !state.unknown(),
+        "capture has an unknown/aborted outcome or no records; any committed prefix is inspection-only"
     );
     ensure!(
-        !state.rounds.is_empty() && !state.unknown(),
-        "capture has an unknown/aborted outcome or no records"
+        checkpoint["next_round"].as_u64() == Some(state.rounds.len() as u64),
+        "capture/GP round progress mismatch"
     );
     ensure!(
         state.rounds.len() <= state.config.max_rounds

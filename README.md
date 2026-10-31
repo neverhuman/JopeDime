@@ -392,7 +392,7 @@ limits and client examples](docs/program-source-stream.md).
 | Workspace | 37 members: 30 crates at 0.4.1 and 7 vendored SmartCluster crates at 8.0.0; 9 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 10: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) opt-in [`go`](docs/go.md) and local/manual `cuda` (CUDA C++ with a native core) <sup>4</sup> |
-| Rust tests | 6,114 listed in 35 packages, 82 of them ignored; a listing, not a run <sup>5</sup> |
+| Rust tests | 6,115 listed in 35 packages, 82 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 209, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 14 jobs per pull request configured in `ci.yml` (export parity executes only on manual main) (automatic triggering paused; dispatch manually) (top-level declarations; 19 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
 | Coverage map | 995 items over 34 lanes <sup>7</sup> |
