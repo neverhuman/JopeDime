@@ -15,11 +15,10 @@ import sys
 import time
 
 from capture_stdio import child_environment, digest
-from verify_capture import CaptureError, decode_json, require, run_retry
+from verify_capture import CaptureError, decode_json, require
 
 
 TOOLS = frozenset({"system_info", "dataset_register", "dataset_inspect"})
-RUN_TOOLS = TOOLS | {"run_start", "run_status", "run_events"}
 
 
 def exited(child):
@@ -43,10 +42,9 @@ def stop_owned(child, grace):
 
 
 class Rpc:
-    def __init__(self, child, deadline, tools=TOOLS):
+    def __init__(self, child, deadline):
         self.child = child
         self.deadline = deadline
-        self.tools = tools
         self.buffer = bytearray()
         self.next_id = 0
 
@@ -58,8 +56,8 @@ class Rpc:
         )
         if value["method"] == "tools/call":
             require(
-                value.get("params", {}).get("name") in self.tools,
-                "tool is outside the selected preparation",
+                value.get("params", {}).get("name") in TOOLS,
+                "tool is outside the prefix",
             )
         raw = (json.dumps(value, ensure_ascii=False) + "\n").encode()
         require(len(raw) <= 1024 * 1024, "request exceeds frame limit")
@@ -98,7 +96,7 @@ class Rpc:
             require(len(self.buffer) <= 1024 * 1024, "reply exceeds frame limit")
 
     def tool(self, name, arguments):
-        require(name in self.tools, "tool is outside the selected preparation")
+        require(name in TOOLS, "tool is outside the system/dataset prefix")
         return self.request("tools/call", dict(name=name, arguments=arguments))
 
 
@@ -186,111 +184,8 @@ def prefix_complete(results, repeated_id, transport_complete):
     )
 
 
-def run_replay(rpc, dataset, target, key, results):
-    """One bounded real run; protocol evidence is never named-client qualification."""
-
-    def call(step, name, arguments):
-        ok, payload = outcome(rpc.tool(name, arguments))
-        results.append(
-            dict(
-                step=step,
-                tool=name,
-                status="success" if ok else "error",
-                payload=payload,
-            )
-        )
-        require(ok and isinstance(payload, dict), "run replay refused at " + step)
-        return payload
-
-    spec = dict(
-        dataset=dataset,
-        target=target,
-        task="regression",
-        ignore_columns=[],
-        test_dataset=None,
-        split=dict(
-            kind="random", holdout_fraction=0.2, group_column=None, time_column=None
-        ),
-        objective="rmse",
-        effort="fast",
-        budget=dict(evaluations="1", wall_seconds="5"),
-        landmarks="none",
-        guidance="heuristic",
-        languages=["rust"],
-        require_all_languages=True,
-        device="cpu",
-        seed="73",
-        dry_run=True,
-        plan_digest=None,
-        idempotency_key=key + "-plan",
-    )
-    plan = call("run_plan", "run_start", spec)
-    require(
-        isinstance(plan.get("plan_digest"), str)
-        and bool(plan["plan_digest"].strip())
-        and isinstance(plan.get("placement"), dict)
-        and plan["placement"].get("evaluation") == "cpu"
-        and type(plan["placement"].get("workers")) is int
-        and plan["placement"].get("workers") == 1,
-        "plan must identify one CPU worker",
-    )
-    call("run_inventory_before", "run_status", {})
-    start = dict(
-        spec, dry_run=False, plan_digest=plan["plan_digest"], idempotency_key=key
-    )
-    first = call("run_create", "run_start", start)
-    run = first.get("run_id")
-    require(
-        isinstance(run, str) and re.fullmatch(r"run_[0-7][0-9A-HJKMNP-TV-Z]{25}", run),
-        "start returned no canonical run ID",
-    )
-    call("run_inventory_created", "run_status", {})
-    retry = call("run_retry", "run_start", start)
-    require(retry.get("run_id") == run, "retry changed run ID")
-    call("run_inventory_retried", "run_status", {})
-    cursor = 0
-    last_kind = None
-    while True:
-        status = call(
-            "run_poll",
-            "run_status",
-            dict(run_id=run, wait_seconds=0, after_event=str(cursor)),
-        )
-        require(status.get("run_id") == run, "status changed run ID")
-        page = call(
-            "run_events", "run_events", dict(run_id=run, after=str(cursor), limit=256)
-        )
-        events = page.get("events")
-        require(isinstance(events, list) and len(events) <= 256, "invalid event page")
-        for event in events:
-            require(
-                isinstance(event, dict)
-                and event.get("run_id") == run
-                and event.get("sequence") == str(cursor + 1),
-                "event gap, duplicate or wrong run",
-            )
-            cursor += 1
-            last_kind = event.get("kind")
-            require(cursor <= 1024, "run replay event bound exceeded")
-        require(page.get("next_after") == str(cursor), "event cursor differs")
-        if status.get("state") in {"completed", "failed", "cancelled"}:
-            require(status["state"] == "completed", "run did not complete successfully")
-            if status.get("event_watermark") == str(cursor):
-                require(
-                    cursor > 0 and last_kind == "run.finished",
-                    "completed run lacks its terminal event",
-                )
-                return dict(run_id=run, state="completed", event_watermark=str(cursor))
-        require(time.monotonic() < rpc.deadline, "run replay deadline exceeded")
-        time.sleep(0.25)
-
-
 def probe(args):
     require(hasattr(os, "WNOWAIT"), "POSIX waitid/WNOWAIT is required")
-    require(
-        args.run_target is None or bool(args.run_target.strip()),
-        "run target must not be blank",
-    )
     require(
         math.isfinite(args.seconds) and 0 < args.seconds <= 120,
         "seconds must be in (0,120]",
@@ -359,8 +254,6 @@ def probe(args):
     engine = relay = None
     engine_exit = relay_exit = None
     results = []
-    selected_tools = RUN_TOOLS if args.run_target else TOOLS
-    replay = retry_contract = None
     repeated_id = None
     error = None
     engine_truncated = False
@@ -410,16 +303,13 @@ def probe(args):
             start_new_session=True,
             bufsize=0,
         )
-        rpc = Rpc(relay, deadline, selected_tools)
+        rpc = Rpc(relay, deadline)
         hello = rpc.request(
             "initialize",
             dict(
                 protocolVersion="2025-11-25",
                 capabilities={},
-                clientInfo=dict(
-                    name="jope-run-replay" if args.run_target else "jope-prefix-probe",
-                    version="1",
-                ),
+                clientInfo=dict(name="jope-prefix-probe", version="1"),
             ),
         )
         require("result" in hello, "initialize refused")
@@ -427,31 +317,17 @@ def probe(args):
         results, repeated_id = prefix(
             rpc, fixture, "mcp05-prefix-" + args.out_dir.name, results
         )
-        if args.run_target:
-            require(
-                repeated_id is True,
-                "run replay requires successful dataset registration retry",
-            )
-            replay = run_replay(
-                rpc,
-                results[2]["payload"]["dataset_id"],
-                args.run_target,
-                "mcp05-run-" + args.out_dir.name,
-                results,
-            )
+        relay.stdin.close()
+        until = min(deadline, time.monotonic() + 3)
+        while exited(relay) is None and time.monotonic() < until:
+            time.sleep(0.02)
     except (CaptureError, OSError, subprocess.SubprocessError) as exc:
         error = str(exc)
     finally:
         if relay:
-            if relay.stdin and not relay.stdin.closed:
-                try:
-                    relay.stdin.close()
-                except BrokenPipeError:
-                    pass
-            until = min(deadline, time.monotonic() + 3)
-            while exited(relay) is None and time.monotonic() < until:
-                time.sleep(0.02)
             relay_exit = stop_owned(relay, 7)
+            if relay.stdin and not relay.stdin.closed:
+                relay.stdin.close()
             relay.stdout.close()
         relay_log.close()
         if engine:
@@ -489,29 +365,10 @@ def probe(args):
     except (CaptureError, OSError) as exc:
         error = error or str(exc)
         capture = {}
-    if args.run_target and capture.get("complete") is True:
-        try:
-            retry_contract = run_retry(
-                (args.out_dir / "capture/wire.jsonl").read_bytes()
-            )
-            if replay is not None:
-                require(
-                    retry_contract["run_id"] == replay["run_id"],
-                    "wire replay identity differs",
-                )
-        except (CaptureError, OSError) as exc:
-            error = error or str(exc)
     complete = relay_exit == 0 and capture.get("complete") is True
-    prefix_success = prefix_complete(results[:6], repeated_id, complete)
-    success = error is None and (
-        complete and replay is not None and retry_contract is not None
-        if args.run_target
-        else prefix_success
-    )
+    success = error is None and prefix_complete(results, repeated_id, complete)
     receipt = dict(
-        schema="jope.mcp-run-replay/v1"
-        if args.run_target
-        else "jope.mcp-prefix-probe/v1",
+        schema="jope.mcp-prefix-probe/v1",
         started_utc=started,
         elapsed_seconds=time.monotonic() - clock,
         harness_source_sha=args.harness_source_sha,
@@ -519,12 +376,12 @@ def probe(args):
         binary_sha256=args.binary_sha256,
         fixture_sha256=args.csv_sha256,
         harness_sha256=digest(Path(__file__)),
-        allowed_tools=sorted(selected_tools),
+        allowed_tools=sorted(TOOLS),
         results=results,
         dataset_retry_same_id=repeated_id,
         dataset_persistence_proved=False,
         transport_complete=complete,
-        prefix_success=prefix_success and error is None,
+        prefix_success=success,
         error=error,
         engine_exit=engine_exit,
         relay_exit=relay_exit,
@@ -535,22 +392,9 @@ def probe(args):
         a5_status="NOT_QUALIFIED",
         cpu_affinity=allowed[:slots],
         environment_names=sorted(environment),
-        scope=(
-            "Bounded CPU run protocol only; no model/control tool or named-client qualification"
-            if args.run_target
-            else "Protocol harness only; no run/model/control tool, fit, or named-client qualification"
-        ),
+        scope="Protocol harness only; no run/model/control tool, fit, or named-client qualification",
     )
-    if args.run_target:
-        receipt.update(
-            run_replay_success=success,
-            run_replay=replay,
-            run_retry_contract=retry_contract,
-            run_persistence_proved=False,
-            response_loss_injected=False,
-        )
-    name = "run-replay.json" if args.run_target else "prefix.json"
-    (args.out_dir / name).write_text(json.dumps(receipt, indent=2) + "\n")
+    (args.out_dir / "prefix.json").write_text(json.dumps(receipt, indent=2) + "\n")
     print(json.dumps(receipt, indent=2))
     return 0 if success else 2
 
@@ -577,11 +421,6 @@ def self_test():
                 with self.subTest(name=name), self.assertRaises(CaptureError):
                     rpc.tool(name, dict(dry_run=True))
             child.stdin.write.assert_not_called()
-            selected = Rpc(child, time.monotonic() + 1, RUN_TOOLS)
-            for name in ["run_control", "run_fork", "model_export", "model_predict"]:
-                with self.subTest(selected=name), self.assertRaises(CaptureError):
-                    selected.tool(name, {})
-            child.stdin.write.assert_not_called()
             with self.assertRaises(CaptureError):
                 rpc.send(dict(method="tools/call", params=dict(name="run_start")))
             child.stdin.write.assert_not_called()
@@ -589,9 +428,6 @@ def self_test():
         def test_allowed_names_are_exact(self):
             self.assertEqual(
                 TOOLS, {"system_info", "dataset_register", "dataset_inspect"}
-            )
-            self.assertEqual(
-                RUN_TOOLS - TOOLS, {"run_start", "run_status", "run_events"}
             )
 
         def test_rpc_and_tool_errors_are_not_successes(self):
@@ -634,110 +470,6 @@ def self_test():
             self.assertTrue(
                 all(call.args[0] in TOOLS for call in rpc.tool.call_args_list)
             )
-            run = "run_01ARZ3NDEKTSV4RRFFQ69G5FAV"
-            page = dict(runs=[dict(run_id=run)], next_after=None)
-            replies = [
-                reply(
-                    dict(
-                        plan_digest="reviewed-plan",
-                        placement=dict(evaluation="cpu", workers=1),
-                    )
-                ),
-                reply(dict(runs=[], next_after=None)),
-                reply(dict(run_id=run)),
-                reply(page),
-                reply(dict(run_id=run)),
-                reply(page),
-                reply(dict(run_id=run, state="completed", event_watermark="1")),
-                reply(
-                    dict(
-                        events=[dict(run_id=run, sequence="1", kind="run.finished")],
-                        next_after="1",
-                    )
-                ),
-            ]
-            rpc = Mock(deadline=time.monotonic() + 1)
-            rpc.tool.side_effect = replies
-            observed = []
-            completed = run_replay(
-                rpc, "ds_fixture", "target", "same-run-key", observed
-            )
-            self.assertEqual(
-                completed, dict(run_id=run, state="completed", event_watermark="1")
-            )
-            calls = rpc.tool.call_args_list
-            self.assertEqual(calls[2], calls[4])
-            self.assertTrue(calls[0].args[1]["dry_run"])
-            self.assertFalse(calls[2].args[1]["dry_run"])
-            self.assertEqual(
-                calls[2].args[1]["budget"], dict(evaluations="1", wall_seconds="5")
-            )
-            # Exercise the real wire verifier too; equal counts cannot hide a changed set.
-            wire = []
-            for i, (call, response) in enumerate(zip(calls, replies), 1):
-                wire.extend(
-                    [
-                        dict(
-                            direction="client_to_server",
-                            message=dict(
-                                jsonrpc="2.0",
-                                id=i,
-                                method="tools/call",
-                                params=dict(name=call.args[0], arguments=call.args[1]),
-                            ),
-                        ),
-                        dict(
-                            direction="server_to_client",
-                            message=dict(jsonrpc="2.0", id=i, **response),
-                        ),
-                    ]
-                )
-            self.assertEqual(
-                run_retry(b"\n".join(json.dumps(x).encode() for x in wire))[
-                    "inventory_counts"
-                ],
-                [0, 1, 1],
-            )
-            for index, replacement in [
-                (
-                    0,
-                    reply(
-                        dict(
-                            plan_digest="plan",
-                            placement=dict(evaluation="cuda", workers=1),
-                        )
-                    ),
-                ),
-                (0, reply(dict(code="CAPABILITY_UNAVAILABLE"), True)),
-                (4, reply(dict(run_id="run_01ARZ3NDEKTSV4RRFFQ69G5FAW"))),
-                (6, reply(dict(run_id=run, state="failed", event_watermark="1"))),
-                (
-                    7,
-                    reply(
-                        dict(
-                            events=[
-                                dict(
-                                    run_id=run, sequence="1", kind="experiment.started"
-                                )
-                            ],
-                            next_after="1",
-                        )
-                    ),
-                ),
-                (
-                    7,
-                    reply(
-                        dict(events=[dict(run_id=run, sequence="2")], next_after="2")
-                    ),
-                ),
-            ]:
-                with self.subTest(replay_refusal=index):
-                    altered = list(replies)
-                    altered[index] = replacement
-                    rpc = Mock(deadline=time.monotonic() + 1)
-                    rpc.tool.side_effect = altered
-                    with self.assertRaises(CaptureError):
-                        run_replay(rpc, "ds_fixture", "target", "same-key", [])
 
         def test_registration_failure_never_invents_dataset(self):
             rpc = Mock()
@@ -842,10 +574,6 @@ def main():
     parser.add_argument("--csv-sha256")
     parser.add_argument("--out-dir", type=Path)
     parser.add_argument("--seconds", type=float, default=45)
-    parser.add_argument(
-        "--run-target",
-        help="opt in to one CPU regression run and retry for this target",
-    )
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
     if args.self_test:

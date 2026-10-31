@@ -189,12 +189,6 @@ impl Store {
         self.cas.verify(reference)
     }
 
-    /// A verified immutable file for the worker's existing FIT matrix mapping.
-    pub(crate) fn verified_blob_path(&self, reference: &BlobRef) -> Result<std::path::PathBuf> {
-        self.cas.verify(reference)?;
-        Ok(self.cas.path(reference))
-    }
-
     /// Read an immutable CAS blob and verify its complete content identity on the bytes returned.
     pub fn read_blob(&self, reference: &BlobRef) -> Result<Vec<u8>> {
         let digest: String = reference
@@ -257,32 +251,6 @@ impl Store {
         value
             .map(|v| serde_json::from_slice(v.value()).map_err(StoreError::from))
             .transpose()
-    }
-
-    pub(crate) fn run_ids_after(
-        &self,
-        after: Option<&jope_api::ids::RunId>,
-        limit: usize,
-    ) -> Result<Vec<jope_api::ids::RunId>> {
-        let read = self.database.begin_read().map_err(db)?;
-        let table = read.open_table(definition(Table::Runs)).map_err(db)?;
-        let start = after.map(ToString::to_string).unwrap_or_default();
-        let mut ids = Vec::new();
-        for row in table.range::<&[u8]>(start.as_bytes()..).map_err(db)? {
-            let (key, _) = row.map_err(db)?;
-            if key.value() == start.as_bytes() {
-                continue;
-            }
-            let id = std::str::from_utf8(key.value())
-                .map_err(|_| StoreError::Integrity("invalid run key"))?
-                .parse()
-                .map_err(|_| StoreError::Integrity("invalid run ID"))?;
-            ids.push(id);
-            if ids.len() == limit {
-                break;
-            }
-        }
-        Ok(ids)
     }
 
     fn recover(&self) -> Result<()> {

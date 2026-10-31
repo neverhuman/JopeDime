@@ -106,17 +106,12 @@ tests what the writer has learned.
 \end{keyidea}
 
 In this checkpoint the writer and map use separate context networks and
-token embeddings. The map ranks the draft pool; it drops no draft and does
-not condition or screen the writer's draw. In the native search, however,
-those ranks weight which seeded survivors are chosen as parents, so the map
-can shape the programs that reach the writer's training lists. The writer's
-loss still weights programs by referee rank. Ranking agreement, including
-comparison with the program-only control, assesses the map's ranking;
-attributing better proposals to the map would require a matched ablation
-(\cref{sub:results-ablation}).
-% Source trace: crates/jope-policy/src/seeds.rs (assemble_population attaches
-% rank_log_weight); crates/jope-engine/src/gp.rs (policy_weighted_parent picks
-% the left parent for mutation and crossover).
+token embeddings. The map ranks the draft pool for comparison with the
+referee; it drops no draft and does not condition, screen or steer the
+writer. The writer learns directly from referee scores. Ranking agreement,
+including comparison with the program-only control, can therefore assess
+the map. Attributing better proposals to it would require an implemented
+influence path and a matched ablation (\cref{sub:results-ablation}).
 
 \subsection{The self-play loop}\label{sub:method-selfplay}
 % Algorithm 1 is defined at the start of the subsection so that the full-width

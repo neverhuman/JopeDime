@@ -42,9 +42,6 @@ impl Drop for RunInterrupts {
 
 #[derive(Args, Debug)]
 pub struct RunArgs {
-    /// Reuse the original key when retrying the same run request.
-    #[arg(long)]
-    pub idempotency_key: Option<String>,
     #[arg(long)]
     pub dataset: String,
     #[arg(long)]
@@ -164,28 +161,15 @@ pub fn dispatch(args: RunArgs) -> anyhow::Result<()> {
         // An explicit endpoint is authoritative. Never substitute a daemon or
         // legacy server when the selected endpoint cannot be authenticated.
         Engine::Endpoint(_) => Err(DispatchUnavailable::EndpointCredentials.into()),
-        Engine::InProcess => {
-            #[cfg(feature = "engine")]
-            {
-                let token = format!("{}{}", ulid::Ulid::new(), ulid::Ulid::new());
-                // The local authority never binds a socket. Derive a valid bearer
-                // from fresh entropy without exposing it on the command line.
-                let token = jope_runtime::sha256_hex(token.as_bytes());
-                let transport = jope_client::InProcess::local(31234, &token)?;
-                run(args, &transport)
-            }
-            #[cfg(not(feature = "engine"))]
-            {
-                Err(DispatchUnavailable::LocalHandlers.into())
-            }
-        }
+        // The approved scope supplies no store-bound router/transport factory.
+        // Refuse before opening a Store; a test-only bridge is not production.
+        Engine::InProcess => Err(DispatchUnavailable::LocalHandlers.into()),
     }
 }
 
 #[derive(Debug)]
 enum DispatchUnavailable {
     EndpointCredentials,
-    #[cfg(not(feature = "engine"))]
     LocalHandlers,
 }
 
@@ -195,7 +179,6 @@ impl std::fmt::Display for DispatchUnavailable {
             Self::EndpointCredentials => {
                 "explicit run endpoints require supported bearer credentials"
             }
-            #[cfg(not(feature = "engine"))]
             Self::LocalHandlers => "in-process batch runs are unavailable in this build",
         })
     }
@@ -214,7 +197,6 @@ pub fn dispatch_exit_code(error: &anyhow::Error) -> Option<u8> {
     top.downcast_ref::<DispatchUnavailable>()
         .map(|error| match error {
             DispatchUnavailable::EndpointCredentials => 9,
-            #[cfg(not(feature = "engine"))]
             DispatchUnavailable::LocalHandlers => 2,
         })
 }
@@ -337,7 +319,7 @@ fn validate_m1_spec(
 
 pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
     let spec = args.run_spec()?;
-    let key = crate::common::resolve_idempotency_key(args.idempotency_key.as_deref());
+    let key = crate::common::resolve_idempotency_key(None);
     let response = transport.run_start(&spec, Some(&key))?;
     match response {
         RunResult::Plan(plan) => write_json(&*plan),
@@ -349,58 +331,34 @@ pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
             let mut current = *snapshot;
             let interrupts = RunInterrupts::install()?;
             if args.events.as_deref() == Some("ndjson") {
-                let after = parse_after(args.after_event.as_deref())?;
-                // The original idempotent response may predate completion. SSE
-                // remains live, so use the committed watermark to avoid waiting
-                // forever when the caller has already consumed the final event.
-                current = transport.run_status(&current.run_id)?;
-                let drained = matches!(
-                    current.state,
-                    RunState::Completed | RunState::Cancelled | RunState::Failed
-                ) && after
-                    .is_some_and(|cursor| cursor.0 >= current.event_watermark.0);
-                if !drained {
-                    let mut events = transport.follow_events(current.run_id.clone(), after)?;
-                    loop {
-                        if interrupts.requested() {
-                            // Drop the response reader before requesting committed control.
-                            drop(events);
-                            finish_interrupt(
-                                transport,
-                                &current,
-                                &interrupts,
-                                &mut std::io::stderr().lock(),
-                            )?;
-                            break;
-                        }
-                        let Some(event) = events.next() else { break };
-                        let event = match event {
-                            Ok(event) => event,
-                            Err(error) => {
-                                if interrupts.requested() {
-                                    let _ = write_run_id(
-                                        &mut std::io::stderr().lock(),
-                                        &current.run_id,
-                                    );
-                                }
-                                return Err(error.into());
-                            }
-                        };
-                        let finished = match &event {
-                            jope_client::StreamEvent::Durable(event) => match &event.event {
-                                jope_api::EventBody::RunFinished(_) => true,
-                                jope_api::EventBody::RunState(body) => {
-                                    matches!(body.state, RunState::Failed | RunState::Cancelled)
-                                }
-                                _ => false,
-                            },
-                            _ => false,
-                        };
-                        println!("{}", serde_json::to_string(&event_json(&event)?)?);
-                        if finished {
-                            break;
-                        }
+                let mut events = transport.follow_events(
+                    current.run_id.clone(),
+                    parse_after(args.after_event.as_deref())?,
+                )?;
+                loop {
+                    if interrupts.requested() {
+                        // Drop the response reader before requesting committed control.
+                        drop(events);
+                        finish_interrupt(
+                            transport,
+                            &current,
+                            &interrupts,
+                            &mut std::io::stderr().lock(),
+                        )?;
+                        break;
                     }
+                    let Some(event) = events.next() else { break };
+                    let event = match event {
+                        Ok(event) => event,
+                        Err(error) => {
+                            if interrupts.requested() {
+                                let _ =
+                                    write_run_id(&mut std::io::stderr().lock(), &current.run_id);
+                            }
+                            return Err(error.into());
+                        }
+                    };
+                    println!("{}", serde_json::to_string(&event_json(&event)?)?);
                 }
             }
             while !matches!(
@@ -434,12 +392,6 @@ pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
                 &interrupts,
                 &mut std::io::stderr().lock(),
             )?;
-            if current.state == RunState::Failed {
-                write_run_id(&mut std::io::stderr().lock(), &current.run_id)?;
-                return Err(jope_runtime::Failure::backend(
-                    "The run failed; inspect its retained status and events.",
-                ));
-            }
             let manifest = args
                 .out
                 .as_deref()
@@ -658,7 +610,6 @@ mod tests {
             dispatch_exit_code(&DispatchUnavailable::EndpointCredentials.into()),
             Some(9)
         );
-        #[cfg(not(feature = "engine"))]
         assert_eq!(
             dispatch_exit_code(&DispatchUnavailable::LocalHandlers.into()),
             Some(2)

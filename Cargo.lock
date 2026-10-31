@@ -2497,7 +2497,6 @@ name = "jope-appliance"
 version = "0.4.1"
 dependencies = [
  "anyhow",
- "axum",
  "clap",
  "jope-api",
  "jope-assets",

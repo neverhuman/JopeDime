@@ -5,31 +5,6 @@ use crate::idempotency::{
 };
 
 impl Store {
-    /// Read the original committed response without executing a new effect.
-    pub fn idempotent_receipt(
-        &self,
-        request: &RequestIdentity,
-    ) -> Result<Option<CommandReceipt>, IdempotencyError> {
-        let key = command_key(request);
-        let Some(record) = self.get(&key)? else {
-            return Ok(None);
-        };
-        if record.run.is_some() || !record.blobs.is_empty() {
-            return Err(StoreError::Integrity("invalid command record envelope").into());
-        }
-        let stored: StoredCommand =
-            serde_json::from_value(record.data).map_err(StoreError::from)?;
-        stored.outcome.validate()?;
-        if stored.request_digest != request.digest || stored.operation_id != request.operation_id {
-            return Err(IdempotencyError::Conflict);
-        }
-        Ok(Some(CommandReceipt {
-            operation_id: stored.operation_id,
-            outcome: stored.outcome,
-            replayed: true,
-        }))
-    }
-
     /// The effect must write metadata ONLY through the supplied transaction.
     /// Prepare immutable CAS blobs first; schedule external work after a new receipt.
     /// Commit IO errors have unknown outcomes: read back/reopen and retry the same key.
@@ -78,38 +53,6 @@ impl Store {
             }))
         })?;
         receipt.ok_or(IdempotencyError::Conflict)
-    }
-}
-
-fn command_key(request: &RequestIdentity) -> RecordKey {
-    RecordKey::Command {
-        principal: request.principal.clone(),
-        idempotency_key: request.key.clone(),
-    }
-}
-
-impl Write<'_> {
-    /// Used by the initial journal commit. The caller must have serialized
-    /// admission and checked readback; a competing reservation aborts this write.
-    pub(crate) fn record_new_command(
-        &mut self,
-        request: &RequestIdentity,
-        outcome: CommandOutcome,
-    ) -> super::Result<()> {
-        let key = command_key(request);
-        if self.get(&key)?.is_some() {
-            return Err(StoreError::Invalid("command already committed"));
-        }
-        outcome.validate()?;
-        let stored = StoredCommand {
-            request_digest: request.digest,
-            operation_id: request.operation_id,
-            outcome,
-        };
-        self.put(
-            &key,
-            &Record::metadata(serde_json::to_value(stored)?, vec![]),
-        )
     }
 }
 

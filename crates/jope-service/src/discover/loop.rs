@@ -598,9 +598,6 @@ struct DiscardedEvaluation {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct Checkpoint {
     version: u32,
-    /// Immutable prepared inputs remain reachable for the run's full lifetime.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    input_roots: Vec<BlobRef>,
     #[cfg(feature = "research")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     capture: Option<CaptureState>,
@@ -707,49 +704,17 @@ pub struct Discovery {
     poisoned: bool,
 }
 
-struct StartCommand {
-    journal: Arc<EventLog>,
-    identity: crate::idempotency::RequestIdentity,
-    input_roots: Vec<BlobRef>,
-    warnings: Vec<jope_api::Warning>,
-}
-
 impl Discovery {
-    /// Commit initial run state and its public retry receipt in one transaction.
-    /// Workers may be dispatched only after this returns successfully.
-    pub(crate) fn start_command(
-        store: Arc<Store>,
-        plan: Plan,
-        journal: Arc<EventLog>,
-        identity: crate::idempotency::RequestIdentity,
-        input_roots: Vec<BlobRef>,
-        warnings: Vec<jope_api::Warning>,
-    ) -> Result<Self> {
-        let start = Some(StartCommand {
-            journal,
-            identity,
-            input_roots,
-            warnings,
-        });
-        #[cfg(feature = "research")]
-        {
-            Self::open_inner(store, plan, None, start)
-        }
-        #[cfg(not(feature = "research"))]
-        {
-            Self::open_inner(store, plan, start)
-        }
-    }
     /// The caller exclusively owns this run and supplies a fresh worker pool on
     /// reopen. Store::open verifies committed blobs and marks interrupted runs.
     pub fn open(store: Arc<Store>, plan: Plan) -> Result<Self> {
         #[cfg(feature = "research")]
         {
-            Self::open_inner(store, plan, None, None)
+            Self::open_inner(store, plan, None)
         }
         #[cfg(not(feature = "research"))]
         {
-            Self::open_inner(store, plan, None)
+            Self::open_inner(store, plan)
         }
     }
 
@@ -761,14 +726,13 @@ impl Discovery {
         context: Arc<CaptureContext>,
     ) -> Result<Self> {
         context.validate(&plan)?;
-        Self::open_inner(store, plan, Some(context), None)
+        Self::open_inner(store, plan, Some(context))
     }
 
     fn open_inner(
         store: Arc<Store>,
         plan: Plan,
         #[cfg(feature = "research")] capture_context: Option<Arc<CaptureContext>>,
-        start: Option<StartCommand>,
     ) -> Result<Self> {
         plan.validate()?;
         let expected_version = CHECKPOINT_VERSION;
@@ -778,15 +742,8 @@ impl Discovery {
         } else {
             expected_version
         };
-        let log = start
-            .as_ref()
-            .map(|s| Arc::clone(&s.journal))
-            .unwrap_or_else(|| Arc::new(EventLog::new(Arc::clone(&store))));
+        let log = Arc::new(EventLog::new(Arc::clone(&store)));
         let old = log.snapshot(&plan.run_id)?;
-        ensure!(
-            start.is_none() || old.is_none(),
-            "command cannot recreate an existing run"
-        );
         let (mut checkpoint, mut snapshot) = if let Some(snapshot) = &old {
             let record = store
                 .get(&RecordKey::Run(plan.run_id.clone()))?
@@ -819,10 +776,6 @@ impl Discovery {
         } else {
             let checkpoint = Checkpoint {
                 version: expected_version,
-                input_roots: start
-                    .as_ref()
-                    .map(|s| s.input_roots.clone())
-                    .unwrap_or_default(),
                 #[cfg(feature = "research")]
                 capture: capture_context
                     .as_deref()
@@ -861,10 +814,7 @@ impl Discovery {
                 },
                 best: None,
                 event_watermark: DecimalU64(0),
-                warnings: start
-                    .as_ref()
-                    .map(|s| s.warnings.clone())
-                    .unwrap_or_default(),
+                warnings: vec![],
                 completion_reason: None,
             };
             (checkpoint, snapshot)
@@ -906,7 +856,6 @@ impl Discovery {
         }
         snapshot.state = RunState::Running;
         let blobs = checkpoint_blobs(&checkpoint)?;
-        let initial_response = serde_json::to_value(&snapshot)?;
         // Initialization/recovery is a control transaction, never a synthetic search event.
         let snapshot = log
             .commit(
@@ -917,15 +866,7 @@ impl Discovery {
                     blobs,
                 },
                 vec![],
-                |tx| {
-                    if let Some(start) = &start {
-                        tx.record_new_command(
-                            &start.identity,
-                            crate::idempotency::CommandOutcome::json(201, initial_response)?,
-                        )?;
-                    }
-                    Ok(())
-                },
+                |_| Ok(()),
             )?
             .snapshot;
         Ok(Self {
@@ -1883,12 +1824,7 @@ fn research_response(request: &Request, response: Response) -> Result<Response> 
 }
 
 fn checkpoint_blobs(state: &Checkpoint) -> Result<Vec<BlobRef>> {
-    let roots: Vec<_> = state
-        .input_roots
-        .iter()
-        .cloned()
-        .chain(state.champion.iter().map(|c| c.model.clone()))
-        .collect();
+    let roots: Vec<_> = state.champion.iter().map(|c| c.model.clone()).collect();
     #[cfg(feature = "research")]
     if let Some(capture) = &state.capture {
         let mut unique = BTreeMap::new();
@@ -5195,80 +5131,5 @@ mod tests {
                 }
             }
         }
-    }
-
-    #[test]
-    fn public_start_commits_snapshot_and_receipt_together_and_aborts_competing_creation() {
-        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/int01");
-        fs::create_dir_all(&root).unwrap();
-        let directory = tempfile::tempdir_in(root).unwrap();
-        let plan = plan(directory.path(), 24, Effort::Fast, 4);
-        let store = Arc::new(Store::open(directory.path().join("store")).unwrap());
-        let log = Arc::new(EventLog::new(Arc::clone(&store)));
-        let input = store
-            .publish_blob(fs::read(&plan.matrix_path).unwrap().as_slice())
-            .unwrap();
-        let identity = crate::idempotency::RequestIdentity::new(
-            "local-engine-owner",
-            "same-key",
-            6,
-            "/v1/runs",
-            None,
-            &json!({"test":"actual-native-plan-creation"}),
-        )
-        .unwrap();
-        let run = Discovery::start_command(
-            Arc::clone(&store),
-            plan.clone(),
-            Arc::clone(&log),
-            identity.clone(),
-            vec![input.clone()],
-            vec![],
-        )
-        .unwrap();
-        let original = store.idempotent_receipt(&identity).unwrap().unwrap();
-        assert_eq!(
-            original.outcome.body(),
-            &serde_json::to_value(run.snapshot()).unwrap()
-        );
-        assert_eq!(
-            log.snapshot(&plan.run_id).unwrap().as_ref(),
-            Some(run.snapshot())
-        );
-        assert_eq!(
-            run.admitted(),
-            0,
-            "no worker admission before the committed creation boundary"
-        );
-        assert!(store
-            .get(&RecordKey::Run(plan.run_id.clone()))
-            .unwrap()
-            .unwrap()
-            .blobs
-            .contains(&input));
-        let mut competing = plan.clone();
-        competing.run_id = "run_01JBD8Q6N4V2T5Y8K3M7P9R1S1".parse().unwrap();
-        assert!(Discovery::start_command(
-            Arc::clone(&store),
-            competing.clone(),
-            Arc::clone(&log),
-            identity.clone(),
-            vec![input],
-            vec![]
-        )
-        .is_err());
-        assert!(
-            log.snapshot(&competing.run_id).unwrap().is_none(),
-            "competing run state escaped its aborted receipt transaction"
-        );
-        assert_eq!(
-            store
-                .idempotent_receipt(&identity)
-                .unwrap()
-                .unwrap()
-                .outcome,
-            original.outcome
-        );
-        assert_eq!(store.run_ids_after(None, 257).unwrap(), vec![plan.run_id]);
     }
 }

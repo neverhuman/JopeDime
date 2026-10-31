@@ -72,18 +72,3 @@ BAT-02's only new lock edge is `jope-appliance -> jope-paths`. Chained after `sv
 `a5ec46b83045f5186016325ae166a250201f0d5bbf9f9e032875296ea935f892`. Evaluator calculations
 and DSL ABI are unchanged. No known-identity row is added because this task supplies no shipped
 receipt. The transition is registered in `bat02_jope_paths_lockfile_identity_rebaseline.v1.json`.
-
-## Current identity transition: GOV-03 bounded run API (2026-10-31)
-
-GOV-03 adds an `axum` dev-dependency to `jope-appliance` for its in-process run-API tests.
-`axum` 0.8.9 is already locked through `jope-service`, `jope-client` and `jope-observatory`, so the only new
-lock edge is `jope-appliance -> axum`, with no new package, version or feature. Chained after
-`res09_candle` (RES-09), implementation hash
-`408032c1357692348e5de8cd1ecb5fc349b0a2e1599329b2990b78fd961094d2` advances to
-`d8cc9c3e1e7e7a426e3c3e5fdfb2af74f74af5d4b2174f4019ef84d83faf188d`; Cargo.lock hash
-`3caec9c49b95c9b63024b24dc5df305bc6ab9ad54ea4265cd3373e984bdf6ba0` advances to
-`da8e834b1b30bbdd93d692caa1a7b09b35c31bb0ac84096cb1fe3f3cb0cf9b93`; and identity digest
-`464fb7086cbd37eaf1356c13335b41a14e1502fe955850d68c4db680452ba565` advances to
-`5fb6602a96b16e5abb2cddf8a82f1c188a579d65be67abefe772f277833a0a7f`. Evaluator calculations
-and DSL ABI are unchanged. No known-identity row is added because this task supplies no shipped
-receipt. The transition is registered in `gov03_axum_dev_lockfile_identity_rebaseline.v1.json`.

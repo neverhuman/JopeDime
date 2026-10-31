@@ -48,7 +48,7 @@ pub fn event_routes(log: Arc<EventLog>, auth: LocalAuth) -> Router {
 
 #[derive(Default, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct EventsQuery {
+struct EventsQuery {
     after: Option<String>,
     limit: Option<usize>,
     kinds: Option<String>,
@@ -56,7 +56,7 @@ pub(super) struct EventsQuery {
 
 #[derive(Default, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct StatusQuery {
+struct StatusQuery {
     wait_seconds: Option<f64>,
     after_event: Option<String>,
 }
@@ -120,7 +120,7 @@ async fn read_page(
         .map_err(|_| StoreError::Integrity("event page reader failed"))?
 }
 
-pub(super) async fn deliver_events(
+async fn deliver_events(
     State(log): State<Arc<EventLog>>,
     path: std::result::Result<Path<String>, PathRejection>,
     query: std::result::Result<Query<EventsQuery>, QueryRejection>,
@@ -213,7 +213,7 @@ pub(super) async fn deliver_events(
         .into_response()
 }
 
-pub(super) async fn long_poll_status(
+async fn long_poll_status(
     State(log): State<Arc<EventLog>>,
     path: std::result::Result<Path<String>, PathRejection>,
     query: std::result::Result<Query<StatusQuery>, QueryRejection>,
