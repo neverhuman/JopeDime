@@ -99,8 +99,10 @@ comparison; no winner is assumed.
 \subsection{The cost of more attempts}\label{sub:results-search}
 
 Compare the single proposal with agents allowed successive attempts and
-development feedback. Keep final outcomes unavailable to those agents and
-count complete candidates, repairs and all task-time computation. Plot
+development feedback. Keep final outcomes unavailable to those agents.
+Count every candidate attempt, including incomplete or invalid outputs
+and failed executions; a repair that emits a revised candidate is another
+attempt. Charge all task-time computation. Plot
 performance against both attempts and cost; if an agent does not reach a
 reference performance within its budget, report that limit.
 \TBD{Supply attempt curves, matched budgets, repeated seeds and uncertainty.}
