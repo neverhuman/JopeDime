@@ -682,6 +682,10 @@ mod tests {
     use super::*;
     use feat_math::Pcg32;
 
+    // These tests can create a CUDA context and launch kernels. Keep them out
+    // of ordinary CPU test runs; invoke ignored tests only while holding the
+    // repository's qualification lock on a qualified CUDA host.
+
     /// Compile-time proof that the public fn satisfies the seam signature.
     #[test]
     fn backend_signature_matches_the_seam() {
@@ -768,6 +772,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires a qualified CUDA host and the qualification lock"]
     fn gpu_scores_match_cpu_reference_bitwise() {
         if !gpu_available() {
             return;
@@ -810,6 +815,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires a qualified CUDA host and the qualification lock"]
     fn same_wave_twice_is_bit_identical() {
         if !gpu_available() {
             return;
@@ -826,6 +832,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires a qualified CUDA host and the qualification lock"]
     fn wide_problems_route_to_cpu_and_preserve_order() {
         if !gpu_available() {
             return;
@@ -869,6 +876,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires a qualified CUDA host and the qualification lock"]
     fn wave_timing_snapshot() {
         if !gpu_available() {
             return;
