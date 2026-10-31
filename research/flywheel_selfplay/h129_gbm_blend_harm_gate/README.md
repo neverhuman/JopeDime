@@ -72,6 +72,16 @@ Across seeds and outer folds, the HARM_GATED gate chose its fit-fold quantile as
   - Peak RSS was 3.16 GB on the resume and 4.5 GB on the first attempt, both under the 6 GiB limit.
   - `metrics.json` is 20.6 KB and was size-checked before it was written.
 
+## Overseer red-team (independent, 2026-10-31 20:35Z): CLEARED as CANDIDATE, not yet adoptable
+
+- **Reproduced.** Recomputed from `family_arrays.json` (sha `ca16816c...`) with an independent 10,000-draw family bootstrap. BLEND_025 per-seed means are +0.0154 / +0.0155 / +0.0165, the median is +0.0155, the 95% CI is [+0.0064, +0.0272] and harm is 12/205 = 5.9%. All match the runner. BLEND_050 harm is 11.7% (fails) and the HARM_GATED_050 CI crosses 0 (fails).
+- **Leakage.** The GBM is cross-fit: 15 fits per seed, each excluding the assessment fold (single and pair exclusions, used for the inner gate calibration). HistGBM `early_stopping=auto` uses a random row split inside the fit folds only. There are 0 DL-Val, sealed, holdout or meta-test reads, and DOPE is `c51a56d0` before and after. No leakage found.
+- **Tail concentration (main caveat).** The family-level median gain is only +0.0005 (W/T/L 119/28/58). The top 10 families (5%) supply 86% of the total gain, with the largest at +0.64, +0.56 and +0.41, which looks like rescued -2.0-type failures. After dropping the 10 largest-|gain| families, the mean is still +0.0047. The gain is real but driven by the tail, which is consistent with the blend fixing catastrophic contexts more than it improves typical ones.
+- **Seed independence.** The seeds only vary GBM randomness, and cross-seed family correlation is 0.89-0.94. Treat this as one experiment with a 205-family bootstrap, not three replicates.
+- **Scope.** This is DL-Train cross-fit development evidence (r882 saw these families in training), not the flywheel DL-Val utility (r882 = 1.1377942). The +0.0155 is on a different scale and is not a val-utility delta.
+- **Gates.** No ties, no boundary cases and no post-hoc thresholds. lambda = 0.25 was fixed before any outcome.
+- **Decision.** Merge as a CANDIDATE record. Live adoption is gated on (1) the prospective H134 confirmation, with a fresh fold and seeds and BLEND_025 as the single primary, and (2) an offline shadow readout by the flywheel owner on its standard validation path. Nothing changes in the live loop until both pass.
+
 ## Next step
 
 Hold for overseer red-team. If it clears, the owner decides on a prospective confirmation: a fresh family fold, new
