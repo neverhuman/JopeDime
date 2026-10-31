@@ -11,6 +11,7 @@
 % twocolumn implies \flushbottom, which stretches gaps around floats and headings.
 \raggedbottom
 \brokenpenalty=10000% never hyphenate across a column or page break
+\clubpenalty=10000 \widowpenalty=10000 \displaywidowpenalty=10000% no single first or last paragraph lines at a column break
 % Venue-style captions and a compact reference list.
 \captionsetup{font=small}
 \renewcommand{\bibfont}{\small}
