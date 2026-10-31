@@ -347,10 +347,8 @@ Every crate below also gets `Cargo.toml`. Public types are documented; format/sc
 | `crates/jope-assets/src/verify.rs` | Streaming hashes, trusted key lookup, signature verification, and integrity errors. |
 | `crates/jope-assets/src/source.rs` | Embedded and directory-backed verified sources for product/test use. |
 | `crates/jope-assets/src/decode.rs` | Raw or bounded zstd decoding; raw content verification. |
-| `crates/jope-assets/src/cache.rs` | Content-addressed cache, atomic creation, locking, and active-use protection. |
 | `crates/jope-assets/tests/envelope.rs` | Real envelope corruption, offset, truncation, and signature-negative cases. |
 | `crates/jope-assets/tests/decode_bounds.rs` | Declared-size/window-limit/decompression-bomb and hash failures. |
-| `crates/jope-assets/tests/cache.rs` | Concurrent creation, corrupted cache, symlink, and interrupted-write cases. |
 | `crates/jope-runtime/src/lib.rs` | `Runtime`, model/session lifecycle, and public fit/predict API. |
 | `crates/jope-runtime/src/config.rs` | Runtime limits and explicit configuration precedence. |
 | `crates/jope-runtime/src/table.rs` | Local typed table ingress, task, feature schema, missing values. |

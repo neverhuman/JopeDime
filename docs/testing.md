@@ -38,11 +38,18 @@ Python tests marked `xbabe2`; static coverage mapping is not execution coverage.
 ## Required PR and main checks
 
 Follow the [exact-head PR procedure](../AGENTS.md#pull-requests).
-Dispatch `ci.yml` manually on the final branch and retain its actual full head,
-run ID and attempt. Every declared manual job must pass, including both Rust
-shards and frontend tests. Preserve the separate PR run and its synthetic checkout
-identity. A legitimate path skip is recorded as a skip. Changed source requires
-fresh checks and substantive review; same-agent review is permitted and identified.
+
+| GitHub entrypoint | Trigger and role |
+| --- | --- |
+| [`ci.yml`](../.github/workflows/ci.yml) | Runs for pull requests marked ready for review and by manual dispatch. The PR run satisfies PR rules; manually dispatch it on the final branch to retain the full-head matrix evidence. |
+| [`full-main.yml`](../.github/workflows/full-main.yml) | Manually dispatched trusted-main run for the extended CPU families and their aggregate. It is separate from PR checks. |
+| [`main-guard.yml`](../.github/workflows/main-guard.yml) | Runs on pushes to `main` and verifies merged-PR provenance. It does not certify test coverage or source quality. |
+
+For the manual `ci.yml` run, retain its actual full head, run ID and attempt.
+Every declared manual job must pass, including both Rust shards and frontend
+tests. Preserve the separate PR run and its synthetic checkout identity. A
+legitimate path skip is recorded as a skip. Changed source requires fresh checks
+and substantive review; same-agent review is permitted and identified.
 
 `full-main.yml` runs the eleven extended CPU families in two non-cancelling groups.
 Its aggregate verifies the entire declared partition and all evidence. The independent
@@ -50,7 +57,7 @@ trusted-main audit job executes the same immutable-input audit wrapper used loca
 Until the score reaches the 85 floor the job is report-only: a verified below-floor
 audit passes with a warning and `report-only.json`, while invalid or inconsistent
 evidence still fails it. A green audit job is therefore not a passing audit.
-A successful `main-guard` proves merged-PR provenance; it does not certify tests,
+A successful `main-guard` run proves merged-PR provenance; it does not certify tests,
 audit quality, scientific utility or serving readiness.
 
 ## Failures and evidence custody
