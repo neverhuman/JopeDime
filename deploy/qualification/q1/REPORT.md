@@ -90,3 +90,65 @@ The record says `q1_status=NOT_RUN`, `decision=UNKNOWN_NOT_RUN`; effects, interv
 subgroups, failure inventory and Q1 compute remain unknown. It records no lock,
 FIFO ticket, backend, payload or default change. This validates CPU plumbing only;
 QLT-04 remains NOT_RUN/UNKNOWN and the existing report tables remain unfilled.
+
+## Owner-delegated key and remaining blocker — 2026-10-31, Jepson GO 10:32 MDT
+
+Jepson approved, for Q1 only, at 10:32 MDT on 2026-10-31: (1) Q1 may use the sealed
+meta-test holdout only through its pinned evaluator; (2) a bot-held ed25519 key may
+sign as principal `jepson`; (3) an `--admin` merge of the Q1 PR(s). This section
+records item (2) as required.
+
+The earlier sections of this report are dated observations. Where they describe
+the allowed-signers digest as `PENDING`, or pin preregistration SHA-256
+`067c1233…`, they describe the state before this change.
+
+**The Q1 signing key is an owner-delegated agent key, not a key Jepson holds
+personally.**
+
+- It was generated on xbabe2 by the `qlt04_sign_claude` session at 16:37Z.
+- The private key stays outside Git, but any agent process running as the shared
+  `ubuntu` user can read it, and so can sign Q1 as `jepson`. The owner accepted this
+  risk.
+- The public half is committed as `owner/allowed_signers`, restricted to namespace
+  `jopedime-q1`, with fingerprint
+  `SHA256:2KNNiZS7c+YbwsAMt2x0Q9gIdRCd2Yi6CR3k/d1N6LY` and no expiry. Its file
+  SHA-256 is `6bc05cef59ee45376fe77fcaf27074edac2f7bd390faac3f193c466175313235`,
+  which replaces `PENDING`.
+- The amended preregistration's SHA-256 is
+  `f2a234dda18171623053e233a1e6a486df5215ea977097ea3f9d6b81a6f219b5`.
+- The canonical ledger root, `/home/ubuntu/jope_plan/ns/qualification/q1_ledger`,
+  exists and is empty. Signatures will go in
+  `/home/ubuntu/jope_plan/ns/qualification/q1_approval/<q1.digest(plan)>.sig`.
+
+**No qualification plan is signed and Q1 is still NOT RUN.** A signature has to bind
+`q1.py approval-payload` for a final plan, and that plan needs the SHA-256 of a
+qualified `production_backend.py`. That backend cannot be built honestly on current
+main:
+
+- The discovery loop's learned-guidance seam is the `Admission` trait in
+  `crates/jope-service/src/discover/loop.rs`. Its `admit` receives only the proposal
+  strings, the explore flag and the RNG.
+- The learned path needs more than that: `ServingAdmissionSlate::prepare` takes
+  measured reveals, program features (prog-412 and proj-16) and landmark/token
+  conditioning, and none of these reach `admit`.
+- No caller outside `crates/jope-service/src/ranker/` uses the slate, `select_costs`
+  or adapter costs. `resolve_unqualified`, which refuses `Guidance::Learned`, is
+  referenced only by its own tests.
+- The RNK-10 CPU policy primitives are merged (#755, #800). The composition card,
+  RNK-10-F01, is blocked: it needs an owner grant for the per-round context hand-off,
+  qualified RNK-07/08 evidence and OD13. RNK-12 M2 parity and the M3 quality
+  receipts are not admitted.
+- QLT-01-F01, the card that owns this backend, forbids service edits and says to
+  stop and ask for a COMPLEX or OWNER ruling when no suitable engine interface
+  exists.
+
+Running Q1 on an improvised learned path would consume the sealed cohort for that
+bundle permanently, because the ledger is single-use, and would produce an
+unqualified default decision.
+
+A materialized roster is also still needed. Owner ruling t2300 defines the sealed
+group by reference as all P3 `sealed_excluded` families (293 production + 470
+catalog). The plan also needs a cut identity per dataset, and that identity depends
+on the evaluator protocol the backend freezes. The published `cohort.json` and
+`inputs-manifest.json` are the non-sealed candidate set
+(`qualification_eligible=false`), not the Q1 cohort.
