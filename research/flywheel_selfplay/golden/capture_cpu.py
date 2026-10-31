@@ -710,6 +710,278 @@ def historical_packet(plan, plan_pin, pools, packet, index_pin, store, output):
     )
 
 
+def train_dsl_records(plan, paths, pins):
+    generate.require(
+        len(paths) == len(pins) and paths and len(set(pins)) == len(pins),
+        "distinct DSL sources and explicit pins required",
+    )
+    selected = generate.read_json(
+        checked(Path(plan["selected"]), plan["selected_sha256"])
+    )
+    train = {row["context_sha256"]: row for row in selected["train"]}
+    programs, aliases, sources = {}, [], []
+    for path, pin in sorted(zip(paths, pins), key=lambda item: item[1]):
+        doc = generate.read_json(checked(path, pin))
+        if isinstance(doc, list):
+            rows, kind = doc, "train-records"
+        else:
+            generate.require(
+                set(doc) == {"all_90_qualified_novel_winner_records"},
+                "unsupported DSL source inventory",
+            )
+            rows, kind = (
+                doc["all_90_qualified_novel_winner_records"],
+                "novel-winner-records",
+            )
+        generate.require(rows, "empty DSL source inventory")
+        for position, row in enumerate(rows):
+            cid = row["context_sha256"]
+            generate.require(
+                cid in train and train[cid]["dl_split"] == "DL-Train",
+                "DSL source is outside TRAIN",
+            )
+            family = train[cid]["family_id"]
+            generate.require(
+                row.get(
+                    "dl_split", "DL-Train" if kind == "novel-winner-records" else None
+                )
+                == "DL-Train"
+                and row.get("family_id", family) == family,
+                "DSL TRAIN family/role differs",
+            )
+            key, dsl = row["program_sha256"], row["dsl"]
+            generate.require(
+                isinstance(dsl, str) and generate.sha(dsl.encode()) == key,
+                "DSL program hash mismatch",
+            )
+            generate.require(
+                key not in programs or programs[key] == dsl,
+                "ambiguous DSL program identity",
+            )
+            programs[key] = dsl
+            aliases.append(
+                dict(
+                    source_sha256=pin,
+                    source_row=position,
+                    source_kind=kind,
+                    context_sha256=cid,
+                    family_id=family,
+                    dl_split="DL-Train",
+                    program_sha256=key,
+                )
+            )
+        sources.append(dict(sha256=pin, kind=kind, records=len(rows)))
+    return programs, aliases, sources
+
+
+def dsl_coverage(plan, plan_pin, store, historical_sha, paths, pins, output):
+    """Recover exact delivered DSLs, never infer missing text from feature vectors."""
+    generate.require(
+        os.environ.get("CUDA_VISIBLE_DEVICES") == ""
+        and not torch.cuda.is_initialized(),
+        "CPU DSL coverage requires hidden CUDA",
+    )
+    generate.require(
+        os.getpriority(os.PRIO_PROCESS, 0) >= 10, "nice10 or lower priority required"
+    )
+    generate.require(
+        not output.exists() and not output.is_symlink(), "output must be new"
+    )
+    parent, parent_bytes = generate.read_custody_index(store, historical_sha)
+    generate.require(
+        parent["plan_sha256"] == plan_pin
+        and parent["bundle_digest"] == plan["bundle_digest"]
+        and not any(name.startswith("dsl/") for name in parent["files"]),
+        "historical catalog plan/bundle/scope differs",
+    )
+
+    def object_bytes(name):
+        spec = parent["files"][name]
+        data = generate.regular(store / spec["sha256"])
+        generate.require(
+            len(data) == spec["bytes"] and generate.sha(data) == spec["sha256"],
+            "historical custody object differs",
+        )
+        return data
+
+    for name in parent["files"]:
+        object_bytes(name)
+    programs, aliases, sources = train_dsl_records(plan, paths, pins)
+    torch.set_num_threads(1)
+    generate.CUSTODY = Path(plan["custody"])
+    _, _, reference, _ = generate.validate_bundle(
+        Path(plan["bundle"]), plan["bundle_digest"]
+    )
+    keys = sorted(programs)
+    canonical = {key: reference.featurize(programs[key]) for key in keys}
+    extras, shards = {}, []
+    for start in range(0, len(keys), 8192):
+        chunk = keys[start : start + 8192]
+        name = f"dsl/programs-{len(shards):05d}.safetensors"
+        extras[name] = generate.tensor_bytes(
+            dict(
+                feat412=np.stack([canonical[k][0] for k in chunk]),
+                proj16=np.stack([canonical[k][1] for k in chunk]),
+            )
+        )
+        shards.append(dict(path=name, start=start, end=start + len(chunk)))
+    extras["dsl/programs.jsonl"] = b"".join(
+        generate.canonical(dict(program_sha256=key, dsl=programs[key])) + b"\n"
+        for key in keys
+    )
+    extras["dsl/source-rows.jsonl"] = b"".join(
+        generate.canonical(row) + b"\n" for row in aliases
+    )
+    historical, covered, contexts = set(), set(), []
+    covered_rows, total_rows, raw_projection_difference = 0, 0, 0.0
+    matrix = reference.env["get_w1_sign_matrix"]()
+    for row in sorted(plan["contexts"], key=lambda value: value["context_sha256"]):
+        cid = row["context_sha256"]
+        meta = generate.read_json(object_bytes(f"historical/{cid}.json"))
+        identities = meta["program_sha256"]
+        generate.require(
+            meta["pool_sha256"] == row["pool_sha256"]
+            and meta["dl_split"] == "DL-Train"
+            and len(identities) == row["n_candidates"],
+            "historical context/row identity differs",
+        )
+        tensors = generate.load_tensors(object_bytes(f"historical/{cid}.safetensors"))
+        f, p = tensors["feat412"].numpy(), tensors["proj16"].numpy()
+        generate.require(
+            f.shape == (len(identities), 412)
+            and f.dtype == np.float32
+            and p.shape == (len(identities), 16)
+            and p.dtype == np.float64,
+            "historical numeric contract differs",
+        )
+        count = 0
+        for i, key in enumerate(identities):
+            historical.add(key)
+            if key in canonical:
+                actual, projection = canonical[key]
+                generate.require(
+                    np.array_equal(actual, f[i]),
+                    "canonical feature differs from captured history: "
+                    + cid
+                    + "/"
+                    + key,
+                )
+                captured_domain = actual.astype(np.float64) @ matrix / np.sqrt(412)
+                generate.require(
+                    np.max(np.abs(captured_domain - p[i])) <= 1e-12,
+                    "captured projection domain differs",
+                )
+                raw_projection_difference = max(
+                    raw_projection_difference, float(np.max(np.abs(projection - p[i])))
+                )
+                covered.add(key)
+                count += 1
+        covered_rows += count
+        total_rows += len(identities)
+        contexts.append(
+            dict(context_sha256=cid, rows=len(identities), covered_rows=count)
+        )
+    generate.require(
+        total_rows == parent["historical_program_rows"]
+        and len(historical) == parent["historical_unique_program_hashes"],
+        "historical coverage inventory differs",
+    )
+    missing = sorted(historical - covered)
+    prior = {
+        generate.read_json(line)["program_sha256"]
+        for line in object_bytes("packet/programs.jsonl").splitlines()
+    }
+    coverage = dict(
+        sources=sources,
+        delivered_source_records=len(aliases),
+        delivered_unique_programs=len(keys),
+        extra_definitions_vs_prior=len(set(keys) - prior),
+        historical_unique_programs=len(historical),
+        historical_rows=total_rows,
+        covered_program_sha256=sorted(covered),
+        missing_program_sha256=missing,
+        covered_rows=covered_rows,
+        contexts=contexts,
+        canonical_tensor_shards=shards,
+        canonical_projection_domain="raw frozen featurizer FP64",
+        captured_projection_domain="captured feature F32 -> FP64 frozen caller",
+        raw_vs_captured_projection_max_abs_difference=raw_projection_difference,
+        historical_snapshot_full_dsl_coverage=not missing,
+        global_historical_corpus_complete=False,
+    )
+    extras["dsl/coverage.json"] = generate.canonical(coverage) + b"\n"
+    generate.require(
+        parent["total_bytes"] + sum(len(data) for data in extras.values())
+        < 511 * 1024 * 1024,
+        "DSL coverage set exceeds byte bound",
+    )
+    files = dict(parent["files"])
+    files["sources/historical-custody-index.json"] = generate.custody_blob(
+        store, parent_bytes
+    )
+    files.update(
+        {
+            name: generate.custody_blob(store, data)
+            for name, data in sorted(extras.items())
+        }
+    )
+    metadata = {
+        key: parent[key]
+        for key in [
+            "plan_sha256",
+            "source_packet_index_sha256",
+            "bundle_digest",
+            "contexts",
+            "historical_program_rows",
+            "historical_unique_program_hashes",
+            "historical_scope",
+            "historical_corpus_complete",
+            "features_regenerated_from_dsl",
+            "projection_formula",
+            "reference_source_sha256",
+            "qualification",
+        ]
+    }
+    metadata.update(
+        source_historical_catalog_sha256=historical_sha,
+        dsl_coverage=dict(
+            sources=sources,
+            delivered_source_records=len(aliases),
+            delivered_unique_programs=len(keys),
+            covered_historical_programs=len(covered),
+            missing_historical_programs=len(missing),
+        ),
+    )
+    index, encoded = generate.custody_index(files, metadata)
+    generate.require(
+        index["total_bytes"] <= 512 * 1024 * 1024, "DSL coverage set exceeds byte bound"
+    )
+    catalog = generate.custody_blob(store, encoded)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="golden-dsl-", dir=output.parent) as temp:
+        staged = Path(temp) / "catalog"
+        staged.mkdir()
+        (staged / "custody-index.json").write_bytes(encoded)
+        generate.exporter()._publish_directory(staged, output)
+    generate.require(
+        not torch.cuda.is_initialized(), "CPU DSL coverage initialized CUDA"
+    )
+    return dict(
+        catalog_sha256=catalog["sha256"],
+        file_count=index["file_count"],
+        total_bytes=index["total_bytes"],
+        delivered_source_records=len(aliases),
+        delivered_unique_programs=len(keys),
+        extra_definitions_vs_prior=coverage["extra_definitions_vs_prior"],
+        covered_historical_programs=len(covered),
+        missing_historical_programs=len(missing),
+        covered_historical_rows=covered_rows,
+        full_historical_corpus_complete=False,
+        native_calls=0,
+        fold_fits=0,
+    )
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--plan", type=Path, required=True)
@@ -721,13 +993,37 @@ def main(argv=None):
     parser.add_argument("--historical-pools", type=Path)
     parser.add_argument("--packet", type=Path)
     parser.add_argument("--custody-store", type=Path)
+    parser.add_argument("--dsl-records", type=Path, action="append")
+    parser.add_argument("--expected-dsl-sha256", action="append")
+    parser.add_argument("--historical-catalog-sha256")
     args = parser.parse_args(argv)
-    history = (args.historical_pools, args.packet, args.custody_store)
-    if any(history) and (
-        not all(history)
-        or not args.expected_index_sha256
+    dsl_mode = (
+        args.dsl_records,
+        args.expected_dsl_sha256,
+        args.historical_catalog_sha256,
+    )
+    if any(dsl_mode) and (
+        not all(dsl_mode)
+        or not args.custody_store
+        or args.historical_pools
+        or args.packet
         or args.regenerate_captures
         or args.expected_captures_sha256
+        or args.expected_index_sha256
+    ):
+        parser.error(
+            "DSL records/pins, historical catalog and custody store are required together, separately from other modes"
+        )
+    history = (args.historical_pools, args.packet, args.custody_store)
+    if (
+        not any(dsl_mode)
+        and any(history)
+        and (
+            not all(history)
+            or not args.expected_index_sha256
+            or args.regenerate_captures
+            or args.expected_captures_sha256
+        )
     ):
         parser.error(
             "historical pools, packet, custody store and expected index are required together; regeneration flags are separate"
@@ -737,12 +1033,24 @@ def main(argv=None):
         args.expected_captures_sha256,
         args.expected_index_sha256,
     )
-    if not any(history) and any(replay) and not all(replay):
+    if not any(dsl_mode) and not any(history) and any(replay) and not all(replay):
         parser.error(
             "regenerate-captures and both expected SHA256 pins are required together"
         )
     plan = generate.read_json(checked(args.plan, args.expected_plan_sha256))
     validate_plan(plan)
+    if args.dsl_records is not None:
+        report = dsl_coverage(
+            plan,
+            args.expected_plan_sha256,
+            args.custody_store,
+            args.historical_catalog_sha256,
+            args.dsl_records,
+            args.expected_dsl_sha256,
+            args.output,
+        )
+        print(json.dumps(report, sort_keys=True))
+        return 0
     if args.historical_pools is not None:
         report = historical_packet(
             plan,

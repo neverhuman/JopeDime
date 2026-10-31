@@ -116,3 +116,10 @@ directory or FIFO is recorded as failed evidence while preserving exit0. An
 empty regular log from a silent source tool remains valid. This does not promote
 CPU diagnostics to signed-byte qualification. The focused controller suite
 exercises these refusals using only its own fixture children and files.
+
+A per-file error while hashing retained output is recorded in the gate diagnostic
+without claiming that output's hash. It fails a successful or incomplete gate,
+preserves existing failed/timed-out/unavailable classifications and the child's
+original exit, and allows later CPU gates to run. Each gate receipt and the
+aggregate diagnostic remain available. The controller tests inject read errors
+at that I/O boundary while real fixture children and other hashes still run.

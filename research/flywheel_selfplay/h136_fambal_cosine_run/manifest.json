@@ -1,115 +1,61 @@
 {
-  "arms": {
-    "CONTROL": {
-      "batch_size_per_microbatch": 16,
-      "microbatches_per_update": 1,
-      "sampler": "rotated uniform over 974 fit contexts (exact r882/H132 CONTROL recipe)",
-      "schedule": "flat 1e-4",
-      "trainable_parameters": 29211,
-      "trainable_tensors": 47
-    },
-    "COSWR": {
-      "batch_size_per_microbatch": 16,
-      "microbatches_per_update": 1,
-      "sampler": "exact CONTROL batch plan (cids, ixs) per seed",
-      "schedule": "linear warmup 4 updates (2.5e-5 -> 1.0e-4), then cosine with 2 warm restarts over updates 4..39 (T0 = 40/3 updates)",
-      "trainable_parameters": 29211,
-      "trainable_tensors": 47
-    },
-    "FAMBAL_ACC4": {
-      "batch_size_per_microbatch": 16,
-      "effective_batch_size": 64,
-      "microbatches_per_update": 4,
-      "sampler": "uniform over 164 fit families, then uniform context within family (default_rng(seed * 1_000_003 + 109_001))",
-      "schedule": "flat 1e-4",
-      "trainable_parameters": 29211,
-      "trainable_tensors": 47
-    }
-  },
-  "baseline": {
-    "checkpoint": "r882",
-    "checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
-    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
-    "full_trainable_parameters": 29211,
-    "full_trainable_tensors": 47,
-    "non_trainable_parameters_hash_verified": true
-  },
-  "cells": 9,
-  "co_readouts": {
-    "adapter_drift": "L2 parameter drift ||theta - theta0||_2 from r882 per cell",
-    "continuous_mean_regret": "all-candidate mean regret, top-1 oracle regret, and softmax-expected regret per family on fold 0",
-    "elo": "family-paired Elo (with 95% CI) and 4-player Bradley-Terry Elo vs r882=1500 and CONTROL=1500; no AUC"
-  },
-  "custody": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run",
-  "execution_gate": "No real-data training or assessment scoring before preregistration PR merges into origin/main; runner enforces HEAD ancestry in origin/main.",
-  "fold": {
-    "assessment_context_count": 245,
-    "assessment_family_count": 41,
-    "family_grouped": true,
-    "fit_context_count": 974,
-    "fit_family_count": 164,
-    "fit_folds": [
-      1,
-      2,
-      3,
-      4
-    ],
-    "fold_0_role": "assessment",
-    "fold_count": 5,
-    "fold_manifest": "fold_manifest_136161.json",
-    "fold_manifest_sha256": "6ff1a5c48564a2b13b83f3b50403bfa113f8e1d0361bd5f1c3cb3c83ce872496",
-    "fold_seed": 136161
-  },
+  "admitted_arms": [],
+  "amendment_a1": "PREREG_AMENDMENT_A1.md",
+  "arms": [
+    "CONTROL",
+    "FAMBAL_ACC4",
+    "COSWR"
+  ],
+  "assessment_contexts": 245,
+  "assessment_families": 41,
+  "assessment_fold": 0,
+  "candidate_breakthrough": false,
+  "cells_completed": 9,
+  "complete": true,
+  "custody_root": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run",
+  "dl_val_metadata_reads": 0,
+  "dl_val_reads": 0,
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "executed_runner_sha256": "b0eda24a960f31c52fc308f5b667f1b76c9a6a55dd0ce031898beeda4fc21072",
+  "finalizer_sha256": "92e0b42540426c4cdeb8bcf6e0407c057040f74126f94b74e22510e4a16b1e1f",
+  "fit_contexts": 974,
+  "fit_families": 164,
+  "fit_folds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "fold_manifest_sha256": "6ff1a5c48564a2b13b83f3b50403bfa113f8e1d0361bd5f1c3cb3c83ce872496",
+  "fold_seed": 136161,
+  "gpu_seconds": 0.0,
   "h109_runner_sha256": "68ed53d5ba80ce52b2450de526c54f2468129eb13d0cb93cba93a8562953866b",
-  "hypothesis": "Family-balanced sampling with 4x gradient accumulation (FAMBAL_ACC4) or 4-step linear warmup + cosine with 2 warm restarts (COSWR) over 40 AdamW updates from fresh r882 copies will yield a strict paired family gain (> +0.001) over unchanged r882 and CONTROL on held-out fold 0 with <= 10% harmed families.",
-  "output_limit_bytes": 100000,
-  "paired_seeds": [
+  "live_loop_reads": 0,
+  "metrics_sha256": "7a8d7d56751b7ef6f3879313e40bdc84c33df47e92ab9399511862708ae33bb5",
+  "non_trainable_parameters": 1126777,
+  "optimizer_updates": 360,
+  "outer_test_reads": 0,
+  "owner": "rd_argon",
+  "planned_optimizer_updates": 360,
+  "prereg_sha256": "a9bbce83d944ab1fab9d88a96b82ea01207fc093f85a08e7cfef117dfda1aa74",
+  "preregistered_runner_sha256": "a8fa2908812964cfd5f33207a5bef2e3a2b5a9c2e23558888cd0e45e5b13e001",
+  "primary_treatments": [
+    "FAMBAL_ACC4",
+    "COSWR"
+  ],
+  "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "regression_receipt_sha256": "e30990a5e8b5e887b6b96d433152f2d43ad14f358b066644ed4964de7f5bec73",
+  "runner_path": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run/run_h136_cpu.py",
+  "schema": "jope.h136.manifest/v1",
+  "sealed_metatest_reads": 0,
+  "seeds": [
     161,
     162,
     163
   ],
-  "prereg_sha256": "a9bbce83d944ab1fab9d88a96b82ea01207fc093f85a08e7cfef117dfda1aa74",
-  "primary": {
-    "admission": {
-      "all_three_seeds_gain_strictly_gt_zero": true,
-      "family_harm_fraction_gain_lt_minus_0_01_lte": 0.1,
-      "holm_adjusted_lcb95_strictly_gt": 0.0,
-      "median_seed_gain_strictly_gt": 0.001,
-      "seeds_not_identical": true,
-      "ties_or_identical_to_r882_fail": true
-    },
-    "comparators": [
-      "r882",
-      "CONTROL"
-    ],
-    "family_bootstrap_draws": 10000,
-    "family_bootstrap_seed": 136161,
-    "holm_family_alpha": 0.05,
-    "treatments": [
-      "FAMBAL_ACC4",
-      "COSWR"
-    ]
-  },
-  "resource_guardrails": {
-    "cpu_only": true,
-    "disk_used_percent_strictly_below": 93.8,
-    "dl_val_outer_test_sealed_holdout_metatest_reads": 0,
-    "gpu": false,
-    "je_arrow_malloc_conf": "background_thread:false",
-    "max_load1": 86.0,
-    "max_rss_bytes": 6442450944,
-    "max_scratch_bytes": 2147483648,
-    "max_threads": 4,
-    "min_mem_available_bytes": 32212254720,
-    "nice": 19,
-    "qualification_lock": false,
-    "rayon_num_threads": 1
-  },
-  "runner_sha256": "a8fa2908812964cfd5f33207a5bef2e3a2b5a9c2e23558888cd0e45e5b13e001",
-  "schema": "jope.h136.preregistration/v1",
-  "source_base": "aa3b8015959e662faa300235dbbc5877b2c07473",
-  "status": "PREREGISTERED_NOT_RUN",
-  "total_optimizer_updates": 360,
-  "updates_per_cell": 40,
+  "status": "COMPLETE",
+  "trainable_parameters": 29211,
+  "trainable_tensors": 47,
+  "verdict": "NO_ADMISSION",
   "wave": "H136"
 }
