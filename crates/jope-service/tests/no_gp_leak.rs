@@ -47,6 +47,7 @@ enum Surface {
     Mcp,
     CliStdout,
     CliStderr,
+    Terminal,
     Error,
     ExportManifest,
     Log,
@@ -113,6 +114,7 @@ fn synthetic_surface_outputs(event: &PublicEvent) -> Vec<(Surface, String)> {
         (Surface::Mcp, mcp.to_string()),
         (Surface::CliStdout, format!("{wire}\n")),
         (Surface::CliStderr, String::new()),
+        (Surface::Terminal, format!("terminal transcript: {wire}")),
         (Surface::Error, "The request could not be completed.".into()),
         (Surface::ExportManifest, manifest.to_string()),
         (Surface::Log, format!("public event: {wire}")),
@@ -136,6 +138,30 @@ fn scanner_reports_a_deliberately_leaking_surface() {
     let leak = scan_surfaces(&outputs).unwrap_err();
     assert_eq!(leak.surface, Surface::Mcp);
     assert_eq!(leak.sentinel, SENTINELS[1]);
+}
+
+#[test]
+fn scanner_rejects_each_sentinel_on_every_public_surface() {
+    let surfaces = [
+        Surface::Http,
+        Surface::Sse,
+        Surface::Mcp,
+        Surface::CliStdout,
+        Surface::CliStderr,
+        Surface::Terminal,
+        Surface::Error,
+        Surface::ExportManifest,
+        Surface::Log,
+    ];
+
+    for surface in surfaces {
+        for sentinel in SENTINELS {
+            let output = format!("leaking {surface:?} capture: {sentinel}");
+            let leak = scan_surfaces(&[(surface, output)]).unwrap_err();
+            assert_eq!(leak.surface, surface);
+            assert_eq!(leak.sentinel, sentinel);
+        }
+    }
 }
 
 #[test]
