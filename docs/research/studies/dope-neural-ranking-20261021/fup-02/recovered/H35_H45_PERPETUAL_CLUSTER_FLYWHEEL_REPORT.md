@@ -1,6 +1,6 @@
 # Waves H35–H45 Technical Whitepaper (`v4.7` Reconciled): Self-Contained First-Party `DOPE` Encoders, Multi-Split S3 Coverage (`15,151` Gate-Disjoint / `15,116` Maximal-Disjoint / `23,403` 4-Role Subset), `SPQ-1` KL Gate Audit (`1.148685 > 0.35`), and 4-Host (`xbabe1`–`xbabe4`) Cluster Flywheel
 
-![Self-Improving Flywheel Metrics Over Time & Full S3 Multi-Split Scale](h40_h45_self_improving_flywheel_timeseries_20261026.png)
+*Self-Improving Flywheel Metrics Over Time & Full S3 Multi-Split Scale plot is not mirrored in this repository; its object identity is listed in the [H40–H45 S3 custody receipt](h40_h45_s3_custody_receipt_v4_7_20261026.json).*
 
 ## 1. Executive Summary & Scientific Qualification Status
 
@@ -23,7 +23,7 @@ This whitepaper records the complete, receipt-verified results and scientific au
    - In `h41_h44_live` (`launch_index=3`, preserved read-only at `/home/ubuntu/.codex-screen-monitor/20261026T135545Z-jope-h41-original/results.json`, SHA-256 `f13380496643d63063505d5a33c7e99431f852a44f3e3a9208a5414691976351`), `ns_mask` on the 16-candidate slate marked standard `"crossover"` / `"transfer"` operators (`14/16 = 0.875` base mass in $p_0$) as new support, forcing $\mathrm{KL}(q \,\|\, p_0) \ge \mathrm{KL}(\mathrm{Ber}(0.2125) \,\|\, \mathrm{Ber}(0.875)) = 1.148685 > 0.35$ (`all_rounds_kl_and_support_admissible = False`).
    - On `stage2_20` `holdout30_verify`, `H41_ONLINE_FP_COMPLETE_TILT_QHAT` (`+0.028847`, `2W/15T/3L` under `G1C`; `+0.028502`, `1W/16T/3L` under `G4`) and `H41_ONLINE_FP_ANALYTIC_ZERO_CKPT_TILT_QHAT` (`+0.028847` `G1C`; `+0.028502` `G4`) outperform `H41_FROZEN_FP_COMPLETE_CONTROL` (`-0.000851`, `1W/16T/3L` under `G1C`), **but both underperform `H41_UNGUIDED_CONTROL` (`+0.035839`, `3W/14T/3L` under `G1C`; `+0.036732`, `1W/17T/2L` under `G4`)**.
    - `H41–H44` executed **`0` adapter optimizer steps and `0` encoder optimizer steps** (reusing `H40-Fast` checkpoints), and `ContextualSurrogateQHatLopoSos` `train_spearman_rho = +0.390249` on `28,192` strict-train rows is an **in-sample training fit correlation**, not held-out qualification.
-   - `enforce_spq1_tilt_admission_fail_closed` is now enforced in [`h40_h45_perpetual_cluster_flywheel.py`](file:///home/ubuntu/JopeDime/.agent/worktrees/flywheel-selfplay-20261023/research/flywheel_selfplay/h40_h45_perpetual_cluster_flywheel.py) before candidate selection (verified by `test_32` in `flywheel_dope_high_only_fixture_verification_receipt_v15_20261026T141435Z.json`, `32/32 PASS`, SHA-256 `c29c4e85c255ef37eed9ba1dcd44cc5822ae5abfa63145dee2e84557658965fa`), and `Wave H45` across `xbabe1`, `xbabe2` (paused for CI lock), `xbabe3`, and `xbabe4` (`338` logical CPUs) rejected promotion (`REJECTED_RETAIN_INCUMBENT_GENERATION`).
+   - `enforce_spq1_tilt_admission_fail_closed` is now enforced in `h40_h45_perpetual_cluster_flywheel.py` (source file is not tracked in this repository snapshot) before candidate selection (verified by `test_32` in `flywheel_dope_high_only_fixture_verification_receipt_v15_20261026T141435Z.json`, `32/32 PASS`, SHA-256 `c29c4e85c255ef37eed9ba1dcd44cc5822ae5abfa63145dee2e84557658965fa`), and `Wave H45` across `xbabe1`, `xbabe2` (paused for CI lock), `xbabe3`, and `xbabe4` (`338` logical CPUs) rejected promotion (`REJECTED_RETAIN_INCUMBENT_GENERATION`).
 
 ---
 

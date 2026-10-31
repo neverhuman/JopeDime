@@ -52,8 +52,8 @@ to the design, and no byte was changed.
   exited 0 on the first attempt with two `unused_assignments` warnings, a never-read initial
   `rounds_f = 0.0` in the two work planners.
 - **Contract checks:** 35 of 35 master-spec O6 checks passed on tiny invented arrays, run by
-  [`admission/Opus5p5_Extra.contract-driver.rs`](admission/Opus5p5_Extra.contract-driver.rs)
-  (log: [`admission/Opus5p5_Extra.contract.txt`](admission/Opus5p5_Extra.contract.txt)). They
+  [`admission/Opus5p5_Extra.contract-driver.rs`](../../../../../../crates/jope-bench/regressors/admission/Opus5p5_Extra.contract-driver.rs)
+  (log: [`admission/Opus5p5_Extra.contract.txt`](../../../../../../crates/jope-bench/regressors/admission/Opus5p5_Extra.contract.txt)). They
   cover shape and overflow errors, infinite and non-finite inputs, zero features, one and two
   rows, constant targets, all-missing columns and rows, repeated rows, signed zeros, lifecycle
   errors, identical results across fresh instances and repeated predictions, batched and
