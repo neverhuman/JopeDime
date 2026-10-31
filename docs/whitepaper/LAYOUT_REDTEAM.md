@@ -99,6 +99,28 @@ The owner widened the scope to a full upgrade, carried out in small sequential P
 
 Everything below needs data, receipts or decisions from the team. None of it was invented or changed. Unless a row says otherwise, it lives in §7.
 
+### Evidence handoff for Results
+
+Use the following packet to supply the evidence requested below. Each component
+should identify its source commit, artifact location and content hash, generating
+command and evaluation protocol. Freeze the evaluation contract before opening
+outcomes. Keep unavailable fields and unresolved outcomes explicit; failed
+attempts remain in the accounting.
+
+| Component | Minimum contents | Used in |
+|---|---|---|
+| Frozen evaluation contract | Problem and family inventory; dataset identities, splits and exclusions; permitted inputs and known training exposure; writer, reference, comparator, encoder and evaluator identities; seeds, metrics and budgets. Link the provenance and acceptance receipts listed below. | §7.1 and every comparison |
+| Paired first-proposal record | Every predeclared task/family/seed pairing, both checkpoint identities and emitted outputs, scores, terminal statuses and costs. Attach evidence of optimizer updates and parameter changes. | §7.2 |
+| Fixed-method comparison record | Paired outcomes, ties, failures and exclusions; originating model versions, prompts and dates; implementation checks; KumoRFM configuration and permitted inputs. Bind Elo summaries to their comparison population and rating protocol. | §7.3, Table 6 and Figure 8 |
+| Attempt and cost record | Every attempt, including repairs and failures, its terminal status and incurred encoding, generation, fitting and prediction costs. Identify unreached targets, unresolved cases and settings with no verified win. | §7.4 and §7.6, Figures 9–10 |
+| Map, example and diagnostic records | Disjoint ranking/similarity data and program-only controls; a declared training influence path for a causal ablation, or ranking-only scope. Include the preselected worked example and its program/outcomes, and pin each historical diagnostic's own inventory, checkpoint and protocol. | §7.5–§7.7, Tables 7–8 |
+| Reproducible summaries and figure inputs | Commands and input identities for paired family-level outcomes, uncertainty and costs; counts of ties, failures, exclusions and unknowns; the records underlying every table cell and plotted panel. | Results tables/figures, then the abstract and Discussion |
+
+Trace each reported result back through its summary command to the frozen
+inventory and attempt records. Keep the retained development plots and the
+historical diagnostics bound to their own populations when preparing the final
+comparisons.
+
 ### Results content that is missing
 
 | Where | What is missing |
