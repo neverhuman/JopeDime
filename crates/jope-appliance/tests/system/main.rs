@@ -578,8 +578,8 @@ fn verify_crash_continuation(home: &Path, committed: u64, point: &str) {
 /// Explicit opt-in: dependency features are not visible as this crate's cfgs.
 /// Run with INT02_INTERNAL_CAS_CUTS=1 and --features jope-service/failpoints.
 /// Selecting these cuts without the hooks must fail, never silently skip.
+#[cfg(unix)]
 fn internal_cas_sigkill_cuts() {
-    assert!(cfg!(unix), "internal CAS cuts require native Unix signals");
     let bytes = b"synthetic model fixture 1";
     let hash = jope_assets::sha256_hex(bytes);
     let reference = jope_service::store::BlobRef {
@@ -660,6 +660,11 @@ fn internal_cas_sigkill_cuts() {
         verify_crash_continuation(home.path(), 0, &point);
         eprintln!("INT02 CAS hook={cut} signal=9 renamed={renamed} staging_recovered=true");
     }
+}
+
+#[cfg(not(unix))]
+fn internal_cas_sigkill_cuts() {
+    panic!("internal CAS cuts require native Unix signals");
 }
 
 #[test]
