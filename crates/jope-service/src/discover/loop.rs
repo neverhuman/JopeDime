@@ -246,8 +246,7 @@ pub struct Candidate {
     pub dsl: String,
 }
 
-/// Admission can later be replaced by learned guidance without changing the
-/// scheduler, worker protocol or transaction boundary.
+/// Context-free policies remain supported through the `RoundAdmission` bridge.
 pub trait Admission {
     fn admit(&self, proposals: Vec<String>, explore: bool, rng: &mut ChaCha12Rng) -> Vec<String>;
 
@@ -260,6 +259,68 @@ pub trait Admission {
         _observed: &ObservedSlate,
     ) -> Result<BehaviorPolicy> {
         bail!("same-invocation admission observations are unavailable")
+    }
+}
+
+/// Committed rung-0 context. User-objective values are deliberately absent;
+/// objective ordering still determines elite membership and search parents.
+pub struct RoundMeasurement<'a> {
+    pub algorithm_id: &'a str,
+    pub dsl: &'a str,
+    pub surrogate_fitness: f64,
+}
+
+pub struct RoundContext<'a> {
+    pub plan: &'a Plan,
+    pub round: u64,
+    pub measured: Vec<RoundMeasurement<'a>>,
+}
+
+/// Fallible admission against the same committed context for every sibling in a
+/// wave. Failure aborts planning before any scheduler checkpoint is committed.
+pub trait RoundAdmission {
+    fn admit_round(
+        &self,
+        context: &RoundContext<'_>,
+        proposals: Vec<String>,
+        explore: bool,
+        rng: &mut ChaCha12Rng,
+    ) -> Result<Vec<String>>;
+
+    #[cfg(feature = "research")]
+    fn admit_recorded_round(
+        &self,
+        _context: &RoundContext<'_>,
+        _proposals: Vec<String>,
+        _explore: bool,
+        _rng: &mut ChaCha12Rng,
+        _observed: &ObservedSlate,
+    ) -> Result<BehaviorPolicy> {
+        bail!("same-invocation admission observations are unavailable")
+    }
+}
+
+impl<T: Admission> RoundAdmission for T {
+    fn admit_round(
+        &self,
+        _context: &RoundContext<'_>,
+        proposals: Vec<String>,
+        explore: bool,
+        rng: &mut ChaCha12Rng,
+    ) -> Result<Vec<String>> {
+        Ok(self.admit(proposals, explore, rng))
+    }
+
+    #[cfg(feature = "research")]
+    fn admit_recorded_round(
+        &self,
+        _context: &RoundContext<'_>,
+        proposals: Vec<String>,
+        explore: bool,
+        rng: &mut ChaCha12Rng,
+        observed: &ObservedSlate,
+    ) -> Result<BehaviorPolicy> {
+        self.admit_recorded(proposals, explore, rng, observed)
     }
 }
 
@@ -917,7 +978,7 @@ impl Discovery {
     pub fn advance(
         &mut self,
         space: &impl SearchSpace,
-        admission: &impl Admission,
+        admission: &impl RoundAdmission,
         executor: &impl Executor,
         live_workers: usize,
         stop_after_rounds: usize,
@@ -1908,7 +1969,7 @@ fn evaluation_seed(seed: u64, round: u64, slot: u32, rung: u8) -> u64 {
 fn plan_wave(
     state: &mut Checkpoint,
     space: &impl SearchSpace,
-    admission: &impl Admission,
+    admission: &impl RoundAdmission,
 ) -> Result<()> {
     #[cfg(feature = "research")]
     {
@@ -1923,7 +1984,7 @@ fn plan_wave(
 fn plan_wave_inner(
     state: &mut Checkpoint,
     space: &impl SearchSpace,
-    admission: &impl Admission,
+    admission: &impl RoundAdmission,
     #[cfg(feature = "research")] capture_context: Option<(&Store, &CaptureContext)>,
 ) -> Result<()> {
     let mut parents: Vec<_> = state
@@ -1969,6 +2030,25 @@ fn plan_wave_inner(
                 unique.push(dsl);
             }
         }
+        let round_context = RoundContext {
+            plan: &state.plan,
+            round: number,
+            measured: state
+                .elites
+                .by_objective()
+                .iter()
+                .map(|elite| {
+                    Ok(RoundMeasurement {
+                        algorithm_id: &elite.algorithm_id,
+                        dsl: state
+                            .programs
+                            .get(&elite.algorithm_id)
+                            .context("elite program missing")?,
+                        surrogate_fitness: elite.surrogate,
+                    })
+                })
+                .collect::<Result<Vec<_>>>()?,
+        };
         #[cfg(feature = "research")]
         let mut capture_ref = None;
         #[cfg(feature = "research")]
@@ -2004,7 +2084,13 @@ fn plan_wave_inner(
                     admitted: (0..unique.len()).collect(),
                 }
             } else {
-                admission.admit_recorded(unique.clone(), explore, &mut rng, &observed)?
+                admission.admit_recorded_round(
+                    &round_context,
+                    unique.clone(),
+                    explore,
+                    &mut rng,
+                    &observed,
+                )?
             };
             let record = ResearchRound {
                 schema: crate::research::VERSION.into(),
@@ -2069,13 +2155,13 @@ fn plan_wave_inner(
         } else if number == 0 {
             unique
         } else {
-            admission.admit(unique, explore, &mut rng)
+            admission.admit_round(&round_context, unique, explore, &mut rng)?
         };
         #[cfg(not(feature = "research"))]
         let admitted = if number == 0 {
             unique
         } else {
-            admission.admit(unique, explore, &mut rng)
+            admission.admit_round(&round_context, unique, explore, &mut rng)?
         };
         let mut candidates = vec![];
         for dsl in admitted
@@ -2797,6 +2883,150 @@ mod tests {
             times: None,
             gap_rows: 0,
         }
+    }
+
+    // Scheduler controls use an executor fixture, not ranker/quality evidence.
+    struct RoundSpace;
+    impl SearchSpace for RoundSpace {
+        fn canonical(&self, dsl: &str) -> Result<String> {
+            Ok(dsl.into())
+        }
+        fn seeds(&self) -> Result<Vec<String>> {
+            Ok((0..4).map(|i| format!("seed-{i}")).collect())
+        }
+        fn propose(
+            &self,
+            parents: &[String],
+            count: usize,
+            rng: &mut ChaCha12Rng,
+        ) -> Result<Vec<String>> {
+            assert_eq!(parents[0], "seed-3", "parents retain user-objective order");
+            let wave = rng.next_u64();
+            Ok((0..count)
+                .map(|i| format!("candidate-{wave}-{i}"))
+                .collect())
+        }
+    }
+    struct OpposingScores;
+    impl Executor for OpposingScores {
+        fn evaluate(&self, request: &Request) -> Response {
+            let seed = request
+                .dsl
+                .strip_prefix("seed-")
+                .and_then(|s| s.parse::<u32>().ok());
+            let (surrogate, objective) =
+                seed.map_or((50.0, 5.0), |i| (f64::from(i), 20.0 - f64::from(i)));
+            Response {
+                attempt: request.attempt.clone(),
+                scores: vec![surrogate, objective, objective],
+                predictions_digest: digest(request.dsl.as_bytes()),
+                wall_ms: 0,
+                failure: None,
+            }
+        }
+        fn fitted_model(&self, request: &Request) -> Result<Vec<u8>> {
+            Ok(request.dsl.as_bytes().to_vec())
+        }
+    }
+    struct ContextAdmission {
+        rounds: Mutex<Vec<u64>>,
+        refuse: bool,
+    }
+    impl RoundAdmission for ContextAdmission {
+        fn admit_round(
+            &self,
+            context: &RoundContext<'_>,
+            proposals: Vec<String>,
+            _: bool,
+            _: &mut ChaCha12Rng,
+        ) -> Result<Vec<String>> {
+            self.rounds.lock().unwrap().push(context.round);
+            ensure!(!self.refuse, "controlled admission refusal");
+            assert_eq!(context.measured.len(), 4);
+            assert_eq!(context.measured[0].dsl, "seed-3");
+            assert_eq!(context.measured[0].algorithm_id, "alg_00000003");
+            assert_eq!(context.measured[0].surrogate_fitness, 3.0);
+            assert_eq!(context.plan.seed, 73);
+            Ok(proposals.into_iter().skip(4).take(4).collect())
+        }
+    }
+
+    #[test]
+    fn round_context_admission_preserves_objective_promotions_and_pending_recovery() {
+        let directory = tempfile::tempdir().unwrap();
+        let p = plan(directory.path(), 30, Effort::Fast, 24);
+        let store = Arc::new(Store::open(directory.path().join("store")).unwrap());
+        let mut d = Discovery::open(store.clone(), p.clone()).unwrap();
+        let admission = ContextAdmission {
+            rounds: Mutex::new(vec![]),
+            refuse: false,
+        };
+        d.advance(&RoundSpace, &admission, &OpposingScores, 1, 1)
+            .unwrap();
+        assert!(
+            admission.rounds.lock().unwrap().is_empty(),
+            "seed round bypasses admission"
+        );
+        assert_eq!(d.champion().unwrap().candidate.dsl, "seed-3");
+        assert_eq!(d.champion().unwrap().loss, 17.0);
+        d.advance(&RoundSpace, &admission, &OpposingScores, 1, 1)
+            .unwrap();
+        assert_eq!(*admission.rounds.lock().unwrap(), vec![1, 2]);
+        assert_eq!(d.checkpoint.pending.len(), 1);
+        assert!(d.champion().unwrap().candidate.dsl.ends_with("-4"));
+        assert_eq!(
+            d.champion().unwrap().loss,
+            5.0,
+            "objective improves despite worse surrogate"
+        );
+        let pending = d.checkpoint.pending[0].candidates.clone();
+        assert!(pending
+            .iter()
+            .all(|c| c.dsl.rsplit('-').next().unwrap().parse::<u32>().unwrap() >= 4));
+        d.pause().unwrap();
+        drop(d);
+        let mut d = Discovery::open(store, p).unwrap();
+        let refusal = ContextAdmission {
+            rounds: Mutex::new(vec![]),
+            refuse: true,
+        };
+        d.advance(&RoundSpace, &refusal, &OpposingScores, 7, 1)
+            .unwrap();
+        assert!(
+            refusal.rounds.lock().unwrap().is_empty(),
+            "retained wave is not reranked on recovery/capacity change"
+        );
+    }
+
+    #[test]
+    fn round_admission_refusal_preserves_committed_state_and_retry_identity() {
+        let directory = tempfile::tempdir().unwrap();
+        let p = plan(directory.path(), 30, Effort::Fast, 24);
+        let store = Arc::new(Store::open(directory.path().join("store")).unwrap());
+        let mut d = Discovery::open(store, p).unwrap();
+        let admission = ContextAdmission {
+            rounds: Mutex::new(vec![]),
+            refuse: false,
+        };
+        d.advance(&RoundSpace, &admission, &OpposingScores, 1, 1)
+            .unwrap();
+        let before = serde_json::to_value(&d.checkpoint).unwrap();
+        let snapshot = d.snapshot().clone();
+        let refusal = ContextAdmission {
+            rounds: Mutex::new(vec![]),
+            refuse: true,
+        };
+        for _ in 0..2 {
+            assert!(d
+                .advance(&RoundSpace, &refusal, &OpposingScores, 1, 1)
+                .is_err());
+            assert_eq!(serde_json::to_value(&d.checkpoint).unwrap(), before);
+            assert_eq!(d.snapshot(), &snapshot);
+        }
+        assert_eq!(*refusal.rounds.lock().unwrap(), vec![1, 1]);
+        d.advance(&RoundSpace, &admission, &OpposingScores, 1, 1)
+            .unwrap();
+        assert_eq!(*admission.rounds.lock().unwrap(), vec![1, 2]);
     }
 
     struct TinySpace;
