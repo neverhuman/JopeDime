@@ -104,7 +104,7 @@ impl ChampionBank for NoBank {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Family {
+pub enum ProposalFamily {
     Retrieval,
     Parameter,
     ReplaceHead,
@@ -114,7 +114,7 @@ pub enum Family {
     Synthesis,
 }
 
-impl Family {
+impl ProposalFamily {
     pub fn name(self) -> &'static str {
         match self {
             Self::Retrieval => "champion_retrieval",
@@ -142,7 +142,7 @@ impl Family {
 pub struct Proposal {
     pub program: Program,
     pub memo_key: String,
-    pub family: Family,
+    pub family: ProposalFamily,
     pub parents: Vec<String>,
 }
 
@@ -161,7 +161,7 @@ pub struct Round<'a> {
 pub struct Batch {
     pub proposals: Vec<Proposal>,
     pub requested: usize,
-    pub attempts: BTreeMap<Family, usize>,
+    pub attempts: BTreeMap<ProposalFamily, usize>,
     pub invalid_or_filtered: usize,
     pub duplicates_or_memo: usize,
     pub synthesis_exhausted: bool,
@@ -318,7 +318,7 @@ impl Proposer {
     fn offer(
         &self,
         dsl: String,
-        family: Family,
+        family: ProposalFamily,
         parents: Vec<String>,
         memo: &BTreeSet<String>,
         seen: &mut BTreeSet<String>,
@@ -406,14 +406,14 @@ impl Proposer {
                     );
                 }
                 previous = Some((record.distance_squared, &record.program.program_sha256));
-                *batch.attempts.entry(Family::Retrieval).or_default() += 1;
+                *batch.attempts.entry(ProposalFamily::Retrieval).or_default() += 1;
                 let checked = self
                     .checked_pipeline(&record.program)
                     .context("invalid retrieved program")?;
                 let usable_parent = self.filter.accepts_seed(&GenomeIr::Pipeline(checked));
                 self.offer(
                     record.program.dsl.clone(),
-                    Family::Retrieval,
+                    ProposalFamily::Retrieval,
                     vec![record.program.program_sha256.clone()],
                     memo,
                     &mut seen,
@@ -453,7 +453,7 @@ impl Proposer {
                 if batch.proposals.len() == width {
                     break;
                 }
-                let family = Family::edit(step);
+                let family = ProposalFamily::edit(step);
                 *batch.attempts.entry(family).or_default() += 1;
                 let parent = &parents[step % parents.len()];
                 let mut parsed = self.pipeline(parent)?;
@@ -461,24 +461,24 @@ impl Proposer {
                 let transforms = &mut parsed.stages;
                 let mut provenance = vec![parent.program_sha256.clone()];
                 let generated = match family {
-                    Family::Parameter => {
+                    ProposalFamily::Parameter => {
                         for stage in transforms.iter_mut() {
                             mutate_parameters(stage, &mut rng);
                         }
                         mutate_parameters(&mut head, &mut rng);
                         Some(assemble(parsed.stages, head))
                     }
-                    Family::ReplaceHead => Some(assemble(
+                    ProposalFamily::ReplaceHead => Some(assemble(
                         parsed.stages,
                         heads[index(&mut rng, heads.len())].clone(),
                     )),
-                    Family::Insert => {
+                    ProposalFamily::Insert => {
                         let inserted = stages[index(&mut rng, stages.len())].clone();
                         let position = index(&mut rng, transforms.len() + 1);
                         transforms.insert(position, inserted);
                         (transforms.len() <= 6).then(|| assemble(parsed.stages, head))
                     }
-                    Family::Delete if transforms.len() >= 2 => Some(
+                    ProposalFamily::Delete if transforms.len() >= 2 => Some(
                         mutate_canonical_pipeline_with_arm(
                             &parent.dsl,
                             rng.next_u64(),
@@ -488,7 +488,7 @@ impl Proposer {
                         )
                         .map_err(anyhow::Error::msg)?,
                     ),
-                    Family::Crossover if parents.len() >= 2 => {
+                    ProposalFamily::Crossover if parents.len() >= 2 => {
                         let other = &parents[(step + 1) % parents.len()];
                         let mut other_parsed = self.pipeline(other)?;
                         let other_head = other_parsed.stages.pop().expect("validated head");
@@ -514,7 +514,7 @@ impl Proposer {
             if batch.proposals.len() == width {
                 break;
             }
-            *batch.attempts.entry(Family::Synthesis).or_default() += 1;
+            *batch.attempts.entry(ProposalFamily::Synthesis).or_default() += 1;
             let count = index(&mut rng, 3) + 1;
             let chosen: Vec<Stage> = (0..count)
                 .map(|_| {
@@ -527,7 +527,7 @@ impl Proposer {
             mutate_parameters(&mut head, &mut rng);
             self.offer(
                 assemble(chosen, head),
-                Family::Synthesis,
+                ProposalFamily::Synthesis,
                 vec![],
                 memo,
                 &mut seen,
@@ -762,17 +762,17 @@ mod tests {
 
     #[test]
     fn typed_cycle_is_not_a_random_twenty_percent_sampler() {
-        let counts = (0..24).fold(BTreeMap::<Family, usize>::new(), |mut m, step| {
-            *m.entry(Family::edit(step)).or_default() += 1;
+        let counts = (0..24).fold(BTreeMap::<ProposalFamily, usize>::new(), |mut m, step| {
+            *m.entry(ProposalFamily::edit(step)).or_default() += 1;
             m
         });
         assert_eq!(
             [
-                counts[&Family::Parameter],
-                counts[&Family::ReplaceHead],
-                counts[&Family::Insert],
-                counts[&Family::Delete],
-                counts[&Family::Crossover]
+                counts[&ProposalFamily::Parameter],
+                counts[&ProposalFamily::ReplaceHead],
+                counts[&ProposalFamily::Insert],
+                counts[&ProposalFamily::Delete],
+                counts[&ProposalFamily::Crossover]
             ],
             [5, 5, 5, 5, 4]
         );
@@ -797,7 +797,7 @@ mod tests {
         let parents = parents();
         let lm = [0.0; 48];
         let bank = Bank::new();
-        let mut counts = BTreeMap::<Family, usize>::new();
+        let mut counts = BTreeMap::<ProposalFamily, usize>::new();
         for round in 0..1250 {
             let mut req = request(&parents, &lm, false);
             req.round = round;
@@ -808,7 +808,8 @@ mod tests {
                 batch
                     .attempts
                     .iter()
-                    .filter(|(f, _)| **f != Family::Retrieval && **f != Family::Synthesis)
+                    .filter(|(f, _)| **f != ProposalFamily::Retrieval
+                        && **f != ProposalFamily::Synthesis)
                     .map(|(_, n)| n)
                     .sum::<usize>()
                     <= 24
@@ -823,7 +824,7 @@ mod tests {
             }
         }
         assert_eq!(counts.values().sum::<usize>(), 10_000);
-        assert_eq!(counts[&Family::Retrieval], 2500);
+        assert_eq!(counts[&ProposalFamily::Retrieval], 2500);
         println!("generated-only CPU fixture histogram (not matched evaluated-population M3): {counts:?}");
     }
 
@@ -858,7 +859,7 @@ mod tests {
         let cross = batch
             .proposals
             .iter()
-            .find(|p| p.family == Family::Crossover)
+            .find(|p| p.family == ProposalFamily::Crossover)
             .unwrap();
         let parsed = parse_canonical_pipeline(&cross.program.dsl).unwrap();
         assert_eq!(
@@ -894,7 +895,7 @@ mod tests {
             .unwrap();
         assert!(batch.synthesis_exhausted);
         assert!(batch.proposals.is_empty());
-        assert_eq!(batch.attempts[&Family::Synthesis], 64 * 8);
+        assert_eq!(batch.attempts[&ProposalFamily::Synthesis], 64 * 8);
         assert_eq!(batch.invalid_or_filtered, 64 * 8);
     }
 
