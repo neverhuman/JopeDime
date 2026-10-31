@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Build vector PDF figures from the derived flywheel CSVs in ../data.
 Usage: python3 make_flywheel_figs.py   (run from any dir)"""
+import argparse
 import csv
+import hashlib
+import json
+import math
 import os
 import matplotlib
 matplotlib.use("Agg")
@@ -10,6 +14,10 @@ import matplotlib.pyplot as plt
 H = os.path.dirname(os.path.abspath(__file__))
 D = os.path.join(H, "..", "data")
 FIGURES_DIR = os.path.join(H, "..")
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--validation-only", action="store_true",
+                    help="Refresh the admission figure and provenance without rebuilding other figures")
+args = parser.parse_args()
 
 plt.rcParams.update({
     "font.family": "serif",
@@ -33,13 +41,21 @@ def f(x):
     return float(x) if x not in ("", "None", None) else None
 with open(f"{D}/rounds.csv") as fh:
     R = list(csv.DictReader(fh))
-with open(f"{D}/admissions.csv") as fh:
-    A = list(csv.DictReader(fh))
+with open(f"{D}/admissions.csv", "rb") as fh:
+    admissions_bytes = fh.read()
+input_sha256 = hashlib.sha256(admissions_bytes).hexdigest()
+assert input_sha256 == "fd64a540f48127f4475b9eda8adeba6ecdcc767757cfdbba118ede332995bf9e", \
+    "Admission CSV differs from the pinned merged receipt; refresh its source pin"
+A = list(csv.DictReader(admissions_bytes.decode().splitlines()))
 
 # 1. Validation trajectory (695 admission evaluations, rounds 775-1469)
 r = [int(a["round"]) for a in A]
 c = [f(a["candidate_val"]) for a in A]
 b = [f(a["best_val"]) for a in A]
+assert r == list(range(r[0], r[-1] + 1)), "Need consecutive admission rounds"
+assert all(v is not None and math.isfinite(v) for v in c + b)
+assert all(a["accepted"] in ("0", "1") for a in A)
+assert A[0]["accepted"] == "0", "First retained row lacks a previous best for classification"
 strict_gains = []
 tie_adms = []
 prev_best = None
@@ -47,8 +63,13 @@ for a in A:
     rd = int(a["round"])
     cv = f(a["candidate_val"])
     bv = f(a["best_val"])
+    if prev_best is not None:
+        assert bv >= prev_best, "Recorded best decreased"
+        if a["accepted"] == "0":
+            assert bv == prev_best, "Unaccepted row changed the best"
     if a["accepted"] == "1":
-        if prev_best is None or bv > prev_best + 1e-12:
+        assert prev_best is not None and cv == bv
+        if bv > prev_best:
             strict_gains.append((rd, cv))
         else:
             tie_adms.append((rd, cv))
@@ -59,18 +80,52 @@ ax.scatter(r, c, s=4.5, c="#6e7781", alpha=0.55, lw=0, zorder=2, label="candidat
 ax.step(r, b, where="post", c="#0b5394", lw=1.25, zorder=3, label="best recorded adapter")
 if strict_gains:
     ax.scatter(*zip(*strict_gains), s=28, marker="*", c="#c92a2a", zorder=5,
-               label="strict gain (785, 859)")
+               label=f"strict gain ({', '.join(str(rd) for rd, _ in strict_gains)})")
 if tie_adms:
     ax.scatter(*zip(*tie_adms), s=16, marker="D", facecolors="none", edgecolors="#d9480f",
-               lw=0.9, zorder=4, label="accepted tie (782, 882)")
+               lw=0.9, zorder=4,
+               label=f"accepted tie ({', '.join(str(rd) for rd, _ in tie_adms)})")
+accepted = len(strict_gains) + len(tie_adms)
+ax.text(0.04, 0.55,
+        f"{len(A)} logged rounds\n{accepted} accepted: {len(strict_gains)} strict gains + {len(tie_adms)} ties",
+        transform=ax.transAxes, fontsize=7.2, va="center",
+        bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.9))
 ax.set_xlabel("round")
 ax.set_ylabel("validation pool utility")
 ax.set_xlim(min(r) - 10, max(r) + 10)
 ax.legend(frameon=True, facecolor="white", framealpha=0.85, edgecolor="none",
           loc="lower right", handletextpad=0.3, borderpad=0.25)
 fig.tight_layout(pad=0.4)
-fig.savefig(f"{FIGURES_DIR}/fig_fw_validation.pdf")
+figure_path = f"{FIGURES_DIR}/fig_fw_validation.pdf"
+fig.savefig(figure_path, metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
+with open(__file__, "rb") as fh:
+    generator_sha256 = hashlib.sha256(fh.read()).hexdigest()
+with open(figure_path, "rb") as fh:
+    figure_sha256 = hashlib.sha256(fh.read()).hexdigest()
+provenance = {
+    "schema": "whitepaper.retained-adapter-admissions/v1",
+    "source_commit": "3ff29c8b6291d239cb1684dfa8dc8bce22831c16",
+    "input": "docs/whitepaper/figures/data/admissions.csv",
+    "input_sha256": input_sha256,
+    "round_window": [r[0], r[-1]], "logged_rounds": len(A),
+    "accepted_rounds": accepted,
+    "strict_best_increase_rounds": [rd for rd, _ in strict_gains],
+    "accepted_tie_rounds": [rd for rd, _ in tie_adms],
+    "classification": "Use logged accepted flags; compare each accepted best_val with the previous retained best_val using exact > or ==, with no epsilon",
+    "checks": "Consecutive rounds, finite utilities, nondecreasing best, accepted candidate equals best, rejected best unchanged; first row is not accepted",
+    "scope": "Retained development admission rounds only; no pre-window comparison, confidence interval, first-proposal or transfer claim",
+    "source_binding": "CSV interpretation only; installed loop/adapter/checkpoint qualification remains required",
+    "generator_sha256": generator_sha256, "figure_sha256": figure_sha256,
+    "matplotlib_version": matplotlib.__version__,
+    "reproduce": "python3 figures/scripts/make_flywheel_figs.py --validation-only",
+}
+with open(f"{D}/admissions.provenance.json", "w") as fh:
+    json.dump(provenance, fh, indent=2)
+    fh.write("\n")
+if args.validation_only:
+    print(f"{len(A)} rounds; {accepted} accepted; {len(strict_gains)} strict gains; {len(tie_adms)} ties")
+    raise SystemExit(0)
 
 # 2. Train vs validation on the 25 retained summary rounds (broken x-axis for 1342-1345 and 1449-1469)
 r1 = [x for x in R if int(x["round"]) <= 1345]
