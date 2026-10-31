@@ -90,4 +90,45 @@ The owner widened the scope to a full upgrade, carried out in small sequential P
 |---|---|---|
 | 1 | Title and subtitle ("EurekaZero: Engineered Intelligence for Algorithm Invention by Self-Play"), PDF metadata, pinned draft date (O4), numbered boxes referenced with `\cref` (O2) | merged (#770) |
 | 2 | Abstract rewritten: problem, game, design, contributions, evidence status, and one TBD for the headline result. Introduction restructured: an "Engineered intelligence" paragraph ties the subtitle to the four pillars; an explicit contributions list; a "What is and is not established" paragraph replaces the introduction's TBD. Figure 1 redrawn as a TikZ diagram (O1). | merged (#772) |
-| 3 | Method (§5–6): the §6.5 objective set as display equations (O5). Three TBDs become accurate statements: exploration in the reference procedure (§5.4, from §6.5/§6.7); the checkpoint acceptance record as an evaluation-contract input (§6.5); and what the admission CSVs do and do not record (§6.8). The regressor identity TBD (§6.2) stays for the team. | this PR |
+| 3 | Method (§5–6): the §6.5 objective set as display equations (O5). Three TBDs become accurate statements: exploration in the reference procedure (§5.4, from §6.5/§6.7); the checkpoint acceptance record as an evaluation-contract input (§6.5); and what the admission CSVs do and do not record (§6.8). The regressor identity TBD (§6.2) stays for the team. | merged (#777) |
+| 4 | Results presentation only, with every sentence, number and TBD of §7 preserved:<br>• "Evaluation plan at a glance" table (Table 5).<br>• Earlier diagnostics moved into their own closing subsection (§7.7).<br>• Worked-game fields moved from §4.6 into a §7.6 record table; §4.6 becomes "The analogy's limits".<br>• Pilot-cost figure moved from §5.2 into §7.4.<br>All results-dependent placeholders now sit in §7. | this PR |
+
+## Needs Jepson/team
+
+Everything below needs data, receipts or decisions from the team. None of it was invented or changed. Unless a row says otherwise, it lives in §7.
+
+### Results content that is missing
+
+| Where | What is missing |
+|---|---|
+| Abstract | One sentence with the headline first-proposal result and its uncertainty. |
+| §7 opening | Independent evaluation evidence for any performance claim. A source-bound benchmark for any deployment-throughput claim. |
+| §7.1 contract | The final problem inventory, dataset identities and content hashes, row splits, family assignments and exclusions, component provenance, evaluator, checkpoint, seeds, task metrics and failure accounting. All of it must be frozen before outcomes are opened. |
+| §7.2 effect of training | The matched first-proposal comparison: the trained writer against the frozen reference writer, paired first draws under predeclared seeds, all draws reported. Source-bound evidence of optimizer updates and parameter changes. This is the central claim of the paper. |
+| §7.3 fixed methods (Table 6, Figure 8) | Paired outcomes with uncertainty for algorithms designed by Claude, Codex and Gemini and for KumoRFM, including ties, failures and exclusions. The originating models, prompts, dates and implementation checks. The KumoRFM configuration and permitted inputs. The leaderboard's methods, paired outcomes, rating protocol and uncertainty. |
+| §7.4 cost of attempts (Figures 9–10) | Attempt-versus-performance and cost curves for agents allowed successive attempts, with matched budgets, repeated seeds and uncertainty. Pilot cost data: per-stage failure shares, and cost per verified win by writer size and reasoning effort, with seeds and family-level uncertainty. Settings with no verified win must be identified without assigning them a finite cost. |
+| §7.5 map (Table 7) | A held-out ranking study, a problem-similarity study and program-only-control evaluations. Either an implemented route by which the map influences training, so a causal ablation is possible, or a decision to limit the claim to ranking. A failure-class comparison. |
+| §7.6 failures (Table 8) | Attempt inventories and costs by terminal outcome class, with unresolved cases identified. The worked example's selection rule, chosen before inspection, and its record: problem, encoding time, emitted output, check and fitting outcomes, and hidden-fold and incumbent scores (or the failure and its cost). |
+| §7.7 diagnostics | Pinned inventories, checkpoints, seeding, timing and ranking protocols for the historical diagnostics. |
+| §5.4 to §7 | The measured exploration quality–cost trade-off, if an exploration study is run. |
+
+### Results evidence that exists but is weak
+
+- **The only training evidence is a development admission record (§6.8).** Over 695 rounds there are two strict validation gains, then a plateau, and a train–validation gap of 0.282–0.290 on 25 summaries. It is not an untouched test and cannot support the transfer claim.
+- **The historical diagnostics (§7.7) do not show a learned proposer outperforming search.**
+  - 3,227 of 3,268 paired searches ended in exact ties.
+  - 98.84% of reported winners were already in their seed populations.
+  - An earlier model's ranking accuracy, 0.506 [0.441, 0.568], includes chance.
+- **§7.2 has no comparison at all yet.** Until it does, the abstract, the introduction and §8 can only state what would be tested.
+
+### Outside Results (provenance and receipts)
+
+- **§6.2 / Appendix C.** The pretrained tabular regressor behind the 1,024-value block needs a name, version and licence.
+  - The repository calls the component "Foundation" (`starlight_core_regressor`).
+  - Its training source describes a TabPFN v3 checkpoint-compatible architecture.
+  - The asset manifests say licence declarations vary by artifact.
+  - Please confirm whether it is third-party or locally trained, and under which licence it ships.
+- **§6.5 / Appendix C.** The reference checkpoint's acceptance record, its held-out promotion receipt and a pinned runtime.
+- **§6.8 (optional).** The adapter's architecture, score normalization and evaluation population, if the snapshot is ever compared with other models.
+- **Appendix B.** The final pre-registration and audit receipts: the inner-fold label-poison test, the sealed canary and the train-only input-closure audit.
+- **Appendix C.** Isolation and parity receipts from the final evaluator.
