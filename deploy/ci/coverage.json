@@ -160,6 +160,16 @@
     }
   },
   "items": {
+    "python:research/flywheel_selfplay/h101_w6_proposer_transfer_prep/test_w6_transfer_prep.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H101 W6 proposer transfer preparation fixtures: weighted bilinear SVD, empirical-Bayes shrinkage, top-2 prior hedging, and fail-closed panel completeness gates."
+    },
     "python:research/flywheel_selfplay/h111_w7_common_support/test_matching.py": {
       "discovery": {
         "kind": "python-family"

@@ -429,6 +429,10 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
+    "python:research/flywheel_selfplay/h101_w6_proposer_transfer_prep/test_w6_transfer_prep.py": {
+      "reason": "Owner-requested pytest proofs for H101 W6 proposer transfer preparation and fail-closed completeness gates; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h111_w7_common_support/test_matching.py": {
       "reason": "Owner-requested W7 common-support matcher synthetic controls; no measured outcomes, provenance authentication or execution admission.",
       "role": "research"
