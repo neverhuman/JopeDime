@@ -1,0 +1,103 @@
+{
+  "arms": {
+    "BITFIT": {
+      "frozen_adapter_parameters": 28520,
+      "frozen_adapter_tensors": 27,
+      "loss": "mean_context_loss",
+      "trainable_parameters": 691,
+      "trainable_subset": "all 17 adapter .bias tensors (595 params) + mm_prior_out.2.weight (24) + traj_delta_head.2.weight (24) + parent_delta_net.3.weight (48)",
+      "trainable_tensors": 20
+    },
+    "CONTROL": {
+      "loss": "mean_context_loss",
+      "trainable_parameters": 29211,
+      "trainable_tensors": 47
+    },
+    "EWC": {
+      "fisher_source": "family-balanced empirical diagonal Fisher across the 164 fit families at r882 (0 assessment families touched)",
+      "lambda_rule": "mean_fit_family_loss_at_r882 / (0.45^2 * mean(F_i)) fixed a priori",
+      "loss": "mean_context_loss + lambda * sum_i F_i * (theta_i - theta0_i)^2",
+      "trainable_parameters": 29211,
+      "trainable_tensors": 47
+    }
+  },
+  "baseline": {
+    "assessment_excluded_from_fisher": true,
+    "bitfit_frozen_adapter_parameters": 28520,
+    "bitfit_trainable_parameters": 691,
+    "checkpoint": "r882",
+    "checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "full_trainable_parameters": 29211
+  },
+  "cells": 9,
+  "custody": "/home/ubuntu/jope-rescue-20260921/h132-ewc-bitfit",
+  "execution_gate": "No real-data training or assessment scoring before preregistration PR merges into origin/main; runner enforces HEAD ancestry in origin/main.",
+  "fold": {
+    "assessment_context_count": 263,
+    "assessment_family_count": 41,
+    "family_grouped": true,
+    "fit_context_count": 956,
+    "fit_family_count": 164,
+    "fit_folds": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "fold_0_role": "assessment",
+    "fold_count": 5,
+    "fold_manifest": "fold_manifest_132100.json",
+    "fold_manifest_sha256": "a2a9dd147601ecca76e247576a4575970450d1facc77c332232a5899ac54f440",
+    "fold_seed": 132100
+  },
+  "hypothesis": "Protecting sensitive adapter directions via fit-fold diagonal empirical Fisher anchoring (EWC) or restricting training to the 691 bias + output-layer parameters (BITFIT) will yield a strict paired family gain (> +0.001) over unchanged r882 with <= 10% harmed families.",
+  "output_limit_bytes": 100000,
+  "paired_seeds": [
+    100,
+    101,
+    102
+  ],
+  "prereg_sha256": "f47ab27d28d53484ffe1ccd7ca7c222601e74779aaed281989db1aac7bc0c659",
+  "primary": {
+    "admission": {
+      "all_three_seeds_gain_strictly_gt_zero": true,
+      "family_harm_fraction_gain_lt_minus_0_01_lte": 0.1,
+      "holm_adjusted_lcb95_strictly_gt": 0.0,
+      "median_seed_gain_strictly_gt": 0.001,
+      "seeds_not_identical": true,
+      "ties_or_identical_to_r882_fail": true
+    },
+    "comparator": "r882",
+    "family_bootstrap_draws": 10000,
+    "family_bootstrap_seed": 132100,
+    "holm_family_alpha": 0.05,
+    "treatments": [
+      "EWC",
+      "BITFIT"
+    ]
+  },
+  "resource_guardrails": {
+    "cpu_only": true,
+    "disk_used_percent_strictly_below": 94.0,
+    "dl_val_outer_test_sealed_holdout_metatest_reads": 0,
+    "gpu": false,
+    "max_load1": 86.7,
+    "max_rss_bytes": 6442450944,
+    "max_threads": 4,
+    "min_mem_available_bytes": 32212254720,
+    "nice": 15,
+    "qualification_lock": false
+  },
+  "runner_sha256": "0c9b2a072864c69757a152ea87f921a105c1d9e223e79715e3003f5f858231bc",
+  "schema": "jope.h132.preregistration/v1",
+  "secondary": {
+    "comparator": "CONTROL",
+    "elo": "report family-paired Elo and Bradley-Terry Elo vs r882=1500 and vs CONTROL=1500; no AUC"
+  },
+  "source_base": "1da3c7556c859b23b2cef91429823dce4a3f2b57",
+  "status": "PREREGISTERED_NOT_RUN",
+  "total_optimizer_updates": 360,
+  "updates_per_cell": 40,
+  "wave": "H132"
+}

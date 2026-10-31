@@ -1,0 +1,32 @@
+{
+  "arms": [
+    "CONTROL",
+    "EWC",
+    "BITFIT"
+  ],
+  "bitfit_trainable_parameters": 691,
+  "candidate_breakthrough": false,
+  "dl_val_outer_test_sealed_holdout_metatest_reads": 0,
+  "fold_manifest_sha256": "a2a9dd147601ecca76e247576a4575970450d1facc77c332232a5899ac54f440",
+  "fold_seed": 132100,
+  "full_trainable_parameters": 29211,
+  "gpu_seconds": 0.0,
+  "optimizer_updates": 0,
+  "paired_seeds": [
+    100,
+    101,
+    102
+  ],
+  "prereg_sha256": "f47ab27d28d53484ffe1ccd7ca7c222601e74779aaed281989db1aac7bc0c659",
+  "status": "NOT_RUN",
+  "synthetic_smoke": {
+    "assessment_read": false,
+    "mode": "synthetic_only",
+    "optimizer_updates": 0,
+    "status": "PASS"
+  },
+  "total_updates_planned": 360,
+  "updates_per_cell_planned": 40,
+  "verdict": "NOT_RUN",
+  "wave": "H132"
+}
