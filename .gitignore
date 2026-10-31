@@ -75,3 +75,7 @@ nohup.out
 
 # The TypeScript qualification SDK may be a local cache symlink or an npm directory.
 /deploy/ci/typescript/node_modules
+
+# H-wave output belongs in research/flywheel_selfplay/hNN/, never the repo root
+/H[0-9]*/
+/H[0-9]*_*/
