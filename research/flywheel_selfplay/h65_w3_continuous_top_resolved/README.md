@@ -67,13 +67,14 @@ overlapping study work.
 
 ## Runner contract and limits
 
-`runner.py` builds the family-fold manifest and emits a CPU-only, `preparation_only` plan. It
-requires `--w1-winner-config` and binds the exact file SHA256 into the plan. The current W1 source
-does not define a winner-config artifact/schema yet; the runner therefore treats its JSON object as
-opaque and does not infer or select a winning arm. Actual training is deliberately not implemented
-here. Do not launch overlapping W3 work until the W1 winner and H59 clipping/normalization
-disposition are available, the W3 row export passes admission, and the study's separate GPU gate
-is approved.
+`runner.py` builds the family-fold manifest and emits a CPU-only, `preparation_only` plan. Its
+`plan` and `admission` commands require `--comparator-binding` pointing to
+`comparator_binding.json`. The runner verifies that W1 remains `NO_ADVANCE` with no accepted
+winner or prior, and binds the strongest comparator's pinned metrics identity for comparisons
+only. This comparator is not a W1 winner or prior. `admission` also validates the pinned H59
+disposition and H113 preregistration. Actual training is deliberately not implemented here. Do
+not launch overlapping W3 work until the W3 row export passes admission and the study's separate
+GPU gate is approved.
 
 The separate `smoke-s3` command verifies one catalog-v246 real-regression **training** blob
 (dataset `b9be38a2d975279c`, 85 rows × 10 columns) with read-only S3 GET, SHA256, and CSV-shape checks.
