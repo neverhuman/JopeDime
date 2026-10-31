@@ -1,0 +1,65 @@
+{
+  "checks_failed": 0,
+  "checks_passed": 8,
+  "decision": "H86_SIGNATURE_MASK_INSUFFICIENT_FOR_COMPLETION_ADMISSION",
+  "h59_disposition": "COMPLETED_NO_ADMISSION; incorporated as dependency evidence; W3 recipe unchanged",
+  "h86_rows": 1404287,
+  "h86_signature_candidates": 1403344,
+  "h86_signature_counts_source_reported": {
+    "anomalous": 0,
+    "measured_fail": 58876,
+    "measured_pass": 1344468,
+    "nonfinite": 0,
+    "sentinel_shaped": 943
+  },
+  "limits": {
+    "gpu_seconds": 0,
+    "mask_npz_read": false,
+    "native_fits": 0,
+    "optimizer_updates": 0,
+    "real_outcome_payloads_read": 0,
+    "training_launched": false
+  },
+  "metrics": {
+    "Elo": null,
+    "U4": null,
+    "val_reg_inner": null
+  },
+  "real_completed_rows_verified_by_this_audit": null,
+  "s3_inputs": [
+    {
+      "byte_equal_committed_copy": true,
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/luna-tel-h86-20261031T0709Z-01/manifest.json",
+      "sha256": "d9e3ba44209b6e1425313fff282055b99d88c192638f91a05f0762fb93a74f84",
+      "version_id": "3d8Ty0jjfnXuZV3bkYiNIGx7Vk3XDJ9G"
+    },
+    {
+      "byte_equal_committed_copy": true,
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/luna-tel-h86-20261031T0709Z-01/metrics.json",
+      "sha256": "500a9876d4a682e8e0e2de9f56670d7ac57a803d2de0ff5de1bef2756663168b",
+      "version_id": "GRzC6Wn0M_3SmMdIQ882Yub1aUGpewIU"
+    }
+  ],
+  "schema": "rd_breakthrough.h89-w3-admission/v1",
+  "source_commit": "b34075ef64ad5d28d4766ae40f55c542125b9f9c",
+  "source_receipts": [
+    {
+      "commit": "b34075ef64ad5d28d4766ae40f55c542125b9f9c",
+      "path": "research/flywheel_selfplay/h86_w3_outcome_status_census/census.py",
+      "sha256": "fce4d9a61aee8914a3a0beb4340120f509e207b6b76e1233a2805c38ed1c21cf"
+    },
+    {
+      "commit": "b34075ef64ad5d28d4766ae40f55c542125b9f9c",
+      "path": "research/flywheel_selfplay/h65_w3_continuous_top_resolved/PUBLICATION_MANIFEST.json",
+      "sha256": "e1ee8315e6c833d99d7eef803593b666a7451147fbcb31f44120bcc460e0b45f"
+    },
+    {
+      "commit": "b34075ef64ad5d28d4766ae40f55c542125b9f9c",
+      "path": "docs/research/studies/dope-neural-ranking-20261021/h59/README.md",
+      "sha256": "867a03873e6d0cc3c0db7273aaa2cd763a02d2a87b5d1e2024dade3b8e368cf2"
+    }
+  ],
+  "unknown_completion_is_not_failure": true,
+  "w3_outcome_export": "NOT_ADMITTED_BY_H86_ALONE",
+  "w3_scientific_verdict": null
+}
