@@ -1,0 +1,268 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Validate identities, all 45 distinct slots and source digests separately; JSON Schema alone cannot authenticate evidence or enforce cross-field identities.",
+  "properties": {
+    "actual_new_fits": {
+      "const": 0
+    },
+    "actual_optimizer_updates": {
+      "const": 0
+    },
+    "advance_admitted": {
+      "const": false
+    },
+    "arms": {
+      "const": [
+        "current_2greedy_2uniform",
+        "uniform4",
+        "qd_2greedy_1diverse_1uniform"
+      ]
+    },
+    "budgets": {
+      "const": {
+        "cpu_seconds_ceiling": 14400,
+        "cumulative_consumption": null,
+        "gpu_seconds_ceiling": 7200,
+        "native_fit_ceiling": 4800,
+        "original_deadline_utc": null,
+        "remaining_authorized_budget": null
+      }
+    },
+    "execution_admitted": {
+      "const": false
+    },
+    "fold_manifest_source": {
+      "const": {
+        "bytes": 395880,
+        "name": "fold_manifest.json",
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W6/w6-roster-prep-res03-20261031T0451Z-d4/fold_manifest.json",
+        "sha256": "129002bcd6cfc4b2f3a0b9e0562967cd4510dcbf88364c2d11d0bbe8801c2c73",
+        "version_id": "R1L8dcRZZzhDQz4XGpXyo02kHhHz6Dh2"
+      }
+    },
+    "gpu_seconds": {
+      "const": 0
+    },
+    "h104_plan_file_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "held_folds": {
+      "const": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    "hwm_candidate": {
+      "const": false
+    },
+    "matching_plan_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "metrics": {
+      "const": {
+        "Elo": null,
+        "U4": null,
+        "val_reg_inner": null
+      }
+    },
+    "planned_acquisition_learners": {
+      "const": 45
+    },
+    "planned_common_learner_replays": {
+      "const": 45
+    },
+    "planned_new_fits": {
+      "const": 3600
+    },
+    "planned_updates_per_learner": {
+      "const": 40
+    },
+    "prereg_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "schema": {
+      "const": "jope.h111.w7-pending-manifest/v1"
+    },
+    "seeds": {
+      "const": [
+        701,
+        702,
+        703
+      ]
+    },
+    "slots": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "arm": {
+            "enum": [
+              "current_2greedy_2uniform",
+              "uniform4",
+              "qd_2greedy_1diverse_1uniform"
+            ]
+          },
+          "evidence": {
+            "additionalProperties": false,
+            "properties": {
+              "acquisition_ledger": {
+                "type": "null"
+              },
+              "admission_bundle": {
+                "type": "null"
+              },
+              "common_support": {
+                "type": "null"
+              },
+              "cost_ledger": {
+                "type": "null"
+              },
+              "qd_archive": {
+                "type": "null"
+              },
+              "recipe_freeze": {
+                "type": "null"
+              },
+              "replay_schedule": {
+                "type": "null"
+              },
+              "terminal_scoring": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "admission_bundle",
+              "recipe_freeze",
+              "acquisition_ledger",
+              "qd_archive",
+              "common_support",
+              "replay_schedule",
+              "cost_ledger",
+              "terminal_scoring"
+            ],
+            "type": "object"
+          },
+          "fit_family_context_manifest_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "fit_family_count": {
+            "const": 20
+          },
+          "held_fold": {
+            "maximum": 4,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "planned_acquisition_attempts": {
+            "const": 80
+          },
+          "seed": {
+            "enum": [
+              701,
+              702,
+              703
+            ]
+          },
+          "slot_id": {
+            "pattern": "^fold[0-4]/seed70[1-3]/(current_2greedy_2uniform|uniform4|qd_2greedy_1diverse_1uniform)$",
+            "type": "string"
+          },
+          "status": {
+            "const": "PENDING"
+          }
+        },
+        "required": [
+          "slot_id",
+          "held_fold",
+          "seed",
+          "arm",
+          "fit_family_context_manifest_sha256",
+          "fit_family_count",
+          "planned_acquisition_attempts",
+          "status",
+          "evidence"
+        ],
+        "type": "object"
+      },
+      "maxItems": 45,
+      "minItems": 45,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "source_sha256": {
+      "additionalProperties": false,
+      "properties": {
+        "research/flywheel_selfplay/h104_w7_acquisition_replay_prep/config.json": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "research/flywheel_selfplay/h104_w7_acquisition_replay_prep/fold_manifest.json": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "research/flywheel_selfplay/h104_w7_acquisition_replay_prep/runner.py": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "research/flywheel_selfplay/h111_w7_common_support/matching.py": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "research/flywheel_selfplay/h111_w7_common_support/prepare.py": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "research/flywheel_selfplay/h111_w7_common_support/matching.py",
+        "research/flywheel_selfplay/h111_w7_common_support/prepare.py",
+        "research/flywheel_selfplay/h104_w7_acquisition_replay_prep/config.json",
+        "research/flywheel_selfplay/h104_w7_acquisition_replay_prep/fold_manifest.json",
+        "research/flywheel_selfplay/h104_w7_acquisition_replay_prep/runner.py"
+      ],
+      "type": "object"
+    },
+    "source_snapshot_git_sha": {
+      "pattern": "^[0-9a-f]{40}$",
+      "type": "string"
+    },
+    "status": {
+      "const": "CPU_PREPARATION_ONLY"
+    }
+  },
+  "required": [
+    "schema",
+    "status",
+    "fold_manifest_source",
+    "seeds",
+    "held_folds",
+    "arms",
+    "planned_new_fits",
+    "planned_acquisition_learners",
+    "planned_common_learner_replays",
+    "planned_updates_per_learner",
+    "budgets",
+    "actual_new_fits",
+    "actual_optimizer_updates",
+    "gpu_seconds",
+    "metrics",
+    "execution_admitted",
+    "advance_admitted",
+    "hwm_candidate",
+    "source_sha256",
+    "prereg_sha256",
+    "slots",
+    "matching_plan_sha256",
+    "source_snapshot_git_sha",
+    "h104_plan_file_sha256"
+  ],
+  "title": "H111 W7 pending preparation manifest; not execution admission",
+  "type": "object"
+}
