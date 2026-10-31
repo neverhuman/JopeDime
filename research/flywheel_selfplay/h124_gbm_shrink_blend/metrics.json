@@ -1,0 +1,32 @@
+{
+  "schema": "jope.h124.gbm-shrink-blend/v1",
+  "status": "STOPPED_RESOURCE_LIMIT",
+  "verdict": "NOT_ASSESSED",
+  "complete": false,
+  "fold_seed": 12400,
+  "seeds": [
+    64,
+    65,
+    66
+  ],
+  "primary_lambda": 0.5,
+  "secondary_lambda": 1.0,
+  "required_fits": 45,
+  "completed_fits": 0,
+  "observed_outcomes": false,
+  "primary_gain": null,
+  "primary_family_bootstrap_ci95": null,
+  "primary_lcb95": null,
+  "harm_fraction": null,
+  "elo": null,
+  "data_reads": true,
+  "checkpoint_reads": true,
+  "GPU_used": false,
+  "qualification_lock_used": false,
+  "FIFO_ticket_created": false,
+  "baseline_predictions_generated": true,
+  "rss_limit_kib": 6291456,
+  "observed_peak_rss_kib": 7052092,
+  "blocked_phase": "r882 DL-Train baseline pass completed; stopped at post-pass RSS guard before any GBM fit",
+  "partial_run_receipt": "/home/ubuntu/jope_plan/evidence/H124/partial-run-blocker.json"
+}
