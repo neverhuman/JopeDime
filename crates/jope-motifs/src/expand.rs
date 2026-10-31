@@ -16,7 +16,9 @@ use std::collections::BTreeSet;
 /// The expanded canonical program, its recipe digest and the ids of the fragments used.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Expanded {
+    /// Expanded, canonical program text.
     pub canonical: String,
+    /// SHA-256 digest of the expanded canonical text.
     pub recipe_sha256: String,
     /// Sorted, distinct fragment ids.
     pub used: Vec<String>,

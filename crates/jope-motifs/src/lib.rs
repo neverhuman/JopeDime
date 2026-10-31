@@ -24,6 +24,8 @@
 //!
 //! No code path promotes an entry. Every promotion requirement is recorded as not run.
 
+#![warn(missing_docs)]
+
 pub mod cli;
 pub mod expand;
 pub mod export;

@@ -25,11 +25,17 @@ pub const INPUTS_SCHEMA: &str = "jope.motif-inputs/v1";
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum InputClass {
+    /// Admitted as a host eligible for fragment mining.
     Used,
+    /// Excluded because optimization could have seen test labels.
     ExcludedAdaptive,
+    /// Skipped because it contains a reserved fragment name.
     SkippedReserved,
+    /// Skipped because it is not a pipeline program.
     SkippedForm,
+    /// Skipped because its input/transform slots are unsupported.
     SkippedSlots,
+    /// Skipped because the task-bound grammar refused the program.
     SkippedUnsupported,
 }
 
@@ -51,13 +57,21 @@ impl From<HostClass> for InputClass {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct InputRecord {
+    /// Digest of the qualified source record.
     pub record_sha256: String,
+    /// Digest of the measured comparison identity.
     pub comparison_sha256: String,
+    /// Digest of the canonical program text.
     pub recipe_sha256: String,
+    /// Digest identifying the source dataset.
     pub dataset_sha256: String,
+    /// Digest identifying the dataset cut.
     pub cut_sha256: String,
+    /// Task under which the program was qualified.
     pub task: TaskLabel,
+    /// Label provenance from the qualified record.
     pub label: LabelOrigin,
+    /// Mining disposition assigned to this input.
     pub class: InputClass,
 }
 
@@ -66,8 +80,11 @@ pub struct InputRecord {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct InputManifest {
+    /// Private input-manifest schema identifier.
     pub schema: String,
+    /// Digest of the table this input list accompanies.
     pub table_sha256: String,
+    /// Qualified source identity and counts.
     pub source: SourceBinding,
     /// Sorted by record digest.
     pub records: Vec<InputRecord>,

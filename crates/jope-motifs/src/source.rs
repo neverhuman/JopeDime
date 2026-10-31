@@ -15,8 +15,11 @@ use std::collections::{BTreeMap, BTreeSet};
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TaskLabel {
+    /// Regression task scored by RMSE.
     Regression,
+    /// Binary classification task scored by ROC AUC.
     Binary,
+    /// Multiclass task scored by macro F1.
     Multiclass,
 }
 
@@ -34,6 +37,7 @@ impl TaskLabel {
         }
     }
 
+    /// Return the serialized lowercase task label.
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Regression => "regression",
@@ -56,7 +60,9 @@ impl TaskLabel {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct LabelOrigin {
+    /// Original role recorded for the labels, such as `development` or `test`.
     pub original_role: String,
+    /// Digest of the burn receipt when optimization-visible labels were burned.
     pub burn_sha256: Option<String>,
 }
 
@@ -142,34 +148,42 @@ impl QualifiedProgram {
         }
     }
 
+    /// Return the admitted canonical program text.
     pub fn program(&self) -> &str {
         &self.program
     }
 
+    /// Return the digest of the admitted canonical program text.
     pub fn recipe_sha256(&self) -> &str {
         &self.recipe_sha256
     }
 
+    /// Return the task under which the program was qualified.
     pub fn task(&self) -> TaskLabel {
         self.task
     }
 
+    /// Return the digest of the source dataset.
     pub fn dataset_sha256(&self) -> &str {
         &self.dataset_sha256
     }
 
+    /// Return the digest identifying the source dataset cut.
     pub fn cut_sha256(&self) -> &str {
         &self.cut_sha256
     }
 
+    /// Return the digest of the measured comparison identity.
     pub fn comparison_sha256(&self) -> &str {
         &self.comparison_sha256
     }
 
+    /// Return the digest of the qualified source record.
     pub fn record_sha256(&self) -> &str {
         &self.record_sha256
     }
 
+    /// Return the label provenance attached to the source record.
     pub fn label(&self) -> &LabelOrigin {
         &self.label
     }
@@ -217,18 +231,22 @@ impl QualifiedSet {
         })
     }
 
+    /// Return every admitted program in source order.
     pub fn programs(&self) -> &[QualifiedProgram] {
         &self.programs
     }
 
+    /// Return the schema identifier of the qualified source.
     pub fn source_schema(&self) -> &str {
         &self.source_schema
     }
 
+    /// Return the digest of the qualified source read.
     pub fn source_sha256(&self) -> &str {
         &self.source_sha256
     }
 
+    /// Return the number of source records excluded before qualification.
     pub fn excluded_at_source(&self) -> u32 {
         self.excluded_at_source
     }
