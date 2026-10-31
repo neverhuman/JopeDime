@@ -1,5 +1,6 @@
 //! Bounded worker processes, attempt fencing and the existing protocol-1 frame codec.
 
+pub mod evaluate;
 pub mod frame;
 mod pool;
 mod process;

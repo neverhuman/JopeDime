@@ -54,8 +54,8 @@ for a in A:
     prev_best = bv
 
 fig, ax = plt.subplots(figsize=(3.4, 2.15))
-ax.scatter(r, c, s=4.5, c="#6e7781", alpha=0.55, lw=0, zorder=2, label="candidate (validation)")
-ax.step(r, b, where="post", c="#0b5394", lw=1.25, zorder=3, label="incumbent best")
+ax.scatter(r, c, s=4.5, c="#6e7781", alpha=0.55, lw=0, zorder=2, label="candidate adapter")
+ax.step(r, b, where="post", c="#0b5394", lw=1.25, zorder=3, label="best recorded adapter")
 if strict_gains:
     ax.scatter(*zip(*strict_gains), s=28, marker="*", c="#c92a2a", zorder=5,
                label="strict gain (785, 859)")
@@ -63,7 +63,7 @@ if tie_adms:
     ax.scatter(*zip(*tie_adms), s=16, marker="D", facecolors="none", edgecolors="#d9480f",
                lw=0.9, zorder=4, label="accepted tie (782, 882)")
 ax.set_xlabel("round")
-ax.set_ylabel("validation utility")
+ax.set_ylabel("validation pool utility")
 ax.set_xlim(min(r) - 10, max(r) + 10)
 ax.legend(frameon=True, facecolor="white", framealpha=0.85, edgecolor="none",
           loc="lower right", handletextpad=0.3, borderpad=0.25)
@@ -87,8 +87,8 @@ for sub, rows in ((axL, r1), (axR, r2)):
     xs = [int(x["round"]) for x in rows]
     ts_y = [f(x["train"]) for x in rows]
     vs_y = [f(x["val"]) for x in rows]
-    sub.plot(xs, ts_y, "o-", ms=2.6, lw=0.95, c="#d95f02", label="train utility")
-    sub.plot(xs, vs_y, "s-", ms=2.6, lw=0.95, c="#0b5394", label="validation utility")
+    sub.plot(xs, ts_y, "o-", ms=2.6, lw=0.95, c="#d95f02", label="train pool utility")
+    sub.plot(xs, vs_y, "s-", ms=2.6, lw=0.95, c="#0b5394", label="validation pool utility")
     sub.fill_between(xs, vs_y, ts_y, color="#d95f02", alpha=0.12, lw=0)
 
 axL.set_xlim(1341.5, 1345.5)
@@ -96,7 +96,7 @@ axL.set_xticks([1342, 1345])
 axR.set_xlim(1448.3, 1469.7)
 axR.set_xticks([1450, 1455, 1460, 1465, 1469])
 axL.set_ylim(1.10, 1.46)
-axL.set_ylabel("utility")
+axL.set_ylabel("pool utility")
 axR.spines["left"].set_visible(False)
 axR.tick_params(labelleft=False, left=False)
 
@@ -112,7 +112,7 @@ axR.text(0.04, 0.50, f"train–val gap\n{min(gaps):.3f}–{max(gaps):.3f}\n(n = 
          bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.8))
 axR.legend(frameon=True, facecolor="white", framealpha=0.85, edgecolor="none",
            loc="center right", handletextpad=0.3, borderpad=0.25)
-fig.supxlabel("round (25 retained summary rounds; 1346–1448 unlogged)", fontsize=7.5, y=0.02)
+fig.supxlabel("round (25 retained summary rounds; 1346–1448 not retained)", fontsize=7.5, y=0.02)
 fig.subplots_adjust(left=0.16, right=0.98, bottom=0.20, top=0.96, wspace=0.08)
 fig.savefig(f"{O}/fig_fw_train_val.pdf")
 plt.close(fig)
@@ -122,7 +122,7 @@ ts = [(int(a["round"]), f(a["timestamp"])) for a in A if f(a["timestamp"])]
 dt = [(rd2, t2 - t1) for (rd1, t1), (rd2, t2) in zip(ts, ts[1:]) if rd2 == rd1 + 1 and 0 < t2 - t1 < 600]
 wall_pts = [(int(x["round"]), f(x["wall_s"])) for x in R if f(x["wall_s"]) is not None]
 
-GAP_SHIFT = 98  # compresses the 103-round unlogged gap (1346-1448) to 5 display units
+GAP_SHIFT = 98  # compresses the 103-round gap in retained summaries (1346-1448) to 5 display units
 x_comp = lambda rd: rd if rd <= 1345 else rd - GAP_SHIFT
 comp_ticks = [1343.5, 1449 - GAP_SHIFT, 1455 - GAP_SHIFT, 1462 - GAP_SHIFT, 1469 - GAP_SHIFT]
 comp_labels = ["1342–45", "1449", "1455", "1462", "1469"]
@@ -135,7 +135,7 @@ def plot_compressed_series(ax, rows, key, color, ylabel, ylim):
         sy = [f(x[key]) for x in seg]
         ax.plot(sx, sy, "o-", ms=2.5, lw=0.9, c=color,
                 label="logged summary (n=25)" if idx == 0 else None)
-    ax.axvspan(1345.3, x_comp(1449) - 0.3, color="0.88", alpha=0.65, lw=0, label="1346–1448 unlogged")
+    ax.axvspan(1345.3, x_comp(1449) - 0.3, color="0.88", alpha=0.65, lw=0, label="1346–1448 not retained")
     ax.set_xlim(1341.2, x_comp(1469) + 0.8)
     ax.set_ylim(*ylim)
     ax.set_xticks(comp_ticks)
@@ -146,18 +146,18 @@ def plot_compressed_series(ax, rows, key, color, ylabel, ylim):
               loc="upper right", fontsize=6, handletextpad=0.3, borderpad=0.2)
 
 fig, axs = plt.subplots(1, 3, figsize=(7.0, 2.05))
-plot_compressed_series(axs[0], R, "datasets_per_s", "#0b5394", "datasets / s", (12.5, 21.8))
+plot_compressed_series(axs[0], R, "datasets_per_s", "#0b5394", "training contexts / s", (12.5, 21.8))
 
 axs[1].scatter(*zip(*dt), s=3.5, alpha=0.55, lw=0, c="#2b8a3e", label="admission $\\Delta t$ (<600 s)")
 if wall_pts:
-    axs[1].scatter(*zip(*wall_pts), s=10, marker="s", c="#0b5394", zorder=4, label="summary wall_s (n=25)")
+    axs[1].scatter(*zip(*wall_pts), s=10, marker="s", c="#0b5394", zorder=4, label="logged round wall time (n=25)")
 axs[1].set_ylabel("seconds / round")
 axs[1].set_xlabel("round (775–1469)")
 axs[1].set_xlim(min(r) - 10, max(r) + 10)
 axs[1].legend(frameon=True, facecolor="white", framealpha=0.88, edgecolor="none",
               loc="upper left", fontsize=6, handletextpad=0.3, borderpad=0.2)
 
-plot_compressed_series(axs[2], R, "promotions_per_hr", "#5f3dc4", "promotions / hour", (56.5, 79.5))
+plot_compressed_series(axs[2], R, "promotions_per_hr", "#5f3dc4", "program promotions / hour", (56.5, 79.5))
 
 fig.tight_layout(pad=0.45)
 fig.savefig(f"{O}/fig_fw_telemetry.pdf")

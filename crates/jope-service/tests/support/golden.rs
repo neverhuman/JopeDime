@@ -661,8 +661,85 @@ mod tests {
         }
     }
 
-    fn rnk07_output_schema() -> [TensorSpec; 2] {
+    #[test]
+    fn rnk07_context_schema_accepts_complete_res07_intermediates() {
+        // Independent fixture contract from golden/reference.py::intermediates.
+        // These zeros exercise file/schema mechanics, not numerical parity.
+        let tensors = vec![
+            ("v256", vec![1, 256]),
+            ("col", vec![1, 64, 17]),
+            ("dope629", vec![1, 629]),
+            ("lm48", vec![1, 48]),
+            ("lm48_z", vec![1, 48]),
+            ("tokens", vec![1, 10, 32]),
+            ("mask", vec![1, 10]),
+        ];
+        let directory = tempdir().unwrap();
+        let write = |name: &str, tensors: &[(&str, Vec<usize>)]| {
+            let buffers = tensors
+                .iter()
+                .map(|(_, shape)| vec![0_u8; shape.iter().product::<usize>() * 4])
+                .collect::<Vec<_>>();
+            let views = tensors
+                .iter()
+                .zip(&buffers)
+                .map(|((name, shape), bytes)| {
+                    (
+                        *name,
+                        TensorView::new(Dtype::F32, shape.clone(), bytes).unwrap(),
+                    )
+                })
+                .collect::<Vec<_>>();
+            fs::write(
+                directory.path().join(format!("{name}.safetensors")),
+                serialize(views, None).unwrap(),
+            )
+            .unwrap();
+        };
+        write("context", &tensors);
+        let schema = rnk07_output_schema();
+        let fixture = load_from_dir(directory.path(), "context", &schema, true)
+            .unwrap()
+            .unwrap();
+        assert_eq!(fixture.tensors.len(), 7);
+        assert_eq!(fixture.values_f32["lm48_z"].len(), 48);
+
+        let mut missing = tensors.clone();
+        missing.retain(|(name, _)| *name != "lm48_z");
+        write("missing", &missing);
+        assert!(load_from_dir(directory.path(), "missing", &schema, true).is_err());
+
+        let mut extra = tensors.clone();
+        extra.push(("unexpected", vec![1]));
+        write("extra", &extra);
+        assert!(load_from_dir(directory.path(), "extra", &schema, true)
+            .unwrap_err()
+            .to_string()
+            .contains("tensor names"));
+
+        let mut wrong_shape = tensors;
+        wrong_shape
+            .iter_mut()
+            .find(|(name, _)| *name == "mask")
+            .unwrap()
+            .1 = vec![1, 9];
+        write("wrong-shape", &wrong_shape);
+        assert!(
+            load_from_dir(directory.path(), "wrong-shape", &schema, true)
+                .unwrap_err()
+                .to_string()
+                .contains("expected [1, 10]")
+        );
+    }
+
+    fn rnk07_output_schema() -> [TensorSpec; 7] {
+        // RES-07 context files carry every intermediate, not only Stage-1b outputs.
         [
+            TensorSpec::new("v256", vec![1, 256]),
+            TensorSpec::new("col", vec![1, 64, 17]),
+            TensorSpec::new("dope629", vec![1, 629]),
+            TensorSpec::new("lm48", vec![1, 48]),
+            TensorSpec::new("lm48_z", vec![1, 48]),
             TensorSpec::new("tokens", vec![1, 10, 32]),
             TensorSpec::new("mask", vec![1, 10]),
         ]
