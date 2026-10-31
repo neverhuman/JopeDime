@@ -659,7 +659,7 @@ fn cpp_error(error: &CppRuntimeError, fallback_code: i32) -> anyhow::Error {
     fn text(buffer: &[c_char]) -> String {
         let bytes = buffer
             .iter()
-            .map(|value| *value as u8)
+            .map(|value| value.to_ne_bytes()[0])
             .take_while(|value| *value != 0)
             .collect::<Vec<_>>();
         String::from_utf8_lossy(&bytes).into_owned()
