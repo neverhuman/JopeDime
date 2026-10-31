@@ -357,12 +357,12 @@ impl Proposer {
         ensure!(round.parents.len() <= MAX_PARENTS, "parent pool exceeds48");
         let width = if round.exploring { 16 } else { 8 };
         let mut rng = round_rng(round.seed, round.round);
-        let mut parents = round.parents.to_vec();
         let mut seen = BTreeSet::new();
-        for parent in &parents {
+        for parent in round.parents {
             self.pipeline(parent).context("invalid parent")?;
             seen.insert(memo_key(&parent.dsl)?);
         }
+        let mut parents = round.parents.to_vec();
         let mut batch = Batch {
             proposals: Vec::new(),
             requested: width,
@@ -745,6 +745,19 @@ mod tests {
             .proposals
             .iter()
             .all(|p| p.program != bank.records[0].program));
+    }
+
+    #[test]
+    fn round_key_matches_an_independent_little_endian_sha256_oracle() {
+        // Python hashlib over struct.pack("<QQ", 123, 7), retained in the source receipt.
+        let mut expected = ChaCha12Rng::from_seed([
+            4, 152, 66, 165, 136, 157, 146, 169, 112, 244, 157, 201, 69, 32, 60, 213, 154, 218, 19,
+            128, 81, 80, 181, 162, 170, 106, 147, 165, 229, 143, 224, 7,
+        ]);
+        let mut actual = round_rng(123, 7);
+        for _ in 0..8 {
+            assert_eq!(actual.next_u64(), expected.next_u64());
+        }
     }
 
     #[test]
