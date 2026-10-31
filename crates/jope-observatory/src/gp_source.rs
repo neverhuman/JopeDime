@@ -16,10 +16,14 @@ use std::{
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
 
+/// Version of the append-only GP source event log.
 pub const EVENT_SCHEMA: &str = "jope.gp-source/v1";
+/// Maximum serialized size of one source event line.
 pub const MAX_LINE: usize = 32 * 1024 * 1024;
+/// Language targets emitted and accounted for by this store.
 pub const LANGUAGES: [&str; 4] = feat_math::source_stream::LANGUAGES;
 
+/// Return the lowercase SHA-256 digest of `bytes`.
 pub fn hash(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
@@ -40,37 +44,54 @@ fn extension(language: &str) -> Result<&'static str> {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+/// Lifecycle state of one emitted source artifact.
 pub enum Status {
+    /// Source was emitted and has not yet been checked.
     Pending,
+    /// Source passed the configured syntax/type check.
     Passed,
+    /// Emission or source check failed.
     Failed,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// One emitted source file and its lexical-token accounting.
 pub struct Artifact {
+    /// Target language identifier.
     pub language: String,
+    /// Emitted source text, absent when emission failed.
     pub source: Option<String>,
+    /// Lowercase SHA-256 of `source`, when emitted.
     pub sha256: Option<String>,
+    /// Lexical code-token count.
     pub code_tokens: u64,
+    /// Documentation-word count, accounted separately from code tokens.
     pub doc_tokens: u64,
+    /// UTF-8 source length in bytes.
     pub bytes: u64,
+    /// Current emission/check state.
     pub status: Status,
+    /// Emission failure detail, when emission failed.
     pub error: Option<String>,
 }
 impl Artifact {
+    /// Return code and documentation tokens combined.
     pub fn tokens(&self) -> u64 {
         self.code_tokens + self.doc_tokens
     }
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+/// Persisted event payload; source publication precedes its compiler result.
 pub enum Payload {
+    /// A source occurrence and its per-language emitted artifacts.
     Source {
         occurrence: Occurrence,
         program_sha256: String,
         emit_ns: u64,
         artifacts: Vec<Artifact>,
     },
+    /// The result of checking one previously published artifact.
     Checked {
         occurrence_id: String,
         language: String,
@@ -82,26 +103,42 @@ pub enum Payload {
     },
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
+/// One sequenced event in the append-only GP source log.
 pub struct Event {
+    /// Event schema version.
     pub schema: String,
+    /// One-based event sequence number.
     pub sequence: u64,
+    /// Event creation time in Unix nanoseconds.
     pub at_unix_ns: u64,
     #[serde(flatten)]
     pub payload: Payload,
 }
 
 #[derive(Clone, Debug, Default, Serialize)]
+/// Cumulative emission and validation counters for one language.
 pub struct LanguageMetrics {
+    /// Number of artifacts emitted.
     pub artifacts: u64,
+    /// Code plus documentation tokens emitted.
     pub emitted_tokens: u64,
+    /// Lexical code tokens emitted.
     pub code_tokens: u64,
+    /// Documentation words emitted.
     pub doc_tokens: u64,
+    /// Tokens belonging to artifacts that passed checking.
     pub passed_tokens: u64,
+    /// Tokens belonging to artifacts that failed checking.
     pub lost_tokens: u64,
+    /// Tokens awaiting checking.
     pub pending_tokens: u64,
+    /// Number of source emission failures.
     pub emission_errors: u64,
+    /// Number of compiler/check failures.
     pub compile_errors: u64,
+    /// Number of artifacts awaiting checking.
     pub pending_artifacts: u64,
+    /// Number of artifacts that passed checking.
     pub passed_artifacts: u64,
 }
 impl LanguageMetrics {
@@ -126,17 +163,22 @@ struct Pending {
     inflight: bool,
 }
 
+/// Exclusive append-only source event store and in-memory accounting index.
 pub struct Store {
+    /// Root containing the event log, source files, and check diagnostics.
     pub root: PathBuf,
     log: File,
     _lock: File,
+    /// Last durable event sequence loaded or appended.
     pub sequence: u64,
     seen: BTreeMap<String, String>,
     pending: BTreeMap<(String, String), Pending>,
     ready: VecDeque<(String, String)>,
     offsets: Vec<u64>,
     programs: BTreeSet<String>,
+    /// Cumulative counters keyed by language identifier.
     pub metrics: BTreeMap<String, LanguageMetrics>,
+    /// Cumulative source emission time in nanoseconds.
     pub emit_ns: u64,
     first_unix_ns: Option<u64>,
     partial_journal_tails: Vec<String>,
@@ -145,6 +187,7 @@ pub struct Store {
     failed: bool,
 }
 impl Store {
+    /// Open or create a source store and acquire its exclusive writer lock.
     pub fn open(root: &Path) -> Result<Self> {
         fs::create_dir_all(root.join("sources"))?;
         fs::create_dir_all(root.join("checks"))?;
@@ -365,15 +408,18 @@ impl Store {
         self.offsets.push(self.log.metadata()?.len());
         Ok(())
     }
+    /// Return the byte offset immediately after `sequence` in the event log.
     pub fn offset_after(&self, sequence: u64) -> Result<u64> {
         self.offsets
             .get(usize::try_from(sequence)?)
             .copied()
             .context("future sequence cursor")
     }
+    /// Return the number of distinct source occurrences in the store.
     pub fn occurrence_count(&self) -> usize {
         self.seen.len()
     }
+    /// Check whether this occurrence was published, rejecting reused IDs with new content.
     pub fn contains(&self, occurrence: &Occurrence) -> Result<bool> {
         match self.seen.get(&occurrence.id) {
             None => Ok(false),
@@ -386,6 +432,7 @@ impl Store {
             }
         }
     }
+    /// Persist an occurrence and its emitted artifacts before they are checked.
     pub fn publish(
         &mut self,
         occurrence: Occurrence,
@@ -432,6 +479,7 @@ impl Store {
             artifacts,
         })
     }
+    /// Claim the next queued artifact for checking, returning its ID, metadata, and store root.
     pub fn next_check(&mut self) -> Option<(String, Artifact, PathBuf)> {
         while let Some(key) = self.ready.pop_front() {
             if let Some(next) = self.pending.get_mut(&key) {
@@ -447,6 +495,7 @@ impl Store {
         }
         None
     }
+    /// Persist a check result for an artifact previously returned by [`Store::next_check`].
     pub fn checked(&mut self, id: String, artifact: &Artifact, check: Check) -> Result<()> {
         self.append(Payload::Checked {
             occurrence_id: id,
@@ -458,6 +507,7 @@ impl Store {
             elapsed_ns: check.elapsed_ns,
         })
     }
+    /// Record the partial or backlogged producer journals observed at ingress.
     pub fn observed_ingress(
         &mut self,
         partial_journal_tails: Vec<String>,
@@ -467,6 +517,7 @@ impl Store {
         self.backlogged_journals = backlogged_journals;
         self.ingress_scanned = true;
     }
+    /// Return a JSON snapshot of cumulative counts, rates, and pending-ingress state.
     pub fn snapshot(&self) -> serde_json::Value {
         let mut total = LanguageMetrics::default();
         for metrics in self.metrics.values() {
@@ -492,12 +543,14 @@ impl Store {
     }
 }
 
+/// Resolve one supported language identifier to its pinned lexer kind.
 pub fn language_kind(language: &str) -> Result<Lang> {
     match feat_math::source_stream::language_kind(language) {
         Some(kind) => Ok(kind),
         None => bail!("unknown language"),
     }
 }
+/// Emit all configured language artifacts and return their aggregate emission time.
 pub fn emit(occurrence: &Occurrence) -> Result<(Vec<Artifact>, u64)> {
     ensure!(
         occurrence.schema == SCHEMA
@@ -545,10 +598,15 @@ pub fn emit(occurrence: &Occurrence) -> Result<(Vec<Artifact>, u64)> {
 }
 
 #[derive(Clone)]
+/// Result of checking one emitted source artifact.
 pub struct Check {
+    /// Pass/fail state.
     pub status: Status,
+    /// Compiler or interpreter executable used.
     pub tool: String,
+    /// Bounded diagnostic text and process result.
     pub diagnostic: String,
+    /// Check duration in nanoseconds.
     pub elapsed_ns: u64,
 }
 /// GNU timeout bounds the compiler process group. No shell or generated-code execution.
