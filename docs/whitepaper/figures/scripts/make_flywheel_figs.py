@@ -143,19 +143,19 @@ def plot_compressed_series(ax, rows, key, color, ylabel, ylim):
     ax.set_ylabel(ylabel)
     ax.set_xlabel("round (compressed gap)")
     ax.legend(frameon=True, facecolor="white", framealpha=0.88, edgecolor="none",
-              loc="upper right", fontsize=6, handletextpad=0.3, borderpad=0.2)
+              loc="upper right", fontsize=7, handletextpad=0.3, borderpad=0.2)
 
 fig, axs = plt.subplots(1, 3, figsize=(7.0, 2.05))
 plot_compressed_series(axs[0], R, "datasets_per_s", "#0b5394", "training contexts / s", (12.5, 21.8))
 
 axs[1].scatter(*zip(*dt), s=3.5, alpha=0.55, lw=0, c="#2b8a3e", label="admission $\\Delta t$ (<600 s)")
 if wall_pts:
-    axs[1].scatter(*zip(*wall_pts), s=10, marker="s", c="#0b5394", zorder=4, label="logged round wall time (n=25)")
+    axs[1].scatter(*zip(*wall_pts), s=10, marker="s", c="#0b5394", zorder=4, label="logged round wall time\n(n=25)")
 axs[1].set_ylabel("seconds / round")
 axs[1].set_xlabel("round (775–1469)")
 axs[1].set_xlim(min(r) - 10, max(r) + 10)
 axs[1].legend(frameon=True, facecolor="white", framealpha=0.88, edgecolor="none",
-              loc="upper left", fontsize=6, handletextpad=0.3, borderpad=0.2)
+              loc="upper left", fontsize=7, handlelength=1.0, handletextpad=0.3, borderpad=0.2)
 
 plot_compressed_series(axs[2], R, "promotions_per_hr", "#5f3dc4", "program promotions / hour", (56.5, 79.5))
 
