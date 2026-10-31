@@ -12543,6 +12543,22 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-service/test/no_gp_leak": {
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Pre-stage T2 public-leak sentinel scanner over synthetic HTTP/SSE/MCP/CLI/error/export/log wire shapes, with a positive control; the PTY transcript case is ignored pending TUI-09. Not a full discovery-run qualification.",
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-service/tests/no_gp_leak.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      }
+    },
     "target:jope-telemetry/bin/jtel": {
       "discovery": {
         "kind": "target",
