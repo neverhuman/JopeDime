@@ -561,7 +561,13 @@ pub(super) async fn start(
     request: Request<Body>,
 ) -> Response {
     let headers = request.headers().clone();
-    let target = request.uri().to_string();
+    // The in-process bridge uses an absolute URI; a listener receives origin
+    // form. Authority is authenticated separately and is not command identity.
+    let target = request
+        .uri()
+        .path_and_query()
+        .map(|v| v.as_str().to_owned())
+        .unwrap_or_else(|| "/v1/runs".into());
     let mut keys = headers.get_all("idempotency-key").iter();
     let Some(key) = keys.next().and_then(|v| v.to_str().ok()) else {
         return response(&invalid("Idempotency-Key is required."));
