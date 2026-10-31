@@ -1,6 +1,15 @@
 # H75 — Closed-loop evolution preregistration
 
-Status: preregistered design, not an executed result. Owner decision
+Status: preregistered design, not an executed result.
+
+**Scheduling amendment — owner t2320:** current lock order is **H57 → Fused D2
+→ W1**; subsequent research order is W3, W4, W6, W5 (provenance hold), W7, W9.
+This supersedes t2250's H75-before-W1 placement. H75 CPU preparation continues;
+t2320 gives it no GPU slot. No active job is interrupted. Scientific protocol,
+metrics, budgets and deadline below are unchanged. See the dated
+[delivery record](../rd_breakthrough/DELIVERY.md).
+
+Historical authority: owner decision
 `owner_lift_t2250.md` moves **H57 → H75 → W1 → H71/W5** into the GPU queue;
 fused D2/E stays CPU preparation only. ASTRA owns this preregistration and
 publication; OPUS owns the CPU-built runner. There is no dependency on a W1
@@ -263,8 +272,8 @@ change requires a dated pre-outcome amendment, never silent downsampling.
 
 All GPU work, including model inference during acquisition, holds the existing
 `/home/ubuntu/jope_plan/qualification.lock` for its duration. Do not create
-`~/qualification.lock` as an independent lock. Respect H57's active ownership;
-H75 precedes W1 and H71/W5. Preflight MemAvailable>=20GiB, free VRAM>=20GiB,
+`~/qualification.lock` as an independent lock. Respect active ownership and the t2320 schedule above;
+the former H75-before-W1 position is historical, not current launch authority. Preflight MemAvailable>=20GiB, free VRAM>=20GiB,
 host CPU<=85%; nice15, OMP/MKL<=8, OpenBLAS<=1. Monitor actual utilization and
 child CPU seconds; load divided by cores is only a capacity proxy. Stop new
 admissions when guards fail, preserve completed evidence, never kill others.
