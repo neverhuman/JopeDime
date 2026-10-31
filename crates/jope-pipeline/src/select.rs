@@ -41,32 +41,41 @@ struct Measurement {
 /// The winning program and its evidence.
 #[derive(Clone, Debug)]
 pub struct Best {
+    /// Canonical source program selected or ranked.
     pub genome: String,
+    /// SHA-256 digest of the canonical genome bytes.
     pub program_sha256: String,
     /// Mean held-out RMSE over the cuts this program was measured on, in the
     /// dataset's own target units.
     pub validation_rmse: f64,
-    /// With an objective: its mean held-out minimization loss over the same cuts, the value the
-    /// program was ranked by.
+    /// Mean held-out minimization loss when the search used a regression objective.
     pub validation_objective: Option<f64>,
     /// Mean held-out R^2 over the same cuts.
     pub validation_r2: f64,
-    /// Mean in-sample R^2, for the gap against `validation_r2`.
+    /// Mean in-sample R², for comparison with `validation_r2`.
     pub train_r2: f64,
     /// Total fit-and-score seconds this program cost.
     pub seconds: f64,
+    /// Number of requested cuts contributing to these means.
     pub cuts_measured: usize,
 }
 
+/// Selection result and coverage evidence for one requested cut set.
 #[derive(Clone, Debug)]
 pub struct Selection {
+    /// Stable name of the rule used to rank eligible programs.
     pub method: &'static str,
-    /// The genome handed to the emitters, always present.
+    /// Canonical source program supplied to emitters, always present.
     pub genome: String,
+    /// SHA-256 digest of the selected canonical genome bytes.
     pub program_sha256: String,
+    /// Winning program's aggregate metrics.
     pub best: Option<Best>,
+    /// Explanation for partial observations excluded from comparison, if any.
     pub reason: Option<String>,
+    /// Sorted original cut indices compared by this result.
     pub compared_cuts: Vec<u64>,
+    /// Per-program coverage evidence used to construct the result.
     pub coverage: Vec<crate::receipt::Coverage>,
 }
 

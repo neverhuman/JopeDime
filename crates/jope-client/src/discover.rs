@@ -15,22 +15,31 @@ use std::{
     time::{Duration, Instant},
 };
 
+/// Maximum time local discovery spends attaching to or starting an engine.
 pub const STARTUP_TIMEOUT: Duration = Duration::from_secs(5);
+/// Message returned when no explicit, existing, or startable engine is available.
 pub const NO_ENGINE: &str = "no engine found; run `jopedime serve` or pass `--endpoint`";
 const MAX_METADATA: u64 = 16 * 1024;
 const POLL: Duration = Duration::from_millis(20);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Mode {
+    /// A foreground command may start a detached local engine.
     Interactive,
+    /// A command that must not start a detached engine; it may use an in-process engine.
     Batch,
 }
 
+/// Inputs that control explicit endpoint selection and local engine discovery.
 #[derive(Clone)]
 pub struct Options {
+    /// Canonical JopeDime home used for daemon metadata and local coordination.
     pub home: PathBuf,
+    /// Executable used to start a detached engine when needed.
     pub executable: PathBuf,
+    /// Optional authoritative endpoint; an invalid explicit value is an error.
     pub endpoint: Option<String>,
+    /// Whether discovery may start a detached process or select an in-process engine.
     pub mode: Mode,
     /// Whether `executable` includes the engine, normally `cfg!(feature = "engine")`
     /// in the appliance, not in this client library.
@@ -52,6 +61,7 @@ impl fmt::Debug for Options {
 pub enum Engine {
     /// Authoritative explicit selection. Authentication/remote TLS belongs to the caller.
     Endpoint(String),
+    /// An authenticated client attached to or started beside this process.
     Background(Background),
     /// The caller opens its in-process engine; discovery starts no listener.
     InProcess,
@@ -59,25 +69,48 @@ pub enum Engine {
 
 #[derive(Clone, Debug)]
 pub struct Background {
+    /// Authenticated client for the attached or newly started local engine.
     pub client: Http,
+    /// Engine endpoint read from its published metadata.
     pub url: String,
+    /// Process ID reported by the engine metadata.
     pub pid: u32,
+    /// Engine package version.
     pub version: String,
+    /// JopeDime API version reported by the engine.
     pub api_version: String,
+    /// Engine startup timestamp from its metadata.
     pub started_at: String,
 }
 
+/// Errors encountered while validating, attaching to, or starting a local engine.
 #[derive(Debug)]
 pub enum Error {
+    /// The explicitly selected endpoint is not a valid supported authority.
     InvalidEndpoint,
+    /// Local daemon metadata is malformed or inconsistent.
     InvalidMetadata,
+    /// Reading local engine metadata or coordination state failed.
     Io(io::Error),
+    /// The configured engine process could not be started.
     Spawn(io::Error),
+    /// No engine was available and local startup was not permitted.
     NoEngine,
-    Busy { pid: Option<u32>, command: String },
-    StartupTimeout { child_exit: Option<i32> },
+    /// Another local engine owns the store or startup coordination slot.
+    Busy {
+        /// PID of the process currently holding the store, when it could be identified.
+        pid: Option<u32>,
+        /// Command recorded for the current store owner.
+        command: String,
+    },
+    /// The engine did not become ready before the startup deadline.
+    StartupTimeout {
+        /// Exit status of the child process, if it exited before the deadline.
+        child_exit: Option<i32>,
+    },
 }
 impl Error {
+    /// Map this discovery failure to the stable CLI exit-code contract.
     pub fn exit_code(&self) -> u8 {
         use jope_api::error::ErrorCode;
         match self {
@@ -120,8 +153,10 @@ struct Record {
     started_at: String,
 }
 
-/// Apply explicit URL, healthy local engine, interactive startup, batch, lite ordering.
-/// No discovery failure silently falls back from an explicit endpoint.
+/// Select an explicit endpoint, attach to a healthy local engine, or start/use a local engine.
+///
+/// An explicit endpoint is authoritative: validation or connection failures never silently fall
+/// back to another engine. Local startup is bounded by [`STARTUP_TIMEOUT`].
 pub fn discover(options: &Options) -> Result<Engine, Error> {
     discover_with(
         options,
