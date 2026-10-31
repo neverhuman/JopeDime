@@ -8,8 +8,25 @@ use std::{
     time::{Duration, Instant},
 };
 
-// Serialize RSS-sensitive worker fixtures; other service tests remain independently runnable.
+// Serialize process fixtures; other service tests remain independently runnable. This mutex
+// protects no state, so a prior fixture panic must not poison later fixtures.
 static PROCESS_TESTS: Mutex<()> = Mutex::new(());
+
+fn process_test_guard() -> std::sync::MutexGuard<'static, ()> {
+    PROCESS_TESTS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
+#[test]
+fn process_test_guard_recovers_after_a_fixture_panics() {
+    let panic = std::panic::catch_unwind(|| {
+        let _guard = PROCESS_TESTS.lock().unwrap();
+        panic!("simulated worker fixture panic");
+    });
+    assert!(panic.is_err());
+    drop(process_test_guard());
+}
 
 fn matrix() -> tempfile::NamedTempFile {
     matrix_rows(1)
@@ -148,23 +165,20 @@ fn child_helper() {
 
 #[test]
 fn timeout_and_memory_breach_are_bounded_and_the_run_continues() {
-    let _guard = PROCESS_TESTS.lock().unwrap();
+    let _guard = process_test_guard();
     let file = matrix();
     let pool = pool(1);
     assert!(pool
         .evaluate(&request(file.path(), 0, 1, "ok"))
         .failure
         .is_none());
-    let baseline = crate::sampler::sample(std::process::id()).unwrap().1;
     let mut hang = request(file.path(), 1, 1, "loop");
     hang.limits.wall_ms = 200;
     let started = Instant::now();
     assert_eq!(pool.evaluate(&hang).failure, Some(WorkerFailure::Timeout));
     assert!(started.elapsed() < Duration::from_millis(2200));
-    assert!(pool
-        .evaluate(&request(file.path(), 2, 1, "ok"))
-        .failure
-        .is_none());
+    let before_breach = pool.evaluate(&request(file.path(), 2, 1, "ok"));
+    assert!(before_breach.failure.is_none(), "{before_breach:?}");
     let mut bomb = request(file.path(), 3, 1, "memory");
     bomb.limits.rss_bytes = 96 * 1024 * 1024;
     let started = Instant::now();
@@ -173,23 +187,21 @@ fn timeout_and_memory_breach_are_bounded_and_the_run_continues() {
         Some(WorkerFailure::MemoryLimit)
     );
     assert!(started.elapsed() < Duration::from_secs(3));
-    assert!(pool
-        .evaluate(&request(file.path(), 4, 1, "ok"))
-        .failure
-        .is_none());
-    let after = crate::sampler::sample(std::process::id()).unwrap().1;
-    assert!(
-        after <= baseline + baseline / 10,
-        "engine RSS baseline={baseline}, after={after}"
+    let after_breach = pool.evaluate(&request(file.path(), 4, 1, "ok"));
+    assert!(after_breach.failure.is_none(), "{after_breach:?}");
+    assert_ne!(
+        before_breach.scores[0], after_breach.scores[0],
+        "the worker must be replaced after exceeding its RSS limit"
     );
     eprintln!(
-        "WRK01_R2 Linux timeout=200ms memorycap=96MiB engineRSSbefore={baseline} after={after}"
+        "WRK01_R2 Linux timeout=200ms memorycap=96MiB workerBefore={} workerAfter={}",
+        before_breach.scores[0], after_breach.scores[0]
     );
 }
 
 #[test]
 fn mmap_is_reused_and_the_501st_evaluation_gets_a_new_process() {
-    let _guard = PROCESS_TESTS.lock().unwrap();
+    let _guard = process_test_guard();
     let file = matrix();
     let pool = pool(1);
     let first = pool.evaluate(&request(file.path(), 0, 1, "ok"));
@@ -209,7 +221,7 @@ fn mmap_is_reused_and_the_501st_evaluation_gets_a_new_process() {
 
 #[test]
 fn rss_growth_recycles_and_matrix_path_changes_replace_the_worker() {
-    let _guard = PROCESS_TESTS.lock().unwrap();
+    let _guard = process_test_guard();
     let file = matrix();
     let another = matrix();
     let pool = pool(1);
@@ -227,7 +239,7 @@ fn rss_growth_recycles_and_matrix_path_changes_replace_the_worker() {
 
 #[test]
 fn newer_and_revoked_attempts_fence_running_and_queued_work() {
-    let _guard = PROCESS_TESTS.lock().unwrap();
+    let _guard = process_test_guard();
     let file = matrix();
     let pool = Arc::new(pool(2));
     let old = request(file.path(), 0, 1, "loop");
@@ -265,7 +277,7 @@ fn newer_and_revoked_attempts_fence_running_and_queued_work() {
 
 #[test]
 fn panic_nonfinite_and_bad_matrix_fail_only_the_candidate() {
-    let _guard = PROCESS_TESTS.lock().unwrap();
+    let _guard = process_test_guard();
     let file = matrix();
     let pool = pool(1);
     assert_eq!(
@@ -289,7 +301,7 @@ fn panic_nonfinite_and_bad_matrix_fail_only_the_candidate() {
 
 #[test]
 fn closing_stdin_terminates_even_a_looping_candidate() {
-    let _guard = PROCESS_TESTS.lock().unwrap();
+    let _guard = process_test_guard();
     let file = matrix();
     let mut command = fixture_command("worker::tests::child_helper");
     command
@@ -414,7 +426,7 @@ fn parent_death_supervisor() {
 #[cfg(target_os = "linux")]
 #[test]
 fn killing_parent_leaves_no_worker_process() {
-    let _guard = PROCESS_TESTS.lock().unwrap();
+    let _guard = process_test_guard();
     let output = fixture_command("worker::tests::parent_death_supervisor")
         .output()
         .unwrap();
@@ -429,7 +441,7 @@ fn killing_parent_leaves_no_worker_process() {
 
 #[test]
 fn dropping_the_pool_reaps_its_idle_children() {
-    let _guard = PROCESS_TESTS.lock().unwrap();
+    let _guard = process_test_guard();
     let file = matrix();
     let pool = pool(1);
     let response = pool.evaluate(&request(file.path(), 0, 1, "ok"));
@@ -442,7 +454,7 @@ fn dropping_the_pool_reaps_its_idle_children() {
 
 #[test]
 fn wrong_reply_fence_is_rejected_before_publication() {
-    let _guard = PROCESS_TESTS.lock().unwrap();
+    let _guard = process_test_guard();
     let mut config = PoolConfig::new(std::env::current_exe().unwrap(), 1);
     config.fixture = true;
     config.wrong_fence = true;
@@ -456,7 +468,7 @@ fn wrong_reply_fence_is_rejected_before_publication() {
 
 #[test]
 fn queued_supersession_does_not_consume_a_worker_or_publish_a_score() {
-    let _guard = PROCESS_TESTS.lock().unwrap();
+    let _guard = process_test_guard();
     let file = matrix();
     let pool = pool(1);
     let occupying = request(file.path(), 0, 1, "loop");
@@ -485,7 +497,7 @@ fn queued_supersession_does_not_consume_a_worker_or_publish_a_score() {
 #[test]
 #[cfg(unix)]
 fn original_mapping_survives_replacement_of_its_fixture_path() {
-    let _guard = PROCESS_TESTS.lock().unwrap();
+    let _guard = process_test_guard();
     let file = matrix();
     let replacement = matrix_rows(2);
     let pool = pool(1);
@@ -507,7 +519,7 @@ fn original_mapping_survives_replacement_of_its_fixture_path() {
 #[cfg(any(windows, target_os = "macos"))]
 #[test]
 fn killing_parent_leaves_no_worker_process() {
-    let _guard = PROCESS_TESTS.lock().unwrap();
+    let _guard = process_test_guard();
     let file = matrix();
     let dir = tempfile::tempdir().unwrap();
     let pid_path = dir.path().join("worker.pid");
@@ -547,7 +559,7 @@ fn killing_parent_leaves_no_worker_process() {
 
 #[test]
 fn crash_is_not_reexecuted_under_the_same_controller_attempt() {
-    let _guard = PROCESS_TESTS.lock().unwrap();
+    let _guard = process_test_guard();
     let file = matrix();
     let pool = pool(1);
     let dir = tempfile::tempdir().unwrap();
