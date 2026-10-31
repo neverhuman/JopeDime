@@ -1,5 +1,5 @@
-//! Registry-driven local router (spec §3.1, §4). Engine handlers are separate
-//! integrations; registered operations currently return an explicit capability error.
+//! Registry-driven local router (spec §3.1, §4). Unimplemented operations return
+//! an explicit capability error; engine handlers use the live engine state.
 
 use super::{
     auth::{authenticate, problem, BearerToken, LocalAuth},
@@ -39,15 +39,15 @@ async fn get_openapi() -> Response {
 /// The same request boundary is used by a listener and by in-process clients.
 /// In-process clients configure their request authority without opening a socket.
 pub fn router(auth: LocalAuth) -> Router {
-    build_router(auth)
+    build_router(auth, false)
 }
 
 /// Engine-owned store/config state is passed by the live engine instance.
 pub(crate) fn router_with_state(auth: LocalAuth, state: DatasetState) -> Router {
-    build_router(auth).layer(Extension(state))
+    build_router(auth, true).layer(Extension(state))
 }
 
-fn build_router(auth: LocalAuth) -> Router {
+fn build_router(auth: LocalAuth, dataset_enabled: bool) -> Router {
     let mut app = Router::new();
     for operation in OPERATIONS {
         let method = match operation.method {
@@ -58,6 +58,12 @@ fn build_router(auth: LocalAuth) -> Router {
         for path in operation.paths {
             app = if operation.name == "system_info" {
                 app.route(path, get(system::get))
+            } else if operation.name == "dataset_register" && dataset_enabled {
+                app.route(
+                    path,
+                    axum::routing::post(super::datasets::register)
+                        .layer(DefaultBodyLimit::disable()),
+                )
             } else {
                 app.route(
                     path,
