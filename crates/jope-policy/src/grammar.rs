@@ -16,8 +16,11 @@ use std::sync::Arc;
 
 use super::{sha256_hex, PRODUCT_RESTRICTIONS};
 
+/// Token id reserved for padding in policy input sequences.
 pub const PAD: usize = 0;
+/// Token id that starts a policy sequence.
 pub const BOS: usize = 1;
+/// Token id that terminates a complete program.
 pub const EOS: usize = 2;
 /// Longest token sequence (BOS..EOS) the policy accepts.
 pub const MAX_PROGRAM_TOKENS: usize = 128;

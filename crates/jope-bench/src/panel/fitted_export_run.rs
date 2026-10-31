@@ -428,7 +428,7 @@ fn verify_plan(plan: &RunPlan, prepared: &PreparedExport) -> Result<()> {
     );
     Ok(())
 }
-fn needed<'a>(commands: &'a [Vec<String>]) -> impl Iterator<Item = &'a str> {
+fn needed(commands: &[Vec<String>]) -> impl Iterator<Item = &str> {
     commands
         .iter()
         .filter_map(|args| args.first().map(String::as_str))

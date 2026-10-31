@@ -1,6 +1,7 @@
 {
   "version": 1,
   "local_only": true,
+  "allow_log_maintenance": false,
   "allowed_host": "xbabe2",
   "repo_root": "~/JopeDime",
   "sccache_max_bytes": 64424509440,
