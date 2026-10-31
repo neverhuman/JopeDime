@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
-import subprocess
 from pathlib import Path
 
 import numpy as np
