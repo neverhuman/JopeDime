@@ -162,6 +162,7 @@ pub struct Batch {
     pub proposals: Vec<Proposal>,
     pub requested: usize,
     pub attempts: BTreeMap<ProposalFamily, usize>,
+    /// Attempts with no eligible output, including inapplicable edit arms.
     pub invalid_or_filtered: usize,
     pub duplicates_or_memo: usize,
     pub synthesis_exhausted: bool,
@@ -505,6 +506,8 @@ impl Proposer {
                 };
                 if let Some(dsl) = generated {
                     self.offer(dsl, family, provenance, memo, &mut seen, &mut batch);
+                } else {
+                    batch.invalid_or_filtered += 1;
                 }
             }
         }
