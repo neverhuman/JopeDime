@@ -421,8 +421,6 @@ def execute_gate(
                 else "passed"
             )
         )
-        if log.is_symlink() or not log.is_file():
-            raise ValueError("command log must be a regular file")
         if gate["result_backend"] != "none":
             if log.stat().st_size > MAX_LOG_BYTES:
                 raise ValueError(

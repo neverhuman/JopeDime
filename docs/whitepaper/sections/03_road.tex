@@ -17,7 +17,8 @@ Five lines of AI research supply the building blocks for the four pillars
 of \cref{sec:anatomy}: deep learning, program search, reinforcement
 learning, games and the race for self-improvement.
 
-The question is whether experience across algorithm-discovery tasks can improve
+We trace how they connect proposal, judgment and retained experience. The
+question is whether experience across algorithm-discovery tasks can improve
 the first complete program proposed for a new family. The combination
 matters more than a claim that any one
 component is new.\footnote{Each history keeps only the
@@ -36,8 +37,8 @@ training compute \citep{kaplan2020scaling,hoffmann2022chinchilla}.
 \citet{sutton2019bitter} drew the lesson: general methods that use
 computation win.
 
-Generative models turned representations into proposals in text, video
-\citep{brooks2024sora} and code. Codex solved
+Generative models then turned representations into
+proposals, from text to video \citep{brooks2024sora} and code. Codex solved
 28.8\% of the HumanEval programming problems with one sample, and 70.2\%
 with 100 samples, counting any that passed the unit tests
 \citep{chen2021codex}. That gap illustrates the value of a larger sampling budget. It is not
@@ -121,8 +122,8 @@ algorithm \citep{silver2018general}, MuZero learned a model for planning
 exploiting agents reached Grandmaster level in StarCraft~II
 \citep{vinyals2019alphastar}.
 
-In expert iteration \citep{anthony2017expert}, search is the teacher,
-the network is the student, and in the end the student alone plays
+The key concept is expert iteration \citep{anthony2017expert}: search is the
+teacher, the network is the student, and in the end the student alone plays
 strongly. AlphaGo Zero's raw network, with no search, nearly matched the
 version that had beaten a professional (\cref{sec:intro}); \cref{box:selfplay} shows how.
 Language models also learn from feedback: human preferences

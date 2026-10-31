@@ -91,22 +91,15 @@ mod tests {
     }
 
     #[cfg(feature = "engine")]
-    #[cfg(feature = "engine")]
     #[test]
     fn events_use_the_typed_in_process_api_contract() {
         use jope_client::{InProcess, Transport};
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/int01");
-        std::fs::create_dir_all(&root).unwrap();
-        let directory = tempfile::tempdir_in(root).unwrap();
-        let engine = std::sync::Arc::new(
-            jope_service::engine::InProcessEngine::open(directory.path()).unwrap(),
-        );
-        let client = InProcess::with_engine(engine, 43123, &"ab".repeat(32)).unwrap();
+        let client = InProcess::local(43123, &"ab".repeat(32)).unwrap();
         let run = RunId::from_str("run_01J00000000000000000000000").unwrap();
         assert!(matches!(
             client.run_events(&run, DecimalU64(0), 256),
             Err(jope_client::Error::Problem(problem))
-                if problem.code == jope_api::error::ErrorCode::NotFound
+                if problem.code == jope_api::error::ErrorCode::CapabilityUnavailable
         ));
     }
 }

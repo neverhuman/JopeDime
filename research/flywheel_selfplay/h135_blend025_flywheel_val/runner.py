@@ -129,17 +129,6 @@ def features(h124, train, val):
     return context, reads
 
 
-def baseline_one_thread(h124, *args):
-    """A2: cap operational Torch threading without editing imported baseline math."""
-    import torch
-
-    setter = torch.set_num_threads
-    setter(1)
-    torch.set_num_interop_threads(1)
-    with patch.object(torch, "set_num_threads", lambda requested: setter(1)):
-        return h124.baseline(*args)
-
-
 def baseline(h124, root, train, val, reference):
     # Pin dependencies without opening source_manifest or other excluded metadata.
     for p, digest in h124.FILES.items():
@@ -155,7 +144,7 @@ def baseline(h124, root, train, val, reference):
     pools = pools_for(h124, val)
     projection = h124.train_projection(train + val, [])
     # One torch process, BLAS pools capped to one before imports; <=4 total threads.
-    costs, net = baseline_one_thread(h124, root, val, context, pools, projection)
+    costs, net = h124.baseline(root, val, context, pools, projection)
     values = [
         native(
             costs[r["context_sha256"]],

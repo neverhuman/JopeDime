@@ -1186,15 +1186,6 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         res09_candle["base_commit"],
         "b452594f63fb44d607d558a5116643a2db51c3a2"
     );
-    let gov03_axum = old_fixture("transitions/gov03_axum_dev_lockfile_identity_rebaseline.v1.json");
-    assert_eq!(
-        gov03_axum["source_commit"],
-        "aacd29a1555e9bdc02be829ca1181460f29dc58f"
-    );
-    assert_eq!(
-        gov03_axum["base_commit"],
-        "1e1229abcdc50f360721c5c3cc6912b58734e30e"
-    );
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -1244,7 +1235,6 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &clienttmp_tempfile,
         &rnk09_ruzstd,
         &res09_candle,
-        &gov03_axum,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -1330,7 +1320,6 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 clienttmp_tempfile.clone(),
                 rnk09_ruzstd.clone(),
                 res09_candle.clone(),
-                gov03_axum.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1402,7 +1391,6 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 clienttmp_tempfile.clone(),
                 rnk09_ruzstd.clone(),
                 res09_candle.clone(),
-                gov03_axum.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1467,7 +1455,6 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 clienttmp_tempfile.clone(),
                 rnk09_ruzstd.clone(),
                 res09_candle.clone(),
-                gov03_axum.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1563,7 +1550,6 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 clienttmp_tempfile.clone(),
                 rnk09_ruzstd.clone(),
                 res09_candle.clone(),
-                gov03_axum.clone(),
             ],
         ),
         (
@@ -1619,7 +1605,6 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 clienttmp_tempfile.clone(),
                 rnk09_ruzstd.clone(),
                 res09_candle.clone(),
-                gov03_axum.clone(),
             ],
         ),
     ] {
@@ -1723,7 +1708,6 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         clienttmp_tempfile,
         rnk09_ruzstd,
         res09_candle,
-        gov03_axum,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

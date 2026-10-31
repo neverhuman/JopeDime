@@ -35,22 +35,12 @@ impl std::fmt::Debug for InProcess {
 }
 impl InProcess {
     pub fn new(router: Router, endpoint: &str, token: &str) -> Result<Self> {
-        Self::new_owned(router, endpoint, token, None)
-    }
-
-    fn new_owned(
-        router: Router,
-        endpoint: &str,
-        token: &str,
-        owner: Option<std::sync::Arc<jope_service::engine::InProcessEngine>>,
-    ) -> Result<Self> {
         let credentials = Credentials::new(endpoint, token)?;
         let (sender, receiver) = mpsc::channel::<Command>();
         let (ready, started) = mpsc::sync_channel(1);
         thread::Builder::new()
             .name("jope-client-bridge".into())
             .spawn(move || {
-                let _owner = owner;
                 let runtime = match Builder::new_multi_thread()
                     .worker_threads(1)
                     .thread_name("jope-client-engine")
@@ -80,35 +70,19 @@ impl InProcess {
             sender,
         })
     }
-    /// Own the local engine/store and its real router without opening a listener.
+    /// Construct the current product router without opening a listener.
     pub fn local(port: u16, token: &str) -> Result<Self> {
-        let engine = jope_service::engine::InProcessEngine::open_default()
-            .map_err(|e| io::Error::other(e.to_string()))?;
-        Self::with_engine(std::sync::Arc::new(engine), port, token)
-    }
-
-    /// An embedding supplies its owned store and authenticated worker executable.
-    pub fn with_engine(
-        engine: std::sync::Arc<jope_service::engine::InProcessEngine>,
-        port: u16,
-        token: &str,
-    ) -> Result<Self> {
-        use jope_service::http::auth::{BearerToken, LocalAuth};
+        use jope_service::http::{
+            auth::{BearerToken, LocalAuth},
+            router::router,
+        };
         let auth = LocalAuth::new(
             BearerToken::from_hex(token)
                 .map_err(|_| Error::InvalidRequest("invalid bearer token"))?,
             port,
         )
         .map_err(|_| Error::InvalidRequest("invalid local authority"))?;
-        let router = engine
-            .router(auth)
-            .map_err(|e| io::Error::other(e.to_string()))?;
-        Self::new_owned(
-            router,
-            &format!("http://127.0.0.1:{port}"),
-            token,
-            Some(engine),
-        )
+        Self::new(router(auth), &format!("http://127.0.0.1:{port}"), token)
     }
 }
 impl Transport for InProcess {
@@ -320,12 +294,7 @@ mod tests {
         });
         let http = Http::new(&server.endpoint, &token).unwrap();
         let port = server.endpoint.rsplit(':').next().unwrap().parse().unwrap();
-        let inproc = InProcess::new(
-            router(LocalAuth::new(BearerToken::from_hex(&token).unwrap(), port).unwrap()),
-            &server.endpoint,
-            &token,
-        )
-        .unwrap();
+        let inproc = InProcess::local(port, &token).unwrap();
         let mut count = 0;
         for op in OPERATIONS {
             for (route, path) in op.paths.iter().enumerate() {
