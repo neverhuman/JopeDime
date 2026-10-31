@@ -360,6 +360,10 @@ fn native_worker(directory: &Path) -> PathBuf {
         .parent()
         .unwrap()
         .to_path_buf();
+    let appliance = deps.parent().unwrap().join("jopedime");
+    if appliance.is_file() {
+        return appliance;
+    }
     let mut libraries: Vec<_> = fs::read_dir(&deps)
         .unwrap()
         .filter_map(Result::ok)
