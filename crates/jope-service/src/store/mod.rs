@@ -7,7 +7,7 @@ mod cas;
 pub mod commands;
 pub mod gc;
 mod record;
-use cas::{sync_dir, Cas};
+use cas::{Cas, sync_dir};
 use jope_api::RunState;
 pub use record::*;
 use redb::{Database, Durability, ReadableTable, TableDefinition, TableHandle};
@@ -187,6 +187,12 @@ impl Store {
 
     pub fn verify_blob(&self, reference: &BlobRef) -> Result<()> {
         self.cas.verify(reference)
+    }
+
+    /// A verified immutable file for the worker's existing FIT matrix mapping.
+    pub(crate) fn verified_blob_path(&self, reference: &BlobRef) -> Result<std::path::PathBuf> {
+        self.cas.verify(reference)?;
+        Ok(self.cas.path(reference))
     }
 
     /// Read an immutable CAS blob and verify its complete content identity on the bytes returned.

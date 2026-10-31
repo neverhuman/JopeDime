@@ -2,24 +2,24 @@
 //! an explicit capability error; engine handlers use the live engine state.
 
 use super::{
-    auth::{authenticate, problem, BearerToken, LocalAuth},
+    auth::{BearerToken, LocalAuth, authenticate, problem},
     system,
 };
 use crate::engine::DatasetState;
 use axum::extract::Extension;
 use axum::{
+    Router,
     extract::DefaultBodyLimit,
-    http::{header, HeaderValue},
+    http::{HeaderValue, header},
     middleware,
     response::Response,
-    routing::{get, on, MethodFilter},
-    Router,
+    routing::{MethodFilter, get, on},
 };
 use jope_api::{
     error::ErrorCode,
     registry::{HttpMethod, OPERATIONS},
 };
-use std::{io, net::Ipv4Addr};
+use std::{io, net::Ipv4Addr, sync::Arc};
 use tokio::net::TcpListener;
 
 const OPENAPI_DOCUMENT: &[u8] = include_bytes!(concat!(
@@ -39,15 +39,29 @@ async fn get_openapi() -> Response {
 /// The same request boundary is used by a listener and by in-process clients.
 /// In-process clients configure their request authority without opening a socket.
 pub fn router(auth: LocalAuth) -> Router {
-    build_router(auth, false)
+    build_router(auth, false, None)
 }
 
 /// Engine-owned store/config state is passed by the live engine instance.
-pub(crate) fn router_with_state(auth: LocalAuth, state: DatasetState) -> Router {
-    build_router(auth, true).layer(Extension(state))
+pub(crate) fn router_with_state(
+    auth: LocalAuth,
+    state: DatasetState,
+    runs: Option<Arc<super::runs::RunService>>,
+) -> Router {
+    let app = build_router(auth, true, runs.as_ref().map(|s| Arc::clone(&s.journal)))
+        .layer(Extension(state));
+    if let Some(runs) = runs {
+        app.layer(Extension(runs))
+    } else {
+        app
+    }
 }
 
-fn build_router(auth: LocalAuth, dataset_enabled: bool) -> Router {
+fn build_router(
+    auth: LocalAuth,
+    dataset_enabled: bool,
+    journal: Option<Arc<crate::events::EventLog>>,
+) -> Router {
     let mut app = Router::new();
     for operation in OPERATIONS {
         let method = match operation.method {
@@ -63,6 +77,20 @@ fn build_router(auth: LocalAuth, dataset_enabled: bool) -> Router {
                     path,
                     axum::routing::post(super::datasets::register)
                         .layer(DefaultBodyLimit::disable()),
+                )
+            } else if operation.name == "run_start" && journal.is_some() {
+                app.route(path, axum::routing::post(super::runs::start))
+            } else if operation.name == "run_status" && journal.is_some() {
+                app.route(
+                    path,
+                    get(super::sse::long_poll_status)
+                        .with_state(Arc::clone(journal.as_ref().unwrap())),
+                )
+            } else if operation.name == "run_events" && journal.is_some() {
+                app.route(
+                    path,
+                    get(super::sse::deliver_events)
+                        .with_state(Arc::clone(journal.as_ref().unwrap())),
                 )
             } else {
                 app.route(
@@ -116,8 +144,8 @@ pub async fn bind_loopback(token: BearerToken) -> io::Result<(TcpListener, Route
 mod tests {
     use super::*;
     use axum::{
-        body::{to_bytes, Body},
-        http::{header, Method, Request, StatusCode},
+        body::{Body, to_bytes},
+        http::{Method, Request, StatusCode, header},
     };
     use jope_api::error::Problem;
     use std::collections::BTreeSet;
@@ -149,10 +177,12 @@ mod tests {
         assert_eq!(response.status(), StatusCode::OK);
         assert_eq!(response.headers()[header::CONTENT_TYPE], "application/json");
         assert_eq!(response.headers()["jope-api-version"], "1.0");
-        assert!(!response
-            .headers()
-            .keys()
-            .any(|key| key.as_str().starts_with("access-control-")));
+        assert!(
+            !response
+                .headers()
+                .keys()
+                .any(|key| key.as_str().starts_with("access-control-"))
+        );
 
         let bytes = to_bytes(response.into_body(), 1024 * 1024).await.unwrap();
         assert_eq!(bytes.as_ref(), OPENAPI_DOCUMENT);
@@ -190,10 +220,12 @@ mod tests {
             let response = app().oneshot(request).await.unwrap();
             assert_eq!(response.status(), expected);
             assert_eq!(response.headers()["jope-api-version"], "1.0");
-            assert!(!response
-                .headers()
-                .keys()
-                .any(|key| key.as_str().starts_with("access-control-")));
+            assert!(
+                !response
+                    .headers()
+                    .keys()
+                    .any(|key| key.as_str().starts_with("access-control-"))
+            );
         }
     }
 
@@ -215,10 +247,12 @@ mod tests {
                     .await
                     .unwrap();
                 assert_eq!(response.headers()["jope-api-version"], "1.0");
-                assert!(!response
-                    .headers()
-                    .keys()
-                    .any(|k| k.as_str().starts_with("access-control-")));
+                assert!(
+                    !response
+                        .headers()
+                        .keys()
+                        .any(|k| k.as_str().starts_with("access-control-"))
+                );
                 if operation.name == "system_info" {
                     assert_eq!(response.status(), StatusCode::OK, "{method} {path}");
                     assert_eq!(response.headers()[header::CONTENT_TYPE], "application/json");
@@ -306,16 +340,21 @@ mod tests {
                 } else {
                     String::new()
                 };
-                let request = format!("GET /v1/system HTTP/1.1\r\nHost: localhost:{}\r\n{auth}Connection: close\r\n\r\n", address.port());
+                let request = format!(
+                    "GET /v1/system HTTP/1.1\r\nHost: localhost:{}\r\n{auth}Connection: close\r\n\r\n",
+                    address.port()
+                );
                 socket.write_all(request.as_bytes()).await.unwrap();
                 let mut response = Vec::new();
                 socket.read_to_end(&mut response).await.unwrap();
                 let response = String::from_utf8(response).unwrap();
                 if authorized {
                     assert!(response.starts_with("HTTP/1.1 200"));
-                    assert!(response
-                        .to_lowercase()
-                        .contains("content-type: application/json"));
+                    assert!(
+                        response
+                            .to_lowercase()
+                            .contains("content-type: application/json")
+                    );
                     let body = response.split_once("\r\n\r\n").unwrap().1;
                     let doc: jope_api::SystemInfo = serde_json::from_str(body).unwrap();
                     assert_eq!(doc.version, env!("CARGO_PKG_VERSION"));
@@ -326,9 +365,11 @@ mod tests {
                     assert!(doc.telemetry.is_empty());
                 } else {
                     assert!(response.starts_with("HTTP/1.1 401"));
-                    assert!(response
-                        .to_lowercase()
-                        .contains("content-type: application/problem+json"));
+                    assert!(
+                        response
+                            .to_lowercase()
+                            .contains("content-type: application/problem+json")
+                    );
                 }
                 assert!(response.to_lowercase().contains("jope-api-version: 1.0"));
                 assert!(!response.to_lowercase().contains("access-control-"));

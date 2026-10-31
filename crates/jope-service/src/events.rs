@@ -6,7 +6,7 @@
 
 use crate::store::{BlobRef, Record, RecordKey, Result, Store, StoreError, Write};
 use jope_api::{
-    decimal::DecimalU64, ids::RunId, EventBody, PublicEvent, RunSnapshot, TelemetryEvent,
+    EventBody, PublicEvent, RunSnapshot, TelemetryEvent, decimal::DecimalU64, ids::RunId,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -398,12 +398,13 @@ pub(crate) mod tests {
                 },
                 vec![test_body("committed")],
                 |tx| {
-                    assert!(tx
-                        .get(&RecordKey::Event {
+                    assert!(
+                        tx.get(&RecordKey::Event {
                             run: run.clone(),
                             sequence: 1
                         })?
-                        .is_some());
+                        .is_some()
+                    );
                     tx.put(
                         &RecordKey::Evaluation { run, number: 7 },
                         &Record::metadata(json!({"finished": true}), vec![]),
@@ -422,20 +423,22 @@ pub(crate) mod tests {
             log.snapshot(&snapshot.run_id).unwrap(),
             Some(snapshot.clone())
         );
-        assert!(log
-            .page(&snapshot.run_id, 0, 10, &[])
-            .unwrap()
-            .unwrap()
-            .events
-            .is_empty());
-        assert!(log
-            .store
-            .get(&RecordKey::Evaluation {
-                run: snapshot.run_id.clone(),
-                number: 7
-            })
-            .unwrap()
-            .is_none());
+        assert!(
+            log.page(&snapshot.run_id, 0, 10, &[])
+                .unwrap()
+                .unwrap()
+                .events
+                .is_empty()
+        );
+        assert!(
+            log.store
+                .get(&RecordKey::Evaluation {
+                    run: snapshot.run_id.clone(),
+                    number: 7
+                })
+                .unwrap()
+                .is_none()
+        );
         tokio::time::sleep(Duration::from_millis(10)).await;
         assert!(!waiter.is_finished());
         release_tx.send(()).unwrap();
@@ -461,14 +464,15 @@ pub(crate) mod tests {
             .unwrap()
             .unwrap();
         assert_eq!(record.data["checkpoint"], json!({"round": 1}));
-        assert!(log
-            .store
-            .get(&RecordKey::Evaluation {
-                run: snapshot.run_id,
-                number: 7
-            })
-            .unwrap()
-            .is_some());
+        assert!(
+            log.store
+                .get(&RecordKey::Evaluation {
+                    run: snapshot.run_id,
+                    number: 7
+                })
+                .unwrap()
+                .is_some()
+        );
     }
 
     #[test]
@@ -502,22 +506,24 @@ pub(crate) mod tests {
             log.snapshot(&snapshot.run_id).unwrap(),
             Some(snapshot.clone())
         );
-        assert!(log
-            .store
-            .get(&RecordKey::Event {
-                run: snapshot.run_id.clone(),
-                sequence: 1
-            })
-            .unwrap()
-            .is_none());
-        assert!(log
-            .store
-            .get(&RecordKey::Evaluation {
-                run: snapshot.run_id.clone(),
-                number: 9
-            })
-            .unwrap()
-            .is_none());
+        assert!(
+            log.store
+                .get(&RecordKey::Event {
+                    run: snapshot.run_id.clone(),
+                    sequence: 1
+                })
+                .unwrap()
+                .is_none()
+        );
+        assert!(
+            log.store
+                .get(&RecordKey::Evaluation {
+                    run: snapshot.run_id.clone(),
+                    number: 9
+                })
+                .unwrap()
+                .is_none()
+        );
         let committed = append(&log, &snapshot, vec![test_body("visible")]);
         let stale = log.commit(
             RunUpdate {
@@ -563,9 +569,10 @@ pub(crate) mod tests {
         assert!(log.page(&current.run_id, 0, 0, &[]).is_err());
         assert!(log.page(&current.run_id, 0, 257, &[]).is_err());
         assert!(log.page(&current.run_id, 301, 1, &[]).is_err());
-        assert!(log
-            .page(&current.run_id, 0, 1, &["telemetry".into()])
-            .is_err());
+        assert!(
+            log.page(&current.run_id, 0, 1, &["telemetry".into()])
+                .is_err()
+        );
     }
 
     #[test]
@@ -642,8 +649,8 @@ pub(crate) mod tests {
                 )
             })
             .unwrap();
-        assert!(log
-            .commit(
+        assert!(
+            log.commit(
                 RunUpdate {
                     expected_revision: Some(1),
                     snapshot: snapshot.clone(),
@@ -653,7 +660,8 @@ pub(crate) mod tests {
                 vec![test_body("collision")],
                 |_| Ok(())
             )
-            .is_err());
+            .is_err()
+        );
         let mut high = snapshot.clone();
         high.event_watermark = DecimalU64(u64::MAX);
         log.store
@@ -672,14 +680,15 @@ pub(crate) mod tests {
                 )
             })
             .unwrap();
-        assert!(log
-            .page(&high.run_id, u64::MAX, 256, &[])
-            .unwrap()
-            .unwrap()
-            .events
-            .is_empty());
-        assert!(log
-            .commit(
+        assert!(
+            log.page(&high.run_id, u64::MAX, 256, &[])
+                .unwrap()
+                .unwrap()
+                .events
+                .is_empty()
+        );
+        assert!(
+            log.commit(
                 RunUpdate {
                     expected_revision: Some(1),
                     snapshot: high.clone(),
@@ -689,7 +698,8 @@ pub(crate) mod tests {
                 vec![test_body("overflow")],
                 |_| Ok(())
             )
-            .is_err());
+            .is_err()
+        );
         assert!(log.page(&snapshot.run_id, 0, 1, &[]).is_err());
         assert_eq!(
             log.snapshot(&high.run_id)

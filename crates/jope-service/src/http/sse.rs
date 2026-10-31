@@ -1,26 +1,26 @@
 //! Functional journal routes with the existing local-engine security boundary.
 //! Engine composition must mount these instead of the SVC05 capability stubs.
 
-use super::auth::{authenticate, problem, LocalAuth};
+use super::auth::{LocalAuth, authenticate, problem};
 use crate::{
-    events::{event_kind, EventLog, EventPage, EVENT_KINDS},
+    events::{EVENT_KINDS, EventLog, EventPage, event_kind},
     store::{Result, StoreError},
 };
 use axum::{
+    Json, Router,
     extract::{
-        rejection::{PathRejection, QueryRejection},
         Path, Query, State,
+        rejection::{PathRejection, QueryRejection},
     },
-    http::{header, HeaderMap},
+    http::{HeaderMap, header},
     middleware,
     response::{
-        sse::{Event, KeepAlive},
         IntoResponse, Response, Sse,
+        sse::{Event, KeepAlive},
     },
     routing::get,
-    Json, Router,
 };
-use jope_api::{decimal::DecimalU64, error::ErrorCode, ids::RunId, PublicEvent, TelemetryEvent};
+use jope_api::{PublicEvent, TelemetryEvent, decimal::DecimalU64, error::ErrorCode, ids::RunId};
 use serde::Deserialize;
 use std::{collections::VecDeque, sync::Arc, time::Duration};
 use tokio::{
@@ -48,7 +48,7 @@ pub fn event_routes(log: Arc<EventLog>, auth: LocalAuth) -> Router {
 
 #[derive(Default, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct EventsQuery {
+pub(super) struct EventsQuery {
     after: Option<String>,
     limit: Option<usize>,
     kinds: Option<String>,
@@ -56,7 +56,7 @@ struct EventsQuery {
 
 #[derive(Default, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct StatusQuery {
+pub(super) struct StatusQuery {
     wait_seconds: Option<f64>,
     after_event: Option<String>,
 }
@@ -120,7 +120,7 @@ async fn read_page(
         .map_err(|_| StoreError::Integrity("event page reader failed"))?
 }
 
-async fn deliver_events(
+pub(super) async fn deliver_events(
     State(log): State<Arc<EventLog>>,
     path: std::result::Result<Path<String>, PathRejection>,
     query: std::result::Result<Query<EventsQuery>, QueryRejection>,
@@ -213,7 +213,7 @@ async fn deliver_events(
         .into_response()
 }
 
-async fn long_poll_status(
+pub(super) async fn long_poll_status(
     State(log): State<Arc<EventLog>>,
     path: std::result::Result<Path<String>, PathRejection>,
     query: std::result::Result<Query<StatusQuery>, QueryRejection>,
@@ -322,11 +322,11 @@ mod tests {
         http::auth::BearerToken,
     };
     use axum::{
-        body::{to_bytes, Body},
+        body::{Body, to_bytes},
         http::{Method, Request, StatusCode},
     };
     use futures_util::StreamExt;
-    use jope_api::{error::Problem, RunSnapshot, TelemetryBody};
+    use jope_api::{RunSnapshot, TelemetryBody, error::Problem};
     use serde_json::Value;
     use tower::ServiceExt;
 
@@ -354,8 +354,10 @@ mod tests {
         serde_json::from_slice(&to_bytes(response.into_body(), 1 << 20).await.unwrap()).unwrap()
     }
     async fn frame(
-        stream: &mut (impl futures_util::Stream<Item = std::result::Result<axum::body::Bytes, axum::Error>>
-                  + Unpin),
+        stream: &mut (
+                 impl futures_util::Stream<Item = std::result::Result<axum::body::Bytes, axum::Error>>
+                 + Unpin
+             ),
     ) -> String {
         String::from_utf8(
             tokio::time::timeout(Duration::from_secs(2), stream.next())
@@ -402,10 +404,12 @@ mod tests {
             .oneshot(request(&root, true, None))
             .await
             .unwrap();
-        assert!(response.headers()[header::CONTENT_TYPE]
-            .to_str()
-            .unwrap()
-            .starts_with("text/event-stream"));
+        assert!(
+            response.headers()[header::CONTENT_TYPE]
+                .to_str()
+                .unwrap()
+                .starts_with("text/event-stream")
+        );
         let mut first = response.into_body().into_data_stream();
         let a = decoded_event(&frame(&mut first).await);
         let b = decoded_event(&frame(&mut first).await);
@@ -590,10 +594,12 @@ mod tests {
                 Problem::CONTENT_TYPE
             );
             assert_eq!(response.headers()["jope-api-version"], "1.0");
-            assert!(!response
-                .headers()
-                .keys()
-                .any(|h| h.as_str().starts_with("access-control-")));
+            assert!(
+                !response
+                    .headers()
+                    .keys()
+                    .any(|h| h.as_str().starts_with("access-control-"))
+            );
         }
         let missing = app(log)
             .oneshot(request(

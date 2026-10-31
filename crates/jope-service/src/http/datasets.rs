@@ -6,20 +6,20 @@ use crate::{
     idempotency::{CommandOutcome, RequestIdentity},
 };
 use axum::{
-    body::{to_bytes, Body},
-    extract::{Extension, Query},
-    http::{header, Request, StatusCode},
-    response::{IntoResponse, Response},
     Json,
+    body::{Body, to_bytes},
+    extract::{Extension, Query},
+    http::{Request, StatusCode, header},
+    response::{IntoResponse, Response},
 };
 use jope_api::{
+    ColumnProfile, DatasetProfile, TargetSuggestion, Task, Warning,
     decimal::DecimalU64,
     error::{ErrorCode, Problem},
     registry::DatasetRegistration,
-    ColumnProfile, DatasetProfile, TargetSuggestion, Task, Warning,
 };
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::path::PathBuf;
 use tokio::io::AsyncWriteExt;
@@ -47,7 +47,7 @@ pub(super) async fn register(
         let Query(query) = match Query::<DatasetQuery>::try_from_uri(request.uri()) {
             Ok(query) => query,
             Err(_) => {
-                return invalid_input("Query must match dataset registration parameters.", "query")
+                return invalid_input("Query must match dataset registration parameters.", "query");
             }
         };
         let (temp, bytes, digest) =
@@ -332,7 +332,7 @@ mod tests {
     use super::*;
     use crate::{config::Config, store::Store};
     use axum::{
-        body::{to_bytes, Body},
+        body::{Body, to_bytes},
         http::{Method, Request},
     };
     use std::{collections::BTreeMap, sync::Arc};
@@ -356,6 +356,7 @@ mod tests {
                 config,
                 home: root.path().to_path_buf(),
             },
+            None,
         );
         (root, store, app)
     }
@@ -536,6 +537,7 @@ mod tests {
                 config,
                 home: limit_root.path().to_path_buf(),
             },
+            None,
         );
         let too_big = limited
             .oneshot(request("text/csv", "too-big", CSV))
@@ -558,6 +560,7 @@ mod tests {
                 config,
                 home: reserve_root.path().to_path_buf(),
             },
+            None,
         );
         let rejected = reserved
             .oneshot(request("text/csv", "disk-reserve", CSV))

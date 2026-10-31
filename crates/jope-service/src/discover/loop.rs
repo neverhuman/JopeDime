@@ -19,20 +19,20 @@ use crate::{
     store::{BlobRef, Record, RecordKey, Store, StoreError},
     worker::{self, Attempt, Request, Response, WorkerFailure, WorkerPool},
 };
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{Context, Result, bail, ensure};
 use jope_api::{
-    decimal::DecimalU64,
-    ids::{ArtifactId, DatasetId, RunId},
     AlgorithmAcceptedBody, BestAlgorithm, BudgetTotal, BudgetUsed, CompletionReason, Effort,
     EventBody, ExperimentFinishedBody, ExperimentOutcome, ExperimentStartedBody, Nondeterminism,
     PublicEvent, PublicFailure, RunPhase, RunSnapshot, RunState,
+    decimal::DecimalU64,
+    ids::{ArtifactId, DatasetId, RunId},
 };
 use rand_chacha::{
-    rand_core::{RngCore, SeedableRng},
     ChaCha12Rng,
+    rand_core::{RngCore, SeedableRng},
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -40,8 +40,8 @@ use std::{
     io::{Read, Write},
     path::{Path, PathBuf},
     sync::{
-        atomic::{AtomicUsize, Ordering},
         Arc, Mutex,
+        atomic::{AtomicUsize, Ordering},
     },
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
@@ -464,13 +464,15 @@ impl ProcessExecutor {
         for _ in 0..workers {
             let pool = Arc::clone(&pool);
             let receiver = Arc::clone(&receiver);
-            threads.push(std::thread::spawn(move || loop {
-                let job = receiver.lock().expect("dispatch mutex poisoned").recv();
-                let Ok((request, result)) = job else {
-                    break;
-                };
-                let response = pool.evaluate(&request);
-                let _ = result.send(response);
+            threads.push(std::thread::spawn(move || {
+                loop {
+                    let job = receiver.lock().expect("dispatch mutex poisoned").recv();
+                    let Ok((request, result)) = job else {
+                        break;
+                    };
+                    let response = pool.evaluate(&request);
+                    let _ = result.send(response);
+                }
             }));
         }
         Ok(Self {
@@ -589,6 +591,9 @@ struct DiscardedEvaluation {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct Checkpoint {
     version: u32,
+    /// Immutable prepared inputs remain reachable for the run's full lifetime.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    input_roots: Vec<BlobRef>,
     #[cfg(feature = "research")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     capture: Option<CaptureState>,
@@ -695,17 +700,46 @@ pub struct Discovery {
     poisoned: bool,
 }
 
+struct StartCommand {
+    journal: Arc<EventLog>,
+    identity: crate::idempotency::RequestIdentity,
+    input_roots: Vec<BlobRef>,
+}
+
 impl Discovery {
+    /// Commit initial run state and its public retry receipt in one transaction.
+    /// Workers may be dispatched only after this returns successfully.
+    pub(crate) fn start_command(
+        store: Arc<Store>,
+        plan: Plan,
+        journal: Arc<EventLog>,
+        identity: crate::idempotency::RequestIdentity,
+        input_roots: Vec<BlobRef>,
+    ) -> Result<Self> {
+        let start = Some(StartCommand {
+            journal,
+            identity,
+            input_roots,
+        });
+        #[cfg(feature = "research")]
+        {
+            Self::open_inner(store, plan, None, start)
+        }
+        #[cfg(not(feature = "research"))]
+        {
+            Self::open_inner(store, plan, start)
+        }
+    }
     /// The caller exclusively owns this run and supplies a fresh worker pool on
     /// reopen. Store::open verifies committed blobs and marks interrupted runs.
     pub fn open(store: Arc<Store>, plan: Plan) -> Result<Self> {
         #[cfg(feature = "research")]
         {
-            Self::open_inner(store, plan, None)
+            Self::open_inner(store, plan, None, None)
         }
         #[cfg(not(feature = "research"))]
         {
-            Self::open_inner(store, plan)
+            Self::open_inner(store, plan, None)
         }
     }
 
@@ -717,13 +751,14 @@ impl Discovery {
         context: Arc<CaptureContext>,
     ) -> Result<Self> {
         context.validate(&plan)?;
-        Self::open_inner(store, plan, Some(context))
+        Self::open_inner(store, plan, Some(context), None)
     }
 
     fn open_inner(
         store: Arc<Store>,
         plan: Plan,
         #[cfg(feature = "research")] capture_context: Option<Arc<CaptureContext>>,
+        start: Option<StartCommand>,
     ) -> Result<Self> {
         plan.validate()?;
         let expected_version = CHECKPOINT_VERSION;
@@ -733,8 +768,15 @@ impl Discovery {
         } else {
             expected_version
         };
-        let log = Arc::new(EventLog::new(Arc::clone(&store)));
+        let log = start
+            .as_ref()
+            .map(|s| Arc::clone(&s.journal))
+            .unwrap_or_else(|| Arc::new(EventLog::new(Arc::clone(&store))));
         let old = log.snapshot(&plan.run_id)?;
+        ensure!(
+            start.is_none() || old.is_none(),
+            "command cannot recreate an existing run"
+        );
         let (mut checkpoint, mut snapshot) = if let Some(snapshot) = &old {
             let record = store
                 .get(&RecordKey::Run(plan.run_id.clone()))?
@@ -767,6 +809,10 @@ impl Discovery {
         } else {
             let checkpoint = Checkpoint {
                 version: expected_version,
+                input_roots: start
+                    .as_ref()
+                    .map(|s| s.input_roots.clone())
+                    .unwrap_or_default(),
                 #[cfg(feature = "research")]
                 capture: capture_context
                     .as_deref()
@@ -847,6 +893,7 @@ impl Discovery {
         }
         snapshot.state = RunState::Running;
         let blobs = checkpoint_blobs(&checkpoint)?;
+        let initial_response = serde_json::to_value(&snapshot)?;
         // Initialization/recovery is a control transaction, never a synthetic search event.
         let snapshot = log
             .commit(
@@ -857,7 +904,15 @@ impl Discovery {
                     blobs,
                 },
                 vec![],
-                |_| Ok(()),
+                |tx| {
+                    if let Some(start) = &start {
+                        tx.record_new_command(
+                            &start.identity,
+                            crate::idempotency::CommandOutcome::json(201, initial_response)?,
+                        )?;
+                    }
+                    Ok(())
+                },
             )?
             .snapshot;
         Ok(Self {
@@ -1815,7 +1870,12 @@ fn research_response(request: &Request, response: Response) -> Result<Response> 
 }
 
 fn checkpoint_blobs(state: &Checkpoint) -> Result<Vec<BlobRef>> {
-    let roots: Vec<_> = state.champion.iter().map(|c| c.model.clone()).collect();
+    let roots: Vec<_> = state
+        .input_roots
+        .iter()
+        .cloned()
+        .chain(state.champion.iter().map(|c| c.model.clone()))
+        .collect();
     #[cfg(feature = "research")]
     if let Some(capture) = &state.capture {
         let mut unique = BTreeMap::new();
@@ -2207,13 +2267,15 @@ fn parallel_evaluate(
     let results = Mutex::new(vec![None; requests.len()]);
     std::thread::scope(|scope| {
         for _ in 0..workers.min(requests.len()) {
-            scope.spawn(|| loop {
-                let index = cursor.fetch_add(1, Ordering::Relaxed);
-                let Some(request) = requests.get(index) else {
-                    break;
-                };
-                let response = checked_response(request, executor.evaluate(request));
-                results.lock().expect("result mutex poisoned")[index] = Some(response);
+            scope.spawn(|| {
+                loop {
+                    let index = cursor.fetch_add(1, Ordering::Relaxed);
+                    let Some(request) = requests.get(index) else {
+                        break;
+                    };
+                    let response = checked_response(request, executor.evaluate(request));
+                    results.lock().expect("result mutex poisoned")[index] = Some(response);
+                }
             });
         }
     });
@@ -2480,7 +2542,7 @@ fn native_scores<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Resul
     feat_math::GenomeIr::parse(&request.dsl)?;
     match (&spec.refit_output, spec.refit_max_bytes) {
         (Some(path), Some(maximum)) => {
-            return native_refit(request, matrix, &spec, &objective, path, maximum)
+            return native_refit(request, matrix, &spec, &objective, path, maximum);
         }
         (None, None) => {}
         _ => bail!("incomplete private refit handoff"),
@@ -2980,9 +3042,11 @@ mod tests {
             "objective improves despite worse surrogate"
         );
         let pending = d.checkpoint.pending[0].candidates.clone();
-        assert!(pending
-            .iter()
-            .all(|c| c.dsl.rsplit('-').next().unwrap().parse::<u32>().unwrap() >= 4));
+        assert!(
+            pending
+                .iter()
+                .all(|c| c.dsl.rsplit('-').next().unwrap().parse::<u32>().unwrap() >= 4)
+        );
         d.pause().unwrap();
         drop(d);
         let mut d = Discovery::open(store, p).unwrap();
@@ -3017,9 +3081,10 @@ mod tests {
             refuse: true,
         };
         for _ in 0..2 {
-            assert!(d
-                .advance(&RoundSpace, &refusal, &OpposingScores, 1, 1)
-                .is_err());
+            assert!(
+                d.advance(&RoundSpace, &refusal, &OpposingScores, 1, 1)
+                    .is_err()
+            );
             assert_eq!(serde_json::to_value(&d.checkpoint).unwrap(), before);
             assert_eq!(d.snapshot(), &snapshot);
         }
@@ -3051,17 +3116,9 @@ mod tests {
             }
             let promotion = request.attempt.slot >= 65_536;
             let loss = if request.dsl == "lucky-seed" {
-                if promotion {
-                    10.0
-                } else {
-                    0.0
-                }
+                if promotion { 10.0 } else { 0.0 }
             } else {
-                if promotion {
-                    5.0
-                } else {
-                    1.0
-                }
+                if promotion { 5.0 } else { 1.0 }
             };
             Response {
                 attempt: request.attempt.clone(),
@@ -3163,11 +3220,13 @@ mod tests {
             );
             if failure == WorkerFailure::NonFinite {
                 let projection = d.projection().unwrap();
-                assert!(projection
-                    .as_array()
-                    .unwrap()
-                    .iter()
-                    .any(|e| e["body"]["failure"]["code"] == "FITNESS_UNDEFINED"));
+                assert!(
+                    projection
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .any(|e| e["body"]["failure"]["code"] == "FITNESS_UNDEFINED")
+                );
             }
         }
     }
@@ -3219,16 +3278,18 @@ mod tests {
         assert!(recovered.checkpoint.elapsed_ms >= 1750);
         assert_eq!(recovered.completed(), Some(CompletionReason::BudgetTime));
         assert_eq!(recovered.budget_bound_by(), Some("time"));
-        assert!(recovered
-            .advance(
-                &TinySpace,
-                &HeuristicAdmission,
-                &Controlled { failure: None },
-                1,
-                1
-            )
-            .unwrap()
-            .is_empty());
+        assert!(
+            recovered
+                .advance(
+                    &TinySpace,
+                    &HeuristicAdmission,
+                    &Controlled { failure: None },
+                    1,
+                    1
+                )
+                .unwrap()
+                .is_empty()
+        );
         assert_eq!(recovered.admitted(), 0);
     }
 
@@ -3281,15 +3342,16 @@ mod tests {
                 )
             })
             .unwrap();
-        assert!(d
-            .advance(
+        assert!(
+            d.advance(
                 &TinySpace,
                 &HeuristicAdmission,
                 &Controlled { failure: None },
                 1,
                 1
             )
-            .is_err());
+            .is_err()
+        );
         assert_eq!(d.snapshot(), &before);
         assert_eq!(d.log.snapshot(&p.run_id).unwrap().unwrap(), before);
         assert!(d.projection().unwrap().as_array().unwrap().is_empty());
@@ -3528,11 +3590,13 @@ mod tests {
         assert_eq!(d.completed(), Some(CompletionReason::BudgetEvaluations));
         assert_eq!(d.nondeterminism().count.0, 0);
         let projection = d.projection().unwrap();
-        assert!(projection
-            .as_array()
-            .unwrap()
-            .iter()
-            .any(|e| e["body"]["failure"]["code"] == "FITNESS_UNDEFINED"));
+        assert!(
+            projection
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|e| e["body"]["failure"]["code"] == "FITNESS_UNDEFINED")
+        );
     }
 
     #[test]
@@ -3584,10 +3648,15 @@ mod tests {
         let binary = directory.join("native-worker");
         let pids = directory.join("worker-pids");
         fs::create_dir_all(&pids).unwrap();
-        let fault=match fault {
-            "timeout"=>"if request.fold_spec.get(\"refit_output\").is_some() { loop { std::hint::spin_loop(); } }",
-            "memory"=>"if request.fold_spec.get(\"refit_output\").is_some() { let mut bytes=vec![0_u8;128*1024*1024]; for i in (0..bytes.len()).step_by(4096) { bytes[i]=1; } loop { std::hint::black_box(&bytes); std::thread::sleep(std::time::Duration::from_millis(10)); } }",
-            ""=>"",_=>panic!("unknown owned fixture fault"),
+        let fault = match fault {
+            "timeout" => {
+                "if request.fold_spec.get(\"refit_output\").is_some() { loop { std::hint::spin_loop(); } }"
+            }
+            "memory" => {
+                "if request.fold_spec.get(\"refit_output\").is_some() { let mut bytes=vec![0_u8;128*1024*1024]; for i in (0..bytes.len()).step_by(4096) { bytes[i]=1; } loop { std::hint::black_box(&bytes); std::thread::sleep(std::time::Duration::from_millis(10)); } }"
+            }
+            "" => "",
+            _ => panic!("unknown owned fixture fault"),
         };
         fs::write(&source,format!("fn main() {{ std::fs::write(std::path::Path::new({:?}).join(std::process::id().to_string()), b\"native\").unwrap(); jope_service::worker::serve(1, |request,matrix| {{ {} jope_service::discover::r#loop::evaluate_native(request,matrix) }}).unwrap(); }}",pids,fault)).unwrap();
         for library in libraries {
@@ -3607,7 +3676,9 @@ mod tests {
                 return binary;
             }
         }
-        panic!("current jope-service library could not link native worker; build the library first with cargo build -p jope-service --locked");
+        panic!(
+            "current jope-service library could not link native worker; build the library first with cargo build -p jope-service --locked"
+        );
     }
 
     fn pool(binary: &Path, workers: usize) -> ProcessExecutor {
@@ -3717,14 +3788,17 @@ mod tests {
                 d.nondeterminism().experiment_ids,
                 vec![experiment(&p, 0, 0, 1).unwrap()]
             );
-            assert!(!d
-                .projection()
-                .unwrap()
-                .as_array()
-                .unwrap()
-                .iter()
-                .any(|e| e["kind"] == "algorithm.accepted"));
-            println!("bounded promoted refit {fault}: CV succeeded; isolated worker failed as {expected:?}; engine alive; limit receipt retained");
+            assert!(
+                !d.projection()
+                    .unwrap()
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .any(|e| e["kind"] == "algorithm.accepted")
+            );
+            println!(
+                "bounded promoted refit {fault}: CV succeeded; isolated worker failed as {expected:?}; engine alive; limit receipt retained"
+            );
         }
     }
 
@@ -3745,10 +3819,12 @@ mod tests {
         .unwrap();
         let result = run_m1(&input, &binary).unwrap();
         assert_eq!(result["stage"], "search_finished");
-        assert!(result["champion"]["algorithm_id"]
-            .as_str()
-            .unwrap()
-            .starts_with("alg_"));
+        assert!(
+            result["champion"]["algorithm_id"]
+                .as_str()
+                .unwrap()
+                .starts_with("alg_")
+        );
         assert!(result["champion"].get("candidate").is_none());
         let text = serde_json::to_string(&result).unwrap();
         for word in [
@@ -3887,7 +3963,9 @@ mod tests {
             )
             .unwrap();
         }
-        println!("DSC08 S2: real native CV; planned R=2; workers1/8, mid-wave pause, SIGKILL/recovery: identical champion/model/projection; zero limits");
+        println!(
+            "DSC08 S2: real native CV; planned R=2; workers1/8, mid-wave pause, SIGKILL/recovery: identical champion/model/projection; zero limits"
+        );
     }
 
     #[test]
@@ -3956,7 +4034,14 @@ mod tests {
         let champion = d
             .champion()
             .expect("medium search must produce a finite rung-1 model");
-        println!("DSC08 QLT05 source={TRAIN_SHA}, FIT=800, seed=73, folds=5, medium128/R2; ridge_cv_rmse={}, champion_cv_rmse={}, admissions={}, reason={:?}, nondeterminism={:?}",baseline.scores[2],champion.value,d.admitted(),d.completed(),d.nondeterminism());
+        println!(
+            "DSC08 QLT05 source={TRAIN_SHA}, FIT=800, seed=73, folds=5, medium128/R2; ridge_cv_rmse={}, champion_cv_rmse={}, admissions={}, reason={:?}, nondeterminism={:?}",
+            baseline.scores[2],
+            champion.value,
+            d.admitted(),
+            d.completed(),
+            d.nondeterminism()
+        );
         assert!(
             champion.loss < baseline.scores[1],
             "medium must strictly improve ridge on the same pinned CV folds"
@@ -4371,11 +4456,13 @@ mod tests {
             assert_eq!(normal.projection().unwrap(), baseline.unwrap().1);
             assert_eq!(stored(&normal)["version"], 2);
             assert!(stored(&normal).get("capture").is_none());
-            assert!(stored(&normal)["pending"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .all(|r| r.get("capture").is_none()));
+            assert!(
+                stored(&normal)["pending"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .all(|r| r.get("capture").is_none())
+            );
         }
 
         #[test]
@@ -4574,18 +4661,20 @@ mod tests {
                 if !bad_gate {
                     e.panic_at = Some(2);
                 }
-                assert!(d
-                    .advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
-                    .is_err());
+                assert!(
+                    d.advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
+                        .is_err()
+                );
                 assert!(d.poisoned);
                 assert_eq!(stored(&d)["capture"]["charged"], 4);
                 assert!(d.projection().unwrap().as_array().unwrap().is_empty());
                 drop(d);
                 let mut d = Discovery::open_research(store.clone(), p, c).unwrap();
                 let calls = e.calls.lock().unwrap().len();
-                assert!(d
-                    .advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
-                    .is_err());
+                assert!(
+                    d.advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
+                        .is_err()
+                );
                 assert_eq!(calls, e.calls.lock().unwrap().len());
                 assert!(d.checkpoint.capture.as_ref().unwrap().tainted);
                 assert!(materialize_controls(&store, &run, &home.path().join("records")).is_err());
@@ -4601,8 +4690,8 @@ mod tests {
                 let (c, _) = context(&p, 20, true, false);
                 let mut d = Discovery::open_research(store.clone(), p, c).unwrap();
                 let e = Evaluator::new(store);
-                assert!(d
-                    .advance(
+                assert!(
+                    d.advance(
                         &Space {
                             seeds,
                             duplicate: false
@@ -4612,7 +4701,8 @@ mod tests {
                         1,
                         usize::MAX
                     )
-                    .is_err());
+                    .is_err()
+                );
                 assert!(e.calls.lock().unwrap().is_empty());
                 assert_eq!(stored(&d)["capture"]["charged"], 0);
             }
@@ -4676,9 +4766,10 @@ mod tests {
                     )
                 })
                 .unwrap();
-            assert!(d
-                .advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
-                .is_err());
+            assert!(
+                d.advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
+                    .is_err()
+            );
             assert!(d.poisoned);
             let cp = stored(&d);
             assert!(cp["elites"]["objective"].is_null() || cp["champion"].is_null());
@@ -4800,9 +4891,10 @@ mod tests {
                     inner: Evaluator::new(store.clone()),
                     mode,
                 };
-                assert!(d
-                    .advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
-                    .is_err());
+                assert!(
+                    d.advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
+                        .is_err()
+                );
                 assert!(d.poisoned);
                 assert!(stored(&d)["capture"]["rounds"]["0"]["committed"].is_null());
                 assert_eq!(stored(&d)["capture"]["charged"], 4);
@@ -4810,9 +4902,10 @@ mod tests {
                 drop(d);
                 let mut d = Discovery::open_research(store.clone(), p, c).unwrap();
                 assert!(d.checkpoint.capture.as_ref().unwrap().tainted);
-                assert!(d
-                    .advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
-                    .is_err());
+                assert!(
+                    d.advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
+                        .is_err()
+                );
                 assert!(materialize_controls(&store, &run, &home.path().join("refused")).is_err());
             }
         }
@@ -4840,9 +4933,10 @@ mod tests {
             // Work performed before advance leaves the frozen admission budget intact.
             let before = d.checkpoint.elapsed_at(wall_clock_ms().unwrap()).unwrap();
             assert_eq!(before, 0);
-            assert!(d
-                .advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
-                .is_err());
+            assert!(
+                d.advance(&SPACE, &HeuristicAdmission, &e, 1, usize::MAX)
+                    .is_err()
+            );
             assert!(d.poisoned);
             assert_eq!(e.0.calls.lock().unwrap().len(), 1);
             assert_eq!(stored(&d)["capture"]["charged"], 4);
@@ -4912,10 +5006,12 @@ mod tests {
                     assert_eq!(*number, prefix.len() as u64);
                     assert!(suffix.aborted && suffix.committed.is_none());
                     assert_eq!(suffix.attempts.len(), if timed_out { 8 } else { 16 });
-                    assert!(suffix
-                        .attempts
-                        .iter()
-                        .all(|attempt| attempt.result.is_some()));
+                    assert!(
+                        suffix
+                            .attempts
+                            .iter()
+                            .all(|attempt| attempt.result.is_some())
+                    );
                     assert!(captured.tainted && captured.unknown());
                     assert_eq!(captured.charged, if timed_out { 20 } else { 52 });
                     let rung0_calls = executor
@@ -4928,19 +5024,22 @@ mod tests {
                         .count();
                     assert_eq!(rung0_calls as u64, captured.charged);
                     assert_eq!(d.checkpoint.discarded.len(), 4);
-                    assert!(d
-                        .checkpoint
-                        .discarded
-                        .iter()
-                        .all(|r| r.reason == reason && r.response.is_some()));
+                    assert!(
+                        d.checkpoint
+                            .discarded
+                            .iter()
+                            .all(|r| r.reason == reason && r.response.is_some())
+                    );
                     let before = store
                         .get(&RecordKey::Run(p.run_id.clone()))
                         .unwrap()
                         .unwrap();
-                    assert!(captured
-                        .roots()
-                        .iter()
-                        .all(|root| before.blobs.contains(root)));
+                    assert!(
+                        captured
+                            .roots()
+                            .iter()
+                            .all(|root| before.blobs.contains(root))
+                    );
                     let output = home.path().join("refused.jsonl");
                     let error = materialize_controls(&store, &p.run_id, &output)
                         .unwrap_err()
@@ -4951,17 +5050,21 @@ mod tests {
                         "{error}"
                     );
                     assert!(!output.exists());
-                    assert!(!fs::read_dir(home.path()).unwrap().any(|entry| entry
-                        .unwrap()
-                        .file_name()
-                        .to_string_lossy()
-                        .starts_with(".jope-research-")));
-                    assert!(store
-                        .gc(true)
-                        .unwrap()
-                        .blobs
-                        .iter()
-                        .all(|root| !captured.roots().contains(root)));
+                    assert!(!fs::read_dir(home.path()).unwrap().any(|entry| {
+                        entry
+                            .unwrap()
+                            .file_name()
+                            .to_string_lossy()
+                            .starts_with(".jope-research-")
+                    }));
+                    assert!(
+                        store
+                            .gc(true)
+                            .unwrap()
+                            .blobs
+                            .iter()
+                            .all(|root| !captured.roots().contains(root))
+                    );
                     drop(d);
                     drop(executor);
                     drop(store);
@@ -4978,10 +5081,12 @@ mod tests {
                         captured.charged
                     );
                     let no_work = Evaluator::new(store.clone());
-                    assert!(resumed
-                        .advance(&SPACE, &HeuristicAdmission, &no_work, workers, usize::MAX)
-                        .unwrap()
-                        .is_empty());
+                    assert!(
+                        resumed
+                            .advance(&SPACE, &HeuristicAdmission, &no_work, workers, usize::MAX)
+                            .unwrap()
+                            .is_empty()
+                    );
                     assert!(no_work.calls.lock().unwrap().is_empty());
                     assert!(materialize_controls(&store, &p.run_id, &output).is_err());
                     let after = store
@@ -5081,16 +5186,15 @@ mod tests {
                             .count(),
                         usize::from(stage == "after_outcome")
                     );
-                    assert!(d
-                        .advance(&SPACE, &HeuristicAdmission, &e, 8, usize::MAX)
-                        .is_err());
+                    assert!(
+                        d.advance(&SPACE, &HeuristicAdmission, &e, 8, usize::MAX)
+                            .is_err()
+                    );
                     assert!(e.calls.lock().unwrap().is_empty());
-                    assert!(materialize_controls(
-                        &store,
-                        &p.run_id,
-                        &home.path().join("refused.jsonl")
-                    )
-                    .is_err());
+                    assert!(
+                        materialize_controls(&store, &p.run_id, &home.path().join("refused.jsonl"))
+                            .is_err()
+                    );
                 } else {
                     assert!(!d.checkpoint.capture.as_ref().unwrap().tainted);
                     run_to_end(&mut d, &e, 8);

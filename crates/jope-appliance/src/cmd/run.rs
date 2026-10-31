@@ -1,9 +1,9 @@
 use clap::Args;
 use jope_api::{
-    decimal::DecimalU64, ids::DatasetId, ExportKind, ExportRequest, Language, Refit, RunSnapshot,
-    RunSpec, RunState,
+    ExportKind, ExportRequest, Language, Refit, RunSnapshot, RunSpec, RunState,
+    decimal::DecimalU64, ids::DatasetId,
 };
-use jope_client::{transport::Request, RunResult, Transport};
+use jope_client::{RunResult, Transport, transport::Request};
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 use std::{io::Write, path::PathBuf, str::FromStr};
@@ -161,15 +161,28 @@ pub fn dispatch(args: RunArgs) -> anyhow::Result<()> {
         // An explicit endpoint is authoritative. Never substitute a daemon or
         // legacy server when the selected endpoint cannot be authenticated.
         Engine::Endpoint(_) => Err(DispatchUnavailable::EndpointCredentials.into()),
-        // The approved scope supplies no store-bound router/transport factory.
-        // Refuse before opening a Store; a test-only bridge is not production.
-        Engine::InProcess => Err(DispatchUnavailable::LocalHandlers.into()),
+        Engine::InProcess => {
+            #[cfg(feature = "engine")]
+            {
+                let token = format!("{}{}", ulid::Ulid::new(), ulid::Ulid::new());
+                // The local authority never binds a socket. Derive a valid bearer
+                // from fresh entropy without exposing it on the command line.
+                let token = jope_runtime::sha256_hex(token.as_bytes());
+                let transport = jope_client::InProcess::local(31234, &token)?;
+                run(args, &transport)
+            }
+            #[cfg(not(feature = "engine"))]
+            {
+                Err(DispatchUnavailable::LocalHandlers.into())
+            }
+        }
     }
 }
 
 #[derive(Debug)]
 enum DispatchUnavailable {
     EndpointCredentials,
+    #[cfg(not(feature = "engine"))]
     LocalHandlers,
 }
 
@@ -179,6 +192,7 @@ impl std::fmt::Display for DispatchUnavailable {
             Self::EndpointCredentials => {
                 "explicit run endpoints require supported bearer credentials"
             }
+            #[cfg(not(feature = "engine"))]
             Self::LocalHandlers => "in-process batch runs are unavailable in this build",
         })
     }
@@ -197,6 +211,7 @@ pub fn dispatch_exit_code(error: &anyhow::Error) -> Option<u8> {
     top.downcast_ref::<DispatchUnavailable>()
         .map(|error| match error {
             DispatchUnavailable::EndpointCredentials => 9,
+            #[cfg(not(feature = "engine"))]
             DispatchUnavailable::LocalHandlers => 2,
         })
 }
@@ -504,8 +519,8 @@ mod tests {
     #[test]
     fn request_boundary_requires_acknowledged_pause_or_cancel_and_preserves_control_errors() {
         use jope_client::{
-            transport::{header, HeaderMap},
             Request, Response,
+            transport::{HeaderMap, header},
         };
         use std::{io::Cursor, sync::Mutex};
         struct Control {
@@ -660,9 +675,11 @@ mod tests {
             panic!("run command")
         };
         assert_eq!(args.m1_plan, Some("prepared.json".into()));
-        assert!(!serde_json::to_string(&args.run_spec().unwrap())
-            .unwrap()
-            .contains("m1"));
+        assert!(
+            !serde_json::to_string(&args.run_spec().unwrap())
+                .unwrap()
+                .contains("m1")
+        );
         let mut cli = crate::cli::Cli::command();
         let help = cli.find_subcommand_mut("run").unwrap().render_long_help();
         assert!(!help.to_string().contains("m1"));
@@ -827,7 +844,7 @@ mod tests {
         }
         assert!(!directory.path().join("absent-daemon").exists());
 
-        use jope_assets::writer::{assemble_development, stage, write_new, StageOptions};
+        use jope_assets::writer::{StageOptions, assemble_development, stage, write_new};
         let code = std::fs::read(&executable).unwrap();
         let staged = stage(
             &code,

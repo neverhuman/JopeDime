@@ -4,7 +4,7 @@ use crate::{
     http::Credentials,
     transport::{Error, Request, Response, Result, Transport},
 };
-use axum::{body::Body, Router};
+use axum::{Router, body::Body};
 use http_body_util::BodyExt;
 use std::{
     io::{self, Read},
@@ -35,12 +35,22 @@ impl std::fmt::Debug for InProcess {
 }
 impl InProcess {
     pub fn new(router: Router, endpoint: &str, token: &str) -> Result<Self> {
+        Self::new_owned(router, endpoint, token, None)
+    }
+
+    fn new_owned(
+        router: Router,
+        endpoint: &str,
+        token: &str,
+        owner: Option<std::sync::Arc<jope_service::engine::InProcessEngine>>,
+    ) -> Result<Self> {
         let credentials = Credentials::new(endpoint, token)?;
         let (sender, receiver) = mpsc::channel::<Command>();
         let (ready, started) = mpsc::sync_channel(1);
         thread::Builder::new()
             .name("jope-client-bridge".into())
             .spawn(move || {
+                let _owner = owner;
                 let runtime = match Builder::new_multi_thread()
                     .worker_threads(1)
                     .thread_name("jope-client-engine")
@@ -70,19 +80,35 @@ impl InProcess {
             sender,
         })
     }
-    /// Construct the current product router without opening a listener.
+    /// Own the local engine/store and its real router without opening a listener.
     pub fn local(port: u16, token: &str) -> Result<Self> {
-        use jope_service::http::{
-            auth::{BearerToken, LocalAuth},
-            router::router,
-        };
+        let engine = jope_service::engine::InProcessEngine::open_default()
+            .map_err(|e| io::Error::other(e.to_string()))?;
+        Self::with_engine(std::sync::Arc::new(engine), port, token)
+    }
+
+    /// An embedding supplies its owned store and authenticated worker executable.
+    pub fn with_engine(
+        engine: std::sync::Arc<jope_service::engine::InProcessEngine>,
+        port: u16,
+        token: &str,
+    ) -> Result<Self> {
+        use jope_service::http::auth::{BearerToken, LocalAuth};
         let auth = LocalAuth::new(
             BearerToken::from_hex(token)
                 .map_err(|_| Error::InvalidRequest("invalid bearer token"))?,
             port,
         )
         .map_err(|_| Error::InvalidRequest("invalid local authority"))?;
-        Self::new(router(auth), &format!("http://127.0.0.1:{port}"), token)
+        let router = engine
+            .router(auth)
+            .map_err(|e| io::Error::other(e.to_string()))?;
+        Self::new_owned(
+            router,
+            &format!("http://127.0.0.1:{port}"),
+            token,
+            Some(engine),
+        )
     }
 }
 impl Transport for InProcess {
@@ -207,14 +233,14 @@ impl Drop for BodyReader {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{transport::header, Http};
+    use crate::{Http, transport::header};
     use axum::{
+        Json,
         http::{HeaderValue, StatusCode},
         routing::get,
-        Json,
     };
-    use jope_api::{registry::OPERATIONS, SystemInfo};
-    use serde_json::{json, Value};
+    use jope_api::{SystemInfo, registry::OPERATIONS};
+    use serde_json::{Value, json};
 
     struct Server {
         endpoint: String,
@@ -294,7 +320,12 @@ mod tests {
         });
         let http = Http::new(&server.endpoint, &token).unwrap();
         let port = server.endpoint.rsplit(':').next().unwrap().parse().unwrap();
-        let inproc = InProcess::local(port, &token).unwrap();
+        let inproc = InProcess::new(
+            router(LocalAuth::new(BearerToken::from_hex(&token).unwrap(), port).unwrap()),
+            &server.endpoint,
+            &token,
+        )
+        .unwrap();
         let mut count = 0;
         for op in OPERATIONS {
             for (route, path) in op.paths.iter().enumerate() {
@@ -372,8 +403,8 @@ mod tests {
     #[test]
     fn response_headers_arrive_before_an_unfinished_stream_and_drop_cancels_it() {
         use std::sync::{
-            atomic::{AtomicBool, Ordering},
             Arc,
+            atomic::{AtomicBool, Ordering},
         };
         struct Dropped(Arc<AtomicBool>);
         impl Drop for Dropped {
