@@ -20,7 +20,7 @@ PROVENANCE = DATA.with_suffix(".provenance.json")
 OUTPUT = FIGURES / "fig_fw_recent_development.pdf"
 FIELDS = ["round", "program_promotions", "cumulative_program_promotions",
           "candidate_validation_utility", "recorded_best_validation_utility",
-          "adapter_accepted"]
+          "adapter_accepted", "completed_round_wall_seconds", "reported_best_round"]
 
 
 def extract(logs):
@@ -53,13 +53,24 @@ def extract(logs):
         assert row["val_reg"] == candidate["val_reg"] == admission["candidate_utility"]
         assert best["val_reg"] == best["mean"] == admission["best_utility"]
         assert isinstance(admission["accepted"], bool)
+        assert math.isfinite(row["wall_seconds"]) and row["wall_seconds"] > 0
+        assert isinstance(admission["best_round"], int)
         assert admission["evaluation_identity"] == row["evaluation_identity"]
         identities.add(row["evaluation_identity"])
         cumulative += counts[row["round"]]
         rows.append(dict(zip(FIELDS, [row["round"], counts[row["round"]], cumulative,
                                      row["val_reg"], admission["best_utility"],
-                                     int(admission["accepted"])])))
+                                     int(admission["accepted"]), row["wall_seconds"],
+                                     admission["best_round"]])))
     assert len(identities) == 1, "Do not join different evaluation identities"
+    wall = sum(row["completed_round_wall_seconds"] for row in rows)
+    rolling = summaries[-20:]
+    rolling_rate = (3600 * sum(row["promotions"] for row in rolling)
+                    / sum(row["wall_seconds"] for row in rolling))
+    assert summaries[-1]["promotions_rate_scope"] == (
+        "up to 20 completed rounds since process start; includes qualification wait")
+    assert math.isclose(rolling_rate, summaries[-1]["promotions_per_hour"],
+                        rel_tol=1e-12), "Derived rate differs from final logged rolling rate"
     with DATA.open("w", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=FIELDS, lineterminator="\n")
         writer.writeheader()
@@ -78,6 +89,12 @@ def extract(logs):
         "round_window": [rounds[0], rounds[-1]],
         "summary_rows": len(rows),
         "strict_program_promotions": len(selected),
+        "adapter_admissions": sum(row["adapter_accepted"] for row in rows),
+        "reported_best_rounds": sorted({row["reported_best_round"] for row in rows}),
+        "completed_round_wall_seconds": wall,
+        "rounds_per_hour": 3600 * len(rows) / wall,
+        "program_promotions_per_hour": 3600 * len(selected) / wall,
+        "rate_scope": "Retained completed rounds; logged wall time includes qualification waits; not deployment throughput",
         "promotion_CI_scope": dict(Counter(r.get("CI_scope", "unrecorded") for r in selected)),
         "evaluation_identities": sorted(identities),
         "metric_definition": {
@@ -85,11 +102,13 @@ def extract(logs):
             "cumulative_program_promotions": "Running sum within this window only; starts from zero",
             "candidate_validation_utility": "summary.val_reg = candidate_dev_utility.val_reg = adapter_admission.candidate_utility",
             "recorded_best_validation_utility": "dev_utility.val_reg = adapter_admission.best_utility",
+            "completed_round_wall_seconds": "summary.wall_seconds; rates divide total completed rounds or strict program promotions by their summed wall time",
+            "reported_best_round": "adapter_admission.best_round; a logged identity, not the first strict increase in utility",
         },
         "code_references": ["research/flywheel_selfplay/automatic_promotion.py:206-273",
                             "research/flywheel_selfplay/dev_incumbent.py:524-570",
-                            "crates/jope-telemetry/src/hooks/flywheel.rs:362-365"],
-        "interpretation_source_commit": ("16609e73f13bd36b895a33008e7db3230b1d6857"
+                            "crates/jope-telemetry/src/hooks/flywheel.rs:316-338,362-365"],
+        "interpretation_source_commit": ("a13afb4fe8f98b5f9b17fbd8c77650b4c8ba9343"
                                          if args.later_window else
                                          "b2c04a846194bda01310d762d646c8a2a91d26cf"),
         "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
@@ -173,4 +192,9 @@ for ax in axes:
 fig.tight_layout(pad=0.4, h_pad=0.65)
 fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
+if args.logs:
+    provenance = json.loads(PROVENANCE.read_text())
+    provenance["figure_sha256"] = hashlib.sha256(OUTPUT.read_bytes()).hexdigest()
+    provenance["matplotlib_version"] = matplotlib.__version__
+    PROVENANCE.write_text(json.dumps(provenance, indent=2) + "\n")
 print(f"{len(rows)} summary rounds; {sum(counts)} strict program promotions")

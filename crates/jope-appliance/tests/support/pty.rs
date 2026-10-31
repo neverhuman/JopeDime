@@ -40,7 +40,7 @@ impl Key {
 /// A child process connected to a PTY, with its output captured in the background.
 pub struct PtySession {
     master: Box<dyn MasterPty + Send>,
-    writer: Box<dyn Write + Send>,
+    writer: Arc<Mutex<Box<dyn Write + Send>>>,
     child: Box<dyn Child + Send + Sync>,
     output: Arc<Mutex<Vec<u8>>>,
     reader_thread: Option<JoinHandle<()>>,
@@ -54,8 +54,24 @@ impl PtySession {
         Self::spawn(binary, args)
     }
 
+    /// Spawn jopedime with selected environment overrides for isolated engine homes.
+    pub fn spawn_jopedime_with_env(args: &[&str], env: &[(&str, &str)]) -> io::Result<Self> {
+        let binary = option_env!("CARGO_BIN_EXE_jopedime")
+            .ok_or_else(|| io::Error::other("jopedime binary path is integration-test only"))?;
+        Self::spawn_with_env(binary, args, env)
+    }
+
     /// Spawn a program attached to a PTY. Kept public for other appliance integration tests.
     pub fn spawn(program: impl AsRef<OsStr>, args: &[&str]) -> io::Result<Self> {
+        Self::spawn_with_env(program, args, &[])
+    }
+
+    /// Spawn a program attached to a PTY with selected environment overrides.
+    pub fn spawn_with_env(
+        program: impl AsRef<OsStr>,
+        args: &[&str],
+        env: &[(&str, &str)],
+    ) -> io::Result<Self> {
         let pty_system = native_pty_system();
         let pair = pty_system
             .openpty(PtySize {
@@ -69,20 +85,44 @@ impl PtySession {
         let mut command = CommandBuilder::new(program);
         command.args(args);
         command.env("TERM", "xterm-256color");
+        for (key, value) in env {
+            command.env(key, value);
+        }
         let child = pair.slave.spawn_command(command).map_err(other)?;
         let mut reader = pair.master.try_clone_reader().map_err(other)?;
-        let writer = pair.master.take_writer().map_err(other)?;
+        let writer = Arc::new(Mutex::new(pair.master.take_writer().map_err(other)?));
+        let reply_writer = Arc::clone(&writer);
         let output = Arc::new(Mutex::new(Vec::new()));
         let captured = Arc::clone(&output);
         let reader_thread = thread::spawn(move || {
             let mut chunk = [0_u8; 4096];
+            let mut processed = 0_usize;
             loop {
                 match reader.read(&mut chunk) {
                     Ok(0) | Err(_) => break,
-                    Ok(count) => captured
-                        .lock()
-                        .unwrap_or_else(std::sync::PoisonError::into_inner)
-                        .extend_from_slice(&chunk[..count]),
+                    Ok(count) => {
+                        let cpr_requests = {
+                            let mut buf = captured
+                                .lock()
+                                .unwrap_or_else(std::sync::PoisonError::into_inner);
+                            let start = processed.saturating_sub(3);
+                            buf.extend_from_slice(&chunk[..count]);
+                            let requests = buf[start..]
+                                .windows(4)
+                                .filter(|window| *window == b"\x1b[6n")
+                                .count();
+                            processed = buf.len();
+                            requests
+                        };
+                        if cpr_requests > 0 {
+                            if let Ok(mut w) = reply_writer.lock() {
+                                for _ in 0..cpr_requests {
+                                    let _ = w.write_all(b"\x1b[1;1R");
+                                }
+                                let _ = w.flush();
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -98,14 +138,22 @@ impl PtySession {
 
     /// Type ordinary text into the child's terminal input.
     pub fn type_text(&mut self, text: &str) -> io::Result<()> {
-        self.writer.write_all(text.as_bytes())?;
-        self.writer.flush()
+        let mut writer = self
+            .writer
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        writer.write_all(text.as_bytes())?;
+        writer.flush()
     }
 
     /// Press a terminal key such as Enter, Escape, or an arrow key.
     pub fn press_key(&mut self, key: Key) -> io::Result<()> {
-        self.writer.write_all(key.bytes())?;
-        self.writer.flush()
+        let mut writer = self
+            .writer
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        writer.write_all(key.bytes())?;
+        writer.flush()
     }
 
     /// Change the terminal dimensions, expressed as columns then rows.
@@ -195,6 +243,11 @@ fn strip_terminal_controls(bytes: &[u8]) -> String {
                     let byte = bytes[index];
                     index += 1;
                     if (0x40..=0x7e).contains(&byte) {
+                        if matches!(byte, b'C' | b'G' | b'H' | b'f')
+                            && !matches!(plain.last(), None | Some(b' ' | b'\n'))
+                        {
+                            plain.push(b' ');
+                        }
                         break;
                     }
                 }
