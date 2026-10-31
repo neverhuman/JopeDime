@@ -168,6 +168,11 @@ class H57Tests(unittest.TestCase):
                 fcntl.flock(handle, fcntl.LOCK_UN)
                 handle.close()
 
+    def test_disk_guard_uses_statvfs_available_blocks(self):
+        stats = SimpleNamespace(f_blocks=100 * 1024**3, f_bavail=5 * 1024**3, f_frsize=1)
+        with mock.patch.object(wave.os, "statvfs", return_value=stats):
+            self.assertRegex(wave.disk_guard_error(), "95% full")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
