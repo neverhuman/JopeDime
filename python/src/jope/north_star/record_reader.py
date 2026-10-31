@@ -269,8 +269,15 @@ def main():
     parser.add_argument(
         "--require-evaluate-all", action="store_true", help="require complete all-proposal captures"
     )
+    parser.add_argument(
+        "--detailed-counts",
+        action="store_true",
+        help="also count behavior admissions, actual dispatches and successful measurements",
+    )
     args = parser.parse_args()
     counts = dict(rounds=0, proposals=0, outcomes=0, failures=0, incomplete_rounds=0)
+    if args.detailed_counts:
+        counts.update(admissions=0, dispatches=0, successes=0)
     try:
         for record in read_records(
             args.records,
@@ -283,6 +290,12 @@ def main():
             counts["proposals"] += len(record["proposals"])
             counts["outcomes"] += len(record["outcomes"])
             counts["failures"] += sum(o["measurement"]["status"] == "failed" for o in record["outcomes"])
+            if args.detailed_counts:
+                counts["admissions"] += len(record["policy"]["admitted"])
+                counts["dispatches"] += len(record["dispatched"])
+                counts["successes"] += sum(
+                    o["measurement"]["status"] == "success" for o in record["outcomes"]
+                )
     except (ValueError, OSError, RecursionError) as exc:
         parser.error(str(exc))
     print(json.dumps(counts, sort_keys=True))

@@ -24,7 +24,11 @@ H99 requires seven unique completed cells, including the NULL diagnostic, plus
 the once-only Fold-B scoring action, `outcomes/fold_b.json` and
 `outcomes/admission.json`. H100 requires twelve paired cells, the original timing
 action and `metrics.json`. Every completed H100 cell and timing receipt is checked
-against its FIFO SHA; the aggregate must contain the exact ledger. H99 checks
+against its FIFO SHA; the aggregate must contain the exact ledger, except that
+the final owner re-arm's `state` may advance from `FIFO_REARM` to `COMPLETE`
+after aggregate publication. Every other ledger field, including all attempts,
+charges, receipt hashes and re-arm authority metadata, must remain identical.
+This check never modifies either source receipt. H99 checks
 the FIFO/scored-adapter digest chain, original source/fold/DOPE identities and
 six once-scored candidates. JSON paths stay inside the input root and reject
 symlinks, traversal and protected/live paths. All wall charges, including retained
