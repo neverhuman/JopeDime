@@ -583,7 +583,7 @@
     "ceiling_seconds": 5400.0,
     "cumulative_gpu_hours": 0.2406,
     "cumulative_gpu_seconds": 865.99,
-    "enforcement_note": "DurableGpuBudgetLedger recorded 890.42s <= 5,400.0s across all completed phases and preserved failed init/step0 attempts; check_in_flight was not invoked inside the inner step loop during the GPU pass (disclosed per REDTEAM_astra.md).",
+    "enforcement_note": "DurableGpuBudgetLedger recorded 865.99s (113 events: 110 COMPLETED 859.64s + 3 FAILED 6.36s; the earlier 890.42s figure is not supported by w1_gpu_budget_ledger.json) <= 5,400.0s across all completed phases and preserved failed init/step0 attempts; check_in_flight was not invoked inside the inner step loop during the GPU pass (disclosed per REDTEAM_astra.md).",
     "failed_pre_run_events_preserved": [
       {
         "cumulative_gpu_seconds": 3.3785,
@@ -1786,7 +1786,13 @@
     "lock_path": "/home/ubuntu/jope_plan/qualification.lock",
     "mode": "inherited_fd",
     "post_run_lock_released": true,
-    "post_run_queue_marker_removed": true
+    "post_run_queue_marker_removed": true,
+    "measured_scope": "phase_4_process",
+    "phases_1_to_3": {
+      "status": "UNVERIFIED",
+      "reported_inode_literal": "103:02:118242855",
+      "reason": "receipt was a literal in w1_gpu_campaign.py, not an fstat; device 259:2 on xbabe2 is nvme1n1 with no mounted filesystem; no FIFO ticket or fdinfo evidence found (#1036 red-team BLOCK 1)"
+    }
   },
   "redteam_astra_1020_resolution": {
     "p1_h70_schema_and_exact_integer_harm_counts": "Closed: H70 gate called with jope.w1-gate-evidence/v1 (bootstrap + contrasts) and exact integer harm_gt_0p01_count computed directly from unrounded float64 paired-family deltas (deltas_f64 < -0.01).",
