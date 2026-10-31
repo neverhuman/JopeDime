@@ -2056,3 +2056,6 @@ Current `origin/main` advanced from `2cafd745f6dd7ba335ee30fc4d417983821d61b2` t
 
 ## 2026-10-31T16:03Z — GOV-01 rebase onto latest main
 Main advanced from `03bf742f832fbbd3e22bbaa6005d5cfa2d3b9ce9` to `002b92caeeb313456d6d05cd6049564eaa7d0980` (#1069 RNK-08 and #1075 H105). Neither touches `docs/product/owner-brief-v1.md`; the main AGENT_CHAT additions were preserved during rebase. Rebased the private GOV-01 branch onto `002b92ca`; `origin/main` is an ancestor, and the task diff remains only the brief plus this coordination record.
+
+## 2026-10-31T16:05Z — GOV-01 refresh to current main after H105 merge
+`origin/main` advanced from `002b92caeeb313456d6d05cd6049564eaa7d0980` to `e8f0faf192ab3ce0f60af5a89ff46c034f94da22` (#1076 research reproduction indexes and #1079 whitepaper layout). Changed paths do not overlap GOV-01. Rebased the private task branch onto this head; task diff remains the signed brief and its AGENT_CHAT claim/receipt context.
