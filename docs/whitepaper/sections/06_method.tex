@@ -121,6 +121,11 @@ its rank among the referee's scores, inside a combined objective (\cref{app:trai
   &\quad + 0.1\,\mathcal{L}_{\text{runtime}} + 0.05\,\mathcal{L}_{\text{prog}}.
   \label{eq:totalLoss}
 \end{align}
+The writer loss in \cref{eq:writerLoss} is schematic: it displays the rank
+weights. The native implementation also smooths grammar-legal targets,
+averages token losses within each program, and normalizes by the sum of
+program weights (\cref{app:training}).
+
 Here $\mathcal{L}_{\text{BT}}$ is a Bradley--Terry loss on the same lists,
 $\mathcal{L}_{\text{runtime}}$ a Huber loss for a head that estimates runtime cost, and
 $\mathcal{L}_{\text{prog}}$ the Bradley--Terry loss of the program-only control head.
