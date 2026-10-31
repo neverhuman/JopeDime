@@ -50,7 +50,7 @@ fn decoded(output: &std::process::Output, command: &str) -> Result<(String, Stri
 
 /// What the Python did with the script's result for the invocation `shown`: `sys.exit` with the
 /// exit status (`returncode`, minus the signal for a killed script) and the stripped stderr, or the
-/// `-p <name>` pairs of its stdout (see [`parse_emitted`]).
+/// `-p <name>` pairs of its stdout (see `parse_emitted`).
 pub fn emitted_result(returncode: i64, stdout: &str, stderr: &str, shown: &str) -> Result<String> {
     if returncode != 0 {
         return Err(Error::Command(format!(

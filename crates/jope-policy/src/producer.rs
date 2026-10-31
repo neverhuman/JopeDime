@@ -395,6 +395,18 @@ fn recipe_hash(genome: &str) -> Result<String> {
     Ok(sha256_hex(recipe.canonical().as_bytes()))
 }
 
+/// Same token-uniform legal-grammar policy used by rejection fallback and
+/// exploration. Each draw uses a fresh, explicitly recorded ChaCha8 seed.
+pub fn generic_program(
+    vocabulary: &crate::grammar::BoundVocabulary,
+    task: &str,
+    seed: u64,
+) -> Result<Option<String>> {
+    use rand::SeedableRng;
+    let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(seed);
+    crate::decode::grammar_uniform_program(vocabulary.vocab(), task, &mut rng)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1349,18 +1361,6 @@ mod tests {
         assert!(read_claims(&serde_json::to_vec(&relabelled)?, &challenger_request()).is_err());
         Ok(())
     }
-}
-
-/// Same token-uniform legal-grammar policy used by rejection fallback and
-/// exploration. Each draw uses a fresh, explicitly recorded ChaCha8 seed.
-pub fn generic_program(
-    vocabulary: &crate::grammar::BoundVocabulary,
-    task: &str,
-    seed: u64,
-) -> Result<Option<String>> {
-    use rand::SeedableRng;
-    let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(seed);
-    crate::decode::grammar_uniform_program(vocabulary.vocab(), task, &mut rng)
 }
 
 /// Private context admission payload for the separate policy child. The parent
