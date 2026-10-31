@@ -102,7 +102,7 @@ fn unavailable(detail: &str) -> Box<Problem> {
 fn io(error: impl std::fmt::Display) -> Box<Problem> {
     issue(ErrorCode::IoFailure, error.to_string())
 }
-fn response(error: Box<Problem>) -> Response {
+fn response(error: &Problem) -> Response {
     problem(
         error.code,
         &error.detail,
@@ -400,7 +400,7 @@ impl RunService {
     fn start(self: &Arc<Self>, spec: RunSpec, identity: RequestIdentity) -> Response {
         let _guard = match self.admission.lock() {
             Ok(guard) => guard,
-            Err(_) => return response(io("Run admission lock is poisoned.")),
+            Err(_) => return response(&io("Run admission lock is poisoned.")),
         };
         match self.store.idempotent_receipt(&identity) {
             Ok(Some(receipt)) => return receipt.into_response(),
@@ -408,14 +408,14 @@ impl RunService {
             Err(error) => return error.into_response(),
         }
         if !spec.dry_run && self.activity.active_runs() != 0 {
-            return response(issue(
+            return response(&issue(
                 ErrorCode::BackendUnavailable,
                 "The bounded CPU run backend is busy; retry this key after the active run drains.",
             ));
         }
         let mut prepared = match self.prepare(&spec) {
             Ok(value) => value,
-            Err(error) => return response(error),
+            Err(error) => return response(&error),
         };
         if spec.dry_run {
             return match self.store.execute_idempotent(&identity, |_| {
@@ -427,19 +427,19 @@ impl RunService {
         }
         let fit = match self.store.publish_blob(prepared.fit.as_slice()) {
             Ok(value) => value,
-            Err(error) => return response(io(error)),
+            Err(error) => return response(&io(error)),
         };
         let holdout = match self.store.publish_blob(prepared.holdout.as_slice()) {
             Ok(value) => value,
-            Err(error) => return response(io(error)),
+            Err(error) => return response(&io(error)),
         };
         prepared.search.matrix_path = match self.store.verified_blob_path(&fit) {
             Ok(value) => value,
-            Err(error) => return response(io(error)),
+            Err(error) => return response(&io(error)),
         };
         let holdout_path = match self.store.verified_blob_path(&holdout) {
             Ok(value) => value,
-            Err(error) => return response(io(error)),
+            Err(error) => return response(&io(error)),
         };
         let request = FinalizationRequest {
             run_id: prepared.search.run_id.clone(),
@@ -496,7 +496,7 @@ impl RunService {
                 }
             })
         {
-            return response(io(error));
+            return response(&io(error));
         }
         let discovery = match Discovery::start_command(
             Arc::clone(&self.store),
@@ -507,14 +507,14 @@ impl RunService {
             prepared.public.warnings,
         ) {
             Ok(value) => value,
-            Err(error) => return response(io(error)),
+            Err(error) => return response(&io(error)),
         };
         if sender.send((discovery, request)).is_err() {
-            return response(io("Run worker stopped before dispatch."));
+            return response(&io("Run worker stopped before dispatch."));
         }
         match self.store.idempotent_receipt(&identity) {
             Ok(Some(receipt)) => receipt.into_response(),
-            Ok(None) => response(io("Committed run receipt missing.")),
+            Ok(None) => response(&io("Committed run receipt missing.")),
             Err(error) => error.into_response(),
         }
     }
@@ -562,15 +562,15 @@ pub(super) async fn start(
 ) -> Response {
     let headers = request.headers().clone();
     let Some(key) = headers.get("idempotency-key").and_then(|v| v.to_str().ok()) else {
-        return response(invalid("Idempotency-Key is required."));
+        return response(&invalid("Idempotency-Key is required."));
     };
     let Json(spec) = match Json::<RunSpec>::from_request(request, &()).await {
         Ok(value) => value,
-        Err(_) => return response(invalid("Expected a valid JSON RunSpec.")),
+        Err(_) => return response(&invalid("Expected a valid JSON RunSpec.")),
     };
     let body = match serde_json::to_value(&spec) {
         Ok(value) => value,
-        Err(error) => return response(io(error)),
+        Err(error) => return response(&io(error)),
     };
     let identity = match RequestIdentity::new(
         "local-engine-owner",
@@ -585,7 +585,7 @@ pub(super) async fn start(
     };
     match tokio::task::spawn_blocking(move || service.start(spec, identity)).await {
         Ok(value) => value,
-        Err(error) => response(io(error)),
+        Err(error) => response(&io(error)),
     }
 }
 
@@ -601,11 +601,11 @@ pub(super) async fn list(
     query: std::result::Result<Query<ListQuery>, axum::extract::rejection::QueryRejection>,
 ) -> Response {
     let Ok(Query(query)) = query else {
-        return response(invalid("Invalid run list query."));
+        return response(&invalid("Invalid run list query."));
     };
     let limit = query.limit.unwrap_or(100);
     if !(1..=256).contains(&limit) {
-        return response(invalid("limit must be between1 and256."));
+        return response(&invalid("limit must be between1 and256."));
     }
     let after = match query
         .after
@@ -613,7 +613,7 @@ pub(super) async fn list(
         .transpose()
     {
         Ok(value) => value,
-        Err(_) => return response(invalid("Invalid run list cursor.")),
+        Err(_) => return response(&invalid("Invalid run list cursor.")),
     };
     let result = tokio::task::spawn_blocking(move || -> Result<jope_api::registry::RunPage> {
         let mut ids = service
@@ -642,8 +642,8 @@ pub(super) async fn list(
     .await;
     match result {
         Ok(Ok(page)) => Json(page).into_response(),
-        Ok(Err(error)) => response(error),
-        Err(error) => response(io(error)),
+        Ok(Err(error)) => response(&error),
+        Err(error) => response(&io(error)),
     }
 }
 
