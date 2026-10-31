@@ -170,6 +170,78 @@ with threadpool_limits(limits=1,user_api='blas'),threadpool_limits(limits=4,user
         self.assertLessEqual(counts["before"], 4)
         self.assertLessEqual(counts["after"], 4)
 
+    def test_a3_environment_precedes_interpreter(self):
+        from launcher import worker_environment
+
+        env = worker_environment({"OMP_NUM_THREADS": "64", "RAYON_NUM_THREADS": "64"})
+        for name in (
+            "OMP_NUM_THREADS",
+            "MKL_NUM_THREADS",
+            "OPENBLAS_NUM_THREADS",
+            "NUMEXPR_NUM_THREADS",
+            "RAYON_NUM_THREADS",
+        ):
+            self.assertEqual(env[name], "1")
+        self.assertEqual(env["JE_ARROW_MALLOC_CONF"], "background_thread:false")
+
+    def test_a3_nested_limit_and_exception_restoration(self):
+        import threadpoolctl
+        from launcher import one_thread
+
+        original = threadpoolctl.threadpool_limits
+
+        def probe():
+            with threadpoolctl.threadpool_limits(limits=4, user_api="openmp"):
+                self.assertTrue(
+                    all(p["num_threads"] == 1 for p in threadpoolctl.threadpool_info())
+                )
+            raise RuntimeError("synthetic exception")
+
+        with self.assertRaisesRegex(RuntimeError, "synthetic exception"):
+            one_thread(probe)
+        self.assertIs(threadpoolctl.threadpool_limits, original)
+
+    def test_baseline_thread_cap_restores_setter(self):
+        from unittest.mock import patch, Mock
+        import torch
+        import runner
+
+        calls = []
+
+        def setter(n):
+            calls.append(n)
+
+        def imported_baseline(*args):
+            torch.set_num_threads(4)
+            return ("costs", "net")
+
+        helper = Mock(baseline=imported_baseline)
+        with (
+            patch.object(torch, "set_num_threads", setter),
+            patch.object(torch, "set_num_interop_threads") as inter,
+        ):
+            self.assertEqual(
+                runner.baseline_one_thread(helper, "root"), ("costs", "net")
+            )
+            self.assertIs(torch.set_num_threads, setter)
+            inter.assert_called_once_with(1)
+        self.assertEqual(calls, [1, 1])
+
+    def test_baseline_thread_cap_restores_after_error(self):
+        from unittest.mock import patch, Mock
+        import torch
+        import runner
+
+        setter = Mock()
+        helper = Mock(baseline=Mock(side_effect=ValueError("fixture")))
+        with (
+            patch.object(torch, "set_num_threads", setter),
+            patch.object(torch, "set_num_interop_threads"),
+        ):
+            with self.assertRaises(ValueError):
+                runner.baseline_one_thread(helper, "root")
+            self.assertIs(torch.set_num_threads, setter)
+
     def test_guard_boundaries(self):
         s = dict(
             rss=0,

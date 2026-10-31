@@ -30,6 +30,7 @@ serde_json.workspace = true
 ulid.workspace = true
 
 [dev-dependencies]
+axum = { version = "=0.8.9", default-features = false, features = ["http1", "tokio"] }
 jope-client = { path = "../jope-client", features = ["engine", "fake"] }
 # Test builds of `jopedime` pack fixture packages and trust the development key. Release builds
 # (no dev-dependencies) get neither.
@@ -42,7 +43,7 @@ tempfile.workspace = true
 [features]
 default = ["engine", "mcp", "client"]
 mcp = ["client", "dep:rmcp", "dep:tokio"]
-engine = ["dep:jope-service"]
+engine = ["dep:jope-service", "jope-client?/engine"]
 # Internal research CLI; ordinary and embedded release builds do not select it.
 research = ["engine", "jope-service/research"]
 # Build service client commands without requiring the embedded engine.

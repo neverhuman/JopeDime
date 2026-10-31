@@ -60,7 +60,3 @@
 3. **`FAMBAL_ACC4` at flat `lr = 1e-4` increases adapter drift and fold-0 degradation**:
    - Although `FAMBAL_ACC4` achieves `100%` fit-family coverage (`164/164` families per cell across `160` microbatches) and reduces gradient variance, taking `40` AdamW steps at flat `lr = 1e-4` along lower-noise fit-fold gradients drives `15.5%` larger parameter drift (`0.50806` vs `0.43980`) and worse out-of-family generalization (`-0.021905` vs `r882`, `-0.005017` vs `CONTROL`).
    - Across all three arms, `fold 0` utility loss, family harm fraction, and continuous regret scale monotonically with adapter L2 drift from `r882` (`COSWR` `0.24585` < `CONTROL` `0.43980` < `FAMBAL_ACC4` `0.50806`).
-
-## 6. Next Step
-
-Every fine-tune-from-`r882` arm (including `CONTROL`) loses `~0.02` on `fold 0`, so further optimizer-schedule waves are low prior; prediction-level blends (`H129`/`H134`/`H135`) are the live lead.
