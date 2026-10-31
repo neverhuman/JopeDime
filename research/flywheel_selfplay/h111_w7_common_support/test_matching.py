@@ -37,6 +37,8 @@ def cell():
 def records():
     return [
         dict(
+            held_fold=0,
+            seed=701,
             arm=a,
             family_id=f"f{i}",
             context_sha256=sha(f"c{i}"),
@@ -121,6 +123,9 @@ def test_missing_attempts_remain_pending_even_with_some_common_support(n):
 @pytest.mark.parametrize(
     "field,value",
     [
+        ("held_fold", 1),
+        ("seed", 702),
+        ("seed", True),
         ("arm", "extra"),
         ("family_id", "foreign"),
         ("context_sha256", "f" * 64),

@@ -9,7 +9,7 @@ selecting a winning learner or acquiring new outcomes.
 ## Implemented boundary
 
 [`matching.py`](matching.py) accepts a verified 20-fit-family cell and only these
-attempt metadata fields: arm, family, context/program SHA, explicit completion
+attempt metadata fields: held fold, seed, arm, family, context/program SHA, explicit completion
 status and completion-receipt SHA. Outcome/utility fields are rejected.
 For each family × completed-pass/completed-gate-fail stratum, it takes the
 minimum count across the three H104 memories, choosing by program SHA. Different
@@ -20,7 +20,7 @@ Selection ignores utility and preserves status balance within each family.
 A complete cell must account for all 240 acquisition attempts: 20 families ×
 four attempts × three arms. Missing attempts produce PENDING, with provisional
 matching and `selection_final=false`. Retries/duplicate programs, a fifth attempt,
-foreign families/contexts or malformed identities are refused. Explicit unknowns
+foreign fold/seed cells, families/contexts or malformed identities are refused. Explicit unknowns
 are excluded, never zero-filled or treated as measured gate failure. Once the
 census is complete, fewer than eight common families is UNTESTED; the original
 batch-of-eight requirement cannot be reduced to obtain a favorable subset.
@@ -86,7 +86,7 @@ reserves no additional fits and resets no campaign deadline or consumption.
 Remaining authorized resources are unknown. DOPE stays frozen; no GPU/lock,
 live-worker, model/weight, protected-row or serving action occurs.
 
-Validation: 29 focused synthetic controls pass; 15 real-metadata empty-ledger
+Validation: 32 focused synthetic controls pass; 15 real-metadata empty-ledger
 controls preserve PENDING across all hosts. These are integrity proofs, not
 scientific observations. Actual fits, optimizer updates and GPU use are zero;
 Elo, val_reg_inner and U4 remain null. See the READY PR for exact-head checks,

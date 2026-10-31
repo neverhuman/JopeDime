@@ -44,39 +44,39 @@
   "pending_common_learner_slots": 45,
   "real_acquisition_attempt_records": 0,
   "real_completion_receipts": 0,
-  "synthetic_tests_passed": 29,
+  "synthetic_tests_passed": 32,
   "empty_ledger_controls": 15,
   "host_shards": [
     {
       "host": "xbabe2",
       "shard": "1",
-      "cpu_seconds": 0.033597141,
+      "cpu_seconds": 0.031461727,
       "exit_status": 0
     },
     {
       "host": "xbabe1",
       "shard": "0",
-      "cpu_seconds": 0.030183369,
+      "cpu_seconds": 0.030116564000000002,
       "exit_status": 0
     },
     {
       "host": "xbabe3",
       "shard": "2",
-      "cpu_seconds": 0.030456772,
+      "cpu_seconds": 0.030143264999999995,
       "exit_status": 0
     },
     {
       "host": "xbabe4",
       "shard": "3_4",
-      "cpu_seconds": 0.018590917000000002,
+      "cpu_seconds": 0.018578124,
       "exit_status": 0
     }
   ],
-  "worker_cpu_seconds": 0.112828199,
+  "worker_cpu_seconds": 0.11029968,
   "other_overhead": "Unmeasured, not zero; prior campaign resource consumption remains unknown.",
   "matching_plan_sha256": "ea2c40033005f344113ee87743da7e72f94505677f8ef6a34812a94ed43ada3c",
   "h104_plan_file_sha256": "28481a3b4be7bc28bb5711b88eb370684b9a0a3263fe387c603edee483bd75d2",
-  "matching_source_sha256": "cd881f9dc5dd859a8519adb79f78130d17518b127ba7b9482d5b36707e936ca7",
+  "matching_source_sha256": "9c711e1e6b92ef03fa9b99404f5cf2fc4523fb53efb69a3f28742710c50e74c9",
   "actual_fits": 0,
   "actual_optimizer_updates": 0,
   "gpu_seconds": 0,
@@ -88,5 +88,7 @@
     "val_reg_inner": null,
     "U4": null
   },
-  "verdict": "CPU_PREPARATION_ONLY_ALL_REAL_MATCHING_RECEIPTS_PENDING"
+  "verdict": "CPU_PREPARATION_ONLY_ALL_REAL_MATCHING_RECEIPTS_PENDING",
+  "initial_worker_cpu_seconds": 0.112828199,
+  "total_measured_worker_cpu_seconds": 0.223127879
 }

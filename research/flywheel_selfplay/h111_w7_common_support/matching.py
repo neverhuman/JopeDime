@@ -79,6 +79,8 @@ def match_cell(cell, records):
         raise ValueError("records must be a list")
     groups, counts, seen, excluded = defaultdict(list), Counter(), set(), Counter()
     fields = [
+        "held_fold",
+        "seed",
         "arm",
         "family_id",
         "context_sha256",
@@ -88,6 +90,8 @@ def match_cell(cell, records):
     ]
     for r in records:
         exact(r, fields)
+        if any(type(r[k]) is not int or r[k] != cell[k] for k in ("held_fold", "seed")):
+            raise ValueError("attempt belongs to another fold/seed cell")
         arm, family, status = r["arm"], r["family_id"], r["status"]
         if (
             not isinstance(arm, str)
