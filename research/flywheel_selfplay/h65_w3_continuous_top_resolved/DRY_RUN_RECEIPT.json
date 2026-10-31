@@ -1,0 +1,21 @@
+{
+  "canonical_sha256": "b9be38a2d975279cf8104003fae130c7282d8262d099c3b08a1a32b235925374",
+  "catalog_source_sha256": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
+  "catalog_version": "v246",
+  "dataset_id": "b9be38a2d975279c",
+  "manifest_key": "datasets/b9be38a2d975279c/manifest.json",
+  "manifest_sha256": "acacfba8c5c083cd16108c25b2a53d82050376fa945bb4fd19f7f7a84a861924",
+  "mode": "dry-run",
+  "observed_at_utc": "2026-10-31T03:53:49.728012+00:00",
+  "origin": "real",
+  "outcome_values_emitted": false,
+  "purpose": "input-plumbing-only; not a W3 outcome row, fit, score, or result",
+  "schema": "jope.h65.s3-plumbing-smoke/v1",
+  "task": "regression",
+  "test_blob_requested": false,
+  "train_blob_key": "blobs/sha256/b777779435c9e4685735e95ce41a9e28e14e01eb4e2de5cb685219f65414c4d8",
+  "train_bytes": 9276,
+  "train_columns": 10,
+  "train_rows": 85,
+  "train_sha256": "b777779435c9e4685735e95ce41a9e28e14e01eb4e2de5cb685219f65414c4d8"
+}
