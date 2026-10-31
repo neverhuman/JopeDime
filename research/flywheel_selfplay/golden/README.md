@@ -58,6 +58,44 @@ for diagnosis; existing output directories refuse and are never overwritten.
 This proves regeneration only for the captured 50-context/model-prior subset;
 full historical corpus, consumer coverage, M2/M3/M5 and CUDA remain separate.
 
+The 50-context historical-pool export is a separate CPU mode. It preserves every
+plan-bound NPZ `program:F32[N,412]` row and ordered program SHA, then computes
+`proj16:F64[N,16]` by the pinned caller formula using the frozen sign matrix.
+These NPZs contain captured historical feature outputs, not DSL strings; this is
+not DSL-to-feature regeneration or completeness of the global historical corpus.
+No pool fitness, table, label or split is modified; only the plan's TRAIN pools
+are read. The original model-prior packet and its index remain unchanged.
+
+```sh
+CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+ nice -n 10 python3 research/flywheel_selfplay/golden/capture_cpu.py \
+ --plan "$CPU_PLAN" --expected-plan-sha256 "$CPU_PLAN_SHA256" \
+ --historical-pools "$TRAIN_POOLS" --packet "$FIXTURES" \
+ --expected-index-sha256 "$PUBLISHED_INDEX_SHA256" \
+ --custody-store "$HASH_CUSTODY" --output "$NEW_CATALOG_ROOT"
+```
+
+`custody-index.json` binds `packet/` (all original fixtures/index) and
+`historical/<context>.safetensors` plus `.json` (row order, program hashes and pool
+provenance). It reports logical payload/total bytes, its own index bytes by fixed
+point, unique content bytes and the decimal 50,000,000-byte threshold. Logical
+size controls required hash custody even when duplicate content reduces physical
+storage. The bounded measured set may exceed 50MB; every object, including the
+catalog, is then retained outside Git under its SHA256 filename. Existing objects
+must match and are never replaced. No execution-host paths or clock values are
+added; fixed frozen-source identifiers are retained.
+
+The committed real CPU test fetches the complete set when
+`JOPE_RES07_HISTORICAL_CATALOG_SHA256` and `JOPE_RES07_CUSTODY_STORE` are set along
+with the existing real-bundle inputs. `generate.materialize_custody(store, sha,
+new_output)` verifies the independently supplied catalog SHA, accounting, canonical
+relative paths and every object SHA/length before atomic publication. A missing,
+corrupt or escaping object refuses; the original store and packet stay intact.
+After fetch, existing consumers use `JOPE_GOLDEN_DIR=<fetched>/packet`; historical
+arrays and ordered identities remain under `<fetched>/historical`.
+This covers only all captured rows for the reviewed 50 TRAIN contexts. Global
+historical DSL inventory, raw proposer snapshots and full qualification stay open.
+
 Strict real replay (external fixture index SHA and the pinned real bundle required):
 
 ```sh
