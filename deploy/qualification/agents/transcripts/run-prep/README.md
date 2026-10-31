@@ -145,3 +145,38 @@ capture receipt/raw files as additional sidecars. `complete:true` describes
 transport capture, not tool success or AG1 completion. A5 is always `UNVERIFIED`.
 Self-tests use disposable synthetic child processes only, never a real engine
 or a named-client qualification run.
+
+### Child environment
+
+The server receives an explicit environment, rather than inheriting every caller
+variable. Defaults retain `PATH`, `HOME`, `LANG`, `LC_ALL`, `LC_CTYPE`, `TZ`,
+`TMPDIR`, `TMP`, `TEMP`, the four XDG config/data/state/cache home paths,
+`JOPEDIME_HOME`, `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `MKL_NUM_THREADS`,
+`RAYON_NUM_THREADS` and `CUDA_VISIBLE_DEVICES`. Empty values are preserved,
+including an empty CUDA visibility mask; the isolated engine-home and resource
+controls therefore remain effective. When `PATH` is absent, the OS default
+executable path is used for both lookup and child execution.
+
+Other variables, including ambient GitHub/AWS/API credentials, proxy settings,
+Python paths and loader options, are omitted by default. For additional required
+configuration, name each variable explicitly; its value comes from the caller's
+environment and is never placed in the command arguments:
+
+```sh
+# JOPE_DATASETS_URL must already exist in the caller's environment.
+nice -n 10 python3 -B deploy/qualification/agents/transcripts/run-prep/capture_stdio.py \
+  --out-dir path/to/FRESH-capture --env-allow JOPE_DATASETS_URL \
+  -- /absolute/path/to/jopedime mcp
+```
+
+`--env-allow NAME` is repeatable. Missing variables or names containing an
+assignment are refused before outputs or a child are created. There is no prefix
+or wildcard allowance. `capture.json` lists the selected `environment_names` and
+explicit `extra_environment_names`, without their values.
+
+Explicit opt-ins can still contain sensitive values, and a server can echo them
+into its output. Argv, wire traffic and stderr remain unredacted; keep secrets out
+of those channels. Environment selection does not sandbox filesystem access:
+the server retains the caller's normal file permissions, including the selected
+home/configuration paths. These controls limit ambient propagation and do not
+establish client provenance or qualify A5.
