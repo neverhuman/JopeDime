@@ -1,0 +1,29 @@
+{
+  "checks": {
+    "global_sealed_family_exclusion": {
+      "missing_artifact": "Complete authoritative identity-only sealed-family manifest, independent authority receipt, and matching alias-registry pin.",
+      "overlap_count": null,
+      "status": "FAIL"
+    },
+    "original_row_source": {
+      "invalid_rows": 0,
+      "missing_rows": 504,
+      "required_artifact": "Per-child original source-row locator, S3 key/version/byte SHA, verified byte receipt and original-training-row ledger.",
+      "status": "FAIL"
+    },
+    "parent_child_lineage": {
+      "invalid_rows": 0,
+      "missing_rows": 504,
+      "required_artifact": "Exact context/child/parent/operator ledger bound to the actual pool-membership byte receipt and immutable lineage source.",
+      "status": "FAIL"
+    }
+  },
+  "children_checked": 504,
+  "contexts": 254,
+  "execution_admitted": false,
+  "families": 123,
+  "next_action": "W9_CPU_PREPARATION",
+  "schema": "jope.h101.w5-relations/v1",
+  "scope": "Pinned metadata relations only; independent authenticity/completeness, completion/evaluator/cut and H98 role-reconciliation gates remain required.",
+  "verdict": "FAIL"
+}

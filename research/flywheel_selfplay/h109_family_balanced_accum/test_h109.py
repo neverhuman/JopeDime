@@ -112,3 +112,66 @@ def test_schedule_contract_and_cpu_dry_run(tmp_path):
     assert receipt["status"] == "cpu_dry_run_pass"
     assert receipt["optimizer_updates"] == 0
     assert receipt["gpu_ticket_created"] is False
+
+
+def test_readout_synthetic_bootstrap_elo_and_admission():
+    receipt = r.readout_cpu_dry_run()
+    assert receipt["status"] == "READOUT_DRY_RUN_PASS"
+    assert receipt["synthetic_cells"] == len(r.ARMS) * len(r.SEEDS)
+    assert receipt["outcome_files_read"] == 0
+    assert receipt["synthetic_fb_admitted"] is True
+    assert receipt["synthetic_control_admitted"] is False
+    assert receipt["GPU_used"] is False
+    assert receipt["qualification_lock_used"] is False
+    assert receipt["FIFO_ticket_created"] is False
+
+
+def _synthetic_outcome_cells():
+    families = [f"fixture-{index}" for index in range(8)]
+    baseline = {family: 0.0 for family in families}
+    cells = []
+    for arm in r.ARMS:
+        for seed in r.SEEDS:
+            cells.append(
+                {
+                    "schema": "jope.h109.cell-outcome/v1",
+                    "wave": "H109",
+                    "arm": arm,
+                    "seed": seed,
+                    "prereg_sha256": r.prereg_sha256(),
+                    "fold_seed": r.FOLD_SEED,
+                    "source_commit": "fixture-source",
+                    "fold_assignment_sha256": "fixture-fold",
+                    "checkpoint_sha256": r.R882_SHA256,
+                    "dope_before": r.DOPE_SHA256,
+                    "dope_after": r.DOPE_SHA256,
+                    "optimizer_updates": r.UPDATES,
+                    "dl_val_reads": 0,
+                    "sealed_holdout_meta_test_reads": 0,
+                    "assessment": {"utility_by_family": dict(baseline)},
+                    "r882_utility_by_family": dict(baseline),
+                }
+            )
+    return cells
+
+
+def test_readout_fails_closed_on_missing_cells_or_wrong_prereg():
+    cells = _synthetic_outcome_cells()
+    with pytest.raises(RuntimeError, match="all nine"):
+        r.summarize_readout(cells[:-1])
+    cells[0]["prereg_sha256"] = "wrong"
+    with pytest.raises(RuntimeError, match="identity/boundary"):
+        r.summarize_readout(cells)
+
+
+def test_readout_exact_margin_ties_do_not_advance():
+    cells = _synthetic_outcome_cells()
+    for cell in cells:
+        if cell["arm"] == "FBAL":
+            cell["assessment"]["utility_by_family"] = {
+                family: 0.001 for family in cell["r882_utility_by_family"]
+            }
+    metrics = r.summarize_readout(cells)
+    assert metrics["arms"]["FBAL"]["family_mean_gain"] == pytest.approx(0.001)
+    assert metrics["arms"]["FBAL"]["holm"]["passes"] is False
+    assert metrics["arms"]["FBAL"]["admitted"] is False
