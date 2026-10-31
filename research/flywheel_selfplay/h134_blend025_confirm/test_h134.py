@@ -93,3 +93,61 @@ def test_dry_run_is_data_free():
         and out["data_reads"] == 0
         and out["estimator_fits"] == 0
     )
+
+
+# Amendment A-resume (owner decision t1715): resume launcher controls, synthetic only.
+RSPEC = importlib.util.spec_from_file_location("h134_test_resume", HERE / "resume.py")
+resume = importlib.util.module_from_spec(RSPEC)
+sys.modules[RSPEC.name] = resume
+RSPEC.loader.exec_module(resume)
+
+
+def test_resume_launcher_pins_the_preregistered_runner():
+    assert resume.load_runner().FOLD_SEED == 134141
+    assert resume.task_name((143, (1, 2))) == "seed143-exclude12"
+    assert resume.task_name((141, (0,))) == "seed141-exclude0"
+
+
+def _aborted(tmp_path, monkeypatch):
+    import hashlib
+    import json
+
+    root = tmp_path / resume.RESUME_ROOT_NAME
+    root.mkdir()
+    files = {}
+    for name, body in (
+        ("split.json", b"{}"),
+        ("seed141-exclude0.npz", b"P"),
+        ("seed141-exclude0.json", b"{}"),
+    ):
+        (root / name).write_bytes(body)
+        files[name] = {"sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body)}
+    manifest = {
+        "status": "ABORTED_DISK_GUARD_INCOMPLETE",
+        "outcomes_computed": False,
+        "fits_completed": 1,
+        "files": files,
+    }
+    (root / "manifest.json").write_text(json.dumps(manifest))
+    monkeypatch.setattr(
+        resume, "RESUME_MANIFEST_SHA", resume.sha(root / "manifest.json")
+    )
+    return root
+
+
+def test_resume_verifies_every_pinned_file(tmp_path, monkeypatch):
+    root = _aborted(tmp_path, monkeypatch)
+    assert resume.verify_resume_root(root)["fits_completed"] == 1
+    (root / "seed141-exclude0.npz").write_bytes(b"changed")
+    with pytest.raises(RuntimeError, match="pinned file changed"):
+        resume.verify_resume_root(root)
+
+
+def test_resume_runs_once_and_only_for_the_pinned_manifest(tmp_path, monkeypatch):
+    root = _aborted(tmp_path, monkeypatch)
+    (root / "resume-identity.json").write_text("{}")
+    with pytest.raises(RuntimeError, match="already resumed"):
+        resume.verify_resume_root(root)
+    monkeypatch.setattr(resume, "RESUME_MANIFEST_SHA", "0" * 64)
+    with pytest.raises(RuntimeError, match="manifest differs"):
+        resume.verify_resume_root(root)
