@@ -13634,6 +13634,16 @@
       ],
       "lanes": [],
       "scope": "H117 W5 identity-only provenance fixtures: unique candidates across manifest revisions, zero overlap yields UNPROVED_BOUNDED never PASS with W5 HELD, any family/dataset/view/prefix/catalog overlap fails proof 1, the lineage census separates pool-level parent fields from per-child lineage, catalog sealed ids parsed from the exclusion sentence only, and the manifest hash pin enforced. Synthetic only; no data payloads; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h121_target_smoothing/test_h121.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H121 target-smoothing preregistration fixtures: target smoothing (eps 0.1/0.3) and continuous mean-regret co-readout vs r882, CPU prep only."
     }
   },
   "lanes": {
