@@ -1,0 +1,69 @@
+{
+  "wave": "H135",
+  "status": "INCOMPLETE",
+  "scientific_verdict": "UNMEASURED",
+  "attempt": 1,
+  "continuation_status": "A2_PREREGISTERED_NOT_EXECUTED",
+  "actual_fits": 0,
+  "actual_optimizer_updates": 0,
+  "baseline_predictions": 0,
+  "blend_reads": 0,
+  "baseline_sanity": "NOT_REACHED",
+  "mean_gain": null,
+  "Elo": null,
+  "val_reg": null,
+  "U4": null,
+  "stop": {
+    "status": "INCOMPLETE",
+    "source_commit": "cd00c99cc4adb85d495b5c12906e4884fc989b62",
+    "exit_status": 1,
+    "reason": "guard: threads>4",
+    "actual_fits": 0,
+    "actual_optimizer_updates": 0,
+    "baseline_predictions": 0,
+    "blend_reads": 0,
+    "baseline_sanity": "NOT_REACHED",
+    "phase": "baseline setup before checkpoint-load receipt and prediction loop",
+    "runtime_read_audit": "NOT_FLUSHED; no complete runtime read-count proof",
+    "authorized_data_exposure": "cohort, context features and91validation pools loaded before baseline constructor by frozen source control flow; no protected inputs authorized",
+    "peak_rss": 925720576,
+    "max_threads": 7,
+    "samples": 72,
+    "first_utc": "2026-10-31T21:35:01.323283+00:00",
+    "last_utc": "2026-10-31T21:35:24.155695+00:00",
+    "files": {
+      "r882-copy.pt": {
+        "bytes": 7493476,
+        "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
+      },
+      "reference.json": {
+        "bytes": 38703,
+        "sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+      },
+      "cohort.json": {
+        "bytes": 139,
+        "sha256": "4bc5ae2e19839030cda0733608da9bf69e6c47696eaa3e1afeb04e8c55573d9b"
+      }
+    },
+    "metric_values": null,
+    "verdict": "INCOMPLETE_NO_SCIENTIFIC_VERDICT",
+    "no_live_processes": true
+  },
+  "custody": {
+    "manifest": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-t1505/manifest.json",
+      "version_id": "FOH8vg.wIYiXFVltILnQP2SuSZIgRpHB",
+      "sha256": "2e657bc0c4451613869f4518d660a184e63919897a98973fb3045b5d996cf1f9",
+      "bytes": 15232,
+      "verified_utc": "2026-10-31T21:38:02.418209+00:00"
+    },
+    "archive": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-t1505/numerical-evidence.npz",
+      "version_id": "4B3kBLJYqmn_ZT.8U1eWt18ZVAmFf32d",
+      "sha256": "0e26e3170ada50afced6a0e20c3ebf87c3c60086b4eb3463c9590575ca009b69",
+      "bytes": 38071,
+      "verified_utc": "2026-10-31T21:37:57.716843+00:00"
+    },
+    "archive_members_verified": 9
+  }
+}
