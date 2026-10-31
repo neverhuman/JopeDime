@@ -120,7 +120,7 @@ plt.rcParams.update({"font.family": "serif", "font.size": 8, "axes.labelsize": 8
 fig, axes = plt.subplots(2, 1, figsize=(3.4, 2.85), sharex=True)
 axes[0].step(rounds, cumulative, where="post", color="#5f3dc4", lw=1.1)
 axes[0].plot(rounds, cumulative, ".", color="#5f3dc4", ms=2.5)
-axes[0].set_title("A. Training-program promotions", fontsize=8, loc="left", pad=3)
+axes[0].set_title("Top: Training-program promotions", fontsize=8, loc="left", pad=3)
 axes[0].set_ylabel("cumulative\npromotions")
 axes[0].set_ylim(-0.5, max(cumulative) + max(1, max(cumulative) * 0.1))
 axes[0].yaxis.set_major_locator(MaxNLocator(nbins=4, integer=True))
@@ -128,7 +128,7 @@ axes[1].plot(rounds, candidate, "o-", color="#6e7781", ms=2.5, lw=0.8,
              label="candidate adapter")
 axes[1].step(rounds, best, where="post", color="#0b5394", lw=1.15,
              label="recorded best")
-axes[1].set_title("B. Adapter validation", fontsize=8, loc="left", pad=3)
+axes[1].set_title("Bottom: Adapter validation", fontsize=8, loc="left", pad=3)
 axes[1].set_ylabel("validation\npool utility")
 axes[1].set_ylim(min(candidate + best) - 0.004, max(candidate + best) + 0.0013)
 axes[1].ticklabel_format(axis="y", style="plain", useOffset=False)
