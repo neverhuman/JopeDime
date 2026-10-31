@@ -107,7 +107,8 @@ import sys
 profile = json.load(open(sys.argv[1], encoding="utf-8"))
 assert profile["rows"] == "30" and len(profile["columns"]) == 13
 assert profile["idempotency_key"] == "rel05-s3-catalog-30-row-v1"
-print("dataset add: " + profile["dataset_id"] + " (30 rows, 13 columns)")
+assert profile["name"] == "rel05-s3-catalog-30-row"
+print("dataset add: " + profile["dataset_id"] + " (30 rows, 13 columns; requested name preserved)")
 PY
 
 http_status=$(python3 - "$daemon_file" <<'PY' | curl --fail-with-body --silent --show-error --config - \
@@ -127,7 +128,8 @@ import json
 import sys
 profile = json.load(open(sys.argv[1], encoding="utf-8"))
 assert profile["rows"] == "30" and len(profile["columns"]) == 13
-print("POST /v1/datasets CSV replay: HTTP 201; 30 rows, 13 columns")
+assert profile["name"] == "rel05-s3-catalog-30-row"
+print("POST /v1/datasets CSV replay: HTTP 201; 30 rows, 13 columns; requested name preserved")
 PY
 
 set +e
