@@ -3,8 +3,9 @@ use super::super::{
     adapter::{CpuAdapter, PredictCostsInputs, PredictedCosts},
     bundle::{check_tensor_header, BundleLimits, VerifiedBundle},
 };
+use super::cpu;
 use anyhow::{ensure, Context, Result};
-use candle_core_0_11_0::{Device, Tensor, D};
+use candle_core_0_11_0::{Device, Tensor};
 use jope_api::{error::ErrorCode, Placement};
 use jope_runtime::backend::DeviceRequest;
 use safetensors::{Dtype, SafeTensors};
@@ -159,30 +160,18 @@ impl FusedForward {
         Ok(Tensor::from_vec(values, shape, &self.device)?)
     }
     fn linear(&self, x: &Tensor, name: &str) -> Result<Tensor> {
-        let input = x.dim(D::Minus1)?;
-        let output = self.p(&format!("{name}.weight"))?.dim(0)?;
-        let shape = x.dims();
-        let y = x
-            .reshape((x.elem_count() / input, input))?
-            .matmul(&self.p(&format!("{name}.weight"))?.t()?.contiguous()?)?
-            .broadcast_add(self.p(&format!("{name}.bias"))?)?;
-        let mut target = shape.to_vec();
-        *target.last_mut().context("linear rank")? = output;
-        Ok(y.reshape(target)?)
+        cpu::linear(
+            x,
+            self.p(&format!("{name}.weight"))?,
+            self.p(&format!("{name}.bias"))?,
+        )
     }
     fn norm(&self, x: &Tensor, name: &str) -> Result<Tensor> {
-        let centered = x.broadcast_sub(&x.mean_keepdim(D::Minus1)?)?;
-        Ok(centered
-            .broadcast_mul(
-                &centered
-                    .sqr()?
-                    .mean_keepdim(D::Minus1)?
-                    .affine(1., 1e-5)?
-                    .sqrt()?
-                    .recip()?,
-            )?
-            .broadcast_mul(self.p(&format!("{name}.weight"))?)?
-            .broadcast_add(self.p(&format!("{name}.bias"))?)?)
+        cpu::norm(
+            x,
+            self.p(&format!("{name}.weight"))?,
+            self.p(&format!("{name}.bias"))?,
+        )
     }
     fn standard(&self, x: &Tensor, mean: &str, std: &str, bound: f64) -> Result<Tensor> {
         let scale = self.p(std)?;
@@ -219,11 +208,11 @@ impl FusedForward {
         let extra = self.norm(&v.narrow(1, 140, 116)?, &format!("{r}.v3_inter_norm"))?;
         let x = Tensor::cat(&[&x140, &extra], 1)?;
         let mut h = self.norm(
-            &self.linear(&x140, &format!("{r}.backbone.0"))?.silu()?,
+            &cpu::silu(&self.linear(&x140, &format!("{r}.backbone.0"))?)?,
             &format!("{r}.backbone.2"),
         )?;
         h = self.norm(
-            &self.linear(&h, &format!("{r}.backbone.3"))?.silu()?,
+            &cpu::silu(&self.linear(&h, &format!("{r}.backbone.3"))?)?,
             &format!("{r}.backbone.5"),
         )?;
         // _LEVEL_INDEX['high'] ==1, not ultra==2; small_embed is absent at high.
@@ -233,19 +222,16 @@ impl FusedForward {
                 .narrow(0, 1, 1)?,
         )?;
         let a = format!("{r}.inter_attn");
-        let tok = self
-            .linear(&x.reshape((8, 32))?, &format!("{a}.token_proj"))?
-            .silu()?;
+        let tok = cpu::silu(&self.linear(&x.reshape((8, 32))?, &format!("{a}.token_proj"))?)?;
         let qkv = self.linear(&tok, &format!("{a}.qkv"))?;
-        let logits = qkv
-            .narrow(1, 0, 32)?
-            .matmul(&qkv.narrow(1, 32, 32)?.t()?.contiguous()?)?
-            .affine(1. / 32f64.sqrt(), 0.)?;
-        let exp = logits.broadcast_sub(&logits.max_keepdim(1)?)?.exp()?;
-        let probs = exp.broadcast_mul(&exp.sum_keepdim(1)?.recip()?)?;
-        let attended = (probs.matmul(&qkv.narrow(1, 64, 32)?)? + &tok)?.reshape((1, 256))?;
-        let bilin = (self.linear(&x, &format!("{a}.bilinear_u"))?.tanh()?
-            * self.linear(&x, &format!("{a}.bilinear_v"))?.silu()?)?;
+        let logits = cpu::scale_attention(&cpu::matmul(
+            &qkv.narrow(1, 0, 32)?,
+            &qkv.narrow(1, 32, 32)?.t()?.contiguous()?,
+        )?)?;
+        let probs = cpu::softmax(&logits)?;
+        let attended = (cpu::matmul(&probs, &qkv.narrow(1, 64, 32)?)? + &tok)?.reshape((1, 256))?;
+        let bilin = (cpu::tanh(&self.linear(&x, &format!("{a}.bilinear_u"))?)?
+            * cpu::silu(&self.linear(&x, &format!("{a}.bilinear_v"))?)?)?;
         let inter = self.norm(
             &self.linear(
                 &Tensor::cat(&[&attended, &bilin], 1)?,
@@ -286,20 +272,16 @@ impl FusedForward {
             ],
             1,
         )?;
-        let task = self.linear(&h, &format!("{r}.task_latent_head"))?.tanh()?;
-        let dist = self.linear(&h, &format!("{r}.dist_latent_head"))?.tanh()?;
-        let lm = self
-            .linear(&h, &format!("{r}.landmark_recon_head"))?
-            .tanh()?;
-        let bb = self.linear(&h, &format!("{r}.bb_recon_head"))?.tanh()?;
-        let col_gates = self
-            .linear(
-                &Tensor::cat(&[&task.broadcast_as((64, 128))?, &c], 1)?,
-                "dope_model.target_net.col_gate_head",
-            )?
-            .tanh()?
-            .affine(0.25, 1.)?
-            .reshape((1, 64))?;
+        let task = cpu::tanh(&self.linear(&h, &format!("{r}.task_latent_head"))?)?;
+        let dist = cpu::tanh(&self.linear(&h, &format!("{r}.dist_latent_head"))?)?;
+        let lm = cpu::tanh(&self.linear(&h, &format!("{r}.landmark_recon_head"))?)?;
+        let bb = cpu::tanh(&self.linear(&h, &format!("{r}.bb_recon_head"))?)?;
+        let col_gates = cpu::tanh(&self.linear(
+            &Tensor::cat(&[&task.broadcast_as((64, 128))?, &c], 1)?,
+            "dope_model.target_net.col_gate_head",
+        )?)?
+        .affine(0.25, 1.)?
+        .reshape((1, 64))?;
         let dope = Tensor::cat(&[&v, &task, &dist, &gates, &lm, &bb, &col_gates], 1)?;
         let lm48 = self
             .standard(&v, "step2_lm_mean_1x256", "step2_lm_std_1x256", 6.)?

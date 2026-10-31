@@ -221,6 +221,83 @@ mod tests {
     };
 
     #[test]
+    #[ignore = "requires an externally staged, hash-pinned sampled/full recipe capture"]
+    fn report_external_sampled_vs_full_capture() {
+        use std::{env, fs};
+
+        let capture_path = env::var("JOPE_RNK05_CAPTURE_JSON").unwrap();
+        let report_path = env::var("JOPE_RNK05_REPORT_JSON").unwrap();
+        let capture: serde_json::Value = serde_json::from_slice(&fs::read(capture_path).unwrap())
+            .expect("decode sampled/full recipe capture");
+
+        let decode_output = |name: &str| {
+            let output = &capture["outputs"][name];
+            let vector: Vec<f32> = serde_json::from_value(output["vector256"].clone()).unwrap();
+            assert_eq!(vector.len(), VECTOR_WIDTH, "{name}: vector width");
+            let columns: Vec<[f32; RAW_COLUMN_WIDTH]> =
+                serde_json::from_value(output["col_full"].clone()).unwrap();
+            assert!(
+                !columns.is_empty(),
+                "{name}: raw column output must be present"
+            );
+
+            let report: [f32; REPORT_WIDTH] = vector[..REPORT_WIDTH].try_into().unwrap();
+            let table: [f32; TABLE_WIDTH] = vector[REPORT_WIDTH..REPORT_WIDTH + TABLE_WIDTH]
+                .try_into()
+                .unwrap();
+            let interactions: [f32; INTERACTION_WIDTH] = vector
+                [REPORT_WIDTH + TABLE_WIDTH..REPORT_WIDTH + TABLE_WIDTH + INTERACTION_WIDTH]
+                .try_into()
+                .unwrap();
+            let building_blocks: [f32; BUILDING_BLOCK_WIDTH] = vector
+                [REPORT_WIDTH + TABLE_WIDTH + INTERACTION_WIDTH..]
+                .try_into()
+                .unwrap();
+            let rows = output["rows"].as_u64().unwrap() as usize;
+
+            (
+                LandmarkOutput::from_descriptor_parts(
+                    &report,
+                    &table,
+                    &interactions,
+                    &building_blocks,
+                    &columns,
+                ),
+                rows,
+            )
+        };
+
+        let (sampled, sampled_rows) = decode_output("sampled");
+        let (full, full_rows) = decode_output("full");
+        let sampled_recipe_elapsed_ms = capture["outputs"]["sampled"]["elapsed_ns"]
+            .as_u64()
+            .unwrap() as f64
+            / 1_000_000.0;
+        let full_recipe_elapsed_ms =
+            capture["outputs"]["full"]["elapsed_ns"].as_u64().unwrap() as f64 / 1_000_000.0;
+        assert!(sampled_rows <= 1_024);
+        assert!(full_rows > sampled_rows);
+        let summary = compare_sampled_to_full(&sampled, &full, sampled_rows, full_rows).unwrap();
+        let report = serde_json::json!({
+            "schema": "rnk05.sampled-full-agreement/v1",
+            "dataset_id": capture["dataset_id"],
+            "training_sha256": capture["training_sha256"],
+            "sample_row_indices_sha256": capture["sample_row_indices_sha256"],
+            "sample_method": capture["sample_method"],
+            "sample_seed": capture["sample_seed"],
+            "sampled_recipe_elapsed_ms": sampled_recipe_elapsed_ms,
+            "full_recipe_elapsed_ms": full_recipe_elapsed_ms,
+            "sampled_rows": summary.sampled_rows,
+            "full_rows": summary.full_rows,
+            "values_compared": summary.values_compared,
+            "exact_matches": summary.exact_matches,
+            "max_abs_error": summary.max_abs_error,
+            "mean_abs_error": summary.mean_abs_error,
+        });
+        fs::write(report_path, serde_json::to_vec_pretty(&report).unwrap()).unwrap();
+    }
+
+    #[test]
     fn vector_blocks_are_concatenated_in_training_order() {
         let report = std::array::from_fn(|i| i as f32);
         let table = std::array::from_fn(|i| (REPORT_WIDTH + i) as f32);

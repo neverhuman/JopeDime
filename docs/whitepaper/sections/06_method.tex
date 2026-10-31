@@ -135,7 +135,7 @@ influence path and a matched ablation (\cref{sub:results-ablation}).
 \end{algorithm*}
 
 The historical reference uses expert iteration \citep{anthony2017expert}:
-the writer learns from verified search (\cref{alg:selfplay}). Programs
+the writer learns from verified search. Programs
 sampled from the scored lists $G_p$ are weighted by their referee rank in
 the combined objective (\cref{app:training}):
 \begin{align}
@@ -180,7 +180,7 @@ the checkpoint was accepted; that record and a pinned runtime are required
 inputs to the evaluation contract (\cref{sub:results-protocol}). These specifications
 identify the historical reference; they do not describe the later adapter
 snapshot or establish its deployment performance. Details belong in
-\cref{app:training}.
+\cref{app:training}. \Cref{alg:selfplay} summarizes the reference training loop.
 
 \subsection{Keeping the referee honest}\label{sub:method-referee}
 
