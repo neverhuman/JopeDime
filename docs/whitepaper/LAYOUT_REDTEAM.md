@@ -62,11 +62,11 @@ The before/after page comparisons are in [`redteam/`](redteam/):
 | O3 | Med | The independent-comparison, repeated-attempt and pilot-cost figures remain placeholders. Their panel descriptions are plans, not supplied results; the development plots use retained log data. | Supply the missing comparison, attempt-curve and pilot-cost data before replacing those placeholders; keep panel labels aligned with the final figures. | writer |
 | O4 | Low | **Fixed in upgrade PR 1** (date pinned to October 2026). `\date{Draft --- \today}` changes the committed PDF on every rebuild day. That defeats byte and text identity checks across days. | Pin the draft date, or drop it. | writer/format |
 | O5 | Low | **Fixed in upgrade PR 3** (display equations 4–5). The §6.5 writer objective, with $\sum_{w\in G_p}$, is inline math. It opens up the line spacing in that paragraph. | Make it a display equation; the wording is unchanged. | writer |
-| O6 | Low | Reference entries are inconsistent: DOI versus URL, "(NeurIPS 2017)" in some book titles but not others, and full author lists of up to about 58 names (refs [19], [66], [114]). | Given names now use initials with standard `abbrvnat`, retaining all authors and source metadata. The Wolf publication month was corrected in [#779](https://github.com/neverhuman/JopeDime/pull/779). DOIs and supplied URLs are both clickable, with existing metadata retained. The 13 NeurIPS entries use the canonical proceedings title, with volume and year in separate fields. Any author-list truncation remains open. | refs.bib owner |
-| O7 | Low | Links are coloured. That suits a draft, but camera-ready IEEE and ACM versions are normally black. | Use `hidelinks` at submission. | format |
-| O8 | Low | The appendices come before the references. That is IEEE order; NeurIPS and ICML put the references first. | Choose per venue at submission. | format |
+| O6 | Low | **Decided (owner t0352): keep the current bibliography style.** Reference entries are inconsistent: DOI versus URL, "(NeurIPS 2017)" in some book titles but not others, and full author lists of up to about 58 names (refs [19], [66], [114]). | Given names now use initials with standard `abbrvnat`, retaining all authors and source metadata. The Wolf publication month was corrected in [#779](https://github.com/neverhuman/JopeDime/pull/779). DOIs and supplied URLs are both clickable, with existing metadata retained. The 13 NeurIPS entries use the canonical proceedings title, with volume and year in separate fields. Any author-list truncation remains open. | refs.bib owner |
+| O7 | Low | **Fixed in upgrade PR 18** (`hidelinks`, owner decision t0352). Links are coloured. That suits a draft, but camera-ready IEEE and ACM versions are normally black. | Use `hidelinks` at submission. | format |
+| O8 | Low | **Decided (owner t0352): keep the order on `main`; revisit per venue.** The appendices come before the references. That is IEEE order; NeurIPS and ICML put the references first. | Choose per venue at submission. | format |
 | O9 | Low | **Fixed in upgrade PR 7** (a preamble patch drops the empty line that `noend` leaves in place of each end statement). Algorithm 1 has an extra vertical gap after the nested `\EndFor`, an artefact of `noend`, between lines 7 and 8. | Cosmetic. Leave as is, or adjust `algpseudocode` spacing. | format |
-| O10 | Low | The title block has no affiliation or contact, and the abstract is styled as a section heading. | The venue template will replace both. | — |
+| O10 | Low | **Decided (owner t0352): keep the current template; revisit per venue.** The title block has no affiliation or contact, and the abstract is styled as a section heading. | The venue template will replace both. | — |
 | O11 | Low | **Fixed in upgrade PR 7** (`flushend`). The two columns of the last page are unbalanced: on p. 23 the left column reaches the bottom margin and the right column stops short, by an amount that shifts with every upstream edit. | Balance the last page only; `balance.sty` was rejected because it also shortens every full bibliography page. | format |
 | O12 | Low | **Fixed in upgrade PR 9** (2 pt row spacing). In Table 9 (Appendix A) wrapped cells run together: "Matrix multiplication" sits directly on "Sorting", and "Machine-learning research" on "Code" (p. 17). | `\setlength{\extrarowheight}{2pt}` separates rows; the widths are unchanged, and no float or section moves. | format |
 | O13 | Low | **Fixed in upgrade PR 11** (2 pt row spacing). Table 4 (§4, p. 7) has the same run-together rows: "Legal move" spans three lines with "Illegal move" directly beneath it. | `\setlength{\extrarowheight}{2pt}`, as in Table 9; the widths are unchanged. After pass 10 the §7 float gap moves only from 2 to 3 (Figure 11 is one page after §7.4). A full-width `table*` still cascades. | format |
@@ -76,6 +76,7 @@ The before/after page comparisons are in [`redteam/`](redteam/):
 | O17 | Low | **Fixed in writer pass 68.** Figures 5–6 legends and the train–validation gap annotation printed at about 6.45 pt. | `make_flywheel_figs.py` uses 7.1 pt source text, about 7.05 pt at the paper's column scale. The Figure 6 legend moves into the empty space between the curves, avoiding the larger annotation. Plot arrays, wording and data are unchanged; Figure 7 remains byte-identical. Five inherited script lint findings are also cleared. | writer |
 | O18 | Low | **Fixed in upgrade PR 15.** Figure 7 (§6.8 operating measurements) was never referenced in the text; Figures 5, 6 and 8 were. | One pointer sentence in §6.8 restates the caption's scope ("operating measurements from the same snapshot"); no new claim. | format |
 | O19 | Low | **Fixed in upgrade PR 15.** Single paragraph lines were stranded at column breaks: an orphan first line at the bottom of p. 13's left column ("Candidate programs are evaluated on two training-side"), and a one-line start of reference [117] at the bottom of p. 23's left column. | `\clubpenalty`, `\widowpenalty` and `\displaywidowpenalty` set to 10000 in `macros.tex` (with `\raggedbottom` already on). Only pp. 13, 14 and 23 change layout; no float moves. | format |
+| O20 | Low | **Fixed in upgrade PR 18** (disclosure boundary, owner decision t0352). The promotions figure's provenance (`figures/data/program_promotions.provenance.json`) and its generator recorded a host name and absolute host paths. | Host name, host paths and inode numbers are removed from the JSON, and the script no longer writes them. File names, sizes, mtimes and all four SHA-256 bindings are unchanged. | format |
 
 ## Clarity and structure (for the writer)
 
@@ -127,7 +128,8 @@ The owner widened the scope to a full upgrade, carried out in small sequential P
 | 14 | Figure 7 legibility: legend text from 6.0 to 7.0 pt (O16), so all of Figure 7's text is at least 7 pt. A narrower middle legend uncovers the round-1322 point. Regenerated deterministically (`SOURCE_DATE_EPOCH` pinned; the unchanged script reproduces all three flywheel figures byte-identical); data, values, axes and figure size unchanged. | merged (#959) |
 | 15 | Whole-paper layout audit on main `b2f271ce`. Fixed: the unreferenced Figure 7 (O18) and the widow/orphan lines (O19). Checked, nothing to fix: 0 overfull or underfull boxes; every float is on its first reference's page or the next, except Table 1 (2 pages after an introduction forward reference) and Figure 11 (§5's forward references to the Results figure, by design); all tables use consistent left-aligned `p`/`X` columns. `refs.bib`: no two keys share a DOI, arXiv id, URL or normalized title. The only near-pair, the AlphaZero preprint (`silver2017chess`) and Science paper (`silver2018general`), is co-cited once on purpose: the preprint's Table S3 is the recorded source of "44 million games" and the paper of "about nine hours", so both are kept. | merged (#971) |
 | 16 | Camera-ready prose pass on §8–§9: a redundant sentence and the Limitations closing paragraph (which restated the Conclusion) cut, §8.2 tense and wording fixed, and source comments trace uncited claims to repository paths. No new numbers; TBDs unchanged. "Needs Jepson/team" gains the overnight H80–H97 closeouts as candidates only. | merged (#976) |
-| 17 | Introduction terminology: the engineered-intelligence definition now reads "aim, judge and memory", matching the Conclusion and the §2 pillar name ("objective" before). No other change. | this PR |
+| 17 | Introduction terminology: the engineered-intelligence definition now reads "aim, judge and memory", matching the Conclusion and the §2 pillar name ("objective" before). No other change. | merged (#980) |
+| 18 | Owner decisions t0352 applied: black links (O7); regressor named "Foundation", version `foundation_enc.v1.tabpfn`, "proprietary, available on request" (two TBDs filled); comparators pinned to receipted model ids (`claude-opus-5-5`, `gpt-6-astra-wm`), with Gemini and KumoRFM dropped (two Table 6 TBDs removed); host name and host paths removed from the promotions provenance (O20); template, appendix order and bibliography style kept (O6, O8, O10). TBDs 32 → 28; `RESULTS_NEEDS.md` renumbered. | this PR |
 
 ## H56 paper-vs-code recheck (pass 8)
 
@@ -170,7 +172,7 @@ attempts remain in the accounting.
 |---|---|---|
 | Frozen evaluation contract | Problem and family inventory; dataset identities, splits and exclusions; permitted inputs and known training exposure; writer, reference, comparator, encoder and evaluator identities; seeds, metrics and budgets. Link the provenance and acceptance receipts listed below. | §7.1 and every comparison |
 | Paired first-proposal record | Every predeclared task/family/seed pairing, both checkpoint identities and emitted outputs, scores, terminal statuses and costs. Attach evidence of optimizer updates and parameter changes. | §7.2 |
-| Fixed-method comparison record | Paired outcomes, ties, failures and exclusions; originating model versions, prompts and dates; implementation checks; KumoRFM configuration and permitted inputs. Bind Elo summaries to their comparison population and rating protocol. | §7.3, Table 6 and Figure 9 |
+| Fixed-method comparison record | Paired outcomes, ties, failures and exclusions; originating model versions, prompts and dates; implementation checks; only comparators whose receipts record the designing model (owner decision t0352). Bind Elo summaries to their comparison population and rating protocol. | §7.3, Table 6 and Figure 9 |
 | Attempt and cost record | Every attempt, including repairs and failures, its terminal status and incurred encoding, generation, fitting and prediction costs. Identify unreached targets, unresolved cases and settings with no verified win. | §7.4 and §7.6, Figures 10–11 |
 | Map, example and diagnostic records | Disjoint ranking/similarity data and program-only controls; a declared training influence path for a causal ablation, or ranking-only scope. Include the preselected worked example and its program/outcomes, and pin each historical diagnostic's own inventory, checkpoint and protocol. | §7.5–§7.7, Tables 7–8 |
 | Reproducible summaries and figure inputs | Commands and input identities for paired family-level outcomes, uncertainty and costs; counts of ties, failures, exclusions and unknowns; the records underlying every table cell and plotted panel. | Results tables/figures, then the abstract and Discussion |
@@ -188,7 +190,7 @@ comparisons.
 | §7 opening | Independent evaluation evidence for any performance claim. A source-bound benchmark for any deployment-throughput claim. |
 | §7.1 contract | The final problem inventory, dataset identities and content hashes, row splits, family assignments and exclusions, component provenance, evaluator, checkpoint, seeds, task metrics and failure accounting. All of it must be frozen before outcomes are opened. |
 | §7.2 effect of training | The matched first-proposal comparison: the trained writer against the frozen reference writer, paired first draws under predeclared seeds, all draws reported. Source-bound evidence of optimizer updates and parameter changes. This is the central claim of the paper. |
-| §7.3 fixed methods (Table 6, Figure 9) | Paired outcomes with uncertainty for algorithms designed by Claude, Codex and Gemini and for KumoRFM, including ties, failures and exclusions. The originating models, prompts, dates and implementation checks. The KumoRFM configuration and permitted inputs. The leaderboard's methods, paired outcomes, rating protocol and uncertainty. |
+| §7.3 fixed methods (Table 6, Figure 9) | Paired outcomes with uncertainty for the frozen algorithms designed by `claude-opus-5-5` and `gpt-6-astra-wm`, including ties, failures and exclusions. The prompts, dates and implementation checks. (Gemini and KumoRFM were dropped for lack of a model-identity receipt; owner decision t0352.) The leaderboard's methods, paired outcomes, rating protocol and uncertainty. |
 | §7.4 cost of attempts (Figures 10–11) | Attempt-versus-performance and cost curves for agents allowed successive attempts, with matched budgets, repeated seeds and uncertainty. Pilot cost data: per-stage failure shares, and cost per verified win by writer size and reasoning effort, with seeds and family-level uncertainty. Settings with no verified win must be identified without assigning them a finite cost. |
 | §7.5 map (Table 7) | A held-out ranking study, a problem-similarity study and program-only-control evaluations. Either an implemented route by which the map influences training, so a causal ablation is possible, or a decision to limit the claim to ranking. A failure-class comparison. |
 | §7.6 failures (Table 8) | Attempt inventories and costs by terminal outcome class, with unresolved cases identified. The worked example's selection rule, chosen before inspection, and its record: problem, encoding time, emitted output, check and fitting outcomes, and hidden-fold and incumbent scores (or the failure and its cost). |
@@ -228,11 +230,7 @@ H96, H98 and H99 were not on `main` at this pass.
 
 ### Outside Results (provenance and receipts)
 
-- **§6.2 / Appendix C.** The pretrained tabular regressor behind the 1,024-value block needs a name, version and licence.
-  - The repository calls the component "Foundation" (`starlight_core_regressor`).
-  - Its training source describes a TabPFN v3 checkpoint-compatible architecture.
-  - The asset manifests say licence declarations vary by artifact.
-  - Please confirm whether it is third-party or locally trained, and under which licence it ships.
+- **§6.2 / Appendix C. Resolved (owner decision t0352).** The regressor is named as on `main`: "Foundation", version `foundation_enc.v1.tabpfn`; licence "proprietary, available on request". No LICENSE file covers it. Its bundle manifest records `LicenseRef-Jain-ThirdParty-Provenance-Pending` with redistribution "prohibited", so confirm "available on request" before any release.
 - **§6.5 / Appendix C.** The reference checkpoint's acceptance record, its held-out promotion receipt and a pinned runtime.
 - **§6.8.** Bind the retained observations to exact loop source and input identities, adapter configuration, score normalization, evaluation population, candidate pools and revealed-history inputs. The implementation is now described; run qualification and cross-model comparisons still require those records.
 - **Appendix B.** The final pre-registration and audit receipts: the inner-fold label-poison test, the sealed canary and the train-only input-closure audit.
@@ -240,14 +238,18 @@ H96, H98 and H99 were not on `main` at this pass.
 
 ### Owner decisions
 
-- **Disclosure boundary.** `deploy/ci/ip-scrub.sh` states that "nothing public may say how the program is found". The script scans only top-level prose, not this paper. Even so:
+- **Disclosure boundary.** **Decided (owner t0352):** disclose only material merged on `main` and backed by receipts, at method level (the typed-GP wording stays). No host names, IPs, S3 paths, sealed or holdout identities, unmerged experiments or kernel-level implementation detail. Pass 18 applied it (O20). Background: `deploy/ci/ip-scrub.sh` states that "nothing public may say how the program is found". The script scans only top-level prose, not this paper. Even so:
   - §3.2 and §3.5 discuss genetic programming and evolutionary search as history.
   - §4.3 cites strongly typed GP for the program language.
   - Appendix A calls "typed genetic programming and evolutionary search" milestones "directly needed for our argument".
 
   Decide whether the white paper falls under the boundary. If it does, the Appendix A wording and the §4.3 citation should change.
-- **Regressor licensing.** The §6.2 editor note says the encoder bundle lists TabICL-v2 artifacts as "provenance pending, redistribution prohibited, policy-ineligible". The legacy training source describes a TabPFN-v3-compatible architecture. Confirm which model it is, its version and licence, and whether that limits releasing the checkpoint.
-- **Comparator identities.** "Claude, Codex and Gemini" in §1 and §7.3 need exact model versions and dates. "Codex" also collides with the 2021 Codex model cited in §3.1.
+- **Regressor licensing.** **Decided (owner t0352):** "Foundation", version `foundation_enc.v1.tabpfn`, "proprietary, available on request" (see §6.2 / Appendix C above). Background: the §6.2 editor note says the encoder bundle lists TabICL-v2 artifacts as "provenance pending, redistribution prohibited, policy-ineligible". The legacy training source describes a TabPFN-v3-compatible architecture. Confirm which model it is, its version and licence, and whether that limits releasing the checkpoint.
+- **Comparator identities.** **Decided (owner t0352):** pin the identifiers recorded in receipts and drop comparators without one:
+  - **Kept:** `claude-opus-5-5`, configured (`crates/jope-bench/regressors/README.md`); `gpt-6-astra-wm`, as its session reported (`crates/jope-bench/submissions/gpt6-astra-max/provenance.json`; the receipt notes the session was not isolated).
+  - **Dropped:** the Gemini-designed method (its receipt records no served model) and KumoRFM (no receipt).
+
+  §1, the abstract, Table 5, §7.3 and Table 6 now say this. "Codex" no longer appears as a comparator, which removes the clash with the 2021 Codex model.
 
 ### More team items surfaced by the review
 
@@ -290,7 +292,7 @@ H96, H98 and H99 were not on `main` at this pass.
 
 **Still required from the team or owner:** regressor identity/licence,
 checkpoint acceptance and objective/runtime identities, comparator versions,
-independent results and the disclosure-policy decision above. Figure 7 units
+independent results and the disclosure-policy decision above. (The regressor identity/licence, the comparator versions and the disclosure policy were later decided by owner call t0352.) Figure 7 units
 and the evaluation-count unit are resolved by #806 and #819.
 
 **Editorial dispositions:**

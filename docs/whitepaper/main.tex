@@ -10,7 +10,7 @@
 \makeatletter\patchcmd{\ALG@doentity}{\item[]\nointerlineskip}{}{}{\PackageError{main}{algorithmicx noend patch failed}{}}\makeatother
 \usepackage{flushend}% equal-height columns on the last page only
 \usepackage[numbers,sort&compress]{natbib}
-\usepackage[colorlinks,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+\usepackage[hidelinks]{hyperref}% black links for print (owner decision t0352; revisit per venue)
 \usepackage[capitalise,noabbrev]{cleveref}
 \usepackage[most]{tcolorbox}
 \usetikzlibrary{positioning}
