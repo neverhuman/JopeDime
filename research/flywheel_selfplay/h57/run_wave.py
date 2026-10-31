@@ -22,14 +22,21 @@ MIN_MEM_AVAILABLE_KIB = 16 * 1024 * 1024
 MAX_LOCK_WAIT_SECONDS = 3 * 60 * 60
 MAX_WAVE_GPU_WALL_SECONDS = 90 * 60
 RSS_LIMIT_KIB = 6 * 1024 * 1024
+MAX_LAUNCH_DISK_USED_PERCENT = 94.5
+MAX_DISK_GUARD_RETRIES = 2
 CELL_ORDER = [(arm, seed) for arm in ("sigma001", "sigma003") for seed in (15, 16, 17)]
 CELL_ORDER.append(("null_sigma001", 15))
 
 
 class InfraVoid(RuntimeError):
-    def __init__(self, message: str, wait_seconds: float = 0.0):
+    def __init__(self, message: str, wait_seconds: float = 0.0, cell_wall_seconds: float = 0.0):
         self.wait_seconds = wait_seconds
+        self.cell_wall_seconds = cell_wall_seconds
         super().__init__(message)
+
+
+class DiskGuardInfraVoid(InfraVoid):
+    """A completed child whose final artifact write was blocked by disk pressure."""
 
 
 def atomic_json(path: Path, value: dict) -> None:
@@ -91,8 +98,18 @@ def disk_guard_error() -> str | None:
     return None
 
 
+def launch_disk_guard_error() -> str | None:
+    usage = disk_usage_stats()
+    if usage["available_bytes"] < 1024**3:
+        return f"less than 1 GiB available on / ({usage['available_bytes']} bytes)"
+    if usage["used_percent"] >= MAX_LAUNCH_DISK_USED_PERCENT:
+        return (f"filesystem / launch gate requires below {MAX_LAUNCH_DISK_USED_PERCENT:.1f}% "
+                f"used ({usage['used_percent']:.2f}%)")
+    return None
+
+
 def safe_preflight() -> dict:
-    disk_error = disk_guard_error()
+    disk_error = launch_disk_guard_error()
     if disk_error:
         raise RuntimeError(disk_error)
     cpu = cpu_percent()
@@ -123,7 +140,13 @@ def remaining_lock_wait(cumulative: float) -> float:
 
 def preflight_wait_reason(error: RuntimeError) -> str | None:
     message = str(error)
-    if "filesystem /" in message or "less than 1 GiB available on /" in message:
+    if "launch gate requires below" in message:
+        usage = disk_usage_stats()
+        return f"disk {usage['used_percent']:.2f}% vs {MAX_LAUNCH_DISK_USED_PERCENT:.1f}% launch gate"
+    if "less than 1 GiB available on /" in message:
+        usage = disk_usage_stats()
+        return f"disk {usage['used_percent']:.2f}% used; available below 1 GiB"
+    if "filesystem /" in message:
         usage = disk_usage_stats()
         return f"disk {usage['used_percent']:.2f}% vs 95% guard"
     if "MemAvailable" in message or "CPU" in message:
@@ -179,7 +202,7 @@ def acquire_lock(status_path: Path, wait_total: float) -> tuple[object, float, i
         keep_locked = False
         wait_reason = "preflight pending"
         try:
-            disk_error = disk_guard_error()
+            disk_error = launch_disk_guard_error()
             if disk_error:
                 raise RuntimeError(disk_error)
             status = None
@@ -276,7 +299,7 @@ def run_child(command: list[str], log_path: Path, timeout: float) -> tuple[int, 
                     raise RuntimeError("H57 CPU or MemAvailable safety guard tripped")
                 time.sleep(1.0)
             code = proc.wait()
-        except BaseException:
+        except BaseException as exc:
             if proc.poll() is None:
                 proc.terminate()
                 try:
@@ -284,6 +307,8 @@ def run_child(command: list[str], log_path: Path, timeout: float) -> tuple[int, 
                 except subprocess.TimeoutExpired:
                     proc.kill()
                     proc.wait()
+            if isinstance(exc, (RuntimeError, TimeoutError)):
+                raise InfraVoid(str(exc), cell_wall_seconds=time.monotonic() - started) from exc
             raise
     return code, time.monotonic() - started, max_rss, max_cpu
 
@@ -293,13 +318,27 @@ def run_locked_cell(key: str, command: list[str], log: Path, timeout: float,
     before = preflight_snapshot()
     handle, waited, free_mib, lock_preflight = acquire_lock(status_path, wait_total)
     try:
-        post_lock = safe_preflight()
+        # acquire_lock performs the final launch-margin/resource preflight
+        # after flock succeeds and returns that exact under-lock snapshot.
+        post_lock = lock_preflight
         if free_mib < MIN_GPU_FREE_MIB:
             raise InfraVoid("GPU free memory below 6 GiB after lock", waited)
         note(status_path, f"START {key}; wait={waited:.2f}s; CUDAfree={free_mib}MiB; preflight={json.dumps(post_lock, sort_keys=True)}")
-        code, wall, max_rss, max_cpu = run_child(command, log, timeout)
+        try:
+            code, wall, max_rss, max_cpu = run_child(command, log, timeout)
+        except InfraVoid as exc:
+            note(status_path, f"VOID {key}; child guard; wall={exc.cell_wall_seconds:.2f}s; reason={exc}")
+            raise
         if code != 0:
-            raise InfraVoid(f"{key} child exit={code}; log={log}; RSSmax={max_rss}; CPUmax={max_cpu:.1f}%", waited)
+            detail = f"{key} child exit={code}; log={log}; RSSmax={max_rss}; CPUmax={max_cpu:.1f}%"
+            try:
+                child_log = log.read_text(errors="replace")[-16_384:]
+            except OSError:
+                child_log = ""
+            if "unsafe filesystem / before H55 write" in child_log:
+                note(status_path, f"VOID {key}; reason=post-training disk writer guard; wall={wall:.2f}s; log={log}")
+                raise DiskGuardInfraVoid(detail, waited, wall)
+            raise InfraVoid(detail, waited, wall)
         note(status_path, f"DONE {key}; wall={wall:.2f}s; RSSmax={max_rss}KiB; CPUmax={max_cpu:.1f}%")
         return {"key": key, "status": "complete", "lock_wait_seconds": waited,
                 "cell_wall_seconds": wall, "gpu_free_mib_after_lock": free_mib,
@@ -309,6 +348,45 @@ def run_locked_cell(key: str, command: list[str], log: Path, timeout: float,
     finally:
         fcntl.flock(handle, fcntl.LOCK_UN)
         handle.close()
+
+
+def run_cell_with_disk_guard_retries(key: str, command: list[str], log: Path, timeout: float,
+                                     status_path: Path, wait_total: float,
+                                     output_path: Path) -> tuple[dict, float, float, float]:
+    retries = 0
+    void_wall = 0.0
+    local_wait = 0.0
+    while True:
+        attempt_log = log if retries == 0 else log.with_name(f"{log.stem}.retry{retries}{log.suffix}")
+        try:
+            cell, waited, wall = run_locked_cell(
+                key, command, attempt_log, timeout, status_path, wait_total + local_wait)
+            cell["disk_guard_retry_count"] = retries
+            cell["prior_void_cell_wall_seconds"] = void_wall
+            cell["attempt_logs"] = [
+                str(log if index == 0 else log.with_name(f"{log.stem}.retry{index}{log.suffix}"))
+                for index in range(retries + 1)
+            ]
+            return cell, local_wait + waited, wall, void_wall
+        except DiskGuardInfraVoid as exc:
+            local_wait += exc.wait_seconds
+            void_wall += exc.cell_wall_seconds
+            if retries >= MAX_DISK_GUARD_RETRIES:
+                raise DiskGuardInfraVoid(
+                    f"{key} exhausted {MAX_DISK_GUARD_RETRIES} disk-guard retries; {exc}",
+                    local_wait, void_wall,
+                ) from exc
+            if output_path.exists() and any(output_path.iterdir()):
+                raise InfraVoid(
+                    f"{key} disk-guard retry refused because prior output files exist at {output_path}; {exc}",
+                    local_wait, void_wall,
+                ) from exc
+            retries += 1
+            note(status_path, f"RETRY {key}; disk guard; retry={retries}/{MAX_DISK_GUARD_RETRIES}; "
+                 f"void_wall={void_wall:.2f}s; wait for disk below {MAX_LAUNCH_DISK_USED_PERCENT:.1f}%")
+        except InfraVoid as exc:
+            raise InfraVoid(str(exc), local_wait + exc.wait_seconds,
+                            void_wall + exc.cell_wall_seconds) from exc
 
 
 def timing_mode(args) -> dict:
@@ -372,6 +450,7 @@ def outcome_mode(args) -> dict:
     cells = []
     wait_total = 0.0
     gpu_wall = 0.0
+    void_gpu_wall = 0.0
     reason = None
     for arm_name, seed in CELL_ORDER:
         is_null = arm_name == "null_sigma001"
@@ -385,23 +464,36 @@ def outcome_mode(args) -> dict:
                                 null_arm=is_null)
         key = f"{arm_name}/seed{seed}"
         try:
-            cell, waited, wall = run_locked_cell(
+            cell, waited, wall, void_wall = run_cell_with_disk_guard_retries(
                 key, command, RUN_ROOT / f"logs/{arm_name}-seed{seed}.log",
-                timeout=remaining, status_path=status, wait_total=wait_total,
+                timeout=remaining, status_path=status, wait_total=wait_total, output_path=out,
             )
             wait_total += waited
             gpu_wall += wall
+            void_gpu_wall += void_wall
             cells.append(cell)
             atomic_json(RUN_ROOT / "outcomes/wave.partial.json", {
                 "schema": "jope.h57.outcome-wave/v1", "complete": False,
                 "cells": cells, "lock_wait_seconds": wait_total,
                 "total_gpu_cell_wall_seconds": gpu_wall,
+                "void_cell_wall_seconds": void_gpu_wall,
                 "total_gpu_cell_wall_cap_seconds": cap})
         except Exception as exc:
             wait_total += float(getattr(exc, "wait_seconds", 0.0))
+            failed_void_wall = float(getattr(exc, "cell_wall_seconds", 0.0))
+            void_gpu_wall += failed_void_wall
             reason = f"infra-void/stopped at {key}: {type(exc).__name__}: {exc}"
             cells.append({"key": key, "status": "infra_void", "error": reason,
-                          "lock_wait_seconds": float(getattr(exc, "wait_seconds", 0.0))})
+                          "lock_wait_seconds": float(getattr(exc, "wait_seconds", 0.0)),
+                          "void_cell_wall_seconds": failed_void_wall,
+                          "disk_guard_retry_count": MAX_DISK_GUARD_RETRIES
+                          if isinstance(exc, DiskGuardInfraVoid) else 0})
+            atomic_json(RUN_ROOT / "outcomes/wave.partial.json", {
+                "schema": "jope.h57.outcome-wave/v1", "complete": False,
+                "cells": cells, "lock_wait_seconds": wait_total,
+                "total_gpu_cell_wall_seconds": gpu_wall,
+                "void_cell_wall_seconds": void_gpu_wall,
+                "total_gpu_cell_wall_cap_seconds": cap})
             break
     complete = len(cells) == len(CELL_ORDER) and all(cell["status"] == "complete" for cell in cells)
     if complete:
@@ -430,6 +522,8 @@ def outcome_mode(args) -> dict:
             "projected_total_seconds": projected, "cell_order": [{"arm": arm, "seed": seed} for arm, seed in CELL_ORDER],
             "cells": cells, "stop_reason": reason, "lock_wait_seconds": wait_total,
             "total_gpu_cell_wall_seconds": gpu_wall, "total_gpu_cell_wall_cap_seconds": cap,
+            "void_cell_wall_seconds": void_gpu_wall,
+            "void_wall_excluded_from_successful_outcome_cap": True,
             "candidate_and_null_cells": 7, "fold_b_candidate_reads": 6, "terminal_val_reads": 0}
     atomic_json(wave_path, wave)
     return wave
