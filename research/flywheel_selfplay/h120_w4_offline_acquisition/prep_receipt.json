@@ -1,0 +1,126 @@
+{
+  "schema": "rd_breakthrough.prep-receipt/v1",
+  "wave": "W4",
+  "h_folder": "H120",
+  "renumbered_from": "H119 (#1046; H119 belongs to sol_v1_dsc08)",
+  "author": "rd_opus [OPUS]",
+  "native_fits": 0,
+  "gpu_seconds": 0,
+  "source_sha256": "cc5219f5013ff6bd08ddfde66f3d06336677c471bdd0f6838287e222074e4d0c",
+  "executed_source_sha256": "d54dee6a63d43de72f088a5924252880cba6448c54127bbd7521207b34aafc2b",
+  "test_source_sha256": "9c2ac418e8e2bb2ccb785a81e958212d901fea059d17b00151567e9fdb87d0aa",
+  "executed_test_source_sha256": "06fe467851292692baca14ef3ddd1b23644e8d944cad8ee5516bb526316de5a7",
+  "h112_source_sha256": "de7d58826a70b9e5279488594bbc7cc7e7d38224a037f56204b04781b2815579",
+  "memory_rows": 2306,
+  "slopes": {
+    "0": 0.8355995827917314,
+    "1": 0.8953228902942555,
+    "2": 0.9084361216362875,
+    "3": 0.9016722651446014,
+    "4": 0.8769360902807808
+  },
+  "integrity": {
+    "checked": 300,
+    "mismatches": 0,
+    "examples": [],
+    "passed": true
+  },
+  "dry_run": {
+    "contexts": [
+      "eda78687896b238f47f3a7ea5be57df0fb43eae397fcf64247a1ef5609f2dcf9",
+      "077d29c6715e6f76299bee024da7284f341a04a59a315e55049174b6f535a9ef",
+      "7ad17b685ca6dbe8fb4e74c8ced745db10319459163d5727fd398f80ec931d93"
+    ],
+    "rows": [
+      {
+        "seed": 1001,
+        "status": "screened"
+      },
+      {
+        "seed": 1001,
+        "status": "screened"
+      },
+      {
+        "seed": 1001,
+        "status": "screened"
+      }
+    ],
+    "note": "dry-run rows: integrity of the harness only; never part of an H120 result"
+  },
+  "w4_native_fit_ledger": {
+    "cap": 2400,
+    "h96_dry": 22,
+    "h103": 850,
+    "h112_dry": 48,
+    "h116": 1614,
+    "total": 2534,
+    "over_cap": 134,
+    "cpu_hours": 0.71,
+    "h120": 0
+  },
+  "execution": {
+    "host": "xbabe2",
+    "integrity_wall_s": 138.4,
+    "dry_run_wall_s": 105.2,
+    "nice": 15
+  },
+  "superseded_prep_s3": "W4/opus-h119-prep-20261031a/ (same content under the H119 runner name; retained, not deleted)",
+  "s3_objects": [
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-prep-20261031a/integrity_receipt.json",
+      "version_id": "eEJXImpmE9QAXEMU_DL0Lc_i9WxbD4PA",
+      "sha256": "3e68a7dcfdf6864ecff85a663317dda9d4fd2aaf03e49b70c38357016c84a90f",
+      "bytes": 505,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-prep-20261031a/dry-run_receipt.json",
+      "version_id": "v90esYfdgV68ROChPl0ZFEyMC2QFXgqJ",
+      "sha256": "eaa5b59563615ee3e32b7a444e166f7935de2d94fdaa76199abbe1cea8dc79a8",
+      "bytes": 905,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-prep-20261031a/integrity.log",
+      "version_id": "cyQDCBXxnj7iifI3IN7za8kKOdYGAo_b",
+      "sha256": "54022181aeaef4eae9cd9562fd35d22386b3754ab1b30e4059cb5765fd3418ae",
+      "bytes": 506,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-prep-20261031a/integrity.time",
+      "version_id": "FfXd.Cr8XEytPCj5RgFOFfOnN3rREnQF",
+      "sha256": "57ca562bacb4e7cac712c0de15ba03cfe054e7594c6670bbc6a989c2ed66860e",
+      "bytes": 24,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-prep-20261031a/dry-run.log",
+      "version_id": "9_2ALuJqZ7HNTkOiB5C6iGnkV6LWRwtW",
+      "sha256": "16ede05d13d2d52ab84d86b730af94fef9cc17e89f7595645cc08d4fd2a68de6",
+      "bytes": 734,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-prep-20261031a/dry-run.time",
+      "version_id": "QiGIspyXJB80cJKaU89nKFWNKD9bwmVN",
+      "sha256": "8f2a64d3997adc82b83307d30c33889003d42e024684bdef777cf733b3653f72",
+      "bytes": 22,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-prep-20261031a/run_h120.py",
+      "version_id": "Gm_HAQeXJ4T7jHwgyFoq54oKSFROUCad",
+      "sha256": "d54dee6a63d43de72f088a5924252880cba6448c54127bbd7521207b34aafc2b",
+      "bytes": 13908,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h120-prep-20261031a/test_run_h120.py",
+      "version_id": "7InCj7RCY_2in_rN9l3AcrYSFHeW7Eyn",
+      "sha256": "06fe467851292692baca14ef3ddd1b23644e8d944cad8ee5516bb526316de5a7",
+      "bytes": 3243,
+      "write": "create-only if-none-match"
+    }
+  ]
+}

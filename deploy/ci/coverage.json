@@ -6242,7 +6242,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -13634,6 +13634,16 @@
       ],
       "lanes": [],
       "scope": "H117 W5 identity-only provenance fixtures: unique candidates across manifest revisions, zero overlap yields UNPROVED_BOUNDED never PASS with W5 HELD, any family/dataset/view/prefix/catalog overlap fails proof 1, the lineage census separates pool-level parent fields from per-child lineage, catalog sealed ids parsed from the exclusion sentence only, and the manifest hash pin enforced. Synthetic only; no data payloads; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h120_w4_offline_acquisition/test_run_h120.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H120 W4 offline acquisition fixtures: every rule reveals only its own picks and returns best-of-four under the ceiling, 1+3 and UCB rule shapes and first-reveal error handling, zero-uncertainty UCB equals the merged two-plus-two, the H116 integrity comparison flags mismatches and incomplete panels, candidate/close/incomplete verdicts, and the merged-H112 loader refusing changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
     },
     "python:research/flywheel_selfplay/h121_target_smoothing/test_h121.py": {
       "discovery": {
