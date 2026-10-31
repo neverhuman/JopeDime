@@ -505,6 +505,109 @@ def test_h100_pre_scoring_rearm_charge_is_retained_without_repeating_the_cell(tm
     assert result["gpu_wall_seconds"] == 28.0
 
 
+def finalized_owner_rearm_fixture(root):
+    path = fixture("H100", root)
+    budget = load(root / "budget.json")
+    row = next(
+        x for x in budget["attempts"] if x["arm"] == "CONTROL" and x["seed"] == 39
+    )
+    row["attempt"] = 2
+    (root / "CONTROL-seed39-attempt1.json").rename(
+        root / "CONTROL-seed39-attempt2.json"
+    )
+    budget["attempts"].insert(
+        1,
+        {
+            "arm": "CONTROL",
+            "seed": 39,
+            "attempt": 1,
+            "timing": False,
+            "wall_seconds": 15.0,
+            "wait_seconds": 0.0,
+            "error": "pre-scoring disk abort",
+            "outcome_started": False,
+            "stage": "loading",
+        },
+    )
+    budget["owner_rearms"] = [
+        {
+            "state": "FIFO_REARM",
+            "authority_sha256": "a" * 64,
+            "operator_sha256": "o" * 64,
+            "stopped_prefix_sha256": "s" * 64,
+        }
+    ]
+    native = load(path)
+    native["ledger"] = copy.deepcopy(budget)
+    native["gpu_wall_seconds"] = 28.0
+    # The authorized operator publishes metrics before this administrative transition.
+    write(path, native)
+    budget["owner_rearms"][-1]["state"] = "COMPLETE"
+    write(root / "budget.json", budget)
+    return path
+
+
+def test_h100_completed_owner_rearm_keeps_all_charges_and_raw_receipts(tmp_path):
+    path = finalized_owner_rearm_fixture(tmp_path)
+    before = {p: p.read_bytes() for p in (path, tmp_path / "budget.json")}
+    result = r.readout("H100", tmp_path)
+    assert result["status"] == "COMPLETE", result
+    assert result["gpu_wall_seconds"] == 28.0
+    assert len(load(tmp_path / "budget.json")["attempts"]) == 14
+    assert load(path)["ledger"]["owner_rearms"][-1]["state"] == "FIFO_REARM"
+    assert all(p.read_bytes() == raw for p, raw in before.items())
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "wall",
+        "wait",
+        "receipt",
+        "cap",
+        "prereg",
+        "authority",
+        "operator",
+        "previous_state",
+        "new_state",
+        "earlier_rearm",
+        "extra_field",
+        "in_progress",
+    ],
+)
+def test_h100_owner_finalization_does_not_hide_other_ledger_changes(tmp_path, mutation):
+    path = finalized_owner_rearm_fixture(tmp_path)
+    native, budget = load(path), load(tmp_path / "budget.json")
+    if mutation == "wall":
+        budget["attempts"][2]["wall_seconds"] += 1
+    elif mutation == "wait":
+        budget["attempts"][2]["wait_seconds"] += 1
+    elif mutation == "receipt":
+        budget["attempts"][2]["receipt_sha256"] = "changed"
+    elif mutation == "cap":
+        budget["cap_seconds"] += 1
+    elif mutation == "prereg":
+        budget["prereg_sha256"] = "changed"
+    elif mutation in ("authority", "operator"):
+        budget["owner_rearms"][-1][mutation + "_sha256"] = "changed"
+    elif mutation == "previous_state":
+        native["ledger"]["owner_rearms"][-1]["state"] = "ARMED_OUTSIDE_FIFO"
+    elif mutation == "new_state":
+        budget["owner_rearms"][-1]["state"] = "STOPPED"
+    elif mutation == "earlier_rearm":
+        native["ledger"]["owner_rearms"].insert(0, {"state": "FIFO_REARM"})
+        budget["owner_rearms"].insert(0, {"state": "COMPLETE"})
+    elif mutation == "extra_field":
+        budget["owner_rearms"][-1]["unapproved_metadata"] = True
+    else:
+        native["ledger"]["in_progress"] = {"arm": "CONTROL"}
+    write(path, native)
+    write(tmp_path / "budget.json", budget)
+    result = r.readout("H100", tmp_path)
+    assert result["status"] == "INVALID", result
+    assert result["verdict"] == "UNKNOWN" and result["arms"] == {}
+
+
 def test_holm_preserves_each_native_boundary_and_step_down_stop():
     assert r.holm_decisions({"ESH-l2": 0.025, "ESH-l4": 0.04}, strict=False) == {
         "ESH-l2": True,
