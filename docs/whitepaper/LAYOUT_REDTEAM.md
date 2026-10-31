@@ -91,7 +91,9 @@ The owner widened the scope to a full upgrade, carried out in small sequential P
 | 1 | Title and subtitle ("EurekaZero: Engineered Intelligence for Algorithm Invention by Self-Play"), PDF metadata, pinned draft date (O4), numbered boxes referenced with `\cref` (O2) | merged (#770) |
 | 2 | Abstract rewritten: problem, game, design, contributions, evidence status, and one TBD for the headline result. Introduction restructured: an "Engineered intelligence" paragraph ties the subtitle to the four pillars; an explicit contributions list; a "What is and is not established" paragraph replaces the introduction's TBD. Figure 1 redrawn as a TikZ diagram (O1). | merged (#772) |
 | 3 | Method (§5–6): the §6.5 objective set as display equations (O5). Three TBDs become accurate statements: exploration in the reference procedure (§5.4, from §6.5/§6.7); the checkpoint acceptance record as an evaluation-contract input (§6.5); and what the admission CSVs do and do not record (§6.8). The regressor identity TBD (§6.2) stays for the team. | merged (#777) |
-| 4 | Results presentation only, with every sentence, number and TBD of §7 preserved:<br>• "Evaluation plan at a glance" table (Table 5).<br>• Earlier diagnostics moved into their own closing subsection (§7.7).<br>• Worked-game fields moved from §4.6 into a §7.6 record table; §4.6 becomes "The analogy's limits".<br>• Pilot-cost figure moved from §5.2 into §7.4.<br>All results-dependent placeholders now sit in §7. | this PR |
+| 4 | Results presentation only, with every sentence, number and TBD of §7 preserved:<br>• "Evaluation plan at a glance" table (Table 5).<br>• Earlier diagnostics moved into their own closing subsection (§7.7).<br>• Worked-game fields moved from §4.6 into a §7.6 record table; §4.6 becomes "The analogy's limits".<br>• Pilot-cost figure moved from §5.2 into §7.4.<br>All results-dependent placeholders now sit in §7. | merged (#786) |
+| 5 | Discussion, Conclusion and appendices:<br>• §8 becomes "Discussion", with each subsection ending in an explicit outcome-to-claim rule. Four per-subsection TBDs become pointers to the §7 subsections that will settle them; the opening TBD stays as the single tracked marker.<br>• New "Limitations" subsection (§8.5) and a §9 Conclusion.<br>• Appendix A becomes a domain-by-domain referee inventory (Table 9), restating referees already cited in §3–§4.<br>• Receipt TBDs in Appendices B and C point to the §7.1 evaluation record.<br>The regressor licence TBD stays. | merged (#789) |
+| 6 | Fixes from an independent camera-ready review (dispositions below): scope stated in the abstract and introduction; honest evidence status; ratchet, map and loss wording matched to §6 and the code-level records; exploration programs added; drafting-process language removed; pointer, typography and Results-presentation slips fixed. | this PR |
 
 ## Needs Jepson/team
 
@@ -132,3 +134,58 @@ Everything below needs data, receipts or decisions from the team. None of it was
 - **§6.8 (optional).** The adapter's architecture, score normalization and evaluation population, if the snapshot is ever compared with other models.
 - **Appendix B.** The final pre-registration and audit receipts: the inner-fold label-poison test, the sealed canary and the train-only input-closure audit.
 - **Appendix C.** Isolation and parity receipts from the final evaluator.
+
+### Owner decisions
+
+- **Disclosure boundary.** `deploy/ci/ip-scrub.sh` states that "nothing public may say how the program is found". The script scans only top-level prose, not this paper. Even so:
+  - §3.2 and §3.5 discuss genetic programming and evolutionary search as history.
+  - §4.3 cites strongly typed GP for the program language.
+  - Appendix A calls "typed genetic programming and evolutionary search" milestones "directly needed for our argument".
+
+  Decide whether the white paper falls under the boundary. If it does, the Appendix A wording and the §4.3 citation should change.
+- **Regressor licensing.** The §6.2 editor note says the encoder bundle lists TabICL-v2 artifacts as "provenance pending, redistribution prohibited, policy-ineligible". The legacy training source describes a TabPFN-v3-compatible architecture. Confirm which model it is, its version and licence, and whether that limits releasing the checkpoint.
+- **Comparator identities.** "Claude, Codex and Gemini" in §1 and §7.3 need exact model versions and dates. "Codex" also collides with the 2021 Codex model cited in §3.1.
+
+### More team items surfaced by the review
+
+- **Weak evidence.** The code-level record (`docs/internal/asm-manual/sections/deep-stack.md`) says the recorded neural winner "descends from exploration candidates, not from a neural_policy proposal". If that still holds, the development record shows no proposal by the writer winning.
+- **Checkpoint acceptance (§6.5, Appendix C).** The training history says all 48 indexed admission decisions of 11 September were inconclusive, and cites no admission pass for the step-60,000 checkpoint. The paper now says this evidence is not documented here.
+- **Objective weights (§6.5, Eq. 5).** The code-level record mentions Kendall–Gal uncertainty weights on the sequence and runtime terms. The method owner should confirm that the fixed weights shown in Eq. 5 match the trained objective.
+- **Figure 7 units.** Define "promotions per hour" and "datasets per second", and how they relate to the 4 acceptances in 695 rounds.
+- **The 63,108 evaluations (§6.6, Appendix B).** Clarify whether the figure is a per-dataset count or a total across 42 datasets.
+
+### Review dispositions (pass 6)
+
+**Fixed:**
+- **Abstract.** It no longer equates the adapter log with the writer's admission test. It names the null diagnostics alongside the log, states the tabular domain and the typed language, and calls KumoRFM a relational model. The map is tested for ranking against a program-only control rather than "ablated".
+- **Introduction.**
+  - The retention sentence matches the actual ratchets.
+  - "Engineered intelligence" has a single definition, "designed to be audited".
+  - The scope is stated.
+  - Contribution 3 is a cost model.
+- **§3 and §4.**
+  - "Much of it", and "evidence from Go".
+  - Table 3's feedback source now matches the within-list ranking.
+  - Table 4's caption no longer contradicts §4.6.
+  - Hedges on learning claims.
+  - §4.4 no longer claims an incumbent-to-map path that the losses do not implement.
+  - Pointers fixed.
+- **§5.**
+  - LLM-writer scope stated.
+  - The 16 exploration programs added.
+  - The duplicate Move 37 anecdote removed from Box 3.
+  - The "supplied cost scenarios" sentence removed.
+- **§6.**
+  - The writer and map are stated as separate branches.
+  - The rank-based weighting is stated correctly.
+  - L_BT, L_runtime and L_prog are defined.
+  - Algorithm 1 includes the exploration programs.
+  - The checkpoint acceptance is stated honestly.
+- **§8 and §9.** "Designed to learn", and the decisive comparison is named.
+- **Appendices.** Pointer, typography and provenance wording fixed.
+- **§7 (presentation only).** "Planned for", and the Table 5 cell.
+
+**Open, for the team or owner:** the owner decisions and team items above (regressor identity and licence, checkpoint acceptance, comparator versions, Figure 7 units, disclosure boundary, the 63,108 count), plus:
+- Figure 2's horizontal position for the learned proposer.
+- Further de-duplication: merging Figures 3 and 4.
+- Defining "cuts" and "mean log error ratio" precisely.

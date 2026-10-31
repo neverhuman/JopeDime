@@ -14,15 +14,15 @@
 \section{The Road to Zero: Five Building Blocks}\label{sec:road}
 
 What has AI already built for each of the four pillars of
-\cref{sec:anatomy}? Nearly all of it. Deep learning gave variation a voice,
+\cref{sec:anatomy}? Much of it. Deep learning gave variation a voice,
 program evolution and reinforcement learning built judgment loops, games
 made judgment cheap, and the race for self-improvement now scales search to
 swarms of agents. These lines of work motivate a narrower question: can
 experience across algorithm-discovery tasks improve the first complete
 program proposed for a new family? The combination matters more than a
 claim that any one component is new.\footnote{Each history keeps only the
-milestones the argument needs; \cref{app:history} reserves space for an
-extended account.}
+milestones the argument needs; \cref{app:history} collects the referees
+those milestones rely on.}
 
 % ---------------------------------------------------------------------
 \subsection{Deep learning gave variation a voice}\label{sub:road-deep}
@@ -121,7 +121,7 @@ Language models also learn from feedback: human preferences
 checks of answers, as in DeepSeek-R1 \citep{guo2025deepseekr1}.
 
 \smallskip
-\noindent\textbf{What \EZ{} takes:} the learning rule, and proof that a
+\noindent\textbf{What \EZ{} takes:} the learning rule, and evidence from Go that a
 network can absorb search.\\
 \textbf{The question carried forward:} how to define a reward for relative
 algorithm quality, then distinguish improvement on training games from
@@ -210,9 +210,10 @@ ranks agents' hypotheses in an Elo tournament
 \citep{recursive2026techcrunch}. In the innovation game, an encoded research task would be the board and
 its evaluator the referee (\cref{sec:game}).
 
-Self-improvement comes in three strengths: better external algorithms,
-better components, and a better ability to improve, with verified
-discoveries per unit of compute rising across generations. These require separate evidence (\cref{sec:meaning}); a recorded
+Self-improvement comes in three strengths: a system can find better external
+algorithms, build better components of itself, or improve its own ability to
+improve, raising verified discoveries per unit of compute across generations.
+Each requires separate evidence (\cref{sec:meaning}); a recorded
 training trajectory alone establishes none of them on an unseen task.
 
 \smallskip
@@ -269,7 +270,7 @@ Absolute Zero; STP
 \textbf{\EZ{}}
   & \textbf{An algorithm} & \textbf{One candidate}
   & \textbf{Proposed writer updates}
-  & \textbf{Incumbent comparisons} \\
+  & \textbf{Referee scores ranked within each problem} \\
 \bottomrule
 \end{tabular}
 \end{table*}

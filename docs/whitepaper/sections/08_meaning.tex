@@ -1,9 +1,11 @@
-\section{Meaning}\label{sec:meaning}
+\section{Discussion}\label{sec:meaning}
 
 What would better first proposals on independent new families establish,
-and where would that claim stop? The answer depends on the independent results in
-\cref{sec:results}. The recorded training trajectory alone cannot establish
-transfer, useful new composition or autonomous scientific discovery.
+and where would that claim stop? This section states, for each outcome of
+\cref{sec:results}, which claim it would support. The answer depends on
+those independent results. The recorded training trajectory alone cannot
+establish transfer, useful new composition or autonomous scientific
+discovery.
 \TBD{Reconcile every conclusion below with the completed evaluation.}
 
 \subsection{Learning to select and learning to invent}
@@ -16,8 +18,8 @@ of each proposed program to that archive. Absence from an archive establishes
 novelty relative to that archive, rather than to the scientific literature.
 Different program spellings can also express the same computation. Claims
 of invention therefore need comparisons of program behavior and known
-methods, alongside predictive quality. \TBD{State which claim the evaluated
-checkpoint and its outputs actually support.}
+methods, alongside predictive quality. The evaluated checkpoint's outputs,
+compared with its training archive, decide which of the two claims applies.
 
 \subsection{Moving judgment across problems}
 
@@ -26,7 +28,8 @@ hypothesis that training evaluations can be retained as a transferable
 proposal capability. It would not show that one proposal wins on every
 problem. Test-time search may still improve a learned writer, and its value
 should be compared with the training cost it takes to improve that writer.
-\TBD{Use the measured search curves and full cost account to bound this claim.}
+The measured search curves and full cost account of
+\cref{sub:results-search} bound how far this claim extends.
 
 \subsection{The referee defines the boundary}
 
@@ -39,8 +42,8 @@ keep the chosen checkpoint fixed and report paired uncertainty, including
 failures and ties. Task representations, training families
 and runtime limits further bound the result. A referee for a new scientific
 domain would need its own validity and cost evidence; analogy to a game
-supplies neither. \TBD{Report observed failures, distribution shifts and
-remaining tests of the referee.}
+supplies neither. Observed failures, distribution shifts and the remaining
+tests of the referee belong with that evaluation (\cref{sub:results-failures}).
 
 \subsection{A bounded claim about self-improvement}
 
@@ -50,9 +53,43 @@ first does not establish the others. An optimizer trace with verified
 parameter changes can establish that training occurred; a lower training
 objective measures the fitting criterion. Neither alone shows that first
 proposals improved on unseen families. People still choose the task, metric,
-representation and resource limits. \TBD{State the strongest supported level
-of improvement and leave untested extensions as future work.}
+representation and resource limits. The paper claims only the strongest
+level that \cref{sec:results} supports; the others remain future work.
+
+\subsection{Limitations}\label{sub:meaning-limits}
+
+Beyond the pending evaluation, four limits belong to the design itself.
+The reference boards are tabular prediction tasks; other task types need
+their own qualified encoding, language and protocol
+(\cref{sub:game-boards}). The program language bounds what can be proposed,
+and its primitives encode human prior knowledge (\cref{sub:game-board}).
+The referee is noisy and can be gamed, and strict improvement on inner
+folds does not quantify confidence (\cref{sub:game-played,sub:method-referee}).
+The economics are modeled rather than measured: pilot costs, and the point
+at which training repays itself, are still to be reported
+(\cref{sec:price,sub:results-search}).
 
 The contribution to assess is concrete: whether retained evaluation
 experience improves the first executable proposal on a new problem, under
 a declared budget and an independently scored test.
+
+\section{Conclusion}\label{sec:conclusion}
+
+Within a game, a learner with a referee went beyond the best human play.
+We asked whether the same recipe can improve the first algorithm a system
+proposes for a new problem, and made the question testable. Invention
+becomes a game with a board, a move, a referee and an incumbent opponent.
+Its price is the cost of a verified win. \EZ{} is designed to learn from
+verified search through a grammar-constrained writer and a separate
+problem--program map, and to deploy one program per problem. The design,
+the cost model and the evaluation protocol are specified here. The
+retained development records show admission and search behavior, not
+transfer.
+
+The decisive experiment is a single comparison: the frozen reference
+writer against the same writer after a predeclared training intervention,
+one proposal each, on problem families held out from both
+(\cref{sub:results-learning}). Engineered intelligence, in our sense, is a
+capability whose aim, judge and memory are designed to be audited. Whether
+experience can also make its first guess better is what \cref{sec:results}
+must show.
