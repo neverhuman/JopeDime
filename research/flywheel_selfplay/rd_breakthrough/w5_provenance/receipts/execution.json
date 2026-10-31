@@ -1,0 +1,28 @@
+{
+  "command": [
+    "nice",
+    "-n",
+    "15",
+    "python3",
+    "-B",
+    "research/flywheel_selfplay/rd_breakthrough/w5_provenance/verify.py",
+    "--collect",
+    "--output",
+    "research/flywheel_selfplay/rd_breakthrough/w5_provenance/receipts"
+  ],
+  "cwd": "/home/ubuntu/JopeDime/.agent/worktrees/res-06",
+  "source_commit": "ca549a23e34b0338ff238d806bc65be990e43102",
+  "started_utc": "2026-10-31T04:00:10.027278+00:00",
+  "finished_utc": "2026-10-31T04:00:11.390455+00:00",
+  "elapsed_seconds": 1.3631760808639228,
+  "exit_status": 1,
+  "expected_exit_status": 1,
+  "environment": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "resource_budget": "one nice15 CPU metadata process; zero native fits/GPU; no new target directory"
+}

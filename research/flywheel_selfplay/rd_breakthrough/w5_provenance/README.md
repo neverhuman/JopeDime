@@ -1,7 +1,7 @@
 # W5 provenance and row-closure preflight
 
 Owner: `sol_v1_obj02`, owner ruling `gb2136_lanes.md`. This is the admission
-preflight for [W5](../PROPOSALS.md#-w5--parent-child-value-and-bounded-evolutionary-lookahead),
+preflight for [W5](../PROPOSALS.md#w5--parent-child-value-and-bounded-evolutionary-lookahead),
 under [S3 admission and row closure](../PROPOSALS.md#s3-admission-and-row-closure).
 It does not start W5, fit a model, call native evaluation, or use a GPU.
 
@@ -76,3 +76,24 @@ hashes, metadata-only HEAD versions, duration and collection errors. The verdict
 binds the inventory SHA256. W5 stays held until actual source/row admission passes;
 these receipts cannot establish a W5 quality, Elo, advancement or serving claim.
 DOPE remains frozen at `c51a56d0`.
+
+## Actual result, 2026-10-31T04:00:10Z
+
+**FAIL / W5 HELD**, intentional exit 1. The complete approved-prefix metadata
+census returned 83 objects; one LIST, five HEADs and three pinned counter GETs
+completed without collection errors in 1.363 seconds including process startup.
+All three counter byte hashes passed. No independently admitted parent/operator/
+child export or original-training/strat300 row ledger was available to this
+preflight. Actual pair joins and row containment therefore remain **unverified**,
+and pair count/coverage remain `null`.
+
+See [inventory](receipts/inventory.json), [verdict](receipts/verdict.json),
+[execution receipt](receipts/execution.json), and [protocol pin](receipts/protocol.json).
+The executed collector source is `ca549a23e34b0338ff238d806bc65be990e43102`;
+its file hash is recorded in both inventory and verdict. Subsequent documentation
+and receipt commits preserve the verifier bytes. Twelve synthetic unit controls
+passed; the actual data-admission verdict remains FAIL.
+
+Long-term create-only S3 custody and verified download hashes are recorded in
+[custody](receipts/custody.json). The manifest was written after every listed
+object passed byte readback; this output prefix grants no additional input scope.
