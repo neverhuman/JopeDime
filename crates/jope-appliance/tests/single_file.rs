@@ -187,6 +187,105 @@ fn cuda_without_a_backend_reports_refusal_and_cpu_output_placement() {
     }
 }
 
+#[cfg(all(feature = "engine", feature = "mcp"))]
+#[test]
+fn packaged_run_reports_device_refusals_and_actual_cpu_plan() {
+    use jope_service::{dataset::register, engine::InProcessEngine};
+
+    let dir = tempfile::tempdir().unwrap();
+    let d = dir.path();
+    let exe = package(d, &["ridge"]);
+    let home = d.join("engine");
+    let engine = InProcessEngine::open(&home).unwrap();
+    // Original-label public TRAIN rows, shared with the run-route acceptance test.
+    let raw = include_bytes!("../../../test-support/datasets/v1/d2-regression/train.csv");
+    assert_eq!(
+        jope_runtime::sha256_hex(raw),
+        "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931"
+    );
+    let mut names: Vec<_> = (0..21).map(|i| format!("x{i}")).collect();
+    names.push("target".into());
+    let mut csv = names.join(",");
+    csv.push('\n');
+    for line in std::str::from_utf8(raw).unwrap().lines().take(96) {
+        csv.push_str(line);
+        csv.push('\n');
+    }
+    let dataset = register::register(engine.store(), csv.as_bytes(), &Default::default()).unwrap();
+    drop(engine);
+    let dataset = dataset.id.to_string();
+    let invoke = |device: &str, dry_run: bool, json: bool| {
+        let mut command = Command::new(&exe);
+        command
+            .args([
+                "run", "--dataset", &dataset, "--target", "target", "--task", "regression",
+                "--split", r#"{"kind":"random","holdout_fraction":0.2,"group_column":null,"time_column":null}"#,
+                "--objective", "rmse", "--effort", "fast", "--budget",
+                r#"{"evaluations":"1","wall_seconds":"5"}"#,
+                "--landmarks", "none", "--guidance", "heuristic", "--language", "rust",
+                "--require-all-languages", "--device", device, "--seed", "73",
+            ])
+            .current_dir(d)
+            .env_clear()
+            .env("JOPEDIME_HOME", &home)
+            .env("CUDA_VISIBLE_DEVICES", "");
+        if dry_run {
+            command.arg("--dry-run");
+        }
+        if json {
+            command.arg("--json");
+        }
+        command.output().unwrap()
+    };
+    for dry_run in [false, true] {
+        for json in [false, true] {
+            for (device, expected, kind) in [
+                ("cuda:0", 4, "BACKEND_UNAVAILABLE"),
+                ("cuda:7", 4, "BACKEND_UNAVAILABLE"),
+                ("cuda:", 2, "Unknown device"),
+                ("cuda:-1", 2, "Unknown device"),
+                ("cuda:4294967296", 2, "Unknown device"),
+                ("gpu", 2, "Unknown device"),
+            ] {
+                let output = invoke(device, dry_run, json);
+                assert_eq!(
+                    code(&output),
+                    expected,
+                    "{device} dry_run={dry_run} json={json}: {output:?}"
+                );
+                assert!(
+                    output.stdout.is_empty(),
+                    "refusal must not emit a plan or accepted run"
+                );
+                assert_eq!(
+                    String::from_utf8_lossy(&output.stderr)
+                        .matches(kind)
+                        .count(),
+                    1,
+                    "{output:?}"
+                );
+            }
+        }
+    }
+    for device in ["cpu", "auto"] {
+        let output = invoke(device, true, true);
+        assert_eq!(code(&output), 0, "{device}: {output:?}");
+        let plan: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(
+            plan["placement"],
+            serde_json::json!({
+                "dope":"none", "ranker":"heuristic", "evaluation":"cpu", "workers":1
+            })
+        );
+        assert_eq!(plan["rows"]["total"], "96");
+        assert!(plan.get("run_id").is_none());
+    }
+    // Neither refusals nor dry-run plans launch a worker or publish a model.
+    for path in ["worker-scratch", "run-scratch", "models"] {
+        assert!(!home.join(path).exists(), "unexpected {path}");
+    }
+}
+
 fn package(dir: &Path, methods: &[&str]) -> PathBuf {
     let code = std::fs::read(BIN).unwrap();
     let notice = EntryInput {

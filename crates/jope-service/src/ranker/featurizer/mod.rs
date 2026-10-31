@@ -315,6 +315,11 @@ mod tests {
         use safetensors::{Dtype, SafeTensors};
         use std::{env, fs, path::PathBuf};
 
+        if env::var_os("JOPE_RES07_DSL_CATALOG_SHA256").is_some() {
+            check_delivered_dsl_oracles();
+            return;
+        }
+
         let root =
             PathBuf::from(env::var_os("JOPE_GOLDEN_DIR").expect("JOPE_GOLDEN_DIR is required"));
         let index_pin = env::var("JOPE_GOLDEN_INDEX_SHA256")
@@ -405,6 +410,145 @@ mod tests {
                     "mod.rs":jope_runtime::sha256_hex(include_str!("mod.rs").as_bytes()),
                     "parse.rs":jope_runtime::sha256_hex(include_str!("parse.rs").as_bytes()),
                     "structural.rs":jope_runtime::sha256_hex(include_str!("structural.rs").as_bytes())
+                }
+            })
+        );
+    }
+    // Consume the delivered-definition export without materializing a packet.
+    fn check_delivered_dsl_oracles() {
+        use safetensors::{Dtype, SafeTensors};
+        use serde_json::Value;
+        use std::{env, fs, path::PathBuf};
+
+        let pin = env::var("JOPE_RES07_DSL_CATALOG_SHA256")
+            .expect("explicit trusted DSL catalog SHA256 is required");
+        let store = PathBuf::from(
+            env::var_os("JOPE_RES07_CUSTODY_STORE").expect("DSL custody store is required"),
+        );
+        assert!(store.is_absolute() && store.is_dir());
+        assert_eq!(
+            store.canonicalize().unwrap(),
+            store,
+            "no store symlink traversal"
+        );
+        let hashed = |key: &str| {
+            assert!(
+                key.len() == 64
+                    && key
+                        .bytes()
+                        .all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase()),
+                "lowercase SHA256 object identity required"
+            );
+            let path = store.join(key);
+            let meta = fs::symlink_metadata(&path).expect("required DSL custody object");
+            assert!(meta.is_file() && meta.len() <= 64 * 1024 * 1024);
+            let bytes = fs::read(path).unwrap();
+            assert_eq!(
+                jope_runtime::sha256_hex(&bytes),
+                key,
+                "DSL object hash differs"
+            );
+            bytes
+        };
+        let index: Value = serde_json::from_slice(&hashed(&pin)).unwrap();
+        assert_eq!(index["schema"], "jope.golden-custody/v1");
+        assert_eq!(index["storage"], "sha256-custody");
+        assert_eq!(
+            index["bundle_digest"],
+            "sha256:94fd9587675c7806bd0a0582b6e97540cd2fdc7ebbc51958411b905185cad85c"
+        );
+        let reference_pins: Vec<_> = index["reference_source_sha256"]
+            .as_object()
+            .unwrap()
+            .iter()
+            .filter(|(name, _)| name.ends_with("/python/rank_prepare.py"))
+            .map(|(_, pin)| pin.as_str().unwrap())
+            .collect();
+        assert_eq!(reference_pins, [REFERENCE_SOURCE_SHA256]);
+        let payload = |name: &str| {
+            let spec = &index["files"][name];
+            let bytes = hashed(spec["sha256"].as_str().expect("required DSL payload pin"));
+            assert_eq!(bytes.len() as u64, spec["bytes"].as_u64().unwrap());
+            bytes
+        };
+        let programs = payload("dsl/programs.jsonl");
+        let programs: Vec<Value> = std::str::from_utf8(&programs)
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+        let coverage: Value = serde_json::from_slice(&payload("dsl/coverage.json")).unwrap();
+        assert!(!programs.is_empty());
+        assert_eq!(coverage["delivered_unique_programs"], programs.len());
+        assert_eq!(
+            index["dsl_coverage"]["delivered_unique_programs"],
+            programs.len()
+        );
+        let mut previous: Option<&str> = None;
+        for program in &programs {
+            let dsl = program["dsl"].as_str().expect("canonical DSL required");
+            let key = program["program_sha256"]
+                .as_str()
+                .expect("program identity required");
+            assert_eq!(jope_runtime::sha256_hex(dsl.as_bytes()), key);
+            assert!(
+                previous.is_none_or(|old| old < key),
+                "sorted unique DSL identities required"
+            );
+            previous = Some(key);
+        }
+        let shards = coverage["canonical_tensor_shards"].as_array().unwrap();
+        let featurizer = Featurizer::default();
+        let mut end = 0;
+        let mut comparisons = 0;
+        let mut maximum = 0.0_f64;
+        for (number, shard) in shards.iter().enumerate() {
+            let start = usize::try_from(shard["start"].as_u64().unwrap()).unwrap();
+            let next = usize::try_from(shard["end"].as_u64().unwrap()).unwrap();
+            assert_eq!(start, end, "contiguous complete oracle shards required");
+            assert!(next > start && next <= programs.len() && next - start <= 8192);
+            let name = shard["path"].as_str().unwrap();
+            assert_eq!(name, format!("dsl/programs-{number:05}.safetensors"));
+            let bytes = payload(name);
+            let tensors = SafeTensors::deserialize(&bytes).unwrap();
+            let features = tensors.tensor("feat412").unwrap();
+            assert_eq!(features.dtype(), Dtype::F32);
+            assert_eq!(features.shape(), [next - start, FEATURE_COUNT]);
+            for (row, program) in programs[start..next].iter().enumerate() {
+                let dsl = program["dsl"].as_str().unwrap();
+                let key = program["program_sha256"].as_str().unwrap();
+                let actual = featurizer
+                    .featurize(dsl)
+                    .unwrap_or_else(|e| panic!("{key}: {e:#}"));
+                for (column, observed) in actual.iter().copied().enumerate() {
+                    let offset = (row * FEATURE_COUNT + column) * 4;
+                    let expected =
+                        f32::from_le_bytes(features.data()[offset..offset + 4].try_into().unwrap());
+                    assert!(observed.is_finite() && expected.is_finite());
+                    maximum = maximum.max((f64::from(observed) - f64::from(expected)).abs());
+                    assert_eq!(observed, expected, "DSL {key}: {}", FEATURE_NAMES[column]);
+                    comparisons += 1;
+                }
+            }
+            end = next;
+        }
+        assert_eq!(end, programs.len(), "every delivered DSL must be compared");
+        assert_eq!(comparisons, programs.len() * FEATURE_COUNT);
+        println!(
+            "{}",
+            serde_json::json!({
+                "gate":"RNK-03 composed serialized-oracle parity", "scope":"delivered TRAIN definitions",
+                "programs":programs.len(),"coordinates_per_program":FEATURE_COUNT,"comparisons":comparisons,
+                "mismatches":0,"max_absolute_error":maximum,"catalog_sha256":pin,
+                "covered_historical_programs":index["dsl_coverage"]["covered_historical_programs"],
+                "missing_historical_programs":index["dsl_coverage"]["missing_historical_programs"],
+                "full_historical_M3":false,
+                "compiled_source_sha256":{
+                    "mod.rs":jope_runtime::sha256_hex(include_str!("mod.rs").as_bytes()),
+                    "parse.rs":jope_runtime::sha256_hex(include_str!("parse.rs").as_bytes()),
+                    "structural.rs":jope_runtime::sha256_hex(include_str!("structural.rs").as_bytes()),
+                    "parameters.rs":jope_runtime::sha256_hex(include_str!("parameters.rs").as_bytes()),
+                    "positions.rs":jope_runtime::sha256_hex(include_str!("positions.rs").as_bytes())
                 }
             })
         );

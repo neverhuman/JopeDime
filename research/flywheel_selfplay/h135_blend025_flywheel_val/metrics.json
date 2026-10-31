@@ -1,69 +1,456 @@
 {
-  "verdict": "INCOMPLETE",
-  "arms": null,
+  "protocol": "fixed-dev-cost-argmin-negative-fitness/v1",
+  "reference_mean": 1.1377941898164525,
+  "reference_failure_count": 0,
+  "reference_elo": 1500,
+  "seeds": [
+    135,
+    136,
+    137
+  ],
+  "contexts": 91,
+  "families": 19,
+  "bootstrap_draws": 10000,
+  "bootstrap_seed": 135100,
+  "arms": {
+    "BLEND_025": {
+      "mean_utility_by_seed": [
+        1.1345310609828356,
+        1.133720746153811,
+        1.0726799327053995
+      ],
+      "gain_by_seed": [
+        -0.0032631288336168853,
+        -0.0040734436626415245,
+        -0.06511425711105273
+      ],
+      "median_gain": -0.0040734436626415245,
+      "lcb95": -0.026278202473671037,
+      "ci95": [
+        -0.02942032959291884,
+        0.009865013780868227
+      ],
+      "harm_count": 8,
+      "harm_fraction": 0.42105263157894735,
+      "families": 19,
+      "trimmed_mean": -0.005902412167989797,
+      "top10_context_ids": [
+        "4425fbe7fee2bd08ad54abfdfdbb2437681bd8e6a83e36cef7063144eaa4e1bd",
+        "d77243cf0858886491d4009e8bf1731257f9f0cfd0759c924f75396d6a7dc62b",
+        "6ecbb7d5ec5384b3079e5faaa161bbe05b4ce9cf11a0b837e857a3965ed3aa61",
+        "ede9d2973b86e72742f16ea74f5e22535b08815aec354eaa02b3bedf210583f6",
+        "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd",
+        "8c424963eef97edcc0520b61061f6c4c34e107e1b8c1f3ca0986a80c9b9bb114",
+        "dbaf4dda74e91180243f917dc31bf3ba8d864a144d23c486bf7f12e72f98193f",
+        "a5f7054e2579b9621abced81485d180f84fba472bc81781851ff0d1373962f6f",
+        "8a13471f5d9ac1032ea6f7a2feec6c8c2c8887180673371c8862bc204eb42235",
+        "f9faf6b9e96f5cca3fc953f0f373e376bc221be103b293650615cfa869ae3434"
+      ],
+      "top10_signed_share": 0.7824540253834785,
+      "top10_absolute_share": 0.6539231852541151,
+      "failure_counts": [
+        0,
+        0,
+        2
+      ],
+      "seed_pairs": [
+        {
+          "seeds": [
+            135,
+            136
+          ],
+          "pearson": 0.09543005188495696,
+          "identical_utilities": false
+        },
+        {
+          "seeds": [
+            135,
+            137
+          ],
+          "pearson": -0.06519872126814091,
+          "identical_utilities": false
+        },
+        {
+          "seeds": [
+            136,
+            137
+          ],
+          "pearson": -0.23514409671412073,
+          "identical_utilities": false
+        }
+      ],
+      "elo_by_seed": [
+        1496.3464943034846,
+        1503.6535056965154,
+        1492.6921804293352
+      ],
+      "median_elo": 1496.3464943034846,
+      "gates": {
+        "median_gt_001": false,
+        "lcb_gt_zero": false,
+        "all_seeds_positive": false,
+        "harm_le_10pct": false,
+        "trim_gt_zero": false,
+        "seed_independence": true
+      },
+      "admission_assessed": true,
+      "candidate": false
+    },
+    "PURE_GBM": {
+      "mean_utility_by_seed": [
+        1.0557183361593612,
+        0.9277372174783051,
+        1.0016207442875023
+      ],
+      "gain_by_seed": [
+        -0.08207585365709104,
+        -0.21005697233814716,
+        -0.13617344552895014
+      ],
+      "median_gain": -0.13617344552895014,
+      "lcb95": -0.26215607355137915,
+      "ci95": [
+        -0.287175928590346,
+        0.015194807361090858
+      ],
+      "harm_count": 9,
+      "harm_fraction": 0.47368421052631576,
+      "families": 19,
+      "trimmed_mean": -0.03821762102180248,
+      "top10_context_ids": [
+        "1904558704af02ce447393649010660c2a6c608e0f1250484e1c21fd74dd1d59",
+        "1cd86c6087f25f2044a29d25091d8e3fa6b8a6bffdb4f1e7815908b744759bb9",
+        "55de002335a4375843a826913f248b38c74b7b875b27726907fc9dc378939d99",
+        "983bb1e5e396d436d7347fc8ca1ebd116cfed99493c6e91f6026a7d167c19780",
+        "1ad9d95cffce95734ff5b4b14d7f291da3cee9338f139596cecf593a86f6f39a",
+        "42db82ea39dbc7a7def1af111b6fd0099aebf783c7ea01548b3f55883fd836e1",
+        "283fb463e021e3cef432a5e46ccf21d95731e25af46eb52be91099d1e248a6ae",
+        "9df0bcb0f8cf6ce721786f461577a7fcdb752bca13319bd8cc0399c523d5cc99",
+        "2d7f56bce09d136473a7847a4672718e147e08b3b4c4db6dec40f481b293d421",
+        "9a3bd46cd866ea55d3f99f9d713cbcc789e1fb8ea427b02aba6ee75e732f883f"
+      ],
+      "top10_signed_share": 0.7617274036619593,
+      "top10_absolute_share": 0.48992477534644263,
+      "failure_counts": [
+        3,
+        5,
+        4
+      ],
+      "seed_pairs": [
+        {
+          "seeds": [
+            135,
+            136
+          ],
+          "pearson": 0.09358718531935827,
+          "identical_utilities": false
+        },
+        {
+          "seeds": [
+            135,
+            137
+          ],
+          "pearson": 0.2858464984108957,
+          "identical_utilities": false
+        },
+        {
+          "seeds": [
+            136,
+            137
+          ],
+          "pearson": 0.3323264895615545,
+          "identical_utilities": false
+        }
+      ],
+      "elo_by_seed": [
+        1521.9493806216506,
+        1496.3464943034846,
+        1597.4664383075417
+      ],
+      "median_elo": 1521.9493806216506,
+      "gates": {
+        "median_gt_001": false,
+        "lcb_gt_zero": false,
+        "all_seeds_positive": false,
+        "harm_le_10pct": false,
+        "trim_gt_zero": false,
+        "seed_independence": true
+      },
+      "admission_assessed": false,
+      "candidate": false
+    },
+    "BLEND_050": {
+      "mean_utility_by_seed": [
+        1.0553666835527293,
+        1.0722114204733348,
+        1.0386853561453002
+      ],
+      "gain_by_seed": [
+        -0.0824275062637231,
+        -0.06558276934311741,
+        -0.09910883367115209
+      ],
+      "median_gain": -0.0824275062637231,
+      "lcb95": -0.1625670343441011,
+      "ci95": [
+        -0.18149453596100998,
+        0.005495278671486604
+      ],
+      "harm_count": 10,
+      "harm_fraction": 0.5263157894736842,
+      "families": 19,
+      "trimmed_mean": 0.0002636428909065366,
+      "top10_context_ids": [
+        "4425fbe7fee2bd08ad54abfdfdbb2437681bd8e6a83e36cef7063144eaa4e1bd",
+        "59aae6f8f8fdedc6caae8e929b0882d99bc8a75d38205a3a99dad3ad95a5376a",
+        "2d7f56bce09d136473a7847a4672718e147e08b3b4c4db6dec40f481b293d421",
+        "1ad9d95cffce95734ff5b4b14d7f291da3cee9338f139596cecf593a86f6f39a",
+        "fcfd54c8f474349f7bd6a5003252fccec8ac1e83e902615a3c2416242cc1ada7",
+        "d268b611456872363e0ca930c279e51245cebfba09d4c55efa4d207cfe8ec64c",
+        "d77243cf0858886491d4009e8bf1731257f9f0cfd0759c924f75396d6a7dc62b",
+        "8a13471f5d9ac1032ea6f7a2feec6c8c2c8887180673371c8862bc204eb42235",
+        "4f7d3f5391d70e8b069ee39bb59adc30b1c4a4050cdb86fdfea2eac35ef1f0d8",
+        "1cd86c6087f25f2044a29d25091d8e3fa6b8a6bffdb4f1e7815908b744759bb9"
+      ],
+      "top10_signed_share": 1.0028488830184605,
+      "top10_absolute_share": 0.661696422779644,
+      "failure_counts": [
+        3,
+        2,
+        3
+      ],
+      "seed_pairs": [
+        {
+          "seeds": [
+            135,
+            136
+          ],
+          "pearson": 0.6779277696680054,
+          "identical_utilities": false
+        },
+        {
+          "seeds": [
+            135,
+            137
+          ],
+          "pearson": 0.2806448301963294,
+          "identical_utilities": false
+        },
+        {
+          "seeds": [
+            136,
+            137
+          ],
+          "pearson": 0.3284880524236299,
+          "identical_utilities": false
+        }
+      ],
+      "elo_by_seed": [
+        1503.6535056965154,
+        1503.6535056965154,
+        1518.2837146001023
+      ],
+      "median_elo": 1503.6535056965154,
+      "gates": {
+        "median_gt_001": false,
+        "lcb_gt_zero": false,
+        "all_seeds_positive": false,
+        "harm_le_10pct": false,
+        "trim_gt_zero": true,
+        "seed_independence": true
+      },
+      "admission_assessed": false,
+      "candidate": false
+    }
+  },
+  "verdict": "NO_ADVANCE",
+  "promotion": false,
   "wave": "H135",
-  "status": "INCOMPLETE",
-  "attempt": 3,
-  "execution_source_commit": "8383e8cd5ceb1fc7dc6041635576edf40c605f1b",
+  "status": "COMPLETE",
+  "attempt": 4,
+  "execution_source_commit": "224bd1c43819188a450fe23dab1ab18598634e62",
   "prereg_pr": 1191,
   "amendments": [
     1194,
     1200,
-    1207
+    1207,
+    1215
   ],
   "prior_attempt": {
     "verdict": "INCOMPLETE",
     "arms": null,
     "wave": "H135",
     "status": "INCOMPLETE",
-    "attempt": 2,
-    "execution_source_commit": "b6d4c6b232a741c2328535fd856b89e1871e6ad3",
+    "attempt": 3,
+    "execution_source_commit": "8383e8cd5ceb1fc7dc6041635576edf40c605f1b",
     "prereg_pr": 1191,
     "amendments": [
       1194,
-      1200
+      1200,
+      1207
     ],
     "prior_attempt": {
+      "verdict": "INCOMPLETE",
+      "arms": null,
       "wave": "H135",
       "status": "INCOMPLETE",
-      "scientific_verdict": "UNMEASURED",
-      "attempt": 1,
-      "continuation_status": "A2_PREREGISTERED_NOT_EXECUTED",
-      "actual_fits": 0,
-      "actual_optimizer_updates": 0,
-      "baseline_predictions": 0,
-      "blend_reads": 0,
-      "baseline_sanity": "NOT_REACHED",
-      "mean_gain": null,
-      "Elo": null,
-      "val_reg": null,
-      "U4": null,
-      "stop": {
+      "attempt": 2,
+      "execution_source_commit": "b6d4c6b232a741c2328535fd856b89e1871e6ad3",
+      "prereg_pr": 1191,
+      "amendments": [
+        1194,
+        1200
+      ],
+      "prior_attempt": {
+        "wave": "H135",
         "status": "INCOMPLETE",
-        "source_commit": "cd00c99cc4adb85d495b5c12906e4884fc989b62",
-        "exit_status": 1,
-        "reason": "guard: threads>4",
+        "scientific_verdict": "UNMEASURED",
+        "attempt": 1,
+        "continuation_status": "A2_PREREGISTERED_NOT_EXECUTED",
         "actual_fits": 0,
         "actual_optimizer_updates": 0,
         "baseline_predictions": 0,
         "blend_reads": 0,
         "baseline_sanity": "NOT_REACHED",
-        "phase": "baseline setup before checkpoint-load receipt and prediction loop",
-        "runtime_read_audit": "NOT_FLUSHED; no complete runtime read-count proof",
-        "authorized_data_exposure": "cohort, context features and91validation pools loaded before baseline constructor by frozen source control flow; no protected inputs authorized",
-        "peak_rss": 925720576,
-        "max_threads": 7,
-        "samples": 72,
-        "first_utc": "2026-10-31T21:35:01.323283+00:00",
-        "last_utc": "2026-10-31T21:35:24.155695+00:00",
+        "mean_gain": null,
+        "Elo": null,
+        "val_reg": null,
+        "U4": null,
+        "stop": {
+          "status": "INCOMPLETE",
+          "source_commit": "cd00c99cc4adb85d495b5c12906e4884fc989b62",
+          "exit_status": 1,
+          "reason": "guard: threads>4",
+          "actual_fits": 0,
+          "actual_optimizer_updates": 0,
+          "baseline_predictions": 0,
+          "blend_reads": 0,
+          "baseline_sanity": "NOT_REACHED",
+          "phase": "baseline setup before checkpoint-load receipt and prediction loop",
+          "runtime_read_audit": "NOT_FLUSHED; no complete runtime read-count proof",
+          "authorized_data_exposure": "cohort, context features and91validation pools loaded before baseline constructor by frozen source control flow; no protected inputs authorized",
+          "peak_rss": 925720576,
+          "max_threads": 7,
+          "samples": 72,
+          "first_utc": "2026-10-31T21:35:01.323283+00:00",
+          "last_utc": "2026-10-31T21:35:24.155695+00:00",
+          "files": {
+            "r882-copy.pt": {
+              "bytes": 7493476,
+              "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
+            },
+            "reference.json": {
+              "bytes": 38703,
+              "sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+            },
+            "cohort.json": {
+              "bytes": 139,
+              "sha256": "4bc5ae2e19839030cda0733608da9bf69e6c47696eaa3e1afeb04e8c55573d9b"
+            }
+          },
+          "metric_values": null,
+          "verdict": "INCOMPLETE_NO_SCIENTIFIC_VERDICT",
+          "no_live_processes": true
+        },
+        "custody": {
+          "manifest": {
+            "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-t1505/manifest.json",
+            "version_id": "FOH8vg.wIYiXFVltILnQP2SuSZIgRpHB",
+            "sha256": "2e657bc0c4451613869f4518d660a184e63919897a98973fb3045b5d996cf1f9",
+            "bytes": 15232,
+            "verified_utc": "2026-10-31T21:38:02.418209+00:00"
+          },
+          "archive": {
+            "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-t1505/numerical-evidence.npz",
+            "version_id": "4B3kBLJYqmn_ZT.8U1eWt18ZVAmFf32d",
+            "sha256": "0e26e3170ada50afced6a0e20c3ebf87c3c60086b4eb3463c9590575ca009b69",
+            "bytes": 38071,
+            "verified_utc": "2026-10-31T21:37:57.716843+00:00"
+          },
+          "archive_members_verified": 9
+        }
+      },
+      "custody": {
+        "manifest": {
+          "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/manifest.json",
+          "version_id": "unhuGh1cUZNOWybJazyaZQEC5.lYyZeh",
+          "sha256": "b0e17eee25e915855035f01fca3a44a761583d81b9c2e7746e5913f543928313",
+          "bytes": 19827,
+          "verified_utc": "2026-10-31T21:57:16.753329+00:00"
+        },
+        "archive": {
+          "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz",
+          "version_id": "gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi",
+          "sha256": "38836aef288e4b1ccde5473f4b0f6db4a5af9e80bae94b7166ccd4a6e5e8b07b",
+          "bytes": 1011407,
+          "verified_utc": "2026-10-31T21:57:14.005847+00:00"
+        },
+        "archive_members_verified": 17
+      },
+      "stop": {
+        "status": "INCOMPLETE",
+        "source_commit": "b6d4c6b232a741c2328535fd856b89e1871e6ad3",
+        "exit_status": 1,
+        "reason": "guard: threads>4",
+        "attempt": 2,
+        "no_live_processes": true,
+        "baseline_predictions": 91,
+        "baseline_sanity": {
+          "status": "PASS",
+          "max_context_error": 0.0,
+          "mean_error": 0.0,
+          "mean": 1.1377941898164525,
+          "baseline_sha256": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
+          "reference_sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+        },
+        "completed_fit_receipts": 0,
+        "actual_completed_fits": null,
+        "fit_stage_attempts": [
+          135
+        ],
+        "fit_internal_progress": "UNKNOWN; no per-iteration telemetry or completed prediction/fit receipt",
+        "actual_optimizer_updates": 0,
+        "blend_reads": 0,
+        "phase": "seed135 stage; no fitted prediction archive or completed fit receipt; exact internal fit progress unknown",
+        "runtime_read_audit": "baseline flushed with protected_reads=0; seed135 NOT_FLUSHED, no complete seed read-count proof",
+        "authorized_data_exposure": "baseline authorized train+validation context features and91validation pools; seed135 may load full authorized train+validation pools; exact seed read counts unavailable",
+        "peak_rss": 6073786368,
+        "max_threads": 8,
+        "samples": 398,
+        "first_utc": "2026-10-31T21:54:02.390111+00:00",
+        "last_utc": "2026-10-31T21:56:12.059376+00:00",
         "files": {
+          "dope-secondary.json": {
+            "bytes": 236,
+            "sha256": "fb7ec681db921774c3c5ac4f7183690ac46e8f6f2db3dd71d60ffc44893975b2"
+          },
           "r882-copy.pt": {
             "bytes": 7493476,
             "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
           },
+          "r882-secondary-costs.npz": {
+            "bytes": 484115,
+            "sha256": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f"
+          },
+          "read-audit-baseline.json": {
+            "bytes": 10807,
+            "sha256": "5214950acaca4a62bc30b3da0c4e4f5ac442dc32f81f7cf2c2c8a0d275ad357e"
+          },
+          "sanity.json": {
+            "bytes": 3269,
+            "sha256": "d9aeb1605b25f0b6db4880372b4cce940e9a0836ad1ec0ebe1727dc1bd23346a"
+          },
+          "baseline.npz": {
+            "bytes": 484115,
+            "sha256": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f"
+          },
           "reference.json": {
             "bytes": 38703,
             "sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+          },
+          "checkpoint-load.json": {
+            "bytes": 131,
+            "sha256": "298a939cb9cc1b205c1ec4ebb9245e2819bb3421baf38e36c3e135dcd03627ac"
           },
           "cohort.json": {
             "bytes": 139,
@@ -72,49 +459,121 @@
         },
         "metric_values": null,
         "verdict": "INCOMPLETE_NO_SCIENTIFIC_VERDICT",
-        "no_live_processes": true
+        "automatic_retry": false
       },
-      "custody": {
-        "manifest": {
-          "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-t1505/manifest.json",
-          "version_id": "FOH8vg.wIYiXFVltILnQP2SuSZIgRpHB",
-          "sha256": "2e657bc0c4451613869f4518d660a184e63919897a98973fb3045b5d996cf1f9",
-          "bytes": 15232,
-          "verified_utc": "2026-10-31T21:38:02.418209+00:00"
-        },
+      "scientific_verdict": "UNMEASURED",
+      "actual_completed_fits": null,
+      "completed_fit_receipts": 0,
+      "actual_optimizer_updates": 0,
+      "baseline_predictions": 91,
+      "blend_reads": 0,
+      "baseline_sanity": "PASS",
+      "resources": {
+        "samples": 398,
+        "first_utc": "2026-10-31T21:54:02.390111+00:00",
+        "last_utc": "2026-10-31T21:56:12.059376+00:00",
+        "peak_rss": 6073786368,
+        "maximum_threads": 8,
+        "peak_scratch": 8514991,
+        "maximum_root_usage": 92.86880308873617
+      },
+      "mean_gain": null,
+      "Elo": null,
+      "val_reg": null,
+      "U4": null,
+      "cleanup": {
+        "utc": "2026-10-31T21:58:11.670469+00:00",
+        "files": [
+          {
+            "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/dope-secondary.json",
+            "bytes": 236,
+            "sha256": "fb7ec681db921774c3c5ac4f7183690ac46e8f6f2db3dd71d60ffc44893975b2",
+            "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/dope-secondary.json"
+          },
+          {
+            "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/r882-copy.pt",
+            "bytes": 7493476,
+            "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+            "recovery": "/home/ubuntu/jope-data/h134/run-20261031T2036Z/r882-copy.pt"
+          },
+          {
+            "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/r882-secondary-costs.npz",
+            "bytes": 484115,
+            "sha256": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
+            "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/r882-secondary-costs.npz"
+          },
+          {
+            "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/read-audit-baseline.json",
+            "bytes": 10807,
+            "sha256": "5214950acaca4a62bc30b3da0c4e4f5ac442dc32f81f7cf2c2c8a0d275ad357e",
+            "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/read-audit-baseline.json"
+          },
+          {
+            "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/sanity.json",
+            "bytes": 3269,
+            "sha256": "d9aeb1605b25f0b6db4880372b4cce940e9a0836ad1ec0ebe1727dc1bd23346a",
+            "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/sanity.json"
+          },
+          {
+            "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/baseline.npz",
+            "bytes": 484115,
+            "sha256": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
+            "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/baseline.npz"
+          },
+          {
+            "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/reference.json",
+            "bytes": 38703,
+            "sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+            "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/reference.json"
+          },
+          {
+            "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/checkpoint-load.json",
+            "bytes": 131,
+            "sha256": "298a939cb9cc1b205c1ec4ebb9245e2819bb3421baf38e36c3e135dcd03627ac",
+            "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/checkpoint-load.json"
+          },
+          {
+            "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/cohort.json",
+            "bytes": 139,
+            "sha256": "4bc5ae2e19839030cda0733608da9bf69e6c47696eaa3e1afeb04e8c55573d9b",
+            "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/cohort.json"
+          }
+        ],
+        "reclaimed_bytes": 8514991,
+        "scope": "Only owned H135 continuation run scratch; source and other-owner inputs untouched",
         "archive": {
-          "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-t1505/numerical-evidence.npz",
-          "version_id": "4B3kBLJYqmn_ZT.8U1eWt18ZVAmFf32d",
-          "sha256": "0e26e3170ada50afced6a0e20c3ebf87c3c60086b4eb3463c9590575ca009b69",
-          "bytes": 38071,
-          "verified_utc": "2026-10-31T21:37:57.716843+00:00"
+          "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz",
+          "version_id": "gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi",
+          "sha256": "38836aef288e4b1ccde5473f4b0f6db4a5af9e80bae94b7166ccd4a6e5e8b07b",
+          "bytes": 1011407,
+          "verified_utc": "2026-10-31T21:57:14.005847+00:00"
         },
-        "archive_members_verified": 9
+        "original_input_exact_s3_recovery": false
       }
     },
     "custody": {
       "manifest": {
-        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/manifest.json",
-        "version_id": "unhuGh1cUZNOWybJazyaZQEC5.lYyZeh",
-        "sha256": "b0e17eee25e915855035f01fca3a44a761583d81b9c2e7746e5913f543928313",
-        "bytes": 19827,
-        "verified_utc": "2026-10-31T21:57:16.753329+00:00"
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/manifest.json",
+        "version_id": "ZEvQ9kPnLHcT_6WV_1lV3sN0qAA6kowL",
+        "sha256": "e4cb583932bc3c68ac9049b9924060d17b922b223a9a678af8905dc0f643c717",
+        "bytes": 21751,
+        "verified_utc": "2026-10-31T22:27:32.506279+00:00"
       },
       "archive": {
-        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz",
-        "version_id": "gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi",
-        "sha256": "38836aef288e4b1ccde5473f4b0f6db4a5af9e80bae94b7166ccd4a6e5e8b07b",
-        "bytes": 1011407,
-        "verified_utc": "2026-10-31T21:57:14.005847+00:00"
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz",
+        "version_id": "LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R",
+        "sha256": "5c4d99295ba815c47503aca4971b5cae4505119a439f5b7b6a0d7302d02f8913",
+        "bytes": 1078302,
+        "verified_utc": "2026-10-31T22:27:28.133556+00:00"
       },
-      "archive_members_verified": 17
+      "archive_members_verified": 19
     },
     "stop": {
       "status": "INCOMPLETE",
-      "source_commit": "b6d4c6b232a741c2328535fd856b89e1871e6ad3",
+      "source_commit": "8383e8cd5ceb1fc7dc6041635576edf40c605f1b",
       "exit_status": 1,
-      "reason": "guard: threads>4",
-      "attempt": 2,
+      "reason": "guard: load>85%",
+      "attempt": 3,
       "no_live_processes": true,
       "baseline_predictions": 91,
       "baseline_sanity": {
@@ -135,12 +594,14 @@
       "blend_reads": 0,
       "phase": "seed135 stage; no fitted prediction archive or completed fit receipt; exact internal fit progress unknown",
       "runtime_read_audit": "baseline flushed with protected_reads=0; seed135 NOT_FLUSHED, no complete seed read-count proof",
-      "authorized_data_exposure": "baseline authorized train+validation context features and91validation pools; seed135 may load full authorized train+validation pools; exact seed read counts unavailable",
-      "peak_rss": 6073786368,
-      "max_threads": 8,
-      "samples": 398,
-      "first_utc": "2026-10-31T21:54:02.390111+00:00",
-      "last_utc": "2026-10-31T21:56:12.059376+00:00",
+      "authorized_data_exposure": "baseline authorized train+validation features and91validation pools; seed135 full authorized training pipeline started; exact seed read counts unavailable",
+      "peak_rss": 6059577344,
+      "max_threads": 1,
+      "peak_load1": 101.30859375,
+      "load_limit": 86.7,
+      "samples": 1839,
+      "first_utc": "2026-10-31T22:15:22.259744+00:00",
+      "last_utc": "2026-10-31T22:26:03.951164+00:00",
       "files": {
         "dope-secondary.json": {
           "bytes": 236,
@@ -190,271 +651,185 @@
     "baseline_predictions": 91,
     "blend_reads": 0,
     "baseline_sanity": "PASS",
-    "resources": {
-      "samples": 398,
-      "first_utc": "2026-10-31T21:54:02.390111+00:00",
-      "last_utc": "2026-10-31T21:56:12.059376+00:00",
-      "peak_rss": 6073786368,
-      "maximum_threads": 8,
-      "peak_scratch": 8514991,
-      "maximum_root_usage": 92.86880308873617
-    },
     "mean_gain": null,
     "Elo": null,
+    "utility_ci95": null,
+    "Elo_ci95": null,
     "val_reg": null,
     "U4": null,
+    "resources": {
+      "samples": 1839,
+      "first_utc": "2026-10-31T22:15:22.259744+00:00",
+      "last_utc": "2026-10-31T22:26:03.951164+00:00",
+      "peak_rss": 6059577344,
+      "maximum_threads": 1,
+      "peak_scratch": 8514991,
+      "maximum_root_usage": 93.38315800072775
+    },
     "cleanup": {
-      "utc": "2026-10-31T21:58:11.670469+00:00",
+      "utc": "2026-10-31T22:28:19.549240+00:00",
       "files": [
         {
-          "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/dope-secondary.json",
+          "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/dope-secondary.json",
           "bytes": 236,
           "sha256": "fb7ec681db921774c3c5ac4f7183690ac46e8f6f2db3dd71d60ffc44893975b2",
-          "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/dope-secondary.json"
+          "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz VersionId=LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R member=run/dope-secondary.json"
         },
         {
-          "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/r882-copy.pt",
+          "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/r882-copy.pt",
           "bytes": 7493476,
           "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
           "recovery": "/home/ubuntu/jope-data/h134/run-20261031T2036Z/r882-copy.pt"
         },
         {
-          "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/r882-secondary-costs.npz",
+          "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/r882-secondary-costs.npz",
           "bytes": 484115,
           "sha256": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
-          "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/r882-secondary-costs.npz"
+          "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz VersionId=LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R member=run/r882-secondary-costs.npz"
         },
         {
-          "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/read-audit-baseline.json",
+          "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/read-audit-baseline.json",
           "bytes": 10807,
           "sha256": "5214950acaca4a62bc30b3da0c4e4f5ac442dc32f81f7cf2c2c8a0d275ad357e",
-          "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/read-audit-baseline.json"
+          "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz VersionId=LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R member=run/read-audit-baseline.json"
         },
         {
-          "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/sanity.json",
+          "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/sanity.json",
           "bytes": 3269,
           "sha256": "d9aeb1605b25f0b6db4880372b4cce940e9a0836ad1ec0ebe1727dc1bd23346a",
-          "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/sanity.json"
+          "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz VersionId=LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R member=run/sanity.json"
         },
         {
-          "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/baseline.npz",
+          "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/baseline.npz",
           "bytes": 484115,
           "sha256": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
-          "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/baseline.npz"
+          "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz VersionId=LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R member=run/baseline.npz"
         },
         {
-          "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/reference.json",
+          "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/reference.json",
           "bytes": 38703,
           "sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
-          "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/reference.json"
+          "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz VersionId=LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R member=run/reference.json"
         },
         {
-          "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/checkpoint-load.json",
+          "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/checkpoint-load.json",
           "bytes": 131,
           "sha256": "298a939cb9cc1b205c1ec4ebb9245e2819bb3421baf38e36c3e135dcd03627ac",
-          "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/checkpoint-load.json"
+          "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz VersionId=LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R member=run/checkpoint-load.json"
         },
         {
-          "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/cohort.json",
+          "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/cohort.json",
           "bytes": 139,
           "sha256": "4bc5ae2e19839030cda0733608da9bf69e6c47696eaa3e1afeb04e8c55573d9b",
-          "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/cohort.json"
+          "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz VersionId=LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R member=run/cohort.json"
         }
       ],
       "reclaimed_bytes": 8514991,
-      "scope": "Only owned H135 continuation run scratch; source and other-owner inputs untouched",
+      "scope": "Only owned H135 A3 continuation run scratch; source and other-owner inputs untouched",
       "archive": {
-        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz",
-        "version_id": "gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi",
-        "sha256": "38836aef288e4b1ccde5473f4b0f6db4a5af9e80bae94b7166ccd4a6e5e8b07b",
-        "bytes": 1011407,
-        "verified_utc": "2026-10-31T21:57:14.005847+00:00"
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz",
+        "version_id": "LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R",
+        "sha256": "5c4d99295ba815c47503aca4971b5cae4505119a439f5b7b6a0d7302d02f8913",
+        "bytes": 1078302,
+        "verified_utc": "2026-10-31T22:27:28.133556+00:00"
       },
       "original_input_exact_s3_recovery": false
     }
   },
   "custody": {
     "manifest": {
-      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/manifest.json",
-      "version_id": "ZEvQ9kPnLHcT_6WV_1lV3sN0qAA6kowL",
-      "sha256": "e4cb583932bc3c68ac9049b9924060d17b922b223a9a678af8905dc0f643c717",
-      "bytes": 21751,
-      "verified_utc": "2026-10-31T22:27:32.506279+00:00"
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a4/manifest.json",
+      "version_id": "Sw41ZGk4mtvsqG4zwVWAxnR5dSVPs5Fx",
+      "sha256": "fc99e90a0e0cbf9e4af95263afef93cfc56ae36817e044cf51c949701c8c64c8",
+      "bytes": 35675,
+      "verified_utc": "2026-10-31T23:12:07.757438+00:00"
     },
     "archive": {
-      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz",
-      "version_id": "LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R",
-      "sha256": "5c4d99295ba815c47503aca4971b5cae4505119a439f5b7b6a0d7302d02f8913",
-      "bytes": 1078302,
-      "verified_utc": "2026-10-31T22:27:28.133556+00:00"
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a4/numerical-evidence.npz",
+      "version_id": "LVo0roOIU2RU5omWZ4M6gOKxDkYgNBrO",
+      "sha256": "28f645808000bb6bdb869bef1200104ce7081f8ae7417a43ca3444ab879786da",
+      "bytes": 2660947,
+      "verified_utc": "2026-10-31T23:12:04.713786+00:00"
     },
-    "archive_members_verified": 19
+    "archive_members_verified": 46
   },
-  "stop": {
-    "status": "INCOMPLETE",
-    "source_commit": "8383e8cd5ceb1fc7dc6041635576edf40c605f1b",
-    "exit_status": 1,
-    "reason": "guard: load>85%",
-    "attempt": 3,
-    "no_live_processes": true,
-    "baseline_predictions": 91,
-    "baseline_sanity": {
-      "status": "PASS",
-      "max_context_error": 0.0,
-      "mean_error": 0.0,
-      "mean": 1.1377941898164525,
-      "baseline_sha256": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
-      "reference_sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
-    },
-    "completed_fit_receipts": 0,
-    "actual_completed_fits": null,
-    "fit_stage_attempts": [
-      135
-    ],
-    "fit_internal_progress": "UNKNOWN; no per-iteration telemetry or completed prediction/fit receipt",
-    "actual_optimizer_updates": 0,
-    "blend_reads": 0,
-    "phase": "seed135 stage; no fitted prediction archive or completed fit receipt; exact internal fit progress unknown",
-    "runtime_read_audit": "baseline flushed with protected_reads=0; seed135 NOT_FLUSHED, no complete seed read-count proof",
-    "authorized_data_exposure": "baseline authorized train+validation features and91validation pools; seed135 full authorized training pipeline started; exact seed read counts unavailable",
-    "peak_rss": 6059577344,
-    "max_threads": 1,
-    "peak_load1": 101.30859375,
-    "load_limit": 86.7,
-    "samples": 1839,
-    "first_utc": "2026-10-31T22:15:22.259744+00:00",
-    "last_utc": "2026-10-31T22:26:03.951164+00:00",
-    "files": {
-      "dope-secondary.json": {
-        "bytes": 236,
-        "sha256": "fb7ec681db921774c3c5ac4f7183690ac46e8f6f2db3dd71d60ffc44893975b2"
-      },
-      "r882-copy.pt": {
-        "bytes": 7493476,
-        "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
-      },
-      "r882-secondary-costs.npz": {
-        "bytes": 484115,
-        "sha256": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f"
-      },
-      "read-audit-baseline.json": {
-        "bytes": 10807,
-        "sha256": "5214950acaca4a62bc30b3da0c4e4f5ac442dc32f81f7cf2c2c8a0d275ad357e"
-      },
-      "sanity.json": {
-        "bytes": 3269,
-        "sha256": "d9aeb1605b25f0b6db4880372b4cce940e9a0836ad1ec0ebe1727dc1bd23346a"
-      },
-      "baseline.npz": {
-        "bytes": 484115,
-        "sha256": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f"
-      },
-      "reference.json": {
-        "bytes": 38703,
-        "sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
-      },
-      "checkpoint-load.json": {
-        "bytes": 131,
-        "sha256": "298a939cb9cc1b205c1ec4ebb9245e2819bb3421baf38e36c3e135dcd03627ac"
-      },
-      "cohort.json": {
-        "bytes": 139,
-        "sha256": "4bc5ae2e19839030cda0733608da9bf69e6c47696eaa3e1afeb04e8c55573d9b"
-      }
-    },
-    "metric_values": null,
-    "verdict": "INCOMPLETE_NO_SCIENTIFIC_VERDICT",
-    "automatic_retry": false
-  },
-  "scientific_verdict": "UNMEASURED",
-  "actual_completed_fits": null,
-  "completed_fit_receipts": 0,
+  "actual_fits": 3,
   "actual_optimizer_updates": 0,
-  "baseline_predictions": 91,
-  "blend_reads": 0,
-  "baseline_sanity": "PASS",
-  "mean_gain": null,
-  "Elo": null,
-  "utility_ci95": null,
-  "Elo_ci95": null,
-  "val_reg": null,
-  "U4": null,
-  "resources": {
-    "samples": 1839,
-    "first_utc": "2026-10-31T22:15:22.259744+00:00",
-    "last_utc": "2026-10-31T22:26:03.951164+00:00",
-    "peak_rss": 6059577344,
-    "maximum_threads": 1,
-    "peak_scratch": 8514991,
-    "maximum_root_usage": 93.38315800072775
-  },
-  "cleanup": {
-    "utc": "2026-10-31T22:28:19.549240+00:00",
-    "files": [
-      {
-        "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/dope-secondary.json",
-        "bytes": 236,
-        "sha256": "fb7ec681db921774c3c5ac4f7183690ac46e8f6f2db3dd71d60ffc44893975b2",
-        "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz VersionId=LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R member=run/dope-secondary.json"
-      },
-      {
-        "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/r882-copy.pt",
-        "bytes": 7493476,
-        "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
-        "recovery": "/home/ubuntu/jope-data/h134/run-20261031T2036Z/r882-copy.pt"
-      },
-      {
-        "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/r882-secondary-costs.npz",
-        "bytes": 484115,
-        "sha256": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
-        "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz VersionId=LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R member=run/r882-secondary-costs.npz"
-      },
-      {
-        "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/read-audit-baseline.json",
-        "bytes": 10807,
-        "sha256": "5214950acaca4a62bc30b3da0c4e4f5ac442dc32f81f7cf2c2c8a0d275ad357e",
-        "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz VersionId=LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R member=run/read-audit-baseline.json"
-      },
-      {
-        "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/sanity.json",
-        "bytes": 3269,
-        "sha256": "d9aeb1605b25f0b6db4880372b4cce940e9a0836ad1ec0ebe1727dc1bd23346a",
-        "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz VersionId=LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R member=run/sanity.json"
-      },
-      {
-        "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/baseline.npz",
-        "bytes": 484115,
-        "sha256": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
-        "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz VersionId=LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R member=run/baseline.npz"
-      },
-      {
-        "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/reference.json",
-        "bytes": 38703,
-        "sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
-        "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz VersionId=LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R member=run/reference.json"
-      },
-      {
-        "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/checkpoint-load.json",
-        "bytes": 131,
-        "sha256": "298a939cb9cc1b205c1ec4ebb9245e2819bb3421baf38e36c3e135dcd03627ac",
-        "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz VersionId=LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R member=run/checkpoint-load.json"
-      },
-      {
-        "path": "/home/ubuntu/jope-rescue-20260921/h135-a3-continuation/run/cohort.json",
-        "bytes": 139,
-        "sha256": "4bc5ae2e19839030cda0733608da9bf69e6c47696eaa3e1afeb04e8c55573d9b",
-        "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz VersionId=LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R member=run/cohort.json"
-      }
-    ],
-    "reclaimed_bytes": 8514991,
-    "scope": "Only owned H135 A3 continuation run scratch; source and other-owner inputs untouched",
-    "archive": {
-      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a3/numerical-evidence.npz",
-      "version_id": "LHGLUJG64GPwZ_HWR6wqIH9yZ7RsoD4R",
-      "sha256": "5c4d99295ba815c47503aca4971b5cae4505119a439f5b7b6a0d7302d02f8913",
-      "bytes": 1078302,
-      "verified_utc": "2026-10-31T22:27:28.133556+00:00"
+  "verification": {
+    "status": "PASS",
+    "source_commit": "224bd1c43819188a450fe23dab1ab18598634e62",
+    "fits": 3,
+    "fit_iterations": {
+      "135": 300,
+      "136": 300,
+      "137": 300
     },
-    "original_input_exact_s3_recovery": false
+    "validation_cells": 9,
+    "raw_prediction_and_choice_replay": "exact",
+    "statistics_replay": "exact",
+    "baseline_vector_tolerance": 1e-06,
+    "DOPE": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "maximum_worker_threads": 1,
+    "peak_rss": 6061096960,
+    "scientific_verdict": "NO_ADVANCE",
+    "seeds": [
+      135,
+      136,
+      137
+    ]
+  },
+  "supplementary_elo_uncertainty": {
+    "status": "PASS",
+    "source_commit": "224bd1c43819188a450fe23dab1ab18598634e62",
+    "arms": {
+      "BLEND_025": {
+        "median_elo": 1496.3464943034846,
+        "family_bootstrap_ci95": [
+          1459.6322447586285,
+          1536.6692623774616
+        ]
+      },
+      "PURE_GBM": {
+        "median_elo": 1521.9493806216506,
+        "family_bootstrap_ci95": [
+          1444.7380788449943,
+          1609.428128805236
+        ]
+      },
+      "BLEND_050": {
+        "median_elo": 1503.6535056965154,
+        "family_bootstrap_ci95": [
+          1452.2069852664522,
+          1566.5632907497993
+        ]
+      }
+    },
+    "draws": 10000,
+    "seed": 135100,
+    "families": 19,
+    "reference_elo": 1500,
+    "primary_gate_effect": "NONE",
+    "caveat": "Supplementary descriptive postprocessing of frozen outcomes, not a preregistered gate. Equal-family exact-sign points, symmetric0.01 prior, same family draws as utility bootstrap; conditions on the three fitted models and selector-exposed validation."
+  },
+  "host": "xbabe1",
+  "resource_verification": {
+    "status": "PASS",
+    "host": "xbabe1",
+    "source_commit": "224bd1c43819188a450fe23dab1ab18598634e62",
+    "monitor_status": "COMPLETE",
+    "samples": 5272,
+    "maximum_threads": 1,
+    "peak_rss": 6061096960,
+    "peak_scratch": 10241699,
+    "maximum_disk_percent": 92.59640304056612,
+    "maximum_load1": 13.0126953125,
+    "minimum_available": 25293643776,
+    "wall_seconds": 1512.0691581815481,
+    "wall_budget_seconds": 14400,
+    "hard_guard_samples": [],
+    "pause_intervals": [],
+    "total_pause_seconds": 0,
+    "resources_sha256": "5cb8828ebfe9190afb46e6bd96dd68a6b4e86ee857a284e7c2bea2d5ba99df5e",
+    "sampling_caveat": "Finite external sampling; continuous recovery checked against recorded quarter-second samples, not proof between samples."
   }
 }

@@ -145,9 +145,16 @@ impl RunService {
         if spec.task != Task::Regression {
             return Err(unavailable("This run backend requires task=regression."));
         }
-        if spec.device != "cpu" && spec.device != "auto" {
-            return Err(unavailable("This run backend evaluates on CPU."));
-        }
+        let device = jope_runtime::backend::DeviceRequest::parse(&spec.device)
+            .ok_or_else(|| invalid(&format!("Unknown device {:?}.", spec.device)))?;
+        // This bounded run instantiates the native CPU evaluator. Select that
+        // actual backend before reading data or publishing any run effects.
+        jope_runtime::backend::select(device).map_err(|error| {
+            issue(
+                ErrorCode::BackendUnavailable,
+                format!("{}: {error:#}", ErrorCode::BackendUnavailable),
+            )
+        })?;
         if spec.landmarks != LandmarkMode::None {
             return Err(unavailable("This run backend requires landmarks=none."));
         }
@@ -773,6 +780,45 @@ mod tests {
         assert_eq!(listed.status(), StatusCode::OK);
         assert_eq!(body(listed).await, json!({"runs":[],"next_after":null}));
         assert!(!_directory.path().join("worker-scratch").exists());
+    }
+
+    #[tokio::test]
+    async fn run_device_errors_are_typed_before_dataset_lookup_or_worker_start() {
+        let (directory, engine, mut spec) = fixture();
+        spec.dataset = "ds_00112233445566778899aabb".parse().unwrap();
+        let app = app(&engine);
+        for dry_run in [false, true] {
+            spec.dry_run = dry_run;
+            for (device, status, code) in [
+                (
+                    "cuda:0",
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "BACKEND_UNAVAILABLE",
+                ),
+                (
+                    "cuda:7",
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "BACKEND_UNAVAILABLE",
+                ),
+                ("cuda:", StatusCode::BAD_REQUEST, "INVALID_INPUT"),
+                ("cuda:-1", StatusCode::BAD_REQUEST, "INVALID_INPUT"),
+                ("cuda:4294967296", StatusCode::BAD_REQUEST, "INVALID_INPUT"),
+                ("gpu", StatusCode::BAD_REQUEST, "INVALID_INPUT"),
+            ] {
+                spec.device = device.into();
+                let denied = app
+                    .clone()
+                    .oneshot(request(&spec, "device-refusal"))
+                    .await
+                    .unwrap();
+                assert_eq!(denied.status(), status, "{device} dry_run={dry_run}");
+                let problem = body(denied).await;
+                assert_eq!(problem["code"], code);
+                assert!(problem.get("run_id").is_none());
+            }
+        }
+        assert!(!directory.path().join("worker-scratch").exists());
+        assert!(!directory.path().join("models").exists());
     }
 
     #[tokio::test]

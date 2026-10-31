@@ -1,5 +1,7 @@
 {
+  "admitted_arms": [],
   "amendment_a1_sha256": "2721fcda10e6abb9957de86203fb9cde54a652856619f2209aca5b63a7031e87",
+  "amendment_a2_sha256": "a3533285867595c45271c2de33238be69a5e70599c4f2b51fd3abe837e911d1a",
   "arms": [
     "CONTROL",
     "TS-0.1",
@@ -8,7 +10,12 @@
   "assessment_contexts": 212,
   "assessment_families": 41,
   "assessment_fold": 0,
-  "complete": false,
+  "attempt1_log_sha256": "c75f3632dbcd043128902d0d9171e6adaaa538586a86ca55f893d11bc853e54e",
+  "attempt1_runner_sha256": "23f221180129940a800ec5a0c275d7bcb03948a364d9f7783b3655cd0274ae70",
+  "attempt2_log_sha256": "3f9ed586bf59891af80d854a877742a0d9fb86d95795153e4b1def26d3717261",
+  "candidate_breakthrough": false,
+  "cells_completed": 9,
+  "complete": true,
   "dl_val_metadata_reads": 0,
   "dl_val_reads": 0,
   "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
@@ -17,6 +24,7 @@
     "TS-0.1": 0.1,
     "TS-0.3": 0.3
   },
+  "executed_source_commit": "117bc11e59fc0d8c40aef1977095c8aa336e5f96",
   "fit_contexts": 1007,
   "fit_families": 164,
   "fit_folds": [
@@ -31,8 +39,9 @@
   "h121_prereg_sha256": "127e0481f06c0d9b42690b3091138b5a927af9fa7b90f10fbf88a80735e6b923",
   "h121_runner_sha256": "36ef51730ebe9db21a59455c99fcb15580252c92bf296f2618911c1dc1624aec",
   "live_loop_reads": 0,
+  "metrics_sha256": "52dab5e182983991f769717ebaedb545d76a4ecdba2f5c6ffc9bb7b1cd018d4b",
   "non_trainable_parameters": 1126777,
-  "optimizer_updates": 0,
+  "optimizer_updates": 360,
   "outer_test_reads": 0,
   "owner": "rd_argon",
   "planned_optimizer_updates": 360,
@@ -42,8 +51,9 @@
     "TS-0.3"
   ],
   "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "regression_receipt_sha256": "44bebb8a114a2a360819c1bae6764e26f4b3535ff60012f55bb6da1d7b9c1525",
   "runner_path": "/home/ubuntu/jope-rescue-20260921/h137-target-smoothing-run/run_h137_cpu.py",
-  "runner_sha256": "23f221180129940a800ec5a0c275d7bcb03948a364d9f7783b3655cd0274ae70",
+  "runner_sha256": "b5d2f00871a710d20deac5ff923c0d493fa085441fcb895e90e45559474cfff5",
   "schema": "jope.h137.manifest/v1",
   "sealed_metatest_reads": 0,
   "seeds": [
@@ -51,9 +61,10 @@
     172,
     173
   ],
-  "status": "PREREGISTERED_NOT_EXECUTED",
+  "status": "COMPLETE",
+  "summary_custody_sha256": "2c941b2c4166d8ae4163afe9ae625459ace613f55bb13d7a0f2e1e42056cee87",
   "trainable_parameters": 29211,
   "trainable_tensors": 47,
-  "verdict": "PENDING",
+  "verdict": "NO_ADMISSION",
   "wave": "H137"
 }
