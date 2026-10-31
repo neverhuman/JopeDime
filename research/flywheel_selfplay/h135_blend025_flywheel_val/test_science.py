@@ -170,6 +170,47 @@ with threadpool_limits(limits=1,user_api='blas'),threadpool_limits(limits=4,user
         self.assertLessEqual(counts["before"], 4)
         self.assertLessEqual(counts["after"], 4)
 
+    def test_baseline_thread_cap_restores_setter(self):
+        from unittest.mock import patch, Mock
+        import torch
+        import runner
+
+        calls = []
+
+        def setter(n):
+            calls.append(n)
+
+        def imported_baseline(*args):
+            torch.set_num_threads(4)
+            return ("costs", "net")
+
+        helper = Mock(baseline=imported_baseline)
+        with (
+            patch.object(torch, "set_num_threads", setter),
+            patch.object(torch, "set_num_interop_threads") as inter,
+        ):
+            self.assertEqual(
+                runner.baseline_one_thread(helper, "root"), ("costs", "net")
+            )
+            self.assertIs(torch.set_num_threads, setter)
+            inter.assert_called_once_with(1)
+        self.assertEqual(calls, [1, 1])
+
+    def test_baseline_thread_cap_restores_after_error(self):
+        from unittest.mock import patch, Mock
+        import torch
+        import runner
+
+        setter = Mock()
+        helper = Mock(baseline=Mock(side_effect=ValueError("fixture")))
+        with (
+            patch.object(torch, "set_num_threads", setter),
+            patch.object(torch, "set_num_interop_threads"),
+        ):
+            with self.assertRaises(ValueError):
+                runner.baseline_one_thread(helper, "root")
+            self.assertIs(torch.set_num_threads, setter)
+
     def test_guard_boundaries(self):
         s = dict(
             rss=0,
