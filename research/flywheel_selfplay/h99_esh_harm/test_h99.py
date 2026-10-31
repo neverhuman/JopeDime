@@ -12,6 +12,7 @@ sys.path.insert(0, str(HERE))
 import runner  # noqa: E402
 import coordinator  # noqa: E402
 import build_metrics  # noqa: E402
+import run_wave  # noqa: E402
 
 
 def test_fixed_paired_cells_and_h80_budget():
@@ -421,6 +422,71 @@ def test_resume_uses_actual_ledger_for_void_and_unstarted_fixed_cells(tmp_path, 
     ]
     assert calls[0][1] == coordinator.attempt_scratch_path(run_root, "ESH-l4", 38, 2)
     assert calls[1][1] == coordinator.attempt_scratch_path(run_root, "NULL", 36, 1)
+
+
+def test_explicit_single_cell_resume_runs_only_requested_retry_without_scoring(tmp_path, monkeypatch):
+    plan = runner.execution_plan()
+    cells = [*plan["candidate_cells"], plan["null_cell"]]
+    target = next(cell for cell in cells if cell["arm"] == "ESH-l4" and cell["seed"] == 38)
+    assert run_wave.select_one_cell(plan, "ESH-l4:38") == [target]
+    for invalid in ("", "ESH-l4", "ESH-l4:038", "ESH-l2:35", "NULL:36:extra"):
+        try:
+            run_wave.select_one_cell(plan, invalid)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"accepted invalid H99 single-cell selector: {invalid}")
+
+    run_root = tmp_path / "run"
+    attempts = []
+    for cell in cells[:-1]:
+        attempts.append({
+            **cell, "attempt": 1,
+            "scratch": str(coordinator.attempt_scratch_path(run_root, cell["arm"], cell["seed"], 1)),
+            "wall_seconds": 2.0, "wait_seconds": 3.0,
+            "status": "void-or-unknown" if cell == target else "complete",
+        })
+    coordinator.write_budget(run_root / "budget.json", {
+        "schema": "jope.h99.gpu-budget/v1", "cap_seconds": coordinator.CAP_SECONDS,
+        "attempts": attempts, "in_progress": None,
+    })
+    monkeypatch.setattr(
+        coordinator, "stage_r882_copy",
+        lambda _source, scratch: (scratch.mkdir(parents=True), scratch / "copy.pt")[1],
+    )
+    calls = []
+    result = coordinator.run_fifo_cells(
+        [target], run_root=run_root, checkpoint=tmp_path / "checkpoint",
+        worker=lambda cell, _staged, scratch, _remaining, attempt: calls.append((cell, scratch, attempt)) or {},
+        allow_partial=True,
+        acquire_fn=lambda _status, *, wait_total: (object(), 0.0, 8192, {}),
+        release_fn=lambda _handle: None, cpu_gate_fn=lambda: None,
+        setup_fn=lambda: None, clock_fn=iter((0.0, 1.0)).__next__,
+    )
+    assert len(calls) == 1 and calls[0][0] == target and calls[0][2] == 2
+    assert calls[0][1] == coordinator.attempt_scratch_path(run_root, "ESH-l4", 38, 2)
+    assert [item["status"] for item in result["attempts"][:-1]] == [item["status"] for item in attempts]
+    assert result["attempts"][-1]["attempt"] == 2
+    assert not any(item["arm"] == "NULL" for item in result["attempts"])
+    assert sum(item["wall_seconds"] for item in result["attempts"]) == 13.0
+
+
+def test_partial_wave_refuses_finalizer_before_launch(tmp_path):
+    plan = runner.execution_plan()
+    target = next(cell for cell in plan["candidate_cells"] if cell["arm"] == "ESH-l4" and cell["seed"] == 38)
+    calls = []
+    try:
+        coordinator.run_fifo_cells(
+            [target], run_root=tmp_path / "run", checkpoint=tmp_path / "checkpoint",
+            worker=lambda *_args: calls.append("cell"),
+            finalize_worker=lambda *_args: calls.append("Fold-B"), allow_partial=True,
+            acquire_fn=lambda *_args, **_kwargs: calls.append("FIFO"), setup_fn=lambda: None,
+        )
+    except ValueError as exc:
+        assert "cannot run Fold-B" in str(exc)
+    else:
+        raise AssertionError("partial H99 wave accepted Fold-B finalization")
+    assert calls == []
 
 
 def test_resume_rejects_retries_after_a_completed_cell(tmp_path):
