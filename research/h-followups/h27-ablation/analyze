@@ -158,12 +158,19 @@ def validate_input_roster(manifest, packet, coverage):
     if coverage["historical_components_crossing_current_roles"]:
         raise ValueError("historical component crosses train/validation roles")
     approved_train = {row["family_id"] for row in packet["train"]}
-    if not set(manifest["train_families"]) <= approved_train:
-        raise ValueError("training family is outside the approved roster")
+    if (
+        not manifest["train_families"]
+        or not set(manifest["train_families"]) <= approved_train
+    ):
+        raise ValueError("training family roster is missing or unapproved")
     expected = {row["context_sha256"]: row["family_id"] for row in packet["dev"]}
     contexts = manifest["validation_contexts"]
     actual = {row["context_sha256"]: row["family_id"] for row in contexts}
-    if len(contexts) != len(expected) or actual != expected:
+    if (
+        len(contexts) != len(expected)
+        or actual != expected
+        or any(row["dl_split"] != "DL-Val" for row in contexts)
+    ):
         raise ValueError("analysis must cover the complete approved DL-Val roster")
 
 

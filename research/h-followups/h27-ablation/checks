@@ -167,6 +167,8 @@ def test_roster_gate_accepts_complete_metadata_and_refuses_subsets():
         "subset",
         "family",
         "train",
+        "empty-train",
+        "role",
         "duplicate",
         "component",
         "missing",
@@ -178,6 +180,10 @@ def test_roster_gate_accepts_complete_metadata_and_refuses_subsets():
             candidate["validation_contexts"][0]["family_id"] = "unapproved"
         elif corruption == "train":
             candidate["train_families"] = ["unapproved"]
+        elif corruption == "empty-train":
+            candidate["train_families"] = []
+        elif corruption == "role":
+            candidate["validation_contexts"][0]["dl_split"] = "DL-Holdout"
         elif corruption == "duplicate":
             candidate["validation_contexts"].append(candidate["validation_contexts"][0])
         elif corruption == "component":
