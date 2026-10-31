@@ -21,7 +21,7 @@
   "checks": "Consecutive rounds, finite utilities, nondecreasing best, accepted candidate equals best, rejected best unchanged; first row is not accepted",
   "scope": "Retained development admission rounds only; no pre-window comparison, confidence interval, first-proposal or transfer claim",
   "source_binding": "CSV interpretation only; installed loop/adapter/checkpoint qualification remains required",
-  "generator_sha256": "82745c740122bfe1273eac3957bad22c7b5ec5ef540f48e34492b8926765ea0a",
+  "generator_sha256": "e1e47bec43a4e00b281f8d0146607684137eaba0d28fb6042aa6cc6fbe0b1849",
   "figure_sha256": "e3e9225acfab1e36c24478553431e60ef59eaeef0ae56c92daeaef122924a789",
   "matplotlib_version": "3.10.8",
   "reproduce": "python3 figures/scripts/make_flywheel_figs.py --validation-only"
