@@ -29,7 +29,7 @@ untouched test. This section specifies the comparisons still needed;
     One proposal against fixed methods (\cref{sub:results-headtohead})
       & Does one task-conditioned program compete with methods that run
         unchanged across tasks?
-      & Algorithms designed by Claude, Codex and Gemini; KumoRFM
+      & Frozen algorithms whose receipts record the designing model
       & \Cref{tab:headtohead,fig:leaderboard} & Pending \\
     The cost of more attempts (\cref{sub:results-search})
       & What do successive attempts buy, per attempt and per unit of cost?
@@ -84,12 +84,15 @@ comparison and training-update evidence before claiming transfer.}
 \subsection{One proposal against fixed methods}\label{sub:results-headtohead}
 
 The proposed comparison asks whether one task-conditioned program competes
-with methods that run unchanged across tasks. Frontier-designed algorithms
-must be fixed before final evaluation; record the originating models,
-prompts, dates and implementation checks. Pin the KumoRFM configuration
-\citep{kumorfm2025}, disclose its permitted inputs and fitting procedure, and
-compare under the same task metrics. \Cref{tab:headtohead} reserves the
-comparison; no winner is assumed.
+with methods that run unchanged across tasks. The comparators are frozen
+algorithms whose receipts record the model that designed them: one designed
+by \texttt{claude-opus-5-5} and one by \texttt{gpt-6-astra-wm}, the latter
+identifier as reported by its authoring session. A comparator without a
+recorded model identity is excluded rather than guessed. Record prompts,
+dates and implementation checks, and compare under the same task metrics.
+\Cref{tab:headtohead} reserves the comparison; no winner is assumed.
+% Receipts: crates/jope-bench/regressors/README.md (Opus5p5_Extra);
+% crates/jope-bench/submissions/gpt6-astra-max/provenance.json (GPT6_Astra_Max).
 
 \begin{table}[t]
   \centering
@@ -101,10 +104,8 @@ comparison; no winner is assumed.
     \toprule
     Comparator & Outcome and uncertainty \\
     \midrule
-    Claude-designed method & \TBD{paired evaluation} \\
-    Codex-designed method & \TBD{paired evaluation} \\
-    Gemini-designed method & \TBD{paired evaluation} \\
-    KumoRFM & \TBD{paired evaluation} \\
+    Designed by \texttt{claude-opus-5-5} & \TBD{paired evaluation} \\
+    Designed by \texttt{gpt-6-astra-wm} & \TBD{paired evaluation} \\
     \bottomrule
   \end{tabularx}
 \end{table}

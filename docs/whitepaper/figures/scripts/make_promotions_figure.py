@@ -47,11 +47,16 @@ def extract(logs):
         writer = csv.DictWriter(stream, fieldnames=FIELDS, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
+    # Disclosure boundary: keep content hashes and sizes, never host names or host paths.
+    snapshot = json.loads((logs / "snapshot.json").read_text())
+    snapshot.pop("host", None)
+    for entry in snapshot.get("files", []):
+        entry.pop("path", None)
+        entry.pop("inode", None)
     provenance = {
         "schema": "whitepaper.development-program-promotions/v1",
-        "source_run": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030",
-        "source_host": "xbabe1",
-        "snapshot": json.loads((logs / "snapshot.json").read_text()),
+        "source_run": "run-20261030 (retained development run; host and path withheld)",
+        "snapshot": snapshot,
         "input_sha256": {name: hashlib.sha256(data).hexdigest()
                          for name, data in inputs.items()},
         "selection": "All consecutive retained summary rounds; journal kind=promotion in that window",
