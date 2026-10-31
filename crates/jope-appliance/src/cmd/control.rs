@@ -3,6 +3,7 @@ use anyhow::Context;
 use jope_api::ids::RunId;
 use jope_api::registry::RunControlRequest;
 use jope_client::Transport;
+use serde::Deserialize;
 use serde_json::Value;
 use std::str::FromStr;
 
@@ -33,10 +34,14 @@ fn execute<T: Transport>(
     let id = RunId::from_str(run).map_err(|_| jope_runtime::Failure::input("invalid run id"))?;
     let body =
         match crate::common::read_json_body(body_file)? {
-            Some(value) => serde_json::from_value::<RunControlRequest>(value).map_err(|error| {
-                jope_runtime::Failure::input(format!("invalid control request: {error}"))
-            })?,
-            None => match action {
+            Some(value) => {
+                RunControlRequest::deserialize(&value).map_err(|error| {
+                    jope_runtime::Failure::input(format!("invalid control request: {error}"))
+                })?;
+                // Retry identities bind the JSON body: retain explicit nulls after validation.
+                value
+            }
+            None => serde_json::to_value(match action {
                 ControlAction::Pause => RunControlRequest::Pause {
                     expected_revision: None,
                 },
@@ -53,9 +58,9 @@ fn execute<T: Transport>(
                     budget: None,
                     expected_revision: None,
                 },
-            },
+            })
+            .context("serialize control request")?,
         };
-    let body = serde_json::to_value(body).context("serialize control request")?;
     let key = crate::common::resolve_idempotency_key(idempotency_key);
     crate::common::announce_generated_key(idempotency_key, &key)?;
     let result = transport
@@ -171,6 +176,8 @@ mod tests {
     #[test]
     fn control_body_preserves_nullable_updates_and_retry_identity() {
         for body in [
+            json!({"action":"pause","expected_revision":null}),
+            json!({"action":"set_effort","effort":null,"budget":{"evaluations":"20"},"expected_revision":null}),
             json!({"action":"pause","expected_revision":"18446744073709551615"}),
             json!({"action":"continue","expected_revision":"0"}),
             json!({"action":"cancel","expected_revision":"2"}),

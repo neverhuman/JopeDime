@@ -2,6 +2,7 @@ use anyhow::Context;
 use jope_api::ids::RunId;
 use jope_api::registry::{ForkSeed, RunForkRequest};
 use jope_client::Transport;
+use serde::Deserialize;
 use serde_json::Value;
 use std::str::FromStr;
 
@@ -34,10 +35,14 @@ fn execute<T: Transport>(
 ) -> anyhow::Result<Value> {
     let id = RunId::from_str(run).map_err(|_| jope_runtime::Failure::input("invalid run id"))?;
     let body = match crate::common::read_json_body(body_file)? {
-        Some(value) => serde_json::from_value::<RunForkRequest>(value).map_err(|error| {
-            jope_runtime::Failure::input(format!("invalid restart request: {error}"))
-        })?,
-        None => RunForkRequest {
+        Some(value) => {
+            RunForkRequest::deserialize(&value).map_err(|error| {
+                jope_runtime::Failure::input(format!("invalid restart request: {error}"))
+            })?;
+            // Validate with the DTO without changing a retry's null-bearing request body.
+            value
+        }
+        None => serde_json::to_value(RunForkRequest {
             seed: if new_seed {
                 ForkSeed::New
             } else {
@@ -45,9 +50,9 @@ fn execute<T: Transport>(
             },
             warm_start: warm.then_some(true),
             overrides: None,
-        },
+        })
+        .context("serialize restart request")?,
     };
-    let body = serde_json::to_value(body).context("serialize restart request")?;
     let key = crate::common::resolve_idempotency_key(idempotency_key);
     crate::common::announce_generated_key(idempotency_key, &key)?;
     let result = transport
@@ -152,6 +157,8 @@ mod tests {
     #[test]
     fn fork_body_preserves_nested_null_overrides_and_retry_identity() {
         for body in [
+            json!({"seed":"same","warm_start":null,"overrides":null}),
+            json!({"seed":"new","overrides":{"effort":null,"budget":null}}),
             json!({"seed":"same","warm_start":false}),
             json!({"seed":"new","warm_start":true,"overrides":{"effort":"high","test_dataset":null,"budget":{"evaluations":null,"wall_seconds":"60"},"require_all_languages":false}}),
         ] {
