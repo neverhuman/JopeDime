@@ -1,0 +1,290 @@
+{
+  "schema": "jope.w5.provenance-refresh/v1",
+  "source_git_sha": "c989ac5cdcb6769380027a700d2822a54d32b3da",
+  "utc": "2026-10-31T14:57:42.665733+00:00",
+  "verdict": "FAIL",
+  "w5": "HELD",
+  "execution_admitted": false,
+  "gpu_queue_plan_filed": false,
+  "source_pins": {
+    "research/flywheel_selfplay/h102_w5_provenance_gaps/IDENTITY_ALIAS.md": "489647cb7c3b73cedafaff74350401ec2efaba91f90710c5c68f8f692b8981d8",
+    "research/flywheel_selfplay/h102_w5_provenance_gaps/README.md": "2feff67f5f948fe444ee3ff73f8db572b1bca005d85b58ce93497b98dc714c86",
+    "research/flywheel_selfplay/h102_w5_provenance_gaps/check.py": "7d8af379cf3cbc8d5294700f85b090981c85ab3285dbd2daa7c7a1ca6a454160",
+    "research/flywheel_selfplay/h102_w5_provenance_gaps/custody.json": "b08b1af5acc3b025b7788e7759fda35b8494eeaf02f6c6905883f88020a86a6f",
+    "research/flywheel_selfplay/h102_w5_provenance_gaps/evidence.json": "9bb825318de6dbef22de2135c1a9dacd173d288feb1b0b64f6f8418609f51843",
+    "research/flywheel_selfplay/h102_w5_provenance_gaps/results.json": "2a5cb412edd62eb8f2ce34429fb72e0f09fb8476c5e23b93083a37af97f8c6eb",
+    "research/flywheel_selfplay/h102_w5_provenance_gaps/test_check.py": "79c94ec84c2db499e9795e3bf8ab24cbfcf0ecdc827ccc4889161a31bc871a7c",
+    "research/flywheel_selfplay/h102_w5_provenance_gaps/w9_cpu_prep.json": "bc25c48e58c37f18a3627261eddc944b829d7b2b2a696780bdeff035d858d49d",
+    "research/flywheel_selfplay/h117_w5_provenance/README.md": "adf6708740c6f69a8781951144164e40a0c0f465ed47a49eefe218c974f1c934",
+    "research/flywheel_selfplay/h117_w5_provenance/check_w5_identity.py": "f54fc34b746d13763e1f3d015d8d311d7f2d8fcd27c5c5cd43407567dc942d63",
+    "research/flywheel_selfplay/h117_w5_provenance/results.json": "2231ac932b2b39ed43803c2313f2e5c6542903d77974ea097cfd3a52ecc1eb35",
+    "research/flywheel_selfplay/h117_w5_provenance/test_check_w5_identity.py": "d6a44367b7d174560bf878ff116dd007d22ae747ca80965058b90244beabd160",
+    "research/flywheel_selfplay/rd_breakthrough/w5_provenance/README.md": "bbc5f040db6399a9d31bc7f782b94dbfb2b285d9a5f84214815796525e299834",
+    "research/flywheel_selfplay/rd_breakthrough/w5_provenance/receipts/custody.json": "a82f89986601b4c34ed0b654bc574dde7c8b6e464d510d8938faeeb235f14217",
+    "research/flywheel_selfplay/rd_breakthrough/w5_provenance/receipts/execution.json": "162e7ae4cd86cf110c2e19f44bc41cb67ac0d9c08d86b1719a26017c0db2fdce",
+    "research/flywheel_selfplay/rd_breakthrough/w5_provenance/receipts/inventory.json": "f0baf9845fffd2f9d79405dda5a3e8e31357d28ae7ebb4acc0184138e9cd92c7",
+    "research/flywheel_selfplay/rd_breakthrough/w5_provenance/receipts/protocol.json": "60d5b8cc802dd672e4b3bbd87400dc3927b6b0aaeb2585d09bfdb264c0f9e3a9",
+    "research/flywheel_selfplay/rd_breakthrough/w5_provenance/receipts/verdict.json": "07992fe34ae5fca644064d6a2cb6f58f83e06a02dc012de7ca60557a61808eae",
+    "research/flywheel_selfplay/rd_breakthrough/w5_provenance/test_verify.py": "8ef8a77ab3649f13f1aa74b2a9bde36edc560b2e3a954adaaf645fee581da117",
+    "research/flywheel_selfplay/rd_breakthrough/w5_provenance/verify.py": "2189499e7c4c087f180f2552cb384657247ac7bc44b586b6d3b1f562775f648f"
+  },
+  "inputs": [
+    {
+      "bytes": 718858,
+      "name": "v3_manifest.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/flywheel-selfplay-20261023/corpus_v3_wider_strict_train_256/corpus_v3_manifest.json",
+      "sha256": "701affc61e14950bc5c890b6399a9d765f10e7f7f720a2ba8f1a16d93e1a7640",
+      "version_id": "gd.JxegwvXXxSr7SNt7qJNbEij97pO7L",
+      "exact_version_get": true,
+      "sha256_match": true,
+      "bytes_match": true
+    },
+    {
+      "bytes": 11895,
+      "name": "h98_s3_manifest.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W5/astra-h98-provenance-20261031T093300Z-dd7fed25/manifest.json",
+      "sha256": "86679a26544da2e81a5fa88426f3f95ef5644645ea1ed71575086dacc561cdc9",
+      "version_id": "K_87tbL0dazl0FgTSxmUszw4CWYMBDS.",
+      "exact_version_get": true,
+      "sha256_match": true,
+      "bytes_match": true
+    },
+    {
+      "bytes": 29242,
+      "name": "h98_s3_metrics.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W5/astra-h98-provenance-20261031T093300Z-dd7fed25/metrics.json",
+      "sha256": "d02135857c6c9269683d8c56afa725d1f267ea00ce9b1b74dc02baa971240e14",
+      "version_id": "07.oje22oT0BMT7FahWI_n5QP6qBq_hH",
+      "exact_version_get": true,
+      "sha256_match": true,
+      "bytes_match": true
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W5/opus-h117-20261031a/results.json",
+      "version_id": "twYWehRGawZAyA.n.7gxM.XOx7289kKn",
+      "sha256": "27f0a76737676985187a28a81bbeac4c9d675de66138fc28234762b387218b18",
+      "bytes": 2321,
+      "write": "create-only if-none-match",
+      "name": "h117-results.json",
+      "exact_version_get": true,
+      "sha256_match": true,
+      "bytes_match": true
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W5/opus-h117-20261031a/S3_DATASET_CATALOG.md",
+      "version_id": "zc4oKOsuhpD1Ib1G0lS3sxtAkjP.bXBo",
+      "sha256": "bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee",
+      "bytes": 18980,
+      "write": "create-only if-none-match",
+      "name": "h117-S3_DATASET_CATALOG.md",
+      "exact_version_get": true,
+      "sha256_match": true,
+      "bytes_match": true
+    }
+  ],
+  "counter_input_pins": [
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-01/persistence_receipt.json",
+      "version": "75H4Wf31_uKWdyh39Ap9iY_yBvfW1KP5",
+      "sha256": "4cdc11dcf994b105614055237afda2847310190dadd289ba79f2f34951683128",
+      "size": 806
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-02/persistence_receipt.json",
+      "version": "UyMRjyqasrO3DKM0viJVr7Cc5Si_iDOz",
+      "sha256": "563ecdad1f2d30288f47370a8c05dde93c9bb4dc6abd0806667f9246b4e0d72e",
+      "size": 806
+    },
+    {
+      "key": "experiments/flywheel-selfplay-20261023/round-03/persistence_receipt.json",
+      "version": "5e06unUgEx6YBaC1bABOLmMujxBWfI7N",
+      "sha256": "ef5e1ace35b5ab298e259dbae4117493b8b7847703902a76fe916726550d3de0",
+      "size": 806
+    }
+  ],
+  "census": {
+    "historical_inventory_sha256": "f0baf9845fffd2f9d79405dda5a3e8e31357d28ae7ebb4acc0184138e9cd92c7",
+    "new_count": 83,
+    "new_inventory_sha256": "c2934fc848a70a079988b1d0d1caf69b7e47c57e9117609dcfb85e470c50e4c1",
+    "old_count": 83,
+    "same_key_sizes": true,
+    "source_keys_unchanged": true
+  },
+  "prefix_search": {
+    "utc": "2026-10-31T14:55:01.382886+00:00",
+    "source_git_sha": "c989ac5cdcb6769380027a700d2822a54d32b3da",
+    "wall_seconds": 2.797548001166433,
+    "collection_errors": [],
+    "source_objects": 83,
+    "source_complete": true,
+    "counter_exact_gets": 3,
+    "additional_exact_gets": 5,
+    "prefix_counts": {
+      "experiments/rd_breakthrough_20261030/W5/": 12,
+      "experiments/rd_breakthrough_20261030/w5_provenance/": 17
+    },
+    "actual_fits": 0,
+    "gpu_seconds": 0
+  },
+  "owner_reference": {
+    "authority_definition": "RESOLVED_BY_OWNER_REFERENCE",
+    "computable_identity_projection": "NOT_SUPPLIED",
+    "global_overlap_count": null,
+    "path": "/home/ubuntu/nudges/owner_t2300.md",
+    "protected_roster_opened": false,
+    "ruling": "- QLT-02-F02: the sealed roster IS the Oct 7 2026 Jepson ruling: the only holdout is the sealed meta-test group = all P3 sealed_excluded families (293 production + 470 catalog). Record that as the roster (reference, do not read the data) and close the task.",
+    "sha256": "16aa3e2a5c9c7a2862d6f346ccb1b93307d0e82dc0f322174b5e09f0aa75901a"
+  },
+  "lineage_field_census": {
+    "lineage_like_keys": [
+      "parent_corpus_manifest_path",
+      "parent_corpus_manifest_sha256",
+      "parent_corpus_v2_manifest_path",
+      "parent_corpus_v2_manifest_sha256",
+      "phase7_256_context_evolution_summary.parent_python_cpu_seconds",
+      "revisions.v3a_strict_train_q25.materialized_pools[].parent_incumbent_best_f",
+      "revisions.v3a_strict_train_q25.materialized_pools[].parent_n_candidates",
+      "revisions.v3a_strict_train_q25.materialized_pools[].parent_pool_path",
+      "revisions.v3a_strict_train_q25.materialized_pools[].parent_pool_sha256",
+      "revisions.v3b_strict_train_median.materialized_pools[].parent_incumbent_best_f",
+      "revisions.v3b_strict_train_median.materialized_pools[].parent_n_candidates",
+      "revisions.v3b_strict_train_median.materialized_pools[].parent_pool_path",
+      "revisions.v3b_strict_train_median.materialized_pools[].parent_pool_sha256"
+    ],
+    "per_child_lineage_fields_present": [],
+    "per_row_source_fields_present": []
+  },
+  "gate": {
+    "command": [
+      "nice",
+      "-n",
+      "10",
+      "python3",
+      "/home/ubuntu/jope-rescue-20260921/w5-provenance-t0855/source/research/flywheel_selfplay/rd_breakthrough/w5_provenance/verify.py",
+      "--inventory",
+      "/home/ubuntu/jope-rescue-20260921/w5-provenance-t0855/inventory.json",
+      "--output",
+      "/home/ubuntu/jope-rescue-20260921/w5-provenance-t0855/offline-replay"
+    ],
+    "exit_status": 1,
+    "wall_seconds": 0.04923429689370096,
+    "result": "FAIL_W5_HELD",
+    "replay_exact": true
+  },
+  "tests": {
+    "passed": 55,
+    "subtests_passed": 28,
+    "failed": 0,
+    "skipped": 0,
+    "kind": "synthetic controls; not data admission"
+  },
+  "resources": {
+    "shards": [
+      {
+        "shard": "global_sealed_family_exclusion",
+        "input_sha256": "4f609a3d73ac2bf5e1534ae7a65736a42f9f51d8b6a572e51e5e51ac295ef0bc",
+        "result": {
+          "status": "FAIL",
+          "overlap_count": null,
+          "missing_artifact": "Complete authoritative identity-only sealed-family manifest, independent authority receipt, and matching alias-registry pin."
+        },
+        "cpu_seconds": 0.011604057000000001,
+        "nice": 19,
+        "hostname": "xbabe2",
+        "seed": null,
+        "stochastic_operations": 0,
+        "host_assignment": "xbabe2",
+        "worker_sha256": "34750248ca93f99e0379aa4f09c9be465b1cd6107b4d79d5d97a5fee6acbdfaf",
+        "exit_status": 0,
+        "transport_wall_seconds": 0.04409792902879417
+      },
+      {
+        "shard": "parent_child_lineage",
+        "input_sha256": "4f609a3d73ac2bf5e1534ae7a65736a42f9f51d8b6a572e51e5e51ac295ef0bc",
+        "result": {
+          "status": "FAIL",
+          "missing_rows": 504,
+          "invalid_rows": 0,
+          "required_artifact": "Exact context/child/parent/operator ledger bound to the actual pool-membership byte receipt and immutable lineage source."
+        },
+        "cpu_seconds": 0.016745701999999998,
+        "nice": 19,
+        "hostname": "xbabe2",
+        "seed": null,
+        "stochastic_operations": 0,
+        "host_assignment": "xbabe2",
+        "worker_sha256": "34750248ca93f99e0379aa4f09c9be465b1cd6107b4d79d5d97a5fee6acbdfaf",
+        "exit_status": 0,
+        "transport_wall_seconds": 0.05475512705743313
+      },
+      {
+        "shard": "original_row_source",
+        "input_sha256": "4f609a3d73ac2bf5e1534ae7a65736a42f9f51d8b6a572e51e5e51ac295ef0bc",
+        "result": {
+          "status": "FAIL",
+          "missing_rows": 504,
+          "invalid_rows": 0,
+          "required_artifact": "Per-child original source-row locator, S3 key/version/byte SHA, verified byte receipt and original-training-row ledger."
+        },
+        "cpu_seconds": 0.010164949999999999,
+        "nice": 10,
+        "hostname": "xbabe3",
+        "seed": null,
+        "stochastic_operations": 0,
+        "host_assignment": "xbabe3",
+        "worker_sha256": "34750248ca93f99e0379aa4f09c9be465b1cd6107b4d79d5d97a5fee6acbdfaf",
+        "exit_status": 0,
+        "transport_wall_seconds": 0.24475857499055564
+      },
+      {
+        "shard": "preflight",
+        "input_sha256": "4f609a3d73ac2bf5e1534ae7a65736a42f9f51d8b6a572e51e5e51ac295ef0bc",
+        "result": {
+          "schema": "jope.w5.admission-verdict/v1",
+          "verdict": "FAIL",
+          "w5": "HELD",
+          "reasons": [
+            "admitted_parent_operator_child_export_missing",
+            "original_training_and_strat300_row_ledger_missing"
+          ],
+          "retention_receipts_verified": 3,
+          "eligible_pair_count": null,
+          "pair_coverage": null,
+          "row_closure": "UNKNOWN",
+          "holdout_exposure": "UNKNOWN; no closure assertion",
+          "native_fits": 0,
+          "gpu_seconds": 0,
+          "w5_training_started": false,
+          "scope": "Admission preflight only; counters are not outcomes or pair evidence."
+        },
+        "cpu_seconds": 0.010198167000000001,
+        "nice": 10,
+        "hostname": "ef7695a8e495",
+        "seed": null,
+        "stochastic_operations": 0,
+        "host_assignment": "xbabe4",
+        "worker_sha256": "34750248ca93f99e0379aa4f09c9be465b1cd6107b4d79d5d97a5fee6acbdfaf",
+        "exit_status": 0,
+        "transport_wall_seconds": 0.674964299891144
+      }
+    ],
+    "worker_cpu_seconds": 0.048712876,
+    "xbabe1": {
+      "status": "SKIPPED_BEFORE_WORKER",
+      "reason": "free-space guard",
+      "observed_free_bytes": 154466062336,
+      "minimum_bytes": 161061273600,
+      "job_launched": false
+    },
+    "fallback": "global exclusion metadata shard on xbabe2; no successful shard repeated",
+    "other_overhead_cpu_seconds": null,
+    "actual_fits": 0,
+    "optimizer_updates": 0,
+    "gpu_seconds": 0
+  },
+  "metrics": {
+    "Elo": null,
+    "val_reg_inner": null,
+    "U4": null
+  }
+}

@@ -38,12 +38,12 @@
   \end{tabular}
 \end{table*}
 
-Does training make the first proposed algorithm better on an unseen problem?
-The available training trajectory in \cref{sec:method-status} records
-validation behavior during learning. It does not answer the deployment
-question: those validation outcomes inform admission and are not an
-untouched test. This section specifies the comparisons still needed;
-\cref{tab:results-plan} summarizes them and their status.
+Does training improve the first algorithm proposed for an unseen problem?
+The development records in \cref{sec:method-status} track program search
+and adapter admission. Their scores inform search or admission, so they
+cannot settle this deployment question. This section sets out the
+independent comparisons still needed; \cref{tab:results-plan} summarizes
+their controls and status.
 \TBD{Add independent evaluation evidence before making a performance claim.}
 \TBD{Supply a source-bound benchmark before claiming deployment throughput.}
 
@@ -247,5 +247,5 @@ matched first-proposal test above is still required.
 \TBD{Pin the inventories, checkpoints and seeding, timing and ranking
 protocols, separately from the final comparisons above.}
 
-These results will determine which interpretations in \cref{sec:meaning}
-the evidence can support.
+The independent comparisons specified above will determine which claims
+\cref{sec:meaning} can support.

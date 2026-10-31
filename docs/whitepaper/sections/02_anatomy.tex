@@ -3,6 +3,30 @@
 % Core points advanced: 2 (novelty is free; judgment is the inventor) and
 % 4 (right about imitation, wrong about learning); sets up 1 (innovation is a game)
 % and 3 (search = 1).
+% Table 1 is defined at the start of the section so that the full-width
+% float can reach the top of the page where Section 2.2 discusses it.
+\begin{table*}[t]
+  \caption{\textbf{A four-part reading of traditions of discovery.} A dash marks a pillar outside a tradition's scope: Wallas analyzed a single act of thought. For Darwin and Campbell, the aim is a criterion set by the environment. Engineering is the design--build--test--learn cycle \citep{nielsen2016engineering}; AlphaGo Zero follows \citet{silver2017mastering}; \EZ{} is defined in \cref{sec:game,sec:method}.}
+  \label{tab:pillars}
+  \centering
+  \small
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.19\linewidth}>{\raggedright\arraybackslash}p{0.19\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.2\linewidth}@{}}
+    \toprule
+    Tradition & Aim & Variation & Judgment & Retention \\
+    \midrule
+    \citet{darwin1859origin} & Fitness to the environment & Variation & Natural selection & Inheritance \\
+    \citet{wallas1926art} & Preparation & Incubation, illumination & Verification & --- \\
+    \citet{campbell1960bvsr} & A selection criterion & Blind variation & Selection & Retention \\
+    \citet{popper1963conjectures} & The problem & Conjecture & Refutation & The surviving theory \\
+    The scientific method & Question & Hypothesis & Experiment & Publication \\
+    Engineering & Design target & Design and build & Test & Learn \\
+    AlphaGo Zero & Win the game & Moves chosen with search & Game outcome & Network weights \\
+    \midrule
+    \EZ{} & Problem encoding and metric & Program writer & Referee on hidden folds & Incumbent pool and weights \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
 
 What must a system retain from an experiment to become a better inventor?
 We organize the process into four parts: an aim, a source of variation, a
@@ -47,29 +71,6 @@ update the generator attempts the second. This distinction connects the
 four pillars to the learning question in \cref{sec:intro}.
 
 The traditions converge for a reason: Campbell argued that every genuine gain in knowledge needs a mechanism for introducing variation, a consistent selection process, and a mechanism for preserving and reproducing what is selected \citep[p.~381]{campbell1960bvsr}. The aim is what keeps the selection consistent, which makes it the fourth pillar.
-
-\begin{table*}[t]
-  \caption{\textbf{A four-part reading of traditions of discovery.} A dash marks a pillar outside a tradition's scope: Wallas analyzed a single act of thought. For Darwin and Campbell, the aim is a criterion set by the environment. Engineering is the design--build--test--learn cycle \citep{nielsen2016engineering}; AlphaGo Zero follows \citet{silver2017mastering}; \EZ{} is defined in \cref{sec:game,sec:method}.}
-  \label{tab:pillars}
-  \centering
-  \small
-  \setlength{\tabcolsep}{4pt}
-  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.19\linewidth}>{\raggedright\arraybackslash}p{0.19\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.2\linewidth}@{}}
-    \toprule
-    Tradition & Aim & Variation & Judgment & Retention \\
-    \midrule
-    \citet{darwin1859origin} & Fitness to the environment & Variation & Natural selection & Inheritance \\
-    \citet{wallas1926art} & Preparation & Incubation, illumination & Verification & --- \\
-    \citet{campbell1960bvsr} & A selection criterion & Blind variation & Selection & Retention \\
-    \citet{popper1963conjectures} & The problem & Conjecture & Refutation & The surviving theory \\
-    The scientific method & Question & Hypothesis & Experiment & Publication \\
-    Engineering & Design target & Design and build & Test & Learn \\
-    AlphaGo Zero & Win the game & Moves chosen with search & Game outcome & Network weights \\
-    \addlinespace
-    \EZ{} & Problem encoding and metric & Program writer & Referee on hidden folds & Incumbent pool and weights \\
-    \bottomrule
-  \end{tabular}
-\end{table*}
 
 \subsection{Taste is judgment moved upstream}\label{sub:anatomy-taste}
 
