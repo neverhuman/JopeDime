@@ -162,6 +162,7 @@ pub struct Batch {
     pub proposals: Vec<Proposal>,
     pub requested: usize,
     pub attempts: BTreeMap<ProposalFamily, usize>,
+    /// Attempts with no eligible output, including inapplicable edit arms.
     pub invalid_or_filtered: usize,
     pub duplicates_or_memo: usize,
     pub synthesis_exhausted: bool,
@@ -505,6 +506,8 @@ impl Proposer {
                 };
                 if let Some(dsl) = generated {
                     self.offer(dsl, family, provenance, memo, &mut seen, &mut batch);
+                } else {
+                    batch.invalid_or_filtered += 1;
                 }
             }
         }
@@ -804,6 +807,10 @@ mod tests {
             let batch = proposer.propose(&req, &bank, &BTreeSet::new()).unwrap();
             assert_eq!(batch.proposals.len(), 8);
             assert!(!batch.synthesis_exhausted);
+            assert_eq!(
+                batch.attempts.values().sum::<usize>(),
+                batch.proposals.len() + batch.invalid_or_filtered + batch.duplicates_or_memo,
+            );
             assert!(
                 batch
                     .attempts
@@ -826,6 +833,58 @@ mod tests {
         assert_eq!(counts.values().sum::<usize>(), 10_000);
         assert_eq!(counts[&ProposalFamily::Retrieval], 2500);
         println!("generated-only CPU fixture histogram (not matched evaluated-population M3): {counts:?}");
+    }
+
+    #[test]
+    fn every_proposer_attempt_has_an_outcome() {
+        let proposer = Proposer::new(&[Language::Rust]).unwrap();
+        let lm = [0.0; 48];
+        let cases = [
+            "(pipe X (ridge lambda_frac=0.1))",
+            "(pipe X (standardize) (ridge lambda_frac=0.1))",
+            "(pipe X (standardize) (standardize) (standardize) (standardize) (standardize) (standardize) (ridge lambda_frac=0.1))",
+        ];
+        let mut unaccounted = vec![];
+        let mut trace = Vec::new();
+        for (case, dsl) in cases.into_iter().enumerate() {
+            let parents = [Program::from_dsl(dsl)];
+            for exploring in [false, true] {
+                for round in 0..8 {
+                    let mut req = request(&parents, &lm, exploring);
+                    req.round = round;
+                    let batch = proposer.propose(&req, &NoBank, &BTreeSet::new()).unwrap();
+                    assert_eq!(batch.proposals.len(), if exploring { 16 } else { 8 });
+                    assert!(batch.attempts[&ProposalFamily::Crossover] > 0);
+                    let attempted: usize = batch.attempts.values().sum();
+                    let accounted = batch.proposals.len()
+                        + batch.invalid_or_filtered
+                        + batch.duplicates_or_memo;
+                    if attempted != accounted {
+                        unaccounted.push((case, exploring, round, attempted, accounted));
+                    }
+                    // Deliberately exclude the repaired outcome counter so the
+                    // before/after trace binds generation, order and provenance.
+                    trace.push(serde_json::json!({
+                        "case":case,"exploring":exploring,"round":round,
+                        "attempts":batch.attempts.iter().map(|(f,n)| (f.name(),n)).collect::<Vec<_>>(),
+                        "proposals":batch.proposals.iter().map(|p| serde_json::json!({
+                            "dsl":p.program.dsl,"program_sha256":p.program.program_sha256,
+                            "memo_key":p.memo_key,"family":p.family.name(),"parents":p.parents,
+                        })).collect::<Vec<_>>(),
+                    }));
+                }
+            }
+        }
+        println!(
+            "DSC06_GENERATION_TRACE_SHA256={}",
+            digest(&serde_json::to_vec(&trace).unwrap())
+        );
+        assert!(
+            unaccounted.is_empty(),
+            "missing attempt outcomes in {} rounds: {:?}",
+            unaccounted.len(),
+            &unaccounted[..unaccounted.len().min(3)]
+        );
     }
 
     #[test]
