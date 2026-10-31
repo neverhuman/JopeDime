@@ -129,21 +129,36 @@ def read_policy(path: Path | None) -> dict[str, Any]:
     if not isinstance(policy.get("allow_log_offload", False), bool):
         raise ValueError("allow_log_offload must be a boolean")
     for entry in policy["paths"]:
-        if entry.get("kind") != "cargo-target":
+        kind = entry.get("kind")
+        if kind == "cargo-target":
+            if "per_target_cap_bytes" in entry and (
+                type(entry["per_target_cap_bytes"]) is not int or entry["per_target_cap_bytes"] < 1
+            ):
+                raise ValueError("cargo-target per_target_cap_bytes must be a positive integer")
+            for key in (
+                "remove_merged_worktrees",
+                "remove_closed_pr_worktrees",
+                "remove_stale_targets_on_open_worktrees",
+            ):
+                if key in entry and not isinstance(entry[key], bool):
+                    raise ValueError(f"{key} must be a boolean")
+            if "ttl_hours" in entry and (type(entry["ttl_hours"]) is not int or entry["ttl_hours"] < 1):
+                raise ValueError("cargo-target ttl_hours must be a positive integer")
+            if "worktree_idle_hours" in entry and (
+                type(entry["worktree_idle_hours"]) is not int or entry["worktree_idle_hours"] < 1
+            ):
+                raise ValueError("cargo-target worktree_idle_hours must be a positive integer")
             continue
-        for key in (
-            "remove_merged_worktrees",
-            "remove_closed_pr_worktrees",
-            "remove_stale_targets_on_open_worktrees",
-        ):
-            if key in entry and not isinstance(entry[key], bool):
-                raise ValueError(f"{key} must be a boolean")
-        if "ttl_hours" in entry and (type(entry["ttl_hours"]) is not int or entry["ttl_hours"] < 1):
-            raise ValueError("cargo-target ttl_hours must be a positive integer")
-        if "worktree_idle_hours" in entry and (
-            type(entry["worktree_idle_hours"]) is not int or entry["worktree_idle_hours"] < 1
-        ):
-            raise ValueError("cargo-target worktree_idle_hours must be a positive integer")
+        if kind == "jankurai-source-tar":
+            if (
+                entry.get("id") != "jankurai-source-tars"
+                or entry.get("path") != "~/JopeDime"
+                or type(entry.get("max_file_bytes")) is not int
+                or entry["max_file_bytes"] < 1
+                or type(entry.get("ttl_hours")) is not int
+                or entry["ttl_hours"] < 1
+            ):
+                raise ValueError("jankurai source tar policy must use its exact canonical root and positive limits")
     hosts = policy.get("allowed_hosts")
     if (
         not isinstance(hosts, list)
@@ -520,6 +535,7 @@ def worktree_cleanup_inventory(
     *,
     include_closed_pr_worktrees: bool = True,
     idle_seconds: int = WORKTREE_IDLE_SECONDS,
+    per_target_cap_bytes: int | None = None,
 ) -> list[dict[str, Any]] | None:
     """Find stale build targets and clean merged/closed worktrees under the canonical root."""
     try:
@@ -550,6 +566,7 @@ def worktree_cleanup_inventory(
             target = worktree / "target"
             target_exists = target.exists() or target.is_symlink()
             stale_target = False
+            target_over_cap = True
             if target_exists:
                 target_stat = target.lstat()
                 stale_target = (
@@ -559,6 +576,13 @@ def worktree_cleanup_inventory(
                     and target.resolve(strict=True) == target
                     and now - target_stat.st_mtime >= ttl_seconds
                 )
+                if per_target_cap_bytes is not None:
+                    target_size = path_size(target) if stale_target else None
+                    target_over_cap = target_size is not None and target_size > per_target_cap_bytes
+                    if stale_target and not target_over_cap:
+                        print(f"KEEP {target}: below per-worktree target cap ({target_size} <= {per_target_cap_bytes} bytes)")
+                    elif stale_target and target_size is None:
+                        print(f"SKIP {target}: per-worktree target size unavailable")
             ancestry = subprocess.run(
                 ["git", "-C", str(repo), "merge-base", "--is-ancestor", head, "origin/main"],
                 capture_output=True, text=True, timeout=15, check=False,
@@ -600,12 +624,13 @@ def worktree_cleanup_inventory(
             )
             if disposition and clean and not branch and not history_safe:
                 print(f"SKIP {worktree}: detached HEAD reflog contains history outside origin/main")
-            if idle and (stale_target or (disposition and clean)):
+            if idle and ((stale_target and target_over_cap) or (disposition and clean)):
                 candidates.append({
                     "worktree": worktree,
                     "target": target,
                     "target_exists": target_exists,
                     "stale_target": stale_target,
+                    "target_over_cap": target_over_cap,
                     "branch": branch,
                     "head": head,
                     "disposition": disposition,
@@ -851,6 +876,185 @@ def offload_jankurai_reports(repo: Path, worktrees_root: Path, logger: Any, *, d
                     pass
         except OSError:
             continue
+
+
+def jankurai_report_roots(repo: Path, worktrees_root: Path) -> list[tuple[Path, Path]] | None:
+    """Return report roots only for the canonical repository and its registered direct worktrees."""
+    try:
+        canonical_repo = repo.resolve(strict=True)
+        canonical_worktrees = (canonical_repo / ".agent" / "worktrees").resolve(strict=True)
+        if worktrees_root.resolve(strict=True) != canonical_worktrees:
+            return None
+        result = subprocess.run(
+            ["git", "-C", str(canonical_repo), "worktree", "list", "--porcelain"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        roots: list[tuple[Path, Path]] = []
+        for item in parse_worktree_list(result.stdout):
+            checkout = Path(str(item.get("path", ""))).resolve(strict=True)
+            if checkout == canonical_repo:
+                roots.append((checkout / "target" / "jankurai" / "reports", checkout))
+                continue
+            try:
+                relative = checkout.relative_to(canonical_worktrees)
+            except ValueError:
+                continue
+            if len(relative.parts) == 1:
+                roots.append((checkout / "target" / "jankurai" / "reports", checkout))
+        return roots
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
+
+
+def source_tar_is_eligible(
+    path: Path,
+    report_root: Path,
+    *,
+    max_file_bytes: int,
+    ttl_seconds: int,
+    now: float,
+) -> os.stat_result | None:
+    """Recognize only aged, large, ordinary input/source.tar files under jankurai reports."""
+    try:
+        relative = path.relative_to(report_root)
+        if len(relative.parts) < 3 or relative.parts[-2:] != ("input", "source.tar"):
+            return None
+        if report_root.is_symlink() or not under_home(report_root):
+            return None
+        root_stat = report_root.lstat()
+        if not stat.S_ISDIR(root_stat.st_mode) or root_stat.st_uid != current_uid():
+            return None
+        resolved_root = report_root.resolve(strict=True)
+        resolved_path = path.resolve(strict=True)
+        resolved_path.relative_to(resolved_root)
+        parent = path.parent
+        while parent != report_root:
+            parent_stat = parent.lstat()
+            if (
+                not stat.S_ISDIR(parent_stat.st_mode)
+                or stat.S_ISLNK(parent_stat.st_mode)
+                or parent_stat.st_uid != current_uid()
+                or parent_stat.st_dev != root_stat.st_dev
+            ):
+                return None
+            parent = parent.parent
+        item = path.lstat()
+        if (
+            not stat.S_ISREG(item.st_mode)
+            or item.st_uid != current_uid()
+            or item.st_dev != root_stat.st_dev
+            or item.st_nlink != 1
+            or item.st_size <= max_file_bytes
+            or now - item.st_mtime < ttl_seconds
+        ):
+            return None
+        return item
+    except (OSError, ValueError):
+        return None
+
+
+def handle_jankurai_source_tars(
+    entry: dict[str, Any],
+    repo: Path,
+    worktrees_root: Path,
+    logger: Any,
+    *,
+    dry_run: bool,
+    now: float,
+    needed_bytes: int,
+) -> int:
+    """Prune only old, oversized, unreferenced `input/source.tar` report inputs."""
+    expected_repo = Path.home() / "JopeDime"
+    if (
+        entry.get("id") != "jankurai-source-tars"
+        or entry.get("path") != "~/JopeDime"
+        or not entry.get("max_file_bytes")
+        or not entry.get("ttl_hours")
+        or repo.absolute() != expected_repo.absolute()
+        or needed_bytes <= 0
+    ):
+        print(f"SKIP {entry.get('id', 'jankurai-source-tars')}: canonical root, limits, or disk-pressure budget unavailable")
+        return 0
+    roots = jankurai_report_roots(repo, worktrees_root)
+    if roots is None:
+        print("SKIP jankurai source tar: registered report-root inventory unavailable")
+        return 0
+    max_file_bytes = int(entry["max_file_bytes"])
+    ttl_seconds = int(entry["ttl_hours"]) * 3600
+    freed = 0
+    candidates: list[tuple[Path, Path, Path, os.stat_result]] = []
+    for report_root, worktree in roots:
+        try:
+            if not report_root.is_dir() or report_root.is_symlink() or not under_home(report_root):
+                continue
+            for directory, dirs, names in os.walk(report_root, topdown=True, followlinks=False, onerror=fail_walk):
+                dirs[:] = [name for name in dirs if not (Path(directory) / name).is_symlink()]
+                if "source.tar" not in names:
+                    continue
+                path = Path(directory) / "source.tar"
+                item = source_tar_is_eligible(
+                    path,
+                    report_root,
+                    max_file_bytes=max_file_bytes,
+                    ttl_seconds=ttl_seconds,
+                    now=now,
+                )
+                if item is not None:
+                    candidates.append((path, report_root, worktree, item))
+        except OSError:
+            print(f"SKIP reports {report_root}: directory scan failed")
+    candidates.sort(key=lambda candidate: candidate[3].st_mtime)
+    for path, report_root, worktree, before in candidates:
+        if freed >= needed_bytes:
+            break
+        opened = open_handles_under(report_root, all_users=False, allow_lsof_fallback=True)
+        referenced = local_process_references(report_root, worktree)
+        if opened is None or any(opened_path.is_dir() for opened_path in opened) or referenced is not False:
+            print(f"SKIP {path}: process/open-handle scan is busy or incomplete")
+            continue
+        resolved = path.resolve(strict=True)
+        if resolved in opened:
+            print(f"SKIP {path}: file is open")
+            continue
+        print(f"{'WOULD REMOVE' if dry_run else 'REMOVE'} jankurai source tar {path} ({before.st_size} bytes)")
+        if dry_run:
+            freed += before.st_size
+            continue
+        # Recheck identity and consumers immediately before logging/removal.
+        opened = open_handles_under(report_root, all_users=False, allow_lsof_fallback=True)
+        referenced = local_process_references(report_root, worktree)
+        after = source_tar_is_eligible(
+            path,
+            report_root,
+            max_file_bytes=max_file_bytes,
+            ttl_seconds=ttl_seconds,
+            now=time.time(),
+        )
+        if (
+            opened is None
+            or any(opened_path.is_dir() for opened_path in opened)
+            or resolved in opened
+            or referenced is not False
+            or after is None
+            or (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)
+            != (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns)
+        ):
+            print(f"SKIP {path}: source tar changed or became active before removal")
+            continue
+        logger({"event": "delete_intent_file", "path": str(path), "bytes": before.st_size, "policy": entry["id"]})
+        try:
+            path.unlink()
+        except OSError as exc:
+            logger({"event": "delete_file_failed", "path": str(path), "bytes": before.st_size, "policy": entry["id"], "error": str(exc)})
+            print(f"SKIP {path}: unlink failed")
+            continue
+        logger({"event": "deleted_file", "path": str(path), "bytes": before.st_size, "policy": entry["id"]})
+        freed += before.st_size
+    print(f"JANKURAI-SOURCE-TARS {entry['id']}: planned_bytes={freed}")
+    return freed
 
 
 def current_uid() -> int:
@@ -1131,6 +1335,7 @@ def handle_cargo_targets(
         now,
         include_closed_pr_worktrees=entry.get("remove_closed_pr_worktrees", False),
         idle_seconds=idle_seconds,
+        per_target_cap_bytes=entry.get("per_target_cap_bytes"),
     )
     if candidates is None:
         print(f"SKIP {entry['id']}: worktree cleanup inventory unavailable")
@@ -1156,6 +1361,7 @@ def handle_cargo_targets(
             remove_worktree = bool(ignored_safe)
         remove_stale_target = bool(
             candidate["stale_target"]
+            and candidate.get("target_over_cap", True)
             and candidate["clean"]
             and (
                 candidate["disposition"] in {"merged", "closed"}
@@ -1329,6 +1535,20 @@ def main(argv: list[str] | None = None) -> int:
                     )
                     freed += handle_cargo_targets(
                         entry, repo, policy, logger, dry_run=dry_run, now=now, needed_bytes=required
+                    )
+                elif kind == "jankurai-source-tar":
+                    required = max(
+                        0,
+                        int(usage.used - (usage.used + usage.free) * policy["watermarks"]["low_percent"] / 100) - freed,
+                    )
+                    freed += handle_jankurai_source_tars(
+                        entry,
+                        repo,
+                        worktrees_root,
+                        logger,
+                        dry_run=dry_run,
+                        now=now,
+                        needed_bytes=required,
                     )
             print(f"planned_reclaim_bytes={freed} mode={'dry-run' if dry_run else 'apply'}")
         return 0
