@@ -42,14 +42,16 @@ J=$(probe $HOST); [ "$J" -lt 4 ] && { echo "$HOST busy/low disk (slots=$J)" >&2;
 [ -n "${JMAX:-}" ] && [ "$J" -gt "$JMAX" ] && J=$JMAX  # JMAX=8 honours lane job caps (gb 2026-10-31)
 echo ">> $HOST sha=${SHA:0:9} jobs=$J: cargo $*" >&2
 ARGS=$(printf '%q ' "$@")
+# Keep local, SSH, and container Cargo builds from writing incremental state
+# and full development debug info into the shared test target.
 if [ "$HOST" = xbabe2 ]; then  # gb 2026-10-31: test the exact SHA (not the dirty checkout) with an absolute cargo path
   S=$HOME/remote_tests/src.$$; mkdir -p $S/target $HOME/remote_tests/target && git -C "$REPO" archive --format=tar "$SHA" | tar -x -C $S || exit 4
-  cd $S && CARGO_TARGET_DIR=$HOME/remote_tests/target nice -n 10 $HOME/.cargo/bin/cargo "$@" -j $J; rc=$?; cd /; rm -rf $S; exit $rc
+  cd $S && CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CARGO_TARGET_DIR=$HOME/remote_tests/target nice -n 10 $HOME/.cargo/bin/cargo "$@" -j $J; rc=$?; cd /; rm -rf $S; exit $rc
 fi
 W='~/remote_tests'
 if [ "$HOST" = xbabe4 ]; then
-  git -C "$REPO" archive --format=tar "$SHA" | ssh -o BatchMode=yes $HOST "/usr/local/bin/docker run -i --rm --cpus=$J -v jope_target:/target -v jope_cargo:/usr/local/cargo/registry -e CARGO_TARGET_DIR=/target rust:1.97.1-slim-bookworm bash -c 'mkdir -p /w && tar -x -C /w && cd /w && command -v g++ >/dev/null || (apt-get update -qq && apt-get install -y -qq build-essential pkg-config libssl-dev >/dev/null); nice -n 10 cargo $ARGS -j $J'"
+  git -C "$REPO" archive --format=tar "$SHA" | ssh -o BatchMode=yes $HOST "/usr/local/bin/docker run -i --rm --cpus=$J -v jope_target:/target -v jope_cargo:/usr/local/cargo/registry -e CARGO_TARGET_DIR=/target -e CARGO_INCREMENTAL=0 -e CARGO_PROFILE_DEV_DEBUG=line-tables-only rust:1.97.1-slim-bookworm bash -c 'mkdir -p /w && tar -x -C /w && cd /w && command -v g++ >/dev/null || (apt-get update -qq && apt-get install -y -qq build-essential pkg-config libssl-dev >/dev/null); nice -n 10 cargo $ARGS -j $J'"
 else
   git -C "$REPO" archive --format=tar "$SHA" | ssh -o BatchMode=yes $HOST "mkdir -p $W/src.$$/target $W/target && tar -x -C $W/src.$$" || exit 4
-  ssh -o BatchMode=yes $HOST "cd $W/src.$$ && CUDA_VISIBLE_DEVICES='' CARGO_TARGET_DIR=\$HOME/remote_tests/target nice -n 10 ~/.cargo/bin/cargo $ARGS -j $J; rc=\$?; rm -rf $W/src.$$; exit \$rc"
+  ssh -o BatchMode=yes $HOST "cd $W/src.$$ && CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CUDA_VISIBLE_DEVICES='' CARGO_TARGET_DIR=\$HOME/remote_tests/target nice -n 10 ~/.cargo/bin/cargo $ARGS -j $J; rc=\$?; rm -rf $W/src.$$; exit \$rc"
 fi
