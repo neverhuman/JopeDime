@@ -5126,7 +5126,7 @@
       "role": "research"
     },
     "python:research/flywheel_selfplay/h122_lookahead_retest/test_h122.py": {
-      "reason": "Owner-requested H122 CPU-only Lookahead retest preparation fixtures: fresh family fold, unique per-attempt checkpoint staging, pre-copy disk barrier, read-only legacy scratch preservation, complete-panel strict admission/Elo summary, and no-data/no-ticket dry run; no experiment outcomes or product qualification.",
+      "reason": "H122 CPU launch-readiness: lease-bound cell CLI, 40 real fixture optimizer steps per arm, frozen-parameter and Lookahead checks, exact six-cell coordinator, predecessor/FIFO/resource budgets, phase and byte-bound collection, official equal-family utility and strict Elo/admission controls. Software fixtures only; no real corpus/checkpoint, shared lock/ticket, GPU or study outcome.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h124_gbm_shrink_blend/test_h124.py": {
