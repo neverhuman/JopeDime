@@ -433,7 +433,8 @@ mod tests {
             jope_runtime::sha256_hex(&fs::read(&executable).unwrap()),
             binary_sha
         );
-        let receipt = json!({"source":source,"binary_sha256":binary_sha,"version":version,
+        let receipt = json!({"source":source,"binary_sha256":binary_sha,"version":version,"plan":&plan,
+            "rounds_in_flight":plan.rounds_in_flight(),"math_threads_per_fit":1,
             "train_sha256":"d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
             "fit_source_rows":(0..80).collect::<Vec<_>>(),"matrix_sha256":plan.matrix_sha256,
             "fold_spec":request.fold_spec,"direct_score_tolerance":1e-12,"reused_pid":pid,
