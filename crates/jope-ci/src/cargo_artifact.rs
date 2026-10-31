@@ -341,7 +341,7 @@ fn committed_types_only(table: &toml::Table, at: &str) -> Result<(), String> {
 /// as a path. A `target` that is not a string crashed the Python there (`TypeError`), after it had
 /// created the output; the port refuses at the same point and leaves the same empty file. After
 /// the `store` check, a value of a type the committed configuration does not use refuses
-/// (stricter; see [`committed_types_only`]), before any output exists.
+/// (stricter; see `committed_types_only`), before any output exists.
 pub fn nextest_config(source: &Path, output: &Path, target: &Value) -> Result<(), String> {
     let text = read_text(source)?;
     if text.starts_with('\u{feff}') {
