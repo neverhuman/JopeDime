@@ -203,10 +203,21 @@ class Controller(unittest.TestCase):
             with self.subTest(value=value):
                 output = self.path / ("invalid-" + value)
                 result = subprocess.run(
-                    [sys.executable, str(HERE / "cpu_gates.py"), "plan",
-                     "--repo", str(self.repo), "--expected-main-sha", head,
-                     "--output", str(output), "--gate-timeout=" + value],
-                    text=True, capture_output=True, timeout=10,
+                    [
+                        sys.executable,
+                        str(HERE / "cpu_gates.py"),
+                        "plan",
+                        "--repo",
+                        str(self.repo),
+                        "--expected-main-sha",
+                        head,
+                        "--output",
+                        str(output),
+                        "--gate-timeout=" + value,
+                    ],
+                    text=True,
+                    capture_output=True,
+                    timeout=10,
                 )
                 self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
                 self.assertIn("gate timeout", result.stderr)
@@ -222,7 +233,9 @@ class Controller(unittest.TestCase):
                     spawn.assert_not_called()
                 self.assertFalse(log.exists())
 
-    @unittest.skipUnless(sys.platform.startswith("linux"), "Linux process-state control")
+    @unittest.skipUnless(
+        sys.platform.startswith("linux"), "Linux process-state control"
+    )
     def test_timeout_removes_descendants_after_leader_exits_and_continues(self):
         state = self.path / "owned-descendant.json"
         child = (
@@ -237,10 +250,16 @@ class Controller(unittest.TestCase):
             f"subprocess.Popen([sys.executable,'-c',{child!r},sys.argv[1]]); "
             "time.sleep(60)"
         )
-        self.source([
-            ("full-a-descendant", [sys.executable, "-c", leader, str(state)], "none"),
-            ("full-b-success", [sys.executable, "-c", ONE_TEST], "unittest"),
-        ])
+        self.source(
+            [
+                (
+                    "full-a-descendant",
+                    [sys.executable, "-c", leader, str(state)],
+                    "none",
+                ),
+                ("full-b-success", [sys.executable, "-c", ONE_TEST], "unittest"),
+            ]
+        )
 
         def alive(info):
             try:
@@ -363,19 +382,26 @@ class Controller(unittest.TestCase):
         process = mock.Mock(pid=314159)
         process.wait.return_value = 0
         with mock.patch.object(cpu.subprocess, "Popen", return_value=process):
-            with mock.patch.object(cpu, "_wait_unreaped", side_effect=KeyboardInterrupt):
+            with mock.patch.object(
+                cpu, "_wait_unreaped", side_effect=KeyboardInterrupt
+            ):
                 with mock.patch.object(cpu.time, "sleep"):
                     with mock.patch.object(cpu.os, "killpg") as stop:
                         events = mock.Mock()
                         events.attach_mock(stop, "signal")
                         events.attach_mock(process.wait, "reap")
                         with self.assertRaises(KeyboardInterrupt):
-                            cpu.invoke(["unused"], self.repo, self.path / "cancel.log", {}, 1)
-                        self.assertEqual(events.mock_calls, [
-                            mock.call.signal(process.pid, cpu.signal.SIGTERM),
-                            mock.call.signal(process.pid, cpu.signal.SIGKILL),
-                            mock.call.reap(),
-                        ])
+                            cpu.invoke(
+                                ["unused"], self.repo, self.path / "cancel.log", {}, 1
+                            )
+                        self.assertEqual(
+                            events.mock_calls,
+                            [
+                                mock.call.signal(process.pid, cpu.signal.SIGTERM),
+                                mock.call.signal(process.pid, cpu.signal.SIGKILL),
+                                mock.call.reap(),
+                            ],
+                        )
         self.source([("full-only", [sys.executable, "-c", ONE_TEST], "unittest")])
         with mock.patch.object(cpu, "execute_gate", side_effect=KeyboardInterrupt):
             with self.assertRaises(KeyboardInterrupt):

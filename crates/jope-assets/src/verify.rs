@@ -30,7 +30,9 @@ impl std::fmt::Display for KeyId {
 }
 
 #[derive(Clone, Debug)]
+/// A public verification key and the role its signer is allowed to serve.
 pub struct TrustedKey {
+    /// SHA-256 identity of this key's SPKI DER.
     pub id: KeyId,
     /// `release` or `development`.
     pub role: &'static str,
@@ -38,6 +40,7 @@ pub struct TrustedKey {
 }
 
 impl TrustedKey {
+    /// Parse an SPKI PEM key and bind it to the supplied package-signing role.
     pub fn from_pem(pem: &str, role: &'static str) -> Result<Self, String> {
         let key = VerifyingKey::from_public_key_pem(pem.trim()).map_err(|e| e.to_string())?;
         Ok(Self {

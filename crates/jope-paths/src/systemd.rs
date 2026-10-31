@@ -23,9 +23,13 @@ pub const TEMPLATE_SUFFIX: &str = ".in";
 /// Values for the four placeholders.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Roots {
+    /// Source checkout used by the unit's working directory and paths.
     pub home: PathBuf,
+    /// Mutable state directory used by the service.
     pub state: PathBuf,
+    /// Directory containing the installed service binaries.
     pub bundle: PathBuf,
+    /// Account name assigned to the rendered unit.
     pub user: String,
 }
 
