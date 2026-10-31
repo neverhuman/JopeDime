@@ -97,12 +97,12 @@ def test_launch_resource_limits_are_strict_at_boundaries():
     coordinator.check_resource_snapshot(
         load1=85.0,
         mem_available_kib=16 * 1024 * 1024,
-        disk_used_percent=94.499,
+        disk_used_percent=93.999,
     )
     for snapshot in (
         {"load1": 85.01, "mem_available_kib": 16 * 1024 * 1024, "disk_used_percent": 90.0},
         {"load1": 1.0, "mem_available_kib": 16 * 1024 * 1024 - 1, "disk_used_percent": 90.0},
-        {"load1": 1.0, "mem_available_kib": 16 * 1024 * 1024, "disk_used_percent": 94.5},
+        {"load1": 1.0, "mem_available_kib": 16 * 1024 * 1024, "disk_used_percent": 94.0},
     ):
         try:
             coordinator.check_resource_snapshot(**snapshot)
@@ -204,7 +204,7 @@ def test_fifo_coordinator_charges_all_seven_cells_and_releases_each_lease(tmp_pa
         cells,
         run_root=tmp_path / "run",
         checkpoint=checkpoint,
-        worker=lambda cell, _staged, _scratch, remaining: {"arm": cell["arm"], "remaining": remaining},
+        worker=lambda cell, _staged, _scratch, remaining, _attempt: {"arm": cell["arm"], "remaining": remaining},
         acquire_fn=acquire,
         release_fn=lambda handle: released.append(handle),
         cpu_gate_fn=lambda: 0.0,
@@ -239,13 +239,24 @@ def test_cpu_fake_wave_end_to_end_produces_preregistered_metrics_json(tmp_path, 
         leases.append((status_path, wait_total, handle))
         return handle, 0.0, 8192, {"cpu": "fake-safe"}
 
-    def fake_worker(cell, _staged, scratch, _remaining):
-        out = tmp_path / "run" / "outcomes" / "cells" / cell["arm"] / f"seed{cell['seed']}" / "attempt1"
+    def fake_worker(cell, _staged, scratch, _remaining, attempt):
+        out = tmp_path / "run" / "outcomes" / "cells" / cell["arm"] / f"seed{cell['seed']}" / f"attempt{attempt}"
         out.mkdir(parents=True)
         (out / "summary.json").write_text(json.dumps({"arm": cell["arm"], "seed": cell["seed"], "status": "complete"}))
         return {"scratch": str(scratch), "fake": True}
 
-    def fake_finalize(_staged, _scratch, _remaining):
+    def fake_finalize(_staged, _scratch, _remaining, _attempt):
+        for cell in cells:
+            assert coordinator.completed_attempt(
+                tmp_path / "run", cell["arm"], cell["seed"],
+                allow_scoring_in_progress=True,
+            ) == 1
+        try:
+            coordinator.completed_attempt(tmp_path / "run", "ESH-l4", 38)
+        except RuntimeError as exc:
+            assert "unaccounted in-progress cell" in str(exc)
+        else:
+            raise AssertionError("default completed-attempt lookup accepted active scoring")
         candidates = []
         for cell in cells:
             if cell["arm"] == "NULL":
@@ -326,3 +337,184 @@ def test_exact_fold_b_ties_never_admit():
     metrics = build_metrics.build_metrics(fold_b)
     assert metrics["arms"]["ESH-l2"]["is_exact_tie"] is True
     assert metrics["arms"]["ESH-l2"]["admitted"] is False
+
+
+def test_resume_retries_only_void_cell_as_next_attempt_and_preserves_budget(tmp_path, monkeypatch):
+    plan = runner.execution_plan()
+    cells = [*plan["candidate_cells"], plan["null_cell"]]
+    target = next(cell for cell in cells if cell["arm"] == "ESH-l4" and cell["seed"] == 38)
+    run_root = tmp_path / "run"
+    run_root.mkdir()
+    attempts = []
+    for cell in cells:
+        status = "void-or-unknown" if cell == target else "complete"
+        attempts.append({
+            **cell, "attempt": 1,
+            "scratch": str(coordinator.attempt_scratch_path(run_root, cell["arm"], cell["seed"], 1)),
+            "wall_seconds": 2.0, "wait_seconds": 3.0, "status": status,
+        })
+    budget_path = run_root / "budget.json"
+    coordinator.write_budget(budget_path, {
+        "schema": "jope.h99.gpu-budget/v1", "cap_seconds": coordinator.CAP_SECONDS,
+        "attempts": attempts, "in_progress": None,
+    })
+    monkeypatch.setattr(coordinator, "stage_r882_copy", lambda _source, scratch: (scratch.mkdir(parents=True), scratch / "copy.pt")[1])
+    calls = []
+    leases = []
+    released = []
+    clock = iter((10.0, 17.0))
+
+    def acquire(status_path, *, wait_total):
+        handle = object()
+        leases.append((status_path, wait_total, handle))
+        return handle, 4.0, 8192, {"cpu": "synthetic-safe"}
+
+    result = coordinator.run_fifo_cells(
+        cells, run_root=run_root, checkpoint=tmp_path / "checkpoint",
+        worker=lambda cell, _staged, scratch, remaining, attempt: calls.append((cell, scratch, remaining, attempt)) or {"ok": True},
+        acquire_fn=acquire, release_fn=lambda handle: released.append(handle),
+        cpu_gate_fn=lambda: None, setup_fn=lambda: None, clock_fn=clock.__next__,
+    )
+    assert len(calls) == len(leases) == len(released) == 1
+    cell, scratch, remaining, attempt = calls[0]
+    assert cell == target
+    assert attempt == 2
+    assert scratch == coordinator.attempt_scratch_path(run_root, "ESH-l4", 38, 2)
+    assert remaining == coordinator.CAP_SECONDS - sum(x["wall_seconds"] for x in attempts)
+    assert leases[0][1] == sum(x["wait_seconds"] for x in attempts)
+    assert result["attempts"][:-1] == attempts
+    assert result["attempts"][-1]["status"] == "complete"
+    assert result["attempts"][-1]["attempt"] == 2
+    assert coordinator.completed_attempt(run_root, "ESH-l4", 38) == 2
+
+
+def test_resume_uses_actual_ledger_for_void_and_unstarted_fixed_cells(tmp_path, monkeypatch):
+    plan = runner.execution_plan()
+    cells = [*plan["candidate_cells"], plan["null_cell"]]
+    run_root = tmp_path / "run"
+    run_root.mkdir()
+    failed = next(cell for cell in cells if cell["arm"] == "ESH-l4" and cell["seed"] == 38)
+    attempts = []
+    for cell in cells[:-1]:
+        attempts.append({
+            **cell, "attempt": 1,
+            "scratch": str(coordinator.attempt_scratch_path(run_root, cell["arm"], cell["seed"], 1)),
+            "wall_seconds": 2.0, "wait_seconds": 0.0,
+            "status": "void-or-unknown" if cell == failed else "complete",
+        })
+    coordinator.write_budget(run_root / "budget.json", {
+        "schema": "jope.h99.gpu-budget/v1", "cap_seconds": coordinator.CAP_SECONDS,
+        "attempts": attempts, "in_progress": None,
+    })
+    monkeypatch.setattr(coordinator, "stage_r882_copy", lambda _source, scratch: (scratch.mkdir(parents=True), scratch / "copy.pt")[1])
+    calls = []
+    clock = iter((0.0, 1.0, 2.0, 3.0))
+    coordinator.run_fifo_cells(
+        cells, run_root=run_root, checkpoint=tmp_path / "checkpoint",
+        worker=lambda cell, _staged, scratch, _remaining, attempt: calls.append((cell, scratch, attempt)) or {},
+        acquire_fn=lambda _status, *, wait_total: (object(), 0.0, 8192, {}),
+        release_fn=lambda _handle: None, cpu_gate_fn=lambda: None,
+        setup_fn=lambda: None, clock_fn=clock.__next__,
+    )
+    assert [(cell["arm"], cell["seed"], attempt) for cell, _scratch, attempt in calls] == [
+        ("ESH-l4", 38, 2), ("NULL", 36, 1),
+    ]
+    assert calls[0][1] == coordinator.attempt_scratch_path(run_root, "ESH-l4", 38, 2)
+    assert calls[1][1] == coordinator.attempt_scratch_path(run_root, "NULL", 36, 1)
+
+
+def test_resume_rejects_retries_after_a_completed_cell(tmp_path):
+    plan = runner.execution_plan()
+    cells = [*plan["candidate_cells"], plan["null_cell"]]
+    cell = cells[0]
+    attempts = []
+    for attempt, status in ((1, "complete"), (2, "void-or-unknown")):
+        attempts.append({
+            **cell, "attempt": attempt,
+            "scratch": str(coordinator.attempt_scratch_path(tmp_path, cell["arm"], cell["seed"], attempt)),
+            "wall_seconds": 1.0, "status": status,
+        })
+    try:
+        coordinator._cell_histories({
+            "schema": "jope.h99.gpu-budget/v1", "cap_seconds": coordinator.CAP_SECONDS,
+            "attempts": attempts, "in_progress": None,
+        }, cells)
+    except RuntimeError as exc:
+        assert "retried after completion" in str(exc)
+    else:
+        raise AssertionError("accepted a retry after a completed H99 cell")
+
+
+def test_resume_never_repeats_void_or_unknown_fold_b_scoring(tmp_path):
+    plan = runner.execution_plan()
+    cells = [*plan["candidate_cells"], plan["null_cell"]]
+    attempts = [
+        {
+            **cell, "attempt": 1,
+            "scratch": str(coordinator.attempt_scratch_path(tmp_path, cell["arm"], cell["seed"], 1)),
+            "wall_seconds": 1.0, "status": "complete",
+        }
+        for cell in cells
+    ]
+    attempts.append({
+        "action": "fold_b_scoring", "attempt": 1, "scratch": str(tmp_path / "scratch/fold-b-scoring-attempt1"),
+        "wall_seconds": 1.0, "wait_seconds": 0.0, "status": "void-or-unknown",
+    })
+    run_root = tmp_path / "run"
+    coordinator.write_budget(run_root / "budget.json", {
+        "schema": "jope.h99.gpu-budget/v1", "cap_seconds": coordinator.CAP_SECONDS,
+        "attempts": attempts, "in_progress": None,
+    })
+    calls = []
+    try:
+        coordinator.run_fifo_cells(
+            cells, run_root=run_root, checkpoint=tmp_path / "checkpoint",
+            worker=lambda *_args: calls.append("cell"),
+            finalize_worker=lambda *_args: calls.append("protected fold"),
+            acquire_fn=lambda *_args, **_kwargs: calls.append("FIFO acquire"),
+            setup_fn=lambda: None,
+        )
+    except RuntimeError as exc:
+        assert "refusing a duplicate protected-fold read" in str(exc)
+    else:
+        raise AssertionError("retried a void-or-unknown H99 Fold-B scoring action")
+    assert calls == []
+
+
+def test_scoring_metadata_lookup_rejects_cell_or_incomplete_in_progress(tmp_path):
+    plan = runner.execution_plan()
+    cells = [*plan["candidate_cells"], plan["null_cell"]]
+    complete_attempts = [
+        {
+            **cell, "attempt": 1,
+            "scratch": str(coordinator.attempt_scratch_path(tmp_path, cell["arm"], cell["seed"], 1)),
+            "wall_seconds": 1.0, "status": "complete",
+        }
+        for cell in cells
+    ]
+    base = {
+        "schema": "jope.h99.gpu-budget/v1", "cap_seconds": coordinator.CAP_SECONDS,
+        "attempts": complete_attempts, "in_progress": None,
+    }
+    cell_in_progress = dict(base, in_progress={
+        **cells[0], "attempt": 2,
+        "scratch": str(coordinator.attempt_scratch_path(tmp_path, cells[0]["arm"], cells[0]["seed"], 2)),
+    })
+    try:
+        coordinator._cell_histories(cell_in_progress, cells, allow_scoring_in_progress=True)
+    except RuntimeError as exc:
+        assert "unaccounted in-progress cell" in str(exc)
+    else:
+        raise AssertionError("scoring metadata lookup accepted an in-progress cell")
+
+    incomplete = [attempt for attempt in complete_attempts if attempt["arm"] != "NULL"]
+    scoring_in_progress = dict(base, attempts=incomplete, in_progress={
+        "action": "fold_b_scoring", "attempt": 1,
+        "scratch": str(tmp_path / "scratch/fold-b-scoring-attempt1"),
+    })
+    try:
+        coordinator._cell_histories(scoring_in_progress, cells, allow_scoring_in_progress=True)
+    except RuntimeError as exc:
+        assert "fixed cells remain incomplete" in str(exc)
+    else:
+        raise AssertionError("scoring metadata lookup accepted an incomplete fixed panel")

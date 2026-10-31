@@ -54,9 +54,9 @@ def main() -> None:
         checkpoint = args.checkpoint
         validate_execution_paths(run_root, input_dir, checkpoint)
         cells = [*execution_plan()["candidate_cells"], execution_plan()["null_cell"]]
-        def worker(cell, staged, scratch, _remaining):
-            return run_cell(cell, staged, scratch, run_root, input_dir=input_dir)
-        def finalize(staged, scratch, _remaining):
+        def worker(cell, staged, scratch, _remaining, attempt):
+            return run_cell(cell, staged, scratch, run_root, input_dir=input_dir, attempt=attempt)
+        def finalize(staged, scratch, _remaining, _attempt):
             return score_fold_b(staged, scratch, run_root, input_dir=input_dir)
         def acquire(status_path, *, wait_total):
             return acquire_h99_fifo(
