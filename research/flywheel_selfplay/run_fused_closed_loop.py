@@ -38,9 +38,9 @@ HERE = Path(__file__).resolve().parent
 # Import the CPU-chain dependencies explicitly, never a Phase-2 worktree.
 MICRO = Path("/home/ubuntu/JopeDimeMicro")
 sys.path.insert(0, str(MICRO / "python"))
-import rust_evaluator as evaluator
-from hpc.landmark_workspace import FusedLandmarkWorkspace
-from phase12_multimodal_model import compute_semantic_struct_sig_24d
+import rust_evaluator as evaluator  # noqa: E402 -- project path is added above.
+from hpc.landmark_workspace import FusedLandmarkWorkspace  # noqa: E402
+from phase12_multimodal_model import compute_semantic_struct_sig_24d  # noqa: E402
 
 spec = importlib.util.spec_from_file_location(
     "freeze_guard", HERE.parents[1] / "python/src/jope/north_star/dope_freeze_guard.py"
@@ -49,26 +49,28 @@ guard = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = guard
 spec.loader.exec_module(guard)
 sys.path.insert(0, str(HERE))
-from automatic_promotion import (
+from automatic_promotion import (  # noqa: E402
     promote,
     replay,
     training_cv_envelope,
     training_indices,
     write_tree_shard,
 )
-from dev_incumbent import (
+from dev_incumbent import (  # noqa: E402
     CandidateNovelty,
     DevIncumbent,
     RejectedCandidateError,
+    add_admission_arguments,
     batch_seed,
     gp_selection_indices,
     project_score_margins,
     proposal_plan,
     publish_checkpoint_archive,
     retain_checkpoint_payloads,
+    validate_admission_options,
     warm_restart_adapter,
 )
-from device_pool_cache import (
+from device_pool_cache import (  # noqa: E402
     DevicePoolCache,
     landmark_float32,
     release_gpu_round,
@@ -169,6 +171,7 @@ def main():
     ap.add_argument("--continuous", action="store_true")
     ap.add_argument("--campaign-prior-output", type=Path, action="append", default=[])
     ap.add_argument("--best-checkpoint", type=Path)
+    add_admission_arguments(ap)
     ap.add_argument("--checkpoint-keep-last", type=int, default=20)
     ap.add_argument(
         "--retention-s3-prefix",
@@ -192,6 +195,12 @@ def main():
         help="directory containing round-NN.json keyed-S3 qualification bundles",
     )
     args = ap.parse_args()
+    try:
+        args.adapter_min_gain = validate_admission_options(
+            args.strict_adapter_admission, args.adapter_min_gain
+        )
+    except ValueError as error:
+        ap.error(str(error))
     if (
         min(
             args.rounds,
@@ -597,6 +606,8 @@ def main():
         evaluation_identity,
         str(best_path or "initial_model"),
         best_round,
+        strict_admission=args.strict_adapter_admission,
+        min_gain=args.adapter_min_gain,
     )
     best_metadata = {
         "evaluation_identity": evaluation_identity,
@@ -607,6 +618,9 @@ def main():
         "utility": incumbent.best_stats,
         "checkpoint_sha256": sha(best_path) if best_path else None,
     }
+    if incumbent.strict_admission:
+        best_metadata["adapter_admission_policy"] = "strict-margin/v1"
+        best_metadata["adapter_min_gain"] = incumbent.min_gain
     write_json(args.output / "best_dev_checkpoint.json", best_metadata)
     if resumed_stats["mean"] < initial["mean"]:
         with (args.output / "adapter_admissions.jsonl").open("a") as admission_log:
@@ -1088,7 +1102,12 @@ def main():
                 candidate_parameter_sha256,
                 rnd,
             )
-        if candidate_dev["mean"] < incumbent.best_utility:
+        candidate_rejected = (
+            not incumbent.accepts(candidate_dev, evaluation_identity)
+            if incumbent.strict_admission
+            else candidate_dev["mean"] < incumbent.best_utility
+        )
+        if candidate_rejected:
             rejected = args.output / "rejected" / f"round-{rnd:02d}.pt"
             rejected.parent.mkdir(exist_ok=True)
             rejected_tmp = rejected.with_suffix(".pt.new")
@@ -1100,6 +1119,14 @@ def main():
                     "admission": "rejected",
                     "dev_utility": candidate_dev,
                     "dope_sha256": before.composite_sha256,
+                    **(
+                        {
+                            "adapter_admission_policy": "strict-margin/v1",
+                            "adapter_min_gain": incumbent.min_gain,
+                        }
+                        if incumbent.strict_admission
+                        else {}
+                    ),
                 },
                 rejected_tmp,
             )
@@ -1116,6 +1143,9 @@ def main():
                 "best_round": incumbent.best_round,
                 "best_checkpoint": incumbent.best_checkpoint,
             }
+            if incumbent.strict_admission:
+                adapter_admission["admission_policy"] = "strict-margin/v1"
+                adapter_admission["min_gain"] = incumbent.min_gain
         else:
             adapter_admission = incumbent.decide(
                 net,
@@ -1317,24 +1347,33 @@ def main():
                 "best_dev_round": incumbent.best_round,
                 "evaluation_identity": evaluation_identity,
                 "margin_projection": margin_policy,
+                **(
+                    {
+                        "adapter_admission_policy": "strict-margin/v1",
+                        "adapter_min_gain": incumbent.min_gain,
+                    }
+                    if incumbent.strict_admission
+                    else {}
+                ),
             },
             checkpoint_tmp,
         )
         with checkpoint_tmp.open("rb") as checkpoint_stream:
             os.fsync(checkpoint_stream.fileno())
         checkpoint_tmp.replace(args.output / f"round-{rnd:02d}.pt")
-        write_json(
-            args.output / "best_dev_checkpoint.json",
-            {
-                "evaluation_identity": evaluation_identity,
-                "evaluation_contract": eval_contract,
-                "best_checkpoint": incumbent.best_checkpoint,
-                "best_round": incumbent.best_round,
-                "best_utility": incumbent.best_utility,
-                "utility": incumbent.best_stats,
-                "checkpoint_sha256": sha(incumbent.best_checkpoint),
-            },
-        )
+        best_metadata = {
+            "evaluation_identity": evaluation_identity,
+            "evaluation_contract": eval_contract,
+            "best_checkpoint": incumbent.best_checkpoint,
+            "best_round": incumbent.best_round,
+            "best_utility": incumbent.best_utility,
+            "utility": incumbent.best_stats,
+            "checkpoint_sha256": sha(incumbent.best_checkpoint),
+        }
+        if incumbent.strict_admission:
+            best_metadata["adapter_admission_policy"] = "strict-margin/v1"
+            best_metadata["adapter_min_gain"] = incumbent.min_gain
+        write_json(args.output / "best_dev_checkpoint.json", best_metadata)
         wall = time.monotonic() - start
         row = {
             "round": rnd,

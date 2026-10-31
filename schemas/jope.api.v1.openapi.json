@@ -1,6 +1,144 @@
 {
   "components": {
     "schemas": {
+      "Algorithm": {
+        "description": "Public source and immutable provenance, never an internal genome (§5.1, §8).",
+        "properties": {
+          "algorithm_id": {
+            "type": "string"
+          },
+          "bundle_digest": {
+            "type": "string"
+          },
+          "conditioning_digest": {
+            "type": "string"
+          },
+          "cv_value": {
+            "format": "double",
+            "type": "number"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "model_artifact": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "model_digest": {
+            "type": "string"
+          },
+          "revision": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
+            "type": "string"
+          },
+          "source": {
+            "items": {
+              "$ref": "#/components/schemas/AlgorithmSource"
+            },
+            "type": "array"
+          },
+          "summary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "algorithm_id",
+          "summary",
+          "metric",
+          "cv_value",
+          "model_digest",
+          "conditioning_digest",
+          "bundle_digest",
+          "revision",
+          "source"
+        ],
+        "type": "object"
+      },
+      "AlgorithmAcceptedBody": {
+        "properties": {
+          "algorithm_id": {
+            "type": "string"
+          },
+          "cv_value": {
+            "format": "double",
+            "type": "number"
+          },
+          "excerpt": {
+            "description": "Primary-language source, limited to 12 lines by the projection producer.",
+            "type": "string"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "model_artifact": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "previous_value": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "summary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "algorithm_id",
+          "metric",
+          "cv_value",
+          "summary",
+          "excerpt"
+        ],
+        "type": "object"
+      },
+      "AlgorithmPage": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "algorithms": {
+            "items": {
+              "$ref": "#/components/schemas/Algorithm"
+            },
+            "maxItems": 256,
+            "type": "array"
+          },
+          "next_after": {
+            "description": "Opaque continuation token; null denotes the end of the list.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "algorithms"
+        ],
+        "title": "AlgorithmPage",
+        "type": "object"
+      },
+      "AlgorithmSource": {
+        "properties": {
+          "language": {
+            "$ref": "#/components/schemas/Language"
+          },
+          "source": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "language",
+          "source"
+        ],
+        "type": "object"
+      },
       "BestAlgorithm": {
         "properties": {
           "algorithm_id": {
@@ -30,12 +168,16 @@
       "Budget": {
         "properties": {
           "evaluations": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": [
               "string",
               "null"
             ]
           },
           "wall_seconds": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": [
               "string",
               "null"
@@ -47,9 +189,13 @@
       "BudgetTotal": {
         "properties": {
           "evaluations": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": "string"
           },
           "wall_seconds": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": "string"
           }
         },
@@ -59,9 +205,34 @@
         ],
         "type": "object"
       },
+      "BudgetUpdate": {
+        "additionalProperties": false,
+        "description": "Missing fields inherit; explicit null clears that requested budget override.",
+        "properties": {
+          "evaluations": {
+            "maxLength": 20,
+            "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]{1}|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "wall_seconds": {
+            "maxLength": 20,
+            "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]{1}|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
       "BudgetUsed": {
         "properties": {
           "evaluations": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": "string"
           },
           "wall_seconds": {
@@ -107,6 +278,66 @@
         ],
         "type": "object"
       },
+      "ColumnProfile": {
+        "properties": {
+          "data_type": {
+            "type": "string"
+          },
+          "distinct": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
+            "type": "string"
+          },
+          "missing": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "data_type",
+          "missing",
+          "distinct"
+        ],
+        "type": "object"
+      },
+      "ComparisonEvidence": {
+        "properties": {
+          "after": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "before": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "comparable": {
+            "type": "boolean"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "metric",
+          "scope",
+          "comparable"
+        ],
+        "type": "object"
+      },
       "CompletionReason": {
         "enum": [
           "budget_evaluations",
@@ -115,6 +346,144 @@
           "effort_reduced"
         ],
         "type": "string"
+      },
+      "DatasetPage": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "datasets": {
+            "items": {
+              "$ref": "#/components/schemas/DatasetProfile"
+            },
+            "maxItems": 256,
+            "type": "array"
+          },
+          "next_after": {
+            "description": "Opaque continuation token; null denotes the end of the list.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "datasets"
+        ],
+        "title": "DatasetPage",
+        "type": "object"
+      },
+      "DatasetProfile": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "bytes": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
+            "type": "string"
+          },
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/ColumnProfile"
+            },
+            "type": "array"
+          },
+          "dataset_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "rows": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
+            "type": "string"
+          },
+          "target_suggestions": {
+            "items": {
+              "$ref": "#/components/schemas/TargetSuggestion"
+            },
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/Warning"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "dataset_id",
+          "name",
+          "bytes",
+          "rows",
+          "columns",
+          "target_suggestions",
+          "warnings"
+        ],
+        "title": "DatasetProfile",
+        "type": "object"
+      },
+      "DatasetRegistration": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "anyOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "path": {
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "path"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "csv_text": {
+                "description": "UTF-8 bytes, not Unicode character count, must fit in 1 MiB.",
+                "maxLength": 1048576,
+                "type": "string",
+                "x-jope-max-utf8-bytes": 1048576
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "csv_text"
+            ],
+            "type": "object"
+          }
+        ],
+        "description": "JSON registration is exclusive. Raw CSV uploads use the separate CSV media type.",
+        "title": "DatasetRegistration"
+      },
+      "DeleteReceipt": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "deleted": {
+            "const": true,
+            "description": "A missing or protected resource is a Problem, never a false success receipt.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "deleted"
+        ],
+        "title": "DeleteReceipt",
+        "type": "object"
       },
       "Direction": {
         "enum": [
@@ -160,6 +529,116 @@
           "FITNESS_UNDEFINED"
         ],
         "type": "string"
+      },
+      "EventPage": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "description": "Durable events only. Cross-item ordering/cursor relations are checked by\nDeserialize; JSON Schema cannot express those relational constraints.",
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/PublicEvent"
+            },
+            "maxItems": 256,
+            "type": "array"
+          },
+          "next_after": {
+            "maxLength": 20,
+            "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]{1}|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
+            "type": "string"
+          }
+        },
+        "required": [
+          "events",
+          "next_after"
+        ],
+        "title": "EventPage",
+        "type": "object"
+      },
+      "ExperimentFinishedBody": {
+        "properties": {
+          "experiment_id": {
+            "type": "string"
+          },
+          "failure": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicFailure"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metric": {
+            "type": "string"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/ExperimentOutcome"
+          },
+          "value": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "experiment_id",
+          "outcome",
+          "metric"
+        ],
+        "type": "object"
+      },
+      "ExperimentOutcome": {
+        "enum": [
+          "improved",
+          "not_improved",
+          "failed"
+        ],
+        "type": "string"
+      },
+      "ExperimentStartedBody": {
+        "properties": {
+          "experiment_id": {
+            "type": "string"
+          },
+          "hypothesis": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "experiment_id",
+          "hypothesis"
+        ],
+        "type": "object"
+      },
+      "ExportCompletedBody": {
+        "properties": {
+          "artifact_id": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ExportKind"
+          },
+          "languages": {
+            "items": {
+              "$ref": "#/components/schemas/Language"
+            },
+            "type": "array"
+          },
+          "parity_status": {
+            "$ref": "#/components/schemas/ParityStatus"
+          }
+        },
+        "required": [
+          "artifact_id",
+          "kind",
+          "languages",
+          "parity_status"
+        ],
+        "type": "object"
       },
       "ExportKind": {
         "enum": [
@@ -258,6 +737,167 @@
           "refit"
         ],
         "title": "ExportRequest",
+        "type": "object"
+      },
+      "FeedbackRecord": {
+        "additionalProperties": false,
+        "description": "Opt-in internal evaluation data (§13.4), not a public event or raw data row.",
+        "properties": {
+          "algorithm": {
+            "type": "string"
+          },
+          "conditioning_mask": {
+            "items": {
+              "type": "boolean"
+            },
+            "maxItems": 10,
+            "minItems": 10,
+            "type": "array"
+          },
+          "conditioning_tokens": {
+            "items": {
+              "items": {
+                "format": "double",
+                "type": "number"
+              },
+              "maxItems": 32,
+              "minItems": 32,
+              "type": "array"
+            },
+            "maxItems": 10,
+            "minItems": 10,
+            "type": "array"
+          },
+          "failure": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicFailure"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "features": {
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "scores": {
+            "additionalProperties": {
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "algorithm",
+          "features",
+          "scores",
+          "conditioning_tokens",
+          "conditioning_mask"
+        ],
+        "type": "object"
+      },
+      "FinalScores": {
+        "properties": {
+          "cv": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "holdout": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "test": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "ForkSeed": {
+        "enum": [
+          "same",
+          "new"
+        ],
+        "type": "string"
+      },
+      "GcBlob": {
+        "additionalProperties": false,
+        "properties": {
+          "bytes": {
+            "maxLength": 20,
+            "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]{1}|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
+            "type": "string"
+          },
+          "sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sha256",
+          "bytes"
+        ],
+        "type": "object"
+      },
+      "GcReport": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "blobs": {
+            "items": {
+              "$ref": "#/components/schemas/GcBlob"
+            },
+            "type": "array"
+          },
+          "bytes": {
+            "maxLength": 20,
+            "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]{1}|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
+            "type": "string"
+          },
+          "dry_run": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "dry_run",
+          "blobs",
+          "bytes"
+        ],
+        "title": "GcReport",
+        "type": "object"
+      },
+      "GcRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "dry_run": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "dry_run"
+        ],
+        "title": "GcRequest",
         "type": "object"
       },
       "Guidance": {
@@ -397,10 +1037,32 @@
           },
           {
             "description": "Exact byte counts follow §4.1 even above JavaScript's integer range.",
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": "string"
           }
         ],
         "description": "§9.1 includes both numeric measurements and the rust_timed_alone boolean."
+      },
+      "Nondeterminism": {
+        "properties": {
+          "count": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
+            "type": "string"
+          },
+          "experiment_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "count",
+          "experiment_ids"
+        ],
+        "type": "object"
       },
       "ObjectiveSpec": {
         "anyOf": [
@@ -413,6 +1075,102 @@
           }
         ],
         "description": "The objective grammar is owned by jope-runtime; the API transports it without\nimporting the evaluator. A string is a built-in name or name:param=value."
+      },
+      "ObjectiveValidation": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "description": "Objective grammar resolution belongs to the runtime. Errors are structured\ndiagnostics; malformed request JSON is INVALID_INPUT at the HTTP boundary.",
+        "properties": {
+          "digest": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Direction"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectiveValidationIssue"
+            },
+            "type": "array"
+          },
+          "required_columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "resolved": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ObjectiveSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "errors"
+        ],
+        "title": "ObjectiveValidation",
+        "type": "object"
+      },
+      "ObjectiveValidationIssue": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "field": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object"
+      },
+      "ObjectiveValidationRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "spec": {
+            "$ref": "#/components/schemas/ObjectiveSpec"
+          },
+          "task": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Task"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "spec"
+        ],
+        "title": "ObjectiveValidationRequest",
+        "type": "object"
       },
       "ParityStatus": {
         "enum": [
@@ -578,6 +1336,237 @@
         "title": "Problem",
         "type": "object"
       },
+      "PublicEvent": {
+        "description": "Only durable events have this envelope. Telemetry is a separate SSE payload.\nPublication/sequence allocation belongs to SVC-04, after transaction commit.",
+        "oneOf": [
+          {
+            "properties": {
+              "body": {
+                "$ref": "#/components/schemas/RunStateBody"
+              },
+              "kind": {
+                "const": "run.state",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "body"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "body": {
+                "$ref": "#/components/schemas/RunConfigBody"
+              },
+              "kind": {
+                "const": "run.config",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "body"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "body": {
+                "$ref": "#/components/schemas/Plan"
+              },
+              "kind": {
+                "const": "plan",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "body"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "body": {
+                "$ref": "#/components/schemas/ExperimentStartedBody"
+              },
+              "kind": {
+                "const": "experiment.started",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "body"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "body": {
+                "$ref": "#/components/schemas/ExperimentFinishedBody"
+              },
+              "kind": {
+                "const": "experiment.finished",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "body"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "body": {
+                "$ref": "#/components/schemas/AlgorithmAcceptedBody"
+              },
+              "kind": {
+                "const": "algorithm.accepted",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "body"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "body": {
+                "$ref": "#/components/schemas/ReasoningBody"
+              },
+              "kind": {
+                "const": "reasoning",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "body"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "body": {
+                "$ref": "#/components/schemas/Warning"
+              },
+              "kind": {
+                "const": "warning",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "body"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "body": {
+                "$ref": "#/components/schemas/ExportCompletedBody"
+              },
+              "kind": {
+                "const": "export.completed",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "body"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "body": {
+                "$ref": "#/components/schemas/RunFinishedBody"
+              },
+              "kind": {
+                "const": "run.finished",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "body"
+            ],
+            "type": "object"
+          }
+        ],
+        "properties": {
+          "run_id": {
+            "type": "string"
+          },
+          "sequence": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
+            "type": "string"
+          },
+          "time": {
+            "description": "RFC 3339 UTC timestamp; produced by the service clock.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "sequence",
+          "time"
+        ],
+        "type": "object"
+      },
+      "PublicFailure": {
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "ReasoningBody": {
+        "properties": {
+          "algorithm_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ComparisonEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stage": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "stage",
+          "summary"
+        ],
+        "type": "object"
+      },
       "Refit": {
         "enum": [
           "fit",
@@ -593,6 +1582,8 @@
             "type": "integer"
           },
           "evaluations": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": "string"
           },
           "name": {
@@ -604,6 +1595,8 @@
             "type": "integer"
           },
           "wall_seconds": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": "string"
           }
         },
@@ -722,9 +1715,13 @@
       "ResourceEstimates": {
         "properties": {
           "disk_bytes": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": "string"
           },
           "peak_ram_bytes": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": "string"
           }
         },
@@ -737,18 +1734,26 @@
       "RowCounts": {
         "properties": {
           "fit": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": "string"
           },
           "holdout": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": "string"
           },
           "test": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": [
               "string",
               "null"
             ]
           },
           "total": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": "string"
           }
         },
@@ -759,6 +1764,256 @@
         ],
         "type": "object"
       },
+      "RunConfigBody": {
+        "properties": {
+          "after": {
+            "$ref": "#/components/schemas/RunConfiguration"
+          },
+          "before": {
+            "$ref": "#/components/schemas/RunConfiguration"
+          }
+        },
+        "required": [
+          "before",
+          "after"
+        ],
+        "type": "object"
+      },
+      "RunConfiguration": {
+        "properties": {
+          "budget": {
+            "$ref": "#/components/schemas/BudgetTotal"
+          },
+          "effort": {
+            "$ref": "#/components/schemas/Effort"
+          },
+          "revision": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
+            "type": "string"
+          }
+        },
+        "required": [
+          "revision",
+          "effort",
+          "budget"
+        ],
+        "type": "object"
+      },
+      "RunControlRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "action": {
+                  "const": "set_effort"
+                }
+              }
+            },
+            "then": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "effort": {
+                      "not": {
+                        "type": "null"
+                      }
+                    }
+                  },
+                  "required": [
+                    "effort"
+                  ]
+                },
+                {
+                  "properties": {
+                    "budget": {
+                      "minProperties": 1,
+                      "not": {
+                        "type": "null"
+                      }
+                    }
+                  },
+                  "required": [
+                    "budget"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "action": {
+                "const": "pause",
+                "type": "string"
+              },
+              "expected_revision": {
+                "maxLength": 20,
+                "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]{1}|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "action"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "action": {
+                "const": "continue",
+                "type": "string"
+              },
+              "expected_revision": {
+                "maxLength": 20,
+                "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]{1}|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "action"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "action": {
+                "const": "cancel",
+                "type": "string"
+              },
+              "expected_revision": {
+                "maxLength": 20,
+                "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]{1}|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "action"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "action": {
+                "const": "set_effort",
+                "type": "string"
+              },
+              "budget": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/BudgetUpdate"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "effort": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/Effort"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "expected_revision": {
+                "maxLength": 20,
+                "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]{1}|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "action"
+            ],
+            "type": "object"
+          }
+        ],
+        "title": "RunControlRequest"
+      },
+      "RunFinishedBody": {
+        "properties": {
+          "budget_used": {
+            "$ref": "#/components/schemas/BudgetUsed"
+          },
+          "champion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BestAlgorithm"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "completion_reason": {
+            "$ref": "#/components/schemas/CompletionReason"
+          },
+          "nondeterminism": {
+            "$ref": "#/components/schemas/Nondeterminism"
+          },
+          "scores": {
+            "$ref": "#/components/schemas/FinalScores"
+          }
+        },
+        "required": [
+          "completion_reason",
+          "scores",
+          "budget_used",
+          "nondeterminism"
+        ],
+        "type": "object"
+      },
+      "RunForkRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "overrides": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunOverrides"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "With warm_start, the service must also verify unchanged ProblemDigest."
+          },
+          "seed": {
+            "$ref": "#/components/schemas/ForkSeed"
+          },
+          "warm_start": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "seed"
+        ],
+        "title": "RunForkRequest",
+        "type": "object"
+      },
       "RunLimits": {
         "properties": {
           "eval_timeout_s": {
@@ -767,6 +2022,8 @@
             "type": "integer"
           },
           "worker_rss_bytes": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": "string"
           }
         },
@@ -774,6 +2031,157 @@
           "eval_timeout_s",
           "worker_rss_bytes"
         ],
+        "type": "object"
+      },
+      "RunOverrides": {
+        "additionalProperties": false,
+        "description": "Only fields supplied here change the parent RunSpec. Seed selection, dry-run\nand plan binding are separate mechanisms, so they cannot be overridden here.",
+        "properties": {
+          "budget": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BudgetUpdate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dataset": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "device": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effort": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Effort"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "guidance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Guidance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ignore_columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "landmarks": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LandmarkMode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "languages": {
+            "items": {
+              "$ref": "#/components/schemas/Language"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "objective": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ObjectiveSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "require_all_languages": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "split": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SplitSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "task": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Task"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "test_dataset": {
+            "description": "Missing inherits; explicit null removes the parent's external test dataset.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "RunPage": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "next_after": {
+            "description": "Opaque continuation token; null denotes the end of the list.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/RunSnapshot"
+            },
+            "maxItems": 256,
+            "type": "array"
+          }
+        },
+        "required": [
+          "runs"
+        ],
+        "title": "RunPage",
         "type": "object"
       },
       "RunPhase": {
@@ -820,6 +2228,8 @@
             "$ref": "#/components/schemas/Effort"
           },
           "event_watermark": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": "string"
           },
           "pending": {
@@ -832,6 +2242,8 @@
             "$ref": "#/components/schemas/RunPhase"
           },
           "revision": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": "string"
           },
           "run_id": {
@@ -912,6 +2324,8 @@
             "type": "boolean"
           },
           "seed": {
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)$(?![\\s\\S])",
             "type": "string"
           },
           "split": {
@@ -960,6 +2374,33 @@
           "failed"
         ],
         "type": "string"
+      },
+      "RunStateBody": {
+        "properties": {
+          "pending": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phase": {
+            "$ref": "#/components/schemas/RunPhase"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "state": {
+            "$ref": "#/components/schemas/RunState"
+          }
+        },
+        "required": [
+          "state",
+          "phase"
+        ],
+        "type": "object"
       },
       "Severity": {
         "enum": [
@@ -1049,6 +2490,25 @@
         "title": "SystemInfo",
         "type": "object"
       },
+      "TargetSuggestion": {
+        "properties": {
+          "column": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "task": {
+            "$ref": "#/components/schemas/Task"
+          }
+        },
+        "required": [
+          "column",
+          "task",
+          "reason"
+        ],
+        "type": "object"
+      },
       "Task": {
         "oneOf": [
           {
@@ -1065,6 +2525,62 @@
             "type": "string"
           }
         ]
+      },
+      "TelemetryEvent": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "description": "Ephemeral SSE frame: deliberately lacks `sequence` and therefore no SSE id.",
+        "oneOf": [
+          {
+            "properties": {
+              "body": {
+                "items": {
+                  "$ref": "#/components/schemas/MetricSample"
+                },
+                "type": "array"
+              },
+              "kind": {
+                "const": "telemetry",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "body"
+            ],
+            "type": "object"
+          }
+        ],
+        "properties": {
+          "run_id": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "time"
+        ],
+        "title": "TelemetryEvent",
+        "type": "object"
+      },
+      "TrainingFeedback": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/FeedbackRecord"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "records"
+        ],
+        "title": "TrainingFeedback",
+        "type": "object"
       },
       "Warning": {
         "description": "Public warning fields from §9.3. TEL-06 owns the warning catalog.",
@@ -1192,6 +2708,337 @@
         "x-jope-requires-idempotency-key": false
       }
     },
+    "/v1/datasets": {
+      "get": {
+        "operationId": "dataset_inspect",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/DatasetPage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DatasetProfile"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-jope-mutating": false,
+        "x-jope-operation-id": 3,
+        "x-jope-requires-idempotency-key": false
+      },
+      "post": {
+        "operationId": "dataset_register",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[ -~]{1,128}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatasetRegistration"
+              }
+            },
+            "text/csv": {
+              "schema": {
+                "format": "csv",
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetProfile"
+                }
+              }
+            },
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-jope-mutating": true,
+        "x-jope-operation-id": 2,
+        "x-jope-requires-idempotency-key": true
+      }
+    },
+    "/v1/datasets/{id}": {
+      "delete": {
+        "operationId": "dataset_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[ -~]{1,128}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteReceipt"
+                }
+              }
+            },
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-jope-mutating": true,
+        "x-jope-operation-id": 4,
+        "x-jope-requires-idempotency-key": true
+      },
+      "get": {
+        "operationId": "dataset_inspect",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/DatasetPage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DatasetProfile"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-jope-mutating": false,
+        "x-jope-operation-id": 3,
+        "x-jope-requires-idempotency-key": false
+      }
+    },
+    "/v1/objectives/validate": {
+      "post": {
+        "operationId": "objective_validate",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ObjectiveValidationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectiveValidation"
+                }
+              }
+            },
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-jope-mutating": false,
+        "x-jope-operation-id": 5,
+        "x-jope-requires-idempotency-key": false
+      }
+    },
     "/v1/predictions": {
       "post": {
         "operationId": "model_predict",
@@ -1265,6 +3112,69 @@
       }
     },
     "/v1/runs": {
+      "get": {
+        "operationId": "run_status",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RunPage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RunSnapshot"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-jope-mutating": false,
+        "x-jope-operation-id": 7,
+        "x-jope-requires-idempotency-key": false
+      },
       "post": {
         "operationId": "run_start",
         "parameters": [
@@ -1340,6 +3250,433 @@
         "x-jope-mutating": true,
         "x-jope-operation-id": 6,
         "x-jope-requires-idempotency-key": true
+      }
+    },
+    "/v1/runs/{id}": {
+      "delete": {
+        "operationId": "run_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[ -~]{1,128}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteReceipt"
+                }
+              }
+            },
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-jope-mutating": true,
+        "x-jope-operation-id": 10,
+        "x-jope-requires-idempotency-key": true
+      },
+      "get": {
+        "operationId": "run_status",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RunPage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RunSnapshot"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-jope-mutating": false,
+        "x-jope-operation-id": 7,
+        "x-jope-requires-idempotency-key": false
+      }
+    },
+    "/v1/runs/{id}/algorithms": {
+      "get": {
+        "operationId": "algorithm_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alg",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AlgorithmPage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/Algorithm"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-jope-mutating": false,
+        "x-jope-operation-id": 12,
+        "x-jope-requires-idempotency-key": false
+      }
+    },
+    "/v1/runs/{id}/algorithms/{alg}": {
+      "get": {
+        "operationId": "algorithm_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alg",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AlgorithmPage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/Algorithm"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-jope-mutating": false,
+        "x-jope-operation-id": 12,
+        "x-jope-requires-idempotency-key": false
+      }
+    },
+    "/v1/runs/{id}/control": {
+      "post": {
+        "operationId": "run_control",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[ -~]{1,128}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunControlRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunSnapshot"
+                }
+              }
+            },
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-jope-mutating": true,
+        "x-jope-operation-id": 8,
+        "x-jope-requires-idempotency-key": true
+      }
+    },
+    "/v1/runs/{id}/events": {
+      "get": {
+        "operationId": "run_events",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventPage"
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/PublicEvent"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TelemetryEvent"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-jope-mutating": false,
+        "x-jope-operation-id": 11,
+        "x-jope-requires-idempotency-key": false
       }
     },
     "/v1/runs/{id}/exports": {
@@ -1421,6 +3758,214 @@
         "x-jope-requires-idempotency-key": true
       }
     },
+    "/v1/runs/{id}/feedback": {
+      "get": {
+        "operationId": "feedback_export",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrainingFeedback"
+                }
+              }
+            },
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-jope-mutating": false,
+        "x-jope-operation-id": 16,
+        "x-jope-requires-idempotency-key": false
+      }
+    },
+    "/v1/runs/{id}/fork": {
+      "post": {
+        "operationId": "run_fork",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[ -~]{1,128}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunForkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunSnapshot"
+                }
+              }
+            },
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-jope-mutating": true,
+        "x-jope-operation-id": 9,
+        "x-jope-requires-idempotency-key": true
+      }
+    },
+    "/v1/store/gc": {
+      "post": {
+        "operationId": "store_gc",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[ -~]{1,128}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GcRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GcReport"
+                }
+              }
+            },
+            "description": "Successful response",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "RFC 9457 problem",
+            "headers": {
+              "Jope-Api-Version": {
+                "required": true,
+                "schema": {
+                  "pattern": "^1\\.[0-9]+$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-jope-mutating": true,
+        "x-jope-operation-id": 17,
+        "x-jope-requires-idempotency-key": true
+      }
+    },
     "/v1/system": {
       "get": {
         "operationId": "system_info",
@@ -1475,20 +4020,5 @@
     {
       "bearerAuth": []
     }
-  ],
-  "x-jope-pending-exchanges": [
-    "AlgorithmPage",
-    "DatasetPage",
-    "DatasetRegistration",
-    "DeleteReceipt",
-    "EventPage",
-    "GcReport",
-    "GcRequest",
-    "ObjectiveValidation",
-    "ObjectiveValidationRequest",
-    "RunControlRequest",
-    "RunForkRequest",
-    "RunPage",
-    "TrainingFeedback"
   ]
 }

@@ -1,7 +1,9 @@
 use anyhow::Context;
 use jope_api::ids::RunId;
+use jope_api::registry::{ForkSeed, RunForkRequest};
 use jope_client::Transport;
-use serde_json::{json, Value};
+use serde::Deserialize;
+use serde_json::Value;
 use std::str::FromStr;
 
 pub fn run(
@@ -32,26 +34,30 @@ fn execute<T: Transport>(
     idempotency_key: Option<&str>,
 ) -> anyhow::Result<Value> {
     let id = RunId::from_str(run).map_err(|_| jope_runtime::Failure::input("invalid run id"))?;
-    let key = crate::common::resolve_idempotency_key(idempotency_key);
-    crate::common::announce_generated_key(idempotency_key, &key)?;
     let body = match crate::common::read_json_body(body_file)? {
-        Some(value) => value,
-        None => {
-            let mut value = json!({"seed": if new_seed { "new" } else { "same" }});
-            if warm {
-                value["warm_start"] = Value::Bool(true);
-            }
+        Some(value) => {
+            RunForkRequest::deserialize(&value).map_err(|error| {
+                jope_runtime::Failure::input(format!("invalid restart request: {error}"))
+            })?;
+            // Validate with the DTO without changing a retry's null-bearing request body.
             value
         }
+        None => serde_json::to_value(RunForkRequest {
+            seed: if new_seed {
+                ForkSeed::New
+            } else {
+                ForkSeed::Same
+            },
+            warm_start: warm.then_some(true),
+            overrides: None,
+        })
+        .context("serialize restart request")?,
     };
-    // Keep the original JSON (including explicit nulls) for retry identity.
-    let result: jope_api::RunSnapshot = (|| {
-        let request = jope_client::Request::new(9, 0, &[("id", &id.to_string())])?
-            .key(Some(&key))?
-            .json(&body)?;
-        transport.execute(request)?.json()
-    })()
-    .context("restart run")?;
+    let key = crate::common::resolve_idempotency_key(idempotency_key);
+    crate::common::announce_generated_key(idempotency_key, &key)?;
+    let result = transport
+        .run_fork(&id, &body, Some(&key))
+        .context("restart run")?;
     serde_json::to_value(result).context("serialize restart response")
 }
 
@@ -59,6 +65,7 @@ fn execute<T: Transport>(
 mod tests {
     use super::*;
     use jope_client::Request;
+    use serde_json::json;
     use std::sync::Mutex;
 
     const RUN: &str = "run_01ARZ3NDEKTSV4RRFFQ69G5FAV";
@@ -109,7 +116,7 @@ mod tests {
     }
 
     #[test]
-    fn raw_body_preserves_overrides_for_pending_fork_schema() {
+    fn body_preserves_canonical_fork_overrides() {
         let mock = Mock::default();
         let temp = tempfile::tempdir().unwrap();
         let path = temp.path().join("fork.json");
@@ -131,5 +138,81 @@ mod tests {
             serde_json::from_slice::<Value>(mock.0.lock().unwrap()[0].body()).unwrap(),
             json!({"seed":"new","warm_start":true,"overrides":{"effort":"fast"}})
         );
+    }
+
+    #[test]
+    fn restart_flags_preserve_same_new_and_optional_warm_start() {
+        for (new_seed, warm) in [(false, false), (false, true), (true, false), (true, true)] {
+            let mock = Mock::default();
+            execute(&mock, RUN, new_seed, warm, None, Some("flags")).unwrap();
+            let requests = mock.0.lock().unwrap();
+            let body: Value = serde_json::from_slice(requests[0].body()).unwrap();
+            assert_eq!(body["seed"], if new_seed { "new" } else { "same" });
+            assert_eq!(body.get("warm_start"), warm.then_some(&Value::Bool(true)));
+            assert!(body.get("overrides").is_none());
+            serde_json::from_value::<RunForkRequest>(body).unwrap();
+        }
+    }
+
+    #[test]
+    fn fork_body_preserves_nested_null_overrides_and_retry_identity() {
+        for body in [
+            json!({"seed":"same","warm_start":null,"overrides":null}),
+            json!({"seed":"new","overrides":{"effort":null,"budget":null}}),
+            json!({"seed":"same","warm_start":false}),
+            json!({"seed":"new","warm_start":true,"overrides":{"effort":"high","test_dataset":null,"budget":{"evaluations":null,"wall_seconds":"60"},"require_all_languages":false}}),
+        ] {
+            let mock = Mock::default();
+            let temp = tempfile::tempdir().unwrap();
+            let path = temp.path().join("body.json");
+            std::fs::write(&path, serde_json::to_vec(&body).unwrap()).unwrap();
+            for _ in 0..2 {
+                execute(&mock, RUN, false, false, path.to_str(), Some("same-key")).unwrap();
+            }
+            let requests = mock.0.lock().unwrap();
+            assert_eq!(requests.len(), 2);
+            for request in requests.iter() {
+                assert_eq!(
+                    serde_json::from_slice::<Value>(request.body()).unwrap(),
+                    body
+                );
+                assert_eq!(request.headers["idempotency-key"], "same-key");
+            }
+            assert_eq!(requests[0].body(), requests[1].body());
+        }
+    }
+
+    #[test]
+    fn invalid_fork_body_is_rejected_before_transport() {
+        for body in [
+            json!({"seed":"new","unexpected":true}),
+            json!({"seed":"invalid"}),
+            json!({"seed":"same","warm_start":"true"}),
+            json!({"seed":"new","overrides":{"unexpected":true}}),
+            json!({"seed":"new","overrides":{"seed":"same"}}),
+            json!({"seed":"same","overrides":{"effort":"invalid"}}),
+            json!({"seed":"new","overrides":{"budget":{"evaluations":20}}}),
+            json!({"seed":"new","overrides":{"budget":{"evaluations":"020"}}}),
+        ] {
+            let mock = Mock::default();
+            let temp = tempfile::tempdir().unwrap();
+            let path = temp.path().join("invalid.json");
+            std::fs::write(&path, serde_json::to_vec(&body).unwrap()).unwrap();
+            let result = execute(
+                &mock,
+                RUN,
+                false,
+                false,
+                path.to_str(),
+                Some("invalid-fork"),
+            );
+            assert!(result.is_err(), "invalid body reached transport: {body}");
+            assert_eq!(
+                jope_runtime::error::kind_of(&result.unwrap_err()).exit_code(),
+                2,
+                "{body}"
+            );
+            assert!(mock.0.lock().unwrap().is_empty(), "{body}");
+        }
     }
 }

@@ -2,10 +2,8 @@
 % Section 3 -- The Road to Zero: Five Building Blocks
 % File: sections/03_road.tex        Label: sec:road
 % Reader's question: What has AI already built for each pillar?
-% One-sentence answer: Deep learning gave variation a voice, program
-%   evolution and reinforcement learning built judgment loops, games made
-%   judgment cheap, and the race for self-improvement scales search. None
-%   of them learns taste for invention itself.
+% One-sentence answer: Earlier work supplies the components; the question is
+%   whether experience across discovery tasks improves a first complete proposal.
 % Core points advanced: 3 (search = 1), 4 (imitation vs. learning),
 %   1 (innovation is a game).
 % Exhibits: Table 3 (tab:roads), Box 2 (Self-play in 90 seconds).
@@ -117,7 +115,7 @@ exploiting agents reached Grandmaster level in StarCraft~II
 The key concept is expert iteration \citep{anthony2017expert}: search is the
 teacher, the network is the student, and in the end the student alone plays
 strongly. AlphaGo Zero's raw network, with no search, nearly matched the
-version that had beaten a professional (\cref{sec:intro}); Box~2 shows how.
+version that had beaten a professional (\cref{sec:intro}); \cref{box:selfplay} shows how.
 Language models also learn from feedback: human preferences
 \citep{christiano2017preferences,ouyang2022instructgpt} and rule-based
 checks of answers, as in DeepSeek-R1 \citep{guo2025deepseekr1}.
@@ -129,7 +127,7 @@ network can absorb search.\\
 algorithm quality, then distinguish improvement on training games from
 improvement on unseen families.
 
-\begin{explainer}{Box 2 --- Self-play in 90 seconds}
+\begin{explainer}[label=box:selfplay]{Self-play in 90 seconds}
 A player starts with only the rules and plays itself. A short search
 before each move finds better moves than instinct would, and the referee
 scores each finished game. The network learns to propose the moves the
@@ -209,8 +207,8 @@ ranks agents' hypotheses in an Elo tournament
 2026, runs about 100 experiments overnight and keeps what improves
 \citep{karpathy2026autoresearch}. In May 2026, Recursive raised
 \$650 million to build AI that improves itself
-\citep{recursive2026techcrunch}. Their referees are our boards
-(\cref{sec:anatomy}).
+\citep{recursive2026techcrunch}. In the innovation game, an encoded research task would be the board and
+its evaluator the referee (\cref{sec:game}).
 
 Self-improvement comes in three strengths: better external algorithms,
 better components, and a better ability to improve, with verified
@@ -227,21 +225,21 @@ frozen proposer under the same deployment budget.
 % ---------------------------------------------------------------------
 \subsection{Where the roads meet}\label{sub:road-meet}
 
-\begin{table}[t]
+\begin{table*}[t]
 \caption{\textbf{Related approaches retain experience in different forms.}
 This qualitative comparison separates output, deployment budget and retained
 state. Exact budgets depend on each study's protocol. The last row states
 \EZ{}'s design; its proposal quality is still to be tested.}
 \label{tab:roads}
 \centering
-\footnotesize
-\setlength{\tabcolsep}{2.8pt}
+\small
+\setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.1}
-\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.21\linewidth}
-                >{\raggedright\arraybackslash}p{0.165\linewidth}
-                >{\raggedright\arraybackslash}p{0.165\linewidth}
-                >{\raggedright\arraybackslash}p{0.165\linewidth}
-                >{\raggedright\arraybackslash}p{0.195\linewidth}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.245\linewidth}
+                >{\raggedright\arraybackslash}p{0.17\linewidth}
+                >{\raggedright\arraybackslash}p{0.155\linewidth}
+                >{\raggedright\arraybackslash}p{0.19\linewidth}
+                >{\raggedright\arraybackslash}p{0.16\linewidth}@{}}
 \toprule
 System & Output & Deployment budget & Retained experience & Feedback source \\
 \midrule
@@ -274,7 +272,7 @@ Absolute Zero; STP
   & \textbf{Incumbent comparisons} \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \Cref{tab:roads} distinguishes what a system produces from how it retains
 experience. TabPFN, MotherNet and KumoRFM provide neighboring examples of

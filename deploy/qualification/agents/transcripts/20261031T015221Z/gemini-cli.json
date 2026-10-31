@@ -1,0 +1,8 @@
+{
+  "client": "Gemini CLI",
+  "version": null,
+  "result": "UNAVAILABLE",
+  "attempted": false,
+  "evidence": "Executable not found on PATH, standard local/system bin directories, or installed Node v26.1.0 bin/module tree; no install/login attempted.",
+  "a5": "NOT_QUALIFIED"
+}

@@ -1,7 +1,6 @@
 //! DSL-only inputs to the frozen 412-coordinate ranker recipe (§5.8).
 //!
-//! RNK-03 implements structural features only. Missing families remain explicit;
-//! a partial extraction cannot be converted into a complete ranker input.
+//! RNK-03 and RNK-04 implement the structural, parameter and position families.
 
 pub mod parameters;
 pub mod parse;
@@ -62,6 +61,31 @@ impl Featurizer {
         let program = parse::parse(dsl)?;
         Ok(self.project(&structural::extract(&program)))
     }
+
+    /// Extract all three frozen feature families and project them in the
+    /// authenticated bundle order before the reference FP32 rounding step.
+    pub fn featurize(&self, dsl: &str) -> Result<[f32; FEATURE_COUNT]> {
+        let program = parse::parse(dsl)?;
+        self.project(&extract_all(&program)?).require_complete()
+    }
+}
+
+fn extract_all(program: &parse::ParsedProgram<'_>) -> Result<BTreeMap<String, f64>> {
+    let mut features = structural::extract(program);
+    for family in [parameters::extract(program), positions::extract(program)] {
+        for (name, value) in family {
+            ensure!(
+                features.insert(name.clone(), value).is_none(),
+                "duplicate feature across frozen families: {name}"
+            );
+        }
+    }
+    ensure!(
+        features.len() == FEATURE_COUNT,
+        "expected {FEATURE_COUNT} composed features, got {}",
+        features.len()
+    );
+    Ok(features)
 }
 
 #[derive(Debug)]
@@ -243,6 +267,44 @@ mod tests {
         assert_eq!(f64::from(complete[index]), 1.0);
         values.insert(name.into(), f64::MAX);
         assert!(f.project(&values).require_complete().is_err());
+    }
+
+    #[test]
+    fn full_composition_covers_all_1309_reference_records_in_frozen_order() {
+        let rows = test_support::corpus();
+        let featurizer = Featurizer::default();
+        let mut reversed_names = FEATURE_NAMES.map(str::to_owned).to_vec();
+        reversed_names.reverse();
+        let reversed = Featurizer::from_names(reversed_names).unwrap();
+
+        for (record, row) in rows.iter().enumerate() {
+            let actual = featurizer.featurize(&row.dsl).unwrap_or_else(|error| {
+                panic!("record {record}, {}: {error:#}", row.program_sha256)
+            });
+            let reversed_actual = reversed.featurize(&row.dsl).unwrap();
+            assert!(actual.iter().all(|value| value.is_finite()));
+            assert_eq!(
+                actual.iter().rev().copied().collect::<Vec<_>>(),
+                reversed_actual.to_vec(),
+                "bundle order for record {record}, {}",
+                row.program_sha256
+            );
+
+            // The component tests bind all 412 named coordinates against the
+            // Python oracle for every record; this checks their full union is
+            // present at the corresponding frozen feat412 index.
+            let program = parse::parse(&row.dsl).unwrap();
+            let all = extract_all(&program).unwrap();
+            assert_eq!(all.len(), FEATURE_COUNT);
+            for (index, name) in FEATURE_NAMES.iter().enumerate() {
+                assert_eq!(
+                    actual[index], all[*name] as f32,
+                    "record {record}, {}: {name}",
+                    row.program_sha256
+                );
+            }
+        }
+        assert_eq!(rows.len(), 1309);
     }
 }
 

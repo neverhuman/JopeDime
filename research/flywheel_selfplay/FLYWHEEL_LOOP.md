@@ -198,6 +198,14 @@ archive manifests/receipts retain the recovery route. Maintenance adds time beyo
 the existing measured training/GP window. Preparation and offline proofs do not
 update the running process: the watcher owns deployment at a safe restart.
 
+Strict adapter admission is a separate opt-in policy. An invocation that omits
+both `--strict-adapter-admission` and `--adapter-min-gain` keeps the existing
+behavior, including acceptance of exact development-utility ties. To opt in,
+pass both flags; candidates are accepted only when their utility is strictly
+greater than the incumbent utility plus the supplied finite, nonnegative margin.
+There is deliberately no default margin: H49-SEL calibration is still pending.
+This flag does not authorize restarting or reconfiguring the live xbabe1 loop.
+
 The maintenance companion `rotate_flywheel_logs.py` additionally bounds the local
 summary and direct `custody/*.log` files to `--keep-rows` (default20). Run it from
 merged source with `--run`, `--custody`, `--archive-root`, `--round-lock` and the

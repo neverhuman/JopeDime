@@ -46,7 +46,7 @@ that writer input.
                    & Go                              & The innovation game \\
     \midrule
     Board          & Stones on a $19\times19$ grid   & The encoded problem \\
-    Move           & Place one stone, or pass        & Write one complete program, or one edit \\
+    Move           & Place one stone, or pass        & Write one complete program \\
     Legal move     & Empty point; no suicide or forbidden repetition & Parses, type-checks, runs within limits \\
     Illegal move   & Not allowed                     & Stillborn: an automatic loss \\
     Referee        & The rules of Go                 & The verifier, on hidden folds \\
@@ -79,15 +79,15 @@ judge. Under a single-attempt budget, the chance $\winprob$ of a win matters
 directly (\cref{eq:taste}). Whether training raises that chance on new
 families is the test in \cref{sec:results}.
 
-\begin{figure}[t]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=\linewidth]{figures/fig3_game_loop.pdf}
+  \includegraphics[width=\textwidth]{figures/fig3_game_loop.pdf}
   \caption{\textbf{Training plays the whole game; game day plays one move.}
   Schematic. Top row (blue): game day. Dashed box: training only. Outcomes
   are recorded; valid scored programs can enter the learning lists, while
   failed attempts still count against the budget.}
   \label{fig:game-loop}
-\end{figure}
+\end{figure*}
 
 \Cref{fig:game-loop} draws the loop. Game day plays only its top row, so
 nothing can send a move back for another try; that is \searchone.

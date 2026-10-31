@@ -7,6 +7,10 @@ use candle_core_0_11_0::{safetensors::load_buffer, DType, Device, Tensor};
 use safetensors::SafeTensors;
 use std::{collections::BTreeMap, env, error::Error, fmt, fs, path::Path};
 
+#[rustfmt::skip]
+#[path = "../../src/ranker/stage1b.rs"]
+mod stage1b;
+
 const GOLDEN_DIR_ENV: &str = "JOPE_GOLDEN_DIR";
 const STRICT_ENV: &str = "JOPE_PARITY_STRICT";
 
@@ -205,11 +209,23 @@ fn validate_schema(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use jope_service::ranker::landmarks::{
+        compare_sampled_to_full, summarize_latency, LandmarkOutput, BUILDING_BLOCK_WIDTH,
+        INTERACTION_WIDTH, RANKER_COLUMN_COUNT, RANKER_COLUMN_WIDTH, RAW_COLUMN_WIDTH,
+        REPORT_WIDTH, TABLE_WIDTH, VECTOR_WIDTH,
+    };
     use safetensors::tensor::{serialize, Dtype, TensorView};
-    use std::process::Command;
+    use std::{process::Command, time::Duration};
     use tempfile::tempdir;
 
     const TEST_PROBE_ENV: &str = "JOPE_GOLDEN_TEST_PROBE";
+
+    fn fixture_array<const N: usize>(fixture: &GoldenFixture, name: &str) -> [f32; N] {
+        fixture.values_f32[name]
+            .clone()
+            .try_into()
+            .unwrap_or_else(|_| panic!("fixture tensor {name} must contain {N} values"))
+    }
 
     fn fixture_bytes() -> Vec<u8> {
         let values = [1.25_f32, -2.0, 3.5, 4.0]
@@ -229,6 +245,130 @@ mod tests {
                 (
                     "extra",
                     TensorView::new(Dtype::F32, vec![1], &extra_values).unwrap(),
+                ),
+            ],
+            None,
+        )
+        .unwrap()
+    }
+
+    fn landmark_fixture_bytes() -> Vec<u8> {
+        let input_x: Vec<f32> = (0..8).map(|value| value as f32).collect();
+        let input_y = [-0.5_f32, 0.5, -1.0, 1.0];
+        let input_row_ids = [10_i64, 11, 20, 21];
+        let report: Vec<f32> = (0..REPORT_WIDTH).map(|value| value as f32).collect();
+        let table: Vec<f32> = (0..TABLE_WIDTH)
+            .map(|value| 1_000.0 + value as f32)
+            .collect();
+        let interactions: Vec<f32> = (0..INTERACTION_WIDTH)
+            .map(|value| 2_000.0 + value as f32)
+            .collect();
+        let building_blocks: Vec<f32> = (0..BUILDING_BLOCK_WIDTH)
+            .map(|value| 3_000.0 + value as f32)
+            .collect();
+        let col_full: Vec<f32> = (0..2 * RAW_COLUMN_WIDTH)
+            .map(|value| 4_000.0 + value as f32)
+            .collect();
+        let expected_vector: Vec<f32> = report
+            .iter()
+            .chain(&table)
+            .chain(&interactions)
+            .chain(&building_blocks)
+            .copied()
+            .collect();
+        let mut expected_columns = vec![0.0; RANKER_COLUMN_COUNT * RANKER_COLUMN_WIDTH];
+        for row in 0..2 {
+            for column in 0..RANKER_COLUMN_WIDTH {
+                expected_columns[row * RANKER_COLUMN_WIDTH + column] =
+                    col_full[row * RAW_COLUMN_WIDTH + column];
+            }
+        }
+        let sampled_rows = [2.0_f32];
+        let full_rows = [4.0_f32];
+        let latency_ms = [1.0_f32, 3.0, 2.0];
+
+        let as_bytes = |values: &[f32]| {
+            values
+                .iter()
+                .flat_map(|value| value.to_le_bytes())
+                .collect::<Vec<_>>()
+        };
+        let input_x = as_bytes(&input_x);
+        let input_y = as_bytes(&input_y);
+        let input_row_ids = input_row_ids
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        let report = as_bytes(&report);
+        let table = as_bytes(&table);
+        let interactions = as_bytes(&interactions);
+        let building_blocks = as_bytes(&building_blocks);
+        let col_full = as_bytes(&col_full);
+        let v256 = as_bytes(&expected_vector);
+        let col = as_bytes(&expected_columns);
+        let sampled_rows = as_bytes(&sampled_rows);
+        let full_rows = as_bytes(&full_rows);
+        let latency_ms = as_bytes(&latency_ms);
+
+        serialize(
+            [
+                (
+                    "input.X",
+                    TensorView::new(Dtype::F32, vec![4, 2], &input_x).unwrap(),
+                ),
+                (
+                    "input.y",
+                    TensorView::new(Dtype::F32, vec![4], &input_y).unwrap(),
+                ),
+                (
+                    "input.row_ids",
+                    TensorView::new(Dtype::I64, vec![4], &input_row_ids).unwrap(),
+                ),
+                (
+                    "report",
+                    TensorView::new(Dtype::F32, vec![REPORT_WIDTH], &report).unwrap(),
+                ),
+                (
+                    "table",
+                    TensorView::new(Dtype::F32, vec![TABLE_WIDTH], &table).unwrap(),
+                ),
+                (
+                    "interactions",
+                    TensorView::new(Dtype::F32, vec![INTERACTION_WIDTH], &interactions).unwrap(),
+                ),
+                (
+                    "building_blocks",
+                    TensorView::new(Dtype::F32, vec![BUILDING_BLOCK_WIDTH], &building_blocks)
+                        .unwrap(),
+                ),
+                (
+                    "col_full",
+                    TensorView::new(Dtype::F32, vec![2, RAW_COLUMN_WIDTH], &col_full).unwrap(),
+                ),
+                (
+                    "v256",
+                    TensorView::new(Dtype::F32, vec![1, VECTOR_WIDTH], &v256).unwrap(),
+                ),
+                (
+                    "col",
+                    TensorView::new(
+                        Dtype::F32,
+                        vec![1, RANKER_COLUMN_COUNT, RANKER_COLUMN_WIDTH],
+                        &col,
+                    )
+                    .unwrap(),
+                ),
+                (
+                    "sampled_rows",
+                    TensorView::new(Dtype::F32, vec![1], &sampled_rows).unwrap(),
+                ),
+                (
+                    "full_rows",
+                    TensorView::new(Dtype::F32, vec![1], &full_rows).unwrap(),
+                ),
+                (
+                    "latency_ms",
+                    TensorView::new(Dtype::F32, vec![3], &latency_ms).unwrap(),
                 ),
             ],
             None,
@@ -256,6 +396,100 @@ mod tests {
         assert_eq!(fixture.tensors["input"].dims(), &[2, 2]);
         assert_eq!(fixture.values_f32["input"], [1.25, -2.0, 3.5, 4.0]);
         assert_eq!(fixture.values_f32["extra"], [0.5]);
+    }
+
+    #[test]
+    #[ignore = "pre-stage scaffold; unignore only after RES-07 publishes real full-high fixtures and recipe parity is wired"]
+    fn synthetic_landmark_qualification_harness_uses_res09_loader() {
+        let directory = tempdir().unwrap();
+        fs::create_dir_all(directory.path().join("rnk05")).unwrap();
+        fs::write(
+            directory
+                .path()
+                .join("rnk05/synthetic-full-high.safetensors"),
+            landmark_fixture_bytes(),
+        )
+        .unwrap();
+
+        let schema = [
+            TensorSpec::new("input.X", vec![4, 2]),
+            TensorSpec::new("input.y", vec![4]),
+            TensorSpec::new("input.row_ids", vec![4]),
+            TensorSpec::new("report", vec![REPORT_WIDTH]),
+            TensorSpec::new("table", vec![TABLE_WIDTH]),
+            TensorSpec::new("interactions", vec![INTERACTION_WIDTH]),
+            TensorSpec::new("building_blocks", vec![BUILDING_BLOCK_WIDTH]),
+            TensorSpec::new("col_full", vec![2, RAW_COLUMN_WIDTH]),
+            TensorSpec::new("v256", vec![1, VECTOR_WIDTH]),
+            TensorSpec::new("col", vec![1, RANKER_COLUMN_COUNT, RANKER_COLUMN_WIDTH]),
+            TensorSpec::new("sampled_rows", vec![1]),
+            TensorSpec::new("full_rows", vec![1]),
+            TensorSpec::new("latency_ms", vec![3]),
+        ];
+        let fixture = load_from_dir(directory.path(), "rnk05/synthetic-full-high", &schema, true)
+            .unwrap()
+            .unwrap();
+        let values = &fixture.values_f32;
+        assert_eq!(fixture.tensors["input.X"].dims(), &[4, 2]);
+        assert_eq!(fixture.tensors["input.y"].dims(), &[4]);
+        assert_eq!(fixture.tensors["input.row_ids"].dims(), &[4]);
+        assert_eq!(fixture.tensors["input.row_ids"].dtype(), DType::I64);
+        assert_eq!(values["input.row_ids"], [10.0, 11.0, 20.0, 21.0]);
+        let report = fixture_array::<REPORT_WIDTH>(&fixture, "report");
+        let table = fixture_array::<TABLE_WIDTH>(&fixture, "table");
+        let interactions = fixture_array::<INTERACTION_WIDTH>(&fixture, "interactions");
+        let building_blocks = fixture_array::<BUILDING_BLOCK_WIDTH>(&fixture, "building_blocks");
+        let raw_column_values = &values["col_full"];
+        let raw_columns: Vec<[f32; RAW_COLUMN_WIDTH]> = raw_column_values
+            .chunks_exact(RAW_COLUMN_WIDTH)
+            .map(|row| row.try_into().unwrap())
+            .collect();
+
+        let full = LandmarkOutput::from_descriptor_parts(
+            &report,
+            &table,
+            &interactions,
+            &building_blocks,
+            &raw_columns,
+        );
+        assert_eq!(
+            full.vector(),
+            &fixture_array::<VECTOR_WIDTH>(&fixture, "v256")
+        );
+        assert_eq!(
+            full.columns().iter().flatten().copied().collect::<Vec<_>>(),
+            values["col"]
+        );
+
+        let mut sampled_report = report;
+        sampled_report[0] += 1.0;
+        let sampled = LandmarkOutput::from_descriptor_parts(
+            &sampled_report,
+            &table,
+            &interactions,
+            &building_blocks,
+            &raw_columns,
+        );
+        let sampled_rows = values["sampled_rows"][0] as usize;
+        let full_rows = values["full_rows"][0] as usize;
+        let agreement = compare_sampled_to_full(&sampled, &full, sampled_rows, full_rows).unwrap();
+        let compared = VECTOR_WIDTH + RANKER_COLUMN_COUNT * RANKER_COLUMN_WIDTH;
+        assert_eq!(agreement.sampled_rows, 2);
+        assert_eq!(agreement.full_rows, 4);
+        assert_eq!(agreement.values_compared, compared);
+        assert_eq!(agreement.exact_matches, compared - 1);
+        assert_eq!(agreement.max_abs_error, 1.0);
+        assert!((agreement.mean_abs_error - 1.0 / compared as f64).abs() < f64::EPSILON);
+
+        let latency = values["latency_ms"]
+            .iter()
+            .map(|milliseconds| Duration::from_secs_f64(f64::from(*milliseconds) / 1_000.0))
+            .collect::<Vec<_>>();
+        let latency = summarize_latency(&latency).unwrap();
+        assert_eq!(latency.samples, 3);
+        assert_eq!(latency.min_ms, 1.0);
+        assert!((latency.median_ms - 2.0).abs() < 1e-9);
+        assert_eq!(latency.max_ms, 3.0);
     }
 
     #[test]
@@ -356,5 +590,38 @@ mod tests {
         // RES-07 must replace this placeholder with its README inventory before
         // removing the ignore, so a missing fixture cannot become a false pass.
         assert!(load_named("<RES-07 fixture name>", &[]).unwrap().is_some());
+    }
+
+    fn rnk07_output_schema() -> [TensorSpec; 2] {
+        [
+            TensorSpec::new("tokens", vec![1, 10, 32]),
+            TensorSpec::new("mask", vec![1, 10]),
+        ]
+    }
+
+    #[test]
+    fn rnk07_loader_seam_rejects_invalid_fixture_paths() {
+        let error = load_named("../outside", &rnk07_output_schema()).unwrap_err();
+        assert!(error.to_string().contains("invalid golden fixture name"));
+    }
+
+    #[test]
+    #[ignore = "RES-07 fixtures not qualified; enable only after qualified tensors are published"]
+    fn rnk07_fixture_schema_smoke_after_res07_qualification() {
+        let context = env::var("JOPE_RNK07_GOLDEN_CONTEXT")
+            .expect("select a qualified RES-07 training context");
+        let fixture_name = format!("contexts/{context}");
+        let fixture = load_named(&fixture_name, &rnk07_output_schema())
+            .expect("qualified RES-07 fixture must satisfy the documented output schema")
+            .expect("fixture-dependent check remains ignored until RES-07 qualification");
+
+        assert_eq!(fixture.tensors["tokens"].dims(), [1, 10, 32]);
+        assert_eq!(fixture.tensors["mask"].dims(), [1, 10]);
+    }
+
+    #[test]
+    fn rnk07_stage1b_module_is_available_for_synthetic_tests() {
+        assert_eq!(stage1b::TOKEN_COUNT, 10);
+        assert_eq!(stage1b::TOKEN_WIDTH, 32);
     }
 }
