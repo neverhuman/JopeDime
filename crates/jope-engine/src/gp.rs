@@ -1559,11 +1559,12 @@ fn search_lease(output: &Path) -> Result<fs::File> {
 /// Whether the evaluator has exited, without reaping it: an unreaped leader
 /// keeps its process-group id reserved while the group is drained.
 fn evaluator_exited(pid: i32) -> Result<bool> {
-    // SAFETY: siginfo_t holds only integer and raw-pointer fields, for which all-zero is valid;
-    // zeroing also leaves si_pid 0 when WNOHANG finds no exited child.
+    // SAFETY: on Linux every siginfo_t union member is composed of integer and
+    // raw-pointer fields, so all-zero is valid; it also supplies si_pid=0 when
+    // WNOHANG finds no exited child and waitid leaves the rest untouched.
     let mut info: libc::siginfo_t = unsafe { std::mem::zeroed() };
-    // SAFETY: `info` is a live, writable siginfo_t for waitid to fill; WNOWAIT leaves the
-    // child unreaped, so its pid stays reserved.
+    // SAFETY: `info` is a live writable siginfo_t for waitid; WNOWAIT leaves
+    // the child unreaped so its pid stays reserved.
     let status = unsafe {
         libc::waitid(
             libc::P_PID,
@@ -1577,8 +1578,8 @@ fn evaluator_exited(pid: i32) -> Result<bool> {
         "evaluator wait failed: {}",
         std::io::Error::last_os_error()
     );
-    // SAFETY: `info` is initialized (zeroed, then written by waitid), and si_pid reads the
-    // integer pid field of the SIGCHLD layout that waitid fills.
+    // SAFETY: `info` is initialized by the valid zeroed value above and waitid;
+    // si_pid reads the integer pid field for the SIGCHLD layout.
     Ok(unsafe { info.si_pid() } != 0)
 }
 

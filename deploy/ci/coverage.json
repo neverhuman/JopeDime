@@ -160,7 +160,7 @@
     }
   },
   "items": {
-    "python:research/flywheel_selfplay/h101_w5_provenance_gaps/test_check.py": {
+    "python:research/flywheel_selfplay/h102_w5_provenance_gaps/test_check.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -168,7 +168,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H101 offline W5 sealed-scope/lineage/source refusal controls and W9 fold/seed receipt-plan consistency; no execution or source admission."
+      "scope": "H102 offline W5 sealed-scope/lineage/source refusal controls and W9 fold/seed receipt-plan consistency; no execution or source admission."
     },
     "job:.github/workflows/export-parity.yml/export-parity": {
       "discovery": {
@@ -6202,7 +6202,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -13489,6 +13489,31 @@
       ],
       "lanes": [],
       "scope": "H99 ESH harm follow-up preregistration fixtures: fold assignment partitions whole train families exactly once, sealed meta-test inputs never opened."
+    },
+    "feature:jope-appliance/research": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "engine",
+          "jope-service/research"
+        ]
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "QLT-03-F01 opt-in internal research CLI and record-controller types. Targeted local feature/default parser, binary dispatch, package-authentication and unavailable-producer controls; absent from default/release feature selection. No committed discovery producer or corpus/Q1 qualification while F02 is deferred. No hosted feature lane is selected."
+    },
+    "feature:jope-service/research": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": []
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "QLT-03-F01 opt-in internal research CLI and record-controller types. Targeted local feature/default parser, binary dispatch, package-authentication and unavailable-producer controls; absent from default/release feature selection. No committed discovery producer or corpus/Q1 qualification while F02 is deferred. No hosted feature lane is selected."
     }
   },
   "lanes": {

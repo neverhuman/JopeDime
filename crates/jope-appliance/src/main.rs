@@ -22,6 +22,9 @@ mod landmarks;
 #[cfg(feature = "mcp")]
 pub mod mcp;
 mod model;
+#[cfg(feature = "research")]
+#[path = "cmd/research.rs"]
+mod research;
 #[cfg(feature = "client")]
 #[path = "terminal/session.rs"]
 mod session;
@@ -970,6 +973,8 @@ fn main() -> ExitCode {
     }
     let cli = Cli::parse();
     match cli.command {
+        #[cfg(feature = "research")]
+        Command::Research(args) => report(research::run(args)),
         #[cfg(feature = "engine")]
         Command::Worker { protocol } => report(worker::run(protocol)),
         Command::Version(flag) => {

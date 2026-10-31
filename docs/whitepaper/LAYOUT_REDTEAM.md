@@ -129,7 +129,8 @@ The owner widened the scope to a full upgrade, carried out in small sequential P
 | 15 | Whole-paper layout audit on main `b2f271ce`. Fixed: the unreferenced Figure 7 (O18) and the widow/orphan lines (O19). Checked, nothing to fix: 0 overfull or underfull boxes; every float is on its first reference's page or the next, except Table 1 (2 pages after an introduction forward reference) and Figure 11 (§5's forward references to the Results figure, by design); all tables use consistent left-aligned `p`/`X` columns. `refs.bib`: no two keys share a DOI, arXiv id, URL or normalized title. The only near-pair, the AlphaZero preprint (`silver2017chess`) and Science paper (`silver2018general`), is co-cited once on purpose: the preprint's Table S3 is the recorded source of "44 million games" and the paper of "about nine hours", so both are kept. | merged (#971) |
 | 16 | Camera-ready prose pass on §8–§9: a redundant sentence and the Limitations closing paragraph (which restated the Conclusion) cut, §8.2 tense and wording fixed, and source comments trace uncited claims to repository paths. No new numbers; TBDs unchanged. "Needs Jepson/team" gains the overnight H80–H97 closeouts as candidates only. | merged (#976) |
 | 17 | Introduction terminology: the engineered-intelligence definition now reads "aim, judge and memory", matching the Conclusion and the §2 pillar name ("objective" before). No other change. | merged (#980) |
-| 18 | Owner decisions t0352 applied: black links (O7); regressor named "Foundation", version `foundation_enc.v1.tabpfn`, "proprietary, available on request" (two TBDs filled); comparators pinned to receipted model ids (`claude-opus-5-5`, `gpt-6-astra-wm`), with Gemini and KumoRFM dropped (two Table 6 TBDs removed); host name and host paths removed from the promotions provenance (O20); template, appendix order and bibliography style kept (O6, O8, O10). TBDs 32 → 28; `RESULTS_NEEDS.md` renumbered. | this PR |
+| 18 | Owner decisions t0352 applied: black links (O7); regressor named "Foundation", version `foundation_enc.v1.tabpfn`, "proprietary, available on request" (two TBDs filled); comparators pinned to receipted model ids (`claude-opus-5-5`, `gpt-6-astra-wm`), with Gemini and KumoRFM dropped (two Table 6 TBDs removed); host name and host paths removed from the promotions provenance (O20); template, appendix order and bibliography style kept (O6, O8, O10). TBDs 32 → 28; `RESULTS_NEEDS.md` renumbered. | merged (#982) |
+| 19 | Flow and format pass on §2–§6, from wp_opus_layout_t0355. §2.3 no longer defines *taste* a second time (§2 defines it). "license" now matches the paper's US spelling (§6.2, Appendix C). §1 ("The Zero move") hyphenates "single-candidate budget". This report's closing paragraph is brought up to the post-t0352 count (28). §4 was read with nothing to change. Spelling, hyphenation, dash and repeated-word scans of §2–§6 are otherwise clean. | this PR |
 
 ## H56 paper-vs-code recheck (pass 8)
 
@@ -209,7 +210,7 @@ comparisons.
 
 ### Overnight research closeouts (H80–H97): candidates only
 
-These studies landed on `main` overnight on 2026-10-31. Each status below is quoted from the study's own README. **None supplies the §7.2 matched first-proposal comparison or any other `\TBD` in [`RESULTS_NEEDS.md`](RESULTS_NEEDS.md).** All are development-data studies of the adapter loop or its context models. If used at all, they belong with the development diagnostics (§6.8, §7.7), bound to their own populations and protocols.
+Snapshot: `main` at [a470804b](https://github.com/neverhuman/JopeDime/tree/a470804b5bc0e0d5f46f42d300ee4b70519f463f/research/flywheel_selfplay) (2026-10-31). Statuses summarize the study READMEs and protocol files present in that source tree. **None supplies the §7.2 matched first-proposal comparison or any other `\TBD` in [`RESULTS_NEEDS.md`](RESULTS_NEEDS.md).** All are development-data studies of the adapter loop or its context models. If used at all, they belong with the development diagnostics (§6.8, §7.7), bound to their own populations and protocols.
 
 | Study | What it tested | Status on `main` | Nearest paper slot | Why it cannot fill a marker |
 |---|---|---|---|---|
@@ -223,9 +224,9 @@ These studies landed on `main` overnight on 2026-10-31. Each status below is quo
 | [H92](../../research/flywheel_selfplay/h92_w6_downside_controlled/README.md) | W6 hedged context learner, cached held-family screen | ADVANCE_CACHED_SCREEN on adaptive development data (3 of 4 primaries clear the common gate) | §7.5 program-only control | Adaptive and cached; the prospective follow-up (H94) did not advance |
 | [H94](../../research/flywheel_selfplay/h94_w6_prospective_hedge/README.md) | The H92 learner on never-evaluated programs, against the program-only prior | NO_ADVANCE: −0.0105 U4 and −51.9 Elo against the program-only prior | §7.5 program-only control | Negative, on development families, and for the W1/W6 context model, not the reference map |
 | [H95](../../research/flywheel_selfplay/h95_w8_hwm_resplit_confirm/README.md) | Resplit confirmation of H94's 45 apparent high-water marks | 30 confirmed (27 material); none admitted or promoted | §6.8 / §7.7 | Training-program incumbents, not proposals by a frozen writer |
-| H82, H90, H93, H97 | SAM steps, candidate diversity, lookahead noise, regularization EMA | Preregistrations and runners only; no outcome on `main` | — | No outcome |
+| [H82](../../research/flywheel_selfplay/h82_sam_steps/PREREG.md), [H90](../../research/flywheel_selfplay/h90_candidate_diversity/PREREG.md), [H93](../../research/flywheel_selfplay/h93_lookahead_noise/PREREG.md), [H97](../../research/flywheel_selfplay/h97_reg_ema/PREREG.md) | SAM steps, candidate diversity, lookahead noise, regularization EMA | Preregistrations and runners only; no outcome on `main` | — | No outcome |
 
-H96, H98 and H99 were not on `main` at this pass.
+H96 was absent at this snapshot. H98 and H99 already had source on `main` and are outside the H80–H97 range covered by this table.
 
 
 ### Outside Results (provenance and receipts)
@@ -319,9 +320,11 @@ checkpoint.
 | #824 | Schematic writer equation distinguished from native smoothing and normalization; fixed aggregate coefficients source-checked | Checkpoint objective identity/configuration remains required |
 | #839 | Admission cuts, nested averaging and ratio direction defined | The checkpoint admission record and independent single-program test remain separate requirements |
 
-The paper retains 32 compiled TBD markers: the full-upgrade snapshot had 31,
-and #791 added an explicit retained-run binding requirement. Existing independent
-results, comparator identities, encoder identity/licence, acceptance, parity,
+The paper retained 32 compiled TBD markers until the owner decisions of
+t0352: the full-upgrade snapshot had 31, and #791 added an explicit
+retained-run binding requirement. Pass 18 (#982) filled the regressor
+identity and removed the two comparator rows without receipts, leaving 28
+(see `RESULTS_NEEDS.md`). Existing independent results, acceptance, parity,
 sandbox and input-closure receipts remain team inputs. The owner decisions above
 are preserved; these writing passes do not change disclosure rules or qualify a
 model for deployment.

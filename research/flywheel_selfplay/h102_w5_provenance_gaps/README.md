@@ -1,10 +1,10 @@
-# H101 — W5 provenance gaps and W9 CPU preparation
+# H102 — W5 provenance gaps and W9 CPU preparation
 
 **W5 remains HELD.** The owner accepted [H98's refusal](../h98_w5_provenance/README.md)
 and requested three specific proofs. Fresh real S3 receipts and a complete v3b
 training-pool schema inspection still cannot establish any of them. The directed
 fallback is implemented as a W9 receipt plan; no learning experiment was launched.
-H99 was already assigned and H100 reserved for W6, so this work uses H101.
+H102 is the overseer-assigned identity for PR #984; H101 belongs to ARGON W6.
 
 | Required proof | Result | Exact missing artifact |
 | --- | --- | --- |
@@ -53,6 +53,11 @@ budget. H91's conditional expansion arithmetic still needs admission. OPUS retai
 runner ownership. Elo, U4 and val_reg_inner are null; no HWM candidate exists.
 
 ## Evidence and replay
+
+[Identity alias](IDENTITY_ALIAS.md): H102 is the current publication ID. The
+immutable S3 archive, its paths, source bytes and serialized `jope.h101.*` schemas
+retain their historical identity; no object or outcome was rewritten. The replay
+command below intentionally uses the original path inside that archive.
 
 [evidence.json](evidence.json) binds the source commit, input SHA/version receipts,
 checker and test bytes, complete schema census, host results and resource scope.
