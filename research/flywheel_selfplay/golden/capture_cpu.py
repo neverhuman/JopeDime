@@ -515,14 +515,86 @@ def capture(plan, output):
     return report
 
 
+def regenerate(plan, captures, capture_pin, index_pin, output):
+    """Repackage saved TRAIN captures on CPU; never rerun the native evaluator."""
+    generate.require(
+        os.environ.get("CUDA_VISIBLE_DEVICES") == ""
+        and not torch.cuda.is_initialized(),
+        "CPU regeneration requires hidden CUDA and no initialized CUDA",
+    )
+    generate.require(
+        os.getpriority(os.PRIO_PROCESS, 0) >= 10, "nice10 or lower priority required"
+    )
+    generate.require(
+        len(index_pin) == 64 and all(c in "0123456789abcdef" for c in index_pin),
+        "explicit published fixture index SHA256 required",
+    )
+    packet = generate.read_json(checked(captures, capture_pin))
+    expected = {row["context_sha256"]: row["family_id"] for row in plan["contexts"]}
+    generate.require(
+        len(packet["contexts"]) == len(expected)
+        and {row["context_sha256"]: row["family_id"] for row in packet["contexts"]}
+        == expected
+        and packet["bundle_digest"] == plan["bundle_digest"],
+        "regeneration capture differs from the reviewed plan population or bundle",
+    )
+    torch.set_num_threads(1)
+    generate.CUSTODY = Path(plan["custody"])
+    index = generate._generate_locked(
+        Path(plan["bundle"]), plan["bundle_digest"], captures, capture_pin, output
+    )
+    checked(output / "index.json", index_pin)
+    generate.require(
+        index["total_bytes"] <= generate.MAX_BYTES,
+        "regenerated packet exceeds byte bound",
+    )
+    generate.require(
+        not torch.cuda.is_initialized(), "CPU regeneration initialized CUDA"
+    )
+    return dict(
+        schema="jope.cpu-golden-regeneration/v1",
+        contexts=index["contexts"],
+        file_count=index["file_count"],
+        fixture_bytes=index["total_bytes"],
+        capture_manifest_sha256=capture_pin,
+        fixture_index_sha256=index_pin,
+        native_calls=0,
+        fold_fits=0,
+        cuda_initialized=False,
+        qualification=index["qualification"],
+    )
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--plan", type=Path, required=True)
     parser.add_argument("--expected-plan-sha256", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--regenerate-captures", type=Path)
+    parser.add_argument("--expected-captures-sha256")
+    parser.add_argument("--expected-index-sha256")
     args = parser.parse_args(argv)
+    replay = (
+        args.regenerate_captures,
+        args.expected_captures_sha256,
+        args.expected_index_sha256,
+    )
+    if any(replay) and not all(replay):
+        parser.error(
+            "regenerate-captures and both expected SHA256 pins are required together"
+        )
     plan = generate.read_json(checked(args.plan, args.expected_plan_sha256))
     validate_plan(plan)
+    if args.regenerate_captures is not None:
+        report = regenerate(
+            plan,
+            args.regenerate_captures,
+            args.expected_captures_sha256,
+            args.expected_index_sha256,
+            args.output,
+        )
+        print(json.dumps(report, sort_keys=True))
+        return 0
     signal.signal(
         signal.SIGALRM,
         lambda *_: (_ for _ in ()).throw(
