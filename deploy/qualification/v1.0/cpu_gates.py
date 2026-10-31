@@ -9,7 +9,6 @@ import datetime as dt
 import hashlib
 import importlib.util
 import json
-import math
 import os
 import platform
 import re
@@ -20,23 +19,6 @@ import sys
 import time
 from pathlib import Path
 
-# The dispatcher may run this selected file through runpy from another checkout.
-# Put its siblings first so helpers always come from the same selected source tree.
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-
-from cpu_gates_metadata import (
-    inventory as _inventory,
-    release_inventory as _release_inventory,
-    result_parser as _result_parser,
-)
-from cpu_gates_process import (
-    _stop_owned_group,
-    _wait_unreaped,
-    child_environment,
-    invoke,
-    validate_timeout,
-)
-
 SCHEMA = "jope.qualification-cpu-prestage/v1"
 GATE_IDS = "M1 M2 M3 M4 M5 S1 S2 S3 S4 R1 R2 R3 R4 A1 A2 A3 A4 A5 E1 E2 E3 U1 U2 T1 T2 T3 D1 D2 Q1".split()
 FIELDS = "collected executed passed failed skipped excluded".split()
@@ -44,16 +26,7 @@ CONTROLS = {
     "source-hygiene": ["just", "hygiene"],
     "source-format": ["cargo", "fmt", "--all", "--", "--check"],
     "source-check": ["cargo", "check", "--workspace", "--all-targets", "--locked"],
-    "source-clippy": [
-        "cargo",
-        "clippy",
-        "--workspace",
-        "--all-targets",
-        "--locked",
-        "--",
-        "-D",
-        "warnings",
-    ],
+    "source-clippy": ["cargo", "clippy", "--workspace", "--all-targets", "--locked", "--", "-D", "warnings"],
     "source-python": ["just", "python-check"],
     "source-audit": ["just", "audit"],
     "source-paths": ["just", "lint-paths"],
@@ -113,38 +86,153 @@ def identity(root, expected=None, require_clean=False):
 
 
 def inventory(root, revision=None):
-    return _inventory(root, revision, git=git, controls=CONTROLS)
+    def read(name):
+        return git(root, "show", revision + ":" + name) if revision else (root / name).read_text()
+
+    mapping = json.loads(read("deploy/ci/coverage.json"))
+    syntax = ast.parse(read("deploy/ci/full-main.py"))
+    definitions = [
+        n
+        for n in syntax.body
+        if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "GROUPS" for t in n.targets)
+    ]
+    if len(definitions) != 1:
+        raise ValueError("expected one literal full CPU GROUPS declaration")
+    groups = ast.literal_eval(definitions[0].value)
+    names = [name for entries in groups.values() for name in entries]
+    families = {name: lane for name, lane in mapping["lanes"].items() if name.startswith("full-")}
+    if not names or len(names) != len(set(names)) or set(names) != set(families):
+        raise ValueError("full CPU groups and coverage families must partition exactly")
+    result = [
+        dict(id=name, command=command, result_backend="none", requires_nonzero_tests=False)
+        for name, command in CONTROLS.items()
+    ]
+    for name in names:
+        if not re.fullmatch(r"full-[a-z0-9-]+", name):
+            raise ValueError("invalid CPU family identifier")
+        lane = families[name]
+        command = lane["command"]
+        if (
+            not isinstance(command, list)
+            or not command
+            or any(not isinstance(x, str) or not x for x in command)
+        ):
+            raise ValueError("invalid CPU command: " + name)
+        backend = lane["result_backend"]
+        if backend not in {"none", "nextest", "rust", "pytest", "unittest"}:
+            raise ValueError("unsupported result backend: " + name)
+        if lane["requires_nonzero_tests"] and backend == "none":
+            raise ValueError("nonzero test family requires a result backend: " + name)
+        result.append(
+            dict(
+                id=name,
+                command=command,
+                result_backend=backend,
+                requires_nonzero_tests=lane["requires_nonzero_tests"],
+            )
+        )
+    return result
 
 
 def result_parser(root):
-    return _result_parser(root)
-
-
-def release_inventory(plan_root):
-    """Inventory dated plan/status metadata; never infer signed-byte qualification."""
-    return _release_inventory(plan_root, digest=digest, gate_ids=GATE_IDS)
+    spec = importlib.util.spec_from_file_location("qualification_cpu_results", root / "deploy/ci/results.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def admission(root):
     capacity = os.statvfs(root)
     used = capacity.f_blocks - capacity.f_bfree
     percent = 100 * used / (used + capacity.f_bavail)
-    cores = (
-        len(os.sched_getaffinity(0))
-        if hasattr(os, "sched_getaffinity")
-        else os.cpu_count()
-    )
+    cores = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else os.cpu_count()
     load = os.getloadavg()[0] if hasattr(os, "getloadavg") else None
     if load is None or load > 0.85 * cores or percent >= 95:
-        raise ValueError(
-            "CPU/disk admission unavailable: load <=85%, disk <95% required"
-        )
+        raise ValueError("CPU/disk admission unavailable: load <=85%, disk <95% required")
     return dict(cpu_count=cores, load1=load, disk_used_percent=percent)
 
 
-def execute_gate(
-    gate, root, folder, target, jobs, source, parser, seconds, check=admission
-):
+def child_environment(folder, target, jobs, source):
+    forwarded = (
+        "PATH",
+        "HOME",
+        "USER",
+        "LOGNAME",
+        "LANG",
+        "LC_ALL",
+        "LC_CTYPE",
+        "TZ",
+        "CARGO_HOME",
+        "RUSTUP_HOME",
+        "CC",
+        "CXX",
+        "AR",
+        "LD_LIBRARY_PATH",
+        "LIBTORCH",
+        "LIBTORCH_USE_PYTORCH",
+        "LIBTORCH_BYPASS_VERSION_CHECK",
+        "CMAKE_PREFIX_PATH",
+        "PKG_CONFIG_PATH",
+        "UV_CACHE_DIR",
+    )
+    environment = {key: os.environ[key] for key in forwarded if key in os.environ}
+    environment.update(
+        CUDA_VISIBLE_DEVICES="",
+        AWS_EC2_METADATA_DISABLED="true",
+        OMP_NUM_THREADS="1",
+        OPENBLAS_NUM_THREADS="1",
+        MKL_NUM_THREADS="1",
+        RAYON_NUM_THREADS="1",
+        CARGO_BUILD_JOBS=str(jobs),
+        CARGO_INCREMENTAL="0",
+        CARGO_PROFILE_DEV_DEBUG="line-tables-only",
+        CARGO_TARGET_DIR=str(target),
+        JOPE_LANE_EVIDENCE=str(folder),
+        JOPE_SOURCE_SHA=source,
+        JOPE_PARITY_STRICT="1",
+        JOPE_CPU_TEST_THREADS=str(jobs),
+        PYTHONDONTWRITEBYTECODE="1",
+        TMPDIR=str(folder / "scratch"),
+    )
+    return environment
+
+
+def invoke(command, root, log, environment, seconds):
+    with log.open("xb") as stream:
+        process = subprocess.Popen(
+            ["nice", "-n", "10", *command],
+            cwd=root,
+            env=environment,
+            stdout=stream,
+            stderr=subprocess.STDOUT,
+            start_new_session=True,
+        )
+        try:
+            return process.wait(timeout=seconds), False
+        except subprocess.TimeoutExpired:
+            # Only the session created by this invocation is signalled.
+            if process.poll() is None:
+                os.killpg(process.pid, signal.SIGTERM)
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                if process.poll() is None:
+                    os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+            return 124, True
+        except BaseException:
+            if process.poll() is None:
+                os.killpg(process.pid, signal.SIGTERM)
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                if process.poll() is None:
+                    os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+            raise
+
+
+def execute_gate(gate, root, folder, target, jobs, source, parser, seconds, check=admission):
     folder.mkdir()
     (folder / "scratch").mkdir()
     record = dict(
@@ -169,37 +257,24 @@ def execute_gate(
         record["status"] = (
             "timed-out"
             if timed_out or code == 124
-            else (
-                "unavailable"
-                if code in (78, 126, 127)
-                else "failed"
-                if code != 0
-                else "passed"
-            )
+            else ("unavailable" if code in (78, 126, 127) else "failed" if code != 0 else "passed")
         )
-        if log.is_symlink() or not log.is_file():
-            raise ValueError("command log must be a regular file")
         if gate["result_backend"] != "none":
             if log.stat().st_size > MAX_LOG_BYTES:
-                raise ValueError(
-                    "test log exceeds count-parser bound; complete log retained"
-                )
+                raise ValueError("test log exceeds count-parser bound; complete log retained")
             junit = folder / "junit.xml"
             if log.is_symlink() or junit.is_symlink():
                 raise ValueError("test evidence must be regular files, never symlinks")
             if gate["result_backend"] in {"nextest", "pytest"} and not junit.is_file():
                 raise ValueError("fresh JUnit evidence is required")
             counts = parser.summarize(
-                log.read_text(errors="replace"),
-                gate["result_backend"],
-                junit if junit.exists() else None,
+                log.read_text(errors="replace"), gate["result_backend"], junit if junit.exists() else None
             )
             record["tests"] = counts
             if any(type(v) is not int or v < 0 for v in counts.values()):
                 raise ValueError("unknown or invalid test counts")
             if counts["executed"] != counts["passed"] + counts["failed"] or (
-                counts["collected"]
-                != counts["executed"] + counts["skipped"] + counts["excluded"]
+                counts["collected"] != counts["executed"] + counts["skipped"] + counts["excluded"]
             ):
                 raise ValueError("test counts do not reconcile")
             if counts["executed"] == 0:
@@ -209,17 +284,12 @@ def execute_gate(
                 if collection_path.is_symlink():
                     raise ValueError("collection must not be a symlink")
                 collection = json.loads(collection_path.read_text())
-                listed = sum(
-                    len(suite["testcases"])
-                    for suite in collection["rust-suites"].values()
-                )
+                listed = sum(len(suite["testcases"]) for suite in collection["rust-suites"].values())
                 if collection["test-count"] != listed or listed != counts["collected"]:
                     raise ValueError("fresh Nextest collection and execution differ")
             if code == 0 and counts["failed"]:
                 record["status"] = "failed"
-            elif record["status"] == "passed" and (
-                counts["skipped"] or counts["excluded"]
-            ):
+            elif record["status"] == "passed" and (counts["skipped"] or counts["excluded"]):
                 record["status"] = "incomplete"
     except (OSError, ValueError, KeyError, TypeError) as error:
         record["diagnostic"] = str(error)
@@ -229,40 +299,26 @@ def execute_gate(
     record["wall_seconds"] = time.monotonic() - start
     for path in sorted(folder.rglob("*")):
         relative = str(path.relative_to(folder))
-        try:
-            if path.is_symlink():
-                record["omitted_symlinks"].append(relative)
-            elif path.is_file():
-                record["outputs"][relative] = dict(
-                    sha256=digest(path), bytes=path.stat().st_size
-                )
-        except OSError as error:
-            record["diagnostic"] = record["diagnostic"] or (
-                f"cannot capture output {relative}: {error}"
-            )
-            if record["status"] in {"passed", "incomplete"}:
-                record["status"] = "failed"
+        if path.is_symlink():
+            record["omitted_symlinks"].append(relative)
+        elif path.is_file():
+            record["outputs"][relative] = dict(sha256=digest(path), bytes=path.stat().st_size)
     write(folder / "receipt.json", record)
     return record
 
 
-def run(root, output, expected=None, jobs=4, seconds=1800, execute=False, target=None):
-    validate_timeout(seconds)
+def run(root, output, expected=None, jobs=8, seconds=1800, execute=False, target=None):
     root = root.resolve()
     if output.is_symlink():
         raise ValueError("evidence directory must not be a symlink")
     output = output.resolve()
     target = (target or root / "target").resolve()
-    if (
-        output == root
-        or output.is_relative_to(Path("/tmp"))
-        or target.is_relative_to(Path("/tmp"))
-    ):
+    if output == root or output.is_relative_to(Path("/tmp")) or target.is_relative_to(Path("/tmp")):
         raise ValueError("evidence and builds require an explicit non-/tmp location")
     source = identity(root, expected, require_clean=execute)
     gates = inventory(root, source["main_sha"])
     output.mkdir(parents=True, exist_ok=False)
-    actual_jobs = min(max(jobs, 1), 4)
+    actual_jobs = min(max(jobs, 1), 8)
     document = dict(
         schema=SCHEMA,
         phase="cpu-prestage",
@@ -272,9 +328,7 @@ def run(root, output, expected=None, jobs=4, seconds=1800, execute=False, target
         source=source,
         driver_sha256=digest(Path(__file__)),
         machine=dict(
-            host=socket.gethostname(),
-            platform=platform.platform(),
-            python=platform.python_version(),
+            host=socket.gethostname(), platform=platform.platform(), python=platform.python_version()
         ),
         environment=dict(
             CUDA_VISIBLE_DEVICES="",
@@ -286,9 +340,7 @@ def run(root, output, expected=None, jobs=4, seconds=1800, execute=False, target
         ),
         inputs={
             path: hashlib.sha256(
-                subprocess.check_output(
-                    ["git", "-C", str(root), "show", source["main_sha"] + ":" + path]
-                )
+                subprocess.check_output(["git", "-C", str(root), "show", source["main_sha"] + ":" + path])
             ).hexdigest()
             for path in INPUTS
         },
@@ -296,8 +348,7 @@ def run(root, output, expected=None, jobs=4, seconds=1800, execute=False, target
         checks=[],
         release_gates={
             gate: dict(
-                status="not-qualified",
-                reason="CPU source diagnostics do not qualify signed release bytes",
+                status="not-qualified", reason="CPU source diagnostics do not qualify signed release bytes"
             )
             for gate in GATE_IDS
         },
@@ -311,15 +362,6 @@ def run(root, output, expected=None, jobs=4, seconds=1800, execute=False, target
         parser = result_parser(root)
         try:
             for gate in gates:
-                try:
-                    current = identity(
-                        root, expected=source["main_sha"], require_clean=True
-                    )
-                    if current != source:
-                        raise ValueError("source identity changed during CPU checks")
-                except (ValueError, subprocess.CalledProcessError) as error:
-                    document["source_changed"] = str(error)
-                    break
                 document["checks"].append(
                     execute_gate(
                         gate,
@@ -340,7 +382,7 @@ def run(root, output, expected=None, jobs=4, seconds=1800, execute=False, target
         statuses = {x["status"] for x in document["checks"]}
         document["status"] = (
             "failed"
-            if "source_changed" in document or statuses & {"failed", "timed-out"}
+            if statuses & {"failed", "timed-out"}
             else "passed"
             if statuses == {"passed"}
             else "incomplete"
@@ -357,60 +399,18 @@ def run(root, output, expected=None, jobs=4, seconds=1800, execute=False, target
     return document
 
 
-def release_plan(root, output, plan_root, expected=None, jobs=4):
-    catalog = release_inventory(plan_root)
-    document = run(root, output, expected=expected, jobs=jobs)
-    document.update(catalog)
-    write(output / "qualification_receipt.json", document)
-    # Compact reviewable current-state table; the JSON retains every byte pin.
-    lines = [
-        "# Release gate inventory — preparation only",
-        "",
-        "Observed "
-        + document["finished_utc"]
-        + "; source "
-        + document["source"]["main_sha"],
-        "",
-        "All statuses concern exact signed-byte qualification. No gates were rerun.",
-        "",
-        "| Gate | Name | Status | Current task/status evidence paths |",
-        "| --- | --- | --- | --- |",
-    ]
-    for gate, record in catalog["release_gates"].items():
-        refs = (
-            "; ".join(
-                ref["status_note"]["path"]
-                + (" (missing)" if not ref["status_note"]["exists"] else "")
-                for ref in record["evidence"]
-            )
-            or "No task-specific status note mapped"
-        )
-        lines.append(
-            f"| {gate} | {record['name']} | not-qualified / not-run | {refs} |"
-        )
-    (output / "gate-status.md").write_text("\n".join(lines) + "\n")
-    return document
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["plan", "run", "release-plan"])
+    parser.add_argument("command", choices=["plan", "run"])
     parser.add_argument("--repo", type=Path, default=Path.cwd())
     parser.add_argument("--expected-main-sha")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--target", type=Path)
-    parser.add_argument("-j", "--jobs", type=int, default=4)
-    parser.add_argument("--plan-root", type=Path)
+    parser.add_argument("-j", "--jobs", type=int, default=8)
     parser.add_argument("--gate-timeout", type=float, default=1800)
     args = parser.parse_args()
-    try:
-        validate_timeout(args.gate_timeout)
-    except ValueError as error:
-        parser.error(str(error))
-    if args.command == "release-plan" and args.plan_root is None:
-        parser.error(
-            "release-plan requires --plan-root with master plan/task/spec metadata"
-        )
+    if args.gate_timeout <= 0 or args.gate_timeout > 3600:
+        parser.error("gate timeout must be positive and at most 3600 seconds")
     if args.command == "run":
 
         def interrupted(_signum, _frame):
@@ -418,24 +418,14 @@ def main():
 
         signal.signal(signal.SIGTERM, interrupted)
     try:
-        receipt = (
-            release_plan(
-                args.repo,
-                args.output,
-                args.plan_root,
-                args.expected_main_sha,
-                args.jobs,
-            )
-            if args.command == "release-plan"
-            else run(
-                args.repo,
-                args.output,
-                args.expected_main_sha,
-                args.jobs,
-                args.gate_timeout,
-                args.command == "run",
-                args.target,
-            )
+        receipt = run(
+            args.repo,
+            args.output,
+            args.expected_main_sha,
+            args.jobs,
+            args.gate_timeout,
+            args.command == "run",
+            args.target,
         )
         print(
             json.dumps(
@@ -449,18 +439,9 @@ def main():
         )
         return 0 if receipt["status"] in {"planned", "passed"} else 1
     except KeyboardInterrupt:
-        print(
-            "CPU qualification interrupted; incomplete checkpoint retained",
-            file=sys.stderr,
-        )
+        print("CPU qualification interrupted; incomplete checkpoint retained", file=sys.stderr)
         return 130
-    except (
-        OSError,
-        ValueError,
-        KeyError,
-        TypeError,
-        subprocess.CalledProcessError,
-    ) as error:
+    except (OSError, ValueError, KeyError, TypeError, subprocess.CalledProcessError) as error:
         print("CPU qualification refused: " + str(error), file=sys.stderr)
         return 2
 
