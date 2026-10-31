@@ -58,7 +58,7 @@ fn input() -> Result<Vec<u8>> {
         return Ok(bytes);
     }
     // Original-label rows from the existing public TRAIN fixture, no generated y.
-    let raw = include_bytes!("../../../../../test-support/datasets/v1/d2-regression/train.csv");
+    let raw = include_bytes!("../../../../test-support/datasets/v1/d2-regression/train.csv");
     ensure!(
         jope_runtime::sha256_hex(raw) == SOURCE_SHA,
         "committed TRAIN hash changed"
@@ -426,7 +426,7 @@ pub(super) fn shared_run_surfaces() -> Result<()> {
         serde_json::from_value(rpc.tool("run_status", json!({"run_id":id}))?)?;
     let page = rpc.tool("run_events", json!({"run_id":id,"after":"0","limit":256}))?;
     ensure!(
-        page["next_after"] == snapshot.event_watermark.to_string(),
+        page["next_after"] == snapshot.event_watermark.0.to_string(),
         "MCP event page truncated"
     );
     captures.push(

@@ -20,7 +20,7 @@ use crate::{
 };
 use axum::{
     body::Body,
-    extract::{Extension, FromRequest, Request},
+    extract::{Extension, FromRequest, Query, Request},
     response::{IntoResponse, Response},
     Json,
 };
@@ -533,6 +533,64 @@ pub(super) async fn start(
     };
     match tokio::task::spawn_blocking(move || service.start(spec, identity)).await {
         Ok(value) => value,
+        Err(error) => response(io(error)),
+    }
+}
+
+#[derive(Default, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct ListQuery {
+    after: Option<String>,
+    limit: Option<usize>,
+}
+
+pub(super) async fn list(
+    Extension(service): Extension<Arc<RunService>>,
+    query: std::result::Result<Query<ListQuery>, axum::extract::rejection::QueryRejection>,
+) -> Response {
+    let Ok(Query(query)) = query else {
+        return response(invalid("Invalid run list query."));
+    };
+    let limit = query.limit.unwrap_or(100);
+    if !(1..=256).contains(&limit) {
+        return response(invalid("limit must be between1 and256."));
+    }
+    let after = match query
+        .after
+        .map(|v| v.parse::<jope_api::ids::RunId>())
+        .transpose()
+    {
+        Ok(value) => value,
+        Err(_) => return response(invalid("Invalid run list cursor.")),
+    };
+    let result = tokio::task::spawn_blocking(move || -> Result<jope_api::registry::RunPage> {
+        let mut ids = service
+            .store
+            .run_ids_after(after.as_ref(), limit + 1)
+            .map_err(io)?;
+        let more = ids.len() > limit;
+        ids.truncate(limit);
+        let next_after = if more {
+            ids.last().map(ToString::to_string)
+        } else {
+            None
+        };
+        let runs = ids
+            .iter()
+            .map(|id| {
+                service
+                    .journal
+                    .snapshot(id)
+                    .map_err(io)?
+                    .ok_or_else(|| io("Listed run disappeared."))
+            })
+            .collect::<Result<Vec<_>>>()?;
+        Ok(jope_api::registry::RunPage { runs, next_after })
+    })
+    .await;
+    match result {
+        Ok(Ok(page)) => Json(page).into_response(),
+        Ok(Err(error)) => response(error),
         Err(error) => response(io(error)),
     }
 }

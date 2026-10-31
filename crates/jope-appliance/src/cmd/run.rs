@@ -410,6 +410,13 @@ pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
                 &interrupts,
                 &mut std::io::stderr().lock(),
             )?;
+            if current.state == RunState::Failed {
+                write_run_id(&mut std::io::stderr().lock(), &current.run_id)?;
+                return Err(jope_runtime::Failure::backend(
+                    "The run failed; inspect its retained status and events.",
+                )
+                .into());
+            }
             let manifest = args
                 .out
                 .as_deref()

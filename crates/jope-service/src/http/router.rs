@@ -81,11 +81,15 @@ fn build_router(
             } else if operation.name == "run_start" && journal.is_some() {
                 app.route(path, axum::routing::post(super::runs::start))
             } else if operation.name == "run_status" && journal.is_some() {
-                app.route(
-                    path,
-                    get(super::sse::long_poll_status)
-                        .with_state(Arc::clone(journal.as_ref().unwrap())),
-                )
+                if path.ends_with("{id}") {
+                    app.route(
+                        path,
+                        get(super::sse::long_poll_status)
+                            .with_state(Arc::clone(journal.as_ref().unwrap())),
+                    )
+                } else {
+                    app.route(path, get(super::runs::list))
+                }
             } else if operation.name == "run_events" && journal.is_some() {
                 app.route(
                     path,
