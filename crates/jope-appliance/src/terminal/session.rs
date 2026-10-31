@@ -347,6 +347,7 @@ impl Session {
                 ]
             }),
             "\\run" => self.start_run(&args)?,
+            "\\export" => self.export(&args)?,
             "\\attach" => {
                 let run = match args.first() {
                     Some(run) => RunId::from_str(run)?,
@@ -462,6 +463,68 @@ impl Session {
             RunResult::Plan(plan) => Ok(Some(*plan)),
             RunResult::Started(_) => anyhow::bail!("dry-run unexpectedly started a run"),
         }
+    }
+
+    fn export(&mut self, args: &[String]) -> anyhow::Result<Vec<String>> {
+        let run = self
+            .snapshot
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("no run selected"))?
+            .run_id
+            .clone();
+        let snapshot = self.client.run_status(&run)?;
+        let best = snapshot
+            .best
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("run has no champion"))?;
+        let mut request = jope_api::ExportRequest {
+            algorithm_id: best.algorithm_id.clone(),
+            kind: jope_api::ExportKind::Bundle,
+            languages: self.draft.languages(),
+            require_all_languages: true,
+            refit: jope_api::Refit::FitHoldout,
+        };
+        let mut out = None;
+        let mut force = false;
+        let mut index = 0;
+        while index < args.len() {
+            let flag = &args[index];
+            if flag == "--force" {
+                force = true;
+                index += 1;
+                continue;
+            }
+            let value = args
+                .get(index + 1)
+                .ok_or_else(|| anyhow::anyhow!("{flag} needs a value"))?;
+            match flag.as_str() {
+                "--out" => out = Some(PathBuf::from(value)),
+                "--alg" => request.algorithm_id = value.parse()?,
+                "--kind" => request.kind = serde_json::from_value(serde_json::json!(value))?,
+                "--lang" => {
+                    request.languages = value
+                        .split(',')
+                        .map(|name| serde_json::from_value(serde_json::json!(name)))
+                        .collect::<Result<_, _>>()?
+                }
+                _ => anyhow::bail!("unknown export option {flag}"),
+            }
+            index += 2;
+        }
+        anyhow::ensure!(
+            !request.languages.is_empty(),
+            "export needs at least one language"
+        );
+        let out = out.ok_or_else(|| anyhow::anyhow!("export requires --out DIR"))?;
+        let key = format!("tui_export_{}", ulid::Ulid::new());
+        let manifest = self.client.model_export(&run, &request, Some(&key))?;
+        crate::cmd::export::materialize(&self.client, &manifest, &out, force)?;
+        Ok(vec![format!(
+            "Export {} · {} · parity {:?}",
+            manifest.artifact_id,
+            out.display(),
+            manifest.parity_status
+        )])
     }
 
     fn start_run(&mut self, args: &[String]) -> anyhow::Result<Vec<String>> {

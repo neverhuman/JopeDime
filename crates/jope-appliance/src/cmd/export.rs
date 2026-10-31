@@ -64,13 +64,32 @@ pub(crate) fn run(options: Options<'_>) -> anyhow::Result<()> {
         refit: Refit::Fit,
     };
     let manifest = client.model_export(&run_id, &request, Some(&key))?;
-    let artifact = manifest.artifact_id.clone();
-    files::download_artifact(&client, &artifact, &manifest.model_digest, out, force)?;
+    materialize(&client, &manifest, out, force)?;
     let mut value: Value = serde_json::to_value(manifest)?;
     if let Some(object) = value.as_object_mut() {
         super::common::add_idempotency_key(object, &key);
     }
     super::dataset::emit(&value, json_out)
+}
+
+/// Authenticate archive bytes separately from the fitted model's identity.
+/// The immutable artifact is fetched again by the existing bounded ZIP extractor.
+pub(crate) fn materialize<T: Transport>(
+    client: &T,
+    manifest: &jope_api::ExportManifest,
+    out: &std::path::Path,
+    force: bool,
+) -> anyhow::Result<()> {
+    let response = client.artifact_download(&manifest.artifact_id)?;
+    let digest = response
+        .headers
+        .get("x-jope-artifact-sha256")
+        .and_then(|value| value.to_str().ok())
+        .ok_or_else(|| anyhow::anyhow!("artifact response omitted its archive SHA-256"))?
+        .to_owned();
+    drop(response);
+    files::download_artifact(client, &manifest.artifact_id, &digest, out, force)?;
+    Ok(())
 }
 
 #[cfg(test)]

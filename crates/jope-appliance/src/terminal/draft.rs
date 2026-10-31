@@ -11,6 +11,7 @@ pub struct Draft {
     dataset: Option<DatasetId>,
     target: Option<String>,
     task: Task,
+    suggested_tasks: BTreeMap<String, Task>,
     ignore_columns: Vec<String>,
     split: SplitSpec,
     objective: ObjectiveSpec,
@@ -31,6 +32,7 @@ impl Default for Draft {
             dataset: None,
             target: None,
             task: Task::Auto,
+            suggested_tasks: BTreeMap::new(),
             ignore_columns: Vec::new(),
             split: SplitSpec {
                 kind: SplitKind::Random,
@@ -73,6 +75,15 @@ impl Draft {
                 .first()
                 .map(|suggestion| suggestion.column.clone());
         }
+        self.suggested_tasks = profile
+            .target_suggestions
+            .into_iter()
+            .map(|suggestion| (suggestion.column, suggestion.task))
+            .collect();
+    }
+
+    pub fn languages(&self) -> Vec<Language> {
+        self.languages.clone()
     }
 
     pub fn apply(&mut self, input: &str) -> Result<(), String> {
@@ -180,7 +191,14 @@ impl Draft {
         Some(RunSpec {
             dataset: self.dataset.clone()?,
             target: self.target.clone()?,
-            task: self.task,
+            task: if self.task == Task::Auto {
+                self.suggested_tasks
+                    .get(self.target.as_ref()?)
+                    .copied()
+                    .unwrap_or(Task::Auto)
+            } else {
+                self.task
+            },
             ignore_columns: self.ignore_columns.clone(),
             test_dataset: None,
             split: self.split.clone(),
@@ -291,6 +309,7 @@ mod tests {
         .unwrap();
         let mut draft = Draft::default();
         draft.set_dataset(profile);
+        assert_eq!(draft.run_spec(true).unwrap().task, Task::Regression);
         draft
             .apply(r"\target target --task regression --ignore group --group group")
             .unwrap();

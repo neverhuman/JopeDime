@@ -45,35 +45,44 @@ pub struct RunArgs {
     /// Reuse the original key when retrying the same run request.
     #[arg(long)]
     pub idempotency_key: Option<String>,
-    #[arg(long)]
-    pub dataset: String,
+    #[arg(
+        value_name = "CSV",
+        required_unless_present = "dataset",
+        conflicts_with = "dataset"
+    )]
+    pub input: Option<PathBuf>,
+    #[arg(long, required_unless_present = "input", conflicts_with = "input")]
+    pub dataset: Option<String>,
     #[arg(long)]
     pub target: String,
-    #[arg(long)]
+    #[arg(long, default_value = "auto")]
     pub task: String,
     #[arg(long = "ignore-column")]
     pub ignore_columns: Vec<String>,
     #[arg(long)]
     pub test_dataset: Option<String>,
-    #[arg(long)]
+    #[arg(
+        long,
+        default_value = "{\"kind\":\"random\",\"holdout_fraction\":0.2,\"group_column\":null,\"time_column\":null}"
+    )]
     pub split: String,
-    #[arg(long)]
+    #[arg(long, default_value = "rmse")]
     pub objective: String,
-    #[arg(long)]
+    #[arg(long, default_value = "medium")]
     pub effort: String,
-    #[arg(long)]
+    #[arg(long, default_value = "{\"evaluations\":null,\"wall_seconds\":null}")]
     pub budget: String,
-    #[arg(long)]
+    #[arg(long, default_value = "full")]
     pub landmarks: String,
-    #[arg(long)]
+    #[arg(long, default_value = "auto")]
     pub guidance: String,
-    #[arg(long = "language")]
+    #[arg(long = "language", alias = "lang", value_delimiter = ',')]
     pub languages: Vec<String>,
     #[arg(long)]
     pub require_all_languages: bool,
-    #[arg(long)]
+    #[arg(long, default_value = "auto")]
     pub device: String,
-    #[arg(long)]
+    #[arg(long, default_value = "0")]
     pub seed: String,
     #[arg(long, conflicts_with_all = ["detach", "out", "events"])]
     pub dry_run: bool,
@@ -103,8 +112,10 @@ pub struct RunArgs {
 
 impl RunArgs {
     pub fn run_spec(&self) -> anyhow::Result<RunSpec> {
-        let dataset = DatasetId::from_str(&self.dataset)
-            .map_err(|_| anyhow::anyhow!("invalid dataset identifier"))?;
+        let dataset = DatasetId::from_str(self.dataset.as_deref().ok_or_else(|| {
+            anyhow::anyhow!("CSV must be registered before constructing RunSpec")
+        })?)
+        .map_err(|_| anyhow::anyhow!("invalid dataset identifier"))?;
         let test_dataset = self
             .test_dataset
             .as_deref()
@@ -335,9 +346,37 @@ fn validate_m1_spec(
     Ok(())
 }
 
-pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
-    let spec = args.run_spec()?;
+pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()> {
     let key = crate::common::resolve_idempotency_key(args.idempotency_key.as_deref());
+    if let Some(path) = args.input.take() {
+        let name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .ok_or_else(|| anyhow::anyhow!("CSV path must have a UTF-8 file name"))?;
+        let file = std::fs::File::open(&path).map_err(|error| {
+            jope_runtime::Failure::input(format!("open CSV {}: {error}", path.display()))
+        })?;
+        let registration_key = format!("csv_{}", jope_runtime::sha256_hex(key.as_bytes()));
+        let profile: jope_api::DatasetProfile =
+            jope_client::files::upload_csv(transport, name, file, &registration_key)?.json()?;
+        if args.task == "auto" {
+            if let Some(suggestion) = profile
+                .target_suggestions
+                .iter()
+                .find(|suggestion| suggestion.column == args.target)
+            {
+                args.task = serde_json::to_value(suggestion.task)?
+                    .as_str()
+                    .ok_or_else(|| anyhow::anyhow!("task did not encode as a name"))?
+                    .to_owned();
+            }
+        }
+        if args.languages.is_empty() {
+            args.languages = vec!["rust".into(), "python".into()];
+        }
+        args.dataset = Some(profile.dataset_id.to_string());
+    }
+    let spec = args.run_spec()?;
     let response = transport.run_start(&spec, Some(&key))?;
     match response {
         RunResult::Plan(plan) => write_json(&*plan),
@@ -466,7 +505,6 @@ fn export_best<T: Transport>(
     spec: &RunSpec,
     directory: &std::path::Path,
 ) -> anyhow::Result<Value> {
-    use std::fs;
     let best = snapshot
         .best
         .as_ref()
@@ -476,19 +514,11 @@ fn export_best<T: Transport>(
         kind: ExportKind::Bundle,
         languages: spec.languages.clone(),
         require_all_languages: spec.require_all_languages,
-        refit: Refit::Fit,
+        refit: Refit::FitHoldout,
     };
     let key = crate::common::resolve_idempotency_key(None);
     let manifest = transport.model_export(&snapshot.run_id, &request, Some(&key))?;
-    fs::create_dir_all(directory)?;
-    let path = directory.join(manifest.artifact_id.to_string());
-    let mut file = fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(path)?;
-    let mut response = transport.artifact_download(&manifest.artifact_id)?;
-    std::io::copy(&mut response.body, &mut file)?;
-    file.sync_all()?;
+    super::export::materialize(transport, &manifest, directory, false)?;
     Ok(serde_json::to_value(manifest)?)
 }
 
@@ -1014,6 +1044,27 @@ mod tests {
 
     #[test]
     fn noninteractive_modes_parse_without_prompting() {
+        let csv = Args::try_parse_from([
+            "jopedime",
+            "run",
+            "data/train.csv",
+            "--target",
+            "target",
+            "--effort",
+            "high",
+            "--lang",
+            "rust,python",
+            "--out",
+            "model",
+            "--json",
+        ])
+        .unwrap();
+        assert_eq!(
+            csv.0.input.as_deref(),
+            Some(std::path::Path::new("data/train.csv"))
+        );
+        assert_eq!(csv.0.languages, ["rust", "python"]);
+        assert!(csv.0.dataset.is_none());
         let required = [
             "--dataset",
             "ds_0123456789abcdef01234567",
