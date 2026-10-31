@@ -127,6 +127,27 @@ the committed actual-fetch, complete-hash-partition and canonical numerical test
 No product source/model exports are needed; the bundle-tamper control changes only
 in-memory metadata bytes. Missing DSL bodies remain an explicit input requirement.
 
+The Rust RNK-03 composed `feat412` consumer reads these canonical DSL oracles
+straight from hash custody. It authenticates the independent catalog pin and each
+used object, checks sorted exact DSL identities and complete shard coverage, then
+compares every FP32 coordinate of every delivered definition against the actual
+Rust featurizer. It reports compared rows/coordinates and the remaining historical
+DSL gap. Raw-FP64 `proj16` is a separate domain and is not compared by this case.
+
+```sh
+JOPE_RES07_DSL_CATALOG_SHA256="$DSL_CATALOG_SHA256" \
+ JOPE_RES07_CUSTODY_STORE="$HASH_CUSTODY" \
+ nice -n 10 cargo test --locked -p jope-service --lib \
+ real_model_prior_structural_features_match_frozen_oracle -- --ignored --nocapture
+```
+
+The existing test name is retained: with the two DSL custody variables it compares
+all 412 composed features; without them its original pinned 872-program/30-feature
+model-prior route remains available. An explicitly invoked missing/invalid fixture
+fails; data-free default runs keep this case ignored. The 1,292 delivered canonical
+definitions do not close full historical corpus, T075 or M3 qualification. This
+consumer does not modify the catalog, bundle, generator or DSC-07 pool fixtures.
+
 Strict real replay (external fixture index SHA and the pinned real bundle required):
 
 ```sh
