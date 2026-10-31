@@ -1943,6 +1943,10 @@
       "reason": "CPU-only H90 candidate-recipe, diversity, pseudoreplication, cumulative budget and H80-exclusion tests; offline research outside product qualification.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h82_sam_steps/ops/test_recover.py": {
+      "role": "research",
+      "reason": "CPU-only H82 operator recovery fixtures for immutable checkpoint staging and exact-prefix refusal; no scientific outcomes or GPU execution."
+    },
     "python:research/flywheel_selfplay/h82_sam_steps/test_h82.py": {
       "reason": "CPU-only H82 fresh-seed retry-boundary, load/budget, frozen-reference and paired Elo/admission tests; offline research outside product qualification.",
       "role": "research"
