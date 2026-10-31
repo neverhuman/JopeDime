@@ -13684,6 +13684,16 @@
       ],
       "lanes": [],
       "scope": "H122 CPU-only Lookahead retest preparation: fresh whole-family fold, unique per-attempt r882 staging, launch disk gate before copying, preservation of read-only legacy scratch, exact six-cell admission/Elo readout and synthetic no-data CPU dry run. No corpus/checkpoint reads, FIFO ticket, GPU or experiment outcome."
+    },
+    "python:research/flywheel_selfplay/h124_gbm_shrink_blend/test_h124.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H124 synthetic CPU controls for the fresh family split, fixed score blend, complete-panel strict family-bootstrap/harm admission and data-free dry run. No H50/H58/H51 reads or model fits in the fixture suite; offline research only."
     }
   },
   "lanes": {
