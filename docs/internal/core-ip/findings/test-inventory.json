@@ -5168,6 +5168,10 @@
     "python:research/flywheel_selfplay/h135_blend025_flywheel_val/test_science.py": {
       "role": "research",
       "reason": "H135 data-free native utility, sanity, bootstrap, seed/harm/trim/resource controls; native HistGB thread ceiling, scoped baseline setter restoration and A3 nested thread cap; A4 native SIGSTOP/SIGCONT, continuous recovery and stopped-worker deadline controls. Manual GBM preflight uses synthetic data and actual estimator hyperparameters with external /proc sampling; constructor preflight reads pretrained assets only, no datasets/r882/predictions; not a product qualification."
+    },
+    "python:research/flywheel_selfplay/h138_trajectory_swa/test_science.py": {
+      "role": "research",
+      "reason": "H138 data-free parameter-only averaging, bitwise DOPE including signed-zero refusal, family partitions, Holm/utility/Elo gates and actual owned-process pause/resume/deadline controls. Manual unscored constructor checks copies and input hashes; no scientific inference before prereg merge. Research only, no product qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
