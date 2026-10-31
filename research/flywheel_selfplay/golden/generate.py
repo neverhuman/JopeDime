@@ -42,7 +42,7 @@ CONSUMERS = {
     "RNK-06": ["contexts/<context>.safetensors:lm48,lm48_z"],
     "RNK-07": ["contexts/<context>.safetensors:tokens,mask"],
     "RNK-08": ["slates/<context>-12.safetensors", "slates/<context>-20.safetensors"],
-    "RNK-09": ["proposer-bank.jsonl"],
+    "RNK-09": [],  # Parked: no admitted raw proposer snapshot in RES-01/RES-02.
     "DSC-07": ["landmark-pools.json"],
     "RES-09": ["index.json", "all *.safetensors (exact per-file tensor schema)"],
     "M3 evaluator": ["surrogate/<context>.json"],
@@ -121,6 +121,20 @@ def decompress(data):
             process.communicate()
 
 
+def model_prior_programs(bank):
+    """Keep the admitted prior population distinct from raw proposer coordinates."""
+    require(len(bank) == 881, "RES-06 model_prior inventory differs")
+    programs = {}
+    for row in bank:
+        require(
+            row.get("role") == "model_prior" and row.get("coordinate_space") == "standardized_lm48_l2_unit",
+            "only the tagged model_prior / standardized_lm48_l2_unit bank is admitted",
+        )
+        key = sha(row["dsl"].encode())
+        programs.setdefault(key, dict(program_sha256=key, dsl=row["dsl"]))
+    return list(programs.values())
+
+
 def validate_bundle(directory, expected_digest):
     require(directory.is_dir() and not directory.is_symlink(), "bundle must be a real directory")
     contract = exporter()
@@ -155,7 +169,7 @@ def validate_bundle(directory, expected_digest):
     )
     reference = Reference(CUSTODY, custody, state, names)
     bank = [read_json(row) for row in decompress(files["bank.jsonl.zst"]).splitlines()]
-    require(len(bank) == 881, "RES-06 prior-bank inventory differs")
+    programs = model_prior_programs(bank)
     max_proj_error = 0.0
     prior_projection_differences = 0
     for row in bank:
@@ -180,6 +194,14 @@ def validate_bundle(directory, expected_digest):
         prior_bank_records=len(bank),
         validated_prior_rows=len(bank),
         prior_unique_programs=len({row["dsl"] for row in bank}),
+        subset=dict(
+            role="model_prior",
+            coordinate_space="standardized_lm48_l2_unit",
+            records=len(bank),
+            programs=len(programs),
+            historical_corpus_complete=False,
+            proposer_retrieval_qualified=False,
+        ),
         prior_proj16_vs_raw_max_absolute_difference=max_proj_error,
         prior_proj16_vs_raw_differing_programs=prior_projection_differences,
         runtime=dict(torch=torch.__version__, numpy=np.__version__, device="cpu"),
@@ -246,7 +268,7 @@ def qualification_lease(path):
 def _generate_locked(bundle, expected_digest, captures_path, expected_captures_sha256, output):
     """Generate only from pinned train-only oracle captures, never table discovery."""
     require(not output.exists() and not output.is_symlink(), "output must be new")
-    manifest, custody, reference, _ = validate_bundle(bundle, expected_digest)
+    manifest, custody, reference, validation = validate_bundle(bundle, expected_digest)
     root = captures_path.parent
     capture_bytes = regular(captures_path)
     require(
@@ -255,19 +277,18 @@ def _generate_locked(bundle, expected_digest, captures_path, expected_captures_s
     capture = read_json(capture_bytes)
     require(capture["schema"] == "jope.golden-source-captures/v1", "unsupported capture schema")
     require(capture["bundle_digest"] == expected_digest, "capture bundle identity differs")
-    inventory = read_json(captured(root, capture["historical_inventory"]))
     require(
-        inventory["scope"] == "RES-01-frozen-training-historical-programs"
-        and inventory["source_file_sha256"],
-        "complete source-bound historical corpus inventory required",
+        not {"proposer_bank", "historical_inventory", "corpus"}.intersection(capture),
+        "this model_prior subset does not admit proposer or replacement corpus inputs",
     )
-    programs = [read_json(row) for row in captured(root, capture["corpus"]).splitlines()]
-    require(programs and len(programs) == capture["corpus"]["count"], "historical corpus count differs")
-    for row in programs:
-        require(row["program_sha256"] == sha(row["dsl"].encode()), "historical DSL hash differs")
+    bank_bytes = regular(bundle / "bank.jsonl.zst")
+    require(
+        sha(bank_bytes) == validation["payloads"]["bank.jsonl.zst"]["sha256"],
+        "model_prior payload changed after validation",
+    )
+    bank = [read_json(row) for row in decompress(bank_bytes).splitlines()]
+    programs = model_prior_programs(bank)
     hashes = [row["program_sha256"] for row in programs]
-    require(len(set(hashes)) == len(hashes), "historical inventory must enumerate unique DSL hashes")
-    require(sorted(hashes) == sorted(inventory["program_sha256"]), "historical inventory coverage differs")
     vectors = [reference.featurize(row["dsl"]) for row in programs]
     features = np.stack([p[0] for p in vectors])
     projections = np.stack([p[1] for p in vectors])
@@ -300,29 +321,8 @@ def _generate_locked(bundle, expected_digest, captures_path, expected_captures_s
     files = {
         "programs.safetensors": tensor_bytes(dict(feat412=features, proj16=projections)),
         "programs.jsonl": b"".join(canonical(p) + b"\n" for p in programs),
+        "model-prior.jsonl": b"".join(canonical(row) + b"\n" for row in bank),
     }
-    # The actual proposer-bank capture is separate from exported normalized prior summaries.
-    files["proposer-bank.jsonl"] = captured(root, capture["proposer_bank"])
-    require(
-        capture["proposer_bank"]["coordinate_space"] == "raw_svd_lm48_first12"
-        and capture["proposer_bank"]["population"] == "actual_training_proposer",
-        "wrong proposer-bank contract",
-    )
-    bank = [read_json(line) for line in files["proposer-bank.jsonl"].splitlines()]
-    require(
-        {row["context_sha256"] for row in bank} == set(train),
-        "actual proposer-bank training coverage differs",
-    )
-    for row in bank:
-        require(
-            row["dl_split"] == "DL-Train"
-            and row["family_id"] == train[row["context_sha256"]]
-            and row["program_sha256"] == sha(row["dsl"].encode())
-            and len(row["landmark_summary"]) == 12
-            and all(math.isfinite(x) for x in row["landmark_summary"]),
-            "invalid actual proposer-bank provenance",
-        )
-        require(row["program_sha256"] in positions, "historical corpus omits an actual proposer-bank program")
     pools = []
     for context in sorted(contexts, key=lambda c: c["context_sha256"]):
         cid = context["context_sha256"]
@@ -418,7 +418,9 @@ def _generate_locked(bundle, expected_digest, captures_path, expected_captures_s
         bundle_digest=expected_digest,
         capture_manifest_sha256=sha(regular(captures_path)),
         contexts=len(contexts),
-        historical_programs=len(programs),
+        model_prior_programs=len(programs),
+        subset=validation["subset"],
+        qualification=dict(M2=False, M3=False, M5=False, proposer_retrieval=False),
         consumers=CONSUMERS,
         reference_source_sha256=reference.source_hashes,
         payload_bytes=total,

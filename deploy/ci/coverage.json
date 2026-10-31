@@ -4733,6 +4733,16 @@
       "lanes": [],
       "scope": "Owner-requested pytest regression proof for flywheel model/optimizer rollback, equal-score progress, and evaluation-identity refusal at the PyTorch boundary; research flywheel outside the reviewed product baseline."
     },
+    "python:research/flywheel_selfplay/golden/test_generate.py": {
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-approved gb1915 RES-07 CPU pre-stage and tagged model_prior subset validation; numerical qualification remains gated and outside release lanes.",
+      "discovery": {
+        "kind": "python-family"
+      }
+    },
     "python:research/flywheel_selfplay/test_export_fused_bundle.py": {
       "dispositions": [
         "research"

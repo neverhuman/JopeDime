@@ -115,6 +115,23 @@ class RealBundle(unittest.TestCase):
         # Constructor/alias wiring cannot modify even the in-memory frozen state.
         generate.exporter().validate_state(self.reference.state)
 
+    def test_model_prior_population_is_preserved_and_cannot_be_relabelled_as_proposer(self):
+        bank = [
+            generate.read_json(row)
+            for row in generate.decompress((self.bundle / "bank.jsonl.zst").read_bytes()).splitlines()
+        ]
+        original = generate.canonical(bank)
+        programs = generate.model_prior_programs(bank)
+        self.assertEqual(len(programs), 872)
+        self.assertEqual({p["dsl"] for p in programs}, {row["dsl"] for row in bank})
+        self.assertEqual(generate.canonical(bank), original)
+        self.assertFalse(self.report["subset"]["historical_corpus_complete"])
+        self.assertFalse(self.report["subset"]["proposer_retrieval_qualified"])
+        for fields in ({"role": "proposer"}, {"coordinate_space": "raw_svd_lm48_first12"}, {"role": None}):
+            changed = [dict(bank[0], **fields), *bank[1:]]
+            with self.assertRaisesRegex(ValueError, "only the tagged model_prior"):
+                generate.model_prior_programs(changed)
+
     def test_canonical_safetensors_preserves_real_program_projection_f64_and_integer_shape(self):
         bank = [
             generate.read_json(row)
