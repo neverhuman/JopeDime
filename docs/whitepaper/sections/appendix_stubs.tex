@@ -113,3 +113,24 @@ later adapter snapshot in \cref{sec:method-status}):
   parity receipts from the final evaluator belong to the same evaluation
   record.
 \end{itemize}
+
+\section{Development Measurements over Completed-Round Time}\label{app:development-time}
+
+\Cref{fig:fw-completed-time} shows the same retained summaries as
+\cref{fig:fw-later-development}. The horizontal axis sums completed-round
+wall time, including qualification waits. Each point is an end-of-round
+summary; the event count starts from zero for this window. Binding these
+records to an exact loop, adapter and checkpoint remains pending
+(\cref{sec:method-status}).
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_completed_time.pdf}
+  \caption{\textbf{Training-program events and logged validation utility over time.}
+  Top: candidate and recorded-best validation pool utility. Bottom:
+  cumulative strict training-program incumbent events reported by round end.
+  Both panels use all 20 consecutive summaries from rounds 2343--2362.
+  The summaries mark no adapter admission. These development observations
+  do not establish independent first-proposal improvement.}
+  \label{fig:fw-completed-time}
+\end{figure}
