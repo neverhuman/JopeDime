@@ -4,6 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 description = "Bit-exact Rust port of numpy 1.26 SeedSequence/PCG64/Generator integer sampling and the frozen jope-dime sampling recipes"
+readme = "README.md"
 publish = false
 
 [dependencies]
