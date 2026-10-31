@@ -29,6 +29,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
+/// Stable refusal message used when callers request deletion from a report operation.
 pub const DELETE_REFUSAL: &str =
     "Deletion is disabled. Use a logged preservation and independent verification batch.";
 const MEASURE_TIMEOUT: Duration = Duration::from_secs(600);
@@ -37,11 +38,14 @@ const DF_TIMEOUT: Duration = Duration::from_secs(30);
 /// A failed step: the Python exception text and, for a failed subprocess, its stderr.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Failure {
+    /// Python-compatible diagnostic for the failed step.
     pub message: String,
+    /// Captured standard error when a subprocess failed.
     pub stderr: Option<String>,
 }
 
 impl Failure {
+    /// Create a failed outcome with a diagnostic and no captured subprocess stderr.
     pub fn new(message: impl Into<String>) -> Self {
         Self {
             message: message.into(),
@@ -56,6 +60,7 @@ impl std::fmt::Display for Failure {
     }
 }
 
+/// Result type used by build-report operations, carrying their compatibility diagnostic.
 pub type Outcome<T> = Result<T, Failure>;
 
 /// An `OSError` as Python prints it: `[Errno N] <strerror>: '<path>'`, a path that is not UTF-8
@@ -100,7 +105,9 @@ fn absolute(path: &Path) -> Outcome<PathBuf> {
 /// The UTC clock as `datetime.now(timezone.utc)` prints it: `isoformat()` and the receipt stamp
 /// `%Y%m%dT%H%M%S.%fZ`.
 pub struct Utc {
+    /// ISO 8601 UTC date and time.
     pub iso: String,
+    /// Compact UTC timestamp used in receipt directory names.
     pub stamp: String,
 }
 
@@ -118,6 +125,7 @@ fn civil(days: i64) -> (i64, u32, u32) {
     (year, month, day)
 }
 
+/// Format a system time as ISO 8601 UTC text and the compact receipt timestamp.
 pub fn utc_at(time: SystemTime) -> Utc {
     let since = time.duration_since(UNIX_EPOCH).unwrap_or_default();
     let secs = since.as_secs() as i64;
@@ -136,6 +144,7 @@ pub fn utc_at(time: SystemTime) -> Utc {
     }
 }
 
+/// Format the current system time as UTC text and a receipt timestamp.
 pub fn utc() -> Utc {
     utc_at(SystemTime::now())
 }
@@ -156,6 +165,7 @@ fn lstat(path: &Path) -> Outcome<fs::Metadata> {
 /// Why a run must stop now (a pending SIGTERM/SIGINT in `report`), checked between steps.
 pub type Interrupt<'a> = &'a dyn Fn() -> Outcome<()>;
 
+/// Interruption callback that always reports success.
 pub fn never_interrupted() -> Outcome<()> {
     Ok(())
 }
@@ -453,7 +463,9 @@ pub fn whole_hours(value: &str) -> Result<u64, String> {
 
 /// What `report` runs: the scan of one approved root and the measurement of one directory.
 pub struct Hooks<'a> {
+    /// Scan an approved root and return its report document.
     pub scan: &'a dyn Fn(&str, Interrupt<'_>) -> Outcome<Value>,
+    /// Measure a directory, optionally using the privileged measurement route.
     pub measure: &'a dyn Fn(&Path, bool, Interrupt<'_>) -> Outcome<u64>,
 }
 
@@ -1127,10 +1139,13 @@ mod tests {
         assert_eq!(refusal(Path::new("/tmp")), refused);
         assert_eq!(refusal(Path::new("/tmp/x/y")), refused);
         assert_eq!(refusal(Path::new("//tmp/never-created")), refused);
-        let tree = Path::new(env!("CARGO_MANIFEST_DIR"));
-        assert_eq!(refusal(&tree.join("never-created")), refused);
+        // Build archives used by remote checks have no enclosing .git marker. Make the worktree
+        // marker explicit so this test checks custody policy independently of the checkout type.
+        let tree = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR")).unwrap();
+        std::fs::write(tree.path().join(".git"), b"gitdir: /not-needed\n").unwrap();
+        assert_eq!(refusal(&tree.path().join("never-created")), refused);
         assert_eq!(
-            refusal(&tree.join("src/never/../../never-created")),
+            refusal(&tree.path().join("src/never/../../never-created")),
             refused
         );
     }

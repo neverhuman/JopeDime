@@ -313,12 +313,16 @@ fn custody_refusals_match_the_captured_python_outputs() {
     )
     .unwrap();
     let unique = format!("never-created-python-parity-{}", std::process::id());
+    // The remote test helper runs a source archive without an enclosing `.git` marker. Keep the
+    // worktree refusal case self-contained instead of relying on the developer's checkout layout.
+    let tree = tempfile::tempdir_in(repo()).unwrap();
+    fs::write(tree.path().join(".git"), b"gitdir: /not-needed\n").unwrap();
     let roots = approved_roots();
     for refusal in captured["custody_refusals"].as_array().unwrap() {
         let name = refusal["name"].as_str().unwrap();
         let custody = match name {
             "report-tmp" => PathBuf::from("/tmp").join(&unique),
-            "report-tree" => repo().canonicalize().unwrap().join(&unique),
+            "report-tree" => tree.path().join(&unique),
             other => panic!("unexpected case {other}"),
         };
         let output = jope_ci(&[
