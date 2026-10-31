@@ -381,8 +381,27 @@ def response_valid(response, request):
         == response["charged"] - response["completed"],
         "missing attempt evidence",
     )
+    failure_attempts = set()
+    for failure in response["candidate_failures"]:
+        require(
+            isinstance(failure, dict)
+            and integer(failure.get("attempt"))
+            and failure["attempt"] < response["charged"]
+            and isinstance(failure.get("reason"), str)
+            and bool(failure["reason"].strip()),
+            "invalid per-attempt failure evidence",
+        )
+        require(failure["attempt"] not in failure_attempts, "duplicate failure attempt")
+        failure_attempts.add(failure["attempt"])
     require(response["status"] in ("complete", "failed"), "invalid response outcome")
     if response["status"] == "complete":
+        require(
+            all(
+                isinstance(response[name], str) and response[name].strip()
+                for name in ("champion_program", "adapter")
+            ),
+            "complete result requires program and adapter identities",
+        )
         require(
             response["completed"] > 0
             and response["fold_scores_completed"] >= 2 * response["completed"]
@@ -597,6 +616,10 @@ def analyze(plan, receipts):
     started = set()
     start_hashes = {}
     for row in receipts:
+        require(
+            integer(row["seed"]) and row["seed"] in plan["seeds"],
+            "invalid receipt seed",
+        )
         key = (row["dataset"]["id"], row["seed"], row["guidance"])
         require(row["mode"] == "qualification", "non-qualification receipt")
         require(
@@ -620,6 +643,12 @@ def analyze(plan, receipts):
             continue
         require(
             row.get("event") == "finished" and key in started, "missing start receipt"
+        )
+        require(
+            type(row.get("wall_seconds")) in (int, float)
+            and math.isfinite(row["wall_seconds"])
+            and row["wall_seconds"] >= 0,
+            "finished receipt requires finite nonnegative wall time",
         )
         require(
             row["request_sha256"] == start_hashes[key], "start/finish digest mismatch"
