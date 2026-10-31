@@ -101,6 +101,10 @@ fn p256_fixed_to_der(fixed: &[u8]) -> Result<Vec<u8>> {
     Ok(der)
 }
 
+/// Read and normalize a signature file into the package's fixed 64-byte low-S form.
+///
+/// The file may contain DER, raw `r || s`, or base64-encoded signature bytes. I/O and
+/// normalization failures include the path in their error context.
 pub fn read(path: &Path) -> Result<[u8; 64]> {
     let bytes = std::fs::read(path).with_context(|| format!("read {}", path.display()))?;
     normalize(&bytes).with_context(|| format!("signature {}", path.display()))

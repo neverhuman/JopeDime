@@ -20,6 +20,7 @@ pub const FACT_SCHEMA: &str = "jope.lineage-fact/v1";
 pub struct ProgramRef {
     /// Lowercase hex sha256 of `canonical`'s bytes.
     pub sha256: String,
+    /// Canonical program text whose bytes produce `sha256`.
     pub canonical: String,
 }
 
@@ -27,6 +28,7 @@ pub struct ProgramRef {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Survivor {
+    /// Lowercase hex sha256 identity of the carried program.
     pub program_sha256: String,
     /// Held-out RMSE on this cut, in target units.
     pub rmse: f64,
