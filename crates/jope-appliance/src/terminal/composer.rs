@@ -15,6 +15,12 @@ use std::sync::atomic::{AtomicU64, Ordering};
 const MAX_DRAFT: usize = 8 * 1024 * 1024;
 const MAX_HISTORY: usize = 16 * 1024 * 1024;
 const HISTORY_ENTRIES: usize = 1000;
+#[cfg(all(
+    target_os = "linux",
+    not(any(target_arch = "x86_64", target_arch = "aarch64"))
+))]
+compile_error!("Linux history-file flags are only verified for x86_64 and aarch64");
+
 /// Client help/dispatch wiring belongs to TUI-09.
 pub const HISTORY_HELP: &str = "History keeps up to 1,000 entries in $JOPEDIME_HOME/history (0600). Inline JSON objectives over 1,024 bytes are omitted. To clear it, close the client and remove that history file.";
 static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
@@ -781,10 +787,15 @@ fn regular_options() -> OpenOptions {
     options.read(true);
     owner_mode(&mut options);
     // OS ABI flags: refuse symlinks/reparse points and avoid blocking on FIFOs.
-    #[cfg(target_os = "linux")]
+    #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
     {
         use std::os::unix::fs::OpenOptionsExt;
         options.custom_flags(0x20000 | 0x800);
+    }
+    #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.custom_flags(0x8000 | 0x800);
     }
     #[cfg(target_os = "macos")]
     {
