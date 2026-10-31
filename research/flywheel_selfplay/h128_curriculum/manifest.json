@@ -1,0 +1,55 @@
+{
+  "actual_training_updates": 0,
+  "arms": [
+    "CONTROL",
+    "CURRIC",
+    "ANTI"
+  ],
+  "assessment_contexts": 244,
+  "assessment_families": 41,
+  "assessment_fold": 0,
+  "batch_size": 16,
+  "bootstrap_draws": 10000,
+  "bootstrap_seed": 128076,
+  "calibration": null,
+  "cells": 9,
+  "curriculum_q_end": 1.0,
+  "curriculum_q_start": 0.5,
+  "custody_root": "/home/ubuntu/jope-rescue-20260921/h128-curriculum",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "execution_started": false,
+  "family_folds": 5,
+  "fit_contexts": 975,
+  "fit_families": 164,
+  "fit_folds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "fold_manifest_sha256": "010e5c3857acf7b7e62ed2da10bc5f332bf7e65fcd62f82a7d80ea995e5b7e8c",
+  "fold_seed": 128076,
+  "fused_sha256": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+  "h50_selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+  "h50_source_manifest_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+  "prereg_sha256": "7cecc7fd36978dd27caddde708ef926f8679f3cd67b8a23ef8366fdf792f4dac",
+  "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "regression": null,
+  "seeds": [
+    76,
+    77,
+    78
+  ],
+  "slate_size": 192,
+  "source_base": "8c73150986d77436b6a206a4e39474e9067e257b",
+  "source_sha256": {
+    "research/flywheel_selfplay/h55/runner.py": "56fd220689805f07877ae403c2f00a4b34831cc4b2919f4bd69807ff3c21f4bc",
+    "research/flywheel_selfplay/h59/runner.py": "604d02ed72a6149284792cba315124efd1ffe8cac79e5ace22613db86c11b4c3",
+    "research/flywheel_selfplay/h61/runner.py": "a1654add23b76e54b22afe5a7f42bf543420b12ca0d31d52b5c25c409498d037",
+    "research/flywheel_selfplay/h76_sam_steps/runner.py": "3556fe81fe654b148d301244d6d0460bf2363b5a97db0a0b644507168e97d24f",
+    "research/flywheel_selfplay/h97_reg_ema/runner.py": "4411ad39b85a2c3d568c03b70d358e40a4fdca7f4affa3315e2856f4f8660a67"
+  },
+  "status": "PREREGISTERED_NOT_RUN",
+  "updates_per_cell": 40,
+  "wave": "H128"
+}

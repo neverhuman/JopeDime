@@ -1,0 +1,5 @@
+# H128 — Loss-Ordered Self-Paced Curriculum (`CURRIC` & `ANTI` vs `CONTROL`)
+
+CPU-only offline study authorized by `/home/ubuntu/nudges/rd_argon_t1130.md` (`rd_argon`). [PREREG.md](PREREG.md) (`sha256 = 7cecc7fd36978dd27caddde708ef926f8679f3cd67b8a23ef8366fdf792f4dac`) freezes the hypothesis, fresh `DL-Train` family split (`fold_seed = 128076`, `41` assessment families / `244` contexts in `fold 0`, `164` fit families / `975` contexts in `folds 1..4`), paired seeds `76–78`, unchanged-`r882` regression gate, frozen fit-fold baseline loss ranking, easy-to-hard self-paced curriculum (`CURRIC`, linear $q_u \in [0.5, 1.0]$ over `40` updates) and hard-to-easy placebo (`ANTI`) vs uniform `CONTROL`, strict admission gates (`median_seed_gain > 0`, `LCB95 > +0.001`, `harm <= 10%` in every seed), and `xbabe2` CPU/memory/load/disk guardrails before any execution.
+
+[manifest.json](manifest.json) pins source, model, and input SHA-256 identities; [metrics.json](metrics.json) records `NOT_RUN` prior to curriculum ranking and execution. No outcome, admission, or runtime qualification is claimed in this preregistration PR.
