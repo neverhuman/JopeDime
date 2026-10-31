@@ -2370,12 +2370,8 @@ mod tests {
             // no third argument and only reads the descriptor flags.
             unsafe { libc::fcntl(retained.as_raw_fd(), libc::F_GETFD) } & libc::FD_CLOEXEC != 0
         );
-        let status = std::process::Command::new("python3")
-            .args([
-                "-c",
-                "import os,sys; sys.exit(1 if os.path.exists('/proc/self/fd/'+sys.argv[1]) else 0)",
-                &fd.to_string(),
-            ])
+        let status = std::process::Command::new("sh")
+            .args(["-c", "test ! -e /proc/self/fd/$1", "sh", &fd.to_string()])
             .status()
             .unwrap();
         assert!(status.success());
