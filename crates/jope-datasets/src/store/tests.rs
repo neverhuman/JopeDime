@@ -2,6 +2,18 @@ use super::*;
 use std::io::Read;
 use std::sync::{Arc, Barrier};
 
+#[test]
+fn poisoned_injected_registry_does_not_panic_store_backend() {
+    let _ = std::panic::catch_unwind(|| {
+        let _guard = injected_registry().lock().unwrap();
+        panic!("poison the test-only backend registry");
+    });
+
+    let store = Store::open("memory:///").unwrap();
+    let expected = StoreLocation::parse("memory:///").unwrap().backend;
+    assert_eq!(store.backend(), expected);
+}
+
 fn exercise_preconditions(store: &Store) {
     tokio::runtime::Runtime::new().unwrap().block_on(async {
         let key = "hwm/ledger/HEAD.json";

@@ -62,12 +62,27 @@ impl Credentials {
     }
 }
 
+/// Synchronous HTTP transport for a local JopeDime engine.
+///
+/// This transport is restricted to `http://localhost` and `http://127.0.0.1` authorities. It
+/// disables proxy use and redirects and does not provide TLS; use an application-owned transport
+/// for remote endpoints.
 #[derive(Clone)]
 pub struct Http {
     credentials: Credentials,
     agent: ureq::Agent,
 }
 impl Http {
+    /// Create a local HTTP client using the engine's 64-character hexadecimal bearer token.
+    ///
+    /// The endpoint must be a loopback HTTP authority with no path, query, user information, or
+    /// fragment. Connection establishment times out after five seconds and response reads after
+    /// thirty seconds.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::InvalidRequest`](crate::transport::Error::InvalidRequest) if the endpoint
+    /// or token does not satisfy the local-client contract.
     pub fn new(endpoint: &str, token: &str) -> Result<Self> {
         let credentials = Credentials::new(endpoint, token)?;
         let config = ureq::Agent::config_builder()
