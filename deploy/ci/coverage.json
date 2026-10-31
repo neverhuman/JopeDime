@@ -13157,6 +13157,16 @@
       ],
       "lanes": [],
       "scope": "Owner-requested H75 CPU fixture contracts for frozen development score rosters, complete A-anchored legacy/confirmed_U8 point panels, seed/context/family averaging and incomplete/refusal boundaries. Manual research diagnostics only; no bootstrap, experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h75_closed_loop_evolution/scoring/test_bootstrap.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested CPU fixtures for H75 shared whole-family bootstrap, canonical batched Elo parity, seed averaging, incomplete execution and deterministic bounded resampling. Descriptive development intervals only; no experiment admission or release qualification."
     }
   },
   "lanes": {
