@@ -45,7 +45,7 @@ scaled targets through two frozen windows (512).
 
 The reference encoder stays fixed during writer training and is pinned by
 hash. Encoding is bounded at
-30 seconds per problem, and a context with any non-finite value is refused
+30 seconds per problem. A context with any non-finite value is refused
 rather than imputed (\cref{app:training}). The input contract permits
 training-side task evidence only; final held-out labels and their derived
 statistics must stay outside the input closure. A context's recorded
@@ -57,11 +57,13 @@ separate representation study; \cref{sub:results-ablation} reserves that test.
 
 \subsection{Describing the move}\label{sub:method-move}
 
-A move is one program in the typed language of \cref{sec:game}, spelled with a vocabulary of 401
-tokens: up to six transforms from a set of 31, feeding one of 22 prediction heads. A grammar automaton masks every
-forbidden token at each step, the valid-only decoding of grammar-constrained generators
-\citep{kusner2017grammar,dai2018sdvae}, so every finished program is grammatical. We credit that to
-the grammar, not to taste; taste must remove the moves that parse and then crash or lose. A program's
+A move is one program in the typed language of \cref{sec:game}, with a
+401-token vocabulary. Up to six transforms from a set of 31 feed one of
+22 prediction heads. The native decoder masks forbidden tokens at each
+step, as in grammar-constrained generators
+\citep{kusner2017grammar,dai2018sdvae}. A finished draft enters the pool
+only after it decodes and parses. These grammar checks do not establish
+that the writer avoids programs that parse but crash or lose. A program's
 identity is the SHA-256 hash of its canonical form. A separate hash of
 predictions on fixed training probes flags matching observed outputs.
 Those matches do not establish equivalence on other inputs. Without probe
@@ -69,6 +71,9 @@ evidence, this behavior check reports novelty as unknown. The reference
 procedure calls for readable Python and Rust recipe exports that fit on
 the task's training rows. Reported winners also require the native--emitted
 parity check in \cref{sub:method-referee}.
+% Source trace (implementation, not retained-checkpoint qualification):
+% crates/jope-policy/src/decode.rs:4--12,580--584 (legal tokens; decode/parse gate);
+% crates/jope-policy/src/model.rs:9--16,558--600 (separate writer/ranking paths).
 
 \subsection{One map for problems and programs}\label{sub:method-map}
 
@@ -154,8 +159,9 @@ to the map's ranking targets.
 
 Two ratchets make this self-play rather than imitation of a fixed archive (\cref{sec:game}). A
 program displaces a board's incumbent only by strictly beating it. A retrained writer takes the held-out
-admission test: 16 cuts with three seeds each. It replaces the serving writer only if its mean log error ratio
-favors it, it wins at least as many cuts as it loses, and it fails no more often.
+admission test: 16 cuts with three seeds each. It replaces the serving writer
+only if its mean log error ratio favors it. It must also win at least as
+many cuts as it loses and fail no more often.
 %
 Here a cut is a held-out evaluation case fixed before the admission test.
 For each cut, the rule takes the natural log of paired best-error ratios
@@ -205,11 +211,13 @@ test-scored outcome from a ledger of 63,108 evaluations; we exclude it as test s
 \end{algorithmic}
 \end{algorithm}
 
-The proposed protocol in \cref{alg:gameday} permits one encoder pass, one draw of at most 128 tokens at
-temperature 1 from a recorded seed, lowering to code, and the fit. The map is never run, and none of
-training's exploration programs is added. A draft that does not finish, crashes or times out is
-stillborn and scores as a loss; it is not replaced. Reported costs count the encoder and writer
-with the fit, and any later search is reported apart, as \citet{silver2017mastering} reported
+The proposed protocol in \cref{alg:gameday} permits one encoder pass and one
+draw of at most 128 tokens at temperature 1 from a recorded seed. The
+program is lowered to code and fitted. The map stays absent, and no
+training exploration program is added. A draft that does not finish,
+crashes or times out is stillborn and scores as a loss; it is not replaced.
+Costs must include the encoder, writer and fit. Report later search
+separately, as \citet{silver2017mastering} reported
 AlphaGo Zero's raw network apart from its search (\cref{sec:results}).
 
 The deployment budget is a protocol constraint. Whether training improves
