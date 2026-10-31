@@ -157,6 +157,63 @@ fn snapshot(output: std::process::Output) -> Result<RunSnapshot> {
     );
     Ok(snapshot)
 }
+
+fn retain_execution(
+    engine: &InProcessEngine,
+    output: &std::process::Output,
+    label: &str,
+) -> Result<()> {
+    let Some(root) = std::env::var_os("JOPE_INT01_RECEIPTS") else {
+        return Ok(());
+    };
+    let root = PathBuf::from(root);
+    fs::create_dir_all(&root)?;
+    fs::write(root.join(format!("{label}-stdout.json")), &output.stdout)?;
+    fs::write(root.join(format!("{label}-stderr.txt")), &output.stderr)?;
+    let id = serde_json::from_slice::<RunSnapshot>(&output.stdout)
+        .ok()
+        .map(|s| s.run_id)
+        .or_else(|| {
+            String::from_utf8_lossy(&output.stderr)
+                .split_whitespace()
+                .find_map(|s| {
+                    s.trim_matches(|c: char| !c.is_ascii_alphanumeric() && c != '_')
+                        .parse::<jope_api::ids::RunId>()
+                        .ok()
+                })
+        });
+    if let Some(id) = id {
+        if let Some(row) = engine.store().get(&RecordKey::Run(id.clone()))? {
+            fs::write(
+                root.join(format!("{label}-run-record.json")),
+                serde_json::to_vec_pretty(&row)?,
+            )?;
+            let blobs = root.join(format!("{label}-blobs"));
+            fs::create_dir_all(&blobs)?;
+            for reference in &row.blobs {
+                let bytes = engine.store().read_blob(reference)?;
+                fs::write(blobs.join(jope_runtime::sha256_hex(&bytes)), bytes)?;
+            }
+            let snap: RunSnapshot = serde_json::from_value(row.data["snapshot"].clone())?;
+            let events = (1..=snap.event_watermark.0)
+                .map(|sequence| {
+                    engine
+                        .store()
+                        .get(&RecordKey::Event {
+                            run: id.clone(),
+                            sequence,
+                        })
+                        .map(|r| r.map(|r| r.data))
+                })
+                .collect::<std::result::Result<Vec<_>, _>>()?;
+            fs::write(
+                root.join(format!("{label}-durable-events.json")),
+                serde_json::to_vec_pretty(&events)?,
+            )?;
+        }
+    }
+    Ok(())
+}
 fn capture<T: Transport>(
     client: &T,
     surface: Surface,
@@ -405,7 +462,9 @@ fn terminal(home: &Path, csv: &Path, id: &jope_api::ids::RunId) -> Result<String
 pub(super) fn shared_run_surfaces() -> Result<()> {
     let bytes = input()?;
     let (server, spec) = Server::start(&bytes)?;
-    let completed = snapshot(batch_command(server.home.path(), &spec).output()?)?;
+    let output = batch_command(server.home.path(), &spec).output()?;
+    retain_execution(&server.engine, &output, "shared")?;
+    let completed = snapshot(output)?;
     let id = &completed.run_id;
     let mut captures = vec![capture(&server.client, Surface::BatchCli, id)?];
     ensure!(
@@ -476,12 +535,14 @@ pub(super) fn batch_fallback() -> Result<()> {
     let bytes = input()?;
     let (engine, spec) = initialize(home.path(), &bytes)?;
     drop(engine);
-    let completed = snapshot(batch_command(home.path(), &spec).output()?)?;
+    let output = batch_command(home.path(), &spec).output()?;
+    let engine = InProcessEngine::open_with_worker(home.path(), BIN)?;
+    retain_execution(&engine, &output, "batch")?;
+    let completed = snapshot(output)?;
     ensure!(
         !home.path().join("daemon.json").exists(),
         "batch fallback left a daemon"
     );
-    let engine = InProcessEngine::open_with_worker(home.path(), BIN)?;
     let row = engine
         .store()
         .get(&RecordKey::Run(completed.run_id.clone()))?

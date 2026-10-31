@@ -7,7 +7,10 @@ use crate::{
         audit::AuditRowId,
         effort::{BudgetOverrides, Effort as SearchEffort},
         finalize::{FinalizationRequest, Finalizer, Partition},
-        r#loop::{Discovery, HeuristicAdmission, NativeSpace, Plan as SearchPlan, ProcessExecutor},
+        r#loop::{
+            Discovery, HeuristicAdmission, NativeSpace, Plan as SearchPlan, ProcessExecutor,
+            SearchSpace,
+        },
         splits::random_split,
     },
     engine::{EngineActivity, EngineLock},
@@ -60,6 +63,26 @@ struct Prepared {
     holdout: Vec<u8>,
     fit_rows: Vec<AuditRowId>,
     holdout_rows: Vec<AuditRowId>,
+}
+
+/// Establish a bounded native baseline before considering expensive mutations.
+/// The existing research/native starter order remains unchanged.
+struct CpuRunSpace;
+impl SearchSpace for CpuRunSpace {
+    fn canonical(&self, dsl: &str) -> anyhow::Result<String> {
+        NativeSpace.canonical(dsl)
+    }
+    fn seeds(&self) -> anyhow::Result<Vec<String>> {
+        Ok(vec![self.canonical("(pipe X (standardize) (ridge))")?])
+    }
+    fn propose(
+        &self,
+        parents: &[String],
+        count: usize,
+        rng: &mut rand_chacha::ChaCha12Rng,
+    ) -> anyhow::Result<Vec<String>> {
+        NativeSpace.propose(parents, count, rng)
+    }
 }
 
 fn hash(bytes: &[u8]) -> String {
@@ -291,9 +314,11 @@ impl RunService {
         normalized["dry_run"] = json!(false);
         normalized["plan_digest"] = Value::Null;
         let plan_digest = hash(
-            &serde_json::to_vec(&json!({"backend":"cpu-native-rmse/v1", "spec":normalized,
+            &serde_json::to_vec(
+                &json!({"backend":"cpu-ridge-seeded-rmse/v1", "spec":normalized,
             "dataset":dataset.csv, "fit":hash(&fit), "binary":self.binary, "timeout_ms":timeout,
-            "worker_ram":WORKER_RAM, "workers":1, "estimates":estimates}))
+            "worker_ram":WORKER_RAM, "workers":1, "estimates":estimates}),
+            )
             .map_err(io)?,
         );
         if spec.plan_digest.as_ref().is_some_and(|v| v != &plan_digest) {
@@ -424,7 +449,7 @@ impl RunService {
                         )?;
                         while discovery.completed().is_none() {
                             discovery.advance(
-                                &NativeSpace,
+                                &CpuRunSpace,
                                 &HeuristicAdmission,
                                 &executor,
                                 1,
@@ -700,6 +725,15 @@ mod tests {
             body(app.oneshot(request(&stale, "stale-plan")).await.unwrap()).await["code"],
             "PLAN_CHANGED"
         );
+        let list = Request::builder()
+            .uri("/v1/runs?limit=1")
+            .header(header::HOST, "127.0.0.1:31234")
+            .header(header::AUTHORIZATION, format!("Bearer {}", "ab".repeat(32)))
+            .body(Body::empty())
+            .unwrap();
+        let listed = super::tests::app(&engine).oneshot(list).await.unwrap();
+        assert_eq!(listed.status(), StatusCode::OK);
+        assert_eq!(body(listed).await, json!({"runs":[],"next_after":null}));
         assert!(!_directory.path().join("worker-scratch").exists());
     }
 
