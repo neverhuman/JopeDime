@@ -91,8 +91,11 @@ All contrasts use `10,000` paired family-clustered bootstrap draws (`seed=202610
 | `legacy_vs_program_context_gbm` | `-0.163040` | `-0.015741` | `112` (`54.63%`) | `205` | `False` |
 
 ### Verdict & Next Step
-- **Verdict**: **`NO_NEURAL_RESIDUAL_ADVANCE_OVER_GBM_CONTROLS`** (`H70` official decision: **`NO_ADVANCE`**). While replacing `RIDGE_PRIOR10` with zero prior (`+0.032551` $U_4$) and replacing zero prior with the calibrated `GBM_PROG412` prior (`+0.086412` $U_4$, `LCB_adj(m=9) = +0.064984 > +0.001`, `155W / 12T / 38L`) produce large gains inside the neural adapter architecture, `NEURAL_GBM_RESIDUAL` ($U_4 = 1.646411$, `1487.17` Elo) does **not** beat standalone `GBM_PROG412_ONLY` ($U_4 = 1.649797$, $\Delta = -0.003387$, `32/205 = 15.61%` harmed families) or `GBM_PROG412_CTX` ($U_4 = 1.653159$, $\Delta = -0.006748$, `35/205 = 17.07%` harmed families) on Track 2 Verified $U_4$.
-- **Next Step**: Do **not** append any W1 neural contender to `HWM_CANDIDATES.jsonl` and do **not** promote to outer-fold or holdout evaluation. Retain the non-neural `GBM_PROG412_CTX` / `GBM_PROG412_ONLY` priors for downstream waves (`W4`, `W6`, `W7`, `W9`) while diagnosing why the slate-centered `smooth_l1 + 0.1 * KL` residual loss harms `32–35 / 205` families relative to the calibrated tree prior.
+
+> **Errata (2026-10-31, hwave overseer).** The verdict bullet originally quoted stale pre-replay numbers (`+0.064984`, `155W/12T/38L`, `1.653159`, `-0.006748`, `32–35/205`). They are corrected below to match the tables above and `metrics.json`. The verdict (`NO_ADVANCE`) is unchanged.
+
+- **Verdict**: **`NO_NEURAL_RESIDUAL_ADVANCE_OVER_GBM_CONTROLS`** (`H70` official decision: **`NO_ADVANCE`**). While replacing `RIDGE_PRIOR10` with zero prior (`+0.032551` $U_4$) and replacing zero prior with the calibrated `GBM_PROG412` prior (`+0.086412` $U_4$, `LCB_adj(m=9) = +0.033982 > +0.001`, `138W / 0T / 67L`) produce large gains inside the neural adapter architecture, `NEURAL_GBM_RESIDUAL` ($U_4 = 1.646411$, `1487.17` Elo) does **not** beat standalone `GBM_PROG412_ONLY` ($U_4 = 1.649797$, $\Delta = -0.003387$, `26/205 = 12.68%` harmed families) or `GBM_PROG412_CTX` ($U_4 = 1.680321$, $\Delta = -0.033911$, `72/205 = 35.12%` harmed families) on Track 2 Verified $U_4$.
+- **Next Step**: Do **not** append any W1 neural contender to `HWM_CANDIDATES.jsonl` and do **not** promote to outer-fold or holdout evaluation. Retain the non-neural `GBM_PROG412_CTX` / `GBM_PROG412_ONLY` priors for downstream waves (`W4`, `W6`, `W7`, `W9`) while diagnosing why the slate-centered `smooth_l1 + 0.1 * KL` residual loss harms `26/205` (vs `GBM_PROG412_ONLY`) and `72/205` (vs `GBM_PROG412_CTX`) families relative to the calibrated tree prior.
 
 ---
 
