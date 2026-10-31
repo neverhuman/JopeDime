@@ -17,6 +17,7 @@ ARMS = ("sigma001", "sigma003")
 STRICT_MARGIN = 0.001
 BOOTSTRAP_DRAWS = 10_000
 MAX_METRICS_BYTES = 50 * 1024
+DEFAULT_OUTPUT = HERE / "metrics.json"
 
 
 def load(path: Path) -> dict:
@@ -140,7 +141,7 @@ def compact_cell(summary: dict, fold_b: dict, baseline: dict) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("run_root", nargs="?", type=Path, default=Path.home() / "jope-data/h57/h57-wave")
-    parser.add_argument("--output", type=Path, default=ROOT / "docs/research/studies/dope-neural-ranking-20261021/h57/metrics.json")
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args()
     wave = load(args.run_root / "outcomes/wave.json")
     if wave.get("schema") != "jope.h57.outcome-wave/v1" or wave.get("complete") is not True:
