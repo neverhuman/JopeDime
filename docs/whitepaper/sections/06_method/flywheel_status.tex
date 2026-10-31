@@ -8,8 +8,10 @@ checkpoint above. Here an adapter is the trainable adjustment evaluated by
 the admission loop; the utilities alone do not identify its relationship to
 the historical writer and map. Utility denotes the logged scalar score,
 with larger values treated as better in the admission record.
-\TBD{Document the adapter's architecture, score normalization and evaluation
-population before comparing this snapshot with other models.}
+The admission CSV records each round, its candidate and best validation utilities,
+an acceptance flag and a timestamp. Neither CSV records the adapter's
+architecture, score normalization or evaluation population, so we do not
+compare this snapshot with other models.
 
 The admission log contains
 695 consecutive rounds. Four rows are marked accepted, but only two strictly
