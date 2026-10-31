@@ -215,3 +215,43 @@ def test_prior_composition_overflow_refused():
     p = torch.full((1, 2), 1e308, dtype=torch.float64)
     with pytest.raises(ValueError):
         compose_cost(p, p)
+
+
+@pytest.mark.parametrize("arm", ["a", "b", "c", "d"])
+@pytest.mark.parametrize("dtype", [torch.float32, torch.float64])
+def test_supported_cpu_dtypes_have_finite_backward(arm, dtype):
+    prior = torch.zeros((1, 2), dtype=dtype)
+    delta = torch.zeros_like(prior, requires_grad=True)
+    heads = {
+        k: torch.zeros_like(prior, requires_grad=True)
+        for k in ("quality", "residual", "gate")
+    }
+    result = w3_loss(
+        arm, prior, delta, [[row(0.2), row(0.5)]], enabled=True, heads=heads
+    )
+    result["loss"].backward()
+    grads = [h.grad for h in heads.values()] if arm == "d" else [delta.grad]
+    assert all(g is not None and torch.isfinite(g).all() for g in grads)
+
+
+@pytest.mark.parametrize("arm", ["a", "d"])
+@pytest.mark.parametrize("dtype", [torch.float16, torch.bfloat16])
+def test_unsupported_cpu_dtypes_refused_before_loss(arm, dtype):
+    prior = torch.zeros((1, 2), dtype=dtype)
+    delta = torch.zeros_like(prior, requires_grad=True)
+    heads = {
+        k: torch.zeros_like(prior, requires_grad=True)
+        for k in ("quality", "residual", "gate")
+    }
+    with pytest.raises(ValueError, match="CPU float32 or float64 tensors required"):
+        w3_loss(arm, prior, delta, [[row(0.2), row(0.5)]], enabled=True, heads=heads)
+
+
+def test_unsupported_auxiliary_head_dtype_refused():
+    prior, delta = tensors(2)
+    heads = {
+        k: torch.zeros((1, 2), dtype=torch.float16, requires_grad=True)
+        for k in ("quality", "residual", "gate")
+    }
+    with pytest.raises(ValueError, match="CPU float32 or float64 tensors required"):
+        w3_loss("d", prior, delta, [[row(0.2), row(0.5)]], enabled=True, heads=heads)

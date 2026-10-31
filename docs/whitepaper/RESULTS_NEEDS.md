@@ -1,6 +1,6 @@
 # What Results still needs
 
-A checklist for Jepson and the team. Status: `main` after the owner decisions of `wp_opus_t0352` and the licence wording of `wp_opus_layout_t0510`, 2026-10-31.
+A checklist for Jepson and the team. Status: `main` after the owner decisions of `wp_opus_t0352`, the licence wording of `wp_opus_layout_t0510` and the negative-result rows of `wp_t0700` and `wp_t0715`, 2026-10-31.
 
 The compiled paper has **28 `\TBD` markers**:
 - 25 in Results (§7);
@@ -30,11 +30,11 @@ Source lines are as of upgrade pass 24 (`wp_opus_layout_t0540`), which moved Tab
 | R3 | §7.1 contract ([:65](sections/07_results.tex#L65)) | The final problem inventory, dataset identities, row splits, family assignments and exclusions, component provenance, evaluator, checkpoint, seeds, task metrics and failure accounting. | Frozen evaluation contract |
 | R4 | §7.2 effect of training ([:81](sections/07_results.tex#L81)) | The matched first-proposal comparison: the trained writer against the frozen reference writer, with paired first draws under predeclared seeds and every draw reported. Also source-bound evidence of optimizer updates and parameter changes. | Paired first-proposal record |
 | R5–R6 | Table 6 ([:107–108](sections/07_results.tex#L107)) | A paired evaluation with uncertainty for each receipted comparator, including ties, failures and exclusions: the frozen algorithm designed by `claude-opus-5-5` (`Opus5p5_Extra`) and the one designed by `gpt-6-astra-wm`, as its session reported (`GPT6_Astra_Max`). Their receipts are in `crates/jope-bench`. | Fixed-method comparison record |
-| R7 | Figure 10 ([:115](sections/07_results.tex#L115)) | The leaderboard: evaluated methods, paired outcomes, rating protocol and uncertainty. Elo summarizes a stated comparison population and does not replace paired results. | Fixed-method comparison record |
+| R7 | Figure 11 ([:115](sections/07_results.tex#L115)) | The leaderboard: evaluated methods, paired outcomes, rating protocol and uncertainty. Elo summarizes a stated comparison population and does not replace paired results. | Fixed-method comparison record |
 | R8 | §7.4 cost of attempts ([:131](sections/07_results.tex#L131)) | Attempt curves with matched budgets, repeated seeds and uncertainty. | Attempt and cost record |
-| R9 | Figure 11 ([:137](sections/07_results.tex#L137)) | Performance against attempts and compute, including failed attempts and unreached targets. | Attempt and cost record |
-| R10 | Figure 12 ([:146](sections/07_results.tex#L146)) | Pilot cost: per-stage failure shares and cost per verified win. | Attempt and cost record |
-| R11 | Figure 12 caption ([:152](sections/07_results.tex#L152)) | Pilot data, seeds and family-level uncertainty. Settings with no verified win are named, not given a finite cost per win. | Attempt and cost record |
+| R9 | Figure 12 ([:137](sections/07_results.tex#L137)) | Performance against attempts and compute, including failed attempts and unreached targets. | Attempt and cost record |
+| R10 | Figure 13 ([:146](sections/07_results.tex#L146)) | Pilot cost: per-stage failure shares and cost per verified win. | Attempt and cost record |
+| R11 | Figure 13 caption ([:152](sections/07_results.tex#L152)) | Pilot data, seeds and family-level uncertainty. Settings with no verified win are named, not given a finite cost per win. | Attempt and cost record |
 | R12 | §7.5 map ([:163](sections/07_results.tex#L163)) | Problem-similarity and program-only-control evaluations, on data disjoint from fitting the map. | Map, example and diagnostic records |
 | R13 | §7.5 map ([:171](sections/07_results.tex#L171)) | A **team decision**: implement a route by which the map changes training, or limit the map study to ranking. In the described checkpoint the map neither conditions nor screens the writer's draw. | Map, example and diagnostic records |
 | R14–R16 | Table 7 ([:183–185](sections/07_results.tex#L183)) | A held-out ranking study; a matched causal ablation, which presupposes the training route in R13; and a failure-class comparison. | Map, example and diagnostic records |
@@ -55,6 +55,16 @@ Source lines are as of upgrade pass 24 (`wp_opus_layout_t0540`), which moved Tab
 | # | Where | Marker asks for | Notes |
 |---|---|---|---|
 | P1 | §6.8 ([06_method/flywheel_status.tex:78](sections/06_method/flywheel_status.tex#L78)) | The retained snapshot bound to the exact loop source, adapter, candidate pools, revealed-history inputs and utility normalization. | Concerns the §6.8 development record (the retained adapter-loop snapshot), not the §7 comparisons. |
+
+## Negative results the team must report (no marker yet)
+
+These registered development studies ended with negative verdicts. The paper has no `\TBD` marker for them, so they are not counted in the 28 above. The team supplies their numbers, and an owner decision places them; they would fit with the historical diagnostics of §7.7. All three are training-set (`DL-Train`) studies of proposal ranking, not untouched first-proposal tests on unseen families, so none can fill R4. This file records no numbers for them.
+
+| # | Study | Registered verdict | Receipt | The team must supply | Status |
+|---|---|---|---|---|---|
+| N1 | W6 cross-family outcome transfer (H101) | `KILL_NO_ADVANCE`: four of five registered gates failed (advance over current retrieval, beating a context-shuffle placebo, surviving an unseen-template proxy, and advancing on prospective new programs); only the advance over the generic prior passed, as a diagnostic | `research/flywheel_selfplay/h101_w6_proposer_transfer_prep/` (`README.md`, `metrics.json`), merged in #983 | Each registered gate contrast with its family-level effect and uncertainty; family harm rates; data scope and exclusions; source commit and receipt hashes | On `main`; citable once the numbers are bound to the receipt |
+| N2 | W1 prior replacement and neural residual (H108) | `NO_ADVANCE` (official gate decision; study verdict `NO_NEURAL_RESIDUAL_ADVANCE_OVER_GBM_CONTROLS`) | `research/flywheel_selfplay/h108_w1_prior_residual/` (`README.md`, `metrics.json`) | The gate contrasts against the tree-prior controls with family-level uncertainty; the reconciled compute budget; data scope; source commit and receipt hashes | Merged in #1036 (13:00Z); a post-merge red-team BLOCK on its GPU-lock custody claim and GPU-seconds total was corrected in #1042 (`7f2d5de21`): Phases 1–3 shared-lock custody is UNVERIFIED and the reconciled budget is 865.99 GPU-seconds. The reviewers state that the verdict stands; cite it with that disclosure. |
+| N3 | W6 cross-family transfer on new families (H118, scored run of the H115 preregistration) | `NO_ADVANCE`: conditioning the proposal scorer on the new family's features added nothing, and the run failed its context-shuffle placebo and unseen-template checks, so W6's context-transfer hypothesis is rejected under its own kill rule. Its secondary contrast, the generic scorer against a random baseline on families outside the training roster, passed its gate. | `research/flywheel_selfplay/h118_w6_xfamily_scored/` (`README.md`, `metrics.json`), merged in #1041 | The primary and secondary contrasts with family-level uncertainty, tie counts and harm rates; the panel (one context per family, outside the training roster); data scope; source commit and receipt hashes. Report the passing secondary contrast with the same care as the failed primary. | On `main`; citable once the numbers are bound to the receipt |
 
 ## Evidence that exists but cannot fill these markers
 
@@ -98,7 +108,7 @@ Follow the evidence-handoff table in `LAYOUT_REDTEAM.md`:
 
 ## Keeping this file current
 
-Remove a row in the same PR that removes its `\TBD`. The row count must match the compiled count:
+Remove a row in the same PR that removes its `\TBD`. The marker rows (R, D and P) must match the compiled count; the N rows have no marker:
 
 ```sh
 cd docs/whitepaper && make pdf && pdftotext eurekazero_whitepaper.pdf - | grep -o 'TBD' | wc -l   # 28 today

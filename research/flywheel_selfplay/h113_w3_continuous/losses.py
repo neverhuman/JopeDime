@@ -106,9 +106,9 @@ def _tensor(value, shape=None):
     if (
         not isinstance(value, torch.Tensor)
         or value.device.type != "cpu"
-        or not value.is_floating_point()
+        or value.dtype not in (torch.float32, torch.float64)
     ):
-        raise ValueError("CPU floating tensors required")
+        raise ValueError("CPU float32 or float64 tensors required")
     if (
         value.ndim != 2
         or (shape is not None and value.shape != shape)

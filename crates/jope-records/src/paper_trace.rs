@@ -2075,6 +2075,12 @@ The 26 workspace members, by directory.
     #[test]
     fn the_committed_documents_agree() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        if !root.join(".git").exists() {
+            eprintln!(
+                "skipping committed-document check: requires a Git checkout; .git metadata is absent"
+            );
+            return;
+        }
         let (report, ok) = check(&root, false, false).expect("readable");
         assert!(ok, "{report}");
 

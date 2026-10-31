@@ -22,10 +22,10 @@ OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 CUDA_VISIBLE_DEVICES=
 ```
 
 Call `w3_loss` explicitly with `enabled=True` only for an approved CPU consumer;
-the module has no training entry point. Tests use synthetic tensors and only
+the module accepts only CPU float32/float64 tensors and has no training entry point. Tests use synthetic tensors and only
 read the H58 function's source for the parity comparison. The returned loss
 cannot authenticate caller-supplied rows. All dataset, checkpoint, optimizer,
 calibration, matched-control-model and runtime integration work remains outside
 this preparation. No result or W3 advance is claimed.
 
-[validation.json](validation.json) records 32 passing synthetic tests, four prior-binding shape controls and 60 loss probes across the 15 fold/seed assignments on all four hosts. No optimiser step or scientific evaluation was performed. Initial and final probe CPU are both included; other overhead is unmeasured. H108 numerical result review remains pending until its real result manifest is published.
+[validation.json](validation.json) records 32 passing synthetic tests, four prior-binding shape controls and 60 loss probes across the 15 fold/seed assignments on all four hosts. No optimiser step or scientific evaluation was performed. Initial and final probe CPU are both included; other overhead is unmeasured. H108 completed with NO_ADVANCE and no accepted W1 winner. W3 stays blocked pending an explicit prior disposition. The historical 32-test receipt is retained; the t0800 dtype regression suite now has 45 cases.

@@ -10,7 +10,7 @@ explicitly pending. No native fits, optimizer updates or GPU work occur here.
 
 ## Registered panel and inputs
 
-Keep the existing W3 panel: r882 continuity; a matched current SmoothL1/KL;
+Keep the existing W3 panel: r882 continuity; a matched revealed-masked H58-B SmoothL1/KL;
 b matched H58-D; c top-resolved listwise; d quality/feasibility heads; and
 width/compute-matched scalar and shuffled-auxiliary controls for d. The two
 primaries are **c−b and d−a**, not a best-of-four selection. Seeds 701–703,
@@ -42,7 +42,7 @@ W3 outcome export is admitted or read in this preparation.
 
 [`losses.py`](losses.py) exports `w3_loss(..., enabled=False)`. Disabled calls
 return `None` without touching inputs or importing Torch. An explicitly enabled
-call accepts CPU floating tensors and a rectangular list of already-admitted
+call accepts CPU float32 or float64 tensors and a rectangular list of already-admitted
 training-slate rows. GPU tensors are refused. There is no optimizer, checkpoint,
 network client, dataset loader, model construction or execution command.
 
@@ -102,7 +102,8 @@ versions/bytes, fold-excluded dependencies, matching history/normalization, sour
 and weights, and the result review before binding. Keep `w1_prior_binding=null`
 until this exists. A search-only W1 claim must not silently become a legacy W3
 winner; record the explicit compatibility disposition. No checkpoint is loaded
-here and no fallback W1 arm is selected while H108 remains pending.
+here. H108 completed with NO_ADVANCE and no accepted W1 winner; no fallback
+arm is selected. W3 remains blocked pending an explicit prior disposition.
 
 ## Readout and admission
 

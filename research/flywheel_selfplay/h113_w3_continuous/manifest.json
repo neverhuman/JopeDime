@@ -346,7 +346,7 @@
   },
   "h59_disposition": "COMPLETED_NO_ADMISSION; no silent recipe change",
   "loss_enabled_by_default": false,
-  "losses_sha256": "958b4c016762c215f5f7d681e874d8751821f76238b5383f1bf6c58d88a1dfae",
+  "losses_sha256": "85700968026710f8b8a9741c480e532e3c8a7596e89bd936551b439cc34f3860",
   "metrics": {
     "Elo": null,
     "U4": null,
@@ -354,7 +354,7 @@
   },
   "planned_trained_cells": 90,
   "planned_updates": 3600,
-  "prereg_sha256": "c18ddafcc69ce73aa8b1d4633c422ed557c6ddcad0b994e677de6bebe95271bd",
+  "prereg_sha256": "057547430ae02dcd9aa17d95b0c2888368e81e4ed017503abdc51fd32883ef1d",
   "primary_contrasts": [
     "c-b",
     "d-a"
@@ -393,6 +393,6 @@
     "d_shuffled"
   ],
   "w1_prior_binding": null,
-  "w1_redteam_status": "No published H108 result objects at initial check; no numerical verdict claimed",
+  "w1_redteam_status": "H108 completed NO_ADVANCE; no accepted W1 winner. W3 remains blocked pending explicit prior disposition.",
   "wave": "W3"
 }
