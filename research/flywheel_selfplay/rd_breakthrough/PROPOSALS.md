@@ -2,11 +2,17 @@
 
 **Phase C consolidated proposal — 2026-10-31. [ASTRA] synthesis; [OPUS]/[ARGON] peer critique and evidence.**
 Source investigation and source-line references are pinned to `ca4c64b36c38b9c3e3f450b09c93896c50d98ee0`. A later main-source readback found an opt-in strict-margin admission mode; default tie acceptance remains, and live activation was not inspected. See [source refresh](astra/CODE_TRUTH.md#source-refresh-before-publication).
-This is a research proposal, not a launch, serving promotion, or measured neural breakthrough.
+Execution priority is updated by the owner-directed t2058 ruling below. Authorization and measured results remain separate; no serving promotion or neural breakthrough is established here.
 
-The highest-value next step is to establish a strong, correctly conditioned learner before spending more rounds on the existing admission rule. Start with a program-only prior and a controlled prior replacement, then isolate slate dependence and outcome-target design. Develop search improvements against that baseline. Finish with a crossed experiment that demonstrates that learned guidance produces better training data and that those data improve subsequent guidance.
+Run the W2 slate-consistency and W8 training-resplit diagnostics first, in parallel on CPU. Their results determine the scoring and stability assumptions inherited by later waves. Prepare W1's prior, folds, manifests and runner on CPU now; W1 is the first GPU wave, queued immediately after H57 and fused C2 under `~/jope_plan/qualification.lock`. Then execute W3, W4, W6, W5, W7 and W9 in that order, subject to their evidence and provenance gates. Wave IDs stay fixed.
 
-The nine waves below are ranked by expected information and plausible leverage, not by an estimated probability of success. GPU figures are proposed ceilings for later approval, not measured costs or an authorization to run. No wave changes the frozen DOPE checksum `c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814`.
+This order supersedes the original Phase C ranking. Source: `~/nudges/rd_wave_priority_t2058.md`, SHA256 `9ef362d10434ac7b211848202ec3ebadf2302bd662f5eb29c9a91817edfc8135` (VP-eng ruling for Jepson, executed on 2026-10-31). Resource ceilings are not measured costs or a guarantee that a wave will pass. No wave changes the frozen DOPE checksum `c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814`.
+
+Ownership under t2058:
+
+- **rd_opus:** run W2 and W8's CPU diagnostics now; apply W2's kill rule and retain W8's limit of 2,400 total fits. The parallel diagnostics share at most four workers, use `nice -n 15`, and keep host utilization at or below 85%.
+- **rd_argon:** prepare W1's GBM prior, fold manifests and runner on CPU now for the first GPU slot after H57 and fused C2. W1 retains its 1.5 GPU-hour ceiling and requires the qualification lock throughout GPU work.
+- **rd_astra:** publish this order in one ready docs PR, excluding `FINDINGS.md.lock`. Each owner posts results and receipt locations to [FINDINGS section 7](FINDINGS.md#7-log-append-only); authorization or preparation is not reported as an executed result.
 
 ## Evidence that changes the plan
 
@@ -67,21 +73,25 @@ Every numeric row needs program/context/table SHA, family/alias component, origi
 
 All nine waves have **no intended holdout exposure**, conditional on this admission preflight. Unknown closure means refusal, not a “none” assertion. Same-family sibling views are excluded: another view's training table may include the target view's excluded rows, and sibling-selected programs can carry that information. W8 instead resplits exactly the original admitted target training rows. Broader sibling transfer requires a separately authorized row-intersection/regeneration contract.
 
-## Ranked waves
+## Execution order under t2058
 
-| Rank | Wave | Main question | Proposed GPU ceiling | Native-fit ceiling | Engineering estimate |
+| Priority | Wave | Main question / dependency | GPU ceiling | Native-fit ceiling | Engineering estimate |
 |---|---|---|---:|---:|---:|
-| 1 | W1 — prior replacement and neural residual | Can a useful prior expose incremental context learning? | 1.5 h | 0 | 12–20 h |
-| 2 | W2 — slate-consistent scoring | Do irrelevant distractors change useful rankings? | 1.5 h | 0 | 8–16 h |
-| 3 | W3 — continuous outcomes and top-resolved loss | Can the learner distinguish useful improvements without flattening failure information? | 2 h | 0 | 16–24 h |
-| 4 | W4 — active reveal within four fits | Can observations be selected for their next-decision value? | 1 h | 2,400 | 16–24 h |
-| 5 | W5 — parent-child value and bounded lookahead | Can the model learn which edit is worth executing? | 2 h | 4,800 including screens | 24–40 h |
-| 6 | W6 — cross-family outcome transfer | Do recurring programs and structural neighbors transfer beyond a generic prior? | 1.5 h | 1,200 | 16–32 h |
-| 7 | W7 — informative acquisition and diverse replay | Does a richer label stream improve the next model, rather than just the archive? | 2 h | 4,800 | 24–40 h |
-| 8 | W8 — robust training-cut outcomes | Are marginal HWM improvements stable enough to teach? | 0 h diagnostic; 1 h conditional | 2,400 | 12–24 h |
+| 1 | W2 — slate-consistency diagnostic | Run now; determine whether distractor-induced reversals affect the contract inherited by later waves. Apply the kill rule. | 0 h diagnostic | 0 | 8–16 h |
+| 2 | W8 — training-resplit diagnostic | Run now in parallel with W2; measure outcome stability to inform subsequent gates. | 0 h diagnostic | 2,400 | 12–24 h |
+| 3 | W1 — prior replacement and neural residual | CPU prep now; first GPU wave after H57 and fused C2, under the lock. | 1.5 h | 0 | 12–20 h |
+| 4 | W3 — continuous outcomes and top-resolved loss | Build on the W1 winner. | 2 h | 0 | 16–24 h |
+| 5 | W4 — active reveal within four fits | Test two-plus-two acquisition at the same four-observation budget. | 1 h | 2,400 | 16–24 h |
+| 6 | W6 — cross-family outcome transfer | Test transfer beyond the established generic prior. | 1.5 h | 1,200 | 16–32 h |
+| 7 | W5 — parent-child value and bounded lookahead | Start only after the parent/child and strat300 provenance checks pass. | 2 h | 4,800 including screens | 24–40 h |
+| 8 | W7 — informative acquisition and diverse replay | Requires a strong learner from the earlier learning waves. | 2 h | 4,800 | 24–40 h |
 | 9 | W9 — causal flywheel closeout | Does learned guidance create data that improve subsequent guidance? | 4 h | 9,600 | 24–40 h |
 
-These are **conditional ceilings**, not an additive campaign grant. Each native wave also stops at four CPU-hours, ≤4 workers, nice 15 and host utilization ≤85%; a timeout is an observed failure/cost, not a replacement sample. GPU use waits for explicit acceptance and the host's qualification-lock protocol; this research task launches none. Initial recommendation: approve only W1's CPU diagnostic and its bounded follow-up after reviewing the final protocol. W2's zero-fit diagnostic can be prepared alongside it. Later waves depend on evidence, not automatic queue advancement.
+The t2058 order authorizes the immediate CPU diagnostics and W1 preparation described above; it supersedes the earlier recommendation to start only with W1 preparation. Each native wave retains its four CPU-hour stop, ≤4 workers, nice 15 and host utilization ≤85%; a timeout is an observed failure/cost, not a replacement sample. GPU work requires holding `~/jope_plan/qualification.lock` and respecting the H57 → fused C2 → W1 queue. Later waves retain the common advance gate and their stated dependencies; the schedule does not declare them passed. W9 runs last using frozen winning settings. W2's proposed ≤1.5 GPU-hour training follow-up and W8's proposed ≤1 GPU-hour reliability head are not part of the immediate zero-GPU diagnostics and do not preempt W1's first GPU slot.
+
+Use training data only, preserve original labels and row closure, keep DOPE frozen, and report family Elo plus raw `val_reg_inner` under the common contract. W8 informs the r882 noise-outlier/gating question through training-cut stability; those resplits alone do not establish selection bias on the repeatedly used dev panel or authorize new dev reads.
+
+The detailed specifications below remain indexed by their stable wave IDs rather than execution priority.
 
 ### W1 — Prior replacement and neural residual
 
@@ -95,8 +105,8 @@ These are **conditional ceilings**, not an additive campaign grant. Each native 
 ### W2 — Slate-consistent scoring
 
 - **Hypothesis:** varying the distractor slate changes pairwise ordering enough to impair training-to-search transfer.
-- **Arms:** r882 continuity and the matched W1 control; compare current candidate-slate mean against a fixed reference derived only from revealed anchors. All candidate features and history remain identical. A mixture-of-slate-sizes training arm is deferred unless the first intervention identifies a real mechanism.
-- **Protocol:** first, on 100 hash-selected training contexts, fix candidate pairs and revealed IDs, then vary real distractors over sizes 12, 20, 192 and full-pool. Record pairwise rank reversals and full-choice regret, separately from harmless common output shifts. Freeze the diagnostic sampling seed 701. Only if reversals occur, train three seeds/five folds for 40 matched updates; changed parameter count is zero.
+- **Arms:** the immediate CPU diagnostic uses frozen r882; compare current candidate-slate mean against a fixed reference derived only from revealed anchors. It does not wait for a W1-trained control. All candidate features and history remain identical. A later training comparison uses the matched W1 control; a mixture-of-slate-sizes arm is deferred unless the first intervention identifies a real mechanism.
+- **Protocol:** first, on 100 hash-selected training contexts, fix candidate pairs and revealed IDs, then vary real distractors over sizes 12, 20, 192 and full-pool. Record pairwise rank reversals and full-choice regret, separately from harmless common output shifts. Freeze the diagnostic sampling seed 701. If the real pair order is invariant, stop this mechanism before training and record the kill result. If reversals occur, disposition the scoring contract before later waves use it; do not carry the diagnosed mismatch forward silently. The proposed three-seed/five-fold, 40-update training follow-up changes no parameter count and remains outside the immediate CPU diagnostic and W1's first GPU slot.
 - **Metrics / success / kill:** advance with ≥50% reduction in distractor-induced reversals **and** the common utility/Elo gate over the matched control. If the real pair order is already invariant, stop before training. If stability improves without better decisions, record an invariance result, not a breakthrough.
 - **Data / budget:** same admitted train pools, no S3 outcome import and no native fits; 0 GPU diagnostic, ≤1.5 GPU-h follow-up. No holdout payload is needed.
 - **Support:** I-A1, A-G10; H58's reveal repair does not isolate nonlinear slate centering.
@@ -176,6 +186,6 @@ These are **conditional ceilings**, not an additive campaign grant. Each native 
 
 This document is the decision surface; [FINDINGS](FINDINGS.md) preserves the team's append-only debate. [Code truth](astra/CODE_TRUTH.md) and [S3 receipts](astra/S3_RECEIPTS.md) retain ASTRA's source and inventory evidence. [OPUS evidence](opus/EVIDENCE.md) and [ARGON evidence](argon/EVIDENCE.md) retain probe transcripts and their corrections. No runtime implementation, model, dataset or raw scratch output is part of the docs PR.
 
-Peer dispositions and their corrections are retained in FINDINGS. W1 incorporates OPUS's endpoint and sensitivity-pilot recommendations within the existing cost ceiling; ARGON's algebra and summary corrections are explicit. [Validation receipt](astra/VALIDATION.md) records targeted document checks and the exact-head evidence location. Full training/build qualification is not claimed. This delivery opens one PR for review and stops; it does not merge or launch a wave.
+Peer dispositions and their corrections are retained in FINDINGS. W1 incorporates OPUS's endpoint and sensitivity-pilot recommendations within the existing cost ceiling; ARGON's algebra and summary corrections are explicit. [Validation receipt](astra/VALIDATION.md) records the original Phase C document checks. This t2058 delivery is ASTRA's ready docs PR for the owner-directed order; OPUS and ARGON execute their separately assigned diagnostics/preparation and post receipts in section 7. A priority change or completed document check is not training/build qualification or a scientific result.
 
 A separately owned whitepaper follow-up should describe the empirical rejection distribution and the hash-history best-known baseline, with each evaluation contract named. Do not subtract the chronological-history floor from an old r882 score. The paper's fixed-look/alpha-spending commitment (`docs/paper/TECHNICAL_WRITEUP.md:765` at the investigation SHA) is a future serving-design requirement, not a guarantee supplied by the current gate. The sibling-pair sign agreement in GT-O14 motivates a W8 sensitivity scenario; it is not a calibrated selected-promotion replication rate or a license to read sibling outcomes during a target evaluation.
