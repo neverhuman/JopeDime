@@ -63,9 +63,13 @@ fn execute<T: Transport>(
         };
     let key = crate::common::resolve_idempotency_key(idempotency_key);
     crate::common::announce_generated_key(idempotency_key, &key)?;
-    let result = transport
-        .run_control(&id, &body, Some(&key))
-        .context("control run")?;
+    let result: jope_api::RunSnapshot = (|| {
+        let request = jope_client::Request::new(8, 0, &[("id", &id.to_string())])?
+            .key(Some(&key))?
+            .json(&body)?;
+        transport.execute(request)?.json()
+    })()
+    .context("control run")?;
     serde_json::to_value(result).context("serialize control response")
 }
 
