@@ -28,8 +28,10 @@ protocols, separately from the final comparisons below.}
 \subsection{Evaluation contract}\label{sub:results-protocol}
 
 Freeze the writer, permitted task inputs, output support, decoding rule and
-budgets before opening final outcomes. Separate unseen problem families from
-training and development, and report which task types were actually tested.
+budgets before opening final outcomes. Pin dataset versions and content
+hashes, row splits and family assignments. Separate unseen problem
+families from training and development, and report which task types were
+actually tested.
 Report known training and pretraining exposure for the writer, encoders
 and learned comparators, with unresolved provenance marked explicitly.
 Bound unseen-family claims to the exclusions actually established.
@@ -38,8 +40,9 @@ executions remain in the denominator. Report paired results and uncertainty
 at the family level, alongside encoding, generation, fitting and prediction
 costs. Disclose any internal model or hyperparameter selection in the
 emitted procedure, even when the writer submits only one outer candidate.
-\TBD{Document the final problem inventory, family exclusions, component
-provenance, evaluator, checkpoint, seeds, task metrics and failure accounting.}
+\TBD{Document the final problem inventory, dataset identities, row splits,
+family assignments and exclusions, component provenance, evaluator,
+checkpoint, seeds, task metrics and failure accounting.}
 
 \subsection{The effect of training}\label{sub:results-learning}
 
@@ -96,8 +99,10 @@ comparison; no winner is assumed.
 \subsection{The cost of more attempts}\label{sub:results-search}
 
 Compare the single proposal with agents allowed successive attempts and
-development feedback. Keep final outcomes unavailable to those agents and
-count complete candidates, repairs and all task-time computation. Plot
+development feedback. Keep final outcomes unavailable to those agents.
+Count every candidate attempt, including incomplete or invalid outputs
+and failed executions; a repair that emits a revised candidate is another
+attempt. Charge all task-time computation. Plot
 performance against both attempts and cost; if an agent does not reach a
 reference performance within its budget, report that limit.
 \TBD{Supply attempt curves, matched budgets, repeated seeds and uncertainty.}

@@ -2695,6 +2695,12 @@
         "fitting"
       ]
     },
+    "target:jope-service/test/no_gp_leak": {
+      "role": "regression",
+      "subsystems": [
+        "evidence"
+      ]
+    },
     "target:jope-appliance/test/e2e": {
       "role": "regression",
       "subsystems": [
