@@ -20,9 +20,10 @@ the ultimate goal (checkmate)'' \citep{shannon1950chess}, and checkers showed
 that a program could improve by playing itself \citep{samuel1959checkers}.
 Together these properties support repeated, reproducible evaluation. People
 scale judgment the same way, through prizes, leaderboards and the common task
-framework's ``scoring referee'' (\cite{donoho2017fifty}; \cref{sec:road}).
+framework's ``scoring referee'' \citep{donoho2017fifty} (\cref{sec:road}).
 Invention has the first three properties once the problem and the solution are
-written down; cheap replay is a question of cost (\cref{sec:price}).
+written down, within the limits of \cref{sub:game-played}; cheap replay is a
+question of cost (\cref{sec:price}).
 
 % ----------------------------------------------------------------------------
 \subsection{The rules}\label{sub:game-rules}
@@ -34,8 +35,9 @@ the referee keeps the incumbent as a separate comparison standard
 that writer input.
 
 \begin{table}[!htb]
-  \caption{\textbf{Invention has every part of a board game, except cheap
-  moves.} Go and the innovation game, element by element. Go's game length is
+  \caption{\textbf{Go and the innovation game, element by element.}
+  Moves differ most: Go's are cheap, while each program is costly to judge
+  (\cref{sub:game-played}). Go's game length is
   from \citet{silver2016mastering}.}
   \label{tab:go-vs-innovation}
   \centering
@@ -105,7 +107,7 @@ A useful board should preserve distinctions relevant to algorithm choice,
 remain stable under irrelevant reorderings, exclude final evaluation
 information and have a measured cost. These are requirements to test, not
 properties guaranteed by naming an encoder. Whoever writes the board
-writes the aim. People still choose the problem, and the machine learns to
+writes the aim. People still choose the problem, and the machine is trained to
 answer it.
 
 The move is where invention gets its language: one program in a typed language
@@ -121,7 +123,7 @@ does not establish agreement on other inputs (\cref{sub:method-move}). The
 language bounds what can be expressed; changing its primitives changes
 that space \citep{boden1990creative}. The reference grammar also bounds
 composition depth. Structural constraints can prevent invalid programs; their effect on useful proposal
-quality must be measured (\cref{sec:price}).
+quality must be measured (\cref{sec:results}).
 
 % ----------------------------------------------------------------------------
 \subsection{The referee and the opponent}\label{sub:game-referee}
@@ -142,12 +144,13 @@ by strict improvement on five inner folds. A retrained writer has a separate
 admission test on 16 held-out cuts with three seeds each
 (\cref{sub:method-selfplay}). These are distinct ratchets, as AlphaGo Zero's
 network admission was distinct from choosing a move during play
-\citep{silver2017mastering}. The ratchet also
-makes this self-play.
+\citep{silver2017mastering}. Together the two ratchets make this self-play:
+the player keeps facing a standard often set by its own earlier play.
 Subtracting the incumbent's score does not change which move is best; what
 matters is what promotion changes. It raises the bar, turns yesterday's winners
-into today's also-rans and so into hard negatives for the problem--program map
-(\cref{sec:method}), and shifts which problems are worth playing.
+into today's also-rans and shifts which problems are worth playing. The
+learning targets themselves use each program's rank within its scored list
+(\cref{sub:method-map,sub:method-selfplay}).
 
 % ----------------------------------------------------------------------------
 \subsection{One game, many boards}\label{sub:game-boards}
@@ -168,7 +171,7 @@ multiplication and AlphaDev for sorting
 \citep{fawzi2022alphatensor,mankowitz2023alphadev}. AlphaZero used one algorithm
 for three games and trained a separate network for each
 \citep{silver2018general}. Here the problem is an input on the board, so one
-player can learn many boards.
+player can, in principle, learn many boards.
 
 \begin{keyidea}
 A reliable referee makes a discipline a candidate for this game; transfer
@@ -178,7 +181,7 @@ to that discipline still needs evidence.
 % ----------------------------------------------------------------------------
 \subsection{The analogy's limits}\label{sub:game-played}
 
-A worked game, chosen by a rule fixed before inspection, is reported with
+A worked game, chosen by a rule fixed before inspection, is to be reported with
 the results (\cref{sub:results-failures}). The analogy breaks in four places. \textbf{The referee is noisy}: picking a
 winner by a noisy validation score biases that score upward
 \citep{cawley2010overfitting}. Strict numerical improvement alone does not

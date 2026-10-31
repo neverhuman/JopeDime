@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
-"""H59 paired loss-ablation runner; execution is intentionally not invoked here."""
+"""H59 paired loss-ablation runner and CLI cell entrypoint (GPU cells require qualification.lock)."""
 from __future__ import annotations
 
+import argparse
 from dataclasses import dataclass
 import hashlib
 import importlib.util
+import json
+import os
 import random
+import shutil
+import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Callable, Iterable, Mapping
 
@@ -16,7 +22,13 @@ import torch.nn.functional as F
 
 ROOT = Path(__file__).resolve().parents[3]
 H55_PATH = ROOT / "research/flywheel_selfplay/h55/runner.py"
+H48_PATH = ROOT / "research/flywheel_selfplay/h48/run.py"
+H49_SCORE_PATH = ROOT / "research/flywheel_selfplay/h49/score.py"
 ELO_PATH = ROOT / "python/src/jope/north_star/elo_tracker.py"
+DEFAULT_INPUT = Path.home() / "jope-data/h50/input"
+DEFAULT_CHECKPOINT = Path.home() / "jope-data/h51/ckpt/round-882.pt"
+DEFAULT_RUN_ROOT = Path.home() / "jope-data/h59/h59-wave"
+
 DOPE_SHA = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
 R882_SHA = "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
 MANIFEST_SHA = "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
@@ -38,21 +50,84 @@ SCALE_FLOOR = 0.05
 BOOTSTRAP_DRAWS = 10_000
 BOOTSTRAP_SEED = 59_000
 ADMISSION_LCB = 0.001
+H61_NULL_MARGIN_M = 0.001546
 MAX_HARM_FRACTION = 0.10
 HARM_THRESHOLD = -0.01
+R882_HARNESS_UTILITY = 1.1536152769912449
+MIN_DISK_FREE_BYTES = 1024**3
+WRITER_MAX_DISK_USED_PERCENT = 95.0
 
 
-def prepare_training(input_dir: Path, checkpoint: Path, device: torch.device) -> dict:
-    """Reuse H55's pinned metadata, fold, checkpoint and fold-A loader contract."""
+def check_writer_disk_budget(statvfs_fn: Callable = os.statvfs) -> dict[str, float | int]:
+    """Enforce writer guard (< 95.0% statvfs used and >= 1 GiB available) before writing cell artifacts."""
+    stats = statvfs_fn("/")
+    total = int(stats.f_blocks * stats.f_frsize)
+    avail = int(stats.f_bavail * stats.f_frsize)
+    used_pct = 100.0 * (stats.f_blocks - stats.f_bavail) / stats.f_blocks if stats.f_blocks else 100.0
+    if avail < MIN_DISK_FREE_BYTES or used_pct >= WRITER_MAX_DISK_USED_PERCENT:
+        raise RuntimeError(
+            f"unsafe filesystem / before H59 write: free={avail} bytes used={used_pct:.2f}%"
+        )
+    return {"total_bytes": total, "available_bytes": avail, "used_percent": float(used_pct)}
+
+
+def atomic_json(path: Path, payload: Mapping[str, object], *, statvfs_fn: Callable = os.statvfs) -> None:
+    check_writer_disk_budget(statvfs_fn=statvfs_fn)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".new")
+    tmp.write_text(json.dumps(payload, sort_keys=True, indent=2, allow_nan=False) + "\n")
+    tmp.replace(path)
+
+
+def stage_r882_copy(source_checkpoint: Path, scratch_dir: Path, *, statvfs_fn: Callable = os.statvfs) -> Path:
+    """Copy the pinned r882 checkpoint into cell-local scratch and verify R882_SHA before loading."""
+    if not source_checkpoint.exists():
+        raise FileNotFoundError(f"missing r882 checkpoint: {source_checkpoint}")
+    if "flywheel-full-20261030" in str(source_checkpoint):
+        raise RuntimeError("refusing to read r882 checkpoint from live xbabe1 directory")
+    if sha256(source_checkpoint) != R882_SHA:
+        raise RuntimeError("r882 source checkpoint SHA mismatch")
+    check_writer_disk_budget(statvfs_fn=statvfs_fn)
+    scratch_dir.mkdir(parents=True, exist_ok=True)
+    copy_path = scratch_dir / "r882_adapter_copy.pt"
+    shutil.copy2(source_checkpoint, copy_path)
+    if sha256(copy_path) != R882_SHA:
+        raise RuntimeError("staged r882 copy SHA mismatch")
+    return copy_path
+
+
+def prepare_training(
+    input_dir: Path,
+    checkpoint: Path,
+    device: torch.device,
+    *,
+    scratch_dir: Path | None = None,
+) -> dict:
+    """Reuse H55's pinned metadata, fold, staged r882 checkpoint copy, and fold-A loader contract."""
     h55 = import_module("h59_h55_runner", H55_PATH)
     if (h55.R882_SHA, h55.DOPE_SHA, h55.MANIFEST_SHA, h55.MANIFEST_ID) != (
-        R882_SHA, DOPE_SHA, MANIFEST_SHA, MANIFEST_ID
+        R882_SHA,
+        DOPE_SHA,
+        MANIFEST_SHA,
+        MANIFEST_ID,
     ):
         raise RuntimeError("H59/H55 pinned inputs differ")
-    ctx = h55.prepare_training(input_dir, checkpoint, device)
+    staged_ckpt = stage_r882_copy(checkpoint, scratch_dir) if scratch_dir is not None else checkpoint
+    if sha256(staged_ckpt) != R882_SHA:
+        raise RuntimeError("H59 requires an exact r882 checkpoint copy")
+    ctx = h55.prepare_training(input_dir, staged_ckpt, device)
     if ctx["fold_assignment"].get("seed") != FOLD_SEED:
         raise RuntimeError("H59 requires the H55 seed-4900 family fold")
+    if set(ctx["fold_a_families"]) & set(ctx["fold_b_families"]):
+        raise RuntimeError("H59 fold-A/fold-B family overlap")
+    for row in ctx["a_rows"]:
+        if row.get("dl_split") != "DL-Train" or row.get("source_split") not in ("train", "inner"):
+            raise RuntimeError("non-DL-Train row entered H59 training closure")
+        if row.get("family_id") in ctx["fold_b_families"]:
+            raise RuntimeError("fold-B row entered H59 fold-A training closure")
     ctx["h55"] = h55
+    ctx["input_dir"] = input_dir
+    ctx["staged_checkpoint_path"] = str(staged_ckpt)
     return ctx
 
 
@@ -232,6 +307,8 @@ def train_arm(ctx: dict, arm: str, seed: int, plan: tuple[TrainingBatch, ...]) -
     net, h48 = ctx["net"], ctx["h48"]
     net.load_state_dict(ctx["checkpoint_state"]["state_dict"], strict=True)
     names = verify_cell_integrity(ctx)
+    dope_before = h48.h46.checkpoint_guard(ctx["guard"], net, expected=DOPE_SHA)
+    validate_dope_hash(dope_before)
     trainable = [parameter for _, parameter in net.named_parameters() if parameter.requires_grad]
     optimizer = torch.optim.AdamW(trainable, lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
     h48.base.guard.assert_optimizer_excludes_dope(optimizer, net)
@@ -262,6 +339,7 @@ def train_arm(ctx: dict, arm: str, seed: int, plan: tuple[TrainingBatch, ...]) -
         "paired_streams": [[b.round_index, b.step_index, b.seed] for b in plan],
         "trainable_parameter_names": list(names),
         "trainable_parameter_count": TRAINABLE_PARAMS,
+        "dope_sha256_before": dope_before,
         "dope_sha256_after": final_dope,
         "grad_norms": grad_norms,
         "r882_checkpoint_sha256": R882_SHA,
@@ -270,6 +348,10 @@ def train_arm(ctx: dict, arm: str, seed: int, plan: tuple[TrainingBatch, ...]) -
         "fold_assignment_sha256": ctx["fold_sha"],
         "source_sha256": ctx["source_sha256"],
         "source_commit": ctx["source_commit"],
+        "fold_b_scored": False,
+        "validation_payloads_opened": False,
+        "holdout_payloads_opened": 0,
+        "outer_rows_delivered": 0,
     }
 
 
@@ -294,13 +376,18 @@ def paired_family_admission(
         raise ValueError("H59 family gains must be finite")
     family_mean = matrix.mean(axis=1)
     family_seed_median = np.median(matrix, axis=1)
+    nonzero_families = int(np.sum(np.abs(family_mean) > 1e-12))
     rng = np.random.default_rng(bootstrap_seed)
     indexes = rng.integers(0, len(families), size=(draws, len(families)))
     mean_boot = family_mean[indexes].mean(axis=1)
     pooled_median_boot = np.median(family_seed_median[indexes], axis=1)
+    mean_gain = float(family_mean.mean())
     mean_lcb = float(np.quantile(mean_boot, 0.05))
     pooled_median = float(np.median(family_seed_median))
     harm_fraction = float(np.mean(family_seed_median < HARM_THRESHOLD))
+    seed_means = np.asarray([float(matrix[:, col].mean()) for col in range(len(SEEDS))], dtype=np.float64)
+    seed_boot_idx = rng.integers(0, len(SEEDS), size=(draws, len(SEEDS)))
+    seed_median_boot = np.median(seed_means[seed_boot_idx], axis=1)
     per_seed = {}
     for column, seed in enumerate(SEEDS):
         values = matrix[:, column]
@@ -310,18 +397,34 @@ def paired_family_admission(
             "family_median_gain": float(np.median(values)),
             "family_median_ci95": [float(np.quantile(boot, 0.025)), float(np.quantile(boot, 0.975))],
         }
+    is_tie = nonzero_families == 0 or mean_gain == 0.0
+    # Per H59 PREREG.md line 46 & amendment-2026-10-31.md §3.1: keep the preregistered H59
+    # gate (mean_lcb > 0.001, pooled_median >= 0.0, harm_fraction <= 0.10, ties fail) unchanged,
+    # and explicitly record the H61 null point-gain margin (m=0.001546) diagnostic alongside it.
+    admitted = bool(
+        not is_tie
+        and mean_lcb > ADMISSION_LCB
+        and pooled_median >= 0.0
+        and harm_fraction <= MAX_HARM_FRACTION
+    )
     return {
         "seed_count": len(SEEDS),
         "family_count": len(families),
-        "family_mean_gain": float(family_mean.mean()),
+        "nonzero_family_count": nonzero_families,
+        "is_tie": is_tie,
+        "family_mean_gain": mean_gain,
         "mean_lcb95_one_sided": mean_lcb,
         "family_median_gain": pooled_median,
         "family_median_ci95": [float(np.quantile(pooled_median_boot, 0.025)), float(np.quantile(pooled_median_boot, 0.975))],
+        "seed_median_gain": float(np.median(seed_means)),
+        "seed_median_ci95": [float(np.quantile(seed_median_boot, 0.025)), float(np.quantile(seed_median_boot, 0.975))],
         "harm_fraction": harm_fraction,
+        "h61_null_margin_m": H61_NULL_MARGIN_M,
+        "clears_h61_null_margin_diagnostic": bool(mean_gain > H61_NULL_MARGIN_M),
         "bootstrap_draws": draws,
         "bootstrap_seed": bootstrap_seed,
         "per_seed": per_seed,
-        "admitted": mean_lcb > ADMISSION_LCB and pooled_median >= 0.0 and harm_fraction <= MAX_HARM_FRACTION,
+        "admitted": admitted,
     }
 
 
@@ -357,25 +460,51 @@ def score_fold_b_arms(ctx: dict, states_by_arm: Mapping[str, dict[str, torch.Ten
             context: float(candidate["per_context"][context] - baseline["per_context"][context])
             for context in sorted(baseline["per_context"])
         }
+        wins = sum(v > 0.0 for v in family_gains.values())
+        ties = sum(v == 0.0 for v in family_gains.values())
+        losses = sum(v < 0.0 for v in family_gains.values())
         result["arms"][arm] = {
+            "family_utility": float(candidate["mean"]),
+            "context_utility": float(candidate["context_mean"]),
+            "per_family": candidate["per_family"],
+            "per_context": candidate["per_context"],
             "family_gains": family_gains,
             "context_gains": context_gains,
+            "w_t_l_family": {"wins": wins, "ties": ties, "losses": losses},
             "elo_vs_r882": elo_vs_r882(scored["families"], baseline["per_context"], candidate["per_context"]),
         }
     return result
 
 
 def admit_arms(scores_by_seed: Mapping[int, dict]) -> dict[str, dict]:
-    """Apply the preregistered admission rule independently to every arm."""
+    """Apply the preregistered admission rule independently to every arm and summarize 3-seed Elo."""
     if tuple(sorted(scores_by_seed)) != SEEDS:
         raise ValueError("H59 fold-B decision requires completed seed scores 12/13/14")
     decisions = {}
+    rng = np.random.default_rng(BOOTSTRAP_SEED + 99)
     for arm in ARMS:
         gains = {
             seed: scores_by_seed[seed]["arms"][arm]["family_gains"]
             for seed in SEEDS
         }
-        decisions[arm] = paired_family_admission(gains)
+        adm = paired_family_admission(gains)
+        seed_elos = []
+        for seed in SEEDS:
+            arm_entry = scores_by_seed[seed]["arms"][arm]
+            elo_obj = arm_entry.get("elo_vs_r882")
+            if isinstance(elo_obj, Mapping) and "ratings" in elo_obj:
+                seed_elos.append(float(elo_obj["ratings"]["H59"]))
+        if len(seed_elos) == len(SEEDS):
+            elo_arr = np.asarray(seed_elos, dtype=np.float64)
+            boot_idx = rng.integers(0, len(SEEDS), size=(BOOTSTRAP_DRAWS, len(SEEDS)))
+            elo_boot = np.median(elo_arr[boot_idx], axis=1)
+            adm["elo_by_seed"] = {str(s): float(e) for s, e in zip(SEEDS, seed_elos, strict=True)}
+            adm["elo_median_across_seeds"] = float(np.median(elo_arr))
+            adm["elo_ci95_across_seeds"] = [
+                float(np.quantile(elo_boot, 0.025)),
+                float(np.quantile(elo_boot, 0.975)),
+            ]
+        decisions[arm] = adm
     return decisions
 
 
@@ -416,3 +545,285 @@ def elo_vs_r882(
     return elo.compute_family_grouped_bradley_terry_elo(
         records, anchor_contender="r882", anchor_elo=1500.0
     )
+
+
+def run_dry(args) -> dict:
+    """CPU-only dry-run verification without reading outcome labels or fold-B/DL-Val."""
+    torch.set_num_threads(1)
+    ctx = prepare_training(
+        args.input,
+        args.checkpoint,
+        torch.device("cpu"),
+        scratch_dir=args.out.parent / "dry_scratch",
+    )
+    names = verify_cell_integrity(ctx)
+    result = {
+        "schema": "jope.h59.dry-run/v1",
+        "status": "pass",
+        "trainable_parameter_count": TRAINABLE_PARAMS,
+        "trainable_parameter_names": list(names),
+        "fold_seed": FOLD_SEED,
+        "fold_assignment_sha256": ctx["fold_sha"],
+        "fold_b_scored": False,
+        "validation_payloads_opened": False,
+        "holdout_payloads_opened": 0,
+        "outer_rows_delivered": 0,
+        "optimizer_updates": 0,
+        "dope_sha256": ctx["h48"].h46.checkpoint_guard(ctx["guard"], ctx["net"], expected=DOPE_SHA),
+    }
+    atomic_json(args.out, result)
+    return result
+
+
+def run_train_cell(args) -> dict:
+    """Execute one (arm, seed) H59 cell under qualification.lock on cuda:0."""
+    if args.device != "cuda:0" or not args.lock_held:
+        raise RuntimeError("H59 timing/outcome cells require cuda:0 and qualification.lock")
+    if args.arm not in ARMS or args.seed not in SEEDS:
+        raise RuntimeError("unregistered H59 arm or seed")
+    if args.mode == "timing" and (args.arm, args.seed) != ("CONTROL", 12):
+        raise RuntimeError("only CONTROL/seed12 is supported for timing-only mode")
+    torch.set_num_threads(1)
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    started = time.monotonic()
+    ctx = prepare_training(
+        args.input,
+        args.checkpoint,
+        torch.device(args.device),
+        scratch_dir=args.out / "scratch_ckpt",
+    )
+    dope_before = ctx["h48"].h46.checkpoint_guard(ctx["guard"], ctx["net"], expected=DOPE_SHA)
+    validate_dope_hash(dope_before)
+    plan = build_paired_batches(
+        sorted(ctx["pools_a"]),
+        ctx["pools_a"],
+        ctx["sorted_orders"],
+        ctx["h53b"].cached_training_indices,
+        seed=args.seed,
+    )
+    adapter_state, report = train_arm(ctx, args.arm, args.seed, plan)
+    dope_after = ctx["h48"].h46.checkpoint_guard(ctx["guard"], ctx["net"], expected=DOPE_SHA)
+    validate_dope_hash(dope_after)
+    if dope_before != DOPE_SHA or dope_after != DOPE_SHA:
+        raise RuntimeError("H59 DOPE checksum changed across cell")
+    wall = time.monotonic() - started
+    h55 = ctx["h55"]
+    payload = {
+        "schema": "jope.h59.timing/v1" if args.mode == "timing" else "jope.h59.cell/v1",
+        "status": "complete",
+        "mode": args.mode,
+        "device": "cuda:0",
+        "wall_seconds": wall,
+        "fold_seed": FOLD_SEED,
+        "fold_assignment": ctx["fold_assignment"],
+        "fold_a_family_count": len(ctx["fold_a_families"]),
+        "fold_b_family_count": len(ctx["fold_b_families"]),
+        "fold_a_context_count": len(ctx["a_rows"]),
+        "fold_b_context_count": len(ctx["b_rows"]),
+        "fold_a_b_family_disjoint": not bool(set(ctx["fold_a_families"]) & set(ctx["fold_b_families"])),
+        "staged_r882_copy_path": ctx["staged_checkpoint_path"],
+        "adapter_sha256": h55.adapter_digest(adapter_state),
+        **report,
+    }
+    if args.mode == "outcome":
+        check_writer_disk_budget()
+        out_artifact = args.out / "candidate_adapter.pt"
+        ctx["h48"].save_adapter_snapshot(out_artifact, adapter_state, R882_SHA)
+        payload["candidate_adapter_artifact"] = str(out_artifact)
+        payload["candidate_adapter_artifact_sha256"] = sha256(out_artifact)
+    # Clean up cell-local staged r882 copy after cell completion to save ~60 MB per cell
+    scratch_ckpt_dir = args.out / "scratch_ckpt"
+    if scratch_ckpt_dir.exists():
+        shutil.rmtree(scratch_ckpt_dir, ignore_errors=True)
+    atomic_json(args.out / ("timing.json" if args.mode == "timing" else "summary.json"), payload)
+    return payload
+
+
+def run_fold_b_cell(args) -> dict:
+    """Score all 12 completed H59 (arm, seed) candidates and r882 on untouched fold B."""
+    if args.device != "cuda:0" or not args.lock_held:
+        raise RuntimeError("H59 fold-B scoring requires cuda:0 and qualification.lock")
+    torch.set_num_threads(1)
+    scores_by_seed: dict[int, dict] = {}
+    for seed in SEEDS:
+        ctx = prepare_training(
+            args.input,
+            args.checkpoint,
+            torch.device(args.device),
+            scratch_dir=args.out / f"scratch_seed{seed}",
+        )
+        dope_before = ctx["h48"].h46.checkpoint_guard(ctx["guard"], ctx["net"], expected=DOPE_SHA)
+        validate_dope_hash(dope_before)
+        states_by_arm: dict[str, dict[str, torch.Tensor]] = {}
+        for arm in ARMS:
+            ckpt_path = args.run_root / f"outcomes/cells/{arm}/seed{seed}/candidate_adapter.pt"
+            if not ckpt_path.exists():
+                raise RuntimeError(f"missing completed H59 candidate artifact: {ckpt_path}")
+            artifact = torch.load(ckpt_path, map_location="cpu", weights_only=True)
+            if (
+                artifact.get("base_checkpoint_sha256") != R882_SHA
+                or artifact.get("dope_sha256") != DOPE_SHA
+                or artifact.get("trainable_params") != TRAINABLE_PARAMS
+            ):
+                raise RuntimeError(f"H59 candidate artifact pin mismatch at {ckpt_path}")
+            states_by_arm[arm] = artifact["adapter_trainable_state"]
+        scored = score_fold_b_arms(ctx, states_by_arm)
+        dope_after = ctx["h48"].h46.checkpoint_guard(ctx["guard"], ctx["net"], expected=DOPE_SHA)
+        validate_dope_hash(dope_after)
+        scored["dope_sha256_before"] = dope_before
+        scored["dope_sha256_after"] = dope_after
+        scores_by_seed[seed] = scored
+        scratch_dir = args.out / f"scratch_seed{seed}"
+        if scratch_dir.exists():
+            shutil.rmtree(scratch_dir, ignore_errors=True)
+
+    decisions = admit_arms(scores_by_seed)
+    source_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    fold_b_payload = {
+        "schema": "jope.h59.fold-b/v1",
+        "status": "complete",
+        "fold_seed": FOLD_SEED,
+        "r882_checkpoint_sha256": R882_SHA,
+        "source_manifest_sha256": MANIFEST_SHA,
+        "manifest_identity": MANIFEST_ID,
+        "dope_sha256": DOPE_SHA,
+        "scores_by_seed": {str(s): scores_by_seed[s] for s in SEEDS},
+        "validation_payloads_opened": False,
+        "holdout_payloads_opened": 0,
+        "outer_rows_delivered": 0,
+        "source_commit": source_commit,
+    }
+    admission_payload = {
+        "schema": "jope.h59.admission/v1",
+        "status": "complete",
+        "fold_seed": FOLD_SEED,
+        "bootstrap_draws": BOOTSTRAP_DRAWS,
+        "bootstrap_seed": BOOTSTRAP_SEED,
+        "admission_lcb_threshold": ADMISSION_LCB,
+        "h61_null_margin_m_diagnostic": H61_NULL_MARGIN_M,
+        "max_harm_fraction": MAX_HARM_FRACTION,
+        "harm_threshold": HARM_THRESHOLD,
+        "arms": decisions,
+        "admitted_arms": [arm for arm in ARMS if decisions[arm]["admitted"]],
+        "planned_terminal_reads": [
+            {"arm": arm, "seed": seed}
+            for arm, seed in plan_terminal_reads(
+                arm for arm in ARMS if decisions[arm]["admitted"]
+            )
+        ],
+        "validation_payloads_opened": False,
+        "holdout_payloads_opened": 0,
+        "outer_rows_delivered": 0,
+        "source_commit": source_commit,
+    }
+    atomic_json(args.run_root / "outcomes/fold_b.json", fold_b_payload)
+    atomic_json(args.run_root / "outcomes/admission.json", admission_payload)
+    return admission_payload
+
+
+def run_terminal_val_cell(args) -> dict:
+    """Execute at most one terminal DL-Val read for an admitted (arm, seed)."""
+    if args.device != "cuda:0" or not args.lock_held:
+        raise RuntimeError("H59 terminal DL-Val requires cuda:0 and qualification.lock")
+    if args.arm not in ARMS or args.seed not in SEEDS:
+        raise RuntimeError("unregistered H59 terminal arm/seed")
+    if args.out.exists():
+        raise RuntimeError(f"refusing duplicate H59 terminal DL-Val receipt: {args.out}")
+    admission_path = args.run_root / "outcomes/admission.json"
+    admission = json.loads(admission_path.read_text())
+    admitted_arms = [
+        arm for arm in ARMS if admission.get("arms", {}).get(arm, {}).get("admitted") is True
+    ]
+    completed_reads = [
+        (json.loads(p.read_text())["arm"], int(json.loads(p.read_text())["seed"]))
+        for p in (args.run_root / "outcomes/terminal-val").glob("*/*.json")
+        if p.exists()
+    ]
+    terminal_read_allowed(args.arm, args.seed, admitted_arms, completed_reads)
+
+    h55 = import_module("h59_h55_val", H55_PATH)
+    h48 = import_module("h59_h48_val", H48_PATH)
+    h48.CHECKPOINT_SHA = R882_SHA
+    h49 = import_module("h59_h49_val", H49_SCORE_PATH)
+    staged_ckpt = stage_r882_copy(args.checkpoint, args.out.parent / f"scratch_val_{args.arm}_{args.seed}")
+    net, _, guard, _ = h55.build_model(args.input, staged_ckpt, torch.device(args.device), h48)
+    rows, pools, tables = h49.load_validation_packet(args.input)
+    if len(rows) != 91 or len({row["family_id"] for row in rows}) != 19:
+        raise RuntimeError("H59 terminal DL-Val roster mismatch")
+    candidate = args.run_root / f"outcomes/cells/{args.arm}/seed{args.seed}/candidate_adapter.pt"
+    artifact = torch.load(candidate, map_location="cpu", weights_only=True)
+    if (
+        artifact.get("base_checkpoint_sha256") != R882_SHA
+        or artifact.get("dope_sha256") != DOPE_SHA
+        or artifact.get("trainable_params") != TRAINABLE_PARAMS
+    ):
+        raise RuntimeError("H59 terminal adapter artifact pin mismatch")
+    before = h48.h46.checkpoint_guard(guard, net, expected=DOPE_SHA)
+    validate_dope_hash(before)
+    h55.set_adapter(net, artifact["adapter_trainable_state"])
+    net.eval()
+    tokens, masks = h48.h46.make_tokens(net, tables, torch.device(args.device))
+    predictor = h48.make_predictor(net, pools, tokens, masks, torch.device(args.device))
+    result = h48.evaluate_utility([row["context_sha256"] for row in rows], pools, predictor)
+    after = h48.h46.checkpoint_guard(guard, net, expected=DOPE_SHA)
+    validate_dope_hash(after)
+    scratch_val_dir = args.out.parent / f"scratch_val_{args.arm}_{args.seed}"
+    if scratch_val_dir.exists():
+        shutil.rmtree(scratch_val_dir, ignore_errors=True)
+    payload = {
+        "schema": "jope.h59.terminal-val/v1",
+        "arm": args.arm,
+        "seed": args.seed,
+        "terminal_dl_val_score_count": 1,
+        "validation_payloads_opened": True,
+        "family_utility": result["mean"],
+        "context_utility": result["context_mean"],
+        "family_delta_vs_r882_harness": result["mean"] - R882_HARNESS_UTILITY,
+        "family_utilities": result["per_family"],
+        "context_utilities": result["per_context"],
+        "candidate_adapter_sha256": sha256(candidate),
+        "dope_sha256_before": before,
+        "dope_sha256_after": after,
+        "holdout_payloads_opened": 0,
+        "outer_rows_delivered": 0,
+        "source_manifest_sha256": MANIFEST_SHA,
+        "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+    }
+    atomic_json(args.out, payload)
+    return payload
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", choices=("dry-run", "timing", "outcome", "fold-b", "terminal-val"), required=True)
+    parser.add_argument("--arm", choices=ARMS)
+    parser.add_argument("--seed", type=int, choices=SEEDS)
+    parser.add_argument("--device", choices=("cpu", "cuda:0"), default="cpu")
+    parser.add_argument("--lock-held", action="store_true")
+    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
+    parser.add_argument("--checkpoint", type=Path, default=DEFAULT_CHECKPOINT)
+    parser.add_argument("--run-root", type=Path, default=DEFAULT_RUN_ROOT)
+    parser.add_argument("--out", type=Path, required=True)
+    args = parser.parse_args()
+    if args.mode == "dry-run":
+        result = run_dry(args)
+    elif args.mode == "fold-b":
+        result = run_fold_b_cell(args)
+    elif args.mode == "terminal-val":
+        if args.arm is None or args.seed is None:
+            raise RuntimeError("H59 terminal DL-Val requires arm and seed")
+        result = run_terminal_val_cell(args)
+    else:
+        if args.arm is None or args.seed is None:
+            raise RuntimeError("H59 timing/outcome needs a registered arm and seed")
+        if args.out.exists():
+            raise RuntimeError(f"refusing to overwrite H59 receipt {args.out}")
+        args.out.mkdir(parents=True, exist_ok=False)
+        result = run_train_cell(args)
+    print(json.dumps({"mode": args.mode, "result": result}, sort_keys=True), flush=True)
+
+
+if __name__ == "__main__":
+    main()
