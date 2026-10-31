@@ -1,0 +1,92 @@
+{
+  "arms": {
+    "CONTROL": {
+      "loss": "mean_context_loss"
+    },
+    "CVAR": {
+      "loss": "mean_context_loss + 1.0 * batch-family CVaR penalty; rank raw deltas, top ceil(0.20*n), weight selected families 1/0.20 and others 0"
+    },
+    "HINGE": {
+      "loss": "mean_context_loss + 1.0 * mean_fit_batch_family relu(L_f(theta)-L_f(r882)+0.0)"
+    }
+  },
+  "baseline": {
+    "assessment_excluded_from_baseline": true,
+    "baseline_loss": "per-fit-family mean of per-context preregistered loss on fit folds only, computed before any optimizer update",
+    "checkpoint": "r882",
+    "checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "trainable_parameters": 29211
+  },
+  "cells": 9,
+  "custody": "/home/ubuntu/jope-rescue-20260921/h130-harm-hinge",
+  "execution_gate": "No real-data training or assessment scoring before preregistration PR merges into origin/main; runner enforces HEAD ancestry in origin/main.",
+  "fold": {
+    "assessment_family_count": 41,
+    "family_grouped": true,
+    "family_population_source": "H128 pinned 205-family DL-Train manifest; deterministic numpy default_rng(130094) permutation and five equal family chunks",
+    "fit_family_count": 164,
+    "fit_folds": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "fold_0_role": "assessment",
+    "fold_count": 5,
+    "fold_manifest": "fold_manifest_130094.json",
+    "fold_manifest_sha256": "98196cbc017c10d12db1f8c4390c163a11d3faddf1c457b79108a6386ed785ea",
+    "fold_seed": 130094
+  },
+  "hypothesis": "Fit-fold family harm penalties will reduce assessment-family harm versus unchanged r882 while retaining a positive paired family gain.",
+  "output_limit_bytes": 100000,
+  "paired_seeds": [
+    94,
+    95,
+    96
+  ],
+  "prereg_sha256": "3eefc25b4c873d27942e0c95e2264fd8357e6784d1ebf2ba401924cab8144491",
+  "primary": {
+    "admission": {
+      "family_bootstrap_lcb95_strictly_gt": 0.001,
+      "family_harm_fraction_gain_lt_minus_0_01_lte": 0.1,
+      "holm_adjusted_one_sided_p": true,
+      "median_paired_family_gain_gte": 0.0,
+      "ties_fail": true
+    },
+    "comparator": "r882",
+    "family_bootstrap_draws": 10000,
+    "family_bootstrap_seed": 130094,
+    "gain": "paired per-family utility gain, averaged across the three paired seeds",
+    "holm_family_alpha": 0.05,
+    "treatments": [
+      "HINGE",
+      "CVAR"
+    ]
+  },
+  "resource_guardrails": {
+    "cpu_only": true,
+    "disk_used_percent_strictly_below": 94.0,
+    "dl_val_outer_test_sealed_holdout_metatest_reads": 0,
+    "gpu": false,
+    "max_load1": 86.7,
+    "max_rss_bytes": 6442450944,
+    "max_threads": 4,
+    "min_mem_available_bytes": 32212254720,
+    "nice": 15,
+    "qualification_lock": false
+  },
+  "runner_sha256": "aad1a68e872f8737b36f632fc7d33976ee5f15d4892c21106ef4985be35ce5a8",
+  "schema": "jope.h130.preregistration/v1",
+  "secondary": {
+    "comparator": "CONTROL",
+    "elo": "report family-paired Elo vs r882 and vs CONTROL; no AUC",
+    "report": "paired family gain and Elo vs CONTROL; no admission gate"
+  },
+  "source_base": "a6e1209e916bb1976e2e3292d437a986b77bd212",
+  "status": "PREREGISTERED_NOT_RUN",
+  "template_runner_sha256": "e116de3eef5eb2af8db9bc30647f415380b2ff74007322a5e1e4d13f5b010269",
+  "total_optimizer_updates": 360,
+  "updates_per_cell": 40,
+  "wave": "H130"
+}
