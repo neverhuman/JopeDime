@@ -3,10 +3,12 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+import hashlib
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import runner  # noqa: E402
+import coordinator  # noqa: E402
 
 
 def test_fixed_paired_cells_and_h80_budget():
@@ -86,3 +88,103 @@ def test_fresh_fold_rejects_protected_and_non_train_rows():
             pass
         else:
             raise AssertionError(f"accepted forbidden H99 fold row: {row}")
+
+
+def test_launch_resource_limits_are_strict_at_boundaries():
+    coordinator.check_resource_snapshot(
+        load1=85.0,
+        mem_available_kib=16 * 1024 * 1024,
+        disk_used_percent=94.499,
+    )
+    for snapshot in (
+        {"load1": 85.01, "mem_available_kib": 16 * 1024 * 1024, "disk_used_percent": 90.0},
+        {"load1": 1.0, "mem_available_kib": 16 * 1024 * 1024 - 1, "disk_used_percent": 90.0},
+        {"load1": 1.0, "mem_available_kib": 16 * 1024 * 1024, "disk_used_percent": 94.5},
+    ):
+        try:
+            coordinator.check_resource_snapshot(**snapshot)
+        except RuntimeError:
+            pass
+        else:
+            raise AssertionError(f"accepted unsafe launch snapshot: {snapshot}")
+
+
+def test_h99_acquire_adapter_uses_shared_fifo_and_h99_wave_name(tmp_path):
+    calls = []
+
+    class FakeWave:
+        @staticmethod
+        def acquire_lock(status_path, wait_total, **kwargs):
+            calls.append((status_path, wait_total, kwargs))
+            return "handle", 3.0, 8192, {"load1": 4.0}
+
+    result = coordinator.acquire_h99_fifo(tmp_path / "H99_STATUS.log", wait_total=2.0, wave=FakeWave)
+    assert result[0] == "handle"
+    status_path, wait_total, kwargs = calls[0]
+    assert status_path == tmp_path / "H99_STATUS.log"
+    assert wait_total == 2.0
+    assert kwargs["wave_name"] == "H99"
+    assert kwargs["after_release"] is True
+    assert callable(kwargs["preflight_fn"])
+
+
+def test_cpu_gate_requires_two_consecutive_safe_load_samples():
+    samples = iter((90.0, 70.0, 80.0))
+    sleeps = []
+    waited = coordinator.wait_for_cpu_gate(
+        load_fn=lambda: (next(samples), 0.0, 0.0),
+        sleep_fn=lambda seconds: sleeps.append(seconds),
+    )
+    assert sleeps == [30.0, 30.0]
+    assert waited >= 0.0
+
+
+def test_read_only_r882_source_stages_to_separate_attempts_without_mutation(tmp_path, monkeypatch):
+    source = tmp_path / "r882-readonly.pt"
+    source.write_bytes(b"synthetic r882 source fixture")
+    source.chmod(0o444)
+    original_mode = source.stat().st_mode & 0o777
+    digest = hashlib.sha256(source.read_bytes()).hexdigest()
+    monkeypatch.setattr(coordinator, "load_h80_wave", lambda: type("H80", (), {"runner_mod": type("R", (), {"R882_SHA": digest, "sha256": staticmethod(lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest())})})())
+
+    first_dir = coordinator.attempt_scratch_path(tmp_path / "wave", "ESH-l2", 36, 1)
+    second_dir = coordinator.attempt_scratch_path(tmp_path / "wave", "ESH-l2", 36, 2)
+    first = coordinator.stage_r882_copy(source, first_dir)
+    second = coordinator.stage_r882_copy(source, second_dir)
+    assert first != second
+    assert first.read_bytes() == second.read_bytes() == source.read_bytes()
+    assert source.stat().st_mode & 0o777 == original_mode == 0o444
+    assert first.stat().st_mode & 0o222
+    assert second.stat().st_mode & 0o222
+
+
+def test_fifo_coordinator_charges_all_seven_cells_and_releases_each_lease(tmp_path, monkeypatch):
+    checkpoint = tmp_path / "r882.pt"
+    checkpoint.write_bytes(b"fixture checkpoint")
+    monkeypatch.setattr(coordinator, "stage_r882_copy", lambda _source, scratch: (scratch.mkdir(parents=True), scratch / "copy.pt")[1])
+    leases = []
+    released = []
+
+    def acquire(status_path, *, wait_total):
+        handle = object()
+        leases.append((status_path, wait_total, handle))
+        return handle, 0.0, 8192, {"load1": 1.0}
+
+    cells = [*runner.execution_plan()["candidate_cells"], runner.execution_plan()["null_cell"]]
+    result = coordinator.run_fifo_cells(
+        cells,
+        run_root=tmp_path / "run",
+        checkpoint=checkpoint,
+        worker=lambda cell, _staged, _scratch, remaining: {"arm": cell["arm"], "remaining": remaining},
+        acquire_fn=acquire,
+        release_fn=lambda handle: released.append(handle),
+        cpu_gate_fn=lambda: 0.0,
+        setup_fn=lambda: None,
+        clock_fn=iter(range(14)).__next__,
+    )
+    assert len(result["attempts"]) == 7
+    assert len(leases) == len(released) == 7
+    assert [Path(item["scratch"]).name for item in result["attempts"]] == [
+        f"{cell['arm']}-seed{cell['seed']}-attempt1" for cell in cells
+    ]
+    assert sum(item["wall_seconds"] for item in result["attempts"]) == 7.0
