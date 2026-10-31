@@ -76,6 +76,8 @@ def relative_payload(relative):
 def safe_path(root, relative):
     path = relative_payload(relative)
     packet = Path(root).resolve()
+    if _is_protected(root) or _is_protected(packet):
+        raise ValueError("protected packet root refused before open")
     result = (Path(root) / path).resolve()
     if not result.is_relative_to(packet):
         raise ValueError("payload symlink escapes packet")
