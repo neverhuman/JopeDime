@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import namedtuple
 from datetime import datetime, timedelta, timezone
+import hashlib
 import importlib.util
 from pathlib import Path
 import sys
@@ -531,6 +532,28 @@ class H61RedTeamTests(unittest.TestCase):
             h61.terminal_read_allowed("S0", 12, ("S1", "S2", "S3"), ())
         with self.assertRaisesRegex(RuntimeError, "duplicate H61 terminal DL-Val"):
             h61.terminal_read_allowed("S1", 12, ("S1", "S2", "S3"), (("S1", 12),))
+
+    def test_frozen_amendment_byte_identical_and_addendum_pins_db8faaa(self):
+        """Ensure frozen amendment-2026-10-31.md is untouched and addendum + README pin db8faaa."""
+        amendment_path = HERE / "amendment-2026-10-31.md"
+        addendum_path = HERE / "addendum-lock-fairness-t2258.md"
+        readme_path = HERE / "README.md"
+        self.assertEqual(
+            hashlib.sha256(amendment_path.read_bytes()).hexdigest(),
+            "3edfad892b40f60909af0c05c8a6c75c6c39c7e4291bc6451541b3f23ec6fe62",
+        )
+        self.assertTrue(addendum_path.exists())
+        required_statement = (
+            "H61 outcome run used PR #816 immediate retry at db8faaa; "
+            "fairness fix applies to later runs only; "
+            "lock policy does not touch any outcome computation"
+        )
+        addendum_text = addendum_path.read_text(encoding="utf-8")
+        readme_text = readme_path.read_text(encoding="utf-8")
+        self.assertIn("db8faaa158c7f7460186a6b92805309e0f0b2cbe", addendum_text)
+        self.assertIn(required_statement, addendum_text)
+        self.assertIn("db8faaa158c7f7460186a6b92805309e0f0b2cbe", readme_text)
+        self.assertIn(required_statement, readme_text)
 
 
 if __name__ == "__main__":

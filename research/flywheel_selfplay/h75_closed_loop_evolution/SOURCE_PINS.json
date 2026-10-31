@@ -1,0 +1,55 @@
+{
+  "source_base": "f3a0f85e9ad0bb2efe049a40c0e76446f648bec3",
+  "owner_ruling_sha256": "55c0b28f370086e94193ba66b1af39abce6f274ac69d9f0be72a261eb9161109",
+  "sources": [
+    {
+      "path": "research/flywheel_selfplay/run_fused_closed_loop.py",
+      "git_commit": "f3a0f85e9ad0bb2efe049a40c0e76446f648bec3",
+      "sha256": "564c441a61654bfd2249d5003873a450f45abe31e15cc9fd704ffafd8b48b737",
+      "bytes": 66544
+    },
+    {
+      "path": "research/flywheel_selfplay/automatic_promotion.py",
+      "git_commit": "f3a0f85e9ad0bb2efe049a40c0e76446f648bec3",
+      "sha256": "261d2d1865c2f50e1c7388dfd2ac404e85f599df3a5b7aaaab69415cf250d8a0",
+      "bytes": 12305
+    },
+    {
+      "path": "research/flywheel_selfplay/dev_incumbent.py",
+      "git_commit": "f3a0f85e9ad0bb2efe049a40c0e76446f648bec3",
+      "sha256": "81ebdafa5fe1accb1da56a424bee669f0e381fee2bd5e23c751c17618079523f",
+      "bytes": 29948
+    },
+    {
+      "path": "python/src/jope/north_star/elo_tracker.py",
+      "git_commit": "f3a0f85e9ad0bb2efe049a40c0e76446f648bec3",
+      "sha256": "9ece98326c32453179b0c765eb45944b68ca9de944d2828a1d42dee1401d1835",
+      "bytes": 25667
+    },
+    {
+      "path": "research/flywheel_selfplay/h56_audit/SUMMARY.md",
+      "git_commit": "f3a0f85e9ad0bb2efe049a40c0e76446f648bec3",
+      "sha256": "18c199dadfe7bdd23b773cd2118f805f7b5703fdc12d1e1dee9e7ac364fae9d0",
+      "bytes": 61714
+    },
+    {
+      "path": "research/flywheel_selfplay/h58/SUMMARY.md",
+      "git_commit": "f3a0f85e9ad0bb2efe049a40c0e76446f648bec3",
+      "sha256": "79af74b483073659b5f5ac76fcc444d6007f6dffee54735bb548077d8bd89518",
+      "bytes": 26044
+    },
+    {
+      "path": "research/flywheel_selfplay/h71_w5_parent_child_critic/README.md",
+      "git_commit": "f3a0f85e9ad0bb2efe049a40c0e76446f648bec3",
+      "sha256": "25296fcdc8155fd897deb087c210b19942a44a9e06ac30ea70871d128aeaeca4",
+      "bytes": 4834
+    },
+    {
+      "path": "research/flywheel_selfplay/rd_breakthrough/PROPOSALS.md",
+      "git_commit": "f3a0f85e9ad0bb2efe049a40c0e76446f648bec3",
+      "sha256": "f0526f20699dea3fe5259d10eee30483ac3c52655249906fd1ce79dd8e193e50",
+      "bytes": 40467
+    }
+  ],
+  "evidence_limit": "Historical H56/H58 observations and source inspection, no new live-loop or protected-payload read."
+}
