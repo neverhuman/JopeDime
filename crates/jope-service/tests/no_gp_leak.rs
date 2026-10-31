@@ -383,8 +383,10 @@ fn native_worker(directory: &Path) -> PathBuf {
         "fn main() { jope_service::worker::serve(1, |request, matrix| jope_service::discover::r#loop::evaluate_native(request, matrix)).unwrap(); }",
     )
     .unwrap();
+    let mut last_error = String::new();
     for library in libraries {
-        let output = Command::new("rustc")
+        let mut command = Command::new("rustc");
+        command
             .arg("--edition=2021")
             .arg("--crate-name=pub06_native_worker")
             .arg(&source)
@@ -393,14 +395,16 @@ fn native_worker(directory: &Path) -> PathBuf {
             .arg("--extern")
             .arg(format!("jope_service={}", library.display()))
             .arg("-o")
-            .arg(&binary)
-            .output()
-            .unwrap();
+            .arg(&binary);
+        #[cfg(target_arch = "aarch64")]
+        command.args(["-C", "target-feature=+fullfp16"]);
+        let output = command.output().unwrap();
         if output.status.success() {
             return binary;
         }
+        last_error = String::from_utf8_lossy(&output.stderr).into_owned();
     }
-    panic!("could not link the bounded native worker from the current jope-service build");
+    panic!("could not link bounded native worker: {last_error}");
 }
 
 #[tokio::test]
