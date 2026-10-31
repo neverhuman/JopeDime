@@ -1,0 +1,112 @@
+#!/usr/bin/env python3
+"""Check Cargo's optimized default-feature executable, not a test parser."""
+
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+import tempfile
+
+
+def release_artifact(messages):
+    """Require a successful build of the ordinary, optimized jopedime binary."""
+    artifacts = [
+        row
+        for row in messages
+        if row.get("reason") == "compiler-artifact"
+        and row.get("target", {}).get("name") == "jopedime"
+        and row.get("target", {}).get("kind") == ["bin"]
+        and row.get("executable")
+    ]
+    if len(artifacts) != 1:
+        raise ValueError("expected exactly one jopedime executable artifact")
+    if not messages or messages[-1] != {"reason": "build-finished", "success": True}:
+        raise ValueError("Cargo build did not finish successfully")
+    artifact = artifacts[0]
+    profile = artifact.get("profile", {})
+    if (
+        profile.get("test") is not False
+        or profile.get("debug_assertions") is not False
+        or profile.get("opt_level") != "3"
+    ):
+        raise ValueError("expected an optimized, non-test release executable")
+    features = artifact.get("features", [])
+    if "default" not in features or "research" in features:
+        raise ValueError("expected default features without research")
+    return artifact
+
+
+def check_commands(executable, scratch):
+    """Both help forms omit research; explicit dispatch must fail in Clap."""
+    checks = []
+    output = scratch / "must-not-exist.jsonl"
+    cases = [
+        (["--help"], 0),
+        (["help"], 0),
+        (["research", "--help"], 2),
+        (["research", "record", "--out", str(output)], 2),
+    ]
+    for args, expected in cases:
+        result = subprocess.run(
+            [str(executable), *args],
+            cwd=scratch,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        if result.returncode != expected:
+            raise ValueError(
+                f"{args}: expected exit {expected}, got {result.returncode}"
+            )
+        if expected == 0:
+            if "Usage:" not in result.stdout or "research" in result.stdout.lower():
+                raise ValueError(
+                    f"{args}: invalid ordinary help or research is exposed"
+                )
+        elif "unrecognized subcommand 'research'" not in result.stderr.lower():
+            raise ValueError(f"{args}: refusal was not unknown-command parsing")
+        if output.exists():
+            raise ValueError("research dispatch created a record file")
+        checks.append(
+            {
+                "args": args,
+                "exit_code": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+            }
+        )
+    return checks
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--cargo-messages", required=True, type=Path)
+    parser.add_argument("--output", required=True, type=Path)
+    args = parser.parse_args()
+    raw = args.cargo_messages.read_bytes()
+    artifact = release_artifact([json.loads(line) for line in raw.splitlines()])
+    executable = Path(artifact["executable"]).resolve(strict=True)
+    with executable.open("rb") as stream:
+        binary_hash = hashlib.file_digest(stream, "sha256").hexdigest()
+    with tempfile.TemporaryDirectory(
+        prefix="release-cli-", dir=args.output.parent
+    ) as scratch:
+        checks = check_commands(executable, Path(scratch))
+    receipt = {
+        "status": "PASS",
+        "cargo_messages_sha256": hashlib.sha256(raw).hexdigest(),
+        "artifact": artifact,
+        "executable_sha256": binary_hash,
+        "checks": checks,
+        "record_created": False,
+    }
+    with args.output.open("x") as stream:
+        json.dump(receipt, stream, indent=2)
+        stream.write("\n")
+    print(f"PASS: four release executable checks; receipt {args.output}")
+
+
+if __name__ == "__main__":
+    main()

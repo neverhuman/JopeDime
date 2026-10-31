@@ -656,7 +656,8 @@
     "feature:jope-appliance/engine": {
       "discovery": {
         "dependencies": [
-          "dep:jope-service"
+          "dep:jope-service",
+          "jope-client?/engine"
         ],
         "kind": "feature"
       },
@@ -6262,7 +6263,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -7107,7 +7108,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "A packaged copy alone in an empty directory with an empty environment: version, doctor, fit with bounded selection, predict, fit-predict parity, verify-self and licenses; every exit status 2-7; a damaged manifest, frame or executable region; a promised but unexecutable method; an unpackaged build."
+      "scope": "A packaged copy alone in an empty directory with an empty environment: version, doctor, fit with bounded selection, predict, fit-predict parity, verify-self and licenses; every exit status 2-7; a damaged manifest, frame or executable region; a promised but unexecutable method; an unpackaged build. RNK-12 executes explicit CUDA refusal in text/JSON with no native input/fitting/output work, and positive CPU/auto fits with actual receipt placement."
     },
     "target:jope-appliance/test/system": {
       "discovery": {
@@ -13777,6 +13778,16 @@
       ],
       "lanes": [],
       "scope": "RNK-12 optional native frozen DOPE/router, Stage-1B projections and shared adapter on CUDA; explicit device placement and no CPU fallback. CPU unit/refusal/trace/lease controls are separate from ignored external real CPU/CUDA M2 replay. CUDA qualification requires an exclusive existing qualification.lock and declared source/bundle/50-context fixture/device/driver evidence. No hosted feature lane or serving/Q1 promotion; numeric qualification remains a separate observed gate."
+    },
+    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/test_science.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H135 data-free native utility, sanity, bootstrap, seed/harm/trim/resource controls; native HistGB thread ceiling, scoped baseline setter restoration and A3 nested thread cap; A4 native SIGSTOP/SIGCONT, continuous recovery and stopped-worker deadline controls. Manual GBM preflight uses synthetic data and actual estimator hyperparameters with external /proc sampling; constructor preflight reads pretrained assets only, no datasets/r882/predictions; not a product qualification."
     }
   },
   "lanes": {

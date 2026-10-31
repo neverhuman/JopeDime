@@ -1,0 +1,61 @@
+{
+  "admitted_arms": [],
+  "amendment_a1": "PREREG_AMENDMENT_A1.md",
+  "arms": [
+    "CONTROL",
+    "FAMBAL_ACC4",
+    "COSWR"
+  ],
+  "assessment_contexts": 245,
+  "assessment_families": 41,
+  "assessment_fold": 0,
+  "candidate_breakthrough": false,
+  "cells_completed": 9,
+  "complete": true,
+  "custody_root": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run",
+  "dl_val_metadata_reads": 0,
+  "dl_val_reads": 0,
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "executed_runner_sha256": "b0eda24a960f31c52fc308f5b667f1b76c9a6a55dd0ce031898beeda4fc21072",
+  "finalizer_sha256": "92e0b42540426c4cdeb8bcf6e0407c057040f74126f94b74e22510e4a16b1e1f",
+  "fit_contexts": 974,
+  "fit_families": 164,
+  "fit_folds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "fold_manifest_sha256": "6ff1a5c48564a2b13b83f3b50403bfa113f8e1d0361bd5f1c3cb3c83ce872496",
+  "fold_seed": 136161,
+  "gpu_seconds": 0.0,
+  "h109_runner_sha256": "68ed53d5ba80ce52b2450de526c54f2468129eb13d0cb93cba93a8562953866b",
+  "live_loop_reads": 0,
+  "metrics_sha256": "7a8d7d56751b7ef6f3879313e40bdc84c33df47e92ab9399511862708ae33bb5",
+  "non_trainable_parameters": 1126777,
+  "optimizer_updates": 360,
+  "outer_test_reads": 0,
+  "owner": "rd_argon",
+  "planned_optimizer_updates": 360,
+  "prereg_sha256": "a9bbce83d944ab1fab9d88a96b82ea01207fc093f85a08e7cfef117dfda1aa74",
+  "preregistered_runner_sha256": "a8fa2908812964cfd5f33207a5bef2e3a2b5a9c2e23558888cd0e45e5b13e001",
+  "primary_treatments": [
+    "FAMBAL_ACC4",
+    "COSWR"
+  ],
+  "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "regression_receipt_sha256": "e30990a5e8b5e887b6b96d433152f2d43ad14f358b066644ed4964de7f5bec73",
+  "runner_path": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run/run_h136_cpu.py",
+  "schema": "jope.h136.manifest/v1",
+  "sealed_metatest_reads": 0,
+  "seeds": [
+    161,
+    162,
+    163
+  ],
+  "status": "COMPLETE",
+  "trainable_parameters": 29211,
+  "trainable_tensors": 47,
+  "verdict": "NO_ADMISSION",
+  "wave": "H136"
+}

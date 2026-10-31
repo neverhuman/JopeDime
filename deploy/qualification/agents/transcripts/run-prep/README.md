@@ -180,3 +180,102 @@ of those channels. Environment selection does not sandbox filesystem access:
 the server retains the caller's normal file permissions, including the selected
 home/configuration paths. These controls limit ambient propagation and do not
 establish client provenance or qualify A5.
+
+## Bounded system/dataset prefix probe
+
+`probe_prefix.py` is a deterministic protocol test client for preparation while the
+run lifecycle is unavailable. It reuses the unchanged recorder above and identifies
+itself as `jope-prefix-probe`, not Claude Code, Gemini CLI or Codex CLI. It launches
+no named client or LLM. Its only tool calls are `system_info`, `dataset_inspect`
+(list/profile), and `dataset_register` with an identical-key registration retry.
+Initialization is protocol lifecycle traffic. The send path rejects every other
+method/tool before writing; it never invokes `run_*`, `model_*` or control tools.
+
+Use a source-bound CPU executable and an approved, hash-pinned training-only CSV.
+Both source SHAs below are full 40-character values: the executing harness commit
+and the actual executable's build source. Keep a scoped compatibility comparison
+when these differ; a passing prefix is not proof that the executable was built at
+the harness commit. Binary/input digests are lowercase SHA256 values.
+
+```sh
+nice -n 10 python3 -B deploy/qualification/agents/transcripts/run-prep/probe_prefix.py \
+  --binary "$CPU_BINARY" --binary-sha256 "$BINARY_SHA256" \
+  --binary-source-sha "$BUILD_SOURCE_SHA" --harness-source-sha "$HARNESS_SHA" \
+  --csv "$APPROVED_TRAIN_CSV" --csv-sha256 "$TRAIN_SHA256" \
+  --out-dir "$PRIVATE_CUSTODY/FRESH-prefix" --seconds 45
+python3 -B deploy/qualification/agents/transcripts/run-prep/probe_prefix.py --self-test
+```
+
+The output must be new, outside Git and `/tmp`. Input is limited to 1 MiB. The
+probe uses private HOME/XDG/engine storage, a cleared explicit child environment,
+one-thread settings and an empty CUDA mask. It reserves at most two allowed CPUs
+under the host's 85% ceiling; no existing engine/store is reused. It terminates
+only its own fresh process groups, reserving each leader PID through cleanup.
+MCP capture is limited to 1 MiB and the supplied monotonic deadline (at most 120s);
+owned-process cleanup has additional bounded grace periods. Engine diagnostics
+retain at most 64 KiB and explicitly report truncation. Retain underlying build
+receipts and input custody separately; source/digest fields are caller-supplied
+pins checked against executable/input bytes, not build attestations.
+
+`capture/` contains the real recorder's raw/wire bytes, stderr and receipt.
+`prefix.json` records actual per-step replies, source/digest identities, exits,
+transport completeness and semantic success separately. Exit 0 requires all six
+prefix steps plus the repeated dataset ID; exit 2 retains partial/refused tool
+outcomes, and 125 reports a preflight/start failure. Listing errors do not prevent
+independent registration probes. Profile inspection is `not_run` if registration
+returned no successful ID; no ID is invented. A same-ID registration retry does
+not prove persisted uniqueness or successful run-start idempotency.
+
+Every result reports zero named-client runs and `a5_status: NOT_QUALIFIED`.
+Synthetic embedded controls are client/cleanup tests only. Full AG1, actual pinned
+named clients, run retries/inventory, export/prediction and A5 remain outstanding.
+The private fixture/store/raw transcripts are never committed by this probe.
+
+### CPU run and retry replay
+
+Add `--run-target TARGET_COLUMN` to explicitly select the next AG1 subpath. The
+same source/input pins, fresh private store, recorder and deadline apply. Default
+prefix mode still refuses every run tool. Selected mode additionally admits only
+`run_start`, `run_status` and `run_events`; model/control/fork tools remain refused.
+
+```sh
+nice -n 10 python3 -B deploy/qualification/agents/transcripts/run-prep/probe_prefix.py \
+ --binary "$CPU_BINARY" --binary-sha256 "$BINARY_SHA256" \
+ --binary-source-sha "$BUILD_SOURCE_SHA" --harness-source-sha "$HARNESS_SHA" \
+ --csv "$APPROVED_TRAIN_CSV" --csv-sha256 "$TRAIN_SHA256" \
+ --out-dir "$PRIVATE_CUSTODY/FRESH-run-replay" --seconds 90 --run-target target
+```
+
+After successful registration/retry, the probe requests a dry-run CPU regression
+plan, then creates one run and retries the identical body/key exactly once. Its
+fixed spec uses heuristic guidance, no landmarks, one evaluation and five nominal
+wall seconds. The plan must select one CPU worker. Native wave/finalization time
+may exceed the nominal search budget; the outer monotonic deadline and owned
+process-group cleanup remain in force. Failed plans never proceed to a start.
+
+The unchanged wire verifier checks the three ordered, complete run inventories:
+before creation, after creation and after retry. It requires the exact ID-set
+transition, including preservation of existing runs, rather than equal counts
+alone. Polling and paged events must retain the returned run ID and contiguous
+sequences through `run.finished` at a completed snapshot's watermark. Status uses
+non-waiting requests with 250 ms between polls; this does not qualify long-poll
+latency or the full AG1 wait-seconds path. Failed/cancelled runs,
+different retry IDs, missing/paginated inventories, event gaps and capability
+errors cannot produce replay success. Existing inspection failures remain visible
+in the prefix results; AG1's run subpath does not require `dataset_inspect`.
+
+`run-replay.json` reports `run_replay_success`, the wire retry contract, terminal
+watermark and actual per-step replies separately from `prefix_success` and
+`transport_complete`. A verified retry subpath is retained even if later polling
+fails. Semantic refusals close recorder input and drain the capture normally, so
+a complete error exchange remains distinct from incomplete transport.
+Exit 0 requires completed transport, a successful run and
+the verified retry contract; exit 2 retains an incomplete/refused replay. Capture
+integrity alone cannot satisfy these conditions. The server must have implemented
+the selected operations; current-main and candidate build identities are distinct.
+
+This deterministic protocol probe is not a named-client invocation. Every receipt
+retains zero named-client/LLM calls and `a5_status: NOT_QUALIFIED`. It does not
+inject response loss, restart the engine to prove on-disk uniqueness, or invoke
+export/prediction. Those steps and all three pinned actual clients remain required
+for full AG1/A5. Embedded positive/negative controls are synthetic harness checks.

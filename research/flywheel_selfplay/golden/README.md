@@ -58,6 +58,75 @@ for diagnosis; existing output directories refuse and are never overwritten.
 This proves regeneration only for the captured 50-context/model-prior subset;
 full historical corpus, consumer coverage, M2/M3/M5 and CUDA remain separate.
 
+The 50-context historical-pool export is a separate CPU mode. It preserves every
+plan-bound NPZ `program:F32[N,412]` row and ordered program SHA, then computes
+`proj16:F64[N,16]` by the pinned caller formula using the frozen sign matrix.
+These NPZs contain captured historical feature outputs, not DSL strings; this is
+not DSL-to-feature regeneration or completeness of the global historical corpus.
+No pool fitness, table, label or split is modified; only the plan's TRAIN pools
+are read. The original model-prior packet and its index remain unchanged.
+
+```sh
+CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+ nice -n 10 python3 research/flywheel_selfplay/golden/capture_cpu.py \
+ --plan "$CPU_PLAN" --expected-plan-sha256 "$CPU_PLAN_SHA256" \
+ --historical-pools "$TRAIN_POOLS" --packet "$FIXTURES" \
+ --expected-index-sha256 "$PUBLISHED_INDEX_SHA256" \
+ --custody-store "$HASH_CUSTODY" --output "$NEW_CATALOG_ROOT"
+```
+
+`custody-index.json` binds `packet/` (all original fixtures/index) and
+`historical/<context>.safetensors` plus `.json` (row order, program hashes and pool
+provenance). It reports logical payload/total bytes, its own index bytes by fixed
+point, unique content bytes and the decimal 50,000,000-byte threshold. Logical
+size controls required hash custody even when duplicate content reduces physical
+storage. The bounded measured set may exceed 50MB; every object, including the
+catalog, is then retained outside Git under its SHA256 filename. Existing objects
+must match and are never replaced. No execution-host paths or clock values are
+added; fixed frozen-source identifiers are retained.
+
+The committed real CPU test fetches the complete set when
+`JOPE_RES07_HISTORICAL_CATALOG_SHA256` and `JOPE_RES07_CUSTODY_STORE` are set along
+with the existing real-bundle inputs. `generate.materialize_custody(store, sha,
+new_output)` verifies the independently supplied catalog SHA, accounting, canonical
+relative paths and every object SHA/length before atomic publication. A missing,
+corrupt or escaping object refuses; the original store and packet stay intact.
+After fetch, existing consumers use `JOPE_GOLDEN_DIR=<fetched>/packet`; historical
+arrays and ordered identities remain under `<fetched>/historical`.
+This covers only all captured rows for the reviewed 50 TRAIN contexts. Global
+historical DSL inventory, raw proposer snapshots and full qualification stay open.
+
+The next DSL-coverage mode authenticates delivered TRAIN program definitions,
+including the champion list and `all_90_qualified_novel_winner_records` dictionary.
+Each source needs an independent SHA pin; every DSL must hash to its exact program
+identity and bind to the reviewed TRAIN roster. Winner families are resolved only
+from that authenticated roster. Source row order/duplicate aliases are retained;
+unique canonical programs are sorted by SHA and tensor shards are bounded8192rows.
+
+```sh
+CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+ nice -n 10 python3 research/flywheel_selfplay/golden/capture_cpu.py \
+ --plan "$CPU_PLAN" --expected-plan-sha256 "$CPU_PLAN_SHA256" \
+ --dsl-records "$CHAMPIONS" --expected-dsl-sha256 "$CHAMPIONS_SHA256" \
+ --dsl-records "$WINNERS" --expected-dsl-sha256 "$WINNERS_SHA256" \
+ --historical-catalog-sha256 "$HISTORICAL_CATALOG_SHA256" \
+ --custody-store "$HASH_CUSTODY" --output "$NEW_CATALOG_ROOT"
+```
+
+The new catalog keeps every old historical/packet object unchanged and adds
+`dsl/programs.jsonl`, `dsl/programs-<shard>.safetensors` (canonical F32 feat412/raw
+F64 proj16), `dsl/source-rows.jsonl`, and `dsl/coverage.json` with the exact
+covered/missing historical hash partition and per-context row coverage. The parent
+catalog is retained as `sources/historical-custody-index.json`. Captured features
+for matching hashes must equal the canonical features; captured-F32 and raw-FP64
+projection domains remain separately named. No DSL is guessed from feature values.
+These outputs cover every delivered definition, not every historical program.
+All global historical/qualification flags stay false while missing hashes remain.
+Set `JOPE_RES07_DSL_CATALOG_SHA256` with the existing custody/bundle inputs to run
+the committed actual-fetch, complete-hash-partition and canonical numerical test.
+No product source/model exports are needed; the bundle-tamper control changes only
+in-memory metadata bytes. Missing DSL bodies remain an explicit input requirement.
+
 Strict real replay (external fixture index SHA and the pinned real bundle required):
 
 ```sh

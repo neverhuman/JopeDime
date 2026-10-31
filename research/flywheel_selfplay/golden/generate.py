@@ -13,6 +13,7 @@ import hashlib
 import importlib.util
 import json
 import math
+import os
 import struct
 import subprocess
 import sys
@@ -60,7 +61,11 @@ def require(condition, message):
 
 def canonical(value):
     return json.dumps(
-        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
     ).encode("utf-8")
 
 
@@ -83,7 +88,9 @@ def read_json(data):
 
 
 def regular(path, maximum=MAX_BYTES):
-    require(path.is_file() and not path.is_symlink(), "regular input required: " + str(path))
+    require(
+        path.is_file() and not path.is_symlink(), "regular input required: " + str(path)
+    )
     require(path.stat().st_size <= maximum, "input exceeds byte bound")
     data = path.read_bytes()
     require(len(data) <= maximum, "input grew past byte bound")
@@ -92,7 +99,8 @@ def regular(path, maximum=MAX_BYTES):
 
 def exporter():
     spec = importlib.util.spec_from_file_location(
-        "res07_export_contract", ROOT / "research/flywheel_selfplay/export_fused_bundle.py"
+        "res07_export_contract",
+        ROOT / "research/flywheel_selfplay/export_fused_bundle.py",
     )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -127,7 +135,8 @@ def model_prior_programs(bank):
     programs = {}
     for row in bank:
         require(
-            row.get("role") == "model_prior" and row.get("coordinate_space") == "standardized_lm48_l2_unit",
+            row.get("role") == "model_prior"
+            and row.get("coordinate_space") == "standardized_lm48_l2_unit",
             "only the tagged model_prior / standardized_lm48_l2_unit bank is admitted",
         )
         key = sha(row["dsl"].encode())
@@ -136,17 +145,26 @@ def model_prior_programs(bank):
 
 
 def validate_bundle(directory, expected_digest):
-    require(directory.is_dir() and not directory.is_symlink(), "bundle must be a real directory")
+    require(
+        directory.is_dir() and not directory.is_symlink(),
+        "bundle must be a real directory",
+    )
     contract = exporter()
     manifest = read_json(regular(directory / "manifest.json"))
     jsonschema.validate(manifest, read_json(regular(contract.SCHEMA_PATH)))
-    require(manifest["bundle_digest"] == expected_digest, "bundle differs from explicit expected digest")
+    require(
+        manifest["bundle_digest"] == expected_digest,
+        "bundle differs from explicit expected digest",
+    )
     require(
         {p.name for p in directory.iterdir()} == {"manifest.json", *contract.PAYLOADS},
         "bundle must contain exactly the RES-06 payload inventory",
     )
     files = {name: regular(directory / name) for name in sorted(contract.PAYLOADS)}
-    require(contract.compute_bundle_digest(manifest, files) == expected_digest, "BundleDigest mismatch")
+    require(
+        contract.compute_bundle_digest(manifest, files) == expected_digest,
+        "BundleDigest mismatch",
+    )
     for name, field in [
         ("dope.safetensors", "dope_weights_sha256"),
         ("jope.safetensors", "jope_weights_sha256"),
@@ -159,8 +177,14 @@ def validate_bundle(directory, expected_digest):
     contract.validate_state(state)
     features = read_json(files["featurizer.json"])
     names = features["feature_names"]
-    require(len(names) == len(set(names)) == 412, "412 distinct ordered feature names required")
-    require(features["proj16_domain"] == "jope-context-cross-v1", "projection domain mismatch")
+    require(
+        len(names) == len(set(names)) == 412,
+        "412 distinct ordered feature names required",
+    )
+    require(
+        features["proj16_domain"] == "jope-context-cross-v1",
+        "projection domain mismatch",
+    )
     custody = read_json(regular(CUSTODY / "MANIFEST.json"))
     require(
         manifest["reference_source_sha256"]["custody/MANIFEST.json"]
@@ -182,7 +206,9 @@ def validate_bundle(directory, expected_digest):
         # These are frozen prior-bank inputs, not a raw-FP64 proj16 oracle.
         # Preserve/report differences rather than relabelling either coordinate contract.
         prior_projection_differences += int(
-            not np.array_equal(p.astype(np.float32), np.asarray(row["proj16"], dtype=np.float32))
+            not np.array_equal(
+                p.astype(np.float32), np.asarray(row["proj16"], dtype=np.float32)
+            )
         )
         max_proj_error = max(max_proj_error, error)
     report = dict(
@@ -190,7 +216,10 @@ def validate_bundle(directory, expected_digest):
         bundle_digest=expected_digest,
         tensors=len(state),
         frozen_dope_composite=contract.FROZEN_DOPE_COMPOSITE,
-        payloads={name: dict(sha256=sha(data), bytes=len(data)) for name, data in files.items()},
+        payloads={
+            name: dict(sha256=sha(data), bytes=len(data))
+            for name, data in files.items()
+        },
         prior_bank_records=len(bank),
         validated_prior_rows=len(bank),
         prior_unique_programs=len({row["dsl"] for row in bank}),
@@ -229,7 +258,9 @@ def tensor_bytes(values):
         array = np.ascontiguousarray(array, dtype=dtype).reshape(shape)
         data = array.tobytes()
         header[name] = dict(
-            dtype=dtypes[dtype.str], shape=list(array.shape), data_offsets=[offset, offset + len(data)]
+            dtype=dtypes[dtype.str],
+            shape=list(array.shape),
+            data_offsets=[offset, offset + len(data)],
         )
         chunks.append(data)
         offset += len(data)
@@ -241,7 +272,9 @@ def tensor_bytes(values):
 def captured(root, item):
     name = Path(item["path"])
     require(
-        not name.is_absolute() and name.parts and all(p not in (".", "..") for p in name.parts),
+        not name.is_absolute()
+        and name.parts
+        and all(p not in (".", "..") for p in name.parts),
         "capture path must be canonical and relative",
     )
     path = root / name
@@ -251,32 +284,176 @@ def captured(root, item):
     return data
 
 
+def custody_blob(store, data):
+    """Publish an immutable-by-convention SHA256 object without replacement."""
+    require(len(data) <= MAX_BYTES, "custody object exceeds byte bound")
+    store.mkdir(parents=True, exist_ok=True)
+    require(
+        store.is_dir() and not store.is_symlink(), "real custody directory required"
+    )
+    key = sha(data)
+    path = store / key
+    if not path.exists():
+        with tempfile.NamedTemporaryFile(dir=store) as staged:
+            staged.write(data)
+            staged.flush()
+            os.fsync(staged.fileno())
+            os.fchmod(staged.fileno(), 0o444)
+            try:
+                os.link(staged.name, path)
+            except FileExistsError:
+                pass  # A competing publisher must have produced the same bytes.
+    require(regular(path) == data, "existing custody object differs")
+    return dict(sha256=key, bytes=len(data))
+
+
+def custody_index(files, metadata):
+    unique = {}
+    for spec in files.values():
+        require(
+            spec["sha256"] not in unique or unique[spec["sha256"]] == spec["bytes"],
+            "inconsistent custody length",
+        )
+        unique[spec["sha256"]] = spec["bytes"]
+    index = dict(
+        metadata,
+        schema="jope.golden-custody/v1",
+        files=files,
+        file_count=len(files) + 1,
+        payload_bytes=sum(spec["bytes"] for spec in files.values()),
+        unique_payload_bytes=sum(unique.values()),
+        total_bytes=0,
+        unique_custody_bytes=0,
+        storage="sha256-custody",
+        hash_custody_required=False,
+    )
+    while True:
+        encoded = canonical(index) + b"\n"
+        sizes = dict(
+            total_bytes=index["payload_bytes"] + len(encoded),
+            unique_custody_bytes=index["unique_payload_bytes"] + len(encoded),
+            hash_custody_required=index["payload_bytes"] + len(encoded)
+            > GIT_FIXTURE_LIMIT,
+        )
+        if all(index[key] == value for key, value in sizes.items()):
+            return index, encoded
+        index.update(sizes)
+
+
+def read_custody_index(store, expected_sha256):
+    """Authenticate catalog metadata without copying any payloads."""
+    require(
+        store.is_dir() and not store.is_symlink(), "real custody directory required"
+    )
+    require(
+        len(expected_sha256) == 64
+        and all(c in "0123456789abcdef" for c in expected_sha256),
+        "invalid custody index SHA256",
+    )
+    encoded = regular(store / expected_sha256)
+    require(sha(encoded) == expected_sha256, "custody index hash mismatch")
+    index = read_json(encoded)
+    require(index["schema"] == "jope.golden-custody/v1", "unsupported custody index")
+    rebuilt, expected = custody_index(
+        index["files"],
+        {
+            key: value
+            for key, value in index.items()
+            if key
+            not in {
+                "schema",
+                "files",
+                "file_count",
+                "payload_bytes",
+                "unique_payload_bytes",
+                "total_bytes",
+                "unique_custody_bytes",
+                "storage",
+                "hash_custody_required",
+            }
+        },
+    )
+    require(index == rebuilt and encoded == expected, "custody byte accounting differs")
+    require(index["total_bytes"] <= 512 * 1024 * 1024, "custody set exceeds byte bound")
+    for name, spec in index["files"].items():
+        path = Path(name)
+        require(
+            path.parts
+            and not path.is_absolute()
+            and name == path.as_posix()
+            and all(p not in (".", "..") for p in path.parts)
+            and name != "custody-index.json",
+            "invalid custody logical path",
+        )
+        key = spec["sha256"]
+        require(
+            len(key) == 64 and all(c in "0123456789abcdef" for c in key),
+            "invalid custody object SHA256",
+        )
+    return index, encoded
+
+
+def materialize_custody(store, expected_sha256, output):
+    """Fetch only authenticated objects into one new atomic fixture directory."""
+    require(not output.exists() and not output.is_symlink(), "output must be new")
+    index, encoded = read_custody_index(store, expected_sha256)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="golden-fetch-", dir=output.parent) as temp:
+        staging = Path(temp) / "packet"
+        staging.mkdir()
+        for name, spec in index["files"].items():
+            data = regular(store / spec["sha256"])
+            require(
+                len(data) == spec["bytes"] and sha(data) == spec["sha256"],
+                "custody object hash/length mismatch",
+            )
+            path = staging / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+        (staging / "custody-index.json").write_bytes(encoded)
+        exporter()._publish_directory(staging, output)
+    return index
+
+
 @contextmanager
 def qualification_lease(path):
-    require(path.exists() and not path.is_symlink(), "existing real qualification lock required")
+    require(
+        path.exists() and not path.is_symlink(),
+        "existing real qualification lock required",
+    )
     with path.open("r+") as stream:
         try:
             fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as error:
-            raise Refusal("qualification lock busy; never preempt another owner") from error
+            raise Refusal(
+                "qualification lock busy; never preempt another owner"
+            ) from error
         try:
             yield
         finally:
             fcntl.flock(stream, fcntl.LOCK_UN)
 
 
-def _generate_locked(bundle, expected_digest, captures_path, expected_captures_sha256, output):
+def _generate_locked(
+    bundle, expected_digest, captures_path, expected_captures_sha256, output
+):
     """Generate only from pinned train-only oracle captures, never table discovery."""
     require(not output.exists() and not output.is_symlink(), "output must be new")
     manifest, custody, reference, validation = validate_bundle(bundle, expected_digest)
     root = captures_path.parent
     capture_bytes = regular(captures_path)
     require(
-        sha(capture_bytes) == expected_captures_sha256, "capture differs from explicit reviewed manifest pin"
+        sha(capture_bytes) == expected_captures_sha256,
+        "capture differs from explicit reviewed manifest pin",
     )
     capture = read_json(capture_bytes)
-    require(capture["schema"] == "jope.golden-source-captures/v1", "unsupported capture schema")
-    require(capture["bundle_digest"] == expected_digest, "capture bundle identity differs")
+    require(
+        capture["schema"] == "jope.golden-source-captures/v1",
+        "unsupported capture schema",
+    )
+    require(
+        capture["bundle_digest"] == expected_digest, "capture bundle identity differs"
+    )
     require(
         not {"proposer_bank", "historical_inventory", "corpus"}.intersection(capture),
         "this model_prior subset does not admit proposer or replacement corpus inputs",
@@ -295,38 +472,56 @@ def _generate_locked(bundle, expected_digest, captures_path, expected_captures_s
     positions = {key: i for i, key in enumerate(hashes)}
     contexts = capture["contexts"]
     require(
-        len(contexts) >= MIN_CONTEXTS and len({c["context_sha256"] for c in contexts}) == len(contexts),
+        len(contexts) >= MIN_CONTEXTS
+        and len({c["context_sha256"] for c in contexts}) == len(contexts),
         "at least 50 distinct training contexts required",
     )
     train_families = set(custody["training_corpus"]["train_family_ids"])
     selected_bytes = captured(root, capture["selected"])
     require(
-        sha(selected_bytes) == custody["training_corpus"]["selected_sha256"], "training selection pin differs"
+        sha(selected_bytes) == custody["training_corpus"]["selected_sha256"],
+        "training selection pin differs",
     )
     # Read identifiers only from the pinned row-free metadata, never follow its table paths.
     selected = read_json(selected_bytes)
     train = {row["context_sha256"]: row["family_id"] for row in selected["train"]}
-    require(len(train) == custody["training_corpus"]["train_contexts"], "training roster count differs")
+    require(
+        len(train) == custody["training_corpus"]["train_contexts"],
+        "training roster count differs",
+    )
     source_pins = {row["path"]: row["sha256"] for row in custody["import_files"]}
     workspace = next(
-        value for key, value in source_pins.items() if key.endswith("/hpc/landmark_workspace.py")
+        value
+        for key, value in source_pins.items()
+        if key.endswith("/hpc/landmark_workspace.py")
     )
     evaluator = custody["evaluator"]["binary"]["sha256"]
     caller = next(
         value
         for key, value in reference.source_hashes.items()
-        if key.endswith("/frozen-source/research/flywheel_selfplay/run_fused_closed_loop.py")
+        if key.endswith(
+            "/frozen-source/research/flywheel_selfplay/run_fused_closed_loop.py"
+        )
     )
-    native = next(row["sha256"] for row in custody["assets"] if row["path"].endswith("/bin/libjope_hpc.so"))
+    native = next(
+        row["sha256"]
+        for row in custody["assets"]
+        if row["path"].endswith("/bin/libjope_hpc.so")
+    )
     files = {
-        "programs.safetensors": tensor_bytes(dict(feat412=features, proj16=projections)),
+        "programs.safetensors": tensor_bytes(
+            dict(feat412=features, proj16=projections)
+        ),
         "programs.jsonl": b"".join(canonical(p) + b"\n" for p in programs),
         "model-prior.jsonl": b"".join(canonical(row) + b"\n" for row in bank),
     }
     pools = []
     for context in sorted(contexts, key=lambda c: c["context_sha256"]):
         cid = context["context_sha256"]
-        require(len(cid) == 64 and all(c in "0123456789abcdef" for c in cid), "invalid context hash")
+        require(
+            len(cid) == 64 and all(c in "0123456789abcdef" for c in cid),
+            "invalid context hash",
+        )
         require(
             context["dl_split"] == "DL-Train"
             and cid in train
@@ -345,10 +540,13 @@ def _generate_locked(bundle, expected_digest, captures_path, expected_captures_s
         data = captured(root, landmark)
         tensors = load_tensors(data)
         require(
-            set(tensors) >= {"input.X", "input.y", "input.row_ids", "v256", "col", "col_full"},
+            set(tensors)
+            >= {"input.X", "input.y", "input.row_ids", "v256", "col", "col_full"},
             "landmark capture must retain actual training inputs and full/padded outputs",
         )
-        x, y, rows, full_col = (tensors[key] for key in ("input.X", "input.y", "input.row_ids", "col_full"))
+        x, y, rows, full_col = (
+            tensors[key] for key in ("input.X", "input.y", "input.row_ids", "col_full")
+        )
         require(
             x.ndim == 2
             and 0 < x.shape[0] <= manifest["landmark_sample_rows"]
@@ -366,7 +564,8 @@ def _generate_locked(bundle, expected_digest, captures_path, expected_captures_s
         n = min(64, len(full_col))
         padded[:n] = full_col[:n, :17]
         require(
-            torch.equal(padded, tensors["col"].reshape(64, 17)), "caller column truncation/padding differs"
+            torch.equal(padded, tensors["col"].reshape(64, 17)),
+            "caller column truncation/padding differs",
         )
         inter = reference.intermediates(tensors["v256"].numpy(), tensors["col"].numpy())
         files[f"landmarks/{cid}.safetensors"] = data
@@ -381,10 +580,15 @@ def _generate_locked(bundle, expected_digest, captures_path, expected_captures_s
             "surrogate comparison identity differs",
         )
         files[f"surrogate/{cid}.json"] = canonical(measured) + b"\n"
-        require(set(context["slates"]) == {"12", "20"}, "both 4+8 and 4+16 serving slates required")
+        require(
+            set(context["slates"]) == {"12", "20"},
+            "both 4+8 and 4+16 serving slates required",
+        )
         for width in (12, 20):
             slate = context["slates"][str(width)]
-            require(len(slate["program_sha256"]) == width, "serving slate width differs")
+            require(
+                len(slate["program_sha256"]) == width, "serving slate width differs"
+            )
             require(
                 len(slate["revealed_raw_f"]) == len(slate["revealed_gate"]) == 4,
                 "exactly four measured reveals required",
@@ -395,7 +599,9 @@ def _generate_locked(bundle, expected_digest, captures_path, expected_captures_s
                 "invalid reveal values",
             )
             for key, value, gate in zip(
-                slate["program_sha256"][:4], slate["revealed_raw_f"], slate["revealed_gate"]
+                slate["program_sha256"][:4],
+                slate["revealed_raw_f"],
+                slate["revealed_gate"],
             ):
                 observation = measured["measurements"][key]
                 require(
@@ -488,7 +694,9 @@ def generate(bundle, expected_digest, captures_path, expected_captures_sha256, o
     )
     require(merged.returncode == 0, "merged RES-06 source required")
     with qualification_lease(Path.home() / "jope_plan/qualification.lock"):
-        return _generate_locked(bundle, expected_digest, captures_path, expected_captures_sha256, output)
+        return _generate_locked(
+            bundle, expected_digest, captures_path, expected_captures_sha256, output
+        )
 
 
 def main(argv=None):
@@ -501,12 +709,18 @@ def main(argv=None):
     args = parser.parse_args(argv)
     torch.set_num_threads(1)
     try:
-        if args.captures is None and args.output is None and args.expected_captures_sha256 is None:
+        if (
+            args.captures is None
+            and args.output is None
+            and args.expected_captures_sha256 is None
+        ):
             *_, report = validate_bundle(args.bundle, args.expected_bundle_digest)
             report["consumers"] = CONSUMERS
         else:
             require(
-                args.captures is not None and args.output is not None and args.expected_captures_sha256,
+                args.captures is not None
+                and args.output is not None
+                and args.expected_captures_sha256,
                 "captures, explicit reviewed capture pin and output are required together",
             )
             report = generate(

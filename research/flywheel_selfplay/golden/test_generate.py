@@ -9,7 +9,6 @@ import io
 import json
 import struct
 import os
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -73,6 +72,25 @@ class Contracts(unittest.TestCase):
                 ),
                 b"{}",
             )
+            # Accounting uses logical bytes, including its own index, rather than
+            # compressed inputs or deduplicated physical content.
+            for size in (1, 50_000_001):
+                index, encoded = generate.custody_index(
+                    {"metadata.json": dict(sha256="0" * 64, bytes=size)}, {}
+                )
+                self.assertEqual(index["total_bytes"], size + len(encoded))
+                self.assertEqual(
+                    index["hash_custody_required"], index["total_bytes"] > 50_000_000
+                )
+            store = root / "store"
+            spec = generate.custody_blob(store, b"row-free metadata")
+            self.assertEqual(
+                (store / spec["sha256"]).read_bytes(), b"row-free metadata"
+            )
+            (store / spec["sha256"]).chmod(0o600)
+            (store / spec["sha256"]).write_bytes(b"changed")
+            with self.assertRaisesRegex(ValueError, "existing custody object differs"):
+                generate.custody_blob(store, b"row-free metadata")
 
     def test_lease_excludes_another_process_and_releases_without_touching_the_real_lock(
         self,
@@ -169,6 +187,98 @@ class RealBundle(unittest.TestCase):
         self.assertFalse(torch.cuda.is_initialized())
         # Constructor/alias wiring cannot modify even the in-memory frozen state.
         generate.exporter().validate_state(self.reference.state)
+        catalog = os.environ.get("JOPE_RES07_DSL_CATALOG_SHA256") or os.environ.get(
+            "JOPE_RES07_HISTORICAL_CATALOG_SHA256"
+        )
+        if catalog:
+            store = Path(os.environ["JOPE_RES07_CUSTODY_STORE"])
+            with tempfile.TemporaryDirectory() as temp:
+                output = Path(temp) / "fetched"
+                index = generate.materialize_custody(store, catalog, output)
+                self.assertEqual(index["contexts"], 50)
+                self.assertEqual(index["historical_program_rows"], 57600)
+                self.assertGreater(index["total_bytes"], 50_000_000)
+                self.assertTrue(index["hash_custody_required"])
+                self.assertFalse(index["historical_corpus_complete"])
+                self.assertFalse(index["features_regenerated_from_dsl"])
+                self.assertEqual(
+                    sum(p.stat().st_size for p in output.rglob("*") if p.is_file()),
+                    index["total_bytes"],
+                )
+                for name, spec in index["files"].items():
+                    self.assertEqual(
+                        generate.sha((output / name).read_bytes()), spec["sha256"]
+                    )
+                if "dsl_coverage" in index:
+                    coverage = generate.read_json(
+                        (output / "dsl/coverage.json").read_bytes()
+                    )
+                    definitions = [
+                        generate.read_json(line)
+                        for line in (output / "dsl/programs.jsonl")
+                        .read_bytes()
+                        .splitlines()
+                    ]
+                    keys = [row["program_sha256"] for row in definitions]
+                    self.assertEqual(keys, sorted(set(keys)))
+                    for row in definitions:
+                        self.assertEqual(
+                            generate.sha(row["dsl"].encode()), row["program_sha256"]
+                        )
+                    historical = set()
+                    for path in (output / "historical").glob("*.json"):
+                        historical.update(
+                            generate.read_json(path.read_bytes())["program_sha256"]
+                        )
+                    covered, missing = (
+                        set(coverage["covered_program_sha256"]),
+                        set(coverage["missing_program_sha256"]),
+                    )
+                    self.assertEqual(covered, historical & set(keys))
+                    self.assertEqual(missing, historical - set(keys))
+                    self.assertFalse(covered & missing)
+                    self.assertEqual(coverage["delivered_unique_programs"], len(keys))
+                    for shard in coverage["canonical_tensor_shards"]:
+                        tensors = load_tensors((output / shard["path"]).read_bytes())
+                        self.assertEqual(tensors["feat412"].dtype, torch.float32)
+                        self.assertEqual(tensors["proj16"].dtype, torch.float64)
+                        for i, row in enumerate(
+                            definitions[shard["start"] : shard["end"]]
+                        ):
+                            features, projection = self.reference.featurize(row["dsl"])
+                            self.assertTrue(
+                                np.array_equal(tensors["feat412"][i].numpy(), features)
+                            )
+                            self.assertLessEqual(
+                                float(
+                                    np.max(
+                                        np.abs(
+                                            tensors["proj16"][i].numpy() - projection
+                                        )
+                                    )
+                                ),
+                                1e-12,
+                            )
+                    aliases = [
+                        generate.read_json(line)
+                        for line in (output / "dsl/source-rows.jsonl")
+                        .read_bytes()
+                        .splitlines()
+                    ]
+                    self.assertEqual(len(aliases), coverage["delivered_source_records"])
+                    self.assertTrue(
+                        all(
+                            row["dl_split"] == "DL-Train"
+                            and row["program_sha256"] in set(keys)
+                            for row in aliases
+                        )
+                    )
+                    print(
+                        f"RES07_DSL_COVERAGE records={len(aliases)} programs={len(keys)} covered={len(covered)} missing={len(missing)}"
+                    )
+                print(
+                    f"RES07_HASH_CUSTODY_FETCH files={index['file_count']} bytes={index['total_bytes']} rows={index['historical_program_rows']}"
+                )
 
     def test_model_prior_population_is_preserved_and_cannot_be_relabelled_as_proposer(
         self,
@@ -226,16 +336,16 @@ class RealBundle(unittest.TestCase):
     def test_payload_tamper_and_missing_frozen_buffer_are_refused_without_changing_original(
         self,
     ):
-        with tempfile.TemporaryDirectory() as temp:
-            copied = Path(temp) / "bundle"
-            shutil.copytree(self.bundle, copied)
-            path = copied / "featurizer.json"
-            path.chmod(
-                0o600
-            )  # Deliberate corruption only in our private copied fixture.
-            path.write_bytes(path.read_bytes() + b" ")
+        # Corrupt the metadata bytes in memory; never copy the model bundle.
+        regular = generate.regular
+
+        def changed(path, *args, **kwargs):
+            data = regular(path, *args, **kwargs)
+            return data + b" " if path == self.bundle / "featurizer.json" else data
+
+        with mock.patch.object(generate, "regular", side_effect=changed):
             with self.assertRaisesRegex(ValueError, "BundleDigest mismatch"):
-                generate.validate_bundle(copied, self.digest)
+                generate.validate_bundle(self.bundle, self.digest)
         state = dict(self.reference.state)
         state.pop("mu_lm48")
         with self.assertRaisesRegex(ValueError, "complete tensor manifest"):

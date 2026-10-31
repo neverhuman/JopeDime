@@ -1,0 +1,178 @@
+{
+  "arms": {
+    "CONTROL": {
+      "lr": 0.0001,
+      "optimizer": "AdamW",
+      "updates_per_seed": 40,
+      "weight_decay": 0.0001
+    },
+    "LOWLR_LONG": {
+      "lr": 2.5e-05,
+      "optimizer": "AdamW",
+      "updates_per_seed": 160,
+      "weight_decay": 0.0001
+    },
+    "SGDM": {
+      "lr": 0.003,
+      "lr_grid": [
+        0.001,
+        0.003,
+        0.01,
+        0.03
+      ],
+      "momentum": 0.9,
+      "nesterov": true,
+      "optimizer": "SGD",
+      "updates_per_seed": 40
+    }
+  },
+  "baseline": {
+    "checkpoint": "r882",
+    "checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "only_adapter_parameters_train": true
+  },
+  "calibration": {
+    "absolute_drift_differences": {
+      "0.001": 1.2855104281215746,
+      "0.003": 0.31914379664863546,
+      "0.01": 1.3630029715099208,
+      "0.03": 2.777830624133252
+    },
+    "assessment_outcome_metrics_read": 0,
+    "assessment_payload_reads": 0,
+    "attempt1_void_receipt_sha256": "6cf6af2028542874ced43cfa70ca518f13bda5683b7d98472375ce8d334d6d95",
+    "attempts": [
+      {
+        "attempt": 1,
+        "reason": "load1 87.96 before SGDM 0.003 update 160; no drift values persisted",
+        "status": "VOID_INCOMPLETE_RESOURCE_GUARD"
+      },
+      {
+        "attempt": 2,
+        "chosen_lr": 0.003,
+        "status": "PASS"
+      }
+    ],
+    "batch_plan_sha256": "8e612616168f680ed8e7430ab07383a2cb81c4ff0dbca83a15ebbee9cd2acf72",
+    "chosen_lr": 0.003,
+    "completed_trajectories": 5,
+    "control_fit_adapter_l2_drift": 2.0692224588887975,
+    "control_updates": 160,
+    "fit_only": true,
+    "grid": [
+      0.001,
+      0.003,
+      0.01,
+      0.03
+    ],
+    "h132_helper_commit": "30be5edb79b0ce1406aa0367d68019c9a3a3c1e1",
+    "h132_runner_sha256": "4d3e8182e674410b179e13ec2cadba21e1715c65b677053fd776a2dfe4a65673",
+    "helper_module_sha256": {
+      "h46/run.py": "645bf1470789c4f5bcc97809f703b04d9a594a21dd9d3aa8c2fd4e98810d0320",
+      "h48/run.py": "756960a0e2bfdf23e75012fb347ce772fb6fdeaa4fb4fc2d4178dfaeb9eac9da",
+      "h53b/runner.py": "85aa59e9c4bee62805ed6c388364611b3a7cdb772a19017eeae848819c2cb318",
+      "h55/runner.py": "56fd220689805f07877ae403c2f00a4b34831cc4b2919f4bd69807ff3c21f4bc",
+      "h59/runner.py": "604d02ed72a6149284792cba315124efd1ffe8cac79e5ace22613db86c11b4c3"
+    },
+    "receipt_sha256": "c969a588154f7acb1a9d26545e9b64b2290605c7f965f448e5a0798c3538fc58",
+    "runner_sha256": "862f2f13c7c441a5c888a7e293668139fab6d002a9c33083d0110b88e75c6edb",
+    "seed": 133,
+    "selection": "closest adapter L2 drift to CONTROL; exact tie chooses smaller LR",
+    "sgdm_fit_adapter_l2_drift": {
+      "0.001": 0.7837120307672231,
+      "0.003": 1.750078662240162,
+      "0.01": 3.4322254303987183,
+      "0.03": 4.8470530830220495
+    },
+    "sgdm_updates_per_grid_candidate": 160,
+    "updates_per_trajectory": 160
+  },
+  "custody": "/home/ubuntu/jope-rescue-20260921/h133-optim-geometry",
+  "execution_gate": "Main study execution only after preregistration merge; unchanged-r882 fold-0 exact regression-first gate before main arm cells",
+  "fold": {
+    "assessment_contexts": 245,
+    "assessment_families": 41,
+    "assessment_fold": 0,
+    "family_grouped": true,
+    "fit_contexts": 974,
+    "fit_families": 164,
+    "fit_folds": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "fold_count": 5
+  },
+  "fold_manifest_sha256": "322137e01ef0a6079284c0e907c8a5ce0db476d46eac1c6ea0fdce3315ea65fc",
+  "fold_seed": 133100,
+  "hypothesis": "LOWLR_LONG (AdamW LR x0.25 for 160 updates) or SGDM with fit-drift-matched fixed LR can improve family utility while limiting harm versus unchanged r882.",
+  "planned_main_optimizer_updates": 720,
+  "prereg_sha256": "40d40118255b308b3da5ad4f11c5c79c73f7bbdbdd0d8605aa68d8b102d125af",
+  "primary": {
+    "admission": {
+      "all_three_seed_mean_gains_strictly_gt": 0.0,
+      "family_harm_fraction_gain_lt_minus_0_01_lte": 0.1,
+      "holm_adjusted_lcb95_strictly_gt": 0.0,
+      "median_gain_strictly_gt": 0.001,
+      "ties_or_zero_gain": "NO_ADMISSION"
+    },
+    "auc": false,
+    "comparator": "r882",
+    "family_cluster_bootstrap_draws": 10000,
+    "family_cluster_bootstrap_seed": 133100,
+    "holm_family_alpha": 0.05,
+    "report": [
+      "family-paired Elo",
+      "continuous mean regret",
+      "adapter L2 drift",
+      "harm versus drift"
+    ],
+    "treatments": [
+      "LOWLR_LONG",
+      "SGDM"
+    ]
+  },
+  "resource_guardrails": {
+    "cpu_only": true,
+    "disk_used_percent_strictly_below": 93.8,
+    "dl_val_outer_sealed_holdout_payload_reads": 0,
+    "max_load1": 86.7,
+    "max_rss_bytes": 6442450944,
+    "max_scratch_bytes": 2147483648,
+    "max_threads": 4,
+    "min_mem_available_bytes": 32212254720,
+    "nice": 19,
+    "qualification_lock": false
+  },
+  "schedule": {
+    "batch_plan": "H132 deterministic family/context candidate plan generator; LOWLR_LONG 160 updates uses extended same generator",
+    "batch_size": 16,
+    "grad_clip_norm": 1.0,
+    "slate_size": 192,
+    "weight_decay": 0.0001
+  },
+  "schema": "jope.h133.preregistration/v1",
+  "seed_use_verified_unused": [
+    133,
+    134,
+    135
+  ],
+  "seeds": [
+    133,
+    134,
+    135
+  ],
+  "source": {
+    "contexts": 1219,
+    "dataset": "H50 real S3 DL-Train only",
+    "families": 205,
+    "forbidden_split_payload_reads": 0,
+    "train_only_export_sha256": "ffe506f68d7aade13a7eef6f0cf55d6e79b200dd5e742f8f035dccd0ee27e3ff"
+  },
+  "source_base": "b140c2adc17786e73ca5c13e2fb589a0be0f6c55",
+  "status": "READY_FOR_PREREGISTRATION_NOT_RUN",
+  "train_only_export_sha256": "ffe506f68d7aade13a7eef6f0cf55d6e79b200dd5e742f8f035dccd0ee27e3ff",
+  "wave": "H133"
+}

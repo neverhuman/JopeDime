@@ -19,7 +19,7 @@ The regressor's name, version and licence (formerly §6.2 and Appendix C) were f
 
 ## Every marker, by location
 
-Source lines are as of upgrade pass 24 (`wp_opus_layout_t0540`), which moved Table 5 ahead of the §7 opening paragraph. "Packet" names the component of the evidence-handoff table that supplies the item.
+Source lines are as of main after #1216; each shown line number matches its link. "Packet" names the component of the evidence-handoff table that supplies the item.
 
 ### Results (§7): 25 markers
 
@@ -27,21 +27,21 @@ Source lines are as of upgrade pass 24 (`wp_opus_layout_t0540`), which moved Tab
 |---|---|---|---|
 | R1 | §7 opening ([07_results.tex:47](sections/07_results.tex#L47)) | Independent evaluation evidence before any performance claim. It is resolved by the completed comparisons in §7.2–§7.4. | Reproducible summaries |
 | R2 | §7 opening ([:48](sections/07_results.tex#L48)) | A source-bound benchmark before any deployment-throughput claim; without one, make no throughput claim. | None yet: add a benchmark record bound to its source commit and inputs |
-| R3 | §7.1 contract ([:65](sections/07_results.tex#L65)) | The final problem inventory, dataset identities, row splits, family assignments and exclusions, component provenance, evaluator, checkpoint, seeds, task metrics and failure accounting. | Frozen evaluation contract |
-| R4 | §7.2 effect of training ([:81](sections/07_results.tex#L81)) | The matched first-proposal comparison: the trained writer against the frozen reference writer, with paired first draws under predeclared seeds and every draw reported. Also source-bound evidence of optimizer updates and parameter changes. | Paired first-proposal record |
-| R5–R6 | Table 6 ([:107–108](sections/07_results.tex#L107)) | A paired evaluation with uncertainty for each receipted comparator, including ties, failures and exclusions: the frozen algorithm designed by `claude-opus-5-5` (`Opus5p5_Extra`) and the one designed by `gpt-6-astra-wm`, as its session reported (`GPT6_Astra_Max`). Their receipts are in `crates/jope-bench`. | Fixed-method comparison record |
-| R7 | Figure 15 ([:115](sections/07_results.tex#L115)) | The leaderboard: evaluated methods, paired outcomes, rating protocol and uncertainty. Elo summarizes a stated comparison population and does not replace paired results. | Fixed-method comparison record |
-| R8 | §7.4 cost of attempts ([:131](sections/07_results.tex#L131)) | Attempt curves with matched budgets, repeated seeds and uncertainty. | Attempt and cost record |
-| R9 | Figure 16 ([:137](sections/07_results.tex#L137)) | Performance against attempts and compute, including failed attempts and unreached targets. | Attempt and cost record |
-| R10 | Figure 17 ([:146](sections/07_results.tex#L146)) | Pilot cost: per-stage failure shares and cost per verified win. | Attempt and cost record |
-| R11 | Figure 17 caption ([:152](sections/07_results.tex#L152)) | Pilot data, seeds and family-level uncertainty. Settings with no verified win are named, not given a finite cost per win. | Attempt and cost record |
-| R12 | §7.5 map ([:163](sections/07_results.tex#L163)) | Problem-similarity and program-only-control evaluations, on data disjoint from fitting the map. | Map, example and diagnostic records |
-| R13 | §7.5 map ([:171](sections/07_results.tex#L171)) | A **team decision**: implement a route by which the map changes training, or limit the map study to ranking. In the described checkpoint the map neither conditions nor screens the writer's draw. | Map, example and diagnostic records |
-| R14–R16 | Table 7 ([:183–185](sections/07_results.tex#L183)) | A held-out ranking study; a matched causal ablation, which presupposes the training route in R13; and a failure-class comparison. | Map, example and diagnostic records |
-| R17 | §7.6 failures ([:199](sections/07_results.tex#L199)) | Attempt inventories and costs by terminal outcome class, with unresolved cases identified. | Attempt and cost record |
-| R18 | §7.6 worked example ([:204](sections/07_results.tex#L204)) | The selection rule, fixed before inspection; the actual program; and its verified outcomes, with no replacement of failed attempts. | Map, example and diagnostic records |
-| R19–R24 | Table 8 ([:221–226](sections/07_results.tex#L221)) | The selected game's problem, task and metric; encoding time; the emitted program or unfinished draft and its size; check and fitting outcomes and time; the hidden-fold score; and the incumbent's score. If there is no valid fit, the failure and its incurred cost replace the scores. | Map, example and diagnostic records |
-| R25 | §7.7 diagnostics ([:247](sections/07_results.tex#L247)) | Pinned inventories, checkpoints, seeding, timing and ranking protocols for the historical diagnostics, kept separate from the final comparisons. | Map, example and diagnostic records |
+| R3 | §7.1 contract ([:67](sections/07_results.tex#L67)) | The final problem inventory, dataset identities, row splits, family assignments and exclusions, component provenance, evaluator, checkpoint, seeds, task metrics and failure accounting. | Frozen evaluation contract |
+| R4 | §7.2 effect of training ([:83](sections/07_results.tex#L83)) | The matched first-proposal comparison: the trained writer against the frozen reference writer, with paired first draws under predeclared seeds and every draw reported. Also source-bound evidence of optimizer updates and parameter changes. | Paired first-proposal record |
+| R5–R6 | Table 6 ([:109–110](sections/07_results.tex#L109)) | A paired evaluation with uncertainty for each receipted comparator, including ties, failures and exclusions: the frozen algorithm designed by `claude-opus-5-5` (`Opus5p5_Extra`) and the one designed by `gpt-6-astra-wm`, as its session reported (`GPT6_Astra_Max`). Their receipts are in `crates/jope-bench`. | Fixed-method comparison record |
+| R7 | Figure 15 ([:117](sections/07_results.tex#L117)) | The leaderboard: evaluated methods, paired outcomes, rating protocol and uncertainty. Elo summarizes a stated comparison population and does not replace paired results. | Fixed-method comparison record |
+| R8 | §7.4 cost of attempts ([:135](sections/07_results.tex#L135)) | Attempt curves with matched budgets, repeated seeds and uncertainty. | Attempt and cost record |
+| R9 | Figure 16 ([:141](sections/07_results.tex#L141)) | Performance against attempts and compute, including failed attempts and unreached targets. | Attempt and cost record |
+| R10 | Figure 17 ([:158](sections/07_results.tex#L158)) | Pilot cost: per-stage failure shares and cost per verified win. | Attempt and cost record |
+| R11 | Figure 17 caption ([:164](sections/07_results.tex#L164)) | Pilot data, seeds and family-level uncertainty. Settings with no verified win are named, not given a finite cost per win. | Attempt and cost record |
+| R12 | §7.5 map ([:154](sections/07_results.tex#L154)) | Problem-similarity and program-only-control evaluations, on data disjoint from fitting the map. | Map, example and diagnostic records |
+| R13 | §7.5 map ([:178](sections/07_results.tex#L178)) | A **team decision**: bind the existing native-search route (the map's ranks weight parent selection) to the evaluated checkpoint and vary it in a matched causal ablation, or limit the map study to ranking. In the described checkpoint the map neither conditions nor screens the writer's draw. | Map, example and diagnostic records |
+| R14–R16 | Table 7 ([:190–192](sections/07_results.tex#L190)) | A held-out ranking study; a matched causal ablation, which presupposes the training route in R13; and a failure-class comparison. | Map, example and diagnostic records |
+| R17 | §7.6 failures ([:206](sections/07_results.tex#L206)) | Attempt inventories and costs by terminal outcome class, with unresolved cases identified. | Attempt and cost record |
+| R18 | §7.6 worked example ([:211](sections/07_results.tex#L211)) | The selection rule, fixed before inspection; the actual program; and its verified outcomes, with no replacement of failed attempts. | Map, example and diagnostic records |
+| R19–R24 | Table 8 ([:228–233](sections/07_results.tex#L228)) | The selected game's problem, task and metric; encoding time; the emitted program or unfinished draft and its size; check and fitting outcomes and time; the hidden-fold score; and the incumbent's score. If there is no valid fit, the failure and its incurred cost replace the scores. | Map, example and diagnostic records |
+| R25 | §7.7 diagnostics ([:254](sections/07_results.tex#L254)) | Pinned inventories, checkpoints, seeding, timing and ranking protocols for the historical diagnostics, kept separate from the final comparisons. | Map, example and diagnostic records |
 
 ### Waiting on Results: 2 markers
 
@@ -128,7 +128,7 @@ The owner decisions of `wp_opus_t0352` settled four items:
 - **Venue-time formatting. Decided.** Black links, the current template, the appendix order as on `main` and the current bibliography style; revisit when a venue is chosen.
 
 Still open:
-- **The map's role (R13–R16):** either a training route or a ranking-only claim.
+- **The map's role (R13–R16):** either a causal ablation of the existing search route (the map's ranks weight parent selection; `crates/jope-engine/src/gp.rs`, `policy_weighted_parent`) or a ranking-only claim.
 - **Reference checkpoint (§6.5, Appendix C):** its acceptance record, held-out promotion receipt and pinned runtime. No marker carries these, but §6.5 names the acceptance record and a pinned runtime as required inputs to the §7.1 evaluation contract.
 
 ## How to hand evidence in

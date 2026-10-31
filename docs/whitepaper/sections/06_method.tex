@@ -9,7 +9,7 @@
 The reference procedure uses verified search to train a program writer
 and a separate problem--program map that ranks scored programs.
 Deployment permits one draw from the writer, with the map absent.
-We describe this historical reference first, then the later
+We describe the historical reference first, then the later
 adapter-ranking record in \cref{sec:method-status}. Ranking a pool and
 proposing a new program are different tasks. The writer's first-proposal
 behavior requires the matched comparison in \cref{sub:results-learning}.
@@ -43,9 +43,8 @@ state of a pretrained third-party tabular regressor that reads the training
 rows and labels (1,024; Foundation, version \texttt{foundation\_enc.v1.tabpfn}; license: proprietary, available on request; redistribution prohibited). The third passes the
 scaled targets through two frozen windows (512).
 
-The reference encoder stays fixed during writer training and is pinned by
-hash. Encoding is bounded at
-30 seconds per problem. A context with any non-finite value is refused
+The reference encoder is pinned by hash and stays fixed during writer
+training. Encoding is bounded at 30 seconds per problem. A context with any non-finite value is refused
 rather than imputed (\cref{app:training}). The input contract permits
 training-side task evidence only; final held-out labels and their derived
 statistics must stay outside the input closure. A context's recorded
@@ -79,11 +78,13 @@ parity check in \cref{sub:method-referee}.
 
 The map reads a program as $z_w=\encS(w)$, the mean of learned token
 embeddings. Pooling discards token order, limiting the map's ability to
-distinguish compositions built from the same tokens. It combines $z_w$
-with $z_p$ three ways (as is, gated by the problem, and as a distance from a projection of it) and
-averages four heads into a score $\mapv(z_p,z_w)$ with parameters $\psi$. It learns from lists: for each problem $p$ with
-at least eight scored programs, $G_p$ holds them and $\rho_w\in[0,1]$ is a program's percentile, 1
-for the best. The map's softmax over the list is trained toward a target concentrated on the best
+distinguish compositions built from the same tokens. It combines $z_w$ with $z_p$ three ways: as is, gated by the problem,
+and as a distance from a projection of it. It averages four heads into a
+score $\mapv(z_p,z_w)$ with parameters $\psi$.
+
+The map learns from scored lists. For each problem $p$ with at least eight
+scored programs, $G_p$ holds them and $\rho_w\in[0,1]$ is a program's
+percentile, 1 for the best. The map's softmax over the list is trained toward a target concentrated on the best
 \citep{cao2007listnet}:
 \begin{equation}
   \mathcal{L}_{\text{map}}(p)=-\sum_{w\in G_p}
@@ -97,7 +98,9 @@ objective over programs scored on the same problem; the analogy to
 contrastive learning \citep{oord2018cpc,radford2021clip} does not establish
 CLIP-style alignment across problems and programs.
 A Bradley--Terry term on the same lists sharpens the top \citep{bradley1952rank}. Stillborn moves
-have no score, so this ranking objective covers only programs that run. A program-only head
+have no score, so this ranking objective covers only programs that run.
+
+A program-only head
 trained beside it tests whether the map reads the problem at all (\cref{sec:results}).
 
 \begin{keyidea}
@@ -106,12 +109,17 @@ tests what the writer has learned.
 \end{keyidea}
 
 In this checkpoint the writer and map use separate context networks and
-token embeddings. The map ranks the draft pool for comparison with the
-referee; it drops no draft and does not condition, screen or steer the
-writer. The writer learns directly from referee scores. Ranking agreement,
-including comparison with the program-only control, can therefore assess
-the map. Attributing better proposals to it would require an implemented
-influence path and a matched ablation (\cref{sub:results-ablation}).
+token embeddings. The map ranks the draft pool; it drops no draft and does
+not condition or screen the writer's draw. In the native search, however,
+those ranks weight which seeded survivors are chosen as parents, so the map
+can shape the programs that reach the writer's training lists. The writer's
+loss still weights programs by referee rank. Ranking agreement, including
+comparison with the program-only control, assesses the map's ranking;
+attributing better proposals to the map would require a matched ablation
+(\cref{sub:results-ablation}).
+% Source trace: crates/jope-policy/src/seeds.rs (assemble_population attaches
+% rank_log_weight); crates/jope-engine/src/gp.rs (policy_weighted_parent picks
+% the left parent for mutation and crossover).
 
 \subsection{The self-play loop}\label{sub:method-selfplay}
 % Algorithm 1 is defined at the start of the subsection so that the full-width
@@ -154,12 +162,14 @@ program weights (\cref{app:training}).
 Here $\mathcal{L}_{\text{BT}}$ is a Bradley--Terry loss on the same lists,
 $\mathcal{L}_{\text{runtime}}$ a Huber loss for a head that estimates runtime cost, and
 $\mathcal{L}_{\text{prog}}$ the Bradley--Terry loss of the program-only control head.
-Losing moves still teach: a median-ranked program carries about a tenth of the top-ranked
-program's weight in the writer loss. Its referee score also contributes
+Losing moves still teach. A median-ranked program carries about a tenth
+of the top-ranked program's weight in the writer loss. Its referee score also contributes
 to the map's ranking targets.
 
 Two ratchets make this self-play rather than imitation of a fixed archive (\cref{sec:game}). A
-program displaces a board's incumbent only by strictly beating it. A retrained writer takes the held-out
+program displaces a board's incumbent only by strictly beating it.
+
+A retrained writer takes the held-out
 admission test: 16 cuts with three seeds each. It replaces the serving writer
 only if its mean log error ratio favors it. It must also win at least as
 many cuts as it loses and fail no more often.
@@ -187,15 +197,20 @@ snapshot or establish its deployment performance. Details belong in
 A learner rewarded by a referee can exploit its flaws. In February 2025 Sakana AI walked back
 claims after its AI CUDA Engineer exploited the evaluation code \citep{sakana2025walkback}. In June
 2025 METR reported frontier models patching their scorers \citep{metr2025rewardhacking}, and 16\% of
-1,968 agent-benchmark tasks can be passed without being solved \citep{zhong2026hackerfixer}. We
-require the evaluation protocol to withstand such attacks. Selection,
+1,968 agent-benchmark tasks can be passed without being solved \citep{zhong2026hackerfixer}. The
+evaluation protocol must withstand such attacks. Selection,
 promotion and final scoring must use separate data (inner folds, held-out
 cuts, a final fold scored once), with sealed meta-test families outside the
-learner's inputs. The proposed comparisons require sandboxed execution
+learner's inputs.
+
+The proposed comparisons require sandboxed execution
 using seccomp and Landlock, with memory, swap and time limits. A
-planted label leak and a sealed canary must both be caught, and every reported winner must be re-run
-from its emitted code, with native and emitted predictions agreeing within
-$10^{-9}\max(1,|\hat y|)$. One earlier leaderboard entry for our search selected each dataset's best
+planted label leak and a sealed canary must both be caught. Every reported
+winner must be re-run from its emitted code, with native and emitted
+predictions agreeing within
+$10^{-9}\max(1,|\hat y|)$.
+
+One earlier leaderboard entry for our search selected each dataset's best
 test-scored outcome from a ledger of 63,108 evaluations; we exclude it as test selection (\cref{app:incidents}).
 
 \subsection{Game day: \texorpdfstring{\searchone}{search = 1}}\label{sub:method-gameday}
@@ -217,7 +232,9 @@ draw of at most 128 tokens at temperature 1 from a recorded seed. The
 program is lowered to code and fitted. The map stays absent, and no
 training exploration program is added. A draft that does not finish,
 crashes or times out is stillborn and scores as a loss; it is not replaced.
-Costs must include the encoder, writer and fit. Report later search
+Costs must include the encoder, writer and fit.
+
+Report later search
 separately, as \citet{silver2017mastering} reported
 AlphaGo Zero's raw network apart from its search (\cref{sec:results}).
 

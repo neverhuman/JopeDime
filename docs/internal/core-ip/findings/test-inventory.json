@@ -5160,6 +5160,10 @@
     "python:research/flywheel_selfplay/h131_family_bag_soup/test_cache.py": {
       "role": "research",
       "reason": "H131 data-free research controls for whole-family bootstrap multiplicity, exact H125 CONTROL plan, eight-member parameter averaging, fixed half-soup, paired-family Holm/margin/harm/Elo/tie gates, cache identity and resource refusal. No real scoring or scientific qualification."
+    },
+    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/test_science.py": {
+      "role": "research",
+      "reason": "H135 data-free native utility, sanity, bootstrap, seed/harm/trim/resource controls; native HistGB thread ceiling, scoped baseline setter restoration and A3 nested thread cap; A4 native SIGSTOP/SIGCONT, continuous recovery and stopped-worker deadline controls. Manual GBM preflight uses synthetic data and actual estimator hyperparameters with external /proc sampling; constructor preflight reads pretrained assets only, no datasets/r882/predictions; not a product qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
