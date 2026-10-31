@@ -1,6 +1,11 @@
-# H114 preregistration — W6 cross-family outcome transfer on new families
+# H115 preregistration — W6 cross-family outcome transfer on new families
 
-Fixed on 2026-10-31, before any H114 panel outcome. `run_h114.py` implements this design. Its frozen sha256, recorded
+> **Numbering.** This work was opened as H114 (#1027). H114 was taken on main by #1028 18 s earlier, so it is H115.
+> The runner's frozen identifiers keep the original `h114` label: file names `run_h114.py`/`test_run_h114.py`, row tag
+> `H114`, and hash salts `h114-panel`, `h114-context`, `h114-stream`, `h114-random`, `h114-shuffle`. Renaming them
+> would change the runner sha256 (`ed7b30a0…`) and the panel, and invalidate the dry-run receipt.
+
+Fixed on 2026-10-31, before any H115 panel outcome. `run_h114.py` implements this design. Its frozen sha256, recorded
 in every receipt, is authoritative; any difference from this text is a defect.
 
 ## Hypothesis (W6)
@@ -16,7 +21,7 @@ features, choose better new programs than a generic proposal prior and current r
   gains only on cached pools. [H94](../h94_w6_prospective_hedge/README.md) found them reversed on new programs.
 - [H110](../h110_w9_scorer_replay_scored/README.md) found a generic proposal-distribution scorer that beats random4
   on held roster families.
-- H114 moves to families outside the roster entirely, and tests whether **context conditioning** adds to that
+- H115 moves to families outside the roster entirely, and tests whether **context conditioning** adds to that
   generic scorer.
 - **Disclosure:** the design follows those outcomes.
 

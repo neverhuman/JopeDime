@@ -1,6 +1,11 @@
-# H114 — W6 cross-family outcome transfer on new families: CPU preparation
+# H115 — W6 cross-family outcome transfer on new families: CPU preparation
 
-Status: **CPU preparation complete: preregistration, panel manifest, harness and a 16-fit real-data dry run. No H114
+> **Numbering.** This work was opened as H114 (#1027). H114 was taken on main by #1028 18 s earlier, so it is H115.
+> The runner's frozen identifiers keep the original `h114` label: file names `run_h114.py`/`test_run_h114.py`, row tag
+> `H114`, and hash salts `h114-panel`, `h114-context`, `h114-stream`, `h114-random`, `h114-shuffle`. Renaming them
+> would change the runner sha256 (`ed7b30a0…`) and the panel, and invalidate the dry-run receipt.
+
+Status: **CPU preparation complete: preregistration, panel manifest, harness and a 16-fit real-data dry run. No H115
 result.** The 608-fit panel run waits for this preregistration to be on main.
 
 ## What this delivers
@@ -39,8 +44,8 @@ The dry-run utilities are integrity evidence only.
 ## Reproduce
 
 ```sh
-python3 -m pytest -q research/flywheel_selfplay/h114_w6_xfamily/test_run_h114.py   # 6 synthetic tests
-cd research/flywheel_selfplay/h114_w6_xfamily
+python3 -m pytest -q research/flywheel_selfplay/h115_w6_xfamily/test_run_h114.py   # 6 synthetic tests
+cd research/flywheel_selfplay/h115_w6_xfamily
 nice -n 15 python3 -I run_h114.py dry-run --out ~/jope-data/h114/<run_id> --run-id <run_id> \
   --h94-run ~/jope-data/h94/opus-h94-20261031a --h103-run ~/jope-data/h103/opus-h103-20261031a \
   --h110-run ~/jope-data/h110/opus-h110-20261031a --workers 8

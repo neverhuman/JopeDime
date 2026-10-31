@@ -13605,7 +13605,7 @@
       "lanes": [],
       "scope": "H112 W4 scorer-prior two-plus-two fixtures: level-free update invariant to a common outcome shift with only the first pair revealed, equal residuals reduce two-plus-two to top4 and the swap negates the signal, first-pair execution errors make adaptive arms INCOMPLETE, within-context clipped OLS slope, analyze requiring gate + placebo + complete panel and refusing dry-run rows, and the merged-H106 loader refusing changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
     },
-    "python:research/flywheel_selfplay/h114_w6_xfamily/test_run_h114.py": {
+    "python:research/flywheel_selfplay/h115_w6_xfamily/test_run_h114.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -13613,7 +13613,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H114 W6 cross-family transfer fixtures: numeric-literal template masking, one-context-per-family non-roster panel that skips earlier dry-run contexts, deterministic context-shuffle permutation, subset-respecting score picks with seeded random4, the advance rule requiring both primaries + placebo + unseen-template check with WITHHELD on sparse coverage and INCOMPLETE on a missing family, dry-run refusal, and the merged-H106 loader refusing changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
+      "scope": "H115 (renumbered from H114; frozen h114 runner identifiers) W6 cross-family transfer fixtures: numeric-literal template masking, one-context-per-family non-roster panel that skips earlier dry-run contexts, deterministic context-shuffle permutation, subset-respecting score picks with seeded random4, the advance rule requiring both primaries + placebo + unseen-template check with WITHHELD on sparse coverage and INCOMPLETE on a missing family, dry-run refusal, and the merged-H106 loader refusing changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
     }
   },
   "lanes": {

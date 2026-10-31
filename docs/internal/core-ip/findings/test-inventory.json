@@ -5091,8 +5091,8 @@
       "reason": "Owner-requested pytest proofs for the H112 W4 two-plus-two re-test with the proposal-distribution scorer prior (CPU preparation); offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/h114_w6_xfamily/test_run_h114.py": {
-      "reason": "Owner-requested pytest proofs for the H114 W6 cross-family outcome-transfer CPU preparation; offline research analysis outside the reviewed product baseline.",
+    "python:research/flywheel_selfplay/h115_w6_xfamily/test_run_h114.py": {
+      "reason": "Owner-requested pytest proofs for the H115 (renumbered from H114) W6 cross-family outcome-transfer CPU preparation; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     }
   },
