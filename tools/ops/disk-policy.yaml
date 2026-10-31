@@ -57,7 +57,10 @@
       "id": "cargo-targets",
       "kind": "cargo-target",
       "path": "~/JopeDime/.agent/worktrees",
-      "ttl_hours": 24
+      "ttl_hours": 24,
+      "remove_merged_worktrees": true,
+      "remove_closed_pr_worktrees": true,
+      "remove_stale_targets_on_open_worktrees": true
     },
     {
       "id": "cargo-cache",
