@@ -1,9 +1,8 @@
 //! Landmark-V2 preferred stage and head pools.
 //!
-//! This is a pre-stage port of `select_landmark_preferred_pools` from the
-//! RES-01-pinned `research/flywheel_selfplay/rust_evaluator.py`. RES-07 golden
-//! fixtures are not available yet; do not treat these synthetic tests as parity
-//! qualification.
+//! This is a port of `select_landmark_preferred_pools` from the RES-01-pinned
+//! `research/flywheel_selfplay/rust_evaluator.py`. The RES-07 parity test uses
+//! the hash-pinned packet selected by `JOPE_GOLDEN_DIR`.
 
 const HEAVY_TAIL: &[&str] = &[
     "(winsor_clip append=true q=0.05)",
@@ -196,10 +195,119 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "needs RES-07 preferred-pool golden fixtures before parity qualification"]
+    #[ignore = "requires the hash-custodied RES-07 packet; set JOPE_GOLDEN_DIR and JOPE_GOLDEN_INDEX_SHA256"]
     fn matches_res07_landmark_preferred_pool_golden_inputs() {
-        // RES-07 has not published this consumer's input/output fixtures yet.
-        // Keep the parity gate visible but do not invent fixture values here.
-        panic!("replace with RES-07 generated fixtures before unignoring");
+        use candle_core_0_11_0::{safetensors::load_buffer, Device};
+        use serde_json::Value;
+        use sha2::{Digest, Sha256};
+        use std::{collections::HashSet, env, fs, path::PathBuf};
+
+        let root = PathBuf::from(env::var_os("JOPE_GOLDEN_DIR").expect("set JOPE_GOLDEN_DIR"));
+        let index_bytes = fs::read(root.join("index.json")).expect("read RES-07 index.json");
+        let actual_index_sha = format!("{:x}", Sha256::digest(&index_bytes));
+        assert_eq!(
+            actual_index_sha,
+            env::var("JOPE_GOLDEN_INDEX_SHA256").expect("set JOPE_GOLDEN_INDEX_SHA256"),
+            "RES-07 fixture index pin differs"
+        );
+        let index: Value = serde_json::from_slice(&index_bytes).expect("parse RES-07 index");
+        let pools_path = root.join("landmark-pools.json");
+        let pools_bytes = fs::read(&pools_path).expect("read landmark-pools.json");
+        let pools_pin = &index["files"]["landmark-pools.json"];
+        assert_eq!(pools_pin["bytes"].as_u64(), Some(pools_bytes.len() as u64));
+        assert_eq!(
+            pools_pin["sha256"].as_str(),
+            Some(format!("{:x}", Sha256::digest(&pools_bytes)).as_str())
+        );
+        let pools: Vec<Value> =
+            serde_json::from_slice(&pools_bytes).expect("parse preferred pools");
+        assert_eq!(
+            pools.len(),
+            50,
+            "expected all contexts in the pinned packet"
+        );
+
+        let mut contexts = HashSet::new();
+        for expected in pools {
+            let context = expected["context_sha256"]
+                .as_str()
+                .expect("golden context_sha256 must be a string");
+            assert_eq!(context.len(), 64, "context hash must be SHA256 hex");
+            assert!(
+                context.bytes().all(|byte| byte.is_ascii_hexdigit()),
+                "context hash must be hexadecimal"
+            );
+            assert!(
+                contexts.insert(context.to_owned()),
+                "duplicate golden context {context}"
+            );
+
+            let relative = format!("contexts/{context}.safetensors");
+            let spec = &index["files"][&relative];
+            assert!(!spec.is_null(), "index is missing {relative}");
+            let bytes = fs::read(root.join(&relative)).expect("read context SafeTensors");
+            assert_eq!(
+                spec["bytes"].as_u64(),
+                Some(bytes.len() as u64),
+                "{relative}"
+            );
+            assert_eq!(
+                spec["sha256"].as_str(),
+                Some(format!("{:x}", Sha256::digest(&bytes)).as_str()),
+                "{relative} hash differs from the pinned index"
+            );
+
+            let tensors = load_buffer(&bytes, &Device::Cpu).expect("decode context tensors");
+            let lm48 = tensors
+                .get("lm48")
+                .expect("context fixture must contain lm48");
+            assert_eq!(lm48.dims(), [1, 48], "{relative} lm48 shape");
+            let values = lm48
+                .flatten_all()
+                .expect("flatten lm48")
+                .to_vec1::<f32>()
+                .expect("read lm48 values");
+            let landmarks: [f64; 48] = values
+                .into_iter()
+                .map(f64::from)
+                .collect::<Vec<_>>()
+                .try_into()
+                .expect("lm48 must have 48 values");
+            assert!(
+                landmarks.iter().all(|value| value.is_finite()),
+                "{relative}"
+            );
+
+            let (stages, heads) = select_landmark_preferred_pools(&landmarks);
+            let expected_stages = expected["stages"]
+                .as_array()
+                .expect("golden stages must be an array")
+                .iter()
+                .map(|value| value.as_str().expect("stage must be a string").to_owned())
+                .collect::<Vec<_>>();
+            let expected_heads = expected["heads"]
+                .as_array()
+                .expect("golden heads must be an array")
+                .iter()
+                .map(|value| value.as_str().expect("head must be a string").to_owned())
+                .collect::<Vec<_>>();
+            assert_eq!(
+                stages
+                    .iter()
+                    .map(|value| (*value).to_owned())
+                    .collect::<Vec<_>>(),
+                expected_stages,
+                "stage pool mismatch for {context}"
+            );
+            assert_eq!(
+                heads
+                    .iter()
+                    .map(|value| (*value).to_owned())
+                    .collect::<Vec<_>>(),
+                expected_heads,
+                "head pool mismatch for {context}"
+            );
+        }
+        assert_eq!(contexts.len(), 50);
     }
 }
