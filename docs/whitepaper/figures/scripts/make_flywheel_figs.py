@@ -147,7 +147,7 @@ if tie_adms:
                lw=0.9, zorder=4,
                label=f"accepted tie ({', '.join(str(rd) for rd, _ in tie_adms)})")
 accepted = len(strict_gains) + len(tie_adms)
-ax.text(0.04, 0.55,
+ax.text(0.07, 0.55,
         f"{len(A)} logged rounds\n{accepted} accepted: {len(strict_gains)} strict gains + {len(tie_adms)} ties",
         transform=ax.transAxes, fontsize=7.2, va="center",
         bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.9))
