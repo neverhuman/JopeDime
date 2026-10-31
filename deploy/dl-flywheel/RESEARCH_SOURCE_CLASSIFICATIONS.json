@@ -3807,6 +3807,54 @@
         "role": "research"
       },
       "sha256": "15e0476ef50cebbe33421627c2a4a0292b14d0d8df6b60cd7c6331e23c23379f"
+    },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/anchor_cache.py": {
+      "bytes": 2520,
+      "sha256": "67d0fbc05c8ef0b61f253c0fe77a59f7b0dfce2973e256d6645f9b4100c60d9f",
+      "classification": {
+        "role": "research",
+        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/custody.py": {
+      "bytes": 2548,
+      "sha256": "46a56863fb3961c174d52f28000aa61814291761038d45bf7a265a914e062289",
+      "classification": {
+        "role": "research",
+        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/monitor.py": {
+      "bytes": 4703,
+      "sha256": "61be2612e033444818de01c4d779395c7bf1a75c4825081aec66ea24482a3a5f",
+      "classification": {
+        "role": "research",
+        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/runner.py": {
+      "bytes": 21172,
+      "sha256": "0b54b5a5e7ea3e044f3a0308b09eae1d201d8dbec463d659e7e32828028c864a",
+      "classification": {
+        "role": "research",
+        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/science.py": {
+      "bytes": 8876,
+      "sha256": "11cf7b2991fd0e46fe712ddad980f3005b4add4d6cd96461d6aa71313536f1ad",
+      "classification": {
+        "role": "research",
+        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/train_reader.py": {
+      "bytes": 3083,
+      "sha256": "f58f4c3290db5cd5b612fac7c55c620658364c98cbc7856a1297d91305b326ab",
+      "classification": {
+        "role": "research",
+        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
