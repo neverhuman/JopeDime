@@ -86,7 +86,17 @@ def test_bank_is_complete_ordered_row_free_and_bound_to_checkpoint(inputs, bundl
     rows = [json.loads(line) for line in decoded.splitlines()]
     assert len(rows) == 881
     for index, (row, source) in enumerate(zip(rows, inputs["champions"], strict=True)):
-        assert set(row) == {"dsl", "family_hash", "feat412", "proj16", "lm48_summary"}
+        assert set(row) == {
+            "dsl",
+            "family_hash",
+            "feat412",
+            "proj16",
+            "lm48_summary",
+            "role",
+            "coordinate_space",
+        }
+        assert row["role"] == "model_prior"
+        assert row["coordinate_space"] == "standardized_lm48_l2_unit"
         assert row["dsl"] == source["dsl"]
         assert row["family_hash"] == source["family_id"].removeprefix("fam-")
         np.testing.assert_array_equal(row["feat412"], inputs["state"]["bank_feat412"][index + 4].numpy())
