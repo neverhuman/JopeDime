@@ -1,0 +1,573 @@
+{
+  "admission": {
+    "ema25": {
+      "admission_thresholds": {
+        "harm_fraction_lte": 0.1,
+        "mean_lcb95_strictly_gt": 0.001,
+        "no_harm_median_gte": 0.0,
+        "ties_fail": true
+      },
+      "admitted": false,
+      "family_count": 41,
+      "mean_lcb95": -0.15545741679364858,
+      "no_harm_fraction_below_minus_0_01": 0.3902439024390244,
+      "pooled_family_median_gain": 0.0,
+      "pooled_mean_gain": -0.07464012101524917,
+      "pooled_median_ci95": [
+        -0.020755644699308906,
+        0.0019897241861037696
+      ],
+      "seed_count": 3
+    },
+    "swa8": {
+      "admission_thresholds": {
+        "harm_fraction_lte": 0.1,
+        "mean_lcb95_strictly_gt": 0.001,
+        "no_harm_median_gte": 0.0,
+        "ties_fail": true
+      },
+      "admitted": false,
+      "family_count": 41,
+      "mean_lcb95": 0.0,
+      "no_harm_fraction_below_minus_0_01": 0.0,
+      "pooled_family_median_gain": 0.0,
+      "pooled_mean_gain": 0.001806535472892292,
+      "pooled_median_ci95": [
+        0.0,
+        0.0
+      ],
+      "seed_count": 3
+    }
+  },
+  "cells": [
+    {
+      "arm": "swa8",
+      "candidate_definition": "uniform mean of eight independent k=2 adapter updates",
+      "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elo_vs_r882": {
+        "delta_vs_r882": 3.39,
+        "interpretation": "family-grouped pairwise diagnostic; not AUC",
+        "losses": 0,
+        "rating": 1503.39,
+        "ties": 216,
+        "wins": 2
+      },
+      "family_mean_gain": 0.0018251385932872728,
+      "family_mean_lcb95_one_sided": 0.0,
+      "family_median_ci95": [
+        0.0,
+        0.0
+      ],
+      "family_median_gain": 0.0,
+      "fold_assignment_sha256": "9bb81404798c697a8fe385a0b3ffa63e40fc7613157699939d01e175e191fe45",
+      "fold_b_candidate_utility": 1.2854448172567516,
+      "fold_b_r882_utility": 1.2836196786634644,
+      "holdout_payloads_opened": 0,
+      "matched_control": {
+        "mean_family_utility": 1.2854501003937027,
+        "member_family_utilities": [
+          1.2854448172567516,
+          1.2854448172567516,
+          1.2853890078955665,
+          1.2854448172567516,
+          1.2853890078955665,
+          1.2854448172567516,
+          1.2854448172567516,
+          1.28559870107473
+        ],
+        "type": "mean of eight single-candidate fold-B utilities"
+      },
+      "optimizer_updates": 16,
+      "outer_rows_delivered": 0,
+      "rounds": 1,
+      "seed": 12,
+      "source_commit": "966f4144c003fe3e37755c6577028d40ff0c6141",
+      "source_sha256": {
+        "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+        "research/flywheel_selfplay/automatic_promotion.py": "261d2d1865c2f50e1c7388dfd2ac404e85f599df3a5b7aaaab69415cf250d8a0",
+        "research/flywheel_selfplay/dev_incumbent.py": "81c85296643ec06acc7ea31a7c7ed248abc8d4040ad28f53aa42eb4209d2f42a",
+        "research/flywheel_selfplay/h46/run.py": "645bf1470789c4f5bcc97809f703b04d9a594a21dd9d3aa8c2fd4e98810d0320",
+        "research/flywheel_selfplay/h48/run.py": "756960a0e2bfdf23e75012fb347ce772fb6fdeaa4fb4fc2d4178dfaeb9eac9da",
+        "research/flywheel_selfplay/h49/score.py": "86a5510f7ceaa1468ac5d2a96c239ecca93c6fa616586a62c74754955ce79192",
+        "research/flywheel_selfplay/h53b/runner.py": "85aa59e9c4bee62805ed6c388364611b3a7cdb772a19017eeae848819c2cb318",
+        "research/flywheel_selfplay/h55/audit.py": "5e952ddf5d32ae874072b49ae29ada92e6a96e5061ff282e31006130b87f82a9",
+        "research/flywheel_selfplay/h55/build_metrics.py": "fda39ce45fd2ef8dacdbac117a627efca3d91a0662fed74ccc67f0d121f4872a",
+        "research/flywheel_selfplay/h55/run_wave.py": "1801e057a744457608b3df7909929bf161262e7954a02214d7212c2210973238",
+        "research/flywheel_selfplay/h55/runner.py": "56fd220689805f07877ae403c2f00a4b34831cc4b2919f4bd69807ff3c21f4bc",
+        "research/flywheel_selfplay/run_fused_closed_loop.py": "8156cda845a392cc29a406a4467091be49cdd96ef6def92709b4d0f58b55aec7"
+      },
+      "w_t_l_family": {
+        "losses": 0,
+        "ties": 39,
+        "wins": 2
+      },
+      "wall_seconds": 125.44458002108149,
+      "worst_five_family_gains": [
+        [
+          "fam-3682425120361f20ec8ece6c872e95f6c83c828e30205adb5206473540ca5247",
+          0.0
+        ],
+        [
+          "fam-ebdf0bb10b87cf025f2efbbd2c730fcf375393d3d7fb93d95c42562d927f53df",
+          0.0
+        ],
+        [
+          "fam-6e1e9c4fc764546aec8e4716742e6d12536a961b77ad6ed7b0dcf1af3d057071",
+          0.0
+        ],
+        [
+          "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7",
+          0.0
+        ],
+        [
+          "fam-fa876affd2eda55b92eac9ce9cb8e078434b969fd1638b2026610cd324893de4",
+          0.0
+        ]
+      ]
+    },
+    {
+      "arm": "swa8",
+      "candidate_definition": "uniform mean of eight independent k=2 adapter updates",
+      "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elo_vs_r882": {
+        "delta_vs_r882": 3.39,
+        "interpretation": "family-grouped pairwise diagnostic; not AUC",
+        "losses": 0,
+        "rating": 1503.39,
+        "ties": 216,
+        "wins": 2
+      },
+      "family_mean_gain": 0.0018251385932872728,
+      "family_mean_lcb95_one_sided": 0.0,
+      "family_median_ci95": [
+        0.0,
+        0.0
+      ],
+      "family_median_gain": 0.0,
+      "fold_assignment_sha256": "9bb81404798c697a8fe385a0b3ffa63e40fc7613157699939d01e175e191fe45",
+      "fold_b_candidate_utility": 1.2854448172567516,
+      "fold_b_r882_utility": 1.2836196786634644,
+      "holdout_payloads_opened": 0,
+      "matched_control": {
+        "mean_family_utility": 1.2854005107579136,
+        "member_family_utilities": [
+          1.2853890078955665,
+          1.2854448172567516,
+          1.2851799351330442,
+          1.2853890078955665,
+          1.2855809238588856,
+          1.2854448172567516,
+          1.2853865688711763,
+          1.2853890078955665
+        ],
+        "type": "mean of eight single-candidate fold-B utilities"
+      },
+      "optimizer_updates": 16,
+      "outer_rows_delivered": 0,
+      "rounds": 1,
+      "seed": 13,
+      "source_commit": "966f4144c003fe3e37755c6577028d40ff0c6141",
+      "source_sha256": {
+        "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+        "research/flywheel_selfplay/automatic_promotion.py": "261d2d1865c2f50e1c7388dfd2ac404e85f599df3a5b7aaaab69415cf250d8a0",
+        "research/flywheel_selfplay/dev_incumbent.py": "81c85296643ec06acc7ea31a7c7ed248abc8d4040ad28f53aa42eb4209d2f42a",
+        "research/flywheel_selfplay/h46/run.py": "645bf1470789c4f5bcc97809f703b04d9a594a21dd9d3aa8c2fd4e98810d0320",
+        "research/flywheel_selfplay/h48/run.py": "756960a0e2bfdf23e75012fb347ce772fb6fdeaa4fb4fc2d4178dfaeb9eac9da",
+        "research/flywheel_selfplay/h49/score.py": "86a5510f7ceaa1468ac5d2a96c239ecca93c6fa616586a62c74754955ce79192",
+        "research/flywheel_selfplay/h53b/runner.py": "85aa59e9c4bee62805ed6c388364611b3a7cdb772a19017eeae848819c2cb318",
+        "research/flywheel_selfplay/h55/audit.py": "5e952ddf5d32ae874072b49ae29ada92e6a96e5061ff282e31006130b87f82a9",
+        "research/flywheel_selfplay/h55/build_metrics.py": "fda39ce45fd2ef8dacdbac117a627efca3d91a0662fed74ccc67f0d121f4872a",
+        "research/flywheel_selfplay/h55/run_wave.py": "1801e057a744457608b3df7909929bf161262e7954a02214d7212c2210973238",
+        "research/flywheel_selfplay/h55/runner.py": "56fd220689805f07877ae403c2f00a4b34831cc4b2919f4bd69807ff3c21f4bc",
+        "research/flywheel_selfplay/run_fused_closed_loop.py": "8156cda845a392cc29a406a4467091be49cdd96ef6def92709b4d0f58b55aec7"
+      },
+      "w_t_l_family": {
+        "losses": 0,
+        "ties": 39,
+        "wins": 2
+      },
+      "wall_seconds": 77.10200894786976,
+      "worst_five_family_gains": [
+        [
+          "fam-3682425120361f20ec8ece6c872e95f6c83c828e30205adb5206473540ca5247",
+          0.0
+        ],
+        [
+          "fam-ebdf0bb10b87cf025f2efbbd2c730fcf375393d3d7fb93d95c42562d927f53df",
+          0.0
+        ],
+        [
+          "fam-6e1e9c4fc764546aec8e4716742e6d12536a961b77ad6ed7b0dcf1af3d057071",
+          0.0
+        ],
+        [
+          "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7",
+          0.0
+        ],
+        [
+          "fam-fa876affd2eda55b92eac9ce9cb8e078434b969fd1638b2026610cd324893de4",
+          0.0
+        ]
+      ]
+    },
+    {
+      "arm": "swa8",
+      "candidate_definition": "uniform mean of eight independent k=2 adapter updates",
+      "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elo_vs_r882": {
+        "delta_vs_r882": 1.69,
+        "interpretation": "family-grouped pairwise diagnostic; not AUC",
+        "losses": 0,
+        "rating": 1501.69,
+        "ties": 217,
+        "wins": 1
+      },
+      "family_mean_gain": 0.0017693292321023302,
+      "family_mean_lcb95_one_sided": 0.0,
+      "family_median_ci95": [
+        0.0,
+        0.0
+      ],
+      "family_median_gain": 0.0,
+      "fold_assignment_sha256": "9bb81404798c697a8fe385a0b3ffa63e40fc7613157699939d01e175e191fe45",
+      "fold_b_candidate_utility": 1.2853890078955665,
+      "fold_b_r882_utility": 1.2836196786634644,
+      "holdout_payloads_opened": 0,
+      "matched_control": {
+        "mean_family_utility": 1.2854601375488213,
+        "member_family_utilities": [
+          1.2853890078955665,
+          1.2853890078955665,
+          1.2855809238588856,
+          1.285654510435915,
+          1.2853890078955665,
+          1.2854448172567516,
+          1.2853890078955665,
+          1.2854448172567516
+        ],
+        "type": "mean of eight single-candidate fold-B utilities"
+      },
+      "optimizer_updates": 16,
+      "outer_rows_delivered": 0,
+      "rounds": 1,
+      "seed": 14,
+      "source_commit": "966f4144c003fe3e37755c6577028d40ff0c6141",
+      "source_sha256": {
+        "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+        "research/flywheel_selfplay/automatic_promotion.py": "261d2d1865c2f50e1c7388dfd2ac404e85f599df3a5b7aaaab69415cf250d8a0",
+        "research/flywheel_selfplay/dev_incumbent.py": "81c85296643ec06acc7ea31a7c7ed248abc8d4040ad28f53aa42eb4209d2f42a",
+        "research/flywheel_selfplay/h46/run.py": "645bf1470789c4f5bcc97809f703b04d9a594a21dd9d3aa8c2fd4e98810d0320",
+        "research/flywheel_selfplay/h48/run.py": "756960a0e2bfdf23e75012fb347ce772fb6fdeaa4fb4fc2d4178dfaeb9eac9da",
+        "research/flywheel_selfplay/h49/score.py": "86a5510f7ceaa1468ac5d2a96c239ecca93c6fa616586a62c74754955ce79192",
+        "research/flywheel_selfplay/h53b/runner.py": "85aa59e9c4bee62805ed6c388364611b3a7cdb772a19017eeae848819c2cb318",
+        "research/flywheel_selfplay/h55/audit.py": "5e952ddf5d32ae874072b49ae29ada92e6a96e5061ff282e31006130b87f82a9",
+        "research/flywheel_selfplay/h55/build_metrics.py": "fda39ce45fd2ef8dacdbac117a627efca3d91a0662fed74ccc67f0d121f4872a",
+        "research/flywheel_selfplay/h55/run_wave.py": "1801e057a744457608b3df7909929bf161262e7954a02214d7212c2210973238",
+        "research/flywheel_selfplay/h55/runner.py": "56fd220689805f07877ae403c2f00a4b34831cc4b2919f4bd69807ff3c21f4bc",
+        "research/flywheel_selfplay/run_fused_closed_loop.py": "8156cda845a392cc29a406a4467091be49cdd96ef6def92709b4d0f58b55aec7"
+      },
+      "w_t_l_family": {
+        "losses": 0,
+        "ties": 40,
+        "wins": 1
+      },
+      "wall_seconds": 67.75158893899061,
+      "worst_five_family_gains": [
+        [
+          "fam-3682425120361f20ec8ece6c872e95f6c83c828e30205adb5206473540ca5247",
+          0.0
+        ],
+        [
+          "fam-ebdf0bb10b87cf025f2efbbd2c730fcf375393d3d7fb93d95c42562d927f53df",
+          0.0
+        ],
+        [
+          "fam-6e1e9c4fc764546aec8e4716742e6d12536a961b77ad6ed7b0dcf1af3d057071",
+          0.0
+        ],
+        [
+          "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7",
+          0.0
+        ],
+        [
+          "fam-fa876affd2eda55b92eac9ce9cb8e078434b969fd1638b2026610cd324893de4",
+          0.0
+        ]
+      ]
+    },
+    {
+      "arm": "ema25",
+      "candidate_definition": "EMA-0.9 adapter after exactly 25 rounds; final EMA only",
+      "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elo_vs_r882": {
+        "delta_vs_r882": -20.79,
+        "interpretation": "family-grouped pairwise diagnostic; not AUC",
+        "losses": 41,
+        "rating": 1479.21,
+        "ties": 146,
+        "wins": 31
+      },
+      "family_mean_gain": -0.07205483591398994,
+      "family_mean_lcb95_one_sided": -0.15473121722460118,
+      "family_median_ci95": [
+        -0.020755644699308906,
+        0.0019897241861037696
+      ],
+      "family_median_gain": 0.0,
+      "fold_assignment_sha256": "9bb81404798c697a8fe385a0b3ffa63e40fc7613157699939d01e175e191fe45",
+      "fold_b_candidate_utility": 1.2115648427494743,
+      "fold_b_r882_utility": 1.2836196786634644,
+      "holdout_payloads_opened": 0,
+      "matched_control": {
+        "family_utility": 1.1456388234268116,
+        "type": "raw final iterate at round 25"
+      },
+      "optimizer_updates": 50,
+      "outer_rows_delivered": 0,
+      "rounds": 25,
+      "seed": 12,
+      "source_commit": "966f4144c003fe3e37755c6577028d40ff0c6141",
+      "source_sha256": {
+        "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+        "research/flywheel_selfplay/automatic_promotion.py": "261d2d1865c2f50e1c7388dfd2ac404e85f599df3a5b7aaaab69415cf250d8a0",
+        "research/flywheel_selfplay/dev_incumbent.py": "81c85296643ec06acc7ea31a7c7ed248abc8d4040ad28f53aa42eb4209d2f42a",
+        "research/flywheel_selfplay/h46/run.py": "645bf1470789c4f5bcc97809f703b04d9a594a21dd9d3aa8c2fd4e98810d0320",
+        "research/flywheel_selfplay/h48/run.py": "756960a0e2bfdf23e75012fb347ce772fb6fdeaa4fb4fc2d4178dfaeb9eac9da",
+        "research/flywheel_selfplay/h49/score.py": "86a5510f7ceaa1468ac5d2a96c239ecca93c6fa616586a62c74754955ce79192",
+        "research/flywheel_selfplay/h53b/runner.py": "85aa59e9c4bee62805ed6c388364611b3a7cdb772a19017eeae848819c2cb318",
+        "research/flywheel_selfplay/h55/audit.py": "5e952ddf5d32ae874072b49ae29ada92e6a96e5061ff282e31006130b87f82a9",
+        "research/flywheel_selfplay/h55/build_metrics.py": "fda39ce45fd2ef8dacdbac117a627efca3d91a0662fed74ccc67f0d121f4872a",
+        "research/flywheel_selfplay/h55/run_wave.py": "1801e057a744457608b3df7909929bf161262e7954a02214d7212c2210973238",
+        "research/flywheel_selfplay/h55/runner.py": "56fd220689805f07877ae403c2f00a4b34831cc4b2919f4bd69807ff3c21f4bc",
+        "research/flywheel_selfplay/run_fused_closed_loop.py": "8156cda845a392cc29a406a4467091be49cdd96ef6def92709b4d0f58b55aec7"
+      },
+      "w_t_l_family": {
+        "losses": 18,
+        "ties": 7,
+        "wins": 16
+      },
+      "wall_seconds": 150.44509840686806,
+      "worst_five_family_gains": [
+        [
+          "fam-ec4835624ef87c3f903ec21d14ca9866812afea7e6fb0ce1397bc56c89c62243",
+          -1.2511395638787928
+        ],
+        [
+          "fam-0524644998aa86a8ae3a50efe411f95ebc51c007c09cf8a34a70bddcf9ee418d",
+          -0.697461287893357
+        ],
+        [
+          "fam-cfdd6a6687c1776e690d664ed23cd8b6b7e06ff06addb46a2c01ec7969f1d83b",
+          -0.6410960026908673
+        ],
+        [
+          "fam-a76de6dbef8706c562230c8cc49322acb2b22033b557a5cd113190361901c941",
+          -0.534513342885936
+        ],
+        [
+          "fam-080d0150fe9b57e7f0dd910275d2e0fb297455bacac55b2e7b0bfb1fafe2139c",
+          -0.4633982001440563
+        ]
+      ]
+    },
+    {
+      "arm": "ema25",
+      "candidate_definition": "EMA-0.9 adapter after exactly 25 rounds; final EMA only",
+      "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elo_vs_r882": {
+        "delta_vs_r882": -17.39,
+        "interpretation": "family-grouped pairwise diagnostic; not AUC",
+        "losses": 40,
+        "rating": 1482.61,
+        "ties": 146,
+        "wins": 32
+      },
+      "family_mean_gain": -0.07227016889110782,
+      "family_mean_lcb95_one_sided": -0.15448248096540726,
+      "family_median_ci95": [
+        -0.020755644699308906,
+        0.0019897241861037696
+      ],
+      "family_median_gain": 0.0,
+      "fold_assignment_sha256": "9bb81404798c697a8fe385a0b3ffa63e40fc7613157699939d01e175e191fe45",
+      "fold_b_candidate_utility": 1.2113495097723563,
+      "fold_b_r882_utility": 1.2836196786634644,
+      "holdout_payloads_opened": 0,
+      "matched_control": {
+        "family_utility": 1.1559053850471606,
+        "type": "raw final iterate at round 25"
+      },
+      "optimizer_updates": 50,
+      "outer_rows_delivered": 0,
+      "rounds": 25,
+      "seed": 13,
+      "source_commit": "966f4144c003fe3e37755c6577028d40ff0c6141",
+      "source_sha256": {
+        "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+        "research/flywheel_selfplay/automatic_promotion.py": "261d2d1865c2f50e1c7388dfd2ac404e85f599df3a5b7aaaab69415cf250d8a0",
+        "research/flywheel_selfplay/dev_incumbent.py": "81c85296643ec06acc7ea31a7c7ed248abc8d4040ad28f53aa42eb4209d2f42a",
+        "research/flywheel_selfplay/h46/run.py": "645bf1470789c4f5bcc97809f703b04d9a594a21dd9d3aa8c2fd4e98810d0320",
+        "research/flywheel_selfplay/h48/run.py": "756960a0e2bfdf23e75012fb347ce772fb6fdeaa4fb4fc2d4178dfaeb9eac9da",
+        "research/flywheel_selfplay/h49/score.py": "86a5510f7ceaa1468ac5d2a96c239ecca93c6fa616586a62c74754955ce79192",
+        "research/flywheel_selfplay/h53b/runner.py": "85aa59e9c4bee62805ed6c388364611b3a7cdb772a19017eeae848819c2cb318",
+        "research/flywheel_selfplay/h55/audit.py": "5e952ddf5d32ae874072b49ae29ada92e6a96e5061ff282e31006130b87f82a9",
+        "research/flywheel_selfplay/h55/build_metrics.py": "fda39ce45fd2ef8dacdbac117a627efca3d91a0662fed74ccc67f0d121f4872a",
+        "research/flywheel_selfplay/h55/run_wave.py": "1801e057a744457608b3df7909929bf161262e7954a02214d7212c2210973238",
+        "research/flywheel_selfplay/h55/runner.py": "56fd220689805f07877ae403c2f00a4b34831cc4b2919f4bd69807ff3c21f4bc",
+        "research/flywheel_selfplay/run_fused_closed_loop.py": "8156cda845a392cc29a406a4467091be49cdd96ef6def92709b4d0f58b55aec7"
+      },
+      "w_t_l_family": {
+        "losses": 18,
+        "ties": 7,
+        "wins": 16
+      },
+      "wall_seconds": 80.74835352506489,
+      "worst_five_family_gains": [
+        [
+          "fam-ec4835624ef87c3f903ec21d14ca9866812afea7e6fb0ce1397bc56c89c62243",
+          -1.2511395638787928
+        ],
+        [
+          "fam-0524644998aa86a8ae3a50efe411f95ebc51c007c09cf8a34a70bddcf9ee418d",
+          -0.697461287893357
+        ],
+        [
+          "fam-cfdd6a6687c1776e690d664ed23cd8b6b7e06ff06addb46a2c01ec7969f1d83b",
+          -0.6410960026908673
+        ],
+        [
+          "fam-a76de6dbef8706c562230c8cc49322acb2b22033b557a5cd113190361901c941",
+          -0.534513342885936
+        ],
+        [
+          "fam-080d0150fe9b57e7f0dd910275d2e0fb297455bacac55b2e7b0bfb1fafe2139c",
+          -0.4580382413243076
+        ]
+      ]
+    },
+    {
+      "arm": "ema25",
+      "candidate_definition": "EMA-0.9 adapter after exactly 25 rounds; final EMA only",
+      "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "elo_vs_r882": {
+        "delta_vs_r882": -20.22,
+        "interpretation": "family-grouped pairwise diagnostic; not AUC",
+        "losses": 41,
+        "rating": 1479.78,
+        "ties": 145,
+        "wins": 32
+      },
+      "family_mean_gain": -0.0795953582406497,
+      "family_mean_lcb95_one_sided": -0.16169283485918012,
+      "family_median_ci95": [
+        -0.027930921206162668,
+        1.2835386652421121e-05
+      ],
+      "family_median_gain": 0.0,
+      "fold_assignment_sha256": "9bb81404798c697a8fe385a0b3ffa63e40fc7613157699939d01e175e191fe45",
+      "fold_b_candidate_utility": 1.2040243204228145,
+      "fold_b_r882_utility": 1.2836196786634644,
+      "holdout_payloads_opened": 0,
+      "matched_control": {
+        "family_utility": 1.1530172105713548,
+        "type": "raw final iterate at round 25"
+      },
+      "optimizer_updates": 50,
+      "outer_rows_delivered": 0,
+      "rounds": 25,
+      "seed": 14,
+      "source_commit": "966f4144c003fe3e37755c6577028d40ff0c6141",
+      "source_sha256": {
+        "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+        "research/flywheel_selfplay/automatic_promotion.py": "261d2d1865c2f50e1c7388dfd2ac404e85f599df3a5b7aaaab69415cf250d8a0",
+        "research/flywheel_selfplay/dev_incumbent.py": "81c85296643ec06acc7ea31a7c7ed248abc8d4040ad28f53aa42eb4209d2f42a",
+        "research/flywheel_selfplay/h46/run.py": "645bf1470789c4f5bcc97809f703b04d9a594a21dd9d3aa8c2fd4e98810d0320",
+        "research/flywheel_selfplay/h48/run.py": "756960a0e2bfdf23e75012fb347ce772fb6fdeaa4fb4fc2d4178dfaeb9eac9da",
+        "research/flywheel_selfplay/h49/score.py": "86a5510f7ceaa1468ac5d2a96c239ecca93c6fa616586a62c74754955ce79192",
+        "research/flywheel_selfplay/h53b/runner.py": "85aa59e9c4bee62805ed6c388364611b3a7cdb772a19017eeae848819c2cb318",
+        "research/flywheel_selfplay/h55/audit.py": "5e952ddf5d32ae874072b49ae29ada92e6a96e5061ff282e31006130b87f82a9",
+        "research/flywheel_selfplay/h55/build_metrics.py": "fda39ce45fd2ef8dacdbac117a627efca3d91a0662fed74ccc67f0d121f4872a",
+        "research/flywheel_selfplay/h55/run_wave.py": "1801e057a744457608b3df7909929bf161262e7954a02214d7212c2210973238",
+        "research/flywheel_selfplay/h55/runner.py": "56fd220689805f07877ae403c2f00a4b34831cc4b2919f4bd69807ff3c21f4bc",
+        "research/flywheel_selfplay/run_fused_closed_loop.py": "8156cda845a392cc29a406a4467091be49cdd96ef6def92709b4d0f58b55aec7"
+      },
+      "w_t_l_family": {
+        "losses": 20,
+        "ties": 6,
+        "wins": 15
+      },
+      "wall_seconds": 79.8270344119519,
+      "worst_five_family_gains": [
+        [
+          "fam-ec4835624ef87c3f903ec21d14ca9866812afea7e6fb0ce1397bc56c89c62243",
+          -1.2511395638787928
+        ],
+        [
+          "fam-0524644998aa86a8ae3a50efe411f95ebc51c007c09cf8a34a70bddcf9ee418d",
+          -0.697461287893357
+        ],
+        [
+          "fam-cfdd6a6687c1776e690d664ed23cd8b6b7e06ff06addb46a2c01ec7969f1d83b",
+          -0.6410960026908673
+        ],
+        [
+          "fam-a76de6dbef8706c562230c8cc49322acb2b22033b557a5cd113190361901c941",
+          -0.534513342885936
+        ],
+        [
+          "fam-080d0150fe9b57e7f0dd910275d2e0fb297455bacac55b2e7b0bfb1fafe2139c",
+          -0.4580382413243076
+        ]
+      ]
+    }
+  ],
+  "comparator": {
+    "family_utility": 1.1536152769912449,
+    "higher_is_better": true,
+    "live_loop_target_1_1377942": "cross-harness, not comparable; excluded",
+    "name": "r882 harness"
+  },
+  "interpretation": "Elo is diagnostic, not AUC; ties fail; fold-B results alone determine admission.",
+  "primary_endpoint": "paired family utility gain on one untouched seed-4900 fold B; higher is better",
+  "protocol": {
+    "admission_partition": "fold B (fifth fold), scored once after candidate training",
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "ema_decay": 0.9,
+    "ema_rounds": 25,
+    "fold_seed": 4900,
+    "holdout_payloads_opened": 0,
+    "manifest_identity": "3eb4a62acea512f528500b043299a5968e1c9b1d1b1759bbf77a426b9fa1ecc3",
+    "outer_rows_delivered": 0,
+    "r882_checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "seeds": [
+      12,
+      13,
+      14
+    ],
+    "source_manifest_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "swa_members": 8,
+    "swa_rounds_per_member": 1,
+    "train_partition": "family-grouped folds A (4/5) only"
+  },
+  "schema": "jope.h55.closeout/v1",
+  "study": "H55 r882 adapter averaging",
+  "terminal_dl_val": {
+    "reads": [],
+    "reads_allowed": 0,
+    "status": "not run; no arm admitted"
+  },
+  "timing_only": {
+    "arm": "ema25",
+    "excluded_from_outcomes": true,
+    "rounds": 25,
+    "seed": 12,
+    "wall_seconds": 225.68928981292993
+  },
+  "wave_receipt": "/home/ubuntu/jope-data/h55/h55-wave-attempt4/outcomes/wave.json"
+}
