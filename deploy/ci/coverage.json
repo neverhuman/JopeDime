@@ -6180,7 +6180,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -13317,6 +13317,16 @@
       ],
       "lanes": [],
       "scope": "H79 W4 cached-pool screen fixture contracts: four-reveal oracle, prior-top4 and two-plus-two GP selection, swap placebo, W1 family-exclusion refusal, paired family bootstrap and gbm_top4-anchored family Elo. Manual research diagnostics only; no native fits, W4 gate or release qualification."
+    },
+    "python:research/flywheel_selfplay/h75_closed_loop_evolution/feedback/test_feedback.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H75 CPU-only feedback writer controls for caller-pinned clean outcomes, fit-family/alias/source/row/program joins, complete execution IDs, failed-outcome masking, D-only loss eligibility, retry conflicts and immutable artifact creation. Synthetic fixtures do not qualify H75 data, training or lift."
     }
   },
   "lanes": {
