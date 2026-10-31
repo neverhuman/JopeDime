@@ -726,3 +726,6 @@ fn live_terminal_attach_and_mcp_reconnect_preserve_the_same_run_projection() {
         "PRE-STAGE: wire terminal/MCP observers to operational run handlers before qualification"
     );
 }
+
+#[path = "s2_determinism.rs"]
+mod s2_determinism;
