@@ -34,6 +34,73 @@ WAVE_SPEC.loader.exec_module(wave)
 
 
 class H57Tests(unittest.TestCase):
+    def test_terminal_metrics_refuses_unadmitted_receipt_before_read(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "sigma001").mkdir()
+            (root / "sigma001/seed15.json").write_text("{}")
+            admissions = {arm: {"admitted": False} for arm in metrics.ARMS}
+            with mock.patch.object(metrics, "load") as read:
+                with self.assertRaisesRegex(SystemExit, "admitted arm/seed set"):
+                    metrics.terminal_metrics(root, admissions)
+                read.assert_not_called()
+
+    def test_terminal_metrics_requires_exact_identity_and_single_read(self):
+        for defect in ("missing", "extra", "misbound", "count"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                (root / "sigma001").mkdir()
+                for seed in metrics.SEEDS:
+                    (root / f"sigma001/seed{seed}.json").write_text(json.dumps({
+                        "arm": "sigma001", "seed": seed,
+                        "family_utility": {"synthetic": 1.0},
+                        "family_delta_vs_r882_harness": {"synthetic": 0.1},
+                        "terminal_dl_val_score_count": 1,
+                    }))
+                if defect == "missing":
+                    (root / "sigma001/seed17.json").unlink()
+                elif defect == "extra":
+                    (root / "sigma001/seed999.json").write_text("{}")
+                else:
+                    path = root / "sigma001/seed15.json"
+                    row = json.loads(path.read_text())
+                    row["seed" if defect == "misbound" else "terminal_dl_val_score_count"] = 16 if defect == "misbound" else 0
+                    path.write_text(json.dumps(row))
+                admissions = {arm: {"admitted": arm == "sigma001"} for arm in metrics.ARMS}
+                with self.assertRaisesRegex(SystemExit, "H57 terminal DL-Val"):
+                    metrics.terminal_metrics(root, admissions)
+
+    def test_terminal_metrics_accepts_exact_authorized_receipts(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "sigma001").mkdir()
+            for seed in metrics.SEEDS:
+                (root / f"sigma001/seed{seed}.json").write_text(json.dumps({
+                    "arm": "sigma001", "seed": seed,
+                    "family_utility": {"synthetic": 1.0},
+                    "family_delta_vs_r882_harness": {"synthetic": 0.1},
+                    "terminal_dl_val_score_count": 1,
+                }))
+            admissions = {arm: {"admitted": arm == "sigma001"} for arm in metrics.ARMS}
+            result = metrics.terminal_metrics(root, admissions)
+            self.assertEqual(result["status"], "complete")
+            self.assertEqual(result["reads_allowed"], 3)
+            self.assertEqual([row["seed"] for row in result["reads"]], list(metrics.SEEDS))
+
+    def test_terminal_metrics_preserves_pending_and_not_run(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            admissions = {arm: {"admitted": False} for arm in metrics.ARMS}
+            self.assertEqual(metrics.terminal_metrics(root, admissions), {
+                "reads_allowed": 0, "status": "not run; no sigma arm admitted", "reads": [],
+            })
+            self.assertEqual(metrics.terminal_metrics(root / "absent", admissions)["reads"], [])
+            admissions["sigma001"]["admitted"] = True
+            pending = metrics.terminal_metrics(root / "absent", admissions)
+            self.assertEqual(pending["status"], "pending admission-gated reads")
+            self.assertEqual(pending["reads_allowed"], 3)
+            self.assertEqual(pending["reads"], [])
+
     def test_metrics_default_output_stays_in_h57_research_directory(self):
         self.assertEqual(metrics.DEFAULT_OUTPUT, HERE / "metrics.json")
 
