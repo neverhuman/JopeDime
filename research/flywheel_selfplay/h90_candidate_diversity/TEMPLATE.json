@@ -1,0 +1,23 @@
+{
+  "template": "H82/H76 guarded CPU/GPU protocol",
+  "source_pins_sha256": {
+    "research/flywheel_selfplay/h82_sam_steps/PREREG.md": "84a31489a1c9f34d54caab46dede529e4e88711ab2491351fbf6e63d02ca1164",
+    "research/flywheel_selfplay/h82_sam_steps/runner.py": "d1a46d1adc050589983ef202a59f2a4b7c3482ee8725b0aa59bbd484052e784e",
+    "research/flywheel_selfplay/h82_sam_steps/run_wave.py": "e69a8eefc090f35977daa43272edf84869e79a2a00d40da90683a0f0e997e0c1",
+    "research/flywheel_selfplay/h82_sam_steps/test_h82.py": "8e53b89b7bbe65d705fbb3abe753dafe2e01c808b5b89a84e74ea106d2a762a1",
+    "research/flywheel_selfplay/h76_sam_steps/runner.py": "3556fe81fe654b148d301244d6d0460bf2363b5a97db0a0b644507168e97d24f",
+    "research/flywheel_selfplay/h59/runner.py": "604d02ed72a6149284792cba315124efd1ffe8cac79e5ace22613db86c11b4c3",
+    "research/flywheel_selfplay/h55/runner.py": "56fd220689805f07877ae403c2f00a4b34831cc4b2919f4bd69807ff3c21f4bc",
+    "research/flywheel_selfplay/h61/runner.py": "a1654add23b76e54b22afe5a7f42bf543420b12ca0d31d52b5c25c409498d037",
+    "research/flywheel_selfplay/h61/run_wave.py": "b665589255015d6dcc014ef0b6dd86953d336849914fe5278361bd5d76cda426",
+    "research/flywheel_selfplay/qualification_lock_fifo.py": "8e3150a7ab9b53612f99db9757f8bfa32938afa5d90c9bbc9db60c6752e79a84",
+    "research/flywheel_selfplay/h48/run.py": "756960a0e2bfdf23e75012fb347ce772fb6fdeaa4fb4fc2d4178dfaeb9eac9da",
+    "research/flywheel_selfplay/h46/run.py": "645bf1470789c4f5bcc97809f703b04d9a594a21dd9d3aa8c2fd4e98810d0320",
+    "research/flywheel_selfplay/h49/score.py": "86a5510f7ceaa1468ac5d2a96c239ecca93c6fa616586a62c74754955ce79192",
+    "research/flywheel_selfplay/h53b/runner.py": "85aa59e9c4bee62805ed6c388364611b3a7cdb772a19017eeae848819c2cb318",
+    "research/flywheel_selfplay/run_fused_closed_loop.py": "564c441a61654bfd2249d5003873a450f45abe31e15cc9fd704ffafd8b48b737",
+    "research/flywheel_selfplay/automatic_promotion.py": "261d2d1865c2f50e1c7388dfd2ac404e85f599df3a5b7aaaab69415cf250d8a0",
+    "research/flywheel_selfplay/dev_incumbent.py": "81ebdafa5fe1accb1da56a424bee669f0e381fee2bd5e23c751c17618079523f"
+  },
+  "outcome_files_copied": false
+}
