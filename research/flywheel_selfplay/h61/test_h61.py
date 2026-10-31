@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""CPU-only fixture and red-team unit tests for the H61 selection-metric runner."""
+"""CPU-only fixture and red-team unit tests for the H61 selection-metric runner and coordinator."""
 from __future__ import annotations
 
 from collections import namedtuple
-import hashlib
+import fcntl
 import importlib.util
 from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 import numpy as np
 import torch
@@ -20,6 +21,13 @@ if spec is None or spec.loader is None:
 h61 = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = h61
 spec.loader.exec_module(h61)
+
+wave_spec = importlib.util.spec_from_file_location("h61_wave_under_test", HERE / "run_wave.py")
+if wave_spec is None or wave_spec.loader is None:
+    raise RuntimeError("cannot import H61 run_wave")
+h61_wave = importlib.util.module_from_spec(wave_spec)
+sys.modules[wave_spec.name] = h61_wave
+wave_spec.loader.exec_module(h61_wave)
 
 FakeStatvfs = namedtuple("FakeStatvfs", ["f_blocks", "f_bavail", "f_frsize"])
 
@@ -301,6 +309,137 @@ class H61RedTeamTests(unittest.TestCase):
         self.assertAlmostEqual(proj["projected_total_seconds"], 2577.332, places=2)
         with self.assertRaisesRegex(RuntimeError, "exceeds cap"):
             h61.project_gpu_budget_from_h57_timing(cap_seconds=1000.0)
+
+    def test_coordinator_fairness_fix_immediate_first_retry_no_sleep(self):
+        """Verify run_wave.py fairness fix retries immediately (0s sleep before first retry) after lock contention."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir)
+            lock_file = tmp_path / "test_qualification.lock"
+            status_log = tmp_path / "H61_STATUS.log"
+
+            # Fast pre-lock snapshot does not call cpu_percent
+            with mock.patch.object(h61_wave, "disk_usage_stats", return_value={"available_bytes": 100 * 1024**3, "used_percent": 90.0}):
+                snap = h61_wave.preflight_snapshot(immediate_first_retry=True)
+                self.assertEqual(snap["mode"], "fast_statvfs_only")
+
+                # First flock attempt raises BlockingIOError, second succeeds -> zero sleep with immediate_first_retry=True
+                flock_attempts = {"count": 0}
+                sleep_calls: list[float] = []
+
+                def fake_flock(handle, flags):
+                    if flags == fcntl.LOCK_UN:
+                        return
+                    flock_attempts["count"] += 1
+                    if flock_attempts["count"] == 1:
+                        raise BlockingIOError("temporarily busy")
+
+                with mock.patch.object(h61_wave, "lock_busy_wait_reason", return_value="qualification.lock busy; holder PID=999"):
+                    handle, waited, free_mib, status = h61_wave.acquire_lock(
+                        status_log,
+                        0.0,
+                        immediate_first_retry=True,
+                        lock_path=lock_file,
+                        flock_fn=fake_flock,
+                        sleep_fn=sleep_calls.append,
+                        gpu_free_fn=lambda: 24_000,
+                        preflight_fn=lambda: {"disk_used_percent": 90.0, "host_cpu_percent": 15.0, "mem_available_kib": 64 * 1024 * 1024},
+                    )
+                    handle.close()
+                self.assertEqual(flock_attempts["count"], 2)
+                self.assertEqual(sleep_calls, [])
+                self.assertEqual(free_mib, 24_000)
+
+                # With immediate_first_retry=False, the first contention sleeps LOCK_POLL_SECONDS
+                flock_attempts["count"] = 0
+                sleep_calls_disabled: list[float] = []
+                with mock.patch.object(h61_wave, "lock_busy_wait_reason", return_value="qualification.lock busy; holder PID=999"):
+                    handle2, _, _, _ = h61_wave.acquire_lock(
+                        status_log,
+                        0.0,
+                        immediate_first_retry=False,
+                        lock_path=lock_file,
+                        flock_fn=fake_flock,
+                        sleep_fn=sleep_calls_disabled.append,
+                        gpu_free_fn=lambda: 24_000,
+                        preflight_fn=lambda: {"disk_used_percent": 90.0, "host_cpu_percent": 15.0, "mem_available_kib": 64 * 1024 * 1024},
+                    )
+                    handle2.close()
+                self.assertEqual(flock_attempts["count"], 2)
+                self.assertEqual(sleep_calls_disabled, [h61_wave.LOCK_POLL_SECONDS])
+
+    def test_coordinator_disk_guard_same_cell_retry_limit_two(self):
+        """Verify run_wave.py retries DiskGuardInfraVoid on the SAME cell up to MAX_DISK_GUARD_RETRIES=2."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir)
+            status_log = tmp_path / "H61_STATUS.log"
+            out_dir = tmp_path / "outcomes/cells/S1/seed12"
+            log_path = tmp_path / "logs/S1-seed12.log"
+            calls = {"count": 0}
+
+            def fake_run_locked_cell(key, command, log, timeout, status_path, wait_total, *, immediate_first_retry=True):
+                calls["count"] += 1
+                out_dir.mkdir(parents=True, exist_ok=True)
+                if calls["count"] <= 2:
+                    raise h61_wave.DiskGuardInfraVoid("writer disk guard tripped", wait_seconds=0.5, cell_wall_seconds=10.0)
+                return {"key": key, "status": "complete"}, 1.0, 25.0
+
+            with mock.patch.object(h61_wave, "run_locked_cell", side_effect=fake_run_locked_cell):
+                cell, total_wait, wall, void_wall = h61_wave.run_cell_with_disk_guard_retries(
+                    "S1/seed12",
+                    ["python3"],
+                    log_path,
+                    timeout=300.0,
+                    status_path=status_log,
+                    wait_total=0.0,
+                    output_path=out_dir,
+                )
+            self.assertEqual(calls["count"], 3)
+            self.assertEqual(cell["disk_guard_retry_count"], 2)
+            self.assertAlmostEqual(void_wall, 20.0, places=5)
+            self.assertAlmostEqual(wall, 25.0, places=5)
+
+    def test_bradley_terry_elo_3_seeds_family_grouped_median_and_ci95_no_auc(self):
+        """Verify 3-seed family-grouped Bradley-Terry Elo vs r882 reports median + 95% CI, never AUC, and ties fail."""
+        pools = make_synthetic_pools(num_families=8, contexts_per_family=2, pool_size=10)
+        cids = sorted(pools)
+        inc_preds = {cid: np.linspace(1.0, 2.0, 10) for cid in cids}
+        cand_preds = {}
+        for cid in cids:
+            row = np.linspace(1.0, 2.0, 10)
+            row[9] = -1.0  # best unrevealed candidate -> +0.5 gain
+            cand_preds[cid] = row
+
+        scores_by_seed = {}
+        for seed in h61.SEEDS:
+            arm_preds = {
+                "S0": inc_preds,   # exact tie with r882 -> must fail admission
+                "S1": cand_preds,  # positive gain -> admitted
+                "S2": cand_preds,
+                "S3": cand_preds,
+            }
+            scores_by_seed[seed] = h61.score_fold_b_arms(pools, inc_preds, arm_preds, eval_mode="unrev")
+
+        decisions = h61.admit_arms(scores_by_seed)
+        self.assertFalse(decisions["S0"]["admitted"])
+        self.assertTrue(decisions["S0"]["is_tie"])
+        self.assertEqual(decisions["S0"]["elo_median_across_seeds"], 1500.0)
+
+        for arm in ("S1", "S2", "S3"):
+            adm = decisions[arm]
+            self.assertTrue(adm["admitted"])
+            self.assertEqual(adm["primary_ranking_metric"], "bradley_terry_elo_family_grouped")
+            self.assertFalse(adm["auc_reported"])
+            self.assertGreater(adm["elo_median_across_seeds"], 1500.0)
+            self.assertEqual(len(adm["elo_ci95_across_seeds"]), 2)
+            self.assertGreater(adm["elo_family_bootstrap_median"], 1500.0)
+            self.assertEqual(len(adm["elo_family_bootstrap_ci95"]), 2)
+
+        planned = h61.plan_terminal_reads(arm for arm in h61.ARMS if decisions[arm]["admitted"])
+        self.assertEqual(planned, tuple((arm, s) for arm in ("S1", "S2", "S3") for s in h61.SEEDS))
+        with self.assertRaisesRegex(RuntimeError, "forbidden unless the arm is admitted"):
+            h61.terminal_read_allowed("S0", 12, ("S1", "S2", "S3"), ())
+        with self.assertRaisesRegex(RuntimeError, "duplicate H61 terminal DL-Val"):
+            h61.terminal_read_allowed("S1", 12, ("S1", "S2", "S3"), (("S1", 12),))
 
 
 if __name__ == "__main__":
