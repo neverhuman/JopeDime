@@ -17,6 +17,8 @@ The current executable lists dataset management commands, but the local service 
 
 **TODO(SVC-05-F01):** replace this limitation note with the supported registration procedure and its verified recovery steps after the service handler is available.
 
+The same router currently reports `CAPABILITY_UNAVAILABLE` for dataset inspection/deletion, objective validation, run lifecycle, algorithm lookup, export, artifact download, prediction, feedback export, and store garbage collection. `GET /v1/system` is the only implemented operation; its empty capability lists describe this service build, not a configured learning engine.
+
 ## Check version and build features
 
 ```console
