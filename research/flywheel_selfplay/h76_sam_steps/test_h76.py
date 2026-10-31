@@ -1,6 +1,7 @@
 """CPU-only numerical, leakage and budget tests; no real corpus payloads."""
 import fcntl
 import importlib.util
+import json
 import subprocess
 import math
 from pathlib import Path
@@ -232,3 +233,66 @@ def test_unmerged_cpu_pr_blocks_before_ticket_or_gpu_query(monkeypatch):
     monkeypatch.setattr(wave.fair, 'gpu_free_mib', lambda: pytest.fail('GPU query attempted'))
     with pytest.raises(RuntimeError, match='must merge'):
         wave.check_dependencies(999)
+
+
+def test_cpu_gate_requires_two_consecutive_checks_before_ticket(tmp_path):
+    loads = iter([90., 80., 87., 86.7, 70.])
+    clock = [0.]
+    sleeps = []
+    def sleep(seconds):
+        sleeps.append(seconds)
+        clock[0] += seconds
+    waited = wave.wait_for_cpu_gate(tmp_path / 'status.log', load_fn=lambda: (next(loads), 0, 0),
+                                   sleep_fn=sleep, clock_fn=lambda: clock[0])
+    assert waited == 120
+    assert sleeps == [30, 30, 30, 30]
+
+
+def test_cpu_gate_times_out_without_any_gpu_or_ticket(tmp_path, monkeypatch):
+    clock = [0.]
+    def sleep(seconds):
+        clock[0] += seconds
+    monkeypatch.setattr(wave.fair, 'acquire_lock', lambda *a, **k: pytest.fail('ticket attempted'))
+    with pytest.raises(RuntimeError, match='did not stabilize'):
+        wave.wait_for_cpu_gate(tmp_path / 'status.log', load_fn=lambda: (90, 0, 0),
+                               sleep_fn=sleep, clock_fn=lambda: clock[0], max_wait=60)
+    assert clock[0] == 60
+
+
+def failed_timing(root):
+    ledger = {'cap_seconds': 2700., 'in_progress': None,
+              'prereg_sha256': r.h59.sha256(HERE / 'PREREG.md'), 'cpu_pr': 842,
+              'cells': [{'timing': True, 'arm': 'K8', 'seed': 12, 'wall_seconds': 65.85,
+                         'wait_seconds': 106., 'error': "RuntimeError('host CPU above 85% load budget')"}]}
+    (root / 'budget.json').write_text(json.dumps(ledger))
+    return ledger
+
+
+def test_exactly_one_timing_infra_retry_retains_all_charges(tmp_path):
+    original = failed_timing(tmp_path)
+    loaded = wave.retry_ledger(tmp_path)
+    assert loaded == original
+    assert wave.remaining(loaded) == 2700 - 65.85
+    assert loaded['cells'][0]['wait_seconds'] == 106
+    assert wave.feasible(120, 65.85)
+    assert not wave.feasible(165, 65.85)
+
+
+@pytest.mark.parametrize('mutation', ['uncertain', 'duplicate', 'retried', 'outcome', 'wrong_guard', 'dev_receipt'])
+def test_timing_retry_refuses_any_other_state(tmp_path, mutation):
+    ledger = failed_timing(tmp_path)
+    if mutation == 'uncertain':
+        ledger['in_progress'] = {'arm': 'K8'}
+    elif mutation == 'duplicate':
+        ledger['cells'].append(dict(ledger['cells'][0]))
+    elif mutation == 'retried':
+        ledger['timing_retry_cpu_pr'] = 999
+    elif mutation == 'outcome':
+        (tmp_path / 'CONTROL-seed12.json').write_text('{}')
+    elif mutation == 'wrong_guard':
+        ledger['cells'][0]['error'] = 'DOPE changed'
+    else:
+        (tmp_path / 'timing-K8-seed12.json').write_text('{"timing_only": true, "dev": {}}')
+    (tmp_path / 'budget.json').write_text(json.dumps(ledger))
+    with pytest.raises(RuntimeError):
+        wave.retry_ledger(tmp_path)

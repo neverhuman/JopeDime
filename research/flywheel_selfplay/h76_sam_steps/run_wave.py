@@ -7,6 +7,7 @@ import ctypes
 from datetime import datetime, timezone
 import fcntl
 import json
+import math
 import os
 from pathlib import Path
 import signal
@@ -53,8 +54,9 @@ def remaining(ledger):
     return value
 
 
-def feasible(timing):
-    return timing * 13 * 1.25 <= CAP
+def feasible(timing, prior_wall=0.0):
+    return (math.isfinite(timing) and math.isfinite(prior_wall) and timing > 0 and
+            prior_wall >= 0 and prior_wall + timing * 13 * 1.25 <= CAP)
 
 
 def preflight():
@@ -64,6 +66,51 @@ def preflight():
         raise RuntimeError(f'host CPU above 85% load budget: {load1:.2f}/102 cores')
     status['load1'] = load1
     return status
+
+
+def wait_for_cpu_gate(status, *, load_fn=os.getloadavg, sleep_fn=time.sleep,
+                      clock_fn=time.monotonic, max_wait=1800.0):
+    """Two consecutive <=86.7 load checks, >=30s apart, before any FIFO ticket."""
+    started = clock_fn()
+    consecutive = 0
+    while True:
+        load1 = float(load_fn()[0])
+        consecutive = consecutive + 1 if math.isfinite(load1) and load1 <= 86.7 else 0
+        fair.note(status, f'CPU_GATE load1={load1:.2f}/102; consecutive={consecutive}/2')
+        if consecutive == 2:
+            return clock_fn() - started
+        if clock_fn() - started + 30 > max_wait:
+            raise RuntimeError('CPU launch gate did not stabilize within 30 minutes')
+        sleep_fn(30)
+
+
+def retry_ledger(root):
+    """Authorize only the owner-specified, fully charged first timing infra void."""
+    ledger = json.loads((root / 'budget.json').read_text())
+    cells = ledger.get('cells', [])
+    if (ledger.get('in_progress') or ledger.get('cap_seconds') != CAP or len(cells) != 1 or
+        ledger.get('timing_retry_cpu_pr') or ledger.get('prereg_sha256') != h59.sha256(HERE / 'PREREG.md')):
+        raise RuntimeError('not the single accounted timing attempt authorized for retry')
+    row = cells[0]
+    if (row.get('timing') is not True or row.get('arm') != 'K8' or row.get('seed') != 12 or
+        'host CPU above 85%' not in row.get('error', '') or
+        not math.isfinite(row.get('wall_seconds', float('nan'))) or
+        not 0 < row['wall_seconds'] < CAP or
+        not math.isfinite(row.get('wait_seconds', float('nan'))) or row['wait_seconds'] < 0):
+        raise RuntimeError('retry requires a fully accounted CPU-guard timing infra void')
+    if any(p.name != 'timing-K8-seed12.json' for p in root.glob('*-seed*.json')):
+        raise RuntimeError('outcome/retry artifacts already exist; refusing retry')
+    if list(root.glob('*.adapter.pt')):
+        raise RuntimeError('outcome adapter artifacts already exist; refusing retry')
+    if (root / 'metrics.json').exists():
+        raise RuntimeError('outcome metrics already exist; refusing retry')
+    receipt = root / 'timing-K8-seed12.json'
+    if receipt.exists():
+        record = json.loads(receipt.read_text())
+        if record.get('timing_only') is not True or 'train' in record or 'dev' in record:
+            raise RuntimeError('prior artifact is not timing-only')
+    remaining(ledger)
+    return ledger
 
 
 def child_setup():
@@ -108,16 +155,16 @@ def execute(root, ledger, arm, seed, timing, wait_total):
     timeout = remaining(ledger) - 10.0  # reserve watchdog polling + own-child shutdown
     if timeout <= 0:
         raise RuntimeError('insufficient wall remaining for safe child shutdown')
-    yielded = 30 if ledger['cells'] else 0
-    if yielded:
-        time.sleep(30)  # mandatory yield before a fresh ticket, outside GPU cell wall
-        wait_total += 30
+    yielded = wait_for_cpu_gate(status)  # outside lock; also enforces the >=30s per-cell yield
+    wait_total += yielded
+    if wait_total >= fair.MAX_LOCK_WAIT_SECONDS:
+        raise RuntimeError('separate cumulative 3-hour wait budget exhausted before ticket')
     lease, waited, free, snapshot = fair.acquire_lock(
         status, wait_total, after_release=True, wave_name='H76', preflight_fn=preflight)
     started = None
-    record = {'arm': arm, 'seed': seed, 'timing': timing, 'wait_seconds': waited + yielded,
+    record = {'arm': arm, 'seed': seed, 'timing': timing, 'wait_seconds': waited + yielded, 'cpu_gate_seconds': yielded,
               'gpu_free_mib': free, 'preflight': snapshot}
-    name = 'timing-K8-seed12' if timing else f'{arm}-seed{seed}'
+    name = ('timing-K8-seed12-attempt2' if ledger['cells'] else 'timing-K8-seed12') if timing else f'{arm}-seed{seed}'
     out = root / f'{name}.json'
     error = None
     try:
@@ -153,23 +200,32 @@ def execute(root, ledger, arm, seed, timing, wait_total):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--cpu-pr', type=int, required=True)
+    parser.add_argument('--retry-timing-infra', action='store_true')
     parser.add_argument('--root', type=Path, default=Path.home() / 'jope-data/h76/h76-wave')
     args = parser.parse_args()
     check_dependencies(args.cpu_pr)  # before ticket, GPU query, or lock attempt
     args.root.mkdir(parents=True, exist_ok=True)
     with (args.root / 'coordinator.lock').open('a+') as coordinator_lock:
         fcntl.flock(coordinator_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        if (args.root / 'budget.json').exists():
-            raise RuntimeError('wave already launched: do not reset timing, outcomes or wall budget')
-        ledger = {'cap_seconds': CAP, 'cells': [], 'in_progress': None,
-                  'prereg_sha256': h59.sha256(HERE / 'PREREG.md'), 'cpu_pr': args.cpu_pr}
+        if args.retry_timing_infra:
+            ledger = retry_ledger(args.root)
+            ledger['timing_retry_cpu_pr'] = args.cpu_pr
+            ledger['retry_addendum_sha256'] = h59.sha256(HERE / 'ADDENDUM-cpu-guard-t2335.md')
+        else:
+            if (args.root / 'budget.json').exists():
+                raise RuntimeError('wave already launched: do not reset timing, outcomes or wall budget')
+            ledger = {'cap_seconds': CAP, 'cells': [], 'in_progress': None,
+                      'prereg_sha256': h59.sha256(HERE / 'PREREG.md'), 'cpu_pr': args.cpu_pr}
+        prior_wall = sum(c['wall_seconds'] for c in ledger['cells'])
+        prior_wait = sum(c['wait_seconds'] for c in ledger['cells'])
         h59.atomic_json(args.root / 'budget.json', ledger)
         status = args.root / 'H76_STATUS.log'
         try:
-            timing, wait = execute(args.root, ledger, 'K8', 12, True, 0.0)
-            timing_wall = ledger['cells'][0]['wall_seconds']
-            if not feasible(timing_wall):
-                raise RuntimeError(f'timing infeasible: {timing_wall:.2f} * 13 * 1.25 > {CAP}')
+            timing, waited = execute(args.root, ledger, 'K8', 12, True, prior_wait)
+            wait = prior_wait + waited
+            timing_wall = ledger['cells'][-1]['wall_seconds']
+            if not feasible(timing_wall, prior_wall):
+                raise RuntimeError(f'timing infeasible: {prior_wall:.2f} + {timing_wall:.2f} * 13 * 1.25 > {CAP}')
             cells = []
             for seed in SEEDS:
                 for arm in ARMS:
@@ -182,7 +238,8 @@ def main():
             h59.atomic_json(args.root / 'metrics.json', result)
             fair.note(status, 'COMPLETE all12 paired cells; metrics.json written; no serving promotion')
         except BaseException as exc:
-            h59.atomic_json(args.root / 'incomplete.json', {'complete': False, 'reason': repr(exc), 'ledger': ledger})
+            h59.atomic_json(args.root / ('incomplete-timing-retry.json' if args.retry_timing_infra else 'incomplete.json'),
+                             {'complete': False, 'reason': repr(exc), 'ledger': ledger})
             fair.note(status, f'STOP {exc}; outcomes unknown where missing; no admission')
             raise
 
