@@ -239,6 +239,17 @@ def test_symlink_escape_rejected(tmp_path):
         safe_path(tmp_path, "link/unknown")
 
 
+def test_in_packet_symlink_to_protected_target_rejected(tmp_path):
+    (tmp_path / "sealed").mkdir()
+    (tmp_path / "sealed" / "rows.npz").write_bytes(b"x")
+    (tmp_path / "public.npz").symlink_to(tmp_path / "sealed" / "rows.npz")
+    with pytest.raises(ValueError, match="protected"):
+        safe_path(tmp_path, "public.npz")
+    (tmp_path / "data").symlink_to(tmp_path / "sealed")
+    with pytest.raises(ValueError, match="protected"):
+        safe_path(tmp_path, "data/rows.npz")
+
+
 def test_metadata_planning_does_not_resolve_payloads_against_cwd(
     manifest, tmp_path, monkeypatch
 ):
