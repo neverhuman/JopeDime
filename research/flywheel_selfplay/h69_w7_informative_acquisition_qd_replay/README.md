@@ -66,3 +66,7 @@ its own code, inspect the approved S3 prefix, or create a fit, model, data, or
 result artifact. Any data-backed execution requires a separate owner-approved
 resume, row-closure receipt, source and resource freeze, and qualification-lock
 slot. This H69 task performs none of those steps.
+
+Run `bash runner_contract_test.sh` from this directory for the targeted,
+offline contract test. It checks the printed design and verifies that omitting
+`--dry-run` is refused; it makes no data or model request.
