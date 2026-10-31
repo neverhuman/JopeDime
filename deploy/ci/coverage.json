@@ -13088,6 +13088,16 @@
       "lanes": [],
       "scope": "Owner-requested H50 offline proofs for seeded unit directions, adapter flattening, antithetic population generation, deterministic rank shaping, and finite strict-JSON rejection metadata."
     },
+    "python:deploy/qualification/v1.0/test_cpu_gates.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 CPU-preparation controller and metadata-only release-plan controls; actual child success/failure/timeout, source/output/hash/count refusals, every release-gate/current-status inventory and prep non-promotion. These local tests and unsigned diagnostics do not qualify signed release bytes, GPU, Q1 or native platforms."
+    },
     "python:research/flywheel_selfplay/h55/test_h55.py": {
       "discovery": {
         "kind": "python-family"
