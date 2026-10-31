@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import fcntl
+import importlib.util
 import json
 import os
 import shutil
@@ -16,8 +17,25 @@ from typing import Callable
 
 ROOT = Path(__file__).resolve().parents[3]
 RUNNER = ROOT / "research/flywheel_selfplay/h61/runner.py"
+FIFO_HELPER_PATH = ROOT / "research/flywheel_selfplay/qualification_lock_fifo.py"
 DEFAULT_AMENDMENT = ROOT / "research/flywheel_selfplay/h61/amendment-2026-10-31.md"
-LOCK = Path.home() / "jope_plan/qualification.lock"
+
+
+def _load_fifo_helper():
+    spec = importlib.util.spec_from_file_location("qualification_lock_fifo", FIFO_HELPER_PATH)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot import {FIFO_HELPER_PATH}")
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+fifo_lock = _load_fifo_helper()
+
+LOCK = fifo_lock.LOCK_PATH
+QUEUE_DIR = fifo_lock.QUEUE_DIR
+JOPE_DATA_DIR = fifo_lock.JOPE_DATA_DIR
 RUN_ROOT = Path(os.environ.get("H61_RUN_ROOT", str(Path.home() / "jope-data/h61/h61-wave")))
 MIN_GPU_FREE_MIB = 6144
 MIN_MEM_AVAILABLE_KIB = 16 * 1024 * 1024
@@ -27,11 +45,14 @@ RSS_LIMIT_KIB = 6 * 1024 * 1024
 MAX_LAUNCH_DISK_USED_PERCENT = 94.5
 WRITER_MAX_DISK_USED_PERCENT = 95.0
 MAX_DISK_GUARD_RETRIES = 2
-LOCK_POLL_SECONDS = 5.0
+LOCK_POLL_SECONDS = fifo_lock.LOCK_POLL_SECONDS  # 30.0s (matches H57/H59; no immediate retry)
 LOCK_STATUS_NOTE_INTERVAL_SECONDS = 30.0
+LEGACY_WAIT_WINDOW_SECONDS = fifo_lock.LEGACY_WAIT_WINDOW_SECONDS  # 90.0s
+LEGACY_BACKOFF_SECONDS = fifo_lock.LEGACY_BACKOFF_SECONDS  # 45.0s
 ARMS = ("S0", "S1", "S2", "S3")
 SEEDS = (12, 13, 14)
 CELL_ORDER = [(arm, seed) for seed in SEEDS for arm in ARMS]
+_RELEASED_CELL_COUNT = 0
 
 
 class InfraVoid(RuntimeError):
@@ -204,15 +225,7 @@ def gpu_wait_reason(free_mib: int) -> str:
     return f"GPU free {free_mib} MiB below {MIN_GPU_FREE_MIB} MiB"
 
 
-def preflight_snapshot(*, immediate_first_retry: bool = True) -> dict:
-    """Return pre-lock snapshot; when immediate_first_retry=True, avoid pre-lock cpu_percent sleep so cells do not yield."""
-    if immediate_first_retry:
-        disk = disk_usage_stats()
-        return {
-            "disk_free_bytes": disk["available_bytes"],
-            "disk_used_percent": disk["used_percent"],
-            "mode": "fast_statvfs_only",
-        }
+def preflight_snapshot() -> dict:
     try:
         return safe_preflight()
     except RuntimeError as exc:
@@ -226,82 +239,129 @@ def acquire_lock(
     status_path: Path,
     wait_total: float,
     *,
-    immediate_first_retry: bool = True,
+    after_release: bool | None = None,
+    wave_name: str = "H61",
+    pid: int | None = None,
+    epoch_ns: int | None = None,
     lock_path: Path = LOCK,
+    queue_dir: Path = QUEUE_DIR,
+    data_root: Path = JOPE_DATA_DIR,
     flock_fn: Callable = fcntl.flock,
     sleep_fn: Callable[[float], None] = time.sleep,
     gpu_free_fn: Callable[[], int] = gpu_free_mib,
     preflight_fn: Callable[[], dict] = safe_preflight,
+    is_alive_fn: Callable[[int], bool] = fifo_lock.pid_is_alive,
+    now_utc_fn: Callable[[], datetime] | None = None,
 ) -> tuple[object, float, int, dict]:
-    """Acquire qualification.lock; when immediate_first_retry=True, retry immediately on first contention without sleeping."""
+    """Acquire qualification.lock in FIFO ticket order with 30s polling and >=45s legacy-waiter backoff after release."""
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     handle = lock_path.open("a+")
     started = time.monotonic()
     last_note = 0.0
-    # When immediate_first_retry=True, do not run pre-flock safe_preflight() on the initial attempt
-    # (safe_preflight() is always verified under the lock right after flock succeeds).
-    last_full_check = started if immediate_first_retry else 0.0
-    immediate_retry_used = False
-    while True:
-        now = time.monotonic()
-        acquired = False
-        keep_locked = False
-        wait_reason = "preflight pending"
-        try:
-            disk_error = launch_disk_guard_error()
-            if disk_error:
-                raise RuntimeError(disk_error)
-            status = None
-            if now - last_full_check >= 300:
-                try:
-                    status = preflight_fn()
-                except RuntimeError:
+    last_full_check = 0.0
+    released_prior = (_RELEASED_CELL_COUNT > 0) if after_release is None else bool(after_release)
+    ticket_path: Path | None = fifo_lock.enqueue_ticket(
+        queue_dir,
+        pid=pid,
+        wave=wave_name,
+        epoch_ns=epoch_ns,
+    )
+    legacy_backoff_done = False
+    try:
+        while True:
+            now = time.monotonic()
+            acquired = False
+            keep_locked = False
+            wait_reason = "preflight pending"
+            try:
+                if released_prior and not legacy_backoff_done:
+                    legacy_backoff_done = True
+                    ref_utc = now_utc_fn() if now_utc_fn is not None else None
+                    legacy_reason = fifo_lock.other_wave_waiting_recently(
+                        data_root,
+                        own_status_path=status_path,
+                        now_utc=ref_utc,
+                        window_seconds=LEGACY_WAIT_WINDOW_SECONDS,
+                    )
+                    if legacy_reason is not None:
+                        note(
+                            status_path,
+                            f"WAIT legacy backoff {LEGACY_BACKOFF_SECONDS:.0f}s ({legacy_reason}); "
+                            f"cumulative_wait={wait_total + (time.monotonic() - started):.1f}s",
+                        )
+                        sleep_fn(LEGACY_BACKOFF_SECONDS)
+                        now = time.monotonic()
+                        last_note = now
+
+                disk_error = launch_disk_guard_error()
+                if disk_error:
+                    raise RuntimeError(disk_error)
+                status = None
+                if now - last_full_check >= 300:
+                    try:
+                        status = preflight_fn()
+                    except RuntimeError:
+                        last_full_check = now
+                        raise
                     last_full_check = now
+
+                assert ticket_path is not None
+                is_oldest, oldest = fifo_lock.is_oldest_live_ticket(
+                    ticket_path,
+                    queue_dir,
+                    is_alive_fn=is_alive_fn,
+                )
+                if not is_oldest:
+                    if oldest is not None:
+                        wait_reason = f"FIFO queue behind {oldest[2]} (PID={oldest[1]}, epoch_ns={oldest[0]})"
+                    else:
+                        wait_reason = "FIFO ticket queue pending"
+                else:
+                    flock_fn(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    acquired = True
+                    free = gpu_free_fn()
+                    if free < MIN_GPU_FREE_MIB:
+                        wait_reason = gpu_wait_reason(free)
+                    else:
+                        try:
+                            status = preflight_fn()
+                        except RuntimeError as exc:
+                            wait_reason = preflight_wait_reason(exc) or str(exc)
+                            raise
+                        keep_locked = True
+                        fifo_lock.remove_ticket(ticket_path)
+                        ticket_path = None
+                        return handle, time.monotonic() - started, free, status
+            except BlockingIOError:
+                wait_reason = lock_busy_wait_reason(handle)
+            except RuntimeError as exc:
+                reason = preflight_wait_reason(exc)
+                if reason is None:
                     raise
-                last_full_check = now
-            flock_fn(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            acquired = True
-            free = gpu_free_fn()
-            if free < MIN_GPU_FREE_MIB:
-                wait_reason = gpu_wait_reason(free)
-            else:
-                try:
-                    status = preflight_fn()
-                except RuntimeError as exc:
-                    wait_reason = preflight_wait_reason(exc) or str(exc)
-                    raise
-                keep_locked = True
-                return handle, time.monotonic() - started, free, status
-        except BlockingIOError:
-            wait_reason = lock_busy_wait_reason(handle)
-        except RuntimeError as exc:
-            reason = preflight_wait_reason(exc)
-            if reason is None:
+                wait_reason = reason
+            except BaseException:
+                if acquired:
+                    flock_fn(handle, fcntl.LOCK_UN)
+                    acquired = False
+                handle.close()
                 raise
-            wait_reason = reason
-        except BaseException:
-            if acquired:
-                flock_fn(handle, fcntl.LOCK_UN)
-                acquired = False
-            handle.close()
-            raise
-        finally:
-            if acquired and not keep_locked:
-                flock_fn(handle, fcntl.LOCK_UN)
-        waited = time.monotonic() - started
-        if waited >= remaining_lock_wait(wait_total):
-            handle.close()
-            raise InfraVoid(
-                f"qualification.lock wait exceeded separate 3h limit; total={wait_total + waited:.1f}s",
-                wait_total + waited,
-            )
-        if immediate_first_retry and not immediate_retry_used:
-            immediate_retry_used = True
-            continue
-        if now - last_note >= LOCK_STATUS_NOTE_INTERVAL_SECONDS:
-            note(status_path, f"WAIT {wait_reason}; cumulative_wait={wait_total + waited:.1f}s")
-            last_note = now
-        sleep_fn(LOCK_POLL_SECONDS)
+            finally:
+                if acquired and not keep_locked:
+                    flock_fn(handle, fcntl.LOCK_UN)
+            waited = time.monotonic() - started
+            if waited >= remaining_lock_wait(wait_total):
+                handle.close()
+                raise InfraVoid(
+                    f"qualification.lock wait exceeded separate 3h limit; total={wait_total + waited:.1f}s",
+                    wait_total + waited,
+                )
+            if now - last_note >= LOCK_STATUS_NOTE_INTERVAL_SECONDS:
+                note(status_path, f"WAIT {wait_reason}; cumulative_wait={wait_total + waited:.1f}s")
+                last_note = now
+            sleep_fn(LOCK_POLL_SECONDS)
+    finally:
+        if ticket_path is not None:
+            fifo_lock.remove_ticket(ticket_path)
 
 
 def child_command(
@@ -397,14 +457,13 @@ def run_locked_cell(
     timeout: float,
     status_path: Path,
     wait_total: float,
-    *,
-    immediate_first_retry: bool = True,
 ) -> tuple[dict, float, float]:
-    before = preflight_snapshot(immediate_first_retry=immediate_first_retry)
+    global _RELEASED_CELL_COUNT
+    before = preflight_snapshot()
     handle, waited, free_mib, lock_preflight = acquire_lock(
         status_path,
         wait_total,
-        immediate_first_retry=immediate_first_retry,
+        after_release=_RELEASED_CELL_COUNT > 0,
     )
     try:
         post_lock = lock_preflight
@@ -457,6 +516,7 @@ def run_locked_cell(
     finally:
         fcntl.flock(handle, fcntl.LOCK_UN)
         handle.close()
+        _RELEASED_CELL_COUNT += 1
 
 
 def run_cell_with_disk_guard_retries(
@@ -467,8 +527,6 @@ def run_cell_with_disk_guard_retries(
     status_path: Path,
     wait_total: float,
     output_path: Path,
-    *,
-    immediate_first_retry: bool = True,
 ) -> tuple[dict, float, float, float]:
     retries = 0
     void_wall = 0.0
@@ -483,7 +541,6 @@ def run_cell_with_disk_guard_retries(
                 timeout,
                 status_path,
                 wait_total + local_wait,
-                immediate_first_retry=immediate_first_retry,
             )
             cell["disk_guard_retry_count"] = retries
             cell["prior_void_cell_wall_seconds"] = void_wall
@@ -562,7 +619,6 @@ def timing_mode(args) -> dict:
         timeout=MAX_WAVE_GPU_WALL_SECONDS,
         status_path=status,
         wait_total=args.prior_lock_wait_seconds,
-        immediate_first_retry=args.immediate_lock_retry,
     )
     receipt = json.loads((out / "timing.json").read_text())
     wave = {
@@ -612,7 +668,6 @@ def outcome_mode(args) -> dict:
                 status_path=status,
                 wait_total=wait_total,
                 output_path=out,
-                immediate_first_retry=args.immediate_lock_retry,
             )
             wait_total += waited
             gpu_wall += wall
@@ -628,7 +683,8 @@ def outcome_mode(args) -> dict:
                     "total_gpu_cell_wall_seconds": gpu_wall,
                     "void_cell_wall_seconds": void_gpu_wall,
                     "total_gpu_cell_wall_cap_seconds": cap,
-                    "immediate_lock_retry": args.immediate_lock_retry,
+                    "lock_policy": "fifo_ticket_and_legacy_backoff",
+                    "lock_poll_seconds": LOCK_POLL_SECONDS,
                 },
             )
         except Exception as exc:
@@ -658,7 +714,8 @@ def outcome_mode(args) -> dict:
                     "total_gpu_cell_wall_seconds": gpu_wall,
                     "void_cell_wall_seconds": void_gpu_wall,
                     "total_gpu_cell_wall_cap_seconds": cap,
-                    "immediate_lock_retry": args.immediate_lock_retry,
+                    "lock_policy": "fifo_ticket_and_legacy_backoff",
+                    "lock_poll_seconds": LOCK_POLL_SECONDS,
                 },
             )
             break
@@ -675,7 +732,6 @@ def outcome_mode(args) -> dict:
                 status_path=status,
                 wait_total=wait_total,
                 output_path=score_out,
-                immediate_first_retry=args.immediate_lock_retry,
             )
             wait_total += waited
             gpu_wall += wall
@@ -707,7 +763,8 @@ def outcome_mode(args) -> dict:
         "fixed_steps_per_round": steps,
         "measured_h57_real_cell_seconds": h57_real_cell,
         "projected_total_seconds": projected,
-        "immediate_lock_retry": args.immediate_lock_retry,
+        "lock_policy": "fifo_ticket_and_legacy_backoff",
+        "lock_poll_seconds": LOCK_POLL_SECONDS,
         "primary_ranking_metric": "bradley_terry_elo_family_grouped",
         "auc_reported": False,
         "cell_order": [{"arm": arm, "seed": seed} for arm, seed in CELL_ORDER],
@@ -726,11 +783,11 @@ def outcome_mode(args) -> dict:
     if complete:
         admission = json.loads((RUN_ROOT / "outcomes/admission.json").read_text())
         if any(admission.get("arms", {}).get(arm, {}).get("admitted") is True for arm in ARMS):
-            terminal_mode(immediate_first_retry=args.immediate_lock_retry)
+            terminal_mode()
     return wave
 
 
-def terminal_mode(*, immediate_first_retry: bool = True) -> dict:
+def terminal_mode() -> dict:
     wave_path = RUN_ROOT / "outcomes/wave.json"
     wave = json.loads(wave_path.read_text())
     if wave.get("complete") is not True:
@@ -766,7 +823,6 @@ def terminal_mode(*, immediate_first_retry: bool = True) -> dict:
                 RUN_ROOT / "H61_STATUS.log",
                 wait_total,
                 out.parent,
-                immediate_first_retry=immediate_first_retry,
             )
         except Exception as exc:
             wave["terminal_stop_reason"] = f"infra-void at {arm}/seed{seed}: {type(exc).__name__}: {exc}"
@@ -804,12 +860,6 @@ def main() -> None:
     modes.add_argument("--terminal-val", action="store_true")
     parser.add_argument("--amendment", type=Path, default=DEFAULT_AMENDMENT)
     parser.add_argument("--prior-lock-wait-seconds", type=float, default=0.0)
-    parser.add_argument(
-        "--immediate-lock-retry",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-        help="Re-try qualification.lock immediately (0s sleep before first retry) after lock release/contention",
-    )
     args = parser.parse_args()
     if args.prior_lock_wait_seconds < 0:
         raise RuntimeError("prior lock wait cannot be negative")
@@ -820,7 +870,7 @@ def main() -> None:
     elif args.outcomes:
         mode, result = "outcomes", outcome_mode(args)
     else:
-        mode, result = "terminal-val", terminal_mode(immediate_first_retry=args.immediate_lock_retry)
+        mode, result = "terminal-val", terminal_mode()
     print(json.dumps({"mode": mode, "result": result}, sort_keys=True), flush=True)
 
 
