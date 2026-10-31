@@ -97,3 +97,7 @@ passed; the actual data-admission verdict remains FAIL.
 Long-term create-only S3 custody and verified download hashes are recorded in
 [custody](receipts/custody.json). The manifest was written after every listed
 object passed byte readback; this output prefix grants no additional input scope.
+
+## 2026-10-31 t0855 refresh
+
+[Fresh exact-version custody and admission replay](refresh_t0855/README.md): input checks pass; W5 remains FAIL/HELD on missing lineage/original-row and computable exclusion evidence. The owner-defined sealed-group reference is now recorded explicitly. No GPU admission plan is filed.
