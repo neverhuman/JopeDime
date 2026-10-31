@@ -185,5 +185,78 @@
     "maximum_threads": 8,
     "peak_scratch": 8514991,
     "maximum_root_usage": 92.86880308873617
+  },
+  "mean_gain": null,
+  "Elo": null,
+  "val_reg": null,
+  "U4": null,
+  "cleanup": {
+    "utc": "2026-10-31T21:58:11.670469+00:00",
+    "files": [
+      {
+        "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/dope-secondary.json",
+        "bytes": 236,
+        "sha256": "fb7ec681db921774c3c5ac4f7183690ac46e8f6f2db3dd71d60ffc44893975b2",
+        "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/dope-secondary.json"
+      },
+      {
+        "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/r882-copy.pt",
+        "bytes": 7493476,
+        "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+        "recovery": "/home/ubuntu/jope-data/h134/run-20261031T2036Z/r882-copy.pt"
+      },
+      {
+        "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/r882-secondary-costs.npz",
+        "bytes": 484115,
+        "sha256": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
+        "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/r882-secondary-costs.npz"
+      },
+      {
+        "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/read-audit-baseline.json",
+        "bytes": 10807,
+        "sha256": "5214950acaca4a62bc30b3da0c4e4f5ac442dc32f81f7cf2c2c8a0d275ad357e",
+        "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/read-audit-baseline.json"
+      },
+      {
+        "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/sanity.json",
+        "bytes": 3269,
+        "sha256": "d9aeb1605b25f0b6db4880372b4cce940e9a0836ad1ec0ebe1727dc1bd23346a",
+        "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/sanity.json"
+      },
+      {
+        "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/baseline.npz",
+        "bytes": 484115,
+        "sha256": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
+        "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/baseline.npz"
+      },
+      {
+        "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/reference.json",
+        "bytes": 38703,
+        "sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+        "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/reference.json"
+      },
+      {
+        "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/checkpoint-load.json",
+        "bytes": 131,
+        "sha256": "298a939cb9cc1b205c1ec4ebb9245e2819bb3421baf38e36c3e135dcd03627ac",
+        "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/checkpoint-load.json"
+      },
+      {
+        "path": "/home/ubuntu/jope-rescue-20260921/h135-a2-continuation/run/cohort.json",
+        "bytes": 139,
+        "sha256": "4bc5ae2e19839030cda0733608da9bf69e6c47696eaa3e1afeb04e8c55573d9b",
+        "recovery": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz VersionId=gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi member=run/cohort.json"
+      }
+    ],
+    "reclaimed_bytes": 8514991,
+    "scope": "Only owned H135 continuation run scratch; source and other-owner inputs untouched",
+    "archive": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H135/astra-a2/numerical-evidence.npz",
+      "version_id": "gDFRqKSTbKZI1oa5MFtWIL5tDTIPtpJi",
+      "sha256": "38836aef288e4b1ccde5473f4b0f6db4a5af9e80bae94b7166ccd4a6e5e8b07b",
+      "bytes": 1011407,
+      "verified_utc": "2026-10-31T21:57:14.005847+00:00"
+    },
+    "original_input_exact_s3_recovery": false
   }
 }
