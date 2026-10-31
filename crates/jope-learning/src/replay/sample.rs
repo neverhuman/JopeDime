@@ -102,7 +102,7 @@ pub enum InclusionProbability {
 }
 
 impl InclusionProbability {
-    /// Performs the as f64 operation and returns an error if it cannot be completed.
+    /// Performs the as f64 operation.
     pub fn as_f64(self) -> Option<f64> {
         match self {
             Self::Known {

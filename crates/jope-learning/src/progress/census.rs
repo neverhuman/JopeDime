@@ -73,7 +73,7 @@ pub enum Disposition {
 }
 
 impl Disposition {
-    /// Performs the terminal operation and returns an error if it cannot be completed.
+    /// Performs the terminal operation.
     pub fn terminal(&self) -> bool {
         matches!(
             self,
@@ -211,12 +211,12 @@ impl Census {
         self.violations.is_empty() && self.units.iter().all(|u| u.disposition.terminal())
     }
 
-    /// Performs the unit operation and returns an error if it cannot be completed.
+    /// Performs the unit operation.
     pub fn unit(&self, work_id: &str) -> Option<&UnitStatus> {
         self.units.iter().find(|u| u.work_id == work_id)
     }
 
-    /// Performs the violation kinds operation and returns an error if it cannot be completed.
+    /// Performs the violation kinds operation.
     pub fn violation_kinds(&self) -> BTreeSet<&str> {
         self.violations.iter().map(|v| v.kind.as_str()).collect()
     }

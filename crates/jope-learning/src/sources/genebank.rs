@@ -181,7 +181,7 @@ pub fn scan(db: &Path, bundle_id: &str) -> Result<(Vec<Candidate>, GenebankScan)
     Ok((out, scan))
 }
 
-/// Performs the scan source operation and returns an error if it cannot be completed.
+/// Performs the scan source operation.
 pub fn scan_source(db: &Path, bundle_id: &str, scan: &GenebankScan) -> serde_json::Value {
     crate::hwm::source_value(
         "genebank",

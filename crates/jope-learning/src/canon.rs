@@ -9,7 +9,7 @@ use anyhow::Result;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 
-/// Performs the SHA-256 hex operation and returns an error if it cannot be completed.
+/// Performs the SHA-256 hex operation.
 pub fn sha256_hex(bytes: &[u8]) -> String {
     hex::encode(Sha256::digest(bytes))
 }

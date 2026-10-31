@@ -1,0 +1,657 @@
+{
+ "admission": {
+  "ES": {
+   "admission_thresholds": {
+    "bootstrap_draws": 10000,
+    "family_median_gte": 0.0,
+    "harm_fraction_lte": 0.1,
+    "mean_lcb95_strictly_gt": 0.001,
+    "ties_fail": true
+   },
+   "admitted": false,
+   "arm": "ES",
+   "elo_delta_vs_r882_median": 16.96,
+   "elo_delta_vs_r882_per_seed": {
+    "21": 16.96,
+    "22": 42.58,
+    "23": 0.0
+   },
+   "elo_vs_r882_median": 1516.96,
+   "elo_vs_r882_per_seed": {
+    "21": 1516.96,
+    "22": 1542.58,
+    "23": 1500.0
+   },
+   "family_count": 41,
+   "harm_fraction_below_minus_0_01": 0.2926829268292683,
+   "is_tie": false,
+   "mean_lcb95_one_sided": -0.03359577534656576,
+   "per_seed": [
+    {
+     "elo_delta_vs_r882": 16.96,
+     "elo_vs_r882": 1516.96,
+     "family_mean_gain": 0.017628143658632224,
+     "family_mean_lcb95_one_sided": -0.037715080922644535,
+     "family_median_gain": 0.0,
+     "harm_fraction_below_minus_0_01": 0.3170731707317073,
+     "losses": 17,
+     "seed": 21,
+     "ties": 5,
+     "wins": 19
+    },
+    {
+     "elo_delta_vs_r882": 42.58,
+     "elo_vs_r882": 1542.58,
+     "family_mean_gain": 0.016563542759299547,
+     "family_mean_lcb95_one_sided": -0.03053585222391551,
+     "family_median_gain": 0.0,
+     "harm_fraction_below_minus_0_01": 0.3170731707317073,
+     "losses": 15,
+     "seed": 22,
+     "ties": 6,
+     "wins": 20
+    },
+    {
+     "elo_delta_vs_r882": 0.0,
+     "elo_vs_r882": 1500.0,
+     "family_mean_gain": 0.0055873797730192345,
+     "family_mean_lcb95_one_sided": -0.054158667184586576,
+     "family_median_gain": 0.0,
+     "harm_fraction_below_minus_0_01": 0.3170731707317073,
+     "losses": 17,
+     "seed": 23,
+     "ties": 7,
+     "wins": 17
+    }
+   ],
+   "pooled_family_median_gain": 0.0,
+   "pooled_mean_gain": 0.013259688730317005,
+   "pooled_median_ci95": [
+    -0.004458013286382956,
+    0.012039134035053967
+   ],
+   "seed_count": 3
+  },
+  "ESH": {
+   "admission_thresholds": {
+    "bootstrap_draws": 10000,
+    "family_median_gte": 0.0,
+    "harm_fraction_lte": 0.1,
+    "mean_lcb95_strictly_gt": 0.001,
+    "ties_fail": true
+   },
+   "admitted": false,
+   "arm": "ESH",
+   "elo_delta_vs_r882_median": 59.9,
+   "elo_delta_vs_r882_per_seed": {
+    "21": 51.21,
+    "22": 77.53,
+    "23": 59.9
+   },
+   "elo_vs_r882_median": 1559.9,
+   "elo_vs_r882_per_seed": {
+    "21": 1551.21,
+    "22": 1577.53,
+    "23": 1559.9
+   },
+   "family_count": 41,
+   "harm_fraction_below_minus_0_01": 0.1951219512195122,
+   "is_tie": false,
+   "mean_lcb95_one_sided": -0.03572183980683448,
+   "per_seed": [
+    {
+     "elo_delta_vs_r882": 51.21,
+     "elo_vs_r882": 1551.21,
+     "family_mean_gain": 0.00027509416300438856,
+     "family_mean_lcb95_one_sided": -0.07640210963576219,
+     "family_median_gain": 0.005960226111752842,
+     "harm_fraction_below_minus_0_01": 0.2682926829268293,
+     "losses": 15,
+     "seed": 21,
+     "ties": 5,
+     "wins": 21
+    },
+    {
+     "elo_delta_vs_r882": 77.53,
+     "elo_vs_r882": 1577.53,
+     "family_mean_gain": 0.03228889046578348,
+     "family_mean_lcb95_one_sided": -0.02223747771305147,
+     "family_median_gain": 0.0,
+     "harm_fraction_below_minus_0_01": 0.24390243902439024,
+     "losses": 11,
+     "seed": 22,
+     "ties": 10,
+     "wins": 20
+    },
+    {
+     "elo_delta_vs_r882": 59.9,
+     "elo_vs_r882": 1559.9,
+     "family_mean_gain": 0.011695188464719711,
+     "family_mean_lcb95_one_sided": -0.04395690527637447,
+     "family_median_gain": 0.0,
+     "harm_fraction_below_minus_0_01": 0.1951219512195122,
+     "losses": 13,
+     "seed": 23,
+     "ties": 8,
+     "wins": 20
+    }
+   ],
+   "pooled_family_median_gain": 0.0033966072217952448,
+   "pooled_mean_gain": 0.01475305769783586,
+   "pooled_median_ci95": [
+    0.0,
+    0.009804492060036862
+   ],
+   "seed_count": 3
+  }
+ },
+ "cells": [
+  {
+   "arm": "ES",
+   "candidate_adapter_sha256": "a769dbc3336ac2636377b43abdf2180652ee8972cdaf1796087325b54e5a147b",
+   "es_gradient_l2": {
+    "first": 4826.0244140625,
+    "last": 5867.0556640625,
+    "max": 6102.17529296875,
+    "n": 16
+   },
+   "evaluated_perturbations": 512,
+   "fold_b_elo_vs_r882": {
+    "delta_vs_r882": 16.96,
+    "interpretation": "family-grouped Elo vs r882 diagnostic; admission uses Fold-B LCB95/median/harm",
+    "losses": 17,
+    "rating": 1516.96,
+    "ties": 5,
+    "wins": 19
+   },
+   "fold_b_family_mean_gain": 0.017628143658632224,
+   "fold_b_family_mean_lcb95_one_sided": -0.037715080922644535,
+   "fold_b_family_median_gain": 0.0,
+   "fold_b_harm_fraction_below_minus_0_01": 0.3170731707317073,
+   "fold_b_worst_five_family_gains": [
+    [
+     "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7",
+     -0.4897078806737851
+    ],
+    [
+     "fam-87c9263f9d0a25afe91364cf765285e26bfee0447c76c4266fbc0aa4fc465a3d",
+     -0.42216230047920356
+    ],
+    [
+     "fam-8cb466b3ca3e577ec81863bfb335577b65a337c79eb48e5527262fb11a71ca1e",
+     -0.3343750477884935
+    ],
+    [
+     "fam-73335129ebdbf39d251b5a7bff3064bdb202e8947f328789216b6de72cf56962",
+     -0.2746447763884574
+    ],
+    [
+     "fam-f8d77f25147b1e9bac6e6f82d09b61c76d21ae0bc44642415d229c3893648e40",
+     -0.19129713697985473
+    ]
+   ],
+   "generation_wall_seconds": [
+    55.794542965013534,
+    57.251620332943276,
+    56.61177687905729,
+    58.23890661704354,
+    63.136524248169735,
+    63.03817678289488,
+    58.63890282204375,
+    60.52769793593325,
+    62.722561083966866,
+    60.830702553037554,
+    62.06644491897896,
+    63.35789635498077,
+    65.03096339199692,
+    59.76031970512122,
+    58.142264344962314,
+    58.825190406059846
+   ],
+   "generations_completed": 16,
+   "mean_theta_update_l2": {
+    "first": 1.7090954780578613,
+    "last": 0.4897043704986572,
+    "max": 1.7090954780578613,
+    "n": 16
+   },
+   "pooled_family_mean_lcb95_one_sided": -0.03359577534656576,
+   "seed": 21,
+   "wall_seconds": 964.113053441979
+  },
+  {
+   "arm": "ES",
+   "candidate_adapter_sha256": "2aecf224ce53bb1c4c71628f5c938449f8540994563799bc023ef27ddc745049",
+   "es_gradient_l2": {
+    "first": 5281.22412109375,
+    "last": 4748.2109375,
+    "max": 5592.4140625,
+    "n": 16
+   },
+   "evaluated_perturbations": 512,
+   "fold_b_elo_vs_r882": {
+    "delta_vs_r882": 42.58,
+    "interpretation": "family-grouped Elo vs r882 diagnostic; admission uses Fold-B LCB95/median/harm",
+    "losses": 15,
+    "rating": 1542.58,
+    "ties": 6,
+    "wins": 20
+   },
+   "fold_b_family_mean_gain": 0.016563542759299547,
+   "fold_b_family_mean_lcb95_one_sided": -0.03053585222391551,
+   "fold_b_family_median_gain": 0.0,
+   "fold_b_harm_fraction_below_minus_0_01": 0.3170731707317073,
+   "fold_b_worst_five_family_gains": [
+    [
+     "fam-af43d2445e80f170f51b3ee45dc5b53cfc28fde2320457bcd4910d5a0d5d55de",
+     -0.43130892937183507
+    ],
+    [
+     "fam-73335129ebdbf39d251b5a7bff3064bdb202e8947f328789216b6de72cf56962",
+     -0.28305886130574365
+    ],
+    [
+     "fam-8c30e4e2ab4819883c99637319c517c599ac07153a224d820726298684335f68",
+     -0.20852674832345253
+    ],
+    [
+     "fam-cfdd6a6687c1776e690d664ed23cd8b6b7e06ff06addb46a2c01ec7969f1d83b",
+     -0.19165731102717531
+    ],
+    [
+     "fam-80005b86cda23ec3ea2549c8ea61cf814a12fd76825018515660be4e99c817bb",
+     -0.09691346476935925
+    ]
+   ],
+   "generation_wall_seconds": [
+    61.835164287826046,
+    64.14653344987892,
+    64.74115839484148,
+    61.7069914820604,
+    62.3801918909885,
+    62.82791670016013,
+    60.901898776879534,
+    65.57812041300349,
+    63.32772471802309,
+    61.436139908852056,
+    59.53806166886352,
+    61.34996233903803,
+    67.58737197006121,
+    66.45077337394468,
+    66.47283953684382,
+    70.87283244007267
+   ],
+   "generations_completed": 16,
+   "mean_theta_update_l2": {
+    "first": 1.7090954780578613,
+    "last": 0.46298399567604065,
+    "max": 1.7090954780578613,
+    "n": 16
+   },
+   "pooled_family_mean_lcb95_one_sided": -0.03359577534656576,
+   "seed": 22,
+   "wall_seconds": 1021.3887247238308
+  },
+  {
+   "arm": "ES",
+   "candidate_adapter_sha256": "b7054bbf59e69688d64b7973ab51e05205787231eff1d272c279eca01a100ae9",
+   "es_gradient_l2": {
+    "first": 4422.21142578125,
+    "last": 6053.89453125,
+    "max": 6053.89453125,
+    "n": 16
+   },
+   "evaluated_perturbations": 512,
+   "fold_b_elo_vs_r882": {
+    "delta_vs_r882": 0.0,
+    "interpretation": "family-grouped Elo vs r882 diagnostic; admission uses Fold-B LCB95/median/harm",
+    "losses": 17,
+    "rating": 1500.0,
+    "ties": 7,
+    "wins": 17
+   },
+   "fold_b_family_mean_gain": 0.0055873797730192345,
+   "fold_b_family_mean_lcb95_one_sided": -0.054158667184586576,
+   "fold_b_family_median_gain": 0.0,
+   "fold_b_harm_fraction_below_minus_0_01": 0.3170731707317073,
+   "fold_b_worst_five_family_gains": [
+    [
+     "fam-0524644998aa86a8ae3a50efe411f95ebc51c007c09cf8a34a70bddcf9ee418d",
+     -0.7552367894604524
+    ],
+    [
+     "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7",
+     -0.46006459304695557
+    ],
+    [
+     "fam-8cb466b3ca3e577ec81863bfb335577b65a337c79eb48e5527262fb11a71ca1e",
+     -0.32756027342712546
+    ],
+    [
+     "fam-73335129ebdbf39d251b5a7bff3064bdb202e8947f328789216b6de72cf56962",
+     -0.2746447763884574
+    ],
+    [
+     "fam-7a021840777fdcf769b4f1e52d4b6bcc6b407c8d88dde00fc76a2deccded63c9",
+     -0.15273422997059094
+    ]
+   ],
+   "generation_wall_seconds": [
+    58.32984430785291,
+    62.64819351979531,
+    67.33994896081276,
+    60.26187937287614,
+    57.90487154107541,
+    60.03800107212737,
+    60.52231332520023,
+    54.8336268379353,
+    56.083061665063724,
+    61.258892263052985,
+    58.72495881491341,
+    58.18664854299277,
+    62.41004844591953,
+    60.480062016053125,
+    59.38618479995057,
+    60.76729376404546
+   ],
+   "generations_completed": 16,
+   "mean_theta_update_l2": {
+    "first": 1.7090954780578613,
+    "last": 0.49111589789390564,
+    "max": 1.7090954780578613,
+    "n": 16
+   },
+   "pooled_family_mean_lcb95_one_sided": -0.03359577534656576,
+   "seed": 23,
+   "wall_seconds": 959.2471489510499
+  },
+  {
+   "arm": "ESH",
+   "candidate_adapter_sha256": "b31214b389d4a9e6d8f3e6917f62bfc64cfd04627249162b6ae26e9bd4e13841",
+   "es_gradient_l2": {
+    "first": 4880.79443359375,
+    "last": 5448.04931640625,
+    "max": 5718.16357421875,
+    "n": 16
+   },
+   "evaluated_perturbations": 512,
+   "fold_b_elo_vs_r882": {
+    "delta_vs_r882": 51.21,
+    "interpretation": "family-grouped Elo vs r882 diagnostic; admission uses Fold-B LCB95/median/harm",
+    "losses": 15,
+    "rating": 1551.21,
+    "ties": 5,
+    "wins": 21
+   },
+   "fold_b_family_mean_gain": 0.00027509416300438856,
+   "fold_b_family_mean_lcb95_one_sided": -0.07640210963576219,
+   "fold_b_family_median_gain": 0.005960226111752842,
+   "fold_b_harm_fraction_below_minus_0_01": 0.2682926829268293,
+   "fold_b_worst_five_family_gains": [
+    [
+     "fam-8a2f464e547bb9717bab153fa0fe1200a7544562c7e5c79a43e68d7bb3f41dcc",
+     -1.2128120375716676
+    ],
+    [
+     "fam-de0fe0b21dea79222688c4ce4ac02e67ee4b3f996947c151e9ed4208b0faac5d",
+     -0.667152590191649
+    ],
+    [
+     "fam-8cb466b3ca3e577ec81863bfb335577b65a337c79eb48e5527262fb11a71ca1e",
+     -0.3343750477884935
+    ],
+    [
+     "fam-73335129ebdbf39d251b5a7bff3064bdb202e8947f328789216b6de72cf56962",
+     -0.28305886130574365
+    ],
+    [
+     "fam-86f4a6774e495a9b5ade2ea44951dcd0a405d5d227f040992a35229db723230f",
+     -0.043543446202317426
+    ]
+   ],
+   "generation_wall_seconds": [
+    56.17648990312591,
+    57.56168916588649,
+    61.32862308481708,
+    56.97024607984349,
+    67.36090383608826,
+    75.7809088670183,
+    72.25554118305445,
+    63.620233420981094,
+    60.99240922019817,
+    65.58754064096138,
+    74.69938077009283,
+    72.6832090949174,
+    71.60854731081054,
+    62.650149263907224,
+    58.50842897989787,
+    67.0695199908223
+   ],
+   "generations_completed": 16,
+   "mean_theta_update_l2": {
+    "first": 1.7090954780578613,
+    "last": 0.4745219051837921,
+    "max": 1.7090954780578613,
+    "n": 16
+   },
+   "pooled_family_mean_lcb95_one_sided": -0.03572183980683448,
+   "seed": 21,
+   "wall_seconds": 1045.0959960129112
+  },
+  {
+   "arm": "ESH",
+   "candidate_adapter_sha256": "4a3e92dc32cecfdaf5510b4bd6328706a8dd3647c8dd7c95c322e3656e5a22aa",
+   "es_gradient_l2": {
+    "first": 5356.533203125,
+    "last": 4587.17822265625,
+    "max": 5959.4990234375,
+    "n": 16
+   },
+   "evaluated_perturbations": 512,
+   "fold_b_elo_vs_r882": {
+    "delta_vs_r882": 77.53,
+    "interpretation": "family-grouped Elo vs r882 diagnostic; admission uses Fold-B LCB95/median/harm",
+    "losses": 11,
+    "rating": 1577.53,
+    "ties": 10,
+    "wins": 20
+   },
+   "fold_b_family_mean_gain": 0.03228889046578348,
+   "fold_b_family_mean_lcb95_one_sided": -0.02223747771305147,
+   "fold_b_family_median_gain": 0.0,
+   "fold_b_harm_fraction_below_minus_0_01": 0.24390243902439024,
+   "fold_b_worst_five_family_gains": [
+    [
+     "fam-de0fe0b21dea79222688c4ce4ac02e67ee4b3f996947c151e9ed4208b0faac5d",
+     -0.6759485580525998
+    ],
+    [
+     "fam-73335129ebdbf39d251b5a7bff3064bdb202e8947f328789216b6de72cf56962",
+     -0.28305886130574365
+    ],
+    [
+     "fam-8c30e4e2ab4819883c99637319c517c599ac07153a224d820726298684335f68",
+     -0.13234961970404746
+    ],
+    [
+     "fam-efa9a4eb58672dc60c978bfc1e99d9d9f698e41e619b3edf05efc79383f2fb05",
+     -0.11866552499306493
+    ],
+    [
+     "fam-86f4a6774e495a9b5ade2ea44951dcd0a405d5d227f040992a35229db723230f",
+     -0.053217801921882746
+    ]
+   ],
+   "generation_wall_seconds": [
+    63.134267064975575,
+    74.86935932305641,
+    69.47789835487492,
+    73.57037169719115,
+    67.53040312300436,
+    64.76893540006131,
+    61.358900013845414,
+    59.896149177104235,
+    57.85631196689792,
+    56.75199502916075,
+    56.41799802798778,
+    60.795979475136846,
+    65.08690565102734,
+    61.69369265018031,
+    61.00248843384907,
+    57.150284548988566
+   ],
+   "generations_completed": 16,
+   "mean_theta_update_l2": {
+    "first": 1.7090954780578613,
+    "last": 0.46709302067756653,
+    "max": 1.7090954780578613,
+    "n": 16
+   },
+   "pooled_family_mean_lcb95_one_sided": -0.03572183980683448,
+   "seed": 22,
+   "wall_seconds": 1011.745819950942
+  },
+  {
+   "arm": "ESH",
+   "candidate_adapter_sha256": "ece1edb0dd5692ab0616514a9f5af24ea66dea44e99f58c745f98eba37772e8d",
+   "es_gradient_l2": {
+    "first": 4881.9873046875,
+    "last": 4601.84228515625,
+    "max": 5960.7265625,
+    "n": 16
+   },
+   "evaluated_perturbations": 512,
+   "fold_b_elo_vs_r882": {
+    "delta_vs_r882": 59.9,
+    "interpretation": "family-grouped Elo vs r882 diagnostic; admission uses Fold-B LCB95/median/harm",
+    "losses": 13,
+    "rating": 1559.9,
+    "ties": 8,
+    "wins": 20
+   },
+   "fold_b_family_mean_gain": 0.011695188464719711,
+   "fold_b_family_mean_lcb95_one_sided": -0.04395690527637447,
+   "fold_b_family_median_gain": 0.0,
+   "fold_b_harm_fraction_below_minus_0_01": 0.1951219512195122,
+   "fold_b_worst_five_family_gains": [
+    [
+     "fam-6a7fd96029f91bfa7a72104090df21aa5ed2b15293bfb8b8b939f6bfcab63a8e",
+     -0.5309914187554554
+    ],
+    [
+     "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7",
+     -0.4672745037647421
+    ],
+    [
+     "fam-37f9e67be184439511ba7b76d189201834b8e82476f44aeee864cd641398783a",
+     -0.4380271883220599
+    ],
+    [
+     "fam-73335129ebdbf39d251b5a7bff3064bdb202e8947f328789216b6de72cf56962",
+     -0.2746447763884574
+    ],
+    [
+     "fam-b188b0edb66def92838f07aaa04802592b660f5450c4268d5ad0288ce8437652",
+     -0.08287405917472335
+    ]
+   ],
+   "generation_wall_seconds": [
+    61.10333464690484,
+    62.261428887955844,
+    60.046311712125316,
+    59.21437730989419,
+    65.57142661395483,
+    71.69366319593973,
+    65.05340671911836,
+    66.36858816607855,
+    63.28251062403433,
+    64.65953758312389,
+    63.246694216970354,
+    59.68810161319561,
+    60.98329964792356,
+    60.192342379828915,
+    57.50866682291962,
+    58.93758565420285
+   ],
+   "generations_completed": 16,
+   "mean_theta_update_l2": {
+    "first": 1.7090954780578613,
+    "last": 0.4683922529220581,
+    "max": 1.7090954780578613,
+    "n": 16
+   },
+   "pooled_family_mean_lcb95_one_sided": -0.03572183980683448,
+   "seed": 23,
+   "wall_seconds": 1000.0682691819966
+  }
+ ],
+ "data_hygiene": {
+  "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "fold_b_read_count": 6,
+  "holdout_payloads_opened": 0,
+  "outer_rows_delivered": 0,
+  "r882_checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "source_commit": "4019fbb68a94ef4e7e9da1cb4839b8a568c3975e",
+  "terminal_dl_val_reads": 0,
+  "validation_payloads_opened": false
+ },
+ "hypothesis": "16-generation, 32-population antithetic ES at sigma=0.001 with an explicit family-harm penalty (ESH, lambda=1) suppresses the lower family tail (gain < -0.01) while preserving positive mean utility gain on Fold B.",
+ "null": {
+  "adapter_sha256": "af4942af167a87eb3a1e7ca58a8bc548c3775184da262a48ada13947a69f98b5",
+  "cell_id": "null_s001",
+  "diagnostic_only": true,
+  "fold_b_family_mean_gain": -0.02656853972495369,
+  "fold_b_family_median_gain": -0.010502769782357202,
+  "harm_fraction_below_minus_0_01": 0.5121951219512195,
+  "losses": 24,
+  "naive_family_elo_delta_vs_r882": -104.75,
+  "not_admissible": true,
+  "note": "per-context utilities omitted for size; full record in ~/jope-data/h80/h80-wave/outcomes/fold_b.json on xbabe2",
+  "seed": 21,
+  "ties": 5,
+  "wins": 12
+ },
+ "protocol": {
+  "adam_lr": 0.01,
+  "admission_partition": "untouched fifth family fold (41 families)",
+  "antithetic_pairs": 16,
+  "arms": [
+   "ES",
+   "ESH"
+  ],
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "esh_lambda": 1.0,
+  "fold_seed": 4900,
+  "generations": 16,
+  "in_sample_note": "r882 was trained on all 1,219 train contexts incl. fold B, so fold-B paired deltas are in-sample vs r882; only DL-Val (once, admitted arms only) is out-of-sample.",
+  "population": 32,
+  "r882_checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "seeds": [
+   21,
+   22,
+   23
+  ],
+  "selection": "final mean theta after generation 16 only; no best-generation pick",
+  "sigma": 0.001,
+  "source_manifest_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+  "terminal_dl_val_reads_allowed": 0,
+  "train_partition": "four family folds (164 families) of DL-Train"
+ },
+ "schema": "jope.h80.closeout/v1",
+ "study": "H80 long direct-utility antithetic ES with family-harm penalty (ES vs ESH, 16 gens, pop 32)",
+ "terminal_dl_val": {
+  "reads": [],
+  "reads_allowed": 0,
+  "status": "not run; no arm admitted"
+ },
+ "timing_only": {
+  "arm": "ES",
+  "excluded_from_outcomes": true,
+  "generation_wall_seconds": 63.9009912291076,
+  "seed": 21,
+  "sigma": 0.001
+ },
+ "verdict": "NOT_ADMITTED_BOTH_ARMS",
+ "wave_receipt": "/home/ubuntu/jope-data/h80/h80-wave/outcomes/wave.json"
+}

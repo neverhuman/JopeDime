@@ -46,7 +46,7 @@ pub enum Measurement {
     },
 }
 impl Measurement {
-    /// Performs the value operation and returns an error if it cannot be completed.
+    /// Performs the value operation.
     pub fn value(&self) -> Option<f64> {
         match self {
             Self::Finite { f64_bits, .. } => {

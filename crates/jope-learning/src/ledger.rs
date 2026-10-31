@@ -116,7 +116,7 @@ pub struct LedgerReport {
 }
 
 impl LedgerReport {
-    /// Performs the ok operation and returns an error if it cannot be completed.
+    /// Performs the ok operation.
     pub fn ok(&self) -> bool {
         self.breaks.is_empty()
     }
@@ -161,7 +161,7 @@ pub struct Ledger {
     name: String,
 }
 
-/// Performs the now unix operation and returns an error if it cannot be completed.
+/// Performs the now unix operation.
 pub fn now_unix() -> u64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -201,12 +201,12 @@ impl Ledger {
         }
     }
 
-    /// Performs the root operation and returns an error if it cannot be completed.
+    /// Performs the root operation.
     pub fn root(&self) -> &Path {
         &self.root
     }
 
-    /// Performs the name operation and returns an error if it cannot be completed.
+    /// Performs the name operation.
     pub fn name(&self) -> &str {
         &self.name
     }
@@ -753,7 +753,7 @@ impl Ledger {
     }
 }
 
-/// Performs the map err walk operation and returns an error if it cannot be completed.
+/// Performs the map err walk operation.
 pub fn map_err_walk(e: walkdir::Error) -> anyhow::Error {
     anyhow!("{e}")
 }

@@ -63,7 +63,7 @@ impl Default for Md5 {
 }
 
 impl Md5 {
-    /// Performs the update operation and returns an error if it cannot be completed.
+    /// Performs the update operation.
     pub fn update(&mut self, mut data: &[u8]) {
         self.len = self.len.wrapping_add(data.len() as u64);
         if !self.buf.is_empty() {
@@ -82,7 +82,7 @@ impl Md5 {
         self.buf.extend_from_slice(chunks.remainder());
     }
 
-    /// Performs the hex operation and returns an error if it cannot be completed.
+    /// Performs the hex operation.
     pub fn hex(mut self) -> String {
         let bits = self.len.wrapping_mul(8);
         let mut tail = std::mem::take(&mut self.buf);
@@ -102,7 +102,7 @@ impl Md5 {
     }
 }
 
-/// Performs the md5 hex operation and returns an error if it cannot be completed.
+/// Performs the md5 hex operation.
 pub fn md5_hex(data: &[u8]) -> String {
     let mut h = Md5::default();
     h.update(data);
