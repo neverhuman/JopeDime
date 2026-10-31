@@ -1,6 +1,6 @@
 //! Bounded CSV registration using the runtime parser and SVC-01's store.
 use super::jmat;
-use crate::store::{BlobRef, Record, RecordKey, Store, StoreError};
+use crate::store::{BlobRef, Record, RecordKey, Store, StoreError, Write};
 use jope_api::{
     error::{ErrorCode, Problem},
     ids::DatasetId,
@@ -34,12 +34,14 @@ impl Default for RegistrationLimits {
 #[derive(Debug)]
 pub enum RegistrationError {
     Invalid(Box<Problem>),
+    Admission,
     Store(StoreError),
 }
 impl std::fmt::Display for RegistrationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Invalid(p) => write!(f, "{}: {}", p.code, p.detail),
+            Self::Admission => f.write_str("dataset registration refused by admission guard"),
             Self::Store(e) => e.fmt(f),
         }
     }
@@ -77,6 +79,32 @@ pub struct RegisteredDataset {
     pub columns: u64,
 }
 
+/// A validated dataset whose immutable blobs exist but whose metadata has not
+/// yet been committed. The caller chooses the transaction that owns metadata.
+#[derive(Clone, Debug)]
+pub struct PreparedRegistration {
+    pub dataset: RegisteredDataset,
+    pub profile: crate::dataset::profile::DatasetProfile,
+    record: Record,
+}
+
+impl PreparedRegistration {
+    /// Commit the dataset row through the transaction supplied by the caller.
+    pub fn commit(&self, write: &mut Write<'_>) -> crate::store::Result<()> {
+        let key = RecordKey::Dataset(self.dataset.id.clone());
+        if let Some(existing) = write.get(&key)? {
+            if existing != self.record {
+                return Err(StoreError::Integrity(
+                    "dataset ID already binds different content",
+                ));
+            }
+        } else {
+            write.put(&key, &self.record)?;
+        }
+        Ok(())
+    }
+}
+
 struct Capture<R> {
     reader: R,
     bytes: Vec<u8>,
@@ -112,17 +140,44 @@ pub fn register(
     reader: impl Read,
     limits: &RegistrationLimits,
 ) -> Result<RegisteredDataset> {
+    let prepared = prepare(store, reader, limits)?;
+    store.transaction(|write| prepared.commit(write))?;
+    Ok(prepared.dataset)
+}
+
+/// Prepare a dataset for an enclosing metadata transaction. CSV and matrix
+/// blobs are immutable CAS objects; only the dataset row is deferred.
+pub fn prepare(
+    store: &Store,
+    reader: impl Read,
+    limits: &RegistrationLimits,
+) -> Result<PreparedRegistration> {
+    prepare_with_admission(store, reader, limits, |_| true)
+}
+
+/// Prepare with a caller supplied free-space admission check before each CAS
+/// publication. `additional_bytes` is the next blob's exact encoded size.
+pub fn prepare_with_admission(
+    store: &Store,
+    reader: impl Read,
+    limits: &RegistrationLimits,
+    mut admit: impl FnMut(u64) -> bool,
+) -> Result<PreparedRegistration> {
     let mut input = Capture {
         reader,
         bytes: Vec::new(),
         limit: limits.max_dataset_bytes,
         exceeded: false,
     };
-    let csv_result = store.publish_blob(&mut input);
+    let read_result = std::io::copy(&mut input, &mut std::io::sink());
     if input.exceeded {
         return Err(invalid("max_dataset_bytes"));
     }
-    let csv = csv_result?;
+    read_result.map_err(StoreError::from)?;
+    if !admit(input.bytes.len() as u64) {
+        return Err(RegistrationError::Admission);
+    }
+    let csv = store.publish_blob(input.bytes.as_slice())?;
     // Validate framing and allocation bounds before the sole table parse. This
     // pass does not decode values or construct another table.
     framing(&input.bytes, limits)?;
@@ -153,7 +208,11 @@ pub fn register(
             }
         }
     }
+    let profile = crate::dataset::profile::profile(&parsed);
     let encoded = jmat::encode(&parsed).map_err(|_| invalid("matrix"))?;
+    if !admit(encoded.len() as u64) {
+        return Err(RegistrationError::Admission);
+    }
     let matrix = store.publish_blob(encoded.as_slice())?;
     let digest = csv
         .sha256
@@ -175,22 +234,11 @@ pub fn register(
         serde_json::to_value(&dataset).map_err(StoreError::from)?,
         vec![dataset.csv.clone(), dataset.matrix.clone()],
     );
-    store.transaction(|write| {
-        let key = RecordKey::Dataset(id);
-        if let Some(existing) = write.get(&key)? {
-            // A truncated ID collision, corrupt metadata or format disagreement
-            // must never replace a previously registered dataset.
-            if existing != record {
-                return Err(StoreError::Integrity(
-                    "dataset ID already binds different content",
-                ));
-            }
-        } else {
-            write.put(&key, &record)?;
-        }
-        Ok(())
-    })?;
-    Ok(dataset)
+    Ok(PreparedRegistration {
+        dataset,
+        profile,
+        record,
+    })
 }
 
 /// Local-path adapter; only reads the supplied path. All writes use Store's home.
@@ -199,6 +247,26 @@ pub fn register_file(
     path: &Path,
     limits: &RegistrationLimits,
 ) -> Result<RegisteredDataset> {
+    let prepared = prepare_file(store, path, limits)?;
+    store.transaction(|write| prepared.commit(write))?;
+    Ok(prepared.dataset)
+}
+
+/// Prepare a local regular file without committing its dataset metadata.
+pub fn prepare_file(
+    store: &Store,
+    path: &Path,
+    limits: &RegistrationLimits,
+) -> Result<PreparedRegistration> {
+    prepare_file_with_admission(store, path, limits, |_| true)
+}
+
+pub fn prepare_file_with_admission(
+    store: &Store,
+    path: &Path,
+    limits: &RegistrationLimits,
+    admit: impl FnMut(u64) -> bool,
+) -> Result<PreparedRegistration> {
     let mut options = OpenOptions::new();
     options.read(true);
     #[cfg(unix)]
@@ -215,7 +283,7 @@ pub fn register_file(
     if metadata.len() > limits.max_dataset_bytes {
         return Err(invalid("max_dataset_bytes"));
     }
-    register(store, file, limits)
+    prepare_with_admission(store, file, limits, admit)
 }
 
 /// Strict UTF8/quote grammar and bounds without allocating decoded records.
