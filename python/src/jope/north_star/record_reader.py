@@ -228,7 +228,7 @@ def _constant(_value):
     raise ValueError("nonfinite JSON constant")
 
 
-def read_records(path, *, allow_synthetic=False, allow_incomplete=False):
+def read_records(path, *, allow_synthetic=False, allow_incomplete=False, require_evaluate_all=False):
     """Yield contiguous rounds from one pinned run; reject truncated/empty streams."""
     binding, count = None, 0
     with Path(path).open("rb") as stream:
@@ -239,6 +239,11 @@ def read_records(path, *, allow_synthetic=False, allow_incomplete=False):
                 allow_synthetic=allow_synthetic,
                 allow_incomplete=allow_incomplete,
             )
+            if require_evaluate_all:
+                _require(
+                    record["evaluate_all_proposals"] and record["capture_complete"],
+                    "complete all-proposal capture required",
+                )
             _require(record["round"] == count, "duplicate, missing or out-of-order round")
             current = json.dumps(
                 [record[k] for k in ("identity", "seed", "tokens", "mask", "evaluate_all_proposals")],
@@ -261,11 +266,17 @@ def main():
     parser.add_argument(
         "--allow-synthetic", action="store_true", help="inspect labelled software controls only"
     )
+    parser.add_argument(
+        "--require-evaluate-all", action="store_true", help="require complete all-proposal captures"
+    )
     args = parser.parse_args()
     counts = dict(rounds=0, proposals=0, outcomes=0, failures=0, incomplete_rounds=0)
     try:
         for record in read_records(
-            args.records, allow_synthetic=args.allow_synthetic, allow_incomplete=args.allow_incomplete
+            args.records,
+            allow_synthetic=args.allow_synthetic,
+            allow_incomplete=args.allow_incomplete,
+            require_evaluate_all=args.require_evaluate_all,
         ):
             counts["rounds"] += 1
             counts["incomplete_rounds"] += not record["capture_complete"]
