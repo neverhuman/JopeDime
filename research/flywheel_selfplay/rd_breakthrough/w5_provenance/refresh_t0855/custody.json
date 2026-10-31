@@ -1,0 +1,26 @@
+{
+  "manifest": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W5/astra-refresh-t0855-20261031T145811Z-7ff19b4a/manifest.json",
+    "version_id": "0b86ceXEKJxambq5In4wxm549gWU55Zj",
+    "sha256": "ac9ce7c0f2b6cc3f60d21c1ee22553c39b550623af39cd376560424ccc22117c",
+    "bytes": 7955
+  },
+  "objects": [
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W5/astra-refresh-t0855-20261031T145811Z-7ff19b4a/evidence.tar.gz",
+      "version_id": "tIDMpg9yBhDct0O0DUo__f_6mK1HtfQw",
+      "sha256": "168a8c63a0a44b0e822d8f3b33c24a9d32f0e57858114bcc94ae376013600ade",
+      "bytes": 400761
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W5/astra-refresh-t0855-20261031T145811Z-7ff19b4a/manifest.json",
+      "version_id": "0b86ceXEKJxambq5In4wxm549gWU55Zj",
+      "sha256": "ac9ce7c0f2b6cc3f60d21c1ee22553c39b550623af39cd376560424ccc22117c",
+      "bytes": 7955
+    }
+  ],
+  "archive_members_verified": 69,
+  "create_only": true,
+  "exact_version_sha256_verified": true,
+  "checkpoint_dataset_receipt_deletions": 0
+}
