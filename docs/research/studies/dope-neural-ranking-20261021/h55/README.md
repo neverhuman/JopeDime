@@ -6,7 +6,7 @@ Family-grouped SWA-8 or EMA-25 averaging of the r882 adapter would improve highe
 
 ## Setup
 
-The candidate adapter was trained on fold A only (four fifths of the family-grouped DL-Train split). The untouched fifth, fold B, was scored once after training. H55 used seeds 12–14, SWA-8 with eight members and one round per member, and EMA-25 with decay 0.9. DOPE `c51a56d0`, the r882 checkpoint, and the source manifest were pinned. No sealed holdout or outer rows were accessed.
+The candidate adapter was trained on fold A only (four fifths of the family-grouped DL-Train split). The untouched fifth, fold B, was scored once after training. H55 used seeds 12–14, SWA-8 with eight members and one round of k=2 adapter-update steps per member, and EMA-25 with decay 0.9. DOPE `c51a56d0`, the r882 checkpoint, and the source manifest were pinned. No sealed holdout or outer rows were accessed.
 
 All six GPU outcome cells completed in preregistered order under `qualification.lock`. The source-bound two-context dry run and its audit passed. The attempt4 wave receipt reports 611.887 seconds of summed GPU cell wall, including the 5.330 seconds conservatively carried from attempt2, against the fixed 1,800-second cap. Cumulative lock wait was 2,282.175 seconds, separately below the three-hour contention limit. Maximum observed process RSS was 4,878,388 KiB; CUDA free memory after each lock acquisition was 24,124 MiB. The independent outcome audit passed.
 
@@ -26,6 +26,8 @@ Elo versus r882 is diagnostic only and does not determine admission. SWA-8 seed 
 ## Verdict
 
 No H55 candidate passed the preregistered admission rule. The fold-B result is not a terminal validation result. The r882 control was trained on all of DL-Train (H56 audit §5), which biases this control against candidates and makes the comparison conservative; terminal DL-Val would have been the clean read, but the admission rule correctly allowed none.
+
+SWA-8 tied r882 on 216 of 218 datasets for seeds 12 and 13, and 217 of 218 for seed 14; seeds 12 and 13 also had identical fold-B utility (1.285445). This repeated plateau suggests a structural limit in the candidate-pool/selection granularity rather than optimizer noise.
 
 ## Next
 
