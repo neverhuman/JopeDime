@@ -1,11 +1,11 @@
 # H123 — continuous-regret tie-break of the H114 lattice
 
-**Status: proposal only; no outcomes or execution.** The required read-only copy
-of H114's `adapter_admissions.jsonl` was not found in local evidence custody.
-H114's committed summary reports 21 candidates at the post-r882 maximum, but
-does not identify their rounds or establish whether their adapter artifacts
-still exist. Those facts remain unknown. No H114 live directory, checkpoint,
-model, dataset payload, S3 object, GPU, or qualification lock was accessed.
+**Status: no-artifact proposal only; no outcomes or execution.** H114's
+committed summary reports 21 candidates at the post-r882 maximum, but does not
+identify their rounds. The owner-provided H123 unstick directive reports that
+0 of the 21 `.pt` checkpoints remain. This lane did not access xbabe1 or the
+raw H114 log; the raw read-only log copy was not found in this lane's custody.
+No model, dataset payload, S3 object, GPU, or qualification lock was accessed.
 
 ## Hypothesis and frozen candidate rule
 
@@ -26,9 +26,10 @@ fixed before examining the held-out fold. This metric follows H121's H114(a)
 co-readout; it never replaces H114's official argmin utility or changes the
 live flywheel admission rule.
 
-If fewer than three artifacts exist, retain this proposal and do not score. If
-artifact availability cannot be established from the required read-only copy,
-as here, report feasibility UNKNOWN and do not score.
+Because the owner-reported inventory is 0/21 retained artifacts, retain this
+proposal only and do not score. The proposal may be reconsidered only if a
+future authorized inventory verifies at least three top-tied candidate
+artifacts.
 
 ## Conditional evaluation plan
 
