@@ -63,12 +63,45 @@ def rows(delta):
     return out
 
 
+ROSTER = [f"c{i}" for i in range(60)]
+
+
+def analyze(rs, roster=ROSTER, shortfalls=()):
+    return h.analyze(H81, rs, roster=roster, shortfalls=list(shortfalls))
+
+
 def test_analyze_gate_and_dry_run_rows_are_never_analyzed():
-    assert h.analyze(H81, rows(0.02))["verdict"].startswith("ADVANCE")
-    assert h.analyze(H81, rows(0.0))["verdict"].startswith("NO_ADVANCE")
+    assert analyze(rows(0.02))["verdict"].startswith("ADVANCE")
+    assert analyze(rows(0.0))["verdict"].startswith("NO_ADVANCE")
     dry = [dict(r, tag="DRY_RUN") for r in rows(0.02)]
     with pytest.raises(SystemExit):
-        h.analyze(H81, dry)
+        analyze(dry)
+
+
+def test_missing_seeds_on_a_small_panel_are_incomplete_not_advance():
+    small = [r for r in rows(0.05) if r["context"] in ("c0", "c1", "c2") and r["seed"] == 701]
+    out = analyze(small)
+    assert out["verdict"].startswith("INCOMPLETE") and out["panel_gaps"] > 0
+
+
+def test_duplicated_seed_is_incomplete_not_advance():
+    dup = [dict(r, seed=701) for r in rows(0.05)]
+    assert analyze(dup)["verdict"].startswith("INCOMPLETE")
+
+
+def test_incomplete_context_seeds_block_the_verdict():
+    rs = [dict(r, status="incomplete") if r["seed"] != 701 or int(r["context"][1:]) >= 10 else r for r in rows(0.05)]
+    out = analyze(rs)
+    assert out["verdict"].startswith("INCOMPLETE") and out["incomplete_context_seeds"] > 0
+
+
+def test_proposal_shortfall_blocks_the_verdict():
+    out = analyze(rows(0.05), shortfalls=[dict(context="c0", seed=701, proposals=5)])
+    assert out["verdict"].startswith("INCOMPLETE") and out["proposal_shortfalls"] == 1
+
+
+def test_off_roster_context_blocks_the_verdict():
+    assert analyze(rows(0.05), roster=ROSTER[:-1])["verdict"].startswith("INCOMPLETE")
 
 
 def test_h81_loader_refuses_changed_bytes(tmp_path, monkeypatch):

@@ -17,6 +17,8 @@ The scored roster run has not been started, so no W4 effect, Elo or verdict exis
    - The only outcome access is a `reveal` callback, called on the first pair before the second pair is chosen.
    - A prior-signal guard on cached pools runs before any proposal is fitted.
    - Dry-run rows are tagged and refused by `analyze`.
+   - A completeness gate refuses any verdict unless the full roster × arm × seed panel completed, with no shortfalls
+     and no off-roster contexts.
 3. **A CPU dry run on a small real shard.** Three DL-Train contexts were drawn from families outside the roster, so
    the roster's outcomes stay unseen. Seed 701, with the full pipeline and native fits.
 4. **[GPU_QUEUE.md](GPU_QUEUE.md).** The `r882_top4` continuity arm is queued after H57 → Fused D → W1 under
@@ -54,7 +56,7 @@ design is not changed here.
 ## Reproduce
 
 ```sh
-python3 -m pytest -q research/flywheel_selfplay/h96_w4_active_reveal/test_run_w4.py   # 6 synthetic tests (merged H81 rule)
+python3 -m pytest -q research/flywheel_selfplay/h96_w4_active_reveal/test_run_w4.py   # 11 synthetic tests (merged H81 rule, completeness gate)
 cd research/flywheel_selfplay/h96_w4_active_reveal
 nice -n 15 python3 -I run_w4.py dry-run --out ~/jope-data/h96/<run_id> --run-id <run_id> \
   --prog-models <H94 models_prog.pkl, sha256 5938a354...> --workers 8
@@ -75,4 +77,6 @@ The program-only models are at
   - The objects live under
     `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/opus-h96-dryrun-20261031a/`: receipt,
     rows, fits, ledger, logs and sources. Each was written create-only with a version-pinned readback hash.
-  - The source sha256 in the receipt (`9e8ca108…`) equals the committed runner.
+  - The dry run used runner sha256 `9e8ca108…` (recorded in the receipt). The committed runner adds the completeness
+    gate to `analyze` only (from super_merge_claude's `bd823a26`). `analyze` never runs in the dry-run stage, so the dry
+    run's selection, fit and receipt paths are unchanged.

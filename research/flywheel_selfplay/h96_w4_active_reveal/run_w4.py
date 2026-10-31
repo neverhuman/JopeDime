@@ -169,10 +169,18 @@ def run(h81, out: Path, run_id: str, prog: dict, contexts: list[str], seeds, wor
     return rows
 
 
-def analyze(h81, rows: list[dict], elo=None) -> dict:
+def analyze(h81, rows: list[dict], elo=None, *, roster: list[str], shortfalls: list[dict]) -> dict:
     rows = [r for r in rows if r["tag"] == "W4"]
     if not rows:
         raise SystemExit("no W4 rows: dry-run rows are never analyzed")
+    # Completeness gate: every roster context x arm must hold exactly one completed row per preregistered seed.
+    seeds = sorted(h81.SEEDS)
+    got = defaultdict(list)
+    for r in rows:
+        if r["status"] == "completed":
+            got[(r["context"], r["arm"])].append(r["seed"])
+    gaps = [f"{c[:12]}/{a}:{sorted(got.get((c, a), []))}" for c in roster for a in ARMS if sorted(got.get((c, a), [])) != seeds]
+    extra = sorted({r["context"] for r in rows} - set(roster))
     bad = {(r["context"], r["seed"]) for r in rows if r["status"] != "completed"}
     fam = {r["context"]: r["family"] for r in rows}
     by = defaultdict(lambda: defaultdict(list))
@@ -199,6 +207,12 @@ def analyze(h81, rows: list[dict], elo=None) -> dict:
         recs = [elo.DatasetEvalRecord(c, fam[c], "regression", v) for c, v in sorted(cm.items())]
         out["family_elo"] = elo.compute_family_grouped_bradley_terry_elo(recs, anchor_contender=ANCHOR, anchor_elo=1500.0,
                                                                          tie_margin=h81.TIE, prior=0.01, n_iters=400)
+    out.update(roster_contexts=len(roster), panel_gaps=len(gaps), panel_gap_examples=gaps[:5],
+               off_roster_contexts=len(extra), proposal_shortfalls=len(shortfalls))
+    if gaps or extra or shortfalls or out["incomplete_context_seeds"] or out["contexts"] != len(roster):
+        out["verdict"] = (f"INCOMPLETE (panel gaps {len(gaps)}, off-roster {len(extra)}, shortfalls {len(shortfalls)}, "
+                          f"incomplete context-seeds {out['incomplete_context_seeds']}); no verdict")
+        return out
     out["verdict"] = ("ADVANCE (primary passes the common gate)" if out["primary"]["common_gate_passed"]
                       else "NO_ADVANCE (primary gate not met)")
     return out
@@ -224,7 +238,8 @@ def main():
                    prog_models_sha256=PROG_MODELS_SHA, gpu_seconds=0)
     if a.stage == "analyze":
         rows = [json.loads(l) for l in (a.out / "rows_w4.jsonl").read_text().splitlines() if l.strip()]
-        receipt.update(analyze(h81, rows, h81.load_elo()))
+        shortfalls = json.loads((a.out / "shortfalls_w4.json").read_text())
+        receipt.update(analyze(h81, rows, h81.load_elo(), roster=roster, shortfalls=shortfalls))
         (a.out / "metrics.json").write_text(json.dumps(receipt, indent=1)); print(receipt["verdict"]); return
     g = guard(h81, prog)
     receipt["guard"] = g
