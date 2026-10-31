@@ -5148,6 +5148,14 @@
     "python:research/flywheel_selfplay/h99_h100_readout/test_readout.py": {
       "role": "research",
       "reason": "Synthetic H99/H100 terminal receipt publication and common-format Elo/gate controls; native CIs unchanged, no product qualification or live partial-outcome reads."
+    },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/test_science.py": {
+      "role": "research",
+      "reason": "H131 data-free research controls for whole-family bootstrap multiplicity, exact H125 CONTROL plan, eight-member parameter averaging, fixed half-soup, paired-family Holm/margin/harm/Elo/tie gates, cache identity and resource refusal. No real scoring or scientific qualification."
+    },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/test_cache.py": {
+      "role": "research",
+      "reason": "H131 data-free research controls for whole-family bootstrap multiplicity, exact H125 CONTROL plan, eight-member parameter averaging, fixed half-soup, paired-family Holm/margin/harm/Elo/tie gates, cache identity and resource refusal. No real scoring or scientific qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
