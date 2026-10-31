@@ -44,7 +44,7 @@ use std::collections::BTreeSet;
 
 /// Milliseconds on a monotonic, injected clock.
 pub trait Clock {
-    /// Performs the now ms operation and returns an error if it cannot be completed.
+    /// Performs the now ms operation.
     fn now_ms(&self) -> u64;
 }
 
@@ -164,12 +164,12 @@ impl Cadence {
         }
     }
 
-    /// Performs the request operation and returns an error if it cannot be completed.
+    /// Performs the request operation.
     pub fn request(&mut self, why: Urgent) {
         self.urgent.insert(why);
     }
 
-    /// Performs the pending urgent operation and returns an error if it cannot be completed.
+    /// Performs the pending urgent operation.
     pub fn pending_urgent(&self) -> Vec<Urgent> {
         self.urgent.iter().copied().collect()
     }
@@ -317,7 +317,7 @@ impl Checkpoints {
         self.last_ms = now_ms;
     }
 
-    /// Performs the uncheckpointed operation and returns an error if it cannot be completed.
+    /// Performs the uncheckpointed operation.
     pub fn uncheckpointed(&self) -> u64 {
         self.uncheckpointed
     }

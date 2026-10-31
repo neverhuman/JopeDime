@@ -259,7 +259,7 @@ impl Reader {
         Ok(body)
     }
 
-    /// Performs the receipt operation and returns an error if it cannot be completed.
+    /// Performs the receipt operation.
     pub fn receipt(&self) -> Value {
         json!({"http_requests":self.requests,"physical_request_count":self.requests.len(),
             "metadata_response_bytes":self.metadata_bytes,"object_body_bytes":self.body_bytes,

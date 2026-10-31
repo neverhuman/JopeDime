@@ -24,9 +24,9 @@ pub enum Class {
 
 /// Interface for the selector contract used by Selectors over a frozen pool (CLOVER §6 Experiment A).
 pub trait Selector {
-    /// Performs the name operation and returns an error if it cannot be completed.
+    /// Performs the name operation.
     fn name(&self) -> &str;
-    /// Performs the class operation and returns an error if it cannot be completed.
+    /// Performs the class operation.
     fn class(&self) -> Class;
     /// Exact rule and version, recorded in the receipt.
     fn rule(&self) -> String;
@@ -78,7 +78,7 @@ pub struct ProgramPrior {
 }
 
 impl ProgramPrior {
-    /// Performs the fit operation and returns an error if it cannot be completed.
+    /// Performs the fit operation.
     pub fn fit(train: &[&Pool], prior_weight: f64) -> Self {
         Self {
             means: program_means(train),
@@ -261,7 +261,7 @@ pub struct ExactCvLoss {
 }
 
 impl CvEstimate {
-    /// Performs the loss operation and returns an error if it cannot be completed.
+    /// Performs the loss operation.
     pub fn loss(&self) -> Option<f64> {
         match self {
             Self::Supported { metric, .. } => Some(f64::from_bits(
@@ -271,7 +271,7 @@ impl CvEstimate {
         }
     }
 
-    /// Performs the counts operation and returns an error if it cannot be completed.
+    /// Performs the counts operation.
     pub fn counts(&self) -> &CvCounts {
         match self {
             Self::Supported { counts, .. } | Self::Unavailable { counts, .. } => counts,
@@ -854,12 +854,12 @@ impl<'a> ContextualSurrogateQHat<'a> {
         self.inner_cv.loss()
     }
 
-    /// Performs the inner cross-validation estimate operation and returns an error if it cannot be completed.
+    /// Performs the inner cross-validation estimate operation.
     pub fn inner_cv_estimate(&self) -> &CvEstimate {
         &self.inner_cv
     }
 
-    /// Performs the inner fold fits operation and returns an error if it cannot be completed.
+    /// Performs the inner fold fits operation.
     pub fn inner_fold_fits(&self) -> &[InnerFoldFit] {
         &self.inner_fold_fits
     }

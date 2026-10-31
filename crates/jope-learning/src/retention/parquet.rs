@@ -1265,7 +1265,7 @@ pub enum Values {
 }
 
 impl Values {
-    /// Performs the len operation and returns an error if it cannot be completed.
+    /// Performs the len operation.
     pub fn len(&self) -> usize {
         match self {
             Values::Bool(v) => v.len(),
@@ -1299,7 +1299,7 @@ pub struct PageCounts {
 }
 
 impl PageCounts {
-    /// Performs the add operation and returns an error if it cannot be completed.
+    /// Performs the add operation.
     pub fn add(&mut self, o: &PageCounts) {
         self.dictionary += o.dictionary;
         self.data_v1 += o.data_v1;
@@ -1624,7 +1624,7 @@ impl<'a> FileReader<'a> {
         })
     }
 
-    /// Performs the column index operation and returns an error if it cannot be completed.
+    /// Performs the column index operation.
     pub fn column_index(&self, name: &str) -> Option<usize> {
         self.columns.iter().position(|c| c.name == name)
     }

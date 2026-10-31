@@ -313,11 +313,11 @@ pub struct GlobalBankExport {
     entries: Vec<(BankEntry, crate::replay::admission::ReplayAdmission)>,
 }
 impl GlobalBankExport {
-    /// Performs the purpose operation and returns an error if it cannot be completed.
+    /// Performs the purpose operation.
     pub fn purpose(&self) -> crate::replay::admission::Purpose {
         self.purpose
     }
-    /// Performs the entries operation and returns an error if it cannot be completed.
+    /// Performs the entries operation.
     pub fn entries(&self) -> &[(BankEntry, crate::replay::admission::ReplayAdmission)] {
         &self.entries
     }

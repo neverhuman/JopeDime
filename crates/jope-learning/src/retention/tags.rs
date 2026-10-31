@@ -166,7 +166,7 @@ impl WriteTags {
         Ok(WriteTags { pairs })
     }
 
-    /// Performs the pairs operation and returns an error if it cannot be completed.
+    /// Performs the pairs operation.
     pub fn pairs(&self) -> &[(String, String)] {
         &self.pairs
     }

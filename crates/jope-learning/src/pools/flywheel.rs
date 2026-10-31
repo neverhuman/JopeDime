@@ -211,7 +211,7 @@ impl FlywheelReceipt {
     }
 }
 
-/// Performs the known scores operation and returns an error if it cannot be completed.
+/// Performs the known scores operation.
 pub fn known_scores() -> BTreeSet<String> {
     [
         "cv_geomean_rmse_ratio",

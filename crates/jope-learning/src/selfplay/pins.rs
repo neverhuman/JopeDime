@@ -130,7 +130,7 @@ impl RetiredVersions {
         Self(entries.into_iter().collect())
     }
 
-    /// Performs the contains operation and returns an error if it cannot be completed.
+    /// Performs the contains operation.
     pub fn contains(&self, resource: &str, version_id: &str) -> bool {
         self.0
             .contains(&(resource.to_owned(), version_id.to_owned()))

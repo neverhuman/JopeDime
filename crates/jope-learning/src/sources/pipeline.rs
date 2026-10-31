@@ -254,7 +254,7 @@ pub fn scan(
     ))
 }
 
-/// Performs the scan source operation and returns an error if it cannot be completed.
+/// Performs the scan source operation.
 pub fn scan_source(path: &Path, scan: &PipelineScan) -> serde_json::Value {
     crate::hwm::source_value(
         SOURCE,

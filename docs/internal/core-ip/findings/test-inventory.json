@@ -1963,6 +1963,10 @@
       "reason": "Owner-requested pytest proofs for the H83 W6 cross-family cached screen; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h95_w8_hwm_resplit_confirm/test_run_resplit_confirm.py": {
+      "reason": "Owner-requested pytest proofs for the H95 W8 resplit confirmation of H94 apparent high-water marks; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h92_w6_downside_controlled/test_run_downside.py": {
       "reason": "Owner-requested pytest proofs for the H92 W6 downside-controlled cached screen (hedge and shortlist pickers, retained-best, H83 reproduction integrity); offline research analysis outside the reviewed product baseline.",
       "role": "research"

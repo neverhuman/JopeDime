@@ -110,7 +110,7 @@ impl Revocations {
         Ok(out)
     }
 
-    /// Performs the status operation and returns an error if it cannot be completed.
+    /// Performs the status operation.
     pub fn status(&self) -> &Status {
         &self.status
     }

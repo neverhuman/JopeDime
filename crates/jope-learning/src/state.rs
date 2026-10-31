@@ -24,7 +24,7 @@ pub struct PointerKey {
 }
 
 impl PointerKey {
-    /// Performs the of operation and returns an error if it cannot be completed.
+    /// Performs the of operation.
     pub fn of(record: &HwmRecord) -> PointerKey {
         PointerKey {
             task: record.identity.task.clone(),
@@ -34,7 +34,7 @@ impl PointerKey {
         }
     }
 
-    /// Performs the rel operation and returns an error if it cannot be completed.
+    /// Performs the rel operation.
     pub fn rel(&self) -> String {
         let root = format!("hwm/{}/{}/{}", self.task, self.dataset_hash, self.cut_id);
         match &self.identity_sha256 {
@@ -43,7 +43,7 @@ impl PointerKey {
         }
     }
 
-    /// Performs the matches operation and returns an error if it cannot be completed.
+    /// Performs the matches operation.
     pub fn matches(&self, record: &HwmRecord) -> bool {
         self.task == record.identity.task
             && self.dataset_hash == record.identity.dataset_hash
@@ -101,24 +101,24 @@ impl State {
         Ok(State { root })
     }
 
-    /// Performs the at operation and returns an error if it cannot be completed.
+    /// Performs the at operation.
     pub fn at(root: &Path) -> State {
         State {
             root: root.to_path_buf(),
         }
     }
 
-    /// Performs the root operation and returns an error if it cannot be completed.
+    /// Performs the root operation.
     pub fn root(&self) -> &Path {
         &self.root
     }
 
-    /// Performs the blob rel operation and returns an error if it cannot be completed.
+    /// Performs the blob rel operation.
     pub fn blob_rel(sha256: &str) -> String {
         format!("blobs/sha256/{sha256}")
     }
 
-    /// Performs the blob path operation and returns an error if it cannot be completed.
+    /// Performs the blob path operation.
     pub fn blob_path(&self, sha256: &str) -> PathBuf {
         self.root.join(State::blob_rel(sha256))
     }
