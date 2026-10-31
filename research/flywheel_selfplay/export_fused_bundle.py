@@ -36,6 +36,10 @@ FROZEN_DOPE_COMPOSITE = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2f
 SCHEMA_PATH = Path(__file__).resolve().parents[2] / "schemas/jope.fused-bundle.v1.schema.json"
 CUSTODY_PATH = Path(__file__).resolve().parent / "custody"
 PAYLOADS = {"dope.safetensors", "jope.safetensors", "featurizer.json", "bank.jsonl.zst"}
+MODEL_PRIOR_BANK_METADATA = {
+    "role": "model_prior",
+    "coordinate_space": "standardized_lm48_l2_unit",
+}
 CONSTANTS = dict(
     scale=0.4208, ctx_feat_dim=584, revealed=4, proposals=8, proposals_explore=16, admit=4, elite_pool=48
 )
@@ -555,7 +559,7 @@ def bank_bytes(champions, state):
             or sha256(dsl.encode()) != champion["program_sha256"]
         ):
             raise ExportError(f"champion family/program identity mismatch: {index}")
-        row = dict(dsl=dsl, family_hash=family)
+        row = dict(dsl=dsl, family_hash=family, **MODEL_PRIOR_BANK_METADATA)
         for field, count, tensor in (("feat412", 412, "bank_feat412"), ("proj16", 16, "bank_proj16")):
             values = np.asarray(champion[field])
             if (
