@@ -59,10 +59,10 @@ The before/after page comparisons are in [`redteam/`](redteam/):
 |---|---|---|---|---|
 | O1 | Med | **Fixed in upgrade PR 2** (redrawn as a TikZ diagram). Figure 1 is a two-row booktabs table captioned as a figure (p. 2). | Either draw it as a schematic or make it a table. A table renumbers every table, so it is a structural call. | writer |
 | O2 | Med | **Fixed in upgrade PR 1.** Box numbers are hard-coded in the box titles and in the text ("Box~1/2/3"). The labels `box:searchone` and `box:hallucination` exist but are not used for numbering, so reordering the boxes desyncs them silently. | Add a box counter inside the `explainer` environment and refer to boxes with `\cref`. | format |
-| O3 | Med | Figures 4, 9 and 10 are `\fbox` placeholders. The text cites "Figure 4a" and "Figure 4b" panels that do not exist yet. Page 14 stacks four pending floats. | Replace them with real figures before submission. Keep the panel letters in step with the final figure. | writer |
+| O3 | Med | The independent-comparison, repeated-attempt and pilot-cost figures remain placeholders. Their panel descriptions are plans, not supplied results; the development plots use retained log data. | Supply the missing comparison, attempt-curve and pilot-cost data before replacing those placeholders; keep panel labels aligned with the final figures. | writer |
 | O4 | Low | **Fixed in upgrade PR 1** (date pinned to October 2026). `\date{Draft --- \today}` changes the committed PDF on every rebuild day. That defeats byte and text identity checks across days. | Pin the draft date, or drop it. | writer/format |
 | O5 | Low | **Fixed in upgrade PR 3** (display equations 4–5). The §6.5 writer objective, with $\sum_{w\in G_p}$, is inline math. It opens up the line spacing in that paragraph. | Make it a display equation; the wording is unchanged. | writer |
-| O6 | Low | Reference entries are inconsistent: DOI versus URL, "(NeurIPS 2017)" in some book titles but not others, and full author lists of up to about 58 names (refs [19], [66], [114]). | Pick one link policy. Consider truncating long author lists ("et al." beyond ~10), which needs a `.bst` or a biblatex switch. The Wolf month fix is still pending. | refs.bib owner |
+| O6 | Low | Reference entries are inconsistent: DOI versus URL, "(NeurIPS 2017)" in some book titles but not others, and full author lists of up to about 58 names (refs [19], [66], [114]). | Pick one link policy. Consider truncating long author lists ("et al." beyond ~10), which needs a `.bst` or a biblatex switch. The Wolf publication month was corrected in [#779](https://github.com/neverhuman/JopeDime/pull/779); the link and author-list style choices remain open. | refs.bib owner |
 | O7 | Low | Links are coloured. That suits a draft, but camera-ready IEEE and ACM versions are normally black. | Use `hidelinks` at submission. | format |
 | O8 | Low | The appendices come before the references. That is IEEE order; NeurIPS and ICML put the references first. | Choose per venue at submission. | format |
 | O9 | Low | Algorithm 1 has an extra vertical gap after the nested `\EndFor`, an artefact of `noend`, between lines 7 and 8. | Cosmetic. Leave as is, or adjust `algpseudocode` spacing. | format |
@@ -93,7 +93,7 @@ The owner widened the scope to a full upgrade, carried out in small sequential P
 | 3 | Method (§5–6): the §6.5 objective set as display equations (O5). Three TBDs become accurate statements: exploration in the reference procedure (§5.4, from §6.5/§6.7); the checkpoint acceptance record as an evaluation-contract input (§6.5); and what the admission CSVs do and do not record (§6.8). The regressor identity TBD (§6.2) stays for the team. | merged (#777) |
 | 4 | Results presentation only, with every sentence, number and TBD of §7 preserved:<br>• "Evaluation plan at a glance" table (Table 5).<br>• Earlier diagnostics moved into their own closing subsection (§7.7).<br>• Worked-game fields moved from §4.6 into a §7.6 record table; §4.6 becomes "The analogy's limits".<br>• Pilot-cost figure moved from §5.2 into §7.4.<br>All results-dependent placeholders now sit in §7. | merged (#786) |
 | 5 | Discussion, Conclusion and appendices:<br>• §8 becomes "Discussion", with each subsection ending in an explicit outcome-to-claim rule. Four per-subsection TBDs become pointers to the §7 subsections that will settle them; the opening TBD stays as the single tracked marker.<br>• New "Limitations" subsection (§8.5) and a §9 Conclusion.<br>• Appendix A becomes a domain-by-domain referee inventory (Table 9), restating referees already cited in §3–§4.<br>• Receipt TBDs in Appendices B and C point to the §7.1 evaluation record.<br>The regressor licence TBD stays. | merged (#789) |
-| 6 | Fixes from an independent camera-ready review (dispositions below): scope stated in the abstract and introduction; honest evidence status; ratchet, map and loss wording matched to §6 and the code-level records; exploration programs added; drafting-process language removed; pointer, typography and Results-presentation slips fixed. | this PR |
+| 6 | Fixes from an independent camera-ready review (dispositions below): scope stated in the abstract and introduction; honest evidence status; ratchet, map and loss wording matched to §6 and the code-level records; exploration programs added; drafting-process language removed; pointer, typography and Results-presentation slips fixed. | merged (#792) |
 
 ## Needs Jepson/team
 
@@ -116,7 +116,7 @@ Everything below needs data, receipts or decisions from the team. None of it was
 
 ### Results evidence that exists but is weak
 
-- **The only training evidence is a development admission record (§6.8).** Over 695 rounds there are two strict validation gains, then a plateau, and a train–validation gap of 0.282–0.290 on 25 summaries. It is not an untouched test and cannot support the transfer claim.
+- **The plotted development evidence concerns an adapter admission record (§6.8).** Over 695 rounds there are two strict validation gains, then a plateau, and a train–validation gap of 0.282–0.290 on 25 summaries. It is not an untouched test and cannot support the transfer claim.
 - **The historical diagnostics (§7.7) do not show a learned proposer outperforming search.**
   - 3,227 of 3,268 paired searches ended in exact ties.
   - 98.84% of reported winners were already in their seed populations.
@@ -131,7 +131,7 @@ Everything below needs data, receipts or decisions from the team. None of it was
   - The asset manifests say licence declarations vary by artifact.
   - Please confirm whether it is third-party or locally trained, and under which licence it ships.
 - **§6.5 / Appendix C.** The reference checkpoint's acceptance record, its held-out promotion receipt and a pinned runtime.
-- **§6.8 (optional).** The adapter's architecture, score normalization and evaluation population, if the snapshot is ever compared with other models.
+- **§6.8.** Bind the retained observations to exact loop source and input identities, adapter configuration, score normalization, evaluation population, candidate pools and revealed-history inputs. The implementation is now described; run qualification and cross-model comparisons still require those records.
 - **Appendix B.** The final pre-registration and audit receipts: the inner-fold label-poison test, the sealed canary and the train-only input-closure audit.
 - **Appendix C.** Isolation and parity receipts from the final evaluator.
 
@@ -150,9 +150,9 @@ Everything below needs data, receipts or decisions from the team. None of it was
 
 - **Weak evidence.** The code-level record (`docs/internal/asm-manual/sections/deep-stack.md`) says the recorded neural winner "descends from exploration candidates, not from a neural_policy proposal". If that still holds, the development record shows no proposal by the writer winning.
 - **Checkpoint acceptance (§6.5, Appendix C).** The training history says all 48 indexed admission decisions of 11 September were inconclusive, and cites no admission pass for the step-60,000 checkpoint. The paper now says this evidence is not documented here.
-- **Objective weights (§6.5, Eq. 5).** The code-level record mentions Kendall–Gal uncertainty weights on the sequence and runtime terms. The method owner should confirm that the fixed weights shown in Eq. 5 match the trained objective.
-- **Figure 7 units.** Define "promotions per hour" and "datasets per second", and how they relate to the 4 acceptances in 695 rounds.
-- **The 63,108 evaluations (§6.6, Appendix B).** Clarify whether the figure is a per-dataset count or a total across 42 datasets.
+- **Objective identity (§6.5, Appendix C).** The native fixed aggregate coefficients match Eq. 5 (`crates/jope-engine/src/training/objective.rs`); uncertainty weighting belongs to a separate objective and must not be substituted for this one. Native sequence-loss smoothing and normalization are documented in #824. The checkpoint-specific objective identity/configuration remains required evidence.
+- **Figure 7 units — fixed in #806.** Throughput counts distinct training contexts per completed-round wall second. Program promotions count strict improvements to training-program incumbents over a rolling window of up to twenty completed rounds; the 4 adapter acceptances in 695 rounds count different events. Exact retained-run binding remains open.
+- **The 63,108 evaluations — fixed in #819.** This is the total across 42 datasets; a best test-scored outcome was selected for each dataset. The entry remains excluded from all comparative claims.
 
 ### Review dispositions (pass 6)
 
@@ -185,7 +185,38 @@ Everything below needs data, receipts or decisions from the team. None of it was
 - **Appendices.** Pointer, typography and provenance wording fixed.
 - **§7 (presentation only).** "Planned for", and the Table 5 cell.
 
-**Open, for the team or owner:** the owner decisions and team items above (regressor identity and licence, checkpoint acceptance, comparator versions, Figure 7 units, disclosure boundary, the 63,108 count), plus:
-- Figure 2's horizontal position for the learned proposer.
-- Further de-duplication: merging Figures 3 and 4.
-- Defining "cuts" and "mean log error ratio" precisely.
+**Still required from the team or owner:** regressor identity/licence,
+checkpoint acceptance and objective/runtime identities, comparator versions,
+independent results and the disclosure-policy decision above. Figure 7 units
+and the evaluation-count unit are resolved by #806 and #819.
+
+**Editorial dispositions:**
+- Figure 2 keeps conceptual positions. Its caption explicitly says they are
+  not measured limits and that the single proposal remains an empirical question.
+- Figures 3 and 4 remain separate views of the game feedback contract and the
+  reference network dataflow; merging them is not required for those distinct roles.
+- Cuts and the mean log error ratio are defined in #839 from the admission
+  contract, separately from the single-program comparison.
+
+## Writer follow-up and remaining evidence
+
+The follow-up PRs preserve Results numbers and claims. Source inspection and a
+successful document build are distinct from qualification of a training run or
+checkpoint.
+
+| Follow-up | Landed change | Evidence limit |
+|---|---|---|
+| #779 | Wolf publication month corrected; 159 keys in the compiled `refs.bib` checked with no exact or case-folded duplicates | Broader link/author-list style policy remains open (O6) |
+| #791 and #814 | Historical writer, inspected evaluation-score ranking adapter and conditional pool metric separated; actual adapter inputs, objective, two-fold evaluation and pool admission described | The retained run still needs exact source/input/normalization and population bindings |
+| #806 | Existing real-log plots identify adapter pool utility, retained-data gaps, throughput and program-promotion units | No new experiment, one-proposal benchmark or transfer result |
+| #811 | Historical training specifications attributed to supplied source notes | Checkpoint acceptance and runtime qualification remain required |
+| #819 | Evaluation-count unit corrected in Method and Appendix B, with before/after images | Test-selected entry stays excluded |
+| #824 | Schematic writer equation distinguished from native smoothing and normalization; fixed aggregate coefficients source-checked | Checkpoint objective identity/configuration remains required |
+| #839 | Admission cuts, nested averaging and ratio direction defined | The checkpoint admission record and independent single-program test remain separate requirements |
+
+The paper retains 32 compiled TBD markers: the full-upgrade snapshot had 31,
+and #791 added an explicit retained-run binding requirement. Existing independent
+results, comparator identities, encoder identity/licence, acceptance, parity,
+sandbox and input-closure receipts remain team inputs. The owner decisions above
+are preserved; these writing passes do not change disclosure rules or qualify a
+model for deployment.
