@@ -1,0 +1,391 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "identity",
+    "round",
+    "seed",
+    "tokens",
+    "mask",
+    "revealed",
+    "proposals",
+    "policy",
+    "evaluate_all_proposals",
+    "outcomes",
+    "source_indices",
+    "dispatched",
+    "capture_complete"
+  ],
+  "properties": {
+    "schema": {
+      "const": "jope.research.round/v1"
+    },
+    "identity": {
+      "$ref": "#/$defs/identity"
+    },
+    "round": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 18446744073709551615
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 18446744073709551615
+    },
+    "tokens": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number",
+          "minimum": -3.4028235e+38,
+          "maximum": 3.4028235e+38
+        },
+        "minItems": 32,
+        "maxItems": 32
+      },
+      "minItems": 10,
+      "maxItems": 10
+    },
+    "mask": {
+      "type": "array",
+      "items": {
+        "type": "boolean"
+      },
+      "minItems": 10,
+      "maxItems": 10
+    },
+    "revealed": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/revealed"
+      },
+      "minItems": 0,
+      "maxItems": 4
+    },
+    "proposals": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/program"
+      },
+      "minItems": 1,
+      "maxItems": 16
+    },
+    "policy": {
+      "$ref": "#/$defs/policy"
+    },
+    "evaluate_all_proposals": {
+      "type": "boolean"
+    },
+    "outcomes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/outcome"
+      },
+      "minItems": 0,
+      "maxItems": 16
+    },
+    "source_indices": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 18446744073709551615
+      }
+    },
+    "dispatched": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 15
+      }
+    },
+    "capture_complete": {
+      "type": "boolean"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:jope:research:round:v1",
+  "title": "Private research round, software component v1",
+  "$comment": "Cross-field inventory, seed/proposal phase, behavior-policy shapes, finite numbers and stream identity/sequence rules are enforced by ResearchRound::validate and record_reader.validate_record/read_records. Identity pins are producer attestations, not model/corpus qualification. Policy admitted, original source and actual dispatch indices are distinct; incomplete captures require explicit reader inspection opt-in. Float32 limits include Rust serde_json shortest decimal encodings of the largest finite f32.",
+  "$defs": {
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "task",
+        "evidence",
+        "partition",
+        "source_commit",
+        "corpus_manifest_sha256",
+        "dataset_sha256",
+        "family_sha256",
+        "problem_sha256",
+        "bundle_sha256",
+        "conditioning_sha256",
+        "evaluator_sha256",
+        "dope_weights_sha256"
+      ],
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_./:-]+$"
+        },
+        "task": {
+          "enum": [
+            "regression",
+            "binary"
+          ]
+        },
+        "evidence": {
+          "enum": [
+            "engine",
+            "synthetic_control"
+          ]
+        },
+        "partition": {
+          "const": "train"
+        },
+        "source_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "corpus_manifest_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "dataset_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "family_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "problem_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "bundle_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "conditioning_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "evaluator_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "dope_weights_sha256": {
+          "const": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+        }
+      }
+    },
+    "program": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "program_sha256",
+        "operator_family",
+        "feat412",
+        "proj16"
+      ],
+      "properties": {
+        "program_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "operator_family": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_./:-]+$"
+        },
+        "feat412": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": -3.4028235e+38,
+            "maximum": 3.4028235e+38
+          },
+          "minItems": 412,
+          "maxItems": 412
+        },
+        "proj16": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": -1.7976931348623157e+308,
+            "maximum": 1.7976931348623157e+308
+          },
+          "minItems": 16,
+          "maxItems": 16
+        }
+      }
+    },
+    "revealed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "program",
+        "surrogate",
+        "gate"
+      ],
+      "properties": {
+        "program": {
+          "$ref": "#/$defs/program"
+        },
+        "surrogate": {
+          "type": "number",
+          "minimum": -1.7976931348623157e+308,
+          "maximum": 1.7976931348623157e+308
+        },
+        "gate": {
+          "type": "boolean"
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "explore",
+        "slate_costs",
+        "admitted"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "heuristic",
+            "learned"
+          ]
+        },
+        "explore": {
+          "type": "boolean"
+        },
+        "slate_costs": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": -1.7976931348623157e+308,
+                "maximum": 1.7976931348623157e+308
+              },
+              "minItems": 1,
+              "maxItems": 20
+            }
+          ]
+        },
+        "admitted": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 15
+          },
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true
+        }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proposal_index",
+        "wall_ms",
+        "measurement"
+      ],
+      "properties": {
+        "proposal_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15
+        },
+        "wall_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "measurement": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "status",
+                "surrogate",
+                "objective",
+                "gate"
+              ],
+              "properties": {
+                "status": {
+                  "const": "success"
+                },
+                "surrogate": {
+                  "type": "number",
+                  "minimum": -1.7976931348623157e+308,
+                  "maximum": 1.7976931348623157e+308
+                },
+                "objective": {
+                  "type": "number",
+                  "minimum": -1.7976931348623157e+308,
+                  "maximum": 1.7976931348623157e+308
+                },
+                "gate": {
+                  "type": "boolean"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "status",
+                "code"
+              ],
+              "properties": {
+                "status": {
+                  "const": "failed"
+                },
+                "code": {
+                  "enum": [
+                    "timeout",
+                    "memory_limit",
+                    "panicked",
+                    "non_finite",
+                    "process_exited",
+                    "protocol",
+                    "invalid_request",
+                    "unavailable",
+                    "stale_attempt"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
