@@ -6,7 +6,7 @@
   "allow_report_offload": false,
   "allowed_hosts": ["xbabe1", "xbabe2", "xbabe3"],
   "repo_root": "~/JopeDime",
-  "sccache_max_bytes": 64424509440,
+  "sccache_max_bytes": 53687091200,
   "offload": {
     "bucket": "veox-jopedime-learning-use2",
     "prefix": "offload",
@@ -82,7 +82,7 @@
       "mode": "observe",
       "manual_only": true,
       "path": "~/.cache/sccache",
-      "max_bytes": 64424509440
+      "max_bytes": 53687091200
     },
     {
       "id": "tmp",
