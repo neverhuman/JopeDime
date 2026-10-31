@@ -5145,6 +5145,10 @@
       "reason": "Owner-requested H134 synthetic CPU controls for the single-primary BLEND_025 confirmation readout, tail checks and pinned H129 runner rebinding; no corpus/checkpoint reads or estimator fits in the fixture suite; offline research only.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h139_selection_audit/test_h139.py": {
+      "reason": "Owner-requested H139 synthetic CPU controls for the zero-update selection-rule audit readout and decision; no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h123_continuous_regret_tiebreak/test_runner.py": {
       "role": "research",
       "reason": "CPU-only H123 continuous-regret tie-break preparation fixtures for the H114 lattice; offline research analysis outside the reviewed product baseline."
