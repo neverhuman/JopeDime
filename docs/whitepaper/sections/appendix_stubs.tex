@@ -1,4 +1,4 @@
-\section{Historical notes}\label{app:history}
+\section{Referee inventory}\label{app:history}
 
 \Cref{sec:road} traces the four pillars of \cref{sec:anatomy} through the
 milestones directly needed for our argument: algorithm selection
@@ -6,13 +6,42 @@ milestones directly needed for our argument: algorithm selection
 \citep{koza1992genetic,montana1995stgp,real2020automlzero}, self-play and expert
 iteration \citep{samuel1959checkers,silver2017mastering,anthony2017expert}, and
 task-conditioned amortization across tabular problems
-\citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025}. \TBD{Expand with
-the full chronological survey table and domain-by-domain referee inventory.}
+\citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025}. Each of those
+systems depends on a referee. \Cref{tab:referees} collects, domain by domain,
+the referees that the main text relies on. A domain enters the innovation
+game only when its referee is reliable and affordable (\cref{sub:game-boards}).
+
+\begin{table}[ht]
+  \caption{\textbf{Referees by domain.} Each row restates a referee described
+  in \cref{sec:road,sec:game}; the last row is the referee of this paper.}
+  \label{tab:referees}
+  \centering
+  \small
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.25\linewidth}>{\raggedright\arraybackslash}p{0.42\linewidth}>{\raggedright\arraybackslash}p{0.28\linewidth}@{}}
+    \toprule
+    Domain & Referee & Systems \\
+    \midrule
+    Board games & The rules of the game and its final score & AlphaGo Zero, AlphaZero \citep{silver2017mastering,silver2018general} \\
+    Machine-learning research & A sealed test set that scores every entry & Netflix Prize, ImageNet \citep{donoho2017fifty,bennett2007netflix,russakovsky2015imagenet} \\
+    Code & Unit tests; a code executor & Codex, Absolute Zero \citep{chen2021codex,zhao2025absolutezero} \\
+    Matrix multiplication & The rules of TensorGame & AlphaTensor \citep{fawzi2022alphatensor} \\
+    Sorting & Sorting tests & AlphaDev \citep{mankowitz2023alphadev} \\
+    Mathematical constructions & Programmatic evaluators & FunSearch \citep{romeraparedes2024funsearch} \\
+    Accelerator kernels & Timers & AlphaEvolve \citep{novikov2025alphaevolve} \\
+    Formal proofs & The Lean proof checker & AlphaProof, STP \citep{hubert2026alphaproof,dong2025stp} \\
+    RNA design & Laboratory tests of designs & EteRNA \citep{lee2014eterna} \\
+    \addlinespace
+    Algorithm invention (this paper) & Hidden-fold scores against the incumbent; promotion on strict improvement & \EZ{} (\cref{sub:game-referee,sec:method}) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \section{Incident log and audit safeguards}\label{app:incidents}
 
-\Cref{sub:method-referee} requires that evaluation artifacts violating
-held-out isolation be recorded and excluded rather than silently dropped:
+\Cref{sub:method-referee} excludes a test-selected search baseline. This appendix records
+that exclusion and the audit safeguards the evaluation protocol requires, so that
+artifacts violating held-out isolation are recorded rather than silently dropped:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Excluded test-selected search baseline.} An earlier internal
   leaderboard entry took, per dataset, the best of \num{63108} test-scored
@@ -24,8 +53,9 @@ held-out isolation be recorded and excluded rather than silently dropped:
   the evaluation protocol requires passing receipts for: an inner-fold label-poison test,
   a sealed canary check, and a train-only input-closure audit verifying that
   held-out test targets and their derived statistics do not enter board
-  encoding or candidate generation. \TBD{Attach final pre-registration and
-  audit receipts before benchmark release.}
+  encoding or candidate generation. The final pre-registration and these
+  audit receipts belong to the evaluation record of
+  \cref{sub:results-protocol} and are not reproduced here.
 \end{itemize}
 
 \section{Training details}\label{app:training}
@@ -40,36 +70,36 @@ later adapter snapshot in \cref{sec:method-status}):
   across training rows by mean, standard deviation, and 10th and 90th
   percentiles; (ii)~\num{1024} values from a projected third-party tabular
   regressor hidden state capped at \num{768} context rows and \num{256} query
-  rows (\TBD{name, version, and licence}); and (iii)~\num{512} values from two
+  rows, \TBD{name, version and license}; and (iii)~\num{512} values from two
   frozen target-summary windows initialized with fixed seed~17. Any context
-  with a non-finite entry is refused rather than imputed. The supplied notes
+  with a non-finite entry is refused rather than imputed. Encoding records
   report wall-clock latency from 11.7\,s to 20.8\,s across eight reference
   encoding jobs, within the 30\,s cap.
   \item \textbf{Objective terms and parameter split (\cref{sub:method-map,sub:method-selfplay}).}
   Lists $G_p$ require at least eight valid scored programs per problem, with
   percentile $\rho_w = 1 - \mathrm{rank}/(|G_p|-1)$ and writer sequence weight
-  $0.05 + \rho_w^4$. In the combined objective
-  $\mathcal{L}_{\text{writer}} + 0.1\,\mathcal{L}_{\text{map}} +
-  0.25\,\mathcal{L}_{\text{BT}} + 0.1\,\mathcal{L}_{\text{runtime}} +
-  0.05\,\mathcal{L}_{\text{prog}}$, the pairwise Bradley--Terry term weights
+  $0.05 + \rho_w^4$. In the combined objective of \cref{eq:totalLoss}, the
+  pairwise Bradley--Terry term weights
   pairs by their score gap, doubled when either program is at or above the
-  0.90 percentile. The network has \num{27796494} parameters in total (six
+  90th percentile. The network has \num{27796494} parameters in total (six
   decoder blocks, width \num{512}, four attention heads, prefix context token,
   and maximum length \num{128} tokens over the \num{401}-token grammar);
   approximately \num{1.05} million parameters belong to training-time ranking
   and control heads that are absent at deployment.
   \item \textbf{Optimization notes (\cref{sub:method-selfplay}).}
-  The supplied source notes describe an AdamW run (learning rate $10^{-4}$,
+  The training records describe an AdamW run (learning rate $10^{-4}$,
   weight decay $0.01$, gradient-norm clip $1.0$, global batch size \num{2048})
   on eight A100 GPUs in September 2026 over \num{10214332} scored programs from
   80 training datasets (\num{7877} lists; \num{8894} contexts). These
   historical reference specifications are separate from the later adapter
-  snapshot in \cref{sec:method-status}.
-  \TBD{Provide the checkpoint acceptance record and held-out promotion receipt
-  before final evaluation.}
+  snapshot in \cref{sec:method-status}. This paper does not document the
+  evidence on which the checkpoint was accepted; that record and a
+  held-out promotion receipt are required inputs to the evaluation contract
+  (\cref{sub:results-protocol}).
   \item \textbf{Execution sandbox and parity (\cref{sub:method-referee}).}
   The final evaluation protocol requires candidate isolation with seccomp
   and Landlock, cgroup memory limits with swap disabled, and native versus
-  emitted-code agreement within $10^{-9}\max(1, |\hat{y}|)$.
-  \TBD{Attach isolation and parity receipts from the final evaluator.}
+  emitted-code agreement within $10^{-9}\max(1, |\hat{y}|)$. Isolation and
+  parity receipts from the final evaluator belong to the same evaluation
+  record.
 \end{itemize}
