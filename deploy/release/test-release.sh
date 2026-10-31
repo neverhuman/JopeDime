@@ -120,14 +120,16 @@ git init -q "$repo"
   printf 'fn main() { println!("jope {}", env!("CARGO_PKG_VERSION")); }\n' > crates/jope-cli/src/main.rs
   printf '[package]\nname = "jope-parallel"\nversion = "0.2.0"\n' > crates/jope-engine/Cargo.toml
   printf 'target/\n' > .gitignore
-  git add -A
+  git add -- .gitignore Cargo.toml crates/jope-cli/Cargo.toml \
+    crates/jope-cli/src/main.rs crates/jope-engine/Cargo.toml
   git commit -qm 'scaffold'
   printf '[toolchain]\nchannel = "1.97.1"\nprofile = "minimal"\n' > rust-toolchain.toml
   changelog > CHANGELOG.md
   pubkey > docs/release/signing.pub
   printf '{"models": []}\n' > models/manifest.json
   printf '# pinned bundles\n\nbundle-a\n  bundle-b  \n' > models/PINNED
-  git add -A
+  git add -- rust-toolchain.toml CHANGELOG.md docs/release/signing.pub \
+    models/manifest.json models/PINNED
   git commit -qm 'release: 0.2.0'
   # An ignored build directory must not count as a dirty tree.
   mkdir -p target/release && printf 'cache' > target/release/cached
@@ -303,15 +305,36 @@ expect "tag v0.2.1 against a 0.2.0 workspace" refuse 'MISMATCH jope-cli 0.2.0 !=
 echo "# committed release inputs (each case is a new commit pushed as origin/main)"
 variant() {  # variant <name> <pattern> <shell snippet that edits the tree>
   local name=$1 pattern=$2 edit=$3 c
-  (cd "$repo" && eval "$edit" && git add -A && git commit -qm "variant: $name")
+  # Stage only the tracked release inputs these cases are allowed to change.
+  (
+    cd "$repo"
+    eval "$edit"
+    for path in rust-toolchain.toml CHANGELOG.md docs/release/signing.pub; do
+      if git ls-files --error-unmatch -- "$path" >/dev/null 2>&1; then
+        git add -u -- "$path"
+      fi
+    done
+    git commit -qm "variant: $name"
+  )
   c=$(git -C "$repo" rev-parse HEAD)
+  if [[ $name == "toolchain channel != builder toolchain" ]]; then
+    if git -C "$repo" cat-file -e "$c:unrelated.txt" 2>/dev/null; then
+      echo "variant staged unrelated fixture content" >&2
+      exit 1
+    fi
+    if ! git -C "$repo" status --porcelain --untracked-files=all | grep -Fq '?? unrelated.txt'; then
+      echo "variant did not leave unrelated fixture content untracked" >&2
+      exit 1
+    fi
+    rm -- "$repo/unrelated.txt"
+  fi
   git -C "$repo" push -q -f "$origin" "$c:refs/heads/main"
   expect "$name" refuse "$pattern" run "${R[@]}" v0.2.0 "$c"
   git -C "$repo" reset -q --hard "$c1"
   git -C "$repo" push -q -f "$origin" "$c1:refs/heads/main"
 }
 variant "toolchain channel != builder toolchain" "rust-toolchain.toml channel '1.98.0' != builder toolchain 1.97.1" \
-  "sed -i 's/1.97.1/1.98.0/' rust-toolchain.toml"
+  "sed -i 's/1.97.1/1.98.0/' rust-toolchain.toml; printf 'must remain untracked\\n' > unrelated.txt"
 variant "no rust-toolchain.toml" "rust-toolchain.toml channel '' != builder" "git rm -q rust-toolchain.toml"
 variant "CHANGELOG.md missing" 'CHANGELOG.md is not committed' "git rm -q CHANGELOG.md"
 variant "CHANGELOG.md without a [0.2.0] section" "no '## \\[0.2.0\\]' section" \
