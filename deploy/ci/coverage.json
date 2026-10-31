@@ -13447,6 +13447,16 @@
       ],
       "lanes": [],
       "scope": "H95 W8 HWM resplit-confirmation fixtures: seven cuts per program with the incumbent deduplicated, DSL/sha mismatch refused, execution errors stay INCOMPLETE (never -2), confirmed/material/complexity-only flags and the verdict, and the merged-H72 loader refuses changed bytes. Synthetic only; no data or native calls; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h97_reg_ema/test_h97.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H97 REG-EMA candidate-protocol fixtures: exact (arm, seed) cell set, 19 paired dev families and 91 contexts required, complete finite seed vectors retained."
     }
   },
   "lanes": {
