@@ -47,3 +47,24 @@ training stream. Prefix export would require separately reviewed semantics.
 The CPU controls exercise both completion reasons at1/8 workers. Their scoped
 clock freezes controller wall anchors and dispatch spans without sleeping; real
 worker-call durations still use `Instant`, and production has no clock override.
+
+
+## Native provider input adapter
+
+`NativeCaptureInputs::from_bundle` binds an authenticated `VerifiedBundle`, the
+exact discovery Plan and actual conditioning to its explicit receipt identity.
+It validates the frozen featurizer recipe, canonical name order, projection domain,
+finite tokens and binary masks. `program` computes native feat412 and original
+f64 proj16; its operator family remains an explicit proposer/seed attestation.
+Engine providers must expose this immutable adapter. Capture preflight checks the
+complete Plan and conditioning binding; observation checks native program hashes,
+features and projections before any reservation. Shape-correct replacement arrays
+and FP32-rounded projections refuse. No model forward or selection RNG is added.
+
+This is the production input portion of the provider integration. It creates no
+CaptureContext capability, accepted corpus/job registry or CLI activation. The
+actual corpus/row admission, qualified conditioning origin, F/objective/gate
+executor and request/seed/fold protocol, OD13 decision and trusted resolver remain
+required. Synthetic controls retain their explicit tag and existing behavior.
+The boundary control constructs no exported Engine record; passing it is software
+evidence rather than a qualified corpus capture.
