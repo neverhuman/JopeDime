@@ -28,15 +28,23 @@ pub struct SvdSlot {
 
 impl SvdSlot {
     fn validate(&self, input_width: usize) -> Result<()> {
-        ensure!(self.mean.len() == input_width, "SVD slot mean width mismatch");
+        ensure!(
+            self.mean.len() == input_width,
+            "SVD slot mean width mismatch"
+        );
         ensure!(self.std.len() == input_width, "SVD slot std width mismatch");
-        ensure!(self.active.len() == input_width, "SVD slot mask width mismatch");
+        ensure!(
+            self.active.len() == input_width,
+            "SVD slot mask width mismatch"
+        );
         ensure!(
             self.projection.len() == input_width * TOKEN_WIDTH,
             "SVD slot projection shape mismatch"
         );
         ensure!(
-            self.std.iter().all(|value| value.is_finite() && *value > 0.0),
+            self.std
+                .iter()
+                .all(|value| value.is_finite() && *value > 0.0),
             "SVD slot std must be finite and positive"
         );
         ensure!(
@@ -54,13 +62,15 @@ impl SvdSlot {
         let mut output = [0.0; TOKEN_WIDTH];
         for (row, value) in input.iter().enumerate() {
             let clean = if value.is_finite() { *value } else { 0.0 };
-            let standardized = ((clean - self.mean[row]) / self.std[row]).clamp(-8.0, 8.0)
-                * self.active[row];
+            let standardized =
+                ((clean - self.mean[row]) / self.std[row]).clamp(-8.0, 8.0) * self.active[row];
             for (column, sum) in output.iter_mut().enumerate() {
                 *sum += standardized * self.projection[row * TOKEN_WIDTH + column];
             }
         }
-        output.iter_mut().for_each(|value| *value = value.clamp(-6.0, 6.0));
+        output
+            .iter_mut()
+            .for_each(|value| *value = value.clamp(-6.0, 6.0));
         output
     }
 }
@@ -89,7 +99,9 @@ impl Stage1bParameters {
             "lm80 mean must be finite"
         );
         ensure!(
-            self.lm80_std.iter().all(|value| value.is_finite() && *value > 0.0),
+            self.lm80_std
+                .iter()
+                .all(|value| value.is_finite() && *value > 0.0),
             "lm80 std must be finite and positive"
         );
         ensure!(
@@ -97,7 +109,9 @@ impl Stage1bParameters {
             "lm48 mean must be finite"
         );
         ensure!(
-            self.lm48_std.iter().all(|value| value.is_finite() && *value > 0.0),
+            self.lm48_std
+                .iter()
+                .all(|value| value.is_finite() && *value > 0.0),
             "lm48 std must be finite and positive"
         );
         self.slot0.validate(184)?;
@@ -128,10 +142,16 @@ pub fn project<P: TokenProjector>(
     dope629: &[f32],
     parameters: &Stage1bParameters,
 ) -> Result<TokenProjection> {
-    ensure!(dope629.len() == DOPE_FEATURES, "DOPE feature width mismatch");
+    ensure!(
+        dope629.len() == DOPE_FEATURES,
+        "DOPE feature width mismatch"
+    );
     parameters.validate()?;
     let lm48 = projector.project(input);
-    ensure!(lm48.len() == LM48_FEATURES, "lm48 projection width mismatch");
+    ensure!(
+        lm48.len() == LM48_FEATURES,
+        "lm48 projection width mismatch"
+    );
 
     let lm48_clean: [f32; LM48_FEATURES] = lm48
         .iter()
@@ -157,9 +177,7 @@ pub fn project<P: TokenProjector>(
     let token4 = parameters.slot4.project(dope629);
     let token5 = parameters.slot5.project(dope629);
     let token7 = parameters.slot7.project(&m0_input);
-    let kron: [f32; 64] = std::array::from_fn(|index| {
-        token2[index / 8] * token0[index % 8]
-    });
+    let kron: [f32; 64] = std::array::from_fn(|index| token2[index / 8] * token0[index % 8]);
     let token9 = parameters.slot9.project(&kron);
 
     Ok(TokenProjection {
@@ -179,11 +197,7 @@ pub fn project<P: TokenProjector>(
     })
 }
 
-fn lm_smart_80(
-    lm48: &[f32; LM48_FEATURES],
-    mean: &[f32; 80],
-    std: &[f32; 80],
-) -> [f32; 80] {
+fn lm_smart_80(lm48: &[f32; LM48_FEATURES], mean: &[f32; 80], std: &[f32; 80]) -> [f32; 80] {
     let mut pm = [0.0; 16];
     let mut ps = [0.0; 16];
     let mut px = [0.0; 16];
@@ -202,7 +216,8 @@ fn lm_smart_80(
     let tgap = std::array::from_fn::<_, 16, _>(|index| {
         ((px[index] - pm[index]) / (pm[index].abs() + ps[index] + 0.05)).clamp(-6.0, 6.0)
     });
-    let stab = std::array::from_fn::<_, 8, _>(|index| 0.5 * (tgap[index * 2] + tgap[index * 2 + 1]));
+    let stab =
+        std::array::from_fn::<_, 8, _>(|index| 0.5 * (tgap[index * 2] + tgap[index * 2 + 1]));
     let mean_std = ps.iter().sum::<f32>() / 16.0;
     let summary = [
         sorted[0],
@@ -278,7 +293,10 @@ mod tests {
             assert!(output.tokens[2]
                 .iter()
                 .all(|value| *value == (context as f32).clamp(-6.0, 6.0)));
-            assert_eq!(output.mask, [1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0]);
+            assert_eq!(
+                output.mask,
+                [1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0]
+            );
         }
     }
 
@@ -287,7 +305,13 @@ mod tests {
         let mut parameters = fixture_parameters();
         assert!(project(&FixtureProjector, &[0.0; 256], &[0.0; 628], &parameters).is_err());
         parameters.slot2.std[0] = 0.0;
-        assert!(project(&FixtureProjector, &[0.0; 256], &[0.0; DOPE_FEATURES], &parameters).is_err());
+        assert!(project(
+            &FixtureProjector,
+            &[0.0; 256],
+            &[0.0; DOPE_FEATURES],
+            &parameters
+        )
+        .is_err());
     }
 
     #[test]
@@ -298,8 +322,13 @@ mod tests {
                 vec![0.0; 47]
             }
         }
-        let error = project(&BadProjector, &[0.0; 256], &[0.0; DOPE_FEATURES], &fixture_parameters())
-            .unwrap_err();
+        let error = project(
+            &BadProjector,
+            &[0.0; 256],
+            &[0.0; DOPE_FEATURES],
+            &fixture_parameters(),
+        )
+        .unwrap_err();
         assert!(error.to_string().contains("lm48 projection width"));
     }
 }
