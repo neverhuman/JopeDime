@@ -13694,6 +13694,16 @@
       ],
       "lanes": [],
       "scope": "H124 synthetic CPU controls for the fresh family split, fixed score blend, complete-panel strict family-bootstrap/harm admission and data-free dry run. No H50/H58/H51 reads or model fits in the fixture suite; offline research only."
+    },
+    "python:research/flywheel_selfplay/h99_h100_readout/test_readout.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H99/H100 synthetic terminal FIFO publication: complete panels, unchanged native Elo/CI, wave-specific Holm/margin/harm gates, charged rearm prefixes, identity/digest/nonfinite/path/snapshot refusals, bounded no-Torch watcher and UNKNOWN timeout. Research only; no new test, corpus qualification, GPU or serving promotion."
     }
   },
   "lanes": {
