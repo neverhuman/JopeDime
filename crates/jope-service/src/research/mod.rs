@@ -90,7 +90,7 @@ pub enum Rung0Measurement {
         gate: bool,
     },
     Failed {
-        code: crate::worker::protocol::WorkerFailure,
+        code: crate::worker::WorkerFailure,
     },
 }
 

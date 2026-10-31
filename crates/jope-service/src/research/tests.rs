@@ -1,5 +1,5 @@
 use super::*;
-use crate::worker::protocol::WorkerFailure;
+use crate::worker::WorkerFailure;
 use serde_json::{json, Value};
 use std::{fs, process::Command};
 
