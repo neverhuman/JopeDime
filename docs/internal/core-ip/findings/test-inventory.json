@@ -5062,6 +5062,10 @@
     "python:research/flywheel_selfplay/h96_w4_active_reveal/test_run_w4.py": {
       "reason": "Owner-requested pytest proofs for the H96 W4 two-plus-two CPU preparation, including the completeness gate that refuses a verdict on missing, duplicated, incomplete or short seed panels; offline research analysis outside the reviewed product baseline.",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h106_w9_proposal_scorer_replay/test_run_h106.py": {
+      "reason": "Owner-requested pytest proofs for the H106 proposal-distribution scorer and W9 non-neural memory-replay CPU preparation; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
