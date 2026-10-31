@@ -53,9 +53,9 @@ def make_fig2_novelty_judgment() -> None:
     inc_y = 0.55
     ax.axhline(inc_y, color="#475569", lw=1.0, ls="--", zorder=2)
     ax.text(
-        0.02, inc_y + 0.03,
-        "Declared incumbent $\\mathrm{inc}(p)$",
-        fontsize=6.4, color="#334155", fontstyle="italic",
+        0.02, inc_y + 0.02,
+        "Declared incumbent\n$\\mathrm{inc}(p)$",
+        fontsize=7.2, color="#334155", fontstyle="italic", va="bottom",
     )
 
     # 1. Imitation prior (lower-left / near incumbent)
@@ -66,7 +66,7 @@ def make_fig2_novelty_judgment() -> None:
     ax.text(
         0.17, 0.34,
         "Imitation prior\n(near precedent)",
-        fontsize=6.3, color="#334155", ha="center", va="top",
+        fontsize=7.2, color="#334155", ha="center", va="top",
         bbox=dict(boxstyle="round,pad=0.22", facecolor="#f8fafc", edgecolor="#cbd5e1", lw=0.6),
     )
 
@@ -75,9 +75,9 @@ def make_fig2_novelty_judgment() -> None:
     rand_y = rng.uniform(0.04, 0.13, 16)
     ax.scatter(rand_x, rand_y, s=15, marker="x", color="#94a3b8", linewidths=0.9, zorder=3)
     ax.text(
-        0.82, 0.17,
+        0.79, 0.17,
         "Random generator\n(high novelty, low value)",
-        fontsize=6.3, color="#475569", ha="center", va="bottom",
+        fontsize=7.2, color="#475569", ha="center", va="bottom",
         bbox=dict(boxstyle="round,pad=0.22", facecolor="#f8fafc", edgecolor="#cbd5e1", lw=0.6),
     )
 
@@ -89,9 +89,9 @@ def make_fig2_novelty_judgment() -> None:
     ax.scatter(srch_x[below], srch_y[below], s=17, color="#93c5fd", edgecolors="#2563eb", linewidths=0.6, zorder=3)
     ax.scatter(srch_x[above], srch_y[above], s=22, color="#2563eb", edgecolors="#1e3a8a", linewidths=0.6, zorder=4)
     ax.text(
-        0.36, 0.77,
+        0.32, 0.77,
         "Repeated search ($B \\gg 1$)\n(many tries; keep winners)",
-        fontsize=6.3, color="#1e40af", ha="center", va="bottom",
+        fontsize=7.2, color="#1e40af", ha="center", va="bottom",
         bbox=dict(boxstyle="round,pad=0.22", facecolor="#eff6ff", edgecolor="#93c5fd", lw=0.6),
     )
 
@@ -104,7 +104,7 @@ def make_fig2_novelty_judgment() -> None:
     ax.text(
         0.81, 0.79,
         "Learned proposer ($B = 1$)\n(height tested in Sec. 7)",
-        fontsize=6.3, color="#92400e", ha="center", va="bottom",
+        fontsize=7.2, color="#92400e", ha="center", va="bottom",
         bbox=dict(boxstyle="round,pad=0.22", facecolor="#fffbeb", edgecolor="#fcd34d", lw=0.7),
     )
 
