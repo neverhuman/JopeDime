@@ -1,32 +1,1160 @@
 {
-  "arms": [
-    "CONTROL",
-    "EWC",
-    "BITFIT"
-  ],
-  "bitfit_trainable_parameters": 691,
-  "candidate_breakthrough": false,
-  "dl_val_outer_test_sealed_holdout_metatest_reads": 0,
-  "fold_manifest_sha256": "a2a9dd147601ecca76e247576a4575970450d1facc77c332232a5899ac54f440",
-  "fold_seed": 132100,
-  "full_trainable_parameters": 29211,
-  "gpu_seconds": 0.0,
-  "optimizer_updates": 0,
-  "paired_seeds": [
-    100,
-    101,
-    102
-  ],
-  "prereg_sha256": "49f9cca4ad7d51e9e20605a60b76a05c2ee1d5ef2a5bca69ec129bc890c070df",
-  "status": "NOT_RUN",
-  "synthetic_smoke": {
-    "assessment_read": false,
-    "mode": "synthetic_only",
-    "optimizer_updates": 0,
-    "status": "PASS"
+  "attempt_1_disclosed_ewc": {
+    "admitted": false,
+    "all_three_seeds_positive_vs_r882": false,
+    "attempt_1a_fisher": {
+      "assessment_families_touched": 0,
+      "ewc_lambda_a_priori": 772275.3451,
+      "fisher_diag_mean": 2.54216e-05,
+      "mean_fit_family_loss_at_r882": 3.975576,
+      "receipt_sha256": "ea301a7a61003ecb58806aeeb179d9a2f74f03e380793b311a18c1f0605921d6"
+    },
+    "attempt_1b_fisher": {
+      "assessment_families_touched": 0,
+      "ewc_lambda_a_priori": 770199.1457,
+      "fisher_diag_mean": 2.548086e-05,
+      "mean_fit_family_loss_at_r882": 3.974131,
+      "receipt_sha256": "0b8d20460ddcefacc8e945e330bbdffaa4a022fbb6d9ad070288eb40cf0ea7fb"
+    },
+    "cells": {
+      "EWC_seed100": {
+        "adapter_l2_drift_from_r882": 0.18583,
+        "deleted_cell_receipt_sha256": "304e9e8490b81458248652b8c5019191f3c5976df0f0ec55ac0ed724d2d4edca",
+        "delta_vs_control": 0.044176,
+        "delta_vs_r882": 0.012276,
+        "ewc_lambda_used": 772275.3451,
+        "final_adapter_sha256_prefix": "e9ecc7bd3827",
+        "final_ewc_penalty": 0.0013,
+        "fisher_weighted_drift_from_r882": 1.9169627443554283e-09,
+        "fold0_context_mean_utility": 1.042572,
+        "fold0_family_mean_utility": 1.081732
+      },
+      "EWC_seed101": {
+        "adapter_l2_drift_from_r882": 0.20481,
+        "delta_vs_control": 0.043723,
+        "delta_vs_r882": 0.012115,
+        "ewc_lambda_used": 770199.1457,
+        "final_adapter_sha256_prefix": "ef8f006b4a70",
+        "final_ewc_penalty": 0.0014,
+        "fisher_weighted_drift_from_r882": 1.7693801622834152e-09,
+        "fold0_context_mean_utility": 1.042447,
+        "fold0_family_mean_utility": 1.081571
+      },
+      "EWC_seed102": {
+        "adapter_l2_drift_from_r882": 0.25008,
+        "delta_vs_control": 0.011148,
+        "delta_vs_r882": -0.002174,
+        "ewc_lambda_used": 770199.1457,
+        "final_adapter_sha256_prefix": "09234a93414d",
+        "final_ewc_penalty": 0.0015,
+        "fisher_weighted_drift_from_r882": 1.8813125010611685e-09,
+        "fold0_context_mean_utility": 1.031309,
+        "fold0_family_mean_utility": 1.067282
+      }
+    },
+    "mean_seed_gain_vs_r882": 0.007406,
+    "median_seed_gain_vs_r882": 0.012115,
+    "note": "Attempt 1 EWC results prior to seeding Step-2 np.random with FOLD_SEED=132100. Seed 100 ran under Attempt 1a Fisher (lambda=772275.3451); seeds 101 and 102 ran under Attempt 1b Fisher (lambda=770199.1457). Disclosed side-by-side per H132 red-team directive.",
+    "per_seed_family_mean_deltas_vs_r882": [
+      0.012276,
+      0.012115,
+      -0.002174
+    ],
+    "verdict": "NO_ADMISSION"
   },
-  "total_updates_planned": 360,
-  "updates_per_cell_planned": 40,
-  "verdict": "NOT_RUN",
+  "bradley_terry_elo_vs_control_1500": {
+    "BITFIT": 1534.38,
+    "CONTROL": 1500.0,
+    "EWC": 1535.63,
+    "R882": 1536.12
+  },
+  "bradley_terry_elo_vs_r882_1500": {
+    "BITFIT": 1498.26,
+    "CONTROL": 1463.88,
+    "EWC": 1499.51,
+    "R882": 1500.0
+  },
+  "candidate_breakthrough": false,
+  "cells": {
+    "BITFIT_seed100": {
+      "adapter_l2_drift_from_r882": 0.07621406763792038,
+      "arm": "BITFIT",
+      "elapsed_seconds": 101.414,
+      "final_adapter_sha256": "bc1dd635df71a0ad4bee2024b61d42ec8702708be654bde54d231623d1bc72bd",
+      "final_ewc_penalty": 0.0,
+      "final_step_loss": 2.523320198059082,
+      "fisher_weighted_drift_from_r882": 6.903795187053561e-07,
+      "fold0_context_mean_utility": 1.0310652365759885,
+      "fold0_family_mean_utility": 1.0671024516243262,
+      "frozen_adapter_max_abs_diff": 0.0,
+      "frozen_adapter_tensor_count": 26,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 29945,
+        "path": "/home/ubuntu/jope-rescue-20260921/h132-ewc-bitfit/cells/BITFIT_seed100.json",
+        "relative_key": "cells/BITFIT_seed100.json",
+        "sha256": "39d37cbd6825d7b2e0086fe51a783937407f206323c84e2c579de0280d5665f9",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 0.40149849411280614,
+      "mean_context_loss": 4.338039723038674,
+      "mean_ewc_penalty": 0.0,
+      "mean_sampled_frozen_loss": 4.338475274667144,
+      "mean_step_loss": 4.338039723038674,
+      "median_post_clip_grad_norm": 0.14623292535543442,
+      "median_pre_clip_grad_norm": 0.14623292535543442,
+      "seed": 100,
+      "trainable_parameter_count": 691,
+      "trainable_tensor_count": 21,
+      "updates": 40
+    },
+    "BITFIT_seed101": {
+      "adapter_l2_drift_from_r882": 0.07255124300718307,
+      "arm": "BITFIT",
+      "elapsed_seconds": 96.551,
+      "final_adapter_sha256": "fe6f4149979740fe9b72ba0762c139a2933ade9fdac495e044c64eb0540bca5c",
+      "final_ewc_penalty": 0.0,
+      "final_step_loss": 2.051661252975464,
+      "fisher_weighted_drift_from_r882": 6.544922948939263e-07,
+      "fold0_context_mean_utility": 1.0310652365759885,
+      "fold0_family_mean_utility": 1.0671024516243262,
+      "frozen_adapter_max_abs_diff": 0.0,
+      "frozen_adapter_tensor_count": 26,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 29946,
+        "path": "/home/ubuntu/jope-rescue-20260921/h132-ewc-bitfit/cells/BITFIT_seed101.json",
+        "relative_key": "cells/BITFIT_seed101.json",
+        "sha256": "665ca56537ea9cf17eb5a429af893c29c1f9a61fae3b246ec0e6d1794780b4cf",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 0.40149849411280614,
+      "mean_context_loss": 4.073722338676452,
+      "mean_ewc_penalty": 0.0,
+      "mean_sampled_frozen_loss": 4.070881719328463,
+      "mean_step_loss": 4.073722338676452,
+      "median_post_clip_grad_norm": 0.16403724253177643,
+      "median_pre_clip_grad_norm": 0.16403724253177643,
+      "seed": 101,
+      "trainable_parameter_count": 691,
+      "trainable_tensor_count": 21,
+      "updates": 40
+    },
+    "BITFIT_seed102": {
+      "adapter_l2_drift_from_r882": 0.07622741907835007,
+      "arm": "BITFIT",
+      "elapsed_seconds": 100.997,
+      "final_adapter_sha256": "b8791dff462c07a4d38bae926cd57d159e8888696e5b835f545972f46c56ff06",
+      "final_ewc_penalty": 0.0,
+      "final_step_loss": 3.1189892292022705,
+      "fisher_weighted_drift_from_r882": 7.149997733387992e-07,
+      "fold0_context_mean_utility": 1.0310602523476826,
+      "fold0_family_mean_utility": 1.0669628651347673,
+      "frozen_adapter_max_abs_diff": 0.0,
+      "frozen_adapter_tensor_count": 26,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 29946,
+        "path": "/home/ubuntu/jope-rescue-20260921/h132-ewc-bitfit/cells/BITFIT_seed102.json",
+        "relative_key": "cells/BITFIT_seed102.json",
+        "sha256": "f61813fadfe7f78e9261099a7cf57b41f810acb403deef9262430f5375b93897",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 0.40149849411280614,
+      "mean_context_loss": 4.579107087850571,
+      "mean_ewc_penalty": 0.0,
+      "mean_sampled_frozen_loss": 4.57723203515634,
+      "mean_step_loss": 4.579107087850571,
+      "median_post_clip_grad_norm": 0.15177073329687119,
+      "median_pre_clip_grad_norm": 0.15177073329687119,
+      "seed": 102,
+      "trainable_parameter_count": 691,
+      "trainable_tensor_count": 21,
+      "updates": 40
+    },
+    "CONTROL_seed100": {
+      "adapter_l2_drift_from_r882": 0.44363972544670105,
+      "arm": "CONTROL",
+      "elapsed_seconds": 104.962,
+      "final_adapter_sha256": "1be4346511e88809a3f4ba6b3865416f2590eae4314b91e812071e1e6491e0b6",
+      "final_ewc_penalty": 0.0,
+      "final_step_loss": 2.506636142730713,
+      "fisher_weighted_drift_from_r882": 8.929181268677428e-06,
+      "fold0_context_mean_utility": 0.9857518739949948,
+      "fold0_family_mean_utility": 1.037555834616746,
+      "frozen_adapter_max_abs_diff": 0.0,
+      "frozen_adapter_tensor_count": 0,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 29909,
+        "path": "/home/ubuntu/jope-rescue-20260921/h132-ewc-bitfit/cells/CONTROL_seed100.json",
+        "relative_key": "cells/CONTROL_seed100.json",
+        "sha256": "c79048272bb2d6b42e69fbb9b1b428814017e1fa1b5be7099afb0c5e9efcca2c",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 2.4851225150058474,
+      "mean_context_loss": 4.327234244346618,
+      "mean_ewc_penalty": 0.0,
+      "mean_sampled_frozen_loss": 4.342028699815273,
+      "mean_step_loss": 4.327234244346618,
+      "median_post_clip_grad_norm": 0.5213259756565094,
+      "median_pre_clip_grad_norm": 0.5213259756565094,
+      "seed": 100,
+      "trainable_parameter_count": 29211,
+      "trainable_tensor_count": 47,
+      "updates": 40
+    },
+    "CONTROL_seed101": {
+      "adapter_l2_drift_from_r882": 0.43069198727607727,
+      "arm": "CONTROL",
+      "elapsed_seconds": 103.615,
+      "final_adapter_sha256": "42df52a6e54f6dc2ecfb18deb629257123ada215598286207bc442ce0e2ce75d",
+      "final_ewc_penalty": 0.0,
+      "final_step_loss": 2.027622699737549,
+      "fisher_weighted_drift_from_r882": 9.84821267232915e-06,
+      "fold0_context_mean_utility": 1.0007297513951416,
+      "fold0_family_mean_utility": 1.0378479262774811,
+      "frozen_adapter_max_abs_diff": 0.0,
+      "frozen_adapter_tensor_count": 0,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 29926,
+        "path": "/home/ubuntu/jope-rescue-20260921/h132-ewc-bitfit/cells/CONTROL_seed101.json",
+        "relative_key": "cells/CONTROL_seed101.json",
+        "sha256": "30c3af2bbc3d4f646bf791c868cb849713d4c8540c5940b65c0d80cf9f96e443",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 2.3384200852157737,
+      "mean_context_loss": 4.062423115968704,
+      "mean_ewc_penalty": 0.0,
+      "mean_sampled_frozen_loss": 4.070881719328463,
+      "mean_step_loss": 4.062423115968704,
+      "median_post_clip_grad_norm": 0.5047106742858887,
+      "median_pre_clip_grad_norm": 0.5047106742858887,
+      "seed": 101,
+      "trainable_parameter_count": 29211,
+      "trainable_tensor_count": 47,
+      "updates": 40
+    },
+    "CONTROL_seed102": {
+      "adapter_l2_drift_from_r882": 0.4452874958515167,
+      "arm": "CONTROL",
+      "elapsed_seconds": 103.547,
+      "final_adapter_sha256": "8c1f953245879665b773ae7c96ebd4d28a7ba673fd41c0550dd6287e86296b0b",
+      "final_ewc_penalty": 0.0,
+      "final_step_loss": 3.0990023612976074,
+      "fisher_weighted_drift_from_r882": 1.0017582030371049e-05,
+      "fold0_context_mean_utility": 1.0005605885365672,
+      "fold0_family_mean_utility": 1.056133523275652,
+      "frozen_adapter_max_abs_diff": 0.0,
+      "frozen_adapter_tensor_count": 0,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 29925,
+        "path": "/home/ubuntu/jope-rescue-20260921/h132-ewc-bitfit/cells/CONTROL_seed102.json",
+        "relative_key": "cells/CONTROL_seed102.json",
+        "sha256": "ae7b87195a7a38796d795d9eca548a9da63f812ae6e653ba96ec829b9b746feb",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 2.4851225150058474,
+      "mean_context_loss": 4.567127588391304,
+      "mean_ewc_penalty": 0.0,
+      "mean_sampled_frozen_loss": 4.57723203515634,
+      "mean_step_loss": 4.567127588391304,
+      "median_post_clip_grad_norm": 0.5357272326946259,
+      "median_pre_clip_grad_norm": 0.5357272326946259,
+      "seed": 102,
+      "trainable_parameter_count": 29211,
+      "trainable_tensor_count": 47,
+      "updates": 40
+    },
+    "EWC_seed100": {
+      "adapter_l2_drift_from_r882": 0.186501145362854,
+      "arm": "EWC",
+      "elapsed_seconds": 98.02,
+      "final_adapter_sha256": "cc4a8dbc3a05dc124ec6a614aeadc154d159ae1b7d6b9677eb865f3912f70a78",
+      "final_ewc_penalty": 0.001279691350646317,
+      "final_step_loss": 2.526013135910034,
+      "fisher_weighted_drift_from_r882": 1.6862012850530182e-09,
+      "fold0_context_mean_utility": 1.0425722177365242,
+      "fold0_family_mean_utility": 1.0817318743897197,
+      "frozen_adapter_max_abs_diff": 0.0,
+      "frozen_adapter_tensor_count": 0,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 29978,
+        "path": "/home/ubuntu/jope-rescue-20260921/h132-ewc-bitfit/cells/EWC_seed100.json",
+        "relative_key": "cells/EWC_seed100.json",
+        "sha256": "dc8771ce02934b7ad2a3d905725eb32766a443848e25b8c439222ce47e462f87",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 2.9144029499378994,
+      "mean_context_loss": 4.33818296790123,
+      "mean_ewc_penalty": 0.0026630778476828708,
+      "mean_sampled_frozen_loss": 4.338977079931647,
+      "mean_step_loss": 4.340846031904221,
+      "median_post_clip_grad_norm": 0.9999998807907104,
+      "median_pre_clip_grad_norm": 11.158295154571533,
+      "seed": 100,
+      "trainable_parameter_count": 29211,
+      "trainable_tensor_count": 47,
+      "updates": 40
+    },
+    "EWC_seed101": {
+      "adapter_l2_drift_from_r882": 0.20366813242435455,
+      "arm": "EWC",
+      "elapsed_seconds": 98.116,
+      "final_adapter_sha256": "8ba054a5dee822dbfb9bb98c194338b13656212b02738d82a4531ed0ee2fc9b5",
+      "final_ewc_penalty": 0.0013010242255404592,
+      "final_step_loss": 2.054095506668091,
+      "fisher_weighted_drift_from_r882": 1.6209530683748706e-09,
+      "fold0_context_mean_utility": 1.0313652895529355,
+      "fold0_family_mean_utility": 1.0673542055493113,
+      "frozen_adapter_max_abs_diff": 0.0,
+      "frozen_adapter_tensor_count": 0,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 29974,
+        "path": "/home/ubuntu/jope-rescue-20260921/h132-ewc-bitfit/cells/EWC_seed101.json",
+        "relative_key": "cells/EWC_seed101.json",
+        "sha256": "8d195d3eebb2eb6bc0a96105d090da984cbd220637778bd895141248a51c5f9f",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 0.40149849411280614,
+      "mean_context_loss": 4.073903572559357,
+      "mean_ewc_penalty": 0.0021109110326506197,
+      "mean_sampled_frozen_loss": 4.0757180217653515,
+      "mean_step_loss": 4.0760144799947735,
+      "median_post_clip_grad_norm": 0.9999998211860657,
+      "median_pre_clip_grad_norm": 5.610447406768799,
+      "seed": 101,
+      "trainable_parameter_count": 29211,
+      "trainable_tensor_count": 47,
+      "updates": 40
+    },
+    "EWC_seed102": {
+      "adapter_l2_drift_from_r882": 0.24832113087177277,
+      "arm": "EWC",
+      "elapsed_seconds": 97.208,
+      "final_adapter_sha256": "181ba00d0200ac2bbcf2a85e614b4fb7593e039b8818d97754acdb0df9e9dfd4",
+      "final_ewc_penalty": 0.0015451727667823434,
+      "final_step_loss": 3.121717691421509,
+      "fisher_weighted_drift_from_r882": 1.8845739301782878e-09,
+      "fold0_context_mean_utility": 1.0313090036291022,
+      "fold0_family_mean_utility": 1.067281994827515,
+      "frozen_adapter_max_abs_diff": 0.0,
+      "frozen_adapter_tensor_count": 0,
+      "grad_clip_cap": 1.0,
+      "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+      "local_receipt": {
+        "bytes": 29969,
+        "path": "/home/ubuntu/jope-rescue-20260921/h132-ewc-bitfit/cells/EWC_seed102.json",
+        "relative_key": "cells/EWC_seed102.json",
+        "sha256": "0c47cf52026865eda52136bbe7de68e50abc8319d56668fdf2938793e55f5302",
+        "status": "LOCAL_ONLY"
+      },
+      "max_abs_context_utility_diff_from_r882": 0.40149849411280614,
+      "mean_context_loss": 4.579307779669762,
+      "mean_ewc_penalty": 0.0019314284989377483,
+      "mean_sampled_frozen_loss": 4.578268834203482,
+      "mean_step_loss": 4.581239202618599,
+      "median_post_clip_grad_norm": 0.9999998807907104,
+      "median_pre_clip_grad_norm": 9.199362754821777,
+      "seed": 102,
+      "trainable_parameter_count": 29211,
+      "trainable_tensor_count": 47,
+      "updates": 40
+    }
+  },
+  "cells_completed": 9,
+  "complete": true,
+  "dl_val_reads": 0,
+  "elapsed_seconds": 501.82,
+  "execution_accounting": {
+    "attempts": [
+      {
+        "attempt": "initial",
+        "new_completed_cells": 0,
+        "optimizer_updates": 0,
+        "task": "task-2357"
+      },
+      {
+        "attempt": "1a",
+        "new_completed_cells": 2,
+        "optimizer_updates": 80,
+        "task": "task-2366"
+      },
+      {
+        "attempt": "1b",
+        "new_completed_cells": 7,
+        "optimizer_updates": 280,
+        "task": "task-2381"
+      },
+      {
+        "attempt": "2",
+        "new_completed_cells": 3,
+        "optimizer_updates": 120,
+        "task": "task-2411"
+      }
+    ],
+    "basis": "Completed cells in the disclosed Amendment A1 chronology; 40 optimizer updates per cell. Existing optimizer_updates and cells_completed describe the final retained panel.",
+    "cumulative_disclosed_completed_cells": 12,
+    "cumulative_disclosed_optimizer_updates": 480,
+    "elapsed_seconds_scope": "task-2411 final invocation only; not cumulative wall time across all attempts",
+    "local_summary_receipt_scope": "Native summary serialized before insertion of its local_summary_receipt field; verified by removing only that field and serializing sorted keys with indent=2 and a final newline.",
+    "retained_panel_cells": 9,
+    "retained_panel_optimizer_updates": 360,
+    "superseded_attempt_1_ewc_cells": 3,
+    "superseded_attempt_1_ewc_optimizer_updates": 120
+  },
+  "final_guards": {
+    "disk_free_gib": 512.07,
+    "disk_used_pct": 93.072,
+    "load1": 26.06,
+    "load5": 29.36,
+    "mem_available_gib": 72.41,
+    "rss_bytes": 5165297664,
+    "rss_mib": 4926.01,
+    "stage": "wave_complete",
+    "torch_threads": 4
+  },
+  "frozen_fit_family_fisher": {
+    "adapter_mutated": false,
+    "assessment_families_touched": 0,
+    "ewc_lambda_a_priori": 773442.8940779238,
+    "ewc_reference_drift": 0.45,
+    "fisher_diag_max": 0.4594065075874903,
+    "fisher_diag_mean": 2.5380361709482852e-05,
+    "fisher_diag_median": 9.652553508168361e-09,
+    "fisher_vector_sha256": "acefa3035c4ac31e3bf90ec04da47eb92d6a6ae4784c85f0bfc0311579cd2c08",
+    "fit_context_count": 956,
+    "fit_family_count": 164,
+    "local_receipt": {
+      "bytes": 9337,
+      "path": "/home/ubuntu/jope-rescue-20260921/h132-ewc-bitfit/fit_family_fisher.json",
+      "relative_key": "fit_family_fisher.json",
+      "sha256": "1cd853ef0abc28ce533ad936664b587d4cea9d13969d8aa3c94a40ca414296a6",
+      "status": "LOCAL_ONLY"
+    },
+    "mean_fit_family_loss_at_r882": 3.9751277336987054
+  },
+  "gpu_seconds": 0.0,
+  "holm_step_down_vs_r882": {
+    "BITFIT": {
+      "admitted": false,
+      "alpha_threshold": 0.05,
+      "gates": {
+        "all_three_seeds_positive": false,
+        "family_harm_le_10pct": true,
+        "holm_lcb95_gt_0": false,
+        "median_seed_gain_gt_0_001": false,
+        "not_identical_to_r882": true,
+        "seeds_not_identical": false
+      },
+      "holm_lcb95": -0.006212288695477807,
+      "p_value_one_sided": 0.929007099290071,
+      "rank": 2
+    },
+    "EWC": {
+      "admitted": false,
+      "alpha_threshold": 0.025,
+      "gates": {
+        "all_three_seeds_positive": false,
+        "family_harm_le_10pct": true,
+        "holm_lcb95_gt_0": false,
+        "median_seed_gain_gt_0_001": false,
+        "not_identical_to_r882": true,
+        "seeds_not_identical": true
+      },
+      "holm_lcb95": -0.005790749442391732,
+      "p_value_one_sided": 0.35196480351964804,
+      "rank": 1
+    }
+  },
+  "live_loop_reads": 0,
+  "local_summary_receipt": {
+    "bytes": 38263,
+    "path": "/home/ubuntu/jope-rescue-20260921/h132-ewc-bitfit/h132_summary.json",
+    "relative_key": "h132_summary.json",
+    "sha256": "8dc9b6ce28b1cdb024178696e298810aecdbfe724b6b134ef51e49a7e5d5271e",
+    "status": "LOCAL_ONLY"
+  },
+  "optimizer_updates": 360,
+  "outer_test_reads": 0,
+  "prereg_amendment_a1": {
+    "attempt_1a_runner_sha256": "fd7d9214ee7840d451859e883fa6ed7e7d66d1b668b217a65eeed2762b03f8f2",
+    "attempt_1b_runner_sha256": "785806f0f0f8f8c4cb1bc5d8e5c3e18b7e4074d61ef70c7f9ca2fb3607311e2b",
+    "final_runner_sha256": "4d3e8182e674410b179e13ec2cadba21e1715c65b677053fd776a2dfe4a65673",
+    "path": "research/flywheel_selfplay/h132_ewc_bitfit/PREREG_AMENDMENT_A1.md",
+    "prereg_runner_sha256": "c1bb24c94d3ad7e83d8844d6fecd9076b5b078fe58c9bd6764282a4166c09f60",
+    "reason": "Step 2 fit-family Fisher in Attempt 1 lacked explicit np.random.seed(FOLD_SEED), causing Attempt 1a (seed 100, lambda=772275.3451) and Attempt 1b (seeds 101-102, lambda=770199.1457) to use two different unseeded fit-fold Fisher penalties across process restart; Step 4 also crashed on BITFIT seed 100/101 utility tie instead of recording seeds_not_identical=False. Attempt 2 seeded Step 2 with FOLD_SEED=132100 (lambda=773442.8941). Both Attempt 1 and Attempt 2 yield NO_ADMISSION.",
+    "sha256": "29605b9e107f06e6e98d09792b5e72a5a17dcb660858ea9c3b6e8f07538fc0e9",
+    "zero_assessment_leakage_in_lambda": true
+  },
+  "primary_vs_r882": {
+    "BITFIT": {
+      "admitted": false,
+      "all_three_seeds_positive": false,
+      "ci95_two_sided": [
+        -0.006854359448564642,
+        0.0002400391223464123
+      ],
+      "comparator": "R882",
+      "holm_alpha": 0.05,
+      "holm_lcb95": -0.006212288695477807,
+      "holm_pass": false,
+      "lcb95_one_sided": -0.006212288695477807,
+      "lcb975_one_sided": -0.006854359448564642,
+      "max_seed_harmed_context_fraction": 0.015209125475285171,
+      "max_seed_harmed_family_fraction": 0.04878048780487805,
+      "mean_seed_gain": -0.0023997323423434933,
+      "median_seed_gain": -0.002353203512490571,
+      "median_seed_paired_elo": 1491.52,
+      "p_value_one_sided": 0.929007099290071,
+      "per_seed": [
+        {
+          "arm_family_mean": 1.0671024516243262,
+          "comparator_family_mean": 1.0694556551368166,
+          "context_mean_delta": -0.0028834381541749314,
+          "family_mean_delta": -0.002353203512490571,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4878048780487805,
+          "family_wtl": [
+            3,
+            34,
+            4
+          ],
+          "harmed_contexts_count": 3,
+          "harmed_contexts_fraction": 0.011406844106463879,
+          "harmed_families_count": 2,
+          "harmed_families_fraction": 0.04878048780487805,
+          "paired_elo": 1491.52,
+          "seed": 100
+        },
+        {
+          "arm_family_mean": 1.0671024516243262,
+          "comparator_family_mean": 1.0694556551368166,
+          "context_mean_delta": -0.0028834381541749314,
+          "family_mean_delta": -0.002353203512490571,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4878048780487805,
+          "family_wtl": [
+            3,
+            34,
+            4
+          ],
+          "harmed_contexts_count": 3,
+          "harmed_contexts_fraction": 0.011406844106463879,
+          "harmed_families_count": 2,
+          "harmed_families_fraction": 0.04878048780487805,
+          "paired_elo": 1491.52,
+          "seed": 101
+        },
+        {
+          "arm_family_mean": 1.0669628651347673,
+          "comparator_family_mean": 1.0694556551368166,
+          "context_mean_delta": -0.002888422382480489,
+          "family_mean_delta": -0.0024927900020493376,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.47560975609756095,
+          "family_wtl": [
+            3,
+            33,
+            5
+          ],
+          "harmed_contexts_count": 4,
+          "harmed_contexts_fraction": 0.015209125475285171,
+          "harmed_families_count": 2,
+          "harmed_families_fraction": 0.04878048780487805,
+          "paired_elo": 1483.04,
+          "seed": 102
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        -0.002353203512490571,
+        -0.002353203512490571,
+        -0.0024927900020493376
+      ],
+      "pooled_family_harm_fraction": 0.04878048780487805,
+      "pooled_family_median_gain": 0.0,
+      "pooled_family_win_rate": 0.483739837398374,
+      "pooled_family_wtl": [
+        9,
+        101,
+        13
+      ],
+      "pooled_paired_elo": 1488.7,
+      "pooled_paired_elo_ci95": [
+        1445.9,
+        1534.0
+      ],
+      "seed_mean_harmed_context_fraction": 0.015209125475285171,
+      "seed_mean_harmed_family_fraction": 0.04878048780487805
+    },
+    "CONTROL": {
+      "all_three_seeds_positive": false,
+      "ci95_two_sided": [
+        -0.08654944796044496,
+        0.049564621758450604
+      ],
+      "comparator": "R882",
+      "lcb95_one_sided": -0.07765386031179428,
+      "lcb975_one_sided": -0.08654944796044496,
+      "max_seed_harmed_context_fraction": 0.19391634980988592,
+      "max_seed_harmed_family_fraction": 0.5121951219512195,
+      "mean_seed_gain": -0.025609893746857095,
+      "median_seed_gain": -0.031607728859335556,
+      "median_seed_paired_elo": 1366.71,
+      "p_value_one_sided": 0.7882211778822118,
+      "per_seed": [
+        {
+          "arm_family_mean": 1.037555834616746,
+          "comparator_family_mean": 1.0694556551368166,
+          "context_mean_delta": -0.04819680073516874,
+          "family_mean_delta": -0.031899820520070774,
+          "family_median_delta": -0.01064104486382278,
+          "family_win_rate": 0.2926829268292683,
+          "family_wtl": [
+            8,
+            8,
+            25
+          ],
+          "harmed_contexts_count": 51,
+          "harmed_contexts_fraction": 0.19391634980988592,
+          "harmed_families_count": 21,
+          "harmed_families_fraction": 0.5121951219512195,
+          "paired_elo": 1346.71,
+          "seed": 100
+        },
+        {
+          "arm_family_mean": 1.0378479262774811,
+          "comparator_family_mean": 1.0694556551368166,
+          "context_mean_delta": -0.03321892333502135,
+          "family_mean_delta": -0.031607728859335556,
+          "family_median_delta": -0.011344772960341865,
+          "family_win_rate": 0.3170731707317073,
+          "family_wtl": [
+            10,
+            6,
+            25
+          ],
+          "harmed_contexts_count": 47,
+          "harmed_contexts_fraction": 0.17870722433460076,
+          "harmed_families_count": 21,
+          "harmed_families_fraction": 0.5121951219512195,
+          "paired_elo": 1366.71,
+          "seed": 101
+        },
+        {
+          "arm_family_mean": 1.056133523275652,
+          "comparator_family_mean": 1.0694556551368166,
+          "context_mean_delta": -0.03338808619359599,
+          "family_mean_delta": -0.013322131861164946,
+          "family_median_delta": -0.0025980015873012796,
+          "family_win_rate": 0.3780487804878049,
+          "family_wtl": [
+            12,
+            7,
+            22
+          ],
+          "harmed_contexts_count": 48,
+          "harmed_contexts_fraction": 0.18250950570342206,
+          "harmed_families_count": 18,
+          "harmed_families_fraction": 0.43902439024390244,
+          "paired_elo": 1413.52,
+          "seed": 102
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        -0.031899820520070774,
+        -0.031607728859335556,
+        -0.013322131861164946
+      ],
+      "pooled_family_harm_fraction": 0.4878048780487805,
+      "pooled_family_median_gain": -0.0075759245945128395,
+      "pooled_family_win_rate": 0.32926829268292684,
+      "pooled_family_wtl": [
+        30,
+        21,
+        72
+      ],
+      "pooled_paired_elo": 1376.4,
+      "pooled_paired_elo_ci95": [
+        1275.49,
+        1463.14
+      ],
+      "seed_mean_harmed_context_fraction": 0.20532319391634982,
+      "seed_mean_harmed_family_fraction": 0.4878048780487805
+    },
+    "EWC": {
+      "admitted": false,
+      "all_three_seeds_positive": false,
+      "ci95_two_sided": [
+        -0.005790749442391732,
+        0.014229116650914864
+      ],
+      "comparator": "R882",
+      "holm_alpha": 0.025,
+      "holm_lcb95": -0.005790749442391732,
+      "holm_pass": false,
+      "lcb95_one_sided": -0.004191620040163185,
+      "lcb975_one_sided": -0.005790749442391732,
+      "max_seed_harmed_context_fraction": 0.011406844106463879,
+      "max_seed_harmed_family_fraction": 0.024390243902439025,
+      "mean_seed_gain": 0.0026670364520319663,
+      "median_seed_gain": -0.0021014495875055156,
+      "median_seed_paired_elo": 1491.52,
+      "p_value_one_sided": 0.35196480351964804,
+      "per_seed": [
+        {
+          "arm_family_mean": 1.0817318743897197,
+          "comparator_family_mean": 1.0694556551368166,
+          "context_mean_delta": 0.008623543006360757,
+          "family_mean_delta": 0.0122762192529031,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.5121951219512195,
+          "family_wtl": [
+            4,
+            34,
+            3
+          ],
+          "harmed_contexts_count": 2,
+          "harmed_contexts_fraction": 0.0076045627376425855,
+          "harmed_families_count": 1,
+          "harmed_families_fraction": 0.024390243902439025,
+          "paired_elo": 1508.48,
+          "seed": 100
+        },
+        {
+          "arm_family_mean": 1.0673542055493113,
+          "comparator_family_mean": 1.0694556551368166,
+          "context_mean_delta": -0.0025833851772277,
+          "family_mean_delta": -0.0021014495875055156,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.4878048780487805,
+          "family_wtl": [
+            3,
+            34,
+            4
+          ],
+          "harmed_contexts_count": 3,
+          "harmed_contexts_fraction": 0.011406844106463879,
+          "harmed_families_count": 1,
+          "harmed_families_fraction": 0.024390243902439025,
+          "paired_elo": 1491.52,
+          "seed": 101
+        },
+        {
+          "arm_family_mean": 1.067281994827515,
+          "comparator_family_mean": 1.0694556551368166,
+          "context_mean_delta": -0.002639671101061217,
+          "family_mean_delta": -0.002173660309301686,
+          "family_median_delta": 0.0,
+          "family_win_rate": 0.47560975609756095,
+          "family_wtl": [
+            2,
+            35,
+            4
+          ],
+          "harmed_contexts_count": 3,
+          "harmed_contexts_fraction": 0.011406844106463879,
+          "harmed_families_count": 1,
+          "harmed_families_fraction": 0.024390243902439025,
+          "paired_elo": 1483.04,
+          "seed": 102
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        0.0122762192529031,
+        -0.0021014495875055156,
+        -0.002173660309301686
+      ],
+      "pooled_family_harm_fraction": 0.024390243902439025,
+      "pooled_family_median_gain": 0.0,
+      "pooled_family_win_rate": 0.491869918699187,
+      "pooled_family_wtl": [
+        9,
+        103,
+        11
+      ],
+      "pooled_paired_elo": 1494.35,
+      "pooled_paired_elo_ci95": [
+        1451.67,
+        1534.0
+      ],
+      "seed_mean_harmed_context_fraction": 0.011406844106463879,
+      "seed_mean_harmed_family_fraction": 0.024390243902439025
+    }
+  },
+  "provenance": {
+    "assessment_contexts": 263,
+    "assessment_families": 41,
+    "assessment_fold": 0,
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "fit_contexts": 956,
+    "fit_families": 164,
+    "fit_folds": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "fold_manifest_local_receipt": {
+      "bytes": 14566,
+      "path": "/home/ubuntu/jope-rescue-20260921/h132-ewc-bitfit/fold_manifest_132100.json",
+      "relative_key": "fold_manifest_132100.json",
+      "sha256": "a2a9dd147601ecca76e247576a4575970450d1facc77c332232a5899ac54f440",
+      "status": "LOCAL_ONLY"
+    },
+    "fold_manifest_sha256": "a2a9dd147601ecca76e247576a4575970450d1facc77c332232a5899ac54f440",
+    "fold_seed": 132100,
+    "fused_sha256": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "prereg_sha256": "49f9cca4ad7d51e9e20605a60b76a05c2ee1d5ef2a5bca69ec129bc890c070df",
+    "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "seeds": [
+      100,
+      101,
+      102
+    ],
+    "selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "source_manifest_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
+  },
+  "regression_gate": {
+    "local_receipt": {
+      "bytes": 1017,
+      "path": "/home/ubuntu/jope-rescue-20260921/h132-ewc-bitfit/regression_receipt.json",
+      "relative_key": "regression_receipt.json",
+      "sha256": "12401be1cd799fa704256fd3903c72c30aa7b8cd8a45331248a247a35a22212d",
+      "status": "LOCAL_ONLY"
+    },
+    "r882_fold0_native_family_utility": 1.0921724552292698,
+    "r882_fold0_unrev_context_utility": 1.0339486747301632,
+    "r882_fold0_unrev_family_utility": 1.0694556551368166,
+    "status": "PASS",
+    "two_copy_control_grad_max_abs_diff": 0.0,
+    "two_copy_control_loss_abs_diff": 0.0,
+    "two_copy_fold0_pred_max_abs_diff": 0.0,
+    "two_copy_fold0_utility_max_abs_diff": 0.0
+  },
+  "schema": "jope.h132.metrics/v1",
+  "sealed_metatest_reads": 0,
+  "secondary_ewc_vs_bitfit": {
+    "all_three_seeds_positive": true,
+    "ci95_two_sided": [
+      -0.00011712790030456788,
+      0.014960051350389603
+    ],
+    "comparator": "BITFIT",
+    "lcb95_one_sided": -7.873592966903377e-05,
+    "lcb975_one_sided": -0.00011712790030456788,
+    "max_seed_harmed_context_fraction": 0.0038022813688212928,
+    "max_seed_harmed_family_fraction": 0.0,
+    "mean_seed_gain": 0.005066768794375459,
+    "median_seed_gain": 0.0003191296927476519,
+    "median_seed_paired_elo": 1508.48,
+    "p_value_one_sided": 0.11308869113088692,
+    "per_seed": [
+      {
+        "arm_family_mean": 1.0817318743897197,
+        "comparator_family_mean": 1.0671024516243262,
+        "context_mean_delta": 0.01150698116053569,
+        "family_mean_delta": 0.014629422765393668,
+        "family_median_delta": 0.0,
+        "family_win_rate": 0.5365853658536586,
+        "family_wtl": [
+          3,
+          38,
+          0
+        ],
+        "harmed_contexts_count": 0,
+        "harmed_contexts_fraction": 0.0,
+        "harmed_families_count": 0,
+        "harmed_families_fraction": 0.0,
+        "paired_elo": 1525.47,
+        "seed": 100
+      },
+      {
+        "arm_family_mean": 1.0673542055493113,
+        "comparator_family_mean": 1.0671024516243262,
+        "context_mean_delta": 0.00030005297694723115,
+        "family_mean_delta": 0.0002517539249850556,
+        "family_median_delta": 0.0,
+        "family_win_rate": 0.5121951219512195,
+        "family_wtl": [
+          2,
+          38,
+          1
+        ],
+        "harmed_contexts_count": 1,
+        "harmed_contexts_fraction": 0.0038022813688212928,
+        "harmed_families_count": 0,
+        "harmed_families_fraction": 0.0,
+        "paired_elo": 1508.48,
+        "seed": 101
+      },
+      {
+        "arm_family_mean": 1.067281994827515,
+        "comparator_family_mean": 1.0669628651347673,
+        "context_mean_delta": 0.00024875128141927207,
+        "family_mean_delta": 0.0003191296927476519,
+        "family_median_delta": 0.0,
+        "family_win_rate": 0.5,
+        "family_wtl": [
+          1,
+          39,
+          1
+        ],
+        "harmed_contexts_count": 1,
+        "harmed_contexts_fraction": 0.0038022813688212928,
+        "harmed_families_count": 0,
+        "harmed_families_fraction": 0.0,
+        "paired_elo": 1500.0,
+        "seed": 102
+      }
+    ],
+    "per_seed_family_mean_deltas": [
+      0.014629422765393668,
+      0.0002517539249850556,
+      0.0003191296927476519
+    ],
+    "pooled_family_harm_fraction": 0.0,
+    "pooled_family_median_gain": 0.0,
+    "pooled_family_win_rate": 0.516260162601626,
+    "pooled_family_wtl": [
+      6,
+      115,
+      2
+    ],
+    "pooled_paired_elo": 1511.3,
+    "pooled_paired_elo_ci95": [
+      1491.52,
+      1536.86
+    ],
+    "seed_mean_harmed_context_fraction": 0.0038022813688212928,
+    "seed_mean_harmed_family_fraction": 0.0
+  },
+  "secondary_vs_control": {
+    "BITFIT": {
+      "all_three_seeds_positive": true,
+      "ci95_two_sided": [
+        -0.05139221407951756,
+        0.08439457135395224
+      ],
+      "comparator": "CONTROL",
+      "lcb95_one_sided": -0.037856568850777685,
+      "lcb975_one_sided": -0.05139221407951756,
+      "max_seed_harmed_context_fraction": 0.09505703422053231,
+      "max_seed_harmed_family_fraction": 0.21951219512195122,
+      "mean_seed_gain": 0.023210161404513593,
+      "median_seed_gain": 0.029254525346844973,
+      "median_seed_paired_elo": 1577.53,
+      "p_value_one_sided": 0.2328767123287671,
+      "per_seed": [
+        {
+          "arm_family_mean": 1.0671024516243262,
+          "comparator_family_mean": 1.037555834616746,
+          "context_mean_delta": 0.045313362580993805,
+          "family_mean_delta": 0.029546617007580205,
+          "family_median_delta": 0.01064104486382278,
+          "family_win_rate": 0.6829268292682927,
+          "family_wtl": [
+            24,
+            8,
+            9
+          ],
+          "harmed_contexts_count": 17,
+          "harmed_contexts_fraction": 0.06463878326996197,
+          "harmed_families_count": 8,
+          "harmed_families_fraction": 0.1951219512195122,
+          "paired_elo": 1633.29,
+          "seed": 100
+        },
+        {
+          "arm_family_mean": 1.0671024516243262,
+          "comparator_family_mean": 1.0378479262774811,
+          "context_mean_delta": 0.03033548518084642,
+          "family_mean_delta": 0.029254525346844973,
+          "family_median_delta": 0.0075759245945128395,
+          "family_win_rate": 0.6097560975609756,
+          "family_wtl": [
+            22,
+            6,
+            13
+          ],
+          "harmed_contexts_count": 25,
+          "harmed_contexts_fraction": 0.09505703422053231,
+          "harmed_families_count": 8,
+          "harmed_families_fraction": 0.1951219512195122,
+          "paired_elo": 1577.53,
+          "seed": 101
+        },
+        {
+          "arm_family_mean": 1.0669628651347673,
+          "comparator_family_mean": 1.056133523275652,
+          "context_mean_delta": 0.030499663811115504,
+          "family_mean_delta": 0.010829341859115603,
+          "family_median_delta": 0.000972092125339552,
+          "family_win_rate": 0.5975609756097561,
+          "family_wtl": [
+            21,
+            7,
+            13
+          ],
+          "harmed_contexts_count": 21,
+          "harmed_contexts_fraction": 0.07984790874524715,
+          "harmed_families_count": 9,
+          "harmed_families_fraction": 0.21951219512195122,
+          "paired_elo": 1568.67,
+          "seed": 102
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        0.029546617007580205,
+        0.029254525346844973,
+        0.010829341859115603
+      ],
+      "pooled_family_harm_fraction": 0.24390243902439024,
+      "pooled_family_median_gain": 0.00537464710478841,
+      "pooled_family_win_rate": 0.6300813008130082,
+      "pooled_family_wtl": [
+        67,
+        21,
+        35
+      ],
+      "pooled_paired_elo": 1592.52,
+      "pooled_paired_elo_ci95": [
+        1505.65,
+        1688.97
+      ],
+      "seed_mean_harmed_context_fraction": 0.09505703422053231,
+      "seed_mean_harmed_family_fraction": 0.24390243902439024
+    },
+    "EWC": {
+      "all_three_seeds_positive": true,
+      "ci95_two_sided": [
+        -0.04689236156656403,
+        0.08998191045911842
+      ],
+      "comparator": "CONTROL",
+      "lcb95_one_sided": -0.032906904525566924,
+      "lcb975_one_sided": -0.04689236156656403,
+      "max_seed_harmed_context_fraction": 0.08745247148288973,
+      "max_seed_harmed_family_fraction": 0.1951219512195122,
+      "mean_seed_gain": 0.02827693019888905,
+      "median_seed_gain": 0.02950627927183003,
+      "median_seed_paired_elo": 1595.55,
+      "p_value_one_sided": 0.1967803219678032,
+      "per_seed": [
+        {
+          "arm_family_mean": 1.0817318743897197,
+          "comparator_family_mean": 1.037555834616746,
+          "context_mean_delta": 0.05682034374152949,
+          "family_mean_delta": 0.044176039772973866,
+          "family_median_delta": 0.01128049519202512,
+          "family_win_rate": 0.7317073170731707,
+          "family_wtl": [
+            26,
+            8,
+            7
+          ],
+          "harmed_contexts_count": 15,
+          "harmed_contexts_fraction": 0.057034220532319393,
+          "harmed_families_count": 6,
+          "harmed_families_fraction": 0.14634146341463414,
+          "paired_elo": 1674.29,
+          "seed": 100
+        },
+        {
+          "arm_family_mean": 1.0673542055493113,
+          "comparator_family_mean": 1.0378479262774811,
+          "context_mean_delta": 0.030635538157793647,
+          "family_mean_delta": 0.02950627927183003,
+          "family_median_delta": 0.0035923621563208608,
+          "family_win_rate": 0.6341463414634146,
+          "family_wtl": [
+            23,
+            6,
+            12
+          ],
+          "harmed_contexts_count": 23,
+          "harmed_contexts_fraction": 0.08745247148288973,
+          "harmed_families_count": 7,
+          "harmed_families_fraction": 0.17073170731707318,
+          "paired_elo": 1595.55,
+          "seed": 101
+        },
+        {
+          "arm_family_mean": 1.067281994827515,
+          "comparator_family_mean": 1.056133523275652,
+          "context_mean_delta": 0.030748415092534776,
+          "family_mean_delta": 0.011148471551863257,
+          "family_median_delta": 0.000972092125339552,
+          "family_win_rate": 0.6219512195121951,
+          "family_wtl": [
+            22,
+            7,
+            12
+          ],
+          "harmed_contexts_count": 21,
+          "harmed_contexts_fraction": 0.07984790874524715,
+          "harmed_families_count": 8,
+          "harmed_families_fraction": 0.1951219512195122,
+          "paired_elo": 1586.48,
+          "seed": 102
+        }
+      ],
+      "per_seed_family_mean_deltas": [
+        0.044176039772973866,
+        0.02950627927183003,
+        0.011148471551863257
+      ],
+      "pooled_family_harm_fraction": 0.1951219512195122,
+      "pooled_family_median_gain": 0.008372121904823207,
+      "pooled_family_win_rate": 0.6626016260162602,
+      "pooled_family_wtl": [
+        71,
+        21,
+        31
+      ],
+      "pooled_paired_elo": 1617.24,
+      "pooled_paired_elo_ci95": [
+        1534.0,
+        1716.27
+      ],
+      "seed_mean_harmed_context_fraction": 0.08745247148288973,
+      "seed_mean_harmed_family_fraction": 0.1951219512195122
+    }
+  },
+  "seed_independence": {
+    "BITFIT": {
+      "max_pairwise_max_abs_context_utility_diff": 0.03301916234586466,
+      "min_pairwise_max_abs_context_utility_diff": 0.0,
+      "seeds_not_identical": false,
+      "unique_final_adapter_shas": 3
+    },
+    "CONTROL": {
+      "max_pairwise_max_abs_context_utility_diff": 2.417504242671291,
+      "min_pairwise_max_abs_context_utility_diff": 2.336871916071208,
+      "seeds_not_identical": true,
+      "unique_final_adapter_shas": 3
+    },
+    "EWC": {
+      "max_pairwise_max_abs_context_utility_diff": 2.9144029499378994,
+      "min_pairwise_max_abs_context_utility_diff": 0.014803197968214887,
+      "seeds_not_identical": true,
+      "unique_final_adapter_shas": 3
+    }
+  },
+  "status": "COMPLETE",
+  "timestamp_utc": "2026-10-31T20:05:02Z",
+  "verdict": "NO_ADMISSION",
   "wave": "H132"
 }
