@@ -31,11 +31,11 @@ source file is pinned by the package's [`SOURCE_PINS.json`](../../deploy/dl-flyw
 `SOURCE_PINS.json` has SHA-256
 `045c8f5838920d323dcc3ae8d6ae1a44baf7cdeb629d0e062e2260a33d19978c`.
 The file is byte-identical between the audit source and current `origin/main`
-`a72fa7b8893e3d6622e5f4bc6c2ee30d39543f27`.
+`86ba2a170eba184466a7b0dd426c65e473e6f09f`.
 
 ## Verification
 
-At `a72fa7b8893e3d6622e5f4bc6c2ee30d39543f27`, the package's pinned
+At `86ba2a170eba184466a7b0dd426c65e473e6f09f`, the package's pinned
 [`run_offline.py`](../../deploy/dl-flywheel/pipelines/generated_target_admission_v1/run_offline.py)
 completed all 28 registered synthetic fixtures with zero failures,
 errors, skips, or unexpected successes. This includes the cutoff tests for
@@ -43,15 +43,15 @@ snapshot identity, sidecar refusal, row bounds, event replay, ACK closure, and
 read-only behavior. The runner reported `source_unchanged=true`, zero GP
 executions, and zero admission commits. Its full receipt is retained outside
 the repository at
-`/home/ubuntu/jope_plan/evidence/res03-t0105/generated-target-admission-offline-a72fa7b.json`
-(SHA-256 `b3d51f625c08c78e398280eb772363f1e605d99b73970deb4810a2857c6df715`). The run completed at `2026-10-31T07:15Z` in
-6.54 seconds, with zero live database accesses.
+`/home/ubuntu/jope_plan/evidence/res03-t0105/generated-target-admission-offline-86ba2a.json`
+(SHA-256 `28d80bcf946e54d9e6552a884496c7b640530cb8da94bd3c06500dfc03e388f0`). The run completed at `2026-10-31T07:17Z` in
+41.93 seconds, with zero live database accesses.
 
 Command, from the repository root:
 
 ```sh
 nice -n 10 rtk proxy python3 -B deploy/dl-flywheel/pipelines/generated_target_admission_v1/run_offline.py \
-  --receipt /home/ubuntu/jope_plan/evidence/res03-t0105/generated-target-admission-offline-a72fa7b.json
+  --receipt /home/ubuntu/jope_plan/evidence/res03-t0105/generated-target-admission-offline-86ba2a.json
 ```
 
 This disposition covers only the one finding above. It does not close the
