@@ -203,7 +203,11 @@ fn read_holder(path: &Path) -> (Option<u32>, String) {
 pub struct InProcessEngine {
     // Fields drop in declaration order: close redb before releasing home ownership.
     store: Arc<Store>,
-    _lock: EngineLock,
+    home: PathBuf,
+    executable: PathBuf,
+    runs: Mutex<Option<Arc<crate::http::runs::RunService>>>,
+    activity: Arc<EngineActivity>,
+    _lock: Arc<EngineLock>,
 }
 
 /// Read-only request state lent from the one live engine/store instance.
@@ -215,11 +219,76 @@ pub(crate) struct DatasetState {
 }
 
 impl InProcessEngine {
+    pub fn open_default() -> Result<Self, EngineError> {
+        Self::open(jope_paths::jopedime_home())
+    }
     pub fn open(home: impl AsRef<Path>) -> Result<Self, EngineError> {
+        Self::open_with_worker(home, std::env::current_exe()?)
+    }
+
+    /// Trusted embeddings supply their authenticated appliance executable, which
+    /// implements the existing worker protocol. This is not a remote API input.
+    pub fn open_with_worker(
+        home: impl AsRef<Path>,
+        executable: impl AsRef<Path>,
+    ) -> Result<Self, EngineError> {
         let home = home.as_ref();
-        let lock = EngineLock::acquire(home)?;
+        let lock = Arc::new(EngineLock::acquire(home)?);
         let store = Arc::new(Store::open(home)?);
-        Ok(Self { store, _lock: lock })
+        Ok(Self {
+            store,
+            home: home.canonicalize()?,
+            executable: executable.as_ref().to_path_buf(),
+            runs: Mutex::new(None),
+            activity: Arc::new(EngineActivity::default()),
+            _lock: lock,
+        })
+    }
+
+    /// The same store-bound router serves embedded clients and loopback HTTP.
+    pub fn router(&self, auth: LocalAuth) -> Result<Router, EngineError> {
+        self.router_with_activity(auth, Arc::clone(&self.activity))
+    }
+
+    fn router_with_activity(
+        &self,
+        auth: LocalAuth,
+        activity: Arc<EngineActivity>,
+    ) -> Result<Router, EngineError> {
+        let mut runs = self
+            .runs
+            .lock()
+            .map_err(|_| EngineError::Runtime("run service lock poisoned".into()))?;
+        if runs.is_none() {
+            let environment = std::env::vars().collect();
+            let config = Config::load(
+                &self.home.join("config.toml"),
+                &Default::default(),
+                &environment,
+            )
+            .map_err(|e| EngineError::Runtime(e.to_string()))?;
+            *runs = Some(Arc::new(
+                crate::http::runs::RunService::new(
+                    Arc::clone(&self.store),
+                    config,
+                    self.home.clone(),
+                    self.executable.clone(),
+                    activity,
+                    Arc::clone(&self._lock),
+                )
+                .map_err(|e| EngineError::Runtime(e.to_string()))?,
+            ));
+        }
+        let service = Arc::clone(runs.as_ref().expect("run service initialized"));
+        Ok(router::router_with_state(
+            auth,
+            DatasetState {
+                store: self.store_handle(),
+                config: service.config().clone(),
+                home: self.home.clone(),
+            },
+            Some(service),
+        ))
     }
 
     pub fn store(&self) -> &Store {
@@ -255,6 +324,12 @@ impl Default for EngineActivity {
 }
 
 impl EngineActivity {
+    pub(crate) fn active_runs(&self) -> usize {
+        self.counts
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .active_runs
+    }
     pub fn begin_run(self: &Arc<Self>) -> ActivityGuard {
         let mut counts = self
             .counts
@@ -464,14 +539,6 @@ async fn serve_with_activity(
     idle_exit: Duration,
     activity: Arc<EngineActivity>,
 ) -> Result<(), EngineError> {
-    let environment = std::env::vars().collect();
-    let config = Config::load(&home.join("config.toml"), &Default::default(), &environment)
-        .map_err(|error| EngineError::Runtime(error.to_string()))?;
-    let dataset_state = DatasetState {
-        store: engine.store_handle(),
-        config,
-        home: home.clone(),
-    };
     let listener = TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, 0)).await?;
     let address = listener.local_addr()?;
     // The socket is bound before the descriptor is atomically published.
@@ -492,7 +559,8 @@ async fn serve_with_activity(
         port: address.port(),
         shutdown,
     });
-    let app: Router = router::router_with_state(auth, dataset_state)
+    let app: Router = engine
+        .router_with_activity(auth, Arc::clone(&activity))?
         .route(STOP_PATH, post(request_stop))
         .layer(Extension(state))
         .layer(Extension(Arc::clone(&activity)));
@@ -568,7 +636,7 @@ fn stop_daemon() -> Result<(), EngineError> {
     let record = match daemon_file::read_daemon_file(&home) {
         Ok(DaemonFileStatus::Running(record) | DaemonFileStatus::Unknown(record)) => record,
         Ok(DaemonFileStatus::Stale(_)) => {
-            return Err(EngineError::Daemon("engine is not running".into()))
+            return Err(EngineError::Daemon("engine is not running".into()));
         }
         Err(error) => return Err(EngineError::Io(error)),
     };
