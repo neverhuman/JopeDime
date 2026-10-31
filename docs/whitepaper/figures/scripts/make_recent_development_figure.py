@@ -89,25 +89,35 @@ def extract(logs):
         "code_references": ["research/flywheel_selfplay/automatic_promotion.py:206-273",
                             "research/flywheel_selfplay/dev_incumbent.py:524-570",
                             "crates/jope-telemetry/src/hooks/flywheel.rs:362-365"],
-        "interpretation_source_commit": "b2c04a846194bda01310d762d646c8a2a91d26cf",
+        "interpretation_source_commit": ("16609e73f13bd36b895a33008e7db3230b1d6857"
+                                         if args.later_window else
+                                         "b2c04a846194bda01310d762d646c8a2a91d26cf"),
         "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
         "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
         "csv_sha256": hashlib.sha256(DATA.read_bytes()).hexdigest(),
         "extraction_script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "reproduce": ("python3 figures/scripts/make_recent_development_figure.py"
-                      + (" --follow-up" if args.follow_up else "") + " --logs SNAPSHOT_DIR"),
+                      + (" --follow-up" if args.follow_up else
+                         " --later-window" if args.later_window else "")
+                      + " --logs SNAPSHOT_DIR"),
     }
     PROVENANCE.write_text(json.dumps(provenance, indent=2) + "\n")
 
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--logs", type=Path, help="Stable complete-line development-log snapshot")
-parser.add_argument("--follow-up", action="store_true", help="Plot the separate follow-up snapshot")
+mode = parser.add_mutually_exclusive_group()
+mode.add_argument("--follow-up", action="store_true", help="Plot the separate follow-up snapshot")
+mode.add_argument("--later-window", action="store_true", help="Plot the separate later snapshot")
 args = parser.parse_args()
 if args.follow_up:
     DATA = FIGURES / "data" / "followup_development.csv"
     PROVENANCE = DATA.with_suffix(".provenance.json")
     OUTPUT = FIGURES / "fig_fw_followup_development.pdf"
+elif args.later_window:
+    DATA = FIGURES / "data" / "later_development.csv"
+    PROVENANCE = DATA.with_suffix(".provenance.json")
+    OUTPUT = FIGURES / "fig_fw_later_development.pdf"
 if args.logs:
     extract(args.logs)
 with DATA.open() as stream:
@@ -124,13 +134,16 @@ assert all(math.isfinite(v) for v in candidate + best)
 plt.rcParams.update({"font.family": "serif", "font.size": 8, "axes.labelsize": 8,
                      "xtick.labelsize": 7.2, "ytick.labelsize": 7.2, "pdf.fonttype": 42,
                      "axes.spines.top": False, "axes.spines.right": False})
-if args.follow_up:
+wide = args.follow_up or args.later_window
+round_axis = ("round (later retained window)" if args.later_window
+              else "round (follow-up retained window)")
+if wide:
     fig, axes = plt.subplots(1, 2, figsize=(6.8, 1.9), sharex=True)
     axes[0].bar(rounds, counts, color="#5f3dc4", width=0.7)
     axes[0].set_title("Left: Training-program promotions", fontsize=8, loc="left", pad=3)
     axes[0].set_ylabel("promotions / round")
     axes[0].set_ylim(-0.1, max(counts) + 0.5)
-    axes[0].set_xlabel("round (follow-up retained window)")
+    axes[0].set_xlabel(round_axis)
 else:
     fig, axes = plt.subplots(2, 1, figsize=(3.4, 2.85), sharex=True)
     axes[0].step(rounds, cumulative, where="post", color="#5f3dc4", lw=1.1)
@@ -143,16 +156,16 @@ axes[1].plot(rounds, candidate, "o-", color="#6e7781", ms=2.5, lw=0.8,
              label="candidate adapter")
 axes[1].step(rounds, best, where="post", color="#0b5394", lw=1.15,
              label="recorded best")
-axes[1].set_title("Right: Adapter validation" if args.follow_up else "Bottom: Adapter validation",
+axes[1].set_title("Right: Adapter validation" if wide else "Bottom: Adapter validation",
                   fontsize=8, loc="left", pad=3)
 axes[1].set_ylabel("validation\npool utility")
 axes[1].set_ylim(min(candidate + best) - 0.004, max(candidate + best) + 0.0013)
 axes[1].ticklabel_format(axis="y", style="plain", useOffset=False)
 axes[1].legend(loc="lower left", ncol=2, fontsize=7.2, frameon=False,
                handlelength=1.3, handletextpad=0.3, columnspacing=0.7, borderaxespad=0.3)
-axes[1].set_xlabel("round (follow-up retained window)" if args.follow_up
+axes[1].set_xlabel(round_axis if wide
                    else "round (additional retained window)")
-axes[1].set_xticks([rounds[0], *rounds[5::5], rounds[-1]])
+axes[1].set_xticks(list(dict.fromkeys([rounds[0], *rounds[5::5], rounds[-1]])))
 for ax in axes:
     ax.set_xlim(rounds[0] - 0.4, rounds[-1] + 0.4)
     ax.grid(axis="y", alpha=0.22, linewidth=0.4)
