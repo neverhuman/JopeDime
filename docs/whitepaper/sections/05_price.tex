@@ -11,15 +11,12 @@
 % Exhibits: Equation 2 (eq:bill), Figure 4 (fig:price), Box 3.
 % Unsupported supplied cost projections are omitted pending reproducible calculations.
 
-What would it cost to play the innovation game? The supplied planning
-draft estimates generation and updates for a 30B-class open-weight writer,
-but its reproducible calculation and dated pricing inputs are not available.
-We omit that total until its assumptions can be checked. Encoding, input
-tokens, repairs and referee execution must also be included in a complete
-ledger. Cheap
-replay is the one property of Go that invention lacks (\cref{sec:game}). Here
-we separate planning assumptions from the measurements still required in
-\cref{sec:results}.
+What would it cost to play the innovation game? A complete ledger counts
+encoding, input tokens, generation, repairs, referee execution, updates and
+operating costs. A reproducible price for a full run is still pending
+(\cref{sub:price-run}). Replay cost is one constraint on the game
+(\cref{sec:game}). Here we separate planning assumptions from the
+measurements still required in \cref{sec:results}.
 
 \subsection{The bill in one line}\label{sub:price-bill}
 
@@ -85,7 +82,7 @@ the effect attributed to the writer.
 \subsection{The correction tax and the reasoning dial}\label{sub:price-tax}
 
 Small models are cheap per token and can be dear per win. For generation
-alone, compute per token falls about 190-fold from a dense 1.5T writer to
+alone, compute per token falls about 190-fold from a hypothetical dense 1.5T writer to
 an 8B one. With equal token counts and compute unit costs, the smaller
 writer can tolerate a win rate about 190 times lower before that
 component's cost per win matches. If it needs three times the tokens per
@@ -159,10 +156,7 @@ prices, measured or justified utilization, a reproducible calculation, and
 an explicit accounting boundary. Those inputs are not yet recorded for the
 supplied cost scenarios, so their per-writer totals, low/high bands,
 referee-cost estimates and API comparisons are omitted. They remain a
-measurement task, not observed costs. The reference checkpoint in \cref{sec:method} uses a
-compact network with 27.8 million parameters and at most 128
-grammar-constrained tokens; its measured costs must be reported separately
-from any future scaling projection.
+measurement task, not observed costs.
 
 \begin{keyidea}
   Cost per verified improvement depends on both the cost of an attempt
