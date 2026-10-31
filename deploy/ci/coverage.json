@@ -13734,6 +13734,26 @@
       ],
       "lanes": [],
       "scope": "H99/H100 synthetic terminal FIFO publication: complete panels, unchanged native Elo/CI, wave-specific Holm/margin/harm gates, charged rearm prefixes, identity/digest/nonfinite/path/snapshot refusals, bounded no-Torch watcher and UNKNOWN timeout. Research only; no new test, corpus qualification, GPU or serving promotion."
+    },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/test_science.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H131 data-free research controls for whole-family bootstrap multiplicity, exact H125 CONTROL plan, eight-member parameter averaging, fixed half-soup, paired-family Holm/margin/harm/Elo/tie gates, cache identity and resource refusal. No real scoring or scientific qualification."
+    },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/test_cache.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H131 data-free research controls for whole-family bootstrap multiplicity, exact H125 CONTROL plan, eight-member parameter averaging, fixed half-soup, paired-family Holm/margin/harm/Elo/tie gates, cache identity and resource refusal. No real scoring or scientific qualification."
     }
   },
   "lanes": {
