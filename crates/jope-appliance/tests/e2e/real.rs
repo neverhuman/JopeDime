@@ -437,7 +437,35 @@ impl Drop for Rpc {
     }
 }
 
-fn terminal(home: &Path, csv: &Path, id: &jope_api::ids::RunId) -> Result<String> {
+fn terminal(
+    home: &Path,
+    csv: &Path,
+    id: &jope_api::ids::RunId,
+    projection: &Projection,
+) -> Result<String> {
+    // Read expectations from the committed journal, independently of the renderer.
+    // Public transcript scores use three decimal places (§6.2).
+    let champion = projection
+        .champion
+        .as_ref()
+        .context("run has no champion")?;
+    let cv = projection.scores.cv.context("run has no CV score")?;
+    let holdout = projection
+        .scores
+        .holdout
+        .context("run has no HOLDOUT score")?;
+    ensure!(
+        champion.cv_value.is_finite() && cv.is_finite() && holdout.is_finite(),
+        "committed scores are not finite"
+    );
+    ensure!(
+        projection.scores.test.is_none(),
+        "fixture has no TEST dataset"
+    );
+    let expected = format!(
+        "champion {} ({} {:.3}) · CV {cv:.3} · HOLDOUT {holdout:.3} · TEST n/a",
+        champion.algorithm_id, champion.metric, champion.cv_value
+    );
     use portable_pty::{native_pty_system, CommandBuilder, PtySize};
     let pair = native_pty_system().openpty(PtySize {
         rows: 35,
@@ -462,7 +490,7 @@ fn terminal(home: &Path, csv: &Path, id: &jope_api::ids::RunId) -> Result<String
             }
         }
     });
-    let commands=format!("\\landmarks none\n\\lang rust\n\\target target --task regression\n\\effort fast --evals 4 --time 30s\n\\open {}\n\\run --seed 73 --idempotency-key {KEY}\n",csv.display());
+    let commands=format!("\\landmarks none\n\\lang rust\n\\target target --task regression\n\\effort fast --evals 4 --time 30s\n\\open {}\n\\run --seed 73 --idempotency-key {KEY}\n\\attach {id}\n",csv.display());
     writer.write_all(commands.as_bytes())?;
     writer.flush()?;
     let deadline = Instant::now() + Duration::from_secs(40);
@@ -473,7 +501,16 @@ fn terminal(home: &Path, csv: &Path, id: &jope_api::ids::RunId) -> Result<String
             bytes.extend(receive.recv_timeout(deadline.saturating_duration_since(Instant::now()))?);
             ensure!(bytes.len() < 1024 * 1024, "PTY transcript exceeds limit");
             let text = String::from_utf8_lossy(&bytes);
-            if text.contains(&marker) {
+            // A completed idempotent retry subscribes after its final watermark.
+            // Explicit attach replays that same run's actual durable score card.
+            if text.contains(&marker)
+                && text.rsplit_once("Run finished").is_some_and(|(_, card)| {
+                    card.split_whitespace()
+                        .collect::<Vec<_>>()
+                        .join(" ")
+                        .contains(&expected)
+                })
+            {
                 return Ok(text.into_owned());
             }
             if text.contains("error:") {
@@ -487,7 +524,12 @@ fn terminal(home: &Path, csv: &Path, id: &jope_api::ids::RunId) -> Result<String
         let _ = child.kill();
     }
     let _ = child.wait();
-    result
+    // Preserve the actual PTY bytes even when replay or score matching fails.
+    if let Some(root) = std::env::var_os("JOPE_INT01_RECEIPTS") {
+        fs::create_dir_all(&root)?;
+        fs::write(PathBuf::from(root).join("terminal.txt"), &bytes)?;
+    }
+    result.with_context(|| format!("terminal did not render committed score card: {expected}"))
 }
 
 // A live SSE subscription remains open after completion. Batch must stop at
@@ -617,7 +659,7 @@ pub(super) fn shared_run_surfaces() -> Result<()> {
     );
     let csv = server.home.path().join("original-label.csv");
     fs::write(&csv, &bytes)?;
-    let transcript = terminal(server.home.path(), &csv, id)?;
+    let transcript = terminal(server.home.path(), &csv, id, &captures[0].projection)?;
     ensure!(
         transcript.contains(&format!("run {id} started")),
         "PTY omitted actual run result"
