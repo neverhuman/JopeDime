@@ -631,6 +631,53 @@ mod tests {
         assert!(warnings.is_empty());
     }
 
+    #[test]
+    fn auto_without_landmarks_stays_heuristic_for_every_unqualified_reason() {
+        for reason in [
+            GuidanceUnavailableReason::Integrity,
+            GuidanceUnavailableReason::Parity,
+            GuidanceUnavailableReason::Quality,
+            GuidanceUnavailableReason::Capability,
+            GuidanceUnavailableReason::RevealedDecision,
+        ] {
+            let (plan, warnings) =
+                resolve_unqualified(Guidance::Auto, LandmarkMode::None, reason).unwrap();
+            assert_eq!(plan.value, Guidance::Heuristic);
+            assert!(!plan.prior_only);
+            assert_eq!(plan.reason, reason.message());
+            assert_eq!(warnings[0].code, "GUIDANCE_HEURISTIC");
+            assert_eq!(warnings[0].message, plan.reason);
+            assert_eq!(
+                warnings.len(),
+                if reason == GuidanceUnavailableReason::Integrity {
+                    2
+                } else {
+                    1
+                }
+            );
+        }
+    }
+
+    #[test]
+    fn explicit_heuristic_never_claims_learned_qualification_or_emits_fallback_warning() {
+        for reason in [
+            GuidanceUnavailableReason::Integrity,
+            GuidanceUnavailableReason::Parity,
+            GuidanceUnavailableReason::Quality,
+            GuidanceUnavailableReason::Capability,
+            GuidanceUnavailableReason::RevealedDecision,
+        ] {
+            for landmarks in [LandmarkMode::None, LandmarkMode::Full] {
+                let (plan, warnings) =
+                    resolve_unqualified(Guidance::Heuristic, landmarks, reason).unwrap();
+                assert_eq!(plan.value, Guidance::Heuristic);
+                assert!(!plan.prior_only);
+                assert_eq!(plan.reason, "Heuristic guidance was requested.");
+                assert!(warnings.is_empty());
+            }
+        }
+    }
+
     struct AdmissionSlateFixture {
         keys: Vec<String>,
         features: Vec<[f32; adapter::PROG_FEATURES]>,
