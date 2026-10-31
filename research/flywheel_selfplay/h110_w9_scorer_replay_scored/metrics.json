@@ -1,0 +1,362 @@
+{
+  "schema": "rd_breakthrough.audited-results/v1",
+  "wave": "W9 non-neural replay + proposal-distribution scorer",
+  "h_folder": "H110",
+  "prereg": "../h106_w9_proposal_scorer_replay/PREREG.md",
+  "run_id": "opus-h110-20261031a",
+  "author": "rd_opus [OPUS]",
+  "verdict": {
+    "A_scorer_vs_random": "PASS",
+    "B_guided_vs_uniform_memory": "FAIL"
+  },
+  "contexts": 50,
+  "families": 44,
+  "roster_contexts": 50,
+  "panel_gaps": 0,
+  "off_roster_contexts": 0,
+  "proposal_shortfalls": 0,
+  "family_mean_best_of_four": {
+    "S_UNIFORM": 1.9422870311488816,
+    "S_PRIOR": 1.9644109152033007,
+    "S_ADAPTIVE": 1.977382291685549,
+    "S_CONTEXT": 1.95988050266178,
+    "S_ALL": 2.0214969609364224,
+    "prog_top4": 1.8750275905087368,
+    "random4": 1.8775805396603145,
+    "ORACLE4": 2.0284276144106745
+  },
+  "primary": {
+    "S_ALL - random4": {
+      "families": 44,
+      "family_mean": 0.1439164212761079,
+      "family_median": 0.009470367992027218,
+      "families_losing_more_than_0_01_fraction": 0.045454545454545456,
+      "family_win_tie_loss": [
+        36,
+        1,
+        7
+      ],
+      "bootstrap_p2_5": 0.023286220102176364,
+      "bootstrap_p5_one_sided_lcb": 0.02655597318736535,
+      "bootstrap_p97_5": 0.36736213408365,
+      "common_gate_passed": true,
+      "adjusted_one_sided_lcb": 0.023286220102176364,
+      "median_ci95": [
+        0.004250997829902209,
+        0.024494613335280246
+      ]
+    },
+    "S_PRIOR - S_UNIFORM": {
+      "families": 44,
+      "family_mean": 0.022123884054419115,
+      "family_median": 0.0,
+      "families_losing_more_than_0_01_fraction": 0.13636363636363635,
+      "family_win_tie_loss": [
+        21,
+        7,
+        16
+      ],
+      "bootstrap_p2_5": -0.01631413054406655,
+      "bootstrap_p5_one_sided_lcb": -0.01258979995006621,
+      "bootstrap_p97_5": 0.08115071542720378,
+      "common_gate_passed": false,
+      "adjusted_one_sided_lcb": -0.01631413054406655,
+      "median_ci95": [
+        -0.00013589581209794144,
+        0.0007529515838686773
+      ]
+    }
+  },
+  "secondary": {
+    "S_ADAPTIVE - S_UNIFORM": {
+      "families": 44,
+      "family_mean": 0.03509526053666744,
+      "family_median": 0.0,
+      "families_losing_more_than_0_01_fraction": 0.1590909090909091,
+      "family_win_tie_loss": [
+        20,
+        7,
+        17
+      ],
+      "bootstrap_p2_5": -0.020952332592964248,
+      "bootstrap_p5_one_sided_lcb": -0.015894736918408207,
+      "bootstrap_p97_5": 0.12615747088973486,
+      "common_gate_passed": false,
+      "median_ci95": [
+        -0.0002728521923813787,
+        0.000773023345021967
+      ]
+    },
+    "S_CONTEXT - S_UNIFORM": {
+      "families": 44,
+      "family_mean": 0.017593471512898494,
+      "family_median": 0.0,
+      "families_losing_more_than_0_01_fraction": 0.18181818181818182,
+      "family_win_tie_loss": [
+        20,
+        7,
+        17
+      ],
+      "bootstrap_p2_5": -0.044451813514009994,
+      "bootstrap_p5_one_sided_lcb": -0.03678351903923543,
+      "bootstrap_p97_5": 0.10959020740654077,
+      "common_gate_passed": false,
+      "median_ci95": [
+        -0.0003333333333337407,
+        0.0006831588060682292
+      ]
+    },
+    "S_ALL - prog_top4": {
+      "families": 44,
+      "family_mean": 0.14646937042768568,
+      "family_median": 0.007201471791508665,
+      "families_losing_more_than_0_01_fraction": 0.022727272727272728,
+      "family_win_tie_loss": [
+        35,
+        4,
+        5
+      ],
+      "bootstrap_p2_5": 0.03009867283066976,
+      "bootstrap_p5_one_sided_lcb": 0.03929139349714271,
+      "bootstrap_p97_5": 0.3111682217574013,
+      "common_gate_passed": true,
+      "median_ci95": [
+        0.003415660887235439,
+        0.01983056804475339
+      ]
+    },
+    "prog_top4 - random4": {
+      "families": 44,
+      "family_mean": -0.002552949151577738,
+      "family_median": -0.0016212534201967554,
+      "families_losing_more_than_0_01_fraction": 0.36363636363636365,
+      "family_win_tie_loss": [
+        20,
+        0,
+        24
+      ],
+      "bootstrap_p2_5": -0.12333886610829697,
+      "bootstrap_p5_one_sided_lcb": -0.10029953914034154,
+      "bootstrap_p97_5": 0.12692474575357163,
+      "common_gate_passed": false,
+      "median_ci95": [
+        -0.009830874164165643,
+        0.0058629183748769576
+      ]
+    }
+  },
+  "family_elo": {
+    "ratings": {
+      "S_ADAPTIVE": 1726.14,
+      "S_ALL": 1769.05,
+      "S_CONTEXT": 1746.01,
+      "S_PRIOR": 1714.34,
+      "S_UNIFORM": 1703.64,
+      "prog_top4": 1505.43,
+      "random4": 1500.0
+    },
+    "pairwise_win_tie_loss_vs_anchor": {
+      "S_ADAPTIVE": {
+        "wins": 37,
+        "ties": 5,
+        "losses": 8,
+        "elo_delta_vs_anchor": 226.14
+      },
+      "S_ALL": {
+        "wins": 40,
+        "ties": 1,
+        "losses": 9,
+        "elo_delta_vs_anchor": 269.05
+      },
+      "S_CONTEXT": {
+        "wins": 41,
+        "ties": 0,
+        "losses": 9,
+        "elo_delta_vs_anchor": 246.01
+      },
+      "S_PRIOR": {
+        "wins": 34,
+        "ties": 1,
+        "losses": 15,
+        "elo_delta_vs_anchor": 214.34
+      },
+      "S_UNIFORM": {
+        "wins": 38,
+        "ties": 2,
+        "losses": 10,
+        "elo_delta_vs_anchor": 203.64
+      },
+      "prog_top4": {
+        "wins": 20,
+        "ties": 0,
+        "losses": 30,
+        "elo_delta_vs_anchor": 5.43
+      }
+    }
+  },
+  "memory_rows": {
+    "ADAPTIVE": 439,
+    "CONTEXT": 437,
+    "PRIOR": 601,
+    "UNIFORM": 546
+  },
+  "memory_sha256": "601f19583f72b5e2b1124c48c1b5607a3f9cfea690ce849295debef6351de025",
+  "scorers_sha256": "c12c4c788b16043121f190b3055d7d5e1662e3e7779e869ca39849c8f4d76ab6",
+  "ledger": {
+    "fits": 1631,
+    "settled": 1631,
+    "failed": 0,
+    "timeouts": 0,
+    "cpu_s": 1659.1619999999966,
+    "wall_s": 2039.1900000000128,
+    "cap": 2400,
+    "deadline_utc": "2026-11-01T12:00:00Z"
+  },
+  "redteam_descriptive_not_preregistered": {
+    "family_mean": {
+      "S_ALL": 2.0214969609364224,
+      "NEAR4": 1.8962912130244136,
+      "random4": 1.8775805396603145,
+      "ORACLE4": 2.0284276144106745
+    },
+    "S_ALL_minus_NEAR4": {
+      "mean": 0.12520574791200878,
+      "median": 0.002108326327877233,
+      "wtl": [
+        29,
+        4,
+        11
+      ]
+    },
+    "NEAR4_minus_random4": {
+      "mean": 0.018710673364099154,
+      "median": 0.004188034064432536
+    },
+    "context_seeds_where_S_ALL_equals_ORACLE4": 81,
+    "median_distinct_utilities_per_batch": 16.0
+  },
+  "source_sha256": "13730ebfdf1a451157799a7d4a639ccae61ed88361044006adb0ff548978f7da",
+  "h81_source_sha256": "9ad50be577a30c616f7668d52f621d5411e70019ba9f1d1960eb8a45a448c999",
+  "prog_models_sha256": "5938a35497ccde1a1489c4d6b13d122196aed16739a3272afea06d57d5fff692",
+  "reveal_logs": {
+    "h94": "18564293060da510364950c041c97cd717021337f0289956045d53beae509dd1",
+    "h103": "2e0757579d5effa82efc1a628b7172880c8e03f0c66d922e5bbb7e514a9cc205"
+  },
+  "gpu_seconds": 0,
+  "execution": {
+    "host": "xbabe2",
+    "run_wall": "9:51",
+    "max_rss_kb": 162744,
+    "nice": 10,
+    "fit_nice": 15,
+    "workers": 12
+  },
+  "data_scope": "DL-Train only (H67 roster); logged H94/H103 native reveals; admitted pools; W1 train-only features; H58 DL-Train champion bank; 0 DL-Val/outer/sealed/holdout reads; DOPE not loaded",
+  "s3_objects": [
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h110-20261031a/manifest.json",
+      "version_id": "9lwJ3KgjywhVmD08w.hnX66blHjeuPm0",
+      "sha256": "969d4f993abfe503eeab34009cbd62bf257843e47e3e3b43f3240e3ac50f3ae9",
+      "bytes": 3201,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h110-20261031a/metrics.json",
+      "version_id": "ttf_P50p3L.OGsRfSe6cDqU9G.PyH2vQ",
+      "sha256": "291b1a74c3a45850ea6264d44fda0fb70ad5a7cfbf507afcb77fea80a4177ec9",
+      "bytes": 5079,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h110-20261031a/run_receipt.json",
+      "version_id": "tNxKo51sfZYC9NaZkgQMiC_si42kEEA_",
+      "sha256": "7d6cb4d224881bd8f72d277517651d2651c0d5dcd0a0fda74168dd28291021b0",
+      "bytes": 2523,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h110-20261031a/memory.jsonl.gz",
+      "version_id": "hOxbgmwJdvsI4KCsBO4GRq6_OV0YtW79",
+      "sha256": "ac99dbb8a4439f891d41d4187b1721633d588e9b37ae2c1290561f59224cfc3e",
+      "bytes": 159385,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h110-20261031a/scorers.pkl",
+      "version_id": "rAMTACXS23acREwmmohJlAq0VzHWUnpP",
+      "sha256": "c12c4c788b16043121f190b3055d7d5e1662e3e7779e869ca39849c8f4d76ab6",
+      "bytes": 9657649,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h110-20261031a/rows_h106.jsonl",
+      "version_id": "dTGquJgSQkM78tYlnmPBTXDoLaU3ztY1",
+      "sha256": "da347e0e3b0d94d5f32f5cd8f68ad378dd3753ffae6670a8ed3b2e73ef1bb1a9",
+      "bytes": 624341,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h110-20261031a/fits.jsonl.gz",
+      "version_id": "8OcW_kRkSxmZNikDWq77t8e1ml1Va.1x",
+      "sha256": "d333e681489449dea2bc19ba294e6470294c90fbcfe83bb683db7ac51c5fef62",
+      "bytes": 118327,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h110-20261031a/ledger.json",
+      "version_id": "FJmAbJhLcqd6.e6ct8CbINiqCeTkhZPJ",
+      "sha256": "61636ed6d38a52475384f364f62c9308732f1477438488036ded88e009a3c69e",
+      "bytes": 181,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h110-20261031a/shortfalls_h106.json",
+      "version_id": "sXBOZgVIAgCbWNYhyHag_t34e7jVkK8d",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "bytes": 2,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h110-20261031a/run.log",
+      "version_id": "iP7UvMEkeQIXjqt3iYHQSLo_W1R0NTm7",
+      "sha256": "9b18eaf5189551a1ed68780ae54dce8a21955cf2796e17b8d4c039309891ec7d",
+      "bytes": 1023,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h110-20261031a/analyze.log",
+      "version_id": "ryA_xekFEJscabVYbRcX2FuwOx5SI4gn",
+      "sha256": "8effde06acfb225d63cbf0b5557a281c9fdb3cbe3cf599a1cc7945147a072182",
+      "bytes": 69,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h110-20261031a/time.log",
+      "version_id": "3zxi9pEw0GVqSjMJrU_7BbANpaFVrtN8",
+      "sha256": "123c8e4c5ea4523149d8cda932549aa790b48ffc07c87effed4a8fbf49ba61bf",
+      "bytes": 1084,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h110-20261031a/run_h106.py",
+      "version_id": "fOZgsi3R_41DLIrQWF8_0ZNVEylSS0QA",
+      "sha256": "13730ebfdf1a451157799a7d4a639ccae61ed88361044006adb0ff548978f7da",
+      "bytes": 19656,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h110-20261031a/redteam/h110_redteam.py",
+      "version_id": "gcAbVJOy0H.pyZ.5ncZRva6CjKD2PnMt",
+      "sha256": "77045c39912fdf4a185c2b43905e43f1cc07117f55f2f6ac61163cd1c2387595",
+      "bytes": 2321,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W9/opus-h110-20261031a/redteam/near4_check.json",
+      "version_id": "Lm4KjOuDW7H.wOB5Meqol3aUzS_Svg5o",
+      "sha256": "7c0874bffa61c70b75ee2b4bb50042021c965811246b81ddf95a2cc02e45876b",
+      "bytes": 469,
+      "write": "create-only if-none-match"
+    }
+  ]
+}

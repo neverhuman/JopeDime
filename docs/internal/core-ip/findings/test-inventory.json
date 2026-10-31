@@ -1969,6 +1969,10 @@
       "role": "research",
       "reason": "CPU-only H82 operator recovery fixtures for immutable checkpoint staging and exact-prefix refusal; no scientific outcomes or GPU execution."
     },
+    "python:research/flywheel_selfplay/h105_shrink_r882/test_h105.py": {
+      "role": "research",
+      "reason": "CPU-only H105 shrinkage, anchor, grouped-fold and strict full-panel Holm/harm/admission fixtures; no data, checkpoint, CUDA or GPU ticket in preparation; outside product qualification."
+    },
     "python:research/flywheel_selfplay/h100_asam_confirm/test_h100.py": {
       "role": "research",
       "reason": "H100 synthetic CPU optimizer, scratch safety, drift, multiplicity/harm/readout and predecessor-FIFO guard tests; no actual study outcomes or serving qualification."
