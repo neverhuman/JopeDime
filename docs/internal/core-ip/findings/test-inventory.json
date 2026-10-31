@@ -5070,6 +5070,10 @@
     "python:research/flywheel_selfplay/h106_w9_proposal_scorer_replay/test_run_h106.py": {
       "reason": "Owner-requested pytest proofs for the H106 proposal-distribution scorer and W9 non-neural memory-replay CPU preparation; offline research analysis outside the reviewed product baseline.",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h109_family_balanced_accum/test_h109.py": {
+      "reason": "Owner-requested pytest proofs for the H109 family-balanced accumulation preregistration; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
