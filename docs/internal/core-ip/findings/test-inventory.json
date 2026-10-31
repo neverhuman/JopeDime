@@ -1599,14 +1599,6 @@
       "reason": "Operational S3 shard-cache unit test against an in-memory fake client; not collected by any CI lane (coverage disposition: maintenance).",
       "role": "infrastructure"
     },
-    "python:tools/ops/test_jope_diskd.py": {
-      "reason": "DISK-01 hermetic tests for jope-diskd's fail-closed cleanup boundaries (policy, dry-run, allowlisted caches, open-handle refusal); no real deletion",
-      "role": "infrastructure"
-    },
-    "python:tools/ops/test_jope_remote_target_cleaner.py": {
-      "reason": "DISK-01 tests for the rebuildable-only remote Cargo target and detached Docker target-volume cleaner (dry-run, host allowlist, live-mount refusal); no real deletion",
-      "role": "infrastructure"
-    },
     "python:python/src/jope/research/test_exact_accept.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
@@ -1843,6 +1835,10 @@
         "training"
       ]
     },
+    "python:research/flywheel_selfplay/golden/test_generate.py": {
+      "reason": "RES-07 CPU pre-stage proofs for golden fixture generation (model_prior subset); no qualification capture generation or GPU use; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
       "role": "research"
@@ -1863,12 +1859,16 @@
       "reason": "Owner-requested tests for H50 seeded sensitivity directions, adapter-state transforms, search candidate generation, and finite JSON metadata; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/h58/test_h58.py": {
-      "reason": "Owner-requested pytest proofs for the H58 multi-arm flywheel runner and cache preparation (Arms A/B/C/D); offline research analysis outside the reviewed product baseline.",
+    "python:research/flywheel_selfplay/h55/test_h55.py": {
+      "reason": "Owner-requested pytest proofs for the H55 adapter-averaging wave; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h57/test_h57.py": {
       "reason": "Owner-requested pytest proofs for the H57 ES wave (data-free ES, identity and admission-boundary checks); offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h58/test_h58.py": {
+      "reason": "Owner-requested pytest proofs for the H58 multi-arm flywheel runner and cache preparation (Arms A/B/C/D); offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h59/test_h59.py": {
@@ -1877,10 +1877,6 @@
     },
     "python:research/flywheel_selfplay/h61/test_h61.py": {
       "reason": "Owner-requested pytest proofs for the H61 selection-metric runner and FIFO coordinator (CPU-only fixtures and red-team cases); offline research analysis outside the reviewed product baseline.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/golden/test_generate.py": {
-      "reason": "RES-07 CPU pre-stage proofs for golden fixture generation (model_prior subset); no qualification capture generation or GPU use; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h65_w3_continuous_top_resolved/test_runner.py": {
@@ -1923,10 +1919,6 @@
       "reason": "Tiny CPU-only H75 complete-panel scoring fixtures; no dataset, model or experiment execution; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/h82_sam_steps/test_h82.py": {
-      "reason": "CPU-only H82 fresh-seed retry-boundary, load/budget, frozen-reference and paired Elo/admission tests; offline research outside product qualification.",
-      "role": "research"
-    },
     "python:research/flywheel_selfplay/h76_sam_steps/test_h76.py": {
       "reason": "CPU-only H76 SAM/ASAM numerical, leakage and budget tests; no real corpus payloads; offline research analysis outside the reviewed product baseline.",
       "role": "research"
@@ -1935,24 +1927,28 @@
       "reason": "CPU-only H77 long-ES unit, red-team, identity, FIFO-lock and admission-boundary tests; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/h80_long_es/test_h80.py": {
-      "reason": "CPU-only H80 long-ES unit, red-team, identity, FIFO lock-fairness and admission-boundary tests; offline research analysis outside the reviewed product baseline.",
-      "role": "research"
-    },
     "python:research/flywheel_selfplay/h79_w4_prior_2plus2_cached/test_run_shard.py": {
       "reason": "Owner-requested pytest proofs for the H79 W4 cached prior-top4 vs two-plus-two screen; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h80_long_es/test_h80.py": {
+      "reason": "CPU-only H80 long-ES unit, red-team, identity, FIFO lock-fairness and admission-boundary tests; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h81_w4_prospective_2plus2/test_run_prospective.py": {
       "reason": "Owner-requested pytest proofs for the H81 W4 prospective two-plus-two stratum and its preregistered comparator-strength guard; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/rd_breakthrough/w5_provenance/test_verify.py": {
-      "reason": "Synthetic metadata controls for the W5 provenance verifier; none admits data or qualifies W5; offline research analysis outside the reviewed product baseline.",
+    "python:research/flywheel_selfplay/h82_sam_steps/test_h82.py": {
+      "reason": "CPU-only H82 fresh-seed retry-boundary, load/budget, frozen-reference and paired Elo/admission tests; offline research outside product qualification.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/h55/test_h55.py": {
-      "reason": "Owner-requested pytest proofs for the H55 adapter-averaging wave; offline research analysis outside the reviewed product baseline.",
+    "python:research/flywheel_selfplay/h86_w3_outcome_status_census/test_census.py": {
+      "role": "research",
+      "reason": "H86 W3 outcome-row status census and status-mask export unit tests."
+    },
+    "python:research/flywheel_selfplay/rd_breakthrough/w5_provenance/test_verify.py": {
+      "reason": "Synthetic metadata controls for the W5 provenance verifier; none admits data or qualifies W5; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
@@ -1963,20 +1959,16 @@
       "reason": "Owner-requested pytest regression proof for flywheel model/optimizer rollback, equal-score progress, and evaluation-identity refusal at the PyTorch boundary; research flywheel outside the reviewed product baseline.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/test_export_fused_bundle.py": {
-      "reason": "Owner-requested pytest proofs for the RES-06 deterministic frozen fused-bundle exporter; research custody tooling outside the reviewed product baseline.",
-      "role": "research"
-    },
     "python:research/flywheel_selfplay/test_device_pool_cache.py": {
       "reason": "Owner-requested pytest parity and promotion/replacement invalidation proofs for the device-resident pool cache training-input boundary; research flywheel outside the reviewed product baseline.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/test_phase3_gates.py": {
-      "reason": "Owner-requested pytest proofs for the flywheel Phase 3 fail-closed gatekeeper (#459): round qualification and comparison, deterministic verification sampling and miss-to-training-pair conversion; research flywheel outside the reviewed product baseline.",
+    "python:research/flywheel_selfplay/test_export_fused_bundle.py": {
+      "reason": "Owner-requested pytest proofs for the RES-06 deterministic frozen fused-bundle exporter; research custody tooling outside the reviewed product baseline.",
       "role": "research"
     },
-    "python:research/joint_regbin/test_study.py": {
-      "reason": "Synthetic CPU protocol fixtures for the joint regression/binary study (protected packet-root refusal); no learner, GPU, dataset or score history; offline research analysis outside the reviewed product baseline.",
+    "python:research/flywheel_selfplay/test_phase3_gates.py": {
+      "reason": "Owner-requested pytest proofs for the flywheel Phase 3 fail-closed gatekeeper (#459): round qualification and comparison, deterministic verification sampling and miss-to-training-pair conversion; research flywheel outside the reviewed product baseline.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/test_rotate_flywheel_logs.py": {
@@ -1990,6 +1982,18 @@
     "python:research/h-followups/h09/test_run.py": {
       "reason": "Pytest proofs for the HWV-04 / H09 conditional DSL-residual-around-tree experiment harness (protocol, arms and result-record shape); offline research analysis outside the reviewed product baseline.",
       "role": "research"
+    },
+    "python:research/joint_regbin/test_study.py": {
+      "reason": "Synthetic CPU protocol fixtures for the joint regression/binary study (protected packet-root refusal); no learner, GPU, dataset or score history; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:tools/ops/test_jope_diskd.py": {
+      "reason": "DISK-01 hermetic tests for jope-diskd's fail-closed cleanup boundaries (policy, dry-run, allowlisted caches, open-handle refusal); no real deletion",
+      "role": "infrastructure"
+    },
+    "python:tools/ops/test_jope_remote_target_cleaner.py": {
+      "reason": "DISK-01 tests for the rebuildable-only remote Cargo target and detached Docker target-volume cleaner (dry-run, host allowlist, live-mount refusal); no real deletion",
+      "role": "infrastructure"
     },
     "target:battle-gpu/lib/battle_gpu": {
       "role": "regression",
@@ -2788,6 +2792,12 @@
         "fitting"
       ]
     },
+    "target:jope-appliance/test/e2e": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
     "target:jope-appliance/test/pty_smoke": {
       "reason": "Portable PTY harness smoke test for the terminal UI test infrastructure (TUI-10); supports UI tests without exercising a regression subsystem",
       "role": "infrastructure"
@@ -2797,24 +2807,6 @@
       "subsystems": [
         "export",
         "fitting"
-      ]
-    },
-    "target:jope-service/test/no_gp_leak": {
-      "role": "regression",
-      "subsystems": [
-        "evidence"
-      ]
-    },
-    "target:jope-service/test/golden-fixture-loader": {
-      "role": "regression",
-      "subsystems": [
-        "evidence"
-      ]
-    },
-    "target:jope-appliance/test/e2e": {
-      "role": "regression",
-      "subsystems": [
-        "orchestration"
       ]
     },
     "target:jope-appliance/test/system": {
@@ -4900,6 +4892,18 @@
     "target:jope-service/lib/jope_service": {
       "reason": "Empty skeleton crate registered by API-06; no behaviour or tests yet",
       "role": "infrastructure"
+    },
+    "target:jope-service/test/golden-fixture-loader": {
+      "role": "regression",
+      "subsystems": [
+        "evidence"
+      ]
+    },
+    "target:jope-service/test/no_gp_leak": {
+      "role": "regression",
+      "subsystems": [
+        "evidence"
+      ]
     },
     "target:jope-telemetry/bin/jtel": {
       "reason": "Telemetry inspection and export CLI; operational tooling that supports training runs without exercising a regression subsystem",
