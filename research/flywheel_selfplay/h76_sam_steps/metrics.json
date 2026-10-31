@@ -1,0 +1,263 @@
+{
+  "admission": {
+    "admitted": false,
+    "assessed": false,
+    "reason": "all twelve complete paired cells required"
+  },
+  "attempts": [
+    {
+      "arm": "K8",
+      "error": "RuntimeError('host CPU above 85% load budget: 89.17/102 cores')",
+      "seed": 12,
+      "started_utc": "2026-10-31T05:26:38.750708+00:00",
+      "timing": true,
+      "wait_seconds": 106.17447731108405,
+      "wall_seconds": 65.85235959594138
+    },
+    {
+      "arm": "K8",
+      "cpu_gate_seconds": 30.217689417069778,
+      "max_rss_kib": 4697768,
+      "seed": 12,
+      "started_utc": "2026-10-31T05:38:16.484094+00:00",
+      "timing": true,
+      "wait_seconds": 31.34827266004868,
+      "wall_seconds": 84.13907809904777
+    },
+    {
+      "arm": "CONTROL",
+      "cpu_gate_seconds": 30.422065895982087,
+      "max_rss_kib": 4921456,
+      "seed": 12,
+      "started_utc": "2026-10-31T05:40:12.315904+00:00",
+      "timing": false,
+      "wait_seconds": 31.458560537081212,
+      "wall_seconds": 66.11697352095507
+    },
+    {
+      "arm": "K8",
+      "cpu_gate_seconds": 30.174038934055716,
+      "max_rss_kib": 4918356,
+      "seed": 12,
+      "started_utc": "2026-10-31T05:41:50.250055+00:00",
+      "timing": false,
+      "wait_seconds": 31.20914890896529,
+      "wall_seconds": 69.1178636488039
+    },
+    {
+      "arm": "SAM",
+      "cpu_gate_seconds": 30.410117672989145,
+      "error": "RuntimeError('host CPU above 85% load budget: 88.11/102 cores')",
+      "seed": 12,
+      "started_utc": "2026-10-31T05:43:30.861327+00:00",
+      "timing": false,
+      "wait_seconds": 31.453249078942463,
+      "wall_seconds": 14.403781396104023
+    }
+  ],
+  "cells": [
+    {
+      "adapter_sha256": "6d4b5207b66ea9154a9211233f57d7bb8c2afd24da3b6a4d631420c46ae519dd",
+      "arm": "CONTROL",
+      "completed_optimizer_updates": 40,
+      "dev_score_contexts": 91,
+      "dev_score_families": 19,
+      "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "planned_optimizer_updates": 40,
+      "receipt_sha256": "33b6eaa01bfa9f22217505340e99bc36ed42cbbead7fb9e81e459b7c61d4d556",
+      "seed": 12,
+      "status": "complete",
+      "train_score_contexts": 1219,
+      "wall_seconds": 66.11697352095507
+    },
+    {
+      "adapter_sha256": "c8da82d411761d693b5b461595d246d220671947400bf0dc95cba0b5154491be",
+      "arm": "K8",
+      "completed_optimizer_updates": 160,
+      "dev_score_contexts": 91,
+      "dev_score_families": 19,
+      "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "planned_optimizer_updates": 160,
+      "receipt_sha256": "6e117dfd100359c3a7417b0dbfd88ece996935129ad9a2bc188b5747c9bada0a",
+      "seed": 12,
+      "status": "complete",
+      "train_score_contexts": 1219,
+      "wall_seconds": 69.1178636488039
+    },
+    {
+      "arm": "SAM",
+      "completed_optimizer_updates": null,
+      "planned_optimizer_updates": 40,
+      "reason": "RuntimeError('host CPU above 85% load budget: 88.11/102 cores')",
+      "seed": 12,
+      "status": "infra_void",
+      "wall_seconds": 14.403781396104023
+    },
+    {
+      "arm": "ASAM",
+      "completed_optimizer_updates": null,
+      "planned_optimizer_updates": 40,
+      "seed": 12,
+      "status": "not_started",
+      "wall_seconds": null
+    },
+    {
+      "arm": "CONTROL",
+      "completed_optimizer_updates": null,
+      "planned_optimizer_updates": 40,
+      "seed": 13,
+      "status": "not_started",
+      "wall_seconds": null
+    },
+    {
+      "arm": "K8",
+      "completed_optimizer_updates": null,
+      "planned_optimizer_updates": 160,
+      "seed": 13,
+      "status": "not_started",
+      "wall_seconds": null
+    },
+    {
+      "arm": "SAM",
+      "completed_optimizer_updates": null,
+      "planned_optimizer_updates": 40,
+      "seed": 13,
+      "status": "not_started",
+      "wall_seconds": null
+    },
+    {
+      "arm": "ASAM",
+      "completed_optimizer_updates": null,
+      "planned_optimizer_updates": 40,
+      "seed": 13,
+      "status": "not_started",
+      "wall_seconds": null
+    },
+    {
+      "arm": "CONTROL",
+      "completed_optimizer_updates": null,
+      "planned_optimizer_updates": 40,
+      "seed": 14,
+      "status": "not_started",
+      "wall_seconds": null
+    },
+    {
+      "arm": "K8",
+      "completed_optimizer_updates": null,
+      "planned_optimizer_updates": 160,
+      "seed": 14,
+      "status": "not_started",
+      "wall_seconds": null
+    },
+    {
+      "arm": "SAM",
+      "completed_optimizer_updates": null,
+      "planned_optimizer_updates": 40,
+      "seed": 14,
+      "status": "not_started",
+      "wall_seconds": null
+    },
+    {
+      "arm": "ASAM",
+      "completed_optimizer_updates": null,
+      "planned_optimizer_updates": 40,
+      "seed": 14,
+      "status": "not_started",
+      "wall_seconds": null
+    }
+  ],
+  "complete": false,
+  "counts": {
+    "complete": 2,
+    "infra_void": 1,
+    "not_started": 9
+  },
+  "elo_reference": {
+    "arm": "fresh CONTROL",
+    "rating": 1500
+  },
+  "hypothesis_assessed": false,
+  "inference": {
+    "ASAM": {
+      "ci95": null,
+      "elo": null,
+      "elo_delta_ci95": null,
+      "lcb95": null,
+      "median_val_reg_gain": null,
+      "train_val_gap": null
+    },
+    "CONTROL": {
+      "ci95": null,
+      "elo": null,
+      "elo_delta_ci95": null,
+      "lcb95": null,
+      "median_val_reg_gain": null,
+      "train_val_gap": null
+    },
+    "K8": {
+      "ci95": null,
+      "elo": null,
+      "elo_delta_ci95": null,
+      "lcb95": null,
+      "median_val_reg_gain": null,
+      "train_val_gap": null
+    },
+    "SAM": {
+      "ci95": null,
+      "elo": null,
+      "elo_delta_ci95": null,
+      "lcb95": null,
+      "median_val_reg_gain": null,
+      "train_val_gap": null
+    }
+  },
+  "next_step": "Hypothesis unresolved. Any continuation requires a new prospective owner protocol and a sufficiently stable CPU window; do not resume or replace outcome cells under this protocol.",
+  "planned_cells": 12,
+  "protocol": {
+    "batch_size": 16,
+    "checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "dev_roster_contexts": 91,
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "lr": 0.0001,
+    "outcome_retries": 0,
+    "prereg_sha256": "a338d290b5dbafcd7adc0459bf91178c9b3ac74c21dade28cd2ab33b5996a4a8",
+    "retry_addendum_sha256": "8eb379d81b52c15db5ead5c7f4d3d773ac847faff02ab5d384cbf4d5f558ba34",
+    "rounds": 20,
+    "seeds": [
+      12,
+      13,
+      14
+    ],
+    "source_commit": "7c0dd66f58bff7eef718cef629afc6e9d8e17d8a",
+    "train_roster_contexts": 1219,
+    "trainable_parameters": 29211,
+    "weight_decay": 0.0001
+  },
+  "provenance": {
+    "builder": "/home/ubuntu/jope_plan/evidence/H76/t2300/build_incomplete_metrics.py",
+    "builder_sha256": "a6ec0a3a0afd201836503875746e6454e55660a6b98a9aa50012e9f521041903",
+    "cpu_guard_repair_pr": 855,
+    "cpu_pr": 842,
+    "fifo_pr": 832,
+    "ledger_sha256": "eeebb940051c1752a41b73b2b4f1e917b4729162fb18c6be4c327662009d3244",
+    "outcome_metric_values_used_for_selection": false,
+    "run_root": "/home/ubuntu/jope-data/h76/h76-wave",
+    "stop_receipt_sha256": "e468dec637e5d51fd13f324a656bc81ff1e3c14498322d2f8acaebf3d6cc2163"
+  },
+  "reason": "SAM seed12 exceeded the unchanged in-cell load guard (88.11/102); no outcome retry is preregistered.",
+  "resources": {
+    "cap_seconds": 2700,
+    "charged_gpu_cell_wall_seconds": 299.63005626085214,
+    "coordinators_exited": true,
+    "gpu_lock_released": true,
+    "max_observed_successful_child_rss_kib": 4921456,
+    "recorded_wait_seconds": 231.6437084961217,
+    "remaining_cap_seconds": 2400.369943739148,
+    "timing_retry_projection_seconds": 1433.1123787054676
+  },
+  "schema": "jope.h76.incomplete/v1",
+  "status": "incomplete_infrastructure_stop",
+  "stop_utc": "2026-10-31T05:43:46Z"
+}

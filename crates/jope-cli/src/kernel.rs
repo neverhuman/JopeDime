@@ -10,6 +10,7 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::{fs, path::Path};
 
+/// Default ridge pipeline used by fit, emit, and related CLI operations.
 pub const DEFAULT_GENOME: &str = "(pipe X (ridge))";
 
 const SEARCH_CANDIDATES: [&str; 3] = [
@@ -19,6 +20,7 @@ const SEARCH_CANDIDATES: [&str; 3] = [
 ];
 
 #[derive(Debug, Serialize)]
+/// Training and validation scores for a fitted genome.
 pub struct FitReport {
     pub schema: &'static str,
     pub ok: bool,
@@ -31,6 +33,7 @@ pub struct FitReport {
 }
 
 #[derive(Debug, Serialize)]
+/// Metadata for one emitted source artifact.
 pub struct Artifact {
     pub lang: String,
     pub bytes: usize,
@@ -40,6 +43,7 @@ pub struct Artifact {
 }
 
 #[derive(Debug, Serialize)]
+/// Summary of source artifacts emitted for a genome.
 pub struct EmitReport {
     pub schema: &'static str,
     pub ok: bool,
@@ -48,6 +52,7 @@ pub struct EmitReport {
 }
 
 #[derive(Debug, Serialize)]
+/// Best candidate and validation score from the bounded offline search.
 pub struct SearchReport {
     pub schema: &'static str,
     pub ok: bool,
@@ -57,6 +62,7 @@ pub struct SearchReport {
     pub considered: usize,
 }
 
+/// Fit `genome` on the training split of a validated regression dataset.
 pub fn fit_dataset(path: &Path, genome: &str) -> Result<FitReport> {
     let data = read_dataset(path)?;
     fit_validated_dataset(&data, genome)
@@ -81,6 +87,7 @@ pub(crate) fn fit_validated_dataset(data: &Dataset, genome: &str) -> Result<FitR
     })
 }
 
+/// Emit source for `genome` in `lang`, optionally writing artifacts under `output`.
 pub fn emit_genome(genome: &str, lang: &str, output: Option<&Path>) -> Result<EmitReport> {
     emit_genome_with_train(genome, lang, None, output)
 }
@@ -401,6 +408,7 @@ fn read_numeric_training_csv_with_schema(
 
 const FITTED_STANDALONE: &str = jope_pipeline::emit::fitted::STANDALONE;
 
+/// Score the built-in small candidate set on a dataset's validation split.
 pub fn search_dataset(path: &Path) -> Result<SearchReport> {
     let data = read_dataset(path)?;
     search_validated_dataset(&data)

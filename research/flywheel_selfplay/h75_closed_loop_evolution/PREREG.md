@@ -2,7 +2,14 @@
 
 Status: preregistered design, not an executed result.
 
-**Scheduling amendment — owner t2320:** current lock order is **H57 → Fused D2
+**Scheduling amendment — owner t2335:** after H57, the first of W1/fixed-D2
+with signed CPU pre-review PASS takes the existing qualification lock; D2 is
+HOLD until repaired. This supersedes the fixed t2320 order. H75 CPU work
+continues, with no new GPU placement. Scientific settings, budgets and deadline
+are unchanged. Test hosts are eligible xbabe1 or local xbabe2 JMAX<=8, not
+xbabe3/xbabe4 for this pass. No active job is interrupted.
+
+**Historical scheduling amendment — owner t2320 (superseded):** current lock order is **H57 → Fused D2
 → W1**; subsequent research order is W3, W4, W6, W5 (provenance hold), W7, W9.
 This supersedes t2250's H75-before-W1 placement. H75 CPU preparation continues;
 t2320 gives it no GPU slot. No active job is interrupted. Scientific protocol,
@@ -272,7 +279,7 @@ change requires a dated pre-outcome amendment, never silent downsampling.
 
 All GPU work, including model inference during acquisition, holds the existing
 `/home/ubuntu/jope_plan/qualification.lock` for its duration. Do not create
-`~/qualification.lock` as an independent lock. Respect active ownership and the t2320 schedule above;
+`~/qualification.lock` as an independent lock. Respect active ownership and the latest t2335 scheduling amendment above;
 the former H75-before-W1 position is historical, not current launch authority. Preflight MemAvailable>=20GiB, free VRAM>=20GiB,
 host CPU<=85%; nice15, OMP/MKL<=8, OpenBLAS<=1. Monitor actual utilization and
 child CPU seconds; load divided by cores is only a capacity proxy. Stop new
