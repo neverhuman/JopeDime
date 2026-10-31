@@ -32,6 +32,7 @@ SAFE_CACHE_PATHS = {
     "uv-cache": Path(".cache/uv"),
     "pip-cache": Path(".cache/pip"),
 }
+SUPPORTED_LOCAL_HOSTS = frozenset({"xbabe1", "xbabe2", "xbabe3"})
 CACHE_METADATA_NAMES = {"cachedir.tag", ".gitignore", ".lock", "lock"}
 LOG_LIMIT_BYTES = 256 * 1024**2
 LOG_RETENTION_SECONDS = 14 * 24 * 3600
@@ -109,10 +110,21 @@ def read_policy(path: Path | None) -> dict[str, Any]:
         raise ValueError("deny_prefixes must be a list")
     if policy.get("local_only") is not True:
         raise ValueError("local-only mode is required")
-    if not isinstance(policy.get("allow_log_maintenance", False), bool):
-        raise ValueError("allow_log_maintenance must be a boolean")
-    if not isinstance(policy.get("allowed_host"), str) or not policy["allowed_host"]:
-        raise ValueError("an exact local-only host is required")
+    if not isinstance(policy.get("allow_log_rotation", False), bool):
+        raise ValueError("allow_log_rotation must be a boolean")
+    if not isinstance(policy.get("allow_report_offload", False), bool):
+        raise ValueError("allow_report_offload must be a boolean")
+    if not isinstance(policy.get("allow_log_offload", False), bool):
+        raise ValueError("allow_log_offload must be a boolean")
+    hosts = policy.get("allowed_hosts")
+    if (
+        not isinstance(hosts, list)
+        or not hosts
+        or any(not isinstance(host, str) for host in hosts)
+        or len(hosts) != len(set(hosts))
+        or not set(hosts).issubset(SUPPORTED_LOCAL_HOSTS)
+    ):
+        raise ValueError("allowed_hosts must be a unique subset of the exact supported local hosts")
     if policy.get("repo_root") != "~/JopeDime" or policy.get("sccache_max_bytes") != 60 * GIB:
         raise ValueError("repo root or sccache cap differs from the reviewed local policy")
     if policy.get("offload") != {
@@ -522,7 +534,9 @@ def offload_file(
         return False
 
 
-def rotate_daemon_log(home: Path, logger: Any, *, dry_run: bool, now: float) -> None:
+def rotate_daemon_log(
+    home: Path, logger: Any, *, dry_run: bool, now: float, offload_archives: bool = False
+) -> None:
     requested_state = home / ".local" / "state" / "jope-diskd"
     if dry_run and not requested_state.is_dir():
         return
@@ -548,9 +562,10 @@ def rotate_daemon_log(home: Path, logger: Any, *, dry_run: bool, now: float) -> 
                     else:
                         active.unlink()
                         logger({"event": "log_rotated", "path": str(active), "archive": str(rotated), "bytes": rotated.stat().st_size})
-        for archive in state.glob("jope-diskd-*.log.gz"):
-            if now - archive.stat().st_mtime >= LOG_RETENTION_SECONDS:
-                offload_file(archive, state, logger, dry_run=dry_run, now=now)
+        if offload_archives:
+            for archive in state.glob("jope-diskd-*.log.gz"):
+                if now - archive.stat().st_mtime >= LOG_RETENTION_SECONDS:
+                    offload_file(archive, state, logger, dry_run=dry_run, now=now)
     except OSError as exc:
         print(f"SKIP log maintenance: {exc}")
 
@@ -952,8 +967,8 @@ def main(argv: list[str] | None = None) -> int:
         usage = shutil.disk_usage(home)
         percent = 100.0 * usage.used / (usage.used + usage.free)
         print(f"host={host} home={home} used={percent:.1f}% free_bytes={usage.free}")
-        if policy.get("local_only") and host != policy["allowed_host"]:
-            print(f"SKIP: local-only policy is for {policy['allowed_host']}, not {host}")
+        if policy.get("local_only") and host not in policy["allowed_hosts"]:
+            print(f"SKIP: local-only policy does not include {host}")
             return 0
         with run_lock(home, dry_run):
             alert_if_needed(home, percent, policy, dry_run)
@@ -962,12 +977,20 @@ def main(argv: list[str] | None = None) -> int:
             now = time.time()
             repo = expand_path(policy.get("repo_root", "~/JopeDime"))
             worktrees_root = repo / ".agent" / "worktrees"
-            if policy.get("allow_log_maintenance", False):
-                rotate_daemon_log(home, logger, dry_run=dry_run, now=now)
-                if percent >= policy["watermarks"]["soft_percent"]:
-                    offload_jankurai_reports(repo, worktrees_root, logger, dry_run=dry_run, now=now)
+            if policy.get("allow_log_rotation", False):
+                rotate_daemon_log(
+                    home,
+                    logger,
+                    dry_run=dry_run,
+                    now=now,
+                    offload_archives=policy.get("allow_log_offload", False),
+                )
             else:
-                print("log rotation and report offload disabled by policy")
+                print("daemon log rotation disabled by policy")
+            if policy.get("allow_report_offload", False) and percent >= policy["watermarks"]["soft_percent"]:
+                offload_jankurai_reports(repo, worktrees_root, logger, dry_run=dry_run, now=now)
+            else:
+                print("report offload disabled by policy")
             if percent < policy["watermarks"]["soft_percent"]:
                 print("below soft watermark; no automatic cleanup")
                 return 0

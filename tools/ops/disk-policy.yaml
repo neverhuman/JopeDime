@@ -1,8 +1,10 @@
 {
   "version": 1,
   "local_only": true,
-  "allow_log_maintenance": false,
-  "allowed_host": "xbabe2",
+  "allow_log_rotation": true,
+  "allow_log_offload": false,
+  "allow_report_offload": false,
+  "allowed_hosts": ["xbabe1", "xbabe2", "xbabe3"],
   "repo_root": "~/JopeDime",
   "sccache_max_bytes": 64424509440,
   "offload": {
