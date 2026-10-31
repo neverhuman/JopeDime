@@ -1,0 +1,33 @@
+{
+  "schema": "jope.h123.metrics/v1",
+  "hypothesis": "Continuous mean regret can break H114's top-utility tie without changing official argmin admission.",
+  "status": "NO_ARTIFACTS_PROPOSAL_ONLY",
+  "evidence": {
+    "h114_summary_commit": "002b92caeeb313456d6d05cd6049564eaa7d0980",
+    "h114_admission_log_sha256": "3093866b4f802704f158fedec1e4d0204d7af7f813776bb984114856d82a7c12",
+    "reported_top_tie_count": 21,
+    "candidate_rounds": null,
+    "verified_adapter_artifacts": 0,
+    "inventory_basis": "owner directive /home/ubuntu/nudges/h123_unstick_t0955_rd_argon.md reports 0 of 21 tied-at-maximum checkpoints retained; this lane did not access xbabe1 or the raw admission log",
+    "required_read_only_log_copy_found": false
+  },
+  "protocol": {
+    "fold_seed": 12300,
+    "paired_seeds": [61, 62, 63],
+    "data": "real S3 H50 DL-Train only",
+    "candidate_pick": "minimum equally-family-weighted continuous mean regret on the four training folds among verified candidates tied at H114 maximum; ties by round then SHA-256",
+    "primary": "median paired equal-family candidate-minus-r882 utility delta over seeds",
+    "admission_lcb95_strictly_above": 0.001,
+    "median_delta_strictly_positive": true,
+    "harm_definition": "family delta < -0.01",
+    "harm_fraction_max": 0.1,
+    "elo": "family-grouped vs r882=1500 with 95% CI",
+    "auc": false
+  },
+  "observed_outcomes": null,
+  "elo": null,
+  "gpu_used": false,
+  "qualification_lock_used": false,
+  "s3_payloads_opened": 0,
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+}

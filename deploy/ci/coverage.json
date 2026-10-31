@@ -13695,6 +13695,16 @@
       "lanes": [],
       "scope": "H124 synthetic CPU controls for the fresh family split, fixed score blend, complete-panel strict family-bootstrap/harm admission and data-free dry run. No H50/H58/H51 reads or model fits in the fixture suite; offline research only."
     },
+    "python:research/flywheel_selfplay/h123_continuous_regret_tiebreak/test_runner.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H123 continuous-regret tie-break preparation fixtures for the H114 plateau lattice; CPU prep only."
+    },
     "python:research/flywheel_selfplay/h99_h100_readout/test_readout.py": {
       "discovery": {
         "kind": "python-family"
