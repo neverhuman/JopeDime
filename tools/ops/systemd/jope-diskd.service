@@ -1,0 +1,18 @@
+[Unit]
+Description=JopeDime bounded disk cache maintenance
+After=default.target
+
+[Service]
+Type=oneshot
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/env python3 %h/.local/bin/jope-diskd --config %h/.config/jope-diskd/policy.yaml --apply
+Nice=10
+IOSchedulingClass=idle
+IOSchedulingPriority=7
+UMask=0077
+NoNewPrivileges=yes
+ProtectSystem=full
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+PrivateTmp=yes

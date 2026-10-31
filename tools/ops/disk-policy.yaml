@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "watermarks": {
+    "soft_percent": 85,
+    "aggressive_percent": 90,
+    "alert_percent": 95,
+    "low_percent": 80
+  },
+  "deny_prefixes": [
+    "~/jope-data",
+    "~/jope_plan",
+    "~/jope-rescue-20260921",
+    "~/admiralty",
+    "~/veox",
+    "~/jeryu"
+  ],
+  "paths": [
+    {
+      "id": "uv-cache",
+      "mode": "observe",
+      "path": "~/.cache/uv",
+      "max_bytes": 21474836480,
+      "soft_ttl_hours": 720,
+      "aggressive_ttl_hours": 72
+    },
+    {
+      "id": "pip-cache",
+      "kind": "cache",
+      "path": "~/.cache/pip",
+      "max_bytes": 5368709120,
+      "soft_ttl_hours": 720,
+      "aggressive_ttl_hours": 72
+    },
+    {
+      "id": "remote-tests",
+      "kind": "remote-tests",
+      "path": "~/remote_tests",
+      "max_bytes": 64424509440,
+      "ttl_hours": 24
+    },
+    {
+      "id": "cargo-targets",
+      "mode": "observe",
+      "path": "~/JopeDime/.agent/worktrees",
+      "manual_only": true,
+      "per_target_cap_bytes": 42949672960,
+      "ttl_hours": 48
+    },
+    {
+      "id": "cargo-cache",
+      "mode": "observe",
+      "path": "~/.cargo"
+    },
+    {
+      "id": "docker-cache",
+      "mode": "observe",
+      "path": "/var/lib/docker",
+      "manual_only": true,
+      "max_bytes": 21474836480,
+      "ttl_hours": 168
+    },
+    {
+      "id": "tmp",
+      "mode": "observe",
+      "path": "/tmp",
+      "manual_only": true,
+      "max_bytes": 21474836480,
+      "ttl_hours": 24
+    }
+  ]
+}
