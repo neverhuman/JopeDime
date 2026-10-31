@@ -30,7 +30,7 @@ sealed or holdout payload was opened. No table, model or checkpoint was loaded.
 | xbabe4 (Linux Docker/Colima) | 3, 4 | 489 | 0.540713 |
 
 Each host ran one worker after a load check below the 85% ceiling, nice 19 on
-xbabe1 and nice 10 elsewhere; xbabe1 had at least 150 GiB available. The Mac ran
+xbabe1 and at least nice 10 elsewhere; xbabe1 had at least 150 GiB available. The Mac ran
 only inside Linux Docker with one CPU, a 768 MiB limit, no network and read-only
 container storage. Deterministic complete-pool auditing uses no random seed.
 Total measured worker CPU was **1.715646 seconds**, within the claimed
