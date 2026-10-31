@@ -223,3 +223,12 @@ def test_family_bootstrap_preserves_seed_vectors():
     means = [np.mean([gains[int(names[i])] for i in draw]) for draw in draws]
     assert result['ci95'] == pytest.approx(np.quantile(means, [.025, .975]))
     assert result['lcb95'] == pytest.approx(np.quantile(means, .05))
+
+
+def test_unmerged_cpu_pr_blocks_before_ticket_or_gpu_query(monkeypatch):
+    monkeypatch.setattr(wave.subprocess, 'run', lambda *a, **k: None)
+    monkeypatch.setattr(wave.subprocess, 'check_output', lambda *a, **k: '{"mergedAt": null}')
+    monkeypatch.setattr(wave.fair, 'acquire_lock', lambda *a, **k: pytest.fail('ticket attempted'))
+    monkeypatch.setattr(wave.fair, 'gpu_free_mib', lambda: pytest.fail('GPU query attempted'))
+    with pytest.raises(RuntimeError, match='must merge'):
+        wave.check_dependencies(999)

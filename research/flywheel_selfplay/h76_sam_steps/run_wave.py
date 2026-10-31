@@ -26,13 +26,12 @@ def check_dependencies(cpu_pr):
     for pr in (832, cpu_pr):
         data = json.loads(subprocess.check_output(
             ['/home/ubuntu/.local/bin/gh', 'pr', 'view', str(pr), '--repo', 'neverhuman/JopeDime',
-             '--json', 'mergedAt,headRefOid'], text=True))
+             '--json', 'mergedAt,headRefOid,mergeCommit'], text=True))
         if not data['mergedAt']:
             raise RuntimeError(f'PR {pr} must merge before starting waiter')
         if pr == cpu_pr:
-            head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
-            if data['headRefOid'] != head:
-                raise RuntimeError('CPU PR head differs from execution source')
+            subprocess.run(['git', 'merge-base', '--is-ancestor', data['mergeCommit']['oid'], 'HEAD'],
+                           cwd=ROOT, check=True)
     for path in HERE.glob('*'):
         if path.suffix not in ('.py', '.md'):
             continue
