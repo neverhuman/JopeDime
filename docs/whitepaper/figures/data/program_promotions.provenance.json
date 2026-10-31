@@ -1,0 +1,63 @@
+{
+  "schema": "whitepaper.development-program-promotions/v1",
+  "source_run": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030",
+  "source_host": "xbabe1",
+  "snapshot": {
+    "host": "xbabe1",
+    "at": "2026-10-31T06:23:19.717660+00:00",
+    "kind": "read-only complete-line development-log prefixes; no dataset or weight files read",
+    "files": [
+      {
+        "name": "promotions.jsonl",
+        "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/promotions.jsonl",
+        "observed_bytes": 7015835,
+        "snapshot_bytes": 7015835,
+        "trailing_incomplete_bytes_omitted": 0,
+        "inode": 62570216,
+        "mtime_ns_before": 1793427786902487081,
+        "bytes_after": 7015835,
+        "mtime_ns_after": 1793427786902487081,
+        "sha256": "7d98f4292381854a6b8d38614ae2803ba407e7c3215fabc5b67793f222880334"
+      },
+      {
+        "name": "summary.jsonl",
+        "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/summary.jsonl",
+        "observed_bytes": 3358733,
+        "snapshot_bytes": 3358733,
+        "trailing_incomplete_bytes_omitted": 0,
+        "inode": 62570245,
+        "mtime_ns_before": 1793427728820542767,
+        "bytes_after": 3358733,
+        "mtime_ns_after": 1793427728820542767,
+        "sha256": "fb3d680d6cbdaeddf0036f800705981abcd9c75495076bdb0bde58fc69c452bb"
+      }
+    ]
+  },
+  "input_sha256": {
+    "promotions.jsonl": "7d98f4292381854a6b8d38614ae2803ba407e7c3215fabc5b67793f222880334",
+    "summary.jsonl": "fb3d680d6cbdaeddf0036f800705981abcd9c75495076bdb0bde58fc69c452bb"
+  },
+  "selection": "All consecutive retained summary rounds; journal kind=promotion in that window",
+  "round_window": [
+    1838,
+    1857
+  ],
+  "summary_rows": 20,
+  "program_promotions": 22,
+  "distinct_training_contexts_promoted": 20,
+  "promotion_CI_scope": {
+    "unavailable": 22
+  },
+  "evaluation_identities": [
+    "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83"
+  ],
+  "metric_definition": "summary.val_reg = candidate_dev_utility.val_reg; larger logged utility is better",
+  "code_references": [
+    "research/flywheel_selfplay/automatic_promotion.py:206",
+    "crates/jope-telemetry/src/hooks/flywheel.rs:362"
+  ],
+  "source_binding": "Inspected code explains fields; the installed run source/checkpoint binding remains required",
+  "scope": "Development telemetry; no sealed data, final test or one-proposal comparison",
+  "csv_sha256": "a5c6be48052332bfad27ad12145fc34ce07434759d71eb1e77cda7ef596d04b6",
+  "reproduce": "python3 figures/scripts/make_promotions_figure.py --logs SNAPSHOT_DIR"
+}

@@ -1931,8 +1931,16 @@
       "reason": "CPU-only H77 long-ES unit, red-team, identity, FIFO-lock and admission-boundary tests; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h80_long_es/test_h80.py": {
+      "reason": "CPU-only H80 long-ES unit, red-team, identity, FIFO lock-fairness and admission-boundary tests; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h79_w4_prior_2plus2_cached/test_run_shard.py": {
       "reason": "Owner-requested pytest proofs for the H79 W4 cached prior-top4 vs two-plus-two screen; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h81_w4_prospective_2plus2/test_run_prospective.py": {
+      "reason": "Owner-requested pytest proofs for the H81 W4 prospective two-plus-two stratum and its preregistered comparator-strength guard; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/rd_breakthrough/w5_provenance/test_verify.py": {

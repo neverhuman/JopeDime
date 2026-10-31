@@ -13228,6 +13228,16 @@
       "lanes": [],
       "scope": "Owner-requested H77 CPU unit, red-team and identity tests for long direct-utility ES: preregistered constants, pop-64 antithetic sampling shared by ES and ESH, harm-penalty fitness, null and timing cell identity, protected-path and trainable-inventory guards, the 2.5 h timing cap, pooled admission with per-seed and median Elo, the admission audit, FIFO queue order and the xbabe2 disk abort; experimental research outside product qualification."
     },
+    "python:research/flywheel_selfplay/h80_long_es/test_h80.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner-requested H80 CPU unit, red-team and identity tests for the long direct-utility ES successor: preregistered t0030 constants and H77 closeout, centered-rank pop-32 antithetic sampling shared by ES and ESH, harm-penalty fitness, null and timing cell identity, the a-priori 9000 s timing projection, pooled admission with per-seed and median Elo, the independent admission audit, FIFO lock release and tail requeue, and the disk-guard retry accounting; experimental research outside product qualification."
+    },
     "python:research/flywheel_selfplay/rd_breakthrough/w5_provenance/test_verify.py": {
       "discovery": {
         "kind": "python-family"
