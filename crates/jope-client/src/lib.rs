@@ -2,7 +2,7 @@
 //!
 //! The default build provides the registry-driven [`Transport`] boundary, the loopback-only
 //! [`Http`] implementation, request/response types, file helpers, and explicit SSE streams. It
-//! does not require an async runtime. The optional `engine` feature adds [`InProcess`] and its
+//! does not require an async runtime. The optional `engine` feature adds `InProcess` and its
 //! Tokio-backed router adapter; builds without that feature do not depend on Tokio. The optional
 //! `fake` feature adds deterministic event replay for tests and terminal clients.
 //!
