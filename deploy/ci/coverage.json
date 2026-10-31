@@ -13427,6 +13427,16 @@
       ],
       "lanes": [],
       "scope": "H94 W6 prospective hedge fixtures: HEDGE_CTX keeps the prior top-2 and adds the context model top-2 of the rest, the three arms reveal at most eight distinct programs per unit, unknown arms are refused, incomplete context-seeds leave the paired panel, verdict and median-interval paths, and the merged-H81 loader refuses changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
+    },
+    "python:research/flywheel_selfplay/h96_w4_active_reveal/test_run_w4.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H96 W4 two-plus-two harness fixtures using the merged H81 selection rule: reveal is called only on the first pair, zero residuals reduce two-plus-two to prior-top4, informative residuals change only the second pair, a first-pair execution error makes the adaptive arms INCOMPLETE, dry-run contexts avoid roster families, analyze refuses dry-run rows, and the merged-H81 loader refuses changed bytes. Synthetic only; no data, model or native calls; no experiment admission or release qualification."
     }
   },
   "lanes": {
