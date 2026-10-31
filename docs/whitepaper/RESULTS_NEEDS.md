@@ -19,14 +19,14 @@ The regressor's name, version and licence (formerly §6.2 and Appendix C) were f
 
 ## Every marker, by location
 
-Source lines are as of the `wp_opus_t0352` owner-decisions PR. "Packet" names the component of the evidence-handoff table that supplies the item.
+Source lines are as of upgrade pass 24 (`wp_opus_layout_t0540`), which moved Table 5 ahead of the §7 opening paragraph. "Packet" names the component of the evidence-handoff table that supplies the item.
 
 ### Results (§7): 25 markers
 
 | # | Where | Marker asks for | Packet |
 |---|---|---|---|
-| R1 | §7 opening ([07_results.tex:9](sections/07_results.tex#L9)) | Independent evaluation evidence before any performance claim. It is resolved by the completed comparisons in §7.2–§7.4. | Reproducible summaries |
-| R2 | §7 opening ([:10](sections/07_results.tex#L10)) | A source-bound benchmark before any deployment-throughput claim; without one, make no throughput claim. | None yet: add a benchmark record bound to its source commit and inputs |
+| R1 | §7 opening ([07_results.tex:47](sections/07_results.tex#L47)) | Independent evaluation evidence before any performance claim. It is resolved by the completed comparisons in §7.2–§7.4. | Reproducible summaries |
+| R2 | §7 opening ([:48](sections/07_results.tex#L48)) | A source-bound benchmark before any deployment-throughput claim; without one, make no throughput claim. | None yet: add a benchmark record bound to its source commit and inputs |
 | R3 | §7.1 contract ([:65](sections/07_results.tex#L65)) | The final problem inventory, dataset identities, row splits, family assignments and exclusions, component provenance, evaluator, checkpoint, seeds, task metrics and failure accounting. | Frozen evaluation contract |
 | R4 | §7.2 effect of training ([:81](sections/07_results.tex#L81)) | The matched first-proposal comparison: the trained writer against the frozen reference writer, with paired first draws under predeclared seeds and every draw reported. Also source-bound evidence of optimizer updates and parameter changes. | Paired first-proposal record |
 | R5–R6 | Table 6 ([:107–108](sections/07_results.tex#L107)) | A paired evaluation with uncertainty for each receipted comparator, including ties, failures and exclusions: the frozen algorithm designed by `claude-opus-5-5` (`Opus5p5_Extra`) and the one designed by `gpt-6-astra-wm`, as its session reported (`GPT6_Astra_Max`). Their receipts are in `crates/jope-bench`. | Fixed-method comparison record |

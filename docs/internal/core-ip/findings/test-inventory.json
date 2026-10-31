@@ -429,6 +429,10 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
+    "python:research/flywheel_selfplay/h111_w7_common_support/test_matching.py": {
+      "reason": "Owner-requested W7 common-support matcher synthetic controls; no measured outcomes, provenance authentication or execution admission.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h104_w7_acquisition_replay_prep/test_runner.py": {
       "reason": "Owner-requested W7 acquisition/QD/replay preparation controls; synthetic offline research, no scientific outcome or execution admission.",
       "role": "research"
