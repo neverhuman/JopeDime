@@ -14,6 +14,7 @@ use std::{
 };
 
 #[derive(Debug, Serialize)]
+/// Summary of a verified synthetic input catalog.
 pub struct Verification {
     pub schema: &'static str,
     pub ok: bool,

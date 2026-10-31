@@ -18,7 +18,7 @@ mod train;
 #[command(
     name = "jope",
     version,
-    about = "JOPE-Dime fixtures, encode, fit/emit/search, local champions, centroid router, model bundles, dataset catalog and the product pipeline"
+    about = "JOPE-Dime command line for diagnostics, fixtures, benchmarking, optimization, training, encoding and fitting, models, datasets, and the product pipeline"
 )]
 struct Cli {
     #[command(subcommand)]
@@ -441,6 +441,21 @@ mod tests {
         assert!(parts
             .iter()
             .all(|part| part.chars().all(|character| character.is_ascii_digit())));
+    }
+
+    #[test]
+    fn about_mentions_the_current_command_groups() {
+        let about = Cli::command().get_about().unwrap().to_string();
+        for topic in [
+            "diagnostics",
+            "benchmarking",
+            "optimization",
+            "training",
+            "models",
+            "datasets",
+        ] {
+            assert!(about.contains(topic), "help summary omits {topic}: {about}");
+        }
     }
 
     #[test]

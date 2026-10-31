@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, fs, path::Path};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+/// A genome label and its centroid in the router embedding space.
 pub struct RouterClass {
     pub genome: String,
     pub n: usize,
@@ -16,6 +17,7 @@ pub struct RouterClass {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+/// Serialized centroid-router model.
 pub struct RouterArtifact {
     pub schema: String,
     pub dim: usize,
@@ -23,6 +25,7 @@ pub struct RouterArtifact {
 }
 
 #[derive(Debug, Serialize)]
+/// Selected genome and its fit scores for one routed dataset.
 pub struct RouteReport {
     pub schema: &'static str,
     pub ok: bool,
@@ -68,6 +71,7 @@ pub fn fit_centroid_router(examples: &[(Vec<f64>, String)]) -> Result<RouterArti
     })
 }
 
+/// Load and validate a router JSON file or a directory containing `router.v1.json`.
 pub fn load_router(path: &Path) -> Result<RouterArtifact> {
     let file = if path.is_dir() {
         path.join("router.v1.json")
@@ -97,6 +101,7 @@ pub fn load_router(path: &Path) -> Result<RouterArtifact> {
     Ok(artifact)
 }
 
+/// Select the nearest router genome and fit it on the dataset's training split.
 pub fn route_dataset(input: &Path, router: &RouterArtifact) -> Result<RouteReport> {
     let data = read_dataset(input)?;
     route_validated_dataset(&data, router)
