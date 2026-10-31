@@ -1699,7 +1699,10 @@ mod tests {
         assert_eq!(features["position0.append"], 0.0);
         assert_eq!(features["position1.lambda_frac"], 1.0);
         assert!((features["position1.ridge"] - (-1.098_612_288_668_109_6)).abs() <= 1e-15);
-        assert!((features["position2.ridge"] - 0.693_147_180_559_945_3).abs() <= 1e-15);
+        assert!(
+            (features["position2.ridge"] - "0.6931471805599453".parse::<f64>().unwrap()).abs()
+                <= 1e-15
+        );
         assert!((features["position2.q"] - 6.909_254_155_105_873).abs() <= 1e-15);
         assert!(!features.contains_key("position0.ridge"));
         assert_eq!(features["position0.bins"], 0.0);
