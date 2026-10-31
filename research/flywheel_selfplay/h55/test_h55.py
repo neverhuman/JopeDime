@@ -78,6 +78,16 @@ class H55PolicyTests(unittest.TestCase):
                                wave.MAX_LOCK_WAIT_SECONDS - prior)
         self.assertEqual(wave.remaining_lock_wait_seconds(wave.MAX_LOCK_WAIT_SECONDS), 0.0)
 
+    def test_wait_accounting_preserves_post_lock_preflight_time(self):
+        exc = wave.CellPreflightError("filesystem / at 95.2%", 963.4)
+        self.assertEqual(wave.exception_wait_seconds(exc), 963.4)
+
+    def test_lock_poll_checks_disk_before_attempt(self):
+        usage = SimpleNamespace(total=1000 * 1024**3, free=49 * 1024**3)
+        self.assertIn("95% full", wave.disk_guard_error(usage))
+        safe = SimpleNamespace(total=1000 * 1024**3, free=51 * 1024**3)
+        self.assertIsNone(wave.disk_guard_error(safe))
+
     def test_outcome_runner_has_no_unregistered_timing_flag(self):
         args = SimpleNamespace(seed=12, arm="swa8", device="cuda:0", lock_held=True,
                                mode="outcome", input=Path("unused"), checkpoint=Path("unused"))

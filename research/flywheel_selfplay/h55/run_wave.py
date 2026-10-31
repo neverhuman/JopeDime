@@ -49,8 +49,33 @@ class RunnerExitError(RuntimeError):
         super().__init__(f"{key} runner exited {code}; log={log_path}")
 
 
+class CellPreflightError(RuntimeError):
+    def __init__(self, message: str, wait_seconds: float):
+        self.wait_seconds = wait_seconds
+        super().__init__(message)
+
+
 def remaining_lock_wait_seconds(cumulative_wait_seconds: float) -> float:
     return max(0.0, MAX_LOCK_WAIT_SECONDS - cumulative_wait_seconds)
+
+
+def disk_guard_error(usage=None) -> str | None:
+    usage = usage or shutil.disk_usage("/")
+    used_percent = 100.0 * (usage.total - usage.free) / usage.total
+    if usage.free < 1024 * 1024 * 1024:
+        return f"less than 1 GiB free on /: {usage.free} bytes"
+    if used_percent >= 95.0:
+        return f"filesystem / is at or above 95% full: {used_percent:.2f}%"
+    return None
+
+
+def is_disk_guard_failure(exc: Exception) -> bool:
+    message = str(exc)
+    return "filesystem / is at or above 95% full" in message or "less than 1 GiB free on /" in message
+
+
+def exception_wait_seconds(exc: Exception) -> float:
+    return float(getattr(exc, "wait_seconds", 0.0))
 
 
 def note(path: Path, text: str) -> None:
@@ -143,21 +168,64 @@ def acquire_lock(status_path: Path, wait_total: float) -> tuple[object, float, i
     handle = LOCK.open("a+")
     started = time.monotonic()
     next_note = started
+    next_full_preflight = started
+    resource_ready = False
+    disk_blocked = False
+    preflight_reason = "initial resource preflight pending"
     while True:
-        try:
-            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            free = gpu_free_mib()
-            if free >= MIN_GPU_FREE_MIB:
-                return handle, time.monotonic() - started, free
-            fcntl.flock(handle, fcntl.LOCK_UN)
-        except BlockingIOError:
-            pass
+        now = time.monotonic()
+        disk_error = disk_guard_error()
+        if disk_error:
+            if not disk_blocked:
+                note(status_path, f"WAIT disk guard before lock acquisition: {disk_error}")
+            disk_blocked = True
+            resource_ready = False
+            preflight_reason = disk_error
+            if now >= next_full_preflight:
+                try:
+                    safe_preflight()
+                except RuntimeError as exc:
+                    preflight_reason = str(exc)
+                    note(status_path, f"WAIT resource preflight before lock acquisition: {preflight_reason}")
+                next_full_preflight = now + 300
+        elif disk_blocked:
+            try:
+                safe_preflight()
+                resource_ready = True
+                disk_blocked = False
+                preflight_reason = ""
+            except RuntimeError as exc:
+                resource_ready = False
+                disk_blocked = is_disk_guard_failure(exc)
+                preflight_reason = str(exc)
+                next_full_preflight = now + 300
+        elif now >= next_full_preflight:
+            try:
+                safe_preflight()
+                resource_ready = True
+                preflight_reason = ""
+            except RuntimeError as exc:
+                resource_ready = False
+                preflight_reason = str(exc)
+                disk_blocked = is_disk_guard_failure(exc)
+                note(status_path, f"WAIT resource preflight before lock acquisition: {preflight_reason}")
+            next_full_preflight = now + 300
+        if resource_ready:
+            try:
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                free = gpu_free_mib()
+                if free >= MIN_GPU_FREE_MIB:
+                    return handle, time.monotonic() - started, free
+                fcntl.flock(handle, fcntl.LOCK_UN)
+            except BlockingIOError:
+                pass
         waited = time.monotonic() - started
         if waited >= remaining_lock_wait_seconds(wait_total):
             handle.close()
             raise LockWaitTimeout(waited, wait_total + waited)
         if time.monotonic() >= next_note:
-            note(status_path, f"WAIT qualification.lock / GPU >=6GiB; cumulative_wait={wait_total + waited:.0f}s")
+            detail = f"; resource_block={preflight_reason}" if preflight_reason else ""
+            note(status_path, f"WAIT qualification.lock / GPU >=6GiB; cumulative_wait={wait_total + waited:.0f}s{detail}")
             next_note = time.monotonic() + 30
         time.sleep(5)
 
@@ -216,10 +284,13 @@ def run_locked_cell(
     preflight = safe_preflight()
     handle, wait_seconds, free_mib = acquire_lock(status_path, cumulative_wait)
     try:
-        post_lock = safe_preflight()
+        try:
+            post_lock = safe_preflight()
+        except RuntimeError as exc:
+            raise CellPreflightError(str(exc), wait_seconds) from exc
         preflight.update({f"post_lock_{key}": value for key, value in post_lock.items()})
         if free_mib < MIN_GPU_FREE_MIB:
-            raise RuntimeError("GPU memory guard failed after lock acquisition")
+            raise CellPreflightError("GPU memory guard failed after lock acquisition", wait_seconds)
         preflight["gpu_free_mib_after_lock"] = free_mib
         preflight["gpu_min_free_mib"] = MIN_GPU_FREE_MIB
         preflight["qualification_lock_wait_seconds"] = wait_seconds
@@ -349,6 +420,10 @@ def run_outcomes(amendment: Path, prior_lock_wait_seconds: float = 0.0,
                 wait_total = exc.cumulative_wait_seconds
                 cells.append({"key": f"{arm}/seed{seed}", "status": "infra_void", "error": reason,
                               "lock_wait_seconds": exc.wait_seconds})
+            elif isinstance(exc, CellPreflightError):
+                wait_total += exc.wait_seconds
+                cells.append({"key": f"{arm}/seed{seed}", "status": "infra_void", "error": reason,
+                              "lock_wait_seconds": exc.wait_seconds})
             elif isinstance(exc, RunnerExitError):
                 wait_total += exc.wait_seconds
                 gpu_wall_total += exc.wall_seconds
@@ -357,7 +432,7 @@ def run_outcomes(amendment: Path, prior_lock_wait_seconds: float = 0.0,
                               "log": str(exc.log_path)})
             else:
                 cells.append({"key": f"{arm}/seed{seed}", "status": "infra_void", "error": reason,
-                              "lock_wait_seconds": 0.0})
+                              "lock_wait_seconds": exception_wait_seconds(exc)})
             break
     completed = len(cells) == len(CELL_ORDER) and all(c["status"] == "complete" for c in cells)
     wave = {
