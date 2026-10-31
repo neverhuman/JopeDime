@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "prediction_max_abs_error": 0.0,
+  "utility_max_abs_error": 0.0,
+  "control_loss_abs_error": 0.0,
+  "control_gradient_max_abs_error": 0.0,
+  "adapter_sha256": "b9ba619e7f13b2ac6beaeb22ca57d53308d180514080d9a8387ed0487c827454",
+  "assessment_families": 41,
+  "assessment_contexts": 241,
+  "optimizer_updates": 0
+}

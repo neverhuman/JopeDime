@@ -1,13 +1,209 @@
 {
-  "status": "NOT_RUN",
-  "complete": false,
-  "Elo": null,
-  "val_reg_inner": null,
-  "median_gain": null,
-  "ci95": null,
-  "holm": null,
-  "harm_fraction": null,
-  "verdict": null,
-  "optimizer_updates": 0,
-  "gpu_seconds": 0
+  "status": "COMPLETE",
+  "arms": {
+    "CONTROL": {
+      "median_gain": -0.06318012577126758,
+      "family_bootstrap_95_ci": [
+        -0.12655812392755583,
+        0.002110485498324425
+      ],
+      "one_sided_95_lcb": -0.11518466587277586,
+      "bootstrap_lower_tail_area": 0.9712028797120288,
+      "seed_utilities": [
+        0.8059850791743554,
+        0.8063949233887189,
+        0.8118877932005468
+      ],
+      "seed_gains": [
+        -0.0635899699856311,
+        -0.06318012577126758,
+        -0.05768725595943978
+      ],
+      "context_harm_fraction": 0.14937759336099585,
+      "seed_harm_fractions": [
+        0.14937759336099585,
+        0.13278008298755187,
+        0.13692946058091288
+      ],
+      "seed_elo": [
+        1422.4719895935548,
+        1422.4719895935548,
+        1448.7880745658233
+      ],
+      "median_elo": 1422.4719895935548,
+      "elo_95_ci": [
+        1336.3503297501795,
+        1516.9615394212349
+      ],
+      "family_wins": [
+        11,
+        11,
+        12
+      ],
+      "family_ties": [
+        10,
+        10,
+        11
+      ],
+      "family_losses": [
+        20,
+        20,
+        18
+      ],
+      "identical_seed_gain_vectors": false,
+      "holm_pass": null,
+      "verdict": "DIAGNOSTIC"
+    },
+    "CLIP": {
+      "median_gain": -0.060801125453017774,
+      "family_bootstrap_95_ci": [
+        -0.12781662578416006,
+        0.004081839371578468
+      ],
+      "one_sided_95_lcb": -0.11604676373847053,
+      "bootstrap_lower_tail_area": 0.9686031396860314,
+      "seed_utilities": [
+        0.8087739237069689,
+        0.8093578736066878,
+        0.8072338038718184
+      ],
+      "seed_gains": [
+        -0.060801125453017774,
+        -0.06021717555329885,
+        -0.062341245288168014
+      ],
+      "context_harm_fraction": 0.17012448132780084,
+      "seed_harm_fractions": [
+        0.15767634854771784,
+        0.14937759336099585,
+        0.15352697095435686
+      ],
+      "seed_elo": [
+        1431.3271439397495,
+        1404.4471644339453,
+        1395.2488513192668
+      ],
+      "median_elo": 1404.4471644339453,
+      "elo_95_ci": [
+        1314.7557838892608,
+        1500.0
+      ],
+      "family_wins": [
+        12,
+        10,
+        10
+      ],
+      "family_ties": [
+        9,
+        10,
+        9
+      ],
+      "family_losses": [
+        20,
+        21,
+        22
+      ],
+      "identical_seed_gain_vectors": false,
+      "holm_pass": false,
+      "verdict": "NO_ADVANCE",
+      "holm_threshold": 0.05
+    },
+    "NORM": {
+      "median_gain": -0.05573008313872886,
+      "family_bootstrap_95_ci": [
+        -0.12345997464724921,
+        0.008802196011637724
+      ],
+      "one_sided_95_lcb": -0.11079193914271883,
+      "bootstrap_lower_tail_area": 0.9567043295670433,
+      "seed_utilities": [
+        0.8085450304742349,
+        0.8145215310989721,
+        0.8138449660212576
+      ],
+      "seed_gains": [
+        -0.061030018685751655,
+        -0.055053518061014474,
+        -0.05573008313872886
+      ],
+      "context_harm_fraction": 0.1991701244813278,
+      "seed_harm_fractions": [
+        0.17842323651452283,
+        0.17012448132780084,
+        0.1825726141078838
+      ],
+      "seed_elo": [
+        1366.714128385847,
+        1376.4004298658974,
+        1376.4004298658974
+      ],
+      "median_elo": 1376.4004298658974,
+      "elo_95_ci": [
+        1267.0142258941673,
+        1457.4178676342854
+      ],
+      "family_wins": [
+        9,
+        10,
+        10
+      ],
+      "family_ties": [
+        8,
+        7,
+        7
+      ],
+      "family_losses": [
+        24,
+        24,
+        24
+      ],
+      "identical_seed_gain_vectors": false,
+      "holm_pass": false,
+      "verdict": "NO_ADVANCE",
+      "holm_threshold": 0.025
+    }
+  },
+  "reference_utility": 0.8695750491599864,
+  "assessment_families": 41,
+  "assessment_contexts": 241,
+  "actual_updates": 360,
+  "interpretation": "Inner assessment families were excluded from H125 updates/calibration, but r882 had prior DL-Train exposure. Not novel-family generalization or serving qualification.",
+  "prereg_commit": "6424a539a295aa02a5fb831c19b70c19d9be07b1",
+  "prereg_sha256": "68723ea3fe689c4f41ae4a9188b7d8ff3aad5f1673c8169a677fdaddcd4eb419",
+  "calibration_sha256": "9f6d6b44e7078b35873cd3d22d1a14d29ff84ffa8926b6f892b4e38303877d61",
+  "roster_sha256": "7ba2497185fe370f96bbde51360e744dc4a283bf003819cb9c1ea4f4e95baf15",
+  "payload_paths_opened": 2438,
+  "non_DL_Train_payloads_opened": 0,
+  "CUDA_initialized": false,
+  "refusals": [],
+  "scientific_verdict": "NO_ADVANCE",
+  "prereg_pr": 1083,
+  "CPU_only": true,
+  "execution_custody": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H125/astra-t0955/manifest-v2.json",
+    "version_id": "YxMNr.xPc8JYEWyREIA7_a5IBNJXSyxN",
+    "sha256": "50cc7893b3d7285f968865f0700c3777c2f7a8d8023d5395d6542e71276cffb7",
+    "bytes": 42744,
+    "verified_utc": "2026-10-31T16:33:20.935509+00:00"
+  },
+  "descriptive_vs_CONTROL": {
+    "CLIP": {
+      "seed_utility_gains_vs_CONTROL": [
+        0.0027888445326135214,
+        0.002962950217968885,
+        -0.004653989328728403
+      ],
+      "median_gain_vs_CONTROL": 0.0027888445326135214,
+      "scope": "preregistered descriptive comparison only; primary comparator and Holm decisions remain r882"
+    },
+    "NORM": {
+      "seed_utility_gains_vs_CONTROL": [
+        0.002559951299879515,
+        0.008126607710253198,
+        0.0019571728207107286
+      ],
+      "median_gain_vs_CONTROL": 0.002559951299879515,
+      "scope": "preregistered descriptive comparison only; primary comparator and Holm decisions remain r882"
+    }
+  }
 }
