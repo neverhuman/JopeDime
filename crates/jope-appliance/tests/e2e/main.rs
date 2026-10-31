@@ -209,6 +209,32 @@ fn synthetic_observation() -> (RunSnapshot, Vec<PublicEvent>) {
     (snapshot, events)
 }
 
+#[derive(Default)]
+struct FakeEngine {
+    requests: Vec<Value>,
+}
+
+impl FakeEngine {
+    fn execute(&mut self, spec: &RunSpec) -> (RunSnapshot, Vec<PublicEvent>) {
+        // Retain each request so the harness can prove that every fake surface
+        // submits the same bounded, typed input to the engine boundary.
+        self.requests
+            .push(serde_json::to_value(spec).expect("RunSpec serializes"));
+        // Engine-free synthetic output: never a product score or golden result.
+        synthetic_observation()
+    }
+}
+
+fn capture_from_fake_engine(
+    engine: &mut FakeEngine,
+    surface: Surface,
+    spec: &RunSpec,
+) -> SurfaceCapture {
+    let (snapshot, events) = engine.execute(spec);
+    SurfaceCapture::from_observation(surface, snapshot, events)
+        .expect("fake engine returns a coherent capture")
+}
+
 #[test]
 fn bounded_run_spec_is_a_single_typed_request_for_every_surface() {
     let spec = bounded_synthetic_spec();
@@ -241,6 +267,20 @@ fn synthetic_surface_capture_harness_accepts_equal_projections_and_rejects_drift
         assert_equivalent(&divergent).unwrap_err(),
         "loopback HTTP differs from batch CLI in champion, final scores, or durable events"
     );
+}
+
+#[test]
+fn fake_engine_receives_one_bounded_spec_for_each_surface_capture() {
+    let spec = bounded_synthetic_spec();
+    let expected_request = serde_json::to_value(&spec).unwrap();
+    let mut engine = FakeEngine::default();
+    let captures = SURFACES
+        .into_iter()
+        .map(|surface| capture_from_fake_engine(&mut engine, surface, &spec))
+        .collect::<Vec<_>>();
+
+    assert_eq!(engine.requests, vec![expected_request; SURFACES.len()]);
+    assert_equivalent(&captures).unwrap();
 }
 
 #[test]
