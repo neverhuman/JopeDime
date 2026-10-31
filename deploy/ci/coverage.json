@@ -160,6 +160,16 @@
     }
   },
   "items": {
+    "python:research/flywheel_selfplay/h104_w7_acquisition_replay_prep/test_runner.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H104 W7 CPU preparation: family/table fold exclusion, deterministic budget-preserving shards, pending common-support receipts, feature-only acquisition and uniform-support/refusal controls."
+    },
     "python:research/flywheel_selfplay/h102_w5_provenance_gaps/test_check.py": {
       "discovery": {
         "kind": "python-family"
