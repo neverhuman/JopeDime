@@ -28,15 +28,14 @@
   \end{tabular}
 \end{table*}
 
-We organize innovation into four roles: an aim, variation, judgment and
+We organize innovation into four roles: aim, variation, judgment and
 retention. They connect a proposed program to its evaluation and to what
-the next attempt can learn. Producing a new string is easy; finding a useful
-program is harder. We call judgment learned before the next attempt
+the next attempt can learn. We call judgment learned before the next attempt
 \emph{taste}, and ask whether it can improve the first proposal.
 
 \subsection{Novelty is free}\label{sub:anatomy-novelty}
 
-Novelty is the cheapest part of invention. Borges imagined a library holding every possible book of 410 pages \citep{borges1941babel}, so every algorithm short enough to fit in a volume is already on its shelves. The library is useless, because nothing in it tells a reader which volume is true. A random string generator is the same library with a faster librarian: almost every string it emits is new, and almost none is worth running (\cref{fig:novelty-judgment}, lower right).
+Novelty is the cheapest part of invention. Borges imagined a library holding every possible book of 410 pages \citep{borges1941babel}, so every algorithm short enough to fit in a volume is already on its shelves. Nothing in the library tells a reader which volume is true. A random string generator is the same library with a faster librarian: almost every string it emits is new, and almost none is worth running (\cref{fig:novelty-judgment}, lower right).
 
 \begin{figure}[t]
   \centering
@@ -45,7 +44,7 @@ Novelty is the cheapest part of invention. Borges imagined a library holding eve
   \label{fig:novelty-judgment}
 \end{figure}
 
-Language models show the same split. In a blinded study with 104 NLP researchers, ideas from a language model were rated more original than experts' ideas ($p < 0.05$) \citep{si2024ideas}. Once 43 experts had spent over 100 hours each carrying out ideas from both pools, the generated ideas lost significantly more ground on every metric \citep{si2025gap}. Boden had predicted the asymmetry in 1998: machines, she wrote, would find generating new ideas easier than automating their evaluation \citep{boden1998creativity}. These studies motivate a distinction between the novelty of a proposal and
+Language-model studies test this distinction. In a blinded study with 104 NLP researchers, ideas from a language model were rated more original than experts' ideas ($p < 0.05$) \citep{si2024ideas}. Once 43 experts had spent over 100 hours each carrying out ideas from both pools, the generated ideas lost significantly more ground on every metric \citep{si2025gap}. Boden had predicted the asymmetry in 1998: machines, she wrote, would find generating new ideas easier than automating their evaluation \citep{boden1998creativity}. These studies motivate a distinction between the novelty of a proposal and
 its value after execution; they do not establish that judgment is the only
 bottleneck in every domain.
 
@@ -70,7 +69,7 @@ Archiving a winning program does the first; using evaluation feedback to
 update the generator attempts the second. This distinction connects the
 four pillars to the learning question in \cref{sec:intro}.
 
-The traditions converge for a reason: Campbell argued that every genuine gain in knowledge needs a mechanism for introducing variation, a consistent selection process, and a mechanism for preserving and reproducing what is selected \citep[p.~381]{campbell1960bvsr}. The aim is what keeps the selection consistent, which makes it the fourth pillar.
+Campbell argued that every genuine gain in knowledge needs a mechanism for introducing variation, a consistent selection process, and a mechanism for preserving and reproducing what is selected \citep[p.~381]{campbell1960bvsr}. The aim is what keeps the selection consistent, which makes it the fourth pillar.
 
 \subsection{Taste is judgment moved upstream}\label{sub:anatomy-taste}
 
@@ -109,15 +108,16 @@ Novelty is free. Judgment is the inventor.
 
 \subsection{Learning from a referee}\label{sub:anatomy-history}
 
-Taste depends on the feedback available to the learner. People learn much
-of it from the record of their field. Normal science, in Kuhn's account, solves puzzles inside a reigning paradigm \citep{kuhn1962structure}. The record also holds people in place: when a star life scientist dies prematurely, articles by outsiders to the star's collaborators flow into the field, draw on different literature and are disproportionately likely to be highly cited \citep{azoulay2019funeral}.
+People learn much of their taste from the record of their field. Normal science, in Kuhn's account, solves puzzles inside a reigning paradigm \citep{kuhn1962structure}. The record also holds people in place: when a star life scientist dies prematurely, articles by outsiders to the star's collaborators flow into the field, draw on different literature and are disproportionately likely to be highly cited \citep{azoulay2019funeral}.
 
 A model trained to predict text receives a signal about what was written,
 rather than a direct score for improving an algorithm. That does not prevent
 novel generalization. It motivates supplementing the historical record with
 feedback from execution, so a useful departure from precedent can be rewarded.
 
-A referee offers such an additional teacher. AlphaGo Zero learned with no human data, from the rules and the outcomes of its own games, and found strategies outside traditional Go knowledge \citep{silver2017mastering}. Its predecessor had already made such a move. As David Silver told Wired in March 2016, AlphaGo put the chance that a human would play its Move~37 against Lee Sedol at one in ten thousand, and it won that game \citep{metz2016twomoves}. The knowledge then flowed back to people. In more than 5.8 million moves by professionals from 1950 to 2021, previously unseen moves grew more frequent once superhuman programs arrived, and came with better decisions \citep{shin2023superhuman}. These results establish the possibility in Go. Whether an analogous signal
+A referee offers such an additional teacher. AlphaGo Zero learned with no human data, from the rules and the outcomes of its own games, and found strategies outside traditional Go knowledge \citep{silver2017mastering}. Its predecessor had already made such a move. As David Silver told Wired in March 2016, AlphaGo put the chance that a human would play its Move~37 against Lee Sedol at one in ten thousand, and it won that game \citep{metz2016twomoves}.
+
+The knowledge then flowed back to people. In more than 5.8 million moves by professionals from 1950 to 2021, previously unseen moves grew more frequent once superhuman programs arrived, and came with better decisions \citep{shin2023superhuman}. These results establish the possibility in Go. Whether an analogous signal
 improves algorithm invention must be measured in the innovation game.
 
 \subsection{Where the pillars live}\label{sub:anatomy-where}
@@ -158,5 +158,4 @@ people still set the aim.}
   \end{tabular}
 \end{table}
 
-The four pillars describe the roles; the next section traces the methods
-that connect them.
+The next section traces the methods that connect these four roles.
