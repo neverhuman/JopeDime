@@ -44,14 +44,13 @@ fn execute<T: Transport>(
         },
     };
     // Keep the original JSON (including explicit nulls) for retry identity.
-    let result: jope_api::RunSnapshot = transport
-        .execute(
-            jope_client::Request::new(8, 0, &[("id", &id.to_string())])?
-                .key(Some(&key))?
-                .json(&body)?,
-        )?
-        .json()
-        .context("control run")?;
+    let result: jope_api::RunSnapshot = (|| {
+        let request = jope_client::Request::new(8, 0, &[("id", &id.to_string())])?
+            .key(Some(&key))?
+            .json(&body)?;
+        transport.execute(request)?.json()
+    })()
+    .context("control run")?;
     serde_json::to_value(result).context("serialize control response")
 }
 
