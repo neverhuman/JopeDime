@@ -33,9 +33,9 @@ Source lines are as of upgrade pass 24 (`wp_opus_layout_t0540`), which moved Tab
 | R7 | Figure 15 ([:115](sections/07_results.tex#L115)) | The leaderboard: evaluated methods, paired outcomes, rating protocol and uncertainty. Elo summarizes a stated comparison population and does not replace paired results. | Fixed-method comparison record |
 | R8 | §7.4 cost of attempts ([:131](sections/07_results.tex#L131)) | Attempt curves with matched budgets, repeated seeds and uncertainty. | Attempt and cost record |
 | R9 | Figure 16 ([:137](sections/07_results.tex#L137)) | Performance against attempts and compute, including failed attempts and unreached targets. | Attempt and cost record |
-| R10 | Figure 17 ([:146](sections/07_results.tex#L146)) | Pilot cost: per-stage failure shares and cost per verified win. | Attempt and cost record |
-| R11 | Figure 17 caption ([:152](sections/07_results.tex#L152)) | Pilot data, seeds and family-level uncertainty. Settings with no verified win are named, not given a finite cost per win. | Attempt and cost record |
-| R12 | §7.5 map ([:163](sections/07_results.tex#L163)) | Problem-similarity and program-only-control evaluations, on data disjoint from fitting the map. | Map, example and diagnostic records |
+| R10 | Figure 17 ([:154](sections/07_results.tex#L154)) | Pilot cost: per-stage failure shares and cost per verified win. | Attempt and cost record |
+| R11 | Figure 17 caption ([:160](sections/07_results.tex#L160)) | Pilot data, seeds and family-level uncertainty. Settings with no verified win are named, not given a finite cost per win. | Attempt and cost record |
+| R12 | §7.5 map ([:150](sections/07_results.tex#L150)) | Problem-similarity and program-only-control evaluations, on data disjoint from fitting the map. | Map, example and diagnostic records |
 | R13 | §7.5 map ([:171](sections/07_results.tex#L171)) | A **team decision**: implement a route by which the map changes training, or limit the map study to ranking. In the described checkpoint the map neither conditions nor screens the writer's draw. | Map, example and diagnostic records |
 | R14–R16 | Table 7 ([:183–185](sections/07_results.tex#L183)) | A held-out ranking study; a matched causal ablation, which presupposes the training route in R13; and a failure-class comparison. | Map, example and diagnostic records |
 | R17 | §7.6 failures ([:199](sections/07_results.tex#L199)) | Attempt inventories and costs by terminal outcome class, with unresolved cases identified. | Attempt and cost record |

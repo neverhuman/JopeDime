@@ -7107,7 +7107,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "A packaged copy alone in an empty directory with an empty environment: version, doctor, fit with bounded selection, predict, fit-predict parity, verify-self and licenses; every exit status 2-7; a damaged manifest, frame or executable region; a promised but unexecutable method; an unpackaged build."
+      "scope": "A packaged copy alone in an empty directory with an empty environment: version, doctor, fit with bounded selection, predict, fit-predict parity, verify-self and licenses; every exit status 2-7; a damaged manifest, frame or executable region; a promised but unexecutable method; an unpackaged build. RNK-12 executes explicit CUDA refusal in text/JSON with no native input/fitting/output work, and positive CPU/auto fits with actual receipt placement."
     },
     "target:jope-appliance/test/system": {
       "discovery": {
@@ -13786,7 +13786,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H135 data-free controls for native utility, ordered baseline sanity, context-weighted family bootstrap, seed identity, harm/trim and resource refusal. No real scoring or scientific qualification."
+      "scope": "H135 data-free native utility, sanity, bootstrap, seed/harm/trim/resource controls; native HistGB thread ceiling and scoped baseline setter restoration. Manual constructor preflight reads pretrained assets only, no datasets/r882/predictions; not a product qualification."
     }
   },
   "lanes": {
