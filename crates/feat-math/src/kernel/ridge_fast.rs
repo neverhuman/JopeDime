@@ -34,7 +34,7 @@ fn standardized(x: &Rows, n: usize, p: usize, means: &[f64], scales: &[f64]) -> 
 }
 
 /// Why a certified route refuses an input. The caller then refits with the legacy authority,
-/// [`RidgeModel::fit`], whose result is always defined.
+/// [`crate::heads::RidgeModel::fit`], whose result is always defined.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Refusal {
     Shape(&'static str),
@@ -72,7 +72,7 @@ pub struct Design {
 }
 
 impl Design {
-    /// The design [`RidgeModel::fit`] solves for `x, y` at `lambda_frac`, or a refusal when a
+    /// The design [`crate::heads::RidgeModel::fit`] solves for `x, y` at `lambda_frac`, or a refusal when a
     /// standardized value or a label is not finite.
     pub fn from_rows(x: &Rows, y: &[f64], lambda_frac: f64) -> Result<Design, Refusal> {
         let n = x.len().min(y.len());
@@ -197,7 +197,7 @@ impl Design {
     }
 }
 
-/// `G = ZᵀZ + lambda I = L Lᵀ` in [`cholesky_solve`]'s operation order, with the forward vector
+/// `G = ZᵀZ + lambda I = L Lᵀ` in [`crate::heads::cholesky_solve`]'s operation order, with the forward vector
 /// `f = L⁻¹ Zᵀ yc`. Row `i` of `L` and entry `f_i` depend only on the first `i + 1` columns, so
 /// the factor of a design's leading columns is exactly the leading block of its full factor, and
 /// [`Factor::extend`] resumes from it bit for bit.
@@ -288,7 +288,7 @@ impl Factor {
         self.p
     }
 
-    /// The ridge coefficients, by [`cholesky_solve`]'s backward substitution.
+    /// The ridge coefficients, by [`crate::heads::cholesky_solve`]'s backward substitution.
     pub fn coefficients(&self) -> Vec<f64> {
         let p = self.p;
         let mut w = vec![0.0f64; p];
