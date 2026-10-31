@@ -149,6 +149,10 @@ pub fn read_csv(path: &Path, limits: &Limits) -> Result<CsvTable> {
     parse_csv(&bytes, limits).with_context(|| path.display().to_string())
 }
 
+/// Parse CSV bytes under the supplied input, row, and column limits.
+///
+/// A UTF-8 BOM is accepted and removed before parsing. The header is required and must contain
+/// non-empty column names; malformed CSV and inputs exceeding `limits` return an input error.
 pub fn parse_csv(bytes: &[u8], limits: &Limits) -> Result<CsvTable> {
     let body = bytes.strip_prefix(b"\xEF\xBB\xBF").unwrap_or(bytes);
     let mut reader = csv::ReaderBuilder::new()
