@@ -1,0 +1,109 @@
+{
+  "candidate_counts": {
+    "contexts": 254,
+    "datasets": 127,
+    "families": 123,
+    "views": 254
+  },
+  "inputs": {
+    "catalog_md_sha256": "bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee",
+    "sealed_proposal_adopted": false,
+    "sealed_proposal_sha256": "799d33eb305b64c0969aa0f4f2fc3e86d171fc58f1f295ded50944d561ab2efb",
+    "v3_manifest_sha256": "701affc61e14950bc5c890b6399a9d765f10e7f7f720a2ba8f1a16d93e1a7640"
+  },
+  "lineage_census": {
+    "lineage_like_keys": [
+      "parent_corpus_manifest_path",
+      "parent_corpus_manifest_sha256",
+      "parent_corpus_v2_manifest_path",
+      "parent_corpus_v2_manifest_sha256",
+      "phase7_256_context_evolution_summary.parent_python_cpu_seconds",
+      "revisions.v3a_strict_train_q25.materialized_pools[].parent_incumbent_best_f",
+      "revisions.v3a_strict_train_q25.materialized_pools[].parent_n_candidates",
+      "revisions.v3a_strict_train_q25.materialized_pools[].parent_pool_path",
+      "revisions.v3a_strict_train_q25.materialized_pools[].parent_pool_sha256",
+      "revisions.v3b_strict_train_median.materialized_pools[].parent_incumbent_best_f",
+      "revisions.v3b_strict_train_median.materialized_pools[].parent_n_candidates",
+      "revisions.v3b_strict_train_median.materialized_pools[].parent_pool_path",
+      "revisions.v3b_strict_train_median.materialized_pools[].parent_pool_sha256"
+    ],
+    "per_child_lineage_fields_present": [],
+    "per_row_source_fields_present": []
+  },
+  "overlap": {
+    "catalog": {
+      "datasets": [],
+      "view_dataset_prefixes": []
+    },
+    "proposal": {
+      "contexts": [],
+      "datasets": [],
+      "families": [],
+      "view_dataset_prefixes": [],
+      "views": []
+    }
+  },
+  "payloads_read": {
+    "outcome_values": 0,
+    "pool_arrays": 0,
+    "report_bodies": 0,
+    "sealed_bucket_objects": 0
+  },
+  "schema": "jope.h117.w5-identity/v1",
+  "sealed_counts": {
+    "catalog_ids": 14,
+    "proposal_contexts": 293,
+    "proposal_datasets": 153,
+    "proposal_families": 97,
+    "proposal_views": 763
+  },
+  "verdict": {
+    "note": "A zero overlap against an unadopted proposal and a catalog exclusion list is bounded evidence, never a global PASS; proof 1 needs an authoritative identity-only sealed roster with an authority receipt.",
+    "proof1_global_sealed_absence": "UNPROVED_BOUNDED",
+    "proof2_parent_child": "UNPROVED",
+    "proof3_original_row_source": "UNPROVED",
+    "w5": "HELD"
+  },
+  "h_folder": "H117",
+  "author": "rd_opus [OPUS]",
+  "run_id": "opus-h117-20261031a",
+  "v3_manifest_s3": {
+    "key": "experiments/flywheel-selfplay-20261023/corpus_v3_wider_strict_train_256/corpus_v3_manifest.json",
+    "version_id": "gd.JxegwvXXxSr7SNt7qJNbEij97pO7L"
+  },
+  "not_opened": [
+    "phase-7 and v2 integration report bodies (may serialize outer-test outcomes; H98 boundary)",
+    "sealed bucket",
+    "pool arrays"
+  ],
+  "s3_objects": [
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W5/opus-h117-20261031a/results.json",
+      "version_id": "twYWehRGawZAyA.n.7gxM.XOx7289kKn",
+      "sha256": "27f0a76737676985187a28a81bbeac4c9d675de66138fc28234762b387218b18",
+      "bytes": 2321,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W5/opus-h117-20261031a/check_w5_identity.py",
+      "version_id": "5EQXaiXgRVSD8J0rlZkUP5vImzUKC6Ra",
+      "sha256": "b0339dbe891a666343ee1f603166657823f47a80a98aaf5f28f2f93d4ef3bf66",
+      "bytes": 7195,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W5/opus-h117-20261031a/test_check_w5_identity.py",
+      "version_id": "S.ZlOWsjbdXpVzb6Mxzkk1N2xoqtbA6u",
+      "sha256": "c2585ce938fb34220be815f49289e5a8a45a76d35c112d5ef5b58bb308ed8be0",
+      "bytes": 3815,
+      "write": "create-only if-none-match"
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W5/opus-h117-20261031a/S3_DATASET_CATALOG.md",
+      "version_id": "zc4oKOsuhpD1Ib1G0lS3sxtAkjP.bXBo",
+      "sha256": "bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee",
+      "bytes": 18980,
+      "write": "create-only if-none-match"
+    }
+  ]
+}
