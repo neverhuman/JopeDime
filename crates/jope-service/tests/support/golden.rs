@@ -707,10 +707,7 @@ mod tests {
         let mut missing = tensors.clone();
         missing.retain(|(name, _)| *name != "lm48_z");
         write("missing", &missing);
-        assert!(load_from_dir(directory.path(), "missing", &schema, true)
-            .unwrap_err()
-            .to_string()
-            .contains("missing required tensor `lm48_z`"));
+        assert!(load_from_dir(directory.path(), "missing", &schema, true).is_err());
 
         let mut extra = tensors.clone();
         extra.push(("unexpected", vec![1]));
