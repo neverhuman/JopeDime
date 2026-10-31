@@ -7,6 +7,10 @@ use candle_core_0_11_0::{safetensors::load_buffer, DType, Device, Tensor};
 use safetensors::SafeTensors;
 use std::{collections::BTreeMap, env, error::Error, fmt, fs, path::Path};
 
+#[rustfmt::skip]
+#[path = "../../src/ranker/stage1b.rs"]
+mod stage1b;
+
 const GOLDEN_DIR_ENV: &str = "JOPE_GOLDEN_DIR";
 const STRICT_ENV: &str = "JOPE_PARITY_STRICT";
 
@@ -356,5 +360,38 @@ mod tests {
         // RES-07 must replace this placeholder with its README inventory before
         // removing the ignore, so a missing fixture cannot become a false pass.
         assert!(load_named("<RES-07 fixture name>", &[]).unwrap().is_some());
+    }
+
+    fn rnk07_output_schema() -> [TensorSpec; 2] {
+        [
+            TensorSpec::new("tokens", vec![1, 10, 32]),
+            TensorSpec::new("mask", vec![1, 10]),
+        ]
+    }
+
+    #[test]
+    fn rnk07_loader_seam_rejects_invalid_fixture_paths() {
+        let error = load_named("../outside", &rnk07_output_schema()).unwrap_err();
+        assert!(error.to_string().contains("invalid golden fixture name"));
+    }
+
+    #[test]
+    #[ignore = "RES-07 fixtures not qualified; enable only after qualified tensors are published"]
+    fn rnk07_fixture_schema_smoke_after_res07_qualification() {
+        let context = env::var("JOPE_RNK07_GOLDEN_CONTEXT")
+            .expect("select a qualified RES-07 training context");
+        let fixture_name = format!("contexts/{context}");
+        let fixture = load_named(&fixture_name, &rnk07_output_schema())
+            .expect("qualified RES-07 fixture must satisfy the documented output schema")
+            .expect("fixture-dependent check remains ignored until RES-07 qualification");
+
+        assert_eq!(fixture.tensors["tokens"].dims(), [1, 10, 32]);
+        assert_eq!(fixture.tensors["mask"].dims(), [1, 10]);
+    }
+
+    #[test]
+    fn rnk07_stage1b_module_is_available_for_synthetic_tests() {
+        assert_eq!(stage1b::TOKEN_COUNT, 10);
+        assert_eq!(stage1b::TOKEN_WIDTH, 32);
     }
 }

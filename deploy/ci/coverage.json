@@ -1221,6 +1221,36 @@
       "lanes": [],
       "scope": "Opt-in Dope encoding; local focused qualification recorded with the draft PR. GPU execution requires CUDA hardware; default CI does not select this feature."
     },
+    "job:.github/workflows/clean-host.yml/linux-x86_64-prestage": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "REL-04 manual Linux synthetic pre-stage only; macOS arm64 and Windows x86-64 jobs explicitly disabled/pending. No signed release, cross-platform D1, real-data parity or successful GitHub execution is qualified."
+    },
+    "job:.github/workflows/clean-host.yml/macos-arm64-pending": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "REL-04 manual Linux synthetic pre-stage only; macOS arm64 and Windows x86-64 jobs explicitly disabled/pending. No signed release, cross-platform D1, real-data parity or successful GitHub execution is qualified."
+    },
+    "job:.github/workflows/clean-host.yml/windows-x86_64-pending": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "REL-04 manual Linux synthetic pre-stage only; macOS arm64 and Windows x86-64 jobs explicitly disabled/pending. No signed release, cross-platform D1, real-data parity or successful GitHub execution is qualified."
+    },
     "job:.github/workflows/ci.yml/aggregate": {
       "discovery": {
         "kind": "workflow-job"
@@ -12914,6 +12944,16 @@
       ],
       "scope": "Configured fast PR/manual lane; path-excluded jobs are not passes."
     },
+    "workflow:.github/workflows/clean-host.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "REL-04 manual Linux synthetic pre-stage only; macOS arm64 and Windows x86-64 jobs explicitly disabled/pending. No signed release, cross-platform D1, real-data parity or successful GitHub execution is qualified."
+    },
     "workflow:.github/workflows/full-main.yml": {
       "discovery": {
         "kind": "workflow"
@@ -13067,6 +13107,16 @@
       ],
       "lanes": [],
       "scope": "HWV-04 H09 CPU experiment safety, family-role separation, DSL-preserving residual features, paired CI and append-only phase receipt fixture tests; run explicitly with pytest research/h-followups/h09 -q."
+    },
+    "python:research/joint_regbin/test_study.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Owner gb1841 CPU-only JRB01 preregistration, isolation/budget admission and family-paired reporting fixtures. Local pytest receipt required; no GPU/learning/split-or-stay qualification."
     }
   },
   "lanes": {

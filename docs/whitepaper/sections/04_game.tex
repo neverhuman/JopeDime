@@ -46,11 +46,11 @@ that writer input.
                    & Go                              & The innovation game \\
     \midrule
     Board          & Stones on a $19\times19$ grid   & The encoded problem \\
-    Move           & Place one stone                 & Write one complete program, or one edit \\
-    Legal move     & An empty point; no suicide      & Parses, type-checks, runs within limits \\
+    Move           & Place one stone, or pass        & Write one complete program \\
+    Legal move     & Empty point; no suicide or forbidden repetition & Parses, type-checks, runs within limits \\
     Illegal move   & Not allowed                     & Stillborn: an automatic loss \\
     Referee        & The rules of Go                 & The verifier, on hidden folds \\
-    Win            & More territory                  & Valid, and beats the incumbent \\
+    Win            & Higher final score             & Valid, and beats the incumbent \\
     Opponent       & A past self                     & The incumbent, often a past self \\
     Rating         & Elo                             & Win rate and Elo across problems \\
     Moves per game & About 150, each cheap           & One, costly to judge \\
