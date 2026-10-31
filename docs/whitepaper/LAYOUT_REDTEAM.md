@@ -57,7 +57,7 @@ The before/after page comparisons are in [`redteam/`](redteam/):
 
 | # | Sev. | Finding | Recommendation | Owner |
 |---|---|---|---|---|
-| O1 | Med | Figure 1 is a two-row booktabs table captioned as a figure (p. 2). | Either draw it as a schematic or make it a table. A table renumbers every table, so it is a structural call. | writer |
+| O1 | Med | **Fixed in upgrade PR 2** (redrawn as a TikZ diagram). Figure 1 is a two-row booktabs table captioned as a figure (p. 2). | Either draw it as a schematic or make it a table. A table renumbers every table, so it is a structural call. | writer |
 | O2 | Med | **Fixed in upgrade PR 1.** Box numbers are hard-coded in the box titles and in the text ("Box~1/2/3"). The labels `box:searchone` and `box:hallucination` exist but are not used for numbering, so reordering the boxes desyncs them silently. | Add a box counter inside the `explainer` environment and refer to boxes with `\cref`. | format |
 | O3 | Med | Figures 4, 9 and 10 are `\fbox` placeholders. The text cites "Figure 4a" and "Figure 4b" panels that do not exist yet. Page 14 stacks four pending floats. | Replace them with real figures before submission. Keep the panel letters in step with the final figure. | writer |
 | O4 | Low | **Fixed in upgrade PR 1** (date pinned to October 2026). `\date{Draft --- \today}` changes the committed PDF on every rebuild day. That defeats byte and text identity checks across days. | Pin the draft date, or drop it. | writer/format |
@@ -89,3 +89,4 @@ The owner widened the scope to a full upgrade, carried out in small sequential P
 | Pass | Scope | Status |
 |---|---|---|
 | 1 | Title and subtitle ("EurekaZero: Engineered Intelligence for Algorithm Invention by Self-Play"), PDF metadata, pinned draft date (O4), numbered boxes referenced with `\cref` (O2) | this PR |
+| 2 | Abstract rewritten: problem, game, design, contributions, evidence status, and one TBD for the headline result. Introduction restructured: an "Engineered intelligence" paragraph ties the subtitle to the four pillars; an explicit contributions list; a "What is and is not established" paragraph replaces the introduction's TBD. Figure 1 redrawn as a TikZ diagram (O1). | this PR |

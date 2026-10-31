@@ -1,16 +1,24 @@
 \begin{abstract}
-Can experience from algorithm discovery improve the first proposal for a
-new problem? We frame invention as a game in which an encoded task is the
-board, an executable program is the move, a verifier supplies feedback and
-an incumbent defines improvement. \EZ{} aims to retain that feedback in a
-program writer, so deployment can use one complete candidate without
-retries or reranking. We separate this proposal budget from the costs of
-encoding, generation and fitting, and distinguish measured training behavior
-from the stronger claim of transfer to unseen problems. The available
-training record does not establish a single-proposal advantage. We specify
-comparisons against frontier-designed algorithms, a tabular foundation
-model and agents allowed repeated attempts, together with a test of the
-problem--program map. \TBD{Complete the independent evaluations, identify
-the evaluated checkpoint and replace this draft statement with supported
-results and uncertainty.}
+Can experience from algorithm discovery improve the first algorithm a system
+proposes for a new problem? We cast invention as a game: the encoded task is
+the board, a complete executable program is the move, a verifier scoring
+hidden folds is the referee and the incumbent algorithm is the opponent.
+\EZ{} is a design for learning this game by self-play, after AlphaGo Zero.
+During training, verified search supplies targets for a grammar-constrained
+program writer and a separate problem--program ranking map. Two ratchets
+keep the targets honest: a board's incumbent changes only on strict
+improvement, and a retrained writer must pass a held-out admission test. At
+deployment the frozen writer commits one complete program per problem
+(\searchone{}), and encoding, generation and fitting are all charged to that
+single proposal. We contribute the game and its rules, a cost model that
+links proposal quality to the cost of a verified improvement, a referee
+protocol that keeps sealed test families outside the learner's inputs, and
+an evaluation protocol that compares the single proposal with algorithms
+designed by frontier models, a tabular foundation model and agents allowed
+repeated attempts, and ablates the map. A retained 695-round admission record shows two strict
+validation gains followed by a plateau. It does not establish a
+single-proposal advantage or transfer to unseen problem families; those
+tests are specified in \cref{sec:results}.
+\TBD{State the headline first-proposal result with its uncertainty once the
+independent evaluation is complete.}
 \end{abstract}
