@@ -32,4 +32,12 @@ nice -n 15 env OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
 
 ## Result receipt
 
-The exact run ID, source commit, SHA-256 verified S3 objects, descriptive metrics, and targeted checks are recorded in `metrics.json` and the external status receipt. Null `Elo`, `val_reg_inner`, and `U4` fields are intentional: this shard does not compute those study endpoints.
+Run `res08-random-hash-20261031T0446Z-01` used source commit `a08e22b46efad4fced0b327750a73414f968bf31`. It processed 50 fit-only contexts / 44 resolved family groups, three seeds, two policies and 1,200 cached reveal slots; native fits and GPU hours were both zero. The per-seed descriptive utility summaries are in `metrics.json`; selection details and full input hashes are in `run_manifest.json` and the S3 trace. No primary endpoint or advancement gate was evaluated.
+
+Create-only S3 outputs under `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W4/res08-random-hash-20261031T0446Z-01/` were downloaded at their recorded version IDs and SHA-256 matched:
+
+- `manifest.json`: version `92s6x_BP5gZt.4XU4KYtmxQlCRQMeIsG`, SHA-256 `5fa6310976529f00284ae8714e44018da56e87a98e4e6d594ee017c90b7f978e`.
+- `metrics.json`: version `zhhSKU9Wpm__p1OE07gMK56n.GwLZhrT`, SHA-256 `55991ac09caa0c3a2e5f884a58f1ca16f0e32e2ad7c56b32febf70582731907b`.
+- `selection_trace.jsonl`: version `Gnehv3B1GxZcCP5AI4icLdD37wjKAmkW`, SHA-256 `87e1ba1e03909077ecae206c40ef7c94d712a8e577962741f790be4aa2847620`.
+
+The admitted H50 offline packet manifest contains no per-pool S3 object keys; the run records its local input paths and pinned hashes and did not fetch a new input prefix. Null `Elo`, `val_reg_inner`, and `U4` fields are intentional: this shard does not compute those study endpoints. Full execution, integrity and gate self-review details are in `~/jope_plan/master/status/H75-W4-cached-pool-shard.md`.
