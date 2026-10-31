@@ -91,7 +91,7 @@ pub struct PackIndex {
 }
 
 impl PackIndex {
-    /// Performs the pack key operation and returns an error if it cannot be completed.
+    /// Performs the pack key operation.
     pub fn pack_key(&self) -> String {
         format!(
             "packs/v1/{}/{}/{:05}-{}.zst",
@@ -99,7 +99,7 @@ impl PackIndex {
         )
     }
 
-    /// Performs the index key operation and returns an error if it cannot be completed.
+    /// Performs the index key operation.
     pub fn index_key(&self) -> String {
         format!(
             "packs/v1/{}/{}/{:05}-{}.index.json",

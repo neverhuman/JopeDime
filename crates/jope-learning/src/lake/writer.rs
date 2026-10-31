@@ -56,7 +56,7 @@ impl ManifestCommit {
 
 /// Interface for the head observation contract used by Disposable analytical projection publication using create-only objects and CAS head moves.
 pub trait HeadObservation {
-    /// Performs the bytes operation and returns an error if it cannot be completed.
+    /// Performs the bytes operation.
     fn bytes(&self) -> &[u8];
 }
 

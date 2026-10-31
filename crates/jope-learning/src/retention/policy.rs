@@ -317,7 +317,7 @@ impl Policy {
         }
     }
 
-    /// Performs the in scope operation and returns an error if it cannot be completed.
+    /// Performs the in scope operation.
     pub fn in_scope(&self, bucket: &str) -> bool {
         self.in_scope_bucket_prefixes
             .iter()
@@ -332,7 +332,7 @@ impl Policy {
             .max_by_key(|r| r.prefix.len())
     }
 
-    /// Performs the soft t0 for operation and returns an error if it cannot be completed.
+    /// Performs the soft t0 for operation.
     pub fn soft_t0_for(&self, bucket: &str, prefix: &str) -> Option<&PrefixNote> {
         self.soft_t0
             .iter()
@@ -340,7 +340,7 @@ impl Policy {
             .max_by_key(|n| n.prefix.len())
     }
 
-    /// Performs the class override for operation and returns an error if it cannot be completed.
+    /// Performs the class override for operation.
     pub fn class_override_for(&self, bucket: &str, prefix: &str) -> Option<&ClassOverride> {
         self.class_overrides
             .iter()
@@ -348,7 +348,7 @@ impl Policy {
             .max_by_key(|o| o.prefix.len())
     }
 
-    /// Performs the e1 candidate for operation and returns an error if it cannot be completed.
+    /// Performs the e1 candidate for operation.
     pub fn e1_candidate_for(&self, bucket: &str, prefix: &str) -> Option<&E1Candidate> {
         self.e1_candidates
             .iter()

@@ -104,7 +104,7 @@ pub enum Transition {
 }
 
 impl Transition {
-    /// Performs the of operation and returns an error if it cannot be completed.
+    /// Performs the of operation.
     pub fn of(incumbent: Option<&HwmRecord>, decision: &Decision) -> Self {
         match decision {
             Decision::Accepted if incumbent.is_none() => Self::Initialized,
@@ -1100,11 +1100,11 @@ pub struct VerifyReport {
 }
 
 impl VerifyReport {
-    /// Performs the ok operation and returns an error if it cannot be completed.
+    /// Performs the ok operation.
     pub fn ok(&self) -> bool {
         self.breaks.is_empty() && self.ledger.ok()
     }
-    /// Performs the total breaks operation and returns an error if it cannot be completed.
+    /// Performs the total breaks operation.
     pub fn total_breaks(&self) -> usize {
         self.breaks.len() + self.ledger.breaks.len()
     }
@@ -1666,7 +1666,7 @@ pub fn tree_size(root: &Path) -> Result<(u64, u64)> {
     Ok((bytes, files))
 }
 
-/// Performs the source value operation and returns an error if it cannot be completed.
+/// Performs the source value operation.
 pub fn source_value(kind: &str, path: &Path, extra: Value) -> Value {
     let mut v =
         json!({"kind": kind, "path": path.display().to_string(), "tool": crate::TOOL_VERSION});
