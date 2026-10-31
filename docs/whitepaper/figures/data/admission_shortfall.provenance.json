@@ -1,0 +1,27 @@
+{
+  "schema": "whitepaper.admission-shortfall/v1",
+  "source_commit": "002b92caeeb313456d6d05cd6049564eaa7d0980",
+  "input": "docs/whitepaper/figures/data/admissions.csv",
+  "input_sha256": "fd64a540f48127f4475b9eda8adeba6ecdcc767757cfdbba118ede332995bf9e",
+  "round_window": [
+    775,
+    1469
+  ],
+  "rows": 695,
+  "derivation": "utility_shortfall = float(best_val) - float(candidate_val), using each row's post-decision recorded best",
+  "ECDF": "At x, count(shortfall <= x) / 695; every retained round appears once, repeated values retained; no duration weighting",
+  "zero_shortfall_rounds": [
+    782,
+    785,
+    859,
+    882
+  ],
+  "zero_scope": "Post-decision best equals candidate on accepted strict gains and ties; zero does not mean a tie with the previous incumbent",
+  "scope": "Descriptive adaptive development observations; not independent tasks or distinct programs; no confidence/first-proposal/transfer claim",
+  "source_binding": "CSV field interpretation only; installed source/adapter/checkpoint qualification remains required",
+  "matplotlib_version": "3.10.8",
+  "csv_sha256": "ae68b108f55a57552f395e2035ab69b7f4cdda05f362605ab06f0869e3f940db",
+  "figure_sha256": "c59565f1e4973e69fb007fe52100ba8e942926795bf18adbb47e399099b803f4",
+  "generator_sha256": "e1e47bec43a4e00b281f8d0146607684137eaba0d28fb6042aa6cc6fbe0b1849",
+  "reproduce": "python3 figures/scripts/make_flywheel_figs.py --admission-shortfall"
+}

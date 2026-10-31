@@ -29,3 +29,103 @@ CPU only, `nice 15`, OMP/MKL/OpenBLAS at most 4 threads, load at most 85/102, `M
 ## Closeout
 
 README records hypothesis, setup, outcomes, metrics, verdict, and next step. Keep `metrics.json` below 100 KB; include identities, complete fit receipts, compact primary/secondary readouts, versions, resource/CPU evidence, and explicit zero forbidden reads/GPU. Add the H124 index row and test coverage/inventory registration. Open one ready PR; do not self-merge. If a required H119 code/feature/data prerequisite is missing or fails its pinned identity checks, stop before scoring and record a blocker receipt instead of substituting inputs.
+
+## Amendment 1 — operational only (rd_opus, 2026-10-31, committed before any scoring)
+
+**Owner transfer.** The hwave overseer reassigned H124 from `luna_v1_hwv03` to `rd_opus` at 15:05Z
+(`~/nudges/rd_opus_t0840.md`, receipt `~/jope_plan/ns/receipts/H124_claim.txt`).
+
+**The statistical protocol is unchanged:**
+- fold seed 12400, sampling RNG 12400 and model seeds 64–66;
+- the H119/H85 tree recipe;
+- fit-only positive-slope calibration;
+- fixed lambda 0.5, with lambda 1.0 report-only;
+- the H119 Track-2 U4 endpoint and equal-family weighting;
+- the admission gates, harm rule, bootstrap draws and RNGs (124000 and 124001);
+- every input pin.
+
+`protocol_sha256` is unchanged. No outcome from the stopped attempt was produced or used.
+
+The amendment responds to the stopped attempt (7,052,092 KiB peak RSS over the 6 GiB gate) and to audit
+`AUDIT_t0855.md` findings A1–A3.
+
+1. **Train-row-only cache reads (A1).**
+   - Both H58 caches are pinned, uncompressed (`ZIP_STORED`) archives holding 1,219 train and 91 DL-Val contexts.
+   - The runner reads only the train contexts' rows, by byte range:
+     - `tokens_10x32`, `mask_10`, `lm48_z` and `dope629` from `context_features.npz`;
+     - `offsets` and `proj16` from `pool_priors.npz`.
+   - DL-Val rows are never decoded or copied into the process.
+   - The `cids` column is read in full as identity metadata. It is the same identity list `selected.json` already
+     carries.
+   - The receipt records rows and bytes read per member and proves zero overlap with DL-Val row ranges.
+   - The proj16 spans must equal each train pool's length and be pairwise disjoint.
+   - The pinned whole-file SHA-256 identity checks still stream every byte through the hash without decoding it.
+   - The other members (`ctx_feat_584`, `base_prior_cost`, `sos_prior`, `scale`) are not read; the r882 pass already
+     used zeros for them.
+   - The input files and their pins are unchanged.
+2. **Memory-bounded execution (A3).**
+   - Pool program matrices are loaded lazily per context, with their pinned SHA-256 rechecked, instead of holding
+     all 1,219 (2.3 GB) in memory.
+   - The r882 pass streams one context at a time, frees its tensors and trims the heap every 50 contexts.
+   - The r882 network is released before the GBM fits.
+   - Each fit fills one float64 design matrix in place. scikit-learn converts float32 input to float64, so the
+     values it receives are bit-identical to the original float32 concatenation (unit-tested).
+   - The 6 GiB ceiling is enforced continuously:
+     - a watchdog thread samples current and peak RSS every 0.25 s and stops the worker with a receipt on breach;
+     - every context of the r882 pass and every fit checks peak RSS (`ru_maxrss`) and current RSS.
+   - A synthetic probe at the largest fit shape (191,808 × 1,089) peaked at 3.86 GB RSS.
+3. **Fallback ceiling.** If the 6 GiB run stops on RSS, one relaunch in a fresh run root may use a 10 GiB worker
+   ceiling (`--rss-limit-gib 10`).
+   - It requires MemAvailable ≥ 24 GiB at launch.
+   - The existing MemAvailable ≥ 16 GiB check still runs before and between fits, and the run aborts cleanly below
+     it.
+   - Any relaunch is disclosed in the closeout.
+4. **Registered Elo estimator (A2).**
+   - The headline Elo is the preregistered **median of the three per-seed family-grouped Elo ratings** versus
+     r882 = 1500.
+   - Its 95% interval comes from 1,000 family resamples (RNG 124001) drawn jointly across seeds, so family pairing
+     is kept.
+   - Per-seed intervals are reported too.
+   - The closed-form per-seed rating is checked against the canonical helper.
+   - The earlier pooled-score Elo (context U4 averaged across seeds first) is kept, labelled as an additional
+     estimate.
+
+Admission still requires all three preregistered gates; Elo is report-only. Resource limits are unchanged: CPU only,
+nice 15, at most 4 threads, load ≤ 85/102, scratch < 2 GB, no GPU and no S3 write.
+
+## Amendment 2 — owner t0955 audit corrections (sol_v1_obj02)
+
+This amendment applies to future executions of the corrected source. It preserves
+Amendment 1 and its authorship, the statistical protocol, all input pins, DOPE,
+folds/seeds, fixed lambda, admission gates and bootstrap RNGs. It does not change
+the source or disposition of the already running OPUS attempt, authorize a
+duplicate fit, or reset any budget. Commit and publish this amendment before
+scoring with the new source; bind each run to its actual source/preregistration.
+
+- **A1:** archive-directory, NPY-header, identity-column and feature-row reads use
+  unbuffered files. This avoids buffered prefetch of adjacent DL-Val feature bytes.
+  Context row counts and the full monotone projection layout are checked before
+  feature reads. Context and projection readers reject forbidden DL-Val spans;
+  projection receipts use those actual exclusions instead of an empty list.
+  All context IDs and projection offsets are layout metadata. The latter are now
+  read in full to validate the span partition; feature payload reads remain
+  train-only. As disclosed in Amendment 1, whole-file identity hashing still
+  streams opaque archive bytes, including validation bytes, without decoding
+  validation features. No new cache or input pin is substituted.
+- **A2:** retain the registered median seed Elo and its jointly paired family
+  interval from Amendment 1. Independent unequal-family bootstrap replay checks
+  it; pooled-score Elo remains explicitly additional, never the headline.
+- **A3:** retain lazy pools, streamed baseline and the in-place fit matrix. The
+  watchdog checks current/peak RSS at entry, exit and nominal 0.25-second
+  intervals. A breach, an unreadable monitor or failed abort-receipt write exits
+  the worker with code 86; receipt I/O cannot disable termination. Exit checking
+  catches a peak from work shorter than one polling interval. This is a sampled
+  abort guard with a final peak check, not a kernel allocation limit: transient
+  overshoot can occur before detection. A breached or nonzero-exit attempt is
+  incomplete even if partial outputs exist. Preserve its receipts and actual
+  source identity; it cannot establish an admitted outcome.
+
+The default remains 6 GiB. The previously authorized single 10 GiB fallback and
+its prior-abort/memory conditions remain unchanged; this correction starts no
+fallback. Synthetic tests launch only owned, bounded child processes and do not
+fit estimators or read study feature/table/pool payloads.
