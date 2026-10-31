@@ -166,5 +166,23 @@ the proposal policy.
   \label{fig:fw-target-progress}
 \end{figure}
 
+\Cref{fig:fw-target-history} follows one historical dataset/cut, chosen
+after inspection for the largest policy-seeded relative improvement in
+the preceding comparison set. Every reported generation is shown, without
+applying a cumulative minimum. All three arms finish at the same value;
+the policy-seeded arm first records it one generation after the controls.
+Shared seeds prevent treating their matching outcomes as independent discoveries.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_target_history.pdf}
+  \caption{\textbf{Post-hoc GP target trajectory.} All 71 generations per
+  arm for one historical dataset/cut, at 1,000 evaluations per search.
+  RMSE is in historical evaluator units; lower is better. The arms shared
+  incumbent and teacher seeds, and elapsed time varied. This selected
+  development example does not establish a learned-policy advantage.}
+  \label{fig:fw-target-history}
+\end{figure*}
+
 \Cref{sec:results} separates this development record from the independent
 comparisons needed to evaluate the invention claim.
