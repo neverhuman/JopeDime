@@ -1,6 +1,6 @@
 # What Results still needs
 
-A checklist for Jepson and the team. Status: `main` after the owner decisions of `wp_opus_t0352` and the licence wording of `wp_opus_layout_t0510`, 2026-10-31.
+A checklist for Jepson and the team. Status: `main` after the owner decisions of `wp_opus_t0352`, the licence wording of `wp_opus_layout_t0510` and the negative-result rows of `wp_t0700`, 2026-10-31.
 
 The compiled paper has **28 `\TBD` markers**:
 - 25 in Results (§7);
@@ -56,6 +56,15 @@ Source lines are as of upgrade pass 24 (`wp_opus_layout_t0540`), which moved Tab
 |---|---|---|---|
 | P1 | §6.8 ([06_method/flywheel_status.tex:78](sections/06_method/flywheel_status.tex#L78)) | The retained snapshot bound to the exact loop source, adapter, candidate pools, revealed-history inputs and utility normalization. | Concerns the §6.8 development record (the retained adapter-loop snapshot), not the §7 comparisons. |
 
+## Negative results the team must report (no marker yet)
+
+These registered development studies ended with negative verdicts. The paper has no `\TBD` marker for them, so they are not counted in the 28 above. The team supplies their numbers, and an owner decision places them; they would fit with the historical diagnostics of §7.7. Both are training-set (`DL-Train`) studies of proposal ranking, not untouched first-proposal tests on unseen families, so neither can fill R4. This file records no numbers for them.
+
+| # | Study | Registered verdict | Receipt | The team must supply | Status |
+|---|---|---|---|---|---|
+| N1 | W6 cross-family outcome transfer (H101) | `KILL_NO_ADVANCE`: four of five registered gates failed (advance over current retrieval, beating a context-shuffle placebo, surviving an unseen-template proxy, and advancing on prospective new programs); only the advance over the generic prior passed, as a diagnostic | `research/flywheel_selfplay/h101_w6_proposer_transfer_prep/` (`README.md`, `metrics.json`), merged in #983 | Each registered gate contrast with its family-level effect and uncertainty; family harm rates; data scope and exclusions; source commit and receipt hashes | On `main`; citable once the numbers are bound to the receipt |
+| N2 | W1 prior replacement and neural residual (H108) | `NO_ADVANCE` (official gate decision; study verdict `NO_NEURAL_RESIDUAL_ADVANCE_OVER_GBM_CONTROLS`) | `research/flywheel_selfplay/h108_w1_prior_residual/` (`README.md`, `metrics.json`) in PR #1036 | The gate contrasts against the tree-prior controls with family-level uncertainty; the compute budget; data scope; source commit and receipt hashes | PR #1036 is **open**. Under the owner disclosure rule (t0352), the paper may not cite it until it merges. |
+
 ## Evidence that exists but cannot fill these markers
 
 These records are already described in the paper. None of them is an untouched first-proposal test.
@@ -98,7 +107,7 @@ Follow the evidence-handoff table in `LAYOUT_REDTEAM.md`:
 
 ## Keeping this file current
 
-Remove a row in the same PR that removes its `\TBD`. The row count must match the compiled count:
+Remove a row in the same PR that removes its `\TBD`. The marker rows (R, D and P) must match the compiled count; the N rows have no marker:
 
 ```sh
 cd docs/whitepaper && make pdf && pdftotext eurekazero_whitepaper.pdf - | grep -o 'TBD' | wc -l   # 28 today

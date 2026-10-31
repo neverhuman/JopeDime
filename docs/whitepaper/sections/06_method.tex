@@ -154,12 +154,11 @@ to the map's ranking targets.
 \end{algorithm*}
 
 Two ratchets make this self-play rather than imitation of a fixed archive (\cref{sec:game}). A
-program displaces a board's incumbent only by strictly beating it. A retrained writer is tested on 16
-held-out cuts with three seeds each. It replaces the serving writer only if its mean log error ratio
+program displaces a board's incumbent only by strictly beating it. A retrained writer takes the held-out
+admission test: 16 cuts with three seeds each. It replaces the serving writer only if its mean log error ratio
 favors it, it wins at least as many cuts as it loses, and it fails no more often.
-
-
-Here a cut is a held-out evaluation case fixed before the tournament.
+%
+Here a cut is a held-out evaluation case fixed before the admission test.
 For each cut, the rule takes the natural log of paired best-error ratios
 (challenger divided by serving) and averages over matched seeds; it then
 averages across cuts. Negative values favor the challenger. This admission
