@@ -34,7 +34,7 @@ rests on H129 (CANDIDATE, development evidence on DL-Train) and H135 (flywheel v
 - **S3.** `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H134/`:
   - `opus-h134-20261031a-partial/` (85 objects);
   - `opus-h134-20261031a-final/` (9 objects).
-  
+
   Both are create-only with a version-pinned readback.
 - **Rescue copies.** `/home/ubuntu/jope-rescue-20260921/h134-rd_opus-20261031-{partial,final}/`.
 - **[metrics.json](metrics.json).** It records the status and identities only; it holds no outcome values.
