@@ -261,7 +261,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn every_production_template_has_a_direct_handler() {
+    fn every_production_template_is_allowlisted_and_receiptable() {
         for template in [
             "dataset-profile",
             "feature-expansion",
