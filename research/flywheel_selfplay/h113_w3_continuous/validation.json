@@ -1,0 +1,138 @@
+{
+  "actual_native_fits": 0,
+  "actual_optimizer_updates": 0,
+  "execution_admitted": false,
+  "final_shards": [
+    {
+      "cpu_seconds": 1.288147468,
+      "exit_status": 0,
+      "folds": [
+        0
+      ],
+      "gpu_seconds": 0,
+      "host_assignment": "xbabe1",
+      "input_sha256": "6d42b351f4b2abf17757945eadfacb575ed38e607b3c2ffd5f1155c6b1c1992a",
+      "native_fits": 0,
+      "optimizer_updates": 0,
+      "scientific_metrics": {
+        "Elo": null,
+        "U4": null,
+        "val_reg_inner": null
+      },
+      "seeds": [
+        701,
+        702,
+        703
+      ],
+      "shard": "0",
+      "torch_threads": 1,
+      "torch_version": "2.7.0",
+      "transport_wall_seconds": 2.0105815241113305,
+      "worker_sha256": "4d0adad533ea91bcac21cc62699676367f9457ffcb831145fac15edc9cf74a45"
+    },
+    {
+      "cpu_seconds": 1.362261384,
+      "exit_status": 0,
+      "folds": [
+        1
+      ],
+      "gpu_seconds": 0,
+      "host_assignment": "xbabe2",
+      "input_sha256": "6d42b351f4b2abf17757945eadfacb575ed38e607b3c2ffd5f1155c6b1c1992a",
+      "native_fits": 0,
+      "optimizer_updates": 0,
+      "scientific_metrics": {
+        "Elo": null,
+        "U4": null,
+        "val_reg_inner": null
+      },
+      "seeds": [
+        701,
+        702,
+        703
+      ],
+      "shard": "1",
+      "torch_threads": 1,
+      "torch_version": "2.7.0",
+      "transport_wall_seconds": 1.890764888143167,
+      "worker_sha256": "4d0adad533ea91bcac21cc62699676367f9457ffcb831145fac15edc9cf74a45"
+    },
+    {
+      "cpu_seconds": 1.1089532340000001,
+      "exit_status": 0,
+      "folds": [
+        2
+      ],
+      "gpu_seconds": 0,
+      "host_assignment": "xbabe3",
+      "input_sha256": "6d42b351f4b2abf17757945eadfacb575ed38e607b3c2ffd5f1155c6b1c1992a",
+      "native_fits": 0,
+      "optimizer_updates": 0,
+      "scientific_metrics": {
+        "Elo": null,
+        "U4": null,
+        "val_reg_inner": null
+      },
+      "seeds": [
+        701,
+        702,
+        703
+      ],
+      "shard": "2",
+      "torch_threads": 1,
+      "torch_version": "2.7.0",
+      "transport_wall_seconds": 1.6534452140331268,
+      "worker_sha256": "4d0adad533ea91bcac21cc62699676367f9457ffcb831145fac15edc9cf74a45"
+    },
+    {
+      "cpu_seconds": 0.698941037,
+      "exit_status": 0,
+      "folds": [
+        3,
+        4
+      ],
+      "gpu_seconds": 0,
+      "host_assignment": "xbabe4",
+      "input_sha256": "6d42b351f4b2abf17757945eadfacb575ed38e607b3c2ffd5f1155c6b1c1992a",
+      "native_fits": 0,
+      "optimizer_updates": 0,
+      "scientific_metrics": {
+        "Elo": null,
+        "U4": null,
+        "val_reg_inner": null
+      },
+      "seeds": [
+        701,
+        702,
+        703
+      ],
+      "shard": "3_4",
+      "torch_threads": 1,
+      "torch_version": "2.13.0+cu130",
+      "transport_wall_seconds": 1.3852346269413829,
+      "worker_sha256": "4d0adad533ea91bcac21cc62699676367f9457ffcb831145fac15edc9cf74a45"
+    }
+  ],
+  "fold_seed_assignments": 15,
+  "four_host_loss_probes": 60,
+  "gpu_seconds": 0,
+  "loss_unit_tests": {
+    "failed": 0,
+    "passed": 32,
+    "scope": "synthetic CPU only; no scientific results",
+    "skipped": 0
+  },
+  "losses_sha256": "958b4c016762c215f5f7d681e874d8751821f76238b5383f1bf6c58d88a1dfae",
+  "measured_worker_cpu_seconds_initial_plus_final": 8.872203706,
+  "metrics": {
+    "Elo": null,
+    "U4": null,
+    "val_reg_inner": null
+  },
+  "other_overhead": "unmeasured",
+  "prior_binding_shape_controls": {
+    "passed": 4,
+    "scope": "synthetic shape only; no real binding or fetch"
+  },
+  "schema": "jope.h113.validation/v1"
+}

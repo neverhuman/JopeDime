@@ -1,0 +1,398 @@
+{
+  "actual_gpu_seconds": 0,
+  "actual_native_fits": 0,
+  "actual_optimizer_updates": 0,
+  "admission": {
+    "calibration": false,
+    "completion_provenance": false,
+    "current_role_alias_row_closure": false,
+    "resource_and_gpu_admission": false,
+    "trainer_and_matched_control_models": false,
+    "w1_winner": false
+  },
+  "advance_admitted": false,
+  "budget": {
+    "cumulative_consumption": null,
+    "gpu_seconds_ceiling": 7200,
+    "native_fit_ceiling": 0,
+    "original_deadline_utc": null,
+    "remaining_authorized_budget": null
+  },
+  "cells": [
+    {
+      "calibration_receipt": null,
+      "completion_export": null,
+      "control_recipe": null,
+      "fit_context_count": 992,
+      "held_context_count": 227,
+      "held_family_count": 41,
+      "held_fold": 0,
+      "r882_readout": null,
+      "seed": 701,
+      "status": "PENDING",
+      "training_receipts": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "d": null,
+        "d_scalar": null,
+        "d_shuffled": null
+      },
+      "w1_prior_binding": null
+    },
+    {
+      "calibration_receipt": null,
+      "completion_export": null,
+      "control_recipe": null,
+      "fit_context_count": 992,
+      "held_context_count": 227,
+      "held_family_count": 41,
+      "held_fold": 0,
+      "r882_readout": null,
+      "seed": 702,
+      "status": "PENDING",
+      "training_receipts": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "d": null,
+        "d_scalar": null,
+        "d_shuffled": null
+      },
+      "w1_prior_binding": null
+    },
+    {
+      "calibration_receipt": null,
+      "completion_export": null,
+      "control_recipe": null,
+      "fit_context_count": 992,
+      "held_context_count": 227,
+      "held_family_count": 41,
+      "held_fold": 0,
+      "r882_readout": null,
+      "seed": 703,
+      "status": "PENDING",
+      "training_receipts": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "d": null,
+        "d_scalar": null,
+        "d_shuffled": null
+      },
+      "w1_prior_binding": null
+    },
+    {
+      "calibration_receipt": null,
+      "completion_export": null,
+      "control_recipe": null,
+      "fit_context_count": 985,
+      "held_context_count": 234,
+      "held_family_count": 41,
+      "held_fold": 1,
+      "r882_readout": null,
+      "seed": 701,
+      "status": "PENDING",
+      "training_receipts": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "d": null,
+        "d_scalar": null,
+        "d_shuffled": null
+      },
+      "w1_prior_binding": null
+    },
+    {
+      "calibration_receipt": null,
+      "completion_export": null,
+      "control_recipe": null,
+      "fit_context_count": 985,
+      "held_context_count": 234,
+      "held_family_count": 41,
+      "held_fold": 1,
+      "r882_readout": null,
+      "seed": 702,
+      "status": "PENDING",
+      "training_receipts": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "d": null,
+        "d_scalar": null,
+        "d_shuffled": null
+      },
+      "w1_prior_binding": null
+    },
+    {
+      "calibration_receipt": null,
+      "completion_export": null,
+      "control_recipe": null,
+      "fit_context_count": 985,
+      "held_context_count": 234,
+      "held_family_count": 41,
+      "held_fold": 1,
+      "r882_readout": null,
+      "seed": 703,
+      "status": "PENDING",
+      "training_receipts": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "d": null,
+        "d_scalar": null,
+        "d_shuffled": null
+      },
+      "w1_prior_binding": null
+    },
+    {
+      "calibration_receipt": null,
+      "completion_export": null,
+      "control_recipe": null,
+      "fit_context_count": 950,
+      "held_context_count": 269,
+      "held_family_count": 41,
+      "held_fold": 2,
+      "r882_readout": null,
+      "seed": 701,
+      "status": "PENDING",
+      "training_receipts": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "d": null,
+        "d_scalar": null,
+        "d_shuffled": null
+      },
+      "w1_prior_binding": null
+    },
+    {
+      "calibration_receipt": null,
+      "completion_export": null,
+      "control_recipe": null,
+      "fit_context_count": 950,
+      "held_context_count": 269,
+      "held_family_count": 41,
+      "held_fold": 2,
+      "r882_readout": null,
+      "seed": 702,
+      "status": "PENDING",
+      "training_receipts": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "d": null,
+        "d_scalar": null,
+        "d_shuffled": null
+      },
+      "w1_prior_binding": null
+    },
+    {
+      "calibration_receipt": null,
+      "completion_export": null,
+      "control_recipe": null,
+      "fit_context_count": 950,
+      "held_context_count": 269,
+      "held_family_count": 41,
+      "held_fold": 2,
+      "r882_readout": null,
+      "seed": 703,
+      "status": "PENDING",
+      "training_receipts": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "d": null,
+        "d_scalar": null,
+        "d_shuffled": null
+      },
+      "w1_prior_binding": null
+    },
+    {
+      "calibration_receipt": null,
+      "completion_export": null,
+      "control_recipe": null,
+      "fit_context_count": 948,
+      "held_context_count": 271,
+      "held_family_count": 41,
+      "held_fold": 3,
+      "r882_readout": null,
+      "seed": 701,
+      "status": "PENDING",
+      "training_receipts": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "d": null,
+        "d_scalar": null,
+        "d_shuffled": null
+      },
+      "w1_prior_binding": null
+    },
+    {
+      "calibration_receipt": null,
+      "completion_export": null,
+      "control_recipe": null,
+      "fit_context_count": 948,
+      "held_context_count": 271,
+      "held_family_count": 41,
+      "held_fold": 3,
+      "r882_readout": null,
+      "seed": 702,
+      "status": "PENDING",
+      "training_receipts": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "d": null,
+        "d_scalar": null,
+        "d_shuffled": null
+      },
+      "w1_prior_binding": null
+    },
+    {
+      "calibration_receipt": null,
+      "completion_export": null,
+      "control_recipe": null,
+      "fit_context_count": 948,
+      "held_context_count": 271,
+      "held_family_count": 41,
+      "held_fold": 3,
+      "r882_readout": null,
+      "seed": 703,
+      "status": "PENDING",
+      "training_receipts": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "d": null,
+        "d_scalar": null,
+        "d_shuffled": null
+      },
+      "w1_prior_binding": null
+    },
+    {
+      "calibration_receipt": null,
+      "completion_export": null,
+      "control_recipe": null,
+      "fit_context_count": 1001,
+      "held_context_count": 218,
+      "held_family_count": 41,
+      "held_fold": 4,
+      "r882_readout": null,
+      "seed": 701,
+      "status": "PENDING",
+      "training_receipts": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "d": null,
+        "d_scalar": null,
+        "d_shuffled": null
+      },
+      "w1_prior_binding": null
+    },
+    {
+      "calibration_receipt": null,
+      "completion_export": null,
+      "control_recipe": null,
+      "fit_context_count": 1001,
+      "held_context_count": 218,
+      "held_family_count": 41,
+      "held_fold": 4,
+      "r882_readout": null,
+      "seed": 702,
+      "status": "PENDING",
+      "training_receipts": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "d": null,
+        "d_scalar": null,
+        "d_shuffled": null
+      },
+      "w1_prior_binding": null
+    },
+    {
+      "calibration_receipt": null,
+      "completion_export": null,
+      "control_recipe": null,
+      "fit_context_count": 1001,
+      "held_context_count": 218,
+      "held_family_count": 41,
+      "held_fold": 4,
+      "r882_readout": null,
+      "seed": 703,
+      "status": "PENDING",
+      "training_receipts": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "d": null,
+        "d_scalar": null,
+        "d_shuffled": null
+      },
+      "w1_prior_binding": null
+    }
+  ],
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "execution_admitted": false,
+  "fold_manifest": {
+    "contexts": 1219,
+    "families": 205,
+    "path": "research/flywheel_selfplay/h65_w3_continuous_top_resolved/fold_manifest.json",
+    "seed": 4900,
+    "sha256": "cabcfc6f182ef3aeb77a10890d81de0c655f60b5bb3db2a56b70c44a58567067"
+  },
+  "h59_disposition": "COMPLETED_NO_ADMISSION; no silent recipe change",
+  "loss_enabled_by_default": false,
+  "losses_sha256": "958b4c016762c215f5f7d681e874d8751821f76238b5383f1bf6c58d88a1dfae",
+  "metrics": {
+    "Elo": null,
+    "U4": null,
+    "val_reg_inner": null
+  },
+  "planned_trained_cells": 90,
+  "planned_updates": 3600,
+  "prereg_sha256": "c18ddafcc69ce73aa8b1d4633c422ed557c6ddcad0b994e677de6bebe95271bd",
+  "primary_contrasts": [
+    "c-b",
+    "d-a"
+  ],
+  "prior_binding_schema_sha256": "b951910ca5497be5d862f6b3e15833e420e880d905359ab35efeb6116c687777",
+  "s3_input": {
+    "bytes": 2898,
+    "purpose": "Historical metadata only; numeric signature census is not completion provenance",
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/W3/luna-tel-h86-20261031T0709Z-01/manifest.json",
+    "sha256": "d9e3ba44209b6e1425313fff282055b99d88c192638f91a05f0762fb93a74f84",
+    "version_id": "3d8Ty0jjfnXuZV3bkYiNIGx7Vk3XDJ9G"
+  },
+  "schema": "jope.h113.w3-cpu-prep/v1",
+  "seeds": [
+    701,
+    702,
+    703
+  ],
+  "source_sha256": {
+    "docs/research/studies/dope-neural-ranking-20261021/h59/README.md": "940496133082018b660e978e01bc53114b8eb1a6c1f7c697c9b3f13a817196fd",
+    "research/flywheel_selfplay/h107_w3_unblock_contract/CONTRACT.md": "fa0defd1055f22188dec7191f3caf7d341c0d71b044fd6c1604f0410811a249f",
+    "research/flywheel_selfplay/h58/runner.py": "cd90f163409de2c25b7316f63c351ba94b0d6fb54fdd8748262987ed9fd052fc",
+    "research/flywheel_selfplay/h65_w3_continuous_top_resolved/fold_manifest.json": "cabcfc6f182ef3aeb77a10890d81de0c655f60b5bb3db2a56b70c44a58567067",
+    "research/flywheel_selfplay/h74_w3_readout_gate/w3_gate.py": "a1a9847fa524a931dfacc191cc0849f16b2890867d1619e1d272b1b98fe169ba",
+    "research/flywheel_selfplay/h89_w3_completion_admission/README.md": "fe2780618b915c6942b0b118400e808dfbba19479c6b0ab3fb1c2bd8521c7c06"
+  },
+  "source_snapshot_git_sha": "774773d96e69d792ddd3389f854e516fb5041718",
+  "status": "CPU_PREPARATION_ONLY",
+  "terminal_updates": 40,
+  "trained_arms": [
+    "a",
+    "b",
+    "c",
+    "d",
+    "d_scalar",
+    "d_shuffled"
+  ],
+  "w1_prior_binding": null,
+  "w1_redteam_status": "No published H108 result objects at initial check; no numerical verdict claimed",
+  "wave": "W3"
+}

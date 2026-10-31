@@ -160,6 +160,16 @@
     }
   },
   "items": {
+    "python:research/flywheel_selfplay/h113_w3_continuous/test_losses.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H113 W3 opt-in CPU loss primitives: masked continuous components, top16 scale, H58-D loss/gradient parity and fixed W1 prior; no training admission."
+    },
     "python:research/flywheel_selfplay/h111_w7_common_support/test_matching.py": {
       "discovery": {
         "kind": "python-family"
