@@ -387,6 +387,42 @@ impl CaptureState {
                 );
             }
         }
+        for attempt in &self.auxiliary {
+            let request: Request = Self::read(store, &attempt.request)?;
+            ensure!(
+                request.attempt.run.to_string() == binding.identity.run_id,
+                "auxiliary request run mismatch"
+            );
+            if let Some(reference) = &attempt.result {
+                let response = match Self::read(store, reference)? {
+                    AuxiliaryResult::Evaluation { response } => Some(response),
+                    AuxiliaryResult::Fit => {
+                        ensure!(
+                            attempt.model.as_ref().is_some_and(|model| model.bytes > 0),
+                            "captured model root missing or empty"
+                        );
+                        None
+                    }
+                    AuxiliaryResult::Failure { worker } => {
+                        ensure!(
+                            worker
+                                .as_ref()
+                                .is_none_or(|response| response.failure.is_some()),
+                            "auxiliary failure contains a successful response"
+                        );
+                        worker
+                    }
+                };
+                if let Some(response) = response {
+                    ensure!(
+                        response.attempt == request.attempt
+                            && response.valid()
+                            && response.failure != Some(crate::worker::WorkerFailure::StaleAttempt),
+                        "auxiliary response identity or outcome mismatch"
+                    );
+                }
+            }
+        }
         ensure!(
             charged == self.charged
                 && charged <= self.config.max_attempts

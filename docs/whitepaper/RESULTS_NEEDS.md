@@ -54,7 +54,7 @@ Source lines are as of upgrade pass 24 (`wp_opus_layout_t0540`), which moved Tab
 
 | # | Where | Marker asks for | Notes |
 |---|---|---|---|
-| P1 | §6.8 ([06_method/flywheel_status.tex:78](sections/06_method/flywheel_status.tex#L78)) | The retained snapshot bound to the exact loop source, adapter, candidate pools, revealed-history inputs and utility normalization. | Concerns the §6.8 development record (the retained adapter-loop snapshot), not the §7 comparisons. |
+| P1 | §6.8 ([06_method/flywheel_status.tex:83](sections/06_method/flywheel_status.tex#L83)) | The retained snapshot bound to the exact loop source, adapter, candidate pools, revealed-history inputs and utility normalization. | Concerns the §6.8 development record (the retained adapter-loop snapshot), not the §7 comparisons. |
 
 ## Negative results the team must report (no marker yet)
 

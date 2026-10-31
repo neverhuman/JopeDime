@@ -37,6 +37,37 @@ def fixture(wave, root, harmed=0):
     }
     metrics = {"arms": {}}
     if wave == "H99":
+        folds = [
+            [f"fit-family-{fold * 41 + i:03}" for i in range(41)] for fold in range(4)
+        ] + [[f"family-{i:02}" for i in range(41)]]
+        fold_a_families = sorted(family for fold in folds[:4] for family in fold)
+        fold_b_families = folds[4]
+        cell_assignment = {
+            "seed": 9900,
+            "folds": folds,
+            "fold_a_families": fold_a_families,
+            "fold_b_families": fold_b_families,
+            "train_contexts_a": 4,
+            "train_contexts_b": 1,
+        }
+        fold_assignment = {
+            "seed": 9900,
+            "folds": folds,
+            "fold_a_families": fold_a_families,
+            "fold_b_families": fold_b_families,
+            "source_split": "DL-Train",
+            "sealed_meta_test_inputs_opened": False,
+        }
+        cell_digest = r.sha(
+            json.dumps(cell_assignment, sort_keys=True, separators=(",", ":")).encode()
+        )
+        fold_digest = r.sha(
+            json.dumps(
+                {"seed": 9900, "folds": folds},
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+        )
         ledger["schema"] = "jope.h99.gpu-budget/v1"
         candidates = []
         for arm, seed in [(a, s) for a in r.ARMS[wave] for s in r.SEEDS[wave]] + [
@@ -52,7 +83,8 @@ def fixture(wave, root, harmed=0):
                     "arm": arm,
                     "seed": seed,
                     "fold_seed": 9900,
-                    "fold_assignment_sha256": "f" * 64,
+                    "fold_assignment": cell_assignment,
+                    "fold_assignment_sha256": cell_digest,
                     "fold_b_scored": False,
                     "dope_sha256_before": r.DOPE,
                     "dope_sha256_after": r.DOPE,
@@ -101,7 +133,8 @@ def fixture(wave, root, harmed=0):
             "validation_payloads_opened": False,
             "holdout_payloads_opened": 0,
             "outer_rows_delivered": 0,
-            "fold_assignment_sha256": "f" * 64,
+            "fold_assignment": fold_assignment,
+            "fold_assignment_sha256": fold_digest,
             "baseline_family_utility": baseline,
             "candidates": candidates,
         }
@@ -124,7 +157,7 @@ def fixture(wave, root, harmed=0):
             bootstrap_draws=10000,
             strict_margin=0.001,
             source_manifest_sha256=r.MANIFEST,
-            fold_assignment_sha256="f" * 64,
+            fold_assignment_sha256=fold_digest,
         )
         for arm in r.ARMS[wave]:
             metrics["arms"][arm] = {
@@ -272,6 +305,30 @@ def test_complete_panel_publishes_native_elo_ci_and_wave_specific_common_gate(
     assert (
         "Median Elo vs r882" in (tmp_path / f"published/{wave}-readout.md").read_text()
     )
+
+
+def test_h99_accepts_different_hashes_when_fold_family_lists_match(tmp_path):
+    fixture("H99", tmp_path)
+    summary_path = next((tmp_path / "outcomes/cells").glob("**/summary.json"))
+    summary = load(summary_path)
+    fold = load(tmp_path / "outcomes/fold_b.json")
+
+    assert summary["fold_assignment_sha256"] != fold["fold_assignment_sha256"]
+    assert r.h99_fold_assignment_matches(summary, fold)
+    result = r.readout("H99", tmp_path)
+    assert result["status"] == "COMPLETE", result
+
+
+def test_h99_rejects_cell_fold_family_list_mismatch(tmp_path):
+    fixture("H99", tmp_path)
+    summary_path = next((tmp_path / "outcomes/cells").glob("**/summary.json"))
+    summary = load(summary_path)
+    summary["fold_assignment"]["fold_b_families"].append("unassigned-family")
+    write(summary_path, summary)
+
+    result = r.readout("H99", tmp_path)
+    assert result["status"] == "INVALID", result
+    assert "fold/scoring mismatch" in result["reason"]
 
 
 @pytest.mark.parametrize("wave,harmed", [("H99", 5), ("H100", 2)])

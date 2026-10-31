@@ -57,6 +57,7 @@
       "id": "cargo-targets",
       "kind": "cargo-target",
       "path": "~/JopeDime/.agent/worktrees",
+      "per_target_cap_bytes": 21474836480,
       "ttl_hours": 2,
       "worktree_idle_hours": 2,
       "remove_merged_worktrees": true,
@@ -68,6 +69,13 @@
       "mode": "observe",
       "manual_only": true,
       "path": "~/.cargo"
+    },
+    {
+      "id": "jankurai-source-tars",
+      "kind": "jankurai-source-tar",
+      "path": "~/JopeDime",
+      "max_file_bytes": 536870912,
+      "ttl_hours": 24
     },
     {
       "id": "docker-cache",

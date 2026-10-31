@@ -1574,6 +1574,126 @@ mod tests {
         }
     }
 
+    /// Serving FP32 outputs for the admitted model-prior subset, not full M3.
+    #[test]
+    #[ignore = "requires pinned RES-07 program tensors and exported feature order"]
+    fn real_model_prior_parameter_features_match_frozen_oracle() {
+        use safetensors::{Dtype, SafeTensors};
+        use std::{collections::BTreeSet, env, fs, path::Path};
+
+        let read_pinned = |path: &Path, pin: &str| {
+            assert!(
+                pin.len() == 64
+                    && pin
+                        .bytes()
+                        .all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase()),
+                "explicit lowercase SHA256 required"
+            );
+            assert!(path.is_absolute(), "fixture paths must be absolute");
+            assert_eq!(
+                fs::canonicalize(path).unwrap(),
+                path,
+                "no symlink traversal"
+            );
+            let metadata = fs::symlink_metadata(path).expect("required real fixture");
+            assert!(metadata.is_file() && metadata.len() <= 64 * 1024 * 1024);
+            let bytes = fs::read(path).unwrap();
+            assert_eq!(jope_runtime::sha256_hex(&bytes), pin, "fixture pin differs");
+            bytes
+        };
+        let root = env::var_os("JOPE_GOLDEN_DIR").expect("JOPE_GOLDEN_DIR is required");
+        let root = Path::new(&root);
+        let index_pin = env::var("JOPE_GOLDEN_INDEX_SHA256")
+            .expect("explicit trusted index SHA256 is required");
+        let feature_path = env::var_os("JOPE_GOLDEN_FEATURIZER_JSON")
+            .expect("exported featurizer JSON is required");
+        let feature_pin = env::var("JOPE_GOLDEN_FEATURIZER_SHA256")
+            .expect("explicit trusted featurizer SHA256 is required");
+        let index: serde_json::Value =
+            serde_json::from_slice(&read_pinned(&root.join("index.json"), &index_pin)).unwrap();
+        assert_eq!(index["schema"], "jope.golden-fixtures/v1");
+        assert_eq!(index["subset"]["role"], "model_prior");
+        assert_eq!(index["model_prior_programs"], 872);
+        assert_eq!(index["subset"]["programs"], 872);
+        assert_eq!(
+            index["bundle_digest"],
+            "sha256:94fd9587675c7806bd0a0582b6e97540cd2fdc7ebbc51958411b905185cad85c"
+        );
+        let feature_json: serde_json::Value =
+            serde_json::from_slice(&read_pinned(Path::new(&feature_path), &feature_pin)).unwrap();
+        let names: Vec<String> =
+            serde_json::from_value(feature_json["feature_names"].clone()).unwrap();
+        let featurizer = super::super::Featurizer::from_names(names).unwrap();
+        let columns: Vec<_> = featurizer
+            .feature_names()
+            .iter()
+            .enumerate()
+            .filter(|(_, name)| name.starts_with("parameter."))
+            .collect();
+        assert_eq!(columns.len(), 80);
+        let payload = |name: &str| {
+            let spec = &index["files"][name];
+            let bytes = read_pinned(&root.join(name), spec["sha256"].as_str().unwrap());
+            assert_eq!(bytes.len() as u64, spec["bytes"].as_u64().unwrap());
+            bytes
+        };
+        let programs = payload("programs.jsonl");
+        let programs: Vec<serde_json::Value> = std::str::from_utf8(&programs)
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+        assert_eq!(programs.len(), 872);
+        let oracle = payload("programs.safetensors");
+        let tensors = SafeTensors::deserialize(&oracle).unwrap();
+        let features = tensors.tensor("feat412").unwrap();
+        assert_eq!(features.dtype(), Dtype::F32);
+        assert_eq!(
+            features.shape(),
+            [programs.len(), super::super::FEATURE_COUNT]
+        );
+        let mut unique = BTreeSet::new();
+        let mut maximum = [0.0_f64; 80];
+        for (row, program) in programs.iter().enumerate() {
+            let dsl = program["dsl"].as_str().expect("DSL required");
+            let pin = program["program_sha256"]
+                .as_str()
+                .expect("program identity required");
+            assert_eq!(jope_runtime::sha256_hex(dsl.as_bytes()), pin);
+            assert!(unique.insert(pin), "duplicate program identity");
+            let actual = extract(&parse::parse(dsl).unwrap());
+            assert_eq!(actual.len(), 80);
+            for (family_column, &(column, name)) in columns.iter().enumerate() {
+                let offset = (row * super::super::FEATURE_COUNT + column) * 4;
+                let expected =
+                    f32::from_le_bytes(features.data()[offset..offset + 4].try_into().unwrap());
+                let observed = *actual.get(name).expect("missing parameter coordinate") as f32;
+                assert!(expected.is_finite() && observed.is_finite());
+                let error = (f64::from(observed) - f64::from(expected)).abs();
+                if name.ends_with(".count") {
+                    assert_eq!(observed, expected, "program {row} {pin}: {name}");
+                } else {
+                    assert!(error <= 1e-6, "program {row} {pin}: {name} error {error}");
+                }
+                maximum[family_column] = maximum[family_column].max(error);
+            }
+        }
+        for ((column, name), error) in columns.iter().zip(maximum) {
+            println!("{column} {name} max_abs_error={error:.17}");
+        }
+        println!(
+            "{}",
+            serde_json::json!({
+                "gate":"RNK-04-A parameter serialized-oracle parity",
+                "scope":"frozen model_prior subset", "programs":programs.len(),
+                "coordinates_per_program":80,"comparisons":programs.len()*80,"mismatches":0,
+                "max_abs_error":maximum.into_iter().fold(0.0_f64,f64::max),
+                "index_sha256":index_pin,"featurizer_sha256":feature_pin,"full_historical_M3":false,
+                "compiled_source_sha256":jope_runtime::sha256_hex(include_str!("parameters.rs").as_bytes())
+            })
+        );
+    }
+
     fn parameter_feature_names() -> Vec<String> {
         PARAMETER_KEYS
             .iter()
