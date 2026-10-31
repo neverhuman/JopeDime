@@ -429,6 +429,10 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
+    "python:research/flywheel_selfplay/h101_w5_provenance_gaps/test_check.py": {
+      "reason": "Owner-requested W5 provenance-gap and W9 CPU-preparation synthetic regression controls; offline research outside the product baseline.",
+      "role": "research"
+    },
     "python:benchmarks/test_prepare.py": {
       "role": "regression",
       "subsystems": [
@@ -1845,10 +1849,6 @@
       "reason": "RES-07 CPU pre-stage proofs for golden fixture generation (model_prior subset); no qualification capture generation or GPU use; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/h101_w5_provenance_gaps/test_check.py": {
-      "reason": "Owner-requested W5 provenance-gap and W9 CPU-preparation synthetic regression controls; offline research outside the product baseline.",
-      "role": "research"
-    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
       "role": "research"
@@ -1949,53 +1949,45 @@
       "reason": "Owner-requested pytest proofs for the H81 W4 prospective two-plus-two stratum and its preregistered comparator-strength guard; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/h82_sam_steps/ops/test_recover.py": {
-      "reason": "CPU-only H82 operator recovery fixtures for immutable checkpoint staging and exact-prefix refusal; no scientific outcomes or GPU execution.",
+    "python:research/flywheel_selfplay/h90_candidate_diversity/test_h90.py": {
+      "reason": "CPU-only H90 candidate-recipe, diversity, pseudoreplication, cumulative budget and H80-exclusion tests; offline research outside product qualification.",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h82_sam_steps/ops/test_recover.py": {
+      "role": "research",
+      "reason": "CPU-only H82 operator recovery fixtures for immutable checkpoint staging and exact-prefix refusal; no scientific outcomes or GPU execution."
     },
     "python:research/flywheel_selfplay/h82_sam_steps/test_h82.py": {
       "reason": "CPU-only H82 fresh-seed retry-boundary, load/budget, frozen-reference and paired Elo/admission tests; offline research outside product qualification.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h83_w6_cross_family_cached/test_run_w6_cached.py": {
-      "reason": "Owner-requested pytest proofs for the H83 W6 cross-family cached screen; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h85_w1_cpu_remediation_and_models/test_w1_remediation.py": {
       "reason": "CPU-only H85 W1 pre-review remediation, shard sidecar, lock FD, GPU budget ledger, within-context template pairing and H81 strength-guard tests; offline research outside product qualification.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/h86_w3_outcome_status_census/test_census.py": {
-      "reason": "H86 W3 outcome-row status census and status-mask export unit tests.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h90_candidate_diversity/test_h90.py": {
-      "reason": "CPU-only H90 candidate-recipe, diversity, pseudoreplication, cumulative budget and H80-exclusion tests; offline research outside product qualification.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h92_w6_downside_controlled/test_run_downside.py": {
-      "reason": "Owner-requested pytest proofs for the H92 W6 downside-controlled cached screen (hedge and shortlist pickers, retained-best, H83 reproduction integrity); offline research analysis outside the reviewed product baseline.",
-      "role": "research"
-    },
     "python:research/flywheel_selfplay/h93_lookahead_noise/test_h93.py": {
       "reason": "CPU-only H93 Lookahead/noise/effective-batch, paired Elo/admission, top-four overlap, and launch-barrier fixtures; offline research outside product qualification.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/h94_w6_prospective_hedge/test_run_prospective_hedge.py": {
-      "reason": "Owner-requested pytest proofs for the H94 W6 prospective HEDGE_CTX evaluation on new proposer programs; offline research analysis outside the reviewed product baseline.",
+    "python:research/flywheel_selfplay/h83_w6_cross_family_cached/test_run_w6_cached.py": {
+      "reason": "Owner-requested pytest proofs for the H83 W6 cross-family cached screen; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h95_w8_hwm_resplit_confirm/test_run_resplit_confirm.py": {
       "reason": "Owner-requested pytest proofs for the H95 W8 resplit confirmation of H94 apparent high-water marks; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/h97_reg_ema/test_h97.py": {
-      "reason": "Owner-requested pytest proofs for the H97 REG-EMA candidate protocol; offline research analysis outside the reviewed product baseline.",
+    "python:research/flywheel_selfplay/h92_w6_downside_controlled/test_run_downside.py": {
+      "reason": "Owner-requested pytest proofs for the H92 W6 downside-controlled cached screen (hedge and shortlist pickers, retained-best, H83 reproduction integrity); offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/h99_esh_harm/test_h99.py": {
-      "reason": "Owner-requested pytest proofs for the H99 ESH harm follow-up preregistration; offline research analysis outside the reviewed product baseline.",
+    "python:research/flywheel_selfplay/h94_w6_prospective_hedge/test_run_prospective_hedge.py": {
+      "reason": "Owner-requested pytest proofs for the H94 W6 prospective HEDGE_CTX evaluation on new proposer programs; offline research analysis outside the reviewed product baseline.",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h86_w3_outcome_status_census/test_census.py": {
+      "role": "research",
+      "reason": "H86 W3 outcome-row status census and status-mask export unit tests."
     },
     "python:research/flywheel_selfplay/rd_breakthrough/w5_provenance/test_verify.py": {
       "reason": "Synthetic metadata controls for the W5 provenance verifier; none admits data or qualifies W5; offline research analysis outside the reviewed product baseline.",
@@ -3892,21 +3884,21 @@
     },
     "target:jope-narrator/lib/jope_narrator": {
       "role": "regression",
-      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts.",
       "subsystems": [
         "gp",
         "evidence",
         "storage"
-      ]
+      ],
+      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
     },
     "target:jope-narrator/test/core": {
       "role": "regression",
-      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts.",
       "subsystems": [
         "gp",
         "evidence",
         "storage"
-      ]
+      ],
+      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
     },
     "target:jope-observatory/bin/collect-datasets": {
       "role": "regression",
@@ -3924,9 +3916,9 @@
       "role": "infrastructure"
     },
     "target:jope-observatory/bin/gp-narration-stream": {
-      "reason": "Reader CLI has no separate unit cases; its real stdio protocol and read-only routes are exercised by target:jope-observatory/test/narration.",
       "role": "infrastructure",
-      "scope": "Read-only narration CLI is built/checked here and launched by narration integration MCP framing tests; no unit-test count inferred for the binary."
+      "scope": "Read-only narration CLI is built/checked here and launched by narration integration MCP framing tests; no unit-test count inferred for the binary.",
+      "reason": "Reader CLI has no separate unit cases; its real stdio protocol and read-only routes are exercised by target:jope-observatory/test/narration."
     },
     "target:jope-observatory/bin/gp-source-stream": {
       "role": "regression",
@@ -3963,12 +3955,12 @@
     },
     "target:jope-observatory/test/narration": {
       "role": "regression",
-      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts.",
       "subsystems": [
         "gp",
         "evidence",
         "storage"
-      ]
+      ],
+      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
     },
     "target:jope-parallel/bin/jope-build-receipt": {
       "role": "regression",
@@ -4723,12 +4715,12 @@
     },
     "target:jope-pipeline/test/search_narration": {
       "role": "regression",
-      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts.",
       "subsystems": [
         "gp",
         "evidence",
         "storage"
-      ]
+      ],
+      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
     },
     "target:jope-pipeline/test/seed_set_v2": {
       "role": "regression",
@@ -4932,12 +4924,12 @@
     },
     "target:jope-runtime/test/prediction_narration": {
       "role": "regression",
-      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts.",
       "subsystems": [
         "fitting",
         "export",
         "evidence"
-      ]
+      ],
+      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
     },
     "target:jope-service/lib/jope_service": {
       "reason": "Empty skeleton crate registered by API-06; no behaviour or tests yet",
@@ -5053,6 +5045,14 @@
       "subsystems": [
         "encoders"
       ]
+    },
+    "python:research/flywheel_selfplay/h97_reg_ema/test_h97.py": {
+      "reason": "Owner-requested pytest proofs for the H97 REG-EMA candidate protocol; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h99_esh_harm/test_h99.py": {
+      "reason": "Owner-requested pytest proofs for the H99 ESH harm follow-up preregistration; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
