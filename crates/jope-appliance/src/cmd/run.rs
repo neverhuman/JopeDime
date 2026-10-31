@@ -42,6 +42,9 @@ impl Drop for RunInterrupts {
 
 #[derive(Args, Debug)]
 pub struct RunArgs {
+    /// Reuse the original key when retrying the same run request.
+    #[arg(long)]
+    pub idempotency_key: Option<String>,
     #[arg(long)]
     pub dataset: String,
     #[arg(long)]
@@ -334,7 +337,7 @@ fn validate_m1_spec(
 
 pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
     let spec = args.run_spec()?;
-    let key = crate::common::resolve_idempotency_key(None);
+    let key = crate::common::resolve_idempotency_key(args.idempotency_key.as_deref());
     let response = transport.run_start(&spec, Some(&key))?;
     match response {
         RunResult::Plan(plan) => write_json(&*plan),
@@ -625,6 +628,7 @@ mod tests {
             dispatch_exit_code(&DispatchUnavailable::EndpointCredentials.into()),
             Some(9)
         );
+        #[cfg(not(feature = "engine"))]
         assert_eq!(
             dispatch_exit_code(&DispatchUnavailable::LocalHandlers.into()),
             Some(2)

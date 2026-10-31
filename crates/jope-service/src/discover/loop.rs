@@ -702,6 +702,7 @@ struct StartCommand {
     journal: Arc<EventLog>,
     identity: crate::idempotency::RequestIdentity,
     input_roots: Vec<BlobRef>,
+    warnings: Vec<jope_api::Warning>,
 }
 
 impl Discovery {
@@ -713,11 +714,13 @@ impl Discovery {
         journal: Arc<EventLog>,
         identity: crate::idempotency::RequestIdentity,
         input_roots: Vec<BlobRef>,
+        warnings: Vec<jope_api::Warning>,
     ) -> Result<Self> {
         let start = Some(StartCommand {
             journal,
             identity,
             input_roots,
+            warnings,
         });
         #[cfg(feature = "research")]
         {
@@ -849,7 +852,7 @@ impl Discovery {
                 },
                 best: None,
                 event_watermark: DecimalU64(0),
-                warnings: vec![],
+                warnings: start.as_ref().map(|s|s.warnings.clone()).unwrap_or_default(),
                 completion_reason: None,
             };
             (checkpoint, snapshot)

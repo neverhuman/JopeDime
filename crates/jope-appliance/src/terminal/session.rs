@@ -465,16 +465,26 @@ impl Session {
     }
 
     fn start_run(&mut self, args: &[String]) -> anyhow::Result<Vec<String>> {
-        if !args.is_empty() {
-            anyhow::ensure!(
-                args.len() == 2 && args[0] == "--seed",
-                "usage: \\run [--seed S]"
-            );
-            let seed = args[1]
-                .parse::<u64>()
-                .map_err(|_| anyhow::anyhow!("--seed must be a nonnegative integer"))?;
-            self.draft.set_seed(DecimalU64(seed));
+        anyhow::ensure!(
+            args.len() % 2 == 0,
+            "usage: \\run [--seed S] [--idempotency-key KEY]"
+        );
+        let mut key = None;
+        let mut seeded = false;
+        for pair in args.chunks_exact(2) {
+            match pair[0].as_str() {
+                "--seed" if !seeded => {
+                    let seed = pair[1]
+                        .parse::<u64>()
+                        .map_err(|_| anyhow::anyhow!("--seed must be a nonnegative integer"))?;
+                    self.draft.set_seed(DecimalU64(seed));
+                    seeded = true;
+                }
+                "--idempotency-key" if key.is_none() => key = Some(pair[1].clone()),
+                _ => anyhow::bail!("usage: \\run [--seed S] [--idempotency-key KEY]"),
+            }
         }
+        let key = key.unwrap_or_else(|| format!("tui_run_{}", ulid::Ulid::new()));
         let plan = self
             .validate_draft()?
             .ok_or_else(|| anyhow::anyhow!("draft needs a registered dataset and target"))?;
@@ -483,10 +493,7 @@ impl Session {
             .run_spec(false)
             .expect("validated draft is complete");
         spec.plan_digest = Some(plan.plan_digest);
-        match self
-            .client
-            .run_start(&spec, Some(&format!("tui_run_{}", ulid::Ulid::new())))?
-        {
+        match self.client.run_start(&spec, Some(&key))? {
             RunResult::Started(snapshot) => {
                 let run = snapshot.run_id.clone();
                 self.attach(run.clone(), Some(snapshot.event_watermark))?;

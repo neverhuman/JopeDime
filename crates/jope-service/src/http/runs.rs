@@ -452,6 +452,7 @@ impl RunService {
             Arc::clone(&self.journal),
             identity.clone(),
             vec![fit, holdout],
+            prepared.public.warnings,
         ) {
             Ok(value) => value,
             Err(error) => return response(io(error)),
