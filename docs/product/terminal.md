@@ -15,9 +15,9 @@ The command exits with status 0 when it reads the engine state. In this example 
 
 The current CLI exposes `run`, `status`, and `events`. The captured help shows that `run` requires `--dataset`, `--target`, `--task`, `--split`, `--objective`, `--effort`, `--budget`, `--landmarks`, `--guidance`, `--device`, and `--seed`. `status` and `events` take a run identifier.
 
-The HTTP service currently implements only `system_info`; run planning, starting, status, control, events, and algorithm lookup return `CAPABILITY_UNAVAILABLE`. The CLI command names therefore describe available syntax, not a working engine workflow in this build.
+The service implements `system_info` and dataset registration. Dataset listing/inspection and run planning, starting, status, control, events, and algorithm lookup still return `CAPABILITY_UNAVAILABLE`. The CLI command names therefore describe available syntax; they do not imply that the corresponding engine operation is wired in this build.
 
-**TODO(SVC-05-F01):** execute and document the end-to-end dataset add, run, status, and events workflow after the dataset and run handlers are available.
+Dataset upload is executable with `jopedime dataset add`; see [Quickstart](quickstart.md). The run, status, and events workflow remains pending until its service handlers are available.
 
 ## Exit statuses
 
