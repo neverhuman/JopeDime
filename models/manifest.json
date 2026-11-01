@@ -47,10 +47,10 @@
     {
       "bundle_id": "r882-regression",
       "manifest": "models/bundles/r882-regression.json",
-      "manifest_sha256": "02375947b50f990079552638aee12981ad8edfd35d68614c730dd27cd7c627f5",
+      "manifest_sha256": "d925582c40146fe2d5eba6d91f03a011e2f5a6abc17df5fe721a496b2d77a707",
       "s3_key": "bundles/r882-regression/manifest.json",
       "files": 1,
-      "bytes": 7493476,
+      "bytes": 7499888,
       "licenses": [
         "LicenseRef-Jain-Internal-Model"
       ]

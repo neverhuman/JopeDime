@@ -143,7 +143,7 @@
       "total_bytes": 103220
     },
     "full": {
-      "profile_sha256": "65183159386301168b39d4878c0583d4dedf1924edaeb1fd3e79b67583bf277e",
+      "profile_sha256": "c993cc5eefa0853d8f81aad9aa97b40d13da18960f46781624c7c10cad3f625e",
       "scope": "internal-restricted",
       "status": "blocked",
       "blockers": [
@@ -180,15 +180,15 @@
           "id": "r882-regression-adapter",
           "role": "model",
           "bundle_id": "r882-regression",
-          "bundle_manifest_sha256": "02375947b50f990079552638aee12981ad8edfd35d68614c730dd27cd7c627f5",
+          "bundle_manifest_sha256": "d925582c40146fe2d5eba6d91f03a011e2f5a6abc17df5fe721a496b2d77a707",
           "backends": [
             "cpu"
           ],
           "files": [
             {
-              "path": "round-882.pt",
-              "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
-              "bytes": 7493476,
+              "path": "jope.safetensors",
+              "sha256": "ff3f9ea5d76fa6c13cd74d40a9effbf7e9c891d98746dc542d851726b9e3138c",
+              "bytes": 7499888,
               "kind": "policy",
               "spdx": "LicenseRef-Jain-Internal-Model",
               "redistribution": "internal"
@@ -288,7 +288,7 @@
           ]
         }
       ],
-      "total_bytes": 326006704
+      "total_bytes": 326013116
     },
     "fused-cpu": {
       "profile_sha256": "307fea3a755563b50ce3085680e6155f20f24399468fd4502a03431ff791d523",

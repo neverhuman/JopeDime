@@ -6,7 +6,7 @@
 #   * the Starlight foundation regressor remains `prohibited`; its explicit owner acknowledgement
 #     permits internal qualification/rehearsal candidates only, never public distribution;
 #   * the proposal method's runtime adapter is not compiled yet (P3). Its model input is the
-#     SHA-pinned flywheel round-882 custody artifact, selected on val_reg by owner ruling t0115.
+#     owner-selected round-882 JOPE safetensors export, pinned by SHA and bundle digest per T0210.
 # Rights are never edited to unblock it: resolve them at their source records.
 schema = "jope.appliance-profile/v1"
 name = "full"
@@ -26,7 +26,7 @@ frame_mib = 16
 [[component]]
 id = "r882-regression-adapter"
 bundle = "r882-regression"
-files = ["round-882.pt"]
+files = ["jope.safetensors"]
 role = "model"
 requires = ["hyperion-v5-arm-b", "starlight-foundation", "target-encoder", "governed-bundle"]
 
