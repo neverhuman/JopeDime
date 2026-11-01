@@ -3,6 +3,7 @@
 use super::*;
 use crate::{
     discover::r#loop::Plan,
+    ranker::admission::{select_revealed, MeasuredAlgorithm, RevealedRule},
     store::{BlobRef, Store},
     worker::{Request, Response},
 };
@@ -64,7 +65,6 @@ impl CaptureConfig {
 /// Actual aligned program inputs and indices into the measured admitted pool.
 pub struct SlateObservation {
     pub programs: Vec<RecordedProgram>,
-    pub revealed_indices: Vec<usize>,
 }
 
 /// A same-invocation admission input; values are not manufactured by the loop.
@@ -210,21 +210,7 @@ impl CaptureContext {
                 "program provenance mismatch"
             );
         }
-        ensure!(
-            observation.revealed_indices.len() == if round == 0 { 0 } else { 4 },
-            "missing actual reveal context"
-        );
-        let mut seen = BTreeSet::new();
-        let mut revealed = vec![];
-        for index in observation.revealed_indices {
-            ensure!(seen.insert(index), "duplicate revealed index");
-            revealed.push(
-                measured
-                    .get(index)
-                    .context("unknown revealed index")?
-                    .clone(),
-            );
-        }
+        let revealed = select_od13_reveals(round, measured)?;
         Ok(ObservedSlate {
             programs: observation.programs,
             revealed,
@@ -232,8 +218,86 @@ impl CaptureContext {
     }
 }
 
+/// Apply the owner-accepted OD13 rule to the actual measured admitted pool.
+/// The ranker selector keeps input order on equal F values.
+fn select_od13_reveals(round: u64, measured: &[RecordedReveal]) -> Result<Vec<RecordedReveal>> {
+    if round == 0 {
+        ensure!(
+            measured.is_empty(),
+            "round zero cannot have revealed context"
+        );
+        return Ok(Vec::new());
+    }
+    let candidates: Vec<_> = measured
+        .iter()
+        .map(|entry| MeasuredAlgorithm {
+            id: &entry.program.program_sha256,
+            surrogate_fitness: entry.surrogate,
+            gate: entry.gate,
+        })
+        .collect();
+    let selected = select_revealed(&candidates, RevealedRule::SurrogateFitness)
+        .context("OD13 could not select four measured reveals")?;
+    Ok(selected
+        .into_iter()
+        .map(|index| measured[index].clone())
+        .collect())
+}
+
 pub(crate) fn digest(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
+}
+
+#[cfg(test)]
+mod od13_tests {
+    use super::*;
+
+    fn reveal(index: usize, surrogate: f64) -> RecordedReveal {
+        RecordedReveal {
+            program: RecordedProgram {
+                program_sha256: format!("{index:064x}"),
+                operator_family: "synthetic_control".into(),
+                feat412: vec![0.0; 412],
+                proj16: vec![0.0; 16],
+            },
+            surrogate,
+            gate: index % 2 == 0,
+        }
+    }
+
+    #[test]
+    fn od13_selects_four_lowest_f_with_stable_source_order_ties() {
+        let measured = [
+            reveal(0, 2.0),
+            reveal(1, -0.0),
+            reveal(2, 1.0),
+            reveal(3, 0.0),
+            reveal(4, -1.0),
+            reveal(5, 3.0),
+        ];
+
+        let selected = select_od13_reveals(1, &measured).unwrap();
+
+        assert_eq!(
+            selected
+                .iter()
+                .map(|entry| entry.program.program_sha256.clone())
+                .collect::<Vec<_>>(),
+            [4, 1, 3, 2].map(|index| format!("{index:064x}"))
+        );
+        assert_eq!(selected[0].gate, measured[4].gate);
+        assert_eq!(selected[1].gate, measured[1].gate);
+    }
+
+    #[test]
+    fn od13_refuses_short_or_nonfinite_measured_pools_and_round_zero_reveals() {
+        assert!(select_od13_reveals(1, &[reveal(0, 1.0); 3]).is_err());
+        let mut nonfinite = vec![reveal(0, 1.0); 4];
+        nonfinite[2].surrogate = f64::NAN;
+        assert!(select_od13_reveals(1, &nonfinite).is_err());
+        assert!(select_od13_reveals(0, &[reveal(0, 1.0)]).is_err());
+        assert!(select_od13_reveals(0, &[]).unwrap().is_empty());
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

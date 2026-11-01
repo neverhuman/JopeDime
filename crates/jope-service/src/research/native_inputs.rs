@@ -349,10 +349,7 @@ pub(super) fn input_controls(mut record: super::ResearchRound) {
                 3 => programs[0].program_sha256 = "6".repeat(64),
                 _ => {}
             }
-            Ok(SlateObservation {
-                programs,
-                revealed_indices: vec![],
-            })
+            Ok(SlateObservation { programs })
         }
         fn measurement(&self, _: &Request, _: &Response) -> Result<Rung0Measurement> {
             anyhow::bail!("not executed")
