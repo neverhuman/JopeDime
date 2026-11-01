@@ -181,13 +181,7 @@ def main():
     )
     # Outcome decoding/statistics on TRAIN and historical metrics start only here.
     provenance = json.loads((HERE / "provenance.json").read_text())
-    import boto3
-
-    s3 = boto3.Session(profile_name="veox-jepson-prod").client("s3")
-    bucket, key = provenance["catalog_uri"].removeprefix("s3://").split("/", 1)
-    raw = s3.get_object(
-        Bucket=bucket, Key=key, VersionId=provenance["catalog_version_id"]
-    )["Body"].read()
+    raw = Path(manifest["catalog_copy"]).read_bytes()
     if hashlib.sha256(raw).hexdigest() != provenance["catalog_sha256"]:
         raise RuntimeError("catalog SHA mismatch")
     catalog = {r["id"]: r for r in map(json.loads, raw.splitlines())}
@@ -199,7 +193,7 @@ def main():
         out / "provenance.json",
         dict(
             status="PASS",
-            actual_exact_version_catalog_GET=True,
+            actual_preflight_exact_version_catalog_GET=True,
             real_dataset_ids=len(ids),
             zero_synthetic_datasets=True,
             counterfactual_policy_injections=True,

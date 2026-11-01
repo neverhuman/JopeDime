@@ -22,7 +22,9 @@
     "/home/ubuntu/jope-data/h175/inputs/historical/H167-metrics.json": "3cefb221dfb25865017b3f833c966804de414fe93e860e6ac86afe018a836622",
     "/home/ubuntu/jope-data/h175/inputs/historical/H168-metrics.json": "93d984456282e8cca982a58d7d50a1d96fe2af456a8892cee0fcc2688bdac9da",
     "/home/ubuntu/jope-data/h175/inputs/historical/H169-metrics.json": "0b498bf786d8d694dd94ac687a60f91f76625abec7c261a2d1ed66381a5fb675",
-    "/home/ubuntu/jope-data/h175/inputs/historical/H170-metrics.json": "37dc9cbbe5453bfe3be21ad688ca2454fa54e990319cd6eba5a9337e396dbc5e"
+    "/home/ubuntu/jope-data/h175/inputs/historical/H170-metrics.json": "37dc9cbbe5453bfe3be21ad688ca2454fa54e990319cd6eba5a9337e396dbc5e",
+    "/home/ubuntu/jope-data/h175/inputs/real-catalog.jsonl": "c5f5eb6db36d24daa9abc5c7808a49773a2b94c1765620d236e91a471fe2cb54",
+    "/home/ubuntu/jope_plan/evidence/H175/CATALOG_PROOF.json": "acba3e906666cf3c6aa12a95d39a30076829ef8312caabb9c67a268516bda40c"
   },
   "assets": {
     "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
@@ -55,11 +57,11 @@
   "source_sha256": {
     "protocol.py": "de98f5824f2750fa89e21205d70ffa80f226224e4093cff746eb3b26e9b47197",
     "power.py": "f795e32f1f8f13c884ca770f96c8e2442dbd956ee97931de6689984efd790917",
-    "runner.py": "b7b73daaa57275ee54332df84b912e3ebb0919a4b4ef89498e1d90c70a29af92",
+    "runner.py": "d3b54b8921e6b94b2c770606c628711be2ec945bf83431c17f02d7d3f794c4b3",
     "monitor.py": "f9c057520bf6937ba36d8493a24bce156b04757d4e86f9903ba18fbbb5411a7d",
     "test_h175.py": "ce21627ea7c31cc6af58351eea746a000a828222ee3079d9b64b7d03b121ce0f",
-    "PREREG.md": "7d5583039a35686ee065fefe0fefa22d8a4cc449c88bd490395bc96e4e1964e8",
-    "provenance.json": "2f8a42182bd80058b95469a5879d5a7fcdc93f105aacaca41b1453706f47f658",
+    "PREREG.md": "bd69aa51c2e0f0788419cfe60ead301cfb71dd6532b080243fb39699ec1cac62",
+    "provenance.json": "8eeba16f800581d597a746477fbb11e1e7c61cfc4437d2e4dd573a0f17285e5e",
     "fold_manifest.json": "26679e71333a7547fc84329a4cd52993c22de93d7474b7f12541b4b51c1f92d3",
     "histories.json": "dbd98f21b77e24d5c3bca6209a9de831f68ea897ca44a7c7049ceba45eb448c9"
   },
@@ -70,5 +72,6 @@
   ],
   "fold_seed": 175140,
   "boot_seed": 175141,
-  "total_optimizer_updates": 0
+  "total_optimizer_updates": 0,
+  "catalog_copy": "/home/ubuntu/jope-data/h175/inputs/real-catalog.jsonl"
 }

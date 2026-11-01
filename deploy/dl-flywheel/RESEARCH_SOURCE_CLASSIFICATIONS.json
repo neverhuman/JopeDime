@@ -4513,8 +4513,8 @@
       }
     },
     "python:research/flywheel_selfplay/h175_selector_power/runner.py": {
-      "bytes": 10774,
-      "sha256": "b7b73daaa57275ee54332df84b912e3ebb0919a4b4ef89498e1d90c70a29af92",
+      "bytes": 10550,
+      "sha256": "d3b54b8921e6b94b2c770606c628711be2ec945bf83431c17f02d7d3f794c4b3",
       "classification": {
         "role": "research",
         "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."

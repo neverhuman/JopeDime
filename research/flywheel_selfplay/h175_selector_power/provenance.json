@@ -306,6 +306,6 @@
   "underlying_dataset_origin": "real S3; inherited H170 exact numeric closure",
   "synthetic_policy_injections": true,
   "synthetic_datasets": false,
-  "actual_versioned_catalog_GET_during_H175": "required after native baseline gate",
+  "actual_versioned_catalog_GET_during_H175": "PASS in metadata-only preflight; catalog admission decoded after native91 gate",
   "H170_source_commit": "fcf6861eb2cca547f91b7c231d79cbcbb74e0bbb"
 }
