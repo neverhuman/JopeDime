@@ -75,8 +75,8 @@ Isolate the writer's contribution.
 
 Here and in \cref{sub:price-run}, we consider language-model writers for regression and
 the agent comparators of \cref{sub:results-headtohead,sub:results-search}.
-The reference network of \cref{sec:method}, writer and map together, has
-27.8 million parameters and writes at most 128 grammar tokens.
+The compact reference network and its generation limit are specified in
+\cref{sec:method}; the scaling examples here concern language-model writers.
 
 Small models are cheap per token and can be dear per win. For generation
 alone, compute per token falls about 190-fold from a hypothetical dense 1.5T writer to
@@ -106,22 +106,20 @@ quality-diversity archives \citep{lehman2011novelty,mouret2015mapelites}.
 Any novelty bonus must preserve the reward ordering in \cref{sec:game}.
 These are design options.
 
-The reference procedure keeps up to 64 distinct
-valid policy draws at temperature~1, filling a short pool with
-grammar-uniform samples. Another 16 random exploration programs join that
-pool to seed verified search
-(\cref{sub:method-selfplay}). A measured exploration study
-must declare its controls and budget share and count unsuccessful attempts;
-its quality--cost trade-off belongs with the results (\cref{sec:results}).
+The reference training procedure combines policy draws, grammar-uniform
+fill and random exploration to seed verified search
+(\cref{sub:method-selfplay}). An exploration study must declare those
+controls and their budget shares, including unsuccessful attempts;
+\cref{sec:results} reserves the quality--cost comparison.
 
 \begin{explainer}[label=box:hallucination]{What a referee verifies}
   An unfamiliar program is a conjecture; the referee checks whether it
   runs and improves the declared score. Verification establishes that
   bounded result. A claim of discovery also needs comparison with known
-  methods (\cref{sec:meaning}). AlphaGo's Move~37 was unlikely by its own
-  estimate and won its game (\cref{sub:anatomy-history}). A referee does
-  not make strange moves good. Its reliability and execution cost must be
-  established for the task (\cref{sec:method}).
+  methods (\cref{sec:meaning}). The Go example in
+  \cref{sub:anatomy-history} illustrates this distinction. The referee's
+  reliability and execution cost must be established for the task
+  (\cref{sub:method-referee}).
 \end{explainer}
 
 \subsection{How many games?}\label{sub:price-games}
@@ -172,11 +170,7 @@ incumbent standard and verification rule. Under \cref{eq:bill}'s
 fixed-probability model, doubling $\winprob$ halves expected cost per win
 only if mean cost per attempt stays fixed.
 
-The reference checkpoint in \cref{sec:method} uses a compact network with
-27.8 million parameters and at most 128 grammar-constrained tokens, with no
-repair in the proposed single-candidate deployment protocol. Its measured
-costs must be reported separately from any future scaling projection.
-
-The next section specifies training intended to raise $\winprob$ (\cref{sec:method}). Its
-effect must be tested on one proposal under the stated deployment
-budget.
+The reference network's measured costs must be reported separately from
+these scaling examples. \Cref{sec:method} now specifies the training intended
+to raise $\winprob$; the single-candidate comparison must determine whether
+that training improves the first proposal.
