@@ -161,7 +161,9 @@ impl Store {
             for table in Table::ALL {
                 write.open_table(definition(table)).map_err(db)?;
             }
+            boundary("before_commit");
             write.commit().map_err(db)?;
+            boundary("after_commit");
             sync_dir(&home)?;
             store_id
         } else {
@@ -403,7 +405,9 @@ impl Store {
                         .map_err(db)?;
                 }
             }
+            boundary("before_commit");
             write.commit().map_err(db)?;
+            boundary("after_commit");
         }
         Ok(())
     }

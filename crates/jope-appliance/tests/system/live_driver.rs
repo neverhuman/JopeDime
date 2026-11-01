@@ -381,6 +381,63 @@ def engine_boundary_matrix():
             client.p.stdin.close();client.p.wait(timeout=5)
             subprocess.run([args.binary,'serve','--stop'],env={**base_env,'JOPEDIME_HOME':str(h)},capture_output=True,text=True,timeout=10,check=True)
     assert len(cases)==sum(map(len,seen.values())) and any(c['state']=='paused' for c in cases) and any(c['state']=='completed' for c in cases)
+    normal_count=len(cases)
+    # Schema creation and recovery metadata use their own raw redb commits.
+    # Exercise both sides with actual fresh/background engines, beyond the run trace.
+    for phase in ['initialization','recovery']:
+        for hook in ['before_commit','after_commit']:
+            label=f'x-{phase[:1]}-{hook[:1]}'
+            original_prefix=[];rid=None
+            if phase=='initialization':
+                h=runtime/label;h.mkdir()
+            else:
+                h,d=start_engine(label);engine=children[-1]
+                rid=run(h,spec_argv(d,'int02-recovery-run',32))['run_id']
+                deadline=time.monotonic()+20
+                while True:
+                    before=run(h,['status',rid,'--json'])
+                    assert before['state']=='running','recovery seed finished before cut'
+                    if before.get('best') is not None and int(before['event_watermark'])>=5:break
+                    assert time.monotonic()<deadline,'no recovery seed model'
+                    time.sleep(.02)
+                observer=MCP(h);original_prefix=observer.events(rid,0)['events']
+                engine.kill();assert engine.wait(timeout=5)==-9
+                observer.p.stdin.close();observer.p.wait(timeout=5)
+            engine,logpath=traced_engine(h,label+'-selected',{'JOPE_STORE_TRACE_BOUNDARIES':'1','JOPE_STORE_FAILPOINT':hook,'JOPE_STORE_FAILPOINT_OCCURRENCE':'1','JOPE_STORE_FAILPOINT_PARK':'1'})
+            deadline=time.monotonic()+20
+            while f'JOPE_STORE_CRASH:{hook}' not in logpath.read_text().splitlines():
+                assert engine.poll() is None,'engine did not reach raw commit'
+                assert time.monotonic()<deadline,'raw commit hook deadline'
+                time.sleep(.01)
+            assert f'JOPE_STORE_BOUNDARY:{hook}:1' in logpath.read_text().splitlines()
+            engine.kill();signal_exit=engine.wait(timeout=5);assert signal_exit==-9
+            recovery_homes.append(h);client=MCP(h)
+            info=client.call('tools/call',{'name':'system_info','arguments':{}});assert not info.get('isError'),info
+            inventory=run(h,['runs','list'])['runs']
+            if phase=='initialization':
+                assert not inventory
+                d=run(h,['dataset','add',str(csv),'--name','int02-real-train','--idempotency-key','int02-register','--json'])['dataset_id']
+                rid=run(h,spec_argv(d,'int02-boundary-run',2))['run_id']
+                recovered=None;state='not-created';prefix=[];expected_best=snapshot['best']
+            else:
+                assert len(inventory)==1 and inventory[0]['run_id']==rid
+                recovered=run(h,['status',rid,'--json']);assert recovered['state']=='paused'
+                assert recovered==run(h,['status',rid,'--json']),'raw recovery was not idempotent'
+                prefix=client.events(rid,0)['events'];assert prefix[:len(original_prefix)]==original_prefix
+                assert project(prefix)==project(json.loads((out/'live-mcp-events.json').read_text()))[:len(project(prefix))]
+                run(h,['control',rid,'--idempotency-key','int02-raw-continue','continue'])
+                state='paused';expected_best=report['r4_final']['best']
+            completed=wait_terminal(h,rid);events=client.events(rid,0)['events']
+            assert completed['state']=='completed' and completed['best']==expected_best
+            assert events[:len(prefix)]==prefix and [int(e['sequence']) for e in events]==list(range(1,len(events)+1))
+            assert events[-1]['body']['nondeterminism']['count']=='0'
+            assert not list((h/'tmp').iterdir())
+            cases.append({'phase':phase,'hook':hook,'ordinal':1,'signal':signal_exit,'state':state,'events':len(prefix),'checkpoint':recovered,'completed':completed,'staging_clean':True,'continued_sequences':len(events),'reference_integrity_checked_on_open':True})
+            save('engine-boundary-cases.json',cases)
+            client.p.stdin.close();client.p.wait(timeout=5)
+            subprocess.run([args.binary,'serve','--stop'],env={**base_env,'JOPEDIME_HOME':str(h)},capture_output=True,text=True,timeout=10,check=True)
+    assert len(cases)==normal_count+4
+    report['r1_run_boundary_cases']=normal_count;report['r1_initialization_and_recovery_cases']=4
     report['r1_engine_boundary_cases']=len(cases);report['r1_engine_boundary_hooks']=hooks
     report['r1_all_internal_background_cuts_qualified']=True
 
