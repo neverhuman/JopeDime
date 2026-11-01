@@ -55,16 +55,21 @@
   },
   "source_sha256": {
     "fold_manifest.json": "220271f333aadd1b6b684d8bfb3ec6d0190e17fd60a278791a7c584b94978761",
-    "run.py": "0403256105a0bd6221bf39283b598d6d9ec8b4f7bed132bd885934eec7e0143c",
-    "analysis.py": "6a7b85de4c44448cff8f006be2ceb5ad950a26a3790aad97cbe19f55fc0f6dc0",
-    "monitor.py": "d8827c49ade455e69a85decadd1c85c445790da177ecaf2e50593538808f2880",
-    "test_h156.py": "17a73f1ad5d16881693c161a932429d24ce6f8352c2245ec4b84eb46a69d5551",
+    "run.py": "b619a959ba84b568d4986d0b1699f9557956f437ee8a04d901971ef460207b6e",
+    "analysis.py": "e30f09dece8bd0379180c6d5a2f5620b5084216f24b77f565009c21cd7df466f",
+    "monitor.py": "ef8a2262dee9456b72a38e7b07c2a7c37d3e0abe098d3debe455458a7d6f5d37",
+    "test_h156.py": "569750836aaafd731705478683e667443a677e2dd0d2b2ab9c93f8d17d15e3f9",
     "PREREG.md": "4ff3919939a5ec0c427a03766c5deefc699c6286c5fc7cdb8aabadc685a54b3b",
-    "PREREG_AMENDMENT_A1.md": "a3b46f7b47e19c5fa80d621c1f6e55f47ed93479dbc36dc21b3e0697745af629"
+    "PREREG_AMENDMENT_A1.md": "a2aa0a949c27ae4556647db53b3375500fdf04287b27d53dea1e9507ce70aec7"
   },
   "packages": {
     "numpy": "1.26.4",
     "torch": "2.7.0",
     "psutil": "7.1.0"
+  },
+  "parent_source_sha256": {
+    "../flywheel_selfplay/h146_lookahead_exec/runner.py": "f394358bb1ead59c212d57b18844b51c748becb36610f7ba38d7c58f6d6d57cd",
+    "../flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4",
+    "../flywheel_selfplay/h146_lookahead_exec/science.py": "b82efcff0b9c34d3b826c68642b4ef30cfc5b459179f2c27b5f24faa34bffdce"
   }
 }

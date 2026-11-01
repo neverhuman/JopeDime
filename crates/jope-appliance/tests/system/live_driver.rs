@@ -22,8 +22,10 @@ pub(super) fn run() {
     let driver = scratch.path().join("live_probe.py");
     fs::write(&driver, DRIVER).unwrap();
     fs::write(scratch.path().join("observe_http.py"), OBSERVER).unwrap();
-    let binary = env!("CARGO_BIN_EXE_jopedime");
-    let version = Command::new(binary)
+    let binary = std::env::var_os("JOPE_INT02_BINARY")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(env!("CARGO_BIN_EXE_jopedime")));
+    let version = Command::new(&binary)
         .args(["--version", "--json"])
         .output()
         .unwrap();
@@ -35,7 +37,7 @@ pub(super) fn run() {
     command
         .arg(&driver)
         .arg("--binary")
-        .arg(binary)
+        .arg(&binary)
         .arg("--source")
         .arg(&source)
         .arg("--source-root")

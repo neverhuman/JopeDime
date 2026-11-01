@@ -1,0 +1,28 @@
+{
+  "wave": "H159",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "verdict": null,
+  "optimizer_updates": 0,
+  "scored_contexts": 0,
+  "seeds": [
+    159101,
+    159102,
+    159103
+  ],
+  "fold_seed": 159140,
+  "bootstrap_seed": 159141,
+  "grid_t": [
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    0.95
+  ],
+  "arms": [
+    "R882",
+    "VETO_FIX",
+    "VETO_CV",
+    "ORACLE_INFO"
+  ]
+}

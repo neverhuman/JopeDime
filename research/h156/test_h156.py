@@ -243,6 +243,95 @@ class TestH156(unittest.TestCase):
             y_w10 = net.adapter_10tok.forward_probe(x_prog, x_sem, x_ctx, x_traj, x_par)
         self.assertEqual(float((y_ref - y_w10).abs().max()), 0.0)
 
+    def test_w05_and_w20_step0_preserve_arm_identity_not_replaced_by_r882(self):
+        rows = synthetic_rows(25, 2)
+        r882_col = np.zeros(len(rows), dtype=np.float64)
+        w05_panel = np.full((len(rows), 5), -0.05, dtype=np.float64)
+        w05_panel[:, 0] = 0.10  # W05 step 0 improves over r882 by +0.10
+        w10_panel = np.full((len(rows), 5), -0.05, dtype=np.float64)
+        w10_panel[:, 0] = 0.0
+        w20_panel = np.full((len(rows), 5), -0.05, dtype=np.float64)
+
+        d_w05 = stat.choose(rows, w05_panel, seed=156141, r882_col=r882_col, arm="W05")
+        self.assertEqual(d_w05["selected_arm"], "W05")
+        self.assertEqual(d_w05["selected_step"], 0)
+        self.assertFalse(d_w05["fallback_r882"])
+        self.assertEqual((d_w05["resolved_arm"], d_w05["resolved_step"]), ("W05", 0))
+
+        d_w10 = stat.choose(rows, w10_panel, seed=156141, r882_col=r882_col, arm="W10")
+        self.assertTrue(d_w10["fallback_r882"])
+        self.assertEqual((d_w10["resolved_arm"], d_w10["resolved_step"]), ("W10", 0))
+
+        d_w20 = stat.choose(rows, w20_panel, seed=156141, r882_col=r882_col, arm="W20")
+        self.assertTrue(d_w20["fallback_r882"])
+        self.assertEqual((d_w20["resolved_arm"], d_w20["resolved_step"]), ("W10", 0))
+
+        panels = {"W05": w05_panel, "W10": w10_panel, "W20": w20_panel}
+        d_joint = stat.choose_joint(rows, panels, r882_col, seed=156141)
+        self.assertEqual(d_joint["selected_arm"], "W05")
+        self.assertEqual(d_joint["selected_step"], 0)
+        self.assertFalse(d_joint["fallback_r882"])
+        self.assertEqual(
+            (d_joint["resolved_arm"], d_joint["resolved_step"]), ("W05", 0)
+        )
+
+        # Not RULE_NEUTRAL when W05 step 0 is non-fallback
+        base = np.zeros((3, len(rows), 5), dtype=np.float64)
+        base[:, :, 1] = 0.10
+        base[:, :, 4] = 0.10
+        summary = stat.summarize(rows, base)
+        sels = [{"W05": d_w05, "W10": d_w10, "W20": d_w20, "XFIT_JOINT": d_joint}]
+        self.assertNotEqual(stat.verdict(summary, summary, sels), "RULE_NEUTRAL")
+
+    def test_monitor_sample_includes_supervisor_and_worker_and_cpu_thread_cap(self):
+        self.assertEqual(mon.MAX_THREADS, 4)
+        self.assertEqual(mon.MAX_GPU_THREADS, 8)
+
+        class DummyMem:
+            def __init__(self, rss):
+                self.rss = rss
+
+        class DummyProc:
+            def __init__(self, pid, rss, threads, kids=None):
+                self.pid = pid
+                self._rss = rss
+                self._threads = threads
+                self._kids = kids or []
+
+            def status(self):
+                return "running"
+
+            def children(self, recursive=True):
+                return list(self._kids)
+
+            def memory_info(self):
+                return DummyMem(self._rss)
+
+            def num_threads(self):
+                return self._threads
+
+        sup = DummyProc(100, 50_000_000, 1)
+        wrk = DummyProc(101, 200_000_000, 2)
+        snap = mon.sample(wrk, sup_proc=sup)
+        self.assertEqual(snap["pids"], [100, 101])
+        self.assertEqual(snap["rss_bytes"], 250_000_000)
+        self.assertEqual(snap["threads"], 3)
+
+    def test_parent_source_sha256_pinned_and_verified(self):
+        import json
+        import run as h156_run
+
+        manifest_path = Path(__file__).resolve().parent / "manifest.json"
+        pins = json.loads(manifest_path.read_text())
+        self.assertIn("parent_source_sha256", pins)
+        self.assertGreaterEqual(len(pins["parent_source_sha256"]), 3)
+        h156_run.verify(pins)
+        bad = json.loads(manifest_path.read_text())
+        first_key = next(iter(bad["parent_source_sha256"]))
+        bad["parent_source_sha256"][first_key] = "0" * 64
+        with self.assertRaises(RuntimeError):
+            h156_run.verify(bad)
+
 
 if __name__ == "__main__":
     unittest.main()

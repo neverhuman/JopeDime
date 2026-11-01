@@ -18,7 +18,8 @@ DATA = Path("/home/ubuntu/jope-data/h156")
 QUAL_LOCK = Path("/home/ubuntu/jope_plan/ns/qualification.lock")
 QUAL_LOCK_LEGACY = Path("/home/ubuntu/jope_plan/qualification.lock")
 MAX_RSS = int(6 * 10**9)
-MAX_THREADS = 8
+MAX_THREADS = 4
+MAX_GPU_THREADS = 8
 MIN_MEM = 16 * 1024**3
 MIN_DISK = 40 * 10**9
 MAX_DISK_USED_PCT = 95.0
@@ -64,8 +65,14 @@ def tree(proc):
     return out
 
 
-def sample(proc):
-    procs = tree(proc)
+def sample(proc, sup_proc=None):
+    sup = sup_proc if sup_proc is not None else psutil.Process(os.getpid())
+    seen = set()
+    procs = []
+    for p in [sup] + tree(proc):
+        if p.pid not in seen:
+            seen.add(p.pid)
+            procs.append(p)
     rss = 0
     threads = 0
     pids = []
@@ -168,6 +175,10 @@ def main():
     samples = []
     reason = None
     started = time.monotonic()
+    child = None
+    proc = None
+    sup_proc = psutil.Process(os.getpid())
+    thread_limit = MAX_GPU_THREADS if gpu_lock_held else MAX_THREADS
     try:
         with log_path.open("w") as log:
             child = subprocess.Popen(
@@ -175,12 +186,12 @@ def main():
             )
             proc = psutil.Process(child.pid)
             while child.poll() is None:
-                snap = sample(proc)
+                snap = sample(proc, sup_proc=sup_proc)
                 snap["elapsed_seconds"] = time.monotonic() - started
                 samples.append(snap)
                 if snap["rss_bytes"] >= MAX_RSS:
                     reason = "RSS_CAP"
-                elif snap["threads"] > MAX_THREADS:
+                elif snap["threads"] > thread_limit:
                     reason = "THREAD_CAP"
                 elif snap["load1"] > snap["load_limit"]:
                     reason = "LOAD_CAP"
@@ -199,6 +210,12 @@ def main():
                 time.sleep(INTERVAL)
             rc = child.wait()
     finally:
+        if child is not None and child.poll() is None and proc is not None:
+            stop_owned(proc)
+            try:
+                child.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                pass
         for fd in lock_fds:
             try:
                 fcntl.flock(fd.fileno(), fcntl.LOCK_UN)

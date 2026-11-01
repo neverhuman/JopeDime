@@ -32,6 +32,9 @@ def verify(pins):
     for p, h in pins["source_sha256"].items():
         if sha(HERE / p) != h:
             raise RuntimeError("source identity mismatch: " + p)
+    for p, h in pins.get("parent_source_sha256", {}).items():
+        if sha(HERE / p) != h:
+            raise RuntimeError("parent source identity mismatch: " + p)
     for name, version in pins["packages"].items():
         if importlib.metadata.version(name) != version:
             raise RuntimeError("package version: " + name)
@@ -849,6 +852,7 @@ def main():
                         arm_panels[arm],
                         stat.BOOT_SEED + 100 * outer + 10 * si + ai,
                         r882_col=r882_sel_vals,
+                        arm=arm,
                     )
                 decisions["XFIT_JOINT"] = stat.choose_joint(
                     select,
@@ -864,11 +868,17 @@ def main():
                 # Evaluate selected (arm, step) pairs on outer assessment fold A and DL-Val
                 needed_pairs = {("W10", 0)}
                 for arm in stat.WIDTH_ARMS:
-                    st_pick = decisions[arm]["selected_step"]
-                    needed_pairs.add(("W10", 0) if st_pick == 0 else (arm, st_pick))
-                j_arm = decisions["XFIT_JOINT"]["selected_arm"]
-                j_step = decisions["XFIT_JOINT"]["selected_step"]
-                needed_pairs.add(("W10", 0) if j_step == 0 else (j_arm, j_step))
+                    needed_pairs.add(
+                        (
+                            decisions[arm]["resolved_arm"],
+                            decisions[arm]["resolved_step"],
+                        )
+                    )
+                j_key = (
+                    decisions["XFIT_JOINT"]["resolved_arm"],
+                    decisions["XFIT_JOINT"]["resolved_step"],
+                )
+                needed_pairs.add(j_key)
 
                 assessment = {("W10", 0): r882_assess_scores}
                 val_assessment = {("W10", 0): baseline}
@@ -887,12 +897,13 @@ def main():
 
                 configure_adapter_width(net, initial, names, 1.0, seed)
                 for col, arm in enumerate(stat.WIDTH_ARMS, start=1):
-                    st_pick = decisions[arm]["selected_step"]
-                    key = ("W10", 0) if st_pick == 0 else (arm, st_pick)
+                    key = (
+                        decisions[arm]["resolved_arm"],
+                        decisions[arm]["resolved_step"],
+                    )
                     primary[si, ai_idx, col] = assessment[key]["values"]
                     secondary[si, outer, :, col] = val_assessment[key]["values"]
 
-                j_key = ("W10", 0) if j_step == 0 else (j_arm, j_step)
                 primary[si, ai_idx, 4] = assessment[j_key]["values"]
                 secondary[si, outer, :, 4] = val_assessment[j_key]["values"]
 

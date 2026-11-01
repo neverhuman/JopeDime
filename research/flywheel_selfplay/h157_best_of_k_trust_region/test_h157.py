@@ -2,13 +2,27 @@
 
 import hashlib
 import json
+import os
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 
 import numpy as np
 
 from science import admits, bootstrap_median, choose_winner, folds, primary_summary
-from runner import h142_loss, training_plan, validate_launch
+from runner import (
+    BOK_BOOTSTRAP_BASE_SEED,
+    HERE,
+    REPO_ROOT,
+    disk_used_percent,
+    h142_loss,
+    input_path,
+    restore_initial_state,
+    training_plan,
+    validate_baseline,
+    validate_launch,
+)
 
 
 class H157Tests(unittest.TestCase):
@@ -56,11 +70,13 @@ class H157Tests(unittest.TestCase):
         first = training_plan(rows, pools, 15710100)
         again = training_plan(rows, pools, 15710100)
         other = training_plan(rows, pools, 15710101)
+
         def fingerprint(plan):
             return [
                 (stream, cids, tuple(ix.tobytes() for ix in indexes))
                 for stream, cids, indexes in plan
             ]
+
         self.assertEqual(len(first), 40)
         self.assertEqual(fingerprint(first), fingerprint(again))
         self.assertNotEqual(fingerprint(first), fingerprint(other))
@@ -69,7 +85,9 @@ class H157Tests(unittest.TestCase):
             self.assertTrue(set(cids) <= allowed)
             self.assertEqual(len(cids), 16)
             self.assertTrue(all(len(ix) == 192 for ix in indexes))
-            self.assertTrue(all(np.array_equal(ix[:48], np.arange(48)) for ix in indexes))
+            self.assertTrue(
+                all(np.array_equal(ix[:48], np.arange(48)) for ix in indexes)
+            )
 
     def test_primary_bootstrap_and_holm_are_paired_family_level(self):
         base = np.zeros((3, 19))
@@ -90,10 +108,14 @@ class H157Tests(unittest.TestCase):
 
     def test_launch_requires_merged_source_and_assigned_cross_review(self):
         launch = dict(
-            source_commit="a" * 40, manifest_sha256="b" * 64,
-            merged_source_verified=True, cross_review_pass=True,
-            reviewer="luna_v1_rnk11", review_pr=1400,
-            reviewed_source_commit="c" * 40, merged_pr=1401,
+            source_commit="a" * 40,
+            manifest_sha256="b" * 64,
+            merged_source_verified=True,
+            cross_review_pass=True,
+            reviewer="luna_v1_rnk11",
+            review_pr=1400,
+            reviewed_source_commit="c" * 40,
+            merged_pr=1401,
         )
         validate_launch(launch, "a" * 40, "b" * 64)
         for change in (
@@ -121,6 +143,125 @@ class H157Tests(unittest.TestCase):
             ).sum(1)
         ).mean()
         self.assertTrue(torch.allclose(h142_loss(prediction, fitness, gate), expected))
+
+    def test_manifest_input_paths_resolve_to_pinned_files_not_hashes(self):
+        self.assertEqual(
+            input_path("/home/ubuntu/jope-data/h50/input/selected.json"),
+            Path("/home/ubuntu/jope-data/h50/input/selected.json"),
+        )
+        self.assertEqual(
+            input_path(
+                "research/flywheel_selfplay/h150_w5_provenance_unblock/sealed_family_manifest.json"
+            ),
+            REPO_ROOT
+            / "research/flywheel_selfplay/h150_w5_provenance_unblock/sealed_family_manifest.json",
+        )
+
+    def test_disk_guard_uses_user_available_blocks(self):
+        percent = disk_used_percent(1000, 70, 40)
+        self.assertAlmostEqual(percent, 100 * 930 / 970)
+        self.assertGreaterEqual(percent, 95.0)
+
+    def test_baseline_requires_exact_91_context_reference(self):
+        expected = np.linspace(-1.0, 1.0, 91, dtype=np.float64)
+        self.assertEqual(validate_baseline(expected.copy(), expected), 0.0)
+        near_miss = expected.copy()
+        near_miss[37] += 1e-12
+        with self.assertRaisesRegex(RuntimeError, "exact native regression"):
+            validate_baseline(near_miss, expected)
+        with self.assertRaisesRegex(RuntimeError, "exactly 91"):
+            validate_baseline(expected[:-1], expected[:-1])
+
+    def test_bok8_bootstrap_seeds_match_preregistered_roster(self):
+        gains = {f"bok-{index:02d}": np.zeros(41) for index in range(1, 9)}
+        for seed_index in range(3):
+            decision = choose_winner(gains, BOK_BOOTSTRAP_BASE_SEED + 100 * seed_index)
+            observed = {
+                name: score["bootstrap_seed"]
+                for name, score in decision["candidates"].items()
+            }
+            expected = {
+                f"bok-{index:02d}": 157141 + 100 * seed_index + index
+                for index in range(1, 9)
+            }
+            self.assertEqual(observed, expected)
+
+    def test_descriptive_r882_baseline_restores_frozen_initial_state(self):
+        import torch
+
+        class Net(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.adapter = torch.nn.Parameter(torch.tensor([1.0, 2.0]))
+
+        class Runtime:
+            @staticmethod
+            def check_frozen(*_args):
+                return None
+
+        net = Net()
+        initial = {
+            name: value.detach().clone() for name, value in net.state_dict().items()
+        }
+        with torch.no_grad():
+            net.adapter.add_(4.0)
+        restore_initial_state(net, initial, Runtime(), None, [], None)
+        self.assertTrue(net.adapter.detach().equal(initial["adapter"]))
+
+    def test_final_pin_verification_allows_only_exact_identity_metadata(self):
+        script = """
+import json, os, sys
+from pathlib import Path
+import runner
+class Audit:
+    def __init__(self, allowed, output):
+        self.allowed = {str(Path(p).resolve()) for p in allowed}
+        self.output = Path(output).resolve()
+        self.opened, self.refused = set(), []
+    def check(self, event, args):
+        if event != 'open' or not isinstance(args[0], (str, bytes)):
+            return
+        path = Path(os.fsdecode(args[0])).resolve()
+        text = str(path)
+        if '/sealed' in text or 'holdout' in text or 'meta-test' in text:
+            self.refused.append(text)
+            raise RuntimeError('protected path refused')
+        if path.is_relative_to(Path('/home/ubuntu/jope-data')) and text not in self.allowed:
+            self.refused.append(text)
+            raise RuntimeError('unlisted data path refused')
+class Runtime:
+    Audit = Audit
+manifest = json.loads((runner.HERE / 'manifest.json').read_text())
+path = (runner.HERE / manifest['h150_sealed_identity_manifest']).resolve()
+expected = manifest['h150_sealed_identity_sha256']
+pins = {
+    'inputs': {str(path.relative_to(runner.REPO_ROOT)): expected},
+    'assets': {}, 'packages': {}, 'source_sha256': {},
+    'parent_source_sha256': {}, 'reference_source_sha256': {},
+    'h142_runner_reference': str(runner.H142_RUNNER),
+    'h142_runner_reference_sha256': runner.H142_RUNNER_SHA,
+    'h150_sealed_identity_manifest': manifest['h150_sealed_identity_manifest'],
+    'h150_sealed_identity_sha256': expected,
+}
+audit = runner.identity_manifest_audit(Runtime, pins, runner.HERE, {str(path)})
+sys.addaudithook(audit.check)
+runner.verify(pins)
+for args in ((str(path) + '.lookalike', 'r', 0), (str(path), 'w', 0)):
+    try:
+        audit.check('open', args)
+    except RuntimeError:
+        continue
+    raise AssertionError('unapproved identity path access was admitted')
+"""
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=HERE,
+            env=os.environ.copy(),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == "__main__":

@@ -100,7 +100,7 @@ def bootstrap(a, b, draws, seed):
     )
 
 
-def choose(rows, panel, seed, r882_col=None):
+def choose(rows, panel, seed, r882_col=None, arm="W10"):
     mat = np.asarray(panel, dtype=np.float64)
     if mat.shape != (len(rows), len(STEPS)) or not np.isfinite(mat).all():
         raise ValueError("selector panel shape/finiteness mismatch")
@@ -111,11 +111,13 @@ def choose(rows, panel, seed, r882_col=None):
         _, base = family_means(rows, np.asarray(r882_col, dtype=np.float64))
     best_xfit = 0
     best_xfit_gain = 0.0
+    fallback_r882 = True
     best_lcb = 0
     best_lcb_gain = 0.0
+    lcb_fallback_r882 = True
     candidates = {}
     for j, step in enumerate(STEPS):
-        if step == 0 and r882_col is None:
+        if step == 0 and (r882_col is None or arm == "W10"):
             candidates["0"] = dict(
                 gain=0.0,
                 ci_low_95=0.0,
@@ -133,22 +135,27 @@ def choose(rows, panel, seed, r882_col=None):
             eligible_lcb=bool(ok_lcb),
         )
         if ok_xfit and stat["delta"] > best_xfit_gain + EPS:
-            best_xfit, best_xfit_gain = step, stat["delta"]
+            best_xfit, best_xfit_gain, fallback_r882 = step, stat["delta"], False
         if ok_lcb and stat["delta"] > best_lcb_gain + EPS:
-            best_lcb, best_lcb_gain = step, stat["delta"]
+            best_lcb, best_lcb_gain, lcb_fallback_r882 = step, stat["delta"], False
     return dict(
+        selected_arm="W10" if fallback_r882 else arm,
         selected_step=best_xfit,
         selected_gain=best_xfit_gain,
+        fallback_r882=bool(fallback_r882),
+        resolved_arm="W10" if fallback_r882 else arm,
+        resolved_step=0 if fallback_r882 else best_xfit,
         lcb_selected_step=best_lcb,
         lcb_selected_gain=best_lcb_gain,
+        lcb_fallback_r882=bool(lcb_fallback_r882),
         candidates=candidates,
     )
 
 
 def choose_joint(rows, arm_panels, r882_col, seed):
     _, base = family_means(rows, np.asarray(r882_col, dtype=np.float64))
-    best_arm, best_step, best_gain = "W10", 0, 0.0
-    lcb_arm, lcb_step, lcb_gain = "W10", 0, 0.0
+    best_arm, best_step, best_gain, fallback_r882 = "W10", 0, 0.0, True
+    lcb_arm, lcb_step, lcb_gain, lcb_fallback_r882 = "W10", 0, 0.0, True
     grid = {}
     for ai, arm in enumerate(WIDTH_ARMS):
         mat = np.asarray(arm_panels[arm], dtype=np.float64)
@@ -177,16 +184,30 @@ def choose_joint(rows, arm_panels, r882_col, seed):
                 eligible_lcb=bool(ok_lcb),
             )
             if ok_xfit and st["delta"] > best_gain + EPS:
-                best_arm, best_step, best_gain = arm, step, st["delta"]
+                best_arm, best_step, best_gain, fallback_r882 = (
+                    arm,
+                    step,
+                    st["delta"],
+                    False,
+                )
             if ok_lcb and st["delta"] > lcb_gain + EPS:
-                lcb_arm, lcb_step, lcb_gain = arm, step, st["delta"]
+                lcb_arm, lcb_step, lcb_gain, lcb_fallback_r882 = (
+                    arm,
+                    step,
+                    st["delta"],
+                    False,
+                )
     return dict(
         selected_arm=best_arm,
         selected_step=best_step,
         selected_gain=best_gain,
+        fallback_r882=bool(fallback_r882),
+        resolved_arm=best_arm,
+        resolved_step=best_step,
         lcb_selected_arm=lcb_arm,
         lcb_selected_step=lcb_step,
         lcb_selected_gain=lcb_gain,
+        lcb_fallback_r882=bool(lcb_fallback_r882),
         grid=grid,
     )
 
@@ -312,8 +333,14 @@ def summarize(rows, panel, arm_names=ALL_ARMS, seed=BOOT_SEED):
 
 def verdict(train_summary, val_summary, selections):
     if all(
-        d["XFIT_JOINT"]["selected_step"] == 0
-        and all(d[w]["selected_step"] == 0 for w in WIDTH_ARMS)
+        d["XFIT_JOINT"].get(
+            "fallback_r882",
+            d["XFIT_JOINT"]["selected_step"] == 0
+            and d["XFIT_JOINT"].get("selected_arm", "W10") == "W10",
+        )
+        and all(
+            d[w].get("fallback_r882", d[w]["selected_step"] == 0) for w in WIDTH_ARMS
+        )
         for d in selections
     ):
         return "RULE_NEUTRAL"
