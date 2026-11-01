@@ -237,7 +237,13 @@ def adapter_fingerprint(adapter: nn.Module) -> str:
         digest.update(str(parameter.dtype).encode())
         digest.update(str(tuple(parameter.shape)).encode())
         digest.update(
-            parameter.detach().cpu().contiguous().view(torch.uint8).numpy().tobytes()
+            parameter.detach()
+            .cpu()
+            .contiguous()
+            .reshape(-1)
+            .view(torch.uint8)
+            .numpy()
+            .tobytes()
         )
     return digest.hexdigest()
 
