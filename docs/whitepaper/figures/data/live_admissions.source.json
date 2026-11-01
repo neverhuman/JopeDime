@@ -2,8 +2,7 @@
   "schema": "whitepaper.live-admission-prefix/v1",
   "snapshot": {
     "name": "adapter_admissions.jsonl",
-    "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/adapter_admissions.jsonl",
-    "inode": 62570224,
+    "path": "adapter_admissions.jsonl",
     "observed_bytes": 986640,
     "prefix_bytes": 986640,
     "prefix_sha256": "37c669dc52d31c9c8428d3cd5190a5558eed54a595f51ef6f1db55376bdc646c",
@@ -12,7 +11,6 @@
     "trailing_incomplete_bytes_omitted": 0,
     "source_rows": 1889,
     "at": "2026-11-01T05:20:06.331608+00:00",
-    "host": "xbabe1",
     "first_round": 775,
     "last_round": 2663,
     "selection": "All complete-line admission records in stable observed prefix; no outcome selection",

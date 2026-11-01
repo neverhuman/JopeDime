@@ -1,8 +1,8 @@
 {
   "schema": "whitepaper.live-admission-figures/v1",
-  "source_receipt_sha256": "ac78d955ab11d98d5f3c2085822afb40eacc5bbd475402bfaafb29c663dc7b31",
+  "source_receipt_sha256": "d04fd2e70229630b75b53e3832f0e53627fcb9307fea0d9520228f54279b199f",
   "csv_sha256": "edd336c3b68e880040e8f41a6fe437617f643ed183d9b03d69554963ad54a6dd",
-  "generator_sha256": "ebe01468dce5e2d27b9532c6684389e1280e90ac1f97d30812341428ae0f9794",
+  "generator_sha256": "ca150f5f8c3c036004199dd5a39401cb57d90c23ffce6d668385cf3ca3a1bf11",
   "figure_sha256": {
     "fig_fw_live_validation.pdf": "89c78a92ef5c87e2a700bcdea9ce337f7994751676cb0d51fc2163a33365065a",
     "fig_fw_live_shortfall.pdf": "10f48feca48070a82b72ac11d9b4820b9e1436d78942af3aa2d00873623a2a15"
