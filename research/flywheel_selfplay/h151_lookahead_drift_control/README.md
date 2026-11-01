@@ -21,7 +21,7 @@
   - `CTRL_HALF`: half-step AdamW (`lr = 5e-5`, `lookahead_k = null`).
   - `CTRL_QTR`: quarter-step AdamW (`lr = 2.5e-5`, `lookahead_k = null`).
   - `LA`: Lookahead (`lr = 1e-4`, `lookahead_k = 5`, `alpha = 0.5`, slow-weight pullbacks at steps `5, 10, ..., 40`).
-- **Seeds & Folds**: paired batch plans across all 4 arms for seeds `151101, 151102, 151103`; 5-fold family split of 1,219 `DL-Train` contexts (`fold_seed = 151140`), fitting on folds 1–4 (`974` contexts / `164` families) and holding out fold 0 (`245` contexts / `41` families) as the preregistered descriptive secondary readout. (The later-requested full `1,219`-context / `205`-family `DL-Train` panel is not reported because folds 1–4 were used for gradient fitting.)
+- **Seeds & Folds**: paired batch plans across all 4 arms for seeds `151101, 151102, 151103`; 5-fold family split of 1,219 `DL-Train` contexts (`fold_seed = 151140`), fitting on folds 1–4 (`968` contexts / `164` families) and holding out fold 0 (`251` contexts / `41` families) as the preregistered descriptive secondary readout. (The later-requested full `1,219`-context / `205`-family `DL-Train` panel is not reported because folds 1–4 were used for gradient fitting.)
 - **Primary Evaluation**: 91-context `DL-Val` (`19` families; historical `r882` / `H140` / `H142` / `H144` / `H146` exposure disclosed), equal-family mean within seed, median across 3 seeds, 10,000-draw shared family-cluster bootstrap (`boot_seed = 151141`, strict `ties = "reject"`), inclusive 15% drift-matching gate (`0.85 * LA <= CTRL_* <= 1.15 * LA`), and `Holm(m = 4)` across all 4 executed arms vs `r882`.
 
 ## Primary Results (`DL-Val`, 91 contexts / 19 families)
@@ -35,9 +35,9 @@
 | `CTRL_QTR` (`2.5e-5`) | `0.1086` (`0.112 / 0.109 / 0.108`) | `-0.0070` `[-0.0169, +0.0009]` | `0/3` | `1.000` | `+0.0288` `[-0.0003, +0.0814]` (`3/3`) | `+0.0027` `[-0.00003, +0.0079]` (`3/3`) | `1463.3` `[1365.8, 1555.3]` | `0 / 0 / 0` |
 | **`LA` (`k=5, α=0.5`)** | **`0.2181`** (`0.226 / 0.218 / 0.218`) | **`-0.0097` `[-0.0228, +0.0006]`** | **`0/3`** | **`1.000`** | **`+0.0155` `[-0.0003, +0.0302]` (`3/3`)** | **`0.0000` `[0.0000, 0.0000]` (`0/3`)** | **`1463.3` `[1365.8, 1555.3]`** | **`1 / 0 / 0`** |
 
-## Secondary Descriptive Readout (`DL-Train` Fold 0, 245 contexts / 41 families)
+## Secondary Descriptive Readout (`DL-Train` Fold 0, 251 contexts / 41 families)
 
-Secondary readout is the preregistered held-out `DL-Train` fold 0 (`245` contexts / `41` families; the full `1,219`-context / `205`-family `DL-Train` panel is not reported because folds 1–4 were used for gradient updates):
+Secondary readout is the preregistered held-out `DL-Train` fold 0 (`251` contexts / `41` families; the full `1,219`-context / `205`-family `DL-Train` panel is not reported because folds 1–4 were used for gradient updates):
 
 - **vs `r882` (`4` invalid picks at baseline)**:
   - `CTRL`: `-0.0195` `[-0.0663, +0.0161]` (`0/3` seeds, invalid `4 / 5 / 5`)
