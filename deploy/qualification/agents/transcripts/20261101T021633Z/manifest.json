@@ -1,0 +1,213 @@
+{
+  "schema": "jopedime.named-client-transcripts/v1",
+  "captured_utc": "2026-11-01T02:16:33Z",
+  "source": "21d65a949bbfc340981cfbcf224cacb9eb571e5c",
+  "a5": {
+    "status": "READY_FOR_REVIEW",
+    "full_path_observed_clients": 3,
+    "successful_tool_calls": 48,
+    "failed_tool_calls": 0,
+    "review_and_merge_owner": "ENG:watcher per mcp01_t2020.md"
+  },
+  "clients": {
+    "claude_code": {
+      "version": "2.1.307 (Claude Code)",
+      "executable": "/home/ubuntu/.local/share/claude/versions/2.1.307",
+      "executable_sha256": "6021eb72d20d0682b720bdc63acd2a5cd2270895d1f10d9ca2a88cbfa7b9dd0e",
+      "implementation": "claude",
+      "requested_model": "claude-opus-5-5"
+    },
+    "gemini_cli": {
+      "version": "1.4.12",
+      "executable": "/home/ubuntu/jope-data/tools/agy-1.4.12/agy",
+      "executable_sha256": "1edfb30477447825f0aaa05fd9a91d82f9adf26686f41cd4f5c70b90abe383e8",
+      "implementation": "Antigravity Gemini CLI (owner-approved mcp05_t1925_jrb02.md)",
+      "requested_model": "gemini-4-argon-high"
+    },
+    "codex_cli": {
+      "version": "codex-cli 0.166.0",
+      "executable": "/home/ubuntu/.codex/packages/standalone/releases/0.166.0-x86_64-unknown-linux-musl/bin/codex",
+      "executable_sha256": "b8a11fedf24b2dfb59a70c9e52b030f9a508dcd49cd2dd0d41956f4c785156b8",
+      "implementation": "codex",
+      "requested_model": "gpt-6.1-sol"
+    }
+  },
+  "files": {
+    "README.md": {
+      "bytes": 6819,
+      "sha256": "4e91df0e50e3e39e3df502f3fec4c39a4166001b947c105c081706e819a487be"
+    },
+    "checks-BUILD.json": {
+      "bytes": 557,
+      "sha256": "a2948cca8e4e4db82411ee2fbae9a092c0e9e828ba0083b02d45b4f156c11ad8"
+    },
+    "checks-STATIC-GATES.json": {
+      "bytes": 1806,
+      "sha256": "101e53d902bbf51f5645bab7d21a5b133d18a1af3ebdaaeaa7f943f42fd26350"
+    },
+    "checks-TESTS.json": {
+      "bytes": 381,
+      "sha256": "ec7e082c076e4453db0f965e22b43562df4589d5347fe18dd82344f4560800d6"
+    },
+    "checks-clippy-linux.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checks-test-inventory.stdout": {
+      "bytes": 579,
+      "sha256": "90720cc41c5845d38835278a21d3617f9a71611b395b9f8955567a94b66defff"
+    },
+    "checks-tests.stdout.json": {
+      "bytes": 2299,
+      "sha256": "463cf66baebf628d09e02cbe599477a60d3b824b0506baaae20bd2b334e0c905"
+    },
+    "claude-code.capture.json": {
+      "bytes": 2060,
+      "sha256": "f81c4cd2d56c6e12bea00ac8966d0ed4cec3b9427ed40b3e8c1e90f207e73159"
+    },
+    "claude-code.client-tools.jsonl": {
+      "bytes": 20134,
+      "sha256": "1f1a27dba557ebe44e0a261cadcb05ab14c430393db0bd476d6370194e8d444e"
+    },
+    "claude-code.client.raw": {
+      "bytes": 12790,
+      "sha256": "f6486e7ab445b2fa55fa67ee269f300370bab6ea07628e1a1dfe7616c4b4e043"
+    },
+    "claude-code.command.json": {
+      "bytes": 4865,
+      "sha256": "7adad013287aaf254215943bfa62f341d469b80c10497bce5a280bb6beac2e00"
+    },
+    "claude-code.execution.json": {
+      "bytes": 1764,
+      "sha256": "a20958f4b3cf8f5df57d76689c011e0e42e2ca75eff4f01d1b020412c0b0db43"
+    },
+    "claude-code.mcp-config.json": {
+      "bytes": 1613,
+      "sha256": "3a81c9286894a968c15640046047cd9aaa7d0d294888eb05d94b49f2bd987d6d"
+    },
+    "claude-code.mcp.jsonl": {
+      "bytes": 242613,
+      "sha256": "d9d905cdef2596ab0d4763d2299b62f1c8a2b282d509c411f917fb353526bb9e"
+    },
+    "claude-code.prompt.txt": {
+      "bytes": 4074,
+      "sha256": "eda99a49379b12fe0ce4dbc15b837fa972734aa057d26b45530822723ca752e1"
+    },
+    "claude-code.server.raw": {
+      "bytes": 213426,
+      "sha256": "577507468e87ced60713871a7cf0ed4c5232ec5f24c93d33a7135a293058cb01"
+    },
+    "claude-code.verification.json": {
+      "bytes": 4203,
+      "sha256": "0ea384f70de6ddf1f0e1dc8900d978b0b0aaaf18de2196bc9e515960d791e9b4"
+    },
+    "codex-cli.capture.json": {
+      "bytes": 2046,
+      "sha256": "7c376ca6d13aa04a097be7bc78f4ad77f9547c028f5ef799ecd07b4feb730b5a"
+    },
+    "codex-cli.client-tools.jsonl": {
+      "bytes": 33508,
+      "sha256": "0b534f6c444bb54b118cf92f663d33d065393c30e50e03ebb6555b5042743f1e"
+    },
+    "codex-cli.client.raw": {
+      "bytes": 16984,
+      "sha256": "3249daf5889db226d1339addb13283d930fdacaf1cd171eee59ebc4a55d50843"
+    },
+    "codex-cli.command.json": {
+      "bytes": 6673,
+      "sha256": "fa0ebcb9e0a60ef4f4a377cdba28e25dd1cb9ac03b9a272ef80904885be1c942"
+    },
+    "codex-cli.execution.json": {
+      "bytes": 1799,
+      "sha256": "fe64ca41a95f4c9be68536a92cfe90203f99136c8931e538b8f46e0300e66854"
+    },
+    "codex-cli.mcp.jsonl": {
+      "bytes": 246130,
+      "sha256": "c10a6b246431af46cfe1a2adc679f1366ab9f2e6c2224adffabcf1ede0212e6b"
+    },
+    "codex-cli.prompt.txt": {
+      "bytes": 4067,
+      "sha256": "72cf711e072f26d7aff3b6d75d0c282be9fdb34e8ee51d90543439e582028394"
+    },
+    "codex-cli.server.raw": {
+      "bytes": 212717,
+      "sha256": "140a12768fc95f6c07c413d01a9b84bc7deb06554de48ef4699a831e2fa30440"
+    },
+    "codex-cli.verification.json": {
+      "bytes": 3871,
+      "sha256": "47159bda0930eef5d4d0a763b82406dda2957a749d7bf837b913634396020b58"
+    },
+    "diagnostics.json": {
+      "bytes": 3264,
+      "sha256": "84c2847776f461213d2ea865e8d5ac250e27e911828ebb293ba5eac10f4e9344"
+    },
+    "gemini-cli.capture.json": {
+      "bytes": 2062,
+      "sha256": "31b9a8b8285ad84dd3f4c0212687c8953e26348aa3f4eb409e104854d95cbaa0"
+    },
+    "gemini-cli.client-tools.jsonl": {
+      "bytes": 25378,
+      "sha256": "d626baf91be67cd48c1cfcf4cc94a27139929efd53db6e923c5c9d32dc71eff1"
+    },
+    "gemini-cli.client.raw": {
+      "bytes": 15267,
+      "sha256": "8a42353bf839d8f9e8aaa9ec45864c4c45a5d5a60e08f01767600b1540a884ac"
+    },
+    "gemini-cli.command.json": {
+      "bytes": 4469,
+      "sha256": "ebec92dd00e815e4b6917a6bdd72591ec565423b75ab39c91ccd29260d5d07e3"
+    },
+    "gemini-cli.execution.json": {
+      "bytes": 1743,
+      "sha256": "991e44118676b061ac2bd5dedf8d81f5a7a7afdff1890dd54c8b692e914bdc77"
+    },
+    "gemini-cli.mcp-config.json": {
+      "bytes": 1613,
+      "sha256": "cc1895c70f6e9f26550f3ce89fc5974859569f43d83124e78e5dc53916a381b4"
+    },
+    "gemini-cli.mcp.jsonl": {
+      "bytes": 244875,
+      "sha256": "378bc8611e6c81575ab66b46991f09fa4775507cdaeab249cfa54003665c24fd"
+    },
+    "gemini-cli.prompt.txt": {
+      "bytes": 4074,
+      "sha256": "dc69c26355da0b6c006514538963c88c02cb2a20b602b09850d272db91e8b73e"
+    },
+    "gemini-cli.server.raw": {
+      "bytes": 213295,
+      "sha256": "8272e164a36dce3dc53fcd333dae964f63ddc8c2f48edd96f43b02a832e5fe9a"
+    },
+    "gemini-cli.verification.json": {
+      "bytes": 3956,
+      "sha256": "1de3b6d6da3de09e134a5793fe8ca980862e60b1ea3a9af6ebac61a5367961de"
+    },
+    "lint-paths-predicate.json": {
+      "bytes": 224,
+      "sha256": "427c66e0725efa1363e8918c2c82339b1656b8785ab06b5f8f6a725310c968cd"
+    },
+    "local-recipe-availability.json": {
+      "bytes": 340,
+      "sha256": "8fecadb2a93b8436a0f753ccf388f4de45be8c4e59ea3601fc7764ed278aeb7b"
+    },
+    "regression-bootstrap-red.json": {
+      "bytes": 454,
+      "sha256": "e68d088408ca2e62d07b8369121f8074bf96afb87ee1827cf6e65988aebf751d"
+    },
+    "regression-bootstrap-red.stdout.json": {
+      "bytes": 817,
+      "sha256": "4829eac811a6156c89509e9a1b07427598d93351b2c5b7ac503b3f7d154fe4b1"
+    },
+    "regression-text-red.json": {
+      "bytes": 383,
+      "sha256": "7315c0e87953136ed1d6c912e75387c940ff1576afdc93982ab8cb2bd74aa8f8"
+    },
+    "regression-text-red.stdout.json": {
+      "bytes": 2805,
+      "sha256": "a5fa884f8cf562ee84ca5f0aabf862360648134c59c7c7100448aee810cddd88"
+    },
+    "source-and-input.json": {
+      "bytes": 2288,
+      "sha256": "ff984ffb63d0c41b91d2eb7316e0965ef5d949e6911da5fb34baa08e1725b7d5"
+    }
+  }
+}
