@@ -119,6 +119,31 @@ summary; the event count starts from zero for this window. Binding these
 records to an exact loop, adapter and checkpoint remains pending
 (\cref{sec:method-status}).
 
+% Development-window figures moved from Section 6.8 so its float queue keeps pace (LAYOUT_REDTEAM.md, pass 53).
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_followup_development.pdf}
+  \caption{\textbf{Program events and adapter validation in a follow-up window.}
+  Left: journaled strict training-program incumbent improvements per round.
+  Right: candidate adapter validation pool utility and the recorded best.
+  Both panels cover the same 20 consecutive summary rounds. The summaries
+  mark no adapter admission. Independent first-proposal and transfer tests
+  remain required.}
+  \label{fig:fw-followup-development}
+\end{figure*}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_later_development.pdf}
+  \caption{\textbf{Continued program events and adapter validation.}
+  Left: journaled strict training-program incumbent improvements per round.
+  Right: candidate adapter validation pool utility and the recorded best.
+  Both panels cover all 20 consecutive rounds in this retained summary
+  window. The summaries mark no adapter admission. Independent
+  first-proposal comparisons remain required.}
+  \label{fig:fw-later-development}
+\end{figure*}
+
 \begin{figure}[ht]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_completed_time.pdf}
