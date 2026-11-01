@@ -1178,7 +1178,7 @@ def stage1b_bytes(bundle):
     return struct.pack("<Q",len(encoded))+encoded+b"".join(parts)
 
 
-def build(plan, reconstruction, cohort, cv, tables, output, store):
+def build(plan, reconstruction, cohort, cv, tables, output, store, parents):
     g.require(not output.exists() and not output.is_symlink(), "output must be new")
     g.require(os.environ.get("CUDA_VISIBLE_DEVICES")=="" and not torch.cuda.is_initialized(),
               "CPU reconstruction requires hidden CUDA")
@@ -1208,6 +1208,20 @@ def build(plan, reconstruction, cohort, cv, tables, output, store):
                   and row["family_id"]==train[row["context_sha256"]]["family_id"]
                   and row["family_id"] in families, "context outside original TRAIN roster")
     programs = {r["program_sha256"]:r["dsl"] for r in rows}
+    evaluated_keys = sorted(programs)
+    g.require(g.sha(parents) == reconstruction["parent-payloads.jsonl"]["sha256"],
+              "parent definition pin differs")
+    parent_rows = [g.read_json(line) for line in parents.splitlines()]
+    needed = {key for row in rows for key in row["parents"]}
+    g.require(len(parent_rows)==405 and {r["program_sha256"] for r in parent_rows}==needed,
+              "complete 405-parent payload closure required")
+    for parent in parent_rows:
+        key, dsl, cid = parent["program_sha256"], parent["dsl"], parent["context_sha256"]
+        g.require(parent["dl_split"]=="DL-Train" and cid in train
+                  and g.sha(dsl.encode())==key, "parent outside pinned TRAIN/DSL closure")
+        g.require(key not in programs or programs[key]==dsl, "parent DSL alias differs")
+        programs[key]=dsl
+    g.require(len(programs)==1137, "complete evaluated plus parent corpus required")
     keys = sorted(programs)
     vector = [reference.featurize(programs[k]) for k in keys]
     f = np.stack([v[0] for v in vector]); p = np.stack([v[1] for v in vector])
@@ -1215,10 +1229,11 @@ def build(plan, reconstruction, cohort, cv, tables, output, store):
     files = {"dsl/programs.jsonl": b"".join(g.canonical(dict(program_sha256=k,dsl=programs[k]))+b"\n" for k in keys),
              "dsl/programs-00000.safetensors":g.tensor_bytes(dict(feat412=f,proj16=p)),
              "dsl/source-rows.jsonl":cohort,
+             "dsl/parent-source-rows.jsonl":parents,
              "sources/reconstruction.json":g.canonical(reconstruction)+b"\n",
              "sources/train-cv.json":g.canonical(cv)+b"\n",
              "packet/rnk07/stage1b-parameters.safetensors":stage1b_bytes(bundle)}
-    coverage = dict(delivered_unique_programs=len(keys), delivered_source_records=1024,
+    coverage = dict(delivered_unique_programs=len(keys), delivered_source_records=1429,evaluated_source_records=1024,parent_source_records=405,
                     covered_historical_programs=len(keys), missing_historical_programs=0,
                     scope="owner R5 reconstructed evaluated cohort only", excluded_unlogged=2688,
                     historical_preproposal_state_recovered=False,
@@ -1288,7 +1303,7 @@ def build(plan, reconstruction, cohort, cv, tables, output, store):
         files[f"packet/contexts/{cid}.safetensors"]=g.tensor_bytes(inter)
         group,vals=eligible[cid]
         reveal=[r["program_sha256"] for r in group]
-        order=reveal+[key for key in keys if key not in reveal][:16]
+        order=reveal+[key for key in evaluated_keys if key not in reveal][:16]
         files[f"packet/surrogate/{cid}.json"]=g.canonical(dict(context_sha256=cid,
              recipe=manifest["surrogate_recipe"],source="original TRAIN CV journal projection",
              evaluator_sha256=custody["evaluator"]["binary"]["sha256"],
@@ -1356,7 +1371,7 @@ def build(plan, reconstruction, cohort, cv, tables, output, store):
         historical_corpus_complete=True,original_historical_state_recovered=False,excluded_unlogged=2688,
         features_regenerated_from_dsl=True,reference_source_sha256=reference.source_hashes,
         source_reconstruction_sha256=g.sha(g.canonical(reconstruction)),
-        source_cohort_sha256=g.sha(cohort),dsl_coverage=coverage,
+        source_cohort_sha256=g.sha(cohort),source_parent_sha256=g.sha(parents),dsl_coverage=coverage,
         qualification=dict(CUDA=False,Q1=False,original_historical_state=False))
     catalog,encoded=g.custody_index(specs,metadata)
     g.require(catalog["total_bytes"]<=512*1024*1024,"bounded fixture custody exceeded")
@@ -1365,22 +1380,22 @@ def build(plan, reconstruction, cohort, cv, tables, output, store):
     g.require(not torch.cuda.is_initialized(),"CPU reconstruction initialized CUDA")
     return dict(catalog_sha256=pin,total_bytes=catalog["total_bytes"],file_count=catalog["file_count"],
                 packet_index_sha256=g.sha(files["packet/index.json"]),contexts=50,corpus_programs=len(keys),
-                cohort_rows=1024,reconstructed_contexts=132,excluded_unlogged=2688,native_evaluator_calls=0,estimator_fits=0,
+                cohort_rows=1024,parent_source_records=405,parent_only_programs=242,reconstructed_contexts=132,excluded_unlogged=2688,native_evaluator_calls=0,estimator_fits=0,
                 native_feature_extractions=264,
                 historical_preproposal_state_recovered=False)
 
 
 def reconstruction_main(argv=None):
     p=argparse.ArgumentParser(description=__doc__)
-    for name in ("plan","reconstruction","cohort","cv"):
+    for name in ("plan","reconstruction","cohort","parents","cv"):
         p.add_argument("--"+name,type=Path,required=True)
         p.add_argument("--"+name+"-sha256",required=True)
     for name in ("tables","output","store"):
         p.add_argument("--"+name,type=Path,required=True)
     a=p.parse_args(argv)
-    docs={n:pinned(getattr(a,n),getattr(a,n+"_sha256")) for n in ("plan","reconstruction","cohort","cv")}
+    docs={n:pinned(getattr(a,n),getattr(a,n+"_sha256")) for n in ("plan","reconstruction","cohort","parents","cv")}
     report=build(g.read_json(docs["plan"]),g.read_json(docs["reconstruction"]),docs["cohort"],
-                 g.read_json(docs["cv"]),a.tables,a.output,a.store)
+                 g.read_json(docs["cv"]),a.tables,a.output,a.store,docs["parents"])
     print(json.dumps(report,sort_keys=True),flush=True)
     return 0
 
