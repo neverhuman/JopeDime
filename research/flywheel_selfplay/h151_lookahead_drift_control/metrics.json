@@ -1,0 +1,9 @@
+{
+  "wave": "H151",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "verdict": null,
+  "mechanism_verdict": null,
+  "r882_verdict": null,
+  "optimizer_updates": 0,
+  "serving_promotion": false
+}
