@@ -358,8 +358,10 @@ requirements. Source/build identities and a passing subset must stay explicit.
 ## Candidate-bound three-client capture preparation
 
 `capture_three_clients.py` runs exactly the pinned Claude Code, Gemini CLI and
-Codex CLI commands in sequence against one candidate and a fresh engine home.
-It writes per-client command/stdout/stderr logs, bounded `capture_stdio.py`
+Codex CLI commands in sequence against one candidate. Each client gets its own
+new engine home and store, so every recorded run inventory begins at zero and
+the frozen `[0, 1, 1]` retry contract remains independently testable. The runner
+writes per-client command/stdout/stderr logs, bounded `capture_stdio.py`
 transport receipts and wire captures, plus source/candidate/client-bound
 execution receipts in the canonical `<client>.execution.json` and
 `<client>.mcp.jsonl` names. It does not produce semantic verification receipts
@@ -371,8 +373,11 @@ path (the input bytes are not opened), pinned client executable hashes, and a
 new external output directory and engine home. The JSON command plan must use
 the schema `jopedime.a5-three-client-command-plan/v1`, name the exact three
 implementations, and explicitly configure `capture_stdio.py` for the pinned
-candidate. Run `--preflight-only` to validate the bindings without starting any
-process. Actual client execution requires the explicit
+candidate. Preflight renders every client's complete argv and rejects unknown
+placeholders before starting any process. On interruption, timeout or client
+launch failure, the owned client group is terminated/reaped and its engine is
+stopped/reaped. Run `--preflight-only` to validate the bindings without
+starting any process. Actual client execution requires the explicit
 `--execute-named-clients` option, an RC2 candidate, and a separately authorized
 capture window. Never place credentials in argv or allow them into transcripts.
 
@@ -381,5 +386,6 @@ execution, semantic-verification and wire sidecars into the provider's
 `jopedime.named-client-transcripts/v1` manifest format. It refuses any client
 whose semantic receipt does not record the exact 16 successful calls and zero
 failures. The generated manifest is always `PREPARED_UNVERIFIED`; only the A5
-provider's complete semantic checks can qualify the gate. Synthetic self-tests
-exercise these controls and are not named-client evidence.
+provider's complete semantic checks can qualify the gate. Synthetic tests use
+inert candidate/client fixtures to exercise separate homes, inventory reset,
+preflight refusal and process cleanup; they are not named-client evidence.
