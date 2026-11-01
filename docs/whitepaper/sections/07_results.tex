@@ -13,7 +13,7 @@
     \toprule
     Test & Question & Comparison or control & Reported in & Status \\
     \midrule
-    Effect of training (\cref{sub:results-learning})
+    The effect of training (\cref{sub:results-learning})
       & Does training improve the first proposal on unseen families?
       & A frozen reference writer under the same budget, paired first draws
       & Text of \cref{sub:results-learning} & Pending \\
@@ -30,7 +30,7 @@
       & Does the map read the problem, and does it change the writer?
       & The program-only head; a matched causal ablation
       & \Cref{tab:ablation} & Pending \\
-    Failures and a worked example (\cref{sub:results-failures})
+    Failure cases and a worked example (\cref{sub:results-failures})
       & How do attempts fail, and what does one game look like?
       & Terminal outcome classes; a rule-selected example
       & \Cref{tab:worked} & Pending \\
@@ -147,10 +147,10 @@ are planned for \cref{fig:price}.
 
 \subsection{What the map contributes}\label{sub:results-ablation}
 
-A representation study should test whether nearby problem encodings share
-useful programs, with data disjoint from fitting the map. Ranking agreement
-should also be compared with the program-only head, so a global preference
-for common programs is distinguishable from reading the problem.
+Test whether nearby problem encodings share useful programs, using data
+disjoint from the data that fit the map. Compare ranking agreement with the
+program-only head, so that a global preference for common programs can be
+distinguished from reading the problem.
 \TBD{Supply problem-similarity and program-only-control evaluations.}
 
 \begin{figure}[t]
