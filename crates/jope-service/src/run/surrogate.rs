@@ -97,6 +97,7 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
     let loss = 0.5 * (losses[0] + losses[1]);
     Ok(Scores {
         values: vec![fitness, loss, loss],
+        fold_scores: losses,
         predictions_digest: format!("{:x}", predicted.finalize()),
     })
 }
