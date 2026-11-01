@@ -5924,6 +5924,16 @@
       "lanes": [],
       "scope": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract)."
     },
+    "python:research/flywheel_selfplay/rnk10_r882_release/test_prepare_release.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "RNK-10 offline research exporter and verified-bytes substitution regression for the pinned r882 adapter bundle; research only, no product runtime, signing, or scientific qualification."
+    },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
       "discovery": {
         "kind": "python-family"
