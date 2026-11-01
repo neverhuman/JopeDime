@@ -22,9 +22,7 @@ def folds(rows, seed=FOLD_SEED):
         raise ValueError("family count must be a positive multiple of 5")
     order = np.random.default_rng(seed).permutation(len(fams))
     size = len(fams) // 5
-    return [
-        sorted(fams[i] for i in order[k * size : (k + 1) * size]) for k in range(5)
-    ]
+    return [sorted(fams[i] for i in order[k * size : (k + 1) * size]) for k in range(5)]
 
 
 def partition(rows, outer, seed=FOLD_SEED):
@@ -52,7 +50,8 @@ def batch_plan(fit_cids, orders, seed, steps=40, batch=8, top=24):
         s = stream_seed(seed, step)
         rng = np.random.default_rng(s)
         chosen = [
-            cids[i] for i in rng.choice(len(cids), size=min(batch, len(cids)), replace=False)
+            cids[i]
+            for i in rng.choice(len(cids), size=min(batch, len(cids)), replace=False)
         ]
         ixs = []
         for cid in chosen:
@@ -118,7 +117,11 @@ def choose(rows, panel, seed, r882_col=None):
     for j, step in enumerate(STEPS):
         if step == 0 and r882_col is None:
             candidates["0"] = dict(
-                gain=0.0, ci_low_95=0.0, ci_high_95=0.0, eligible_xfit=False, eligible_lcb=False
+                gain=0.0,
+                ci_low_95=0.0,
+                ci_high_95=0.0,
+                eligible_xfit=False,
+                eligible_lcb=False,
             )
             continue
         stat = bootstrap(fam[:, j], base, 1000, seed + step)
@@ -198,7 +201,9 @@ def elo(rows, matrix, anchor=1500.0, iters=400):
     for i in range(m):
         for j in range(i + 1, m):
             d = mat[:, i] - mat[:, j]
-            w_ij = float(np.sum(weights[d > EPS]) + 0.5 * np.sum(weights[np.abs(d) <= EPS]))
+            w_ij = float(
+                np.sum(weights[d > EPS]) + 0.5 * np.sum(weights[np.abs(d) <= EPS])
+            )
             wins[i, j] = w_ij
             wins[j, i] = 1.0 - w_ij
     p = np.ones(m, dtype=np.float64)
@@ -230,11 +235,17 @@ def holm(pvals):
 
 def summarize(rows, panel, arm_names=ALL_ARMS, seed=BOOT_SEED):
     arr = np.asarray(panel, dtype=np.float64)
-    if arr.shape != (len(SEEDS), len(rows), len(arm_names)) or not np.isfinite(arr).all():
+    if (
+        arr.shape != (len(SEEDS), len(rows), len(arm_names))
+        or not np.isfinite(arr).all()
+    ):
         raise ValueError("assessment panel shape/finiteness mismatch")
     fams, _ = family_means(rows, arr[0, :, 0])
     fam = np.stack(
-        [[family_means(rows, arr[s, :, m])[1] for m in range(len(arm_names))] for s in range(len(SEEDS))],
+        [
+            [family_means(rows, arr[s, :, m])[1] for m in range(len(arm_names))]
+            for s in range(len(SEEDS))
+        ],
         axis=0,
     )
     med = np.median(fam, axis=0)
@@ -264,7 +275,9 @@ def summarize(rows, panel, arm_names=ALL_ARMS, seed=BOOT_SEED):
     raw_p = {}
     for idx_m, name in enumerate(arm_names[1:], start=1):
         st = bootstrap(med[idx_m], med[0], 10000, seed + idx_m)
-        per_seed = [float((fam[s, idx_m] - fam[s, 0]).mean()) for s in range(len(SEEDS))]
+        per_seed = [
+            float((fam[s, idx_m] - fam[s, 0]).mean()) for s in range(len(SEEDS))
+        ]
         contrasts[name] = dict(
             **st,
             per_seed_equal_family_delta=per_seed,

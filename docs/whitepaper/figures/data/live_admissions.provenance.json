@@ -1,19 +1,19 @@
 {
   "schema": "whitepaper.live-admission-figures/v1",
-  "source_receipt_sha256": "afd3cce8f96b982882f3ff203cd18045a1c5ae6593dde4570ef924cab3a46c2d",
-  "csv_sha256": "fd7eb3248be25b5d7fc08794cf11b0bbf7154ecff3a8e7f10073370ed126ead1",
+  "source_receipt_sha256": "ac78d955ab11d98d5f3c2085822afb40eacc5bbd475402bfaafb29c663dc7b31",
+  "csv_sha256": "edd336c3b68e880040e8f41a6fe437617f643ed183d9b03d69554963ad54a6dd",
   "generator_sha256": "ebe01468dce5e2d27b9532c6684389e1280e90ac1f97d30812341428ae0f9794",
   "figure_sha256": {
-    "fig_fw_live_validation.pdf": "3676096e815d717890458f396e51ba027f4d38f7255c4ce8f5d0f9d5fe3f887e",
-    "fig_fw_live_shortfall.pdf": "2c232ecc3d50dca6fabd1629732f25020880d29e12c8ea3a7da73fdb4ae7a468"
+    "fig_fw_live_validation.pdf": "89c78a92ef5c87e2a700bcdea9ce337f7994751676cb0d51fc2163a33365065a",
+    "fig_fw_live_shortfall.pdf": "10f48feca48070a82b72ac11d9b4820b9e1436d78942af3aa2d00873623a2a15"
   },
   "round_window": [
     775,
-    2633
+    2663
   ],
-  "rows": 1859,
+  "rows": 1889,
   "historical_reference_rows": 695,
-  "additional_logged_rows": 1164,
+  "additional_logged_rows": 1194,
   "accepted_rounds": [
     782,
     785,
@@ -29,7 +29,7 @@
     882
   ],
   "last_accepted_round": 882,
-  "rejected_rounds_after_last_acceptance": 1751,
+  "rejected_rounds_after_last_acceptance": 1781,
   "final_recorded_best": "1.1377941898164525",
   "final_recorded_best_round": 882,
   "zero_gap_rounds": [

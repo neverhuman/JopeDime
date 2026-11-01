@@ -12,7 +12,14 @@ fn repo() -> PathBuf {
 }
 
 fn code(dir: &Path) -> PathBuf {
-    let mut bytes = b"\x7fELF".to_vec();
+    let mut bytes = vec![0u8; 64];
+    bytes[0..4].copy_from_slice(b"\x7fELF");
+    bytes[4] = 2; // ELFCLASS64
+    bytes[5] = 1; // ELFDATA2LSB
+    bytes[6] = 1; // EV_CURRENT
+    bytes[18..20].copy_from_slice(&62u16.to_le_bytes()); // EM_X86_64
+    bytes[20..24].copy_from_slice(&1u32.to_le_bytes()); // EV_CURRENT
+    bytes[52..54].copy_from_slice(&64u16.to_le_bytes()); // ELF64 header size
     bytes.extend((0..20_000u32).map(|i| (i * 7 % 251) as u8));
     let path = dir.join("jopedime.code");
     std::fs::write(&path, bytes).unwrap();
@@ -180,16 +187,23 @@ fn a_release_stage_seals_only_with_its_own_signature() {
     assert!(!dir.path().join("y").exists());
     // Another executable than the stage names is refused.
     let other = dir.path().join("other.code");
-    std::fs::write(&other, b"\x7fELF other").unwrap();
-    assert!(seal(
+    let mut other_bytes = std::fs::read(&code).unwrap();
+    *other_bytes.last_mut().unwrap() ^= 1; // Different payload, still the same valid target.
+    std::fs::write(&other, other_bytes).unwrap();
+    let error = seal(
         &other,
         &stage,
         &signature,
         Some(&pem),
         &dir.path().join("z"),
-        None
+        None,
     )
-    .is_err());
+    .unwrap_err();
+    assert!(
+        format!("{error:#}").contains("staged manifest names other executable bytes"),
+        "{error:#}"
+    );
+    assert!(!dir.path().join("z").exists());
 }
 
 #[test]

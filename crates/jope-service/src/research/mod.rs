@@ -9,6 +9,8 @@ pub use native_inputs::NativeCaptureInputs;
 
 mod inventory;
 pub use inventory::{RecordCounts, RecordInventory};
+mod job_resolver;
+pub use job_resolver::{AcceptedJobAdmission, TrustedJobResolver};
 mod run;
 pub use run::{record_run, RecordingBackend};
 

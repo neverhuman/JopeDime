@@ -17,6 +17,7 @@ from runner import (
     REPO_ROOT,
     disk_used_percent,
     h142_loss,
+    import_parent,
     input_path,
     restore_initial_state,
     training_plan,
@@ -26,6 +27,13 @@ from runner import (
 
 
 class H157Tests(unittest.TestCase):
+    def test_parent_runner_uses_h146_modules_and_restores_h157_imports(self):
+        h157_science = sys.modules["science"]
+        parent, runtime = import_parent()
+        self.assertEqual(set(parent.ARMS), {"CTRL", "LA", "LA_K10"})
+        self.assertEqual(runtime.HERE.name, "h146_lookahead_exec")
+        self.assertIs(sys.modules["science"], h157_science)
+
     def test_partition_is_complete_disjoint_and_deterministic(self):
         families = [f"fam-{i:03d}" for i in range(205)]
         groups = folds(families)
@@ -213,24 +221,7 @@ class H157Tests(unittest.TestCase):
 import json, os, sys
 from pathlib import Path
 import runner
-class Audit:
-    def __init__(self, allowed, output):
-        self.allowed = {str(Path(p).resolve()) for p in allowed}
-        self.output = Path(output).resolve()
-        self.opened, self.refused = set(), []
-    def check(self, event, args):
-        if event != 'open' or not isinstance(args[0], (str, bytes)):
-            return
-        path = Path(os.fsdecode(args[0])).resolve()
-        text = str(path)
-        if '/sealed' in text or 'holdout' in text or 'meta-test' in text:
-            self.refused.append(text)
-            raise RuntimeError('protected path refused')
-        if path.is_relative_to(Path('/home/ubuntu/jope-data')) and text not in self.allowed:
-            self.refused.append(text)
-            raise RuntimeError('unlisted data path refused')
-class Runtime:
-    Audit = Audit
+_, runtime = runner.import_parent()
 manifest = json.loads((runner.HERE / 'manifest.json').read_text())
 path = (runner.HERE / manifest['h150_sealed_identity_manifest']).resolve()
 expected = manifest['h150_sealed_identity_sha256']
@@ -243,7 +234,7 @@ pins = {
     'h150_sealed_identity_manifest': manifest['h150_sealed_identity_manifest'],
     'h150_sealed_identity_sha256': expected,
 }
-audit = runner.identity_manifest_audit(Runtime, pins, runner.HERE, {str(path)})
+audit = runner.identity_manifest_audit(runtime, pins, runner.HERE, {str(path)})
 sys.addaudithook(audit.check)
 runner.verify(pins)
 for args in ((str(path) + '.lookalike', 'r', 0), (str(path), 'w', 0)):

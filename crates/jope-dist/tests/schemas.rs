@@ -28,7 +28,15 @@ fn a_packed_manifest_matches_its_schema() {
     let repo = jope_dist::repo_root();
     let dir = tempfile::tempdir().unwrap();
     let code = dir.path().join("code");
-    std::fs::write(&code, b"\x7fELF-not-really-but-long-enough").unwrap();
+    let mut elf = vec![0u8; 64];
+    elf[0..4].copy_from_slice(b"\x7fELF");
+    elf[4] = 2; // ELFCLASS64
+    elf[5] = 1; // ELFDATA2LSB
+    elf[6] = 1; // EV_CURRENT
+    elf[18..20].copy_from_slice(&62u16.to_le_bytes()); // EM_X86_64
+    elf[20..24].copy_from_slice(&1u32.to_le_bytes()); // EV_CURRENT
+    elf[52..54].copy_from_slice(&64u16.to_le_bytes()); // ELF64 header size
+    std::fs::write(&code, elf).unwrap();
     let models = dir.path().join("models");
     fixture::write(&models, &repo.join("deploy/appliance/fixtures/bundles")).unwrap();
     let notices = dir.path().join("notices.json");
