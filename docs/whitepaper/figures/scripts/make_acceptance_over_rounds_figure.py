@@ -170,7 +170,7 @@ plt.close(fig)
 
 provenance = {
     "schema": "whitepaper.acceptance-over-rounds-view/v1",
-    "source_csv": "data/live_admissions.csv",
+    "source_csv": "figures/data/live_admissions.csv",
     "source_csv_sha256": csv_digest,
     "parent_provenance_sha256": hashlib.sha256(raw_parent).hexdigest(),
     "round_window": [rounds[0], rounds[-1]],
