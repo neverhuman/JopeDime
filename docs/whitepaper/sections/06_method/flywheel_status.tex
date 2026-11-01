@@ -55,7 +55,7 @@ relationship to the historical writer or map.
 
 In the inspected loop implementation, heuristic program edits, retrieval
 and grammar sampling supply candidate programs. Only an adapter that ranks
-proposals by predicted score is optimized; the encoder and other modules
+proposals by predicted cost is optimized; the encoder and other modules
 stay frozen. This loop has no neural program writer. Its pool-utility
 calculation uses the recorded scores and gate outcomes of
 the first four candidates as revealed history, then selects the candidate
@@ -67,8 +67,8 @@ evaluation uses stored pool order. The two calls can therefore reveal
 different examples.
 
 The inspected caller supplies modality tokens and a mask while zeroing
-separate context and prior inputs. Its objective combines scalar
-evaluation-score regression and listwise matching, with a fixed target for
+separate context and prior inputs. Its objective combines regression to
+recorded costs and listwise matching, with a fixed target for
 failed gates. The reporting code averages the negative selected scores,
 assigning a fixed penalty to failed gates.
 
@@ -82,6 +82,13 @@ model and optimizer states.
 
 \TBD{Bind the retained snapshot to the exact loop source, adapter, candidate
 pools, revealed-history inputs and utility normalization.}
+
+Lower predicted cost is preferred. Logged utility averages the selected
+programs' recorded outcomes; it is not the adapter's cost prediction.
+For new proposals, the caller uses predicted costs and an exploration
+setting to select programs for exact evaluation. The referee still decides
+validity and improvement. Logging an evaluation does not itself add the
+program to the adapter's training pool.
 
 The admission log contains
 695 consecutive rounds. Four rows are marked accepted, but only two strictly
