@@ -2,8 +2,8 @@
 
 - **Wave**: `H168` (`research/flywheel_selfplay/h168_selector_remedy/`)
 - **Owner**: `rd_argon`
-- **Status**: `attempt 1 INCOMPLETE (API), A1 running`
-- **Execution Gate**: Data-free unit tests (`15/15` in `test_h168.py`, including constructing `FusedJopeNetwork` and verifying `net.adapter_10tok.predict_costs`) and zero-update `--smoke` (`0` optimizer updates, `0` `DL-Train` pool opens, reproducing `91/91` `DL-Val` baseline `1.1377941898164525` exactly and `W10` `total_cost` bit-identity). Pre-baseline attempts `custody-run` (`AttributeError` on `predict_with_10tok_adapter`, `0` updates, `0` contexts scored) and `custody-run-a1` (`TypeError` on anchor-only `enable_*` kwargs in `net.adapter_10tok.predict_costs`, `0` updates, `0` contexts scored, `0` `DL-Train` pools opened) are preserved untouched; this amendment matches the exact `h146`/`h165` `net.adapter_10tok.predict_costs` call and verifies the `91/91` `DL-Val` baseline in `--smoke` before launching `custody-run-a2`.
+- **Status**: `attempt 1 & A1 INCOMPLETE (0 updates, pre-baseline API/signature); A2 preregistered (custody-run-a2 not yet launched)`
+- **Execution Gate**: Data-free unit tests (`15/15` in `test_h168.py`, including constructing `FusedJopeNetwork` and verifying `net.adapter_10tok.predict_costs`) and `91`-context `DL-Val` baseline-scoring `--smoke` (`0` optimizer updates, `0` `DL-Train` pool opens, reproducing `91/91` `DL-Val` baseline `1.1377941898164525` exactly and `W10` `total_cost` bit-identity). Pre-baseline setup attempts `custody-run` (`AttributeError` on `predict_with_10tok_adapter`, `0` updates, `0` contexts scored) and `custody-run-a1` (`TypeError` on anchor-only `enable_*` kwargs in `net.adapter_10tok.predict_costs`, `0` updates, `0` contexts scored, `0` `DL-Train` pools opened) are both `INCOMPLETE` (`0` updates) and preserved untouched; prospective full continuation is `custody-run-a2` and has not yet launched at this head.
 - **Hypothesis & Lineage**:
   - `H156` tested `W10` (`1.0x`, `29,211` trainable adapter params) and `W20` (`2.0x`, `46,595` trainable adapter params, research-only Net2WiderNet initialization from `r882`) under point-positive `XFIT` primary selection and returned `NULL`; in post-hoc strict-eligibility diagnostics (`evidence/redteam-t0058/selector-gate-counts.json`), `59 / 180` non-baseline inner-`B` candidates cleared $\Delta_B(t) > +0.001 + 10^{-12}$, whereas only `4 / 180` (`1` in `W10`, `3` in `W05`, `0` in `W20`) cleared both $\Delta_B(t) > +0.001 + 10^{-12}$ and 41-family paired bootstrap $\text{LCB}_{95,B}(t) > 0$.
   - Red-Team audit `t0058` (`evidence/redteam-t0058/selector-power-and-oof.json`) showed via conditional empirical `H156` `W10_XFIT` noise diagnostics on a 41-family inner selector fold $B$ (not refit-training or out-of-sample generalization power) that a planted diffuse $+0.005$ equal-family improvement has `22.0%–62.4%` conditional 41-family admission under the strict `OLD` selector (`53.4%–94.2%` margin pass rate bottlenecked by `LCB > 0`), and that in the fixed single-family sparse control ($+0.205$ on 1 family, $0$ on 40 families, mean $+0.005$), $(40/41)^{41} \approx 36.33\%$ of 41-family bootstrap draws omit the improved family, forcing $\text{LCB}_{95,B} = 0.0$ (`0%` admission for that sparse fixed control), while outer 205-family out-of-fold confirmation retains prespecified decision gates (`+0.001`, shared-family bootstrap `LCB > 0`, `>= 2/3` positive seeds, Holm $m = 4$; not a claim of calibrated/full statistical control for overlapping fitted policies).
@@ -26,14 +26,14 @@
 ## Reproduction & Verification Commands
 
 ```bash
-# 1. Data-free unit tests (10/10)
+# 1. Data-free unit tests (15/15)
 pytest -q research/flywheel_selfplay/h168_selector_remedy/test_h168.py
 
-# 2. Zero-update constructor & audit smoke
+# 2. 91-context DL-Val baseline-scoring smoke (0 updates, 0 DL-Train pool opens)
 python3 -B research/flywheel_selfplay/h168_selector_remedy/monitor.py \
   --custody /home/ubuntu/jope-data/h168/custody --smoke
 
-# 3. Full single-attempt wave (post-prereg merge only)
+# 3. Full single-attempt wave (post-A2 merge only, under custody-run-a2)
 python3 -B research/flywheel_selfplay/h168_selector_remedy/monitor.py \
-  --custody /home/ubuntu/jope-data/h168/custody-run
+  --custody /home/ubuntu/jope-data/h168/custody-run-a2
 ```
