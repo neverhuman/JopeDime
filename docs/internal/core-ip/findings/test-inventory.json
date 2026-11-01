@@ -5371,6 +5371,10 @@
     "python:research/h166/test_h166.py": {
       "role": "research",
       "reason": "H166 owner-directed C-Mixup label-similarity mixup r882 adapter continuation study; data-free target-similarity kernel, rank-aligned slate mixing, None-grad guard, and cross-fit selector controls. Research only; no product/sealed qualification."
+    },
+    "python:research/flywheel_selfplay/h168_selector_remedy/test_h168.py": {
+      "role": "research",
+      "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

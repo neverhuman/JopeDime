@@ -4279,6 +4279,38 @@
         "role": "research",
         "reason": "H166 owner-directed C-Mixup label-similarity mixup r882 adapter continuation study; family cross-fit runner, target-similarity kernel, and bounded CPU supervisor. Research only; no product/sealed qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h168_selector_remedy/monitor.py": {
+      "bytes": 5840,
+      "sha256": "0895281aa8a4e6073086eb2e4ee99e12245f290ff272ac4ae2617556ac4782e7",
+      "classification": {
+        "role": "research",
+        "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h168_selector_remedy/runner.py": {
+      "bytes": 46659,
+      "sha256": "57f5ee2a44a51fcbed347dfa241cde0ac0e7406bfb721ccd47f4727aacbc49b5",
+      "classification": {
+        "role": "research",
+        "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h168_selector_remedy/runtime.py": {
+      "bytes": 15824,
+      "sha256": "162f97bd111dfa016c500d8db187ba714a1acab0715a00bcb91addb8671ef22d",
+      "classification": {
+        "role": "research",
+        "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h168_selector_remedy/science.py": {
+      "bytes": 15063,
+      "sha256": "805d7f23188217e252e50a611421c065e69e2d25a09fa61f74a47de8f38b8ba7",
+      "classification": {
+        "role": "research",
+        "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
