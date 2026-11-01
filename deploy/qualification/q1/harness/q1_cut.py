@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+from pathlib import Path
 
 SCHEMA = "jope.q1-cut/v1"
 FIELDS = {
@@ -81,3 +82,38 @@ def canonical_bytes(definition):
 
 def cut_sha256(definition):
     return hashlib.sha256(canonical_bytes(definition)).hexdigest()
+
+
+def load_content_addressed(path, expected_sha256, *, expected_dataset_sha256=None):
+    """Load a cut definition and verify its address and optional roster binding."""
+    source = Path(path)
+    if source.is_symlink() or not source.is_file():
+        raise ValueError("cut definition must be a regular non-symlink file")
+    if source.stem != expected_sha256:
+        raise ValueError("cut definition filename differs from its content address")
+
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("duplicate cut definition key")
+            result[key] = value
+        return result
+
+    def reject_constant(_value):
+        raise ValueError("non-finite cut definition value")
+
+    definition = json.loads(
+        source.read_text(encoding="utf-8"),
+        object_pairs_hook=unique_object,
+        parse_constant=reject_constant,
+    )
+    actual_sha256 = cut_sha256(definition)
+    if actual_sha256 != expected_sha256:
+        raise ValueError("cut definition differs from its content address")
+    if (
+        expected_dataset_sha256 is not None
+        and definition["dataset_sha256"] != expected_dataset_sha256
+    ):
+        raise ValueError("cut definition dataset differs from its roster entry")
+    return definition

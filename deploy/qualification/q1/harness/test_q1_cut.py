@@ -1,4 +1,6 @@
 import copy
+from pathlib import Path
+import tempfile
 import unittest
 
 import q1_cut
@@ -46,6 +48,42 @@ class Q1CutTests(unittest.TestCase):
         value["cut_sha256"] = "c" * 64
         with self.assertRaises(ValueError):
             q1_cut.cut_sha256(value)
+
+    def test_content_addressed_cut_binds_definition_and_roster_identity(self):
+        value = fixture()
+        digest = q1_cut.cut_sha256(value)
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / f"{digest}.json"
+            path.write_bytes(q1_cut.canonical_bytes(value))
+            self.assertEqual(
+                q1_cut.load_content_addressed(
+                    path, digest, expected_dataset_sha256=value["dataset_sha256"]
+                ),
+                value,
+            )
+            with self.assertRaisesRegex(ValueError, "roster entry"):
+                q1_cut.load_content_addressed(
+                    path, digest, expected_dataset_sha256="c" * 64
+                )
+
+    def test_content_addressed_cut_rejects_tampering_and_symlinks(self):
+        value = fixture()
+        digest = q1_cut.cut_sha256(value)
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            path = root / f"{digest}.json"
+            path.write_bytes(q1_cut.canonical_bytes(value))
+            changed = copy.deepcopy(value)
+            changed["folds"][0]["validation"].reverse()
+            path.write_bytes(q1_cut.canonical_bytes(changed))
+            with self.assertRaisesRegex(ValueError, "content address"):
+                q1_cut.load_content_addressed(path, digest)
+            path.unlink()
+            target = root / "target.json"
+            target.write_bytes(q1_cut.canonical_bytes(value))
+            path.symlink_to(target)
+            with self.assertRaisesRegex(ValueError, "non-symlink"):
+                q1_cut.load_content_addressed(path, digest)
 
 
 if __name__ == "__main__":

@@ -20,6 +20,7 @@ import sys
 import time
 
 import q1
+import q1_cut
 
 ROOT = Path(__file__).resolve().parents[4]
 DOPE = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
@@ -34,6 +35,7 @@ class Paths:
     fifo: Path = ROOT / "research/flywheel_selfplay/qualification_lock_fifo.py"
     cohort: Path = ROOT / "deploy/qualification/q1/cohort.json"
     input_manifest: Path = ROOT / "deploy/qualification/q1/inputs-manifest.json"
+    cut_definitions: Path = ROOT / "deploy/qualification/q1/cuts"
     lock: Path = Path.home() / "jope_plan/qualification.lock"
     queue: Path = Path.home() / "jope_plan/qualification.queue"
 
@@ -133,13 +135,25 @@ def build_input_manifest(paths):
             dataset_id not in seen_ids, "duplicate QLT-02 candidate dataset identity"
         )
         seen_ids.add(dataset_id)
-        datasets.append(
-            {
-                "dataset_id": dataset_id,
-                "sha256": canonical_sha,
-                "s3_manifest_sha256": manifest_sha,
-            }
-        )
+        dataset = {
+            "dataset_id": dataset_id,
+            "sha256": canonical_sha,
+            "s3_manifest_sha256": manifest_sha,
+        }
+        cut_sha256 = row.get("cut_sha256")
+        if cut_sha256 is not None:
+            q1.require(q1.sha(cut_sha256), "invalid Q1 cut reference in roster")
+            definition = q1_cut.load_content_addressed(
+                paths.cut_definitions / f"{cut_sha256}.json",
+                cut_sha256,
+                expected_dataset_sha256=canonical_sha,
+            )
+            q1.require(
+                len(definition["folds"]) == 3,
+                "T0610 roster cuts require exactly three FIT folds",
+            )
+            dataset["cut_sha256"] = cut_sha256
+        datasets.append(dataset)
     q1.require(datasets, "no QLT-02 candidate metadata in the source cohort")
     q1.require(
         cohort.get("dataset_count") == len(datasets)

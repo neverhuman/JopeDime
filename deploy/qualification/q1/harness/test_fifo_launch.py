@@ -16,6 +16,7 @@ from unittest.mock import patch
 
 import fifo_launch as launch
 import q1
+import q1_cut
 from test_q1 import qualification_plan
 
 
@@ -194,6 +195,111 @@ else:
         self.assertEqual(list(self.queue.iterdir()), [sentinel])
         with self.assertRaises(FileExistsError):
             launch.dry_run(self.paths.input_manifest, output, self.paths)
+
+    def test_synthetic_dry_run_consumes_amended_roster_three_fold_cut(self):
+        cut_root = self.root / "cuts"
+        cut_root.mkdir()
+        first_dataset_sha = f"{1:016x}" + "a" * 48
+        cut = {
+            "schema": q1_cut.SCHEMA,
+            "dataset_sha256": first_dataset_sha,
+            "train_blob_sha256": "b" * 64,
+            "train_rows": 6,
+            "target": "target",
+            "feature_columns": ["x"],
+            "folds": [
+                {"repeat": 0, "train": [2, 3, 4, 5], "validation": [0, 1]},
+                {"repeat": 0, "train": [0, 1, 4, 5], "validation": [2, 3]},
+                {"repeat": 0, "train": [0, 1, 2, 3], "validation": [4, 5]},
+            ],
+        }
+        cut_sha = q1_cut.cut_sha256(cut)
+        (cut_root / f"{cut_sha}.json").write_bytes(q1_cut.canonical_bytes(cut))
+        datasets = []
+        for index in range(40):
+            dataset_sha = f"{index + 1:016x}" + "a" * 48
+            row = {
+                "dataset_id": dataset_sha[:16],
+                "sha256": dataset_sha,
+                "s3_manifest_sha256": "b" * 64,
+            }
+            if index == 0:
+                row["cut_sha256"] = cut_sha
+            datasets.append(row)
+        cohort = self.root / "amended-roster.json"
+        cohort.write_bytes(
+            q1.canonical(
+                {
+                    "schema": "jope.q1.held-out-cohort/v1",
+                    "dataset_count": len(datasets),
+                    "datasets": datasets,
+                    "source": {"catalog_sha256": "c" * 64},
+                }
+            )
+        )
+        paths = replace(
+            self.paths,
+            cohort=cohort,
+            input_manifest=self.root / "inputs-manifest.json",
+            cut_definitions=cut_root,
+        )
+        manifest = launch.build_input_manifest(paths)
+        self.assertEqual(manifest["datasets"][0]["cut_sha256"], cut_sha)
+        self.assertNotIn("cut_sha256", manifest["datasets"][1])
+        paths.input_manifest.write_bytes(q1.canonical(manifest))
+        output = self.root / "amended-dry-run.json"
+        record = launch.dry_run(paths.input_manifest, output, paths)
+        self.assertEqual(record["q1_status"], "NOT_RUN")
+        self.assertEqual(record["decision"], "UNKNOWN_NOT_RUN")
+        self.assertFalse(record["qualification_eligible"])
+        self.assertFalse(record["controls"]["dataset_payloads_opened"])
+
+    def test_input_manifest_rejects_a_non_three_fold_roster_cut(self):
+        cut_root = self.root / "cuts"
+        cut_root.mkdir()
+        first_dataset_sha = f"{1:016x}" + "a" * 48
+        definition = {
+            "schema": q1_cut.SCHEMA,
+            "dataset_sha256": first_dataset_sha,
+            "train_blob_sha256": "b" * 64,
+            "train_rows": 4,
+            "target": "target",
+            "feature_columns": ["x"],
+            "folds": [
+                {"repeat": 0, "train": [0, 1], "validation": [2, 3]},
+                {"repeat": 0, "train": [2, 3], "validation": [0, 1]},
+            ],
+        }
+        cut_sha = q1_cut.cut_sha256(definition)
+        (cut_root / f"{cut_sha}.json").write_bytes(q1_cut.canonical_bytes(definition))
+        datasets = []
+        for index in range(40):
+            dataset_sha = f"{index + 1:016x}" + "a" * 48
+            row = {
+                "dataset_id": dataset_sha[:16],
+                "sha256": dataset_sha,
+                "s3_manifest_sha256": "b" * 64,
+            }
+            if index == 0:
+                row["cut_sha256"] = cut_sha
+            datasets.append(row)
+        paths = replace(
+            self.paths,
+            cohort=self.root / "bad-amended-roster.json",
+            cut_definitions=cut_root,
+        )
+        paths.cohort.write_bytes(
+            q1.canonical(
+                {
+                    "schema": "jope.q1.held-out-cohort/v1",
+                    "dataset_count": len(datasets),
+                    "datasets": datasets,
+                    "source": {"catalog_sha256": "c" * 64},
+                }
+            )
+        )
+        with self.assertRaisesRegex(ValueError, "exactly three FIT folds"):
+            launch.build_input_manifest(paths)
 
     def test_synthetic_dry_run_refuses_a_changed_dope_manifest(self):
         source = q1.load(self.paths.input_manifest)
