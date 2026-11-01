@@ -4319,6 +4319,16 @@
       "lanes": [],
       "scope": "REL-07 S3 leakage provider controls: candidate/source binding, exact single-pass selectors for FIT-row audit, fold constraints and finalization scope, path/hash refusals; synthetic child output only, no release execution."
     },
+    "python:deploy/qualification/v1.0/test_provider_s4/test_s4.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 S4 candidate-bound provider controls: exact named execution, full source/artifact binding, drift/failure/symlink/non-file/overwrite refusal. Synthetic controls are not release qualification."
+    },
     "python:deploy/qualification/v1.0/test_provider_t2/test_provider_t2.py": {
       "discovery": {
         "kind": "python-family"
