@@ -6,11 +6,11 @@
   \includegraphics[width=\linewidth,height=1.55in,keepaspectratio]{figures/fig_fw_latest_round_clock.pdf}
   \caption{\textbf{Program-event yield and full round time in a later capture.}
   Every completed summary in rounds 3033--3052, including zero-event rounds.
-  Left: strict training-program incumbent events per round. Right: each
-  round's full logged wall time, including work and waits. The window
+  Left: strict training-program incumbent events per completed round (count). Right: each
+  round's full logged wall time (seconds), including work and waits. The window
   records 8 events over \num{1831.32}\,s (15.73 events per logged hour)
-  and no adapter admissions. These are distinct event and time measures;
-  scope: \cref{sec:method-status}.}
+  and no adapter admissions. These are distinct event and time measures.
+  Scope: \cref{sec:method-status}.}
   \label{fig:fw-latest-round-clock}
 \end{figure*}
 
@@ -22,6 +22,23 @@ retained development windows. Consolidation changes no underlying observation.
 \cref{fig:fw-telemetry} (with train--validation aggregates in
 \cref{fig:fw-trainval}) resolves the 25 retained detailed summaries.
 Gaps between windows are not filled or treated as observations.
+
+\begin{figure*}[!t]
+  \setlength{\abovecaptionskip}{4pt}
+  \centering
+  \includegraphics[width=\linewidth,height=1.55in,keepaspectratio]{figures/fig_fw_admission_block_rates.pdf}
+  \caption{\textbf{Adapter admission and rejection frequencies by observed-round block.}
+  All \num{2391} complete journal decisions in rounds 775--3165, captured at 20:17 UTC
+  on 1 November 2026. Blocks contain 100 consecutive observed rounds; the final
+  3075--3165 block contains 91. Left: accepted strict gains (blue) and exact ties
+  (orange), stacked percentages. Right: rejected decisions (percent; axis starts
+  at 96\%). Each denominator is that block's observed rounds; hatching and a
+  diamond mark the partial block. Totals: 3 strict gains, 4 exact ties and
+  \num{2384} rejections. These are adaptive adapter decisions, distinct from
+  program-incumbent events and independent first-proposal performance.
+  Scope: \cref{sec:method-status}.}
+  \label{fig:fw-candidate-retained-trace}
+\end{figure*}
 
 Lower predicted cost is preferred. Logged utility averages the selected
 programs' recorded outcomes; it is not the adapter's cost prediction.

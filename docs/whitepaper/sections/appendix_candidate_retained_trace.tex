@@ -1,26 +1,15 @@
-\subsection{A later candidate-versus-retained-best record}\label{app:candidate-retained-trace}
+\subsection{Admission frequency through a later cutoff}\label{app:candidate-retained-trace}
 
-\begin{figure*}[!t]
-  \centering
-  \includegraphics[width=\linewidth,height=1.85in,keepaspectratio]{figures/fig_fw_candidate_retained_trace.pdf}
-  \caption{\textbf{Candidate adapter scores and the retained best across a long rejection interval.}
-  All 341 complete admission evaluations in rounds 2795--3135, captured at 19:24 UTC
-  on 1 November 2026. Grey: candidate validation pool utility; blue: post-decision
-  retained-best utility, unchanged at 1.1383668. Diamonds mark accepted exact ties
-  at rounds 2795 and 3100. Rounds 2796--3099 are 304 consecutive rejections;
-  another 35 follow the tie at 3100. No strict retained-utility gain occurs in this
-  window. These are adaptive adapter decisions, distinct from program-incumbent
-  events and independent first-proposal performance. Scope: \cref{sec:method-status}.}
-  \label{fig:fw-candidate-retained-trace}
-\end{figure*}
-
-\Cref{fig:fw-candidate-retained-trace} begins at the retained-best identity
-reported by the earlier ledger (\cref{tab:admission-ledger}) and ends at the
-latest complete admission matched to a retained summary. The journal covers
-the whole interval; the 20 available summaries (3116--3135) match its scores
-and decisions. The accepted tie changes the recorded best-round identity,
-not its utility. Stable log-prefix hashes bind this separate capture; it does
-not replace the earlier ledger or establish a training gain. The field-binding
-limits in \cref{sec:method-status} still apply.
+\Cref{fig:fw-candidate-retained-trace} groups the complete admission journal
+from the earlier ledger's first round (\cref{tab:admission-ledger}) through
+the latest complete admission matched to a retained summary. Its 24 blocks
+contain 23 full blocks and one partial block; 19 have no admission, including
+17 consecutive full blocks in rounds 975--2674. The 21 available summaries
+(3145--3165) match the journal's scores and decisions; older rows are journal-only.
+The last accepted decision, at round 3100, is an exact tie, followed by
+65 rejections. Frequencies count decisions, not independent tasks, distinct
+programs or a stationary admission probability. Stable log-prefix hashes bind
+this separate capture. The earlier ledger and trace data remain unchanged;
+the field-binding limits in \cref{sec:method-status} still apply.
 
 \FloatBarrier

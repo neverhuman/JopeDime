@@ -38,6 +38,12 @@ game only when its referee is reliable and affordable (\cref{sub:game-boards}).
   \end{tabularx}
 \end{table}
 
+Family allocation is separate from the within-dataset referee. In the native
+audit path, approved datasets are grouped by source identity, declared family
+or identical training bytes before seeded family ordering assigns the
+meta-training, meta-validation and meta-test partitions. This code path does
+not establish that a particular corpus or checkpoint satisfies the split.
+
 \section{Incident Log and Audit Safeguards}\label{app:incidents}
 
 The reliability requirements in \cref{sub:method-referee} distinguish a
@@ -62,8 +68,9 @@ Artifacts that violate held-out isolation belong in the audit record:
 % Consolidated Appendix D full-width figures defined in Appendix C so they land
 % on pages 18--19 alongside Appendices D.1--D.7 without spilling into References.
 \begin{figure*}[!t]
+  \setlength{\abovecaptionskip}{4pt}
   \centering
-  \includegraphics[width=\linewidth,height=2.25in,keepaspectratio]{figures/fig_fw_recent_development.pdf}
+  \includegraphics[width=\linewidth,height=2.10in,keepaspectratio]{figures/fig_fw_recent_development.pdf}
   \caption{\textbf{Training-program promotions and adapter validation across four 20-round windows.}
   Columns show four separate 20-round summary windows: rounds 2005--2024 (15 events),
   2082--2101 (10 events), 2343--2362 (22 events over 28.8\,min of completed-round wall time),
@@ -82,13 +89,14 @@ Artifacts that violate held-out isolation belong in the audit record:
 \end{figure*}
 
 \begin{figure*}[!t]
+  \setlength{\abovecaptionskip}{4pt}
   \centering
-  \includegraphics[width=\linewidth,height=1.75in,keepaspectratio]{figures/fig_fw_latest_event_rates.pdf}
+  \includegraphics[width=\linewidth,height=1.65in,keepaspectratio]{figures/fig_fw_latest_event_rates.pdf}
   \caption{\textbf{Event distributions, program-event rates, and round durations across retained 20-round windows.}
   Each row is a separate capture of 20 consecutive completed rounds with logged wall times.
   Left: completed rounds grouped by 0, 1, 2, or 3+ strict training-program incumbent events.
-  Center: strict training-program incumbent events divided by total logged round time, with total
-  window event counts annotated. Right: mean completed-round duration over the 20 rounds, including
+  Center: strict training-program incumbent events divided by total logged round time (events per hour), with total
+  window event counts annotated. Right: mean completed-round duration (seconds) over the 20 rounds, including
   all within-round work and waits. Windows are displayed separately; program events are distinct
   from adapter admissions. Scope: \cref{sec:method-status}.}
   \label{fig:fw-event-distribution}
@@ -192,8 +200,9 @@ The scope statement in \cref{sec:method-status} applies throughout this appendix
 
 
 \begin{figure*}[!t]
+  \setlength{\abovecaptionskip}{4pt}
   \centering
-  \includegraphics[width=\linewidth,height=1.55in,keepaspectratio]{figures/fig_fw_acceptance_over_rounds.pdf}
+  \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_acceptance_over_rounds.pdf}
   \caption{\textbf{Adapter validation, cumulative acceptance rate, and candidate utility shortfalls across rounds 775--2663.}
   All three panels use the same \num{1889} consecutive admission evaluations (\cref{tab:admission-ledger}).
   Left: candidate validation utility (grey) and post-decision recorded best (blue), with stars at

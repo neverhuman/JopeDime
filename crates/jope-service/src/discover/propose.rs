@@ -10,7 +10,7 @@ use anyhow::{bail, ensure, Context, Result};
 use feat_math::dsl::{DslExpr, ParamValue, Stage};
 use feat_math::evolve::api::{
     capability::{self, CapabilityKind, Language, LanguageFilter, Registry},
-    mutate_canonical_pipeline_with_arm, parse_canonical_pipeline, CanonicalMutationArm,
+    parse_canonical_pipeline,
 };
 use feat_math::GenomeIr;
 use rand_chacha::{
@@ -187,6 +187,15 @@ fn index(rng: &mut ChaCha12Rng, length: usize) -> usize {
             return (value % bound) as usize;
         }
     }
+}
+
+fn delete_stage(transforms: &mut Vec<Stage>, rng: &mut ChaCha12Rng) -> Option<usize> {
+    if transforms.len() < 2 {
+        return None;
+    }
+    let removed = index(rng, transforms.len());
+    transforms.remove(removed);
+    Some(removed)
 }
 
 fn uniform(rng: &mut ChaCha12Rng, low: f64, high: f64) -> f64 {
@@ -479,16 +488,9 @@ impl Proposer {
                         transforms.insert(position, inserted);
                         (transforms.len() <= 6).then(|| assemble(parsed.stages, head))
                     }
-                    ProposalFamily::Delete if transforms.len() >= 2 => Some(
-                        mutate_canonical_pipeline_with_arm(
-                            &parent.dsl,
-                            rng.next_u64(),
-                            6,
-                            false,
-                            CanonicalMutationArm::Delete,
-                        )
-                        .map_err(anyhow::Error::msg)?,
-                    ),
+                    ProposalFamily::Delete => {
+                        delete_stage(transforms, &mut rng).map(|_| assemble(parsed.stages, head))
+                    }
                     ProposalFamily::Crossover if parents.len() >= 2 => {
                         let other = &parents[(step + 1) % parents.len()];
                         let mut other_parsed = self.pipeline(other)?;
@@ -565,6 +567,28 @@ mod tests {
             raw_lm48: lm,
             parents,
         }
+    }
+
+    #[test]
+    fn delete_uses_one_unbiased_draw_from_the_shared_proposer_stream() {
+        let source =
+            parse_canonical_pipeline("(pipe X (robust_scale) (standardize) (sigmoid) (ridge))")
+                .unwrap();
+        let mut expected_rng = round_rng(101_635_475, 777);
+        let expected_index = index(&mut expected_rng, source.stages.len());
+        let expected_removed = source.stages[expected_index].op.clone();
+        let next_shared_value = expected_rng.next_u64();
+
+        let mut actual_rng = round_rng(101_635_475, 777);
+        let mut actual_stages = source.stages;
+        let actual_index = delete_stage(&mut actual_stages, &mut actual_rng).unwrap();
+
+        assert_eq!(actual_index, expected_index);
+        assert_eq!(actual_rng.next_u64(), next_shared_value);
+        assert_eq!(actual_stages.len(), 3);
+        assert!(!actual_stages
+            .iter()
+            .any(|stage| stage.op == expected_removed));
     }
 
     struct Bank {

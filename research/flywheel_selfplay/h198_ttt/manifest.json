@@ -93,7 +93,19 @@
     "provenance.json": "dcdad7e43e7677da6ef5a4b68b2da234f5bbf326db72b273e08ed1be60958d9d",
     "runner.py": "0b5709a326770edca6adb14a6fa8a44aa7e4ee95d7c06792319727bfcaa6e1a6",
     "s3_arrays.py": "80e4807a9ac502aa6dff35adc70eaf88364d48084c07d15abbe02b765d95d204",
-    "test_h198.py": "ec0d767a8939858aaa95fc5ee0ee9982c39955937c5965069a13e2b09b64e3a2",
+    "test_h198.py": "bc9033df32c5b9b3df3860f83ca7e824edd595c6838e9ff70345edaf2847cdc0",
     "treatment.py": "f81eca2d57760fe620758ef14e6f6331dd150d350568090e3ea5d88ea9ff08bf"
-  }
+  },
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "source_commit": "208acd63772f4c07926027ee9d765cde80ef1198",
+  "custody_manifest": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H198/rd_argon-t1205/manifest.json",
+    "version_id": "D5UT5E3eDXHgrYzcUgL2RFn6tFlPdY.t",
+    "sha256": "aacd8d4f2d0a0583268631b1f1e5e7e568d921b4ad183f0124d3bab899efbcf9",
+    "bytes": 2904,
+    "verified_utc": "2026-11-01T20:15:18.606233+00:00",
+    "readback": "exact-version full payload SHA256; synchronous client"
+  },
+  "verdict_label": "NO_ADVANCE (INERT TREATMENT)"
 }

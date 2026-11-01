@@ -18,6 +18,7 @@ from treatment import (
     K_GRID,
     L2_BETA,
     LR_GRID,
+    adapter_forward,
     revealed_live_loss,
     shuf_permutation,
     ttt_context_trajectory,
@@ -389,3 +390,94 @@ def test_validate_launch_contract():
         validate_launch(
             dict(good, prereg_pr=0), "abc1234", "m_sha", "p_sha", "f_sha", smoke=False
         )
+
+
+def test_ttt_scores_use_adapted_weights_not_reset_copy():
+    net, names, params, pdict, initial, initial_hash, rt, build_inputs, pool = (
+        _make_toy_setup()
+    )
+    c_in = build_inputs("cid_adapted_vs_reset", pool["fitness"], pool["gate"])
+    with torch.no_grad():
+        base_costs = (
+            adapter_forward(
+                net,
+                c_in["prog_412"],
+                c_in["sos_prior"],
+                c_in["tokens"],
+                c_in["masks"],
+                c_in["scale"],
+                c_in["revealed_indices"],
+                c_in["revealed_raw_f"],
+                c_in["revealed_gate"],
+                c_in["anchor_total"],
+                c_in["anchor_prior"],
+            )[0]
+            .detach()
+            .cpu()
+            .numpy()
+            .copy()
+        )
+
+    snaps, steps = ttt_context_trajectory(
+        net,
+        names,
+        params,
+        pdict,
+        initial,
+        initial_hash,
+        rt,
+        c_in,
+        lr=1e-5,
+        k_steps=(1, 3, 5),
+        arm="TTT_K",
+    )
+    assert steps == 5
+    for k in (1, 3, 5):
+        delta = np.abs(snaps[k]["costs"] - base_costs)
+        assert float(delta.max()) > 0.0
+        assert int((delta > 0.0).sum()) == len(base_costs)
+
+    # After trajectory returns, weights are reset to r882 and post-reset forward equals base_costs bit-for-bit
+    assert rt.tensor_hash({n: pdict[n] for n in names}) == initial_hash
+    with torch.no_grad():
+        post_reset_costs = (
+            adapter_forward(
+                net,
+                c_in["prog_412"],
+                c_in["sos_prior"],
+                c_in["tokens"],
+                c_in["masks"],
+                c_in["scale"],
+                c_in["revealed_indices"],
+                c_in["revealed_raw_f"],
+                c_in["revealed_gate"],
+                c_in["anchor_total"],
+                c_in["anchor_prior"],
+            )[0]
+            .detach()
+            .cpu()
+            .numpy()
+            .copy()
+        )
+    assert np.array_equal(post_reset_costs, base_costs)
+
+    metrics = json.loads((HERE / "metrics.json").read_text())
+    assert metrics["verdict_label"] == "NO_ADVANCE (INERT TREATMENT)"
+    ver = metrics["adapted_score_verification"]
+    ctx0 = ver["single_context_cell_examples"]["cell_198101_outer0_A0_ctx0"]
+    assert ctx0["stage2_locked_k1_lr1e05"]["TTT_K"]["max_abs_delta_score"] == pytest.approx(
+        7.62939453125e-05
+    )
+    assert ctx0["stage2_locked_k1_lr1e05"]["TTT_K"]["changed_candidates"] == 1112
+    assert (
+        ver["stage2_counts_locked_k1_lr1e05"]["pooled_TRAIN_A"]["TTT_K"][
+            "contexts_any_score_changed_per_seed"
+        ]
+        == [1219, 1219, 1219]
+    )
+    assert (
+        ver["stage2_counts_locked_k1_lr1e05"]["pooled_TRAIN_A"]["TTT_K"][
+            "contexts_argmin_flipped_per_seed"
+        ]
+        == [0, 0, 0]
+    )

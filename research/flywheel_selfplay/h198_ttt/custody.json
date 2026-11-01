@@ -1,0 +1,80 @@
+{
+  "manifest": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H198/rd_argon-t1205/manifest.json",
+    "version_id": "D5UT5E3eDXHgrYzcUgL2RFn6tFlPdY.t",
+    "sha256": "aacd8d4f2d0a0583268631b1f1e5e7e568d921b4ad183f0124d3bab899efbcf9",
+    "bytes": 2904,
+    "verified_utc": "2026-11-01T20:15:18.606233+00:00",
+    "readback": "exact-version full payload SHA256; synchronous client"
+  },
+  "objects": {
+    "native/VAL": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H198/rd_argon-t1205/native/VAL.npz",
+      "version_id": "D8EkTfOKVkIzu3lQAhsBVvnV043_mOiM",
+      "sha256": "a5109aff14e9aed679752f9884059adf9ce580f1a2d266c2d0a88fe42194ee38",
+      "bytes": 409829,
+      "member_count": 91,
+      "verified_utc": "2026-11-01T19:58:28.854902+00:00"
+    },
+    "native/TRAIN": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H198/rd_argon-t1205/native/TRAIN.npz",
+      "version_id": "6fPx4Qj27XAW4oXyQH92vYd26p8kCNT5",
+      "sha256": "e8b61ce0cee774348afa026c77035d1ebfe256ab8190c5fdb13de3bebab0151d",
+      "bytes": 5453481,
+      "member_count": 1219,
+      "verified_utc": "2026-11-01T19:58:29.603743+00:00"
+    },
+    "stage1/B_grid_costs": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H198/rd_argon-t1205/stage1/B_grid_costs.npz",
+      "version_id": "5qXXKm6WveeXq0Pm4FH65sKB1UX0bUix",
+      "sha256": "939a44e38596132069d57d67ad746d6d1cd14b5a14770dc3b1407ba99328990a",
+      "bytes": 49344897,
+      "member_count": 10971,
+      "verified_utc": "2026-11-01T19:58:36.110249+00:00"
+    },
+    "stage2/A_and_VAL_costs": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H198/rd_argon-t1205/stage2/A_and_VAL_costs.npz",
+      "version_id": "AAHjpQy8Hceju0qtUXlhHrexl.OJ9VMQ",
+      "sha256": "f6918aeafe222dc644d0615dc2c67a106cbd4cd862d20d332f85bc0f6489fcac",
+      "bytes": 36753246,
+      "member_count": 8133,
+      "verified_utc": "2026-11-01T19:58:42.976093+00:00"
+    },
+    "stage2/panels": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H198/rd_argon-t1205/stage2/panels.npz",
+      "version_id": "W2XysopObPYsJJrVuKrsMvdgJ2fvUbNL",
+      "sha256": "fda586669f3ddc5ce450a9f0cbee7dfef49bf6828e32b94aac44f5329808ae47",
+      "bytes": 174497,
+      "member_count": 20,
+      "verified_utc": "2026-11-01T19:58:43.081513+00:00"
+    }
+  },
+  "verified_members": 20434,
+  "replay_verification": {
+    "status": "PASS",
+    "native_val_91_bit_exact": true,
+    "stage1_b_grid_cost_vectors_replayed": 10971,
+    "stage1_cells_verified": 15,
+    "stage2_cost_vectors_replayed": 8133,
+    "contrasts_replayed_bit_exact": true,
+    "model_forwards_during_replay": 0
+  },
+  "resource_telemetry": {
+    "elapsed_seconds": 2052.4671959970146,
+    "peak_rss_bytes": 3443978240,
+    "peak_threads": 3,
+    "max_disk_used_pct": 93.492,
+    "min_mem_available_bytes": 74008473600,
+    "local_output_bytes": 5931262
+  },
+  "adapted_score_verification": {
+    "status": "PASS",
+    "verdict_label": "NO_ADVANCE (INERT TREATMENT)",
+    "train_contexts_score_changed": "1219/1219",
+    "val_contexts_score_changed": "91/91",
+    "stage2_locked_argmin_flips_train": "0/1219",
+    "stage2_locked_argmin_flips_val": "0/91",
+    "cell_198101_outer0_A0_ctx0_ttt_k_max_abs_delta": 7.62939453125e-05,
+    "cell_198101_outer0_A0_ctx0_ttt_k_changed_candidates": "1112/1152"
+  }
+}
