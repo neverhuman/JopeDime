@@ -21,7 +21,7 @@ LAMBDA_BY_LABEL = {
     "1e1": 10.0,
     "1": 1.0,
     "1e-1": 0.1,
-    "inf": math.inf,
+    "inf": None,
 }
 FINITE_LAMBDA_LABELS = ("1e4", "1e3", "1e2", "1e1", "1", "1e-1")
 
@@ -208,7 +208,7 @@ def select_lambda(baseline_values, candidate_values_by_label, fit_rows, seed, ou
             best_strict_label, best_strict_gain = label, stats["delta"]
         if eligible_uncon and stats["delta"] > best_uncon_gain + 1e-12:
             best_uncon_label, best_uncon_gain = label, stats["delta"]
-        if stats["delta"] > best_finite_gain + 1e-12:
+        if best_finite_label is None or stats["delta"] > best_finite_gain + 1e-12:
             best_finite_label, best_finite_gain = label, stats["delta"]
 
     return dict(

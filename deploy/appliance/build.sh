@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # deploy/appliance/build.sh — build, pack and check one `jopedime` package.
 #
-#   build.sh --profile NAME --out DIR [--cargo-profile dist|dist-ci] [--models DIR] [--source-sha SHA]
+#   build.sh --profile NAME --out DIR [--cargo-profile dist|dist-ci] [--models DIR] [--source-sha SHA] [--rehearsal]
 #
 # A development-scope profile (fixture) is packed and signed with the development key into
 # DIR/jopedime. Every other scope stops at DIR/stage: the release host signs
@@ -13,7 +13,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
-profile='' out='' cargo_profile=dist models='' source_sha=${JOPE_SOURCE_SHA:-}
+profile='' out='' cargo_profile=dist models='' rehearsal=false source_sha=${JOPE_SOURCE_SHA:-}
 while [ $# -gt 0 ]; do
   case $1 in
     --profile) profile=$2; shift 2 ;;
@@ -21,7 +21,8 @@ while [ $# -gt 0 ]; do
     --cargo-profile) cargo_profile=$2; shift 2 ;;
     --models) models=$2; shift 2 ;;
     --source-sha) source_sha=$2; shift 2 ;;
-    *) echo "usage: $0 --profile NAME --out DIR [--cargo-profile P] [--models DIR] [--source-sha SHA]" >&2; exit 2 ;;
+    --rehearsal) rehearsal=true; shift ;;
+    *) echo "usage: $0 --profile NAME --out DIR [--cargo-profile P] [--models DIR] [--source-sha SHA] [--rehearsal]" >&2; exit 2 ;;
   esac
 done
 [ -n "$profile" ] && [ -n "$out" ] || { echo "$0: --profile and --out are required" >&2; exit 2; }
@@ -32,6 +33,9 @@ case $out in /tmp | /tmp/*) echo "$0: never build under /tmp (AGENTS.md)" >&2; e
 [ -n "$source_sha" ] || source_sha=$(git rev-parse HEAD)
 [[ $source_sha =~ ^[0-9a-f]{40}$ ]] || { echo "$0: source sha must be 40 lower-case hex: $source_sha" >&2; exit 2; }
 scope=$(sed -n 's/^scope = "\(.*\)"$/\1/p' "$profile_file")
+if [ "$rehearsal" = true ] && { [ "$profile" != full ] || [ "$scope" != internal-restricted ]; }; then
+  echo "$0: --rehearsal requires the internal-restricted full profile" >&2; exit 2
+fi
 features=embedded
 [ "$scope" = development ] && features=embedded,dev-keys
 # The full v1 product needs the ordinary defaults despite --no-default-features below.
@@ -102,7 +106,11 @@ fi
 
 common=(--profile "$profile_file" --code "$out/code" --models "$models" --notices "$out/notices.json"
   --source-sha "$source_sha" --receipt "$out/pack-receipt.json")
-if [ "$scope" = development ]; then
+if [ "$rehearsal" = true ]; then
+  echo "== full-asset rehearsal only (not signable or release-qualified)"
+  dist pack "${common[@]}" --rehearsal "$out/rehearsal"
+  package=''
+elif [ "$scope" = development ]; then
   echo "== pack and sign (development key)"
   dist pack "${common[@]}" --out "$out/jopedime"
   keys=(--development-key --no-release-key)
@@ -119,9 +127,9 @@ else
 fi
 
 jq -n --arg profile "$profile" --arg scope "$scope" --arg cargo_profile "$cargo_profile" \
-  --arg features "$features" --arg source_sha "$source_sha" --arg package "$package" \
+  --arg features "$features" --arg source_sha "$source_sha" --arg package "$package" --argjson rehearsal "$rehearsal" \
   --arg code_sha256 "$(sha256sum < "$out/code" | cut -d' ' -f1)" \
   '{schema: "jope.appliance-build/v1", profile: $profile, scope: $scope, cargo_profile: $cargo_profile,
     features: $features, source_sha40: $source_sha, base_executable_sha256: $code_sha256,
-    package: (if $package == "" then null else $package end)}' > "$out/build.json"
+    rehearsal: $rehearsal, package: (if $package == "" then null else $package end)}' > "$out/build.json"
 cat "$out/build.json"
