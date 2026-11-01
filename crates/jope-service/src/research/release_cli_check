@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check Cargo's optimized default-feature executable, not a test parser."""
+"""Check Cargo's optimized production executable, not a test parser."""
 
 import argparse
 import hashlib
@@ -28,12 +28,21 @@ def release_artifact(messages):
     if (
         profile.get("test") is not False
         or profile.get("debug_assertions") is not False
-        or profile.get("opt_level") != "3"
+        or profile.get("opt_level") not in ("3", "s")
     ):
         raise ValueError("expected an optimized, non-test release executable")
     features = artifact.get("features", [])
-    if "default" not in features or "research" in features:
-        raise ValueError("expected default features without research")
+    if not isinstance(features, list) or not all(isinstance(f, str) for f in features):
+        raise ValueError("invalid executable feature selection")
+    selected = set(features)
+    if (
+        not {"client", "engine", "mcp"}.issubset(selected)
+        or not selected.intersection({"default", "embedded"})
+        or selected.intersection({"research", "dev-keys"})
+    ):
+        raise ValueError(
+            "expected default or full production features without research/dev-keys"
+        )
     return artifact
 
 
