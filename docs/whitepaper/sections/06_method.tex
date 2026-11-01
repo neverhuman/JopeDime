@@ -82,6 +82,10 @@ embeddings. Pooling discards token order, limiting the map's ability to
 distinguish compositions built from the same tokens. It combines $z_w$ with $z_p$ three ways: as is, gated by the problem,
 and as a distance from a projection of it. It averages four heads into a
 score $\mapv(z_p,z_w)$ with parameters $\psi$.
+Higher logits rank higher within a problem. The score is not a calibrated
+error estimate. Comparing its magnitude across problems or reading it as a
+probability of a verified win requires separate evidence. The referee
+still establishes validity and measures performance.
 
 The map learns from scored lists. For each problem $p$ with at least eight
 scored programs, $G_p$ holds them and $\rho_w\in[0,1]$ is a program's
@@ -98,8 +102,9 @@ concentrates the target on that program. This is a listwise ranking
 objective over programs scored on the same problem; the analogy to
 contrastive learning \citep{oord2018cpc,radford2021clip} does not establish
 CLIP-style alignment across problems and programs.
-A Bradley--Terry term on the same lists sharpens the top \citep{bradley1952rank}. Stillborn moves
-have no score, so this ranking objective covers only programs that run.
+A Bradley--Terry term adds pairwise comparisons on the same lists
+\citep{bradley1952rank}. Stillborn moves have no score, so this ranking
+objective covers only programs that run.
 
 A program-only head trained beside it provides a control for testing
 whether the map uses problem context (\cref{sec:results}).
