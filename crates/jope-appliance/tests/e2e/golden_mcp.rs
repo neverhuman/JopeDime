@@ -276,7 +276,9 @@ try:
     # Test-only host qualification: real engine/Python/Rust outputs, then the
     # existing trusted registrar. Production export never launches a compiler.
     client.close(); client = None
-    command(['serve', '--stop']); assert daemon.wait(timeout=10) == 0
+    stopped = subprocess.run([binary, 'serve', '--stop'], env=env, capture_output=True, timeout=10)
+    assert stopped.returncode == 0, stopped.stderr
+    assert daemon.wait(timeout=10) == 0
     qenv = os.environ.copy()
     qenv.update(JOPE_INT01_QUALIFY_HOME=str(home), JOPE_INT01_QUALIFY_RUN=rid,
                 JOPE_INT01_QUALIFY_CSV=a.csv, JOPE_INT01_QUALIFY_SHA256=a.csv_sha256,
@@ -308,6 +310,34 @@ try:
     check('usage_readme_exists', 'README.md' in export_files or all(
         'src/' + language['language'] + '/README.md' in export_files
         for language in manifest['languages'] if language['status'] == 'exported'))
+    measured = json.loads((out / 'measured64' / 'observations.json').read_text())
+    check('downloaded_sources_match_measured_bytes', all(
+        export_files[language['path']]['sha256'] == measured['source_sha256'][language['language']]
+        for language in manifest['languages'] if language['status'] == 'exported'))
+    for language in ['python', 'rust']:
+        directory = home / 'export' / 'src' / language
+        readme = (directory / 'README.md').read_text()
+        if language == 'python':
+            assert 'python3 predictor.py --self-check' in readme
+            command_line = ['python3', '-B', 'predictor.py', '--self-check']
+        else:
+            assert 'rustc --edition=2021 --test predictor.rs' in readme
+            command_line = ['rustc', '--edition=2021', '--test', 'predictor.rs', '-o', str(out / 'downloaded-rust-self-check')]
+        checked = subprocess.run(command_line, cwd=directory, env=env, capture_output=True, timeout=60)
+        (out / (language + '-readme.stdout')).write_bytes(checked.stdout)
+        (out / (language + '-readme.stderr')).write_bytes(checked.stderr)
+        assert checked.returncode == 0, checked.stderr
+        if language == 'rust':
+            checked = subprocess.run([str(out / 'downloaded-rust-self-check'), '--test-threads=1'], env=env, capture_output=True, timeout=20)
+            (out / 'rust-readme-execute.stdout').write_bytes(checked.stdout)
+            (out / 'rust-readme-execute.stderr').write_bytes(checked.stderr)
+            assert checked.returncode == 0 and b'1 passed' in checked.stdout
+        check(language + '_downloaded_readme_self_check', True)
+    repeated_export = client.tool('model_export', {'run_id': rid, 'kind': 'bundle',
+        'languages': ['python', 'rust'], 'out_dir': str(home / 'export'),
+        'idempotency_key': 'int01-obj02-ag1-export'})
+    check('export_retry', repeated_export == manifest)
+
     prediction_request = {'model': {'artifact_id': manifest['artifact_id']},
         'input': {'dataset_id': dataset}, 'idempotency_key': 'int01-obj02-ag1-predict'}
     predictions = client.tool('model_predict', prediction_request)
