@@ -70,7 +70,10 @@ utility tables do not establish either.
 \Cref{fig:fw-telemetry} shows the loop's operating measurements from the earlier
 retained window.
 
-\begin{figure}[t]
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\dbltopfraction}{0.95}
+\begin{figure}[!t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_recent_development.pdf}
   \caption{\textbf{Program promotions and adapter utility in an additional window.}
@@ -82,7 +85,7 @@ retained window.
   \label{fig:fw-recent-development}
 \end{figure}
 
-\begin{figure*}[t]
+\begin{figure*}[!t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_followup_development.pdf}
   \caption{\textbf{Program events and adapter validation in a follow-up window.}
@@ -93,6 +96,40 @@ retained window.
   remain required.}
   \label{fig:fw-followup-development}
 \end{figure*}
+
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_later_development.pdf}
+  \caption{\textbf{Continued program events and adapter validation.}
+  Left: journaled strict training-program incumbent improvements per round.
+  Right: candidate adapter validation pool utility and the recorded best.
+  Both panels cover all 20 consecutive rounds, 2343--2362, in this retained summary
+  window. The summaries mark no adapter admission. Independent
+  first-proposal comparisons remain required.}
+  \label{fig:fw-later-development}
+\end{figure*}
+
+\begin{figure}[!t]
+  \centering
+  \includegraphics[width=\linewidth,height=2.35in,keepaspectratio]{figures/fig_fw_live_development.pdf}
+  \caption{\textbf{Program-incumbent events and validation summaries.}
+  Top: logged strict improvements to training-program incumbents per round.
+  Bottom: candidate adapter validation pool utility. Both panels cover the
+  same 20 consecutive rounds, 2644--2663. These are development measurements;
+  independent first-proposal comparisons remain required.}
+  \label{fig:fw-program-promotions}
+\end{figure}
+
+\begin{figure}[!t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_live_shortfall.pdf}
+  \caption{\textbf{Candidate gaps to the recorded best.} Cumulative share
+  of the same \num{1889} admission rounds as \cref{fig:fw-validation}, against
+  recorded best minus candidate validation utility. The best is logged
+  after admission, so zero includes strict gains and ties. Repeated
+  adaptive rounds are not independent trials.}
+  \label{fig:fw-admission-shortfall}
+\end{figure}
 
 \paragraph{Retained operating windows.}
 The five 20-round program-event slices contain 15 events in rounds
@@ -108,48 +145,24 @@ These are separate retained windows, not a matched learning curve;
 unobserved rounds are not filled. Program-event rates include the logged
 work and qualification waits and do not measure one-proposal deployment.
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_live_shortfall.pdf}
-  \caption{\textbf{Candidate gaps to the recorded best.} Cumulative share
-  of the same \num{1889} admission rounds as \cref{fig:fw-validation}, against
-  recorded best minus candidate validation utility. The best is logged
-  after admission, so zero includes strict gains and ties. Repeated
-  adaptive rounds are not independent trials.}
-  \label{fig:fw-admission-shortfall}
-\end{figure}
-
 For the adapter record in \cref{fig:fw-validation},
 \cref{fig:fw-admission-shortfall} summarizes candidate gaps to each round's
 recorded best. Each retained round contributes once; the curve does not
 count independent tasks or distinct programs.
+\newpage
 
-\FloatBarrier
-\begin{figure*}[t]
+\begin{figure*}[!t]
   \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_later_development.pdf}
-  \caption{\textbf{Continued program events and adapter validation.}
-  Left: journaled strict training-program incumbent improvements per round.
-  Right: candidate adapter validation pool utility and the recorded best.
-  Both panels cover all 20 consecutive rounds, 2343--2362, in this retained summary
-  window. The summaries mark no adapter admission. Independent
-  first-proposal comparisons remain required.}
-  \label{fig:fw-later-development}
+  \includegraphics[width=\linewidth]{figures/fig_fw_target_history.pdf}
+  \caption{\textbf{Post-hoc GP target trajectory.} All 71 generations per
+  arm for one historical dataset/cut, at \num{1000} evaluations per search.
+  RMSE is in historical evaluator units; lower is better. The arms shared
+  incumbent and teacher seeds, and elapsed time varied. This selected
+  development example does not establish a learned-policy advantage.}
+  \label{fig:fw-target-history}
 \end{figure*}
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_live_development.pdf}
-  \caption{\textbf{Program-incumbent events and validation summaries.}
-  Top: logged strict improvements to training-program incumbents per round.
-  Bottom: candidate adapter validation pool utility. Both panels cover the
-  same 20 consecutive rounds, 2644--2663. These are development measurements;
-  independent first-proposal comparisons remain required.}
-  \label{fig:fw-program-promotions}
-\end{figure}
-
-\FloatBarrier
-\begin{figure}[t]
+\begin{figure}[!t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_target_progress.pdf}
   \caption{\textbf{Historical GP target progress.} First-to-last reported
@@ -166,17 +179,6 @@ Historical GP target scores provide a separate view in
 23 pairs. Shared incumbent and teacher seeds make the arms dependent.
 These retained development outcomes do not establish that learning improved
 the proposal policy.
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_target_history.pdf}
-  \caption{\textbf{Post-hoc GP target trajectory.} All 71 generations per
-  arm for one historical dataset/cut, at \num{1000} evaluations per search.
-  RMSE is in historical evaluator units; lower is better. The arms shared
-  incumbent and teacher seeds, and elapsed time varied. This selected
-  development example does not establish a learned-policy advantage.}
-  \label{fig:fw-target-history}
-\end{figure*}
 
 \Cref{fig:fw-target-history} follows one historical dataset/cut, chosen
 after inspection for the largest policy-seeded relative improvement in
