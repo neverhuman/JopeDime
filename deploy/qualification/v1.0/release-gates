@@ -26,7 +26,10 @@ INPUT_FIELDS = {
         "parity_report_dir",
     },
     "M3": {"full_inputs", "full_inputs_sha256"},
-    "M5": {"golden_dir", "bundle_dir"},
+    "M5": (
+        frozenset({"golden_dir", "bundle_dir"}),
+        frozenset({"default_off_receipt", "default_off_receipt_sha256"}),
+    ),
 }
 
 
@@ -97,7 +100,11 @@ def provider_inputs(path):
     ):
         raise ValueError("unsupported provider-input bindings")
     for gate, fields in value["gates"].items():
-        if not isinstance(fields, dict) or set(fields) != INPUT_FIELDS[gate]:
+        expected = INPUT_FIELDS[gate]
+        allowed = expected if isinstance(expected, tuple) else (expected,)
+        if not isinstance(fields, dict) or not any(
+            set(fields) == field_set for field_set in allowed
+        ):
             raise ValueError("provider input fields do not match " + gate)
         for name, item in fields.items():
             if not isinstance(item, str) or not item or "\0" in item:
@@ -176,12 +183,20 @@ def provider_commands(repo, bindings=None):
                 bindings[gate]["full_inputs_sha256"],
             ]
         if gate == "M5" and gate in bindings:
-            argv += [
-                "--golden-dir",
-                bindings[gate]["golden_dir"],
-                "--bundle-dir",
-                bindings[gate]["bundle_dir"],
-            ]
+            if "default_off_receipt" in bindings[gate]:
+                argv += [
+                    "--default-off-receipt",
+                    bindings[gate]["default_off_receipt"],
+                    "--default-off-receipt-sha256",
+                    bindings[gate]["default_off_receipt_sha256"],
+                ]
+            else:
+                argv += [
+                    "--golden-dir",
+                    bindings[gate]["golden_dir"],
+                    "--bundle-dir",
+                    bindings[gate]["bundle_dir"],
+                ]
         if gate == "A5" and gate in bindings:
             # child_environment deliberately strips undeclared parent variables.
             # Explicit argv bindings survive that boundary without forwarding
@@ -459,7 +474,7 @@ def main():
     parser.add_argument(
         "--provider-inputs",
         type=Path,
-        help="explicit A5/D1/M2/M5 evidence and fixture bindings for --providers",
+        help="explicit A5/D1/M2/M3/R21-M5 evidence bindings for --providers",
     )
     parser.add_argument("--dry-discovery", action="store_true")
     parser.add_argument("--output", type=Path)

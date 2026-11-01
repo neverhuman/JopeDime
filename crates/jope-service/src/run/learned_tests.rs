@@ -457,6 +457,46 @@ fn learned_requires_explicit_admission_and_invalid_device_is_not_fallback() {
     assert_eq!(super::service::error_code(&err), ErrorCode::InvalidInput);
 }
 
+#[test]
+fn default_auto_plan_is_byte_identical_with_ranker_absent_or_disabled() {
+    use crate::discover::r#loop::SearchSpace;
+    use jope_api::Guidance;
+    use rand_chacha::{
+        rand_core::{RngCore, SeedableRng},
+        ChaCha12Rng,
+    };
+
+    let mut request = spec("ds_0123456789abcdef01234567", "cpu");
+    request.guidance = Guidance::Auto;
+    let absent = BackendPlan::resolve(&request, None, 1).unwrap();
+    let admitted = AdmittedRanker::test_admitted();
+    let present_but_disabled = BackendPlan::resolve(&request, Some(&admitted), 1).unwrap();
+    let serving_bytes = |plan: &BackendPlan| {
+        let space = super::service::BackendSpace {
+            native: crate::discover::r#loop::NativeSpace,
+            learned: plan.learned(),
+        };
+        let seeds = space.seeds().unwrap();
+        let mut rng = ChaCha12Rng::seed_from_u64(73);
+        let proposals = space.propose(&seeds, 8, &mut rng).unwrap();
+        serde_json::to_vec(&serde_json::json!({
+            "guidance": plan.guidance,
+            "warnings": plan.warnings,
+            "placement": plan.placement,
+            "bundle_digest": plan.bundle_digest,
+            "landmark_rows": plan.landmark_rows,
+            "learned": plan.learned(),
+            "seeds": seeds,
+            "proposals": proposals,
+            "next_rng_word": rng.next_u64(),
+        }))
+        .unwrap()
+    };
+
+    assert!(!absent.learned() && !present_but_disabled.learned());
+    assert_eq!(serving_bytes(&absent), serving_bytes(&present_but_disabled));
+}
+
 async fn post(app: axum::Router, request: &RunSpec, key: &str) -> (u16, Value) {
     let response = app
         .oneshot(

@@ -365,8 +365,8 @@ class ReleaseGates(unittest.TestCase):
                 "full_inputs_sha256": "c" * 64,
             },
             "M5": {
-                "golden_dir": str(self.root / "golden fixture"),
-                "bundle_dir": str(self.root / "bundle"),
+                "default_off_receipt": str(self.root / "DEFAULT-OFF.json"),
+                "default_off_receipt_sha256": "f" * 64,
             },
             "A5": {
                 "manifest": str(self.root / "named client capture.json"),
@@ -577,7 +577,7 @@ raise SystemExit(module.main())
     def test_declared_m5_arguments_reach_a_real_required_argument_parser(self):
         self.commit_providers(
             {
-                "M5": "import argparse,json\np=argparse.ArgumentParser();p.add_argument('--golden-dir',required=True);p.add_argument('--bundle-dir',required=True);print(json.dumps(vars(p.parse_args())))\n"
+                "M5": "import argparse,json\np=argparse.ArgumentParser();p.add_argument('--default-off-receipt',required=True);p.add_argument('--default-off-receipt-sha256',required=True);print(json.dumps(vars(p.parse_args())))\n"
             }
         )
         commands, _ = runner.provider_commands(self.repo)
@@ -592,6 +592,26 @@ raise SystemExit(module.main())
         )
         self.assertEqual(after.returncode, 0, after.stderr)
         self.assertEqual(json.loads(after.stdout), bindings["M5"])
+
+    def test_m5_legacy_fixture_binding_remains_accepted(self):
+        self.commit_providers({"M5": "# synthetic legacy provider\n"})
+        legacy = {
+            "M5": {
+                "golden_dir": str(self.root / "golden fixture"),
+                "bundle_dir": str(self.root / "bundle"),
+            }
+        }
+        accepted = runner.provider_inputs(self.input_file(legacy))
+        commands, _ = runner.provider_commands(self.repo, accepted)
+        self.assertEqual(
+            commands[0]["argv"][-4:],
+            [
+                "--golden-dir",
+                legacy["M5"]["golden_dir"],
+                "--bundle-dir",
+                legacy["M5"]["bundle_dir"],
+            ],
+        )
 
     def test_a5_explicit_bindings_survive_the_restricted_child_environment(self):
         self.commit_providers(
@@ -669,6 +689,7 @@ raise SystemExit(module.main())
                 }
             },
             {"M5": {"golden_dir": "/golden", "bundle_dir": "/bundle", "argv": ["sh"]}},
+            {"M5": {"default_off_receipt": "/receipt.json"}},
             {
                 "M5": {
                     "golden_dir": "/golden",
@@ -677,6 +698,12 @@ raise SystemExit(module.main())
                 }
             },
             {"M5": {"golden_dir": True, "bundle_dir": "/bundle"}},
+            {
+                "M5": {
+                    "default_off_receipt": "/receipt.json",
+                    "default_off_receipt_sha256": "F" * 64,
+                }
+            },
             {"M5": {"golden_dir": "/golden\0bad", "bundle_dir": "/bundle"}},
         ]
         for gates in bad:

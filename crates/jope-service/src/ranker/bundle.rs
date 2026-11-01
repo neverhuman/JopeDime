@@ -380,6 +380,11 @@ impl VerifiedBundle {
     }
 }
 
+#[cfg(test)]
+pub(crate) fn test_verified_bundle() -> VerifiedBundle {
+    integrity_tests::test_verified_bundle()
+}
+
 impl fmt::Debug for VerifiedBundle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("VerifiedBundle")
@@ -1381,6 +1386,10 @@ mod integrity_tests {
                 &[*fixture_key().verifying_key()],
             )
         }
+    }
+
+    pub(super) fn test_verified_bundle() -> VerifiedBundle {
+        Fixture::new().load(load_limits()).unwrap()
     }
 
     fn refuses(result: Result<VerifiedBundle>, detail: &str) {

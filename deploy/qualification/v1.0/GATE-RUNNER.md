@@ -46,8 +46,8 @@ This reports the exact source SHA, found provider IDs, missing provider IDs, and
 counts. It accepts no artifact or output path, executes no provider, and writes
 no gate evidence. A successful inventory report may still be incomplete.
 
-Five providers require explicit external inputs. M5 needs frozen TRAIN fixture
-and bundle directories; A5 needs a candidate-bound named-client transcript
+Five providers require explicit external inputs. M5 binds the R21 RNK-10
+default-off receipt and its independently computed SHA-256; A5 needs a candidate-bound named-client transcript
 manifest and its independently pinned SHA-256. D1 needs the candidate-bound
 macOS receipt and its SHA-256. M2 needs its golden directory/index SHA-256,
 frozen bundle directory and a new external parity-report directory. M3 needs the
@@ -65,8 +65,8 @@ Supply these through `--provider-inputs "$INPUT_BINDINGS"` with
       "full_inputs_sha256": "<replace with the independently pinned full-input manifest SHA-256>"
     },
     "M5": {
-      "golden_dir": "/absolute/path/to/qualified/golden",
-      "bundle_dir": "/absolute/path/to/frozen/bundle"
+      "default_off_receipt": "/absolute/path/to/RNK-10/DEFAULT-OFF.json",
+      "default_off_receipt_sha256": "<independently computed lowercase SHA-256>"
     },
     "A5": {
       "manifest": "/absolute/path/to/candidate/transcript-manifest.json",
@@ -87,10 +87,20 @@ Supply these through `--provider-inputs "$INPUT_BINDINGS"` with
 }
 ```
 
+The M5 receipt uses `jope.rnk10.default-off/v1` and binds the tested source SHA,
+the `PASS` result, SHA-256-pinned shipped config and bundle with heuristic
+default and learned guidance disabled, identical
+serving-admission hashes with the ranker absent and present-but-disabled, and
+identical hashes from two default-path S2 runs. M5 validates those three
+non-waived R21 checks and candidate identity; it does not execute the waived
+learned-guidance causal replay. The `release-command-scaffold.json` stays
+`NOT_EXECUTABLE`; RC2 materialization supplies the candidate and receipt paths
+and pins to the generated `jope.rel07.gate-commands/v1` manifest.
+
 Discovery reports `unbound_providers` and `unbound_provider_count` separately from
 missing modules. `complete` requires both inventories to be empty. Execution
 discovery refuses unbound providers before writing a runnable manifest. It adds
-M5's directory arguments; D1's receipt, receipt pin, and platform-artifact pin;
+M5's R21 receipt and hash pin; D1's receipt, receipt pin, and platform-artifact pin;
 M2's four input/report arguments; M3's full-input manifest/pin arguments; and A5's
 two explicit environment bindings to each provider's argv without a shell. The
 frozen command-manifest hash covers them. The restricted

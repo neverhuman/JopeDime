@@ -33,12 +33,160 @@ R782_DIGEST = "sha256:94fd9587675c7806bd0a0582b6e97540cd2fdc7ebbc51958411b905185
 R782_JOPE_SHA256 = "ce39c75f37624e64dfbf89e6493adbf74811a5248f9355997161491e93a132ef"
 R882_JOPE_SHA256 = "ff3f9ea5d76fa6c13cd74d40a9effbf7e9c891d98746dc542d851726b9e3138c"
 SINGLE_PASS = dict(collected=1, executed=1, passed=1, failed=0, skipped=0, excluded=0)
+DEFAULT_OFF_PASS = dict(
+    collected=3, executed=3, passed=3, failed=0, skipped=0, excluded=0
+)
 
 
 @dataclass(frozen=True)
 class Inputs:
     golden: Path
     bundle: Path
+
+
+@dataclass(frozen=True)
+class DefaultOffInput:
+    receipt: Path
+    receipt_sha256: str
+
+
+def default_off_report(ctx: Context, inputs: DefaultOffInput) -> dict:
+    """Validate the R21 waiver evidence without running the waived causal replay."""
+    regular(inputs.receipt)
+    if inputs.receipt.resolve().is_relative_to(ROOT.resolve()):
+        raise ProviderError("M5 default-off receipt must be external to the checkout")
+    if not re.fullmatch(r"[0-9a-f]{64}", inputs.receipt_sha256):
+        raise ProviderError("M5 default-off receipt requires a full SHA-256 pin")
+    if sha256(inputs.receipt) != inputs.receipt_sha256:
+        raise ProviderError("M5 default-off receipt bytes differ from the pinned hash")
+    try:
+        report = json.loads(inputs.receipt.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ProviderError(
+            "M5 default-off receipt must be valid UTF-8 JSON"
+        ) from error
+    if (
+        not isinstance(report, dict)
+        or set(report)
+        != {
+            "schema",
+            "source_sha",
+            "status",
+            "default_config",
+            "serving_admission",
+            "s2_determinism",
+        }
+        or report["schema"] != "jope.rnk10.default-off/v1"
+        or report["source_sha"] != ctx.source_sha
+        or report["status"] != "PASS"
+    ):
+        raise ProviderError("M5 requires a source-bound R21 default-off PASS receipt")
+    default = report["default_config"]
+    serving = report["serving_admission"]
+    determinism = report["s2_determinism"]
+    if (
+        not isinstance(default, dict)
+        or set(default)
+        != {"track", "learned_guidance_enabled", "config_sha256", "bundle_sha256"}
+        or default["track"] != "heuristic"
+        or default["learned_guidance_enabled"] is not False
+        or any(
+            not isinstance(default[key], str)
+            or not re.fullmatch(r"[0-9a-f]{64}", default[key])
+            for key in ("config_sha256", "bundle_sha256")
+        )
+    ):
+        raise ProviderError("M5 receipt does not prove learned guidance defaults off")
+    serving_keys = {"ranker_absent_sha256", "ranker_present_disabled_sha256"}
+    if (
+        not isinstance(serving, dict)
+        or set(serving) != serving_keys
+        or any(
+            not isinstance(serving[key], str)
+            or not re.fullmatch(r"[0-9a-f]{64}", serving[key])
+            for key in serving_keys
+        )
+        or serving["ranker_absent_sha256"] != serving["ranker_present_disabled_sha256"]
+    ):
+        raise ProviderError(
+            "M5 receipt does not prove byte-identical serving admission"
+        )
+    determinism_keys = {"run_1_sha256", "run_2_sha256"}
+    if (
+        not isinstance(determinism, dict)
+        or set(determinism) != determinism_keys
+        or any(
+            not isinstance(determinism[key], str)
+            or not re.fullmatch(r"[0-9a-f]{64}", determinism[key])
+            for key in determinism_keys
+        )
+        or determinism["run_1_sha256"] != determinism["run_2_sha256"]
+    ):
+        raise ProviderError("M5 receipt does not prove default-path S2 determinism")
+    return report
+
+
+def qualify_default_off(ctx: Context, inputs: DefaultOffInput) -> int:
+    report = default_off_report(ctx, inputs)
+    if any(
+        path.is_symlink() for path in (ctx.result, *ctx.result.parents)
+    ) or ctx.result.resolve().is_relative_to(ROOT.resolve()):
+        raise ProviderError("M5 result must be external and non-symlink")
+    jobs = os.environ.get("CARGO_BUILD_JOBS", "8")
+    if jobs not in {str(i) for i in range(1, 9)}:
+        raise ProviderError("M5 build jobs must be 1..8")
+    env = os.environ.copy()
+    env.update(
+        CARGO_BUILD_JOBS=jobs,
+        CARGO_INCREMENTAL="0",
+        CARGO_PROFILE_DEV_DEBUG="line-tables-only",
+        CUDA_VISIBLE_DEVICES="",
+    )
+
+    def run(args, **kwargs):
+        return subprocess.run(["nice", "-n", "10", *args], env=env, **kwargs)
+
+    for args, expected in (
+        (["git", "rev-parse", "HEAD"], ctx.source_sha),
+        (["git", "status", "--porcelain", "--untracked-files=all"], ""),
+    ):
+        result = run(args, cwd=ROOT, capture_output=True, text=True, check=False)
+        if result.returncode or result.stdout.strip() != expected:
+            raise ProviderError("M5 requires a clean candidate-pinned source checkout")
+    if sha256(ctx.artifact) != ctx.artifact_sha256:
+        raise ProviderError("candidate bytes changed before M5 default-off validation")
+    verify_candidate(ctx, run=run)
+    for args, expected in (
+        (["git", "rev-parse", "HEAD"], ctx.source_sha),
+        (["git", "status", "--porcelain", "--untracked-files=all"], ""),
+    ):
+        result = run(args, cwd=ROOT, capture_output=True, text=True, check=False)
+        if result.returncode or result.stdout.strip() != expected:
+            raise ProviderError("M5 source changed during default-off validation")
+    if (
+        sha256(ctx.artifact) != ctx.artifact_sha256
+        or sha256(inputs.receipt) != inputs.receipt_sha256
+    ):
+        raise ProviderError(
+            "M5 candidate or default-off receipt changed during validation"
+        )
+    payload = {
+        "schema": "jope.rel07.gate-execution/v1",
+        "id": "M5",
+        "status": "PASS",
+        "source_sha": ctx.source_sha,
+        "artifact_sha256": ctx.artifact_sha256,
+        "counts": DEFAULT_OFF_PASS,
+        "default_off": {
+            "receipt": str(inputs.receipt),
+            "sha256": inputs.receipt_sha256,
+            "schema": report["schema"],
+        },
+    }
+    ctx.result.parent.mkdir(parents=True, exist_ok=True)
+    with ctx.result.open("x", encoding="utf-8") as stream:
+        stream.write(json.dumps(payload, sort_keys=True) + "\n")
+    return 0
 
 
 def regular(path: Path) -> None:
@@ -117,9 +265,7 @@ def causal_report(path: Path) -> dict:
         or report["consumer"] != "M5-causal"
         or report["device"] != "cpu"
     ):
-        raise ProviderError(
-            "M5 native report must contain the v2 CPU replay"
-        )
+        raise ProviderError("M5 native report must contain the v2 CPU replay")
     output_checks = report["output_checks"]
     oracle = report["reference_oracle"]
     if (
@@ -265,8 +411,27 @@ def main() -> int:
         default=os.environ.get("JOPE_RNK10_SIGNED_BUNDLE_DIR") or None,
         help="Signed r882 release bundle (default: JOPE_RNK10_SIGNED_BUNDLE_DIR)",
     )
+    parser.add_argument("--default-off-receipt", type=Path)
+    parser.add_argument("--default-off-receipt-sha256")
     args = parser.parse_args()
     try:
+        if (
+            args.default_off_receipt is not None
+            or args.default_off_receipt_sha256 is not None
+        ):
+            if (
+                args.default_off_receipt is None
+                or args.default_off_receipt_sha256 is None
+                or args.golden_dir is not None
+                or args.bundle_dir is not None
+            ):
+                raise ProviderError("M5 default-off receipt inputs cannot be mixed")
+            return qualify_default_off(
+                context("M5"),
+                DefaultOffInput(
+                    args.default_off_receipt, args.default_off_receipt_sha256
+                ),
+            )
         if args.golden_dir is None or args.bundle_dir is None:
             raise ProviderError(
                 "M5 requires --golden-dir/JOPE_GOLDEN_DIR and "
