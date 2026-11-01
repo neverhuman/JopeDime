@@ -1,6 +1,9 @@
 """Data-free prediction ensembling and family-level selector helpers for H163."""
 
 import numpy as np
+import hashlib
+import importlib.util
+import sys
 
 FOLD_SEED = 163140
 SEEDS = (163101, 163102, 163103)
@@ -142,6 +145,39 @@ def median_seed_bootstrap(rows, candidate, baseline, draws=10_000, seed=BOOT_SEE
     return {"delta": point, "ci_low_95": float(lo), "ci_high_95": float(hi),
             "p_one_sided": float((np.sum(boot <= 0.0) + 1) / (draws + 1)),
             "draws": draws}
+
+
+def canonical_elo(rows, panel, contender_names, tracker_path, tracker_sha256):
+    """Run the pinned H145 canonical family-grouped Elo tracker (400 MM, prior .01)."""
+    path = str(tracker_path)
+    digest = hashlib.sha256()
+    with open(path, "rb") as source:
+        for block in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(block)
+    if digest.hexdigest() != tracker_sha256:
+        raise ValueError("canonical Elo tracker source hash mismatch")
+    values = np.asarray(panel, dtype=np.float64)
+    names = list(contender_names)
+    if values.shape != (len(rows), len(names)) or not np.isfinite(values).all():
+        raise ValueError("invalid canonical Elo panel")
+    spec = importlib.util.spec_from_file_location("h163_canonical_elo", path)
+    if spec is None or spec.loader is None:
+        raise ImportError("could not load canonical Elo tracker")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    records = [
+        module.DatasetEvalRecord(
+            dataset_id=row["context_sha256"],
+            family_id=row["family_id"],
+            task_type="regression",
+            scores_by_contender={name: float(values[i, j]) for j, name in enumerate(names)},
+        )
+        for i, row in enumerate(rows)
+    ]
+    return module.compute_family_grouped_bradley_terry_elo(
+        records, anchor_contender="R882", prior=0.0
+    )["ratings"]
 
 
 def admit(stat):

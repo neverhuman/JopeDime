@@ -1,6 +1,7 @@
 """Data-free tests for H163 score direction, ID alignment, ties and gates."""
 
 import unittest
+from pathlib import Path
 import numpy as np
 import analysis
 
@@ -55,6 +56,22 @@ class H163Tests(unittest.TestCase):
         candidate = np.array([[.004, -.004], [-.004, .004], [.004, .004]])
         result = analysis.median_seed_bootstrap(rows, candidate, baseline, draws=100, seed=19)
         self.assertAlmostEqual(result["delta"], 0.0)
+
+    def test_canonical_h145_elo_dominance_matches_tracker(self):
+        root = Path(__file__).resolve().parents[3]
+        tracker = root / "python/src/jope/north_star/elo_tracker.py"
+        rows = [
+            {"context_sha256": "d1", "family_id": "f1"},
+            {"context_sha256": "d2", "family_id": "f2"},
+        ]
+        ratings = analysis.canonical_elo(
+            rows,
+            np.array([[0., 1.], [0., 1.]]),
+            ["R882", "ALT"],
+            tracker,
+            "9ece98326c32453179b0c765eb45944b68ca9de944d2828a1d42dee1401d1835",
+        )
+        self.assertEqual(ratings, {"ALT": 6300.0, "R882": 1500.0})
 
     def test_fixed_family_folds_are_balanced_and_deterministic(self):
         rows = [{"family_id": f"fam-{i:03d}"} for i in range(205)]

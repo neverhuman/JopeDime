@@ -1,10 +1,13 @@
 """H163 single-attempt CPU evaluator; predictions are locked before each A outcome read."""
 
 import argparse
+import atexit
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
+import signal
 import sys
 
 import numpy as np
@@ -16,6 +19,7 @@ H146 = ROOT / "research/flywheel_selfplay/h146_lookahead_exec"
 H160 = ROOT / "research/flywheel_selfplay/h160_trajectory_subspace"
 DATA = Path("/home/ubuntu/jope-data/h160")
 OUT_DEFAULT = Path("/home/ubuntu/jope-data/h163")
+FORWARD_CALLS = 0
 
 
 def sha(path):
@@ -31,6 +35,7 @@ def parent_api():
 
 
 def model_costs(net, parent, rt, pools, tokens, masks, rows):
+    global FORWARD_CALLS
     out = {}
     sizes = {}
     for row in rows:
@@ -41,6 +46,7 @@ def model_costs(net, parent, rt, pools, tokens, masks, rows):
             for cid in cids:
                 score = parent.predict(net, pools, tokens, masks, [cid],
                                        [np.arange(size)]).detach().cpu().numpy()[0]
+                FORWARD_CALLS += 1
                 if score.shape != (size,) or not np.isfinite(score).all():
                     raise RuntimeError("invalid candidate cost vector")
                 out[cid] = score.astype(np.float64)
@@ -49,29 +55,6 @@ def model_costs(net, parent, rt, pools, tokens, masks, rows):
 
 def row_utility(pool, choice):
     return float(-pool["fitness"][choice] if pool["gate"][choice] else -2.0)
-
-
-def elo(rows, panel):
-    """H145 400-iteration Bradley-Terry MM, equal-family context weights."""
-    x = np.asarray(panel, dtype=np.float64)
-    fam = np.asarray([r["family_id"] for r in rows])
-    unique, inverse = np.unique(fam, return_inverse=True)
-    weights = 1.0 / (len(unique) * np.bincount(inverse)[inverse])
-    m = x.shape[1]
-    wins = np.zeros((m, m), dtype=np.float64)
-    for i in range(m):
-        for j in range(i + 1, m):
-            d = x[:, i] - x[:, j]
-            w = float(weights[d > 1e-4].sum() + 0.5 * weights[np.abs(d) <= 1e-4].sum())
-            wins[i, j], wins[j, i] = w, 1.0 - w
-    p = np.ones(m, dtype=np.float64)
-    for _ in range(400):
-        nxt = np.ones(m, dtype=np.float64)
-        for i in range(m):
-            denom = sum(1.0 / (p[i] + p[j]) for j in range(m) if j != i)
-            nxt[i] = max(wins[i].sum() / max(denom, 1e-12), 1e-12)
-        p = nxt / p[0]
-    return (1500.0 + (400.0 / np.log(10.0)) * np.log(p)).tolist()
 
 
 def panel_utility(rows, pools, predictions, arm, weight=0.5):
@@ -164,161 +147,228 @@ def main():
     allowed |= {str(rt.INPUT / "pools" / f"{r['context_sha256']}.npz") for r in train + val}
     audit = rt.Audit(allowed, out)
     sys.addaudithook(audit.check)
-    pools = {}
-    projection = fused.get_w1_sign_matrix() / np.sqrt(412.0)
+    worker = {
+        "status": "RUNNING",
+        "source_commit": launch["source_commit"],
+        "manifest_sha256": sha(HERE / "manifest.json"),
+        "parent_source_sha256": pins["parent_sources"],
+        "canonical_elo_source_sha256": pins["canonical_elo"]["source_sha256"],
+        "checkpoint_sha256": {name: item["sha256"] for name, item in pins["checkpoint_inputs"].items()},
+        "dope_sha256": rt.DOPE,
+        "frozen_sha256": frozen,
+        "optimizer_updates": 0,
+        "forward_calls": 0,
+        "redteam_review_pass": bool(launch["redteam_review_pass"]),
+    }
 
-    def load_pools(rows):
-        for row in rows:
+    def persist_audit():
+        try:
+            receipt = audit.receipt()
+            protected_tokens = ("/sealed", "/holdout", "meta-test", "meta_test", "qualification.lock", "/data/flywheel_selfplay/")
+            receipt["protected_reads"] = sum(any(t in p.lower() for t in protected_tokens) for p in receipt["refused"])
+            receipt.update(worker)
+            receipt["forward_calls"] = FORWARD_CALLS
+            temp = out / "audit.json.tmp"
+            temp.write_text(json.dumps(receipt, indent=2, allow_nan=False) + "\n")
+            os.replace(temp, out / "audit.json")
+        except Exception:
+            # Preserve the original worker failure; the supervisor retains stderr/log evidence.
+            pass
+
+    old_excepthook = sys.excepthook
+
+    def record_exception(kind, value, tb):
+        worker["status"] = "INCOMPLETE"
+        worker["failure"] = f"{kind.__name__}: {value}"
+        persist_audit()
+        old_excepthook(kind, value, tb)
+
+    def record_termination(signum, _frame):
+        worker["status"] = f"INCOMPLETE_SIGNAL_{signum}"
+        persist_audit()
+        raise SystemExit(128 + signum)
+
+    sys.excepthook = record_exception
+    signal.signal(signal.SIGTERM, record_termination)
+    atexit.register(persist_audit)
+    try:
+        pools = {}
+        projection = fused.get_w1_sign_matrix() / np.sqrt(412.0)
+
+        def load_pools(rows):
+            for row in rows:
+                cid = row["context_sha256"]
+                path = rt.INPUT / "pools" / f"{cid}.npz"
+                if rt.sha(path) != row["pool_sha256"]:
+                    raise RuntimeError("pool identity mismatch")
+                with np.load(path, allow_pickle=False) as z:
+                    pools[cid] = {"program": z["program"].astype(np.float32),
+                                  "fitness": z["fitness"].astype(np.float64),
+                                  "gate": z["gate"].astype(bool)}
+                pools[cid]["proj16"] = (pools[cid]["program"].astype(np.float64) @ projection).astype(np.float32)
+
+        with np.load(rt.CACHE, allow_pickle=False) as z:
+            ids = list(map(str, z["cids"]))
+            if set(ids) != {r["context_sha256"] for r in train + val} or len(ids) != len(train) + len(val):
+                raise RuntimeError("feature cache closure mismatch")
+            tokens = {c: torch.as_tensor(z["tokens_10x32"][i], dtype=torch.float32) for i, c in enumerate(ids)}
+            masks = {c: torch.as_tensor(z["mask_10"][i], dtype=torch.bool) for i, c in enumerate(ids)}
+        # Stage 1 opens only DL-Val outcome pools and verifies exact R882 per-context parity.
+        load_pools(val)
+        model_preds_val = {}
+        initial = {k: v.detach().clone() for k, v in net.state_dict().items()}
+        for name in ("R882", "R859", "R785", "R782"):
+            state = torch.load(pins["checkpoint_inputs"][name]["path"], map_location="cpu", weights_only=True)["state_dict"]
+            if set(state) != set(initial):
+                raise RuntimeError("checkpoint key mismatch")
+            for key, value in initial.items():
+                if key not in names and not torch.equal(state[key], value):
+                    raise RuntimeError("non-adapter checkpoint tensor differs")
+            net.load_state_dict(state, strict=True)
+            model_preds_val[name] = model_costs(net, parent, rt, pools, tokens, masks, val)
+            rt.check_frozen(net, guard, names, frozen)
+        # The first scored operation is exact per-context R882 DL-Val; TRAIN outcome pools remain unopened.
+        baseline, baseline_choices = panel_utility(val, pools, model_preds_val, "R882")
+        ref_path = DATA / "inputs/best_dev_checkpoint.json"
+        reference = json.loads(ref_path.read_text())
+        gate = parent.baseline_gate(baseline.tolist(), reference)
+        (out / "baseline.json").write_text(json.dumps({"gate": gate, "choices": baseline_choices.tolist()}, indent=2) + "\n")
+        # TRAIN outcome pools are opened only after the exact secondary baseline passes.
+        load_pools(train)
+        model_preds = dict(model_preds_val)
+        for name in ("R882", "R859", "R785", "R782"):
+            state = torch.load(pins["checkpoint_inputs"][name]["path"], map_location="cpu", weights_only=True)["state_dict"]
+            net.load_state_dict(state, strict=True)
+            model_preds[name].update(model_costs(net, parent, rt, pools, tokens, masks, train))
+            rt.check_frozen(net, guard, names, frozen)
+        all_rows = train + val
+        offsets = [0]
+        flat = {name: [] for name in ("R882", "R859", "R785", "R782")}
+        for row in all_rows:
             cid = row["context_sha256"]
-            path = rt.INPUT / "pools" / f"{cid}.npz"
-            if rt.sha(path) != row["pool_sha256"]:
-                raise RuntimeError("pool identity mismatch")
-            with np.load(path, allow_pickle=False) as z:
-                pools[cid] = {"program": z["program"].astype(np.float32),
-                              "fitness": z["fitness"].astype(np.float64),
-                              "gate": z["gate"].astype(bool)}
-            pools[cid]["proj16"] = (pools[cid]["program"].astype(np.float64) @ projection).astype(np.float32)
+            n = len(pools[cid]["fitness"])
+            for name in flat:
+                if model_preds[name][cid].shape != (n,):
+                    raise RuntimeError("candidate order/score vector mismatch")
+                flat[name].append(model_preds[name][cid])
+            offsets.append(offsets[-1] + n)
+        np.savez_compressed(out / "prediction_panels.npz",
+                            context_ids=np.asarray([r["context_sha256"] for r in all_rows]),
+                            candidate_index=np.concatenate([np.arange(len(pools[r["context_sha256"]]["fitness"]), dtype=np.int32) for r in all_rows]),
+                            offsets=np.asarray(offsets, dtype=np.int64),
+                            **{f"cost_{name}": np.concatenate(parts).astype(np.float32) for name, parts in flat.items()})
+        base_train, base_train_choices = panel_utility(train, pools, model_preds, "R882")
+        folds = stat.folds(train)
+        fold_index = {f: i for i, group in enumerate(folds) for f in group}
+        by_cid = {r["context_sha256"]: i for i, r in enumerate(train)}
+        results = {arm: np.full((len(stat.SEEDS), len(train)), np.nan) for arm in stat.ARMS}
+        choices_oof = {arm: np.full((len(stat.SEEDS), len(train)), -1, dtype=np.int64) for arm in stat.ARMS}
+        secondary = {arm: np.full((len(stat.SEEDS), 5, len(val)), np.nan) for arm in stat.ARMS}
+        secondary_choices = {arm: np.full((len(stat.SEEDS), 5, len(val)), -1, dtype=np.int64) for arm in stat.ARMS}
+        decisions = []
+        for outer in range(5):
+            select_fold = (outer + 1) % 5
+            fit = [r for r in train if fold_index[r["family_id"]] not in (outer, select_fold)]
+            select = [r for r in train if fold_index[r["family_id"]] == select_fold]
+            assess = [r for r in train if fold_index[r["family_id"]] == outer]
+            fit_fams, sel_fams, out_fams = ({r["family_id"] for r in group} for group in (fit, select, assess))
+            if fit_fams & sel_fams or fit_fams & out_fams or sel_fams & out_fams:
+                raise RuntimeError("family leakage")
+            weight_scores = {}
+            for w in (0.5, 0.7):
+                vals, _ = panel_utility(fit, pools, model_preds, "ENS4_W", w)
+                fams, means = stat.family_means(fit, vals)
+                weight_scores[str(w)] = float(means.mean())
+            weight = 0.5 if weight_scores["0.5"] >= weight_scores["0.7"] else 0.7
+            base_sel, _ = panel_utility(select, pools, model_preds, "R882")
+            for si, seed in enumerate(stat.SEEDS):
+                locked = {}
+                for arm in ("ENS2", "ENS4", "ENS4_W", "RANKAVG4"):
+                    vals, _ = panel_utility(select, pools, model_preds, arm, weight)
+                    stat_gate = stat.family_bootstrap(select, vals, base_sel, 10_000, seed + outer * 1000)
+                    locked[arm] = {"admit": stat.admit(stat_gate), "selector": stat_gate}
+                decision = {"seed": seed, "outer_fold": outer, "selection_fold": select_fold,
+                            "ens4_w": weight, "fit_weight_utility": weight_scores, "arms": locked}
+                # Persist the lock before assessing A outcomes.
+                lock_path = out / f"A{outer}-{seed}-selection-lock.json"
+                lock_path.write_text(json.dumps(decision, indent=2, allow_nan=False) + "\n")
+                for arm in stat.ARMS:
+                    use_arm = arm == "R882" or locked[arm]["admit"]
+                    vals, choices = panel_utility(assess, pools, model_preds, arm if use_arm else "R882", weight)
+                    for row, v, choice in zip(assess, vals, choices, strict=True):
+                        idx = by_cid[row["context_sha256"]]
+                        results[arm][si, idx] = v
+                        choices_oof[arm][si, idx] = choice
+                    val_values, val_choices = panel_utility(val, pools, model_preds, arm if use_arm else "R882", weight)
+                    secondary[arm][si, outer] = val_values
+                    secondary_choices[arm][si, outer] = val_choices
+                decision["selection_lock_sha256"] = sha(lock_path)
+                decisions.append(decision)
+        if any(not np.isfinite(v).all() for v in results.values()):
+            raise RuntimeError("incomplete outer assessment panels")
+        arm_names = list(stat.ARMS)
+        panel = np.stack([results[a] for a in arm_names], axis=-1)
+        summary = {}
+        elo_by_seed = [
+            stat.canonical_elo(
+                train,
+                np.stack([results[a][si] for a in arm_names], axis=-1),
+                arm_names,
+                pins["canonical_elo"]["source_path"],
+                pins["canonical_elo"]["source_sha256"],
+            )
+            for si in range(len(stat.SEEDS))
+        ]
+        for j, arm in enumerate(arm_names):
+            per_seed = []
+            for si, seed in enumerate(stat.SEEDS):
+                s = stat.family_bootstrap(train, results[arm][si], results["R882"][si], 10_000, stat.BOOT_SEED + seed)
+                per_seed.append(s)
+            delta = [s["delta"] for s in per_seed]
+            median_stat = stat.median_seed_bootstrap(train, results[arm], results["R882"], 10_000, stat.BOOT_SEED)
+            summary[arm] = {
+                "per_seed": per_seed,
+                "median_seed_bootstrap": median_stat,
+                "median_gain": median_stat["delta"],
+                "median_ci_low_95": median_stat["ci_low_95"],
+                "median_ci_high_95": median_stat["ci_high_95"],
+                "elo_vs_r882": [e[arm] for e in elo_by_seed],
+                "changed_choices_per_seed": [int(np.sum(choices_oof[arm][si] != choices_oof["R882"][si])) for si in range(len(stat.SEEDS))],
+                "minus2_per_seed": [int(np.sum(results[arm][si] <= -2.0 + 1e-12)) for si in range(len(stat.SEEDS))],
+            }
+        for arm in arm_names[1:]:
+            summary[arm]["verdict"] = "ADVANCE" if summary[arm]["median_gain"] > .001 and summary[arm]["median_ci_low_95"] > 0 else "NO_ADVANCE"
+        for arm in arm_names:
+            summary[arm]["dlval_selected_policy"] = {
+                "mean_utility_per_seed": [float(secondary[arm][si].mean()) for si in range(len(stat.SEEDS))],
+                "mean_utility_median": float(np.median([secondary[arm][si].mean() for si in range(len(stat.SEEDS))])),
+                "elo_per_seed": [
+                    stat.canonical_elo(
+                        val,
+                        np.column_stack([baseline, secondary[arm][si].mean(axis=0)]),
+                        ["R882", arm],
+                        pins["canonical_elo"]["source_path"],
+                        pins["canonical_elo"]["source_sha256"],
+                    )[arm]
+                    for si in range(len(stat.SEEDS))
+                ],
+                "changed_choices_per_seed_of_455": [int(np.sum(secondary_choices[arm][si] != baseline_choices[None, :])) for si in range(len(stat.SEEDS))],
+                "minus2_per_seed_of_455": [int(np.sum(secondary[arm][si] <= -2.0 + 1e-12)) for si in range(len(stat.SEEDS))],
+            }
+        report = {"status": "COMPLETE", "baseline_gate": gate, "optimizer_updates": 0,
+                  "dope_composite_sha256": rt.DOPE, "decisions": decisions,
+                  "summary": summary,
+                  "train_oof_utility": {a: v.tolist() for a, v in results.items()},
+                  "train_oof_choices": {a: v.tolist() for a, v in choices_oof.items()},
+                  "dlval_selected_policy_utility": {a: v.tolist() for a, v in secondary.items()},
+                  "dlval_selected_policy_choices": {a: v.tolist() for a, v in secondary_choices.items()},
+                  "baseline_train_utility": base_train.tolist(), "baseline_val_utility": baseline.tolist(),
+                  "baseline_val_choices": baseline_choices.tolist(), "baseline_train_choices": base_train_choices.tolist()}
+        (out / "panels.json").write_text(json.dumps(report, allow_nan=False) + "\n")
+        worker["status"] = "COMPLETE"
 
-    with np.load(rt.CACHE, allow_pickle=False) as z:
-        ids = list(map(str, z["cids"]))
-        if set(ids) != {r["context_sha256"] for r in train + val} or len(ids) != len(train) + len(val):
-            raise RuntimeError("feature cache closure mismatch")
-        tokens = {c: torch.as_tensor(z["tokens_10x32"][i], dtype=torch.float32) for i, c in enumerate(ids)}
-        masks = {c: torch.as_tensor(z["mask_10"][i], dtype=torch.bool) for i, c in enumerate(ids)}
-    # Stage 1 opens only DL-Val outcome pools and verifies exact R882 per-context parity.
-    load_pools(val)
-    model_preds_val = {}
-    initial = {k: v.detach().clone() for k, v in net.state_dict().items()}
-    for name in ("R882", "R859", "R785", "R782"):
-        state = torch.load(pins["checkpoint_inputs"][name]["path"], map_location="cpu", weights_only=True)["state_dict"]
-        if set(state) != set(initial):
-            raise RuntimeError("checkpoint key mismatch")
-        for key, value in initial.items():
-            if key not in names and not torch.equal(state[key], value):
-                raise RuntimeError("non-adapter checkpoint tensor differs")
-        net.load_state_dict(state, strict=True)
-        model_preds_val[name] = model_costs(net, parent, rt, pools, tokens, masks, val)
-        rt.check_frozen(net, guard, names, frozen)
-    # The first scored operation is exact per-context R882 DL-Val; TRAIN outcome pools remain unopened.
-    baseline, baseline_choices = panel_utility(val, pools, model_preds_val, "R882")
-    ref_path = DATA / "inputs/best_dev_checkpoint.json"
-    reference = json.loads(ref_path.read_text())
-    gate = parent.baseline_gate(baseline.tolist(), reference)
-    (out / "baseline.json").write_text(json.dumps({"gate": gate, "choices": baseline_choices.tolist()}, indent=2) + "\n")
-    # TRAIN outcome pools are opened only after the exact secondary baseline passes.
-    load_pools(train)
-    model_preds = dict(model_preds_val)
-    for name in ("R882", "R859", "R785", "R782"):
-        state = torch.load(pins["checkpoint_inputs"][name]["path"], map_location="cpu", weights_only=True)["state_dict"]
-        net.load_state_dict(state, strict=True)
-        model_preds[name].update(model_costs(net, parent, rt, pools, tokens, masks, train))
-        rt.check_frozen(net, guard, names, frozen)
-    all_rows = train + val
-    offsets = [0]
-    flat = {name: [] for name in ("R882", "R859", "R785", "R782")}
-    for row in all_rows:
-        cid = row["context_sha256"]
-        n = len(pools[cid]["fitness"])
-        for name in flat:
-            if model_preds[name][cid].shape != (n,):
-                raise RuntimeError("candidate order/score vector mismatch")
-            flat[name].append(model_preds[name][cid])
-        offsets.append(offsets[-1] + n)
-    np.savez_compressed(out / "prediction_panels.npz",
-                        context_ids=np.asarray([r["context_sha256"] for r in all_rows]),
-                        candidate_index=np.concatenate([np.arange(len(pools[r["context_sha256"]]["fitness"]), dtype=np.int32) for r in all_rows]),
-                        offsets=np.asarray(offsets, dtype=np.int64),
-                        **{f"cost_{name}": np.concatenate(parts).astype(np.float32) for name, parts in flat.items()})
-    base_train, base_train_choices = panel_utility(train, pools, model_preds, "R882")
-    folds = stat.folds(train)
-    fold_index = {f: i for i, group in enumerate(folds) for f in group}
-    by_cid = {r["context_sha256"]: i for i, r in enumerate(train)}
-    results = {arm: np.full((len(stat.SEEDS), len(train)), np.nan) for arm in stat.ARMS}
-    choices_oof = {arm: np.full((len(stat.SEEDS), len(train)), -1, dtype=np.int64) for arm in stat.ARMS}
-    secondary = {arm: np.full((len(stat.SEEDS), 5, len(val)), np.nan) for arm in stat.ARMS}
-    secondary_choices = {arm: np.full((len(stat.SEEDS), 5, len(val)), -1, dtype=np.int64) for arm in stat.ARMS}
-    decisions = []
-    for outer in range(5):
-        select_fold = (outer + 1) % 5
-        fit = [r for r in train if fold_index[r["family_id"]] not in (outer, select_fold)]
-        select = [r for r in train if fold_index[r["family_id"]] == select_fold]
-        assess = [r for r in train if fold_index[r["family_id"]] == outer]
-        fit_fams, sel_fams, out_fams = ({r["family_id"] for r in group} for group in (fit, select, assess))
-        if fit_fams & sel_fams or fit_fams & out_fams or sel_fams & out_fams:
-            raise RuntimeError("family leakage")
-        weight_scores = {}
-        for w in (0.5, 0.7):
-            vals, _ = panel_utility(fit, pools, model_preds, "ENS4_W", w)
-            fams, means = stat.family_means(fit, vals)
-            weight_scores[str(w)] = float(means.mean())
-        weight = 0.5 if weight_scores["0.5"] >= weight_scores["0.7"] else 0.7
-        base_sel, _ = panel_utility(select, pools, model_preds, "R882")
-        for si, seed in enumerate(stat.SEEDS):
-            locked = {}
-            for arm in ("ENS2", "ENS4", "ENS4_W", "RANKAVG4"):
-                vals, _ = panel_utility(select, pools, model_preds, arm, weight)
-                stat_gate = stat.family_bootstrap(select, vals, base_sel, 10_000, seed + outer * 1000)
-                locked[arm] = {"admit": stat.admit(stat_gate), "selector": stat_gate}
-            decision = {"seed": seed, "outer_fold": outer, "selection_fold": select_fold,
-                        "ens4_w": weight, "fit_weight_utility": weight_scores, "arms": locked}
-            # Persist the lock before assessing A outcomes.
-            lock_path = out / f"A{outer}-{seed}-selection-lock.json"
-            lock_path.write_text(json.dumps(decision, indent=2, allow_nan=False) + "\n")
-            for arm in stat.ARMS:
-                use_arm = arm == "R882" or locked[arm]["admit"]
-                vals, choices = panel_utility(assess, pools, model_preds, arm if use_arm else "R882", weight)
-                for row, v, choice in zip(assess, vals, choices, strict=True):
-                    idx = by_cid[row["context_sha256"]]
-                    results[arm][si, idx] = v
-                    choices_oof[arm][si, idx] = choice
-                val_values, val_choices = panel_utility(val, pools, model_preds, arm if use_arm else "R882", weight)
-                secondary[arm][si, outer] = val_values
-                secondary_choices[arm][si, outer] = val_choices
-            decision["selection_lock_sha256"] = sha(lock_path)
-            decisions.append(decision)
-    if any(not np.isfinite(v).all() for v in results.values()):
-        raise RuntimeError("incomplete outer assessment panels")
-    arm_names = list(stat.ARMS)
-    panel = np.stack([results[a] for a in arm_names], axis=-1)
-    summary = {}
-    for j, arm in enumerate(arm_names):
-        per_seed = []
-        for si, seed in enumerate(stat.SEEDS):
-            s = stat.family_bootstrap(train, results[arm][si], results["R882"][si], 10_000, stat.BOOT_SEED + seed)
-            per_seed.append(s)
-        delta = [s["delta"] for s in per_seed]
-        median_stat = stat.median_seed_bootstrap(train, results[arm], results["R882"], 10_000, stat.BOOT_SEED)
-        summary[arm] = {
-            "per_seed": per_seed,
-            "median_seed_bootstrap": median_stat,
-            "median_gain": median_stat["delta"],
-            "median_ci_low_95": median_stat["ci_low_95"],
-            "median_ci_high_95": median_stat["ci_high_95"],
-            "elo_vs_r882": [e[j] for e in [elo(train, results_for_seed) for results_for_seed in np.stack([results[a] for a in arm_names], axis=-1)]],
-            "changed_choices_per_seed": [int(np.sum(choices_oof[arm][si] != choices_oof["R882"][si])) for si in range(len(stat.SEEDS))],
-            "minus2_per_seed": [int(np.sum(results[arm][si] <= -2.0 + 1e-12)) for si in range(len(stat.SEEDS))],
-        }
-    for arm in arm_names[1:]:
-        summary[arm]["verdict"] = "ADVANCE" if summary[arm]["median_gain"] > .001 and summary[arm]["median_ci_low_95"] > 0 else "NO_ADVANCE"
-    for arm in arm_names:
-        summary[arm]["dlval_selected_policy"] = {
-            "mean_utility_per_seed": [float(secondary[arm][si].mean()) for si in range(len(stat.SEEDS))],
-            "mean_utility_median": float(np.median([secondary[arm][si].mean() for si in range(len(stat.SEEDS))])),
-            "elo_per_seed": [elo(val, np.column_stack([baseline, secondary[arm][si].mean(axis=0)]))[1] for si in range(len(stat.SEEDS))],
-            "changed_choices_per_seed_of_455": [int(np.sum(secondary_choices[arm][si] != baseline_choices[None, :])) for si in range(len(stat.SEEDS))],
-            "minus2_per_seed_of_455": [int(np.sum(secondary[arm][si] <= -2.0 + 1e-12)) for si in range(len(stat.SEEDS))],
-        }
-    report = {"status": "COMPLETE", "baseline_gate": gate, "optimizer_updates": 0,
-              "dope_composite_sha256": rt.DOPE, "decisions": decisions,
-              "summary": summary,
-              "train_oof_utility": {a: v.tolist() for a, v in results.items()},
-              "train_oof_choices": {a: v.tolist() for a, v in choices_oof.items()},
-              "dlval_selected_policy_utility": {a: v.tolist() for a, v in secondary.items()},
-              "dlval_selected_policy_choices": {a: v.tolist() for a, v in secondary_choices.items()},
-              "baseline_train_utility": base_train.tolist(), "baseline_val_utility": baseline.tolist(),
-              "baseline_val_choices": baseline_choices.tolist(), "baseline_train_choices": base_train_choices.tolist()}
-    (out / "panels.json").write_text(json.dumps(report, allow_nan=False) + "\n")
-
+    finally:
+        persist_audit()
 
 if __name__ == "__main__":
     main()

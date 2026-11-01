@@ -63,7 +63,11 @@
   },
   "canonical_elo": {
     "implementation": "H145 Bradley-Terry MM",
+    "source_path": "/home/ubuntu/JopeDime/.agent/worktrees/h163-hbaseline/python/src/jope/north_star/elo_tracker.py",
+    "source_sha256": "9ece98326c32453179b0c765eb45944b68ca9de944d2828a1d42dee1401d1835",
+    "source_commit": "f16953951",
     "iterations": 400,
+    "prior": 0.0,
     "tie_margin": 0.0001,
     "baseline_anchor": 1500.0
   }
