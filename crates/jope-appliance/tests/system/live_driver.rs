@@ -102,7 +102,7 @@ pub(super) fn run() {
 const DRIVER: &str = r####"#!/usr/bin/env python3
 """Native acceptance probe. Runtime outputs stay outside the source checkout."""
 import argparse, datetime, fcntl, hashlib, json, os, pty, select, signal
-import struct, subprocess, termios, time, traceback, re
+import struct, subprocess, termios, time, traceback, re, http.client, urllib.parse
 from pathlib import Path
 
 a = argparse.ArgumentParser()
@@ -271,8 +271,18 @@ def traced_engine(home,label,extra):
     return child,logpath
 
 def daemon_ready(home,child):
-    try:return json.loads((home/'daemon.json').read_text())['pid']==child.pid
-    except (OSError,ValueError,KeyError):return False
+    connection=None
+    try:
+        record=json.loads((home/'daemon.json').read_text())
+        if record['pid']!=child.pid:return False
+        address=urllib.parse.urlsplit(record['url']);assert address.hostname=='127.0.0.1'
+        connection=http.client.HTTPConnection('127.0.0.1',address.port,timeout=.2)
+        connection.request('GET','/v1/system',headers={'Authorization':'Bearer '+record['token']})
+        response=connection.getresponse();body=json.loads(response.read())
+        return response.status==200 and body['api_version'].startswith('1.')
+    except (OSError,ValueError,KeyError,http.client.HTTPException):return False
+    finally:
+        if connection is not None:connection.close()
 
 def wait_ready(home,child):
     deadline=time.monotonic()+15
@@ -318,7 +328,10 @@ def engine_boundary_matrix():
                 try:request.wait(timeout=5)
                 except subprocess.TimeoutExpired:request.terminate();request.wait(timeout=5)
             recovery_homes.append(h)
-            client=MCP(h)  # Actual interactive discovery starts the replacement engine.
+            client=MCP(h)
+            # Invoke an actual tool: stdio initialization alone may defer engine discovery.
+            info=client.call('tools/call',{'name':'system_info','arguments':{}})
+            assert not info.get('isError'),info
             inventory=run(h,['runs','list'])['runs'];assert len(inventory)<=1
             recovered_events=[];state='not-created';recovered=None
             if inventory:
