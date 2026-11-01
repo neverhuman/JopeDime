@@ -5497,6 +5497,10 @@
     "python:research/flywheel_selfplay/h193_invalid_veto/test_h193.py": {
       "role": "research",
       "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+    },
+    "python:research/flywheel_selfplay/h194_invalid_margin/test_h194.py": {
+      "role": "research",
+      "reason": "H194 CPU research-only invalid-margin continuation controls; no serving promotion"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
