@@ -116,9 +116,9 @@ properties guaranteed by naming an encoder. People still choose the problem
 and define what counts as a useful solution.
 
 A move is one program in a typed language over learning primitives.
-The reference language uses a 401-token
-vocabulary, with up to six transforms chosen from 31 and one of 22 prediction
-heads (\cref{sub:method-move}).
+The reference vocabulary has 401 tokens, listing 31 transforms and
+22 prediction heads, with up to six transforms per program; the task
+mask restricts which tokens are legal (\cref{sub:method-move}).
 
 Types remove whole classes of stillborn
 programs before they run \citep{montana1995stgp}. Canonicalization can merge
@@ -165,10 +165,10 @@ reference learning targets use each program's rank within its scored list
 % ----------------------------------------------------------------------------
 \subsection{One game, many boards}\label{sub:game-boards}
 
-Binary and multiclass classification, regression, ranking, forecasting and
-relational prediction are prospective boards. A shared formal interface
-still needs a compatible encoding, program language, metric and validation
-protocol qualified for each task type.
+The accepted checkpoint route and both fixed comparators support only
+tabular regression. Binary and multiclass classification, ranking, forecasting
+and relational prediction remain prospective boards, each needing a qualified
+encoding, program language, metric and validation protocol.
 
 Beyond machine learning, examples of referees include sorting tests
 \citep{mankowitz2023alphadev}, evaluators for mathematical constructions
@@ -214,7 +214,7 @@ than another, ours included \citep{wolpert1996nfl}.
 
 Real problems are structured, though, and a player that
 reads the board can choose its bias board by board. \Cref{sec:results} reserves the tests of that hypothesis against fixed
-frontier-designed algorithms, with paired outcomes beside Elo summaries
+frontier-designed regressors, with paired outcomes beside Elo summaries
 \citep{elo1978rating}. Non-transitive comparisons are one reason not to
 reduce the evidence to a single rating \citep{balduzzi2018reevaluating}.
 
