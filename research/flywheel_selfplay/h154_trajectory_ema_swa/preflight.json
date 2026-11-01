@@ -100,30 +100,30 @@
     ],
     "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
     "launch_guard": {
-      "disk_used_fraction": 0.9112,
-      "disk_free_bytes": 704861745152,
-      "load1": 33.3525390625,
-      "scratch_bytes": 7532968
+      "disk_used_fraction": 0.9113,
+      "disk_free_bytes": 703867695104,
+      "load1": 27.4580078125,
+      "scratch_bytes": 7532970
     },
     "end_guard": {
-      "disk_used_fraction": 0.9112,
-      "disk_free_bytes": 704847568896,
-      "load1": 33.3525390625,
-      "scratch_bytes": 7534480
+      "disk_used_fraction": 0.9113,
+      "disk_free_bytes": 703789899776,
+      "load1": 27.4580078125,
+      "scratch_bytes": 7534293
     }
   },
   "resources": {
     "samples": 13,
     "max_os_threads": 2,
-    "max_rss_bytes": 914870272
+    "max_rss_bytes": 932417536
   },
   "tests": {
     "executed": 27,
     "failed": 0,
     "command": "python3 -B -m unittest discover -s research/flywheel_selfplay/h154_trajectory_ema_swa -p test_h154.py -v"
   },
-  "manifest_sha256": "b17d3de923c454b6a7b63a08919cc532feb9be0f39395cc61b696989b54a56d1",
-  "prereg_sha256": "276cabf739d4867a0163db9442510b4927f472984d600f646774d555c476b100",
+  "manifest_sha256": "2c21a07cb3915e73630216f69cd1e05f0bbc5afee35f722b4fb72d0349639665",
+  "prereg_sha256": "c4c8cb1d6132995ca4f9dbc7bdcaa3e3d192ab80565127d2f877e2ea14cb5981",
   "executor_sha256": {
     "monitor.py": "2ee2bb78a03da2b5e42b68e2ec4448bc331b365f89730482e3a4fb3941e91a33",
     "runner.py": "d4ef45421e36d62347ed8cfff70c121f1c5b6401e3dc2416de0778c5437b9bc2",
@@ -131,17 +131,17 @@
     "science.py": "bcc2dea8794a7d595c018443fed8a2792cc809ed569f54ae14be7244ec5827e6",
     "test_h154.py": "b86ef5e1c06e3fb18b93f7aa8e294cc52629e0fb15c3613d92d3cc33ade4d332"
   },
-  "smoke_sha256": "9ff0bf1634c857f80913e1c30de644dd7e3af87cc025f492fa9a3b2351d69e92",
+  "smoke_sha256": "c2967bf2a857ed5efac0d9861d309e9d2279f430dc1e7d68b0f49ca4d6a5b844",
   "smoke_custody_receipts": {
     "custody_dir": "/home/ubuntu/jope_plan/evidence/H154/smoke",
     "files_sha256": {
-      "smoke-monitor.json": "8f20736e52fda84958113c6ce0f31683e1fc6a50bcd63d4d1ed11ca5ec05d29e",
-      "smoke-resources.jsonl": "4404d89b953511f34de500cd1e8d0fa84b4a4c5b72bcc81620f2662ad4ce0117",
-      "smoke.started": "b23a94cfd268b37c1ca91657d46937eb3bde7eaaf408842d0e89151a5d63f455",
-      "smoke/audit.json": "3c9f60a135ae1ceb5240a2b6ce0544737b075a131d0af858f5f251b15b86875b",
-      "smoke/smoke.json": "9ff0bf1634c857f80913e1c30de644dd7e3af87cc025f492fa9a3b2351d69e92"
+      "smoke-monitor.json": "b55cdd772abdc892f448b88a03cc95a365a993f0377aeaf854d9577e6bfdd841",
+      "smoke-resources.jsonl": "e4b9e9a8a9c7b446fe370077fbf342f97e24b8581b4ca37e65c77b494b58cb89",
+      "smoke.started": "6c8aba07b6fbd730486d7072be6ed746b4533dde2fadb927b94fa8e087b78115",
+      "smoke/audit.json": "132dee4e2826a2d6605f0e73c2d1f4b49f049b5909e0f30da8e29bc148974cc1",
+      "smoke/smoke.json": "c2967bf2a857ed5efac0d9861d309e9d2279f430dc1e7d68b0f49ca4d6a5b844"
     },
-    "pid": 767896,
-    "started_utc": "2026-11-01T04:30:09.776507+00:00"
+    "pid": 1194339,
+    "started_utc": "2026-11-01T04:35:14.188083+00:00"
   }
 }
