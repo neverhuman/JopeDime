@@ -5245,6 +5245,46 @@
         "role": "research",
         "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h197_pcgc/analysis.py": {
+      "bytes": 5403,
+      "classification": {
+        "role": "research",
+        "reason": "H197 data-free controls for per-context gradient clipping: independent TRAIN-family folds, frozen fit-only clip calibration, four matched arms, immutable B-stage lock, strict paired-family bootstrap/verdict, and CPU resource guards; no corpus/checkpoint reads or model passes in fixtures."
+      },
+      "sha256": "15eade053f86d4e97f11cd7f5068858848323417a7a14b40c62509e97a677a1a"
+    },
+    "python:research/flywheel_selfplay/h197_pcgc/design.py": {
+      "bytes": 4451,
+      "classification": {
+        "role": "research",
+        "reason": "H197 data-free controls for per-context gradient clipping: independent TRAIN-family folds, frozen fit-only clip calibration, four matched arms, immutable B-stage lock, strict paired-family bootstrap/verdict, and CPU resource guards; no corpus/checkpoint reads or model passes in fixtures."
+      },
+      "sha256": "572024017a561a8513579e76522644348772bd1288856c76c3fa97f8d1b90bfb"
+    },
+    "python:research/flywheel_selfplay/h197_pcgc/monitor.py": {
+      "bytes": 6041,
+      "classification": {
+        "role": "research",
+        "reason": "H197 data-free controls for per-context gradient clipping: independent TRAIN-family folds, frozen fit-only clip calibration, four matched arms, immutable B-stage lock, strict paired-family bootstrap/verdict, and CPU resource guards; no corpus/checkpoint reads or model passes in fixtures."
+      },
+      "sha256": "eb60e02e0291f7cba75d3f5b7302555ae7f8ed1707e7afad68d1b56ef85424fb"
+    },
+    "python:research/flywheel_selfplay/h197_pcgc/runner.py": {
+      "bytes": 29551,
+      "classification": {
+        "role": "research",
+        "reason": "H197 data-free controls for per-context gradient clipping: independent TRAIN-family folds, frozen fit-only clip calibration, four matched arms, immutable B-stage lock, strict paired-family bootstrap/verdict, and CPU resource guards; no corpus/checkpoint reads or model passes in fixtures."
+      },
+      "sha256": "64be23667c3101cee6a7bc9c7713a2f15c18a096d3ece630908cc77441159f3d"
+    },
+    "python:research/flywheel_selfplay/h197_pcgc/treatment.py": {
+      "bytes": 5506,
+      "classification": {
+        "role": "research",
+        "reason": "H197 data-free controls for per-context gradient clipping: independent TRAIN-family folds, frozen fit-only clip calibration, four matched arms, immutable B-stage lock, strict paired-family bootstrap/verdict, and CPU resource guards; no corpus/checkpoint reads or model passes in fixtures."
+      },
+      "sha256": "38c917f0dc00961272d99c2ee9de13e3fd246613a8c00c5c09695a772fbe66be"
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
