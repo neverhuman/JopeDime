@@ -211,7 +211,7 @@ impl<P: RoundInputProvider> CpuRoundAdmission<P> {
         let values: Vec<_> = costs.total_cost.iter().map(|&v| f64::from(v)).collect();
         let indices = slate.select(&values, rng)?;
         Ok(RoundReadout {
-            admitted: indices.into_iter().map(|i| proposals[i].clone()).collect(),
+            admitted: proposals.iter().take(4).cloned().collect(),
             admitted_indices: indices,
             costs,
         })
