@@ -128,11 +128,19 @@ fn signing_key(scope: Scope, release_key: Option<&Path>) -> Result<TrustedKey> {
 /// including Windows PE, are deliberately unsupported.
 fn validate_executable_target(code: &[u8], target: &str, path: &Path) -> Result<()> {
     match target {
-        "x86_64-unknown-linux-gnu" => ensure!(
-            code.get(0..4) == Some(b"\x7fELF"),
-            "{} is not an ELF file for Linux target {target}",
-            path.display()
-        ),
+        "x86_64-unknown-linux-gnu" => {
+            let x86_64_elf = code.len() >= 64
+                && code.get(0..4) == Some(b"\x7fELF")
+                && code.get(4) == Some(&2) // ELFCLASS64
+                && code.get(5) == Some(&1) // ELFDATA2LSB
+                && code.get(6) == Some(&1) // EV_CURRENT
+                && code.get(18..20) == Some(&62u16.to_le_bytes()); // EM_X86_64
+            ensure!(
+                x86_64_elf,
+                "{} is not a 64-bit little-endian x86_64 ELF file for Linux target {target}",
+                path.display()
+            );
+        }
         "aarch64-apple-darwin" => {
             let arm64_mach_o = code.len() >= 32
                 && code.get(0..4) == Some(&[0xcf, 0xfa, 0xed, 0xfe])
@@ -484,6 +492,19 @@ mod executable_target_tests {
     const LINUX_X86_64: &str = "x86_64-unknown-linux-gnu";
     const MACOS_ARM64: &str = "aarch64-apple-darwin";
 
+    fn x86_64_elf() -> Vec<u8> {
+        let mut code = vec![0; 64];
+        code[0..4].copy_from_slice(b"\x7fELF");
+        code[4] = 2; // ELFCLASS64
+        code[5] = 1; // ELFDATA2LSB
+        code[6] = 1; // EV_CURRENT
+        code[16..18].copy_from_slice(&2u16.to_le_bytes()); // ET_EXEC
+        code[18..20].copy_from_slice(&62u16.to_le_bytes()); // EM_X86_64
+        code[20..24].copy_from_slice(&1u32.to_le_bytes()); // EV_CURRENT
+        code[52..54].copy_from_slice(&64u16.to_le_bytes()); // ELF64 header size
+        code
+    }
+
     fn arm64_mach_o() -> Vec<u8> {
         let mut code = vec![0; 32];
         code[0..4].copy_from_slice(&[0xcf, 0xfa, 0xed, 0xfe]); // MH_MAGIC_64, little-endian
@@ -493,16 +514,30 @@ mod executable_target_tests {
     }
 
     #[test]
-    fn linux_target_accepts_elf_and_rejects_macho_and_pe() {
-        assert!(
-            validate_executable_target(b"\x7fELF fixture", LINUX_X86_64, Path::new("app")).is_ok()
-        );
-        for bytes in [arm64_mach_o(), b"MZ windows PE".to_vec()] {
+    fn linux_target_accepts_x86_64_elf_and_rejects_other_formats_or_architectures() {
+        assert!(validate_executable_target(&x86_64_elf(), LINUX_X86_64, Path::new("app")).is_ok());
+
+        let mut arm64_elf = x86_64_elf();
+        arm64_elf[18..20].copy_from_slice(&183u16.to_le_bytes()); // EM_AARCH64
+        let mut elf32 = x86_64_elf();
+        elf32[4] = 1; // ELFCLASS32
+        elf32[18..20].copy_from_slice(&3u16.to_le_bytes()); // EM_386
+        let mut big_endian = x86_64_elf();
+        big_endian[5] = 2; // ELFDATA2MSB
+
+        for bytes in [
+            arm64_elf,
+            elf32,
+            big_endian,
+            b"\x7fELF truncated".to_vec(),
+            arm64_mach_o(),
+            b"MZ windows PE".to_vec(),
+        ] {
             let error = validate_executable_target(&bytes, LINUX_X86_64, Path::new("app"))
                 .unwrap_err()
                 .to_string();
             assert!(
-                error.contains("not an ELF file for Linux target"),
+                error.contains("not a 64-bit little-endian x86_64 ELF file"),
                 "{error}"
             );
         }
@@ -513,7 +548,7 @@ mod executable_target_tests {
         let mach_o = arm64_mach_o();
         assert!(validate_executable_target(&mach_o, MACOS_ARM64, Path::new("app")).is_ok());
         assert!(
-            validate_executable_target(b"\x7fELF fixture", MACOS_ARM64, Path::new("app"))
+            validate_executable_target(&x86_64_elf(), MACOS_ARM64, Path::new("app"))
                 .unwrap_err()
                 .to_string()
                 .contains("not a 64-bit arm64 Mach-O executable")
@@ -529,13 +564,10 @@ mod executable_target_tests {
 
     #[test]
     fn unsupported_targets_are_rejected_even_when_the_binary_is_elf() {
-        let error = validate_executable_target(
-            b"\x7fELF fixture",
-            "x86_64-pc-windows-gnu",
-            Path::new("app"),
-        )
-        .unwrap_err()
-        .to_string();
+        let error =
+            validate_executable_target(&x86_64_elf(), "x86_64-pc-windows-gnu", Path::new("app"))
+                .unwrap_err()
+                .to_string();
         assert!(
             error.contains("unsupported appliance executable target"),
             "{error}"
