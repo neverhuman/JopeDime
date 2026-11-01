@@ -5466,5 +5466,9 @@
         "W6"
       ]
     }
+  },
+  "python:research/flywheel_selfplay/h169_optimizer_geometry/test_h169.py": {
+    "reason": "H169 data-free controls: family exclusion/assessment coverage, repeatable FIT-only minibatches, strict selection, drift calibration, exact optimizer pins, None-gradient materialization, bootstrap/Holm/Elo, and resource guards.",
+    "role": "research"
   }
 }
