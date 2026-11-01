@@ -416,7 +416,7 @@ Derived digests: the **objective digest** (part of `ProblemDigest`) and the **`p
 ```mermaid
 stateDiagram-v2
     [*] --> running: run_start (validated before the run exists)
-    running --> pausing: pause or Ctrl-C
+    running --> pausing: pause
     pausing --> paused: round committed
     paused --> running: continue
     running --> completed: budget reached or converged
@@ -746,10 +746,11 @@ Backslash is canonical; `/` is accepted as a silent alias. Engine-backed command
 
 ### 6.5 Interrupts and exit
 
+Interactive exit behavior follows the owner direction of 2026-11-01. On macOS use Control-C; Command-C remains the terminal emulator’s copy shortcut. Explicit `\pause` and `\cancel` commands control runs.
+
 | Input | Composer has text | Composer empty, run active | Composer empty, nothing active |
 | --- | --- | --- | --- |
-| Ctrl-C | Clear the draft | Request `\pause`; status shows "pausing — Ctrl-C again within 2 s cancels" | Hint: "\quit or Ctrl-D to exit" |
-| Ctrl-C twice within 2 s | — | `\cancel` (best model kept) | — |
+| Ctrl-C | Exit immediately | Exit; the run continues in the background engine | Exit |
 | Ctrl-D | Delete char | Same as `\quit` | Exit |
 | `\quit` | — | Leave; the run continues in the background engine. Prints `jopedime attach RUN` and `jopedime control RUN pause`. `\quit --pause` pauses first | Exit |
 | SIGHUP (terminal closed), SIGTERM | — | Client exits; the run continues | Exit |

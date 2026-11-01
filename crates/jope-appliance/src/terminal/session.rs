@@ -96,7 +96,6 @@ struct Session {
     event_sender: mpsc::Sender<PublicEvent>,
     activity: String,
     message: Option<String>,
-    ctrl_c_at: Option<Instant>,
     exit_requested: bool,
 }
 
@@ -121,7 +120,6 @@ impl Session {
             event_sender,
             activity: "Type \\help for commands".into(),
             message: None,
-            ctrl_c_at: None,
             exit_requested: false,
         })
     }
@@ -147,6 +145,7 @@ impl Session {
         let mut last_draw = None;
         loop {
             if guard.signal().is_some() {
+                self.leave();
                 return Ok(());
             }
             let width = terminal::size().map(|size| size.0).unwrap_or(80);
@@ -186,9 +185,6 @@ impl Session {
                         if self.exit_requested {
                             return Ok(());
                         }
-                    }
-                    crate::terminal::composer::ComposerAction::Interrupt => {
-                        self.interrupt()?;
                     }
                     crate::terminal::composer::ComposerAction::ExitRequested => {
                         self.leave();
@@ -649,40 +645,6 @@ impl Session {
         Ok(())
     }
 
-    fn interrupt(&mut self) -> anyhow::Result<()> {
-        if self.snapshot.as_ref().is_some_and(|snapshot| {
-            matches!(
-                snapshot.state,
-                RunState::Running | RunState::Pausing | RunState::Paused
-            )
-        }) {
-            let now = Instant::now();
-            let cancel = self
-                .ctrl_c_at
-                .is_some_and(|previous| now.duration_since(previous) <= Duration::from_secs(2));
-            let already_paused = self
-                .snapshot
-                .as_ref()
-                .is_some_and(|snapshot| snapshot.state == RunState::Paused);
-            if cancel {
-                self.control("cancel")?;
-            } else if !already_paused {
-                self.control("pause")?;
-            }
-            self.ctrl_c_at = Some(now);
-            self.message = Some(if cancel {
-                "cancelling; current best model is kept".into()
-            } else if already_paused {
-                "run is paused — Ctrl-C again within 2 s cancels".into()
-            } else {
-                "pausing — Ctrl-C again within 2 s cancels".into()
-            });
-        } else {
-            self.message = Some("\\quit or Ctrl-D to exit".into());
-        }
-        Ok(())
-    }
-
     fn handle_event(&mut self, event: PublicEvent, width: usize) -> Vec<String> {
         update_snapshot_from_event(&mut self.snapshot, &event);
         crate::terminal::cards::render_transcript(
@@ -757,8 +719,7 @@ fn accept_line(
         &crate::terminal::complete::CompletionData::default(),
     )? {
         crate::terminal::composer::ComposerAction::Submit(text) => Ok(Some(text)),
-        crate::terminal::composer::ComposerAction::Interrupt
-        | crate::terminal::composer::ComposerAction::ExitRequested
+        crate::terminal::composer::ComposerAction::ExitRequested
         | crate::terminal::composer::ComposerAction::Redraw
         | crate::terminal::composer::ComposerAction::None => {
             unreachable!("plain line Enter submits the current composer text")

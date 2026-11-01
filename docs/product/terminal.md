@@ -22,3 +22,9 @@ Dataset upload is executable with `jopedime dataset add`; see [Quickstart](quick
 ## Exit statuses
 
 The executable's top-level help lists these exit statuses: 0 for success, 2 for invalid input, 3 for integrity or compatibility errors, 4 for unavailable backends, 5 for a time budget exhausted, 6 for numerical failure, and 7 for output failure.
+
+## Leaving an interactive session
+
+Press **Ctrl-C** to exit immediately and return to your shell on Linux or macOS, including while editing a draft or searching history. On macOS this is Control-C; Command-C remains the terminal’s copy shortcut. **Ctrl-D** exits when the input is empty; `\quit` also exits. The CLI restores terminal input and cursor visibility when it leaves.
+
+An active run continues in the local background engine. Reconnect with `jopedime attach RUN`; use explicit `\pause` or `\cancel` commands to control it. Ctrl-C does not send either command.

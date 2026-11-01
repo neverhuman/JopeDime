@@ -213,3 +213,99 @@ fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io
 }
 
 // Windows ConPTY coverage is tracked separately from this Linux/macOS smoke test.
+
+#[cfg(all(
+    any(target_os = "linux", target_os = "macos"),
+    feature = "client",
+    feature = "engine"
+))]
+mod interactive_exit {
+    use super::pty;
+
+    use std::{
+        fs,
+        os::unix::fs::PermissionsExt,
+        process::{Child, Command, Stdio},
+        time::{Duration, Instant},
+    };
+
+    struct Engine(Child);
+    impl Drop for Engine {
+        fn drop(&mut self) {
+            let _ = self.0.kill();
+            let _ = self.0.wait();
+        }
+    }
+
+    #[test]
+    fn interactive_exit_returns_to_shell_with_terminal_settings_restored() -> std::io::Result<()> {
+        let root = tempfile::tempdir()?;
+        let home = root.path().join("home");
+        fs::create_dir(&home)?;
+        fs::set_permissions(&home, fs::Permissions::from_mode(0o700))?;
+        let binary = env!("CARGO_BIN_EXE_jopedime");
+        let mut engine = Engine(
+            Command::new(binary)
+                .args(["serve", "--idle-exit", "60s"])
+                .env("JOPEDIME_HOME", &home)
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .spawn()?,
+        );
+        let deadline = Instant::now() + Duration::from_secs(15);
+        loop {
+            assert!(engine.0.try_wait()?.is_none(), "isolated engine exited");
+            let status = Command::new(binary)
+                .args(["serve", "--status"])
+                .env("JOPEDIME_HOME", &home)
+                .output()?;
+            if status.status.success() && status.stdout.starts_with(b"running ") {
+                break;
+            }
+            assert!(
+                Instant::now() < deadline,
+                "isolated engine never became ready"
+            );
+            std::thread::sleep(Duration::from_millis(20));
+        }
+
+        for keys in [
+            "\u{3}",
+            "unsent draft\u{3}",
+            "\u{12}\u{3}",
+            "\u{4}",
+            "\\quit\r",
+        ] {
+            // Compare the shell's actual termios before and after the CLI; a reset
+            // escape alone does not prove canonical input and echo were restored.
+            let script = r#"saved=$(stty -g) || exit 91
+    "$JAIN_EXIT_BINARY"
+    result=$?
+    if [ "$result" = 0 ] && [ "$(stty -g)" = "$saved" ]; then
+        echo JAIN_EXIT_RESTORED
+    else
+        echo JAIN_EXIT_BROKEN
+        exit 92
+    fi"#;
+            let mut terminal = pty::PtySession::spawn_with_env(
+                "/usr/bin/env",
+                &["-u", "NO_COLOR", "sh", "-c", script],
+                &[
+                    ("JOPEDIME_HOME", home.to_str().unwrap()),
+                    ("JAIN_EXIT_BINARY", binary),
+                ],
+            )?;
+            terminal.wait_for_output_bytes(b"\x1b[6n", Duration::from_secs(15))?;
+            // Emulate the terminal's cursor-position response for the inline viewport.
+            terminal.type_text("\x1b[1;1R")?;
+            terminal.wait_for_text("background", Duration::from_secs(10))?;
+            terminal.type_text(keys)?;
+            terminal.wait_for_text("JAIN_EXIT_RESTORED", Duration::from_secs(5))?;
+            assert!(
+                engine.0.try_wait()?.is_none(),
+                "leaving killed the shared engine"
+            );
+        }
+        Ok(())
+    }
+}
