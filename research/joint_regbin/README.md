@@ -127,12 +127,39 @@ owner-alias, or protected-roster inputs are added. The corresponding
 `verify_family_key_pool_manifest(...)` re-derives the split against the catalog
 and reports metadata-only preflight status.
 
-This does not make a runnable learner packet. Catalog train hashes do not
-establish the 412-wide candidate programs and frozen 10-slot feature tensors
-consumed by the existing flywheel adapter. The full verifier therefore remains
-closed until a source-pinned train-row cache builder, two-task runtime binding,
-and worker/checkpoint qualification evidence are available. The split receipt
+This does not make a runnable learner packet. The candidate tensor builder below
+constructs the missing feature representation, but role admission, two-task
+worker qualification and checkpoint evidence remain required. The split receipt
 keeps `eligibility_verified:false`; no payload is opened and no campaign starts.
+
+### Train-only candidate tensor builder (ENG:watcher R22)
+
+`candidate_builder.py` supplies the train-only cache construction seam. It binds
+one explicit TRAIN/VAL role row to both the family-key pools and the
+protected-exclusion role candidate receipt, then reads only
+`datasets/<id>/manifest.json` and the exact
+`blobs/sha256/<catalog-train-sha256>` object from the approved dataset bucket.
+It never lists a bucket or reads another split. CSV rows are numeric and finite;
+binary labels are explicitly mapped to zero/one from their two observed class
+values. A deterministic seed builds two inner folds, and the source-pinned
+Flywheel Landmark-V2 proposer, DSL featurizer and native S1 evaluator build 16
+candidate rows.
+
+Regression worker targets are the existing S1 constrained fitness. Binary
+worker targets are the existing two-fold `cv_gate_passed` labels, because the
+task head is BCE-with-logits; this does not infer task from target cardinality
+or introduce a new threshold. The R882/DOPE token tensors are supplied by the
+caller after its read-only pinned initialization. Worker inputs have no revealed
+candidate labels, so target values cannot leak through conditioning slots.
+`make_worker_packer(...)` implements the callable expected by `WorkerCore`.
+
+Every generated pool remains
+`CANDIDATE_TENSORS_NOT_ADMITTED` / `eligibility_verified:false`. This builder
+does not qualify a worker, admit role candidates, train, reserve the study lock,
+write checkpoints or mutate the score store. Use only role rows whose pinned
+metadata proves nonsealed TRAIN/VAL eligibility. Current owner evidence still
+does not provide an admitted complete role manifest or qualified two-task
+worker, so no real pool was built by this change.
 
 ## Learner integration contract (qualification still required)
 
