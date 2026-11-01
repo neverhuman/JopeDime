@@ -36,10 +36,17 @@ def sha(path):
 
 def extract(logs):
     snapshot = json.loads((logs / "snapshot.json").read_text())
+    snapshot.pop("host", None)
     names = {"summary.jsonl", "admissions.jsonl"}
     assert {f["name"] for f in snapshot["files"]} == names
     for item in snapshot["files"]:
         assert sha(logs / item["name"]) == item["sha256"]
+        prefix = item.get("source_prefix")
+        if isinstance(prefix, dict):
+            prefix.pop("host", None)
+            prefix.pop("inode", None)
+            if "path" in prefix:
+                prefix["path"] = Path(prefix["path"]).name
     summaries = [
         json.loads(s) for s in (logs / "summary.jsonl").read_text().splitlines()
     ]

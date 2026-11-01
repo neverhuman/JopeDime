@@ -462,6 +462,23 @@ class A5ProviderTests(unittest.TestCase):
             self.invoke()
         self.assertFalse(self.result.exists())
 
+    def test_candidate_symlink_swap_after_raw_verifier_refuses(self):
+        target = self.root / "same-candidate-bytes.bin"
+        target.write_bytes(self.artifact.read_bytes())
+        original = self.run_child
+
+        def swap(args, **kwargs):
+            result = original(args, **kwargs)
+            if len(args) > 2 and str(args[2]).endswith("verify_capture.py"):
+                self.artifact.unlink()
+                self.artifact.symlink_to(target)
+            return result
+
+        self.run_child = swap
+        with self.assertRaisesRegex(common.ProviderError, "non-symlink"):
+            self.invoke()
+        self.assertFalse(self.result.exists())
+
     def test_result_must_be_new_and_outside_checkout(self):
         self.ctx = common.Context(
             "A5",

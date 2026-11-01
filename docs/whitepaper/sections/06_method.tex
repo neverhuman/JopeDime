@@ -84,10 +84,14 @@ Reported winners still require the parity check in \cref{sub:method-referee}.
 \subsection{One map for problems and programs}\label{sub:method-map}
 
 The map reads a program as $z_w=\encS(w)$, the layer-normalized mean of
-non-padding token embeddings. Pooling discards token order, limiting its ability to
-distinguish compositions built from the same tokens. It combines $z_w$ with $z_p$ three ways: as is, gated by the problem,
-and as a distance from a projection of it. It averages four heads into a
-score $\mapv(z_p,z_w)$ with parameters $\psi$.
+non-padding token embeddings, including \texttt{BOS}, the fixed engine and
+task header, and \texttt{EOS}. Pooling discards token order, limiting its
+ability to distinguish compositions built from the same tokens. It combines
+$z_w$ with $z_p$ three ways: as is, gated by the problem, and as a distance
+from a projection of it. Four two-layer heads receive this same interaction
+vector and their mean gives the score $\mapv(z_p,z_w)$ with parameters
+$\psi$. Native ranking losses supervise that mean jointly; the heads have
+no separate targets or bootstrap samples.
 Higher logits rank higher within a problem. The score is not a calibrated
 error estimate. Comparing its magnitude across problems or reading it as a
 probability of a verified win requires separate evidence. The referee

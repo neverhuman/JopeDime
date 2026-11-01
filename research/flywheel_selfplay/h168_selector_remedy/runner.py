@@ -151,6 +151,36 @@ def verify_external_launch_binding(ext_path, head, manifest_sha, prereg_sha, fol
     return ext
 
 
+def predict_uncached_adapter_costs(net, progs, proj, fit, gate_arr, tok_arr, msk_arr):
+    """Calls net.adapter_10tok.predict_costs directly for uncached native W10 r882 baseline verification."""
+    import torch
+
+    b, size = progs.shape[:2]
+    return (
+        net.adapter_10tok.predict_costs(
+            ctx_feat=torch.zeros((b, 584), dtype=torch.float32),
+            prog_412=torch.as_tensor(progs),
+            proj_16=torch.as_tensor(proj),
+            base_prior_cost=torch.zeros((b, size), dtype=torch.float32),
+            scale=torch.full((b,), 0.4208, dtype=torch.float32),
+            sos_prior=torch.zeros((b, size, 2), dtype=torch.float32),
+            mm_tokens_10x32=torch.as_tensor(tok_arr),
+            mm_mask_10=torch.as_tensor(msk_arr),
+            revealed_indices=torch.arange(min(4, size)).reshape(1, -1).expand(b, -1),
+            revealed_raw_f=torch.as_tensor(fit[:, : min(4, size)], dtype=torch.float32),
+            revealed_gate=torch.as_tensor(
+                gate_arr[:, : min(4, size)], dtype=torch.float32
+            ),
+            enable_prior_correction=True,
+            enable_struct_kernel=True,
+            enable_cross_attn=True,
+            enable_ucb=False,
+        )["total_cost"]
+        .cpu()
+        .numpy()
+    )
+
+
 def subpanel(full, rows):
     idx = {c: i for i, c in enumerate(full["context_ids"])}
     order = [idx[r["context_sha256"]] for r in rows]
@@ -307,82 +337,84 @@ def main():
 
         import torch
 
-        pools = {}
-        projection = fused.get_w1_sign_matrix() / np.sqrt(412.0)
-        for row in train + val:
-            cid = row["context_sha256"]
-            path = rt.INPUT / "pools" / f"{cid}.npz"
-            if rt.sha(path) != row["pool_sha256"]:
-                raise RuntimeError(f"pool hash mismatch: {cid}")
-            with np.load(path, allow_pickle=False) as z:
-                program = z["program"].astype(np.float32)
-                pools[cid] = dict(
-                    program=program,
-                    proj16=(program.astype(np.float64) @ projection).astype(np.float32),
-                    fitness=z["fitness"].astype(np.float64),
-                    gate=z["gate"].astype(bool),
-                )
         with np.load(rt.CACHE, allow_pickle=False) as z:
             ids = list(map(str, z["cids"]))
-            if set(ids) != set(pools) or len(ids) != len(pools):
+            expected_ids = {r["context_sha256"] for r in train + val}
+            if set(ids) != expected_ids or len(ids) != len(expected_ids):
                 raise RuntimeError("context feature cache mismatch")
             tok, mask = z["tokens_10x32"], z["mask_10"]
             tokens = {c: tok[i].astype(np.float32) for i, c in enumerate(ids)}
             masks = {c: mask[i].astype(bool) for i, c in enumerate(ids)}
 
-        # Precompute frozen anchor outputs once across all 1,310 contexts (exact 0.0 diff vs uncached)
+        pools = {}
         anchor_cache = {}
-        all_groups = {}
-        for r in train + val:
-            c = r["context_sha256"]
-            all_groups.setdefault(len(pools[c]["fitness"]), []).append(c)
-        with torch.no_grad():
-            for size, cids in sorted(all_groups.items()):
-                for start in range(0, len(cids), 8):
-                    batch = cids[start : start + 8]
-                    b = len(batch)
-                    k = size
-                    progs = torch.as_tensor(
-                        np.stack([pools[c]["program"] for c in batch])
+        projection = fused.get_w1_sign_matrix() / np.sqrt(412.0)
+
+        def load_pools_and_anchor_cache(rows):
+            groups_sub = {}
+            for row in rows:
+                cid = row["context_sha256"]
+                path = rt.INPUT / "pools" / f"{cid}.npz"
+                if rt.sha(path) != row["pool_sha256"]:
+                    raise RuntimeError(f"pool hash mismatch: {cid}")
+                with np.load(path, allow_pickle=False) as z:
+                    program = z["program"].astype(np.float32)
+                    pools[cid] = dict(
+                        program=program,
+                        proj16=(program.astype(np.float64) @ projection).astype(
+                            np.float32
+                        ),
+                        fitness=z["fitness"].astype(np.float64),
+                        gate=z["gate"].astype(bool),
                     )
-                    proj = torch.as_tensor(
-                        np.stack([pools[c]["proj16"] for c in batch])
-                    )
-                    rev_idx = torch.arange(min(4, k)).reshape(1, -1).expand(b, -1)
-                    rev_raw_f = torch.as_tensor(
-                        np.stack([pools[c]["fitness"][: min(4, k)] for c in batch]),
-                        dtype=torch.float32,
-                    )
-                    rev_gate = torch.as_tensor(
-                        np.stack([pools[c]["gate"][: min(4, k)] for c in batch]),
-                        dtype=torch.float32,
-                    )
-                    scale_b = torch.full((b,), 0.4208, dtype=torch.float32)
-                    sos_b = torch.zeros((b, k, 2), dtype=torch.float32)
-                    a_out = net.adapter_10tok.anchor.predict_costs(
-                        ctx_feat=torch.zeros((b, 584), dtype=torch.float32),
-                        prog_412=progs,
-                        proj_16=proj,
-                        base_prior_cost=torch.zeros((b, k), dtype=torch.float32),
-                        scale=scale_b,
-                        sos_prior=sos_b,
-                        revealed_indices=rev_idx,
-                        revealed_raw_f=rev_raw_f,
-                        revealed_gate=rev_gate,
-                        enable_prior_correction=True,
-                        enable_struct_kernel=True,
-                        enable_cross_attn=True,
-                        enable_ucb=False,
-                    )
-                    a_tot = a_out["total_cost"].detach().float()
-                    a_eff = a_out["eff_prior"].detach().float()
-                    for i_b, c in enumerate(batch):
-                        anchor_cache[c] = (
-                            a_tot[i_b].clone(),
-                            a_eff[i_b].clone(),
-                            rev_raw_f[i_b].clone(),
-                            rev_gate[i_b].clone(),
+                groups_sub.setdefault(len(pools[cid]["fitness"]), []).append(cid)
+            with torch.no_grad():
+                for size, cids in sorted(groups_sub.items()):
+                    for start in range(0, len(cids), 8):
+                        batch = cids[start : start + 8]
+                        b = len(batch)
+                        k = size
+                        progs = torch.as_tensor(
+                            np.stack([pools[c]["program"] for c in batch])
                         )
+                        proj = torch.as_tensor(
+                            np.stack([pools[c]["proj16"] for c in batch])
+                        )
+                        rev_idx = torch.arange(min(4, k)).reshape(1, -1).expand(b, -1)
+                        rev_raw_f = torch.as_tensor(
+                            np.stack([pools[c]["fitness"][: min(4, k)] for c in batch]),
+                            dtype=torch.float32,
+                        )
+                        rev_gate = torch.as_tensor(
+                            np.stack([pools[c]["gate"][: min(4, k)] for c in batch]),
+                            dtype=torch.float32,
+                        )
+                        scale_b = torch.full((b,), 0.4208, dtype=torch.float32)
+                        sos_b = torch.zeros((b, k, 2), dtype=torch.float32)
+                        a_out = net.adapter_10tok.anchor.predict_costs(
+                            ctx_feat=torch.zeros((b, 584), dtype=torch.float32),
+                            prog_412=progs,
+                            proj_16=proj,
+                            base_prior_cost=torch.zeros((b, k), dtype=torch.float32),
+                            scale=scale_b,
+                            sos_prior=sos_b,
+                            revealed_indices=rev_idx,
+                            revealed_raw_f=rev_raw_f,
+                            revealed_gate=rev_gate,
+                            enable_prior_correction=True,
+                            enable_struct_kernel=True,
+                            enable_cross_attn=True,
+                            enable_ucb=False,
+                        )
+                        a_tot = a_out["total_cost"].detach().float()
+                        a_eff = a_out["eff_prior"].detach().float()
+                        for i_b, c in enumerate(batch):
+                            anchor_cache[c] = (
+                                a_tot[i_b].clone(),
+                                a_eff[i_b].clone(),
+                                rev_raw_f[i_b].clone(),
+                                rev_gate[i_b].clone(),
+                            )
 
         def evaluate_uncached(rows, return_raw_scores=False):
             groups_r = {}
@@ -401,40 +433,8 @@ def main():
                         gate_arr = np.stack([pools[c]["gate"] for c in batch])
                         tok_arr = np.stack([tokens[c] for c in batch])
                         msk_arr = np.stack([masks[c] for c in batch])
-                        scores = (
-                            net.predict_with_10tok_adapter(
-                                ctx_feat=torch.zeros(
-                                    (len(batch), 584), dtype=torch.float32
-                                ),
-                                prog_412=torch.as_tensor(progs),
-                                proj_16=torch.as_tensor(proj),
-                                base_prior_cost=torch.zeros(
-                                    (len(batch), size), dtype=torch.float32
-                                ),
-                                scale=torch.full(
-                                    (len(batch),), 0.4208, dtype=torch.float32
-                                ),
-                                sos_prior=torch.zeros(
-                                    (len(batch), size, 2), dtype=torch.float32
-                                ),
-                                mm_tokens_10x32=torch.as_tensor(tok_arr),
-                                mm_mask_10=torch.as_tensor(msk_arr),
-                                revealed_indices=torch.arange(min(4, size))
-                                .reshape(1, -1)
-                                .expand(len(batch), -1),
-                                revealed_raw_f=torch.as_tensor(
-                                    fit[:, : min(4, size)], dtype=torch.float32
-                                ),
-                                revealed_gate=torch.as_tensor(
-                                    gate_arr[:, : min(4, size)], dtype=torch.float32
-                                ),
-                                enable_prior_correction=True,
-                                enable_struct_kernel=True,
-                                enable_cross_attn=True,
-                                enable_ucb=False,
-                            )["total_cost"]
-                            .cpu()
-                            .numpy()
+                        scores = predict_uncached_adapter_costs(
+                            net, progs, proj, fit, gate_arr, tok_arr, msk_arr
                         )
                         for cid, cost in zip(batch, scores, strict=True):
                             if return_raw_scores:
@@ -532,7 +532,8 @@ def main():
                 out_dict["raw_scores"] = raw_scores
             return out_dict
 
-        # Verify exact 91-ctx r882 baseline on BOTH uncached and cached paths (including per-candidate total_cost bit-identity for native W10 r882)
+        # 1. Load ONLY the 91 DL-Val contexts and run the exact 91-ctx baseline & W10 score bit-identity gate BEFORE opening any DL-Train pools
+        load_pools_and_anchor_cache(val)
         baseline_uncached = evaluate_uncached(val, return_raw_scores=True)
         baseline_with_raw = evaluate(val, return_raw_scores=True)
         w10_score_bit_identity = verify_native_score_bit_identity(
@@ -594,6 +595,8 @@ def main():
             flush=True,
         )
 
+        # 2. Load the 1,219 DL-Train pools and precompute frozen anchor outputs after DL-Val baseline gate passes
+        load_pools_and_anchor_cache(train)
         r882_train = evaluate(train)
         train_index = {r["context_sha256"]: i for i, r in enumerate(train)}
 
