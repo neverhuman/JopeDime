@@ -232,3 +232,27 @@ def test_supervisor_hard_stops():
         ("available", 15 * 1024**3, "MEMORY"),
     ]:
         assert mon.classify(dict(ok, **{key: bad})) == ("abort", why)
+
+
+def test_amendment_a1_project_grads_zero_fills_missing_gradients():
+    import torch
+
+    rspec = importlib.util.spec_from_file_location("h160_test_run", HERE / "run.py")
+    run = importlib.util.module_from_spec(rspec)
+    rspec.loader.exec_module(run)
+    u_np, _ = stat.basis(chain(dim=7), 2)
+    u = torch.as_tensor(u_np)
+    a = torch.nn.Parameter(torch.zeros(4))
+    b = torch.nn.Parameter(
+        torch.zeros(3)
+    )  # receives no gradient this step (grad is None)
+    a.grad = torch.arange(1.0, 5.0)
+    missing = run.project_grads(torch, [a, b], [4, 3], u)
+    assert missing == [1] and b.grad is not None
+    full = np.r_[np.arange(1.0, 5.0), np.zeros(3)]
+    got = np.r_[a.grad.numpy(), b.grad.numpy()]
+    assert (
+        np.allclose(got, stat.project(u_np, full), atol=1e-6)
+        and stat.out_of_span(u_np, got) < 1e-6
+    )
+    assert run.project_grads(torch, [a, b], [4, 3], u) == []  # both now have gradients
