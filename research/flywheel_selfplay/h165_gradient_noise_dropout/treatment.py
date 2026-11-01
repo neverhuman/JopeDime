@@ -31,6 +31,12 @@ def noise_std(eta, scale, step, parameters=PARAMETERS):
     return scale * math.sqrt(eta / parameters) / (1 + step) ** 0.275
 
 
+def gradient_norm(params):
+    """Match clip_grad_norm_: inactive tensors contribute zero to the data gradient."""
+    grads = [p.grad.detach().reshape(-1) for p in params if p.grad is not None]
+    return float(torch.linalg.vector_norm(torch.cat(grads))) if grads else 0.0
+
+
 def add_noise(params, eta, scale, step, seed):
     generator = torch.Generator(device="cpu").manual_seed(seed)
     sigma = noise_std(eta, scale, step)

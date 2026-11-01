@@ -14,7 +14,7 @@ import time
 import numpy as np
 import torch
 import analysis as stat
-from treatment import InputDropout, adapter_forward, add_noise
+from treatment import InputDropout, adapter_forward, add_noise, gradient_norm
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
@@ -475,11 +475,7 @@ def main():
                                 params, 1.0, error_if_nonfinite=True
                             )
                         )
-                        clipped = float(
-                            torch.linalg.vector_norm(
-                                torch.cat([p.grad.detach().reshape(-1) for p in params])
-                            )
-                        )
+                        clipped = gradient_norm(params)
                         noise = {}
                         if arm == "DROP":
                             noise = dict(
