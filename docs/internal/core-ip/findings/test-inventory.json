@@ -3181,6 +3181,12 @@
       "reason": "Portable PTY harness smoke test for the terminal UI test infrastructure (TUI-10); supports UI tests without exercising a regression subsystem",
       "role": "infrastructure"
     },
+    "target:jope-appliance/test/resize_input_readiness": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
     "target:jope-appliance/test/single_file": {
       "role": "regression",
       "subsystems": [
