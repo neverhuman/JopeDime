@@ -4409,8 +4409,8 @@
       }
     },
     "python:research/h172/analysis.py": {
-      "bytes": 19836,
-      "sha256": "9118315aab9920d93781fb270b67da88dcbda67f52be0bf1c5c7cdf3339e4253",
+      "bytes": 19861,
+      "sha256": "0c5fbd4eb6fd7e31aad0b5bc773133aab24b608b2664bd386d621e2ff7afc610",
       "classification": {
         "role": "research",
         "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; family cross-fit L-BFGS runner and bounded CPU supervisor. Research only; no product/sealed qualification."
@@ -4425,8 +4425,8 @@
       }
     },
     "python:research/h172/run.py": {
-      "bytes": 61489,
-      "sha256": "33e81f10ef55f0c3f32993e24dd7df15d3fa2ac1d0d41d44e549ee9ec2d71601",
+      "bytes": 61496,
+      "sha256": "c019274392f744fd105d832f5765f40bcbe5bdb94aecb99c3bfbe482dbcb371b",
       "classification": {
         "role": "research",
         "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; family cross-fit L-BFGS runner and bounded CPU supervisor. Research only; no product/sealed qualification."
