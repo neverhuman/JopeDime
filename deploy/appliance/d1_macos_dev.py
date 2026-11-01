@@ -102,88 +102,6 @@ def toolchain_path_is_empty(path: Path) -> bool:
     return path.is_dir() and not any(path.iterdir())
 
 
-def validate_build_record(source_sha: str, code: Path, record_path: Path) -> dict:
-    if code.is_symlink() or not code.is_file() or not os.access(code, os.X_OK):
-        raise D1DevError("base executable must be a regular executable file")
-    record = read_json(record_path)
-    code_sha = digest(code)
-    if (
-        record.get("schema") != "jope.rel07.d1-darwin-build/v1"
-        or record.get("source_sha") != source_sha
-        or record.get("target_triple") != "aarch64-apple-darwin"
-        or record.get("profile") != "full"
-        or record.get("features") != FEATURES
-        or record.get("base_executable_sha256") != code_sha
-        or record.get("checks")
-        != {
-            "native_arm64": True,
-            "embedded_source_pin": True,
-            "full_features": True,
-            "macos_os_libraries_only": True,
-        }
-    ):
-        raise D1DevError("Darwin build receipt does not bind the expected source/code")
-    return {"sha256": code_sha, "record": record}
-
-
-def package_dev(source_sha: str, code: Path, build_record: Path, output: str) -> dict:
-    require_macos_arm64()
-    if not SOURCE_SHA.fullmatch(source_sha) or repo_source_sha() != source_sha:
-        raise D1DevError("package source SHA must match the clean checkout HEAD")
-    code = code.resolve(strict=True)
-    build_record = build_record.resolve(strict=True)
-    validate_build_record(source_sha, code, build_record)
-    archs = subprocess.run(
-        ["lipo", "-archs", str(code)], text=True, capture_output=True, check=False
-    )
-    if archs.returncode or archs.stdout.strip() != "arm64":
-        raise D1DevError("base executable is not native Darwin arm64")
-    version = subprocess.run(
-        [str(code), "--version", "--json"], text=True, capture_output=True, check=False
-    )
-    if version.returncode:
-        raise D1DevError("base executable version probe failed")
-    try:
-        identity = json.loads(version.stdout)
-    except json.JSONDecodeError as error:
-        raise D1DevError("base executable returned invalid version JSON") from error
-    features = identity.get("features", {})
-    if (
-        identity.get("source_sha40") != source_sha
-        or identity.get("target") != "aarch64-apple-darwin"
-        or any(features.get(name) is not True for name in FEATURES)
-        or features.get("dev_keys") is not False
-        or identity.get("trusts_development_key") is not False
-    ):
-        raise D1DevError("base executable identity/features differ from D1")
-
-    out = external_new_dir(output)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.mkdir()
-    executable = out / "jopedime"
-    shutil.copyfile(code, executable)
-    executable.chmod(0o755)
-    package = {
-        "schema": PACKAGE_SCHEMA,
-        "label": "DEV-BUILD",
-        "qualification": "NOT_QUALIFIED",
-        "source_sha": source_sha,
-        "platform": "macos-arm64",
-        "target_triple": "aarch64-apple-darwin",
-        "profile": "full",
-        "features": FEATURES,
-        "artifact": "jopedime",
-        "artifact_sha256": digest(executable),
-        "release_signed": False,
-        "development_signed": False,
-        "build_record_sha256": digest(build_record),
-    }
-    (out / "DEV-BUILD.json").write_text(
-        json.dumps(package, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
-    return package
-
-
 def package_fixture(source_sha: str, fixture_package: Path, output: str) -> dict:
     """Wrap the repository's development-key fixture package for a non-gate rehearsal."""
     require_macos_arm64()
@@ -268,14 +186,13 @@ def validate_dev_candidate(candidate: Path, source_sha: str) -> tuple[Path, dict
         or package.get("source_sha") != source_sha
         or package.get("platform") != "macos-arm64"
         or package.get("target_triple") != "aarch64-apple-darwin"
-        or package.get("profile") not in {"full", "fixture"}
+        or package.get("profile") != "fixture"
         or package.get("features") != FEATURES
         or package.get("artifact") != "jopedime"
         or package.get("artifact_sha256") != digest(executable)
         or not executable.is_file()
         or not os.access(executable, os.X_OK)
-        or package.get("development_signed")
-        is not (package.get("profile") == "fixture")
+        or package.get("development_signed") is not True
     ):
         raise D1DevError("candidate is not an intact source-bound D1 DEV-BUILD")
     return executable, package
@@ -531,15 +448,8 @@ def main() -> int:
         help="clean exact-SHA source checkout (defaults to this script's checkout)",
     )
     commands = parser.add_subparsers(dest="command", required=True)
-    package = commands.add_parser(
-        "package", help="wrap a Darwin base executable as DEV-BUILD"
-    )
-    package.add_argument("--source-sha", required=True)
-    package.add_argument("--base-executable", required=True, type=Path)
-    package.add_argument("--build-record", required=True, type=Path)
-    package.add_argument("--out", required=True)
     fixture = commands.add_parser(
-        "package-fixture", help="wrap a development-key fixture package as DEV-BUILD"
+        "package", help="wrap a development-key fixture package as DEV-BUILD"
     )
     fixture.add_argument("--source-sha", required=True)
     fixture.add_argument("--fixture-package", required=True, type=Path)
@@ -551,10 +461,6 @@ def main() -> int:
     try:
         ROOT = args.repo_root.resolve(strict=True)
         if args.command == "package":
-            result = package_dev(
-                args.source_sha, args.base_executable, args.build_record, args.out
-            )
-        elif args.command == "package-fixture":
             result = package_fixture(args.source_sha, args.fixture_package, args.out)
         else:
             result = run_candidate(args.candidate, args.out)

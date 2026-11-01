@@ -24,23 +24,6 @@ def sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def build_record(code: Path, source: str = SOURCE) -> dict:
-    return {
-        "schema": "jope.rel07.d1-darwin-build/v1",
-        "source_sha": source,
-        "target_triple": "aarch64-apple-darwin",
-        "profile": "full",
-        "features": FEATURES,
-        "base_executable_sha256": sha(code),
-        "checks": {
-            "native_arm64": True,
-            "embedded_source_pin": True,
-            "full_features": True,
-            "macos_os_libraries_only": True,
-        },
-    }
-
-
 def package(path: Path, code: Path, source: str = SOURCE) -> None:
     executable = path / "jopedime"
     executable.write_bytes(code.read_bytes())
@@ -52,12 +35,12 @@ def package(path: Path, code: Path, source: str = SOURCE) -> None:
         "source_sha": source,
         "platform": "macos-arm64",
         "target_triple": "aarch64-apple-darwin",
-        "profile": "full",
+        "profile": "fixture",
         "features": FEATURES,
         "artifact": "jopedime",
         "artifact_sha256": sha(executable),
         "release_signed": False,
-        "development_signed": False,
+        "development_signed": True,
     }
     (path / "DEV-BUILD.json").write_text(json.dumps(metadata), encoding="utf-8")
 
@@ -72,21 +55,14 @@ class D1DarwinDevTests(unittest.TestCase):
             self.assertFalse(d1.toolchain_path_is_empty(path))
             self.assertFalse(d1.toolchain_path_is_empty(path / "missing"))
 
-    def test_build_record_binds_source_code_profile_and_allowlist(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            code = root / "jopedime"
-            code.write_bytes(b"synthetic executable")
-            code.chmod(0o755)
-            record = root / "darwin-build.json"
-            record.write_text(json.dumps(build_record(code)), encoding="utf-8")
-
-            valid = d1.validate_build_record(SOURCE, code, record)
-            self.assertEqual(valid["sha256"], sha(code))
-            value = build_record(code, "0" * 40)
-            record.write_text(json.dumps(value), encoding="utf-8")
-            with self.assertRaisesRegex(d1.D1DevError, "does not bind"):
-                d1.validate_build_record(SOURCE, code, record)
+    def test_version_source_uses_bound_package_identity(self):
+        self.assertEqual(d1.version_source({"source_sha40": SOURCE}), SOURCE)
+        self.assertEqual(
+            d1.version_source(
+                {"source_sha40": "unknown", "package": {"source_sha40": SOURCE}}
+            ),
+            SOURCE,
+        )
 
     def test_candidate_requires_dev_label_and_byte_binding(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -121,13 +97,12 @@ class D1DarwinDevTests(unittest.TestCase):
             package(candidate, Path(__file__))
             metadata_path = candidate / "DEV-BUILD.json"
             metadata = json.loads(metadata_path.read_text())
-            metadata["profile"] = "fixture"
-            metadata["development_signed"] = True
+            metadata["profile"] = "full"
+            metadata["development_signed"] = False
             metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
 
-            _, accepted = d1.validate_dev_candidate(candidate, SOURCE)
-            self.assertEqual(accepted["profile"], "fixture")
-            self.assertTrue(accepted["development_signed"])
+            with self.assertRaisesRegex(d1.D1DevError, "not an intact"):
+                d1.validate_dev_candidate(candidate, SOURCE)
 
 
 if __name__ == "__main__":

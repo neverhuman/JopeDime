@@ -43,7 +43,7 @@ path builds and verifies the fixture package in the lane's reused Cargo target. 
 run:
 
 ```bash
-nice -n 19 python3 -B deploy/appliance/d1_macos_dev.py package-fixture \
+nice -n 19 python3 -B deploy/appliance/d1_macos_dev.py package \
   --source-sha <40-lowercase-hex-source-sha> \
   --fixture-package /absolute/evidence/REL-07/D1-fixture/jopedime \
   --out /absolute/evidence/REL-07/D1-dev-package
@@ -52,7 +52,7 @@ nice -n 19 python3 -B deploy/appliance/d1_macos_dev.py run \
   --out /absolute/evidence/REL-07/D1-dev-run
 ```
 
-`package-fixture` requires `--repo-root <checkout>` before the subcommand when staged outside the
+`package` requires `--repo-root <checkout>` before the subcommand when staged outside the
 source checkout. It verifies the native arm64 package's embedded source identity and development-key
 trust, then labels the copied package `DEV-BUILD` with `release_signed: false` and
 `development_signed: true`. `run` executes network-denied discovery, synthetic local fit,
