@@ -78,25 +78,52 @@
   },
   "paired_differences": {
     "25_to_100": {
-      "family_bootstrap_ci95": [
+      "axis1_seed_median_quantile_bug_ci95": [
         -0.004377481719555746,
         0.0029133609987936696
       ],
-      "median_equal_family_gain": -0.0007339988174765051
+      "family_bootstrap_ci95": [
+        -0.006640822026346033,
+        0.004873083847082756
+      ],
+      "median_equal_family_gain": -0.0007339988174765051,
+      "per_seed_equal_family_gain": [
+        -0.0007339988174765051,
+        -0.004785764379614511,
+        0.003472060678137726
+      ]
     },
     "25_to_50": {
-      "family_bootstrap_ci95": [
+      "axis1_seed_median_quantile_bug_ci95": [
         -0.00268879147683202,
         0.007188823127151072
       ],
-      "median_equal_family_gain": 0.0009364909899551194
+      "family_bootstrap_ci95": [
+        -0.004266422431118795,
+        0.006807589663796517
+      ],
+      "median_equal_family_gain": 0.0009364909899551194,
+      "per_seed_equal_family_gain": [
+        0.0009364909899551194,
+        -0.0031093440469350817,
+        0.008024466566846918
+      ]
     },
     "50_to_100": {
-      "family_bootstrap_ci95": [
+      "axis1_seed_median_quantile_bug_ci95": [
         -0.0041403385963950275,
         -0.0016231595204058266
       ],
-      "median_equal_family_gain": -0.0016764203326794297
+      "family_bootstrap_ci95": [
+        -0.0066740987296053465,
+        0.0016825747985897773
+      ],
+      "median_equal_family_gain": -0.0016764203326794297,
+      "per_seed_equal_family_gain": [
+        -0.0016704898074316246,
+        -0.0016764203326794297,
+        -0.00455240588870919
+      ]
     }
   },
   "prereg_pr": 1493,
@@ -134,7 +161,8 @@
     "median": -0.0003669994087377432
   },
   "source_commit": "6f489fd4b20adcbd58685d9349d0243d97c6eacd",
-  "verdict": "INCONCLUSIVE",
+  "verdict": "DATA_SATURATED",
+  "verdict_before_axis0_ci_fix": "INCONCLUSIVE",
   "wave": "H176",
   "zero_update_gap": {
     "dl_val_equal_family_utility": 1.153615276991245,
