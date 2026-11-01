@@ -84,6 +84,23 @@ def test_holm_and_verdict_require_all_strict_primary_conditions():
         assert stat.verdict(bad)["verdict"] == "NO_ADVANCE"
 
 
+def test_paired_bootstrap_keeps_all_draws_and_reports_cont_gain():
+    families = [f"f{i:03}" for i in range(40)]
+    panel = np.zeros((3, 40, len(stat.ARMS)), dtype=float)
+    centered = np.tile([-0.01, 0.01], 20)
+    for arm_index in range(1, len(stat.ARMS)):
+        panel[:, :, arm_index] = centered
+    result = stat.ensemble_summary(families, panel)
+    assert set(result["gain_vs_r882"]) == set(stat.ARMS[1:])
+    assert len(result["gain_vs_r882"]["CONT"]["family_bootstrap_ci95"]) == 2
+    assert "holm_m3_adjusted_p" not in result["gain_vs_r882"]["CONT"]
+    for arm in stat.FRESH_ARMS:
+        gain = result["gain_vs_r882"][arm]
+        assert len(gain["family_bootstrap_ci95"]) == 2
+        assert gain["one_sided_centered_bootstrap_p"] > 0.20
+        assert gain["holm_m3_adjusted_p"] > 0.20
+
+
 def test_pilot_budget_accounts_for_six_trajectories_and_three_hour_cap():
     assert stat.execution_plan(0.1)["outer_folds"] == 5
     assert stat.execution_plan(10.0)["outer_folds"] == 3
