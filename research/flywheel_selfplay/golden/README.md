@@ -59,6 +59,8 @@ CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS
  --cohort "$COHORT" --cohort-sha256 "$COHORT_SHA" \
  --parents "$PARENTS" --parents-sha256 "$PARENTS_SHA" \
  --cv "$TRAIN_CV" --cv-sha256 "$TRAIN_CV_SHA" \
+ --rnk05-packet "$ORIGINAL_CPU_PACKET" \
+ --rnk05-index-sha256 "27905f29703431bedacac90eed1bd54257fd0c59bdf24b56605d0b9416ae1393" \
  --tables "$TRAIN_TABLES" --store "$HASH_STORE" --output "$NEW_OUTPUT"
 ```
 
@@ -70,14 +72,14 @@ S1 fit ledger and deadline are not restarted because this route performs no S1
 calls. It records feature extraction separately from estimator fits.
 
 The published R5 catalog is
-`06b1867d2e91bc9e394146accd4bca297ded7fb7fc1438687b6942f1d5ad9f57`.
-Its complete set is **400 files / 24,611,659 bytes**, including the catalog.
+`a16efb5c3a8bd09ea08caaaf030c199f5d2d733153874d112b928a3f1cd2bb86`.
+Its complete set is **655 files / 43,934,017 bytes**, including the catalog.
 The packet index is
 `ddaa6cfc558f0a7e56fe73f657266d00d6c821739a602afc701f87fa1c4f5af1`.
 Two fresh generations and every payload/index byte match. Although below the
 50,000,000-byte threshold, all objects are retained by SHA256 outside Git at
 `/home/ubuntu/jope-data/dsc08/res07-r5-t1900/sha256`; xbabe1 has a verified
-348-object replica at
+591-object replica at
 `/home/ubuntu/lane_work/sol_v1_dsc08/fixtures/res07-r5-t1900/sha256`.
 The canonical source receipt and external gate logs are under
 `/home/ubuntu/jope_plan/evidence/RES07-R5-closeout-t1900-dsc08`.
@@ -85,7 +87,7 @@ The canonical source receipt and external gate logs are under
 `generate.materialize_custody(store, catalog_sha256, new_output)` verifies the
 independent catalog SHA, canonical paths, accounting, every object SHA and byte
 length, then atomically publishes a new directory. Tests fetch this exact catalog;
-a missing/corrupt/escaping object refuses. Set `JOPE_GOLDEN_DIR=<fetched-complete>/packet`
+a missing/corrupt/escaping object refuses. Set `JOPE_GOLDEN_DIR=<fetched-qualified>/packet`
 and `JOPE_GOLDEN_INDEX_SHA256` to the packet index pin above. No source/model
 copies or shared build cleanup are part of fetch.
 
@@ -96,7 +98,7 @@ copies or shared build cleanup are part of fetch.
 | RNK-01 | Original RES06 bundle digest94fd9587 | Frozen manifest, four payload hashes, weight/shape and DOPE c51a56d0 validation; no new bundle format |
 | RNK-02 | `dsl/programs-00000.safetensors:proj16` | All1137 F64[16] vectors; native `proj16.rs`, absolute error<=1e-12 |
 | RNK-03 / RNK-04 | `dsl/programs.jsonl`, `dsl/programs-00000.safetensors:feat412` | Native composed featurizer, all1137×412 coordinates, including all parameter coordinates |
-| RNK-05 | `packet/landmarks/<context>.safetensors` | Actual input.X/input.y/input.row_ids, native v256/col_full/caller col; owning port's qualification remains separate |
+| RNK-05 | `rnk05-compat/landmarks/<context>.safetensors` | Actual input.X/input.y/input.row_ids, native v256/col_full/caller col; owning port's qualification remains separate |
 | RNK-06 | `packet/contexts/<context>.safetensors:lm48,lm48_z` | Raw and standardized coordinates; native frozen projection, 50 contexts |
 | RNK-07 | `packet/contexts/*:tokens,mask`, `packet/rnk07/stage1b-parameters.safetensors` | Native `stage1b.rs`, all50×320 tokens and masks; deterministic32-tensor sidecar |
 | RNK-08 | `packet/slates/<context>-12.safetensors`, `-20.safetensors` | Native costs/admitted-set policy, 100 slates, all named input/output tensors |
@@ -126,3 +128,12 @@ ratio2.01868452). All100 decisive admitted sets match; max proposalKL0.34163552
 is below0.35. These oracle values are retained unchanged. RES07 fixture
 completeness does not mark RNK08 numerical parity passed; the native failure
 receipt and a focused RNK08 repair handoff accompany this task closeout.
+
+RNK05 native serving tests admit at most1024 FIT rows. The complete original
+50-context packet (index27905f29703431bedacac90eed1bd54257fd0c59bdf24b56605d0b9416ae1393)
+is retained under `rnk05-compat/` in this same hash-fetched catalog. Point RNK05
+tests to that root with its original index pin. Its full255-file inventory is
+authenticated and materialized; no dangling index entries are introduced.
+The reconstructed full-TRAIN landmark inputs remain under `packet/landmarks`
+and all reference data stays intact. This compatibility packet is separately
+scoped and does not replace the reconstructed raw banks or1137-definition corpus.
