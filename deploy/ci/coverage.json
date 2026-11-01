@@ -7431,7 +7431,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -14538,6 +14538,16 @@
       ],
       "lanes": [],
       "scope": "H185 data-free controls: FIT-only batch construction and 205-family 3/1/1 fold coverage, StageOrderGuard requiring fsynced pooled_b_selection_lock.json before Stage-2 A/DL-Val scoring, RENS5 member initializations matching ENS5 with 5 distinct member hashes per seed, imported H177_DECISION_RULE and H178 calibration receipt gating, axis=0 paired family bootstrap seed reduction, -2.0 pick counting, and xbabe2 supervisor/launch guards. No checkpoint, corpus or model passes in the fixture suite; offline research only."
+    },
+    "python:research/flywheel_selfplay/h186_kernel_sweep/test_h186.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
     }
   },
   "lanes": {

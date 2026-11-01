@@ -5463,6 +5463,10 @@
     "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/test_h185.py": {
       "reason": "Owner-requested H185 data-free controls for the power-aware 205-family pooled cross-fit confirmatory test of FRESH160, ENS5, and RENS5 vs R882 (FIT-only training, B lock before A, RENS5==ENS5 inits, distinct member init hashes, imported H177_DECISION_RULE + H178 receipt, axis=0 bootstrap seed reduction, and host guards); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h186_kernel_sweep/test_h186.py": {
+      "role": "research",
+      "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

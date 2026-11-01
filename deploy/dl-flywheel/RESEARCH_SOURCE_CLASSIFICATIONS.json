@@ -4887,6 +4887,46 @@
         "role": "research",
         "reason": "H185 preregistered CPU-only confirmatory test of FRESH160 (160-step fresh adapter), ENS5 (5x40-step fresh score ensemble), and RENS5 (5x0-step untrained member init control) vs R882 using the imported H177 205-family pooled-B selector and H178 calibration receipt; DL-Val descriptive and correlated cross-fold A readout only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
       }
+    },
+    "python:research/flywheel_selfplay/h186_kernel_sweep/parents.py": {
+      "bytes": 1356,
+      "sha256": "d13246aa00208b704c63e52f8e53328cdaf5b370ca30b0b3067ab2a147843a9d",
+      "classification": {
+        "role": "research",
+        "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h186_kernel_sweep/analysis.py": {
+      "bytes": 5209,
+      "sha256": "0395ef2fe9742095da39331f18bfcef30c306756e1e791fd3593d77a99028b80",
+      "classification": {
+        "role": "research",
+        "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h186_kernel_sweep/treatment.py": {
+      "bytes": 4340,
+      "sha256": "c98fb48bab25a98cb13b27627ef6a8b3859502fa4e86a87e1983088f8dd11e35",
+      "classification": {
+        "role": "research",
+        "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h186_kernel_sweep/monitor.py": {
+      "bytes": 5240,
+      "sha256": "abe13cf865679c53b56a21acb19370f6c2029d3b70916f5d5de0f4c74ea2a10e",
+      "classification": {
+        "role": "research",
+        "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h186_kernel_sweep/runner.py": {
+      "bytes": 17638,
+      "sha256": "58ed3b3f2526318f4f968b447f277bf6453bfb00fbe4ab014893fbfff2f4ba61",
+      "classification": {
+        "role": "research",
+        "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
