@@ -5215,6 +5215,10 @@
       "subsystems": [
         "encoders"
       ]
+    },
+    "python:research/flywheel_selfplay/h151_lookahead_drift_control/test_h151.py": {
+      "reason": "H151 owner-directed Lookahead vs drift-matched AdamW step-size control data-free unit suite; offline research only.",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
