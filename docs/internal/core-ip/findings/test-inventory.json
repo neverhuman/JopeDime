@@ -1969,6 +1969,10 @@
       "reason": "Owner-requested H146 data-free controls for the Lookahead adapter-continuation executor and its readout; no corpus/checkpoint reads or optimizer updates in the fixture suite; offline research only.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h147_reveal_alignment/test_h147.py": {
+      "reason": "H147 owner-directed matched-support reveal alignment and 5-fold CV control unit suite; offline research only.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h149_wd_dose/test_h149.py": {
       "reason": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification.",
       "role": "research"
