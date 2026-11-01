@@ -1,0 +1,26 @@
+[
+  {
+    "command": [
+      "just",
+      "hygiene"
+    ],
+    "exit_status": 127,
+    "outcome": "NOT_RUN"
+  },
+  {
+    "command": [
+      "just",
+      "lint-paths"
+    ],
+    "exit_status": 127,
+    "outcome": "NOT_RUN"
+  },
+  {
+    "command": [
+      "just",
+      "audit"
+    ],
+    "exit_status": 127,
+    "outcome": "NOT_RUN"
+  }
+]

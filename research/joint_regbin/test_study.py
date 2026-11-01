@@ -3,10 +3,16 @@
 import json
 import math
 from collections import Counter
+from pathlib import Path
 
 import pytest
 
 from research.joint_regbin import driver
+from research.joint_regbin.admission import (
+    PARTIAL_SCHEMA,
+    _load_csv,
+    review_binary_families,
+)
 from research.joint_regbin.driver import (
     collect,
     output_location,
@@ -25,6 +31,7 @@ from research.joint_regbin.protocol import (
     expected_counts,
     make_plan,
     safe_path,
+    validate_manifest,
     verify_catalog,
     verify_plan,
 )
@@ -632,6 +639,158 @@ def test_complete_collection_and_no_partial_inventory(plan, tmp_path):
     assert {row["task"] for row in rows} == {"regression", "binary"}
     with pytest.raises(ValueError, match="empty"):
         paired_records(rows, "binary", "panel", 49)
+
+
+def test_regression_score_store_wiring_is_idempotent_and_task_scoped(tmp_path):
+    """The study adapter emits the existing JRB-02 contract without touching history."""
+    module = Path(__file__).with_name("score_store.py")
+    store = tmp_path / "history.jsonl"
+    plan = {"sha256": "f" * 64}
+    row = {
+        "id": "fixture-regression-1",
+        "arm": "joint-balanced",
+        "seed": 73,
+        "fold": 2,
+        "job_id": "fixture-regression-job",
+        "task": "regression",
+        "family": "fixture-family",
+        "dataset": "fixture-dataset",
+        "role": "cv",
+        "metric": "rmse",
+        "value": 0.4,
+        "curve": 0.8,
+        "model_sha256": "a" * 64,
+        "round": 5,
+    }
+
+    assert driver.append_score_store(plan, [row], module, store) == 2
+    assert driver.append_score_store(plan, [row], module, store) == 0
+    assert store.with_name("history.jsonl.lock").exists()
+    stored = [json.loads(line) for line in store.read_text().splitlines()]
+    assert len(stored) == 2
+    assert {item["metric"] for item in stored} == {"rmse", "log_rmse_ratio"}
+    for item in stored:
+        assert set(item) == {
+            "schema",
+            "ts",
+            "model",
+            "model_sha",
+            "task",
+            "dataset",
+            "family",
+            "split",
+            "metric",
+            "value",
+            "higher_is_better",
+            "source",
+            "round",
+            "host",
+        }
+        assert item["schema"] == "jope.score-history/v1"
+        assert item["ts"].endswith("+00:00")
+        assert item["task"] == "regression"
+        assert item["dataset"] == "fixture-dataset"
+        assert item["family"] == "fixture-family"
+        assert item["split"] == "jrb01-cv"
+        assert item["higher_is_better"] is False
+        assert item["source"] == (
+            "jrb01:" + plan["sha256"] + ":fixture-regression-job:"
+            "fixture-regression-1:round5"
+        )
+
+
+def test_binary_family_review_promotes_srcfile_and_merges_dedupe_aliases():
+    rows = [
+        {
+            "id": "a",
+            "task": "binary",
+            "family_key": "a" * 64,
+            "family_key_derived": None,
+            "canonical_sha256": "1" * 64,
+            "source_file": "same_name.csv",
+            "source_url": "https://example.test/datasets/same-name.csv",
+            "platform": "example",
+        },
+        {
+            "id": "b",
+            "task": "binary",
+            "family_key": "a" * 64,
+            "family_key_derived": None,
+            "canonical_sha256": "2" * 64,
+            "source_file": "different_name.csv",
+            "source_url": "https://example.test/datasets/different-name.csv",
+            "platform": "example",
+        },
+        {
+            "id": "c",
+            "task": "binary",
+            "family_key": None,
+            "family_key_derived": "srcfile:same_name",
+            "canonical_sha256": "3" * 64,
+            "source_file": "same_name.csv",
+            "source_url": None,
+            "platform": None,
+        },
+    ]
+    reviewed = review_binary_families(rows)
+    assert reviewed["schema"] == "jope.joint-regbin.binary-family-review/v1"
+    assert reviewed["dataset_count"] == 3
+    assert reviewed["family_count"] == 1
+    assert len({item["family"] for item in reviewed["records"]}) == 1
+    assert ["srcfile", "srcfile:same_name"] in reviewed["families"][0]["union_evidence"]
+    assert all("dedupe_tool_policy_sha256" in item for item in reviewed["records"])
+
+
+def test_family_review_rejects_binary_row_without_any_provisional_family_key():
+    with pytest.raises(ValueError, match="lacks a reviewed family key"):
+        review_binary_families(
+            [
+                {
+                    "id": "a",
+                    "task": "binary",
+                    "family_key": None,
+                    "family_key_derived": None,
+                    "canonical_sha256": None,
+                    "source_file": None,
+                    "source_url": None,
+                    "platform": None,
+                }
+            ]
+        )
+
+
+def test_binary_csv_loader_uses_only_training_matrix(tmp_path: Path):
+    train = tmp_path / "train.csv"
+    train.write_text("1,0\n2,1\n3,0\n4,1\n")
+    x, y = _load_csv(train, expected_rows=4, expected_cols=2, target_index=-1)
+    assert x.tolist() == [[1.0], [2.0], [3.0], [4.0]]
+    assert y.tolist() == [0.0, 1.0, 0.0, 1.0]
+    assert not (tmp_path / "test.csv").exists()
+
+
+def test_partial_binary_panel_manifest_fails_closed():
+    packet = {
+        "schema": SCHEMA,
+        "eligibility_verified": False,
+        "admission_status": "PARTIAL_PANEL_ONLY",
+        "contexts": [
+            {
+                "id": "synthetic",
+                "dataset": "synthetic",
+                "family": "srcfile:synthetic",
+                "task": "binary",
+                "role": "panel",
+                "source_split": "train",
+                "origin": "real",
+                "has_meta_test": False,
+                "payload": "binary/synthetic.npz",
+                "payload_sha256": "0" * 64,
+            }
+        ],
+    }
+    assert PARTIAL_SCHEMA == "jope.joint-regbin.binary-panel-packet/v1"
+    with pytest.raises(ValueError, match="explicit eligible real-S3 metadata required"):
+        validate_manifest(packet)
 
 
 def test_family_weighting_seed_pairing_and_elo_orientation():

@@ -3,12 +3,17 @@
 use super::*;
 use crate::{
     discover::r#loop::Plan,
+    ranker::admission::{select_revealed, MeasuredAlgorithm, RevealedRule},
     store::{BlobRef, Store},
     worker::{Request, Response},
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::{collections::BTreeMap, io::Cursor, sync::Arc};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    io::Cursor,
+    sync::Arc,
+};
 
 pub(crate) const CHECKPOINT_VERSION: u32 = 3;
 const ENVELOPE_VERSION: u32 = 1;
@@ -210,21 +215,24 @@ impl CaptureContext {
                 "program provenance mismatch"
             );
         }
-        ensure!(
-            observation.revealed_indices.len() == if round == 0 { 0 } else { 4 },
-            "missing actual reveal context"
-        );
-        let mut seen = BTreeSet::new();
-        let mut revealed = vec![];
-        for index in observation.revealed_indices {
-            ensure!(seen.insert(index), "duplicate revealed index");
-            revealed.push(
-                measured
-                    .get(index)
-                    .context("unknown revealed index")?
-                    .clone(),
+        let revealed_indices = if self.binding.identity.evidence == RecordEvidence::Engine {
+            validate_od13_provider_indices(round, measured, &observation.revealed_indices)?
+        } else {
+            ensure!(
+                observation.revealed_indices.len() == if round == 0 { 0 } else { 4 },
+                "missing actual reveal context"
             );
-        }
+            let mut seen = BTreeSet::new();
+            for index in &observation.revealed_indices {
+                ensure!(seen.insert(*index), "duplicate revealed index");
+                ensure!(measured.get(*index).is_some(), "unknown revealed index");
+            }
+            observation.revealed_indices
+        };
+        let revealed = revealed_indices
+            .into_iter()
+            .map(|index| measured[index].clone())
+            .collect();
         Ok(ObservedSlate {
             programs: observation.programs,
             revealed,
@@ -232,8 +240,95 @@ impl CaptureContext {
     }
 }
 
+/// Apply the owner-accepted OD13 rule to the actual measured admitted pool.
+/// The ranker selector keeps input order on equal F values.
+fn select_od13_indices(round: u64, measured: &[RecordedReveal]) -> Result<Vec<usize>> {
+    if round == 0 {
+        return Ok(Vec::new());
+    }
+    let candidates: Vec<_> = measured
+        .iter()
+        .map(|entry| MeasuredAlgorithm {
+            id: &entry.program.program_sha256,
+            surrogate_fitness: entry.surrogate,
+            gate: entry.gate,
+        })
+        .collect();
+    let selected = select_revealed(&candidates, RevealedRule::SurrogateFitness)
+        .context("OD13 could not select four measured reveals")?;
+    Ok(selected.into_iter().collect())
+}
+
+fn validate_od13_provider_indices(
+    round: u64,
+    measured: &[RecordedReveal],
+    provider_indices: &[usize],
+) -> Result<Vec<usize>> {
+    let expected = select_od13_indices(round, measured)?;
+    ensure!(
+        provider_indices == expected,
+        "provider reveal selection differs from accepted OD13 rule"
+    );
+    Ok(expected)
+}
+
 pub(crate) fn digest(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
+}
+
+#[cfg(test)]
+mod od13_tests {
+    use super::*;
+
+    fn reveal(index: usize, surrogate: f64) -> RecordedReveal {
+        RecordedReveal {
+            program: RecordedProgram {
+                program_sha256: format!("{index:064x}"),
+                operator_family: "synthetic_control".into(),
+                feat412: vec![0.0; 412],
+                proj16: vec![0.0; 16],
+            },
+            surrogate,
+            gate: index & 1 == 0,
+        }
+    }
+
+    #[test]
+    fn od13_selects_four_lowest_f_with_stable_source_order_ties() {
+        let measured = [
+            reveal(0, 2.0),
+            reveal(1, -0.0),
+            reveal(2, 1.0),
+            reveal(3, 0.0),
+            reveal(4, -1.0),
+            reveal(5, 3.0),
+        ];
+
+        let selected = select_od13_indices(1, &measured).unwrap();
+
+        assert_eq!(selected, [4, 1, 3, 2]);
+        assert_eq!(
+            validate_od13_provider_indices(1, &measured, &[4, 1, 3, 2]).unwrap(),
+            selected
+        );
+        assert!(validate_od13_provider_indices(1, &measured, &[0, 1, 2, 3]).is_err());
+        assert_eq!(measured[selected[0]].gate, measured[4].gate);
+        assert_eq!(measured[selected[1]].gate, measured[1].gate);
+    }
+
+    #[test]
+    fn od13_refuses_short_or_nonfinite_measured_pools_and_round_zero_reveals() {
+        let short = (0..3).map(|index| reveal(index, 1.0)).collect::<Vec<_>>();
+        assert!(select_od13_indices(1, &short).is_err());
+        let mut nonfinite = vec![reveal(0, 1.0); 4];
+        nonfinite[2].surrogate = f64::NAN;
+        assert!(select_od13_indices(1, &nonfinite).is_err());
+        assert!(select_od13_indices(0, &[reveal(0, 1.0)])
+            .unwrap()
+            .is_empty());
+        assert!(validate_od13_provider_indices(0, &[reveal(0, 1.0)], &[0]).is_err());
+        assert!(select_od13_indices(0, &[]).unwrap().is_empty());
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

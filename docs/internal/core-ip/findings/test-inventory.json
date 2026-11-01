@@ -1591,6 +1591,10 @@
       "reason": "QLT-04 FIFO launcher controls with private queue/key/backend fixtures; admission, lease, mutation, ledger and process cleanup proofs, not live qualification.",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/q1/harness/test_production_backend.py": {
+      "reason": "QLT-01-F01 unit controls for the Q1 production receipt adapter (daemon.json bearer token binding, loopback endpoint, closed schema/identity/family/champion validation, and projection). Synthetic receipts only, not Q1 qualification.",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/q1/harness/test_q1.py": {
       "reason": "Q1 qualification harness protocol/statistical fixtures (QLT-01): owner-signature refusal, holdout guards and failure accounting; no learned model or sealed payload executes",
       "role": "infrastructure"
@@ -1965,6 +1969,14 @@
       "reason": "Owner-requested H146 data-free controls for the Lookahead adapter-continuation executor and its readout; no corpus/checkpoint reads or optimizer updates in the fixture suite; offline research only.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h149_wd_dose/test_h149.py": {
+      "reason": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h150_w5_provenance_unblock/test_w5_proofs.py": {
+      "reason": "Owner-requested H150 W5 provenance-unblock controls for the identity-only manifest builder and proof checker; synthetic fixtures only, no sealed/holdout payloads; offline research only.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
       "role": "research"
@@ -2125,6 +2137,10 @@
       "reason": "Synthetic metadata controls for the W5 provenance verifier; none admits data or qualifies W5; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/rnk10_r882_acceptance/test_import_checkpoint.py": {
+      "reason": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract).",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
       "reason": "Owner-requested pytest proof for flywheel automatic promotion, next-round targets, replay, and training-only parser adaptation; research flywheel outside the reviewed product baseline.",
       "role": "research"
@@ -2157,8 +2173,20 @@
       "reason": "Pytest proofs for the HWV-04 / H09 conditional DSL-residual-around-tree experiment harness (protocol, arms and result-record shape); offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/h145/test_h145.py": {
+      "reason": "H145 data-free controls for disjoint family-fold selection/assessment, duplicate/nonfinite refusal, equal-family weighting, exact Elo ties, canonical Bradley-Terry bootstrap equivalence with repeated-family multiplicity, and lexical exclusion of DL-Val outcome subtrees. These controls do not train or qualify a model; offline research only.",
+      "role": "research"
+    },
+    "python:research/h148/test_h148.py": {
+      "reason": "H148 data-free checkpoint-selection scientific controls; no product/native/GPU qualification.",
+      "role": "research"
+    },
     "python:research/joint_regbin/test_study.py": {
       "reason": "Synthetic CPU protocol fixtures for the joint regression/binary study (protected packet-root refusal); no learner, GPU, dataset or score history; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:test-support/qlt01/test_production_backend_acceptance.py": {
+      "reason": "QLT-01 F01 production receipt adapter acceptance controls (malformed family identity and receipt champion consistency).",
       "role": "research"
     },
     "python:tools/ops/test_install_jope_diskd.py": {
@@ -2986,6 +3014,13 @@
       "subsystems": [
         "export",
         "fitting"
+      ]
+    },
+    "target:jope-appliance/test/store_transport": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration",
+        "storage"
       ]
     },
     "target:jope-appliance/test/system": {
@@ -5189,12 +5224,8 @@
         "encoders"
       ]
     },
-    "python:research/h145/test_h145.py": {
-      "reason": "H145 data-free controls for disjoint family-fold selection/assessment, duplicate/nonfinite refusal, equal-family weighting, exact Elo ties, canonical Bradley-Terry bootstrap equivalence with repeated-family multiplicity, and lexical exclusion of DL-Val outcome subtrees. These controls do not train or qualify a model; offline research only.",
-      "role": "research"
-    },
-    "python:research/h148/test_h148.py": {
-      "reason": "H148 data-free checkpoint-selection scientific controls; no product/native/GPU qualification.",
+    "python:research/flywheel_selfplay/h151_lookahead_drift_control/test_h151.py": {
+      "reason": "H151 owner-directed Lookahead vs drift-matched AdamW step-size control data-free unit suite; offline research only.",
       "role": "research"
     }
   },

@@ -1,0 +1,20 @@
+{
+  "attempted_manifest_sha256": "f3ea7cfaeda35a3e768bfc21827a84debc48adb3791fd5e613471b28b1b7fdba",
+  "corrected_runner_sha256": "a444c0fa35759c2dc48c7c014527c967245c84e62cfab2a93f2516209fc44dfd",
+  "deadline_utc": "2026-11-01T07:00:00Z",
+  "evaluation_id": "RNK10-T2140-R882-CPU-01",
+  "failure": "frozen anchor predict_costs rejected unexpected multimodal keyword mm_tokens_10x32",
+  "failure_kind": "TypeError",
+  "failure_receipt": "result/acceptance-failure.json",
+  "finished_utc": "2026-11-01T03:49:30+00:00",
+  "manifest_sha256": "1cef7e2b7772865c0ddfc8eaf275ab01d2bce4271c0b77c4cabab871254d39e6",
+  "max_unique_terminal_outcomes": 800,
+  "planned_maximum_unique_terminal_outcomes": 728,
+  "run_count": 1,
+  "runner_sha256": "dae5663024bd0ae51ce8b4276d7ef623756ef5675e0c6c17815dab2fcf2226f0",
+  "schema": "jope.rnk10.outcome-ledger/v1",
+  "selected_terminal_outcomes_scored": 0,
+  "status": "FAILED_CONSUMED",
+  "unique_terminal_outcomes_read": 0,
+  "validation_pools_opened": 91
+}

@@ -1,0 +1,22 @@
+{
+  "source": "74467365626c4eece580e9b1cce66a2cd802771f",
+  "command": [
+    "nice",
+    "-n",
+    "10",
+    "/Users/agent/.cargo/bin/cargo",
+    "test",
+    "--locked",
+    "-p",
+    "jope-appliance",
+    "--bin",
+    "jopedime",
+    "discovery_with_early_roots_change_keeps_modern_bootstrap_open",
+    "-j",
+    "4"
+  ],
+  "exit_status": 101,
+  "elapsed_seconds": 61.846870915964246,
+  "one_test_executed": true,
+  "expected_regression_failed": true
+}
