@@ -1,20 +1,20 @@
 {
   "schema": "whitepaper.latest-admissions-source/v1",
   "capture": {
-    "at": "2026-11-01T13:27:38.003851+00:00",
-    "observed_bytes": 1134810,
-    "prefix_bytes": 1134810,
-    "prefix_sha256": "b633bbddd0330c4457b5d736744071551e72191fb77fde3dc2c69744ff378993",
+    "at": "2026-11-01T15:22:03.053052+00:00",
+    "observed_bytes": 1169337,
+    "prefix_bytes": 1169337,
+    "prefix_sha256": "6d7987f48acb57282f349e6cfe321de50ea8d4929fea1a0faeda6f26c4b37adf",
     "trailing_incomplete_bytes_omitted": 0,
-    "source_rows": 2164,
+    "source_rows": 2228,
     "first_round": 775,
-    "last_round": 2938
+    "last_round": 3002
   },
   "stable_prefix_reread_verified": true,
   "evaluation_identity_sha256": [
     "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6"
   ],
-  "csv_sha256": "b76aac16867a777c98294165271c8d5a131061a14a1eab43c01c8a9702e99885",
+  "csv_sha256": "565cb3de898240f1134e62bda8a8e99473a37234c5b914a55ecc9bc21625671e",
   "selection": "Every complete admission row in stable prefix, in log order; no outcome selection or deduplication",
   "field_mapping": "candidate/previous best/post-decision best utility, acceptance/action and best-round identity as logged",
   "source_binding": "Aggregate field interpretation only; exact installed source, adapter and evaluation population remain unjoined",

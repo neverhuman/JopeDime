@@ -2,7 +2,7 @@
 
 The main text selects four views of admission decisions and operating
 activity. The additional figures here retain the earlier windows and
-alternative summaries, with their original captions and observations.
+alternative summaries. Their observations are unchanged.
 \Cref{fig:fw-validation} covers the earlier admission prefix;
 \cref{fig:fw-trainval,fig:fw-telemetry} resolve a smaller set of retained
 summaries. Gaps between windows are not filled or treated as observations.
@@ -12,7 +12,7 @@ summaries. Gaps between windows are not filled or treated as observations.
   \includegraphics[width=\linewidth]{figures/fig_fw_live_validation.pdf}
   \caption{\textbf{Adapter validation and admissions.} The \num{1889}-round window,
   775--2663: grey candidate utility, blue recorded best; stars mark strict gains,
-  hollow diamonds accepted ties. \Cref{app:latest-admissions} extends through round 2938.}
+  hollow diamonds accepted ties. The full prefix is in \cref{tab:admission-ledger}.}
   \label{fig:fw-validation}
 \end{figure}
 
@@ -28,7 +28,7 @@ summaries. Gaps between windows are not filled or treated as observations.
   wall time over up to twenty completed rounds in the reporting process,
   including qualification waits. Program events and adapter admissions count
   different outcomes. These are earlier operating windows within
-  \cref{fig:fw-validation}, not one-proposal deployment accuracy or cost.}
+  \cref{fig:fw-validation}, subject to the scope in \cref{sec:method-status}.}
   \label{fig:fw-telemetry}
 \end{figure*}
 
@@ -73,7 +73,7 @@ retained window.
 \renewcommand{\textfraction}{0.05}
 \renewcommand{\topfraction}{0.95}
 \renewcommand{\dbltopfraction}{0.95}
-\begin{figure}[!t]
+\begin{figure}[!tp]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_recent_development.pdf}
   \caption{\textbf{Program promotions and adapter utility in an additional window.}
@@ -85,42 +85,40 @@ retained window.
   \label{fig:fw-recent-development}
 \end{figure}
 
-\begin{figure*}[!t]
+\begin{figure*}[!tp]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_followup_development.pdf}
   \caption{\textbf{Program events and adapter validation in a follow-up window.}
   Left: journaled strict training-program incumbent improvements per round.
   Right: candidate adapter validation pool utility and the recorded best.
   Both panels cover the same 20 consecutive summary rounds, 2082--2101. The summaries
-  mark no adapter admission. Independent first-proposal and transfer tests
-  remain required.}
+  mark no adapter admission. Scope: \cref{sec:method-status}.}
   \label{fig:fw-followup-development}
 \end{figure*}
 
-\begin{figure*}[!t]
+\begin{figure*}[!tp]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_later_development.pdf}
   \caption{\textbf{Continued program events and adapter validation.}
   Left: journaled strict training-program incumbent improvements per round.
   Right: candidate adapter validation pool utility and the recorded best.
   Both panels cover all 20 consecutive rounds, 2343--2362, in this retained summary
-  window. The summaries mark no adapter admission. Independent
-  first-proposal comparisons remain required.}
+  window. The summaries mark no adapter admission. Scope: \cref{sec:method-status}.}
   \label{fig:fw-later-development}
 \end{figure*}
 
-\begin{figure}[!t]
+\begin{figure}[!tp]
   \centering
   \includegraphics[width=\linewidth,height=2.35in,keepaspectratio]{figures/fig_fw_live_development.pdf}
   \caption{\textbf{Program-incumbent events and validation summaries.}
   Top: logged strict improvements to training-program incumbents per round.
   Bottom: candidate adapter validation pool utility. Both panels cover the
   same 20 consecutive rounds, 2644--2663. These are development measurements;
-  independent first-proposal comparisons remain required.}
+  Scope: \cref{sec:method-status}.}
   \label{fig:fw-program-promotions}
 \end{figure}
 
-\begin{figure}[!t]
+\begin{figure}[!tp]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_live_shortfall.pdf}
   \caption{\textbf{Candidate gaps to the recorded best.} Cumulative share
@@ -141,18 +139,15 @@ wall time rather than a program-event total.
 show the event slices. Completed-time, event-distribution and rate
 summaries appear in
 \cref{app:development-time,app:event-counts,app:subsequent-rates,app:promotions-per-hour,app:round-throughput}.
-These are separate retained windows, not a matched learning curve;
-unobserved rounds are not filled. Program-event rates include the logged
-work and qualification waits and do not measure one-proposal deployment.
+The window separation and scope follow \cref{sec:method-status}; logged
+round time includes work and qualification waits.
 
-\newpage
 For the adapter record in \cref{fig:fw-validation},
 \cref{fig:fw-admission-shortfall} summarizes candidate gaps to each round's
 recorded best. Each retained round contributes once; the curve does not
 count independent tasks or distinct programs.
-\newpage
 
-\begin{figure*}[!t]
+\begin{figure*}[!tp]
   \centering
   \includegraphics[width=\linewidth,height=1.42in,keepaspectratio]{figures/fig_fw_target_history.pdf}
   \caption{\textbf{Post-hoc GP target trajectory.} All 71 generations per
@@ -163,7 +158,7 @@ count independent tasks or distinct programs.
   \label{fig:fw-target-history}
 \end{figure*}
 
-\begin{figure}[!t]
+\begin{figure*}[!tp]
   \centering
   \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_target_progress.pdf}
   \caption{\textbf{Historical GP target progress.} First-to-last reported
@@ -172,14 +167,13 @@ count independent tasks or distinct programs.
   incumbent and teacher seeds, and elapsed time varied. These counts do
   not measure independent discoveries or a learned-policy advantage.}
   \label{fig:fw-target-progress}
-\end{figure}
+\end{figure*}
 
 Historical GP target scores provide a separate view in
 \cref{fig:fw-target-progress}. The 159 repeated dataset/cut/arm groups cover
 55 distinct dataset/cut pairs; the 64 groups with lower final scores cover
 23 pairs. Shared incumbent and teacher seeds make the arms dependent.
-These retained development outcomes do not establish that learning improved
-the proposal policy.
+Scope: \cref{sec:method-status}.
 
 \Cref{fig:fw-target-history} follows one historical dataset/cut, chosen
 after inspection for the largest policy-seeded relative improvement in

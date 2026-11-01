@@ -10,9 +10,9 @@ The costs in \cref{sec:price} attach to two distinct learning tasks. The
 offline reference trains a neural program writer and a separate ranking
 map on search-scored lists; proposed deployment asks for one new program.
 \Cref{sec:method-status} separately examines an adapter-only loop with
-heuristic, retrieval and grammar proposals. That implementation does not
-retrain a program writer, and its logs do not establish transfer from the
-reference. We first specify the writer and map, then the admission record.
+heuristic, retrieval and grammar proposals; it does not retrain a writer.
+The scope of its recorded observations is stated there.
+We first specify the writer and map, then the admission record.
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
@@ -231,17 +231,9 @@ averages across cuts. Negative values favor the challenger. This admission
 comparison is separate from the single-program comparison in
 \cref{sub:results-learning}.
 
-\paragraph{The historical reference.} The writer is a decoder-only
-transformer (six blocks, width 512, four attention heads). It reads the
-context as a prefix token and writes at most 128 tokens over 401 active
-grammar tokens. Its token table allocates 657 rows, including 256 unused
-reserved rows; the tied output projection uses only the grammar rows.
-With the map and registered auxiliary heads, the checkpoint contains
-\num{27796494} parameters (27.8 million). \Cref{app:training} distinguishes
-registered capacity from the token-generation path. The supplied source notes describe training on eight A100 GPUs in
-September 2026, with a corpus of about 10.2 million scored programs from
-80 training datasets. \Cref{alg:selfplay,app:training} give the reference
-specifications.
+\paragraph{The historical reference.} The decoder-only writer has separate
+ranking and auxiliary heads. \Cref{app:training} records the architecture,
+registered capacity, token allocation and training corpus in one inventory.
 
 These specifications do not supply the checkpoint's acceptance evidence or
 qualify its runtime. Both records remain inputs to the evaluation contract
@@ -251,20 +243,7 @@ held at its grant gate. Numerical parity of the CPU float32 Candle port
 with the native CUDA BF16 tch runtime remains unqualified; random streams
 and uniform-token fallback differ.
 
-\begin{figure*}[!t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_latest_admissions.pdf}
-  \caption{\textbf{Retained development utility through round 2938.}
-  All \num{2164} admission records from rounds 775--2938 are shown: blue is the
-  post-decision retained best; grey marks rejected candidates, red stars
-  accepted strict gains and hollow diamonds accepted exact ties.
-  The default rule accepts candidate utility $\geq$ the previous best,
-  without a margin. Acceptance can therefore change the recorded
-  best-round identity without raising utility. Ties are classified from
-  unrounded logged values. These adaptive development observations require
-  separate first-proposal and transfer evaluations.}
-  \label{fig:fw-latest-admissions}
-\end{figure*}
+
 
 \subsection{Keeping the referee honest}\label{sub:method-referee}
 
@@ -312,8 +291,6 @@ separately, as \citet{silver2017mastering} reported
 AlphaGo Zero's raw network apart from its search (\cref{sec:results}).
 
 That fixed budget defines the matched first-proposal comparison in
-\cref{sub:results-learning}. The development record that follows concerns
-an adapter ranking an existing pool. Its admission decisions measure a
-different task from writing a new program.
+\cref{sub:results-learning}.
 \FloatBarrier
 \input{sections/06_method/flywheel_status}
