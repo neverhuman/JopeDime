@@ -243,3 +243,122 @@ fn failed_consumer_update_keeps_last_valid_product() {
         Some(last.consumer.as_ref().unwrap().receipt())
     );
 }
+
+fn assert_terminal_jsonl_event(
+    session: EncodingSession,
+    expected: SessionOutcome,
+    expected_updates: usize,
+) {
+    let directory = tempfile::Builder::new()
+        .prefix("jope-landmark-terminal-")
+        .tempdir()
+        .unwrap();
+    let path = directory.path().join("events.jsonl");
+    let run = super::super::workflow::write_events(session, &path).unwrap();
+    let events: Vec<serde_json::Value> = std::fs::read_to_string(&path)
+        .unwrap()
+        .lines()
+        .map(|line| serde_json::from_str(line).unwrap())
+        .collect();
+
+    assert_eq!(run.outcome, expected);
+    assert_eq!(run.receipts.len(), expected_updates + 1);
+    assert_eq!(events.len(), run.receipts.len() + 1);
+    let terminal = events.last().unwrap();
+    let previous = &events[events.len() - 2];
+    assert_eq!(
+        terminal["receipt"]["outcome"],
+        serde_json::to_value(&expected).unwrap()
+    );
+    assert!(previous["receipt"]["outcome"].is_null());
+    for field in [
+        "version",
+        "conditioning_digest",
+        "source_digest",
+        "weights_sha256",
+        "embedding_identity",
+        "mask",
+        "status",
+    ] {
+        assert_eq!(terminal["receipt"][field], previous["receipt"][field]);
+    }
+    assert_eq!(terminal["embedding"], previous["embedding"]);
+    assert_eq!(terminal["consumer"], previous["consumer"]);
+    assert_eq!(terminal["fusion"], previous["fusion"]);
+    assert_eq!(
+        terminal["receipt"],
+        serde_json::to_value(&run.final_snapshot.receipt).unwrap()
+    );
+}
+
+#[test]
+fn jsonl_terminal_event_records_completion_without_landmark_updates() {
+    assert_terminal_jsonl_event(
+        EncodingSession::spawn(snapshot("zero"), |_| Ok(())),
+        SessionOutcome::Complete,
+        0,
+    );
+}
+
+#[test]
+fn jsonl_terminal_event_preserves_last_progressive_embedding() {
+    let session = EncodingSession::spawn(snapshot("zero"), |publisher| {
+        publisher.publish(snapshot("macro"))?;
+        assert!(!publisher.publish(snapshot("macro"))?);
+        publisher.publish(snapshot("full"))?;
+        Ok(())
+    });
+    assert_terminal_jsonl_event(session, SessionOutcome::Complete, 2);
+}
+
+#[test]
+fn jsonl_terminal_event_records_worker_failure_after_valid_update() {
+    let session = EncodingSession::spawn(snapshot("zero"), |publisher| {
+        publisher.publish(snapshot("macro"))?;
+        anyhow::bail!("native worker failed")
+    });
+    assert_terminal_jsonl_event(
+        session,
+        SessionOutcome::Failed {
+            message: "native worker failed".into(),
+        },
+        1,
+    );
+}
+
+#[test]
+fn jsonl_terminal_event_records_cancellation_after_valid_update() {
+    let cancel = Arc::new(AtomicBool::new(false));
+    let worker_cancel = cancel.clone();
+    let session = EncodingSession::spawn_with_cancel(
+        direct_snapshot("zero"),
+        Some(cancel),
+        move |publisher| {
+            publisher.publish(direct_snapshot("macro"))?;
+            worker_cancel.store(true, Ordering::Release);
+            Ok(())
+        },
+    );
+    assert_terminal_jsonl_event(session, SessionOutcome::Cancelled, 1);
+}
+
+#[test]
+fn collection_callback_receives_final_outcome_without_new_embedding_version() {
+    let session = EncodingSession::spawn(snapshot("zero"), |publisher| {
+        publisher.publish(snapshot("macro"))?;
+        Ok(())
+    });
+    let mut events = Vec::new();
+    let run = super::super::workflow::collect(session, |snapshot| {
+        events.push(snapshot.receipt.clone());
+        Ok(())
+    })
+    .unwrap();
+    assert_eq!(events.len(), run.receipts.len() + 1);
+    assert_eq!(
+        events.last().unwrap().outcome,
+        Some(SessionOutcome::Complete)
+    );
+    assert_eq!(events.last().unwrap().version, 1);
+    assert_eq!(events.last().unwrap().conditioning_digest, "macro");
+}
