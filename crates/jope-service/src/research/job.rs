@@ -9,19 +9,17 @@ use crate::{
     dataset::jmat,
     discover::r#loop::{NativeSpace, Plan, ProcessExecutor, RoundContext, SearchSpace},
     ranker::{
-        admission::{CpuRoundAdmission, RoundInputProvider, RoundInputs, RoundProgram},
+        admission::{
+            CpuRoundAdmission, RevealedRule, RoundInputProvider, RoundInputs, RoundProgram,
+        },
         cuda::release::{load_r882_release, R882},
-        serving::RevealedRule,
         stage1b::TokenProjection,
     },
     run::{learned::AdmittedRanker, service::BackendSpace},
     store::Store,
 };
 use anyhow::{ensure, Context, Result};
-use jope_api::{
-    ids::{DatasetId, RunId},
-    Effort,
-};
+use jope_api::{ids::RunId, Effort};
 use jope_runtime::backend::DeviceRequest;
 use rand_chacha::ChaCha12Rng;
 use serde::Serialize;
@@ -211,7 +209,7 @@ pub fn record_catalog_job(
     create(&matrix_path, &matrix)?;
     let plan = Plan {
         run_id: run,
-        dataset_id: DatasetId::parse(&format!("ds_{}", &TRAIN[..24]))?,
+        dataset_id: format!("ds_{}", &TRAIN[..24]).parse()?,
         problem_digest: digest(&serde_json::to_vec(
             &json!({"protocol":"qlt03.slump85/v1", "matrix":digest(&matrix), "target":TARGET, "features":features, "objective":"rmse"}),
         )?),
@@ -462,5 +460,59 @@ impl SearchSpace for RecordingSpace {
         NativeSpace.propose_observed(parents, count, rng, |dsl, arm| {
             self.provenance.generated(dsl, arm)
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand_chacha::rand_core::{RngCore, SeedableRng};
+
+    #[test]
+    fn unknown_job_refuses_before_inputs_or_output() {
+        let dir = tempfile::tempdir().unwrap();
+        let output = dir.path().join("rounds.jsonl");
+        for job in ["", "../qlt03-slump85-v1", "arbitrary.json"] {
+            let error =
+                record_catalog_job(job, &dir.path().join("missing"), &output, true).unwrap_err();
+            assert!(error.to_string().contains("no source-approved"));
+            assert!(!output.exists());
+        }
+    }
+
+    #[test]
+    fn pinned_inputs_reject_modified_bytes_size_and_symlinks() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("input"), b"TRAIN").unwrap();
+        assert_eq!(
+            pinned(dir.path(), "input", 5, &digest(b"TRAIN")).unwrap(),
+            b"TRAIN"
+        );
+        assert!(pinned(dir.path(), "input", 4, &digest(b"TRAIN")).is_err());
+        assert!(pinned(dir.path(), "input", 5, &digest(b"train")).is_err());
+        #[cfg(unix)]
+        {
+            std::os::unix::fs::symlink(dir.path().join("input"), dir.path().join("link")).unwrap();
+            assert!(pinned(dir.path(), "link", 5, &digest(b"TRAIN")).is_err());
+        }
+    }
+
+    #[test]
+    fn generator_observation_preserves_candidates_and_rng() {
+        let parents = NativeSpace.seeds().unwrap();
+        let mut plain_rng = ChaCha12Rng::seed_from_u64(250119);
+        let mut observed_rng = plain_rng.clone();
+        let expected = NativeSpace.propose(&parents, 32, &mut plain_rng).unwrap();
+        let mut seen = Vec::new();
+        let actual = NativeSpace
+            .propose_observed(&parents, 32, &mut observed_rng, |dsl, arm| {
+                assert!(arm.starts_with("native_"));
+                seen.push(dsl.to_owned());
+            })
+            .unwrap();
+        assert!(!actual.is_empty());
+        assert_eq!(actual, expected);
+        assert_eq!(seen, actual);
+        assert_eq!(plain_rng.next_u64(), observed_rng.next_u64());
     }
 }
