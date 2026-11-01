@@ -712,7 +712,6 @@ struct StartCommand {
     identity: crate::idempotency::RequestIdentity,
     input_roots: Vec<BlobRef>,
     warnings: Vec<jope_api::Warning>,
-    resume: bool,
 }
 
 impl Discovery {
@@ -731,7 +730,6 @@ impl Discovery {
             identity,
             input_roots,
             warnings,
-            resume: false,
         });
         #[cfg(feature = "research")]
         {
@@ -740,29 +738,6 @@ impl Discovery {
         #[cfg(not(feature = "research"))]
         {
             Self::open_inner(store, plan, start)
-        }
-    }
-    /// Resume an owned paused run and atomically retain its public retry receipt.
-    pub(crate) fn continue_command(
-        store: Arc<Store>,
-        plan: Plan,
-        journal: Arc<EventLog>,
-        identity: crate::idempotency::RequestIdentity,
-    ) -> Result<Self> {
-        let command = Some(StartCommand {
-            journal,
-            identity,
-            input_roots: vec![],
-            warnings: vec![],
-            resume: true,
-        });
-        #[cfg(feature = "research")]
-        {
-            Self::open_inner(store, plan, None, command)
-        }
-        #[cfg(not(feature = "research"))]
-        {
-            Self::open_inner(store, plan, command)
         }
     }
     /// The caller exclusively owns this run and supplies a fresh worker pool on
@@ -808,17 +783,10 @@ impl Discovery {
             .map(|s| Arc::clone(&s.journal))
             .unwrap_or_else(|| Arc::new(EventLog::new(Arc::clone(&store))));
         let old = log.snapshot(&plan.run_id)?;
-        if let Some(command) = &start {
-            ensure!(
-                if command.resume {
-                    old.as_ref()
-                        .is_some_and(|snapshot| snapshot.state == RunState::Paused)
-                } else {
-                    old.is_none()
-                },
-                "command requires a new run or an explicitly continued paused run"
-            );
-        }
+        ensure!(
+            start.is_none() || old.is_none(),
+            "command cannot recreate an existing run"
+        );
         let (mut checkpoint, mut snapshot) = if let Some(snapshot) = &old {
             let record = store
                 .get(&RecordKey::Run(plan.run_id.clone()))?
@@ -898,7 +866,6 @@ impl Discovery {
                     .map(|s| s.warnings.clone())
                     .unwrap_or_default(),
                 completion_reason: None,
-                evaluation_receipt: None,
             };
             (checkpoint, snapshot)
         };
@@ -954,10 +921,7 @@ impl Discovery {
                     if let Some(start) = &start {
                         tx.record_new_command(
                             &start.identity,
-                            crate::idempotency::CommandOutcome::json(
-                                if start.resume { 200 } else { 201 },
-                                initial_response,
-                            )?,
+                            crate::idempotency::CommandOutcome::json(201, initial_response)?,
                         )?;
                     }
                     Ok(())
@@ -982,11 +946,6 @@ impl Discovery {
     pub fn completed(&self) -> Option<CompletionReason> {
         self.checkpoint.completed
     }
-    /// True when an attempted durable commit may have succeeded despite an
-    /// error return. Callers must retain an unknown outcome in this case.
-    pub fn outcome_unknown(&self) -> bool {
-        self.poisoned
-    }
     pub fn admitted(&self) -> u64 {
         self.checkpoint.admitted
     }
@@ -1008,8 +967,8 @@ impl Discovery {
         }
     }
 
-    /// Canonical event projection under owner ruling rulings_t1900 R2 (§5.6).
-    /// Operational envelopes and receipts retain run identity and elapsed usage.
+    /// Search events only contain deterministic values. Elapsed wall usage is
+    /// available in the snapshot/receipt; DSC-09 owns run.finished/finalization.
     pub fn projection(&self) -> Result<Value> {
         let mut after = 0;
         let mut values = vec![];
@@ -1021,23 +980,10 @@ impl Discovery {
             after = page.next_after.0;
             for event in page.events {
                 let mut value = serde_json::to_value(event)?;
-                let envelope = value.as_object_mut().context("event is not an object")?;
-                envelope.remove("run_id");
-                envelope.remove("time");
-                if let Some(warnings) = value
-                    .get_mut("body")
-                    .and_then(|body| body.get_mut("warnings"))
-                    .and_then(Value::as_array_mut)
-                {
-                    warnings.retain(|warning| warning.get("host") != Some(&Value::Bool(true)));
-                }
-                if let Some(budget) = value
-                    .get_mut("body")
-                    .and_then(|body| body.get_mut("budget_used"))
-                    .and_then(Value::as_object_mut)
-                {
-                    budget.remove("wall_seconds");
-                }
+                value
+                    .as_object_mut()
+                    .context("event is not an object")?
+                    .remove("time");
                 if value
                     .get("body")
                     .and_then(|b| b.get("host"))
@@ -1189,7 +1135,7 @@ impl Discovery {
                 let response = &outcomes[offset + slot];
                 let id = experiment(&next.plan, round.number, slot, 0)?;
                 record_result(&mut next, candidate, response, &id, &mut events)?;
-                records.push(json!({"round":round.number,"slot":slot,"rung":0,"candidate":candidate,"worker_attempt":response.attempt,
+                records.push(json!({"round":round.number,"slot":slot,"rung":0,"candidate":candidate,
                     "scores":response.scores,"predictions_digest":response.predictions_digest,"failure":response.failure}));
             }
             let best = round
@@ -1260,10 +1206,9 @@ impl Discovery {
                 } else {
                     None
                 };
-                response.fold_scores = cv_response.fold_scores.clone();
                 let id = experiment(&next.plan, round.number, 0, 1)?;
-                add_events(&mut next, candidate, &response, &id, &mut events)?;
-                records.push(json!({"round":round.number,"slot":0,"rung":1,"candidate":candidate,"worker_attempt":response.attempt,
+                add_events(&mut next, &response, &id, &mut events)?;
+                records.push(json!({"round":round.number,"slot":0,"rung":1,"candidate":candidate,
                     "scores":cv_response.scores,"predictions_digest":cv_response.predictions_digest,
                     "failure":response.failure,"cv_failure":cv_response.failure,"refit_failure":refit_failure}));
                 if let Some(bytes) = bytes {
@@ -1360,7 +1305,7 @@ impl Discovery {
             .checked_add(1)
             .context("session attempt counter exhausted")?;
         let plan = &self.checkpoint.plan;
-        let request = Request {
+        Ok(Request {
             attempt: Attempt {
                 run: plan.run_id.clone(),
                 round,
@@ -1376,18 +1321,7 @@ impl Discovery {
                 wall_ms: plan.evaluation_wall_ms,
                 rss_bytes: plan.evaluation_rss_bytes,
             },
-        };
-        #[cfg(feature = "research")]
-        let request = {
-            let mut request = request;
-            if rung == 0 {
-                if let Some(context) = &self.capture_context {
-                    context.provider.prepare_request(&mut request)?;
-                }
-            }
-            request
-        };
-        Ok(request)
+        })
     }
 
     fn commit_round(
@@ -1528,7 +1462,7 @@ impl Discovery {
                         .checked_add(1)
                         .context("label attempt counter exhausted")?;
                     let slot = 32 + *index as u32;
-                    let mut request = Request {
+                    let request = Request {
                         attempt: Attempt {
                             run: next.plan.run_id.clone(),
                             round: round.number,
@@ -1545,7 +1479,6 @@ impl Discovery {
                             rss_bytes: next.plan.evaluation_rss_bytes,
                         },
                     };
-                    context.provider.prepare_request(&mut request)?;
                     (None, request)
                 };
                 let capture = next.capture.as_mut().unwrap();
@@ -2018,16 +1951,11 @@ fn experiment(plan: &Plan, round: u64, slot: usize, rung: u8) -> Result<String> 
         slot < 65536 && rung < 4,
         "evaluation ordinal is out of range"
     );
-    let ordinal = evaluation_ordinal(round, u32::from(rung) * 65536 + slot as u32)?;
-    Ok(projector(plan)?.experiment_id(project::EvaluationOrdinal(ordinal)))
-}
-
-fn evaluation_ordinal(round: u64, encoded_slot: u32) -> Result<u64> {
-    ensure!(encoded_slot < 262144, "evaluation ordinal is out of range");
-    round
+    let ordinal = round
         .checked_mul(262144)
-        .and_then(|n| n.checked_add(u64::from(encoded_slot)))
-        .context("evaluation ordinal exhausted")
+        .and_then(|n| n.checked_add(u64::from(rung) * 65536 + slot as u64))
+        .context("evaluation ordinal exhausted")?;
+    Ok(projector(plan)?.experiment_id(project::EvaluationOrdinal(ordinal)))
 }
 
 fn projected_summary(plan: &Plan, claim: project::Claim<'_>) -> Result<String> {
@@ -2098,7 +2026,7 @@ fn round_rng(seed: u64, round: u64) -> ChaCha12Rng {
     hash.update(round.to_le_bytes());
     ChaCha12Rng::from_seed(hash.finalize().into())
 }
-pub(crate) fn evaluation_seed(seed: u64, round: u64, slot: u32, rung: u8) -> u64 {
+fn evaluation_seed(seed: u64, round: u64, slot: u32, rung: u8) -> u64 {
     let mut hash = Sha256::new();
     hash.update(seed.to_le_bytes());
     hash.update(round.to_le_bytes());
@@ -2394,7 +2322,7 @@ fn record_result(
     id: &str,
     events: &mut Vec<EventBody>,
 ) -> Result<()> {
-    add_events(state, candidate, response, id, events)?;
+    add_events(state, response, id, events)?;
     if response.failure.is_none() {
         state.elites.insert(Elite {
             algorithm_id: candidate.algorithm_id.clone(),
@@ -2407,7 +2335,6 @@ fn record_result(
 
 fn add_events(
     state: &mut Checkpoint,
-    candidate: &Candidate,
     response: &Response,
     id: &str,
     events: &mut Vec<EventBody>,
@@ -2442,30 +2369,6 @@ fn add_events(
             },
             reason: public_failure(failure),
         }),
-        attempt_receipt: Some(Box::new(jope_api::EvaluationAttempt {
-            // The public receipt identifies the logical evaluation, just like its
-            // experiment ID. Worker restart epochs remain in private run records.
-            attempt: evaluation_ordinal(response.attempt.round, response.attempt.slot)?,
-            outcome: if response.failure.is_some() {
-                jope_api::EvaluationAttemptOutcome::Failed
-            } else {
-                jope_api::EvaluationAttemptOutcome::Completed
-            },
-            fold_scores: response.fold_scores.clone(),
-            loss: response
-                .scores
-                .get(1)
-                .copied()
-                .filter(|_| response.failure.is_none()),
-            program_sha256: response
-                .failure
-                .is_none()
-                .then(|| digest(candidate.dsl.as_bytes())),
-            failure: response.failure.map(|failure| jope_api::EvaluationFailure {
-                code: format!("{failure:?}").to_ascii_lowercase(),
-                reason: public_failure(failure),
-            }),
-        })),
     }));
     Ok(())
 }
@@ -2523,7 +2426,7 @@ fn discard_pending(
             let response = index.and_then(|i| responses.get(i)).cloned();
             if let Some(response) = &response {
                 let id = experiment(&state.plan, pending.number, slot, 0)?;
-                add_events(state, &candidate, response, &id, events)?;
+                add_events(state, response, &id, events)?;
             }
             state.discarded.push(DiscardedEvaluation {
                 round: pending.number,
@@ -2565,19 +2468,6 @@ impl SearchSpace for NativeSpace {
         count: usize,
         rng: &mut ChaCha12Rng,
     ) -> Result<Vec<String>> {
-        self.propose_observed(parents, count, rng, |_, _| {})
-    }
-}
-
-impl NativeSpace {
-    /// Observe the actual generator arm without adding RNG draws or changing candidates.
-    pub(crate) fn propose_observed(
-        &self,
-        parents: &[String],
-        count: usize,
-        rng: &mut ChaCha12Rng,
-        mut observe: impl FnMut(&str, &'static str),
-    ) -> Result<Vec<String>> {
         use feat_math::evolve::{self, CanonicalMutationArm::*};
         ensure!(!parents.is_empty(), "no parents");
         let arms = [
@@ -2602,19 +2492,6 @@ impl NativeSpace {
                 Ok(evolve::random_canonical_pipeline(seed, 6))
             };
             if let Ok(dsl) = proposed.and_then(|s| self.canonical(&s).map_err(|e| e.to_string())) {
-                observe(
-                    &dsl,
-                    [
-                        "native_parameter_jitter",
-                        "native_insert",
-                        "native_delete",
-                        "native_adjacent_swap",
-                        "native_head_replacement",
-                        "native_simplify",
-                        "native_crossover",
-                        "native_random",
-                    ][arm],
-                );
                 proposals.push(dsl);
                 if proposals.len() == count {
                     break;
@@ -2704,7 +2581,6 @@ fn native_scores<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Resul
     let mut losses = vec![];
     let mut values = vec![];
     let mut surrogate = vec![];
-    let mut fold_scores = vec![];
     for fold in spec.folds {
         let train: BTreeSet<_> = fold.train.iter().copied().collect();
         ensure!(
@@ -2731,7 +2607,6 @@ fn native_scores<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Resul
         losses.push(score.loss);
         values.push(score.value);
         surrogate.push(rmse.loss);
-        fold_scores.push(rmse.loss);
         targets.extend(vy);
         predictions.extend(prediction);
     }
@@ -2746,12 +2621,11 @@ fn native_scores<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Resul
     }
     Ok(worker::Scores {
         values: scores,
-        fold_scores,
         predictions_digest: digest(&bytes),
     })
 }
 
-pub(crate) fn numeric_rows<B: AsRef<[u8]>>(
+fn numeric_rows<B: AsRef<[u8]>>(
     matrix: &Matrix<B>,
     target: &str,
     features: &[String],
@@ -2801,7 +2675,7 @@ pub(crate) fn numeric_rows<B: AsRef<[u8]>>(
 /// Internal CAS fit, deliberately separate from the frozen exported bundle
 /// format. Every preprocessing parameter is fitted inside the training fold.
 #[derive(Serialize, Deserialize)]
-pub(crate) struct NativeModel {
+struct NativeModel {
     version: u32,
     features: Vec<String>,
     dsl: String,
@@ -2813,12 +2687,7 @@ pub(crate) struct NativeModel {
     model: feat_math::Model,
 }
 impl NativeModel {
-    pub(crate) fn fit(
-        features: &[String],
-        dsl: &str,
-        x: &feat_math::Rows,
-        y: &[f64],
-    ) -> Result<Self> {
+    fn fit(features: &[String], dsl: &str, x: &feat_math::Rows, y: &[f64]) -> Result<Self> {
         ensure!(
             !x.is_empty() && x.len() == y.len() && y.iter().all(|y| y.is_finite()),
             "invalid training rows"
@@ -2885,7 +2754,7 @@ impl NativeModel {
             model,
         })
     }
-    pub(crate) fn predict(&self, x: &feat_math::Rows) -> Result<Vec<f64>> {
+    fn predict(&self, x: &feat_math::Rows) -> Result<Vec<f64>> {
         ensure!(
             x.iter().all(|r| r.len() == self.features.len()),
             "prediction width mismatch"
@@ -2989,7 +2858,6 @@ fn native_refit<B: AsRef<[u8]>>(
     file.sync_all()?;
     Ok(worker::Scores {
         values: vec![surrogate.loss, score.loss, score.value],
-        fold_scores: vec![],
         predictions_digest,
     })
 }
@@ -3141,7 +3009,6 @@ mod tests {
             Response {
                 attempt: request.attempt.clone(),
                 scores: vec![surrogate, objective, objective],
-                fold_scores: vec![],
                 predictions_digest: digest(request.dsl.as_bytes()),
                 wall_ms: 0,
                 failure: None,
@@ -3172,76 +3039,6 @@ mod tests {
             assert_eq!(context.plan.seed, 73);
             Ok(proposals.into_iter().skip(4).take(4).collect())
         }
-    }
-
-    #[test]
-    fn custom_objective_controls_every_promotion_despite_opposing_surrogate() {
-        struct CustomScores {
-            promoted: Mutex<Vec<String>>,
-        }
-        impl Executor for CustomScores {
-            fn evaluate(&self, request: &Request) -> Response {
-                let prediction = request
-                    .dsl
-                    .strip_prefix("seed-")
-                    .and_then(|s| s.parse::<u32>().ok())
-                    .map_or(100.0, f64::from);
-                let objective = RegressionObjective::parse(request.objective.as_str().unwrap())
-                    .unwrap()
-                    .evaluate(&[0.0], &[prediction])
-                    .unwrap();
-                let surrogate = RegressionObjective::parse("rmse")
-                    .unwrap()
-                    .evaluate(&[0.0], &[prediction])
-                    .unwrap();
-                assert_eq!(objective.loss, -prediction);
-                assert_eq!(surrogate.loss, prediction);
-                if request.attempt.slot >= 65_536 {
-                    self.promoted.lock().unwrap().push(request.dsl.clone());
-                }
-                Response {
-                    attempt: request.attempt.clone(),
-                    scores: vec![surrogate.loss, objective.loss, objective.value],
-                    fold_scores: vec![],
-                    predictions_digest: digest(request.dsl.as_bytes()),
-                    wall_ms: 0,
-                    failure: None,
-                }
-            }
-            fn fitted_model(&self, request: &Request) -> Result<Vec<u8>> {
-                Ok(request.dsl.as_bytes().to_vec())
-            }
-        }
-        let directory = tempfile::tempdir().unwrap();
-        let mut p = plan(directory.path(), 30, Effort::Fast, 24);
-        // A newly defined objective, rather than one of the ranker's trained
-        // catalog labels. Actual runtime parsing/scoring supplies the loss.
-        p.objective = json!({
-            "metric": "custom", "name": "rel07_untrained_pred_mean",
-            "direction": "maximize", "expression": {"op": "pred"},
-            "aggregation": {"kind": "mean"}
-        })
-        .to_string();
-        let store = Arc::new(Store::open(directory.path().join("store")).unwrap());
-        let mut d = Discovery::open(store, p).unwrap();
-        let executor = CustomScores {
-            promoted: Mutex::new(vec![]),
-        };
-        let admission = ContextAdmission {
-            rounds: Mutex::new(vec![]),
-            refuse: false,
-        };
-        d.advance(&RoundSpace, &admission, &executor, 1, 1).unwrap();
-        assert_eq!(d.champion().unwrap().candidate.dsl, "seed-3");
-        assert_eq!(d.champion().unwrap().loss, -3.0);
-        d.advance(&RoundSpace, &admission, &executor, 1, 1).unwrap();
-        assert_eq!(d.champion().unwrap().loss, -100.0);
-        assert!(d.champion().unwrap().candidate.dsl.ends_with("-4"));
-        let promoted = executor.promoted.lock().unwrap();
-        assert_eq!(promoted.len(), 2, "every rung-1 decision is observed");
-        assert_eq!(promoted[0], "seed-3", "seed-0 had the best surrogate");
-        assert!(promoted[1].ends_with("-4"));
-        assert_eq!(*admission.rounds.lock().unwrap(), vec![1, 2]);
     }
 
     #[test]
@@ -3477,7 +3274,6 @@ mod tests {
                 Response {
                     attempt: request.attempt.clone(),
                     scores: vec![surrogate, objective, objective],
-                    fold_scores: vec![],
                     predictions_digest: digest(request.dsl.as_bytes()),
                     wall_ms: 0,
                     failure: None,
@@ -3724,7 +3520,6 @@ mod tests {
             Response {
                 attempt: request.attempt.clone(),
                 scores: vec![loss, loss, loss],
-                fold_scores: vec![],
                 predictions_digest: digest(request.dsl.as_bytes()),
                 wall_ms: 0,
                 failure: None,
@@ -4063,7 +3858,6 @@ mod tests {
             Response {
                 attempt: request.attempt.clone(),
                 scores: vec![loss, loss, loss],
-                fold_scores: vec![],
                 predictions_digest: digest(request.dsl.as_bytes()),
                 wall_ms: 0,
                 failure: None,
@@ -4222,22 +4016,24 @@ mod tests {
         native_worker_fault(directory, "")
     }
     fn native_worker_fault(directory: &Path, fault: &str) -> PathBuf {
-        let deps = std::env::var_os("JOPE_DSC_DEPENDENCY_DIR")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| {
-                std::env::current_exe()
+        let deps = std::env::current_exe()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .to_path_buf();
+        let mut libraries: Vec<_> = fs::read_dir(&deps)
+            .unwrap()
+            .filter_map(|p| p.ok())
+            .map(|p| p.path())
+            .filter(|p| {
+                p.file_name()
                     .unwrap()
-                    .parent()
-                    .unwrap()
-                    .to_path_buf()
-            });
-        let library = std::env::var_os("JOPE_DSC_SERVICE_RLIB")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| deps.parent().unwrap().join("libjope_service.rlib"));
-        assert!(
-            library.is_file(),
-            "build the current service with cargo build -p jope-service --all-targets --locked"
-        );
+                    .to_string_lossy()
+                    .starts_with("libjope_service-")
+                    && p.extension().is_some_and(|e| e == "rlib")
+            })
+            .collect();
+        libraries.sort_by_key(|p| std::cmp::Reverse(fs::metadata(p).unwrap().modified().unwrap()));
         let source = directory.join("native-worker.rs");
         let binary = directory.join("native-worker");
         let pids = directory.join("worker-pids");
@@ -4245,49 +4041,27 @@ mod tests {
         let fault=match fault {
             "timeout"=>"if request.fold_spec.get(\"refit_output\").is_some() { loop { std::hint::spin_loop(); } }",
             "memory"=>"if request.fold_spec.get(\"refit_output\").is_some() { let mut bytes=vec![0_u8;128*1024*1024]; for i in (0..bytes.len()).step_by(4096) { bytes[i]=1; } loop { std::hint::black_box(&bytes); std::thread::sleep(std::time::Duration::from_millis(10)); } }",
-            "r2-timeout"=>"if request.attempt.slot == 0 { loop { std::hint::spin_loop(); } }",
-            "r2-memory"=>"if request.attempt.slot == 0 { let mut bytes=vec![0_u8;128*1024*1024]; for i in (0..bytes.len()).step_by(4096) { bytes[i]=1; } loop { std::hint::black_box(&bytes); std::thread::sleep(std::time::Duration::from_millis(10)); } }",
             ""=>"",_=>panic!("unknown owned fixture fault"),
         };
         fs::write(&source,format!("fn main() {{ std::fs::write(std::path::Path::new({:?}).join(std::process::id().to_string()), b\"native\").unwrap(); jope_service::worker::serve(1, |request,matrix| {{ {} jope_service::discover::r#loop::evaluate_native(request,matrix) }}).unwrap(); }}",pids,fault)).unwrap();
-        let compiler = std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into());
-        let output = Command::new(&compiler)
-            .arg("--edition=2021")
-            .arg("--crate-name=dsc08_native_worker")
-            .arg(&source)
-            .arg("-L")
-            .arg(format!("dependency={}", deps.display()))
-            .arg("--extern")
-            .arg(format!("jope_service={}", library.display()))
-            .arg("-o")
-            .arg(&binary)
-            .output()
-            .unwrap();
-        assert!(
-            output.status.success(),
-            "exact current service artifact could not link native worker: {}\n{}",
-            library.display(),
-            String::from_utf8_lossy(&output.stderr)
-        );
-        if let Some(receipt) = std::env::var_os("JOPE_DSC_RECEIPT_DIR") {
-            let compiler_version = Command::new(&compiler).arg("-vV").output().unwrap();
-            ensure_worker_receipt(&PathBuf::from(receipt), &library, &compiler_version.stdout);
+        for library in libraries {
+            let output = Command::new("rustc")
+                .arg("--edition=2021")
+                .arg("--crate-name=dsc08_native_worker")
+                .arg(&source)
+                .arg("-L")
+                .arg(format!("dependency={}", deps.display()))
+                .arg("--extern")
+                .arg(format!("jope_service={}", library.display()))
+                .arg("-o")
+                .arg(&binary)
+                .output()
+                .unwrap();
+            if output.status.success() {
+                return binary;
+            }
         }
-        binary
-    }
-
-    fn ensure_worker_receipt(receipt: &Path, library: &Path, compiler: &[u8]) {
-        fs::create_dir_all(receipt).unwrap();
-        fs::write(
-            receipt.join("native-worker-build.json"),
-            serde_json::to_vec_pretty(&json!({
-                "library": library, "sha256": digest(&fs::read(library).unwrap()),
-                "compiler": String::from_utf8_lossy(compiler),
-                "source": std::env::var("JOPE_BUILD_SOURCE_SHA").unwrap_or_default(),
-            }))
-            .unwrap(),
-        )
-        .unwrap();
+        panic!("current jope-service library could not link native worker; build the library first with cargo build -p jope-service --locked");
     }
 
     #[cfg(unix)]
@@ -4432,171 +4206,6 @@ mod tests {
         }
     }
 
-    #[cfg(target_os = "linux")]
-    #[test]
-    #[ignore = "dedicated REL-07 R2 native worker/RSS gate; build the current service library first"]
-    fn rel07_r2_worker_faults_preserve_engine_memory_and_complete_search() {
-        use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-
-        struct TwoSeeds;
-        impl SearchSpace for TwoSeeds {
-            fn canonical(&self, dsl: &str) -> Result<String> {
-                NativeSpace.canonical(dsl)
-            }
-            fn seeds(&self) -> Result<Vec<String>> {
-                ["(pipe X (ridge))", "(pipe X (standardize) (ridge))"]
-                    .into_iter()
-                    .map(|dsl| self.canonical(dsl))
-                    .collect()
-            }
-            fn propose(&self, _: &[String], _: usize, _: &mut ChaCha12Rng) -> Result<Vec<String>> {
-                Ok(vec![])
-            }
-        }
-        struct Observed {
-            inner: ProcessExecutor,
-            failures: Mutex<Vec<(WorkerFailure, u64)>>,
-        }
-        impl Executor for Observed {
-            fn evaluate(&self, request: &Request) -> Response {
-                let start = Instant::now();
-                let response = self.inner.evaluate(request);
-                if let Some(failure) = response.failure {
-                    self.failures
-                        .lock()
-                        .unwrap()
-                        .push((failure, start.elapsed().as_millis() as u64));
-                }
-                response
-            }
-            fn fitted_model(&self, request: &Request) -> Result<Vec<u8>> {
-                self.inner.fitted_model(request)
-            }
-            fn revoke(&self, attempt: &Attempt) {
-                self.inner.revoke(attempt);
-            }
-        }
-
-        // Warm an ordinary successful native run before establishing the RSS baseline.
-        // This charges startup/store/allocator setup neither to the malicious candidate
-        // nor to a fabricated extra memory allowance. The 10% limit stays exact.
-        let warm = tempfile::tempdir().unwrap();
-        let warm_plan = plan(warm.path(), 30, Effort::Fast, 1);
-        let warm_worker = native_worker(warm.path());
-        run_store(&warm.path().join("store"), &warm_plan, &warm_worker, 1);
-
-        for (fault, expected) in [
-            ("timeout", WorkerFailure::Timeout),
-            ("memory", WorkerFailure::MemoryLimit),
-        ] {
-            let directory = tempfile::tempdir().unwrap();
-            let mut p = plan(directory.path(), 30, Effort::Fast, 2);
-            p.planned_workers = 1;
-            p.evaluation_wall_ms = 1000;
-            p.evaluation_rss_bytes = 96 * 1024 * 1024;
-            let binary = native_worker_fault(directory.path(), &format!("r2-{fault}"));
-            let store = Arc::new(Store::open(directory.path().join("store")).unwrap());
-            let mut d = Discovery::open(Arc::clone(&store), p.clone()).unwrap();
-            let observed = Observed {
-                inner: pool(&binary, 1),
-                failures: Mutex::new(vec![]),
-            };
-            let prime = d
-                .request(
-                    99,
-                    0,
-                    1,
-                    &Candidate {
-                        algorithm_id: "alg_00000099".into(),
-                        dsl: NativeSpace.canonical("(pipe X (ridge))").unwrap(),
-                    },
-                )
-                .unwrap();
-            assert_eq!(observed.inner.evaluate(&prime).failure, None);
-            let engine = std::process::id();
-            let baseline = crate::sampler::sample(engine).unwrap().1;
-            assert!(baseline > 0);
-            let peak = AtomicU64::new(baseline);
-            let samples = AtomicU64::new(0);
-            let stop = AtomicBool::new(false);
-            let sampling_failed = AtomicBool::new(false);
-            std::thread::scope(|scope| {
-                let observer = scope.spawn(|| {
-                    while !stop.load(Ordering::Acquire) {
-                        match crate::sampler::sample(engine) {
-                            Ok((_, rss)) if rss > 0 => {
-                                peak.fetch_max(rss, Ordering::Relaxed);
-                                samples.fetch_add(1, Ordering::Relaxed);
-                            }
-                            _ => {
-                                sampling_failed.store(true, Ordering::Release);
-                                break;
-                            }
-                        }
-                        std::thread::sleep(Duration::from_millis(5));
-                    }
-                });
-                let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    finish(&mut d, &TwoSeeds, &observed, 1);
-                }));
-                stop.store(true, Ordering::Release);
-                observer.join().unwrap();
-                if let Err(panic) = outcome {
-                    std::panic::resume_unwind(panic);
-                }
-            });
-            assert!(
-                !sampling_failed.load(Ordering::Acquire),
-                "RSS sensor unavailable"
-            );
-            let sample_count = samples.load(Ordering::Relaxed);
-            let peak_rss = peak.load(Ordering::Relaxed);
-            assert!(sample_count > 0);
-            assert!(
-                peak_rss * 10 <= baseline * 11,
-                "engine RSS exceeded 110% of warmed baseline: {peak_rss}/{baseline}"
-            );
-            assert!(
-                d.completed().is_some(),
-                "search must complete after the isolated fault"
-            );
-            let champion = d
-                .champion()
-                .expect("healthy candidate must still produce a champion");
-            assert!(champion.value.is_finite() && champion.loss.is_finite());
-            store.verify_blob(&champion.model).unwrap();
-            assert_eq!(d.nondeterminism().count.0, 1);
-            let failures = observed.failures.lock().unwrap();
-            assert_eq!(failures.len(), 1);
-            assert_eq!(failures[0].0, expected);
-            let elapsed_ms = failures[0].1;
-            assert!(
-                elapsed_ms <= p.evaluation_wall_ms + 2000,
-                "worker fault exceeded its limit plus two seconds"
-            );
-            drop(failures);
-            let pids = directory.path().join("worker-pids");
-            let workers_started = fs::read_dir(&pids).unwrap().count();
-            assert!(workers_started >= 2, "faulted worker must be replaced");
-            drop(observed);
-            let workers_remaining = live_native_workers(&pids);
-            assert_eq!(workers_remaining, 0, "owned worker cleanup must finish");
-            println!(
-                "REL07_R2 {}",
-                json!({
-                    "schema":"jope.rel07.worker-isolation/v1", "fault":fault,
-                    "failure":format!("{expected:?}"), "wall_limit_ms":p.evaluation_wall_ms,
-                    "elapsed_ms":elapsed_ms, "baseline_rss_bytes":baseline,
-                    "peak_rss_bytes":peak_rss, "rss_samples":sample_count,
-                    "completed":true, "champion_present":true,
-                    "workers_started":workers_started, "workers_remaining":workers_remaining,
-                    "train_sha256":TRAIN_SHA,
-                    "source_sha":std::env::var("JOPE_BUILD_SOURCE_SHA").unwrap_or_default()
-                })
-            );
-        }
-    }
-
     #[test]
     #[ignore = "dedicated service M1 entry acceptance; build jope-service library first and run explicitly"]
     fn service_m1_entry_executes_native_discovery_and_returns_only_public_projection() {
@@ -4638,7 +4247,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "dedicated native process gate: first cargo build -p jope-service --all-targets --locked, then run this exact test with --ignored"]
+    #[ignore = "dedicated native process gate: first cargo build -p jope-service --locked, then run this exact test with --ignored"]
     fn real_native_workers_preserve_projection_across_capacity_pause_and_sigkill() {
         let directory = tempfile::tempdir().unwrap();
         let mut p = plan(directory.path(), 80, Effort::Medium, 25);
@@ -4647,11 +4256,6 @@ mod tests {
         assert_eq!(p.rounds_in_flight(), 2);
         let binary = native_worker(directory.path());
         let baseline = run_store(&directory.path().join("one"), &p, &binary, 1);
-        println!(
-            "RNK10 R21 default-path hashes: champion={} projection={}",
-            digest(&serde_json::to_vec(&baseline.0).unwrap()),
-            digest(&serde_json::to_vec(&baseline.1).unwrap()),
-        );
         same(
             "eight",
             &baseline,
@@ -5103,7 +4707,6 @@ mod tests {
                 Response {
                     attempt: request.attempt.clone(),
                     scores: vec![loss, loss, 777.0],
-                    fold_scores: vec![],
                     predictions_digest: digest(request.dsl.as_bytes()),
                     wall_ms: 7,
                     failure: None,
