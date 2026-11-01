@@ -121,6 +121,22 @@ pub struct CaptureContext {
 }
 
 impl CaptureContext {
+    /// Build an Engine capability only inside the trusted service crate. There
+    /// is no JSON importer or caller-controlled provider selection.
+    pub(crate) fn engine(
+        binding: Binding,
+        provider: Arc<dyn CaptureProvider>,
+        plan: &Plan,
+    ) -> Result<Self> {
+        ensure!(
+            binding.identity.evidence == RecordEvidence::Engine,
+            "Engine context requires Engine evidence"
+        );
+        let context = Self { binding, provider };
+        context.validate(plan)?;
+        Ok(context)
+    }
+
     #[cfg(test)]
     pub(crate) fn control(binding: Binding, provider: Arc<dyn CaptureProvider>) -> Result<Self> {
         ensure!(

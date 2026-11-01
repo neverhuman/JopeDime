@@ -144,6 +144,15 @@ impl LearnedAdmission {
         self.plan = Some(plan.clone());
         Ok(rows.len())
     }
+    /// Borrow the exact FIT conditioning only when its full Plan binding matches.
+    pub(crate) fn research_conditioning(&self, plan: &Plan) -> Result<&TokenProjection> {
+        let bound = self.plan.as_ref().context("learned FIT is not bound")?;
+        ensure!(bound == plan, "learned conditioning Plan changed");
+        self.conditioning
+            .as_ref()
+            .context("learned FIT conditioning is not bound")
+    }
+
     fn program(&self, dsl: &str) -> Result<([f32; 412], [f32; 16])> {
         let features = self.featurizer.featurize(dsl)?;
         let projection = proj16::proj16(&features.map(f64::from)).map(|v| v as f32);
