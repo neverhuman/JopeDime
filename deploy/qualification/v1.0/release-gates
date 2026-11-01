@@ -25,6 +25,7 @@ INPUT_FIELDS = {
         "parity_bundle_dir",
         "parity_report_dir",
     },
+    "M3": {"full_inputs", "full_inputs_sha256"},
     "M5": {"golden_dir", "bundle_dir"},
 }
 
@@ -120,7 +121,11 @@ def provider_commands(repo, bindings=None):
     supported = {gate.lower() for gate in RELEASE_GATE_IDS}
     unexpected = []
     for path in provider_dir.glob("*.py"):
-        if path.stem == "common":
+        if path.stem in {"common", "m3_full"}:
+            if path.is_symlink() or not path.is_file():
+                raise ValueError(
+                    "helper must be a regular, non-symlink file: " + path.name
+                )
             continue
         if path.stem not in supported:
             unexpected.append(path.name)
@@ -160,6 +165,13 @@ def provider_commands(repo, bindings=None):
                 bindings[gate]["parity_bundle_dir"],
                 "--parity-report-dir",
                 bindings[gate]["parity_report_dir"],
+            ]
+        if gate == "M3" and gate in bindings:
+            argv += [
+                "--full-inputs",
+                bindings[gate]["full_inputs"],
+                "--full-inputs-sha256",
+                bindings[gate]["full_inputs_sha256"],
             ]
         if gate == "M5" and gate in bindings:
             argv += [

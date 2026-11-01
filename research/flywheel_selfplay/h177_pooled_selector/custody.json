@@ -1,0 +1,90 @@
+{
+  "wave": "H177",
+  "owner": "gpu_fused_agy",
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "candidate_admitted": false,
+  "lift_qualified": false,
+  "h178_calibration_status": "PENDING_H178",
+  "prereg_pr": 1492,
+  "prereg_merged_commit": "725fed25dc2ec2dfcc16c50e39c2351913ac7c48",
+  "amendment_pr": 1500,
+  "amendment_merged_commit": "70bf6698301d544fcb522998fffe0bc8dd7ec278",
+  "redteam_amendment_review_id": "5727935400",
+  "h175_closeout_commit": "b0261812e125c8743370b7801b75d27e7f27977f",
+  "s3_bucket": "veox-jopedime-learning-use2",
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H177/gpu_fused_agy-t0400/",
+  "local_evidence_dir": "/home/ubuntu/jope-data/h177/attempt-002",
+  "prelaunch_attempt_001_disclosure": {
+    "attempt": "attempt-001",
+    "optimizer_updates": 0,
+    "scored_contexts": 0,
+    "elapsed_seconds": 2.2563461509998888,
+    "reason": "KeyError: merged_source_verified at runner.py:495 before any model, feature, or pool load"
+  },
+  "objects": [
+    {
+      "name": "h177-evidence-bundle.tar.gz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H177/gpu_fused_agy-t0400/h177-evidence-bundle.tar.gz",
+      "version_id": "pYs2Qq1jmHW7vRTE39Pel2t0Npah8jKJ",
+      "etag": "f6563676e9c4b9ffc255af27f415d9f2",
+      "bytes": 9075509,
+      "sha256": "950df2212f8385f0b9e694a4d4c31e4aa0e3b38b47403e4f85d7dcf014d6c25b",
+      "readback_verified": true
+    },
+    {
+      "name": "metrics.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H177/gpu_fused_agy-t0400/metrics.json",
+      "version_id": "Pps6M4kJnOmgHn8bfdNjaztViKI4j0XU",
+      "etag": "f384cb3d6d346ac385e860c92681bd9a",
+      "bytes": 232212,
+      "sha256": "aff5e5875780c6a8e278dcc02c38889204fac69cccbc130a9246753e565d258c",
+      "readback_verified": true
+    },
+    {
+      "name": "pooled_b_selection_lock.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H177/gpu_fused_agy-t0400/pooled_b_selection_lock.json",
+      "version_id": "8NOh_prT3qM0JoHvJ_9IteK.5KND1UJu",
+      "etag": "e0a01c69e4977a844a37a1a61094c1e4",
+      "bytes": 34168,
+      "sha256": "3acc421fb5a46bbdee2373cd5586f9dff3c63986c6b521ef2f8e7e358158123a",
+      "readback_verified": true
+    },
+    {
+      "name": "panels.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H177/gpu_fused_agy-t0400/panels.npz",
+      "version_id": "rnk1Ye7jt0t0peipZVJPlSs9Rub7yGsN",
+      "etag": "fb7c7a96956e3585b64481a7ef1a2713",
+      "bytes": 121279,
+      "sha256": "713f2999c549966b7fc9f6c96cda1614d3fc54844a1ce0244eafe399963e87cc",
+      "readback_verified": true
+    },
+    {
+      "name": "audit.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H177/gpu_fused_agy-t0400/audit.json",
+      "version_id": "sGTBbN7cDoHDtKSGC_VVgyH4HlbI1JkT",
+      "etag": "2f072875baa791d43668895082d0c61d",
+      "bytes": 159459,
+      "sha256": "007587e19144381ce5834f699e302364d91482c036b5136266db529cb28b6f86",
+      "readback_verified": true
+    },
+    {
+      "name": "baseline.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H177/gpu_fused_agy-t0400/baseline.json",
+      "version_id": "gwFBmjDcVf1uRx1MciJdfcNMDpsyr0.8",
+      "etag": "af0445c3590d06307e4cb2813eb79261",
+      "bytes": 10781,
+      "sha256": "64fa9f657ff635a335d6e88d0cca4e29abc152b8bbeb71c28e99ae7ea06b3093",
+      "readback_verified": true
+    },
+    {
+      "name": "recount_verification.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H177/gpu_fused_agy-t0400/recount_verification.json",
+      "version_id": "cztv2ZobDi7zv91kQSuPNha7SeVpWrgG",
+      "etag": "89cec5019ae8ba681c36bd9a1c298c89",
+      "bytes": 954,
+      "sha256": "746ed3ca7a5bf813c6239460ec5ab39e47bc6699e2237f566c930bfba73ef0c1",
+      "readback_verified": true
+    }
+  ]
+}
