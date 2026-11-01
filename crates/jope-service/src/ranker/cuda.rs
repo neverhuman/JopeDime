@@ -7,6 +7,8 @@
 //! The existing cpu_placement helper still describes CPU-only native evaluation.
 
 mod cpu;
+#[cfg(feature = "fused-cuda")]
+mod deterministic;
 mod forward;
 pub use forward::{FusedForward, StageOutput};
 #[cfg(test)]
