@@ -471,6 +471,8 @@ def full_report(source="a" * 40, pin="b" * 64):
                 passed=True,
                 newly_generated=44544,
                 admitted=10000,
+                clock=full.PAIRED_CLOCK,
+                native_witness_sha256=dict(full.SOURCE_CLOCK_PINS),
                 strata=[
                     mode("all", 1024, 10000),
                     mode(False, 192, 1920),
@@ -504,6 +506,59 @@ class M3FullTests(unittest.TestCase):
             Path("/unused-result"),
         )
         self.pin = "b" * 64
+
+    def test_current_clock_routes_without_paired_reference_metadata(self):
+        cfg = dict(
+            selected=dict(sha256=full.SELECTED_SHA),
+            proposer={
+                name: dict(sha256=pin) for name, pin in full.PROPOSER_PINS.items()
+            },
+            native_clock=dict(
+                clock=full.PAIRED_CLOCK,
+                **{
+                    name: dict(sha256=pin)
+                    for name, pin in full.SOURCE_CLOCK_PINS.items()
+                },
+            ),
+        )
+        self.assertNotIn("paired_r0", cfg)
+        full.reference_pins(cfg)
+        self.assertEqual(
+            full.proposer_command(Path("/probe"), Path("/staged"), Path("/out")),
+            ["/probe", "/staged", "/out", "r0-clock"],
+        )
+        for section, key in (
+            ("proposer", "native_reference"),
+            ("native_clock", "native_candidates"),
+            ("native_clock", "native_admission"),
+        ):
+            bad = json.loads(json.dumps(cfg))
+            bad[section][key]["sha256"] = "0" * 64
+            with (
+                self.subTest(section=section, key=key),
+                self.assertRaises(ProviderError),
+            ):
+                full.reference_pins(bad)
+
+    def test_legacy_only_witnesses_cannot_qualify_corrected_clock(self):
+        with self.assertRaisesRegex(ProviderError, "legacy-only inputs cannot qualify"):
+            full.compare_proposer(
+                [], dict(proposer=dict(cohort=[], requests=[]), paired=None)
+            )
+
+    def test_clock_and_current_witness_binding_are_required_for_full_gate(self):
+        for key, value in (
+            ("clock", "legacy-clock"),
+            ("clock", None),
+            ("native_witness_sha256", {}),
+        ):
+            report = full_report()
+            report["clauses"]["r0_proposer"][key] = value
+            with (
+                self.subTest(key=key, value=value),
+                self.assertRaisesRegex(ProviderError, "correct source-clock"),
+            ):
+                full.gate_payload(self.ctx, report, self.pin)
 
     def test_all_four_complete_comparisons_allow_bound_pass(self):
         payload = full.gate_payload(self.ctx, full_report(), self.pin)
