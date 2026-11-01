@@ -11,11 +11,11 @@
 % Exhibits: Equation 2 (eq:bill), Box 3. The pilot-cost figure (fig:price) lives in Results.
 % Unsupported supplied cost projections are omitted pending reproducible calculations.
 
-The cost of a verified improvement includes the attempts that precede it.
-A complete ledger must count encoding, input tokens, generation, repairs,
-referee execution, updates and operating costs. A reproducible full-run
-price remains pending (\cref{sub:price-run}); \cref{sec:results} reserves
-the measurements needed to test the planning assumptions below.
+A verified improvement carries the cost of the attempts that precede it.
+The ledger includes encoding, input tokens, generation, repairs, referee
+execution, updates and operating costs. The planning ratios below organize
+that bill; a full-run price requires the measurements in
+\cref{sub:price-run,sec:results}.
 
 \subsection{The bill in one line}\label{sub:price-bill}
 
@@ -67,9 +67,9 @@ If 90\% of attempts fail to improve the incumbent, the independent-try
 model requires ten attempts per improvement in expectation. A typed language
 can exclude invalid structures before fitting (\cref{sec:game}). Runtime,
 resource and output failures may consume part or all of the fit, and their
-incurred cost must be counted. Whether also-rans dominate is a pilot question.
-Changes in learning, search or opponent can affect the measured win rate.
-Isolate the writer's contribution.
+incurred cost must be counted. The pilot must measure whether also-rans
+dominate. To isolate the writer's contribution, compare it under a common
+search budget and incumbent; changes to either can alter the win rate.
 
 \subsection{The correction tax and the reasoning dial}\label{sub:price-tax}
 
@@ -156,23 +156,22 @@ for 1T parameters alone require at least 13 H100 SXM GPUs with 80~GB each
 \citep{nvidia2026h100}; runtime state needs additional memory. This memory
 floor is separate from the cost estimates omitted below.
 
-A cost projection needs a pinned model and hardware configuration, dated
-prices, measured or justified utilization, a reproducible calculation, and
-an explicit accounting boundary. Those inputs are not yet recorded, so this
-paper reports no cost projections; they remain a measurement task.
+A reproducible projection therefore needs a pinned model and hardware
+configuration, dated prices, measured or justified utilization and an
+explicit accounting boundary. Those inputs remain unrecorded; a full
+cost projection remains a measurement task.
 
 \begin{keyidea}
   Cost per verified improvement depends on both the cost of an attempt
   and the probability that it wins.
 \end{keyidea}
 
-Any future projection of a fixed attempt budget must be converted to cost
-per win using a measured win rate and compared under a common task mix,
-incumbent standard and verification rule. Under \cref{eq:bill}'s
-fixed-probability model, doubling $\winprob$ halves expected cost per win
-only if mean cost per attempt stays fixed.
+A fixed attempt budget becomes a cost per win only after measuring the win
+rate under a common task mix, incumbent and verification rule. Under
+\cref{eq:bill}'s fixed-probability model, doubling $\winprob$ halves expected
+cost per win only if mean attempt cost stays fixed.
 
-The reference network's measured costs must be reported separately from
-these scaling examples. \Cref{sec:method} now specifies the training intended
-to raise $\winprob$; the single-candidate comparison must determine whether
-that training improves the first proposal.
+\Cref{sec:method} turns from these planning ratios to the reference
+network and its training. Its measured costs require their own ledger;
+whether training improves the first proposal remains the single-candidate
+test in \cref{sub:results-learning}.
