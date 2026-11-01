@@ -1,16 +1,76 @@
 {
   "wave": "H177",
-  "status": "PENDING_H175_CLOSEOUT",
+  "status": "READY_TO_LAUNCH",
+  "authority": "/home/ubuntu/nudges/hwave_t0440_h177_anchor_fusedagy.md",
+  "owner_ruling": "DECISIONS_20261029.md 2026-11-01T11:28Z",
   "h175_prereg_pr": 1490,
+  "h175_prereg_merge_commit": "9cd28fc563d92e9696178957e387f8cb8d31bb0e",
   "h175_prereg_reviewed_head": "1cb289d545912561f09ac332a0e8344948ac3e67",
   "h175_redteam_review_id": "PRR_kwDOUgaGXM8AAAABVWX1aw",
-  "h175_closeout_commit": "PINNED_PLACEHOLDER_UPDATE_BEFORE_LAUNCH",
-  "h175_verdict": "PINNED_PLACEHOLDER_UPDATE_BEFORE_LAUNCH",
-  "h175_mde80_41fam": null,
+  "h175_metrics_path": "/home/ubuntu/jope-data/h175/attempt-001/metrics.json",
+  "h175_metrics_sha256": "89320699ac9a6d736cde7cd063fe6c3123bb22f6119f6874c3f0afcf23f9e567",
+  "h175_closeout_commit": "b0261812e125c8743370b7801b75d27e7f27977f",
+  "h175_verdict": "MIXED",
+  "h175_typical_historical_inner_b_gain": 0.02814887903781732,
   "single_fold_b_families": 41,
   "pooled_b_families": 205,
   "family_count_ratio": 5.0,
   "expected_mde80_205fam_se_scale": 0.4472135954999579,
-  "expected_mde80_205fam": null,
-  "launch_rule": "Update this file with H175 closeout commit, verdict in {SELECTOR_UNDERPOWERED, MIXED}, and measured MDE80 before running H177; if H175 returns CEILING_LIKELY, close H177 as NOT_RUN."
+  "mde80_single_fold_41_family": {
+    "context": {
+      "24_slate": 0.015834306207683856,
+      "24_slate_ci95": [
+        0.01281268541627302,
+        0.01953510038349481
+      ],
+      "24_slate_headroom_percent": 4.945644672354119,
+      "full_slate": 0.02280187032608344,
+      "full_slate_ci95": [
+        0.017640358535396868,
+        0.02925698504458184
+      ],
+      "full_slate_headroom_percent": 4.880669094895011
+    },
+    "family_clustered": {
+      "24_slate": 0.06395704693361139,
+      "24_slate_ci95": [
+        0.05066967924435128,
+        0.07889123441597562
+      ],
+      "24_slate_headroom_percent": 19.976172260280244,
+      "full_slate": 0.09467790954714358,
+      "full_slate_ci95": [
+        0.07216901837061505,
+        0.12161850289488915
+      ],
+      "full_slate_headroom_percent": 20.265510700997837
+    }
+  },
+  "expected_pooled_205_family_mde80": {
+    "context": {
+      "24_slate": 0.0076341034158856425,
+      "24_slate_raw_div_sqrt5": 0.0070813170113856,
+      "full_slate": 0.010750092817151616,
+      "full_slate_raw_div_sqrt5": 0.010197306412651572
+    },
+    "family_clustered": {
+      "24_slate": 0.02915524732123995,
+      "24_slate_raw_div_sqrt5": 0.028602460916739906,
+      "full_slate": 0.042894034747497915,
+      "full_slate_raw_div_sqrt5": 0.04234124834299788
+    }
+  },
+  "h175_mde80_41fam": 0.06395704693361139,
+  "h175_mde80_41fam_full_family": 0.09467790954714358,
+  "h175_mde80_41fam_24_context": 0.015834306207683856,
+  "h175_mde80_41fam_full_context": 0.02280187032608344,
+  "expected_mde80_205fam": 0.02915524732123995,
+  "expected_mde80_205fam_full_family": 0.042894034747497915,
+  "expected_mde80_205fam_24_context": 0.0076341034158856425,
+  "expected_mde80_205fam_full_context": 0.010750092817151616,
+  "h178_calibration_gate": "Any H177 ADMIT is lift only if H178 (gpu_tokbench_agy, calibration of this exact rule on the H175 bank) shows null/harmful admission <= 0.05. Otherwise H177 is DIAGNOSTIC.",
+  "launch_rule": "Update h175_closeout_commit and set status=READY_TO_LAUNCH once H175 closeout merges into main and red-team review passes.",
+  "h175_closeout_pr": 1498,
+  "h175_closeout_metrics_sha256": "1d884ada17dc0e6e9b943d19f11b59a7c2d36a3276677f0aaf76bf46e9b404df",
+  "h177_lift_qualification": "H177 lift is conditional on the fixed H178 gate; a failed gate makes H177 diagnostic. A passed gate establishes only the reported finite-bank criterion. It does not repair the A/B family reuse or prove new-family calibration. Keep r882 1.1377941898164525 as the reference; r2750/r2795 dev tie admissions remain outside H-wave lift."
 }
