@@ -1,0 +1,41 @@
+{
+  "wave": "H144",
+  "checkpoint": "/home/ubuntu/jope-data/h144/inputs/round-882.pt",
+  "reference": "/home/ubuntu/jope-data/h144/inputs/best_dev_checkpoint.json",
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "inputs": {
+    "/home/ubuntu/jope-data/h144/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h144/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf"
+  },
+  "status": "PREREG_DRAFT_SMOKE_WAITING_H142",
+  "seeds": [
+    144101,
+    144102,
+    144103
+  ],
+  "arms": {
+    "CTRL": 0.0001,
+    "WD_1E2": 0.01,
+    "WD_1E1": 0.1
+  },
+  "dropped": [
+    "DROP_00",
+    "DROP_30"
+  ],
+  "fold_seed": 144140,
+  "holm_hypotheses": 4,
+  "prereg_sha256": "d9d8508b850ae37623380f10595acaa31a948b7cc58fa534a096075dfe1ca3f8",
+  "fold_manifest_sha256": "e0133c54ede334ace668c7d47975b239c71c6bc590b8aebc75b357a06e198f96",
+  "executor_sha256": {
+    "test_h144.py": "936f3730352425d8c087f4246c7ea1553e01fc77306197d80fcbbab54fcb624d",
+    "runtime.py": "24d4eac98da23791f706341fd6c7c3f54cc5f693b0b435852049b319dd996ecc",
+    "science.py": "5aa07f6b8a5e2b5502afa1d5680fe1bd6a29f3b5994bd8d0bb5305f03727918c",
+    "monitor.py": "e5f9c1a94110d1526007bacdafab5119d6525e3d048a9d1371e6fc371415f250",
+    "runner.py": "a9a96738928107e4cbe978ba1bb406427082d5553221e40b9a9b3ab272b05143"
+  },
+  "seed_audit_sha256": "82149d517db0b1b3aad3039cee7edbdf3841e01c975755ea4c6511903981748c"
+}
