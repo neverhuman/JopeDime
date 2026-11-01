@@ -52,14 +52,16 @@ def configure_adapter_width(net, r882_sd, names, width_mult, seed):
     import torch.nn as nn
 
     ad = net.adapter_10tok
-    ad.prog_412_bottleneck = nn.Sequential(nn.Linear(412, 16), nn.LayerNorm(16), nn.GELU())
-    ad.cand_query_proj = nn.Sequential(nn.Linear(66, 32), nn.LayerNorm(32), nn.GELU())
+    ad.prog_412_bottleneck = nn.Sequential(
+        nn.Linear(412, 16), nn.LayerNorm(16), nn.SiLU()
+    )
+    ad.cand_query_proj = nn.Sequential(nn.Linear(66, 32), nn.LayerNorm(32), nn.SiLU())
     ad.ctx_bilinear_u = nn.Linear(32, 16, bias=False)
     ad.prog_bilinear_v = nn.Linear(24, 16, bias=False)
-    ad.mm_prior_out = nn.Sequential(nn.Linear(50, 24), nn.GELU(), nn.Linear(24, 1))
-    ad.traj_delta_head = nn.Sequential(nn.Linear(67, 24), nn.GELU(), nn.Linear(24, 1))
+    ad.mm_prior_out = nn.Sequential(nn.Linear(50, 24), nn.SiLU(), nn.Linear(24, 1))
+    ad.traj_delta_head = nn.Sequential(nn.Linear(67, 24), nn.SiLU(), nn.Linear(24, 1))
     ad.parent_delta_net = nn.Sequential(
-        nn.Linear(114, 48), nn.LayerNorm(48), nn.GELU(), nn.Linear(48, 1)
+        nn.Linear(114, 48), nn.LayerNorm(48), nn.SiLU(), nn.Linear(48, 1)
     )
     net.load_state_dict(r882_sd, strict=True)
     if abs(width_mult - 1.0) > 1e-9:
@@ -97,37 +99,49 @@ def configure_adapter_width(net, r882_sd, names, width_mult, seed):
             b_pa3 = ad.parent_delta_net[3].bias.detach().cpu()
 
             ad.prog_412_bottleneck = nn.Sequential(
-                nn.Linear(412, d_bot), nn.LayerNorm(d_bot), nn.GELU()
+                nn.Linear(412, d_bot), nn.LayerNorm(d_bot), nn.SiLU()
             )
             ad.cand_query_proj = nn.Sequential(
-                nn.Linear(50 + d_bot, 32), nn.LayerNorm(32), nn.GELU()
+                nn.Linear(50 + d_bot, 32), nn.LayerNorm(32), nn.SiLU()
             )
             ad.cand_query_proj[1].weight.copy_(w_cq1)
             ad.cand_query_proj[1].bias.copy_(b_cq1)
             ad.ctx_bilinear_u = nn.Linear(32, d_bi, bias=False)
             ad.prog_bilinear_v = nn.Linear(24, d_bi, bias=False)
             ad.mm_prior_out = nn.Sequential(
-                nn.Linear(34 + d_bi, d_mm), nn.GELU(), nn.Linear(d_mm, 1)
+                nn.Linear(34 + d_bi, d_mm), nn.SiLU(), nn.Linear(d_mm, 1)
             )
             ad.traj_delta_head = nn.Sequential(
-                nn.Linear(67, d_traj), nn.GELU(), nn.Linear(d_traj, 1)
+                nn.Linear(67, d_traj), nn.SiLU(), nn.Linear(d_traj, 1)
             )
             ad.parent_delta_net = nn.Sequential(
-                nn.Linear(114, d_par), nn.LayerNorm(d_par), nn.GELU(), nn.Linear(d_par, 1)
+                nn.Linear(114, d_par),
+                nn.LayerNorm(d_par),
+                nn.SiLU(),
+                nn.Linear(d_par, 1),
             )
 
             if width_mult > 1.0:
                 eps_s = 1e-3
-                ad.prog_412_bottleneck[0].weight.copy_(torch.cat([w_bot0, w_bot0], dim=0))
+                ad.prog_412_bottleneck[0].weight.copy_(
+                    torch.cat([w_bot0, w_bot0], dim=0)
+                )
                 ad.prog_412_bottleneck[0].bias.copy_(torch.cat([b_bot0, b_bot0], dim=0))
-                ad.prog_412_bottleneck[1].weight.copy_(torch.cat([w_bot1, w_bot1], dim=0))
+                ad.prog_412_bottleneck[1].weight.copy_(
+                    torch.cat([w_bot1, w_bot1], dim=0)
+                )
                 ad.prog_412_bottleneck[1].bias.copy_(torch.cat([b_bot1, b_bot1], dim=0))
 
                 w_cq_b = w_cq0[:, 48:64]
                 e_cq = torch.randn(w_cq_b.shape, generator=g, dtype=w_cq0.dtype) * eps_s
                 ad.cand_query_proj[0].weight.copy_(
                     torch.cat(
-                        [w_cq0[:, :48], 0.5 * w_cq_b + e_cq, 0.5 * w_cq_b - e_cq, w_cq0[:, 64:]],
+                        [
+                            w_cq0[:, :48],
+                            0.5 * w_cq_b + e_cq,
+                            0.5 * w_cq_b - e_cq,
+                            w_cq0[:, 64:],
+                        ],
                         dim=1,
                     )
                 )
@@ -139,7 +153,12 @@ def configure_adapter_width(net, r882_sd, names, width_mult, seed):
                 w_mm_b = w_mm0[:, 32:48]
                 e_bi = torch.randn(w_mm_b.shape, generator=g, dtype=w_mm0.dtype) * eps_s
                 w_mm_in = torch.cat(
-                    [w_mm0[:, :32], 0.5 * w_mm_b + e_bi, 0.5 * w_mm_b - e_bi, w_mm0[:, 48:]],
+                    [
+                        w_mm0[:, :32],
+                        0.5 * w_mm_b + e_bi,
+                        0.5 * w_mm_b - e_bi,
+                        w_mm0[:, 48:],
+                    ],
                     dim=1,
                 )
                 ad.mm_prior_out[0].weight.copy_(torch.cat([w_mm_in, w_mm_in], dim=0))
@@ -168,18 +187,28 @@ def configure_adapter_width(net, r882_sd, names, width_mult, seed):
                 )
                 ad.parent_delta_net[3].bias.copy_(b_pa3)
             else:
-                imp_bot = w_bot0.norm(dim=1) * w_bot1.abs() * w_cq0[:, 48:64].norm(dim=0)
-                idx_bot = torch.topk(imp_bot, k=d_bot, largest=True).indices.sort().values
+                imp_bot = (
+                    w_bot0.norm(dim=1) * w_bot1.abs() * w_cq0[:, 48:64].norm(dim=0)
+                )
+                idx_bot = (
+                    torch.topk(imp_bot, k=d_bot, largest=True).indices.sort().values
+                )
                 ad.prog_412_bottleneck[0].weight.copy_(w_bot0[idx_bot])
                 ad.prog_412_bottleneck[0].bias.copy_(b_bot0[idx_bot])
                 ad.prog_412_bottleneck[1].weight.copy_(w_bot1[idx_bot])
                 ad.prog_412_bottleneck[1].bias.copy_(b_bot1[idx_bot])
                 ad.cand_query_proj[0].weight.copy_(
-                    torch.cat([w_cq0[:, :48], w_cq0[:, 48 + idx_bot], w_cq0[:, 64:]], dim=1)
+                    torch.cat(
+                        [w_cq0[:, :48], w_cq0[:, 48 + idx_bot], w_cq0[:, 64:]], dim=1
+                    )
                 )
                 ad.cand_query_proj[0].bias.copy_(b_cq0)
 
-                imp_bi = w_bi_u.norm(dim=1) * w_bi_v.norm(dim=1) * w_mm0[:, 32:48].norm(dim=0)
+                imp_bi = (
+                    w_bi_u.norm(dim=1)
+                    * w_bi_v.norm(dim=1)
+                    * w_mm0[:, 32:48].norm(dim=0)
+                )
                 idx_bi = torch.topk(imp_bi, k=d_bi, largest=True).indices.sort().values
                 ad.ctx_bilinear_u.weight.copy_(w_bi_u[idx_bi])
                 ad.prog_bilinear_v.weight.copy_(w_bi_v[idx_bi])
@@ -195,7 +224,9 @@ def configure_adapter_width(net, r882_sd, names, width_mult, seed):
                 ad.mm_prior_out[2].bias.copy_(b_mm2)
 
                 imp_tr = w_tr0.norm(dim=1) * w_tr2[0].abs()
-                idx_tr = torch.topk(imp_tr, k=d_traj, largest=True).indices.sort().values
+                idx_tr = (
+                    torch.topk(imp_tr, k=d_traj, largest=True).indices.sort().values
+                )
                 ad.traj_delta_head[0].weight.copy_(w_tr0[idx_tr])
                 ad.traj_delta_head[0].bias.copy_(b_tr0[idx_tr])
                 ad.traj_delta_head[2].weight.copy_(w_tr2[:, idx_tr])
@@ -210,33 +241,48 @@ def configure_adapter_width(net, r882_sd, names, width_mult, seed):
                 ad.parent_delta_net[3].weight.copy_(w_pa3[:, idx_pa])
                 ad.parent_delta_net[3].bias.copy_(b_pa3)
 
+    dev = next(net.adapter_10tok.anchor.parameters()).device
+    ad.to(dev)
     net.eval()
     for name, p in net.named_parameters():
         p.requires_grad_(
-            name.startswith("adapter_10tok.") and not name.startswith("adapter_10tok.anchor.")
+            name.startswith("adapter_10tok.")
+            and not name.startswith("adapter_10tok.anchor.")
         )
     cur_names = [n for n, p in net.named_parameters() if p.requires_grad]
     if sorted(cur_names) != sorted(names):
         raise RuntimeError("adapter parameter tensor names changed")
     param_map = dict(net.named_parameters())
     params = [param_map[n] for n in names]
-    init_state = {n: net.state_dict()[n].detach().clone() for n in names}
+    init_state = {n: net.state_dict()[n].detach().cpu().clone() for n in names}
     init_vec = torch.cat([init_state[n].reshape(-1) for n in names])
     return params, init_state, init_vec
 
 
 def forward_adapter_with_anchor(
-    net, prog_t, sos_t, tok_t, mask_t, scale_t, rev_idx, rev_raw_f, rev_gate, anchor_total, anchor_eff_prior
+    net,
+    prog_t,
+    sos_t,
+    tok_t,
+    mask_t,
+    scale_t,
+    rev_idx,
+    rev_raw_f,
+    rev_gate,
+    anchor_total,
+    anchor_eff_prior,
 ):
     import torch.nn.functional as F
 
     ad = net.adapter_10tok
-    ctx_pooled, cand_q, sem24, mm_prior_adj = ad.encode_multimodal_context_and_candidates(
-        mm_tokens_10x32=tok_t,
-        mm_mask_10=mask_t,
-        prog_412=prog_t,
-        sos_prior=sos_t,
-        active_modality_override_mask=None,
+    ctx_pooled, cand_q, sem24, mm_prior_adj = (
+        ad.encode_multimodal_context_and_candidates(
+            mm_tokens_10x32=tok_t,
+            mm_mask_10=mask_t,
+            prog_412=prog_t,
+            sos_prior=sos_t,
+            active_modality_override_mask=None,
+        )
     )
     static = {
         "eff_prior": anchor_eff_prior + mm_prior_adj,
@@ -370,74 +416,102 @@ def main():
                     fitness=z["fitness"].astype(np.float64),
                     gate=z["gate"].astype(bool),
                 )
+        use_cuda = bool(args.gpu_lock_held and torch.cuda.is_available())
+        if use_cuda:
+            torch.backends.cuda.matmul.allow_tf32 = False
+            torch.backends.cudnn.allow_tf32 = False
+            device = torch.device("cuda:0")
+            net.to(device)
+        else:
+            device = torch.device("cpu")
+
         with np.load(rt.CACHE, allow_pickle=False) as z:
             ids = list(map(str, z["cids"]))
             if set(ids) != set(pools) or len(ids) != len(pools):
                 raise RuntimeError("feature cache closure")
             tok, mask = z["tokens_10x32"], z["mask_10"]
             tokens = {
-                c: torch.as_tensor(tok[i], dtype=torch.float32) for i, c in enumerate(ids)
+                c: torch.as_tensor(tok[i], dtype=torch.float32, device=device)
+                for i, c in enumerate(ids)
             }
             masks = {
-                c: torch.as_tensor(mask[i], dtype=torch.bool) for i, c in enumerate(ids)
+                c: torch.as_tensor(mask[i], dtype=torch.bool, device=device)
+                for i, c in enumerate(ids)
             }
 
-        # Precompute frozen anchor terms per context for exact zero-diff fast evaluation
+        # Precompute frozen anchor terms per cohort (12 MB total) for exact zero-diff evaluation
         eval_cache = {}
-        with torch.no_grad():
-            all_groups = {}
-            for r in train + val:
-                c = r["context_sha256"]
-                all_groups.setdefault(len(pools[c]["fitness"]), []).append(c)
-            for size, cids in sorted(all_groups.items()):
-                for start in range(0, len(cids), 8):
-                    batch = cids[start : start + 8]
-                    b = len(batch)
-                    k = size
-                    progs = torch.as_tensor(
-                        np.stack([pools[c]["program"] for c in batch]), dtype=torch.float32
-                    )
-                    proj = torch.as_tensor(
-                        np.stack([pools[c]["proj16"] for c in batch]), dtype=torch.float32
-                    )
-                    tok_b = torch.stack([tokens[c] for c in batch])
-                    mask_b = torch.stack([masks[c] for c in batch])
-                    rev_idx = torch.arange(min(4, k)).reshape(1, -1).expand(b, -1)
-                    rev_raw_f = torch.as_tensor(
-                        np.stack([pools[c]["fitness"][: min(4, k)] for c in batch]),
-                        dtype=torch.float32,
-                    )
-                    rev_gate = torch.as_tensor(
-                        np.stack([pools[c]["gate"][: min(4, k)] for c in batch]),
-                        dtype=torch.float32,
-                    )
-                    scale_b = torch.full((b,), 0.4208, dtype=torch.float32)
-                    sos_b = torch.zeros((b, k, 2), dtype=torch.float32)
-                    a_out = net.adapter_10tok.anchor.predict_costs(
-                        ctx_feat=torch.zeros((b, 584), dtype=torch.float32),
-                        prog_412=progs,
-                        proj_16=proj,
-                        base_prior_cost=torch.zeros((b, k), dtype=torch.float32),
-                        scale=scale_b,
-                        sos_prior=sos_b,
-                        revealed_indices=rev_idx,
-                        revealed_raw_f=rev_raw_f,
-                        revealed_gate=rev_gate,
-                        enable_prior_correction=True,
-                        enable_struct_kernel=True,
-                        enable_cross_attn=True,
-                        enable_ucb=False,
-                    )
-                    a_tot = a_out["total_cost"].detach().float()
-                    a_eff = a_out["eff_prior"].detach().float()
-                    for i_b, c in enumerate(batch):
-                        eval_cache[c] = (
-                            progs[i_b],
-                            a_tot[i_b],
-                            a_eff[i_b],
-                            rev_raw_f[i_b],
-                            rev_gate[i_b],
+
+        def precompute_cohort(cohort_rows):
+            with torch.no_grad():
+                cohort_groups = {}
+                for r in cohort_rows:
+                    c = r["context_sha256"]
+                    cohort_groups.setdefault(len(pools[c]["fitness"]), []).append(c)
+                for size, cids in sorted(cohort_groups.items()):
+                    for start in range(0, len(cids), 8):
+                        batch = cids[start : start + 8]
+                        b = len(batch)
+                        k = size
+                        progs = torch.as_tensor(
+                            np.stack([pools[c]["program"] for c in batch]),
+                            dtype=torch.float32,
+                            device=device,
                         )
+                        proj = torch.as_tensor(
+                            np.stack([pools[c]["proj16"] for c in batch]),
+                            dtype=torch.float32,
+                            device=device,
+                        )
+                        rev_idx = (
+                            torch.arange(min(4, k), device=device)
+                            .reshape(1, -1)
+                            .expand(b, -1)
+                        )
+                        rev_raw_f = torch.as_tensor(
+                            np.stack([pools[c]["fitness"][: min(4, k)] for c in batch]),
+                            dtype=torch.float32,
+                            device=device,
+                        )
+                        rev_gate = torch.as_tensor(
+                            np.stack([pools[c]["gate"][: min(4, k)] for c in batch]),
+                            dtype=torch.float32,
+                            device=device,
+                        )
+                        scale_b = torch.full(
+                            (b,), 0.4208, dtype=torch.float32, device=device
+                        )
+                        sos_b = torch.zeros(
+                            (b, k, 2), dtype=torch.float32, device=device
+                        )
+                        a_out = net.adapter_10tok.anchor.predict_costs(
+                            ctx_feat=torch.zeros(
+                                (b, 584), dtype=torch.float32, device=device
+                            ),
+                            prog_412=progs,
+                            proj_16=proj,
+                            base_prior_cost=torch.zeros(
+                                (b, k), dtype=torch.float32, device=device
+                            ),
+                            scale=scale_b,
+                            sos_prior=sos_b,
+                            revealed_indices=rev_idx,
+                            revealed_raw_f=rev_raw_f,
+                            revealed_gate=rev_gate,
+                            enable_prior_correction=True,
+                            enable_struct_kernel=True,
+                            enable_cross_attn=True,
+                            enable_ucb=False,
+                        )
+                        a_tot = a_out["total_cost"].detach().float()
+                        a_eff = a_out["eff_prior"].detach().float()
+                        for i_b, c in enumerate(batch):
+                            eval_cache[c] = (
+                                a_tot[i_b].clone(),
+                                a_eff[i_b].clone(),
+                                rev_raw_f[i_b].clone(),
+                                rev_gate[i_b].clone(),
+                            )
 
         def evaluate(rows):
             groups_r = {}
@@ -451,29 +525,45 @@ def main():
                         batch = cids[start : start + 8]
                         b = len(batch)
                         k = size
-                        prog_b = torch.stack([eval_cache[c][0] for c in batch])
-                        a_tot_b = torch.stack([eval_cache[c][1] for c in batch])
-                        a_eff_b = torch.stack([eval_cache[c][2] for c in batch])
-                        rev_raw_b = torch.stack([eval_cache[c][3] for c in batch])
-                        rev_gate_b = torch.stack([eval_cache[c][4] for c in batch])
+                        prog_b = torch.as_tensor(
+                            np.stack([pools[c]["program"] for c in batch]),
+                            dtype=torch.float32,
+                            device=device,
+                        )
+                        a_tot_b = torch.stack([eval_cache[c][0] for c in batch])
+                        a_eff_b = torch.stack([eval_cache[c][1] for c in batch])
+                        rev_raw_b = torch.stack([eval_cache[c][2] for c in batch])
+                        rev_gate_b = torch.stack([eval_cache[c][3] for c in batch])
                         tok_b = torch.stack([tokens[c] for c in batch])
                         mask_b = torch.stack([masks[c] for c in batch])
-                        rev_idx = torch.arange(min(4, k)).reshape(1, -1).expand(b, -1)
-                        scale_b = torch.full((b,), 0.4208, dtype=torch.float32)
-                        sos_b = torch.zeros((b, k, 2), dtype=torch.float32)
-                        scores = forward_adapter_with_anchor(
-                            net,
-                            prog_b,
-                            sos_b,
-                            tok_b,
-                            mask_b,
-                            scale_b,
-                            rev_idx,
-                            rev_raw_b,
-                            rev_gate_b,
-                            a_tot_b,
-                            a_eff_b,
-                        ).numpy()
+                        rev_idx = (
+                            torch.arange(min(4, k), device=device)
+                            .reshape(1, -1)
+                            .expand(b, -1)
+                        )
+                        scale_b = torch.full(
+                            (b,), 0.4208, dtype=torch.float32, device=device
+                        )
+                        sos_b = torch.zeros(
+                            (b, k, 2), dtype=torch.float32, device=device
+                        )
+                        scores = (
+                            forward_adapter_with_anchor(
+                                net,
+                                prog_b,
+                                sos_b,
+                                tok_b,
+                                mask_b,
+                                scale_b,
+                                rev_idx,
+                                rev_raw_b,
+                                rev_gate_b,
+                                a_tot_b,
+                                a_eff_b,
+                            )
+                            .cpu()
+                            .numpy()
+                        )
                         if not np.isfinite(scores).all():
                             raise RuntimeError("nonfinite predictions")
                         for cid, cost in zip(batch, scores, strict=True):
@@ -482,7 +572,9 @@ def main():
                             valid = bool(p["gate"][idx_min])
                             result[cid] = dict(
                                 choice=idx_min,
-                                utility=float(-p["fitness"][idx_min] if valid else -2.0),
+                                utility=float(
+                                    -p["fitness"][idx_min] if valid else -2.0
+                                ),
                                 invalid=not valid,
                             )
             rt.check_frozen(net, guard, names, frozen)
@@ -493,19 +585,17 @@ def main():
                 context_ids=[r["context_sha256"] for r in rows],
             )
 
+        precompute_cohort(val)
         baseline = evaluate(val)
         sanity = parent.baseline_gate(baseline["values"], ref)
-        r882_train = evaluate(train)
         save(out / "baseline.json", dict(**baseline, sanity=sanity))
         print("BASELINE PASS", sanity, flush=True)
+        for outer in range(5):
+            precompute_cohort(stat.partition(train, outer)[2])
 
         train_index = {r["context_sha256"]: i for i, r in enumerate(train)}
         primary = np.full((len(stat.SEEDS), len(train), len(stat.ALL_ARMS)), np.nan)
         secondary = np.full((len(stat.SEEDS), 5, len(val), len(stat.ALL_ARMS)), np.nan)
-        for si in range(len(stat.SEEDS)):
-            primary[si, :, 0] = r882_train["values"]
-            for outer in range(5):
-                secondary[si, outer, :, 0] = baseline["values"]
 
         selections = []
         for outer in range(5):
@@ -516,8 +606,11 @@ def main():
             orders = {c: np.argsort(pools[c]["fitness"]) for c in fit_ids}
             r882_sel_scores = evaluate(select)
             r882_assess_scores = evaluate(assess)
+            ai_idx = [train_index[r["context_sha256"]] for r in assess]
 
             for si, seed in enumerate(stat.SEEDS):
+                primary[si, ai_idx, 0] = r882_assess_scores["values"]
+                secondary[si, outer, :, 0] = baseline["values"]
                 cell_tick = time.monotonic()
                 plan = stat.batch_plan(fit_ids, orders, seed)
                 if len(plan) != 40:
@@ -532,43 +625,87 @@ def main():
                         b = len(cids)
                         k = ixs[0].shape[0]
                         progs = torch.as_tensor(
-                            np.stack([pools[c]["program"][ix] for c, ix in zip(cids, ixs, strict=True)]),
+                            np.stack(
+                                [
+                                    pools[c]["program"][ix]
+                                    for c, ix in zip(cids, ixs, strict=True)
+                                ]
+                            ),
                             dtype=torch.float32,
+                            device=device,
                         )
                         proj = torch.as_tensor(
-                            np.stack([pools[c]["proj16"][ix] for c, ix in zip(cids, ixs, strict=True)]),
+                            np.stack(
+                                [
+                                    pools[c]["proj16"][ix]
+                                    for c, ix in zip(cids, ixs, strict=True)
+                                ]
+                            ),
                             dtype=torch.float32,
+                            device=device,
                         )
                         tok_b = torch.stack([tokens[c] for c in cids])
                         mask_b = torch.stack([masks[c] for c in cids])
-                        rev_idx = torch.arange(min(4, k)).reshape(1, -1).expand(b, -1)
+                        rev_idx = (
+                            torch.arange(min(4, k), device=device)
+                            .reshape(1, -1)
+                            .expand(b, -1)
+                        )
                         rev_raw_f = torch.as_tensor(
                             np.stack(
-                                [pools[c]["fitness"][ix[: min(4, k)]] for c, ix in zip(cids, ixs, strict=True)]
+                                [
+                                    pools[c]["fitness"][ix[: min(4, k)]]
+                                    for c, ix in zip(cids, ixs, strict=True)
+                                ]
                             ),
                             dtype=torch.float32,
+                            device=device,
                         )
                         rev_gate = torch.as_tensor(
                             np.stack(
-                                [pools[c]["gate"][ix[: min(4, k)]] for c, ix in zip(cids, ixs, strict=True)]
+                                [
+                                    pools[c]["gate"][ix[: min(4, k)]]
+                                    for c, ix in zip(cids, ixs, strict=True)
+                                ]
                             ),
                             dtype=torch.float32,
+                            device=device,
                         )
                         fitness = torch.as_tensor(
-                            np.stack([pools[c]["fitness"][ix] for c, ix in zip(cids, ixs, strict=True)]),
+                            np.stack(
+                                [
+                                    pools[c]["fitness"][ix]
+                                    for c, ix in zip(cids, ixs, strict=True)
+                                ]
+                            ),
                             dtype=torch.float32,
+                            device=device,
                         )
                         gate = torch.as_tensor(
-                            np.stack([pools[c]["gate"][ix] for c, ix in zip(cids, ixs, strict=True)]),
+                            np.stack(
+                                [
+                                    pools[c]["gate"][ix]
+                                    for c, ix in zip(cids, ixs, strict=True)
+                                ]
+                            ),
                             dtype=torch.bool,
+                            device=device,
                         )
-                        scale_b = torch.full((b,), 0.4208, dtype=torch.float32)
-                        sos_b = torch.zeros((b, k, 2), dtype=torch.float32)
+                        scale_b = torch.full(
+                            (b,), 0.4208, dtype=torch.float32, device=device
+                        )
+                        sos_b = torch.zeros(
+                            (b, k, 2), dtype=torch.float32, device=device
+                        )
                         a_out = net.adapter_10tok.anchor.predict_costs(
-                            ctx_feat=torch.zeros((b, 584), dtype=torch.float32),
+                            ctx_feat=torch.zeros(
+                                (b, 584), dtype=torch.float32, device=device
+                            ),
                             prog_412=progs,
                             proj_16=proj,
-                            base_prior_cost=torch.zeros((b, k), dtype=torch.float32),
+                            base_prior_cost=torch.zeros(
+                                (b, k), dtype=torch.float32, device=device
+                            ),
                             scale=scale_b,
                             sos_prior=sos_b,
                             revealed_indices=rev_idx,
@@ -602,7 +739,6 @@ def main():
 
                 arm_snapshots = {}
                 arm_sel_scores = {}
-                arm_val_scores = {}
                 arm_losses = {}
                 arm_drifts = {}
 
@@ -613,10 +749,12 @@ def main():
                     )
                     rt.check_frozen(net, guard, names, frozen)
                     optimizer = torch.optim.AdamW(params, lr=1e-4, weight_decay=1e-4)
-                    snapshots, sel_scores, val_scores, losses = {}, [], [], []
+                    snapshots, sel_scores, losses = {}, [], []
 
                     def take_snapshot(step_num, arm_label=arm):
-                        st = {n: net.state_dict()[n].detach().clone() for n in names}
+                        st = {
+                            n: net.state_dict()[n].detach().cpu().clone() for n in names
+                        }
                         snapshots[step_num] = st
                         np.savez_compressed(
                             out / f"A{outer}-{seed}-{arm_label}-step{step_num}.npz",
@@ -624,10 +762,8 @@ def main():
                         )
                         if arm_label == "W10" and step_num == 0:
                             sel_scores.append(r882_sel_scores)
-                            val_scores.append(baseline)
                         else:
                             sel_scores.append(evaluate(select))
-                            val_scores.append(evaluate(val))
 
                     take_snapshot(0)
                     for (
@@ -667,7 +803,9 @@ def main():
                         if not torch.isfinite(objective):
                             raise RuntimeError("nonfinite objective")
                         objective.backward()
-                        torch.nn.utils.clip_grad_norm_(params, 1.0, error_if_nonfinite=True)
+                        torch.nn.utils.clip_grad_norm_(
+                            params, 1.0, error_if_nonfinite=True
+                        )
                         optimizer.step()
                         updates += 1
                         rt.check_frozen(net, guard, names, frozen)
@@ -679,7 +817,10 @@ def main():
                         torch.linalg.vector_norm(
                             torch.cat(
                                 [
-                                    dict(net.named_parameters())[n].detach().reshape(-1)
+                                    dict(net.named_parameters())[n]
+                                    .detach()
+                                    .cpu()
+                                    .reshape(-1)
                                     for n in names
                                 ]
                             )
@@ -690,14 +831,15 @@ def main():
                         raise RuntimeError("no optimizer parameter drift")
                     arm_snapshots[arm] = snapshots
                     arm_sel_scores[arm] = sel_scores
-                    arm_val_scores[arm] = val_scores
                     arm_losses[arm] = losses
                     arm_drifts[arm] = drift
 
                 # Selection on inner selector fold B locked BEFORE outer fold A assessment
                 r882_sel_vals = np.asarray(r882_sel_scores["values"], dtype=np.float64)
                 arm_panels = {
-                    arm: np.array([r["values"] for r in arm_sel_scores[arm]], dtype=np.float64).T
+                    arm: np.array(
+                        [r["values"] for r in arm_sel_scores[arm]], dtype=np.float64
+                    ).T
                     for arm in stat.WIDTH_ARMS
                 }
                 decisions = {}
@@ -719,7 +861,7 @@ def main():
                 lockpath = out / f"{cellname}-selection.json"
                 save(lockpath, decisions)
 
-                # Evaluate selected (arm, step) pairs on outer assessment fold A
+                # Evaluate selected (arm, step) pairs on outer assessment fold A and DL-Val
                 needed_pairs = {("W10", 0)}
                 for arm in stat.WIDTH_ARMS:
                     st_pick = decisions[arm]["selected_step"]
@@ -729,6 +871,7 @@ def main():
                 needed_pairs.add(("W10", 0) if j_step == 0 else (j_arm, j_step))
 
                 assessment = {("W10", 0): r882_assess_scores}
+                val_assessment = {("W10", 0): baseline}
                 for arm_k, step_k in sorted(needed_pairs):
                     if (arm_k, step_k) in assessment:
                         continue
@@ -738,30 +881,20 @@ def main():
                     with torch.no_grad():
                         for n, p in net.named_parameters():
                             if n in arm_snapshots[arm_k][step_k]:
-                                p.copy_(arm_snapshots[arm_k][step_k][n])
+                                p.copy_(arm_snapshots[arm_k][step_k][n].to(p.device))
                     assessment[(arm_k, step_k)] = evaluate(assess)
+                    val_assessment[(arm_k, step_k)] = evaluate(val)
 
                 configure_adapter_width(net, initial, names, 1.0, seed)
-                ai_idx = [train_index[r["context_sha256"]] for r in assess]
                 for col, arm in enumerate(stat.WIDTH_ARMS, start=1):
                     st_pick = decisions[arm]["selected_step"]
                     key = ("W10", 0) if st_pick == 0 else (arm, st_pick)
                     primary[si, ai_idx, col] = assessment[key]["values"]
-                    val_entry = (
-                        baseline
-                        if st_pick == 0
-                        else arm_val_scores[arm][stat.STEPS.index(st_pick)]
-                    )
-                    secondary[si, outer, :, col] = val_entry["values"]
+                    secondary[si, outer, :, col] = val_assessment[key]["values"]
 
                 j_key = ("W10", 0) if j_step == 0 else (j_arm, j_step)
                 primary[si, ai_idx, 4] = assessment[j_key]["values"]
-                j_val_entry = (
-                    baseline
-                    if j_step == 0
-                    else arm_val_scores[j_arm][stat.STEPS.index(j_step)]
-                )
-                secondary[si, outer, :, 4] = j_val_entry["values"]
+                secondary[si, outer, :, 4] = val_assessment[j_key]["values"]
 
                 cell = dict(
                     outer_fold=outer,
@@ -775,7 +908,10 @@ def main():
                     losses=arm_losses,
                     adapter_l2_drift=arm_drifts,
                     snapshot_sha256={
-                        arm: {str(s): rt.tensor_hash(v) for s, v in arm_snapshots[arm].items()}
+                        arm: {
+                            str(s): rt.tensor_hash(v)
+                            for s, v in arm_snapshots[arm].items()
+                        }
                         for arm in stat.WIDTH_ARMS
                     },
                     selection_lock_sha256=sha(lockpath),
@@ -841,7 +977,8 @@ def main():
                 **audit.receipt(),
                 optimizer_updates=updates,
                 wall_seconds=time.monotonic() - started,
-                peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024,
+                peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+                * 1024,
                 threads_at_end=len(list(Path("/proc/self/task").iterdir())),
                 cuda_initialized=torch.cuda.is_initialized(),
             ),
