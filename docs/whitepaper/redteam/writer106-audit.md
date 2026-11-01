@@ -2,7 +2,7 @@
 
 Owner t0048 asks for1–2 new real flywheel figures and rechecks ranks22–24. This pass adds one new two-panel vector figure (Figure23) in AppendixI after the existing appendices. Existing figures/data/generators remain exact; the earlier main-text20-round window is qualified as such and points to the later appendix.
 
-Base: `ff8a74d8336bc92ca9bb1ebb830ce7a8435c8145`. Source/read/build/replay/Decimal/proof/lifecycle receipts are under `/home/ubuntu/whitepaper_tmp_t541/writer-pass106-*`.
+Base: `e8fc35b14c62d7a95bba6a0d83d7f467a63d65fc`. Source/read/build/replay/Decimal/proof/lifecycle receipts are under `/home/ubuntu/whitepaper_tmp_t541/writer-pass106-*`.
 
 The new view contains the latest20 consecutive completed summaries also present in the admission journal at capture:2696–2715, xbabe1,2026-11-01T06:54:28.875479Z. Both source files were read from stable complete-line prefixes with sizes/inodes/timestamps/full-prefix hashes retained. Only aggregate operating/development fields were projected; no examples, labels, per-context outcomes, predictions, candidate programs, weights, sealed or holdout payloads transferred. The new CSV matches every projected source value and every candidate/best/flag/best-round/evaluation-identity field agrees between summary and admission journals. All20flags are rejected; the recorded best-round marker remains882.
 
