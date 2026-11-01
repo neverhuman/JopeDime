@@ -1,0 +1,36 @@
+{
+  "schema": "jope.q1-protocol-binding/v1",
+  "purpose": "Bind Q1 plan identity to the frozen regression evaluation protocol and engine vocabulary.",
+  "status": "source-binding-only-not-qualification",
+  "vocabulary": {
+    "token_source": {
+      "path": "crates/jope-engine/assets/grammar/featmath.json",
+      "sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787"
+    },
+    "engine_grammar": {
+      "path": "crates/jope-engine/assets/grammar/featmath-jain-v1.json",
+      "sha256": "570b2e5e8d859a73b888f5d0bee27f59da0e2376536babce24c241604f818e81"
+    },
+    "executable_ops": {
+      "path": "crates/jope-engine/assets/grammar/jain-math-executable-9fa594e2.json",
+      "sha256": "21c194e2d2c162e29d3893877bc2a2944ce33815db09f21626b5a99371d398aa"
+    },
+    "token_ids_preserved_by_engine_grammar": true
+  },
+  "evaluation": {
+    "task": "regression",
+    "metric": "rmse",
+    "device": "cpu",
+    "max_workers": 8,
+    "seeds": [0, 1, 2],
+    "charged_admissions_per_policy_dataset_seed": 24,
+    "per_run_timeout_seconds": 600,
+    "policies": ["heuristic", "learned"],
+    "policy_order": "reverse-on-odd-seeds"
+  },
+  "request": "jope.q1-request/v1",
+  "receipt": "jope.q1-evaluation-receipt/v1",
+  "response": "jope.q1-response/v1",
+  "dataset_binding": "Pinned evaluator resolves dataset and deterministic FIT folds from authoritative manifests; the Q1 authoring harness reads no qualification rows.",
+  "qualification_boundary": "This source artifact binds protocol identity only. It does not establish a qualified evaluator, backend binary, candidate-vocabulary compatibility, authoritative cohort/cut roster, owner authorization, or permission to launch."
+}
