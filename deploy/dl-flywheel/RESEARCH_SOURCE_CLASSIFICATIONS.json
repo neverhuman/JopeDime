@@ -3903,6 +3903,46 @@
         "role": "research",
         "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
       }
+    },
+    "python:research/flywheel_selfplay/h138_trajectory_swa/model_ops.py": {
+      "bytes": 2198,
+      "sha256": "10b71f05909318e7ef43ddde7f2836afd307dfa2977376930f95c458ffc94db7",
+      "classification": {
+        "role": "research",
+        "reason": "H138 owner-directed zero-update retained-trajectory averaging, native inference and bounded external CPU controls; not product qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h138_trajectory_swa/monitor.py": {
+      "bytes": 10055,
+      "sha256": "c26f67cedfe41b3185fae7f7dc75f7e9a41f79cf1d0872ed61de928f4f7860eb",
+      "classification": {
+        "role": "research",
+        "reason": "H138 owner-directed zero-update retained-trajectory averaging, native inference and bounded external CPU controls; not product qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h138_trajectory_swa/preflight.py": {
+      "bytes": 3926,
+      "sha256": "7062d02daba55ece1dd27564ac2380cebb8849357cc04de52b4d9d4895c8c7bc",
+      "classification": {
+        "role": "research",
+        "reason": "H138 owner-directed zero-update retained-trajectory averaging, native inference and bounded external CPU controls; not product qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h138_trajectory_swa/runner.py": {
+      "bytes": 15333,
+      "sha256": "0963899439de0d3d1155789520d3202d05d37d70aa83a0da5c5b15834ff905ff",
+      "classification": {
+        "role": "research",
+        "reason": "H138 owner-directed zero-update retained-trajectory averaging, native inference and bounded external CPU controls; not product qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h138_trajectory_swa/science.py": {
+      "bytes": 9074,
+      "sha256": "2e855f4f6b40dc196900e7f9608170cce125b9e6b0fabe9b91095d8dfc46f003",
+      "classification": {
+        "role": "research",
+        "reason": "H138 owner-directed zero-update retained-trajectory averaging, native inference and bounded external CPU controls; not product qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

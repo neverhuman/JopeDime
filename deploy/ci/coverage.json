@@ -6263,7 +6263,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -13798,6 +13798,16 @@
       ],
       "lanes": [],
       "scope": "H135 data-free native utility, sanity, bootstrap, seed/harm/trim/resource controls; native HistGB thread ceiling, scoped baseline setter restoration and A3 nested thread cap; A4 native SIGSTOP/SIGCONT, continuous recovery and stopped-worker deadline controls. Manual GBM preflight uses synthetic data and actual estimator hyperparameters with external /proc sampling; constructor preflight reads pretrained assets only, no datasets/r882/predictions; not a product qualification."
+    },
+    "python:research/flywheel_selfplay/h138_trajectory_swa/test_science.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H138 data-free parameter-only averaging, bitwise DOPE including signed-zero refusal, family partitions, Holm/utility/Elo gates and actual owned-process pause/resume/deadline controls. Manual unscored constructor checks copies and input hashes; no scientific inference before prereg merge. Research only, no product qualification."
     }
   },
   "lanes": {
