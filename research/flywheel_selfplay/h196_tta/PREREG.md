@@ -135,3 +135,27 @@ Verify merged source identity. Final README includes hypothesis, setup, complete
 three-seed family-grouped results, verdict, limitations, and next step. Preserve
 source, receipts, S3 recovery route and stopped-head handoff; remove only the owned
 lane and independently verified owned bulk after closeout.
+
+## Owner amendment: one fresh attempt 3, seven-hour budget (2026-11-01)
+
+ENG preauthorized this amendment in `hw_t1338_h196_rdastra.md` while attempt 2
+was still running, before any treatment A results. Attempt 2 retained its original
+three-hour deadline and has its own INCOMPLETE closeout; no partial efficacy
+claim supports this decision. This amendment changes only the wall budget for
+one fresh attempt 3, to **25,200 seconds (seven hours)** after this amendment merges.
+It does not extend or resume attempt 2, and authorizes no fourth attempt.
+
+Start from scratch, repeat native91 bitexact validation first, and reuse no
+attempt-2 B selections, predictions or panels. Scientific source, frozen weights,
+arms, sigma, input identities, seeds 196101–196103, fold seeds 196141–196143,
+bootstrap seed196150, family analysis and acceptance gates remain unchanged.
+The monitor deadline and this manifest's budget are the only executable/budget
+changes. Original attempt-1/2 receipts retain the original three-hour limits.
+
+Use xbabe2 with a fresh prelaunch resource check. The preferred xbabe1 failed the
+read-only storage preflight (94.04% user-visible disk usage and 111.23GB free at
+2026-11-01 20:32 UTC); no input staging or live-loop access occurred there.
+Nice19, one numeric thread, aggregate threads<=4, RSS<6GB, CPU<=85%,
+MemAvailable>=16GiB, user-visible disk<=93.8%, local output<300MB, frozen-state
+checks and versioned S3 custody remain unchanged. Use new `attempt3/` object
+keys, preserve both earlier attempts, and report a new PID and fixed deadline.
