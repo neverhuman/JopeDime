@@ -5102,7 +5102,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H152 data-free controls for zero-update checkpoint soups: fixed arms and weights, trainable-only blending with frozen tensors from R882, frozen-identity census, deterministic bootstrap readout, tie rejection, Holm decision and Elo interval. No checkpoint, corpus or model passes in the fixture suite; offline research only."
+      "scope": "H152 data-free controls for zero-update checkpoint soups: fixed arms and weights, trainable-only blending with frozen tensors from R882, frozen-identity census, deterministic bootstrap readout, tie rejection, Holm decision, Elo interval, family-disjoint TRAIN folds, exact R882 regression, Torch thread cap, every disk/load/scratch/nice and supervisor stop guard, and squash-compatible source binding with mismatch rejection. No checkpoint, corpus or model passes in the fixture suite; offline research only."
     },
     "python:research/flywheel_selfplay/h143_strict_admission_replay/test_h143.py": {
       "discovery": {

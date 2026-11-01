@@ -31,7 +31,15 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
 H139_PATH = HERE.parent / "h139_selection_audit" / "runner.py"
 H139_SHA = "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686"
-H152_PREREG_COMMIT = "e9367a0f43dfe5c3c90797b258872d44969b3f89"
+PREREG_SHA = "c3570fa133a285f0134db94d271e000b0ca790f532e00dd3815af7707963d3b6"  # PREREG.md bytes as reviewed (a content hash survives a central squash merge)
+BOUND_FILES = (  # executed bytes must equal both the reviewed head and the merged source commit
+    "research/flywheel_selfplay/h152_ckpt_soup/PREREG.md",
+    "research/flywheel_selfplay/h152_ckpt_soup/runner.py",
+    "research/flywheel_selfplay/h152_ckpt_soup/monitor.py",
+    "research/flywheel_selfplay/h139_selection_audit/runner.py",
+    "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py",
+    "python/src/jope/north_star/dope_freeze_guard.py",
+)
 INPUTS = Path("/home/ubuntu/jope-data/h152/inputs")
 SOURCES = {  # round: (file, sha256) — one-time read-only copies from xbabe1 run-20261030 at 2026-11-01T03:24:28Z
     782: (
@@ -69,7 +77,10 @@ HOLM_ALPHA = 0.05
 TRAINABLE_TENSORS = 47
 TRAINABLE_PARAMETERS = 29_211
 RSS_LIMIT_BYTES = 6_000_000_000
-DISK_USED_MAX = 0.94
+DISK_USED_MAX = 0.95  # absolute guard (xbabe1 sits at 94%): stop at >= 95% used
+DISK_FREE_MIN_BYTES = 40_000_000_000  # ... or < 40 GB free
+SCRATCH_LIMIT_BYTES = 1_000_000_000  # the whole ~/jope-data/h152 tree, inputs included
+TORCH_THREADS = 1  # + main thread + 1-thread supervisor stays within the 4-thread process-tree budget
 LOAD_MAX = 85.0
 MIN_NICE = 19
 METRICS_LIMIT_BYTES = 100_000
@@ -200,39 +211,67 @@ def decide(primary, secondary):
 # ------------------------------------------------------------------ guards and identity
 
 
+def tree_bytes(path):
+    return sum(p.stat().st_size for p in Path(path).rglob("*") if p.is_file())
+
+
 def guards(path):
+    """Stop (never pause) on nice, disk, load or scratch; called at launch and before every arm. The external
+    supervisor (monitor.py) applies the same limits continuously, plus process-tree threads and RSS."""
     if os.getpriority(os.PRIO_PROCESS, 0) < MIN_NICE:
         raise RuntimeError("H152 requires nice >= 19")
     usage = shutil.disk_usage(path)
     used = 1 - usage.free / usage.total
-    if used >= DISK_USED_MAX:
-        raise RuntimeError(f"disk use {used:.4f} >= 94%")
+    if used >= DISK_USED_MAX or usage.free < DISK_FREE_MIN_BYTES:
+        raise RuntimeError(f"disk stop: used {used:.4f}, free {usage.free} B")
     load = os.getloadavg()[0]
     if load > LOAD_MAX:
-        raise RuntimeError(f"host load {load:.1f} > 85")
-    return {"disk_used_fraction": round(used, 4), "load1": load}
+        raise RuntimeError(f"load stop: {load:.1f} > 85")
+    scratch = tree_bytes(path)
+    if scratch >= SCRATCH_LIMIT_BYTES:
+        raise RuntimeError(f"scratch stop: {scratch} B >= 1 GB")
+    return {
+        "disk_used_fraction": round(used, 4),
+        "disk_free_bytes": usage.free,
+        "load1": load,
+        "scratch_bytes": scratch,
+    }
 
 
-def verify_prereg_committed():
-    source = subprocess.check_output(
-        ["git", "rev-parse", "HEAD"], cwd=REPO, text=True
-    ).strip()
-    subprocess.run(
-        ["git", "merge-base", "--is-ancestor", H152_PREREG_COMMIT, source],
-        cwd=REPO,
-        check=True,
-    )
-    expected = subprocess.check_output(
-        [
-            "git",
-            "show",
-            f"{H152_PREREG_COMMIT}:research/flywheel_selfplay/h152_ckpt_soup/PREREG.md",
-        ],
-        cwd=REPO,
-    )
-    if expected != (HERE / "PREREG.md").read_bytes():
-        raise RuntimeError("H152 PREREG bytes changed after the preregistration commit")
-    return source, hashlib.sha256(expected).hexdigest()
+def bind_source(launch, repo=REPO):
+    """Squash-compatible binding. Every bound file's executed bytes must equal its blob at the reviewed head AND at the
+    merged source commit (content, not ancestry: a central squash merge keeps blobs but drops the author commits).
+    PREREG.md must also hash to the preregistered PREREG_SHA."""
+    reviewed, source = launch["reviewed_head"], launch["source_commit"]
+    if sha(repo / BOUND_FILES[0]) != PREREG_SHA:
+        raise RuntimeError("PREREG bytes differ from the preregistration")
+    bound = {}
+    for rel in BOUND_FILES:
+        local = (repo / rel).read_bytes()
+        for commit in (reviewed, source):
+            if (
+                subprocess.check_output(["git", "show", f"{commit}:{rel}"], cwd=repo)
+                != local
+            ):
+                raise RuntimeError(f"{rel}: executed bytes differ from {commit}")
+        bound[rel] = hashlib.sha256(local).hexdigest()
+    return {"reviewed_head": reviewed, "source_commit": source, "bound_sha256": bound}
+
+
+def bounded_threads(fn, *args, **kwargs):
+    """The byte-pinned H124 baseline hardcodes torch.set_num_threads(4); hold the pool at TORCH_THREADS instead."""
+    from unittest.mock import patch
+
+    import torch
+
+    setter = torch.set_num_threads
+
+    def capped(requested):
+        setter(TORCH_THREADS)
+
+    setter(TORCH_THREADS)
+    with patch.object(torch, "set_num_threads", capped):
+        return fn(*args, **kwargs)
 
 
 def trainable_names(h124):
@@ -326,7 +365,55 @@ def build_soups(h124, root):
 # ------------------------------------------------------------------ run
 
 
-def run(root, smoke=False):
+def regression(values, reference):
+    """R882 must reproduce the live best_dev utilities exactly: 91/91 contexts with zero error and the same mean."""
+    exp = np.asarray(reference["utility"]["per_context"], np.float64)
+    got = np.asarray(values, np.float64)
+    if got.shape != (91,) or exp.shape != (91,) or not np.array_equal(got, exp):
+        raise RuntimeError("R882 regression failed: 91/91 exact required")
+    if float(got.mean()) != reference["best_utility"]:
+        raise RuntimeError("R882 regression failed: mean differs from best_utility")
+    return {
+        "status": "PASS",
+        "contexts_matched": 91,
+        "max_abs_error": 0.0,
+        "mean": float(got.mean()),
+    }
+
+
+def evaluate_arm(h124, root, arm, path, digest, rows, context, pools, projection):
+    guards(root.parent)
+    h124.headroom(root)
+    h124.R882 = path
+    h124.FILES[path] = digest
+    arm_root = root / f"eval-{arm}"
+    arm_root.mkdir()
+    costs, net = bounded_threads(
+        h124.baseline, arm_root, rows, context, pools, projection
+    )
+    del net
+    h124.release_memory()
+    (arm_root / "r882-copy.pt").unlink()
+    return costs, json.loads((arm_root / "dope-secondary.json").read_text())
+
+
+def native_values(h139, costs, pools, rows):
+    out = []
+    for r in rows:
+        pool = pools[r["context_sha256"]]
+        out.append(
+            h139.native(costs[r["context_sha256"]], pool["fitness"], pool["gate"])
+        )
+    return out
+
+
+def run(root, smoke=False, launch=None):
+    """--smoke: build the soups, score only R882 (same rows and path as the run) and require the exact regression.
+    --run: bind the merged source, then score every arm once."""
+    import torch
+
+    torch.set_num_threads(TORCH_THREADS)
+    torch.set_num_interop_threads(1)
     root = Path(root)
     parent = Path.home() / "jope-data/h152"
     if (
@@ -337,153 +424,130 @@ def run(root, smoke=False):
         raise RuntimeError(
             "H152 requires a fresh run-*/smoke-* root under ~/jope-data/h152"
         )
+    if smoke == (launch is not None):
+        raise RuntimeError("--run needs --launch; --smoke takes none")
+    launch_guard = guards(parent)
+    binding = None if smoke else bind_source(json.loads(Path(launch).read_text()))
     h139 = load_h139()
     h124 = h139.load_h124()
     h124.RSS_LIMIT_KIB = (
         RSS_LIMIT_BYTES // 1024
-    )  # decimal 6 GB ceiling for the H124 watchdog
-    launch = dict(guards(parent))
-    if smoke:
-        paths, structure = build_soups(h124, root)
-        h124.write(
-            root / "smoke.json",
-            {
-                "status": "PASS",
-                "optimizer_updates": 0,
-                "scored_contexts": 0,
-                "structure": structure,
-                "launch": launch,
-            },
-        )
-        print(
-            "SMOKE PASS",
-            json.dumps(structure["adapter_l2_distance_from_R882"]),
-            flush=True,
-        )
-        return structure
-    source, prereg_sha = verify_prereg_committed()
-    launch.update(h124.preflight(parent))
+    )  # decimal 6 GB ceiling for the inherited synchronous RSS check
     t0, cpu0, run_sha = time.monotonic(), time.process_time(), sha(Path(__file__))
-    with h124.RssWatchdog(parent) as watchdog:
-        paths, structure = build_soups(h124, root)
-        h124.write(
-            root / "execution-identity.json",
-            {
-                "source_commit": source,
-                "prereg_commit": H152_PREREG_COMMIT,
-                "prereg_sha256": prereg_sha,
-                "runner_sha256": run_sha,
-                "h139_runner_sha256": H139_SHA,
-                "launch": launch,
-                "structure": structure,
-                "environment": {
-                    k: os.environ.get(k)
-                    for k in (
-                        "OMP_NUM_THREADS",
-                        "MKL_NUM_THREADS",
-                        "OPENBLAS_NUM_THREADS",
-                        "CUDA_VISIBLE_DEVICES",
-                    )
-                },
-            },
-        )
-        train, val, reference = h139.roster(h124)
-        rows = val + train
-        context, reads = h124.train_context(rows, [])
-        projection = h124.train_projection(rows, [])
-        pools = h139.pools_for(rows)
-        native_val, native_train, u4, dope = {}, {}, {}, {}
-        for arm in ARMS:
-            guards(parent)
-            h124.headroom(root)
-            path, digest = paths[arm]
-            h124.R882 = path
-            h124.FILES[path] = digest
-            arm_root = root / f"eval-{arm}"
-            arm_root.mkdir()
-            costs, net = h124.baseline(arm_root, rows, context, pools, projection)
-            del net
-            h124.release_memory()
-            dope[arm] = json.loads((arm_root / "dope-secondary.json").read_text())
-            (arm_root / "r882-copy.pt").unlink()
-            nat = lambda r: h139.native(
-                costs[r["context_sha256"]],
-                pools[r["context_sha256"]]["fitness"],  # noqa: E731
-                pools[r["context_sha256"]]["gate"],
+    paths, structure = build_soups(h124, root)
+    train, val, reference = h139.roster(h124)
+    rows = val + train
+    context, _ = h124.train_context(rows, [])
+    projection = h124.train_projection(rows, [])
+    pools = h139.pools_for(rows)
+    identity = {
+        "binding": binding,
+        "prereg_sha256": PREREG_SHA,
+        "runner_sha256": run_sha,
+        "h139_runner_sha256": H139_SHA,
+        "launch_guard": launch_guard,
+        "structure": structure,
+        "torch_threads": TORCH_THREADS,
+        "interop_threads": torch.get_num_interop_threads(),
+        "environment": {
+            k: os.environ.get(k)
+            for k in (
+                "OMP_NUM_THREADS",
+                "MKL_NUM_THREADS",
+                "OPENBLAS_NUM_THREADS",
+                "CUDA_VISIBLE_DEVICES",
             )
-            native_val[arm] = [nat(r) for r in val]
-            native_train[arm] = [nat(r) for r in train]
-            u4[arm] = [
-                h124.endpoints(
-                    costs[r["context_sha256"]], pools[r["context_sha256"]]["u"]
-                )["u4"]
-                for r in train
-            ]
-            if arm == ANCHOR:  # regression first: exact 91/91 parity, zero error
-                exp = np.asarray(reference["utility"]["per_context"], np.float64)
-                if np.max(np.abs(np.asarray(native_val[arm]) - exp)) != 0.0:
-                    raise RuntimeError("R882 regression failed (exact 91/91 required)")
-            print("ARM DONE", arm, flush=True)
-        if any(
-            d["before"] != h124.DOPE or d["after"] != h124.DOPE for d in dope.values()
-        ):
+        },
+    }
+    h124.write(root / "execution-identity.json", identity)
+    native_val, native_train, u4, dope = {}, {}, {}, {}
+    for arm in (ANCHOR,) if smoke else ARMS:
+        costs, dope[arm] = evaluate_arm(
+            h124, root, arm, *paths[arm], rows, context, pools, projection
+        )
+        if dope[arm]["before"] != h124.DOPE or dope[arm]["after"] != h124.DOPE:
             raise RuntimeError("DOPE identity changed")
-        result = readout(val, train, native_val, native_train, u4)
-        per_raw = json.dumps(
-            {"val": native_val, "train": native_train, "u4": u4}, sort_keys=True
-        ).encode()
-        import sklearn
-        import torch
-
-        metrics = {
-            "schema": "jope.h152.ckpt-soup/v1",
-            "status": "COMPLETE",
-            "verdict": result.pop("verdict"),
-            "source_commit": source,
-            "prereg_commit": H152_PREREG_COMMIT,
-            "prereg_sha256": prereg_sha,
-            "runner_sha256": run_sha,
-            "h139_runner_sha256": H139_SHA,
-            "structure": structure,
-            "regression": {
-                "R882_val_mean": float(np.mean(native_val[ANCHOR])),
-                "contexts": 91,
-                "max_abs_error": 0.0,
-            },
-            **result,
-            "per_context_sha256": hashlib.sha256(per_raw).hexdigest(),
-            "dope": {
-                a: {"before": d["before"], "after": d["after"]} for a, d in dope.items()
-            },
-            "read_boundary": {
-                "dl_train_contexts": len(train),
-                "dl_val_contexts": len(val),
-                "sealed_payloads_opened": 0,
-                "holdout_payloads_opened": 0,
-                "meta_test_payloads_opened": 0,
-                "live_dir_writes": 0,
-            },
-            "runtime": {
-                "wall_seconds": time.monotonic() - t0,
-                "process_cpu_seconds": time.process_time() - cpu0,
-                "max_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
-                "rss_watchdog": watchdog.receipt(),
-            },
-            "versions": {
-                "numpy": np.__version__,
-                "scikit_learn": sklearn.__version__,
-                "torch": torch.__version__,
-                "python": platform.python_version(),
-            },
+        native_val[arm] = native_values(h139, costs, pools, val)
+        native_train[arm] = native_values(h139, costs, pools, train)
+        u4[arm] = [
+            h124.endpoints(costs[r["context_sha256"]], pools[r["context_sha256"]]["u"])[
+                "u4"
+            ]
+            for r in train
+        ]
+        if arm == ANCHOR:  # regression first, before any soup is scored
+            reg = regression(native_val[arm], reference)
+        print("ARM DONE", arm, flush=True)
+    end_guard = guards(parent)
+    if smoke:
+        out = {
+            "status": "PASS",
             "optimizer_updates": 0,
-            "GPU_used": False,
-            "CUDA_initialized": torch.cuda.is_initialized(),
+            "soup_arms_scored": 0,
+            "regression": reg,
+            "dope": dope[ANCHOR],
+            "structure": structure,
+            "launch_guard": launch_guard,
+            "end_guard": end_guard,
+            "torch_threads": torch.get_num_threads(),
+            "wall_seconds": time.monotonic() - t0,
+            "max_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
         }
-        raw = json.dumps(metrics, indent=1, sort_keys=True, allow_nan=False) + "\n"
-        if len(raw.encode()) >= METRICS_LIMIT_BYTES:
-            raise RuntimeError("H152 metrics would exceed 100 KB")
-        (root / "per_context.json").write_bytes(per_raw)
-        (root / "metrics.json").write_text(raw)
+        h124.write(root / "smoke.json", out)
+        print("SMOKE PASS", json.dumps(reg), flush=True)
+        return out
+    result = readout(val, train, native_val, native_train, u4)
+    per_raw = json.dumps(
+        {"val": native_val, "train": native_train, "u4": u4}, sort_keys=True
+    ).encode()
+    import sklearn
+
+    metrics = {
+        "schema": "jope.h152.ckpt-soup/v2",
+        "status": "COMPLETE",
+        "verdict": result.pop("verdict"),
+        "binding": binding,
+        "prereg_sha256": PREREG_SHA,
+        "runner_sha256": run_sha,
+        "h139_runner_sha256": H139_SHA,
+        "structure": structure,
+        "regression": reg,
+        **result,
+        "per_context_sha256": hashlib.sha256(per_raw).hexdigest(),
+        "dope": {
+            a: {"before": d["before"], "after": d["after"]} for a, d in dope.items()
+        },
+        "read_boundary": {
+            "dl_train_contexts": len(train),
+            "dl_val_contexts": len(val),
+            "sealed_payloads_opened": 0,
+            "holdout_payloads_opened": 0,
+            "meta_test_payloads_opened": 0,
+            "live_dir_writes": 0,
+        },
+        "runtime": {
+            "wall_seconds": time.monotonic() - t0,
+            "process_cpu_seconds": time.process_time() - cpu0,
+            "max_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+            "torch_threads": TORCH_THREADS,
+            "launch_guard": launch_guard,
+            "end_guard": end_guard,
+        },
+        "versions": {
+            "numpy": np.__version__,
+            "scikit_learn": sklearn.__version__,
+            "torch": torch.__version__,
+            "python": platform.python_version(),
+        },
+        "optimizer_updates": 0,
+        "GPU_used": False,
+        "CUDA_initialized": torch.cuda.is_initialized(),
+    }
+    raw = json.dumps(metrics, indent=1, sort_keys=True, allow_nan=False) + "\n"
+    if len(raw.encode()) >= METRICS_LIMIT_BYTES:
+        raise RuntimeError("H152 metrics would exceed 100 KB")
+    (root / "per_context.json").write_bytes(per_raw)
+    (root / "metrics.json").write_text(raw)
     print("COMPLETE", metrics["verdict"], flush=True)
     return metrics
 
@@ -496,6 +560,45 @@ def family_means(values, families):
         s[idx[f]] += v
         c[idx[f]] += 1
     return s / c
+
+
+def train_folds(families, seed):
+    """Deterministic family-disjoint 5-fold partition of the TRAIN families for one seed (descriptive only)."""
+    fams = np.array(sorted(set(families)))
+    return [
+        sorted(g.tolist())
+        for g in np.array_split(np.random.default_rng(seed).permutation(fams), 5)
+    ]
+
+
+def fold_readout(train, native_train):
+    """For each seed 152101-152103: family-disjoint folds and, per arm, the equal-family gain vs R882 within each fold.
+    No fitting or arm selection uses these folds; they show how the TRAIN-exposed gain spreads across family subsets."""
+    tf = [r["family_id"] for r in train]
+    order = sorted(set(tf))
+    ref = family_means(native_train[ANCHOR], tf)
+    out = {}
+    for seed in SEEDS:
+        groups = train_folds(tf, seed)
+        fold_of = {f: k for k, g in enumerate(groups) for f in g}
+        gains = {}
+        for arm in ARMS:
+            if arm == ANCHOR:
+                continue
+            g = family_means(native_train[arm], tf) - ref
+            gains[arm] = [
+                float(np.mean([g[i] for i, f in enumerate(order) if fold_of[f] == k]))
+                for k in range(5)
+            ]
+        out[str(seed)] = {
+            "fold_families": [len(g) for g in groups],
+            "fold_contexts": [sum(fold_of[f] == k for f in tf) for k in range(5)],
+            "assignment_sha256": hashlib.sha256(
+                json.dumps(groups).encode()
+            ).hexdigest(),
+            "fold_gain_by_arm": gains,
+        }
+    return out
 
 
 def readout(val, train, native_val, native_train, u4):
@@ -544,6 +647,7 @@ def readout(val, train, native_val, native_train, u4):
     return {
         "verdict": verdict,
         "arms": arms,
+        "train_family_folds_descriptive": fold_readout(train, native_train),
         "baseline": {
             "R882_val_context_mean": float(np.mean(native_val[ANCHOR])),
             "R882_val_invalid_picks": int(sum(v == -2.0 for v in native_val[ANCHOR])),
@@ -562,11 +666,16 @@ def main():
     g.add_argument(
         "--smoke",
         action="store_true",
-        help="build soups and structural checks only; zero evaluation",
+        help="build soups; score R882 only for the exact regression",
     )
     ap.add_argument("--root", type=Path, required=True)
+    ap.add_argument(
+        "--launch",
+        type=Path,
+        help="launch.json naming reviewed_head and source_commit (--run only)",
+    )
     a = ap.parse_args()
-    run(a.root, smoke=a.smoke)
+    run(a.root, smoke=a.smoke, launch=a.launch)
 
 
 if __name__ == "__main__":

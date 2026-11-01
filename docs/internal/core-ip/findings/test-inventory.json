@@ -1958,7 +1958,7 @@
       "role": "research"
     },
     "python:research/flywheel_selfplay/h152_ckpt_soup/test_h152.py": {
-      "reason": "Owner-requested H152 data-free controls for the zero-update checkpoint soup readout; no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
+      "reason": "Owner-requested H152 data-free controls for the zero-update checkpoint soup readout, resource guards and source binding; no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h143_strict_admission_replay/test_h143.py": {

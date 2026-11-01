@@ -1,11 +1,40 @@
 {
- "launch": {
-  "disk_used_fraction": 0.9289,
-  "load1": 15.3759765625
+ "dope": {
+  "CUDA_initialized": false,
+  "after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "device": "cpu",
+  "optimizer_updates": 0
  },
- "note": "zero-eval smoke on xbabe1: soups built and structurally checked; 0 updates, 0 scored contexts; 6.0 s, 0.89 GB RSS",
+ "host": "xbabe1",
+ "kind": "supervised zero-soup-eval smoke (R882 only, exact regression)",
+ "monitor_sha256": "83f25b9532613a81dd20e3479d7ffd90a39cce94759911526e387febda00101c",
+ "nice": 19,
  "optimizer_updates": 0,
- "scored_contexts": 0,
+ "regression": {
+  "contexts_matched": 91,
+  "max_abs_error": 0.0,
+  "mean": 1.1377941898164525,
+  "status": "PASS"
+ },
+ "runner_guards": {
+  "end": {
+   "disk_free_bytes": 113520177152,
+   "disk_used_fraction": 0.9423,
+   "load1": 13.80078125,
+   "scratch_bytes": 113352080
+  },
+  "launch": {
+   "disk_free_bytes": 116235001856,
+   "disk_used_fraction": 0.9409,
+   "load1": 13.4150390625,
+   "scratch_bytes": 68225961
+  }
+ },
+ "runner_max_rss_kib": 994512,
+ "runner_sha256": "d40ca122cc9a8f89f770567759ee4170b0d6241c3451a81a037feda1ac6e4c71",
+ "runner_wall_seconds": 325.9622548632324,
+ "soup_arms_scored": 0,
  "status": "PASS",
  "structure": {
   "adapter_l2_distance_from_R882": {
@@ -48,5 +77,28 @@
     "882": 0.25
    }
   }
- }
+ },
+ "superseded": "the earlier 2026-11-01T03:3x zero-eval smoke (soup construction only, unsupervised) is replaced by this one",
+ "supervisor": {
+  "exit_status": 0,
+  "limits": {
+   "disk_free_bytes": 40000000000,
+   "disk_used": 0.95,
+   "load1": 85,
+   "mem_available": 12884901888,
+   "rss_bytes": 6000000000,
+   "scratch_bytes": 1000000000,
+   "threads": 4
+  },
+  "peak": {
+   "disk_used": 0.94258,
+   "load": 16.16357421875,
+   "rss": 1039175680,
+   "samples": 1135,
+   "scratch": 118501303,
+   "threads": 2
+  },
+  "wall_seconds": 329.5716465078294
+ },
+ "torch_threads": 1
 }

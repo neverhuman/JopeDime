@@ -9,7 +9,7 @@ This file is committed and merged **before** any arm is scored.
 
 - On the 1,219 TRAIN contexts, R782 beats R882 (H139/H145: +0.0133 [+0.0023, +0.0273]), while R882 wins the
   91-context DL-Val selection.
-- Every r882 continuation so far loses roughly −0.02 (H144, H146, H151 CTRL).
+- The executed r882 continuations so far lost ground (H144; H146 CTRL −0.0237). H151 has not run and is not cited.
 - A weight-space blend of already-saved rounds might keep R882's val skill and add R782's robustness.
 
 **How this differs from earlier waves.**
@@ -86,6 +86,19 @@ A025 and A075 are reported but never admitted.
 **Secondary (descriptive, TRAIN-exposed).** The 1,219-context, 205-family TRAIN panel gets the same equal-family
 gain, CI, Elo, invalid picks and U4. Every source adapter was trained on these contexts.
 
+**TRAIN family-grouped folds (descriptive).** For each seed 152101–152103, the 205 TRAIN families are permuted
+with that seed and split into 5 family-disjoint folds. The readout records, per seed:
+- the fold family and context counts;
+- a SHA-256 of the assignment;
+- per arm, the equal-family gain against R882 within each fold.
+
+No model is fitted, and no arm is selected, on these folds. They show how the TRAIN-exposed gain spreads across
+disjoint family subsets.
+
+**Status of the inference.** DL-Val is the flywheel's own selection set and has been reused across waves, so every
+H152 inference is exploratory evidence, not a fresh confirmation. The bootstrap seeds are resampling repetitions,
+not independent model runs.
+
 If an arm advances, the closeout writes an adoption note for the flywheel owner. The live loop is never changed.
 
 ## Data and resources
@@ -95,13 +108,39 @@ If an arm advances, the closeout writes an adoption note for the flywheel owner.
   - Sealed, holdout and meta-test data are never read.
   - DL-Val is the flywheel's own 91-context contract.
   - `source_manifest.json` and `cache_manifest.json` are not opened.
-- **Resources.**
-  - xbabe1 CPU, nice 19, OMP/MKL/OpenBLAS = 4 threads.
-  - RSS < 6,000,000,000 B; the H124 watchdog is set to that decimal ceiling.
-  - **Stop if disk use ≥ 94% or load1 > 85**, checked at launch and before every arm.
-  - Scratch < 1 GB. No GPU and no qualification lock.
+- **Host.** xbabe1 CPU at nice 19, with no GPU and no qualification lock.
+  - xbabe1's root disk is at 94% (about 118 GB free), so a 94% guard would trip at launch.
+  - **Choice (ENG:watcher addendum t2159): stay on xbabe1 with an absolute disk guard.** Stop if used ≥ 95% or
+    free < 40 GB.
+  - Not xbabe2: the inputs already live on xbabe1. Nothing is deleted to make room.
+- **Thread budget: at most 4 OS threads across the whole process tree, supervisor included.**
+  - The byte-pinned H124 `baseline()` hardcodes `torch.set_num_threads(4)`. H152 wraps the call so the intra-op
+    pool stays at **1**, with interop at 1.
+  - OMP, MKL, OpenBLAS and numexpr are all set to 1.
+  - There is no in-process watchdog thread.
+- **Supervisor (`monitor.py`).** It runs the smoke and the run, samples about 4 times a second and **stops (never
+  pauses)** on any of:
+
+  | Limit | Stops at |
+  |---|---|
+  | process-tree threads | > 4 |
+  | process-tree RSS | ≥ 6,000,000,000 B |
+  | scratch: the whole `~/jope-data/h152` tree, inputs included, plus custody | ≥ 1 GB |
+  | disk | ≥ 95% used or < 40 GB free |
+  | load1 | > 85 |
+  | available memory | < 12 GiB |
+
+  The runner repeats the disk, load, scratch and nice checks at launch, before every arm and at the end. Each
+  attempt leaves a resource log and a peak receipt.
 - **Execution.**
-  - One run from merged source, launched after this preregistration merges.
-  - The runner checks this file against the preregistration commit.
-  - A zero-eval smoke (soup construction and structural checks only) ran before merge. Its result is in
-    [preflight.json](preflight.json).
+  - One run from merged source, launched only after a follow-up review PASS and the merge.
+  - **Squash-compatible binding.** The runner refuses to start unless:
+    - PREREG.md hashes to the preregistered SHA-256;
+    - every bound file is byte-identical to its blob at both the **reviewed head** and the **merged source commit**
+      named in `launch.json`.
+
+    The bound files are PREREG, runner, monitor, the H139 and H124 runners, and the DOPE freeze guard. This binds
+    content rather than ancestry, because a central squash merge keeps the blobs but drops the author commits.
+  - **Smoke (before merge, under the supervisor).** It builds every soup, then scores **R882 only**, over the same
+    rows and code path as the run. It must reproduce the 91 best-dev utilities exactly: zero error on all 91 and a
+    mean of exactly 1.1377941898164525. No soup arm is scored. Its result is in [preflight.json](preflight.json).
