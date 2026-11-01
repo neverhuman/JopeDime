@@ -5431,6 +5431,10 @@
     "python:research/flywheel_selfplay/h179_deep_ensemble/test_h179.py": {
       "role": "research",
       "reason": "H179 data-free controls for grouped family separation, independent member seeds, score averaging before argmin, FIT-only batch construction, Holm/verdict boundaries, timing-only budget selection, and CPU/resource guards. Synthetic fixtures only; no study data or checkpoint loaded."
+    },
+    "python:research/flywheel_selfplay/h178_pooled_calibration/test_h178.py": {
+      "role": "research",
+      "reason": "H178 empirical calibration of the H177 pooled 205-family cross-fit selector (pooled_b_select imported directly from h177_pooled_selector/analysis.py) on the H175 counterfactual bank; data-free controls for imported H177 rule object identity, 10k-draw step-down Holm counterexample, LocalOnlyPayload role isolation, StageOrderGuard fsync barrier, exact Clopper-Pearson bounds, zero optimizer/backward calls, and resource guards. Research only; no product or sealed qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
