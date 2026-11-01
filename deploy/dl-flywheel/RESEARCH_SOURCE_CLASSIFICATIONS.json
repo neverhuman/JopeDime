@@ -4591,6 +4591,38 @@
         "role": "research",
         "reason": "H176 preregistered CPU-only diagnostic of the r882 zero-update generalization gap and nested FIT-family data-scaling curve; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
       }
+    },
+    "python:research/flywheel_selfplay/h179_deep_ensemble/analysis.py": {
+      "bytes": 10832,
+      "sha256": "01608aca1e5fed456182601b34b91f879378638083fe8467f3abdfcebf169e94",
+      "classification": {
+        "role": "research",
+        "reason": "H179 data-free ensemble inference, family-bootstrap, Holm correction, Elo, verdict, seed, fold, and timing-plan implementation. Research only; no model or product qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h179_deep_ensemble/runner.py": {
+      "bytes": 28873,
+      "sha256": "3869448c9f0abee36a7573fff481bbbf64bd5f0dff88ba7c10ddf84127c19764",
+      "classification": {
+        "role": "research",
+        "reason": "H179 pinned CPU-only runner for independent fresh adapter members and candidate-score ensembles, with fold isolation and fixed timing pilot. Research only; no product or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h179_deep_ensemble/treatment.py": {
+      "bytes": 2139,
+      "sha256": "336b759b6bbd81288425c4fcaf244d4f8160f8c69e0178c29106e77323b8f6fe",
+      "classification": {
+        "role": "research",
+        "reason": "H179 reuses the H176 pinned adapter forward/loss support for frozen DOPE and adapter-only CPU research. Research only; no product or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h179_deep_ensemble/monitor.py": {
+      "bytes": 5192,
+      "sha256": "6d1c29e0f46ff91d157ec6bc8356f00c88ba969113549df6d7073b1b90579b4e",
+      "classification": {
+        "role": "research",
+        "reason": "H179 CPU-only xbabe2 attempt supervisor with 93.8% disk-use stop and process resource guards. Research only; no product or serving qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
