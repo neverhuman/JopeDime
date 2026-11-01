@@ -231,52 +231,144 @@ def render_argv(argv: list[str], values: dict[str, str]) -> list[str]:
     return rendered
 
 
+def _current_sigmask() -> tuple[set[signal.Signals], BaseException | None]:
+    pending_error = None
+    while True:
+        try:
+            return signal.pthread_sigmask(signal.SIG_BLOCK, ()), pending_error
+        except KeyboardInterrupt as error:
+            if pending_error is None:
+                pending_error = error
+
+
+def _block_sigint() -> tuple[set[signal.Signals], BaseException | None]:
+    # Read the mask before changing it: pthread_sigmask applies the new mask and
+    # only then runs pending handlers, so an interrupt raised by the blocking call
+    # must not be retried into a "previous" mask that already blocks SIGINT.
+    previous_mask, pending_error = _current_sigmask()
+    try:
+        signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT})
+    except KeyboardInterrupt as error:
+        if pending_error is None:
+            pending_error = error
+    return previous_mask, pending_error
+
+
+def _restore_sigint(previous_mask: set[signal.Signals]) -> BaseException | None:
+    try:
+        signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
+    except BaseException as error:
+        return error
+    return None
+
+
 def terminate_group(process: subprocess.Popen, grace_seconds: float = 5) -> int:
+    previous_mask, pending_error = _block_sigint()
     pgid = process.pid
-    try:
-        os.killpg(pgid, signal.SIGTERM)
-    except ProcessLookupError:
-        pass
-    try:
-        process.wait(timeout=grace_seconds)
-    except subprocess.TimeoutExpired:
-        pass
+    cleanup_error = None
 
-    def live_group_members() -> bool:
-        proc = Path("/proc")
-        if not proc.is_dir():
+    def remember(error: BaseException) -> None:
+        nonlocal pending_error
+        if pending_error is None:
+            pending_error = error
+
+    def wait(timeout: float) -> int | None:
+        try:
+            return process.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return None
+        except BaseException as error:
+            remember(error)
+            return None
+
+    def pause(seconds: float) -> None:
+        try:
+            time.sleep(seconds)
+        except BaseException as error:
+            remember(error)
+
+    try:
+        try:
+            os.killpg(pgid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        except BaseException as error:
+            remember(error)
+
+        def live_group_members() -> bool:
+            proc = Path("/proc")
+            if not proc.is_dir():
+                try:
+                    os.killpg(pgid, 0)
+                    return True
+                except ProcessLookupError:
+                    return False
+            for entry in proc.iterdir():
+                if not entry.name.isdecimal():
+                    continue
+                try:
+                    stat = (entry / "stat").read_text(encoding="ascii")
+                    fields = stat.rsplit(")", 1)[1].split()
+                    state, member_pgid = fields[0], int(fields[2])
+                except (OSError, IndexError, ValueError):
+                    continue
+                if member_pgid == pgid and state not in {"Z", "X"}:
+                    return True
+            return False
+
+        grace_deadline = time.monotonic() + max(0, grace_seconds)
+        wait(max(0, grace_seconds))
+        while live_group_members() and time.monotonic() < grace_deadline:
+            pause(min(0.05, max(0, grace_deadline - time.monotonic())))
+        if live_group_members():
             try:
-                os.killpg(pgid, 0)
-                return True
+                os.killpg(pgid, signal.SIGKILL)
             except ProcessLookupError:
-                return False
-        for entry in proc.iterdir():
-            if not entry.name.isdecimal():
-                continue
-            try:
-                stat = (entry / "stat").read_text(encoding="ascii")
-                fields = stat.rsplit(")", 1)[1].split()
-                state, member_pgid = fields[0], int(fields[2])
-            except (OSError, IndexError, ValueError):
-                continue
-            if member_pgid == pgid and state not in {"Z", "X"}:
-                return True
-        return False
+                pass
+            except BaseException as error:
+                remember(error)
+            kill_deadline = time.monotonic() + 2
+            while live_group_members() and time.monotonic() < kill_deadline:
+                pause(0.02)
+            if live_group_members():
+                cleanup_error = CaptureError(f"process group {pgid} survived SIGKILL")
 
-    deadline = time.monotonic() + max(0, grace_seconds)
-    while live_group_members() and time.monotonic() < deadline:
-        time.sleep(min(0.05, max(0, deadline - time.monotonic())))
-    if live_group_members():
+        reap_deadline = time.monotonic() + 2
+        engine_exit = None
+        while engine_exit is None and time.monotonic() < reap_deadline:
+            engine_exit = wait(max(0, reap_deadline - time.monotonic()))
+        if engine_exit is None and process.poll() is None:
+            cleanup_error = cleanup_error or CaptureError(
+                f"process {process.pid} could not be reaped"
+            )
+        elif engine_exit is None:
+            engine_exit = process.returncode
+    except BaseException as error:
+        remember(error)
         try:
             os.killpg(pgid, signal.SIGKILL)
         except ProcessLookupError:
             pass
-        kill_deadline = time.monotonic() + 2
-        while live_group_members() and time.monotonic() < kill_deadline:
-            time.sleep(0.02)
-        if live_group_members():
-            raise CaptureError(f"process group {pgid} survived SIGKILL")
-    return process.wait()
+        except BaseException as cleanup_failure:
+            if cleanup_error is None:
+                cleanup_error = cleanup_failure
+        try:
+            engine_exit = process.wait(timeout=2)
+        except BaseException as cleanup_failure:
+            if cleanup_error is None:
+                cleanup_error = cleanup_failure
+    finally:
+        restore_error = _restore_sigint(previous_mask)
+        if pending_error is None:
+            pending_error = restore_error
+
+    if pending_error is not None:
+        if cleanup_error is not None:
+            raise pending_error from cleanup_error
+        raise pending_error
+    if cleanup_error is not None:
+        raise cleanup_error
+    return engine_exit
 
 
 def render_client_commands(
@@ -320,31 +412,43 @@ def stop_engine(
 ) -> tuple[int | None, int | None]:
     if process is None:
         return None, None
+    previous_mask, pending_error = _block_sigint()
     stop_exit = None
-    pending_error = None
+    engine_exit = None
     try:
-        stop = subprocess.run(
-            [str(candidate), "serve", "--stop"],
-            cwd=repo,
-            env=environment,
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=15,
-            preexec_fn=lambda: os.nice(19),
-        )
-        stop_exit = stop.returncode
-    except BaseException as error:
-        pending_error = error
-    try:
+        try:
+            stop = subprocess.run(
+                [str(candidate), "serve", "--stop"],
+                cwd=repo,
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=15,
+                preexec_fn=lambda: os.nice(19),
+            )
+            stop_exit = stop.returncode
+        except BaseException as error:
+            if pending_error is None:
+                pending_error = error
         try:
             process.wait(timeout=10)
         except subprocess.TimeoutExpired:
             pass
-        engine_exit = terminate_group(process)
+        except BaseException as error:
+            if pending_error is None:
+                pending_error = error
+        try:
+            engine_exit = terminate_group(process)
+        except BaseException as error:
+            if pending_error is None:
+                pending_error = error
     finally:
-        if pending_error is not None:
-            raise pending_error
+        restore_error = _restore_sigint(previous_mask)
+        if pending_error is None:
+            pending_error = restore_error
+    if pending_error is not None:
+        raise pending_error
     return stop_exit, engine_exit
 
 
@@ -477,6 +581,27 @@ def run_capture(args: argparse.Namespace) -> dict:
         command_path = case / "command.json"
         command_path.write_text(json.dumps(command, indent=2) + "\n", encoding="utf-8")
         os.chmod(command_path, 0o600)
+        run_mask, run_mask_error = _current_sigmask()
+        if run_mask_error is not None:
+            raise run_mask_error
+        previous_sigint_handler = signal.getsignal(signal.SIGINT)
+        pending_sigint: list[KeyboardInterrupt] = []
+
+        def defer_sigint(_signum, _frame):
+            if previous_sigint_handler is signal.SIG_IGN:
+                return
+            if not pending_sigint:
+                pending_sigint.append(KeyboardInterrupt())
+
+        def raise_if_sigint_pending():
+            if pending_sigint:
+                raise pending_sigint[0]
+
+        # A handler installed before the owned engine exists closes the Python
+        # bytecode gap between leaving the try body and entering its finally.
+        # It records SIGINT without raising, so teardown cannot itself be cut
+        # short; the saved exception is raised after the owned group is reaped.
+        signal.signal(signal.SIGINT, defer_sigint)
 
         try:
             with (
@@ -494,8 +619,10 @@ def run_capture(args: argparse.Namespace) -> dict:
                     preexec_fn=lambda: os.nice(19),
                 )
 
+            raise_if_sigint_pending()
             ready = False
             for _ in range(200):
+                raise_if_sigint_pending()
                 if engine.poll() is not None:
                     break
                 status = subprocess.run(
@@ -508,6 +635,7 @@ def run_capture(args: argparse.Namespace) -> dict:
                     timeout=3,
                     preexec_fn=lambda: os.nice(19),
                 )
+                raise_if_sigint_pending()
                 if status.returncode == 0 and status.stdout.startswith("running"):
                     ready = True
                     break
@@ -531,14 +659,27 @@ def run_capture(args: argparse.Namespace) -> dict:
                         start_new_session=True,
                         preexec_fn=lambda: os.nice(19),
                     )
+                    raise_if_sigint_pending()
                 except OSError as error:
                     capture_error = f"client launch failed: {error}"
 
                 if active_client is not None:
                     try:
-                        client_exit = active_client.wait(timeout=row["timeout_seconds"])
-                    except subprocess.TimeoutExpired:
-                        timed_out = True
+                        client_deadline = time.monotonic() + row["timeout_seconds"]
+                        while True:
+                            raise_if_sigint_pending()
+                            remaining = client_deadline - time.monotonic()
+                            if remaining <= 0:
+                                timed_out = active_client.poll() is None
+                                client_exit = active_client.poll()
+                                break
+                            try:
+                                client_exit = active_client.wait(
+                                    timeout=min(0.1, remaining)
+                                )
+                                break
+                            except subprocess.TimeoutExpired:
+                                continue
                     finally:
                         client_exit = terminate_group(active_client)
 
@@ -598,13 +739,32 @@ def run_capture(args: argparse.Namespace) -> dict:
                 except (OSError, CaptureError) as error:
                     capture_error = str(error)
         finally:
+            # Block inline, before any Python call: a function entry is itself an
+            # interrupt point, and an interrupt there would skip the engine stop.
+            teardown_error = None
             try:
-                if active_client is not None:
-                    terminate_group(active_client)
-            finally:
-                engine_stop_exit, engine_exit = stop_engine(
-                    candidate, repo, environment, engine
-                )
+                signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT})
+            except KeyboardInterrupt as error:
+                teardown_error = error
+            try:
+                try:
+                    if active_client is not None:
+                        terminate_group(active_client)
+                finally:
+                    engine_stop_exit, engine_exit = stop_engine(
+                        candidate, repo, environment, engine
+                    )
+            except BaseException as error:
+                if teardown_error is None:
+                    teardown_error = pending_sigint[0] if pending_sigint else error
+            restore_error = _restore_sigint(run_mask)
+            if teardown_error is None:
+                teardown_error = restore_error
+            signal.signal(signal.SIGINT, previous_sigint_handler)
+            if teardown_error is None and pending_sigint:
+                teardown_error = pending_sigint[0]
+            if teardown_error is not None:
+                raise teardown_error
 
         rows[key] = {
             "version": row["version"],

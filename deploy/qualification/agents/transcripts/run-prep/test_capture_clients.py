@@ -1,13 +1,16 @@
 """Data-free tests for the A5 custody packager."""
 
+import ast
 import importlib.util
 import argparse
 import hashlib
+import inspect
 import json
 import os
 from pathlib import Path
 import signal
 import subprocess
+import sys
 import tempfile
 import textwrap
 import time
@@ -477,6 +480,360 @@ def test_engine_cleanup_runs_after_client_cleanup_failure(
         _kill_fixture_processes(a5_tmp_path)
 
 
+def _start_sigterm_ignoring_engine(tmp_path):
+    ready = tmp_path / "engine-ready.txt"
+    code = (
+        "import signal,time; from pathlib import Path; "
+        "signal.signal(signal.SIGTERM, signal.SIG_IGN); "
+        f"Path({str(ready)!r}).write_text('ready'); "
+        "print('READY', flush=True); time.sleep(60)"
+    )
+    process = subprocess.Popen(
+        [sys.executable, "-u", "-c", code],
+        cwd=tmp_path,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        start_new_session=True,
+    )
+    assert process.stdout.readline().strip() == "READY"
+    return process
+
+
+def _cleanup_test_engine(process):
+    if process.poll() is None:
+        assert os.getpgid(process.pid) == process.pid
+        os.killpg(process.pid, signal.SIGKILL)
+        process.wait(timeout=3)
+    for stream in (process.stdout, process.stderr):
+        if stream is not None:
+            stream.close()
+
+
+@pytest.mark.parametrize(
+    "wait_error", ["sigint", "oserror"], ids=["actual-sigint", "wait-error"]
+)
+def test_stop_engine_reaps_group_when_wait_raises(wait_error, tmp_path):
+    engine = _start_sigterm_ignoring_engine(tmp_path)
+
+    class InterruptWaitOnce:
+        def __init__(self, process):
+            self.process = process
+            self.injected = False
+
+        def __getattr__(self, name):
+            return getattr(self.process, name)
+
+        def wait(self, *positional, **kwargs):
+            if kwargs.get("timeout") == 10 and not self.injected:
+                self.injected = True
+                if wait_error == "sigint":
+                    os.kill(os.getpid(), signal.SIGINT)
+                    return self.process.wait(*positional, **kwargs)
+                raise OSError("injected engine wait failure")
+            return self.process.wait(*positional, **kwargs)
+
+    try:
+        with pytest.raises(KeyboardInterrupt if wait_error == "sigint" else OSError):
+            THREE_CLIENTS_MODULE.stop_engine(
+                Path("/usr/bin/false"),
+                tmp_path,
+                os.environ.copy(),
+                InterruptWaitOnce(engine),
+            )
+        assert engine.poll() is not None, "engine survived interrupted wait cleanup"
+    finally:
+        _cleanup_test_engine(engine)
+
+
+@pytest.mark.parametrize(
+    "boundary",
+    [
+        "grace-wait",
+        "grace-sleep",
+        "kill-sleep",
+        "reap-wait",
+        "inventory-iterdir",
+        "inventory-stat",
+    ],
+    ids=[
+        "grace-wait",
+        "grace-sleep",
+        "kill-sleep",
+        "reap-wait",
+        "inventory-iterdir",
+        "inventory-stat",
+    ],
+)
+def test_stop_engine_finishes_teardown_when_cleanup_is_interrupted(
+    boundary, monkeypatch, tmp_path
+):
+    engine = _start_sigterm_ignoring_engine(tmp_path)
+    original_terminate = THREE_CLIENTS_MODULE.terminate_group
+    original_killpg = os.killpg
+    original_sleep = time.sleep
+    original_path = THREE_CLIENTS_MODULE.Path
+    state = {"injected": False, "kill_requested": False, "deferred": False}
+
+    def inject_sigint():
+        state["injected"] = True
+        os.kill(os.getpid(), signal.SIGINT)
+        # Only reached when the teardown mask held the signal pending.
+        state["deferred"] = signal.SIGINT in signal.sigpending()
+
+    class InterruptAtCleanupBoundary:
+        def __init__(self, process):
+            self.process = process
+
+        def __getattr__(self, name):
+            return getattr(self.process, name)
+
+        def wait(self, *positional, **kwargs):
+            timeout = kwargs.get("timeout")
+            if timeout == 10:
+                raise subprocess.TimeoutExpired("initial engine wait", 10)
+            if boundary == "grace-wait" and timeout == 5:
+                inject_sigint()
+            if (
+                boundary
+                in {
+                    "grace-sleep",
+                    "kill-sleep",
+                    "inventory-iterdir",
+                    "inventory-stat",
+                }
+                and timeout == 0.1
+            ):
+                raise subprocess.TimeoutExpired("short grace wait", 0.1)
+            if boundary == "reap-wait" and state["kill_requested"]:
+                inject_sigint()
+            return self.process.wait(*positional, **kwargs)
+
+    def short_grace(process, *positional, **kwargs):
+        grace_seconds = 5 if boundary == "grace-wait" else 0.1
+        return original_terminate(process, grace_seconds=grace_seconds)
+
+    def track_kill(pgid, sig):
+        if sig == signal.SIGKILL:
+            state["kill_requested"] = True
+            if boundary == "kill-sleep":
+                return
+        original_killpg(pgid, sig)
+
+    def interrupt_sleep(seconds):
+        if boundary == "grace-sleep" and not state["injected"]:
+            inject_sigint()
+        if (
+            boundary == "kill-sleep"
+            and state["kill_requested"]
+            and not state["injected"]
+        ):
+            try:
+                inject_sigint()
+            finally:
+                original_killpg(engine.pid, signal.SIGKILL)
+        original_sleep(seconds)
+
+    class OwnStat:
+        def read_text(self, *args, **kwargs):
+            if boundary == "inventory-stat" and not state["injected"]:
+                inject_sigint()
+            return original_path(f"/proc/{engine.pid}/stat").read_text(*args, **kwargs)
+
+    class OwnEntry:
+        name = str(engine.pid)
+
+        def __truediv__(self, child):
+            assert child == "stat"
+            return OwnStat()
+
+    class ProcDirectory:
+        def is_dir(self):
+            return True
+
+        def iterdir(self):
+            if boundary == "inventory-iterdir" and not state["injected"]:
+                inject_sigint()
+                return original_path("/proc").iterdir()
+            return [OwnEntry()]
+
+    def path_with_owned_proc(path):
+        if str(path) == "/proc" and boundary.startswith("inventory-"):
+            return ProcDirectory()
+        return original_path(path)
+
+    monkeypatch.setattr(THREE_CLIENTS_MODULE, "terminate_group", short_grace)
+    monkeypatch.setattr(THREE_CLIENTS_MODULE.os, "killpg", track_kill)
+    monkeypatch.setattr(THREE_CLIENTS_MODULE.time, "sleep", interrupt_sleep)
+    monkeypatch.setattr(THREE_CLIENTS_MODULE, "Path", path_with_owned_proc)
+    try:
+        with pytest.raises(KeyboardInterrupt):
+            THREE_CLIENTS_MODULE.stop_engine(
+                Path("/usr/bin/false"),
+                tmp_path,
+                os.environ.copy(),
+                InterruptAtCleanupBoundary(engine),
+            )
+        assert state["injected"] is True
+        assert state["deferred"] is True, f"SIGINT was not deferred at {boundary}"
+        assert engine.poll() is not None, f"engine survived {boundary} interrupt"
+        assert _processes_with_paths_under(tmp_path) == []
+    finally:
+        monkeypatch.undo()
+        _cleanup_test_engine(engine)
+
+
+def _sigint_blocked():
+    return signal.SIGINT in signal.pthread_sigmask(signal.SIG_BLOCK, ())
+
+
+def test_block_sigint_restores_mask_when_blocking_surfaces_pending_interrupt(
+    monkeypatch, tmp_path
+):
+    engine = _start_sigterm_ignoring_engine(tmp_path)
+    real_sigmask = signal.pthread_sigmask
+    blocked_before = _sigint_blocked()
+    state = {"surfaced": False}
+
+    def apply_then_surface(how, mask):
+        previous = real_sigmask(how, mask)
+        if (
+            how == signal.SIG_BLOCK
+            and signal.SIGINT in set(mask)
+            and not state["surfaced"]
+        ):
+            state["surfaced"] = True
+            # CPython applies the new mask before it runs pending handlers.
+            raise KeyboardInterrupt("pending SIGINT surfaced by pthread_sigmask")
+        return previous
+
+    monkeypatch.setattr(
+        THREE_CLIENTS_MODULE.signal, "pthread_sigmask", apply_then_surface
+    )
+    try:
+        with pytest.raises(KeyboardInterrupt):
+            THREE_CLIENTS_MODULE.terminate_group(engine, grace_seconds=0.1)
+        monkeypatch.undo()
+        assert state["surfaced"] is True
+        assert engine.poll() is not None, "engine survived surfaced interrupt"
+        assert _sigint_blocked() is blocked_before, "SIGINT mask was not restored"
+    finally:
+        monkeypatch.undo()
+        if _sigint_blocked() and not blocked_before:
+            real_sigmask(signal.SIG_UNBLOCK, {signal.SIGINT})
+        _cleanup_test_engine(engine)
+
+
+def test_run_capture_defers_interrupt_at_engine_stop_entry(monkeypatch, a5_tmp_path):
+    args, _plan, _candidate, _client = _runner_fixture(a5_tmp_path)
+    original_stop = THREE_CLIENTS_MODULE.stop_engine
+    stopped = []
+    blocked_before = _sigint_blocked()
+
+    def interrupt_at_entry(candidate, repo, environment, process):
+        if not stopped:
+            os.kill(os.getpid(), signal.SIGINT)
+        stopped.append(process)
+        return original_stop(candidate, repo, environment, process)
+
+    monkeypatch.setattr(THREE_CLIENTS_MODULE, "stop_engine", interrupt_at_entry)
+    try:
+        with pytest.raises(KeyboardInterrupt):
+            THREE_CLIENTS_MODULE.run_capture(args)
+        assert len(stopped) == 1, "engine stop was skipped by the entry interrupt"
+        assert stopped[0] is not None and stopped[0].poll() is not None
+        assert _sigint_blocked() is blocked_before, "SIGINT mask was not restored"
+        assert _processes_with_paths_under(a5_tmp_path) == []
+    finally:
+        _kill_fixture_processes(a5_tmp_path)
+
+
+def test_run_capture_defers_interrupt_at_outer_cleanup_entry(monkeypatch, a5_tmp_path):
+    args, _plan, _candidate, _client = _runner_fixture(a5_tmp_path)
+    original_stop = THREE_CLIENTS_MODULE.stop_engine
+    original_handler = signal.getsignal(signal.SIGINT)
+    stopped = []
+    injected = {"value": False}
+
+    source, first_line = inspect.getsourcelines(THREE_CLIENTS_MODULE.run_capture)
+    function = ast.parse("".join(source)).body[0]
+    cleanup_try = next(
+        node
+        for node in ast.walk(function)
+        if isinstance(node, ast.Try)
+        and node.finalbody
+        and any(
+            isinstance(call.func, ast.Name) and call.func.id == "stop_engine"
+            for statement in node.finalbody
+            for call in ast.walk(statement)
+            if isinstance(call, ast.Call)
+        )
+    )
+    cleanup_entry_line = first_line + cleanup_try.finalbody[0].lineno - 1
+
+    def track_stop(candidate, repo, environment, process):
+        stopped.append(process)
+        return original_stop(candidate, repo, environment, process)
+
+    def interrupt_at_finally_entry(frame, event, _arg):
+        if (
+            not injected["value"]
+            and frame.f_code is THREE_CLIENTS_MODULE.run_capture.__code__
+            and event == "line"
+            and frame.f_lineno == cleanup_entry_line
+        ):
+            injected["value"] = True
+            sys.settrace(None)
+            os.kill(os.getpid(), signal.SIGINT)
+            return None
+        return interrupt_at_finally_entry
+
+    monkeypatch.setattr(THREE_CLIENTS_MODULE, "stop_engine", track_stop)
+    try:
+        sys.settrace(interrupt_at_finally_entry)
+        with pytest.raises(KeyboardInterrupt):
+            THREE_CLIENTS_MODULE.run_capture(args)
+        assert injected["value"] is True, "SIGINT missed the outer cleanup entry"
+        assert len(stopped) == 1, "engine stop was skipped by outer-finally SIGINT"
+        assert stopped[0] is not None and stopped[0].poll() is not None
+        assert _processes_with_paths_under(a5_tmp_path) == []
+        assert signal.getsignal(signal.SIGINT) is original_handler
+    finally:
+        sys.settrace(None)
+        _kill_fixture_processes(a5_tmp_path)
+
+
+def test_stop_engine_preserves_stop_error_after_group_cleanup(monkeypatch, tmp_path):
+    engine = _start_sigterm_ignoring_engine(tmp_path)
+    original_wait = engine.wait
+    first_wait = True
+
+    def fail_stop(*args, **kwargs):
+        raise FileNotFoundError("synthetic stop command failure")
+
+    def timeout_initial_wait(*args, **kwargs):
+        nonlocal first_wait
+        if first_wait and kwargs.get("timeout") == 10:
+            first_wait = False
+            raise subprocess.TimeoutExpired("engine", 10)
+        return original_wait(*args, **kwargs)
+
+    monkeypatch.setattr(THREE_CLIENTS_MODULE.subprocess, "run", fail_stop)
+    monkeypatch.setattr(engine, "wait", timeout_initial_wait)
+    try:
+        with pytest.raises(FileNotFoundError, match="synthetic stop command failure"):
+            THREE_CLIENTS_MODULE.stop_engine(
+                Path("/missing/inert-candidate"),
+                tmp_path,
+                os.environ.copy(),
+                engine,
+            )
+        assert engine.poll() is not None, "engine survived stop-command failure cleanup"
+    finally:
+        _cleanup_test_engine(engine)
+
+
 def test_roster_names_are_exact():
     assert set(MODULE.CLIENTS) == {"claude_code", "gemini_cli", "codex_cli"}
 
@@ -512,3 +869,69 @@ def test_candidate_drift_during_copy_cannot_publish(monkeypatch):
     monkeypatch.setattr(MODULE.shutil, "copyfile", tamper)
     with pytest.raises(MODULE.CapturePackageError, match="candidate"):
         MODULE.self_test()
+
+
+def test_run_capture_defers_traced_interrupt_at_teardown_entry(a5_tmp_path):
+    args, _plan, _candidate, _client = _runner_fixture(a5_tmp_path)
+    source, start = inspect.getsourcelines(THREE_CLIENTS_MODULE.run_capture)
+    target = next(
+        start + offset
+        for offset, line in enumerate(source)
+        if line.strip() == "teardown_error = None"
+    )
+    code = THREE_CLIENTS_MODULE.run_capture.__code__
+    state = {"sent": False}
+
+    def interrupt_at_teardown_line(frame, event, arg):
+        if event == "line" and frame.f_lineno == target and not state["sent"]:
+            state["sent"] = True
+            os.kill(os.getpid(), signal.SIGINT)
+        return interrupt_at_teardown_line
+
+    def trace_run_capture(frame, event, arg):
+        return interrupt_at_teardown_line if frame.f_code is code else None
+
+    try:
+        sys.settrace(trace_run_capture)
+        try:
+            with pytest.raises(KeyboardInterrupt):
+                THREE_CLIENTS_MODULE.run_capture(args)
+        finally:
+            sys.settrace(None)
+        assert state["sent"] is True
+        assert list(Path(args.engine_home).glob("*/stopped")), "engine stop skipped"
+        assert signal.getsignal(signal.SIGINT) is signal.default_int_handler
+        assert _processes_with_paths_under(a5_tmp_path) == []
+    finally:
+        _kill_fixture_processes(a5_tmp_path)
+
+
+def test_run_capture_honors_interrupt_deferred_during_engine_launch(
+    monkeypatch, a5_tmp_path
+):
+    args, _plan, _candidate, client = _runner_fixture(a5_tmp_path)
+    original_popen = subprocess.Popen
+    launched = {"engines": [], "clients": 0}
+
+    def interrupt_after_engine_fork(command, *positional, **kwargs):
+        process = original_popen(command, *positional, **kwargs)
+        if "--idle-exit" in command and not launched["engines"]:
+            launched["engines"].append(process)
+            # Arrives after the fork but before run_capture owns the handle.
+            os.kill(os.getpid(), signal.SIGINT)
+        elif command[0] == str(client):
+            launched["clients"] += 1
+        return process
+
+    monkeypatch.setattr(
+        THREE_CLIENTS_MODULE.subprocess, "Popen", interrupt_after_engine_fork
+    )
+    try:
+        with pytest.raises(KeyboardInterrupt):
+            THREE_CLIENTS_MODULE.run_capture(args)
+        assert launched["engines"] and launched["engines"][0].poll() is not None
+        assert launched["clients"] == 0, "deferred interrupt was not honored promptly"
+        assert signal.getsignal(signal.SIGINT) is signal.default_int_handler
+        assert _processes_with_paths_under(a5_tmp_path) == []
+    finally:
+        _kill_fixture_processes(a5_tmp_path)
