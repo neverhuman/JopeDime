@@ -252,7 +252,7 @@ Everything else runs beside it. M1 (native discovery) does not depend on the cus
 | REL-05 | LUNA | S | W4 | INT-01 | Product docs with executed examples | — | todo |
 | REL-06 | LUNA | S | W4 | REL-02 | D2 startup and first-model benchmark | D2 | todo |
 | REL-07 | COMPLEX | M | W5 | all | ★ Qualification receipt and final gate rerun | all | todo |
-| INT-01 | COMPLEX | M | W3 | DSC-09, RNK-10, TUI-09, BAT-02..04, MCP-02, EXP-09 | Surface-equivalence and golden-path suites | S1 | todo |
+| INT-01 | COMPLEX | M | W3 | DSC-09, RNK-10, TUI-09, BAT-02..04, MCP-02, EXP-09 | Surface-equivalence and golden-path suites | S1 | done |
 | INT-02 | COMPLEX | M | W3 | SVC-09, CLT-02, TUI-09 | Reconnect, determinism across reconnect, system crash matrix | R4, S2, R1 | done |
 
 ★ = on the critical path.
