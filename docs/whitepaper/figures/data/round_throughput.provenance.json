@@ -1,0 +1,65 @@
+{
+  "schema": "whitepaper.round-throughput.v1",
+  "csv_sha256": "f2ccfb9e5dff3c29a8e188bc2ff4430bf7bef2e721daba3d870859db0146d002",
+  "generator_sha256": "b5612f4d2892d869a9ea9d8d77c8eee2b41520addffc0c0408f15a8f5f60bbf5",
+  "source_snapshot": {
+    "at": "2026-11-01T06:54:28.875479+00:00",
+    "host": "xbabe1",
+    "round_window": [
+      2696,
+      2715
+    ],
+    "selection": "Latest20 consecutive retained completed summary rounds also present in the stable admission prefix; no selection on outcome",
+    "scope": "Read-only operating/development aggregate projection only; no examples, labels, per-context outcomes, candidate programs, weights, sealed or holdout payloads transferred",
+    "files": [
+      {
+        "name": "summary.jsonl",
+        "sha256": "8d5dd69c9a8fa65c05b9fd37c82ff2a9ae1ca6f6c6d522153e5193d21cf8f7c0",
+        "selected_rows": 20,
+        "source_prefix": {
+          "name": "summary.jsonl",
+          "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/summary.jsonl",
+          "inode": 62570245,
+          "observed_bytes": 3358805,
+          "prefix_bytes": 3358805,
+          "prefix_sha256": "733877348d00608d72fafa4654d6b2a581b13b41f4312a2e6bcfc437de683ab6",
+          "mtime_ns_before": 1793516002334011105,
+          "mtime_ns_after": 1793516002334011105,
+          "source_rows": 20,
+          "incomplete_tail_bytes_omitted": 0
+        }
+      },
+      {
+        "name": "admissions.jsonl",
+        "sha256": "d5c1cf47e7a82628d1af56c11ff16b56412d2857a08bd5fbffcc017e48c41e85",
+        "selected_rows": 20,
+        "source_prefix": {
+          "name": "adapter_admissions.jsonl",
+          "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/adapter_admissions.jsonl",
+          "inode": 62570224,
+          "observed_bytes": 1015133,
+          "prefix_bytes": 1015133,
+          "prefix_sha256": "ea3e163ed076a178c52f9f0cc3f2ad229016abfc839e95d1d192c28807bb01da",
+          "mtime_ns_before": 1793516023629343532,
+          "mtime_ns_after": 1793516023629343532,
+          "source_rows": 1942,
+          "incomplete_tail_bytes_omitted": 0
+        }
+      }
+    ]
+  },
+  "rows": 20,
+  "round_window": [
+    2696,
+    2715
+  ],
+  "adapter_admissions": 0,
+  "metrics": {
+    "validation": "Candidate adapter utility and recorded best; larger is preferred in the admission log",
+    "throughput": "Distinct training contexts within each completed round / that round's entire logged wall_seconds; independently checked against datasets_per_second"
+  },
+  "scope": "Development operating observations; repeated contexts across rounds are not independent tasks. Runtime/checkpoint binding and independent first-proposal/deployment comparisons remain pending.",
+  "reproduce": "python3 figures/scripts/make_round_throughput_figure.py",
+  "figure_sha256": "a8804d4db21105b68c2e1aa843448ccf61c6f18462757fb7ddf21b337ed88a5a",
+  "matplotlib_version": "3.10.8"
+}

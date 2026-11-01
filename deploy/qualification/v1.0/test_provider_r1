@@ -41,6 +41,7 @@ class R1ProviderTests(unittest.TestCase):
         self.source = self.ctx.source_sha
         self.dirty = ""
         self.output = self.successful_output()
+        self.errors = ""
         self.returncode = 0
         self.after_test = lambda: None
         self.addCleanup(mock.patch.stopall)
@@ -75,13 +76,13 @@ class R1ProviderTests(unittest.TestCase):
                     }
                 )
             else:
-                output = json.dumps(
-                    {"schema": "jope.appliance-verify/v1", "ok": True}
-                )
+                output = json.dumps({"schema": "jope.appliance-verify/v1", "ok": True})
             return subprocess.CompletedProcess(args, 0, output, "")
         else:
             self.after_test()
-            return subprocess.CompletedProcess(args, self.returncode, self.output, "")
+            return subprocess.CompletedProcess(
+                args, self.returncode, self.output, self.errors
+            )
         return subprocess.CompletedProcess(args, 0, output, "")
 
     def invoke(self):
@@ -98,7 +99,9 @@ class R1ProviderTests(unittest.TestCase):
         self.assertEqual(result["source_sha"], self.ctx.source_sha)
         self.assertEqual(result["counts"], r1.SINGLE_PASS)
         cargo_call = next(
-            args for args, _ in self.calls if args and args[0] == "cargo" and args[1] == "test"
+            args
+            for args, _ in self.calls
+            if args and args[0] == "cargo" and args[1] == "test"
         )
         self.assertEqual(cargo_call, r1.command())
         cargo_env = next(
@@ -129,7 +132,12 @@ class R1ProviderTests(unittest.TestCase):
             with self.subTest(source=source, dirty=dirty, gate=gate):
                 with self.assertRaises(common.ProviderError):
                     r1.qualify(ctx, run=self.run_child)
-        self.assertFalse(any(args and args[0] == "cargo" and args[1] == "test" for args, _ in self.calls))
+        self.assertFalse(
+            any(
+                args and args[0] == "cargo" and args[1] == "test"
+                for args, _ in self.calls
+            )
+        )
 
     def test_candidate_symlink_and_result_symlink_are_refused(self):
         link = self.root / "candidate-link"
@@ -148,7 +156,11 @@ class R1ProviderTests(unittest.TestCase):
         result_link = self.root / "result-link"
         result_link.symlink_to(self.root / "missing")
         ctx = common.Context(
-            "R1", self.artifact, self.ctx.artifact_sha256, self.ctx.source_sha, result_link
+            "R1",
+            self.artifact,
+            self.ctx.artifact_sha256,
+            self.ctx.source_sha,
+            result_link,
         )
         with self.assertRaisesRegex(common.ProviderError, "new regular file"):
             r1.check_result_path(ctx)
@@ -159,9 +171,15 @@ class R1ProviderTests(unittest.TestCase):
             r1.check_result_path(self.ctx)
         result_in_checkout = self.repo / "result.json"
         ctx = common.Context(
-            "R1", self.artifact, self.ctx.artifact_sha256, self.ctx.source_sha, result_in_checkout
+            "R1",
+            self.artifact,
+            self.ctx.artifact_sha256,
+            self.ctx.source_sha,
+            result_in_checkout,
         )
-        with self.assertRaisesRegex(common.ProviderError, "outside the source checkout"):
+        with self.assertRaisesRegex(
+            common.ProviderError, "outside the source checkout"
+        ):
             r1.check_result_path(ctx)
         self.assertEqual(self.result.read_text(), "prior receipt")
 
@@ -173,9 +191,43 @@ class R1ProviderTests(unittest.TestCase):
         ):
             self.output = output
             self.returncode = 0
-            with self.subTest(output=output[:80]), self.assertRaises(common.ProviderError):
+            with (
+                self.subTest(output=output[:80]),
+                self.assertRaises(common.ProviderError),
+            ):
                 r1.validate_output(output)
         self.assertFalse(self.result.exists())
+
+    def test_actual_stream_shape_with_cas_cuts_on_stderr_passes(self):
+        # The real system harness writes CAS cuts to stderr; libtest writes its result to stdout.
+        self.output = (
+            "\n".join(
+                [
+                    "running 1 test",
+                    f"test {r1.TEST} ... ok",
+                    "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out",
+                ]
+            )
+            + "\n"
+        )
+        self.errors = "\n".join(sorted(r1.EXPECTED_INTERNAL_CUTS)) + "\n"
+        self.assertEqual(self.invoke(), 0)
+        self.assertEqual(json.loads(self.result.read_text())["status"], "PASS")
+
+    def test_cas_cuts_missing_from_both_streams_or_duplicated_refuse(self):
+        stdout = "\n".join(
+            [
+                f"test {r1.TEST} ... ok",
+                "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out",
+            ]
+        )
+        cuts = sorted(r1.EXPECTED_INTERNAL_CUTS)
+        for errors in ("", "\n".join(cuts[1:]), "\n".join(cuts + cuts[:1])):
+            with (
+                self.subTest(errors=len(errors)),
+                self.assertRaises(common.ProviderError),
+            ):
+                r1.validate_output(stdout, errors)
 
     def test_failed_or_drifted_run_never_writes_a_receipt(self):
         self.returncode = 42
