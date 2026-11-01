@@ -5407,6 +5407,14 @@
     "python:research/h172/test_h172.py": {
       "role": "research",
       "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; data-free inner-CV selector, L-BFGS convergence, None-grad guard, and placebo leak controls. Research only; no product/sealed qualification."
+    },
+    "python:research/flywheel_selfplay/h174_swag/test_h174.py": {
+      "reason": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector, raw B cost/choice/utility lock replay, and fused adapter API keyword contract. Research only; no study data, checkpoint, product, sealed qualification or serving promotion.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h173_hard_context_reweight/test_h173.py": {
+      "role": "research",
+      "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
@@ -5498,5 +5506,9 @@
         "W6"
       ]
     }
+  },
+  "python:research/flywheel_selfplay/h174_swag/test_h174.py": {
+    "reason": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector, raw B cost/choice/utility lock replay, and fused adapter API keyword contract. Research only; no study data, checkpoint, product, sealed qualification or serving promotion.",
+    "role": "research"
   }
 }
