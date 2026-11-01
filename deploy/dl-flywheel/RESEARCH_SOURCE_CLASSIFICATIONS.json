@@ -4679,6 +4679,38 @@
         "role": "research",
         "reason": "H178 empirical calibration of the H177 pooled 205-family cross-fit selector (pooled_b_select imported directly from h177_pooled_selector/analysis.py) on the H175 counterfactual bank; data-free controls for imported H177 rule object identity, 10k-draw step-down Holm counterexample, LocalOnlyPayload role isolation, StageOrderGuard fsync barrier, exact Clopper-Pearson bounds, zero optimizer/backward calls, and resource guards. Research only; no product or sealed qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h182_ensemble_size_dose/analysis.py": {
+      "bytes": 13172,
+      "sha256": "6c6c955f99a347629d2e4660589b3370472b3a8ceb8f186ad48bc3d2c9fa80b7",
+      "classification": {
+        "role": "research",
+        "reason": "H182 ensemble-size bootstrap/Holm/Elo/verdict and strict nested member-seed/fold/timing rules; research only, no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h182_ensemble_size_dose/runner.py": {
+      "bytes": 41760,
+      "sha256": "b837328d6835e12eb0f5514044600e976f774175e062ed110afa7499adcbc471",
+      "classification": {
+        "role": "research",
+        "reason": "H182 pinned CPU-only runner for 20 distinct fresh adapter members, nested 5/10/20 ensembles, FIT-only training, and custody-only member A scores; research only."
+      }
+    },
+    "python:research/flywheel_selfplay/h182_ensemble_size_dose/monitor.py": {
+      "bytes": 5193,
+      "sha256": "0aaf571f391f1be7bed8efec31fb219a5a466faf7fb6bb7f4333c02634feea33",
+      "classification": {
+        "role": "research",
+        "reason": "H182 xbabe2 CPU supervisor with four-hour deadline and process/resource guards; research only, no product or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h182_ensemble_size_dose/treatment.py": {
+      "bytes": 2199,
+      "sha256": "fe0156ad79db3b70849963f86d4d78615000f36ead201e82d95e1c9b61766407",
+      "classification": {
+        "role": "research",
+        "reason": "H182 reuses H179/H176 pinned adapter forward/loss support for fresh adapter-only CPU research; no product qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
