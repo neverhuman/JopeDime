@@ -428,3 +428,47 @@ inventories, ELF sections and the three paired phase artifacts are retained unde
 `build-fixture-ddbc1516a/`, `clean-host-ddbc1516a/`, `ablation-source/`,
 `pair-artifacts/{full,feat-math-off,full-restored}/`, and
 `appliance-size-attribution-ddbc1516a.json`.
+
+
+## A19 — Separate the real R882 fused CPU edition from its development fixture
+
+`fused-cpu` previously selected two synthetic fixture files and development scope.
+It could not produce the release stage required by REL-07 R2. The original profile
+and its 7,856,768 / 7,902,400 B historical size baseline are preserved as
+`fixture-fused-cpu`; their 5% tolerance is unchanged.
+
+The real `fused-cpu` edition has internal scope and the same complete 56-file R882
+runtime closure as `jope_service::proposal::required_assets()`: 10,538,398 raw bytes,
+with every file's existing hash, length and internal redistribution right intact.
+It selects the native methods and `proposal.r882.regression`, compiling
+`embedded,engine,mcp,client` with development-key trust disabled, as the full
+edition does. The full profile and its separate legacy foundation closure remain
+unchanged. This packaging change changes no model weights, training protocol,
+adoption policy or scientific gate threshold.
+
+An xbabe1 paired build at source `5ed99c59599369eba6dfd85ebc993e6ef2fc4b9d`
+uses Rust 1.97.1, Linux x86_64, the same reused lane target, `dist` fat LTO,
+stripping and source stamp, with four build workers and one math thread.
+The preserved `embedded,dev-keys` fixture measures 7,033,456 B of code and an
+expected final length of 7,079,115 B (four asset/notice entries). The real release
+runtime measures 18,871,032 B of code, SHA-256
+`e4a7d559deaef6f152f0a1b67d57cbae3eb7e0361693ae0affcd3d9dc0051fe3`, and an
+expected final length of 25,737,975 B (56 model assets and two notices).
+The code/feature selection accounts for 11,837,576 B of this paired difference;
+the remaining 6,821,284 B is the difference in aligned payload, manifest and
+fixed envelope overhead. This is a comparison of the two intended editions,
+not a per-function attribution or a performance measurement. The `dist` fixture
+comparison is separate from the retained historical `dist-ci` fixture baseline.
+
+The final length is derived from the actual unsigned stage footer: signed-region
+length plus a fixed 64-byte P-256 signature and 128-byte footer. No signature or
+sealed executable was created. The new profile baseline records these measured
+stage sizes; the 5% tolerance remains unchanged. REL-07 D2 separately retains its
+40,000,000-byte hard ceiling and must still run on the future signed RC2 artifact.
+The stage is an implementation diagnostic, not an RC2 cut, signing request,
+cryptographic verification, qualification or serving promotion.
+
+The regenerated model lock, required-asset closure assertion, 36 passing package
+tests, build/features/source receipts, fixture comparison and unsigned stage bytes
+are retained under `/home/ubuntu/jope_plan/evidence/REL-07/res08-t0940/`, with build
+receipts at `xbabe1:/home/ubuntu/remote_tests/evidence/REL-07/res08-t0940/`.

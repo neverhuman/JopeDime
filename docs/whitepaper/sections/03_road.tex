@@ -51,15 +51,15 @@ halicin, an antibiotic that then treated infections in mice
 CLIP put images and captions in one shared space
 \citep{radford2021clip}, an analogy for our problem--program ranking map
 (\cref{sec:method}).
-The reference map ranks scored programs within each problem; it does not
-condition or screen the writer. Its ranks can influence training through
-search-parent selection (\cref{sub:method-map}). Ranking accuracy and
-first-proposal quality therefore need separate tests.
+The reference map learns from programs scored within each problem.
+Its ranks can influence search-parent selection
+(\cref{sub:method-map}); they neither condition nor screen the writer.
+Map-ranking accuracy and first-proposal quality require separate tests.
 
-Representations, code generation and ranking supply a proposer with an
-interface to the problem. Executable tests complete the loop: \EZ{} proposes
-training on verified algorithm quality, then testing whether that experience
-transfers beyond its training tasks.
+Representations describe a problem, code generation supplies candidates
+and a separate map can rank drafts for search. Executable tests make their
+quality observable. \EZ{} proposes training on those outcomes, then
+measuring transfer beyond its training tasks.
 
 % ---------------------------------------------------------------------
 \subsection{Program search built the variation--judgment loop}\label{sub:road-programs}
@@ -128,8 +128,8 @@ families.
 
 \begin{figure}[tb]% floats so the text above can fill the column
 \begin{explainer}[label=box:selfplay]{Self-play in 90 seconds}
-A player starts with only the rules and plays itself. A short search
-before each move finds better moves than instinct would, and the referee
+In AlphaGo Zero, a player starts with the rules and plays itself. A short
+search before each move finds better moves than instinct would, and the referee
 scores each finished game. The network learns to propose the moves the
 search chose (its policy) and to predict the winner (its value), so the
 next search is stronger. Over millions of games, search is distilled into
@@ -269,21 +269,19 @@ training trajectory alone establishes none of them on an unseen task.
 These systems motivate two reference requirements: verify an improvement
 before retaining it, and sandbox candidate execution
 (\cref{sub:method-referee}). The proposed learning test compares a trained
-writer with its frozen reference under the same deployment budget.
+writer with its frozen reference under the same deployment budget;
+it is separate from the adapter record in \cref{sec:method-status}.
 
 % ---------------------------------------------------------------------
 \subsection{Where the roads meet}\label{sub:road-meet}
 
-\Cref{tab:roads} distinguishes what a system produces from how it retains
-experience. TabPFN, MotherNet and KumoRFM provide neighboring examples of
-learning across tasks \citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025}.
-Their prediction or network-generation interfaces differ from the proposed
-readable-program output of \EZ{}, but a common candidate budget alone
-would not make their computation or task assumptions equivalent. Absolute Zero and
-STP learn by self-play, with correctness as feedback. Our proposed
-comparison measures improvement against a declared incumbent. That standard
-supplies the opponent; the next section specifies the board, program,
-referee and promotion rules needed to judge a move (\cref{sec:game}).
+\Cref{tab:roads} separates outputs, budgets and retained experience.
+Its cross-task predictors and network generators
+\citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025} differ from
+readable-program output; one candidate does not equalize compute or inputs.
+Absolute Zero and STP use correctness feedback. A declared incumbent sets
+our comparison standard; \cref{sec:game} defines how the referee judges a
+program against it.
 
 \begin{keyidea}
 The test is whether experience on earlier discovery tasks improves the first

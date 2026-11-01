@@ -5125,6 +5125,70 @@
         "role": "research",
         "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h194_invalid_margin/design.py": {
+      "bytes": 6020,
+      "sha256": "84d89963ed96c18495f109a642d19f1fb11a70defce52e84675d17779a604138",
+      "classification": {
+        "role": "research",
+        "reason": "H194 registered CPU invalid-candidate hinge continuation; frozen DOPE, independent TRAIN family folds, B-before-A selection, no live changes"
+      }
+    },
+    "python:research/flywheel_selfplay/h194_invalid_margin/objective.py": {
+      "bytes": 3102,
+      "sha256": "cdae7a81d45c137797b96786ec81e78773c669c2c121cf067197bf4700a24237",
+      "classification": {
+        "role": "research",
+        "reason": "H194 registered CPU invalid-candidate hinge continuation; frozen DOPE, independent TRAIN family folds, B-before-A selection, no live changes"
+      }
+    },
+    "python:research/flywheel_selfplay/h194_invalid_margin/parents.py": {
+      "bytes": 1151,
+      "sha256": "767059a7068e34b412c93259436e10fbcc5e00354c21543bf9d5fe60bafa7226",
+      "classification": {
+        "role": "research",
+        "reason": "H194 registered CPU invalid-candidate hinge continuation; frozen DOPE, independent TRAIN family folds, B-before-A selection, no live changes"
+      }
+    },
+    "python:research/flywheel_selfplay/h194_invalid_margin/monitor.py": {
+      "bytes": 6038,
+      "sha256": "f3560f5b3d8e05ab91ef50b4c3a9572833136ab1f448e3cf1c0277fff9200cf4",
+      "classification": {
+        "role": "research",
+        "reason": "H194 registered CPU invalid-candidate hinge continuation; frozen DOPE, independent TRAIN family folds, B-before-A selection, no live changes"
+      }
+    },
+    "python:research/flywheel_selfplay/h194_invalid_margin/runner.py": {
+      "bytes": 20970,
+      "sha256": "1af8e2b1cb2c375566feca1248a291b2f593ec01191a8f9e276770a0c77d00bd",
+      "classification": {
+        "role": "research",
+        "reason": "H194 registered CPU invalid-candidate hinge continuation; frozen DOPE, independent TRAIN family folds, B-before-A selection, no live changes"
+      }
+    },
+    "python:research/flywheel_selfplay/h195_blend025_kernel_confirm/analysis.py": {
+      "bytes": 8760,
+      "sha256": "4904da8ba7f997ddcf9a2ab8d2dad9801be95f2e82e972f221013b1220fac721",
+      "classification": {
+        "role": "research",
+        "reason": "H195 preregistered CPU-only diagnostic: prospective confirmation of H129 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed) on fresh per-seed family folds; GBM and calibration from FIT folds only, stage-1 lock before pooled-A U4 scoring, m=1 CANDIDATE gate (LCB95>0, p vs +0.001 <0.05, harm<=10%); NOKERNEL/SHUF descriptive; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h195_blend025_kernel_confirm/monitor.py": {
+      "bytes": 7064,
+      "sha256": "808459b28206cb82f705cf66c8aab47263c07cd95c3ad0e78146e4e8fc1dab87",
+      "classification": {
+        "role": "research",
+        "reason": "H195 preregistered CPU-only diagnostic: prospective confirmation of H129 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed) on fresh per-seed family folds; GBM and calibration from FIT folds only, stage-1 lock before pooled-A U4 scoring, m=1 CANDIDATE gate (LCB95>0, p vs +0.001 <0.05, harm<=10%); NOKERNEL/SHUF descriptive; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h195_blend025_kernel_confirm/runner.py": {
+      "bytes": 29433,
+      "sha256": "cd23328e73fef9a343ccd1a46b79d0568692411175f54c4a30fb0086a96491a5",
+      "classification": {
+        "role": "research",
+        "reason": "H195 preregistered CPU-only diagnostic: prospective confirmation of H129 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed) on fresh per-seed family folds; GBM and calibration from FIT folds only, stage-1 lock before pooled-A U4 scoring, m=1 CANDIDATE gate (LCB95>0, p vs +0.001 <0.05, harm<=10%); NOKERNEL/SHUF descriptive; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

@@ -6,29 +6,29 @@
 % Historical source notes are archived outside the paper tree.
 \section{EurekaZero: Learning Taste}\label{sec:method}
 
-The costs in \cref{sec:price} attach to two distinct learning tasks. The
-offline reference trains a neural program writer and a separate ranking
-map on search-scored lists; proposed deployment asks for one new program.
-\Cref{sec:method-status} separately examines an adapter-only loop with
-heuristic, retrieval and grammar proposals; it does not retrain a writer.
-The scope of its recorded observations is stated there.
-We first specify the writer and map, then the admission record.
+The reference design trains a neural program writer and a separate ranking
+map on search-scored lists, then asks the frozen writer for one new program.
+The adapter record in \cref{sec:method-status} instead concerns heuristic,
+retrieval and grammar proposals; only a ranking adapter is updated.
+These require separate cost ledgers (\cref{sec:price}) and evaluation.
+We specify the reference learner first, then bound the adapter observations.
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
 \Cref{fig:network} connects the architecture to the contract in
 \cref{box:searchone}: a frozen encoder reads the board and $\writer$ writes
 a complete program, as AlphaGo's policy proposed a move
-\citep{silver2016mastering}. The problem--program map $\mapv$ supplies the
-seed ranking during training, without conditioning or screening the writer.
+\citep{silver2016mastering}. In one reference search route, the separate
+map $\mapv$ supplies weights for parent selection among ranked survivors
+(\cref{sub:method-map}); it neither conditions nor screens the writer.
 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/fig5_network.pdf}
-  \caption{\textbf{A writer and a separate ranking map learn from scored programs.} Historical reference schematic. Top:
-  game day, the whole of \searchone{}. Dashed box: training only. Search seeded with the writer's
-  drafts proposes more programs, the referee scores them against the incumbent, and the scored
-  lists retrain the writer ($\theta$) and the map ($\psi$). Stillborn programs enter no list.}
+  \caption{\textbf{Reference training design for the writer and separate ranking map.}
+  Top: game day, the whole of \searchone{}. Dashed box: proposed training.
+  Search extends the writer's drafts; referee-scored lists supply objectives
+  for the writer ($\theta$) and map ($\psi$). Stillborn programs enter no list.}
   \label{fig:network}
 \end{figure*}
 
@@ -129,21 +129,22 @@ A Bradley--Terry term adds pairwise comparisons on the same lists
 \citep{bradley1952rank}. Stillborn moves have no score, so this ranking
 objective covers only programs that run.
 
-A program-only head trained beside it provides a control for testing
-whether the map uses problem context (\cref{sec:results}).
+The program-only head controls for ranking without problem context
+(\cref{sub:results-ablation}). Ranking valid scored programs alone does not
+test the validity rate $q_{\text{run}}$ in \cref{sec:price}.
 
 \begin{keyidea}
-The reference game-day protocol omits the ranking map. Its single proposal
-tests what the writer has learned.
+The reference game-day protocol omits the ranking map. Matched first
+proposals test whether training improved the writer.
 \end{keyidea}
 
 In the native implementation, the writer and map use separate context
-networks and token embeddings. The map ranks the draft pool without
-dropping drafts or screening the writer.
-The map can influence search through parent selection. One native GP route
-weights seeded-survivor parents by map rank; the bounded search driver
-instead cycles among up to four parents chosen by measured loss. Any
-claimed effect on training must identify which route was used.
+networks and token embeddings. The map ranks drafts without dropping them
+or screening the writer. One native GP route matches map-derived weights
+by program identity to ranked survivors for parent selection. The bounded
+search driver instead cycles among up to four parents chosen by measured
+loss. These are different influence paths, not evidence of trained-map lift;
+an evaluation must bind the route it used.
 
 Only the 64 neural or fallback seeds receive normalized rank weights;
 the 16 tail seeds enter unscored. Unscored survivors share the lowest
@@ -153,10 +154,10 @@ up to a 16-seed tail. Random fallbacks fill to ten slots if needed; random
 exploration fills the remaining slots. The standalone seed writer instead
 uses 16 random programs. Teacher-first execution prioritizes retained cut
 teachers; \cref{alg:selfplay} leaves the tail route-dependent.
-This search role is separate from the writer loss, which weights programs
-by referee rank. The program-only control tests context-sensitive ranking;
-a change in proposal quality requires the matched ablation in
-\cref{sub:results-ablation}.
+Parent weighting can change the search targets supplied to training.
+The writer loss separately weights programs by referee rank. Testing whether
+map-guided targets improve later proposals requires the matched ablation
+in \cref{sub:results-ablation}.
 
 \subsection{The self-play loop}\label{sub:method-selfplay}
 % Algorithm 1 is defined at the start of the subsection so that the full-width
@@ -279,14 +280,13 @@ test-scored outcome from a ledger of \num{63108} evaluations; we exclude it as t
 \end{algorithmic}
 \end{algorithm}
 
-\Cref{alg:gameday} instantiates the contract in \cref{box:searchone} for
-regression, with a recorded seed and frozen components. That contract
-fixes the candidate budget, failure handling and full cost boundary.
+\Cref{alg:gameday} applies the contract in \cref{box:searchone} to
+regression: frozen components, a recorded seed and one draw, with failures
+and all incurred costs retained. \Cref{sub:results-learning} compares that
+draw with a frozen reference under matched conditions.
 
-Report later search
-separately, as \citet{silver2017mastering} reported
-AlphaGo Zero's raw network apart from its search (\cref{sec:results}).
-
-That fixed budget defines the first-proposal comparison in
-\cref{sub:results-learning}; the following adapter record has a separate scope.
+Report later search separately, as \citet{silver2017mastering} reported
+AlphaGo Zero's raw network apart from its search (\cref{sec:results}). The
+following adapter record concerns candidate selection and admission, not
+this first-proposal comparison.
 \input{sections/06_method/flywheel_status}

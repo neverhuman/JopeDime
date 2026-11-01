@@ -59,8 +59,7 @@ Automated research systems already couple proposals to tests
 \Cref{sub:anatomy-where,sec:road} compare how they generate, judge and
 retain useful work.
 
-Keeping a winning program preserves a result. Training on its evaluation
-asks whether that result can improve proposals for a new problem.
+The test here concerns what evaluation changes in a proposer across problems.
 
 \begin{figure}[tb]% floats so the text above can fill the column
 \begin{keyidea}
@@ -114,24 +113,21 @@ deployment.
     \node[gloss] at (0,-21mm) {Frozen writer; one candidate committed before its score is known.};
   \end{tikzpicture}
   \caption{\textbf{Training feedback and the single-candidate contract.}
-  Schematic of the reference procedure. The writer updates during training;
-  the emitted estimator fits during deployment. Whether the learned writer
-  improves the first proposal is the empirical question in \cref{sec:results}.}
+  Reference schematic: the proposed procedure updates the writer during
+  training and fits the emitted estimator during deployment. The adapter-only
+  record in \cref{sec:method-status} is a separate loop; first-proposal
+  improvement remains the empirical question in \cref{sec:results}.}
   \label{fig:emptysquare}
 \end{figure}
 
 \paragraph{Engineered intelligence.}
-The reference design makes each of the four pillars in \cref{sec:anatomy}
-an inspectable component of \EZ{}: aim, variation, judgment and retention. The aim is a declared task and metric. Variation comes from a
-grammar-constrained program writer. Judgment is a referee that scores each
-program on folds withheld from its fit. Retention uses two ratchets. A
-board's incumbent changes only on strict improvement. A retrained
-writer replaces the serving one only after a held-out admission test
-(\cref{tab:pillars}). We call this \emph{engineered intelligence}: a
-capability whose aim, judge and memory are designed to be audited,
-rather than left implicit in a pretrained model. Pretrained components still
-supply prior knowledge (\cref{box:searchone}). Engineering fixes what the
-system is rewarded for and how its improvement is checked.
+The reference design assigns each role in \cref{sec:anatomy} an inspectable
+component: a declared task and metric, a grammar-constrained writer, a
+referee and retained state (\cref{tab:pillars}). Program-incumbent
+promotion and proposed writer admission are distinct rules in that design.
+We call the design \emph{engineered intelligence}: its aim, judge and memory
+are specified for audit. Pretrained components still supply prior knowledge
+(\cref{box:searchone}); execution feedback supplies the additional teacher.
 
 \begin{explainer}[label=box:searchone]{What ``search = 1'' means}
 \begin{itemize}[leftmargin=*,nosep]
@@ -159,8 +155,8 @@ reference whose moves are typed programs of learning primitives.
     judgment and retention), with an idealized relation between proposal
     quality and the number of attempts (\cref{sec:anatomy}).
   \item \textbf{The innovation game:} a board, move, referee and opponent,
-    with a reward ordering and two ratchets, that make invention playable
-    on many boards (\cref{sec:game}).
+    with a reward ordering and two reference admission rules; each task
+    type needs a qualified encoding and referee (\cref{sec:game}).
   \item \textbf{The economics of algorithmic self-play:} a cost model for
     training and for the cost per verified improvement (\cref{sec:price}).
   \item \textbf{\EZ{}:} a reference learner with a frozen problem encoder,
@@ -175,9 +171,10 @@ reference whose moves are typed programs of learning primitives.
 \end{enumerate}
 
 \paragraph{Evidence scope.}
-The learning tasks and their separate evidence are defined in
-\cref{sec:method}. First-proposal comparisons remain the evaluation
-contract in \cref{sec:results}.
+The adapter records in \cref{sec:method-status} establish neither neural
+writer updates nor a training gain in the separate ranking map. Independent
+first-proposal comparisons remain pending; \cref{sec:method,sec:results}
+specify the reference design and its tests.
 
 We first separate innovation's roles (\cref{sec:anatomy}), then trace the
 AI methods that connect them (\cref{sec:road}). The game and learner make

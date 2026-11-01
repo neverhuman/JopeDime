@@ -159,9 +159,10 @@ fn run_language_filter(
         requested.push(match language {
             Language::Rust => ExportLanguage::Rust,
             Language::Python => ExportLanguage::Python,
+            Language::Javascript => ExportLanguage::Javascript,
             _ => {
                 return Err(unavailable(
-                    "This run backend supports Rust and Python export languages.",
+                    "This run backend supports Rust, Python, and JavaScript export languages.",
                 ))
             }
         });
@@ -3336,7 +3337,8 @@ mod tests {
     }
     #[test]
     fn requested_export_languages_filter_the_actual_native_seed_and_mutations() {
-        let allowed = run_language_filter(&[Language::Rust, Language::Python]).unwrap();
+        let allowed =
+            run_language_filter(&[Language::Rust, Language::Python, Language::Javascript]).unwrap();
         let space = CpuRunSpace {
             allowed: allowed.clone(),
             #[cfg(all(feature = "failpoints", debug_assertions))]
@@ -3348,22 +3350,24 @@ mod tests {
         let proposals = space.propose(&seeds, 16, &mut rng).unwrap();
         assert!(!proposals.is_empty());
         for dsl in seeds.iter().chain(&proposals) {
-            assert!(allowed.accepts_seed(&feat_math::GenomeIr::parse(dsl).unwrap()));
+            let genome = feat_math::GenomeIr::parse(dsl).unwrap();
+            assert!(allowed.accepts_seed(&genome));
+            assert!(feat_math::transpile::emit_javascript(
+                &genome,
+                &feat_math::transpile::EmitOptions::default()
+            )
+            .is_ok());
         }
         assert!(space.canonical("(sym affine \"c0\")").is_err());
-        for languages in [
-            vec![],
-            vec![Language::Javascript],
-            vec![Language::Typescript],
-        ] {
+        for languages in [vec![], vec![Language::Typescript]] {
             assert!(run_language_filter(&languages).is_err());
         }
     }
 
     #[tokio::test]
-    async fn python_and_rust_plan_uses_the_declared_capability_intersection() {
+    async fn javascript_python_and_rust_plan_uses_the_declared_capability_intersection() {
         let (directory, engine, mut spec) = fixture();
-        spec.languages = vec![Language::Rust, Language::Python];
+        spec.languages = vec![Language::Rust, Language::Python, Language::Javascript];
         let reply = app(&engine)
             .oneshot(request(&spec, "portable-plan"))
             .await
