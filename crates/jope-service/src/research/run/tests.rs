@@ -249,7 +249,7 @@ fn committed_controls_match_python_bytes_identity_mode_and_every_count() {
                     "a refused inventory emitted a success summary"
                 );
             }
-            let mut oversized = vec![b; MAX_LINE_BYTES + 1];
+            let mut oversized = vec![b' '; MAX_LINE_BYTES + 1];
             oversized.extend(serde_json::to_vec(&original).unwrap());
             fs::write(&inventory_path, oversized).unwrap();
             let refusal = reader(&output, &inventory_path, all);
