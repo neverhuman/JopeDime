@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""REL-07 M3 source checks; refuses PASS while full parity evidence is incomplete."""
+"""REL-07 M3 complete CPU parity, bounded source controls and custody preflight."""
 
 from __future__ import annotations
 
@@ -112,7 +112,7 @@ def _frequency_report(output: str) -> dict:
     return report
 
 
-def qualify(ctx: Context, run=None) -> int:
+def qualify(ctx: Context, run=None, full_inputs=None, full_inputs_sha256=None) -> int:
     run = subprocess.run if run is None else run
     if ctx.result.exists() or ctx.result.is_symlink():
         raise ProviderError("M3 result must be a new regular file")
@@ -120,6 +120,27 @@ def qualify(ctx: Context, run=None) -> int:
         raise ProviderError("M3 evidence must be outside the source checkout")
     check_binding(ctx, run)
     verify_candidate(ctx, run=run)
+    if full_inputs is not None:
+        from m3_full import gate_payload, measure_full, regular
+
+        if ctx.gate_id != "M3" or full_inputs_sha256 is None:
+            raise ProviderError(
+                "M3 full path requires gate M3 and explicit input manifest SHA"
+            )
+        regular(ctx.artifact, 2**40)
+        evidence = ctx.result.with_name(ctx.result.name + ".m3-full")
+        report = measure_full(
+            ctx.source_sha, full_inputs, full_inputs_sha256, evidence, input_preflight
+        )
+        check_binding(ctx, run)
+        regular(ctx.artifact, 2**40)
+        if any(parent.is_symlink() for parent in ctx.result.parents):
+            raise ProviderError("M3 result parents must not be symlinks")
+        payload = gate_payload(ctx, report, full_inputs_sha256)
+        ctx.result.parent.mkdir(parents=True, exist_ok=True)
+        with ctx.result.open("x", encoding="utf-8") as output:
+            output.write(json.dumps(payload, sort_keys=True, allow_nan=False) + "\n")
+        return 0 if payload["status"] == "PASS" else 1
     diagnostic = None
     for test in TESTS:
         check_binding(ctx, run)
@@ -304,9 +325,15 @@ def main(argv=None) -> int:
     parser.add_argument("--preflight-inputs", action="store_true")
     parser.add_argument("--store", type=Path)
     parser.add_argument("--catalog-sha256")
+    parser.add_argument("--full-inputs", type=Path)
+    parser.add_argument("--full-inputs-sha256")
     args = parser.parse_args(argv)
     try:
         if args.preflight_inputs:
+            if args.full_inputs is not None or args.full_inputs_sha256 is not None:
+                raise ProviderError(
+                    "M3 preflight and full qualification are separate modes"
+                )
             if args.store is None or args.catalog_sha256 is None:
                 raise ProviderError(
                     "M3 input preflight requires --store and --catalog-sha256"
@@ -319,7 +346,15 @@ def main(argv=None) -> int:
             return 0
         if args.store is not None or args.catalog_sha256 is not None:
             raise ProviderError("M3 custody arguments require --preflight-inputs")
-        return qualify(context("M3"))
+        if args.full_inputs is None and args.full_inputs_sha256 is None:
+            return qualify(context("M3"))
+        if args.full_inputs is None or args.full_inputs_sha256 is None:
+            raise ProviderError("M3 full path requires both input manifest and SHA")
+        return qualify(
+            context("M3"),
+            full_inputs=args.full_inputs,
+            full_inputs_sha256=args.full_inputs_sha256,
+        )
     except (OSError, subprocess.TimeoutExpired, ProviderError) as error:
         print(f"M3 provider refused: {error}", file=sys.stderr)
         return 2
