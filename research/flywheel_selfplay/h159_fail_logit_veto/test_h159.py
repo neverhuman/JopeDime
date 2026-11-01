@@ -9,11 +9,25 @@ from unittest.mock import patch
 import numpy as np
 
 import monitor
+import runner
 import runtime as rt
 import science as stat
 
 
 class H159Tests(unittest.TestCase):
+    def test_baseline_gate_exact_parity(self):
+        vals = [1.0 + 0.01 * i for i in range(91)]
+        ref = {
+            "utility": {"per_context": vals},
+            "best_utility": float(np.mean(vals)),
+        }
+        gate = runner.baseline_gate(vals, 1.15, 0, ref)
+        self.assertEqual(gate["status"], "PASS")
+        self.assertEqual(gate["matches"], 91)
+        self.assertEqual(gate["max_context_error"], 0.0)
+        with self.assertRaises(RuntimeError):
+            runner.baseline_gate([v + 1e-6 for v in vals], 1.15, 0, ref)
+
     def test_registered_constants(self):
         self.assertEqual(stat.SEEDS, (159101, 159102, 159103))
         self.assertEqual(stat.FOLD_SEED, 159140)
