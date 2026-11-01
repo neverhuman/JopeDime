@@ -151,17 +151,30 @@ fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io
         .as_str()
         .expect("dataset id in response");
 
-    for args in [
-        vec!["dataset", "list", "--json"],
-        vec!["dataset", "show", id, "--json"],
-    ] {
-        let output = run_jopedime(home_text, &args)?;
-        assert!(
-            !output.status.success(),
-            "unimplemented dataset read unexpectedly succeeded"
-        );
-        assert_output_clean(&output);
-    }
+    let listed = run_jopedime(home_text, &["dataset", "list", "--json"])?;
+    assert!(
+        listed.status.success(),
+        "dataset list failed: {}",
+        String::from_utf8_lossy(&listed.stderr)
+    );
+    assert_output_clean(&listed);
+    let listing: serde_json::Value = serde_json::from_slice(&listed.stdout).unwrap();
+    assert!(
+        listing["datasets"]
+            .as_array()
+            .is_some_and(|datasets| datasets.iter().any(|profile| profile["dataset_id"] == id)),
+        "dataset list omitted the registered profile: {listing}"
+    );
+
+    let shown = run_jopedime(home_text, &["dataset", "show", id, "--json"])?;
+    assert!(
+        shown.status.success(),
+        "dataset show failed: {}",
+        String::from_utf8_lossy(&shown.stderr)
+    );
+    assert_output_clean(&shown);
+    let shown_profile: serde_json::Value = serde_json::from_slice(&shown.stdout).unwrap();
+    assert_eq!(shown_profile["dataset_id"], id);
 
     let mut terminal = pty::PtySession::spawn_jopedime_with_env(
         &[],
@@ -171,6 +184,10 @@ fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io
     assert_no_internal_sentinels(&screen);
     terminal.type_text(&format!("\\open {}", csv.display()))?;
     terminal.press_key(pty::Key::Enter)?;
+    // Wait for this command's unique completion marker before sending the next line. PTY
+    // input and output are asynchronous; back-to-back commands can otherwise race the reader.
+    let screen = terminal.wait_for_text("registered safe-name as", Duration::from_secs(10))?;
+    assert_no_internal_sentinels(&screen);
     terminal.type_text("\\help")?;
     terminal.press_key(pty::Key::Enter)?;
     let screen = terminal.wait_for_text("\\open PATH", Duration::from_secs(10))?;
