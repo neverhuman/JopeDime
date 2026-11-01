@@ -529,13 +529,19 @@ fn plan_sha256(plan: &Plan) -> Result<String> {
 
 fn evaluator_sha256() -> String {
     let mut hash = Sha256::new();
+    hash.update(b"jope.research.r782-v2-evaluator/v1\0");
+    hash.update(include_bytes!("../worker/evaluate.rs"));
     hash.update(include_bytes!("../run/surrogate.rs"));
     hash.update(GATE_RULE.as_bytes());
     format!("{:x}", hash.finalize())
 }
 
 fn seed_protocol_sha256() -> String {
-    digest(SEED_PROTOCOL)
+    let mut hash = Sha256::new();
+    hash.update(b"jope.research.evaluation-seed/v1\0");
+    hash.update(SEED_PROTOCOL);
+    hash.update(include_bytes!("../discover/loop.rs"));
+    format!("{:x}", hash.finalize())
 }
 
 fn conditioning_sha256(plan: &Plan, conditioning: &TokenProjection) -> Result<String> {
