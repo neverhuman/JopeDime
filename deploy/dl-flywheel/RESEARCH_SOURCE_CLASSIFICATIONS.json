@@ -4199,6 +4199,30 @@
         "role": "research",
         "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h163_prediction_ensemble/analysis.py": {
+      "bytes": 7623,
+      "classification": {
+        "reason": "H163 owner-directed prediction-level accepted-adapter ensemble preregistration, inference and bounded CPU attempt controls. Research only; no product runtime, protected-data qualification, or serving promotion.",
+        "role": "research"
+      },
+      "sha256": "7461ef085d22587a48838067c13a09e8691a38e38eacb18d08a028fbec9e1569"
+    },
+    "python:research/flywheel_selfplay/h163_prediction_ensemble/run.py": {
+      "bytes": 20112,
+      "classification": {
+        "reason": "H163 owner-directed prediction-level accepted-adapter ensemble preregistration, inference and bounded CPU attempt controls. Research only; no product runtime, protected-data qualification, or serving promotion.",
+        "role": "research"
+      },
+      "sha256": "a344a7aff13401a46e7be1851a14ce3dff984fe5296b9dd4cdd90a70839cf584"
+    },
+    "python:research/flywheel_selfplay/h163_prediction_ensemble/monitor.py": {
+      "bytes": 4521,
+      "classification": {
+        "reason": "H163 owner-directed prediction-level accepted-adapter ensemble preregistration, inference and bounded CPU attempt controls. Research only; no product runtime, protected-data qualification, or serving promotion.",
+        "role": "research"
+      },
+      "sha256": "5ef2442c1f56996464488651e0b9674efa9447c0c93c1e32583732c31c7857b7"
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

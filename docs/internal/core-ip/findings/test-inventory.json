@@ -5339,6 +5339,10 @@
     "python:research/flywheel_selfplay/h165_gradient_noise_dropout/test_h165.py": {
       "role": "research",
       "reason": "H165 owner-directed gradient-noise/dropout continuation study; data-free selector, bootstrap and frozen-state controls. Research only; no product or sealed qualification. Restores classification omitted by prereg PR #1410."
+    },
+    "python:research/flywheel_selfplay/h163_prediction_ensemble/test_h163.py": {
+      "reason": "H163 data-free controls for cost-vs-utility direction, candidate ordering and stable argmin ties, fixed family folds, shared-family median-seed bootstrap, strict selector admission, and canonical H145 Elo dominance; offline research only.",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
