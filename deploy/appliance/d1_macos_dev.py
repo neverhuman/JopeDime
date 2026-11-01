@@ -300,9 +300,8 @@ def run_candidate(candidate_value: str, output: str) -> dict:
             check=False,
         )
         if result.returncode:
-            raise D1DevError(
-                f"native D1 command failed ({args[0]}): {result.stderr[-1500:]}"
-            )
+            detail = (result.stdout + result.stderr)[-3000:]
+            raise D1DevError(f"native D1 command failed ({args[0]}): {detail}")
         return result
 
     version = app("--version", "--json")
