@@ -89,6 +89,96 @@ struct Prepared {
     backend: BackendPlan,
 }
 
+// Both Q1 arms use the same pinned folds and bounded numerical workers. Only
+// admitted rung-0 attempts consume the policy budget; promotion/refit results
+// remain in Discovery's own journal and are not invented as extra admissions.
+struct Q1PinnedExecutor<E> {
+    inner: E,
+    folds: Value,
+    started_at: std::time::Instant,
+    attempts: Mutex<Vec<(crate::worker::Attempt, EvaluationAttempt)>>,
+}
+impl<E: crate::discover::r#loop::Executor> crate::discover::r#loop::Executor
+    for Q1PinnedExecutor<E>
+{
+    fn evaluate(&self, request: &crate::worker::Request) -> crate::worker::Response {
+        use crate::worker::{Response, WorkerFailure};
+        let charged = request.attempt.slot < 65_536;
+        let mut pinned = request.clone();
+        pinned.fold_spec = self.folds.clone();
+        pinned.fold_spec["version"] = json!(if charged { 2 } else { 1 });
+        pinned.limits.wall_ms = pinned
+            .limits
+            .wall_ms
+            .min(q1_remaining_wall_ms(self.started_at.elapsed()).unwrap_or(0));
+        let mut result = if pinned.limits.wall_ms == 0 {
+            Response::failed(pinned.attempt.clone(), WorkerFailure::Timeout, 0)
+        } else {
+            self.inner.evaluate(&pinned)
+        };
+        if result.attempt != pinned.attempt
+            || !result.valid()
+            || (result.failure.is_none()
+                && (result.scores.len() != 3 || result.fold_scores.len() < 2))
+        {
+            result = Response::failed(pinned.attempt.clone(), WorkerFailure::Protocol, 0);
+        }
+        if charged {
+            let failure = result.failure.map(q1_failure);
+            let completed = failure.is_none();
+            let mut attempts = self.attempts.lock().expect("Q1 attempt inventory poisoned");
+            assert!(
+                !attempts.iter().any(|(key, _)| key == &request.attempt),
+                "Q1 cannot charge the same attempt twice"
+            );
+            let number = attempts.len() as u64;
+            attempts.push((
+                request.attempt.clone(),
+                EvaluationAttempt {
+                    attempt: number,
+                    outcome: if completed {
+                        EvaluationAttemptOutcome::Completed
+                    } else {
+                        EvaluationAttemptOutcome::Failed
+                    },
+                    fold_scores: if completed {
+                        result.fold_scores.clone()
+                    } else {
+                        vec![]
+                    },
+                    loss: completed.then(|| {
+                        result
+                            .fold_scores
+                            .iter()
+                            .map(|score| score / result.fold_scores.len() as f64)
+                            .sum::<f64>()
+                    }),
+                    program_sha256: completed.then(|| hash(request.dsl.as_bytes())),
+                    failure,
+                },
+            ));
+        }
+        result
+    }
+    fn fitted_model(&self, request: &crate::worker::Request) -> anyhow::Result<Vec<u8>> {
+        let mut pinned = request.clone();
+        pinned.fold_spec = self.folds.clone();
+        pinned.fold_spec["version"] = json!(1);
+        pinned.limits.wall_ms = pinned
+            .limits
+            .wall_ms
+            .min(q1_remaining_wall_ms(self.started_at.elapsed()).unwrap_or(0));
+        anyhow::ensure!(
+            pinned.limits.wall_ms > 0,
+            "Q1 refit reached the policy deadline"
+        );
+        self.inner.fitted_model(&pinned)
+    }
+    fn revoke(&self, attempt: &crate::worker::Attempt) {
+        self.inner.revoke(attempt);
+    }
+}
+
 #[derive(Clone, Debug, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Q1Request {
@@ -272,7 +362,10 @@ fn validate_q1_request(request: &Q1Request, raw: &Value) -> Result<()> {
         || ![40, 64].contains(&request.dataset.family.len())
         || !request.dataset.family_authoritative
         || request.dataset.task != "regression"
-        || request.dataset.holdout_group != "sealed_meta_test"
+        || !matches!(
+            request.dataset.holdout_group.as_str(),
+            "sealed_meta_test" | "development_fit"
+        )
         || request.dataset.rows == 0
         || request.dataset.features == 0
     {
@@ -418,7 +511,7 @@ fn q1_running_snapshot(run_id: jope_api::ids::RunId, budget: u64) -> RunSnapshot
         state: RunState::Running,
         phase: RunPhase::Encoding,
         pending: Some("pinned_training_evaluation".into()),
-        effort: Effort::Fast,
+        effort: Effort::High,
         budget_used: BudgetUsed {
             evaluations: DecimalU64(0),
             wall_seconds: "0".into(),
@@ -520,12 +613,85 @@ impl RunService {
     }
 
     fn q1_evaluate(&self, raw: Value) -> Result<Vec<u8>> {
+        self.q1_evaluate_using(raw, || {
+            ProcessExecutor::new(&self.executable, 1, &self.home.join("worker-scratch"))
+        })
+    }
+
+    fn q1_evaluate_using<E: crate::discover::r#loop::Executor>(
+        &self,
+        raw: Value,
+        make_executor: impl FnOnce() -> anyhow::Result<E>,
+    ) -> Result<Vec<u8>> {
+        let started_at = std::time::Instant::now();
         let request: Q1Request = serde_json::from_value(raw.clone())
             .map_err(|_| invalid("Expected a closed jope.q1-request/v1 object."))?;
         validate_q1_request(&request, &raw)?;
-        if request.guidance != "heuristic" {
-            return Err(unavailable(
-                "This engine build has no verified learned Q1 evaluator binding.",
+        let admission = self
+            .admission
+            .lock()
+            .map_err(|_| io("Run admission lock is poisoned."))?;
+        if let Some(record) = self
+            .store
+            .get(&q1_command_key(&request.request_sha256))
+            .map_err(io)?
+        {
+            return q1_replay_or_unknown(record.data)?
+                .ok_or_else(|| io("Q1 replay bytes missing."));
+        }
+        if self.activity.active_runs() != 0 {
+            return Err(unavailable("The bounded evaluation backend is busy."));
+        }
+        // This spec only selects the trusted backend. No public-run split is
+        // performed: the Q1 matrix and every evaluation fold come from the
+        // independently pinned protocol manifest below.
+        let backend_spec = RunSpec {
+            dataset: format!("ds_{}", &request.dataset.dataset_sha256[..24])
+                .parse()
+                .map_err(io)?,
+            target: String::new(),
+            task: Task::Regression,
+            ignore_columns: vec![],
+            test_dataset: None,
+            split: SplitSpec {
+                kind: SplitKind::Random,
+                holdout_fraction: 0.5,
+                group_column: None,
+                time_column: None,
+            },
+            objective: ObjectiveSpec::Name("rmse".into()),
+            effort: Effort::High,
+            budget: Budget {
+                evaluations: Some(DecimalU64(request.budget)),
+                wall_seconds: Some(DecimalU64(600)),
+            },
+            landmarks: LandmarkMode::Full,
+            guidance: if request.guidance == "learned" {
+                Guidance::Learned
+            } else {
+                Guidance::Heuristic
+            },
+            languages: vec![Language::Rust],
+            require_all_languages: true,
+            device: "cpu".into(),
+            seed: DecimalU64(request.seed),
+            dry_run: false,
+            plan_digest: None,
+        };
+        let mut backend = BackendPlan::resolve(&backend_spec, self.activity.admitted_ranker(), 1)
+            .map_err(|error| {
+            issue(
+                crate::run::service::error_code(&error),
+                "The requested Q1 backend could not be prepared.",
+            )
+        })?;
+        if backend.learned()
+            && (backend.bundle_digest != request.pins["bundle_sha256"]
+                || request.pins["dope_sha256"]
+                    != "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814")
+        {
+            return Err(invalid(
+                "Q1 bundle/DOPE pins differ from the admitted evaluator.",
             ));
         }
 
@@ -596,118 +762,106 @@ impl RunService {
         let matrix_bytes = jmat::encode(&table)
             .map_err(|_| invalid("Pinned training partition cannot be encoded."))?;
         let matrix_sha = hash(&matrix_bytes);
-        jmat::Matrix::open(matrix_bytes.clone())
+        let matrix = jmat::Matrix::open(matrix_bytes)
             .map_err(|_| invalid("Pinned training matrix is invalid."))?;
-        let matrix_dir = tempfile::Builder::new()
-            .prefix("q1-")
-            .tempdir_in(&self.home)
-            .map_err(io)?;
-        let matrix_path = matrix_dir.path().join("train.jmat");
-        std::fs::write(&matrix_path, &matrix_bytes).map_err(io)?;
-        #[allow(unused_mut)]
-        let mut worker_config = crate::worker::PoolConfig::new(self.executable.clone(), 1);
-        #[cfg(test)]
-        {
-            worker_config.fixture = true;
-            worker_config.fixture_test = Some("http::runs::tests::q1_worker_helper");
-        }
-        let worker_pool = crate::worker::WorkerPool::new(worker_config).map_err(io)?;
-        let fold_spec = json!({
-            "version": 1,
-            "matrix_sha256": matrix_sha,
-            "target": binding.target.clone(),
-            "features": binding.feature_columns.clone(),
-            "folds": binding.folds.clone(),
-            "refit_output": null,
-            "refit_max_bytes": null
-        });
         let run_id = jope_api::ids::RunId::new();
-        let started_at = std::time::Instant::now();
+        let matrix_blob = self.store.publish_blob(matrix.bytes()).map_err(io)?;
+        // High patience cannot stop a 24-admission policy early; evaluations
+        // and wall time remain explicitly capped, and every worker uses the pinned folds.
+        let search_plan = SearchPlan {
+            run_id: jope_api::ids::RunId::new(),
+            dataset_id: backend_spec.dataset,
+            problem_digest: request.dataset.dataset_sha256.clone(),
+            bundle_digest: request.pins["bundle_sha256"].clone(),
+            binary_version: self.binary.clone(),
+            matrix_path: self.store.verified_blob_path(&matrix_blob).map_err(io)?,
+            matrix_sha256: matrix_sha.clone(),
+            target: binding.target.clone(),
+            features: binding.feature_columns.clone(),
+            objective: "rmse".into(),
+            seed: request.seed,
+            planned_workers: 1,
+            effort: Effort::High,
+            evaluations: request.budget,
+            wall_seconds: 600,
+            evaluation_wall_ms: 600_000,
+            evaluation_rss_bytes: WORKER_RAM,
+            groups: None,
+            times: None,
+            gap_rows: 0,
+        };
+        backend
+            .bind_fit(matrix.bytes(), &search_plan)
+            .map_err(|error| {
+                issue(
+                    crate::run::service::error_code(&error),
+                    "Pinned Q1 FIT binding failed.",
+                )
+            })?;
+        let inner = make_executor().map_err(io)?;
+        let search_root = self.home.join("q1/search");
+        match std::fs::create_dir(&search_root) {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
+                if !std::fs::symlink_metadata(&search_root)
+                    .map_err(io)?
+                    .file_type()
+                    .is_dir()
+                {
+                    return Err(invalid("Q1 search root is not a real directory."));
+                }
+            }
+            Err(error) => return Err(io(error)),
+        }
+        let search_home = search_root.join(&request.request_sha256);
+        std::fs::create_dir(&search_home).map_err(io)?;
+        let search_store = Arc::new(Store::open(search_home.join("store")).map_err(io)?);
         let started = self.reserve_q1_request(&request, &run_id)?;
         if let Some(bytes) = started {
             return Ok(bytes);
         }
 
-        let program = "(pipe X (standardize) (ridge))";
-        let program_sha = hash(program.as_bytes());
-        let mut attempts = Vec::with_capacity(request.budget as usize);
-        let mut attempt_events = Vec::with_capacity(request.budget as usize);
-        for number in 0..request.budget {
-            let evaluated = q1_remaining_wall_ms(started_at.elapsed()).map_or_else(
-                || Err(crate::worker::WorkerFailure::Timeout),
-                |wall_ms| {
-                    let worker_request = crate::worker::Request {
-                        attempt: crate::worker::Attempt {
-                            run: run_id.clone(),
-                            round: 0,
-                            slot: 0,
-                            attempt: number + 1,
-                        },
-                        matrix_path: matrix_path.clone(),
-                        fold_spec: fold_spec.clone(),
-                        dsl: program.to_owned(),
-                        objective: json!("rmse"),
-                        seed: request.seed.wrapping_add(number),
-                        limits: crate::worker::Limits {
-                            wall_ms,
-                            rss_bytes: WORKER_RAM,
-                        },
-                    };
-                    let response = worker_pool.evaluate(&worker_request);
-                    match response.failure {
-                        Some(failure) => Err(failure),
-                        None => Ok(crate::worker::Scores {
-                            values: response.scores,
-                            fold_scores: response.fold_scores,
-                            predictions_digest: response.predictions_digest,
-                        }),
-                    }
-                },
-            );
-            let attempt = match evaluated {
-                Ok(scores)
-                    if scores.fold_scores.len() >= 2
-                        && scores
-                            .fold_scores
-                            .iter()
-                            .all(|score| score.is_finite() && *score >= 0.0) =>
-                {
-                    let loss =
-                        scores.fold_scores.iter().sum::<f64>() / scores.fold_scores.len() as f64;
-                    jope_api::EvaluationAttempt {
-                        attempt: number,
-                        outcome: jope_api::EvaluationAttemptOutcome::Completed,
-                        fold_scores: scores.fold_scores,
-                        loss: Some(loss),
-                        program_sha256: Some(program_sha.clone()),
-                        failure: None,
-                    }
-                }
-                result => {
-                    let failure = match result {
-                        Err(failure) => q1_failure(failure),
-                        Ok(_) => jope_api::EvaluationFailure {
-                            code: "invalid_fold_scores".into(),
-                            reason: "Evaluator returned no finite per-fold RMSE inventory.".into(),
-                        },
-                    };
-                    jope_api::EvaluationAttempt {
-                        attempt: number,
-                        outcome: jope_api::EvaluationAttemptOutcome::Failed,
-                        fold_scores: vec![],
-                        loss: None,
-                        program_sha256: None,
-                        failure: Some(failure),
-                    }
-                }
-            };
+        let _activity = self.activity.begin_run();
+        drop(admission);
+        let executor = Q1PinnedExecutor {
+            inner,
+            folds: json!({"version":1,"matrix_sha256":matrix_sha,"target":binding.target,
+                "features":binding.feature_columns,"folds":binding.folds}),
+            started_at,
+            attempts: Mutex::new(vec![]),
+        };
+        let mut discovery = Discovery::open(search_store, search_plan).map_err(io)?;
+        // Match the proposal construction and numerical recipe across arms.
+        // The verified backend chooses only the admission policy.
+        let space = BackendSpace {
+            native: NativeSpace,
+            learned: true,
+        };
+        while discovery.completed().is_none() {
+            discovery
+                .advance(&space, &backend.admission, &executor, 1, usize::MAX)
+                .map_err(io)?;
+        }
+        let used = discovery.snapshot().budget_used.evaluations.0;
+        let attempts: Vec<_> = executor
+            .attempts
+            .into_inner()
+            .map_err(|_| io("Q1 inventory poisoned."))?
+            .into_iter()
+            .map(|(_, receipt)| receipt)
+            .collect();
+        if attempts.len() as u64 != used || used > request.budget {
+            return Err(io("Committed Q1 admission and worker inventories differ."));
+        }
+        let mut attempt_events = Vec::with_capacity(attempts.len() * 2);
+        for attempt in &attempts {
             attempt_events.push(EventBody::ExperimentStarted(ExperimentStartedBody {
-                experiment_id: format!("q1_{number}"),
+                experiment_id: format!("q1_{}", attempt.attempt),
                 hypothesis: "Pinned Q1 evaluation attempt".into(),
             }));
             attempt_events.push(EventBody::ExperimentFinished(ExperimentFinishedBody {
-                experiment_id: format!("q1_{number}"),
-                outcome: if attempt.outcome == jope_api::EvaluationAttemptOutcome::Completed {
+                experiment_id: format!("q1_{}", attempt.attempt),
+                outcome: if attempt.outcome == EvaluationAttemptOutcome::Completed {
                     ExperimentOutcome::NotImproved
                 } else {
                     ExperimentOutcome::Failed
@@ -720,7 +874,6 @@ impl RunService {
                 }),
                 attempt_receipt: Some(Box::new(attempt.clone())),
             }));
-            attempts.push(attempt);
         }
 
         let charged = attempts.len() as u64;
@@ -1620,9 +1773,117 @@ mod tests {
         serde_json::from_slice(&to_bytes(response.into_body(), 1 << 20).await.unwrap()).unwrap()
     }
 
-    fn q1_request(directory: &std::path::Path, engine: &InProcessEngine) -> Value {
+    struct InlineQ1Native {
+        calls: Arc<std::sync::atomic::AtomicUsize>,
+    }
+    impl crate::discover::r#loop::Executor for InlineQ1Native {
+        fn evaluate(&self, request: &crate::worker::Request) -> crate::worker::Response {
+            use crate::worker::Response;
+            self.calls
+                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            let matrix = jmat::Matrix::open(std::fs::read(&request.matrix_path).unwrap()).unwrap();
+            match crate::worker::evaluate::native(request, &matrix) {
+                Ok(scores) => Response {
+                    attempt: request.attempt.clone(),
+                    scores: scores.values,
+                    fold_scores: scores.fold_scores,
+                    predictions_digest: scores.predictions_digest,
+                    wall_ms: 0,
+                    failure: None,
+                },
+                Err(error) => Response::failed(request.attempt.clone(), error, 0),
+            }
+        }
+        fn fitted_model(&self, request: &crate::worker::Request) -> anyhow::Result<Vec<u8>> {
+            let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/q1-native");
+            std::fs::create_dir_all(&root)?;
+            let directory = tempfile::tempdir_in(root)?;
+            let output = directory.path().join("model.json");
+            let mut request = request.clone();
+            request.fold_spec["refit_output"] = json!(output);
+            request.fold_spec["refit_max_bytes"] = json!(16 * 1024 * 1024);
+            let response = self.evaluate(&request);
+            anyhow::ensure!(response.failure.is_none(), "native fixture refit failed");
+            let value: Value = serde_json::from_slice(&std::fs::read(output)?)?;
+            let model = value["model_json"].as_str().unwrap();
+            anyhow::ensure!(
+                value["attempt"] == serde_json::to_value(&request.attempt)?
+                    && value["model_digest"] == hash(model.as_bytes())
+                    && value["predictions_digest"] == response.predictions_digest,
+                "refit binding differs"
+            );
+            Ok(model.as_bytes().to_vec())
+        }
+    }
+
+    #[test]
+    fn q1_expired_policy_never_invokes_the_evaluator() {
+        use crate::discover::r#loop::Executor;
+        let calls = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let executor = Q1PinnedExecutor {
+            inner: InlineQ1Native {
+                calls: Arc::clone(&calls),
+            },
+            folds: json!({}),
+            started_at: std::time::Instant::now() - Q1_WALL_BUDGET,
+            attempts: Mutex::new(vec![]),
+        };
+        let request = crate::worker::Request {
+            attempt: crate::worker::Attempt {
+                run: jope_api::ids::RunId::new(),
+                round: 0,
+                slot: 0,
+                attempt: 1,
+            },
+            matrix_path: PathBuf::new(),
+            fold_spec: json!({}),
+            dsl: "(pipe X (ridge))".into(),
+            objective: json!("rmse"),
+            seed: 0,
+            limits: crate::worker::Limits {
+                wall_ms: 600_000,
+                rss_bytes: WORKER_RAM,
+            },
+        };
+        let response = executor.evaluate(&request);
+        assert_eq!(
+            response.failure,
+            Some(crate::worker::WorkerFailure::Timeout)
+        );
+        assert_eq!(calls.load(std::sync::atomic::Ordering::Relaxed), 0);
+        let attempts = executor.attempts.into_inner().unwrap();
+        assert_eq!(attempts.len(), 1);
+        assert_eq!(attempts[0].1.outcome, EvaluationAttemptOutcome::Failed);
+        assert!(attempts[0].1.loss.is_none() && attempts[0].1.fold_scores.is_empty());
+    }
+
+    fn q1_service_fixture() -> (tempfile::TempDir, RunService) {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/q1-native");
+        std::fs::create_dir_all(&root).unwrap();
+        let directory = tempfile::tempdir_in(root).unwrap();
+        let lease = Arc::new(EngineLock::acquire(directory.path()).unwrap());
+        let store = Arc::new(Store::open(directory.path().join("store")).unwrap());
+        let config = Config::load(
+            &directory.path().join("config.toml"),
+            &Default::default(),
+            &Default::default(),
+        )
+        .unwrap();
+        let service = RunService::new(
+            store,
+            config,
+            directory.path().to_path_buf(),
+            std::env::current_exe().unwrap(),
+            Arc::new(EngineActivity::default()),
+            lease,
+        )
+        .unwrap();
+        (directory, service)
+    }
+
+    fn q1_request(directory: &std::path::Path, store: &Store) -> Value {
         let train = b"x,target\n0,0\n1,1\n2,2\n3,3\n4,4\n5,5\n";
-        let blob = engine.store().publish_blob(train.as_slice()).unwrap();
+        let blob = store.publish_blob(train.as_slice()).unwrap();
         let protocol_sha = "a".repeat(64);
         let plan_sha = "b".repeat(64);
         let source_commit = "c".repeat(40);
@@ -1667,13 +1928,13 @@ mod tests {
             folds: vec![
                 Q1Fold {
                     repeat: 0,
-                    train: vec![0, 1, 2, 3],
-                    validation: vec![4, 5],
+                    train: vec![0, 1, 2],
+                    validation: vec![3, 4, 5],
                 },
                 Q1Fold {
                     repeat: 0,
-                    train: vec![2, 3, 4, 5],
-                    validation: vec![0, 1],
+                    train: vec![3, 4, 5],
+                    validation: vec![0, 1, 2],
                 },
             ],
         };
@@ -1745,18 +2006,16 @@ mod tests {
         use crate::{ranker::cuda::release::load_r782_release, run::learned::AdmittedRanker};
         use std::sync::atomic::Ordering;
         let assets = PathBuf::from(std::env::var_os("JOPE_AUTHENTICATED_BUNDLE_DIR").unwrap());
+        let worker = PathBuf::from(
+            std::env::var_os("JOPE_Q1_WORKER_BIN").expect("source-bound native worker required"),
+        );
         let ranker = AdmittedRanker::r782(load_r782_release(&assets).unwrap()).unwrap();
         let forwards = ranker.execution_counter();
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/q1-native");
         std::fs::create_dir_all(&root).unwrap();
         let directory = tempfile::tempdir_in(root).unwrap();
-        // The red control stops at the old guard, before any worker invocation.
-        let worker = std::env::var_os("JOPE_Q1_WORKER_BIN")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| std::env::current_exe().unwrap());
         let engine = InProcessEngine::open_with_ranker(directory.path(), &worker, ranker).unwrap();
-        let mut request = q1_request(directory.path(), &engine);
-        request["guidance"] = json!("learned");
+        let mut request = q1_request(directory.path(), engine.store());
         request["pins"]["bundle_sha256"] =
             json!("94fd9587675c7806bd0a0582b6e97540cd2fdc7ebbc51958411b905185cad85c");
         request["pins"]["dope_sha256"] =
@@ -1768,60 +2027,182 @@ mod tests {
         let mut manifest: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
         manifest["pins"] = request["pins"].clone();
         std::fs::write(path, serde_json::to_vec(&manifest).unwrap()).unwrap();
+        for guidance in ["heuristic", "learned"] {
+            request["guidance"] = json!(guidance);
+            request.as_object_mut().unwrap().remove("request_sha256");
+            request["request_sha256"] = json!(canonical_sha256(&request).unwrap());
+            let before = forwards.load(Ordering::Relaxed);
+            let response = app(&engine)
+                .oneshot(q1_http_request(&request))
+                .await
+                .unwrap();
+            let status = response.status();
+            let bytes = to_bytes(response.into_body(), 1 << 20).await.unwrap();
+            assert_eq!(
+                status,
+                StatusCode::OK,
+                "{}",
+                String::from_utf8_lossy(&bytes)
+            );
+            let receipt: EvaluationReceipt = serde_json::from_slice(&bytes).unwrap();
+            if let Some(output) = std::env::var_os("JOPE_Q1_TEST_RECEIPTS") {
+                let output = PathBuf::from(output);
+                std::fs::create_dir_all(&output).unwrap();
+                std::fs::write(
+                    output.join(format!("request-{guidance}.json")),
+                    serde_json::to_vec_pretty(&request).unwrap(),
+                )
+                .unwrap();
+                std::fs::write(output.join(format!("receipt-{guidance}.json")), &bytes).unwrap();
+            }
+            assert_eq!(receipt.identity.guidance, guidance);
+            assert_eq!(receipt.charged, 24);
+            assert_eq!(receipt.attempts.len(), 24);
+            let completed = receipt
+                .attempts
+                .iter()
+                .filter(|a| a.outcome == EvaluationAttemptOutcome::Completed)
+                .count();
+            assert!(completed > 0);
+            let after = forwards.load(Ordering::Relaxed);
+            if guidance == "learned" {
+                assert!(after > before, "no actual neural guidance");
+            } else {
+                assert_eq!(after, before, "heuristic arm invoked neural guidance");
+            }
+            let replay = app(&engine)
+                .oneshot(q1_http_request(&request))
+                .await
+                .unwrap();
+            assert_eq!(replay.status(), StatusCode::OK);
+            assert_eq!(bytes, to_bytes(replay.into_body(), 1 << 20).await.unwrap());
+            assert_eq!(
+                forwards.load(Ordering::Relaxed),
+                after,
+                "replay evaluated again"
+            );
+            println!(
+                "{}",
+                json!({"guidance":guidance,"charged":receipt.charged,
+                "completed":completed,"actual_neural_forwards":after-before,
+                "fixture_only":true,"sealed_payloads_read":0})
+            );
+        }
+        request["pins"]["bundle_sha256"] = json!("e".repeat(64));
         request.as_object_mut().unwrap().remove("request_sha256");
         request["request_sha256"] = json!(canonical_sha256(&request).unwrap());
         let response = app(&engine)
             .oneshot(q1_http_request(&request))
             .await
             .unwrap();
-        let status = response.status();
-        let bytes = to_bytes(response.into_body(), 1 << 20).await.unwrap();
-        assert_eq!(
-            status,
-            StatusCode::OK,
-            "{}",
-            String::from_utf8_lossy(&bytes)
-        );
-        let receipt: EvaluationReceipt = serde_json::from_slice(&bytes).unwrap();
-        assert_eq!(receipt.identity.guidance, "learned");
-        assert_eq!(receipt.charged, 24);
-        assert_eq!(receipt.attempts.len(), 24);
-        assert!(
-            forwards.load(Ordering::Relaxed) > 0,
-            "Q1 never used its admitted neural backend"
-        );
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(body(response).await["code"], "INVALID_INPUT");
+        assert!(engine
+            .store()
+            .get(&q1_command_key(request["request_sha256"].as_str().unwrap()))
+            .unwrap()
+            .is_none());
+    }
+
+    #[tokio::test]
+    async fn q1_learned_without_admitted_model_refuses_before_reservation() {
+        let (directory, engine, _) = fixture();
+        let mut request = q1_request(directory.path(), engine.store());
+        request["guidance"] = json!("learned");
+        request.as_object_mut().unwrap().remove("request_sha256");
+        request["request_sha256"] = json!(canonical_sha256(&request).unwrap());
+        let response = app(&engine)
+            .oneshot(q1_http_request(&request))
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body(response).await["code"], "CAPABILITY_UNAVAILABLE");
+        assert!(engine
+            .store()
+            .get(&q1_command_key(request["request_sha256"].as_str().unwrap()))
+            .unwrap()
+            .is_none());
+        assert!(!directory.path().join("q1/search").exists());
+    }
+
+    #[test]
+    fn q1_development_fit_scope_keeps_request_identity_validation() {
+        let (directory, service) = q1_service_fixture();
+        let mut request = q1_request(directory.path(), &service.store);
+        request["dataset"]["holdout_group"] = json!("development_fit");
+        request.as_object_mut().unwrap().remove("request_sha256");
+        request["request_sha256"] = json!(canonical_sha256(&request).unwrap());
+        let parsed: Q1Request = serde_json::from_value(request.clone()).unwrap();
+        validate_q1_request(&parsed, &request).unwrap();
+        request["dataset"]["holdout_group"] = json!("unapproved_group");
+        request.as_object_mut().unwrap().remove("request_sha256");
+        request["request_sha256"] = json!(canonical_sha256(&request).unwrap());
+        let parsed: Q1Request = serde_json::from_value(request.clone()).unwrap();
+        assert!(validate_q1_request(&parsed, &request).is_err());
     }
 
     #[tokio::test]
     async fn q1_receipt_uses_real_fold_values_and_replays_identical_durable_bytes() {
-        let (directory, engine, _) = fixture();
-        let request_body = q1_request(directory.path(), &engine);
-        let app = app(&engine);
-        let first = app
-            .clone()
-            .oneshot(q1_http_request(&request_body))
-            .await
+        let (directory, service) = q1_service_fixture();
+        let request_body = q1_request(directory.path(), &service.store);
+        let calls = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let first_bytes = service
+            .q1_evaluate_using(request_body.clone(), || {
+                Ok(InlineQ1Native {
+                    calls: Arc::clone(&calls),
+                })
+            })
             .unwrap();
-        assert_eq!(first.status(), StatusCode::OK);
-        let first_bytes = to_bytes(first.into_body(), 1 << 20).await.unwrap();
         let receipt: EvaluationReceipt = serde_json::from_slice(&first_bytes).unwrap();
         assert_eq!(receipt.charged, 24);
         assert_eq!(receipt.attempts.len(), 24);
-        assert!(receipt.attempts.iter().all(|attempt| {
-            attempt.outcome == EvaluationAttemptOutcome::Completed
-                && attempt.fold_scores.len() == 2
+        let completed: Vec<_> = receipt
+            .attempts
+            .iter()
+            .filter(|attempt| attempt.outcome == EvaluationAttemptOutcome::Completed)
+            .collect();
+        assert!(!completed.is_empty());
+        assert!(completed
+            .iter()
+            .all(|attempt| attempt.fold_scores.len() == 2
                 && attempt.loss.is_some()
                 && attempt.program_sha256.is_some()
-                && attempt.failure.is_none()
-        }));
+                && attempt.failure.is_none()));
+        let programs: std::collections::BTreeSet<_> = completed
+            .iter()
+            .map(|attempt| attempt.program_sha256.as_ref().unwrap())
+            .collect();
+        assert!(
+            programs.len() > 1,
+            "Q1 must search rather than repeat one ridge DSL"
+        );
+        assert!(receipt
+            .attempts
+            .iter()
+            .enumerate()
+            .all(|(number, attempt)| attempt.attempt == number as u64
+                && (attempt.outcome == EvaluationAttemptOutcome::Completed
+                    || (attempt.failure.is_some()
+                        && attempt.fold_scores.is_empty()
+                        && attempt.loss.is_none()))));
 
-        let replay = app.oneshot(q1_http_request(&request_body)).await.unwrap();
-        assert_eq!(replay.status(), StatusCode::OK);
-        let replay_bytes = to_bytes(replay.into_body(), 1 << 20).await.unwrap();
+        let before = calls.load(std::sync::atomic::Ordering::Relaxed);
+        let replay_bytes = service
+            .q1_evaluate_using(request_body, || {
+                Ok(InlineQ1Native {
+                    calls: Arc::clone(&calls),
+                })
+            })
+            .unwrap();
+        assert_eq!(
+            calls.load(std::sync::atomic::Ordering::Relaxed),
+            before,
+            "idempotent replay must not evaluate again"
+        );
         assert_eq!(first_bytes, replay_bytes);
 
-        let stored = engine
-            .store()
+        let stored = service
+            .store
             .get(&q1_command_key(&receipt.request_sha256))
             .unwrap()
             .unwrap();
@@ -1830,8 +2211,8 @@ mod tests {
             String::from_utf8(first_bytes.to_vec()).unwrap()
         );
         let run: jope_api::ids::RunId = stored.data["run_id"].as_str().unwrap().parse().unwrap();
-        let receipt_row = engine
-            .store()
+        let receipt_row = service
+            .store
             .get(&RecordKey::Evaluation {
                 run: run.clone(),
                 number: 0,
@@ -1840,8 +2221,8 @@ mod tests {
             .unwrap();
         assert_eq!(receipt_row.data["request_sha256"], receipt.request_sha256);
         for attempt in 0..24 {
-            assert!(engine
-                .store()
+            assert!(service
+                .store
                 .get(&RecordKey::Evaluation {
                     run: run.clone(),
                     number: attempt + 1
