@@ -1,0 +1,119 @@
+{
+ "adapter_tensors": 47,
+ "basis": {
+  "PROJ_K2": {
+   "basis_sha256": "59eafe29868e67efb7a2760363523b2b6e2093fe78d170ff0d191c562c2a4144",
+   "cumulative_energy": [
+    0.7947605433089513,
+    0.926319400219271,
+    0.9703957634132796,
+    0.9852293262320563,
+    0.9999934307202716,
+    0.9999999831293112,
+    1.0
+   ],
+   "delta_l2": [
+    0.00046475983521118377,
+    0.0009221744604861405,
+    0.07731776060434857,
+    0.019040690232197538,
+    0.09671250913806101,
+    0.060697036492477936,
+    0.01924546896173316
+   ],
+   "explained_energy": 0.926319400219271,
+   "k": 2,
+   "rank": 7,
+   "singular_values": [
+    0.12528410103739676,
+    0.05097272572693945,
+    0.029503985682893225,
+    0.01711593189270141,
+    0.017075812097082435,
+    0.0003597313706886915,
+    1.8253418888143955e-05
+   ]
+  },
+  "PROJ_K4": {
+   "basis_sha256": "7733a7332ab76afa359ba0ab37dde1eacb0e5132d6515d1aa327da9c35ffb386",
+   "cumulative_energy": [
+    0.7947605433089513,
+    0.926319400219271,
+    0.9703957634132796,
+    0.9852293262320563,
+    0.9999934307202716,
+    0.9999999831293112,
+    1.0
+   ],
+   "delta_l2": [
+    0.00046475983521118377,
+    0.0009221744604861405,
+    0.07731776060434857,
+    0.019040690232197538,
+    0.09671250913806101,
+    0.060697036492477936,
+    0.01924546896173316
+   ],
+   "explained_energy": 0.9852293262320563,
+   "k": 4,
+   "rank": 7,
+   "singular_values": [
+    0.12528410103739676,
+    0.05097272572693945,
+    0.029503985682893225,
+    0.01711593189270141,
+    0.017075812097082435,
+    0.0003597313706886915,
+    1.8253418888143955e-05
+   ]
+  }
+ },
+ "census": {
+  "adapter_attention_dropout": [
+   {
+    "name": "mm_cross_attn",
+    "p": 0.0
+   },
+   {
+    "name": "traj_cross_attn",
+    "p": 0.0
+   }
+  ],
+  "adapter_dropout_modules": [],
+  "adapter_training": false,
+  "dope_training": false,
+  "effective_encoder": "_sync_free_encode_context_and_candidates",
+  "modality_dropout_attribute": 0.1
+ },
+ "custody": "/home/ubuntu/jope_plan/evidence/H160/smoke3 and /home/ubuntu/jope-data/h160/smoke",
+ "disclosure": "smoke attempt 1 stopped before any model step (set_num_interop_threads after parent import); fixed with a guarded call. Its empty output dir was removed; attempt 2 output kept as ~/jope-data/h160/smoke-attempt2",
+ "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+ "frozen_sha256": "8d1070faf574ee1cd2a4e630887e1662b43189b3f89b04982143ef2704818aae",
+ "host": "xbabe2",
+ "interop_threads": 1,
+ "kind": "supervised constructor + trajectory-basis smoke (0 forwards, 0 updates, 0 scored contexts)",
+ "manifest_sha256": "b74b61616945dec60554bf2ccce0ee8b2b9654bbc7e0ad06d747242f949b6d36",
+ "nice": 19,
+ "optimizer_updates": 0,
+ "projection_idempotence_error": {
+  "PROJ_K2": 6.591949208711867e-17,
+  "PROJ_K4": 1.457167719820518e-16
+ },
+ "scored_contexts": 0,
+ "status": "PASS",
+ "supervisor": {
+  "exit_status": 0,
+  "peak": {
+   "disk_used": 0.9157770701658936,
+   "load": 33.59228515625,
+   "min_available": 86303232000,
+   "rss": 934715392,
+   "samples": 15,
+   "scratch": 77674109,
+   "threads": 2
+  },
+  "wall_seconds": 4.727972311899066
+ },
+ "torch_threads": 1,
+ "trainable_parameters": 29211
+}
