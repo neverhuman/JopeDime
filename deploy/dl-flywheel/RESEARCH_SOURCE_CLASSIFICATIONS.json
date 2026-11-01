@@ -4562,7 +4562,7 @@
     },
     "python:research/flywheel_selfplay/h176_data_scaling/analysis.py": {
       "bytes": 13501,
-      "sha256": "82d8e00737f0376827d9a7249f955157f0fde7a9e04ff80b88b879909b0c0a47",
+      "sha256": "4623f888133d15fc5f6653b61f394260145c98b5bd4b8b19161fac9c946fe67f",
       "classification": {
         "role": "research",
         "reason": "H176 preregistered CPU-only diagnostic of the r882 zero-update generalization gap and nested FIT-family data-scaling curve; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."

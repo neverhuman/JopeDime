@@ -119,3 +119,30 @@ def test_h148_elo_uses_context_pair_outcomes_before_equal_family_weighting():
     assert result["elo_vs_r882"]["FRESH_25"]["median_over_seeds"] != pytest.approx(
         stat.learning_curve_summary(["large", "small"], family_panels)["elo_vs_r882"]["FRESH_25"]["median_over_seeds"]
     )
+
+
+def test_paired_differences_reduce_across_seeds_axis0_not_draws_axis1():
+    families = [f"f{i:03}" for i in range(205)]
+    rng = np.random.default_rng(176999)
+    panel = np.zeros((3, 205, 5), dtype=float)
+    # Non-degenerate per-family and per-seed variance where all 3 per-seed means on 50_to_100
+    # are slightly negative (around -0.0020 to -0.0035), so buggy axis=1 reduction over draws
+    # collapses boot to 3 negative seed medians (CI95 entirely < 0 -> INCONCLUSIVE), whereas
+    # true axis=0 reduction over seeds across 10,000 family resamples preserves family variance
+    # (~0.035 SD / sqrt(205) ~ 0.0024 SE) so CI95 spans 0 -> DATA_SATURATED.
+    fam_noise_25_50 = rng.normal(0.0, 0.035, size=(3, 205))
+    fam_noise_25_50 -= fam_noise_25_50.mean(axis=1, keepdims=True)
+    fam_noise_50_100 = rng.normal(0.0, 0.035, size=(3, 205))
+    fam_noise_50_100 -= fam_noise_50_100.mean(axis=1, keepdims=True)
+    seed_offsets_25_50 = np.array([0.0018, 0.0005, -0.0012])[:, None]
+    seed_offsets_50_100 = np.array([-0.0018, -0.0021, -0.0038])[:, None]
+    panel[:, :, 1] = 0.0
+    panel[:, :, 2] = fam_noise_25_50 + seed_offsets_25_50
+    panel[:, :, 3] = panel[:, :, 2] + fam_noise_50_100 + seed_offsets_50_100
+    panel[:, :, 4] = panel[:, :, 3]
+    result = stat.learning_curve_summary(families, panel)
+    ci_25_50 = result["paired_differences"]["25_to_50"]["family_bootstrap_ci95"]
+    ci_50_100 = result["paired_differences"]["50_to_100"]["family_bootstrap_ci95"]
+    assert ci_25_50[0] < 0.0 < ci_25_50[1]
+    assert ci_50_100[0] < 0.0 < ci_50_100[1]
+    assert result["verdict"] == "DATA_SATURATED"
