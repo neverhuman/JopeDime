@@ -314,7 +314,7 @@ def main():
                 train,
                 np.stack([results[a][si] for a in arm_names], axis=-1),
                 arm_names,
-                pins["canonical_elo"]["source_path"],
+            ROOT / pins["canonical_elo"]["source_path"],
                 pins["canonical_elo"]["source_sha256"],
             )
             for si in range(len(stat.SEEDS))
@@ -347,7 +347,7 @@ def main():
                         val,
                         np.column_stack([baseline, secondary[arm][si].mean(axis=0)]),
                         ["R882", arm],
-                        pins["canonical_elo"]["source_path"],
+                    ROOT / pins["canonical_elo"]["source_path"],
                         pins["canonical_elo"]["source_sha256"],
                     )[arm]
                     for si in range(len(stat.SEEDS))

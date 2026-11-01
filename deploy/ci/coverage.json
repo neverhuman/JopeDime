@@ -14228,6 +14228,16 @@
       ],
       "lanes": [],
       "scope": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
+    },
+    "python:research/flywheel_selfplay/h163_prediction_ensemble/test_h163.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H163 data-free controls for cost/utility direction, candidate ID alignment and native ties, z-normalization/rank ensemble, fixed family folds, shared-family median-seed bootstrap, canonical H145 Elo dominance, and strict selector gates. Offline research only; no checkpoint, corpus, or live promotion in unit tests."
     }
   },
   "lanes": {
