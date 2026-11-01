@@ -1,0 +1,27 @@
+{
+  "manifest": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H191/astra-t0835/manifest.json",
+    "version_id": "QfW6dn8jErBrdyv5soyuCQsydX6rxgWn",
+    "sha256": "5a98bfc75da4520bd8e6628023c0fccc7d4567caf41af62e390a35a4c94bbb87",
+    "bytes": 607844,
+    "verified_utc": "2026-11-01T16:11:02.670419+00:00",
+    "readback": "exact-version full payload SHA256; synchronous client"
+  },
+  "outputs": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H191/astra-t0835/numerical-evidence.zip",
+    "version_id": "oUvaUYbqT0FokLljaUSl3FSbMnh.TIIs",
+    "sha256": "a77eb34451d0f4b987de9e7d82482b8755106e85932af6982fc54a74a178bcee",
+    "bytes": 191071442,
+    "verified_utc": "2026-11-01T16:10:33.857138+00:00",
+    "readback": "exact-version full payload and every member SHA256; memory archive, no duplicate disk output"
+  },
+  "inputs": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H191/astra-t0835/exact-inputs.zip",
+    "version_id": "8oqtT9diPjSQXWiJCw8PoDgfR7BnkWh7",
+    "sha256": "d7e12175f46f8bd5cfbb7e1db7176ee39f51427de1b6101d82b0ea82cf80c92b",
+    "bytes": 243253847,
+    "verified_utc": "2026-11-01T16:11:01.736708+00:00",
+    "readback": "exact-version full payload and every member SHA256; memory archive, no duplicate disk output"
+  },
+  "verified_members": 1521
+}

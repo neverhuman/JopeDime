@@ -1,0 +1,44 @@
+{
+  "schema": "whitepaper.window-operating-source/v1",
+  "csv_sha256": "7d3eaed80874d387c45abbc4b5583e828acbf5bbc06c1769384f97ab80843ba1",
+  "retained_source_commit": "716c26b3bcce02677ea7b837eca49ffdcea6ee70",
+  "retained_input_sha256": {
+    "later_development.csv": "1b4600aaf84769efb6f3b4c24db4a5d68d281480731d2f2a8d37d5459fae909f",
+    "subsequent_window.csv": "a4999500f97cb98c3ef3fd3bab0bb42aa4e91982997923c28d095f08691adabd",
+    "live_development.csv": "a913ea6de13ed5c48b36c5499ecc5a2c72a38652bf4472835ace69ba95f56dfc",
+    "latest_event_rates.csv": "eef4905cb41729766f76d15e75b51a1e76db8d56f763499b215925015ffaad3c"
+  },
+  "capture": {
+    "at": "2026-11-01T15:55:20.700468+00:00",
+    "round_window": [
+      3001,
+      3020
+    ],
+    "rows": 20,
+    "projection_sha256": "56808c22c5571741841da0b1ad674c27abb4d3efcd486dd3ca72b447a0ea3a7e",
+    "stable_prefix_rereads_verified": true,
+    "journal_verification": {
+      "all20_summary_counts_matched": true,
+      "window_program_events": 12,
+      "prefix_sha256": "65e6cded6f883795ccd0d71a4b2377a3151af5124b6d7844fdd03c628e9c7882",
+      "prefix_bytes": 10182973,
+      "source_rows": 2814
+    }
+  },
+  "source_prefixes": {
+    "summary": {
+      "prefix_bytes": 3358355,
+      "prefix_sha256": "cea56130cca6025ad1b1b932981e17473c5a5cf5735ea7e85c89883e413e4bbb",
+      "source_rows": 20,
+      "trailing_incomplete_bytes_omitted": 0
+    },
+    "admission": {
+      "prefix_bytes": 1179590,
+      "prefix_sha256": "07ce4191e6dbfc97c2ea3f9e51fadf0ff040c4a30ffa2a46f40db208443545d6",
+      "source_rows": 2247,
+      "trailing_incomplete_bytes_omitted": 0
+    }
+  },
+  "selection": "All four existing complete20round windows containing both raw event counts and logged wall seconds, plus latest matched20; incomplete-duration or noncontiguous sources excluded, no imputation.",
+  "scope": "Separate adaptive training-search windows; not a learning curve or independent first-proposal/deployment comparison."
+}

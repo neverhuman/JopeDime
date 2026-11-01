@@ -174,7 +174,7 @@ a change in proposal quality requires the matched ablation in
     \State add every scored program to the list $G_p$ \Comment{winners and also-rans}
   \EndFor
   \State train a challenger $(\theta',\psi')$ on the lists
-  \State \textbf{if} it beats $\writer$ on held-out cuts \textbf{then} $(\theta,\psi)\gets(\theta',\psi')$ \Comment{player ratchet}
+  \State \textbf{if} it beats $\writer$ on held-out cuts \textbf{then} $(\theta,\psi)\gets(\theta',\psi')$ \Comment{proposed player ratchet}
 \EndFor
 \end{algorithmic}
 \end{algorithm*}
