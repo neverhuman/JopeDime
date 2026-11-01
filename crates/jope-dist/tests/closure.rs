@@ -74,6 +74,39 @@ fn the_committed_lock_is_current() {
         "ff3f9ea5d76fa6c13cd74d40a9effbf7e9c891d98746dc542d851726b9e3138c"
     );
     assert_eq!(jope.bytes, 7_499_888);
+
+    let fused = &lock.profiles["fused-cpu"];
+    assert_eq!(fused.status, "ready");
+    assert_eq!(fused.scope, "internal");
+    assert_eq!(fused.methods, full.methods);
+    assert_eq!(fused.components.len(), 1);
+    let mut actual = fused
+        .components
+        .iter()
+        .flat_map(|component| {
+            component.files.iter().map(move |file| {
+                (
+                    format!("{}/{}/{}", component.role, component.id, file.path),
+                    file.sha256.clone(),
+                    file.bytes,
+                )
+            })
+        })
+        .collect::<Vec<_>>();
+    let mut required = jope_service::proposal::required_assets().unwrap();
+    actual.sort();
+    required.sort();
+    assert_eq!(
+        actual, required,
+        "fused must carry the exact complete compiled runtime closure"
+    );
+    assert!(fused.total_bytes <= 16 << 20);
+    let fixture_fused = &lock.profiles["fixture-fused-cpu"];
+    assert_eq!(fixture_fused.scope, "development");
+    assert!(!fixture_fused
+        .methods
+        .iter()
+        .any(|id| id == jope_service::proposal::METHOD));
     let r882_manifest: serde_json::Value = serde_json::from_slice(
         &std::fs::read(repo.join("models/bundles/r882-regression.json")).unwrap(),
     )

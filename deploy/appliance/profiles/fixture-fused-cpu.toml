@@ -1,0 +1,21 @@
+# Synthetic fused-ranker packaging fixture only; development trust is never a release candidate.
+schema = "jope.appliance-profile/v1"
+name = "fixture-fused-cpu"
+description = "Synthetic fused-ranker CPU packaging fixture (development only)."
+scope = "development"
+redistribution = ["permitted"]
+methods = ["native"]
+bundles = "deploy/appliance/fixtures/bundles"
+max_payload_mib = 4
+
+[codec]
+name = "shuffle+zstd"
+level = 19
+frame_mib = 1
+
+[[component]]
+id = "fused-ranker"
+bundle = "fixture-fused-ranker"
+files = ["ranker.safetensors", "fused.config.json"]
+role = "model"
+backends = ["cpu"]
