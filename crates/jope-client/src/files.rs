@@ -130,7 +130,8 @@ pub fn download_export_artifact<T: Transport>(
     let digest = format!("sha256:{digest}");
     parse_digest(&digest)?;
     drop(response);
-    if force || !out.exists() {
+    let empty = out.is_dir() && fs::read_dir(out)?.next().is_none();
+    if force || !out.exists() || empty {
         return download_artifact(transport, artifact, &digest, out, force);
     }
     // Verify a retry against a fresh, authenticated archive. Never overwrite the
@@ -645,6 +646,7 @@ mod tests {
     fn export_retry_checks_every_existing_byte_and_refuses_tampering() {
         let temp = temp_dir();
         let out = temp.join("export");
+        fs::create_dir(&out).unwrap(); // Existing empty directories are valid destinations.
         let transport = Fake {
             bytes: zip(&[("model/data", b"frozen"), ("manifest.json", b"manifest")]),
         };
@@ -663,6 +665,20 @@ mod tests {
             Err(FileError::OutputExists)
         ));
         assert_eq!(fs::read(out.join("extra")).unwrap(), b"keep");
+        #[cfg(unix)]
+        {
+            fs::remove_file(out.join("extra")).unwrap();
+            fs::remove_file(out.join("model/data")).unwrap();
+            std::os::unix::fs::symlink("../manifest.json", out.join("model/data")).unwrap();
+            assert!(matches!(
+                download_export_artifact(&transport, &artifact_id(), &out, false),
+                Err(FileError::OutputExists)
+            ));
+            assert!(fs::symlink_metadata(out.join("model/data"))
+                .unwrap()
+                .file_type()
+                .is_symlink());
+        }
     }
 
     #[test]
