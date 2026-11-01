@@ -300,6 +300,54 @@ fn run_spec() -> Value {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn discovery_with_early_roots_change_keeps_modern_bootstrap_open() {
+    let mut wire = Wire::connect("2026-07-28").await;
+    let discovery_id = json!("gemini-discovery");
+    wire.send("server/discover", json!({}), Some(discovery_id.clone()))
+        .await;
+    // Actual agy 1.4.12 sends this legacy hint without per-request metadata
+    // immediately after its modern discovery probe, before requesting tools.
+    wire.writer
+        .write_all(b"{\"jsonrpc\":\"2.0\",\"method\":\"notifications/roots/list_changed\",\"params\":{}}\n")
+        .await
+        .unwrap();
+    wire.writer.flush().await.unwrap();
+    let discovered = wire.read_for(discovery_id).await;
+    assert_eq!(discovered["result"]["resultType"], "complete");
+    assert!(wire.backend.requests.lock().unwrap().is_empty());
+
+    let tools = wire.call("tools/list", json!({})).await;
+    assert!(tools["result"]["tools"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|tool| tool["name"] == "run_start"));
+    assert!(wire.backend.requests.lock().unwrap().is_empty());
+    let info = wire.tool("system_info", json!({})).await;
+    assert_ne!(info["result"]["isError"], true);
+    assert_eq!(info["result"]["structuredContent"]["api_version"], "1.0");
+    assert_eq!(wire.backend.requests.lock().unwrap().len(), 1);
+    wire.finish("early-roots-discovery").await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn roots_change_without_discovery_does_not_open_a_session() {
+    let mut wire = Wire::connect("2026-07-28").await;
+    wire.writer
+        .write_all(b"{\"jsonrpc\":\"2.0\",\"method\":\"notifications/roots/list_changed\",\"params\":{}}\n")
+        .await
+        .unwrap();
+    wire.writer.flush().await.unwrap();
+    wire.writer.shutdown().await.unwrap();
+    let result = tokio::time::timeout(Duration::from_secs(3), wire.server)
+        .await
+        .expect("invalid bootstrap must finish")
+        .unwrap();
+    assert!(result.is_err());
+    assert!(wire.backend.requests.lock().unwrap().is_empty());
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn legacy_aliases_are_listed_and_dispatched_through_existing_handlers() {
     let mut wire = Wire::connect("2025-11-25").await;
     wire.ready().await;
