@@ -19,12 +19,16 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .admission import (
+    DEFAULT_ROLE_CATALOG,
+    make_worker_bound_plan,
+    verify_worker_bound_plan,
+)
 from .protocol import (
     SCHEMA,
     admit_result,
     batches,
     file_sha,
-    make_plan,
     safe_path,
     verify_catalog,
     verify_plan,
@@ -164,8 +168,21 @@ def worker_call(argv, env, lock_fd, log, timeout, output, limit):
         raise RuntimeError("shared campaign output budget exhausted")
 
 
-def preflight(plan, packet, worker, checkpoint):
+def preflight(
+    plan,
+    packet,
+    worker,
+    checkpoint,
+    *,
+    catalog_path=DEFAULT_ROLE_CATALOG,
+):
     """Verify approved input identities without starting or reserving a study."""
+    verify_worker_bound_plan(plan, catalog_path=catalog_path)
+    return _preflight_verified_inputs(plan, packet, worker, checkpoint)
+
+
+def _preflight_verified_inputs(plan, packet, worker, checkpoint):
+    """Check packet and learner bytes after the caller verified plan admission."""
     verify_plan(plan)
     # Resolve every path before opening any input. A later protected target must
     # not be discovered only after an earlier permitted payload was hashed.
@@ -193,7 +210,17 @@ def preflight(plan, packet, worker, checkpoint):
     )
 
 
-def execute(plan, packet, worker, checkpoint, output, store_module, store):
+def execute(
+    plan,
+    packet,
+    worker,
+    checkpoint,
+    output,
+    store_module,
+    store,
+    *,
+    catalog_path=DEFAULT_ROLE_CATALOG,
+):
     os.nice(max(0, 10 - os.getpriority(os.PRIO_PROCESS, 0)))
     verify_plan(plan)
     output = output_location(output)
@@ -201,7 +228,13 @@ def execute(plan, packet, worker, checkpoint, output, store_module, store):
         raise ValueError(
             "new campaign directory required; no implicit restart/budget reset"
         )
-    preflight(plan, packet, worker, checkpoint)
+    preflight(
+        plan,
+        packet,
+        worker,
+        checkpoint,
+        catalog_path=catalog_path,
+    )
     check_headroom()
     with qualification_lock() as lock_fd:
         start = time.monotonic()
@@ -375,7 +408,11 @@ def main():
     if args.command == "plan":
         manifest = json.loads(args.manifest.read_text())
         verify_catalog(manifest, args.catalog)
-        write_new(args.out, make_plan(manifest))
+        try:
+            plan = make_worker_bound_plan(manifest, catalog_path=args.catalog)
+        except ValueError as exc:
+            parser.error(str(exc))
+        write_new(args.out, plan)
     elif args.command == "preflight":
         try:
             plan_path = safe_path(args.plan.parent, args.plan.name)

@@ -4,6 +4,18 @@
 % judgment is the inventor), 3 (search = 1)
 % Exhibits: Table 4 (tab:go-vs-innovation), Figure 3 (fig:game-loop)
 
+% Figure 3 is defined here, ahead of its first reference, so that the
+% full-width float can reach the top of the page where it is cited.
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig3_game_loop.pdf}
+  \caption{\textbf{Training plays the whole game; game day plays one move.}
+  Schematic. Top row (blue): game day. Dashed box: training only. Outcomes
+  are recorded; valid scored programs can enter the learning lists, while
+  failed attempts still count against the budget.}
+  \label{fig:game-loop}
+\end{figure*}
+
 We define one attempt at algorithm invention as a game: the encoded
 problem is the board, a program is the move, the referee checks and
 scores it, and a declared incumbent is the opponent.
@@ -64,17 +76,6 @@ input.
     \bottomrule
   \end{tabular}
 \end{table}
-% Figure 3 is defined here, ahead of its first reference, so that the
-% full-width float can reach the top of the page where it is cited.
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\textwidth]{figures/fig3_game_loop.pdf}
-  \caption{\textbf{Training plays the whole game; game day plays one move.}
-  Schematic. Top row (blue): game day. Dashed box: training only. Outcomes
-  are recorded; valid scored programs can enter the learning lists, while
-  failed attempts still count against the budget.}
-  \label{fig:game-loop}
-\end{figure*}
 
 Formally, the game is a tuple of seven parts,
 \[
