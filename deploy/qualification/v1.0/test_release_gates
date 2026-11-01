@@ -266,7 +266,11 @@ class ReleaseGates(unittest.TestCase):
         commands, missing = runner.provider_commands(self.repo)
         self.assertEqual([row["id"] for row in commands], runner.RELEASE_GATE_IDS)
         self.assertEqual(missing, [])
-        d2_manifest = runner.provider_manifest(self.repo, self.artifact)
+        with self.assertRaisesRegex(ValueError, "input bindings required for: M5, A5"):
+            runner.provider_manifest(self.repo, self.artifact)
+        d2_manifest = runner.provider_manifest(
+            self.repo, self.artifact, self.bindings()
+        )
         d2 = next(row for row in d2_manifest["gates"] if row["id"] == "D2")
         self.assertEqual(
             d2["argv"],
@@ -328,6 +332,206 @@ class ReleaseGates(unittest.TestCase):
         self.assertEqual(report["missing_provider_count"], 26)
         self.assertIn("D2", report["found"])
         self.assertFalse(report["complete"])
+
+    def bindings(self):
+        return {
+            "M5": {
+                "golden_dir": str(self.root / "golden fixture"),
+                "bundle_dir": str(self.root / "bundle"),
+            },
+            "A5": {
+                "manifest": str(self.root / "named client capture.json"),
+                "manifest_sha256": "a" * 64,
+            },
+        }
+
+    def input_file(self, gates=None):
+        path = self.root / "provider-inputs.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "schema": "jope.rel07.provider-inputs/v1",
+                    "gates": self.bindings() if gates is None else gates,
+                }
+            )
+        )
+        return path
+
+    def commit_providers(self, providers):
+        folder = self.repo / "deploy/qualification/v1.0/providers"
+        folder.mkdir(parents=True, exist_ok=True)
+        for gate, content in providers.items():
+            (folder / (gate.lower() + ".py")).write_text(content)
+        subprocess.run(["git", "-C", str(self.repo), "add", "deploy"], check=True)
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(self.repo),
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-qm",
+                "provider input fixture",
+            ],
+            check=True,
+        )
+        source = runner.cpu.git(self.repo, "rev-parse", "HEAD")
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(self.repo),
+                "update-ref",
+                "refs/remotes/origin/main",
+                source,
+            ],
+            check=True,
+        )
+
+    def test_declared_m5_arguments_reach_a_real_required_argument_parser(self):
+        self.commit_providers(
+            {
+                "M5": "import argparse,json\np=argparse.ArgumentParser();p.add_argument('--golden-dir',required=True);p.add_argument('--bundle-dir',required=True);print(json.dumps(vars(p.parse_args())))\n"
+            }
+        )
+        commands, _ = runner.provider_commands(self.repo)
+        before = subprocess.run(
+            commands[0]["argv"], cwd=self.repo, capture_output=True, text=True
+        )
+        self.assertEqual(before.returncode, 2)
+        bindings = runner.provider_inputs(self.input_file())
+        commands, _ = runner.provider_commands(self.repo, bindings)
+        after = subprocess.run(
+            commands[0]["argv"], cwd=self.repo, capture_output=True, text=True
+        )
+        self.assertEqual(after.returncode, 0, after.stderr)
+        self.assertEqual(json.loads(after.stdout), bindings["M5"])
+
+    def test_a5_explicit_bindings_survive_the_restricted_child_environment(self):
+        self.commit_providers(
+            {
+                "A5": "import json,os\nprint(json.dumps({k:os.environ.get(k) for k in ['JOPE_REL07_A5_MANIFEST','JOPE_REL07_A5_MANIFEST_SHA256','JOPE_REL07_SOURCE_SHA','JOPE_REL07_ARTIFACT_SHA256']}))\n"
+            }
+        )
+        folder = self.root / "child"
+        folder.mkdir()
+        with mock.patch.dict(
+            os.environ, {"JOPE_REL07_A5_MANIFEST": "discard this inherited value"}
+        ):
+            env = runner.cpu.child_environment(
+                folder, self.root / "target", 4, self.source
+            )
+        self.assertNotIn("JOPE_REL07_A5_MANIFEST", env)
+        env.update(
+            JOPE_REL07_SOURCE_SHA=self.source, JOPE_REL07_ARTIFACT_SHA256=self.sha
+        )
+        bindings = runner.provider_inputs(self.input_file())
+        commands, _ = runner.provider_commands(self.repo, bindings)
+        child = subprocess.run(
+            commands[0]["argv"], cwd=self.repo, env=env, capture_output=True, text=True
+        )
+        self.assertEqual(child.returncode, 0, child.stderr)
+        self.assertEqual(
+            json.loads(child.stdout),
+            {
+                "JOPE_REL07_A5_MANIFEST": bindings["A5"]["manifest"],
+                "JOPE_REL07_A5_MANIFEST_SHA256": "a" * 64,
+                "JOPE_REL07_SOURCE_SHA": self.source,
+                "JOPE_REL07_ARTIFACT_SHA256": self.sha,
+            },
+        )
+
+    def test_discovery_reports_unbound_existing_providers_and_cli_accepts_inputs(self):
+        self.commit_providers({"A5": "# fixture\n", "M5": "# fixture\n"})
+        report = runner.provider_inventory(self.repo)
+        self.assertEqual(report["found_provider_count"], 2)
+        self.assertEqual(report["unbound_providers"], ["M5", "A5"])
+        self.assertEqual(report["unbound_provider_count"], 2)
+        with (
+            mock.patch(
+                "sys.argv",
+                [
+                    "release-gates",
+                    "--providers",
+                    "--dry-discovery",
+                    "--repo",
+                    str(self.repo),
+                    "--provider-inputs",
+                    str(self.input_file()),
+                ],
+            ),
+            redirect_stdout(StringIO()) as output,
+        ):
+            self.assertEqual(runner.main(), 0)
+        bound = json.loads(output.getvalue())
+        self.assertEqual(bound["unbound_provider_count"], 0)
+        self.assertEqual(bound["missing_provider_count"], 26)
+        self.assertFalse(bound["complete"])
+
+    def test_input_bindings_cannot_override_commands_identities_or_resource_environment(
+        self,
+    ):
+        bad = [
+            {"Q1": {}},
+            {"A5": {"manifest": "/capture.json", "manifest_sha256": "bad"}},
+            {"A5": {"manifest": "relative", "manifest_sha256": "a" * 64}},
+            {
+                "A5": {
+                    "manifest": "/capture.json",
+                    "manifest_sha256": "a" * 64,
+                    "JOPE_REL07_SOURCE_SHA": "b" * 40,
+                }
+            },
+            {"M5": {"golden_dir": "/golden", "bundle_dir": "/bundle", "argv": ["sh"]}},
+            {
+                "M5": {
+                    "golden_dir": "/golden",
+                    "bundle_dir": "/bundle",
+                    "CARGO_BUILD_JOBS": "32",
+                }
+            },
+            {"M5": {"golden_dir": True, "bundle_dir": "/bundle"}},
+            {"M5": {"golden_dir": "/golden\0bad", "bundle_dir": "/bundle"}},
+        ]
+        for gates in bad:
+            with self.subTest(gates=gates), self.assertRaises(ValueError):
+                runner.provider_inputs(self.input_file(gates))
+
+    def test_input_file_must_be_regular_and_non_symlink(self):
+        path = self.input_file()
+        link = self.root / "input-link.json"
+        link.symlink_to(path)
+        for candidate in [link, self.root]:
+            with self.subTest(candidate=candidate), self.assertRaises(ValueError):
+                runner.provider_inputs(candidate)
+        alias = self.root / "alias"
+        alias.symlink_to(self.root, target_is_directory=True)
+        with self.assertRaises(ValueError):
+            runner.provider_inputs(alias / path.name)
+
+    def test_provider_inputs_require_discovery_mode(self):
+        self.manifest()
+        with (
+            mock.patch(
+                "sys.argv",
+                [
+                    "release-gates",
+                    "--manifest",
+                    str(self.commands),
+                    "--provider-inputs",
+                    str(self.input_file()),
+                    "--output",
+                    str(self.root / "unused"),
+                ],
+            ),
+            redirect_stderr(StringIO()),
+            self.assertRaises(SystemExit) as error,
+        ):
+            runner.main()
+        self.assertEqual(error.exception.code, 2)
 
     def test_cli_provider_discovery_refuses_before_creating_partial_evidence(self):
         output = self.root / "provider-discovery-output"
