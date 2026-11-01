@@ -55,8 +55,9 @@ CLIP put images and captions in one shared space
 \citep{radford2021clip}, an analogy for our problem--program ranking map
 (\cref{sec:method}).
 The reference map ranks scored programs within each problem; it does not
-condition or screen the writer. Ranking accuracy and proposal quality
-therefore need separate tests.
+condition or screen the writer. Its ranks can influence training through
+search-parent selection (\cref{sub:method-map}). Ranking accuracy and
+first-proposal quality therefore need separate tests.
 
 \smallskip
 \noindent\textbf{What \EZ{} takes:} representations that read a problem,
