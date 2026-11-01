@@ -319,6 +319,8 @@ struct Q1ProtocolManifest {
     datasets: std::collections::BTreeMap<String, Q1DatasetBinding>,
 }
 
+mod q1_fit;
+
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Q1DatasetBinding {
@@ -956,14 +958,9 @@ impl RunService {
             bytes: binding.train_blob_bytes,
         };
         let train_csv = self.store.read_blob(&train_blob).map_err(io)?;
-        let table = jope_runtime::table::parse_csv(
-            &train_csv,
-            &jope_runtime::limits::Limits {
-                max_input_bytes: binding.train_blob_bytes,
-                ..Default::default()
-            },
-        )
-        .map_err(|_| invalid("Pinned training partition is not a valid CSV."))?;
+        let table = q1_fit::parse(&self.home, binding, &train_csv).map_err(|_| {
+            invalid("Pinned training partition CSV or native import metadata mismatch.")
+        })?;
         if table.rows.len() as u64 != binding.train_rows
             || binding.feature_columns.len() as u64 != request.dataset.features
             || table.headers.len() != binding.feature_columns.len() + 1
