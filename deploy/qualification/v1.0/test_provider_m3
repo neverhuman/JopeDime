@@ -5,11 +5,13 @@ import contextlib
 import hashlib
 import importlib
 import io
+import math
 import json
 import os
 from pathlib import Path
 import subprocess
 import sys
+import struct
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -404,6 +406,407 @@ class M3InputTests(unittest.TestCase):
         with contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(m3.main(["--preflight-inputs"]), 2)
             self.assertEqual(m3.main(["--store", str(self.store)]), 2)
+
+
+full = importlib.import_module("m3_full")
+
+
+def full_report(source="a" * 40, pin="b" * 64):
+    ops = [
+        "champion_retrieval",
+        "edit_parameter",
+        "edit_replace_head",
+        "edit_insert_stage",
+        "edit_delete_stage",
+        "edit_crossover",
+        "landmark_synthesis",
+    ]
+
+    def mode(name, a, b):
+        return dict(
+            mode=name,
+            reference=a,
+            native=b,
+            reference_counts={op: (a if i == 0 else 0) for i, op in enumerate(ops)},
+            native_counts={op: (b if i == 0 else 0) for i, op in enumerate(ops)},
+            passed=True,
+        )
+
+    return dict(
+        schema="jope.rel07.m3-full-measurement/v1",
+        source_sha=source,
+        inputs_sha256=pin,
+        status="NUMERICAL_PASS",
+        scope="data-free control only",
+        counts=dict(collected=4, executed=4, passed=4, failed=0, skipped=0, excluded=0),
+        clauses=dict(
+            feat412_proj16=dict(
+                passed=True,
+                programs=1137,
+                coordinates=1137 * 412,
+                projection_comparisons=1137 * 16,
+                count_flag_comparisons=100,
+                feature_mismatches=0,
+                projection_mismatches=0,
+                max_feature_error=0.0,
+                max_projection_error=0.0,
+            ),
+            training_landmarks=dict(
+                passed=True,
+                contexts=50,
+                comparisons=1000,
+                mismatches=0,
+                max_absolute_error=0.0,
+            ),
+            full_train_cv=dict(
+                passed=True,
+                evaluations=1024,
+                contexts=132,
+                evaluator_sha256=full.R0_EVALUATOR,
+                protocol="full_train_cv/two-fold",
+                mismatches=0,
+                max_relative_error=0.0,
+            ),
+            r0_proposer=dict(
+                passed=True,
+                newly_generated=44544,
+                admitted=10000,
+                strata=[
+                    mode("all", 1024, 10000),
+                    mode(False, 192, 1920),
+                    mode(True, 832, 8080),
+                ],
+            ),
+        ),
+    )
+
+
+def mode_failure(report):
+    proposer = report["clauses"]["r0_proposer"]
+    # Pooled 1.2pp passes, but the false-mode 6.25pp miss must fail the gate.
+    for row in proposer["strata"][:2]:
+        row["native_counts"]["champion_retrieval"] -= 120
+        row["native_counts"]["edit_parameter"] += 120
+    proposer["strata"][1]["passed"] = False
+    proposer["passed"] = False
+    report["status"] = "NUMERICAL_FAIL"
+    report["counts"].update(passed=3, failed=1)
+    return report
+
+
+class M3FullTests(unittest.TestCase):
+    def setUp(self):
+        self.ctx = Context(
+            "M3",
+            Path("/unused-controlled-candidate"),
+            "c" * 64,
+            "a" * 40,
+            Path("/unused-result"),
+        )
+        self.pin = "b" * 64
+
+    def test_all_four_complete_comparisons_allow_bound_pass(self):
+        payload = full.gate_payload(self.ctx, full_report(), self.pin)
+        self.assertEqual(payload["status"], "PASS")
+        self.assertEqual(payload["counts"]["passed"], 4)
+        self.assertEqual(payload["source_sha"], self.ctx.source_sha)
+        self.assertEqual(payload["artifact_sha256"], self.ctx.artifact_sha256)
+
+    def test_pooled_pass_cannot_hide_exploration_mode_failure(self):
+        report = mode_failure(full_report())
+        self.assertTrue(report["clauses"]["r0_proposer"]["strata"][0]["passed"])
+        payload = full.gate_payload(self.ctx, report, self.pin)
+        self.assertEqual(payload["status"], "FAIL")
+        self.assertEqual(
+            payload["counts"],
+            dict(collected=4, executed=4, passed=3, failed=1, skipped=0, excluded=0),
+        )
+
+    def test_forged_proposer_flag_and_inconsistent_accounting_refused(self):
+        for change in [
+            lambda r: r["clauses"]["r0_proposer"].update(passed=True),
+            lambda r: r.update(status="NUMERICAL_PASS"),
+            lambda r: r["counts"].update(passed=4, failed=0),
+        ]:
+            report = mode_failure(full_report())
+            change(report)
+            with self.subTest(change=change), self.assertRaises(ProviderError):
+                full.gate_payload(self.ctx, report, self.pin)
+
+    def test_missing_partial_or_wrong_source_evidence_refused(self):
+        changes = [
+            lambda r: r["clauses"].pop("full_train_cv"),
+            lambda r: r["clauses"]["feat412_proj16"].update(programs=1136),
+            lambda r: r["clauses"]["training_landmarks"].update(contexts=49),
+            lambda r: r["clauses"]["full_train_cv"].update(evaluations=1023),
+            lambda r: r["clauses"]["full_train_cv"].update(evaluator_sha256="0" * 64),
+            lambda r: r.update(source_sha="d" * 40),
+            lambda r: r.update(inputs_sha256="d" * 64),
+        ]
+        for change in changes:
+            report = full_report()
+            change(report)
+            with self.subTest(change=change), self.assertRaises(ProviderError):
+                full.gate_payload(self.ctx, report, self.pin)
+
+    def test_strict_booleans_counts_and_modes_required(self):
+        changes = [
+            lambda r: r["counts"].update(failed=False),
+            lambda r: r["counts"].update(passed=4.0),
+            lambda r: r["clauses"]["feat412_proj16"].update(passed=1),
+            lambda r: r["clauses"]["feat412_proj16"].update(programs=1137.0),
+            lambda r: r["clauses"]["training_landmarks"].update(mismatches=False),
+            lambda r: r["clauses"]["r0_proposer"]["strata"][1].update(mode=0),
+            lambda r: r["clauses"]["r0_proposer"]["strata"][0]["native_counts"].update(
+                edit_parameter=True
+            ),
+        ]
+        for change in changes:
+            report = full_report()
+            change(report)
+            with self.subTest(change=change), self.assertRaises(ProviderError):
+                full.gate_payload(self.ctx, report, self.pin)
+
+    def test_no_tolerance_or_nonfinite_shortcuts(self):
+        for clause, field, value in [
+            ("feat412_proj16", "max_projection_error", 1.01e-12),
+            ("feat412_proj16", "max_feature_error", 1.01e-6),
+            ("full_train_cv", "max_relative_error", 1.01e-9),
+            ("full_train_cv", "max_relative_error", float("nan")),
+        ]:
+            report = full_report()
+            report["clauses"][clause][field] = value
+            with self.subTest(clause=clause), self.assertRaises(ProviderError):
+                full.gate_payload(self.ctx, report, self.pin)
+
+    def test_evaluator_is_relative_without_absolute_floor_and_zero_is_exact(self):
+        expected = [
+            dict(
+                row=dict(context_sha256="x", program_sha256="y"),
+                score=dict(fitness=1e-8, cv_gate_passed=True),
+            )
+        ]
+        actual = [
+            dict(context_sha256="x", program_sha256="y", failure=None, fitness=1e-8)
+        ]
+        self.assertTrue(full.compare_evaluator(actual, expected)["passed"])
+        actual[0]["fitness"] += 1e-16
+        self.assertFalse(full.compare_evaluator(actual, expected)["passed"])
+        expected[0]["score"]["fitness"] = 0.0
+        actual[0]["fitness"] = 0.0
+        self.assertTrue(full.compare_evaluator(actual, expected)["passed"])
+        actual[0]["fitness"] = 1e-16
+        report = full.compare_evaluator(actual, expected)
+        self.assertFalse(report["passed"])
+        json.dumps(report, allow_nan=False)
+
+    def test_wrong_or_missing_evaluator_cases_never_count_as_pass(self):
+        expected = [
+            dict(
+                row=dict(context_sha256="x", program_sha256="y"),
+                score=dict(fitness=-0.5, cv_gate_passed=True),
+            )
+        ]
+        for actual in [
+            [],
+            [
+                dict(
+                    context_sha256="other",
+                    program_sha256="y",
+                    failure=None,
+                    fitness=-0.5,
+                )
+            ],
+        ]:
+            with self.subTest(actual=actual), self.assertRaises(ProviderError):
+                full.compare_evaluator(actual, expected)
+        actual = [
+            dict(
+                context_sha256="x",
+                program_sha256="y",
+                failure="InvalidRequest",
+                fitness=None,
+            )
+        ]
+        self.assertEqual(full.compare_evaluator(actual, expected)["mismatches"], 1)
+
+    def test_feature_flag_float_and_projection_boundaries_use_distinct_rules(self):
+        names = ["count.ridge", "estimator.ridge"] + [
+            f"parameter.numeric{i}.sum" for i in range(410)
+        ]
+        header = json.dumps(
+            {"feat412": dict(dtype="F32", shape=[1, 412], data_offsets=[0, 412 * 4])}
+        ).encode()
+        raw = (
+            struct.pack("<Q", len(header))
+            + header
+            + struct.pack("<412f", *([0.0] * 412))
+        )
+        inputs = dict(
+            names=names,
+            programs=[dict(program_sha256="a" * 64)],
+            catalog=dict(
+                dsl_coverage=dict(
+                    canonical_tensor_shards=[dict(start=0, end=1, path="fixture")]
+                )
+            ),
+            load=lambda _: raw,
+        )
+
+        def measurement():
+            return dict(
+                names=names,
+                programs=[
+                    dict(
+                        program_sha256="a" * 64, feat412=[0.0] * 412, proj16=[0.0] * 16
+                    )
+                ],
+            )
+
+        self.assertTrue(full.compare_features(measurement(), inputs)["passed"])
+        value = measurement()
+        value["programs"][0]["feat412"][0] = 1e-12
+        self.assertEqual(full.compare_features(value, inputs)["feature_mismatches"], 1)
+        value = measurement()
+        value["programs"][0]["feat412"][2] = 1e-6
+        self.assertEqual(full.compare_features(value, inputs)["feature_mismatches"], 0)
+        value["programs"][0]["feat412"][2] = math.nextafter(1e-6, math.inf)
+        self.assertEqual(full.compare_features(value, inputs)["feature_mismatches"], 1)
+        value = measurement()
+        value["programs"][0]["proj16"][0] = 1e-12
+        self.assertEqual(
+            full.compare_features(value, inputs)["projection_mismatches"], 0
+        )
+        value["programs"][0]["proj16"][0] = math.nextafter(1e-12, math.inf)
+        self.assertEqual(
+            full.compare_features(value, inputs)["projection_mismatches"], 1
+        )
+        with self.assertRaises(ProviderError):
+            full.compare_features(dict(names=names, programs=[]), inputs)
+
+    def test_landmark_full_sample_and_existing_relative_tolerance(self):
+        names = [f"landmarks/{i:064x}.safetensors" for i in range(50)]
+        header = json.dumps(
+            {
+                key: dict(dtype="F32", shape=[1], data_offsets=[i * 4, (i + 1) * 4])
+                for i, key in enumerate(["v256", "col_full", "col"])
+            }
+        ).encode()
+        raw = (
+            struct.pack("<Q", len(header)) + header + struct.pack("<3f", 1e6, 1e6, 1e6)
+        )
+        inputs = dict(
+            compatibility=dict(files={name: {} for name in names}), load=lambda _: raw
+        )
+        actual = [
+            dict(context_sha256=Path(name).stem, v256=[1e6], col_full=[1e6], col=[1e6])
+            for name in names
+        ]
+        self.assertTrue(full.compare_landmarks(actual, inputs)["passed"])
+        actual[0]["v256"][0] += 100.0
+        self.assertTrue(full.compare_landmarks(actual, inputs)["passed"])
+        actual[0]["v256"][0] += 1.0
+        self.assertFalse(full.compare_landmarks(actual, inputs)["passed"])
+        with self.assertRaises(ProviderError):
+            full.compare_landmarks(actual[:-1], inputs)
+
+    def test_replaced_reference_pin_is_rejected_even_with_qualified_boolean(self):
+        cfg = dict(
+            selected=dict(sha256=full.SELECTED_SHA),
+            proposer={
+                name: dict(sha256=pin) for name, pin in full.PROPOSER_PINS.items()
+            },
+        )
+        full.reference_pins(cfg)
+        cfg["qualified"] = True
+        cfg["proposer"]["admission"]["sha256"] = hashlib.sha256(
+            b"forged replacement costs"
+        ).hexdigest()
+        with self.assertRaises(ProviderError):
+            full.reference_pins(cfg)
+        cfg["proposer"]["admission"]["sha256"] = full.PROPOSER_PINS["admission"]
+        cfg["selected"]["sha256"] = hashlib.sha256(b"another roster").hexdigest()
+        with self.assertRaises(ProviderError):
+            full.reference_pins(cfg)
+
+    def test_full_cli_requires_paired_arguments_and_separate_modes(self):
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(m3.main(["--full-inputs", "/missing"]), 2)
+            self.assertEqual(m3.main(["--full-inputs-sha256", "b" * 64]), 2)
+            self.assertEqual(
+                m3.main(["--preflight-inputs", "--full-inputs", "/missing"]), 2
+            )
+
+
+class M3FullFlowTests(unittest.TestCase):
+    def setUp(self):
+        base = Path(os.environ.get("JOPE_QUALIFICATION_TEST_TMP", HERE / "target"))
+        base.mkdir(parents=True, exist_ok=True)
+        self.tmp = tempfile.TemporaryDirectory(prefix="m3-full-control-", dir=base)
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.artifact = self.root / "candidate"
+        self.artifact.write_bytes(b"data-free controller fixture")
+        self.ctx = Context(
+            "M3",
+            self.artifact,
+            hashlib.sha256(self.artifact.read_bytes()).hexdigest(),
+            "a" * 40,
+            self.root / "result.json",
+        )
+
+    def run_with(self, report):
+        with (
+            patch.object(m3, "check_binding"),
+            patch.object(m3, "verify_candidate"),
+            patch.object(full, "measure_full", return_value=report),
+        ):
+            return m3.qualify(
+                self.ctx,
+                full_inputs=self.root / "inputs.json",
+                full_inputs_sha256="b" * 64,
+            )
+
+    def test_full_path_can_write_complete_pass_and_preserve_candidate_binding(self):
+        self.assertEqual(self.run_with(full_report()), 0)
+        result = json.loads(self.ctx.result.read_text())
+        self.assertEqual(result["status"], "PASS")
+        self.assertEqual(result["artifact_sha256"], self.ctx.artifact_sha256)
+
+    def test_real_comparison_failure_produces_consistent_fail_receipt(self):
+        self.assertEqual(self.run_with(mode_failure(full_report())), 1)
+        result = json.loads(self.ctx.result.read_text())
+        self.assertEqual(result["status"], "FAIL")
+        self.assertEqual(result["counts"]["failed"], 1)
+        self.assertEqual(result["counts"]["passed"], 3)
+
+    def test_same_byte_artifact_symlink_replacement_never_writes_pass(self):
+        def changed(*args, **kwargs):
+            real = self.root / "other-candidate"
+            real.write_bytes(self.artifact.read_bytes())
+            self.artifact.unlink()
+            self.artifact.symlink_to(real)
+            return full_report()
+
+        with (
+            patch.object(m3, "check_binding"),
+            patch.object(m3, "verify_candidate"),
+            patch.object(full, "measure_full", side_effect=changed),
+        ):
+            with self.assertRaises(ProviderError):
+                m3.qualify(
+                    self.ctx,
+                    full_inputs=self.root / "inputs.json",
+                    full_inputs_sha256="b" * 64,
+                )
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_contradictory_measurements_never_write_a_result(self):
+        report = mode_failure(full_report())
+        report["status"] = "NUMERICAL_PASS"
+        with self.assertRaises(ProviderError):
+            self.run_with(report)
+        self.assertFalse(self.ctx.result.exists())
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ use crate::{
     objective::regression::RegressionObjective,
     worker::{Request, Scores, WorkerFailure},
 };
-use anyhow::{ensure, Result};
+use anyhow::{ensure, Context, Result};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
@@ -45,13 +45,20 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
         spec.version == 2
             && spec.folds.len() == 2
             && matrix.rows() <= 20_000
-            && request.objective.as_str() == Some("rmse")
             && jope_runtime::sha256_hex(matrix.bytes()) == spec.matrix_sha256,
         "invalid admitted surrogate identity"
     );
     let objective = RegressionObjective::parse("rmse")?;
+    let user_objective = RegressionObjective::parse(
+        request
+            .objective
+            .as_str()
+            .context("objective must be a specification string")?,
+    )?;
     let mut logs = Vec::new();
     let mut losses = Vec::new();
+    let mut user_losses = Vec::new();
+    let mut user_values = Vec::new();
     let mut predicted = Sha256::new();
     let mut validation_seen = BTreeSet::new();
     let mut wins = 0;
@@ -84,6 +91,9 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
         logs.push(ratio.ln());
         wins += usize::from(ratio <= 1.0);
         losses.push(rmse);
+        let user_score = user_objective.evaluate(&vy, &prediction)?;
+        user_losses.push(user_score.loss);
+        user_values.push(user_score.value);
         for (y, p) in vy.iter().zip(prediction) {
             predicted.update(y.to_le_bytes());
             predicted.update(p.to_le_bytes());
@@ -94,9 +104,12 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
         "incomplete surrogate FIT coverage"
     );
     let (fitness, _) = fitness(&request.dsl, logs[0], logs[1], wins)?;
-    let loss = 0.5 * (losses[0] + losses[1]);
     Ok(Scores {
-        values: vec![fitness, loss, loss],
+        values: vec![
+            fitness,
+            0.5 * (user_losses[0] + user_losses[1]),
+            0.5 * (user_values[0] + user_values[1]),
+        ],
         fold_scores: losses,
         predictions_digest: format!("{:x}", predicted.finalize()),
     })

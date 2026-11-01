@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""REL-07 M3 source checks; refuses PASS while full parity evidence is incomplete."""
+"""REL-07 M3 complete CPU parity, bounded source controls and custody preflight."""
 
 from __future__ import annotations
 

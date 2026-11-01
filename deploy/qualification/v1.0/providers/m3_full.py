@@ -34,6 +34,27 @@ ENV = dict(
 )
 
 
+# Trusted data pins from the accepted R5/RES-01 reconstruction, not caller assertions.
+SELECTED_SHA = "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1"
+OPERATOR_FAMILIES = {
+    "champion_retrieval",
+    "edit_parameter",
+    "edit_replace_head",
+    "edit_insert_stage",
+    "edit_delete_stage",
+    "edit_crossover",
+    "landmark_synthesis",
+}
+PROPOSER_PINS = {
+    "admission": "52df3263b45b90fa39304ef45fd9a791eacc0554f4e44e844240a8a822164e8f",
+    "bank": "e0cea61862ef6949f9b36c58f0631e48370733c8ff7086aa56b383305b04af58",
+    "cohort": "c08ee9abe87ec72bd35e616f81d9035860e5e8298fc9eb13d604e080960bfe45",
+    "native_reference": "7c3e211edaa5d5ead121a1c5b6563aad9b6d8e3bd1d6d3a46950db4d58334840",
+    "requests": "a0bfcee8c110e2321f381533ab478b76aab22118d2aa799c937feb49df2a4043",
+    "vectors": "c115ca08095f00b31e637a6a3fdf46593c90c8d31fbb9a939efa9692073aac18",
+}
+
+
 def require(ok, reason):
     if not ok:
         raise ProviderError("M3 full: " + reason)
@@ -54,8 +75,25 @@ def regular(path, cap=64 * 1024 * 1024):
 
 def pinned(spec):
     path = regular(spec["path"])
-    require(sha256(path) == spec["sha256"], "input hash differs: " + path.name)
-    return path.read_bytes()
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    with os.fdopen(descriptor, "rb") as stream:
+        before = os.fstat(stream.fileno())
+        raw = stream.read(64 * 1024 * 1024 + 1)
+        after = os.fstat(stream.fileno())
+    require(len(raw) <= 64 * 1024 * 1024, "input byte limit exceeded")
+    regular(path)
+    current = path.stat()
+    require(
+        (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)
+        == (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns)
+        == (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns),
+        "input changed during read",
+    )
+    require(
+        hashlib.sha256(raw).hexdigest() == spec["sha256"],
+        "input hash differs: " + path.name,
+    )
+    return raw
 
 
 def jsonlines(raw):
@@ -84,6 +122,21 @@ def tensor(raw, name):
     return spec["shape"], values
 
 
+def reference_pins(cfg):
+    require(
+        cfg["selected"]["sha256"] == SELECTED_SHA,
+        "approved R0 TRAIN roster pin required",
+    )
+    require(
+        set(cfg["proposer"]) == set(PROPOSER_PINS)
+        and all(
+            cfg["proposer"][name]["sha256"] == pin
+            for name, pin in PROPOSER_PINS.items()
+        ),
+        "accepted R5 proposer witness pins required",
+    )
+
+
 def load_inputs(path, pin, preflight):
     raw = pinned(dict(path=str(path), sha256=pin))
     cfg = json.loads(raw)
@@ -96,7 +149,7 @@ def load_inputs(path, pin, preflight):
     )
     store = Path(cfg["store"])
     inventory = preflight(store, CATALOG)
-    catalog = json.loads((store / CATALOG).read_bytes())
+    catalog = json.loads(pinned(dict(path=str(store / CATALOG), sha256=CATALOG)))
 
     def load(name):
         spec = catalog["files"][name]
@@ -126,6 +179,7 @@ def load_inputs(path, pin, preflight):
     scores = {(r["journal_sha256"], r["journal_line"]): r for r in cv["rows"]}
     require(len(scores) == 1024, "duplicate CV identity")
     expected = []
+    reference_pins(cfg)
     selected = json.loads(pinned(cfg["selected"]))
     roster = {r["context_sha256"]: r for r in selected["train"]}
     tables = Path(cfg["tables_root"])
@@ -417,6 +471,11 @@ def compare_proposer(generated, inputs):
     require(len(selected) >= 10000, "10000 newly generated/admitted attempts required")
     selected = selected[:10000]
     ref = inputs["proposer"]["cohort"]
+    require(
+        {r["operator"] for r in ref} | {r["operator"] for r in selected}
+        <= OPERATOR_FAMILIES,
+        "unknown proposer operator family",
+    )
     ops = sorted(
         {r["operator"] for r in ref}
         | {r["operator"] for r in selected}
@@ -842,8 +901,7 @@ def gate_payload(ctx, report, input_pin):
         require(
             isinstance(a, dict)
             and isinstance(b, dict)
-            and set(a) == set(b)
-            and len(a) == 7
+            and set(a) == set(b) == OPERATOR_FAMILIES
             and all(type(x) is int and x >= 0 for x in [*a.values(), *b.values()]),
             "complete typed operator counts required",
         )
@@ -887,7 +945,10 @@ def gate_payload(ctx, report, input_pin):
         collected=4, executed=4, passed=passed, failed=4 - passed, skipped=0, excluded=0
     )
     require(
-        report.get("counts") == counts
+        isinstance(report.get("counts"), dict)
+        and set(report["counts"]) == set(counts)
+        and all(type(value) is int for value in report["counts"].values())
+        and report["counts"] == counts
         and report.get("status")
         == ("NUMERICAL_PASS" if passed == 4 else "NUMERICAL_FAIL"),
         "report status/count contradiction",
