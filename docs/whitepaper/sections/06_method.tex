@@ -140,7 +140,6 @@ tests what the writer has learned.
 In the native implementation, the writer and map use separate context
 networks and token embeddings. The map ranks the draft pool without
 dropping drafts or screening the writer.
-
 The map can influence search through parent selection. One native GP route
 weights seeded-survivor parents by map rank; the bounded search driver
 instead cycles among up to four parents chosen by measured loss. Any
@@ -149,13 +148,11 @@ claimed effect on training must identify which route was used.
 Only the 64 neural or fallback seeds receive normalized rank weights;
 the 16 tail seeds enter unscored. Unscored survivors share the lowest
 scored survivor weight while scored survivors remain.
-
 Native assembly takes up to ten same-cut teachers, then cross-cut teachers
 up to a 16-seed tail. Random fallbacks fill to ten slots if needed; random
 exploration fills the remaining slots. The standalone seed writer instead
 uses 16 random programs. Teacher-first execution prioritizes retained cut
 teachers; \cref{alg:selfplay} leaves the tail route-dependent.
-
 This search role is separate from the writer loss, which weights programs
 by referee rank. The program-only control tests context-sensitive ranking;
 a change in proposal quality requires the matched ablation in
@@ -292,5 +289,4 @@ AlphaGo Zero's raw network apart from its search (\cref{sec:results}).
 
 That fixed budget defines the matched first-proposal comparison in
 \cref{sub:results-learning}.
-\FloatBarrier
 \input{sections/06_method/flywheel_status}
