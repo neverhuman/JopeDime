@@ -275,7 +275,7 @@ pub struct EvaluationReceipt {
     pub schema: String,
     pub request_sha256: String,
     pub identity: EvaluationIdentity,
-    pub charged: DecimalU64,
+    pub charged: u64,
     pub attempts: Vec<EvaluationAttempt>,
     pub champion_program: Option<String>,
     pub adapter: String,
@@ -291,14 +291,14 @@ pub struct EvaluationIdentity {
     pub cut_sha256: String,
     pub guidance: String,
     pub metric: String,
-    pub seed: DecimalU64,
-    pub requested_budget: DecimalU64,
+    pub seed: u64,
+    pub requested_budget: u64,
     pub dataset_binding_sha256: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct EvaluationAttempt {
-    pub attempt: DecimalU64,
+    pub attempt: u64,
     pub outcome: EvaluationAttemptOutcome,
     pub fold_scores: Vec<f64>,
     pub loss: Option<f64>,

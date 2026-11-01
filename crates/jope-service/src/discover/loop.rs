@@ -2373,7 +2373,7 @@ fn add_events(
             reason: public_failure(failure),
         }),
         attempt_receipt: Some(jope_api::EvaluationAttempt {
-            attempt: DecimalU64(response.attempt.attempt),
+            attempt: response.attempt.attempt,
             outcome: if response.failure.is_some() {
                 jope_api::EvaluationAttemptOutcome::Failed
             } else {
