@@ -38,6 +38,15 @@ class H163Tests(unittest.TestCase):
         self.assertFalse(analysis.admit({"delta": .01, "ci_low_95": 0.}))
         self.assertTrue(analysis.admit({"delta": .001001, "ci_low_95": .0001}))
 
+    def test_median_seed_bootstrap_uses_shared_family_draws(self):
+        rows = [{"family_id": f"f{i}"} for i in range(5) for _ in range(2)]
+        base = np.zeros((3, len(rows)))
+        candidate = base + .002
+        result = analysis.median_seed_bootstrap(rows, candidate, base, draws=100, seed=17)
+        self.assertAlmostEqual(result["delta"], .002)
+        self.assertAlmostEqual(result["ci_low_95"], .002)
+        self.assertAlmostEqual(result["ci_high_95"], .002)
+
 
 if __name__ == "__main__":
     unittest.main()

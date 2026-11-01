@@ -120,6 +120,30 @@ def family_bootstrap(rows, candidate, baseline, draws=10_000, seed=BOOT_SEED):
             "draws": draws}
 
 
+def median_seed_bootstrap(rows, candidate, baseline, draws=10_000, seed=BOOT_SEED):
+    """Shared-family bootstrap of the preregistered median-of-seed utility gain."""
+    c = np.asarray(candidate, dtype=np.float64)
+    b = np.asarray(baseline, dtype=np.float64)
+    if c.ndim != 2 or c.shape != b.shape or c.shape[1] != len(rows):
+        raise ValueError("seed-by-context panel mismatch")
+    fams = sorted({r["family_id"] for r in rows})
+    fam_index = {f: i for i, f in enumerate(fams)}
+    family_diff = np.empty((c.shape[0], len(fams)), dtype=np.float64)
+    for j, family in enumerate(fams):
+        ix = np.asarray([r["family_id"] == family for r in rows])
+        family_diff[:, j] = c[:, ix].mean(axis=1) - b[:, ix].mean(axis=1)
+    point = float(np.median(family_diff.mean(axis=1)))
+    rng = np.random.default_rng(seed)
+    indices = rng.integers(0, len(fams), size=(draws, len(fams)))
+    # Reuse each draw across seeds to preserve the paired family structure.
+    seed_means = family_diff[:, indices].mean(axis=2)
+    boot = np.median(seed_means, axis=0)
+    lo, hi = np.quantile(boot, [.025, .975])
+    return {"delta": point, "ci_low_95": float(lo), "ci_high_95": float(hi),
+            "p_one_sided": float((np.sum(boot <= 0.0) + 1) / (draws + 1)),
+            "draws": draws}
+
+
 def admit(stat):
     """Strict margin; equality within 1e-12 rejects, as does nonpositive LCB."""
     return bool(stat["delta"] > THRESHOLD + EPS and stat["ci_low_95"] > 0.0)

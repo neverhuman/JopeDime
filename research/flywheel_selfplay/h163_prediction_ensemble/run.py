@@ -271,6 +271,7 @@ def main():
                 val_values, val_choices = panel_utility(val, pools, model_preds, arm if use_arm else "R882", weight)
                 secondary[arm][si, outer] = val_values
                 secondary_choices[arm][si, outer] = val_choices
+            decision["selection_lock_sha256"] = sha(lock_path)
             decisions.append(decision)
     if any(not np.isfinite(v).all() for v in results.values()):
         raise RuntimeError("incomplete outer assessment panels")
@@ -283,11 +284,13 @@ def main():
             s = stat.family_bootstrap(train, results[arm][si], results["R882"][si], 10_000, stat.BOOT_SEED + seed)
             per_seed.append(s)
         delta = [s["delta"] for s in per_seed]
+        median_stat = stat.median_seed_bootstrap(train, results[arm], results["R882"], 10_000, stat.BOOT_SEED)
         summary[arm] = {
             "per_seed": per_seed,
-            "median_gain": float(np.median(delta)),
-            "median_ci_low_95": float(np.median([s["ci_low_95"] for s in per_seed])),
-            "median_ci_high_95": float(np.median([s["ci_high_95"] for s in per_seed])),
+            "median_seed_bootstrap": median_stat,
+            "median_gain": median_stat["delta"],
+            "median_ci_low_95": median_stat["ci_low_95"],
+            "median_ci_high_95": median_stat["ci_high_95"],
             "elo_vs_r882": [e[j] for e in [elo(train, results_for_seed) for results_for_seed in np.stack([results[a] for a in arm_names], axis=-1)]],
             "changed_choices_per_seed": [int(np.sum(choices_oof[arm][si] != choices_oof["R882"][si])) for si in range(len(stat.SEEDS))],
             "minus2_per_seed": [int(np.sum(results[arm][si] <= -2.0 + 1e-12)) for si in range(len(stat.SEEDS))],
