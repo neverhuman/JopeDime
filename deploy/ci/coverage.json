@@ -5164,6 +5164,16 @@
       "lanes": [],
       "scope": "H152 data-free controls for zero-update checkpoint soups: fixed arms and weights, trainable-only blending with frozen tensors from R882, frozen-identity census, deterministic bootstrap readout, tie rejection, Holm decision, Elo interval, family-disjoint TRAIN folds, exact R882 regression, Torch thread cap, every disk/load/scratch/nice and supervisor stop guard, and squash-compatible source binding with mismatch rejection. No checkpoint, corpus or model passes in the fixture suite; offline research only."
     },
+    "python:research/flywheel_selfplay/h160_trajectory_subspace/test_h160.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H160 data-free controls: trajectory-delta SVD basis (orthonormal, rank refusal), gradient/displacement projection (idempotence, Adam leak repaired), drift-matched learning rate and inclusive manipulation band, H148 nested family partition and 40-step fit-only batch plan, strict snapshot selection with margin ties and lower bound, identical-arm Elo 1500, Holm decision and mechanism labels, and every supervisor hard stop. No checkpoint, corpus or model passes in the fixture suite; offline research only."
+    },
     "python:research/flywheel_selfplay/h153_sam/test_h153.py": {
       "discovery": {
         "kind": "python-family"
@@ -7121,7 +7131,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {

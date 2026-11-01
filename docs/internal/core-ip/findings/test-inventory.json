@@ -1985,6 +1985,10 @@
       "reason": "Owner-requested H152 data-free controls for the zero-update checkpoint soup readout, resource guards and source binding; no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h160_trajectory_subspace/test_h160.py": {
+      "reason": "Owner-requested H160 data-free controls for trajectory-subspace projected continuation (basis, projection, drift match, strict selection, decision, supervisor); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h153_sam/test_h153.py": {
       "reason": "Owner-requested H153 SAM/ASAM data-free registration, manipulation and resource-stop controls; offline research only.",
       "role": "research"
