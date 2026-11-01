@@ -22,16 +22,39 @@ fn the_committed_lock_is_current() {
     assert_eq!(lock.profiles["fixture"].status, "ready");
     assert_eq!(lock.profiles["native-only"].status, "ready");
     assert_eq!(lock.profiles["native-only"].total_bytes, 0);
+    let public = &lock.profiles["native-only"];
+    assert!(public.components.iter().all(|component| {
+        component.files.iter().all(|file| {
+            !file.path.contains("starlight_core_regressor")
+                && !file.path.contains("starforge/starlight")
+        })
+    }));
+    let public_profile = Profile::load(&repo.join("deploy/appliance/profiles/native-only.toml"))
+        .unwrap()
+        .0;
+    assert_eq!(public_profile.scope, "public");
+    assert!(public_profile.owner_ack.is_none());
+    assert!(public_profile.components.iter().all(|component| {
+        component.files.iter().all(|file| {
+            !file.contains("starlight_core_regressor") && !file.contains("starforge/starlight")
+        })
+    }));
     let full = &lock.profiles["full"];
     assert_eq!(full.status, "blocked");
-    assert!(full
-        .blockers
-        .iter()
-        .any(|b| b.contains("starlight_core_regressor") && b.contains("prohibited")));
+    assert!(!full.blockers.iter().any(|b| {
+        b.contains("starlight_core_regressor") && b.contains("owner acknowledgement")
+    }));
     assert!(full
         .blockers
         .iter()
         .any(|b| b.contains("proposal.step60000.regression")));
+    let acknowledgement = std::fs::read_to_string(
+        repo.join("deploy/appliance/acknowledgements/full-internal-restricted.md"),
+    )
+    .unwrap();
+    assert!(acknowledgement.contains("REL-07 T0115 D3"));
+    assert!(acknowledgement.contains("Internal qualification and rehearsal candidates only"));
+    assert!(acknowledgement.contains("Public distribution | Excluded"));
     // The accepted closure's five tensor files, as the specification inventories them.
     let tensors: u64 = full
         .components

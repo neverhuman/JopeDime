@@ -99,6 +99,9 @@ fn version_value() -> Value {
         "package_format": jope_assets::MANIFEST_SCHEMA,
         "target": env!("JOPE_BUILD_TARGET"),
         "features": {
+            "engine": cfg!(feature = "engine"),
+            "mcp": cfg!(feature = "mcp"),
+            "client": cfg!(feature = "client"),
             "embedded": bootstrap::EMBEDDED,
             "dev_keys": jope_assets::verify::TRUSTS_DEVELOPMENT_KEY,
             "cuda": backend::CUDA_COMPILED,

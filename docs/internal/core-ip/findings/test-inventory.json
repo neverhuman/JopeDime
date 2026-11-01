@@ -1615,6 +1615,10 @@
       "reason": "REL-07 A2 provider orchestration controls; synthetic candidate/children only, no live release or scientific data execution",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/v1.0/test_provider_a4/test_a4.py": {
+      "reason": "REL-07 PR1406 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/v1.0/test_provider_a5/test_a5.py": {
       "reason": "REL-07 A5 named-client provider controls (manifest, sidecar and receipt refusal proofs over synthetic evidence); no live client, release or dataset job executes",
       "role": "infrastructure"
@@ -5347,6 +5351,10 @@
       "subsystems": [
         "encoders"
       ]
+    },
+    "python:research/flywheel_selfplay/h167_input_noise/test_h167.py": {
+      "role": "research",
+      "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
