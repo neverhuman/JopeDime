@@ -117,8 +117,9 @@ in \cref{sec:method-status}:
   90th percentile. The network has \num{27796494} parameters in total (six
   decoder blocks, width \num{512}, four attention heads, prefix context token,
   and maximum length \num{128} tokens over the \num{401}-token grammar);
-  approximately \num{1.05} million parameters belong to training-time ranking
-  and control heads that are absent at deployment.
+  approximately \num{1.05} million parameters belong to ranking and control
+  heads. Token decoding bypasses them, but the native checkpoint loader
+  still requires them.
   \item \textbf{Optimization notes (\cref{sub:method-selfplay}).}
   The records describe AdamW training (learning rate $10^{-4}$,
   weight decay $0.01$, gradient-norm clip $1.0$, global batch size \num{2048})

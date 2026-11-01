@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 import ast
 import ctypes
 import hashlib
@@ -983,6 +984,9 @@ def dsl_coverage(plan, plan_pin, store, historical_sha, paths, pins, output):
 
 
 def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "reconstruct-r5":
+        return reconstruction_main(argv[1:])
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--plan", type=Path, required=True)
     parser.add_argument("--expected-plan-sha256", required=True)
@@ -1086,6 +1090,326 @@ def main(argv=None):
     generate.require(remaining > 0, "original absolute CPU deadline exhausted")
     signal.alarm(remaining)
     print(json.dumps(capture(plan, args.output), sort_keys=True))
+    return 0
+
+
+
+# Owner-accepted R5 reconstruction (separate from the original capture budget).
+"""R5 finite-cohort golden reconstruction; CPU only, no fits or bank-history claims.
+
+Inputs are independently pinned TRAIN projections. Raw journal files, held-out
+metrics and historical checkpoint pickle files are never opened by this worker.
+"""
+import argparse
+import ctypes
+import json
+import math
+import os
+from pathlib import Path
+import struct
+import subprocess
+import tempfile
+
+import numpy as np
+import torch
+
+import generate as g
+
+
+def pinned(path, expected):
+    data = g.regular(Path(path))
+    g.require(g.sha(data) == expected, "explicit input hash differs: " + str(path))
+    return data
+
+
+def cohort_records(manifest, raw):
+    g.require(manifest["authority"] == "rulings_t1900.md R5", "R5 authority required")
+    g.require(manifest["excluded_unlogged"] == 2688, "exact R5 exclusion required")
+    g.require(not manifest["historical_preproposal_state_recovered"], "scope differs")
+    g.require(g.sha(raw) == manifest["cohort.jsonl"]["sha256"], "cohort pin differs")
+    rows = [g.read_json(line) for line in raw.splitlines()]
+    g.require(len(rows) == 1024, "complete ordered R5 evaluated cohort required")
+    forbidden = {"test_rmse_ratio", "cv_test_agreed", "test_ratio", "test", "dev"}
+    for row in rows:
+        g.require(not forbidden.intersection(row), "protected metric in TRAIN closure")
+        g.require(row["dl_split"] == "DL-Train", "TRAIN records only")
+        g.require(g.sha(row["dsl"].encode()) == row["program_sha256"], "DSL hash differs")
+        original = dict(row)
+        key = original.pop("source_record_sha256")
+        g.require(g.sha(g.canonical(original)) == key, "ordered record binding differs")
+    g.require(len({r["program_sha256"] for r in rows}) == 895, "R5 unique corpus differs")
+    g.require(len({r["context_sha256"] for r in rows}) == 132, "R5 context cohort differs")
+    g.require(sum(r["excluded_unlogged_generated"] for r in manifest["exclusions"]) == 2688,
+              "R5 per-round exclusions differ")
+    return rows
+
+
+def stage1b_bytes(bundle):
+    """Deterministic tensor/metadata order, including the published RNK07 map."""
+    from safetensors import safe_open
+    mapping = {"lm80.mean": ("lm80_mu", (80,)), "lm80.std": ("lm80_sd", (80,)),
+               "lm48.mean": ("mu_lm48", (48,)), "lm48.std": ("sd_lm48", (48,))}
+    for slot, prefix, width in [(0,"svd_slot0_m0",184),(1,"svd_slot1_m1",48),
+            (2,"svd_slot2_m2",629),(4,"svd_slot4_d629_mid",629),
+            (5,"svd_slot5_d629_tail",629),(7,"svd_slot7_lm_fine",184),
+            (9,"svd_slot9_kron",64)]:
+        for field, suffix in [("mean","_mu"),("std","_sd_safe"),("active","_active_mask"),
+                              ("projection","_effective_proj_mat")]:
+            mapping[f"slot{slot}.{field}"] = (prefix+suffix,
+                                             (width,32) if field=="projection" else (width,))
+    header = {"__metadata__": {
+        "source_jope_safetensors_sha256": g.sha(g.regular(bundle/"jope.safetensors")),
+        "source_checkpoint_sha256": "427b0d4608e94f60f5f97d79b5c1c4ce9a7efd59d17e7853f714e901f3a4af0c",
+        "source_bundle_manifest_sha256": g.sha(g.regular(bundle/"manifest.json")),
+        "export": "RNK-07-Stage1B-frozen-buffer-map/v1"}}
+    offset, parts = 0, []
+    with safe_open(str(bundle/"jope.safetensors"), framework="np") as tensors:
+        for name, (key, shape) in sorted(mapping.items()):
+            array = np.ascontiguousarray(tensors.get_tensor(key), dtype="<f4").reshape(shape)
+            g.require(np.isfinite(array).all(), "nonfinite Stage1B parameter")
+            if name.endswith(".std"):
+                g.require((array>0).all(), "Stage1B std must be positive")
+            data = array.tobytes()
+            header[name] = dict(dtype="F32", shape=list(shape), data_offsets=[offset,offset+len(data)])
+            parts.append(data)
+            offset += len(data)
+    encoded = json.dumps(header, separators=(",",":"), ensure_ascii=False).encode()
+    encoded += b" " * (-len(encoded)%8)
+    return struct.pack("<Q",len(encoded))+encoded+b"".join(parts)
+
+
+def build(plan, reconstruction, cohort, cv, tables, output, store, parents, rnk05_packet, rnk05_pin):
+    g.require(not output.exists() and not output.is_symlink(), "output must be new")
+    g.require(os.environ.get("CUDA_VISIBLE_DEVICES")=="" and not torch.cuda.is_initialized(),
+              "CPU reconstruction requires hidden CUDA")
+    g.require(os.getpriority(os.PRIO_PROCESS,0)>=10 and os.getloadavg()[0]<=85,
+              "nice10 and host CPU headroom required")
+    cpus = sorted(os.sched_getaffinity(0))
+    os.sched_setaffinity(0, cpus[:4])
+    torch.set_num_threads(1)
+    torch.use_deterministic_algorithms(True)
+    rows = cohort_records(reconstruction, cohort)
+    g.require(cv["schema"]=="jope.res07.train-cv-projection/v1"
+              and cv["protected_metrics_decoded"] is False, "TRAIN CV projection required")
+    measurements = {(r["journal_sha256"],r["journal_line"]):r for r in cv["rows"]}
+    g.require(len(measurements)==1024, "complete original CV projection required")
+    for row in rows:
+        value = measurements[row["journal_sha256"], row["journal_line"]]
+        g.require(value["program_sha256"]==row["program_sha256"]
+                  and value["status"]==row["source_status"], "CV ordered join differs")
+    g.CUSTODY = Path(plan["custody"])
+    bundle = Path(plan["bundle"])
+    manifest, custody, reference, validation = g.validate_bundle(bundle, plan["bundle_digest"])
+    selected = g.read_json(pinned(plan["selected"],plan["selected_sha256"]))
+    train = {r["context_sha256"]:r for r in selected["train"]}
+    families = set(custody["training_corpus"]["train_family_ids"])
+    for row in rows:
+        g.require(row["context_sha256"] in train
+                  and row["family_id"]==train[row["context_sha256"]]["family_id"]
+                  and row["family_id"] in families, "context outside original TRAIN roster")
+    programs = {r["program_sha256"]:r["dsl"] for r in rows}
+    evaluated_keys = sorted(programs)
+    g.require(g.sha(parents) == reconstruction["parent-payloads.jsonl"]["sha256"],
+              "parent definition pin differs")
+    parent_rows = [g.read_json(line) for line in parents.splitlines()]
+    needed = {key for row in rows for key in row["parents"]}
+    g.require(len(parent_rows)==405 and {r["program_sha256"] for r in parent_rows}==needed,
+              "complete 405-parent payload closure required")
+    for parent in parent_rows:
+        key, dsl, cid = parent["program_sha256"], parent["dsl"], parent["context_sha256"]
+        g.require(parent["dl_split"]=="DL-Train" and cid in train
+                  and g.sha(dsl.encode())==key, "parent outside pinned TRAIN/DSL closure")
+        g.require(key not in programs or programs[key]==dsl, "parent DSL alias differs")
+        programs[key]=dsl
+    g.require(len(programs)==1137, "complete evaluated plus parent corpus required")
+    keys = sorted(programs)
+    vector = [reference.featurize(programs[k]) for k in keys]
+    f = np.stack([v[0] for v in vector]); p = np.stack([v[1] for v in vector])
+    position = {key:i for i,key in enumerate(keys)}
+    files = {"dsl/programs.jsonl": b"".join(g.canonical(dict(program_sha256=k,dsl=programs[k]))+b"\n" for k in keys),
+             "dsl/programs-00000.safetensors":g.tensor_bytes(dict(feat412=f,proj16=p)),
+             "dsl/source-rows.jsonl":cohort,
+             "dsl/parent-source-rows.jsonl":parents,
+             "sources/reconstruction.json":g.canonical(reconstruction)+b"\n",
+             "sources/train-cv.json":g.canonical(cv)+b"\n",
+             "packet/rnk07/stage1b-parameters.safetensors":stage1b_bytes(bundle)}
+    coverage = dict(delivered_unique_programs=len(keys), delivered_source_records=1429,evaluated_source_records=1024,parent_source_records=405,
+                    covered_historical_programs=len(keys), missing_historical_programs=0,
+                    scope="owner R5 reconstructed evaluated cohort only", excluded_unlogged=2688,
+                    historical_preproposal_state_recovered=False,
+                    canonical_tensor_shards=[dict(path="dsl/programs-00000.safetensors",start=0,end=len(keys))])
+    files["dsl/coverage.json"] = g.canonical(coverage)+b"\n"
+    # Same frozen native fit-only feature extraction as the original loop. Full
+    # actual TRAIN rows are retained; the native recipe owns its internal sampling.
+    for suffix in ["JopeDimeMicro/python/research/levels/descriptors.py",
+                   "JopeDimeMicro/python/research/levels/building_block_landmarks.py"]:
+        source_definition(reference,suffix,constants=True)
+    native = next(r for r in custody["assets"] if r["path"].endswith("/bin/libjope_hpc.so"))
+    library = reference.custody/"files"/native["path"].lstrip("/")
+    pinned(library,native["sha256"])
+    reference.env.update(ctypes=ctypes,Path=Path,LIB_PATH=library)
+    workspace_sha = source_definition(reference,"JopeDimeMicro/python/hpc/landmark_workspace.py")
+    source_definition(reference,"frozen-source/research/flywheel_selfplay/device_pool_cache.py")
+    ws = reference.env["FusedLandmarkWorkspace"](lib_path=library,num_threads=4)
+    cast = reference.env["landmark_float32"]
+    contexts, inters, bindings, groups = {}, {}, [], {}
+    for row in rows:
+        groups.setdefault((row["context_sha256"],row["source_round"]),[]).append(row)
+    eligible = {}
+    for (cid,rnd), group in groups.items():
+        values = [measurements[r["journal_sha256"],r["journal_line"]] for r in group]
+        if (len(group)==4 and len({r["program_sha256"] for r in group})==4
+                and all(v["status"]=="completed" and math.isfinite(v["fitness"])
+                        and isinstance(v["cv_gate_passed"],bool) for v in values)):
+            eligible.setdefault(cid,(group,values))
+    chosen = sorted(eligible)[:50]
+    g.require(len(chosen)==50,"50 complete measured context groups required")
+    for cid in sorted({r["context_sha256"] for r in rows}):
+        g.require(os.getloadavg()[0]<=85,"host CPU ceiling exceeded")
+        raw = pinned(tables/(cid+".jtt1"),train[cid]["train_only_jtt1_sha256"])
+        g.require(raw[:4]==b"JTT1" and raw[16]==2,"TRAIN two-fold JTT1 required")
+        n,q,width=struct.unpack_from("<III",raw,4)
+        g.require(q==0 and 50<=n<=2048 and 0<width<=512
+                  and len(raw)==17+n+n*(width+1)*8,"complete bounded TRAIN table required")
+        values=np.frombuffer(raw,dtype="<f8",offset=17+n).reshape(n,width+1)
+        x,y=values[:,:-1],values[:,-1]
+        g.require(np.isfinite(y).all(),"finite actual TRAIN labels required")
+        xn=cast(x);yn=np.ascontiguousarray((y-y.mean())/max(float(y.std()),1e-8),dtype=np.float32)
+        v,full,_=ws.fit_transform_and_extract_bundle_high(xn,yn)
+        v2,full2,_=ws.fit_transform_and_extract_bundle_high(xn,yn)
+        g.require(v.tobytes()==v2.tobytes() and full.tobytes()==full2.tobytes(),"native regeneration differs")
+        col=np.zeros((64,17),dtype=np.float32);col[:min(64,width)]=full[:64,:17]
+        inter=reference.intermediates(v,col);inters[cid]=inter
+        files[f"retrieval/contexts/{cid}.safetensors"]=g.tensor_bytes(inter)
+        bindings.append(dict(context_sha256=cid,family_id=train[cid]["family_id"],dl_split="DL-Train",
+                             training_table_sha256=g.sha(raw),rows=n,columns=width,
+                             row_ids=list(range(n)),outer_query_rows=0,
+                             native_library_sha256=native["sha256"],workspace_source_sha256=workspace_sha,
+                             conditioning="reconstructed frozen full-TRAIN native recipe; not original bank state"))
+        if cid not in chosen:
+            continue
+        # tensor_bytes refuses NaN outputs. Missing input cells remain unchanged.
+        input_tensors={"input.X":torch.from_numpy(xn.copy()),"input.y":torch.from_numpy(yn.copy()),
+                       "input.row_ids":torch.arange(n,dtype=torch.int64),"v256":torch.from_numpy(v.copy()),
+                       "col_full":torch.from_numpy(full.copy()),"col":torch.from_numpy(col)}
+        header,parts,offset={},[],0
+        for name,tensor in sorted(input_tensors.items()):
+            g.require(name=="input.X" or torch.isfinite(tensor).all(),"nonfinite native output")
+            data=tensor.numpy().astype("<i8" if tensor.dtype==torch.int64 else "<f4").tobytes()
+            header[name]=dict(dtype="I64" if tensor.dtype==torch.int64 else "F32",shape=list(tensor.shape),data_offsets=[offset,offset+len(data)])
+            parts.append(data);offset+=len(data)
+        h=g.canonical(header);h+=b" "*(-len(h)%8)
+        files[f"packet/landmarks/{cid}.safetensors"]=struct.pack("<Q",len(h))+h+b"".join(parts)
+        files[f"packet/contexts/{cid}.safetensors"]=g.tensor_bytes(inter)
+        group,vals=eligible[cid]
+        reveal=[r["program_sha256"] for r in group]
+        order=reveal+[key for key in evaluated_keys if key not in reveal][:16]
+        files[f"packet/surrogate/{cid}.json"]=g.canonical(dict(context_sha256=cid,
+             recipe=manifest["surrogate_recipe"],source="original TRAIN CV journal projection",
+             evaluator_sha256=custody["evaluator"]["binary"]["sha256"],
+             protocol_stratum=group[0]["protocol_stratum"],source_round=group[0]["source_round"],
+             measurements={r["program_sha256"]:dict(raw_f=z["fitness"],gate=int(z["cv_gate_passed"]),
+                  status=z["status"],journal_sha256=r["journal_sha256"],journal_line=r["journal_line"])
+                  for r,z in zip(group,vals)}))+b"\n"
+        for size in (12,20):
+            ii=[position[k] for k in order[:size]]
+            result=reference.costs(inter,f[ii],p[ii],[z["fitness"] for z in vals],
+                                   [int(z["cv_gate_passed"]) for z in vals])
+            files[f"packet/slates/{cid}-{size}.safetensors"]=g.tensor_bytes(result)
+        stages,heads=reference.preferred_pools(inter["lm48"].numpy().reshape(-1))
+        contexts[cid]=dict(context_sha256=cid,stages=stages,heads=heads)
+        print(json.dumps(dict(landmark_contexts=len(inters),serving_contexts=len(contexts))),flush=True)
+    files["retrieval/conditioning-bindings.json"]=g.canonical(bindings)+b"\n"
+    for stratum in ("legacy16","full1219"):
+        bank=[]
+        for r in rows:
+            if r["protocol_stratum"]!=stratum:continue
+            i=position[r["program_sha256"]]
+            bank.append(dict(program_sha256=r["program_sha256"],canonical_dsl=r["dsl"],
+                feat412=f[i].tolist(),proj16=p[i].astype(np.float32).tolist(),
+                landmark_summary=inters[r["context_sha256"]]["lm48"].reshape(-1)[:12].tolist(),
+                family_hash=r["family_id"],role="proposer",coordinate_space="raw_lm48_first12",
+                reconstruction_authority="R5",source_record_sha256=r["source_record_sha256"]))
+        bank_raw=b"".join(g.canonical(r)+b"\n" for r in bank)
+        compressed=subprocess.run(["zstd","-q","-3","-c"],input=bank_raw,capture_output=True,check=True).stdout
+        name=f"retrieval/{stratum}-bank.jsonl.zst";files[name]=compressed
+        queries=[]
+        for cid in sorted({r["context_sha256"] for r in rows if r["protocol_stratum"]==stratum}):
+            lm=inters[cid]["lm48"].reshape(-1).tolist()
+            ranked=sorted(bank,key=lambda r:(sum((float(a)-float(b))**2 for a,b in zip(lm[:12],r["landmark_summary"])),r["program_sha256"]))
+            for k in (1,8,16,513):
+                queries.append(dict(lm48=lm,k=k,nearest_program_sha256=[r["program_sha256"] for r in ranked[:k]]))
+        files[f"retrieval/{stratum}-nearest.json"]=g.canonical(dict(schema="jope.rnk09-nearest-parity/v1",
+            authority="R5 reconstructed cohort; original evolving bank unrecovered",excluded_unlogged=2688,
+            bank=dict(path=f"{stratum}-bank.jsonl.zst",sha256=g.sha(compressed)),queries=queries))+b"\n"
+    files["packet/landmark-pools.json"]=g.canonical([contexts[k] for k in sorted(contexts)])+b"\n"
+    files["packet/programs.safetensors"]=files["dsl/programs-00000.safetensors"]
+    files["packet/programs.jsonl"]=files["dsl/programs.jsonl"]
+    packet_files={name.removeprefix("packet/"):data for name,data in files.items() if name.startswith("packet/")}
+    inventory={}
+    for name,data in sorted(packet_files.items()):
+        spec=dict(sha256=g.sha(data),bytes=len(data))
+        if name.endswith(".safetensors"):
+            header=g.read_json(data[8:8+struct.unpack("<Q",data[:8])[0]])
+            spec["tensors"]={k:{f:v[f] for f in ("dtype","shape")} for k,v in header.items() if k!="__metadata__"}
+        inventory[name]=spec
+    index=dict(schema="jope.golden-fixtures/v1",bundle_digest=plan["bundle_digest"],contexts=50,
+        reconstructed_programs=len(keys),authority="rulings_t1900.md R5",excluded_unlogged=2688,
+        subset="complete R5 reconstructed evaluated corpus",reference_source_sha256=reference.source_hashes,
+        qualification=dict(CUDA=False,Q1=False,original_historical_state=False),
+        consumers=g.CONSUMERS,payload_bytes=sum(len(v) for v in packet_files.values()),total_bytes=0,
+        file_count=len(packet_files)+1,storage="hash-custody",files=inventory)
+    while True:
+        data=g.canonical(index)+b"\n";size=index["payload_bytes"]+len(data)
+        if index["total_bytes"]==size:break
+        index["total_bytes"]=size
+    files["packet/index.json"]=data
+    # RNK05's production test admits at most1024 FIT rows. Preserve its original
+    # approved complete50-context packet as a separate, explicitly pinned fixture.
+    compat_raw=pinned(rnk05_packet/"index.json",rnk05_pin)
+    compat=g.read_json(compat_raw)
+    g.require(compat["schema"]=="jope.golden-fixtures/v1" and compat["contexts"]==50
+              and compat["bundle_digest"]==plan["bundle_digest"], "RNK05 compatibility identity differs")
+    for name,spec in compat["files"].items():
+        data=g.captured(rnk05_packet,dict(path=name,sha256=spec["sha256"]))
+        g.require(len(data)==spec["bytes"],"RNK05 compatibility length differs")
+        files["rnk05-compat/"+name]=data
+    files["rnk05-compat/index.json"]=compat_raw
+    specs={name:g.custody_blob(store,data) for name,data in sorted(files.items())}
+    metadata=dict(authority="rulings_t1900.md R5",bundle_digest=plan["bundle_digest"],contexts=50,
+        rnk05_compatibility_index_sha256=rnk05_pin,reconstructed_contexts=132,historical_program_rows=1024,historical_unique_program_hashes=len(keys),
+        historical_scope="complete owner-accepted R5 evaluated reconstruction; 2688 unlogged generated excluded",
+        historical_corpus_complete=True,original_historical_state_recovered=False,excluded_unlogged=2688,
+        features_regenerated_from_dsl=True,reference_source_sha256=reference.source_hashes,
+        source_reconstruction_sha256=g.sha(g.canonical(reconstruction)),
+        source_cohort_sha256=g.sha(cohort),source_parent_sha256=g.sha(parents),dsl_coverage=coverage,
+        qualification=dict(CUDA=False,Q1=False,original_historical_state=False))
+    catalog,encoded=g.custody_index(specs,metadata)
+    g.require(catalog["total_bytes"]<=512*1024*1024,"bounded fixture custody exceeded")
+    pin=g.custody_blob(store,encoded)["sha256"]
+    g.materialize_custody(store,pin,output)
+    g.require(not torch.cuda.is_initialized(),"CPU reconstruction initialized CUDA")
+    return dict(catalog_sha256=pin,total_bytes=catalog["total_bytes"],file_count=catalog["file_count"],
+                packet_index_sha256=g.sha(files["packet/index.json"]),contexts=50,corpus_programs=len(keys),
+                cohort_rows=1024,parent_source_records=405,parent_only_programs=242,reconstructed_contexts=132,excluded_unlogged=2688,native_evaluator_calls=0,estimator_fits=0,
+                native_feature_extractions=264,
+                historical_preproposal_state_recovered=False)
+
+
+def reconstruction_main(argv=None):
+    p=argparse.ArgumentParser(description=__doc__)
+    for name in ("plan","reconstruction","cohort","parents","cv"):
+        p.add_argument("--"+name,type=Path,required=True)
+        p.add_argument("--"+name+"-sha256",required=True)
+    for name in ("tables","output","store"):
+        p.add_argument("--"+name,type=Path,required=True)
+    p.add_argument("--rnk05-packet",type=Path,required=True)
+    p.add_argument("--rnk05-index-sha256",required=True)
+    a=p.parse_args(argv)
+    docs={n:pinned(getattr(a,n),getattr(a,n+"_sha256")) for n in ("plan","reconstruction","cohort","parents","cv")}
+    report=build(g.read_json(docs["plan"]),g.read_json(docs["reconstruction"]),docs["cohort"],
+                 g.read_json(docs["cv"]),a.tables,a.output,a.store,docs["parents"],a.rnk05_packet,a.rnk05_index_sha256)
+    print(json.dumps(report,sort_keys=True),flush=True)
     return 0
 
 
