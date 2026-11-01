@@ -1,0 +1,6 @@
+{
+  "encoding": "UTF-8",
+  "raw_sha256": "4c957a623d563d238c898ad7924916d10ec9773c7660c414eabb812168636567",
+  "raw_bytes": 653,
+  "stdout": "\nrunning 1 test\ntest mcp::tests::discovery_with_early_roots_change_keeps_modern_bootstrap_open ... FAILED\n\nfailures:\n\n---- mcp::tests::discovery_with_early_roots_change_keeps_modern_bootstrap_open stdout ----\n\nthread 'mcp::tests::discovery_with_early_roots_change_keeps_modern_bootstrap_open' (121977369) panicked at crates/jope-appliance/src/mcp/tests.rs:252:13:\nunexpected MCP EOF\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n\nfailures:\n    mcp::tests::discovery_with_early_roots_change_keeps_modern_bootstrap_open\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 145 filtered out; finished in 0.01s\n\n"
+}

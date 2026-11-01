@@ -45,12 +45,41 @@ SHA256 pins `catalog_sha256`, `learner_sha256`, `initial_checkpoint_sha256`, and
 ```
 
 Roles are `train`, `val`, `panel`; source rows must be `train` or `inner`.
-Only authoritative catalog family keys are accepted; unreviewed derived keys are
-refused. Context roles and train-row-only summary construction need provenance
-review against the frozen DL partition. `eligibility_verified` records that
-review; it does not perform it. Multiclass metadata is counted and excluded.
+The current executable catalog verifier accepts only recorded family keys;
+provisional keys require the audited admission mapping described below before
+they may enter a runnable manifest. Context roles and train-row-only summary
+construction need provenance review against the frozen DL partition.
+`eligibility_verified` records that review; it does not perform it. Multiclass
+metadata is counted and excluded.
 Unknown tasks, protected splits/paths, family leakage and payload escapes fail
 before a payload is opened. Payloads, model weights and output remain outside Git.
+
+### Current catalog admission ruling (ENG:watcher t2035, 2026-11-01)
+
+The approved source is catalog v246 in `S3_DATASET_CATALOG.md`. The only holdout is
+the P3 `sealed_excluded` family group defined by the Oct 7 Jepson ruling
+(293 production members and 470 catalog members); exclude it by family and do
+not read its payloads. All remaining catalog regression and binary records are
+eligible for TRAIN or validation, including P3 `heldout` and `dev` records. A
+manifest must retain the family-grouped role assignment and the ruling
+reference. The sealed roster is recorded by reference only; no sealed payload
+or roster contents are part of this repository.
+
+For unkeyed binary records, promote the catalog's provisional
+`srcfile:<stem>` key, add the source URL parent when present, and merge shared
+recorded dedupe fingerprints before assigning folds. Record the source fields
+and the resulting family key for every promoted dataset. `panel_v1` is the
+admitted panel target at 240 datasets per task; if the eligible binary roster
+falls short after family exclusions, include all eligible records and report
+the measured shortfall.
+
+This ruling changes data eligibility; it does not qualify an executable study
+packet. The current verifier still needs an audited provisional-key admission
+mapping before it accepts these new roles. The runtime manifest also needs
+task-correct train-row-only cached pools with payload hashes, the existing
+task-split validation contexts, and a pinned two-task learner/checkpoint. Until
+those inputs pass preflight and the learner is qualified, no study result or
+split-or-stay verdict is available.
 
 ## Learner integration contract (qualification still required)
 

@@ -4239,6 +4239,16 @@
       "lanes": [],
       "scope": "QLT-04 FIFO launch software fixtures: private queue/lock, fixture signature verification, admission rechecks, persistent-ledger refusal and owned process cleanup. Not collected by a CI lane; no live Q1 study, model or sealed payload executes."
     },
+    "python:deploy/qualification/q1/harness/test_production_backend.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "QLT-01-F01 synthetic unit controls for deploy/qualification/q1/harness/production_backend.py: owner-scoped daemon.json bearer auth, strict loopback URL binding, redirect/proxy refusal, closed request/receipt validation, authoritative family SHA-1 format, and champion-program projection. Fixture controls only, not live Q1 qualification."
+    },
     "python:deploy/qualification/q1/harness/test_q1.py": {
       "discovery": {
         "kind": "python-family"
@@ -4954,16 +4964,6 @@
       "lanes": [],
       "scope": "H117 W5 identity-only provenance fixtures: unique candidates across manifest revisions, zero overlap yields UNPROVED_BOUNDED never PASS with W5 HELD, any family/dataset/view/prefix/catalog overlap fails proof 1, the lineage census separates pool-level parent fields from per-child lineage, catalog sealed ids parsed from the exclusion sentence only, and the manifest hash pin enforced. Synthetic only; no data payloads; no experiment admission or release qualification."
     },
-    "python:research/flywheel_selfplay/h150_w5_provenance_unblock/test_w5_proofs.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H150 synthetic controls for the identity-only sealed-family manifest (owner 293+470 definition enforcement, conservative union) and the three W5 provenance proofs (identity overlap and registry crosswalk, lineage/row-source census, no promotion of missing evidence). No sealed rows, outcomes or real identities in the fixture suite; offline research only."
-    },
     "python:research/flywheel_selfplay/h119_gbm_ctx_confirm/test_h119.py": {
       "discovery": {
         "kind": "python-family"
@@ -5133,6 +5133,16 @@
       ],
       "lanes": [],
       "scope": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+    },
+    "python:research/flywheel_selfplay/h150_w5_provenance_unblock/test_w5_proofs.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H150 synthetic controls for the identity-only sealed-family manifest (owner 293+470 definition enforcement, conservative union) and the three W5 provenance proofs (identity overlap and registry crosswalk, lineage/row-source census, no promotion of missing evidence). No sealed rows, outcomes or real identities in the fixture suite; offline research only."
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
@@ -5533,6 +5543,16 @@
       ],
       "lanes": [],
       "scope": "Owner-requested W5 provenance-preflight synthetic metadata controls: body reads refused before any S3 call, counter hashes over bytes, unknown counts kept null, and refusal of pair and row-closure shortcuts (strat300 nq=0, siblings, wrong cut or alias, sentinels, AST similarity, missing operator or evaluator provenance). None admits data or qualifies W5."
+    },
+    "python:research/flywheel_selfplay/rnk10_r882_acceptance/test_import_checkpoint.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract)."
     },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
       "discovery": {

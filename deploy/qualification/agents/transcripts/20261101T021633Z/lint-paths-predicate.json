@@ -1,0 +1,15 @@
+{
+  "command": [
+    "git",
+    "grep",
+    "-nE",
+    "/home/[a-z]+/",
+    "--",
+    "crates/*/src",
+    "crates/*/tests",
+    "deploy/systemd",
+    ".github"
+  ],
+  "git_grep_exit": 1,
+  "lint_result": "PASS_NO_MATCHES"
+}
