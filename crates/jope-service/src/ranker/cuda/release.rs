@@ -160,6 +160,7 @@ fn catalog(bytes: &[u8], schema: &str, bundle: &str) -> Result<ReleaseCatalog> {
 /// Load the complete r882 closure directly from an authenticated executable.
 /// The same fixed catalog, release key, hashes and tensor inventories as the
 /// explicit host loader apply. There are no sidecars, downloads or test keys.
+#[cfg(unix)]
 pub fn load_r882_embedded(package: &jope_assets::Package) -> Result<VerifiedBundle> {
     use crate::ranker::bundle::EmbeddedAsset;
     let limits = BundleLimits::default();

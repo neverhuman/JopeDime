@@ -30,6 +30,7 @@ pub mod lex;
 /// Objective evaluation types and helpers.
 pub mod objective;
 /// Authenticated embedded proposal runtime and its appliance capability record.
+#[cfg(unix)]
 pub mod proposal;
 /// Public response projection and claim-level filtering.
 pub mod public;

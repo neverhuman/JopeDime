@@ -24,7 +24,6 @@ chrono = "=0.4.45"
 futures-util.workspace = true
 anyhow.workspace = true
 jope-runtime = { path = "../jope-runtime" }
-jope-assets = { path = "../jope-assets" }
 # Keep the appliance/service graph Rust-only; the research fitted C++ runtime is unused here.
 feat-math = { path = "../feat-math", default-features = false }
 rand_chacha = "=0.3.1"
@@ -53,6 +52,7 @@ tower = { version = "=0.5.3", default-features = false, features = ["util"] }
 portable-pty = "=0.9.0"
 
 [target.'cfg(unix)'.dependencies]
+jope-assets = { path = "../jope-assets" }
 libc = "=0.2.189"
 nix = { workspace = true }
 

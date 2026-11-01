@@ -232,9 +232,12 @@ impl InProcessEngine {
         home: impl AsRef<Path>,
         executable: impl AsRef<Path>,
     ) -> Result<Self, EngineError> {
+        #[cfg(unix)]
         let ranker = crate::proposal::from_self().map_err(|error| {
             EngineError::Runtime(format!("embedded proposal integrity: {error:#}"))
         })?;
+        #[cfg(not(unix))]
+        let ranker: Option<crate::run::learned::AdmittedRanker> = None;
         let home = home.as_ref();
         let lock = Arc::new(EngineLock::acquire(home)?);
         let store = Arc::new(Store::open(home)?);

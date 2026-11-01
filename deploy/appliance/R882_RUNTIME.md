@@ -12,6 +12,9 @@ frozen semantic/tensor catalog, and install `AdmittedRanker::r882`. They then us
 the existing discovery, proposal admission, fold evaluation, native final refit,
 persisted model, export and prediction paths. No numerical algorithm is replaced.
 The daemon retains that same activity/ranker object when opening its listener.
+The embedded bridge uses the existing Unix-only appliance asset reader. Its
+dependency is target gated so standalone Windows service builds retain their
+existing graph; this change does not qualify a Windows embedded appliance.
 
 The closure is the existing RNK-10 export's 56 files, under `model/r882/`, including
 DOPE, JOPE, feature metadata, bank, golden tensors, semantic manifest and release
