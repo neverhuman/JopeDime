@@ -81,11 +81,14 @@ enum Command {
         #[arg(long)]
         release_key: Option<PathBuf>,
         /// Development scope: the signed package to write.
-        #[arg(long, conflicts_with = "stage")]
+        #[arg(long, conflicts_with_all = ["stage", "rehearsal"])]
         out: Option<PathBuf>,
         /// Release scopes: the stage directory to create for external signing.
-        #[arg(long)]
+        #[arg(long, conflicts_with = "rehearsal")]
         stage: Option<PathBuf>,
+        /// Internal full-profile inspection only; never signable or sealable.
+        #[arg(long)]
+        rehearsal: Option<PathBuf>,
         #[arg(long)]
         receipt: Option<PathBuf>,
     },
@@ -263,6 +266,7 @@ fn run(cli: Cli) -> Result<bool> {
             release_key,
             out,
             stage,
+            rehearsal,
             receipt,
         } => {
             let request = pack::PackRequest {
@@ -276,10 +280,11 @@ fn run(cli: Cli) -> Result<bool> {
                 target: &target,
                 release_key: release_key.as_deref(),
             };
-            let output = match (&out, &stage) {
-                (Some(out), None) => pack::Output::Development { out },
-                (None, Some(dir)) => pack::Output::Stage { dir },
-                _ => anyhow::bail!("give --out (development scope) or --stage (release scopes)"),
+            let output = match (&out, &stage, &rehearsal) {
+                (Some(out), None, None) => pack::Output::Development { out },
+                (None, Some(dir), None) => pack::Output::Stage { dir },
+                (None, None, Some(dir)) => pack::Output::Rehearsal { dir },
+                _ => anyhow::bail!("give exactly one of --out, --stage or --rehearsal"),
             };
             pack::pack(&request, output, receipt.as_deref())?;
             Ok(true)

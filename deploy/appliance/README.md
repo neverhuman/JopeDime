@@ -120,3 +120,20 @@ cross-fitted during selection and stored in the model file; columns an objective
 features. See [the objective guide](../../docs/regression-objectives.md) and
 [41 executable recipes](../../examples/objectives/README.md). Order-dependent objectives require
 chronological forward validation; defaults remain RMSE.
+
+### Internal full-asset rehearsal
+
+`build.sh --profile full --rehearsal` builds the same `embedded,engine,mcp,client`
+CPU executable and resolves every full-profile asset, hash and rights record. It
+writes `rehearsal/frames.bin`, `manifest.json` and `rehearsal.json` for internal
+inspection while a promised runtime method is unavailable. The receipt records
+the intended method roster and every unavailable method; no capability is enabled
+or qualified by packaging its weights. Asset, rights and payload blockers still
+refuse the operation. This mode requires the full internal-restricted profile and
+its explicit owner acknowledgement.
+
+This output is not a release candidate: it contains no footer, signing message or
+sealable stage, and `jope-dist seal` refuses it. Normal `pack --stage` retains its
+unavailable-method refusal. A full signed candidate and actual release gates still
+require the proposal runtime implementation. Do not submit a rehearsal to signing
+or report source controls as release-gate passes.
