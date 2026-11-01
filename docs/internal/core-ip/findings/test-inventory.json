@@ -5493,6 +5493,10 @@
     "python:research/flywheel_selfplay/h190_ens10_indep_folds/test_h190.py": {
       "role": "research",
       "reason": "H190 synthetic/data-free design and selector controls for ENS10/RENS10 confirmation with independent fold seeds per outer seed; no production promotion"
+    },
+    "python:research/flywheel_selfplay/h193_invalid_veto/test_h193.py": {
+      "role": "research",
+      "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
