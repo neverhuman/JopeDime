@@ -1059,12 +1059,15 @@ mod tests {
             "--json",
         ])
         .unwrap();
+        let crate::cli::Command::Run(csv) = csv.command else {
+            panic!("expected run command")
+        };
         assert_eq!(
-            csv.0.input.as_deref(),
+            csv.input.as_deref(),
             Some(std::path::Path::new("data/train.csv"))
         );
-        assert_eq!(csv.0.languages, ["rust", "python"]);
-        assert!(csv.0.dataset.is_none());
+        assert_eq!(csv.languages, ["rust", "python"]);
+        assert!(csv.dataset.is_none());
         let required = [
             "--dataset",
             "ds_0123456789abcdef01234567",
