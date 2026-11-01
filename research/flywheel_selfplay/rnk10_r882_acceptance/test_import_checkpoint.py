@@ -50,5 +50,5 @@ def test_state_dtype_contract_allows_only_int64_grid_indices() -> None:
     }
     module.validate_state_dtypes(state)
     state["grid_idx_13"] = torch.arange(13, dtype=torch.int32)
-    with pytest.raises(ValueError, match="pinned int64"):
+    with pytest.raises(ValueError, match="grid_idx_13"):
         module.validate_state_dtypes(state)
