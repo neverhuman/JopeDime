@@ -165,3 +165,24 @@ effect, interval or subgroup verdict is supplied by this amendment.
 
 Small, large and narrow retain their original inferential requirements. Any later
 overall decision must identify R19; it cannot claim a wide subgroup verdict.
+
+## Current T1115 deduplicated plan — 2026-11-01
+
+**Q1 NOT RUN / INCOMPLETE / signable:false.** The latest owner direction requires
+five distinct wide families and supersedes the historical R19 exception for this
+new plan. [T1115](PREREG-AMENDMENT-T1115.md) selects 97 frozen owner families from
+the unchanged153-record source packet by the existing minimum-SHA rule, excluding
+56 same-family variants. The four old wide records contain two RECS members of
+one owner family; the selected97 therefore contain only three wide families.
+
+| Subgroup | Selected distinct families | Required | Q1 result |
+|---|---:|---:|---|
+| small | 70 | 5 | UNKNOWN — Q1 NOT RUN |
+| large | 27 | 5 | UNKNOWN — Q1 NOT RUN |
+| narrow | 94 | 5 | UNKNOWN — Q1 NOT RUN |
+| wide | 3 | 5 | INCOMPLETE — two families short; no result |
+
+The full pinned4750-row catalog census supplies no additional wide member bound
+to these97 owner families. No row is duplicated or family reclassified to fill
+the gap. Primary estimates/intervals/subgroup verdicts, failures and study compute
+remain unknown. Actual evaluator/runtime/closure/signature gates still apply.
