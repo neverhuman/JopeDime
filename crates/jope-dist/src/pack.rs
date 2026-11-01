@@ -213,7 +213,7 @@ fn stage_for(
                 .is_some_and(|ack| request.repo.join(ack).is_file()),
             "full rehearsal requires an explicit owner acknowledgement"
         );
-        let method_blockers: Vec<String> = jope_runtime::methods::unexecutable(&locked.methods)?
+        let method_blockers: Vec<String> = jope_service::proposal::uncompiled(&locked.methods)?
             .into_iter()
             .map(|(id, reason)| format!("method {id}: {reason}"))
             .collect();
@@ -251,7 +251,13 @@ fn stage_for(
         ensure!(version.status.success(), "candidate runtime probe failed");
         let version: serde_json::Value = serde_json::from_slice(&version.stdout)
             .context("candidate must report its compiled runtime as version JSON")?;
-        validate_proposal_build(&version, request.source_sha)?;
+        let methods = std::process::Command::new(request.code.canonicalize()?)
+            .args(["methods", "--json"])
+            .output()
+            .context("probe the candidate's compiled proposal adapter")?;
+        ensure!(methods.status.success(), "candidate method probe failed");
+        let methods: serde_json::Value = serde_json::from_slice(&methods.stdout)?;
+        validate_proposal_build(&version, &methods, request.source_sha)?;
     }
     match Package::open_with_keys(request.code, &[]) {
         Ok(None) => {}
@@ -339,7 +345,18 @@ fn stage_for(
     Ok((staged, code, key, profile))
 }
 
-fn validate_proposal_build(version: &serde_json::Value, source: &str) -> Result<()> {
+fn validate_proposal_build(
+    version: &serde_json::Value,
+    methods: &serde_json::Value,
+    source: &str,
+) -> Result<()> {
+    ensure!(
+        methods["methods"].as_array().is_some_and(|records| records
+            .iter()
+            .any(|record| record["id"] == jope_service::proposal::METHOD
+                && record["compiled"] == true)),
+        "candidate does not contain the compiled r882 proposal adapter"
+    );
     ensure!(
         version["features"]["engine"] == true && version["features"]["embedded"] == true,
         "r882 requires an embedded Engine build"
@@ -447,7 +464,7 @@ pub fn pack(
             std::fs::write(dir.join("frames.bin"), &staged.frames)?;
             std::fs::write(dir.join("manifest.json"), &staged.manifest_bytes)?;
             let unavailable: Vec<serde_json::Value> =
-                jope_runtime::methods::unexecutable(&staged.manifest.methods)?
+                jope_service::proposal::uncompiled(&staged.manifest.methods)?
                     .into_iter()
                     .map(|(id, reason)| serde_json::json!({"id": id, "reason": reason}))
                     .collect();
@@ -602,7 +619,9 @@ mod executable_target_tests {
         let source = "1".repeat(40);
         let good = serde_json::json!({"source_sha40":source,
             "features":{"engine":true,"embedded":true},"trusts_development_key":false});
-        super::validate_proposal_build(&good, &source).unwrap();
+        let methods =
+            serde_json::json!({"methods":[{"id":jope_service::proposal::METHOD,"compiled":true}]});
+        super::validate_proposal_build(&good, &methods, &source).unwrap();
         for (path, value) in [
             ("/features/engine", serde_json::json!(false)),
             ("/features/embedded", serde_json::json!(false)),
@@ -612,11 +631,19 @@ mod executable_target_tests {
             let mut bad = good.clone();
             *bad.pointer_mut(path).unwrap() = value;
             assert!(
-                super::validate_proposal_build(&bad, &source).is_err(),
+                super::validate_proposal_build(&bad, &methods, &source).is_err(),
                 "{path}"
             );
         }
-        assert!(super::validate_proposal_build(&serde_json::json!({}), &source).is_err());
+        for methods in [
+            serde_json::json!({}),
+            serde_json::json!({"methods":[]}),
+            serde_json::json!({"methods":[{"id":jope_service::proposal::METHOD,"compiled":false}]}),
+            serde_json::json!({"methods":[{"id":"proposal.step60000.regression","compiled":true}]}),
+        ] {
+            assert!(super::validate_proposal_build(&good, &methods, &source).is_err());
+        }
+        assert!(super::validate_proposal_build(&serde_json::json!({}), &methods, &source).is_err());
     }
 
     fn x86_64_elf() -> Vec<u8> {
