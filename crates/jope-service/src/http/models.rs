@@ -580,7 +580,7 @@ mod tests {
         let dir = tempfile::tempdir_in(root).unwrap();
         let state = open_state(dir.path());
         let run = RunId::new();
-        let parts = BTreeMap::from([
+        let parts: BTreeMap<String, Vec<u8>> = BTreeMap::from([
             (
                 INPUT_PART.into(),
                 include_bytes!("../../../jope-runtime/tests/fixtures/math-pipeline/input.json")
