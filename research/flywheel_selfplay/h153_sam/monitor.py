@@ -1,4 +1,4 @@
-"""External supervisor: includes its own thread/RSS, never resumes cells."""
+"""External supervisor: includes its own thread/RSS and stops on any guard breach."""
 
 import argparse
 import datetime
@@ -35,12 +35,13 @@ def classify(s):
         (s["rss"] >= 6_000_000_000, "RSS"),
         (s["threads"] > 4, "TOTAL_THREADS"),
         (s["free"] < 40_000_000_000, "DISK"),
+        (s["disk_used"] >= 0.95, "DISK_USED"),
         (s["scratch"] >= 3_000_000_000, "SCRATCH"),
     ]:
         if bad:
             return "abort", why
     if s["load"] > 85 or s["available"] < 16 * 1024**3:
-        return "pause", "HOST_PRESSURE"
+        return "abort", "HOST_PRESSURE"
     return "run", None
 
 
@@ -60,11 +61,14 @@ def sample(root, child=None):
         except psutil.NoSuchProcess:
             pass
     fs = os.statvfs(root)
+    if fs.f_blocks <= 0:
+        raise RuntimeError("filesystem reports no blocks")
     return dict(
         utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         rss=rss,
         threads=threads,
         free=fs.f_bavail * fs.f_frsize,
+        disk_used=(fs.f_blocks - fs.f_bfree) / fs.f_blocks,
         scratch=sum(
             p.stat().st_size
             for tree in (Path("/home/ubuntu/jope-data/h153"),)
@@ -80,7 +84,6 @@ def stop(child):
     if child and child.poll() is None:
         try:
             os.killpg(child.pid, signal.SIGTERM)
-            os.killpg(child.pid, signal.SIGCONT)
         except ProcessLookupError:
             return
         try:
@@ -108,23 +111,15 @@ def main():
     record = dict(
         status="WAITING",
         stages=[],
-        pauses=[],
         nice=os.getpriority(os.PRIO_PROCESS, 0),
         host=os.uname().nodename,
     )
     started = time.monotonic()
-    paused = False
-    pause_start = None
     try:
-        while True:
-            s = sample(c)
-            action, why = classify(s)
-            if action == "abort":
-                raise RuntimeError("prelaunch guard " + why)
-            if action == "run":
-                break
-            print("WAIT host pressure", flush=True)
-            time.sleep(15)
+        s = sample(c)
+        action, why = classify(s)
+        if action != "run":
+            raise RuntimeError("prelaunch guard " + str(why))
         cmd = [
             sys.executable,
             "-B",
@@ -149,17 +144,6 @@ def main():
                     action, why = classify(s)
                     if action == "abort":
                         raise RuntimeError("guard " + why)
-                    if action == "pause" and not paused:
-                        os.killpg(child.pid, signal.SIGSTOP)
-                        paused = True
-                        pause_start = time.monotonic()
-                        record["pauses"].append(dict(start=s["utc"], reason=why))
-                    elif paused and s["load"] < 80 and s["available"] >= 16 * 1024**3:
-                        os.killpg(child.pid, signal.SIGCONT)
-                        paused = False
-                        record["pauses"][-1].update(
-                            end=s["utc"], seconds=time.monotonic() - pause_start
-                        )
                     time.sleep(0.25)
             code = child.wait()
             record["exit_status"] = code
