@@ -53,6 +53,60 @@ fn user_objectives_keep_runtime_identity_and_refuse_unavailable_inputs() {
 }
 
 #[test]
+fn q1_threefold_worker_executes_all_validation_rows_and_scores() {
+    use crate::{dataset::jmat, worker};
+    let mut csv = String::from("x,target\n");
+    for x in 0..60 {
+        csv.push_str(&format!("{x},{}\n", 3 * x + 2));
+    }
+    let table = jope_runtime::table::parse_csv(csv.as_bytes(), &Default::default()).unwrap();
+    let bytes = jmat::encode(&table).unwrap();
+    let matrix = jmat::Matrix::open(&bytes).unwrap();
+    let folds: Vec<_> = (0..3)
+        .map(|fold| json!({"repeat":0,
+            "train":(0..60).filter(|row| row / 20 != fold).collect::<Vec<_>>(),
+            "validation":(fold * 20..(fold + 1) * 20).collect::<Vec<_>>()}))
+        .collect();
+    let mut request = worker::Request {
+        attempt: worker::Attempt {
+            run: "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0".parse().unwrap(),
+            round: 0, slot: 0, attempt: 0,
+        },
+        matrix_path: "unused-direct-callback.jmat".into(),
+        fold_spec: json!({"version":2,"matrix_sha256":jope_runtime::sha256_hex(&bytes),
+            "target":"target","features":["x"],"folds":folds}),
+        dsl: "(pipe X (ridge lambda_frac=0.01))".into(),
+        objective: json!("rmse"), seed: 0,
+        limits: worker::Limits { wall_ms: 30_000, rss_bytes: 1_073_741_824 },
+    };
+    let scores = worker::evaluate::native(&request, &matrix).unwrap();
+    assert_eq!(scores.fold_scores.len(), 3);
+    assert_eq!(scores.values.len(), 3);
+    assert!(scores.values.iter().all(|v| v.is_finite()));
+    assert!(scores.values[0] < 100.0);
+    assert!((scores.values[1] - scores.fold_scores.iter().sum::<f64>() / 3.0).abs() < 1e-12);
+    assert!(scores.fold_scores[1] < scores.fold_scores[0]);
+    assert_eq!(scores.predictions_digest.len(), 64);
+    // Rotating the three validation partitions preserves all-fold aggregates;
+    // predictions are hashed in the pinned fold order.
+    request.fold_spec["folds"].as_array_mut().unwrap().rotate_left(1);
+    let rotated = worker::evaluate::native(&request, &matrix).unwrap();
+    assert!((rotated.values[0] - scores.values[0]).abs() < 1e-12);
+    assert!((rotated.values[1] - scores.values[1]).abs() < 1e-12);
+    assert_ne!(rotated.predictions_digest, scores.predictions_digest);
+    // Invalid third folds must not escape validation after two good folds.
+    for bad in [
+        json!({"repeat":1,"train":(0..40).collect::<Vec<_>>(),"validation":(40..60).collect::<Vec<_>>()}),
+        json!({"repeat":0,"train":(0..40).collect::<Vec<_>>(),"validation":(0..20).collect::<Vec<_>>()}),
+        json!({"repeat":0,"train":(0..40).collect::<Vec<_>>(),"validation":(41..61).collect::<Vec<_>>()}),
+    ] {
+        request.fold_spec["folds"] = json!(folds);
+        request.fold_spec["folds"][2] = bad;
+        assert_eq!(worker::evaluate::native(&request, &matrix).unwrap_err(), worker::WorkerFailure::InvalidRequest);
+    }
+}
+
+#[test]
 fn frozen_s1_surrogate_extrapolates_beyond_each_training_fold_range() {
     use crate::{dataset::jmat, worker};
     // Data-free regression control: independent frozen S1 recipe, two disjoint
