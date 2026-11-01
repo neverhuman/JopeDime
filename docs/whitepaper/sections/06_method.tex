@@ -8,7 +8,8 @@
 
 The reference procedure uses verified search to train a program writer
 and a separate problem--program map that ranks scored programs.
-Deployment permits one draw from the writer, with the map absent.
+The proposed deployment protocol permits one draw from the writer, with
+the map absent.
 We describe the historical reference first, then the later
 adapter-ranking record in \cref{sec:method-status}. Ranking a pool and
 proposing a new program are different tasks. The writer's first-proposal
@@ -100,8 +101,8 @@ CLIP-style alignment across problems and programs.
 A Bradley--Terry term on the same lists sharpens the top \citep{bradley1952rank}. Stillborn moves
 have no score, so this ranking objective covers only programs that run.
 
-A program-only head
-trained beside it tests whether the map reads the problem at all (\cref{sec:results}).
+A program-only head trained beside it provides a control for testing
+whether the map uses problem context (\cref{sec:results}).
 
 \begin{keyidea}
 The reference game-day protocol omits the ranking map. Its single proposal
@@ -166,11 +167,11 @@ Losing moves still teach. A median-ranked program carries about a tenth
 of the top-ranked program's weight in the writer loss. Its referee score also contributes
 to the map's ranking targets.
 
-Two ratchets make this self-play rather than imitation of a fixed archive (\cref{sec:game}). A
-program displaces a board's incumbent only by strictly beating it.
+The reference procedure uses two ratchets (\cref{sec:game}). A program
+displaces a board's incumbent only by strictly beating it.
 
-A retrained writer takes the held-out
-admission test: 16 cuts with three seeds each. It replaces the serving writer
+Under the reference admission rule, a retrained writer faces 16 cuts with
+three seeds each. It replaces the serving writer
 only if its mean log error ratio favors it. It must also win at least as
 many cuts as it loses and fail no more often.
 %

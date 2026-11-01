@@ -26,7 +26,7 @@ All arms use the H132 CONTROL objective and batch-plan generator, batch size 16,
 
 **Attempt disclosure:** Calibration attempt 1 completed CONTROL-160 and SGDM `0.001`-160, then was voided when load1 reached `87.96` before SGDM `0.003` update 160; it had persisted no drift values. No assessment payload/outcome metric was read. Receipt [calibration_attempt_001.json](calibration_attempt_001.json) records the stop. Attempt 2 is the complete calibration above; every completed trajectory was persisted before proceeding.
 
-Seeds for the three main arms are `133, 134, 135` (prior-use search found no collision). The SGDM LR is frozen once from seed-133 fit-only calibration and is reused unchanged for all three main seeds. No assessment tuning or post-hoc rate changes are allowed.
+The original preregistration seeds were `133, 134, 135`. Prospective A6 replaces 135 with 138 because H135 owns 135–137. The SGDM LR remains frozen from seed-133 fit-only calibration and is reused unchanged for all three main seeds. No assessment tuning or post-hoc rate changes are allowed.
 
 **Calibration implementation pins:** H133's fit-only calibration runner is `calibrate_fit_only.py` (SHA-256 `862f2f13c7c441a5c888a7e293668139fab6d002a9c33083d0110b88e75c6edb`). It uses the H132 helper file SHA-256 `4d3e8182e674410b179e13ec2cadba21e1715c65b677053fd776a2dfe4a65673`; this is the amended final H132 helper, not its originally preregistered `c1bb24c9` version. H132 Amendment A1 reports three edits: DL-Train pool-key loading, a BITFIT trainable-count/DOPE guard correction, and seeded Fisher / Step-4 tie handling. H133 calibration uses its own fit-only input loader and does not invoke H132's Fisher or fold-0/Step-4 code; it uses the helper's batch-stream seed and per-context loss definitions. Imported helper modules are pinned to source commit `30be5edb79b0ce1406aa0367d68019c9a3a3c1e1` with SHA-256s: `756960a0e2bfdf23e75012fb347ce772fb6fdeaa4fb4fc2d4178dfaeb9eac9da` (`h48/run.py`), `56fd220689805f07877ae403c2f00a4b34831cc4b2919f4bd69807ff3c21f4bc` (`h55/runner.py`), `85aa59e9c4bee62805ed6c388364611b3a7cdb772a19017eeae848819c2cb318` (`h53b/runner.py`), `604d02ed72a6149284792cba315124efd1ffe8cac79e5ace22613db86c11b4c3` (`h59/runner.py`), `645bf1470789c4f5bcc97809f703b04d9a594a21dd9d3aa8c2fd4e98810d0320` (`h46/run.py`).
 
@@ -46,8 +46,27 @@ Report family-paired Elo (not AUC), continuous mean regret, per-seed gains, adap
 
 ## Resource and execution guards
 
-CPU only; launched at `nice 19`; at most 4 threads; RSS `<= 6 GiB`; `MemAvailable >= 30 GiB`; load1 `<= 86.7`; `/` disk usage strictly `< 93.8%`; H133 scratch strictly `< 2 GiB`. Abort at a violated guard. No GPU, no `qualification.lock`, no reads from DL-Val, outer-test, sealed, or holdout. Custody: `/home/ubuntu/jope-rescue-20260921/h133-optim-geometry/`.
+CPU only; launched at `nice 19`; at most 4 threads; RSS `<= 6 GiB`; `/` disk usage strictly `< 93.8%`; H133 scratch strictly `< 2 GiB`; host CPU `<=85%`. These guards remain hard aborts. A6 changes only load and available memory to PAUSE-AND-WAIT: send SIGSTOP when load1 > 86.7 or MemAvailable < 30 GiB; send SIGCONT only after load1 < 80 and MemAvailable >= 34 GiB continuously for 60 seconds. The launcher records pause/resume events and resource snapshots. Four-hour wall budget includes pause time. No GPU, no `qualification.lock`, no reads from DL-Val, outer-test, sealed, or holdout. Custody: `/home/ubuntu/jope-rescue-20260921/h133-optim-geometry/`.
 
 ## Scope and status
 
 This document preregisters only H133. No serving/promotion claim follows from any result. Execution is authorized only after this preregistration has merged. All trial, void, and restart attempts must be reported; no unlogged reruns.
+
+
+## Prospective amendment A6 — owner authorization t1630 / t1715
+
+A6 is limited to the execution launcher/resource guard and documentation. It does not change the hypothesis, objective, arms, update counts, split, fold seed `133100`, batch plans, metrics, admission thresholds, or statistical gates. Main seeds are `133, 134, 138`; seed 138 replaces seed 135, which is owned by H135. No H133 seed 135 cell was run.
+
+The load and MemAvailable thresholds now pause execution through the supervised launcher. The worker sends SIGSTOP on a load1 > 86.7 or MemAvailable < 30 GiB observation; the launcher sends SIGCONT only after load1 < 80 and MemAvailable >= 34 GiB have both held continuously for 60 seconds. Each pause and resume is written to `pause_events.jsonl`, with periodic host/resource snapshots in `resources.jsonl`. Other resource checks remain hard aborts. CPU only, nice 19, at most four threads, no qualification.lock, and the four-hour cap includes startup, active work, and pauses. DOPE SHA `c51a56d0…` is verified before and after each cell.
+
+The executor has separate source, data, and fresh run roots so attempt 013 cannot resume or overwrite attempts 001–012. The launcher validates the pinned runner and refuses an existing run root. It runs the exact r882 regression first; the required family-utility reproduction is `1.1377942`. No treatment cell may start unless that exact regression passes. The preferred host is xbabe1 if the complete train-only input closure is below 2 GB; the measured H50 input directory is 457,391,900 bytes locally and 175,187,219 bytes on xbabe1 before staging the missing tables and r882 checkpoint. The final host and staged closure hashes must be recorded in the launch receipt.
+
+### Complete attempt disclosure through attempt 012
+
+- Attempts 001–007: startup/import/thread voids before any outcome. They are preserved as `startup_attempt_001.json` through `startup_attempt_007.json`; no optimizer updates or assessment scores.
+- Attempts 008–009: exact r882 regression passed, then executor/thread initialization stopped before a treatment update; zero treatment outcomes.
+- Attempt 010: CONTROL seed 133 performed 40 fit updates, then a fit-only predictor caused a KeyError before any assessment model prediction. The 40 updates are unscored and void.
+- Attempt 011: load guard stopped execution before input reads or scoring.
+- Attempt 012: exact regression passed; CONTROL seed 133 completed 40 updates (adapter drift 0.4389823302707865; fold-0 family utility 1.0960967447286205). LOWLR_LONG seed 133 performed 100/160 fit-only updates, then load1 424.13 > 86.7 and MemAvailable 21.64 GiB < 30 GiB. It produced no assessment outcome or cell receipt; these 100 updates are unscored and void. The run held `qualification.lock`, contrary to the no-lock protocol; the lock was released on exit. This deviation is disclosed and A6 must not acquire that lock.
+
+A6 is a prospective amendment; it does not repair or reclassify any prior attempt. The merged amendment and exact regression gate are required before the single next launch. No automatic retry or resume is allowed.
