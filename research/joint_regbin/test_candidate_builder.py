@@ -27,6 +27,16 @@ def rederive_synthetic_role_admission(monkeypatch):
         return manifest
 
     monkeypatch.setattr(builder.admission, "rederive_role_manifest", rederive)
+    monkeypatch.setattr(
+        builder.admission,
+        "verify_family_key_pool_manifest",
+        lambda manifest, _catalog: {
+            "catalog_sha256": manifest["catalog_sha256"],
+            "eligibility_verified": False,
+            "fold_count": 0,
+            "payloads_opened": 0,
+        },
+    )
 
 
 def _inputs(task="regression", role="train"):

@@ -127,9 +127,9 @@ or protected-roster inputs.
 The admission inputs require a family's nonsealed status to be established
 before assigning TRAIN or validation roles. The approved v246 catalog supplies
 identities and TRAIN-file hashes, but no reviewed nonsealed eligibility
-evidence. Every unverified family is therefore withheld: `fold_by_family` and
-`fold_splits` stay empty, and the receipt records the withheld family and
-dataset counts. Metadata-only preflight reports
+evidence. Every unverified family is therefore withheld: the fail-closed pool
+receipt has empty `fold_by_family` and `fold_splits` maps and records withheld
+family and dataset counts. Metadata-only preflight reports
 `METADATA_ONLY_NONSEALED_STATUS_UNVERIFIED`, zero folds, and
 `eligibility_verified:false`. Presence in the catalog does not establish
 permission. No role is inferred and no payload is opened.
@@ -142,8 +142,9 @@ study can run.
 ### Train-only candidate tensor builder (ENG:watcher R22)
 
 `candidate_builder.py` supplies the train-only cache construction seam. It
-requires an ADMITTED role manifest that passes `admission.rederive_role_manifest`
-and an exact family-key identity. Metadata-only role candidates are refused;
+rederives the zero-role family-key pool and requires an ADMITTED role manifest
+that passes `admission.rederive_role_manifest`. Metadata-only role candidates
+and provisional nonempty family folds are refused;
 the current approved catalog has no reviewed nonsealed-family evidence, so the
 family pool has no folds and cannot authorize payload reads. When a reviewed
 admission exists, the builder reads only

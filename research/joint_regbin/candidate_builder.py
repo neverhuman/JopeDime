@@ -92,6 +92,17 @@ def validate_catalog_train_context(
         == 0,
         "unverified family roles must remain withheld",
     )
+    source_catalog = catalog_path or admission.DEFAULT_ROLE_CATALOG
+    verified_pool = admission.verify_family_key_pool_manifest(
+        family_pools, source_catalog
+    )
+    _require(
+        verified_pool.get("catalog_sha256") == CATALOG_V246_SHA256
+        and verified_pool.get("eligibility_verified") is False
+        and verified_pool.get("fold_count") == 0
+        and verified_pool.get("payloads_opened") == 0,
+        "family-key pool did not rederive as metadata-only with zero roles",
+    )
     if catalog_path is None:
         admitted = admission.rederive_role_manifest(role_manifest)
     else:
@@ -236,6 +247,8 @@ def fetch_train_csv(
         "family",
         "role",
         "source_split",
+        "origin",
+        "has_meta_test",
         "train_rows",
         "columns",
         "train_sha256",
