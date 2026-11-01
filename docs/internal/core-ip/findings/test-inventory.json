@@ -5428,6 +5428,10 @@
       "role": "research",
       "reason": "H176 data-free controls for nested family-fraction data scaling, role isolation, zero-update baseline alignment, deterministic paired fitting, context-level Elo aggregation, and resource guards. No study data/checkpoint loaded by unit tests; diagnostic research only."
     },
+    "python:research/flywheel_selfplay/h180_adapter_ablation/test_h180.py": {
+      "reason": "Owner-requested H180 data-free controls for the adapter-contribution ablation and fresh-init update-budget dose (anchor-only scorer proof, prefix trajectory, axis=0 bootstrap, no-A-leak, verdicts, guards); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h179_deep_ensemble/test_h179.py": {
       "role": "research",
       "reason": "H179 data-free controls for grouped family separation, independent member seeds, score averaging before argmin, FIT-only batch construction, Holm/verdict boundaries, timing-only budget selection, CPU/resource guards, and seed-varying non-degenerate paired-family bootstrap retaining all 10,000 draws. Synthetic fixtures only; no study data or checkpoint loaded."
