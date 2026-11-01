@@ -3061,8 +3061,8 @@ mod tests {
             let (directory, service) = q1_service_fixture();
             let mut raw = q1_request(directory.path(), &service.store);
             let path = directory.path().join(format!("q1/protocols/{}.json", "a".repeat(64)));
-            let mut manifest: Q1ProtocolManifest = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
-            let binding = manifest.datasets.get_mut("0123456789abcdef").unwrap();
+            let mut manifest: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+            let mut binding: Q1DatasetBinding = serde_json::from_value(manifest["datasets"]["0123456789abcdef"].clone()).unwrap();
             match case {
                 0 => { binding.folds.pop(); }
                 1 => binding.folds[2].repeat = 1,
@@ -3073,14 +3073,15 @@ mod tests {
                 6 => { binding.folds[2].train.pop(); }
                 _ => { binding.folds[2].validation.pop(); }
             }
-            binding.cut_sha256 = q1_cut_sha256(binding).unwrap();
-            let mut value = serde_json::to_value(&*binding).unwrap();
+            binding.cut_sha256 = q1_cut_sha256(&binding).unwrap();
+            let mut value = serde_json::to_value(&binding).unwrap();
             value.as_object_mut().unwrap().remove("dataset_binding_sha256");
             binding.dataset_binding_sha256 = hash(&serde_json::to_vec(&value).unwrap());
             raw["dataset"]["cut_sha256"] = json!(binding.cut_sha256);
             raw.as_object_mut().unwrap().remove("request_sha256");
             let sha = canonical_sha256(&raw).unwrap();
             raw["request_sha256"] = json!(sha);
+            manifest["datasets"]["0123456789abcdef"] = serde_json::to_value(&binding).unwrap();
             std::fs::write(path, serde_json::to_vec(&manifest).unwrap()).unwrap();
             assert!(service.q1_evaluate_using(raw, || -> anyhow::Result<InlineQ1Native> {
                 panic!("invalid fold recipe must not prepare an executor")

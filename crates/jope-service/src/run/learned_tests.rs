@@ -102,7 +102,7 @@ fn q1_threefold_worker_executes_all_validation_rows_and_scores() {
     ] {
         request.fold_spec["folds"] = json!(folds);
         request.fold_spec["folds"][2] = bad;
-        assert_eq!(worker::evaluate::native(&request, &matrix).unwrap_err(), worker::WorkerFailure::InvalidRequest);
+        assert_eq!(worker::evaluate::native(&request, &matrix).err().unwrap(), worker::WorkerFailure::InvalidRequest);
     }
 }
 
