@@ -41,9 +41,6 @@ DEFAULT_FAMILY_EXCLUSION_PATH = (
 OWNER_ALIAS_RECEIPT_SHA256 = (
     "114c57bf328c3556315a4b69f2f230ee0987086bda5ee1043aa50016ad9147b4"
 )
-CATALOG_POOL_RECEIPT_SHA256 = (
-    "9f82ecb4df818975072071b5d6464f3b1b6b9478ce54c6eed84b09da2a400953"
-)
 FLYWHEEL_SELECTED_SHA256 = (
     "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1"
 )
@@ -1430,7 +1427,6 @@ def build_task_role_candidate_manifest_from_files(
     expected = {
         "catalog": CATALOG_V246_SHA256,
         "owner_alias": OWNER_ALIAS_RECEIPT_SHA256,
-        "catalog_pool": CATALOG_POOL_RECEIPT_SHA256,
         "selected": FLYWHEEL_SELECTED_SHA256,
         "flywheel_run": FLYWHEEL_RUN_MANIFEST_SHA256,
         "panel": ELO_PANEL_V1_SHA256,
@@ -1438,11 +1434,16 @@ def build_task_role_candidate_manifest_from_files(
     }
     raw = {name: path.read_bytes() for name, path in paths.items()}
     actual = {name: hashlib.sha256(data).hexdigest() for name, data in raw.items()}
-    if actual != expected:
+    if any(actual[name] != digest for name, digest in expected.items()):
         raise ValueError(
             "role-candidate input file hash differs from owner-pinned source"
         )
     objects = {name: json.loads(data) for name, data in raw.items()}
+    expected_catalog_pool = build_catalog_pool_manifest_from_files(
+        paths["catalog"], paths["owner_alias"]
+    )
+    if objects["catalog_pool"] != expected_catalog_pool:
+        raise ValueError("catalog-pool receipt differs from the rederived R15/D4 pool")
     return build_task_role_candidate_manifest(
         objects["catalog"],
         actual["catalog"],
