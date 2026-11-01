@@ -1,7 +1,7 @@
 {
   "schema": "jope.h147.preregistration/v2",
   "wave": "H147",
-  "status": "PREREGISTERED_EXECUTOR_READY",
+  "status": "COMPLETE_NO_ADVANCE",
   "authority": "/home/ubuntu/nudges/hwave_t0000_h147exec_gpu_fused_agy.md",
   "owner": "gpu_fused_agy",
   "prereg_owner": "rd_astra",
@@ -29,9 +29,9 @@
   ],
   "planned_cells": 45,
   "planned_optimizer_updates": 1800,
-  "actual_optimizer_updates": 0,
+  "actual_optimizer_updates": 1800,
   "actual_model_forwards": 0,
-  "executable_status": "IMPLEMENTED_PRE_EXECUTION",
+  "executable_status": "EXECUTED_COMPLETE",
   "execution_authorized": true,
   "serving_promotion": false,
   "one_use_ledger": "/home/ubuntu/jope_plan/ns/receipts/H147_exec_claim.txt",
@@ -116,6 +116,35 @@
       "smoke.started": "a0adcc575b4014f2a5ef8c63bba60e9f9e73a0d75ec521e37ad89e8e012da8d7",
       "smoke/audit.json": "f02f9bebb1829cef80c9c686b9b802fd7df106b3913467542953a36fb08056f3",
       "smoke/smoke.json": "75f775538f1dc2f383ea6ddc82b902a7c1122e8b225214e2f86cb951a296e090"
+    }
+  },
+  "completed_cells": 45,
+  "verdict": "NO_ADVANCE",
+  "best_advancing_arm": null,
+  "metrics_sha256": "47d1cb044a752d330fa51ff163e84b560b1912bb0913d1ecd31d6b9a2a915857",
+  "run_custody_receipts": {
+    "custody_dir": "/home/ubuntu/jope_plan/evidence/H147/run",
+    "pid": 1770724,
+    "started_utc": "2026-11-01T06:25:00.908857+00:00",
+    "wall_seconds": 2077.879971684888,
+    "peak": {
+      "threads": 3,
+      "rss": 3691053056,
+      "scratch": 12369682,
+      "load": 41.29248046875,
+      "disk_used": 0.9201,
+      "samples": 6539
+    },
+    "files_sha256": {
+      "launch.json": "3119d8b1ab8c9aaf14c1a044d986db33ea8a8b63f3e2ffe5e7f2de0929260d11",
+      "run-monitor.json": "91560e2f7b89ef895f74a08bded3def0da6877d2933914cad10ba455bf15589a",
+      "run-resources.jsonl": "743c51fce5f6b6100fbe61fabf6c85a7cf1f509e38349846ec6db96c4a49facf",
+      "run.started": "2d4b93335d3da04e2b5104aa51aa2f365b964ac88c023763ec60dfb64d71ec47",
+      "run/audit.json": "2190a7e415b24d9b32fb79113ad8f3c4b0440535b6b065dbaea66c26780d1d17",
+      "run/baseline.json": "1b9eb9336b1df8c8fa3236d6d8a5dffb639d6939b0e6abb9a73f74358e91711f",
+      "run/baseline_train.json": "e820b84b16ee7c0afc849996ec9915301d5d43f67d3273ca3818f4393d8de77a",
+      "run/exec_claim.json": "a60319d30da1e63dbfe33af3f84d73e7f53f1fa2926eeab1c068f25c52dc6c57",
+      "run/metrics.json": "47d1cb044a752d330fa51ff163e84b560b1912bb0913d1ecd31d6b9a2a915857"
     }
   }
 }
