@@ -8,7 +8,7 @@ feature_sets = [
   ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
 ]
 
-# Never in the normal or build closure of `jopedime`.
+# Denied in the normal/build closure unless an exact scoped package exception below applies.
 deny = [
   # Python, LibTorch and external ML runtimes.
   # Additional CPU appliance bans from spec §3.4.
@@ -18,12 +18,12 @@ deny = [
   "jope-parallel", "jope-learning", "jope-campaigns", "jope-bench", "jope-pipeline",
   "jope-datasets", "jope-models", "jope-arena", "jope-engine", "jope-ci", "jope-dist",
   "jain-*", "scq", "hyperion", "starforge", "jope-encoders",
-  # Network clients and TLS: the appliance never fetches anything.
+  # Remote-fetch/TLS stacks stay out; full v1 loopback HTTP exceptions are scoped below.
   "object_store", "reqwest", "hyper", "ureq", "rustls", "aws-*", "openssl*", "native-tls",
   # The zstd C library is the packer's encoder only; the appliance decodes with ruzstd.
   "zstd", "zstd-safe", "zstd-sys",
-  # The CPU/native edition carries no Candle or CUDA. The neural build amends this list in the
-  # same reviewed change that adds the CUDA linkage gate (AMENDMENTS.md A3).
+  # Minimal builds exclude tensor runtimes. Full v1 CPU exceptions pin the reviewed versions
+  # and CPU features below; CUDA/native backends remain separately fenced (AMENDMENTS.md A3).
   "candle-*", "cudarc", "gemm*", "ug*", "tokenizers", "onig*",
 ]
 
