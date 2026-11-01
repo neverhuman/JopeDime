@@ -20,10 +20,13 @@ quality qualification is absent. Report `prior_only` and the objective mismatch
 warning for objectives outside the authenticated trained set. The user objective
 continues to control every promotion.
 
-The implementation reuses the real HTTP/worker/discovery path. Controls cover
-signature/tensor corruption refusal, actual learned forwards, stable replay across
-worker counts, landmark/revealed-fitness influence and objective promotion. The
-bounded TRAIN-only paired A/B is preregistered in PREREG.md before outcome access.
+The implementation reuses the real HTTP/worker/discovery path. The v2 worker
+retains the exact frozen F/gate and RMSE fold channel while independently scoring
+the user objective in the promotion loss/value channels. Unsupported ordered or
+auxiliary-column objectives still refuse on this numeric random-split path.
+Acceptance requires signature/tensor corruption refusal, actual learned forwards,
+stable replay, landmark/revealed-fitness influence and objective promotion. The
+bounded TRAIN-only paired A/B is preregistered in PREREG.json before outcome access.
 H157 is RULE_NEUTRAL (zero gain, R882 Elo 1500 [1500,1500]); it does not qualify a
 new candidate or convert an exposed validation cohort into fresh evidence.
 

@@ -63,8 +63,17 @@ fn trained_surrogate_stays_frozen_while_actual_custom_loss_drives_selection() {
         jope_runtime::sha256_hex(raw),
         "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931"
     );
-    let mut table = jope_runtime::table::parse_csv(raw, &Default::default()).unwrap();
-    table.rows.truncate(32);
+    let mut csv = (0..21)
+        .map(|i| format!("x{i}"))
+        .chain(std::iter::once("target".into()))
+        .collect::<Vec<_>>()
+        .join(",")
+        + "\n";
+    for line in std::str::from_utf8(raw).unwrap().lines().take(32) {
+        csv.push_str(line);
+        csv.push('\n');
+    }
+    let table = jope_runtime::table::parse_csv(csv.as_bytes(), &Default::default()).unwrap();
     let target = table.headers.last().unwrap().clone();
     let features = table.headers[..table.headers.len() - 1].to_vec();
     let bytes = jmat::encode(&table).unwrap();
