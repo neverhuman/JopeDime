@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import importlib.util
+import io
 import json
 from pathlib import Path
 import shutil
@@ -76,7 +77,7 @@ def prepare(checkpoint: Path, output: Path, packer: Path) -> dict:
     ):
         raise ValueError("r882 pointer identity mismatch")
     fused = exporter()
-    state = torch.load(checkpoint, map_location="cpu", weights_only=True)
+    state = torch.load(io.BytesIO(checkpoint_data), map_location="cpu", weights_only=True)
     if (
         state.get("round") != 882
         or state.get("dope_sha256") != fused.FROZEN_DOPE_COMPOSITE
