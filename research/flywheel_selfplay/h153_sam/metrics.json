@@ -1,16 +1,17 @@
 {
   "wave": "H153",
-  "status": "PREREGISTERED_NOT_EXECUTED",
+  "status": "INCOMPLETE",
+  "verdict": "INCOMPLETE",
+  "attempts": 1,
+  "smoke_status": "PASS",
+  "baseline_status": "NOT_REACHED",
+  "primary": null,
+  "secondary": null,
   "optimizer_updates": 0,
   "scored_contexts": 0,
-  "seeds": [
-    153101,
-    153102,
-    153103
-  ],
-  "arms": [
-    "CTRL",
-    "SAM",
-    "ASAM"
-  ]
+  "invalid_picks": null,
+  "elo_vs_r882": null,
+  "reason": "runtime Audit refused the custody-parent launch.json read before the first baseline evaluation; the Audit allowlist only admitted the run output directory and registered inputs.",
+  "retry_eligible": false,
+  "archive_status": "NOT_UPLOADED_NO_AWS_CREDENTIALS"
 }
