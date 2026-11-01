@@ -1,25 +1,35 @@
-# H197 closeout: per-context gradient clipping
+# H197: per-context gradient-norm clipping
 
-**Status: INCOMPLETE / NOT_EVALUABLE.** The native reference passed, but attempt 3 stopped during the first FIT cell before B/A scoring. No scientific verdict is available.
+**Status:** complete — **NO_ADVANCE**. No serving promotion or live-loop change is authorized.
 
-## Hypothesis and registered setup
+## Hypothesis and setup
 
-The preregistered hypothesis was that per-context adapter-gradient clipping (PCGC40) could reduce the influence of a small number of high-gradient, low-loss contexts and improve held-family utility over the exact r882 reference. The frozen design uses three independent TRAIN-family fold seeds, five cyclic A/B/FIT folds per seed, four matched 40-update arms (CTRL40, PCGC40, GCLIP40, PCGC_SHUF40), and a fixed step-40 candidate with no B-based selection. Only the 47-tensor/29,211-parameter adapter trains; the native loss, targets, and kernel stay fixed. See [PREREG.md](PREREG.md) and [fold_manifest.json](fold_manifest.json).
+H197 tested whether clipping each FIT context’s adapter gradient before averaging reduces outlier influence and improves held-family utility from the fixed r882 adapter. The loss, target, model/kernel, candidate sampling, optimizer recipe, and 40-update budget were unchanged. Only the 47 adapter tensors (29,211 parameters) trained; DOPE remained frozen.
 
-## Preflight and attempts
+The preregistered study used 1,219 real TRAIN contexts across 205 families, three training seeds (197101–197103), three independent family-fold seeds (197141–197143), five rotating outer folds, and five arms: R882, CTRL40, PCGC40 (primary), GCLIP40, and PCGC_SHUF40. FIT, B, and A families were disjoint within each cell. All 60 trained trajectories (2,400 optimizer updates) completed before B evaluation. The pooled B panels and all FIT states were bound by a fsynced fixed-step-40 lock before any A scoring.
 
-The preregistration is [PR #1616](https://github.com/neverhuman/JopeDime/pull/1616), merged at `33aa7fd2544cb4395d1c06f3e083be87a7502960`. A mandatory verify-only preflight passed on source `c61b23010759d179f626bc7378057239988b0f59`: all 10 local source, 11 input, and 15 asset pins verified; the pinned checkpoint and feature cache loaded; native r882 DL-Val replay was bit-exact on 91/91 contexts (`1.1377941898164525`) with exact cost bytes; all 1,219 TRAIN and 91 DL-Val pools loaded after the reference passed; optimizer updates were zero. The run used a separate preflight output and did not claim an attempt.
+## Primary result
 
-- **Attempt 1:** Resource guard passed, then the worker failed after 1.77 seconds because the H189 helper import resolved outside the checkout. No model loaded and no updates occurred. The root-path and module isolation fix is [PR #1617](https://github.com/neverhuman/JopeDime/pull/1617), merged at `ca3c938e1`.
-- **Attempt 2:** Resource guard passed, then H182 source verification rejected the H197 `PREREG.md` pin because it resolved local pins relative to H189. The verifier hashed pinned files, but did not deserialize the checkpoint or load a model. The local-pin and preflight fix is [PR #1622](https://github.com/neverhuman/JopeDime/pull/1622), merged at `ff9ed17390db799cce0c0a59ea4d823f38bdd2e3`.
-- **Attempt 3:** The required preflight passed, then the guarded CPU run passed the exact reference and completed 160 FIT optimizer updates in seed `197101`, fold `0` (40 each for CTRL40, PCGC40, GCLIP40, and PCGC_SHUF40). It stopped while writing the PCGC_SHUF40 trace: its factor permutation was a NumPy array and the JSON writer rejected it. The three preceding arm traces/receipts and all four adapter snapshots exist; the shuffled trace is truncated and has no receipt. The attempt failure record shows `backward_started=720`, `backward_completed=720`, `step_started=160`, `step_completed=160`, `protected_reads=0`, and no audit refusals. The monitor reported no resource violation. No B panels, B lock, A scores, or cross-seed outcomes were produced.
+Scores use equal-family averages, with contexts averaged equally inside each family. Each seed’s pooled A score covers all 205 families exactly once. The primary is the median of three seed-level PCGC40-minus-R882 gains, with a paired-family bootstrap (10,000 draws; shared family resamples across seeds; seed 197150).
 
-The trace serializer is corrected in the closeout source and covered by a fixture. Attempt 3 is consumed and was not resumed. Attempts 1–3 claims, launch/preflight receipts, monitor samples, stdout, failure record, and partial FIT files remain outside Git under `/home/ubuntu/jope_plan/ns/`.
+| Seed | PCGC40 − R882 equal-family gain |
+|---:|---:|
+| 197101 | −0.03214 |
+| 197102 | −0.02510 |
+| 197103 | −0.02223 |
 
-## Family-grouped metrics and decision
+Median gain was **−0.02510** (95% paired-family bootstrap interval **[−0.05128, +0.00009]**; one-sided p = **0.9743**, Holm m=1; 0/3 positive seeds). The interval does not meet the preregistered strictly-positive lower-bound criterion. The family harm rate was **46.83%**, and PCGC40 did not strictly beat the shuffled-factor placebo. The preregistered verdict is **NO_ADVANCE**.
 
-The registered outputs—per-seed equal-family utility gains, median and paired-family 95% CI over three seeds, bootstrap p-value, positive-seed count, harm rate, exact `-2.0` picks, clipping summaries, and family-bootstrap Elo/lift versus r882—are **not computed**. They require completed FIT states and B-before-A scoring across all cells. The 160 updates are a partial execution record, not a candidate comparison. The registered decision is **NOT_EVALUABLE**; no adoption or serving action is supported.
+PCGC40 versus CTRL40 was near zero (median +0.00063; 95% interval [−0.00094, +0.00190]). PCGC40 versus PCGC_SHUF40 had median −0.00177 (95% interval [−0.00371, +0.00044]). These are descriptive comparisons.
 
-## Verification and next step
+H148 family-paired Elo versus R882 was 1485.63 for PCGC40 (lift −14.37; 95% family-bootstrap interval [−24.34, −4.38]). CTRL40, GCLIP40, and PCGC_SHUF40 were also below R882 (see `metrics.json`). Exact −2.0 selected-choice counts by seed and arm, clip rates/factor quantiles, and full unrounded family-level summaries are included in the compact metrics and raw evidence.
 
-The closeout fixes NumPy permutation serialization for a future authorized run. Focused H197 fixtures, Ruff, all five `jope-records` checks, source pins, Python compilation, and the import check pass. No attempt 4 is authorized by this closeout; any further run requires a new ENG decision. No large science panels were produced, so no S3 result custody was created.
+Native r882 DL-Val replay passed bit-exactly on 91/91 contexts before TRAIN outcome pools were opened. Subsequent DL-Val candidate results are descriptive only and do not affect selection. Corresponding-fold family Jaccard values across the three independent fold partitions ranged from 0.038 to 0.242 (all five fold pairs for each seed pair are retained in `metrics.json`). The audit recorded zero protected reads and zero refused accesses. The guarded CPU monitor passed without resource violations; the complete output remained below 300 MB.
+
+## Conclusion and next step
+
+Per-context clipping did not improve the preregistered family-level outcome and did not pass the placebo or harm-rate checks. Do not advance or promote PCGC40. Close H197 as NO_ADVANCE; any new experiment requires separate ENG authorization and a new preregistration.
+
+## Reproducibility and custody
+
+Preregistration: [`PREREG.md`](PREREG.md). Fold assignments: [`fold_manifest.json`](fold_manifest.json). Source is bound to merged commit `47c7a43cefdbb9ea360d335d829d9381aa55b15b`; writer fixture/fix merged in PR #1634. The full raw traces, fit states, B/A/DL-Val panels, audit, and resource receipts are kept outside Git in versioned S3 custody. See [`custody.json`](custody.json); the compact metrics include hashes for the principal run summaries.

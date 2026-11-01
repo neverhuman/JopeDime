@@ -119,6 +119,8 @@ class Custody(unittest.TestCase):
             self.verify()
 
     def test_unlisted_current_file_refused(self):
+        self.put("src/dl_training_v1/__pycache__/unlisted.cpython-312.pyc", b"cache")
+        self.assertEqual(self.verify()["current_files"], 1)
         self.put("src/dl_training_v1/unlisted.py", b"x = 1\n")
         with self.assertRaisesRegex(ValueError, "inventory mismatch"):
             self.verify()

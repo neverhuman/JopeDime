@@ -122,7 +122,13 @@ def verify(root, handoff_sha=HANDOFF_SHA, predecessors=PREDECESSORS, supplements
             if path.is_symlink():
                 raise ValueError("unlisted source symlink")
             if path.is_file():
-                discovered.add(path.relative_to(root).as_posix())
+                relative = path.relative_to(root)
+                # Python may leave ignored interpreter caches beside an otherwise
+                # exact custody tree. They are not source bytes and are never
+                # admitted as manifest entries; keep rejecting every other extra.
+                if "__pycache__" in relative.parts and path.suffix in {".pyc", ".pyo"}:
+                    continue
+                discovered.add(relative.as_posix())
     if discovered != set(records):
         raise ValueError("source inventory mismatch")
     available = {sha(data): name for name, data in captured.items()}

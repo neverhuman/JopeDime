@@ -1,12 +1,15 @@
-\subsection{A later candidate-versus-retained-best record}\label{app:candidate-retained-trace}
+\subsection{Admission frequency through a later cutoff}\label{app:candidate-retained-trace}
 
-\Cref{fig:fw-candidate-retained-trace} begins at the retained-best identity
-reported by the earlier ledger (\cref{tab:admission-ledger}) and ends at the
-latest complete admission matched to a retained summary. The journal covers
-the whole interval; the 20 available summaries (3116--3135) match its scores
-and decisions. The accepted tie changes the recorded best-round identity,
-not its utility. Stable log-prefix hashes bind this separate capture; it does
-not replace the earlier ledger or establish a training gain. The field-binding
-limits in \cref{sec:method-status} still apply.
+\Cref{fig:fw-candidate-retained-trace} groups the complete admission journal
+from the earlier ledger's first round (\cref{tab:admission-ledger}) through
+the latest complete admission matched to a retained summary. Its 24 blocks
+contain 23 full blocks and one partial block; 19 have no admission, including
+17 consecutive full blocks in rounds 975--2674. The 21 available summaries
+(3145--3165) match the journal's scores and decisions; older rows are journal-only.
+The last accepted decision, at round 3100, is an exact tie, followed by
+65 rejections. Frequencies count decisions, not independent tasks, distinct
+programs or a stationary admission probability. Stable log-prefix hashes bind
+this separate capture. The earlier ledger and trace data remain unchanged;
+the field-binding limits in \cref{sec:method-status} still apply.
 
 \FloatBarrier

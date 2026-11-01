@@ -4647,6 +4647,11 @@ mod tests {
         assert_eq!(p.rounds_in_flight(), 2);
         let binary = native_worker(directory.path());
         let baseline = run_store(&directory.path().join("one"), &p, &binary, 1);
+        println!(
+            "RNK10 R21 default-path hashes: champion={} projection={}",
+            digest(&serde_json::to_vec(&baseline.0).unwrap()),
+            digest(&serde_json::to_vec(&baseline.1).unwrap()),
+        );
         same(
             "eight",
             &baseline,

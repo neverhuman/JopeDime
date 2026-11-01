@@ -26,7 +26,10 @@ INPUT_FIELDS = {
         "parity_report_dir",
     },
     "M3": {"full_inputs", "full_inputs_sha256"},
-    "M5": {"golden_dir", "bundle_dir"},
+    "M5": (
+        frozenset({"golden_dir", "bundle_dir"}),
+        frozenset({"default_off_receipt", "default_off_receipt_sha256"}),
+    ),
 }
 
 
@@ -58,8 +61,15 @@ def manifest(path):
         raise ValueError("manifest requires exactly 28 release gates")
     commands = {}
     for row in rows:
-        if not isinstance(row, dict) or set(row) != {"id", "argv", "timeout_seconds"}:
+        if not isinstance(row, dict) or set(row) not in (
+            {"id", "argv", "timeout_seconds"},
+            {"id", "argv", "timeout_seconds", "blocked_reason"},
+        ):
             raise ValueError("each command requires id, argv and timeout_seconds")
+        if "blocked_reason" in row and (
+            not isinstance(row["blocked_reason"], str) or not row["blocked_reason"]
+        ):
+            raise ValueError("blocked_reason must be a non-empty string")
         gate = row["id"]
         if (
             not isinstance(gate, str)
@@ -96,8 +106,18 @@ def provider_inputs(path):
         or not set(value["gates"]) <= set(INPUT_FIELDS)
     ):
         raise ValueError("unsupported provider-input bindings")
-    for gate, fields in value["gates"].items():
-        if not isinstance(fields, dict) or set(fields) != INPUT_FIELDS[gate]:
+    return validate_provider_bindings(value["gates"])
+
+
+def validate_provider_bindings(gates):
+    if not isinstance(gates, dict) or not set(gates) <= set(INPUT_FIELDS):
+        raise ValueError("provider input bindings contain unknown gates")
+    for gate, fields in gates.items():
+        expected = INPUT_FIELDS[gate]
+        allowed = expected if isinstance(expected, tuple) else (expected,)
+        if not isinstance(fields, dict) or not any(
+            set(fields) == field_set for field_set in allowed
+        ):
             raise ValueError("provider input fields do not match " + gate)
         for name, item in fields.items():
             if not isinstance(item, str) or not item or "\0" in item:
@@ -109,7 +129,21 @@ def provider_inputs(path):
                     )
             elif not Path(item).is_absolute():
                 raise ValueError("provider input paths must be absolute")
-    return value["gates"]
+    return gates
+
+
+def candidate_input_bindings(path, expected_sha256):
+    """Load the established provider-input schema through a full-file pin."""
+    if path is None or expected_sha256 is None:
+        raise ValueError("candidate execution requires --inputs and --inputs-sha256")
+    if not re.fullmatch(r"[0-9a-f]{64}", expected_sha256):
+        raise ValueError("--inputs-sha256 must be full lowercase SHA-256 hex")
+    if not path.is_absolute() or any(part.is_symlink() for part in (path, *path.parents)):
+        raise ValueError("candidate inputs must be an absolute non-symlink file")
+    actual_sha256 = cpu.digest(path)
+    if actual_sha256 != expected_sha256:
+        raise ValueError("candidate inputs do not match --inputs-sha256")
+    return provider_inputs(path), actual_sha256
 
 
 def provider_commands(repo, bindings=None):
@@ -147,6 +181,14 @@ def provider_commands(repo, bindings=None):
         if not path.is_file():
             missing.append(gate)
             continue
+        if gate == "A5":
+            relative = Path("deploy/qualification/v1.0/a5_run.py")
+            wrapper = repo / relative
+            if wrapper.is_symlink():
+                raise ValueError("A5 wrapper must not be a symlink: " + str(relative))
+            if not wrapper.is_file():
+                missing.append(gate)
+                continue
         argv = ["python3", "-B", relative.as_posix()]
         if gate == "D1" and gate in bindings:
             argv += [
@@ -176,12 +218,20 @@ def provider_commands(repo, bindings=None):
                 bindings[gate]["full_inputs_sha256"],
             ]
         if gate == "M5" and gate in bindings:
-            argv += [
-                "--golden-dir",
-                bindings[gate]["golden_dir"],
-                "--bundle-dir",
-                bindings[gate]["bundle_dir"],
-            ]
+            if "default_off_receipt" in bindings[gate]:
+                argv += [
+                    "--default-off-receipt",
+                    bindings[gate]["default_off_receipt"],
+                    "--default-off-receipt-sha256",
+                    bindings[gate]["default_off_receipt_sha256"],
+                ]
+            else:
+                argv += [
+                    "--golden-dir",
+                    bindings[gate]["golden_dir"],
+                    "--bundle-dir",
+                    bindings[gate]["bundle_dir"],
+                ]
         if gate == "A5" and gate in bindings:
             # child_environment deliberately strips undeclared parent variables.
             # Explicit argv bindings survive that boundary without forwarding
@@ -228,11 +278,30 @@ def provider_inventory(repo, bindings=None):
     )
 
 
-def provider_manifest(repo, artifact, bindings=None):
+def source_is_ancestor(repo, source_sha, main_sha):
+    result = subprocess.run(
+        ["git", "-C", str(repo), "merge-base", "--is-ancestor", source_sha, main_sha],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    if result.returncode not in (0, 1):
+        raise ValueError("cannot verify source ancestry: " + result.stderr.strip())
+    return result.returncode == 0
+
+
+def provider_manifest(
+    repo, artifact, bindings=None, inputs_sha256=None, allow_unbound=False
+):
     """Build the exact command manifest from registered, merged gate providers."""
     repo = repo.resolve()
-    source = cpu.identity(repo, require_clean=True)
-    source_sha = source["main_sha"]
+    source = cpu.identity(repo)
+    if source["dirty_paths"]:
+        raise ValueError("provider manifest requires a clean source checkout")
+    source_sha = source["head_sha"]
+    if not source_is_ancestor(repo, source_sha, source["main_sha"]):
+        raise ValueError("source checkout HEAD is not an ancestor of origin/main")
     artifact = artifact.absolute()
     if artifact.is_symlink() or not artifact.is_file():
         raise ValueError("candidate must be a regular, non-symlink file")
@@ -248,17 +317,216 @@ def provider_manifest(repo, artifact, bindings=None):
         for row in commands
         if row["id"] in INPUT_FIELDS and row["id"] not in bindings
     ]
-    if unbound:
+    if unbound and not allow_unbound:
         raise ValueError("provider input bindings required for: " + ", ".join(unbound))
-    return dict(
+    for command in commands:
+        if command["id"] in unbound:
+            command["blocked_reason"] = (
+                "required provider inputs are unbound: "
+                + _required_input_description(command["id"])
+            )
+    value = dict(
         schema="jope.rel07.gate-commands/v1",
         source_sha=source_sha,
         artifact_sha256=artifact_sha,
         gates=commands,
     )
+    if inputs_sha256 is not None:
+        value["candidate_inputs_sha256"] = inputs_sha256
+    return value
 
 
-def write_provider_manifest(repo, artifact, output, bindings=None):
+def _candidate_record(artifact, candidate_manifest=None):
+    artifact = artifact.absolute()
+    if (
+        any(part.is_symlink() for part in (artifact, *artifact.parents))
+        or not artifact.is_file()
+    ):
+        raise ValueError("candidate must be an absolute regular, non-symlink file")
+    manifest_path = candidate_manifest
+    if manifest_path is None:
+        manifest_path = artifact.parent.parent / "rc2-manifest.json"
+    manifest_path = manifest_path.absolute()
+    if any(part.is_symlink() for part in (manifest_path, *manifest_path.parents)):
+        raise ValueError("RC2 manifest must not contain symlinks")
+    value = read_json(manifest_path)
+    source_sha = value.get("source_sha")
+    if (
+        value.get("schema") != "jope.rel07.rc2-manifest/v1"
+        or value.get("release_candidate") is not True
+        or value.get("qualified") is not False
+        or not isinstance(source_sha, str)
+        or not re.fullmatch(r"[0-9a-f]{40}", source_sha)
+        or not isinstance(value.get("artifacts"), list)
+    ):
+        raise ValueError("candidate requires an unqualified RC2 manifest")
+    artifact_sha = cpu.digest(artifact)
+    row = next(
+        (
+            item
+            for item in value["artifacts"]
+            if isinstance(item, dict)
+            and item.get("id") == "full-linux-x86_64"
+            and item.get("path") == str(artifact)
+        ),
+        None,
+    )
+    if (
+        row is None
+        or row.get("source_sha") != source_sha
+        or row.get("sha256") != artifact_sha
+        or type(row.get("bytes")) is not int
+        or row["bytes"] != artifact.stat().st_size
+    ):
+        raise ValueError("candidate bytes/source do not match the RC2 manifest")
+    seal_path = Path(row.get("seal_verify_receipt", ""))
+    if not seal_path.is_absolute() or any(
+        part.is_symlink() for part in (seal_path, *seal_path.parents)
+    ):
+        raise ValueError("candidate seal receipt path must be absolute and non-symlink")
+    seal = read_json(seal_path)
+    verification = seal.get("verify")
+    details = verification.get("report") if isinstance(verification, dict) else None
+    signatures = row.get("signature_receipts")
+    if (
+        seal.get("schema") != "jope.rel07.rc2-sealed-variant/v1"
+        or seal.get("id") != row["id"]
+        or seal.get("source_sha") != source_sha
+        or seal.get("sha256") != artifact_sha
+        or not isinstance(verification, dict)
+        or verification.get("ok") is not True
+        or not isinstance(details, dict)
+        or details.get("file_sha256") != artifact_sha
+        or not isinstance(signatures, list)
+        or not signatures
+        or any(
+            not isinstance(item, dict)
+            or not isinstance(item.get("receipt"), dict)
+            or item["receipt"].get("verify") != "PASS"
+            for item in signatures
+        )
+    ):
+        raise ValueError("candidate is not bound to a passing sealed/signature receipt")
+    return {
+        "path": str(artifact),
+        "sha256": artifact_sha,
+        "bytes": artifact.stat().st_size,
+        "source_sha": source_sha,
+        "manifest_path": str(manifest_path),
+        "manifest_sha256": cpu.digest(manifest_path),
+        "seal_receipt_path": str(seal_path),
+        "seal_receipt_sha256": cpu.digest(seal_path),
+    }
+
+
+def _required_input_description(gate):
+    expected = INPUT_FIELDS.get(gate)
+    if expected is None:
+        return ""
+    field_sets = expected if isinstance(expected, tuple) else (expected,)
+    choices = [" + ".join(sorted(fields)) for fields in field_sets]
+    return "one of: " + "; or ".join(choices)
+
+
+def dry_run_candidate(
+    repo, artifact, output, bindings=None, candidate_manifest=None, inputs_sha256=None
+):
+    """Write a 28-row blocked/not-run table without invoking any gate provider."""
+    repo = repo.resolve()
+    source = cpu.identity(repo)
+    if source["dirty_paths"]:
+        raise ValueError("candidate dry-run requires a clean source checkout")
+    candidate = _candidate_record(artifact, candidate_manifest)
+    bindings = bindings or {}
+    commands, missing = provider_commands(repo, bindings)
+    by_id = {row["id"]: row for row in commands}
+    missing_set = set(missing)
+    rows = []
+    source_matches_checkout = candidate["source_sha"] == source["head_sha"]
+    source_eligible = source_is_ancestor(
+        repo, source["head_sha"], source["main_sha"]
+    )
+    for gate in RELEASE_GATE_IDS:
+        command = by_id.get(gate)
+        reasons = []
+        if gate in missing_set:
+            reasons.append("provider command is missing from this checkout")
+        if not source_matches_checkout:
+            reasons.append(
+                "candidate source "
+                + candidate["source_sha"]
+                + " differs from checkout HEAD "
+                + source["head_sha"]
+            )
+        if not source_eligible:
+            reasons.append(
+                "checkout HEAD "
+                + source["head_sha"]
+                + " is not an ancestor of origin/main "
+                + source["main_sha"]
+            )
+        if gate in INPUT_FIELDS and gate not in bindings:
+            reasons.append("required provider inputs are unbound: " + _required_input_description(gate))
+        if reasons:
+            status = "BLOCKED"
+            reason = "; ".join(reasons)
+        else:
+            status = "NOT_RUN"
+            reason = "dry-run mode does not invoke provider commands"
+        rows.append(
+            {
+                "id": gate,
+                "status": status,
+                "argv": command["argv"] if command else None,
+                "timeout_seconds": command["timeout_seconds"] if command else None,
+                "reason": reason,
+            }
+        )
+    if len(rows) != 28:
+        raise ValueError("candidate dry-run must retain exactly 28 release gate rows")
+    evidence = output.absolute()
+    if evidence.exists() or evidence.is_symlink():
+        raise ValueError("dry-run evidence output must be new")
+    if evidence.resolve().is_relative_to(repo):
+        raise ValueError("dry-run evidence must be outside the tested checkout")
+    evidence.parent.mkdir(parents=True, exist_ok=True)
+    evidence.mkdir()
+    started = cpu.utc()
+    cpu.write(
+        evidence / "status_table.json",
+        {
+            "schema": "jope.rel07.gate-status-table/v1",
+            "mode": "dry-run",
+            "source_sha": source["head_sha"],
+            "origin_main_sha": source["main_sha"],
+            "candidate": candidate,
+            "gates": rows,
+        },
+    )
+    cpu.write(
+        evidence / "execution.json",
+        {
+            "schema": "jope.rel07.gate-run/v1",
+            "mode": "dry-run",
+            "source_sha": source["head_sha"],
+            "artifact": candidate["path"],
+            "artifact_sha256": candidate["sha256"],
+            "gates_expected": 28,
+            "gates_executed": 0,
+            "release_qualified": False,
+            "started_utc": started,
+            "finished_utc": cpu.utc(),
+            "candidate_manifest_sha256": candidate["manifest_sha256"],
+            "seal_receipt_sha256": candidate["seal_receipt_sha256"],
+            "candidate_inputs_sha256": inputs_sha256,
+        },
+    )
+    return rows
+
+
+def write_provider_manifest(
+    repo, artifact, output, bindings=None, inputs_sha256=None, allow_unbound=False
+):
     """Retain the generated manifest beside gate evidence before execution."""
     repo = repo.resolve()
     evidence = output.absolute()
@@ -270,7 +538,9 @@ def write_provider_manifest(repo, artifact, output, bindings=None):
     path = evidence.with_name(evidence.name + ".gate-commands.json")
     if path.exists() or path.is_symlink():
         raise ValueError("generated gate manifest path must be new: " + str(path))
-    value = provider_manifest(repo, artifact, bindings)
+    value = provider_manifest(
+        repo, artifact, bindings, inputs_sha256, allow_unbound
+    )
     path.write_text(json.dumps(value, indent=2) + "\n")
     return path
 
@@ -324,7 +594,13 @@ def execute(repo, artifact, commands_path, output):
     output.mkdir(parents=True, exist_ok=False)
     rows = {
         gate: dict(
-            id=gate, status="NOT_RUN", evidence=f"not started; artifact={digest}"
+            id=gate,
+            status="BLOCKED" if commands[gate].get("blocked_reason") else "NOT_RUN",
+            evidence=(
+                commands[gate]["blocked_reason"]
+                if commands[gate].get("blocked_reason")
+                else f"not started; artifact={digest}"
+            ),
         )
         for gate in RELEASE_GATE_IDS
     }
@@ -336,6 +612,7 @@ def execute(repo, artifact, commands_path, output):
         artifact_sha256=digest,
         manifest_sha256=manifest_sha,
         runner_sha256=cpu.digest(Path(__file__)),
+        candidate_inputs_sha256=spec.get("candidate_inputs_sha256"),
         machine=socket.gethostname(),
         started_utc=cpu.utc(),
         checks=[],
@@ -343,6 +620,26 @@ def execute(repo, artifact, commands_path, output):
     )
 
     def retain():
+        cpu.write(
+            output / "status_table.json",
+            {
+                "schema": "jope.rel07.gate-status-table/v1",
+                "mode": "execute",
+                "source_sha": source,
+                "artifact": str(artifact),
+                "artifact_sha256": digest,
+                "gates": [
+                    dict(
+                        id=gate,
+                        status=rows[gate]["status"],
+                        argv=commands[gate]["argv"],
+                        timeout_seconds=commands[gate]["timeout_seconds"],
+                        reason=rows[gate]["evidence"],
+                    )
+                    for gate in RELEASE_GATE_IDS
+                ],
+            },
+        )
         results_path = output / "gate_results.json"
         cpu.write(
             results_path,
@@ -368,6 +665,8 @@ def execute(repo, artifact, commands_path, output):
     retain()
     interrupted = False
     for gate in RELEASE_GATE_IDS:
+        if rows[gate]["status"] == "BLOCKED":
+            continue
         record = dict(commands[gate], started_utc=cpu.utc(), exit_code=None)
         folder = output / gate
         try:
@@ -453,21 +752,61 @@ def main():
         action="store_true",
         help="discover the complete provider set and retain its command manifest beside evidence",
     )
+    inputs.add_argument(
+        "--candidate",
+        type=Path,
+        help="single-command mode: discover, materialize, and execute all 28 providers",
+    )
     inputs.add_argument("--cpu-prestage", type=Path)
     parser.add_argument("--repo", type=Path)
     parser.add_argument("--artifact", type=Path)
+    parser.add_argument("--candidate-manifest", type=Path)
     parser.add_argument(
         "--provider-inputs",
         type=Path,
-        help="explicit A5/D1/M2/M5 evidence and fixture bindings for --providers",
+        help="explicit A5/D1/M2/M3/R21-M5 evidence bindings for --providers",
     )
+    parser.add_argument("--inputs", type=Path, help="sha256-pinned candidate input bindings")
+    parser.add_argument("--inputs-sha256")
     parser.add_argument("--dry-discovery", action="store_true")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="with --candidate, write 28 reasoned BLOCKED/NOT_RUN rows without invoking providers",
+    )
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
+    candidate_mode = args.candidate is not None
+    if candidate_mode:
+        if args.artifact is not None:
+            parser.error("--candidate cannot be combined with --artifact")
+        args.artifact = args.candidate
+        args.repo = args.repo or Path.cwd()
+        args.providers = True
+    if args.dry_run and not candidate_mode:
+        parser.error("--dry-run requires --candidate")
+    if args.candidate_manifest and not candidate_mode:
+        parser.error("--candidate-manifest requires --candidate")
     if args.provider_inputs and not args.providers:
         parser.error("--provider-inputs requires --providers")
+    if candidate_mode and args.provider_inputs:
+        parser.error("--candidate uses --inputs, not --provider-inputs")
+    if (args.inputs is None) != (args.inputs_sha256 is None):
+        parser.error("--inputs and --inputs-sha256 must be supplied together")
+    if args.inputs is not None and not candidate_mode:
+        parser.error("--inputs requires --candidate")
     try:
-        bindings = provider_inputs(args.provider_inputs)
+        candidate = None
+        inputs_sha256 = None
+        if args.inputs is not None:
+            candidate = _candidate_record(args.artifact, args.candidate_manifest)
+            bindings, inputs_sha256 = candidate_input_bindings(
+                args.inputs, args.inputs_sha256
+            )
+        elif candidate_mode and not args.dry_run:
+            raise ValueError("candidate execution requires --inputs and --inputs-sha256")
+        else:
+            bindings = provider_inputs(args.provider_inputs)
     except (OSError, ValueError) as error:
         parser.error(str(error))
     if args.dry_discovery:
@@ -480,6 +819,34 @@ def main():
         except (OSError, ValueError, subprocess.CalledProcessError) as error:
             parser.error(str(error))
         print(json.dumps(report, sort_keys=True))
+        return 0
+    if args.dry_run:
+        if args.repo is None or args.artifact is None or args.output is None:
+            parser.error("--dry-run requires --candidate, --repo and --output")
+        try:
+            rows = dry_run_candidate(
+                args.repo.resolve(),
+                args.artifact,
+                args.output,
+                bindings,
+                args.candidate_manifest,
+                inputs_sha256,
+            )
+        except (OSError, ValueError, subprocess.CalledProcessError) as error:
+            parser.error(str(error))
+        print(
+            json.dumps(
+                {
+                    "gates": len(rows),
+                    "dry_run": True,
+                    "gates_executed": 0,
+                    "blocked": sum(row["status"] == "BLOCKED" for row in rows),
+                    "not_run": sum(row["status"] == "NOT_RUN" for row in rows),
+                    "release_qualified": False,
+                },
+                sort_keys=True,
+            )
+        )
         return 0
     if args.output is None:
         parser.error("--output is required unless --dry-discovery is used")
@@ -509,11 +876,32 @@ def main():
             code = 0
         else:
             if not args.repo or not args.artifact:
-                raise ValueError("execution requires --repo and --artifact")
+                raise ValueError("execution requires --repo and --artifact/--candidate")
+            if candidate_mode:
+                candidate = candidate or _candidate_record(
+                    args.artifact, args.candidate_manifest
+                )
+                source = cpu.identity(args.repo.resolve())
+                if source["dirty_paths"]:
+                    raise ValueError("candidate execution requires a clean source checkout")
+                if (
+                    candidate["source_sha"] != source["head_sha"]
+                    or not source_is_ancestor(
+                        args.repo.resolve(), source["head_sha"], source["main_sha"]
+                    )
+                ):
+                    raise ValueError(
+                        "candidate source must match a clean checkout at an ancestor of origin/main"
+                    )
             commands_path = args.manifest
             if args.providers:
                 commands_path = write_provider_manifest(
-                    args.repo.resolve(), args.artifact, args.output, bindings
+                    args.repo.resolve(),
+                    args.artifact,
+                    args.output,
+                    bindings,
+                    inputs_sha256 if candidate_mode else None,
+                    allow_unbound=candidate_mode,
                 )
             receipt, code = execute(
                 args.repo.resolve(),

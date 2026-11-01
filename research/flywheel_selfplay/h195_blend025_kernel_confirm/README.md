@@ -84,9 +84,10 @@ means. Arm values are listed in [metrics.json](metrics.json).
 
 ## Next step
 
-The owner decides whether a frozen-DOPE flywheel shadow should score a BLEND_025 prior. The prior would come from a
-FIT-only GBM, with no λ search, on the flywheel's own DL-Val protocol (H135's question), using a fresh held-out
-partition, before any serving change. A λ dose curve, if wanted, should be its own preregistered wave.
+**Correction (H199 prereg).** The native DL-Val question is not open: H135 (COMPLETE, NO_ADVANCE) already tested
+fixed BLEND_025 on the flywheel's 91-context native protocol (median −0.0041, CI [−0.029, +0.0099], Elo 1496), with
+only 19 families, so it was underpowered. H199 re-asks the native first-argmin question with the 205-family pooled
+cross-fit. Any frozen-DOPE flywheel shadow decision follows H199, and the owner makes it.
 
 ## Custody
 

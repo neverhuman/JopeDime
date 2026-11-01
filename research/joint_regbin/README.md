@@ -116,23 +116,63 @@ appear in the usable catalog, and the task-specific worker qualification is
 still missing. It is a role-planning receipt for the worker lane, not a runnable
 study manifest or scientific result.
 
-### T1210 family-key pool split
+### T1350 catalog-eligible family folds and role guard
 
-`admission.build_family_key_pool_manifest(...)` builds five deterministic,
-family-disjoint train/validation splits from catalog v246 metadata. It obtains
-identity only through the pinned `family_keys.attrs_from_catalog_row()` and
-`family_keys.derive()` calls, records the exact returned keys and catalog IDs,
-and assigns families with the preregistered seed 136. No source-file, URL-parent,
-owner-alias, or protected-roster inputs are added. The corresponding
-`verify_family_key_pool_manifest(...)` re-derives the split against the catalog
-and reports metadata-only preflight status.
+`admission.build_family_key_pool_manifest(...)` builds family components from
+the pinned `family_keys` projection and catalog-recorded dedupe/source-file
+keys. Shared and transitive keys are unioned across regression and binary rows.
+The only protected input is an owner-pinned identity-only exclusion artifact;
+no roster columns or payloads are read.
 
-This does not make a runnable learner packet. Catalog train hashes do not
-establish the 412-wide candidate programs and frozen 10-slot feature tensors
-consumed by the existing flywheel adapter. The full verifier therefore remains
-closed until a source-pinned train-row cache builder, two-task runtime binding,
-and worker/checkpoint qualification evidence are available. The split receipt
-keeps `eligibility_verified:false`; no payload is opened and no campaign starts.
+ENG:watcher t2035/t1350/t1410 D4 authorizes the pinned v246 usable catalog after
+excluding every family component named by
+`JRB01_SEALED_FAMILY_EXCLUSION.json` (SHA-256
+`ca0eff866a87548803feb03e50f8e7e99b74993b2e1d0b8ce56e3ec1b184a651`). The
+artifact contains family keys and catalog IDs of unkeyed sealed-family members
+only. The builder fails closed if it is absent, unreadable, or does not match
+the code-pinned hash, then re-derives family closure across the catalog. P3
+heldout/dev families remain eligible. The analysis-only overlap receipt reports
+153 excluded dataset IDs, zero protected IDs or keys in the eligible pool,
+3,335 regression and 843 binary candidates, and five family-grouped folds.
+No protected roster columns or payloads are read. This is role planning, not
+worker admission or qualification: the pool remains
+`eligibility_verified:false`, and the catalog's train hashes do not provide
+candidate tensors or the qualified worker/checkpoint required for an
+executable study. No campaign starts.
+
+### Train-only candidate tensor builder (ENG:watcher R22)
+
+`candidate_builder.py` supplies the train-only cache construction seam. It
+re-derives the artifact-pinned family folds and requires a separate ADMITTED
+role manifest that passes `admission.rederive_role_manifest`. Catalog folds
+alone cannot authorize payload reads. When a reviewed role admission exists,
+the builder reads only
+`datasets/<id>/manifest.json` and the exact
+`blobs/sha256/<catalog-train-sha256>` object from the approved dataset bucket.
+It never lists a bucket or reads another split. CSV rows are numeric and finite;
+binary labels are explicitly mapped to zero/one from their two observed class
+values. A deterministic seed builds two inner folds, and the source-pinned
+Flywheel Landmark-V2 proposer, DSL featurizer and native S1 evaluator build 16
+candidate rows.
+
+Regression worker targets are the existing S1 constrained fitness. Binary
+worker targets are the existing two-fold `cv_gate_passed` labels, because the
+task head is BCE-with-logits; this does not infer task from target cardinality
+or introduce a new threshold. The R882/DOPE token tensors are supplied by the
+caller after its read-only pinned initialization. Worker inputs have no revealed
+candidate labels, so target values cannot leak through conditioning slots.
+`make_worker_packer(...)` implements the callable expected by `WorkerCore`.
+The synthetic suite checks that catalog role candidates without a complete
+admitted manifest cannot authorize an S3 request. Building a tensor cache does
+not qualify a worker or admit a study packet.
+
+Every generated pool remains
+`CANDIDATE_TENSORS_NOT_ADMITTED` / `eligibility_verified:false`. This builder
+does not qualify a worker, admit role candidates, train, reserve the study lock,
+write checkpoints or mutate the score store. Use only role rows whose pinned
+metadata proves nonsealed TRAIN/VAL eligibility. Current owner evidence still
+does not provide an admitted complete role manifest or qualified two-task
+worker, so no real pool was built by this change.
 
 ## Learner integration contract (qualification still required)
 

@@ -1,53 +1,57 @@
 {
   "schema": "whitepaper.rolling-margin-quantiles-figure/v2",
   "source_csv": "figures/data/latest_admissions.csv",
-  "source_csv_sha256": "8593b87e632bd729ab41e6fecb63ce6cb8fe62b1ce4b9d74564dfef629c48e50",
-  "source_receipt_sha256": "e5ffc16fee760a0e0c80a23a943eeb92f35684b9614dea5227128e8ae5ae96d2",
+  "source_csv_sha256": "aba6f21f5c9d0e0ab2b85c12081f05d2f6c6f558a64db90299af78f58c28a0b3",
+  "source_receipt_sha256": "00efb299a509d911ccf4292e8bedf5cf30beb55f991ee5a63bdb083c6daa552d",
   "generator_sha256": "6af19064eaea2a600d2ed46ac694473bad411e5d5e8cfab769cf293aec95c304",
-  "rolling_csv_sha256": "c3b22ab67aa36d2954d938ea636a25f54f250705d917dd9438fb670c81018e17",
+  "rolling_csv_sha256": "7cfb79a9de610c9abd04500c9671fd4004ead369c975897760cfcd032ec05859",
   "quantile_window": 50,
   "quantiles": "Linear interpolation at p*(n-1), all50 candidate margins, Decimal precision50; no partial windows",
   "near_tie_counts": "Cumulative rejected rows in two exclusive bands; no acceptance trials inferred",
-  "figure_sha256": "f02d1849e22524bed1d0fd4edfda95658e9cf6771e9bb6abfb7154624be5d926",
+  "figure_sha256": "1c27944a31a9e03114859dde178ee03a638985bf3aa4bd08a38dccaed195fcd0",
   "round_window": [
     775,
-    3021
+    3197
   ],
-  "rows": 2247,
-  "accepted_rows": 6,
+  "rows": 2423,
+  "accepted_rows": 8,
   "accepted_strict_gain_rounds": [
     785,
     859,
-    2750
+    2750,
+    3175
   ],
   "accepted_strict_gains_ge_1e_3_rounds": [
     785
   ],
   "accepted_strict_gains_sub_1e_3_rounds": [
     859,
-    2750
+    2750,
+    3175
   ],
   "accepted_exact_tie_rounds": [
     782,
     882,
-    2795
+    2795,
+    3100
   ],
   "accepted_strict_gain_margins": {
     "785": "0.0302180320058556",
     "859": "0.0001988950680422",
-    "2750": "0.0005726212619803"
+    "2750": "0.0005726212619803",
+    "3175": "0.0005904292964097"
   },
-  "rejected_rows": 2241,
+  "rejected_rows": 2415,
   "rejected_in_minus_1e_4_to_0": 26,
   "rejected_in_minus_1e_3_to_minus_1e_4": 49,
-  "rejected_below_minus_1e_3": 2166,
+  "rejected_below_minus_1e_3": 2340,
   "closest_rejected_round": 803,
   "closest_rejected_margin": "-0.0000433838086485",
-  "min_rejected_round": 2784,
-  "min_rejected_margin": "-0.0084690348103498",
+  "min_rejected_round": 3135,
+  "min_rejected_margin": "-0.0110660634147548",
   "median_rejected_margin": "-0.0033601045139468",
   "definition": "Pre-decision validation margin Delta_r = candidate_val - previous_best_val in exact Decimal; accepted iff Delta_r >= 0 (strict gain > 0, exact tie == 0).",
-  "scope": "Development admission telemetry over rounds 775-3021 (2,247 records); not an independent first-proposal or deployment comparison.",
+  "scope": "Development admission telemetry over rounds 775-3197 (2,423 records); not an independent first-proposal or deployment comparison.",
   "source_binding": "Aggregate field interpretation only; exact installed source, adapter and evaluation population remain unjoined",
   "matplotlib_version": "3.10.8",
   "reproduce": "python3 figures/scripts/make_admission_margins_figure.py"

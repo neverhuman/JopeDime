@@ -1,0 +1,88 @@
+{
+  "wave": "H199",
+  "authority": "/home/ubuntu/nudges/hwave_t1300_h199_rdopus.md",
+  "claim": "/home/ubuntu/jope_plan/ns/receipts/H199_claim.txt",
+  "parent_waves": {
+    "H195": "ca1cd19e3 (CANDIDATE on U4)",
+    "H135": "NO_ADVANCE on flywheel91 native (19 families)"
+  },
+  "arms": [
+    "R882",
+    "BLEND_025",
+    "BLEND_015",
+    "BLEND_035",
+    "BLEND_025_SHUF"
+  ],
+  "primary": "BLEND_025",
+  "holm_m": 1,
+  "lambdas": {
+    "BLEND_015": 0.15,
+    "BLEND_025": 0.25,
+    "BLEND_035": 0.35
+  },
+  "endpoint": "flywheel native fixed-dev-cost-argmin-negative-fitness/v1 (h139.native == h124 legacy, checked per context)",
+  "seeds": [
+    199101,
+    199102,
+    199103
+  ],
+  "fold_seeds": {
+    "199101": 199141,
+    "199102": 199142,
+    "199103": 199143
+  },
+  "sample_seed": 199140,
+  "shuf_seed": 199160,
+  "shuf_seeds": [
+    199101
+  ],
+  "boot_seed": 199150,
+  "elo_boot_seed": 199151,
+  "bootstrap_draws": 10000,
+  "elo_draws": 1000,
+  "fits": {
+    "BLEND": 45,
+    "SHUF": 15,
+    "total": 60
+  },
+  "decision": "CANDIDATE iff LCB95>0 AND median>+0.001 AND 3/3 seeds positive AND harm<=10%; else NO_ADVANCE",
+  "regression": {
+    "dl_val_contexts": 91,
+    "r882_native_mean": 1.1377941898164525,
+    "reference": "best_dev_checkpoint.json 30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+  },
+  "inputs": {
+    "staging": "xbabe1 ~/jope-data/h199/inputs -> ~/jope-data/h195/inputs",
+    "hash_list_sha256": "2f7a364221e809d86abca30d14c3b80f5be1e2ba36db5b45ca1fe09ba82792e8",
+    "files": 2628,
+    "r882": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "selected_json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "dope": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+  },
+  "pinned_modules": {
+    "h124_runner": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+    "h139_runner": "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686"
+  },
+  "host": "xbabe1 only (guard free>=40GB); xbabe2/xbabe0/xbabe3 excluded",
+  "resources": {
+    "nice": 19,
+    "omp_threads": 4,
+    "worker_tree_cores_max": 4.0,
+    "rss_max_bytes": 6000000000,
+    "mem_available_min_gib": 16,
+    "load_and_cpu_max_pct": 85,
+    "output_root_max_bytes": 500000000,
+    "deadline_hours": 4,
+    "resume": "one, after a resource-guard stop only"
+  },
+  "custody": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H199/<run_id>/ (create-only)",
+  "never": [
+    "sealed",
+    "holdout",
+    "meta-test",
+    "live flywheel",
+    "xbabe0",
+    "xbabe3",
+    "GPU"
+  ]
+}

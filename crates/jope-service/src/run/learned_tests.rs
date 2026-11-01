@@ -457,6 +457,97 @@ fn learned_requires_explicit_admission_and_invalid_device_is_not_fallback() {
     assert_eq!(super::service::error_code(&err), ErrorCode::InvalidInput);
 }
 
+#[test]
+fn default_auto_plan_is_byte_identical_with_ranker_absent_or_disabled() {
+    use crate::discover::r#loop::{Plan, RoundAdmission, RoundContext, SearchSpace};
+    use jope_api::Guidance;
+    use rand_chacha::{
+        rand_core::{RngCore, SeedableRng},
+        ChaCha12Rng,
+    };
+
+    let mut request = spec("ds_0123456789abcdef01234567", "cpu");
+    request.guidance = Guidance::Auto;
+    let absent = BackendPlan::resolve(&request, None, 1).unwrap();
+    let admitted = AdmittedRanker::test_admitted();
+    let present_but_disabled = BackendPlan::resolve(&request, Some(&admitted), 1).unwrap();
+    // Heuristic admission reads neither a matrix nor learned conditioning.
+    let context_plan = Plan {
+        run_id: "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0".parse().unwrap(),
+        dataset_id: "ds_0123456789abcdef01234567".parse().unwrap(),
+        problem_digest: "0".repeat(64),
+        bundle_digest: absent.bundle_digest.clone(),
+        binary_version: "default-off-admission-test".into(),
+        matrix_path: "unused-default-off-test.jmat".into(),
+        matrix_sha256: "0".repeat(64),
+        target: "target".into(),
+        features: vec!["x".into()],
+        objective: "rmse".into(),
+        seed: 73,
+        planned_workers: 1,
+        effort: jope_api::Effort::Fast,
+        evaluations: 8,
+        wall_seconds: 60,
+        evaluation_wall_ms: 1_000,
+        evaluation_rss_bytes: 1_073_741_824,
+        groups: None,
+        times: None,
+        gap_rows: 0,
+    };
+    let context = RoundContext {
+        plan: &context_plan,
+        round: 7,
+        measured: vec![],
+    };
+    let serving_bytes = |plan: &BackendPlan| {
+        let space = super::service::BackendSpace {
+            native: crate::discover::r#loop::NativeSpace,
+            learned: plan.learned(),
+        };
+        let seeds = space.seeds().unwrap();
+        let mut rng = ChaCha12Rng::seed_from_u64(73);
+        let proposals = space.propose(&seeds, 8, &mut rng).unwrap();
+        let admissions: Vec<_> = [false, true]
+            .into_iter()
+            .map(|explore| {
+                let mut admission_rng = ChaCha12Rng::seed_from_u64(73);
+                let selected = plan
+                    .admission
+                    .admit_round(&context, proposals.clone(), explore, &mut admission_rng)
+                    .unwrap();
+                serde_json::json!({
+                    "explore": explore,
+                    "admitted": selected,
+                    "next_rng_word": admission_rng.next_u64(),
+                })
+            })
+            .collect();
+        serde_json::to_vec(&serde_json::json!({
+            "guidance": plan.guidance,
+            "warnings": plan.warnings,
+            "placement": plan.placement,
+            "bundle_digest": plan.bundle_digest,
+            "landmark_rows": plan.landmark_rows,
+            "learned": plan.learned(),
+            "seeds": seeds,
+            "proposals": proposals,
+            "admissions": admissions,
+            "next_rng_word": rng.next_u64(),
+        }))
+        .unwrap()
+    };
+
+    assert!(!absent.learned() && !present_but_disabled.learned());
+    let absent_bytes = serving_bytes(&absent);
+    let present_bytes = serving_bytes(&present_but_disabled);
+    assert_eq!(absent_bytes, present_bytes);
+    assert_eq!(admitted.execution_counter().load(Ordering::Relaxed), 0);
+    println!(
+        "RNK10 R21 actual serving admission sha256={}",
+        jope_runtime::sha256_hex(&absent_bytes)
+    );
+}
+
 async fn post(app: axum::Router, request: &RunSpec, key: &str) -> (u16, Value) {
     let response = app
         .oneshot(

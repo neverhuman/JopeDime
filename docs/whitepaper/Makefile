@@ -25,5 +25,6 @@ figs:
 	python3 figures/scripts/make_latest_event_rates_figure.py
 	python3 figures/scripts/make_latest_event_rates_figure.py --round-clock-only
 	python3 figures/scripts/make_candidate_retained_trace.py
+	python3 figures/scripts/make_admission_block_rates.py
 clean:
 	latexmk -C
