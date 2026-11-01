@@ -1,0 +1,189 @@
+#!/usr/bin/env python3
+"""Data-free provider contract controls; fixture responses are not gate results."""
+
+import contextlib
+import hashlib
+import importlib
+import io
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE / "providers"))
+e1 = importlib.import_module("e1")
+common = importlib.import_module("common")
+Context, ProviderError = common.Context, common.ProviderError
+
+
+class E1Tests(unittest.TestCase):
+    def setUp(self):
+        root = Path(os.environ.get("JOPE_QUALIFICATION_TEST_TMP", HERE / "target"))
+        root.mkdir(parents=True, exist_ok=True)
+        self.tmp = tempfile.TemporaryDirectory(prefix="e1-", dir=root)
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.repo = self.root / "checkout"
+        self.repo.mkdir()
+        self.artifact = self.root / "candidate"
+        self.artifact.write_bytes(b"controlled E1 fixture; not a release")
+        self.ctx = Context(
+            "E1",
+            self.artifact,
+            hashlib.sha256(self.artifact.read_bytes()).hexdigest(),
+            "a" * 40,
+            self.root / "result.json",
+        )
+        self.calls = []
+        self.test_calls = 0
+        self.source = self.ctx.source_sha
+        self.dirty = ""
+        self.output_override = None
+        self.returncode = 0
+        self.after_test = lambda: None
+        self.addCleanup(patch.stopall)
+        patch.object(e1, "ROOT", self.repo).start()
+
+    def run_child(self, args, **kwargs):
+        self.calls.append(args)
+        if args[:2] == ["git", "rev-parse"]:
+            output = self.source
+        elif args[:2] == ["git", "status"]:
+            output = self.dirty
+        elif args[0] == "cargo" and args[1] == "run":
+            if "inspect" in args:
+                output = json.dumps(
+                    {
+                        "manifest": {
+                            "profile": "full",
+                            "scope": "release",
+                            "source": {"sha40": self.ctx.source_sha},
+                        }
+                    }
+                )
+            else:
+                output = json.dumps({"schema": "jope.appliance-verify/v1", "ok": True})
+        else:
+            self.test_calls += 1
+            crate, test = e1.TESTS[self.test_calls - 1]
+            self.after_test()
+            output = self.output_override
+            if output is None:
+                output = (
+                    f"running 1 test\ntest {test} ... ok\n\n"
+                    "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n"
+                )
+            return subprocess.CompletedProcess(args, self.returncode, output, "")
+        return subprocess.CompletedProcess(args, 0, output, "")
+
+    def invoke(self):
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            return e1.qualify(self.ctx, run=self.run_child)
+
+    def test_all_language_constraints_are_candidate_bound(self):
+        self.assertEqual(self.invoke(), 0)
+        result = json.loads(self.ctx.result.read_text())
+        self.assertEqual(result["artifact_sha256"], self.ctx.artifact_sha256)
+        self.assertEqual(result["source_sha"], self.ctx.source_sha)
+        self.assertEqual(
+            result["counts"], {key: len(e1.TESTS) * value for key, value in e1.SINGLE_PASS.items()}
+        )
+        self.assertEqual(self.test_calls, len(e1.TESTS))
+        for crate, test in e1.TESTS:
+            self.assertIn(e1.command(crate, test), self.calls)
+            self.assertIn("--exact", e1.command(crate, test))
+
+    def test_zero_collected_cases_never_pass(self):
+        self.output_override = "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n"
+        with self.assertRaises(ProviderError):
+            self.invoke()
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_wrong_test_name_cannot_substitute(self):
+        self.output_override = "test other::case ... ok\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n"
+        with self.assertRaises(ProviderError):
+            self.invoke()
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_failed_case_stops_without_receipt(self):
+        self.returncode = 42
+        self.assertEqual(self.invoke(), 42)
+        self.assertEqual(self.test_calls, 1)
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_skipped_measured_and_multiple_cases_are_refused(self):
+        for counts in [(0, 0, 1, 0), (0, 0, 0, 1), (2, 0, 0, 0)]:
+            self.test_calls = 0
+            self.output_override = f"test {e1.TESTS[0][1]} ... ok\ntest result: ok. {counts[0]} passed; {counts[1]} failed; {counts[2]} ignored; {counts[3]} measured; 0 filtered out\n"
+            with self.subTest(counts=counts), self.assertRaises(ProviderError):
+                self.invoke()
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_artifact_drift_prevents_later_case_and_receipt(self):
+        self.after_test = lambda: self.artifact.write_bytes(b"changed")
+        with self.assertRaisesRegex(ProviderError, "candidate bytes changed"):
+            self.invoke()
+        self.assertEqual(self.test_calls, 1)
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_wrong_or_dirty_source_refuses_before_tests(self):
+        for source, dirty in [("b" * 40, ""), (self.ctx.source_sha, " M source.rs")]:
+            self.source, self.dirty = source, dirty
+            with self.subTest(source=source, dirty=dirty), self.assertRaises(ProviderError):
+                self.invoke()
+        self.assertEqual(self.test_calls, 0)
+
+    def test_source_drift_during_suite_refuses_receipt(self):
+        self.after_test = lambda: setattr(self, "source", "b" * 40)
+        with self.assertRaises(ProviderError):
+            self.invoke()
+        self.assertEqual(self.test_calls, 1)
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_evidence_cannot_enter_checkout_through_dotdot(self):
+        from dataclasses import replace
+
+        self.ctx = replace(self.ctx, result=self.root / "checkout" / ".." / "checkout" / "result.json")
+        with self.assertRaisesRegex(ProviderError, "outside the source checkout"):
+            self.invoke()
+        self.assertEqual(self.test_calls, 0)
+        self.assertFalse((self.repo / "result.json").exists())
+
+    def test_existing_result_is_never_overwritten(self):
+        self.ctx.result.write_bytes(b"prior receipt")
+        with self.assertRaises(ProviderError):
+            self.invoke()
+        self.assertEqual(self.ctx.result.read_bytes(), b"prior receipt")
+        self.assertEqual(self.test_calls, 0)
+
+    def test_context_refuses_symlink_and_nonfile_candidates(self):
+        link = self.root / "candidate-link"
+        link.symlink_to(self.artifact)
+        directory = self.root / "candidate-directory"
+        directory.mkdir()
+        for candidate in (link, directory):
+            env = {
+                "JOPE_REL07_GATE_ID": "E1",
+                "JOPE_REL07_ARTIFACT": str(candidate),
+                "JOPE_REL07_ARTIFACT_SHA256": self.ctx.artifact_sha256,
+                "JOPE_REL07_SOURCE_SHA": self.ctx.source_sha,
+                "JOPE_REL07_RESULT": str(self.root / "new-result.json"),
+            }
+            with (
+                self.subTest(candidate=candidate),
+                patch.dict(os.environ, env),
+                self.assertRaisesRegex(ProviderError, "regular non-symlink file"),
+            ):
+                common.context("E1")
+
+
+if __name__ == "__main__":
+    unittest.main()

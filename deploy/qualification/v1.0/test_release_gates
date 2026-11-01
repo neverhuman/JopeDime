@@ -10,6 +10,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr
+from io import StringIO
 from pathlib import Path
 from unittest import mock
 
@@ -85,6 +87,17 @@ class ReleaseGates(unittest.TestCase):
         ]:
             subprocess.run(["git", "-C", str(self.repo), *args], check=True)
         self.source = runner.cpu.git(self.repo, "rev-parse", "HEAD")
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(self.repo),
+                "update-ref",
+                "refs/remotes/origin/main",
+                self.source,
+            ],
+            check=True,
+        )
         self.artifact = self.root / "fixture.bin"
         self.artifact.write_bytes(b"synthetic harness fixture, not a signed release")
         self.sha = hashlib.sha256(self.artifact.read_bytes()).hexdigest()
@@ -173,6 +186,80 @@ class ReleaseGates(unittest.TestCase):
         self.assertEqual(len(receipt["gates"]), 28)
         self.assertTrue(all(gate["status"] == "PASS" for gate in receipt["gates"]))
         self.assertEqual(receipt["artifact_sha256"], self.sha)
+
+    def test_provider_discovery_lists_merged_modules_and_refuses_incomplete_inventory(
+        self,
+    ):
+        provider_dir = self.repo / "deploy/qualification/v1.0/providers"
+        provider_dir.mkdir(parents=True)
+        expected = [gate for gate in runner.RELEASE_GATE_IDS if gate != "D2"]
+        for gate in expected:
+            (provider_dir / (gate.lower() + ".py")).write_text("# fixture provider\n")
+        subprocess.run(["git", "-C", str(self.repo), "add", "deploy"], check=True)
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(self.repo),
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-qm",
+                "provider fixture inventory",
+            ],
+            check=True,
+        )
+        source = runner.cpu.git(self.repo, "rev-parse", "HEAD")
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(self.repo),
+                "update-ref",
+                "refs/remotes/origin/main",
+                source,
+            ],
+            check=True,
+        )
+
+        commands, missing = runner.provider_commands(self.repo)
+        self.assertEqual([row["id"] for row in commands], expected)
+        self.assertEqual(missing, ["D2"])
+        self.assertEqual(
+            commands[0]["argv"],
+            ["python3", "-B", "deploy/qualification/v1.0/providers/m1.py"],
+        )
+        with self.assertRaisesRegex(ValueError, "missing: D2"):
+            runner.provider_manifest(self.repo, self.artifact)
+
+        (provider_dir / "d2.py").write_text("# speed verdict fixture must not run\n")
+        with self.assertRaisesRegex(ValueError, "D2 speed-gate"):
+            runner.provider_commands(self.repo)
+
+    def test_cli_provider_discovery_refuses_before_creating_partial_evidence(self):
+        output = self.root / "provider-discovery-output"
+        with (
+            mock.patch(
+                "sys.argv",
+                [
+                    "release-gates",
+                    "--providers",
+                    "--repo",
+                    str(self.repo),
+                    "--artifact",
+                    str(self.artifact),
+                    "--output",
+                    str(output),
+                ],
+            ),
+            redirect_stderr(StringIO()),
+            self.assertRaises(SystemExit),
+        ):
+            runner.main()
+        self.assertFalse(output.exists())
+        self.assertFalse(Path(str(output) + ".gate-commands.json").exists())
 
     def test_bad_child_evidence_never_becomes_pass_and_later_gates_run(self):
         for mode in [

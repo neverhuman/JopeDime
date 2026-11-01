@@ -3840,6 +3840,38 @@
       },
       "sha256": "5aa07f6b8a5e2b5502afa1d5680fe1bd6a29f3b5994bd8d0bb5305f03727918c"
     },
+    "python:research/flywheel_selfplay/h147_reveal_alignment/monitor.py": {
+      "bytes": 5539,
+      "classification": {
+        "reason": "H147 owner-directed matched-support reveal alignment 5-fold CV executor: SUPPORT_CTRL, STORAGE_REVEAL, and STORAGE_MASK over common 192-candidate support S across 205 DL-Train families (1,219 contexts), intersection Holm m=2 gates vs SUPPORT_CTRL and r882, pinned Bradley-Terry MM Elo, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification.",
+        "role": "research"
+      },
+      "sha256": "95bd01afe60832e408c1a8606b36d819f99dd6638805415ff0b294b3580b56f9"
+    },
+    "python:research/flywheel_selfplay/h147_reveal_alignment/runner.py": {
+      "bytes": 47621,
+      "classification": {
+        "reason": "H147 owner-directed matched-support reveal alignment 5-fold CV executor: SUPPORT_CTRL, STORAGE_REVEAL, and STORAGE_MASK over common 192-candidate support S across 205 DL-Train families (1,219 contexts), intersection Holm m=2 gates vs SUPPORT_CTRL and r882, pinned Bradley-Terry MM Elo, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification.",
+        "role": "research"
+      },
+      "sha256": "72f88b0b59021913b94f048a4063da90167bbb7cc45cfc478cd622fcb0b6bfac"
+    },
+    "python:research/flywheel_selfplay/h147_reveal_alignment/runtime.py": {
+      "bytes": 19145,
+      "classification": {
+        "reason": "H147 owner-directed matched-support reveal alignment 5-fold CV executor: SUPPORT_CTRL, STORAGE_REVEAL, and STORAGE_MASK over common 192-candidate support S across 205 DL-Train families (1,219 contexts), intersection Holm m=2 gates vs SUPPORT_CTRL and r882, pinned Bradley-Terry MM Elo, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification.",
+        "role": "research"
+      },
+      "sha256": "aae23339e4c01c5f628356eabc95df989aae7f1114fe34f7f860d3a757b61836"
+    },
+    "python:research/flywheel_selfplay/h147_reveal_alignment/science.py": {
+      "bytes": 17445,
+      "classification": {
+        "reason": "H147 owner-directed matched-support reveal alignment 5-fold CV executor: SUPPORT_CTRL, STORAGE_REVEAL, and STORAGE_MASK over common 192-candidate support S across 205 DL-Train families (1,219 contexts), intersection Holm m=2 gates vs SUPPORT_CTRL and r882, pinned Bradley-Terry MM Elo, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification.",
+        "role": "research"
+      },
+      "sha256": "adceb742fd6848239acc7824154e1fc8de5b78190c9bf9453719937d710f1477"
+    },
     "python:research/flywheel_selfplay/h149_wd_dose/monitor.py": {
       "bytes": 5731,
       "classification": {
