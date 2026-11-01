@@ -10,9 +10,9 @@
   \centering
   \includegraphics[width=\textwidth]{figures/fig3_game_loop.pdf}
   \caption{\textbf{Training plays the whole game; game day plays one move.}
-  Schematic. Top row (blue): game day. Dashed box: training only. Outcomes
-  are recorded; valid scored programs can enter the learning lists, while
-  failed attempts still count against the budget.}
+  Reference loop (\cref{sub:method-selfplay}), separate from the adapter
+  record (\cref{sec:method-status}). Blue: game day; dashed: proposed training.
+  Valid scored programs enter learning lists; failed attempts consume budget.}
   \label{fig:game-loop}
 \end{figure*}
 
@@ -81,17 +81,19 @@ Formally, the game is a tuple of seven parts,
 \[
   \Game = (\Prob, \encP, \Sol, \encS, \referee, \reward, \opp).
 \]
-Here $\encP$ and $\encS$ embed a problem $p \in \Prob$ and a program
-$w \in \Sol$ as $z_p$ and $z_w$. The referee $\referee$ reports a program's
-validity and score, the reward $\reward$ orders moves, and the opponent $\opp$
-supplies the incumbent $\inc{p}$. The tuple extends Rice's model of algorithm
+In the reference learner, $\encP$ represents a problem $p \in \Prob$ as
+$z_p$, while $\encS$ embeds a program $w \in \Sol$ as $z_w$ for the separate
+ranking map (\cref{sub:method-map}). Game-day generation and the referee
+do not use $\encS$. The referee $\referee$ reports validity and score, the
+reward $\reward$ orders moves, and the opponent $\opp$ supplies the
+incumbent $\inc{p}$. The tuple extends Rice's model of algorithm
 selection \citep{rice1976algorithm}: the player writes the algorithm instead of
 picking it, and a declared incumbent sets the comparison standard.
 
 With one move, the game is a contextual bandit: the board supplies context,
 the program is the action and the
-verdict is the reward \citep{lattimore2020bandit}. It earns the name through an
-opponent that improves as the player does. The asymmetry is in the
+verdict is the reward \citep{lattimore2020bandit}. The incumbent supplies a
+changing comparison standard as verified programs displace it. The asymmetry is in the
 moves: Go offers about 250 legal moves per turn over about 150 turns, each free
 to check \citep{silver2016mastering}, while this game offers one move, costly to
 judge. Under a single-attempt budget, the chance $\winprob$ of a win matters
@@ -153,10 +155,10 @@ $\tilde{w}$, an also-ran $w^-$ and a win $w^+$ on board $p$,
 
 The opponent is a ratcheting incumbent. A program must strictly improve
 under the same evaluation protocol to displace a board's incumbent.
-A retrained writer faces a separate admission test
-(\cref{sub:method-selfplay}). Together the two ratchets make this self-play:
-the player keeps facing a standard often set by its own earlier play.
-These are the reference training rules. The later loop in
+The reference design gives a retrained writer a separate proposed admission
+test (\cref{sub:method-selfplay}). The two rules define its self-play:
+a proposer faces incumbents retained from earlier play.
+These are reference rules, not a record of writer improvement. The later loop in
 \cref{sec:method-status} updates only a ranking adapter; its default
 admission gate can retain equal utility. That record does not establish
 retraining or admission of the neural writer.
