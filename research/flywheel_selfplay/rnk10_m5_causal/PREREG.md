@@ -34,7 +34,28 @@ Initialize from the signed R882 weights; use source slate size 192 and source `t
 
 The code regression must prove the auxiliary loss is zero after its margin is met, positive below the margin, and supplies a nonzero gradient to both baseline and ablated cost paths. The candidate run must bind the exact source, input roster, checkpoint, DOPE identity, optimizer updates, resource limits, and output hash. The candidate is not admitted based on training loss.
 
-After training, rnk02 evaluates the candidate against R882 on the unchanged dev-fold Elo procedure and performs the unchanged M5 baseline-versus-ablation control on the signed-R882 replay. Report M5 as failed unless the original predicate passes; preserve the existing val_reg utility and Elo method. This one candidate does not trigger another A/B study or any default/serving/qualification promotion.
+After training, rnk02 runs the candidate-loading M5 sensitivity runner and the pinned dev-roster Elo runner. The 50 M5 fixture contexts are TRAIN contexts, so every candidate M5 sensitivity result is **in-sample** and is descriptive only. The only lift criterion is candidate dev-fold Elo above the signed R882 incumbent, using the existing 91-context/19-family roster and family-grouped Bradley-Terry Elo method. No throughput or speed verdict is permitted. Neither runner alone qualifies a release or serving promotion.
+
+The reproducible entry points are:
+
+```sh
+nice -n 19 python3 research/flywheel_selfplay/rnk10_m5_causal/evaluate_candidate.py m5 \
+  --input /path/to/RNK10-M5-lift-t0815/input-signed \
+  --candidate /path/to/RNK10-M5-lift-t0815/candidate/r10-landmark-candidate.safetensors \
+  --signed-r882 /path/to/RNK10-M5-lift-t0815/input-signed/signed-r882 \
+  --output /path/to/output/m5-candidate.json \
+  --fixtures /path/to/pinned/golden-fixtures
+nice -n 19 python3 research/flywheel_selfplay/rnk10_m5_causal/stage_dev_packet.py \
+  --destination /path/to/empty/dev-packet
+nice -n 19 python3 research/flywheel_selfplay/rnk10_m5_causal/evaluate_candidate.py dev-elo \
+  --input /path/to/dev-packet \
+  --train-input /path/to/RNK10-M5-lift-t0815/input-signed \
+  --candidate /path/to/RNK10-M5-lift-t0815/candidate/r10-landmark-candidate.safetensors \
+  --signed-r882 /path/to/RNK10-M5-lift-t0815/input-signed/signed-r882 \
+  --output /path/to/output/dev-elo.json
+```
+
+`dev_roster.json` contains only pinned row identities and payload hashes. `stage_dev_packet.py` verifies the complete source roster and copies only the 91 DL-Val pools and their train-only tables; it excludes the 93 holdout and outer payloads. Candidate execution provenance is supplemented by `candidate-execution-evidence.json`, which binds the implementation head/files, exact packet hashes, both attempt update counts, the serialization-only recovery, and the timestamp limits of the retained evidence.
 
 ## Operational recovery note (before persisted candidate rerun)
 

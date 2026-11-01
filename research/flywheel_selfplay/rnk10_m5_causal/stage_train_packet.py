@@ -13,11 +13,15 @@ import threading
 from pathlib import Path, PurePosixPath
 
 SELECTED_SHA256 = "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1"
-SOURCE_MANIFEST_SHA256 = "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
+SOURCE_MANIFEST_SHA256 = (
+    "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
+)
 CPU_FUSED_SHA256 = "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab"
 SIGNED_BUNDLE = Path("/home/ubuntu/jope-data/RNK10-t0140-t0250-rnk11/verified-r882")
 SIGNED_PACKAGE = Path("/home/ubuntu/jope-data/RNK10-t0140-t0250-rnk11/r882.jopedime")
-SIGNED_RECEIPT = Path("/home/ubuntu/jope_plan/signing/receipts/release-r882-20261101T094716Z.json")
+SIGNED_RECEIPT = Path(
+    "/home/ubuntu/jope_plan/signing/receipts/release-r882-20261101T094716Z.json"
+)
 RECEIPT_SHA256 = "be1e4a4584d89d5b09b26287c8a58a43391943d03f12616280bdbb87b217f5f0"
 SOURCE_ROOT = "flywheel-full-20261030/input"
 
@@ -45,8 +49,13 @@ def main() -> int:
     destination.mkdir(parents=True, exist_ok=True)
 
     selected_bytes = subprocess.check_output(
-        ["ssh", "-o", "BatchMode=yes", args.source_host,
-         f"cat /home/ubuntu/jope-data/{SOURCE_ROOT}/selected.json"],
+        [
+            "ssh",
+            "-o",
+            "BatchMode=yes",
+            args.source_host,
+            f"cat /home/ubuntu/jope-data/{SOURCE_ROOT}/selected.json",
+        ],
         text=False,
     )
     if hashlib.sha256(selected_bytes).hexdigest() != SELECTED_SHA256:
@@ -123,7 +132,9 @@ def main() -> int:
                 raise SystemExit(f"unexpected packet member: {member.name}")
             if relative.parts[:2] != PurePosixPath(SOURCE_ROOT).parts:
                 source.kill()
-                raise SystemExit(f"train packet member escaped pinned source root: {member.name}")
+                raise SystemExit(
+                    f"train packet member escaped pinned source root: {member.name}"
+                )
             target = destination / Path(*relative.parts[2:])
             target.parent.mkdir(parents=True, exist_ok=True)
             stream = archive.extractfile(member)
@@ -159,7 +170,9 @@ def main() -> int:
     signed_dir = destination / "signed-r882"
     signed_dir.mkdir()
     for name, expected_hash in signed_hashes.items():
-        source_path = SIGNED_PACKAGE if name == "r882.jopedime" else SIGNED_BUNDLE / name
+        source_path = (
+            SIGNED_PACKAGE if name == "r882.jopedime" else SIGNED_BUNDLE / name
+        )
         if sha256(source_path) != expected_hash:
             raise SystemExit(f"signed R882 input mismatch: {name}")
         shutil.copyfile(source_path, signed_dir / name)
@@ -168,7 +181,8 @@ def main() -> int:
         receipt.get("kind") != "release"
         or receipt.get("label") != "r882"
         or receipt.get("verify") != "PASS"
-        or receipt.get("message_sha256") != "45e21d576cec91b5171bb8e279ef24fef761456fa916e4de1ed8ed2b8bd6eba5"
+        or receipt.get("message_sha256")
+        != "45e21d576cec91b5171bb8e279ef24fef761456fa916e4de1ed8ed2b8bd6eba5"
     ):
         raise SystemExit("watcher-signed R882 receipt identity mismatch")
     if sha256(SIGNED_RECEIPT) != RECEIPT_SHA256:
@@ -197,7 +211,15 @@ def main() -> int:
     (destination / "selected_train.json").write_text(
         json.dumps(manifest, sort_keys=True, separators=(",", ":")) + "\n"
     )
-    print(json.dumps({"staged": len(train_rows), "families": len(families), "destination": str(destination)}))
+    print(
+        json.dumps(
+            {
+                "staged": len(train_rows),
+                "families": len(families),
+                "destination": str(destination),
+            }
+        )
+    )
     return 0
 
 

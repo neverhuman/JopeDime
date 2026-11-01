@@ -4999,6 +4999,60 @@
         "role": "research",
         "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
       }
+    },
+    "python:research/flywheel_selfplay/rnk10_m5_causal/objective.py": {
+      "bytes": 3285,
+      "classification": {
+        "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
+        "role": "research"
+      },
+      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
+      "sha256": "25e784f667292075a1d8178d96f4b2bd631ecb1aba610135af4f408387905946"
+    },
+    "python:research/flywheel_selfplay/rnk10_m5_causal/stage_train_packet.py": {
+      "bytes": 9300,
+      "classification": {
+        "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
+        "role": "research"
+      },
+      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
+      "sha256": "3396bced69ba492486649f3fdedceb865b052f7f7a7d377300b253cc98d0fdbb"
+    },
+    "python:research/flywheel_selfplay/rnk10_m5_causal/train_candidate.py": {
+      "bytes": 27161,
+      "classification": {
+        "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
+        "role": "research"
+      },
+      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
+      "sha256": "7276cc681efdc83e10733ff6389eea3173ef5ae9c64566024730a3a00d905bf4"
+    },
+    "python:research/flywheel_selfplay/rnk10_m5_causal/stage_dev_roster.py": {
+      "bytes": 2231,
+      "classification": {
+        "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
+        "role": "research"
+      },
+      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
+      "sha256": "fad477aedc837578b48ced28c1e8f8404d83d09ab4e9b69045ed80ba2f969a73"
+    },
+    "python:research/flywheel_selfplay/rnk10_m5_causal/evaluate_candidate.py": {
+      "bytes": 26021,
+      "classification": {
+        "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
+        "role": "research"
+      },
+      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
+      "sha256": "61150795fb49414253671cf58aae660195b162461183d6ff1c1e81e1315e1757"
+    },
+    "python:research/flywheel_selfplay/rnk10_m5_causal/stage_dev_packet.py": {
+      "classification": {
+        "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
+        "role": "research"
+      },
+      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
+      "bytes": 6193,
+      "sha256": "c84a0468d709ed988f2c3a712129dc44bf2d6172bf3dd7e81107c15f223a10b8"
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

@@ -15,7 +15,9 @@ CAUSAL_MARGIN = 0.1 * F12_SCALE
 def choose_training_pair(fitness: torch.Tensor, gate: torch.Tensor) -> tuple[int, int]:
     """Choose best/worst gated unrevealed candidates; stable source-order ties."""
     if fitness.ndim != 1 or gate.shape != fitness.shape or fitness.numel() <= 4:
-        raise ValueError("expected aligned slate with at least one unrevealed candidate")
+        raise ValueError(
+            "expected aligned slate with at least one unrevealed candidate"
+        )
     eligible = torch.nonzero(gate[4:].bool(), as_tuple=False).flatten() + 4
     if eligible.numel() < 2:
         raise ValueError("at least two gated unrevealed candidates are required")
@@ -35,19 +37,28 @@ def landmark_causality_hinge(
 ) -> torch.Tensor:
     """Train the baseline good-vs-bad margin to exceed its ablated counterpart."""
     if baseline_costs.shape != ablated_costs.shape or baseline_costs.ndim != 2:
-        raise ValueError("baseline and ablated cost batches must have matching [B, N] shape")
+        raise ValueError(
+            "baseline and ablated cost batches must have matching [B, N] shape"
+        )
     if best_indices.shape != worst_indices.shape or best_indices.ndim != 1:
         raise ValueError("best/worst indices must be aligned vectors")
     if best_indices.numel() != baseline_costs.shape[0]:
         raise ValueError("one best/worst pair is required per slate")
     if not math.isfinite(margin) or margin <= 0:
         raise ValueError("causal margin must be positive and finite")
-    if not torch.isfinite(baseline_costs).all() or not torch.isfinite(ablated_costs).all():
+    if (
+        not torch.isfinite(baseline_costs).all()
+        or not torch.isfinite(ablated_costs).all()
+    ):
         raise ValueError("costs must be finite")
 
     batch = torch.arange(baseline_costs.shape[0], device=baseline_costs.device)
-    base_margin = baseline_costs[batch, worst_indices] - baseline_costs[batch, best_indices]
-    ablated_margin = ablated_costs[batch, worst_indices] - ablated_costs[batch, best_indices]
+    base_margin = (
+        baseline_costs[batch, worst_indices] - baseline_costs[batch, best_indices]
+    )
+    ablated_margin = (
+        ablated_costs[batch, worst_indices] - ablated_costs[batch, best_indices]
+    )
     return F.relu(margin - (base_margin - ablated_margin)).mean()
 
 

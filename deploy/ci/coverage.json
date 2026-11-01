@@ -7431,7 +7431,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -14588,6 +14588,16 @@
       ],
       "lanes": [],
       "scope": "H190 data-free controls for ENS10/RENS10 confirmation with independent family-fold partitions per outer seed (190141, 190142, 190143), imported H177/H178 selector, and stage-order lock."
+    },
+    "python:research/flywheel_selfplay/rnk10_m5_causal/test_objective.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Synthetic offline regression tests for trainer objective, export alias safety, and fail-closed authenticated DL-Train roster boundary; changed ID, split/role, and payload pin are rejected before pool/table reads. No dataset payload or qualification outcome access."
     }
   },
   "lanes": {
