@@ -209,3 +209,10 @@ confusion between the candidate list and a signed Q1 roster; the command binds t
 cohort and catalog hashes and refuses to emit a result. This is limited to CPU
 preparation under spec §§13.1, 13.3 and 14; actual Q1, the guidance default and
 the frozen protocol remain unchanged.
+
+## Evaluator/runtime handoff
+
+The [T1005 handoff record](../EVALUATOR-RUNTIME-HANDOFF.md) pins the merged source
+and documents the existing qualified-input publisher, runtime evidence and FIFO
+ticket schema. Its [JSON draft](../evaluator-runtime-handoff.draft.json) is
+`DRAFT_NOT_QUALIFIED`; it must not be published as `QUALIFIED-INPUTS.json`.

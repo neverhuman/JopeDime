@@ -26,6 +26,19 @@ second half, P5), the derived-asset cache and worker processes (P5), and `releas
 integration and publication (P6). The `full` profile is locked and *blocked* until then; see
 [models.lock.json](models.lock.json).
 
+## Internal fused CPU edition (ENG R2)
+
+`fused-cpu` stages an internal release package with the complete source-pinned R882
+DOPE/adapter/bank/config/golden closure and the same embedded Engine/MCP/client build as
+`full`. It needs the verified real model cache and release signing. The complete compiled
+R882 dependency set is checked by `jope-dist`; `full` separately retains its legacy
+foundation closure and existing rights acknowledgement. No weights or learning criteria
+change. Authentication and size do not qualify the scientific or release gates.
+
+The previous synthetic development package is `fixture-fused-cpu`. It remains a fixture
+and cannot satisfy D2. D2 uses the authenticated `fused-cpu` package, with its unchanged
+40,000,000-byte ceiling and 5% baseline tolerance.
+
 ## Build and run
 
 ```bash
