@@ -1,0 +1,30 @@
+\subsection{Program-event rates over completed-round time}\label{app:latest-event-rates}
+
+A read-only capture retains the latest 20 consecutive completed summaries,
+rounds 2933--2952, matched to their admission records. They report
+7 strict training-program incumbent events over \num{1814.51}\,s
+of logged round time: 13.89 events per hour, with 0 adapter admissions.
+\Cref{fig:fw-latest-event-rates} shows every round, including zero-event
+rounds. The horizontal clock sums each completed round's full logged wall
+time; the cumulative event count starts at zero for this window.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_latest_event_rates.pdf}
+  \caption{\textbf{Program-event counts and rates on the completed-round clock.}
+  All 20 consecutive summaries from rounds 2933--2952. Left: cumulative
+  logged strict improvements to training-program incumbents. Right:
+  per-round event rate, the cumulative rate from this window's start, and
+  the whole-window average (7 events / \num{1814.51}\,s, or 13.89/h).
+  Rates include all logged round work and waits. The records mark 0
+  adapter admissions. These adaptive operating observations do not establish
+  independent first-proposal improvement or deployment cost.}
+  \label{fig:fw-latest-event-rates}
+\end{figure*}
+
+The running rate divides cumulative events by cumulative completed-round
+time; each per-round rate uses only that round's events and duration.
+Both views reuse the same 20 records. Repeated improvements within a
+training context are event counts, not independent discoveries. As with
+the earlier windows, exact installed-source, adapter and population binding
+remains pending in \cref{sec:method-status}.

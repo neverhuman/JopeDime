@@ -1,0 +1,22 @@
+{
+  "schema": "whitepaper.latest-event-rates-figure/v1",
+  "source_receipt_sha256": "4fd8c96a1cc6cd4e14e3479652f7e6b38aba77aef650f25e6eaabce2749e25ee",
+  "csv_sha256": "eef4905cb41729766f76d15e75b51a1e76db8d56f763499b215925015ffaad3c",
+  "generator_sha256": "081f265ba10ccb22d8f4b0d098e99437e5038329329c65536a98815deb713cb1",
+  "figure_sha256": "60e0324aa854651d9cb79681a164dda32314872f048b129f5409829ad9b3e63f",
+  "rows": 20,
+  "round_window": [
+    2933,
+    2952
+  ],
+  "program_events": 7,
+  "logged_wall_seconds": "1814.511273090",
+  "whole_window_events_per_hour": "13.888037166661392604641302035924183986465000838393",
+  "adapter_admissions": 0,
+  "definitions": "Per-round rate=3600*events/wall_seconds; cumulative rate=3600*cumulative events/cumulative wall_seconds; clock includes all logged completed-round work and waits",
+  "transformations": "All20 consecutive captured rows including zero-event rounds; cumulative count reset to zero at window start; no gap filling or smoothing",
+  "source_binding": "Matched aggregate summary/admission fields only; installed source, adapter and population remain unjoined",
+  "scope": "Training-search operating observations; no independent first-proposal or deployment qualification",
+  "matplotlib_version": "3.10.8",
+  "reproduce": "python3 figures/scripts/make_latest_event_rates_figure.py"
+}
