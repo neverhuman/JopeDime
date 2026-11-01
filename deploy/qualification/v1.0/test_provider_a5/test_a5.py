@@ -443,6 +443,38 @@ class A5ProviderTests(unittest.TestCase):
             self.invoke()
         self.assertFalse(self.result.exists())
 
+    def test_snapshot_events_and_prediction_cannot_mix_run_or_input_identity(self):
+        original = self.make_wire("claude_code").decode()
+        for kind in ("snapshot", "events", "prediction"):
+            frames = [json.loads(line) for line in original.splitlines()]
+            for index, frame in enumerate(frames):
+                message = frame["message"]
+                params = message.get("params", {})
+                response = (
+                    frames[index + 1]["message"]
+                    .get("result", {})
+                    .get("structuredContent", {})
+                    if index + 1 < len(frames)
+                    else {}
+                )
+                if (
+                    kind == "snapshot"
+                    and params.get("name") == "run_status"
+                    and params.get("arguments", {}).get("run_id")
+                ):
+                    response["run_id"] = "run_01ARZ3NDEKTSV4RRFFQ69G5FAX"
+                elif kind == "events" and params.get("name") == "run_events":
+                    response["events"][-1]["sequence"] = "1"
+                elif kind == "prediction" and params.get("name") == "model_predict":
+                    response["rows"] = "24"
+            self.sidecars["claude-code.mcp.jsonl"] = b"\n".join(
+                json.dumps(frame).encode() for frame in frames
+            ) + b"\n"
+            self.write_manifest()
+            with self.subTest(kind=kind), self.assertRaises(common.ProviderError):
+                self.invoke()
+            self.assertFalse(self.result.exists())
+
     def test_raw_retry_ids_must_match_each_semantic_receipt(self):
         self.verifier_output = json.dumps(
             {
