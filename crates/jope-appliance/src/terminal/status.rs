@@ -259,6 +259,7 @@ mod tests {
             event_watermark: DecimalU64(0),
             warnings: Vec::new(),
             completion_reason: None,
+            evaluation_receipt: None,
         }
     }
 

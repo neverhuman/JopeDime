@@ -330,6 +330,7 @@ pub(crate) mod tests {
             event_watermark: DecimalU64(0),
             warnings: vec![],
             completion_reason: None,
+            evaluation_receipt: None,
         };
         log.commit(
             RunUpdate {
