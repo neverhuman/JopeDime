@@ -3913,16 +3913,16 @@
       }
     },
     "python:research/flywheel_selfplay/h154_trajectory_ema_swa/runner.py": {
-      "bytes": 27571,
-      "sha256": "9499ded88ef57cba575e973d64871b8ef99510ab253115c7ef6f3d1d6ff625a7",
+      "bytes": 28503,
+      "sha256": "1560f935a82cca72c309ae00c98d323bcedc4c7ed56a5740d46742a0cf204e9c",
       "classification": {
         "role": "research",
         "reason": "H154 owner-directed trajectory EMA (0.99/0.995/0.999) and uniform SWA (K=5/10/20) weight averaging with in-fold DL-Train RMS stat recalibration: median-seed equal-family bootstrap, [0.85, 1.15] output-scale recalibration, 7-arm Holm vs r882 and 6-arm Holm vs CTRL, dose manipulation gate, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification."
       }
     },
     "python:research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py": {
-      "bytes": 15333,
-      "sha256": "ed7384ae4ef553fee1d148657e4248ee22687bd4921eacafbe19f058f73ae03f",
+      "bytes": 19177,
+      "sha256": "345ef71cd4c894e48818741df75a8c21b62fbfc9325398bdaf8d361e434031f5",
       "classification": {
         "role": "research",
         "reason": "H154 owner-directed trajectory EMA (0.99/0.995/0.999) and uniform SWA (K=5/10/20) weight averaging with in-fold DL-Train RMS stat recalibration: median-seed equal-family bootstrap, [0.85, 1.15] output-scale recalibration, 7-arm Holm vs r882 and 6-arm Holm vs CTRL, dose manipulation gate, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification."
