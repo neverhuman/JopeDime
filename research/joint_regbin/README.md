@@ -97,6 +97,25 @@ establish full owner-alias or sealed-family closure. It cannot be used as a
 runnable study manifest until role, alias, payload, and worker evidence is
 reviewed and admitted separately.
 
+### Task-split role candidates
+
+`admission.build_task_role_candidate_manifest_from_files(...)` binds the
+catalog pool to the pinned flywheel train/dev selection and `panel_v1` metadata.
+It preserves the 1,219 regression train and 91 regression validation contexts,
+uses all 843 catalog binary rows as a family-grouped candidate pool, and
+records task-specific panel rows. The five-fold assignment groups contexts by
+the cross-task P2/source-file/URL family review. Panel evaluation excludes
+training families that intersect its panel family set. Per T0830 owner ruling,
+the 14 owner aliases without source-file metadata are collapsed into one
+conservative family and excluded from role assignment.
+
+The output schema is `jope.joint-regbin.task-role-candidates/v1` and remains
+`ROLE_CANDIDATES_NOT_ADMITTED`: it records metadata and source hashes only; no
+payload bytes are opened or verified, 11 regression panel identities do not
+appear in the usable catalog, and the task-specific worker qualification is
+still missing. It is a role-planning receipt for the worker lane, not a runnable
+study manifest or scientific result.
+
 ## Learner integration contract (qualification still required)
 
 Supply a reviewed Python learner, pinned by its full file hash, accepting

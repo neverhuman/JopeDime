@@ -28,6 +28,25 @@ from . import protocol
 SCHEMA = "jope.joint-regbin/v1"
 PARTIAL_SCHEMA = "jope.joint-regbin.binary-panel-packet/v1"
 CATALOG_POOL_SCHEMA = "jope.joint-regbin.catalog-pools/v1"
+ROLE_CANDIDATE_SCHEMA = "jope.joint-regbin.task-role-candidates/v1"
+CATALOG_V246_SHA256 = "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba"
+OWNER_ALIAS_RECEIPT_SHA256 = (
+    "114c57bf328c3556315a4b69f2f230ee0987086bda5ee1043aa50016ad9147b4"
+)
+CATALOG_POOL_RECEIPT_SHA256 = (
+    "9f82ecb4df818975072071b5d6464f3b1b6b9478ce54c6eed84b09da2a400953"
+)
+FLYWHEEL_SELECTED_SHA256 = (
+    "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1"
+)
+FLYWHEEL_RUN_MANIFEST_SHA256 = (
+    "b638084435e4a2363098586b0f1a5f9e014b552c45e2a6b7bb6f2cc829f4171f"
+)
+ELO_PANEL_V1_SHA256 = "e0ce676f62b4df77e586d42b6fa1ebfe48c148a0dd87d17fdd0cb98a51e67ab9"
+PROTECTED_FAMILY_MANIFEST_SHA256 = (
+    "0314599fe06515d3f3e976c0d435cbe4e9fbe26738014bd89470f525702f983b"
+)
+PROTECTED_FAMILY_MANIFEST_SCHEMA = "jope.h150.sealed-family-identity-manifest/v1"
 
 
 def sha256_file(path: Path) -> str:
@@ -236,23 +255,21 @@ def review_catalog_families(records: list[dict]) -> dict:
     evidence_by_id: dict[str, list[list[str]]] = {}
     review_by_id: dict[str, dict] = {}
     for dataset_id, row in sorted(by_id.items()):
-        provenance = {
-            key: value
-            for key, value in {
-                "platform": row.get("platform"),
-                "url": row.get("source_url"),
-                "dedupe_fingerprint": row.get("family_key"),
-            }.items()
-            if value is not None
-        }
-        keys = set(
-            family_keys.derive(
-                {
-                    "canonical_sha256": row.get("canonical_sha256"),
-                    "provenance": provenance,
-                }
-            )[0]
+        attrs = family_keys.attrs_from_catalog_row(row)
+        provenance = dict(attrs.get("provenance", {}))
+        provenance.update(
+            {
+                key: value
+                for key, value in {
+                    "platform": row.get("platform"),
+                    "url": row.get("source_url"),
+                    "dedupe_fingerprint": row.get("family_key"),
+                }.items()
+                if value is not None
+            }
         )
+        attrs["provenance"] = provenance
+        keys = set(family_keys.derive(attrs)[0])
         srcfile = _srcfile_key(row)
         if srcfile:
             keys.add(("srcfile", srcfile))
@@ -521,6 +538,474 @@ def build_catalog_pool_manifest_from_files(
         hashlib.sha256(catalog_bytes).hexdigest(),
         owner_alias,
         owner_alias_sha,
+    )
+
+
+def _protected_catalog_member_ids(
+    manifest: dict, manifest_sha256: str
+) -> tuple[set[str], set[str]]:
+    """Return protected catalog member IDs and the complete protected identity set."""
+    if (
+        manifest.get("schema") != PROTECTED_FAMILY_MANIFEST_SCHEMA
+        or manifest_sha256 != PROTECTED_FAMILY_MANIFEST_SHA256
+        or not re.fullmatch(r"[0-9a-f]{64}", manifest_sha256 or "")
+    ):
+        raise ValueError("protected-family manifest is not the pinned identity receipt")
+
+    dataset_ids = manifest.get("dataset_hashes")
+    view_ids = manifest.get("view_ids")
+    catalog_ids = manifest.get("catalog_sealed_ids")
+    families = manifest.get("families")
+    counts = manifest.get("counts")
+    if (
+        not isinstance(dataset_ids, list)
+        or not isinstance(view_ids, list)
+        or not isinstance(catalog_ids, list)
+        or not isinstance(families, dict)
+        or not isinstance(counts, dict)
+        or any(not isinstance(value, str) or not value for value in dataset_ids)
+        or any(not isinstance(value, str) or not value for value in view_ids)
+        or any(not isinstance(value, str) or not value for value in catalog_ids)
+        or len(set(dataset_ids)) != len(dataset_ids)
+        or len(set(view_ids)) != len(view_ids)
+        or len(set(catalog_ids)) != len(catalog_ids)
+        or len(families) != len(set(families))
+    ):
+        raise ValueError("protected-family manifest identity inventory is malformed")
+    view_member_ids = set()
+    for view_id in view_ids:
+        member_id, separator, suffix = view_id.partition("__")
+        if not separator or not suffix:
+            raise ValueError("protected-family manifest has a malformed view identity")
+        view_member_ids.add(member_id)
+    if view_member_ids != set(dataset_ids):
+        raise ValueError("protected-family dataset and view identities disagree")
+
+    if any(
+        not isinstance(family_id, str)
+        or not family_id
+        or not isinstance(family_labels, list)
+        or any(not isinstance(label, str) or not label for label in family_labels)
+        for family_id, family_labels in families.items()
+    ):
+        raise ValueError("protected-family manifest family labels are malformed")
+    labels = {label for family_labels in families.values() for label in family_labels}
+    if not {"p3_holdout_sealed_excluded", "p3_holdout_heldout"} <= labels:
+        raise ValueError("protected-family manifest lacks sealed or DL-Holdout labels")
+    expected_counts = {
+        "dataset_hashes": len(dataset_ids),
+        "view_ids": len(view_ids),
+        "catalog_sealed_ids": len(catalog_ids),
+        "families_total": len(families),
+    }
+    if any(counts.get(name) != count for name, count in expected_counts.items()):
+        raise ValueError("protected-family manifest counts do not match its identities")
+
+    protected_dataset_ids = set(dataset_ids)
+    protected_member_ids = protected_dataset_ids | set(catalog_ids)
+    return protected_dataset_ids, protected_member_ids
+
+
+def build_task_role_candidate_manifest(
+    catalog: dict,
+    catalog_sha256: str,
+    owner_alias: dict,
+    owner_alias_sha256: str,
+    catalog_pool: dict,
+    catalog_pool_sha256: str,
+    selected: dict,
+    selected_sha256: str,
+    flywheel_run: dict,
+    flywheel_run_sha256: str,
+    panel: dict,
+    panel_sha256: str,
+    protected_manifest: dict,
+    protected_manifest_sha256: str,
+) -> dict:
+    """Build role and five-fold candidates without asserting payload admission."""
+    if (
+        catalog.get("inventory", {}).get("usable_records")
+        != len(catalog.get("datasets", []))
+        or "LATEST=v246" not in catalog.get("inventory", {}).get("source_catalog", "")
+        or not re.fullmatch(r"[0-9a-f]{64}", catalog_sha256 or "")
+    ):
+        raise ValueError("role candidates require curated v246 catalog metadata")
+    if (
+        owner_alias.get("schema") != "jope.jrb01.raw-catalog-alias-expansion/v1"
+        or owner_alias.get("curated_catalog_sha256") != catalog_sha256
+        or owner_alias.get("owner_identities") != 167
+        or owner_alias.get("previously_missing_now_joined") != 14
+        or owner_alias.get("source_file_metadata_for_previous_missing_ids") != 0
+        or owner_alias.get("all_raw_catalog_transitive_unions_checked") is not True
+        or owner_alias.get("no_p3_roster_or_plaintext_sealed_aliases_published")
+        is not True
+        or owner_alias.get("payloads_opened") != 0
+        or not re.fullmatch(r"[0-9a-f]{64}", owner_alias_sha256 or "")
+    ):
+        raise ValueError("role candidate owner-alias receipt is incomplete")
+    if (
+        catalog_pool.get("schema") != CATALOG_POOL_SCHEMA
+        or catalog_pool.get("catalog_sha256") != catalog_sha256
+        or catalog_pool.get("owner_alias_expansion_sha256") != owner_alias_sha256
+        or catalog_pool.get("eligibility_verified") is not False
+        or catalog_pool.get("qualification_status") != "NOT_QUALIFIED"
+        or not re.fullmatch(r"[0-9a-f]{64}", catalog_pool_sha256 or "")
+    ):
+        raise ValueError("role candidate catalog-pool receipt is not the pinned input")
+    if (
+        selected.get("protocol") != "full-DL-Train1219-DL-Val91/v1"
+        or selected_sha256 != flywheel_run.get("input_hashes", {}).get("selected.json")
+        or flywheel_run.get("task_counts")
+        != {
+            "train_binary": 0,
+            "train_regression": len(selected.get("train", [])),
+            "val_binary": 0,
+            "val_regression": len(selected.get("dev", [])),
+        }
+        or flywheel_run.get("train_contexts")
+        != [row.get("context_sha256") for row in selected.get("train", [])]
+        or flywheel_run.get("dev_contexts")
+        != [row.get("context_sha256") for row in selected.get("dev", [])]
+        or flywheel_run.get("dope_sha256") != protocol.DOPE
+        or not re.fullmatch(r"[0-9a-f]{64}", selected_sha256 or "")
+        or not re.fullmatch(r"[0-9a-f]{64}", flywheel_run_sha256 or "")
+    ):
+        raise ValueError("flywheel train/dev metadata does not match its pinned run")
+    if panel.get("schema") != "jope.elo-panel/v1" or not re.fullmatch(
+        r"[0-9a-f]{64}", panel_sha256 or ""
+    ):
+        raise ValueError("task panel metadata schema or digest is invalid")
+    protected_dataset_ids, protected_member_ids = _protected_catalog_member_ids(
+        protected_manifest, protected_manifest_sha256
+    )
+
+    catalog_rows = catalog.get("datasets", [])
+    catalog_by_id = {row.get("id"): row for row in catalog_rows}
+    if None in catalog_by_id or len(catalog_by_id) != len(catalog_rows):
+        raise ValueError("catalog has duplicate or missing dataset IDs")
+    family_review = review_catalog_families(catalog_rows)
+    family_by_id = family_review["family_by_dataset"]
+    if not protected_dataset_ids <= catalog_by_id.keys():
+        raise ValueError("pinned protected members do not join to curated catalog")
+    protected_catalog_ids = protected_member_ids & catalog_by_id.keys()
+    protected_families = {family_by_id[dataset] for dataset in protected_catalog_ids}
+    family_evidence_by_id = {
+        row["dataset"]: {tuple(key) for key in row["union_evidence"]}
+        for row in family_review["records"]
+    }
+    protected_union_keys = set().union(
+        *(family_evidence_by_id[dataset] for dataset in protected_catalog_ids)
+    )
+    protected_union_key_sha256 = canonical_json_sha(
+        [list(key) for key in sorted(protected_union_keys)]
+    )
+    role_exclusion_counts = {
+        "train": {task: 0 for task in protocol.TASKS},
+        "val": {task: 0 for task in protocol.TASKS},
+        "panel": {task: 0 for task in protocol.TASKS},
+    }
+
+    def is_protected(dataset: str) -> bool:
+        return (
+            dataset in protected_member_ids
+            or family_by_id[dataset] in protected_families
+        )
+
+    pool_rows: dict[str, dict[str, dict]] = {}
+    for task in protocol.TASKS:
+        rows = catalog_pool.get("candidate_pools", {}).get(task)
+        if not isinstance(rows, list):
+            raise ValueError("catalog-pool task is missing from role inputs")
+        pool_by_id = {row.get("dataset"): row for row in rows}
+        expected_ids = {row["id"] for row in catalog_rows if row.get("task") == task}
+        if len(pool_by_id) != len(rows) or set(pool_by_id) != expected_ids:
+            raise ValueError(f"{task} candidate pool differs from curated catalog")
+        pool_rows[task] = pool_by_id
+
+    def selected_role_rows(role: str) -> list[dict]:
+        rows = selected["train"] if role == "train" else selected["dev"]
+        result = []
+        seen_contexts = set()
+        for row in rows:
+            dataset = row.get("dataset_id")
+            catalog_row = catalog_by_id.get(dataset)
+            if (
+                row.get("task") != "regression"
+                or catalog_row is None
+                or catalog_row.get("task") != "regression"
+                or row.get("dl_split") != ("DL-Train" if role == "train" else "DL-Val")
+                or row.get("source_split") not in ("train", "inner")
+                or not isinstance(row.get("view_id"), str)
+                or row["view_id"] in seen_contexts
+            ):
+                raise ValueError("flywheel selected row is malformed or not regression")
+            seen_contexts.add(row["view_id"])
+            for key in ("context_sha256", "pool_sha256", "train_only_jtt1_sha256"):
+                if not re.fullmatch(r"[0-9a-f]{64}", row.get(key) or ""):
+                    raise ValueError(
+                        "flywheel selected row lacks pinned context hashes"
+                    )
+            if is_protected(dataset):
+                role_exclusion_counts[role]["regression"] += 1
+                continue
+            result.append(
+                {
+                    "context": row["view_id"],
+                    "dataset": dataset,
+                    "task": "regression",
+                    "role": role,
+                    "source_split": row["source_split"],
+                    "family": family_by_id[dataset],
+                    "context_sha256": row["context_sha256"],
+                    "pool_sha256": row["pool_sha256"],
+                    "train_only_jtt1_sha256": row["train_only_jtt1_sha256"],
+                }
+            )
+        return result
+
+    regression_train = selected_role_rows("train")
+    regression_val = selected_role_rows("val")
+    binary_train = []
+    for dataset, candidate in sorted(pool_rows["binary"].items()):
+        catalog_row = catalog_by_id[dataset]
+        if (
+            type(candidate.get("train_rows")) is not int
+            or candidate["train_rows"] != catalog_row.get("train_rows")
+            or candidate.get("train_sha256") != catalog_row.get("train_sha256")
+        ):
+            raise ValueError("binary candidate row differs from pinned catalog")
+        if is_protected(dataset):
+            role_exclusion_counts["train"]["binary"] += 1
+            continue
+        binary_train.append(
+            {
+                "dataset": dataset,
+                "task": "binary",
+                "role": "train",
+                "family": family_by_id[dataset],
+                "train_rows": candidate["train_rows"],
+                "train_sha256": candidate["train_sha256"],
+                "family_aliases": candidate["family_aliases"],
+            }
+        )
+
+    panel_entries = panel.get("datasets")
+    if not isinstance(panel_entries, list):
+        raise ValueError("panel metadata has no dataset list")
+    panel_counts = {task: 0 for task in protocol.TASKS}
+    panel_rows = {task: [] for task in protocol.TASKS}
+    seen_panel_ids = set()
+    panel_catalog_missing = {task: 0 for task in protocol.TASKS}
+    for item in panel_entries:
+        dataset, task = item.get("id"), item.get("task")
+        if task not in protocol.TASKS or not isinstance(dataset, str):
+            raise ValueError("panel row has unknown task or missing dataset identity")
+        if dataset in seen_panel_ids:
+            raise ValueError("panel metadata repeats a dataset identity")
+        seen_panel_ids.add(dataset)
+        panel_counts[task] += 1
+        catalog_row = catalog_by_id.get(dataset)
+        if catalog_row is None:
+            panel_catalog_missing[task] += 1
+            continue
+        if catalog_row.get("task") != task or catalog_row.get("train_rows") != item.get(
+            "train_rows"
+        ):
+            raise ValueError("panel row differs from curated catalog task or size")
+        if is_protected(dataset):
+            role_exclusion_counts["panel"][task] += 1
+            continue
+        panel_rows[task].append(
+            {
+                "dataset": dataset,
+                "task": task,
+                "role": "panel",
+                "family": family_by_id[dataset],
+                "train_rows": catalog_row["train_rows"],
+                "train_sha256": catalog_row["train_sha256"],
+            }
+        )
+    stats = panel.get("stats", {})
+    for task in protocol.TASKS:
+        if stats.get(f"{task}:selected") != panel_counts[task]:
+            raise ValueError("panel task counts differ from the pinned v1 roster")
+
+    cv_rows = [*regression_train, *regression_val, *binary_train]
+    fold_by_family = protocol.family_folds(cv_rows, seed=136)
+    for row in cv_rows:
+        row["cv_fold"] = fold_by_family[row["family"]]
+    fold_counts = {
+        str(fold): {
+            task: sum(row["task"] == task and row["cv_fold"] == fold for row in cv_rows)
+            for task in protocol.TASKS
+        }
+        for fold in range(5)
+    }
+
+    training_rows = {"regression": regression_train, "binary": binary_train}
+    panel_train_exclusions = {}
+    for task in protocol.TASKS:
+        panel_families = {row["family"] for row in panel_rows[task]}
+        excluded_families = sorted(
+            panel_families & {row["family"] for row in training_rows[task]}
+        )
+        panel_train_exclusions[task] = {
+            "families_sha256": canonical_json_sha(excluded_families),
+            "family_count": len(excluded_families),
+            "train_context_or_dataset_count": sum(
+                row["family"] in set(excluded_families) for row in training_rows[task]
+            ),
+        }
+
+    assigned_rows = [
+        *regression_train,
+        *regression_val,
+        *binary_train,
+        *panel_rows["regression"],
+        *panel_rows["binary"],
+    ]
+    if any(
+        row["dataset"] in protected_member_ids or row["family"] in protected_families
+        for row in assigned_rows
+    ):
+        raise ValueError("protected family remained in an assigned role")
+
+    role_counts = {
+        "train": {
+            "regression": len(regression_train),
+            "binary": len(binary_train),
+        },
+        "val": {"regression": len(regression_val), "binary": 0},
+        "panel": {task: len(panel_rows[task]) for task in protocol.TASKS},
+    }
+    blockers = [
+        "role records are metadata candidates; payload bytes were not opened or verified",
+        "the task-specific two-head worker qualification receipt is not supplied here",
+    ]
+    missing_regression_panel = panel_catalog_missing["regression"]
+    if missing_regression_panel:
+        blockers.append(
+            f"{missing_regression_panel} regression panel identities are absent from the usable curated catalog"
+        )
+    return {
+        "schema": ROLE_CANDIDATE_SCHEMA,
+        "admission_status": "ROLE_CANDIDATES_NOT_ADMITTED",
+        "eligibility_verified": False,
+        "qualification_status": "NOT_QUALIFIED",
+        "catalog_sha256": catalog_sha256,
+        "catalog_pool_manifest_sha256": catalog_pool_sha256,
+        "owner_alias_expansion_sha256": owner_alias_sha256,
+        "flywheel_selected_sha256": selected_sha256,
+        "flywheel_run_manifest_sha256": flywheel_run_sha256,
+        "panel_v1_sha256": panel_sha256,
+        "flywheel_source_sha": flywheel_run.get("source_sha"),
+        "dope_sha256": flywheel_run.get("dope_sha256"),
+        "family_review_sha256": canonical_json_sha(family_by_id),
+        "family_by_dataset": dict(sorted(family_by_id.items())),
+        "role_counts": role_counts,
+        "cv": {
+            "protocol": "family-grouped-5-fold/v1",
+            "seed": 136,
+            "family_by_fold": dict(sorted(fold_by_family.items())),
+            "validation_context_counts_by_fold": fold_counts,
+        },
+        "panel_train_exclusions": panel_train_exclusions,
+        "protected_exclusion": {
+            "manifest_sha256": protected_manifest_sha256,
+            "manifest_schema": PROTECTED_FAMILY_MANIFEST_SCHEMA,
+            "protected_member_count": len(protected_member_ids),
+            "protected_catalog_dataset_count": len(protected_catalog_ids),
+            "catalog_alias_family_count": len(protected_families),
+            "catalog_alias_family_sha256": canonical_json_sha(
+                sorted(protected_families)
+            ),
+            "family_key_schema": family_review["dedupe_tool_schema"],
+            "family_key_policy_sha256": family_review["dedupe_tool_policy_sha256"],
+            "protected_derived_union_key_count": len(protected_union_keys),
+            "protected_derived_union_keys_sha256": protected_union_key_sha256,
+            "excluded_role_counts": role_exclusion_counts,
+            "assigned_role_dataset_overlap": 0,
+            "assigned_role_family_overlap": 0,
+        },
+        "records": {
+            "regression_train": regression_train,
+            "regression_val": regression_val,
+            "binary_train": binary_train,
+            "regression_panel": panel_rows["regression"],
+            "binary_panel": panel_rows["binary"],
+        },
+        "closure": {
+            "catalog_p2_srcfile_url_aliases_closed": True,
+            "unresolved_owner_aliases_collapsed_to_one_excluded_family": 14,
+            "owner_alias_family_id": "owner-aliases:conservative-single-family",
+            "owner_alias_family_source_sha256": owner_alias[
+                "owner_identity_manifest_sha256"
+            ],
+            "owner_alias_family_assigned_a_role": False,
+            "panel_catalog_missing_by_task": panel_catalog_missing,
+            "panel_train_family_overlap_excluded_during_panel_evaluation": True,
+            "p3_sealed_and_dl_holdout_roles_excluded_by_family_keys": True,
+            "sealed_meta_test_and_dl_holdout_payloads_opened": 0,
+        },
+        "blockers": blockers,
+    }
+
+
+def build_task_role_candidate_manifest_from_files(
+    catalog_path: Path,
+    owner_alias_path: Path,
+    catalog_pool_path: Path,
+    selected_path: Path,
+    flywheel_run_path: Path,
+    panel_path: Path,
+    protected_manifest_path: Path | None = None,
+) -> dict:
+    """Load exact approved role metadata and bind all source files by SHA-256."""
+    if protected_manifest_path is None:
+        protected_manifest_path = (
+            Path(__file__).resolve().parents[2]
+            / "research/flywheel_selfplay/h150_w5_provenance_unblock/sealed_family_manifest.json"
+        )
+    paths = {
+        "catalog": Path(catalog_path),
+        "owner_alias": Path(owner_alias_path),
+        "catalog_pool": Path(catalog_pool_path),
+        "selected": Path(selected_path),
+        "flywheel_run": Path(flywheel_run_path),
+        "panel": Path(panel_path),
+        "protected_manifest": Path(protected_manifest_path),
+    }
+    expected = {
+        "catalog": CATALOG_V246_SHA256,
+        "owner_alias": OWNER_ALIAS_RECEIPT_SHA256,
+        "catalog_pool": CATALOG_POOL_RECEIPT_SHA256,
+        "selected": FLYWHEEL_SELECTED_SHA256,
+        "flywheel_run": FLYWHEEL_RUN_MANIFEST_SHA256,
+        "panel": ELO_PANEL_V1_SHA256,
+        "protected_manifest": PROTECTED_FAMILY_MANIFEST_SHA256,
+    }
+    raw = {name: path.read_bytes() for name, path in paths.items()}
+    actual = {name: hashlib.sha256(data).hexdigest() for name, data in raw.items()}
+    if actual != expected:
+        raise ValueError(
+            "role-candidate input file hash differs from owner-pinned source"
+        )
+    objects = {name: json.loads(data) for name, data in raw.items()}
+    return build_task_role_candidate_manifest(
+        objects["catalog"],
+        actual["catalog"],
+        objects["owner_alias"],
+        actual["owner_alias"],
+        objects["catalog_pool"],
+        actual["catalog_pool"],
+        objects["selected"],
+        actual["selected"],
+        objects["flywheel_run"],
+        actual["flywheel_run"],
+        objects["panel"],
+        actual["panel"],
+        objects["protected_manifest"],
+        actual["protected_manifest"],
     )
 
 
