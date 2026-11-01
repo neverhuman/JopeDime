@@ -84,7 +84,12 @@ class TestH156(unittest.TestCase):
         self.assertAlmostEqual(j_pos["selected_gain"], 0.040, places=9)
 
     def test_holm_stepdown_adjustment(self):
-        pvals = {"W05_XFIT": 0.04, "W10_XFIT": 0.01, "W20_XFIT": 0.02, "XFIT_JOINT": 0.20}
+        pvals = {
+            "W05_XFIT": 0.04,
+            "W10_XFIT": 0.01,
+            "W20_XFIT": 0.02,
+            "XFIT_JOINT": 0.20,
+        }
         adj = stat.holm(pvals)
         self.assertAlmostEqual(adj["W10_XFIT"], 0.04)
         self.assertAlmostEqual(adj["W20_XFIT"], 0.06)
@@ -139,7 +144,9 @@ class TestH156(unittest.TestCase):
                 "XFIT_JOINT": {"selected_step": 0},
             }
         ]
-        self.assertEqual(stat.verdict(s_neutral, s_neutral, sels_neutral), "RULE_NEUTRAL")
+        self.assertEqual(
+            stat.verdict(s_neutral, s_neutral, sels_neutral), "RULE_NEUTRAL"
+        )
 
         pos = base.copy()
         pos[:, :, 3] += 0.05
@@ -162,6 +169,79 @@ class TestH156(unittest.TestCase):
         self.assertTrue(pct >= mon.MAX_DISK_USED_PCT)
         pct_ok = mon.disk_used_pct(949_999_999_000, 50_000_001_000)
         self.assertLess(pct_ok, mon.MAX_DISK_USED_PCT)
+
+    def test_configure_adapter_width_preserves_silu_and_exact_w10_parity(self):
+        import torch
+        import torch.nn as nn
+        import run as h156_run
+
+        class MockAdapter(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.anchor = nn.Linear(4, 4)
+                for p in self.anchor.parameters():
+                    p.requires_grad_(False)
+                self.prog_412_bottleneck = nn.Sequential(
+                    nn.Linear(412, 16), nn.LayerNorm(16), nn.SiLU()
+                )
+                self.cand_query_proj = nn.Sequential(
+                    nn.Linear(66, 32), nn.LayerNorm(32), nn.SiLU()
+                )
+                self.ctx_bilinear_u = nn.Linear(32, 16, bias=False)
+                self.prog_bilinear_v = nn.Linear(24, 16, bias=False)
+                self.mm_prior_out = nn.Sequential(
+                    nn.Linear(50, 24), nn.SiLU(), nn.Linear(24, 1)
+                )
+                self.traj_delta_head = nn.Sequential(
+                    nn.Linear(67, 24), nn.SiLU(), nn.Linear(24, 1)
+                )
+                self.parent_delta_net = nn.Sequential(
+                    nn.Linear(114, 48), nn.LayerNorm(48), nn.SiLU(), nn.Linear(48, 1)
+                )
+
+            def forward_probe(self, x_prog, x_sem, x_ctx, x_traj, x_par):
+                b16 = self.prog_412_bottleneck(x_prog)
+                cq = self.cand_query_proj(
+                    torch.cat([x_sem, x_sem, b16, x_sem[:, :2]], dim=-1)
+                )
+                bi = self.ctx_bilinear_u(x_ctx) * self.prog_bilinear_v(x_sem)
+                mm = self.mm_prior_out(torch.cat([cq, bi, x_sem[:, :2]], dim=-1))
+                tr = self.traj_delta_head(x_traj)
+                pa = self.parent_delta_net(x_par)
+                return mm + tr + pa
+
+        class MockNet(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.adapter_10tok = MockAdapter()
+
+        torch.manual_seed(156)
+        net = MockNet()
+        net.eval()
+        r882_sd = {n: t.detach().clone() for n, t in net.state_dict().items()}
+        names = [
+            n
+            for n, p in net.named_parameters()
+            if n.startswith("adapter_10tok.")
+            and not n.startswith("adapter_10tok.anchor.")
+        ]
+        x_prog = torch.randn(4, 412)
+        x_sem = torch.randn(4, 24)
+        x_ctx = torch.randn(4, 32)
+        x_traj = torch.randn(4, 67)
+        x_par = torch.randn(4, 114)
+        with torch.no_grad():
+            y_ref = net.adapter_10tok.forward_probe(x_prog, x_sem, x_ctx, x_traj, x_par)
+            for wm in (0.5, 2.0, 1.0):
+                h156_run.configure_adapter_width(net, r882_sd, names, wm, 156101)
+                ad = net.adapter_10tok
+                self.assertIsInstance(ad.prog_412_bottleneck[2], nn.SiLU)
+                self.assertIsInstance(ad.cand_query_proj[2], nn.SiLU)
+                self.assertIsInstance(ad.mm_prior_out[1], nn.SiLU)
+                self.assertIsInstance(ad.traj_delta_head[1], nn.SiLU)
+                self.assertIsInstance(ad.parent_delta_net[2], nn.SiLU)
+            y_w10 = net.adapter_10tok.forward_probe(x_prog, x_sem, x_ctx, x_traj, x_par)
+        self.assertEqual(float((y_ref - y_w10).abs().max()), 0.0)
 
 
 if __name__ == "__main__":
