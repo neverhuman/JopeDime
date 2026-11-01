@@ -1,10 +1,2225 @@
 {
   "wave": "H154",
-  "status": "PREREGISTERED_NOT_EXECUTED",
-  "verdict": null,
-  "r882_verdict": null,
-  "trajectory_vs_ctrl_verdict": null,
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "r882_verdict": "NO_ADVANCE",
+  "trajectory_vs_ctrl_verdict": "NO_TRAJECTORY_AVERAGING_GAIN_OVER_CTRL",
   "best_r882_arm": null,
-  "optimizer_updates": 0,
-  "serving_promotion": false
+  "primary_dl_val_91ctx_19fam": {
+    "CTRL": {
+      "context_mean_utility_by_seed": [
+        1.082371859562251,
+        1.11266584895106,
+        1.0838495201710112
+      ],
+      "family_mean_utility_by_seed": [
+        1.1006350629094523,
+        1.129653515902943,
+        1.1020505062294228
+      ],
+      "vs_r882": {
+        "families": 19,
+        "per_seed_gain": [
+          -0.05298021408179261,
+          -0.02396176108830198,
+          -0.05156477076182233
+        ],
+        "median_gain": -0.05156477076182233,
+        "ci95": [
+          -0.11659819926180567,
+          -0.006343350382395074
+        ],
+        "p_one_sided": 0.9979002099790021,
+        "seeds_beating": 0,
+        "median_seed": 154103,
+        "top3_positive_share": 1.0,
+        "harmed_families": 8,
+        "elo": 1386.5294715499087,
+        "elo_ci95": [
+          1241.8781274608878,
+          1518.2837146001023
+        ]
+      },
+      "vs_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p_one_sided": 1.0,
+        "seeds_beating": 0,
+        "median_seed": 154102,
+        "top3_positive_share": 1.0,
+        "harmed_families": 0,
+        "elo": 1500.0,
+        "elo_ci95": [
+          1500.0,
+          1500.0
+        ]
+      },
+      "invalid_counts": [
+        1,
+        0,
+        1
+      ],
+      "drift": [
+        0.44553864002227783,
+        0.4532197117805481,
+        0.44772079586982727
+      ],
+      "recalibration": [
+        null,
+        null,
+        null
+      ]
+    },
+    "EMA_099": {
+      "context_mean_utility_by_seed": [
+        1.135806016680202,
+        1.1354387884248622,
+        1.135806016680202
+      ],
+      "family_mean_utility_by_seed": [
+        1.1517108164080998,
+        1.1513590503950903,
+        1.1517108164080998
+      ],
+      "vs_r882": {
+        "families": 19,
+        "per_seed_gain": [
+          -0.0019044605831452434,
+          -0.002256226596154842,
+          -0.0019044605831452434
+        ],
+        "median_gain": -0.0019044605831452434,
+        "ci95": [
+          -0.007161893032119403,
+          0.00203263147295875
+        ],
+        "p_one_sided": 0.7684231576842315,
+        "seeds_beating": 0,
+        "median_seed": 154101,
+        "top3_positive_share": 1.0,
+        "harmed_families": 3,
+        "elo": 1481.7162853998977,
+        "elo_ci95": [
+          1406.470004225501,
+          1555.2619211550057
+        ]
+      },
+      "vs_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          0.05107575349864737,
+          0.021705534492147138,
+          0.049660310178677086
+        ],
+        "median_gain": 0.049660310178677086,
+        "ci95": [
+          0.004994315789984667,
+          0.11409950424535345
+        ],
+        "p_one_sided": 0.0034996500349965005,
+        "seeds_beating": 3,
+        "median_seed": 154103,
+        "top3_positive_share": 0.9374825377429203,
+        "harmed_families": 2,
+        "elo": 1613.4705284500913,
+        "elo_ci95": [
+          1500.0,
+          1729.2945278492352
+        ]
+      },
+      "invalid_counts": [
+        0,
+        0,
+        0
+      ],
+      "drift": [
+        0.08201799541711807,
+        0.08387971669435501,
+        0.08322864025831223
+      ],
+      "recalibration": [
+        {
+          "ref_mm_rms": 0.006124297969425578,
+          "ref_traj_rms": 0.06031049420662495,
+          "cand_mm_rms_before": 0.006742366707854644,
+          "cand_traj_rms_before": 0.06560008104345472,
+          "raw_mm_ratio": 0.9083305958857094,
+          "raw_traj_ratio": 0.919366153933166,
+          "applied_mm_scale": 0.9083305958857094,
+          "applied_traj_scale": 0.919366153933166,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        },
+        {
+          "ref_mm_rms": 0.005960680772748485,
+          "ref_traj_rms": 0.0594608211272581,
+          "cand_mm_rms_before": 0.006589717270414146,
+          "cand_traj_rms_before": 0.06477589527558414,
+          "raw_mm_ratio": 0.9045427183211872,
+          "raw_traj_ratio": 0.9179467280889988,
+          "applied_mm_scale": 0.9045427183211872,
+          "applied_traj_scale": 0.9179467280889988,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        },
+        {
+          "ref_mm_rms": 0.005880454317432267,
+          "ref_traj_rms": 0.05971590020011507,
+          "cand_mm_rms_before": 0.006493441808059286,
+          "cand_traj_rms_before": 0.06502099198552279,
+          "raw_mm_ratio": 0.9055989860621814,
+          "raw_traj_ratio": 0.9184095532318406,
+          "applied_mm_scale": 0.9055989860621814,
+          "applied_traj_scale": 0.9184095532318406,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        }
+      ]
+    },
+    "EMA_0995": {
+      "context_mean_utility_by_seed": [
+        1.1352489854411765,
+        1.1352489854411765,
+        1.1352489854411765
+      ],
+      "family_mean_utility_by_seed": [
+        1.151177239115981,
+        1.151177239115981,
+        1.151177239115981
+      ],
+      "vs_r882": {
+        "families": 19,
+        "per_seed_gain": [
+          -0.0024380378752642744,
+          -0.0024380378752642744,
+          -0.0024380378752642744
+        ],
+        "median_gain": -0.0024380378752642744,
+        "ci95": [
+          -0.00919172396578719,
+          0.0021096880008242905
+        ],
+        "p_one_sided": 0.7644235576442355,
+        "seeds_beating": 0,
+        "median_seed": 154102,
+        "top3_positive_share": 1.0,
+        "harmed_families": 2,
+        "elo": 1481.7162853998977,
+        "elo_ci95": [
+          1425.8258453497506,
+          1536.6692623774618
+        ]
+      },
+      "vs_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          0.05054217620652833,
+          0.021523723213037704,
+          0.049126732886558055
+        ],
+        "median_gain": 0.049126732886558055,
+        "ci95": [
+          0.007112265420764624,
+          0.10784410949661344
+        ],
+        "p_one_sided": 0.0008999100089991,
+        "seeds_beating": 3,
+        "median_seed": 154103,
+        "top3_positive_share": 0.8937044472958406,
+        "harmed_families": 2,
+        "elo": 1613.4705284500913,
+        "elo_ci95": [
+          1500.0,
+          1729.2945278492352
+        ]
+      },
+      "invalid_counts": [
+        0,
+        0,
+        0
+      ],
+      "drift": [
+        0.04367606341838837,
+        0.04467882588505745,
+        0.044348642230033875
+      ],
+      "recalibration": [
+        {
+          "ref_mm_rms": 0.006124297969425578,
+          "ref_traj_rms": 0.06031049420662495,
+          "cand_mm_rms_before": 0.006446470481142172,
+          "cand_traj_rms_before": 0.06307582694502184,
+          "raw_mm_ratio": 0.9500234255847376,
+          "raw_traj_ratio": 0.9561585971626309,
+          "applied_mm_scale": 0.9500234255847376,
+          "applied_traj_scale": 0.9561585971626309,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        },
+        {
+          "ref_mm_rms": 0.005960680772748485,
+          "ref_traj_rms": 0.0594608211272581,
+          "cand_mm_rms_before": 0.006288192060640404,
+          "cand_traj_rms_before": 0.06223943281878928,
+          "raw_mm_ratio": 0.9479164623577728,
+          "raw_traj_ratio": 0.9553560891272719,
+          "applied_mm_scale": 0.9479164623577728,
+          "applied_traj_scale": 0.9553560891272719,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        },
+        {
+          "ref_mm_rms": 0.005880454317432267,
+          "ref_traj_rms": 0.05971590020011507,
+          "cand_mm_rms_before": 0.0061998812641726395,
+          "cand_traj_rms_before": 0.062489290995989585,
+          "raw_mm_ratio": 0.9484785380348734,
+          "raw_traj_ratio": 0.9556181426982024,
+          "applied_mm_scale": 0.9484785380348734,
+          "applied_traj_scale": 0.9556181426982024,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        }
+      ]
+    },
+    "EMA_0999": {
+      "context_mean_utility_by_seed": [
+        1.1344340853025057,
+        1.1344340853025057,
+        1.1344340853025057
+      ],
+      "family_mean_utility_by_seed": [
+        1.1503966505620962,
+        1.1503966505620962,
+        1.1503966505620962
+      ],
+      "vs_r882": {
+        "families": 19,
+        "per_seed_gain": [
+          -0.003218626429149013,
+          -0.003218626429149013,
+          -0.003218626429149013
+        ],
+        "median_gain": -0.003218626429149013,
+        "ci95": [
+          -0.009423801626617115,
+          0.0
+        ],
+        "p_one_sided": 1.0,
+        "seeds_beating": 0,
+        "median_seed": 154102,
+        "top3_positive_share": 1.0,
+        "harmed_families": 2,
+        "elo": 1463.3307376225382,
+        "elo_ci95": [
+          1406.470004225501,
+          1500.0
+        ]
+      },
+      "vs_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          0.049761587652643595,
+          0.02074313465915296,
+          0.04834614433267331
+        ],
+        "median_gain": 0.04834614433267331,
+        "ci95": [
+          0.006057739579795666,
+          0.10720974901734887
+        ],
+        "p_one_sided": 0.0025997400259974,
+        "seeds_beating": 3,
+        "median_seed": 154103,
+        "top3_positive_share": 0.8937044472958406,
+        "harmed_families": 3,
+        "elo": 1593.529995774499,
+        "elo_ci95": [
+          1481.7162853998977,
+          1729.2945278492352
+        ]
+      },
+      "invalid_counts": [
+        0,
+        0,
+        0
+      ],
+      "drift": [
+        0.00920088030397892,
+        0.009414207190275192,
+        0.009347471408545971
+      ],
+      "recalibration": [
+        {
+          "ref_mm_rms": 0.006124297969425578,
+          "ref_traj_rms": 0.06031049420662495,
+          "cand_mm_rms_before": 0.0061908784739460035,
+          "cand_traj_rms_before": 0.06088346988726177,
+          "raw_mm_ratio": 0.9892453866118313,
+          "raw_traj_ratio": 0.9905889778999489,
+          "applied_mm_scale": 0.9892453866118313,
+          "applied_traj_scale": 0.9905889778999489,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        },
+        {
+          "ref_mm_rms": 0.005960680772748485,
+          "ref_traj_rms": 0.0594608211272581,
+          "cand_mm_rms_before": 0.006028294673877647,
+          "cand_traj_rms_before": 0.06003655360554919,
+          "raw_mm_ratio": 0.9887839090842468,
+          "raw_traj_ratio": 0.9904103009963937,
+          "applied_mm_scale": 0.9887839090842468,
+          "applied_traj_scale": 0.9904103009963937,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        },
+        {
+          "ref_mm_rms": 0.005880454317432267,
+          "ref_traj_rms": 0.05971590020011507,
+          "cand_mm_rms_before": 0.0059464477073799165,
+          "cand_traj_rms_before": 0.06029051874375186,
+          "raw_mm_ratio": 0.9889020482151475,
+          "raw_traj_ratio": 0.9904691723406952,
+          "applied_mm_scale": 0.9889020482151475,
+          "applied_traj_scale": 0.9904691723406952,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        }
+      ]
+    },
+    "SWA_K5": {
+      "context_mean_utility_by_seed": [
+        1.1022256824349022,
+        1.1244333016008017,
+        1.125483018915186
+      ],
+      "family_mean_utility_by_seed": [
+        1.1195443909731284,
+        1.1408169524899374,
+        1.1418224711805585
+      ],
+      "vs_r882": {
+        "families": 19,
+        "per_seed_gain": [
+          -0.03407088601811663,
+          -0.012798324501307657,
+          -0.011792805810686601
+        ],
+        "median_gain": -0.012798324501307657,
+        "ci95": [
+          -0.02832127197044381,
+          0.0006193012485343265
+        ],
+        "p_one_sided": 0.9645035496450355,
+        "seeds_beating": 0,
+        "median_seed": 154102,
+        "top3_positive_share": 1.0,
+        "harmed_families": 7,
+        "elo": 1463.3307376225382,
+        "elo_ci95": [
+          1344.1984999319018,
+          1574.1741546502494
+        ]
+      },
+      "vs_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          0.018909328063675984,
+          0.011163436586994325,
+          0.03977196495113573
+        ],
+        "median_gain": 0.018909328063675984,
+        "ci95": [
+          0.0009232146624927428,
+          0.040862385954379216
+        ],
+        "p_one_sided": 0.015798420157984203,
+        "seeds_beating": 3,
+        "median_seed": 154101,
+        "top3_positive_share": 0.944600631661108,
+        "harmed_families": 2,
+        "elo": 1536.6692623774618,
+        "elo_ci95": [
+          1463.3307376225382,
+          1613.4705284500913
+        ]
+      },
+      "invalid_counts": [
+        1,
+        0,
+        0
+      ],
+      "drift": [
+        0.3996756374835968,
+        0.40749046206474304,
+        0.40144139528274536
+      ],
+      "recalibration": [
+        {
+          "ref_mm_rms": 0.006124297969425578,
+          "ref_traj_rms": 0.06031049420662495,
+          "cand_mm_rms_before": 0.009810318063282104,
+          "cand_traj_rms_before": 0.09099770653917907,
+          "raw_mm_ratio": 0.6242710919177533,
+          "raw_traj_ratio": 0.6627693872774504,
+          "applied_mm_scale": 0.85,
+          "applied_traj_scale": 0.85,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        },
+        {
+          "ref_mm_rms": 0.005960680772748485,
+          "ref_traj_rms": 0.0594608211272581,
+          "cand_mm_rms_before": 0.009771151770505663,
+          "cand_traj_rms_before": 0.09061366364677223,
+          "raw_mm_ratio": 0.6100284708237641,
+          "raw_traj_ratio": 0.6562014903077608,
+          "applied_mm_scale": 0.85,
+          "applied_traj_scale": 0.85,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        },
+        {
+          "ref_mm_rms": 0.005880454317432267,
+          "ref_traj_rms": 0.05971590020011507,
+          "cand_mm_rms_before": 0.009549461916816767,
+          "cand_traj_rms_before": 0.0905415048609569,
+          "raw_mm_ratio": 0.6157890746783006,
+          "raw_traj_ratio": 0.6595417238957957,
+          "applied_mm_scale": 0.85,
+          "applied_traj_scale": 0.85,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        }
+      ]
+    },
+    "SWA_K10": {
+      "context_mean_utility_by_seed": [
+        1.1310402075859662,
+        1.1274794931061909,
+        1.1249810695160936
+      ],
+      "family_mean_utility_by_seed": [
+        1.1471456729599374,
+        1.1437348833003629,
+        1.1413416564930068
+      ],
+      "vs_r882": {
+        "families": 19,
+        "per_seed_gain": [
+          -0.0064696040313077866,
+          -0.009880393690882217,
+          -0.012273620498238323
+        ],
+        "median_gain": -0.009880393690882217,
+        "ci95": [
+          -0.022781079654866438,
+          0.0002106430796188239
+        ],
+        "p_one_sided": 0.972002799720028,
+        "seeds_beating": 0,
+        "median_seed": 154102,
+        "top3_positive_share": 1.0,
+        "harmed_families": 6,
+        "elo": 1444.7380788449943,
+        "elo_ci95": [
+          1321.3598362325883,
+          1555.2619211550057
+        ]
+      },
+      "vs_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          0.046510610050484825,
+          0.014081367397419763,
+          0.039291150263584006
+        ],
+        "median_gain": 0.039291150263584006,
+        "ci95": [
+          0.0048796277105378465,
+          0.09073275549138804
+        ],
+        "p_one_sided": 0.0045995400459954,
+        "seeds_beating": 3,
+        "median_seed": 154103,
+        "top3_positive_share": 0.931133520550514,
+        "harmed_families": 3,
+        "elo": 1555.2619211550057,
+        "elo_ci95": [
+          1444.7380788449943,
+          1655.8015000680982
+        ]
+      },
+      "invalid_counts": [
+        0,
+        0,
+        0
+      ],
+      "drift": [
+        0.3437531888484955,
+        0.35069403052330017,
+        0.34655699133872986
+      ],
+      "recalibration": [
+        {
+          "ref_mm_rms": 0.006124297969425578,
+          "ref_traj_rms": 0.06031049420662495,
+          "cand_mm_rms_before": 0.009199024461823562,
+          "cand_traj_rms_before": 0.08607059090438689,
+          "raw_mm_ratio": 0.6657551564126977,
+          "raw_traj_ratio": 0.7007096567237697,
+          "applied_mm_scale": 0.85,
+          "applied_traj_scale": 0.85,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        },
+        {
+          "ref_mm_rms": 0.005960680772748485,
+          "ref_traj_rms": 0.0594608211272581,
+          "cand_mm_rms_before": 0.009114838658120216,
+          "cand_traj_rms_before": 0.08533625799766956,
+          "raw_mm_ratio": 0.6539535142992621,
+          "raw_traj_ratio": 0.6967826164686283,
+          "applied_mm_scale": 0.85,
+          "applied_traj_scale": 0.85,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        },
+        {
+          "ref_mm_rms": 0.005880454317432267,
+          "ref_traj_rms": 0.05971590020011507,
+          "cand_mm_rms_before": 0.0089294806628298,
+          "cand_traj_rms_before": 0.08549714665105661,
+          "raw_mm_ratio": 0.6585438212448875,
+          "raw_traj_ratio": 0.6984548904753078,
+          "applied_mm_scale": 0.85,
+          "applied_traj_scale": 0.85,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        }
+      ]
+    },
+    "SWA_K20": {
+      "context_mean_utility_by_seed": [
+        1.1272091043848287,
+        1.127233408772518,
+        1.1272091043848287
+      ],
+      "family_mean_utility_by_seed": [
+        1.1434758793672686,
+        1.1434991604123184,
+        1.1434758793672686
+      ],
+      "vs_r882": {
+        "families": 19,
+        "per_seed_gain": [
+          -0.010139397623976528,
+          -0.010116116578926684,
+          -0.010139397623976528
+        ],
+        "median_gain": -0.010139397623976528,
+        "ci95": [
+          -0.023122905246453197,
+          5.053465661038596e-05
+        ],
+        "p_one_sided": 0.9745025497450255,
+        "seeds_beating": 0,
+        "median_seed": 154103,
+        "top3_positive_share": 1.0,
+        "harmed_families": 6,
+        "elo": 1444.7380788449943,
+        "elo_ci95": [
+          1321.3598362325883,
+          1555.2619211550057
+        ]
+      },
+      "vs_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          0.04284081645781608,
+          0.013845644509375296,
+          0.0414253731378458
+        ],
+        "median_gain": 0.0414253731378458,
+        "ci95": [
+          0.0046006950045851145,
+          0.09713694212864885
+        ],
+        "p_one_sided": 0.0047995200479952005,
+        "seeds_beating": 3,
+        "median_seed": 154103,
+        "top3_positive_share": 0.9346150473536947,
+        "harmed_families": 4,
+        "elo": 1536.6692623774618,
+        "elo_ci95": [
+          1444.7380788449943,
+          1634.1611298235387
+        ]
+      },
+      "invalid_counts": [
+        0,
+        0,
+        0
+      ],
+      "drift": [
+        0.23353686928749084,
+        0.23868729174137115,
+        0.23706494271755219
+      ],
+      "recalibration": [
+        {
+          "ref_mm_rms": 0.006124297969425578,
+          "ref_traj_rms": 0.06031049420662495,
+          "cand_mm_rms_before": 0.008066899807548576,
+          "cand_traj_rms_before": 0.07676099197700978,
+          "raw_mm_ratio": 0.7591885501905932,
+          "raw_traj_ratio": 0.7856919595917701,
+          "applied_mm_scale": 0.85,
+          "applied_traj_scale": 0.85,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        },
+        {
+          "ref_mm_rms": 0.005960680772748485,
+          "ref_traj_rms": 0.0594608211272581,
+          "cand_mm_rms_before": 0.007945507258701176,
+          "cand_traj_rms_before": 0.07596657533233532,
+          "raw_mm_ratio": 0.7501951201694399,
+          "raw_traj_ratio": 0.782723465775987,
+          "applied_mm_scale": 0.85,
+          "applied_traj_scale": 0.85,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        },
+        {
+          "ref_mm_rms": 0.005880454317432267,
+          "ref_traj_rms": 0.05971590020011507,
+          "cand_mm_rms_before": 0.007816387895796927,
+          "cand_traj_rms_before": 0.07624086189347164,
+          "raw_mm_ratio": 0.7523237582150112,
+          "raw_traj_ratio": 0.7832532151007652,
+          "applied_mm_scale": 0.85,
+          "applied_traj_scale": 0.85,
+          "bounds": [
+            0.85,
+            1.15
+          ]
+        }
+      ]
+    }
+  },
+  "decision": {
+    "vs_r882": {
+      "EMA_0995": {
+        "holm_adjusted_p": 1.0,
+        "gates": {
+          "margin": false,
+          "ci": false,
+          "three_seeds": false,
+          "concentration": false,
+          "holm": false,
+          "dose": true
+        },
+        "dose": {
+          "median_adapter_l2_drift": 0.044348642230033875,
+          "control_median_adapter_l2_drift": 0.44772079586982727,
+          "relative_difference": 0.9009457620929271,
+          "drift_within_five_percent": false,
+          "identical_utilities_to_ctrl": false,
+          "status": "DOSE_VALID"
+        },
+        "efficacy_only_advance": false,
+        "advance": false
+      },
+      "EMA_099": {
+        "holm_adjusted_p": 1.0,
+        "gates": {
+          "margin": false,
+          "ci": false,
+          "three_seeds": false,
+          "concentration": false,
+          "holm": false,
+          "dose": true
+        },
+        "dose": {
+          "median_adapter_l2_drift": 0.08322864025831223,
+          "control_median_adapter_l2_drift": 0.44772079586982727,
+          "relative_difference": 0.8141059315848475,
+          "drift_within_five_percent": false,
+          "identical_utilities_to_ctrl": false,
+          "status": "DOSE_VALID"
+        },
+        "efficacy_only_advance": false,
+        "advance": false
+      },
+      "SWA_K5": {
+        "holm_adjusted_p": 1.0,
+        "gates": {
+          "margin": false,
+          "ci": false,
+          "three_seeds": false,
+          "concentration": false,
+          "holm": false,
+          "dose": true
+        },
+        "dose": {
+          "median_adapter_l2_drift": 0.40144139528274536,
+          "control_median_adapter_l2_drift": 0.44772079586982727,
+          "relative_difference": 0.1033666539816869,
+          "drift_within_five_percent": false,
+          "identical_utilities_to_ctrl": false,
+          "status": "DOSE_VALID"
+        },
+        "efficacy_only_advance": false,
+        "advance": false
+      },
+      "SWA_K10": {
+        "holm_adjusted_p": 1.0,
+        "gates": {
+          "margin": false,
+          "ci": false,
+          "three_seeds": false,
+          "concentration": false,
+          "holm": false,
+          "dose": true
+        },
+        "dose": {
+          "median_adapter_l2_drift": 0.34655699133872986,
+          "control_median_adapter_l2_drift": 0.44772079586982727,
+          "relative_difference": 0.22595288283305542,
+          "drift_within_five_percent": false,
+          "identical_utilities_to_ctrl": false,
+          "status": "DOSE_VALID"
+        },
+        "efficacy_only_advance": false,
+        "advance": false
+      },
+      "SWA_K20": {
+        "holm_adjusted_p": 1.0,
+        "gates": {
+          "margin": false,
+          "ci": false,
+          "three_seeds": false,
+          "concentration": false,
+          "holm": false,
+          "dose": true
+        },
+        "dose": {
+          "median_adapter_l2_drift": 0.23706494271755219,
+          "control_median_adapter_l2_drift": 0.44772079586982727,
+          "relative_difference": 0.47050718906861383,
+          "drift_within_five_percent": false,
+          "identical_utilities_to_ctrl": false,
+          "status": "DOSE_VALID"
+        },
+        "efficacy_only_advance": false,
+        "advance": false
+      },
+      "CTRL": {
+        "holm_adjusted_p": 1.0,
+        "gates": {
+          "margin": false,
+          "ci": false,
+          "three_seeds": false,
+          "concentration": false,
+          "holm": false,
+          "dose": true
+        },
+        "dose": {
+          "median_adapter_l2_drift": 0.44772079586982727,
+          "control_median_adapter_l2_drift": 0.44772079586982727,
+          "relative_difference": 0.0,
+          "drift_within_five_percent": true,
+          "identical_utilities_to_ctrl": true,
+          "status": "DOSE_VALID"
+        },
+        "efficacy_only_advance": false,
+        "advance": false
+      },
+      "EMA_0999": {
+        "holm_adjusted_p": 1.0,
+        "gates": {
+          "margin": false,
+          "ci": false,
+          "three_seeds": false,
+          "concentration": false,
+          "holm": false,
+          "dose": true
+        },
+        "dose": {
+          "median_adapter_l2_drift": 0.009347471408545971,
+          "control_median_adapter_l2_drift": 0.44772079586982727,
+          "relative_difference": 0.9791220968631001,
+          "drift_within_five_percent": false,
+          "identical_utilities_to_ctrl": false,
+          "status": "DOSE_VALID"
+        },
+        "efficacy_only_advance": false,
+        "advance": false
+      }
+    },
+    "vs_ctrl": {
+      "EMA_0995": {
+        "holm_adjusted_p": 0.0053994600539946005,
+        "gates": {
+          "margin": true,
+          "ci": true,
+          "three_seeds": true,
+          "concentration": false,
+          "holm": true,
+          "dose": true
+        },
+        "dose": {
+          "median_adapter_l2_drift": 0.044348642230033875,
+          "control_median_adapter_l2_drift": 0.44772079586982727,
+          "relative_difference": 0.9009457620929271,
+          "drift_within_five_percent": false,
+          "identical_utilities_to_ctrl": false,
+          "status": "DOSE_VALID"
+        },
+        "efficacy_only_advance": false,
+        "advance": false
+      },
+      "EMA_0999": {
+        "holm_adjusted_p": 0.012998700129987,
+        "gates": {
+          "margin": true,
+          "ci": true,
+          "three_seeds": true,
+          "concentration": false,
+          "holm": true,
+          "dose": true
+        },
+        "dose": {
+          "median_adapter_l2_drift": 0.009347471408545971,
+          "control_median_adapter_l2_drift": 0.44772079586982727,
+          "relative_difference": 0.9791220968631001,
+          "drift_within_five_percent": false,
+          "identical_utilities_to_ctrl": false,
+          "status": "DOSE_VALID"
+        },
+        "efficacy_only_advance": false,
+        "advance": false
+      },
+      "EMA_099": {
+        "holm_adjusted_p": 0.013998600139986002,
+        "gates": {
+          "margin": true,
+          "ci": true,
+          "three_seeds": true,
+          "concentration": false,
+          "holm": true,
+          "dose": true
+        },
+        "dose": {
+          "median_adapter_l2_drift": 0.08322864025831223,
+          "control_median_adapter_l2_drift": 0.44772079586982727,
+          "relative_difference": 0.8141059315848475,
+          "drift_within_five_percent": false,
+          "identical_utilities_to_ctrl": false,
+          "status": "DOSE_VALID"
+        },
+        "efficacy_only_advance": false,
+        "advance": false
+      },
+      "SWA_K10": {
+        "holm_adjusted_p": 0.013998600139986002,
+        "gates": {
+          "margin": true,
+          "ci": true,
+          "three_seeds": true,
+          "concentration": false,
+          "holm": true,
+          "dose": true
+        },
+        "dose": {
+          "median_adapter_l2_drift": 0.34655699133872986,
+          "control_median_adapter_l2_drift": 0.44772079586982727,
+          "relative_difference": 0.22595288283305542,
+          "drift_within_five_percent": false,
+          "identical_utilities_to_ctrl": false,
+          "status": "DOSE_VALID"
+        },
+        "efficacy_only_advance": false,
+        "advance": false
+      },
+      "SWA_K20": {
+        "holm_adjusted_p": 0.013998600139986002,
+        "gates": {
+          "margin": true,
+          "ci": true,
+          "three_seeds": true,
+          "concentration": false,
+          "holm": true,
+          "dose": true
+        },
+        "dose": {
+          "median_adapter_l2_drift": 0.23706494271755219,
+          "control_median_adapter_l2_drift": 0.44772079586982727,
+          "relative_difference": 0.47050718906861383,
+          "drift_within_five_percent": false,
+          "identical_utilities_to_ctrl": false,
+          "status": "DOSE_VALID"
+        },
+        "efficacy_only_advance": false,
+        "advance": false
+      },
+      "SWA_K5": {
+        "holm_adjusted_p": 0.015798420157984203,
+        "gates": {
+          "margin": true,
+          "ci": true,
+          "three_seeds": true,
+          "concentration": false,
+          "holm": true,
+          "dose": true
+        },
+        "dose": {
+          "median_adapter_l2_drift": 0.40144139528274536,
+          "control_median_adapter_l2_drift": 0.44772079586982727,
+          "relative_difference": 0.1033666539816869,
+          "drift_within_five_percent": false,
+          "identical_utilities_to_ctrl": false,
+          "status": "DOSE_VALID"
+        },
+        "efficacy_only_advance": false,
+        "advance": false
+      }
+    },
+    "doses": {
+      "CTRL": {
+        "median_adapter_l2_drift": 0.44772079586982727,
+        "control_median_adapter_l2_drift": 0.44772079586982727,
+        "relative_difference": 0.0,
+        "drift_within_five_percent": true,
+        "identical_utilities_to_ctrl": true,
+        "status": "DOSE_VALID"
+      },
+      "EMA_099": {
+        "median_adapter_l2_drift": 0.08322864025831223,
+        "control_median_adapter_l2_drift": 0.44772079586982727,
+        "relative_difference": 0.8141059315848475,
+        "drift_within_five_percent": false,
+        "identical_utilities_to_ctrl": false,
+        "status": "DOSE_VALID"
+      },
+      "EMA_0995": {
+        "median_adapter_l2_drift": 0.044348642230033875,
+        "control_median_adapter_l2_drift": 0.44772079586982727,
+        "relative_difference": 0.9009457620929271,
+        "drift_within_five_percent": false,
+        "identical_utilities_to_ctrl": false,
+        "status": "DOSE_VALID"
+      },
+      "EMA_0999": {
+        "median_adapter_l2_drift": 0.009347471408545971,
+        "control_median_adapter_l2_drift": 0.44772079586982727,
+        "relative_difference": 0.9791220968631001,
+        "drift_within_five_percent": false,
+        "identical_utilities_to_ctrl": false,
+        "status": "DOSE_VALID"
+      },
+      "SWA_K5": {
+        "median_adapter_l2_drift": 0.40144139528274536,
+        "control_median_adapter_l2_drift": 0.44772079586982727,
+        "relative_difference": 0.1033666539816869,
+        "drift_within_five_percent": false,
+        "identical_utilities_to_ctrl": false,
+        "status": "DOSE_VALID"
+      },
+      "SWA_K10": {
+        "median_adapter_l2_drift": 0.34655699133872986,
+        "control_median_adapter_l2_drift": 0.44772079586982727,
+        "relative_difference": 0.22595288283305542,
+        "drift_within_five_percent": false,
+        "identical_utilities_to_ctrl": false,
+        "status": "DOSE_VALID"
+      },
+      "SWA_K20": {
+        "median_adapter_l2_drift": 0.23706494271755219,
+        "control_median_adapter_l2_drift": 0.44772079586982727,
+        "relative_difference": 0.47050718906861383,
+        "drift_within_five_percent": false,
+        "identical_utilities_to_ctrl": false,
+        "status": "DOSE_VALID"
+      }
+    }
+  },
+  "secondary_h145_train_1219ctx_205fam": {
+    "CTRL": {
+      "context_mean_utility_by_seed": [
+        1.3898543865558552,
+        1.3862678571050642,
+        1.3883734683798488
+      ],
+      "family_mean_utility_by_seed": [
+        1.3513754208944273,
+        1.3479310329847045,
+        1.3504199089634892
+      ],
+      "vs_r882": {
+        "families": 205,
+        "per_seed_gain": [
+          -0.03398001209875539,
+          -0.03742440000847819,
+          -0.034935524029693396
+        ],
+        "median_gain": -0.034935524029693396,
+        "ci95": [
+          -0.0656327071264734,
+          -0.0071458113315826
+        ],
+        "p_one_sided": 0.9927007299270073,
+        "seeds_beating": 0,
+        "median_seed": 154103,
+        "top3_positive_share": 0.5215891416548654,
+        "harmed_families": 98,
+        "elo": 1438.3540061016408,
+        "elo_ci95": [
+          1397.110206953606,
+          1479.6410208561401
+        ]
+      },
+      "vs_CTRL": {
+        "families": 205,
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p_one_sided": 1.0,
+        "seeds_beating": 0,
+        "median_seed": 154102,
+        "top3_positive_share": 1.0,
+        "harmed_families": 0,
+        "elo": 1500.0,
+        "elo_ci95": [
+          1500.0,
+          1500.0
+        ]
+      },
+      "invalid_counts": [
+        25,
+        26,
+        23
+      ]
+    },
+    "EMA_099": {
+      "context_mean_utility_by_seed": [
+        1.4168487305168367,
+        1.4140113157494856,
+        1.4130815066644058
+      ],
+      "family_mean_utility_by_seed": [
+        1.3782096964226673,
+        1.3744447725758566,
+        1.3740620630844282
+      ],
+      "vs_r882": {
+        "families": 205,
+        "per_seed_gain": [
+          -0.0071457365705156475,
+          -0.010910660417326109,
+          -0.011293369908754345
+        ],
+        "median_gain": -0.010910660417326109,
+        "ci95": [
+          -0.02297520132421912,
+          -0.0009867210997569907
+        ],
+        "p_one_sided": 0.9873012698730127,
+        "seeds_beating": 0,
+        "median_seed": 154102,
+        "top3_positive_share": 0.6940468642749381,
+        "harmed_families": 21,
+        "elo": 1498.305344157598,
+        "elo_ci95": [
+          1477.940052019426,
+          1518.6589845967476
+        ]
+      },
+      "vs_CTRL": {
+        "families": 205,
+        "per_seed_gain": [
+          0.02683427552823974,
+          0.026513739591152084,
+          0.02364215412093905
+        ],
+        "median_gain": 0.026513739591152084,
+        "ci95": [
+          -0.0005281656784836937,
+          0.053275284304070365
+        ],
+        "p_one_sided": 0.028197180281971802,
+        "seeds_beating": 3,
+        "median_seed": 154102,
+        "top3_positive_share": 0.27292202988710973,
+        "harmed_families": 58,
+        "elo": 1558.1549359855587,
+        "elo_ci95": [
+          1520.3589791438599,
+          1599.2056169726416
+        ]
+      },
+      "invalid_counts": [
+        20,
+        20,
+        20
+      ]
+    },
+    "EMA_0995": {
+      "context_mean_utility_by_seed": [
+        1.421098990219795,
+        1.419384447760343,
+        1.4188366566317472
+      ],
+      "family_mean_utility_by_seed": [
+        1.3843306651526135,
+        1.382288612696816,
+        1.381650550047101
+      ],
+      "vs_r882": {
+        "families": 205,
+        "per_seed_gain": [
+          -0.0010247678405694845,
+          -0.0030668202963668218,
+          -0.003704882946081476
+        ],
+        "median_gain": -0.0030668202963668218,
+        "ci95": [
+          -0.010118474205778327,
+          0.0012989407464749545
+        ],
+        "p_one_sided": 0.8714128587141285,
+        "seeds_beating": 0,
+        "median_seed": 154102,
+        "top3_positive_share": 0.8257778643953703,
+        "harmed_families": 13,
+        "elo": 1498.305344157598,
+        "elo_ci95": [
+          1483.0401178315346,
+          1515.2615899451666
+        ]
+      },
+      "vs_CTRL": {
+        "families": 205,
+        "per_seed_gain": [
+          0.032955244258185905,
+          0.03435757971211137,
+          0.031230641083611926
+        ],
+        "median_gain": 0.032955244258185905,
+        "ci95": [
+          0.005386417261770102,
+          0.06314503309939692
+        ],
+        "p_one_sided": 0.0108989101089891,
+        "seeds_beating": 3,
+        "median_seed": 154101,
+        "top3_positive_share": 0.27539128862787887,
+        "harmed_families": 62,
+        "elo": 1556.4138030110664,
+        "elo_ci95": [
+          1516.9598821684651,
+          1599.2056169726416
+        ]
+      },
+      "invalid_counts": [
+        18,
+        19,
+        19
+      ]
+    },
+    "EMA_0999": {
+      "context_mean_utility_by_seed": [
+        1.4229903696033568,
+        1.4233447537931823,
+        1.4233707655325603
+      ],
+      "family_mean_utility_by_seed": [
+        1.3855146241409262,
+        1.3856645719554768,
+        1.3856688684744878
+      ],
+      "vs_r882": {
+        "families": 205,
+        "per_seed_gain": [
+          0.00015919114774349521,
+          0.0003091389622942474,
+          0.0003134354813052911
+        ],
+        "median_gain": 0.0003091389622942474,
+        "ci95": [
+          -0.00021229389265279696,
+          0.0011372170498585635
+        ],
+        "p_one_sided": 0.2328767123287671,
+        "seeds_beating": 3,
+        "median_seed": 154102,
+        "top3_positive_share": 0.9516634661213215,
+        "harmed_families": 3,
+        "elo": 1503.3893923240769,
+        "elo_ci95": [
+          1494.9157098926767,
+          1513.5640262459892
+        ]
+      },
+      "vs_CTRL": {
+        "families": 205,
+        "per_seed_gain": [
+          0.034139203246498884,
+          0.03773353897077244,
+          0.03524895951099869
+        ],
+        "median_gain": 0.03524895951099869,
+        "ci95": [
+          0.007484405723626913,
+          0.0660841879742126
+        ],
+        "p_one_sided": 0.006999300069993001,
+        "seeds_beating": 3,
+        "median_seed": 154103,
+        "top3_positive_share": 0.31105232870613797,
+        "harmed_families": 60,
+        "elo": 1561.6459938983592,
+        "elo_ci95": [
+          1522.059947980574,
+          1602.889793046394
+        ]
+      },
+      "invalid_counts": [
+        17,
+        17,
+        17
+      ]
+    },
+    "SWA_K5": {
+      "context_mean_utility_by_seed": [
+        1.3906196905476458,
+        1.3877889283076659,
+        1.390398610740678
+      ],
+      "family_mean_utility_by_seed": [
+        1.3521591921425749,
+        1.35073051426559,
+        1.352249037193853
+      ],
+      "vs_r882": {
+        "families": 205,
+        "per_seed_gain": [
+          -0.033196240850607656,
+          -0.0346249187275928,
+          -0.03310639579932972
+        ],
+        "median_gain": -0.033196240850607656,
+        "ci95": [
+          -0.06073043092032568,
+          -0.00882046328978093
+        ],
+        "p_one_sided": 0.9969003099690031,
+        "seeds_beating": 0,
+        "median_seed": 154101,
+        "top3_positive_share": 0.5732908908653057,
+        "harmed_families": 83,
+        "elo": 1447.060143316838,
+        "elo_ci95": [
+          1408.098942919637,
+          1484.7384100548334
+        ]
+      },
+      "vs_CTRL": {
+        "families": 205,
+        "per_seed_gain": [
+          0.0007837712481477352,
+          0.002799481280885387,
+          0.0018291282303636801
+        ],
+        "median_gain": 0.0018291282303636801,
+        "ci95": [
+          -0.013692217731412583,
+          0.016441267782826455
+        ],
+        "p_one_sided": 0.3812618738126187,
+        "seeds_beating": 3,
+        "median_seed": 154103,
+        "top3_positive_share": 0.48503175118149644,
+        "harmed_families": 32,
+        "elo": 1523.7619735587118,
+        "elo_ci95": [
+          1494.9157098926767,
+          1546.0226503024894
+        ]
+      },
+      "invalid_counts": [
+        25,
+        26,
+        24
+      ]
+    },
+    "SWA_K10": {
+      "context_mean_utility_by_seed": [
+        1.4016251107232218,
+        1.3945416505723307,
+        1.3949064208962898
+      ],
+      "family_mean_utility_by_seed": [
+        1.3626626302742593,
+        1.355158175820045,
+        1.3568852818064758
+      ],
+      "vs_r882": {
+        "families": 205,
+        "per_seed_gain": [
+          -0.022692802718923634,
+          -0.03019725717313787,
+          -0.028470151186707128
+        ],
+        "median_gain": -0.028470151186707128,
+        "ci95": [
+          -0.051152183690317266,
+          -0.004731733826728449
+        ],
+        "p_one_sided": 0.9917008299170083,
+        "seeds_beating": 0,
+        "median_seed": 154103,
+        "top3_positive_share": 0.6203835877510895,
+        "harmed_families": 84,
+        "elo": 1457.4220633007235,
+        "elo_ci95": [
+          1420.6973695525191,
+          1491.5674940833792
+        ]
+      },
+      "vs_CTRL": {
+        "families": 205,
+        "per_seed_gain": [
+          0.011287209379831754,
+          0.007227142835340322,
+          0.006465372842986271
+        ],
+        "median_gain": 0.007227142835340322,
+        "ci95": [
+          -0.008395888809694803,
+          0.02489940429266425
+        ],
+        "p_one_sided": 0.15508449155084492,
+        "seeds_beating": 3,
+        "median_seed": 154102,
+        "top3_positive_share": 0.35775872168330786,
+        "harmed_families": 44,
+        "elo": 1520.3589791438599,
+        "elo_ci95": [
+          1491.5251075188642,
+          1549.4763833417874
+        ]
+      },
+      "invalid_counts": [
+        21,
+        23,
+        23
+      ]
+    },
+    "SWA_K20": {
+      "context_mean_utility_by_seed": [
+        1.4069443265915236,
+        1.4075587572496526,
+        1.404758228412341
+      ],
+      "family_mean_utility_by_seed": [
+        1.370018028007448,
+        1.3701356689832802,
+        1.3675052192303268
+      ],
+      "vs_r882": {
+        "families": 205,
+        "per_seed_gain": [
+          -0.015337404985734862,
+          -0.015219764009902492,
+          -0.017850213762856237
+        ],
+        "median_gain": -0.015337404985734862,
+        "ci95": [
+          -0.03545714927655278,
+          0.003589708673320123
+        ],
+        "p_one_sided": 0.9448055194480552,
+        "seeds_beating": 0,
+        "median_seed": 154101,
+        "top3_positive_share": 0.6877709090171756,
+        "harmed_families": 56,
+        "elo": 1465.9990225081754,
+        "elo_ci95": [
+          1433.0939946945457,
+          1494.9157098926767
+        ]
+      },
+      "vs_CTRL": {
+        "families": 205,
+        "per_seed_gain": [
+          0.01864260711302053,
+          0.0222046359985757,
+          0.01708531026683716
+        ],
+        "median_gain": 0.01864260711302053,
+        "ci95": [
+          -0.0015586666315643637,
+          0.0403951706597753
+        ],
+        "p_one_sided": 0.0336966303369663,
+        "seeds_beating": 3,
+        "median_seed": 154101,
+        "top3_positive_share": 0.25959400530935633,
+        "harmed_families": 56,
+        "elo": 1544.299210690391,
+        "elo_ci95": [
+          1508.4748924811358,
+          1581.0891799077876
+        ]
+      },
+      "invalid_counts": [
+        21,
+        21,
+        21
+      ]
+    }
+  },
+  "secondary_fold0_out_of_fold_254ctx_41fam": {
+    "CTRL": {
+      "context_mean_utility_by_seed": [
+        1.4621971078332847,
+        1.4634799952329312,
+        1.458975477437373
+      ],
+      "family_mean_utility_by_seed": [
+        1.5567079435263034,
+        1.5596380586982683,
+        1.5535726050343606
+      ],
+      "vs_r882": {
+        "families": 41,
+        "per_seed_gain": [
+          0.002139494931921175,
+          0.00506961010388596,
+          -0.000995843560021844
+        ],
+        "median_gain": 0.002139494931921175,
+        "ci95": [
+          -0.03469907347376768,
+          0.055913202522069064
+        ],
+        "p_one_sided": 0.504049595040496,
+        "seeds_beating": 2,
+        "median_seed": 154101,
+        "top3_positive_share": 0.902372079387555,
+        "harmed_families": 18,
+        "elo": 1448.8134067834028,
+        "elo_ci95": [
+          1346.7981114400968,
+          1533.9876304990464
+        ]
+      },
+      "vs_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p_one_sided": 1.0,
+        "seeds_beating": 0,
+        "median_seed": 154102,
+        "top3_positive_share": 1.0,
+        "harmed_families": 0,
+        "elo": 1500.0,
+        "elo_ci95": [
+          1500.0,
+          1500.0
+        ]
+      },
+      "invalid_counts": [
+        1,
+        1,
+        1
+      ]
+    },
+    "EMA_099": {
+      "context_mean_utility_by_seed": [
+        1.4588994491592564,
+        1.4590482417682613,
+        1.4560598125924193
+      ],
+      "family_mean_utility_by_seed": [
+        1.5552460291223769,
+        1.5552516520099136,
+        1.5534868396395067
+      ],
+      "vs_r882": {
+        "families": 41,
+        "per_seed_gain": [
+          0.0006775805279942718,
+          0.0006832034155312619,
+          -0.0010816089548756705
+        ],
+        "median_gain": 0.0006775805279942718,
+        "ci95": [
+          -0.001414299202121581,
+          0.0028278800903789535
+        ],
+        "p_one_sided": 0.3067693230676932,
+        "seeds_beating": 2,
+        "median_seed": 154101,
+        "top3_positive_share": 0.9526100921362088,
+        "harmed_families": 6,
+        "elo": 1491.5284144921036,
+        "elo_ci95": [
+          1431.3615048042864,
+          1542.561162339644
+        ]
+      },
+      "vs_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          -0.0014619144039269016,
+          -0.0043864066883546925,
+          -8.576539485382606e-05
+        ],
+        "median_gain": -0.0014619144039269016,
+        "ci95": [
+          -0.055607849309231974,
+          0.035196073755506756
+        ],
+        "p_one_sided": 0.49105089491050896,
+        "seeds_beating": 0,
+        "median_seed": 154101,
+        "top3_positive_share": 0.5077292671545147,
+        "harmed_families": 12,
+        "elo": 1525.455170275162,
+        "elo_ci95": [
+          1440.1248614222168,
+          1614.0345795606704
+        ]
+      },
+      "invalid_counts": [
+        2,
+        2,
+        2
+      ]
+    },
+    "EMA_0995": {
+      "context_mean_utility_by_seed": [
+        1.4588602919628422,
+        1.4588602919628422,
+        1.4588602919628422
+      ],
+      "family_mean_utility_by_seed": [
+        1.5550320713057448,
+        1.5550320713057448,
+        1.5550320713057448
+      ],
+      "vs_r882": {
+        "families": 41,
+        "per_seed_gain": [
+          0.00046362271136238465,
+          0.00046362271136238465,
+          0.00046362271136238465
+        ],
+        "median_gain": 0.00046362271136238465,
+        "ci95": [
+          -0.001188430494027928,
+          0.002357068049338675
+        ],
+        "p_one_sided": 0.3153684631536846,
+        "seeds_beating": 3,
+        "median_seed": 154102,
+        "top3_positive_share": 1.0,
+        "harmed_families": 3,
+        "elo": 1500.0,
+        "elo_ci95": [
+          1457.438837660356,
+          1542.561162339644
+        ]
+      },
+      "vs_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          -0.0016758722205587873,
+          -0.004605987392523571,
+          0.0014594662713842284
+        ],
+        "median_gain": -0.0016758722205587873,
+        "ci95": [
+          -0.05536322979161119,
+          0.0349767944312519
+        ],
+        "p_one_sided": 0.4891510848915108,
+        "seeds_beating": 1,
+        "median_seed": 154101,
+        "top3_positive_share": 0.5053261665940931,
+        "harmed_families": 12,
+        "elo": 1542.561162339644,
+        "elo_ci95": [
+          1448.8134067834028,
+          1633.2143249047929
+        ]
+      },
+      "invalid_counts": [
+        2,
+        2,
+        2
+      ]
+    },
+    "EMA_0999": {
+      "context_mean_utility_by_seed": [
+        1.4570472413012399,
+        1.4570472413012399,
+        1.4570472413012399
+      ],
+      "family_mean_utility_by_seed": [
+        1.554178315356731,
+        1.554178315356731,
+        1.554178315356731
+      ],
+      "vs_r882": {
+        "families": 41,
+        "per_seed_gain": [
+          -0.000390133237651344,
+          -0.000390133237651344,
+          -0.000390133237651344
+        ],
+        "median_gain": -0.000390133237651344,
+        "ci95": [
+          -0.0013383972512150887,
+          0.0001679975382610568
+        ],
+        "p_one_sided": 0.7752224777522247,
+        "seeds_beating": 0,
+        "median_seed": 154102,
+        "top3_positive_share": 1.0,
+        "harmed_families": 2,
+        "elo": 1491.5284144921036,
+        "elo_ci95": [
+          1457.438837660356,
+          1516.9532563971777
+        ]
+      },
+      "vs_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          -0.0025296281695725187,
+          -0.0054597433415373015,
+          0.0006057103223704996
+        ],
+        "median_gain": -0.0025296281695725187,
+        "ci95": [
+          -0.056102105514285905,
+          0.034114395295036654
+        ],
+        "p_one_sided": 0.5034496550344966,
+        "seeds_beating": 1,
+        "median_seed": 154101,
+        "top3_positive_share": 0.5121277048334011,
+        "harmed_families": 12,
+        "elo": 1551.1865932165972,
+        "elo_ci95": [
+          1466.0123695009536,
+          1653.2018885599032
+        ]
+      },
+      "invalid_counts": [
+        2,
+        2,
+        2
+      ]
+    },
+    "SWA_K5": {
+      "context_mean_utility_by_seed": [
+        1.4513644734804292,
+        1.4501293592145708,
+        1.4489389039925233
+      ],
+      "family_mean_utility_by_seed": [
+        1.5443851492645506,
+        1.5446278837900713,
+        1.541425037589835
+      ],
+      "vs_r882": {
+        "families": 41,
+        "per_seed_gain": [
+          -0.01018329932983195,
+          -0.00994056480431104,
+          -0.013143411004547339
+        ],
+        "median_gain": -0.01018329932983195,
+        "ci95": [
+          -0.028324408623967175,
+          0.005461717542293212
+        ],
+        "p_one_sided": 0.8982101789821018,
+        "seeds_beating": 0,
+        "median_seed": 154101,
+        "top3_positive_share": 0.7826971475861243,
+        "harmed_families": 16,
+        "elo": 1431.3615048042864,
+        "elo_ci95": [
+          1346.7981114400968,
+          1508.4715855078964
+        ]
+      },
+      "vs_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          -0.012322794261753124,
+          -0.015010174908196996,
+          -0.012147567444525496
+        ],
+        "median_gain": -0.012322794261753124,
+        "ci95": [
+          -0.06147489619727091,
+          0.016095663804074206
+        ],
+        "p_one_sided": 0.6495350464953504,
+        "seeds_beating": 0,
+        "median_seed": 154101,
+        "top3_positive_share": 0.6175201332016463,
+        "harmed_families": 9,
+        "elo": 1500.0,
+        "elo_ci95": [
+          1431.3615048042864,
+          1568.6384951957136
+        ]
+      },
+      "invalid_counts": [
+        2,
+        2,
+        2
+      ]
+    },
+    "SWA_K10": {
+      "context_mean_utility_by_seed": [
+        1.4527791277321986,
+        1.447485757328521,
+        1.4471990640826524
+      ],
+      "family_mean_utility_by_seed": [
+        1.5472176415175958,
+        1.5407526503478886,
+        1.5409928326680729
+      ],
+      "vs_r882": {
+        "families": 41,
+        "per_seed_gain": [
+          -0.00735080707678684,
+          -0.01381579824649371,
+          -0.013575615926309447
+        ],
+        "median_gain": -0.013575615926309447,
+        "ci95": [
+          -0.02885451580025495,
+          0.002892300320438401
+        ],
+        "p_one_sided": 0.9394060593940606,
+        "seeds_beating": 0,
+        "median_seed": 154103,
+        "top3_positive_share": 0.8928396915002974,
+        "harmed_families": 17,
+        "elo": 1422.5110560755188,
+        "elo_ci95": [
+          1346.7981114400968,
+          1508.4715855078964
+        ]
+      },
+      "vs_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          -0.009490302008708014,
+          -0.018885408350379666,
+          -0.012579772366287604
+        ],
+        "median_gain": -0.012579772366287604,
+        "ci95": [
+          -0.06179252773008343,
+          0.017243661094880725
+        ],
+        "p_one_sided": 0.6482351764823517,
+        "seeds_beating": 0,
+        "median_seed": 154103,
+        "top3_positive_share": 0.7628459839804801,
+        "harmed_families": 11,
+        "elo": 1491.5284144921036,
+        "elo_ci95": [
+          1422.5110560755188,
+          1568.6384951957136
+        ]
+      },
+      "invalid_counts": [
+        2,
+        2,
+        2
+      ]
+    },
+    "SWA_K20": {
+      "context_mean_utility_by_seed": [
+        1.453426296350975,
+        1.4553019249045671,
+        1.4522413153905736
+      ],
+      "family_mean_utility_by_seed": [
+        1.548272696042785,
+        1.550516949890972,
+        1.5461008279829214
+      ],
+      "vs_r882": {
+        "families": 41,
+        "per_seed_gain": [
+          -0.006295752551597364,
+          -0.004051498703410515,
+          -0.008467620611460914
+        ],
+        "median_gain": -0.006295752551597364,
+        "ci95": [
+          -0.015213672275434839,
+          0.0035945528907100756
+        ],
+        "p_one_sided": 0.8895110488951105,
+        "seeds_beating": 0,
+        "median_seed": 154101,
+        "top3_positive_share": 0.8788145500876113,
+        "harmed_families": 13,
+        "elo": 1431.3615048042864,
+        "elo_ci95": [
+          1356.904036953584,
+          1500.0
+        ]
+      },
+      "vs_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          -0.008435247483518541,
+          -0.009121108807296472,
+          -0.0074717770514390785
+        ],
+        "median_gain": -0.008435247483518541,
+        "ci95": [
+          -0.060335954014460166,
+          0.025807797266388734
+        ],
+        "p_one_sided": 0.6026397360263973,
+        "seeds_beating": 0,
+        "median_seed": 154101,
+        "top3_positive_share": 0.5344462462403592,
+        "harmed_families": 12,
+        "elo": 1542.561162339644,
+        "elo_ci95": [
+          1457.438837660356,
+          1633.2143249047929
+        ]
+      },
+      "invalid_counts": [
+        2,
+        2,
+        2
+      ]
+    }
+  },
+  "seed_pseudoreplication": {
+    "CTRL": {
+      "identical_primary_utilities_across_seeds": false,
+      "identical_primary_choices_across_seeds": false,
+      "identical_adapters_across_seeds": false
+    },
+    "EMA_099": {
+      "identical_primary_utilities_across_seeds": false,
+      "identical_primary_choices_across_seeds": false,
+      "identical_adapters_across_seeds": false
+    },
+    "EMA_0995": {
+      "identical_primary_utilities_across_seeds": true,
+      "identical_primary_choices_across_seeds": true,
+      "identical_adapters_across_seeds": false
+    },
+    "EMA_0999": {
+      "identical_primary_utilities_across_seeds": true,
+      "identical_primary_choices_across_seeds": true,
+      "identical_adapters_across_seeds": false
+    },
+    "SWA_K5": {
+      "identical_primary_utilities_across_seeds": false,
+      "identical_primary_choices_across_seeds": false,
+      "identical_adapters_across_seeds": false
+    },
+    "SWA_K10": {
+      "identical_primary_utilities_across_seeds": false,
+      "identical_primary_choices_across_seeds": false,
+      "identical_adapters_across_seeds": false
+    },
+    "SWA_K20": {
+      "identical_primary_utilities_across_seeds": false,
+      "identical_primary_choices_across_seeds": false,
+      "identical_adapters_across_seeds": false
+    }
+  },
+  "cross_arm_argmin_pseudoreplication": {
+    "EMA_099_vs_CTRL": {
+      "identical_primary_utilities_by_seed": [
+        false,
+        false,
+        false
+      ],
+      "identical_primary_choices_by_seed": [
+        false,
+        false,
+        false
+      ],
+      "choice_diffs_out_of_91_by_seed": [
+        19,
+        18,
+        18
+      ]
+    },
+    "EMA_0995_vs_CTRL": {
+      "identical_primary_utilities_by_seed": [
+        false,
+        false,
+        false
+      ],
+      "identical_primary_choices_by_seed": [
+        false,
+        false,
+        false
+      ],
+      "choice_diffs_out_of_91_by_seed": [
+        21,
+        19,
+        20
+      ]
+    },
+    "EMA_0999_vs_CTRL": {
+      "identical_primary_utilities_by_seed": [
+        false,
+        false,
+        false
+      ],
+      "identical_primary_choices_by_seed": [
+        false,
+        false,
+        false
+      ],
+      "choice_diffs_out_of_91_by_seed": [
+        22,
+        20,
+        21
+      ]
+    },
+    "SWA_K5_vs_CTRL": {
+      "identical_primary_utilities_by_seed": [
+        false,
+        false,
+        false
+      ],
+      "identical_primary_choices_by_seed": [
+        false,
+        false,
+        false
+      ],
+      "choice_diffs_out_of_91_by_seed": [
+        8,
+        5,
+        7
+      ]
+    },
+    "SWA_K10_vs_CTRL": {
+      "identical_primary_utilities_by_seed": [
+        false,
+        false,
+        false
+      ],
+      "identical_primary_choices_by_seed": [
+        false,
+        false,
+        false
+      ],
+      "choice_diffs_out_of_91_by_seed": [
+        10,
+        8,
+        9
+      ]
+    },
+    "SWA_K20_vs_CTRL": {
+      "identical_primary_utilities_by_seed": [
+        false,
+        false,
+        false
+      ],
+      "identical_primary_choices_by_seed": [
+        false,
+        false,
+        false
+      ],
+      "choice_diffs_out_of_91_by_seed": [
+        12,
+        9,
+        11
+      ]
+    }
+  },
+  "baseline_dl_val": {
+    "matches": 91,
+    "max_context_error": 0.0,
+    "mean_error": 0.0,
+    "mean": 1.1377941898164525,
+    "status": "PASS"
+  },
+  "baseline_dl_val_family_utility": 1.1536152769912449,
+  "baseline_h145_train_context_utility": 1.423073434552299,
+  "baseline_h145_train_family_utility": 1.3853554329931828,
+  "baseline_fold0_family_utility": 1.5545684485943823,
+  "baseline_invalid_dl_val": 0,
+  "baseline_invalid_h145_train": 17,
+  "baseline_invalid_fold0": 2,
+  "optimizer_updates": 120,
+  "identity": {
+    "source_commit": "4c40a03224b1f313faa250c032bd6eb959014cd7",
+    "reviewed_head": "0754d5f7aef700cf0071e297fab55c96a901bfa5",
+    "binding": {
+      "reviewed_head": "0754d5f7aef700cf0071e297fab55c96a901bfa5",
+      "source_commit": "4c40a03224b1f313faa250c032bd6eb959014cd7",
+      "bound_sha256": {
+        "research/flywheel_selfplay/h154_trajectory_ema_swa/PREREG.md": "ea8ef7205b3e19ff6dea27df7314d6aec89b4648b0dd0dbd03bde7f7ffe8eeac",
+        "research/flywheel_selfplay/h154_trajectory_ema_swa/PREREG_AMENDMENT_A1.md": "cb955d55eab4a826303e35eddfc954d18959236311ac16d802a43e7b7a74bd2e",
+        "research/flywheel_selfplay/h154_trajectory_ema_swa/runner.py": "1560f935a82cca72c309ae00c98d323bcedc4c7ed56a5740d46742a0cf204e9c",
+        "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py": "345ef71cd4c894e48818741df75a8c21b62fbfc9325398bdaf8d361e434031f5",
+        "research/flywheel_selfplay/h154_trajectory_ema_swa/science.py": "bcc2dea8794a7d595c018443fed8a2792cc809ed569f54ae14be7244ec5827e6",
+        "research/flywheel_selfplay/h154_trajectory_ema_swa/monitor.py": "2ee2bb78a03da2b5e42b68e2ec4448bc331b365f89730482e3a4fb3941e91a33",
+        "python/src/jope/north_star/dope_freeze_guard.py": "07de5bc34f181e8ef14c3e5cdc20716716b2cc7dd418792f82f3db1d0d576f9c"
+      }
+    },
+    "manifest_sha256": "c2db7a402c352849597c22c3e0a3c6e7c8c9f3b4baf9295fbc004c28d4331d40",
+    "input_sha256": {
+      "/home/ubuntu/jope-data/h154/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+      "/home/ubuntu/jope-data/h154/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+      "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+      "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+      "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+      "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf"
+    },
+    "fold_sha256": "c69c186ffee98eaa1f3c975417d9dcc5ae4fd3b0ebf9d913c7812817a864daf3"
+  },
+  "seeds": [
+    154101,
+    154102,
+    154103
+  ],
+  "arms": {
+    "CTRL": {
+      "kind": "raw_final_step40",
+      "decay": null,
+      "swa_k": null,
+      "recal": false
+    },
+    "EMA_099": {
+      "kind": "ema",
+      "decay": 0.99,
+      "swa_k": null,
+      "recal": true
+    },
+    "EMA_0995": {
+      "kind": "ema",
+      "decay": 0.995,
+      "swa_k": null,
+      "recal": true
+    },
+    "EMA_0999": {
+      "kind": "ema",
+      "decay": 0.999,
+      "swa_k": null,
+      "recal": true
+    },
+    "SWA_K5": {
+      "kind": "swa",
+      "decay": null,
+      "swa_k": 5,
+      "recal": true
+    },
+    "SWA_K10": {
+      "kind": "swa",
+      "decay": null,
+      "swa_k": 10,
+      "recal": true
+    },
+    "SWA_K20": {
+      "kind": "swa",
+      "decay": null,
+      "swa_k": 20,
+      "recal": true
+    }
+  },
+  "launch_guard": {
+    "disk_used_fraction": 0.9137,
+    "disk_free_bytes": 685146128384,
+    "load1": 25.3564453125,
+    "scratch_bytes": 8098428
+  },
+  "end_guard": {
+    "disk_used_fraction": 0.9165,
+    "disk_free_bytes": 662865776640,
+    "load1": 38.03515625,
+    "scratch_bytes": 9140578
+  },
+  "inference_unit": "equal family mean within seed, median across three seeds; shared family-cluster bootstrap",
+  "serving_promotion": false,
+  "wall_seconds": 1450.984303175006
 }
