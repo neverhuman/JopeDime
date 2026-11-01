@@ -2,7 +2,6 @@
 """Manual A3 provider controls; fixture processes are not release qualification."""
 
 import copy
-import hashlib
 import importlib.util
 import json
 import os
@@ -20,7 +19,7 @@ sys.modules[spec.name] = a3
 spec.loader.exec_module(a3)
 
 FIXTURE = r"""#!/usr/bin/env python3
-import hashlib,json,os,sys
+import hashlib,json,os,sys,socketserver
 from http.server import HTTPServer,BaseHTTPRequestHandler
 from pathlib import Path
 home=Path(os.environ['JOPEDIME_HOME']);mode=os.environ.get('A3_TEST_MODE','good')
@@ -36,7 +35,11 @@ class Handler(BaseHTTPRequestHandler):
   self.send_response(status);self.send_header('Content-Type','application/json' if status==200 else 'application/problem+json')
   if mode=='cors':self.send_header('Access-Control-Allow-Origin','*')
   self.end_headers();self.wfile.write(json.dumps(value).encode())
-server=HTTPServer(('127.0.0.1',0),Handler)
+class NumericLoopbackServer(HTTPServer):
+ def server_bind(self):
+  socketserver.TCPServer.server_bind(self)
+  self.server_name='localhost';self.server_port=self.server_address[1]
+server=NumericLoopbackServer(('127.0.0.1',0),Handler)
 record={'url':'http://127.0.0.1:'+str(server.server_port),'token':token,'pid':os.getpid()}
 if mode=='foreign':record['url']='http://attacker.invalid:12345'
 if mode=='pid':record['pid']=1
