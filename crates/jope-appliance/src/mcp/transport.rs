@@ -3,7 +3,7 @@ use super::{Adapter, MAX_FRAME};
 use jope_client::Transport;
 use rmcp::{
     model::{
-        ClientJsonRpcMessage, ClientNotification, ClientRequest, ProtocolVersion,
+        ClientJsonRpcMessage, ClientNotification, ClientRequest, GetMeta, ProtocolVersion,
         ServerJsonRpcMessage,
     },
     transport::{async_rw::AsyncRwTransport, Transport as SdkTransport},
@@ -65,9 +65,15 @@ impl<T: SdkTransport<RoleServer>> SdkTransport<RoleServer> for BootstrapTranspor
                         _ => {}
                     }
                 }
-                ClientJsonRpcMessage::Notification(
-                    ClientNotification::RootsListChangedNotification(_),
-                ) if self.bootstrapping && self.discovery_seen => continue,
+                ClientJsonRpcMessage::Notification(notification)
+                    if self.discovery_seen
+                        && matches!(
+                            &notification.notification,
+                            ClientNotification::RootsListChangedNotification(_)
+                        ) =>
+                {
+                    continue;
+                }
                 _ => {}
             }
             return Some(message);
