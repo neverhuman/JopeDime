@@ -167,6 +167,10 @@ def worker_call(argv, env, lock_fd, log, timeout, output, limit):
 def preflight(plan, packet, worker, checkpoint):
     """Verify approved input identities without starting or reserving a study."""
     verify_plan(plan)
+    if "learner_start" in plan:
+        from .admission import verify_worker_binding
+
+        verify_worker_binding(plan)
     # Resolve every path before opening any input. A later protected target must
     # not be discovered only after an earlier permitted payload was hashed.
     worker = safe_path(Path(worker).parent, Path(worker).name)

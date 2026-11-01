@@ -21,6 +21,8 @@ from urllib.parse import urlsplit
 
 import numpy as np
 
+from . import protocol
+
 SCHEMA = "jope.joint-regbin/v1"
 PARTIAL_SCHEMA = "jope.joint-regbin.binary-panel-packet/v1"
 
@@ -638,6 +640,269 @@ def verify_binary_train_admission(
     if admission != expected:
         raise ValueError("binary TRAIN admission differs from its audited inputs")
     return expected
+
+
+ROLE_SCHEMA = "jope.joint-regbin.role-admission/v1"
+R882_CHECKPOINT_SHA256 = (
+    "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
+)
+R882_MESSAGE_SHA256 = "45e21d576cec91b5171bb8e279ef24fef761456fa916e4de1ed8ed2b8bd6eba5"
+R882_BUNDLE_DIGEST = "057e50a9a741d30d541ed8af8339cec84a5157af621100cb70857052ef14dacc"
+
+CONTEXT_FIELDS = {
+    "id",
+    "dataset",
+    "family",
+    "task",
+    "role",
+    "source_split",
+    "origin",
+    "has_meta_test",
+    "payload",
+    "payload_sha256",
+}
+ROLE_NAMES = {"train", "val", "panel"}
+REQUIRED_PROOFS = (
+    "role_assignment_reviewed",
+    "family_mapping_reviewed",
+    "payload_hashes_verified",
+    "sealed_exclusion_verified",
+    "binary_family_alias_closure_verified",
+)
+
+
+def canonical_sha256(value: object) -> str:
+    raw = json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _sha(value: object, label: str) -> str:
+    protocol.check_sha(value)
+    return value
+
+
+def _catalog(path: Path) -> tuple[dict, str]:
+    raw = Path(path).read_bytes()
+    catalog = json.loads(raw)
+    source = catalog.get("inventory", {}).get("source_catalog", "")
+    if "LATEST=v246" not in source:
+        raise ValueError("JRB role admission requires the pinned v246 S3 catalog")
+    return catalog, hashlib.sha256(raw).hexdigest()
+
+
+def _learner_evidence(evidence: dict) -> tuple[str, str, list[str]]:
+    """Return worker/checkpoint pins and blockers; signature is receipt-bound."""
+    blockers = []
+    release = evidence.get("release") or {}
+    worker = evidence.get("worker") or {}
+    if (
+        release.get("label") != "r882"
+        or release.get("verify") != "PASS"
+        or release.get("message_sha256") != R882_MESSAGE_SHA256
+        or release.get("bundle_digest") != R882_BUNDLE_DIGEST
+        or release.get("source_checkpoint_sha256") != R882_CHECKPOINT_SHA256
+    ):
+        blockers.append("signed r882 receipt/checkpoint binding is incomplete")
+    worker_sha = worker.get("sha256")
+    try:
+        _sha(worker_sha, "worker sha256")
+    except (TypeError, ValueError):
+        worker_sha = "0" * 64
+        blockers.append("worker source hash is missing or invalid")
+    if worker.get("qualified") is not True:
+        blockers.append("two-task worker qualification is not verified")
+    if set(worker.get("tasks", [])) != set(protocol.TASKS):
+        blockers.append("worker does not prove regression and binary heads")
+    updates = worker.get("actual_optimizer_updates")
+    if type(updates) is not int or updates <= 0:
+        blockers.append("worker qualification has no positive optimizer updates")
+    if worker.get("parameters_changed") is not True:
+        blockers.append("worker qualification has no changed-parameter proof")
+    if worker.get("dope_sha256") != protocol.DOPE:
+        blockers.append("worker qualification does not pin frozen DOPE")
+    try:
+        _sha(worker.get("qualification_sha256"), "worker qualification sha256")
+    except (TypeError, ValueError):
+        blockers.append("worker qualification receipt hash is missing or invalid")
+    return worker_sha, R882_CHECKPOINT_SHA256, blockers
+
+
+def build_role_manifest(
+    catalog_path: Path,
+    contexts: list[dict],
+    family_by_dataset: dict[str, str],
+    evidence: dict,
+) -> dict:
+    """Build a role manifest, deriving eligibility only from complete evidence.
+
+    `contexts` must be sourced from reviewed train-row-only packet metadata.
+    Evidence booleans are receipt claims that a reviewer must bind to the listed
+    hashes; they are not inferred from a candidate catalog or a partial packet.
+    """
+    catalog, catalog_sha = _catalog(catalog_path)
+    records = {row["id"]: row for row in catalog.get("datasets", [])}
+    blockers: list[str] = []
+    seen_ids: set[str] = set()
+    seen_dataset_identity: dict[str, tuple[str, str]] = {}
+    role_families: dict[str, set[str]] = {role: set() for role in ROLE_NAMES}
+    family_roles: dict[str, set[str]] = {}
+    kept = []
+
+    if not contexts:
+        blockers.append("no train/dev/panel role rows supplied")
+    for raw in contexts:
+        if set(raw) != CONTEXT_FIELDS:
+            raise ValueError("context metadata fields differ from JRB schema")
+        row = dict(raw)
+        if row["id"] in seen_ids:
+            raise ValueError("duplicate context identity")
+        seen_ids.add(row["id"])
+        if row["role"] not in ROLE_NAMES:
+            raise ValueError("only train, val, and panel roles are accepted")
+        if row["source_split"] not in ("train", "inner"):
+            raise ValueError("role rows must originate from train-only source splits")
+        if row["origin"] != "real" or row["has_meta_test"] is not False:
+            raise ValueError("only unsealed real-S3 metadata is accepted")
+        protocol.relative_payload(row["payload"])
+        _sha(row["payload_sha256"], "payload sha256")
+        catalog_row = records.get(row["dataset"])
+        if catalog_row is None or catalog_row.get("origin") != "real":
+            raise ValueError(
+                "context dataset is absent from the pinned real-S3 catalog"
+            )
+        if catalog_row.get("task") != row["task"] or row["task"] not in protocol.TASKS:
+            raise ValueError(
+                "catalog task differs or is outside JRB regression/binary scope"
+            )
+        family = family_by_dataset.get(row["dataset"])
+        if not isinstance(family, str) or not family.strip() or row["family"] != family:
+            raise ValueError("family mapping is missing or differs from reviewed input")
+        prior = seen_dataset_identity.setdefault(row["dataset"], (family, row["task"]))
+        if prior != (family, row["task"]):
+            raise ValueError("dataset task/family identity changed")
+        role_families[row["role"]].add(family)
+        family_roles.setdefault(family, set()).add(row["role"])
+        kept.append(row)
+
+    if any("train" in roles and "val" in roles for roles in family_roles.values()):
+        blockers.append("a family occurs in both train and dev/val roles")
+    for role in ROLE_NAMES:
+        for task in protocol.TASKS:
+            if not any(r["role"] == role and r["task"] == task for r in kept):
+                blockers.append(f"missing {role} {task} role")
+    train_families = {
+        task: {r["family"] for r in kept if r["role"] == "train" and r["task"] == task}
+        for task in protocol.TASKS
+    }
+    if any(len(families) < 5 for families in train_families.values()):
+        blockers.append("fewer than five independent train families for a task")
+
+    proof = evidence.get("data") or {}
+    for key in REQUIRED_PROOFS:
+        if proof.get(key) is not True:
+            blockers.append(f"data proof missing: {key}")
+    for key in (
+        "role_review_sha256",
+        "family_review_sha256",
+        "payload_audit_sha256",
+        "sealed_exclusion_sha256",
+    ):
+        try:
+            _sha(proof.get(key), key)
+        except (TypeError, ValueError):
+            blockers.append(f"data proof hash missing: {key}")
+    role_identity = [
+        {key: row[key] for key in sorted(CONTEXT_FIELDS)}
+        for row in sorted(kept, key=lambda item: item["id"])
+    ]
+    if proof.get("role_review_sha256") != canonical_sha256(role_identity):
+        blockers.append("role review hash does not bind the exact role rows")
+    family_identity = dict(sorted(family_by_dataset.items()))
+    if proof.get("family_review_sha256") != canonical_sha256(family_identity):
+        blockers.append("family review hash does not bind the exact family mapping")
+    payload_identity = [
+        {
+            "id": row["id"],
+            "payload": row["payload"],
+            "payload_sha256": row["payload_sha256"],
+        }
+        for row in sorted(kept, key=lambda item: item["id"])
+    ]
+    if proof.get("payload_audit_sha256") != canonical_sha256(payload_identity):
+        blockers.append("payload audit hash does not bind the exact payload inventory")
+
+    worker_sha, checkpoint_sha, learner_blockers = _learner_evidence(evidence)
+    blockers.extend(learner_blockers)
+    manifest = {
+        "schema": protocol.SCHEMA,
+        "admission_schema": ROLE_SCHEMA,
+        "admission_status": "ADMITTED"
+        if not blockers
+        else "BLOCKED_INCOMPLETE_EVIDENCE",
+        "eligibility_verified": not blockers,
+        "catalog_sha256": catalog_sha,
+        "learner_sha256": worker_sha,
+        "initial_checkpoint_sha256": checkpoint_sha,
+        "contexts": sorted(
+            kept, key=lambda row: (row["role"], row["task"], row["family"], row["id"])
+        ),
+        "family_by_dataset": dict(sorted(family_by_dataset.items())),
+        "evidence": evidence,
+        "blockers": sorted(set(blockers)),
+    }
+    return manifest
+
+
+def make_worker_bound_plan(manifest: dict, config: dict | None = None) -> dict:
+    """Create the preregistered 3-arm plan only after all evidence is admitted."""
+    if manifest.get("admission_schema") != ROLE_SCHEMA:
+        raise ValueError("role admission receipt required")
+    if manifest.get("eligibility_verified") is not True or manifest.get("blockers"):
+        raise ValueError("incomplete JRB inputs cannot produce a runnable plan")
+    worker = manifest["evidence"]["worker"]
+    release = manifest["evidence"]["release"]
+    if manifest["initial_checkpoint_sha256"] != R882_CHECKPOINT_SHA256:
+        raise ValueError(
+            "initial learner checkpoint must be signed r882 custody 0084479a"
+        )
+    if (
+        release.get("verify") != "PASS"
+        or release.get("message_sha256") != R882_MESSAGE_SHA256
+    ):
+        raise ValueError("signed r882 verification receipt is missing")
+    if worker.get("sha256") != manifest["learner_sha256"]:
+        raise ValueError("worker hash differs from the admitted manifest")
+    plan = protocol.make_plan(manifest, config)
+    plan["learner_start"] = {
+        "release": "r882",
+        "bundle_digest": R882_BUNDLE_DIGEST,
+        "signing_message_sha256": R882_MESSAGE_SHA256,
+        "checkpoint_sha256": R882_CHECKPOINT_SHA256,
+        "worker_sha256": manifest["learner_sha256"],
+        "worker_qualification_sha256": worker["qualification_sha256"],
+    }
+    plan["sha256"] = protocol.digest(
+        {key: value for key, value in plan.items() if key != "sha256"}
+    )
+    return plan
+
+
+def verify_worker_binding(plan: dict) -> None:
+    binding = plan.get("learner_start") or {}
+    if (
+        binding.get("release") != "r882"
+        or binding.get("bundle_digest") != R882_BUNDLE_DIGEST
+        or binding.get("signing_message_sha256") != R882_MESSAGE_SHA256
+        or binding.get("checkpoint_sha256") != R882_CHECKPOINT_SHA256
+        or binding.get("checkpoint_sha256") != plan["initial_checkpoint_sha256"]
+        or binding.get("worker_sha256") != plan["learner_sha256"]
+    ):
+        raise ValueError("worker-bound r882 plan identity mismatch")
+
+
+def verify_worker_bound_plan(plan: dict) -> None:
+    protocol.verify_plan(plan)
+    verify_worker_binding(plan)
 
 
 def main(argv=None) -> int:
