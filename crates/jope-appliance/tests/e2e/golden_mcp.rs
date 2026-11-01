@@ -251,8 +251,19 @@ try:
     check('dry_run_plan_replay', client.tool('run_start', spec) == plan)
     real = {**spec, 'dry_run': False, 'plan_digest': plan['plan_digest'],
             'idempotency_key': 'int01-obj02-ag1-start'}
+    initial_inventory = client.tool('run_status', {})
+    check('initial_run_inventory_empty', initial_inventory['next_after'] is None
+          and initial_inventory['runs'] == [])
+    assert report['checks']['initial_run_inventory_empty']
     started = client.tool('run_start', real); rid = started['run_id']
+    created_inventory = client.tool('run_status', {})
+    check('one_run_between_create_and_retry', created_inventory['next_after'] is None
+          and [r['run_id'] for r in created_inventory['runs']] == [rid])
     check('run_start_replay', client.tool('run_start', real) == started)
+    replay_inventory = client.tool('run_status', {})
+    check('one_run_after_create_retry', replay_inventory['next_after'] is None
+          and [r['run_id'] for r in replay_inventory['runs']] == [rid])
+    save('run-retry-inventories.json', [initial_inventory, created_inventory, replay_inventory])
     client.close(); client = Rpc()
     check('run_start_replay_after_mcp_reconnect', client.tool('run_start', real) == started)
     events = []; cursor = 0; deadline = time.monotonic() + 140
@@ -350,6 +361,23 @@ try:
     check('prediction_rows', int(predictions['rows']) == train_rows and len(predicted_rows) - 1 == train_rows)
     check('finite_predictions', all(math.isfinite(float(row[0])) for row in predicted_rows[1:]))
     save('predictions.json', predictions); (out / 'predictions.csv').write_text(text)
+    file_request = {'model': {'run_id': rid}, 'input': {'dataset_id': dataset},
+        'out_path': str(home / 'predictions.csv'),
+        'idempotency_key': 'int01-obj02-ag1-predict-file'}
+    file_prediction = client.tool('model_predict', file_request)
+    before = (home / 'predictions.csv').stat()
+    file_replay = client.tool('model_predict', file_request)
+    after = (home / 'predictions.csv').stat()
+    check('prediction_file_retry', all(file_replay[k] == file_prediction[k]
+                                      for k in ['rows', 'sha256', 'out_path']))
+    check('prediction_file_retry_preserves_inode', (before.st_dev, before.st_ino, before.st_mtime_ns)
+          == (after.st_dev, after.st_ino, after.st_mtime_ns))
+    check('prediction_file_matches_resource', (home / 'predictions.csv').read_bytes() == text.encode()
+          and file_prediction['sha256'] == predictions['sha256']
+          and file_prediction['rows'] == str(train_rows))
+    save('prediction-file-retry.json', {'arguments': file_request,
+         'first': file_prediction, 'replay': file_replay,
+         'file_sha256': hashlib.sha256((home / 'predictions.csv').read_bytes()).hexdigest()})
     check('prediction_did_not_mutate_run', client.tool('run_status', {'run_id': rid}) == snapshot)
     check_binary()
     report['full_AG1_qualified'] = all(report['checks'].values())

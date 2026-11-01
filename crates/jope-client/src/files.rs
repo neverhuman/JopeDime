@@ -4,7 +4,7 @@ use jope_api::ids::ArtifactId;
 use sha2::{Digest, Sha256};
 use std::{
     fs::{self, File, OpenOptions},
-    io::{self, Read, Write},
+    io::{self, BufRead, BufReader, Read, Write},
     path::{Component, Path, PathBuf},
     sync::atomic::{AtomicU64, Ordering},
     time::{SystemTime, UNIX_EPOCH},
@@ -66,7 +66,8 @@ pub fn upload_csv<T: Transport>(
     transport.dataset_register_stream(name, Box::new(reader), idempotency_key)
 }
 
-/// Atomically publish a CSV response at `out`; an existing path is never replaced.
+/// Atomically publish a CSV response, or verify a byte-identical retry.
+/// An existing path is never replaced; only a regular, non-symlink file qualifies.
 pub fn write_csv_atomic(out: &Path, mut reader: impl Read) -> Result<u64> {
     let parent = out
         .parent()
@@ -82,7 +83,8 @@ pub fn write_csv_atomic(out: &Path, mut reader: impl Read) -> Result<u64> {
         )));
     }
     match fs::symlink_metadata(out) {
-        Ok(_) => return Err(FileError::OutputExists),
+        Ok(metadata) if !metadata.is_file() => return Err(FileError::OutputExists),
+        Ok(_) => {}
         Err(error) if error.kind() == io::ErrorKind::NotFound => {}
         Err(error) => return Err(error.into()),
     }
@@ -99,16 +101,45 @@ pub fn write_csv_atomic(out: &Path, mut reader: impl Read) -> Result<u64> {
             Err(error) => return Err(error.into()),
         }
     };
-    let mut cleanup = RemoveOnDrop(Some(temporary.clone()));
+    let _cleanup = RemoveOnDrop(Some(temporary.clone()));
     let bytes = io::copy(&mut reader, &mut file)?;
     file.sync_all()?;
     drop(file);
-    if fs::symlink_metadata(out).is_ok() {
-        return Err(FileError::OutputExists);
+    // Unlike check-then-rename, hard_link cannot replace a concurrent creator.
+    // The sibling is on the same filesystem and is removed on every exit path.
+    match fs::hard_link(&temporary, out) {
+        Ok(()) => Ok(bytes),
+        Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {
+            if same_csv_contents(&temporary, out)? {
+                Ok(bytes)
+            } else {
+                Err(FileError::OutputExists)
+            }
+        }
+        Err(error) => Err(error.into()),
     }
-    fs::rename(&temporary, out)?;
-    cleanup.take();
-    Ok(bytes)
+}
+
+fn same_csv_contents(expected: &Path, actual: &Path) -> Result<bool> {
+    let metadata = fs::symlink_metadata(actual)?;
+    if !metadata.is_file() || metadata.len() != fs::metadata(expected)?.len() {
+        return Ok(false);
+    }
+    let mut expected = BufReader::new(File::open(expected)?);
+    let mut actual = BufReader::new(File::open(actual)?);
+    loop {
+        let left = expected.fill_buf()?;
+        let right = actual.fill_buf()?;
+        if left.is_empty() || right.is_empty() {
+            return Ok(left.is_empty() && right.is_empty());
+        }
+        let count = left.len().min(right.len());
+        if left[..count] != right[..count] {
+            return Ok(false);
+        }
+        expected.consume(count);
+        actual.consume(count);
+    }
 }
 
 /// Materialize a model export without confusing its model identity with archive bytes.
@@ -556,6 +587,74 @@ mod tests {
         assert_eq!(fs::read_dir(&*temp).unwrap().count(), 1);
     }
 
+    #[test]
+    fn atomic_csv_retry_verifies_existing_bytes_without_replacing_the_file() {
+        let temp = temp_dir();
+        let out = temp.join("prediction.csv");
+        let csv = b"prediction\n0.25\n0.5\n";
+        write_csv_atomic(&out, Cursor::new(csv)).unwrap();
+        // Keeping this handle open also proves that a successful replay does not
+        // replace the original file with a newly staged one.
+        let mut original = File::open(&out).unwrap();
+        let before = original.metadata().unwrap();
+        assert_eq!(
+            write_csv_atomic(&out, Cursor::new(csv)).unwrap(),
+            csv.len() as u64
+        );
+        assert_eq!(
+            fs::metadata(&out).unwrap().modified().unwrap(),
+            before.modified().unwrap()
+        );
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::MetadataExt;
+            assert_eq!(fs::metadata(&out).unwrap().ino(), before.ino());
+        }
+        let mut retained = Vec::new();
+        original.read_to_end(&mut retained).unwrap();
+        assert_eq!(retained, csv);
+        for different in [
+            &b"prediction\n0.25\n0.6\n"[..],
+            &csv[..csv.len() - 1],
+            b"prediction\n0.25\n0.5\n0\n",
+        ] {
+            assert!(matches!(
+                write_csv_atomic(&out, Cursor::new(different)),
+                Err(FileError::OutputExists)
+            ));
+            assert_eq!(fs::read(&out).unwrap(), csv);
+        }
+        assert_eq!(fs::read_dir(&*temp).unwrap().count(), 1);
+    }
+
+    #[test]
+    fn atomic_csv_retry_refuses_directories_and_symlinks_even_to_identical_bytes() {
+        let temp = temp_dir();
+        let out = temp.join("prediction.csv");
+        fs::create_dir(&out).unwrap();
+        assert!(matches!(
+            write_csv_atomic(&out, Cursor::new(b"prediction\n0.25\n")),
+            Err(FileError::OutputExists)
+        ));
+        assert!(out.is_dir());
+        #[cfg(unix)]
+        {
+            let original = temp.join("original.csv");
+            fs::write(&original, b"prediction\n0.25\n").unwrap();
+            let link = temp.join("linked.csv");
+            std::os::unix::fs::symlink(&original, &link).unwrap();
+            assert!(matches!(
+                write_csv_atomic(&link, Cursor::new(b"prediction\n0.25\n")),
+                Err(FileError::OutputExists)
+            ));
+            assert!(fs::symlink_metadata(&link)
+                .unwrap()
+                .file_type()
+                .is_symlink());
+            assert_eq!(fs::read(&original).unwrap(), b"prediction\n0.25\n");
+        }
+    }
+
     struct FailsAfterPrefix(bool);
     impl Read for FailsAfterPrefix {
         fn read(&mut self, output: &mut [u8]) -> io::Result<usize> {
@@ -575,6 +674,56 @@ mod tests {
         assert!(write_csv_atomic(&out, FailsAfterPrefix(false)).is_err());
         assert!(!out.exists());
         assert_eq!(fs::read_dir(&*temp).unwrap().count(), 0);
+    }
+
+    #[test]
+    fn atomic_csv_failed_retry_preserves_existing_file_and_removes_staging() {
+        let temp = temp_dir();
+        let out = temp.join("prediction.csv");
+        fs::write(&out, b"prediction\n0.25\n").unwrap();
+        assert!(matches!(
+            write_csv_atomic(&out, FailsAfterPrefix(false)),
+            Err(FileError::Io(_))
+        ));
+        assert_eq!(fs::read(&out).unwrap(), b"prediction\n0.25\n");
+        assert_eq!(fs::read_dir(&*temp).unwrap().count(), 1);
+    }
+
+    #[test]
+    fn atomic_csv_publication_verifies_a_concurrent_creator_without_overwriting() {
+        struct PublishDuringRead<'a> {
+            out: &'a Path,
+            concurrent: Option<&'a [u8]>,
+            response: Cursor<&'a [u8]>,
+        }
+        impl Read for PublishDuringRead<'_> {
+            fn read(&mut self, bytes: &mut [u8]) -> io::Result<usize> {
+                if let Some(concurrent) = self.concurrent.take() {
+                    fs::write(self.out, concurrent)?;
+                }
+                self.response.read(bytes)
+            }
+        }
+        let csv = b"prediction\n0.25\n";
+        for concurrent in [&csv[..], &b"prediction\n0.75\n"[..]] {
+            let temp = temp_dir();
+            let out = temp.join("prediction.csv");
+            let result = write_csv_atomic(
+                &out,
+                PublishDuringRead {
+                    out: &out,
+                    concurrent: Some(concurrent),
+                    response: Cursor::new(csv),
+                },
+            );
+            if concurrent == csv {
+                assert_eq!(result.unwrap(), csv.len() as u64);
+            } else {
+                assert!(matches!(result, Err(FileError::OutputExists)));
+            }
+            assert_eq!(fs::read(&out).unwrap(), concurrent);
+            assert_eq!(fs::read_dir(&*temp).unwrap().count(), 1);
+        }
     }
 
     #[test]
