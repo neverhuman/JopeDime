@@ -28,8 +28,8 @@
 | **Stage-2 Readout (`Pooled A` + `DL-Val`)** | Correlated cross-fold `A` readout (`205` families, `1,219` contexts) + descriptive `DL-Val` (`19` families, `91` contexts) + active contrasts (`ENS5 - RENS5`, `FRESH160 - RENS5`, `ENS5 - FRESH160`) + `-2.0` failure pick counts |
 | **Confirmatory Verdict Rule** | `ADVANCE` iff an arm is admitted on Stage-1 pooled `B` (with `H178` receipt passing) **and** achieves Stage-2 pooled `A` gain $> 0$ with `3/3` positive outer seeds (ties reject); else `NO_ADVANCE` |
 
-### Selection & Cross-Fold Dependency Caveat
-`FRESH160`, `ENS5`, and `RENS5` were selected for `H185` after observing their unconditional `A` gains in `H179` and `H180` on the same `205` `DL-Train` families. Furthermore, because `A_k` and `B_k` cycle across the same `205` `DL-Train` families and fold training splits share `82/123` fit families, Stage-2 pooled `A` is a **correlated cross-fold candidate readout**, not an independent sample split. `DL-Val` (`19` disjoint families, `91` contexts) is reported descriptively.
+### Selection, Shared Fold-Seed, & Cross-Fold Dependency Caveats
+`FRESH160`, `ENS5`, and `RENS5` were selected for `H185` after observing their unconditional `A` gains in `H179` and `H180` on the same `205` `DL-Train` families. All three outer seeds (`185101–185103`) share the single five-fold family partition generated from `fold_seed 185140` (`123 FIT / 41 B / 41 A` families per fold, like `H182`), so across-seed variation is fresh-adapter / ensemble-member initialization and `FIT` minibatch-stream order only (leaving `R882` utility identical across seeds). Furthermore, because `A_k` and `B_k` cycle across the same `205` `DL-Train` families and fold training splits share `82/123` fit families, Stage-2 pooled `A` is a **correlated cross-fold candidate readout**, not an independent sample split. `DL-Val` (`19` disjoint families, `91` contexts) is reported descriptively.
 
 ---
 

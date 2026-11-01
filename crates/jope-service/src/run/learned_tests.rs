@@ -53,6 +53,74 @@ fn user_objectives_keep_runtime_identity_and_refuse_unavailable_inputs() {
 }
 
 #[test]
+fn q1_threefold_worker_executes_all_validation_rows_and_scores() {
+    use crate::{dataset::jmat, worker};
+    let mut csv = String::from("x,target\n");
+    for x in 0..60 {
+        csv.push_str(&format!("{x},{}\n", 3 * x + 2));
+    }
+    let table = jope_runtime::table::parse_csv(csv.as_bytes(), &Default::default()).unwrap();
+    let bytes = jmat::encode(&table).unwrap();
+    let matrix = jmat::Matrix::open(&bytes).unwrap();
+    let folds: Vec<_> = (0..3)
+        .map(|fold| {
+            json!({"repeat":0,
+            "train":(0..60).filter(|row| row / 20 != fold).collect::<Vec<_>>(),
+            "validation":(fold * 20..(fold + 1) * 20).collect::<Vec<_>>()})
+        })
+        .collect();
+    let mut request = worker::Request {
+        attempt: worker::Attempt {
+            run: "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0".parse().unwrap(),
+            round: 0,
+            slot: 0,
+            attempt: 0,
+        },
+        matrix_path: "unused-direct-callback.jmat".into(),
+        fold_spec: json!({"version":2,"matrix_sha256":jope_runtime::sha256_hex(&bytes),
+            "target":"target","features":["x"],"folds":folds}),
+        dsl: "(pipe X (ridge lambda_frac=0.01))".into(),
+        objective: json!("rmse"),
+        seed: 0,
+        limits: worker::Limits {
+            wall_ms: 30_000,
+            rss_bytes: 1_073_741_824,
+        },
+    };
+    let scores = worker::evaluate::native(&request, &matrix).unwrap();
+    assert_eq!(scores.fold_scores.len(), 3);
+    assert_eq!(scores.values.len(), 3);
+    assert!(scores.values.iter().all(|v| v.is_finite()));
+    assert!(scores.values[0] < 100.0);
+    assert!((scores.values[1] - scores.fold_scores.iter().sum::<f64>() / 3.0).abs() < 1e-12);
+    assert!(scores.fold_scores[1] < scores.fold_scores[0]);
+    assert_eq!(scores.predictions_digest.len(), 64);
+    // Rotating the three validation partitions preserves all-fold aggregates;
+    // predictions are hashed in the pinned fold order.
+    request.fold_spec["folds"]
+        .as_array_mut()
+        .unwrap()
+        .rotate_left(1);
+    let rotated = worker::evaluate::native(&request, &matrix).unwrap();
+    assert!((rotated.values[0] - scores.values[0]).abs() < 1e-12);
+    assert!((rotated.values[1] - scores.values[1]).abs() < 1e-12);
+    assert_ne!(rotated.predictions_digest, scores.predictions_digest);
+    // Invalid third folds must not escape validation after two good folds.
+    for bad in [
+        json!({"repeat":1,"train":(0..40).collect::<Vec<_>>(),"validation":(40..60).collect::<Vec<_>>()}),
+        json!({"repeat":0,"train":(0..40).collect::<Vec<_>>(),"validation":(0..20).collect::<Vec<_>>()}),
+        json!({"repeat":0,"train":(0..40).collect::<Vec<_>>(),"validation":(41..61).collect::<Vec<_>>()}),
+    ] {
+        request.fold_spec["folds"] = json!(folds);
+        request.fold_spec["folds"][2] = bad;
+        assert_eq!(
+            worker::evaluate::native(&request, &matrix).err().unwrap(),
+            worker::WorkerFailure::InvalidRequest
+        );
+    }
+}
+
+#[test]
 fn frozen_s1_surrogate_extrapolates_beyond_each_training_fold_range() {
     use crate::{dataset::jmat, worker};
     // Data-free regression control: independent frozen S1 recipe, two disjoint
@@ -327,18 +395,45 @@ async fn signed_r882_in_loop_ab_and_replay() {
 }
 
 #[test]
+fn q1_threefold_fitness_includes_third_log_gate_tail_and_population_sd() {
+    // Independently calculated mean=-0.3, max=-0.1, population sd=sqrt(0.08/3).
+    let (f, gate) = surrogate::fitness("(pipe X (ridge))", &[-0.5, -0.3, -0.1], 3).unwrap();
+    assert!(gate);
+    let expected = -0.24 - 0.01 + 0.1 * (0.08_f64 / 3.0).sqrt() + 0.001;
+    assert!((f - expected).abs() < 1e-15);
+    let (flat, gate) = surrogate::fitness("(pipe X (ridge))", &[-0.3; 3], 3).unwrap();
+    assert!(gate && f > flat);
+    // Ignoring the final fold would incorrectly pass both controls.
+    let (f, gate) = surrogate::fitness("x", &[-0.5, -0.3, 0.9], 2).unwrap();
+    assert!(!gate && f >= 100.0);
+    let (f, gate) = surrogate::fitness("x", &[-0.5, -0.3, 0.9], 3).unwrap();
+    assert!(!gate && f >= 100.0); // geometric mean alone fails
+    let (f, gate) = surrogate::fitness("x", &[-0.5, -0.3, -0.1], 2).unwrap();
+    assert!(!gate && f >= 100.0); // every fold must beat its baseline
+    for logs in [
+        vec![],
+        vec![-0.3],
+        vec![-0.3; 4],
+        vec![-0.3, -0.2, f64::NAN],
+    ] {
+        assert!(surrogate::fitness("x", &logs, 0).is_err());
+    }
+    assert!(surrogate::fitness("x", &[-0.3; 3], 4).is_err());
+}
+
+#[test]
 fn frozen_surrogate_gate_and_fitness_ranges_match_reference() {
-    let (value, gate) = surrogate::fitness("(pipe X (ridge))", -0.4, -0.2, 2).unwrap();
+    let (value, gate) = surrogate::fitness("(pipe X (ridge))", &[-0.4, -0.2], 2).unwrap();
     assert!(gate);
     let expected = 0.8 * -0.3 + 0.1 * -0.2 + 0.1 * 0.1 + 0.0005 * 2.0;
     assert!((value - expected).abs() < 1e-15);
     for (a, b, wins) in [(0.1, -0.3, 1), (0.1, 0.3, 0), (-0.01, -0.01, 2)] {
-        let (f, g) = surrogate::fitness("(pipe X (ridge))", a, b, wins).unwrap();
+        let (f, g) = surrogate::fitness("(pipe X (ridge))", &[a, b], wins).unwrap();
         assert!(!g);
         assert!(f >= 100.0);
     }
-    assert!(surrogate::fitness("x", f64::NAN, 0.0, 0).is_err());
-    assert!(surrogate::fitness("x", 0.0, 0.0, 3).is_err());
+    assert!(surrogate::fitness("x", &[f64::NAN, 0.0], 0).is_err());
+    assert!(surrogate::fitness("x", &[0.0, 0.0], 3).is_err());
 }
 
 fn spec(dataset: &str, device: &str) -> RunSpec {

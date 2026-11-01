@@ -4959,6 +4959,46 @@
         "role": "research",
         "reason": "H187 registered CPU fresh-adapter loss normalization/family-balancing experiment; frozen DOPE, TRAIN-only, imported pooled selector, no live changes"
       }
+    },
+    "python:research/flywheel_selfplay/h191_nested_kernel/parents.py": {
+      "bytes": 1885,
+      "sha256": "e4fdb64adcfaad1a5a97558cc4314fc1901665697d0bf3093f6cc9150284e354",
+      "classification": {
+        "role": "research",
+        "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h191_nested_kernel/analysis.py": {
+      "bytes": 8368,
+      "sha256": "95848b31a33b4512e14c883a2b2b2413663e813082de31a4ba9ebfe757418879",
+      "classification": {
+        "role": "research",
+        "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h191_nested_kernel/treatment.py": {
+      "bytes": 434,
+      "sha256": "0edc8aa0eb2eaa81938925e4a1bbe97ad214277fff8312d84581db3e0b39b5c3",
+      "classification": {
+        "role": "research",
+        "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h191_nested_kernel/monitor.py": {
+      "bytes": 5493,
+      "sha256": "c35174c41c4e93ddc00aa3373a104c96832136ebd07def4b0dcc14299c6a06c5",
+      "classification": {
+        "role": "research",
+        "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h191_nested_kernel/runner.py": {
+      "bytes": 13340,
+      "sha256": "a7e5f19cc6794180dfbc126095e039f39ce52e9c267a2d1f0cc396f3ca46c735",
+      "classification": {
+        "role": "research",
+        "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

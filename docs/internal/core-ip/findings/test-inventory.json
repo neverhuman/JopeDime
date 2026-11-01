@@ -5471,6 +5471,14 @@
     "python:research/flywheel_selfplay/h187_robust_family/test_h187.py": {
       "role": "research",
       "reason": "H187 research-only paired robust-loss/equal-family fresh adapter fixture tests; no serving promotion"
+    },
+    "python:research/flywheel_selfplay/h189_swa_ema/test_h189.py": {
+      "role": "research",
+      "reason": "H189 synthetic/data-free design and selector controls for the adapter weight-averaging (SWA/EMA) preregistration; no production promotion"
+    },
+    "python:research/flywheel_selfplay/h191_nested_kernel/test_h191.py": {
+      "role": "research",
+      "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

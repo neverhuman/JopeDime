@@ -21,7 +21,9 @@ from pathlib import Path, PurePosixPath
 from unittest.mock import patch
 
 from research.joint_regbin.admission import (
+    build_catalog_pool_manifest,
     build_binary_train_admission,
+    review_catalog_families,
     verify_binary_train_admission,
 )
 from research.joint_regbin import protocol
@@ -43,6 +45,154 @@ CATALOG_SHA256 = "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0
 PANEL_MANIFEST_SHA256 = (
     "5ebe5b429314a536a3aa9e9cb7783a9b97409835031e7d4fafc4e05a6cd02531"
 )
+
+
+class CatalogPoolManifestTests(unittest.TestCase):
+    def _inputs(self):
+        rows = [
+            {
+                "id": "reg-a",
+                "task": "regression",
+                "canonical_sha256": "a" * 64,
+                "family_key": "f" * 64,
+                "family_key_source": "provenance.dedupe_fingerprint",
+                "family_key_derived": "srcfile:shared-data",
+                "source_file": "regression/shared-data.csv",
+                "source_url": "https://example.org/data/shared-data.csv",
+                "platform": "pmlb",
+                "s3_bucket": "veox-jopedime-datasets-use2",
+                "train_rows": 12,
+                "train_sha256": "1" * 64,
+            },
+            {
+                "id": "bin-a",
+                "task": "binary",
+                "canonical_sha256": "b" * 64,
+                "family_key": "f" * 64,
+                "family_key_source": "provenance.dedupe_fingerprint",
+                "family_key_derived": "srcfile:shared-data",
+                "source_file": "binary/shared-data.csv",
+                "source_url": "https://example.org/data/shared-data.csv",
+                "platform": "pmlb",
+                "s3_bucket": "veox-jopedime-datasets-use2",
+                "train_rows": 9,
+                "train_sha256": "2" * 64,
+            },
+            {
+                "id": "reg-b",
+                "task": "regression",
+                "canonical_sha256": "c" * 64,
+                "family_key": "f" * 64,
+                "family_key_source": "provenance.dedupe_fingerprint",
+                "family_key_derived": None,
+                "source_file": "regression/other.csv",
+                "source_url": "https://example.org/data/other.csv",
+                "platform": "pmlb",
+                "s3_bucket": "veox-jopedime-datasets-use2",
+                "train_rows": 7,
+                "train_sha256": "3" * 64,
+            },
+            {
+                "id": "ml-a",
+                "task": "multi_label",
+                "canonical_sha256": "d" * 64,
+                "s3_bucket": "veox-jopedime-datasets-use2",
+                "train_rows": 11,
+                "train_sha256": "4" * 64,
+            },
+        ]
+        catalog = {
+            "inventory": {
+                "source_catalog": "catalog/v246.jsonl (LATEST=v246)",
+                "catalog_records": 18,
+                "usable_records": 4,
+                "by_task": {"regression": 2, "binary": 1, "multi_label": 1},
+            },
+            "datasets": rows,
+        }
+        catalog_sha = hashlib.sha256(b"catalog metadata").hexdigest()
+        owner_alias = {
+            "schema": "jope.jrb01.raw-catalog-alias-expansion/v1",
+            "policy_schema": "jope.dl-family-keys/v1",
+            "policy_sha256": "4cd876f7e215dc17941fde88bb23b95104b8512d75e82305c4e4967e9d609901",
+            "policy_source_pins": {
+                "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/common.py": "c419b6d721a32879db830ab7f312e95fec8501c2b47f40581a5054b2317cfbbe",
+                "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/family_keys.py": "9b688e9b8a36a32485524243dc1adea7d30ee7404df4027d2b4d17bd6a900f7e",
+            },
+            "curated_catalog_sha256": catalog_sha,
+            "owner_identity_manifest_sha256": "e" * 64,
+            "owner_identities": 167,
+            "owner_identities_joined_raw_catalog": 167,
+            "previously_missing_identities": 14,
+            "previously_missing_now_joined": 14,
+            "source_file_metadata_for_previous_missing_ids": 0,
+            "binary_direct_owner_alias_intersections": 0,
+            "binary_transitive_owner_alias_intersections": 0,
+            "all_raw_catalog_transitive_unions_checked": True,
+            "no_p3_roster_or_plaintext_sealed_aliases_published": True,
+            "payloads_opened": 0,
+        }
+        owner_alias_sha = hashlib.sha256(b"owner alias evidence").hexdigest()
+        return catalog, catalog_sha, owner_alias, owner_alias_sha
+
+    def test_catalog_alias_closure_merges_families_across_tasks(self) -> None:
+        catalog, _, _, _ = self._inputs()
+
+        review = review_catalog_families(catalog["datasets"])
+
+        families = review["family_by_dataset"]
+        self.assertEqual(families["reg-a"], families["bin-a"])
+        self.assertEqual(families["bin-a"], families["reg-b"])
+        component = next(
+            row for row in review["families"] if "reg-a" in row["datasets"]
+        )
+        self.assertEqual(set(component["tasks"]), {"regression", "binary"})
+        self.assertNotIn("ml-a", families)
+
+    def test_candidate_pools_are_complete_metadata_but_never_admitted(self) -> None:
+        catalog, catalog_sha, owner_alias, owner_alias_sha = self._inputs()
+
+        manifest = build_catalog_pool_manifest(
+            catalog, catalog_sha, owner_alias, owner_alias_sha
+        )
+
+        self.assertEqual(manifest["schema"], "jope.joint-regbin.catalog-pools/v1")
+        self.assertEqual(
+            manifest["admission_status"], "CATALOG_CANDIDATES_NOT_ADMITTED"
+        )
+        self.assertIs(manifest["eligibility_verified"], False)
+        self.assertEqual(manifest["candidate_counts"], {"binary": 1, "regression": 2})
+        self.assertEqual(manifest["candidate_pool_scope"], "catalog_train_rows_only")
+        self.assertFalse(manifest["role_assignments_present"])
+        self.assertTrue(manifest["closure"]["catalog_aliases_closed"])
+        self.assertFalse(manifest["closure"]["owner_aliases_fully_closed"])
+        self.assertFalse(
+            manifest["closure"]["owner_regression_alias_intersections_reviewed"]
+        )
+        self.assertEqual(manifest["closure"]["unresolved_owner_sourcefile_aliases"], 14)
+        self.assertTrue(
+            all(
+                row["task"] in {"regression", "binary"}
+                for rows in manifest["candidate_pools"].values()
+                for row in rows
+            )
+        )
+
+    def test_candidate_pool_rejects_owner_alias_overlap_or_catalog_drift(self) -> None:
+        catalog, catalog_sha, owner_alias, owner_alias_sha = self._inputs()
+        owner_alias["binary_transitive_owner_alias_intersections"] = 1
+        with self.assertRaisesRegex(ValueError, "owner alias evidence"):
+            build_catalog_pool_manifest(
+                catalog, catalog_sha, owner_alias, owner_alias_sha
+            )
+
+        catalog, catalog_sha, owner_alias, owner_alias_sha = self._inputs()
+        catalog["datasets"][0]["train_sha256"] = "not-a-sha"
+        with self.assertRaisesRegex(ValueError, "train metadata"):
+            build_catalog_pool_manifest(
+                catalog, catalog_sha, owner_alias, owner_alias_sha
+            )
+
 
 # Catalog v246's explicit sealed-name-match exclusion IDs. This is the
 # published catalog exclusion list, not a claim to possess the authoritative
@@ -644,6 +794,52 @@ class RoleManifestAdmissionTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "approved real S3 bucket"):
             build_role_manifest(catalog_path, contexts, families, evidence)
+
+    def test_worker_task_summary_requires_exact_supported_list(self) -> None:
+        catalog_path, contexts, families, evidence = self._fixture()
+        for tasks in [
+            None,
+            False,
+            1,
+            "regression",
+            {"regression": {}, "binary": {}},
+            [],
+            ["regression"],
+            ["regression", "binary", "binary"],
+            ["regression", "regression"],
+            ["regression", "multiclass"],
+            ["regression", None],
+            ["regression", 1],
+            [{}, "binary"],
+            ["regression", ["binary"]],
+        ]:
+            with self.subTest(tasks=tasks):
+                evidence["worker"]["tasks"] = tasks
+                manifest = build_role_manifest(
+                    catalog_path, contexts, families, evidence
+                )
+                self.assertIs(manifest["eligibility_verified"], False)
+                self.assertIn(
+                    "worker does not prove regression and binary heads",
+                    manifest["blockers"],
+                )
+                with self.assertRaisesRegex(ValueError, "incomplete JRB inputs"):
+                    make_worker_bound_plan(manifest, catalog_path=catalog_path)
+
+    def test_worker_task_summary_accepts_both_supported_orders(self) -> None:
+        catalog_path, contexts, families, evidence = self._fixture()
+        for tasks in [list(protocol.TASKS), list(reversed(protocol.TASKS))]:
+            with self.subTest(tasks=tasks):
+                evidence["worker"]["tasks"] = tasks
+                manifest = build_role_manifest(
+                    catalog_path, contexts, families, evidence
+                )
+                self.assertIs(manifest["eligibility_verified"], True)
+                plan = make_worker_bound_plan(manifest, catalog_path=catalog_path)
+                self.assertEqual(
+                    plan["learner_start"]["worker_qualification_sha256"],
+                    evidence["worker"]["qualification_sha256"],
+                )
 
     def test_plan_rederives_proof_instead_of_trusting_cached_eligibility(self) -> None:
         catalog_path, contexts, families, evidence = self._fixture()

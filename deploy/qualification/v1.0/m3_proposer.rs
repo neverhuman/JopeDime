@@ -73,14 +73,17 @@ fn r0_clock(seed: u64, round: u64, context: u64, cycle: u64) -> Option<(u64, u64
     let round = round.checked_add(cycle.checked_mul(16)?)?;
     Some((seed, round))
 }
+fn source_clock(mode: Option<&str>) -> Result<bool> {
+    match mode {
+        None | Some("r0-clock") => Ok(true),
+        Some("legacy-clock") => Ok(false),
+        _ => anyhow::bail!("unknown proposer clock"),
+    }
+}
 fn main() -> Result<()> {
     let mode = std::env::args().nth(3);
-    ensure!(
-        mode.is_none() || mode.as_deref() == Some("r0-clock"),
-        "unknown proposer clock"
-    );
+    let use_source_clock = source_clock(mode.as_deref())?;
     ensure!(std::env::args().len() <= 4, "unexpected proposer arguments");
-    let paired_clock = mode.is_some();
     let dir = std::env::args().nth(1).expect("evidence directory");
     let dir = Path::new(&dir);
     let cohort = read(&dir.join("cohort.jsonl"))?;
@@ -189,8 +192,9 @@ fn main() -> Result<()> {
             sha: hash(format!("{}:{}", bank_sha, calls % requests.len()).as_bytes()),
         };
         // Round::seed is the base, not the already round-mixed Python seed.
-        // The legacy default remains reproducible; paired diagnostics use the R0 clock.
-        let (seed, round) = if paired_clock {
+        // Correct source routing is independent of optional paired diagnostics.
+        // The old measurement is reproducible only with explicit legacy-clock.
+        let (seed, round) = if use_source_clock {
             r0_clock(
                 source["source_round_seed"].as_u64().unwrap(),
                 source["source_round"].as_u64().unwrap(),
@@ -250,7 +254,15 @@ fn main() -> Result<()> {
 
 #[cfg(test)]
 mod clock_tests {
-    use super::r0_clock;
+    use super::{r0_clock, source_clock};
+
+    #[test]
+    fn source_clock_is_default_and_legacy_requires_explicit_opt_in() {
+        assert!(source_clock(None).unwrap());
+        assert!(source_clock(Some("r0-clock")).unwrap());
+        assert!(!source_clock(Some("legacy-clock")).unwrap());
+        assert!(source_clock(Some("chosen-seed")).is_err());
+    }
 
     #[test]
     fn registered_clock_examples_are_unchanged() {
