@@ -195,7 +195,7 @@ pub fn stage(request: &PackRequest<'_>) -> Result<(Staged, Vec<u8>, TrustedKey, 
     );
     let code = std::fs::read(request.code)
         .with_context(|| format!("read executable {}", request.code.display()))?;
-    validate_executable_target(&code, &request.target, request.code)?;
+    validate_executable_target(&code, request.target, request.code)?;
     match Package::open_with_keys(request.code, &[]) {
         Ok(None) => {}
         _ => bail!(
@@ -280,73 +280,6 @@ pub fn stage(request: &PackRequest<'_>) -> Result<(Staged, Vec<u8>, TrustedKey, 
     };
     let staged = writer::stage(&code, inputs, &options).context("encode assets")?;
     Ok((staged, code, key, profile))
-}
-
-#[cfg(test)]
-mod executable_target_tests {
-    use super::validate_executable_target;
-    use std::path::Path;
-
-    const LINUX_X86_64: &str = "x86_64-unknown-linux-gnu";
-    const MACOS_ARM64: &str = "aarch64-apple-darwin";
-
-    fn arm64_mach_o() -> Vec<u8> {
-        let mut code = vec![0; 32];
-        code[0..4].copy_from_slice(&[0xcf, 0xfa, 0xed, 0xfe]); // MH_MAGIC_64, little-endian
-        code[4..8].copy_from_slice(&0x0100000cu32.to_le_bytes()); // CPU_TYPE_ARM64
-        code[12..16].copy_from_slice(&2u32.to_le_bytes()); // MH_EXECUTE
-        code
-    }
-
-    #[test]
-    fn linux_target_accepts_elf_and_rejects_macho_and_pe() {
-        assert!(
-            validate_executable_target(b"\x7fELF fixture", LINUX_X86_64, Path::new("app")).is_ok()
-        );
-        for bytes in [arm64_mach_o(), b"MZ windows PE".to_vec()] {
-            let error = validate_executable_target(&bytes, LINUX_X86_64, Path::new("app"))
-                .unwrap_err()
-                .to_string();
-            assert!(
-                error.contains("not an ELF file for Linux target"),
-                "{error}"
-            );
-        }
-    }
-
-    #[test]
-    fn macos_arm64_target_accepts_only_arm64_64_bit_mach_o_executables() {
-        let mach_o = arm64_mach_o();
-        assert!(validate_executable_target(&mach_o, MACOS_ARM64, Path::new("app")).is_ok());
-        assert!(
-            validate_executable_target(b"\x7fELF fixture", MACOS_ARM64, Path::new("app"))
-                .unwrap_err()
-                .to_string()
-                .contains("not a 64-bit arm64 Mach-O executable")
-        );
-
-        let mut wrong_cpu = arm64_mach_o();
-        wrong_cpu[4..8].copy_from_slice(&0x01000007u32.to_le_bytes()); // CPU_TYPE_X86_64
-        assert!(validate_executable_target(&wrong_cpu, MACOS_ARM64, Path::new("app")).is_err());
-        let mut dylib = arm64_mach_o();
-        dylib[12..16].copy_from_slice(&6u32.to_le_bytes()); // MH_DYLIB, not MH_EXECUTE
-        assert!(validate_executable_target(&dylib, MACOS_ARM64, Path::new("app")).is_err());
-    }
-
-    #[test]
-    fn unsupported_targets_are_rejected_even_when_the_binary_is_elf() {
-        let error = validate_executable_target(
-            b"\x7fELF fixture",
-            "x86_64-pc-windows-gnu",
-            Path::new("app"),
-        )
-        .unwrap_err()
-        .to_string();
-        assert!(
-            error.contains("unsupported appliance executable target"),
-            "{error}"
-        );
-    }
 }
 
 fn receipt(
@@ -541,4 +474,71 @@ pub fn seal(
 /// `<repo>/deploy/appliance/<relative>`.
 pub fn appliance_path(repo: &Path, relative: &str) -> PathBuf {
     repo.join("deploy/appliance").join(relative)
+}
+
+#[cfg(test)]
+mod executable_target_tests {
+    use super::validate_executable_target;
+    use std::path::Path;
+
+    const LINUX_X86_64: &str = "x86_64-unknown-linux-gnu";
+    const MACOS_ARM64: &str = "aarch64-apple-darwin";
+
+    fn arm64_mach_o() -> Vec<u8> {
+        let mut code = vec![0; 32];
+        code[0..4].copy_from_slice(&[0xcf, 0xfa, 0xed, 0xfe]); // MH_MAGIC_64, little-endian
+        code[4..8].copy_from_slice(&0x0100000cu32.to_le_bytes()); // CPU_TYPE_ARM64
+        code[12..16].copy_from_slice(&2u32.to_le_bytes()); // MH_EXECUTE
+        code
+    }
+
+    #[test]
+    fn linux_target_accepts_elf_and_rejects_macho_and_pe() {
+        assert!(
+            validate_executable_target(b"\x7fELF fixture", LINUX_X86_64, Path::new("app")).is_ok()
+        );
+        for bytes in [arm64_mach_o(), b"MZ windows PE".to_vec()] {
+            let error = validate_executable_target(&bytes, LINUX_X86_64, Path::new("app"))
+                .unwrap_err()
+                .to_string();
+            assert!(
+                error.contains("not an ELF file for Linux target"),
+                "{error}"
+            );
+        }
+    }
+
+    #[test]
+    fn macos_arm64_target_accepts_only_arm64_64_bit_mach_o_executables() {
+        let mach_o = arm64_mach_o();
+        assert!(validate_executable_target(&mach_o, MACOS_ARM64, Path::new("app")).is_ok());
+        assert!(
+            validate_executable_target(b"\x7fELF fixture", MACOS_ARM64, Path::new("app"))
+                .unwrap_err()
+                .to_string()
+                .contains("not a 64-bit arm64 Mach-O executable")
+        );
+
+        let mut wrong_cpu = arm64_mach_o();
+        wrong_cpu[4..8].copy_from_slice(&0x01000007u32.to_le_bytes()); // CPU_TYPE_X86_64
+        assert!(validate_executable_target(&wrong_cpu, MACOS_ARM64, Path::new("app")).is_err());
+        let mut dylib = arm64_mach_o();
+        dylib[12..16].copy_from_slice(&6u32.to_le_bytes()); // MH_DYLIB, not MH_EXECUTE
+        assert!(validate_executable_target(&dylib, MACOS_ARM64, Path::new("app")).is_err());
+    }
+
+    #[test]
+    fn unsupported_targets_are_rejected_even_when_the_binary_is_elf() {
+        let error = validate_executable_target(
+            b"\x7fELF fixture",
+            "x86_64-pc-windows-gnu",
+            Path::new("app"),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(
+            error.contains("unsupported appliance executable target"),
+            "{error}"
+        );
+    }
 }
