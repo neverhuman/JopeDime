@@ -181,6 +181,11 @@ class ReleaseGates(unittest.TestCase):
         receipt = json.loads((output / "gates_receipt.json").read_text())
         self.assertEqual(code, 0)
         self.assertEqual(run["manifest_sha256"], runner.cpu.digest(self.commands))
+        self.assertEqual(run["source_sha"], self.source)
+        self.assertFalse(run["release_qualified"])
+        self.assertEqual(len(receipt["gates"]), 28)
+        self.assertTrue(all(gate["status"] == "PASS" for gate in receipt["gates"]))
+        self.assertEqual(receipt["artifact_sha256"], self.sha)
 
     def test_candidate_mode_executes_all_28_and_writes_status_table(self):
         qualification = self.repo / "deploy/qualification/v1.0"

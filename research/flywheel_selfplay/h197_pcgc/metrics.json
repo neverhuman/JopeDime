@@ -1,59 +1,232 @@
 {
-  "schema": "jope.hwave-closeout/v1",
-  "wave": "H197",
-  "status": "INCOMPLETE",
-  "decision": "NOT_EVALUABLE",
-  "authorized_attempts_consumed": 3,
-  "preflight": {
-    "status": "PASS",
-    "source_commit": "c61b23010759d179f626bc7378057239988b0f59",
-    "native_r882_dl_val_contexts": 91,
-    "native_r882_mean_utility": 1.1377941898164525,
-    "utility_bit_exact": true,
-    "cost_bytes_exact": true,
-    "train_pools_loaded_after_baseline": 1219,
-    "optimizer_updates": 0
+  "artifact_hashes": {
+    "A_metrics.json": "ea45f3c91f6068a6095596a5c5a62061404054e74ad98523b2d1fb259cd8ac31",
+    "DLVal_descriptive.json": "9546ded2bf066e4e7c6c7aee4df4f2ef691d56a8c8ffd9d393714890aaa6370b",
+    "audit.json": "8c26900f3833fe7f1ad97673ba6bd3c061841a1c7a7ae106e7276f84936a68f5",
+    "baseline.json": "21c08b35941279c83bf679a3baab5798e9eb069839dba968a88e044d8ba5aaf8",
+    "calibration.json": "24505fc37ffd8f62abb1d6153232706c9f71c77a40db60dc6fe01669ba935e5c",
+    "catalog_join.json": "74bb31ee0da9138910573b5f2c15f288e3b2b8f214f1f2760cc8589423390427",
+    "metrics.json": "b88fa41d7af12bf0cacc0c368fc39c14ded56dc89e73b24697f9565e16c0f8fa",
+    "pooled_b_lock_receipt.json": "b9a48573fc094d9c9ec11c593303a0b8a371e3ba20453dbed76dcf88d05be4ed",
+    "pooled_b_selection_lock.json": "78a7666a86f2a36ef4a80f41a97ade055180620fa195b08cee65015965d6f255"
   },
-  "attempts": [
-    {
-      "attempt": 1,
-      "elapsed_seconds": 1.770412189,
-      "exit_code": 1,
-      "error": "ModuleNotFoundError: No module named 'h182_base'",
-      "optimizer_updates": 0
+  "attempt": 4,
+  "clip_stats": {
+    "PCGC40": {
+      "clipped_fraction": 0.5925,
+      "context_gradient_count": 4800,
+      "factor_quantiles": [
+        0.10823737186266318,
+        0.49146308174101666,
+        0.8987343253833922,
+        1.0,
+        1.0
+      ]
     },
-    {
-      "attempt": 2,
-      "elapsed_seconds": 2.253341689,
-      "exit_code": 1,
-      "error": "RuntimeError: source pin mismatch: PREREG.md",
-      "checkpoint_deserialized": false,
-      "optimizer_updates": 0
-    },
-    {
-      "attempt": 3,
-      "elapsed_seconds": 77.478155028,
-      "exit_code": 1,
-      "error": "TypeError: NumPy factor permutation is not JSON serializable",
-      "baseline_exact": true,
-      "seed": 197101,
-      "fold": 0,
-      "arms_with_40_updates": ["CTRL40", "PCGC40", "GCLIP40", "PCGC_SHUF40"],
-      "optimizer_updates": 160,
-      "backward_started": 720,
-      "backward_completed": 720,
-      "protected_reads": 0,
-      "audit_refusals": 0,
-      "B_or_A_scoring_started": false,
-      "monitor_resource_violations": []
+    "PCGC_SHUF40": {
+      "clipped_fraction": 0.590625,
+      "context_gradient_count": 4800,
+      "factor_quantiles": [
+        0.10844344519169287,
+        0.4928242949734834,
+        0.9014398072948886,
+        1.0,
+        1.0
+      ]
     }
+  },
+  "design": {
+    "A_panels": 75,
+    "B_panels": 75,
+    "DLVal_panels": 60,
+    "arms": [
+      "R882",
+      "CTRL40",
+      "PCGC40",
+      "GCLIP40",
+      "PCGC_SHUF40"
+    ],
+    "candidate_step": 40,
+    "cells": 15,
+    "optimizer_updates": 2400,
+    "trajectories": 60,
+    "updates_per_trained_arm_per_cell": 40
+  },
+  "elo_vs_R882": {
+    "CTRL40": {
+      "elo": 1485.0104261692097,
+      "lift": -14.989573830790277,
+      "lift_ci95": [
+        -24.857082370881322,
+        -5.096047945659322
+      ]
+    },
+    "GCLIP40": {
+      "elo": 1485.526850839523,
+      "lift": -14.473149160477078,
+      "lift_ci95": [
+        -24.160194997239792,
+        -4.734262213360466
+      ]
+    },
+    "PCGC40": {
+      "elo": 1485.62538826386,
+      "lift": -14.374611736139968,
+      "lift_ci95": [
+        -24.33591782928127,
+        -4.383876740110159
+      ]
+    },
+    "PCGC_SHUF40": {
+      "elo": 1486.108244921442,
+      "lift": -13.891755078557935,
+      "lift_ci95": [
+        -23.62591434611416,
+        -4.155548259208513
+      ]
+    },
+    "R882": {
+      "elo": 1500.0,
+      "lift": 0.0,
+      "lift_ci95": [
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "exact_minus2_choices_per_seed": {
+    "CTRL40": [
+      22,
+      21,
+      21
+    ],
+    "GCLIP40": [
+      22,
+      21,
+      21
+    ],
+    "PCGC40": [
+      23,
+      21,
+      20
+    ],
+    "PCGC_SHUF40": [
+      22,
+      20,
+      20
+    ],
+    "R882": [
+      17,
+      17,
+      17
+    ]
+  },
+  "execution": {
+    "elapsed_seconds": 5100.288803051924,
+    "monitor": "PASS",
+    "output_bytes": 199280819,
+    "protected_reads": 0,
+    "refused_accesses": 0,
+    "resource_guard_violations": 0
+  },
+  "fold_pairwise_corresponding_family_jaccard": {
+    "197101-197102": [
+      0.09333333333333334,
+      0.17142857142857143,
+      0.1232876712328767,
+      0.24242424242424243,
+      0.15492957746478872
+    ],
+    "197101-197103": [
+      0.10810810810810811,
+      0.15492957746478872,
+      0.1388888888888889,
+      0.09333333333333334,
+      0.10810810810810811
+    ],
+    "197102-197103": [
+      0.06493506493506493,
+      0.10810810810810811,
+      0.05128205128205128,
+      0.1232876712328767,
+      0.0379746835443038
+    ]
+  },
+  "fold_seeds": [
+    197141,
+    197142,
+    197143
   ],
-  "trajectories_fully_scored": 0,
-  "science_metrics": null,
-  "harm_rate": null,
-  "family_grouped_median_and_ci": null,
-  "family_bootstrap_elo": null,
-  "adoption": false,
+  "full_evidence": "Raw trace, state, panel, audit and resource files are external and versioned in S3; see custody.json.",
+  "harm_rate_family_average": 0.4682926829268293,
+  "population": {
+    "contexts": 1219,
+    "families": 205,
+    "unit": "family; contexts averaged equally within family"
+  },
+  "preflight": {
+    "baseline_mean_utility": 1.1377941898164525,
+    "native_r882_dl_val_91_91_bit_exact": true,
+    "optimizer_updates": 0,
+    "train_and_dl_val_pools_loaded": 1310
+  },
+  "prereg_pr": 1616,
+  "primary": {
+    "bootstrap_draws": 10000,
+    "bootstrap_seed": 197150,
+    "contrast": "PCGC40_vs_R882",
+    "median_over_seeds": -0.02509787973152258,
+    "one_sided_p_holm_m1": 0.9743025697430256,
+    "paired_family_bootstrap_95pct_ci_for_median": [
+      -0.05127931222742533,
+      9.065151569863966e-05
+    ],
+    "per_seed_equal_family_gain": [
+      -0.0321426268261548,
+      -0.02509787973152258,
+      -0.022226378977546007
+    ],
+    "positive_seeds": 0
+  },
+  "secondary": {
+    "PCGC40_vs_CTRL40": {
+      "median_bootstrap_ci95": [
+        -0.0009445398511155656,
+        0.001897068461425024
+      ],
+      "median_over_seeds": 0.0006302129764227193,
+      "per_seed": [
+        -0.0022161445550661,
+        0.0006302129764227193,
+        0.004804854685741748
+      ],
+      "positive_seed_count": 2
+    },
+    "PCGC40_vs_PCGC_SHUF40": {
+      "median_bootstrap_ci95": [
+        -0.003709437321691038,
+        0.00043989882067984454
+      ],
+      "median_over_seeds": -0.001767125187672936,
+      "per_seed": [
+        -0.0026987942968997912,
+        -0.001767125187672936,
+        0.0008207407747381363
+      ],
+      "positive_seed_count": 1
+    },
+    "strictly_beats_shuffled_placebo": false
+  },
+  "seeds": [
+    197101,
+    197102,
+    197103
+  ],
   "serving_promotion": false,
-  "next_attempt_authorized": false
+  "source_commit": "47c7a43cefdbb9ea360d335d829d9381aa55b15b",
+  "source_tree": "a8a7293a49c97e84e63f15aa2702a359024030de",
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "wave": "H197",
+  "writer_fix_pr": 1634
 }
