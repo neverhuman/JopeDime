@@ -106,7 +106,7 @@ class M5Tests(unittest.TestCase):
             self.assertEqual(environment["CUDA_VISIBLE_DEVICES"], "")
             self.assertEqual(environment["CARGO_INCREMENTAL"], "0")
             report = {
-                "schema": "jope.m5-causal/v2",
+                "schema": "jope.m5-causal/v3",
                 "consumer": "M5-causal",
                 "device": "cpu",
                 "passed": True,
@@ -122,7 +122,8 @@ class M5Tests(unittest.TestCase):
                 "details": {
                     "contexts": 50,
                     "slates": 100,
-                    "admitted_order_mismatches": 0,
+                    "admitted_order_comparison": "not_comparable_model_weights",
+                    "admitted_order_mismatches": None,
                     "quality_gate_granted": False,
                     "Q1_ready": False,
                     "serving_4_plus_8": {
@@ -267,6 +268,7 @@ class M5Tests(unittest.TestCase):
         for field, value in [
             ("contexts", 49),
             ("slates", 99),
+            ("admitted_order_comparison", "same_model_oracle"),
             ("admitted_order_mismatches", 1),
             ("quality_gate_granted", True),
             ("Q1_ready", True),

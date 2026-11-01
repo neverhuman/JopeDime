@@ -448,9 +448,22 @@ fn round_admission_fixture(causal_measurements_only: bool) {
             let actual = admission
                 .evaluate_round(&context, &proposals, width == 20, &mut actual_rng)
                 .unwrap();
-            let expected = f.numbers("output.total_cost");
             if compare_reference_outputs {
+                let expected = f.numbers("output.total_cost");
                 stats.compare(&actual.costs.total_cost, &expected);
+                let mut reference_rng = rng.clone();
+                let indices = select_costs(&expected, width == 20, &mut reference_rng).unwrap();
+                let reference: Vec<_> = indices.iter().map(|&i| proposals[i].clone()).collect();
+                let mut order: Vec<_> = expected[4..].to_vec();
+                order.sort_by(f64::total_cmp);
+                let cutoff = if width == 12 { 4 } else { 2 };
+                let (a, b) = (order[cutoff - 1], order[cutoff]);
+                if b - a > 2.0 * (1e-5 + 1e-4 * a.abs().max(b.abs())) {
+                    decisive += 1;
+                    mismatches += usize::from(actual.admitted != reference);
+                } else {
+                    ties += 1;
+                }
             } else {
                 checked_cost_values += actual.costs.total_cost.len();
                 invalid_cost_values += actual
@@ -461,24 +474,20 @@ fn round_admission_fixture(causal_measurements_only: bool) {
                     .count();
             }
             max_kl = max_kl.max(actual.costs.proposal_kl_to_anchor[0]);
-            let mut reference_rng = rng.clone();
-            let indices = select_costs(&expected, width == 20, &mut reference_rng).unwrap();
-            let reference: Vec<_> = indices.iter().map(|&i| proposals[i].clone()).collect();
+            let actual_costs: Vec<_> = actual
+                .costs
+                .total_cost
+                .iter()
+                .map(|&value| f64::from(value))
+                .collect();
+            let mut selection_rng = rng.clone();
+            let selected = select_costs(&actual_costs, width == 20, &mut selection_rng).unwrap();
+            assert_eq!(actual.admitted_indices, selected);
             assert_eq!(
                 actual_rng.next_u64(),
-                reference_rng.next_u64(),
+                selection_rng.next_u64(),
                 "same round RNG consumption"
             );
-            let mut order: Vec<_> = expected[4..].to_vec();
-            order.sort_by(f64::total_cmp);
-            let cutoff = if width == 12 { 4 } else { 2 };
-            let (a, b) = (order[cutoff - 1], order[cutoff]);
-            if b - a > 2.0 * (1e-5 + 1e-4 * a.abs().max(b.abs())) {
-                decisive += 1;
-                mismatches += usize::from(actual.admitted != reference);
-            } else {
-                ties += 1;
-            }
             disconnected_changes += usize::from(actual.admitted != proposals[..4]);
             if width == 12 {
                 serving_slates += 1;
@@ -691,18 +700,20 @@ fn round_admission_fixture(causal_measurements_only: bool) {
             "M5 requires both complete slate widths"
         );
         let passed = invalid_cost_values == 0
-            && mismatches == 0
+            && (!compare_reference_outputs || mismatches == 0)
             && serving_landmark_changes > 0
             && serving_fitness_changes > 0
             && serving_disconnected_changes > 0;
         let report = json!({
-            "schema":"jope.m5-causal/v2","consumer":"M5-causal","device":"cpu",
+            "schema":"jope.m5-causal/v3","consumer":"M5-causal","device":"cpu",
             "passed":passed,
             "output_checks":{"finite_cost_values":checked_cost_values,"invalid_cost_values":invalid_cost_values},
             "reference_oracle":{"status":"not_comparable_model_weights","comparison_performed":false,
                 "reference_bundle_digest":fixtures.index["bundle_digest"],"reference_jope_weights_sha256":JOPE_SHA,
                 "actual_bundle_digest":actual_bundle_digest,"actual_jope_weights_sha256":actual_jope_sha},
-            "details":{"contexts":50,"slates":100,"admitted_order_mismatches":mismatches,
+            "details":{"contexts":50,"slates":100,
+                "admitted_order_comparison": if compare_reference_outputs { "same_model_oracle" } else { "not_comparable_model_weights" },
+                "admitted_order_mismatches": if compare_reference_outputs { Some(mismatches) } else { None },
                 "quality_gate_granted":false,"Q1_ready":false,
                 "serving_4_plus_8":{"slates":serving_slates,
                     "landmark_only_changed_admission":serving_landmark_changes,
