@@ -391,7 +391,7 @@ fn legacy_model(bound: &feat_math::advanced_v3::BoundModel) -> Result<Model> {
     serde_json::from_value(legacy).context("decode retained legacy fitted model")
 }
 
-fn retains_training_data(model: &Model) -> bool {
+pub(crate) fn retains_training_data(model: &Model) -> bool {
     let Model::Pipeline { head, .. } = model else {
         return false;
     };
