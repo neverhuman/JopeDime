@@ -5,9 +5,9 @@
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_live_validation.pdf}
-  \caption{\textbf{Adapter validation and admissions.} All \num{1889} retained
-  rounds, 775--2663: grey candidate utility, blue recorded best. Stars mark
-  strict gains; hollow diamonds mark accepted ties.}
+  \caption{\textbf{Adapter validation and admissions.} The \num{1889}-round window,
+  775--2663: grey candidate utility, blue recorded best; stars mark strict gains,
+  hollow diamonds accepted ties. \Cref{app:latest-admissions} extends through round 2837.}
   \label{fig:fw-validation}
 \end{figure}
 
@@ -115,8 +115,8 @@ program to the adapter's training pool.
 
 The admission prefix covers \num{1889} consecutive rounds, 775--2663.
 Four rows are marked accepted: two strict best increases and two ties.
-The recorded best remains 1.1378. After the accepted tie at round 882,
-all \num{1781} subsequent rounds are rejected (\cref{fig:fw-validation}; see \cref{app:acceptance-over-rounds} for the isolated recorded-best trajectory and cumulative acceptance rate).
+Within this 775--2663 window, the recorded best remains 1.1378. After the tie
+at round 882, all \num{1781} remaining rounds in that window are rejected (\cref{fig:fw-validation}; see \cref{app:acceptance-over-rounds} for the isolated recorded-best trajectory and cumulative acceptance rate).
 Comparisons across harnesses need matched data, normalization and scoring
 protocols.
 
