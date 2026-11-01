@@ -1,12 +1,7 @@
 #[path = "support/pty.rs"]
 mod pty;
 
-const SENTINELS: [&str; 4] = [
-    "T2_DSL_SENTINEL_8f27",
-    "T2_OPERATOR_SENTINEL_19ac",
-    "T2_LINEAGE_SENTINEL_43de",
-    "T2_ROUND_SENTINEL_71b0",
-];
+const SENTINELS: [&str; 4] = ["918273.125", "817263.25", "716254.375", "615245.5"];
 
 fn assert_no_internal_sentinels(output: &str) {
     for sentinel in SENTINELS {
@@ -88,7 +83,7 @@ fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io
     fs::write(
         &csv,
         format!(
-            "feature,target\nalpha,{}\nbeta,{}\ngamma,{}\ndelta,{}\n",
+            "feature,target\n1,{}\n2,{}\n3,{}\n4,{}\n",
             SENTINELS[0], SENTINELS[1], SENTINELS[2], SENTINELS[3]
         ),
     )?;
@@ -151,17 +146,30 @@ fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io
         .as_str()
         .expect("dataset id in response");
 
-    for args in [
-        vec!["dataset", "list", "--json"],
-        vec!["dataset", "show", id, "--json"],
-    ] {
-        let output = run_jopedime(home_text, &args)?;
-        assert!(
-            !output.status.success(),
-            "unimplemented dataset read unexpectedly succeeded"
-        );
-        assert_output_clean(&output);
-    }
+    let listed = run_jopedime(home_text, &["dataset", "list", "--json"])?;
+    assert!(
+        listed.status.success(),
+        "dataset list failed: {}",
+        String::from_utf8_lossy(&listed.stderr)
+    );
+    assert_output_clean(&listed);
+    let listing: serde_json::Value = serde_json::from_slice(&listed.stdout).unwrap();
+    assert!(
+        listing["datasets"]
+            .as_array()
+            .is_some_and(|datasets| datasets.iter().any(|profile| profile["dataset_id"] == id)),
+        "dataset list omitted the registered profile: {listing}"
+    );
+
+    let shown = run_jopedime(home_text, &["dataset", "show", id, "--json"])?;
+    assert!(
+        shown.status.success(),
+        "dataset show failed: {}",
+        String::from_utf8_lossy(&shown.stderr)
+    );
+    assert_output_clean(&shown);
+    let shown_profile: serde_json::Value = serde_json::from_slice(&shown.stdout).unwrap();
+    assert_eq!(shown_profile["dataset_id"], id);
 
     let mut terminal = pty::PtySession::spawn_jopedime_with_env(
         &[],
@@ -169,8 +177,29 @@ fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io
     )?;
     let screen = terminal.wait_for_text("engine background", Duration::from_secs(10))?;
     assert_no_internal_sentinels(&screen);
+    // The local run backend validates a bounded regression task with no landmarks
+    // when a dataset is opened. Configure that draft before registration.
+    terminal.type_text("\\landmarks none")?;
+    terminal.press_key(pty::Key::Enter)?;
+    terminal.type_text("\\lang rust")?;
+    terminal.press_key(pty::Key::Enter)?;
+    terminal.type_text("\\target target --task regression")?;
+    terminal.press_key(pty::Key::Enter)?;
+    // This unique plan response is a barrier proving both earlier draft commands
+    // were processed before the dataset registration starts.
+    terminal.type_text("\\plan")?;
+    terminal.press_key(pty::Key::Enter)?;
+    let screen = terminal.wait_for_text(
+        "draft needs a registered dataset and target before it can be validated",
+        Duration::from_secs(10),
+    )?;
+    assert_no_internal_sentinels(&screen);
     terminal.type_text(&format!("\\open {}", csv.display()))?;
     terminal.press_key(pty::Key::Enter)?;
+    // Wait for this command's unique completion marker before sending the next line. PTY
+    // input and output are asynchronous; back-to-back commands can otherwise race the reader.
+    let screen = terminal.wait_for_text("registered safe-name.csv as", Duration::from_secs(10))?;
+    assert_no_internal_sentinels(&screen);
     terminal.type_text("\\help")?;
     terminal.press_key(pty::Key::Enter)?;
     let screen = terminal.wait_for_text("\\open PATH", Duration::from_secs(10))?;
