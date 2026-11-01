@@ -39,6 +39,8 @@ pub enum Output<'a> {
     Development { out: &'a Path },
     /// Release scopes: write the stage directory for external signing.
     Stage { dir: &'a Path },
+    /// Internal full-profile inspection only: no signing message, footer or sealable stage.
+    Rehearsal { dir: &'a Path },
 }
 
 #[derive(Serialize)]
@@ -179,6 +181,13 @@ fn notice(component: &str, path: &str, origin: &str, spdx: &str, bytes: Vec<u8>)
 
 /// Resolve, read and encode everything; the manifest and footer are fixed, unsigned.
 pub fn stage(request: &PackRequest<'_>) -> Result<(Staged, Vec<u8>, TrustedKey, Profile)> {
+    stage_for(request, false)
+}
+
+fn stage_for(
+    request: &PackRequest<'_>,
+    rehearsal: bool,
+) -> Result<(Staged, Vec<u8>, TrustedKey, Profile)> {
     let (profile, profile_sha) = Profile::load(request.profile)?;
     let (lock, lock_sha) = Lock::load(request.lock)?;
     let locked = lock
@@ -192,7 +201,31 @@ pub fn stage(request: &PackRequest<'_>) -> Result<(Staged, Vec<u8>, TrustedKey, 
         request.lock.display(),
         profile.name
     );
-    if locked.status != "ready" {
+    if rehearsal {
+        ensure!(
+            profile.name == "full" && profile.scope() == Scope::InternalRestricted,
+            "rehearsal is limited to the internal-restricted full profile"
+        );
+        ensure!(
+            profile
+                .owner_ack
+                .as_ref()
+                .is_some_and(|ack| request.repo.join(ack).is_file()),
+            "full rehearsal requires an explicit owner acknowledgement"
+        );
+        let method_blockers: Vec<String> = jope_runtime::methods::unexecutable(&locked.methods)?
+            .into_iter()
+            .map(|(id, reason)| format!("method {id}: {reason}"))
+            .collect();
+        ensure!(
+            locked
+                .blockers
+                .iter()
+                .all(|blocker| method_blockers.contains(blocker)),
+            "full rehearsal cannot waive asset, rights or payload blockers: {:?}",
+            locked.blockers
+        );
+    } else if locked.status != "ready" {
         bail!(
             "profile {} is blocked:\n  {}",
             profile.name,
@@ -373,8 +406,44 @@ pub fn pack(
     receipt_path: Option<&Path>,
 ) -> Result<()> {
     let started = Instant::now();
-    let (staged, code, key, profile) = stage(request)?;
+    let rehearsal = matches!(output, Output::Rehearsal { .. });
+    let (staged, code, key, profile) = stage_for(request, rehearsal)?;
     match output {
+        Output::Rehearsal { dir } => {
+            // Deliberately not a release stage. In particular there is nothing for a signer
+            // to sign and no footer for `seal` to assemble into a package.
+            std::fs::create_dir(dir)
+                .with_context(|| format!("create new rehearsal directory {}", dir.display()))?;
+            std::fs::write(dir.join("frames.bin"), &staged.frames)?;
+            std::fs::write(dir.join("manifest.json"), &staged.manifest_bytes)?;
+            let unavailable: Vec<serde_json::Value> =
+                jope_runtime::methods::unexecutable(&staged.manifest.methods)?
+                    .into_iter()
+                    .map(|(id, reason)| serde_json::json!({"id": id, "reason": reason}))
+                    .collect();
+            let record = serde_json::json!({
+                "schema": "jope.appliance-rehearsal/v1",
+                "purpose": "internal full-asset inspection; not a release candidate",
+                "signable": false,
+                "release_qualified": false,
+                "profile": profile.name,
+                "scope": profile.scope,
+                "owner_ack": profile.owner_ack,
+                "source_sha40": request.source_sha,
+                "intended_methods": staged.manifest.methods,
+                "unexecutable_methods": unavailable,
+                "base_executable_sha256": staged.manifest.code.sha256,
+                "base_executable_bytes": staged.manifest.code.len,
+                "manifest_sha256": jope_assets::sha256_hex(&staged.manifest_bytes),
+                "frames_sha256": jope_assets::sha256_hex(&staged.frames),
+                "payload_bytes": staged.frames.len(),
+                "assets": receipt(started, &staged, &profile.name, None)?.entries,
+            });
+            write_json(&dir.join("rehearsal.json"), &record)?;
+            if let Some(path) = receipt_path {
+                write_json(path, &record)?;
+            }
+        }
         Output::Development { out } => {
             ensure!(
                 staged.manifest.scope == Scope::Development,
@@ -433,6 +502,10 @@ pub fn seal(
     receipt_path: Option<&Path>,
 ) -> Result<()> {
     let started = Instant::now();
+    ensure!(
+        !stage_dir.join("rehearsal.json").exists(),
+        "rehearsal output cannot be sealed; resolve the profile blockers and pack a release stage"
+    );
     let code_bytes = std::fs::read(code).with_context(|| format!("read {}", code.display()))?;
     let read = |name: &str| -> Result<Vec<u8>> {
         let path = stage_dir.join(name);
