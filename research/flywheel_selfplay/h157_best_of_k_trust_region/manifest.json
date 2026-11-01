@@ -1,0 +1,56 @@
+{
+  "arms": {
+    "BOK8": {
+      "candidates_per_seed": 8,
+      "recipe": "H142 TR_LR",
+      "updates_per_candidate": 40
+    },
+    "R882": {
+      "updates": 0
+    },
+    "TR1": {
+      "candidates_per_seed": 1,
+      "recipe": "H142 TR_LR",
+      "updates_per_candidate": 40
+    }
+  },
+  "assets": {
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "/home/ubuntu/JopeDimeMicro/assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+    "/home/ubuntu/JopeDimeMicro/assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
+    "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d"
+  },
+  "checkpoint": "/home/ubuntu/jope-data/h148/inputs/round-882.pt",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "fold_manifest_sha256": "6953ff44a1b8368a6254f8c31aa58305cda193c6adb253f3a4fbc5b0e6c15cf9",
+  "fold_seed": 157140,
+  "inner_bootstrap_draws": 2000,
+  "inner_bootstrap_seed": 157141,
+  "inputs": {
+    "/home/ubuntu/jope-data/h148/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/jope-data/h148/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "research/flywheel_selfplay/h150_w5_provenance_unblock/sealed_family_manifest.json": "0314599fe06515d3f3e976c0d435cbe4e9fbe26738014bd89470f525702f983b"
+  },
+  "planned_optimizer_updates": 1080,
+  "primary_bootstrap_draws": 10000,
+  "primary_bootstrap_seed": 157142,
+  "reference": "/home/ubuntu/jope-data/h148/inputs/best_dev_checkpoint.json",
+  "seeds": [
+    157101,
+    157102,
+    157103
+  ],
+  "source_sha256": {
+    "PREREG.md": "ec40d90ec9448f2c5088df5b3eebed03515e74be9872db2a12059772cc06b5a8",
+    "fold_manifest.json": "6953ff44a1b8368a6254f8c31aa58305cda193c6adb253f3a4fbc5b0e6c15cf9",
+    "test_h157.py": "273f958774cffc4337e401d0cda78e1a45ea1acf368b4dd552c7dee283e337a3"
+  },
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "trainable_parameters": 29211,
+  "wave": "H157"
+}
