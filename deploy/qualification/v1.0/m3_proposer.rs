@@ -67,6 +67,12 @@ fn hash(raw: &[u8]) -> String {
         .map(|b| format!("{b:02x}"))
         .collect()
 }
+fn r0_clock(seed: u64, round: u64, context: u64, cycle: u64) -> Option<(u64, u64)> {
+    let offset = round.checked_mul(104729)?;
+    let seed = seed.checked_sub(offset)?.checked_add(context)?;
+    let round = round.checked_add(cycle.checked_mul(16)?)?;
+    Some((seed, round))
+}
 fn main() -> Result<()> {
     let mode = std::env::args().nth(3);
     ensure!(
@@ -185,12 +191,13 @@ fn main() -> Result<()> {
         // Round::seed is the base, not the already round-mixed Python seed.
         // The legacy default remains reproducible; paired diagnostics use the R0 clock.
         let (seed, round) = if paired_clock {
-            (
-                source["source_round_seed"].as_u64().unwrap()
-                    - source["source_round"].as_u64().unwrap() * 104729
-                    + source["context_index"].as_u64().unwrap(),
-                source["source_round"].as_u64().unwrap() + 16 * (calls / requests.len()) as u64,
+            r0_clock(
+                source["source_round_seed"].as_u64().unwrap(),
+                source["source_round"].as_u64().unwrap(),
+                source["context_index"].as_u64().unwrap(),
+                (calls / requests.len()) as u64,
             )
+            .ok_or_else(|| anyhow::anyhow!("invalid R0 source clock arithmetic"))?
         } else {
             (
                 source["source_round_seed"].as_u64().unwrap()
@@ -239,4 +246,43 @@ fn main() -> Result<()> {
     )?;
     println!("{}", report);
     Ok(())
+}
+
+#[cfg(test)]
+mod clock_tests {
+    use super::r0_clock;
+
+    #[test]
+    fn registered_clock_examples_are_unchanged() {
+        assert_eq!(r0_clock(73, 0, 0, 0), Some((73, 0)));
+        assert_eq!(r0_clock(104802, 1, 7, 3), Some((80, 49)));
+        assert_eq!(r0_clock(1571008, 15, 5, 11), Some((78, 191)));
+    }
+
+    #[test]
+    fn source_seed_underflow_is_refused() {
+        assert_eq!(r0_clock(0, 1, 0, 0), None);
+    }
+
+    #[test]
+    fn source_round_multiplier_overflow_is_refused() {
+        assert_eq!(r0_clock(u64::MAX, u64::MAX, 0, 0), None);
+    }
+
+    #[test]
+    fn context_addition_overflow_is_refused() {
+        assert_eq!(r0_clock(u64::MAX, 0, 1, 0), None);
+        assert_eq!(r0_clock(u64::MAX, 0, 0, 0), Some((u64::MAX, 0)));
+    }
+
+    #[test]
+    fn cycle_multiplier_overflow_is_refused() {
+        assert_eq!(r0_clock(0, 0, 0, u64::MAX), None);
+    }
+
+    #[test]
+    fn round_addition_refuses_overflow_and_preserves_exact_boundary() {
+        assert_eq!(r0_clock(1675664, 16, 0, u64::MAX / 16), None);
+        assert_eq!(r0_clock(1570935, 15, 0, u64::MAX / 16), Some((0, u64::MAX)));
+    }
 }
