@@ -19,16 +19,17 @@ We first specify the writer and map, then the admission record.
 \Cref{fig:network} connects the architecture to the contract in
 \cref{box:searchone}: a frozen encoder reads the board and $\writer$ writes
 a complete program, as AlphaGo's policy proposed a move
-\citep{silver2016mastering}. The problem--program map $\mapv$ supplies the
-seed ranking during training, without conditioning or screening the writer.
+\citep{silver2016mastering}. In one reference search route, the separate
+map $\mapv$ weights seeded-survivor parents (\cref{sub:method-map}),
+without conditioning or screening the writer.
 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/fig5_network.pdf}
-  \caption{\textbf{A writer and a separate ranking map learn from scored programs.} Historical reference schematic. Top:
-  game day, the whole of \searchone{}. Dashed box: training only. Search seeded with the writer's
-  drafts proposes more programs, the referee scores them against the incumbent, and the scored
-  lists retrain the writer ($\theta$) and the map ($\psi$). Stillborn programs enter no list.}
+  \caption{\textbf{Reference training design for the writer and separate ranking map.}
+  Top: game day, the whole of \searchone{}. Dashed box: proposed training.
+  Search extends the writer's drafts; referee-scored lists supply objectives
+  for the writer ($\theta$) and map ($\psi$). Stillborn programs enter no list.}
   \label{fig:network}
 \end{figure*}
 

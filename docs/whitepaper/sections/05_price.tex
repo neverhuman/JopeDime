@@ -34,7 +34,8 @@ attempt beats the incumbent.
 It factors as $\winprob = q_{\text{run}}\,q_{\text{beat}}$,
 the share of moves that run times the share of those that win. Valid losses
 still cost money, so divide by $\winprob$, not by the survival
-rate.
+rate. The factorization separates validity from winning among valid
+programs; it attributes neither factor to learning (\cref{sub:results-ablation}).
 
 Generating a token costs about 2~FLOPs per active parameter, and
 training on one about~6 \citep{kaplan2020scaling}. Cost projections require reproducible inputs and calculations (\cref{sub:price-run}).
