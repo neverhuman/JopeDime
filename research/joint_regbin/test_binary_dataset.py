@@ -13,9 +13,11 @@ import io
 import json
 import os
 import shutil
+import tempfile
 import unittest
 import zipfile
 from pathlib import Path, PurePosixPath
+from unittest.mock import patch
 
 from research.joint_regbin.admission import (
     build_binary_train_admission,
@@ -26,6 +28,9 @@ from research.joint_regbin.admission import (
 DEFAULT_PACKET = Path.home() / "jope-data/jrb-01/panel-v1-binary-train"
 PACKET = Path(os.environ.get("JOPE_JRB01_BINARY_PACKET", DEFAULT_PACKET))
 CATALOG_SHA256 = "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba"
+PANEL_MANIFEST_SHA256 = (
+    "5ebe5b429314a536a3aa9e9cb7783a9b97409835031e7d4fafc4e05a6cd02531"
+)
 
 # Catalog v246's explicit sealed-name-match exclusion IDs. This is the
 # published catalog exclusion list, not a claim to possess the authoritative
@@ -284,6 +289,10 @@ class BinaryTrainCandidatePacketTests(unittest.TestCase):
         )
 
         self.assertEqual(admission, verified)
+        self.assertEqual(
+            admission["candidate_manifest_sha256"], CANDIDATE_MANIFEST_SHA256
+        )
+        self.assertEqual(admission["panel_manifest_sha256"], PANEL_MANIFEST_SHA256)
         self.assertEqual(admission["admission_status"], "ADMITTED_BINARY_TRAIN_SUBSET")
         self.assertTrue(admission["binary_train_admitted"])
         self.assertFalse(admission["full_binary_pool_admitted"])
@@ -305,6 +314,69 @@ class BinaryTrainCandidatePacketTests(unittest.TestCase):
                 for row in admission["records"]
             )
         )
+
+    def test_admission_rejects_candidate_manifest_drift(self) -> None:
+        catalog = Path.home() / "jope_plan/master/source/S3_DATASET_CATALOG.json"
+        owner_alias = (
+            Path.home()
+            / "jope_plan/evidence/JRB-01/obj02-t2240/RAW-CATALOG-ALIAS-EXPANSION.json"
+        )
+        panel = Path.home() / "jope-data/jrb-01/panel-v1-binary-train/manifest.json"
+        if not all(path.is_file() for path in (catalog, owner_alias, panel)):
+            self.skipTest("pinned JRB admission evidence is unavailable")
+
+        with self._temporary_test_directory() as temp_dir:
+            altered_packet = Path(temp_dir) / "candidate"
+            altered_packet.mkdir()
+            for filename in ("manifest.json", "binary-family-review.json"):
+                shutil.copyfile(self.packet / filename, altered_packet / filename)
+            altered_manifest_path = altered_packet / "manifest.json"
+            altered_manifest = json.loads(altered_manifest_path.read_text())
+            altered_manifest["eligibility_verified"] = True
+            altered_manifest_path.write_text(json.dumps(altered_manifest))
+
+            with self.assertRaisesRegex(ValueError, "pinned v246 TRAIN pool"):
+                build_binary_train_admission(
+                    altered_packet, catalog, owner_alias, panel
+                )
+
+    def test_admission_rejects_panel_catalog_and_role_drift(self) -> None:
+        catalog = Path.home() / "jope_plan/master/source/S3_DATASET_CATALOG.json"
+        owner_alias = (
+            Path.home()
+            / "jope_plan/evidence/JRB-01/obj02-t2240/RAW-CATALOG-ALIAS-EXPANSION.json"
+        )
+        panel = Path.home() / "jope-data/jrb-01/panel-v1-binary-train/manifest.json"
+        if not all(path.is_file() for path in (catalog, owner_alias, panel)):
+            self.skipTest("pinned JRB admission evidence is unavailable")
+
+        original = json.loads(panel.read_text())
+        for drift in ("catalog", "role"):
+            with (
+                self.subTest(drift=drift),
+                self._temporary_test_directory() as temp_dir,
+            ):
+                altered = json.loads(json.dumps(original))
+                if drift == "catalog":
+                    altered["catalog_sha256"] = "0" * 64
+                else:
+                    altered["contexts"][0]["role"] = "train"
+                altered_path = Path(temp_dir) / "panel.json"
+                altered_path.write_text(json.dumps(altered))
+                altered_sha = sha256_file(altered_path)
+                with patch(
+                    "research.joint_regbin.admission.BINARY_PANEL_MANIFEST_SHA256",
+                    altered_sha,
+                ):
+                    with self.assertRaisesRegex(ValueError, "pinned train-only panel"):
+                        build_binary_train_admission(
+                            self.packet, catalog, owner_alias, altered_path
+                        )
+
+    def _temporary_test_directory(self) -> tempfile.TemporaryDirectory:
+        test_root = Path(__file__).resolve().parents[2] / "target"
+        test_root.mkdir(parents=True, exist_ok=True)
+        return tempfile.TemporaryDirectory(dir=test_root)
 
     def test_admission_payload_path_rejects_protected_and_escaping_paths(self) -> None:
         from research.joint_regbin.admission import _packet_file
