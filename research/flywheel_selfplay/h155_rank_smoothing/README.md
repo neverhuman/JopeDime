@@ -1,42 +1,63 @@
-# H155 — pairwise rank smoothing and margin calibration
+# H155 — pairwise smoothing and TRAIN-fold margin calibration
 
-Prospective executor for [PREREG.md](PREREG.md), merged in PR #1309.
-No H155 scoring, calibration or adapter update has run at executor publication.
+**Verdict: NO_ADVANCE.** Exploratory conditional continuation; no serving or sealed-test qualification.
 
-[runner.py](runner.py) uses immutable, SHA-bound H153 primitives from Git commit
-ea6347d5cc642cd0d7ae847c4e95f309471a5e72; no foreign working files are imported.
-[manifest.json](manifest.json) binds inputs, source assets, parent sources and
-the executor. [fold_manifest.json](fold_manifest.json) fixes disjoint TRAIN
-family fit/calibration/inner-evaluation sets.
+Native r882 baseline: **91/91 exact**, context mean **1.1377941898164525**; full H145 TRAIN context mean **1.423073434552** (1219 contexts/205 families).
 
-Validation: nine CPU tests cover pairwise direction, effective smoothing,
-ties, temperature fitting/argmin invariance, family isolation/equal weighting,
-refusal to call a worse-than-r882 result promising, and reserved-block disk guards. Both runner and supervisor use the shared user-visible used/(used+bavail) accounting; 95% is a hard stop, with equality tests for 95% and40GB. Ruff check/format pass.
-Zero-evaluation smoke verifies 47 trainable tensors/29,211 adapter parameters
-and frozen DOPE c51a56d0, with zero CUDA initialization and no optimizer updates.
-The exact native91-context baseline is still a runtime prerequisite.
+Five fixed arms, seeds155101–155103, 40 AdamW adapter updates/cell: **15/15 cells,600 adapter updates**. Two TRAIN-only scalar temperature fits:200 updates each. Frozen DOPE **c51a56d0** and all non-adapter state unchanged;29211 trainable adapter parameters/47 tensors. CPU only, no speed gate.
 
-Real-S3 custody: all1319 numerical inputs/pools/model assets match immutable H144 archive
-members; runtime source code is separately hash-pinned (H144 excluded code); the archived source manifest was independently fetched at its pinned
-S3 version and SHA checked. All276 dataset IDs join the authoritative real-S3
-catalog; no TRAIN/Val family overlap, no sealed/holdout/meta-test input payload.
-Original H50/H58 derivative S3 object versions remain unestablished; exact
-used numeric closure has versioned H144 archive custody. No synthetic training.
+## 91-context exposed development panel and full TRAIN panel
 
-Operational source export (not another checkout):
-/home/ubuntu/jope_plan/evidence/H155. Owned data and output:
-/home/ubuntu/jope-data/h155. CPU only, nice19, math threads1, at most4 OS
-threads. Before scoring, launch.json must attest exact merged executor bytes
-and manifest hash. A failed/partial attempt is preserved, never silently reused.
-Model scoring and adapter/calibration updates occur only after executor merge
-and source/provenance review. No speed gate or serving authorization.
+Elo is equal-family win/tie/loss versus r882=1500, with Jeffreys0.5 correction. Values below are medians across3 seeds. Full TRAIN scores are exposed/descriptive.
 
-Acceptance:
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 CUDA_VISIBLE_DEVICES=
-python3 -m pytest test_h155.py -q -p no:cacheprovider
-ruff check runner.py test_h155.py
-ruff format --check runner.py test_h155.py
+| Arm | 91ctx mean utility | 91ctx Elo | 91ctx family gain vs r882 [95% CI] | 1219ctx mean utility | 1219ctx Elo |
+|---|---:|---:|---|---:|---:|
+| CTRL | 1.092180013 | 1352.809 | -0.043585036 [-0.110879015,-0.003267062] | 1.388444936 | 1445.589 |
+| LS05 | 1.092180013 | 1352.809 | -0.043585036 [-0.110879015,-0.003267062] | 1.388290417 | 1443.859 |
+| LS10 | 1.092180013 | 1352.809 | -0.043585036 [-0.110879015,-0.003267062] | 1.388009294 | 1443.859 |
+| LS05_TEMP | 1.090052518 | 1352.809 | -0.045622951 [-0.112191456,-0.003267062] | 1.388762360 | 1443.859 |
+| LS10_TEMP | 1.090052518 | 1352.809 | -0.045622951 [-0.112191456,-0.003267062] | 1.388762360 | 1443.859 |
 
-Full native just required / hosted CI was not run in another owner's checkout.
-The central merger owns any generated inventory registration and exact-head
-integration checks; no product/runtime code changes are included.
+## Prespecified inner TRAIN evaluation
+
+241 contexts/41 families; calibration247/41; adapter fit731/123. These family sets are disjoint, but r882 previously trained on all1219 contexts. This is not an untouched out-of-family generalization estimate.
+
+| Arm | Elo vs r882 | Family gain vs r882 [95% CI] | Family gain vs CTRL [95% CI] | Holm p vs CTRL | Promising |
+|---|---:|---|---|---:|---|
+| CTRL | 1516.557 | +0.018998273 [-0.007872378,+0.050001719] | +0.000000000 [+0.000000000,+0.000000000] | n/a | control |
+| LS05 | 1516.557 | +0.018998273 [-0.007872378,+0.050001719] | +0.000000000 [+0.000000000,+0.000000000] | 1 | False |
+| LS10 | 1516.557 | +0.018998273 [-0.007872378,+0.050001719] | +0.000000000 [+0.000000000,+0.000000000] | 1 | False |
+| LS05_TEMP | 1508.274 | +0.018619575 [-0.007793572,+0.049903717] | -0.000035296 [-0.000105889,+0.000002266] | 1 | False |
+| LS10_TEMP | 1508.274 | +0.018619575 [-0.007793572,+0.049903717] | -0.000035296 [-0.000105889,+0.000002266] | 1 | False |
+
+## Per-seed comparison
+
+| Arm | Seed | 91ctx utility | 91ctx Elo | TRAIN utility | TRAIN Elo |
+|---|---:|---:|---:|---:|---:|
+| CTRL | 155101 | 1.089149590 | 1352.809 | 1.388753724 | 1445.589 |
+| CTRL | 155102 | 1.112406144 | 1352.809 | 1.386740729 | 1436.912 |
+| CTRL | 155103 | 1.092180013 | 1411.261 | 1.388444936 | 1445.589 |
+| LS05 | 155101 | 1.089149590 | 1352.809 | 1.388700789 | 1445.589 |
+| LS05 | 155102 | 1.112406144 | 1352.809 | 1.386740729 | 1436.912 |
+| LS05 | 155103 | 1.092180013 | 1411.261 | 1.388290417 | 1443.859 |
+| LS10 | 155101 | 1.089149590 | 1352.809 | 1.388714590 | 1445.589 |
+| LS10 | 155102 | 1.112406144 | 1352.809 | 1.386789492 | 1436.912 |
+| LS10 | 155103 | 1.092180013 | 1411.261 | 1.388009294 | 1443.859 |
+| LS05_TEMP | 155101 | 1.089149590 | 1352.809 | 1.391061618 | 1443.859 |
+| LS05_TEMP | 155102 | 1.112320667 | 1352.809 | 1.388762360 | 1436.912 |
+| LS05_TEMP | 155103 | 1.090052518 | 1392.462 | 1.388383682 | 1447.316 |
+| LS10_TEMP | 155101 | 1.089149590 | 1352.809 | 1.391061618 | 1443.859 |
+| LS10_TEMP | 155102 | 1.112320667 | 1352.809 | 1.388762360 | 1436.912 |
+| LS10_TEMP | 155103 | 1.090052518 | 1392.462 | 1.388383682 | 1447.316 |
+
+## Calibration, provenance and verification
+
+Learned temperatures: eps0.05:T=20.000000000, eps0.1:T=20.000000000. A positive scalar temperature cannot change an inference argmin; the treatment changes training gradients.
+
+All276 dataset IDs independently join versioned S3 catalog v246 with origin=real;0 synthetic training datasets. All1319 numerical inputs/pools/model assets rehashed against the immutable H144 archive manifest.12 runtime source files excluded by that historical archive are separately pinned. Original H50/H58 derivative object versions remain unestablished; the exact numerical closure is preserved by the pinned H144 S3 archive.
+
+Independent audit PASS:19650 utility recounts from actual pool labels/choices,30 family/Elo/bootstrap contrasts,15 adapter hash/inventory checks,30 native argmin model spot replays. Protected reads0, CUDA initialization0, input/checkpoint hashes unchanged. All fixed cells retained; no adaptive selection, retries or foreign outcome reuse.
+
+Preregistration #1309; executor #1310; reserved-block disk-guard repair #1313. The red-team guard defect was repaired and independently cleared before any scoring/calibration/adapter update. Nine CPU tests, Ruff check/format and corrected-source zero-evaluation smoke passed. Exact merged executor: dc1faae7bc16f7c60287eb50a79aeca7e7c7c6ea.
+
+Source/input/fold manifest and complete native cell evidence are bound in the custody archive. See [PREREG.md](PREREG.md), [metrics.json](metrics.json), [independent-audit.json](independent-audit.json) and [S3_CUSTODY.json](S3_CUSTODY.json). No live flywheel/pinned checkpoint change or serving admission.
