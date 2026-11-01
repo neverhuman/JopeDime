@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "scope": "recovery verification, NOT a scientific gate PASS",
+  "wave": "H201",
+  "scientific_attempt_status": "INCOMPLETE",
+  "primary_gate": "FAIL_NATIVE_ARCHIVE_PARITY",
+  "verdict": "INCONCLUSIVE",
+  "archive": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H201/codex-t1356/4f0f35f65f1bc5df/H201-evidence.zip",
+    "version_id": "lO63G9i7srsHuGl3xuq8Q1Y0DfJK9uvz",
+    "sha256": "4f0f35f65f1bc5df1ff867a9ed49ed38508d989ddecb8071a05927261c28b63c",
+    "bytes": 101381405,
+    "actual_versioned_byte_readback": true
+  },
+  "manifest": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H201/codex-t1356/4f0f35f65f1bc5df/manifest.json",
+    "version_id": "72dN8g1jk0K3pTttSg.3aeKHsUkR4oGG",
+    "sha256": "243085bc96b5f72223c24d34a903e5f361b5a63656fcc4902b36b9f484153dc6",
+    "bytes": 46232,
+    "actual_versioned_byte_readback": true
+  },
+  "member_count": 230,
+  "all_members_actual_version_restored": true,
+  "restored_arrays": 1195,
+  "restored_NPZ_files": 97,
+  "restored_full_checkpoints": 3,
+  "DLVal_pools": 91,
+  "optimizer_updates": 0,
+  "inference_retries": 0
+}
