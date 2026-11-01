@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import argparse
 import subprocess
 import sys
 from pathlib import Path
@@ -225,7 +226,21 @@ def qualify(ctx: Context, run=None) -> int:
     return 0
 
 
-def main() -> int:
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--golden-dir")
+    parser.add_argument("--golden-index-sha256")
+    parser.add_argument("--parity-bundle-dir")
+    parser.add_argument("--parity-report-dir")
+    args = parser.parse_args(argv)
+    for option, variable in (
+        (args.golden_dir, "JOPE_GOLDEN_DIR"),
+        (args.golden_index_sha256, "JOPE_GOLDEN_INDEX_SHA256"),
+        (args.parity_bundle_dir, "JOPE_PARITY_BUNDLE_DIR"),
+        (args.parity_report_dir, "JOPE_PARITY_REPORT_DIR"),
+    ):
+        if option is not None:
+            os.environ[variable] = option
     try:
         return qualify(context("M2"))
     except (OSError, subprocess.TimeoutExpired, ProviderError) as error:

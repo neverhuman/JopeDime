@@ -170,6 +170,39 @@ class M2Tests(unittest.TestCase):
                 self.invoke()
         self.assertFalse(any(args[:1] == ["cargo"] for args, _ in self.calls))
 
+    def test_manifest_arguments_bind_parity_inputs_for_current_child(self):
+        values = [
+            "--golden-dir",
+            "/approved/golden",
+            "--golden-index-sha256",
+            m2.INDEX_SHA256,
+            "--parity-bundle-dir",
+            "/approved/bundle",
+            "--parity-report-dir",
+            "/new/report",
+        ]
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch.object(m2, "context", return_value=self.ctx),
+            patch.object(m2, "qualify", return_value=0) as qualify,
+        ):
+            self.assertEqual(m2.main(values), 0)
+            self.assertEqual(
+                [
+                    os.environ["JOPE_GOLDEN_DIR"],
+                    os.environ["JOPE_GOLDEN_INDEX_SHA256"],
+                    os.environ["JOPE_PARITY_BUNDLE_DIR"],
+                    os.environ["JOPE_PARITY_REPORT_DIR"],
+                ],
+                [
+                    "/approved/golden",
+                    m2.INDEX_SHA256,
+                    "/approved/bundle",
+                    "/new/report",
+                ],
+            )
+            qualify.assert_called_once_with(self.ctx)
+
     def test_missing_stage_bad_coverage_or_admission_mismatch_refuse(self):
         for change in (
             lambda report: report["stages"].pop("tokens"),
