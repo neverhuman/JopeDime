@@ -13,7 +13,7 @@ State: preregistered before candidate training. This is a single CPU research ca
 - Supporting training helpers are read from immutable source commit `3b4f...`: `automatic_promotion.py` SHA-256 `37e50568fd097944cf7125de340a19da3dbf27f7be80f47e28fb93b6cc24d16d` and `device_pool_cache.py` SHA-256 `cdcb1d672a643716ffba3f2c20aa75d5ae0b19766db616ccd6f6ad65a9adbd76`.
 - Landmark preprocessing inputs are pinned before execution: `JopeDimeMicro/python/hpc/landmark_workspace.py` SHA-256 `834b3a13db9a257f2b8f3cb892cbdd5571092a41b0e5257826b7d9d3cf61f91a`, `python/research/levels/building_block_landmarks.py` SHA-256 `fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186`, `python/research/levels/descriptors.py` SHA-256 `18cfefdddca262616dadd4841119abfd2b073f9e2ee28fb58c31cad09dd1b928`, and `bin/libjope_hpc.so` SHA-256 `f37f3f4d8ed9954a8ceb23baca08f8b08a79234ad3afd7f90638d68242484901`.
 
-The full-run sidecar states that a per-round run manifest for round 882 is absent; the exact training commit basis is the `OPERATIONS.md` record above. No missing run manifest is fabricated.
+The full-run sidecar states that a per-round run manifest for round 882 is absent; the exact training commit basis is the `OPERATIONS.md` record above. No missing run manifest is fabricated. The candidate execution evidence binds the complete receipt `source_pins` map and its canonical SHA-256, including the model, preprocessing, evaluator, and staged fused-source identities.
 
 ## Fixed cohort and treatment
 
@@ -56,6 +56,8 @@ nice -n 19 python3 research/flywheel_selfplay/rnk10_m5_causal/evaluate_candidate
 ```
 
 `dev_roster.json` contains only pinned row identities and payload hashes. `stage_dev_packet.py` verifies the complete source roster and copies only the 91 DL-Val pools and their train-only tables; it excludes the 93 holdout and outer payloads. Candidate execution provenance is supplemented by `candidate-execution-evidence.json`, which binds the implementation head/files, exact packet hashes, both attempt update counts, the serialization-only recovery, and the timestamp limits of the retained evidence.
+
+The dev-Elo runner reports the existing family-grouped Bradley-Terry point estimate and a descriptive 95% whole-family bootstrap interval for candidate Elo relative to the fixed R882 anchor (1500). It resamples the 19 pinned families with replacement, averages context win/tie/loss outcomes within each sampled family, uses 10,000 draws and fixed seed `20261101`, and records ordered-family and sampled-index hashes. The interval is descriptive and adds no decision threshold; dev-fold point Elo above R882 remains the sole lift criterion.
 
 ## Operational recovery note (before persisted candidate rerun)
 

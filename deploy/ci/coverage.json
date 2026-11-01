@@ -14607,7 +14607,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "Synthetic offline regression tests for trainer objective, export alias safety, and fail-closed authenticated DL-Train roster boundary; changed ID, split/role, and payload pin are rejected before pool/table reads. No dataset payload or qualification outcome access."
+      "scope": "Synthetic offline controls for trainer objective, authenticated DL-Train roster boundary, pinned batched M5 fixture shapes and full 50-context candidate-loop consumption, fitness-axis reversal, and deterministic descriptive 19-family dev-Elo bootstrap. No candidate/model/data outcome evaluation or qualification claim."
     },
     "target:jope-appliance/test/resize_input_readiness": {
       "discovery": {

@@ -29,6 +29,8 @@ MICRO = Path("/home/ubuntu/JopeDimeMicro")
 DOPE_SHA256 = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
 CPU_FUSED_SHA256 = "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab"
 GOLDEN_INDEX_SHA256 = "27905f29703431bedacac90eed1bd54257fd0c59bdf24b56605d0b9416ae1393"
+DEV_ELO_BOOTSTRAP_DRAWS = 10_000
+DEV_ELO_BOOTSTRAP_SEED = 20261101
 TRAIN_PACKET_SHA256 = "a2fc16d2a8112dd6966bcfc34a923a29cf727a3a91d497a74f56b300e6cc0bbd"
 SOURCE_MANIFEST_FILE_SHA256 = (
     "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
@@ -58,6 +60,140 @@ def serving_selection(costs: np.ndarray) -> np.ndarray:
     if values.shape != (12,) or not np.isfinite(values).all():
         raise ValueError("M5 serving selection requires twelve finite slate costs")
     return np.argsort(values[4:], kind="stable")[:4]
+
+
+def fixture_width(prog_412) -> int:
+    """Read N from the pinned fixture shape [1, N, 412]."""
+    shape = tuple(np.shape(prog_412))
+    if len(shape) != 3 or shape[0] != 1 or shape[2] != 412 or shape[1] not in (12, 20):
+        raise ValueError(f"unexpected pinned prog_412 fixture shape: {shape}")
+    return shape[1]
+
+
+def fixture_payload(fields, token, *, reverse_fitness=False):
+    """Build the adapter payload while preserving the fixture's batch axis."""
+    width = fixture_width(fields["prog_412"])
+    expected = {
+        "ctx_feat": (1, 584),
+        "prog_412": (1, width, 412),
+        "proj_16": (1, width, 16),
+        "base_prior_cost": (1, width),
+        "scale": (1,),
+        "sos_prior": (1, width, 2),
+        "mm_tokens_10x32": (1, 10, 32),
+        "mm_mask_10": (1, 10),
+        "revealed_indices": (1, 4),
+        "revealed_raw_f": (1, 4),
+        "revealed_gate": (1, 4),
+    }
+    payload = {}
+    for key, shape in expected.items():
+        value = token if key == "mm_tokens_10x32" else fields[key]
+        tensor = torch.as_tensor(value)
+        if key in {"prog_412", "revealed_raw_f"} and tuple(tensor.shape) != shape:
+            raise ValueError(
+                f"unexpected pinned {key} fixture shape: {tuple(tensor.shape)}; expected {shape}"
+            )
+        try:
+            payload[key] = tensor.reshape(shape)
+        except RuntimeError as error:
+            raise ValueError(
+                f"unexpected pinned {key} fixture shape: {tuple(tensor.shape)}; expected {shape}"
+            ) from error
+    if reverse_fitness:
+        payload["revealed_raw_f"] = payload["revealed_raw_f"][:, [3, 2, 1, 0]]
+    return payload
+
+
+def predict_fixture_costs(net, fields, token, *, reverse_fitness=False):
+    payload = fixture_payload(fields, token, reverse_fitness=reverse_fitness)
+    with torch.no_grad():
+        costs = net.adapter_10tok.predict_costs(**payload)["total_cost"]
+    return costs.detach().cpu().numpy().reshape(-1)
+
+
+def family_bootstrap_elo_interval(
+    records, *, draws=DEV_ELO_BOOTSTRAP_DRAWS, seed=DEV_ELO_BOOTSTRAP_SEED
+):
+    """Descriptive paired whole-family interval for candidate Elo vs the 1500 R882 anchor."""
+    if type(draws) is not int or draws != DEV_ELO_BOOTSTRAP_DRAWS:
+        raise ValueError(
+            f"dev Elo interval requires exactly {DEV_ELO_BOOTSTRAP_DRAWS} draws"
+        )
+    if type(seed) is not int or seed != DEV_ELO_BOOTSTRAP_SEED:
+        raise ValueError(
+            f"dev Elo interval requires fixed seed {DEV_ELO_BOOTSTRAP_SEED}"
+        )
+    family_rows = {}
+    for row in records:
+        if not {"candidate", "r882"}.issubset(row.scores_by_contender):
+            raise ValueError(
+                "dev Elo bootstrap requires a complete candidate/R882 panel"
+            )
+        candidate = float(row.scores_by_contender["candidate"])
+        incumbent = float(row.scores_by_contender["r882"])
+        if not np.isfinite([candidate, incumbent]).all():
+            raise ValueError("dev Elo bootstrap refuses nonfinite scores")
+        win = (
+            1.0
+            if candidate > incumbent + 1e-4
+            else 0.0
+            if candidate < incumbent - 1e-4
+            else 0.5
+        )
+        family_rows.setdefault(row.family_id, []).append(win)
+    families = sorted(family_rows)
+    if len(families) != 19:
+        raise ValueError(
+            f"dev Elo bootstrap requires all 19 pinned families; found {len(families)}"
+        )
+    family_win_rates = np.asarray(
+        [np.mean(family_rows[family]) for family in families], dtype=np.float64
+    )
+    rng = np.random.default_rng(seed)
+    indices = rng.integers(
+        0, len(families), size=(draws, len(families)), dtype=np.int32
+    )
+    wins = family_win_rates[indices].sum(axis=1)
+    losses = len(families) - wins
+    strength = np.clip(wins / np.maximum(losses, 1e-12), 1e-6, 1e6)
+    ratings = 1500.0 + 400.0 * np.log10(strength)
+    index_bytes = indices.astype("<i4", copy=False).tobytes()
+    family_bytes = json.dumps(families, separators=(",", ":")).encode()
+    interval = np.quantile(ratings, [0.025, 0.975], method="linear").tolist()
+    return {
+        "status": "COMPLETE_DESCRIPTIVE_FAMILY_BOOTSTRAP",
+        "algorithm": "two-contender stationary Bradley-Terry Elo; family-weighted mean win/tie/loss; fixed R882 anchor Elo 1500",
+        "unit": "whole DL-Val family, sampled with replacement; contexts averaged within family",
+        "draws": draws,
+        "seed": seed,
+        "tie_margin": 1e-4,
+        "family_count": len(families),
+        "family_order_sha256": hashlib.sha256(family_bytes).hexdigest(),
+        "sampled_indices_sha256": hashlib.sha256(index_bytes).hexdigest(),
+        "quantiles": [0.025, 0.975],
+        "quantile_method": "linear",
+        "interval95_candidate_elo": interval,
+        "interval95_elo_lift_vs_r882": [interval[0] - 1500.0, interval[1] - 1500.0],
+        "interval_is_descriptive_only": True,
+    }
+
+
+def candidate_source_pins_match(receipt, evidence) -> bool:
+    source_pins = receipt.get("source_pins")
+    if not isinstance(source_pins, dict) or not source_pins:
+        return False
+    canonical = json.dumps(source_pins, sort_keys=True, separators=(",", ":")).encode()
+    fused_source_matches = any(
+        path.endswith("/cpu_exact_fused.py") and value == CPU_FUSED_SHA256
+        for path, value in source_pins.items()
+    )
+    return (
+        evidence.get("source_pins") == source_pins
+        and evidence.get("source_pins_sha256") == hashlib.sha256(canonical).hexdigest()
+        and evidence.get("cpu_fused_source_sha256") == CPU_FUSED_SHA256
+        and fused_source_matches
+    )
 
 
 def authenticate_candidate_inputs(args) -> None:
@@ -286,6 +422,7 @@ def dev_elo(args):
     ratings = compute_family_grouped_bradley_terry_elo(
         records, anchor_contender="r882", anchor_elo=1500.0
     )
+    elo_interval = family_bootstrap_elo_interval(records)
     result = {
         "schema": "jope.rnk10-candidate-dev-elo/v1",
         "scope": "reused DL-Val development cohort; not independent generalization evidence",
@@ -306,6 +443,7 @@ def dev_elo(args):
             "signed_r882_assets_sha256": SIGNED_R882_HASHES,
         },
         "ratings": ratings,
+        "elo_interval": elo_interval,
         "candidate_elo_lift": ratings["ratings"]["candidate"]
         > ratings["ratings"]["r882"],
         "qualification": "NOT_CLAIMED",
@@ -366,38 +504,19 @@ def m5(args):
             raise RuntimeError(f"M5 slate fixture hash mismatch: {name}")
         data = load_numpy(str(path))
         fields = {key.removeprefix("input."): value for key, value in data.items()}
-        width = len(fields["prog_412"]) // 412
+        width = fixture_width(fields["prog_412"])
+        expected_width = int(Path(name).stem.rsplit("-", 1)[1])
+        if width != expected_width:
+            raise RuntimeError(
+                f"M5 fixture suffix/shape width mismatch: {name} declares {expected_width}, has {width}"
+            )
         context_id = Path(name).stem.rsplit("-", 1)[0]
         contexts_seen.add(context_id)
 
         # Fixture fields are the exact serving tensor inputs; apply the same deterministic
         # four-lowest-cost admission rule while varying only landmark token slots.
         def predict(token):
-            payload = {
-                "ctx_feat": torch.as_tensor(fields["ctx_feat"]).reshape(1, 584),
-                "prog_412": torch.as_tensor(fields["prog_412"]).reshape(1, width, 412),
-                "proj_16": torch.as_tensor(fields["proj_16"]).reshape(1, width, 16),
-                "base_prior_cost": torch.as_tensor(fields["base_prior_cost"]).reshape(
-                    1, width
-                ),
-                "scale": torch.as_tensor(fields["scale"]).reshape(1),
-                "sos_prior": torch.as_tensor(fields["sos_prior"]).reshape(1, width, 2),
-                "mm_tokens_10x32": torch.as_tensor(token).reshape(1, 10, 32),
-                "mm_mask_10": torch.as_tensor(fields["mm_mask_10"]).reshape(1, 10),
-                "revealed_indices": torch.as_tensor(fields["revealed_indices"]).reshape(
-                    1, 4
-                ),
-                "revealed_raw_f": torch.as_tensor(fields["revealed_raw_f"]).reshape(
-                    1, 4
-                ),
-                "revealed_gate": torch.as_tensor(fields["revealed_gate"]).reshape(1, 4),
-            }
-            with torch.no_grad():
-                out = (
-                    net.adapter_10tok.predict_costs(**payload)["total_cost"]
-                    .numpy()
-                    .reshape(-1)
-                )
+            out = predict_fixture_costs(net, fields, token)
             return out, serving_selection(out) if width == 12 else None
 
         base_costs, base_choice = predict(fields["mm_tokens_10x32"])
@@ -418,33 +537,12 @@ def m5(args):
                     intervention_contexts[value].add(context_id)
                     landmark_changed_contexts.add(context_id)
 
-            fitness_args = {
-                "ctx_feat": torch.as_tensor(fields["ctx_feat"]).reshape(1, 584),
-                "prog_412": torch.as_tensor(fields["prog_412"]).reshape(1, width, 412),
-                "proj_16": torch.as_tensor(fields["proj_16"]).reshape(1, width, 16),
-                "base_prior_cost": torch.as_tensor(fields["base_prior_cost"]).reshape(
-                    1, width
-                ),
-                "scale": torch.as_tensor(fields["scale"]).reshape(1),
-                "sos_prior": torch.as_tensor(fields["sos_prior"]).reshape(1, width, 2),
-                "mm_tokens_10x32": torch.as_tensor(fields["mm_tokens_10x32"]).reshape(
-                    1, 10, 32
-                ),
-                "mm_mask_10": torch.as_tensor(fields["mm_mask_10"]).reshape(1, 10),
-                "revealed_indices": torch.as_tensor(fields["revealed_indices"]).reshape(
-                    1, 4
-                ),
-                "revealed_raw_f": torch.as_tensor(fields["revealed_raw_f"])[
-                    [3, 2, 1, 0]
-                ].reshape(1, 4),
-                "revealed_gate": torch.as_tensor(fields["revealed_gate"]).reshape(1, 4),
-            }
-            with torch.no_grad():
-                fitness_costs = (
-                    net.adapter_10tok.predict_costs(**fitness_args)["total_cost"]
-                    .numpy()
-                    .reshape(-1)
-                )
+            fitness_costs = predict_fixture_costs(
+                net,
+                fields,
+                fields["mm_tokens_10x32"],
+                reverse_fitness=True,
+            )
             fitness_control_cost_values += int(np.isfinite(fitness_costs).sum())
             invalid_cost_values += int((~np.isfinite(fitness_costs)).sum())
             if not np.array_equal(base_choice, serving_selection(fitness_costs)):
@@ -562,6 +660,7 @@ def main() -> int:
     if (
         evidence.get("candidate_weights_sha256") != digest(args.candidate)
         or evidence.get("selected_train_packet_sha256") != TRAIN_PACKET_SHA256
+        or not candidate_source_pins_match(receipt, evidence)
         or receipt.get("training_input_identity", {}).get(
             "selected_train_packet_sha256"
         )
