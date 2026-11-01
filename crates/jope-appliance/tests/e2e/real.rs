@@ -208,8 +208,11 @@ fn retain_execution(
     fs::create_dir_all(&root)?;
     fs::write(root.join(format!("{label}-stdout.json")), &output.stdout)?;
     fs::write(root.join(format!("{label}-stderr.txt")), &output.stderr)?;
-    let id = serde_json::from_slice::<RunSnapshot>(&output.stdout)
+    let id = serde_json::from_slice::<Value>(&output.stdout)
         .ok()
+        .and_then(|value| {
+            serde_json::from_value::<RunSnapshot>(value.get("run").unwrap_or(&value).clone()).ok()
+        })
         .map(|s| s.run_id)
         .or_else(|| {
             String::from_utf8_lossy(&output.stderr)
@@ -869,14 +872,14 @@ pub(super) fn batch_fallback() -> Result<()> {
         .arg("--out")
         .arg(&out)
         .output()?;
+    let engine = InProcessEngine::open_with_worker(home.path(), home.path().join("jopedime"))?;
+    retain_execution(&engine, &output, "batch")?;
     ensure!(
         out.join("src/python/predictor.py").is_file()
             && out.join("src/rust/predictor.rs").is_file(),
         "CSV batch did not export both requested languages"
     );
 
-    let engine = InProcessEngine::open_with_worker(home.path(), home.path().join("jopedime"))?;
-    retain_execution(&engine, &output, "batch")?;
     let completed = snapshot(output)?;
     ensure!(
         !home.path().join("daemon.json").exists(),
