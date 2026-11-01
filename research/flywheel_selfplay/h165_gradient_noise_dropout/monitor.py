@@ -1,6 +1,7 @@
 """Terminal host guard; the sole launcher for smoke and the one H165 attempt."""
 
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -28,6 +29,19 @@ def violations(sample):
         if bad:
             reasons.append(reason)
     return reasons
+
+
+def validate_resume_state(failure, trained_artifacts):
+    if (
+        failure.get("status") != "INCOMPLETE"
+        or failure.get("optimizer_updates") != 0
+        or failure.get("error")
+        != "AttributeError(\"'NoneType' object has no attribute 'detach'\")"
+        or trained_artifacts
+    ):
+        raise RuntimeError(
+            "A1 applies only to the recorded zero-update logging failure"
+        )
 
 
 def snapshot(process=None):
@@ -77,8 +91,37 @@ def main():
     initial = snapshot()
     if violations(initial):
         raise RuntimeError("prelaunch resource refusal: " + repr(violations(initial)))
+    deadline = time.time() + 12 * 3600
     if not args.smoke:
         marker = Path("/home/ubuntu/jope_plan/ns/receipts/H165_attempt.claim")
+        launch = json.loads(args.launch.read_text())
+        if launch.get("resume_A1"):
+            binding = json.loads((HERE / "resume_guard.json").read_text())
+            original = Path(binding["original_output"])
+            for path, digest in [
+                (original / "failure.json", binding["failure_sha256"]),
+                (
+                    original.with_suffix(".resource_summary.json"),
+                    binding["resource_summary_sha256"],
+                ),
+                (marker, binding["original_attempt_claim_sha256"]),
+            ]:
+                if hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+                    raise RuntimeError("A1 original-attempt identity mismatch")
+            failure = json.loads((original / "failure.json").read_text())
+            artifacts = list(original.glob("A*.npz")) + list(
+                original.glob("*-selection.json")
+            )
+            artifacts += [
+                p
+                for p in [original / "metrics.json", original / "progress.json"]
+                if p.exists()
+            ]
+            validate_resume_state(failure, bool(artifacts))
+            deadline = json.loads(marker.read_text())["utc"] + 12 * 3600
+            marker = marker.with_name("H165_resume_A1.claim")
+        if time.time() >= deadline:
+            raise RuntimeError("original 12h deadline exhausted")
         with marker.open("x") as f:
             json.dump(
                 dict(
@@ -86,6 +129,7 @@ def main():
                     launch=str(args.launch.resolve()),
                     output=str(args.output.resolve()),
                     utc=time.time(),
+                    deadline_utc=deadline,
                 ),
                 f,
             )
@@ -127,7 +171,7 @@ def main():
             samples.write(json.dumps(sample) + "\n")
             samples.flush()
             reasons = violations(sample)
-            if sample["elapsed"] > 12 * 3600:
+            if time.time() > deadline:
                 reasons.append("12h administrative cap")
             if reasons:
                 os.killpg(child.pid, signal.SIGTERM)

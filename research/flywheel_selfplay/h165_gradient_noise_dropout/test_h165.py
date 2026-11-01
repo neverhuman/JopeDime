@@ -5,8 +5,8 @@ import numpy as np
 import pytest
 import torch
 import analysis as stat
-from monitor import violations
-from treatment import InputDropout, add_noise, noise_std
+from monitor import validate_resume_state, violations
+from treatment import InputDropout, add_noise, gradient_norm, noise_std
 
 
 def rows(n=205):
@@ -130,3 +130,29 @@ def test_every_terminal_guard_and_reserved_disk_space():
         threads=5,
     ).items():
         assert violations(dict(good, **{key: value}))
+
+
+def test_gradient_norm_matches_clipping_with_inactive_parameters():
+    active = torch.nn.Parameter(torch.tensor([3.0, 4.0]))
+    inactive = torch.nn.Parameter(torch.ones(7))
+    active.grad = torch.tensor([3.0, 4.0])
+    assert gradient_norm([active, inactive]) == 5.0
+    assert inactive.grad is None
+    torch.nn.utils.clip_grad_norm_([active, inactive], 1.0, error_if_nonfinite=True)
+    assert gradient_norm([active, inactive]) == pytest.approx(1.0, abs=3e-7)
+    assert inactive.grad is None
+    assert gradient_norm([inactive]) == 0.0
+
+
+def test_A1_exception_rejects_nonzero_update_or_any_trained_artifact():
+    failure = dict(
+        status="INCOMPLETE",
+        optimizer_updates=0,
+        error="AttributeError(\"'NoneType' object has no attribute 'detach'\")",
+    )
+    validate_resume_state(failure, False)
+    for updates, artifact in [(1, False), (0, True)]:
+        with pytest.raises(RuntimeError):
+            validate_resume_state(dict(failure, optimizer_updates=updates), artifact)
+    with pytest.raises(RuntimeError):
+        validate_resume_state(dict(failure, error="other"), False)

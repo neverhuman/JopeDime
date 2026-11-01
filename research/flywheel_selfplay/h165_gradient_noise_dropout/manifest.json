@@ -65,12 +65,14 @@
   },
   "source_sha256": {
     "provenance.json": "54b9491d8c1c1f3aba6d22343397d9e255175e73ca116b8e73c3ac5797526103",
-    "test_h165.py": "dadd6f5ad57c7bda685686732013aae7ce4c553a2c440a935c255baba730d7b0",
+    "PREREG_AMENDMENT_A1.md": "f07a219145d6ae2a8fbdaae7bc24bf634f0660fe9e68f9aba7121653c7bd1cf0",
+    "test_h165.py": "4384f3d4927043fdfbbce22ab5d8f3277a6a346e1e7eb36128183efd12c821b2",
+    "resume_guard.json": "972307c17401aee679ff4434f7eb7807f0bd98c11154a81b1aa1d06ae5a33145",
     "analysis.py": "59352b84a3ef7f9764a6489ad3865e86925de6e2f3c80d23a5c2f9e5453ad1fd",
-    "treatment.py": "608534b1dff826617537d6e58c27fa656228948deaf027936fd35d72f8504790",
+    "treatment.py": "a532ca1b8a6eb8e0ebbb455a82662bf0a03088b768ada8e285e27222427e8e04",
     "PREREG.md": "48119af6a09cfdfd00700e3f614c2dabbb687cc791cb722c118cc0f8bb2c3901",
-    "monitor.py": "b66f7c97875414e1c413f21dbedaa92b7e11462e3503e10a8eab35e1dacd6025",
+    "monitor.py": "39c16a4cc75fda51ba370feb44013abd2fa3ca26894e4c87adfc28ff83947602",
     "fold_manifest.json": "4a3e45c090aa0968d8ce80393d8443ee01ca9f509ab59b5df34056804a44ac3c",
-    "runner.py": "2ab7cda65ac21cf0fc93537d678b342994be4a18e7e4c68b954978c146c2e09f"
+    "runner.py": "6430691737b88abbd4923976bf25f95bd4acdc3af1b14eff4653f91646b52d0a"
   }
 }
