@@ -27,7 +27,8 @@ from common import (
 
 TEST = "ranker::adapter::real_cpu_parity::m5_serving_causal_measurements"
 INDEX_SHA256 = "27905f29703431bedacac90eed1bd54257fd0c59bdf24b56605d0b9416ae1393"
-WEIGHTS_SHA256 = "ce39c75f37624e64dfbf89e6493adbf74811a5248f9355997161491e93a132ef"
+R882_CATALOG_SHA256 = "3af56a817bfae39b70f0b2f60668fe88fae178650ee596e1ba7a180acba1e0c6"
+R882_DIGEST = "sha256:057e50a9a741d30d541ed8af8339cec84a5157af621100cb70857052ef14dacc"
 SINGLE_PASS = dict(collected=1, executed=1, passed=1, failed=0, skipped=0, excluded=0)
 
 
@@ -64,12 +65,12 @@ def check_paths(ctx: Context, inputs: Inputs) -> None:
         raise ProviderError("M5 result must be new, external and non-symlink")
     for path, expected in (
         (inputs.golden / "index.json", INDEX_SHA256),
-        (inputs.bundle / "jope.safetensors", WEIGHTS_SHA256),
+        (inputs.bundle / "release-catalog.json", R882_CATALOG_SHA256),
     ):
         regular(path)
         if sha256(path) != expected:
             raise ProviderError(
-                "M5 requires the pinned TRAIN fixture and frozen adapter"
+                "M5 requires the pinned TRAIN fixture and signed r882 catalog"
             )
 
 
@@ -152,6 +153,7 @@ def qualify(ctx: Context, inputs: Inputs, run=None) -> int:
     if jobs not in {str(i) for i in range(1, 9)}:
         raise ProviderError("M5 build jobs must be 1..8")
     env = os.environ.copy()
+    env.pop("JOPE_PARITY_BUNDLE_DIR", None)
     env.update(
         CARGO_BUILD_JOBS=jobs,
         CARGO_INCREMENTAL="0",
@@ -163,7 +165,7 @@ def qualify(ctx: Context, inputs: Inputs, run=None) -> int:
         CUDA_VISIBLE_DEVICES="",
         JOPE_GOLDEN_DIR=str(inputs.golden),
         JOPE_GOLDEN_INDEX_SHA256=INDEX_SHA256,
-        JOPE_PARITY_BUNDLE_DIR=str(inputs.bundle),
+        JOPE_RNK10_SIGNED_BUNDLE_DIR=str(inputs.bundle),
     )
 
     def run(args, **kwargs):
@@ -214,7 +216,7 @@ def qualify(ctx: Context, inputs: Inputs, run=None) -> int:
             "report": str(native_path),
             "sha256": sha256(native_path),
             "fixture_index_sha256": INDEX_SHA256,
-            "adapter_sha256": WEIGHTS_SHA256,
+            "adapter_bundle_digest": R882_DIGEST,
             "serving_4_plus_8": report["details"]["serving_4_plus_8"],
         },
     }
@@ -235,15 +237,15 @@ def main() -> int:
     parser.add_argument(
         "--bundle-dir",
         type=Path,
-        default=os.environ.get("JOPE_PARITY_BUNDLE_DIR") or None,
-        help="Frozen adapter (default: JOPE_PARITY_BUNDLE_DIR)",
+        default=os.environ.get("JOPE_RNK10_SIGNED_BUNDLE_DIR") or None,
+        help="Signed r882 release bundle (default: JOPE_RNK10_SIGNED_BUNDLE_DIR)",
     )
     args = parser.parse_args()
     try:
         if args.golden_dir is None or args.bundle_dir is None:
             raise ProviderError(
                 "M5 requires --golden-dir/JOPE_GOLDEN_DIR and "
-                "--bundle-dir/JOPE_PARITY_BUNDLE_DIR"
+                "--bundle-dir/JOPE_RNK10_SIGNED_BUNDLE_DIR"
             )
         return qualify(context("M5"), Inputs(args.golden_dir, args.bundle_dir))
     except (
