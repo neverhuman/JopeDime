@@ -31,14 +31,14 @@
     "W20"
   ],
   "holm_m": 4,
-  "prereg_sha256": "1a0a060033de5c8f0b516f3232e7db84a9ecfaf116fdfb1c20030b201e3aed06",
+  "prereg_sha256": "d379ed9cfb12531de0aa4c775a6015c6b0e8446455a7ae5e4760d3ae88a0f38f",
   "fold_manifest_sha256": "f5ee3bafa04335f044e380c64bad73cd417463758506ed03a1837dac87b3ff22",
   "executor_sha256": {
+    "monitor.py": "0895281aa8a4e6073086eb2e4ee99e12245f290ff272ac4ae2617556ac4782e7",
+    "runner.py": "9c35e10456cee9c0f5c3d2eea6b2b75a6e311848a5534c8b18130a7519ee3249",
     "runtime.py": "162f97bd111dfa016c500d8db187ba714a1acab0715a00bcb91addb8671ef22d",
     "science.py": "805d7f23188217e252e50a611421c065e69e2d25a09fa61f74a47de8f38b8ba7",
-    "runner.py": "807d0373196fe86cd372c1f8d2f857b1adde408d32b52379c31b021da96db34f",
-    "monitor.py": "0895281aa8a4e6073086eb2e4ee99e12245f290ff272ac4ae2617556ac4782e7",
-    "test_h168.py": "2392b8518983a6dc56b212fa0a7b34ad498b7eba99b18d8608f4082e7e62c6db"
+    "test_h168.py": "b028565e72deea3576bd934fed7b5e7c225355b6aebc851081a2e4898d6f96c0"
   },
   "inputs": {
     "/home/ubuntu/jope-data/h168/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
@@ -71,9 +71,8 @@
     "torch": "2.7.0"
   },
   "smoke_custody_receipts": {
-    "smoke/smoke.json": "679422aeae5166e78117904578dda43d991a6fc8a8be6e1516b89e8d2ea22730",
-    "smoke/audit.json": "faf998addf7a902b00d756e7b0b8a9f882a0a9500b5106c9f552007f8f585cfc",
-    "smoke-monitor.json": "05d76b8283d5a9a2ec9add87b035bdf56fcafc9c7b492744c4c342e820fe183d",
-    "smoke-resources.jsonl": "703672163c8bd6af21c1722552b7278c59a784e8f2939972459d885ba577338c"
+    "/home/ubuntu/jope-data/h168/custody/smoke/smoke.json": "01f9bf387d557cdc9a5e3b95e127a71cfc30fb9a21f5316d36221d6518f7717a",
+    "/home/ubuntu/jope-data/h168/custody/smoke/audit.json": "7f54f59dbd94c2993237e8d7c3d493946ddc26a9fa70106a7b5172aed8cf808f",
+    "/home/ubuntu/jope-data/h168/custody/smoke-monitor.json": "e8bb2bdd4f269d7097901e491adaa3dfd88b5e69a5c8953475cb2849e443a3b0"
   }
 }
