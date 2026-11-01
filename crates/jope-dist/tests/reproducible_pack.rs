@@ -18,6 +18,8 @@ fn code(dir: &Path) -> PathBuf {
     bytes[5] = 1; // ELFDATA2LSB
     bytes[6] = 1; // EV_CURRENT
     bytes[18..20].copy_from_slice(&62u16.to_le_bytes()); // EM_X86_64
+    bytes[20..24].copy_from_slice(&1u32.to_le_bytes()); // EV_CURRENT
+    bytes[52..54].copy_from_slice(&64u16.to_le_bytes()); // ELF64 header size
     bytes.extend((0..20_000u32).map(|i| (i * 7 % 251) as u8));
     let path = dir.join("jopedime.code");
     std::fs::write(&path, bytes).unwrap();
