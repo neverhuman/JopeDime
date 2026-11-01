@@ -14584,6 +14584,26 @@
       ],
       "lanes": [],
       "scope": "H189 data-free controls for the adapter weight-averaging (SWA/EMA) preregistration."
+    },
+    "python:research/flywheel_selfplay/h191_nested_kernel/test_h191.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+    },
+    "python:research/flywheel_selfplay/h190_ens10_indep_folds/test_h190.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H190 data-free controls for ENS10/RENS10 confirmation with independent family-fold partitions per outer seed (190141, 190142, 190143), imported H177/H178 selector, and stage-order lock."
     }
   },
   "lanes": {

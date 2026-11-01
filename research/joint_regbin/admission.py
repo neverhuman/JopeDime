@@ -1029,7 +1029,13 @@ def _learner_evidence(evidence: dict) -> tuple[str, str, list[str]]:
         blockers.append("worker source hash is missing or invalid")
     if worker.get("qualified") is not True:
         blockers.append("two-task worker qualification is not verified")
-    if set(worker.get("tasks", [])) != set(protocol.TASKS):
+    worker_tasks = worker.get("tasks")
+    if (
+        not isinstance(worker_tasks, list)
+        or len(worker_tasks) != len(protocol.TASKS)
+        or any(not isinstance(task, str) for task in worker_tasks)
+        or set(worker_tasks) != set(protocol.TASKS)
+    ):
         blockers.append("worker does not prove regression and binary heads")
     updates = worker.get("actual_optimizer_updates")
     if type(updates) is not int or updates <= 0:
