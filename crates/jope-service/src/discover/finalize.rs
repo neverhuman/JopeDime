@@ -257,6 +257,9 @@ impl Finalizer {
                     principal: "discover.finalization.interrupted.v1".into(),
                     idempotency_key: format!("{}:{}", request.run_id, snapshot.revision.0),
                 };
+                if tx.get(&history)?.is_some() {
+                    return Err(StoreError::Integrity("interrupted finalization history already exists"));
+                }
                 tx.put(&history, &Record::metadata(json!({
                     "outcome":"unknown", "explicit_continue":true, "prior":prior
                 }), prior.blobs.clone()))?;
