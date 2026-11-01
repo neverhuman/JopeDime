@@ -59,11 +59,10 @@ condition or screen the writer. Its ranks can influence training through
 search-parent selection (\cref{sub:method-map}). Ranking accuracy and
 first-proposal quality therefore need separate tests.
 
-\smallskip
-\noindent\textbf{What \EZ{} takes:} representations that read a problem,
-models that write code, and a separate ranking map.\\
-\textbf{The question carried forward:} how to train a code proposer directly
-on verified algorithm quality, and test transfer beyond its training tasks.
+\EZ{} draws on these three ingredients: representations that read a problem,
+models that write code and a separate ranking map. What remains is training a
+proposer directly on verified algorithm quality and testing transfer beyond its
+training tasks.
 
 % ---------------------------------------------------------------------
 \subsection{Program search built the variation--judgment loop}\label{sub:road-programs}
@@ -96,14 +95,11 @@ improving on Strassen's algorithm in that setting after 56 years
 \citep{novikov2025alphaevolve}. MLEvolve carries the loop into
 machine-learning engineering \citep{mlevolve2026}.
 
-\smallskip
-\noindent\textbf{What \EZ{} takes:} programs as moves, and the
-generate--judge loop.\\
-\textbf{The question carried forward:} how much of a verified search can
-transfer into the proposer. DreamCoder already learns reusable libraries
-and a search-guiding model across tasks \citep{ellis2021dreamcoder}; a
-single-candidate evaluation tests how useful a learned proposal is before
-additional task-specific search.
+\EZ{} adopts executable programs as moves inside this generate--judge loop,
+and asks how much of a verified search can transfer into the proposer itself.
+DreamCoder already learns reusable libraries and a search-guiding model across
+tasks \citep{ellis2021dreamcoder}; a single-candidate evaluation tests how
+useful a learned proposal is before additional task-specific search.
 
 % ---------------------------------------------------------------------
 \subsection{Reinforcement learning turned retention into taste}\label{sub:road-rl}
@@ -129,12 +125,10 @@ Language models also learn from feedback: human preferences
 \citep{christiano2017preferences,ouyang2022instructgpt} and rule-based
 checks of answers, as in DeepSeek-R1 \citep{guo2025deepseekr1}.
 
-\smallskip
-\noindent\textbf{What \EZ{} takes:} training from referee-scored programs,
-and evidence from Go that a network can absorb search.\\
-\textbf{The question carried forward:} how to define a reward for relative
-algorithm quality, then distinguish improvement on training games from
-improvement on unseen families.
+From this line of work, \EZ{} takes training on referee-scored play and the
+lesson from Go that a network can absorb search; the remaining challenge is
+defining a reward for relative algorithm quality and separating gains on
+training games from transfer to unseen families.
 
 \begin{figure}[tb]% floats so the text above can fill the column
 \begin{explainer}[label=box:selfplay]{Self-play in 90 seconds}
@@ -172,12 +166,10 @@ checker, and AlphaGeometry~2 jointly reached silver-medal standard on the
 2024 International Mathematical Olympiad problems, using computation over
 multiple days \citep{hubert2026alphaproof}.
 
-\smallskip
-\noindent\textbf{What \EZ{} takes:} the recipe for a game: rules, a referee,
-a score and a sealed test.\\
-\textbf{The question carried forward:} which parts of a task can vary under
-a shared representation and referee. \EZ{} makes the problem an input to
-the proposer (\cref{sec:game}); whether that supports transfer across
+These benchmarks supply the recipe for a game (clear rules, a referee, a
+score and a sealed test) and raise the question of which parts of a task can
+vary under a shared representation and referee. \EZ{} makes the problem an
+input to the proposer (\cref{sec:game}); whether that supports transfer across
 families remains a result to establish.
 
 % ---------------------------------------------------------------------
@@ -229,12 +221,11 @@ improve, raising verified discoveries per unit of compute across generations.
 Each requires separate evidence (\cref{sec:meaning}); a recorded
 training trajectory alone establishes none of them on an unseen task.
 
-\smallskip
-\noindent\textbf{What \EZ{} takes:} the destination, and the safety frame:
-verify every improvement before keeping it, and sandbox every program.\\
-\textbf{The question carried forward:} whether learning across discovery
-episodes improves the first proposal, compared with the corresponding
-frozen proposer under the same deployment budget.
+From these systems \EZ{} keeps both the destination and the safety frame,
+verifying every improvement before keeping it and sandboxing every program,
+while testing whether learning across discovery episodes improves the first
+proposal over the corresponding frozen proposer under the same deployment
+budget.
 
 % ---------------------------------------------------------------------
 \subsection{Where the roads meet}\label{sub:road-meet}

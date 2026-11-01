@@ -1,0 +1,13 @@
+# Residual paper/code, provenance and flow audit
+
+The incoming report audits a source version before the last writer and format passes. Runtime transforms, whole-microbatch Bradley--Terry reduction, 64-only seed scoring, native teacher/exploration assembly, the program-admission margin and repeated narration are already corrected. The format owner has consolidated the telemetry appendices; its intentional early float definitions remain.
+
+This pass supplies the map's separate 2,048-to-512 context projection, the three-block 1,536-value interaction, four heads' training dropout and the distinct runtime/control inputs. It makes comparison grouping versus reduction explicit. Native sources and 23 code/vocabulary hashes support these details; no model, checkpoint or dataset payload was opened. The report's table describing a six-layer map transformer is not adopted: the map pools token embeddings.
+
+The cost figure is moved intact into the cost-of-attempts subsection, keeping every float byte and every Results placeholder body. The affected checklist anchors are refreshed. No TBD is merged or renamed; source-line positions can change with this requested relocation. Full abstract and Meaning remain exact. Equation/float/heading numbers, all citations and scientific CSV/vector assets remain unchanged.
+
+Reported private source paths, run identifier and code-reference fields are removed from seven figure sidecars and their three emitting generators. Neutral input names preserve content hashes. The historical generator takes an explicit local source directory; make figs receives HISTORICAL_TARGET_INPUTS. Original metadata and the private-to-neutral input map are preserved in writer111-provenance-custody.json outside the publication tree. The internal layout review is archived byte-for-byte. Window extractor ASTs differ only by removed provenance fields; historical extraction replays committed documentation tables to identical CSV/vector bytes. No fresh run, sealed or holdout input is accessed.
+
+The report's conditional KumoRFM finding does not establish the identity of the redacted third-party encoder: the public citation is prior-art context, not an encoder provenance statement. It is retained. The owner's explicit unchanged-TBD instruction also retains the researcher name inside those protected bodies. These exceptions are disclosed, not claimed scrubbed.
+
+The external residual matrix, numeric recomputation, exact source ledger, build logs and page proofs record detailed dispositions and limits. No performance, trained improvement, accepted loop or runtime qualification follows from this documentation pass.
