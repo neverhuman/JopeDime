@@ -7,7 +7,7 @@ Contains zero fabricated empirical results:
   vertical question-mark interval ('?', tested in Section 7).
 - fig3_game_loop.pdf: Schematic of the innovation game loop (top blue row:
   game-day search=1 deployment; dashed box: training-only referee & ratchets).
-- fig5_network.pdf: Architectural schematic of the 27.8M step-60,000 reference
+- fig5_network.pdf: Architectural schematic of the 27.8M historical reference
   checkpoint showing the frozen 2,048-value encoder, grammar-masked writer
   pi_theta, and separate training-only ranking map v_psi (with explicit note
   that v_psi has no influence path into pi_theta's draw).
@@ -202,7 +202,7 @@ def make_fig3_game_loop() -> None:
 
 
 def make_fig5_network() -> None:
-    """Schematic: Writer pi_theta and separate ranking map v_psi in step-60,000 checkpoint."""
+    """Schematic: Writer pi_theta and separate ranking map v_psi in historical reference checkpoint."""
     fig, ax = plt.subplots(figsize=(7.0, 2.6))
     fig.subplots_adjust(left=0.005, right=0.995, bottom=0.005, top=0.995)
     ax.set_xlim(0.0, 1.0)

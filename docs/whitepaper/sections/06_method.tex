@@ -34,11 +34,11 @@ only the writer's single draw.
 \subsection{Reading the board}\label{sub:method-board}
 
 The reference regression encoder turns the board of \cref{sec:game}
-into 2,048 numbers, $z_p=\encP(p)$, in three blocks.
+into \num{2048} numbers, $z_p=\encP(p)$, in three blocks.
 The first summarizes a pretrained row encoder's embeddings across rows,
 independent of row order (512 values). The second projects the hidden
 state of a pretrained third-party tabular regressor that reads the training
-rows and labels (1,024; third-party provenance pending; restricted; redistribution prohibited). The third passes the
+rows and labels (\num{1024}; third-party provenance pending; restricted; redistribution prohibited). The third passes the
 scaled targets through two frozen windows (512).
 
 The reference encoder is pinned by hash and stays fixed during writer
@@ -82,11 +82,11 @@ non-padding token embeddings, including \texttt{BOS}, the fixed engine and
 task header, and \texttt{EOS}. Pooling discards token order, limiting its
 ability to distinguish compositions built from the same tokens.
 
-The map's own two-layer context network projects the 2,048-value $z_p$
+The map's own two-layer context network projects the \num{2048}-value $z_p$
 to $r_z\in\mathbb{R}^{512}$. It joins three 512-value blocks: $z_w$
 as is, $z_w\odot\tanh(W_\gamma r_z+b_\gamma)$, and
 $|z_w-(W_{\mathrm{proj}}r_z+b_{\mathrm{proj}})|$.
-Four two-layer heads receive this same 1,536-value interaction vector;
+Four two-layer heads receive this same \num{1536}-value interaction vector;
 their mean gives $\mapv(z_p,z_w)$ with parameters $\psi$.
 Native ranking losses supervise that mean jointly, without separate
 targets or bootstrap samples. Training applies dropout of 0.05 in each
@@ -246,7 +246,7 @@ predictions agreeing within
 $10^{-9}\max(1,|\hat y|)$.
 
 One earlier leaderboard entry for our search selected each dataset's best
-test-scored outcome from a ledger of 63,108 evaluations; we exclude it as test selection (\cref{app:incidents}).
+test-scored outcome from a ledger of \num{63108} evaluations; we exclude it as test selection (\cref{app:incidents}).
 
 \subsection{Game day: \texorpdfstring{\searchone}{search = 1}}\label{sub:method-gameday}
 

@@ -1,29 +1,5 @@
 \subsection{Completed-round rates}\label{app:subsequent-rates}
 
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_subsequent_rates.pdf}
-  \caption{\textbf{Work and training-program event rates in the subsequent window.}
-  Left: completed rounds per hour. Right: strict training-program incumbent
-  events per hour. Each step is an average over one completed round's logged
-  wall time; dashed lines are rates from whole-window totals. Both panels
-  use the same 20 summaries as \cref{fig:fw-subsequent-window}, with no new
-  observations. Program events do not count adapter admissions.}
-  \label{fig:fw-subsequent-rates}
-\end{figure*}
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\textwidth]{figures/fig_fw_round_throughput.pdf}
-  \caption{\textbf{Adapter utility and whole-round throughput in a later retained window.}
-  Both panels cover the same 20 completed summaries, rounds 2696--2715.
-  Left: candidate adapter validation utility and the recorded best.
-  Right: distinct training contexts divided by the full wall time of each
-  completed round. The rates include all work and waits inside that interval.
-  These are development operating observations; independent first-proposal
-  and deployment comparisons remain required.}
-  \label{fig:fw-round-throughput}
-\end{figure*}
-
 \Cref{fig:fw-subsequent-rates} reuses the 20 summaries from rounds
 2508--2527 in \cref{app:subsequent-window}. Each step divides one completed
 round, or its strict training-program event count, by that round's logged
