@@ -143,3 +143,124 @@ class BinaryDatasetPacketTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+CANDIDATE_PACKET = Path(
+    os.environ.get(
+        "JOPE_JRB01_BINARY_CANDIDATE_PACKET",
+        Path.home() / "jope-data/jrb-01/binary-s3-train-t2210",
+    )
+)
+CANDIDATE_MANIFEST_SHA256 = (
+    "0fa17ee3ddf2a16a84dc90d6a6d19c6467bb1497597b68c86a279e0ac0055a06"
+)
+SEALED_IDENTITY_MANIFEST_SHA256 = (
+    "0314599fe06515d3f3e976c0d435cbe4e9fbe26738014bd89470f525702f983b"
+)
+
+
+@unittest.skipUnless(
+    CANDIDATE_PACKET.is_dir(),
+    f"JRB binary TRAIN candidate packet unavailable: {CANDIDATE_PACKET}",
+)
+class BinaryTrainCandidatePacketTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.packet = CANDIDATE_PACKET
+        cls.manifest_path = cls.packet / "manifest.json"
+        cls.manifest = packet_manifest(cls.packet)
+        cls.records = cls.manifest["datasets"]
+        cls.exclusion = cls.manifest["exclusion_proof"]
+        cls.family_review = json.loads(
+            (cls.packet / "binary-family-review.json").read_text(encoding="utf-8")
+        )
+
+    def test_candidate_manifest_keeps_train_only_unadmitted_scope(self) -> None:
+        self.assertEqual(sha256_file(self.manifest_path), CANDIDATE_MANIFEST_SHA256)
+        self.assertEqual(
+            self.manifest["schema"], "jope.joint-regbin.binary-s3-train-pool/v1"
+        )
+        self.assertEqual(self.manifest["status"], "TRAIN_POOL_CANDIDATES_NOT_ADMITTED")
+        self.assertIs(self.manifest["eligibility_verified"], False)
+        self.assertEqual(self.manifest["catalog_sha256"], CATALOG_SHA256)
+        self.assertEqual(
+            self.manifest["exclusion_manifest_sha256"],
+            SEALED_IDENTITY_MANIFEST_SHA256,
+        )
+        self.assertEqual(len(self.records), 843)
+        self.assertEqual(len({row["dataset"] for row in self.records}), 843)
+        self.assertEqual(len({row["family"] for row in self.records}), 807)
+        self.assertEqual(self.manifest["counts"]["cached_train_only"], 843)
+        self.assertEqual(self.manifest["counts"]["candidate_families"], 807)
+
+        for row in self.records:
+            with self.subTest(dataset=row["dataset"]):
+                self.assertEqual(row["task"], "binary")
+                self.assertEqual(row["source_split"], "train")
+                self.assertEqual(row["origin"], "real")
+                self.assertIs(row["has_meta_test"], False)
+                self.assertIsNone(row["study_role"])
+                self.assertIs(row["family_reviewed_from_catalog_metadata"], True)
+                self.assertEqual(row["target_classes"], 2)
+                self.assertEqual(
+                    row["manifest_s3_key"], f"datasets/{row['dataset']}/manifest.json"
+                )
+                self.assertEqual(
+                    row["train_s3_key"],
+                    f"blobs/sha256/{row['catalog_train_sha256']}",
+                )
+                for field in ("cache_file", "train_file"):
+                    relpath = PurePosixPath(row[field])
+                    self.assertFalse(relpath.is_absolute())
+                    self.assertNotIn("..", relpath.parts)
+
+    def test_available_sealed_exclusion_proof_is_explicitly_incomplete(self) -> None:
+        self.assertEqual(self.exclusion["actual_excluded_binary_ids"], [])
+        self.assertEqual(
+            self.exclusion["included_binary_ids_intersection_owner_deny_ids"], []
+        )
+        self.assertEqual(
+            self.exclusion["included_binary_ids_intersection_catalog_sealed_ids"], []
+        )
+        self.assertIs(
+            self.exclusion["identity_and_available_metadata_family_exclusion_verified"],
+            True,
+        )
+        self.assertIs(
+            self.exclusion["family_alias_complete_for_absent_catalog_ids"], False
+        )
+        self.assertIs(self.exclusion["denied_alias_expansion_complete"], False)
+        absent_ids = set(
+            self.exclusion["owner_identity_ids_absent_from_usable_catalog"]
+        )
+        self.assertEqual(len(absent_ids), 14)
+        self.assertEqual(
+            set(self.exclusion["catalog_sealed_name_exclusion_ids"]), absent_ids
+        )
+        candidate_ids = {row["dataset"] for row in self.records}
+        self.assertTrue(candidate_ids.isdisjoint(absent_ids))
+        # The packet is deliberately candidate-only until the missing alias
+        # closure is resolved; this test does not promote it to study input.
+        self.assertIs(self.manifest["eligibility_verified"], False)
+        self.assertTrue(all(row["study_role"] is None for row in self.records))
+
+    def test_all_train_and_cache_hashes_and_cache_rebuilds_match(self) -> None:
+        self.assertEqual(
+            self.family_review["schema"], "jope.joint-regbin.binary-family-review/v1"
+        )
+        self.assertEqual(
+            sha256_file(self.packet / "binary-family-review.json"),
+            self.manifest["family_review_sha256"],
+        )
+        for row in self.records:
+            with self.subTest(dataset=row["dataset"]):
+                train_path = self.packet.joinpath(
+                    *PurePosixPath(row["train_file"]).parts
+                )
+                cache_path = self.packet.joinpath(
+                    *PurePosixPath(row["cache_file"]).parts
+                )
+                self.assertEqual(sha256_file(train_path), row["train_file_sha256"])
+                self.assertEqual(row["catalog_train_sha256"], row["train_file_sha256"])
+                self.assertEqual(sha256_file(cache_path), row["cache_sha256"])
+                self.assertEqual(rebuilt_npz_sha256(cache_path), row["cache_sha256"])
