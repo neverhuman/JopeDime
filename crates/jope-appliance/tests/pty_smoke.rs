@@ -182,6 +182,15 @@ fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io
     )?;
     let screen = terminal.wait_for_text("engine background", Duration::from_secs(10))?;
     assert_no_internal_sentinels(&screen);
+    // The local run backend validates a bounded regression task when a dataset is
+    // opened. Set the target/task first so registration reaches its completion marker.
+    terminal.type_text("\\target target --task regression")?;
+    terminal.press_key(pty::Key::Enter)?;
+    let screen = terminal.wait_for_text(
+        "draft updated; dataset and target are needed",
+        Duration::from_secs(10),
+    )?;
+    assert_no_internal_sentinels(&screen);
     terminal.type_text(&format!("\\open {}", csv.display()))?;
     terminal.press_key(pty::Key::Enter)?;
     // Wait for this command's unique completion marker before sending the next line. PTY
