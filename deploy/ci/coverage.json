@@ -5544,6 +5544,16 @@
       "lanes": [],
       "scope": "Owner-requested W5 provenance-preflight synthetic metadata controls: body reads refused before any S3 call, counter hashes over bytes, unknown counts kept null, and refusal of pair and row-closure shortcuts (strat300 nq=0, siblings, wrong cut or alias, sentinels, AST similarity, missing operator or evaluator provenance). None admits data or qualifies W5."
     },
+    "python:research/flywheel_selfplay/rnk10_r882_acceptance/test_import_checkpoint.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract)."
+    },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
       "discovery": {
         "kind": "python-family"
