@@ -107,6 +107,8 @@ docs:
     for root, _, names in os.walk("docs"):
         if root == "docs/legacy" or root.startswith("docs/legacy/"):
             continue  # historical documents kept verbatim; excluded from every lint
+        if root.startswith("docs/paper/innovationzero/artifacts"):
+            continue  # byte-pinned archive copies (evidence/artifact-manifest.json)
         files += [os.path.join(root, n) for n in names if n.endswith(".md")]
     link = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
     bad = 0
