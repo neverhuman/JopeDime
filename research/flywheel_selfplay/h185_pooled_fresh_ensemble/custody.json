@@ -1,0 +1,131 @@
+{
+  "wave": "H185",
+  "bucket": "veox-jopedime-learning-use2",
+  "prefix": "experiments/rd_breakthrough_20261030/H185/gpu_tokbench_agy-h185-20261101",
+  "s3_root": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H185/gpu_tokbench_agy-h185-20261101/",
+  "source_commit": "60c856959a3c6a137a35468f91fda7fa89ee3fd5",
+  "object_count": 15,
+  "total_bytes": 21409744,
+  "objects": [
+    {
+      "name": "metrics.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H185/gpu_tokbench_agy-h185-20261101/metrics.json",
+      "version_id": "YmWKzafR7WtX36qvdzLFHrrgiPNar2h5",
+      "etag": "e12c73002f6ed53c491db7f54663824e",
+      "bytes": 53343,
+      "sha256": "0bf93e5dbd33bd2017fe94a64631319cd200121946bc89774a9b6187345add8c"
+    },
+    {
+      "name": "pooled_b_selection_lock.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H185/gpu_tokbench_agy-h185-20261101/pooled_b_selection_lock.json",
+      "version_id": "2.fLTN.vtwWSUH88CLRcX0sFhnLYHcVE",
+      "etag": "3e88e94eade5910455e258d459a10c36",
+      "bytes": 12305,
+      "sha256": "eead6066301d3e8a62fd7e7033f8988eed418d26829efac359a9d31138823c53"
+    },
+    {
+      "name": "panels.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H185/gpu_tokbench_agy-h185-20261101/panels.npz",
+      "version_id": "aXgQYZOHEo1YcovqjbqxeJiT7TYwRfTE",
+      "etag": "e582787461107e1e29c97d27858098c4",
+      "bytes": 612870,
+      "sha256": "afbe3d1922683a72cde5f875225660b646920e37b073a8c0a0e7e4e6823a79a1"
+    },
+    {
+      "name": "audit.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H185/gpu_tokbench_agy-h185-20261101/audit.json",
+      "version_id": "ok7.WhYI7w6fnZp9nxqmoKJf7eunBmQ1",
+      "etag": "84a5c2bcfb08ff8dd01f4ba7f826cd63",
+      "bytes": 169764,
+      "sha256": "fe3f3212bc79ab8a9964a2144b8ccbfff829013a620a4df5cb9393286f8c0d7d"
+    },
+    {
+      "name": "recount_verification.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H185/gpu_tokbench_agy-h185-20261101/recount_verification.json",
+      "version_id": "gBeH1FeFHRtW.jffTzwByvW9vfX_aclP",
+      "etag": "c26e4e2b4e01abee5769613f7cbb0f26",
+      "bytes": 627,
+      "sha256": "82de0abb7f7d96252922293bb574aa270f3bfe3f93d56e54acf18e4c938f139f"
+    },
+    {
+      "name": "baseline.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H185/gpu_tokbench_agy-h185-20261101/baseline.json",
+      "version_id": "v9_1CWOS1.BHO5lO2IqIGzgsZiWX5P.Q",
+      "etag": "af0445c3590d06307e4cb2813eb79261",
+      "bytes": 10781,
+      "sha256": "64fa9f657ff635a335d6e88d0cca4e29abc152b8bbeb71c28e99ae7ea06b3093"
+    },
+    {
+      "name": "baseline_costs.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H185/gpu_tokbench_agy-h185-20261101/baseline_costs.npz",
+      "version_id": "ylvmGD9YmXuGxyICW0NuFaFE1y8JrwQW",
+      "etag": "41a0877dbe876ed9079b17393d20ae51",
+      "bytes": 409829,
+      "sha256": "a5109aff14e9aed679752f9884059adf9ce580f1a2d266c2d0a88fe42194ee38"
+    },
+    {
+      "name": "pilot_budget.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H185/gpu_tokbench_agy-h185-20261101/pilot_budget.json",
+      "version_id": "9XT_gpmlEeR8sXlgy.0y6zJsvSR1XP9L",
+      "etag": "9f17e3253c5647fb6230411a769eb090",
+      "bytes": 524,
+      "sha256": "343afc216fd496a1091f9767443e8d8626ef3aab679c793df92a8e2738ab199e"
+    },
+    {
+      "name": "attempt-001.stdout",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H185/gpu_tokbench_agy-h185-20261101/attempt-001.stdout",
+      "version_id": "mCtH112AI76gkGnDlyLOnooYoWgf3zMG",
+      "etag": "623666b2b23b97dbd169625aa87ed05d",
+      "bytes": 693,
+      "sha256": "fabd157cc30d79b4a12574c705da49b2e55b1afea8711b558d7060c445446996"
+    },
+    {
+      "name": "attempt-001.resources.jsonl",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H185/gpu_tokbench_agy-h185-20261101/attempt-001.resources.jsonl",
+      "version_id": "mvYxGyY5uFMd4qJaNOIrVaKxsJpFiloJ",
+      "etag": "422c1ec9a9ed57f805fb40e14bbf73c1",
+      "bytes": 679949,
+      "sha256": "405a81c4ff35a1f4e81d48c276d864789fd77fcede3da65350d347fd10d1800a"
+    },
+    {
+      "name": "attempt-001.resource_summary.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H185/gpu_tokbench_agy-h185-20261101/attempt-001.resource_summary.json",
+      "version_id": "VnmS1I9WKfpvyLRsZjqIa.cjUpDhCGi.",
+      "etag": "4d34ae7e98052bea5804858a2d2c77cc",
+      "bytes": 128,
+      "sha256": "cb0d0c6116eb7e0697db724b0f3e34091b9b081709bfa1a7b4d4777700e9abf2"
+    },
+    {
+      "name": "launch.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H185/gpu_tokbench_agy-h185-20261101/launch.json",
+      "version_id": "AHHxVmAj60CMYjrCq6taFf266Se542HZ",
+      "etag": "722fdb056f064850fe988f55e71922a1",
+      "bytes": 770,
+      "sha256": "9e958b925cf6d899932281d3c984838da8f47621861ef51536595a25a463f42f"
+    },
+    {
+      "name": "complete_stage2_postprocess.py",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H185/gpu_tokbench_agy-h185-20261101/complete_stage2_postprocess.py",
+      "version_id": "hv5QjJj3.FPTthsWkb8BMABT.w6cIaGm",
+      "etag": "e110f926c49cca3181b3297284785ed3",
+      "bytes": 30539,
+      "sha256": "a822d59e08e2cd7e0ea63c9d9ac3bd90ea6de4937d335fb36eacda811e748b57"
+    },
+    {
+      "name": "smoke.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H185/gpu_tokbench_agy-h185-20261101/smoke.json",
+      "version_id": "J9_rcLzpc781i_ru.k1XK75yzinGjypF",
+      "etag": "07eabecd59c5a6735788813480a5f4dd",
+      "bytes": 1987,
+      "sha256": "3a516d86f3b92ae8c2a3e918a80ff2949f33460ee393430402b1c1797585341c"
+    },
+    {
+      "name": "h185-checkpoints-and-records.tar.gz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H185/gpu_tokbench_agy-h185-20261101/h185-checkpoints-and-records.tar.gz",
+      "version_id": "h6u1pX1dqNYNQcMKRIDpikgdE7mlPC9D",
+      "etag": "0baac002d6cb2b8035f1bca14b368995",
+      "bytes": 19425635,
+      "sha256": "137c025f3274666d4c6f0167475e2243bfff75255d7b98b1a7e33576dd4bc4fd"
+    }
+  ]
+}
