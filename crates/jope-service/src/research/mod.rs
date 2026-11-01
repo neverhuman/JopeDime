@@ -391,3 +391,5 @@ impl RecordWriter {
 
 #[cfg(test)]
 mod tests;
+
+pub(crate) mod qualified;
