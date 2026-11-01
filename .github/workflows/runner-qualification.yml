@@ -34,9 +34,4 @@ jobs:
         uses: ./.github/actions/runner-provenance
       - name: Real runner and provenance contract tests
         shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p target/tmp
-          export TMPDIR="$PWD/target/tmp"
-          python3 deploy/ci/test-runner.py
-          python3 deploy/ci/test-provenance.py
+        run: bash ops/ci/runner-qualification.sh

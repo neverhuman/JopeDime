@@ -21,22 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build and package Linux fixture
-        run: |
-          set -euo pipefail
-          out=target/rel04/linux
-          mkdir -p "$out/models"
-          source_sha=$(git rev-parse HEAD)
-          code=$(JOPE_BUILD_SOURCE_SHA="$source_sha" nice -n 10 cargo run -q --locked -p jope-ci -- cargo-artifact build --package jope-appliance --bin jopedime --profile dist-ci --no-default-features --features embedded,dev-keys)
-          nice -n 10 cargo run -q --locked -p jope-dist -- fixture --models "$out/models"
-          nice -n 10 cargo run -q --locked -p jope-dist -- notices --out "$out/notices.json" --features embedded,dev-keys
-          nice -n 10 cargo run -q --locked -p jope-dist -- pack --profile deploy/appliance/profiles/fixture.toml --code "$code" --models "$out/models" --notices "$out/notices.json" --source-sha "$source_sha" --target x86_64-unknown-linux-gnu --receipt "$out/pack-receipt.json" --out "$out/jopedime"
-          nice -n 10 cargo run -q --locked -p jope-dist -- verify --file "$out/jopedime" --development-key --no-release-key > "$out/verify.json"
+        run: bash ops/ci/clean-host.sh linux-prestage
       - name: Exercise isolated Linux clean-host D1
-        run: |
-          sudo env GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory \
-            "GIT_CONFIG_VALUE_0=$GITHUB_WORKSPACE" \
-            bash deploy/appliance/test-clean-host.sh \
-            target/rel04/linux/jopedime target/rel04/linux-clean-host --require-isolation
+        run: bash ops/ci/clean-host.sh linux-exercise
 
   macos-arm64-pending:
     runs-on: macos-14
@@ -48,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build, package and exercise native macOS arm64 D1
-        run: nice -n 10 bash deploy/appliance/test-clean-host-macos.sh --build-fixture
+        run: nice -n 10 bash ops/ci/clean-host.sh macos
 
   windows-x86_64-pending:
     if: ${{ false }}
