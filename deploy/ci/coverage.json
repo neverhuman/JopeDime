@@ -14518,6 +14518,16 @@
       ],
       "lanes": [],
       "scope": "H183 data-free controls: FIT/A/B isolation and poisoned outer targets, distinct initial member/student seeds, softmax of ten mean teacher costs, fixed detached KL T=.2 with .5/.5 weights, common 40/80 student prefix, axis=0 paired family bootstrap, strict DIST10 primary Holm m2 gate, RENS10 diagnostic, ragged native choices and resource/timing caps. No study data/checkpoint/optimizer updates."
+    },
+    "python:research/flywheel_selfplay/h187_robust_family/test_h187.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H187 FIT-only, identical paired inits, normalized Huber influence, exact equal-family sampling, timing budget, imported pooled-B rule/stage lock, seed-axis bootstrap and ADVANCE gates"
     }
   },
   "lanes": {
