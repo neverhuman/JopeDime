@@ -12,7 +12,9 @@ from research.joint_regbin import driver, worker
 from research.joint_regbin.admission import (
     PARTIAL_SCHEMA,
     _load_csv,
+    build_family_key_pool_manifest,
     review_binary_families,
+    verify_family_key_pool_manifest,
 )
 from research.joint_regbin.driver import (
     collect,
@@ -37,6 +39,109 @@ from research.joint_regbin.protocol import (
     verify_plan,
 )
 from research.joint_regbin.report import comparison, decide, elo, paired_records, render
+
+
+def test_family_key_pool_manifest_is_catalog_only_and_family_disjoint(monkeypatch):
+    from research.joint_regbin import admission
+
+    rows = []
+    for task, prefix, start in (("regression", "r", 1), ("binary", "b", 101)):
+        for index in range(6):
+            canonical = f"{start + index:064x}"
+            if index == 0:
+                canonical = "f" * 64
+            rows.append(
+                {
+                    "id": f"{prefix}-{index}",
+                    "task": task,
+                    "canonical_sha256": canonical,
+                    "s3_bucket": "veox-jopedime-datasets-use2",
+                    "train_rows": 12,
+                    "train_sha256": f"{start + index + 300:064x}",
+                    # These are intentionally not family_keys inputs.
+                    "family_key_derived": "srcfile:must-not-be-used",
+                    "source_file": "must-not-be-used.csv",
+                }
+            )
+    catalog = {
+        "inventory": {
+            "source_catalog": "catalog/v246.jsonl (LATEST=v246)",
+            "usable_records": len(rows),
+        },
+        "datasets": rows,
+    }
+
+    monkeypatch.setattr(admission, "CATALOG_V246_SHA256", "a" * 64)
+    manifest = build_family_key_pool_manifest(catalog, "a" * 64)
+
+    assert manifest["schema"] == "jope.joint-regbin.family-key-pools/v1"
+    assert manifest["eligibility_verified"] is False
+    assert manifest["payloads_opened"] == 0
+    assert manifest["candidate_count_by_task"] == {"regression": 6, "binary": 6}
+    assert manifest["family_by_dataset"]["r-0"] == manifest["family_by_dataset"]["b-0"]
+    assert (
+        manifest["fold_by_family"][manifest["family_by_dataset"]["r-0"]]
+        == manifest["fold_by_family"][manifest["family_by_dataset"]["b-0"]]
+    )
+    assert manifest["family_keys_by_dataset"]["r-0"] == [["canonical_sha256", "f" * 64]]
+    for split in manifest["fold_splits"].values():
+        for task in ("regression", "binary"):
+            assert split["train"][task]
+            assert split["val"][task]
+            train_families = {
+                manifest["family_by_dataset"][dataset]
+                for dataset in split["train"][task]
+            }
+            val_families = {
+                manifest["family_by_dataset"][dataset] for dataset in split["val"][task]
+            }
+            assert train_families.isdisjoint(val_families)
+
+
+def test_family_key_pool_preflight_rederives_and_stays_non_admitted(
+    tmp_path, monkeypatch
+):
+    from research.joint_regbin import admission
+
+    rows = []
+    for task, prefix, start in (("regression", "r", 1), ("binary", "b", 101)):
+        for index in range(6):
+            rows.append(
+                {
+                    "id": f"{prefix}-{index}",
+                    "task": task,
+                    "canonical_sha256": f"{start + index:064x}",
+                    "s3_bucket": "veox-jopedime-datasets-use2",
+                    "train_rows": 12,
+                    "train_sha256": f"{start + index + 300:064x}",
+                }
+            )
+    catalog_path = tmp_path / "catalog.json"
+    catalog_path.write_text(
+        json.dumps(
+            {
+                "inventory": {
+                    "source_catalog": "catalog/v246.jsonl (LATEST=v246)",
+                    "usable_records": len(rows),
+                },
+                "datasets": rows,
+            }
+        )
+    )
+    from research.joint_regbin.admission import sha256_file
+
+    catalog_sha = sha256_file(catalog_path)
+    monkeypatch.setattr(admission, "CATALOG_V246_SHA256", catalog_sha)
+    manifest = build_family_key_pool_manifest(
+        json.loads(catalog_path.read_text()), catalog_sha
+    )
+    receipt = verify_family_key_pool_manifest(manifest, catalog_path)
+    assert receipt["status"] == "METADATA_SPLIT_VERIFIED"
+    assert receipt["eligibility_verified"] is False
+    assert receipt["payloads_opened"] == 0
+    manifest["fold_splits"]["0"]["train"]["binary"].pop()
+    with pytest.raises(ValueError, match="differs from pinned catalog split"):
+        verify_family_key_pool_manifest(manifest, catalog_path)
 
 
 @pytest.fixture
