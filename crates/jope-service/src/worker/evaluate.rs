@@ -6,4 +6,18 @@
 //! fitting, objective evaluation or prediction hashing. Store publication and
 //! attempt fencing remain parent responsibilities.
 
-pub use crate::discover::r#loop::evaluate_native as native;
+pub fn native<B: AsRef<[u8]> + Sync>(
+    request: &super::Request,
+    matrix: &crate::dataset::jmat::Matrix<B>,
+) -> Result<super::Scores, super::WorkerFailure> {
+    if request
+        .fold_spec
+        .get("version")
+        .and_then(serde_json::Value::as_u64)
+        == Some(2)
+    {
+        crate::run::surrogate::native(request, matrix)
+    } else {
+        crate::discover::r#loop::evaluate_native(request, matrix)
+    }
+}
