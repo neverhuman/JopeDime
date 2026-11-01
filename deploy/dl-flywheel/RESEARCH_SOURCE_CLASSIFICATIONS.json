@@ -5069,13 +5069,13 @@
       "sha256": "fad477aedc837578b48ced28c1e8f8404d83d09ab4e9b69045ed80ba2f969a73"
     },
     "python:research/flywheel_selfplay/rnk10_m5_causal/evaluate_candidate.py": {
-      "bytes": 30905,
+      "bytes": 33291,
       "classification": {
         "reason": "RNK-10 R10 research-only candidate-loading M5/dev-Elo reproduction. M5 validates pinned batched fixture shapes, and dev Elo reports a reproducible descriptive family-bootstrap interval. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
         "role": "research"
       },
       "migration": "New RNK-10 research-only source classification; no product runtime claim.",
-      "sha256": "d1dd32f36d5f39b807525725a88a8d78e5554737561d5343640333f55d8a93d2"
+      "sha256": "379cd94040124c36bd9cbdee0b7b54bdca0f6524774c948866311f3f4b52b478"
     },
     "python:research/flywheel_selfplay/rnk10_m5_causal/stage_dev_packet.py": {
       "classification": {

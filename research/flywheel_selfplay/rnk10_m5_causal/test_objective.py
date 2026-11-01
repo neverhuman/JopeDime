@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.machinery
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -8,6 +9,7 @@ from types import SimpleNamespace
 import numpy as np
 import torch
 import pytest
+import evaluate_candidate
 
 from objective import (
     AUXILIARY_WEIGHT,
@@ -299,6 +301,119 @@ def test_dev_elo_family_selection_keeps_default_and_full_roster_unchanged():
     ]
     assert family_bootstrap_elo_interval(records) == family_bootstrap_elo_interval(
         explicit_records
+    )
+
+
+def test_dev_elo_default_serialization_matches_pinned_full_roster_golden(
+    tmp_path, monkeypatch
+):
+    """Exercise full 91/19 default evaluation and freeze its serialized bytes."""
+    pinned_path = Path(evaluate_candidate.__file__).with_name("dev_roster.json")
+    pinned = json.loads(pinned_path.read_text())
+    rows = pinned["contexts"]
+    assert len(rows) == 91
+    assert len({row["family_id"] for row in rows}) == 19
+
+    input_dir = tmp_path / "dev-input"
+    input_dir.mkdir()
+    (input_dir / "source_manifest.json").write_text("{}")
+    (input_dir / "selected.json").write_text(json.dumps({"dev": rows}))
+    candidate = tmp_path / "candidate.safetensors"
+    candidate.write_bytes(b"mock candidate")
+    signed_r882 = tmp_path / "signed-r882"
+
+    class Loader:
+        def __init__(self, kind):
+            self.kind = kind
+
+        def create_module(self, spec):
+            return None
+
+        def exec_module(self, module):
+            if self.kind == "score":
+                guard = SimpleNamespace(lock_dope_weights_and_eval_mode=lambda *_: None)
+                module.h48 = SimpleNamespace(
+                    base=SimpleNamespace(guard=guard),
+                    h46=SimpleNamespace(
+                        checkpoint_guard=lambda *_args, **_kwargs: None,
+                        make_tokens=lambda *_args, **_kwargs: (None, None),
+                    ),
+                )
+                module.load_validation_packet = lambda _path: (rows, {}, {})
+            else:
+
+                class FixtureNet:
+                    def __init__(self, **_kwargs):
+                        self.adapter_10tok = SimpleNamespace(
+                            named_parameters=lambda: ()
+                        )
+
+                    def parameters(self):
+                        return ()
+
+                    def load_state_dict(self, *_args, **_kwargs):
+                        pass
+
+                    def eval(self):
+                        pass
+
+                module.FusedJopeNetwork = FixtureNet
+
+    def fake_spec(name, path):
+        kind = "score" if str(path).endswith("/h49/score.py") else "fused"
+        return importlib.machinery.ModuleSpec(name, Loader(kind))
+
+    monkeypatch.setattr(
+        evaluate_candidate.importlib.util, "spec_from_file_location", fake_spec
+    )
+    monkeypatch.setattr(evaluate_candidate, "load_file", lambda *_args, **_kwargs: {})
+    monkeypatch.setattr(
+        evaluate_candidate,
+        "score_tensor_batch",
+        lambda _net, selected_rows, *_args: {
+            row["context_sha256"]: 1.0 for row in selected_rows
+        },
+    )
+    original_digest = evaluate_candidate.digest
+
+    def pinned_digest(path):
+        path = Path(path)
+        if path == input_dir / "source_manifest.json":
+            return evaluate_candidate.SOURCE_MANIFEST_FILE_SHA256
+        if path == input_dir / "selected.json":
+            return evaluate_candidate.SELECTED_ROSTER_SHA256
+        if path == input_dir / "cpu_exact_fused.py":
+            return evaluate_candidate.CPU_FUSED_SHA256
+        if path == candidate:
+            return "c" * 64
+        return original_digest(path)
+
+    monkeypatch.setattr(evaluate_candidate, "digest", pinned_digest)
+    output = tmp_path / "dev-elo.json"
+    evaluate_candidate.dev_elo(
+        SimpleNamespace(
+            input=input_dir,
+            train_input=tmp_path / "train-input",
+            candidate=candidate,
+            receipt_sha256="receipt-pin",
+            evidence_sha256="evidence-pin",
+            runner_sha256="runner-pin",
+            signed_r882=signed_r882,
+            output=output,
+            families=None,
+        )
+    )
+
+    result_bytes = output.read_bytes()
+    result = json.loads(result_bytes)
+    assert result["contexts"] == 91
+    assert result["families"] == 19
+    assert result["elo_interval"]["family_count"] == 19
+    assert "selection" not in result
+    # Golden uses the pre-selector dev_elo path at 33aa7fd with this deterministic fixture.
+    assert (
+        hashlib.sha256(result_bytes).hexdigest()
+        == "e400bb4e312c522ce2ad760f497a107257a269e29d1098942300b9f16148338c"
     )
 
 
