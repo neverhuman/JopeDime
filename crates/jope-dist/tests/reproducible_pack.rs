@@ -210,11 +210,42 @@ fn a_release_stage_seals_only_with_its_own_signature() {
 fn a_blocked_profile_is_never_packed() {
     let repo = repo();
     let dir = tempfile::tempdir().unwrap();
-    let profile = repo.join("deploy/appliance/profiles/full.toml");
-    let lock = repo.join("deploy/appliance/models.lock.json");
+    // The shipped `full` profile can become ready as its runtime is implemented.
+    // Derive a blocked test variant so this test remains about the blocked-profile
+    // guard and never probes the synthetic, non-executable ELF below.
+    let full_profile = repo.join("deploy/appliance/profiles/full.toml");
+    let blocked_profile = dir.path().join("blocked-full.toml");
+    let source = std::fs::read_to_string(&full_profile).unwrap();
+    let source = source
+        .replace("name = \"full\"", "name = \"blocked-full\"")
+        .replace("proposal.r882.regression", "proposal.step60000.regression");
+    assert_ne!(source, std::fs::read_to_string(&full_profile).unwrap());
+    std::fs::write(&blocked_profile, source).unwrap();
+    let (profile, profile_sha) = jope_dist::profile::Profile::load(&blocked_profile).unwrap();
+    let blocked = jope_dist::profile::lock_profile(&profile, &profile_sha, &repo).unwrap();
+    assert_eq!(blocked.status, "blocked");
+    assert!(blocked
+        .blockers
+        .iter()
+        .any(|blocker| blocker.contains("proposal.step60000.regression")));
+
+    let (mut lock, _) =
+        jope_dist::profile::Lock::load(&repo.join("deploy/appliance/models.lock.json")).unwrap();
+    lock.profiles.insert(profile.name.clone(), blocked);
+    let lock_path = dir.path().join("blocked-models.lock.json");
+    std::fs::write(&lock_path, serde_json::to_vec_pretty(&lock).unwrap()).unwrap();
+
     let (code, models, notices) = (code(dir.path()), models(dir.path()), notices(dir.path()));
     let error = pack(
-        &request(&repo, &profile, &lock, &code, &models, &notices, None),
+        &request(
+            &repo,
+            &blocked_profile,
+            &lock_path,
+            &code,
+            &models,
+            &notices,
+            None,
+        ),
         Output::Stage {
             dir: &dir.path().join("s"),
         },
