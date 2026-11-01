@@ -97,8 +97,8 @@ judge. Under a single-attempt budget, the chance $\winprob$ of a win matters
 directly (\cref{eq:taste}). Whether training raises that chance on new
 families is the test in \cref{sec:results}.
 
-\Cref{fig:game-loop} draws the loop. Game day plays only its top row, so
-nothing can send a move back for another try; that is \searchone.
+\Cref{fig:game-loop} separates training from game day. Its top row follows
+the single-candidate contract in \cref{box:searchone}.
 
 % ----------------------------------------------------------------------------
 \subsection{The board and the move}\label{sub:game-board}
@@ -106,9 +106,9 @@ nothing can send a move back for another try; that is \searchone.
 The board is the aim pillar of \cref{sec:anatomy}, made machine-readable: a
 summary of the training data, the objective and metric, and the constraints.
 Landmark scores from cheap learners \citep{pfahringer2000landmarking} and
-learned tabular summaries are possible encodings. The reference checkpoint
-in \cref{sub:method-board} uses a frozen 2,048-value summary with a
-30-second cap.
+learned tabular summaries are possible encodings; \cref{sub:method-board}
+specifies the reference encoder and its cost limit.
+
 A useful board should preserve distinctions relevant to algorithm choice,
 remain stable under irrelevant reorderings, exclude final evaluation
 information and have a measured cost. These are requirements to test, not
@@ -116,9 +116,8 @@ properties guaranteed by naming an encoder. People still choose the problem
 and define what counts as a useful solution.
 
 A move is one program in a typed language over learning primitives.
-The reference vocabulary has 401 tokens, listing 31 transforms and
-22 prediction heads, with up to six transforms per program; the task
-mask restricts which tokens are legal (\cref{sub:method-move}).
+A task-specific grammar restricts legal moves; \cref{sub:method-move}
+specifies the reference vocabulary and composition limits.
 
 Types remove whole classes of stillborn
 programs before they run \citep{montana1995stgp}. Canonicalization can merge
@@ -146,11 +145,9 @@ $\tilde{w}$, an also-ran $w^-$ and a win $w^+$ on board $p$,
   \reward(p, \tilde{w}) \;<\; \reward(p, w^-) \;<\; \reward(p, w^+).
 \]
 
-The opponent is a ratcheting incumbent. In the reference procedure, only
-strict improvement on five inner folds under the same evaluation protocol
-can displace a board's incumbent.
-A retrained writer has a separate
-admission test on 16 held-out cuts with three seeds each
+The opponent is a ratcheting incumbent. A program must strictly improve
+under the same evaluation protocol to displace a board's incumbent.
+A retrained writer faces a separate admission test
 (\cref{sub:method-selfplay}). Together the two ratchets make this self-play:
 the player keeps facing a standard often set by its own earlier play.
 AlphaGo Zero likewise separated network admission from choosing a move

@@ -4269,6 +4269,16 @@
       "lanes": [],
       "scope": "Standalone pytest protocol/statistical fixtures for the Q1 qualification harness (QLT-01, #497): owner-signature refusal, sealed-holdout and smoke-scope guards, backend-failure accounting; no learned model or sealed payload executes. Not collected by a CI lane; owner-signed qualification runs are separate."
     },
+    "python:deploy/qualification/q1/harness/test_q1_cut.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Standalone unittest controls for the Q1 canonical cut hash (QLT-04, jope.q1-cut/v1): golden cross-language digest, key-order independence, field/order sensitivity and invalid-fold refusal; data-free, no learned model or sealed payload executes."
+    },
     "python:deploy/qualification/v1.0/test_cpu_gates.py": {
       "discovery": {
         "kind": "python-family"
@@ -14368,6 +14378,16 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
+    },
+    "python:research/flywheel_selfplay/h171_grad_accum/test_h171.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H171 owner-directed large effective batch via family-stratified gradient accumulation r882 continuation study (CTRL, ACC4, ACC16, CTRL_EX4); data-free family-stratified batch plan, None-as-zero 29,211-param gradient cosine diagnostic, strict selector and resource controls. Research only; no product or sealed qualification."
     }
   },
   "lanes": {

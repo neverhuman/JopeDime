@@ -66,8 +66,9 @@ game only when its referee is reliable and affordable (\cref{sub:game-boards}).
 
 \section{Incident Log and Audit Safeguards}\label{app:incidents}
 
-\Cref{sub:method-referee} excludes a test-selected search baseline. The record below documents that exclusion and the required audit safeguards.
-Artifacts violating held-out isolation must be recorded rather than silently dropped:
+The reliability requirements in \cref{sub:method-referee} distinguish a
+documented baseline exclusion from checks still required for final evaluation.
+Artifacts that violate held-out isolation belong in the audit record:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Excluded test-selected search baseline.} An earlier internal
   leaderboard entry selected each dataset's best test-scored outcome from
@@ -99,7 +100,7 @@ in \cref{sec:method-status}:
   concatenation and clipping to $\pm32$. Non-finite contexts are refused. Encoding records
   report wall-clock latency from 11.7\,s to 20.8\,s across eight reference
   encoding jobs, within the 30\,s cap.
-  \item \textbf{Objective terms and parameter split (\cref{sub:method-map,sub:method-selfplay}).}
+  \item \textbf{Comparison construction (\cref{sub:method-map,sub:method-selfplay}).}
   Lists $G_p$ require at least eight valid scored programs per problem, with
   percentile $\rho_w = 1 - \mathrm{rank}/\allowbreak{(|G_p|-1)}$ and writer sequence weight
   $0.05 + \rho_w^4$. The native trainer gives problem families equal mass and forms
@@ -110,7 +111,8 @@ in \cref{sec:method-status}:
   separate comparisons from the same context do not pair with each other.
   Pairwise ranking omits non-finite targets and exactly equal values,
   $v_w=v_u$, leaving only strict finite orderings.
-  Thus \cref{eq:writerLoss,eq:mapLoss} show the list-level form. The native decoder
+  \Cref{eq:writerLoss,eq:mapLoss} show the list-level form.
+  \item \textbf{Sequence supervision (\cref{eq:writerLoss}).} The native decoder
   prepends the projected context token before \texttt{BOS}. The sequence
   loss leaves \texttt{BOS} unsupervised but includes the following non-padding
   tokens, including the engine and regression-task header and \texttt{EOS}.
@@ -119,10 +121,20 @@ in \cref{sec:method-status}:
   the normalized rank-weighted mean over programs. The displayed aggregate
   coefficients match the native objective; the checkpoint's objective
   identity and configuration still belong in its evaluation record.
+  \item \textbf{Runtime supervision (\cref{eq:totalLoss}).}
+  The runtime term compares $\ln(1+s)$ with
+  $\ln(1+\operatorname{softplus}(h))$ by Huber loss with threshold~1,
+  for measured seconds $s\geq0$ and raw head output $h$.
+  \item \textbf{Ranking targets (\cref{eq:mapLoss,eq:totalLoss}).}
   In \cref{eq:totalLoss}, $v_w=1/(1+\mathrm{RMSE}_w/m_p)$, where $m_p$ is
   the corpus list's median RMSE. Bradley--Terry weights use $|v_w-v_u|$,
   doubled when either member is at or above the 90th percentile, then
-  normalized by their sum over non-tied pairs. The network has \num{27796494} parameters in total (six
+  reduced over all non-tied within-comparison pairs in the rank-local
+  microbatch. The implementation mean-scales their weights, casts them to
+  float32 and averages weighted pair losses. Listwise losses are computed
+  per eligible comparison group and averaged across groups.
+  \item \textbf{Registered parameter inventory (\cref{sub:method-map}).}
+  The network has \num{27796494} parameters in total (six
   decoder blocks, width \num{512}, four attention heads, prefix context token,
   and maximum length \num{128} tokens over the \num{401}-token grammar).
   Each of the writer and ranking token tables allocates \num{657} rows:
@@ -151,16 +163,9 @@ in \cref{sec:method-status}:
   record.
 \end{itemize}
 
-\section{Development Measurements over Completed-Round Time}\label{app:development-time}
+\section{Flywheel Telemetry}\label{app:flywheel-telemetry}
 
-\Cref{fig:fw-completed-time} shows the same retained summaries as
-\cref{fig:fw-later-development}. The horizontal axis sums completed-round
-wall time, including qualification waits. Each point is an end-of-round
-summary; the event count starts from zero for this window. Binding these
-records to an exact loop, adapter and checkpoint remains pending
-(\cref{sec:method-status}).
-
-\begin{figure}[ht]
+\begin{figure}[htb]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_completed_time.pdf}
   \caption{\textbf{Training-program events and logged validation utility over time.}
@@ -172,6 +177,23 @@ records to an exact loop, adapter and checkpoint remains pending
   \label{fig:fw-completed-time}
 \end{figure}
 
+The following diagnostics are grouped by question. Timing and event counts
+appear in \cref{app:development-time,app:event-counts}; later operating
+windows and rates follow in
+\cref{app:subsequent-window,app:subsequent-utility,app:subsequent-rates,app:round-throughput}.
+\Cref{app:acceptance-over-rounds,app:promotions-per-hour} distinguish adapter
+admissions from program-promotion rates. These views reuse retained
+records and do not add independent evaluations.
+
+\subsection{Development Measurements over Completed-Round Time}\label{app:development-time}
+
+\Cref{fig:fw-completed-time} shows the same retained summaries as
+\cref{fig:fw-later-development}. The horizontal axis sums completed-round
+wall time, including qualification waits. Each point is an end-of-round
+summary; the event count starts from zero for this window. Binding these
+records to an exact loop, adapter and checkpoint remains pending
+(\cref{sec:method-status}).
+
 \input{sections/appendix_event_counts}
 
 \input{sections/appendix_subsequent_window}
@@ -179,3 +201,9 @@ records to an exact loop, adapter and checkpoint remains pending
 \input{sections/appendix_subsequent_utility}
 
 \input{sections/appendix_subsequent_rates}
+
+\input{sections/appendix_round_throughput}
+
+\input{sections/appendix_acceptance_over_rounds}
+
+\input{sections/appendix_promotions_per_hour}
