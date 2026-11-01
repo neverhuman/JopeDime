@@ -114,7 +114,7 @@ def family_bootstrap_context_weights(fit_rows, seed, outer, bag_idx):
 
 def permute_targets_within_family(fitness, gate, seed, outer, cid):
     """Permute candidate targets (fitness, gate) within a fit-split context (hence within its family)."""
-    f_arr = np.asarray(fitness, dtype=np.float32)
+    f_arr = np.asarray(fitness, dtype=np.float64)
     g_arr = np.asarray(gate, dtype=bool)
     if f_arr.shape != g_arr.shape or f_arr.ndim != 1:
         raise ValueError("1D matching fitness and gate arrays required")
