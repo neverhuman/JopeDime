@@ -112,8 +112,13 @@ For the later signed-byte run, provide a result manifest using schema
 `jope.rel07.gate-results/v1`, exactly 28 unique gate rows, a non-empty evidence
 string per row, and `signed_bytes_sha256`. Pass `--artifact` with the exact file
 whose bytes were tested; the runner verifies that digest and requires all 28
-statuses to be PASS before emitting a signer-acceptable receipt. The helper only
-formats and validates receipts; it never signs or requests a signature.
+statuses to be PASS before emitting a receipt with top-level `artifact_sha256`
+and the same `artifact_sha256` on every gate row. The previous
+`signed_bytes_sha256` field is retained for compatibility. These fields bind
+both the receipt and each gate to the exact artifact hash checked by
+`signer_watch.sh`.
+CPU-prestage output has no artifact binding and remains `NOT_RUN`. The helper
+only formats and validates receipts; it never signs or requests a signature.
 
     python3 -B deploy/qualification/v1.0/gates_receipt.py \
       --cpu-prestage "$CPU_RECEIPT" --output "$NEW_GATES_RECEIPT"
