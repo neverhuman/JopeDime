@@ -53,6 +53,51 @@ fn user_objectives_keep_runtime_identity_and_refuse_unavailable_inputs() {
 }
 
 #[test]
+fn frozen_s1_surrogate_extrapolates_beyond_each_training_fold_range() {
+    use crate::{dataset::jmat, worker};
+    // Data-free regression control: independent frozen S1 recipe, two disjoint
+    // ranges. Clipping validation covariates silently changes the trained F.
+    let mut csv = String::from("x,target\n");
+    for x in 0..50 {
+        csv.push_str(&format!("{x},{}\n", 3 * x + 2));
+    }
+    let table = jope_runtime::table::parse_csv(csv.as_bytes(), &Default::default()).unwrap();
+    let bytes = jmat::encode(&table).unwrap();
+    let matrix = jmat::Matrix::open(&bytes).unwrap();
+    let rows: Vec<usize> = (0..50).collect();
+    let request = worker::Request {
+        attempt: worker::Attempt {
+            run: "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0".parse().unwrap(),
+            round: 0,
+            slot: 0,
+            attempt: 0,
+        },
+        matrix_path: "unused-direct-callback.jmat".into(),
+        fold_spec: json!({"version":2,"matrix_sha256":jope_runtime::sha256_hex(&bytes),
+            "target":"target","features":["x"],"folds":[
+            {"repeat":0,"train":rows[..25],"validation":rows[25..]},
+            {"repeat":0,"train":rows[25..],"validation":rows[..25]}]}),
+        dsl: "(pipe X (ridge lambda_frac=0.01))".into(),
+        objective: json!("rmse"),
+        seed: 73,
+        limits: worker::Limits {
+            wall_ms: 30_000,
+            rss_bytes: 1_073_741_824,
+        },
+    };
+    let score = worker::evaluate::native(&request, &matrix).unwrap();
+    assert!(
+        (score.values[0] - -4.1526084651571455).abs() <= 1e-12,
+        "frozen S1 fitness changed: {:?}",
+        score.values
+    );
+    assert_eq!(score.fold_scores.len(), 2);
+    for rmse in score.fold_scores {
+        assert!((rmse - 0.7728482275994584).abs() <= 1e-12);
+    }
+}
+
+#[test]
 fn trained_surrogate_stays_frozen_while_actual_custom_loss_drives_selection() {
     use crate::{
         dataset::jmat,
