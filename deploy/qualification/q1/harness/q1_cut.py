@@ -84,7 +84,13 @@ def cut_sha256(definition):
     return hashlib.sha256(canonical_bytes(definition)).hexdigest()
 
 
-def load_content_addressed(path, expected_sha256, *, expected_dataset_sha256=None):
+def load_content_addressed(
+    path,
+    expected_sha256,
+    *,
+    expected_dataset_sha256=None,
+    expected_train_blob_sha256=None,
+):
     """Load a cut definition and verify its address and optional roster binding."""
     source = Path(path)
     if source.is_symlink() or not source.is_file():
@@ -116,4 +122,37 @@ def load_content_addressed(path, expected_sha256, *, expected_dataset_sha256=Non
         and definition["dataset_sha256"] != expected_dataset_sha256
     ):
         raise ValueError("cut definition dataset differs from its roster entry")
+    if (
+        expected_train_blob_sha256 is not None
+        and definition["train_blob_sha256"] != expected_train_blob_sha256
+    ):
+        raise ValueError("cut definition train blob differs from its roster entry")
+    return definition
+
+
+def require_three_fold_fit_partition(definition):
+    """Enforce R2's three-way disjoint FIT validation partition and ascending complements."""
+    cut_sha256(definition)
+    folds = definition["folds"]
+    if len(folds) != 3:
+        raise ValueError("T0610 roster cuts require exactly three FIT folds")
+    train_rows = definition["train_rows"]
+    all_rows = set(range(train_rows))
+    validation_union = []
+    for fold in folds:
+        if fold["repeat"] != 0:
+            raise ValueError("T0610 roster cuts require repeat 0")
+        validation = fold["validation"]
+        train = fold["train"]
+        if validation != sorted(validation):
+            raise ValueError("T0610 validation rows must be ascending")
+        if train != sorted(all_rows - set(validation)):
+            raise ValueError(
+                "T0610 training rows must be the ascending validation complement"
+            )
+        validation_union.extend(validation)
+    if len(validation_union) != train_rows or set(validation_union) != all_rows:
+        raise ValueError(
+            "T0610 validation folds must form a disjoint three-way FIT partition"
+        )
     return definition

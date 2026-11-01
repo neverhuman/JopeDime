@@ -35,6 +35,7 @@ class Paths:
     fifo: Path = ROOT / "research/flywheel_selfplay/qualification_lock_fifo.py"
     cohort: Path = ROOT / "deploy/qualification/q1/cohort.json"
     input_manifest: Path = ROOT / "deploy/qualification/q1/inputs-manifest.json"
+    amendment: Path = ROOT / "deploy/qualification/q1/amendments/t0610.json"
     cut_definitions: Path = ROOT / "deploy/qualification/q1/cuts"
     lock: Path = Path.home() / "jope_plan/qualification.lock"
     queue: Path = Path.home() / "jope_plan/qualification.queue"
@@ -148,10 +149,7 @@ def build_input_manifest(paths):
                 cut_sha256,
                 expected_dataset_sha256=canonical_sha,
             )
-            q1.require(
-                len(definition["folds"]) == 3,
-                "T0610 roster cuts require exactly three FIT folds",
-            )
+            q1_cut.require_three_fold_fit_partition(definition)
             dataset["cut_sha256"] = cut_sha256
         datasets.append(dataset)
     q1.require(datasets, "no QLT-02 candidate metadata in the source cohort")
@@ -171,6 +169,123 @@ def build_input_manifest(paths):
         "qualification_eligible": False,
         "payloads_included": False,
         "datasets": datasets,
+    }
+
+
+def load_amended_roster_packet(paths=Paths()):
+    """Load the T0610 preregistration amendment, roster packet, and all 154 real FIT cuts."""
+    amendment_path = Path(paths.amendment)
+    q1.require(not amendment_path.is_symlink(), "amendment must not be a symlink")
+    amendment = q1.load(amendment_path.resolve(strict=True))
+    q1.require(
+        isinstance(amendment, dict)
+        and amendment.get("schema") == "jope.q1-prereg-amendment/v1"
+        and amendment.get("amendment_id") == "QLT-04-T0610-R1-R2",
+        "unsupported Q1 preregistration amendment",
+    )
+    roster_rel = amendment.get("roster_cut_packet_path")
+    manifest_rel = amendment.get("fold_manifest_path")
+    q1.require(
+        isinstance(roster_rel, str)
+        and isinstance(manifest_rel, str)
+        and q1.sha(amendment.get("roster_cut_packet_sha256"))
+        and q1.sha(amendment.get("fold_manifest_sha256")),
+        "incomplete Q1 amendment references",
+    )
+    roster_path = (paths.root / roster_rel).resolve(strict=True)
+    manifest_path = (paths.root / manifest_rel).resolve(strict=True)
+    q1.require(
+        not (paths.root / roster_rel).is_symlink()
+        and not (paths.root / manifest_rel).is_symlink(),
+        "amendment target files must not be symlinks",
+    )
+    q1.require(
+        q1.sha_file(roster_path) == amendment["roster_cut_packet_sha256"],
+        "amended roster packet hash differs from amendment",
+    )
+    q1.require(
+        q1.sha_file(manifest_path) == amendment["fold_manifest_sha256"],
+        "fold manifest hash differs from amendment",
+    )
+    packet = q1.load(roster_path)
+    q1.require(
+        isinstance(packet, dict)
+        and packet.get("schema") == "jope.q1-amended-roster-cut-packet/v1"
+        and packet.get("amendment_id") == amendment["amendment_id"],
+        "unsupported Q1 amended roster packet",
+    )
+    rows = packet.get("official_roster")
+    q1.require(
+        isinstance(rows, list)
+        and len(rows) == packet.get("official_roster_count") == 153,
+        "invalid Q1 amended official roster count",
+    )
+    seen_ids = set()
+    datasets = []
+    for row in rows:
+        q1.require(
+            isinstance(row, dict) and row.get("owner_roster153_member") is True,
+            "invalid official roster entry",
+        )
+        dataset_id = row.get("dataset_id")
+        dataset_sha256 = row.get("dataset_sha256")
+        train_blob_sha256 = row.get("train_blob_sha256")
+        cut_sha256 = row.get("cut_sha256")
+        q1.require(
+            isinstance(dataset_id, str)
+            and re.fullmatch(r"[0-9a-f]{16}", dataset_id) is not None
+            and isinstance(dataset_sha256, str)
+            and dataset_sha256.startswith(dataset_id)
+            and q1.sha(dataset_sha256)
+            and q1.sha(train_blob_sha256)
+            and q1.sha(cut_sha256)
+            and row.get("cut_definition_path")
+            == f"deploy/qualification/q1/cuts/{cut_sha256}.json",
+            "invalid amended roster dataset or cut binding",
+        )
+        q1.require(
+            dataset_id not in seen_ids, "duplicate amended roster dataset identity"
+        )
+        seen_ids.add(dataset_id)
+        definition = q1_cut.load_content_addressed(
+            paths.cut_definitions / f"{cut_sha256}.json",
+            cut_sha256,
+            expected_dataset_sha256=dataset_sha256,
+            expected_train_blob_sha256=train_blob_sha256,
+        )
+        q1_cut.require_three_fold_fit_partition(definition)
+        datasets.append(
+            {
+                "dataset_id": dataset_id,
+                "sha256": dataset_sha256,
+                "train_blob_sha256": train_blob_sha256,
+                "cut_sha256": cut_sha256,
+            }
+        )
+    candidate = packet.get("catalog_wide_candidate")
+    q1.require(
+        isinstance(candidate, dict)
+        and candidate.get("official_roster_member") is False
+        and q1.sha(candidate.get("cut_sha256"))
+        and q1.sha(candidate.get("dataset_sha256")),
+        "invalid catalog wide candidate metadata",
+    )
+    candidate_cut = q1_cut.load_content_addressed(
+        paths.cut_definitions / f"{candidate['cut_sha256']}.json",
+        candidate["cut_sha256"],
+        expected_dataset_sha256=candidate["dataset_sha256"],
+    )
+    q1_cut.require_three_fold_fit_partition(candidate_cut)
+    return {
+        "schema": "jope.q1-amended-roster-summary/v1",
+        "amendment_id": amendment["amendment_id"],
+        "amendment_sha256": q1.sha_file(amendment_path),
+        "roster_cut_packet_sha256": amendment["roster_cut_packet_sha256"],
+        "fold_manifest_sha256": amendment["fold_manifest_sha256"],
+        "official_roster_count": len(datasets),
+        "datasets": datasets,
+        "qualification_eligible": False,
+        "q1_status": "NOT_RUN",
     }
 
 

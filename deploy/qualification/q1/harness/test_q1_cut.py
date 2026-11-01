@@ -85,6 +85,30 @@ class Q1CutTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "non-symlink"):
                 q1_cut.load_content_addressed(path, digest)
 
+    def test_require_three_fold_fit_partition_enforces_disjoint_complement(self):
+        valid = {
+            "schema": q1_cut.SCHEMA,
+            "dataset_sha256": "a" * 64,
+            "train_blob_sha256": "b" * 64,
+            "train_rows": 6,
+            "target": "y",
+            "feature_columns": ["x1", "x2"],
+            "folds": [
+                {"repeat": 0, "train": [2, 3, 4, 5], "validation": [0, 1]},
+                {"repeat": 0, "train": [0, 1, 4, 5], "validation": [2, 3]},
+                {"repeat": 0, "train": [0, 1, 2, 3], "validation": [4, 5]},
+            ],
+        }
+        self.assertEqual(q1_cut.require_three_fold_fit_partition(valid), valid)
+        duplicate_folds = copy.deepcopy(valid)
+        duplicate_folds["folds"][1] = copy.deepcopy(valid["folds"][0])
+        with self.assertRaisesRegex(ValueError, "disjoint three-way FIT partition"):
+            q1_cut.require_three_fold_fit_partition(duplicate_folds)
+        incomplete_complement = copy.deepcopy(valid)
+        incomplete_complement["folds"][0]["train"] = [2, 3, 4]
+        with self.assertRaisesRegex(ValueError, "ascending validation complement"):
+            q1_cut.require_three_fold_fit_partition(incomplete_complement)
+
 
 if __name__ == "__main__":
     unittest.main()

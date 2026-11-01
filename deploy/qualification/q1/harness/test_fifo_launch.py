@@ -301,6 +301,60 @@ else:
         with self.assertRaisesRegex(ValueError, "exactly three FIT folds"):
             launch.build_input_manifest(paths)
 
+    def test_consumes_real_t0610_amended_roster_cut_packet_and_cuts(self):
+        summary = launch.load_amended_roster_packet(self.paths)
+        self.assertEqual(summary["schema"], "jope.q1-amended-roster-summary/v1")
+        self.assertEqual(summary["amendment_id"], "QLT-04-T0610-R1-R2")
+        self.assertEqual(
+            summary["roster_cut_packet_sha256"],
+            "ab434d145b8cec60399b35c35a1ce9551a881843e8136b1c757e9c93ae62bd9a",
+        )
+        self.assertEqual(
+            summary["fold_manifest_sha256"],
+            "fdc243193d9436449cf74aa92b05ff7842c6c88bf4dce0b29ef7edf453b74987",
+        )
+        self.assertEqual(summary["official_roster_count"], 153)
+        self.assertEqual(len(summary["datasets"]), 153)
+        self.assertFalse(summary["qualification_eligible"])
+        self.assertEqual(summary["q1_status"], "NOT_RUN")
+        datasets = [
+            {
+                "dataset_id": row["dataset_id"],
+                "sha256": row["sha256"],
+                "s3_manifest_sha256": row["train_blob_sha256"],
+                "cut_sha256": row["cut_sha256"],
+            }
+            for row in summary["datasets"]
+        ]
+        cohort = self.root / "real-t0610-roster.json"
+        cohort.write_bytes(
+            q1.canonical(
+                {
+                    "schema": "jope.q1.held-out-cohort/v1",
+                    "dataset_count": len(datasets),
+                    "datasets": datasets,
+                    "source": {"catalog_sha256": summary["fold_manifest_sha256"]},
+                }
+            )
+        )
+        paths = replace(
+            self.paths,
+            cohort=cohort,
+            input_manifest=self.root / "real-t0610-inputs-manifest.json",
+        )
+        manifest = launch.build_input_manifest(paths)
+        self.assertEqual(len(manifest["datasets"]), 153)
+        self.assertEqual(
+            manifest["datasets"][0]["cut_sha256"],
+            "8b686be059e981dab5cf3245d8c7e2f33e7af2cca0a93935b5e7a7083d91645c",
+        )
+        paths.input_manifest.write_bytes(q1.canonical(manifest))
+        output = self.root / "real-t0610-dry-run.json"
+        record = launch.dry_run(paths.input_manifest, output, paths)
+        self.assertEqual(record["real_s3_metadata_entries"], 153)
+        self.assertEqual(record["q1_status"], "NOT_RUN")
+        self.assertFalse(record["controls"]["dataset_payloads_opened"])
+
     def test_synthetic_dry_run_refuses_a_changed_dope_manifest(self):
         source = q1.load(self.paths.input_manifest)
         source["dope_sha256"] = "f" * 64
