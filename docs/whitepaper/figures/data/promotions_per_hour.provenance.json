@@ -1,0 +1,33 @@
+{
+  "schema": "whitepaper.promotions-per-hour/v1",
+  "source_csv": "figures/data/live_development.csv",
+  "source_csv_sha256": "a913ea6de13ed5c48b36c5499ecc5a2c72a38652bf4472835ace69ba95f56dfc",
+  "parent_provenance": "figures/data/live_development.provenance.json",
+  "parent_provenance_sha256": "3e1c14113dd9ba215a25524dcdba222b333d172f0e219d1e82f25832cb0c2587",
+  "csv": "figures/data/promotions_per_hour.csv",
+  "csv_sha256": "c45b14fe81fba0f3c225bf29abb05d3d67fcfce663121cc16f85ccd9ee05b508",
+  "figure": "figures/fig_fw_promotions_per_hour.pdf",
+  "figure_sha256": "1ba019f43c98068819769fc4c64495aea6e133e6a20aa86e10d1b087b36c4798",
+  "generator": "figures/scripts/make_promotions_per_hour_figure.py",
+  "generator_sha256": "31c162fbd8e7841ddf3e61178e62e02822d7e1e439724dac36ae376d8abc11b6",
+  "round_window": [
+    2644,
+    2663
+  ],
+  "rows": 20,
+  "strict_program_promotions": 21,
+  "completed_round_wall_seconds": "1994.540229887",
+  "initial_rolling_promotions_per_hour": "18.646974966368926",
+  "final_rolling_promotions_per_hour": "37.90347212213568",
+  "window_promotions_per_hour": "37.90347212213568254263857698",
+  "adapter_admissions": 0,
+  "reported_best_round": 882,
+  "metrics": {
+    "round_promotions_per_hour": "3600 * program_promotions / completed_round_wall_seconds for each completed round",
+    "rolling_promotions_per_hour": "Logged summary.promotions_per_hour over up to 20 completed rounds since process start, including qualification wait",
+    "validation_utility": "Logged summary.val_reg (candidate adapter) versus dev_utility.val_reg (recorded best)"
+  },
+  "scope": "Development operating telemetry from rounds 2644-2663; program promotions and adapter admissions are distinct events, not independent first-proposal or deployment comparisons",
+  "matplotlib_version": "3.10.8",
+  "reproduce": "python3 figures/scripts/make_promotions_per_hour_figure.py"
+}

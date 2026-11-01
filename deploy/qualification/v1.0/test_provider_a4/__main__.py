@@ -173,6 +173,47 @@ class A4Tests(unittest.TestCase):
                 self.invoke()
         self.assertFalse(self.tests)
 
+    def test_candidate_parent_aliases_refuse_before_tests(self):
+        alias = self.root / "candidate-parent-link"
+        alias.symlink_to(self.root, target_is_directory=True)
+        directory = self.root / "directory"
+        directory.mkdir()
+        for index, path in enumerate(
+            [
+                alias / self.artifact.name,
+                directory / ".." / self.artifact.name,
+            ]
+        ):
+            with self.subTest(path=path):
+                self.ctx = replace(
+                    self.ctx, artifact=path, result=self.root / f"result-{index}.json"
+                )
+                self.tests.clear()
+                with self.assertRaises(common.ProviderError):
+                    self.invoke()
+                self.assertFalse(self.ctx.result.exists())
+                self.assertFalse(self.tests)
+
+    def test_same_byte_candidate_parent_swap_prevents_receipt(self):
+        directory = self.root / "candidate-parent"
+        directory.mkdir()
+        candidate = directory / "candidate"
+        candidate.write_bytes(self.artifact.read_bytes())
+        self.ctx = replace(self.ctx, artifact=candidate)
+        retained = self.root / "retained-candidate-parent"
+
+        def swap():
+            directory.rename(retained)
+            directory.symlink_to(retained, target_is_directory=True)
+            self.after_test = lambda: None
+
+        self.after_test = swap
+        with self.assertRaises(common.ProviderError):
+            self.invoke()
+        self.assertEqual(common.sha256(candidate), self.ctx.artifact_sha256)
+        self.assertEqual(len(self.tests), 1)
+        self.assertFalse(self.ctx.result.exists())
+
     def test_existing_relative_symlink_or_in_checkout_result_refuses(self):
         existing = self.root / "existing.json"
         existing.write_bytes(b"retain")
