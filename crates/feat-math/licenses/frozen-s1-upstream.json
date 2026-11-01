@@ -1,0 +1,50 @@
+[
+  {
+    "file": "s_sin.c",
+    "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.36/sysdeps/ieee754/dbl-64/s_sin.c",
+    "sha256": "9aa66cb2c44f976d41c3b14e6daa9708066a6d341fca6d1842b959e4f127905f",
+    "bytes": 9483
+  },
+  {
+    "file": "sincostab.c",
+    "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.36/sysdeps/ieee754/dbl-64/sincostab.c",
+    "sha256": "1da08546d74c8efd2524c39bd57d26d81fcb7c8f8a920b61ad116fa41bfde218",
+    "bytes": 42571
+  },
+  {
+    "file": "usncs.h",
+    "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.36/sysdeps/ieee754/dbl-64/usncs.h",
+    "sha256": "c78fb520931e863618a60dc28206d5393f884ede9cbaffa3758b8dbc11553ee3",
+    "bytes": 2640
+  },
+  {
+    "file": "e_log.c",
+    "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.36/sysdeps/ieee754/dbl-64/e_log.c",
+    "sha256": "d9fae4150d9a19e218ea2d3550d563f07454f4ca285a7c3009f12dd5013ac33d",
+    "bytes": 4249
+  },
+  {
+    "file": "e_log_data.c",
+    "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.36/sysdeps/ieee754/dbl-64/e_log_data.c",
+    "sha256": "a98e712fe4920b62b59fbb5fa6d605b750a88cdc51481a2e8d4c7e14e4b9444c",
+    "bytes": 14781
+  },
+  {
+    "file": "e_exp.c",
+    "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.36/sysdeps/ieee754/dbl-64/e_exp.c",
+    "sha256": "804c4899d9bfb8c153a13368376cabbff493d28ef4916689d5c4a65de39f56b8",
+    "bytes": 5716
+  },
+  {
+    "file": "e_exp_data.c",
+    "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.36/sysdeps/ieee754/dbl-64/e_exp_data.c",
+    "sha256": "b66a754f50e1bd6cd628561e8c7924e15ababba07ffe4a6a3e6c2459c8bd2c49",
+    "bytes": 7073
+  },
+  {
+    "file": "math_config.h",
+    "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.36/sysdeps/ieee754/dbl-64/math_config.h",
+    "sha256": "d8976c33defa72d1c55101de6544e18e369ed568e22bbef888917df700266d81",
+    "bytes": 5579
+  }
+]

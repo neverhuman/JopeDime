@@ -404,7 +404,7 @@ pub fn probit(p: f64) -> f64 {
     let p = p.clamp(1e-12, 1.0 - 1e-12);
     let p_low = 0.02425;
     if p < p_low {
-        let q = (-2.0 * p.ln()).sqrt();
+        let q = (-2.0 * crate::portable_math::frozen_s1::ln(p)).sqrt();
         (((((C[0] * q + C[1]) * q + C[2]) * q + C[3]) * q + C[4]) * q + C[5])
             / ((((D[0] * q + D[1]) * q + D[2]) * q + D[3]) * q + 1.0)
     } else if p <= 1.0 - p_low {
@@ -413,7 +413,7 @@ pub fn probit(p: f64) -> f64 {
         (((((A[0] * r + A[1]) * r + A[2]) * r + A[3]) * r + A[4]) * r + A[5]) * q
             / (((((B[0] * r + B[1]) * r + B[2]) * r + B[3]) * r + B[4]) * r + 1.0)
     } else {
-        let q = (-2.0 * (1.0 - p).ln()).sqrt();
+        let q = (-2.0 * crate::portable_math::frozen_s1::ln(1.0 - p)).sqrt();
         -(((((C[0] * q + C[1]) * q + C[2]) * q + C[3]) * q + C[4]) * q + C[5])
             / ((((D[0] * q + D[1]) * q + D[2]) * q + D[3]) * q + 1.0)
     }
@@ -1235,13 +1235,13 @@ pub(crate) fn apply_op_generated(op: &FittedOp, x: &Rows) -> Rows {
         FittedOp::RffCos { w, b, .. } => map_rows(x, |r| {
             let scale = (2.0 / w.len() as f64).sqrt();
             (0..w.len())
-                .map(|i| scale * (dot(&w[i], r) + b[i]).cos())
+                .map(|i| scale * crate::portable_math::frozen_s1::cos(dot(&w[i], r) + b[i]))
                 .collect()
         }),
         FittedOp::RffSin { w, b, .. } => map_rows(x, |r| {
             let scale = (2.0 / w.len() as f64).sqrt();
             (0..w.len())
-                .map(|i| scale * (dot(&w[i], r) + b[i]).sin())
+                .map(|i| scale * crate::portable_math::frozen_s1::sin(dot(&w[i], r) + b[i]))
                 .collect()
         }),
         FittedOp::RandProj { w, .. } => map_rows(x, |r| {
@@ -1284,7 +1284,7 @@ pub(crate) fn apply_op_generated(op: &FittedOp, x: &Rows) -> Rows {
         // Same clamp as MathExpr's sigmoid: keeps Python's math.exp overflow-free.
         FittedOp::Sigmoid { .. } => map_rows(x, |r| {
             r.iter()
-                .map(|v| 1.0 / (1.0 + (-v.clamp(-30.0, 30.0)).exp()))
+                .map(|v| 1.0 / (1.0 + crate::portable_math::frozen_s1::exp(-v.clamp(-30.0, 30.0))))
                 .collect()
         }),
         // Hard indicator per cell: 1.0 when v > t else 0.0 (NaN => 0.0). The
