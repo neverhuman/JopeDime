@@ -3,7 +3,10 @@
 schema = "jope.appliance-dependency-policy/v1"
 package = "jope-appliance"
 target = "x86_64-unknown-linux-gnu"
-feature_sets = [[], ["embedded"], ["embedded", "dev-keys"]]
+feature_sets = [
+  [], ["embedded"], ["embedded", "dev-keys"],
+  ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
+]
 
 # Never in the normal or build closure of `jopedime`.
 deny = [
@@ -35,3 +38,77 @@ native = [
 denied_features = ["feat-math/fitted-cpp", "jope-assets/pack"]
 
 [native_allowed]
+
+# T0115 owner-authorized v1 CPU server/client/ranker scope. Every global deny above remains.
+# Exact versions + root selections + dependency feature caps; no native approval is granted.
+# See DEPENDENCY-FENCE-FULL-DESIGN.md. Empty allowed_features means NO features, never all.
+
+[[package_exceptions]]
+name = "candle-core"
+version = "0.11.0"
+feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+allowed_features = ["default"]
+reason = "CPU-only accepted ranker tensor implementation; reviewed vendored source; no CUDA/Metal/native backends."
+
+[[package_exceptions]]
+name = "gemm"
+version = "0.19.0"
+feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+allowed_features = ["default", "f16", "gemm-f16", "rayon", "std", "wasm-simd128-enable"]
+reason = "Pure Rust CPU matrix kernels required by candle-core0.11; no external BLAS/native runtime."
+
+[[package_exceptions]]
+name = "gemm-common"
+version = "0.19.0"
+feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+allowed_features = ["f16", "half", "rayon", "std", "sysctl", "wasm-simd128-enable"]
+reason = "Shared pure Rust CPU matrix support for the pinned Candle/GEMM selection."
+
+[[package_exceptions]]
+name = "gemm-c32"
+version = "0.19.0"
+feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+allowed_features = ["rayon", "std"]
+reason = "Pure Rust typed CPU kernels required by pinned gemm0.19; no native/CUDA backend."
+
+[[package_exceptions]]
+name = "gemm-c64"
+version = "0.19.0"
+feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+allowed_features = ["rayon", "std"]
+reason = "Pure Rust typed CPU kernels required by pinned gemm0.19; no native/CUDA backend."
+
+[[package_exceptions]]
+name = "gemm-f16"
+version = "0.19.0"
+feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+allowed_features = ["rayon", "std"]
+reason = "Pure Rust typed CPU kernels required by pinned gemm0.19; no native/CUDA backend."
+
+[[package_exceptions]]
+name = "gemm-f32"
+version = "0.19.0"
+feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+allowed_features = ["rayon", "std"]
+reason = "Pure Rust typed CPU kernels required by pinned gemm0.19; no native/CUDA backend."
+
+[[package_exceptions]]
+name = "gemm-f64"
+version = "0.19.0"
+feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+allowed_features = ["rayon", "std"]
+reason = "Pure Rust typed CPU kernels required by pinned gemm0.19; no native/CUDA backend."
+
+[[package_exceptions]]
+name = "hyper"
+version = "1.11.1"
+feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+allowed_features = ["default", "http1", "server"]
+reason = "Axum HTTP1 engine server; existing loopback/auth boundary remains required; no HTTP client/TLS allowance."
+
+[[package_exceptions]]
+name = "ureq"
+version = "3.4.2"
+feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+allowed_features = []
+reason = "Featureless local HTTP client; defaults, TLS and remote-fetch dependencies stay disabled and denied."
