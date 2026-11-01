@@ -771,6 +771,7 @@ def main():
                 pooled_b_families=205,
                 pooled_b_contexts=1219,
                 prespecified_candidate_step=stat.PRESPECIFIED_CANDIDATE_STEP,
+                h178_calibration_gate=stat.H178_CALIBRATION_GATE,
                 decisions=pooled_b_decisions,
                 pooled_b_summary=pooled_b_summary,
                 locked_before_a_confirmation=True,
@@ -886,6 +887,7 @@ def main():
             static_grad_parity_perturbed_bit_exact=True,
             pooled_b_coverage=coverage_proof,
             h175_power_anchor=power_anchor,
+            h178_calibration_gate=stat.H178_CALIBRATION_GATE,
             pooled_b_selection=dict(
                 decisions=pooled_b_decisions,
                 summary=pooled_b_summary,

@@ -180,32 +180,81 @@ def test_synthetic_plus_001_shift_admits_and_within_family_seed_averaging():
     assert acc16["selected_step"] == 0
 
 
-def test_h175_power_anchor_gate_and_mde80_scaling():
+def test_h175_power_anchor_gate_mde80_scaling_and_h178_reusable_decision_object():
     anchor = json.loads((HERE / "h175_power_anchor.json").read_text())
-    # Smoke is permitted while H175 is pending closeout.
+    # Verify both context (+0.0158/+0.0228) and family-clustered (+0.0640/+0.0947) MDE80s are pinned.
+    mde41 = anchor["mde80_single_fold_41_family"]
+    mde205 = anchor["expected_pooled_205_family_mde80"]
+    assert math.isclose(
+        mde41["context"]["24_slate"], 0.015834306207683856, rel_tol=1e-9
+    )
+    assert math.isclose(
+        mde41["context"]["full_slate"], 0.02280187032608344, rel_tol=1e-9
+    )
+    assert math.isclose(
+        mde41["family_clustered"]["24_slate"], 0.06395704693361139, rel_tol=1e-9
+    )
+    assert math.isclose(
+        mde41["family_clustered"]["full_slate"], 0.09467790954714358, rel_tol=1e-9
+    )
+    assert math.isclose(
+        mde205["family_clustered"]["24_slate_raw_div_sqrt5"],
+        0.06395704693361139 / math.sqrt(5.0),
+        rel_tol=1e-12,
+    )
+    assert math.isclose(
+        mde205["family_clustered"]["full_slate_raw_div_sqrt5"],
+        0.09467790954714358 / math.sqrt(5.0),
+        rel_tol=1e-12,
+    )
+    assert anchor["h178_calibration_gate"] == stat.H178_CALIBRATION_GATE
+
+    # Committed anchor is now READY_TO_LAUNCH with H175 closeout b0261812e125c8743370b7801b75d27e7f27977f (MIXED).
+    assert anchor["status"] == "READY_TO_LAUNCH"
+    assert anchor["h175_closeout_commit"] == "b0261812e125c8743370b7801b75d27e7f27977f"
+    assert anchor["h175_verdict"] == "MIXED"
     validate_h175_power_anchor(anchor, smoke=True)
-    # Full science run is blocked while H175 is pending closeout.
+    validate_h175_power_anchor(anchor, smoke=False)
+
+    # Pending closeout must block non-smoke runs.
+    pending = dict(anchor, status="PENDING_H175_CLOSEOUT")
     with pytest.raises(RuntimeError, match="blocked until H175 closes"):
-        validate_h175_power_anchor(anchor, smoke=False)
+        validate_h175_power_anchor(pending, smoke=False)
 
     # CEILING_LIKELY must hard-refuse science run.
     ceiling = dict(anchor, status="READY_TO_LAUNCH", h175_verdict="CEILING_LIKELY")
     with pytest.raises(RuntimeError, match="CEILING_LIKELY"):
         validate_h175_power_anchor(ceiling, smoke=False)
 
-    # Valid SELECTOR_UNDERPOWERED or MIXED anchor with measured MDE80 passes.
-    mde41 = 0.015
-    mde205 = stat.expected_mde80_205fam(mde41)
-    assert math.isclose(mde205, 0.001 + (0.015 - 0.001) / math.sqrt(5.0), rel_tol=1e-12)
+    # Missing H178 calibration gate or missing family_clustered MDE80 must fail.
+    bad_gate = dict(anchor, h178_calibration_gate="missing")
+    with pytest.raises(RuntimeError, match="H178 calibration gate"):
+        validate_h175_power_anchor(bad_gate, smoke=True)
+
+    # Valid MIXED anchor with 40-hex closeout commit passes.
     ready = dict(
         anchor,
         status="READY_TO_LAUNCH",
-        h175_verdict="SELECTOR_UNDERPOWERED",
+        h175_verdict="MIXED",
         h175_closeout_commit="a" * 40,
-        h175_mde80_41fam=mde41,
-        expected_mde80_205fam=mde205,
     )
     validate_h175_power_anchor(ready, smoke=False)
+
+    # Verify H177_DECISION_RULE is importable as one object and reusable unchanged by H178 on single or custom panels.
+    rows = _synthetic_1219_rows()
+    rng = np.random.default_rng(177909)
+    r882 = rng.normal(1.15, 0.25, size=len(rows))
+    null_panel = np.broadcast_to(r882[None, :], (3, len(rows))).copy()
+    plus_panel = np.stack([r882 + 0.015 for _ in range(3)])
+    single_null = stat.H177_DECISION_RULE(rows, r882, null_panel)
+    assert single_null["admitted"] is False and single_null["selected_step"] == 0
+    single_plus = stat.H177_DECISION_RULE.decide_single_panel(rows, r882, plus_panel)
+    assert single_plus["admitted"] is True and single_plus["selected_step"] == 40
+    custom_bank = stat.H177_DECISION_RULE.select(
+        rows, r882, {"H175_NULL": null_panel, "H175_ORACLE_005": plus_panel}
+    )
+    assert custom_bank["H175_NULL"]["admitted"] is False
+    assert custom_bank["H175_ORACLE_005"]["admitted"] is True
 
 
 def test_recipe_arms_family_stratified_batches_oc15_and_none_grad_handling():

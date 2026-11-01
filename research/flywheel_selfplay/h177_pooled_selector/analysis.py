@@ -223,6 +223,12 @@ def holm(pvals):
     return result
 
 
+H178_CALIBRATION_GATE = (
+    "Any H177 ADMIT is lift only if H178 (gpu_tokbench_agy, calibration of this exact rule on the H175 bank) "
+    "shows null/harmful admission <= 0.05. Otherwise H177 is DIAGNOSTIC."
+)
+
+
 def expected_mde80_205fam(mde80_41fam, margin=0.001):
     """Project 205-family pooled-B MDE80 from H175's 41-family single-fold MDE80 via sqrt(41/205) = 1/sqrt(5) SE scaling."""
     if (
@@ -237,14 +243,21 @@ def expected_mde80_205fam(mde80_41fam, margin=0.001):
 
 
 def pooled_b_select(rows, r882_values, candidate_panels_by_arm, seed=BOOT_SEED):
-    """Confirmatory pooled cross-fit selector over all 205 DL-Train families.
+    """Confirmatory pooled cross-fit selector over all 205 DL-Train families (reusable unchanged by H178).
 
-    - Requires exactly ONE prespecified candidate step per arm (shape (3, N_ctx)); multi-step arrays raise ValueError.
+    - Accepts either a mapping `{arm_name: panel_2d}` or a single 2D panel `(3, N_ctx)`.
+    - Requires exactly ONE prespecified candidate step per arm (shape `(3, N_ctx)`); multi-step 3D arrays raise ValueError.
     - Averages the 3 seeds within each of the 205 families BEFORE running 10,000 paired family-bootstrap draws.
     - Admits iff equal-family gain > 0.001 + 1e-12 AND lower 95% bound > 0.0 AND Holm-adjusted p < 0.05 across arms; ties reject.
     """
-    if not candidate_panels_by_arm:
-        raise ValueError("non-empty candidate_panels_by_arm required")
+    single_panel_input = not isinstance(candidate_panels_by_arm, dict)
+    if single_panel_input:
+        arms_map = {"CANDIDATE": candidate_panels_by_arm}
+    else:
+        if not candidate_panels_by_arm:
+            raise ValueError("non-empty candidate_panels_by_arm required")
+        arms_map = dict(candidate_panels_by_arm)
+
     families = [r["family_id"] for r in rows]
     fams_sorted = sorted(set(families))
     n_fams = len(fams_sorted)
@@ -268,9 +281,9 @@ def pooled_b_select(rows, r882_values, candidate_panels_by_arm, seed=BOOT_SEED):
 
     raw_decisions = {}
     pvals_all = {}
-    for arm, panel in candidate_panels_by_arm.items():
-        if arm not in PRESPECIFIED_CANDIDATE_STEP:
-            raise ValueError(f"unknown arm {arm}; prespecified arm required")
+    for arm, panel in arms_map.items():
+        if not isinstance(arm, str) or not arm:
+            raise ValueError("non-empty string arm name required")
         arr = np.asarray(panel, dtype=np.float64)
         if arr.ndim != 2 or arr.shape != (3, len(rows)):
             raise ValueError(
@@ -278,6 +291,7 @@ def pooled_b_select(rows, r882_values, candidate_panels_by_arm, seed=BOOT_SEED):
             )
         if not np.isfinite(arr).all():
             raise ValueError(f"nonfinite candidate panel for arm {arm}")
+        cand_step = int(PRESPECIFIED_CANDIDATE_STEP.get(arm, CANDIDATE_STEP))
         fm_arm = np.stack([family_matrix(v, families)[1] for v in arr])  # (3, 205)
         diff_by_seed_fam = fm_arm - fm_base  # (3, 205)
         per_seed_gain = diff_by_seed_fam.mean(axis=1)  # (3,)
@@ -292,7 +306,7 @@ def pooled_b_select(rows, r882_values, candidate_panels_by_arm, seed=BOOT_SEED):
         med_seed_ci95 = np.quantile(boot_med_seeds, [0.025, 0.975]).tolist()
         pvals_all[arm] = p_one_sided
         raw_decisions[arm] = dict(
-            prespecified_candidate_step=PRESPECIFIED_CANDIDATE_STEP[arm],
+            prespecified_candidate_step=cand_step,
             mean_gain=mean_gain,
             ci95=ci95,
             per_seed_gain=per_seed_gain.tolist(),
@@ -325,7 +339,36 @@ def pooled_b_select(rows, r882_values, candidate_panels_by_arm, seed=BOOT_SEED):
             selected_step=cand_step if admitted else 0,
             selected_step_unadjusted=cand_step if unadj_ok else 0,
         )
+    if single_panel_input:
+        return decisions["CANDIDATE"]
     return decisions
+
+
+class H177DecisionRule:
+    """Single importable decision-rule object for H177 and H178 calibration replay on the H175 counterfactual bank."""
+
+    wave = "H177"
+    margin = 0.001
+    eps = EPS
+    draws = DRAWS
+    boot_seed = BOOT_SEED
+    fold_seed = FOLD_SEED
+    candidate_step = CANDIDATE_STEP
+    pooled_b_families = 205
+    h178_calibration_gate = H178_CALIBRATION_GATE
+
+    def __call__(self, rows, r882_values, candidate_panels_by_arm, seed=BOOT_SEED):
+        return pooled_b_select(rows, r882_values, candidate_panels_by_arm, seed=seed)
+
+    def select(self, rows, r882_values, candidate_panels_by_arm, seed=BOOT_SEED):
+        return pooled_b_select(rows, r882_values, candidate_panels_by_arm, seed=seed)
+
+    def decide_single_panel(self, rows, r882_values, candidate_panel, seed=BOOT_SEED):
+        return pooled_b_select(rows, r882_values, candidate_panel, seed=seed)
+
+
+H177_DECISION_RULE = H177DecisionRule()
+h177_decision_function = pooled_b_select
 
 
 def bt_ratings(wins, anchor=0, prior=0.01):
