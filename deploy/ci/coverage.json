@@ -14764,6 +14764,16 @@
       ],
       "lanes": [],
       "scope": "H201 data-free host-before-input exclusion, paired family bootstrap and weighting, sequential SMA versus observed-incumbent screen, joint-null candidate dependence, family split exclusion, BT reference and strict verdict controls; no corpus/checkpoint reads, model passes or optimizer calls in fixtures."
+    },
+    "python:research/flywheel_selfplay/h202_hard_negative/test_h202.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H202 data-free host-before-read/resource, stable current-top5 logistic inversion/gradient sign, zero-inversion loss, within-context shuffle, DOPE/anchor gradient masking and optimizer exclusion, fresh FIT/B/A folds, family-balanced paired sampling, durable B lock, lossless XOR and strict median/verdict controls; no corpus or model-checkpoint reads in fixtures."
     }
   },
   "lanes": {
