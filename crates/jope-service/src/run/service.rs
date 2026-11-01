@@ -114,7 +114,7 @@ impl BackendPlan {
                 guidance: ResolvedGuidance {
                     value: Guidance::Learned,
                     prior_only: false,
-                    reason: "Explicit owner-admitted signed r782 backend.".into(),
+                    reason: "Learned guidance uses the configured regression model.".into(),
                 },
                 warnings: vec![],
                 placement: graph.placement(),
