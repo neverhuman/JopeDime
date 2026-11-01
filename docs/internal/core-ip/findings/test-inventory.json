@@ -5192,6 +5192,10 @@
     "python:research/h145/test_h145.py": {
       "reason": "H145 data-free controls for disjoint family-fold selection/assessment, duplicate/nonfinite refusal, equal-family weighting, exact Elo ties, canonical Bradley-Terry bootstrap equivalence with repeated-family multiplicity, and lexical exclusion of DL-Val outcome subtrees. These controls do not train or qualify a model; offline research only.",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h149_reg_sweep/test_h149.py": {
+      "role": "research",
+      "reason": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
