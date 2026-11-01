@@ -1,0 +1,76 @@
+{
+  "schema": "whitepaper.live-development/v1",
+  "snapshot": {
+    "at": "2026-11-01T05:20:06.331608+00:00",
+    "host": "xbabe1",
+    "selection": "Latest20 consecutive completed summary rounds also present in captured admissions; journal strict-promotion records in exactly that window; required aggregate fields only",
+    "round_window": [
+      2644,
+      2663
+    ],
+    "files": [
+      {
+        "name": "summary.jsonl",
+        "sha256": "475274e6c52b3d9ba68a77f18b219056ed7534003f4e0f93ce6fa14d37168d9e",
+        "selected_rows": 20,
+        "source_prefix": {
+          "name": "summary.jsonl",
+          "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/summary.jsonl",
+          "inode": 62570245,
+          "observed_bytes": 3526637,
+          "prefix_bytes": 3526637,
+          "prefix_sha256": "ca4196a00d75a9b9412e7ca479b87cddbf9a96112aa971b33ec24985c1c27983",
+          "mtime_ns_before": 1793510403700661171,
+          "mtime_ns_after": 1793510403700661171,
+          "trailing_incomplete_bytes_omitted": 0,
+          "source_rows": 21
+        }
+      },
+      {
+        "name": "promotions.jsonl",
+        "sha256": "00eb9854d41f092468af925db1e8bb0d94454f32fa635bc4748178fbf2ccd660",
+        "selected_rows": 21,
+        "source_prefix": {
+          "name": "promotions.jsonl",
+          "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/promotions.jsonl",
+          "inode": 62570216,
+          "observed_bytes": 9388866,
+          "prefix_bytes": 9388866,
+          "prefix_sha256": "6308e589e3bbb36188ed1993de21e6a6cd3a38971ceb9380bb5f764964833f80",
+          "mtime_ns_before": 1793510382711675426,
+          "mtime_ns_after": 1793510382711675426,
+          "trailing_incomplete_bytes_omitted": 0,
+          "source_rows": 2594
+        }
+      }
+    ],
+    "scope": "Aggregate-only projection; no candidate programs, dataset rows, model weights or protected outcomes transferred"
+  },
+  "round_window": [
+    2644,
+    2663
+  ],
+  "summary_rows": 20,
+  "strict_program_promotions": 21,
+  "adapter_admissions": 0,
+  "reported_best_rounds": [
+    882
+  ],
+  "completed_round_wall_seconds": "1994.540229887",
+  "rounds_per_hour": "36.09854487822445956441769236",
+  "program_promotions_per_hour": "37.90347212213568254263857698",
+  "promotion_CI_scope": {
+    "unavailable": 21
+  },
+  "evaluation_identities": [
+    "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83"
+  ],
+  "csv_sha256": "a913ea6de13ed5c48b36c5499ecc5a2c72a38652bf4472835ace69ba95f56dfc",
+  "admission_csv_sha256": "edd336c3b68e880040e8f41a6fe437617f643ed183d9b03d69554963ad54a6dd",
+  "generator_sha256": "e2b712c4818d64b872d0b7f10f3001c1cffe8f3d726ea0c0c5ee06a23f41f050",
+  "source_binding": "Aggregate field interpretation only; installed source/checkpoint qualification remains required",
+  "scope": "Latest retained completed-round development telemetry; program events and adapter admissions are distinct, not independent first-proposal or deployment evidence",
+  "reproduce": "python3 figures/scripts/make_live_development_figure.py",
+  "figure_sha256": "c7aa615a2ad667b9b462f8a695ba6c1e69b2da26bfed4bae8a4e305140d0a147",
+  "matplotlib_version": "3.10.8"
+}
