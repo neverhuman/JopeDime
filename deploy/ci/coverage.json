@@ -6094,6 +6094,16 @@
       "lanes": [],
       "scope": "JRB-01 binary panel packet validation (schema, family coverage, sealed-id exclusion, deterministic rebuild); offline research only."
     },
+    "python:research/joint_regbin/test_candidate_builder.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "JRB-01 synthetic train-only tensor builder checks: rederived role-admission requirement, unverified-family withholding, exact train-blob identity, Flywheel candidate evaluation and worker tensor packing. No real S3 payload, checkpoint, training, score history, GPU or qualification."
+    },
     "python:research/joint_regbin/test_study.py": {
       "discovery": {
         "kind": "python-family"

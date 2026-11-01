@@ -20,7 +20,7 @@ from typing import Callable
 import numpy as np
 import torch
 
-from . import protocol
+from . import admission, protocol
 
 CATALOG_V246_SHA256 = "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba"
 R882_CHECKPOINT_SHA256 = (
@@ -39,8 +39,6 @@ PROGRAM_FEATURE_NAMES_SHA256 = (
     "c4e4373d1bc7e99bc38e44eb4acda22d0f9ecc9e332fa8cb9c6a0b463fe37962"
 )
 POOL_SCHEMA = "jope.joint-regbin.candidate-tensor/v1"
-FAMILY_POOL_SCHEMA = "jope.joint-regbin.family-key-pools/v1"
-ROLE_CANDIDATE_SCHEMA = "jope.joint-regbin.task-role-candidates/v1"
 PROPOSALS_PER_CONTEXT = 16
 
 
@@ -63,20 +61,20 @@ def _require(condition: bool, message: str) -> None:
 
 def validate_catalog_train_context(
     family_pools: dict,
-    role_candidates: dict,
+    role_manifest: dict,
     context: dict,
     catalog_row: dict,
     *,
-    fold: int,
+    catalog_path: Path | None = None,
 ) -> dict:
-    """Bind one non-panel train-role candidate to the two metadata manifests.
+    """Bind a train-only context to rederived role admission and family identity.
 
-    Role candidates intentionally remain non-admitted. This check only
-    establishes that a cache build is for an explicitly assigned TRAIN/VAL
-    row, never that its output may enter a runnable study.
+    Metadata-only pools intentionally withhold unverified families. They
+    provide family identity only; complete role admission is required before
+    a train blob can be fetched.
     """
     _require(
-        family_pools.get("schema") == FAMILY_POOL_SCHEMA
+        family_pools.get("schema") == admission.FAMILY_KEY_POOL_SCHEMA
         and family_pools.get("status") == "FAMILY_KEY_SPLITS_NOT_ADMITTED"
         and family_pools.get("eligibility_verified") is False,
         "pinned non-admitted family-key pool manifest required",
@@ -86,25 +84,24 @@ def validate_catalog_train_context(
         "family-key pool catalog pin mismatch",
     )
     _require(
-        role_candidates.get("schema") == ROLE_CANDIDATE_SCHEMA
-        and role_candidates.get("admission_status") == "ROLE_CANDIDATES_NOT_ADMITTED"
-        and role_candidates.get("eligibility_verified") is False,
-        "metadata-only task role candidates required",
+        family_pools.get("fold_splits") == {}
+        and family_pools.get("fold_by_family") == {}
+        and family_pools.get("nonsealed_eligibility", {}).get("status")
+        == "UNVERIFIED_FROM_APPROVED_METADATA"
+        and family_pools.get("nonsealed_eligibility", {}).get("verified_family_count")
+        == 0,
+        "unverified family roles must remain withheld",
     )
-    exclusion = role_candidates.get("protected_exclusion")
+    if catalog_path is None:
+        admitted = admission.rederive_role_manifest(role_manifest)
+    else:
+        admitted = admission.rederive_role_manifest(role_manifest, catalog_path)
     _require(
-        isinstance(exclusion, dict)
-        and exclusion.get("assigned_role_dataset_overlap") == 0
-        and exclusion.get("assigned_role_family_overlap") == 0
-        and isinstance(exclusion.get("manifest_sha256"), str)
-        and len(exclusion["manifest_sha256"]) == 64,
-        "protected-family exclusion receipt missing or overlapping",
+        admitted.get("admission_status") == "ADMITTED"
+        and admitted.get("eligibility_verified") is True
+        and admitted.get("catalog_sha256") == CATALOG_V246_SHA256,
+        "complete admitted role manifest required; unverified families are withheld",
     )
-    _require(
-        role_candidates.get("catalog_sha256") == CATALOG_V246_SHA256,
-        "task-role catalog pin mismatch",
-    )
-    _require(type(fold) is int and 0 <= fold < 5, "family fold must be 0..4")
     required = {
         "id",
         "dataset",
@@ -120,6 +117,14 @@ def validate_catalog_train_context(
     _require(
         isinstance(context, dict) and set(context) == required,
         "JRB context fields mismatch",
+    )
+    admitted_context = next(
+        (row for row in admitted.get("contexts", []) if row.get("id") == context["id"]),
+        None,
+    )
+    _require(
+        admitted_context == context,
+        "context is not in the rederived admitted role manifest",
     )
     dataset = context["dataset"]
     task = context["task"]
@@ -145,19 +150,12 @@ def validate_catalog_train_context(
         catalog_row.get("s3_bucket") == "veox-jopedime-datasets-use2",
         "unapproved dataset bucket",
     )
+    pool_row = family_pools.get("train_metadata_by_dataset", {}).get(dataset, {})
     _require(
-        catalog_row.get("train_sha256")
-        == family_pools.get("train_metadata_by_dataset", {})
-        .get(dataset, {})
-        .get("train_sha256"),
-        "catalog train hash differs from family pool",
-    )
-    _require(
-        catalog_row.get("train_rows")
-        == family_pools.get("train_metadata_by_dataset", {})
-        .get(dataset, {})
-        .get("train_rows"),
-        "catalog train row count differs from family pool",
+        catalog_row.get("train_sha256") == pool_row.get("train_sha256")
+        and catalog_row.get("train_rows") == pool_row.get("train_rows")
+        and catalog_row.get("task") == pool_row.get("task"),
+        "catalog train metadata differs from the pinned family pool",
     )
     family = family_pools.get("family_by_dataset", {}).get(dataset)
     _require(
@@ -165,48 +163,15 @@ def validate_catalog_train_context(
         "family identity mismatch",
     )
     _require(
-        role_candidates.get("family_by_dataset", {}).get(dataset) == family,
-        "role-family identity mismatch",
+        admitted.get("family_by_dataset", {}).get(dataset) == family,
+        "admitted role family differs from pinned family identity",
     )
-    role_rows = (
-        role_candidates.get("records", {}).get(context["role"], {}).get(task, [])
-    )
-    role_row = next((row for row in role_rows if row.get("dataset") == dataset), None)
-    _require(
-        role_row is not None and role_row.get("family") == family,
-        "context absent from role candidates",
-    )
-    _require(
-        role_row.get("train_sha256") == catalog_row.get("train_sha256"),
-        "role train hash mismatch",
-    )
-    if context["role"] == "train":
-        _require(
-            dataset
-            in family_pools.get("fold_splits", {})
-            .get(str(fold), {})
-            .get("train", {})
-            .get(task, []),
-            "family-key fold does not assign this context to train",
-        )
-    else:
-        _require(
-            dataset
-            in family_pools.get("fold_splits", {})
-            .get(str(fold), {})
-            .get("val", {})
-            .get(task, []),
-            "family-key fold does not assign this context to validation",
-        )
     _require(
         catalog_row.get("cols", 0) > 1, "catalog feature/target column count invalid"
     )
     _require(
         type(catalog_row.get("train_rows")) is int and catalog_row["train_rows"] >= 50,
         "train rows below S1 minimum",
-    )
-    _require(
-        len(catalog_row.get("train_sha256", "")) == 64, "catalog train hash missing"
     )
     return {
         "context_id": context["id"],
@@ -217,11 +182,20 @@ def validate_catalog_train_context(
         "source_split": context["source_split"],
         "origin": context["origin"],
         "has_meta_test": context["has_meta_test"],
-        "fold": fold,
         "train_rows": catalog_row["train_rows"],
         "columns": catalog_row["cols"],
         "train_sha256": catalog_row["train_sha256"],
-        "catalog_sha256": family_pools["catalog_sha256"],
+        "catalog_sha256": admitted["catalog_sha256"],
+        "role_admission_sha256": sha256_bytes(
+            json.dumps(admitted, sort_keys=True, separators=(",", ":")).encode()
+        ),
+        "admission_status": "ADMITTED",
+        "eligibility_verified": True,
+        "_role_manifest": role_manifest,
+        "_context": context,
+        "_catalog_row": catalog_row,
+        "_family_pools": family_pools,
+        "_catalog_path": catalog_path,
     }
 
 
@@ -229,9 +203,53 @@ def fetch_train_csv(
     s3_client, bucket: str, context_identity: dict
 ) -> tuple[dict, bytes]:
     """Read only the exact dataset manifest and catalog-pinned train blob."""
+    _require(
+        all(
+            key in context_identity
+            for key in (
+                "_family_pools",
+                "_role_manifest",
+                "_context",
+                "_catalog_row",
+                "_catalog_path",
+            )
+        ),
+        "fresh role-admission validation required before S3 read",
+    )
     _require(bucket == "veox-jopedime-datasets-use2", "unapproved S3 bucket")
+    rechecked = validate_catalog_train_context(
+        context_identity["_family_pools"],
+        context_identity["_role_manifest"],
+        context_identity["_context"],
+        context_identity["_catalog_row"],
+        catalog_path=context_identity["_catalog_path"],
+    )
+    _require(
+        rechecked.get("role_admission_sha256")
+        == context_identity.get("role_admission_sha256"),
+        "role admission identity changed before S3 read",
+    )
+    for key in (
+        "context_id",
+        "dataset",
+        "task",
+        "family",
+        "role",
+        "source_split",
+        "train_rows",
+        "columns",
+        "train_sha256",
+        "catalog_sha256",
+    ):
+        _require(
+            rechecked.get(key) == context_identity.get(key),
+            f"validated train identity changed before S3 read: {key}",
+        )
     _require(
         context_identity.get("catalog_sha256") == CATALOG_V246_SHA256
+        and context_identity.get("admission_status") == "ADMITTED"
+        and context_identity.get("eligibility_verified") is True
+        and len(context_identity.get("role_admission_sha256", "")) == 64
         and context_identity.get("role") in ("train", "val")
         and context_identity.get("source_split") == "train"
         and context_identity.get("origin") == "real"
@@ -390,6 +408,12 @@ def build_candidate_pool(
     """Build task-labeled candidates with injected, source-pinned Flywheel APIs."""
     _require(
         context_identity.get("task") in protocol.TASKS, "explicit catalog task required"
+    )
+    _require(
+        context_identity.get("admission_status") == "ADMITTED"
+        and context_identity.get("eligibility_verified") is True
+        and len(context_identity.get("role_admission_sha256", "")) == 64,
+        "candidate labels require a rederived admitted role manifest",
     )
     _require(
         context_identity.get("role") in ("train", "val"), "TRAIN/VAL role required"

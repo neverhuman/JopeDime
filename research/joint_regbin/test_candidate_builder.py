@@ -15,12 +15,26 @@ import torch
 from research.joint_regbin import candidate_builder as builder
 
 
+@pytest.fixture(autouse=True)
+def rederive_synthetic_role_admission(monkeypatch):
+    def rederive(manifest, *_args):
+        if (
+            manifest.get("admission_schema") != builder.admission.ROLE_SCHEMA
+            or manifest.get("admission_status") != "ADMITTED"
+            or manifest.get("eligibility_verified") is not True
+        ):
+            raise ValueError("incomplete JRB inputs cannot produce a runnable plan")
+        return manifest
+
+    monkeypatch.setattr(builder.admission, "rederive_role_manifest", rederive)
+
+
 def _inputs(task="regression", role="train"):
     dataset = "fixture-dataset"
     family = "fixture-family"
     train_sha = "a" * 64
     family_pools = {
-        "schema": builder.FAMILY_POOL_SCHEMA,
+        "schema": builder.admission.FAMILY_KEY_POOL_SCHEMA,
         "status": "FAMILY_KEY_SPLITS_NOT_ADMITTED",
         "eligibility_verified": False,
         "catalog_sha256": builder.CATALOG_V246_SHA256,
@@ -28,12 +42,11 @@ def _inputs(task="regression", role="train"):
             dataset: {"train_sha256": train_sha, "train_rows": 50, "task": task}
         },
         "family_by_dataset": {dataset: family},
-        "fold_splits": {
-            str(fold): {
-                "train": {task: [dataset] if role == "train" else ["other"]},
-                "val": {task: [dataset] if role == "val" else ["other"]},
-            }
-            for fold in range(5)
+        "fold_by_family": {},
+        "fold_splits": {},
+        "nonsealed_eligibility": {
+            "status": "UNVERIFIED_FROM_APPROVED_METADATA",
+            "verified_family_count": 0,
         },
     }
     context = {
@@ -48,24 +61,15 @@ def _inputs(task="regression", role="train"):
         "payload": f"{task}/{dataset}.npz",
         "payload_sha256": "c" * 64,
     }
-    role_candidates = {
-        "schema": builder.ROLE_CANDIDATE_SCHEMA,
-        "admission_status": "ROLE_CANDIDATES_NOT_ADMITTED",
-        "eligibility_verified": False,
+    role_manifest = {
+        "schema": builder.protocol.SCHEMA,
+        "admission_schema": builder.admission.ROLE_SCHEMA,
+        "admission_status": "ADMITTED",
+        "eligibility_verified": True,
         "catalog_sha256": builder.CATALOG_V246_SHA256,
-        "protected_exclusion": {
-            "manifest_sha256": "e" * 64,
-            "assigned_role_dataset_overlap": 0,
-            "assigned_role_family_overlap": 0,
-        },
+        "contexts": [context],
         "family_by_dataset": {dataset: family},
-        "records": {
-            role: {
-                task: [
-                    {"dataset": dataset, "family": family, "train_sha256": train_sha}
-                ]
-            }
-        },
+        "evidence": {"data": {}},
     }
     catalog_row = {
         "id": dataset,
@@ -75,7 +79,7 @@ def _inputs(task="regression", role="train"):
         "train_rows": 50,
         "cols": 3,
     }
-    return family_pools, role_candidates, context, catalog_row
+    return family_pools, role_manifest, context, catalog_row
 
 
 class _Body:
@@ -103,18 +107,37 @@ class _S3:
         return {"Body": _Body(body)}
 
 
-def test_train_context_binds_pinned_pool_role_and_source_split():
+def test_train_context_binds_rederived_admission_and_source_split():
     pools, roles, context, catalog_row = _inputs()
     identity = builder.validate_catalog_train_context(
-        pools, roles, context, catalog_row, fold=0
+        pools, roles, context, catalog_row
     )
     assert identity["task"] == "regression"
     assert identity["train_sha256"] == "a" * 64
+    assert identity["admission_status"] == "ADMITTED"
+    assert identity["eligibility_verified"] is True
     context["source_split"] = "test"
-    with pytest.raises(ValueError, match="train CSVs only"):
+    with pytest.raises(ValueError):
+        builder.validate_catalog_train_context(pools, roles, context, catalog_row)
+
+
+def test_unverified_roles_and_family_folds_cannot_authorize_candidate_reads():
+    pools, role_manifest, context, catalog_row = _inputs()
+    pools["fold_splits"] = {"0": {"train": {"regression": [context["dataset"]]}}}
+    with pytest.raises(ValueError, match="roles must remain withheld"):
         builder.validate_catalog_train_context(
-            pools, roles, context, catalog_row, fold=0
+            pools, role_manifest, context, catalog_row
         )
+
+    pools["fold_splits"] = {}
+    role_manifest["admission_status"] = "BLOCKED_INCOMPLETE_EVIDENCE"
+    role_manifest["eligibility_verified"] = False
+    s3 = _S3(b"{}", b"")
+    with pytest.raises(ValueError, match="incomplete JRB inputs"):
+        builder.validate_catalog_train_context(
+            pools, role_manifest, context, catalog_row
+        )
+    assert s3.requests == []
 
 
 @pytest.mark.parametrize(
@@ -124,19 +147,18 @@ def test_train_context_rejects_panel_protected_and_synthetic_rows(field, value):
     pools, roles, context, catalog_row = _inputs()
     context[field] = value
     with pytest.raises(ValueError):
-        builder.validate_catalog_train_context(
-            pools, roles, context, catalog_row, fold=0
-        )
+        builder.validate_catalog_train_context(pools, roles, context, catalog_row)
 
 
 def test_s3_reads_exact_manifest_and_sha_addressed_train_blob_only():
     pools, roles, context, catalog_row = _inputs()
-    identity = builder.validate_catalog_train_context(
-        pools, roles, context, catalog_row, fold=0
-    )
     csv_bytes = b"0,1,0\n1,0,1\n" + b"0,1,0\n" * 48
     train_sha = hashlib.sha256(csv_bytes).hexdigest()
-    identity["train_sha256"] = train_sha
+    catalog_row["train_sha256"] = train_sha
+    pools["train_metadata_by_dataset"][context["dataset"]]["train_sha256"] = train_sha
+    identity = builder.validate_catalog_train_context(
+        pools, roles, context, catalog_row
+    )
     manifest = {
         "id": identity["dataset"],
         "task": identity["task"],
@@ -156,6 +178,17 @@ def test_s3_reads_exact_manifest_and_sha_addressed_train_blob_only():
         ),
         ("veox-jopedime-datasets-use2", f"blobs/sha256/{train_sha}"),
     ]
+
+
+def test_s3_reader_rejects_unvalidated_metadata_candidates_before_request():
+    s3 = _S3(b"{}", b"")
+    with pytest.raises(ValueError, match="fresh role-admission validation"):
+        builder.fetch_train_csv(
+            s3,
+            "veox-jopedime-datasets-use2",
+            {"dataset": "metadata-only"},
+        )
+    assert s3.requests == []
 
 
 def test_binary_labels_are_explicitly_normalized_and_regression_is_unchanged():
@@ -230,6 +263,9 @@ def test_candidate_pool_uses_existing_features_and_task_specific_targets(task):
         "has_meta_test": False,
         "train_sha256": "d" * 64,
         "catalog_sha256": builder.CATALOG_V246_SHA256,
+        "admission_status": "ADMITTED",
+        "eligibility_verified": True,
+        "role_admission_sha256": "e" * 64,
     }
     x = np.arange(100, dtype=np.float64).reshape(50, 2)
     y = (
@@ -349,6 +385,9 @@ def test_candidate_pool_rejects_incomplete_evaluation_and_unpinned_checkpoint():
         "has_meta_test": False,
         "train_sha256": "d" * 64,
         "catalog_sha256": builder.CATALOG_V246_SHA256,
+        "admission_status": "ADMITTED",
+        "eligibility_verified": True,
+        "role_admission_sha256": "e" * 64,
     }
     with pytest.raises(ValueError, match="evaluation result count mismatch"):
         builder.build_candidate_pool(

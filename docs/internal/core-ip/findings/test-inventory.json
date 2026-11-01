@@ -2357,6 +2357,10 @@
       "reason": "JRB-01 binary panel packet validation (schema, family coverage, sealed-id exclusion, deterministic rebuild); offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/joint_regbin/test_candidate_builder.py": {
+      "reason": "JRB-01 synthetic train-only candidate tensor controls for rederived role admission, withheld unverified families, exact train-blob reads, Flywheel evaluation and worker tensor packing. No real S3 payload, checkpoint, training, score history or qualification.",
+      "role": "research"
+    },
     "python:research/joint_regbin/test_study.py": {
       "reason": "Synthetic CPU protocol fixtures for the joint regression/binary study (protected packet-root refusal); no learner, GPU, dataset or score history; offline research analysis outside the reviewed product baseline.",
       "role": "research"
