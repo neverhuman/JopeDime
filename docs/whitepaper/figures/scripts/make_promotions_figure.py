@@ -215,6 +215,80 @@ def target_history(source):
     print(f"{len(rows)} historical scores; first final-value generations {first_final_generation}")
 
 
+def plot_target_combined():
+    """Plot consolidated 4-panel historical GP target figure from committed CSVs."""
+    prog_csv = FIGURES / "data/target_progress.csv"
+    hist_csv = FIGURES / "data/target_history.csv"
+    with prog_csv.open() as stream:
+        prog_rows = list(csv.DictReader(stream))
+    with hist_csv.open() as stream:
+        hist_rows = list(csv.DictReader(stream))
+    plt.rcParams.update({"font.family": "serif", "font.size": 7.5, "axes.labelsize": 7.5,
+                         "xtick.labelsize": 6.8, "ytick.labelsize": 6.8, "pdf.fonttype": 42,
+                         "axes.spines.top": False, "axes.spines.right": False})
+    fig, axes = plt.subplots(1, 4, figsize=(6.8, 1.95),
+                             gridspec_kw={"width_ratios": [1.25, 1, 1, 1]})
+    ax0 = axes[0]
+    left = [0] * len(prog_rows)
+    for key, label, color in [("lower", "Lower", "#2b8a3e"),
+                              ("same", "Same", "#adb5bd"),
+                              ("higher", "Higher (0)", "#c92a2a")]:
+        values = [int(row[key]) for row in prog_rows]
+        bars = ax0.barh(range(len(prog_rows)), values, left=left, label=label,
+                        color=color, height=0.58)
+        for bar, value in zip(bars, values):
+            if value:
+                ax0.text(bar.get_x() + value / 2, bar.get_y() + bar.get_height() / 2,
+                         str(value), ha="center", va="center", fontsize=6.8,
+                         color="white" if key == "lower" else "#212529")
+        left = [a + b for a, b in zip(left, values)]
+    ax0.set_yticks(range(len(prog_rows)),
+                   [f"{row['arm']} ({row['groups']})" for row in prog_rows])
+    ax0.invert_yaxis()
+    ax0.set_xlim(0, 60)
+    ax0.set_xticks([0, 20, 40, 60])
+    ax0.set_xlabel("Comparison groups")
+    ax0.set_title("First vs. last (159 groups)", fontsize=7.5, loc="left", pad=2.5)
+    ax0.grid(axis="x", alpha=0.22, linewidth=0.4)
+    ax0.set_axisbelow(True)
+    ax0.legend(loc="lower right", frameon=True, facecolor="white", framealpha=0.88,
+               edgecolor="none", fontsize=6.2, handlelength=0.8, handletextpad=0.25,
+               borderpad=0.2)
+    for idx, (arm_label, color) in enumerate([
+        ("Policy-seeded", "#0b5394"),
+        ("Generic", "#2b8a3e"),
+        ("Shuffled", "#d95f02"),
+    ], start=1):
+        ax = axes[idx]
+        group = [row for row in hist_rows if row["arm"] == arm_label]
+        ax.plot([int(row["generation"]) for row in group],
+                [float(row["reported_best_development_rmse"]) for row in group],
+                ".-", ms=2.2, lw=0.85, color=color)
+        ax.set_title(f"{arm_label} (71 gen)", fontsize=7.5, loc="left", pad=2.5)
+        ax.set_xlabel("Generation")
+        ax.set_xticks([0, 20, 40, 70])
+        ax.set_xlim(-1, 71)
+        ax.set_ylim(0.0025, 0.0105)
+        ax.ticklabel_format(axis="y", style="plain", useOffset=False)
+        if idx == 1:
+            ax.set_ylabel("Reported best\ndev. RMSE")
+        else:
+            ax.tick_params(labelleft=False)
+        ax.grid(alpha=0.22, linewidth=0.4)
+        ax.set_axisbelow(True)
+    fig.tight_layout(pad=0.35, w_pad=0.45)
+    fig.savefig(FIGURES / "fig_fw_target_history.pdf",
+                metadata={"CreationDate": None, "ModDate": None})
+    plt.close(fig)
+    gen_sha = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    for p_path in [prog_csv.with_suffix(".provenance.json"),
+                   hist_csv.with_suffix(".provenance.json")]:
+        if p_path.exists():
+            prov = json.loads(p_path.read_text())
+            prov["generator_sha256"] = gen_sha
+            p_path.write_text(json.dumps(prov, indent=2) + "\n")
+
+
 def extract(logs):
     inputs = {name: (logs / name).read_bytes()
               for name in ("promotions.jsonl", "summary.jsonl")}
@@ -318,4 +392,5 @@ fig.tight_layout(pad=0.45, h_pad=0.7)
 fig.savefig(FIGURES / "fig_fw_program_promotions.pdf",
             metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
+plot_target_combined()
 print(f"{len(rows)} summary rounds; {sum(counts)} recorded program promotions")

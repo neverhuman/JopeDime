@@ -1,5 +1,5 @@
 {
-  "schema": "whitepaper.acceptance-over-rounds-view/v1",
+  "schema": "whitepaper.acceptance-over-rounds-view/v2",
   "source_csv": "figures/data/live_admissions.csv",
   "source_csv_sha256": "edd336c3b68e880040e8f41a6fe437617f643ed183d9b03d69554963ad54a6dd",
   "parent_provenance_sha256": "c31f121d76ff2353d7888a96ea851964e429e4337fdbe1d49aa0682aebd03ade",
@@ -28,11 +28,11 @@
   "peak_cumulative_acceptance_round": 785,
   "last_acceptance_cumulative_pct": 3.703704,
   "final_cumulative_acceptance_pct": 0.211752,
-  "definition": "At round r (index k >= 1 from 775), cumulative acceptance rate is 100 * sum_{j<=k} accepted_j / k; recorded best is the post-decision best_val step trajectory.",
-  "scope": "Alternate view of the 1,889 retained admission rounds (775-2663); adds no observations and makes no independent first-proposal or deployment claim.",
+  "definition": "Consolidated 3-panel view of the 1,889-round prefix (775-2663): (a) candidate and post-decision recorded-best utility, (b) cumulative acceptance rate 100 * sum_{j<=k} accepted_j / k, (c) empirical CDF of utility_shortfall = best_val - candidate_val.",
+  "scope": "Consolidated view of the 1,889 retained admission rounds (775-2663); adds no observations and makes no independent first-proposal or deployment claim.",
   "source_binding": "Aggregate field interpretation only; installed loop/adapter/checkpoint qualification remains required",
-  "generator_sha256": "92ad704c19f8adc8d4221a20fd05d2e2b7c433896834867370abbcd99c1e09e0",
-  "figure_sha256": "a06eea796865f7fb583f391c026dd4fbcd691a15104d1d39dfae1cd9587143b7",
+  "generator_sha256": "cbab19706221568f81b43e4e77c72c998782c022f42eb5c654846bb4453b70c6",
+  "figure_sha256": "8220c7468c4aeb1f9aa191a97eb044ecd91177675e19f3a4b30fb51ef6b1540d",
   "matplotlib_version": "3.10.8",
   "reproduce": "python3 figures/scripts/make_acceptance_over_rounds_figure.py"
 }

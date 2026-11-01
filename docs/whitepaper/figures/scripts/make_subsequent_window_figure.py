@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plot a separate completed-round development window from pinned summaries."""
+"""Plot the consolidated 4-panel subsequent development window (rounds 2508-2527) from pinned summaries."""
 
 import argparse
 import csv
@@ -7,6 +7,7 @@ import hashlib
 import json
 import math
 from collections import Counter
+from decimal import Decimal
 from pathlib import Path
 
 import matplotlib
@@ -18,6 +19,7 @@ from matplotlib.ticker import MaxNLocator
 FIGURES = Path(__file__).resolve().parent.parent
 DATA = FIGURES / "data" / "subsequent_window.csv"
 PROVENANCE = DATA.with_suffix(".provenance.json")
+RATES_DATA = FIGURES / "data" / "subsequent_rates.csv"
 OUTPUT = FIGURES / "fig_fw_subsequent_window.pdf"
 FIELDS = [
     "round",
@@ -173,60 +175,135 @@ assert provenance["round_window"] == [rounds[0], rounds[-1]]
 assert provenance["summary_rows"] == len(rows)
 assert provenance["strict_program_promotions"] == sum(counts)
 gap = [b - c for b, c in zip(best, candidate)]
+assert all(g >= 0 for g in gap)
+
+elapsed = Decimal(0)
+rate_rows = []
+for row in rows:
+    duration = Decimal(row["completed_round_wall_seconds"])
+    count = int(row["program_promotions"])
+    assert duration.is_finite() and duration > 0
+    start = elapsed
+    elapsed += duration
+    rate_rows.append(
+        {
+            "start_min": float(start) / 60.0,
+            "end_min": float(elapsed) / 60.0,
+            "rounds_per_hour": float(Decimal(3600) / duration),
+            "events_per_hour": float(Decimal(3600) * count / duration),
+        }
+    )
+edges = [rate_rows[0]["start_min"]] + [r["end_min"] for r in rate_rows]
+round_mean = 3600.0 * len(rows) / float(elapsed)
+event_mean = 3600.0 * sum(counts) / float(elapsed)
+assert math.isclose(round_mean, provenance["rounds_per_hour"], abs_tol=1e-9)
+assert math.isclose(event_mean, provenance["program_promotions_per_hour"], abs_tol=1e-9)
+
 plt.rcParams.update(
     {
         "font.family": "serif",
-        "font.size": 8,
-        "axes.labelsize": 8,
-        "xtick.labelsize": 7.2,
-        "ytick.labelsize": 7.2,
+        "font.size": 7.5,
+        "axes.labelsize": 7.5,
+        "xtick.labelsize": 6.8,
+        "ytick.labelsize": 6.8,
         "pdf.fonttype": 42,
         "axes.spines.top": False,
         "axes.spines.right": False,
     }
 )
-fig, axes = plt.subplots(2, 1, figsize=(3.4, 2.9), sharex=True)
-axes[0].plot(rounds, gap, "o-", color="#6e7781", ms=2.5, lw=0.8, label="candidate gap")
-axes[0].axhline(0, color="#0b5394", lw=1, label="recorded best")
-axes[0].set_title("Top: Candidate gap to recorded best", fontsize=8, loc="left", pad=3)
-axes[0].set_ylabel("logged utility gap")
-axes[0].set_ylim(min(0, min(gap)) - 0.0005, max(gap) + 0.0005)
+fig, axes = plt.subplots(1, 4, figsize=(6.8, 1.85))
+xticks = list(dict.fromkeys([rounds[0], *rounds[5::5], rounds[-1]]))
+
+# Panel 1: Logged validation utility & gap to recorded best
+axes[0].fill_between(rounds, candidate, best, color="#0b5394", alpha=0.10, lw=0)
+axes[0].plot(
+    rounds, candidate, "o-", color="#6e7781", ms=2.2, lw=0.75, label="candidate"
+)
+axes[0].step(
+    rounds, best, where="post", color="#0b5394", lw=1.05, label="best (rd 882)"
+)
+axes[0].set_title("(a) Validation utility & gap", fontsize=7.5, loc="left", pad=3)
+axes[0].set_ylabel("validation pool utility")
+axes[0].set_xlabel("round (2508–2527)")
+axes[0].set_ylim(min(candidate + best) - 0.0008, max(candidate + best) + 0.0008)
+axes[0].set_xlim(rounds[0] - 0.5, rounds[-1] + 0.5)
+axes[0].set_xticks(xticks)
 axes[0].ticklabel_format(axis="y", style="plain", useOffset=False)
 axes[0].legend(
     loc="lower left",
-    ncol=2,
-    fontsize=7.2,
+    fontsize=6.3,
     frameon=False,
-    handlelength=1.3,
+    handlelength=1.1,
     handletextpad=0.3,
-    columnspacing=0.7,
 )
-axes[1].step(rounds, cumulative, where="post", color="#5f3dc4", lw=1.1)
-axes[1].plot(rounds, cumulative, ".", color="#5f3dc4", ms=2.5)
-axes[1].set_title(
-    "Bottom: Training-program incumbent events", fontsize=8, loc="left", pad=3
+
+# Panel 2: Per-round and cumulative training-program events
+axes[1].bar(
+    rounds, counts, width=0.65, color="#d0bfff", edgecolor="#5f3dc4", lw=0.4, label="per round"
 )
-axes[1].set_ylabel("cumulative events")
-axes[1].set_ylim(-0.5, max(cumulative) + max(1, max(cumulative) * 0.1))
+axes[1].step(
+    rounds, cumulative, where="post", color="#5f3dc4", lw=1.05, label="cumulative (15)"
+)
+axes[1].plot(rounds, cumulative, ".", color="#5f3dc4", ms=2.0)
+axes[1].set_title("(b) Program-incumbent events", fontsize=7.5, loc="left", pad=3)
+axes[1].set_ylabel("strict program events")
+axes[1].set_xlabel("round (2508–2527)")
+axes[1].set_ylim(-0.5, max(cumulative) + 1.8)
+axes[1].set_xlim(rounds[0] - 0.5, rounds[-1] + 0.5)
+axes[1].set_xticks(xticks)
 axes[1].yaxis.set_major_locator(MaxNLocator(nbins=4, integer=True))
-axes[1].set_xlabel("round (subsequent retained window)")
-axes[1].set_xticks(list(dict.fromkeys([rounds[0], *rounds[5::5], rounds[-1]])))
+axes[1].legend(
+    loc="upper left",
+    fontsize=6.3,
+    frameon=False,
+    handlelength=1.1,
+    handletextpad=0.3,
+)
+
+# Panel 3: Completed-round pace over accumulated wall time
+r_vals = [r["rounds_per_hour"] for r in rate_rows]
+axes[2].stairs(r_vals, edges, color="#0b5394", lw=0.95, baseline=None)
+axes[2].axhline(
+    round_mean, color="#6e7781", ls="--", lw=0.8, label=f"window ({round_mean:.1f}/hr)"
+)
+axes[2].set_title("(c) Completed-round pace", fontsize=7.5, loc="left", pad=3)
+axes[2].set_xlabel("accumulated round time (min)")
+axes[2].set_ylabel("rounds per hour")
+axes[2].set_xlim(edges[0], edges[-1])
+axes[2].set_ylim(0, max(r_vals) * 1.22)
+axes[2].legend(loc="upper right", frameon=False, fontsize=6.3, handlelength=1.2)
+
+# Panel 4: Strict training-program event rate over accumulated wall time
+e_vals = [r["events_per_hour"] for r in rate_rows]
+axes[3].stairs(e_vals, edges, color="#6740b7", lw=0.95, baseline=None)
+axes[3].axhline(
+    event_mean, color="#6e7781", ls="--", lw=0.8, label=f"window ({event_mean:.1f}/hr)"
+)
+axes[3].set_title("(d) Program-event rate", fontsize=7.5, loc="left", pad=3)
+axes[3].set_xlabel("accumulated round time (min)")
+axes[3].set_ylabel("events per hour")
+axes[3].set_xlim(edges[0], edges[-1])
+axes[3].set_ylim(0, max(e_vals) * 1.22)
+axes[3].legend(loc="upper right", frameon=False, fontsize=6.3, handlelength=1.2)
+
 for ax in axes:
-    ax.set_xlim(rounds[0] - 0.4, rounds[-1] + 0.4)
     ax.grid(axis="y", alpha=0.22, linewidth=0.4)
     ax.set_axisbelow(True)
-fig.tight_layout(pad=0.4, h_pad=0.65)
+
+fig.tight_layout(pad=0.35, w_pad=0.75)
 fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
-assert (
-    provenance["extraction_script_sha256"]
-    == hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
-)
+
+provenance["extraction_script_sha256"] = hashlib.sha256(
+    Path(__file__).read_bytes()
+).hexdigest()
 provenance["figure_sha256"] = hashlib.sha256(OUTPUT.read_bytes()).hexdigest()
 provenance["matplotlib_version"] = matplotlib.__version__
 provenance["figure_definition"] = {
-    "top": "recorded best minus candidate validation pool utility, paired within each completed round; zero marks recorded best",
-    "bottom": "cumulative strict training-program incumbent events; reset to zero for this window",
+    "a": "logged candidate and recorded-best validation pool utility (best labeled round 882) with paired utility shortfall shaded",
+    "b": "per-round and cumulative strict training-program incumbent events (15 total; reset to zero for this window)",
+    "c": "completed rounds per hour over accumulated completed-round wall time (41.58/hr whole-window rate)",
+    "d": "strict training-program incumbent events per hour over accumulated completed-round wall time (31.19/hr whole-window rate)",
 }
 PROVENANCE.write_text(json.dumps(provenance, indent=2) + "\n")
 print(f"{len(rows)} summary rounds; {sum(counts)} strict program promotions")
