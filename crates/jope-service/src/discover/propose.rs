@@ -206,6 +206,7 @@ fn head_retry_order(first: usize, length: usize, step: usize, rng: &ChaCha12Rng)
     let mut remaining: Vec<_> = (0..length).filter(|&i| i != first).collect();
     let mut fork = rng.clone();
     fork.set_stream(rng.get_stream().wrapping_add(step as u64 + 1));
+    fork.set_word_pos(0);
     for i in (1..remaining.len()).rev() {
         let j = index(&mut fork, i + 1);
         remaining.swap(i, j);
@@ -678,6 +679,21 @@ mod tests {
             self.called.borrow_mut().push((*raw, family.into(), limit));
             Ok(self.records.iter().take(limit).cloned().collect())
         }
+    }
+
+    #[test]
+    fn retry_stream_starts_at_zero_independently_of_the_main_word_position() {
+        let initial = round_rng(42, 0);
+        let mut advanced = initial.clone();
+        advanced.set_word_pos(197);
+        for step in [1, 6, 11] {
+            assert_eq!(
+                head_retry_order(0, 13, step, &initial),
+                head_retry_order(0, 13, step, &advanced)
+            );
+        }
+        assert_eq!(initial.get_word_pos(), 0);
+        assert_eq!(advanced.get_word_pos(), 197);
     }
 
     #[test]
