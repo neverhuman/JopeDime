@@ -106,7 +106,7 @@ class M5Tests(unittest.TestCase):
             self.assertEqual(environment["CUDA_VISIBLE_DEVICES"], "")
             self.assertEqual(environment["CARGO_INCREMENTAL"], "0")
             report = {
-                "schema": "jope.m5-causal/v2",
+                "schema": "jope.m5-causal/v3",
                 "consumer": "M5-causal",
                 "device": "cpu",
                 "passed": True,
@@ -122,7 +122,8 @@ class M5Tests(unittest.TestCase):
                 "details": {
                     "contexts": 50,
                     "slates": 100,
-                    "admitted_order_mismatches": 0,
+                    "admitted_order_comparison": "not_comparable_model_weights",
+                    "admitted_order_mismatches": None,
                     "quality_gate_granted": False,
                     "Q1_ready": False,
                     "serving_4_plus_8": {
@@ -131,6 +132,7 @@ class M5Tests(unittest.TestCase):
                         "fitness_changed_admission": 8,
                         "disconnected_heuristic_mismatches": 45,
                         "landmark_slots": [0, 1, 7, 9],
+                        "intervention_kind": "zero_mean_additive_landmark_delta",
                         "interventions": [-6.0, 0.0, 6.0],
                         "masks_and_dope_only_slots_preserved": True,
                     },
@@ -255,6 +257,7 @@ class M5Tests(unittest.TestCase):
             ("landmark_only_changed_admission", True),
             ("fitness_changed_admission", 51),
             ("landmark_slots", [0, 2]),
+            ("intervention_kind", "constant_token_overwrite"),
             ("masks_and_dope_only_slots_preserved", False),
         ]:
             self.edit_report = lambda r, field=field, value=value: r["details"][
@@ -267,6 +270,7 @@ class M5Tests(unittest.TestCase):
         for field, value in [
             ("contexts", 49),
             ("slates", 99),
+            ("admitted_order_comparison", "same_model_oracle"),
             ("admitted_order_mismatches", 1),
             ("quality_gate_granted", True),
             ("Q1_ready", True),
