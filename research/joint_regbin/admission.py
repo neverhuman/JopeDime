@@ -377,6 +377,246 @@ def build_binary_panel_packet(
     return manifest
 
 
+BINARY_TRAIN_ADMISSION_SCHEMA = "jope.joint-regbin.binary-train-admission/v1"
+OWNER_ALIAS_EXPANSION_SHA256 = (
+    "114c57bf328c3556315a4b69f2f230ee0987086bda5ee1043aa50016ad9147b4"
+)
+
+
+def _packet_file(root: Path, relative: str) -> Path:
+    """Resolve only relative train-packet files without protected path tokens."""
+    rel = Path(relative)
+    protected = ("holdout", "sealed", "meta_test", "outer_test", "test.csv")
+    if (
+        rel.is_absolute()
+        or ".." in rel.parts
+        or not rel.parts
+        or any(token in str(rel).lower().replace("-", "_") for token in protected)
+    ):
+        raise ValueError("binary admission payload path is not train-only")
+    packet = Path(root).resolve()
+    resolved = (packet / rel).resolve()
+    if not resolved.is_relative_to(packet):
+        raise ValueError("binary admission payload escapes candidate packet")
+    if any(
+        token in str(resolved.relative_to(packet)).lower().replace("-", "_")
+        for token in protected
+    ):
+        raise ValueError("binary admission payload resolves to a protected path")
+    return resolved
+
+
+def build_binary_train_admission(
+    candidate_packet: Path,
+    catalog_path: Path,
+    owner_alias_path: Path,
+    panel_packet: Path,
+) -> dict:
+    """Admit the closed binary TRAIN subset while withholding srcfile-dependent rows.
+
+    This is intentionally narrower than the full JRB manifest. The approved
+    raw-catalog P2 expansion proves no owner-identity overlap through recorded
+    keys; 14 owner identities have no source-file value in that catalog. We
+    therefore select only binary components whose entire key closure contains
+    no ``srcfile`` key, leaving all other candidate rows unadmitted.
+    """
+    candidate_packet = Path(candidate_packet).resolve()
+    catalog_path = Path(catalog_path).resolve()
+    owner_alias_path = Path(owner_alias_path).resolve()
+    panel_packet = Path(panel_packet).resolve()
+    candidate_path = candidate_packet / "manifest.json"
+    family_review_path = candidate_packet / "binary-family-review.json"
+    candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+    catalog_bytes = catalog_path.read_bytes()
+    catalog = json.loads(catalog_bytes)
+    owner_alias = json.loads(owner_alias_path.read_text(encoding="utf-8"))
+    panel = json.loads(panel_packet.read_text(encoding="utf-8"))
+    family_review = json.loads(family_review_path.read_text(encoding="utf-8"))
+
+    catalog_sha = hashlib.sha256(catalog_bytes).hexdigest()
+    owner_alias_sha = sha256_file(owner_alias_path)
+    if (
+        candidate.get("schema") != "jope.joint-regbin.binary-s3-train-pool/v1"
+        or candidate.get("status") != "TRAIN_POOL_CANDIDATES_NOT_ADMITTED"
+        or candidate.get("eligibility_verified") is not False
+        or candidate.get("catalog_sha256") != catalog_sha
+        or catalog.get("inventory", {}).get("source_catalog", "").find("LATEST=v246")
+        < 0
+    ):
+        raise ValueError("binary candidate packet is not the pinned v246 TRAIN pool")
+    family_review_sha = sha256_file(family_review_path)
+    if candidate.get("family_review_sha256") != family_review_sha:
+        raise ValueError("candidate family review hash mismatch")
+    expected_review = review_binary_families(catalog["datasets"])
+    expected_review.pop("family_by_dataset")
+    if family_review != expected_review:
+        raise ValueError("binary family review does not match pinned catalog policy")
+
+    if (
+        owner_alias.get("schema") != "jope.jrb01.raw-catalog-alias-expansion/v1"
+        or owner_alias.get("curated_catalog_sha256") != catalog_sha
+        or owner_alias_sha != OWNER_ALIAS_EXPANSION_SHA256
+        or owner_alias.get("owner_identity_manifest_sha256")
+        != candidate.get("exclusion_manifest_sha256")
+        or owner_alias.get("owner_identities") != 167
+        or owner_alias.get("owner_identities_joined_raw_catalog") != 167
+        or owner_alias.get("previously_missing_now_joined") != 14
+        or owner_alias.get("source_file_metadata_for_previous_missing_ids") != 0
+        or owner_alias.get("binary_direct_owner_alias_intersections") != 0
+        or owner_alias.get("binary_transitive_owner_alias_intersections") != 0
+        or owner_alias.get("all_raw_catalog_transitive_unions_checked") is not True
+        or owner_alias.get("no_p3_roster_or_plaintext_sealed_aliases_published")
+        is not True
+        or owner_alias.get("payloads_opened") != 0
+    ):
+        raise ValueError("owner P2 exclusion expansion is incomplete or has an overlap")
+    if panel.get("schema") != "jope.joint-regbin/v1":
+        raise ValueError("binary panel packet schema mismatch")
+
+    candidate_rows = candidate.get("datasets", [])
+    candidate_by_id = {row.get("dataset"): row for row in candidate_rows}
+    if (
+        len(candidate_by_id) != 843
+        or len(candidate_rows) != 843
+        or any(
+            row.get("task") != "binary" or row.get("source_split") != "train"
+            for row in candidate_rows
+        )
+    ):
+        raise ValueError("binary candidate inventory must contain 843 TRAIN datasets")
+    reviewed_by_id = {row["dataset"]: row for row in family_review["records"]}
+    components = {row["family"]: row for row in family_review["families"]}
+    if len(reviewed_by_id) != 843 or len(components) != 807:
+        raise ValueError(
+            "family review inventory differs from the binary candidate pool"
+        )
+    panel_ids = {
+        row["dataset"]
+        for row in panel.get("contexts", [])
+        if row.get("task") == "binary"
+    }
+    safe_families = {
+        family
+        for family, component in components.items()
+        if not any(evidence[0] == "srcfile" for evidence in component["union_evidence"])
+    }
+    safe_ids = {
+        dataset_id
+        for dataset_id, reviewed in reviewed_by_id.items()
+        if reviewed["family"] in safe_families
+    }
+    train_ids = sorted(safe_ids - panel_ids)
+    safe_panel_ids = safe_ids & panel_ids
+    if len(safe_ids) != 7 or len(safe_panel_ids) != 2 or len(train_ids) != 5:
+        raise ValueError(
+            "closed binary subset differs from the reviewed five-family TRAIN scope"
+        )
+    train_families = {reviewed_by_id[dataset_id]["family"] for dataset_id in train_ids}
+    if len(train_families) != 5:
+        raise ValueError("admitted binary TRAIN subset needs five independent families")
+
+    records = []
+    for dataset_id in train_ids:
+        source = candidate_by_id[dataset_id]
+        reviewed = reviewed_by_id[dataset_id]
+        component = components[reviewed["family"]]
+        if (
+            reviewed.get("family") != source.get("family")
+            or source.get("study_role") is not None
+            or source.get("has_meta_test") is not False
+            or source.get("family_reviewed_from_catalog_metadata") is not True
+            or source.get("target_classes") != 2
+        ):
+            raise ValueError(f"binary TRAIN candidate metadata mismatch: {dataset_id}")
+        cache_path = _packet_file(candidate_packet, source["cache_file"])
+        train_path = _packet_file(candidate_packet, source["train_file"])
+        if (
+            sha256_file(cache_path) != source["cache_sha256"]
+            or sha256_file(train_path) != source["train_file_sha256"]
+            or source["train_file_sha256"] != source["catalog_train_sha256"]
+        ):
+            raise ValueError(f"binary TRAIN payload hash mismatch: {dataset_id}")
+        record = {
+            "id": canonical_json_sha(
+                {
+                    "dataset": dataset_id,
+                    "family": reviewed["family"],
+                    "task": "binary",
+                    "role": "train",
+                    "payload_sha256": source["cache_sha256"],
+                }
+            ),
+            "dataset": dataset_id,
+            "family": reviewed["family"],
+            "task": "binary",
+            "role": "train",
+            "source_split": "train",
+            "origin": "real",
+            "has_meta_test": False,
+            "payload": source["cache_file"],
+            "payload_sha256": source["cache_sha256"],
+            "source_train_sha256": source["train_file_sha256"],
+            "train_s3_key": source["train_s3_key"],
+            "manifest_s3_key": source["manifest_s3_key"],
+            "family_union_evidence": component["union_evidence"],
+        }
+        records.append(record)
+
+    panel_sha = sha256_file(panel_packet)
+    return {
+        "schema": BINARY_TRAIN_ADMISSION_SCHEMA,
+        "admission_status": "ADMITTED_BINARY_TRAIN_SUBSET",
+        "binary_train_admitted": True,
+        "full_binary_pool_admitted": False,
+        "full_joint_eligibility_verified": False,
+        "catalog_sha256": catalog_sha,
+        "candidate_manifest_sha256": sha256_file(candidate_path),
+        "family_review_sha256": family_review_sha,
+        "owner_alias_expansion_sha256": owner_alias_sha,
+        "owner_identity_manifest_sha256": candidate["exclusion_manifest_sha256"],
+        "panel_manifest_sha256": panel_sha,
+        "counts": {
+            "candidate_binary_records": len(candidate_rows),
+            "candidate_family_components": len(components),
+            "srcfile_dependent_candidate_records": len(candidate_rows) - len(safe_ids),
+            "safe_srcfile_free_components": len(safe_families),
+            "safe_panel_records_withheld_from_train": len(safe_panel_ids),
+            "admitted_train_records": len(records),
+            "admitted_train_families": len(train_families),
+            "unproven_owner_srcfile_aliases": 14,
+        },
+        "closure": {
+            "recorded_p2_owner_direct_intersections": 0,
+            "recorded_p2_owner_transitive_intersections": 0,
+            "all_raw_catalog_transitive_unions_checked": True,
+            "owner_identity_count": 167,
+            "owner_identity_raw_catalog_joins": 167,
+            "selected_components_have_srcfile_alias": False,
+            "full_candidate_srcfile_alias_closure": False,
+            "excluded_unproven_srcfile_dependent_candidates": len(candidate_rows)
+            - len(safe_ids),
+            "test_or_sealed_payloads_opened": 0,
+        },
+        "records": records,
+    }
+
+
+def verify_binary_train_admission(
+    admission: dict,
+    candidate_packet: Path,
+    catalog_path: Path,
+    owner_alias_path: Path,
+    panel_packet: Path,
+) -> dict:
+    """Rebuild the narrow admission proof and require byte-stable identities."""
+    expected = build_binary_train_admission(
+        candidate_packet, catalog_path, owner_alias_path, panel_packet
+    )
+    if admission != expected:
+        raise ValueError("binary TRAIN admission differs from its audited inputs")
+    return expected
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--catalog", type=Path, required=True)
