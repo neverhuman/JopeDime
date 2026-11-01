@@ -1,332 +1,121 @@
-# CPU real-fixture parity (owner unstick_t0955)
+# RES-07 golden parity fixtures — accepted R5 reconstruction
 
-The CPU capture route is `capture_cpu.py`. It uses an explicitly hash-pinned run
-plan and the original50 admitted DL-Train contexts (including authenticated inner
-training views), complete tables<=1024 rows, frozen native workspace and RES06
-bundle94fd9587. Every context measures exactly four real reveals with the pinned
-S1 two-fold evaluator; the unchanged first20 unique model-prior DSLs supply both
-4+8 and4+16 slates. Proposals need no oracle measurements. No synthetic numeric
-input, held-out rows, original checkpoint unpickling or CUDA is used.
+Owner `rulings_t1900.md R5` accepts closure on the complete reconstructed
+r767–782 evaluated TRAIN cohort. It contains **1,024 ordered records, 895 unique
+exact DSLs and 132 TRAIN contexts** across separate legacy16/full1219 strata.
+**Exactly 2,688 generated but unlogged items are excluded.** The original evolving
+pre-proposal bank and the larger cached program history have not been restored.
+This qualification applies to the accepted reconstruction, not those populations.
 
-Run at nice10+ with CUDA_VISIBLE_DEVICES empty and math threads1:
+`capture_cpu.py reconstruct-r5` reads independently SHA-pinned reconstruction/cohort/TRAIN-CV
+projections and the frozen RES06 bundle. It authenticates the original TRAIN
+roster and every complete training-only JTT1 table. No raw journal, protected test
+metric, checkpoint pickle, evaluator fit, optimizer update or CUDA is needed.
+The source projection retains ordered DSL/context/operator/parent/protocol joins;
+`source-rows.jsonl` preserves duplicate occurrences and source-record identities.
+Protected metrics are excluded before the golden worker's input closure.
 
-```sh
-CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
- nice -n 10 python3 research/flywheel_selfplay/golden/capture_cpu.py \
- --plan "$CPU_PLAN" --expected-plan-sha256 "$CPU_PLAN_SHA256" --output "$NEW_EXTERNAL_ROOT"
-```
+The frozen native workspace processes all actual TRAIN rows, with its original
+internal sampling and preprocessing, including out-of-F32-range column scaling.
+Complete input tables in this cohort have at most 2,048 rows and 512 features.
+Input labels, folds and bytes are authenticated unchanged; normalized landmark
+inputs and exact row IDs are retained. Native feature extraction runs twice per
+context and refuses differing bytes. The original50-context packet remains a
+separate compatibility proof; its former 1,024-row admission limit does not
+truncate the R5 tables. Neither route reads outer-query rows.
 
-The plan pins the selected metadata, training-only JTT tables, restored custody
-source/native bytes, bundle and an absolute deadline/cumulative native-call ledger.
-The original1799s/4CPU/math1/1000calls/2000fold/2GiB ceilings do not reset on retry.
-The old evaluator's S1 parser requires ten query slots but decodes only nt training
-rows. The wrapper fills those ignored slots with byte-exact copies of training
-rows0..9; it changes no training byte, label or fold assignment and supplies no
-outer-query row. Both input hashes, source row IDs and parser SHAe369e13b are
-recorded. Refused attempts remain charged; failed/unknown CV outcomes refuse.
+All 895 DSLs are freshly featurized in frozen name order. `feat412` is F32 and
+`proj16` is the frozen caller's F64 projection of that F32 vector. Four original
+completed, finite TRAIN-CV evaluations provide each serving slate's revealed
+values and gates. The first eligible group per context and first 50 sorted
+context identities are used; selection does not optimize the observed fitness.
+Remaining proposals use deterministic unique corpus order and carry no invented
+measurements. Both `4+8` and `4+16` slates are generated for every context.
 
-Outputs reuse the schema/layout below under generation-1 and generation-2, plus
-capture/native receipts. All generated file bytes and index inventories must match.
-The original generator's qualification.lock gate remains in place for its broader
-GPU qualification path. This explicitly CPU-only entry calls the same deterministic
-packager without acquiring a GPU lease. Its index keeps full M2/M3/M5 flags false;
-only actual Rust CPU replay can qualify the two CPU consumers.
+The retrieval banks contain all 512 ordered evaluated occurrences in each
+protocol stratum, with raw first12 `lm48` coordinates reconstructed from each
+record's actual TRAIN context. They are explicitly tagged `role=proposer` and
+`coordinate_space=raw_lm48_first12`. They **are reconstruction fixtures**, not
+snapshots of the lost evolving bank. Source order and duplicate program hashes
+are preserved. Independent Python F64 Euclidean distances and SHA tie-breaking
+supply nearest-k oracles for k=1,8,16,513 at every context. Neither standardized
+coordinates nor the model-prior bank substitute for raw retrieval inputs.
 
-CPU-only deterministic re-packaging of an existing reviewed capture is separate
-from native capture. It does not run S1, discover tables, reserve native calls,
-change the original budget/deadline, or acquire qualification.lock:
+## Regenerate and fetch
 
-```sh
-CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
- nice -n 10 python3 research/flywheel_selfplay/golden/capture_cpu.py \
- --plan "$CPU_PLAN" --expected-plan-sha256 "$CPU_PLAN_SHA256" \
- --regenerate-captures "$REVIEWED_CAPTURES" \
- --expected-captures-sha256 "$CAPTURE_SHA256" \
- --expected-index-sha256 "$PUBLISHED_INDEX_SHA256" --output "$NEW_EXTERNAL_ROOT"
-```
-
-Both new pins are required together. The capture must contain the plan's exact
-50 TRAIN context/family identities and bundle. The command recomputes frozen
-neural intermediates/costs, features/projections and preferred pools from saved
-landmark/surrogate captures, then requires the entire generated index to match
-the separately reviewed published index SHA256. Its report records zero native
-calls/fits, file count, total bytes and unchanged qualification flags. Use the same
-pinned CPU runtime for two fresh outputs; independently compare every payload and
-index byte against each other and the published packet. Input captures and bundle
-remain read-only. An index mismatch fails and leaves the new unqualified output
-for diagnosis; existing output directories refuse and are never overwritten.
-This proves regeneration only for the captured 50-context/model-prior subset;
-full historical corpus, consumer coverage, M2/M3/M5 and CUDA remain separate.
-
-The 50-context historical-pool export is a separate CPU mode. It preserves every
-plan-bound NPZ `program:F32[N,412]` row and ordered program SHA, then computes
-`proj16:F64[N,16]` by the pinned caller formula using the frozen sign matrix.
-These NPZs contain captured historical feature outputs, not DSL strings; this is
-not DSL-to-feature regeneration or completeness of the global historical corpus.
-No pool fitness, table, label or split is modified; only the plan's TRAIN pools
-are read. The original model-prior packet and its index remain unchanged.
+At nice10+, CPU<=85%, math threads1, with CUDA hidden:
 
 ```sh
 CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
- nice -n 10 python3 research/flywheel_selfplay/golden/capture_cpu.py \
- --plan "$CPU_PLAN" --expected-plan-sha256 "$CPU_PLAN_SHA256" \
- --historical-pools "$TRAIN_POOLS" --packet "$FIXTURES" \
- --expected-index-sha256 "$PUBLISHED_INDEX_SHA256" \
- --custody-store "$HASH_CUSTODY" --output "$NEW_CATALOG_ROOT"
+ nice -n 10 python3 research/flywheel_selfplay/golden/capture_cpu.py reconstruct-r5 \
+ --plan "$PLAN" --plan-sha256 "$PLAN_SHA" \
+ --reconstruction "$RECONSTRUCTION" --reconstruction-sha256 "$RECONSTRUCTION_SHA" \
+ --cohort "$COHORT" --cohort-sha256 "$COHORT_SHA" \
+ --cv "$TRAIN_CV" --cv-sha256 "$TRAIN_CV_SHA" \
+ --tables "$TRAIN_TABLES" --store "$HASH_STORE" --output "$NEW_OUTPUT"
 ```
 
-`custody-index.json` binds `packet/` (all original fixtures/index) and
-`historical/<context>.safetensors` plus `.json` (row order, program hashes and pool
-provenance). It reports logical payload/total bytes, its own index bytes by fixed
-point, unique content bytes and the decimal 50,000,000-byte threshold. Logical
-size controls required hash custody even when duplicate content reduces physical
-storage. The bounded measured set may exceed 50MB; every object, including the
-catalog, is then retained outside Git under its SHA256 filename. Existing objects
-must match and are never replaced. No execution-host paths or clock values are
-added; fixed frozen-source identifiers are retained.
+All pins are supplied independently. Existing outputs refuse. No generation clock, current
+host path or random staging name enters generated bytes. `sources/` retains the
+original reconstruction receipt and TRAIN-only CV projection for audit. The plan
+selects already admitted, read-only source/native/bundle bytes; the old native
+S1 fit ledger and deadline are not restarted because this route performs no S1
+calls. It records feature extraction separately from estimator fits.
 
-The committed real CPU test fetches the complete set when
-`JOPE_RES07_HISTORICAL_CATALOG_SHA256` and `JOPE_RES07_CUSTODY_STORE` are set along
-with the existing real-bundle inputs. `generate.materialize_custody(store, sha,
-new_output)` verifies the independently supplied catalog SHA, accounting, canonical
-relative paths and every object SHA/length before atomic publication. A missing,
-corrupt or escaping object refuses; the original store and packet stay intact.
-After fetch, existing consumers use `JOPE_GOLDEN_DIR=<fetched>/packet`; historical
-arrays and ordered identities remain under `<fetched>/historical`.
-This covers only all captured rows for the reviewed 50 TRAIN contexts. Global
-historical DSL inventory, raw proposer snapshots and full qualification stay open.
+The published R5 catalog is
+`55a27a487d09e5302d8e00d6529e4f53ce7a7effc92db2b99eb1a6adf6b334bb`.
+Its complete set is **399 files / 23,432,213 bytes**, including the catalog.
+The packet index is
+`cf03214ac1087917b27a7d5d841f1bcd2345281d7990421def5e4b7094699a84`.
+Two fresh generations and every payload/index byte match. Although below the
+50,000,000-byte threshold, all objects are retained by SHA256 outside Git at
+`/home/ubuntu/jope-data/dsc08/res07-r5-t1900/sha256`; xbabe1 has a verified
+347-object replica at
+`/home/ubuntu/lane_work/sol_v1_dsc08/fixtures/res07-r5-t1900/sha256`.
+The canonical source receipt and external gate logs are under
+`/home/ubuntu/jope_plan/evidence/RES07-R5-closeout-t1900-dsc08`.
 
-The next DSL-coverage mode authenticates delivered TRAIN program definitions,
-including the champion list and `all_90_qualified_novel_winner_records` dictionary.
-Each source needs an independent SHA pin; every DSL must hash to its exact program
-identity and bind to the reviewed TRAIN roster. Winner families are resolved only
-from that authenticated roster. Source row order/duplicate aliases are retained;
-unique canonical programs are sorted by SHA and tensor shards are bounded8192rows.
+`generate.materialize_custody(store, catalog_sha256, new_output)` verifies the
+independent catalog SHA, canonical paths, accounting, every object SHA and byte
+length, then atomically publishes a new directory. Tests fetch this exact catalog;
+a missing/corrupt/escaping object refuses. Set `JOPE_GOLDEN_DIR=<fetched>/packet`
+and `JOPE_GOLDEN_INDEX_SHA256` to the packet index pin above. No source/model
+copies or shared build cleanup are part of fetch.
 
-```sh
-CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
- nice -n 10 python3 research/flywheel_selfplay/golden/capture_cpu.py \
- --plan "$CPU_PLAN" --expected-plan-sha256 "$CPU_PLAN_SHA256" \
- --dsl-records "$CHAMPIONS" --expected-dsl-sha256 "$CHAMPIONS_SHA256" \
- --dsl-records "$WINNERS" --expected-dsl-sha256 "$WINNERS_SHA256" \
- --historical-catalog-sha256 "$HISTORICAL_CATALOG_SHA256" \
- --custody-store "$HASH_CUSTODY" --output "$NEW_CATALOG_ROOT"
-```
+## Consumer map
 
-The new catalog keeps every old historical/packet object unchanged and adds
-`dsl/programs.jsonl`, `dsl/programs-<shard>.safetensors` (canonical F32 feat412/raw
-F64 proj16), `dsl/source-rows.jsonl`, and `dsl/coverage.json` with the exact
-covered/missing historical hash partition and per-context row coverage. The parent
-catalog is retained as `sources/historical-custody-index.json`. Captured features
-for matching hashes must equal the canonical features; captured-F32 and raw-FP64
-projection domains remain separately named. No DSL is guessed from feature values.
-These outputs cover every delivered definition, not every historical program.
-All global historical/qualification flags stay false while missing hashes remain.
-Set `JOPE_RES07_DSL_CATALOG_SHA256` with the existing custody/bundle inputs to run
-the committed actual-fetch, complete-hash-partition and canonical numerical test.
-No product source/model exports are needed; the bundle-tamper control changes only
-in-memory metadata bytes. Missing DSL bodies remain an explicit input requirement.
-
-The Rust RNK-03 composed `feat412` consumer reads these canonical DSL oracles
-straight from hash custody. It authenticates the independent catalog pin and each
-used object, checks sorted exact DSL identities and complete shard coverage, then
-compares every FP32 coordinate of every delivered definition against the actual
-Rust featurizer. It reports compared rows/coordinates and the remaining historical
-DSL gap. Raw-FP64 `proj16` is a separate domain and is not compared by this case.
-
-```sh
-JOPE_RES07_DSL_CATALOG_SHA256="$DSL_CATALOG_SHA256" \
- JOPE_RES07_CUSTODY_STORE="$HASH_CUSTODY" \
- nice -n 10 cargo test --locked -p jope-service --lib \
- real_model_prior_structural_features_match_frozen_oracle -- --ignored --nocapture
-```
-
-The existing test name is retained: with the two DSL custody variables it compares
-all 412 composed features; without them its original pinned 872-program/30-feature
-model-prior route remains available. An explicitly invoked missing/invalid fixture
-fails; data-free default runs keep this case ignored. The 1,292 delivered canonical
-definitions do not close full historical corpus, T075 or M3 qualification. This
-consumer does not modify the catalog, bundle, generator or DSC-07 pool fixtures.
-
-Strict real replay (external fixture index SHA and the pinned real bundle required):
-
-```sh
-JOPE_GOLDEN_DIR="$FIXTURES" JOPE_GOLDEN_INDEX_SHA256="$INDEX_SHA256" \
- JOPE_PARITY_BUNDLE_DIR="$RES06_BUNDLE" JOPE_PARITY_REPORT_DIR="$REPORT_DIR" \
- cargo test --locked -p jope-service --lib matches_t087_lm48_golden -- --ignored --nocapture
-# Same environment; run the RNK08 case:
-cargo test --locked -p jope-service --lib real_serving_slate_cost_and_admitted_set_m2_parity -- --ignored --nocapture
-```
-
-These existing tests are ignored in a data-free default run and fail if explicitly
-run without real pinned fixtures. They compare raw/standardized lm48 and every
-serving cost at atol1e-5/rtol1e-4. Admission compares the same production policy and
-persisted RNG state on reference versus Rust costs outside the conservative spec5.8
-cutoff band; ties and mismatches are counted, never relabelled as passes. This does
-not establish NumPy RNG parity. The readout records proposal KL and the0.35 flag;
-parity establishes implementation agreement, never guidance benefit.
-
-CPU fixtures are numeric test inputs, not a signed release. The adapter's public
-constructor still requires VerifiedBundle; only its internal test can consume the
-hash-pinned reference bytes. No public loader/trust boundary changes. The report
-must retain actual counts, maximum errors, excluded ties, source/fixture identities,
-bytes and timings. CUDA, Q1, full historical corpus, raw proposer retrieval,
-M3/M5 and serving promotion remain separate requirements.
-
----
-
-# RES-07 CPU pre-stage + model_prior subset
-
-`generate.py` validates a RES-06 bundle and stages deterministic reference fixtures.
-This directory currently contains generator source, documentation and tests, **no
-qualification fixture set**. M2, M3 and M5 remain open. Owner passes `gb1841` and
-`gb1915` admit only the `model_prior`-compatible, non-proposer subset. Actual fixture
-generation/commit requires merged RES-06 and the exclusive
-`~/jope_plan/qualification.lock`. H58/H57 have priority; never preempt their owner.
-
-Validation uses exported SafeTensors and hash-verified RES-02 source definitions.
-It does not import the historical runner, call the file-loading fused-network
-constructor, unpickle checkpoints, read original host assets, fit a model, open
-S3/held-out/sealed data, or initialize CUDA. Source definitions include the frozen
-constructor's owned attention wrappers. Model layers are constructed on CPU and
-strictly loaded from the already-exported tensors. No tensor/weight is changed.
-
-Merged RES-06-F02 (#721) tags all 881 bank records `role=model_prior` and
-`coordinate_space=standardized_lm48_l2_unit`. Validation requires both tags and
-refuses proposer/raw-coordinate or unlabelled records. It never calls the exporter
-to load legacy assets. The 881 rows/885 neural prior entries and normalized
-summaries are distinct from the actual 1,219-context proposer bank's first twelve
-**raw SVD lm48** coordinates. Its pinned raw snapshot/promotion prefix is absent
-from admitted custody; RNK-09 retrieval parity stays parked. No inversion or
-replacement bank is admitted by this generator.
-
-## CPU validation
-
-```sh
-OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
-  nice -n 10 python3 research/flywheel_selfplay/golden/generate.py \
-  --bundle "$RES06_BUNDLE" --expected-bundle-digest "$RES06_BUNDLE_DIGEST"
-```
-
-The expected digest is an explicit trusted input, not an inferred authentication
-claim. The report checks the existing schema, all four payload hashes/BundleDigest,
-338 tensor contracts/finiteness/frozen composite/anchor aliases, source hashes and
-all prior-bank `feat412` records. It reports prior-bank versus raw-FP64 projection
-differences without replacing either representation. Stored FP32 bank vectors are
-inputs; they are **not** the raw program-projection oracle. The validation report
-sets qualification false and writes no fixture files.
-
-The #721 tagged bundle used for this pre-stage is
-`sha256:94fd9587675c7806bd0a0582b6e97540cd2fdc7ebbc51958411b905185cad85c`.
-Its admitted subset is exactly 881 prior records / 872 unique DSLs. This does not
-establish completeness of the historical training-program corpus. The validation
-report explicitly sets `historical_corpus_complete` and
-`proposer_retrieval_qualified` false.
-Runtime/provenance receipts belong outside the Git tree. Use the same pinned
-Python/PyTorch/NumPy/runtime and thread configuration for regeneration.
-
-## Consumers and layout
-
-A generated root has `index.json` binding the input capture manifest, BundleDigest,
-reference hashes, counts, per-file byte length/SHA256 and exact tensor names,
-dtypes and dimensions. `total_bytes` includes the index itself. Paths below are
-relative to that root; `<context>` is the original 64-hex training-context ID.
-
-| Consumer | Required fixture | Contract |
+| Consumer | Fixture relative to fetched root | Check |
 |---|---|---|
-| RNK-01 | Original RES-06 bundle | Existing loader/schema/weight checks, not a new bundle format |
-| RNK-02 | `programs.safetensors:proj16` | `[872,16]` F64, raw program projection for unique model-prior DSLs, absolute tolerance `1e-12` |
-| RNK-03 / RNK-04 | `programs.safetensors:feat412`, `programs.jsonl` | `[872,412]` F32 in frozen name order; model-prior program subset only, count/flag exact, other values `1e-6` |
-| RNK-05 | `landmarks/<context>.safetensors` | Actual training `input.X`, normalized `input.y`, source `input.row_ids`, native `col_full`, `v256`, caller-padded `col`; full trained HPC recipe |
-| RNK-06 | `contexts/<context>.safetensors:lm48,lm48_z` | `[1,48]` F32 raw and standardized SVD coordinates, separately named |
-| RNK-07 | `contexts/<context>.safetensors:tokens,mask` | `[1,10,32]`, `[1,10]` F32; exact source projection/masking |
-| RNK-08 | `slates/<context>-12.safetensors`, `slates/<context>-20.safetensors` | All named `input.*` and `output.*` tensors, including total costs; four actual measured reveals plus 8/16 proposals |
-| RNK-09 | PARKED; no retrieval fixture in this subset | Requires the separately pinned raw proposer snapshot/promotion epoch; `model-prior.jsonl` is not a substitute |
-| DSC-07 | `landmark-pools.json` | Context-keyed ordered stage/head multisets from raw `lm48`; duplicates retained |
-| RES-09 | All SafeTensors + index schemas | Use `JOPE_GOLDEN_DIR`; `JOPE_PARITY_STRICT=1` makes missing fixtures fail |
-| M3 evaluator | `surrogate/<context>.json` | Original full-train-CV measurement identity, values, gates and failed/unknown outcomes; compare relative tolerance `1e-9` |
+| RNK-01 | Original RES06 bundle digest94fd9587 | Frozen manifest, four payload hashes, weight/shape and DOPE c51a56d0 validation; no new bundle format |
+| RNK-02 | `dsl/programs-00000.safetensors:proj16` | All895 F64[16] vectors; native `proj16.rs`, absolute error<=1e-12 |
+| RNK-03 / RNK-04 | `dsl/programs.jsonl`, `dsl/programs-00000.safetensors:feat412` | Native composed featurizer, all895×412 coordinates, including all parameter coordinates |
+| RNK-05 | `packet/landmarks/<context>.safetensors` | Actual input.X/input.y/input.row_ids, native v256/col_full/caller col; owning port's qualification remains separate |
+| RNK-06 | `packet/contexts/<context>.safetensors:lm48,lm48_z` | Raw and standardized coordinates; native frozen projection, 50 contexts |
+| RNK-07 | `packet/contexts/*:tokens,mask`, `packet/rnk07/stage1b-parameters.safetensors` | Native `stage1b.rs`, all50×320 tokens and masks; deterministic32-tensor sidecar |
+| RNK-08 | `packet/slates/<context>-12.safetensors`, `-20.safetensors` | Native costs/admitted-set policy, 100 slates, all named input/output tensors |
+| RNK-09 | `retrieval/{legacy16,full1219}-bank.jsonl.zst`, `-nearest.json` | Native Bank load/nearest; both512-row banks, all132 context queries and four k values |
+| DSC-07 | `packet/landmark-pools.json` | Ordered preferred stage/head multisets from raw lm48, duplicates retained |
+| RES-09 | `packet/index.json` and all202 indexed SafeTensors | Strict name/dtype/dimension/hash loader; F64 projection stays F64 |
+| Rung-0 surrogate values | `packet/surrogate/<context>.json`, `sources/train-cv.json` | Original TRAIN CV identities/values/gates; all1024 outcomes retained, no unknown outcome converted to zero |
 
-Each context tensor file also includes `v256:[1,256]`, `col:[1,64,17]` and
-`dope629:[1,629]` F32. `model-prior.jsonl` preserves all 881 original prior records
-and their order, including explicit role/coordinate tags; `programs.jsonl` indexes
-their 872 unique exact DSL byte strings in first-occurrence order. This is the
-only program population admitted for the subset. Program projections remain F64; slate inputs are the
-frozen caller's FP32 tensors. RES-09's `values_f32` convenience map must not be used
-for RNK-02's `1e-12` comparison; retain/read the F64 Candle tensor instead.
+`consumers.rs` compiles the maintained native projection/Stage1B modules directly
+and replays a separately pinned packet; it changes no production ranker API.
+Compile it against the same source's Cargo-built `anyhow`, `sha2`, `safetensors`
+and `serde_json` rlibs. Existing RNK03 tests select the whole R5 catalog with
+`JOPE_RES07_DSL_CATALOG_SHA256` and `JOPE_RES07_CUSTODY_STORE`. Existing RNK06,
+RNK08, DSC07 and RES09 tests accept the explicit packet index pin. RNK09 uses
+`JOPE_RNK09_PARITY_MANIFEST` and its separately supplied SHA256 for each stratum.
+Legacy RNK07 tests hard-pin the original/augmented packet indexes; this new
+consumer supports R5 without changing those tests or their original fixtures.
 
-The frozen closed loop passes **zero base priors and zero SOS priors** to h40b;
-those inputs are reproduced from its source. The separate fused GPU fitter's
-calibrated-prior route is not substituted. Costs do not select new contexts,
-change revealed slots, or define exploration admission. Rust admitted-set tests
-apply the qualified policy outside the spec tie band
-`2 * (1e-5 + 1e-4 * abs(cost))`; ties remain reported separately.
+Fixture availability, source implementation, native CPU parity, CUDA parity,
+serving promotion and global product qualification are separate claims. RES07's
+accepted R5 fixture closure does not declare Q1, a release, restoration of original
+pre-proposal state, or blanket M2/M3/M5 qualification for other tasks.
 
-## Required source-capture packet
-
-No training table is discovered automatically. The generation owner supplies a
-reviewed, immutable `jope.golden-source-captures/v1` JSON manifest with a separately
-pinned SHA256. Every referenced file uses a canonical relative path and SHA256;
-symlinks/escapes, unknown contexts and identity mismatches refuse. No numeric
-example/placeholder fixture is supplied here.
-
-Required fields are:
-
-- `bundle_digest`: the explicitly selected RES-06 BundleDigest.
-- `selected`: hash-pinned row-free selection metadata, matching RES-01's original
-  selection SHA256. Only its `train` context/family identifiers are used; dataset
-  paths, development and outer-query payloads are never followed.
-- `contexts`: at least 50 distinct pinned DL-Train contexts, each with `family_id`,
-  `landmarks`, `surrogate` and `slates` keys `12` and `20`.
-
-The program corpus comes directly from the hash-verified tagged model-prior bank.
-`corpus`, `historical_inventory` and `proposer_bank` packet keys refuse in this
-subset. Every slate program must belong to that prior population. Full historical
-corpus coverage and raw retrieval goldens require a separate future source closure;
-their absence does not block validation of this admitted subset.
-
-A landmark capture retains the **actual function inputs**: F32 table input,
-already-normalized target, distinct nonnegative source row IDs, at most 1,024 rows,
-`col_full:[P,24]` native output, `v256` and `col:[64,17]` caller padding/truncation.
-Raw missing input values may remain in the captured input; computed intermediates
-must be finite. Its metadata pins the trained native workspace source, native
-library and frozen caller hashes, and `outer_query_rows:0`. These are pre-existing
-reference oracle captures, not values inferred from a Rust port or an approximate
-PyTorch landmark extractor. The generator reuses their exact bytes and computes
-the downstream neural reference stages from the pinned source/weights.
-
-Surrogate captures contain `evaluator_sha256`, `context_sha256`, exact `recipe`,
-and `measurements` keyed by program SHA with original `raw_f`, `gate` and execution
-outcomes. Each slate supplies its ordered `program_sha256`, four `revealed_raw_f`
-and four `revealed_gate` values; all four must match those measurement records.
-Do not turn unknown/failed outcomes into zero, change selection from the frozen
-caller, or replace full-training CV with a newly chosen surrogate. Capturing these
-landmark/native-evaluator inputs remains a qualification prerequisite; CPU bundle
-validation does not supply them. A subset index retains the false full-qualification
-flags even when its particular outputs have been generated and checked.
-
-## Gated generation and regeneration
-
-Only the generation owner with the real free qualification lock may run:
-
-```sh
-OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
-  nice -n 10 python3 research/flywheel_selfplay/golden/generate.py \
-  --bundle "$RES06_BUNDLE" --expected-bundle-digest "$RES06_BUNDLE_DIGEST" \
-  --captures "$REVIEWED_CAPTURES" --expected-captures-sha256 "$CAPTURE_SHA256" \
-  --output "$NEW_EXTERNAL_OUTPUT"
-```
-
-Generation refuses a busy lock, missing merged RES-06 ancestry, incomplete input
-coverage and existing output. It publishes the non-proposer subset atomically into
-a new directory. Check regeneration using two fresh external outputs, each holding
-the required lease and using the same runtime; compare every file byte for byte and
-read `index.total_bytes`.
-No clock, execution-host path, random staging name or input dictionary insertion order enters
-the output bytes. Validation remains CPU-only; CUDA parity is separately qualified.
-
-At or below 50,000,000 total bytes, the qualification owner may stage verified
-fixtures into Git while holding the required lease. Above that limit, retain the
-payloads in immutable content-hash custody and commit only the reviewed index and
-retrieval record. Materialize files from that exact approved location, verify every
-index length/SHA256, then set `JOPE_GOLDEN_DIR` to the resulting root. No bucket
-listing, credentials, upload permission or serving promotion is implied.
+The expanded R5 oracle exposes an RNK08 port failure: **4/1,600 costs** exceed
+the unchanged tolerance (max absolute error6.103515625e-5, max tolerance
+ratio2.01868452). All100 decisive admitted sets match; max proposalKL0.34163552
+is below0.35. These oracle values are retained unchanged. RES07 fixture
+completeness does not mark RNK08 numerical parity passed; the native failure
+receipt and a focused RNK08 repair handoff accompany this task closeout.
