@@ -528,6 +528,7 @@ def test_stop_engine_reaps_group_when_wait_raises(wait_error, tmp_path):
                 self.injected = True
                 if wait_error == "sigint":
                     os.kill(os.getpid(), signal.SIGINT)
+                    return self.process.wait(*positional, **kwargs)
                 raise OSError("injected engine wait failure")
             return self.process.wait(*positional, **kwargs)
 
@@ -546,8 +547,22 @@ def test_stop_engine_reaps_group_when_wait_raises(wait_error, tmp_path):
 
 @pytest.mark.parametrize(
     "boundary",
-    ["grace-wait", "grace-sleep", "kill-sleep", "reap-wait"],
-    ids=["grace-wait", "grace-sleep", "kill-sleep", "reap-wait"],
+    [
+        "grace-wait",
+        "grace-sleep",
+        "kill-sleep",
+        "reap-wait",
+        "inventory-iterdir",
+        "inventory-stat",
+    ],
+    ids=[
+        "grace-wait",
+        "grace-sleep",
+        "kill-sleep",
+        "reap-wait",
+        "inventory-iterdir",
+        "inventory-stat",
+    ],
 )
 def test_stop_engine_finishes_teardown_when_cleanup_is_interrupted(
     boundary, monkeypatch, tmp_path
@@ -556,6 +571,7 @@ def test_stop_engine_finishes_teardown_when_cleanup_is_interrupted(
     original_terminate = THREE_CLIENTS_MODULE.terminate_group
     original_killpg = os.killpg
     original_sleep = time.sleep
+    original_path = THREE_CLIENTS_MODULE.Path
     state = {"injected": False, "kill_requested": False}
 
     def inject_sigint():
@@ -575,7 +591,16 @@ def test_stop_engine_finishes_teardown_when_cleanup_is_interrupted(
                 raise subprocess.TimeoutExpired("initial engine wait", 10)
             if boundary == "grace-wait" and timeout == 5:
                 inject_sigint()
-            if boundary in {"grace-sleep", "kill-sleep"} and timeout == 0.1:
+            if (
+                boundary
+                in {
+                    "grace-sleep",
+                    "kill-sleep",
+                    "inventory-iterdir",
+                    "inventory-stat",
+                }
+                and timeout == 0.1
+            ):
                 raise subprocess.TimeoutExpired("short grace wait", 0.1)
             if boundary == "reap-wait" and state["kill_requested"]:
                 inject_sigint()
@@ -606,9 +631,38 @@ def test_stop_engine_finishes_teardown_when_cleanup_is_interrupted(
                 original_killpg(engine.pid, signal.SIGKILL)
         original_sleep(seconds)
 
+    class OwnStat:
+        def read_text(self, *args, **kwargs):
+            if boundary == "inventory-stat" and not state["injected"]:
+                inject_sigint()
+            return original_path(f"/proc/{engine.pid}/stat").read_text(*args, **kwargs)
+
+    class OwnEntry:
+        name = str(engine.pid)
+
+        def __truediv__(self, child):
+            assert child == "stat"
+            return OwnStat()
+
+    class ProcDirectory:
+        def is_dir(self):
+            return True
+
+        def iterdir(self):
+            if boundary == "inventory-iterdir" and not state["injected"]:
+                inject_sigint()
+                return original_path("/proc").iterdir()
+            return [OwnEntry()]
+
+    def path_with_owned_proc(path):
+        if str(path) == "/proc" and boundary.startswith("inventory-"):
+            return ProcDirectory()
+        return original_path(path)
+
     monkeypatch.setattr(THREE_CLIENTS_MODULE, "terminate_group", short_grace)
     monkeypatch.setattr(THREE_CLIENTS_MODULE.os, "killpg", track_kill)
     monkeypatch.setattr(THREE_CLIENTS_MODULE.time, "sleep", interrupt_sleep)
+    monkeypatch.setattr(THREE_CLIENTS_MODULE, "Path", path_with_owned_proc)
     try:
         with pytest.raises(KeyboardInterrupt):
             THREE_CLIENTS_MODULE.stop_engine(

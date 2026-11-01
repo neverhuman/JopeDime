@@ -231,9 +231,28 @@ def render_argv(argv: list[str], values: dict[str, str]) -> list[str]:
     return rendered
 
 
-def terminate_group(process: subprocess.Popen, grace_seconds: float = 5) -> int:
-    pgid = process.pid
+def _block_sigint() -> tuple[set[signal.Signals], BaseException | None]:
     pending_error = None
+    while True:
+        try:
+            previous_mask = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT})
+            return previous_mask, pending_error
+        except KeyboardInterrupt as error:
+            if pending_error is None:
+                pending_error = error
+
+
+def _restore_sigint(previous_mask: set[signal.Signals]) -> BaseException | None:
+    try:
+        signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
+    except BaseException as error:
+        return error
+    return None
+
+
+def terminate_group(process: subprocess.Popen, grace_seconds: float = 5) -> int:
+    previous_mask, pending_error = _block_sigint()
+    pgid = process.pid
     cleanup_error = None
 
     def remember(error: BaseException) -> None:
@@ -257,60 +276,79 @@ def terminate_group(process: subprocess.Popen, grace_seconds: float = 5) -> int:
             remember(error)
 
     try:
-        os.killpg(pgid, signal.SIGTERM)
-    except ProcessLookupError:
-        pass
-    except BaseException as error:
-        remember(error)
-
-    def live_group_members() -> bool:
-        proc = Path("/proc")
-        if not proc.is_dir():
-            try:
-                os.killpg(pgid, 0)
-                return True
-            except ProcessLookupError:
-                return False
-        for entry in proc.iterdir():
-            if not entry.name.isdecimal():
-                continue
-            try:
-                stat = (entry / "stat").read_text(encoding="ascii")
-                fields = stat.rsplit(")", 1)[1].split()
-                state, member_pgid = fields[0], int(fields[2])
-            except (OSError, IndexError, ValueError):
-                continue
-            if member_pgid == pgid and state not in {"Z", "X"}:
-                return True
-        return False
-
-    grace_deadline = time.monotonic() + max(0, grace_seconds)
-    wait(max(0, grace_seconds))
-    while live_group_members() and time.monotonic() < grace_deadline:
-        pause(min(0.05, max(0, grace_deadline - time.monotonic())))
-    if live_group_members():
         try:
-            os.killpg(pgid, signal.SIGKILL)
+            os.killpg(pgid, signal.SIGTERM)
         except ProcessLookupError:
             pass
         except BaseException as error:
             remember(error)
-        kill_deadline = time.monotonic() + 2
-        while live_group_members() and time.monotonic() < kill_deadline:
-            pause(0.02)
-        if live_group_members():
-            cleanup_error = CaptureError(f"process group {pgid} survived SIGKILL")
 
-    reap_deadline = time.monotonic() + 2
-    engine_exit = None
-    while engine_exit is None and time.monotonic() < reap_deadline:
-        engine_exit = wait(max(0, reap_deadline - time.monotonic()))
-    if engine_exit is None and process.poll() is None:
-        cleanup_error = cleanup_error or CaptureError(
-            f"process {process.pid} could not be reaped"
-        )
-    elif engine_exit is None:
-        engine_exit = process.returncode
+        def live_group_members() -> bool:
+            proc = Path("/proc")
+            if not proc.is_dir():
+                try:
+                    os.killpg(pgid, 0)
+                    return True
+                except ProcessLookupError:
+                    return False
+            for entry in proc.iterdir():
+                if not entry.name.isdecimal():
+                    continue
+                try:
+                    stat = (entry / "stat").read_text(encoding="ascii")
+                    fields = stat.rsplit(")", 1)[1].split()
+                    state, member_pgid = fields[0], int(fields[2])
+                except (OSError, IndexError, ValueError):
+                    continue
+                if member_pgid == pgid and state not in {"Z", "X"}:
+                    return True
+            return False
+
+        grace_deadline = time.monotonic() + max(0, grace_seconds)
+        wait(max(0, grace_seconds))
+        while live_group_members() and time.monotonic() < grace_deadline:
+            pause(min(0.05, max(0, grace_deadline - time.monotonic())))
+        if live_group_members():
+            try:
+                os.killpg(pgid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            except BaseException as error:
+                remember(error)
+            kill_deadline = time.monotonic() + 2
+            while live_group_members() and time.monotonic() < kill_deadline:
+                pause(0.02)
+            if live_group_members():
+                cleanup_error = CaptureError(f"process group {pgid} survived SIGKILL")
+
+        reap_deadline = time.monotonic() + 2
+        engine_exit = None
+        while engine_exit is None and time.monotonic() < reap_deadline:
+            engine_exit = wait(max(0, reap_deadline - time.monotonic()))
+        if engine_exit is None and process.poll() is None:
+            cleanup_error = cleanup_error or CaptureError(
+                f"process {process.pid} could not be reaped"
+            )
+        elif engine_exit is None:
+            engine_exit = process.returncode
+    except BaseException as error:
+        remember(error)
+        try:
+            os.killpg(pgid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        except BaseException as cleanup_failure:
+            if cleanup_error is None:
+                cleanup_error = cleanup_failure
+        try:
+            engine_exit = process.wait(timeout=2)
+        except BaseException as cleanup_failure:
+            if cleanup_error is None:
+                cleanup_error = cleanup_failure
+    finally:
+        restore_error = _restore_sigint(previous_mask)
+        if pending_error is None:
+            pending_error = restore_error
 
     if pending_error is not None:
         if cleanup_error is not None:
@@ -362,35 +400,41 @@ def stop_engine(
 ) -> tuple[int | None, int | None]:
     if process is None:
         return None, None
+    previous_mask, pending_error = _block_sigint()
     stop_exit = None
-    pending_error = None
+    engine_exit = None
     try:
-        stop = subprocess.run(
-            [str(candidate), "serve", "--stop"],
-            cwd=repo,
-            env=environment,
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=15,
-            preexec_fn=lambda: os.nice(19),
-        )
-        stop_exit = stop.returncode
-    except BaseException as error:
-        pending_error = error
-    try:
+        try:
+            stop = subprocess.run(
+                [str(candidate), "serve", "--stop"],
+                cwd=repo,
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=15,
+                preexec_fn=lambda: os.nice(19),
+            )
+            stop_exit = stop.returncode
+        except BaseException as error:
+            if pending_error is None:
+                pending_error = error
         try:
             process.wait(timeout=10)
         except subprocess.TimeoutExpired:
             pass
-    except BaseException as error:
+        except BaseException as error:
+            if pending_error is None:
+                pending_error = error
+        try:
+            engine_exit = terminate_group(process)
+        except BaseException as error:
+            if pending_error is None:
+                pending_error = error
+    finally:
+        restore_error = _restore_sigint(previous_mask)
         if pending_error is None:
-            pending_error = error
-    try:
-        engine_exit = terminate_group(process)
-    except BaseException as error:
-        if pending_error is None:
-            pending_error = error
+            pending_error = restore_error
     if pending_error is not None:
         raise pending_error
     return stop_exit, engine_exit
