@@ -1207,8 +1207,9 @@ impl Discovery {
                 } else {
                     None
                 };
+                response.fold_scores = cv_response.fold_scores.clone();
                 let id = experiment(&next.plan, round.number, 0, 1)?;
-                add_events(&mut next, &response, &id, &mut events)?;
+                add_events(&mut next, candidate, &response, &id, &mut events)?;
                 records.push(json!({"round":round.number,"slot":0,"rung":1,"candidate":candidate,
                     "scores":cv_response.scores,"predictions_digest":cv_response.predictions_digest,
                     "failure":response.failure,"cv_failure":cv_response.failure,"refit_failure":refit_failure}));
@@ -2446,7 +2447,7 @@ fn discard_pending(
             let response = index.and_then(|i| responses.get(i)).cloned();
             if let Some(response) = &response {
                 let id = experiment(&state.plan, pending.number, slot, 0)?;
-                add_events(state, response, &id, events)?;
+                add_events(state, &candidate, response, &id, events)?;
             }
             state.discarded.push(DiscardedEvaluation {
                 round: pending.number,
@@ -2644,7 +2645,6 @@ fn native_scores<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Resul
     Ok(worker::Scores {
         values: scores,
         fold_scores,
-        fold_scores: vec![],
         predictions_digest: digest(&bytes),
     })
 }
