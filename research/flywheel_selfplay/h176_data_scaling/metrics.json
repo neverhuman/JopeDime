@@ -1,0 +1,150 @@
+{
+  "arms": {
+    "FRESH_100": {
+      "family_bootstrap_ci95": [
+        1.1422928599982032,
+        1.6753826936005256
+      ],
+      "median_equal_family_utility": 1.3882548225175018
+    },
+    "FRESH_25": {
+      "family_bootstrap_ci95": [
+        1.141762610398579,
+        1.6770756940433877
+      ],
+      "median_equal_family_utility": 1.3902062652010478
+    },
+    "FRESH_50": {
+      "family_bootstrap_ci95": [
+        1.1451256594558459,
+        1.678068302796699
+      ],
+      "median_equal_family_utility": 1.3899312428501813
+    },
+    "R882": {
+      "family_bootstrap_ci95": [
+        1.1418919160343592,
+        1.6689921329988853
+      ],
+      "median_equal_family_utility": 1.3853554329931834
+    },
+    "R882_CONT_100": {
+      "family_bootstrap_ci95": [
+        1.1142616332125006,
+        1.6394069393796311
+      ],
+      "median_equal_family_utility": 1.3551498578340484
+    }
+  },
+  "cohort": {
+    "assessed_A_families": 205,
+    "dl_val_contexts": 91,
+    "dl_val_families": 19,
+    "outer_folds": 5,
+    "seeds": 3,
+    "train_contexts": 1219,
+    "train_families": 205
+  },
+  "diagnostic_only": true,
+  "elo_vs_r882": {
+    "FRESH_100": {
+      "family_bootstrap_ci95": [
+        1495.0581567300715,
+        1522.906701012706
+      ],
+      "median": 1509.222247697816
+    },
+    "FRESH_25": {
+      "family_bootstrap_ci95": [
+        1495.263067111646,
+        1523.6301610652527
+      ],
+      "median": 1509.2416908192886
+    },
+    "FRESH_50": {
+      "family_bootstrap_ci95": [
+        1496.209707487976,
+        1524.056531239882
+      ],
+      "median": 1510.248501398029
+    },
+    "R882_CONT_100": {
+      "family_bootstrap_ci95": [
+        1475.18780137819,
+        1494.4974851261147
+      ],
+      "median": 1485.0847461604067
+    }
+  },
+  "paired_differences": {
+    "25_to_100": {
+      "family_bootstrap_ci95": [
+        -0.004377481719555746,
+        0.0029133609987936696
+      ],
+      "median_equal_family_gain": -0.0007339988174765051
+    },
+    "25_to_50": {
+      "family_bootstrap_ci95": [
+        -0.00268879147683202,
+        0.007188823127151072
+      ],
+      "median_equal_family_gain": 0.0009364909899551194
+    },
+    "50_to_100": {
+      "family_bootstrap_ci95": [
+        -0.0041403385963950275,
+        -0.0016231595204058266
+      ],
+      "median_equal_family_gain": -0.0016764203326794297
+    }
+  },
+  "prereg_pr": 1493,
+  "protocol": {
+    "bootstrap_draws": 10000,
+    "bootstrap_seed": 176141,
+    "fractions": [
+      {
+        "fit_families": 31,
+        "label": "25%"
+      },
+      {
+        "fit_families": 62,
+        "label": "50%"
+      },
+      {
+        "fit_families": 123,
+        "label": "100%"
+      }
+    ],
+    "optimizer_updates": 2400,
+    "trajectories": 60,
+    "updates_per_cell": 40
+  },
+  "raw_evidence_s3": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H176/codex-t1135/658ea2b050e3dd36/",
+  "resource_guard": "PASS",
+  "review_id": 5727836812,
+  "schema": "jope.h176-results/v1",
+  "serving_promotion": false,
+  "slope_per_log2_doubling": {
+    "family_bootstrap_ci95": [
+      -0.0033204110658609258,
+      0.0024365421874789567
+    ],
+    "median": -0.0003669994087377432
+  },
+  "source_commit": "6f489fd4b20adcbd58685d9349d0243d97c6eacd",
+  "verdict": "INCONCLUSIVE",
+  "wave": "H176",
+  "zero_update_gap": {
+    "dl_val_equal_family_utility": 1.153615276991245,
+    "minus2_contexts": {
+      "dl_val": 0,
+      "train": 17
+    },
+    "oracle_headroom_normalized_gap": 0.4960325627985796,
+    "train_equal_family_utility": 1.3853554329931828,
+    "train_minus_dl_val": 0.23174015600193765,
+    "train_oracle_headroom": 0.4671873852282531
+  }
+}
