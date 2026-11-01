@@ -23,8 +23,9 @@
 //! `signed_prefix_len + 64 + 128` bytes.
 
 use crate::{
-    align_up, decode, limits, manifest::Manifest, source::VerifiedBytes, verify, AssetError, Entry,
-    KeyId, TrustedKey, ALGORITHM_P256_SHA256, FOOTER_LEN, FORMAT_VERSION, MAGIC, SIGNATURE_LEN,
+    ALGORITHM_P256_SHA256, AssetError, Entry, FOOTER_LEN, FORMAT_VERSION, KeyId, MAGIC,
+    SIGNATURE_LEN, TrustedKey, align_up, decode, limits, manifest::Manifest, source::VerifiedBytes,
+    verify,
 };
 use std::fs::File;
 use std::os::unix::fs::FileExt;
@@ -181,6 +182,9 @@ pub struct Package {
     footer: Footer,
     manifest: Manifest,
     signer: TrustedKey,
+    signed_manifest: Vec<u8>,
+    signed_footer: [u8; FOOTER_LEN as usize],
+    signed_signature: [u8; SIGNATURE_LEN as usize],
 }
 
 /// What [`Package::verify_full`] checked.
@@ -281,7 +285,21 @@ impl Package {
             footer,
             manifest,
             signer,
+            signed_manifest: manifest_bytes,
+            signed_footer: raw,
+            signed_signature: signature,
         }))
+    }
+
+    /// Exact authenticated envelope, for a model loader that independently checks
+    /// the release signature and its own semantic/tensor catalog. No reserialization
+    /// or reopening a mutable pathname is involved.
+    pub fn signed_envelope(&self) -> (&[u8], &[u8; 128], &[u8; 64]) {
+        (
+            &self.signed_manifest,
+            &self.signed_footer,
+            &self.signed_signature,
+        )
     }
 
     /// Return the authenticated manifest.

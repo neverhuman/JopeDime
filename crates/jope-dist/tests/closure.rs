@@ -1,7 +1,7 @@
 //! The committed lock is the derivation of the committed profiles (SPECIFICATION.md §5.3–5.4):
 //! rights the scope does not admit, missing acknowledgements, unlicensed weights and promised
 //! methods this build cannot run block a profile; structural mistakes are errors.
-use jope_dist::profile::{derive_lock, lock_profile, Profile};
+use jope_dist::profile::{Profile, derive_lock, lock_profile};
 use std::path::{Path, PathBuf};
 
 fn repo() -> PathBuf {
@@ -40,14 +40,17 @@ fn the_committed_lock_is_current() {
         })
     }));
     let full = &lock.profiles["full"];
-    assert_eq!(full.status, "blocked");
+    assert_eq!(full.status, "ready");
+    assert!(full.blockers.is_empty());
+    assert!(
+        full.methods
+            .iter()
+            .any(|id| id == jope_service::proposal::METHOD)
+    );
     assert!(!full.blockers.iter().any(|b| {
         b.contains("starlight_core_regressor") && b.contains("owner acknowledgement")
     }));
-    assert!(full
-        .blockers
-        .iter()
-        .any(|b| b.contains("proposal.step60000.regression")));
+
     let acknowledgement = std::fs::read_to_string(
         repo.join("deploy/appliance/acknowledgements/full-internal-restricted.md"),
     )
@@ -58,16 +61,20 @@ fn the_committed_lock_is_current() {
     let r882 = full
         .components
         .iter()
-        .find(|component| component.id == "r882-regression-adapter")
+        .find(|component| component.id == "r882")
         .expect("the full profile resolves the owner-selected r882 adapter");
-    assert_eq!(r882.bundle_id, "r882-regression");
-    assert_eq!(r882.files.len(), 1);
-    assert_eq!(r882.files[0].path, "jope.safetensors");
+    assert_eq!(r882.bundle_id, "r882");
+    assert_eq!(r882.files.len(), 56);
+    let jope = r882
+        .files
+        .iter()
+        .find(|file| file.path == "jope.safetensors")
+        .unwrap();
     assert_eq!(
-        r882.files[0].sha256,
+        jope.sha256,
         "ff3f9ea5d76fa6c13cd74d40a9effbf7e9c891d98746dc542d851726b9e3138c"
     );
-    assert_eq!(r882.files[0].bytes, 7_499_888);
+    assert_eq!(jope.bytes, 7_499_888);
     let r882_manifest: serde_json::Value = serde_json::from_slice(
         &std::fs::read(repo.join("models/bundles/r882-regression.json")).unwrap(),
     )
@@ -76,10 +83,12 @@ fn the_committed_lock_is_current() {
         r882_manifest["export"]["bundle_digest"],
         "sha256:057e50a9a741d30d541ed8af8339cec84a5157af621100cb70857052ef14dacc"
     );
-    assert!(!full
-        .components
-        .iter()
-        .any(|component| component.bundle_id == "policy-step-60000"));
+    assert!(
+        !full
+            .components
+            .iter()
+            .any(|component| component.bundle_id == "policy-step-60000")
+    );
 
     // Three encoder tensors plus the pinned r882 safetensors adapter remain in the closure.
     let tensors: u64 = full
@@ -89,13 +98,96 @@ fn the_committed_lock_is_current() {
         .filter(|f| f.path.ends_with(".safetensors"))
         .map(|f| f.bytes)
         .sum();
-    assert_eq!(tensors, 325_949_288);
+    assert_eq!(tensors, 328235504);
 }
 
 fn write_profile(dir: &Path, name: &str, body: &str) -> PathBuf {
     let path = dir.join(format!("{name}.toml"));
     std::fs::write(&path, body).unwrap();
     path
+}
+
+#[test]
+fn r882_promises_require_the_complete_exact_internal_closure() {
+    let dir = tempfile::tempdir().unwrap();
+    let assets = jope_service::proposal::required_assets().unwrap();
+    let files = assets
+        .iter()
+        .map(|(id, _, _)| id.strip_prefix("model/r882/").unwrap())
+        .collect::<Vec<_>>();
+    let text = format!(
+        r#"schema = "jope.appliance-profile/v1"
+name = "r882"
+description = "test"
+scope = "internal"
+redistribution = ["internal"]
+methods = ["proposal.r882.regression"]
+bundles = "models/bundles"
+max_payload_mib = 512
+[codec]
+name = "zstd"
+level = 3
+frame_mib = 16
+[[component]]
+id = "r882"
+bundle = "r882"
+role = "model"
+files = {}
+"#,
+        serde_json::to_string(&files).unwrap()
+    );
+    let path = write_profile(dir.path(), "r882", &text);
+    let (profile, sha) = Profile::load(&path).unwrap();
+    assert_eq!(
+        lock_profile(&profile, &sha, &repo()).unwrap().status,
+        "ready"
+    );
+    let mut missing = profile.clone();
+    missing.components[0]
+        .files
+        .retain(|file| file != "dope.safetensors");
+    let blocked = lock_profile(&missing, &sha, &repo()).unwrap();
+    assert!(
+        blocked
+            .blockers
+            .iter()
+            .any(|why| why.contains("model/r882/dope.safetensors"))
+    );
+    let mut alias = profile.clone();
+    alias.components[0].id = "wrong-logical-id".into();
+    assert_eq!(
+        lock_profile(&alias, &sha, &repo()).unwrap().status,
+        "blocked"
+    );
+    let mut public = profile.clone();
+    public.scope = "public".into();
+    assert!(
+        lock_profile(&public, &sha, &repo())
+            .unwrap()
+            .blockers
+            .iter()
+            .any(|why| why.contains("internal-only"))
+    );
+    // A descriptor with a different hash must not become a runnable method merely
+    // because its file names and loader architecture are recognized.
+    let mut descriptor: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(repo().join("models/bundles/r882.json")).unwrap())
+            .unwrap();
+    descriptor["files"][0]["sha256"] = serde_json::json!("0".repeat(64));
+    std::fs::write(
+        dir.path().join("r882.json"),
+        serde_json::to_vec(&descriptor).unwrap(),
+    )
+    .unwrap();
+    let mut drift = profile;
+    drift.bundles = ".".into();
+    assert!(
+        lock_profile(&drift, &sha, dir.path())
+            .unwrap()
+            .blockers
+            .iter()
+            .any(|why| why.contains("missing or different asset"))
+    );
 }
 
 const HEADER: &str = r#"schema = "jope.appliance-profile/v1"
@@ -138,16 +230,20 @@ fn rights_outside_the_scope_block_and_never_pass() {
     );
     let (profile, sha) = Profile::load(&public).unwrap();
     let locked = lock_profile(&profile, &sha, &repo()).unwrap();
-    assert!(locked
-        .blockers
-        .iter()
-        .any(|b| b.contains("`internal` is not admitted by scope public")));
+    assert!(
+        locked
+            .blockers
+            .iter()
+            .any(|b| b.contains("`internal` is not admitted by scope public"))
+    );
 
     // A public profile may not even claim to admit internal files.
     let wide = write_profile(
         dir.path(),
         "wide",
-        &format!("name = \"wide\"\nscope = \"public\"\nredistribution = [\"permitted\", \"internal\"]\n{HEADER}"),
+        &format!(
+            "name = \"wide\"\nscope = \"public\"\nredistribution = [\"permitted\", \"internal\"]\n{HEADER}"
+        ),
     );
     assert!(Profile::load(&wide).is_err());
 }

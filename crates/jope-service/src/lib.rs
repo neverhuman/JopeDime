@@ -29,6 +29,8 @@ pub mod idempotency;
 pub mod lex;
 /// Objective evaluation types and helpers.
 pub mod objective;
+/// Authenticated embedded proposal runtime and its appliance capability record.
+pub mod proposal;
 /// Public response projection and claim-level filtering.
 pub mod public;
 /// Learned ranking, feature extraction, and candidate admission.

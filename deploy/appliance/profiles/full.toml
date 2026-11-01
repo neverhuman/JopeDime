@@ -1,19 +1,15 @@
-# The full product: native methods plus the owner-selected r882 regression adapter and its exact
-# encoder closure (SPECIFICATION.md §5.1). Neural alternatives (§6.2) join with their components
-# when their adapters land (P4).
-#
-# It is BLOCKED, and `jope-dist lock` records why (deploy/appliance/models.lock.json):
-#   * the Starlight foundation regressor remains `prohibited`; its explicit owner acknowledgement
-#     permits internal qualification/rehearsal candidates only, never public distribution;
-#   * the proposal method's runtime adapter is not compiled yet (P3). Its model input is the
-#     owner-selected round-882 JOPE safetensors export, pinned by SHA and bundle digest per T0210.
-# Rights are never edited to unblock it: resolve them at their source records.
+# Internal full candidate: native methods plus the explicit r882 v1 Engine proposal runtime.
+# This successor uses the complete authenticated r882 DOPE/ranker closure. It does not
+# impersonate the different, still unimplemented step-60000 generative policy.
+# Invoke through `jopedime run --guidance learned --landmarks full` (numeric regression).
+# Authentication/pack availability does not qualify any release gate or change Auto.
+# Retained foundation assets keep their original rights and owner acknowledgement.
 schema = "jope.appliance-profile/v1"
 name = "full"
 description = "Native methods plus the owner-selected r882 regression adapter (internal-restricted)."
 scope = "internal-restricted"
 redistribution = ["permitted", "internal", "prohibited"]
-methods = ["native", "proposal.step60000.regression"]
+methods = ["native", "proposal.r882.regression"]
 bundles = "models/bundles"
 max_payload_mib = 512
 owner_ack = "deploy/appliance/acknowledgements/full-internal-restricted.md"
@@ -24,9 +20,66 @@ level = 19
 frame_mib = 16
 
 [[component]]
-id = "r882-regression-adapter"
-bundle = "r882-regression"
-files = ["jope.safetensors"]
+id = "r882"
+bundle = "r882"
+files = [
+  "bank.jsonl.zst",
+  "dope.safetensors",
+  "featurizer.json",
+  "golden/contexts/004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d.safetensors",
+  "golden/contexts/010cc1caaa0743330780528c3ca1f644150d171717bf75e81ff9e9fa681ca31b.safetensors",
+  "golden/contexts/05cb929edb69424ee790270b59dcff2eeb91130d9d3dbf435808fd27b9c75132.safetensors",
+  "golden/contexts/07103ad960ef0fdfa9a471029e4d4050ec3ef39fc6e3f89e758f84752ff6d667.safetensors",
+  "golden/contexts/13dd5faa6c6f4f8becd9e1c20e6115c98da45905b0199d08c17a847dbea928de.safetensors",
+  "golden/contexts/16cdac486163423d020f484fda3fc6aee49faa536fdd3355ec0d951458d2bc32.safetensors",
+  "golden/contexts/173f9ef98021d3303ea555ca3f2b7dc68c05fdeea6be0cc3b9e04d5a05fefd51.safetensors",
+  "golden/contexts/19addf778e2359778ebf97acdc1677b3eb94d1f5a0971b55bb84a7019c99f22b.safetensors",
+  "golden/contexts/1a4fcbfa5e0f4a5230385780d1b9a163d94607e2aa9a4449e463100b84c2423e.safetensors",
+  "golden/contexts/2494607872da9cf5a07963d63d5868c2226415c5e46230d75f7e0b91e8aa03d2.safetensors",
+  "golden/contexts/28615dcdf8b886386a772030a159f027d76b537301da2331d9cc7b64fcf168b9.safetensors",
+  "golden/contexts/2870a5994f3e68eac1d085b5ab8fc34d15fa061231a22687ecde5165c06ffa13.safetensors",
+  "golden/contexts/2ffbdcfac965e86f786a5690b0fe2ae7c1d0e73731a74a568d56b25856f8b64f.safetensors",
+  "golden/contexts/36ecc459a68a4c4f72b0f57672b0832cb0ce9b099b9923ddd18124b8c77f027b.safetensors",
+  "golden/contexts/385509316caea6bb0dfc3044e8304f94b89570f5ee5aceb7d882c273d49be352.safetensors",
+  "golden/contexts/386a8b523b853951284b2db929b6314f72158723c3bedfc791f3e5e5c1445384.safetensors",
+  "golden/contexts/3909a22ecda556b3c261651994cc52979f8bffc2078fc330128c1e3aafd036ab.safetensors",
+  "golden/contexts/3961fc363370c7c00e90513b1ecf41983a55806952635f1af313142763039e80.safetensors",
+  "golden/contexts/3e33714bc989878ecafcf0b9690d5024b70b47090c1fd35960b65c67c8d14604.safetensors",
+  "golden/contexts/49bfc6d9fd44926c6fe7abf627b6ea2b15ce7adbfdbcf007509caeca987f0328.safetensors",
+  "golden/contexts/4f499a76cc7848bfcb9f6765e8fcedc3ff9f50379047c8dec2da239a1a08e180.safetensors",
+  "golden/contexts/5884985ecc662c6f57bc779a4d3e5e4bc02706b2f6e8579aea7b22e66f3bf163.safetensors",
+  "golden/contexts/5c0d177df5010aca1a18ceaff07e560f05b5da2cb0767433de587e42423ca1f3.safetensors",
+  "golden/contexts/68ff261ddbf860da2ccf872948c25e7708569af918effc587b1d6cc0a0dffeda.safetensors",
+  "golden/contexts/6b4f2e018713d522a8be7a7d767ec9513bc58bf9920275b026dde442bebb0096.safetensors",
+  "golden/contexts/713c2d1b6d1ca7482f6d5494a79fe26ecb2196ba9841b2a1f7b5cfdfaf5aec12.safetensors",
+  "golden/contexts/784f97a17547eaa6362c468e5579a5f58d26b3dbb28f2002d3b8e51c854aa0a3.safetensors",
+  "golden/contexts/78fa02e6623f696cf637954015c246f35d88cd36b13caf4d2dbfba643bff7c02.safetensors",
+  "golden/contexts/7940bbf41555fed32e6dc76a763a2fe0c4b1c9deadef80ee755c874904b75c25.safetensors",
+  "golden/contexts/7a92ae5c083863ad7735355d004de4db6d56aeeb7d7e7b8411d33d3cae06f00f.safetensors",
+  "golden/contexts/7b59e337b39c892af851bf3bd5a3ef1d426101d637467da2595af27470baee91.safetensors",
+  "golden/contexts/7f277fa883b8520fe565d691b974373f30aaa6d808b2d246d451586057334360.safetensors",
+  "golden/contexts/7f69cff51414380b64a1304a7fb5d281e3c469af4d2a6c36546e82c8153a9c1b.safetensors",
+  "golden/contexts/842ad0368b840aabc2671fa2b7d23874bda6d7bca3ffcdfe52384bb7d8a1c44e.safetensors",
+  "golden/contexts/866f77f1b8027433309dbda09ee29b86b36fa709f07d50e1dcd375ae227dd298.safetensors",
+  "golden/contexts/888985677654e3242bcb4e6b196af910bc8114cf0d4b56f6903ced98a96a36ca.safetensors",
+  "golden/contexts/89033749285b8be2b0ded865cb81e244e65bd5da25e22e62dbc11ef1d71fb8c0.safetensors",
+  "golden/contexts/8dac4e942caafd9819e87a419cf6bd457d2b81e31b13551aa70613bb668b36b2.safetensors",
+  "golden/contexts/8e5901a47442d253a378aac4c612c4ee81a4ab7f7de50d1c9e553dca5745ac52.safetensors",
+  "golden/contexts/916c44b64596df2c156fcb5f7cf1f62edcd2e343f9c55310a9e75271336370c2.safetensors",
+  "golden/contexts/92b9a308bd009e404adebbf3e0bbd179bc7d0c8c09e3252a7b929c12b3a21102.safetensors",
+  "golden/contexts/96298d7d8085aab13aaf7522034a60a9c0b75ee5dde10afd86ebc8ead7db097c.safetensors",
+  "golden/contexts/96ed297d76da0de7b3a82b306f6a87a8444f428598616527bd9f16fd052560d7.safetensors",
+  "golden/contexts/970df08bb8c3105d772b5c177dd9282adb7eb8ad76c656aa1303adf9f27a67a2.safetensors",
+  "golden/contexts/9dd10b2cd509b7002d7d72407319d72813fd3e65f984d5bc77c35f0cd321f64c.safetensors",
+  "golden/contexts/a0d2041a5995062a0b35bb4fe8930f27f7a07943770780ed525b245d7c2bc696.safetensors",
+  "golden/contexts/a40e62f8bfb72f779880872c27c1e48e5b16363abcf8919666744f90d83d77f6.safetensors",
+  "golden/contexts/aa9e0c70ccefcc720441464f81f0f0644702a67cf1b6139f0e25b8acf6ccb815.safetensors",
+  "golden/contexts/ab1d315ed9d0d5fcb92a7e61ecae6b0218ddc73d8b9e085d5349b318b197bcf0.safetensors",
+  "golden/contexts/ae301b510ffdfd70e2f430d98009eba8d2086338f5b7fd889e264fba05b05e6e.safetensors",
+  "jope.safetensors",
+  "manifest.json",
+  "release-catalog.json"
+]
 role = "model"
 requires = ["hyperion-v5-arm-b", "starlight-foundation", "target-encoder", "governed-bundle"]
 

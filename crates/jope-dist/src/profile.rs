@@ -10,7 +10,7 @@
 //! build cannot execute. A blocked profile locks fine (the lock is a faithful derivation, checked
 //! in CI without weights) but `jope-dist pack` refuses it.
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{Context, Result, bail, ensure};
 use jope_assets::Scope;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
@@ -335,8 +335,30 @@ pub fn lock_profile(profile: &Profile, profile_sha256: &str, repo: &Path) -> Res
         ));
     }
     let methods = profile.expanded_methods()?;
-    for (id, reason) in jope_runtime::methods::unexecutable(&methods)? {
+    for (id, reason) in jope_service::proposal::uncompiled(&methods)? {
         blockers.push(format!("method {id}: {reason}"));
+    }
+    if methods
+        .iter()
+        .any(|id| id == jope_service::proposal::METHOD)
+    {
+        if !matches!(profile.scope(), Scope::Internal | Scope::InternalRestricted) {
+            blockers.push("r882 proposal runtime is internal-only".into());
+        }
+        for (id, sha, bytes) in jope_service::proposal::required_assets()? {
+            let actual = components
+                .iter()
+                .flat_map(|component| component.files.iter().map(move |file| (component, file)))
+                .find(|(component, file)| {
+                    format!("{}/{}/{}", component.role, component.id, file.path) == id
+                });
+            if !actual.is_some_and(|(_, file)| file.sha256 == sha && file.bytes == bytes) {
+                blockers.push(format!(
+                    "method {}: missing or different asset {id}",
+                    jope_service::proposal::METHOD
+                ));
+            }
+        }
     }
     Ok(LockedProfile {
         profile_sha256: profile_sha256.to_owned(),

@@ -6,8 +6,8 @@
 //! root-held cosign step signs; `seal` then checks that signature against the release key, joins
 //! executable, payload, signature and footer, and re-verifies every byte of the result.
 
-use crate::profile::{lock_profile, Lock, Profile};
-use anyhow::{bail, ensure, Context, Result};
+use crate::profile::{Lock, Profile, lock_profile};
+use anyhow::{Context, Result, bail, ensure};
 use jope_assets::verify::{self, TrustedKey};
 use jope_assets::writer::{self, EntryInput, StageOptions, Staged};
 use jope_assets::{Codec, Footer, License, Manifest, Package, Scope, SourceIdentity};
@@ -206,6 +206,20 @@ pub fn stage(request: &PackRequest<'_>) -> Result<(Staged, Vec<u8>, TrustedKey, 
     let code = std::fs::read(request.code)
         .with_context(|| format!("read executable {}", request.code.display()))?;
     validate_executable_target(&code, request.target, request.code)?;
+    if locked
+        .methods
+        .iter()
+        .any(|id| id == jope_service::proposal::METHOD)
+    {
+        let version = std::process::Command::new(request.code.canonicalize()?)
+            .args(["--version", "--json"])
+            .output()
+            .context("probe the full candidate's compiled Engine runtime")?;
+        ensure!(version.status.success(), "candidate runtime probe failed");
+        let version: serde_json::Value = serde_json::from_slice(&version.stdout)
+            .context("candidate must report its compiled runtime as version JSON")?;
+        validate_proposal_build(&version, request.source_sha)?;
+    }
     match Package::open_with_keys(request.code, &[]) {
         Ok(None) => {}
         _ => bail!(
@@ -290,6 +304,22 @@ pub fn stage(request: &PackRequest<'_>) -> Result<(Staged, Vec<u8>, TrustedKey, 
     };
     let staged = writer::stage(&code, inputs, &options).context("encode assets")?;
     Ok((staged, code, key, profile))
+}
+
+fn validate_proposal_build(version: &serde_json::Value, source: &str) -> Result<()> {
+    ensure!(
+        version["features"]["engine"] == true && version["features"]["embedded"] == true,
+        "r882 requires an embedded Engine build"
+    );
+    ensure!(
+        version["trusts_development_key"] == false,
+        "full candidate must not trust the development key"
+    );
+    ensure!(
+        version["source_sha40"] == source,
+        "full candidate source differs from --source-sha"
+    );
+    Ok(())
 }
 
 fn receipt(
@@ -493,6 +523,28 @@ mod executable_target_tests {
 
     const LINUX_X86_64: &str = "x86_64-unknown-linux-gnu";
     const MACOS_ARM64: &str = "aarch64-apple-darwin";
+
+    #[test]
+    fn full_proposal_requires_the_actual_embedded_engine_and_source() {
+        let source = "1".repeat(40);
+        let good = serde_json::json!({"source_sha40":source,
+            "features":{"engine":true,"embedded":true},"trusts_development_key":false});
+        super::validate_proposal_build(&good, &source).unwrap();
+        for (path, value) in [
+            ("/features/engine", serde_json::json!(false)),
+            ("/features/embedded", serde_json::json!(false)),
+            ("/trusts_development_key", serde_json::json!(true)),
+            ("/source_sha40", serde_json::json!("2".repeat(40))),
+        ] {
+            let mut bad = good.clone();
+            *bad.pointer_mut(path).unwrap() = value;
+            assert!(
+                super::validate_proposal_build(&bad, &source).is_err(),
+                "{path}"
+            );
+        }
+        assert!(super::validate_proposal_build(&serde_json::json!({}), &source).is_err());
+    }
 
     fn x86_64_elf() -> Vec<u8> {
         let mut code = vec![0; 64];
