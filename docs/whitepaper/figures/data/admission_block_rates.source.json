@@ -1,0 +1,107 @@
+{
+  "schema": "whitepaper.admission-block-rates-source/v1",
+  "csv_sha256": "42f913c81aa4ab32a48cefcd54882d98c5d280cafdcb18e4bba6db0054da1e9d",
+  "capture": {
+    "at": "2026-11-01T20:17:53.690473+00:00",
+    "selection": "First round in the existing full-cohort admission ledger through the last complete live admission also present in the retained summary prefix; no score or outcome filtering",
+    "published_anchor": {
+      "anchor_round": 775,
+      "published_capture_last_round": 3021,
+      "published_csv_sha256": "8593b87e632bd729ab41e6fecb63ce6cb8fe62b1ce4b9d74564dfef629c48e50",
+      "source_base": "424e16e84cf628eaaa51f98453ffc10fed95b3e5",
+      "selection": "First round in the existing full-cohort admission ledger through the last complete live admission also present in the retained summary prefix; no score or outcome filtering"
+    },
+    "rows": 2391,
+    "round_window": [
+      775,
+      3165
+    ],
+    "accepted_rounds": [
+      782,
+      785,
+      859,
+      882,
+      2750,
+      2795,
+      3100
+    ],
+    "strict_gain_rounds": [
+      785,
+      859,
+      2750
+    ],
+    "accepted_tie_rounds": [
+      782,
+      882,
+      2795,
+      3100
+    ],
+    "rejected_round_spans": [
+      [
+        775,
+        781
+      ],
+      [
+        783,
+        784
+      ],
+      [
+        786,
+        858
+      ],
+      [
+        860,
+        881
+      ],
+      [
+        883,
+        2749
+      ],
+      [
+        2751,
+        2794
+      ],
+      [
+        2796,
+        3099
+      ],
+      [
+        3101,
+        3165
+      ]
+    ],
+    "last_accepted_round": 3100,
+    "trailing_rejected_rows": 65,
+    "admission_policies": [
+      "default-tie-acceptance"
+    ],
+    "evaluation_identity_sha256": "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6",
+    "stable_prefix_rereads_verified": true,
+    "summary_admission_join": {
+      "rows": 21,
+      "summary_round_window": [
+        3145,
+        3165
+      ],
+      "all_retained_summaries_match": true
+    },
+    "operational_records_omitted": 0,
+    "block_size": 100
+  },
+  "source_prefixes": {
+    "admission": {
+      "prefix_bytes": 1257272,
+      "prefix_sha256": "d58b444cffdf9fdebeaf89cc53a7100461863164a95b0047da75ead63f43c950",
+      "trailing_incomplete_bytes_omitted": 0,
+      "source_rows": 2391
+    },
+    "summary": {
+      "prefix_bytes": 3526379,
+      "prefix_sha256": "c6dd6f45b5d59ba149bd5fc4e33d4d7798c79c87bbedd098058e3eda2c2bbc2a",
+      "trailing_incomplete_bytes_omitted": 0,
+      "source_rows": 21
+    }
+  },
+  "source_binding": "Stable log-prefix bytes and aggregate projection only. Installed loop source, checkpoint, complete evaluation population and normalization remain separately unqualified.",
+  "scope": "Adaptive training-side adapter admission decisions and logged pool utility only; not GP program-incumbent events, neural writer training, independent first-proposal performance or deployment throughput. No gaps filled. Aggregate projection only; no per-context rows, labels, programs, weights or sealed payloads transferred."
+}
