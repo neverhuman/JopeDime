@@ -267,7 +267,7 @@ class ReleaseGates(unittest.TestCase):
         self.assertEqual([row["id"] for row in commands], runner.RELEASE_GATE_IDS)
         self.assertEqual(missing, [])
         with self.assertRaisesRegex(
-            ValueError, "input bindings required for: M2, M5, A5, D1"
+            ValueError, "input bindings required for: M2, M3, M5, A5, D1"
         ):
             runner.provider_manifest(self.repo, self.artifact)
         d2_manifest = runner.provider_manifest(
@@ -278,6 +278,29 @@ class ReleaseGates(unittest.TestCase):
             d2["argv"],
             ["python3", "-B", "deploy/qualification/v1.0/providers/d2.py"],
         )
+
+    def test_m3_full_helper_is_registered_without_becoming_a_gate(self):
+        self.commit_providers(
+            {"M3": "# fixture provider\n", "m3_full": "# imported helper\n"}
+        )
+        commands, missing = runner.provider_commands(self.repo)
+        self.assertEqual([row["id"] for row in commands], ["M3"])
+        self.assertEqual(len(missing), 27)
+        folder = self.repo / "deploy/qualification/v1.0/providers"
+        (folder / "unexpected_helper.py").write_text("# unregistered\n")
+        with self.assertRaisesRegex(
+            ValueError, "unregistered provider modules: unexpected_helper.py"
+        ):
+            runner.provider_commands(self.repo)
+
+    def test_registered_m3_helper_symlink_still_refuses(self):
+        self.commit_providers({"M3": "# fixture provider\n"})
+        folder = self.repo / "deploy/qualification/v1.0/providers"
+        (folder / "m3_full.py").symlink_to(folder / "m3.py")
+        with self.assertRaisesRegex(
+            ValueError, "helper must be a regular, non-symlink file"
+        ):
+            runner.provider_commands(self.repo)
 
     def test_cli_dry_provider_discovery_reports_missing_ids_without_candidate(self):
         provider_dir = self.repo / "deploy/qualification/v1.0/providers"
@@ -337,6 +360,10 @@ class ReleaseGates(unittest.TestCase):
 
     def bindings(self):
         return {
+            "M3": {
+                "full_inputs": str(self.root / "M3 full inputs.json"),
+                "full_inputs_sha256": "c" * 64,
+            },
             "M5": {
                 "golden_dir": str(self.root / "golden fixture"),
                 "bundle_dir": str(self.root / "bundle"),
@@ -411,8 +438,11 @@ sys.path.insert(0,{str(provider.parent)!r})
 spec=importlib.util.spec_from_file_location('transport_provider',{str(provider)!r})
 module=importlib.util.module_from_spec(spec);sys.modules[spec.name]=module;spec.loader.exec_module(module)
 module.context=lambda gate:gate
-def observe(ctx,*args):
-    if ctx=='D1':
+def observe(ctx,*args,**kwargs):
+    if ctx=='M3':
+        if set(kwargs)!={{'full_inputs','full_inputs_sha256'}}:raise module.ProviderError('controlled missing M3 full inputs')
+        fields=dict(full_inputs=str(kwargs['full_inputs']),full_inputs_sha256=kwargs['full_inputs_sha256'])
+    elif ctx=='D1':
         fields=dict(macos_receipt=str(args[0]),macos_receipt_sha256=args[1])
     else:
         fields={{name:os.environ.get(variable) for name,variable in [
@@ -426,9 +456,9 @@ module.qualify=observe
 raise SystemExit(module.main())
 """
 
-    def test_d1_and_m2_flags_cross_the_real_restricted_environment_boundary(self):
+    def test_d1_m2_and_m3_flags_cross_the_real_restricted_environment_boundary(self):
         self.commit_providers(
-            {gate: self.transport_stub(gate) for gate in ["D1", "M2"]}
+            {gate: self.transport_stub(gate) for gate in ["D1", "M2", "M3"]}
         )
         inputs = runner.provider_inputs(self.input_file())
         inherited = {
@@ -443,7 +473,7 @@ raise SystemExit(module.main())
             ]
         }
         source = runner.cpu.git(self.repo, "rev-parse", "HEAD")
-        for gate in ["D1", "M2"]:
+        for gate in ["D1", "M2", "M3"]:
             folder = self.root / gate
             folder.mkdir()
             with mock.patch.dict(os.environ, inherited):
@@ -485,7 +515,7 @@ raise SystemExit(module.main())
             {gate: "# synthetic inventory only\n" for gate in runner.RELEASE_GATE_IDS}
         )
         full = runner.provider_inputs(self.input_file())
-        self.assertEqual(set(full), {"A5", "D1", "M2", "M5"})
+        self.assertEqual(set(full), {"A5", "D1", "M2", "M3", "M5"})
         self.assertTrue(runner.provider_inventory(self.repo, full)["complete"])
         for gate in full:
             partial = {key: value for key, value in full.items() if key != gate}
@@ -514,6 +544,12 @@ raise SystemExit(module.main())
             ("M2", "golden_index_sha256", "B" * 64),
             ("M2", "parity_report_dir", "relative"),
             ("M2", "CARGO_BUILD_JOBS", "32"),
+            ("M3", "full_inputs_sha256", "bad"),
+            ("M3", "full_inputs_sha256", "C" * 64),
+            ("M3", "full_inputs_sha256", True),
+            ("M3", "full_inputs", "relative.json"),
+            ("M3", "JOPE_REL07_SOURCE_SHA", "0" * 40),
+            ("M3", "CARGO_BUILD_JOBS", "32"),
         ]:
             fields = self.bindings()[gate].copy()
             fields[field] = value
