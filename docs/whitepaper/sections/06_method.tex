@@ -6,21 +6,20 @@
 % Historical source notes are archived outside the paper tree.
 \section{EurekaZero: Learning Taste}\label{sec:method}
 
-The reference architecture for tabular regression pairs a program writer
-with a separate ranking map. Verified search supplies their training
-targets; the proposed deployment protocol asks for one new program.
-We describe that reference first, then distinguish the later
-adapter-ranking record in \cref{sec:method-status}.
+The tabular-regression reference pairs a program writer with a separate
+ranking map. Search supplies scored training programs; proposed deployment
+asks the writer for one new program. We follow those roles through the
+architecture and training rule, then distinguish the later adapter-ranking
+record in \cref{sec:method-status}.
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
-\Cref{fig:network} connects training to the single-candidate contract in
-\cref{box:searchone}. A frozen encoder reads the board and the program
-writer $\writer$ writes one complete program, as AlphaGo's policy
-network proposed a move \citep{silver2016mastering}. The problem--program map
-$\mapv$ supplies a separate ranking score. In the native implementation it
-neither conditions nor screens the writer. The proposed game-day protocol
-omits it, permitting only the writer's single draw under \searchone{}.
+\Cref{fig:network} connects the architecture to the contract in
+\cref{box:searchone}: a frozen encoder reads the board and $\writer$ writes
+a complete program, as AlphaGo's policy proposed a move
+\citep{silver2016mastering}. The problem--program map $\mapv$ supplies the
+training-side ranking score. Proposed game day omits that map and permits
+only the writer's single draw.
 
 \begin{figure*}[t]
   \centering
@@ -130,10 +129,10 @@ In the native implementation, the writer and map use separate context
 networks and token embeddings. The map ranks the draft pool without
 dropping drafts or screening the writer.
 
-One native GP route weights
-seeded-survivor parent selection by map rank. The bounded search driver
-instead cycles among up to four parents selected by measured loss. The map's
-influence on training therefore depends on the search route.
+The map can influence search through parent selection. One native GP route
+weights seeded-survivor parents by map rank; the bounded search driver
+instead cycles among up to four parents chosen by measured loss. Any
+claimed effect on training must identify which route was used.
 
 Only the 64 neural or fallback seeds receive normalized rank weights;
 the 16 tail seeds enter unscored. Unscored survivors share the lowest
@@ -143,9 +142,10 @@ Native assembly reserves ten tail slots for cut teachers or fallbacks
 and six for random exploration. Teacher-first execution prioritizes
 retained cut teachers. The reference layout is in \cref{alg:selfplay}.
 
-The writer's loss weights programs by referee rank. Ranking agreement with the referee
-and program-only control assesses ranking; better proposals require a
-matched ablation (\cref{sub:results-ablation}).
+This search role is separate from the writer loss, which weights programs
+by referee rank. The program-only control tests context-sensitive ranking;
+a change in proposal quality requires the matched ablation in
+\cref{sub:results-ablation}.
 
 \subsection{The self-play loop}\label{sub:method-selfplay}
 % Algorithm 1 is defined at the start of the subsection so that the full-width
@@ -168,10 +168,11 @@ matched ablation (\cref{sub:results-ablation}).
 \end{algorithmic}
 \end{algorithm*}
 
-The historical reference uses expert iteration \citep{anthony2017expert}:
-verified search supplies the writer's training programs. Programs sampled
-from the scored lists $G_p$ are weighted by referee rank in the combined
-objective (\cref{app:training}):
+The reference training rule is expert iteration
+\citep{anthony2017expert}: search-scored programs train the writer.
+The writer term weights sampled programs from $G_p$ by referee rank;
+it joins the map and auxiliary terms in the combined objective
+(\cref{app:training}):
 \begin{align}
   \mathcal{L}_{\text{writer}}(p) &= -\sum_{w\in G_p}\bigl(0.05+\rho_w^{4}\bigr)\log\writer(w\mid z_p),
   \label{eq:writerLoss}\\
@@ -269,8 +270,8 @@ Report later search
 separately, as \citet{silver2017mastering} reported
 AlphaGo Zero's raw network apart from its search (\cref{sec:results}).
 
-The deployment budget is a protocol constraint; improvement in the first
-proposal requires the matched comparison in \cref{sub:results-learning}.
-The development record in \cref{sec:method-status} concerns an adapter that
-ranks a pool, a different task from proposing a new program.
+That fixed budget defines the matched first-proposal comparison in
+\cref{sub:results-learning}. The development record that follows concerns
+an adapter ranking an existing pool. Its admission decisions measure a
+different task from writing a new program.
 \input{sections/06_method/flywheel_status}
