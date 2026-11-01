@@ -5326,6 +5326,30 @@
         "reason": "H199 preregistered CPU-only diagnostic: H129/H195 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed; 0.15/0.35 report-only) against r882 on the flywheel native first-argmin protocol, powered by the 205-family pooled cross-fit on fresh per-seed folds; GBM and calibration FIT-only, stage-1 lock before pooled-A scoring, m=1 CANDIDATE gate (LCB95>0, median>+0.001, 3/3 seeds, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
       }
     },
+    "python:research/flywheel_selfplay/h200_nested_blend/analysis.py": {
+      "bytes": 7619,
+      "classification": {
+        "role": "research",
+        "reason": "H200 pure-data-free fold, nested-lambda, rank-blend, family-bootstrap, Holm and Elo analysis primitives; no data access."
+      },
+      "sha256": "f59c934e0d8aa38d3ac3d83bb5ec36efd1620da32ba1371ccdfe917c354be8b2"
+    },
+    "python:research/flywheel_selfplay/h200_nested_blend/runner.py": {
+      "bytes": 23364,
+      "classification": {
+        "role": "research",
+        "reason": "H200 xbabe1-only, single-attempt CPU runner for exact r882 regression, FIT-only nested calibration/lambda selection, native A scoring, source pins, and resource guards; no updates or promotion."
+      },
+      "sha256": "69addcb1c86ca87a231d44510674b89c64870d86590c56c33f734c47c964dbe1"
+    },
+    "python:research/flywheel_selfplay/h200_nested_blend/monitor.py": {
+      "bytes": 6672,
+      "classification": {
+        "role": "research",
+        "reason": "H200 xbabe1-only supervisor enforcing nice 19, four-core, memory, RSS, load, disk, deadline and output guards for one attempt."
+      },
+      "sha256": "078c8d4221d51d6024e0e48a1429cf76c29d8aac3f6716c040d9664f9d5188d4"
+    },
     "python:research/flywheel_selfplay/h201_strict_admission/analysis.py": {
       "bytes": 8730,
       "sha256": "51d54087125d824479e842705d3e1308a31e11a9e68fd0b041a3a0cb7c3cf292",

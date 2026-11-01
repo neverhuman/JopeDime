@@ -42,7 +42,11 @@ class ReleaseCommandScaffoldTests(unittest.TestCase):
         self.assertEqual(Counter(ids), Counter(self.runner.RELEASE_GATE_IDS))
         for row in rows:
             self.assertEqual(set(row), {"id", "argv", "timeout_seconds"})
-            expected = f"deploy/qualification/v1.0/providers/{row['id'].lower()}.py"
+            expected = (
+                "deploy/qualification/v1.0/a5_run.py"
+                if row["id"] == "A5"
+                else f"deploy/qualification/v1.0/providers/{row['id'].lower()}.py"
+            )
             self.assertEqual(row["argv"].count(expected), 1)
             self.assertLessEqual(row["timeout_seconds"], 3600)
             self.assertTrue(row["argv"])
