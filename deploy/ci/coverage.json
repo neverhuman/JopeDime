@@ -14439,6 +14439,12 @@
       "lanes": [],
       "scope": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification."
     }
+    ,"python:research/flywheel_selfplay/h176_data_scaling/test_h176.py": {
+      "discovery": {"kind": "python-family"},
+      "dispositions": ["research"],
+      "lanes": [],
+      "scope": "H176 data-free controls for nested family-fraction data scaling, role isolation, zero-update baseline alignment, deterministic paired fitting, context-level Elo aggregation, and resource guards. No study data/checkpoint loaded by unit tests; diagnostic research only."
+    }
   },
   "lanes": {
     "aggregate": {
@@ -15770,5 +15776,11 @@
     ],
     "lanes": [],
     "scope": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector, raw B cost/choice/utility lock replay, and fused adapter API keyword contract. Research only; no study data, checkpoint, product, sealed qualification or serving promotion."
+  },
+  "python:research/flywheel_selfplay/h176_data_scaling/test_h176.py": {
+    "discovery": {"kind": "python-family"},
+    "dispositions": ["research"],
+    "lanes": [],
+    "scope": "H176 data-free controls for nested family-fraction data scaling, role isolation, zero-update baseline alignment, deterministic paired fitting, context-level Elo aggregation, and resource guards. No study data/checkpoint loaded by unit tests; diagnostic research only."
   }
 }
