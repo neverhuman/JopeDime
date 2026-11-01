@@ -116,42 +116,37 @@ appear in the usable catalog, and the task-specific worker qualification is
 still missing. It is a role-planning receipt for the worker lane, not a runnable
 study manifest or scientific result.
 
-### T1210 family-key candidate inventory and role guard
+### T1350 catalog-eligible family folds and role guard
 
-`admission.build_family_key_pool_manifest(...)` records catalog IDs and exactly
-those keys returned by the pinned `family_keys.attrs_from_catalog_row()` and
-`family_keys.derive()` calls. Family components preserve shared and transitive
-returned keys across both tasks. No source-file, URL-parent, owner-alias, or
-protected-roster inputs are added.
+`admission.build_family_key_pool_manifest(...)` builds family components from
+the pinned `family_keys` projection and catalog-recorded dedupe/source-file
+keys. Shared and transitive keys are unioned across regression and binary rows.
+The only protected input is an owner-pinned identity-only exclusion artifact;
+no roster columns or payloads are read.
 
-The frozen T1145/T1210 admission inputs require a family's nonsealed status to
-be established before assigning TRAIN or validation roles. The approved v246
-catalog supplies identities and TRAIN-file hashes, but no reviewed nonsealed
-eligibility evidence. Presence in the catalog, a task label, and self-reported
-flags cannot establish that permission. Every unverified family is therefore
-withheld: `fold_by_family` and `fold_splits` stay empty, while
-`nonsealed_eligibility` records the withheld family/dataset counts and ruling.
-The preflight re-derives this candidate inventory and reports
-`METADATA_ONLY_NONSEALED_STATUS_UNVERIFIED`, zero folds, and
-`eligibility_verified:false`. Forged role assignments are rejected.
-
-This withholds unknown eligibility; it does not classify P3 `heldout` or `dev`
-as forbidden. The t2035 holdout remains exactly `sealed_excluded` by family.
-Restoring five-fold assignments with fixed seed 136 requires approved,
-reviewed nonsealed-family evidence that respects the no-protected-roster input
-boundary. No role is inferred and no payload is opened in this metadata path.
-Catalog train hashes also do not provide the candidate tensors or qualified
-worker/checkpoint required for an executable learner packet. No campaign starts.
+ENG:watcher t2035/t1350/t1410 D4 authorizes the pinned v246 usable catalog after
+excluding every family component named by
+`JRB01_SEALED_FAMILY_EXCLUSION.json` (SHA-256
+`ca0eff866a87548803feb03e50f8e7e99b74993b2e1d0b8ce56e3ec1b184a651`). The
+artifact contains family keys and catalog IDs of unkeyed sealed-family members
+only. The builder fails closed if it is absent, unreadable, or does not match
+the code-pinned hash, then re-derives family closure across the catalog. P3
+heldout/dev families remain eligible. The analysis-only overlap receipt reports
+153 excluded dataset IDs, zero protected IDs or keys in the eligible pool,
+3,335 regression and 843 binary candidates, and five family-grouped folds.
+No protected roster columns or payloads are read. This is role planning, not
+worker admission or qualification: the pool remains
+`eligibility_verified:false`, and the catalog's train hashes do not provide
+candidate tensors or the qualified worker/checkpoint required for an
+executable study. No campaign starts.
 
 ### Train-only candidate tensor builder (ENG:watcher R22)
 
 `candidate_builder.py` supplies the train-only cache construction seam. It
-rederives the zero-role family-key pool and requires an ADMITTED role manifest
-that passes `admission.rederive_role_manifest`. Metadata-only role candidates
-and provisional nonempty family folds are refused;
-the current approved catalog has no reviewed nonsealed-family evidence, so the
-family pool has no folds and cannot authorize payload reads. When a reviewed
-admission exists, the builder reads only
+re-derives the artifact-pinned family folds and requires a separate ADMITTED
+role manifest that passes `admission.rederive_role_manifest`. Catalog folds
+alone cannot authorize payload reads. When a reviewed role admission exists,
+the builder reads only
 `datasets/<id>/manifest.json` and the exact
 `blobs/sha256/<catalog-train-sha256>` object from the approved dataset bucket.
 It never lists a bucket or reads another split. CSV rows are numeric and finite;
@@ -167,8 +162,8 @@ or introduce a new threshold. The R882/DOPE token tensors are supplied by the
 caller after its read-only pinned initialization. Worker inputs have no revealed
 candidate labels, so target values cannot leak through conditioning slots.
 `make_worker_packer(...)` implements the callable expected by `WorkerCore`.
-The synthetic suite checks that unverified family roles and metadata-only
-candidate receipts cannot authorize an S3 request. Building a tensor cache does
+The synthetic suite checks that catalog role candidates without a complete
+admitted manifest cannot authorize an S3 request. Building a tensor cache does
 not qualify a worker or admit a study packet.
 
 Every generated pool remains
