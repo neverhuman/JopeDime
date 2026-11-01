@@ -14508,6 +14508,16 @@
       ],
       "lanes": [],
       "scope": "H181 data-free CUPED exclusion/axis/bootstrap/calibration/gate/zero-update tests"
+    },
+    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/test_h185.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H185 data-free controls: FIT-only batch construction and 205-family 3/1/1 fold coverage, StageOrderGuard requiring fsynced pooled_b_selection_lock.json before Stage-2 A/DL-Val scoring, RENS5 member initializations matching ENS5 with 5 distinct member hashes per seed, imported H177_DECISION_RULE and H178 calibration receipt gating, axis=0 paired family bootstrap seed reduction, -2.0 pick counting, and xbabe2 supervisor/launch guards. No checkpoint, corpus or model passes in the fixture suite; offline research only."
     }
   },
   "lanes": {
