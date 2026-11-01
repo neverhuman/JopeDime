@@ -14488,6 +14488,16 @@
       ],
       "lanes": [],
       "scope": "H182 data-free controls for nested ENS5/ENS10/ENS20 member prefixes, all 60 fresh member seeds and synthetic init hashes, FIT/A/B isolation, score-before-argmin, axis=0 paired bootstrap, strict ENS20 verdict/Holm gates, timing-only four-hour fold rule, and resource guards. No study data or model checkpoint loaded."
+    },
+    "python:research/flywheel_selfplay/h181_covariate_selector/test_h181.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H181 data-free CUPED exclusion/axis/bootstrap/calibration/gate/zero-update tests"
     }
   },
   "lanes": {
