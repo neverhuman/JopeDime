@@ -1587,6 +1587,10 @@
         "training"
       ]
     },
+    "python:deploy/qualification/agents/transcripts/run-prep/test_capture_clients.py": {
+      "reason": "REL-07 PR1436 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/q1/harness/test_fifo_launch.py": {
       "reason": "QLT-04 FIFO launcher controls with private queue/key/backend fixtures; admission, lease, mutation, ledger and process cleanup proofs, not live qualification.",
       "role": "infrastructure"
@@ -2094,8 +2098,12 @@
       "role": "research"
     },
     "python:research/flywheel_selfplay/h167_input_noise/test_h167.py": {
-      "role": "research",
-      "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
+      "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h168_selector_remedy/test_h168.py": {
+      "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification.",
+      "role": "research"
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
@@ -2315,6 +2323,10 @@
     },
     "python:research/h162/test_h162.py": {
       "reason": "H162 cosine warm-restart LR schedule with snapshot selection vs LR-matched control unit tests",
+      "role": "research"
+    },
+    "python:research/h166/test_h166.py": {
+      "reason": "H166 owner-directed C-Mixup label-similarity mixup r882 adapter continuation study; data-free target-similarity kernel, rank-aligned slate mixing, None-grad guard, and cross-fit selector controls. Research only; no product/sealed qualification.",
       "role": "research"
     },
     "python:research/joint_regbin/test_binary_dataset.py": {
@@ -5367,14 +5379,6 @@
       "subsystems": [
         "encoders"
       ]
-    },
-    "python:research/h166/test_h166.py": {
-      "role": "research",
-      "reason": "H166 owner-directed C-Mixup label-similarity mixup r882 adapter continuation study; data-free target-similarity kernel, rank-aligned slate mixing, None-grad guard, and cross-fit selector controls. Research only; no product/sealed qualification."
-    },
-    "python:research/flywheel_selfplay/h168_selector_remedy/test_h168.py": {
-      "role": "research",
-      "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
@@ -5462,5 +5466,9 @@
         "W6"
       ]
     }
+  },
+  "python:research/flywheel_selfplay/h169_optimizer_geometry/test_h169.py": {
+    "reason": "H169 data-free controls: family exclusion/assessment coverage, repeatable FIT-only minibatches, strict selection, drift calibration, exact optimizer pins, None-gradient materialization, bootstrap/Holm/Elo, and resource guards.",
+    "role": "research"
   }
 }
