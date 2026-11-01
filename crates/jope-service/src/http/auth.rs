@@ -233,6 +233,27 @@ mod tests {
             .contains(&"ab".repeat(32)));
     }
 
+    #[tokio::test]
+    async fn every_http_catalog_error_has_a_problem_json_response() {
+        for &code in ErrorCode::ALL {
+            let Some(status) = code.http_status() else {
+                continue;
+            };
+            let response = problem(code, "contract detail", "contract remedy", None);
+            assert_eq!(response.status().as_u16(), status, "{code}");
+            assert_eq!(
+                response.headers()[header::CONTENT_TYPE],
+                Problem::CONTENT_TYPE
+            );
+            let bytes = to_bytes(response.into_body(), 8192).await.unwrap();
+            let document: Problem = serde_json::from_slice(&bytes).unwrap();
+            assert_eq!(document.code, code);
+            assert_eq!(document.status, status);
+            assert_eq!(document.detail, "contract detail");
+            assert_eq!(document.remedy, "contract remedy");
+        }
+    }
+
     #[test]
     fn secret_and_authority_configuration_are_validated_and_redacted() {
         for bad in [

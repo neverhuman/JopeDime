@@ -1607,6 +1607,18 @@
       "reason": "REL-07 signer-compatible gate-receipt adapter proofs (exact 28-gate M1-D2 inventory, CPU-prestage NOT_RUN projection, and artifact SHA256 binding); no Rust build, GPU, release or dataset job executes",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/v1.0/test_provider_a1/test_a1.py": {
+      "reason": "REL-07 PR1396 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
+      "role": "infrastructure"
+    },
+    "python:deploy/qualification/v1.0/test_provider_a2/test_a2.py": {
+      "reason": "REL-07 A2 provider orchestration controls; synthetic candidate/children only, no live release or scientific data execution",
+      "role": "infrastructure"
+    },
+    "python:deploy/qualification/v1.0/test_provider_a5/test_a5.py": {
+      "reason": "REL-07 A5 named-client provider controls (manifest, sidecar and receipt refusal proofs over synthetic evidence); no live client, release or dataset job executes",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/v1.0/test_provider_e2/test_e2.py": {
       "reason": "REL-07 E2 export-parity provider controls (binding, census and refusal proofs over synthetic harness reports); no real harness, release or dataset job executes",
       "role": "infrastructure"
@@ -3313,6 +3325,10 @@
     },
     "target:jope-client/lib/jope_client": {
       "reason": "Empty skeleton crate registered by API-06; no behaviour or tests yet",
+      "role": "infrastructure"
+    },
+    "target:jope-client/test/a1_lite": {
+      "reason": "REL-07 A1 explicitly ignored no-engine background-candidate contract test; requires external verified candidate/source bindings and manual CPU execution, not a default-suite or release qualification claim.",
       "role": "infrastructure"
     },
     "target:jope-client/test/contract": {
