@@ -15530,5 +15530,15 @@
   },
   "note": "Execution mappings are promises of scope, not run outcomes. Collection and execution receipts must independently establish counts and capabilities. Changes require explicit assignment; there is no auto-accept/update mode.",
   "schema": "jope.coverage/v1",
-  "stage": "static"
+  "stage": "static",
+  "python:research/flywheel_selfplay/h163_prediction_ensemble/test_h163.py": {
+    "discovery": {
+      "kind": "python-family"
+    },
+    "dispositions": [
+      "research"
+    ],
+    "lanes": [],
+    "scope": "H163 data-free score direction, candidate ID alignment, stable argmin ties, z-normalization/rank ensemble, and strict paired family-bootstrap selector controls. Offline research only; no checkpoint, corpus, or live promotion in unit tests."
+  }
 }
