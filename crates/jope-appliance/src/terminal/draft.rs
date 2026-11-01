@@ -63,6 +63,24 @@ impl Draft {
     }
 
     pub fn set_dataset(&mut self, profile: DatasetProfile) {
+        // Match the existing table::training Auto policy using the server's profile.
+        self.suggested_tasks = profile
+            .columns
+            .iter()
+            .filter_map(|column| {
+                if column.distinct.0 == 0 {
+                    return None;
+                }
+                let task = if column.distinct.0 == 2 {
+                    Task::Binary
+                } else if matches!(column.data_type.as_str(), "numeric" | "number") {
+                    Task::Regression
+                } else {
+                    Task::Multiclass
+                };
+                Some((column.name.clone(), task))
+            })
+            .collect();
         self.dataset = Some(profile.dataset_id);
         self.columns = profile
             .columns
@@ -75,11 +93,12 @@ impl Draft {
                 .first()
                 .map(|suggestion| suggestion.column.clone());
         }
-        self.suggested_tasks = profile
-            .target_suggestions
-            .into_iter()
-            .map(|suggestion| (suggestion.column, suggestion.task))
-            .collect();
+        for suggestion in profile.target_suggestions {
+            if suggestion.task != Task::Auto {
+                self.suggested_tasks
+                    .insert(suggestion.column, suggestion.task);
+            }
+        }
     }
 
     pub fn languages(&self) -> Vec<Language> {
@@ -302,7 +321,7 @@ mod tests {
                 {"name": "group", "data_type": "string", "missing": "0", "distinct": "3"}
             ],
             "target_suggestions": [
-                {"column": "target", "task": "regression", "reason": "numeric"}
+                {"column": "target", "task": "auto", "reason": "non-binding target hint"}
             ],
             "warnings": []
         }))

@@ -3,7 +3,7 @@ use jope_api::{
     ids::{AlgorithmId, RunId},
     ExportKind, ExportRequest, Language, Refit, RunSnapshot,
 };
-use jope_client::{files, Transport};
+use jope_client::Transport;
 use serde_json::Value;
 use std::str::FromStr;
 
@@ -72,25 +72,7 @@ pub(crate) fn run(options: Options<'_>) -> anyhow::Result<()> {
     super::dataset::emit(&value, json_out)
 }
 
-/// Authenticate archive bytes separately from the fitted model's identity.
-/// The immutable artifact is fetched again by the existing bounded ZIP extractor.
-pub(crate) fn materialize<T: Transport>(
-    client: &T,
-    manifest: &jope_api::ExportManifest,
-    out: &std::path::Path,
-    force: bool,
-) -> anyhow::Result<()> {
-    let response = client.artifact_download(&manifest.artifact_id)?;
-    let digest = response
-        .headers
-        .get("x-jope-artifact-sha256")
-        .and_then(|value| value.to_str().ok())
-        .ok_or_else(|| anyhow::anyhow!("artifact response omitted its archive SHA-256"))?
-        .to_owned();
-    drop(response);
-    files::download_artifact(client, &manifest.artifact_id, &digest, out, force)?;
-    Ok(())
-}
+pub(crate) use crate::common::materialize_export as materialize;
 
 #[cfg(test)]
 mod tests {

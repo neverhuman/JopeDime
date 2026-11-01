@@ -353,3 +353,24 @@ mod tests {
         }
     }
 }
+
+/// Authenticate archive bytes separately from the fitted model's identity.
+/// The immutable artifact is fetched again by the existing bounded ZIP extractor.
+#[cfg(feature = "client")]
+pub(crate) fn materialize_export<T: jope_client::Transport>(
+    client: &T,
+    manifest: &jope_api::ExportManifest,
+    out: &std::path::Path,
+    force: bool,
+) -> anyhow::Result<()> {
+    let response = client.artifact_download(&manifest.artifact_id)?;
+    let digest = response
+        .headers
+        .get("x-jope-artifact-sha256")
+        .and_then(|value| value.to_str().ok())
+        .ok_or_else(|| anyhow::anyhow!("artifact response omitted its archive SHA-256"))?
+        .to_owned();
+    drop(response);
+    jope_client::files::download_artifact(client, &manifest.artifact_id, &digest, out, force)?;
+    Ok(())
+}
