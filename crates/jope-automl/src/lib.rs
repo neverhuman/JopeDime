@@ -4,7 +4,6 @@
 //! they do not replace its preprocessing, fitting, or prediction procedure.
 
 #[rustfmt::skip]
-#[allow(clippy::all)]
 #[path = "GPT6p1_Sol_Max.rs"]
 mod submission;
 
