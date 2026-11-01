@@ -40,3 +40,15 @@ def test_extract_state_rejects_non_tensor_values() -> None:
     }
     with pytest.raises(ValueError, match="tensors only"):
         module.extract_state(payload)
+
+
+def test_state_dtype_contract_allows_only_int64_grid_indices() -> None:
+    state = {
+        "adapter_10tok.prog_mean": torch.zeros(412, dtype=torch.float32),
+        "grid_idx_257": torch.arange(257, dtype=torch.int64),
+        "grid_idx_13": torch.arange(13, dtype=torch.int64),
+    }
+    module.validate_state_dtypes(state)
+    state["grid_idx_13"] = torch.arange(13, dtype=torch.int32)
+    with pytest.raises(ValueError, match="pinned int64"):
+        module.validate_state_dtypes(state)

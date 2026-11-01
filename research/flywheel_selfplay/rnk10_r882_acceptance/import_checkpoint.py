@@ -19,6 +19,7 @@ OUTPUT_DIR = Path("/home/ubuntu/jope-data/RNK10-t2115-run-20261101")
 OUTPUT_WEIGHTS = OUTPUT_DIR / "round-882-state.safetensors"
 OUTPUT_RECEIPT = OUTPUT_DIR / "round-882-import.json"
 EXPECTED_STATE_TENSORS = 338
+EXPECTED_INT64_TENSORS = {"grid_idx_257": (257,), "grid_idx_13": (13,)}
 
 
 def sha256(path: Path) -> str:
@@ -42,6 +43,15 @@ def extract_state(payload: object) -> dict[str, torch.Tensor]:
     if any(not isinstance(name, str) or not torch.is_tensor(value) for name, value in state.items()):
         raise ValueError("state_dict must contain named tensors only")
     return state
+
+
+def validate_state_dtypes(state: dict[str, torch.Tensor]) -> None:
+    non_float = {name: value for name, value in state.items() if value.dtype != torch.float32}
+    if set(non_float) != set(EXPECTED_INT64_TENSORS):
+        raise ValueError("only the two pinned int64 grid-index buffers may be non-F32")
+    for name, shape in EXPECTED_INT64_TENSORS.items():
+        if non_float[name].dtype != torch.int64 or tuple(non_float[name].shape) != shape:
+            raise ValueError(f"invalid dtype or shape for {name}")
 
 
 def main() -> int:
@@ -71,8 +81,10 @@ def main() -> int:
     state = extract_state(payload)
     if len(state) != EXPECTED_STATE_TENSORS:
         raise SystemExit(f"expected {EXPECTED_STATE_TENSORS} tensors, got {len(state)}")
-    if any(value.dtype != torch.float32 for value in state.values()):
-        raise SystemExit("r882 state_dict contains a non-F32 tensor")
+    try:
+        validate_state_dtypes(state)
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     save_file({name: value.contiguous() for name, value in state.items()}, str(OUTPUT_WEIGHTS))
     receipt = {
@@ -86,6 +98,10 @@ def main() -> int:
         "round": 882,
         "dope_sha256": EXPECTED_DOPE_SHA256,
         "state_tensor_count": len(state),
+        "dtype_counts": {
+            "float32": sum(value.dtype == torch.float32 for value in state.values()),
+            "int64": sum(value.dtype == torch.int64 for value in state.values()),
+        },
         "imported_safetensors": str(OUTPUT_WEIGHTS),
         "imported_safetensors_sha256": sha256(OUTPUT_WEIGHTS),
         "signing": "none; this is not a VerifiedBundle or production artifact",
