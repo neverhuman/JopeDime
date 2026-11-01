@@ -102,7 +102,7 @@ pub(super) fn run() {
 const DRIVER: &str = r####"#!/usr/bin/env python3
 """Native acceptance probe. Runtime outputs stay outside the source checkout."""
 import argparse, datetime, fcntl, hashlib, json, os, pty, select, signal
-import struct, subprocess, termios, time, traceback, re, http.client, urllib.parse
+import struct, subprocess, termios, time, traceback, re, http.client, urllib.parse, resource
 from pathlib import Path
 
 a = argparse.ArgumentParser()
@@ -139,15 +139,22 @@ assert hashlib.sha256(raw).hexdigest() == 'd9a0b97e91ff9d04bc87fefa4671a49c40cee
 csv = runtime/'train.csv'
 selected_raw=b''.join(raw.splitlines(keepends=True)[:args.train_rows])
 csv.write_bytes((','.join([f'x{i}' for i in range(21)]+['target'])+'\n').encode()+selected_raw)
-commands = []; children = []; files = []; observers = []; recovery_homes = []
+commands = []; children = []; observers = []; recovery_homes = []
 report = {'source': args.source, 'started': datetime.datetime.now(datetime.timezone.utc).isoformat(),
           'dataset': '21fbfe8b53dbcd60', 'rows': args.train_rows, 'selected_train_sha256': hashlib.sha256(selected_raw).hexdigest(), 'source_split': 'train',
           'train_sha256': hashlib.sha256(raw).hexdigest(), 'seed': 73,
           'cpu_nice': os.getpriority(os.PRIO_PROCESS, 0), 'load_before': os.getloadavg()[0],
+          'open_file_limit': list(resource.getrlimit(resource.RLIMIT_NOFILE)),
+          'parent_open_files_start': len(os.listdir('/dev/fd')),
           'binary_sha256': hashlib.sha256(Path(args.binary).read_bytes()).hexdigest()}
 
 def save(name, value):
     (out/name).write_text(json.dumps(value, indent=2)+'\n')
+
+def check_descriptors():
+    current=len(os.listdir('/dev/fd'))
+    report['parent_open_files_max']=max(report.get('parent_open_files_max',0),current)
+    assert current<=report['parent_open_files_start']+16,'acceptance driver leaked parent descriptors'
 
 def run(home, argv, timeout=45):
     start = time.monotonic()
@@ -173,9 +180,9 @@ def project(events):
 
 def start_engine(name):
     home = runtime/name; home.mkdir(exist_ok=False)
-    log = (out/(name+'-engine.log')).open('w'); files.append(log)
-    child = subprocess.Popen([args.binary, 'serve', '--idle-exit', '120s'],
-        env={**base_env, 'JOPEDIME_HOME': str(home)}, stdout=log, stderr=log)
+    with (out/(name+'-engine.log')).open('w') as log:
+        child = subprocess.Popen([args.binary, 'serve', '--idle-exit', '120s'],
+            env={**base_env, 'JOPEDIME_HOME': str(home)}, stdout=log, stderr=log)
     children.append(child)
     deadline = time.monotonic()+15
     while not (home/'daemon.json').exists():
@@ -207,9 +214,9 @@ def wait_terminal(home, rid):
 
 class MCP:
     def __init__(self,home):
-        log=(out/f'mcp-{len(children)}-stderr.log').open('w');files.append(log)
-        self.p=subprocess.Popen([args.binary,'mcp'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,
-            stderr=log,env={**base_env,'JOPEDIME_HOME':str(home)},text=True,bufsize=1)
+        with (out/f'mcp-{len(children)}-stderr.log').open('w') as log:
+            self.p=subprocess.Popen([args.binary,'mcp'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,
+                stderr=log,env={**base_env,'JOPEDIME_HOME':str(home)},text=True,bufsize=1)
         children.append(self.p);self.i=0;self.frames=[]
         self.call('initialize',{'protocolVersion':'2025-03-26','capabilities':{},
             'clientInfo':{'name':'int02-closeout-native','version':'1'}})
@@ -233,6 +240,10 @@ class MCP:
         assert not value.get('isError'),value
         if 'structuredContent' in value:return value['structuredContent']
         return json.loads(''.join(x['text'] for x in value['content'] if x['type']=='text'))
+    def close(self):
+        self.p.stdin.close()
+        try:return self.p.wait(timeout=5)
+        finally:self.p.stdout.close()
 
 def attach(home,rid,name):
     master,slave=pty.openpty()
@@ -265,8 +276,9 @@ def stop_engine(home,child):
     assert child.wait(timeout=10)==0,'own seed engine did not stop cleanly'
 
 def traced_engine(home,label,extra):
-    logpath=out/(label+'-engine.log');log=logpath.open('w');files.append(log)
-    child=subprocess.Popen([args.binary,'serve','--idle-exit','120s'],env={**base_env,'JOPEDIME_HOME':str(home),**extra},stdout=log,stderr=log)
+    logpath=out/(label+'-engine.log')
+    with logpath.open('w') as log:
+        child=subprocess.Popen([args.binary,'serve','--idle-exit','120s'],env={**base_env,'JOPEDIME_HOME':str(home),**extra},stdout=log,stderr=log)
     children.append(child)
     return child,logpath
 
@@ -299,7 +311,7 @@ def engine_boundary_matrix():
     started=run(home,spec_argv(dataset,'int02-boundary-run',2));snapshot=wait_terminal(home,started['run_id'])
     observer=MCP(home);baseline=observer.events(started['run_id'],0)['events']
     assert snapshot['state']=='completed' and baseline[-1]['body']['nondeterminism']['count']=='0'
-    observer.p.stdin.close();observer.p.wait(timeout=5);stop_engine(home,child)
+    observer.close();stop_engine(home,child)
     seen={hook:[] for hook in hooks}
     for name,ordinal in re.findall(r'JOPE_STORE_BOUNDARY:(\w+):(\d+)',logpath.read_text()):seen[name].append(int(ordinal))
     assert all(seen.values()),'full engine matrix requires --features jope-service/failpoints; missing actual boundary traces'
@@ -327,7 +339,7 @@ def engine_boundary_matrix():
                     time.sleep(.02)
                 observer=MCP(h);original_prefix=observer.events(rid,0)['events']
                 engine.kill();assert engine.wait(timeout=5)==-9
-                observer.p.stdin.close();observer.p.wait(timeout=5)
+                observer.close()
             engine,logpath=traced_engine(h,label+'-selected',{'JOPE_STORE_TRACE_BOUNDARIES':'1','JOPE_STORE_FAILPOINT':hook,'JOPE_STORE_FAILPOINT_OCCURRENCE':'1','JOPE_STORE_FAILPOINT_PARK':'1'})
             deadline=time.monotonic()+20
             while f'JOPE_STORE_CRASH:{hook}' not in logpath.read_text().splitlines():
@@ -359,8 +371,9 @@ def engine_boundary_matrix():
             assert not list((h/'tmp').iterdir())
             cases.append({'phase':phase,'hook':hook,'ordinal':1,'signal':signal_exit,'state':state,'events':len(prefix),'checkpoint':recovered,'completed':completed,'staging_clean':True,'continued_sequences':len(events),'reference_integrity_checked_on_open':True})
             save('engine-boundary-cases.json',cases)
-            client.p.stdin.close();client.p.wait(timeout=5)
+            client.close()
             subprocess.run([args.binary,'serve','--stop'],env={**base_env,'JOPEDIME_HOME':str(h)},capture_output=True,text=True,timeout=10,check=True)
+            check_descriptors()
     for hook in hooks:
         for ordinal in seen[hook]:
             label=f'b-{hooks.index(hook)}-{ordinal}'
@@ -372,8 +385,8 @@ def engine_boundary_matrix():
                 if f'JOPE_STORE_CRASH:{hook}' in text.splitlines():break
                 assert child.poll() is None,f'{label}: engine exited before selected boundary: {text}'
                 if request is None and daemon_ready(h,child):
-                    output=(out/(label+'-request.log')).open('w');files.append(output)
-                    request=subprocess.Popen([args.binary,*spec_argv(d,'int02-boundary-run',2)],env={**base_env,'JOPEDIME_HOME':str(h)},stdout=output,stderr=output)
+                    with (out/(label+'-request.log')).open('w') as output:
+                        request=subprocess.Popen([args.binary,*spec_argv(d,'int02-boundary-run',2)],env={**base_env,'JOPEDIME_HOME':str(h)},stdout=output,stderr=output)
                     children.append(request)
                 assert time.monotonic()<deadline,f'{label}: real boundary not reached'
                 time.sleep(.01)
@@ -433,8 +446,9 @@ def engine_boundary_matrix():
             assert final_events[-1]['body']['nondeterminism']['count']=='0','continuation hit a resource limit'
             cases.append({'hook':hook,'ordinal':ordinal,'signal':signal_exit,'state':state,'events':len(recovered_events),'staging_clean':True,'checkpoint':recovered,'completed':completed,'continued_sequences':len(final_events),'reference_integrity_checked_on_open':True})
             save('engine-boundary-cases.json',cases)
-            client.p.stdin.close();client.p.wait(timeout=5)
+            client.close()
             subprocess.run([args.binary,'serve','--stop'],env={**base_env,'JOPEDIME_HOME':str(h)},capture_output=True,text=True,timeout=10,check=True)
+            check_descriptors()
     assert len(cases)==sum(map(len,seen.values()))+4 and any(c['state']=='paused' for c in cases) and any(c['state']=='completed' for c in cases)
     normal_count=len(cases)-4
     assert len(cases)==normal_count+4
@@ -494,6 +508,7 @@ try:
             report['terminal_champion_render_matches_mcp_snapshot']=rendered
             report['r4_qualified']=bool(equal) and rendered and report['mcp_sequences_contiguous'] and report['mcp_equals_cli_events'] and report['state_at_close']=='running' and report['terminal_first']['exit']==report['terminal_reattach']['exit']==0
             assert report['r4_qualified'],'live terminal wire projection/reattach acceptance failed'
+        mcp.close()
 
     if not args.r4_only and not args.r1_only:
         # Rerun twice in fresh engine homes with identical registered train bytes/budgets/seed.
@@ -508,7 +523,7 @@ try:
             start=run(h,argv)
             snap=wait_terminal(h,start['run_id']);c=MCP(h)
             page=c.events(start['run_id'],0,2);ev=list(page['events']);cursor=int(page['next_after'])
-            c.p.stdin.close();assert c.p.wait(timeout=5)==0,'MCP EOF did not close first observer'
+            assert c.close()==0,'MCP EOF did not close first observer'
             resumed=MCP(h)
             while cursor<int(snap['event_watermark']):
                 page=resumed.events(start['run_id'],cursor,2)
@@ -519,6 +534,7 @@ try:
             save(f's2-{index}-reconnect-wire.json',{'before_disconnect':c.frames,'after_reconnect':resumed.frames})
             save(f's2-{index}-events.json',ev);save(f's2-{index}-snapshot.json',snap)
             pairs.append((snap,ev))
+            resumed.close()
         assert pairs[0][0]['run_id']!=pairs[1][0]['run_id'],'must compare distinct logical runs, not an idempotent retry'
         report['distinct_run_ids']=True
         report['same_store']=args.same_store
@@ -551,7 +567,7 @@ try:
         client=MCP(h);prefix=client.events(rid,0)['events']
         engine.kill();signal_exit=engine.wait(timeout=5)
         assert signal_exit==-9,'must be actual own background engine SIGKILL'
-        client.p.terminate();client.p.wait(timeout=5)
+        client.p.terminate();client.close()
         recovery_homes.append(h)
         report['r1_signal_exit']=signal_exit
         save('r1-before.json',before);save('r1-prefix.json',prefix);save('report-intermediate.json',report)
@@ -563,6 +579,7 @@ try:
         assert int(recovered['revision'])>=int(before['revision'])+1
         assert recovered==repeated,'repeat next-use changed recovery'
         resumed_client=MCP(h);after=resumed_client.events(rid,0)['events']
+        resumed_client.close()
         assert after[:len(prefix)]==prefix,'committed public prefix changed after engine crash'
         assert [int(event['sequence']) for event in after]==list(range(1,len(after)+1))
         save('r1-before.json',before);save('r1-recovered.json',recovered)
@@ -592,10 +609,13 @@ finally:
         if child.poll() is None:child.terminate()
         try:child.wait(timeout=5)
         except subprocess.TimeoutExpired:child.kill();child.wait(timeout=5)
+        for stream in [child.stdin,child.stdout,child.stderr]:
+            if stream is not None:
+                try:stream.close()
+                except OSError as error:cleanup.append(str(error))
     report['cleanup_errors']=cleanup
     report['finished']=datetime.datetime.now(datetime.timezone.utc).isoformat()
     report['load_after']=os.getloadavg()[0];save('commands.json',commands);save('report.json',report)
-    for f in files:f.close()
 print(json.dumps({k:v for k,v in report.items() if k not in ['traceback','r4_final']}))
 raise SystemExit(1 if 'error' in report else 0)
 "####;
