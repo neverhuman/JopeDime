@@ -144,6 +144,11 @@ def _ci(values):
     return np.quantile(np.asarray(values), [0.025, 0.975], axis=0).tolist()
 
 
+def paired_family_bootstrap(delta, draw):
+    """Median over seeds for each paired-family bootstrap draw."""
+    return np.median(delta[:, draw].mean(axis=2), axis=0)
+
+
 def ensemble_summary(family_ids, family_panel, seed_ids=SEEDS, boot_seed=BOOT_SEED, context_panel=None, context_families=None):
     """Paired family bootstrap, one-sided centered bootstrap tests, Holm m=3, and Elo."""
     panel = np.asarray(family_panel, dtype=np.float64)
@@ -169,7 +174,7 @@ def ensemble_summary(family_ids, family_panel, seed_ids=SEEDS, boot_seed=BOOT_SE
         j = ARMS.index(arm)
         delta = panel[:, :, j] - panel[:, :, 0]
         point = np.median(delta.mean(axis=1))
-        boot = np.median(delta[:, draw].mean(axis=2), axis=0)
+        boot = paired_family_bootstrap(delta, draw)
         gains[arm] = {"per_seed": delta.mean(axis=1).tolist(), "median_over_seeds": float(point), "family_bootstrap_ci95": _ci(boot)}
         if arm in FRESH_ARMS:
             # Center paired family bootstrap under the point null; upper tail is prespecified.
