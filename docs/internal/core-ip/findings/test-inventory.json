@@ -1957,6 +1957,10 @@
       "reason": "Owner-requested H143 synthetic CPU controls for the zero-update strict-admission shadow replay and its verdict mapping; no receipt/checkpoint reads or model passes in the fixture suite; offline research only.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h144_reg_sweep/test_h144.py": {
+      "reason": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
       "role": "research"
