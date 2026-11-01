@@ -18,7 +18,7 @@ fn view<'a>(shape: &'a [usize], values: &'a [f32]) -> TensorView<'a> {
     TensorView { shape, values }
 }
 
-fn replay(device: Device) {
+fn replay(device: Device, authenticated: bool) {
     let started = Instant::now();
     let source = env::var("JOPE_SOURCE_SHA").expect("exact tested source SHA required");
     assert!(
@@ -44,7 +44,24 @@ fn replay(device: Device) {
         candle_core_0_11_0::DeviceLocation::Cuda { gpu_id } => format!("cuda:{gpu_id}"),
         other => panic!("unsupported replay device: {other:?}"),
     };
-    let graph = FusedForward::from_bytes(&dope, &fixtures.weights(), device, 8).unwrap();
+    let graph = if authenticated {
+        let bundle = super::authenticated::load();
+        assert_eq!(bundle.asset("dope.safetensors").unwrap(), dope);
+        assert_eq!(
+            bundle.asset("jope.safetensors").unwrap(),
+            fixtures.weights()
+        );
+        let request = match device.location() {
+            candle_core_0_11_0::DeviceLocation::Cpu => jope_runtime::backend::DeviceRequest::Cpu,
+            candle_core_0_11_0::DeviceLocation::Cuda { gpu_id } => {
+                jope_runtime::backend::DeviceRequest::Cuda(gpu_id as u32)
+            }
+            other => panic!("unsupported replay device: {other:?}"),
+        };
+        FusedForward::from_bundle(&bundle, request, 8).unwrap()
+    } else {
+        FusedForward::from_bytes(&dope, &fixtures.weights(), device, 8).unwrap()
+    };
     assert_eq!(
         serde_json::to_value(graph.placement()).unwrap(),
         serde_json::json!({
@@ -185,7 +202,7 @@ fn replay(device: Device) {
     graph.device_sync_for_test();
     let stage_rows:serde_json::Value=stages.iter().map(|(name,s)|(name.to_string(),serde_json::json!({"values":s.values,"failed_values":s.failures,"max_absolute_error":s.max_abs,"max_tolerance_ratio":s.max_tolerance_ratio}))).collect();
     let failed: usize = stages.values().map(|s| s.failures).sum();
-    let receipt = serde_json::json!({"source":source,"consumer":"RNK-12","placement":graph.placement(),"dope_logical_composite":FROZEN_DOPE_COMPOSITE,"dope_weights_sha256":dope_sha,"fixture_index_sha256":env::var("JOPE_GOLDEN_INDEX_SHA256").unwrap(),"contexts":fixtures.contexts.len(),"slates":slates,"stages":stage_rows,"atol":1e-5,"rtol":1e-4,"failed_values":failed,"trace_errors":trace_errors,"decisive_admission_slates":decisive,"tie_band_slates":ties,"admitted_set_mismatches_outside_tie_band":admission_failures,"max_proposal_KL":max_kl,"elapsed_seconds":started.elapsed().as_secs_f64(),"passed":failed==0 && trace_errors.is_empty() && admission_failures==0,"native_evaluator_calls":0,"optimizer_updates":0,"scope":"recorded real DL-Train inputs/reference replay; no Q1/default promotion"});
+    let receipt = serde_json::json!({"source":source,"consumer":"RNK-12","authenticated_release":authenticated,"placement":graph.placement(),"dope_logical_composite":FROZEN_DOPE_COMPOSITE,"dope_weights_sha256":dope_sha,"fixture_index_sha256":env::var("JOPE_GOLDEN_INDEX_SHA256").unwrap(),"contexts":fixtures.contexts.len(),"slates":slates,"stages":stage_rows,"atol":1e-5,"rtol":1e-4,"failed_values":failed,"trace_errors":trace_errors,"decisive_admission_slates":decisive,"tie_band_slates":ties,"admitted_set_mismatches_outside_tie_band":admission_failures,"max_proposal_KL":max_kl,"elapsed_seconds":started.elapsed().as_secs_f64(),"passed":failed==0 && trace_errors.is_empty() && admission_failures==0,"native_evaluator_calls":0,"optimizer_updates":0,"scope":"recorded real DL-Train inputs/reference replay; no Q1/default promotion"});
     fs::write(
         out.join("RNK-12.json"),
         serde_json::to_vec_pretty(&receipt).unwrap(),
@@ -201,7 +218,13 @@ fn replay(device: Device) {
 #[test]
 #[ignore = "requires hash-pinned external RES-07 real inputs, references and frozen bundle; execute explicitly"]
 fn real_full_forward_cpu_fixture_replay() {
-    replay(Device::Cpu);
+    replay(Device::Cpu, false);
+}
+
+#[test]
+#[ignore = "requires the exact release-verified S1 r782 assets and pinned real M2 capture"]
+fn authenticated_real_full_forward_cpu_fixture_replay() {
+    replay(Device::Cpu, true);
 }
 
 #[cfg(unix)]
@@ -275,6 +298,16 @@ fn inherited_lease_rejects_another_inode_before_callback() {
 #[test]
 #[ignore = "requires fused-cuda, qualified GPU and exclusive existing qualification.lock; execute explicitly after merge"]
 fn real_cuda_m2_fixture_replay() {
+    cuda_replay(false);
+}
+
+#[test]
+#[ignore = "requires release-verified S1 r782, fused-cuda and the exclusive existing qualification.lock"]
+fn authenticated_real_cuda_m2_fixture_replay() {
+    cuda_replay(true);
+}
+
+fn cuda_replay(authenticated: bool) {
     let lock = PathBuf::from(
         env::var_os("JOPE_QUALIFICATION_LOCK").expect("existing qualification lock path required"),
     );
@@ -283,7 +316,7 @@ fn real_cuda_m2_fixture_replay() {
             Device::new_cuda(0).map_err(|e| anyhow::anyhow!("BACKEND_UNAVAILABLE: {e}"))?;
         #[cfg(feature = "fused-cuda")]
         super::deterministic::verify_frozen_primitives(&device)?;
-        replay(device);
+        replay(device, authenticated);
         Ok(())
     };
     if env::var_os("JOPE_GPU_LEASE_STDIN").is_some() {
