@@ -298,6 +298,13 @@ def dev_elo(args):
         "candidate_execution_evidence_sha256": args.evidence_sha256,
         "runner_sha256": args.runner_sha256,
         "source_roster_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+        "input_pins": {
+            "dev_roster_sha256": DEV_ROSTER_SHA256,
+            "source_manifest_file_sha256": SOURCE_MANIFEST_FILE_SHA256,
+            "selected_roster_sha256": SELECTED_ROSTER_SHA256,
+            "cpu_fused_source_sha256": CPU_FUSED_SHA256,
+            "signed_r882_assets_sha256": SIGNED_R882_HASHES,
+        },
         "ratings": ratings,
         "candidate_elo_lift": ratings["ratings"]["candidate"]
         > ratings["ratings"]["r882"],
@@ -460,6 +467,14 @@ def m5(args):
         "candidate_execution_evidence_sha256": args.evidence_sha256,
         "runner_sha256": args.runner_sha256,
         "fixture_index_sha256": GOLDEN_INDEX_SHA256,
+        "input_pins": {
+            "source_manifest_file_sha256": SOURCE_MANIFEST_FILE_SHA256,
+            "selected_train_packet_sha256": TRAIN_PACKET_SHA256,
+            "source_selected_roster_sha256": SELECTED_ROSTER_SHA256,
+            "dev_roster_sha256": DEV_ROSTER_SHA256,
+            "cpu_fused_source_sha256": CPU_FUSED_SHA256,
+            "signed_r882_assets_sha256": SIGNED_R882_HASHES,
+        },
         "selection_policy": "unchanged deterministic M5 4+8 serving selection: stable lowest four costs from proposal indices 4..11",
         "contexts": 50,
         "slates": slates,

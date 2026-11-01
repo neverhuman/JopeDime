@@ -5069,13 +5069,13 @@
       "sha256": "fad477aedc837578b48ced28c1e8f8404d83d09ab4e9b69045ed80ba2f969a73"
     },
     "python:research/flywheel_selfplay/rnk10_m5_causal/evaluate_candidate.py": {
-      "bytes": 26021,
+      "bytes": 26771,
       "classification": {
         "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
         "role": "research"
       },
       "migration": "New RNK-10 research-only source classification; no product runtime claim.",
-      "sha256": "61150795fb49414253671cf58aae660195b162461183d6ff1c1e81e1315e1757"
+      "sha256": "0939c4ddf7051012bcf15cde9ed3584117fc4bad651a5f4575156bb7cbe775ac"
     },
     "python:research/flywheel_selfplay/rnk10_m5_causal/stage_dev_packet.py": {
       "classification": {
