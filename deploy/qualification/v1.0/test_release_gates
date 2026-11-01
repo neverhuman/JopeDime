@@ -266,7 +266,9 @@ class ReleaseGates(unittest.TestCase):
         commands, missing = runner.provider_commands(self.repo)
         self.assertEqual([row["id"] for row in commands], runner.RELEASE_GATE_IDS)
         self.assertEqual(missing, [])
-        with self.assertRaisesRegex(ValueError, "input bindings required for: M5, A5"):
+        with self.assertRaisesRegex(
+            ValueError, "input bindings required for: M2, M5, A5, D1"
+        ):
             runner.provider_manifest(self.repo, self.artifact)
         d2_manifest = runner.provider_manifest(
             self.repo, self.artifact, self.bindings()
@@ -343,6 +345,16 @@ class ReleaseGates(unittest.TestCase):
                 "manifest": str(self.root / "named client capture.json"),
                 "manifest_sha256": "a" * 64,
             },
+            "D1": {
+                "macos_receipt": str(self.root / "macos receipt.json"),
+                "macos_receipt_sha256": "d" * 64,
+            },
+            "M2": {
+                "golden_dir": str(self.root / "M2 golden fixture"),
+                "golden_index_sha256": "b" * 64,
+                "parity_bundle_dir": str(self.root / "M2 bundle"),
+                "parity_report_dir": str(self.root / "M2 fresh report"),
+            },
         }
 
     def input_file(self, gates=None):
@@ -390,6 +402,138 @@ class ReleaseGates(unittest.TestCase):
             ],
             check=True,
         )
+
+    def transport_stub(self, gate):
+        """Use the maintained provider's CLI; replace qualification with observation."""
+        provider = HERE / "providers" / (gate.lower() + ".py")
+        return f"""import importlib.util,json,os,sys
+sys.path.insert(0,{str(provider.parent)!r})
+spec=importlib.util.spec_from_file_location('transport_provider',{str(provider)!r})
+module=importlib.util.module_from_spec(spec);sys.modules[spec.name]=module;spec.loader.exec_module(module)
+module.context=lambda gate:gate
+def observe(ctx,*args):
+    if ctx=='D1':
+        fields=dict(macos_receipt=str(args[0]),macos_receipt_sha256=args[1])
+    else:
+        fields={{name:os.environ.get(variable) for name,variable in [
+            ('golden_dir','JOPE_GOLDEN_DIR'),('golden_index_sha256','JOPE_GOLDEN_INDEX_SHA256'),
+            ('parity_bundle_dir','JOPE_PARITY_BUNDLE_DIR'),('parity_report_dir','JOPE_PARITY_REPORT_DIR')]}}
+        if any(value is None for value in fields.values()):raise module.ProviderError('controlled missing transport inputs')
+    identity={{name:os.environ.get(name) for name in ['JOPE_REL07_GATE_ID','JOPE_REL07_SOURCE_SHA','JOPE_REL07_ARTIFACT','JOPE_REL07_ARTIFACT_SHA256','JOPE_REL07_RESULT']}}
+    print(json.dumps(dict(synthetic=True,fields=fields,identity=identity,jobs=os.environ['CARGO_BUILD_JOBS'])))
+    return 0
+module.qualify=observe
+raise SystemExit(module.main())
+"""
+
+    def test_d1_and_m2_flags_cross_the_real_restricted_environment_boundary(self):
+        self.commit_providers(
+            {gate: self.transport_stub(gate) for gate in ["D1", "M2"]}
+        )
+        inputs = runner.provider_inputs(self.input_file())
+        inherited = {
+            name: "discard inherited input"
+            for name in [
+                "JOPE_REL07_D1_MACOS_RECEIPT",
+                "JOPE_REL07_D1_MACOS_RECEIPT_SHA256",
+                "JOPE_GOLDEN_DIR",
+                "JOPE_GOLDEN_INDEX_SHA256",
+                "JOPE_PARITY_BUNDLE_DIR",
+                "JOPE_PARITY_REPORT_DIR",
+            ]
+        }
+        source = runner.cpu.git(self.repo, "rev-parse", "HEAD")
+        for gate in ["D1", "M2"]:
+            folder = self.root / gate
+            folder.mkdir()
+            with mock.patch.dict(os.environ, inherited):
+                env = runner.cpu.child_environment(
+                    folder, self.root / "target", 4, source
+                )
+            self.assertTrue(set(inherited).isdisjoint(env))
+            identity = dict(
+                JOPE_REL07_GATE_ID=gate,
+                JOPE_REL07_SOURCE_SHA=source,
+                JOPE_REL07_ARTIFACT=str(self.artifact),
+                JOPE_REL07_ARTIFACT_SHA256=self.sha,
+                JOPE_REL07_RESULT=str(folder / "result.json"),
+            )
+            env.update(identity)
+            commands, _ = runner.provider_commands(self.repo)
+            bare = next(row["argv"] for row in commands if row["id"] == gate)
+            unbound = subprocess.run(
+                bare, cwd=self.repo, env=env, capture_output=True, text=True
+            )
+            self.assertEqual(unbound.returncode, 2, unbound.stdout + unbound.stderr)
+            commands, _ = runner.provider_commands(self.repo, inputs)
+            bound = next(row["argv"] for row in commands if row["id"] == gate)
+            child = subprocess.run(
+                bound, cwd=self.repo, env=env, capture_output=True, text=True
+            )
+            self.assertEqual(child.returncode, 0, child.stderr)
+            observation = json.loads(child.stdout)
+            self.assertTrue(observation["synthetic"])
+            self.assertEqual(observation["fields"], inputs[gate])
+            self.assertEqual(observation["identity"], identity)
+            self.assertEqual(observation["jobs"], "4")
+            self.assertFalse((folder / "result.json").exists())
+
+    def test_all_28_providers_never_report_complete_with_any_declared_input_unbound(
+        self,
+    ):
+        self.commit_providers(
+            {gate: "# synthetic inventory only\n" for gate in runner.RELEASE_GATE_IDS}
+        )
+        full = runner.provider_inputs(self.input_file())
+        self.assertEqual(set(full), {"A5", "D1", "M2", "M5"})
+        self.assertTrue(runner.provider_inventory(self.repo, full)["complete"])
+        for gate in full:
+            partial = {key: value for key, value in full.items() if key != gate}
+            with self.subTest(gate=gate):
+                report = runner.provider_inventory(self.repo, partial)
+                self.assertEqual(report["missing_provider_count"], 0)
+                self.assertEqual(report["unbound_providers"], [gate])
+                self.assertFalse(report["complete"])
+                output = self.root / (gate + "-unbound")
+                with self.assertRaisesRegex(
+                    ValueError, "input bindings required for: " + gate
+                ):
+                    runner.write_provider_manifest(
+                        self.repo, self.artifact, output, partial
+                    )
+                self.assertFalse(output.exists())
+                self.assertFalse(Path(str(output) + ".gate-commands.json").exists())
+
+    def test_new_receipt_and_index_bindings_reject_bad_pins_paths_and_overrides(self):
+        for gate, field, value in [
+            ("D1", "macos_receipt_sha256", "bad"),
+            ("D1", "macos_receipt_sha256", "D" * 64),
+            ("D1", "macos_receipt", "relative.json"),
+            ("D1", "JOPE_REL07_SOURCE_SHA", "b" * 40),
+            ("M2", "golden_index_sha256", True),
+            ("M2", "golden_index_sha256", "B" * 64),
+            ("M2", "parity_report_dir", "relative"),
+            ("M2", "CARGO_BUILD_JOBS", "32"),
+        ]:
+            fields = self.bindings()[gate].copy()
+            fields[field] = value
+            with (
+                self.subTest(gate=gate, field=field, value=value),
+                self.assertRaises(ValueError),
+            ):
+                runner.provider_inputs(self.input_file({gate: fields}))
+
+    def test_both_entrypoints_execute_directly(self):
+        for name in ["release-gates", "test_release_gates"]:
+            with self.subTest(name=name):
+                help_result = subprocess.run(
+                    [str(HERE / name), "--help"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+                self.assertEqual(help_result.returncode, 0, help_result.stderr)
+                self.assertIn("--help", help_result.stdout)
 
     def test_declared_m5_arguments_reach_a_real_required_argument_parser(self):
         self.commit_providers(
