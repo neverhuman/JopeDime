@@ -141,10 +141,6 @@ class BinaryDatasetPacketTests(unittest.TestCase):
                 self.assertEqual(rebuilt_npz_sha256(payload), row["payload_sha256"])
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
-
-
 CANDIDATE_PACKET = Path(
     os.environ.get(
         "JOPE_JRB01_BINARY_CANDIDATE_PACKET",
@@ -264,3 +260,7 @@ class BinaryTrainCandidatePacketTests(unittest.TestCase):
                 self.assertEqual(row["catalog_train_sha256"], row["train_file_sha256"])
                 self.assertEqual(sha256_file(cache_path), row["cache_sha256"])
                 self.assertEqual(rebuilt_npz_sha256(cache_path), row["cache_sha256"])
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
