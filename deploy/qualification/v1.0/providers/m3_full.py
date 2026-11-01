@@ -54,6 +54,16 @@ PROPOSER_PINS = {
     "vectors": "c115ca08095f00b31e637a6a3fdf46593c90c8d31fbb9a939efa9692073aac18",
 }
 
+# Optional source-paired diagnostic; historical qualification remains authoritative.
+R0_PROPOSER = "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900"
+PAIRED_CLOCK = "source-round-104729/v1"
+PAIRED_PINS = {
+    "native_candidates": "02a0f381f83fddb460be65187b5fce67a2269ab9a32b1a98875a790cc3b065d1",
+    "native_admission": "6e06c22f60b2db9cb89972d315e63eafa26c97d2a7d56b0342454049e61de5b0",
+    "r0_candidates": "e3d3b3bae8ef172a5029e6147439c9f5eb7f6a97b37735621122811efe744fd2",
+    "r0_admission": "5d9d35fb4780ec5533ba7ccddf1a6404942f6084534f2ac2b2337febc0fb67b4",
+}
+
 
 def require(ok, reason):
     if not ok:
@@ -135,6 +145,16 @@ def reference_pins(cfg):
         ),
         "accepted R5 proposer witness pins required",
     )
+
+    if "paired_r0" in cfg:
+        pair = cfg["paired_r0"]
+        require(
+            set(pair) == {"source_sha256", "clock", *PAIRED_PINS}
+            and pair["source_sha256"] == R0_PROPOSER
+            and pair["clock"] == PAIRED_CLOCK
+            and all(pair[key]["sha256"] == pin for key, pin in PAIRED_PINS.items()),
+            "identified source-paired diagnostic pins required",
+        )
 
 
 def load_inputs(path, pin, preflight):
@@ -239,6 +259,28 @@ def load_inputs(path, pin, preflight):
         and len(admission["results"]) == 3072,
         "incomplete R5 proposer reconstruction",
     )
+    paired = None
+    if "paired_r0" in cfg:
+        pair = cfg["paired_r0"]
+        paired = {
+            key: (json.loads if key.endswith("admission") else jsonlines)(
+                pinned(pair[key])
+            )
+            for key in PAIRED_PINS
+        }
+        require(
+            all(
+                len(paired[key]) == 44544
+                for key in ("native_candidates", "r0_candidates")
+            )
+            and all(
+                len(paired[key]["results"]) == 3072
+                for key in ("native_admission", "r0_admission")
+            )
+            and paired["native_admission"]["models"]
+            == paired["r0_admission"]["models"],
+            "complete paired same-model population required",
+        )
     names_raw = (ROOT / NAMES).read_bytes()
     require(
         hashlib.sha256(names_raw).hexdigest() == NAMES_SHA, "frozen name order changed"
@@ -268,6 +310,7 @@ def load_inputs(path, pin, preflight):
         expected=expected,
         proposer=proposer,
         admission=admission,
+        paired=paired,
         compatibility=compatibility,
     )
 
@@ -428,18 +471,12 @@ def compare_evaluator(measurements, expected):
     )
 
 
-def compare_proposer(generated, inputs):
-    reference = inputs["proposer"]["native_reference"]
-    require(
-        generated == reference,
-        "fresh native proposer differs from pinned same-forward oracle; new admission measurement required",
-    )
-    requests = inputs["proposer"]["requests"]
+def admitted(generated, admission, requests, *, paired_clock=False):
     by_call = {}
     for row in generated:
         by_call.setdefault(row["native_call"], []).append(row)
     selected = []
-    for call, result in enumerate(inputs["admission"]["results"]):
+    for call, result in enumerate(admission["results"]):
         require(
             result["native_call"] == call and call in by_call,
             "missing or reordered native calls",
@@ -455,10 +492,13 @@ def compare_proposer(generated, inputs):
             "invalid admission costs",
         )
         order = sorted(range(len(costs)), key=lambda i: (costs[i]["cost"], i))
+        seed = source["source_round_seed"] + source["context_index"]
+        if paired_clock:
+            seed += (call // len(requests)) * 16 * 104729
         if source["exploration"] and len(order) > 2:
-            chosen = order[:2] + random.Random(
-                source["source_round_seed"] + source["context_index"]
-            ).sample(order[2:], min(2, len(order) - 2))
+            chosen = order[:2] + random.Random(seed).sample(
+                order[2:], min(2, len(order) - 2)
+            )
         else:
             chosen = order[:4]
         actual = [costs[i]["program_sha256"] for i in chosen]
@@ -466,20 +506,18 @@ def compare_proposer(generated, inputs):
             actual == [r["program_sha256"] for r in result["selected"]],
             "same-forward admission selection differs",
         )
-        for key in actual:
-            selected.append(dict(original[key], exploration=source["exploration"]))
+        selected.extend(
+            dict(original[key], exploration=source["exploration"]) for key in actual
+        )
     require(len(selected) >= 10000, "10000 newly generated/admitted attempts required")
-    selected = selected[:10000]
-    ref = inputs["proposer"]["cohort"]
+    return selected[:10000]
+
+
+def frequencies(ref, selected):
     require(
         {r["operator"] for r in ref} | {r["operator"] for r in selected}
         <= OPERATOR_FAMILIES,
         "unknown proposer operator family",
-    )
-    ops = sorted(
-        {r["operator"] for r in ref}
-        | {r["operator"] for r in selected}
-        | {"landmark_synthesis"}
     )
     rows = []
     for mode in (None, False, True):
@@ -491,26 +529,67 @@ def compare_proposer(generated, inputs):
         )
         na, nb = sum(a.values()), sum(b.values())
         require(na > 0 and nb > 0, "missing exploration stratum")
-        values = {op: 100 * (b[op] / nb - a[op] / na) for op in ops}
-        # Integer cross multiplication enforces exactly ±2 percentage points.
+        ops = sorted(OPERATOR_FAMILIES)
+        # Exact unchanged ±2 percentage points, overall AND each exploration mode.
         passed = all(abs(b[op] * na - a[op] * nb) * 50 <= na * nb for op in ops)
         rows.append(
             dict(
                 mode="all" if mode is None else mode,
                 reference=na,
                 native=nb,
-                deltas_pp=values,
+                deltas_pp={op: 100 * (b[op] / nb - a[op] / na) for op in ops},
                 reference_counts={op: a[op] for op in ops},
                 native_counts={op: b[op] for op in ops},
                 passed=passed,
             )
         )
-    return dict(
-        passed=all(r["passed"] for r in rows),
-        newly_generated=len(generated),
-        admitted=10000,
-        strata=rows,
+    return dict(passed=all(r["passed"] for r in rows), strata=rows)
+
+
+def compare_proposer(generated, inputs):
+    historical = inputs["proposer"]["cohort"]
+    requests = inputs["proposer"]["requests"]
+    pair = inputs.get("paired")
+    reference = (
+        inputs["proposer"]["native_reference"]
+        if pair is None
+        else pair["native_candidates"]
     )
+    require(
+        generated == reference,
+        "fresh native proposer differs from pinned same-forward oracle; new admission measurement required",
+    )
+    legacy = admitted(
+        inputs["proposer"]["native_reference"], inputs["admission"], requests
+    )
+    result = dict(
+        frequencies(historical, legacy), newly_generated=len(generated), admitted=10000
+    )
+    if pair is not None:
+        native = admitted(
+            generated, pair["native_admission"], requests, paired_clock=True
+        )
+        r0 = admitted(
+            pair["r0_candidates"], pair["r0_admission"], requests, paired_clock=True
+        )
+        # A new reference is evidence for review, not permission to replace the release criterion.
+        result = dict(
+            frequencies(historical, native),
+            newly_generated=len(generated),
+            admitted=10000,
+            legacy_comparison=frequencies(historical, legacy),
+        )
+        result["paired_diagnostic"] = dict(
+            frequencies(r0, native),
+            reference_mode="source-paired/v1",
+            source_sha256=R0_PROPOSER,
+            clock=PAIRED_CLOCK,
+            witness_sha256=PAIRED_PINS,
+            qualification=False,
+            historical_current_comparison=frequencies(historical, native),
+            r0_historical_self_control=frequencies(historical, r0),
+        )
+    return result
 
 
 def execute(args, *, env, timeout=1800):
@@ -731,7 +810,10 @@ def measure_full(source, path, pin, evidence, preflight, run=None):
         ("vectors", "raw-svd-all-train.jsonl"),
     ):
         (staged / filename).write_bytes(pinned(cfg["proposer"][name]))
-    result = command("proposer", [str(bins["m3_proposer"]), str(staged), str(out)])
+    proposer_args = [str(bins["m3_proposer"]), str(staged), str(out)]
+    if inputs["paired"] is not None:
+        proposer_args.append("r0-clock")
+    result = command("proposer", proposer_args)
     diagnostic = json.loads(result.stdout)
     require(
         diagnostic["source_sha"] == source
@@ -885,7 +967,72 @@ def gate_payload(ctx, report, input_pin):
         proposer.get("newly_generated") == 44544 and proposer.get("admitted") == 10000,
         "fresh comparable proposer population required",
     )
-    strata = proposer.get("strata")
+    diagnostic = proposer.get("paired_diagnostic")
+    if diagnostic is not None:
+        require(
+            diagnostic.get("reference_mode") == "source-paired/v1"
+            and diagnostic.get("source_sha256") == R0_PROPOSER
+            and diagnostic.get("clock") == PAIRED_CLOCK
+            and diagnostic.get("witness_sha256") == PAIRED_PINS
+            and diagnostic.get("qualification") is False,
+            "paired result is diagnostic only; historical release criterion retained",
+        )
+    require(
+        proposer["passed"] == validate_strata(proposer.get("strata"), 1024),
+        "pooled proposer pass cannot replace mode qualification",
+    )
+    if diagnostic is not None:
+        require(
+            type(diagnostic.get("passed")) is bool
+            and diagnostic["passed"] == validate_strata(diagnostic.get("strata"), 10000)
+            and all(row["reference"] == row["native"] for row in diagnostic["strata"]),
+            "paired diagnostic requires equal mode populations and derived flags",
+        )
+        for comparison in (
+            proposer.get("legacy_comparison"),
+            diagnostic.get("historical_current_comparison"),
+            diagnostic.get("r0_historical_self_control"),
+        ):
+            require(
+                isinstance(comparison, dict)
+                and type(comparison.get("passed")) is bool
+                and comparison["passed"]
+                == validate_strata(comparison.get("strata"), 1024),
+                "historical comparisons must remain explicit and count-derived",
+            )
+        current = diagnostic["historical_current_comparison"]
+        require(
+            proposer["passed"] == current["passed"]
+            and proposer["strata"] == current["strata"],
+            "top-level proposer differs from retained historical-current comparison",
+        )
+    passed = sum(value["passed"] for value in clauses.values())
+    counts = dict(
+        collected=4, executed=4, passed=passed, failed=4 - passed, skipped=0, excluded=0
+    )
+    require(
+        isinstance(report.get("counts"), dict)
+        and set(report["counts"]) == set(counts)
+        and all(type(value) is int for value in report["counts"].values())
+        and report["counts"] == counts
+        and report.get("status")
+        == ("NUMERICAL_PASS" if passed == 4 else "NUMERICAL_FAIL"),
+        "report status/count contradiction",
+    )
+    return dict(
+        schema="jope.rel07.gate-execution/v1",
+        id="M3",
+        status="PASS" if passed == 4 else "FAIL",
+        source_sha=ctx.source_sha,
+        artifact_sha256=ctx.artifact_sha256,
+        counts=counts,
+        inputs_sha256=input_pin,
+        scope=report.get("scope"),
+        clauses=clauses,
+    )
+
+
+def validate_strata(strata, reference_population):
     require(
         isinstance(strata, list) and len(strata) == 3,
         "aggregate and both exploration strata required",
@@ -924,7 +1071,7 @@ def gate_payload(ctx, report, input_pin):
         )
         derived.append(passed)
     require(
-        strata[0]["reference"] == 1024 and strata[0]["native"] == 10000,
+        strata[0]["reference"] == reference_population and strata[0]["native"] == 10000,
         "full proposer comparison census required",
     )
     for key in ("reference_counts", "native_counts"):
@@ -936,31 +1083,4 @@ def gate_payload(ctx, report, input_pin):
             ),
             "exploration strata do not partition aggregate",
         )
-    require(
-        proposer["passed"] == all(derived),
-        "pooled proposer pass cannot replace mode qualification",
-    )
-    passed = sum(value["passed"] for value in clauses.values())
-    counts = dict(
-        collected=4, executed=4, passed=passed, failed=4 - passed, skipped=0, excluded=0
-    )
-    require(
-        isinstance(report.get("counts"), dict)
-        and set(report["counts"]) == set(counts)
-        and all(type(value) is int for value in report["counts"].values())
-        and report["counts"] == counts
-        and report.get("status")
-        == ("NUMERICAL_PASS" if passed == 4 else "NUMERICAL_FAIL"),
-        "report status/count contradiction",
-    )
-    return dict(
-        schema="jope.rel07.gate-execution/v1",
-        id="M3",
-        status="PASS" if passed == 4 else "FAIL",
-        source_sha=ctx.source_sha,
-        artifact_sha256=ctx.artifact_sha256,
-        counts=counts,
-        inputs_sha256=input_pin,
-        scope=report.get("scope"),
-        clauses=clauses,
-    )
+    return all(derived)

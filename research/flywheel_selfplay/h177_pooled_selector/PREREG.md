@@ -2,13 +2,14 @@
 
 - **Wave**: `H177`
 - **Owner**: `gpu_fused_agy` (`[FUSED-AGY]`)
-- **Authority**: `/home/ubuntu/nudges/hwave_t0400_h177_fused_agy.md` and `/home/ubuntu/jope_plan/DECISIONS_20261029.md` (`2026-11-01T11:05Z` H-wave selector policy)
+- **Authority**: `/home/ubuntu/nudges/hwave_t0400_h177_fused_agy.md`, `/home/ubuntu/nudges/hwave_t0440_h177_anchor_fusedagy.md`, and `/home/ubuntu/jope_plan/DECISIONS_20261029.md` (`2026-11-01T11:05Z` & `2026-11-01T11:28Z` H-wave selector policy)
 - **Seeds & Partition Pins**: `SEEDS = (177101, 177102, 177103)`, `FOLD_SEED = 177140`, `BOOT_SEED = 177141`
-- **Launch Gate (`PREREG + HARNESS ONLY` until `H175` `#1490` Verdict)**:
-  - **No science run is permitted in this preregistration step.**
-  - Execution is gated on the merged closeout verdict of `H175` (`#1490`, `research/flywheel_selfplay/h175_selector_power`):
-    - If `H175` closes with **`SELECTOR_UNDERPOWERED`** or **`MIXED`**, update `h175_power_anchor.json` and Section 4 below with `H175`'s measured `MDE80` and closeout commit SHA, then launch the single guarded CPU run on `xbabe2`.
-    - If `H175` closes with **`CEILING_LIKELY`**, `H177` closes immediately as **`NOT_RUN`** with reason `H175_CEILING_LIKELY` (`0` optimizer updates).
+- **H178 Calibration Gate & Scope Qualifications**:
+  - **Any H177 ADMIT is lift only if H178 (gpu_tokbench_agy, calibration of this exact rule on the H175 bank) shows null/harmful admission <= 0.05. Otherwise H177 is DIAGNOSTIC.**
+  - **H177 lift is conditional on the fixed H178 gate; a failed gate makes H177 diagnostic. A passed gate establishes only the reported finite-bank criterion. It does not repair the A/B family reuse or prove new-family calibration. Keep r882 1.1377941898164525 as the reference; r2750/r2795 dev tie admissions remain outside H-wave lift.**
+  - The `H177` decision function is exported as one self-contained importable object (`H177_DECISION_RULE` / `pooled_b_select` / `h177_decision_function` in `analysis.py`) so `H178` (`gpu_tokbench_agy`) can reuse it unchanged on the `H175` counterfactual bank.
+- **Pinned `H175` Closeout Anchor (`PR #1498`, `b0261812e125c8743370b7801b75d27e7f27977f`, Verdict `MIXED`)**:
+  - `H175` (`#1490` / closeout `#1498`, commit `b0261812e125c8743370b7801b75d27e7f27977f`, `metrics.json` SHA-256 `1d884ada17dc0e6e9b943d19f11b59a7c2d36a3276677f0aaf76bf46e9b404df`) closed with verdict **`MIXED`**. Both measured `MDE80`s (family-clustered `+0.0640 / +0.0947` and scattered-context `+0.0158 / +0.0228` on `24 / full`) and the closeout commit SHA are pinned in `h175_power_anchor.json`.
 
 ---
 
@@ -55,31 +56,43 @@ The `205` `DL-Train` families (`1,219` contexts) are partitioned by `fold_seed =
 5. **Hard Stage-Order File-System Barrier (`pooled_b_selection_lock.json`)**:
    - Before any `A_k` confirmation context or `DL-Val` context is scored on any trained checkpoint, `runner.py` writes and `os.fsync`s `pooled_b_selection_lock.json` containing the full `205`-family pooled `B` gains, CIs, Holm $p$-values, and admission decisions. `StageOrderGuard.require_b_locked()` verifies both in-memory lock state and on-disk `pooled_b_selection_lock.json` integrity before Stage 2 can execute.
 
-### Stage 2: Separate Confirmation Readout on `A` Families & Descriptive `DL-Val`
-- For each fold $k \in \{0..4\}$ and seed $s \in \{1..3\}$, model $\hat{\theta}_{s, k}^{(\text{arm})}$ scores its held-out confirmation block $A_k = F_k$ (`41` families, never used in $\text{FIT}_k$ or $B_k$ for fold $k$) and the `91`-context / `19`-family `DL-Val` panel.
+### Stage 2: Correlated Cross-Fold Candidate Readout on `A` Families & Descriptive `DL-Val`
+- For each fold $k \in \{0..4\}$ and seed $s \in \{1..3\}$, model $\hat{\theta}_{s, k}^{(\text{arm})}$ scores its fold block $A_k = F_k$ (`41` families, never used in $\text{FIT}_k$ or $B_k$ for fold $k$) and the `91`-context / `19`-family `DL-Val` panel.
 - We report both:
-  1. **Admitted/Selected Policy Confirmation on Pooled `A` (`205` families, `1,219` contexts)**: evaluates $\hat{\theta}_{s, k}^{(\text{arm})}$ (`step 40`) if arm $a$ was admitted in `pooled_b_selection_lock.json`, else `r882` (`step 0`).
-  2. **Unconditional Prespecified Candidate (`step = 40`) Confirmation on Pooled `A` (`205` families) & Per-Fold Disjoint Confirmation ($B_k \to A_k$)**: always evaluates the `step 40` candidate $\hat{\theta}_{s, k}^{(\text{arm})}$ on $A_k$ so confirmation behavior is visible even when pooled `B` rejects (`admitted = False`).
+  1. **Admitted/Selected Policy Correlated Cross-Fold Readout on Pooled `A` (`205` families, `1,219` contexts)**: evaluates $\hat{\theta}_{s, k}^{(\text{arm})}$ (`step 40`) if arm $a$ was admitted in `pooled_b_selection_lock.json`, else `r882` (`step 0`).
+  2. **Unconditional Prespecified Candidate (`step = 40`) Correlated Cross-Fold Readout on Pooled `A` (`205` families) & Per-Fold Disjoint Readout ($B_k \to A_k$)**: always evaluates the `step 40` candidate $\hat{\theta}_{s, k}^{(\text{arm})}$ on $A_k$ so candidate behavior is visible even when pooled `B` rejects (`admitted = False`).
   3. **Descriptive `91`-Context / `19`-Family `DL-Val` Readout** (both selected and unconditional `step 40`).
 - **Elo Reporting**: Canonical `H148` 400-iteration Bradley–Terry MM ratings anchored at `r882 = 1500.0` (`tie_tol = 1e-4`, `prior = 0.01`, `1,000` family-bootstrap draws with `seed = BOOT_SEED + 1 = 177142`). No AUC or speed metrics are computed or reported.
 
 ### Scope & Cross-Fold Dependency Disclosures
 1. **Conditional TRAIN-Exposed Scope**: Because `round-882.pt` was produced on the `1,219`-context / `205`-family `DL-Train` pool during the historical flywheel run, all `DL-Train` readouts represent conditional continuation evidence rather than unexposed holdout generalization.
-2. **Cross-Fold Relationship Between Pooled `B` and Pooled `A`**: Within each fold $k$, $B_k = F_{(k+1)\bmod 5}$ and $A_k = F_k$ are 100% disjoint (`41` vs `41` families) and neither overlaps $\text{FIT}_k$ (`123` families). Across the 5-fold rotation, each family $f \in F_m$ is evaluated in pooled `B` under fold model $k_B(f) = (m-1)\bmod 5$ and in pooled `A` under a **distinct fold model** $k_A(f) = m$ (whose training sets share `82/123` fit families). Because the underlying ground-truth context outcomes of $F_m$ appear in $B_{(m-1)\bmod 5}$ and $A_m$, pooled `A` is a cross-fold out-of-selection confirmation under distinct fold models rather than a disjoint new-family cohort; `DL-Val` (`19` disjoint families) and per-fold $B_k \to A_k$ (`41` vs `41` disjoint families) provide family-disjoint descriptive companions.
+2. **Correlated Cross-Fold Candidate Readout (Shared `A`/`B` Family Roster — Not Independent Confirmation)**: `H177`'s pooled `A` and pooled `B` contain the **same `205` families and `1,219` contexts**. Per-fold `FIT`/`B`/`A` disjointness is valid within each fold $k$ ($B_k = F_{(k+1)\bmod 5}$ and $A_k = F_k$ are disjoint `41`-family blocks and neither overlaps $\text{FIT}_k$), but global pooled `B` selection has already used each `A` family's ground-truth labels through another fold's $B_{(m-1)\bmod 5}$. Distinct fitted models ($k_A(f) = m$ vs $k_B(f) = (m-1)\bmod 5$, whose training sets also share `82/123` fit families) and a later `fsync` barrier do **not** create an independent held-out confirmation sample. Accordingly, pooled `A` is reported strictly as a **correlated cross-fold candidate readout**, never as global held-out or independent confirmation; `DL-Val` (`19` disjoint families) remains descriptive under the current order.
 
 ---
 
-## 4. Expected Statistical Power & `H175` `MDE80` Anchor (`h175_power_anchor.json`)
+## 4. Expected Statistical Power, `H175` `MDE80` Anchor (`h175_power_anchor.json`), & `H178` Calibration Gate
 
 - **Variance & MDE Scaling From `41` Single-Fold `B` Families to `205` Pooled `B` Families**:
   - Pooling `5` disjoint `41`-family selection blocks into `N_fam = 205` families increases family sample size by $5\times$, reducing the between-family bootstrap standard error $\text{SE}_{\text{fam}} = \sigma_{\text{fam}} / \sqrt{N_{\text{fam}}}$ by $\sqrt{5} \approx 2.236068$ ($\text{SE}_{205} / \text{SE}_{41} = 1/\sqrt{5} \approx 0.447214$, a **$55.28\%$ reduction** in standard error and 95% CI half-width).
   - Averaging `3` seeds within each family before resampling further reduces the seed-stochastic within-family variance component by $3\times$, and testing a single prespecified candidate (`step = 40`) eliminates 4-snapshot winner's-curse inflation.
   - Given `H175`'s measured single-fold (`41`-family) strict-selector minimum detectable effect $\text{MDE}_{80}^{(41)}$, the expected `205`-family pooled-`B` $\text{MDE}_{80}^{(205)}$ under the $\sqrt{5}$ standard-error scaling law is:
     $$\text{MDE}_{80}^{(205, \text{expected})} = \max\!\left(0.001 + \frac{\text{MDE}_{80}^{(41)} - 0.001}{\sqrt{5}},\; \frac{\text{MDE}_{80}^{(41)}}{\sqrt{5}}\right).$$
-- **Pinned `H175` Placeholder (`h175_power_anchor.json`)**:
-  - At the time of `H177` preregistration, `H175` (PR `#1490`, reviewed head `1cb289d545912561f09ac332a0e8344948ac3e67`, `@gpu_fused_redteam_codex` PASS review `5727688555`) has not yet merged its closeout metrics.
-  - `h175_power_anchor.json` pins `status = "PENDING_H175_CLOSEOUT"`, `h175_prereg_pr = 1490`, `h175_prereg_reviewed_head = "1cb289d545912561f09ac332a0e8344948ac3e67"`, `h175_closeout_commit = "PINNED_PLACEHOLDER_UPDATE_BEFORE_LAUNCH"`, `h175_verdict = "PINNED_PLACEHOLDER_UPDATE_BEFORE_LAUNCH"`, and `h175_mde80_41fam = null`.
-  - **Programmatic Pre-Launch Gate**: `treatment.validate_launch()` allows `--smoke` preflight while `h175_power_anchor.json` is in `PENDING_H175_CLOSEOUT` state, but **hard-refuses any non-smoke science run** until `h175_power_anchor.json` is updated with `status = "READY_TO_LAUNCH"`, a valid 40-hex `h175_closeout_commit`, `h175_verdict in ("SELECTOR_UNDERPOWERED", "MIXED")`, and a finite positive `h175_mde80_41fam`.
+- **Pinned `H175` Measured `MDE80`s (`b0261812e125c8743370b7801b75d27e7f27977f`, Both Family-Clustered and Scattered-Context — Never Cite Context Alone)**:
+  - In `H175` (closeout PR `#1498`, commit `b0261812e125c8743370b7801b75d27e7f27977f`, committed `metrics.json` SHA-256 `1d884ada17dc0e6e9b943d19f11b59a7c2d36a3276677f0aaf76bf46e9b404df`, raw `attempt-001/metrics.json` SHA-256 `89320699ac9a6d736cde7cd063fe6c3123bb22f6119f6874c3f0afcf23f9e567`, verdict **`MIXED`**), the single-fold `41`-family `STRICT` selector (`gain > 0.001` and `LCB95 > 0`, testing one counterfactual candidate vs baseline) has:
+    1. **Family-Clustered `MDE80` (Primary Realistic Sparsity Regime)**:
+       - `24`-slate: **`+0.0640`** (`+0.063957`, `CI95 = [0.050670, 0.078891]`, `19.98%` of `24`-slate headroom `+0.3202`; grid upper detection point at $f = 0.20$ after $f = 0.10$).
+       - `full`-slate: **`+0.0947`** (`+0.094678`, `CI95 = [0.072169, 0.121619]`, `20.27%` of `full`-slate headroom `+0.4672`; grid upper detection point at $f = 0.20$ after $f = 0.10$).
+       - **Expected Pooled `205`-Family `MDE80` Planning Heuristic (Family-Clustered, $\div \sqrt{5}$)**: **`~+0.029`** on `24`-slate (`+0.028602` raw $\div\sqrt{5}$, `+0.029155` margin-adjusted) and **`~+0.042`** on `full`-slate (`+0.042341` raw $\div\sqrt{5}$, `+0.042894` margin-adjusted). These $\div\sqrt{5}$ projections are **planning heuristics**, not measurements or a proved sample-size calculation: sparse family effects, coarse grid crossings, seed dependence, overlapping training sets across folds (`82/123` shared fit families), and 4-arm Holm adjustment differ from `H175`'s single-candidate setting, and even the full-pool projection (`~+0.042`) exceeds the six-study median historical max inner-`B` gain of **`+0.0281`** (`0.028149`). `H178` must measure the exact pooled rule.
+    2. **Scattered-Context `MDE80` (Optimistic Unclustered Companion — Never Cited Alone)**:
+       - `24`-slate: **`+0.0158`** (`+0.015834`, `CI95 = [0.012813, 0.019535]`, `4.95%` of headroom).
+       - `full`-slate: **`+0.0228`** (`+0.022802`, `CI95 = [0.017640, 0.029257]`, `4.88%` of headroom).
+       - **Expected Pooled `205`-Family `MDE80` Planning Heuristic (Scattered-Context, $\div \sqrt{5}$)**: **`~+0.0071 / +0.0076`** on `24`-slate and **`~+0.0102 / +0.0108`** on `full`-slate.
+- **`H178` Calibration Gate, Qualification Scope, & Reusable Decision Object**:
+  - **Any H177 ADMIT is lift only if H178 (gpu_tokbench_agy, calibration of this exact rule on the H175 bank) shows null/harmful admission <= 0.05. Otherwise H177 is DIAGNOSTIC.**
+  - **H177 lift is conditional on the fixed H178 gate; a failed gate makes H177 diagnostic. A passed gate establishes only the reported finite-bank criterion. It does not repair the A/B family reuse or prove new-family calibration. Keep r882 1.1377941898164525 as the reference; r2750/r2795 dev tie admissions remain outside H-wave lift.**
+  - `analysis.py` exports `pooled_b_select` (and aliases `H177_DECISION_RULE` / `h177_decision_function`) as one self-contained importable object so `H178` (`gpu_tokbench_agy`) can import and replay the exact `H177` decision rule unchanged on the `H175` bank.
+- **Programmatic Pre-Launch Gate (`treatment.validate_h175_power_anchor`)**:
+  - Allows `--smoke` preflight while `h175_power_anchor.json` is in `PENDING_H175_CLOSEOUT` state, and **hard-refuses any non-smoke science run** until `h175_power_anchor.json` has `status = "READY_TO_LAUNCH"`, a valid 40-hex `h175_closeout_commit`, `h175_verdict in ("SELECTOR_UNDERPOWERED", "MIXED")`, both `context` (`+0.0158/+0.0228`) and `family_clustered` (`+0.0640/+0.0947`) `MDE80`s, expected pooled family `MDE80` (`~+0.029/+0.042`), and the exact `H178` calibration gate string.
 
 ---
 

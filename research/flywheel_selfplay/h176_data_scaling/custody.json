@@ -1,0 +1,33 @@
+{
+  "archive": {
+    "actual_versioned_byte_readback": true,
+    "all_member_hashes_verified": true,
+    "bytes": 1605215,
+    "member_count": 85,
+    "sha256": "658ea2b050e3dd36b6deeb757c6bf1be4db78723fdccbb09f6f4f360d609b1cf",
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H176/codex-t1135/658ea2b050e3dd36/H176-evidence.zip",
+    "version_id": "RYYg_p73Co1_RfLqSmXDMaKzHfS4z4gn",
+    "zip_test": true
+  },
+  "bucket_versioning": "Enabled",
+  "manifest": {
+    "actual_versioned_byte_readback": true,
+    "bytes": 15710,
+    "sha256": "d7eabd4b77b33607716da160300557fd335f4d1a939dfb0aaf9b6e037bd44bce",
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H176/codex-t1135/658ea2b050e3dd36/manifest.json",
+    "version_id": "xRSG_YP3DnxRUokqtTiJWTFvzM7OLgjS"
+  },
+  "prereg_pr": 1493,
+  "review_id": 5727836812,
+  "source_commit": "6f489fd4b20adcbd58685d9349d0243d97c6eacd",
+  "status": "PASS",
+  "supplemental_objects": [
+    {
+      "actual_versioned_byte_readback": true,
+      "bytes": 184,
+      "sha256": "6bca00fbdf19d25cfbdd89e05a523c93fa2a9fb412dd3e2a65d065937aa1e945",
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H176/codex-t1135/658ea2b050e3dd36/H176-attempt.claim",
+      "version_id": "SJgnwfXrlzeQoG3Eebh_go0rYXp4X_jE"
+    }
+  ]
+}

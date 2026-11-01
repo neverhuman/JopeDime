@@ -11,3 +11,12 @@ Feature count/flag coordinates are exact; other features allow `1e-6` absolute, 
 All four comparisons execute and retain individual measurements. A real mismatch produces a candidate-bound FAIL with consistent passed/failed counts; only all four complete passing comparisons may emit PASS. Source/candidate/input/dependency identities are rechecked and results created exclusively. Missing, malformed, changed, incomplete or contradictory evidence refuses qualification. CPU work uses nice19/math1, four evaluator children maximum and bounded owned process groups. No GPU, model training, sealed/holdout payload, signer or live-loop access occurs.
 
 Controls cover full PASS/FAIL accounting, pooled-versus-mode failures, complete coverage, strict types, identities and exact tolerance boundaries. Real CPU replays are retained separately; data-free controls never qualify release bytes. The complete real replay at source `708770035bdd2abd2201c6b94fd3e2427d0b394b` passes features/projections and landmarks, but records 615/1,024 evaluator mismatches and a non-exploration replacement-head frequency miss of -2.65625 percentage points. Fresh proposer output exactly reproduces the accepted 44,544-record reconstruction; aggregate frequency success cannot hide the mode failure. Thus the measured result is two clauses passed and two failed. Numerical repairs remain separate work; this path preserves both failures. Actual candidate qualification remains pending the supplied signed artifact and complete successful measurements.
+
+
+An optional `paired_r0` input adds a source-bound same-population diagnostic and uses
+`m3_proposer ... r0-clock` to pass base seed and source round to the public Proposer.
+It retains the original witnesses and historical criterion: neither a paired PASS
+nor a forged qualification flag can replace a historical failure. See
+[M3-PROPOSER-REFERENCE.md](M3-PROPOSER-REFERENCE.md) for the reproduced source self-control
+and the explicit comparison-identity review still required. No production sampler,
+model, weights, RNG or tolerance changes are included.

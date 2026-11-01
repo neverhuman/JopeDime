@@ -1,4 +1,22 @@
-\subsection{Latest retained admission trace}\label{app:latest-admissions}
+\subsection{Latest retained admission trace and pre-decision margins}\label{app:latest-admissions}
+
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_admission_margins.pdf}
+  \caption{\textbf{Pre-decision validation margins across rounds 775--2837.}
+  Left: candidate minus prior retained-best validation utility
+  ($\Delta_r = u_{\mathrm{cand},r} - u_{\mathrm{prev},r}$) across all
+  \num{2063} retained admission records in rounds 775--2837, zoomed around the
+  $\Delta_r = 0$ admission threshold (round 785's $+0.0302$ gain is annotated
+  off-scale). Right: round counts by pre-decision margin band on a symmetric log
+  scale. Half of all six accepted rounds are exact ties ($\Delta_r = 0$ at
+  rounds 782, 882 and 2795), two are sub-$10^{-3}$ gains ($+\num{1.99e-4}$ at
+  round 859 and $+\num{5.73e-4}$ at round 2750), and 26 of the \num{2057}
+  rejected candidates lie within $[-10^{-4}, 0)$ of a tie. This is development
+  telemetry from the same retained window as \cref{fig:fw-latest-admissions},
+  not a Results claim or an independent first-proposal evaluation.}
+  \label{fig:fw-admission-margins}
+\end{figure*}
 
 The earlier window in \cref{fig:fw-validation} ends at round 2663.
 \Cref{fig:fw-latest-admissions} extends that exact prefix by 174 records,
@@ -6,5 +24,20 @@ through round 2837. The full prefix contains six accepted candidates:
 three strict gains and three exact ties. Round 2750 raises recorded best
 utility from 1.1377941898164525 to 1.1383668110784328; round 2795 accepts
 that same value again. A visually small or rounded change alone does not
-establish a strict gain. The source, adapter and evaluation-population
-binding remains pending in \cref{sec:method-status}.
+establish a strict gain.
+
+\Cref{fig:fw-admission-margins} decomposes the same \num{2063} development
+records by their unrounded pre-decision validation margin,
+$\Delta_r = u_{\mathrm{cand},r} - u_{\mathrm{prev},r}$, evaluated immediately
+before each round's retention update. Under the non-strict rule
+$\Delta_r \geq 0$, three of the six admissions are exact zero-margin ties
+(rounds 782, 882 and 2795), two are strict gains smaller than $10^{-3}$
+($+\num{1.99e-4}$ at round 859 and $+\num{5.73e-4}$ at round 2750), and only
+round 785 exceeds $10^{-3}$ ($+0.030218$). Among the \num{2057} rejected rounds
+($\Delta_r < 0$), 26 candidates ($1.26\%$) fall within $[-10^{-4}, 0)$ of a tie
+(closest $-\num{4.34e-5}$ at rounds 803 and 807), 48 fall in
+$[-10^{-3}, -10^{-4})$ (74 rejected rounds, or $3.60\%$, within $10^{-3}$ of
+zero), and \num{1983} ($96.40\%$) fall below $-10^{-3}$ (median rejected margin
+$-0.003360$; minimum $-0.008469$ at round 2784). These development margins add
+no new evaluations and do not constitute a Results claim; the source, adapter
+and evaluation-population binding remains pending in \cref{sec:method-status}.
