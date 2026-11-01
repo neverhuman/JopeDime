@@ -58,9 +58,9 @@ separate representation study; \cref{sub:results-ablation} reserves that test.
 \subsection{Describing the move}\label{sub:method-move}
 
 A move is one program in the typed language of \cref{sec:game}, with a
-401-token vocabulary. Up to six transforms from a set of 31 feed one of
-22 prediction heads. The native decoder masks forbidden tokens at each
-step, as in grammar-constrained generators
+401-token vocabulary listing 31 transforms and 22 prediction heads.
+Up to six transforms feed a head; the native task mask permits only
+compatible tokens at each step, as in grammar-constrained generators
 \citep{kusner2017grammar,dai2018sdvae}. A finished draft enters the pool
 only after it decodes and parses. These grammar checks do not establish
 that the writer avoids programs that parse but crash or lose. A program's

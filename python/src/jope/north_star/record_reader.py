@@ -8,6 +8,7 @@ Synthetic controls require an explicit opt-in and must never become training dat
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -228,8 +229,7 @@ def _constant(_value):
     raise ValueError("nonfinite JSON constant")
 
 
-def read_records(path, *, allow_synthetic=False, allow_incomplete=False, require_evaluate_all=False):
-    """Yield contiguous rounds from one pinned run; reject truncated/empty streams."""
+def _record_lines(path, *, allow_synthetic=False, allow_incomplete=False, require_evaluate_all=False):
     binding, count = None, 0
     with Path(path).open("rb") as stream:
         while line := stream.readline(MAX_LINE_BYTES + 1):
@@ -253,8 +253,71 @@ def read_records(path, *, allow_synthetic=False, allow_incomplete=False, require
                 binding = current
             _require(current == binding, "run/input identity, conditioning, seed or capture mode changed")
             count += 1
-            yield record
+            yield record, line
     _require(count > 0, "empty research stream")
+
+
+def read_records(path, *, allow_synthetic=False, allow_incomplete=False, require_evaluate_all=False):
+    """Yield contiguous rounds from one pinned run; reject truncated/empty streams."""
+    for record, _line in _record_lines(
+        path,
+        allow_synthetic=allow_synthetic,
+        allow_incomplete=allow_incomplete,
+        require_evaluate_all=require_evaluate_all,
+    ):
+        yield record
+
+
+def record_inventory(path, *, allow_synthetic=False, allow_incomplete=False, require_evaluate_all=False):
+    """Count and hash the same validated bytes; this does not qualify provenance."""
+    counts = dict(
+        rounds=0,
+        proposals=0,
+        admissions=0,
+        dispatches=0,
+        outcomes=0,
+        successes=0,
+        failures=0,
+        incomplete_rounds=0,
+    )
+    digest = hashlib.sha256()
+    for record, line in _record_lines(
+        path,
+        allow_synthetic=allow_synthetic,
+        allow_incomplete=allow_incomplete,
+        require_evaluate_all=require_evaluate_all,
+    ):
+        digest.update(line)
+        counts["rounds"] += 1
+        counts["proposals"] += len(record["proposals"])
+        counts["admissions"] += len(record["policy"]["admitted"])
+        counts["dispatches"] += len(record["dispatched"])
+        counts["outcomes"] += len(record["outcomes"])
+        counts["failures"] += sum(o["measurement"]["status"] == "failed" for o in record["outcomes"])
+        counts["successes"] += sum(o["measurement"]["status"] == "success" for o in record["outcomes"])
+        counts["incomplete_rounds"] += not record["capture_complete"]
+    return dict(
+        schema="jope.research.inventory/v1",
+        identity=record["identity"],
+        evaluate_all_proposals=record["evaluate_all_proposals"],
+        records_sha256=digest.hexdigest(),
+        counts=counts,
+    )
+
+
+def verify_inventory(actual, expected):
+    """Require exact stream identity, dispatch mode, bytes and every observed count."""
+    _fields(expected, "schema identity evaluate_all_proposals records_sha256 counts")
+    _fields(
+        expected["counts"],
+        "rounds proposals admissions dispatches outcomes successes failures incomplete_rounds",
+    )
+    # Canonical JSON also distinguishes bool/int and int/float lookalikes.
+    _require(
+        json.dumps(actual, sort_keys=True, allow_nan=False)
+        == json.dumps(expected, sort_keys=True, allow_nan=False),
+        "research stream differs from the expected committed inventory",
+    )
 
 
 def main():
@@ -274,28 +337,33 @@ def main():
         action="store_true",
         help="also count behavior admissions, actual dispatches and successful measurements",
     )
+    parser.add_argument(
+        "--expected-inventory",
+        type=Path,
+        help="verify identity, mode, exact bytes and counts against the Rust outbox inventory",
+    )
     args = parser.parse_args()
-    counts = dict(rounds=0, proposals=0, outcomes=0, failures=0, incomplete_rounds=0)
-    if args.detailed_counts:
-        counts.update(admissions=0, dispatches=0, successes=0)
     try:
-        for record in read_records(
+        inventory = record_inventory(
             args.records,
             allow_synthetic=args.allow_synthetic,
             allow_incomplete=args.allow_incomplete,
             require_evaluate_all=args.require_evaluate_all,
-        ):
-            counts["rounds"] += 1
-            counts["incomplete_rounds"] += not record["capture_complete"]
-            counts["proposals"] += len(record["proposals"])
-            counts["outcomes"] += len(record["outcomes"])
-            counts["failures"] += sum(o["measurement"]["status"] == "failed" for o in record["outcomes"])
-            if args.detailed_counts:
-                counts["admissions"] += len(record["policy"]["admitted"])
-                counts["dispatches"] += len(record["dispatched"])
-                counts["successes"] += sum(
-                    o["measurement"]["status"] == "success" for o in record["outcomes"]
-                )
+        )
+        if args.expected_inventory is not None:
+            with args.expected_inventory.open("rb") as stream:
+                expected_bytes = stream.read(MAX_LINE_BYTES + 1)
+            _require(len(expected_bytes) <= MAX_LINE_BYTES, "oversized expected inventory")
+            expected = json.loads(
+                expected_bytes.decode("utf-8"), object_pairs_hook=_object, parse_constant=_constant
+            )
+            verify_inventory(inventory, expected)
+        counts = inventory["counts"]
+        if not args.detailed_counts:
+            counts = {
+                key: counts[key]
+                for key in ("rounds", "proposals", "outcomes", "failures", "incomplete_rounds")
+            }
     except (ValueError, OSError, RecursionError) as exc:
         parser.error(str(exc))
     print(json.dumps(counts, sort_keys=True))
