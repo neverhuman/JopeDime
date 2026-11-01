@@ -7,25 +7,46 @@ to one production-engine evaluation and its durable per-request receipt. It
 does not authorize a Q1 run, read sealed or holdout rows, or make a reference
 backend a production backend.
 
+The authoritative real-data selection catalog is
+`~/jope_plan/master/source/S3_DATASET_CATALOG.json`, with its human-readable
+inventory at `S3_DATASET_CATALOG.md`. The frozen catalog bytes are JSON SHA-256
+`e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba` and
+Markdown SHA-256 `bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee`.
+The JSON records the 2026-10-30 catalog v246 source (object VersionId
+`eJuErIwj0Pgu.lAgflPcWvvRKyuwptLC`); an implementation must consume those
+exact pinned bytes, never a moving `LATEST` alias.
+
 ## Request-to-dataset binding
 
-The request's `dataset.id`, `dataset.dataset_sha256`, `dataset.cut_sha256`,
-`dataset.task`, `dataset.rows`, and `dataset.features` are exact identity
-constraints. The engine resolves the full dataset SHA-256 and cut SHA-256
-through the dataset/cut manifest selected by the request's pinned
-`pins.protocol_sha256`. The manifest supplies the canonical dataset object,
-target column, ignored columns, and deterministic train-fold partition. The
-engine MUST verify all request metadata against that manifest and the loaded
-object before evaluation. Prefix IDs are only lookup hints; they never replace
-the full SHA-256 check. No target, split, row count, feature count, or cut is
-inferred from a dataset profile, a suggested target, or a caller default.
+For a non-sealed development qualification, the request's `dataset.id`,
+`dataset.dataset_sha256`, `dataset.cut_sha256`, `dataset.task`,
+`dataset.family`, `dataset.rows`, and `dataset.features` are exact identity
+constraints. Resolve `dataset.id` only in the pinned catalog, then require
+exact equality for `canonical_sha256`, task, authoritative `family_key`, rows
+and features (the catalog's `cols` includes the target). The catalog record's
+`s3_objects.manifest.json` key resolves the immutable dataset manifest; its
+`native_split_registry_key` resolves the split registry entry. The pinned Q1
+protocol binds the exact target/ignored-column mapping and deterministic
+FIT-fold construction from those manifests, and its cut SHA must match the
+resulting cut definition. The engine MUST verify all request metadata against
+those pinned entries and the loaded training object before evaluation. Prefix
+IDs are lookup hints only; they never replace full SHA-256 checks. No target,
+split, row count, feature count, family key, or cut is inferred from a profile,
+derived/unreviewed family key, suggested target, or caller default. Catalog
+`family_key_derived` entries are ineligible. All catalog exclusions remain
+excluded, and any BeyondArena-derived family is off-limits because the
+authoritative sealed roster is absent.
 
-The engine receives the original closed request unchanged. Dataset resolution
-is an engine-side operation under the pinned protocol, not additional caller
-fields that could escape `q1.py`'s closed request schema. An unknown, ambiguous,
-or mismatched mapping is refused before charging an attempt. Qualification
-requests contain no payload; the engine uses only its authorized training
-partition and never opens the holdout group.
+The engine receives the original closed request unchanged. For a development
+request, dataset resolution is an engine-side operation under the pinned
+catalog and protocol, not additional caller fields that could escape `q1.py`'s
+closed request schema. An unknown, ambiguous, or mismatched mapping is refused
+before charging an attempt. Development qualification may use only
+catalog-selected non-sealed datasets and their train objects. The official
+sealed Q1 cohort uses its separately pinned QLT-02 cohort mapping; it is
+forwarded only to the separately qualified evaluator after QLT-04 signature
+and admission checks. This adapter does not authorize sealed Q1 execution or
+open holdout rows/outcomes.
 
 ## Engine operation and receipt
 

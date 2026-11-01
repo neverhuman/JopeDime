@@ -114,6 +114,17 @@ class ProductionBackendTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "request fields"):
             backend.validate_receipt(self.receipt, request)
 
+    def test_accepts_nonsealed_development_binding(self):
+        request = copy.deepcopy(self.request)
+        request["dataset"]["holdout_group"] = "development_fit"
+        request["request_sha256"] = backend.digest(
+            {key: value for key, value in request.items() if key != "request_sha256"}
+        )
+        receipt = copy.deepcopy(self.receipt)
+        receipt["request_sha256"] = request["request_sha256"]
+        response = backend.validate_receipt(receipt, request)
+        self.assertEqual(response["status"], "complete")
+
     def test_refuses_missing_attempt_and_requested_budget_echo(self):
         receipt = copy.deepcopy(self.receipt)
         receipt["attempts"].pop()

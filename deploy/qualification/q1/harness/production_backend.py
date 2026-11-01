@@ -143,7 +143,7 @@ def validate_receipt(receipt, request):
         and sha(dataset.get("cut_sha256"))
         and dataset.get("task") == "regression"
         and dataset.get("family_authoritative") is True
-        and dataset.get("holdout_group") == "sealed_meta_test"
+        and dataset.get("holdout_group") in ("development_fit", "sealed_meta_test")
         and type(dataset.get("rows")) is int
         and dataset["rows"] > 0
         and type(dataset.get("features")) is int
