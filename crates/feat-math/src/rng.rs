@@ -48,7 +48,8 @@ impl Pcg32 {
     pub fn gaussian(&mut self) -> f64 {
         let u1 = self.next_f64().max(1e-12);
         let u2 = self.next_f64();
-        (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()
+        (-2.0 * crate::portable_math::frozen_s1::ln(u1)).sqrt()
+            * crate::portable_math::frozen_s1::cos(2.0 * std::f64::consts::PI * u2)
     }
 }
 

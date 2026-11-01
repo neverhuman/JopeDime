@@ -35,7 +35,9 @@ pub(crate) fn native<B: AsRef<[u8]> + Sync>(
     matrix: &Matrix<B>,
 ) -> std::result::Result<Scores, WorkerFailure> {
     jope_runtime::budget::Budget::new(None, 1)
-        .install(|| evaluate(request, matrix))
+        .install(|| {
+            feat_math::portable_math::frozen_s1::with_frozen_s1_math(|| evaluate(request, matrix))
+        })
         .map_err(|_| WorkerFailure::Unavailable)?
         .map_err(|_| WorkerFailure::InvalidRequest)
 }
@@ -88,7 +90,7 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
             "undefined trained surrogate baseline"
         );
         let ratio = (rmse / baseline).max(1e-12);
-        logs.push(ratio.ln());
+        logs.push(feat_math::portable_math::frozen_s1::ln(ratio));
         wins += usize::from(ratio <= 1.0);
         losses.push(rmse);
         let user_score = user_objective.evaluate(&vy, &prediction)?;
@@ -192,7 +194,7 @@ pub(crate) fn fitness(dsl: &str, logs: &[f64], wins: usize) -> Result<(f64, bool
             (logs.iter().map(|value| (value - mean).powi(2)).sum::<f64>() / 3.0).sqrt(),
         )
     };
-    let gate = wins == logs.len() && mean.exp() <= 0.90;
+    let gate = wins == logs.len() && feat_math::portable_math::frozen_s1::exp(mean) <= 0.90;
     let value = if gate {
         0.8 * mean
             + 0.1 * tail
