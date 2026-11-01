@@ -56,3 +56,15 @@ references; it is intentionally rejected by the worker until a reviewed
 admission step supplies exact payload identities and the packer integration.
 Synthetic tests exercise the task heads, loss, update, metrics and refusal
 boundaries. They do not qualify a real worker or authorize campaign execution.
+
+Before either update entry point calls the optimizer, at least one trainable
+shared-adapter parameter must have a gradient and every present optimizer
+gradient must be finite, including the binary head. Unused gradients may remain
+absent (the binary head is unused for regression). Refusals occur before any
+optimizer step or parameter change.
+
+Regression metrics reject nonfinite inputs and computed RMSE. The reported RMSE
+remains exact, including zero for perfect predictions. The log-ratio curve uses
+an explicit relative RMSE/ridge floor of 1e-12 so perfect or smaller ratios have
+a finite JSON/report value, log(1e-12). This numerical reporting convention does
+not change training losses, Elo metrics, study budgets or decision predicates.

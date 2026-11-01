@@ -159,6 +159,22 @@ def task_loss(
     raise ValueError("unknown task")
 
 
+def _validate_update_gradients(adapter: nn.Module, optimizer: torch.optim.Optimizer):
+    if not any(
+        parameter.grad is not None
+        for parameter in adapter.parameters()
+        if parameter.requires_grad
+    ):
+        raise ValueError("task loss did not produce a shared-adapter gradient")
+    if not all(
+        bool(torch.isfinite(parameter.grad).all())
+        for group in optimizer.param_groups
+        for parameter in group["params"]
+        if parameter.grad is not None
+    ):
+        raise ValueError("nonfinite optimizer gradient; update refused")
+
+
 def train_step(
     adapter: nn.Module,
     heads: TwoTaskHeads,
@@ -187,12 +203,7 @@ def train_step(
         raise ValueError("exactly 29,211 shared adapter parameters must be trainable")
     optimizer.zero_grad(set_to_none=True)
     loss.backward()
-    if not any(
-        parameter.grad is not None and bool(torch.isfinite(parameter.grad).all())
-        for parameter in adapter.parameters()
-        if parameter.requires_grad
-    ):
-        raise ValueError("task loss did not produce a finite shared-adapter gradient")
+    _validate_update_gradients(adapter, optimizer)
     before_state = {
         name: parameter.detach().clone()
         for name, parameter in adapter.named_parameters()
@@ -285,11 +296,7 @@ def train_context_batch(
     if not bool(torch.isfinite(loss)):
         raise ValueError("nonfinite scheduled-batch loss")
     loss.backward()
-    if not any(
-        parameter.grad is not None and bool(torch.isfinite(parameter.grad).all())
-        for parameter in trainable
-    ):
-        raise ValueError("scheduled task loss did not reach the shared adapter")
+    _validate_update_gradients(adapter, optimizer)
     optimizer.step()
     after = adapter_fingerprint(adapter)
     if before == after:
@@ -378,6 +385,19 @@ def regression_metrics(
         raise ValueError("regression metric tensors must be aligned and nonempty")
     if not math.isfinite(ridge_rmse) or ridge_rmse <= 0:
         raise ValueError("positive finite ridge RMSE required")
+    if not bool(torch.isfinite(prediction).all()) or not bool(
+        torch.isfinite(target).all()
+    ):
+        raise ValueError("nonfinite regression metric predictions or targets")
     rmse = torch.mean((prediction.float() - target.float()).square()).sqrt()
     value = float(rmse)
-    return {"rmse": value, "log_rmse_ratio": math.log(value / ridge_rmse)}
+    if not math.isfinite(value):
+        raise ValueError("nonfinite regression RMSE")
+    # Preserve exact RMSE, with an explicit relative floor for the JSON curve.
+    log_floor = math.log(1e-12)
+    log_ratio = (
+        max(math.log(value) - math.log(ridge_rmse), log_floor)
+        if value > 0
+        else log_floor
+    )
+    return {"rmse": value, "log_rmse_ratio": log_ratio}

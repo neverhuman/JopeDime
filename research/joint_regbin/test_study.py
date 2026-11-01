@@ -1077,3 +1077,157 @@ def test_worker_regression_curve_is_log_rmse_over_ridge():
     assert result["log_rmse_ratio"] == pytest.approx(
         torch.log(torch.tensor(2**0.5 / 2.0)).item()
     )
+
+
+class SplitWorkerAdapter(torch.nn.Module):
+    """Two synthetic gradient tensors with the required total parameter count."""
+
+    def __init__(self):
+        super().__init__()
+        self.left = torch.nn.Parameter(torch.zeros(1))
+        self.right = torch.nn.Parameter(torch.zeros(29210))
+
+    def predict_costs(self, candidates):
+        return {"total_cost": (self.left[0] + self.right[0]).expand_as(candidates)}
+
+
+def _worker_update(entry, adapter, heads, optimizer, task):
+    packed = {"candidates": torch.ones(2)}
+    target = torch.ones(2)
+    if entry == "step":
+        return worker.train_step(adapter, heads, optimizer, task, packed, target)
+    return worker.train_context_batch(
+        adapter, heads, optimizer, [("synthetic-context", task, packed, target)]
+    )
+
+
+@pytest.mark.parametrize("entry", ["step", "batch"])
+@pytest.mark.parametrize("location", ["adapter", "head"])
+@pytest.mark.parametrize("invalid", [float("nan"), float("inf"), -float("inf")])
+def test_worker_gradient_refusal_precedes_any_optimizer_step(
+    monkeypatch, entry, location, invalid
+):
+    adapter = SplitWorkerAdapter()
+    heads = worker.TwoTaskHeads()
+    parameters = [*adapter.parameters(), *heads.parameters()]
+    optimizer = torch.optim.SGD(parameters, lr=0.1)
+    step = optimizer.step
+    calls = []
+
+    def observed_step(*args, **kwargs):
+        calls.append(True)
+        return step(*args, **kwargs)
+
+    monkeypatch.setattr(optimizer, "step", observed_step)
+    parameter = adapter.right if location == "adapter" else heads.binary.weight
+
+    def poison_one_gradient(gradient):
+        poisoned = gradient.clone()
+        poisoned.reshape(-1)[0] = invalid
+        return poisoned
+
+    parameter.register_hook(poison_one_gradient)
+    before = [parameter.detach().clone() for parameter in parameters]
+    with pytest.raises(ValueError, match="nonfinite"):
+        _worker_update(
+            entry,
+            adapter,
+            heads,
+            optimizer,
+            "regression" if location == "adapter" else "binary",
+        )
+    assert not calls
+    assert all(
+        torch.equal(original, parameter.detach())
+        for original, parameter in zip(before, parameters)
+    )
+    present = [parameter.grad for parameter in parameters if parameter.grad is not None]
+    assert any(bool(torch.isfinite(gradient).all()) for gradient in present)
+    assert any(not bool(torch.isfinite(gradient).all()) for gradient in present)
+
+
+@pytest.mark.parametrize("entry", ["step", "batch"])
+@pytest.mark.parametrize("task", ["regression", "binary"])
+def test_worker_all_finite_gradients_apply_exactly_one_update(monkeypatch, entry, task):
+    adapter = SplitWorkerAdapter()
+    heads = worker.TwoTaskHeads()
+    parameters = [*adapter.parameters(), *heads.parameters()]
+    optimizer = torch.optim.SGD(parameters, lr=0.1)
+    step = optimizer.step
+    calls = []
+
+    def observed_step(*args, **kwargs):
+        calls.append(True)
+        return step(*args, **kwargs)
+
+    monkeypatch.setattr(optimizer, "step", observed_step)
+    before = [parameter.detach().clone() for parameter in adapter.parameters()]
+    _worker_update(entry, adapter, heads, optimizer, task)
+    assert calls == [True]
+    assert all(bool(torch.isfinite(parameter).all()) for parameter in parameters)
+    assert any(
+        not torch.equal(original, parameter.detach())
+        for original, parameter in zip(before, adapter.parameters())
+    )
+    if task == "regression":
+        assert all(parameter.grad is None for parameter in heads.parameters())
+
+
+@pytest.mark.parametrize("entry", ["step", "batch"])
+def test_worker_requires_shared_gradient_even_with_finite_head_gradients(
+    monkeypatch, entry
+):
+    class DetachedAdapter(SplitWorkerAdapter):
+        def predict_costs(self, candidates):
+            return {
+                "total_cost": super().predict_costs(candidates)["total_cost"].detach()
+            }
+
+    adapter = DetachedAdapter()
+    heads = worker.TwoTaskHeads()
+    parameters = [*adapter.parameters(), *heads.parameters()]
+    optimizer = torch.optim.SGD(parameters, lr=0.1)
+    calls = []
+    monkeypatch.setattr(optimizer, "step", lambda: calls.append(True))
+    before = [parameter.detach().clone() for parameter in parameters]
+    with pytest.raises(ValueError, match="shared"):
+        _worker_update(entry, adapter, heads, optimizer, "binary")
+    assert not calls
+    assert all(
+        torch.equal(original, parameter.detach())
+        for original, parameter in zip(before, parameters)
+    )
+    assert all(parameter.grad is None for parameter in adapter.parameters())
+    assert any(parameter.grad is not None for parameter in heads.parameters())
+
+
+@pytest.mark.parametrize("value", [0.0, 1e-15])
+def test_worker_regression_metric_boundary_preserves_rmse_with_finite_log_floor(value):
+    result = worker.regression_metrics(
+        torch.tensor([value]), torch.zeros(1), ridge_rmse=1.0
+    )
+    assert result["rmse"] == pytest.approx(value, rel=1e-6, abs=0)
+    assert result["log_rmse_ratio"] == pytest.approx(math.log(1e-12))
+    json.dumps(result, allow_nan=False)
+
+
+@pytest.mark.parametrize("field", ["prediction", "target"])
+@pytest.mark.parametrize("invalid", [float("nan"), float("inf"), -float("inf")])
+def test_worker_regression_metric_nonfinite_inputs_are_refused(field, invalid):
+    values = {"prediction": torch.ones(1), "target": torch.ones(1)}
+    values[field] = torch.tensor([invalid])
+    with pytest.raises(ValueError, match="nonfinite"):
+        worker.regression_metrics(**values, ridge_rmse=1.0)
+
+
+def test_worker_regression_metric_nonfinite_computation_is_refused():
+    with pytest.raises(ValueError, match="nonfinite"):
+        worker.regression_metrics(torch.tensor([3e30]), torch.zeros(1), ridge_rmse=1.0)
+
+
+@pytest.mark.parametrize(
+    "ridge", [0.0, -1.0, float("nan"), float("inf"), -float("inf")]
+)
+def test_worker_regression_metric_bad_ridge_is_refused(ridge):
+    with pytest.raises(ValueError, match="positive finite"):
+        worker.regression_metrics(torch.ones(1), torch.zeros(1), ridge_rmse=ridge)
