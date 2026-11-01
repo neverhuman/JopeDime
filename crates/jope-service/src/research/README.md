@@ -4,7 +4,7 @@ The [proposed qualified provider contract](../../../../docs/contracts/research-p
 records the remaining input/evaluator/reveal/seed and activation requirements,
 with decision owners. It is a review draft; it does not activate the CLI.
 
-This is the QLT-03 CPU record and durable discovery capture component for spec 13.2, behind the optional `research` feature. `Discovery::open_research` requires an opaque reviewed input/provider capability. No production resolver or arbitrary JSON importer is registered. The internal native `research record` command still authenticates its package and returns producer-unavailable until the separately approved corpus, conditioning, evaluator, gate and seed contract exists. These hooks and synthetic controls do not qualify a live capture, learned guidance, binary-task evaluation or Q1.
+This is the QLT-03 CPU record and durable discovery capture component for spec 13.2, behind the optional `research` feature. `Discovery::open_research` requires an opaque reviewed input/provider capability. `TrustedJobResolver` resolves only opaque IDs already registered with an `AcceptedJobAdmission`, and revalidates the complete serialized `Plan` and capture context on lookup. The registry starts empty; only service code can construct an admission after verifying its accepted receipt. There is no registry file, arbitrary JSON importer, production admission loader, or CLI wiring. The internal native `research record` command still authenticates its package and returns producer-unavailable until the separately approved corpus, conditioning, evaluator, gate and seed contract exists. These hooks and synthetic controls do not qualify a live capture, learned guidance, binary-task evaluation or Q1.
 
 `RoundCapture` controls CPU evaluation of an already observed pre-admission slate. Construct it with an empty dispatch/outcome inventory and an attempt budget. `evaluate_next` invokes the caller's rung-0 evaluator in behavior-policy admission order, or original proposal order when `evaluate_all_proposals` is true. It preserves the input policy, admitted indices, costs, features and source indices. Each attempt is reserved before evaluation, including explicit worker failures; wall milliseconds are measured around the callback. It returns false at the attempt/population limit. `finish` validates the resulting record and marks early stops incomplete. An evaluator error, panic or nonfinite success leaves an unresolved attempt, refuses further calls and prevents publication; inspect `attempted_indices` and `outcomes` rather than fabricating a failed label or retrying within that capture. These in-memory attempt counts do not replace the engine's durable evaluation/wall budget accounting. The standalone controller still requires its caller to provide trusted inputs and commit its result; it alone establishes neither discovery integration nor crash recovery. The discovery hooks below supply separate durable orchestration.
 
@@ -68,3 +68,39 @@ executor and request/seed/fold protocol, OD13 decision and trusted resolver rema
 required. Synthetic controls retain their explicit tag and existing behavior.
 The boundary control constructs no exported Engine record; passing it is software
 evidence rather than a qualified corpus capture.
+
+## Executing an admitted recording job and checking its inventory
+
+`record_run` accepts an already resolved opaque `CaptureContext`, its exact Plan,
+and the qualified executor/search/admission objects. It checks a fresh canonical
+output destination and the admitted worker bound before opening a research run.
+It drives the existing durable Discovery capture and materializes only the complete
+committed outbox. Provider construction, job admission, policy selection, retries
+and partial-stream export remain outside this coordinator. The public entry point
+refuses SyntheticControl before any run reservation or worker call. The trusted
+job resolver and actual provider qualification remain prerequisites for CLI use.
+
+`materialize_committed_with_inventory` returns `RecordInventory` in addition to
+publishing the same JSONL as `materialize_committed`. It binds the exact stream
+SHA256, full RecordIdentity, evaluate-all mode, and eight separate actual counts:
+rounds, proposals, admissions, dispatches, outcomes, successes, failures and
+incomplete_rounds. It is an integrity/readback receipt, not a qualification or
+corpus-admission capability. Existing materialize callers keep their round-count
+return value and publication/recovery behavior.
+
+The standalone Python reader can check that receipt while hashing the same bytes
+it validates:
+
+```sh
+python3 python/src/jope/north_star/record_reader.py /private/records.jsonl \
+  --expected-inventory /private/inventory.json --detailed-counts
+```
+
+Identity, mode, byte or count mismatch refuses before any success summary. The
+comparison distinguishes bool/int and int/float values, rejects extra fields,
+and bounds the expected inventory to the same 2 MiB maximum as a record line.
+`--require-evaluate-all` still requires a complete all-proposal stream; synthetic
+inspection still needs explicit `--allow-synthetic`. Hashing does not reread a
+possibly changed file. The Rust/Python controls run both modes with one/eight live
+workers, a known failure, and mutated inventories; they stay SyntheticControl and
+do not qualify a real corpus run or activate the missing trusted job resolver.

@@ -17,5 +17,6 @@ figs:
 	python3 figures/scripts/make_subsequent_utility_figure.py
 	python3 figures/scripts/make_subsequent_rates_figure.py
 	python3 figures/scripts/make_live_admissions_figures.py
+	python3 figures/scripts/make_live_development_figure.py
 clean:
 	latexmk -C

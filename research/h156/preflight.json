@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "optimizer_updates": 0,
+  "scored_contexts": 0,
+  "adapter_tensors": 47,
+  "trainable_parameters": 29211,
+  "width_parameter_counts": {
+    "W05": 20807,
+    "W10": 29211,
+    "W20": 46595
+  },
+  "census": {
+    "adapter_dropout_modules": [],
+    "adapter_attention_dropout": [
+      {
+        "name": "mm_cross_attn",
+        "p": 0.0
+      },
+      {
+        "name": "traj_cross_attn",
+        "p": 0.0
+      }
+    ],
+    "modality_dropout_attribute": 0.1,
+    "effective_encoder": "_sync_free_encode_context_and_candidates",
+    "adapter_training": false,
+    "dope_training": false
+  },
+  "frozen_sha256": "8d1070faf574ee1cd2a4e630887e1662b43189b3f89b04982143ef2704818aae",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "packages": {
+    "numpy": "1.26.4",
+    "torch": "2.7.0",
+    "psutil": "7.1.0"
+  }
+}

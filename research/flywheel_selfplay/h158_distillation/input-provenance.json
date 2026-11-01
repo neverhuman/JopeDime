@@ -1,0 +1,39 @@
+{
+  "status": "PASS",
+  "utc": "2026-11-01T05:03:34.813973+00:00",
+  "inputs": [
+    {
+      "path": "/home/ubuntu/jope-data/h158/inputs/round-782.pt",
+      "source": {
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H139/opus-h139-inputs-20261031/R782.pt",
+        "version_id": "7u4IaZTgMYA1t7C9Y6sd.YKEIgTh_K7V",
+        "sha256": "427b0d4608e94f60f5f97d79b5c1c4ce9a7efd59d17e7853f714e901f3a4af0c",
+        "bytes": 7493476,
+        "write": "create-only if-none-match"
+      }
+    },
+    {
+      "path": "/home/ubuntu/jope-data/h158/inputs/round-882.pt",
+      "source": {
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H139/opus-h139-inputs-20261031/R882.pt",
+        "version_id": "uH2u3yAQ6hxLFLKmDg9jxeTq.aDomrN2",
+        "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+        "bytes": 7493476,
+        "write": "create-only if-none-match"
+      }
+    },
+    {
+      "path": "/home/ubuntu/jope-data/h158/inputs/best_dev_checkpoint.json",
+      "sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+      "source_archive": {
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H149/astra-t2030/exact-inputs.npz",
+        "version_id": "0BPuQS2EWgOstRDGsQnlTp4TFjYZxOiw",
+        "sha256": "fc4aba42bdbaae7555576dc45bbba93af9ec17afef2da44c6e00f1729a47a234",
+        "bytes": 241247730,
+        "verified_utc": "2026-11-01T04:34:58.449666+00:00"
+      },
+      "source_member": "jope-data/h149/inputs/best_dev_checkpoint.json"
+    }
+  ],
+  "live_reads": 0
+}

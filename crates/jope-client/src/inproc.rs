@@ -160,7 +160,7 @@ impl Transport for InProcess {
 }
 async fn dispatch(router: Router, command: Command) {
     let response = match tokio::time::timeout(
-        Duration::from_secs(30),
+        Duration::from_secs(35),
         router.oneshot(command.request.map(Body::from)),
     )
     .await

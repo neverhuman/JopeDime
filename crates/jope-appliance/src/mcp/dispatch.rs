@@ -333,7 +333,7 @@ fn execute_inner<T: Transport>(
                 None => best(client, &run)?,
             };
             let body: ExportRequest = serde_json::from_value(
-                json!({"algorithm_id":alg,"kind":args["kind"],"languages":args["languages"],"require_all_languages":true,"refit":"fit"}),
+                json!({"algorithm_id":alg,"kind":args["kind"],"languages":args["languages"],"require_all_languages":true,"refit":"fit_holdout"}),
             )?;
             let manifest: ExportManifest = serde_json::from_value(json_call(
                 client,

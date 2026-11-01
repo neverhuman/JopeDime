@@ -8,8 +8,8 @@
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_live_validation.pdf}
-  \caption{\textbf{Adapter validation and admissions.} All 1,859 retained
-  rounds, 775--2633: grey candidate utility, blue recorded best. Stars mark
+  \caption{\textbf{Adapter validation and admissions.} All 1,889 retained
+  rounds, 775--2663: grey candidate utility, blue recorded best. Stars mark
   strict gains; hollow diamonds mark accepted ties.}
   \label{fig:fw-validation}
 \end{figure}
@@ -18,29 +18,29 @@
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_train_val.pdf}
   \caption{\textbf{Train and validation aggregates on retained summaries.}
-  The 25 observations span rounds 1342--1469; a broken axis separates the
-  observed blocks. Missing rounds are unobserved, and the reported utility
-  gap covers only these summaries.}
+  The 25 summaries span rounds 1342--1469; a broken axis separates the
+  observed blocks. Intervening summaries are not retained; the utility
+  gap covers only these 25 summaries.}
   \label{fig:fw-trainval}
 \end{figure}
 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_telemetry.pdf}
-  \caption{\textbf{Operating measurements from the retained snapshot.}
-  Left: distinct training contexts divided by completed-round wall time.
-  Middle: filtered time between admission timestamps (green) and logged
-  round wall time (blue squares); longer timestamp intervals are omitted
-  as indicated in the legend. Right: program promotions per hour, computed
-  from strict improvements to training-program incumbents and accumulated
-  round wall time over up to twenty completed rounds in the reporting
-  process, including qualification waits. Program promotions and adapter
-  acceptances count different events. These measurements describe the
-  training loop, rather than the accuracy or cost of one-proposal deployment.}
+  \caption{\textbf{Operating measurements from earlier retained windows.}
+  Left/right: 25 summaries spanning rounds 1342--1469. Middle: intervals
+  between logged admission timestamps within 775--1469. Green: positive
+  intervals under 600\,s. Blue squares: 25 logged round wall times. Left:
+  distinct training contexts divided by completed-round wall time. Right:
+  strict improvements to training-program incumbents per hour, using accumulated
+  wall time over up to twenty completed rounds in the reporting process,
+  including qualification waits. Program events and adapter admissions count
+  different outcomes. These are earlier operating windows within
+  \cref{fig:fw-validation}, not one-proposal deployment accuracy or cost.}
   \label{fig:fw-telemetry}
 \end{figure*}
 
-The retained CSVs describe a later adapter-training snapshot (\cref{fig:fw-validation}), separate
+The retained CSVs summarize a later regression admission record (\cref{fig:fw-validation}), separate
 from the historical reference above. An adapter is the trainable
 adjustment evaluated by this admission loop. Utility is the logged
 scalar score, with larger values treated as better.
@@ -85,11 +85,11 @@ pools, revealed-history inputs and utility normalization.}
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_program_promotions.pdf}
+  \includegraphics[width=\linewidth]{figures/fig_fw_live_development.pdf}
   \caption{\textbf{Program-incumbent events and validation summaries.}
   Top: logged strict improvements to training-program incumbents per round.
   Bottom: candidate adapter validation pool utility. Both panels cover the
-  same later retained summary window. These are development measurements;
+  same 20 consecutive rounds, 2644--2663. These are development measurements;
   independent first-proposal comparisons remain required.}
   \label{fig:fw-program-promotions}
 \end{figure}
@@ -101,7 +101,7 @@ pools, revealed-history inputs and utility normalization.}
   Top: cumulative logged strict improvements to training-program incumbents,
   reset to zero at the start of this window. Bottom: candidate adapter
   validation utility and the recorded best. Both panels use the same 20
-  consecutive summary rounds. These are development measurements; neither
+  summaries from rounds 2005--2024. These are development measurements; neither
   the event count nor the utility curve establishes first-proposal improvement.}
   \label{fig:fw-recent-development}
 \end{figure}
@@ -124,10 +124,10 @@ setting to select programs for exact evaluation. The referee still decides
 validity and improvement. Logging an evaluation does not itself add the
 program to the adapter's training pool.
 
-The admission prefix covers \num{1859} consecutive rounds, 775--2633.
+The admission prefix covers \num{1889} consecutive rounds, 775--2663.
 Four rows are marked accepted: two strict best increases and two ties.
 The recorded best remains 1.1378. After the accepted tie at round 882,
-all \num{1751} subsequent rounds are rejected (\cref{fig:fw-validation}).
+all \num{1781} subsequent rounds are rejected (\cref{fig:fw-validation}).
 Comparisons across harnesses need matched data, normalization and scoring
 protocols.
 
@@ -142,19 +142,19 @@ utility tables do not establish either.
 \Cref{fig:fw-telemetry} shows the loop's operating measurements from the earlier
 retained window.
 
-A separate later log slice aligns journaled training-program promotions
-with candidate validation summaries in \cref{fig:fw-program-promotions}.
+The latest 20 completed rounds, 2644--2663, appear in \cref{fig:fw-program-promotions}.
+They record 21 strict program promotions and no adapter admission.
 These events record numerical improvements to training-program incumbents;
 the journal supplies no confidence interval for them. Program promotions
-and neural adapter admissions remain distinct events. The later slice is
-shown separately from the earlier trajectory.
+and neural adapter admissions remain distinct events. The two panels
+align the event counts with candidate validation utility for each round.
 
-A further development window appears in \cref{fig:fw-recent-development}.
+An earlier window at rounds 2005--2024 appears in \cref{fig:fw-recent-development}.
 The cumulative count starts from zero for this window and includes only
 journaled strict program promotions. The adapter panel separates candidate
 validation utility from the recorded best; progress in the program pool
 and admission of a new adapter are different events.
-\Cref{fig:fw-followup-development} in the appendix shows a separate subsequent window.
+\Cref{fig:fw-followup-development} in the appendix shows a separate retained window at rounds 2082--2101.
 
 Historical GP target scores provide a separate view in
 \cref{fig:fw-target-progress}. The 159 repeated dataset/cut/arm groups cover
@@ -190,7 +190,7 @@ count independent tasks or distinct programs.
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_live_shortfall.pdf}
   \caption{\textbf{Candidate gaps to the recorded best.} Cumulative share
-  of the same 1,859 admission rounds as \cref{fig:fw-validation}, against
+  of the same 1,889 admission rounds as \cref{fig:fw-validation}, against
   recorded best minus candidate validation utility. The best is logged
   after admission, so zero includes strict gains and ties. Repeated
   adaptive rounds are not independent trials.}
@@ -202,14 +202,14 @@ The retained window at rounds 2343--2362 appears in
 improvements and no adapter admission. The logged best remains 1.1378,
 labeled round 882 in these records. The 20 completed rounds total 1730.1
 seconds of logged wall time: 41.6 rounds and 45.8 program promotions per
-hour, including qualification waits. These rates describe this window,
-not one-proposal deployment; the program events concern training incumbents.
+hour, including qualification waits. These program-event rates apply to
+2343--2362, not all admission rounds through 2663 or one-proposal deployment.
 
-\Cref{app:development-time} plots the earlier retained window against
+\Cref{app:development-time} plots the retained window at 2343--2362 against
 accumulated completed-round time, \cref{app:event-counts} groups the three
 retained windows by training-program event count, and
-\cref{app:subsequent-window,app:subsequent-rates} show a subsequent window
-and its work and event rates.
+\cref{app:subsequent-window,app:subsequent-rates} show rounds 2508--2527
+and their work and event rates.
 
 Program-incumbent gains, adapter admissions and historical target scores
 measure different outcomes. \Cref{sec:results} specifies the independent

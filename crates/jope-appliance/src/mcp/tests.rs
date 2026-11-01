@@ -587,6 +587,38 @@ async fn model_predict_uploads_local_csv_and_atomically_writes_requested_output(
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn prediction_file_retry_verifies_bytes_and_preserves_changed_output() {
+    for version in VERSIONS {
+        let mut wire = Wire::connect(version).await;
+        wire.ready().await;
+        let dir = tempfile::tempdir().unwrap();
+        let output = dir.path().join("predictions.csv");
+        let args = json!({"model":{"artifact_id":ARTIFACT},"input":{"dataset_id":DATASET},"out_path":output,"idempotency_key":"prediction-file-retry"});
+        let first = wire.tool("model_predict", args.clone()).await;
+        assert_eq!(first["result"]["isError"], false, "{first}");
+        let replay = wire.tool("model_predict", args.clone()).await;
+        assert_eq!(replay["result"]["isError"], false, "{replay}");
+        for key in ["rows", "sha256", "out_path"] {
+            assert_eq!(
+                first["result"]["structuredContent"][key],
+                replay["result"]["structuredContent"][key]
+            );
+        }
+        assert_eq!(std::fs::read(&output).unwrap(), b"prediction\n0.25\n0.5\n");
+        std::fs::write(&output, b"prediction\n0.75\n0.5\n").unwrap();
+        let changed = wire.tool("model_predict", args).await;
+        assert_eq!(changed["result"]["isError"], true);
+        assert_eq!(
+            changed["result"]["structuredContent"]["detail"],
+            "OUTPUT_EXISTS"
+        );
+        assert_eq!(std::fs::read(&output).unwrap(), b"prediction\n0.75\n0.5\n");
+        assert_eq!(std::fs::read_dir(dir.path()).unwrap().count(), 1);
+        wire.finish("prediction-file-retry").await;
+    }
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn local_model_path_is_rejected_before_dataset_upload() {
     let mut wire = Wire::connect("2025-11-25").await;
     wire.ready().await;
@@ -934,6 +966,9 @@ async fn native_fitting_and_slow_requests_do_not_block_status_or_cancel_p95() {
 }
 
 fn proof_dir() -> std::path::PathBuf {
+    if let Some(path) = std::env::var_os("JOPE_MCP02_PROOF_DIR") {
+        return path.into();
+    }
     let path = std::path::Path::new(file!());
     let path = if path.is_absolute() {
         path.to_owned()
@@ -995,11 +1030,8 @@ async fn generated_input_and_success_error_output_schemas_validate_actual_wire_v
                             if pattern.contains("(?![\\s\\S])") {
                                 let pattern_schema = json!({"type": "string", "pattern": pattern});
                                 assert!(
-                                    jope_datasets::schema::validate(
-                                        &pattern_schema,
-                                        &json!("0")
-                                    )
-                                    .is_empty(),
+                                    jope_datasets::schema::validate(&pattern_schema, &json!("0"))
+                                        .is_empty(),
                                     "generated DecimalU64 pattern rejected a valid value: {pattern}"
                                 );
                                 assert!(
