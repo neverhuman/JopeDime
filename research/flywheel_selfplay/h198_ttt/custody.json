@@ -1,10 +1,10 @@
 {
   "manifest": {
     "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H198/rd_argon-t1205/manifest.json",
-    "version_id": "I72ncJz3jVSw3iiczzU.ZedxshwRPGWY",
-    "sha256": "ed47ffe6ebb4dd8d295cea68b4d987fbe7b8da5eb17cf82b1378c40485a15c10",
-    "bytes": 2622,
-    "verified_utc": "2026-11-01T19:58:53.192743+00:00",
+    "version_id": "D5UT5E3eDXHgrYzcUgL2RFn6tFlPdY.t",
+    "sha256": "aacd8d4f2d0a0583268631b1f1e5e7e568d921b4ad183f0124d3bab899efbcf9",
+    "bytes": 2904,
+    "verified_utc": "2026-11-01T20:15:18.606233+00:00",
     "readback": "exact-version full payload SHA256; synchronous client"
   },
   "objects": {
@@ -66,5 +66,15 @@
     "max_disk_used_pct": 93.492,
     "min_mem_available_bytes": 74008473600,
     "local_output_bytes": 5931262
+  },
+  "adapted_score_verification": {
+    "status": "PASS",
+    "verdict_label": "NO_ADVANCE (INERT TREATMENT)",
+    "train_contexts_score_changed": "1219/1219",
+    "val_contexts_score_changed": "91/91",
+    "stage2_locked_argmin_flips_train": "0/1219",
+    "stage2_locked_argmin_flips_val": "0/91",
+    "cell_198101_outer0_A0_ctx0_ttt_k_max_abs_delta": 7.62939453125e-05,
+    "cell_198101_outer0_A0_ctx0_ttt_k_changed_candidates": "1112/1152"
   }
 }
