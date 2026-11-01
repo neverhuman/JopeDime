@@ -24,9 +24,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-benchmark = ["scikit-learn==1.7.2", "PyYAML==6.0.3"]
+benchmark = ["scikit-learn==1.9.1", "PyYAML==6.0.3"]
 # Synthetic DL custody fixtures use fake clients; no live AWS access.
-dl-custody = ["boto3==1.43.97"]
+dl-custody = ["boto3==1.43.121"]
 dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.6", "mypy>=1.11", "jsonschema>=4.23", "pip-licenses>=5"]
 foundry = ["catboost>=1.2.8", "lightgbm>=4.0", "scikit-learn>=1.4", "xgboost>=2.0"]
 research = ["matplotlib>=3.9", "autogluon.tabular>=1.1; python_version < '3.13'", "tabpfn>=2.0", "tabicl>=0.1"]
