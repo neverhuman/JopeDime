@@ -1,0 +1,547 @@
+{
+  "wave": "H178",
+  "bucket": "veox-jopedime-learning-use2",
+  "prefix": "experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101",
+  "s3_root": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/",
+  "source_commit": "4de98a453de4214116330bb4e387c786d07f9211",
+  "object_count": 67,
+  "total_bytes": 16919203,
+  "objects": [
+    {
+      "name": "panels.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/panels.npz",
+      "version_id": "GJ02fgS_NvunKu4TFqThObSxd.v5vG67",
+      "etag": "4f34720413d1e536bd250c403fd3417a",
+      "bytes": 6849038,
+      "sha256": "3eefb8f2f08d529fee7d9221cff1455b21338b51445125c88195d21ff9489396"
+    },
+    {
+      "name": "simulation_metrics.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/simulation_metrics.json",
+      "version_id": "dpKUzc4PkqO63BcKRktFyc835v.uxAY9",
+      "etag": "43f5a746da8ddc1da308b59be8b8134f",
+      "bytes": 893176,
+      "sha256": "1220a84bd7efb7dd2c530220227a747d6e9022d0e3d7bc38712162d1e83bcec0"
+    },
+    {
+      "name": "metrics.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/metrics.json",
+      "version_id": "Rh3bHdAeLIe_nZSg_.fAyntGDpt_ck5l",
+      "etag": "d9dfcca06dabc05d0d4766c8ca6c8801",
+      "bytes": 913985,
+      "sha256": "0bcb524c0a2056436baa0c19b5af47e2f794d38a94e3c530f3af20a318972804"
+    },
+    {
+      "name": "h178_receipt.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/h178_receipt.json",
+      "version_id": "9xTixWgzqmIbrYcJ6n7gUNej2D14ZNJX",
+      "etag": "5f33230b425bad38d548010b307baf44",
+      "bytes": 262,
+      "sha256": "3e6545d371334c505023d4d0593dbf0abf10ef220785c8f30e49f5a5aec5e91d"
+    },
+    {
+      "name": "baseline.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/baseline.json",
+      "version_id": "3.y.oM8h5sOThS5OvhVqEWmsqLnOYGGa",
+      "etag": "07bf84d68196acca629c415f5193d007",
+      "bytes": 407,
+      "sha256": "4ed21ffff3dc1bcf63302af932da5e784deb0ebff6c045e8d10b7bb69f5f3352"
+    },
+    {
+      "name": "provenance.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/provenance.json",
+      "version_id": "9N7Hqdj.OdFxMIQmUldlMMjJEPpTIL05",
+      "etag": "98cba930fc5d9597db56f7bb51b3af1c",
+      "bytes": 297,
+      "sha256": "f946e9ba47431ed9933f9ac0a8c446fb33f3d9d1a977c5deea72588dce5b8c94"
+    },
+    {
+      "name": "real-catalog.jsonl",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/real-catalog.jsonl",
+      "version_id": "2ZF3KgyIacGbnlbHSsa2pmoPulB4z8p5",
+      "etag": "85058f0c455685c1159a343d52b60ebc",
+      "bytes": 6853838,
+      "sha256": "c5f5eb6db36d24daa9abc5c7808a49773a2b94c1765620d236e91a471fe2cb54"
+    },
+    {
+      "name": "attempt-001.stdout",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/attempt-001.stdout",
+      "version_id": "7Ux_iydsbQo6pZZRTTmaDZ3YGNmRgnC6",
+      "etag": "51e4b06a7d2aa5c077bed33019d9a6b2",
+      "bytes": 2783,
+      "sha256": "c9df3b8a22c3d5449d5abd909d74bef7209e2a09437f4079104d0c607827ff44"
+    },
+    {
+      "name": "attempt-001.resources.jsonl",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/attempt-001.resources.jsonl",
+      "version_id": "tQGNXCg7d_jhcUttOtvoldBQ94ZMUJ3j",
+      "etag": "13487fc56a8ee54840b940c1bef94feb",
+      "bytes": 1336024,
+      "sha256": "6662bedf79c5a685d503a3a740a950c929fc7b00eea81535c04292600f51639d"
+    },
+    {
+      "name": "attempt-001.resource_summary.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/attempt-001.resource_summary.json",
+      "version_id": "HQxjC8nstkH4Um6LKE2eGPJb6l1a_Tg4",
+      "etag": "97a6647ca8ac4ab9c7b80e61b4b23df5",
+      "bytes": 178,
+      "sha256": "823e244112b2c15e24e92230e09c809c063bcd6fef5994ec42940eb24b09c78b"
+    },
+    {
+      "name": "launch.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/launch.json",
+      "version_id": "xwhjNFuNnjU6bcgWr.Bajq4u99AMLVKH",
+      "etag": "1da582aedcf50c85391a5050dd3deac5",
+      "bytes": 455,
+      "sha256": "6f5ad05c3462d613d3c17399bc29c54f71d558a8b02c92b3f267dec6fb32fa7a"
+    },
+    {
+      "name": "lock-pooled-b-24-context-oracle-0.005.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-context-oracle-0.005.json",
+      "version_id": "ipD8elH4MjmNF2RU4Nt.yChbm5bifp5o",
+      "etag": "0689237a39b1fa8cd759081533f5b661",
+      "bytes": 1231,
+      "sha256": "d3d8105742e0ed555054825d0f82f32e9cac50fef52010b8537d06b86e829900"
+    },
+    {
+      "name": "lock-pooled-b-24-context-oracle-0.01.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-context-oracle-0.01.json",
+      "version_id": "zzb2rq6JPc95sjTYA.4ex04rla7t4_lo",
+      "etag": "ac1945d73f0ee84786d41ffbba8ff0ed",
+      "bytes": 1233,
+      "sha256": "8ff6b754a9fa5335fe367fa885e2a538d2ad7bfa1eb17222b1b80d3d291fce5e"
+    },
+    {
+      "name": "lock-pooled-b-24-context-oracle-0.02.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-context-oracle-0.02.json",
+      "version_id": "8FvN11Ef9QTlHNcfc1S9nbh9kSfEuZrS",
+      "etag": "1602973c2698e57dbdefc250e1ae6421",
+      "bytes": 1230,
+      "sha256": "a006386f2c66f566293bd28c00162b75d6824a432ecde5da2c8e11886856ec83"
+    },
+    {
+      "name": "lock-pooled-b-24-context-oracle-0.05.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-context-oracle-0.05.json",
+      "version_id": "XHoYp1RywZRkSgfAxPfnRIhiKOXXcDqB",
+      "etag": "fced9dab9da60a8f188ca95332b75cfa",
+      "bytes": 1230,
+      "sha256": "92c380894bf552fbf74400922687ad84533afbed9232d916f14ef8e5fffd45ef"
+    },
+    {
+      "name": "lock-pooled-b-24-context-oracle-0.1.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-context-oracle-0.1.json",
+      "version_id": "wiV_srBWZ5.pGqHtj7qBKYNfs_KhQ6Vn",
+      "etag": "4f899176c37186c099f4638a575bc254",
+      "bytes": 1229,
+      "sha256": "f887d97b813e18905846ae35186b6e5d38a3b3e1e24ea1f4ba0169a5d464db4d"
+    },
+    {
+      "name": "lock-pooled-b-24-context-oracle-0.2.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-context-oracle-0.2.json",
+      "version_id": "zMomUp57mF2o1oH6m2WRsU5yPTsUmJmv",
+      "etag": "c31b177afc26fa6cf1e1e6cbd8e8a41e",
+      "bytes": 1229,
+      "sha256": "904759c838b31a5ac00cca8833b389631a4908f44ec0d0557055cb31749b61ca"
+    },
+    {
+      "name": "lock-pooled-b-24-context-oracle-0.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-context-oracle-0.json",
+      "version_id": "L4d7v.Sz2TD1QvI5s9OMlrYBu35cZ5NL",
+      "etag": "421aabc8e7fbfffd3a294ce0fa68ddc3",
+      "bytes": 1215,
+      "sha256": "25a5c848e3b1e3cd9a7d5212528497d3bb701b304b401cd30c0748fb24ca009d"
+    },
+    {
+      "name": "lock-pooled-b-24-context-random_nonoracle-0.005.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-context-random_nonoracle-0.005.json",
+      "version_id": "EfdD12fGc78D4tIChCmhe3HCBSKFuswE",
+      "etag": "2ecc96e85c903849e6c21ccc5c5196ce",
+      "bytes": 1229,
+      "sha256": "a5e47bb2237f3f6a3dff053582a273fd3f61ae792bc03f7c85cf9e87dfdef763"
+    },
+    {
+      "name": "lock-pooled-b-24-context-random_nonoracle-0.01.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-context-random_nonoracle-0.01.json",
+      "version_id": "5tLf0kf_7NypsMWSPtZPsGa5bS8xbMB7",
+      "etag": "ed06cca791b021fa13fed8bfe3ce3ec0",
+      "bytes": 1228,
+      "sha256": "aa1072feec0a7d6a46b3ddd5a290a104cd08d83c71129fe8d8b025efe9fe6204"
+    },
+    {
+      "name": "lock-pooled-b-24-context-random_nonoracle-0.02.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-context-random_nonoracle-0.02.json",
+      "version_id": "mtiF2jPzi8nERiLTYr8W4BziHCk7zhDp",
+      "etag": "5a85dcf1ce7ae7bded6c21913bcf5474",
+      "bytes": 1228,
+      "sha256": "d6ad9dc49dd81bc8b1d2145486cbaa6ab346a1ddb66dbd653bb2392bcef13f68"
+    },
+    {
+      "name": "lock-pooled-b-24-context-random_nonoracle-0.05.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-context-random_nonoracle-0.05.json",
+      "version_id": "TL6D7.XSDzG5Bmwaqqr8da1aC3GJZU05",
+      "etag": "1b785dc541109396cd44cb4688d55fe9",
+      "bytes": 1228,
+      "sha256": "385bd6deeebca675c216c83c7339b750acd05eb5e42e217312f6db4521a2976f"
+    },
+    {
+      "name": "lock-pooled-b-24-context-random_nonoracle-0.1.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-context-random_nonoracle-0.1.json",
+      "version_id": "dd2Sm45bwKPj_TuE_ppcHhMUZrrLn4YF",
+      "etag": "28d3dbb016201044ece606e9d2aa7699",
+      "bytes": 1227,
+      "sha256": "687acc3d5f8f7f9cd9b139c76719073324bf420d7b88109fcaceeae2f7314aae"
+    },
+    {
+      "name": "lock-pooled-b-24-context-random_nonoracle-0.2.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-context-random_nonoracle-0.2.json",
+      "version_id": "_wj_Jg1IJ4mH5VfJzUlmyTvA7tdqQ9F7",
+      "etag": "b21c1f0bc5c1b0859bb494cacf67e429",
+      "bytes": 1227,
+      "sha256": "7e44ff23a3df1cf99f3bef728b0d45416f78d92057bd603db427957e8431f9ad"
+    },
+    {
+      "name": "lock-pooled-b-24-context-random_nonoracle-0.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-context-random_nonoracle-0.json",
+      "version_id": "S4MvDpVSjprsDv80QlVzDKgvTX6Nb4I0",
+      "etag": "5a5249034572e8012abc3657630d77a2",
+      "bytes": 1225,
+      "sha256": "c03a30428335584086d31afaba26ffb9180e8ee08b1aa6bc5a83425d8db7539e"
+    },
+    {
+      "name": "lock-pooled-b-24-family-oracle-0.005.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-family-oracle-0.005.json",
+      "version_id": "qgwL0cI0h4tkiEVopbPIiA5VTrUJFoiB",
+      "etag": "6eac13e0e0287c41662d4694faa56a7f",
+      "bytes": 1222,
+      "sha256": "630866629e1c512732f03e1bbeed8783fd066ba6407bbc22ba6ba7a505fb22ad"
+    },
+    {
+      "name": "lock-pooled-b-24-family-oracle-0.01.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-family-oracle-0.01.json",
+      "version_id": "r9SRdSavBN4JHmW2lg5fcqCR5oY_Zkzd",
+      "etag": "3eb86785bac2754b80cb943fd179df7a",
+      "bytes": 1227,
+      "sha256": "690e02d5878f90e9aa814770a3288e489026c7be0f1b509250eecba7a43f9d88"
+    },
+    {
+      "name": "lock-pooled-b-24-family-oracle-0.02.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-family-oracle-0.02.json",
+      "version_id": "9oN8V3rP.8t3B..fJnQK856BKUVjxcpI",
+      "etag": "187d3dd7fdf06f152c061d3b9b7ce4cb",
+      "bytes": 1229,
+      "sha256": "2eae946c0983e8be7a2a78e4c2bb9dc5b3952c75d3d5fad23cafeaa4e03bfc91"
+    },
+    {
+      "name": "lock-pooled-b-24-family-oracle-0.05.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-family-oracle-0.05.json",
+      "version_id": "KGUitG4ccwN5c79902EWrD9wmB.xbQan",
+      "etag": "44c7da7ffd4d0712953eebb17a37a864",
+      "bytes": 1229,
+      "sha256": "c7723d4fa87f522cb1df798fd2b15d4d5a7dfa7ca302eefec93ba54d320af62c"
+    },
+    {
+      "name": "lock-pooled-b-24-family-oracle-0.1.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-family-oracle-0.1.json",
+      "version_id": "POz5_PSoCQZNjM5KYrDQU6yXhuyC0NlF",
+      "etag": "e023abc40333be48abec118bd1a296fb",
+      "bytes": 1228,
+      "sha256": "89154568f1fb2dc19acddf319bf06ee45f9eb36ee14a3526dc1e61ad339e13d2"
+    },
+    {
+      "name": "lock-pooled-b-24-family-oracle-0.2.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-family-oracle-0.2.json",
+      "version_id": "S3qtXLGR5Qr9QUmwyImmoJw.aZOqY8FX",
+      "etag": "521e4401aa761b674596501ffee8db05",
+      "bytes": 1228,
+      "sha256": "e5bd06c720689b4e5d2dddf6b0a014c6dc75e0cfdffe422339ab909d6f72655a"
+    },
+    {
+      "name": "lock-pooled-b-24-family-oracle-0.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-family-oracle-0.json",
+      "version_id": "cr3GbrJ6R011GcDD8xehT239BAv8VDfK",
+      "etag": "bf5931abde7477a85ce70a889ddcdc87",
+      "bytes": 1214,
+      "sha256": "d35e643043fee3860c99524ca4356174e8eec9a2266e6d61942e01b0704f5255"
+    },
+    {
+      "name": "lock-pooled-b-24-family-random_nonoracle-0.005.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-family-random_nonoracle-0.005.json",
+      "version_id": "hdThPQIcUpgxVAb33ZrsLdjA2l5U6Isj",
+      "etag": "5b4eb548308690c259313a6bc70b608d",
+      "bytes": 1228,
+      "sha256": "cc3fb6408ba5387fbcbfadea1e0db03ab9a28254b7a33c66b178cc09299d4581"
+    },
+    {
+      "name": "lock-pooled-b-24-family-random_nonoracle-0.01.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-family-random_nonoracle-0.01.json",
+      "version_id": "ArBWOoNCOhv0ARNDosuXAp_7CJb6.TIG",
+      "etag": "47c7743230eea73b2701025b7f3da58a",
+      "bytes": 1227,
+      "sha256": "2a96979fba82ef92a188410caa744f32bf383dab0448054b6e01341975436bfe"
+    },
+    {
+      "name": "lock-pooled-b-24-family-random_nonoracle-0.02.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-family-random_nonoracle-0.02.json",
+      "version_id": "q_Z0Lfzn4k99JXnn4co0y3flOBr4xZyI",
+      "etag": "b34df8d777ad731b98a2992feee1c679",
+      "bytes": 1227,
+      "sha256": "feaa43c04e6f67bc4e84d713d9104d4fd4ca7a960ea5fcd8e80c671141057702"
+    },
+    {
+      "name": "lock-pooled-b-24-family-random_nonoracle-0.05.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-family-random_nonoracle-0.05.json",
+      "version_id": "0_QMkQee39kLseuy5_O3TPmD7GZ0UL3n",
+      "etag": "8304256c129f6156a2e96f96b2dc129c",
+      "bytes": 1227,
+      "sha256": "2bf142ef23eb8055aeeea1f47736c0b058ddb3ccce5b0c9f9667bbcb1be4e6c2"
+    },
+    {
+      "name": "lock-pooled-b-24-family-random_nonoracle-0.1.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-family-random_nonoracle-0.1.json",
+      "version_id": "a1GuJWjuCkiotoTU.G.Y.5JRzHxv_XAI",
+      "etag": "ac98ce3bc241bbeab5a811f600749fb5",
+      "bytes": 1226,
+      "sha256": "663332d133efcd1097b57a9e6600b301a60b78d971126efdcb0d468b7871e1fb"
+    },
+    {
+      "name": "lock-pooled-b-24-family-random_nonoracle-0.2.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-family-random_nonoracle-0.2.json",
+      "version_id": "yuhCB6o58gvuQY_0I4iXG_Y3omtKPE3C",
+      "etag": "4776acd8202dcd41b5b37914469ae539",
+      "bytes": 1226,
+      "sha256": "5db207cfa21a34a18d2d05b82343e8295e3f3f555acf9c4a59aa4f9866250381"
+    },
+    {
+      "name": "lock-pooled-b-24-family-random_nonoracle-0.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-24-family-random_nonoracle-0.json",
+      "version_id": "7lgyJP6g6CSPeKLKndfyhD66Pa1fHxLK",
+      "etag": "523ed7753645d14d8acaf0adaffda226",
+      "bytes": 1224,
+      "sha256": "ab62f73d1587d527ae115b4b71fd26f3dea727672170148302b00c5e69ce076c"
+    },
+    {
+      "name": "lock-pooled-b-full-context-oracle-0.005.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-context-oracle-0.005.json",
+      "version_id": "DUJDyHU3PBXsi93BzR7LFbC6KtDFF43V",
+      "etag": "45b38445e420ef57ca4de2783c209be5",
+      "bytes": 1236,
+      "sha256": "999a63f088adbc615dd4d945661eb9b33baf355120920b483eb814bdfa756962"
+    },
+    {
+      "name": "lock-pooled-b-full-context-oracle-0.01.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-context-oracle-0.01.json",
+      "version_id": "lMLejMgg4qYKt75id8s4zuLSBxDIe8dM",
+      "etag": "92db74dcdff4a05880463701ce6bb5eb",
+      "bytes": 1232,
+      "sha256": "ad0deb2d257b6c613fcb3471594c85e598faef462e2ba14e9e7ffdf88387c61e"
+    },
+    {
+      "name": "lock-pooled-b-full-context-oracle-0.02.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-context-oracle-0.02.json",
+      "version_id": "i_SBajuzyfJG0trdWhmbvU_Kz8PtrZAW",
+      "etag": "adca532343cd7b14fc2dc6b724a0b5ab",
+      "bytes": 1232,
+      "sha256": "00e79e32abbd9edb9d10bb962b1a89559a23c599f86d40663630b405e200cf8b"
+    },
+    {
+      "name": "lock-pooled-b-full-context-oracle-0.05.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-context-oracle-0.05.json",
+      "version_id": "GFTkBSQyv4.mX0Hu3J280vvn9vIn70mZ",
+      "etag": "d9b1da86aa7919fa2e57aebcffcd146e",
+      "bytes": 1232,
+      "sha256": "3f43191585554d5be6b8b5feebe93f044a905bc4b7d4a5b3a2bc1994831d2414"
+    },
+    {
+      "name": "lock-pooled-b-full-context-oracle-0.1.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-context-oracle-0.1.json",
+      "version_id": "qtBt3vnF4jp6rp1WgnT_jVRA3b2OEnK0",
+      "etag": "84f2b3ac950e7302e02b0977ea5ebfa1",
+      "bytes": 1231,
+      "sha256": "2a9d1b2e7030832ac4fb35e0e948408344b14d9505c1b7b9925abedaf63f10d3"
+    },
+    {
+      "name": "lock-pooled-b-full-context-oracle-0.2.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-context-oracle-0.2.json",
+      "version_id": "WplmkixsZMXYJBwwbTQk7utlTtfQDI5i",
+      "etag": "2e5fd6b1ac799483ded90e7df5064e98",
+      "bytes": 1231,
+      "sha256": "e8f2bd14be1b2945b0580319e25f3d432ffbc6acc0e51689b7101a4278cbe8cf"
+    },
+    {
+      "name": "lock-pooled-b-full-context-oracle-0.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-context-oracle-0.json",
+      "version_id": "JepcifnG2WP7j_cmGuW_yPDz_CSlJbo5",
+      "etag": "7b88b449a7e8cf79b99d7f143f8b90e2",
+      "bytes": 1217,
+      "sha256": "4e2996e5029c11d462fa16d5b3329673a522231baab59bd52568ec39cd71687f"
+    },
+    {
+      "name": "lock-pooled-b-full-context-random_nonoracle-0.005.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-context-random_nonoracle-0.005.json",
+      "version_id": "zIZKS5ssU8D5hx_eclGjwW.oCAlvdTsP",
+      "etag": "73cbfec65ca3a96fc860bb002f1a040f",
+      "bytes": 1231,
+      "sha256": "ef5f39aaa16439273bcacac0f25c4ee38e335668d9cce9311473ef39a94db15a"
+    },
+    {
+      "name": "lock-pooled-b-full-context-random_nonoracle-0.01.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-context-random_nonoracle-0.01.json",
+      "version_id": "iGmYY4TnPYydg_tx8kaZ8smsm3rhEklc",
+      "etag": "010755b17d04bd9b0ca9129f47bc59da",
+      "bytes": 1230,
+      "sha256": "182b7b5623ca8c5340ac607dcce277b999b6e50ad79c32b615c593f22618609e"
+    },
+    {
+      "name": "lock-pooled-b-full-context-random_nonoracle-0.02.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-context-random_nonoracle-0.02.json",
+      "version_id": "xs_HFmm5lQJHoWBVM9ItEydksXQA9jOf",
+      "etag": "25a3edeefa20efcccc7593b34e542dda",
+      "bytes": 1230,
+      "sha256": "310a512553d3a9d59ee135c164b2d4803f2510ee05ffdb5bfe7db52f7337fab6"
+    },
+    {
+      "name": "lock-pooled-b-full-context-random_nonoracle-0.05.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-context-random_nonoracle-0.05.json",
+      "version_id": "eKzXFJNj83Vmg88zzk4yYriyWBQvppYi",
+      "etag": "d019f64c1a9c1497f018a0b415f9268f",
+      "bytes": 1230,
+      "sha256": "d1606d11e0aaee3422d154ca3733dbf84da9768bdbeb453c8c66bfeb756e7387"
+    },
+    {
+      "name": "lock-pooled-b-full-context-random_nonoracle-0.1.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-context-random_nonoracle-0.1.json",
+      "version_id": "4V.oaHVb1OkZzquKs9S4p9UID6j2Hu0m",
+      "etag": "4c5af53566b5219f8012ca017e1b8e5b",
+      "bytes": 1229,
+      "sha256": "e62e38e82a6fff3db650bf88a2a3819ada54a275698c503e6bea11e785f59f9c"
+    },
+    {
+      "name": "lock-pooled-b-full-context-random_nonoracle-0.2.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-context-random_nonoracle-0.2.json",
+      "version_id": "cmlyh4VnWQ6MSH84sLFyLZh6D_swV9Z6",
+      "etag": "11fca9a303d40514e6afc39600d7e78c",
+      "bytes": 1229,
+      "sha256": "8141c130358ed4cbb463a4b08faa6b862d178cb9dde162815e6c1a2f882eb01b"
+    },
+    {
+      "name": "lock-pooled-b-full-context-random_nonoracle-0.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-context-random_nonoracle-0.json",
+      "version_id": "k3ixPWNbJzYY.uKNoFYoVmYXCyiSG_B0",
+      "etag": "563c0879a1ca7b4517eef5ad80cfae95",
+      "bytes": 1227,
+      "sha256": "73b0c8f8c5b059bba63bbde8607e00bdab43f1237a4f5cbc3a522c737d0fdebc"
+    },
+    {
+      "name": "lock-pooled-b-full-family-oracle-0.005.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-family-oracle-0.005.json",
+      "version_id": "mPRj04GcFUDlTsO0cO.0XRyzI75y7cQb",
+      "etag": "bf048510959ae23cedc3c90d31ff78ed",
+      "bytes": 1227,
+      "sha256": "ba32ee8d3418f4f5f7a8cf965b8ad55740fc4ae75998d6460af35a3ee5844fc6"
+    },
+    {
+      "name": "lock-pooled-b-full-family-oracle-0.01.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-family-oracle-0.01.json",
+      "version_id": "m2oh_TJn6ES6JJIQxzZmN.3VCAuzIjve",
+      "etag": "921048387452730d6fd4f8b347b6b8a2",
+      "bytes": 1229,
+      "sha256": "2da56792544b7e6d94b5cd1772bf2bbd9ed1e92b650b882c6db4433a885b8801"
+    },
+    {
+      "name": "lock-pooled-b-full-family-oracle-0.02.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-family-oracle-0.02.json",
+      "version_id": "5IfpzTY4Y_7E8QnNza45GNGhf5qhVqyF",
+      "etag": "0b00d2690a7ccf9506c7fbccb84509de",
+      "bytes": 1230,
+      "sha256": "ee450b917c05b4751be12ad484bc85db76d740453d7e39687976750e0eb303cc"
+    },
+    {
+      "name": "lock-pooled-b-full-family-oracle-0.05.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-family-oracle-0.05.json",
+      "version_id": "ogRpHY1k2a._PYRj95RwoQchYOFz8eIt",
+      "etag": "be287d5158b8501643724376bd22accf",
+      "bytes": 1231,
+      "sha256": "c3883f4da270c96ee50c6f0b0414a72dfb93d40789105b3f282ae58c02bd6968"
+    },
+    {
+      "name": "lock-pooled-b-full-family-oracle-0.1.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-family-oracle-0.1.json",
+      "version_id": "W0dvz_SFihQa2De_FhqDRaBfQDcC9b9V",
+      "etag": "cdd0a8e6cca0b43817319733015bd8fb",
+      "bytes": 1230,
+      "sha256": "a868bd16682be73154e5c4d9e82ccb547d5819f6937e35d664f341e04c83be41"
+    },
+    {
+      "name": "lock-pooled-b-full-family-oracle-0.2.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-family-oracle-0.2.json",
+      "version_id": "Pin8qOHpB1coiTnPfGsj_yPYdOfdXPBR",
+      "etag": "69b91a98bf6fbd1afda9e837fbbe1782",
+      "bytes": 1230,
+      "sha256": "a698d0cdcfba9e20f3605fcd7ff22786bd21fa4dc5cbbaa781c035bda05b3609"
+    },
+    {
+      "name": "lock-pooled-b-full-family-oracle-0.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-family-oracle-0.json",
+      "version_id": "45WMGuWRyXcnm8XlhQ4W1m5NhttDp7ln",
+      "etag": "f35d22348d0e50c65f85bb54eb059980",
+      "bytes": 1216,
+      "sha256": "cf660c73008c56374dcbbd13baad187629df86fd48985d1d584e0907cb111e0b"
+    },
+    {
+      "name": "lock-pooled-b-full-family-random_nonoracle-0.005.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-family-random_nonoracle-0.005.json",
+      "version_id": "ph7aWwdKDXsc29RH4aHFi1ob40H2.V65",
+      "etag": "30699c2f76c524d860b0ddd2349d8cb2",
+      "bytes": 1230,
+      "sha256": "32d5d7cc643a9505d571744e25ec77246e7a0a6fc0a289f6a23b044a735c88b0"
+    },
+    {
+      "name": "lock-pooled-b-full-family-random_nonoracle-0.01.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-family-random_nonoracle-0.01.json",
+      "version_id": "zLQz.eBWCbQGR8d703hrSW2LsPDToSfR",
+      "etag": "4ad38491ca544aa5d967fd85ad9690c7",
+      "bytes": 1229,
+      "sha256": "33236dce4e704796f5ede589bc7e8fa789f9957df9c58d286e894268701beb8d"
+    },
+    {
+      "name": "lock-pooled-b-full-family-random_nonoracle-0.02.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-family-random_nonoracle-0.02.json",
+      "version_id": "ju7Pc7Yc0p4ptiJ.p.DpK5l8uEX.CNNo",
+      "etag": "ed7a5a1713890ff066b23f3ea428c895",
+      "bytes": 1229,
+      "sha256": "39e15409ff61c7782c458fd20eea406782e27ba7e61b1e633068066ff22655b8"
+    },
+    {
+      "name": "lock-pooled-b-full-family-random_nonoracle-0.05.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-family-random_nonoracle-0.05.json",
+      "version_id": "rRc6v7bNlAghLTHBrsP5VwfYWS9w2Qi4",
+      "etag": "d81847e0bdc325bb8350d0cd1e5f20c3",
+      "bytes": 1229,
+      "sha256": "71c79895c4221c29e26213c73eacb8b96a2ae7d9e0a0905d099efcb11eb4d8e5"
+    },
+    {
+      "name": "lock-pooled-b-full-family-random_nonoracle-0.1.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-family-random_nonoracle-0.1.json",
+      "version_id": "FAKLTyx0n1tIyHU1aMF4Bb3.Ygz.Xiw1",
+      "etag": "a7b45cd9af43217f3448e65246a659a6",
+      "bytes": 1228,
+      "sha256": "c56c357c6fd6c09b0ac92bd0f750497a675bd4c48ee4b97cffa13682675166d3"
+    },
+    {
+      "name": "lock-pooled-b-full-family-random_nonoracle-0.2.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-family-random_nonoracle-0.2.json",
+      "version_id": "oVkSdRxfx_jUaGW1TbvEDFfD67S9EpN2",
+      "etag": "2643a13a2508a79ae38e3e3a1aed162b",
+      "bytes": 1228,
+      "sha256": "92df826df4fc2e640ff5c27322c0965e07c77ffb9b7d342040d4f1880057b0fb"
+    },
+    {
+      "name": "lock-pooled-b-full-family-random_nonoracle-0.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/lock-pooled-b-full-family-random_nonoracle-0.json",
+      "version_id": "_mtmD_dNlWFCUynmwReLRrJnkRTWQcFh",
+      "etag": "b33cd4126d8c030910a263972ab72280",
+      "bytes": 1226,
+      "sha256": "717cbeb45bf07815e2c23e8e855104cf46c5982f1e8eb2847f96c5ec8b0b5169"
+    }
+  ]
+}

@@ -8,6 +8,8 @@ partial manifest until the complete role inventory is supplied and reviewed.
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
 import csv
 import hashlib
 import json
@@ -643,6 +645,7 @@ def verify_binary_train_admission(
 
 
 ROLE_SCHEMA = "jope.joint-regbin.role-admission/v1"
+REAL_S3_BUCKET = "veox-jopedime-datasets-use2"
 DEFAULT_ROLE_CATALOG = Path.home() / "jope_plan/master/source/S3_DATASET_CATALOG.json"
 R882_CHECKPOINT_SHA256 = (
     "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
@@ -663,6 +666,7 @@ CONTEXT_FIELDS = {
     "payload_sha256",
 }
 ROLE_NAMES = {"train", "val", "panel"}
+WORKER_QUALIFICATION_SCHEMA = "jope.joint-regbin.worker-qualification/v1"
 REQUIRED_PROOFS = (
     "role_assignment_reviewed",
     "family_mapping_reviewed",
@@ -721,10 +725,54 @@ def _learner_evidence(evidence: dict) -> tuple[str, str, list[str]]:
         blockers.append("worker qualification has no changed-parameter proof")
     if worker.get("dope_sha256") != protocol.DOPE:
         blockers.append("worker qualification does not pin frozen DOPE")
+    # Carry exact receipt bytes in the admission so preflight can re-hash them.
+    receipt_bytes = None
+    encoded_receipt = worker.get("qualification_receipt_bytes_b64")
+    if isinstance(encoded_receipt, str):
+        try:
+            receipt_bytes = base64.b64decode(encoded_receipt, validate=True)
+            if base64.b64encode(receipt_bytes).decode("ascii") != encoded_receipt:
+                receipt_bytes = None
+        except (binascii.Error, ValueError):
+            receipt_bytes = None
+    if receipt_bytes is None:
+        blockers.append("worker qualification receipt bytes are missing or invalid")
     try:
-        _sha(worker.get("qualification_sha256"), "worker qualification sha256")
+        qualification_sha = _sha(
+            worker.get("qualification_sha256"), "worker qualification sha256"
+        )
     except (TypeError, ValueError):
+        qualification_sha = None
         blockers.append("worker qualification receipt hash is missing or invalid")
+    if receipt_bytes is not None:
+        if hashlib.sha256(receipt_bytes).hexdigest() != qualification_sha:
+            blockers.append(
+                "worker qualification receipt hash does not match its bytes"
+            )
+        try:
+            receipt = json.loads(receipt_bytes)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            receipt = None
+        if not isinstance(receipt, dict):
+            blockers.append("worker qualification receipt is not a JSON object")
+        else:
+            receipt_tasks = receipt.get("tasks")
+            if (
+                receipt.get("schema") != WORKER_QUALIFICATION_SCHEMA
+                or receipt.get("worker_sha256") != worker_sha
+                or receipt.get("qualified") is not True
+                or not isinstance(receipt_tasks, list)
+                or len(receipt_tasks) != len(protocol.TASKS)
+                or any(not isinstance(task, str) for task in receipt_tasks)
+                or set(receipt_tasks) != set(protocol.TASKS)
+                or receipt.get("actual_optimizer_updates") != updates
+                or type(receipt.get("actual_optimizer_updates")) is not int
+                or receipt.get("parameters_changed") is not True
+                or receipt.get("dope_sha256") != protocol.DOPE
+            ):
+                blockers.append(
+                    "worker qualification receipt does not attest the supplied worker evidence"
+                )
     return worker_sha, R882_CHECKPOINT_SHA256, blockers
 
 
@@ -767,10 +815,8 @@ def build_role_manifest(
         protocol.relative_payload(row["payload"])
         _sha(row["payload_sha256"], "payload sha256")
         catalog_row = records.get(row["dataset"])
-        if catalog_row is None or catalog_row.get("origin") != "real":
-            raise ValueError(
-                "context dataset is absent from the pinned real-S3 catalog"
-            )
+        if catalog_row is None or catalog_row.get("s3_bucket") != REAL_S3_BUCKET:
+            raise ValueError("context dataset is not from the approved real S3 bucket")
         if catalog_row.get("task") != row["task"] or row["task"] not in protocol.TASKS:
             raise ValueError(
                 "catalog task differs or is outside JRB regression/binary scope"

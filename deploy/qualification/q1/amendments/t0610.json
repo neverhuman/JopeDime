@@ -1,0 +1,50 @@
+{
+  "amendment_id": "QLT-04-T0610-R1-R2",
+  "authority": "ENG:watcher lanes_t0610.md; R1/R2 final owner rulings",
+  "base_preregistration_sha256": "f2a234dda18171623053e233a1e6a486df5215ea977097ea3f9d6b81a6f219b5",
+  "cut_definition_directory": "deploy/qualification/q1/cuts/",
+  "existing_owner_roster_count": 153,
+  "fold_manifest_path": "deploy/qualification/q1/cut_manifests/fdc243193d9436449cf74aa92b05ff7842c6c88bf4dce0b29ef7edf453b74987.json",
+  "fold_manifest_sha256": "fdc243193d9436449cf74aa92b05ff7842c6c88bf4dce0b29ef7edf453b74987",
+  "qualification": {
+    "Q1": "NOT_RUN",
+    "cut_hashes_derived": 154,
+    "cuts_qualified": 0,
+    "launch_authorized_by_this_amendment": false,
+    "signing_request_filed": false
+  },
+  "r1": {
+    "candidate_dataset_id": "c4b1f6dfb2a8605f",
+    "minimum": 5,
+    "official_minimum_met": false,
+    "official_wide_count": 4,
+    "q1_family_binding": "UNRESOLVED: source family key is legacy/non-hex and no authoritative 40/64-hex family join was found",
+    "sealed_catalog_id_membership_verified": true,
+    "selection_basis": "first catalog-order >20-feature regression in exact pinned H150 catalog_sealed_ids not already in the 153-member owner roster",
+    "wide_threshold": "features > 20"
+  },
+  "r2": {
+    "algorithm": "jope-service/src/discover/splits.rs::k_fold; seed label dsc03/rung0/groups; validation partitions shuffled round-robin and sorted; training is the ascending complement",
+    "fold_count": 3,
+    "fold_seed": 0,
+    "grouping": "singleton group per FIT row index; no target/feature-derived grouping",
+    "payloads_read": 0,
+    "repeat": 0,
+    "row_order": "FIT object physical row order, zero-based",
+    "seed_source": "first preregistered Q1 seed in [0,1,2]"
+  },
+  "record_count": 154,
+  "roster_binding": {
+    "bound_to_aggregate_manifest_sha256": "fdc243193d9436449cf74aa92b05ff7842c6c88bf4dce0b29ef7edf453b74987",
+    "family_binding_unresolved_rows": 36,
+    "official_roster_count": 153,
+    "official_roster_dataset_id_overlap_with_q1_cohort": 0,
+    "payloads_read": 0,
+    "per_cut_definition_files": 154,
+    "schema": "jope.q1-amended-roster-cut-packet/v1"
+  },
+  "roster_cut_packet_path": "deploy/qualification/q1/rosters/ab434d145b8cec60399b35c35a1ce9551a881843e8136b1c757e9c93ae62bd9a.json",
+  "roster_cut_packet_sha256": "ab434d145b8cec60399b35c35a1ce9551a881843e8136b1c757e9c93ae62bd9a",
+  "schema": "jope.q1-prereg-amendment/v1",
+  "status": "pre-outcome amendment; candidate metadata only; not signable or qualified"
+}

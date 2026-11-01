@@ -1,0 +1,8 @@
+{
+  "wave": "H178",
+  "status": "COMPLETE",
+  "null_and_harmful_admission_le_005": true,
+  "max_null_or_harmful_admission_rate": 0.0,
+  "replayed_four_arm_holm_m": 4,
+  "h177_analysis_sha256": "707c4903a77d48ffc8ae14c820a626df5c2858d3d24df35db3f9718d120bafc4"
+}
