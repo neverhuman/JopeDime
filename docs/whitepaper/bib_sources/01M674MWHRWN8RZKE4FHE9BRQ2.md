@@ -57,16 +57,6 @@
   url       = {https://lccn.loc.gov/43002084}
 }
 
-@incollection{borges1941library,
-  author    = {Jorge Luis Borges},
-  title     = {La biblioteca de {Babel} ({The Library of Babel})},
-  booktitle = {El jard{\'\i}n de senderos que se bifurcan},
-  publisher = {Editorial Sur},
-  address   = {Buenos Aires},
-  year      = {1941},
-  url       = {https://lccn.loc.gov/43002084}
-}
-
 @article{runco2012standard,
   author  = {Mark A. Runco and Garrett J. Jaeger},
   title   = {The Standard Definition of Creativity},
@@ -84,6 +74,7 @@
   booktitle = {International Conference on Learning Representations (ICLR)},
   year      = {2025},
   note      = {Preprint posted September 2024, arXiv:2409.04109},
+  doi       = {10.48550/arXiv.2409.04109},
   url       = {https://openreview.net/forum?id=M23dTGWCZy}
 }
 
@@ -92,6 +83,7 @@
   title   = {The Ideation-Execution Gap: Execution Outcomes of {LLM}-Generated versus Human Research Ideas},
   journal = {arXiv preprint arXiv:2506.20803},
   year    = {2025},
+  doi     = {10.48550/arXiv.2506.20803},
   url     = {https://arxiv.org/abs/2506.20803}
 }
 
@@ -126,40 +118,7 @@
   doi     = {10.1037/h0040373}
 }
 
-@article{campbell1960blind,
-  author  = {Donald T. Campbell},
-  title   = {Blind Variation and Selective Retentions in Creative Thought as in Other Knowledge Processes},
-  journal = {Psychological Review},
-  volume  = {67},
-  number  = {6},
-  pages   = {380--400},
-  year    = {1960},
-  doi     = {10.1037/h0040373}
-}
-
-@article{campbell1960variation,
-  author  = {Donald T. Campbell},
-  title   = {Blind Variation and Selective Retentions in Creative Thought as in Other Knowledge Processes},
-  journal = {Psychological Review},
-  volume  = {67},
-  number  = {6},
-  pages   = {380--400},
-  year    = {1960},
-  doi     = {10.1037/h0040373}
-}
-
 @article{simonton2011bvsr,
-  author  = {Dean Keith Simonton},
-  title   = {Creativity and Discovery as Blind Variation: {Campbell's} (1960) {BVSR} Model After the Half-Century Mark},
-  journal = {Review of General Psychology},
-  volume  = {15},
-  number  = {2},
-  pages   = {158--174},
-  year    = {2011},
-  doi     = {10.1037/a0022912}
-}
-
-@article{simonton2011creativity,
   author  = {Dean Keith Simonton},
   title   = {Creativity and Discovery as Blind Variation: {Campbell's} (1960) {BVSR} Model After the Half-Century Mark},
   journal = {Review of General Psychology},
@@ -236,15 +195,6 @@
 }
 
 @book{polya1945solve,
-  author    = {George P{\'o}lya},
-  title     = {How to Solve It: A New Aspect of Mathematical Method},
-  publisher = {Princeton University Press},
-  address   = {Princeton, NJ},
-  year      = {1945},
-  url       = {https://lccn.loc.gov/a45003112}
-}
-
-@book{polya1945how,
   author    = {George P{\'o}lya},
   title     = {How to Solve It: A New Aspect of Mathematical Method},
   publisher = {Princeton University Press},
@@ -467,29 +417,7 @@
   doi     = {10.1038/nature24270}
 }
 
-@article{silver2017zero,
-  author  = {David Silver and Julian Schrittwieser and Karen Simonyan and Ioannis Antonoglou and Aja Huang and Arthur Guez and Thomas Hubert and Lucas Baker and Matthew Lai and Adrian Bolton and others},
-  title   = {Mastering the Game of {Go} Without Human Knowledge},
-  journal = {Nature},
-  volume  = {550},
-  number  = {7676},
-  pages   = {354--359},
-  year    = {2017},
-  doi     = {10.1038/nature24270}
-}
-
 @article{silver2018general,
-  author  = {David Silver and Thomas Hubert and Julian Schrittwieser and Ioannis Antonoglou and Matthew Lai and Arthur Guez and Marc Lanctot and Laurent Sifre and Dharshan Kumaran and Thore Graepel and others},
-  title   = {A General Reinforcement Learning Algorithm That Masters Chess, Shogi, and {Go} Through Self-Play},
-  journal = {Science},
-  volume  = {362},
-  number  = {6419},
-  pages   = {1140--1144},
-  year    = {2018},
-  doi     = {10.1126/science.aar6404}
-}
-
-@article{silver2018alphazero,
   author  = {David Silver and Thomas Hubert and Julian Schrittwieser and Ioannis Antonoglou and Matthew Lai and Arthur Guez and Marc Lanctot and Laurent Sifre and Dharshan Kumaran and Thore Graepel and others},
   title   = {A General Reinforcement Learning Algorithm That Masters Chess, Shogi, and {Go} Through Self-Play},
   journal = {Science},
@@ -507,16 +435,7 @@
   volume    = {30},
   pages     = {5360--5370},
   year      = {2017},
-  url       = {https://arxiv.org/abs/1705.08439}
-}
-
-@inproceedings{anthony2017thinking,
-  author    = {Thomas Anthony and Zheng Tian and David Barber},
-  title     = {Thinking Fast and Slow with Deep Learning and Tree Search},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
-  volume    = {30},
-  pages     = {5360--5370},
-  year      = {2017},
+  doi       = {10.48550/arXiv.1705.08439},
   url       = {https://arxiv.org/abs/1705.08439}
 }
 
@@ -624,6 +543,7 @@
   title   = {{AlphaEvolve}: A Coding Agent for Scientific and Algorithmic Discovery},
   journal = {arXiv preprint arXiv:2506.13131},
   year    = {2025},
+  doi     = {10.48550/arXiv.2506.13131},
   url     = {https://arxiv.org/abs/2506.13131}
 }
 
@@ -656,6 +576,7 @@
   volume    = {119},
   pages     = {8007--8019},
   year      = {2020},
+  doi       = {10.48550/arXiv.2003.03384},
   url       = {https://proceedings.mlr.press/v119/real20a.html}
 }
 
