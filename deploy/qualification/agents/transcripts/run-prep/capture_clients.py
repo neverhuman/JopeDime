@@ -161,6 +161,17 @@ def prepare(args) -> dict:
                     != metadata[key]["executable_sha256"],
                     f"verification identity does not bind to source, candidate and client: {key}",
                 )
+                if getattr(args, "provider_ready", False):
+                    fail_if(
+                        type(record.get("tool_calls")) is not int
+                        or record["tool_calls"] != 16
+                        or type(record.get("successful_calls")) is not int
+                        or record["successful_calls"] != 16
+                        or type(record.get("failed_calls")) is not int
+                        or record["failed_calls"] != 0
+                        or record.get("ag1_named_client_flow_pass") is not True,
+                        f"provider manifest requires a complete successful client receipt: {key}",
+                    )
             inventory[name] = {"bytes": len(contents), "sha256": digest(contents)}
 
     fail_if(output.exists() or output.is_symlink(), "output directory already exists")
@@ -215,18 +226,57 @@ def prepare(args) -> dict:
         pin = output / "trusted-manifest.sha256"
         pin.write_text(digest(manifest.read_bytes()) + "\n", encoding="ascii")
         os.chmod(pin, 0o600)
+        provider_manifest_path = None
+        provider_manifest_sha256 = None
+        if getattr(args, "provider_ready", False):
+            provider_payload = {
+                "schema": "jopedime.named-client-transcripts/v1",
+                "status": "PREPARED_UNVERIFIED",
+                "source": args.source_sha,
+                "candidate_artifact_sha256": candidate_sha,
+                "input": {
+                    "split": "TRAIN",
+                    "dataset_id": handoff["dataset_id"],
+                    "handoff_sha256": handoff_sha,
+                },
+                "a5": {
+                    "status": "PREPARED_UNVERIFIED",
+                    "full_path_observed_clients": len(CLIENTS),
+                    "successful_tool_calls": 16 * len(CLIENTS),
+                    "failed_tool_calls": 0,
+                },
+                "clients": metadata,
+                "files": inventory,
+            }
+            provider_manifest_path = output / "a5-manifest.json"
+            provider_manifest_path.write_text(
+                json.dumps(provider_payload, sort_keys=True, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            os.chmod(provider_manifest_path, 0o600)
+            provider_manifest_sha256 = digest(provider_manifest_path.read_bytes())
+            provider_pin = output / "a5-manifest.sha256"
+            provider_pin.write_text(provider_manifest_sha256 + "\n", encoding="ascii")
+            os.chmod(provider_pin, 0o600)
     except Exception:
         # Never recursively remove a caller-supplied tree; output was freshly created.
         for child in output.iterdir():
             child.unlink()
         output.rmdir()
         raise
-    return {
+    result = {
         "manifest": str(manifest),
         "manifest_sha256": digest(manifest.read_bytes()),
         "status": payload["status"],
         "a5_status": payload["a5_status"],
     }
+    if provider_manifest_path is not None:
+        result.update(
+            provider_manifest=str(provider_manifest_path),
+            provider_manifest_sha256=provider_manifest_sha256,
+            provider_status="PREPARED_UNVERIFIED",
+        )
+    return result
 
 
 def self_test() -> None:
@@ -289,6 +339,10 @@ def self_test() -> None:
                 "binary_sha256": candidate_sha,
                 "client_version": "fixture",
                 "client_sha256": "a" * 64,
+                "tool_calls": 16,
+                "successful_calls": 16,
+                "failed_calls": 0,
+                "ag1_named_client_flow_pass": True,
             }
             (captures / f"{slug}.execution.json").write_text(
                 json.dumps(execution), encoding="utf-8"
@@ -311,6 +365,7 @@ def self_test() -> None:
             client_metadata=metadata_path,
             capture_root=captures,
             out_dir=root / "out",
+            provider_ready=False,
         )
         result = prepare(parser)
         assert result["a5_status"] == "NOT_QUALIFIED"
@@ -318,6 +373,52 @@ def self_test() -> None:
             digest((root / "out/capture-manifest.json").read_bytes())
             == result["manifest_sha256"]
         )
+        provider_result = prepare(
+            argparse.Namespace(
+                **{
+                    **vars(parser),
+                    "out_dir": root / "out-provider",
+                    "provider_ready": True,
+                }
+            )
+        )
+        provider_manifest = json.loads(
+            (root / "out-provider/a5-manifest.json").read_text(encoding="utf-8")
+        )
+        assert provider_result["provider_status"] == "PREPARED_UNVERIFIED"
+        assert provider_manifest["schema"] == "jopedime.named-client-transcripts/v1"
+        assert provider_manifest["source"] == source
+        assert provider_manifest["candidate_artifact_sha256"] == candidate_sha
+        assert provider_manifest["a5"] == {
+            "status": "PREPARED_UNVERIFIED",
+            "full_path_observed_clients": 3,
+            "successful_tool_calls": 48,
+            "failed_tool_calls": 0,
+        }
+        assert (
+            digest((root / "out-provider/a5-manifest.json").read_bytes())
+            == (root / "out-provider/a5-manifest.sha256").read_text().strip()
+        )
+        verification_path = captures / "claude-code.verification.json"
+        verification = json.loads(verification_path.read_text(encoding="utf-8"))
+        verification["failed_calls"] = 1
+        verification_path.write_text(json.dumps(verification), encoding="utf-8")
+        try:
+            prepare(
+                argparse.Namespace(
+                    **{
+                        **vars(parser),
+                        "out_dir": root / "rejected-summary",
+                        "provider_ready": True,
+                    }
+                )
+            )
+        except CapturePackageError:
+            pass
+        else:
+            raise AssertionError("provider manifest accepted a failed client receipt")
+        verification["failed_calls"] = 0
+        verification_path.write_text(json.dumps(verification), encoding="utf-8")
         for broken in (
             {**metadata, "extra": {}},
             {"claude_code": metadata["claude_code"]},
@@ -370,6 +471,11 @@ def main() -> int:
     parser.add_argument("--client-metadata", type=Path)
     parser.add_argument("--capture-root", type=Path)
     parser.add_argument("--out-dir", type=Path)
+    parser.add_argument(
+        "--provider-ready",
+        action="store_true",
+        help="also write a candidate-bound A5 input manifest from three successful receipts",
+    )
     args = parser.parse_args()
     if args.self_test:
         self_test()
