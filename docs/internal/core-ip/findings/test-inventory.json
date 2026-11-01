@@ -5459,6 +5459,10 @@
     "python:research/flywheel_selfplay/h183_ensemble_distill/test_h183.py": {
       "role": "research",
       "reason": "H183 data-free controls: FIT/A/B isolation and poisoned outer targets, distinct initial member/student seeds, softmax of ten mean teacher costs, fixed detached KL T=.2 with .5/.5 weights, common 40/80 student prefix, axis=0 paired family bootstrap, strict DIST10 primary Holm m2 gate, RENS10 diagnostic, ragged native choices and resource/timing caps. No study data/checkpoint/optimizer updates."
+    },
+    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/test_h185.py": {
+      "reason": "Owner-requested H185 data-free controls for the power-aware 205-family pooled cross-fit confirmatory test of FRESH160, ENS5, and RENS5 vs R882 (FIT-only training, B lock before A, RENS5==ENS5 inits, distinct member init hashes, imported H177_DECISION_RULE + H178 receipt, axis=0 bootstrap seed reduction, and host guards); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

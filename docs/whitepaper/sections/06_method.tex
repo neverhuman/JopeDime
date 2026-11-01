@@ -123,8 +123,8 @@ a target concentrated on the best
   \log\frac{e^{\mapv(z_p,z_w)}}{\sum_{u\in G_p}e^{\mapv(z_p,z_u)}},
   \label{eq:mapLoss}
 \end{equation}
-with $\tau=0.25$. With a unique best program, the low-temperature limit
-concentrates the target on that program. This is a listwise ranking
+with native target temperature $\tau=0.25$ and unscaled prediction logits.
+With a unique best program, the low-temperature limit concentrates the target on that program. This is a listwise ranking
 objective over programs scored on the same problem; the analogy to
 contrastive learning \citep{oord2018cpc,radford2021clip} does not establish
 CLIP-style alignment across problems and programs.

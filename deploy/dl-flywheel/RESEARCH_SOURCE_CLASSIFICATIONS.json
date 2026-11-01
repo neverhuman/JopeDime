@@ -4855,6 +4855,38 @@
         "role": "research",
         "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/analysis.py": {
+      "bytes": 22527,
+      "sha256": "6371dfd6f1b731f79f5e15c21acd3c7e4aa30432cc2f6b71d6521aaf3bff52db",
+      "classification": {
+        "role": "research",
+        "reason": "H185 preregistered CPU-only confirmatory test of FRESH160 (160-step fresh adapter), ENS5 (5x40-step fresh score ensemble), and RENS5 (5x0-step untrained member init control) vs R882 using the imported H177 205-family pooled-B selector and H178 calibration receipt; DL-Val descriptive and correlated cross-fold A readout only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/monitor.py": {
+      "bytes": 4892,
+      "sha256": "26f43d55c09995aaa101aebce4dcacf55d8c29fe3212670a1cb431dad9f42834",
+      "classification": {
+        "role": "research",
+        "reason": "H185 preregistered CPU-only confirmatory test of FRESH160 (160-step fresh adapter), ENS5 (5x40-step fresh score ensemble), and RENS5 (5x0-step untrained member init control) vs R882 using the imported H177 205-family pooled-B selector and H178 calibration receipt; DL-Val descriptive and correlated cross-fold A readout only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/runner.py": {
+      "bytes": 59887,
+      "sha256": "fd41edb3073f71b90d16042e6adb350b28322cbb36a1b54aeebd0c867303c25a",
+      "classification": {
+        "role": "research",
+        "reason": "H185 preregistered CPU-only confirmatory test of FRESH160 (160-step fresh adapter), ENS5 (5x40-step fresh score ensemble), and RENS5 (5x0-step untrained member init control) vs R882 using the imported H177 205-family pooled-B selector and H178 calibration receipt; DL-Val descriptive and correlated cross-fold A readout only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/treatment.py": {
+      "bytes": 2527,
+      "sha256": "6facc59a28d80cc47bf7441a72f431502f10284020e22c7a0655133d43c4c710",
+      "classification": {
+        "role": "research",
+        "reason": "H185 preregistered CPU-only confirmatory test of FRESH160 (160-step fresh adapter), ENS5 (5x40-step fresh score ensemble), and RENS5 (5x0-step untrained member init control) vs R882 using the imported H177 205-family pooled-B selector and H178 calibration receipt; DL-Val descriptive and correlated cross-fold A readout only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
