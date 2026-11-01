@@ -1718,29 +1718,49 @@ def test_h144_loader_refuses_hash_mismatch_before_execution(tmp_path, monkeypatc
     assert not marker.exists()
 
 
-def test_h144_loader_executes_the_exact_hashed_bytes(tmp_path, monkeypatch):
+def test_h144_loader_reads_the_pinned_file_once(tmp_path, monkeypatch):
     source = tmp_path / "h144-runtime.py"
     source.write_text("VALUE = 'verified'\n")
     expected = hashlib.sha256(source.read_bytes()).hexdigest()
     monkeypatch.setattr(runtime, "H144_RUNTIME", source)
     monkeypatch.setattr(runtime, "H144_RUNTIME_SHA256", expected)
-    original_read_bytes = Path.read_bytes
-    reads = 0
+    original_open, original_read_bytes = Path.open, Path.read_bytes
+    reads = []
 
-    def read_then_replace(path):
-        nonlocal reads
+    def swap_after_first_read():
+        if len(reads) == 1:
+            import os
+
+            fd = os.open(source, os.O_WRONLY | os.O_TRUNC)
+            os.write(fd, b"VALUE = 'changed after verification'\n")
+            os.close(fd)
+
+    def counting_open(path, *args, **kwargs):
+        stream = original_open(path, *args, **kwargs)
+        mode = args[0] if args else kwargs.get("mode", "r")
+        if path == source and "r" in mode:
+            reads.append("open")
+            data = stream.read()
+            stream.close()
+            swap_after_first_read()
+            import io
+
+            return io.BytesIO(data)
+        return stream
+
+    def counting_read_bytes(path):
         contents = original_read_bytes(path)
         if path == source:
-            reads += 1
-            source.write_text("VALUE = 'changed after verification'\n")
+            reads.append("read_bytes")
+            swap_after_first_read()
         return contents
 
-    monkeypatch.setattr(Path, "read_bytes", read_then_replace)
+    monkeypatch.setattr(Path, "open", counting_open)
+    monkeypatch.setattr(Path, "read_bytes", counting_read_bytes)
 
     loaded = runtime._load_pinned_h144_runtime()
 
-    assert reads == 1
-    assert loaded.VALUE == "verified"
+    assert loaded.VALUE == "verified", reads
 
 
 def test_worker_adapter_fingerprint_supports_scalar_parameters():
