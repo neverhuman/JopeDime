@@ -124,7 +124,8 @@ mod tests {
         let repo = Repo::at(Path::new(env!("CARGO_MANIFEST_DIR")).join("../.."));
         let r = verify_manifests(&repo).unwrap();
         assert!(r.errors.is_empty(), "{:?}", r.errors);
-        assert_eq!(r.bundles.len(), 3);
+        assert_eq!(r.bundles.len(), 5);
+        assert!(r.bundles.iter().any(|(id, _, _)| id == "r882"));
         assert_eq!(r.pinned.len(), 3);
     }
 }
