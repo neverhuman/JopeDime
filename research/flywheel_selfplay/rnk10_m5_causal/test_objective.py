@@ -22,6 +22,7 @@ from evaluate_candidate import (
     family_bootstrap_elo_interval,
     m5,
     predict_fixture_costs,
+    select_dev_family_rows,
     serving_selection,
 )
 from train_candidate import authenticate_train_roster
@@ -266,6 +267,73 @@ def test_dev_elo_family_bootstrap_interval_is_pinned_and_deterministic():
     assert first["family_count"] == 19
     assert first["interval95_candidate_elo"] == [1500.0, 1500.0]
     assert first["interval_is_descriptive_only"] is True
+
+
+def test_dev_elo_family_selection_keeps_default_and_full_roster_unchanged():
+    rows = [
+        {"context_sha256": f"{index:064x}", "family_id": f"family-{index // 2:02d}"}
+        for index in range(38)
+    ]
+    families = sorted({row["family_id"] for row in rows})
+
+    default_rows = select_dev_family_rows(rows, None)
+    explicit_full_rows = select_dev_family_rows(rows, list(reversed(families)))
+
+    assert default_rows is rows
+    assert explicit_full_rows is rows
+    assert explicit_full_rows == default_rows
+
+    records = [
+        SimpleNamespace(
+            family_id=row["family_id"],
+            scores_by_contender={"candidate": 1.0, "r882": 1.0},
+        )
+        for row in default_rows
+    ]
+    explicit_records = [
+        SimpleNamespace(
+            family_id=row["family_id"],
+            scores_by_contender={"candidate": 1.0, "r882": 1.0},
+        )
+        for row in explicit_full_rows
+    ]
+    assert family_bootstrap_elo_interval(records) == family_bootstrap_elo_interval(
+        explicit_records
+    )
+
+
+def test_dev_elo_family_selection_is_whole_family_and_rejects_bad_ids():
+    rows = [
+        {"context_sha256": f"{index:064x}", "family_id": f"family-{index // 2:02d}"}
+        for index in range(8)
+    ]
+    selected = select_dev_family_rows(rows, ["family-03", "family-01"])
+
+    assert [row["family_id"] for row in selected] == [
+        "family-01",
+        "family-01",
+        "family-03",
+        "family-03",
+    ]
+    with pytest.raises(ValueError, match="duplicates"):
+        select_dev_family_rows(rows, ["family-01", "family-01"])
+    with pytest.raises(ValueError, match="unknown IDs"):
+        select_dev_family_rows(rows, ["not-in-roster"])
+
+
+def test_dev_elo_family_bootstrap_supports_a_selected_fold():
+    records = [
+        SimpleNamespace(
+            family_id=f"family-{family:02d}",
+            scores_by_contender={"candidate": 1.0, "r882": 1.0},
+        )
+        for family in range(6)
+    ]
+
+    interval = family_bootstrap_elo_interval(records)
+
+    assert interval["family_count"] == 6
+    assert interval["interval95_candidate_elo"] == [1500.0, 1500.0]
 
 
 def test_dev_elo_bootstrap_matches_canonical_solver_at_extreme_boundary():
