@@ -4623,6 +4623,30 @@
         "role": "research",
         "reason": "H179 CPU-only xbabe2 attempt supervisor with 93.8% disk-use stop and process resource guards. Research only; no product or serving qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h178_pooled_calibration/calibration.py": {
+      "bytes": 55577,
+      "sha256": "c8351c915e04c5efa436530fdedbcb4594817aa78edf2497eead3d08e9378700",
+      "classification": {
+        "role": "research",
+        "reason": "H178 empirical calibration of the H177 pooled 205-family cross-fit selector (pooled_b_select imported directly from h177_pooled_selector/analysis.py) on the H175 counterfactual bank; data-free controls for imported H177 rule object identity, 10k-draw step-down Holm counterexample, LocalOnlyPayload role isolation, StageOrderGuard fsync barrier, exact Clopper-Pearson bounds, zero optimizer/backward calls, and resource guards. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h178_pooled_calibration/runner.py": {
+      "bytes": 12359,
+      "sha256": "29fc584891a0734c2863ffbab3c921d13633f6977d1de43d078eb34c86549198",
+      "classification": {
+        "role": "research",
+        "reason": "H178 empirical calibration of the H177 pooled 205-family cross-fit selector (pooled_b_select imported directly from h177_pooled_selector/analysis.py) on the H175 counterfactual bank; data-free controls for imported H177 rule object identity, 10k-draw step-down Holm counterexample, LocalOnlyPayload role isolation, StageOrderGuard fsync barrier, exact Clopper-Pearson bounds, zero optimizer/backward calls, and resource guards. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h178_pooled_calibration/monitor.py": {
+      "bytes": 5378,
+      "sha256": "961cdec04d8f7d207e61e14412f9abad04ea43a021bbbae667021486a6e68095",
+      "classification": {
+        "role": "research",
+        "reason": "H178 empirical calibration of the H177 pooled 205-family cross-fit selector (pooled_b_select imported directly from h177_pooled_selector/analysis.py) on the H175 counterfactual bank; data-free controls for imported H177 rule object identity, 10k-draw step-down Holm counterexample, LocalOnlyPayload role isolation, StageOrderGuard fsync barrier, exact Clopper-Pearson bounds, zero optimizer/backward calls, and resource guards. Research only; no product or sealed qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
