@@ -56,6 +56,22 @@ def version_source(identity: dict) -> str | None:
     return source
 
 
+def validate_fixture_identity(identity: dict, source_sha: str) -> None:
+    features = identity.get("features", {})
+    packaged = identity.get("package", {})
+    if (
+        version_source(identity) != source_sha
+        or identity.get("target") != "aarch64-apple-darwin"
+        or any(features.get(name) is not True for name in FEATURES)
+        or features.get("dev_keys") is not True
+        or identity.get("trusts_development_key") is not True
+        or packaged.get("profile") != "fixture"
+        or packaged.get("scope") != "development"
+        or packaged.get("signer_role") != "development"
+    ):
+        raise D1DevError("fixture package identity/features differ from D1 DEV-BUILD")
+
+
 def require_macos_arm64() -> None:
     if platform.system() != "Darwin" or platform.machine().lower() not in {
         "arm64",
@@ -107,12 +123,10 @@ def package_fixture(source_sha: str, fixture_package: Path, output: str) -> dict
     require_macos_arm64()
     if not SOURCE_SHA.fullmatch(source_sha) or repo_source_sha() != source_sha:
         raise D1DevError("package source SHA must match the clean checkout HEAD")
+    if fixture_package.is_symlink():
+        raise D1DevError("fixture package must not be a symlink")
     fixture_package = fixture_package.resolve(strict=True)
-    if (
-        fixture_package.is_symlink()
-        or not fixture_package.is_file()
-        or not os.access(fixture_package, os.X_OK)
-    ):
+    if not fixture_package.is_file() or not os.access(fixture_package, os.X_OK):
         raise D1DevError("fixture package must be a regular executable file")
     archs = subprocess.run(
         ["lipo", "-archs", str(fixture_package)],
@@ -134,15 +148,7 @@ def package_fixture(source_sha: str, fixture_package: Path, output: str) -> dict
         identity = json.loads(version.stdout)
     except json.JSONDecodeError as error:
         raise D1DevError("fixture package returned invalid version JSON") from error
-    features = identity.get("features", {})
-    if (
-        version_source(identity) != source_sha
-        or identity.get("target") != "aarch64-apple-darwin"
-        or any(features.get(name) is not True for name in FEATURES)
-        or features.get("dev_keys") is not True
-        or identity.get("trusts_development_key") is not True
-    ):
-        raise D1DevError("fixture package identity/features differ from D1 DEV-BUILD")
+    validate_fixture_identity(identity, source_sha)
 
     out = external_new_dir(output)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -306,16 +312,12 @@ def run_candidate(candidate_value: str, output: str) -> dict:
         identity = json.loads(version.stdout)
     except json.JSONDecodeError as error:
         raise D1DevError("native D1 version output is not JSON") from error
-    if (
-        version_source(identity) != source_sha
-        or identity.get("target") != "aarch64-apple-darwin"
-        or identity.get("features", {}).get("dev_keys")
-        is not package["development_signed"]
-        or identity.get("trusts_development_key") is not package["development_signed"]
-    ):
+    try:
+        validate_fixture_identity(identity, source_sha)
+    except D1DevError as error:
         raise D1DevError(
             "native D1 executable identity differs from the pinned DEV-BUILD"
-        )
+        ) from error
 
     methods = app("methods", "--task", "regression", "--json")
     (out / "methods.json").write_text(methods.stdout, encoding="utf-8")

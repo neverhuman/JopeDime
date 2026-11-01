@@ -64,6 +64,24 @@ class D1DarwinDevTests(unittest.TestCase):
             SOURCE,
         )
 
+    def test_fixture_identity_requires_development_signature_and_source(self):
+        identity = {
+            "source_sha40": "unknown",
+            "target": "aarch64-apple-darwin",
+            "features": {name: True for name in FEATURES} | {"dev_keys": True},
+            "trusts_development_key": True,
+            "package": {
+                "source_sha40": SOURCE,
+                "profile": "fixture",
+                "scope": "development",
+                "signer_role": "development",
+            },
+        }
+        d1.validate_fixture_identity(identity, SOURCE)
+        identity["package"]["signer_role"] = "release"
+        with self.assertRaisesRegex(d1.D1DevError, "identity/features"):
+            d1.validate_fixture_identity(identity, SOURCE)
+
     def test_candidate_requires_dev_label_and_byte_binding(self):
         with tempfile.TemporaryDirectory() as tmp:
             candidate = Path(tmp) / "candidate"
