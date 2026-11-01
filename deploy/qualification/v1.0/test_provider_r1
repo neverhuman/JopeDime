@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+"""Data-free R1 provider controls; fixture children are not release results."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+from unittest import mock
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE / "providers"))
+import common  # noqa: E402
+import r1  # noqa: E402
+
+
+class R1ProviderTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.repo = self.root / "checkout"
+        self.repo.mkdir()
+        self.artifact = self.root / "candidate.bin"
+        self.artifact.write_bytes(b"synthetic candidate; never a release")
+        self.result = self.root / "evidence" / "r1.json"
+        self.result.parent.mkdir()
+        self.ctx = common.Context(
+            "R1",
+            self.artifact,
+            hashlib.sha256(self.artifact.read_bytes()).hexdigest(),
+            "a" * 40,
+            self.result,
+        )
+        self.calls = []
+        self.source = self.ctx.source_sha
+        self.dirty = ""
+        self.output = self.successful_output()
+        self.returncode = 0
+        self.after_test = lambda: None
+        self.addCleanup(mock.patch.stopall)
+        mock.patch.object(r1, "ROOT", self.repo).start()
+
+    @staticmethod
+    def successful_output():
+        lines = ["running 1 test", f"test {r1.TEST} ... ok"]
+        lines.extend(sorted(r1.EXPECTED_INTERNAL_CUTS))
+        lines.extend(
+            [
+                "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 502 filtered out",
+            ]
+        )
+        return "\n".join(lines) + "\n"
+
+    def run_child(self, args, **kwargs):
+        self.calls.append((args, kwargs))
+        if args[:2] == ["git", "rev-parse"]:
+            output = self.source
+        elif args[:2] == ["git", "status"]:
+            output = self.dirty
+        elif args[0] == "cargo" and args[1] == "run":
+            if "inspect" in args:
+                output = json.dumps(
+                    {
+                        "manifest": {
+                            "profile": "full",
+                            "scope": "release",
+                            "source": {"sha40": self.ctx.source_sha},
+                        }
+                    }
+                )
+            else:
+                output = json.dumps(
+                    {"schema": "jope.appliance-verify/v1", "ok": True}
+                )
+            return subprocess.CompletedProcess(args, 0, output, "")
+        else:
+            self.after_test()
+            return subprocess.CompletedProcess(args, self.returncode, self.output, "")
+        return subprocess.CompletedProcess(args, 0, output, "")
+
+    def invoke(self):
+        with mock.patch("sys.stdout.write"), mock.patch("sys.stderr.write"):
+            return r1.qualify(self.ctx, run=self.run_child)
+
+    def test_success_binds_candidate_and_executes_full_cut_matrix(self):
+        self.assertEqual(self.invoke(), 0)
+        result = json.loads(self.result.read_text())
+        self.assertEqual(result["schema"], "jope.rel07.gate-execution/v1")
+        self.assertEqual(result["id"], "R1")
+        self.assertEqual(result["status"], "PASS")
+        self.assertEqual(result["artifact_sha256"], self.ctx.artifact_sha256)
+        self.assertEqual(result["source_sha"], self.ctx.source_sha)
+        self.assertEqual(result["counts"], r1.SINGLE_PASS)
+        cargo_call = next(
+            args for args, _ in self.calls if args and args[0] == "cargo" and args[1] == "test"
+        )
+        self.assertEqual(cargo_call, r1.command())
+        cargo_env = next(
+            kwargs["env"]
+            for args, kwargs in self.calls
+            if args and args[0] == "cargo" and args[1] == "test"
+        )
+        self.assertEqual(cargo_env["INT02_INTERNAL_CAS_CUTS"], "1")
+        self.assertLessEqual(int(cargo_env["CARGO_BUILD_JOBS"]), 8)
+        self.assertEqual(cargo_env["CARGO_INCREMENTAL"], "0")
+        self.assertEqual(cargo_env["CARGO_PROFILE_DEV_DEBUG"], "line-tables-only")
+
+    def test_wrong_gate_source_or_dirty_checkout_refuses_before_rust_test(self):
+        cases = [
+            (self.ctx.source_sha, "", "S1"),
+            ("b" * 40, "", "R1"),
+            (self.ctx.source_sha, " M changed.rs", "R1"),
+        ]
+        for source, dirty, gate in cases:
+            self.source, self.dirty = source, dirty
+            ctx = common.Context(
+                gate,
+                self.ctx.artifact,
+                self.ctx.artifact_sha256,
+                self.ctx.source_sha,
+                self.ctx.result,
+            )
+            with self.subTest(source=source, dirty=dirty, gate=gate):
+                with self.assertRaises(common.ProviderError):
+                    r1.qualify(ctx, run=self.run_child)
+        self.assertFalse(any(args and args[0] == "cargo" and args[1] == "test" for args, _ in self.calls))
+
+    def test_candidate_symlink_and_result_symlink_are_refused(self):
+        link = self.root / "candidate-link"
+        link.symlink_to(self.artifact)
+        env = {
+            "JOPE_REL07_GATE_ID": "R1",
+            "JOPE_REL07_ARTIFACT": str(link),
+            "JOPE_REL07_ARTIFACT_SHA256": self.ctx.artifact_sha256,
+            "JOPE_REL07_SOURCE_SHA": self.ctx.source_sha,
+            "JOPE_REL07_RESULT": str(self.result),
+        }
+        with self.assertRaisesRegex(common.ProviderError, "non-symlink"):
+            with mock.patch.dict(os.environ, env, clear=True):
+                common.context("R1")
+
+        result_link = self.root / "result-link"
+        result_link.symlink_to(self.root / "missing")
+        ctx = common.Context(
+            "R1", self.artifact, self.ctx.artifact_sha256, self.ctx.source_sha, result_link
+        )
+        with self.assertRaisesRegex(common.ProviderError, "new regular file"):
+            r1.check_result_path(ctx)
+
+    def test_result_cannot_be_overwritten_or_written_inside_checkout(self):
+        self.result.write_text("prior receipt")
+        with self.assertRaisesRegex(common.ProviderError, "new regular file"):
+            r1.check_result_path(self.ctx)
+        result_in_checkout = self.repo / "result.json"
+        ctx = common.Context(
+            "R1", self.artifact, self.ctx.artifact_sha256, self.ctx.source_sha, result_in_checkout
+        )
+        with self.assertRaisesRegex(common.ProviderError, "outside the source checkout"):
+            r1.check_result_path(ctx)
+        self.assertEqual(self.result.read_text(), "prior receipt")
+
+    def test_zero_skipped_or_missing_internal_case_cannot_pass(self):
+        for output in (
+            "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 502 filtered out\n",
+            self.output.replace("0 ignored", "1 ignored"),
+            self.output.replace("after_file_sync", "missing_hook", 1),
+        ):
+            self.output = output
+            self.returncode = 0
+            with self.subTest(output=output[:80]), self.assertRaises(common.ProviderError):
+                r1.validate_output(output)
+        self.assertFalse(self.result.exists())
+
+    def test_failed_or_drifted_run_never_writes_a_receipt(self):
+        self.returncode = 42
+        self.assertEqual(self.invoke(), 42)
+        self.assertFalse(self.result.exists())
+
+        self.returncode = 0
+        self.after_test = lambda: self.artifact.write_bytes(b"candidate changed")
+        with self.assertRaisesRegex(common.ProviderError, "candidate bytes changed"):
+            self.invoke()
+        self.assertFalse(self.result.exists())
+
+
+if __name__ == "__main__":
+    unittest.main()
