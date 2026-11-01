@@ -97,7 +97,8 @@ python3 python/src/jope/north_star/record_reader.py /private/records.jsonl \
 ```
 
 Identity, mode, byte or count mismatch refuses before any success summary. The
-comparison distinguishes bool/int and int/float values and rejects extra fields.
+comparison distinguishes bool/int and int/float values, rejects extra fields,
+and bounds the expected inventory to the same2MiB maximum as a record line.
 `--require-evaluate-all` still requires a complete all-proposal stream; synthetic
 inspection still needs explicit `--allow-synthetic`. Hashing does not reread a
 possibly changed file. The Rust/Python controls run both modes with one/eight live

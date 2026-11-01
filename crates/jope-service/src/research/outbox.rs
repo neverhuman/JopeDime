@@ -119,13 +119,14 @@ pub(super) fn materialize(
         fs::read(&staging)? == expected_bytes,
         "outbox encoding changed during materialization"
     );
+    let inventory = RecordInventory::committed(&records, &expected_bytes)?;
     // hard_link is atomic and refuses an existing destination. The staging
     // evidence is deliberately retained, including after uncertain publication.
     fs::hard_link(&staging, output)?;
     #[cfg(test)]
     capture::boundary("after_file_publish");
     File::open(parent)?.sync_all()?;
-    RecordInventory::committed(&records, &expected_bytes)
+    Ok(inventory)
 }
 
 fn output_parent(output: &Path) -> Result<&Path> {

@@ -351,10 +351,11 @@ def main():
             require_evaluate_all=args.require_evaluate_all,
         )
         if args.expected_inventory is not None:
+            with args.expected_inventory.open("rb") as stream:
+                expected_bytes = stream.read(MAX_LINE_BYTES + 1)
+            _require(len(expected_bytes) <= MAX_LINE_BYTES, "oversized expected inventory")
             expected = json.loads(
-                args.expected_inventory.read_text(encoding="utf-8"),
-                object_pairs_hook=_object,
-                parse_constant=_constant,
+                expected_bytes.decode("utf-8"), object_pairs_hook=_object, parse_constant=_constant
             )
             verify_inventory(inventory, expected)
         counts = inventory["counts"]
