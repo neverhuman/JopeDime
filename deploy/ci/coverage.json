@@ -7431,7 +7431,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -14478,6 +14478,16 @@
       ],
       "lanes": [],
       "scope": "H178 empirical calibration of the H177 pooled 205-family cross-fit selector (pooled_b_select imported directly from h177_pooled_selector/analysis.py) on the H175 counterfactual bank; data-free controls for imported H177 rule object identity, 10k-draw step-down Holm counterexample, LocalOnlyPayload role isolation, StageOrderGuard fsync barrier, exact Clopper-Pearson bounds, zero optimizer/backward calls, and resource guards. Research only; no product or sealed qualification."
+    },
+    "python:research/flywheel_selfplay/h182_ensemble_size_dose/test_h182.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H182 data-free controls for nested ENS5/ENS10/ENS20 member prefixes, all 60 fresh member seeds and synthetic init hashes, FIT/A/B isolation, score-before-argmin, axis=0 paired bootstrap, strict ENS20 verdict/Holm gates, timing-only four-hour fold rule, and resource guards. No study data or model checkpoint loaded."
     }
   },
   "lanes": {
@@ -15830,5 +15840,15 @@
     ],
     "lanes": [],
     "scope": "H179 data-free controls for family-separated folds, independent initialization and member seed streams, score averaging before argmin, FIT-only batches, Holm/verdict boundaries, and timing-only execution planning. Synthetic fixtures only; no study data or model checkpoint loaded."
+  },
+  "python:research/flywheel_selfplay/h182_ensemble_size_dose/test_h182.py": {
+    "discovery": {
+      "kind": "python-family"
+    },
+    "dispositions": [
+      "research"
+    ],
+    "lanes": [],
+    "scope": "H182 data-free controls for nested ENS5/ENS10/ENS20 member prefixes, all 60 fresh member seeds and synthetic init hashes, FIT/A/B isolation, score-before-argmin, axis=0 paired bootstrap, strict ENS20 verdict/Holm gates, timing-only four-hour fold rule, and resource guards. No study data or model checkpoint loaded."
   }
 }
