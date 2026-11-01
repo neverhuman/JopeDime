@@ -208,6 +208,12 @@ class ReleaseGates(unittest.TestCase):
         candidate.parent.mkdir(parents=True)
         candidate.write_bytes(self.artifact.read_bytes())
         candidate_sha = runner.cpu.digest(candidate)
+        fused_candidate = (
+            candidate_dir / "fused-cpu-linux-x86_64" / "jopedime"
+        )
+        fused_candidate.parent.mkdir(parents=True)
+        fused_candidate.write_bytes(b"synthetic fused-cpu candidate fixture")
+        fused_sha = runner.cpu.digest(fused_candidate)
         seal = self.root / "candidate-run-seal.json"
         seal.write_text(
             json.dumps(
@@ -219,6 +225,21 @@ class ReleaseGates(unittest.TestCase):
                     "verify": {
                         "ok": True,
                         "report": {"file_sha256": candidate_sha},
+                    },
+                }
+            )
+        )
+        fused_seal = self.root / "candidate-run-fused-seal.json"
+        fused_seal.write_text(
+            json.dumps(
+                {
+                    "schema": "jope.rel07.rc2-sealed-variant/v1",
+                    "id": "fused-cpu-linux-x86_64",
+                    "source_sha": source,
+                    "sha256": fused_sha,
+                    "verify": {
+                        "ok": True,
+                        "report": {"file_sha256": fused_sha},
                     },
                 }
             )
@@ -242,7 +263,19 @@ class ReleaseGates(unittest.TestCase):
                             "signature_receipts": [
                                 {"receipt": {"verify": "PASS"}}
                             ],
-                        }
+                        },
+                        {
+                            "id": "fused-cpu-linux-x86_64",
+                            "path": str(fused_candidate),
+                            "profile": "fused-cpu",
+                            "source_sha": source,
+                            "sha256": fused_sha,
+                            "bytes": fused_candidate.stat().st_size,
+                            "seal_verify_receipt": str(fused_seal),
+                            "signature_receipts": [
+                                {"receipt": {"verify": "PASS"}}
+                            ],
+                        },
                     ],
                 }
             )
@@ -278,9 +311,54 @@ class ReleaseGates(unittest.TestCase):
         run = json.loads((output / "execution.json").read_text())
         self.assertEqual(run["candidate_inputs_sha256"], inputs_sha256)
         self.assertEqual(
+            run["gate_artifacts"]["D2"],
+            {
+                "path": str(fused_candidate),
+                "sha256": fused_sha,
+                "source_sha": source,
+                "candidate_manifest_sha256": runner.cpu.digest(manifest),
+                "seal_receipt_sha256": runner.cpu.digest(fused_seal),
+            },
+        )
+        d2_result = json.loads((output / "D2" / "result.json").read_text())
+        self.assertEqual(d2_result["artifact_sha256"], fused_sha)
+        self.assertEqual(
             next(row for row in table["gates"] if row["id"] == "A5")["argv"][-1],
             "deploy/qualification/v1.0/a5_run.py",
         )
+        d2_command_manifest = json.loads(
+            output.with_name(output.name + ".gate-commands.json").read_text()
+        )
+        d2_command = next(
+            row for row in d2_command_manifest["gates"] if row["id"] == "D2"
+        )
+        self.assertIn(f"JOPE_REL07_ARTIFACT={fused_candidate}", d2_command["argv"])
+        self.assertIn(f"JOPE_REL07_ARTIFACT_SHA256={fused_sha}", d2_command["argv"])
+
+        original_manifest = manifest.read_text()
+        manifest_value = json.loads(original_manifest)
+        fused_row = next(
+            row
+            for row in manifest_value["artifacts"]
+            if row["id"] == "fused-cpu-linux-x86_64"
+        )
+        fused_row["source_sha"] = "0" * 40
+        manifest.write_text(json.dumps(manifest_value))
+        try:
+            rejected = runner._candidate_record(candidate)
+        finally:
+            manifest.write_text(original_manifest)
+        self.assertIsNone(rejected["d2_artifact"])
+        self.assertIn("source differs", rejected["d2_blocked_reason"])
+
+        fused_record = runner._candidate_record(candidate)["d2_artifact"]
+        original_fused = fused_candidate.read_bytes()
+        fused_candidate.write_bytes(b"changed after candidate binding")
+        try:
+            with self.assertRaisesRegex(ValueError, "D2 candidate bytes changed"):
+                runner.verify_candidate_variant(fused_record, source)
+        finally:
+            fused_candidate.write_bytes(original_fused)
 
     def test_candidate_dry_run_writes_reasoned_28_row_status_without_execution(self):
         qualification = self.repo / "deploy/qualification/v1.0"
@@ -350,8 +428,11 @@ class ReleaseGates(unittest.TestCase):
             {"BLOCKED"},
         )
         self.assertEqual(
-            sum(row["status"] == "NOT_RUN" for row in table["gates"]), 23
+            sum(row["status"] == "NOT_RUN" for row in table["gates"]), 22
         )
+        d2_row = next(row for row in table["gates"] if row["id"] == "D2")
+        self.assertEqual(d2_row["status"], "BLOCKED")
+        self.assertIn("fused-cpu-linux-x86_64", d2_row["reason"])
         self.assertTrue(all(row["reason"] for row in table["gates"]))
 
     def test_candidate_input_file_is_sha_pinned_and_uses_established_schema(self):

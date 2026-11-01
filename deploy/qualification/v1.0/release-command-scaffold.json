@@ -272,6 +272,9 @@
     {
       "id": "D2",
       "argv": [
+        "/usr/bin/env",
+        "JOPE_REL07_ARTIFACT=${JOPE_REL07_D2_ARTIFACT}",
+        "JOPE_REL07_ARTIFACT_SHA256=${JOPE_REL07_D2_ARTIFACT_SHA256}",
         "python3",
         "-B",
         "deploy/qualification/v1.0/providers/d2.py"
