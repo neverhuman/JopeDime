@@ -1,11 +1,12 @@
 \subsection{Completed-round rates}\label{app:subsequent-rates}
 
-The third and fourth panels of \cref{fig:fw-subsequent-rates} reuse the 20
-summaries from rounds 2508--2527 in \cref{app:subsequent-window}. Each step
-divides one completed round, or its strict training-program event count, by
-that round's logged wall time. Its width is the corresponding duration.
-Dashed lines divide the window's total work or events by its total time;
-they do not average the per-round rates.
+For the 20 summaries in the fourth column of \cref{fig:fw-subsequent-rates},
+rounds 2508--2527 total \num{1731.45}\,s and 15 strict program-incumbent
+events. Dividing total counts by total logged time gives 41.58 completed
+rounds/h and 31.19 events/h; these are not averages of per-round rates.
+\Cref{fig:fw-latest-event-rates} places the event rate and mean round duration
+alongside the other timed windows. The underlying per-round times remain
+in the retained window record; they are not plotted again here.
 
 Time includes logged qualification waits and omits gaps outside completed
 rounds. None records an adapter admission. Scope: \cref{sec:method-status}.

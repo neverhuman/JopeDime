@@ -67,15 +67,18 @@ Artifacts that violate held-out isolation belong in the audit record:
   \caption{\textbf{Training-program promotions and adapter validation across four 20-round windows.}
   Columns show four separate 20-round summary windows: rounds 2005--2024 (15 events),
   2082--2101 (10 events), 2343--2362 (22 events over 28.8\,min of completed-round wall time),
-  and 2644--2663 (21 events over 33.2\,min). Top row: strict training-program incumbent
+  and 2508--2527 (15 events over 28.9\,min). Top row: strict training-program incumbent
   promotions per completed round. Bottom row: candidate adapter validation pool utility (grey)
   and the post-decision recorded best (blue, 1.1378 from round 882). Every window records zero
-  adapter admissions. Scope: \cref{sec:method-status}.}
+  adapter admissions. The separate 2644--2663 window is shown once in
+  \cref{fig:fw-promotions-per-hour}. Scope: \cref{sec:method-status}.}
   \label{fig:fw-completed-time}
   \label{fig:fw-recent-development}
   \label{fig:fw-followup-development}
   \label{fig:fw-later-development}
-  \label{fig:fw-program-promotions}
+  \label{fig:fw-subsequent-window}
+  \label{fig:fw-subsequent-utility}
+  \label{fig:fw-subsequent-rates}
 \end{figure*}
 
 \begin{figure*}[!t]
@@ -190,21 +193,7 @@ The scope statement in \cref{sec:method-status} applies throughout this appendix
 
 \subsection{Development measurements over completed-round time}\label{app:development-time}
 
-\begin{figure*}[!t]
-  \centering
-  \includegraphics[width=\linewidth,height=1.55in,keepaspectratio]{figures/fig_fw_subsequent_window.pdf}
-  \caption{\textbf{Candidate gaps, original-scale utility, and completed-round rates in rounds 2508--2527.}
-  All four panels cover the same 20 consecutive completed summaries (15 strict training-program
-  promotions over \num{1731.45}\,s; zero adapter admissions). From left to right:
-  (i)~recorded-best minus candidate validation utility paired with cumulative promotions;
-  (ii)~candidate and recorded-best validation utility (1.1378, labeled round 882) on their original scale;
-  (iii)~completed rounds per hour (dashed: whole-window rate 41.58\,rounds/h); and
-  (iv)~strict program promotions per hour (dashed: whole-window rate 31.19\,events/h).
-  Scope: \cref{sec:method-status}.}
-  \label{fig:fw-subsequent-window}
-  \label{fig:fw-subsequent-utility}
-  \label{fig:fw-subsequent-rates}
-\end{figure*}
+
 
 \begin{figure*}[!t]
   \centering
@@ -222,9 +211,8 @@ The scope statement in \cref{sec:method-status} applies throughout this appendix
   \label{fig:fw-admission-shortfall}
 \end{figure*}
 
-\Cref{fig:fw-completed-time} shows the retained summaries for rounds 2343--2362
-(\cref{fig:fw-later-development}) alongside the other three 20-round development
-windows. Total completed-round wall time includes qualification waits, and each
+The third column of \cref{fig:fw-completed-time} shows rounds 2343--2362
+alongside the other three 20-round development windows. Total completed-round wall time includes qualification waits, and each
 point is an end-of-round summary.
 
 \input{sections/appendix_event_counts}

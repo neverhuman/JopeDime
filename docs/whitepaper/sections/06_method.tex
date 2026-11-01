@@ -6,12 +6,11 @@
 % Historical source notes are archived outside the paper tree.
 \section{EurekaZero: Learning Taste}\label{sec:method}
 
-The reference design trains a neural program writer and a separate ranking
-map on search-scored lists, then asks the frozen writer for one new program.
-The adapter record in \cref{sec:method-status} instead concerns heuristic,
-retrieval and grammar proposals; only a ranking adapter is updated.
-These require separate cost ledgers (\cref{sec:price}) and evaluation.
-We specify the reference learner first, then bound the adapter observations.
+The reference design trains a writer and separate ranking map on
+search-scored lists, then deploys the frozen writer for one proposal.
+The record in \cref{sec:method-status} updates only a ranking adapter over
+heuristic, retrieval and grammar proposals. Their cost ledgers
+(\cref{sec:price}) and evaluations are separate.
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
@@ -154,10 +153,11 @@ up to a 16-seed tail. Random fallbacks fill to ten slots if needed; random
 exploration fills the remaining slots. The standalone seed writer instead
 uses 16 random programs. Teacher-first execution prioritizes retained cut
 teachers; \cref{alg:selfplay} leaves the tail route-dependent.
-Parent weighting can change the search targets supplied to training.
-The writer loss separately weights programs by referee rank. Testing whether
-map-guided targets improve later proposals requires the matched ablation
-in \cref{sub:results-ablation}.
+Search-parent weights and writer-loss weights act at different stages;
+the latter use referee rank. Whether map-guided targets improve later
+proposals requires the matched ablation in \cref{sub:results-ablation}.
+The historical diagnostics in \cref{fig:fw-target-progress,fig:fw-target-history}
+do not supply that comparison.
 
 \subsection{The self-play loop}\label{sub:method-selfplay}
 % Algorithm 1 is defined at the start of the subsection so that the full-width
@@ -188,7 +188,8 @@ pool. These are training-search budgets, separate from the one-draw
 protocol in \cref{sub:method-gameday}.
 
 The reference training rule is expert iteration
-\citep{anthony2017expert}: search-scored programs train the writer.
+\citep{anthony2017expert}: in the proposed offline loop, search-scored
+programs train the writer.
 The writer term weights sampled programs from $G_p$ by referee rank;
 it joins the map and auxiliary terms in the combined objective
 (\cref{app:training}):
