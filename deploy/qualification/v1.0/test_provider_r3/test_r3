@@ -200,6 +200,71 @@ class R3ProviderTests(unittest.TestCase):
             self.invoke()
         self.assertFalse(self.result.exists())
 
+    def test_duplicate_success_streams_never_publish_a_receipt(self):
+        original = self.successful_output
+        self.successful_output = lambda test: original(test) * 2
+        with self.assertRaises(common.ProviderError):
+            self.invoke()
+        self.assertFalse(self.result.exists())
+
+    def test_mixed_summaries_and_extra_cases_refuse(self):
+        test, _ = r3.TESTS[0]
+        valid = self.successful_output(test)
+        for output in (
+            valid
+            + "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out\n",
+            valid.replace("test result: ok.", "test result: FAILED."),
+            valid.replace("test result:", "test other::case ... ok\ntest result:"),
+            valid.replace(" ... ok", " ... FAILED\nok"),
+            valid.replace(" ... ok", " ... panicked at fixture\nok"),
+        ):
+            with self.subTest(output=output), self.assertRaises(common.ProviderError):
+                r3.validate_output(test, output)
+
+    def test_exact_nocapture_case_accepts_interleaved_diagnostics(self):
+        original = self.successful_output
+        self.successful_output = lambda test: original(test).replace(
+            " ... ok", " ... data-free diagnostic\nok"
+        )
+        self.assertEqual(self.invoke(), 0)
+        self.assertEqual(json.loads(self.result.read_text())["counts"]["passed"], 7)
+
+    def test_mid_run_same_byte_candidate_symlink_never_publishes(self):
+        target = self.root / "same-bytes.bin"
+        target.write_bytes(self.artifact.read_bytes())
+
+        def swap():
+            self.artifact.unlink()
+            self.artifact.symlink_to(target)
+
+        self.after_test = swap
+        with self.assertRaisesRegex(common.ProviderError, "non-symlink"):
+            self.invoke()
+        self.assertFalse(self.result.exists())
+
+    def test_mid_run_candidate_parent_symlink_never_publishes(self):
+        folder = self.root / "candidate-folder"
+        folder.mkdir()
+        self.artifact = folder / "candidate.bin"
+        self.artifact.write_bytes(b"synthetic candidate; never a release")
+        self.ctx = common.Context(
+            "R3",
+            self.artifact,
+            self.ctx.artifact_sha256,
+            self.ctx.source_sha,
+            self.result,
+        )
+
+        def swap():
+            target = self.root / "moved-candidate-folder"
+            folder.rename(target)
+            folder.symlink_to(target, target_is_directory=True)
+
+        self.after_test = swap
+        with self.assertRaisesRegex(common.ProviderError, "non-symlink"):
+            self.invoke()
+        self.assertFalse(self.result.exists())
+
     def test_existing_receipt_is_not_overwritten(self):
         self.result.write_text("existing receipt")
         with self.assertRaisesRegex(common.ProviderError, "new regular file"):

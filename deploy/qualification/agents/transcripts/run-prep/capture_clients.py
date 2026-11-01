@@ -37,18 +37,27 @@ def fail_if(condition: bool, message: str) -> None:
         raise CapturePackageError(message)
 
 
+def parse_object(raw: bytes, label: str) -> dict:
+    try:
+        value = json.loads(raw)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise CapturePackageError(f"{label} is invalid JSON") from exc
+    fail_if(not isinstance(value, dict), f"{label} must be a JSON object")
+    return value
+
+
 def load_object(path: Path, label: str) -> tuple[dict, bytes]:
     try:
         raw = path.read_bytes()
-        value = json.loads(raw)
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise CapturePackageError(f"{label} is unreadable or invalid JSON") from exc
-    fail_if(not isinstance(value, dict), f"{label} must be a JSON object")
-    return value, raw
+    except OSError as exc:
+        raise CapturePackageError(f"{label} is unreadable") from exc
+    return parse_object(raw, label), raw
 
 
 def source_identity(repo: Path, claimed: str) -> None:
-    fail_if(GIT_SHA.fullmatch(claimed) is None, "source SHA must be 40 lowercase hex chars")
+    fail_if(
+        GIT_SHA.fullmatch(claimed) is None, "source SHA must be 40 lowercase hex chars"
+    )
     try:
         actual = subprocess.check_output(
             ["git", "-C", str(repo), "rev-parse", "HEAD"], text=True
@@ -58,7 +67,9 @@ def source_identity(repo: Path, claimed: str) -> None:
             text=True,
         )
     except (OSError, subprocess.CalledProcessError) as exc:
-        raise CapturePackageError("cannot establish repository source identity") from exc
+        raise CapturePackageError(
+            "cannot establish repository source identity"
+        ) from exc
     fail_if(actual != claimed, "claimed source does not match checkout HEAD")
     fail_if(bool(dirty), "source checkout is not clean")
 
@@ -73,68 +84,115 @@ def prepare(args) -> dict:
     fail_if(args.candidate_sha256 != candidate_sha, "candidate SHA-256 mismatch")
 
     handoff, handoff_raw = load_object(args.input_handoff, "DSC01 input handoff")
-    fail_if(handoff.get("split") != "TRAIN", "input handoff must explicitly identify TRAIN")
-    fail_if(not isinstance(handoff.get("dataset_id"), str)
-            or not handoff["dataset_id"].strip(),
-            "input handoff must contain a nonblank dataset_id")
+    fail_if(
+        handoff.get("split") != "TRAIN", "input handoff must explicitly identify TRAIN"
+    )
+    fail_if(
+        not isinstance(handoff.get("dataset_id"), str)
+        or not handoff["dataset_id"].strip(),
+        "input handoff must contain a nonblank dataset_id",
+    )
     handoff_sha = digest(handoff_raw)
-    fail_if(not isinstance(args.input_handoff_sha256, str)
-            or SHA.fullmatch(args.input_handoff_sha256) is None,
-            "an expected input handoff SHA-256 is required")
+    fail_if(
+        not isinstance(args.input_handoff_sha256, str)
+        or SHA.fullmatch(args.input_handoff_sha256) is None,
+        "an expected input handoff SHA-256 is required",
+    )
     fail_if(args.input_handoff_sha256 != handoff_sha, "input handoff SHA-256 mismatch")
 
     metadata, _ = load_object(args.client_metadata, "client metadata")
-    fail_if(set(metadata) != set(CLIENTS), "metadata must name exactly the three required clients")
+    fail_if(
+        set(metadata) != set(CLIENTS),
+        "metadata must name exactly the three required clients",
+    )
     for key, row in metadata.items():
         fail_if(not isinstance(row, dict), f"metadata for {key} must be an object")
         for field in ("version", "executable", "executable_sha256", "implementation"):
-            fail_if(not isinstance(row.get(field), str) or not row[field].strip(),
-                    f"metadata field {key}.{field} is required")
-        fail_if(SHA.fullmatch(row["executable_sha256"]) is None,
-                f"metadata field {key}.executable_sha256 is invalid")
+            fail_if(
+                not isinstance(row.get(field), str) or not row[field].strip(),
+                f"metadata field {key}.{field} is required",
+            )
+        fail_if(
+            SHA.fullmatch(row["executable_sha256"]) is None,
+            f"metadata field {key}.executable_sha256 is invalid",
+        )
 
     capture_root = args.capture_root.resolve(strict=True)
     fail_if(not capture_root.is_dir(), "capture root must be a directory")
     output = args.out_dir.resolve()
-    fail_if(output == repo or repo in output.parents,
-            "output directory must be outside the source checkout")
-    fail_if(Path("/tmp") == output or Path("/tmp") in output.parents,
-            "output directory must not be under /tmp")
+    fail_if(
+        output == repo or repo in output.parents,
+        "output directory must be outside the source checkout",
+    )
+    fail_if(
+        Path("/tmp") == output or Path("/tmp") in output.parents,
+        "output directory must not be under /tmp",
+    )
     inventory = {}
     for key, slug in CLIENTS.items():
         for suffix in ("execution.json", "verification.json", "mcp.jsonl"):
             name = f"{slug}.{suffix}"
             source_file = capture_root / name
-            fail_if(source_file.is_symlink() or not source_file.is_file(),
-                    f"required fresh sidecar missing or unsafe: {name}")
+            fail_if(
+                source_file.is_symlink() or not source_file.is_file(),
+                f"required fresh sidecar missing or unsafe: {name}",
+            )
             contents = source_file.read_bytes()
             fail_if(not contents, f"sidecar is empty: {name}")
             if suffix == "execution.json":
-                record, _ = load_object(source_file, name)
-                fail_if(record.get("source") != args.source_sha
-                        or record.get("binary_sha256") != candidate_sha
-                        or record.get("client") != key
-                        or record.get("client_version") != metadata[key]["version"]
-                        or record.get("client_resolved_path") != metadata[key]["executable"]
-                        or record.get("client_launcher_sha256") != metadata[key]["executable_sha256"],
-                        f"execution identity does not bind to source, candidate and client: {key}")
+                record = parse_object(contents, name)
+                fail_if(
+                    record.get("source") != args.source_sha
+                    or record.get("binary_sha256") != candidate_sha
+                    or record.get("client") != key
+                    or record.get("client_version") != metadata[key]["version"]
+                    or record.get("client_resolved_path") != metadata[key]["executable"]
+                    or record.get("client_launcher_sha256")
+                    != metadata[key]["executable_sha256"],
+                    f"execution identity does not bind to source, candidate and client: {key}",
+                )
             elif suffix == "verification.json":
-                record, _ = load_object(source_file, name)
-                fail_if(record.get("source") != args.source_sha
-                        or record.get("binary_sha256") != candidate_sha
-                        or record.get("client_version") != metadata[key]["version"]
-                        or record.get("client_sha256") != metadata[key]["executable_sha256"],
-                        f"verification identity does not bind to source, candidate and client: {key}")
+                record = parse_object(contents, name)
+                fail_if(
+                    record.get("source") != args.source_sha
+                    or record.get("binary_sha256") != candidate_sha
+                    or record.get("client_version") != metadata[key]["version"]
+                    or record.get("client_sha256")
+                    != metadata[key]["executable_sha256"],
+                    f"verification identity does not bind to source, candidate and client: {key}",
+                )
             inventory[name] = {"bytes": len(contents), "sha256": digest(contents)}
 
     fail_if(output.exists() or output.is_symlink(), "output directory already exists")
-    fail_if(output == capture_root or capture_root in output.parents,
-            "output directory must not be inside capture input")
+    fail_if(
+        output == capture_root or capture_root in output.parents,
+        "output directory must not be inside capture input",
+    )
     output.mkdir(mode=0o700, parents=True)
     try:
         for name in inventory:
-            shutil.copyfile(capture_root / name, output / name, follow_symlinks=False)
-            os.chmod(output / name, 0o600)
+            copied = output / name
+            shutil.copyfile(capture_root / name, copied, follow_symlinks=False)
+            fail_if(
+                copied.is_symlink() or not copied.is_file(),
+                f"sidecar changed while copying: {name}",
+            )
+            copied_bytes = copied.read_bytes()
+            fail_if(
+                len(copied_bytes) != inventory[name]["bytes"]
+                or digest(copied_bytes) != inventory[name]["sha256"],
+                f"sidecar changed while copying: {name}",
+            )
+            os.chmod(copied, 0o600)
+        source_identity(repo, args.source_sha)
+        fail_if(
+            args.candidate.is_symlink() or not args.candidate.is_file(),
+            "candidate must remain a regular non-symlink file",
+        )
+        fail_if(
+            digest(args.candidate.read_bytes()) != candidate_sha,
+            "candidate changed during capture copy",
+        )
         payload = {
             "schema": "jopedime.a5-capture-custody/v1",
             "status": "PREPARED_UNVERIFIED",
@@ -150,7 +208,9 @@ def prepare(args) -> dict:
             "a5_status": "NOT_QUALIFIED",
         }
         manifest = output / "capture-manifest.json"
-        manifest.write_text(json.dumps(payload, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+        manifest.write_text(
+            json.dumps(payload, sort_keys=True, indent=2) + "\n", encoding="utf-8"
+        )
         os.chmod(manifest, 0o600)
         pin = output / "trusted-manifest.sha256"
         pin.write_text(digest(manifest.read_bytes()) + "\n", encoding="ascii")
@@ -161,71 +221,137 @@ def prepare(args) -> dict:
             child.unlink()
         output.rmdir()
         raise
-    return {"manifest": str(manifest), "manifest_sha256": digest(manifest.read_bytes()),
-            "status": payload["status"], "a5_status": payload["a5_status"]}
+    return {
+        "manifest": str(manifest),
+        "manifest_sha256": digest(manifest.read_bytes()),
+        "status": payload["status"],
+        "a5_status": payload["a5_status"],
+    }
 
 
 def self_test() -> None:
     """Data-free contract checks; no client, engine, or dataset is launched/read."""
     import tempfile
 
-    with tempfile.TemporaryDirectory(prefix="a5-capture-selftest-", dir=Path.home()) as temp:
+    with tempfile.TemporaryDirectory(
+        prefix="a5-capture-selftest-", dir=Path.home()
+    ) as temp:
         root = Path(temp)
         repo = root / "repo"
         repo.mkdir()
         subprocess.run(["git", "init", "-q", str(repo)], check=True)
-        subprocess.run(["git", "-C", str(repo), "-c", "user.name=test", "-c",
-                        "user.email=test@example.invalid", "commit", "--allow-empty", "-qm", "fixture"], check=True)
-        source = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(repo),
+                "-c",
+                "user.name=test",
+                "-c",
+                "user.email=test@example.invalid",
+                "commit",
+                "--allow-empty",
+                "-qm",
+                "fixture",
+            ],
+            check=True,
+        )
+        source = subprocess.check_output(
+            ["git", "-C", str(repo), "rev-parse", "HEAD"], text=True
+        ).strip()
         candidate = root / "candidate.bin"
         candidate.write_bytes(b"synthetic candidate bytes")
         handoff = root / "handoff.json"
-        handoff.write_text('{"dataset_id":"fixture-only","split":"TRAIN"}\n', encoding="utf-8")
+        handoff.write_text(
+            '{"dataset_id":"fixture-only","split":"TRAIN"}\n', encoding="utf-8"
+        )
         metadata = {}
         captures = root / "captures"
         captures.mkdir()
         candidate_sha = digest(candidate.read_bytes())
         for key, slug in CLIENTS.items():
-            metadata[key] = {"version": "fixture", "executable": "/fixture/client",
-                             "executable_sha256": "a" * 64, "implementation": "fixture"}
-            execution = {"source": source, "binary_sha256": candidate_sha,
-                "client": key, "client_version": "fixture",
-                "client_resolved_path": "/fixture/client", "client_launcher_sha256": "a" * 64}
-            verification = {"source": source, "binary_sha256": candidate_sha,
-                "client_version": "fixture", "client_sha256": "a" * 64}
-            (captures / f"{slug}.execution.json").write_text(json.dumps(execution), encoding="utf-8")
-            (captures / f"{slug}.verification.json").write_text(json.dumps(verification), encoding="utf-8")
-            (captures / f"{slug}.mcp.jsonl").write_text("synthetic frame\n", encoding="utf-8")
+            metadata[key] = {
+                "version": "fixture",
+                "executable": "/fixture/client",
+                "executable_sha256": "a" * 64,
+                "implementation": "fixture",
+            }
+            execution = {
+                "source": source,
+                "binary_sha256": candidate_sha,
+                "client": key,
+                "client_version": "fixture",
+                "client_resolved_path": "/fixture/client",
+                "client_launcher_sha256": "a" * 64,
+            }
+            verification = {
+                "source": source,
+                "binary_sha256": candidate_sha,
+                "client_version": "fixture",
+                "client_sha256": "a" * 64,
+            }
+            (captures / f"{slug}.execution.json").write_text(
+                json.dumps(execution), encoding="utf-8"
+            )
+            (captures / f"{slug}.verification.json").write_text(
+                json.dumps(verification), encoding="utf-8"
+            )
+            (captures / f"{slug}.mcp.jsonl").write_text(
+                "synthetic frame\n", encoding="utf-8"
+            )
         metadata_path = root / "clients.json"
         metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
-        parser = argparse.Namespace(repo=repo, source_sha=source, candidate=candidate,
-            candidate_sha256=digest(candidate.read_bytes()), input_handoff=handoff,
-            input_handoff_sha256=digest(handoff.read_bytes()), client_metadata=metadata_path,
-            capture_root=captures, out_dir=root / "out")
+        parser = argparse.Namespace(
+            repo=repo,
+            source_sha=source,
+            candidate=candidate,
+            candidate_sha256=digest(candidate.read_bytes()),
+            input_handoff=handoff,
+            input_handoff_sha256=digest(handoff.read_bytes()),
+            client_metadata=metadata_path,
+            capture_root=captures,
+            out_dir=root / "out",
+        )
         result = prepare(parser)
         assert result["a5_status"] == "NOT_QUALIFIED"
-        assert digest((root / "out/capture-manifest.json").read_bytes()) == result["manifest_sha256"]
-        for broken in ({**metadata, "extra": {}}, {"claude_code": metadata["claude_code"]}):
+        assert (
+            digest((root / "out/capture-manifest.json").read_bytes())
+            == result["manifest_sha256"]
+        )
+        for broken in (
+            {**metadata, "extra": {}},
+            {"claude_code": metadata["claude_code"]},
+        ):
             metadata_path.write_text(json.dumps(broken), encoding="utf-8")
             try:
-                prepare(argparse.Namespace(**{**vars(parser), "out_dir": root / "rejected"}))
+                prepare(
+                    argparse.Namespace(**{**vars(parser), "out_dir": root / "rejected"})
+                )
             except CapturePackageError:
                 pass
             else:
                 raise AssertionError("invalid client roster was accepted")
         metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
-        altered = json.loads((captures / "claude-code.execution.json").read_text(encoding="utf-8"))
+        altered = json.loads(
+            (captures / "claude-code.execution.json").read_text(encoding="utf-8")
+        )
         altered["source"] = "0" * 40
-        (captures / "claude-code.execution.json").write_text(json.dumps(altered), encoding="utf-8")
+        (captures / "claude-code.execution.json").write_text(
+            json.dumps(altered), encoding="utf-8"
+        )
         try:
-            prepare(argparse.Namespace(**{**vars(parser), "out_dir": root / "bad-binding"}))
+            prepare(
+                argparse.Namespace(**{**vars(parser), "out_dir": root / "bad-binding"})
+            )
         except CapturePackageError:
             pass
         else:
             raise AssertionError("source-mismatched capture was accepted")
         handoff.write_text('{"dataset_id":"fixture-only"}\n', encoding="utf-8")
         try:
-            prepare(argparse.Namespace(**{**vars(parser), "out_dir": root / "bad-train"}))
+            prepare(
+                argparse.Namespace(**{**vars(parser), "out_dir": root / "bad-train"})
+            )
         except CapturePackageError:
             pass
         else:
@@ -249,8 +375,16 @@ def main() -> int:
         self_test()
         print("capture client packaging controls: PASS (synthetic fixtures only)")
         return 0
-    required = (args.repo, args.source_sha, args.candidate, args.candidate_sha256,
-                args.input_handoff, args.client_metadata, args.capture_root, args.out_dir)
+    required = (
+        args.repo,
+        args.source_sha,
+        args.candidate,
+        args.candidate_sha256,
+        args.input_handoff,
+        args.client_metadata,
+        args.capture_root,
+        args.out_dir,
+    )
     if any(value is None for value in required):
         parser.error("all package inputs are required unless --self-test is used")
     try:

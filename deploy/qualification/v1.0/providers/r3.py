@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -13,6 +14,7 @@ from common import (
     Context,
     ProviderError,
     context,
+    exact_case_passed,
     rust_counts,
     sha256,
     verify_candidate,
@@ -81,6 +83,14 @@ def check_result_path(ctx: Context) -> None:
 
 
 def check_binding(ctx: Context, run, env: dict[str, str]) -> None:
+    if (
+        not ctx.artifact.is_absolute()
+        or any(part.is_symlink() for part in (ctx.artifact, *ctx.artifact.parents))
+        or not ctx.artifact.is_file()
+    ):
+        raise ProviderError(
+            "R3 candidate must remain an absolute regular non-symlink file"
+        )
     for args, expected in (
         (["git", "rev-parse", "HEAD"], ctx.source_sha),
         (["git", "status", "--porcelain", "--untracked-files=all"], ""),
@@ -102,9 +112,17 @@ def check_binding(ctx: Context, run, env: dict[str, str]) -> None:
 
 
 def validate_output(test: str, output: str) -> None:
-    if rust_counts(output) != SINGLE_PASS:
+    summaries = re.findall(r"^test result: .+$", output, re.MULTILINE)
+    if (
+        output.count("test result:") != 1
+        or len(summaries) != 1
+        or not summaries[0].startswith("test result: ok.")
+        or rust_counts(output) != SINGLE_PASS
+    ):
         raise ProviderError(f"R3 requires exactly one passing case for {test}")
-    if f"test store::commands::tests::{test} ... ok" not in output:
+    expected = f"store::commands::tests::{test}"
+    cases = re.findall(r"^test (\S+) \.\.\. ", output, re.MULTILINE)
+    if cases != [expected] or not exact_case_passed(output, expected):
         raise ProviderError(f"R3 exact selector did not pass: {test}")
 
 

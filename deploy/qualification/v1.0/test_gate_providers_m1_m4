@@ -143,6 +143,117 @@ class GateProviders(unittest.TestCase):
         )
         self.assertEqual(result["counts"]["passed"], 2)
 
+    def suite_context(self, gate="M1"):
+        with mock.patch.dict(
+            "os.environ", self.env | {"JOPE_REL07_GATE_ID": gate}, clear=True
+        ):
+            return common.context(gate)
+
+    @staticmethod
+    def passing_child():
+        return mock.Mock(
+            returncode=0,
+            stdout="test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 52 filtered out",
+            stderr="",
+        )
+
+    def test_result_created_after_context_is_preserved_before_child_execution(self):
+        ctx = self.suite_context()
+        self.result.write_bytes(b"earlier receipt")
+        with mock.patch.object(
+            common.subprocess, "run", return_value=self.passing_child()
+        ) as run:
+            with self.assertRaises((common.ProviderError, FileExistsError)):
+                common.run_suite(ctx, ["fixture"], common.rust_counts)
+        run.assert_not_called()
+        self.assertEqual(self.result.read_bytes(), b"earlier receipt")
+
+    def test_racing_result_is_preserved_instead_of_overwritten_by_pass(self):
+        ctx = self.suite_context()
+
+        def race(*args, **kwargs):
+            self.result.write_bytes(b"concurrent receipt")
+            return self.passing_child()
+
+        with mock.patch.object(common.subprocess, "run", side_effect=race):
+            with self.assertRaises((common.ProviderError, FileExistsError)):
+                common.run_suite(ctx, ["fixture"], common.rust_counts)
+        self.assertEqual(self.result.read_bytes(), b"concurrent receipt")
+
+    def test_existing_temporary_evidence_is_not_used_or_deleted(self):
+        ctx = self.suite_context()
+        temporary = self.result.with_name(self.result.name + ".new")
+        temporary.write_bytes(b"earlier incomplete evidence")
+        with mock.patch.object(
+            common.subprocess, "run", return_value=self.passing_child()
+        ):
+            self.assertEqual(common.run_suite(ctx, ["fixture"], common.rust_counts), 0)
+        self.assertEqual(temporary.read_bytes(), b"earlier incomplete evidence")
+        self.assertEqual(json.loads(self.result.read_text())["status"], "PASS")
+
+    def test_racing_symlink_result_does_not_replace_link_or_touch_target(self):
+        ctx = self.suite_context()
+        target = self.root / "prior.json"
+        target.write_bytes(b"prior evidence")
+
+        def race(*args, **kwargs):
+            self.result.symlink_to(target)
+            return self.passing_child()
+
+        with mock.patch.object(common.subprocess, "run", side_effect=race):
+            with self.assertRaises((common.ProviderError, FileExistsError)):
+                common.run_suite(ctx, ["fixture"], common.rust_counts)
+        self.assertTrue(self.result.is_symlink())
+        self.assertEqual(target.read_bytes(), b"prior evidence")
+
+    def test_unsafe_result_paths_refuse_before_child_execution(self):
+        from dataclasses import replace
+
+        ctx = self.suite_context()
+        checkout = self.root / "checkout"
+        checkout.mkdir()
+        alias = self.root / "alias"
+        alias.symlink_to(self.root, target_is_directory=True)
+        for result in [Path("relative-result"), checkout / "result", alias / "result"]:
+            with (
+                self.subTest(result=result),
+                mock.patch.object(common, "ROOT", checkout),
+            ):
+                with mock.patch.object(
+                    common.subprocess, "run", return_value=self.passing_child()
+                ) as run:
+                    with self.assertRaises(common.ProviderError):
+                        common.run_suite(
+                            replace(ctx, result=result), ["fixture"], common.rust_counts
+                        )
+                run.assert_not_called()
+        self.assertFalse((checkout / "result").exists())
+
+    def test_m4_positive_result_keeps_full_identity_and_real_counts(self):
+        ctx = self.suite_context("M4")
+        with mock.patch.object(
+            common.subprocess, "run", return_value=self.passing_child()
+        ):
+            self.assertEqual(common.run_suite(ctx, ["fixture"], common.rust_counts), 0)
+        result = json.loads(self.result.read_text())
+        self.assertEqual(result["id"], "M4")
+        self.assertEqual(result["source_sha"], ctx.source_sha)
+        self.assertEqual(result["artifact_sha256"], ctx.artifact_sha256)
+        self.assertEqual(
+            result["counts"],
+            dict(collected=4, executed=4, passed=4, failed=0, skipped=0, excluded=0),
+        )
+
+    def test_child_failure_preserves_exit_without_publishing_a_result(self):
+        ctx = self.suite_context()
+        with mock.patch.object(
+            common.subprocess,
+            "run",
+            return_value=mock.Mock(returncode=7, stdout="", stderr="failed fixture"),
+        ):
+            self.assertEqual(common.run_suite(ctx, ["fixture"], common.rust_counts), 7)
+        self.assertFalse(self.result.exists())
+
     def test_skipped_suite_cannot_emit_a_pass_result(self):
         with mock.patch.dict("os.environ", self.env, clear=True):
             ctx = common.context("M1")
