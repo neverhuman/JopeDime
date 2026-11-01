@@ -1,0 +1,262 @@
+{
+  "family_count": 205,
+  "seed_ids": [
+    182101,
+    182102,
+    182103
+  ],
+  "arms": {
+    "R882": {
+      "per_seed_equal_family_utility": [
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834
+      ],
+      "median_over_seeds": 1.3853554329931834,
+      "family_bootstrap_ci95": [
+        1.1399445926696037,
+        1.6728098680667889
+      ]
+    },
+    "ENS5": {
+      "per_seed_equal_family_utility": [
+        1.3923557972354346,
+        1.4045335870476123,
+        1.392875931909453
+      ],
+      "median_over_seeds": 1.392875931909453,
+      "family_bootstrap_ci95": [
+        1.1461213759298707,
+        1.6853230975942008
+      ]
+    },
+    "ENS10": {
+      "per_seed_equal_family_utility": [
+        1.400555700271843,
+        1.4044714236045415,
+        1.3981908479468208
+      ],
+      "median_over_seeds": 1.400555700271843,
+      "family_bootstrap_ci95": [
+        1.1523127129859523,
+        1.6896127187898509
+      ]
+    },
+    "ENS20": {
+      "per_seed_equal_family_utility": [
+        1.4021124611139166,
+        1.4053778761733247,
+        1.396261369374022
+      ],
+      "median_over_seeds": 1.4021124611139166,
+      "family_bootstrap_ci95": [
+        1.1529644872685214,
+        1.6901185356791895
+      ]
+    }
+  },
+  "family_bootstrap_draws": 10000,
+  "gain_vs_r882": {
+    "ENS5": {
+      "per_seed": [
+        0.007000364242251574,
+        0.01917815405442878,
+        0.007520498916270659
+      ],
+      "median_over_seeds": 0.007520498916270659,
+      "family_bootstrap_ci95": [
+        -0.0210927791741273,
+        0.044897518800569323
+      ],
+      "one_sided_centered_bootstrap_p": 0.37646235376462356,
+      "holm_m3_adjusted_p": 0.4574542545745426
+    },
+    "ENS10": {
+      "per_seed": [
+        0.015200267278660685,
+        0.019115990611359168,
+        0.012835414953637455
+      ],
+      "median_over_seeds": 0.015200267278660685,
+      "family_bootstrap_ci95": [
+        -0.015163454367017248,
+        0.04996151773447941
+      ],
+      "one_sided_centered_bootstrap_p": 0.19508049195080493,
+      "holm_m3_adjusted_p": 0.4574542545745426
+    },
+    "ENS20": {
+      "per_seed": [
+        0.016757028120734107,
+        0.020022443180142156,
+        0.010905936380839695
+      ],
+      "median_over_seeds": 0.016757028120734107,
+      "family_bootstrap_ci95": [
+        -0.015297020956762448,
+        0.05053399015832999
+      ],
+      "one_sided_centered_bootstrap_p": 0.15248475152484753,
+      "holm_m3_adjusted_p": 0.4574542545745426
+    }
+  },
+  "elo_vs_r882": {
+    "ENS5": {
+      "per_seed": [
+        1502.1427369793605,
+        1510.9781036846412,
+        1505.3097636380269
+      ],
+      "median_over_seeds": 1505.3097636380269,
+      "family_bootstrap_ci95": [
+        1490.7601318869865,
+        1521.0438957296974
+      ]
+    },
+    "ENS10": {
+      "per_seed": [
+        1509.0213502792876,
+        1507.2791621956994,
+        1509.9289581998546
+      ],
+      "median_over_seeds": 1509.0213502792876,
+      "family_bootstrap_ci95": [
+        1493.8699228308399,
+        1523.6508370232145
+      ]
+    },
+    "ENS20": {
+      "per_seed": [
+        1511.271841171317,
+        1506.6595098307264,
+        1506.3695825372624
+      ],
+      "median_over_seeds": 1506.6595098307264,
+      "family_bootstrap_ci95": [
+        1492.2178664714415,
+        1523.3181376434638
+      ]
+    }
+  },
+  "verdict": "NO_ADVANCE",
+  "underpowered_null_per_H175_MDE80": true,
+  "H175_MDE80_reference": {
+    "pooled_205_family_planning_heuristic": 0.04234124834299788,
+    "measured_for_this_rule": false,
+    "basis": "H175 family-clustered full-slate MDE80 .094678 divided by sqrt(5); planning heuristic only"
+  },
+  "verdict_rule": "ADVANCE_CANDIDATE iff ENS20 median gain > .001, paired-family bootstrap LCB95 > 0, all three seed gains > 0, and Holm m=3 adjusted one-sided centered-bootstrap p < .05 across ENS5/ENS10/ENS20; ties reject",
+  "minus2_context_count_by_seed_arm": {
+    "182101": {
+      "R882": 17,
+      "ENS5": 19,
+      "ENS10": 17,
+      "ENS20": 18
+    },
+    "182102": {
+      "R882": 17,
+      "ENS5": 16,
+      "ENS10": 17,
+      "ENS20": 16
+    },
+    "182103": {
+      "R882": 17,
+      "ENS5": 19,
+      "ENS10": 18,
+      "ENS20": 17
+    }
+  },
+  "outer_folds": 5,
+  "updates_per_member": 40,
+  "trajectories": 300,
+  "optimizer_updates": 12000,
+  "assessed_family_count": 205,
+  "gain_vs_k": [
+    {
+      "k": 5,
+      "arm": "ENS5",
+      "median_gain": 0.007520498916270659,
+      "ci95": [
+        -0.0210927791741273,
+        0.044897518800569323
+      ],
+      "per_seed": [
+        0.007000364242251574,
+        0.01917815405442878,
+        0.007520498916270659
+      ],
+      "raw_p": 0.37646235376462356,
+      "holm_m3_adjusted_p": 0.4574542545745426,
+      "median_elo": 1505.3097636380269,
+      "elo_ci95": [
+        1490.7601318869865,
+        1521.0438957296974
+      ],
+      "member_choice_disagreement": 0.3424938474159147
+    },
+    {
+      "k": 10,
+      "arm": "ENS10",
+      "median_gain": 0.015200267278660685,
+      "ci95": [
+        -0.015163454367017248,
+        0.04996151773447941
+      ],
+      "per_seed": [
+        0.015200267278660685,
+        0.019115990611359168,
+        0.012835414953637455
+      ],
+      "raw_p": 0.19508049195080493,
+      "holm_m3_adjusted_p": 0.4574542545745426,
+      "median_elo": 1509.0213502792876,
+      "elo_ci95": [
+        1493.8699228308399,
+        1523.6508370232145
+      ],
+      "member_choice_disagreement": 0.34198037249718954
+    },
+    {
+      "k": 20,
+      "arm": "ENS20",
+      "median_gain": 0.016757028120734107,
+      "ci95": [
+        -0.015297020956762448,
+        0.05053399015832999
+      ],
+      "per_seed": [
+        0.016757028120734107,
+        0.020022443180142156,
+        0.010905936380839695
+      ],
+      "raw_p": 0.15248475152484753,
+      "holm_m3_adjusted_p": 0.4574542545745426,
+      "median_elo": 1506.6595098307264,
+      "elo_ci95": [
+        1492.2178664714415,
+        1523.3181376434638
+      ],
+      "member_choice_disagreement": 0.3431702718650605
+    }
+  ],
+  "member_pairwise_choice_disagreement_by_k": {
+    "5": 0.3424938474159147,
+    "10": 0.34198037249718954,
+    "20": 0.3431702718650605
+  },
+  "member_pairwise_choice_disagreement_rate": 0.3431702718650605,
+  "member_a_score_persistence": {
+    "file": "member_a_scores.npz",
+    "shape": [
+      3,
+      20,
+      1219,
+      1152
+    ],
+    "dtype": "float32",
+    "choices_persisted": true
+  },
+  "diagnostic_only": true,
+  "serving_promotion": false,
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+}
