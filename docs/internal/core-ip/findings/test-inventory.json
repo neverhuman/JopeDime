@@ -1631,6 +1631,10 @@
       "reason": "REL-07 A5 named-client provider controls (manifest, sidecar and receipt refusal proofs over synthetic evidence); no live client, release or dataset job executes",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/v1.0/test_provider_a5/test_a5_run.py": {
+      "reason": "REL-07 A5 command adapter controls over synthetic manifest, provider and DEV-BUILD receipts; no live client, release or dataset job executes.",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/v1.0/test_provider_d2/test_d2.py": {
       "reason": "REL-07 D2 size-provider contract controls over synthetic size reports and candidate identities; no latency verdict, live candidate or release qualification.",
       "role": "infrastructure"
