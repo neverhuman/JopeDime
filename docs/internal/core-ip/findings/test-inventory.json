@@ -1977,6 +1977,10 @@
       "reason": "Owner-requested H150 W5 provenance-unblock controls for the identity-only manifest builder and proof checker; synthetic fixtures only, no sealed/holdout payloads; offline research only.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h151_lookahead_drift_control/test_h151.py": {
+      "reason": "H151 owner-directed Lookahead vs drift-matched AdamW step-size control data-free unit suite; offline research only.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
       "role": "research"
@@ -2138,6 +2142,10 @@
       "role": "research"
     },
     "python:research/flywheel_selfplay/rnk10_r882_acceptance/test_import_checkpoint.py": {
+      "reason": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract).",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/rnk10_r882_acceptance/test_run_acceptance.py": {
       "reason": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract).",
       "role": "research"
     },
@@ -5223,10 +5231,6 @@
       "subsystems": [
         "encoders"
       ]
-    },
-    "python:research/flywheel_selfplay/h151_lookahead_drift_control/test_h151.py": {
-      "reason": "H151 owner-directed Lookahead vs drift-matched AdamW step-size control data-free unit suite; offline research only.",
-      "role": "research"
     },
     "python:research/joint_regbin/test_binary_dataset.py": {
       "reason": "JRB-01 binary panel packet validation (schema, family coverage, sealed-id exclusion, deterministic rebuild); offline research analysis outside the reviewed product baseline.",

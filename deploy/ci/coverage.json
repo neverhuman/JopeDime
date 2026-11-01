@@ -5144,6 +5144,16 @@
       "lanes": [],
       "scope": "H150 synthetic controls for the identity-only sealed-family manifest (owner 293+470 definition enforcement, conservative union) and the three W5 provenance proofs (identity overlap and registry crosswalk, lineage/row-source census, no promotion of missing evidence). No sealed rows, outcomes or real identities in the fixture suite; offline research only."
     },
+    "python:research/flywheel_selfplay/h151_lookahead_drift_control/test_h151.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H151 owner-directed Lookahead drift-matched control suite: median-seed equal-family bootstrap, inclusive [0.85, 1.15] 15% drift-matching manipulation gate, three-seed r882 advancement and Holm-four gates across all executed arms, Lookahead k=5 alpha=0.5 schedule, input audit, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"
@@ -5545,6 +5555,16 @@
       "scope": "Owner-requested W5 provenance-preflight synthetic metadata controls: body reads refused before any S3 call, counter hashes over bytes, unknown counts kept null, and refusal of pair and row-closure shortcuts (strat300 nq=0, siblings, wrong cut or alias, sentinels, AST similarity, missing operator or evaluator provenance). None admits data or qualifies W5."
     },
     "python:research/flywheel_selfplay/rnk10_r882_acceptance/test_import_checkpoint.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract)."
+    },
+    "python:research/flywheel_selfplay/rnk10_r882_acceptance/test_run_acceptance.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -13934,16 +13954,6 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
-    },
-    "python:research/flywheel_selfplay/h151_lookahead_drift_control/test_h151.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H151 owner-directed Lookahead drift-matched control suite: median-seed equal-family bootstrap, inclusive [0.85, 1.15] 15% drift-matching manipulation gate, three-seed r882 advancement and Holm-four gates across all executed arms, Lookahead k=5 alpha=0.5 schedule, input audit, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
     },
     "python:research/joint_regbin/test_binary_dataset.py": {
       "discovery": {

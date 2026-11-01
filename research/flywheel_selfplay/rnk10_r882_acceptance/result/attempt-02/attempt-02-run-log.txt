@@ -1,0 +1,6 @@
+scored 16/91 registered DL-Val contexts
+scored 32/91 registered DL-Val contexts
+scored 48/91 registered DL-Val contexts
+scored 64/91 registered DL-Val contexts
+scored 80/91 registered DL-Val contexts
+{"gates": {"family_bootstrap_97_5pct_lower_bound_gt_0": false, "family_grouped_elo_gt_1500": true, "max_conditional_base_kl_lte_0_35": true, "median_family_mean_delta_gt_0": false}, "output": "/home/ubuntu/jope-data/RNK10-t2210-run-20261101/acceptance-result.json", "qualified": false}
