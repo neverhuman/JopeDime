@@ -9,3 +9,21 @@ Runner argv is `python3 -B deploy/qualification/v1.0/providers/m5.py --golden-di
 Acceptance: `nice -n 10 python3 -B deploy/qualification/v1.0/test_provider_m5 -v`, the exact Rust selector above with the explicit fixture bindings, Ruff/format, diff and the five records checks. Source implementation, controlled fixture proof, candidate gate execution, RNK-10/Q1 scientific qualification and release signing remain separate. No sealed/holdout input, GPU, speed verdict, training or signing is involved; no GitHub CI is dispatched under the owner ruling. Gate evidence context is `status/RES-07.md` and `status/RNK-10.md`; those records cannot substitute for executing this candidate gate.
 
 Initial real CPU probes at sources `0c6fb19ec27e8ef333cbfbb011dc8b35b4b9b138` and `6b5e92e733948bb75f1e7b8309ec49cb4a24b68c` failed the stronger 4+8 landmark assertion, first under negation and then under the bounded interventions. Those failures are preserved. The final provider retains complete measurements and rejects this missing causal effect; no M5 release PASS, weight repair or quality grant is inferred from implementation tests.
+
+
+## Discovery input binding
+
+The release runner discovers M5 as `python3 -B providers/m5.py` without extra
+arguments. M5 therefore accepts the existing `JOPE_GOLDEN_DIR` and
+`JOPE_PARITY_BUNDLE_DIR` environment bindings as defaults for `--golden-dir` and
+`--bundle-dir`. Explicit flags take precedence, and either source may supply
+each path. Missing bindings refuse before candidate verification or child
+execution. Absolute paths, non-symlink regular files and the exact TRAIN-index
+and frozen-weight hashes remain mandatory. No input is downloaded or selected
+automatically. The causal report predicates and result publication are unchanged;
+the observed 0/50 landmark-causality result remains unqualified.
+
+Data-free CLI controls reproduce the runner's bare invocation through the real
+context parser and M5 checks. They cover environment-only and mixed/explicit
+inputs, precedence, missing inputs and invalid paths. Synthetic child receipts
+prove orchestration, not model causality or a release-candidate PASS.

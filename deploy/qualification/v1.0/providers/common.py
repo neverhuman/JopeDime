@@ -194,6 +194,17 @@ def run_suite(
     parse_counts: Callable[[Path | str], dict[str, int]],
     counts_path: Path | None = None,
 ) -> int:
+    def check_result_path() -> None:
+        if not ctx.result.is_absolute() or any(
+            p.is_symlink() for p in (ctx.result, *ctx.result.parents)
+        ):
+            raise ProviderError("gate result must be an absolute non-symlink path")
+        if ctx.result.exists():
+            raise ProviderError("gate result must be a new file")
+        if ctx.result.resolve().is_relative_to(ROOT.resolve()):
+            raise ProviderError("gate evidence must be outside the source checkout")
+
+    check_result_path()
     actual = ctx.artifact_sha256
     if sha256(ctx.artifact) != actual:
         raise ProviderError("candidate changed before gate assertions")
@@ -232,7 +243,7 @@ def run_suite(
         "counts": counts,
     }
     ctx.result.parent.mkdir(parents=True, exist_ok=True)
-    temporary = ctx.result.with_name(ctx.result.name + ".new")
-    temporary.write_text(json.dumps(payload, sort_keys=True) + "\n")
-    temporary.replace(ctx.result)
+    check_result_path()
+    with ctx.result.open("x", encoding="utf-8") as stream:
+        stream.write(json.dumps(payload, sort_keys=True) + "\n")
     return 0 if status == "PASS" else 1

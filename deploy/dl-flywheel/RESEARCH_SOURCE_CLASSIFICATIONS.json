@@ -4255,6 +4255,126 @@
         "role": "research",
         "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
       }
+    },
+    "python:research/h166/analysis.py": {
+      "bytes": 21053,
+      "sha256": "aeecc30b1fbff9479b568dd54a140825d00b16a53bf4dc928a6cf0fe32195918",
+      "classification": {
+        "role": "research",
+        "reason": "H166 owner-directed C-Mixup label-similarity mixup r882 adapter continuation study; family cross-fit runner, target-similarity kernel, and bounded CPU supervisor. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/h166/monitor.py": {
+      "bytes": 5872,
+      "sha256": "4c7841e6580f98c2f88f8ab15c25cbf0b988f94b65d118347d092f6eb779fa17",
+      "classification": {
+        "role": "research",
+        "reason": "H166 owner-directed C-Mixup label-similarity mixup r882 adapter continuation study; family cross-fit runner, target-similarity kernel, and bounded CPU supervisor. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/h166/run.py": {
+      "bytes": 44985,
+      "sha256": "d928439ea5994da64be7244da3443ec3b9829ec3481bde159d4a8a908dd96200",
+      "classification": {
+        "role": "research",
+        "reason": "H166 owner-directed C-Mixup label-similarity mixup r882 adapter continuation study; family cross-fit runner, target-similarity kernel, and bounded CPU supervisor. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h168_selector_remedy/monitor.py": {
+      "bytes": 5840,
+      "sha256": "0895281aa8a4e6073086eb2e4ee99e12245f290ff272ac4ae2617556ac4782e7",
+      "classification": {
+        "role": "research",
+        "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h168_selector_remedy/runner.py": {
+      "bytes": 46887,
+      "sha256": "9c35e10456cee9c0f5c3d2eea6b2b75a6e311848a5534c8b18130a7519ee3249",
+      "classification": {
+        "role": "research",
+        "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h168_selector_remedy/runtime.py": {
+      "bytes": 15824,
+      "sha256": "162f97bd111dfa016c500d8db187ba714a1acab0715a00bcb91addb8671ef22d",
+      "classification": {
+        "role": "research",
+        "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h168_selector_remedy/science.py": {
+      "bytes": 15063,
+      "sha256": "805d7f23188217e252e50a611421c065e69e2d25a09fa61f74a47de8f38b8ba7",
+      "classification": {
+        "role": "research",
+        "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h170_onecycle/analysis.py": {
+      "bytes": 9598,
+      "sha256": "d0cd7cf8bafe4903509e77d438242ef41b82ed75609674cf7357773f93f07694",
+      "classification": {
+        "role": "research",
+        "reason": "H170 preregistered one-cycle LR/inverse-momentum continuation on a read-only r882 copy. Offline research source only; no product, protected-data, speed or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h170_onecycle/treatment.py": {
+      "bytes": 3477,
+      "sha256": "45fcb10302c3274482490bf444457993c0025185c4e05cf706d0611df9ae39de",
+      "classification": {
+        "role": "research",
+        "reason": "H170 preregistered one-cycle LR/inverse-momentum continuation on a read-only r882 copy. Offline research source only; no product, protected-data, speed or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h170_onecycle/runner.py": {
+      "bytes": 28560,
+      "sha256": "a76985f7e006005785885429c18582d9063f5e557b06b950cb6d023d91cb3bf8",
+      "classification": {
+        "role": "research",
+        "reason": "H170 preregistered one-cycle LR/inverse-momentum continuation on a read-only r882 copy. Offline research source only; no product, protected-data, speed or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h170_onecycle/monitor.py": {
+      "bytes": 5212,
+      "sha256": "053f758e620b1b40847d9c0c7f5235a75029ad220d33bea7b42f5410dca3d8df",
+      "classification": {
+        "role": "research",
+        "reason": "H170 preregistered one-cycle LR/inverse-momentum continuation on a read-only r882 copy. Offline research source only; no product, protected-data, speed or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h169_optimizer_geometry/analysis.py": {
+      "bytes": 7086,
+      "classification": {
+        "role": "research",
+        "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "30af2ebeda438de7db1d7e4e592a46dffbc273b4cb31dabb3925ab7d1fcac527"
+    },
+    "python:research/flywheel_selfplay/h169_optimizer_geometry/treatment.py": {
+      "bytes": 2340,
+      "classification": {
+        "role": "research",
+        "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "30f243e772dbb123ed81cb25e8f32c14e800afef50b6d840802dabddcb443634"
+    },
+    "python:research/flywheel_selfplay/h169_optimizer_geometry/runner.py": {
+      "bytes": 30768,
+      "classification": {
+        "role": "research",
+        "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "8ec30b06f92c8ad9b369c2c2c3257c61bcac557f1a1d65ad10e94664557e85b6"
+    },
+    "python:research/flywheel_selfplay/h169_optimizer_geometry/monitor.py": {
+      "bytes": 5293,
+      "classification": {
+        "role": "research",
+        "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "b1d173305ac59c60f4d34b355df62479ebdfb5ac6103ac0646a6d6525c7ea2a3"
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

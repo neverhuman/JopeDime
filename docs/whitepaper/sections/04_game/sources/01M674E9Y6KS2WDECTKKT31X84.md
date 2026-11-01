@@ -109,7 +109,7 @@ A game supplies experience. Its practicality depends on the cost and informative
 Copy the complete block below into `references.bib`. It contains exactly the seven works cited in this section.
 
 ```bibtex
-@article{silver2017zero,
+@article{silver2017mastering,
   title = {Mastering the game of {Go} without human knowledge},
   author = {Silver, David and Schrittwieser, Julian and Simonyan, Karen and Antonoglou, Ioannis and Huang, Aja and Guez, Arthur and Hubert, Thomas and Baker, Lucas and Lai, Matthew and Bolton, Adrian and Chen, Yutian and Lillicrap, Timothy and Hui, Fan and Sifre, Laurent and van den Driessche, George and Graepel, Thore and Hassabis, Demis},
   journal = {Nature},

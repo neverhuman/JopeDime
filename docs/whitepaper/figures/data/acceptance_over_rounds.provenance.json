@@ -1,0 +1,38 @@
+{
+  "schema": "whitepaper.acceptance-over-rounds-view/v1",
+  "source_csv": "data/live_admissions.csv",
+  "source_csv_sha256": "edd336c3b68e880040e8f41a6fe437617f643ed183d9b03d69554963ad54a6dd",
+  "parent_provenance_sha256": "564df2be09dd8c989add2c80c84c4c3cabc1652b670de95c0afc2c0acaa820e8",
+  "round_window": [
+    775,
+    2663
+  ],
+  "rows": 1889,
+  "accepted_rounds": [
+    782,
+    785,
+    859,
+    882
+  ],
+  "strict_gain_rounds": [
+    785,
+    859
+  ],
+  "accepted_tie_rounds": [
+    782,
+    882
+  ],
+  "initial_recorded_best": "1.1073772627425547",
+  "final_recorded_best": "1.1377941898164525",
+  "peak_cumulative_acceptance_pct": 18.181818,
+  "peak_cumulative_acceptance_round": 785,
+  "last_acceptance_cumulative_pct": 3.703704,
+  "final_cumulative_acceptance_pct": 0.211752,
+  "definition": "At round r (index k >= 1 from 775), cumulative acceptance rate is 100 * sum_{j<=k} accepted_j / k; recorded best is the post-decision best_val step trajectory.",
+  "scope": "Alternate view of the 1,889 retained admission rounds (775-2663); adds no observations and makes no independent first-proposal or deployment claim.",
+  "source_binding": "Aggregate field interpretation only; installed loop/adapter/checkpoint qualification remains required",
+  "generator_sha256": "4d2e829359a1a54d32b110480e38d7da0898582892432f8349b9ed6bab44ff81",
+  "figure_sha256": "a06eea796865f7fb583f391c026dd4fbcd691a15104d1d39dfae1cd9587143b7",
+  "matplotlib_version": "3.10.8",
+  "reproduce": "python3 figures/scripts/make_acceptance_over_rounds_figure.py"
+}

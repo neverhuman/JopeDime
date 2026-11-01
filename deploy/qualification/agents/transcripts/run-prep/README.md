@@ -23,6 +23,47 @@ real capability failures and Gemini's absence. Editing backend routes is outside
 path. The primary risk is mistaking intact partial transcripts for successful qualification; the
 verifier deliberately keeps integrity and qualification as separate results.
 
+### Candidate-bound three-client custody package
+
+`capture_clients.py` packages already captured, fresh sidecars for exactly
+`claude_code`, `gemini_cli` and `codex_cli`. It does not start clients, an engine,
+or inspect dataset contents. The caller supplies a clean checkout SHA, the exact
+candidate file and SHA-256, a DSC01 handoff JSON and its independently supplied
+expected SHA-256, client identity metadata, and a
+directory containing each client's `.execution.json`, `.verification.json` and
+`.mcp.jsonl` files. The handoff is content-pinned and must explicitly contain
+`"split":"TRAIN"` and a nonblank `dataset_id`. The output directory must be new.
+
+```sh
+nice -n 10 python3 -B deploy/qualification/agents/transcripts/run-prep/capture_clients.py \
+  --repo "$PWD" --source-sha "$SOURCE_SHA" \
+  --candidate "$CANDIDATE" --candidate-sha256 "$CANDIDATE_SHA256" \
+  --input-handoff "$DSC01_TRAIN_HANDOFF.json" \
+  --input-handoff-sha256 "$HANDOFF_SHA256" \
+  --client-metadata "$CLIENT_METADATA.json" \
+  --capture-root "$FRESH_CAPTURE_SIDECARS" --out-dir "$PRIVATE_CUSTODY/FRESH-package"
+```
+
+The tool copies only the nine required sidecars into a private new directory and
+writes `capture-manifest.json` plus `trusted-manifest.sha256`. Recompute and
+independently review that pin after the manifest is finalized; the pin is a
+content identity, not a signature or an authority by itself. The custody schema
+is deliberately separate from the A5 provider manifest. It records
+`PREPARED_UNVERIFIED` / `NOT_QUALIFIED` and must not be passed as an A5 PASS
+receipt. Semantic review, provider-ready manifest construction, and the actual
+candidate/handoff remain separate gates. Never fabricate client results to make
+this package qualify. It verifies the source, candidate and client identity fields
+inside each execution and verification JSON receipt before copying; the MCP wire
+sidecar is bound by its inventory hash. Outputs are refused inside the checkout
+or under `/tmp`, and no existing output is overwritten.
+
+The synthetic controls use a disposable empty Git repo and fixture bytes only:
+
+```sh
+nice -n 10 python3 -B deploy/qualification/agents/transcripts/run-prep/capture_clients.py --self-test
+pytest deploy/qualification/agents/transcripts/run-prep/test_capture_clients.py -q
+```
+
 ## Use
 
 From the repository root:

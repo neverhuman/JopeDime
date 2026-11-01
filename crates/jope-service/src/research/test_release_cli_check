@@ -43,11 +43,29 @@ class ReleaseCliCheckTests(unittest.TestCase):
                 rows[0]["profile"][field] = value
                 with self.assertRaises(ValueError):
                     check.release_artifact(rows)
-        for features in [["research", "default"], ["engine"]]:
+        for features in [
+            ["research", "default"],
+            ["engine"],
+            ["default"],
+            ["embedded", "engine", "client"],
+            ["client", "engine", "mcp"],
+            ["client", "default", "engine", "mcp", "research"],
+            ["client", "default", "engine", "mcp", "dev-keys"],
+            None,
+            "default",
+        ]:
             rows = copy.deepcopy(self.messages)
             rows[0]["features"] = features
             with self.assertRaises(ValueError):
                 check.release_artifact(rows)
+
+    def test_full_dist_artifact_accepts_explicit_production_components(self):
+        for optimization in ["3", "s"]:
+            with self.subTest(optimization=optimization):
+                rows = copy.deepcopy(self.messages)
+                rows[0]["profile"]["opt_level"] = optimization
+                rows[0]["features"] = ["client", "embedded", "engine", "mcp"]
+                self.assertEqual(check.release_artifact(rows), rows[0])
 
     def test_failed_missing_and_ambiguous_builds_are_refused(self):
         for rows in [

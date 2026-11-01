@@ -39,6 +39,10 @@ def sha(path):
 def extract(log, snapshot):
     """Read only the captured aggregate prefix and its capture receipt."""
     metadata = json.loads(snapshot.read_text())
+    metadata.pop("host", None)
+    metadata.pop("inode", None)
+    if "path" in metadata:
+        metadata["path"] = Path(metadata["path"]).name
     assert sha(log) == metadata["prefix_sha256"]
     source = [
         json.loads(line, parse_float=Decimal) for line in log.read_text().splitlines()

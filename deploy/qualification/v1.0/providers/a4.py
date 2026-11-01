@@ -85,9 +85,13 @@ def check_binding(ctx: Context, run) -> None:
     if (
         not ctx.artifact.is_absolute()
         or ctx.artifact.is_symlink()
+        or any(parent.is_symlink() for parent in ctx.artifact.parents)
+        or ctx.artifact.resolve() != ctx.artifact
         or not ctx.artifact.is_file()
     ):
-        raise ProviderError("candidate must remain a regular non-symlink file")
+        raise ProviderError(
+            "candidate must remain a canonical absolute regular file without symlink components"
+        )
     for args, expected in (
         (["git", "rev-parse", "HEAD"], ctx.source_sha),
         (["git", "status", "--porcelain", "--untracked-files=all"], ""),
