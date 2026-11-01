@@ -5176,6 +5176,10 @@
     "python:research/flywheel_selfplay/h138_trajectory_swa/test_science.py": {
       "role": "research",
       "reason": "H138 data-free parameter-only averaging, bitwise DOPE including signed-zero refusal, family partitions, Holm/utility/Elo gates and actual owned-process pause/resume/deadline controls. Manual unscored constructor checks copies and input hashes; no scientific inference before prereg merge. Research only, no product qualification."
+    },
+    "python:research/flywheel_selfplay/h144_reg_sweep/test_h144.py": {
+      "role": "research",
+      "reason": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
