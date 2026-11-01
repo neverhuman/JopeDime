@@ -111,7 +111,7 @@ in \cref{sec:method-status}:
   ranking helpers group by dataset identifier. Native ranking groups by corpus context and the eight-row comparison index;
   separate comparisons from the same context do not pair with each other.
   Pairwise ranking omits non-finite targets and exactly equal values,
-  $v_w=v_u$, leaving only strict finite orderings.
+  $q_w=q_u$, leaving only strict finite orderings.
   \Cref{eq:writerLoss,eq:mapLoss} show the list-level form.
   \item \textbf{Sequence supervision (\cref{eq:writerLoss}).} The native decoder
   prepends the projected context token before \texttt{BOS}. The sequence
@@ -127,8 +127,8 @@ in \cref{sec:method-status}:
   $\ln(1+\operatorname{softplus}(h))$ by Huber loss with threshold~1,
   for measured seconds $s\geq0$ and raw head output $h$.
   \item \textbf{Ranking targets (\cref{eq:mapLoss,eq:totalLoss}).}
-  In \cref{eq:totalLoss}, $v_w=1/(1+\mathrm{RMSE}_w/m_p)$, where $m_p$ is
-  the corpus list's median RMSE. Bradley--Terry weights use $|v_w-v_u|$,
+  In \cref{eq:totalLoss}, $q_w=1/(1+\mathrm{RMSE}_w/m_p)$, where $m_p$ is
+  the corpus list's median RMSE. Bradley--Terry weights use $|q_w-q_u|$,
   doubled when either member is at or above the 90th percentile, then
   reduced over all non-tied within-comparison pairs in the rank-local
   microbatch. The implementation mean-scales their weights, casts them to
@@ -229,16 +229,17 @@ windows and rates follow in
 \Cref{app:acceptance-over-rounds,app:promotions-per-hour} distinguish adapter
 admissions from program-promotion rates. These earlier views reuse retained
 records. \Cref{app:latest-admissions} adds 174 captured rows through round 2837;
-none of these views adds independent evaluations.
+none of these views adds independent evaluations. Binding the records to
+an exact loop, adapter and qualified runtime remains pending
+(\cref{sec:method-status}); first-proposal comparisons belong to
+\cref{sec:results}.
 
 \subsection{Development measurements over completed-round time}\label{app:development-time}
 
 \Cref{fig:fw-completed-time} shows the same retained summaries as
 \cref{fig:fw-later-development}. The horizontal axis sums completed-round
 wall time, including qualification waits. Each point is an end-of-round
-summary; the event count starts from zero for this window. Binding these
-records to an exact loop, adapter and checkpoint remains pending
-(\cref{sec:method-status}).
+summary; the event count starts from zero for this window.
 
 \input{sections/appendix_event_counts}
 
@@ -255,3 +256,4 @@ records to an exact loop, adapter and checkpoint remains pending
 \input{sections/appendix_promotions_per_hour}
 
 \input{sections/appendix_latest_admissions}
+\FloatBarrier

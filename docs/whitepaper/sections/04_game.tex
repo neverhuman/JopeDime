@@ -202,9 +202,9 @@ needed to interpret it.
 \textbf{Moves are expensive}, each a fit and a cross-validation
 (\cref{sec:price}).
 
-\textbf{Judges can be gamed}, as METR documented for
-frontier models in June 2025 \citep{metr2025rewardhacking}; \cref{sec:method}
-lists our safeguards.
+\textbf{Judges can be gamed}: the evaluation harness must resist exploits
+\citep{metr2025rewardhacking}. \Cref{sub:method-referee} specifies the
+isolation and parity checks required here.
 
 And \textbf{no algorithm wins everywhere}: averaged
 uniformly over all problems, no learner has lower error off the training set
