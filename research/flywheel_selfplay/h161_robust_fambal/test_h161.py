@@ -185,8 +185,12 @@ class TestH161(unittest.TestCase):
             runner.baseline_gate(bad, ref)
 
     def test_audit_hook_refuses_protected_and_unlisted_paths(self):
-        allowed = {"/home/ubuntu/jope-data/h50/input/selected.json"}
-        audit = runtime.Audit(allowed, "/home/ubuntu/jope-data/h161/custody/run")
+        out_dir = Path("/home/ubuntu/jope-data/h161/custody/run")
+        launch_path = str((out_dir.parent / "launch.json").resolve())
+        allowed = {"/home/ubuntu/jope-data/h50/input/selected.json", launch_path}
+        audit = runtime.Audit(allowed, out_dir)
+        audit.check("open", (launch_path, "r", 0))
+        self.assertIn(launch_path, audit.opened)
         for blocked in [
             "/home/ubuntu/jope-data/sealed/x.npz",
             "/home/ubuntu/jope-data/holdout/x.npz",
