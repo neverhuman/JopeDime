@@ -5,9 +5,12 @@ import hashlib
 import json
 import math
 import os
+import stat
 import sys
+from pathlib import Path
 from urllib.error import URLError
-from urllib.request import Request, urlopen
+from urllib.parse import urlsplit
+from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
 REQUEST_KEYS = {
     "schema",
@@ -72,6 +75,91 @@ def decode(raw):
         object_pairs_hook=unique_object,
         parse_constant=lambda _: (_ for _ in ()).throw(ValueError("non-finite JSON")),
     )
+
+
+def daemon_file_path():
+    configured = os.environ.get("JOPEDIME_HOME")
+    if configured:
+        return Path(configured) / "daemon.json"
+    xdg = os.environ.get("XDG_DATA_HOME")
+    if sys.platform.startswith("linux") and xdg and Path(xdg).is_absolute():
+        return Path(xdg) / "jopedime" / "daemon.json"
+    if sys.platform == "darwin":
+        return Path.home() / "Library/Application Support/jopedime/daemon.json"
+    if os.name == "nt":
+        local = os.environ.get("LOCALAPPDATA")
+        if local:
+            return Path(local) / "jopedime" / "daemon.json"
+    return Path.home() / ".local/share/jopedime/daemon.json"
+
+
+def loopback_endpoint(endpoint):
+    require(isinstance(endpoint, str), "engine endpoint is missing")
+    parsed = urlsplit(endpoint)
+    require(
+        parsed.scheme == "http"
+        and parsed.hostname == "127.0.0.1"
+        and parsed.port is not None
+        and parsed.username is None
+        and parsed.password is None
+        and parsed.path in ("", "/")
+        and not parsed.query
+        and not parsed.fragment,
+        "engine must use a loopback HTTP endpoint",
+    )
+    return f"http://127.0.0.1:{parsed.port}"
+
+
+def read_daemon_token(endpoint):
+    normalized_endpoint = loopback_endpoint(endpoint)
+    path = daemon_file_path()
+    try:
+        link_metadata = os.lstat(path)
+    except OSError as error:
+        raise ValueError(
+            "matching local engine daemon record is unavailable"
+        ) from error
+    require(
+        stat.S_ISREG(link_metadata.st_mode),
+        "engine daemon record is not a regular file",
+    )
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(path, flags)
+    except OSError as error:
+        raise ValueError(
+            "matching local engine daemon record is unavailable"
+        ) from error
+    try:
+        metadata = os.fstat(descriptor)
+        require(
+            stat.S_ISREG(metadata.st_mode), "engine daemon record is not a regular file"
+        )
+        if os.name == "posix":
+            require(
+                metadata.st_mode & 0o077 == 0,
+                "engine daemon record permissions are too broad",
+            )
+        require(metadata.st_size <= 4096, "engine daemon record exceeds size limit")
+        with os.fdopen(descriptor, "rb") as record_file:
+            descriptor = -1
+            record = decode(record_file.read(4097))
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+    require(
+        isinstance(record, dict)
+        and set(record)
+        == {"url", "token", "pid", "version", "api_version", "started_at"},
+        "engine daemon record has invalid fields",
+    )
+    require(
+        loopback_endpoint(record["url"]) == normalized_endpoint,
+        "configured endpoint does not match the local engine daemon",
+    )
+    token = record["token"]
+    require(sha(token), "engine daemon token is invalid")
+    return token
 
 
 def sha(value):
@@ -249,25 +337,33 @@ def validate_receipt(receipt, request):
 
 
 def call_engine(request, endpoint, timeout=600):
-    require(
-        isinstance(endpoint, str) and endpoint.startswith("http://127.0.0.1:"),
-        "engine must use loopback HTTP",
-    )
-    url = endpoint.rstrip("/") + "/v1/q1/evaluations"
+    endpoint = loopback_endpoint(endpoint)
+    token = read_daemon_token(endpoint)
+    url = endpoint + "/v1/q1/evaluations"
     http_request = Request(
         url,
         data=canonical(request),
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json",
+        },
         method="POST",
     )
     try:
-        with urlopen(http_request, timeout=timeout) as response:
+        opener = build_opener(ProxyHandler({}), NoRedirectHandler())
+        with opener.open(http_request, timeout=timeout) as response:
+            require(response.geturl() == url, "engine response URL changed")
             require(response.status == 200, "engine returned non-success status")
             raw = response.read(8 * 1024 * 1024 + 1)
     except (OSError, URLError) as error:
         raise ValueError("production engine request failed") from error
     require(len(raw) <= 8 * 1024 * 1024, "engine receipt exceeds size limit")
     return decode(raw)
+
+
+class NoRedirectHandler(HTTPRedirectHandler):
+    def redirect_request(self, request, response, code, message, headers, new_url):
+        return None
 
 
 def main():

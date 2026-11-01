@@ -108,6 +108,14 @@ manifest, capability, and nonterminal-result errors fail closed. The endpoint
 must resolve the requested guidance exactly; it must not downgrade learned to
 heuristic or report a policy different from the request.
 
+The client reads the bearer token from the local service's owner-scoped
+`daemon.json` under `JOPEDIME_HOME` (or the platform data-directory default).
+It requires the configured `JOPE_Q1_ENGINE_URL` to match the daemon record's
+loopback URL, refuses symlink/non-regular/oversized or broadly permissioned
+records, disables proxy use, and refuses redirects. A missing, malformed, or
+mismatched record is an error; callers must not pass a guessed token or forward
+the bearer credential to another endpoint.
+
 ## Adapter projection
 
 `production_backend.py` validates the receipt against the canonical request
