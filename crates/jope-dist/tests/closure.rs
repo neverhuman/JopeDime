@@ -55,7 +55,25 @@ fn the_committed_lock_is_current() {
     assert!(acknowledgement.contains("REL-07 T0115 D3"));
     assert!(acknowledgement.contains("Internal qualification and rehearsal candidates only"));
     assert!(acknowledgement.contains("Public distribution | Excluded"));
-    // The accepted closure's five tensor files, as the specification inventories them.
+    let r882 = full
+        .components
+        .iter()
+        .find(|component| component.id == "r882-regression-adapter")
+        .expect("the full profile resolves the owner-selected r882 adapter");
+    assert_eq!(r882.bundle_id, "r882-regression");
+    assert_eq!(r882.files.len(), 1);
+    assert_eq!(r882.files[0].path, "round-882.pt");
+    assert_eq!(
+        r882.files[0].sha256,
+        "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
+    );
+    assert_eq!(r882.files[0].bytes, 7_493_476);
+    assert!(!full
+        .components
+        .iter()
+        .any(|component| component.bundle_id == "policy-step-60000"));
+
+    // The three remaining tensor files remain separate from the pinned r882 .pt adapter.
     let tensors: u64 = full
         .components
         .iter()
@@ -63,7 +81,7 @@ fn the_committed_lock_is_current() {
         .filter(|f| f.path.ends_with(".safetensors"))
         .map(|f| f.bytes)
         .sum();
-    assert_eq!(tensors, 438_062_296);
+    assert_eq!(tensors, 318_449_400);
 }
 
 fn write_profile(dir: &Path, name: &str, body: &str) -> PathBuf {

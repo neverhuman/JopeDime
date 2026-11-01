@@ -43,6 +43,17 @@
       "licenses": [
         "LicenseRef-Jain-Internal-Model"
       ]
+    },
+    {
+      "bundle_id": "r882-regression",
+      "manifest": "models/bundles/r882-regression.json",
+      "manifest_sha256": "02375947b50f990079552638aee12981ad8edfd35d68614c730dd27cd7c627f5",
+      "s3_key": "bundles/r882-regression/manifest.json",
+      "files": 1,
+      "bytes": 7493476,
+      "licenses": [
+        "LicenseRef-Jain-Internal-Model"
+      ]
     }
   ]
 }

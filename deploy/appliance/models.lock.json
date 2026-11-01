@@ -143,7 +143,7 @@
       "total_bytes": 103220
     },
     "full": {
-      "profile_sha256": "417a6975c6dab09adbb3743f673386dcf82d78b7aac709906556ad2e113c11a7",
+      "profile_sha256": "65183159386301168b39d4878c0583d4dedf1924edaeb1fd3e79b67583bf277e",
       "scope": "internal-restricted",
       "status": "blocked",
       "blockers": [
@@ -177,27 +177,19 @@
       ],
       "components": [
         {
-          "id": "policy-step-60000",
+          "id": "r882-regression-adapter",
           "role": "model",
-          "bundle_id": "policy-step-60000",
-          "bundle_manifest_sha256": "d8e259b26ef8d580ddb99ae5826c9501bcdc0c32045945eef9010926fd796e9e",
+          "bundle_id": "r882-regression",
+          "bundle_manifest_sha256": "02375947b50f990079552638aee12981ad8edfd35d68614c730dd27cd7c627f5",
           "backends": [
             "cpu"
           ],
           "files": [
             {
-              "path": "policy.safetensors",
-              "sha256": "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
-              "bytes": 111199088,
+              "path": "round-882.pt",
+              "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+              "bytes": 7493476,
               "kind": "policy",
-              "spdx": "LicenseRef-Jain-Internal-Model",
-              "redistribution": "internal"
-            },
-            {
-              "path": "context_transforms.safetensors",
-              "sha256": "1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22",
-              "bytes": 8413808,
-              "kind": "context_transforms",
               "spdx": "LicenseRef-Jain-Internal-Model",
               "redistribution": "internal"
             }
@@ -296,7 +288,7 @@
           ]
         }
       ],
-      "total_bytes": 438126124
+      "total_bytes": 326006704
     },
     "fused-cpu": {
       "profile_sha256": "307fea3a755563b50ce3085680e6155f20f24399468fd4502a03431ff791d523",
