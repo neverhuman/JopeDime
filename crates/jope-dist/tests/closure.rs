@@ -472,7 +472,7 @@ fn full_rehearsal_never_waives_scope_rights_or_asset_identity() {
     let out = dir.path().join("rehearsal");
     let error = pack(&fixture.request(), Output::Rehearsal { dir: &out }, None).unwrap_err();
     assert!(
-        error.to_string().contains("hash") || error.to_string().contains("size"),
+        error.to_string().contains("does not match the lock"),
         "{error:#}"
     );
     assert!(!out.exists());
