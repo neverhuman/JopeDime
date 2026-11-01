@@ -1,27 +1,7 @@
 \begin{abstract}
-Can experience from algorithm discovery improve the first algorithm a system
-proposes for a new problem? We cast invention as a game: the encoded task is
-the board, a complete executable program is the move, a verifier that scores
-the program on folds withheld from its fit is the referee, and the incumbent
-algorithm is the opponent. \EZ{} is a design for learning this game by
-self-play, after AlphaGo Zero, on tabular prediction tasks whose moves are
-programs in a typed language of learning primitives. During training,
-verified search supplies targets for a grammar-constrained program writer
-and for a separate problem--program ranking map. Two ratchets govern what
-is kept: a board's incumbent changes only on strict improvement, and a
-retrained writer must pass a held-out admission test. At deployment the
-frozen writer commits one complete program per problem (\searchone{}), and
-encoding, generation and fitting are all charged to that single proposal.
-We contribute the game and its rules, a cost model that links proposal
-quality to the cost of a verified improvement, a referee protocol that keeps
-sealed test families outside the learner's inputs, and an evaluation
-protocol that compares the single proposal both with algorithms designed by
-frontier models and with agents allowed repeated attempts, and tests the
-map's ranking against a program-only control. The development records
-available so far (admission and program-promotion logs from later adapter
-training, and earlier search and ranking diagnostics) do not establish a
-single-proposal advantage or transfer to unseen problem families;
-\cref{sec:results} specifies those tests.
+\TBD{Supply the problem statement, proposed method, supported task scope,
+contributions and evaluation summary from Jepson's source.}
+
 \TBD{State the headline first-proposal result with its uncertainty once the
 independent evaluation is complete.}
 \end{abstract}

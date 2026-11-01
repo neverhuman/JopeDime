@@ -111,6 +111,14 @@ class U2Tests(unittest.TestCase):
             },
         )
         self.assertEqual(self.tests, list(u2.TESTS))
+        self.assertEqual(
+            u2.TESTS[4:],
+            (
+                "terminal::tests::detects_each_color_level_and_disables_color_when_requested",
+                "terminal::tests::strips_escape_sequences_and_controls_without_losing_plain_text",
+                "terminal::tests::uses_unicode_symbols_only_for_utf8_locales",
+            ),
+        )
         self.assertTrue(all("--bin" in u2.command(test) for test in u2.TESTS))
         self.assertTrue(all("jopedime" in u2.command(test) for test in u2.TESTS))
         self.assertTrue(all("--exact" in u2.command(test) for test in u2.TESTS))

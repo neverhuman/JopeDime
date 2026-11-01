@@ -1,0 +1,262 @@
+#!/usr/bin/env python3
+"""Data-free D1 provider controls; fixtures never establish release qualification."""
+
+import contextlib
+import hashlib
+import importlib
+import io
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE / "providers"))
+d1 = importlib.import_module("d1")
+common = importlib.import_module("common")
+Context, ProviderError = common.Context, common.ProviderError
+
+
+class D1Tests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix="d1-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.repo = self.root / "checkout"
+        self.repo.mkdir()
+        self.evidence = self.root / "evidence"
+        self.artifact = self.root / "candidate"
+        self.artifact.write_bytes(b"controlled D1 candidate fixture; not a release")
+        self.result = self.evidence / "result.json"
+        self.ctx = Context(
+            "D1",
+            self.artifact,
+            hashlib.sha256(self.artifact.read_bytes()).hexdigest(),
+            "a" * 40,
+            self.result,
+        )
+        self.mac_receipt = self.root / "macos-d1.json"
+        self.write_macos_receipt()
+        self.mac_digest = d1.sha256(self.mac_receipt)
+        self.source = self.ctx.source_sha
+        self.dirty = ""
+        self.linux_exit = 0
+        self.linux_receipt_mutation = None
+        self.calls = []
+        self.addCleanup(patch.stopall)
+        patch.object(d1, "ROOT", self.repo).start()
+        patch.object(
+            d1, "LINUX_DRIVER", self.repo / "test-clean-host-prestage.sh"
+        ).start()
+        patch.object(d1.platform, "system", return_value="Linux").start()
+        patch.object(d1.platform, "machine", return_value="x86_64").start()
+        patch.dict(os.environ, {"JOPE_LANE_EVIDENCE": str(self.evidence)}).start()
+
+    def write_macos_receipt(self, **updates):
+        payload = {
+            "schema": d1.MAC_RECEIPT_SCHEMA,
+            "gate_id": "D1",
+            "platform": "macos-arm64",
+            "status": "PASS",
+            "source_sha": self.ctx.source_sha,
+            "artifact_sha256": self.ctx.artifact_sha256,
+            "checks": {
+                "network_disabled": True,
+                "toolchain_absent": True,
+                "discovery": True,
+                "exports": {"python": True, "rust": True, "javascript": True},
+                "prediction": True,
+                "link_audit_os_libraries_only": True,
+            },
+        }
+        payload.update(updates)
+        self.mac_receipt.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+
+    def linux_receipt(self):
+        return {
+            "schema": "jope.appliance-clean-host/v1",
+            "qualification": "pre-stage",
+            "status": "passed",
+            "exit_status": 0,
+            "source_sha": self.ctx.source_sha,
+            "binary_sha256": self.ctx.artifact_sha256,
+            "isolation": "network namespace; loopback only; no default route",
+            "toolchain_path": "empty (python, python3, rustc and node unavailable to the app)",
+            "method_discovery": "passed",
+            "run_discovery": {"status": "passed"},
+            "export_status": {
+                "python": "passed",
+                "rust": "passed",
+                "javascript": "passed",
+            },
+            "prediction_rows": 3,
+            "link_audit": "passed",
+        }
+
+    def run_child(self, argv, **kwargs):
+        self.calls.append(argv)
+        if argv[:2] == ["git", "rev-parse"]:
+            output = self.source
+        elif argv[:2] == ["git", "status"]:
+            output = self.dirty
+        elif argv[:3] == ["cargo", "run", "--locked"]:
+            if "inspect" in argv:
+                output = json.dumps(
+                    {
+                        "manifest": {
+                            "profile": "full",
+                            "scope": "release",
+                            "source": {"sha40": self.ctx.source_sha},
+                        }
+                    }
+                )
+            else:
+                output = json.dumps({"schema": "jope.appliance-verify/v1", "ok": True})
+        elif argv[0] == "bash":
+            work = Path(argv[3])
+            work.mkdir(parents=True)
+            receipt = self.linux_receipt()
+            if self.linux_receipt_mutation is not None:
+                self.linux_receipt_mutation(receipt)
+            (work / "clean-host.json").write_text(json.dumps(receipt), encoding="utf-8")
+            if self.linux_exit:
+                return subprocess.CompletedProcess(
+                    argv, self.linux_exit, "", "driver failed"
+                )
+            return subprocess.CompletedProcess(
+                argv, 0, "linux leg fixture passed\n", ""
+            )
+        else:
+            raise AssertionError(f"unexpected provider command: {argv}")
+        return subprocess.CompletedProcess(argv, 0, output, "")
+
+    def invoke(self):
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            return d1.qualify(
+                self.ctx, self.mac_receipt, self.mac_digest, run=self.run_child
+            )
+
+    def test_both_bound_platform_legs_produce_candidate_bound_pass(self):
+        self.assertEqual(self.invoke(), 0)
+        result = json.loads(self.result.read_text())
+        self.assertEqual(result["status"], "PASS")
+        self.assertEqual(result["source_sha"], self.ctx.source_sha)
+        self.assertEqual(result["artifact_sha256"], self.ctx.artifact_sha256)
+        self.assertEqual(
+            result["counts"],
+            {key: 2 * value for key, value in d1.RUN_PASS_COUNTS.items()},
+        )
+        self.assertEqual(
+            result["platforms"]["macos-arm64"]["receipt_sha256"], self.mac_digest
+        )
+        self.assertTrue(
+            any(
+                call[0] == "bash" and "--require-golden-path" in call
+                for call in self.calls
+            )
+        )
+
+    def test_missing_macos_receipt_is_blocked_before_linux_leg(self):
+        self.mac_receipt.unlink()
+        with self.assertRaisesRegex(ProviderError, "BLOCKED"):
+            self.invoke()
+        self.assertFalse(self.result.exists())
+        self.assertFalse(any(call[0] == "bash" for call in self.calls))
+
+    def test_missing_receipt_binding_reports_blocked(self):
+        stderr = io.StringIO()
+        with (
+            patch.object(sys, "argv", ["d1.py"]),
+            patch.dict(
+                os.environ,
+                {
+                    key: value
+                    for key, value in os.environ.items()
+                    if not key.startswith("JOPE_REL07_D1_MACOS_RECEIPT")
+                },
+                clear=True,
+            ),
+            contextlib.redirect_stderr(stderr),
+        ):
+            self.assertEqual(d1.main(), 2)
+        self.assertIn("D1 BLOCKED", stderr.getvalue())
+
+    def test_wrong_receipt_hash_or_candidate_binding_refuses(self):
+        with self.assertRaisesRegex(ProviderError, "SHA-256 differs"):
+            d1.verify_macos_receipt(self.ctx, self.mac_receipt, "0" * 64)
+        self.write_macos_receipt(artifact_sha256="f" * 64)
+        wrong_binding_digest = d1.sha256(self.mac_receipt)
+        with self.assertRaisesRegex(ProviderError, "candidate SHA-256 differs"):
+            d1.verify_macos_receipt(self.ctx, self.mac_receipt, wrong_binding_digest)
+
+    def test_macos_receipt_must_be_regular_and_stable_while_read(self):
+        alias = self.root / "macos-d1-link.json"
+        alias.symlink_to(self.mac_receipt)
+        with self.assertRaisesRegex(ProviderError, "non-symlink"):
+            d1.verify_macos_receipt(self.ctx, alias, self.mac_digest)
+        with patch.object(d1, "sha256", side_effect=[self.mac_digest, "f" * 64]):
+            with self.assertRaisesRegex(ProviderError, "changed while being verified"):
+                d1.verify_macos_receipt(self.ctx, self.mac_receipt, self.mac_digest)
+
+    def test_incomplete_macos_assertions_never_pass(self):
+        self.write_macos_receipt(checks={"network_disabled": True})
+        self.mac_digest = d1.sha256(self.mac_receipt)
+        with self.assertRaisesRegex(ProviderError, "required clean-host assertion"):
+            self.invoke()
+        self.assertFalse(self.result.exists())
+
+    def test_macos_exports_require_exact_json_true_values(self):
+        checks = json.loads(self.mac_receipt.read_text(encoding="utf-8"))["checks"]
+        invalid_exports = (
+            {"python": 1, "rust": 1, "javascript": 1},
+            {"python": True, "rust": True, "javascript": True, "extra": True},
+        )
+        for exports in invalid_exports:
+            with self.subTest(exports=exports):
+                self.write_macos_receipt(checks={**checks, "exports": exports})
+                self.mac_digest = d1.sha256(self.mac_receipt)
+                with self.assertRaisesRegex(ProviderError, "all three run exports"):
+                    self.invoke()
+                self.assertFalse(self.result.exists())
+                self.assertFalse(any(call[0] == "bash" for call in self.calls))
+
+    def test_linux_driver_failure_never_emits_result(self):
+        self.linux_exit = 1
+        with self.assertRaisesRegex(ProviderError, "Linux clean-host leg failed"):
+            self.invoke()
+        self.assertFalse(self.result.exists())
+
+    def test_dirty_source_refuses_before_candidate_or_platform_execution(self):
+        self.dirty = " M source.rs"
+        with self.assertRaisesRegex(ProviderError, "clean, candidate-pinned"):
+            self.invoke()
+        self.assertFalse(any(call[0] == "bash" for call in self.calls))
+        self.assertFalse(self.result.exists())
+
+    def test_candidate_drift_after_linux_run_refuses_result(self):
+        def drift(_receipt):
+            self.artifact.write_bytes(b"changed")
+
+        self.linux_receipt_mutation = drift
+        with self.assertRaisesRegex(ProviderError, "candidate bytes changed"):
+            self.invoke()
+        self.assertFalse(self.result.exists())
+
+    def test_existing_result_is_never_overwritten(self):
+        self.result.parent.mkdir(parents=True)
+        self.result.write_text("prior", encoding="utf-8")
+        with self.assertRaises(ProviderError):
+            self.invoke()
+        self.assertEqual(self.result.read_text(), "prior")
+        self.assertFalse(self.calls)
+
+
+if __name__ == "__main__":
+    unittest.main()

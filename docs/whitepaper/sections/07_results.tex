@@ -1,6 +1,6 @@
 \section{Results}\label{sec:results}
 
-\begin{table*}[t]% defined before the opening paragraph so it can reach the next page top (LAYOUT_REDTEAM.md, pass 24)
+\begin{table*}[t]% defined before the opening paragraph so it can reach the next page top
   \caption{\textbf{Evaluation plan at a glance.} Each test is specified in the
   subsection named in the first column. No outcome is reported yet; the
   contract in \cref{sub:results-protocol} fixes inputs, budgets and splits
@@ -85,16 +85,9 @@ comparison and training-update evidence before claiming transfer.}
 
 \subsection{One proposal against fixed methods}\label{sub:results-headtohead}
 
-Compare one task-conditioned program with methods that run unchanged
-across tasks. The comparators are frozen
-algorithms whose receipts record the model that designed them: one designed
-by \texttt{claude-opus-5-5} and one by \texttt{gpt-6-astra-wm}, the latter
-identifier as reported by its authoring session. A comparator without a
-recorded model identity is excluded. Authoring receipts do not establish isolated
-challenge eligibility; record prompts, dates and implementation checks, and use the same task metrics.
-\Cref{tab:headtohead,fig:leaderboard} reserve the comparison; no winner is assumed.
-% Receipts: crates/jope-bench/regressors/README.md (Opus5p5_Extra);
-% crates/jope-bench/submissions/gpt6-astra-max/provenance.json (GPT6_Astra_Max).
+\TBD{Identify Jepson's supplied frozen comparators, their provenance and
+eligibility, and the matched outcomes and uncertainty for
+\cref{tab:headtohead,fig:leaderboard}.}
 
 \begin{table}[t]
   \centering
@@ -106,8 +99,8 @@ challenge eligibility; record prompts, dates and implementation checks, and use 
     \toprule
     Comparator & Outcome and uncertainty \\
     \midrule
-    Designed by \texttt{claude-opus-5-5} & \TBD{paired evaluation} \\
-    Designed by \texttt{gpt-6-astra-wm} & \TBD{paired evaluation} \\
+    \TBD{first frozen comparator identity} & \TBD{paired evaluation} \\
+    \TBD{second frozen comparator identity} & \TBD{paired evaluation} \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -238,20 +231,11 @@ without updating the writer.
 
 \subsection{Earlier development diagnostics}\label{sub:results-diagnostics}
 
-The supplied method notes report 3,227 exact ties in
-3,268 paired policy-seeded versus generic final searches. A separate audit
-in those notes found that 98.84\% of reported winners were already in
-their starting seed populations. The paired searches shared seeds, repeated development
-contexts and had unequal wall times; they were not independent
-first-proposal draws. The two historical inventories differ.
+\TBD{Supply Jepson's source-bound search and ranking diagnostics, including
+original inventories, comparison conditions, overlap checks and uncertainty.
+Keep their scope separate from the final first-proposal comparisons.}
 
-For a separate earlier model evaluated on development contexts, the notes
-report fresh-program pairwise ranking accuracy of 0.506 with an interval
-of [0.441, 0.568], which includes chance. The reference checkpoint and later adapter snapshot in
-\cref{sec:method} require their own ranking evidence.
-These observations describe historical search and ranking behavior; the
-matched first-proposal test in \cref{sub:results-learning} is still required.
 \TBD{Pin the inventories, checkpoints and seeding, timing and ranking
 protocols, separately from the final comparisons above.}
 
-The limits on interpreting those comparisons follow in \cref{sec:meaning}.
+\TBD{Supply the interpretation and limits of these comparisons in \cref{sec:meaning} once Jepson provides the source.}

@@ -3,7 +3,7 @@
 % Core points advanced: 3 (search = 1) and 4 (learning from referee feedback); supports 1.
 % Historical reference specifications come from the supplied source notes.
 % Checkpoint acceptance and reference runtime receipts remain required.
-% Supplied method notes in 06_method/sources/ give provenance and remaining implementation limits.
+% Historical source notes are archived outside the paper tree.
 \section{EurekaZero: Learning Taste}\label{sec:method}
 
 The accepted native checkpoint route is limited to tabular regression.
@@ -41,7 +41,7 @@ into 2,048 numbers, $z_p=\encP(p)$, in three blocks.
 The first summarizes a pretrained row encoder's embeddings across rows,
 independent of row order (512 values). The second projects the hidden
 state of a pretrained third-party tabular regressor that reads the training
-rows and labels (1,024; Foundation, version \texttt{foundation\_enc.v1.tabpfn}; license: third-party provenance pending; restricted; redistribution prohibited). The third passes the
+rows and labels (1,024; third-party provenance pending; restricted; redistribution prohibited). The third passes the
 scaled targets through two frozen windows (512).
 
 The reference encoder is pinned by hash and stays fixed during writer
@@ -59,11 +59,17 @@ separate representation study; \cref{sub:results-ablation} reserves that test.
 
 A move is one program in the typed language of \cref{sec:game}, with a
 401-token training inventory listing 31 transforms and 22 prediction heads; the product runtime restricts executable heads.
-Up to six transforms feed a head; the native task mask permits only
-compatible tokens at each step, as in grammar-constrained generators
-\citep{kusner2017grammar,dai2018sdvae}. A finished draft enters the pool
-only after it decodes and parses. These grammar checks do not establish
-that the writer avoids programs that parse but crash or lose. The proposal
+The writer emits a flat operator-and-slot token stream with a fixed
+beginning, engine and regression-task header, rather than parenthesis
+tokens or the \texttt{pipe} wrapper. Its nine-phase grammar mask permits
+up to six transform stages and three expression stages; each expression
+tree is bounded at depth four and 15 nodes
+\citep{kusner2017grammar,dai2018sdvae}. After the end token, detokenization
+renders a parenthesized program that must parse before entering the pool.
+The mask has no remaining-token-budget check: a draw without an end token
+at the 128-token horizon, including the fixed header, is incomplete and
+discarded. Grammar legality does not establish successful execution or
+useful quality. The proposal
 pool removes exact decoded-string duplicates and records their SHA-256.
 The executor also records canonical recipe hashes. Probe-based behavior
 matching is a separate audit, not part of pool deduplication. Without probe
@@ -129,7 +135,7 @@ matched ablation (\cref{sub:results-ablation}).
 
 \subsection{The self-play loop}\label{sub:method-selfplay}
 % Algorithm 1 is defined at the start of the subsection so that the full-width
-% float can reach the top of the next page (LAYOUT_REDTEAM.md, pass 44).
+% float can reach the top of the next page.
 \begin{algorithm*}[t]
 \caption{The reference self-play loop (training).}\label{alg:selfplay}
 \begin{algorithmic}[1]
