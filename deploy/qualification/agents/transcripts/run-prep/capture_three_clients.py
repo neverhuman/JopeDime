@@ -233,14 +233,35 @@ def render_argv(argv: list[str], values: dict[str, str]) -> list[str]:
 
 def terminate_group(process: subprocess.Popen, grace_seconds: float = 5) -> int:
     pgid = process.pid
+    pending_error = None
+    cleanup_error = None
+
+    def remember(error: BaseException) -> None:
+        nonlocal pending_error
+        if pending_error is None:
+            pending_error = error
+
+    def wait(timeout: float) -> int | None:
+        try:
+            return process.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return None
+        except BaseException as error:
+            remember(error)
+            return None
+
+    def pause(seconds: float) -> None:
+        try:
+            time.sleep(seconds)
+        except BaseException as error:
+            remember(error)
+
     try:
         os.killpg(pgid, signal.SIGTERM)
     except ProcessLookupError:
         pass
-    try:
-        process.wait(timeout=grace_seconds)
-    except subprocess.TimeoutExpired:
-        pass
+    except BaseException as error:
+        remember(error)
 
     def live_group_members() -> bool:
         proc = Path("/proc")
@@ -263,20 +284,41 @@ def terminate_group(process: subprocess.Popen, grace_seconds: float = 5) -> int:
                 return True
         return False
 
-    deadline = time.monotonic() + max(0, grace_seconds)
-    while live_group_members() and time.monotonic() < deadline:
-        time.sleep(min(0.05, max(0, deadline - time.monotonic())))
+    grace_deadline = time.monotonic() + max(0, grace_seconds)
+    wait(max(0, grace_seconds))
+    while live_group_members() and time.monotonic() < grace_deadline:
+        pause(min(0.05, max(0, grace_deadline - time.monotonic())))
     if live_group_members():
         try:
             os.killpg(pgid, signal.SIGKILL)
         except ProcessLookupError:
             pass
+        except BaseException as error:
+            remember(error)
         kill_deadline = time.monotonic() + 2
         while live_group_members() and time.monotonic() < kill_deadline:
-            time.sleep(0.02)
+            pause(0.02)
         if live_group_members():
-            raise CaptureError(f"process group {pgid} survived SIGKILL")
-    return process.wait()
+            cleanup_error = CaptureError(f"process group {pgid} survived SIGKILL")
+
+    reap_deadline = time.monotonic() + 2
+    engine_exit = None
+    while engine_exit is None and time.monotonic() < reap_deadline:
+        engine_exit = wait(max(0, reap_deadline - time.monotonic()))
+    if engine_exit is None and process.poll() is None:
+        cleanup_error = cleanup_error or CaptureError(
+            f"process {process.pid} could not be reaped"
+        )
+    elif engine_exit is None:
+        engine_exit = process.returncode
+
+    if pending_error is not None:
+        if cleanup_error is not None:
+            raise pending_error from cleanup_error
+        raise pending_error
+    if cleanup_error is not None:
+        raise cleanup_error
+    return engine_exit
 
 
 def render_client_commands(

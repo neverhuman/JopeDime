@@ -544,6 +544,87 @@ def test_stop_engine_reaps_group_when_wait_raises(wait_error, tmp_path):
         _cleanup_test_engine(engine)
 
 
+@pytest.mark.parametrize(
+    "boundary",
+    ["grace-wait", "grace-sleep", "kill-sleep", "reap-wait"],
+    ids=["grace-wait", "grace-sleep", "kill-sleep", "reap-wait"],
+)
+def test_stop_engine_finishes_teardown_when_cleanup_is_interrupted(
+    boundary, monkeypatch, tmp_path
+):
+    engine = _start_sigterm_ignoring_engine(tmp_path)
+    original_terminate = THREE_CLIENTS_MODULE.terminate_group
+    original_killpg = os.killpg
+    original_sleep = time.sleep
+    state = {"injected": False, "kill_requested": False}
+
+    def inject_sigint():
+        state["injected"] = True
+        os.kill(os.getpid(), signal.SIGINT)
+
+    class InterruptAtCleanupBoundary:
+        def __init__(self, process):
+            self.process = process
+
+        def __getattr__(self, name):
+            return getattr(self.process, name)
+
+        def wait(self, *positional, **kwargs):
+            timeout = kwargs.get("timeout")
+            if timeout == 10:
+                raise subprocess.TimeoutExpired("initial engine wait", 10)
+            if boundary == "grace-wait" and timeout == 5:
+                inject_sigint()
+            if boundary in {"grace-sleep", "kill-sleep"} and timeout == 0.1:
+                raise subprocess.TimeoutExpired("short grace wait", 0.1)
+            if boundary == "reap-wait" and state["kill_requested"]:
+                inject_sigint()
+            return self.process.wait(*positional, **kwargs)
+
+    def short_grace(process, *positional, **kwargs):
+        grace_seconds = 5 if boundary == "grace-wait" else 0.1
+        return original_terminate(process, grace_seconds=grace_seconds)
+
+    def track_kill(pgid, sig):
+        if sig == signal.SIGKILL:
+            state["kill_requested"] = True
+            if boundary == "kill-sleep":
+                return
+        original_killpg(pgid, sig)
+
+    def interrupt_sleep(seconds):
+        if boundary == "grace-sleep" and not state["injected"]:
+            inject_sigint()
+        if (
+            boundary == "kill-sleep"
+            and state["kill_requested"]
+            and not state["injected"]
+        ):
+            try:
+                inject_sigint()
+            finally:
+                original_killpg(engine.pid, signal.SIGKILL)
+        original_sleep(seconds)
+
+    monkeypatch.setattr(THREE_CLIENTS_MODULE, "terminate_group", short_grace)
+    monkeypatch.setattr(THREE_CLIENTS_MODULE.os, "killpg", track_kill)
+    monkeypatch.setattr(THREE_CLIENTS_MODULE.time, "sleep", interrupt_sleep)
+    try:
+        with pytest.raises(KeyboardInterrupt):
+            THREE_CLIENTS_MODULE.stop_engine(
+                Path("/usr/bin/false"),
+                tmp_path,
+                os.environ.copy(),
+                InterruptAtCleanupBoundary(engine),
+            )
+        assert state["injected"] is True
+        assert engine.poll() is not None, f"engine survived {boundary} interrupt"
+        assert _processes_with_paths_under(tmp_path) == []
+    finally:
+        monkeypatch.undo()
+        _cleanup_test_engine(engine)
+
+
 def test_stop_engine_preserves_stop_error_after_group_cleanup(monkeypatch, tmp_path):
     engine = _start_sigterm_ignoring_engine(tmp_path)
     original_wait = engine.wait
