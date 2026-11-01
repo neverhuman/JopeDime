@@ -5541,6 +5541,10 @@
     "python:research/flywheel_selfplay/h199_blend025_native/test_h199.py": {
       "reason": "Owner-requested H199 data-free controls for BLEND_025 on the flywheel native protocol (cells, minimal fit plan, H124 fold algorithm per fold seed, fold manifest, within-family SHUF, registered lambda dose, native gates incl. 3/3 seeds and exact ties as zero, harm gate, Elo orientation, monitor guards); no checkpoint/corpus reads or model passes in the fixtures",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h201_strict_admission/test_h201.py": {
+      "role": "research",
+      "reason": "H201 data-free host-before-input exclusion, paired family bootstrap and weighting, sequential SMA versus observed-incumbent screen, joint-null candidate dependence, family split exclusion, BT reference and strict verdict controls; no corpus/checkpoint reads, model passes or optimizer calls in fixtures."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

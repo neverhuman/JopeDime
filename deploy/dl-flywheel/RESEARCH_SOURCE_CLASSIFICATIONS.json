@@ -5325,6 +5325,30 @@
         "role": "research",
         "reason": "H199 preregistered CPU-only diagnostic: H129/H195 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed; 0.15/0.35 report-only) against r882 on the flywheel native first-argmin protocol, powered by the 205-family pooled cross-fit on fresh per-seed folds; GBM and calibration FIT-only, stage-1 lock before pooled-A scoring, m=1 CANDIDATE gate (LCB95>0, median>+0.001, 3/3 seeds, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
       }
+    },
+    "python:research/flywheel_selfplay/h201_strict_admission/analysis.py": {
+      "bytes": 8730,
+      "sha256": "51d54087125d824479e842705d3e1308a31e11a9e68fd0b041a3a0cb7c3cf292",
+      "classification": {
+        "role": "research",
+        "reason": "H201 zero-update frozen native replay, paired-family selection-noise audit and strict admission history counterfactual; offline research, no live policy changes."
+      }
+    },
+    "python:research/flywheel_selfplay/h201_strict_admission/monitor.py": {
+      "bytes": 4683,
+      "sha256": "55ccae8a383ccd0d02f1f4efa5b665cc629ba869dbc8b052d34c12e414a615b8",
+      "classification": {
+        "role": "research",
+        "reason": "H201 zero-update frozen native replay, paired-family selection-noise audit and strict admission history counterfactual; offline research, no live policy changes."
+      }
+    },
+    "python:research/flywheel_selfplay/h201_strict_admission/runner.py": {
+      "bytes": 13494,
+      "sha256": "0e7457d31dc2403e22ce43babf9348c3f87f735a0c0ecb4d142c84262d9c0c1b",
+      "classification": {
+        "role": "research",
+        "reason": "H201 zero-update frozen native replay, paired-family selection-noise audit and strict admission history counterfactual; offline research, no live policy changes."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
