@@ -1057,6 +1057,109 @@ mod tests {
     }
 
     #[test]
+    fn custom_objective_changes_elite_order_without_changing_ranker_inputs() {
+        use crate::discover::elites::{Elite, ElitePool, ScoreOrder};
+        use crate::objective::regression::RegressionObjective;
+
+        let fixture = AdmissionSlateFixture::new();
+        for explore in [false, true] {
+            let baseline = fixture
+                .prepare(RevealedRule::SurrogateFitness, explore)
+                .unwrap();
+            let expected = baseline.canonical_inputs();
+            for direction in ["minimize", "maximize"] {
+                let objective = RegressionObjective::parse(
+                    &serde_json::json!({
+                        "metric": "custom", "name": "rel07_untrained_pred_mean",
+                        "direction": direction, "expression": {"op": "pred"},
+                        "aggregation": {"kind": "mean"}
+                    })
+                    .to_string(),
+                )
+                .unwrap();
+                let mut elites = ElitePool::new(ScoreOrder::Minimize, ScoreOrder::Minimize);
+                for (i, measured) in fixture.measured().iter().enumerate() {
+                    let score = objective.evaluate(&[0.0], &[i as f64]).unwrap();
+                    elites
+                        .insert(Elite {
+                            algorithm_id: measured.id.to_owned(),
+                            surrogate: measured.surrogate_fitness,
+                            objective: score.loss,
+                        })
+                        .unwrap();
+                }
+                assert_eq!(
+                    elites.by_objective()[0].algorithm_id,
+                    if direction == "minimize" {
+                        "program-0"
+                    } else {
+                        "program-5"
+                    }
+                );
+                let ordered: Vec<_> = elites
+                    .by_objective()
+                    .iter()
+                    .map(|e| {
+                        let i = fixture
+                            .keys
+                            .iter()
+                            .position(|k| k == &e.algorithm_id)
+                            .unwrap();
+                        MeasuredAlgorithm {
+                            id: &fixture.keys[i],
+                            surrogate_fitness: e.surrogate,
+                            gate: i % 2 == 0,
+                        }
+                    })
+                    .collect();
+                let programs = fixture.programs();
+                let pool: Vec<_> = ordered
+                    .iter()
+                    .map(|m| programs.iter().find(|p| p.key == m.id).copied().unwrap())
+                    .collect();
+                let slate = ServingAdmissionSlate::prepare(
+                    &ordered,
+                    &pool,
+                    &programs[6..if explore { 22 } else { 14 }],
+                    &fixture.conditioning,
+                    RevealedRule::SurrogateFitness,
+                    explore,
+                )
+                .unwrap();
+                let actual = slate.canonical_inputs();
+                assert_eq!(slate.revealed_keys(), baseline.revealed_keys());
+                assert_eq!(slate.proposal_keys(), baseline.proposal_keys());
+                assert_eq!(
+                    (actual.batch, actual.candidates),
+                    (expected.batch, expected.candidates)
+                );
+                assert_eq!(actual.revealed_indices, expected.revealed_indices);
+                // Check every floating-point input bit, including conditioning,
+                // reveals, features and the frozen context/prior/scale channels.
+                let channels = |input: &PredictCostsInputs<'_>| {
+                    [
+                        input.prog_412,
+                        input.proj_16,
+                        input.tokens,
+                        input.token_mask,
+                        input.revealed_fitness,
+                        input.revealed_gates,
+                        input.ctx_feat,
+                        input.base_prior_cost,
+                        input.sos_prior,
+                        &[input.scale],
+                    ]
+                    .into_iter()
+                    .flatten()
+                    .map(|v| v.to_bits())
+                    .collect::<Vec<_>>()
+                };
+                assert_eq!(channels(&actual), channels(&expected));
+            }
+        }
+    }
+
+    #[test]
     fn assembly_aligns_rows_and_frozen_context_channels_for_both_shapes() {
         let fixture = AdmissionSlateFixture::new();
         for explore in [false, true] {
