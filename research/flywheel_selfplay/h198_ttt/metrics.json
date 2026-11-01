@@ -2,10 +2,10 @@
   "wave": "H198",
   "status": "COMPLETE",
   "verdict": "NO_ADVANCE",
-  "disposition": "reject treatment; keep r882",
+  "disposition": "reject treatment (inert at k<=5, lr<=1e-4); keep r882",
   "decision": {
     "verdict": "NO_ADVANCE",
-    "disposition": "reject treatment; keep r882",
+    "disposition": "reject treatment (inert at k<=5, lr<=1e-4); keep r882",
     "serving_promotion": false,
     "holm_multiplicity": 1,
     "gates": {
@@ -16,7 +16,10 @@
       "ttt_k_median_gain_gt_margin": false,
       "pooled_selector_admits": false,
       "h178_receipt_gate": true
-    }
+    },
+    "verdict_label": "NO_ADVANCE (INERT TREATMENT)",
+    "inert_treatment": true,
+    "inert_treatment_summary": "TTT-adapted weights (not the reset copy) were used to score every context before the finally-block reset: candidate scores changed on 1,219/1,219 TRAIN contexts and 91/91 DL-Val contexts, but the preregistered k<=5, lr<=1e-4 grid moved scores too little relative to the r882 top-2 margin (median max|delta|=1.55e-5 vs median top2_gap=2.09e-2 at locked k*=1, lr*=1e-5) to flip any first-argmin pick at k*=1, lr*=1e-5 (0/1,219 TRAIN, 0/91 DL-Val) and flipped only 1-4/1,219 TRAIN contexts at the largest grid points. This is an inert treatment at k<=5, lr<=1e-4, not evidence against TTT at larger step budgets."
   },
   "arms": {
     "R882": {
@@ -1168,5 +1171,304 @@
     "normalization_definition": "(r882 equal-family TRAIN utility - r882 equal-family DL-Val utility) / (TRAIN oracle utility - r882 TRAIN utility)"
   },
   "diagnostic_only": true,
-  "serving_promotion": false
+  "serving_promotion": false,
+  "verdict_label": "NO_ADVANCE (INERT TREATMENT)",
+  "adapted_score_verification": {
+    "code_execution_order": {
+      "file": "research/flywheel_selfplay/h198_ttt/treatment.py",
+      "function": "ttt_context_trajectory",
+      "update_line": 175,
+      "adapted_forward_lines": [
+        178,
+        191
+      ],
+      "argmin_pick_line": 194,
+      "positive_drift_assert_line": 196,
+      "post_scoring_finally_reset_lines": [
+        205,
+        212
+      ],
+      "proof": "Inside the try-block step loop, optimizer.step() updates pdict in-place (line 175), adapter_forward() immediately scores all M candidates with the adapted weights (lines 178-191), np.argmin(costs) selects the pick (line 194), and adapter_drift() asserts drift > 0.0 (line 196). Only after the step loop exits does the finally-block (lines 205-212) copy initial[n] (r882) back into pdict[n] and verify tensor_hash."
+    },
+    "single_context_cell_examples": {
+      "cell_198101_outer0_A0_ctx0": {
+        "seed": 198101,
+        "outer": 0,
+        "split": "A_0 (outer test)",
+        "context_sha256": "004a7438dc815b62c821976ac64379b7bf9a1a138d3ca441a9fb5a5e0e5dfb24",
+        "dataset_id": "e745feb6c192f73b",
+        "family_id": "fam-3682425120361f20ec8ece6c872e95f6c83c828e30205adb5206473540ca5247",
+        "candidates": 1152,
+        "r882_argmin": 573,
+        "r882_min_cost": -4.693466663360596,
+        "r882_second_min_cost": -4.479747295379639,
+        "r882_top2_margin": 0.21371936798095703,
+        "stage2_locked_k1_lr1e05": {
+          "TTT_K": {
+            "max_abs_delta_score": 7.62939453125e-05,
+            "mean_abs_delta_score": 2.327631231921259e-05,
+            "l2_delta_score": 0.0009262948879040778,
+            "changed_candidates": 1112,
+            "argmin_pick": 573
+          },
+          "TTT_SHUF": {
+            "max_abs_delta_score": 3.0517578125e-05,
+            "mean_abs_delta_score": 5.904248606384499e-06,
+            "l2_delta_score": 0.00027195014990866184,
+            "changed_candidates": 923,
+            "argmin_pick": 573
+          },
+          "TTT_L2": {
+            "max_abs_delta_score": 7.62939453125e-05,
+            "mean_abs_delta_score": 2.327631231921259e-05,
+            "l2_delta_score": 0.0009262948879040778,
+            "changed_candidates": 1112,
+            "argmin_pick": 573
+          }
+        },
+        "stage1_grid_max_abs_delta_score": {
+          "K1_LR1e-05": 7.62939453125e-05,
+          "K1_LR3e-05": 0.00022125244140625,
+          "K1_LR1e-04": 0.00072479248046875,
+          "K3_LR1e-05": 0.00022125244140625,
+          "K3_LR3e-05": 0.0006561279296875,
+          "K3_LR1e-04": 0.00217437744140625,
+          "K5_LR1e-05": 0.0003662109375,
+          "K5_LR3e-05": 0.00109100341796875,
+          "K5_LR1e-04": 0.00362396240234375
+        }
+      },
+      "dl_val_ctx0": {
+        "split": "DL-Val",
+        "context_sha256": "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da",
+        "dataset_id": "12d32dd30f8c602e",
+        "family_id": "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119",
+        "candidates": 1152,
+        "r882_argmin": 678,
+        "r882_top2_margin": 0.14867174625396729,
+        "TTT_K_max_abs_delta_score": 0.00012969970703125,
+        "TTT_K_changed_candidates": 1109,
+        "TTT_SHUF_max_abs_delta_score": 0.00012969970703125,
+        "TTT_SHUF_changed_candidates": 1084,
+        "TTT_L2_max_abs_delta_score": 0.00012969970703125,
+        "TTT_L2_changed_candidates": 1109
+      }
+    },
+    "stage2_counts_locked_k1_lr1e05": {
+      "cell_198101_outer0_A0": {
+        "contexts": 233,
+        "r882_median_top2_gap": 0.025588035583496094,
+        "TTT_K": {
+          "contexts_any_score_changed": 233,
+          "contexts_argmin_flipped": 0,
+          "max_abs_delta_min": 1.8775463104248047e-06,
+          "max_abs_delta_median": 1.6868114471435547e-05,
+          "max_abs_delta_mean": 4.934864072914084e-05,
+          "max_abs_delta_p95": 0.0001985073089599609,
+          "max_abs_delta_max": 0.001003265380859375
+        },
+        "TTT_SHUF": {
+          "contexts_any_score_changed": 233,
+          "contexts_argmin_flipped": 0,
+          "max_abs_delta_min": 1.519918441772461e-06,
+          "max_abs_delta_median": 2.47955322265625e-05,
+          "max_abs_delta_mean": 0.00012187018298733999,
+          "max_abs_delta_p95": 0.0004589557647705077,
+          "max_abs_delta_max": 0.005313873291015625
+        },
+        "TTT_L2": {
+          "contexts_any_score_changed": 233,
+          "contexts_argmin_flipped": 0,
+          "max_abs_delta_min": 1.8775463104248047e-06,
+          "max_abs_delta_median": 1.6868114471435547e-05,
+          "max_abs_delta_mean": 4.934864072914084e-05,
+          "max_abs_delta_p95": 0.0001985073089599609,
+          "max_abs_delta_max": 0.001003265380859375
+        }
+      },
+      "pooled_TRAIN_A": {
+        "contexts": 1219,
+        "r882_median_top2_gap": 0.020889759063720703,
+        "TTT_K": {
+          "contexts_any_score_changed_per_seed": [
+            1219,
+            1219,
+            1219
+          ],
+          "contexts_argmin_flipped_per_seed": [
+            0,
+            0,
+            0
+          ],
+          "max_abs_delta_min": 9.5367431640625e-07,
+          "max_abs_delta_median": 1.5497207641601562e-05,
+          "max_abs_delta_mean": 3.479263869966996e-05,
+          "max_abs_delta_p95": 0.00010251998901367185,
+          "max_abs_delta_max": 0.00144195556640625
+        },
+        "TTT_SHUF": {
+          "contexts_any_score_changed_per_seed": [
+            1219,
+            1219,
+            1219
+          ],
+          "contexts_argmin_flipped_per_seed": [
+            0,
+            0,
+            0
+          ],
+          "max_abs_delta_median_by_seed": [
+            2.2172927856445312e-05,
+            2.2411346435546875e-05,
+            2.205371856689453e-05
+          ],
+          "max_abs_delta_mean_by_seed": [
+            6.261201461180511e-05,
+            6.066098664667094e-05,
+            5.82869492363246e-05
+          ],
+          "max_abs_delta_max_by_seed": [
+            0.005313873291015625,
+            0.0036334991455078125,
+            0.0036334991455078125
+          ]
+        },
+        "TTT_L2": {
+          "contexts_any_score_changed_per_seed": [
+            1219,
+            1219,
+            1219
+          ],
+          "contexts_argmin_flipped_per_seed": [
+            0,
+            0,
+            0
+          ],
+          "max_abs_delta_min": 9.5367431640625e-07,
+          "max_abs_delta_median": 1.5497207641601562e-05,
+          "max_abs_delta_mean": 3.479263869966996e-05,
+          "max_abs_delta_p95": 0.00010251998901367185,
+          "max_abs_delta_max": 0.00144195556640625
+        }
+      },
+      "DL_Val": {
+        "contexts": 91,
+        "r882_median_top2_gap": 0.0222320556640625,
+        "TTT_K": {
+          "contexts_any_score_changed_per_seed": [
+            91,
+            91,
+            91
+          ],
+          "contexts_argmin_flipped_per_seed": [
+            0,
+            0,
+            0
+          ],
+          "max_abs_delta_min": 2.6226043701171875e-06,
+          "max_abs_delta_median": 1.52587890625e-05,
+          "max_abs_delta_mean": 2.6649171655828303e-05,
+          "max_abs_delta_p95": 8.022785186767578e-05,
+          "max_abs_delta_max": 0.0001678466796875
+        },
+        "TTT_SHUF": {
+          "contexts_any_score_changed_per_seed": [
+            91,
+            91,
+            91
+          ],
+          "contexts_argmin_flipped_per_seed": [
+            0,
+            0,
+            0
+          ],
+          "max_abs_delta_median_seed198101": 2.09808349609375e-05,
+          "max_abs_delta_mean_seed198101": 3.927213686094945e-05,
+          "max_abs_delta_max_seed198101": 0.0006561279296875
+        },
+        "TTT_L2": {
+          "contexts_any_score_changed_per_seed": [
+            91,
+            91,
+            91
+          ],
+          "contexts_argmin_flipped_per_seed": [
+            0,
+            0,
+            0
+          ],
+          "max_abs_delta_min": 2.6226043701171875e-06,
+          "max_abs_delta_median": 1.52587890625e-05,
+          "max_abs_delta_mean": 2.6649171655828303e-05,
+          "max_abs_delta_p95": 8.022785186767578e-05,
+          "max_abs_delta_max": 0.0001678466796875
+        }
+      }
+    },
+    "stage1_grid_counts_all_train_1219": {
+      "K1_LR1e-05": {
+        "contexts_any_score_changed": 1219,
+        "contexts_argmin_flipped": 0,
+        "contexts_utility_changed": 0,
+        "max_abs_delta_median": 1.5497207641601562e-05,
+        "max_abs_delta_max": 0.00144195556640625
+      },
+      "K1_LR3e-05": {
+        "contexts_any_score_changed": 1219,
+        "contexts_argmin_flipped": 0,
+        "contexts_utility_changed": 0,
+        "max_abs_delta_median": 4.673004150390625e-05,
+        "max_abs_delta_max": 0.004322052001953125
+      },
+      "K1_LR1e-04": {
+        "contexts_any_score_changed": 1219,
+        "contexts_argmin_flipped": 1,
+        "contexts_utility_changed": 0,
+        "max_abs_delta_median": 0.000156402587890625,
+        "max_abs_delta_max": 0.014286041259765625
+      },
+      "K3_LR1e-05": {
+        "contexts_any_score_changed": 1219,
+        "contexts_argmin_flipped": 0,
+        "contexts_utility_changed": 0,
+        "max_abs_delta_median": 4.673004150390625e-05,
+        "max_abs_delta_max": 0.00432586669921875
+      },
+      "K3_LR3e-05": {
+        "contexts_any_score_changed": 1219,
+        "contexts_argmin_flipped": 1,
+        "contexts_utility_changed": 0,
+        "max_abs_delta_median": 0.00014066696166992188,
+        "max_abs_delta_max": 0.01291656494140625
+      },
+      "K3_LR1e-04": {
+        "contexts_any_score_changed": 1219,
+        "contexts_argmin_flipped": 3,
+        "contexts_utility_changed": 2,
+        "max_abs_delta_median": 0.000469207763671875,
+        "max_abs_delta_max": 0.042057037353515625
+      },
+      "K5_LR1e-05": {
+        "contexts_any_score_changed": 1219,
+        "contexts_argmin_flipped": 0,
+        "contexts_utility_changed": 0,
+        "max_abs_delta_median": 7.82012939453125e-05,
+        "max_abs_delta_max": 0.007205963134765625
+      },
+      "K5_LR3e-05": {
+        "contexts_any_score_changed": 1219,
+        "contexts_argmin_flipped": 1,
+        "contexts_utility_changed": 0,
+        "max_abs_delta_median": 0.0002346038818359375,
+        "max_abs_delta_max": 0.02143096923828125
+      },
+      "K5_LR1e-04": {
+        "contexts_any_score_changed": 1219,
+        "contexts_argmin_flipped": 4,
+        "contexts_utility_changed": 3,
+        "max_abs_delta_median": 0.000782012939453125,
+        "max_abs_delta_max": 0.06807708740234375
+      }
+    }
+  }
 }
