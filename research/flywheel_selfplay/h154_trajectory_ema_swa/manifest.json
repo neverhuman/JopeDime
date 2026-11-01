@@ -83,11 +83,14 @@
   },
   "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
   "executor_sha256": {
+    "PREREG.md": "ea8ef7205b3e19ff6dea27df7314d6aec89b4648b0dd0dbd03bde7f7ffe8eeac",
+    "PREREG_AMENDMENT_A1.md": "cb955d55eab4a826303e35eddfc954d18959236311ac16d802a43e7b7a74bd2e",
+    "fold_manifest.json": "c69c186ffee98eaa1f3c975417d9dcc5ae4fd3b0ebf9d913c7812817a864daf3",
     "monitor.py": "2ee2bb78a03da2b5e42b68e2ec4448bc331b365f89730482e3a4fb3941e91a33",
-    "runner.py": "9499ded88ef57cba575e973d64871b8ef99510ab253115c7ef6f3d1d6ff625a7",
-    "runtime.py": "ed7384ae4ef553fee1d148657e4248ee22687bd4921eacafbe19f058f73ae03f",
+    "runner.py": "1560f935a82cca72c309ae00c98d323bcedc4c7ed56a5740d46742a0cf204e9c",
+    "runtime.py": "345ef71cd4c894e48818741df75a8c21b62fbfc9325398bdaf8d361e434031f5",
     "science.py": "bcc2dea8794a7d595c018443fed8a2792cc809ed569f54ae14be7244ec5827e6",
-    "test_h154.py": "d1d2eb1c780878f8b2ddf812cb3e0f7c8cb8a62d1f03d6e674be7ab720959a47"
+    "test_h154.py": "3450509c8d164e4a766142a0f2ec3ee5cf3d1028b33ea39bf4929ed493e6d83e"
   },
   "fold_manifest_sha256": "c69c186ffee98eaa1f3c975417d9dcc5ae4fd3b0ebf9d913c7812817a864daf3",
   "fold_seed": 154140,
@@ -106,7 +109,7 @@
     "psutil": "7.1.0",
     "torch": "2.7.0"
   },
-  "prereg_sha256": "253d0c70ae1ec777635e365fa5084c8fdfbd6e16af64895ad1d8431a772ac137",
+  "prereg_sha256": "ea8ef7205b3e19ff6dea27df7314d6aec89b4648b0dd0dbd03bde7f7ffe8eeac",
   "prior_prereg_heads": [
     "81441ac1e68572eba93b4f5d8ec1c0efeb20618a",
     "b9098cf517d07fabf0093ad158a9a20602424ceb",
@@ -143,5 +146,6 @@
     "SWA_K20": 20,
     "SWA_K5": 5
   },
-  "wave": "H154"
+  "wave": "H154",
+  "prereg_amendment_a1_sha256": "cb955d55eab4a826303e35eddfc954d18959236311ac16d802a43e7b7a74bd2e"
 }
