@@ -248,7 +248,7 @@ Everything else runs beside it. M1 (native discovery) does not depend on the cus
 | REL-01 | LUNA | S | W2 | RNK-11 | Link-audit script and CI job | D1 | merged |
 | REL-02 | COMPLEX | M | W3 | RNK-01, RNK-11, TEL-02 | `fused-cpu`/`fused-cuda` profiles; retire `full` | D1 | todo |
 | REL-03 | LUNA | S | W4 | REL-02 | Size budget entry | D2 | todo |
-| REL-04 | COMPLEX | M | W4 | REL-02, INT-01 | Clean-host matrix on three OSes | D1 | todo |
+| REL-04 | COMPLEX | M | W4 | REL-02, INT-01 | Clean-host matrix on three OSes | D1 | done |
 | REL-05 | LUNA | S | W4 | INT-01 | Product docs with executed examples | — | todo |
 | REL-06 | LUNA | S | W4 | REL-02 | D2 startup and first-model benchmark | D2 | todo |
 | REL-07 | COMPLEX | M | W5 | all | ★ Qualification receipt and final gate rerun | all | todo |
