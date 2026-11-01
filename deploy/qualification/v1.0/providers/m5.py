@@ -29,6 +29,9 @@ TEST = "ranker::adapter::real_cpu_parity::m5_serving_causal_measurements"
 INDEX_SHA256 = "27905f29703431bedacac90eed1bd54257fd0c59bdf24b56605d0b9416ae1393"
 R882_CATALOG_SHA256 = "3af56a817bfae39b70f0b2f60668fe88fae178650ee596e1ba7a180acba1e0c6"
 R882_DIGEST = "sha256:057e50a9a741d30d541ed8af8339cec84a5157af621100cb70857052ef14dacc"
+R782_DIGEST = "sha256:94fd9587675c7806bd0a0582b6e97540cd2fdc7ebbc51958411b905185cad85c"
+R782_JOPE_SHA256 = "ce39c75f37624e64dfbf89e6493adbf74811a5248f9355997161491e93a132ef"
+R882_JOPE_SHA256 = "ff3f9ea5d76fa6c13cd74d40a9effbf7e9c891d98746dc542d851726b9e3138c"
 SINGLE_PASS = dict(collected=1, executed=1, passed=1, failed=0, skipped=0, excluded=0)
 
 
@@ -110,22 +113,31 @@ def causal_report(path: Path) -> dict:
     regular(path)
     report = json.loads(path.read_text())
     if (
-        report["schema"] != "jope.m5-causal/v1"
+        report["schema"] != "jope.m5-causal/v2"
         or report["consumer"] != "M5-causal"
         or report["device"] != "cpu"
-        or report["passed"] is not True
-        or report["values"] != 1600
-        or report["failed_values"] != 0
     ):
         raise ProviderError(
-            "M5 native report must contain the complete passing CPU replay"
+            "M5 native report must contain the v2 CPU replay"
         )
+    output_checks = report["output_checks"]
+    oracle = report["reference_oracle"]
+    if (
+        output_checks["finite_cost_values"] != 1600
+        or output_checks["invalid_cost_values"] != 0
+        or oracle["status"] != "not_comparable_model_weights"
+        or oracle["comparison_performed"] is not False
+        or oracle["reference_bundle_digest"] != R782_DIGEST
+        or oracle["reference_jope_weights_sha256"] != R782_JOPE_SHA256
+        or oracle["actual_bundle_digest"] != R882_DIGEST
+        or oracle["actual_jope_weights_sha256"] != R882_JOPE_SHA256
+    ):
+        raise ProviderError("M5 report has invalid output checks or oracle identity")
     details = report["details"]
     serving = details["serving_4_plus_8"]
     if (
         details["contexts"] != 50
         or details["slates"] != 100
-        or details["admitted_order_mismatches"] != 0
         or details["quality_gate_granted"] is not False
         or details["Q1_ready"] is not False
         or serving["slates"] != 50
@@ -133,7 +145,7 @@ def causal_report(path: Path) -> dict:
         or serving["interventions"] != [-6.0, 0.0, 6.0]
         or serving["masks_and_dope_only_slots_preserved"] is not True
         or any(
-            type(serving[key]) is not int or not 0 < serving[key] <= 50
+            type(serving[key]) is not int or not 0 <= serving[key] <= 50
             for key in (
                 "landmark_only_changed_admission",
                 "fitness_changed_admission",
@@ -142,8 +154,17 @@ def causal_report(path: Path) -> dict:
         )
     ):
         raise ProviderError(
-            "M5 requires 50 serving trials and a positive result for each causal control"
+            "M5 requires 50 serving trials and bounded causal control counts"
         )
+    expected_pass = (
+        output_checks["invalid_cost_values"] == 0
+        and details["admitted_order_mismatches"] == 0
+        and serving["landmark_only_changed_admission"] > 0
+        and serving["fitness_changed_admission"] > 0
+        and serving["disconnected_heuristic_mismatches"] > 0
+    )
+    if report["passed"] is not expected_pass:
+        raise ProviderError("M5 passed flag disagrees with its measured controls")
     return report
 
 
@@ -208,7 +229,7 @@ def qualify(ctx: Context, inputs: Inputs, run=None) -> int:
     payload = {
         "schema": "jope.rel07.gate-execution/v1",
         "id": "M5",
-        "status": "PASS",
+        "status": "PASS" if report["passed"] is True else "FAIL",
         "source_sha": ctx.source_sha,
         "artifact_sha256": ctx.artifact_sha256,
         "counts": SINGLE_PASS,
@@ -223,6 +244,9 @@ def qualify(ctx: Context, inputs: Inputs, run=None) -> int:
     check_binding(ctx, inputs, run)
     with ctx.result.open("x", encoding="utf-8") as stream:
         stream.write(json.dumps(payload, sort_keys=True) + "\n")
+    if report["passed"] is not True:
+        print("M5 native replay completed with a genuine causal FAIL", file=sys.stderr)
+        return 1
     return 0
 
 

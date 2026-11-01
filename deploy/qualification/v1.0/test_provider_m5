@@ -106,12 +106,19 @@ class M5Tests(unittest.TestCase):
             self.assertEqual(environment["CUDA_VISIBLE_DEVICES"], "")
             self.assertEqual(environment["CARGO_INCREMENTAL"], "0")
             report = {
-                "schema": "jope.m5-causal/v1",
+                "schema": "jope.m5-causal/v2",
                 "consumer": "M5-causal",
                 "device": "cpu",
                 "passed": True,
-                "values": 1600,
-                "failed_values": 0,
+                "output_checks": {"finite_cost_values": 1600, "invalid_cost_values": 0},
+                "reference_oracle": {
+                    "status": "not_comparable_model_weights",
+                    "comparison_performed": False,
+                    "reference_bundle_digest": m5.R782_DIGEST,
+                    "reference_jope_weights_sha256": m5.R782_JOPE_SHA256,
+                    "actual_bundle_digest": m5.R882_DIGEST,
+                    "actual_jope_weights_sha256": m5.R882_JOPE_SHA256,
+                },
                 "details": {
                     "contexts": 50,
                     "slates": 100,
@@ -206,12 +213,37 @@ class M5Tests(unittest.TestCase):
             ("passed", False),
             ("consumer", "other"),
             ("device", "cuda"),
-            ("values", 0),
-            ("failed_values", 1),
+            ("output_checks", {"finite_cost_values": 1599, "invalid_cost_values": 0}),
+            ("output_checks", {"finite_cost_values": 1600, "invalid_cost_values": 1}),
         ]:
             self.edit_report = lambda r, key=key, value=value: r.update({key: value})
             with self.subTest(key=key):
                 self.refuses()
+
+    def test_cross_model_oracle_claims_and_invalid_bindings_are_rejected(self):
+        for field, value in [
+            ("comparison_performed", True),
+            ("reference_jope_weights_sha256", m5.R882_JOPE_SHA256),
+            ("actual_jope_weights_sha256", m5.R782_JOPE_SHA256),
+            ("actual_bundle_digest", m5.R782_DIGEST),
+        ]:
+            self.edit_report = lambda r, field=field, value=value: r[
+                "reference_oracle"
+            ].update({field: value})
+            with self.subTest(field=field):
+                self.refuses()
+
+    def test_genuine_causal_failure_is_recorded_as_fail(self):
+        self.edit_report = lambda report: (
+            report.update({"passed": False}),
+            report["details"]["serving_4_plus_8"].update(
+                {"landmark_only_changed_admission": 0}
+            ),
+        )
+        self.assertEqual(self.invoke(), 1)
+        receipt = json.loads(self.ctx.result.read_text())
+        self.assertEqual(receipt["status"], "FAIL")
+        self.assertEqual(self.test_calls, 1)
 
     def test_twenty_candidate_success_cannot_replace_missing_serving_causality(self):
         for field, value in [

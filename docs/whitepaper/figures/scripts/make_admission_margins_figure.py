@@ -35,7 +35,9 @@ def main() -> None:
     rows = list(csv.DictReader(io.StringIO(raw_csv.decode("utf-8"))))
     rounds = [int(r["round"]) for r in rows]
     assert rounds == list(range(rounds[0], rounds[-1] + 1))
-    assert len(rows) == source_meta["capture"]["source_rows"] == 2063
+    assert len(rows) == source_meta["capture"]["source_rows"]
+    assert rounds[0] == source_meta["capture"]["first_round"]
+    assert rounds[-1] == source_meta["capture"]["last_round"]
 
     candidates = [Decimal(r["candidate_val"]) for r in rows]
     previous = [Decimal(r["previous_best_val"]) for r in rows]
@@ -47,7 +49,10 @@ def main() -> None:
 
     gains_idx, ties_idx, rej_idx = [], [], []
     for i, (m, acc, dec) in enumerate(zip(margins, accepted_flags, decisions)):
-        assert m.is_finite()
+        assert all(value.is_finite() for value in [candidates[i], previous[i], bests[i]])
+        assert bests[i] == (candidates[i] if acc else previous[i])
+        if i:
+            assert previous[i] == bests[i - 1]
         assert acc in (0, 1)
         assert (acc == 1) == (m >= Decimal("0"))
         if acc == 1:
@@ -62,9 +67,8 @@ def main() -> None:
             assert dec == "restore_best_model_and_optimizer"
             rej_idx.append(i)
 
-    assert [rounds[i] for i in gains_idx] == [785, 859, 2750]
-    assert [rounds[i] for i in ties_idx] == [782, 882, 2795]
-    assert len(rej_idx) == 2057
+    assert len(gains_idx) + len(ties_idx) + len(rej_idx) == len(rows)
+    assert rej_idx, "This diagnostic requires rejected candidates"
 
     gains_ge_1e3 = [i for i in gains_idx if margins[i] >= Decimal("0.001")]
     gains_sub_1e3 = [i for i in gains_idx if Decimal("0") < margins[i] < Decimal("0.001")]
@@ -74,14 +78,14 @@ def main() -> None:
     ]
     rej_below_1e3 = [i for i in rej_idx if margins[i] < Decimal("-0.001")]
 
-    assert len(gains_ge_1e3) == 1 and len(gains_sub_1e3) == 2
-    assert len(rej_band_1e4) == 26
-    assert len(rej_band_1e3) == 48
-    assert len(rej_below_1e3) == 1983
+    assert len(gains_ge_1e3) + len(gains_sub_1e3) == len(gains_idx)
     assert len(rej_band_1e4) + len(rej_band_1e3) + len(rej_below_1e3) == len(rej_idx)
 
     rej_margins_sorted = sorted(margins[i] for i in rej_idx)
-    median_rej = rej_margins_sorted[len(rej_margins_sorted) // 2]
+    median_rej = (
+        rej_margins_sorted[(len(rej_idx) - 1) // 2]
+        + rej_margins_sorted[len(rej_idx) // 2]
+    ) / 2
     min_rej_i = min(rej_idx, key=lambda i: margins[i])
     max_rej_i = max(rej_idx, key=lambda i: margins[i])
 
@@ -140,39 +144,26 @@ def main() -> None:
         label=f"exact ties ({len(ties_idx)})",
     )
 
-    # Off-scale annotation for round 785 (+0.030218)
-    r785 = rounds[gains_ge_1e3[0]]
-    m785 = margins[gains_ge_1e3[0]]
-    ax0.annotate(
-        f"r{r785}: +{m785:.4f} (off-scale)",
-        xy=(r785, 0.00165),
-        xytext=(960, 0.00122),
-        fontsize=6.6,
-        color="#c92a2a",
-        ha="left",
-        va="center",
-        arrowprops=dict(arrowstyle="->", color="#c92a2a", lw=0.7),
-        bbox=dict(facecolor="white", edgecolor="none", alpha=0.88, pad=0.6),
-    )
-    # Near-zero gain annotations
-    ax0.annotate(
-        "r859 (+2.0e-4)",
-        xy=(859, float(margins[gains_sub_1e3[0]])),
-        xytext=(1080, -0.00095),
-        fontsize=6.5,
-        color="#c92a2a",
-        arrowprops=dict(arrowstyle="->", color="#c92a2a", lw=0.6),
-    )
-    ax0.annotate(
-        "r2750 (+5.7e-4)",
-        xy=(2750, float(margins[gains_sub_1e3[1]])),
-        xytext=(2560, -0.00095),
-        ha="right",
-        va="center",
-        fontsize=6.5,
-        color="#c92a2a",
-        arrowprops=dict(arrowstyle="->", color="#c92a2a", lw=0.6),
-    )
+    span = rounds[-1] - rounds[0]
+    for j, i in enumerate(gains_ge_1e3):
+        ax0.annotate(
+            f"r{rounds[i]}: +{margins[i]:.4f} (off-scale)",
+            xy=(rounds[i], 0.00165),
+            xytext=(rounds[0] + span * 0.09, 0.00122 - j * 0.0004),
+            fontsize=6.6, color="#c92a2a", ha="left", va="center",
+            arrowprops=dict(arrowstyle="->", color="#c92a2a", lw=0.7),
+            bbox=dict(facecolor="white", edgecolor="none", alpha=0.88, pad=0.6),
+        )
+    for i in gains_sub_1e3:
+        left = rounds[i] < (rounds[0] + rounds[-1]) / 2
+        ax0.annotate(
+            f"r{rounds[i]} (+{margins[i]:.1e})",
+            xy=(rounds[i], float(margins[i])),
+            xytext=(rounds[i] + span * (0.1 if left else -0.1), -0.00095),
+            ha="left" if left else "right", va="center", fontsize=6.5,
+            color="#c92a2a",
+            arrowprops=dict(arrowstyle="->", color="#c92a2a", lw=0.6),
+        )
 
     ax0.set_title("Candidate minus retained-best utility", loc="left", fontsize=8)
     ax0.set_xlabel("round")
@@ -219,7 +210,7 @@ def main() -> None:
 
     bars = ax1.barh(y_pos, counts, color=colors, height=0.62, edgecolor="none")
     ax1.set_xscale("symlog", linthresh=10)
-    ax1.set_xlim(0, 6500)
+    ax1.set_xlim(0, max(6500, max(counts) * 2))
     ax1.set_yticks(y_pos)
     ax1.set_yticklabels(categories, fontsize=6.9)
     ax1.axhline(2.5, color="#212529", lw=0.65, ls=":")
@@ -227,13 +218,18 @@ def main() -> None:
     ax1.set_xlabel("rounds (symlog scale)")
     ax1.grid(axis="x", alpha=0.22, lw=0.4)
 
+    def round_note(indices):
+        shown = ", r".join(str(rounds[i]) for i in indices[:3])
+        suffix = ", ..." if len(indices) > 3 else ""
+        return f"{len(indices):,} (r{shown}{suffix})" if indices else "0"
+
     notes = [
-        "1 (r785: +0.0302)",
-        "2 (r859, r2750)",
-        "3 (r782, r882, r2795)",
-        "26 (max -4.3e-5)",
-        "48 (74 in [-1e-3, 0))",
-        "1,983 (med -0.0034)",
+        round_note(gains_ge_1e3),
+        round_note(gains_sub_1e3),
+        round_note(ties_idx),
+        f"{len(rej_band_1e4):,} (max {margins[max_rej_i]:.1e})",
+        f"{len(rej_band_1e3):,} ({len(rej_band_1e4) + len(rej_band_1e3):,} in [-1e-3, 0))",
+        f"{len(rej_below_1e3):,} (med {median_rej:.4f})",
     ]
     for bar, note in zip(bars, notes):
         w = bar.get_width()
@@ -290,7 +286,7 @@ def main() -> None:
         "min_rejected_margin": str(margins[min_rej_i]),
         "median_rejected_margin": str(median_rej),
         "definition": "Pre-decision validation margin Delta_r = candidate_val - previous_best_val in exact Decimal; accepted iff Delta_r >= 0 (strict gain > 0, exact tie == 0).",
-        "scope": "Development admission telemetry over rounds 775-2837 (2,063 records); not an independent first-proposal or deployment comparison.",
+        "scope": f"Development admission telemetry over rounds {rounds[0]}-{rounds[-1]} ({len(rows):,} records); not an independent first-proposal or deployment comparison.",
         "source_binding": source_meta["source_binding"],
         "matplotlib_version": matplotlib.__version__,
         "reproduce": "python3 figures/scripts/make_admission_margins_figure.py",

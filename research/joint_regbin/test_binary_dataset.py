@@ -8,6 +8,7 @@ open test, holdout, or sealed payloads.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import io
 import json
@@ -454,6 +455,30 @@ class RoleManifestAdmissionTests(unittest.TestCase):
             }
             for row in sorted(contexts, key=lambda item: item["id"])
         ]
+        worker = {
+            "sha256": hashlib.sha256(b"qualified-worker").hexdigest(),
+            "qualified": True,
+            "tasks": list(protocol.TASKS),
+            "actual_optimizer_updates": 12,
+            "parameters_changed": True,
+            "dope_sha256": protocol.DOPE,
+        }
+        qualification_receipt = {
+            "schema": "jope.joint-regbin.worker-qualification/v1",
+            "worker_sha256": worker["sha256"],
+            "qualified": worker["qualified"],
+            "tasks": sorted(worker["tasks"]),
+            "actual_optimizer_updates": worker["actual_optimizer_updates"],
+            "parameters_changed": worker["parameters_changed"],
+            "dope_sha256": worker["dope_sha256"],
+        }
+        receipt_bytes = json.dumps(
+            qualification_receipt, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
+        worker["qualification_sha256"] = hashlib.sha256(receipt_bytes).hexdigest()
+        worker["qualification_receipt_bytes_b64"] = base64.b64encode(
+            receipt_bytes
+        ).decode("ascii")
         evidence = {
             "data": {
                 "role_assignment_reviewed": True,
@@ -477,15 +502,7 @@ class RoleManifestAdmissionTests(unittest.TestCase):
                 "bundle_digest": R882_BUNDLE_DIGEST,
                 "source_checkpoint_sha256": R882_CHECKPOINT_SHA256,
             },
-            "worker": {
-                "sha256": hashlib.sha256(b"qualified-worker").hexdigest(),
-                "qualified": True,
-                "tasks": list(protocol.TASKS),
-                "actual_optimizer_updates": 12,
-                "parameters_changed": True,
-                "dope_sha256": protocol.DOPE,
-                "qualification_sha256": hashlib.sha256(b"qualification").hexdigest(),
-            },
+            "worker": worker,
         }
         return catalog_path, contexts, family_by_dataset, evidence
 
@@ -513,6 +530,52 @@ class RoleManifestAdmissionTests(unittest.TestCase):
                     },
                     {50, 2, 32, 10},
                 )
+
+    def test_forged_qualified_worker_arbitrary_digest_is_rejected(self) -> None:
+        catalog_path, contexts, families, evidence = self._fixture()
+        evidence["worker"]["qualified"] = True
+        evidence["worker"]["qualification_sha256"] = hashlib.sha256(
+            b"arbitrary qualification digest"
+        ).hexdigest()
+
+        manifest = build_role_manifest(catalog_path, contexts, families, evidence)
+
+        self.assertIs(manifest["eligibility_verified"], False)
+        self.assertTrue(
+            any(
+                "receipt hash does not match its bytes" in blocker
+                for blocker in manifest["blockers"]
+            )
+        )
+        with self.assertRaisesRegex(ValueError, "incomplete JRB inputs"):
+            make_worker_bound_plan(manifest, catalog_path=catalog_path)
+
+    def test_worker_qualification_receipt_must_attest_worker_fields(self) -> None:
+        catalog_path, contexts, families, evidence = self._fixture()
+        receipt_bytes = base64.b64decode(
+            evidence["worker"]["qualification_receipt_bytes_b64"], validate=True
+        )
+        receipt = json.loads(receipt_bytes)
+        receipt["actual_optimizer_updates"] = 11
+        receipt_bytes = json.dumps(
+            receipt, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
+        evidence["worker"]["qualification_sha256"] = hashlib.sha256(
+            receipt_bytes
+        ).hexdigest()
+        evidence["worker"]["qualification_receipt_bytes_b64"] = base64.b64encode(
+            receipt_bytes
+        ).decode("ascii")
+
+        manifest = build_role_manifest(catalog_path, contexts, families, evidence)
+
+        self.assertIs(manifest["eligibility_verified"], False)
+        self.assertTrue(
+            any(
+                "does not attest the supplied worker evidence" in blocker
+                for blocker in manifest["blockers"]
+            )
+        )
 
     def test_role_manifest_rejects_noncanonical_catalog_bucket(self) -> None:
         catalog_path, contexts, families, evidence = self._fixture()
