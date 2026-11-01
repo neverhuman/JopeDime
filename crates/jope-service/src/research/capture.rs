@@ -216,12 +216,7 @@ impl CaptureContext {
             );
         }
         let revealed_indices = if self.binding.identity.evidence == RecordEvidence::Engine {
-            let expected = select_od13_indices(round, measured)?;
-            ensure!(
-                observation.revealed_indices == expected,
-                "provider reveal selection differs from accepted OD13 rule"
-            );
-            expected
+            validate_od13_provider_indices(round, measured, &observation.revealed_indices)?
         } else {
             ensure!(
                 observation.revealed_indices.len() == if round == 0 { 0 } else { 4 },
@@ -268,6 +263,19 @@ fn select_od13_indices(round: u64, measured: &[RecordedReveal]) -> Result<Vec<us
     Ok(selected.into_iter().collect())
 }
 
+fn validate_od13_provider_indices(
+    round: u64,
+    measured: &[RecordedReveal],
+    provider_indices: &[usize],
+) -> Result<Vec<usize>> {
+    let expected = select_od13_indices(round, measured)?;
+    ensure!(
+        provider_indices == expected,
+        "provider reveal selection differs from accepted OD13 rule"
+    );
+    Ok(expected)
+}
+
 pub(crate) fn digest(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
@@ -285,7 +293,7 @@ mod od13_tests {
                 proj16: vec![0.0; 16],
             },
             surrogate,
-            gate: index % 2 == 0,
+            gate: index & 1 == 0,
         }
     }
 
@@ -303,6 +311,11 @@ mod od13_tests {
         let selected = select_od13_indices(1, &measured).unwrap();
 
         assert_eq!(selected, [4, 1, 3, 2]);
+        assert_eq!(
+            validate_od13_provider_indices(1, &measured, &[4, 1, 3, 2]).unwrap(),
+            selected
+        );
+        assert!(validate_od13_provider_indices(1, &measured, &[0, 1, 2, 3]).is_err());
         assert_eq!(measured[selected[0]].gate, measured[4].gate);
         assert_eq!(measured[selected[1]].gate, measured[1].gate);
     }
