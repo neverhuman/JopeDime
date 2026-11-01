@@ -133,8 +133,10 @@ fn validate_executable_target(code: &[u8], target: &str, path: &Path) -> Result<
                 && code.get(0..4) == Some(b"\x7fELF")
                 && code.get(4) == Some(&2) // ELFCLASS64
                 && code.get(5) == Some(&1) // ELFDATA2LSB
-                && code.get(6) == Some(&1) // EV_CURRENT
-                && code.get(18..20) == Some(&62u16.to_le_bytes()); // EM_X86_64
+                && code.get(6) == Some(&1) // EI_VERSION: EV_CURRENT
+                && code.get(18..20) == Some(&62u16.to_le_bytes()) // EM_X86_64
+                && code.get(20..24) == Some(&1u32.to_le_bytes()) // e_version: EV_CURRENT
+                && code.get(52..54) == Some(&64u16.to_le_bytes()); // e_ehsize: ELF64 header size
             ensure!(
                 x86_64_elf,
                 "{} is not a 64-bit little-endian x86_64 ELF file for Linux target {target}",
@@ -524,11 +526,17 @@ mod executable_target_tests {
         elf32[18..20].copy_from_slice(&3u16.to_le_bytes()); // EM_386
         let mut big_endian = x86_64_elf();
         big_endian[5] = 2; // ELFDATA2MSB
+        let mut bad_header_version = x86_64_elf();
+        bad_header_version[20..24].copy_from_slice(&0u32.to_le_bytes());
+        let mut bad_header_size = x86_64_elf();
+        bad_header_size[52..54].copy_from_slice(&0u16.to_le_bytes());
 
         for bytes in [
             arm64_elf,
             elf32,
             big_endian,
+            bad_header_version,
+            bad_header_size,
             b"\x7fELF truncated".to_vec(),
             arm64_mach_o(),
             b"MZ windows PE".to_vec(),
