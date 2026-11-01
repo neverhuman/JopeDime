@@ -81,6 +81,22 @@ task-split validation contexts, and a pinned two-task learner/checkpoint. Until
 those inputs pass preflight and the learner is qualified, no study result or
 split-or-stay verdict is available.
 
+### Catalog pool candidate inventory
+
+`admission.build_catalog_pool_manifest_from_files(catalog_path, owner_alias_path)`
+constructs a metadata-only regression/binary candidate inventory. It applies
+the pinned `dltrain.family_keys` policy, unions source-file and URL-parent
+aliases across both tasks, and binds the current owner raw-catalog alias
+receipt. The output is `jope.joint-regbin.catalog-pools/v1` with
+`admission_status: CATALOG_CANDIDATES_NOT_ADMITTED` and
+`eligibility_verified: false`. It contains catalog train-row hashes and family
+alias evidence, but assigns no train/validation/panel roles and does not read
+payloads. The owner receipt still leaves 14 source-file aliases unresolved and
+its recorded-key intersection check is binary-only, so this inventory does not
+establish full owner-alias or sealed-family closure. It cannot be used as a
+runnable study manifest until role, alias, payload, and worker evidence is
+reviewed and admitted separately.
+
 ## Learner integration contract (qualification still required)
 
 Supply a reviewed Python learner, pinned by its full file hash, accepting
