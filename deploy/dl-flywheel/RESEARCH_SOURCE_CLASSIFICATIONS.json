@@ -4648,6 +4648,38 @@
         "reason": "H184 preregistered CPU-only diagnostic: adapter-structure component ablation (PRIOR/KERNEL/ATTN output terms, proved bit-exact against the live adapter delta) under 0-update random weights against r882 on the H180/H176 family harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
       }
     },
+    "python:research/flywheel_selfplay/h188_kernel_inputs/analysis.py": {
+      "bytes": 13629,
+      "sha256": "669b4c07f4cd00ce41a05f79a02c0b14f177023b922f17425475cf69f29ae891",
+      "classification": {
+        "role": "research",
+        "reason": "H188 preregistered CPU-only diagnostic: kernel-input ablation (anchor similarity features, rank-normalized and Huber-winsorized revealed residuals) on the trained r882 adapter at 0 updates, with the H177-derived pooled-B selector, bit-exact kernel replay gates, DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h188_kernel_inputs/monitor.py": {
+      "bytes": 5245,
+      "sha256": "f52c65ffa65ac3eff86ffcf11971cc345ff8408beaf6b14c3788e3c0230708c5",
+      "classification": {
+        "role": "research",
+        "reason": "H188 preregistered CPU-only diagnostic: kernel-input ablation (anchor similarity features, rank-normalized and Huber-winsorized revealed residuals) on the trained r882 adapter at 0 updates, with the H177-derived pooled-B selector, bit-exact kernel replay gates, DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h188_kernel_inputs/runner.py": {
+      "bytes": 34691,
+      "sha256": "7bf491f9333761ffc1a50c689279de633d843b5e6f260e40896bb1b7c363775b",
+      "classification": {
+        "role": "research",
+        "reason": "H188 preregistered CPU-only diagnostic: kernel-input ablation (anchor similarity features, rank-normalized and Huber-winsorized revealed residuals) on the trained r882 adapter at 0 updates, with the H177-derived pooled-B selector, bit-exact kernel replay gates, DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h188_kernel_inputs/treatment.py": {
+      "bytes": 13293,
+      "sha256": "534ed8e9700797f0bbae00166e50cfd739c85caa90d4e1479c3700b58577de15",
+      "classification": {
+        "role": "research",
+        "reason": "H188 preregistered CPU-only diagnostic: kernel-input ablation (anchor similarity features, rank-normalized and Huber-winsorized revealed residuals) on the trained r882 adapter at 0 updates, with the H177-derived pooled-B selector, bit-exact kernel replay gates, DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
     "python:research/flywheel_selfplay/h176_data_scaling/monitor.py": {
       "bytes": 5200,
       "sha256": "79079503077af4097423089e1b22d921049f047f2e641f7fb62fef30f1cfb100",
