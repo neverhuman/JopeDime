@@ -1,0 +1,9 @@
+{
+  "original_source_commit": "e247e6bdd76c1a8ef7cbdc488329c377e693625e",
+  "original_output": "/home/ubuntu/jope-data/h165/attempt-001",
+  "failure_sha256": "82a77af801bb4dd03cd3bcc5513aae1b8f673529aa16ae12241e9f60d52cad13",
+  "resource_summary_sha256": "49f014a871e7d5bdf14c4a623e1ed395fb1a4667c4e4d3e2bb7871129914c16e",
+  "original_attempt_claim_sha256": "dd16b6e182d156726ef97ed45c155ef09a0b54ed6c3c3bea013513b4a81642f7",
+  "sole_exception": "zero-update inactive-gradient norm logging failure; no trained snapshots or selection decisions",
+  "max_total_updates": 2400
+}

@@ -4299,6 +4299,16 @@
       "lanes": [],
       "scope": "REL-07 A2 provider controls over synthetic child responses: candidate/source binding, exact API schema/error/decimal selectors, execution counts, path and drift refusals. No real release gate is executed."
     },
+    "python:deploy/qualification/v1.0/test_provider_a4/test_a4.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 PR1406 provider controls: candidate/source binding, exact test execution, drift/failure/overwrite refusals. Synthetic fixtures validate orchestration only; actual candidate release execution remains separate."
+    },
     "python:deploy/qualification/v1.0/test_provider_a5/test_a5.py": {
       "discovery": {
         "kind": "python-family"
@@ -4348,6 +4358,16 @@
       ],
       "lanes": [],
       "scope": "REL-07 S3 leakage provider controls: candidate/source binding, exact single-pass selectors for FIT-row audit, fold constraints and finalization scope, path/hash refusals; synthetic child output only, no release execution."
+    },
+    "python:deploy/qualification/v1.0/test_provider_s4/test_s4.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 S4 candidate-bound provider controls: exact named execution, full source/artifact binding, drift/failure/symlink/non-file/overwrite refusal. Synthetic controls are not release qualification."
     },
     "python:deploy/qualification/v1.0/test_provider_t2/test_provider_t2.py": {
       "discovery": {
@@ -5353,6 +5373,36 @@
       ],
       "lanes": [],
       "scope": "H161 robust per-context normalized/Huber loss + family-balanced sampling unit tests"
+    },
+    "python:research/flywheel_selfplay/h163_prediction_ensemble/test_h163.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H163 data-free controls for cost/utility direction, candidate ID alignment and native ties, z-normalization/rank ensemble, fixed family folds, shared-family median-seed bootstrap, canonical H145 Elo dominance, and strict selector gates. Offline research only; no checkpoint, corpus, or live promotion in unit tests."
+    },
+    "python:research/flywheel_selfplay/h164_sam_retry/test_h164.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
+    },
+    "python:research/flywheel_selfplay/h165_gradient_noise_dropout/test_h165.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H165 data-free controls: family cross-fit exclusion and assessment cover, planted positive/tied selector reachability, paired fit batches, dimension-scaled annealed noise and independent streams, adapter-input dropout train/eval bit identity, family weighting/canonical Elo/Holm and terminal resource guards. No study data, checkpoint, model or serving qualification."
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
@@ -14208,36 +14258,6 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
-    },
-    "python:research/flywheel_selfplay/h165_gradient_noise_dropout/test_h165.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H165 data-free controls: family cross-fit exclusion and assessment cover, planted positive/tied selector reachability, paired fit batches, dimension-scaled annealed noise and independent streams, adapter-input dropout train/eval bit identity, family weighting/canonical Elo/Holm and terminal resource guards. No study data, checkpoint, model or serving qualification."
-    },
-    "python:research/flywheel_selfplay/h164_sam_retry/test_h164.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
-    },
-    "python:research/flywheel_selfplay/h163_prediction_ensemble/test_h163.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H163 data-free controls for cost/utility direction, candidate ID alignment and native ties, z-normalization/rank ensemble, fixed family folds, shared-family median-seed bootstrap, canonical H145 Elo dominance, and strict selector gates. Offline research only; no checkpoint, corpus, or live promotion in unit tests."
     }
   },
   "lanes": {
@@ -15539,8 +15559,6 @@
     }
   },
   "note": "Execution mappings are promises of scope, not run outcomes. Collection and execution receipts must independently establish counts and capabilities. Changes require explicit assignment; there is no auto-accept/update mode.",
-  "schema": "jope.coverage/v1",
-  "stage": "static",
   "python:research/flywheel_selfplay/h163_prediction_ensemble/test_h163.py": {
     "discovery": {
       "kind": "python-family"
@@ -15550,5 +15568,7 @@
     ],
     "lanes": [],
     "scope": "H163 data-free score direction, candidate ID alignment, stable argmin ties, z-normalization/rank ensemble, and strict paired family-bootstrap selector controls. Offline research only; no checkpoint, corpus, or live promotion in unit tests."
-  }
+  },
+  "schema": "jope.coverage/v1",
+  "stage": "static"
 }

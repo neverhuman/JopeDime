@@ -8,6 +8,7 @@ import subprocess
 import sys
 
 from common import (
+    exact_case_passed,
     ROOT,
     Context,
     ProviderError,
@@ -79,11 +80,12 @@ def check_binding(ctx: Context, run) -> None:
 
 
 def _frequency_report(output: str) -> dict:
-    reports = [
-        line[len(DIAGNOSTIC_PREFIX) :]
-        for line in output.splitlines()
-        if line.startswith(DIAGNOSTIC_PREFIX)
-    ]
+    reports = []
+    for line in output.splitlines():
+        # Under --nocapture the diagnostic follows libtest's "test NAME ... ".
+        head, separator, report = line.partition(DIAGNOSTIC_PREFIX)
+        if separator and (not head or head.endswith(" ... ")):
+            reports.append(report)
     if len(reports) != 1:
         raise ProviderError(
             "M3 proposer test must emit exactly one frequency diagnostic"
@@ -126,9 +128,8 @@ def qualify(ctx: Context, run=None) -> int:
         check_binding(ctx, run)
         if result.returncode != 0:
             return result.returncode
-        if (
-            rust_counts(result.stdout) != SINGLE_PASS
-            or f"test {test} ... ok" not in result.stdout
+        if rust_counts(result.stdout) != SINGLE_PASS or not exact_case_passed(
+            result.stdout, test
         ):
             raise ProviderError(f"M3 requires exactly one passing case for {test}")
         if test == FREQUENCY_DIAGNOSTIC:
