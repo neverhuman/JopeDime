@@ -6,21 +6,21 @@ use crate::{
         admission::{AdmissionProgram, MeasuredAlgorithm, RevealedRule, ServingAdmissionSlate},
         bundle::VerifiedBundle,
         cuda::{
-            FusedForward,
             release::{R782, R882},
+            FusedForward,
         },
         featurizer::Featurizer,
         landmarks, proj16,
         stage1b::TokenProjection,
     },
 };
-use anyhow::{Context, Result, ensure};
+use anyhow::{ensure, Context, Result};
 use jope_api::Placement;
 use jope_runtime::backend::DeviceRequest;
 use rand_chacha::ChaCha12Rng;
 use std::sync::{
-    Arc,
     atomic::{AtomicUsize, Ordering},
+    Arc,
 };
 
 /// Only a trusted embedding installs this capability, after release verification.

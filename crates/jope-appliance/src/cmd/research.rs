@@ -75,12 +75,10 @@ mod tests {
 
     #[test]
     fn internal_help_and_record_options_are_available() {
-        assert!(
-            Cli::command()
-                .render_help()
-                .to_string()
-                .contains("research")
-        );
+        assert!(Cli::command()
+            .render_help()
+            .to_string()
+            .contains("research"));
         let help = Cli::try_parse_from(["jopedime", "research", "record", "--help"])
             .err()
             .unwrap();
@@ -151,11 +149,9 @@ mod tests {
                     std::fs::write(&path, b"retained evidence\n").unwrap();
                 }
                 let error = record("../unknown", path.clone(), all).unwrap_err();
-                assert!(
-                    error
-                        .to_string()
-                        .contains("no source-approved research job")
-                );
+                assert!(error
+                    .to_string()
+                    .contains("no source-approved research job"));
                 if existing {
                     assert_eq!(std::fs::read(&path).unwrap(), b"retained evidence\n");
                     std::fs::remove_file(&path).unwrap();
