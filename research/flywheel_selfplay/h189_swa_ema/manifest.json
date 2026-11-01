@@ -119,7 +119,7 @@
     "psutil": "7.1.0",
     "torch": "2.7.0"
   },
-  "parent_commit": "e112c6e2a8fc19fa10f898db327a1f0309656f1d",
+  "parent_commit": "480ba360243e8f5f518d415095eedbf53480c614",
   "parent_sources": {
     "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4",
     "research/flywheel_selfplay/h165_gradient_noise_dropout/analysis.py": "59352b84a3ef7f9764a6489ad3865e86925de6e2f3c80d23a5c2f9e5453ad1fd",
