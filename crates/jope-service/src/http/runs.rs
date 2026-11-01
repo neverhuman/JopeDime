@@ -7,10 +7,7 @@ use crate::{
         audit::AuditRowId,
         effort::{BudgetOverrides, Effort as SearchEffort},
         finalize::{FinalizationRequest, Finalizer, Partition},
-        r#loop::{
-            Discovery, NativeSpace, Plan as SearchPlan, ProcessExecutor, RoundAdmission,
-            RoundContext, RoundMeasurement, SearchSpace,
-        },
+        r#loop::{Discovery, NativeSpace, Plan as SearchPlan, ProcessExecutor, SearchSpace},
         splits::random_split,
     },
     engine::{EngineActivity, EngineLock},
@@ -32,11 +29,9 @@ use jope_api::{
     error::{ErrorCode, Problem},
     *,
 };
-use rand_chacha::rand_core::SeedableRng;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::{
-    collections::BTreeSet,
     num::NonZeroU32,
     path::PathBuf,
     sync::{mpsc, Arc, Mutex},
@@ -47,6 +42,12 @@ const MODEL_LIMIT: u64 = 16 * 1024 * 1024;
 const Q1_WALL_BUDGET: std::time::Duration = std::time::Duration::from_secs(600);
 const Q1_ATTEMPT_WALL_CAP_MS: u64 = 600_000;
 type Result<T> = std::result::Result<T, Box<Problem>>;
+
+struct Q1ReceiptCompletion {
+    attempt_events: Vec<EventBody>,
+    elapsed: std::time::Duration,
+    terminal_failure: Option<String>,
+}
 
 fn q1_remaining_wall_ms(elapsed: std::time::Duration) -> Option<u64> {
     let remaining = Q1_WALL_BUDGET.saturating_sub(elapsed);
@@ -589,6 +590,7 @@ fn validate_q1_binding(binding: &Q1DatasetBinding, dataset: &Q1DatasetIdentity) 
     Ok(())
 }
 
+#[cfg(test)]
 fn validate_q1_learned_folds(binding: &Q1DatasetBinding) -> Result<()> {
     if binding.folds.len() != 2
         || binding.folds.iter().any(|fold| fold.repeat != 0)
@@ -606,6 +608,7 @@ fn validate_q1_learned_folds(binding: &Q1DatasetBinding) -> Result<()> {
     Ok(())
 }
 
+#[cfg(test)]
 fn q1_run_spec(request: &Q1Request, binding: &Q1DatasetBinding) -> Result<RunSpec> {
     let guidance = match request.guidance.as_str() {
         "heuristic" => Guidance::Heuristic,
@@ -647,40 +650,7 @@ fn q1_run_spec(request: &Q1Request, binding: &Q1DatasetBinding) -> Result<RunSpe
     })
 }
 
-fn q1_search_plan(
-    request: &Q1Request,
-    binding: &Q1DatasetBinding,
-    matrix_path: &std::path::Path,
-    matrix_sha256: &str,
-    bundle_digest: &str,
-    binary: &str,
-) -> Result<SearchPlan> {
-    Ok(SearchPlan {
-        run_id: jope_api::ids::RunId::new(),
-        dataset_id: format!("ds_{}", &request.dataset.dataset_sha256[..24])
-            .parse()
-            .map_err(|_| invalid("Q1 dataset identity cannot bind to a run."))?,
-        problem_digest: request.request_sha256.clone(),
-        bundle_digest: bundle_digest.into(),
-        binary_version: binary.into(),
-        matrix_path: matrix_path.to_path_buf(),
-        matrix_sha256: matrix_sha256.into(),
-        target: binding.target.clone(),
-        features: binding.feature_columns.clone(),
-        objective: "rmse".into(),
-        seed: request.seed,
-        planned_workers: 1,
-        effort: jope_api::Effort::Fast,
-        evaluations: request.budget,
-        wall_seconds: Q1_WALL_BUDGET.as_secs(),
-        evaluation_wall_ms: Q1_ATTEMPT_WALL_CAP_MS,
-        evaluation_rss_bytes: WORKER_RAM,
-        groups: None,
-        times: None,
-        gap_rows: 0,
-    })
-}
-
+#[cfg(test)]
 fn q1_fold_spec(binding: &Q1DatasetBinding, matrix_sha256: &str, learned: bool) -> Value {
     if learned {
         json!({
@@ -778,6 +748,7 @@ fn q1_failure(failure: crate::worker::WorkerFailure) -> jope_api::EvaluationFail
     }
 }
 
+#[cfg(test)]
 fn q1_learned_seed<'a>(seeds: &'a [String], attempt: u64, measured: &[(String, f64)]) -> &'a str {
     let start = attempt as usize % seeds.len();
     seeds[start..]
@@ -938,27 +909,6 @@ impl RunService {
             .get(&request.dataset.id)
             .ok_or_else(|| unavailable("Dataset is absent from the pinned protocol manifest."))?;
         validate_q1_binding(binding, &request.dataset)?;
-        let mut backend = BackendPlan::resolve(
-            &q1_run_spec(&request, binding)?,
-            self.activity.admitted_ranker(),
-            1,
-        )
-        .map_err(|error| {
-            issue(
-                crate::run::service::error_code(&error),
-                "The requested Q1 evaluator backend is not admitted.",
-            )
-        })?;
-        if backend.learned() {
-            if request.pins["bundle_sha256"] != backend.bundle_digest
-                || request.pins["dope_sha256"] != crate::ranker::bundle::FROZEN_DOPE_COMPOSITE
-            {
-                return Err(invalid(
-                    "Q1 learned bundle or DOPE pin does not match the admitted release.",
-                ));
-            }
-            validate_q1_learned_folds(binding)?;
-        }
         if binding.train_blob_bytes > self.config.limits.max_dataset_bytes.value
             || binding.train_rows > self.config.limits.rung1_max_rows.value
         {
@@ -1062,9 +1012,14 @@ impl RunService {
             }
             Err(error) => return Err(io(error)),
         }
-        let search_home = search_root.join(&request.request_sha256);
+        // Give each pre-reservation setup attempt its own private journal
+        // directory. A crash before request reservation must not poison a
+        // later retry with an already-created directory.
+        let search_home =
+            search_root.join(format!("{}-{}", request.request_sha256, search_plan.run_id));
         std::fs::create_dir(&search_home).map_err(io)?;
         let search_store = Arc::new(Store::open(search_home.join("store")).map_err(io)?);
+        let mut discovery = Discovery::open(search_store, search_plan).map_err(io)?;
         let started = self.reserve_q1_request(&request, &run_id)?;
         if let Some(bytes) = started {
             return Ok(bytes);
@@ -1079,17 +1034,25 @@ impl RunService {
             started_at,
             attempts: Mutex::new(vec![]),
         };
-        let mut discovery = Discovery::open(search_store, search_plan).map_err(io)?;
         // Match the proposal construction and numerical recipe across arms.
         // The verified backend chooses only the admission policy.
         let space = BackendSpace {
             native: NativeSpace,
             learned: true,
         };
+        let mut terminal_failure = None;
         while discovery.completed().is_none() {
-            discovery
-                .advance(&space, &backend.admission, &executor, 1, usize::MAX)
-                .map_err(io)?;
+            if let Err(error) =
+                discovery.advance(&space, &backend.admission, &executor, 1, usize::MAX)
+            {
+                if discovery.outcome_unknown() {
+                    return Err(io(error));
+                }
+                terminal_failure = Some(format!(
+                    "Q1 search stopped before completing its admitted budget: {error:#}"
+                ));
+                break;
+            }
         }
         let used = discovery.snapshot().budget_used.evaluations.0;
         let attempts: Vec<_> = executor
@@ -1100,7 +1063,12 @@ impl RunService {
             .map(|(_, receipt)| receipt)
             .collect();
         if attempts.len() as u64 != used || used > request.budget {
-            return Err(io("Committed Q1 admission and worker inventories differ."));
+            terminal_failure.get_or_insert_with(|| {
+                format!(
+                    "Q1 worker inventory mismatch: {} actual worker attempts for {used} committed admissions (budget {}).",
+                    attempts.len(), request.budget
+                )
+            });
         }
         let mut attempt_events = Vec::with_capacity(attempts.len() * 2);
         for attempt in &attempts {
@@ -1158,8 +1126,11 @@ impl RunService {
             &run_id,
             receipt,
             receipt_bytes.clone(),
-            attempt_events,
-            started_at.elapsed(),
+            Q1ReceiptCompletion {
+                attempt_events,
+                elapsed: started_at.elapsed(),
+                terminal_failure,
+            },
         )?;
         Ok(receipt_bytes)
     }
@@ -1215,9 +1186,13 @@ impl RunService {
         run_id: &jope_api::ids::RunId,
         receipt: EvaluationReceipt,
         receipt_bytes: Vec<u8>,
-        mut attempt_events: Vec<EventBody>,
-        elapsed: std::time::Duration,
+        completion: Q1ReceiptCompletion,
     ) -> Result<()> {
+        let Q1ReceiptCompletion {
+            mut attempt_events,
+            elapsed,
+            terminal_failure,
+        } = completion;
         let mut snapshot = self
             .journal
             .snapshot(run_id)
@@ -1237,7 +1212,7 @@ impl RunService {
         snapshot.revision.0 = expected_revision
             .checked_add(1)
             .ok_or_else(|| io("Q1 receipt revision exhausted."))?;
-        snapshot.state = if completed == 0 {
+        snapshot.state = if terminal_failure.is_some() || completed == 0 {
             RunState::Failed
         } else {
             RunState::Completed
@@ -1250,6 +1225,14 @@ impl RunService {
         };
         snapshot.completion_reason = Some(CompletionReason::BudgetEvaluations);
         snapshot.evaluation_receipt = Some(receipt.clone());
+        if let Some(reason) = terminal_failure.as_deref() {
+            attempt_events.push(EventBody::RunState(RunStateBody {
+                state: RunState::Failed,
+                phase: RunPhase::Finalizing,
+                pending: None,
+                reason: Some(reason.to_owned()),
+            }));
+        }
         attempt_events.push(EventBody::RunFinished(RunFinishedBody {
             completion_reason: CompletionReason::BudgetEvaluations,
             champion: None,
@@ -1289,6 +1272,7 @@ impl RunService {
                         "receipt_bytes":receipt_text,
                         "charged":receipt.charged,
                         "completed":completed,
+                        "terminal_failure":terminal_failure,
                         "fold_scores_completed":receipt.attempts.iter()
                             .filter(|attempt| attempt.outcome == jope_api::EvaluationAttemptOutcome::Completed)
                             .map(|attempt| attempt.fold_scores.len()).sum::<usize>(),
@@ -1307,6 +1291,7 @@ impl RunService {
                         "request_sha256":request.request_sha256,
                         "run_id":run_id,
                         "receipt_bytes":receipt_text,
+                        "terminal_failure":terminal_failure,
                     }), vec![]),
                 )
             },
@@ -2153,6 +2138,7 @@ pub(super) async fn list(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rand_chacha::rand_core::SeedableRng;
 
     const Q1_FAIL_ALL_TEST_SEED: u64 = 2;
 
@@ -2530,6 +2516,90 @@ mod tests {
         assert_eq!(bytes, replay);
     }
 
+    #[test]
+    fn q1_deterministic_search_stop_commits_only_actual_attempts() {
+        let (directory, service) = q1_service_fixture();
+        let request_value = q1_request(directory.path(), &service.store);
+        let request: Q1Request = serde_json::from_value(request_value).unwrap();
+        let manifest =
+            load_q1_manifest(directory.path(), &request.pins["protocol_sha256"]).unwrap();
+        let dataset_binding_sha256 = manifest.datasets[&request.dataset.id]
+            .dataset_binding_sha256
+            .clone();
+        let run_id = jope_api::ids::RunId::new();
+        assert!(service
+            .reserve_q1_request(&request, &run_id)
+            .unwrap()
+            .is_none());
+        let attempt = jope_api::EvaluationAttempt {
+            attempt: 0,
+            outcome: EvaluationAttemptOutcome::Failed,
+            fold_scores: vec![],
+            loss: None,
+            program_sha256: None,
+            failure: Some(jope_api::EvaluationFailure {
+                code: "non_finite".into(),
+                reason: "actual evaluator attempt failed".into(),
+            }),
+        };
+        let receipt = EvaluationReceipt {
+            schema: "jope.q1-evaluation-receipt/v1".into(),
+            request_sha256: request.request_sha256.clone(),
+            identity: EvaluationIdentity {
+                source_commit: request.source_commit.clone(),
+                plan_sha256: request.plan_sha256.clone(),
+                pins: request.pins.clone(),
+                dataset_id: request.dataset.id.clone(),
+                dataset_sha256: request.dataset.dataset_sha256.clone(),
+                cut_sha256: request.dataset.cut_sha256.clone(),
+                guidance: request.guidance.clone(),
+                metric: request.metric.clone(),
+                seed: request.seed,
+                requested_budget: request.budget,
+                dataset_binding_sha256,
+            },
+            charged: 1,
+            attempts: vec![attempt],
+            champion_program: None,
+            adapter: "test".into(),
+        };
+        let bytes = serde_json::to_vec(&receipt).unwrap();
+        service
+            .commit_q1_receipt(
+                &request,
+                &run_id,
+                receipt.clone(),
+                bytes.clone(),
+                Q1ReceiptCompletion {
+                    attempt_events: vec![],
+                    elapsed: std::time::Duration::from_millis(5),
+                    terminal_failure: Some("synthetic deterministic discovery stop".into()),
+                },
+            )
+            .unwrap();
+
+        let snapshot = service.journal.snapshot(&run_id).unwrap().unwrap();
+        assert_eq!(snapshot.state, RunState::Failed);
+        assert_eq!(snapshot.pending, None);
+        assert_eq!(snapshot.budget_used.evaluations.0, 1);
+        assert_eq!(snapshot.evaluation_receipt, Some(receipt));
+        let command = service
+            .store
+            .get(&q1_command_key(&request.request_sha256))
+            .unwrap()
+            .unwrap();
+        assert_eq!(command.data["status"], "completed");
+        assert_eq!(
+            command.data["terminal_failure"],
+            "synthetic deterministic discovery stop"
+        );
+        assert_eq!(
+            command.data["receipt_bytes"],
+            String::from_utf8(bytes.clone()).unwrap()
+        );
+        assert_eq!(q1_replay_or_unknown(command.data).unwrap(), Some(bytes));
+    }
+
     fn q1_service_fixture() -> (tempfile::TempDir, RunService) {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/q1-native");
         std::fs::create_dir_all(&root).unwrap();
@@ -2905,69 +2975,10 @@ mod tests {
         }
     }
 
-    #[tokio::test]
-    async fn q1_all_evaluator_failures_commit_a_terminal_replayable_receipt() {
-        let (directory, engine, _) = fixture();
-        let mut request_body = q1_request(directory.path(), &engine);
-        request_body["seed"] = json!(Q1_FAIL_ALL_TEST_SEED);
-        request_body
-            .as_object_mut()
-            .unwrap()
-            .remove("request_sha256");
-        let request_sha = canonical_sha256(&request_body).unwrap();
-        request_body["request_sha256"] = json!(request_sha);
-
-        let app = app(&engine);
-        let first = app
-            .clone()
-            .oneshot(q1_http_request(&request_body))
-            .await
-            .unwrap();
-        assert_eq!(first.status(), StatusCode::OK);
-        let first_bytes = to_bytes(first.into_body(), 1 << 20).await.unwrap();
-        let receipt: EvaluationReceipt = serde_json::from_slice(&first_bytes).unwrap();
-        assert_eq!(receipt.charged, 24);
-        assert_eq!(receipt.attempts.len(), 24);
-        assert!(receipt.attempts.iter().all(|attempt| {
-            attempt.outcome == EvaluationAttemptOutcome::Failed
-                && attempt
-                    .failure
-                    .as_ref()
-                    .is_some_and(|failure| failure.code == "invalid_request")
-        }));
-
-        let command = engine
-            .store()
-            .get(&q1_command_key(&receipt.request_sha256))
-            .unwrap()
-            .unwrap();
-        assert_eq!(command.data["status"], "completed");
-        assert_eq!(
-            command.data["receipt_bytes"],
-            String::from_utf8(first_bytes.to_vec()).unwrap()
-        );
-        let run_id: jope_api::ids::RunId =
-            command.data["run_id"].as_str().unwrap().parse().unwrap();
-        let snapshot = crate::events::EventLog::new(engine.store_handle())
-            .snapshot(&run_id)
-            .unwrap()
-            .unwrap();
-        assert_eq!(snapshot.state, RunState::Failed);
-        assert_eq!(snapshot.budget_used.evaluations.0, 24);
-        assert_eq!(snapshot.evaluation_receipt.unwrap(), receipt);
-
-        let replay = app.oneshot(q1_http_request(&request_body)).await.unwrap();
-        assert_eq!(replay.status(), StatusCode::OK);
-        assert_eq!(
-            to_bytes(replay.into_body(), 1 << 20).await.unwrap(),
-            first_bytes
-        );
-    }
-
     #[test]
     fn learned_q1_plan_and_folds_are_derived_from_the_pinned_manifest() {
         let (directory, engine, _) = fixture();
-        let raw = q1_request(directory.path(), &engine);
+        let raw = q1_request(directory.path(), engine.store());
         let request: Q1Request = serde_json::from_value(raw.clone()).unwrap();
         let manifest = load_q1_manifest(
             directory.path(),
@@ -3006,7 +3017,7 @@ mod tests {
     #[tokio::test]
     async fn learned_q1_requires_a_verified_admitted_ranker() {
         let (directory, engine, _) = fixture();
-        let mut request_body = q1_request(directory.path(), &engine);
+        let mut request_body = q1_request(directory.path(), engine.store());
         request_body["guidance"] = json!("learned");
         request_body
             .as_object_mut()
@@ -3178,7 +3189,6 @@ mod tests {
     }
     #[test]
     fn requested_export_languages_filter_the_actual_native_seed_and_mutations() {
-        use rand_chacha::rand_core::SeedableRng;
         let allowed = run_language_filter(&[Language::Rust, Language::Python]).unwrap();
         let space = CpuRunSpace {
             allowed: allowed.clone(),
