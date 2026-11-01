@@ -5149,6 +5149,10 @@
       "reason": "Owner-requested H139 synthetic CPU controls for the zero-update selection-rule audit readout and decision; no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h143_strict_admission_replay/test_h143.py": {
+      "reason": "Owner-requested H143 synthetic CPU controls for the zero-update strict-admission shadow replay and its verdict mapping; no receipt/checkpoint reads or model passes in the fixture suite; offline research only.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h123_continuous_regret_tiebreak/test_runner.py": {
       "role": "research",
       "reason": "CPU-only H123 continuous-regret tie-break preparation fixtures for the H114 lattice; offline research analysis outside the reviewed product baseline."
