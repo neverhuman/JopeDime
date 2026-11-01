@@ -1,0 +1,11 @@
+{
+  "deadline_utc": "2026-11-01T07:00:00Z",
+  "evaluation_id": "RNK10-T2140-R882-CPU-01",
+  "manifest_sha256": "755d1c56f24cf1aef6e2e00b978d79738c811e6ab4805e65376d86f32a60e9bb",
+  "max_unique_terminal_outcomes": 800,
+  "planned_maximum_unique_terminal_outcomes": 728,
+  "run_count": 0,
+  "schema": "jope.rnk10.outcome-ledger/v1",
+  "status": "UNUSED",
+  "unique_terminal_outcomes_read": 0
+}
