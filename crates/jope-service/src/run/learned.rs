@@ -1,11 +1,14 @@
-//! Explicit owner-admitted r782 execution. This does not grant Auto/Q1 quality.
+//! Explicit owner-admitted execution. This does not grant Auto/Q1 quality.
 use crate::{
     dataset::jmat::{JmatCell, Matrix},
     discover::r#loop::{Plan, RoundAdmission, RoundContext},
     ranker::{
         admission::{AdmissionProgram, MeasuredAlgorithm, RevealedRule, ServingAdmissionSlate},
         bundle::VerifiedBundle,
-        cuda::{release::R782, FusedForward},
+        cuda::{
+            release::{R782, R882},
+            FusedForward,
+        },
         featurizer::Featurizer,
         landmarks, proj16,
         stage1b::TokenProjection,
@@ -24,17 +27,52 @@ use std::sync::{
 /// The t2015 admission is specific to the frozen numeric-regression candidate.
 pub struct AdmittedRanker {
     bundle: Arc<VerifiedBundle>,
+    trained_objectives: Vec<String>,
     forwards: Arc<AtomicUsize>,
 }
 impl AdmittedRanker {
     pub fn r782(bundle: VerifiedBundle) -> Result<Self> {
+        Self::exact(bundle, R782)
+    }
+    /// R1 internal opt-in; the quality-gated Auto path remains heuristic.
+    pub fn r882(bundle: VerifiedBundle) -> Result<Self> {
+        Self::exact(bundle, R882)
+    }
+    fn exact(bundle: VerifiedBundle, expected: &str) -> Result<Self> {
         ensure!(
-            bundle.digest().to_string() == R782,
-            "bundle is not admitted r782"
+            bundle.digest().to_string() == expected,
+            "bundle is not admitted"
         );
+        #[derive(serde::Deserialize)]
+        struct Metadata {
+            trained_objectives: Vec<String>,
+        }
+        let metadata: Metadata = serde_json::from_slice(
+            bundle
+                .asset("manifest.json")
+                .context("missing authenticated manifest")?,
+        )?;
         Ok(Self {
             bundle: Arc::new(bundle),
+            trained_objectives: metadata.trained_objectives,
             forwards: Arc::new(AtomicUsize::new(0)),
+        })
+    }
+    pub(crate) fn digest(&self) -> String {
+        self.bundle.digest().to_string()
+    }
+    pub(crate) fn trains_objective(&self, objective: &jope_api::ObjectiveSpec) -> bool {
+        let Ok((text, _)) = super::service::run_objective(objective) else {
+            return false;
+        };
+        let identity = jope_runtime::fitness::Fitness::parse(&text)
+            .and_then(|value| value.identity())
+            .ok();
+        self.trained_objectives.iter().any(|name| {
+            jope_runtime::fitness::Fitness::parse(name)
+                .and_then(|value| value.identity())
+                .ok()
+                == identity
         })
     }
     pub(crate) fn instantiate(
@@ -63,6 +101,7 @@ impl AdmittedRanker {
             featurizer: Featurizer::from_names(metadata.feature_names)?,
             conditioning: None,
             plan: None,
+            bundle_digest: self.digest(),
             forwards: Arc::clone(&self.forwards),
         })
     }
@@ -77,6 +116,7 @@ pub(crate) struct LearnedAdmission {
     featurizer: Featurizer,
     conditioning: Option<TokenProjection>,
     plan: Option<Plan>,
+    bundle_digest: String,
     forwards: Arc<AtomicUsize>,
 }
 impl LearnedAdmission {
@@ -98,7 +138,7 @@ impl LearnedAdmission {
     }
     pub(crate) fn bind_fit(&mut self, bytes: &[u8], plan: &Plan) -> Result<usize> {
         ensure!(
-            format!("sha256:{}", plan.bundle_digest) == R782
+            format!("sha256:{}", plan.bundle_digest) == self.bundle_digest
                 && jope_runtime::sha256_hex(bytes) == plan.matrix_sha256,
             "learned FIT/Plan identity mismatch"
         );
