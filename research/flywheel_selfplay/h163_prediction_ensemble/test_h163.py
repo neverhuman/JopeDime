@@ -47,6 +47,15 @@ class H163Tests(unittest.TestCase):
         self.assertAlmostEqual(result["ci_low_95"], .002)
         self.assertAlmostEqual(result["ci_high_95"], .002)
 
+    def test_seed_aggregation_precedes_family_bootstrap(self):
+        # Per-seed family means are [0, 0, +.004], so the median seed gain is zero.
+        # A family-median-then-mean estimator would incorrectly report +.004.
+        rows = [{"family_id": "A"}, {"family_id": "B"}]
+        baseline = np.zeros((3, 2))
+        candidate = np.array([[.004, -.004], [-.004, .004], [.004, .004]])
+        result = analysis.median_seed_bootstrap(rows, candidate, baseline, draws=100, seed=19)
+        self.assertAlmostEqual(result["delta"], 0.0)
+
     def test_fixed_family_folds_are_balanced_and_deterministic(self):
         rows = [{"family_id": f"fam-{i:03d}"} for i in range(205)]
         a = analysis.folds(rows)
