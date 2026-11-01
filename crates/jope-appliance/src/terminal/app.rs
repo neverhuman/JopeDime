@@ -16,6 +16,11 @@ use super::line_mode::{self, LineMode};
 use super::restore::{ExitSignal, TerminalGuard};
 use super::{cards, sanitize_user_string, symbols_from_env, ColorLevel, Theme, ThemeMode};
 
+#[cfg(target_os = "linux")]
+use std::io::Read;
+#[cfg(target_os = "linux")]
+use std::os::unix::fs::OpenOptionsExt;
+
 const INPUT_LATENCY: Duration = Duration::from_millis(20);
 
 #[cfg(all(test, target_os = "linux"))]
@@ -214,6 +219,68 @@ struct State {
     active: bool,
 }
 
+/// Canonical input must be drained from the tty itself after the inline backend is left.
+/// Crossterm's poller can consume a queued resize notification while leaving a following
+/// newline readable in the kernel, then miss that byte when its readiness state is stale.
+#[cfg(target_os = "linux")]
+struct CanonicalInput {
+    input: std::fs::File,
+    pending: Vec<u8>,
+}
+
+#[cfg(target_os = "linux")]
+impl CanonicalInput {
+    fn new() -> io::Result<Self> {
+        let input = std::fs::OpenOptions::new()
+            .read(true)
+            .custom_flags(0o4000) // O_NONBLOCK
+            .open("/dev/stdin")?;
+        Ok(Self {
+            input,
+            pending: Vec::new(),
+        })
+    }
+
+    fn lines(&mut self) -> io::Result<Vec<String>> {
+        let mut bytes = [0; 1024];
+        loop {
+            match self.input.read(&mut bytes) {
+                Ok(0) => break,
+                Ok(count) => self.pending.extend_from_slice(&bytes[..count]),
+                Err(error) if error.kind() == io::ErrorKind::WouldBlock => break,
+                Err(error) if error.kind() == io::ErrorKind::Interrupted => continue,
+                Err(error) => return Err(error),
+            }
+        }
+        let mut lines = Vec::new();
+        while let Some(end) = self
+            .pending
+            .iter()
+            .position(|byte| matches!(byte, b'\r' | b'\n'))
+        {
+            let mut line: Vec<_> = self.pending.drain(..=end).collect();
+            let delimiter = line.pop();
+            if delimiter == Some(b'\r') && self.pending.first() == Some(&b'\n') {
+                self.pending.remove(0);
+            }
+            lines.push(String::from_utf8_lossy(&line).into_owned());
+        }
+        Ok(lines)
+    }
+}
+
+fn submit_draft(
+    state: &mut State,
+    command: &mut impl FnMut(&str) -> io::Result<()>,
+) -> io::Result<Option<Exit>> {
+    let draft = std::mem::take(&mut state.draft);
+    if matches!(draft.trim(), "\\quit" | "/quit") {
+        return Ok(Some(Exit::Quit));
+    }
+    command(&draft)?;
+    Ok(None)
+}
+
 impl Default for State {
     fn default() -> Self {
         Self {
@@ -285,6 +352,8 @@ pub fn run(
     let mut clock = RedrawClock::new();
     let mut connected = true;
     let mut recent_activity = None;
+    #[cfg(target_os = "linux")]
+    let mut canonical_input = None;
     if matches!(screen, Screen::Plain(_)) {
         screen.transcript(&[state.status.clone(), state.activity.clone()], width)?;
     }
@@ -293,7 +362,24 @@ pub fn run(
             return Ok(Exit::Signal(signal));
         }
         screen.reconcile_width(&guard, &mut width)?;
-        if input && event::poll(Duration::ZERO)? {
+        #[cfg(target_os = "linux")]
+        if input && matches!(screen, Screen::Plain(_)) {
+            if canonical_input.is_none() {
+                canonical_input = Some(CanonicalInput::new()?);
+            }
+            for line in canonical_input.as_mut().unwrap().lines()? {
+                recent_activity = Some(Instant::now());
+                state.draft.push_str(&sanitize_user_string(&line));
+                if let Some(exit) = submit_draft(&mut state, &mut command)? {
+                    return Ok(exit);
+                }
+            }
+        }
+        #[cfg(target_os = "linux")]
+        let use_crossterm_input = matches!(screen, Screen::Inline(_));
+        #[cfg(not(target_os = "linux"))]
+        let use_crossterm_input = true;
+        if input && use_crossterm_input && event::poll(Duration::ZERO)? {
             recent_activity = Some(Instant::now());
             match event::read()? {
                 Event::Resize(columns, _) => {
@@ -315,11 +401,9 @@ pub fn run(
                         screen.transcript(&["Use \\quit or Ctrl-D to exit.".into()], width)?;
                     }
                     KeyCode::Enter => {
-                        let draft = std::mem::take(&mut state.draft);
-                        if matches!(draft.trim(), "\\quit" | "/quit") {
-                            return Ok(Exit::Quit);
+                        if let Some(exit) = submit_draft(&mut state, &mut command)? {
+                            return Ok(exit);
                         }
-                        command(&draft)?;
                     }
                     KeyCode::Backspace => {
                         state.draft.pop();
@@ -719,11 +803,7 @@ mod tests {
             .wait_for_text("draft", Duration::from_secs(10))
             .unwrap();
         session.resize(39, 24).unwrap();
-        // Resize delivery is asynchronous. Wait for raw-mode restoration before sending Enter,
-        // so this checks draft submission after fallback instead of racing the PTY resize signal.
-        session
-            .wait_for_output_bytes(b"\x1b[?2004l", Duration::from_secs(10))
-            .unwrap();
+        // Send Enter immediately after resize so the newline can be queued behind SIGWINCH.
         session.press_key(pty::Key::Enter).unwrap();
         session
             .wait_for_text("COMMAND draft", Duration::from_secs(10))
