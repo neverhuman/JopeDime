@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "parent_commit": "aad54937c43ecd413ac2990d23ac5bff3e0dc27f",
+  "checks": {
+    "science.py:folds": "IDENTICAL_AST",
+    "science.py:batch_plan": "IDENTICAL_AST",
+    "science.py:family_matrix": "IDENTICAL_AST",
+    "science.py:contrast": "IDENTICAL_AST",
+    "runtime.py:loss": "IDENTICAL_AST",
+    "runtime.py:tensor_hash": "IDENTICAL_AST",
+    "runtime.py:build": "IDENTICAL_AST_EXCEPT_module_label_h144_guard_to_h149_guard",
+    "runtime.py:check_frozen": "IDENTICAL_AST",
+    "runtime.py:dropout_census": "IDENTICAL_AST",
+    "runner.py:predict": "IDENTICAL_AST",
+    "runner.py:evaluate": "IDENTICAL_AST",
+    "runner.py:selected": "IDENTICAL_AST",
+    "runner.py:baseline_gate": "IDENTICAL_AST",
+    "monitor.py:classify": "IDENTICAL_AST",
+    "monitor.py:environment": "IDENTICAL_AST",
+    "monitor.py:stop": "IDENTICAL_AST"
+  },
+  "scope": "unchanged loss, sampler, prediction, evaluation, baseline, model/freeze guards, estimator and resource classifier; identity globals differ as dispatched",
+  "initial_check": "strict build AST differed only in private module label; normalized this label explicitly, not model behavior"
+}
