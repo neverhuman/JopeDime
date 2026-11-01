@@ -37,10 +37,18 @@ fn shape(rows: usize, cols: usize, len: usize) -> bool {
     cols != 0 && rows.checked_mul(cols) == Some(len)
 }
 unsafe fn rows_from(ptr: *const f64, rows: usize, cols: usize) -> Vec<Vec<f64>> {
-    // Caller has checked the nonempty slice bounds and pointer alignment.
+    // SAFETY: The pointer's provenance is the caller-owned C allocation. The
+    // caller must keep one contiguous, aligned allocation of `rows * cols`
+    // initialized `f64` values live for this borrow. This helper only creates
+    // a shared slice and copies it into Rust-owned vectors; it never transfers,
+    // frees, or reallocates the C allocation, whose allocator ownership stays
+    // with the caller. Callers establish the checked product and buffer bounds.
     if rows == 0 {
         return Vec::new();
     }
+    // SAFETY: `rows > 0`, `cols > 0`, and the checked shape plus C pointer
+    // contract guarantee the caller-owned allocation's provenance, lifetime,
+    // alignment, and initialized contents for this shared borrow.
     unsafe { std::slice::from_raw_parts(ptr, rows * cols) }
         .chunks_exact(cols)
         .map(|row| row.to_vec())
@@ -73,13 +81,22 @@ pub unsafe extern "C" fn jope_model_fit(
             return Err(INVALID_ARGUMENT);
         }
         // Copy foreign memory before constructing state or touching caller output.
+        // SAFETY: `shape` checked the product, `buffer` checked alignment and
+        // non-nullness, and the caller's C contract guarantees that `x` retains
+        // provenance from one live, contiguous, readable C allocation. The
+        // helper only borrows/copies it; allocation ownership stays with C.
         let x = unsafe { rows_from(x, rows, cols) };
+        // SAFETY: `rows > 0`, `y_len == rows`, and `buffer` checked alignment;
+        // the caller keeps `y`'s contiguous C allocation live/readable. This
+        // shared borrow is copied and never transfers or frees that allocation.
         let y = unsafe { std::slice::from_raw_parts(y, y_len) }.to_vec();
         let model = Arc::new(model_core::C17Model::fit(&x, &y, cols));
         let mut table = handles().lock().map_err(|_| INTERNAL_ERROR)?;
         let id = table.next;
         table.next = id.checked_add(1).ok_or(INTERNAL_ERROR)?;
         table.models.insert(id, model);
+        // SAFETY: `buffer(out_handle, 1)` checked alignment/non-nullness; the
+        // C caller guarantees one writable `u64` at this address.
         unsafe {
             out_handle.write(id);
         }
@@ -115,6 +132,10 @@ pub unsafe extern "C" fn jope_model_predict(
         if rows == 0 {
             return Ok(());
         }
+        // SAFETY: `shape` checked the product, `buffer` checked alignment and
+        // non-nullness, and the caller's C contract guarantees that `x` retains
+        // provenance from one live, contiguous, readable C allocation. The
+        // helper only borrows/copies it; allocation ownership stays with C.
         let x = unsafe { rows_from(x, rows, cols) };
         let predictions = model.predict(&x);
         if predictions.len() != rows {
@@ -122,6 +143,9 @@ pub unsafe extern "C" fn jope_model_predict(
         }
         // Commit output only after the complete prediction succeeds. The temporary
         // result owns disjoint memory, including when caller input aliases output.
+        // SAFETY: `buffer(out, out_len)` guarantees alignment/non-nullness,
+        // `rows <= out_len`, and the C caller guarantees writable output memory.
+        // `predictions` owns a separate allocation, so the regions do not overlap.
         unsafe {
             std::ptr::copy_nonoverlapping(predictions.as_ptr(), out, rows);
         }
@@ -159,9 +183,18 @@ pub unsafe extern "C" fn jope_model_score(
         if cols != model.width {
             return Err(INVALID_ARGUMENT);
         }
+        // SAFETY: `shape` checked the product, `buffer` checked alignment and
+        // non-nullness, and the caller's C contract guarantees that `x` retains
+        // provenance from one live, contiguous, readable C allocation. The
+        // helper only borrows/copies it; allocation ownership stays with C.
         let x = unsafe { rows_from(x, rows, cols) };
+        // SAFETY: `rows > 0`, `y_len == rows`, and `buffer` checked alignment;
+        // the caller keeps `y`'s contiguous C allocation live/readable. This
+        // shared borrow is copied and never transfers or frees that allocation.
         let y = unsafe { std::slice::from_raw_parts(y, y_len) }.to_vec();
         let score = model.score(&x, &y);
+        // SAFETY: `buffer(out_score, 1)` checked alignment/non-nullness; the
+        // C caller guarantees one writable `f64` at this address.
         unsafe {
             out_score.write(score);
         }
