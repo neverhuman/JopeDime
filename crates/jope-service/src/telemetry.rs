@@ -936,7 +936,80 @@ mod platform {
     }
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(target_os = "macos")]
+#[allow(unsafe_code)]
+mod platform {
+    use std::{ffi::CString, os::unix::ffi::OsStrExt, path::Path};
+
+    // libc exposes host_statistics64 and mach_host_self, but not the matching
+    // mach_port_deallocate declaration. Keep this narrow FFI next to the Mach sensor.
+    #[link(name = "System")]
+    unsafe extern "C" {
+        fn mach_port_deallocate(task: libc::task_t, name: libc::mach_port_t)
+            -> libc::kern_return_t;
+    }
+
+    pub(super) fn logical_cpus() -> Result<f64, String> {
+        std::thread::available_parallelism()
+            .map(|n| n.get() as f64)
+            .map_err(|_| "parallelism_unavailable".to_owned())
+    }
+
+    pub(super) fn allowed_cpus() -> Result<f64, String> {
+        logical_cpus()
+    }
+
+    /// Conservative available memory from free, inactive and speculative VM pages.
+    /// Failures stay unavailable; admission never substitutes total RAM for availability.
+    pub(super) fn mem_available() -> Result<u64, String> {
+        let host = unsafe { libc::mach_host_self() };
+        if host == 0 {
+            return Err("mach_host_unavailable".to_owned());
+        }
+        let mut stats: libc::vm_statistics64 = unsafe { std::mem::zeroed() };
+        let mut count = libc::HOST_VM_INFO64_COUNT;
+        let status = unsafe {
+            libc::host_statistics64(
+                host,
+                libc::HOST_VM_INFO64,
+                (&mut stats as *mut libc::vm_statistics64).cast(),
+                &mut count,
+            )
+        };
+        let released = unsafe { mach_port_deallocate(libc::mach_task_self(), host) };
+        if status != libc::KERN_SUCCESS {
+            return Err("host_statistics_unavailable".to_owned());
+        }
+        if released != libc::KERN_SUCCESS {
+            return Err("host_port_release_failed".to_owned());
+        }
+        if count < libc::HOST_VM_INFO64_COUNT {
+            return Err("host_statistics_truncated".to_owned());
+        }
+        let pages = u64::from(stats.free_count)
+            .checked_add(u64::from(stats.inactive_count))
+            .and_then(|pages| pages.checked_add(u64::from(stats.speculative_count)))
+            .ok_or_else(|| "memory_pages_overflow".to_owned())?;
+        let page_size = unsafe { libc::vm_page_size } as u64;
+        if page_size == 0 {
+            return Err("page_size_unavailable".to_owned());
+        }
+        pages
+            .checked_mul(page_size)
+            .ok_or_else(|| "memory_bytes_overflow".to_owned())
+    }
+
+    pub(super) fn disk_free(path: &Path) -> Result<u64, String> {
+        let path = CString::new(path.as_os_str().as_bytes()).map_err(|_| "invalid_store_path")?;
+        let mut stats: libc::statvfs = unsafe { std::mem::zeroed() };
+        if unsafe { libc::statvfs(path.as_ptr(), &mut stats) } != 0 {
+            return Err("statvfs_failed".to_owned());
+        }
+        Ok((stats.f_bavail as u64).saturating_mul(stats.f_frsize as u64))
+    }
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
 mod platform {
     use std::path::Path;
 
@@ -969,6 +1042,13 @@ mod tests {
     }
 
     const ENGINE: u32 = 1;
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn macos_system_memory_sensor_reports_available_bytes() {
+        let available = platform::mem_available().expect("native Mach VM memory sensor");
+        assert!(available > 0, "available memory must be nonzero");
+    }
 
     #[derive(Clone, Default)]
     struct Fake {

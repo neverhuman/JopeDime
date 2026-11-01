@@ -4064,6 +4064,24 @@ mod tests {
         panic!("current jope-service library could not link native worker; build the library first with cargo build -p jope-service --locked");
     }
 
+    #[cfg(unix)]
+    fn live_native_workers(directory: &Path) -> usize {
+        fs::read_dir(directory)
+            .unwrap()
+            .filter_map(|entry| entry.ok())
+            .filter_map(|entry| entry.file_name().to_string_lossy().parse::<u32>().ok())
+            .filter(|pid| {
+                let status = Command::new("/bin/kill")
+                    .args(["-0", &pid.to_string()])
+                    .stdin(Stdio::null())
+                    .stdout(Stdio::null())
+                    .stderr(Stdio::null())
+                    .status();
+                status.is_ok_and(|status| status.success())
+            })
+            .count()
+    }
+
     fn pool(binary: &Path, workers: usize) -> ProcessExecutor {
         ProcessExecutor::new(
             binary,
@@ -4077,6 +4095,12 @@ mod tests {
         let mut d = Discovery::open(store, p.clone()).unwrap();
         let pool = pool(binary, workers);
         finish(&mut d, &NativeSpace, &pool, workers);
+        #[cfg(unix)]
+        assert_eq!(
+            live_native_workers(&binary.parent().unwrap().join("worker-pids")),
+            workers,
+            "native worker process count while the pool is still alive"
+        );
         assert_eq!(d.nondeterminism().count.0, 0);
         let projection = d.projection().unwrap();
         assert!(
@@ -4232,24 +4256,10 @@ mod tests {
         assert_eq!(p.rounds_in_flight(), 2);
         let binary = native_worker(directory.path());
         let baseline = run_store(&directory.path().join("one"), &p, &binary, 1);
-        assert_eq!(
-            fs::read_dir(directory.path().join("worker-pids"))
-                .unwrap()
-                .count(),
-            1,
-            "one live native worker observed"
-        );
         same(
             "eight",
             &baseline,
             &run_store(&directory.path().join("eight"), &p, &binary, 8),
-        );
-        assert_eq!(
-            fs::read_dir(directory.path().join("worker-pids"))
-                .unwrap()
-                .count(),
-            9,
-            "eight additional live native workers observed"
         );
         let pause_home = directory.path().join("pause");
         {
