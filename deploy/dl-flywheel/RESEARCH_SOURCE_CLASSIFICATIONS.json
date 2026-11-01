@@ -4223,6 +4223,62 @@
         "role": "research"
       },
       "sha256": "5ef2442c1f56996464488651e0b9674efa9447c0c93c1e32583732c31c7857b7"
+    },
+    "python:research/flywheel_selfplay/h167_input_noise/analysis.py": {
+      "bytes": 6581,
+      "sha256": "e5e3138ac7487edbff956012f0ba4dba86fc5198a3c1f79c99ead6d353857086",
+      "classification": {
+        "role": "research",
+        "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h167_input_noise/treatment.py": {
+      "bytes": 6747,
+      "sha256": "e1d2f89934523c369667345b474db8395dd35b17bfa210dcc1bb028ef9a7c501",
+      "classification": {
+        "role": "research",
+        "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h167_input_noise/runner.py": {
+      "bytes": 32574,
+      "sha256": "52697b71220c57bef2e7b718a27a5ea451570512e0da921211019ffd374f7f6f",
+      "classification": {
+        "role": "research",
+        "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h167_input_noise/monitor.py": {
+      "bytes": 4891,
+      "sha256": "71f0a2882f80e53dea484b29921fd45a57a101d16c0a06280de8dd247213535a",
+      "classification": {
+        "role": "research",
+        "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/h166/analysis.py": {
+      "bytes": 21053,
+      "sha256": "aeecc30b1fbff9479b568dd54a140825d00b16a53bf4dc928a6cf0fe32195918",
+      "classification": {
+        "role": "research",
+        "reason": "H166 owner-directed C-Mixup label-similarity mixup r882 adapter continuation study; family cross-fit runner, target-similarity kernel, and bounded CPU supervisor. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/h166/monitor.py": {
+      "bytes": 5872,
+      "sha256": "4c7841e6580f98c2f88f8ab15c25cbf0b988f94b65d118347d092f6eb779fa17",
+      "classification": {
+        "role": "research",
+        "reason": "H166 owner-directed C-Mixup label-similarity mixup r882 adapter continuation study; family cross-fit runner, target-similarity kernel, and bounded CPU supervisor. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/h166/run.py": {
+      "bytes": 44985,
+      "sha256": "d928439ea5994da64be7244da3443ec3b9829ec3481bde159d4a8a908dd96200",
+      "classification": {
+        "role": "research",
+        "reason": "H166 owner-directed C-Mixup label-similarity mixup r882 adapter continuation study; family cross-fit runner, target-similarity kernel, and bounded CPU supervisor. Research only; no product/sealed qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

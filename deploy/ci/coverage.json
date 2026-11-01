@@ -4319,6 +4319,16 @@
       "lanes": [],
       "scope": "REL-07 A5 named-client provider controls: candidate/source binding, transcript manifest and sidecar identities, per-client execution/semantic receipt checks, exact tool counts, distinct runs, CPU placement and export evidence; synthetic receipts only, no live client execution."
     },
+    "python:deploy/qualification/v1.0/test_provider_d2/test_d2.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 D2 size-only provider controls: candidate/source binding, fused-cpu profile and size-budget checks, 40 MB ceiling and refusal/result accounting. Synthetic reports only; no latency verdict or release execution."
+    },
     "python:deploy/qualification/v1.0/test_provider_e2/test_e2.py": {
       "discovery": {
         "kind": "python-family"
@@ -4328,6 +4338,26 @@
       ],
       "lanes": [],
       "scope": "REL-07 E2 export-parity provider controls: candidate/source binding, pinned toolchains, harness/registry/fixture identities, retained-evidence inventory, exact cell/module/calibration/raw-contract census and refusals; synthetic reports only, no release execution."
+    },
+    "python:deploy/qualification/v1.0/test_provider_m2/test_m2.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 M2 CPU provider controls: candidate/source and fixture identity binding, exact real-replay selector and report requirements, drift/failure/coverage/admission refusals. Synthetic fixtures validate orchestration only; they do not qualify real M2 or CUDA."
+    },
+    "python:deploy/qualification/v1.0/test_provider_r2/test_r2.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 R2 worker-isolation provider controls: candidate binding, service-library snapshot, exact native selector, timeout and memory fault measurements, engine RSS and search completion refusals; synthetic output only, no release execution."
     },
     "python:deploy/qualification/v1.0/test_provider_r4/test_r4.py": {
       "discovery": {
@@ -5403,6 +5433,16 @@
       ],
       "lanes": [],
       "scope": "H165 data-free controls: family cross-fit exclusion and assessment cover, planted positive/tied selector reachability, paired fit batches, dimension-scaled annealed noise and independent streams, adapter-input dropout train/eval bit identity, family weighting/canonical Elo/Holm and terminal resource guards. No study data, checkpoint, model or serving qualification."
+    },
+    "python:research/flywheel_selfplay/h167_input_noise/test_h167.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
@@ -7311,7 +7351,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -14258,6 +14298,16 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
+    },
+    "python:research/h166/test_h166.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H166 owner-directed C-Mixup label-similarity mixup r882 adapter continuation study; data-free target-similarity kernel, rank-aligned slate mixing, None-grad guard, and cross-fit selector controls. Research only; no product/sealed qualification."
     }
   },
   "lanes": {

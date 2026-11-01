@@ -11,6 +11,7 @@
   title   = {Scaling Laws for Neural Language Models},
   journal = {arXiv preprint arXiv:2001.08361},
   year    = {2020},
+  doi     = {10.48550/arXiv.2001.08361},
   url     = {https://arxiv.org/abs/2001.08361}
 }
 
@@ -21,6 +22,7 @@
   volume    = {35},
   pages     = {30016--30030},
   year      = {2022},
+  doi       = {10.48550/arXiv.2203.15556},
   url       = {https://arxiv.org/abs/2203.15556}
 }
 
@@ -37,6 +39,7 @@
   title   = {{DeepSeek-V3} Technical Report},
   journal = {arXiv preprint arXiv:2412.19437},
   year    = {2024},
+  doi     = {10.48550/arXiv.2412.19437},
   url     = {https://arxiv.org/abs/2412.19437}
 }
 
@@ -70,29 +73,7 @@
   doi     = {10.1038/nature24270}
 }
 
-@article{silver2017zero,
-  author  = {David Silver and Julian Schrittwieser and Karen Simonyan and Ioannis Antonoglou and Aja Huang and Arthur Guez and Thomas Hubert and Lucas Baker and Matthew Lai and Adrian Bolton and Yutian Chen and Timothy Lillicrap and Fan Hui and Laurent Sifre and George van den Driessche and Thore Graepel and Demis Hassabis},
-  title   = {Mastering the game of {Go} without human knowledge},
-  journal = {Nature},
-  volume  = {550},
-  number  = {7676},
-  pages   = {354--359},
-  year    = {2017},
-  doi     = {10.1038/nature24270}
-}
-
 @article{silver2018general,
-  author  = {David Silver and Thomas Hubert and Julian Schrittwieser and Ioannis Antonoglou and Matthew Lai and Arthur Guez and Marc Lanctot and Laurent Sifre and Dharshan Kumaran and Thore Graepel and Timothy Lillicrap and Karen Simonyan and Demis Hassabis},
-  title   = {A general reinforcement learning algorithm that masters chess, shogi, and {Go} through self-play},
-  journal = {Science},
-  volume  = {362},
-  number  = {6419},
-  pages   = {1140--1144},
-  year    = {2018},
-  doi     = {10.1126/science.aar6404}
-}
-
-@article{silver2018alphazero,
   author  = {David Silver and Thomas Hubert and Julian Schrittwieser and Ioannis Antonoglou and Matthew Lai and Arthur Guez and Marc Lanctot and Laurent Sifre and Dharshan Kumaran and Thore Graepel and Timothy Lillicrap and Karen Simonyan and Demis Hassabis},
   title   = {A general reinforcement learning algorithm that masters chess, shogi, and {Go} through self-play},
   journal = {Science},
@@ -114,30 +95,12 @@
   doi     = {10.1162/EVCO_a_00025}
 }
 
-@article{lehman2011abandoning,
-  author  = {Joel Lehman and Kenneth O. Stanley},
-  title   = {Abandoning Objectives: Evolution Through the Search for Novelty Alone},
-  journal = {Evolutionary Computation},
-  volume  = {19},
-  number  = {2},
-  pages   = {189--223},
-  year    = {2011},
-  doi     = {10.1162/EVCO_a_00025}
-}
-
 @article{mouret2015mapelites,
   author  = {Jean-Baptiste Mouret and Jeff Clune},
   title   = {Illuminating search spaces by mapping elites},
   journal = {arXiv preprint arXiv:1504.04909},
   year    = {2015},
-  url     = {https://arxiv.org/abs/1504.04909}
-}
-
-@article{mouret2015illuminating,
-  author  = {Jean-Baptiste Mouret and Jeff Clune},
-  title   = {Illuminating search spaces by mapping elites},
-  journal = {arXiv preprint arXiv:1504.04909},
-  year    = {2015},
+  doi     = {10.48550/arXiv.1504.04909},
   url     = {https://arxiv.org/abs/1504.04909}
 }
 
@@ -185,30 +148,11 @@
   volume    = {70},
   pages     = {1945--1954},
   year      = {2017},
+  doi       = {10.48550/arXiv.1703.01925},
   url       = {https://proceedings.mlr.press/v70/kusner17a.html}
 }
 
 @inproceedings{agarwal2021precipice,
-  author    = {Rishabh Agarwal and Max Schwarzer and Pablo Samuel Castro and Aaron C. Courville and Marc G. Bellemare},
-  title     = {Deep Reinforcement Learning at the Edge of the Statistical Precipice},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
-  volume    = {34},
-  pages     = {29304--29320},
-  year      = {2021},
-  url       = {https://arxiv.org/abs/2108.13264}
-}
-
-@inproceedings{agarwal2021deep,
-  author    = {Rishabh Agarwal and Max Schwarzer and Pablo Samuel Castro and Aaron C. Courville and Marc G. Bellemare},
-  title     = {Deep Reinforcement Learning at the Edge of the Statistical Precipice},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
-  volume    = {34},
-  pages     = {29304--29320},
-  year      = {2021},
-  url       = {https://arxiv.org/abs/2108.13264}
-}
-
-@inproceedings{agarwal2021evaluation,
   author    = {Rishabh Agarwal and Max Schwarzer and Pablo Samuel Castro and Aaron C. Courville and Marc G. Bellemare},
   title     = {Deep Reinforcement Learning at the Edge of the Statistical Precipice},
   booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
@@ -325,6 +269,7 @@
   title   = {{AlphaEvolve}: A coding agent for scientific and algorithmic discovery},
   journal = {arXiv preprint arXiv:2506.13131},
   year    = {2025},
+  doi     = {10.48550/arXiv.2506.13131},
   url     = {https://arxiv.org/abs/2506.13131}
 }
 
@@ -367,6 +312,7 @@
   title     = {Can {LLMs} Generate Novel Research Ideas? A Large-Scale Human Study with 100+ {NLP} Researchers},
   booktitle = {International Conference on Learning Representations (ICLR)},
   year      = {2025},
+  doi       = {10.48550/arXiv.2409.04109},
   url       = {https://openreview.net/forum?id=M23dTGWCZy}
 }
 
@@ -375,6 +321,7 @@
   title     = {The Ideation--Execution Gap in {LLM}-Assisted Scientific Research},
   booktitle = {International Conference on Learning Representations (ICLR)},
   year      = {2026},
+  doi       = {10.48550/arXiv.2506.20803},
   url       = {https://openreview.net/forum?id=Fllp8l6Puy}
 }
 
@@ -395,17 +342,6 @@
 }
 
 @article{campbell1960bvsr,
-  author  = {Donald T. Campbell},
-  title   = {Blind variation and selective retentions in creative thought as in other knowledge processes},
-  journal = {Psychological Review},
-  volume  = {67},
-  number  = {6},
-  pages   = {380--400},
-  year    = {1960},
-  doi     = {10.1037/h0040373}
-}
-
-@article{campbell1960variation,
   author  = {Donald T. Campbell},
   title   = {Blind variation and selective retentions in creative thought as in other knowledge processes},
   journal = {Psychological Review},
@@ -570,6 +506,7 @@
   booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
   volume    = {30},
   year      = {2017},
+  doi       = {10.48550/arXiv.1705.08439},
   url       = {https://arxiv.org/abs/1705.08439}
 }
 
@@ -581,6 +518,7 @@
   volume    = {139},
   pages     = {8748--8763},
   year      = {2021},
+  doi       = {10.48550/arXiv.2103.00020},
   url       = {https://proceedings.mlr.press/v139/radford21a.html}
 }
 
@@ -625,6 +563,7 @@
   volume    = {119},
   pages     = {8007--8019},
   year      = {2020},
+  doi       = {10.48550/arXiv.2003.03384},
   url       = {https://proceedings.mlr.press/v119/real20a.html}
 }
 
@@ -652,6 +591,7 @@
   title     = {{MotherNet}: A Foundational Hypernetwork for Tabular Classification},
   booktitle = {International Conference on Learning Representations (ICLR)},
   year      = {2025},
+  doi       = {10.48550/arXiv.2312.08598},
   url       = {https://arxiv.org/abs/2312.08598}
 }
 
