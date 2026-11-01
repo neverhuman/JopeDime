@@ -1,0 +1,122 @@
+{
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "assets": {
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "/home/ubuntu/JopeDimeMicro/assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+    "/home/ubuntu/JopeDimeMicro/assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
+    "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
+    "/home/ubuntu/JopeDimeMicro/python/rank_prepare.py": "534169af0443122600853ef9e96d734d570cd9d77c2a3d21e7b6456b4b19ab40",
+    "/home/ubuntu/JopeDimeMicro/python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
+    "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "/home/ubuntu/JopeDimeMicro/python/research/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/__init__.py": "4b6481f96986d33139cd5a078a3da50d0b41378b3aa109f5cf85af93d31fd8af",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/scaling.py": "6d592197a5a74afc1a9eddc18e1ca894987de831e0b61ef1c8a9b65e9154ded3",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/budget_planner.py": "ae76dd8c587c00d28e57cb152de6719f77cc516c660819d7990823c6a9ff1e4f",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/building_block_landmarks.py": "fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6"
+  },
+  "packages": {
+    "numpy": "1.26.4",
+    "torch": "2.7.0",
+    "psutil": "7.1.0"
+  },
+  "wave": "H190",
+  "authority": "/home/ubuntu/nudges/hwave_t0835_h190.md",
+  "execution_host": "xbabe1",
+  "checkpoint": "/home/ubuntu/lane_work/h190-agy/inputs/round-882.pt",
+  "reference": "/home/ubuntu/lane_work/h190-agy/inputs/best_dev_checkpoint.json",
+  "seeds": [
+    190101,
+    190102,
+    190103
+  ],
+  "fold_seeds_by_seed": {
+    "190101": 190141,
+    "190102": 190142,
+    "190103": 190143
+  },
+  "member_seeds_by_seed": {
+    "190101": [
+      190201,
+      190202,
+      190203,
+      190204,
+      190205,
+      190206,
+      190207,
+      190208,
+      190209,
+      190210
+    ],
+    "190102": [
+      190301,
+      190302,
+      190303,
+      190304,
+      190305,
+      190306,
+      190307,
+      190308,
+      190309,
+      190310
+    ],
+    "190103": [
+      190401,
+      190402,
+      190403,
+      190404,
+      190405,
+      190406,
+      190407,
+      190408,
+      190409,
+      190410
+    ]
+  },
+  "boot_seed": 190150,
+  "prespecified_candidate_step": {
+    "ENS10": 40,
+    "RENS10": 0
+  },
+  "arms": [
+    "R882",
+    "ENS10",
+    "RENS10"
+  ],
+  "holm_multiplicity": 2,
+  "default_ensemble_k": 10,
+  "fallback_ensemble_k": 5,
+  "total_updates_default": 6000,
+  "total_updates_fallback": 3000,
+  "parent_commit": "716c26b3bcce02677ea7b837eca49ffdcea6ee70",
+  "inputs": {
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/lane_work/h190-agy/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/lane_work/h190-agy/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/lane_work/h190-agy/inputs/train_only_selected_1219.json": "110307b8f1fb19de1b33c4005004e7b1512eee1e5d2042db49d6282407a3ab33",
+    "/home/ubuntu/lane_work/h190-agy/inputs/train_only_context_features_1219.npz": "5194c29a916cbde22d5fe312a595c6d3e0d213dcbede048bea3c731a4bdf8f10",
+    "/home/ubuntu/lane_work/h190-agy/inputs/val_only_context_features_91.npz": "c480fee5f4e26a3fb0efb0a294ad73ddbec72f7c1fc7d9344889d3a520efaa9e"
+  },
+  "parent_sources": {
+    "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4",
+    "research/flywheel_selfplay/h177_pooled_selector/analysis.py": "707c4903a77d48ffc8ae14c820a626df5c2858d3d24df35db3f9718d120bafc4",
+    "research/flywheel_selfplay/h177_pooled_selector/treatment.py": "167a0d8d3fdf9d3f811e79259b6bf7e38b6ea810d15bdcc40e128b68317a044a",
+    "research/flywheel_selfplay/h178_pooled_calibration/h178_receipt.json": "3e6545d371334c505023d4d0593dbf0abf10ef220785c8f30e49f5a5aec5e91d"
+  },
+  "source_sha256": {
+    "provenance.json": "54b9491d8c1c1f3aba6d22343397d9e255175e73ca116b8e73c3ac5797526103",
+    "fold_manifest.json": "0299dede989eb07d83fad8f142c7a1986970acb131445ea127257bc6397313a7",
+    "analysis.py": "16406996c10ecd360c97af24e5c6696358d1c1ad5bc06a157638829c19ef62f9",
+    "treatment.py": "b0b1653248ea2958983296ac1909609e32ae0cf8e54dcd59defb193927973376",
+    "runner.py": "50dc4cc03f13ca6237cacdab364aaca9ea5ff7a69675255b78887320325b7a0e",
+    "monitor.py": "8ef12c60997367e53d42c7934d44fc6f7716db015fd833875e0e02f699598f4d",
+    "test_h190.py": "96d91d0c27adf49222b7e3e3b97e67e94180df94a42b6d0bd77824a80246268e",
+    "PREREG.md": "511ee6173d2008402e10ca51d786196917704a50f2dc02e5dd6075c1f7bd7a5d",
+    "README.md": "78459b104d1d09302b4d050fdd0fddc82532c667a8972d6ca5bf68bda228c196"
+  }
+}
