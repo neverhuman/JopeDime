@@ -31,3 +31,12 @@ available. Do not adapt that packet into dev data or bypass the manifest checks.
 A real dev-data dry-run remains required after eligible paired dev inputs and a
 qualified worker are supplied. GPU launch remains a separate owner-controlled
 operation under the exclusive qualification lock.
+
+## Worker task-summary admission
+
+The worker summary and its qualification receipt must each name exactly the two
+supported tasks as a list of strings; either order is accepted. Validate the
+summary shape before comparing task sets. Null/scalar/nested values, mappings,
+duplicates and unsupported tasks produce the existing worker-head blocker and
+cannot create a worker-bound plan. These consistency checks do not authenticate
+an issuer, qualify a real worker or authorize the study.
