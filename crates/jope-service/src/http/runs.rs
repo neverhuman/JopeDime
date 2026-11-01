@@ -7,17 +7,14 @@ use crate::{
         audit::AuditRowId,
         effort::{BudgetOverrides, Effort as SearchEffort},
         finalize::{FinalizationRequest, Finalizer, Partition},
-        r#loop::{
-            Discovery, HeuristicAdmission, NativeSpace, Plan as SearchPlan, ProcessExecutor,
-            SearchSpace,
-        },
+        r#loop::{Discovery, NativeSpace, Plan as SearchPlan, ProcessExecutor, SearchSpace},
         splits::random_split,
     },
     engine::{EngineActivity, EngineLock},
     events::{EventLog, RunUpdate},
     governor::{Governor, Requirements},
     idempotency::{CommandOutcome, RequestIdentity},
-    ranker::admission::{resolve_unqualified, GuidanceUnavailableReason},
+    run::service::{BackendExecutor, BackendPlan, BackendSpace},
     store::{RecordKey, Store},
     telemetry::{Sensors, SystemSensors},
 };
@@ -89,6 +86,7 @@ struct Prepared {
     holdout: Vec<u8>,
     fit_rows: Vec<AuditRowId>,
     holdout_rows: Vec<AuditRowId>,
+    backend: BackendPlan,
 }
 
 #[derive(Clone, Debug, serde::Deserialize)]
@@ -918,17 +916,14 @@ impl RunService {
         if spec.task != Task::Regression {
             return Err(unavailable("This run backend requires task=regression."));
         }
-        let device = jope_runtime::backend::DeviceRequest::parse(&spec.device)
-            .ok_or_else(|| invalid(&format!("Unknown device {:?}.", spec.device)))?;
-        // This bounded run instantiates the native CPU evaluator. Select that
-        // actual backend before reading data or publishing any run effects.
-        jope_runtime::backend::select(device).map_err(|error| {
-            issue(
-                ErrorCode::BackendUnavailable,
-                format!("{}: {error:#}", ErrorCode::BackendUnavailable),
-            )
-        })?;
-        if spec.landmarks != LandmarkMode::None {
+        let mut backend =
+            BackendPlan::resolve(spec, self.activity.admitted_ranker(), 1).map_err(|error| {
+                issue(
+                    crate::run::service::error_code(&error),
+                    "The requested run backend could not be prepared.",
+                )
+            })?;
+        if !backend.learned() && spec.landmarks != LandmarkMode::None {
             return Err(unavailable("This run backend requires landmarks=none."));
         }
         if spec.test_dataset.is_some()
@@ -950,12 +945,6 @@ impl RunService {
                 "This run backend currently qualifies the rmse regression objective.",
             ));
         }
-        let (guidance, warnings) = resolve_unqualified(
-            spec.guidance,
-            spec.landmarks,
-            GuidanceUnavailableReason::Capability,
-        )
-        .map_err(|code| issue(code, "Requested guidance is unavailable."))?;
         if !spec.split.holdout_fraction.is_finite()
             || !(0.0..1.0).contains(&spec.split.holdout_fraction)
             || spec.split.holdout_fraction == 0.0
@@ -1117,7 +1106,8 @@ impl RunService {
             &serde_json::to_vec(
                 &json!({"backend":"cpu-ridge-seeded-rmse/v1", "spec":normalized,
             "dataset":dataset.csv, "fit":hash(&fit), "binary":self.binary, "timeout_ms":timeout,
-            "worker_ram":WORKER_RAM, "workers":1, "estimates":estimates}),
+            "worker_ram":WORKER_RAM, "workers":1, "estimates":estimates,
+            "ranker_bundle":backend.bundle_digest,"placement":backend.placement}),
             )
             .map_err(io)?,
         );
@@ -1127,21 +1117,21 @@ impl RunService {
                 "Plan digest changed; request a fresh dry-run plan.",
             ));
         }
-        let public: Plan = serde_json::from_value(json!({"plan_digest":plan_digest,
+        let mut public: Plan = serde_json::from_value(json!({"plan_digest":plan_digest,
             "task":{"value":"regression","inferred":false,"reason":"Explicit regression task."},
             "objective":{"name":"rmse","digest":jope_runtime::fitness::Fitness::parse("rmse").map_err(io)?.identity().map_err(io)?,"direction":"minimize","fitting":"squared_error"},
             "rows":{"total":table.rows.len().to_string(),"fit":fit_count.to_string(),"holdout":holdout_ids.len().to_string(),"test":null},
             "effort":{"name":spec.effort,"evaluations":effort.evaluations.to_string(),"wall_seconds":effort.wall_seconds.to_string(),"cv_folds":effort.rung1_folds,"rounds_in_flight":1},
-            "guidance":guidance,"landmarks":{"mode":"none","sample_rows":0},
+            "guidance":backend.guidance,"landmarks":{"mode":spec.landmarks,"sample_rows":0},
             "languages":{"requested":spec.languages,"excluded_operations":[],"intersection_empty":false},
-            "placement":{"dope":"none","ranker":"heuristic","evaluation":"cpu","workers":1},
-            "limits":{"eval_timeout_s":timeout.div_ceil(1000),"worker_rss_bytes":WORKER_RAM.to_string()},"estimates":estimates,"warnings":warnings})).map_err(io)?;
+            "placement":backend.placement,
+            "limits":{"eval_timeout_s":timeout.div_ceil(1000),"worker_rss_bytes":WORKER_RAM.to_string()},"estimates":estimates,"warnings":backend.warnings})).map_err(io)?;
         let search = SearchPlan {
             run_id: format!("run_{}", ulid::Ulid::new()).parse().map_err(io)?,
             dataset_id: spec.dataset.clone(),
             problem_digest: hash(&serde_json::to_vec(&json!({"spec":normalized,"csv_sha256":dataset.csv.sha256,
                 "fit_sha256":hash(&fit),"objective_digest":public.objective.digest,"split":"public-run/fit-v1"})).map_err(io)?),
-            bundle_digest: hash(b"cpu-native-no-learned-bundle/v1"),
+            bundle_digest: backend.bundle_digest.clone(),
             binary_version: self.binary.clone(),
             matrix_path: PathBuf::new(),
             matrix_sha256: hash(&fit),
@@ -1159,6 +1149,10 @@ impl RunService {
             times: None,
             gap_rows: 0,
         };
+        backend
+            .bind_fit(&fit, &search)
+            .map_err(|_| invalid("Unable to prepare numeric FIT landmarks."))?;
+        public.landmarks.sample_rows = backend.landmark_rows as u32;
         let rows = |ids: Vec<usize>| {
             ids.into_iter()
                 .map(|row| AuditRowId {
@@ -1174,6 +1168,7 @@ impl RunService {
             holdout,
             fit_rows: rows(fit_ids),
             holdout_rows: rows(holdout_ids),
+            backend,
         })
     }
 
@@ -1253,6 +1248,12 @@ impl RunService {
         };
         #[cfg(not(all(feature = "failpoints", debug_assertions)))]
         let run_space = CpuRunSpace {};
+        let learned = prepared.backend.learned();
+        let admission = prepared.backend.admission;
+        let run_space = BackendSpace {
+            native: run_space,
+            learned,
+        };
         let activity = self.activity.begin_run();
         if let Err(error) = std::thread::Builder::new()
             .name("jope-run".into())
@@ -1260,19 +1261,17 @@ impl RunService {
                 let _activity = activity;
                 if let Ok((mut discovery, request)) = receiver.recv() {
                     let result = (|| -> anyhow::Result<()> {
-                        let executor = ProcessExecutor::new(
+                        let process = ProcessExecutor::new(
                             &owner.executable,
                             1,
                             &owner.home.join("worker-scratch"),
                         )?;
+                        let executor = BackendExecutor {
+                            inner: &process,
+                            learned,
+                        };
                         while discovery.completed().is_none() {
-                            discovery.advance(
-                                &run_space,
-                                &HeuristicAdmission,
-                                &executor,
-                                1,
-                                usize::MAX,
-                            )?;
+                            discovery.advance(&run_space, &admission, &executor, 1, usize::MAX)?;
                         }
                         Finalizer::with_journal(
                             Arc::clone(&owner.store),
