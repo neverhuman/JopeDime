@@ -232,20 +232,51 @@ def render_argv(argv: list[str], values: dict[str, str]) -> list[str]:
 
 
 def terminate_group(process: subprocess.Popen, grace_seconds: float = 5) -> int:
-    if process.poll() is not None:
-        return process.returncode
+    pgid = process.pid
     try:
-        os.killpg(process.pid, signal.SIGTERM)
+        os.killpg(pgid, signal.SIGTERM)
     except ProcessLookupError:
         pass
     try:
-        return process.wait(timeout=grace_seconds)
+        process.wait(timeout=grace_seconds)
     except subprocess.TimeoutExpired:
+        pass
+
+    def live_group_members() -> bool:
+        proc = Path("/proc")
+        if not proc.is_dir():
+            try:
+                os.killpg(pgid, 0)
+                return True
+            except ProcessLookupError:
+                return False
+        for entry in proc.iterdir():
+            if not entry.name.isdecimal():
+                continue
+            try:
+                stat = (entry / "stat").read_text(encoding="ascii")
+                fields = stat.rsplit(")", 1)[1].split()
+                state, member_pgid = fields[0], int(fields[2])
+            except (OSError, IndexError, ValueError):
+                continue
+            if member_pgid == pgid and state not in {"Z", "X"}:
+                return True
+        return False
+
+    deadline = time.monotonic() + max(0, grace_seconds)
+    while live_group_members() and time.monotonic() < deadline:
+        time.sleep(min(0.05, max(0, deadline - time.monotonic())))
+    if live_group_members():
         try:
-            os.killpg(process.pid, signal.SIGKILL)
+            os.killpg(pgid, signal.SIGKILL)
         except ProcessLookupError:
             pass
-        return process.wait()
+        kill_deadline = time.monotonic() + 2
+        while live_group_members() and time.monotonic() < kill_deadline:
+            time.sleep(0.02)
+        if live_group_members():
+            raise CaptureError(f"process group {pgid} survived SIGKILL")
+    return process.wait()
 
 
 def render_client_commands(
@@ -307,9 +338,10 @@ def stop_engine(
         pending_error = error
     try:
         try:
-            engine_exit = process.wait(timeout=10)
+            process.wait(timeout=10)
         except subprocess.TimeoutExpired:
-            engine_exit = terminate_group(process)
+            pass
+        engine_exit = terminate_group(process)
     finally:
         if pending_error is not None:
             raise pending_error
@@ -509,10 +541,7 @@ def run_capture(args: argparse.Namespace) -> dict:
                         timed_out = True
                         client_exit = terminate_group(active_client)
                     finally:
-                        if active_client.poll() is None:
-                            terminate_group(active_client)
-                        else:
-                            active_client.wait()
+                        client_exit = terminate_group(active_client)
 
             if active_client is not None:
                 try:
@@ -571,10 +600,7 @@ def run_capture(args: argparse.Namespace) -> dict:
                     capture_error = str(error)
         finally:
             if active_client is not None:
-                if active_client.poll() is None:
-                    terminate_group(active_client)
-                else:
-                    active_client.wait()
+                terminate_group(active_client)
             engine_stop_exit, engine_exit = stop_engine(
                 candidate, repo, environment, engine
             )

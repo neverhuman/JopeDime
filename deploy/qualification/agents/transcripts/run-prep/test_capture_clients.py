@@ -4,10 +4,13 @@ import importlib.util
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
+import signal
 import subprocess
 import tempfile
 import textwrap
+import time
 
 import pytest
 
@@ -27,7 +30,7 @@ THREE_CLIENTS_MODULE = importlib.util.module_from_spec(THREE_CLIENTS_SPEC)
 THREE_CLIENTS_SPEC.loader.exec_module(THREE_CLIENTS_MODULE)
 
 
-def _runner_fixture(tmp_path, *, sleep_key=None):
+def _runner_fixture(tmp_path, *, sleep_key=None, descendant_key=None):
     repo = tmp_path / "source"
     repo.mkdir()
     capture_script = (
@@ -90,10 +93,18 @@ def _runner_fixture(tmp_path, *, sleep_key=None):
         textwrap.dedent(
             f"""\
             #!/usr/bin/env python3
-            import hashlib, json, os, sys, time
+            import hashlib, json, os, signal, subprocess, sys, time
             from pathlib import Path
             _, capture_stdio, capture_dir, candidate, engine_home, key = sys.argv
             Path('client.pid').write_text(str(os.getpid()))
+            if key == {descendant_key!r}:
+                child_code = "import os, signal, time; signal.signal(signal.SIGTERM, signal.SIG_IGN); open('descendant.pid', 'w').write(str(os.getpid())); time.sleep(120)"
+                subprocess.Popen([sys.executable, '-c', child_code])
+                deadline = time.monotonic() + 5
+                while not Path('descendant.pid').exists() and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                if not Path('descendant.pid').exists():
+                    raise SystemExit('descendant did not start')
             if key == {sleep_key!r}:
                 time.sleep(30)
             home = Path(engine_home)
@@ -232,6 +243,94 @@ def test_timeout_kills_and_reaps_client_and_stops_its_engine():
         assert row["timed_out"] is True
         assert row["client_exit"] is not None
         assert Path(row["engine_home"], "stopped").is_file()
+
+
+def _pid_is_live(pid):
+    try:
+        with open(f"/proc/{pid}/stat", encoding="utf-8") as stat_file:
+            state = stat_file.read().rsplit(")", 1)[1].split()[0]
+        return state != "Z"
+    except FileNotFoundError:
+        return False
+
+
+@pytest.mark.parametrize("timed_out", [False, True], ids=["normal-exit", "timeout"])
+def test_client_process_group_descendant_is_gone_after_teardown(timed_out):
+    with tempfile.TemporaryDirectory(
+        prefix="a5-descendant-cleanup-", dir=Path.home()
+    ) as temp:
+        args, plan, _candidate, _client = _runner_fixture(
+            Path(temp),
+            sleep_key="claude_code" if timed_out else None,
+            descendant_key="claude_code",
+        )
+        case = args.out_dir / "clients" / "claude_code"
+        plan["clients"]["claude_code"]["timeout_seconds"] = 1
+        args.client_plan.write_text(json.dumps(plan), encoding="utf-8")
+        child_pid = None
+        try:
+            result = THREE_CLIENTS_MODULE.run_capture(args)
+            child_pid = int((case / "descendant.pid").read_text())
+            assert not _pid_is_live(child_pid), (
+                f"same-group descendant {child_pid} survived {result['status']}"
+            )
+            assert result["clients"]["claude_code"]["timed_out"] is timed_out
+        finally:
+            if child_pid is None and (case / "descendant.pid").is_file():
+                child_pid = int((case / "descendant.pid").read_text())
+            if child_pid is not None and _pid_is_live(child_pid):
+                os.kill(child_pid, signal.SIGKILL)
+
+
+def test_interrupt_kills_client_process_group_descendant(monkeypatch):
+    with tempfile.TemporaryDirectory(
+        prefix="a5-interrupt-descendant-", dir=Path.home()
+    ) as temp:
+        args, _plan, _candidate, client = _runner_fixture(
+            Path(temp), descendant_key="claude_code"
+        )
+        case = args.out_dir / "clients" / "claude_code"
+        child_pid = None
+        original_popen = subprocess.Popen
+
+        class InterruptAfterDescendant:
+            def __init__(self, process):
+                self.process = process
+                self.interrupted = False
+
+            def __getattr__(self, name):
+                return getattr(self.process, name)
+
+            def wait(self, *positional, **kwargs):
+                deadline = time.monotonic() + 5
+                marker = case / "descendant.pid"
+                while not marker.exists() and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                assert marker.exists(), "fixture descendant did not start"
+                if not self.interrupted:
+                    self.interrupted = True
+                    raise KeyboardInterrupt
+                return self.process.wait(*positional, **kwargs)
+
+        def interrupt_client(command, *positional, **kwargs):
+            process = original_popen(command, *positional, **kwargs)
+            if command[0] == str(client) and command[-1] == "claude_code":
+                return InterruptAfterDescendant(process)
+            return process
+
+        monkeypatch.setattr(THREE_CLIENTS_MODULE.subprocess, "Popen", interrupt_client)
+        try:
+            with pytest.raises(KeyboardInterrupt):
+                THREE_CLIENTS_MODULE.run_capture(args)
+            child_pid = int((case / "descendant.pid").read_text())
+            assert not _pid_is_live(child_pid), (
+                f"same-group descendant {child_pid} survived interrupt teardown"
+            )
+        finally:
+            if child_pid is None and (case / "descendant.pid").is_file():
+                child_pid = int((case / "descendant.pid").read_text())
+            if child_pid is not None and _pid_is_live(child_pid):
+                os.kill(child_pid, signal.SIGKILL)
 
 
 def test_launch_failure_stops_engine_and_records_incomplete_client(monkeypatch):
