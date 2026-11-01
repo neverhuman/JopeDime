@@ -1,0 +1,1646 @@
+{
+  "arms": {
+    "guided": {
+      "policy": "frozen candidate adapter cost order; choose four lowest-cost gate-passing unrevealed entries"
+    },
+    "matched": [
+      "context",
+      "width-specific slate",
+      "revealed slots 0..3",
+      "candidate support",
+      "gate rule",
+      "single shared terminal outcome read"
+    ],
+    "unguided": {
+      "policy": "frozen anchor_cost output from the same CPU adapter; choose four lowest-cost gate-passing unrevealed entries"
+    }
+  },
+  "budget": {
+    "absolute_deadline_utc": "2026-11-01T02:30:00Z",
+    "device": "cpu",
+    "environment": {
+      "MKL_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    },
+    "host_cpu_utilization_limit_pct": 85,
+    "math_threads": 1,
+    "optimizer_updates": 0,
+    "qualification_lock": false,
+    "requested_nice_increment": 10,
+    "retries": 0,
+    "rss_limit_bytes": 6442450944,
+    "wall_seconds_limit": 2700,
+    "workers": 1
+  },
+  "candidate": {
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "id": "fad792d982ac",
+    "kind": "frozen research adapter",
+    "production_authenticated": false,
+    "research_only": true,
+    "weights_path": "/home/ubuntu/jope-data/res-06-f02/gb1841/candidate-fad792d982ac/jope.safetensors",
+    "weights_sha256": "ce39c75f37624e64dfbf89e6493adbf74811a5248f9355997161491e93a132ef"
+  },
+  "created_utc": "2026-11-01T01:28:10Z",
+  "data": {
+    "capture_identity_sha256": "bbc89c29a43c4137a4759bb97ff10e49bbcbf6113bbbb9061e2658f3c0a55a4c",
+    "capture_manifest_sha256": "bbc89c29a43c4137a4759bb97ff10e49bbcbf6113bbbb9061e2658f3c0a55a4c",
+    "context_roster": [
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d.safetensors",
+          "sha256": "4adba1c90a2bef50fdfc66c631d79735e841a8ff6280cabb79cd8ce16f25d95e"
+        },
+        "context_sha256": "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d",
+        "dataset_id": "c73bb3253bca4fc6",
+        "dl_split": "DL-Train",
+        "family_id": "fam-13a5431ab60796b93570f3a26ee0978011cf86a9e1a335781a1e2e98bb3f6ceb",
+        "pool_sha256": "6f62d0d964433dba0d568455ad88232cd8105d50ab733f6b5c092752819b28e3",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d-12.safetensors",
+            "sha256": "5bb13ab9415f96e338ee35eb4ea466a19648b722c87db8fb947eb0a48b85354f",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d-20.safetensors",
+            "sha256": "397a24af12a9bc14cb5e2f10f05e3325b9dc68d3cbced6c0e574b82ff58f68f4",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/010cc1caaa0743330780528c3ca1f644150d171717bf75e81ff9e9fa681ca31b.safetensors",
+          "sha256": "24573aaa8154e093813e86652ef60125a1c5c0ac78c59e98cbe09203821fa2f8"
+        },
+        "context_sha256": "010cc1caaa0743330780528c3ca1f644150d171717bf75e81ff9e9fa681ca31b",
+        "dataset_id": "4a82afd1c81f2f05",
+        "dl_split": "DL-Train",
+        "family_id": "fam-429eaab7348573055e154177a53236f62e65d3b3aac5d87a4f5957c9f97c0e1b",
+        "pool_sha256": "b9b34d3ddf4adf702140ff43b01ed3e134e6b8a92f8b16e9782219bef35d1f48",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/010cc1caaa0743330780528c3ca1f644150d171717bf75e81ff9e9fa681ca31b-12.safetensors",
+            "sha256": "2ef4e2ea2c96f3484e2ecaf5e7484b70e9d6d621b5bb54bc4e3afc34279ee67e",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/010cc1caaa0743330780528c3ca1f644150d171717bf75e81ff9e9fa681ca31b-20.safetensors",
+            "sha256": "21861f4b27c13a1831d1b5700cc727be3ed390ce15afd2f1d624c0269518ae1c",
+            "width": 20
+          }
+        ],
+        "source_split": "inner",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/05cb929edb69424ee790270b59dcff2eeb91130d9d3dbf435808fd27b9c75132.safetensors",
+          "sha256": "ce52ab248e416ea5d014672c6c2168fd8e2916ab9ae0cd8ac689e55e4c8c9349"
+        },
+        "context_sha256": "05cb929edb69424ee790270b59dcff2eeb91130d9d3dbf435808fd27b9c75132",
+        "dataset_id": "672bbbd5290bbc1f",
+        "dl_split": "DL-Train",
+        "family_id": "fam-462953f4374a440b2c6aa821537af1dd1e98b30db3778c8489c335c4358571d9",
+        "pool_sha256": "6e6d2aec50f435801c1b53f1f74cf615612f55122fc07dc92e6d5b5e2a22b3fc",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/05cb929edb69424ee790270b59dcff2eeb91130d9d3dbf435808fd27b9c75132-12.safetensors",
+            "sha256": "9f387ce039138172ea80fd5fe14922ed234f922c8ea919024443311fbd9e3158",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/05cb929edb69424ee790270b59dcff2eeb91130d9d3dbf435808fd27b9c75132-20.safetensors",
+            "sha256": "4b3635be039df9da1835a777d65525fcf56d90e7ac2a9ef32532d25af6668ecb",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/07103ad960ef0fdfa9a471029e4d4050ec3ef39fc6e3f89e758f84752ff6d667.safetensors",
+          "sha256": "76c883f72c7639854c372f438baa00f3db52ec54d4ca5351beb44e154c25fda3"
+        },
+        "context_sha256": "07103ad960ef0fdfa9a471029e4d4050ec3ef39fc6e3f89e758f84752ff6d667",
+        "dataset_id": "353ae247c133a94a",
+        "dl_split": "DL-Train",
+        "family_id": "fam-af60f9d1ac3114ad2b4f5cd311ff0a5847289686b2bf40f328467b33739997d5",
+        "pool_sha256": "f7dd4ae9ca815c09cec586dd59a1516b3187b751faabf5ddc619bf7fc04bcd73",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/07103ad960ef0fdfa9a471029e4d4050ec3ef39fc6e3f89e758f84752ff6d667-12.safetensors",
+            "sha256": "ac231f11e239d6db2e360778197b950fe195fc7849500c3926b50391b5966d1d",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/07103ad960ef0fdfa9a471029e4d4050ec3ef39fc6e3f89e758f84752ff6d667-20.safetensors",
+            "sha256": "89ae1f14fb3c35bfbd3a2fce7f0f9d283004c5eb57d3aa8fee15edf87324c4c6",
+            "width": 20
+          }
+        ],
+        "source_split": "inner",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/13dd5faa6c6f4f8becd9e1c20e6115c98da45905b0199d08c17a847dbea928de.safetensors",
+          "sha256": "246271a92e2918426a45a61ff614ce763d0d0cecbcff7d63065f8ef0223f3f05"
+        },
+        "context_sha256": "13dd5faa6c6f4f8becd9e1c20e6115c98da45905b0199d08c17a847dbea928de",
+        "dataset_id": "3ee2a1a57e55743a",
+        "dl_split": "DL-Train",
+        "family_id": "fam-be71762e2eaec4f4d74c98443bd318ecd61c7bca5896be219724cdac878bac63",
+        "pool_sha256": "2c052c6934c682661593923c70d922a94b57a1f6a39a5ea01a173931ace0a167",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/13dd5faa6c6f4f8becd9e1c20e6115c98da45905b0199d08c17a847dbea928de-12.safetensors",
+            "sha256": "c725f2ea2d1836184ff0728ba707bae0b34d06cfc27c802bd8751ec4692c620a",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/13dd5faa6c6f4f8becd9e1c20e6115c98da45905b0199d08c17a847dbea928de-20.safetensors",
+            "sha256": "c07041d3f00d14d5713fe169f9ceeee68c090cf294e0ad19d21ade95ebb705cf",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/16cdac486163423d020f484fda3fc6aee49faa536fdd3355ec0d951458d2bc32.safetensors",
+          "sha256": "411c33ecdc11b11590449602453630d627638bfbddf64a8c2a814343691ecf72"
+        },
+        "context_sha256": "16cdac486163423d020f484fda3fc6aee49faa536fdd3355ec0d951458d2bc32",
+        "dataset_id": "e07857608843d1d8",
+        "dl_split": "DL-Train",
+        "family_id": "fam-deb6e0130b2407e54c15051e037c031b3ca786da7f02a66f7fc88f066396418d",
+        "pool_sha256": "64b92008814da8329f41c4af420419090e8d7adce350085002542d47f149a2be",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/16cdac486163423d020f484fda3fc6aee49faa536fdd3355ec0d951458d2bc32-12.safetensors",
+            "sha256": "066a3ea69339235d7fe81f5e285a4e788ebae731c96293249925d8aff6670553",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/16cdac486163423d020f484fda3fc6aee49faa536fdd3355ec0d951458d2bc32-20.safetensors",
+            "sha256": "d75dbc3ace451913d8ce45b0d3d58c530b77cbf9821a9f5145c0dfe7f5b2f191",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/173f9ef98021d3303ea555ca3f2b7dc68c05fdeea6be0cc3b9e04d5a05fefd51.safetensors",
+          "sha256": "3d6df86b8a1bd9608d67edbdbed7a33d61f766dba9d3acfd2ef85e1db6aa5377"
+        },
+        "context_sha256": "173f9ef98021d3303ea555ca3f2b7dc68c05fdeea6be0cc3b9e04d5a05fefd51",
+        "dataset_id": "00cbcb0ad778f57d",
+        "dl_split": "DL-Train",
+        "family_id": "fam-a0fc30a995a47c8ec73fbdd3b0dfc78becdfe101de0c274d4d98db895c6e2d60",
+        "pool_sha256": "21e7727856515b267847e5e083f65937e6528c2eb32e06dab7ad2181e0072240",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/173f9ef98021d3303ea555ca3f2b7dc68c05fdeea6be0cc3b9e04d5a05fefd51-12.safetensors",
+            "sha256": "f15f3a5a59afcc277ffcf3768235978c2a7af3774e862ee9c3431c877715ae3b",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/173f9ef98021d3303ea555ca3f2b7dc68c05fdeea6be0cc3b9e04d5a05fefd51-20.safetensors",
+            "sha256": "9a5f804b78203b07c2b3697d72c1152e542576d56fa23b1eb9fc9e5b56ee7f7a",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/19addf778e2359778ebf97acdc1677b3eb94d1f5a0971b55bb84a7019c99f22b.safetensors",
+          "sha256": "05d5331706aad26ec2e57614104579037824d47605256ca9cc708b75b1932697"
+        },
+        "context_sha256": "19addf778e2359778ebf97acdc1677b3eb94d1f5a0971b55bb84a7019c99f22b",
+        "dataset_id": "ce43e232f2cfee00",
+        "dl_split": "DL-Train",
+        "family_id": "fam-a559743d80534db11a02f4e6e6c456e9604c06b19943bc26ee74eab600829aa0",
+        "pool_sha256": "5be37a045322a589060a271ed8d88f15aa6dc6e4bb8f3bc7921b85a56f520ec8",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/19addf778e2359778ebf97acdc1677b3eb94d1f5a0971b55bb84a7019c99f22b-12.safetensors",
+            "sha256": "64dc98b830a2c369ea559563093861bb570a456000486177c39876b9788430d9",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/19addf778e2359778ebf97acdc1677b3eb94d1f5a0971b55bb84a7019c99f22b-20.safetensors",
+            "sha256": "a8c1fbdd0fc6bf16a652707471cd06d7d99f7b5a11a2e215e86b9508cd5d9625",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/1a4fcbfa5e0f4a5230385780d1b9a163d94607e2aa9a4449e463100b84c2423e.safetensors",
+          "sha256": "e8417984c1c921daf837495656b4e0d1bc873d6c8c9e6a38d449fe09323ae1cc"
+        },
+        "context_sha256": "1a4fcbfa5e0f4a5230385780d1b9a163d94607e2aa9a4449e463100b84c2423e",
+        "dataset_id": "95c0e579f498c882",
+        "dl_split": "DL-Train",
+        "family_id": "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619",
+        "pool_sha256": "6303535fb362a4107a6429722fe5d4d26c007e387d48dc85fb55ac5ac649fedf",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/1a4fcbfa5e0f4a5230385780d1b9a163d94607e2aa9a4449e463100b84c2423e-12.safetensors",
+            "sha256": "653e7fd316fc23baf638c9408b3af4c9449aab0e60bb04ce150c319f9b92c991",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/1a4fcbfa5e0f4a5230385780d1b9a163d94607e2aa9a4449e463100b84c2423e-20.safetensors",
+            "sha256": "f1d5da52c863b95f38144daf0afd5e3411cbef352a93dc8a485dee8193abd335",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/2494607872da9cf5a07963d63d5868c2226415c5e46230d75f7e0b91e8aa03d2.safetensors",
+          "sha256": "01ab48354adb511b5b58d0695ad1697233cab32f3823fff920f82847f4a37a29"
+        },
+        "context_sha256": "2494607872da9cf5a07963d63d5868c2226415c5e46230d75f7e0b91e8aa03d2",
+        "dataset_id": "35546f62566963a1",
+        "dl_split": "DL-Train",
+        "family_id": "fam-d95734c761e0f763d53f134ff916029df0fc5ab8abdfe018bf95291dae6f8efa",
+        "pool_sha256": "1f49bcd28e5700f6aab2d0e22af6ffdaabf35aa3dbf66d0b373493ec923ed130",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/2494607872da9cf5a07963d63d5868c2226415c5e46230d75f7e0b91e8aa03d2-12.safetensors",
+            "sha256": "fb8b9bd6aeeed179ca1d1d64490658a5b01e1f8ab6660f8187c0717083b05fb6",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/2494607872da9cf5a07963d63d5868c2226415c5e46230d75f7e0b91e8aa03d2-20.safetensors",
+            "sha256": "d8b72f56e5e8b996240f3a35532d6094c6fd28bf4c9cd2d0ea0137d61c890455",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/28615dcdf8b886386a772030a159f027d76b537301da2331d9cc7b64fcf168b9.safetensors",
+          "sha256": "068b18daf6ed24fd87fe210b2af498d8dba07300085b29c884f2f56dbf93ec1f"
+        },
+        "context_sha256": "28615dcdf8b886386a772030a159f027d76b537301da2331d9cc7b64fcf168b9",
+        "dataset_id": "3ee2a1a57e55743a",
+        "dl_split": "DL-Train",
+        "family_id": "fam-be71762e2eaec4f4d74c98443bd318ecd61c7bca5896be219724cdac878bac63",
+        "pool_sha256": "5ea4485059616c942123e5ca88df85b1a3c75b9d46167888ae255ed88ad54a51",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/28615dcdf8b886386a772030a159f027d76b537301da2331d9cc7b64fcf168b9-12.safetensors",
+            "sha256": "2891b287040516ef54bfd5840eb94b8cd6c2688dcf6674e4a13534a6d5b5de64",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/28615dcdf8b886386a772030a159f027d76b537301da2331d9cc7b64fcf168b9-20.safetensors",
+            "sha256": "90f0844dcd07ff0a0aabaa2d9e4ccd759555cd0f1bc922cf424810045a1fed4d",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/2870a5994f3e68eac1d085b5ab8fc34d15fa061231a22687ecde5165c06ffa13.safetensors",
+          "sha256": "485c4d31f8cc8bb7065e49e98d799b1fa379911c8eba36f4b9ccf5096afe264c"
+        },
+        "context_sha256": "2870a5994f3e68eac1d085b5ab8fc34d15fa061231a22687ecde5165c06ffa13",
+        "dataset_id": "4a82afd1c81f2f05",
+        "dl_split": "DL-Train",
+        "family_id": "fam-429eaab7348573055e154177a53236f62e65d3b3aac5d87a4f5957c9f97c0e1b",
+        "pool_sha256": "ea77f77fd56d7df234000aa855cbd8a1055e669e1a78c528bfbc648cd81e6f1d",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/2870a5994f3e68eac1d085b5ab8fc34d15fa061231a22687ecde5165c06ffa13-12.safetensors",
+            "sha256": "9267a58b92e84e81a5d7ad92f121e1359821b33abc2bd8f0067815e95af97e6c",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/2870a5994f3e68eac1d085b5ab8fc34d15fa061231a22687ecde5165c06ffa13-20.safetensors",
+            "sha256": "30ca2d2a3b4ed02ae2600482736d17e926d4f3b11c57362e5ce55bcf5a53bd9f",
+            "width": 20
+          }
+        ],
+        "source_split": "inner",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/2ffbdcfac965e86f786a5690b0fe2ae7c1d0e73731a74a568d56b25856f8b64f.safetensors",
+          "sha256": "63980218e2f938dc935ab95ba3d9ca0ddb480d0d125bb3b60ee2cc62336be2e5"
+        },
+        "context_sha256": "2ffbdcfac965e86f786a5690b0fe2ae7c1d0e73731a74a568d56b25856f8b64f",
+        "dataset_id": "6011402103a7dd56",
+        "dl_split": "DL-Train",
+        "family_id": "fam-ff04cd6235b55c24abd1f09dc5e8a78d604eaf48fa23cf8c0a9e367ba2a52ffa",
+        "pool_sha256": "40585dda56696a9da124630f8fc5a01226f931ae9311831a66adfe6a064d5df8",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/2ffbdcfac965e86f786a5690b0fe2ae7c1d0e73731a74a568d56b25856f8b64f-12.safetensors",
+            "sha256": "17f5d211d7fd645424b0922a3845c42bc61f3f37101da6daaf95b5543ca1014e",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/2ffbdcfac965e86f786a5690b0fe2ae7c1d0e73731a74a568d56b25856f8b64f-20.safetensors",
+            "sha256": "fc60da020d8424a312dce9ed16a347a6ce993f6049a088490fa7b02045e365c4",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/36ecc459a68a4c4f72b0f57672b0832cb0ce9b099b9923ddd18124b8c77f027b.safetensors",
+          "sha256": "1437b397fc63e85d09f05a014528fc2efe9a6fe913a5cdaf05decff2cc780cdc"
+        },
+        "context_sha256": "36ecc459a68a4c4f72b0f57672b0832cb0ce9b099b9923ddd18124b8c77f027b",
+        "dataset_id": "00cbcb0ad778f57d",
+        "dl_split": "DL-Train",
+        "family_id": "fam-a0fc30a995a47c8ec73fbdd3b0dfc78becdfe101de0c274d4d98db895c6e2d60",
+        "pool_sha256": "2f300113c2e03d2ec84ef86db2e4eccf743b909e9878534dcf77edae5ad826d7",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/36ecc459a68a4c4f72b0f57672b0832cb0ce9b099b9923ddd18124b8c77f027b-12.safetensors",
+            "sha256": "9a0a96790bdc910f544fba416be9dd2fb16a421689ed087e964bf59b6bb13ddd",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/36ecc459a68a4c4f72b0f57672b0832cb0ce9b099b9923ddd18124b8c77f027b-20.safetensors",
+            "sha256": "6a67983e5e0014b87b412f0785392d1dec407b26425c3a830de02134cceb211b",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/385509316caea6bb0dfc3044e8304f94b89570f5ee5aceb7d882c273d49be352.safetensors",
+          "sha256": "a9af8733a174d0eb520394e0e78f0aa281fbf527a2662cd4318be5e73648ebf9"
+        },
+        "context_sha256": "385509316caea6bb0dfc3044e8304f94b89570f5ee5aceb7d882c273d49be352",
+        "dataset_id": "672bbbd5290bbc1f",
+        "dl_split": "DL-Train",
+        "family_id": "fam-462953f4374a440b2c6aa821537af1dd1e98b30db3778c8489c335c4358571d9",
+        "pool_sha256": "9b632b1cf14caf461668e8d61ab6429f98b2039ebb60f6a0a0d07be6d9ae0fec",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/385509316caea6bb0dfc3044e8304f94b89570f5ee5aceb7d882c273d49be352-12.safetensors",
+            "sha256": "c94ccae89474a7fd2e36a5eb5c75f53eddab6d7d10c7e6df3a5643b7f2985609",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/385509316caea6bb0dfc3044e8304f94b89570f5ee5aceb7d882c273d49be352-20.safetensors",
+            "sha256": "9b73a13a78811bacada9f182d9b4b1442651784fcd5a62208bf2534cad2394fb",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/386a8b523b853951284b2db929b6314f72158723c3bedfc791f3e5e5c1445384.safetensors",
+          "sha256": "52efc3d239ae3f886d611d78c8439ad326fbd71e3a7480c961463c2f87cbf729"
+        },
+        "context_sha256": "386a8b523b853951284b2db929b6314f72158723c3bedfc791f3e5e5c1445384",
+        "dataset_id": "ce43e232f2cfee00",
+        "dl_split": "DL-Train",
+        "family_id": "fam-a559743d80534db11a02f4e6e6c456e9604c06b19943bc26ee74eab600829aa0",
+        "pool_sha256": "dfcc1bf99ecd1a4f15688e1224e437daca977db456165c0979b009fcc8639278",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/386a8b523b853951284b2db929b6314f72158723c3bedfc791f3e5e5c1445384-12.safetensors",
+            "sha256": "089f09c96179b76e0df8ed8c3b2e3a54273202a2af7d23a55a28a5920dc57ee0",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/386a8b523b853951284b2db929b6314f72158723c3bedfc791f3e5e5c1445384-20.safetensors",
+            "sha256": "6224acf59438570972cc4cb3cd676d23e14c9ae21d75d73bdd4023a2afb8552e",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/3909a22ecda556b3c261651994cc52979f8bffc2078fc330128c1e3aafd036ab.safetensors",
+          "sha256": "a26a04b775df957bc59c64f3563ce8294f6f0b6bf80671bdf7773f51804ef3bd"
+        },
+        "context_sha256": "3909a22ecda556b3c261651994cc52979f8bffc2078fc330128c1e3aafd036ab",
+        "dataset_id": "34720a747a36c5ba",
+        "dl_split": "DL-Train",
+        "family_id": "fam-13d0d5b99eda2e40cb57dd8cbce45267633877bba8f0bd367d0101600c3e387d",
+        "pool_sha256": "bb3b1cfbe0dbee37c2fd768e6059424e9e7485d170065b3f2e192d58e649b7e6",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/3909a22ecda556b3c261651994cc52979f8bffc2078fc330128c1e3aafd036ab-12.safetensors",
+            "sha256": "b27f297a1b7d410366c0c3c771c5d51d49e1a5b5308b29be2f3f5d2c54f3d983",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/3909a22ecda556b3c261651994cc52979f8bffc2078fc330128c1e3aafd036ab-20.safetensors",
+            "sha256": "55e5ddd1aca324ce9b05806c07e8317aaaae01797d75fffd077896fe184660e4",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/3961fc363370c7c00e90513b1ecf41983a55806952635f1af313142763039e80.safetensors",
+          "sha256": "cf2d0a9c0a707a37286fe8fd2a560b913d13085dc74d81ba5bdf02687cea5a71"
+        },
+        "context_sha256": "3961fc363370c7c00e90513b1ecf41983a55806952635f1af313142763039e80",
+        "dataset_id": "48178b7062a20bb4",
+        "dl_split": "DL-Train",
+        "family_id": "fam-e5edcf048260ad65a90b3b4529a1c72bf1b6e1f9f92565df63ddb9fec6013629",
+        "pool_sha256": "d53360a3f6941275a128b3200e5935015ea27ee76615fdf79297cb0bf8aee9b1",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/3961fc363370c7c00e90513b1ecf41983a55806952635f1af313142763039e80-12.safetensors",
+            "sha256": "ad82978eae2400786854eaa4e6e2e32f39bf0ed9f0c3a0fa0f90505c4330f069",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/3961fc363370c7c00e90513b1ecf41983a55806952635f1af313142763039e80-20.safetensors",
+            "sha256": "7c4531f1735f4bce001ce53cbf13943d4731e43e10fc7135cd591e7ae149a36e",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/3e33714bc989878ecafcf0b9690d5024b70b47090c1fd35960b65c67c8d14604.safetensors",
+          "sha256": "e87de967ff921fb711ee4de05304f2f88db60685772b4aa3c7d4c37b27ec5931"
+        },
+        "context_sha256": "3e33714bc989878ecafcf0b9690d5024b70b47090c1fd35960b65c67c8d14604",
+        "dataset_id": "a3977b4e056408b2",
+        "dl_split": "DL-Train",
+        "family_id": "fam-37f9e67be184439511ba7b76d189201834b8e82476f44aeee864cd641398783a",
+        "pool_sha256": "737742b9523db5b1f51a4cb03d11509687d53cd4f50f8b3b199cd454be3c9a7c",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/3e33714bc989878ecafcf0b9690d5024b70b47090c1fd35960b65c67c8d14604-12.safetensors",
+            "sha256": "fcfeb5af1ef048882254c2a71b419d9d8d5f63fedc7211eec187cd5f9d79481c",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/3e33714bc989878ecafcf0b9690d5024b70b47090c1fd35960b65c67c8d14604-20.safetensors",
+            "sha256": "3968797da1605e2b63bdcadb5b4f8b5195c118a62e62acf5c92c85a9d4f9ed84",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/49bfc6d9fd44926c6fe7abf627b6ea2b15ce7adbfdbcf007509caeca987f0328.safetensors",
+          "sha256": "7e487db72253edea5079952e37a4c3c05237380dbf0f730ac9fed276844d0061"
+        },
+        "context_sha256": "49bfc6d9fd44926c6fe7abf627b6ea2b15ce7adbfdbcf007509caeca987f0328",
+        "dataset_id": "35546f62566963a1",
+        "dl_split": "DL-Train",
+        "family_id": "fam-d95734c761e0f763d53f134ff916029df0fc5ab8abdfe018bf95291dae6f8efa",
+        "pool_sha256": "bc0524b9cdd99cf4eed02c4e508725dd83248f11e63d1de363275f04768a4b83",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/49bfc6d9fd44926c6fe7abf627b6ea2b15ce7adbfdbcf007509caeca987f0328-12.safetensors",
+            "sha256": "de5ad91ee4d3ffe496048eadce2bdb8feeacc6c3e01aec568ba7d5c6f3bd57db",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/49bfc6d9fd44926c6fe7abf627b6ea2b15ce7adbfdbcf007509caeca987f0328-20.safetensors",
+            "sha256": "eb75b260c273fcebafa1cbf3e8ceb46eaac968dd17154e64d8af77311decf539",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/4f499a76cc7848bfcb9f6765e8fcedc3ff9f50379047c8dec2da239a1a08e180.safetensors",
+          "sha256": "82100d628e768a77ef3dec7963eded3b2ba2beb8de4afbd74ffb95733f8ced1d"
+        },
+        "context_sha256": "4f499a76cc7848bfcb9f6765e8fcedc3ff9f50379047c8dec2da239a1a08e180",
+        "dataset_id": "c73bb3253bca4fc6",
+        "dl_split": "DL-Train",
+        "family_id": "fam-13a5431ab60796b93570f3a26ee0978011cf86a9e1a335781a1e2e98bb3f6ceb",
+        "pool_sha256": "d226f3d8e664790a419c210b21b1adfbd295fcfbbd8944d6b03f8b22eb7b24b5",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/4f499a76cc7848bfcb9f6765e8fcedc3ff9f50379047c8dec2da239a1a08e180-12.safetensors",
+            "sha256": "ca399cfe56291be55d47268cf72f6f14c44d6e0a785b3f37d548f03bc3bb1bad",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/4f499a76cc7848bfcb9f6765e8fcedc3ff9f50379047c8dec2da239a1a08e180-20.safetensors",
+            "sha256": "8ac8294d010773f5ad7cd09a00b49c09f10844588dcde38916a0c29db12489d4",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/5884985ecc662c6f57bc779a4d3e5e4bc02706b2f6e8579aea7b22e66f3bf163.safetensors",
+          "sha256": "fd1930ebf4df3dfa758d33f2fd7657a54e3a045f7241696c333dfa8173551087"
+        },
+        "context_sha256": "5884985ecc662c6f57bc779a4d3e5e4bc02706b2f6e8579aea7b22e66f3bf163",
+        "dataset_id": "35546f62566963a1",
+        "dl_split": "DL-Train",
+        "family_id": "fam-d95734c761e0f763d53f134ff916029df0fc5ab8abdfe018bf95291dae6f8efa",
+        "pool_sha256": "801b1187fe0b4543949bb5fbbc3941518e83281662514a584420439cf66aeb85",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/5884985ecc662c6f57bc779a4d3e5e4bc02706b2f6e8579aea7b22e66f3bf163-12.safetensors",
+            "sha256": "c8557aea45113b7517a1c616fe485d22efb8d29510a2a9533ac060618a9a56d4",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/5884985ecc662c6f57bc779a4d3e5e4bc02706b2f6e8579aea7b22e66f3bf163-20.safetensors",
+            "sha256": "186ba476617f76571ab0131f792996c8f06aad62eef269cbacb8c4466a8ec56b",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/5c0d177df5010aca1a18ceaff07e560f05b5da2cb0767433de587e42423ca1f3.safetensors",
+          "sha256": "81a30a9feb03d1f385a3cd0be85ed5e0b4a376af57688c52db5aa4e22d0c110e"
+        },
+        "context_sha256": "5c0d177df5010aca1a18ceaff07e560f05b5da2cb0767433de587e42423ca1f3",
+        "dataset_id": "a3977b4e056408b2",
+        "dl_split": "DL-Train",
+        "family_id": "fam-37f9e67be184439511ba7b76d189201834b8e82476f44aeee864cd641398783a",
+        "pool_sha256": "36a1c1d27150c27311c649146c8de57683e30d733ec46842a851a7c1b2abca01",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/5c0d177df5010aca1a18ceaff07e560f05b5da2cb0767433de587e42423ca1f3-12.safetensors",
+            "sha256": "e98529ad55dd590f131941e0fafbb5d25a953e4440c097528862ae0ff4c8f75a",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/5c0d177df5010aca1a18ceaff07e560f05b5da2cb0767433de587e42423ca1f3-20.safetensors",
+            "sha256": "0981fdb49626008afc97321b0939e07603184515b1826b7d8f2f01a98f196dcd",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/68ff261ddbf860da2ccf872948c25e7708569af918effc587b1d6cc0a0dffeda.safetensors",
+          "sha256": "19d5bbe6a3e5a14b64b5cf089fb48d3b2e0afb59d7cea24bd27bc4e53bc3515f"
+        },
+        "context_sha256": "68ff261ddbf860da2ccf872948c25e7708569af918effc587b1d6cc0a0dffeda",
+        "dataset_id": "6752633826892e66",
+        "dl_split": "DL-Train",
+        "family_id": "fam-87c9263f9d0a25afe91364cf765285e26bfee0447c76c4266fbc0aa4fc465a3d",
+        "pool_sha256": "3c26bb02d7bb566418c5b69244677e8c4466360a8e6aaa02ad37ad4e1f7a0855",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/68ff261ddbf860da2ccf872948c25e7708569af918effc587b1d6cc0a0dffeda-12.safetensors",
+            "sha256": "7f8d184a3f210d24d2029c5326df39888d63e5802d0decfb660f751c6c85690f",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/68ff261ddbf860da2ccf872948c25e7708569af918effc587b1d6cc0a0dffeda-20.safetensors",
+            "sha256": "b2702eece43e5ce3e9bcfcbe0953e4cae82b74761dc7af6352981456dd60f937",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/6b4f2e018713d522a8be7a7d767ec9513bc58bf9920275b026dde442bebb0096.safetensors",
+          "sha256": "370e950f2b1f0faa918d01e409c89b68c4f83b270805f34992033ef61f809120"
+        },
+        "context_sha256": "6b4f2e018713d522a8be7a7d767ec9513bc58bf9920275b026dde442bebb0096",
+        "dataset_id": "34720a747a36c5ba",
+        "dl_split": "DL-Train",
+        "family_id": "fam-13d0d5b99eda2e40cb57dd8cbce45267633877bba8f0bd367d0101600c3e387d",
+        "pool_sha256": "048ab952008f0076ba29fa60636c6e5e6246f6778191efedd4c4b8c38f43fe82",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/6b4f2e018713d522a8be7a7d767ec9513bc58bf9920275b026dde442bebb0096-12.safetensors",
+            "sha256": "872c906e97f6f8bf0bdbc2013424892049e468a4a228738fc0df25e9a1e8aeb0",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/6b4f2e018713d522a8be7a7d767ec9513bc58bf9920275b026dde442bebb0096-20.safetensors",
+            "sha256": "1f5abea2d05cdd234a16ea26e9f660db19d8ab269085ad0af7128cd4ae26ba85",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/713c2d1b6d1ca7482f6d5494a79fe26ecb2196ba9841b2a1f7b5cfdfaf5aec12.safetensors",
+          "sha256": "ff184cb25ec51952bc303a9e009feacb97bb099d861c572972a7b30ac5af2b1f"
+        },
+        "context_sha256": "713c2d1b6d1ca7482f6d5494a79fe26ecb2196ba9841b2a1f7b5cfdfaf5aec12",
+        "dataset_id": "672bbbd5290bbc1f",
+        "dl_split": "DL-Train",
+        "family_id": "fam-462953f4374a440b2c6aa821537af1dd1e98b30db3778c8489c335c4358571d9",
+        "pool_sha256": "d0043cb5db623e3f3eda2103a10eaa2211dd9d6934a59b2dd4196ef9611b91dc",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/713c2d1b6d1ca7482f6d5494a79fe26ecb2196ba9841b2a1f7b5cfdfaf5aec12-12.safetensors",
+            "sha256": "73c3cb8e8b02cf2537d8de2b827ff12f63064aac246ffc6dd074d0c41a66661e",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/713c2d1b6d1ca7482f6d5494a79fe26ecb2196ba9841b2a1f7b5cfdfaf5aec12-20.safetensors",
+            "sha256": "f7df4c8a4e63615a5a22fb4c8c4f81e19a297832ca58b2ee033d52066752472b",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/784f97a17547eaa6362c468e5579a5f58d26b3dbb28f2002d3b8e51c854aa0a3.safetensors",
+          "sha256": "796ffef0f5ebafb0792951d9e5c1eee814fdadbe0b352cfa6afceaea6e253d24"
+        },
+        "context_sha256": "784f97a17547eaa6362c468e5579a5f58d26b3dbb28f2002d3b8e51c854aa0a3",
+        "dataset_id": "e07857608843d1d8",
+        "dl_split": "DL-Train",
+        "family_id": "fam-deb6e0130b2407e54c15051e037c031b3ca786da7f02a66f7fc88f066396418d",
+        "pool_sha256": "0501970e853ebdd6a575622c99c7a6a3bd3b2654595a9719f9cf607873f73e2d",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/784f97a17547eaa6362c468e5579a5f58d26b3dbb28f2002d3b8e51c854aa0a3-12.safetensors",
+            "sha256": "f95b5d8fe0975625a3e3c4889135a56dc9dbd6fb397887ed78cbd3c7b201332c",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/784f97a17547eaa6362c468e5579a5f58d26b3dbb28f2002d3b8e51c854aa0a3-20.safetensors",
+            "sha256": "1f2c1285ad046cb56f53efe5e923452c0c49a2de81618d7954763b983d260bdc",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/78fa02e6623f696cf637954015c246f35d88cd36b13caf4d2dbfba643bff7c02.safetensors",
+          "sha256": "9b8c017c29f77330ce4051a511535992c953c2ac43c10ef72131c9a1dad3835a"
+        },
+        "context_sha256": "78fa02e6623f696cf637954015c246f35d88cd36b13caf4d2dbfba643bff7c02",
+        "dataset_id": "00cbcb0ad778f57d",
+        "dl_split": "DL-Train",
+        "family_id": "fam-a0fc30a995a47c8ec73fbdd3b0dfc78becdfe101de0c274d4d98db895c6e2d60",
+        "pool_sha256": "c64c8be8704bb053397cac127aca2ce96a14fa0a1959164e96abc5dd1ca67012",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/78fa02e6623f696cf637954015c246f35d88cd36b13caf4d2dbfba643bff7c02-12.safetensors",
+            "sha256": "ad7e7f42aadad948c032959d299ccf9c4838aac5faaceefbaade56d989ff7e95",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/78fa02e6623f696cf637954015c246f35d88cd36b13caf4d2dbfba643bff7c02-20.safetensors",
+            "sha256": "55d60315a665f991d2463fa13635eaee519bdabf6d54c099c6c922c6feb2a81b",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/7940bbf41555fed32e6dc76a763a2fe0c4b1c9deadef80ee755c874904b75c25.safetensors",
+          "sha256": "2172b6c5482be762f0f1410c1fae980ff6460f8163a67a58796b1846eeac39b0"
+        },
+        "context_sha256": "7940bbf41555fed32e6dc76a763a2fe0c4b1c9deadef80ee755c874904b75c25",
+        "dataset_id": "4a82afd1c81f2f05",
+        "dl_split": "DL-Train",
+        "family_id": "fam-429eaab7348573055e154177a53236f62e65d3b3aac5d87a4f5957c9f97c0e1b",
+        "pool_sha256": "ed7824fc678aab3f2ce135144118bdd9418f17147a1d540e110f8c88186277f6",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/7940bbf41555fed32e6dc76a763a2fe0c4b1c9deadef80ee755c874904b75c25-12.safetensors",
+            "sha256": "70fb2f25e774022c14c02d489553a40db998c65a02ee8d9def03a70f7f5c9514",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/7940bbf41555fed32e6dc76a763a2fe0c4b1c9deadef80ee755c874904b75c25-20.safetensors",
+            "sha256": "18a3a34a649271a04d3b5938fd57eab00fb56946945463bc1a846a0c2ef1943c",
+            "width": 20
+          }
+        ],
+        "source_split": "inner",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/7a92ae5c083863ad7735355d004de4db6d56aeeb7d7e7b8411d33d3cae06f00f.safetensors",
+          "sha256": "dfe5b81f9369f02548a923c4ae55e2eb8f7feb51cc8a573d6bd0bc830b041769"
+        },
+        "context_sha256": "7a92ae5c083863ad7735355d004de4db6d56aeeb7d7e7b8411d33d3cae06f00f",
+        "dataset_id": "4a82afd1c81f2f05",
+        "dl_split": "DL-Train",
+        "family_id": "fam-429eaab7348573055e154177a53236f62e65d3b3aac5d87a4f5957c9f97c0e1b",
+        "pool_sha256": "a359954d358eb210ae9f34694364a88805bf27fd4d82110c10692fe2ea088970",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/7a92ae5c083863ad7735355d004de4db6d56aeeb7d7e7b8411d33d3cae06f00f-12.safetensors",
+            "sha256": "dd337e140e9cf4270150ee916fdf554bebb388029099af615c6c74be9945c47f",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/7a92ae5c083863ad7735355d004de4db6d56aeeb7d7e7b8411d33d3cae06f00f-20.safetensors",
+            "sha256": "0207da4260abfd07e6f7bb72c15454757534df31c5fb01f616c05d670b877410",
+            "width": 20
+          }
+        ],
+        "source_split": "inner",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/7b59e337b39c892af851bf3bd5a3ef1d426101d637467da2595af27470baee91.safetensors",
+          "sha256": "fb15f920817a02366cf701714b295f5e5e3361c4cc3788d1c38edff65372632c"
+        },
+        "context_sha256": "7b59e337b39c892af851bf3bd5a3ef1d426101d637467da2595af27470baee91",
+        "dataset_id": "353ae247c133a94a",
+        "dl_split": "DL-Train",
+        "family_id": "fam-af60f9d1ac3114ad2b4f5cd311ff0a5847289686b2bf40f328467b33739997d5",
+        "pool_sha256": "404a7c6a0747c454e84547fe24a160054dcb87d4dc8b971a102077c8eeea6a03",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/7b59e337b39c892af851bf3bd5a3ef1d426101d637467da2595af27470baee91-12.safetensors",
+            "sha256": "ec851b8a6b8f4e6d604bfc87d204f98ff7fad1f405c9dee1f7d66de48e65f087",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/7b59e337b39c892af851bf3bd5a3ef1d426101d637467da2595af27470baee91-20.safetensors",
+            "sha256": "b4c57dc398966456cb479452222ccaec44c52183f7b5eb0414942e45391e4aa3",
+            "width": 20
+          }
+        ],
+        "source_split": "inner",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/7f277fa883b8520fe565d691b974373f30aaa6d808b2d246d451586057334360.safetensors",
+          "sha256": "03a236bd31fddd8acb7de88d3c0a811773adbd0acf33154929811a5269fb8ee4"
+        },
+        "context_sha256": "7f277fa883b8520fe565d691b974373f30aaa6d808b2d246d451586057334360",
+        "dataset_id": "672bbbd5290bbc1f",
+        "dl_split": "DL-Train",
+        "family_id": "fam-462953f4374a440b2c6aa821537af1dd1e98b30db3778c8489c335c4358571d9",
+        "pool_sha256": "d880b02620207e580afac4c0111459a1ff3539f2d193c672c15ac321805d8250",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/7f277fa883b8520fe565d691b974373f30aaa6d808b2d246d451586057334360-12.safetensors",
+            "sha256": "5028e9e45bc0c0bf05839d4d05db6304fe63786f5207ae74d838917b1f3cf7e0",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/7f277fa883b8520fe565d691b974373f30aaa6d808b2d246d451586057334360-20.safetensors",
+            "sha256": "bf6e875e74ff102f827091a1c6bbb7d759535a8a688be41ea2b79c8c12af8767",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/7f69cff51414380b64a1304a7fb5d281e3c469af4d2a6c36546e82c8153a9c1b.safetensors",
+          "sha256": "d7e6d0b969273aa83a45f6bf82e8edb132ca6a8a3d9da79a0ef1f830ed706ad2"
+        },
+        "context_sha256": "7f69cff51414380b64a1304a7fb5d281e3c469af4d2a6c36546e82c8153a9c1b",
+        "dataset_id": "ce43e232f2cfee00",
+        "dl_split": "DL-Train",
+        "family_id": "fam-a559743d80534db11a02f4e6e6c456e9604c06b19943bc26ee74eab600829aa0",
+        "pool_sha256": "275b9691a46079f1114733483050e4df75714d5e2b36d34c80ed5733188520ff",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/7f69cff51414380b64a1304a7fb5d281e3c469af4d2a6c36546e82c8153a9c1b-12.safetensors",
+            "sha256": "b931c86c6a572f9ed09557e96274e8b983ba52604dd3a4dea5c97aa72ac94485",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/7f69cff51414380b64a1304a7fb5d281e3c469af4d2a6c36546e82c8153a9c1b-20.safetensors",
+            "sha256": "691d10951dbb74f134b48af9a68f10cfa3009b9e93d070d1650164e036dfdfc3",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/842ad0368b840aabc2671fa2b7d23874bda6d7bca3ffcdfe52384bb7d8a1c44e.safetensors",
+          "sha256": "1daca9e7b20bc6a7d2c7a5a85f2580e71ae620fd797bac8b13f82a6f6550ac94"
+        },
+        "context_sha256": "842ad0368b840aabc2671fa2b7d23874bda6d7bca3ffcdfe52384bb7d8a1c44e",
+        "dataset_id": "672bbbd5290bbc1f",
+        "dl_split": "DL-Train",
+        "family_id": "fam-462953f4374a440b2c6aa821537af1dd1e98b30db3778c8489c335c4358571d9",
+        "pool_sha256": "b56c6053ae07ff4cc536c0569d9d972f80a17ce8d63d22c7b8116d963868da6d",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/842ad0368b840aabc2671fa2b7d23874bda6d7bca3ffcdfe52384bb7d8a1c44e-12.safetensors",
+            "sha256": "0b0382e0ea794e6a6df8988f045c2c32bf0a912bbb79d945c2f46cc8be5ffc48",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/842ad0368b840aabc2671fa2b7d23874bda6d7bca3ffcdfe52384bb7d8a1c44e-20.safetensors",
+            "sha256": "17c22759217432befbdffe1f0bf8748df494c18e100fa55af74ca1dab41eb184",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/866f77f1b8027433309dbda09ee29b86b36fa709f07d50e1dcd375ae227dd298.safetensors",
+          "sha256": "28504dccccf8be2c9216eb9a8f0f938f172836c5ad108f70c175f00c7c4bf21e"
+        },
+        "context_sha256": "866f77f1b8027433309dbda09ee29b86b36fa709f07d50e1dcd375ae227dd298",
+        "dataset_id": "ce43e232f2cfee00",
+        "dl_split": "DL-Train",
+        "family_id": "fam-a559743d80534db11a02f4e6e6c456e9604c06b19943bc26ee74eab600829aa0",
+        "pool_sha256": "fff5ae0cf8a50534065c7a648b38ba93d3462c05d0075cdb67503fc5e144243b",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/866f77f1b8027433309dbda09ee29b86b36fa709f07d50e1dcd375ae227dd298-12.safetensors",
+            "sha256": "05f6b7f35decc3a13ac4345666952e81f57a680b0cce5829cabe5b42c034f4e5",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/866f77f1b8027433309dbda09ee29b86b36fa709f07d50e1dcd375ae227dd298-20.safetensors",
+            "sha256": "ae6e62dbd5877f3c00719ac799364bcaae8907a661c7d651fab73ac5b3c0b1a7",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/888985677654e3242bcb4e6b196af910bc8114cf0d4b56f6903ced98a96a36ca.safetensors",
+          "sha256": "ede06d57a2bdc86b6b1f05628730ad89815876d7f570bb9669b4d36513d57b57"
+        },
+        "context_sha256": "888985677654e3242bcb4e6b196af910bc8114cf0d4b56f6903ced98a96a36ca",
+        "dataset_id": "3ee2a1a57e55743a",
+        "dl_split": "DL-Train",
+        "family_id": "fam-be71762e2eaec4f4d74c98443bd318ecd61c7bca5896be219724cdac878bac63",
+        "pool_sha256": "536052c89631cff050c5f27ffba7dd6440d3d14f79687c90a566921271236d7c",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/888985677654e3242bcb4e6b196af910bc8114cf0d4b56f6903ced98a96a36ca-12.safetensors",
+            "sha256": "a3fa1a44d88524eaba7af8a8c9ee4a10d0a061ee3709201a0b0e925b60da90ec",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/888985677654e3242bcb4e6b196af910bc8114cf0d4b56f6903ced98a96a36ca-20.safetensors",
+            "sha256": "568fee2263407deb751d363213553237c4c9bb3d85a3a4655602cb953cbba480",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/89033749285b8be2b0ded865cb81e244e65bd5da25e22e62dbc11ef1d71fb8c0.safetensors",
+          "sha256": "430de6402ddd30bf2da69d457b4bbc716794efc78683030fa2529d50ac3432ad"
+        },
+        "context_sha256": "89033749285b8be2b0ded865cb81e244e65bd5da25e22e62dbc11ef1d71fb8c0",
+        "dataset_id": "353ae247c133a94a",
+        "dl_split": "DL-Train",
+        "family_id": "fam-af60f9d1ac3114ad2b4f5cd311ff0a5847289686b2bf40f328467b33739997d5",
+        "pool_sha256": "2335c59b2e360d2039d5bc9b778e47f629b01c8756173a6506ac554e87cbf76e",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/89033749285b8be2b0ded865cb81e244e65bd5da25e22e62dbc11ef1d71fb8c0-12.safetensors",
+            "sha256": "269d25263d08975c748ac2d59558850f78b8f29825dbc35cf570b77c83800150",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/89033749285b8be2b0ded865cb81e244e65bd5da25e22e62dbc11ef1d71fb8c0-20.safetensors",
+            "sha256": "b68f97745abb84e3dc52cb6336d76ddb7ceef4f983e64349c4fb8b916f585657",
+            "width": 20
+          }
+        ],
+        "source_split": "inner",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/8dac4e942caafd9819e87a419cf6bd457d2b81e31b13551aa70613bb668b36b2.safetensors",
+          "sha256": "4c051c1abd6b00eca4f80957b07298634d8ea8d3c9a2027f20bb05bd81c3de7d"
+        },
+        "context_sha256": "8dac4e942caafd9819e87a419cf6bd457d2b81e31b13551aa70613bb668b36b2",
+        "dataset_id": "57b5ccc54b511c6f",
+        "dl_split": "DL-Train",
+        "family_id": "fam-0b8fbb476f2bd249c45a8c891fa80e73dfda6a9a325869bac26b81b5cadf23f9",
+        "pool_sha256": "394920f838f3d0e1498a8ca77623e781a3386483f3e8bdf9dff0fe7b0a8f15ce",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/8dac4e942caafd9819e87a419cf6bd457d2b81e31b13551aa70613bb668b36b2-12.safetensors",
+            "sha256": "cf262ace27b32bd7c296cd52b8da6beaa7672d279a538ee18a6d691a9aabb842",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/8dac4e942caafd9819e87a419cf6bd457d2b81e31b13551aa70613bb668b36b2-20.safetensors",
+            "sha256": "d80434fbfc9ec68460f4b6c36360d86ac1bab0a8e7b39fcfab33b2b639cf0528",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/8e5901a47442d253a378aac4c612c4ee81a4ab7f7de50d1c9e553dca5745ac52.safetensors",
+          "sha256": "63925985827c2d8b2a77bfc5fe5a05b73cfe1f2b1892c6a3377a61ca80f0046e"
+        },
+        "context_sha256": "8e5901a47442d253a378aac4c612c4ee81a4ab7f7de50d1c9e553dca5745ac52",
+        "dataset_id": "34720a747a36c5ba",
+        "dl_split": "DL-Train",
+        "family_id": "fam-13d0d5b99eda2e40cb57dd8cbce45267633877bba8f0bd367d0101600c3e387d",
+        "pool_sha256": "92459b10db45865730fdd3dd6a7a2ec687c48448e595fe1ffb994670a13f5dc2",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/8e5901a47442d253a378aac4c612c4ee81a4ab7f7de50d1c9e553dca5745ac52-12.safetensors",
+            "sha256": "a58bb810355e7fd11ebeafc91c364679ac36f057ee5822e692f6b117ce792233",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/8e5901a47442d253a378aac4c612c4ee81a4ab7f7de50d1c9e553dca5745ac52-20.safetensors",
+            "sha256": "260f8d7f310790dc9dd9d819226c3f339799c0a72a4b6e40ebf9ef2d29949b52",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/916c44b64596df2c156fcb5f7cf1f62edcd2e343f9c55310a9e75271336370c2.safetensors",
+          "sha256": "9b137f5cda71a1364246de2bb5c5879815a665a3d01206a9da6af569e477a7f9"
+        },
+        "context_sha256": "916c44b64596df2c156fcb5f7cf1f62edcd2e343f9c55310a9e75271336370c2",
+        "dataset_id": "6752633826892e66",
+        "dl_split": "DL-Train",
+        "family_id": "fam-87c9263f9d0a25afe91364cf765285e26bfee0447c76c4266fbc0aa4fc465a3d",
+        "pool_sha256": "3ebec2cbb98f9fee280839bfcbd41462752df779129d4becb70984df3f98507e",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/916c44b64596df2c156fcb5f7cf1f62edcd2e343f9c55310a9e75271336370c2-12.safetensors",
+            "sha256": "2a37a835b242a418dc05fcb339ee35da8061715cd386a817a4d9b8c2de280a28",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/916c44b64596df2c156fcb5f7cf1f62edcd2e343f9c55310a9e75271336370c2-20.safetensors",
+            "sha256": "154dfa294c74722ccaaca772ba6bcb8c09d9a414c2addd3bb04ea1b8414f4783",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/92b9a308bd009e404adebbf3e0bbd179bc7d0c8c09e3252a7b929c12b3a21102.safetensors",
+          "sha256": "73aa3d3375e643ada71cae7188eed6cf566a5a4c4b0558c5b3c05857c98d3976"
+        },
+        "context_sha256": "92b9a308bd009e404adebbf3e0bbd179bc7d0c8c09e3252a7b929c12b3a21102",
+        "dataset_id": "353ae247c133a94a",
+        "dl_split": "DL-Train",
+        "family_id": "fam-af60f9d1ac3114ad2b4f5cd311ff0a5847289686b2bf40f328467b33739997d5",
+        "pool_sha256": "f5aa0e96b22d206fe02b9be3448b19293cf1e1f67026620843d74f43b613a62c",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/92b9a308bd009e404adebbf3e0bbd179bc7d0c8c09e3252a7b929c12b3a21102-12.safetensors",
+            "sha256": "15696f747e73f4c6ff043cad5d842068823ec8d39e1c0764e5c0aff9c26a132c",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/92b9a308bd009e404adebbf3e0bbd179bc7d0c8c09e3252a7b929c12b3a21102-20.safetensors",
+            "sha256": "82a28b7b2aecd32f315fc28864892fb497078b414dc380ec30e23094e6d13316",
+            "width": 20
+          }
+        ],
+        "source_split": "inner",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/96298d7d8085aab13aaf7522034a60a9c0b75ee5dde10afd86ebc8ead7db097c.safetensors",
+          "sha256": "80ce40c1d30c0e0090f8e5d78a9b9daa28aba9960d95e6a913ffa3b34c431d0b"
+        },
+        "context_sha256": "96298d7d8085aab13aaf7522034a60a9c0b75ee5dde10afd86ebc8ead7db097c",
+        "dataset_id": "9c01773c117cdcc7",
+        "dl_split": "DL-Train",
+        "family_id": "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619",
+        "pool_sha256": "91805959dcec4497b496bf431d59c4e6de647aea135c5016078bf9b6fe19f12a",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/96298d7d8085aab13aaf7522034a60a9c0b75ee5dde10afd86ebc8ead7db097c-12.safetensors",
+            "sha256": "2c193a19076f71595fe09a02a7cd722f4edcd37f4b8f70d3f9325f203696f093",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/96298d7d8085aab13aaf7522034a60a9c0b75ee5dde10afd86ebc8ead7db097c-20.safetensors",
+            "sha256": "333e1abb3476c1142e83e80736b69b3e4681bf865706a3d51c481c1a1f029cbd",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/96ed297d76da0de7b3a82b306f6a87a8444f428598616527bd9f16fd052560d7.safetensors",
+          "sha256": "b018a25a5be7381730a1718925c5068f5f431e1aa0bee270f952e0fcc1fdb2c8"
+        },
+        "context_sha256": "96ed297d76da0de7b3a82b306f6a87a8444f428598616527bd9f16fd052560d7",
+        "dataset_id": "34720a747a36c5ba",
+        "dl_split": "DL-Train",
+        "family_id": "fam-13d0d5b99eda2e40cb57dd8cbce45267633877bba8f0bd367d0101600c3e387d",
+        "pool_sha256": "852037c753241d37ab59c1ec5308f5f50bc49e82d33553e8d9fa6920005540ea",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/96ed297d76da0de7b3a82b306f6a87a8444f428598616527bd9f16fd052560d7-12.safetensors",
+            "sha256": "3c2569512e919d3c58952bf01ba393da3434378b0f27cdaf16845e60c9350cf2",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/96ed297d76da0de7b3a82b306f6a87a8444f428598616527bd9f16fd052560d7-20.safetensors",
+            "sha256": "5161f8fd50dbbd94b4936adec1f6d3306aa1af4711bea3fac8beac5e5763a597",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/970df08bb8c3105d772b5c177dd9282adb7eb8ad76c656aa1303adf9f27a67a2.safetensors",
+          "sha256": "bb69b5b6b390133cbf8e673fb681dba4d3fa08548b5ce2b7d244f4e87074b334"
+        },
+        "context_sha256": "970df08bb8c3105d772b5c177dd9282adb7eb8ad76c656aa1303adf9f27a67a2",
+        "dataset_id": "6011402103a7dd56",
+        "dl_split": "DL-Train",
+        "family_id": "fam-ff04cd6235b55c24abd1f09dc5e8a78d604eaf48fa23cf8c0a9e367ba2a52ffa",
+        "pool_sha256": "f08ecadc1d00df6ebfaaf278204df6f00be4cb025f4daa894da45144878ea399",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/970df08bb8c3105d772b5c177dd9282adb7eb8ad76c656aa1303adf9f27a67a2-12.safetensors",
+            "sha256": "d1fcc29fe859daeebaed6b15f0f2acd90ab28d265349e1359b9ef3b061e37bec",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/970df08bb8c3105d772b5c177dd9282adb7eb8ad76c656aa1303adf9f27a67a2-20.safetensors",
+            "sha256": "b0a83ff6df2da7dd2ac9e556bbb8b7e8a39b3f6cd6d5aee4830b4c5f98d3c401",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/9dd10b2cd509b7002d7d72407319d72813fd3e65f984d5bc77c35f0cd321f64c.safetensors",
+          "sha256": "5688ced17e1b7bacb6a41e8d19d1f68f6804d9a07c56e4ca7d348a99a68f44d3"
+        },
+        "context_sha256": "9dd10b2cd509b7002d7d72407319d72813fd3e65f984d5bc77c35f0cd321f64c",
+        "dataset_id": "9c01773c117cdcc7",
+        "dl_split": "DL-Train",
+        "family_id": "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619",
+        "pool_sha256": "776909f5f8be525493c33874be7be942b9154db29e92b3ed738a8575873093d3",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/9dd10b2cd509b7002d7d72407319d72813fd3e65f984d5bc77c35f0cd321f64c-12.safetensors",
+            "sha256": "b82f7d364354b4bc28dea0d58899c217ea54053e7ddb384ff9d2c855ca037f61",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/9dd10b2cd509b7002d7d72407319d72813fd3e65f984d5bc77c35f0cd321f64c-20.safetensors",
+            "sha256": "6047194d006d3bc957f3fa12937feeea0ff7da9a8ac04791267733f299ef912b",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/a0d2041a5995062a0b35bb4fe8930f27f7a07943770780ed525b245d7c2bc696.safetensors",
+          "sha256": "7d3a32ae24c7c30fe0e19030e7b914f295a4a8f83c497cbaa4d0a090a2aefb1b"
+        },
+        "context_sha256": "a0d2041a5995062a0b35bb4fe8930f27f7a07943770780ed525b245d7c2bc696",
+        "dataset_id": "3ee2a1a57e55743a",
+        "dl_split": "DL-Train",
+        "family_id": "fam-be71762e2eaec4f4d74c98443bd318ecd61c7bca5896be219724cdac878bac63",
+        "pool_sha256": "e07f2ab5d26b9c898f6dd480c77d06d68dc909da5fdd89c505fcbf7053c8836e",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/a0d2041a5995062a0b35bb4fe8930f27f7a07943770780ed525b245d7c2bc696-12.safetensors",
+            "sha256": "0562232aa85a3f8b862b62bff894251276152d87e77562178bd72002dcb9cf89",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/a0d2041a5995062a0b35bb4fe8930f27f7a07943770780ed525b245d7c2bc696-20.safetensors",
+            "sha256": "1e950ee4f4e6450febf7998ebfe03adea68c9058d6320dcd038d0029d40e1da0",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/a40e62f8bfb72f779880872c27c1e48e5b16363abcf8919666744f90d83d77f6.safetensors",
+          "sha256": "0b54c8f098c22651d6b2a4955fde201fffd15f9133aa65e2f5b1559869d4492a"
+        },
+        "context_sha256": "a40e62f8bfb72f779880872c27c1e48e5b16363abcf8919666744f90d83d77f6",
+        "dataset_id": "6011402103a7dd56",
+        "dl_split": "DL-Train",
+        "family_id": "fam-ff04cd6235b55c24abd1f09dc5e8a78d604eaf48fa23cf8c0a9e367ba2a52ffa",
+        "pool_sha256": "09e62022b0eb9bdcfab68b9012a207a67ee268e5256044d3f849f26546ee4349",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/a40e62f8bfb72f779880872c27c1e48e5b16363abcf8919666744f90d83d77f6-12.safetensors",
+            "sha256": "c5bb28352a555501caa6d8fb346f0fb9f0b97c4b1cc8d83ebcbbcd30dd3e6fc7",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/a40e62f8bfb72f779880872c27c1e48e5b16363abcf8919666744f90d83d77f6-20.safetensors",
+            "sha256": "121ce6ef827b65cbe30f8bad07a1c20c8a2a5b30b0d81f1f59d6efc55771af79",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/aa9e0c70ccefcc720441464f81f0f0644702a67cf1b6139f0e25b8acf6ccb815.safetensors",
+          "sha256": "796db97759a10473ba7a32436807d9e978ef74904379ce59511244bc20697c76"
+        },
+        "context_sha256": "aa9e0c70ccefcc720441464f81f0f0644702a67cf1b6139f0e25b8acf6ccb815",
+        "dataset_id": "95c0e579f498c882",
+        "dl_split": "DL-Train",
+        "family_id": "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619",
+        "pool_sha256": "065460cb1d3997cc14735039ab655a299ee3d569029dfbb3c9e8905073035879",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/aa9e0c70ccefcc720441464f81f0f0644702a67cf1b6139f0e25b8acf6ccb815-12.safetensors",
+            "sha256": "a92446fcbf86431bd1a3b600a4b775261b64a0dcb22fe4771dc6255c5d4890dc",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/aa9e0c70ccefcc720441464f81f0f0644702a67cf1b6139f0e25b8acf6ccb815-20.safetensors",
+            "sha256": "b3378fa58eb697d32aca1fd7e160742db6cea1a46709d719110f52d8c1ab6048",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/ab1d315ed9d0d5fcb92a7e61ecae6b0218ddc73d8b9e085d5349b318b197bcf0.safetensors",
+          "sha256": "b2dc0292f7a1015d28abe1f67be0d04006cd686c3b1226927c19a129997f8da9"
+        },
+        "context_sha256": "ab1d315ed9d0d5fcb92a7e61ecae6b0218ddc73d8b9e085d5349b318b197bcf0",
+        "dataset_id": "34720a747a36c5ba",
+        "dl_split": "DL-Train",
+        "family_id": "fam-13d0d5b99eda2e40cb57dd8cbce45267633877bba8f0bd367d0101600c3e387d",
+        "pool_sha256": "d4f6797658eced042c20d051ffcc98b150ccd41f9e426264a864b7f019a4ff62",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/ab1d315ed9d0d5fcb92a7e61ecae6b0218ddc73d8b9e085d5349b318b197bcf0-12.safetensors",
+            "sha256": "a8104ed613643847d70117d107d16cd252dd3e9211366afa8c33e0b019630f51",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/ab1d315ed9d0d5fcb92a7e61ecae6b0218ddc73d8b9e085d5349b318b197bcf0-20.safetensors",
+            "sha256": "c185000846163612716f2746154fe327db55a38cb83d084bae14762b5a7d2b7c",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      },
+      {
+        "context_features": {
+          "bytes": 10076,
+          "path": "contexts/ae301b510ffdfd70e2f430d98009eba8d2086338f5b7fd889e264fba05b05e6e.safetensors",
+          "sha256": "14cff3b7e54e9643c734deb656e713a1f13ac84f6ae9d25e285f6a2e8e05c345"
+        },
+        "context_sha256": "ae301b510ffdfd70e2f430d98009eba8d2086338f5b7fd889e264fba05b05e6e",
+        "dataset_id": "6752633826892e66",
+        "dl_split": "DL-Train",
+        "family_id": "fam-87c9263f9d0a25afe91364cf765285e26bfee0447c76c4266fbc0aa4fc465a3d",
+        "pool_sha256": "853ca56bcb6f7e84e0a2acfd09d968f9b7a7505197647507854ebcf2baf04174",
+        "slates": [
+          {
+            "bytes": 29252,
+            "outcome_read_budget": 4,
+            "path": "slates/ae301b510ffdfd70e2f430d98009eba8d2086338f5b7fd889e264fba05b05e6e-12.safetensors",
+            "sha256": "44fab3203c68b9dc49a8c89841792b22e0e5e896a024afbf733e79951db32183",
+            "width": 12
+          },
+          {
+            "bytes": 45060,
+            "outcome_read_budget": 4,
+            "path": "slates/ae301b510ffdfd70e2f430d98009eba8d2086338f5b7fd889e264fba05b05e6e-20.safetensors",
+            "sha256": "175bffcb7652ce694c75ce38f70df9ff98f98d1284468b5e7417b4283a3fc22f",
+            "width": 20
+          }
+        ],
+        "source_split": "train",
+        "task": "regression"
+      }
+    ],
+    "contexts": 50,
+    "excluded": [
+      "DL-Val",
+      "outer-test",
+      "holdout",
+      "sealed",
+      "meta-test"
+    ],
+    "families": 16,
+    "index_identity_sha256": "27905f29703431bedacac90eed1bd54257fd0c59bdf24b56605d0b9416ae1393",
+    "index_sha256": "27905f29703431bedacac90eed1bd54257fd0c59bdf24b56605d0b9416ae1393",
+    "packet_root": "/home/ubuntu/jope-data/gov-03/res07-cpu-t0955/run-3/generation-1",
+    "s3_dataset_catalog_sha256": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
+    "selected_identity_sha256": "981960ad628f5029f8f54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "selected_train_metadata_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "slates": 100,
+    "source": "real S3 non-sealed RES-07 DL-Train regression capture"
+  },
+  "deadline_utc": "2026-11-01T02:30:00Z",
+  "evaluator": {
+    "admission_path": "crates/jope-service/src/ranker/admission.rs",
+    "admission_sha256": "b433a1ee533b02d3ad108f5a85932e9a38d4ebd86b53c87519b2441e12aca039",
+    "cpu_parity_path": "crates/jope-service/tests/support/cpu_parity.rs",
+    "cpu_parity_sha256": "20ec633061cef38e2fa4f9b7083fac2c3907a9ea2722e74eb20b2069d806f9f6",
+    "elo_source_path": "python/src/jope/north_star/elo_tracker.py",
+    "elo_source_sha256": "9ece98326c32453179b0c765eb45944b68ca9de944d2828a1d42dee1401d1835",
+    "kl_source_path": "crates/jope-service/src/ranker/adapter.rs",
+    "kl_source_sha256": "3686b8dfd1172423e0da6b0755fe7e481678b71f4ccea774686dae9f755f7688",
+    "runner_hash_required_before_outcome_read": true,
+    "source_commit": "8cc068adee08f45290ee1d0d69e1b6bc5f7aa0de",
+    "utility_source_path": "research/flywheel_selfplay/h48/run.py",
+    "utility_source_sha256": "756960a0e2bfdf23e75012fb347ce772fb6fdeaa4fb4fc2d4178dfaeb9eac9da"
+  },
+  "metrics": {
+    "aggregation": "average slate widths within context; contexts within family; equal weight across 16 families",
+    "bootstrap": {
+      "draws": 10000,
+      "interval": "two-sided percentile 97.5%",
+      "rng": "NumPy default_rng",
+      "sampling_unit": "16 complete families, equal probability, with replacement",
+      "seed": 181100
+    },
+    "delta": "guided minus unguided",
+    "elo": {
+      "anchor": "unguided=1500",
+      "method": "family-grouped Bradley-Terry",
+      "weighting": "equal family"
+    },
+    "gates": {
+      "family_bootstrap_97_5pct_lower_bound_gt": 0.0,
+      "family_grouped_elo_gt": 1500.0,
+      "max_kl_lte": 0.35,
+      "median_family_mean_delta_gt": 0.0
+    },
+    "kl": {
+      "metric": "maximum per-slate proposal_kl_to_anchor from pinned CpuAdapter, over all unrevealed proposals",
+      "temperature": 1.0,
+      "threshold_max": 0.35
+    },
+    "u4": "max utility among four common revealed entries plus arm-selected four; utility=-fitness when gate passes, otherwise -2.0"
+  },
+  "nonclaims": [
+    "TRAIN diagnostic only; not independent generalization",
+    "not QLT-04/Q1 or sealed qualification",
+    "not M5/S4/serving/production qualification",
+    "no signature, production authentication, or default enablement"
+  ],
+  "outcome_ledger": {
+    "already_revealed_slots": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "consumed_prior": 0,
+    "initial_state": "UNUSED",
+    "max_unique_unrevealed_outcome_reads": 800,
+    "must_record": [
+      "candidate_slot_ids",
+      "s3_object_and_version_ids",
+      "returned_payload_sha256",
+      "read_timestamp_utc"
+    ],
+    "path": "/home/ubuntu/jope_plan/evidence/RNK-10/rnk11-manifest-t1930/outcome_ledger.json",
+    "per_slate_maximum": 8,
+    "read_unit": "(context_sha256, slate_width, candidate_slot); union of up to four guided and four anchor choices; deduplicate overlap",
+    "retry_allowed": false,
+    "single_use": true
+  },
+  "owner": "luna_v1_rnk11",
+  "partner": "luna_v1_res08",
+  "protocol_id": "RNK10-RES08-T1930-20261101",
+  "roster_sha256": "b76996cb898604a07275003b752b46ea9dd024997021ee28d168ab76b085ab8f",
+  "schema": "jope.rnk10.matched-cpu-acceptance-manifest/v1",
+  "status": "PROSPECTIVE_UNRUN"
+}

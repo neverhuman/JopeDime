@@ -429,26 +429,6 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
-    "python:research/flywheel_selfplay/h113_w3_continuous/test_losses.py": {
-      "reason": "Synthetic W3 loss/gradient and zero-update prior contracts; real outcome provenance and full trainer remain unqualified.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h101_w6_proposer_transfer_prep/test_w6_transfer_prep.py": {
-      "reason": "Owner-requested pytest proofs for H101 W6 proposer transfer preparation and fail-closed completeness gates; offline research analysis outside the reviewed product baseline.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h111_w7_common_support/test_matching.py": {
-      "reason": "Owner-requested W7 common-support matcher synthetic controls; no measured outcomes, provenance authentication or execution admission.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h104_w7_acquisition_replay_prep/test_runner.py": {
-      "reason": "Owner-requested W7 acquisition/QD/replay preparation controls; synthetic offline research, no scientific outcome or execution admission.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h102_w5_provenance_gaps/test_check.py": {
-      "reason": "Owner-requested W5 provenance-gap and W9 CPU-preparation synthetic regression controls; offline research outside the product baseline.",
-      "role": "research"
-    },
     "python:benchmarks/test_prepare.py": {
       "role": "regression",
       "subsystems": [
@@ -1619,6 +1599,10 @@
       "reason": "REL-07 v1.0 CPU qualification controller proofs (gate inventory, receipts and refusals); no Rust build, GPU, release or dataset job executes",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/v1.0/test_gates_receipt.py": {
+      "reason": "REL-07 signer-compatible gate-receipt adapter proofs (exact 28-gate M1-D2 inventory, CPU-prestage NOT_RUN projection, and artifact SHA256 binding); no Rust build, GPU, release or dataset job executes",
+      "role": "infrastructure"
+    },
     "python:ops/s3_shard_cache/test_s3_shard_cache.py": {
       "reason": "Operational S3 shard-cache unit test against an in-memory fake client; not collected by any CI lane (coverage disposition: maintenance).",
       "role": "infrastructure"
@@ -1869,6 +1853,114 @@
       "reason": "RES-07 CPU pre-stage proofs for golden fixture generation (model_prior subset); no qualification capture generation or GPU use; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h100_asam_confirm/test_h100.py": {
+      "reason": "H100 synthetic CPU optimizer, scratch safety, drift, multiplicity/harm/readout and predecessor-FIFO guard tests; no actual study outcomes or serving qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h101_w6_proposer_transfer_prep/test_w6_transfer_prep.py": {
+      "reason": "Owner-requested pytest proofs for H101 W6 proposer transfer preparation and fail-closed completeness gates; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h102_w5_provenance_gaps/test_check.py": {
+      "reason": "Owner-requested W5 provenance-gap and W9 CPU-preparation synthetic regression controls; offline research outside the product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h104_w7_acquisition_replay_prep/test_runner.py": {
+      "reason": "Owner-requested W7 acquisition/QD/replay preparation controls; synthetic offline research, no scientific outcome or execution admission.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h105_shrink_r882/test_h105.py": {
+      "reason": "H105 synthetic CPU protocol and guarded-queue/source-provenance fixtures; separate real DL-Train CPU smoke has no optimizer update, assessment payload, CUDA or ticket. Research only; no GPU outcome or product qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h106_w9_proposal_scorer_replay/test_run_h106.py": {
+      "reason": "Owner-requested pytest proofs for the H106 proposal-distribution scorer and W9 non-neural memory-replay CPU preparation; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h109_family_balanced_accum/test_h109.py": {
+      "reason": "Owner-requested pytest proofs for the H109 family-balanced accumulation preregistration; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h111_w7_common_support/test_matching.py": {
+      "reason": "Owner-requested W7 common-support matcher synthetic controls; no measured outcomes, provenance authentication or execution admission.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h112_w4_active_reveal_scorer/test_run_h112.py": {
+      "reason": "Owner-requested pytest proofs for the H112 W4 two-plus-two re-test with the proposal-distribution scorer prior (CPU preparation); offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h113_w3_continuous/test_losses.py": {
+      "reason": "Synthetic W3 loss/gradient and zero-update prior contracts; real outcome provenance and full trainer remain unqualified.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h115_w6_xfamily/test_run_h114.py": {
+      "reason": "Owner-requested pytest proofs for the H115 (renumbered from H114) W6 cross-family outcome-transfer CPU preparation; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h117_w5_provenance/test_check_w5_identity.py": {
+      "reason": "Owner-requested pytest proofs for the H117 W5 identity-only data-provenance re-check; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h119_gbm_ctx_confirm/test_h119.py": {
+      "reason": "H119 GBM-vs-r882 prospective confirmation: synthetic CPU endpoint/fold/multiplicity/harm/tie/completeness/BT controls; no product qualification or hidden-data access.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h120_w4_offline_acquisition/test_run_h120.py": {
+      "reason": "Owner-requested pytest proofs for the H120 (renumbered from H119) W4 offline acquisition screen CPU preparation (zero native fits); offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h121_target_smoothing/test_h121.py": {
+      "reason": "Owner-requested pytest proofs for the H121 target-smoothing preregistration; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h122_lookahead_retest/test_h122.py": {
+      "reason": "H122 CPU launch-readiness: lease-bound cell CLI, 40 real fixture optimizer steps per arm, frozen-parameter and Lookahead checks, exact six-cell coordinator, predecessor/FIFO/resource budgets, phase and byte-bound collection, official equal-family utility and strict Elo/admission controls. Software fixtures only; no real corpus/checkpoint, shared lock/ticket, GPU or study outcome.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h123_continuous_regret_tiebreak/test_runner.py": {
+      "reason": "CPU-only H123 continuous-regret tie-break preparation fixtures for the H114 lattice; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h124_gbm_shrink_blend/test_h124.py": {
+      "reason": "Owner-requested H124 synthetic CPU controls for the fresh family split, fixed-lambda utility-score blend, complete-panel paired family bootstrap and harm gate, and no-data dry run; no corpus/checkpoint reads or estimator fits in the fixture suite; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h129_gbm_blend_harm_gate/test_h129.py": {
+      "reason": "Owner-requested H129 synthetic CPU controls for the H124-follow-up blend arms, fit-fold harm-gate threshold, Holm readout and pre-write metrics size check; no corpus/checkpoint reads or estimator fits in the fixture suite; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/test_cache.py": {
+      "reason": "H131 data-free research controls for whole-family bootstrap multiplicity, exact H125 CONTROL plan, eight-member parameter averaging, fixed half-soup, paired-family Holm/margin/harm/Elo/tie gates, cache identity and resource refusal. No real scoring or scientific qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/test_science.py": {
+      "reason": "H131 data-free research controls for whole-family bootstrap multiplicity, exact H125 CONTROL plan, eight-member parameter averaging, fixed half-soup, paired-family Holm/margin/harm/Elo/tie gates, cache identity and resource refusal. No real scoring or scientific qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h134_blend025_confirm/test_h134.py": {
+      "reason": "Owner-requested H134 synthetic CPU controls for the single-primary BLEND_025 confirmation readout, tail checks and pinned H129 runner rebinding; no corpus/checkpoint reads or estimator fits in the fixture suite; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/test_science.py": {
+      "reason": "H135 data-free native utility, sanity, bootstrap, seed/harm/trim/resource controls; native HistGB thread ceiling, scoped baseline setter restoration and A3 nested thread cap; A4 native SIGSTOP/SIGCONT, continuous recovery and stopped-worker deadline controls. Manual GBM preflight uses synthetic data and actual estimator hyperparameters with external /proc sampling; constructor preflight reads pretrained assets only, no datasets/r882/predictions; not a product qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h138_trajectory_swa/test_science.py": {
+      "reason": "H138 data-free parameter-only averaging, bitwise DOPE including signed-zero refusal, family partitions, Holm/utility/Elo gates and actual owned-process pause/resume/deadline controls. Manual unscored constructor checks copies and input hashes; no scientific inference before prereg merge. Research only, no product qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h139_selection_audit/test_h139.py": {
+      "reason": "Owner-requested H139 synthetic CPU controls for the zero-update selection-rule audit readout and decision; no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h143_strict_admission_replay/test_h143.py": {
+      "reason": "Owner-requested H143 synthetic CPU controls for the zero-update strict-admission shadow replay and its verdict mapping; no receipt/checkpoint reads or model passes in the fixture suite; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h144_reg_sweep/test_h144.py": {
+      "reason": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
       "role": "research"
@@ -1969,57 +2061,61 @@
       "reason": "Owner-requested pytest proofs for the H81 W4 prospective two-plus-two stratum and its preregistered comparator-strength guard; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/h90_candidate_diversity/test_h90.py": {
-      "reason": "CPU-only H90 candidate-recipe, diversity, pseudoreplication, cumulative budget and H80-exclusion tests; offline research outside product qualification.",
-      "role": "research"
-    },
     "python:research/flywheel_selfplay/h82_sam_steps/ops/test_recover.py": {
-      "role": "research",
-      "reason": "CPU-only H82 operator recovery fixtures for immutable checkpoint staging and exact-prefix refusal; no scientific outcomes or GPU execution."
-    },
-    "python:research/flywheel_selfplay/h105_shrink_r882/test_h105.py": {
-      "role": "research",
-      "reason": "H105 synthetic CPU protocol and guarded-queue/source-provenance fixtures; separate real DL-Train CPU smoke has no optimizer update, assessment payload, CUDA or ticket. Research only; no GPU outcome or product qualification."
-    },
-    "python:research/flywheel_selfplay/h119_gbm_ctx_confirm/test_h119.py": {
-      "role": "research",
-      "reason": "H119 GBM-vs-r882 prospective confirmation: synthetic CPU endpoint/fold/multiplicity/harm/tie/completeness/BT controls; no product qualification or hidden-data access."
-    },
-    "python:research/flywheel_selfplay/h100_asam_confirm/test_h100.py": {
-      "role": "research",
-      "reason": "H100 synthetic CPU optimizer, scratch safety, drift, multiplicity/harm/readout and predecessor-FIFO guard tests; no actual study outcomes or serving qualification."
+      "reason": "CPU-only H82 operator recovery fixtures for immutable checkpoint staging and exact-prefix refusal; no scientific outcomes or GPU execution.",
+      "role": "research"
     },
     "python:research/flywheel_selfplay/h82_sam_steps/test_h82.py": {
       "reason": "CPU-only H82 fresh-seed retry-boundary, load/budget, frozen-reference and paired Elo/admission tests; offline research outside product qualification.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h85_w1_cpu_remediation_and_models/test_w1_remediation.py": {
-      "reason": "CPU-only H85 W1 pre-review remediation, shard sidecar, lock FD, GPU budget ledger, within-context template pairing and H81 strength-guard tests; offline research outside product qualification.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h93_lookahead_noise/test_h93.py": {
-      "reason": "CPU-only H93 Lookahead/noise/effective-batch, unique per-attempt scratch-collision regression, paired Elo/admission, top-four overlap, and launch-barrier fixtures; offline research outside product qualification.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h83_w6_cross_family_cached/test_run_w6_cached.py": {
       "reason": "Owner-requested pytest proofs for the H83 W6 cross-family cached screen; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/h95_w8_hwm_resplit_confirm/test_run_resplit_confirm.py": {
-      "reason": "Owner-requested pytest proofs for the H95 W8 resplit confirmation of H94 apparent high-water marks; offline research analysis outside the reviewed product baseline.",
+    "python:research/flywheel_selfplay/h85_w1_cpu_remediation_and_models/test_w1_remediation.py": {
+      "reason": "CPU-only H85 W1 pre-review remediation, shard sidecar, lock FD, GPU budget ledger, within-context template pairing and H81 strength-guard tests; offline research outside product qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h86_w3_outcome_status_census/test_census.py": {
+      "reason": "H86 W3 outcome-row status census and status-mask export unit tests.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h90_candidate_diversity/test_h90.py": {
+      "reason": "CPU-only H90 candidate-recipe, diversity, pseudoreplication, cumulative budget and H80-exclusion tests; offline research outside product qualification.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h92_w6_downside_controlled/test_run_downside.py": {
       "reason": "Owner-requested pytest proofs for the H92 W6 downside-controlled cached screen (hedge and shortlist pickers, retained-best, H83 reproduction integrity); offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h93_lookahead_noise/test_h93.py": {
+      "reason": "CPU-only H93 Lookahead/noise/effective-batch, unique per-attempt scratch-collision regression, paired Elo/admission, top-four overlap, and launch-barrier fixtures; offline research outside product qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h94_w6_prospective_hedge/test_run_prospective_hedge.py": {
       "reason": "Owner-requested pytest proofs for the H94 W6 prospective HEDGE_CTX evaluation on new proposer programs; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/h86_w3_outcome_status_census/test_census.py": {
-      "role": "research",
-      "reason": "H86 W3 outcome-row status census and status-mask export unit tests."
+    "python:research/flywheel_selfplay/h95_w8_hwm_resplit_confirm/test_run_resplit_confirm.py": {
+      "reason": "Owner-requested pytest proofs for the H95 W8 resplit confirmation of H94 apparent high-water marks; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h96_w4_active_reveal/test_run_w4.py": {
+      "reason": "Owner-requested pytest proofs for the H96 W4 two-plus-two CPU preparation, including the completeness gate that refuses a verdict on missing, duplicated, incomplete or short seed panels; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h97_reg_ema/test_h97.py": {
+      "reason": "Owner-requested pytest proofs for the H97 REG-EMA candidate protocol; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h99_esh_harm/test_h99.py": {
+      "reason": "Owner-requested pytest proofs for the H99 ESH harm follow-up preregistration; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h99_h100_readout/test_readout.py": {
+      "reason": "Synthetic H99/H100 terminal receipt publication and common-format Elo/gate controls; native CIs unchanged, no product qualification or live partial-outcome reads.",
+      "role": "research"
     },
     "python:research/flywheel_selfplay/rd_breakthrough/w5_provenance/test_verify.py": {
       "reason": "Synthetic metadata controls for the W5 provenance verifier; none admits data or qualifies W5; offline research analysis outside the reviewed product baseline.",
@@ -2061,12 +2157,12 @@
       "reason": "Synthetic CPU protocol fixtures for the joint regression/binary study (protected packet-root refusal); no learner, GPU, dataset or score history; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
-    "python:tools/ops/test_jope_diskd.py": {
-      "reason": "DISK-01 hermetic tests for jope-diskd's fail-closed cleanup boundaries (policy, dry-run, allowlisted caches, open-handle refusal); no real deletion",
-      "role": "infrastructure"
-    },
     "python:tools/ops/test_install_jope_diskd.py": {
       "reason": "DISK-01 regression tests for the jope-diskd installer (print-only default, invalid-option refusal, dirty or unmerged checkout refusal); no real enable or deletion",
+      "role": "infrastructure"
+    },
+    "python:tools/ops/test_jope_diskd.py": {
+      "reason": "DISK-01 hermetic tests for jope-diskd's fail-closed cleanup boundaries (policy, dry-run, allowlisted caches, open-handle refusal); no real deletion",
       "role": "infrastructure"
     },
     "python:tools/ops/test_jope_remote_target_cleaner.py": {
@@ -2864,12 +2960,12 @@
       "role": "infrastructure"
     },
     "target:jope-appliance/bin/jopedime": {
+      "reason": "Preserves the existing fitting/export regressions. QLT-03-F01 adds default feature-boundary and opt-in internal CLI parser/refusal controls in this same binary target; these do not qualify actual research capture or replace F02 producer integration.",
       "role": "regression",
       "subsystems": [
         "export",
         "fitting"
-      ],
-      "reason": "Preserves the existing fitting/export regressions. QLT-03-F01 adds default feature-boundary and opt-in internal CLI parser/refusal controls in this same binary target; these do not qualify actual research capture or replace F02 producer integration."
+      ]
     },
     "target:jope-appliance/test/e2e": {
       "role": "regression",
@@ -3921,21 +4017,21 @@
     },
     "target:jope-narrator/lib/jope_narrator": {
       "role": "regression",
+      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts.",
       "subsystems": [
         "gp",
         "evidence",
         "storage"
-      ],
-      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
+      ]
     },
     "target:jope-narrator/test/core": {
       "role": "regression",
+      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts.",
       "subsystems": [
         "gp",
         "evidence",
         "storage"
-      ],
-      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
+      ]
     },
     "target:jope-observatory/bin/collect-datasets": {
       "role": "regression",
@@ -3953,9 +4049,9 @@
       "role": "infrastructure"
     },
     "target:jope-observatory/bin/gp-narration-stream": {
+      "reason": "Reader CLI has no separate unit cases; its real stdio protocol and read-only routes are exercised by target:jope-observatory/test/narration.",
       "role": "infrastructure",
-      "scope": "Read-only narration CLI is built/checked here and launched by narration integration MCP framing tests; no unit-test count inferred for the binary.",
-      "reason": "Reader CLI has no separate unit cases; its real stdio protocol and read-only routes are exercised by target:jope-observatory/test/narration."
+      "scope": "Read-only narration CLI is built/checked here and launched by narration integration MCP framing tests; no unit-test count inferred for the binary."
     },
     "target:jope-observatory/bin/gp-source-stream": {
       "role": "regression",
@@ -3992,12 +4088,12 @@
     },
     "target:jope-observatory/test/narration": {
       "role": "regression",
+      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts.",
       "subsystems": [
         "gp",
         "evidence",
         "storage"
-      ],
-      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
+      ]
     },
     "target:jope-parallel/bin/jope-build-receipt": {
       "role": "regression",
@@ -4752,12 +4848,12 @@
     },
     "target:jope-pipeline/test/search_narration": {
       "role": "regression",
+      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts.",
       "subsystems": [
         "gp",
         "evidence",
         "storage"
-      ],
-      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
+      ]
     },
     "target:jope-pipeline/test/seed_set_v2": {
       "role": "regression",
@@ -4961,22 +5057,22 @@
     },
     "target:jope-runtime/test/prediction_narration": {
       "role": "regression",
+      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts.",
       "subsystems": [
         "fitting",
         "export",
         "evidence"
-      ],
-      "scope": "Evidence-grounded narration: exact replay/identity, real bounded admission/durable prefix, producer noninterference, transport limits, or fixed-prediction binding as appropriate to this target. Source execution proof remains in retained receipts."
+      ]
     },
     "target:jope-service/lib/jope_service": {
+      "reason": "QLT-03-F02 adds16 collected optional-research capture/outbox controls in this existing library target, including an ignored child exercised by its owning SIGKILL test. Synthetic software fixtures cover persistence, label isolation, bounds, privacy, CAS/GC and Rust-to-Python readback; no real corpus/evaluator/provider or Q1 qualification. CPU follow-up adds one collected suffix/refusal/reopen/GC regression and replaces the existing deadline test sleep with a scoped clock; no new native/provider qualification. RNK-12 adds13 collected trace/device/lease controls in this target, including two ignored external real-forward CPU/CUDA replay entry points. Hermetic controls and software implementation do not establish CUDA M2, guidance or serving qualification. RNK-12 CPU repair adds five collected deterministic arithmetic regressions (moments, exp, dense bias, scalar division, softmax); real 50-context/100-slate CPU parity is separate evidence and is not GPU M2.",
       "role": "regression",
       "source": "crates/jope-service/src/lib.rs",
       "subsystems": [
         "gp",
         "storage",
         "evidence"
-      ],
-      "reason": "QLT-03-F02 adds16 collected optional-research capture/outbox controls in this existing library target, including an ignored child exercised by its owning SIGKILL test. Synthetic software fixtures cover persistence, label isolation, bounds, privacy, CAS/GC and Rust-to-Python readback; no real corpus/evaluator/provider or Q1 qualification. CPU follow-up adds one collected suffix/refusal/reopen/GC regression and replaces the existing deadline test sleep with a scoped clock; no new native/provider qualification. RNK-12 adds13 collected trace/device/lease controls in this target, including two ignored external real-forward CPU/CUDA replay entry points. Hermetic controls and software implementation do not establish CUDA M2, guidance or serving qualification. RNK-12 CPU repair adds five collected deterministic arithmetic regressions (moments, exp, dense bias, scalar division, softmax); real 50-context/100-slate CPU parity is separate evidence and is not GPU M2."
+      ]
     },
     "target:jope-service/test/golden-fixture-loader": {
       "role": "regression",
@@ -5089,93 +5185,9 @@
         "encoders"
       ]
     },
-    "python:research/flywheel_selfplay/h97_reg_ema/test_h97.py": {
-      "reason": "Owner-requested pytest proofs for the H97 REG-EMA candidate protocol; offline research analysis outside the reviewed product baseline.",
+    "python:research/h145/test_h145.py": {
+      "reason": "H145 data-free controls for disjoint family-fold selection/assessment, duplicate/nonfinite refusal, equal-family weighting, exact Elo ties, canonical Bradley-Terry bootstrap equivalence with repeated-family multiplicity, and lexical exclusion of DL-Val outcome subtrees. These controls do not train or qualify a model; offline research only.",
       "role": "research"
-    },
-    "python:research/flywheel_selfplay/h99_esh_harm/test_h99.py": {
-      "reason": "Owner-requested pytest proofs for the H99 ESH harm follow-up preregistration; offline research analysis outside the reviewed product baseline.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h96_w4_active_reveal/test_run_w4.py": {
-      "reason": "Owner-requested pytest proofs for the H96 W4 two-plus-two CPU preparation, including the completeness gate that refuses a verdict on missing, duplicated, incomplete or short seed panels; offline research analysis outside the reviewed product baseline.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h106_w9_proposal_scorer_replay/test_run_h106.py": {
-      "reason": "Owner-requested pytest proofs for the H106 proposal-distribution scorer and W9 non-neural memory-replay CPU preparation; offline research analysis outside the reviewed product baseline.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h109_family_balanced_accum/test_h109.py": {
-      "reason": "Owner-requested pytest proofs for the H109 family-balanced accumulation preregistration; offline research analysis outside the reviewed product baseline.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h112_w4_active_reveal_scorer/test_run_h112.py": {
-      "reason": "Owner-requested pytest proofs for the H112 W4 two-plus-two re-test with the proposal-distribution scorer prior (CPU preparation); offline research analysis outside the reviewed product baseline.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h115_w6_xfamily/test_run_h114.py": {
-      "reason": "Owner-requested pytest proofs for the H115 (renumbered from H114) W6 cross-family outcome-transfer CPU preparation; offline research analysis outside the reviewed product baseline.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h117_w5_provenance/test_check_w5_identity.py": {
-      "reason": "Owner-requested pytest proofs for the H117 W5 identity-only data-provenance re-check; offline research analysis outside the reviewed product baseline.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h120_w4_offline_acquisition/test_run_h120.py": {
-      "reason": "Owner-requested pytest proofs for the H120 (renumbered from H119) W4 offline acquisition screen CPU preparation (zero native fits); offline research analysis outside the reviewed product baseline.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h121_target_smoothing/test_h121.py": {
-      "reason": "Owner-requested pytest proofs for the H121 target-smoothing preregistration; offline research analysis outside the reviewed product baseline.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h122_lookahead_retest/test_h122.py": {
-      "reason": "H122 CPU launch-readiness: lease-bound cell CLI, 40 real fixture optimizer steps per arm, frozen-parameter and Lookahead checks, exact six-cell coordinator, predecessor/FIFO/resource budgets, phase and byte-bound collection, official equal-family utility and strict Elo/admission controls. Software fixtures only; no real corpus/checkpoint, shared lock/ticket, GPU or study outcome.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h124_gbm_shrink_blend/test_h124.py": {
-      "reason": "Owner-requested H124 synthetic CPU controls for the fresh family split, fixed-lambda utility-score blend, complete-panel paired family bootstrap and harm gate, and no-data dry run; no corpus/checkpoint reads or estimator fits in the fixture suite; offline research only.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h129_gbm_blend_harm_gate/test_h129.py": {
-      "reason": "Owner-requested H129 synthetic CPU controls for the H124-follow-up blend arms, fit-fold harm-gate threshold, Holm readout and pre-write metrics size check; no corpus/checkpoint reads or estimator fits in the fixture suite; offline research only.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h134_blend025_confirm/test_h134.py": {
-      "reason": "Owner-requested H134 synthetic CPU controls for the single-primary BLEND_025 confirmation readout, tail checks and pinned H129 runner rebinding; no corpus/checkpoint reads or estimator fits in the fixture suite; offline research only.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h139_selection_audit/test_h139.py": {
-      "reason": "Owner-requested H139 synthetic CPU controls for the zero-update selection-rule audit readout and decision; no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h143_strict_admission_replay/test_h143.py": {
-      "reason": "Owner-requested H143 synthetic CPU controls for the zero-update strict-admission shadow replay and its verdict mapping; no receipt/checkpoint reads or model passes in the fixture suite; offline research only.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h123_continuous_regret_tiebreak/test_runner.py": {
-      "role": "research",
-      "reason": "CPU-only H123 continuous-regret tie-break preparation fixtures for the H114 lattice; offline research analysis outside the reviewed product baseline."
-    },
-    "python:research/flywheel_selfplay/h99_h100_readout/test_readout.py": {
-      "role": "research",
-      "reason": "Synthetic H99/H100 terminal receipt publication and common-format Elo/gate controls; native CIs unchanged, no product qualification or live partial-outcome reads."
-    },
-    "python:research/flywheel_selfplay/h131_family_bag_soup/test_science.py": {
-      "role": "research",
-      "reason": "H131 data-free research controls for whole-family bootstrap multiplicity, exact H125 CONTROL plan, eight-member parameter averaging, fixed half-soup, paired-family Holm/margin/harm/Elo/tie gates, cache identity and resource refusal. No real scoring or scientific qualification."
-    },
-    "python:research/flywheel_selfplay/h131_family_bag_soup/test_cache.py": {
-      "role": "research",
-      "reason": "H131 data-free research controls for whole-family bootstrap multiplicity, exact H125 CONTROL plan, eight-member parameter averaging, fixed half-soup, paired-family Holm/margin/harm/Elo/tie gates, cache identity and resource refusal. No real scoring or scientific qualification."
-    },
-    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/test_science.py": {
-      "role": "research",
-      "reason": "H135 data-free native utility, sanity, bootstrap, seed/harm/trim/resource controls; native HistGB thread ceiling, scoped baseline setter restoration and A3 nested thread cap; A4 native SIGSTOP/SIGCONT, continuous recovery and stopped-worker deadline controls. Manual GBM preflight uses synthetic data and actual estimator hyperparameters with external /proc sampling; constructor preflight reads pretrained assets only, no datasets/r882/predictions; not a product qualification."
-    },
-    "python:research/flywheel_selfplay/h138_trajectory_swa/test_science.py": {
-      "role": "research",
-      "reason": "H138 data-free parameter-only averaging, bitwise DOPE including signed-zero refusal, family partitions, Holm/utility/Elo gates and actual owned-process pause/resume/deadline controls. Manual unscored constructor checks copies and input hashes; no scientific inference before prereg merge. Research only, no product qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
