@@ -5301,6 +5301,30 @@
         "reason": "Single durable H197 JSON writer using json.dumps(allow_nan=False), used by every trace, receipt, summary, metrics, audit and failure record."
       },
       "sha256": "99135f2c304b6558c25291913484982e0a7f5cd10b37520d3cbd0e109cdf50a5"
+    },
+    "python:research/flywheel_selfplay/h199_blend025_native/analysis.py": {
+      "bytes": 9149,
+      "sha256": "57c40ae02b882e2840ab57c6f88121487b1604052d3d5536b5659a7753a54c73",
+      "classification": {
+        "role": "research",
+        "reason": "H199 preregistered CPU-only diagnostic: H129/H195 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed; 0.15/0.35 report-only) against r882 on the flywheel native first-argmin protocol, powered by the 205-family pooled cross-fit on fresh per-seed folds; GBM and calibration FIT-only, stage-1 lock before pooled-A scoring, m=1 CANDIDATE gate (LCB95>0, median>+0.001, 3/3 seeds, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h199_blend025_native/monitor.py": {
+      "bytes": 7032,
+      "sha256": "9d8b23d03ae7eeb1571b3efa33d8daa30051439831316e8318495e4de9e77917",
+      "classification": {
+        "role": "research",
+        "reason": "H199 preregistered CPU-only diagnostic: H129/H195 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed; 0.15/0.35 report-only) against r882 on the flywheel native first-argmin protocol, powered by the 205-family pooled cross-fit on fresh per-seed folds; GBM and calibration FIT-only, stage-1 lock before pooled-A scoring, m=1 CANDIDATE gate (LCB95>0, median>+0.001, 3/3 seeds, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h199_blend025_native/runner.py": {
+      "bytes": 26753,
+      "sha256": "59a4c0209f5b313b11cfbaa4e87bcf0f4b60cb512140d78560181394847fe41f",
+      "classification": {
+        "role": "research",
+        "reason": "H199 preregistered CPU-only diagnostic: H129/H195 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed; 0.15/0.35 report-only) against r882 on the flywheel native first-argmin protocol, powered by the 205-family pooled cross-fit on fresh per-seed folds; GBM and calibration FIT-only, stage-1 lock before pooled-A scoring, m=1 CANDIDATE gate (LCB95>0, median>+0.001, 3/3 seeds, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

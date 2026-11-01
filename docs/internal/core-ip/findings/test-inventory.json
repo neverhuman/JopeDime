@@ -5533,6 +5533,10 @@
     "python:research/flywheel_selfplay/h198_ttt/test_h198.py": {
       "role": "research",
       "reason": "H198 data-free checks for per-context test-time training on revealed candidates only: leakage masking of unrevealed labels, per-context reset and trajectory-prefix equivalence, shuffle-control derangement, independent fold seeds with the stage-1 B-only lock, verdict gates with axis-0 bootstrap, and the launch contract; no corpus/checkpoint reads in fixtures."
+    },
+    "python:research/flywheel_selfplay/h199_blend025_native/test_h199.py": {
+      "reason": "Owner-requested H199 data-free controls for BLEND_025 on the flywheel native protocol (cells, minimal fit plan, H124 fold algorithm per fold seed, fold manifest, within-family SHUF, registered lambda dose, native gates incl. 3/3 seeds and exact ties as zero, harm gate, Elo orientation, monitor guards); no checkpoint/corpus reads or model passes in the fixtures",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
