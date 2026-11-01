@@ -1,0 +1,1 @@
+{"evaluation_payloads_opened": 0, "smoke": "/home/ubuntu/jope-data/RNK10-t2115-run-20261101/model-smoke.json"}

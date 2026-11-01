@@ -7,17 +7,14 @@ use crate::{
         audit::AuditRowId,
         effort::{BudgetOverrides, Effort as SearchEffort},
         finalize::{FinalizationRequest, Finalizer, Partition},
-        r#loop::{
-            Discovery, HeuristicAdmission, NativeSpace, Plan as SearchPlan, ProcessExecutor,
-            SearchSpace,
-        },
+        r#loop::{Discovery, NativeSpace, Plan as SearchPlan, ProcessExecutor, SearchSpace},
         splits::random_split,
     },
     engine::{EngineActivity, EngineLock},
     events::{EventLog, RunUpdate},
     governor::{Governor, Requirements},
     idempotency::{CommandOutcome, RequestIdentity},
-    ranker::admission::{resolve_unqualified, GuidanceUnavailableReason},
+    run::service::{BackendExecutor, BackendPlan, BackendSpace},
     store::{Record, RecordKey, Store},
     telemetry::{Sensors, SystemSensors},
 };
@@ -42,7 +39,17 @@ use std::{
 
 const WORKER_RAM: u64 = 1024 * 1024 * 1024;
 const MODEL_LIMIT: u64 = 16 * 1024 * 1024;
+const Q1_WALL_BUDGET: std::time::Duration = std::time::Duration::from_secs(600);
+const Q1_ATTEMPT_WALL_CAP_MS: u64 = 600_000;
 type Result<T> = std::result::Result<T, Box<Problem>>;
+
+fn q1_remaining_wall_ms(elapsed: std::time::Duration) -> Option<u64> {
+    let remaining = Q1_WALL_BUDGET.saturating_sub(elapsed);
+    let remaining_ms = remaining
+        .as_millis()
+        .min(u128::from(Q1_ATTEMPT_WALL_CAP_MS)) as u64;
+    (remaining_ms > 0).then_some(remaining_ms)
+}
 
 #[cfg(all(feature = "failpoints", debug_assertions))]
 #[derive(Clone, Debug)]
@@ -76,12 +83,54 @@ pub(crate) struct RunService {
 struct Continuation {
     search: SearchPlan,
     finalization: FinalizationRequest,
-    #[serde(default = "legacy_run_languages")]
-    languages: Vec<Language>,
+    // Store the request and resolved placement, never the live graph or weights.
+    backend: ContinuationBackend,
 }
 
-fn legacy_run_languages() -> Vec<Language> {
-    vec![Language::Rust]
+#[derive(serde::Serialize, serde::Deserialize)]
+struct ContinuationBackend {
+    spec: RunSpec,
+    placement: Placement,
+}
+
+impl ContinuationBackend {
+    fn restore(
+        &self,
+        store: &Store,
+        plan: &SearchPlan,
+        roots: &[crate::store::BlobRef],
+        admitted: Option<&crate::run::learned::AdmittedRanker>,
+    ) -> Result<BackendPlan> {
+        let mut backend = BackendPlan::resolve(&self.spec, admitted, plan.planned_workers)
+            .map_err(|error| {
+                issue(
+                    crate::run::service::error_code(&error),
+                    "The original run backend is unavailable.",
+                )
+            })?;
+        if backend.bundle_digest != plan.bundle_digest || backend.placement != self.placement {
+            return Err(unavailable(
+                "Continuation requires the original backend placement and bundle.",
+            ));
+        }
+        let fit = roots
+            .iter()
+            .find(|blob| {
+                blob.sha256
+                    .iter()
+                    .map(|byte| format!("{byte:02x}"))
+                    .collect::<String>()
+                    == plan.matrix_sha256
+            })
+            .ok_or_else(|| unavailable("Original FIT blob is unavailable."))?;
+        if store.verified_blob_path(fit).map_err(io)? != plan.matrix_path {
+            return Err(unavailable("Original FIT path changed."));
+        }
+        backend
+            .bind_fit(&store.read_blob(fit).map_err(io)?, plan)
+            .map_err(io)?;
+        Ok(backend)
+    }
 }
 
 fn run_language_filter(
@@ -125,6 +174,7 @@ struct Prepared {
     holdout: Vec<u8>,
     fit_rows: Vec<AuditRowId>,
     holdout_rows: Vec<AuditRowId>,
+    backend: BackendPlan,
 }
 
 #[derive(Clone, Debug, serde::Deserialize)]
@@ -645,8 +695,22 @@ impl RunService {
         let matrix_bytes = jmat::encode(&table)
             .map_err(|_| invalid("Pinned training partition cannot be encoded."))?;
         let matrix_sha = hash(&matrix_bytes);
-        let matrix = jmat::Matrix::open(matrix_bytes)
+        jmat::Matrix::open(matrix_bytes.clone())
             .map_err(|_| invalid("Pinned training matrix is invalid."))?;
+        let matrix_dir = tempfile::Builder::new()
+            .prefix("q1-")
+            .tempdir_in(&self.home)
+            .map_err(io)?;
+        let matrix_path = matrix_dir.path().join("train.jmat");
+        std::fs::write(&matrix_path, &matrix_bytes).map_err(io)?;
+        #[allow(unused_mut)]
+        let mut worker_config = crate::worker::PoolConfig::new(self.executable.clone(), 1);
+        #[cfg(test)]
+        {
+            worker_config.fixture = true;
+            worker_config.fixture_test = Some("http::runs::tests::q1_worker_helper");
+        }
+        let worker_pool = crate::worker::WorkerPool::new(worker_config).map_err(io)?;
         let fold_spec = json!({
             "version": 1,
             "matrix_sha256": matrix_sha,
@@ -668,24 +732,38 @@ impl RunService {
         let mut attempts = Vec::with_capacity(request.budget as usize);
         let mut attempt_events = Vec::with_capacity(request.budget as usize);
         for number in 0..request.budget {
-            let worker_request = crate::worker::Request {
-                attempt: crate::worker::Attempt {
-                    run: run_id.clone(),
-                    round: 0,
-                    slot: number as u32,
-                    attempt: number,
+            let evaluated = q1_remaining_wall_ms(started_at.elapsed()).map_or_else(
+                || Err(crate::worker::WorkerFailure::Timeout),
+                |wall_ms| {
+                    let worker_request = crate::worker::Request {
+                        attempt: crate::worker::Attempt {
+                            run: run_id.clone(),
+                            round: 0,
+                            slot: 0,
+                            attempt: number + 1,
+                        },
+                        matrix_path: matrix_path.clone(),
+                        fold_spec: fold_spec.clone(),
+                        dsl: program.to_owned(),
+                        objective: json!("rmse"),
+                        seed: request.seed.wrapping_add(number),
+                        limits: crate::worker::Limits {
+                            wall_ms,
+                            rss_bytes: WORKER_RAM,
+                        },
+                    };
+                    let response = worker_pool.evaluate(&worker_request);
+                    match response.failure {
+                        Some(failure) => Err(failure),
+                        None => Ok(crate::worker::Scores {
+                            values: response.scores,
+                            fold_scores: response.fold_scores,
+                            predictions_digest: response.predictions_digest,
+                        }),
+                    }
                 },
-                matrix_path: PathBuf::new(),
-                fold_spec: fold_spec.clone(),
-                dsl: program.to_owned(),
-                objective: json!("rmse"),
-                seed: request.seed.wrapping_add(number),
-                limits: crate::worker::Limits {
-                    wall_ms: 600_000,
-                    rss_bytes: WORKER_RAM,
-                },
-            };
-            let attempt = match crate::discover::r#loop::evaluate_native(&worker_request, &matrix) {
+            );
+            let attempt = match evaluated {
                 Ok(scores)
                     if scores.fold_scores.len() >= 2
                         && scores
@@ -937,17 +1015,14 @@ impl RunService {
         if spec.task != Task::Regression {
             return Err(unavailable("This run backend requires task=regression."));
         }
-        let device = jope_runtime::backend::DeviceRequest::parse(&spec.device)
-            .ok_or_else(|| invalid(&format!("Unknown device {:?}.", spec.device)))?;
-        // This bounded run instantiates the native CPU evaluator. Select that
-        // actual backend before reading data or publishing any run effects.
-        jope_runtime::backend::select(device).map_err(|error| {
-            issue(
-                ErrorCode::BackendUnavailable,
-                format!("{}: {error:#}", ErrorCode::BackendUnavailable),
-            )
-        })?;
-        if spec.landmarks != LandmarkMode::None {
+        let mut backend =
+            BackendPlan::resolve(spec, self.activity.admitted_ranker(), 1).map_err(|error| {
+                issue(
+                    crate::run::service::error_code(&error),
+                    "The requested run backend could not be prepared.",
+                )
+            })?;
+        if !backend.learned() && spec.landmarks != LandmarkMode::None {
             return Err(unavailable("This run backend requires landmarks=none."));
         }
         if spec.test_dataset.is_some()
@@ -965,12 +1040,6 @@ impl RunService {
                 "This run backend currently qualifies the rmse regression objective.",
             ));
         }
-        let (guidance, warnings) = resolve_unqualified(
-            spec.guidance,
-            spec.landmarks,
-            GuidanceUnavailableReason::Capability,
-        )
-        .map_err(|code| issue(code, "Requested guidance is unavailable."))?;
         if !spec.split.holdout_fraction.is_finite()
             || !(0.0..1.0).contains(&spec.split.holdout_fraction)
             || spec.split.holdout_fraction == 0.0
@@ -1132,7 +1201,8 @@ impl RunService {
             &serde_json::to_vec(
                 &json!({"backend":"cpu-ridge-seeded-rmse/v1", "spec":normalized,
             "dataset":dataset.csv, "fit":hash(&fit), "binary":self.binary, "timeout_ms":timeout,
-            "worker_ram":WORKER_RAM, "workers":1, "estimates":estimates}),
+            "worker_ram":WORKER_RAM, "workers":1, "estimates":estimates,
+            "ranker_bundle":backend.bundle_digest,"placement":backend.placement}),
             )
             .map_err(io)?,
         );
@@ -1142,21 +1212,21 @@ impl RunService {
                 "Plan digest changed; request a fresh dry-run plan.",
             ));
         }
-        let public: Plan = serde_json::from_value(json!({"plan_digest":plan_digest,
+        let mut public: Plan = serde_json::from_value(json!({"plan_digest":plan_digest,
             "task":{"value":"regression","inferred":false,"reason":"Explicit regression task."},
             "objective":{"name":"rmse","digest":jope_runtime::fitness::Fitness::parse("rmse").map_err(io)?.identity().map_err(io)?,"direction":"minimize","fitting":"squared_error"},
             "rows":{"total":table.rows.len().to_string(),"fit":fit_count.to_string(),"holdout":holdout_ids.len().to_string(),"test":null},
             "effort":{"name":spec.effort,"evaluations":effort.evaluations.to_string(),"wall_seconds":effort.wall_seconds.to_string(),"cv_folds":effort.rung1_folds,"rounds_in_flight":1},
-            "guidance":guidance,"landmarks":{"mode":"none","sample_rows":0},
+            "guidance":backend.guidance,"landmarks":{"mode":spec.landmarks,"sample_rows":0},
             "languages":{"requested":spec.languages,"excluded_operations":language_filter.excluded_ops(),"intersection_empty":false},
-            "placement":{"dope":"none","ranker":"heuristic","evaluation":"cpu","workers":1},
-            "limits":{"eval_timeout_s":timeout.div_ceil(1000),"worker_rss_bytes":WORKER_RAM.to_string()},"estimates":estimates,"warnings":warnings})).map_err(io)?;
+            "placement":backend.placement,
+            "limits":{"eval_timeout_s":timeout.div_ceil(1000),"worker_rss_bytes":WORKER_RAM.to_string()},"estimates":estimates,"warnings":backend.warnings})).map_err(io)?;
         let search = SearchPlan {
             run_id: format!("run_{}", ulid::Ulid::new()).parse().map_err(io)?,
             dataset_id: spec.dataset.clone(),
             problem_digest: hash(&serde_json::to_vec(&json!({"spec":normalized,"csv_sha256":dataset.csv.sha256,
                 "fit_sha256":hash(&fit),"objective_digest":public.objective.digest,"split":"public-run/fit-v1"})).map_err(io)?),
-            bundle_digest: hash(b"cpu-native-no-learned-bundle/v1"),
+            bundle_digest: backend.bundle_digest.clone(),
             binary_version: self.binary.clone(),
             matrix_path: PathBuf::new(),
             matrix_sha256: hash(&fit),
@@ -1174,6 +1244,10 @@ impl RunService {
             times: None,
             gap_rows: 0,
         };
+        backend
+            .bind_fit(&fit, &search)
+            .map_err(|_| invalid("Unable to prepare numeric FIT landmarks."))?;
+        public.landmarks.sample_rows = backend.landmark_rows as u32;
         let rows = |ids: Vec<usize>| {
             ids.into_iter()
                 .map(|row| AuditRowId {
@@ -1189,6 +1263,7 @@ impl RunService {
             holdout,
             fit_rows: rows(fit_ids),
             holdout_rows: rows(holdout_ids),
+            backend,
         })
     }
 
@@ -1254,8 +1329,7 @@ impl RunService {
                 rows: prepared.holdout_rows,
             },
             test: None,
-            // Finalize both models once: default exports use FIT+HOLDOUT, while
-            // explicit FIT exports retain the model used to score HOLDOUT.
+            // Publish both genuine models once; exports select their recorded fit mode.
             refit: Refit::FitHoldout,
             model_root: self.home.join("models"),
             scratch_root: self.home.join("run-scratch"),
@@ -1267,7 +1341,10 @@ impl RunService {
         let context = Continuation {
             search: prepared.search.clone(),
             finalization: request.clone(),
-            languages: spec.languages.clone(),
+            backend: ContinuationBackend {
+                spec,
+                placement: prepared.backend.placement.clone(),
+            },
         };
         let persisted = self.store.transaction(|tx| {
             tx.put(
@@ -1281,7 +1358,12 @@ impl RunService {
         if let Err(error) = persisted {
             return response(&io(error));
         }
-        let sender = match self.worker_sender(_pub06_values, false, spec.languages.clone()) {
+        let sender = match self.worker_sender(
+            _pub06_values,
+            false,
+            prepared.backend,
+            context.backend.spec.languages.clone(),
+        ) {
             Ok(sender) => sender,
             Err(error) => return response(&error),
         };
@@ -1310,6 +1392,7 @@ impl RunService {
         self: &Arc<Self>,
         _pub06_values: Pub06Injection,
         explicit_continue: bool,
+        backend: BackendPlan,
         languages: Vec<Language>,
     ) -> Result<mpsc::SyncSender<(Discovery, FinalizationRequest)>> {
         let (sender, receiver) = mpsc::sync_channel::<(Discovery, FinalizationRequest)>(1);
@@ -1322,6 +1405,12 @@ impl RunService {
         };
         #[cfg(not(all(feature = "failpoints", debug_assertions)))]
         let run_space = CpuRunSpace { allowed };
+        let learned = backend.learned();
+        let admission = backend.admission;
+        let run_space = BackendSpace {
+            native: run_space,
+            learned,
+        };
         let activity = self.activity.begin_run();
         if let Err(error) = std::thread::Builder::new()
             .name("jope-run".into())
@@ -1329,19 +1418,17 @@ impl RunService {
                 let _activity = activity;
                 if let Ok((mut discovery, request)) = receiver.recv() {
                     let result = (|| -> anyhow::Result<()> {
-                        let executor = ProcessExecutor::new(
+                        let process = ProcessExecutor::new(
                             &owner.executable,
                             1,
                             &owner.home.join("worker-scratch"),
                         )?;
+                        let executor = BackendExecutor {
+                            inner: &process,
+                            learned,
+                        };
                         while discovery.completed().is_none() {
-                            discovery.advance(
-                                &run_space,
-                                &HeuristicAdmission,
-                                &executor,
-                                1,
-                                usize::MAX,
-                            )?;
+                            discovery.advance(&run_space, &admission, &executor, 1, usize::MAX)?;
                         }
                         let finalizer = Finalizer::with_journal(
                             Arc::clone(&owner.store),
@@ -1398,14 +1485,14 @@ impl RunService {
                     "Continue requires an idle backend and a paused run.",
                 ));
             }
-            let context = self
+            let stored_context = self
                 .store
                 .get(&continuation_key(&run))
                 .map_err(io)?
                 .ok_or_else(|| {
                     unavailable("Original continuation context is unavailable for this run.")
                 })?;
-            let context: Continuation = serde_json::from_value(context.data).map_err(io)?;
+            let context: Continuation = serde_json::from_value(stored_context.data).map_err(io)?;
             if context.search.run_id != run
                 || context.finalization.run_id != run
                 || context.search.binary_version != self.binary
@@ -1414,11 +1501,23 @@ impl RunService {
                     "Continuation requires the original binary and run identity.",
                 ));
             }
+            // Rebuild only the original backend, retaining the checkpoint plan.
+            let backend = context.backend.restore(
+                &self.store,
+                &context.search,
+                &stored_context.blobs,
+                self.activity.admitted_ranker(),
+            )?;
             #[cfg(all(feature = "failpoints", debug_assertions))]
             let injection = None;
             #[cfg(not(all(feature = "failpoints", debug_assertions)))]
             let injection = ();
-            let sender = self.worker_sender(injection, true, context.languages.clone())?;
+            let sender = self.worker_sender(
+                injection,
+                true,
+                backend,
+                context.backend.spec.languages.clone(),
+            )?;
             let discovery = Discovery::continue_command(
                 Arc::clone(&self.store),
                 context.search,
@@ -1746,6 +1845,43 @@ pub(super) async fn list(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    #[ignore = "Q1 worker subprocess target; invoked by the worker process supervisor"]
+    fn q1_worker_helper() {
+        use std::io::Write as _;
+
+        assert_eq!(std::env::var("JOPE_WORKER_FIXTURE").unwrap(), "worker");
+        let mut stdout = std::io::stdout().lock();
+        writeln!(stdout, "WORKER_FIXTURE_READY").unwrap();
+        stdout.flush().unwrap();
+        drop(stdout);
+        crate::worker::serve(1, |request, matrix| {
+            crate::discover::r#loop::evaluate_native(request, matrix)
+        })
+        .unwrap();
+    }
+
+    #[test]
+    fn q1_attempt_timeout_is_bounded_by_one_total_wall_budget() {
+        assert_eq!(
+            q1_remaining_wall_ms(std::time::Duration::ZERO),
+            Some(600_000)
+        );
+        assert_eq!(
+            q1_remaining_wall_ms(std::time::Duration::from_millis(1250)),
+            Some(598_750)
+        );
+        assert_eq!(
+            q1_remaining_wall_ms(Q1_WALL_BUDGET - std::time::Duration::from_millis(1)),
+            Some(1)
+        );
+        assert_eq!(q1_remaining_wall_ms(Q1_WALL_BUDGET), None);
+        assert_eq!(
+            q1_remaining_wall_ms(Q1_WALL_BUDGET + std::time::Duration::from_secs(1)),
+            None
+        );
+    }
     use crate::{
         dataset::register,
         engine::InProcessEngine,
@@ -1782,6 +1918,121 @@ mod tests {
             "objective":"rmse","effort":"fast","budget":{"evaluations":"4","wall_seconds":"30"},"landmarks":"none","guidance":"heuristic",
             "languages":["rust"],"require_all_languages":true,"device":"cpu","seed":"73","dry_run":true,"plan_digest":null})).unwrap();
         (directory, engine, spec)
+    }
+
+    fn continuation_backend_fixture() -> (
+        tempfile::TempDir,
+        InProcessEngine,
+        ContinuationBackend,
+        SearchPlan,
+        crate::store::BlobRef,
+    ) {
+        let (directory, engine, spec) = fixture();
+        let dataset: RegisteredDataset = serde_json::from_value(
+            engine
+                .store()
+                .get(&RecordKey::Dataset(spec.dataset.clone()))
+                .unwrap()
+                .unwrap()
+                .data,
+        )
+        .unwrap();
+        let fit = dataset.matrix;
+        let backend = BackendPlan::resolve(&spec, None, 1).unwrap();
+        let plan = SearchPlan {
+            run_id: "run_01ARZ3NDEKTSV4RRFFQ69G5FAV".parse().unwrap(),
+            dataset_id: spec.dataset.clone(),
+            problem_digest: "a".repeat(64),
+            bundle_digest: backend.bundle_digest,
+            binary_version: "continuation-guard-test".into(),
+            matrix_path: engine.store().verified_blob_path(&fit).unwrap(),
+            matrix_sha256: hash(&engine.store().read_blob(&fit).unwrap()),
+            target: spec.target.clone(),
+            features: (0..21).map(|i| format!("x{i}")).collect(),
+            objective: "rmse".into(),
+            seed: spec.seed.0,
+            planned_workers: 1,
+            effort: spec.effort,
+            evaluations: 4,
+            wall_seconds: 30,
+            evaluation_wall_ms: 1000,
+            evaluation_rss_bytes: WORKER_RAM,
+            groups: None,
+            times: None,
+            gap_rows: 0,
+        };
+        let context = ContinuationBackend {
+            spec,
+            placement: backend.placement,
+        };
+        (directory, engine, context, plan, fit)
+    }
+
+    #[test]
+    fn continuation_restores_native_backend_from_persisted_request_without_replanning() {
+        let (_directory, engine, context, plan, fit) = continuation_backend_fixture();
+        let context: ContinuationBackend =
+            serde_json::from_value(serde_json::to_value(context).unwrap()).unwrap();
+        let original = plan.clone();
+        let restored = context
+            .restore(engine.store(), &plan, &[fit], None)
+            .unwrap();
+        assert!(!restored.learned());
+        assert_eq!(restored.placement, context.placement);
+        assert_eq!(restored.bundle_digest, original.bundle_digest);
+        assert_eq!(plan, original);
+    }
+
+    #[test]
+    fn learned_continuation_without_admitted_capability_never_falls_back_to_native() {
+        let (_directory, engine, mut context, plan, fit) = continuation_backend_fixture();
+        context.spec.guidance = Guidance::Learned;
+        context.spec.landmarks = LandmarkMode::Full;
+        let error = context
+            .restore(engine.store(), &plan, &[fit], None)
+            .err()
+            .unwrap();
+        assert_eq!(error.code, ErrorCode::CapabilityUnavailable);
+    }
+
+    #[test]
+    fn continuation_refuses_changed_backend_identity_and_tampered_fit() {
+        let (_directory, engine, mut context, mut plan, fit) = continuation_backend_fixture();
+        context.placement.workers = 2;
+        assert_eq!(
+            context
+                .restore(engine.store(), &plan, std::slice::from_ref(&fit), None)
+                .err()
+                .unwrap()
+                .code,
+            ErrorCode::CapabilityUnavailable
+        );
+        context.placement.workers = 1;
+        let original = plan.clone();
+        plan.bundle_digest = "b".repeat(64);
+        assert_eq!(
+            context
+                .restore(engine.store(), &plan, std::slice::from_ref(&fit), None)
+                .err()
+                .unwrap()
+                .code,
+            ErrorCode::CapabilityUnavailable
+        );
+        plan = original;
+        plan.matrix_path = plan.matrix_path.with_extension("changed");
+        assert_eq!(
+            context
+                .restore(engine.store(), &plan, std::slice::from_ref(&fit), None)
+                .err()
+                .unwrap()
+                .code,
+            ErrorCode::CapabilityUnavailable
+        );
+        plan.matrix_path = engine.store().verified_blob_path(&fit).unwrap();
+        std::fs::write(&plan.matrix_path, b"corrupted owned TRAIN fixture").unwrap();
+        assert!(context
+            .restore(engine.store(), &plan, &[fit], None)
+            .is_err());
     }
 
     fn app(engine: &InProcessEngine) -> axum::Router {

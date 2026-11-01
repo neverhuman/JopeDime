@@ -1,0 +1,104 @@
+{
+ "dope": {
+  "CUDA_initialized": false,
+  "after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "device": "cpu",
+  "optimizer_updates": 0
+ },
+ "host": "xbabe1",
+ "kind": "supervised zero-soup-eval smoke (R882 only, exact regression)",
+ "monitor_sha256": "83f25b9532613a81dd20e3479d7ffd90a39cce94759911526e387febda00101c",
+ "nice": 19,
+ "optimizer_updates": 0,
+ "regression": {
+  "contexts_matched": 91,
+  "max_abs_error": 0.0,
+  "mean": 1.1377941898164525,
+  "status": "PASS"
+ },
+ "runner_guards": {
+  "end": {
+   "disk_free_bytes": 113520177152,
+   "disk_used_fraction": 0.9423,
+   "load1": 13.80078125,
+   "scratch_bytes": 113352080
+  },
+  "launch": {
+   "disk_free_bytes": 116235001856,
+   "disk_used_fraction": 0.9409,
+   "load1": 13.4150390625,
+   "scratch_bytes": 68225961
+  }
+ },
+ "runner_max_rss_kib": 994512,
+ "runner_sha256": "d40ca122cc9a8f89f770567759ee4170b0d6241c3451a81a037feda1ac6e4c71",
+ "runner_wall_seconds": 325.9622548632324,
+ "soup_arms_scored": 0,
+ "status": "PASS",
+ "structure": {
+  "adapter_l2_distance_from_R882": {
+   "A025": 0.036861935252646874,
+   "A075": 0.11058581488221596,
+   "MID": 0.07372387457435556,
+   "SOUP4": 0.054682807783285915
+  },
+  "non_trainable_source": "R882 (unchanged)",
+  "non_trainable_tensors_differing_across_inputs": [],
+  "soup_sha256": {
+   "A025": "286b558e638afab81675dab0c6ad3d1e981399d9431acda8c0e57db5c2040b3e",
+   "A075": "86631e542cba34f5e0a2789142324109126edfee3c1203969dd01e2a0ecb6984",
+   "MID": "c5ecae109175c98b1e6d2349814af53d510ddb1e3f7a9987297912cd8a85da2e",
+   "R882": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+   "SOUP4": "63be9c2d2f0c04d942af261e76cd564c6494416fbfc384daac891aa318995ad1"
+  },
+  "trainable_parameters": 29211,
+  "trainable_tensors": 47,
+  "weights": {
+   "A025": {
+    "782": 0.25,
+    "882": 0.75
+   },
+   "A075": {
+    "782": 0.75,
+    "882": 0.25
+   },
+   "MID": {
+    "782": 0.5,
+    "882": 0.5
+   },
+   "R882": {
+    "882": 1.0
+   },
+   "SOUP4": {
+    "782": 0.25,
+    "785": 0.25,
+    "859": 0.25,
+    "882": 0.25
+   }
+  }
+ },
+ "superseded": "the earlier 2026-11-01T03:3x zero-eval smoke (soup construction only, unsupervised) is replaced by this one",
+ "supervisor": {
+  "exit_status": 0,
+  "limits": {
+   "disk_free_bytes": 40000000000,
+   "disk_used": 0.95,
+   "load1": 85,
+   "mem_available": 12884901888,
+   "rss_bytes": 6000000000,
+   "scratch_bytes": 1000000000,
+   "threads": 4
+  },
+  "peak": {
+   "disk_used": 0.94258,
+   "load": 16.16357421875,
+   "rss": 1039175680,
+   "samples": 1135,
+   "scratch": 118501303,
+   "threads": 2
+  },
+  "wall_seconds": 329.5716465078294
+ },
+ "torch_threads": 1
+}

@@ -3672,6 +3672,270 @@
       },
       "sha256": "cb9f8a3bdd33cee1dad4fbf10bdc7476c2d26939c79872bdf1755b029f4fb7f5"
     },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/anchor_cache.py": {
+      "bytes": 2520,
+      "sha256": "67d0fbc05c8ef0b61f253c0fe77a59f7b0dfce2973e256d6645f9b4100c60d9f",
+      "classification": {
+        "role": "research",
+        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/custody.py": {
+      "bytes": 2549,
+      "sha256": "1522d9019b0b4265511ab9cc2a56b1d3d35df6765ffa4aee81438ade3c729b6c",
+      "classification": {
+        "role": "research",
+        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/monitor.py": {
+      "bytes": 6392,
+      "sha256": "80b7d5a7787e7d49488e9fdd39ab51730f01f2fa3c4e8549b78df9f936cf926b",
+      "classification": {
+        "role": "research",
+        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/runner.py": {
+      "bytes": 21676,
+      "sha256": "a3b0e5be9597b7680dd25e10675b8ef785ca75109041e0978a9cc5d9350e23f6",
+      "classification": {
+        "role": "research",
+        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/science.py": {
+      "bytes": 8876,
+      "sha256": "11cf7b2991fd0e46fe712ddad980f3005b4add4d6cd96461d6aa71313536f1ad",
+      "classification": {
+        "role": "research",
+        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h131_family_bag_soup/train_reader.py": {
+      "bytes": 3083,
+      "sha256": "f58f4c3290db5cd5b612fac7c55c620658364c98cbc7856a1297d91305b326ab",
+      "classification": {
+        "role": "research",
+        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/constructor_preflight.py": {
+      "bytes": 5448,
+      "sha256": "73f6105a8586e7f1101bf72587a2ce6e2c8ff4d1a1fe382ad4137f153c453d01",
+      "classification": {
+        "role": "research",
+        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/gbm_preflight.py": {
+      "bytes": 5769,
+      "sha256": "d6bacacb91f5bb05ecbd8e8cc2bf474ab22d1c1683f2f51f290241a72dbc31e6",
+      "classification": {
+        "role": "research",
+        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/launcher.py": {
+      "bytes": 1383,
+      "sha256": "3e101d24ba691812551784b1dada528ba4c63d3a262d69e036e7520e5a75bd82",
+      "classification": {
+        "role": "research",
+        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/monitor.py": {
+      "bytes": 9634,
+      "sha256": "868ad9649f8b5c9e3b8dd02fc387cce3514cb8da98b5217e4761c5e901c3be26",
+      "classification": {
+        "role": "research",
+        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/runner.py": {
+      "bytes": 13105,
+      "sha256": "aa73463c9866cf8e4ae50ebef64ebe78a06d25c29cdc95d399999462fc8c9ac9",
+      "classification": {
+        "role": "research",
+        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/science.py": {
+      "bytes": 6019,
+      "sha256": "bba1dc69e228bac25e07cc1d0582eecfa6d9f15f1cfba53914201bd6fe0ad77e",
+      "classification": {
+        "role": "research",
+        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
+      }
+    },
+    "python:research/flywheel_selfplay/h138_trajectory_swa/model_ops.py": {
+      "bytes": 2198,
+      "sha256": "10b71f05909318e7ef43ddde7f2836afd307dfa2977376930f95c458ffc94db7",
+      "classification": {
+        "role": "research",
+        "reason": "H138 owner-directed zero-update retained-trajectory averaging, native inference and bounded external CPU controls; not product qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h138_trajectory_swa/monitor.py": {
+      "bytes": 10055,
+      "sha256": "c26f67cedfe41b3185fae7f7dc75f7e9a41f79cf1d0872ed61de928f4f7860eb",
+      "classification": {
+        "role": "research",
+        "reason": "H138 owner-directed zero-update retained-trajectory averaging, native inference and bounded external CPU controls; not product qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h138_trajectory_swa/preflight.py": {
+      "bytes": 3926,
+      "sha256": "7062d02daba55ece1dd27564ac2380cebb8849357cc04de52b4d9d4895c8c7bc",
+      "classification": {
+        "role": "research",
+        "reason": "H138 owner-directed zero-update retained-trajectory averaging, native inference and bounded external CPU controls; not product qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h138_trajectory_swa/runner.py": {
+      "bytes": 15333,
+      "sha256": "0963899439de0d3d1155789520d3202d05d37d70aa83a0da5c5b15834ff905ff",
+      "classification": {
+        "role": "research",
+        "reason": "H138 owner-directed zero-update retained-trajectory averaging, native inference and bounded external CPU controls; not product qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h138_trajectory_swa/science.py": {
+      "bytes": 9074,
+      "sha256": "2e855f4f6b40dc196900e7f9608170cce125b9e6b0fabe9b91095d8dfc46f003",
+      "classification": {
+        "role": "research",
+        "reason": "H138 owner-directed zero-update retained-trajectory averaging, native inference and bounded external CPU controls; not product qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h144_reg_sweep/monitor.py": {
+      "bytes": 6038,
+      "sha256": "b777fe680a0266617d646a2e29203234b165febc4049051d24e2f036b2e0b5f3",
+      "classification": {
+        "role": "research",
+        "reason": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h144_reg_sweep/runner.py": {
+      "bytes": 19035,
+      "sha256": "ec15b5a127c0aee5323d08798678ab930a0f968b4a02696853a429a4056fe7fd",
+      "classification": {
+        "role": "research",
+        "reason": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h144_reg_sweep/runtime.py": {
+      "bytes": 6220,
+      "sha256": "24d4eac98da23791f706341fd6c7c3f54cc5f693b0b435852049b319dd996ecc",
+      "classification": {
+        "role": "research",
+        "reason": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h144_reg_sweep/science.py": {
+      "bytes": 5131,
+      "sha256": "5aa07f6b8a5e2b5502afa1d5680fe1bd6a29f3b5994bd8d0bb5305f03727918c",
+      "classification": {
+        "role": "research",
+        "reason": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h149_wd_dose/monitor.py": {
+      "bytes": 5731,
+      "sha256": "71bcdb983c605cb1c4adfa4c39e62bd1fee2699a8a5f2f54581deabd24c01a51",
+      "classification": {
+        "role": "research",
+        "reason": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h149_wd_dose/runner.py": {
+      "bytes": 19385,
+      "sha256": "2a1b5108b24433f4d73077629a69ec4e1d71791b10cb9c374972a34f0c372a24",
+      "classification": {
+        "role": "research",
+        "reason": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h149_wd_dose/runtime.py": {
+      "bytes": 6220,
+      "sha256": "ab50da32a19751d1f8b2d75e85b272eb77821c2d0ab3817a5ef6dcd8358e48d6",
+      "classification": {
+        "role": "research",
+        "reason": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h149_wd_dose/science.py": {
+      "bytes": 6139,
+      "sha256": "2c55bbdeeec3d1f31be25e0cef2896ac44196d9b73761ff1cca79e4cf940612e",
+      "classification": {
+        "role": "research",
+        "reason": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h151_lookahead_drift_control/monitor.py": {
+      "bytes": 5762,
+      "sha256": "e4ec63641ab3eef4e1fec6d7d98c05a4b60a1321e1d69d86ee0e88e978eb17f7",
+      "classification": {
+        "role": "research",
+        "reason": "H151 owner-directed Lookahead drift-matched control suite: median-seed equal-family bootstrap, inclusive [0.85, 1.15] 15% drift-matching manipulation gate, three-seed r882 advancement and Holm-four gates across all executed arms, Lookahead k=5 alpha=0.5 schedule, input audit, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h151_lookahead_drift_control/runner.py": {
+      "bytes": 22586,
+      "sha256": "88b25f0cd44b2e4907ea598bc30b93f7273092ae74dcfd316836591ccc612760",
+      "classification": {
+        "role": "research",
+        "reason": "H151 owner-directed Lookahead drift-matched control suite: median-seed equal-family bootstrap, inclusive [0.85, 1.15] 15% drift-matching manipulation gate, three-seed r882 advancement and Holm-four gates across all executed arms, Lookahead k=5 alpha=0.5 schedule, input audit, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py": {
+      "bytes": 7368,
+      "sha256": "2fb2a351de2d58da3ff985fab7870c6e56783c685d30800d4b625b8543d0456b",
+      "classification": {
+        "role": "research",
+        "reason": "H151 owner-directed Lookahead drift-matched control suite: median-seed equal-family bootstrap, inclusive [0.85, 1.15] 15% drift-matching manipulation gate, three-seed r882 advancement and Holm-four gates across all executed arms, Lookahead k=5 alpha=0.5 schedule, input audit, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h151_lookahead_drift_control/science.py": {
+      "bytes": 8414,
+      "sha256": "3e38deb3a719403ac1a5c4fdf8ffe6a73d586697e57dd31db2f5a27d26eb6905",
+      "classification": {
+        "role": "research",
+        "reason": "H151 owner-directed Lookahead drift-matched control suite: median-seed equal-family bootstrap, inclusive [0.85, 1.15] 15% drift-matching manipulation gate, three-seed r882 advancement and Holm-four gates across all executed arms, Lookahead k=5 alpha=0.5 schedule, input audit, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h154_trajectory_ema_swa/monitor.py": {
+      "bytes": 5959,
+      "sha256": "2ee2bb78a03da2b5e42b68e2ec4448bc331b365f89730482e3a4fb3941e91a33",
+      "classification": {
+        "role": "research",
+        "reason": "H154 owner-directed trajectory EMA (0.99/0.995/0.999) and uniform SWA (K=5/10/20) weight averaging with in-fold DL-Train RMS stat recalibration: median-seed equal-family bootstrap, [0.85, 1.15] output-scale recalibration, 7-arm Holm vs r882 and 6-arm Holm vs CTRL, dose manipulation gate, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h154_trajectory_ema_swa/runner.py": {
+      "bytes": 27294,
+      "sha256": "d4ef45421e36d62347ed8cfff70c121f1c5b6401e3dc2416de0778c5437b9bc2",
+      "classification": {
+        "role": "research",
+        "reason": "H154 owner-directed trajectory EMA (0.99/0.995/0.999) and uniform SWA (K=5/10/20) weight averaging with in-fold DL-Train RMS stat recalibration: median-seed equal-family bootstrap, [0.85, 1.15] output-scale recalibration, 7-arm Holm vs r882 and 6-arm Holm vs CTRL, dose manipulation gate, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py": {
+      "bytes": 14177,
+      "sha256": "39c6c6e2a662c623e800bbb8b578f0e722579bf2f52558352c84ea640d0b546a",
+      "classification": {
+        "role": "research",
+        "reason": "H154 owner-directed trajectory EMA (0.99/0.995/0.999) and uniform SWA (K=5/10/20) weight averaging with in-fold DL-Train RMS stat recalibration: median-seed equal-family bootstrap, [0.85, 1.15] output-scale recalibration, 7-arm Holm vs r882 and 6-arm Holm vs CTRL, dose manipulation gate, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h154_trajectory_ema_swa/science.py": {
+      "bytes": 10847,
+      "sha256": "bcc2dea8794a7d595c018443fed8a2792cc809ed569f54ae14be7244ec5827e6",
+      "classification": {
+        "role": "research",
+        "reason": "H154 owner-directed trajectory EMA (0.99/0.995/0.999) and uniform SWA (K=5/10/20) weight averaging with in-fold DL-Train RMS stat recalibration: median-seed equal-family bootstrap, [0.85, 1.15] output-scale recalibration, 7-arm Holm vs r882 and 6-arm Holm vs CTRL, dose manipulation gate, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification."
+      }
+    },
     "python:research/flywheel_selfplay/h53/audit.py": {
       "bytes": 14374,
       "classification": {
@@ -3808,172 +4072,28 @@
       },
       "sha256": "15e0476ef50cebbe33421627c2a4a0292b14d0d8df6b60cd7c6331e23c23379f"
     },
-    "python:research/flywheel_selfplay/h131_family_bag_soup/anchor_cache.py": {
-      "bytes": 2520,
-      "sha256": "67d0fbc05c8ef0b61f253c0fe77a59f7b0dfce2973e256d6645f9b4100c60d9f",
+    "python:research/h156/analysis.py": {
+      "bytes": 11618,
+      "sha256": "916146656723f48d6fe619d893a576dc9b2059e086555d3148b7f78220bad3f6",
       "classification": {
         "role": "research",
-        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
+        "reason": "H156 owner-directed 5-fold family cross-fit early stopping and {0.5x, 1x, 2x} capacity sweep continuation from r882: nested family isolation, durable selection lock before outer assessment, dual 1219-ctx H145 train-only and 91-ctx DL-Val Elo/bootstrap reporting, bytewise frozen DOPE/anchor state, and bounded resources. Research only; no product or sealed-test qualification."
       }
     },
-    "python:research/flywheel_selfplay/h131_family_bag_soup/custody.py": {
-      "bytes": 2549,
-      "sha256": "1522d9019b0b4265511ab9cc2a56b1d3d35df6765ffa4aee81438ade3c729b6c",
+    "python:research/h156/monitor.py": {
+      "bytes": 6390,
+      "sha256": "7b98c0dfd8ad7eaeb69ec7c47b623ebad88e018efb3c01d2738157c4d0b9e55a",
       "classification": {
         "role": "research",
-        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
+        "reason": "H156 owner-directed 5-fold family cross-fit early stopping and {0.5x, 1x, 2x} capacity sweep continuation from r882: nested family isolation, durable selection lock before outer assessment, dual 1219-ctx H145 train-only and 91-ctx DL-Val Elo/bootstrap reporting, bytewise frozen DOPE/anchor state, and bounded resources. Research only; no product or sealed-test qualification."
       }
     },
-    "python:research/flywheel_selfplay/h131_family_bag_soup/monitor.py": {
-      "bytes": 6392,
-      "sha256": "80b7d5a7787e7d49488e9fdd39ab51730f01f2fa3c4e8549b78df9f936cf926b",
+    "python:research/h156/run.py": {
+      "bytes": 39300,
+      "sha256": "211cdcde726f2c309ca81a0ad2e3661fb16ba2539eaa2da298b59a0d2fa20faa",
       "classification": {
         "role": "research",
-        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
-      }
-    },
-    "python:research/flywheel_selfplay/h131_family_bag_soup/runner.py": {
-      "bytes": 21676,
-      "sha256": "a3b0e5be9597b7680dd25e10675b8ef785ca75109041e0978a9cc5d9350e23f6",
-      "classification": {
-        "role": "research",
-        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
-      }
-    },
-    "python:research/flywheel_selfplay/h131_family_bag_soup/science.py": {
-      "bytes": 8876,
-      "sha256": "11cf7b2991fd0e46fe712ddad980f3005b4add4d6cd96461d6aa71313536f1ad",
-      "classification": {
-        "role": "research",
-        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
-      }
-    },
-    "python:research/flywheel_selfplay/h131_family_bag_soup/train_reader.py": {
-      "bytes": 3083,
-      "sha256": "f58f4c3290db5cd5b612fac7c55c620658364c98cbc7856a1297d91305b326ab",
-      "classification": {
-        "role": "research",
-        "reason": "H131 owner-directed bounded CPU family-bootstrap adapter-soup research source, not a product runtime or qualification claim."
-      }
-    },
-    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/monitor.py": {
-      "bytes": 9634,
-      "sha256": "868ad9649f8b5c9e3b8dd02fc387cce3514cb8da98b5217e4761c5e901c3be26",
-      "classification": {
-        "role": "research",
-        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
-      }
-    },
-    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/runner.py": {
-      "bytes": 13105,
-      "sha256": "aa73463c9866cf8e4ae50ebef64ebe78a06d25c29cdc95d399999462fc8c9ac9",
-      "classification": {
-        "role": "research",
-        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
-      }
-    },
-    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/science.py": {
-      "bytes": 6019,
-      "sha256": "bba1dc69e228bac25e07cc1d0582eecfa6d9f15f1cfba53914201bd6fe0ad77e",
-      "classification": {
-        "role": "research",
-        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
-      }
-    },
-    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/constructor_preflight.py": {
-      "bytes": 5448,
-      "sha256": "73f6105a8586e7f1101bf72587a2ce6e2c8ff4d1a1fe382ad4137f153c453d01",
-      "classification": {
-        "role": "research",
-        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
-      }
-    },
-    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/gbm_preflight.py": {
-      "bytes": 5769,
-      "sha256": "d6bacacb91f5bb05ecbd8e8cc2bf474ab22d1c1683f2f51f290241a72dbc31e6",
-      "classification": {
-        "role": "research",
-        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
-      }
-    },
-    "python:research/flywheel_selfplay/h135_blend025_flywheel_val/launcher.py": {
-      "bytes": 1383,
-      "sha256": "3e101d24ba691812551784b1dada528ba4c63d3a262d69e036e7520e5a75bd82",
-      "classification": {
-        "role": "research",
-        "reason": "H135 owner-directed bounded CPU native-validation blend research source, not a product runtime or qualification claim."
-      }
-    },
-    "python:research/flywheel_selfplay/h138_trajectory_swa/model_ops.py": {
-      "bytes": 2198,
-      "sha256": "10b71f05909318e7ef43ddde7f2836afd307dfa2977376930f95c458ffc94db7",
-      "classification": {
-        "role": "research",
-        "reason": "H138 owner-directed zero-update retained-trajectory averaging, native inference and bounded external CPU controls; not product qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h138_trajectory_swa/monitor.py": {
-      "bytes": 10055,
-      "sha256": "c26f67cedfe41b3185fae7f7dc75f7e9a41f79cf1d0872ed61de928f4f7860eb",
-      "classification": {
-        "role": "research",
-        "reason": "H138 owner-directed zero-update retained-trajectory averaging, native inference and bounded external CPU controls; not product qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h138_trajectory_swa/preflight.py": {
-      "bytes": 3926,
-      "sha256": "7062d02daba55ece1dd27564ac2380cebb8849357cc04de52b4d9d4895c8c7bc",
-      "classification": {
-        "role": "research",
-        "reason": "H138 owner-directed zero-update retained-trajectory averaging, native inference and bounded external CPU controls; not product qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h138_trajectory_swa/runner.py": {
-      "bytes": 15333,
-      "sha256": "0963899439de0d3d1155789520d3202d05d37d70aa83a0da5c5b15834ff905ff",
-      "classification": {
-        "role": "research",
-        "reason": "H138 owner-directed zero-update retained-trajectory averaging, native inference and bounded external CPU controls; not product qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h138_trajectory_swa/science.py": {
-      "bytes": 9074,
-      "sha256": "2e855f4f6b40dc196900e7f9608170cce125b9e6b0fabe9b91095d8dfc46f003",
-      "classification": {
-        "role": "research",
-        "reason": "H138 owner-directed zero-update retained-trajectory averaging, native inference and bounded external CPU controls; not product qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h144_reg_sweep/runtime.py": {
-      "bytes": 6220,
-      "sha256": "24d4eac98da23791f706341fd6c7c3f54cc5f693b0b435852049b319dd996ecc",
-      "classification": {
-        "role": "research",
-        "reason": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h144_reg_sweep/science.py": {
-      "bytes": 5131,
-      "sha256": "5aa07f6b8a5e2b5502afa1d5680fe1bd6a29f3b5994bd8d0bb5305f03727918c",
-      "classification": {
-        "role": "research",
-        "reason": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h144_reg_sweep/monitor.py": {
-      "bytes": 6038,
-      "sha256": "b777fe680a0266617d646a2e29203234b165febc4049051d24e2f036b2e0b5f3",
-      "classification": {
-        "role": "research",
-        "reason": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h144_reg_sweep/runner.py": {
-      "bytes": 19035,
-      "sha256": "ec15b5a127c0aee5323d08798678ab930a0f968b4a02696853a429a4056fe7fd",
-      "classification": {
-        "role": "research",
-        "reason": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+        "reason": "H156 owner-directed 5-fold family cross-fit early stopping and {0.5x, 1x, 2x} capacity sweep continuation from r882: nested family isolation, durable selection lock before outer assessment, dual 1219-ctx H145 train-only and 91-ctx DL-Val Elo/bootstrap reporting, bytewise frozen DOPE/anchor state, and bounded resources. Research only; no product or sealed-test qualification."
       }
     }
   },

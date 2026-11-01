@@ -15,5 +15,7 @@ figs:
 	python3 figures/scripts/make_event_distribution_figure.py
 	python3 figures/scripts/make_subsequent_window_figure.py
 	python3 figures/scripts/make_subsequent_utility_figure.py
+	python3 figures/scripts/make_subsequent_rates_figure.py
+	python3 figures/scripts/make_live_admissions_figures.py
 clean:
 	latexmk -C

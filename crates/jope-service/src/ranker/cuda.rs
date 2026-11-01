@@ -7,10 +7,17 @@
 //! The existing cpu_placement helper still describes CPU-only native evaluation.
 
 mod cpu;
+#[cfg(feature = "fused-cuda")]
+mod deterministic;
 mod forward;
+pub mod release;
 pub use forward::{FusedForward, StageOutput};
 #[cfg(test)]
+mod authenticated;
+#[cfg(test)]
 mod fixture;
+#[cfg(all(test, unix))]
+pub(crate) use fixture::inherited_lease;
 
 use super::{
     admission,
