@@ -2109,6 +2109,10 @@
       "reason": "H169 owner-directed optimizer-geometry continuation wave on the r882 adapter; data-free controls only, no checkpoint, corpus, sealed or holdout data in the fixture suite; offline research.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h170_onecycle/test_h170.py": {
+      "role": "research",
+      "reason": "H170 owner-directed one-cycle AdamW continuation (CTRL,OC3,OC15,mean-LR-matched control): data-free schedule application, inactive-gradient handling, drift, family selection/median inference, pseudoreplication and guarded launch controls. Research only; no product or sealed qualification."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
       "role": "research"
@@ -2279,6 +2283,10 @@
     },
     "python:research/flywheel_selfplay/rnk10_r882_acceptance/test_run_acceptance.py": {
       "reason": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract).",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/rnk10_r882_release/test_prepare_release.py": {
+      "reason": "RNK-10 offline research exporter and verified-bytes substitution regression for the pinned r882 adapter bundle; research only, no product runtime, signing, or scientific qualification.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
@@ -5383,10 +5391,6 @@
       "subsystems": [
         "encoders"
       ]
-    },
-    "python:research/flywheel_selfplay/h170_onecycle/test_h170.py": {
-      "role": "research",
-      "reason": "H170 owner-directed one-cycle AdamW continuation (CTRL,OC3,OC15,mean-LR-matched control): data-free schedule application, inactive-gradient handling, drift, family selection/median inference, pseudoreplication and guarded launch controls. Research only; no product or sealed qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

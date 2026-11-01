@@ -5474,6 +5474,16 @@
       "lanes": [],
       "scope": "H169 owner-directed optimizer-geometry continuation wave on the r882 adapter; data-free controls only, no checkpoint, corpus, sealed or holdout data in the fixture suite; offline research."
     },
+    "python:research/flywheel_selfplay/h170_onecycle/test_h170.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H170 data-free one-cycle LR/beta1 endpoints and applied native AdamW steps, mean-LR dose match, None-gradient and full-adapter drift, family cross-fit/strict best-only selector, shared-family median bootstrap/Holm/canonical Elo, exact prediction/adapter pseudoreplication disclosures, aggregate terminal resources and external launch binding. Offline real-S3 regression research only; no product, sealed, serving or speed qualification."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"
@@ -5903,6 +5913,16 @@
       ],
       "lanes": [],
       "scope": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract)."
+    },
+    "python:research/flywheel_selfplay/rnk10_r882_release/test_prepare_release.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "RNK-10 offline research exporter and verified-bytes substitution regression for the pinned r882 adapter bundle; research only, no product runtime, signing, or scientific qualification."
     },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
       "discovery": {
@@ -14338,16 +14358,6 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
-    },
-    "python:research/flywheel_selfplay/h170_onecycle/test_h170.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H170 data-free one-cycle LR/beta1 endpoints and applied native AdamW steps, mean-LR dose match, None-gradient and full-adapter drift, family cross-fit/strict best-only selector, shared-family median bootstrap/Holm/canonical Elo, exact prediction/adapter pseudoreplication disclosures, aggregate terminal resources and external launch binding. Offline real-S3 regression research only; no product, sealed, serving or speed qualification."
     }
   },
   "lanes": {
