@@ -1,0 +1,164 @@
+#!/usr/bin/env python3
+"""Focused tests for the first CPU-only REL-07 provider batch."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE / "providers"))
+import common  # noqa: E402
+import m1  # noqa: E402
+import m4  # noqa: E402
+
+
+class GateProviders(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.artifact = self.root / "candidate.bin"
+        self.artifact.write_bytes(b"fixture candidate bytes")
+        self.result = self.root / "result.json"
+        self.env = {
+            "JOPE_REL07_GATE_ID": "M1",
+            "JOPE_REL07_ARTIFACT": str(self.artifact),
+            "JOPE_REL07_ARTIFACT_SHA256": hashlib.sha256(
+                self.artifact.read_bytes()
+            ).hexdigest(),
+            "JOPE_REL07_SOURCE_SHA": "a" * 40,
+            "JOPE_REL07_RESULT": str(self.result),
+        }
+
+    def test_context_binds_regular_candidate_and_exact_gate(self):
+        with mock.patch.dict("os.environ", self.env, clear=True):
+            ctx = common.context("M1")
+        self.assertEqual(ctx.artifact_sha256, self.env["JOPE_REL07_ARTIFACT_SHA256"])
+        self.assertEqual(ctx.source_sha, "a" * 40)
+        with mock.patch.dict(
+            "os.environ", self.env | {"JOPE_REL07_GATE_ID": "M4"}, clear=True
+        ):
+            with self.assertRaisesRegex(common.ProviderError, "requires gate M1"):
+                common.context("M1")
+
+    def test_context_refuses_wrong_hash_symlink_and_existing_result(self):
+        with mock.patch.dict(
+            "os.environ",
+            self.env | {"JOPE_REL07_ARTIFACT_SHA256": "0" * 64},
+            clear=True,
+        ):
+            with self.assertRaisesRegex(common.ProviderError, "differ from"):
+                common.context("M1")
+        link = self.root / "candidate-link"
+        link.symlink_to(self.artifact)
+        with mock.patch.dict(
+            "os.environ", self.env | {"JOPE_REL07_ARTIFACT": str(link)}, clear=True
+        ):
+            with self.assertRaisesRegex(common.ProviderError, "non-symlink"):
+                common.context("M1")
+        self.result.write_text("existing")
+        with mock.patch.dict("os.environ", self.env, clear=True):
+            with self.assertRaisesRegex(common.ProviderError, "new absolute path"):
+                common.context("M1")
+
+    def test_candidate_verification_requires_full_profile_source_and_all_bytes(self):
+        inspect = {
+            "manifest": {
+                "profile": "full",
+                "scope": "internal-restricted",
+                "source": {"sha40": "a" * 40},
+            }
+        }
+        verified = {"schema": "jope.appliance-verify/v1", "ok": True}
+        run = mock.Mock(
+            side_effect=[
+                mock.Mock(returncode=0, stdout=json.dumps(inspect)),
+                mock.Mock(returncode=0, stdout=json.dumps(verified)),
+            ]
+        )
+        with mock.patch.dict("os.environ", self.env, clear=True):
+            ctx = common.context("M1")
+        common.verify_candidate(ctx, run=run)
+        self.assertEqual(run.call_count, 2)
+        inspect["manifest"]["source"]["sha40"] = "b" * 40
+        with self.assertRaisesRegex(common.ProviderError, "source pin"):
+            common.verify_candidate(
+                ctx,
+                run=mock.Mock(
+                    return_value=mock.Mock(returncode=0, stdout=json.dumps(inspect))
+                ),
+            )
+        inspect["manifest"]["source"]["sha40"] = "a" * 40
+        inspect["manifest"]["scope"] = "development"
+        with self.assertRaisesRegex(common.ProviderError, "non-development"):
+            common.verify_candidate(
+                ctx,
+                run=mock.Mock(
+                    return_value=mock.Mock(returncode=0, stdout=json.dumps(inspect))
+                ),
+            )
+
+    def test_junit_and_rust_parsers_keep_skips_and_failures_visible(self):
+        junit = self.root / "suite.xml"
+        junit.write_text('<testsuite tests="3" failures="1" errors="0" skipped="1" />')
+        self.assertEqual(
+            common.junit_counts(junit),
+            dict(collected=3, executed=2, passed=1, failed=1, skipped=1, excluded=0),
+        )
+        self.assertEqual(
+            common.rust_counts(
+                "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 52 filtered out"
+            ),
+            dict(collected=4, executed=4, passed=4, failed=0, skipped=0, excluded=0),
+        )
+
+    def test_provider_commands_cover_only_the_claimed_gate_assertions(self):
+        m1_command = m1.command(self.result)
+        self.assertIn("test_export_fused_bundle.py", m1_command[-1])
+        self.assertIn("--junitxml", m1_command)
+        m4_command = m4.command()
+        self.assertIn("ranker::bundle::integrity_tests::m4_", m4_command)
+        self.assertNotIn("--features", m4_command)
+
+    def test_m1_result_is_candidate_bound_and_positive_only(self):
+        with mock.patch.dict("os.environ", self.env, clear=True):
+            ctx = common.context("M1")
+        completed = mock.Mock(returncode=0, stdout="provider output", stderr="")
+        xml = ctx.result.with_suffix(".junit.xml")
+        xml.write_text('<testsuite tests="2" failures="0" skipped="0" />')
+        with mock.patch.object(common.subprocess, "run", return_value=completed):
+            code = common.run_suite(ctx, ["fixture"], common.junit_counts, xml)
+        self.assertEqual(code, 0)
+        result = json.loads(ctx.result.read_text())
+        self.assertEqual(result["schema"], "jope.rel07.gate-execution/v1")
+        self.assertEqual(result["id"], "M1")
+        self.assertEqual(
+            result["artifact_sha256"], self.env["JOPE_REL07_ARTIFACT_SHA256"]
+        )
+        self.assertEqual(result["counts"]["passed"], 2)
+
+    def test_skipped_suite_cannot_emit_a_pass_result(self):
+        with mock.patch.dict("os.environ", self.env, clear=True):
+            ctx = common.context("M1")
+        xml = ctx.result.with_suffix(".junit.xml")
+        xml.write_text('<testsuite tests="2" failures="0" skipped="1" />')
+        with mock.patch.object(
+            common.subprocess,
+            "run",
+            return_value=mock.Mock(returncode=0, stdout="", stderr=""),
+        ):
+            code = common.run_suite(ctx, ["fixture"], common.junit_counts, xml)
+        result = json.loads(ctx.result.read_text())
+        self.assertEqual(code, 1)
+        self.assertEqual(result["status"], "FAIL")
+        self.assertEqual(result["counts"]["skipped"], 1)
+
+
+if __name__ == "__main__":
+    unittest.main()
