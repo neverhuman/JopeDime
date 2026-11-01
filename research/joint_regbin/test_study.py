@@ -1763,6 +1763,71 @@ def test_h144_loader_reads_the_pinned_file_once(tmp_path, monkeypatch):
     assert loaded.VALUE == "verified", reads
 
 
+def test_h144_fused_loader_rejects_source_replaced_after_wrapper_check(
+    tmp_path, monkeypatch
+):
+    marker = tmp_path / "fused-executed"
+    source = tmp_path / "cpu_exact_fused.py"
+    source.write_text(f"from pathlib import Path\nPath({str(marker)!r}).touch()\n")
+    expected = hashlib.sha256(source.read_bytes()).hexdigest()
+    monkeypatch.setattr(runtime, "FUSED_SOURCE", source)
+    monkeypatch.setattr(runtime, "FUSED_SOURCE_SHA256", expected)
+    h144_runtime = type("H144Runtime", (), {})()
+
+    def old_load_fused():
+        module = type("FusedModule", (), {})()
+        module.__file__ = str(source)
+        exec(compile(source.read_bytes(), str(source), "exec"), module.__dict__)
+        return module
+
+    h144_runtime.load_fused = old_load_fused
+    original_open, original_read_bytes = Path.open, Path.read_bytes
+    reads = []
+
+    def swap_after_first_read():
+        if len(reads) == 1:
+            import os
+
+            fd = os.open(source, os.O_WRONLY | os.O_TRUNC)
+            changed = (
+                f"from pathlib import Path\nPath({str(marker)!r}).touch()\n"
+                "VALUE = 'changed after verification'\n"
+            )
+            os.write(fd, changed.encode())
+            os.close(fd)
+
+    def counting_open(path, *args, **kwargs):
+        stream = original_open(path, *args, **kwargs)
+        mode = args[0] if args else kwargs.get("mode", "r")
+        if path == source and "r" in mode:
+            reads.append("open")
+            data = stream.read()
+            stream.close()
+            swap_after_first_read()
+            import io
+
+            return io.BytesIO(data)
+        return stream
+
+    def counting_read_bytes(path):
+        contents = original_read_bytes(path)
+        if path == source:
+            reads.append("read_bytes")
+            swap_after_first_read()
+        return contents
+
+    monkeypatch.setattr(Path, "open", counting_open)
+    monkeypatch.setattr(Path, "read_bytes", counting_read_bytes)
+    runtime.verify_file_pin(source, expected)
+    runtime._bind_pinned_fused_loader(h144_runtime)
+
+    with pytest.raises(runtime.SourcePinError, match="hash mismatch"):
+        h144_runtime.load_fused()
+
+    assert len(reads) >= 2
+    assert not marker.exists()
+
+
 def test_worker_adapter_fingerprint_supports_scalar_parameters():
     class ScalarAdapter(torch.nn.Module):
         def __init__(self):
