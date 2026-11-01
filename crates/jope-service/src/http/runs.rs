@@ -84,8 +84,53 @@ struct Continuation {
     search: SearchPlan,
     finalization: FinalizationRequest,
     // Store the request and resolved placement, never the live graph or weights.
-    backend_spec: RunSpec,
-    backend_placement: Placement,
+    backend: ContinuationBackend,
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct ContinuationBackend {
+    spec: RunSpec,
+    placement: Placement,
+}
+
+impl ContinuationBackend {
+    fn restore(
+        &self,
+        store: &Store,
+        plan: &SearchPlan,
+        roots: &[crate::store::BlobRef],
+        admitted: Option<&crate::run::learned::AdmittedRanker>,
+    ) -> Result<BackendPlan> {
+        let mut backend = BackendPlan::resolve(&self.spec, admitted, plan.planned_workers)
+            .map_err(|error| {
+                issue(
+                    crate::run::service::error_code(&error),
+                    "The original run backend is unavailable.",
+                )
+            })?;
+        if backend.bundle_digest != plan.bundle_digest || backend.placement != self.placement {
+            return Err(unavailable(
+                "Continuation requires the original backend placement and bundle.",
+            ));
+        }
+        let fit = roots
+            .iter()
+            .find(|blob| {
+                blob.sha256
+                    .iter()
+                    .map(|byte| format!("{byte:02x}"))
+                    .collect::<String>()
+                    == plan.matrix_sha256
+            })
+            .ok_or_else(|| unavailable("Original FIT blob is unavailable."))?;
+        if store.verified_blob_path(fit).map_err(io)? != plan.matrix_path {
+            return Err(unavailable("Original FIT path changed."));
+        }
+        backend
+            .bind_fit(&store.read_blob(fit).map_err(io)?, plan)
+            .map_err(io)?;
+        Ok(backend)
+    }
 }
 
 fn continuation_key(run: &jope_api::ids::RunId) -> RecordKey {
@@ -1261,8 +1306,10 @@ impl RunService {
         let context = Continuation {
             search: prepared.search.clone(),
             finalization: request.clone(),
-            backend_spec: spec,
-            backend_placement: prepared.backend.placement.clone(),
+            backend: ContinuationBackend {
+                spec,
+                placement: prepared.backend.placement.clone(),
+            },
         };
         let persisted = self.store.transaction(|tx| {
             tx.put(
@@ -1411,43 +1458,13 @@ impl RunService {
                     "Continuation requires the original binary and run identity.",
                 ));
             }
-            // Rebuild only the original backend. Preparing a new run here would
-            // change its identity, split, plan or remaining-budget contract.
-            let mut backend = BackendPlan::resolve(
-                &context.backend_spec,
+            // Rebuild only the original backend, retaining the checkpoint plan.
+            let backend = context.backend.restore(
+                &self.store,
+                &context.search,
+                &stored_context.blobs,
                 self.activity.admitted_ranker(),
-                context.search.planned_workers,
-            )
-            .map_err(|error| {
-                issue(
-                    crate::run::service::error_code(&error),
-                    "The original run backend is unavailable.",
-                )
-            })?;
-            if backend.bundle_digest != context.search.bundle_digest
-                || backend.placement != context.backend_placement
-            {
-                return Err(unavailable(
-                    "Continuation requires the original backend placement and bundle.",
-                ));
-            }
-            let fit = stored_context
-                .blobs
-                .iter()
-                .find(|blob| {
-                    blob.sha256
-                        .iter()
-                        .map(|byte| format!("{byte:02x}"))
-                        .collect::<String>()
-                        == context.search.matrix_sha256
-                })
-                .ok_or_else(|| unavailable("Original FIT blob is unavailable."))?;
-            if self.store.verified_blob_path(fit).map_err(io)? != context.search.matrix_path {
-                return Err(unavailable("Original FIT path changed."));
-            }
-            backend
-                .bind_fit(&self.store.read_blob(fit).map_err(io)?, &context.search)
-                .map_err(io)?;
+            )?;
             #[cfg(all(feature = "failpoints", debug_assertions))]
             let injection = None;
             #[cfg(not(all(feature = "failpoints", debug_assertions)))]
@@ -1853,6 +1870,121 @@ mod tests {
             "objective":"rmse","effort":"fast","budget":{"evaluations":"4","wall_seconds":"30"},"landmarks":"none","guidance":"heuristic",
             "languages":["rust"],"require_all_languages":true,"device":"cpu","seed":"73","dry_run":true,"plan_digest":null})).unwrap();
         (directory, engine, spec)
+    }
+
+    fn continuation_backend_fixture() -> (
+        tempfile::TempDir,
+        InProcessEngine,
+        ContinuationBackend,
+        SearchPlan,
+        crate::store::BlobRef,
+    ) {
+        let (directory, engine, spec) = fixture();
+        let dataset: RegisteredDataset = serde_json::from_value(
+            engine
+                .store()
+                .get(&RecordKey::Dataset(spec.dataset.clone()))
+                .unwrap()
+                .unwrap()
+                .data,
+        )
+        .unwrap();
+        let fit = dataset.matrix;
+        let backend = BackendPlan::resolve(&spec, None, 1).unwrap();
+        let plan = SearchPlan {
+            run_id: "run_01ARZ3NDEKTSV4RRFFQ69G5FAV".parse().unwrap(),
+            dataset_id: spec.dataset.clone(),
+            problem_digest: "a".repeat(64),
+            bundle_digest: backend.bundle_digest,
+            binary_version: "continuation-guard-test".into(),
+            matrix_path: engine.store().verified_blob_path(&fit).unwrap(),
+            matrix_sha256: hash(&engine.store().read_blob(&fit).unwrap()),
+            target: spec.target.clone(),
+            features: (0..21).map(|i| format!("x{i}")).collect(),
+            objective: "rmse".into(),
+            seed: spec.seed.0,
+            planned_workers: 1,
+            effort: spec.effort,
+            evaluations: 4,
+            wall_seconds: 30,
+            evaluation_wall_ms: 1000,
+            evaluation_rss_bytes: WORKER_RAM,
+            groups: None,
+            times: None,
+            gap_rows: 0,
+        };
+        let context = ContinuationBackend {
+            spec,
+            placement: backend.placement,
+        };
+        (directory, engine, context, plan, fit)
+    }
+
+    #[test]
+    fn continuation_restores_native_backend_from_persisted_request_without_replanning() {
+        let (_directory, engine, context, plan, fit) = continuation_backend_fixture();
+        let context: ContinuationBackend =
+            serde_json::from_value(serde_json::to_value(context).unwrap()).unwrap();
+        let original = plan.clone();
+        let restored = context
+            .restore(engine.store(), &plan, &[fit], None)
+            .unwrap();
+        assert!(!restored.learned());
+        assert_eq!(restored.placement, context.placement);
+        assert_eq!(restored.bundle_digest, original.bundle_digest);
+        assert_eq!(plan, original);
+    }
+
+    #[test]
+    fn learned_continuation_without_admitted_capability_never_falls_back_to_native() {
+        let (_directory, engine, mut context, plan, fit) = continuation_backend_fixture();
+        context.spec.guidance = Guidance::Learned;
+        context.spec.landmarks = LandmarkMode::Full;
+        let error = context
+            .restore(engine.store(), &plan, &[fit], None)
+            .err()
+            .unwrap();
+        assert_eq!(error.code, ErrorCode::CapabilityUnavailable);
+    }
+
+    #[test]
+    fn continuation_refuses_changed_backend_identity_and_tampered_fit() {
+        let (_directory, engine, mut context, mut plan, fit) = continuation_backend_fixture();
+        context.placement.workers = 2;
+        assert_eq!(
+            context
+                .restore(engine.store(), &plan, std::slice::from_ref(&fit), None)
+                .err()
+                .unwrap()
+                .code,
+            ErrorCode::CapabilityUnavailable
+        );
+        context.placement.workers = 1;
+        let original = plan.clone();
+        plan.bundle_digest = "b".repeat(64);
+        assert_eq!(
+            context
+                .restore(engine.store(), &plan, std::slice::from_ref(&fit), None)
+                .err()
+                .unwrap()
+                .code,
+            ErrorCode::CapabilityUnavailable
+        );
+        plan = original;
+        plan.matrix_path = plan.matrix_path.with_extension("changed");
+        assert_eq!(
+            context
+                .restore(engine.store(), &plan, std::slice::from_ref(&fit), None)
+                .err()
+                .unwrap()
+                .code,
+            ErrorCode::CapabilityUnavailable
+        );
+        plan.matrix_path = engine.store().verified_blob_path(&fit).unwrap();
+        std::fs::write(&plan.matrix_path, b"corrupted owned TRAIN fixture").unwrap();
+        assert!(context
+            .restore(engine.store(), &plan, &[fit], None)
+            .is_err());
     }
 
     fn app(engine: &InProcessEngine) -> axum::Router {
