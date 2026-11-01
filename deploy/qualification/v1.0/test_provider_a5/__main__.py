@@ -469,6 +469,35 @@ class A5Tests(unittest.TestCase):
             self.invoke()
         self.assertFalse(self.ctx.result.exists())
 
+    def test_snapshot_events_and_prediction_cannot_mix_run_or_input_identity(self):
+        original = (self.packet / "claude-code.mcp.jsonl").read_text()
+        for kind in ["snapshot", "events", "prediction"]:
+            frames = [json.loads(line) for line in original.splitlines()]
+            for index, frame in enumerate(frames):
+                params = frame["message"].get("params", {})
+                response = (
+                    frames[index + 1]["message"]
+                    .get("result", {})
+                    .get("structuredContent", {})
+                    if index + 1 < len(frames)
+                    else {}
+                )
+                if (
+                    kind == "snapshot"
+                    and params.get("name") == "run_status"
+                    and "run_id" in params["arguments"]
+                ):
+                    response["run_id"] = "run_01ARZ3NDEKTSV4RRFFQ69G5FAX"
+                elif kind == "events" and params.get("name") == "run_events":
+                    response["events"][-1]["sequence"] = "1"
+                elif kind == "prediction" and params.get("name") == "model_predict":
+                    response["rows"] = "24"
+            self.save_wire("claude-code", frames)
+            self.freeze()
+            with self.subTest(kind=kind), self.assertRaises(common.ProviderError):
+                self.invoke()
+            self.assertFalse(self.ctx.result.exists())
+
     def test_existing_or_in_checkout_results_never_overwrite(self):
         self.ctx.result.write_bytes(b"prior")
         with self.assertRaises(common.ProviderError):

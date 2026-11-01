@@ -174,6 +174,9 @@ def full_path(raw: bytes, retry: dict, train_hash: str, train_rows: int) -> None
         "A5 run did not complete",
     )
     terminal = statuses[-1]
+    require(
+        terminal["data"].get("run_id") == run_id, "A5 snapshot refers to another run"
+    )
     evaluations = terminal["data"].get("budget_used", {}).get("evaluations")
     require(
         isinstance(evaluations, str)
