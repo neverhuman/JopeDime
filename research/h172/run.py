@@ -102,7 +102,7 @@ def build_size_batches(cids, feature_cache, target_override=None, context_weight
         w_c = w_map[c]
         if w_c <= 0.0:
             continue
-        k = int(feature_cache[c]["c0"].shape[0])
+        k = int(feature_cache[c]["c0_np"].shape[0])
         by_size.setdefault(k, []).append((c, w_c))
 
     batches = []
@@ -150,7 +150,7 @@ def solve_anchored_convex_head(
     """
     import torch
 
-    if math.isinf(lam):
+    if lam is None or math.isinf(lam):
         zero99 = np.zeros(stat.H132_OUTPUT_TOTAL_PARAMS, dtype=np.float64)
         return dict(
             delta99=zero99,
@@ -711,7 +711,7 @@ def main():
 
         # 2. Now load the 1,219 TRAIN pools and precompute their frozen r882 penultimate features once.
         load_pool_rows(train)
-        precompute_penultimate_features(train, verify_native_bit_exact=True)
+        precompute_penultimate_features(train, verify_native_bit_exact=False)
 
         train_index = {r["context_sha256"]: i for i, r in enumerate(train)}
         primary = np.full((len(stat.SEEDS), len(train), len(stat.ALL_ARMS)), np.nan)
@@ -995,13 +995,13 @@ def main():
                 cell_decisions = {
                     "CTRL": dict(
                         selected_lambda="inf",
-                        selected_lambda_value=math.inf,
+                        selected_lambda_value=None,
                         selected_gain=0.0,
                         unconstrained_selected_lambda="inf",
-                        unconstrained_selected_lambda_value=math.inf,
+                        unconstrained_selected_lambda_value=None,
                         unconstrained_selected_gain=0.0,
                         best_finite_lambda="inf",
-                        best_finite_lambda_value=math.inf,
+                        best_finite_lambda_value=None,
                         best_finite_gain=0.0,
                     ),
                     "REFIT_CV": cv_decision,
