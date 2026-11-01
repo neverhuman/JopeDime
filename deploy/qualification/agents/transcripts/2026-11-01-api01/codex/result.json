@@ -1,0 +1,216 @@
+{
+  "source": "72ed48163b5deb911e3b8e49ba9f860b793cf600",
+  "binary_sha256": "ff0aad38bdc953fc905f7826609d5459a0bda9e8937d93a901acaf7ca88184f7",
+  "client": "codex",
+  "client_version": "codex-cli 0.166.0",
+  "actual_model": null,
+  "model_identity_note": "Provider model ID was not echoed; exact command receipt remains in external evidence.",
+  "started_utc": "2026-11-01T00:30:59.774600+00:00",
+  "elapsed_seconds": 30.552011746913195,
+  "client_exit": 0,
+  "engine_exit": 0,
+  "engine_stop_exit": 0,
+  "server_exit": 0,
+  "relay_exit": 0,
+  "forced_engine_signal": false,
+  "fixture_sha256": "153f24a64081035aaa97541e08bf0eb037a14dcb61eca355bafaa23ab62cbf7f",
+  "tool_counts": {
+    "system_info": 1,
+    "run_status": 4,
+    "dataset_register": 2,
+    "dataset_inspect": 1,
+    "run_start": 3,
+    "run_events": 1,
+    "model_export": 2,
+    "model_predict": 1
+  },
+  "tool_calls": 15,
+  "successful_calls": 15,
+  "failed_calls": 0,
+  "frame_count": 35,
+  "raw_bytes_verified": 449896,
+  "transport_complete": true,
+  "run_ids": [
+    "run_01M6A892CCY9KCHNJ5CWGK4KKW"
+  ],
+  "inventory_counts": [
+    0,
+    1,
+    1
+  ],
+  "event_count": 6,
+  "events_contiguous": true,
+  "identical_run_retry": true,
+  "exports": [
+    {
+      "success": true,
+      "data": {
+        "algorithm_id": "alg_00000000",
+        "artifact_id": "art_94dcb1c27b444decdd7d6839",
+        "emitter_version": "0.4.1",
+        "kind": "bundle",
+        "languages": [
+          {
+            "language": "rust",
+            "path": "src/rust/predictor.rs",
+            "status": "exported"
+          }
+        ],
+        "model_digest": "sha256-1d24192e3e5c32529d1247f15479874bcb895177000cfa98114c1c628317320c",
+        "parity_receipt": null,
+        "parity_status": "unavailable",
+        "qualified_set_id": "not-qualified",
+        "refit": "fit",
+        "retains_training_data": false
+      }
+    },
+    {
+      "success": true,
+      "data": {
+        "algorithm_id": "alg_00000000",
+        "artifact_id": "art_94dcb1c27b444decdd7d6839",
+        "emitter_version": "0.4.1",
+        "kind": "bundle",
+        "languages": [
+          {
+            "language": "rust",
+            "path": "src/rust/predictor.rs",
+            "status": "exported"
+          }
+        ],
+        "model_digest": "sha256-1d24192e3e5c32529d1247f15479874bcb895177000cfa98114c1c628317320c",
+        "parity_receipt": null,
+        "parity_status": "unavailable",
+        "qualified_set_id": "not-qualified",
+        "refit": "fit",
+        "retains_training_data": false
+      }
+    }
+  ],
+  "identical_export_retry": true,
+  "materialized_export": {
+    "pass": false,
+    "path": "/home/ubuntu/jope-data/mcp05-named-t1745/materialized-72ed48163b5d/codex/exported",
+    "files": {
+      "export.json": {
+        "sha256": "86add131a543e849fc8ceb85f4f8a2beb44b0c717dcbfbcb0ac100a588299b0e",
+        "bytes": 111,
+        "inode": 83233829,
+        "mtime_ns": 1793493080987299609
+      },
+      "manifest.json": {
+        "sha256": "b7979373ca4cd888b13614728ec83cce13efb1b140d5ba3eaf10073985556f79",
+        "bytes": 587,
+        "inode": 83233830,
+        "mtime_ns": 1793493080992299682
+      },
+      "model/input.json": {
+        "sha256": "8d08d708fcd23d18b1b45b6bf65214a0b1eeaf370365a148b76f7c4d06670ed9",
+        "bytes": 910,
+        "inode": 83233832,
+        "mtime_ns": 1793493080997299756
+      },
+      "model/manifest.json": {
+        "sha256": "1d24192e3e5c32529d1247f15479874bcb895177000cfa98114c1c628317320c",
+        "bytes": 1213,
+        "inode": 83233833,
+        "mtime_ns": 1793493081002299829
+      },
+      "model/pipeline.json": {
+        "sha256": "efa10c5c136facaf7cd933b3b606f3b34555e76bc1d0b9a15dddb4ac8078352f",
+        "bytes": 1328,
+        "inode": 83233834,
+        "mtime_ns": 1793493081007299903
+      },
+      "src/rust/predictor.rs": {
+        "sha256": "e89fa0f6dcecb6138e9ca8a58cf2d235437b224aaa264e8d6dd058ce7cc94a57",
+        "bytes": 15657,
+        "inode": 83233837,
+        "mtime_ns": 1793493081013299991
+      }
+    },
+    "archive_manifest_entries_verified": true,
+    "model_manifest_and_parts_match_export_digest": true,
+    "first_export_snapshot_precedes_retry_request": false,
+    "same_file_bytes_inodes_and_mtimes_after_retry": true,
+    "source_predictor_present": true,
+    "observer_error": null
+  },
+  "predictions": {
+    "path": "/home/ubuntu/jope-data/mcp05-named-t1745/materialized-72ed48163b5d/codex/predictions.csv",
+    "sha256": "504063ac11b66972f872e4205b2021b1ff32e8c718f8c0b6656cc314df4d7045",
+    "columns": [
+      "prediction"
+    ],
+    "rows": 25
+  },
+  "parity_status": "unavailable",
+  "qualified_set_id": "not-qualified",
+  "a5": "NOT_QUALIFIED",
+  "capture_producer_sha256": "cddd5371dedea342a593b209c354c7321c46deeb2e7707528ac8cda3e7aaadf7",
+  "raw_capture": {
+    "wire.jsonl": {
+      "bytes": 233019,
+      "sha256": "a6c6101538c80a05433043450e93b7a0bdb9c7714e496103525fbdcbaa68b70b"
+    },
+    "client.raw": {
+      "bytes": 16188,
+      "sha256": "2f227beff416be1acfad8f5d870e680399021340eb5d4c1fe9b8a421d574022e"
+    },
+    "server.raw": {
+      "bytes": 200689,
+      "sha256": "a65ff0a8704608b17c2d7fe2b05711484f28af0bd86e694bcdcfd3b5a1b5042f"
+    },
+    "server.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "source_evidence": "/home/ubuntu/jope_plan/evidence/MCP05-NAMED-sol_v1_mcp01-t1745/materialized-72ed48163b5d/codex",
+  "supplemental_zero_fit_retry": {
+    "source": "72ed48163b5deb911e3b8e49ba9f860b793cf600",
+    "binary_sha256": "ff0aad38bdc953fc905f7826609d5459a0bda9e8937d93a901acaf7ca88184f7",
+    "actual_client": "codex-cli 0.166.0",
+    "started_utc": "2026-11-01T00:34:55.210941+00:00",
+    "elapsed_seconds": 19.681286938488483,
+    "original_run_id": "run_01M6A892CCY9KCHNJ5CWGK4KKW",
+    "same_private_store": true,
+    "additional_fits": 0,
+    "tool_calls": 4,
+    "successful_calls": 4,
+    "failed_calls": 0,
+    "frame_count": 13,
+    "raw_bytes_verified": 404511,
+    "inventories": [
+      1,
+      1
+    ],
+    "before_snapshot_precedes_all_supplement_requests": true,
+    "same_materialized_tree": true,
+    "two_additional_export_retries_identical_to_original": true,
+    "before_after_equal_except_observed_utc": true,
+    "transport_complete": true,
+    "all_process_exits_zero": true,
+    "verification": "PASS",
+    "capture_producer_sha256": "cddd5371dedea342a593b209c354c7321c46deeb2e7707528ac8cda3e7aaadf7",
+    "raw_capture": {
+      "wire.jsonl": {
+        "bytes": 208577,
+        "sha256": "91882828d629d9f409e548cae965cd760a596d3439e62b4c133efbfe00e4e9af"
+      },
+      "client.raw": {
+        "bytes": 4313,
+        "sha256": "d725bd7a3a2e00a441a85c9cd6ed55e1800305b4c74ccde4dba2ea8b13a31f90"
+      },
+      "server.raw": {
+        "bytes": 191621,
+        "sha256": "855275f258b7f01e083d50848ea79fbaa7c7542c23efcb70461cc25c1ba31632"
+      },
+      "server.stderr": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "source_evidence": "/home/ubuntu/jope_plan/evidence/MCP05-NAMED-sol_v1_mcp01-t1745/materialized-72ed48163b5d/codex-export-retry-supplement"
+  }
+}

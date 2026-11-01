@@ -1,0 +1,11 @@
+{
+  "disposition": "WATCHER_PROVISIONAL_WAIVER_NOT_INSTALLED",
+  "host": "xbabe1",
+  "checked_utc": "2026-11-01T00:01:56.502315+00:00",
+  "actual_gemini_client_runs": 0,
+  "installs_logins_purchases": 0,
+  "three_client_a5_pass_claimed": false,
+  "owner_may_override": true,
+  "ruling_sha256": "218951775a32690cd936f212f106776cd67dbc1857172b35845bf55113d15584",
+  "external_receipt": "/home/ubuntu/jope_plan/evidence/MCP05-NAMED-sol_v1_mcp01-t1745/GEMINI-WAIVER.json"
+}

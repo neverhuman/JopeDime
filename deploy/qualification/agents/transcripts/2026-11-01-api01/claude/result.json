@@ -1,0 +1,170 @@
+{
+  "source": "72ed48163b5deb911e3b8e49ba9f860b793cf600",
+  "binary_sha256": "ff0aad38bdc953fc905f7826609d5459a0bda9e8937d93a901acaf7ca88184f7",
+  "client": "claude",
+  "client_version": "2.1.307 (Claude Code)",
+  "actual_model": "claude-opus-5-5",
+  "model_identity_note": null,
+  "started_utc": "2026-11-01T00:28:36.877093+00:00",
+  "elapsed_seconds": 65.4013107586652,
+  "client_exit": 0,
+  "engine_exit": 0,
+  "engine_stop_exit": 0,
+  "server_exit": 0,
+  "relay_exit": 0,
+  "forced_engine_signal": false,
+  "fixture_sha256": "153f24a64081035aaa97541e08bf0eb037a14dcb61eca355bafaa23ab62cbf7f",
+  "tool_counts": {
+    "system_info": 1,
+    "run_status": 4,
+    "dataset_register": 2,
+    "dataset_inspect": 1,
+    "run_start": 3,
+    "run_events": 1,
+    "model_export": 2,
+    "model_predict": 1
+  },
+  "tool_calls": 15,
+  "successful_calls": 15,
+  "failed_calls": 0,
+  "frame_count": 36,
+  "raw_bytes_verified": 443810,
+  "transport_complete": true,
+  "run_ids": [
+    "run_01M6A850ATANWZAMMH77E2WE49"
+  ],
+  "inventory_counts": [
+    0,
+    1,
+    1
+  ],
+  "event_count": 6,
+  "events_contiguous": true,
+  "identical_run_retry": true,
+  "exports": [
+    {
+      "success": true,
+      "data": {
+        "algorithm_id": "alg_00000000",
+        "artifact_id": "art_1e9a9e4dfcd522d3487efa11",
+        "emitter_version": "0.4.1",
+        "kind": "bundle",
+        "languages": [
+          {
+            "language": "rust",
+            "path": "src/rust/predictor.rs",
+            "status": "exported"
+          }
+        ],
+        "model_digest": "sha256-973a730a8c8538189b8088cd4174468c9452d717e566680277e2b0378b20441e",
+        "parity_receipt": null,
+        "parity_status": "unavailable",
+        "qualified_set_id": "not-qualified",
+        "refit": "fit",
+        "retains_training_data": false
+      }
+    },
+    {
+      "success": true,
+      "data": {
+        "algorithm_id": "alg_00000000",
+        "artifact_id": "art_1e9a9e4dfcd522d3487efa11",
+        "emitter_version": "0.4.1",
+        "kind": "bundle",
+        "languages": [
+          {
+            "language": "rust",
+            "path": "src/rust/predictor.rs",
+            "status": "exported"
+          }
+        ],
+        "model_digest": "sha256-973a730a8c8538189b8088cd4174468c9452d717e566680277e2b0378b20441e",
+        "parity_receipt": null,
+        "parity_status": "unavailable",
+        "qualified_set_id": "not-qualified",
+        "refit": "fit",
+        "retains_training_data": false
+      }
+    }
+  ],
+  "identical_export_retry": true,
+  "materialized_export": {
+    "pass": true,
+    "path": "/home/ubuntu/jope-data/mcp05-named-t1745/materialized-72ed48163b5d/claude/exported",
+    "files": {
+      "export.json": {
+        "sha256": "86add131a543e849fc8ceb85f4f8a2beb44b0c717dcbfbcb0ac100a588299b0e",
+        "bytes": 111,
+        "inode": 83233765,
+        "mtime_ns": 1793492959650523845
+      },
+      "manifest.json": {
+        "sha256": "699da257255bc1d8b6f19ec2feadb2a4a1a4ae3767d1637738c4f0a86f5a9cae",
+        "bytes": 587,
+        "inode": 83233766,
+        "mtime_ns": 1793492959657523947
+      },
+      "model/input.json": {
+        "sha256": "8d08d708fcd23d18b1b45b6bf65214a0b1eeaf370365a148b76f7c4d06670ed9",
+        "bytes": 910,
+        "inode": 83233768,
+        "mtime_ns": 1793492959664524049
+      },
+      "model/manifest.json": {
+        "sha256": "973a730a8c8538189b8088cd4174468c9452d717e566680277e2b0378b20441e",
+        "bytes": 1213,
+        "inode": 83233769,
+        "mtime_ns": 1793492959670524136
+      },
+      "model/pipeline.json": {
+        "sha256": "efa10c5c136facaf7cd933b3b606f3b34555e76bc1d0b9a15dddb4ac8078352f",
+        "bytes": 1328,
+        "inode": 83233770,
+        "mtime_ns": 1793492959675524209
+      },
+      "src/rust/predictor.rs": {
+        "sha256": "e89fa0f6dcecb6138e9ca8a58cf2d235437b224aaa264e8d6dd058ce7cc94a57",
+        "bytes": 15657,
+        "inode": 83233773,
+        "mtime_ns": 1793492959682524311
+      }
+    },
+    "archive_manifest_entries_verified": true,
+    "model_manifest_and_parts_match_export_digest": true,
+    "first_export_snapshot_precedes_retry_request": true,
+    "same_file_bytes_inodes_and_mtimes_after_retry": true,
+    "source_predictor_present": true,
+    "observer_error": null
+  },
+  "predictions": {
+    "path": "/home/ubuntu/jope-data/mcp05-named-t1745/materialized-72ed48163b5d/claude/predictions.csv",
+    "sha256": "504063ac11b66972f872e4205b2021b1ff32e8c718f8c0b6656cc314df4d7045",
+    "columns": [
+      "prediction"
+    ],
+    "rows": 25
+  },
+  "parity_status": "unavailable",
+  "qualified_set_id": "not-qualified",
+  "a5": "NOT_QUALIFIED",
+  "capture_producer_sha256": "cddd5371dedea342a593b209c354c7321c46deeb2e7707528ac8cda3e7aaadf7",
+  "raw_capture": {
+    "wire.jsonl": {
+      "bytes": 229970,
+      "sha256": "f5eb73ffea76c86a45dd66572923e05b2bb237d50d8e4d8a7f0cc6ff30ac8092"
+    },
+    "client.raw": {
+      "bytes": 12324,
+      "sha256": "1d07300366c3abc2a098eca73db6fe235582cf2b453c8bfe364f06d68833a675"
+    },
+    "server.raw": {
+      "bytes": 201516,
+      "sha256": "608963e89868c09bd8f01f18a06dcb77ede95d672fb907d855c7e1b22abd769d"
+    },
+    "server.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "source_evidence": "/home/ubuntu/jope_plan/evidence/MCP05-NAMED-sol_v1_mcp01-t1745/materialized-72ed48163b5d/claude"
+}
