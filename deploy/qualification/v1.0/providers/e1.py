@@ -24,7 +24,7 @@ TESTS = (
     ("feat-math", "evolve::api::capability::tests::coverage_agrees_with_actual_recipe_emitters"),
     ("jope-service", "discover::propose::tests::actual_language_intersection_filters_every_generated_operation"),
     ("jope-service", "http::runs::tests::requested_export_languages_filter_the_actual_native_seed_and_mutations"),
-    ("jope-service", "http::runs::tests::python_and_rust_plan_uses_the_declared_capability_intersection"),
+    ("jope-service", "http::runs::tests::javascript_python_and_rust_plan_uses_the_declared_capability_intersection"),
 )
 SINGLE_PASS = {
     "collected": 1,

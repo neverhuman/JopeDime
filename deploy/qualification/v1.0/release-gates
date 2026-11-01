@@ -16,6 +16,8 @@ import cpu_gates as cpu
 from gates_receipt import RELEASE_GATE_IDS, from_cpu_prestage, from_gate_results
 
 COUNTS = "collected executed passed failed skipped excluded".split()
+D2_ARTIFACT_ID = "fused-cpu-linux-x86_64"
+_NO_CANDIDATE_D2 = object()
 INPUT_FIELDS = {
     "A5": {"manifest", "manifest_sha256"},
     "D1": {"macos_receipt", "macos_receipt_sha256", "macos_artifact_sha256"},
@@ -146,7 +148,13 @@ def candidate_input_bindings(path, expected_sha256):
     return provider_inputs(path), actual_sha256
 
 
-def provider_commands(repo, bindings=None):
+def provider_commands(
+    repo,
+    bindings=None,
+    *,
+    d2_artifact=_NO_CANDIDATE_D2,
+    d2_blocked_reason=None,
+):
     """Return discovered commands and missing gate IDs without inventing rows."""
     bindings = bindings or {}
     provider_dir = repo / "deploy/qualification/v1.0/providers"
@@ -242,13 +250,22 @@ def provider_commands(repo, bindings=None):
                 "JOPE_REL07_A5_MANIFEST_SHA256=" + bindings[gate]["manifest_sha256"],
                 *argv,
             ]
-        commands.append(
-            dict(
-                id=gate,
-                argv=argv,
-                timeout_seconds=3600,
-            )
-        )
+        row = dict(id=gate, argv=argv, timeout_seconds=3600)
+        if gate == "D2" and d2_artifact is not _NO_CANDIDATE_D2:
+            if d2_artifact is None:
+                row["blocked_reason"] = d2_blocked_reason or (
+                    "candidate manifest has no verified "
+                    + D2_ARTIFACT_ID
+                    + " artifact"
+                )
+            else:
+                row["argv"] = [
+                    "/usr/bin/env",
+                    "JOPE_REL07_ARTIFACT=" + d2_artifact["path"],
+                    "JOPE_REL07_ARTIFACT_SHA256=" + d2_artifact["sha256"],
+                    *argv,
+                ]
+        commands.append(row)
     return commands, missing
 
 
@@ -292,7 +309,13 @@ def source_is_ancestor(repo, source_sha, main_sha):
 
 
 def provider_manifest(
-    repo, artifact, bindings=None, inputs_sha256=None, allow_unbound=False
+    repo,
+    artifact,
+    bindings=None,
+    inputs_sha256=None,
+    allow_unbound=False,
+    d2_artifact=_NO_CANDIDATE_D2,
+    d2_blocked_reason=None,
 ):
     """Build the exact command manifest from registered, merged gate providers."""
     repo = repo.resolve()
@@ -307,7 +330,12 @@ def provider_manifest(
         raise ValueError("candidate must be a regular, non-symlink file")
     artifact_sha = cpu.digest(artifact)
     bindings = bindings or {}
-    commands, missing = provider_commands(repo, bindings)
+    commands, missing = provider_commands(
+        repo,
+        bindings,
+        d2_artifact=d2_artifact,
+        d2_blocked_reason=d2_blocked_reason,
+    )
     if missing:
         raise ValueError(
             "provider inventory is incomplete; missing: " + ", ".join(missing)
@@ -333,7 +361,100 @@ def provider_manifest(
     )
     if inputs_sha256 is not None:
         value["candidate_inputs_sha256"] = inputs_sha256
+    if d2_artifact is not _NO_CANDIDATE_D2:
+        value["gate_artifacts"] = {
+            "D2": (
+                {
+                    "path": d2_artifact["path"],
+                    "sha256": d2_artifact["sha256"],
+                    "source_sha": d2_artifact["source_sha"],
+                    "candidate_manifest_sha256": d2_artifact["manifest_sha256"],
+                    "seal_receipt_sha256": d2_artifact["seal_receipt_sha256"],
+                }
+                if d2_artifact is not None
+                else None
+            )
+        }
+        if d2_blocked_reason:
+            value["gate_artifacts_blocked"] = {"D2": d2_blocked_reason}
     return value
+
+
+def _candidate_variant_record(
+    row,
+    source_sha,
+    manifest_path,
+    manifest_sha256,
+    expected_id,
+    expected_path=None,
+    expected_profile=None,
+):
+    if not isinstance(row, dict) or row.get("id") != expected_id:
+        raise ValueError("candidate manifest variant has an unexpected identity")
+    path_value = row.get("path")
+    if not isinstance(path_value, str):
+        raise ValueError("candidate variant path must be an absolute regular file")
+    artifact = Path(path_value)
+    if (
+        not artifact.is_absolute()
+        or any(part.is_symlink() for part in (artifact, *artifact.parents))
+        or not artifact.is_file()
+    ):
+        raise ValueError("candidate variant path must be an absolute regular non-symlink file")
+    if expected_path is not None and path_value != str(expected_path):
+        raise ValueError("candidate path does not match its manifest variant")
+    if row.get("source_sha") != source_sha:
+        raise ValueError("candidate variant source differs from its signed candidate")
+    if expected_profile is not None and row.get("profile") != expected_profile:
+        raise ValueError("candidate variant profile does not match " + expected_profile)
+    artifact_sha = cpu.digest(artifact)
+    if (
+        row.get("sha256") != artifact_sha
+        or type(row.get("bytes")) is not int
+        or row["bytes"] != artifact.stat().st_size
+    ):
+        raise ValueError("candidate variant bytes do not match its manifest")
+    seal_value = row.get("seal_verify_receipt")
+    if not isinstance(seal_value, str):
+        raise ValueError("candidate seal receipt path must be absolute and non-symlink")
+    seal_path = Path(seal_value)
+    if not seal_path.is_absolute() or any(
+        part.is_symlink() for part in (seal_path, *seal_path.parents)
+    ):
+        raise ValueError("candidate seal receipt path must be absolute and non-symlink")
+    seal = read_json(seal_path)
+    verification = seal.get("verify")
+    details = verification.get("report") if isinstance(verification, dict) else None
+    signatures = row.get("signature_receipts")
+    if (
+        seal.get("schema") != "jope.rel07.rc2-sealed-variant/v1"
+        or seal.get("id") != expected_id
+        or seal.get("source_sha") != source_sha
+        or seal.get("sha256") != artifact_sha
+        or not isinstance(verification, dict)
+        or verification.get("ok") is not True
+        or not isinstance(details, dict)
+        or details.get("file_sha256") != artifact_sha
+        or not isinstance(signatures, list)
+        or not signatures
+        or any(
+            not isinstance(item, dict)
+            or not isinstance(item.get("receipt"), dict)
+            or item["receipt"].get("verify") != "PASS"
+            for item in signatures
+        )
+    ):
+        raise ValueError("candidate variant lacks a passing sealed/signature receipt")
+    return {
+        "path": str(artifact),
+        "sha256": artifact_sha,
+        "bytes": artifact.stat().st_size,
+        "source_sha": source_sha,
+        "manifest_path": str(manifest_path),
+        "manifest_sha256": manifest_sha256,
+        "seal_receipt_path": str(seal_path),
+        "seal_receipt_sha256": cpu.digest(seal_path),
+    }
 
 
 def _candidate_record(artifact, candidate_manifest=None):
@@ -360,63 +481,76 @@ def _candidate_record(artifact, candidate_manifest=None):
         or not isinstance(value.get("artifacts"), list)
     ):
         raise ValueError("candidate requires an unqualified RC2 manifest")
-    artifact_sha = cpu.digest(artifact)
-    row = next(
-        (
-            item
-            for item in value["artifacts"]
-            if isinstance(item, dict)
-            and item.get("id") == "full-linux-x86_64"
-            and item.get("path") == str(artifact)
-        ),
-        None,
+    artifacts = value["artifacts"]
+    full_rows = [
+        row
+        for row in artifacts
+        if isinstance(row, dict) and row.get("id") == "full-linux-x86_64"
+    ]
+    if len(full_rows) != 1:
+        raise ValueError("candidate manifest must contain exactly one full-linux variant")
+    manifest_sha256 = cpu.digest(manifest_path)
+    full = _candidate_variant_record(
+        full_rows[0],
+        source_sha,
+        manifest_path,
+        manifest_sha256,
+        "full-linux-x86_64",
+        expected_path=artifact,
     )
-    if (
-        row is None
-        or row.get("source_sha") != source_sha
-        or row.get("sha256") != artifact_sha
-        or type(row.get("bytes")) is not int
-        or row["bytes"] != artifact.stat().st_size
-    ):
-        raise ValueError("candidate bytes/source do not match the RC2 manifest")
-    seal_path = Path(row.get("seal_verify_receipt", ""))
-    if not seal_path.is_absolute() or any(
-        part.is_symlink() for part in (seal_path, *seal_path.parents)
-    ):
-        raise ValueError("candidate seal receipt path must be absolute and non-symlink")
-    seal = read_json(seal_path)
-    verification = seal.get("verify")
-    details = verification.get("report") if isinstance(verification, dict) else None
-    signatures = row.get("signature_receipts")
-    if (
-        seal.get("schema") != "jope.rel07.rc2-sealed-variant/v1"
-        or seal.get("id") != row["id"]
-        or seal.get("source_sha") != source_sha
-        or seal.get("sha256") != artifact_sha
-        or not isinstance(verification, dict)
-        or verification.get("ok") is not True
-        or not isinstance(details, dict)
-        or details.get("file_sha256") != artifact_sha
-        or not isinstance(signatures, list)
-        or not signatures
-        or any(
-            not isinstance(item, dict)
-            or not isinstance(item.get("receipt"), dict)
-            or item["receipt"].get("verify") != "PASS"
-            for item in signatures
-        )
-    ):
-        raise ValueError("candidate is not bound to a passing sealed/signature receipt")
+    fused_rows = [
+        row
+        for row in artifacts
+        if isinstance(row, dict) and row.get("id") == D2_ARTIFACT_ID
+    ]
+    d2_artifact = None
+    if not fused_rows:
+        d2_blocked_reason = "candidate manifest has no " + D2_ARTIFACT_ID + " artifact"
+    elif len(fused_rows) != 1:
+        d2_blocked_reason = "candidate manifest has duplicate " + D2_ARTIFACT_ID + " entries"
+    else:
+        try:
+            d2_artifact = _candidate_variant_record(
+                fused_rows[0],
+                source_sha,
+                manifest_path,
+                manifest_sha256,
+                D2_ARTIFACT_ID,
+                expected_profile="fused-cpu",
+            )
+            d2_blocked_reason = None
+        except (OSError, ValueError) as error:
+            d2_blocked_reason = (
+                "candidate manifest D2 variant is not admissible: " + str(error)
+            )
     return {
-        "path": str(artifact),
-        "sha256": artifact_sha,
-        "bytes": artifact.stat().st_size,
-        "source_sha": source_sha,
-        "manifest_path": str(manifest_path),
-        "manifest_sha256": cpu.digest(manifest_path),
-        "seal_receipt_path": str(seal_path),
-        "seal_receipt_sha256": cpu.digest(seal_path),
+        **full,
+        "d2_artifact": d2_artifact,
+        "d2_blocked_reason": d2_blocked_reason,
     }
+
+
+def verify_candidate_variant(record, source_sha):
+    """Keep a secondary gate artifact bound to the same frozen signed candidate."""
+    if record["source_sha"] != source_sha:
+        raise ValueError("D2 variant source differs from the candidate source")
+    for path_key, digest_key in (
+        ("manifest_path", "manifest_sha256"),
+        ("seal_receipt_path", "seal_receipt_sha256"),
+    ):
+        path = Path(record[path_key])
+        if any(part.is_symlink() for part in (path, *path.parents)) or not path.is_file():
+            raise ValueError("D2 candidate binding file is missing or contains a symlink")
+        if cpu.digest(path) != record[digest_key]:
+            raise ValueError("D2 candidate binding file changed during gate execution")
+    artifact = Path(record["path"])
+    if (
+        any(part.is_symlink() for part in (artifact, *artifact.parents))
+        or not artifact.is_file()
+        or artifact.stat().st_size != record["bytes"]
+        or cpu.digest(artifact) != record["sha256"]
+    ):
+        raise ValueError("D2 candidate bytes changed during gate execution")
 
 
 def _required_input_description(gate):
@@ -438,7 +572,12 @@ def dry_run_candidate(
         raise ValueError("candidate dry-run requires a clean source checkout")
     candidate = _candidate_record(artifact, candidate_manifest)
     bindings = bindings or {}
-    commands, missing = provider_commands(repo, bindings)
+    commands, missing = provider_commands(
+        repo,
+        bindings,
+        d2_artifact=candidate["d2_artifact"],
+        d2_blocked_reason=candidate["d2_blocked_reason"],
+    )
     by_id = {row["id"]: row for row in commands}
     missing_set = set(missing)
     rows = []
@@ -449,6 +588,8 @@ def dry_run_candidate(
     for gate in RELEASE_GATE_IDS:
         command = by_id.get(gate)
         reasons = []
+        if command and command.get("blocked_reason"):
+            reasons.append(command["blocked_reason"])
         if gate in missing_set:
             reasons.append("provider command is missing from this checkout")
         if not source_matches_checkout:
@@ -519,13 +660,37 @@ def dry_run_candidate(
             "candidate_manifest_sha256": candidate["manifest_sha256"],
             "seal_receipt_sha256": candidate["seal_receipt_sha256"],
             "candidate_inputs_sha256": inputs_sha256,
+            "gate_artifacts": {
+                "D2": (
+                    {
+                        "path": candidate["d2_artifact"]["path"],
+                        "sha256": candidate["d2_artifact"]["sha256"],
+                        "source_sha": candidate["d2_artifact"]["source_sha"],
+                        "candidate_manifest_sha256": candidate["d2_artifact"][
+                            "manifest_sha256"
+                        ],
+                        "seal_receipt_sha256": candidate["d2_artifact"][
+                            "seal_receipt_sha256"
+                        ],
+                    }
+                    if candidate["d2_artifact"]
+                    else None
+                )
+            },
         },
     )
     return rows
 
 
 def write_provider_manifest(
-    repo, artifact, output, bindings=None, inputs_sha256=None, allow_unbound=False
+    repo,
+    artifact,
+    output,
+    bindings=None,
+    inputs_sha256=None,
+    allow_unbound=False,
+    d2_artifact=_NO_CANDIDATE_D2,
+    d2_blocked_reason=None,
 ):
     """Retain the generated manifest beside gate evidence before execution."""
     repo = repo.resolve()
@@ -539,7 +704,13 @@ def write_provider_manifest(
     if path.exists() or path.is_symlink():
         raise ValueError("generated gate manifest path must be new: " + str(path))
     value = provider_manifest(
-        repo, artifact, bindings, inputs_sha256, allow_unbound
+        repo,
+        artifact,
+        bindings,
+        inputs_sha256,
+        allow_unbound,
+        d2_artifact,
+        d2_blocked_reason,
     )
     path.write_text(json.dumps(value, indent=2) + "\n")
     return path
@@ -585,10 +756,22 @@ def verified_result(path, gate, source, digest):
     return result
 
 
-def execute(repo, artifact, commands_path, output):
+def execute(
+    repo, artifact, commands_path, output, d2_artifact=_NO_CANDIDATE_D2
+):
     spec, commands, manifest_sha = manifest(commands_path)
     source, digest = spec["source_sha"], spec["artifact_sha256"]
     verify_inputs(repo, artifact, source, digest)
+    candidate_d2 = d2_artifact is not _NO_CANDIDATE_D2
+    if candidate_d2 and d2_artifact is not None:
+        verify_candidate_variant(d2_artifact, source)
+        expected_prefix = [
+            "/usr/bin/env",
+            "JOPE_REL07_ARTIFACT=" + d2_artifact["path"],
+            "JOPE_REL07_ARTIFACT_SHA256=" + d2_artifact["sha256"],
+        ]
+        if commands["D2"]["argv"][: len(expected_prefix)] != expected_prefix:
+            raise ValueError("D2 command does not bind the signed fused-cpu candidate")
     if output.resolve().is_relative_to(repo):
         raise ValueError("gate evidence must be outside the tested checkout")
     output.mkdir(parents=True, exist_ok=False)
@@ -613,6 +796,27 @@ def execute(repo, artifact, commands_path, output):
         manifest_sha256=manifest_sha,
         runner_sha256=cpu.digest(Path(__file__)),
         candidate_inputs_sha256=spec.get("candidate_inputs_sha256"),
+        gate_artifacts=(
+            {
+                "D2": (
+                    {
+                        "path": d2_artifact["path"],
+                        "sha256": d2_artifact["sha256"],
+                        "source_sha": d2_artifact["source_sha"],
+                        "candidate_manifest_sha256": d2_artifact[
+                            "manifest_sha256"
+                        ],
+                        "seal_receipt_sha256": d2_artifact[
+                            "seal_receipt_sha256"
+                        ],
+                    }
+                    if d2_artifact is not None
+                    else None
+                )
+            }
+            if candidate_d2
+            else {}
+        ),
         machine=socket.gethostname(),
         started_utc=cpu.utc(),
         checks=[],
@@ -628,6 +832,7 @@ def execute(repo, artifact, commands_path, output):
                 "source_sha": source,
                 "artifact": str(artifact),
                 "artifact_sha256": digest,
+                "gate_artifacts": run["gate_artifacts"],
                 "gates": [
                     dict(
                         id=gate,
@@ -671,6 +876,8 @@ def execute(repo, artifact, commands_path, output):
         folder = output / gate
         try:
             verify_inputs(repo, artifact, source, digest)
+            if gate == "D2" and candidate_d2 and d2_artifact is not None:
+                verify_candidate_variant(d2_artifact, source)
             record["admission"] = cpu.admission(repo)
         except (OSError, ValueError) as error:
             rows[gate].update(status="BLOCKED", evidence=f"{error}; artifact={digest}")
@@ -687,6 +894,14 @@ def execute(repo, artifact, commands_path, output):
             JOPE_REL07_GATE_ID=gate,
             JOPE_REL07_RESULT=str(folder / "result.json"),
         )
+        if gate == "D2" and candidate_d2 and d2_artifact is not None:
+            record["gate_artifact"] = {
+                "path": d2_artifact["path"],
+                "sha256": d2_artifact["sha256"],
+                "source_sha": d2_artifact["source_sha"],
+                "candidate_manifest_sha256": d2_artifact["manifest_sha256"],
+                "seal_receipt_sha256": d2_artifact["seal_receipt_sha256"],
+            }
         try:
             code, timed_out = cpu.invoke(
                 commands[gate]["argv"],
@@ -701,18 +916,31 @@ def execute(repo, artifact, commands_path, output):
                 raise ValueError("gate requires a retained regular command log")
             record["log_sha256"] = cpu.digest(log)
             verify_inputs(repo, artifact, source, digest)
+            if gate == "D2" and candidate_d2 and d2_artifact is not None:
+                verify_candidate_variant(d2_artifact, source)
             if code != 0 or timed_out:
                 raise ValueError(
                     f"gate command failed: exit={code}, timeout={timed_out}"
                 )
-            result = verified_result(folder / "result.json", gate, source, digest)
+            gate_digest = (
+                d2_artifact["sha256"]
+                if gate == "D2" and candidate_d2 and d2_artifact is not None
+                else digest
+            )
+            result = verified_result(
+                folder / "result.json", gate, source, gate_digest
+            )
             record.update(
                 counts=result["counts"],
                 result_sha256=cpu.digest(folder / "result.json"),
             )
-            rows[gate].update(
-                status="PASS", evidence=f"{folder / 'result.json'}; artifact={digest}"
-            )
+            evidence = f"{folder / 'result.json'}; artifact={digest}"
+            if gate == "D2" and candidate_d2 and d2_artifact is not None:
+                evidence += (
+                    f"; gate_artifact={d2_artifact['path']}"
+                    f" sha256={d2_artifact['sha256']}"
+                )
+            rows[gate].update(status="PASS", evidence=evidence)
         except (OSError, ValueError) as error:
             record["diagnostic"] = str(error)
             rows[gate].update(
@@ -729,6 +957,8 @@ def execute(repo, artifact, commands_path, output):
         # Recheck before publishing even the last PASS; source drift cannot emit 28 PASS.
         try:
             verify_inputs(repo, artifact, source, digest)
+            if gate == "D2" and candidate_d2 and d2_artifact is not None:
+                verify_candidate_variant(d2_artifact, source)
         except (OSError, ValueError) as error:
             rows[gate].update(status="FAIL", evidence=f"{error}; artifact={digest}")
             run["diagnostic"] = str(error)
@@ -902,13 +1132,28 @@ def main():
                     bindings,
                     inputs_sha256 if candidate_mode else None,
                     allow_unbound=candidate_mode,
+                    d2_artifact=(
+                        candidate["d2_artifact"]
+                        if candidate_mode
+                        else _NO_CANDIDATE_D2
+                    ),
+                    d2_blocked_reason=(
+                        candidate["d2_blocked_reason"] if candidate_mode else None
+                    ),
                 )
-            receipt, code = execute(
+            execute_args = (
                 args.repo.resolve(),
                 args.artifact.absolute(),
                 commands_path,
                 args.output.absolute(),
             )
+            if candidate_mode:
+                receipt, code = execute(
+                    *execute_args,
+                    d2_artifact=candidate["d2_artifact"],
+                )
+            else:
+                receipt, code = execute(*execute_args)
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         parser.error(str(error))
     print(
