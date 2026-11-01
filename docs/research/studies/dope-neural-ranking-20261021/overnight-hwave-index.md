@@ -134,4 +134,4 @@
 
 | H191 | 2026-11-01 | Nested zero-update r882 kernel selection (rd_astra) | PREREGISTERED; not executed | 6 kernel coefficients; 15 B-only choices locked before A; sole KXSEL / Holm1; 0 updates | [h191_nested_kernel/](../../../../research/flywheel_selfplay/h191_nested_kernel/README.md) |
 
-| H187 | gpu_tokbench_codex | Robust loss / equal-family fresh adapters | attempt001 INCOMPLETE (376 updates; host load); owner-authorized attempt002 | [relaunch](../../../../research/flywheel_selfplay/h187_robust_family/RELAUNCH.md) |
+| H187 | gpu_tokbench_codex | Robust loss / equal-family fresh adapters; imported pooled selector | COMPLETE; NO_ADVANCE; 7200 updates; no live adoption | [results](../../../../research/flywheel_selfplay/h187_robust_family/README.md) |
