@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 import analysis as stat
+from runner import locked_b_panel
 from treatment import (
     RANK,
     SAMPLES,
@@ -76,6 +77,26 @@ def test_bma_rejects_wrong_sample_count_or_nonfinite_costs():
     bad[0][0] = float("nan")
     with pytest.raises(ValueError):
         average_cost_vectors(bad)
+
+
+def test_locked_b_panel_retains_raw_costs_choices_and_utilities_by_context():
+    rows = [dict(context_sha256=f"c{i:04}") for i in range(41)]
+    raw = {
+        row["context_sha256"]: np.arange(24, dtype=np.float32) + i
+        for i, row in enumerate(rows)
+    }
+    panel = dict(
+        context_ids=[row["context_sha256"] for row in rows],
+        choices=[0] * len(rows),
+        values=[-float(i) for i in range(len(rows))],
+    )
+    locked = locked_b_panel(rows, raw, panel)
+    assert locked["context_ids"] == panel["context_ids"]
+    assert locked["cost_vectors"][7] == raw["c0007"].tolist()
+    assert locked["choices"] == panel["choices"]
+    assert locked["utilities"] == panel["values"]
+    with pytest.raises(ValueError, match="context identity"):
+        locked_b_panel(rows, {"wrong": np.zeros(24)}, panel)
 
 
 def test_trajectory_scope_rejects_selector_assessment_and_val_families():

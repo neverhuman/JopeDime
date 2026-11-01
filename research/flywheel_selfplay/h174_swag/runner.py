@@ -312,7 +312,25 @@ def average_costs(engine, rows, vectors, net, names, template, restore):
         ).numpy()
         for row in rows
     }
-    return utility_panel(engine, rows, averaged), averaged, utility_samples
+    return utility_panel(engine, rows, averaged), averaged, utility_samples, raw_samples
+
+
+def locked_b_panel(rows, raw, panel):
+    ids = [row["context_sha256"] for row in rows]
+    if set(raw) != set(ids) or panel["context_ids"] != ids:
+        raise ValueError("B panel context identity mismatch")
+    costs = [np.asarray(raw[cid], dtype=np.float64).tolist() for cid in ids]
+    if any(
+        len(values) != 24 or not np.isfinite(values).all()
+        for values in map(np.asarray, costs)
+    ):
+        raise ValueError("B cost vector shape or finiteness")
+    return {
+        "context_ids": ids,
+        "cost_vectors": costs,
+        "choices": list(panel["choices"]),
+        "utilities": list(panel["values"]),
+    }
 
 
 def replication_report(primary, val_panel, cells):
@@ -636,7 +654,14 @@ def main():
                 del plan
                 restore(initial)
                 engine.load(select)
-                base_b, _ = engine.evaluate(select)
+                base_b, base_b_raw = engine.evaluate(select)
+                raw_b_costs = {
+                    "r882": locked_b_panel(select, base_b_raw, base_b),
+                    "CTRL": {"0": locked_b_panel(select, base_b_raw, base_b)},
+                    "SWA": {},
+                    "BMA05": {},
+                    "BMA10": {},
+                }
                 selector_panels = {
                     "CTRL": [base_b],
                     "SWA": [],
@@ -646,9 +671,10 @@ def main():
                 ctrl_snapshots = {}
                 for step in SELECT_STEPS[1:]:
                     restore(snapshots[step])
-                    panel, _ = engine.evaluate(select)
+                    panel, raw = engine.evaluate(select)
                     ctrl_snapshots[step] = panel
                     selector_panels["CTRL"].append(panel)
+                    raw_b_costs["CTRL"][str(step)] = locked_b_panel(select, raw, panel)
                 decisions = {
                     "CTRL": stat.choose(
                         select,
@@ -666,11 +692,14 @@ def main():
                     if arm == "SWA":
                         restore(candidate_states[arm])
                         panel, raw = engine.evaluate(select)
+                        raw_b_costs[arm] = {
+                            "candidate_mean": locked_b_panel(select, raw, panel)
+                        }
                         swag_hashes[arm] = rt.tensor_hash(candidate_states[arm])
                         sample_panels = [panel]
                     else:
                         scale = 0.5 if arm == "BMA05" else 1.0
-                        panel, raw, sample_panels = average_costs(
+                        panel, raw, sample_panels, raw_samples_for_lock = average_costs(
                             engine,
                             select,
                             candidate_states[arm],
@@ -679,6 +708,15 @@ def main():
                             initial,
                             restore,
                         )
+                        raw_b_costs[arm] = {
+                            "posterior_samples": [
+                                locked_b_panel(select, sample, sample_panel)
+                                for sample, sample_panel in zip(
+                                    raw_samples_for_lock, sample_panels, strict=True
+                                )
+                            ],
+                            "candidate_mean": locked_b_panel(select, raw, panel),
+                        }
                         swag_hashes[arm] = hashlib.sha256(
                             b"".join(v.numpy().tobytes() for v in candidate_states[arm])
                         ).hexdigest()
@@ -715,6 +753,7 @@ def main():
                         seed=seed,
                         decisions=decisions,
                         selector_panels=selector_panels,
+                        raw_b_cost_vectors=raw_b_costs,
                         bma_posterior_sample_utility_spread=bma_spread,
                         fit_context_ids=sorted(fit_ids),
                         trajectory_context_ids=sorted(trajectory_ids),

@@ -4,6 +4,7 @@ from collections.abc import Mapping
 import math
 
 import torch
+import torch.nn.functional as F
 
 SNAPSHOT_STEPS = tuple(range(10, 41, 2))
 SELECT_STEPS = (0, 10, 20, 30, 40)
@@ -130,6 +131,36 @@ def adapter_drift(initial, final):
             for n in initial
         )
     )
+
+
+def adapter_forward(
+    net, prog, sos, tokens, mask, scale, rev, raw, gate, anchor_total, anchor_prior
+):
+    """Run the adapter-only cost head against frozen cached anchor features."""
+    ad = net.adapter_10tok
+    pooled, query, semantic, adjustment = ad.encode_multimodal_context_and_candidates(
+        mm_tokens_10x32=tokens,
+        mm_mask=mask,
+        prog_412=prog,
+        sos_prior=sos,
+        active_modality_override_mask=None,
+    )
+    static = dict(
+        eff_prior=anchor_prior + adjustment,
+        mm_prior_adj=adjustment,
+        sem24=semantic,
+        cand_q=query,
+        cand_q_norm=F.normalize(query, p=2, dim=-1, eps=1e-8),
+        ctx_pooled=pooled,
+    )
+    delta = ad.compute_adapter_delta_from_static_terms(
+        static_terms=static,
+        scale=scale,
+        revealed_indices=rev,
+        revealed_raw_f=raw,
+        revealed_gate=gate,
+    )
+    return (anchor_total + delta).float()
 
 
 def validate_launch(

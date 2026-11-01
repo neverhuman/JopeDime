@@ -4441,20 +4441,20 @@
       "sha256": "5c49bd20a3865ca3bb3a2833c4701b95b66cb00d0e295640751b461a9c701c4c"
     },
     "python:research/flywheel_selfplay/h174_swag/treatment.py": {
-      "bytes": 5398,
+      "bytes": 6363,
       "classification": {
         "role": "research",
         "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
       },
-      "sha256": "4a476d567e352d999d88e76c80de80e1db973fe741bcf9038bf9a66390e32014"
+      "sha256": "c455d92090ba861c00d90915a51c57345f27bd24801b9a99f56846be65defbe6"
     },
     "python:research/flywheel_selfplay/h174_swag/runner.py": {
-      "bytes": 37530,
+      "bytes": 39305,
       "classification": {
         "role": "research",
         "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
       },
-      "sha256": "87c42db1422daf823e97bc83a968411c71771fa9540491f3e24c904496d0f09b"
+      "sha256": "fb33e03e266c34ab16f72de16a92cb8d8a87cad78e5db720aa0cd3727d33bcd7"
     },
     "python:research/flywheel_selfplay/h174_swag/monitor.py": {
       "bytes": 5212,

@@ -5409,7 +5409,7 @@
       "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; data-free inner-CV selector, L-BFGS convergence, None-grad guard, and placebo leak controls. Research only; no product/sealed qualification."
     },
     "python:research/flywheel_selfplay/h174_swag/test_h174.py": {
-      "reason": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector and cross-fit batches. Research only; no study data, checkpoint, product, sealed qualification or serving promotion.",
+      "reason": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector and raw B cost/choice/utility lock replay. Research only; no study data, checkpoint, product, sealed qualification or serving promotion.",
       "role": "research"
     }
   },
@@ -5504,7 +5504,7 @@
     }
   },
   "python:research/flywheel_selfplay/h174_swag/test_h174.py": {
-    "reason": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector and cross-fit batches. Research only; no study data, checkpoint, product, sealed qualification or serving promotion.",
+    "reason": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector and raw B cost/choice/utility lock replay. Research only; no study data, checkpoint, product, sealed qualification or serving promotion.",
     "role": "research"
   }
 }
