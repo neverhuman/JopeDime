@@ -457,6 +457,30 @@ fn learned_requires_explicit_admission_and_invalid_device_is_not_fallback() {
     assert_eq!(super::service::error_code(&err), ErrorCode::InvalidInput);
 }
 
+#[test]
+fn default_auto_plan_is_byte_identical_with_ranker_absent_or_disabled() {
+    use jope_api::Guidance;
+
+    let mut request = spec("ds_0123456789abcdef01234567", "cpu");
+    request.guidance = Guidance::Auto;
+    let absent = BackendPlan::resolve(&request, None, 1).unwrap();
+    let admitted = AdmittedRanker::test_admitted();
+    let present_but_disabled = BackendPlan::resolve(&request, Some(&admitted), 1).unwrap();
+    let serving_bytes = |plan: &BackendPlan| {
+        serde_json::to_vec(&serde_json::json!({
+            "guidance": plan.guidance,
+            "warnings": plan.warnings,
+            "placement": plan.placement,
+            "bundle_digest": plan.bundle_digest,
+            "landmark_rows": plan.landmark_rows,
+        }))
+        .unwrap()
+    };
+
+    assert!(!absent.learned() && !present_but_disabled.learned());
+    assert_eq!(serving_bytes(&absent), serving_bytes(&present_but_disabled));
+}
+
 async fn post(app: axum::Router, request: &RunSpec, key: &str) -> (u16, Value) {
     let response = app
         .oneshot(
