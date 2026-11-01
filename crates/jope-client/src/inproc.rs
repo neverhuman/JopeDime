@@ -15,6 +15,27 @@ use std::{
 use tokio::{runtime::Builder, sync::oneshot};
 use tower::ServiceExt;
 
+/// Supplies a router bound to an embedding's store and local authentication.
+///
+/// The provider is retained for the lifetime of the bridge, so implementations
+/// can own the store and services backing their router.
+pub trait InProcessApiProvider: Send + Sync + 'static {
+    fn router(
+        &self,
+        auth: jope_service::http::auth::LocalAuth,
+    ) -> std::result::Result<Router, io::Error>;
+}
+
+impl InProcessApiProvider for jope_service::engine::InProcessEngine {
+    fn router(
+        &self,
+        auth: jope_service::http::auth::LocalAuth,
+    ) -> std::result::Result<Router, io::Error> {
+        jope_service::engine::InProcessEngine::router(self, auth)
+            .map_err(|e| io::Error::other(e.to_string()))
+    }
+}
+
 struct Command {
     request: ureq::http::Request<Vec<u8>>,
     reply: mpsc::Sender<Result<Response>>,
@@ -42,7 +63,7 @@ impl InProcess {
         router: Router,
         endpoint: &str,
         token: &str,
-        owner: Option<std::sync::Arc<jope_service::engine::InProcessEngine>>,
+        owner: Option<std::sync::Arc<dyn InProcessApiProvider>>,
     ) -> Result<Self> {
         let credentials = Credentials::new(endpoint, token)?;
         let (sender, receiver) = mpsc::channel::<Command>();
@@ -93,6 +114,18 @@ impl InProcess {
         port: u16,
         token: &str,
     ) -> Result<Self> {
+        Self::with_api(engine, port, token)
+    }
+
+    /// Bind a local API provider to the in-process transport without opening a listener.
+    ///
+    /// This is useful for store-backed embeddings and for substituting a small
+    /// provider in transport tests.
+    pub fn with_api(
+        provider: std::sync::Arc<dyn InProcessApiProvider>,
+        port: u16,
+        token: &str,
+    ) -> Result<Self> {
         use jope_service::http::auth::{BearerToken, LocalAuth};
         let auth = LocalAuth::new(
             BearerToken::from_hex(token)
@@ -100,14 +133,12 @@ impl InProcess {
             port,
         )
         .map_err(|_| Error::InvalidRequest("invalid local authority"))?;
-        let router = engine
-            .router(auth)
-            .map_err(|e| io::Error::other(e.to_string()))?;
+        let router = provider.router(auth)?;
         Self::new_owned(
             router,
             &format!("http://127.0.0.1:{port}"),
             token,
-            Some(engine),
+            Some(provider),
         )
     }
 }
@@ -295,6 +326,22 @@ mod tests {
             "/v1/system",
             get(|| async { ([("jope-api-version", "1.0")], Json(fixture())) }),
         )
+    }
+    struct StubProvider;
+    impl InProcessApiProvider for StubProvider {
+        fn router(
+            &self,
+            _auth: jope_service::http::auth::LocalAuth,
+        ) -> std::result::Result<Router, io::Error> {
+            Ok(app())
+        }
+    }
+    #[test]
+    fn provider_trait_accepts_a_stub_router() {
+        let client =
+            InProcess::with_api(std::sync::Arc::new(StubProvider), 12345, &"ab".repeat(32))
+                .unwrap();
+        assert_eq!(client.system_info().unwrap(), fixture());
     }
     #[test]
     fn typed_positive_response_is_identical_over_both_transports() {
