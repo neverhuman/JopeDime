@@ -324,6 +324,77 @@ class M5Tests(unittest.TestCase):
             self.refuses()
         self.assertEqual(self.calls, [])
 
+    def invoke_main(self, argv=(), environment=None):
+        bindings = {
+            "JOPE_REL07_GATE_ID": "M5",
+            "JOPE_REL07_ARTIFACT": str(self.ctx.artifact),
+            "JOPE_REL07_ARTIFACT_SHA256": self.ctx.artifact_sha256,
+            "JOPE_REL07_SOURCE_SHA": self.ctx.source_sha,
+            "JOPE_REL07_RESULT": str(self.ctx.result),
+            "JOPE_GOLDEN_DIR": str(self.inputs.golden),
+            "JOPE_PARITY_BUNDLE_DIR": str(self.inputs.bundle),
+        }
+        bindings.update(environment or {})
+        with (
+            patch.dict(os.environ, bindings),
+            patch.object(sys, "argv", ["providers/m5.py", *argv]),
+            patch.object(m5.subprocess, "run", side_effect=self.run_child),
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            return m5.main()
+
+    def test_discovery_argv_accepts_standard_environment_inputs(self):
+        self.assertEqual(self.invoke_main(), 0)
+        result = json.loads(self.ctx.result.read_text())
+        self.assertEqual(result["artifact_sha256"], self.ctx.artifact_sha256)
+        self.assertEqual(result["source_sha"], self.ctx.source_sha)
+        self.assertEqual(self.test_calls, 1)
+
+    def test_explicit_input_flags_take_precedence_over_environment(self):
+        self.assertEqual(
+            self.invoke_main(
+                [
+                    "--golden-dir",
+                    str(self.inputs.golden),
+                    "--bundle-dir",
+                    str(self.inputs.bundle),
+                ],
+                {
+                    "JOPE_GOLDEN_DIR": "wrong-relative-golden",
+                    "JOPE_PARITY_BUNDLE_DIR": "wrong-relative-bundle",
+                },
+            ),
+            0,
+        )
+        self.assertEqual(self.test_calls, 1)
+
+    def test_explicit_and_environment_input_paths_can_be_combined(self):
+        self.assertEqual(
+            self.invoke_main(
+                ["--bundle-dir", str(self.inputs.bundle)],
+                {"JOPE_PARITY_BUNDLE_DIR": ""},
+            ),
+            0,
+        )
+
+    def test_missing_environment_inputs_refuse_before_any_child(self):
+        for name in ["JOPE_GOLDEN_DIR", "JOPE_PARITY_BUNDLE_DIR"]:
+            with self.subTest(name=name):
+                self.assertEqual(self.invoke_main(environment={name: ""}), 2)
+                self.assertEqual(self.calls, [])
+                self.assertFalse(self.ctx.result.exists())
+
+    def test_environment_paths_still_require_absolute_pinned_regular_inputs(self):
+        for name, value in [
+            ("JOPE_GOLDEN_DIR", "relative-golden"),
+            ("JOPE_PARITY_BUNDLE_DIR", str(self.root / "missing-bundle")),
+        ]:
+            with self.subTest(name=name):
+                self.assertEqual(self.invoke_main(environment={name: value}), 2)
+                self.assertEqual(self.calls, [])
+                self.assertFalse(self.ctx.result.exists())
+
     def test_main_catches_provider_refusals_as_exit_two(self):
         args = [
             "m5.py",
