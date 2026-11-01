@@ -347,7 +347,14 @@ def engine_boundary_matrix():
             if not inventory:
                 rid=run(h,spec_argv(d,'int02-boundary-run',2))['run_id']
             elif state=='paused':
-                run(h,['control',rid,'--idempotency-key','int02-boundary-continue','continue'])
+                control=['control',rid,'--idempotency-key','int02-boundary-continue','continue']
+                resumed=run(h,control)
+                assert run(h,control)==resumed,'Continue retry changed its committed outcome'
+                changed=out/(label+'-changed-control.json')
+                changed.write_text(json.dumps({'action':'continue','expected_revision':'0'}))
+                conflict=subprocess.run([args.binary,'control',rid,'--idempotency-key','int02-boundary-continue','--body',str(changed),'continue'],env={**base_env,'JOPEDIME_HOME':str(h)},text=True,capture_output=True,timeout=10)
+                assert conflict.returncode==8 and 'IDEMPOTENCY_CONFLICT' in conflict.stderr,'changed Continue request did not conflict'
+                commands.append({'argv':['control',rid,'changed-body-negative'],'exit':conflict.returncode,'stderr':conflict.stderr})
             completed=wait_terminal(h,rid)
             final_events=client.events(rid,0)['events']
             assert completed['state']=='completed' and completed['best']==snapshot['best'],(label,completed)

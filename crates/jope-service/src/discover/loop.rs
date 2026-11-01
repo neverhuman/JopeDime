@@ -712,6 +712,7 @@ struct StartCommand {
     identity: crate::idempotency::RequestIdentity,
     input_roots: Vec<BlobRef>,
     warnings: Vec<jope_api::Warning>,
+    resume: bool,
 }
 
 impl Discovery {
@@ -730,6 +731,7 @@ impl Discovery {
             identity,
             input_roots,
             warnings,
+            resume: false,
         });
         #[cfg(feature = "research")]
         {
@@ -738,6 +740,29 @@ impl Discovery {
         #[cfg(not(feature = "research"))]
         {
             Self::open_inner(store, plan, start)
+        }
+    }
+    /// Resume an owned paused run and atomically retain its public retry receipt.
+    pub(crate) fn continue_command(
+        store: Arc<Store>,
+        plan: Plan,
+        journal: Arc<EventLog>,
+        identity: crate::idempotency::RequestIdentity,
+    ) -> Result<Self> {
+        let command = Some(StartCommand {
+            journal,
+            identity,
+            input_roots: vec![],
+            warnings: vec![],
+            resume: true,
+        });
+        #[cfg(feature = "research")]
+        {
+            Self::open_inner(store, plan, None, command)
+        }
+        #[cfg(not(feature = "research"))]
+        {
+            Self::open_inner(store, plan, command)
         }
     }
     /// The caller exclusively owns this run and supplies a fresh worker pool on
@@ -783,10 +808,17 @@ impl Discovery {
             .map(|s| Arc::clone(&s.journal))
             .unwrap_or_else(|| Arc::new(EventLog::new(Arc::clone(&store))));
         let old = log.snapshot(&plan.run_id)?;
-        ensure!(
-            start.is_none() || old.is_none(),
-            "command cannot recreate an existing run"
-        );
+        if let Some(command) = &start {
+            ensure!(
+                if command.resume {
+                    old.as_ref()
+                        .is_some_and(|snapshot| snapshot.state == RunState::Paused)
+                } else {
+                    old.is_none()
+                },
+                "command requires a new run or an explicitly continued paused run"
+            );
+        }
         let (mut checkpoint, mut snapshot) = if let Some(snapshot) = &old {
             let record = store
                 .get(&RecordKey::Run(plan.run_id.clone()))?
@@ -921,7 +953,10 @@ impl Discovery {
                     if let Some(start) = &start {
                         tx.record_new_command(
                             &start.identity,
-                            crate::idempotency::CommandOutcome::json(201, initial_response)?,
+                            crate::idempotency::CommandOutcome::json(
+                                if start.resume { 200 } else { 201 },
+                                initial_response,
+                            )?,
                         )?;
                     }
                     Ok(())

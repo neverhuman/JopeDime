@@ -36,14 +36,14 @@ const HANDOFF_MAX: u64 = 16 * 1024 * 1024;
 
 /// Every file contains exactly these dataset-local source rows in this order.
 /// The split preparer supplies the provenance roster; no payload is read here.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Partition {
     pub path: PathBuf,
     pub sha256: String,
     pub rows: Vec<AuditRowId>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FinalizationRequest {
     pub run_id: RunId,
     pub fit: Partition,
@@ -106,6 +106,25 @@ impl Finalizer {
         request: &FinalizationRequest,
         executor: &impl Executor,
     ) -> Result<FinalizationReceipt> {
+        self.finalize_inner(request, executor, false)
+    }
+
+    /// Only an explicit public Continue dispatch may retry an interrupted claim.
+    /// Preserve its unknown prior outcome; automatic replay still refuses it.
+    pub(crate) fn finalize_after_explicit_continue(
+        &self,
+        request: &FinalizationRequest,
+        executor: &impl Executor,
+    ) -> Result<FinalizationReceipt> {
+        self.finalize_inner(request, executor, true)
+    }
+
+    fn finalize_inner(
+        &self,
+        request: &FinalizationRequest,
+        executor: &impl Executor,
+        explicit_continue: bool,
+    ) -> Result<FinalizationReceipt> {
         let record = self
             .store
             .get(&RecordKey::Run(request.run_id.clone()))?
@@ -119,24 +138,27 @@ impl Finalizer {
             principal: "discover.finalization.v1".into(),
             idempotency_key: request.run_id.to_string(),
         };
-        if let Some(record) = self.store.get(&key)? {
+        let prior = self.store.get(&key)?;
+        if let Some(record) = &prior {
             ensure!(
                 record.data["identity"] == identity,
                 "finalization request changed"
             );
+            if record.data["state"] == "completed" {
+                let receipt: FinalizationReceipt =
+                    serde_json::from_value(record.data["receipt"].clone())?;
+                let object = ModelObject::read(&receipt.model_path, request.max_model_bytes)?;
+                ensure!(
+                    object.id() == receipt.model_digest,
+                    "finalized object identity changed"
+                );
+                object.verify_executable()?;
+                return Ok(receipt);
+            }
             ensure!(
-                record.data["state"] == "completed",
-                "finalization outcome failed or unknown; protected rows will not be reread"
+                explicit_continue && record.data["state"] == "started",
+                "finalization outcome failed or unknown; automatic protected-row reread refused"
             );
-            let receipt: FinalizationReceipt =
-                serde_json::from_value(record.data["receipt"].clone())?;
-            let object = ModelObject::read(&receipt.model_path, request.max_model_bytes)?;
-            ensure!(
-                object.id() == receipt.model_digest,
-                "finalized object identity changed"
-            );
-            object.verify_executable()?;
-            return Ok(receipt);
         }
         let snapshot = self
             .journal
@@ -216,8 +238,8 @@ impl Finalizer {
             request.test.as_ref().map(ids).unwrap_or_default(),
         )?;
         self.store.transaction(|tx| {
-            if tx.get(&key)?.is_some() {
-                return Err(StoreError::Invalid("finalization already claimed"));
+            if tx.get(&key)? != prior {
+                return Err(StoreError::Invalid("finalization claim changed"));
             }
             let current = tx
                 .get(&RecordKey::Run(request.run_id.clone()))?
@@ -230,9 +252,18 @@ impl Finalizer {
             {
                 return Err(StoreError::Invalid("run changed before finalization"));
             }
+            if let Some(prior) = &prior {
+                let history = RecordKey::Command {
+                    principal: "discover.finalization.interrupted.v1".into(),
+                    idempotency_key: format!("{}:{}", request.run_id, snapshot.revision.0),
+                };
+                tx.put(&history, &Record::metadata(json!({
+                    "outcome":"unknown", "explicit_continue":true, "prior":prior
+                }), prior.blobs.clone()))?;
+            }
             tx.put(
                 &key,
-                &Record::metadata(json!({"identity":identity,"state":"started"}), vec![]),
+                &Record::metadata(json!({"identity":identity,"state":"started", "attempt":prior.as_ref().and_then(|r|r.data["attempt"].as_u64()).unwrap_or(0).checked_add(1).ok_or(StoreError::Invalid("finalization attempts exhausted"))?}), vec![]),
             )
         })?;
         audit.begin_finalization();
@@ -1158,6 +1189,39 @@ mod tests {
             .to_string()
             .contains("unknown"));
         assert_eq!(before, native.calls.lock().unwrap().len());
+        // An operator's explicit Continue is a new authorized attempt, while the
+        // interrupted attempt remains durably unknown rather than a zero score.
+        let revision = Finalizer::new(Arc::clone(&f.store))
+            .journal()
+            .snapshot(&f.plan.run_id)
+            .unwrap()
+            .unwrap()
+            .revision
+            .0;
+        let finalizer = Finalizer::new(Arc::clone(&f.store));
+        let resumed = finalizer
+            .finalize_after_explicit_continue(&f.request, &native)
+            .unwrap();
+        assert!(resumed.scores.holdout.unwrap().is_finite());
+        let history = f
+            .store
+            .get(&RecordKey::Command {
+                principal: "discover.finalization.interrupted.v1".into(),
+                idempotency_key: format!("{}:{revision}", f.plan.run_id),
+            })
+            .unwrap()
+            .unwrap();
+        assert_eq!(history.data["outcome"], "unknown");
+        assert_eq!(history.data["prior"]["data"]["state"], "started");
+        let calls = native.calls.lock().unwrap().len();
+        assert_eq!(
+            finalizer
+                .finalize(&f.request, &native)
+                .unwrap()
+                .model_digest,
+            resumed.model_digest
+        );
+        assert_eq!(calls, native.calls.lock().unwrap().len());
     }
 
     #[test]

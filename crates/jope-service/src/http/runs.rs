@@ -18,7 +18,7 @@ use crate::{
     governor::{Governor, Requirements},
     idempotency::{CommandOutcome, RequestIdentity},
     ranker::admission::{resolve_unqualified, GuidanceUnavailableReason},
-    store::{RecordKey, Store},
+    store::{Record, RecordKey, Store},
     telemetry::{Sensors, SystemSensors},
 };
 use axum::{
@@ -69,6 +69,19 @@ pub(crate) struct RunService {
     admission: Mutex<()>,
     // Worker jobs retain store ownership and the OS lease after a client drops.
     _lease: Arc<EngineLock>,
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct Continuation {
+    search: SearchPlan,
+    finalization: FinalizationRequest,
+}
+
+fn continuation_key(run: &jope_api::ids::RunId) -> RecordKey {
+    RecordKey::Command {
+        principal: "public-run-continuation.v1".into(),
+        idempotency_key: run.to_string(),
+    }
 }
 
 struct Prepared {
@@ -509,6 +522,54 @@ impl RunService {
             max_input_bytes: self.config.limits.max_dataset_bytes.value,
             max_model_bytes: MODEL_LIMIT,
         };
+        // This context precedes the first run commit, so every visible run can
+        // resume from its original immutable plan and partition provenance.
+        let context = Continuation {
+            search: prepared.search.clone(),
+            finalization: request.clone(),
+        };
+        let persisted = self.store.transaction(|tx| {
+            tx.put(
+                &continuation_key(&prepared.search.run_id),
+                &Record::metadata(
+                    serde_json::to_value(&context)?,
+                    vec![fit.clone(), holdout.clone()],
+                ),
+            )
+        });
+        if let Err(error) = persisted {
+            return response(&io(error));
+        }
+        let sender = match self.worker_sender(_pub06_values, false) {
+            Ok(sender) => sender,
+            Err(error) => return response(&error),
+        };
+        let discovery = match Discovery::start_command(
+            Arc::clone(&self.store),
+            prepared.search,
+            Arc::clone(&self.journal),
+            identity.clone(),
+            vec![fit, holdout],
+            prepared.public.warnings,
+        ) {
+            Ok(value) => value,
+            Err(error) => return response(&io(error)),
+        };
+        if sender.send((discovery, request)).is_err() {
+            return response(&io("Run worker stopped before dispatch."));
+        }
+        match self.store.idempotent_receipt(&identity) {
+            Ok(Some(receipt)) => receipt.into_response(),
+            Ok(None) => response(&io("Committed run receipt missing.")),
+            Err(error) => error.into_response(),
+        }
+    }
+
+    fn worker_sender(
+        self: &Arc<Self>,
+        _pub06_values: Pub06Injection,
+        explicit_continue: bool,
+    ) -> Result<mpsc::SyncSender<(Discovery, FinalizationRequest)>> {
         let (sender, receiver) = mpsc::sync_channel::<(Discovery, FinalizationRequest)>(1);
         let owner = Arc::clone(self);
         #[cfg(all(feature = "failpoints", debug_assertions))]
@@ -538,11 +599,15 @@ impl RunService {
                                 usize::MAX,
                             )?;
                         }
-                        Finalizer::with_journal(
+                        let finalizer = Finalizer::with_journal(
                             Arc::clone(&owner.store),
                             Arc::clone(&owner.journal),
-                        )
-                        .finalize(&request, &executor)?;
+                        );
+                        if explicit_continue {
+                            finalizer.finalize_after_explicit_continue(&request, &executor)?;
+                        } else {
+                            finalizer.finalize(&request, &executor)?;
+                        }
                         Ok(())
                     })();
                     if let Err(error) = result {
@@ -551,25 +616,81 @@ impl RunService {
                 }
             })
         {
-            return response(&io(error));
+            return Err(io(error));
         }
-        let discovery = match Discovery::start_command(
-            Arc::clone(&self.store),
-            prepared.search,
-            Arc::clone(&self.journal),
-            identity.clone(),
-            vec![fit, holdout],
-            prepared.public.warnings,
-        ) {
-            Ok(value) => value,
-            Err(error) => return response(&io(error)),
+        Ok(sender)
+    }
+
+    fn continue_run(
+        self: &Arc<Self>,
+        run: jope_api::ids::RunId,
+        expected_revision: Option<u64>,
+        identity: RequestIdentity,
+    ) -> Response {
+        let _guard = match self.admission.lock() {
+            Ok(guard) => guard,
+            Err(_) => return response(&io("Run admission lock is poisoned.")),
         };
-        if sender.send((discovery, request)).is_err() {
-            return response(&io("Run worker stopped before dispatch."));
+        match self.store.idempotent_receipt(&identity) {
+            Ok(Some(receipt)) => return receipt.into_response(),
+            Ok(None) => {}
+            Err(error) => return error.into_response(),
+        }
+        let attempt = (|| -> Result<()> {
+            let snapshot = self
+                .journal
+                .snapshot(&run)
+                .map_err(io)?
+                .ok_or_else(|| issue(ErrorCode::NotFound, "Run does not exist."))?;
+            if expected_revision.is_some_and(|revision| revision != snapshot.revision.0) {
+                return Err(issue(
+                    ErrorCode::RevisionConflict,
+                    "Re-read the snapshot and retry.",
+                ));
+            }
+            if snapshot.state != RunState::Paused || self.activity.active_runs() != 0 {
+                return Err(issue(
+                    ErrorCode::RevisionConflict,
+                    "Continue requires an idle backend and a paused run.",
+                ));
+            }
+            let context = self
+                .store
+                .get(&continuation_key(&run))
+                .map_err(io)?
+                .ok_or_else(|| {
+                    unavailable("Original continuation context is unavailable for this run.")
+                })?;
+            let context: Continuation = serde_json::from_value(context.data).map_err(io)?;
+            if context.search.run_id != run
+                || context.finalization.run_id != run
+                || context.search.binary_version != self.binary
+            {
+                return Err(unavailable(
+                    "Continuation requires the original binary and run identity.",
+                ));
+            }
+            #[cfg(all(feature = "failpoints", debug_assertions))]
+            let injection = None;
+            #[cfg(not(all(feature = "failpoints", debug_assertions)))]
+            let injection = ();
+            let sender = self.worker_sender(injection, true)?;
+            let discovery = Discovery::continue_command(
+                Arc::clone(&self.store),
+                context.search,
+                Arc::clone(&self.journal),
+                identity.clone(),
+            )
+            .map_err(io)?;
+            sender.send((discovery, context.finalization)).map_err(io)?;
+            Ok(())
+        })();
+        if let Err(error) = attempt {
+            return response(&error);
         }
         match self.store.idempotent_receipt(&identity) {
             Ok(Some(receipt)) => receipt.into_response(),
-            Ok(None) => response(&io("Committed run receipt missing.")),
+            Ok(None) => response(&io("Committed continue receipt missing.")),
             Err(error) => error.into_response(),
         }
     }
@@ -705,6 +826,82 @@ pub(super) async fn start(
         }
     }
     result
+}
+
+pub(super) async fn control(
+    Extension(service): Extension<Arc<RunService>>,
+    axum::extract::Path(run): axum::extract::Path<String>,
+    request: Request<Body>,
+) -> Response {
+    let Ok(run) = run.parse::<jope_api::ids::RunId>() else {
+        return response(&invalid("Invalid run id."));
+    };
+    let headers = request.headers().clone();
+    let target = request
+        .uri()
+        .path_and_query()
+        .map(|v| v.as_str().to_owned())
+        .unwrap_or_default();
+    let mut keys = headers.get_all("idempotency-key").iter();
+    let Some(key) = keys.next().and_then(|v| v.to_str().ok()) else {
+        return response(&invalid("Idempotency-Key is required."));
+    };
+    if keys.next().is_some() {
+        return response(&invalid("Idempotency-Key must occur once."));
+    }
+    let Json(body) =
+        match Json::<jope_api::registry::RunControlRequest>::from_request(request, &()).await {
+            Ok(body) => body,
+            Err(_) => return response(&invalid("Expected a valid run control request.")),
+        };
+    let jope_api::registry::RunControlRequest::Continue { expected_revision } = body else {
+        return response(&unavailable(
+            "This bounded backend currently supports explicit continue only.",
+        ));
+    };
+    let mut preconditions = headers.get_all("if-match").iter();
+    let raw_if_match = preconditions.next();
+    if preconditions.next().is_some() {
+        return response(&invalid("If-Match must occur once."));
+    }
+    let if_match = match raw_if_match.map(|v| {
+        v.to_str()
+            .ok()
+            .and_then(|s| s.trim_matches('"').parse::<u64>().ok())
+    }) {
+        None => None,
+        Some(Some(value)) => Some(value),
+        Some(None) => return response(&invalid("Invalid If-Match revision.")),
+    };
+    if if_match
+        .zip(expected_revision)
+        .is_some_and(|(a, b)| a != b.0)
+    {
+        return response(&invalid("Revision preconditions disagree."));
+    }
+    let value = match serde_json::to_value(&body) {
+        Ok(v) => v,
+        Err(e) => return response(&io(e)),
+    };
+    let identity = match RequestIdentity::new(
+        "local-engine-owner",
+        key,
+        8,
+        &target,
+        raw_if_match.and_then(|v| v.to_str().ok()),
+        &value,
+    ) {
+        Ok(v) => v,
+        Err(e) => return e.into_response(),
+    };
+    match tokio::task::spawn_blocking(move || {
+        service.continue_run(run, if_match.or(expected_revision.map(|v| v.0)), identity)
+    })
+    .await
+    {
+        Ok(value) => value,
+        Err(error) => response(&io(error)),
+    }
 }
 
 #[derive(Default, serde::Deserialize)]
