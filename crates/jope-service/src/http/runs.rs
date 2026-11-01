@@ -657,7 +657,11 @@ impl RunService {
                     let response = worker_pool.evaluate(&worker_request);
                     match response.failure {
                         Some(failure) => Err(failure),
-                        None => Ok(response.fold_scores),
+                        None => Ok(crate::worker::Scores {
+                            values: response.scores,
+                            fold_scores: response.fold_scores,
+                            predictions_digest: response.predictions_digest,
+                        }),
                     }
                 },
             );
