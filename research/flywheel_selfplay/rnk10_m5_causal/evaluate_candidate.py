@@ -143,10 +143,8 @@ def family_bootstrap_elo_interval(
         )
         family_rows.setdefault(row.family_id, []).append(win)
     families = sorted(family_rows)
-    if len(families) != 19:
-        raise ValueError(
-            f"dev Elo bootstrap requires all 19 pinned families; found {len(families)}"
-        )
+    if not families:
+        raise ValueError("dev Elo bootstrap requires at least one pinned family")
     family_win_rates = np.asarray(
         [np.mean(family_rows[family]) for family in families], dtype=np.float64
     )
@@ -322,6 +320,27 @@ def score_tensor_batch(net, rows, pools, tokens, masks):
     return scores
 
 
+def select_dev_family_rows(rows, selected_families):
+    """Select complete pinned DL-Val families while preserving roster order."""
+    if selected_families is None:
+        return rows
+    requested = list(selected_families)
+    if not requested:
+        raise ValueError("dev Elo family selection cannot be empty")
+    if len(requested) != len(set(requested)):
+        raise ValueError("dev Elo family selection contains duplicates")
+    available = {row["family_id"] for row in rows}
+    unknown = set(requested) - available
+    if unknown:
+        raise ValueError(
+            f"dev Elo family selection contains unknown IDs: {sorted(unknown)}"
+        )
+    if set(requested) == available:
+        return rows
+    requested_set = set(requested)
+    return [row for row in rows if row["family_id"] in requested_set]
+
+
 def dev_elo(args):
     # The existing acceptance loader verifies the pinned manifest, selected roster,
     # every payload hash, and the 91-row / 19-family DL-Val inventory.
@@ -372,6 +391,8 @@ def dev_elo(args):
             raise RuntimeError(
                 f"selected DL-Val metadata differs from pin: {lock['context_sha256']}"
             )
+    if args.families is not None:
+        select_dev_family_rows(rows, args.families)
     rows, pools, tables = score.load_validation_packet(args.input)
     if len(rows) != 91 or len({r["family_id"] for r in rows}) != 19:
         raise RuntimeError(
@@ -381,6 +402,20 @@ def dev_elo(args):
         row["context_sha256"] for row in pinned["contexts"]
     ]:
         raise RuntimeError("DL-Val loader changed the authenticated row sequence")
+    all_rows = rows
+    if args.families is not None:
+        rows = select_dev_family_rows(rows, args.families)
+        selected_contexts = {row["context_sha256"] for row in rows}
+        pools = {
+            context: pool
+            for context, pool in pools.items()
+            if context in selected_contexts
+        }
+        tables = {
+            context: table
+            for context, table in tables.items()
+            if context in selected_contexts
+        }
     fused_path = args.input / "cpu_exact_fused.py"
     if digest(fused_path) != CPU_FUSED_SHA256:
         raise RuntimeError("staged CPU fused model source differs from its pin")
@@ -432,10 +467,14 @@ def dev_elo(args):
     elo_interval = family_bootstrap_elo_interval(records)
     result = {
         "schema": "jope.rnk10-candidate-dev-elo/v1",
-        "scope": "reused DL-Val development cohort; not independent generalization evidence",
+        "scope": (
+            "reused DL-Val development cohort; not independent generalization evidence"
+            if args.families is None
+            else "selected whole-family subset of reused DL-Val development cohort; not independent generalization evidence"
+        ),
         "criterion": "candidate dev-fold Elo exceeds signed R882 incumbent",
-        "contexts": 91,
-        "families": 19,
+        "contexts": len(rows),
+        "families": len({row["family_id"] for row in rows}),
         "sealed_payloads_opened": 0,
         "candidate_sha256": digest(args.candidate),
         "candidate_receipt_sha256": args.receipt_sha256,
@@ -455,6 +494,17 @@ def dev_elo(args):
         > ratings["ratings"]["r882"],
         "qualification": "NOT_CLAIMED",
     }
+    if args.families is not None:
+        selected_context_ids = [row["context_sha256"] for row in rows]
+        result["selection"] = {
+            "unit": "family_id",
+            "family_ids": sorted({row["family_id"] for row in rows}),
+            "context_order_sha256": hashlib.sha256(
+                json.dumps(selected_context_ids, separators=(",", ":")).encode()
+            ).hexdigest(),
+            "roster_order_preserved": rows
+            == [row for row in all_rows if row["family_id"] in set(args.families)],
+        }
     args.output.write_text(json.dumps(result, sort_keys=True, indent=2) + "\n")
 
 
@@ -625,6 +675,11 @@ def main() -> int:
     parser.add_argument("--candidate", type=Path, required=True)
     parser.add_argument("--receipt", type=Path)
     parser.add_argument("--signed-r882", type=Path)
+    parser.add_argument(
+        "--families",
+        nargs="+",
+        help="score these complete family IDs from the authenticated DL-Val roster",
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
         "--fixtures", type=Path, default=Path("/home/ubuntu/jope-data/golden")
@@ -634,6 +689,8 @@ def main() -> int:
         parser.error(
             "dev-elo requires --train-input with the authenticated candidate train packet"
         )
+    if args.mode == "m5" and args.families is not None:
+        parser.error("--families is supported only for dev-elo mode")
     if args.train_input is None:
         args.train_input = args.input
     if os.nice(0) < 19:
