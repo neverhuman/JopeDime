@@ -507,6 +507,108 @@ class M3FullTests(unittest.TestCase):
         )
         self.pin = "b" * 64
 
+    def bc14_current_inputs(self):
+        return dict(
+            selected=dict(sha256=full.SELECTED_SHA),
+            proposer={
+                name: dict(sha256=pin) for name, pin in full.PROPOSER_PINS.items()
+            },
+            native_clock=dict(
+                clock=full.PAIRED_CLOCK,
+                native_candidates=dict(
+                    sha256="97e1dacb68420b311705cf8eb9b800025803ae8dc92daa8366c09b01fd82e27d"
+                ),
+                native_admission=dict(
+                    sha256="051058a1a919c9c64360aa6345d2c1d72b819362c22337f1e1705d2604e86767"
+                ),
+            ),
+        )
+
+    def test_bc14_fresh_witnesses_are_accepted_without_replacing_the_reference(self):
+        full.reference_pins(self.bc14_current_inputs())
+        self.assertEqual(
+            full.PROPOSER_PINS["cohort"],
+            "c08ee9abe87ec72bd35e616f81d9035860e5e8298fc9eb13d604e080960bfe45",
+        )
+        self.assertEqual(
+            full.PAIRED_PINS["native_candidates"],
+            "02a0f381f83fddb460be65187b5fce67a2269ab9a32b1a98875a790cc3b065d1",
+        )
+
+    def test_bc14_rejects_stale_current_witnesses_but_retains_paired_diagnostics(self):
+        cfg = self.bc14_current_inputs()
+        cfg["native_clock"].update(
+            native_candidates=dict(sha256=full.PAIRED_PINS["native_candidates"]),
+            native_admission=dict(sha256=full.PAIRED_PINS["native_admission"]),
+        )
+        with self.assertRaisesRegex(ProviderError, "current source-clock witness"):
+            full.reference_pins(cfg)
+        del cfg["native_clock"]
+        cfg["paired_r0"] = dict(
+            source_sha256=full.R0_PROPOSER,
+            clock=full.PAIRED_CLOCK,
+            **{name: dict(sha256=pin) for name, pin in full.PAIRED_PINS.items()},
+        )
+        full.reference_pins(cfg)
+
+    def test_bc14_pin_refresh_preserves_the_measured_frequency_failure(self):
+        source = "bc14b7f8cfcb6493482c8c2a0add927c7ca1e224"
+        report = full_report(source=source)
+        proposer = report["clauses"]["r0_proposer"]
+        proposer["native_witness_sha256"] = {
+            key: value["sha256"]
+            for key, value in self.bc14_current_inputs()["native_clock"].items()
+            if key != "clock"
+        }
+        # Actual BC14 aggregate counts from the frozen 10,000-admission replay.
+        operators = [
+            "champion_retrieval",
+            "edit_crossover",
+            "edit_delete_stage",
+            "edit_insert_stage",
+            "edit_parameter",
+            "edit_replace_head",
+            "landmark_synthesis",
+        ]
+        values = [
+            (
+                "all",
+                [252, 42, 130, 187, 238, 175, 0],
+                [2405, 407, 1334, 1871, 2253, 1730, 0],
+                True,
+            ),
+            (False, [46, 0, 16, 34, 51, 45, 0], [463, 0, 186, 380, 488, 403, 0], False),
+            (
+                True,
+                [206, 42, 114, 153, 187, 130, 0],
+                [1942, 407, 1148, 1491, 1765, 1327, 0],
+                True,
+            ),
+        ]
+        proposer.update(
+            passed=False,
+            strata=[
+                dict(
+                    mode=mode,
+                    reference=sum(a),
+                    native=sum(b),
+                    reference_counts=dict(zip(operators, a)),
+                    native_counts=dict(zip(operators, b)),
+                    passed=passed,
+                )
+                for mode, a, b, passed in values
+            ],
+        )
+        report.update(status="NUMERICAL_FAIL")
+        report["counts"].update(passed=3, failed=1)
+        ctx = Context(
+            "M3", self.ctx.artifact, self.ctx.artifact_sha256, source, self.ctx.result
+        )
+        result = full.gate_payload(ctx, report, self.pin)
+        self.assertEqual(result["status"], "FAIL")
+        self.assertEqual(result["counts"]["passed"], 3)
+        self.assertEqual(result["counts"]["failed"], 1)
+
     def test_current_clock_routes_without_paired_reference_metadata(self):
         cfg = dict(
             selected=dict(sha256=full.SELECTED_SHA),
