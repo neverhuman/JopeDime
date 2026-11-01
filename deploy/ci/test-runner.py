@@ -51,11 +51,14 @@ done
                 with self.subTest(lane=lane):
                     output.write_text('')
                     result = subprocess.run(['bash', '-ec', script], cwd=ROOT,
-                        env=os.environ | {'JOPE_RUNNER_LANE': lane, 'GITHUB_ENV': str(output)},
+                        env=os.environ | {'JOPE_RUNNER_LANE': lane, 'GITHUB_ENV': str(output),
+                                          'HOME': str(Path(name)/'home')},
                         capture_output=True, text=True)
                     self.assertEqual(0, result.returncode, result.stderr)
-                    self.assertEqual(f'CARGO_TARGET_DIR=/var/cache/jope/target/{lane}\n',
-                                     output.read_text())
+                    # Persistent lane volume, or the runner-home fallback when it is unwritable.
+                    self.assertIn(output.read_text(), {
+                        f'CARGO_TARGET_DIR=/var/cache/jope/target/{lane}\n',
+                        f'CARGO_TARGET_DIR={Path(name)}/home/.cache/jope/target/{lane}\n'})
             for lane in ('guard', 'gpu', 'ci13', '../full', '', 'ci\nINJECTED=1'):
                 with self.subTest(rejected_lane=lane):
                     output.write_text('')
