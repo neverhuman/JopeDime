@@ -1,10 +1,11 @@
 # Private research round records
 
 The [proposed qualified provider contract](../../../../docs/contracts/research-provider.md)
-records the remaining input/evaluator/reveal/seed and activation requirements,
-with decision owners. It is a review draft; it does not activate the CLI.
+records the broader qualification requirements and decision owners. The fixed
+internal TRAIN recording path is specified in [ACCEPTED-JOB.md](ACCEPTED-JOB.md);
+its input admission does not qualify learned guidance, Q1 or a release.
 
-This is the QLT-03 CPU record and durable discovery capture component for spec 13.2, behind the optional `research` feature. `Discovery::open_research` requires an opaque reviewed input/provider capability. `TrustedJobResolver` resolves only opaque IDs already registered with an `AcceptedJobAdmission`, and revalidates the complete serialized `Plan` and capture context on lookup. The registry starts empty; only service code can construct an admission after verifying its accepted receipt. There is no registry file, arbitrary JSON importer, production admission loader, or CLI wiring. The internal native `research record` command still authenticates its package and returns producer-unavailable until the separately approved corpus, conditioning, evaluator, gate and seed contract exists. These hooks and synthetic controls do not qualify a live capture, learned guidance, binary-task evaluation or Q1.
+This is the QLT-03 CPU record and durable discovery capture component for spec 13.2, behind the optional `research` feature. `Discovery::open_research` requires an opaque reviewed input/provider capability. `TrustedJobResolver` resolves only opaque IDs already registered with an `AcceptedJobAdmission`, and revalidates the complete serialized `Plan` and capture context on lookup. The registry starts empty; only service code can construct an admission after verifying its accepted receipt. There is no registry file or arbitrary JSON importer. The source-approved `record_catalog_job` loader authenticates signed r882 and exact catalog/exclusion/manifest/TRAIN pins, derives native conditioning and evaluator/seed identities, retains an operational input-admission receipt, and registers one exact-Plan job. The internal native `research record --job qlt03-slump85-v1` command authenticates its package before this loader runs. Synthetic controls remain separately tagged; the recording path does not qualify learned utility, binary-task evaluation, Q1 or a release.
 
 `RoundCapture` controls CPU evaluation of an already observed pre-admission slate. Construct it with an empty dispatch/outcome inventory and an attempt budget. `evaluate_next` invokes the caller's rung-0 evaluator in behavior-policy admission order, or original proposal order when `evaluate_all_proposals` is true. It preserves the input policy, admitted indices, costs, features and source indices. Each attempt is reserved before evaluation, including explicit worker failures; wall milliseconds are measured around the callback. It returns false at the attempt/population limit. `finish` validates the resulting record and marks early stops incomplete. An evaluator error, panic or nonfinite success leaves an unresolved attempt, refuses further calls and prevents publication; inspect `attempted_indices` and `outcomes` rather than fabricating a failed label or retrying within that capture. These in-memory attempt counts do not replace the engine's durable evaluation/wall budget accounting. The standalone controller still requires its caller to provide trusted inputs and commit its result; it alone establishes neither discovery integration nor crash recovery. The discovery hooks below supply separate durable orchestration.
 
@@ -61,11 +62,10 @@ complete Plan and conditioning binding; observation checks native program hashes
 features and projections before any reservation. Shape-correct replacement arrays
 and FP32-rounded projections refuse. No model forward or selection RNG is added.
 
-This is the production input portion of the provider integration. It creates no
-CaptureContext capability, accepted corpus/job registry or CLI activation. The
-actual corpus/row admission, qualified conditioning origin, F/objective/gate
-executor and request/seed/fold protocol, OD13 decision and trusted resolver remain
-required. Synthetic controls retain their explicit tag and existing behavior.
+This adapter alone creates no CaptureContext capability or CLI activation. The
+fixed loader described above supplies corpus/row admission, native conditioning,
+F/objective/gate execution, request/seed/fold checks and the opaque resolver.
+Scientific qualification remains separate. Synthetic controls retain their explicit tag and existing behavior.
 The boundary control constructs no exported Engine record; passing it is software
 evidence rather than a qualified corpus capture.
 
