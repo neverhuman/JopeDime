@@ -32,7 +32,7 @@ use jope_api::{
     error::{ErrorCode, Problem},
     *,
 };
-use rand::SeedableRng;
+use rand_chacha::rand_core::SeedableRng;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::{
@@ -478,7 +478,7 @@ fn q1_search_plan(
         objective: "rmse".into(),
         seed: request.seed,
         planned_workers: 1,
-        effort: SearchEffort::Fast,
+        effort: jope_api::Effort::Fast,
         evaluations: request.budget,
         wall_seconds: Q1_WALL_BUDGET.as_secs(),
         evaluation_wall_ms: Q1_ATTEMPT_WALL_CAP_MS,
