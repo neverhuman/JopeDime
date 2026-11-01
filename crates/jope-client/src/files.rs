@@ -120,6 +120,7 @@ pub fn download_export_artifact<T: Transport>(
     out: &Path,
     force: bool,
 ) -> Result<()> {
+    validate_export_destination(out)?;
     let response = transport.artifact_download(artifact)?;
     let digest = response
         .headers
@@ -129,7 +130,83 @@ pub fn download_export_artifact<T: Transport>(
     let digest = format!("sha256:{digest}");
     parse_digest(&digest)?;
     drop(response);
-    download_artifact(transport, artifact, &digest, out, force)
+    if force || !out.exists() {
+        return download_artifact(transport, artifact, &digest, out, force);
+    }
+    // Verify a retry against a fresh, authenticated archive. Never overwrite the
+    // existing destination, and reject extras, changed files and symlinks.
+    let parent = out
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or(Path::new("."));
+    let name = out.file_name().ok_or(FileError::OutputExists)?;
+    let verify = unique_sibling(parent, name, "verify");
+    fs::create_dir(&verify)?;
+    let _cleanup = RemoveOnDrop(Some(verify.clone()));
+    let expected = verify.join("expected");
+    download_artifact(transport, artifact, &digest, &expected, false)?;
+    if same_export_tree(&expected, out)? {
+        Ok(())
+    } else {
+        Err(FileError::OutputExists)
+    }
+}
+
+/// Validate local destination syntax and type before a mutating engine request.
+/// Existing directories may be verified retries; files and symlinks never qualify.
+pub fn validate_export_destination(out: &Path) -> Result<()> {
+    let parent = out
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or(Path::new("."));
+    if out.as_os_str().is_empty() || out.file_name().is_none() || !parent.is_dir() {
+        return Err(FileError::UnsafeArchive(
+            "output must name a directory with an existing parent",
+        ));
+    }
+    match fs::symlink_metadata(out) {
+        Ok(m) if !m.is_dir() || m.file_type().is_symlink() => Err(FileError::OutputExists),
+        Ok(_) => Ok(()),
+        Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(()),
+        Err(e) => Err(e.into()),
+    }
+}
+fn same_export_tree(expected: &Path, actual: &Path) -> Result<bool> {
+    let a = fs::symlink_metadata(expected)?;
+    let b = fs::symlink_metadata(actual)?;
+    if a.file_type().is_symlink() || b.file_type().is_symlink() {
+        return Ok(false);
+    }
+    if a.is_file() && b.is_file() {
+        if a.len() != b.len() {
+            return Ok(false);
+        }
+        let mut left = Vec::new();
+        let mut right = Vec::new();
+        File::open(expected)?
+            .take(a.len().saturating_add(1))
+            .read_to_end(&mut left)?;
+        File::open(actual)?
+            .take(a.len().saturating_add(1))
+            .read_to_end(&mut right)?;
+        return Ok(left == right);
+    }
+    if !a.is_dir() || !b.is_dir() {
+        return Ok(false);
+    }
+    let names = |p: &Path| -> io::Result<std::collections::BTreeSet<std::ffi::OsString>> {
+        fs::read_dir(p)?.map(|v| v.map(|e| e.file_name())).collect()
+    };
+    let expected_names = names(expected)?;
+    if expected_names != names(actual)? {
+        return Ok(false);
+    }
+    for name in expected_names {
+        if !same_export_tree(&expected.join(&name), &actual.join(&name))? {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 /// Download an artifact, verify the service-provided digest, and publish its ZIP contents.
@@ -366,6 +443,10 @@ mod tests {
     impl Transport for Fake {
         fn execute(&self, _: Request) -> TransportResult<Response> {
             let mut headers = HeaderMap::new();
+            headers.insert(
+                "x-jope-artifact-sha256",
+                digest_hex(&Sha256::digest(&self.bytes)).parse().unwrap(),
+            );
             headers.insert("content-type", "application/octet-stream".parse().unwrap());
             headers.insert("jope-api-version", "1.0".parse().unwrap());
             Ok(Response::new(200, headers, Cursor::new(self.bytes.clone())))
@@ -560,6 +641,30 @@ mod tests {
             Err(FileError::InvalidDigest)
         ));
     }
+    #[test]
+    fn export_retry_checks_every_existing_byte_and_refuses_tampering() {
+        let temp = temp_dir();
+        let out = temp.join("export");
+        let transport = Fake {
+            bytes: zip(&[("model/data", b"frozen"), ("manifest.json", b"manifest")]),
+        };
+        download_export_artifact(&transport, &artifact_id(), &out, false).unwrap();
+        download_export_artifact(&transport, &artifact_id(), &out, false).unwrap();
+        fs::write(out.join("model/data"), b"edited").unwrap();
+        assert!(matches!(
+            download_export_artifact(&transport, &artifact_id(), &out, false),
+            Err(FileError::OutputExists)
+        ));
+        assert_eq!(fs::read(out.join("model/data")).unwrap(), b"edited");
+        fs::write(out.join("model/data"), b"frozen").unwrap();
+        fs::write(out.join("extra"), b"keep").unwrap();
+        assert!(matches!(
+            download_export_artifact(&transport, &artifact_id(), &out, false),
+            Err(FileError::OutputExists)
+        ));
+        assert_eq!(fs::read(out.join("extra")).unwrap(), b"keep");
+    }
+
     #[test]
     fn download_collision_preserves_existing_directory() {
         const CHILD: &str = "JOPE_CLIENT_DOWNLOAD_COLLISION_CHILD";

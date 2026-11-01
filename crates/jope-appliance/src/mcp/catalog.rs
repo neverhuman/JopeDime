@@ -167,7 +167,12 @@ pub fn input_schema(op: &Operation) -> Value {
                 json!({"type":"array","minItems":1,"items":language()}),
                 true,
             );
-            add(&mut s, "out_dir", string(), false);
+            add(
+                &mut s,
+                "out_dir",
+                json!({"type":"string","minLength":1}),
+                false,
+            );
         }
         15 => {
             add(&mut s, "model", object(), true);

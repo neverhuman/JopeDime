@@ -580,12 +580,13 @@ mod tests {
         let dir = tempfile::tempdir_in(root).unwrap();
         let state = open_state(dir.path());
         let run = RunId::new();
+        let mut input: Value = serde_json::from_slice(include_bytes!(
+            "../../../jope-runtime/tests/fixtures/math-pipeline/input.json"
+        ))
+        .unwrap();
+        input["prediction_version"] = json!(2);
         let parts: BTreeMap<String, Vec<u8>> = BTreeMap::from([
-            (
-                INPUT_PART.into(),
-                include_bytes!("../../../jope-runtime/tests/fixtures/math-pipeline/input.json")
-                    .to_vec(),
-            ),
+            (INPUT_PART.into(), serde_json::to_vec(&input).unwrap()),
             (
                 PIPELINE_PART.into(),
                 include_bytes!("../../../jope-runtime/tests/fixtures/math-pipeline/pipeline.json")
