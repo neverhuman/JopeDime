@@ -1,0 +1,24 @@
+{
+  "manifest": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H149/astra-t2030/manifest.json",
+    "version_id": "FelDLOLtQKNJ5O50HaEqcGlm9HYCHV7T",
+    "sha256": "574f6f35a67630db27bfdc45b60ba47fe116db39371b949afd777b69b2b88297",
+    "bytes": 537565,
+    "verified_utc": "2026-11-01T04:35:03.502515+00:00"
+  },
+  "outputs": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H149/astra-t2030/numerical-evidence.npz",
+    "version_id": "Hxren01Rxd0h1jj7Ov7FnLGibkZcJkzu",
+    "sha256": "2de582a40a3498324d51a87ca7453080f1c9038ada3da12e8a7cca6261ad8b40",
+    "bytes": 2253726,
+    "verified_utc": "2026-11-01T04:34:21.951982+00:00"
+  },
+  "inputs": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H149/astra-t2030/exact-inputs.npz",
+    "version_id": "0BPuQS2EWgOstRDGsQnlTp4TFjYZxOiw",
+    "sha256": "fc4aba42bdbaae7555576dc45bbba93af9ec17afef2da44c6e00f1729a47a234",
+    "bytes": 241247730,
+    "verified_utc": "2026-11-01T04:34:58.449666+00:00"
+  },
+  "verified_members": 1397
+}
