@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "wave": "H202",
+  "scientific_attempt_status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "archive": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H202/codex-t1505/7cda6382788e1bce/H202-evidence.zip",
+    "version_id": "_JDRpN3zjms92a.A4M0ca2mjtd0YtMd6",
+    "sha256": "7cda6382788e1bcef5bb9201046390b2bb2ff57df03476a43cc828ec7a5e64b2",
+    "bytes": 478051793,
+    "actual_versioned_byte_readback": true
+  },
+  "manifest": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H202/codex-t1505/7cda6382788e1bce/manifest.json",
+    "version_id": "U1daDwAVXXLZTI3c2MzuerKVS5c6Y1US",
+    "sha256": "4f8d3a39b610b6d694da875ee29411d23ffdad3e697c72e95ec87f0a3f6e4eea",
+    "bytes": 437443,
+    "actual_versioned_byte_readback": true
+  },
+  "member_count": 2063,
+  "all_members_actual_version_restored": true,
+  "restored_arrays": 21888,
+  "restored_NPZ_files": 1811,
+  "adapter_states": 180,
+  "approved_real_pools": 1310,
+  "optimizer_updates": 1800,
+  "backward_calls": 7200,
+  "inference_retries": 0
+}
