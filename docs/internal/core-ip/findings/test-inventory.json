@@ -2169,6 +2169,10 @@
       "reason": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract).",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/rnk10_hwave_packet/test_prepare.py": {
+      "reason": "RNK-10 metadata-only H-wave packet scaffold tests; synthetic metadata only, no training/evaluation data, outcome reads or launch authorization.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
       "reason": "Owner-requested pytest proof for flywheel automatic promotion, next-round targets, replay, and training-only parser adaptation; research flywheel outside the reviewed product baseline.",
       "role": "research"
