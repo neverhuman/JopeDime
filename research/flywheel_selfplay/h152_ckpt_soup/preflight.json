@@ -1,0 +1,52 @@
+{
+ "launch": {
+  "disk_used_fraction": 0.9289,
+  "load1": 15.3759765625
+ },
+ "note": "zero-eval smoke on xbabe1: soups built and structurally checked; 0 updates, 0 scored contexts; 6.0 s, 0.89 GB RSS",
+ "optimizer_updates": 0,
+ "scored_contexts": 0,
+ "status": "PASS",
+ "structure": {
+  "adapter_l2_distance_from_R882": {
+   "A025": 0.036861935252646874,
+   "A075": 0.11058581488221596,
+   "MID": 0.07372387457435556,
+   "SOUP4": 0.054682807783285915
+  },
+  "non_trainable_source": "R882 (unchanged)",
+  "non_trainable_tensors_differing_across_inputs": [],
+  "soup_sha256": {
+   "A025": "286b558e638afab81675dab0c6ad3d1e981399d9431acda8c0e57db5c2040b3e",
+   "A075": "86631e542cba34f5e0a2789142324109126edfee3c1203969dd01e2a0ecb6984",
+   "MID": "c5ecae109175c98b1e6d2349814af53d510ddb1e3f7a9987297912cd8a85da2e",
+   "R882": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+   "SOUP4": "63be9c2d2f0c04d942af261e76cd564c6494416fbfc384daac891aa318995ad1"
+  },
+  "trainable_parameters": 29211,
+  "trainable_tensors": 47,
+  "weights": {
+   "A025": {
+    "782": 0.25,
+    "882": 0.75
+   },
+   "A075": {
+    "782": 0.75,
+    "882": 0.25
+   },
+   "MID": {
+    "782": 0.5,
+    "882": 0.5
+   },
+   "R882": {
+    "882": 1.0
+   },
+   "SOUP4": {
+    "782": 0.25,
+    "785": 0.25,
+    "859": 0.25,
+    "882": 0.25
+   }
+  }
+ }
+}
