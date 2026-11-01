@@ -65,6 +65,7 @@ fn native_metadata(home: &Path, binding: &Q1DatasetBinding) -> Result<()> {
     ensure!(
         record["id"] == binding.id
             && record["canonical_sha256"] == binding.dataset_sha256
+            && record["schema"] == "jope.dataset-catalog/v1"
             && record["origin"] == "real"
             && record["task"] == "regression",
         "native catalog dataset identity differs"
@@ -77,6 +78,7 @@ fn native_metadata(home: &Path, binding: &Q1DatasetBinding) -> Result<()> {
             && train["columns"] == binding.features + 1
             && train["has_header"] == false
             && record["shape"]["features"] == binding.features
+            && record["shape"]["rows"] == binding.rows
             && record["target"]["index"] == -1
             && record["target"]["name"] == binding.target,
         "native FIT format or role differs"
@@ -188,7 +190,7 @@ mod tests {
             "output_headers":["stale","x,quoted","y"],"counts":{"n_features":2}});
         let meta_raw = serde_json::to_vec(&meta).unwrap();
         let catalog = json!({"id":"a".repeat(16),"canonical_sha256":"a".repeat(64),"origin":"real","task":"regression",
-            "shape":{"features":1},"target":{"index":-1,"name":"y"},
+            "schema":"jope.dataset-catalog/v1","shape":{"features":1,"rows":2},"target":{"index":-1,"name":"y"},
             "files":{"train":{"sha256":super::super::hash(raw),"bytes":raw.len(),"rows":2,"columns":2,"has_header":false},
                 "meta":{"sha256":super::super::hash(&meta_raw),"bytes":meta_raw.len()}}});
         let binding: Q1DatasetBinding = serde_json::from_value(json!({"id":"a".repeat(16),"task":"regression",
@@ -290,5 +292,23 @@ mod tests {
         fs::rename(&path, &saved).unwrap();
         std::os::unix::fs::symlink(saved, path).unwrap();
         assert!(parse(home.path(), &binding, raw).is_err());
+    }
+    #[test]
+    #[ignore = "metadata-only corpus compatibility probe; requires Q1_NATIVE_METADATA_ROOT; never reads TRAIN"]
+    fn native_metadata_corpus_compatibility() {
+        let root = std::path::PathBuf::from(
+            std::env::var_os("Q1_NATIVE_METADATA_ROOT").expect("explicit metadata root required"),
+        );
+        let inputs: Vec<Q1DatasetBinding> =
+            serde_json::from_slice(&fs::read(root.join("metadata-probe-bindings.json")).unwrap())
+                .unwrap();
+        assert_eq!(inputs.len(), 154);
+        for binding in &inputs {
+            assert!(!binding.family_authoritative);
+            assert!(binding.folds.is_empty());
+            native_metadata(&root, binding)
+                .unwrap_or_else(|error| panic!("{}: {error}", binding.id));
+        }
+        println!("Q1_METADATA_ONLY_COMPATIBILITY:154; TRAIN_PAYLOAD_READS:0; Q1_ADMISSIONS:0");
     }
 }
