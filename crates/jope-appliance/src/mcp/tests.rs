@@ -490,7 +490,11 @@ async fn four_versions_lifecycle_twelve_tools_resources_and_stdout_purity() {
             assert!(result.get("error").is_none(), "{version} {name}: {result}");
             assert_ne!(result["result"]["isError"], true, "{name}: {result}");
             assert!(result["result"]["structuredContent"].is_object());
-            assert!(result["result"]["content"][0]["text"].is_string());
+            // Text-only clients need the same real identifiers and plan fields.
+            let text = result["result"]["content"][0]["text"].as_str().unwrap();
+            let text_value: Value = serde_json::from_str(text)
+                .unwrap_or_else(|_| panic!("{version} {name}: missing JSON text fallback"));
+            assert_eq!(text_value, result["result"]["structuredContent"]);
             if version == "2026-07-28" {
                 assert_eq!(result["result"]["resultType"], "complete");
             }
