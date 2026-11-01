@@ -98,6 +98,49 @@ class TestH172(unittest.TestCase):
         self.assertEqual(sols["inf"]["l2_drift"], 0.0)
         self.assertTrue(np.all(sols["inf"]["delta99"] == 0.0))
 
+        # Also exercise build_size_batches + evaluate_head_on_rows + head_state_tensors
+        fc = {}
+        pools = {}
+        rows = []
+        for idx in range(4):
+            cid = f"c_{idx}"
+            rows.append({"context_sha256": cid, "family_id": f"f_{idx}"})
+            c0_i = c0[idx].numpy().astype(np.float32)
+            x48_i = x48[idx].numpy().astype(np.float32)
+            f_i = tgt[idx].numpy().astype(np.float64)
+            g_i = np.ones((n_cand,), dtype=bool)
+            t_64 = run_mod.resolve_slate_target_tensor(
+                torch.as_tensor(f_i, dtype=torch.float64),
+                torch.as_tensor(g_i, dtype=torch.bool),
+            )
+            fc[cid] = dict(
+                c0_np=c0_i,
+                x48_np=x48_i,
+                c0_64=torch.as_tensor(c0_i, dtype=torch.float64),
+                x48_64=torch.as_tensor(x48_i, dtype=torch.float64),
+                target_64=t_64,
+                p_target_64=F.softmax(-t_64 / 0.2, dim=-1),
+            )
+            pools[cid] = dict(fitness=f_i, gate=g_i)
+        sb = run_mod.build_size_batches([r["context_sha256"] for r in rows], fc)
+        self.assertEqual(len(sb), 1)
+        ev = run_mod.evaluate_head_on_rows(rows, fc, pools, sols["1e1"]["delta48"])
+        self.assertEqual(len(ev["values"]), 4)
+        base_head = {
+            "adapter_10tok.mm_prior_out.2.weight": np.zeros((1, 24), dtype=np.float32),
+            "adapter_10tok.mm_prior_out.2.bias": np.zeros((1,), dtype=np.float32),
+            "adapter_10tok.traj_delta_head.2.weight": np.zeros(
+                (1, 24), dtype=np.float32
+            ),
+            "adapter_10tok.traj_delta_head.2.bias": np.zeros((1,), dtype=np.float32),
+            "adapter_10tok.parent_delta_net.3.weight": np.zeros(
+                (1, 48), dtype=np.float32
+            ),
+            "adapter_10tok.parent_delta_net.3.bias": np.zeros((1,), dtype=np.float32),
+        }
+        hs = run_mod.head_state_tensors(base_head, sols["1e1"]["delta99"])
+        self.assertEqual(set(hs.keys()), set(analysis.H132_OUTPUT_TENSORS))
+
         prev_l2 = -1.0
         for lbl in analysis.FINITE_LAMBDA_LABELS:
             res = sols[lbl]
@@ -153,7 +196,12 @@ class TestH172(unittest.TestCase):
         }
         sel_tie = analysis.select_lambda(ctrl, cands_tie, rows, seed=172101, outer=0)
         self.assertEqual(sel_tie["selected_lambda"], "inf")
+        self.assertIsNone(sel_tie["selected_lambda_value"])
         self.assertEqual(sel_tie["unconstrained_selected_lambda"], "1e2")
+        # Verify strict JSON serializability with allow_nan=False when "inf" is selected
+        import json
+
+        json.dumps(sel_tie, allow_nan=False)
 
         cands_win = dict(cands_tie)
         cands_win["1e1"] = [0.505 for _ in rows]
