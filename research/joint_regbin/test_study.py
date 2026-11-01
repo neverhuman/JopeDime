@@ -981,6 +981,26 @@ def test_worker_validates_tel_rows_and_protected_inputs():
         worker.validate_context_rows(escaped)
 
 
+@pytest.mark.parametrize("field", ["id", "dataset", "family"])
+def test_worker_refuses_empty_identity_before_packer(field):
+    adapter = SyntheticWorkerAdapter()
+    heads = worker.TwoTaskHeads()
+    optimizer = torch.optim.SGD([*adapter.parameters(), *heads.parameters()], lr=0.1)
+    packed = []
+
+    def packer(row):
+        packed.append(row)
+        return {"candidates": torch.tensor([1.0])}, torch.tensor([1.0])
+
+    core = worker.WorkerCore(adapter, heads, optimizer, packer)
+    row = _worker_context(**{field: "  "})
+
+    with pytest.raises(ValueError, match="identity fields must be nonempty"):
+        core.train_batch([row])
+
+    assert packed == []
+
+
 def test_worker_refuses_tel_metadata_candidates_before_payload_packing():
     # TEL role candidates intentionally contain no admitted payload reference.
     candidate = {

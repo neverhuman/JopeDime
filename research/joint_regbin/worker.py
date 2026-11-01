@@ -68,6 +68,11 @@ def validate_context_rows(rows: list[dict]) -> None:
     for row in rows:
         if not isinstance(row, dict) or set(row) != required:
             raise ValueError("worker context fields differ from role-manifest schema")
+        if any(
+            not isinstance(row[field], str) or not row[field].strip()
+            for field in ("id", "dataset", "family")
+        ):
+            raise ValueError("worker context identity fields must be nonempty strings")
         if row["task"] not in protocol.TASKS:
             raise ValueError("worker accepts only explicit regression/binary tasks")
         if row["role"] not in ("train", "val", "panel"):
