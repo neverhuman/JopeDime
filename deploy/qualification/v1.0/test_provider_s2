@@ -147,6 +147,18 @@ class S2ProviderTests(unittest.TestCase):
         self.assertEqual(self.test_calls, 0)
         self.assertFalse(self.ctx.result.exists())
 
+    def test_real_interleaved_nocapture_case_block_is_accepted(self):
+        # The native test prints its summary between "test NAME ... " and "ok".
+        real = (
+            f"running 1 test\ntest {s2.TEST} ... DSC08 S2: real native CV; workers1/8\nok\n\n"
+            "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n"
+        )
+        self.assertTrue(s2.exact_case_passed(real, s2.TEST))
+        self.assertFalse(
+            s2.exact_case_passed(real.replace("\nok\n", "\nFAILED\n"), s2.TEST)
+        )
+        self.assertFalse(s2.exact_case_passed("test other ... ok\n", s2.TEST))
+
     def test_zero_skipped_or_wrong_case_cannot_emit_pass(self):
         bad_outputs = (
             "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n",

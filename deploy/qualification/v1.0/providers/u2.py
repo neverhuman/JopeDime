@@ -26,9 +26,9 @@ TESTS = (
     "terminal::app::tests::linux_fallbacks_never_change_raw_mode_and_resize_preserves_draft",
     "terminal::app::tests::no_color_replays_all_five_real_recorded_fixtures_without_escape_bytes",
     "terminal::restore::tests::restoration_commands_show_cursor_reset_colors_and_disable_paste",
-    "terminal::theme::tests::detects_each_color_level_and_disables_color_when_requested",
-    "terminal::theme::tests::strips_escape_sequences_and_controls_without_losing_plain_text",
-    "terminal::theme::tests::uses_unicode_symbols_only_for_utf8_locales",
+    "terminal::tests::detects_each_color_level_and_disables_color_when_requested",
+    "terminal::tests::strips_escape_sequences_and_controls_without_losing_plain_text",
+    "terminal::tests::uses_unicode_symbols_only_for_utf8_locales",
 )
 SINGLE_PASS = {
     "collected": 1,
