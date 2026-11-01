@@ -1611,6 +1611,10 @@
       "reason": "REL-07 E2 export-parity provider controls (binding, census and refusal proofs over synthetic harness reports); no real harness, release or dataset job executes",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/v1.0/test_provider_s3/test_s3.py": {
+      "reason": "REL-07 S3 leakage provider controls (binding, exact-selector and refusal proofs over synthetic child output); no real candidate, release or dataset job executes",
+      "role": "infrastructure"
+    },
     "python:ops/s3_shard_cache/test_s3_shard_cache.py": {
       "reason": "Operational S3 shard-cache unit test against an in-memory fake client; not collected by any CI lane (coverage disposition: maintenance).",
       "role": "infrastructure"
