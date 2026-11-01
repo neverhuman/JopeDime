@@ -1,0 +1,78 @@
+{
+  "schema": "jope.h147.preregistration/v1",
+  "status": "PROPOSED_NOT_EXECUTED",
+  "authority": "idle_t2020.md section rd_astra; preregistration only",
+  "owner": "rd_astra",
+  "reference_executor_commit": "aad54937c43ecd413ac2990d23ac5bff3e0dc27f",
+  "reference_executor_path": "research/flywheel_selfplay/h144_reg_sweep",
+  "source_observation_commit": "c9961262bf8c2e21180ac86d9e2a30f5b83ef5a1",
+  "inputs": {
+    "selected_metadata_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "source_manifest_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "checkpoint_recovery": {
+      "archive": {
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H144/astra-t1940/exact-inputs.npz",
+        "version_id": "GMtNnf1WCqpGkjctN9pDYqZ9uPdI6_cw",
+        "sha256": "69ea279984fe981acfc3067f95f320c5514f78e30c7389602049975c0dcbe6d7",
+        "bytes": 241247730,
+        "verified_utc": "2026-11-01T02:09:48.713125+00:00"
+      },
+      "member": "jope-data/h144/inputs/round-882.pt"
+    },
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "train_only_features_status": "NOT_MATERIALIZED; must be pinned before future execution"
+  },
+  "fold_manifest_sha256": "a03f5aa9d9d00d40ea2f990009e64e0844d72729e3ff2ca020ae9cb9be7f0954",
+  "prereg_sha256": "f694b4386939ca18bee165de92aeb18a00d61080f415f096ee79b1396ae9ea89",
+  "seeds": [
+    147101,
+    147102,
+    147103
+  ],
+  "fold_seed": 147140,
+  "bootstrap_seed": 147141,
+  "bootstrap_draws": 10000,
+  "arms": [
+    "SUPPORT_CTRL",
+    "STORAGE_REVEAL",
+    "STORAGE_MASK"
+  ],
+  "planned_cells": 45,
+  "planned_optimizer_updates": 1800,
+  "actual_optimizer_updates": 0,
+  "actual_model_forwards": 0,
+  "executable_status": "NOT_IMPLEMENTED",
+  "execution_authorized": false,
+  "serving_promotion": false,
+  "elo": {
+    "source_commit": "c9961262bf8c2e21180ac86d9e2a30f5b83ef5a1",
+    "path": "python/src/jope/north_star/elo_tracker.py",
+    "sha256": "9ece98326c32453179b0c765eb45944b68ca9de944d2828a1d42dee1401d1835",
+    "function": "compute_family_grouped_bradley_terry_elo",
+    "anchor": "r882",
+    "anchor_elo": 1500,
+    "seed_aggregation": "compute each seed panel then median; identical family-bootstrap draws across seeds",
+    "tie_margin": 0.0001,
+    "prior": 0.01,
+    "iterations": 400
+  },
+  "resource_proposal": {
+    "host": "xbabe4 Linux jope-ci",
+    "nice": 19,
+    "math_threads": 1,
+    "total_os_threads_max": 4,
+    "rss_bytes_lt": 6000000000,
+    "free_disk_bytes_min": 40000000000,
+    "scratch_bytes_lt": 3000000000,
+    "cpu_seconds_cap": 7200,
+    "wall_seconds_cap": 10800,
+    "retries": 0
+  },
+  "remaining_before_execution": [
+    "separate implementation/launch assignment",
+    "TRAIN-only feature closure and all asset/executor hashes",
+    "targeted safety/control tests and exact-head review",
+    "absolute deadline and atomic one-use ledger"
+  ]
+}
