@@ -27,6 +27,7 @@ from . import protocol
 
 SCHEMA = "jope.joint-regbin/v1"
 PARTIAL_SCHEMA = "jope.joint-regbin.binary-panel-packet/v1"
+CATALOG_POOL_SCHEMA = "jope.joint-regbin.catalog-pools/v1"
 
 
 def sha256_file(path: Path) -> str:
@@ -209,6 +210,318 @@ def review_binary_families(records: list[dict]) -> dict:
         ],
         "family_by_dataset": family_by_id,
     }
+
+
+def review_catalog_families(records: list[dict]) -> dict:
+    """Close P2, source-file and URL aliases across regression and binary rows."""
+    family_keys = _family_tool()
+    selected = [row for row in records if row.get("task") in protocol.TASKS]
+    by_id = {row.get("id"): row for row in selected}
+    if not selected or None in by_id or len(by_id) != len(selected):
+        raise ValueError("catalog family review has no rows or duplicate/missing IDs")
+    parent = {dataset_id: dataset_id for dataset_id in by_id}
+
+    def find(dataset_id: str) -> str:
+        while parent[dataset_id] != dataset_id:
+            parent[dataset_id] = parent[parent[dataset_id]]
+            dataset_id = parent[dataset_id]
+        return dataset_id
+
+    def union(left: str, right: str) -> None:
+        left_root, right_root = find(left), find(right)
+        if left_root != right_root:
+            parent[max(left_root, right_root)] = min(left_root, right_root)
+
+    owners: dict[tuple[str, str], str] = {}
+    evidence_by_id: dict[str, list[list[str]]] = {}
+    review_by_id: dict[str, dict] = {}
+    for dataset_id, row in sorted(by_id.items()):
+        provenance = {
+            key: value
+            for key, value in {
+                "platform": row.get("platform"),
+                "url": row.get("source_url"),
+                "dedupe_fingerprint": row.get("family_key"),
+            }.items()
+            if value is not None
+        }
+        keys = set(
+            family_keys.derive(
+                {
+                    "canonical_sha256": row.get("canonical_sha256"),
+                    "provenance": provenance,
+                }
+            )[0]
+        )
+        srcfile = _srcfile_key(row)
+        if srcfile:
+            keys.add(("srcfile", srcfile))
+        url_parent = _url_parent_key(row.get("source_url"))
+        if url_parent:
+            keys.add(("url_parent", url_parent))
+        if not keys:
+            raise ValueError(
+                f"catalog dataset lacks family alias evidence: {dataset_id}"
+            )
+        evidence = sorted([kind, value] for kind, value in keys)
+        evidence_by_id[dataset_id] = evidence
+        for kind, value in evidence:
+            key = (kind, value)
+            previous = owners.get(key)
+            if previous is None:
+                owners[key] = dataset_id
+            else:
+                union(dataset_id, previous)
+        review_by_id[dataset_id] = {
+            "dataset": dataset_id,
+            "task": row["task"],
+            "catalog_family_key": row.get("family_key"),
+            "catalog_family_key_source": row.get("family_key_source"),
+            "catalog_family_key_derived": row.get("family_key_derived"),
+            "promoted_srcfile_key": srcfile,
+            "url_parent_key": url_parent,
+            "union_evidence": evidence,
+        }
+
+    components: dict[str, list[str]] = defaultdict(list)
+    for dataset_id in sorted(by_id):
+        components[find(dataset_id)].append(dataset_id)
+
+    family_by_id: dict[str, str] = {}
+    component_rows = []
+    for member_ids in sorted(components.values(), key=lambda members: members[0]):
+        component_evidence = sorted(
+            {
+                tuple(item)
+                for dataset_id in member_ids
+                for item in evidence_by_id[dataset_id]
+            }
+        )
+        srcfile_keys = sorted(
+            value for kind, value in component_evidence if kind == "srcfile"
+        )
+        recorded_keys = sorted(
+            value
+            for dataset_id in member_ids
+            if (value := by_id[dataset_id].get("family_key"))
+        )
+        canonical_keys = sorted(
+            value for kind, value in component_evidence if kind == "canonical_sha256"
+        )
+        normalized_urls = sorted(
+            value for kind, value in component_evidence if kind == "normalized_url"
+        )
+        if srcfile_keys:
+            family = srcfile_keys[0]
+        elif recorded_keys:
+            family = f"dedupe:{recorded_keys[0]}"
+        elif canonical_keys:
+            family = f"canonical:{canonical_keys[0]}"
+        elif normalized_urls:
+            family = f"url:{normalized_urls[0]}"
+        else:
+            family = f"p2:{component_evidence[0][0]}:{component_evidence[0][1]}"
+        member_tasks = sorted({by_id[dataset_id]["task"] for dataset_id in member_ids})
+        for dataset_id in member_ids:
+            family_by_id[dataset_id] = family
+        component_rows.append(
+            {
+                "family": family,
+                "datasets": member_ids,
+                "tasks": member_tasks,
+                "union_evidence": [list(item) for item in component_evidence],
+            }
+        )
+
+    return {
+        "schema": "jope.joint-regbin.catalog-family-alias-review/v1",
+        "method": "catalog P2 family_keys plus srcfile stem and URL-parent union",
+        "dedupe_tool_schema": family_keys.SCHEMA,
+        "dedupe_tool_policy_sha256": family_keys.KEYS_POLICY_SHA256,
+        "dataset_count": len(selected),
+        "family_count": len(component_rows),
+        "task_counts": {
+            task: sum(row.get("task") == task for row in selected)
+            for task in protocol.TASKS
+        },
+        "families": component_rows,
+        "records": [
+            dict(review_by_id[dataset_id], family=family_by_id[dataset_id])
+            for dataset_id in sorted(by_id)
+        ],
+        "family_by_dataset": dict(sorted(family_by_id.items())),
+    }
+
+
+def build_catalog_pool_manifest(
+    catalog: dict,
+    catalog_sha256: str,
+    owner_alias: dict,
+    owner_alias_sha256: str,
+) -> dict:
+    """Build both task candidate pools without assigning roles or eligibility."""
+    inventory = catalog.get("inventory", {})
+    catalog_rows = catalog.get("datasets", [])
+    if (
+        not isinstance(catalog_sha256, str)
+        or not re.fullmatch(r"[0-9a-f]{64}", catalog_sha256)
+        or "LATEST=v246" not in inventory.get("source_catalog", "")
+        or inventory.get("usable_records") != len(catalog_rows)
+        or inventory.get("catalog_records", 0) - inventory.get("usable_records", 0)
+        != 14
+    ):
+        raise ValueError("catalog pool input is not the curated v246 metadata")
+    if (
+        not isinstance(owner_alias_sha256, str)
+        or not re.fullmatch(r"[0-9a-f]{64}", owner_alias_sha256)
+        or owner_alias.get("schema") != "jope.jrb01.raw-catalog-alias-expansion/v1"
+        or owner_alias.get("curated_catalog_sha256") != catalog_sha256
+        or owner_alias.get("owner_identities") != 167
+        or owner_alias.get("owner_identities_joined_raw_catalog") != 167
+        or owner_alias.get("previously_missing_identities") != 14
+        or owner_alias.get("previously_missing_now_joined") != 14
+        or owner_alias.get("source_file_metadata_for_previous_missing_ids") != 0
+        or owner_alias.get("binary_direct_owner_alias_intersections") != 0
+        or owner_alias.get("binary_transitive_owner_alias_intersections") != 0
+        or owner_alias.get("all_raw_catalog_transitive_unions_checked") is not True
+        or owner_alias.get("no_p3_roster_or_plaintext_sealed_aliases_published")
+        is not True
+        or owner_alias.get("payloads_opened") != 0
+    ):
+        raise ValueError("owner alias evidence is incomplete or has an overlap")
+    family_keys = _family_tool()
+    pinned_sources = owner_alias.get("policy_source_pins")
+    expected_sources = {
+        "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/common.py",
+        "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/family_keys.py",
+    }
+    repo = Path(__file__).resolve().parents[2]
+    if (
+        owner_alias.get("policy_schema") != family_keys.SCHEMA
+        or owner_alias.get("policy_sha256") != family_keys.KEYS_POLICY_SHA256
+        or not isinstance(pinned_sources, dict)
+        or set(pinned_sources) != expected_sources
+        or any(
+            sha256_file(repo / path) != expected
+            for path, expected in pinned_sources.items()
+        )
+    ):
+        raise ValueError(
+            "owner alias evidence does not pin the active family-key policy"
+        )
+
+    task_rows = [row for row in catalog_rows if row.get("task") in protocol.TASKS]
+    expected_counts = {
+        task: inventory.get("by_task", {}).get(task) for task in protocol.TASKS
+    }
+    actual_counts = {
+        task: sum(row.get("task") == task for row in catalog_rows)
+        for task in protocol.TASKS
+    }
+    if expected_counts != actual_counts:
+        raise ValueError("catalog pool task counts differ from v246 inventory")
+    for row in task_rows:
+        if (
+            row.get("s3_bucket") != "veox-jopedime-datasets-use2"
+            or type(row.get("train_rows")) is not int
+            or row["train_rows"] <= 0
+            or not isinstance(row.get("train_sha256"), str)
+            or not re.fullmatch(r"[0-9a-f]{64}", row["train_sha256"])
+        ):
+            raise ValueError(f"catalog train metadata is invalid: {row.get('id')}")
+
+    family_review = review_catalog_families(task_rows)
+    review_by_id = {row["dataset"]: row for row in family_review["records"]}
+    candidate_pools = {task: [] for task in protocol.TASKS}
+    for row in sorted(task_rows, key=lambda item: (item["task"], item["id"])):
+        reviewed = review_by_id[row["id"]]
+        candidate_pools[row["task"]].append(
+            {
+                "dataset": row["id"],
+                "task": row["task"],
+                "family": reviewed["family"],
+                "family_aliases": reviewed["union_evidence"],
+                "family_key_source": row.get("family_key_source"),
+                "train_rows": row["train_rows"],
+                "train_sha256": row["train_sha256"],
+            }
+        )
+
+    sourcefile_gaps = max(
+        0,
+        owner_alias["previously_missing_identities"]
+        - owner_alias["source_file_metadata_for_previous_missing_ids"],
+    )
+    owner_regression_alias_intersections_reviewed = (
+        owner_alias.get("regression_direct_owner_alias_intersections") == 0
+        and owner_alias.get("regression_transitive_owner_alias_intersections") == 0
+    )
+    return {
+        "schema": CATALOG_POOL_SCHEMA,
+        "admission_status": "CATALOG_CANDIDATES_NOT_ADMITTED",
+        "eligibility_verified": False,
+        "candidate_pool_scope": "catalog_train_rows_only",
+        "role_assignments_present": False,
+        "qualification_status": "NOT_QUALIFIED",
+        "catalog_sha256": catalog_sha256,
+        "catalog_version": "v246",
+        "owner_alias_expansion_sha256": owner_alias_sha256,
+        "owner_identity_manifest_sha256": owner_alias["owner_identity_manifest_sha256"],
+        "family_review_sha256": canonical_json_sha(family_review),
+        "family_review": family_review,
+        "candidate_counts": actual_counts,
+        "candidate_pools": candidate_pools,
+        "closure": {
+            "catalog_aliases_closed": True,
+            "catalog_rows_reviewed": len(task_rows),
+            "cross_task_alias_families": sum(
+                len(component["tasks"]) > 1 for component in family_review["families"]
+            ),
+            "owner_binary_recorded_alias_intersections": 0,
+            "owner_binary_alias_reviewed": True,
+            "owner_regression_alias_intersections_reviewed": (
+                owner_regression_alias_intersections_reviewed
+            ),
+            "owner_identity_count": owner_alias["owner_identities"],
+            "owner_identity_raw_catalog_joins": owner_alias[
+                "owner_identities_joined_raw_catalog"
+            ],
+            "owner_aliases_fully_closed": (
+                sourcefile_gaps == 0 and owner_regression_alias_intersections_reviewed
+            ),
+            "unresolved_owner_sourcefile_aliases": sourcefile_gaps,
+            "owner_identity_manifest_sha256": owner_alias[
+                "owner_identity_manifest_sha256"
+            ],
+            "protected_payloads_opened": 0,
+        },
+        "blockers": [
+            "catalog rows are candidates and do not assign reviewed train/val/panel roles",
+            "owner source-file alias closure is incomplete",
+            "actual two-task worker and qualification receipt are not supplied by this manifest",
+        ],
+    }
+
+
+def build_catalog_pool_manifest_from_files(
+    catalog_path: Path, owner_alias_path: Path
+) -> dict:
+    """Load and pin approved metadata inputs, then build fail-closed pool candidates."""
+    catalog_path = Path(catalog_path)
+    owner_alias_path = Path(owner_alias_path)
+    catalog_bytes = catalog_path.read_bytes()
+    owner_alias_bytes = owner_alias_path.read_bytes()
+    catalog = json.loads(catalog_bytes)
+    owner_alias = json.loads(owner_alias_bytes)
+    owner_alias_sha = hashlib.sha256(owner_alias_bytes).hexdigest()
+    if owner_alias_sha != OWNER_ALIAS_EXPANSION_SHA256:
+        raise ValueError("owner alias expansion is not the pinned metadata receipt")
+    return build_catalog_pool_manifest(
+        catalog,
+        hashlib.sha256(catalog_bytes).hexdigest(),
+        owner_alias,
+        owner_alias_sha,
+    )
 
 
 def _load_csv(path: Path, expected_rows: int, expected_cols: int, target_index: int):
