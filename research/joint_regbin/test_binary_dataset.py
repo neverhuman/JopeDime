@@ -795,6 +795,52 @@ class RoleManifestAdmissionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "approved real S3 bucket"):
             build_role_manifest(catalog_path, contexts, families, evidence)
 
+    def test_worker_task_summary_requires_exact_supported_list(self) -> None:
+        catalog_path, contexts, families, evidence = self._fixture()
+        for tasks in [
+            None,
+            False,
+            1,
+            "regression",
+            {"regression": {}, "binary": {}},
+            [],
+            ["regression"],
+            ["regression", "binary", "binary"],
+            ["regression", "regression"],
+            ["regression", "multiclass"],
+            ["regression", None],
+            ["regression", 1],
+            [{}, "binary"],
+            ["regression", ["binary"]],
+        ]:
+            with self.subTest(tasks=tasks):
+                evidence["worker"]["tasks"] = tasks
+                manifest = build_role_manifest(
+                    catalog_path, contexts, families, evidence
+                )
+                self.assertIs(manifest["eligibility_verified"], False)
+                self.assertIn(
+                    "worker does not prove regression and binary heads",
+                    manifest["blockers"],
+                )
+                with self.assertRaisesRegex(ValueError, "incomplete JRB inputs"):
+                    make_worker_bound_plan(manifest, catalog_path=catalog_path)
+
+    def test_worker_task_summary_accepts_both_supported_orders(self) -> None:
+        catalog_path, contexts, families, evidence = self._fixture()
+        for tasks in [list(protocol.TASKS), list(reversed(protocol.TASKS))]:
+            with self.subTest(tasks=tasks):
+                evidence["worker"]["tasks"] = tasks
+                manifest = build_role_manifest(
+                    catalog_path, contexts, families, evidence
+                )
+                self.assertIs(manifest["eligibility_verified"], True)
+                plan = make_worker_bound_plan(manifest, catalog_path=catalog_path)
+                self.assertEqual(
+                    plan["learner_start"]["worker_qualification_sha256"],
+                    evidence["worker"]["qualification_sha256"],
+                )
+
     def test_plan_rederives_proof_instead_of_trusting_cached_eligibility(self) -> None:
         catalog_path, contexts, families, evidence = self._fixture()
         evidence["worker"]["qualified"] = False
