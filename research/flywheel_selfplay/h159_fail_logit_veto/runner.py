@@ -56,38 +56,61 @@ def selected():
     return train, val
 
 
-def load_pools(rows):
+def baseline_gate(values, equal_family_mean, invalid_picks, reference):
+    expected = np.asarray(reference["utility"]["per_context"], dtype=np.float64)
+    actual = np.asarray(values, dtype=np.float64)
+    if (
+        expected.shape != (91,)
+        or actual.shape != (91,)
+        or not np.isfinite(actual).all()
+    ):
+        raise RuntimeError("91 finite contexts required")
+    err = float(np.max(np.abs(actual - expected)))
+    mean_err = abs(float(actual.mean()) - float(reference["best_utility"]))
+    if err != 0.0 or mean_err != 0.0:
+        raise RuntimeError(f"baseline exact parity failed: {err}, {mean_err}")
+    return dict(
+        matches=int(np.sum(np.abs(actual - expected) == 0.0)),
+        max_context_error=err,
+        mean_error=mean_err,
+        mean=float(actual.mean()),
+        equal_family_mean=float(equal_family_mean),
+        invalid_picks=int(invalid_picks),
+        status="PASS",
+    )
+
+
+def load_pools_and_tokens(rows, fused):
+    import torch
+
     pools = {}
+    projection = fused.get_w1_sign_matrix() / np.sqrt(412.0)
     for r in rows:
         cid = r["context_sha256"]
         p = rt.INPUT / "pools" / f"{cid}.npz"
         if rt.sha(p) != r["pool_sha256"]:
             raise RuntimeError("pool sha mismatch: " + cid)
-        with np.load(p) as z:
+        with np.load(p, allow_pickle=False) as z:
+            program = z["program"].astype(np.float32)
             pools[cid] = dict(
-                program=z["cand_prog_feat412"].astype(np.float32),
-                proj16=z["cand_proj16"].astype(np.float32),
-                fitness=z["cand_fitness_f"].astype(np.float32),
-                gate=z["cand_gate"].astype(bool),
+                program=program,
+                proj16=(program.astype(np.float64) @ projection).astype(np.float32),
+                fitness=z["fitness"].astype(np.float64),
+                gate=z["gate"].astype(bool),
             )
-    return pools
-
-
-def load_tokens(rows):
-    import torch
-
-    with np.load(rt.CACHE) as z:
-        ids = list(z["context_ids"])
-        ix = {str(c): i for i, c in enumerate(ids)}
-        toks = z["mm_tokens_10x32"].astype(np.float32)
-        masks = z["mm_mask_10"].astype(np.float32)
-    t_out, m_out = {}, {}
-    for r in rows:
-        c = r["context_sha256"]
-        i = ix[c]
-        t_out[c] = torch.from_numpy(toks[i])
-        m_out[c] = torch.from_numpy(masks[i])
-    return t_out, m_out
+    with np.load(rt.CACHE, allow_pickle=False) as z:
+        ids = list(map(str, z["cids"]))
+        tok = z["tokens_10x32"]
+        mask = z["mask_10"]
+        if set(ids) != set(pools) or len(ids) != len(pools):
+            raise RuntimeError("cache closure")
+        tokens = {
+            c: torch.as_tensor(tok[i], dtype=torch.float32) for i, c in enumerate(ids)
+        }
+        masks = {
+            c: torch.as_tensor(mask[i], dtype=torch.float32) for i, c in enumerate(ids)
+        }
+    return pools, tokens, masks
 
 
 def predict_batch(net, pools, tokens, masks, cids, size):
@@ -195,7 +218,7 @@ def main():
             raise RuntimeError("CUDA forbidden")
         ckpt_path = "/home/ubuntu/jope-data/h159/inputs/round-882.pt"
         ref_path = "/home/ubuntu/jope-data/h159/inputs/best_dev_checkpoint.json"
-        net, guard, names, frozen, adapter_hash, _ = rt.build(ckpt_path)
+        net, guard, names, frozen, adapter_hash, fused = rt.build(ckpt_path)
         census = rt.dropout_census(net)
         if (
             census["adapter_dropout_modules"]
@@ -248,39 +271,25 @@ def main():
         ]
         if (
             contract["contexts"] != expected
-            or hashlib.sha256(
-                json.dumps(
-                    contract["contexts"], sort_keys=True, separators=(",", ":")
-                ).encode()
-            ).hexdigest()
-            != contract["contexts_sha256"]
+            or hashlib.sha256(json.dumps(contract, sort_keys=True).encode()).hexdigest()
+            != pins["evaluation_identity"]
         ):
             raise RuntimeError("DL-Val contract mismatch")
 
         all_rows = train + val
-        pools = load_pools(all_rows)
-        tokens, masks = load_tokens(all_rows)
+        pools, tokens, masks = load_pools_and_tokens(all_rows, fused)
 
         # 1. Score 91-ctx DL-Val and verify exact R882 regression gate first
         val_records = score_panel(net, pools, tokens, masks, val)
         scored_contexts += len(val_records)
         r882_val_eval = stat.evaluate_threshold_on_records(val_records, None)
-        ref_u = [ref["per_context"][r["context_sha256"]]["utility"] for r in val]
-        err = np.abs(np.asarray(r882_val_eval["utilities"]) - np.asarray(ref_u))
-        sanity = dict(
-            matches=int(np.sum(err == 0.0)),
-            max_context_error=float(err.max()),
-            mean_error=float(
-                abs(r882_val_eval["context_mean_utility"] - ref["mean_utility"])
-            ),
-            mean=float(r882_val_eval["context_mean_utility"]),
-            equal_family_mean=float(r882_val_eval["equal_family_mean_utility"]),
-            invalid_picks=int(r882_val_eval["invalid_picks"]),
-            status="PASS" if float(err.max()) == 0.0 else "FAIL",
+        sanity = baseline_gate(
+            r882_val_eval["utilities"],
+            r882_val_eval["equal_family_mean_utility"],
+            r882_val_eval["invalid_picks"],
+            ref,
         )
         rt.save(out / "baseline.json", sanity)
-        if sanity["status"] != "PASS" or sanity["matches"] != 91:
-            raise RuntimeError("R882 91/91 baseline regression gate failed")
         rt.guards(out)
 
         # 2. Score 1,219-ctx DL-Train

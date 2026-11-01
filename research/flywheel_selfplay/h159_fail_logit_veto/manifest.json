@@ -24,14 +24,15 @@
     "ORACLE_INFO"
   ],
   "optimizer_updates": 0,
-  "prereg_sha256": "e4bb5bc96fa3b24517af1237c1b8d00d35104b33fe4755648db6d4c0a2719d53",
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "prereg_sha256": "fd0bf36bab65b7c6ef8720abf383e415c8db1e92bf420205da79edf8ae76348f",
   "fold_manifest_sha256": "5ef9a1e27e2e63655dca08083378bafd62a22cb55ed2fa4d5772108ac3456133",
   "executor_sha256": {
-    "runner.py": "9bad929580166755cdd939358b14bf4a59331d8187fbfb1c403536ef48d6ddb7",
+    "runner.py": "68d855322dbac47e1bf65ef73e8f9ad7f2008974cd0a672213b33914183d67ae",
     "runtime.py": "3051b328f585f045e92a7f49d84243d05a0ec658839fb6e70533e763f3f7c48d",
     "science.py": "0529fec8b4bfb2b9c19ff49eb826b2b02a95a014ff3e700ba6b3904df318d7c0",
     "monitor.py": "e2c47878850e468361f6dc05137dd64b32da43dae239b0047dbfbcc716950d8c",
-    "test_h159.py": "3a9d7766dcb3470ca887b0aa6ef730fe0779f9472a5a389454f383817592f670"
+    "test_h159.py": "c2db581c7ff9af236aa4c9e2d7b6cb52acc13ea58ea8c0dcccf778eb888d96fb"
   },
   "inputs": {
     "/home/ubuntu/jope-data/h159/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
@@ -65,8 +66,8 @@
   "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
   "smoke_custody_receipts": {
     "smoke/smoke.json": "5e8011541fcea448f1a36d6d9e71f6b5a80c00395ec497873f9205474a089ce7",
-    "smoke/audit.json": "a47b4e4867d77aed1c061e7728c3cf7446e56a2ef6d7be0b917a5b036b258755",
-    "smoke-monitor.json": "8df9fc085b378ec36f10444cedcd2fddb52249d95b950b1a40a6d34dd8b4bdd4",
-    "smoke-resources.jsonl": "4d5ddfb6f9079f03a460001755fc72ece892e4b0556523f16fa5ba2b06db7a18"
+    "smoke/audit.json": "d4a9c631f44f57837da748c1e6ca2d17bd9f872eea131f7349d24234965f278d",
+    "smoke-monitor.json": "8ad1e2e156485ca65e52dbeb7663cb061638ab217f525792dfdcbe27a11f557c",
+    "smoke-resources.jsonl": "947a2951969a3c05dbdc514a412724d33cd5a50a62121adc17341cd88f553adf"
   }
 }
