@@ -439,7 +439,7 @@ stateDiagram-v2
 | `cancelled` | Terminal. The best committed model stays available. | |
 | `failed` | Terminal. `failure` carries a catalog code; the best committed model stays available. | |
 
-**Crash recovery.** On engine start, any run in `running` or `pausing` is moved to `paused{interrupted:true}` at its last committed round; `tmp/` is emptied; every artifact referenced by a committed record is verified. `\continue` resumes. Uncommitted work did not happen and is recomputed with the same seeds (§5.6).
+**Crash recovery.** On engine start, any run in `running` or `pausing` is moved to `paused{interrupted:true}` at its last committed round; `tmp/` is emptied; every artifact referenced by a committed record is verified. `\continue` resumes. Uncommitted work did not happen and is recomputed with the same seeds (§5.6). Continue retains the original plan, binary identity and remaining budget; its state change and retry response commit together. An interrupted finalization attempt retains an unknown outcome. Automatic replay cannot reread its assessment rows; an explicit Continue can authorize a new finalization attempt after durably retaining the prior unknown attempt.
 
 **Fencing.** Each evaluation dispatch carries `(run_id, round, slot, attempt)`. A result for a revoked `attempt` (cancel, pause deadline, crash) is discarded. An effort change does not revoke in-flight attempts.
 

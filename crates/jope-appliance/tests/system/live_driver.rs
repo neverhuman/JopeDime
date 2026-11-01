@@ -353,8 +353,16 @@ def engine_boundary_matrix():
                 changed=out/(label+'-changed-control.json')
                 changed.write_text(json.dumps({'action':'continue','expected_revision':'0'}))
                 conflict=subprocess.run([args.binary,'control',rid,'--idempotency-key','int02-boundary-continue','--body',str(changed),'continue'],env={**base_env,'JOPEDIME_HOME':str(h)},text=True,capture_output=True,timeout=10)
-                assert conflict.returncode==8 and 'IDEMPOTENCY_CONFLICT' in conflict.stderr,'changed Continue request did not conflict'
                 commands.append({'argv':['control',rid,'changed-body-negative'],'exit':conflict.returncode,'stderr':conflict.stderr})
+                assert conflict.returncode==8,'changed Continue request did not return the conflict exit'
+                record=json.loads((h/'daemon.json').read_text());address=urllib.parse.urlsplit(record['url'])
+                connection=http.client.HTTPConnection('127.0.0.1',address.port,timeout=10)
+                try:
+                    connection.request('POST',f'/v1/runs/{rid}/control',body=changed.read_text(),headers={'Authorization':'Bearer '+record['token'],'Content-Type':'application/json','Idempotency-Key':'int02-boundary-continue'})
+                    reply=connection.getresponse();problem=json.loads(reply.read())
+                    assert reply.status==409 and problem['code']=='IDEMPOTENCY_CONFLICT','changed Continue API request did not return its typed conflict'
+                    save(label+'-conflict.json',{'status':reply.status,'problem':problem,'cli_exit':conflict.returncode})
+                finally:connection.close()
             completed=wait_terminal(h,rid)
             final_events=client.events(rid,0)['events']
             assert completed['state']=='completed' and completed['best']==snapshot['best'],(label,completed)
