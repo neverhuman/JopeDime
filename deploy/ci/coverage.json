@@ -4279,6 +4279,16 @@
       "lanes": [],
       "scope": "REL-07 signer-compatible gate-receipt adapter controls; exact 28-gate M1-D2 inventory, CPU-prestage NOT_RUN projection, artifact SHA256 binding, and missing/duplicate/malformed gate refusals."
     },
+    "python:deploy/qualification/v1.0/test_provider_d2/test_d2.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 D2 size-only provider controls: candidate/source binding, fused-cpu profile and size-budget checks, 40 MB ceiling and refusal/result accounting. Synthetic reports only; no latency verdict or release execution."
+    },
     "python:deploy/qualification/v1.0/test_provider_e2/test_e2.py": {
       "discovery": {
         "kind": "python-family"
