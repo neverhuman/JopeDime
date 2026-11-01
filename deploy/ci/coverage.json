@@ -15640,5 +15640,15 @@
     "scope": "H163 data-free score direction, candidate ID alignment, stable argmin ties, z-normalization/rank ensemble, and strict paired family-bootstrap selector controls. Offline research only; no checkpoint, corpus, or live promotion in unit tests."
   },
   "schema": "jope.coverage/v1",
-  "stage": "static"
+  "stage": "static",
+  "python:research/flywheel_selfplay/h169_optimizer_geometry/test_h169.py": {
+    "discovery": {
+      "kind": "python-family"
+    },
+    "dispositions": [
+      "research"
+    ],
+    "lanes": [],
+    "scope": "H169 data-free controls: family exclusion/assessment coverage, repeatable FIT-only minibatches, strict selection, drift calibration, exact optimizer pins, None-gradient materialization, bootstrap/Holm/Elo, and resource guards. No study data, checkpoint, model, or serving qualification."
+  }
 }
