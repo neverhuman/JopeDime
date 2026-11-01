@@ -5234,6 +5234,16 @@
       "lanes": [],
       "scope": "H160 data-free controls: trajectory-delta SVD basis (orthonormal, rank refusal), gradient/displacement projection (idempotence, Adam leak repaired), drift-matched learning rate and inclusive manipulation band, H148 nested family partition and 40-step fit-only batch plan, strict snapshot selection with margin ties and lower bound, identical-arm Elo 1500, Holm decision and mechanism labels, and every supervisor hard stop. No checkpoint, corpus or model passes in the fixture suite; offline research only."
     },
+    "python:research/flywheel_selfplay/h161_robust_fambal/test_h161.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H161 data-free controls: disjoint folds/partition, family-balanced batch plan, fold-median scale and Huber robust-loss gradient capping for the preregistered r882 continuation; no checkpoint, corpus, sealed or holdout data."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"

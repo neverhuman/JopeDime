@@ -2013,6 +2013,10 @@
       "reason": "Owner-requested H160 data-free controls for trajectory-subspace projected continuation (basis, projection, drift match, strict selection, decision, supervisor); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h161_robust_fambal/test_h161.py": {
+      "reason": "Owner-requested H161 data-free controls for robust per-context normalized/Huber loss and family-balanced sampling on r882 continuation (disjoint folds/partition, batch plans, fold-median scale, gradient capping); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
       "role": "research"
