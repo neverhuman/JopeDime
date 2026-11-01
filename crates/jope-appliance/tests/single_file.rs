@@ -810,6 +810,47 @@ fn a_promised_method_this_build_cannot_run_fails_doctor() {
     );
 }
 
+#[cfg(feature = "engine")]
+#[test]
+fn r882_reports_compilation_separately_and_fixture_keys_cannot_enable_it() {
+    let dir = tempfile::tempdir().unwrap();
+    let output = ok(run(
+        Path::new(env!("CARGO_BIN_EXE_jopedime")),
+        dir.path(),
+        &["methods", "--json"],
+    ));
+    let methods: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    let r882 = methods["methods"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|record| record["id"] == "proposal.r882.regression")
+        .unwrap();
+    assert_eq!(r882["compiled"], true);
+    assert_eq!(r882["assets_present"], false);
+    assert_eq!(r882["executable"], false);
+    assert!(r882["required_assets"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|id| id == "model/r882/dope.safetensors"));
+    let old = methods["methods"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|record| record["id"] == "proposal.step60000.regression")
+        .unwrap();
+    assert_eq!(old["compiled"], false);
+    let fixture = package(dir.path(), &["proposal.r882.regression"]);
+    let output = run(&fixture, dir.path(), &["doctor", "--json"]);
+    assert_eq!(code(&output), 3, "{output:?}");
+    // Compiled code and a development signature grant no internal r882 capability.
+    assert!(
+        String::from_utf8_lossy(&output.stdout).contains("internal-only")
+            || String::from_utf8_lossy(&output.stderr).contains("internal-only")
+    );
+}
+
 #[test]
 fn an_unpackaged_development_build_runs_native_methods() {
     let dir = tempfile::tempdir().unwrap();

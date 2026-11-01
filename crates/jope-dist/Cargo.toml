@@ -22,6 +22,7 @@ hex.workspace = true
 jope-assets = { path = "../jope-assets", features = ["pack", "dev-keys"] }
 # The native roster the profiles promise and what this build can execute.
 jope-runtime = { path = "../jope-runtime" }
+jope-service = { path = "../jope-service" }
 serde.workspace = true
 serde_json.workspace = true
 toml.workspace = true
