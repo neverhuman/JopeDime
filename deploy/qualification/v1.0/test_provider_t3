@@ -100,6 +100,10 @@ class T3Tests(unittest.TestCase):
         for test in t3.TESTS:
             self.assertIn(t3.command(test), self.calls)
             self.assertIn("--exact", t3.command(test))
+        self.assertIn("--nocapture", t3.command(t3.TESTS[2]))
+        self.assertIn("--nocapture", t3.command(t3.TESTS[3]))
+        self.assertNotIn("--ignored", t3.command(t3.TESTS[2]))
+        self.assertIn("--ignored", t3.command(t3.TESTS[3]))
 
     def test_zero_ignored_and_multiple_cases_never_pass(self):
         for output in (

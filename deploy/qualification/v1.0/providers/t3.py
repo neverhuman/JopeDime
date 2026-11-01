@@ -39,6 +39,8 @@ def command(test: str) -> list[str]:
     args = ["cargo", "test", "--locked", "-p", "jope-service", "--lib", test, "--"]
     if test.endswith("fixed_work_overhead_measurement"):
         args.extend(("--ignored", "--nocapture"))
+    elif test.endswith("real_sensor_tick_cost_measurement"):
+        args.append("--nocapture")
     args.extend(("--exact", "--test-threads=1"))
     return args
 
