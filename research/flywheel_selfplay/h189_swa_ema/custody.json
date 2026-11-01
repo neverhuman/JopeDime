@@ -1,13 +1,35 @@
 {
-  "bucket_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H189/H189_attempt1_20261101T1508Z/",
-  "local_bulk_policy": "retain until exact-version S3 readback verifies; then remove raw local bulk outputs and write cleanup receipt",
-  "required_members": [
-    "H189-evidence.zip",
-    "H189-manifest.json",
-    "pooled_b_selection_lock.json",
-    "run-metadata.json"
-  ],
-  "sealed_or_holdout_prefixes_access": "forbidden",
-  "status": "PENDING_RUN_AND_VERSIONED_S3_UPLOAD",
-  "wave": "H189"
+  "wave": "H189",
+  "attempt": 2,
+  "run_id": "H189_attempt2_20261101T1743Z",
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "source_commit": "716c26b3bcce02677ea7b837eca49ffdcea6ee70",
+  "source_tree": "8e625473f826f44d2fc579bb68214aef1c23928a",
+  "protected_reads": 0,
+  "optimizer_updates": 1200,
+  "resume_ledger": {
+    "path": "/home/ubuntu/jope_plan/ns/receipts/H189_resume_ledger.json",
+    "sha256": "dc9988058927c395bc6713586d77d58b472d3f2db6a7a7080310689aaeac23d3",
+    "executed_resume_events": 5,
+    "final_launch_sha256": "9798004f384bd86cd719e9abce9554c0ce40fee4f14666f3c252b761f63ffc0a"
+  },
+  "archive": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H189/H189_attempt2_20261101T1743Z/H189-evidence.zip",
+    "version_id": "7RF8XZyEi3VCQNSbYAvTRWgA1QH4uPK4",
+    "bytes": 135130154,
+    "sha256": "8fc229fea1062251165f770328125ed301571e84760cf6006bc2acd2325798c",
+    "member_count": 126,
+    "member_readback_verified": true,
+    "actual_versioned_byte_readback": true
+  },
+  "manifest": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H189/H189_attempt2_20261101T1743Z/H189-manifest.json",
+    "version_id": "sFyKpzaVuw4rYqtVJeg6PV.IycfOUX2O",
+    "bytes": 23250,
+    "sha256": "c014a777e1b310e399e894fca64ed6e94fa514ecea4e37629b33e94c398a4cbc",
+    "actual_versioned_byte_readback": true
+  },
+  "seed_fold_uncertainty": "All three seeds share one fold assignment from seed 189140; seed intervals reflect training noise and family bootstrap, not fold-assignment uncertainty.",
+  "paired_transformations": "CTRL80, SWA80, and EMA80 are paired transformations of one trajectory per fold/seed."
 }

@@ -1,0 +1,176 @@
+{
+  "audit": {
+    "live_flywheel_write": false,
+    "optimizer_updates": 1200,
+    "protected_reads": 0,
+    "refused_reads": [],
+    "status": "PASS"
+  },
+  "candidate_elo_vs_r882": {
+    "EMA": {
+      "elo": 1476.0058089849783,
+      "elo_delta_ci95": [
+        -35.73953538623202,
+        -11.01628317276922
+      ],
+      "elo_delta_vs_r882": -23.99419101502167
+    },
+    "R882": {
+      "elo": 1500.0,
+      "elo_delta_ci95": [
+        0.0,
+        0.0
+      ],
+      "elo_delta_vs_r882": 0.0
+    },
+    "SWA": {
+      "elo": 1475.9073211619334,
+      "elo_delta_ci95": [
+        -36.16983882693884,
+        -11.643213446774855
+      ],
+      "elo_delta_vs_r882": -24.092678838066604
+    }
+  },
+  "design": {
+    "bootstrap_seed": 189141,
+    "contexts": 1219,
+    "exact_baseline": {
+      "bit_exact": true,
+      "contexts": 91,
+      "mean": 1.1377941898164525
+    },
+    "fold_seed": 189140,
+    "optimizer_updates": 1200,
+    "outer_folds": 5,
+    "paired_transformations": "CTRL80, SWA80, and EMA80 are paired transformations of one continuation trajectory per fold/seed",
+    "seed_uncertainty_scope": "training noise only; no fold-assignment noise; seeds are not independent fold replicates",
+    "seeds": [
+      189101,
+      189102,
+      189103
+    ],
+    "shared_fold_assignment_across_all_three_seeds": true,
+    "train_families": 205,
+    "trajectories": 15,
+    "updates_per_trajectory": 80
+  },
+  "diagnostic_control_elo": null,
+  "evidence": {
+    "resume_ledger": "/home/ubuntu/jope_plan/ns/receipts/H189_resume_ledger.json",
+    "run_output": "/home/ubuntu/jope_plan/ns/results/H189_attempt2"
+  },
+  "metrics_scope": "Elo/lift only; no AUC or speed claims",
+  "pooled_a_vs_r882": {
+    "EMA": {
+      "advance": false,
+      "ci95": [
+        -0.07698944056489473,
+        -0.01400838750729022
+      ],
+      "holm_m2_p": 1.0,
+      "lcb95_gt_zero": false,
+      "mean_gain": -0.04516889546408115,
+      "median_gain": -0.04325337928133079,
+      "one_sided_family_bootstrap_p": 0.9983001699830018,
+      "per_seed_gain": [
+        -0.04325337928133079,
+        -0.05171659558551774,
+        -0.040536711525394925
+      ]
+    },
+    "SWA": {
+      "advance": false,
+      "ci95": [
+        -0.07734032085141429,
+        -0.015170169204669806
+      ],
+      "holm_m2_p": 1.0,
+      "lcb95_gt_zero": false,
+      "mean_gain": -0.04487913571203604,
+      "median_gain": -0.04381461373881577,
+      "one_sided_family_bootstrap_p": 0.9986001399860014,
+      "per_seed_gain": [
+        -0.04060093306285207,
+        -0.0502218603344403,
+        -0.04381461373881577
+      ]
+    }
+  },
+  "pooled_b": {
+    "EMA": {
+      "admitted": false,
+      "ci95": [
+        -0.06825801082968735,
+        -0.00981667424215197
+      ],
+      "holm_p": 1.0,
+      "mean_gain": -0.03825827859412885,
+      "p_one_sided": 0.9963003699630038,
+      "per_seed_gain": [
+        -0.0362425112083518,
+        -0.04390441123585923,
+        -0.0346279133381755
+      ]
+    },
+    "SWA": {
+      "admitted": false,
+      "ci95": [
+        -0.06550346265923832,
+        -0.007492139226456067
+      ],
+      "holm_p": 1.0,
+      "mean_gain": -0.03576307483159952,
+      "p_one_sided": 0.9941005899410059,
+      "per_seed_gain": [
+        -0.03502230185156094,
+        -0.03922595029312568,
+        -0.03304097235011194
+      ]
+    }
+  },
+  "red_team_caveats": [
+    "All three seeds share the single family-fold assignment generated with seed 189140; seed intervals reflect training noise and family bootstrap only, not fold-assignment uncertainty.",
+    "SWA80, EMA80, and CTRL80 are paired transformations of one trajectory per fold/seed, not independent trajectories."
+  ],
+  "resource_guard": {
+    "cumulative_elapsed_seconds": 6305.348663784331,
+    "disk_used_limit_fraction": 0.938,
+    "host_cpu_limit_percent": 85,
+    "status": "PASS"
+  },
+  "selected_policy": "R882 (both candidates failed pooled B admission)",
+  "selected_policy_elo": {
+    "EMA": {
+      "elo": 1500.0,
+      "elo_delta_ci95": [
+        0.0,
+        0.0
+      ],
+      "elo_delta_vs_r882": 0.0
+    },
+    "R882": {
+      "elo": 1500.0,
+      "elo_delta_ci95": [
+        0.0,
+        0.0
+      ],
+      "elo_delta_vs_r882": 0.0
+    },
+    "SWA": {
+      "elo": 1500.0,
+      "elo_delta_ci95": [
+        0.0,
+        0.0
+      ],
+      "elo_delta_vs_r882": 0.0
+    }
+  },
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "verdict_rule": {
+    "required": "pooled A vs R882; LCB95 > 0 and Holm-adjusted one-sided p < 0.05 (m=2); ties are NO_ADVANCE",
+    "source": "closeout red-team note and preregistered strict rule"
+  },
+  "wave": "H189"
+}
