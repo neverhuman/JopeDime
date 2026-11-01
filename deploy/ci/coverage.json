@@ -14407,7 +14407,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector and raw B cost/choice/utility lock replay. Research only; no study data, checkpoint, product, sealed qualification or serving promotion."
+      "scope": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector, raw B cost/choice/utility lock replay, and fused adapter API keyword contract. Research only; no study data, checkpoint, product, sealed qualification or serving promotion."
     }
   },
   "lanes": {
@@ -15739,6 +15739,6 @@
       "research"
     ],
     "lanes": [],
-    "scope": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector and raw B cost/choice/utility lock replay. Research only; no study data, checkpoint, product, sealed qualification or serving promotion."
+    "scope": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector, raw B cost/choice/utility lock replay, and fused adapter API keyword contract. Research only; no study data, checkpoint, product, sealed qualification or serving promotion."
   }
 }
