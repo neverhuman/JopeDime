@@ -17,9 +17,7 @@ Five lines of AI research supply the building blocks for the four pillars
 of \cref{sec:anatomy}: deep learning, program search, reinforcement
 learning, games and the race for self-improvement.
 
-The question is whether their combination can turn experience across
-algorithm-discovery tasks into a better first complete program for a new
-family.\footnote{Each history keeps only the
+We trace how each links proposals to tests and carries feedback forward.\footnote{Each history keeps only the
 milestones the argument needs; \cref{app:history} collects the referees
 those milestones rely on.}
 
@@ -268,11 +266,10 @@ improve, raising verified discoveries per unit of compute across generations.
 Each requires separate evidence (\cref{sec:meaning}); a recorded
 training trajectory alone establishes none of them on an unseen task.
 
-From these systems \EZ{} keeps both the destination and the safety frame,
-verifying every improvement before keeping it and sandboxing every program,
-while testing whether learning across discovery episodes improves the first
-proposal over the corresponding frozen proposer under the same deployment
-budget.
+These systems motivate two reference requirements: verify an improvement
+before retaining it, and sandbox candidate execution
+(\cref{sub:method-referee}). The proposed learning test compares a trained
+writer with its frozen reference under the same deployment budget.
 
 % ---------------------------------------------------------------------
 \subsection{Where the roads meet}\label{sub:road-meet}

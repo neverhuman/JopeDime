@@ -12,9 +12,21 @@ MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC and SPEC.loader
 SPEC.loader.exec_module(MODULE)
 
+THREE_CLIENTS_SCRIPT = Path(__file__).with_name("capture_three_clients.py")
+THREE_CLIENTS_SPEC = importlib.util.spec_from_file_location(
+    "capture_three_clients", THREE_CLIENTS_SCRIPT
+)
+assert THREE_CLIENTS_SPEC and THREE_CLIENTS_SPEC.loader
+THREE_CLIENTS_MODULE = importlib.util.module_from_spec(THREE_CLIENTS_SPEC)
+THREE_CLIENTS_SPEC.loader.exec_module(THREE_CLIENTS_MODULE)
+
 
 def test_synthetic_package_contract():
     MODULE.self_test()
+
+
+def test_three_client_capture_plan_self_test():
+    THREE_CLIENTS_MODULE.self_test()
 
 
 def test_roster_names_are_exact():

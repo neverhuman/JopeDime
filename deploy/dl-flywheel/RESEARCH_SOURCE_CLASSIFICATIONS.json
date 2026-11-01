@@ -4648,6 +4648,38 @@
         "reason": "H184 preregistered CPU-only diagnostic: adapter-structure component ablation (PRIOR/KERNEL/ATTN output terms, proved bit-exact against the live adapter delta) under 0-update random weights against r882 on the H180/H176 family harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
       }
     },
+    "python:research/flywheel_selfplay/h188_kernel_inputs/analysis.py": {
+      "bytes": 13629,
+      "sha256": "669b4c07f4cd00ce41a05f79a02c0b14f177023b922f17425475cf69f29ae891",
+      "classification": {
+        "role": "research",
+        "reason": "H188 preregistered CPU-only diagnostic: kernel-input ablation (anchor similarity features, rank-normalized and Huber-winsorized revealed residuals) on the trained r882 adapter at 0 updates, with the H177-derived pooled-B selector, bit-exact kernel replay gates, DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h188_kernel_inputs/monitor.py": {
+      "bytes": 5245,
+      "sha256": "f52c65ffa65ac3eff86ffcf11971cc345ff8408beaf6b14c3788e3c0230708c5",
+      "classification": {
+        "role": "research",
+        "reason": "H188 preregistered CPU-only diagnostic: kernel-input ablation (anchor similarity features, rank-normalized and Huber-winsorized revealed residuals) on the trained r882 adapter at 0 updates, with the H177-derived pooled-B selector, bit-exact kernel replay gates, DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h188_kernel_inputs/runner.py": {
+      "bytes": 34691,
+      "sha256": "7bf491f9333761ffc1a50c689279de633d843b5e6f260e40896bb1b7c363775b",
+      "classification": {
+        "role": "research",
+        "reason": "H188 preregistered CPU-only diagnostic: kernel-input ablation (anchor similarity features, rank-normalized and Huber-winsorized revealed residuals) on the trained r882 adapter at 0 updates, with the H177-derived pooled-B selector, bit-exact kernel replay gates, DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h188_kernel_inputs/treatment.py": {
+      "bytes": 13293,
+      "sha256": "534ed8e9700797f0bbae00166e50cfd739c85caa90d4e1479c3700b58577de15",
+      "classification": {
+        "role": "research",
+        "reason": "H188 preregistered CPU-only diagnostic: kernel-input ablation (anchor similarity features, rank-normalized and Huber-winsorized revealed residuals) on the trained r882 adapter at 0 updates, with the H177-derived pooled-B selector, bit-exact kernel replay gates, DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
     "python:research/flywheel_selfplay/h176_data_scaling/monitor.py": {
       "bytes": 5200,
       "sha256": "79079503077af4097423089e1b22d921049f047f2e641f7fb62fef30f1cfb100",
@@ -4822,6 +4854,38 @@
       "classification": {
         "role": "research",
         "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/analysis.py": {
+      "bytes": 22527,
+      "sha256": "6371dfd6f1b731f79f5e15c21acd3c7e4aa30432cc2f6b71d6521aaf3bff52db",
+      "classification": {
+        "role": "research",
+        "reason": "H185 preregistered CPU-only confirmatory test of FRESH160 (160-step fresh adapter), ENS5 (5x40-step fresh score ensemble), and RENS5 (5x0-step untrained member init control) vs R882 using the imported H177 205-family pooled-B selector and H178 calibration receipt; DL-Val descriptive and correlated cross-fold A readout only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/monitor.py": {
+      "bytes": 4892,
+      "sha256": "26f43d55c09995aaa101aebce4dcacf55d8c29fe3212670a1cb431dad9f42834",
+      "classification": {
+        "role": "research",
+        "reason": "H185 preregistered CPU-only confirmatory test of FRESH160 (160-step fresh adapter), ENS5 (5x40-step fresh score ensemble), and RENS5 (5x0-step untrained member init control) vs R882 using the imported H177 205-family pooled-B selector and H178 calibration receipt; DL-Val descriptive and correlated cross-fold A readout only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/runner.py": {
+      "bytes": 59887,
+      "sha256": "fd41edb3073f71b90d16042e6adb350b28322cbb36a1b54aeebd0c867303c25a",
+      "classification": {
+        "role": "research",
+        "reason": "H185 preregistered CPU-only confirmatory test of FRESH160 (160-step fresh adapter), ENS5 (5x40-step fresh score ensemble), and RENS5 (5x0-step untrained member init control) vs R882 using the imported H177 205-family pooled-B selector and H178 calibration receipt; DL-Val descriptive and correlated cross-fold A readout only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/treatment.py": {
+      "bytes": 2527,
+      "sha256": "6facc59a28d80cc47bf7441a72f431502f10284020e22c7a0655133d43c4c710",
+      "classification": {
+        "role": "research",
+        "reason": "H185 preregistered CPU-only confirmatory test of FRESH160 (160-step fresh adapter), ENS5 (5x40-step fresh score ensemble), and RENS5 (5x0-step untrained member init control) vs R882 using the imported H177 205-family pooled-B selector and H178 calibration receipt; DL-Val descriptive and correlated cross-fold A readout only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
       }
     },
     "python:research/flywheel_selfplay/h187_robust_family/design.py": {
