@@ -5,6 +5,7 @@ import hashlib
 
 import numpy as np
 import pytest
+import torch
 
 import analysis as stat
 import treatment
@@ -24,6 +25,40 @@ def test_swa_is_uniform_mean_of_fixed_adapter_only_snapshots():
     result = treatment.uniform_swa(snapshots)
     assert result["adapter.weight"].dtype == np.float32
     assert result["adapter.weight"].tolist() == [60.0, 60.0]
+
+
+def test_state_array_preserves_scalar_adapter_tensors_as_zero_dim_arrays():
+    result = treatment.state_array(np.float32(1.25))
+    assert isinstance(result, np.ndarray)
+    assert result.shape == ()
+    assert result.dtype == np.float32
+    assert result.item() == pytest.approx(1.25)
+    assert torch.from_numpy(result).item() == pytest.approx(1.25)
+
+
+def test_saved_fit_cell_resume_requires_matching_receipt_and_arrays(tmp_path):
+    names = ("scalar", "vector")
+    path = tmp_path / "candidate-states.npz"
+    np.savez_compressed(
+        path,
+        **{
+            f"{arm}::{name}": np.asarray(1.0, dtype=np.float32)
+            for arm in ("CTRL80", "SWA", "EMA")
+            for name in names
+        },
+    )
+    receipt = {
+        "fold": 0,
+        "seed": 189101,
+        "updates": 80,
+        "fit_family_count": 123,
+        "snapshot_steps": list(stat.SNAPSHOT_STEPS),
+        "ema_decay": 0.95,
+        "fit_context_ids": ["a", "b"],
+    }
+    assert treatment.validate_saved_cell(receipt, 0, 189101, ["a", "b"], path, names)
+    with pytest.raises(RuntimeError, match="current plan"):
+        treatment.validate_saved_cell(receipt, 1, 189101, ["a", "b"], path, names)
 
 
 def test_swa_rejects_missing_or_nonfinite_snapshot():

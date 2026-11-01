@@ -117,6 +117,41 @@ def uniform_swa(snapshots):
     return out
 
 
+def state_array(value):
+    """Return a copied float32 ndarray, including for scalar adapter tensors."""
+    array = np.asarray(value)
+    if array.dtype != np.float32 or not np.isfinite(array).all():
+        raise ValueError("adapter state values must be finite float32")
+    return array.copy()
+
+
+def validate_saved_cell(
+    receipt, fold, seed, fit_context_ids, state_path, adapter_names
+):
+    """Validate and load a fully persisted FIT cell for guarded continuation."""
+    if (
+        receipt.get("fold") != fold
+        or receipt.get("seed") != seed
+        or receipt.get("updates") != UPDATES
+        or receipt.get("fit_family_count") != 123
+        or receipt.get("snapshot_steps") != list(stat.SNAPSHOT_STEPS)
+        or receipt.get("ema_decay") != EMA_DECAY
+        or sorted(receipt.get("fit_context_ids", [])) != sorted(fit_context_ids)
+    ):
+        raise RuntimeError("saved H189 FIT cell does not match the current plan")
+    expected = {
+        f"{arm}::{name}" for arm in ("CTRL80", "SWA", "EMA") for name in adapter_names
+    }
+    with np.load(state_path, allow_pickle=False) as archive:
+        if set(archive.files) != expected:
+            raise RuntimeError("saved H189 adapter-state inventory mismatch")
+        for name in expected:
+            array = archive[name]
+            if array.dtype != np.float32 or not np.isfinite(array).all():
+                raise RuntimeError("saved H189 adapter state is not finite float32")
+    return Path(state_path)
+
+
 def ema_step(ema_state, current_state, decay=EMA_DECAY):
     if not 0.0 < decay < 1.0 or set(ema_state) != set(current_state):
         raise ValueError("EMA decay or tensor inventory")
