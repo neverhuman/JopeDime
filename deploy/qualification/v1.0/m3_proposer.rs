@@ -68,6 +68,13 @@ fn hash(raw: &[u8]) -> String {
         .collect()
 }
 fn main() -> Result<()> {
+    let mode = std::env::args().nth(3);
+    ensure!(
+        mode.is_none() || mode.as_deref() == Some("r0-clock"),
+        "unknown proposer clock"
+    );
+    ensure!(std::env::args().len() <= 4, "unexpected proposer arguments");
+    let paired_clock = mode.is_some();
     let dir = std::env::args().nth(1).expect("evidence directory");
     let dir = Path::new(&dir);
     let cohort = read(&dir.join("cohort.jsonl"))?;
@@ -175,10 +182,25 @@ fn main() -> Result<()> {
             rows: entries,
             sha: hash(format!("{}:{}", bank_sha, calls % requests.len()).as_bytes()),
         };
+        // Round::seed is the base, not the already round-mixed Python seed.
+        // The legacy default remains reproducible; paired diagnostics use the R0 clock.
+        let (seed, round) = if paired_clock {
+            (
+                source["source_round_seed"].as_u64().unwrap()
+                    - source["source_round"].as_u64().unwrap() * 104729
+                    + source["context_index"].as_u64().unwrap(),
+                source["source_round"].as_u64().unwrap() + 16 * (calls / requests.len()) as u64,
+            )
+        } else {
+            (
+                source["source_round_seed"].as_u64().unwrap()
+                    + source["context_index"].as_u64().unwrap(),
+                calls as u64,
+            )
+        };
         let request = Round {
-            seed: source["source_round_seed"].as_u64().unwrap()
-                + source["context_index"].as_u64().unwrap(),
-            round: calls as u64,
+            seed,
+            round,
             exploring: source["exploration"].as_bool().unwrap(),
             target_family: source["family_id"].as_str().unwrap(),
             raw_lm48: &vectors[&key],
