@@ -7431,7 +7431,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -14448,6 +14448,16 @@
       ],
       "lanes": [],
       "scope": "H176 data-free controls for nested family-fraction data scaling, role isolation, zero-update baseline alignment, deterministic paired fitting, context-level Elo aggregation, and resource guards. No study data/checkpoint loaded by unit tests; diagnostic research only."
+    },
+    "python:research/flywheel_selfplay/h180_adapter_ablation/test_h180.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H180 data-free controls: registered constants, five-fold family cross-fit with B unused, no-A-leak FIT batch plan, FRESH40 as a prefix of the FRESH160 trajectory, ZERO_ADAPTER equal to the anchor-only scorer of the live decomposition (and its refusals), axis=0 paired family bootstrap, adapter/dose verdict boundaries with the +0.001 tie, Holm advance gates, identical-arm Elo 1500, timing-only fold rule, choice agreement, launch review-or-waiver binding and supervisor guards. No checkpoint, corpus or model passes in the fixture suite; offline research only."
     },
     "python:research/flywheel_selfplay/h179_deep_ensemble/test_h179.py": {
       "discovery": {

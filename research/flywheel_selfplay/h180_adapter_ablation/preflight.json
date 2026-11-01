@@ -1,0 +1,23 @@
+{
+ "adapter_tensors": 47,
+ "custody": "/home/ubuntu/jope-data/h180/smoke*",
+ "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+ "frozen_sha256": "8d1070faf574ee1cd2a4e630887e1662b43189b3f89b04982143ef2704818aae",
+ "host": "xbabe2",
+ "initial_adapter_sha256": "9c3ba940d9eb60aa2a39dd57c229c0952927ea1c2f22c372ae9764f43baa8669",
+ "kind": "supervised constructor-only smoke (0 forwards, 0 updates, 0 scored contexts)",
+ "nice": 19,
+ "optimizer_updates": 0,
+ "scored_contexts": 0,
+ "status": "PASS",
+ "supervisor": {
+  "elapsed_seconds": 4.46153767593205,
+  "exit_code": 0,
+  "max_disk_used_fraction": 0.930054949576147,
+  "max_rss": 916451328,
+  "max_threads": 2,
+  "samples": 8,
+  "status": "PASS"
+ },
+ "trainable_parameters": 29211
+}

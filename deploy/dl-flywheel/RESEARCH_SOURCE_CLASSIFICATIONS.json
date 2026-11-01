@@ -4584,6 +4584,38 @@
         "reason": "H176 preregistered CPU-only diagnostic of the r882 zero-update generalization gap and nested FIT-family data-scaling curve; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
       }
     },
+    "python:research/flywheel_selfplay/h180_adapter_ablation/analysis.py": {
+      "bytes": 14437,
+      "sha256": "4ba3ed98c32a913c2bfad1015bd5f75945a8a2633ecb56ddb614daf7ebe2441b",
+      "classification": {
+        "role": "research",
+        "reason": "H180 preregistered CPU-only diagnostic: adapter-contribution ablation (anchor-only ZERO_ADAPTER, fresh RAND0) and fresh-init update-budget dose (FRESH40 prefix of FRESH160) against r882 on the H176 family-grouped harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h180_adapter_ablation/monitor.py": {
+      "bytes": 5235,
+      "sha256": "3e03e97d4c9d4aa141248bb65987b8640e2988655cdf8aaf7b36e35f50d0afc5",
+      "classification": {
+        "role": "research",
+        "reason": "H180 preregistered CPU-only diagnostic: adapter-contribution ablation (anchor-only ZERO_ADAPTER, fresh RAND0) and fresh-init update-budget dose (FRESH40 prefix of FRESH160) against r882 on the H176 family-grouped harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h180_adapter_ablation/runner.py": {
+      "bytes": 35260,
+      "sha256": "a58fffea1d432b15613287b0786aaf8c5190cfe1127c33ad1e9a4e93e10d191e",
+      "classification": {
+        "role": "research",
+        "reason": "H180 preregistered CPU-only diagnostic: adapter-contribution ablation (anchor-only ZERO_ADAPTER, fresh RAND0) and fresh-init update-budget dose (FRESH40 prefix of FRESH160) against r882 on the H176 family-grouped harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h180_adapter_ablation/treatment.py": {
+      "bytes": 3556,
+      "sha256": "d4752ba7fd6430157161ec707ff1ef588925b3baeb82a12c36a9516d7ea2ec9d",
+      "classification": {
+        "role": "research",
+        "reason": "H180 preregistered CPU-only diagnostic: adapter-contribution ablation (anchor-only ZERO_ADAPTER, fresh RAND0) and fresh-init update-budget dose (FRESH40 prefix of FRESH160) against r882 on the H176 family-grouped harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
     "python:research/flywheel_selfplay/h176_data_scaling/monitor.py": {
       "bytes": 5200,
       "sha256": "79079503077af4097423089e1b22d921049f047f2e641f7fb62fef30f1cfb100",
