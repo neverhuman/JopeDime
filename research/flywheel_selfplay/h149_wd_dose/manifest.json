@@ -11,7 +11,7 @@
     "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
     "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf"
   },
-  "status": "PREREGISTERED_NOT_EXECUTED",
+  "status": "COMPLETE",
   "seeds": [
     149101,
     149102,
@@ -83,5 +83,15 @@
   "parent_executor_commit": "aad54937c43ecd413ac2990d23ac5bff3e0dc27f",
   "smoke_sha256": "8d3c2c0f52ec2db8c00559ab4da867d78825eae3436c94e33428a17f6bf97181",
   "parent_parity_sha256": "0ba12c5f408c900183c8da45fa6739cfc9f6fd29dc34c2a95302b9ff00755db8",
-  "input_provenance_sha256": "35374e3d09ce9ebaec1d722f1614a1aaae81043875a2f47ca7d381ee0b2b9143"
+  "input_provenance_sha256": "35374e3d09ce9ebaec1d722f1614a1aaae81043875a2f47ca7d381ee0b2b9143",
+  "executed_source_commit": "9122ff702e388f6b8f5991937f77cebe0266f7d6",
+  "verdict": "NO_ADVANCE",
+  "optimizer_updates": 360,
+  "custody_manifest": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H149/astra-t2030/manifest.json",
+    "version_id": "FelDLOLtQKNJ5O50HaEqcGlm9HYCHV7T",
+    "sha256": "574f6f35a67630db27bfdc45b60ba47fe116db39371b949afd777b69b2b88297",
+    "bytes": 537565,
+    "verified_utc": "2026-11-01T04:35:03.502515+00:00"
+  }
 }
