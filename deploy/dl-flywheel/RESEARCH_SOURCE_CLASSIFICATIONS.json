@@ -4431,6 +4431,38 @@
         "role": "research",
         "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; family cross-fit L-BFGS runner and bounded CPU supervisor. Research only; no product/sealed qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h174_swag/analysis.py": {
+      "bytes": 8046,
+      "classification": {
+        "role": "research",
+        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "5c49bd20a3865ca3bb3a2833c4701b95b66cb00d0e295640751b461a9c701c4c"
+    },
+    "python:research/flywheel_selfplay/h174_swag/treatment.py": {
+      "bytes": 5398,
+      "classification": {
+        "role": "research",
+        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "4a476d567e352d999d88e76c80de80e1db973fe741bcf9038bf9a66390e32014"
+    },
+    "python:research/flywheel_selfplay/h174_swag/runner.py": {
+      "bytes": 37530,
+      "classification": {
+        "role": "research",
+        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "87c42db1422daf823e97bc83a968411c71771fa9540491f3e24c904496d0f09b"
+    },
+    "python:research/flywheel_selfplay/h174_swag/monitor.py": {
+      "bytes": 5212,
+      "classification": {
+        "role": "research",
+        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "dd9637f1fbbb6ed82eea8305f14fe9b3ced34433b6d2e9f2c2d9266bafccd644"
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
