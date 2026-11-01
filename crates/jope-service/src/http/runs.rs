@@ -97,6 +97,8 @@ struct Continuation {
 struct ContinuationBackend {
     spec: RunSpec,
     placement: Placement,
+    #[serde(default)]
+    landmarks: Option<crate::run::landmarks::FullFitLandmarks>,
 }
 
 impl ContinuationBackend {
@@ -135,6 +137,9 @@ impl ContinuationBackend {
         backend
             .bind_fit(&store.read_blob(fit).map_err(io)?, plan)
             .map_err(io)?;
+        if backend.full_fit_landmarks != self.landmarks {
+            return Err(unavailable("Original FIT landmark evidence changed."));
+        }
         Ok(backend)
     }
 }
@@ -1315,9 +1320,6 @@ impl RunService {
                     format!("{code}: The requested run backend could not be prepared."),
                 )
             })?;
-        if !backend.learned() && spec.landmarks != LandmarkMode::None {
-            return Err(unavailable("This run backend requires landmarks=none."));
-        }
         if spec.test_dataset.is_some()
             || spec.split.kind != SplitKind::Random
             || spec.split.group_column.is_some()
@@ -1637,6 +1639,7 @@ impl RunService {
             backend: ContinuationBackend {
                 spec,
                 placement: prepared.backend.placement.clone(),
+                landmarks: prepared.backend.full_fit_landmarks.clone(),
             },
         };
         let persisted = self.store.transaction(|tx| {
@@ -2286,6 +2289,7 @@ mod tests {
         let context = ContinuationBackend {
             spec,
             placement: backend.placement,
+            landmarks: None,
         };
         (directory, engine, context, plan, fit)
     }
@@ -2293,8 +2297,10 @@ mod tests {
     #[test]
     fn continuation_restores_native_backend_from_persisted_request_without_replanning() {
         let (_directory, engine, context, plan, fit) = continuation_backend_fixture();
-        let context: ContinuationBackend =
-            serde_json::from_value(serde_json::to_value(context).unwrap()).unwrap();
+        // Legacy native contexts predate the optional landmark evidence.
+        let mut legacy = serde_json::to_value(context).unwrap();
+        legacy.as_object_mut().unwrap().remove("landmarks");
+        let context: ContinuationBackend = serde_json::from_value(legacy).unwrap();
         let original = plan.clone();
         let restored = context
             .restore(engine.store(), &plan, &[fit], None)
@@ -3230,5 +3236,91 @@ mod tests {
         );
         assert!(!plan.languages.intersection_empty);
         assert!(!directory.path().join("worker-scratch").exists());
+    }
+    #[tokio::test]
+    async fn full_landmarks_plan_measures_real_fit_and_progressive_stays_unavailable() {
+        let (directory, engine, mut spec) = fixture();
+        spec.landmarks = LandmarkMode::Full;
+        spec.guidance = Guidance::Auto;
+        spec.languages = vec![Language::Rust, Language::Python];
+        let app = app(&engine);
+        let reply = app
+            .clone()
+            .oneshot(request(&spec, "full-plan"))
+            .await
+            .unwrap();
+        assert_eq!(reply.status(), StatusCode::OK);
+        let value = body(reply).await;
+        let plan: Plan = serde_json::from_value(value.clone()).unwrap();
+        assert_eq!(plan.landmarks.mode, LandmarkMode::Full);
+        assert_eq!(plan.landmarks.sample_rows, 76);
+        assert_eq!(plan.guidance.value, Guidance::Heuristic);
+        assert_eq!(plan.placement.dope, "none");
+        assert_eq!(plan.languages.requested, spec.languages);
+        assert_eq!(
+            body(
+                app.clone()
+                    .oneshot(request(&spec, "full-plan"))
+                    .await
+                    .unwrap()
+            )
+            .await,
+            value
+        );
+        spec.landmarks = LandmarkMode::Progressive;
+        let denied = app
+            .oneshot(request(&spec, "progressive-plan"))
+            .await
+            .unwrap();
+        assert_eq!(denied.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body(denied).await["code"], "CAPABILITY_UNAVAILABLE");
+        assert!(!directory.path().join("worker-scratch").exists());
+    }
+
+    #[test]
+    fn full_landmark_continuation_rebuilds_only_original_fit_and_refuses_receipt_drift() {
+        let (_directory, engine, mut context, plan, fit) = continuation_backend_fixture();
+        context.spec.landmarks = LandmarkMode::Full;
+        let bytes = engine.store().read_blob(&fit).unwrap();
+        let mut backend = BackendPlan::resolve(&context.spec, None, 1).unwrap();
+        backend.bind_fit(&bytes, &plan).unwrap();
+        let measured = backend.full_fit_landmarks.clone().unwrap();
+        assert_eq!(measured.fit_sha256, plan.matrix_sha256);
+        assert_eq!(measured.fit_rows, 96);
+        assert_eq!(measured.sampled_fit_rows.len(), 96);
+        assert!(measured.sampled_fit_rows.iter().all(|&r| r < 96));
+        assert!(!measured.features.contains(&measured.target));
+        assert_eq!(measured.vector.len(), 256);
+        assert_eq!(measured.columns.len(), 64 * 17);
+        assert!(measured
+            .vector
+            .iter()
+            .chain(&measured.columns)
+            .all(|v| v.is_finite()));
+        assert!(measured.vector.iter().any(|v| *v != 0.));
+        context.landmarks = Some(measured);
+        let mut context: ContinuationBackend =
+            serde_json::from_value(serde_json::to_value(context).unwrap()).unwrap();
+        let before = plan.clone();
+        let restored = context
+            .restore(engine.store(), &plan, std::slice::from_ref(&fit), None)
+            .unwrap();
+        assert_eq!(restored.full_fit_landmarks, context.landmarks);
+        assert_eq!(plan, before);
+        context.landmarks.as_mut().unwrap().vector[0] += 1.;
+        assert_eq!(
+            context
+                .restore(engine.store(), &plan, &[fit], None)
+                .err()
+                .unwrap()
+                .code,
+            ErrorCode::CapabilityUnavailable
+        );
+        let mut wrong = plan.clone();
+        wrong.matrix_sha256 = "0".repeat(64);
+        assert!(crate::run::landmarks::FullFitLandmarks::extract(&bytes, &wrong).is_err());
+        wrong = plan;
+        wrong.features.push(wrong.target.clone());
+        assert!(crate::run::landmarks::FullFitLandmarks::extract(&bytes, &wrong).is_err());
     }
 }

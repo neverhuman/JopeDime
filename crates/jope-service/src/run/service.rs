@@ -1,5 +1,8 @@
 //! Backend preparation used by the live RunService, independent of HTTP parsing.
-use super::learned::{AdmittedRanker, LearnedAdmission};
+use super::{
+    landmarks::FullFitLandmarks,
+    learned::{AdmittedRanker, LearnedAdmission},
+};
 use crate::{
     discover::r#loop::{
         Executor, HeuristicAdmission, Plan, ProcessExecutor, RoundAdmission, RoundContext,
@@ -86,6 +89,8 @@ pub(crate) struct BackendPlan {
     pub placement: Placement,
     pub bundle_digest: String,
     pub landmark_rows: usize,
+    landmark_mode: LandmarkMode,
+    pub full_fit_landmarks: Option<FullFitLandmarks>,
     pub admission: RunAdmission,
 }
 impl BackendPlan {
@@ -120,6 +125,8 @@ impl BackendPlan {
                 placement: graph.placement(),
                 bundle_digest: R782.trim_start_matches("sha256:").into(),
                 landmark_rows: 0,
+                landmark_mode: spec.landmarks,
+                full_fit_landmarks: None,
                 admission: RunAdmission::Learned(Box::new(graph)),
             })
         } else {
@@ -141,13 +148,25 @@ impl BackendPlan {
                 },
                 bundle_digest: jope_runtime::sha256_hex(b"cpu-native-no-learned-bundle/v1"),
                 landmark_rows: 0,
+                landmark_mode: spec.landmarks,
+                full_fit_landmarks: None,
                 admission: RunAdmission::Heuristic,
             })
         }
     }
     pub fn bind_fit(&mut self, fit: &[u8], plan: &Plan) -> Result<()> {
-        if let RunAdmission::Learned(admission) = &mut self.admission {
-            self.landmark_rows = admission.bind_fit(fit, plan)?;
+        match &mut self.admission {
+            RunAdmission::Learned(admission) => {
+                self.landmark_rows = admission.bind_fit(fit, plan)?;
+            }
+            RunAdmission::Heuristic if self.landmark_mode == LandmarkMode::Full => {
+                // Full requests still compute the real CPU recipe when Auto has
+                // resolved to heuristic. This does not enable a learned ranker.
+                let measured = FullFitLandmarks::extract(fit, plan)?;
+                self.landmark_rows = measured.sampled_fit_rows.len();
+                self.full_fit_landmarks = Some(measured);
+            }
+            RunAdmission::Heuristic => {}
         }
         Ok(())
     }
