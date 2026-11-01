@@ -1,0 +1,24 @@
+{
+  "source": "21d65a949bbfc340981cfbcf224cacb9eb571e5c",
+  "command": [
+    "nice",
+    "-n",
+    "10",
+    "/Users/agent/jope-data/mcp05-a5-t1930/tools/cargo-zigbuild/cargo-zigbuild-aarch64-apple-darwin/cargo-zigbuild",
+    "zigbuild",
+    "--locked",
+    "--target",
+    "x86_64-unknown-linux-musl",
+    "-p",
+    "jope-appliance",
+    "--bin",
+    "jopedime",
+    "--message-format=json",
+    "-j",
+    "4"
+  ],
+  "started_utc": "2026-11-01T02:15:46.923820+00:00",
+  "elapsed_seconds": 4.093399792909622,
+  "exit_status": 0,
+  "artifact_pinned": true
+}

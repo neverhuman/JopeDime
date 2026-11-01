@@ -1,0 +1,66 @@
+{
+  "source": "21d65a949bbfc340981cfbcf224cacb9eb571e5c",
+  "commands": [
+    {
+      "command": [
+        "/Users/agent/remote_tests/target/debug/jope-records",
+        "coverage",
+        "validate"
+      ],
+      "exit_status": 0,
+      "elapsed_seconds": 0.8533008750528097,
+      "started_utc": "2026-11-01T02:18:37.333830+00:00"
+    },
+    {
+      "command": [
+        "/Users/agent/remote_tests/target/debug/jope-records",
+        "test-inventory"
+      ],
+      "exit_status": 2,
+      "elapsed_seconds": 0.005098208785057068,
+      "started_utc": "2026-11-01T02:18:38.187170+00:00"
+    },
+    {
+      "command": [
+        "/Users/agent/remote_tests/target/debug/jope-records",
+        "repo-layout"
+      ],
+      "exit_status": 0,
+      "elapsed_seconds": 0.8747073337435722,
+      "started_utc": "2026-11-01T02:18:38.192306+00:00"
+    },
+    {
+      "command": [
+        "/Users/agent/remote_tests/target/debug/jope-records",
+        "rust-scope-check"
+      ],
+      "exit_status": 0,
+      "elapsed_seconds": 0.07366508431732655,
+      "started_utc": "2026-11-01T02:18:39.067048+00:00"
+    },
+    {
+      "command": [
+        "/Users/agent/remote_tests/target/debug/jope-records",
+        "readme-benchmarks",
+        "--check"
+      ],
+      "exit_status": 0,
+      "elapsed_seconds": 0.07922995835542679,
+      "started_utc": "2026-11-01T02:18:39.140752+00:00"
+    },
+    {
+      "command": [
+        "/Users/agent/.cargo/bin/rustfmt",
+        "--check",
+        "--edition",
+        "2021",
+        "crates/jope-appliance/src/mcp/transport.rs",
+        "crates/jope-appliance/src/mcp/mod.rs",
+        "crates/jope-appliance/src/mcp/tests.rs"
+      ],
+      "exit_status": 0,
+      "elapsed_seconds": 0.058662666007876396,
+      "started_utc": "2026-11-01T02:18:39.220022+00:00"
+    }
+  ]
+}

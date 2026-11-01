@@ -300,6 +300,92 @@ fn run_spec() -> Value {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn discovery_with_early_roots_change_keeps_modern_bootstrap_open() {
+    let mut wire = Wire::connect("2026-07-28").await;
+    let discovery_id = json!("gemini-discovery");
+    wire.send("server/discover", json!({}), Some(discovery_id.clone()))
+        .await;
+    // Actual agy 1.4.12 sends this legacy hint without per-request metadata
+    // immediately after its modern discovery probe, before requesting tools.
+    wire.writer
+        .write_all(b"{\"jsonrpc\":\"2.0\",\"method\":\"notifications/roots/list_changed\",\"params\":{}}\n")
+        .await
+        .unwrap();
+    wire.writer.flush().await.unwrap();
+    let discovered = wire.read_for(discovery_id).await;
+    assert_eq!(discovered["result"]["resultType"], "complete");
+    assert!(wire.backend.requests.lock().unwrap().is_empty());
+
+    let tools = wire.call("tools/list", json!({})).await;
+    assert!(tools["result"]["tools"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|tool| tool["name"] == "run_start"));
+    assert!(wire.backend.requests.lock().unwrap().is_empty());
+    let info = wire.tool("system_info", json!({})).await;
+    assert_ne!(info["result"]["isError"], true);
+    assert_eq!(info["result"]["structuredContent"]["api_version"], "1.0");
+    assert_eq!(wire.backend.requests.lock().unwrap().len(), 1);
+    wire.finish("early-roots-discovery").await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn roots_change_without_discovery_does_not_open_a_session() {
+    let mut wire = Wire::connect("2026-07-28").await;
+    wire.writer
+        .write_all(b"{\"jsonrpc\":\"2.0\",\"method\":\"notifications/roots/list_changed\",\"params\":{}}\n")
+        .await
+        .unwrap();
+    wire.writer.flush().await.unwrap();
+    wire.writer.shutdown().await.unwrap();
+    let result = tokio::time::timeout(Duration::from_secs(3), wire.server)
+        .await
+        .expect("invalid bootstrap must finish")
+        .unwrap();
+    assert!(result.unwrap_err().to_string().contains("RootsListChanged"));
+    assert!(wire.backend.requests.lock().unwrap().is_empty());
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn invalid_discovery_metadata_does_not_allow_a_roots_hint() {
+    let mut wire = Wire::connect("2026-07-28").await;
+    wire.writer
+        .write_all(b"{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"server/discover\",\"params\":{}}\n{\"jsonrpc\":\"2.0\",\"method\":\"notifications/roots/list_changed\",\"params\":{}}\n")
+        .await
+        .unwrap();
+    wire.writer.flush().await.unwrap();
+    wire.writer.shutdown().await.unwrap();
+    let result = tokio::time::timeout(Duration::from_secs(3), wire.server)
+        .await
+        .expect("invalid discovery must finish")
+        .unwrap();
+    assert!(result.unwrap_err().to_string().contains("RootsListChanged"));
+    assert!(wire.backend.requests.lock().unwrap().is_empty());
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn discovery_does_not_allow_other_premature_notifications() {
+    let mut wire = Wire::connect("2026-07-28").await;
+    wire.send("server/discover", json!({}), Some(json!(1)))
+        .await;
+    wire.writer
+        .write_all(
+            b"{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\",\"params\":{}}\n",
+        )
+        .await
+        .unwrap();
+    wire.writer.flush().await.unwrap();
+    wire.writer.shutdown().await.unwrap();
+    let result = tokio::time::timeout(Duration::from_secs(3), wire.server)
+        .await
+        .expect("unexpected notification must finish")
+        .unwrap();
+    assert!(result.unwrap_err().to_string().contains("Initialized"));
+    assert!(wire.backend.requests.lock().unwrap().is_empty());
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn legacy_aliases_are_listed_and_dispatched_through_existing_handlers() {
     let mut wire = Wire::connect("2025-11-25").await;
     wire.ready().await;
@@ -404,7 +490,11 @@ async fn four_versions_lifecycle_twelve_tools_resources_and_stdout_purity() {
             assert!(result.get("error").is_none(), "{version} {name}: {result}");
             assert_ne!(result["result"]["isError"], true, "{name}: {result}");
             assert!(result["result"]["structuredContent"].is_object());
-            assert!(result["result"]["content"][0]["text"].is_string());
+            // Text-only clients need the same real identifiers and plan fields.
+            let text = result["result"]["content"][0]["text"].as_str().unwrap();
+            let text_value: Value = serde_json::from_str(text)
+                .unwrap_or_else(|_| panic!("{version} {name}: missing JSON text fallback"));
+            assert_eq!(text_value, result["result"]["structuredContent"]);
             if version == "2026-07-28" {
                 assert_eq!(result["result"]["resultType"], "complete");
             }

@@ -13,12 +13,17 @@ from pathlib import Path
 import tempfile
 import unittest
 
-import pytest
 from unittest import mock
 from urllib.error import URLError
 
 
-backend_path = Path(os.environ["QLT01_BACKEND_PATH"]).resolve()
+backend_path = Path(
+    os.environ.get(
+        "QLT01_BACKEND_PATH",
+        Path(__file__).resolve().parents[2]
+        / "deploy/qualification/q1/harness/production_backend.py",
+    )
+).resolve()
 spec = importlib.util.spec_from_file_location(
     "production_backend_under_test", backend_path
 )
@@ -220,7 +225,6 @@ class ProductionBackendAcceptanceTests(unittest.TestCase):
         bind_receipt(receipt, request)
         self.assert_refused(receipt, request, pattern="dataset identity")
 
-    @pytest.mark.xfail(strict=True, reason="QLT-01-F01-FAMILY-ID RES-03 validation gap")
     def test_rejects_malformed_authoritative_family_identity(self):
         request = copy.deepcopy(self.request)
         request["dataset"]["family"] = "derived-family"
@@ -323,7 +327,6 @@ class ProductionBackendAcceptanceTests(unittest.TestCase):
                 receipt["attempts"][1][field] = value
                 self.assert_refused(receipt, pattern="typed failure")
 
-    @pytest.mark.xfail(strict=True, reason="QLT-01-F01-CHAMPION RES-03 validation gap")
     def test_requires_receipt_champion_to_match_lowest_loss_attempt(self):
         receipt = copy.deepcopy(self.receipt)
         receipt["champion_program"] = "7" * 64
