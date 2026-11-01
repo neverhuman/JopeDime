@@ -121,6 +121,22 @@ pub struct CaptureContext {
 }
 
 impl CaptureContext {
+    /// Create an Engine capability only from the trusted service provider.
+    /// There is intentionally no serialized or caller-selectable constructor.
+    pub(crate) fn engine(
+        binding: Binding,
+        provider: Arc<dyn CaptureProvider>,
+        plan: &Plan,
+    ) -> Result<Self> {
+        ensure!(
+            binding.identity.evidence == RecordEvidence::Engine,
+            "Engine context requires Engine evidence"
+        );
+        let context = Self { binding, provider };
+        context.validate(plan)?;
+        Ok(context)
+    }
+
     #[cfg(test)]
     pub(crate) fn control(binding: Binding, provider: Arc<dyn CaptureProvider>) -> Result<Self> {
         ensure!(
