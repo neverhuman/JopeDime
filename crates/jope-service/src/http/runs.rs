@@ -606,6 +606,7 @@ impl RunService {
             .map_err(io)?;
         let matrix_path = matrix_dir.path().join("train.jmat");
         std::fs::write(&matrix_path, &matrix_bytes).map_err(io)?;
+        #[allow(unused_mut)]
         let mut worker_config = crate::worker::PoolConfig::new(self.executable.clone(), 1);
         #[cfg(test)]
         {
@@ -1527,7 +1528,13 @@ mod tests {
     #[test]
     #[ignore = "Q1 worker subprocess target; invoked by the worker process supervisor"]
     fn q1_worker_helper() {
+        use std::io::Write as _;
+
         assert_eq!(std::env::var("JOPE_WORKER_FIXTURE").unwrap(), "worker");
+        let mut stdout = std::io::stdout().lock();
+        writeln!(stdout, "WORKER_FIXTURE_READY").unwrap();
+        stdout.flush().unwrap();
+        drop(stdout);
         crate::worker::serve(1, |request, matrix| {
             crate::discover::r#loop::evaluate_native(request, matrix)
         })
