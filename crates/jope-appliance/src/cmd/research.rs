@@ -1,4 +1,4 @@
-//! Internal command boundary. Durable discovery capture remains QLT-03-F02.
+//! Internal source-approved TRAIN recording command boundary.
 
 use clap::{Args, Subcommand};
 use std::path::PathBuf;
@@ -13,6 +13,9 @@ pub struct ResearchArgs {
 enum ResearchCommand {
     /// Record per-round training observations from the discovery producer.
     Record {
+        /// Opaque, source-approved job ID (not a path or JSON plan).
+        #[arg(long)]
+        job: String,
         /// Destination for committed training records.
         #[arg(long)]
         out: PathBuf,
@@ -27,18 +30,22 @@ pub fn run(args: ResearchArgs) -> anyhow::Result<()> {
     let _package = crate::bootstrap::open()?;
     match args.command {
         ResearchCommand::Record {
+            job,
             out,
             evaluate_all_proposals,
-        } => record(out, evaluate_all_proposals),
+        } => record(&job, out, evaluate_all_proposals),
     }
 }
 
-fn record(_out: PathBuf, _evaluate_all_proposals: bool) -> anyhow::Result<()> {
-    // F02 must supply the trusted corpus/evaluator and checkpoint commit hooks.
-    // The in-memory RoundCapture controller is not that committed producer.
-    Err(jope_runtime::Failure::backend(
-        "research record is unavailable: the committed discovery producer is not integrated (QLT-03-F02)",
-    ))
+fn record(job: &str, out: PathBuf, evaluate_all: bool) -> anyhow::Result<()> {
+    anyhow::ensure!(
+        job == "qlt03-slump85-v1",
+        "no source-approved research job matches this ID"
+    );
+    let root = jope_paths::jopedime_home().join("research/jobs").join(job);
+    let receipt = jope_service::research::record_catalog_job(job, &root, &out, evaluate_all)?;
+    println!("{}", serde_json::to_string(&receipt)?);
+    Ok(())
 }
 
 #[cfg(test)]
@@ -59,7 +66,15 @@ mod tests {
         assert_eq!(help.kind(), clap::error::ErrorKind::DisplayHelp);
         assert!(help.to_string().contains("--evaluate-all-proposals"));
         for all in [false, true] {
-            let mut argv = vec!["jopedime", "research", "record", "--out", "records.jsonl"];
+            let mut argv = vec![
+                "jopedime",
+                "research",
+                "record",
+                "--job",
+                "qlt03-slump85-v1",
+                "--out",
+                "records.jsonl",
+            ];
             if all {
                 argv.push("--evaluate-all-proposals");
             }
@@ -67,9 +82,11 @@ mod tests {
                 panic!("research dispatch expected");
             };
             let ResearchCommand::Record {
+                job,
                 out,
                 evaluate_all_proposals,
             } = args.command;
+            assert_eq!(job, "qlt03-slump85-v1");
             assert_eq!(out, PathBuf::from("records.jsonl"));
             assert_eq!(evaluate_all_proposals, all);
         }
@@ -77,7 +94,7 @@ mod tests {
     }
 
     #[test]
-    fn unavailable_producer_never_creates_or_overwrites_records() {
+    fn unknown_job_never_creates_or_overwrites_records() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("records.jsonl");
         for all in [false, true] {
@@ -85,11 +102,10 @@ mod tests {
                 if existing {
                     std::fs::write(&path, b"retained evidence\n").unwrap();
                 }
-                let error = record(path.clone(), all).unwrap_err();
-                assert_eq!(
-                    jope_runtime::error::kind_of(&error),
-                    jope_runtime::FailureKind::Backend
-                );
+                let error = record("../unknown", path.clone(), all).unwrap_err();
+                assert!(error
+                    .to_string()
+                    .contains("no source-approved research job"));
                 if existing {
                     assert_eq!(std::fs::read(&path).unwrap(), b"retained evidence\n");
                     std::fs::remove_file(&path).unwrap();
@@ -101,24 +117,25 @@ mod tests {
     }
 
     #[test]
-    fn dispatch_authenticates_before_reaching_the_unavailable_producer() {
+    fn dispatch_authenticates_before_reaching_the_producer() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("records.jsonl");
         let args = ResearchArgs {
             command: ResearchCommand::Record {
+                job: "qlt03-slump85-v1".into(),
                 out: path.clone(),
                 evaluate_all_proposals: true,
             },
         };
         let error = run(args).unwrap_err();
-        assert_eq!(
-            jope_runtime::error::kind_of(&error),
-            if crate::bootstrap::EMBEDDED {
+        if crate::bootstrap::EMBEDDED {
+            assert_eq!(
+                jope_runtime::error::kind_of(&error),
                 jope_runtime::FailureKind::Integrity
-            } else {
-                jope_runtime::FailureKind::Backend
-            }
-        );
+            );
+        } else {
+            assert!(!error.to_string().is_empty());
+        }
         assert!(!path.exists());
     }
 }

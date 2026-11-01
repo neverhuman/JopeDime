@@ -33,6 +33,7 @@ use std::{
 };
 
 const R782: &str = crate::ranker::cuda::release::R782;
+const R882: &str = crate::ranker::cuda::release::R882;
 const SEED_PROTOCOL: &[u8] =
     b"jope.discover.evaluation-seed/v1:sha256(seed_le,round_le,slot_le,rung_u8),le64(digest[0..8])";
 const GATE_RULE: &str = "jope.r782.surrogate.v2:F<100;fitness-enforces-(F<100)==gate";
@@ -43,6 +44,7 @@ const GATE_RULE: &str = "jope.r782.surrogate.v2:F<100;fitness-enforces-(F<100)==
 pub(crate) enum OperatorOrigin {
     Seed,
     Proposal(ProposalFamily),
+    Native(&'static str),
 }
 
 impl OperatorOrigin {
@@ -50,6 +52,7 @@ impl OperatorOrigin {
         match self {
             Self::Seed => "seed",
             Self::Proposal(family) => family.name(),
+            Self::Native(family) => family,
         }
     }
 }
@@ -58,6 +61,9 @@ impl OperatorOrigin {
 /// checked before capture. No implementation is installed by default.
 pub(crate) trait OperatorProvenance: Send + Sync {
     fn validate_plan(&self, plan: &Plan) -> Result<()>;
+    fn observe_round(&self, _round: u64, _dsls: &[String]) -> Result<()> {
+        Ok(())
+    }
     fn origin(&self, round: u64, dsl_sha256: &str) -> Result<OperatorOrigin>;
 }
 
@@ -182,13 +188,14 @@ impl QualifiedCaptureProvider {
         learned: &LearnedAdmission,
         provenance: Arc<dyn OperatorProvenance>,
     ) -> Result<Self> {
+        let bundle_digest = bundle.digest().to_string();
         ensure!(
-            bundle.digest().to_string() == R782,
-            "qualified provider requires admitted r782 bundle"
+            bundle_digest == R782 || bundle_digest == R882,
+            "unadmitted research bundle"
         );
         ensure!(
-            format!("sha256:{}", plan.bundle_digest) == R782,
-            "Plan does not pin admitted r782 bundle"
+            format!("sha256:{}", plan.bundle_digest) == bundle_digest,
+            "Plan does not pin the admitted research bundle"
         );
         ensure!(
             plan.objective == "rmse",
@@ -327,12 +334,23 @@ impl CaptureProvider for QualifiedCaptureProvider {
         self.inputs.validate_binding(binding, plan)
     }
 
+    fn prepare_request(&self, request: &mut Request) -> Result<()> {
+        ensure!(
+            request.fold_spec["version"] == 1 || request.fold_spec["version"] == 2,
+            "unsupported recording evaluator request"
+        );
+        request.fold_spec["version"] = serde_json::json!(2);
+        let spec: V2FoldSpec = serde_json::from_value(request.fold_spec.clone())?;
+        validate_v2_request(&self.plan, &spec)
+    }
+
     fn observe(
         &self,
         round: u64,
         dsls: &[String],
         measured: &[RecordedReveal],
     ) -> Result<SlateObservation> {
+        self.provenance.observe_round(round, dsls)?;
         let programs = dsls
             .iter()
             .map(|dsl| {
@@ -363,8 +381,11 @@ impl CaptureProvider for QualifiedCaptureProvider {
     }
 
     fn label_seed(&self, round: u64, proposal_index: usize) -> Result<u64> {
-        let slot =
-            u32::try_from(proposal_index).context("proposal index exceeds worker slot range")?;
+        ensure!(
+            proposal_index < 16,
+            "label proposal index exceeds serving slate"
+        );
+        let slot = 32 + u32::try_from(proposal_index)?;
         Ok(crate::discover::r#loop::evaluation_seed(
             self.plan.seed,
             round,
@@ -527,7 +548,7 @@ fn plan_sha256(plan: &Plan) -> Result<String> {
     Ok(digest(&serde_json::to_vec(plan)?))
 }
 
-fn evaluator_sha256() -> String {
+pub(super) fn evaluator_sha256() -> String {
     let mut hash = Sha256::new();
     hash.update(b"jope.research.r782-v2-evaluator/v1\0");
     hash.update(include_bytes!("../worker/evaluate.rs"));
@@ -536,7 +557,7 @@ fn evaluator_sha256() -> String {
     format!("{:x}", hash.finalize())
 }
 
-fn seed_protocol_sha256() -> String {
+pub(super) fn seed_protocol_sha256() -> String {
     let mut hash = Sha256::new();
     hash.update(b"jope.research.evaluation-seed/v1\0");
     hash.update(SEED_PROTOCOL);
@@ -544,7 +565,7 @@ fn seed_protocol_sha256() -> String {
     format!("{:x}", hash.finalize())
 }
 
-fn conditioning_sha256(plan: &Plan, conditioning: &TokenProjection) -> Result<String> {
+pub(super) fn conditioning_sha256(plan: &Plan, conditioning: &TokenProjection) -> Result<String> {
     ensure!(
         conditioning
             .tokens
