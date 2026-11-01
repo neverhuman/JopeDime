@@ -61,11 +61,10 @@ pub(crate) fn run(options: Options<'_>) -> anyhow::Result<()> {
         kind,
         languages: vec![language],
         require_all_languages: true,
-        refit: Refit::Fit,
+        refit: Refit::FitHoldout,
     };
     let manifest = client.model_export(&run_id, &request, Some(&key))?;
-    let artifact = manifest.artifact_id.clone();
-    files::download_artifact(&client, &artifact, &manifest.model_digest, out, force)?;
+    files::download_export_artifact(&client, &manifest.artifact_id, out, force)?;
     let mut value: Value = serde_json::to_value(manifest)?;
     if let Some(object) = value.as_object_mut() {
         super::common::add_idempotency_key(object, &key);

@@ -72,7 +72,7 @@ pub enum Command {
     },
     /// Save, inspect, verify and export language-neutral fitted objects; or serve their MCP tools.
     Model(crate::model::ModelArgs),
-    /// Start a run from an API dataset identifier.
+    /// Start a run from a CSV or an API dataset identifier.
     #[cfg(feature = "mcp")]
     Run(crate::cmd::run::RunArgs),
     /// Read or long-poll a run snapshot.

@@ -123,6 +123,58 @@ fn assert_equivalent(captures: &[SurfaceCapture]) -> Result<(), String> {
     Ok(())
 }
 
+// Exact field map accepted by owner ruling rulings_t1900 R2 (§5.6).
+// Keep the raw captures; operational provenance is excluded only for this comparison.
+fn canonical_events(events: &[PublicEvent]) -> Value {
+    let mut values = Vec::new();
+    for event in events {
+        let mut value = serde_json::to_value(event).expect("public event serializes");
+        let envelope = value.as_object_mut().unwrap();
+        envelope.remove("run_id");
+        envelope.remove("time");
+        let body = value.get_mut("body").unwrap();
+        if let Some(warnings) = body.get_mut("warnings").and_then(Value::as_array_mut) {
+            warnings.retain(|warning| warning["host"] != true);
+        }
+        if let Some(budget) = body.get_mut("budget_used").and_then(Value::as_object_mut) {
+            budget.remove("wall_seconds");
+        }
+        if body.get("host") != Some(&Value::Bool(true)) {
+            values.push(value);
+        }
+    }
+    Value::Array(values)
+}
+
+fn assert_independent_equivalent(captures: &[SurfaceCapture]) -> Result<(), String> {
+    for surface in SURFACES {
+        if captures.iter().filter(|c| c.surface == surface).count() != 1 {
+            return Err(format!("expected one independent {} run", surface.name()));
+        }
+    }
+    let ids: std::collections::BTreeSet<_> = captures
+        .iter()
+        .filter_map(|c| c.projection.events.first().map(|event| &event.run_id))
+        .collect();
+    if captures.len() != SURFACES.len() || ids.len() != SURFACES.len() {
+        return Err("independent surface runs must have five distinct run IDs".into());
+    }
+    let baseline = &captures[0].projection;
+    for capture in &captures[1..] {
+        let actual = &capture.projection;
+        if actual.champion != baseline.champion
+            || actual.scores != baseline.scores
+            || canonical_events(&actual.events) != canonical_events(&baseline.events)
+        {
+            return Err(format!(
+                "{} independent R2 projection differs",
+                capture.surface.name()
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn bounded_synthetic_spec() -> RunSpec {
     let mut spec: Value = json!({
         "dataset": "ds_00112233445566778899aabb",
@@ -255,6 +307,35 @@ fn synthetic_surface_capture_harness_accepts_equal_projections_and_rejects_drift
         })
         .collect::<Vec<_>>();
     assert_equivalent(&captures).unwrap();
+    assert!(assert_independent_equivalent(&captures).is_err());
+    let independent: Vec<_> = captures
+        .iter()
+        .enumerate()
+        .map(|(i, capture)| {
+            let mut capture = capture.clone();
+            let run: jope_api::ids::RunId =
+                format!("run_01JBD8Q6N4V2T5Y8K3M7P9R1S{i}").parse().unwrap();
+            for event in &mut capture.projection.events {
+                event.run_id = run.clone();
+                if let EventBody::RunFinished(finished) = &mut event.event {
+                    finished.budget_used.wall_seconds = (i + 2).to_string();
+                }
+            }
+            capture
+        })
+        .collect();
+    assert_independent_equivalent(&independent).unwrap();
+    let mut divergent_independent = independent;
+    if let EventBody::RunFinished(finished) = &mut divergent_independent[2]
+        .projection
+        .events
+        .last_mut()
+        .unwrap()
+        .event
+    {
+        finished.budget_used.evaluations = DecimalU64(99);
+    }
+    assert!(assert_independent_equivalent(&divergent_independent).is_err());
 
     let mut divergent = captures.clone();
     if let EventBody::RunFinished(finished) =
@@ -321,8 +402,18 @@ mod real;
     feature = "mcp",
     any(target_os = "linux", target_os = "macos")
 ))]
+mod qualification;
+
+#[cfg(all(
+    feature = "engine",
+    feature = "mcp",
+    any(target_os = "linux", target_os = "macos")
+))]
 #[test]
 fn all_product_surfaces_share_the_bounded_run_projection() -> anyhow::Result<()> {
+    if let Some(home) = std::env::var_os("JOPE_INT01_QUALIFY_HOME") {
+        return qualification::from_env(std::path::Path::new(&home));
+    }
     real::shared_run_surfaces()
 }
 

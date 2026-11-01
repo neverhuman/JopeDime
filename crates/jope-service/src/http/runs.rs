@@ -138,6 +138,33 @@ impl ContinuationBackend {
     }
 }
 
+fn run_language_filter(
+    languages: &[Language],
+) -> Result<feat_math::evolve::api::capability::LanguageFilter> {
+    use feat_math::evolve::api::capability::{self, Language as ExportLanguage};
+    if languages.is_empty() {
+        return Err(unavailable(
+            "At least one supported export language is required.",
+        ));
+    }
+    // Evaluation is always native Rust; requested portable exports add constraints.
+    let mut requested = vec![ExportLanguage::Rust];
+    for language in languages {
+        requested.push(match language {
+            Language::Rust => ExportLanguage::Rust,
+            Language::Python => ExportLanguage::Python,
+            _ => {
+                return Err(unavailable(
+                    "This run backend supports Rust and Python export languages.",
+                ))
+            }
+        });
+    }
+    capability::allowed_ops(&requested).map_err(|_| {
+        unavailable("Requested export languages have no supported native pipeline intersection.")
+    })
+}
+
 fn continuation_key(run: &jope_api::ids::RunId) -> RecordKey {
     RecordKey::Command {
         principal: "public-run-continuation.v1".into(),
@@ -230,12 +257,19 @@ struct Q1Fold {
 /// Establish a bounded native baseline before considering expensive mutations.
 /// The existing research/native starter order remains unchanged.
 struct CpuRunSpace {
+    allowed: feat_math::evolve::api::capability::LanguageFilter,
     #[cfg(all(feature = "failpoints", debug_assertions))]
     pub06_values: Option<Pub06InternalValues>,
 }
 impl SearchSpace for CpuRunSpace {
     fn canonical(&self, dsl: &str) -> anyhow::Result<String> {
-        NativeSpace.canonical(dsl)
+        let canonical = NativeSpace.canonical(dsl)?;
+        anyhow::ensure!(
+            self.allowed
+                .accepts_seed(&feat_math::GenomeIr::parse(&canonical)?),
+            "pipeline is excluded by requested export languages"
+        );
+        Ok(canonical)
     }
     fn seeds(&self) -> anyhow::Result<Vec<String>> {
         #[cfg(all(feature = "failpoints", debug_assertions))]
@@ -265,7 +299,11 @@ impl SearchSpace for CpuRunSpace {
         {
             anyhow::bail!("PUB-06 test worker failure after internal-value injection");
         }
-        NativeSpace.propose(parents, count, rng)
+        Ok(NativeSpace
+            .propose(parents, count, rng)?
+            .into_iter()
+            .filter(|dsl| self.canonical(dsl).is_ok())
+            .collect())
     }
 }
 
@@ -1204,11 +1242,16 @@ impl RunService {
         if spec.task != Task::Regression {
             return Err(unavailable("This run backend requires task=regression."));
         }
+        if jope_runtime::backend::DeviceRequest::parse(&spec.device).is_none() {
+            return Err(invalid("Unknown device."));
+        }
         let mut backend =
             BackendPlan::resolve(spec, self.activity.admitted_ranker(), 1).map_err(|error| {
+                let code = crate::run::service::error_code(&error);
+                // Keep the public catalog code without exposing private backend diagnostics.
                 issue(
-                    crate::run::service::error_code(&error),
-                    "The requested run backend could not be prepared.",
+                    code,
+                    format!("{code}: The requested run backend could not be prepared."),
                 )
             })?;
         if !backend.learned() && spec.landmarks != LandmarkMode::None {
@@ -1223,11 +1266,7 @@ impl RunService {
                 "This run backend supports random FIT/internal assessment splits without a separate test dataset.",
             ));
         }
-        if spec.languages != [Language::Rust] {
-            return Err(unavailable(
-                "This run backend currently qualifies Rust operations only.",
-            ));
-        }
+        let language_filter = run_language_filter(&spec.languages)?;
         if spec.objective != ObjectiveSpec::Name("rmse".into()) {
             return Err(unavailable(
                 "This run backend currently qualifies the rmse regression objective.",
@@ -1411,7 +1450,7 @@ impl RunService {
             "rows":{"total":table.rows.len().to_string(),"fit":fit_count.to_string(),"holdout":holdout_ids.len().to_string(),"test":null},
             "effort":{"name":spec.effort,"evaluations":effort.evaluations.to_string(),"wall_seconds":effort.wall_seconds.to_string(),"cv_folds":effort.rung1_folds,"rounds_in_flight":1},
             "guidance":backend.guidance,"landmarks":{"mode":spec.landmarks,"sample_rows":0},
-            "languages":{"requested":spec.languages,"excluded_operations":[],"intersection_empty":false},
+            "languages":{"requested":spec.languages,"excluded_operations":language_filter.excluded_ops(),"intersection_empty":false},
             "placement":backend.placement,
             "limits":{"eval_timeout_s":timeout.div_ceil(1000),"worker_rss_bytes":WORKER_RAM.to_string()},"estimates":estimates,"warnings":backend.warnings})).map_err(io)?;
         let search = SearchPlan {
@@ -1522,7 +1561,8 @@ impl RunService {
                 rows: prepared.holdout_rows,
             },
             test: None,
-            refit: Refit::Fit,
+            // Publish both genuine models once; exports select their recorded fit mode.
+            refit: Refit::FitHoldout,
             model_root: self.home.join("models"),
             scratch_root: self.home.join("run-scratch"),
             max_input_bytes: self.config.limits.max_dataset_bytes.value,
@@ -1550,7 +1590,12 @@ impl RunService {
         if let Err(error) = persisted {
             return response(&io(error));
         }
-        let sender = match self.worker_sender(_pub06_values, false, prepared.backend) {
+        let sender = match self.worker_sender(
+            _pub06_values,
+            false,
+            prepared.backend,
+            context.backend.spec.languages.clone(),
+        ) {
             Ok(sender) => sender,
             Err(error) => return response(&error),
         };
@@ -1580,15 +1625,18 @@ impl RunService {
         _pub06_values: Pub06Injection,
         explicit_continue: bool,
         backend: BackendPlan,
+        languages: Vec<Language>,
     ) -> Result<mpsc::SyncSender<(Discovery, FinalizationRequest)>> {
         let (sender, receiver) = mpsc::sync_channel::<(Discovery, FinalizationRequest)>(1);
         let owner = Arc::clone(self);
+        let allowed = run_language_filter(&languages)?;
         #[cfg(all(feature = "failpoints", debug_assertions))]
         let run_space = CpuRunSpace {
+            allowed,
             pub06_values: _pub06_values,
         };
         #[cfg(not(all(feature = "failpoints", debug_assertions)))]
-        let run_space = CpuRunSpace {};
+        let run_space = CpuRunSpace { allowed };
         let learned = backend.learned();
         let admission = backend.admission;
         let run_space = BackendSpace {
@@ -1696,7 +1744,12 @@ impl RunService {
             let injection = None;
             #[cfg(not(all(feature = "failpoints", debug_assertions)))]
             let injection = ();
-            let sender = self.worker_sender(injection, true, backend)?;
+            let sender = self.worker_sender(
+                injection,
+                true,
+                backend,
+                context.backend.spec.languages.clone(),
+            )?;
             let discovery = Discovery::continue_command(
                 Arc::clone(&self.store),
                 context.search,
@@ -2712,5 +2765,50 @@ mod tests {
         let missing = app.oneshot(missing).await.unwrap();
         assert_eq!(missing.status(), StatusCode::NOT_FOUND);
         assert_eq!(body(missing).await["code"], "NOT_FOUND");
+    }
+    #[test]
+    fn requested_export_languages_filter_the_actual_native_seed_and_mutations() {
+        use rand_chacha::rand_core::SeedableRng;
+        let allowed = run_language_filter(&[Language::Rust, Language::Python]).unwrap();
+        let space = CpuRunSpace {
+            allowed: allowed.clone(),
+            #[cfg(all(feature = "failpoints", debug_assertions))]
+            pub06_values: None,
+        };
+        let seeds = space.seeds().unwrap();
+        assert_eq!(seeds.len(), 1);
+        let mut rng = rand_chacha::ChaCha12Rng::seed_from_u64(73);
+        let proposals = space.propose(&seeds, 16, &mut rng).unwrap();
+        assert!(!proposals.is_empty());
+        for dsl in seeds.iter().chain(&proposals) {
+            assert!(allowed.accepts_seed(&feat_math::GenomeIr::parse(dsl).unwrap()));
+        }
+        assert!(space.canonical("(sym affine \"c0\")").is_err());
+        for languages in [
+            vec![],
+            vec![Language::Javascript],
+            vec![Language::Typescript],
+        ] {
+            assert!(run_language_filter(&languages).is_err());
+        }
+    }
+
+    #[tokio::test]
+    async fn python_and_rust_plan_uses_the_declared_capability_intersection() {
+        let (directory, engine, mut spec) = fixture();
+        spec.languages = vec![Language::Rust, Language::Python];
+        let reply = app(&engine)
+            .oneshot(request(&spec, "portable-plan"))
+            .await
+            .unwrap();
+        assert_eq!(reply.status(), StatusCode::OK);
+        let plan: Plan = serde_json::from_value(body(reply).await).unwrap();
+        assert_eq!(plan.languages.requested, spec.languages);
+        assert_eq!(
+            plan.languages.excluded_operations,
+            run_language_filter(&spec.languages).unwrap().excluded_ops()
+        );
+        assert!(!plan.languages.intersection_empty);
+        assert!(!directory.path().join("worker-scratch").exists());
     }
 }
