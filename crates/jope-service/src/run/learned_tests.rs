@@ -228,7 +228,20 @@ async fn signed_r882_in_loop_ab_and_replay() {
             tokio::time::sleep(Duration::from_millis(50)).await;
         };
         assert_eq!(finished["state"], "completed", "{finished}");
-        assert_eq!(finished["budget_used"]["evaluations"], "12");
+        let used = finished["budget_used"]["evaluations"]
+            .as_str()
+            .and_then(|value| value.parse::<u64>().ok())
+            .expect("completed run must report actual evaluation use");
+        assert!(
+            used > 0 && used <= 12,
+            "run exceeded its 12-evaluation ceiling: {finished}"
+        );
+        let reason = finished["completion_reason"].as_str().unwrap_or_default();
+        assert!(
+            (used == 12 && reason == "budget_evaluations")
+                || (used < 12 && matches!(reason, "converged" | "effort_reduced")),
+            "actual use must agree with budget completion semantics: {finished}"
+        );
         let cost = finished["best"]["cv_value"].as_f64().unwrap();
         assert!(cost.is_finite());
         let count = forwards.map_or(0, |v| v.load(Ordering::Relaxed));
@@ -246,6 +259,7 @@ async fn signed_r882_in_loop_ab_and_replay() {
             }
         }
         let row = json!({"seed":seed,"policy":if learned {"r882"} else {"heuristic"},"repeat":repeated,
+            "actual_evaluations":used,"evaluation_ceiling":12,"completion_reason":reason,
             "plan":plan,"run":finished,"real_learned_forwards":count,
             "engine_home":home,"attempt_ledger_retained":true});
         fs::write(

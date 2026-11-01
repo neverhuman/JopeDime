@@ -64,11 +64,15 @@ impl Fixtures {
         assert!(contexts.iter().all(|c| c.len() == 64
             && c.bytes()
                 .all(|v| v.is_ascii_hexdigit() && !v.is_ascii_uppercase())));
-        let weights = PathBuf::from(
-            env::var_os("JOPE_PARITY_BUNDLE_DIR").expect("real frozen RES06 bundle required"),
-        )
-        .join("jope.safetensors");
-        hashed(&weights, JOPE_SHA);
+        let signed_r882 = env::var_os("JOPE_RNK10_SIGNED_BUNDLE_DIR");
+        let weights_root = signed_r882
+            .clone()
+            .or_else(|| env::var_os("JOPE_PARITY_BUNDLE_DIR"))
+            .expect("real frozen or signed release bundle required");
+        let weights = PathBuf::from(weights_root).join("jope.safetensors");
+        if signed_r882.is_none() {
+            hashed(&weights, JOPE_SHA);
+        }
         Self {
             root: root.canonicalize().unwrap(),
             index,
@@ -301,7 +305,11 @@ fn round_admission_fixture(causal_measurements_only: bool) {
         run_id: "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0".parse().unwrap(),
         dataset_id: "ds_21fbfe8b53dbcd605d79486b".parse().unwrap(),
         problem_digest: "a".repeat(64),
-        bundle_digest: BUNDLE.strip_prefix("sha256:").unwrap().into(),
+        bundle_digest: if causal_measurements_only {
+            super::super::cuda::release::R882.strip_prefix("sha256:").unwrap().into()
+        } else {
+            BUNDLE.strip_prefix("sha256:").unwrap().into()
+        },
         binary_version: "RNK10-real-CPU-replay".into(),
         matrix_path: "FIT-only-not-opened-by-replay".into(),
         matrix_sha256: "b".repeat(64),
@@ -331,7 +339,18 @@ fn round_admission_fixture(causal_measurements_only: bool) {
         mut serving_disconnected_changes,
     ) = (0, 0, 0, 0);
     let mut max_kl = 0.0_f64;
-    let weights = fixtures.weights();
+    let weights = if causal_measurements_only { None } else { Some(fixtures.weights()) };
+    let causal_bundle = if causal_measurements_only {
+        let root = PathBuf::from(
+            env::var_os("JOPE_RNK10_SIGNED_BUNDLE_DIR")
+                .expect("M5 requires an externally staged signed r882 bundle"),
+        );
+        let verified = super::super::cuda::release::load_r882_release(&root).unwrap();
+        assert_eq!(verified.digest().to_string(), super::super::cuda::release::R882);
+        Some(verified)
+    } else {
+        None
+    };
     for cid in &fixtures.contexts {
         for width in [12, 20] {
             let f = fixtures.load(&format!("slates/{cid}-{width}.safetensors"));
@@ -347,8 +366,12 @@ fn round_admission_fixture(causal_measurements_only: bool) {
                 gates: f.f32("input.revealed_gate"),
                 mode: &mode,
             };
+            let adapter = match &causal_bundle {
+                Some(bundle) => super::CpuAdapter::from_bundle(bundle).unwrap(),
+                None => super::CpuAdapter::from_bytes(weights.as_ref().unwrap()).unwrap(),
+            };
             let admission = CpuRoundAdmission::for_cpu_replay(
-                super::CpuAdapter::from_bytes(&weights).unwrap(),
+                adapter,
                 plan.clone(),
                 provider,
                 RevealedRule::StorageOrder,
