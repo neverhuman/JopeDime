@@ -85,24 +85,6 @@ promise that every first proposal wins. \Cref{fig:emptysquare} separates
 the training feedback path from the frozen writer and fitting procedure at
 deployment.
 
-\begin{explainer}[label=box:searchone]{What ``search = 1'' means}
-\begin{itemize}[leftmargin=*,nosep]
-  \item \textbf{One inference, one candidate.} For a new problem, the program
-    writer emits one complete program ($\budget = 1$), with no retries, repairs,
-    best-of-$N$, reranking or weight updates.
-  \item \textbf{Everything is counted,} including reasoning tokens and problem
-    encoding. One inference is one generation, not one forward pass.
-  \item \textbf{Declare the fitting procedure.} Fitting the emitted algorithm
-    to training rows is allowed. Any internal model or hyperparameter
-    selection must be disclosed and counted in its compute budget. One
-    outer proposal does not establish the absence of internal search.
-    Training search is priced separately in \cref{sec:price}.
-\end{itemize}
-\textbf{A single candidate, with prior knowledge:} human-designed program
-primitives and pretrained encoding components supply prior knowledge. The
-Zero analogy concerns the additional training feedback from the referee.
-\end{explainer}
-
 \begin{figure}[t]
   \centering
   \begin{tikzpicture}[
@@ -151,6 +133,24 @@ capability whose aim, judge and memory are designed to be audited,
 rather than left implicit in a pretrained model. Pretrained components still
 supply prior knowledge (\cref{box:searchone}). Engineering fixes what the
 system is rewarded for and how its improvement is checked.
+
+\begin{explainer}[label=box:searchone]{What ``search = 1'' means}
+\begin{itemize}[leftmargin=*,nosep]
+  \item \textbf{One inference, one candidate.} For a new problem, the program
+    writer emits one complete program ($\budget = 1$), with no retries, repairs,
+    best-of-$N$, reranking or weight updates.
+  \item \textbf{Everything is counted,} including reasoning tokens and problem
+    encoding. One inference is one generation, not one forward pass.
+  \item \textbf{Declare the fitting procedure.} Fitting the emitted algorithm
+    to training rows is allowed. Any internal model or hyperparameter
+    selection must be disclosed and counted in its compute budget. One
+    outer proposal does not establish the absence of internal search.
+    Training search is priced separately in \cref{sec:price}.
+\end{itemize}
+\textbf{A single candidate, with prior knowledge:} human-designed program
+primitives and pretrained encoding components supply prior knowledge. The
+Zero analogy concerns the additional training feedback from the referee.
+\end{explainer}
 
 \paragraph{Contributions.}
 We formulate algorithm invention as a game and design a learner for it,

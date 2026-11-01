@@ -97,14 +97,35 @@ fn load_release(
         },
         limits,
     )?;
-    let metadata: ReleaseMetadata = serde_json::from_slice(&bytes)?;
+    let catalog = catalog(&bytes, schema, bundle)?;
+    let manifest = bounded(&root.join("appliance-manifest.json"), limits.manifest_bytes)?;
+    let footer: [u8; 128] = bounded(&root.join("appliance-footer.bin"), 128)?
+        .try_into()
+        .map_err(|_| anyhow::anyhow!("invalid footer length"))?;
+    let signature: [u8; 64] = bounded(&root.join("appliance-signature.bin"), 64)?
+        .try_into()
+        .map_err(|_| anyhow::anyhow!("invalid signature length"))?;
+    Ok(load_bundle(
+        BundleInput::DevelopmentDirectory(root),
+        SignedAssetContext {
+            manifest: &manifest,
+            footer: &footer,
+            signature: &signature,
+        },
+        &catalog,
+        limits,
+    )?)
+}
+
+fn catalog(bytes: &[u8], schema: &str, bundle: &str) -> Result<ReleaseCatalog> {
+    let metadata: ReleaseMetadata = serde_json::from_slice(bytes)?;
     ensure!(
         metadata.schema == schema
             && metadata.bundle_digest == bundle
             && metadata.dope_logical_composite == FROZEN_DOPE_COMPOSITE,
         "release is not the admitted frozen bundle"
     );
-    let catalog = ReleaseCatalog {
+    Ok(ReleaseCatalog {
         bundle_digest: BundleDigest::parse(&metadata.bundle_digest)?,
         dope_logical_composite: digest(&metadata.dope_logical_composite)?,
         dope_weights_sha256: digest(&metadata.dope_weights_sha256)?,
@@ -133,20 +154,53 @@ fn load_release(
                 )
             })
             .collect(),
-    };
-    let manifest = bounded(&root.join("appliance-manifest.json"), limits.manifest_bytes)?;
-    let footer: [u8; 128] = bounded(&root.join("appliance-footer.bin"), 128)?
-        .try_into()
-        .map_err(|_| anyhow::anyhow!("invalid footer length"))?;
-    let signature: [u8; 64] = bounded(&root.join("appliance-signature.bin"), 64)?
-        .try_into()
-        .map_err(|_| anyhow::anyhow!("invalid signature length"))?;
+    })
+}
+
+/// Load the complete r882 closure directly from an authenticated executable.
+/// The same fixed catalog, release key, hashes and tensor inventories as the
+/// explicit host loader apply. There are no sidecars, downloads or test keys.
+#[cfg(unix)]
+pub fn load_r882_embedded(package: &jope_assets::Package) -> Result<VerifiedBundle> {
+    use crate::ranker::bundle::EmbeddedAsset;
+    use anyhow::Context;
+    let limits = BundleLimits::default();
+    // Refuse a different closure before decoding even the first asset. The
+    // generic container's allocation limits are much wider than this release.
+    for (id, sha, bytes) in crate::proposal::required_assets()? {
+        let entry = package
+            .entry(&id)
+            .with_context(|| format!("missing r882 asset {id}"))?;
+        ensure!(
+            entry.bytes == bytes && entry.sha256 == sha,
+            "embedded r882 asset identity differs: {id}"
+        );
+    }
+    let bytes = package.read_entry("model/r882/release-catalog.json")?;
+    ensure!(
+        bytes.bytes().len() == 48_885 && bytes.sha256() == R882_CATALOG_SHA,
+        "embedded r882 catalog differs from the admitted release"
+    );
+    let catalog = catalog(bytes.bytes(), "jope.r882-release-catalog/v1", R882)?;
+    let entries = catalog
+        .assets
+        .iter()
+        .map(|(path, asset)| Ok((path.as_str(), package.read_entry(&asset.signed_asset_id)?)))
+        .collect::<Result<Vec<_>>>()?;
+    let assets = entries
+        .iter()
+        .map(|(path, bytes)| EmbeddedAsset {
+            path,
+            bytes: bytes.bytes(),
+        })
+        .collect::<Vec<_>>();
+    let (manifest, footer, signature) = package.signed_envelope();
     Ok(load_bundle(
-        BundleInput::DevelopmentDirectory(root),
+        BundleInput::Embedded(&assets),
         SignedAssetContext {
-            manifest: &manifest,
-            footer: &footer,
-            signature: &signature,
+            manifest,
+            footer,
+            signature,
         },
         &catalog,
         limits,

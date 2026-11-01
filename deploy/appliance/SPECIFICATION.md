@@ -305,6 +305,11 @@ Expose adapters for existing implemented paths, with capability records generate
 | `neural.chimera.regression` | `ChimeraRegressor` | Starlight expert + exact shuffled TabICL expert + stack-fusion trunk + layout manifest. |
 | `neural.chimera.binary` | `ChimeraClassifier` | Both classification experts + attention-fusion trunk; current fusion code uses a two-logit boundary, so do not advertise arbitrary multiclass support. |
 | `proposal.step60000.regression` | `jope-policy` accepted semantic release | Encoders, transforms, policy, vocabulary, qualification, recipe fit, and native predictor. |
+| `proposal.r882.regression` | v1 Engine discovery, `AdmittedRanker::r882`, native refit/export/predict | Complete signed r882 DOPE/ranker closure; internal explicit `run --guidance learned --landmarks full`, numeric regression only. Authentication does not establish quality qualification. |
+
+The internal full profile selects the explicit r882 successor identity; the historical
+step-60000 policy stays unavailable. See [the runtime design](R882_RUNTIME.md).
+The r882 adapter is exposed through v1 `run`; the legacy `fit --method` registry stays native.
 
 These IDs are proposed API names, not claims that current hosted CI qualifies every method. `methods --json` must report exact limits and distinguish compiled, assets-present, rights-authorized, numerically-qualified, and executable states. Full-profile release must fail if any method promised by that profile is not executable; it must not quietly downgrade the roster.
 

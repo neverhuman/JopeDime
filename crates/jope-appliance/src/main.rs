@@ -112,6 +112,27 @@ fn version_value() -> Value {
     })
 }
 
+fn unexecutable(promised: &[String]) -> anyhow::Result<Vec<(String, String)>> {
+    #[cfg(feature = "engine")]
+    {
+        let mut blocked = jope_service::proposal::uncompiled(promised)?;
+        if promised
+            .iter()
+            .any(|id| id == jope_service::proposal::METHOD)
+        {
+            let package = Package::open_self().map_err(bootstrap::integrity)?;
+            let record = jope_service::proposal::record(package.as_ref())
+                .map_err(|error| Failure::integrity(format!("{error:#}")))?;
+            if !record.executable {
+                blocked.push((record.id, record.reason.unwrap_or_default()));
+            }
+        }
+        Ok(blocked)
+    }
+    #[cfg(not(feature = "engine"))]
+    methods::unexecutable(promised)
+}
+
 fn doctor() -> anyhow::Result<(Value, bool)> {
     let started = Instant::now();
     let (package, promised, package_ok) = match Package::open_self() {
@@ -136,7 +157,7 @@ fn doctor() -> anyhow::Result<(Value, bool)> {
             false,
         ),
     };
-    let unexecutable: Vec<Value> = methods::unexecutable(&promised)?
+    let unexecutable: Vec<Value> = unexecutable(&promised)?
         .into_iter()
         .map(|(id, reason)| json!({"id": id, "reason": reason}))
         .collect();
@@ -170,7 +191,18 @@ fn methods_value(task_filter: Option<&str>) -> anyhow::Result<Value> {
         Ok(None) => Vec::new(),
         Err(error) => return Err(bootstrap::integrity(error)),
     };
-    let records: Vec<Value> = methods::records()?
+    let records = methods::records()?;
+    #[cfg(feature = "engine")]
+    let records = {
+        let mut records = records;
+        let package = Package::open_self().map_err(bootstrap::integrity)?;
+        records.push(
+            jope_service::proposal::record(package.as_ref())
+                .map_err(|error| Failure::integrity(format!("{error:#}")))?,
+        );
+        records
+    };
+    let records: Vec<Value> = records
         .into_iter()
         .filter(|r| task_filter.is_none_or(|t| r.task == t))
         .map(|r| {
