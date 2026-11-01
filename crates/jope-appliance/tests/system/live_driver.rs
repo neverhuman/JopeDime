@@ -325,7 +325,19 @@ def engine_boundary_matrix():
                 assert [int(event['sequence']) for event in recovered_events]==list(range(1,len(recovered_events)+1))
                 assert project(recovered_events)==expected[:len(project(recovered_events))],label
             assert not list((h/'tmp').iterdir()),f'{label}: staging survived automatic recovery'
-            cases.append({'hook':hook,'ordinal':ordinal,'signal':signal_exit,'state':state,'events':len(recovered_events),'staging_clean':True,'checkpoint':recovered})
+            # Recovery verifies every durable record's CAS references before serving.
+            # Execute the authorized continuation as well as proving the recovered prefix.
+            if not inventory:
+                rid=run(h,spec_argv(d,'int02-boundary-run',2))['run_id']
+            elif state=='paused':
+                run(h,['control',rid,'--idempotency-key','int02-boundary-continue','continue'])
+            completed=wait_terminal(h,rid)
+            final_events=client.events(rid,0)['events']
+            assert completed['state']=='completed' and completed['best']==snapshot['best'],(label,completed)
+            assert final_events[:len(recovered_events)]==recovered_events,'continuation changed durable prefix'
+            assert [int(event['sequence']) for event in final_events]==list(range(1,len(final_events)+1))
+            assert final_events[-1]['body']['nondeterminism']['count']=='0','continuation hit a resource limit'
+            cases.append({'hook':hook,'ordinal':ordinal,'signal':signal_exit,'state':state,'events':len(recovered_events),'staging_clean':True,'checkpoint':recovered,'completed':completed,'continued_sequences':len(final_events),'reference_integrity_checked_on_open':True})
             save('engine-boundary-cases.json',cases)
             client.p.stdin.close();client.p.wait(timeout=5)
             subprocess.run([args.binary,'serve','--stop'],env={**base_env,'JOPEDIME_HOME':str(h)},capture_output=True,text=True,timeout=10,check=True)
