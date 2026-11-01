@@ -1,0 +1,13 @@
+{
+  "parent": "origin/main:H151",
+  "parent_resolved_commit": "d877533442a8e1fc4d5b18045f519ee28a997cd0",
+  "unchanged_runner_functions": [
+    "predict",
+    "evaluate",
+    "selected",
+    "baseline_gate",
+    "verify"
+  ],
+  "status": "PASS",
+  "note": "H142 contributes lr1e-5 only; H151 evaluator/live loss/sampler retained; H158 adds KD, teacher fit-only cache, assess+fullTRAIN panels and explicit Holm bounds."
+}
