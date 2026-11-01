@@ -5069,13 +5069,13 @@
       "sha256": "fad477aedc837578b48ced28c1e8f8404d83d09ab4e9b69045ed80ba2f969a73"
     },
     "python:research/flywheel_selfplay/rnk10_m5_causal/evaluate_candidate.py": {
-      "bytes": 30905,
+      "bytes": 33291,
       "classification": {
         "reason": "RNK-10 R10 research-only candidate-loading M5/dev-Elo reproduction. M5 validates pinned batched fixture shapes, and dev Elo reports a reproducible descriptive family-bootstrap interval. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
         "role": "research"
       },
       "migration": "New RNK-10 research-only source classification; no product runtime claim.",
-      "sha256": "d1dd32f36d5f39b807525725a88a8d78e5554737561d5343640333f55d8a93d2"
+      "sha256": "379cd94040124c36bd9cbdee0b7b54bdca0f6524774c948866311f3f4b52b478"
     },
     "python:research/flywheel_selfplay/rnk10_m5_causal/stage_dev_packet.py": {
       "classification": {
@@ -5271,12 +5271,12 @@
       "sha256": "eb60e02e0291f7cba75d3f5b7302555ae7f8ed1707e7afad68d1b56ef85424fb"
     },
     "python:research/flywheel_selfplay/h197_pcgc/runner.py": {
-      "bytes": 31977,
+      "bytes": 32031,
       "classification": {
         "role": "research",
-        "reason": "H197 CPU fixed-step continuation runner with exact source binding, H197-rooted local pin verification, full-corpus zero-update preflight, FIT-only training, B lock before A, and guarded single-attempt protocol; research only."
+        "reason": "H197 CPU fixed-step continuation runner with exact source binding, H197-rooted local pin verification, full-corpus zero-update preflight, FIT-only training, B lock before A, and a shared strict JSON record writer; research only."
       },
-      "sha256": "9ebd2249a21246becf88bf893905f7e8a36c259478b1f74db22eda3ef92c96d3"
+      "sha256": "ca123ce220f76a625208e59e3997a72576715daddddb2ece9d16e5fc4f3ac1dd"
     },
     "python:research/flywheel_selfplay/h197_pcgc/treatment.py": {
       "bytes": 5606,
@@ -5293,6 +5293,14 @@
         "reason": "H197 read-only source hash validator confined to the study directory; path traversal and mismatch refusal."
       },
       "sha256": "92dc24bb84a1a378e59d4b2c1f69d39f24f7645dfdb79d00e91138408657063a"
+    },
+    "python:research/flywheel_selfplay/h197_pcgc/json_writer.py": {
+      "bytes": 329,
+      "classification": {
+        "role": "research",
+        "reason": "Single durable H197 JSON writer using json.dumps(allow_nan=False), used by every trace, receipt, summary, metrics, audit and failure record."
+      },
+      "sha256": "99135f2c304b6558c25291913484982e0a7f5cd10b37520d3cbd0e109cdf50a5"
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

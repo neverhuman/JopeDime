@@ -14693,7 +14693,17 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H197 data-free controls for independent TRAIN folds, fixed-step matched clipping arms, B-before-A lock, strict family bootstrap/verdict, pin path confinement, zero-update full-corpus/native-DL-Val preflight, and JSON-safe placebo trace serialization; no outcome data/checkpoint reads or model passes in fixtures."
+      "scope": "H197 data-free checks for independent TRAIN folds, matched clipping arms, local pin and zero-update preflight guards, plus strict JSON round-trips of 40-step traces for all arms, 60 FIT receipts, 15 cell calibrations, three per-seed summaries, aggregate A/Elo metrics, DL-Val, B lock, counters, audit and failure records through the production writer; no corpus/checkpoint reads or model passes in fixtures."
+    },
+    "python:research/flywheel_selfplay/h198_ttt/test_h198.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H198 data-free checks for per-context test-time training on revealed candidates only: leakage masking of unrevealed labels, per-context reset and trajectory-prefix equivalence, shuffle-control derangement, independent fold seeds with the stage-1 B-only lock, verdict gates with axis-0 bootstrap, and the launch contract; no corpus/checkpoint reads in fixtures."
     }
   },
   "lanes": {

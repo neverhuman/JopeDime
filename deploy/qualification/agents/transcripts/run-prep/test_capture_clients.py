@@ -871,19 +871,38 @@ def test_candidate_drift_during_copy_cannot_publish(monkeypatch):
         MODULE.self_test()
 
 
+def _engine_cleanup_finally_lines():
+    """Line span of run_capture's engine cleanup `finally:`, found structurally.
+
+    The innermost try statement whose body launches the engine owns the
+    cleanup; the first line executed inside its `finally:` is the earliest
+    point an interrupt can reach the teardown.
+    """
+    source, start = inspect.getsourcelines(THREE_CLIENTS_MODULE.run_capture)
+    tree = ast.parse("".join(source))
+    owners = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Try)
+        and node.finalbody
+        and "--idle-exit" in "\n".join(ast.unparse(stmt) for stmt in node.body)
+    ]
+    assert owners, "run_capture has no engine cleanup finally"
+    owner = max(owners, key=lambda node: node.lineno)
+    return (
+        start - 1 + owner.finalbody[0].lineno,
+        start - 1 + owner.finalbody[-1].end_lineno,
+    )
+
+
 def test_run_capture_defers_traced_interrupt_at_teardown_entry(a5_tmp_path):
     args, _plan, _candidate, _client = _runner_fixture(a5_tmp_path)
-    source, start = inspect.getsourcelines(THREE_CLIENTS_MODULE.run_capture)
-    target = next(
-        start + offset
-        for offset, line in enumerate(source)
-        if line.strip() == "teardown_error = None"
-    )
+    first, last = _engine_cleanup_finally_lines()
     code = THREE_CLIENTS_MODULE.run_capture.__code__
     state = {"sent": False}
 
     def interrupt_at_teardown_line(frame, event, arg):
-        if event == "line" and frame.f_lineno == target and not state["sent"]:
+        if event == "line" and first <= frame.f_lineno <= last and not state["sent"]:
             state["sent"] = True
             os.kill(os.getpid(), signal.SIGINT)
         return interrupt_at_teardown_line
