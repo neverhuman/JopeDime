@@ -25,6 +25,16 @@ def expected_pins():
         raise ValueError("unsupported Q1 protocol binding schema")
     if protocol.get("status") != "source-binding-only-not-qualification":
         raise ValueError("Q1 protocol binding must retain its qualification boundary")
+    expected_cut = {
+        "schema": "jope.q1-cut/v1",
+        "hash": "sha256(UTF-8 canonical JSON)",
+        "canonical_json": "recursively sorted object keys, compact separators, ensure_ascii=false; arrays retain order",
+        "fields": ["dataset_sha256", "train_blob_sha256", "train_rows", "target", "feature_columns", "folds"],
+        "fold_shape": {"repeat": "u8", "train": "ordered zero-based FIT row indexes", "validation": "ordered zero-based FIT row indexes"},
+        "qualification_boundary": "source-binding-only-not-qualification",
+    }
+    if protocol.get("cut") != expected_cut:
+        raise ValueError("Q1 protocol cut derivation mismatch")
     for path in (VOCABULARY, ENGINE_VOCABULARY, EXECUTABLE_OPS):
         if not path.is_file():
             raise ValueError(f"Q1 vocabulary binding input missing: {path.name}")

@@ -428,6 +428,19 @@ fn canonical_sha256(value: &Value) -> Result<String> {
         .map_err(io)
 }
 
+fn q1_cut_sha256(binding: &Q1DatasetBinding) -> Result<String> {
+    // serde_json::Map serializes keys in sorted order; all array orders are semantic.
+    canonical_sha256(&json!({
+        "dataset_sha256": binding.dataset_sha256,
+        "feature_columns": binding.feature_columns,
+        "folds": binding.folds,
+        "schema": "jope.q1-cut/v1",
+        "target": binding.target,
+        "train_blob_sha256": binding.train_blob_sha256,
+        "train_rows": binding.train_rows,
+    }))
+}
+
 fn validate_q1_request(request: &Q1Request, raw: &Value) -> Result<()> {
     if request.schema != "jope.q1-request/v1"
         || request.mode != "qualification"
@@ -549,6 +562,7 @@ fn validate_q1_binding(binding: &Q1DatasetBinding, dataset: &Q1DatasetIdentity) 
         || !valid_hex(&binding.train_blob_sha256, 64)
         || !valid_hex(&binding.dataset_binding_sha256, 64)
         || hash(&serde_json::to_vec(&value).map_err(io)?) != binding.dataset_binding_sha256
+        || q1_cut_sha256(binding)? != binding.cut_sha256
         || binding.target.is_empty()
         || binding.feature_columns.len() as u64 != dataset.features
         || binding.feature_columns.iter().any(String::is_empty)
@@ -2143,6 +2157,65 @@ mod tests {
     use super::*;
     use rand_chacha::rand_core::SeedableRng;
 
+    #[test]
+    fn q1_cut_hash_matches_canonical_cross_language_control() {
+        let binding = Q1DatasetBinding {
+            id: "0000000000000001".into(),
+            task: "regression".into(),
+            dataset_sha256: "a".repeat(64),
+            family: "f".repeat(40),
+            family_authoritative: true,
+            rows: 4,
+            features: 2,
+            cut_sha256: String::new(),
+            holdout_group: "development_fit".into(),
+            catalog_version: "v1".into(),
+            catalog_record_sha256: "c".repeat(64),
+            dataset_binding_sha256: String::new(),
+            target: "y".into(),
+            feature_columns: vec!["x1".into(), "x2".into()],
+            train_rows: 4,
+            train_blob_sha256: "b".repeat(64),
+            train_blob_bytes: 1,
+            folds: vec![
+                Q1Fold {
+                    repeat: 0,
+                    train: vec![0, 1],
+                    validation: vec![2, 3],
+                },
+                Q1Fold {
+                    repeat: 0,
+                    train: vec![2, 3],
+                    validation: vec![0, 1],
+                },
+            ],
+        };
+        assert_eq!(
+            q1_cut_sha256(&binding).unwrap(),
+            "0c87e715ccb1a01fe05d4bc4e8b81f62f978d8aed0126248d97b866686acf249"
+        );
+        let identity = Q1DatasetIdentity {
+            id: binding.id.clone(),
+            task: binding.task.clone(),
+            dataset_sha256: binding.dataset_sha256.clone(),
+            family: binding.family.clone(),
+            family_authoritative: binding.family_authoritative,
+            rows: binding.rows,
+            features: binding.features,
+            cut_sha256: binding.cut_sha256.clone(),
+            holdout_group: binding.holdout_group.clone(),
+        };
+        let mut mismatched = binding;
+        mismatched.cut_sha256 = "d".repeat(64);
+        let mut binding_value = serde_json::to_value(&mismatched).unwrap();
+        binding_value
+            .as_object_mut()
+            .unwrap()
+            .remove("dataset_binding_sha256");
+        mismatched.dataset_binding_sha256 = hash(&serde_json::to_vec(&binding_value).unwrap());
+        assert!(validate_q1_binding(&mismatched, &identity).is_err());
+    }
+
     const Q1_FAIL_ALL_TEST_SEED: u64 = 2;
 
     #[test]
@@ -2664,7 +2737,7 @@ mod tests {
             family_authoritative: true,
             rows: 10,
             features: 1,
-            cut_sha256: "1".repeat(64),
+            cut_sha256: String::new(),
             holdout_group: "sealed_meta_test".into(),
             catalog_version: "v246".into(),
             catalog_record_sha256: "2".repeat(64),
@@ -2687,6 +2760,7 @@ mod tests {
                 },
             ],
         };
+        binding.cut_sha256 = q1_cut_sha256(&binding).unwrap();
         let mut binding_value = serde_json::to_value(&binding).unwrap();
         binding_value
             .as_object_mut()
@@ -2723,7 +2797,7 @@ mod tests {
                 "family_authoritative":true,
                 "rows":10,
                 "features":1,
-                "cut_sha256":"1".repeat(64),
+                "cut_sha256":binding.cut_sha256,
                 "holdout_group":"sealed_meta_test"
             },
             "guidance":"heuristic",
