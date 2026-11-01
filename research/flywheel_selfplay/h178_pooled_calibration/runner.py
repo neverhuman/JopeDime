@@ -121,7 +121,7 @@ def main():
         raise RuntimeError("DOPE sha256 mismatch before run")
     train, val = parent.cohorts(rt)
     if (
-        cal.h175_protocol.folds(train)
+        cal.folds(train)
         != json.loads((HERE / "fold_manifest.json").read_text())["families"]
     ):
         raise RuntimeError("fold pin mismatch")

@@ -4633,8 +4633,8 @@
       }
     },
     "python:research/flywheel_selfplay/h178_pooled_calibration/runner.py": {
-      "bytes": 12359,
-      "sha256": "29fc584891a0734c2863ffbab3c921d13633f6977d1de43d078eb34c86549198",
+      "bytes": 12345,
+      "sha256": "5316aa33812d2ad46627323839dc0ad985faa726a76dcc380490b96dc2a31f6b",
       "classification": {
         "role": "research",
         "reason": "H178 empirical calibration of the H177 pooled 205-family cross-fit selector (pooled_b_select imported directly from h177_pooled_selector/analysis.py) on the H175 counterfactual bank; data-free controls for imported H177 rule object identity, 10k-draw step-down Holm counterexample, LocalOnlyPayload role isolation, StageOrderGuard fsync barrier, exact Clopper-Pearson bounds, zero optimizer/backward calls, and resource guards. Research only; no product or sealed qualification."
