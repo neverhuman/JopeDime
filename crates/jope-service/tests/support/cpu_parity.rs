@@ -10,6 +10,16 @@ use std::{
 
 const BUNDLE: &str = "sha256:94fd9587675c7806bd0a0582b6e97540cd2fdc7ebbc51958411b905185cad85c";
 const JOPE_SHA: &str = "ce39c75f37624e64dfbf89e6493adbf74811a5248f9355997161491e93a132ef";
+const R882_JOPE_SHA: &str = "ff3f9ea5d76fa6c13cd74d40a9effbf7e9c891d98746dc542d851726b9e3138c";
+
+fn output_oracle_matches(
+    reference_bundle: &str,
+    reference_jope_sha: &str,
+    actual_bundle: &str,
+    actual_jope_sha: &str,
+) -> bool {
+    reference_bundle == actual_bundle && reference_jope_sha == actual_jope_sha
+}
 
 pub struct Fixtures {
     root: PathBuf,
@@ -208,6 +218,23 @@ fn m5_serving_causal_measurements() {
     round_admission_fixture(true);
 }
 
+#[test]
+fn output_oracle_requires_matching_bundle_and_jope_weights() {
+    assert!(output_oracle_matches(BUNDLE, JOPE_SHA, BUNDLE, JOPE_SHA));
+    assert!(!output_oracle_matches(
+        BUNDLE,
+        JOPE_SHA,
+        super::super::cuda::release::R882,
+        R882_JOPE_SHA,
+    ));
+    assert!(!output_oracle_matches(
+        BUNDLE,
+        JOPE_SHA,
+        BUNDLE,
+        R882_JOPE_SHA
+    ));
+}
+
 fn round_admission_fixture(causal_measurements_only: bool) {
     use crate::discover::r#loop::{Plan, RoundAdmission, RoundContext, RoundMeasurement};
     use crate::ranker::admission::{
@@ -342,6 +369,8 @@ fn round_admission_fixture(causal_measurements_only: bool) {
         mut serving_disconnected_changes,
     ) = (0, 0, 0, 0);
     let mut max_kl = 0.0_f64;
+    let mut checked_cost_values = 0;
+    let mut invalid_cost_values = 0;
     let weights = if causal_measurements_only {
         None
     } else {
@@ -361,6 +390,21 @@ fn round_admission_fixture(causal_measurements_only: bool) {
     } else {
         None
     };
+    let actual_bundle_digest = causal_bundle
+        .as_ref()
+        .map_or(BUNDLE, |_| super::super::cuda::release::R882);
+    let actual_jope_sha = causal_bundle.as_ref().map_or(JOPE_SHA, |_| R882_JOPE_SHA);
+    let compare_reference_outputs = output_oracle_matches(
+        fixtures.index["bundle_digest"].as_str().unwrap(),
+        JOPE_SHA,
+        actual_bundle_digest,
+        actual_jope_sha,
+    );
+    if causal_measurements_only {
+        assert!(!compare_reference_outputs);
+        let root = PathBuf::from(env::var_os("JOPE_RNK10_SIGNED_BUNDLE_DIR").unwrap());
+        hashed(&root.join("jope.safetensors"), R882_JOPE_SHA);
+    }
     for cid in &fixtures.contexts {
         for width in [12, 20] {
             let f = fixtures.load(&format!("slates/{cid}-{width}.safetensors"));
@@ -405,7 +449,17 @@ fn round_admission_fixture(causal_measurements_only: bool) {
                 .evaluate_round(&context, &proposals, width == 20, &mut actual_rng)
                 .unwrap();
             let expected = f.numbers("output.total_cost");
-            stats.compare(&actual.costs.total_cost, &expected);
+            if compare_reference_outputs {
+                stats.compare(&actual.costs.total_cost, &expected);
+            } else {
+                checked_cost_values += actual.costs.total_cost.len();
+                invalid_cost_values += actual
+                    .costs
+                    .total_cost
+                    .iter()
+                    .filter(|value| !value.is_finite())
+                    .count();
+            }
             max_kl = max_kl.max(actual.costs.proposal_kl_to_anchor[0]);
             let mut reference_rng = rng.clone();
             let indices = select_costs(&expected, width == 20, &mut reference_rng).unwrap();
@@ -631,13 +685,23 @@ fn round_admission_fixture(causal_measurements_only: bool) {
     if causal_measurements_only {
         use std::io::Write;
         assert_eq!(serving_slates, 50, "M5 requires every serving 4+8 fixture");
-        assert_eq!(stats.values, 1600, "M5 requires both complete slate widths");
-        let passed = serving_landmark_changes > 0
+        assert_eq!(
+            checked_cost_values + stats.values,
+            1600,
+            "M5 requires both complete slate widths"
+        );
+        let passed = invalid_cost_values == 0
+            && mismatches == 0
+            && serving_landmark_changes > 0
             && serving_fitness_changes > 0
             && serving_disconnected_changes > 0;
         let report = json!({
-            "schema":"jope.m5-causal/v1","consumer":"M5-causal","device":"cpu",
-            "passed":passed,"values":stats.values,"failed_values":stats.failures,
+            "schema":"jope.m5-causal/v2","consumer":"M5-causal","device":"cpu",
+            "passed":passed,
+            "output_checks":{"finite_cost_values":checked_cost_values,"invalid_cost_values":invalid_cost_values},
+            "reference_oracle":{"status":"not_comparable_model_weights","comparison_performed":false,
+                "reference_bundle_digest":fixtures.index["bundle_digest"],"reference_jope_weights_sha256":JOPE_SHA,
+                "actual_bundle_digest":actual_bundle_digest,"actual_jope_weights_sha256":actual_jope_sha},
             "details":{"contexts":50,"slates":100,"admitted_order_mismatches":mismatches,
                 "quality_gate_granted":false,"Q1_ready":false,
                 "serving_4_plus_8":{"slates":serving_slates,
