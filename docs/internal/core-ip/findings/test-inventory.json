@@ -5263,6 +5263,10 @@
       "subsystems": [
         "encoders"
       ]
+    },
+    "python:research/flywheel_selfplay/h158_distillation/test_h158.py": {
+      "role": "research",
+      "reason": "H158 owner-directed fit-only frozen-teacher KL distillation, full-context gate veto, KD-three Holm family, strict ties/completeness, frozen state and bounded offline CPU resources. Research only; no product/sealed qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
