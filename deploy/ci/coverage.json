@@ -13858,6 +13858,16 @@
       ],
       "lanes": [],
       "scope": "H145 data-free controls for disjoint family-fold selection/assessment, duplicate/nonfinite refusal, equal-family weighting, exact Elo ties, canonical Bradley-Terry bootstrap equivalence with repeated-family multiplicity, and lexical exclusion of DL-Val outcome subtrees. These controls do not train or qualify a model; offline research only."
+    },
+    "python:research/h148/test_h148.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H148 data-free nested family isolation, strict selection/bootstrap fallback, batch closure and anchored Elo controls. Scientific600-update experiment is separate, CPU only; no live promotion."
     }
   },
   "lanes": {
