@@ -680,6 +680,30 @@ class Controller(unittest.TestCase):
             validator.validate(report)
         self.assertTrue((self.path / "release-plan/gate-status.md").is_file())
 
+    def test_gate_status_table_is_complete_and_never_promotes_historical_pass(self):
+        self.source([("full-only", [sys.executable, "-c", ONE_TEST], "unittest")])
+        plan = self.plan_metadata()
+        with mock.patch.object(
+            cpu, "invoke", side_effect=AssertionError("plan executed gates")
+        ):
+            report = cpu.release_plan(self.repo, self.path / "release-plan", plan)
+
+        lines = (self.path / "release-plan/gate-status.md").read_text().splitlines()
+        rows = []
+        for line in lines:
+            if not line.startswith("| "):
+                continue
+            cells = [cell.strip() for cell in line.split("|")[1:-1]]
+            if cells and cells[0] in cpu.GATE_IDS:
+                rows.append(cells)
+
+        self.assertEqual([row[0] for row in rows], cpu.GATE_IDS)
+        self.assertTrue(all(row[2] == "not-qualified / not-run" for row in rows))
+        evidence = report["release_gates"]["T1"]["evidence"][0]
+        self.assertIn("Historical PASS", evidence["status_note"]["reported_status"])
+        self.assertFalse(evidence["qualifies_signed_bytes"])
+        self.assertEqual(report["checks"], [])
+
     def test_missing_status_note_is_not_fabricated_or_qualified(self):
         report = cpu.release_inventory(self.plan_metadata(status=False))
         note = report["release_gates"]["T1"]["evidence"][0]["status_note"]
