@@ -59,6 +59,7 @@ step "paper and README numbers trace (jope-records paper-trace; docs/paper/NUMBE
 step "full-default/full-scratch budgets cover the slowest recorded feat-math::golden test"
 slowest=$(jq '[.tests[] | select(.binary == "feat-math::golden") | .seconds] | max' docs/parity/test-timings.json)
 if jq -e --argjson slowest "$slowest" '[.lanes["full-default", "full-scratch"].command[3] | rtrimstr("s") | tonumber] | length == 2 and all(. >= 1.25 * $slowest + 120)' deploy/ci/coverage.json > /dev/null; then echo "ok (slowest ${slowest}s)"; else echo "a full family budget is below 1.25 x ${slowest}s + 120s"; fail=1; fi
+step "external custody verifier controls"; if ! python3 -B research/flywheel_selfplay/custody/verify_custody.py --self-test; then fail=1; fi
 step "size caps"; big=$(git ls-files -z | xargs -0 stat -c '%s %n' | awk '$1>5242880{print}' ); if [ -n "$big" ]; then echo "$big"; echo "files over 5 MiB"; fail=1; else echo "ok"; fi
 step "no large files or archives newly added under flywheel custody"; custody_base=${GITHUB_BASE_REF:+origin/$GITHUB_BASE_REF}; if ! bash deploy/ci/check-custody-additions.sh "${custody_base:-origin/main}"; then fail=1; fi
 # gitleaks' private-key rule needs a complete block and skips its allowlisted paths (docs/legacy/,
