@@ -25,12 +25,17 @@ MAX_WALL = 7200
 INTERVAL = 2.0
 
 
+def disk_used_pct(used_bytes: int, free_bytes: int) -> float:
+    denom = int(used_bytes) + int(free_bytes)
+    return (float(used_bytes) / float(denom)) * 100.0 if denom > 0 else 100.0
+
+
 def host_state():
     cpus = os.cpu_count() or 1
     load1, load5, load15 = os.getloadavg()
     mem = psutil.virtual_memory()
     disk = shutil.disk_usage("/home/ubuntu")
-    used_pct = (disk.used / disk.total) * 100.0 if disk.total > 0 else 0.0
+    used_pct = disk_used_pct(disk.used, disk.free)
     return dict(
         cpus=cpus,
         load1=load1,

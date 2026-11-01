@@ -8,6 +8,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import analysis as stat
+import monitor as mon
 
 
 def synthetic_rows(n_fams=205, per_fam=2):
@@ -153,6 +154,14 @@ class TestH156(unittest.TestCase):
             }
         ]
         self.assertEqual(stat.verdict(s_pos, s_pos, sels_pos), "ADVANCE")
+
+    def test_disk_used_pct_includes_reserved_blocks_and_95_boundary(self):
+        # Match user-visible df Use% = used / (used + bavail)
+        pct = mon.disk_used_pct(950_000_000_000, 50_000_000_000)
+        self.assertAlmostEqual(pct, 95.0, places=9)
+        self.assertTrue(pct >= mon.MAX_DISK_USED_PCT)
+        pct_ok = mon.disk_used_pct(949_999_999_000, 50_000_001_000)
+        self.assertLess(pct_ok, mon.MAX_DISK_USED_PCT)
 
 
 if __name__ == "__main__":

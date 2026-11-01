@@ -4049,8 +4049,8 @@
       }
     },
     "python:research/h156/monitor.py": {
-      "bytes": 6226,
-      "sha256": "9937f10228b6e988156bf95bb0e2526b492957a821055ba2317fe87ffe78b8cc",
+      "bytes": 6390,
+      "sha256": "7b98c0dfd8ad7eaeb69ec7c47b623ebad88e018efb3c01d2738157c4d0b9e55a",
       "classification": {
         "role": "research",
         "reason": "H156 owner-directed 5-fold family cross-fit early stopping and {0.5x, 1x, 2x} capacity sweep continuation from r882: nested family isolation, durable selection lock before outer assessment, dual 1219-ctx H145 train-only and 91-ctx DL-Val Elo/bootstrap reporting, bytewise frozen DOPE/anchor state, and bounded resources. Research only; no product or sealed-test qualification."

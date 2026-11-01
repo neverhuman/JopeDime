@@ -5,7 +5,7 @@
   "scored_contexts": 0,
   "tests": {
     "host": "xbabe2",
-    "executed": 8,
+    "executed": 9,
     "failed": 0,
     "command": "python3 -B research/h156/test_h156.py -v"
   },
@@ -62,7 +62,7 @@
   },
   "constructor_source_sha256": {
     "run.py": "211cdcde726f2c309ca81a0ad2e3661fb16ba2539eaa2da298b59a0d2fa20faa",
-    "monitor.py": "9937f10228b6e988156bf95bb0e2526b492957a821055ba2317fe87ffe78b8cc",
+    "monitor.py": "7b98c0dfd8ad7eaeb69ec7c47b623ebad88e018efb3c01d2738157c4d0b9e55a",
     "analysis.py": "916146656723f48d6fe619d893a576dc9b2059e086555d3148b7f78220bad3f6"
   }
 }
