@@ -4343,40 +4343,40 @@
         "role": "research",
         "reason": "H170 preregistered one-cycle LR/inverse-momentum continuation on a read-only r882 copy. Offline research source only; no product, protected-data, speed or serving qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h169_optimizer_geometry/analysis.py": {
+      "bytes": 7086,
+      "classification": {
+        "role": "research",
+        "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "30af2ebeda438de7db1d7e4e592a46dffbc273b4cb31dabb3925ab7d1fcac527"
+    },
+    "python:research/flywheel_selfplay/h169_optimizer_geometry/treatment.py": {
+      "bytes": 2340,
+      "classification": {
+        "role": "research",
+        "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "30f243e772dbb123ed81cb25e8f32c14e800afef50b6d840802dabddcb443634"
+    },
+    "python:research/flywheel_selfplay/h169_optimizer_geometry/runner.py": {
+      "bytes": 30768,
+      "classification": {
+        "role": "research",
+        "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "8ec30b06f92c8ad9b369c2c2c3257c61bcac557f1a1d65ad10e94664557e85b6"
+    },
+    "python:research/flywheel_selfplay/h169_optimizer_geometry/monitor.py": {
+      "bytes": 5293,
+      "classification": {
+        "role": "research",
+        "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "b1d173305ac59c60f4d34b355df62479ebdfb5ac6103ac0646a6d6525c7ea2a3"
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
-  "scope": "Non-test research source roles and exact source hashes. Native jope-records test inventory permits only test-bearing CI coverage families; these source records are not exclusions or claimed tests.",
-  "python:research/flywheel_selfplay/h169_optimizer_geometry/analysis.py": {
-    "bytes": 7086,
-    "classification": {
-      "role": "research",
-      "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
-    },
-    "sha256": "30af2ebeda438de7db1d7e4e592a46dffbc273b4cb31dabb3925ab7d1fcac527"
-  },
-  "python:research/flywheel_selfplay/h169_optimizer_geometry/treatment.py": {
-    "bytes": 2340,
-    "classification": {
-      "role": "research",
-      "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
-    },
-    "sha256": "30f243e772dbb123ed81cb25e8f32c14e800afef50b6d840802dabddcb443634"
-  },
-  "python:research/flywheel_selfplay/h169_optimizer_geometry/runner.py": {
-    "bytes": 30768,
-    "classification": {
-      "role": "research",
-      "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
-    },
-    "sha256": "8ec30b06f92c8ad9b369c2c2c3257c61bcac557f1a1d65ad10e94664557e85b6"
-  },
-  "python:research/flywheel_selfplay/h169_optimizer_geometry/monitor.py": {
-    "bytes": 5293,
-    "classification": {
-      "role": "research",
-      "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
-    },
-    "sha256": "b1d173305ac59c60f4d34b355df62479ebdfb5ac6103ac0646a6d6525c7ea2a3"
-  }
+  "scope": "Non-test research source roles and exact source hashes. Native jope-records test inventory permits only test-bearing CI coverage families; these source records are not exclusions or claimed tests."
 }
