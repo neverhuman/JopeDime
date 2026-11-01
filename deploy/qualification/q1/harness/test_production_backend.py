@@ -103,6 +103,15 @@ class ProductionBackendTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "identity mismatch"):
             backend.validate_receipt(receipt, self.request)
 
+    def test_refuses_unrecognized_request_fields(self):
+        request = copy.deepcopy(self.request)
+        request["target"] = "inferred-target"
+        request["request_sha256"] = backend.digest(
+            {key: value for key, value in request.items() if key != "request_sha256"}
+        )
+        with self.assertRaisesRegex(ValueError, "request fields"):
+            backend.validate_receipt(self.receipt, request)
+
     def test_refuses_missing_attempt_and_requested_budget_echo(self):
         receipt = copy.deepcopy(self.receipt)
         receipt["attempts"].pop()

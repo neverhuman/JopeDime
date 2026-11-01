@@ -9,6 +9,39 @@ import sys
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
+REQUEST_KEYS = {
+    "schema",
+    "mode",
+    "plan_sha256",
+    "source_commit",
+    "pins",
+    "metric",
+    "dataset",
+    "guidance",
+    "seed",
+    "budget",
+    "request_sha256",
+}
+DATASET_KEYS = {
+    "id",
+    "task",
+    "dataset_sha256",
+    "family",
+    "family_authoritative",
+    "rows",
+    "features",
+    "cut_sha256",
+    "holdout_group",
+}
+PIN_KEYS = {
+    "bundle_sha256",
+    "dope_sha256",
+    "evaluator_sha256",
+    "vocabulary_sha256",
+    "protocol_sha256",
+    "training_family_manifest_sha256",
+}
+
 
 def canonical(value):
     return json.dumps(
@@ -50,6 +83,10 @@ def sha(value):
 
 
 def validate_receipt(receipt, request):
+    require(
+        isinstance(request, dict) and set(request) == REQUEST_KEYS,
+        "invalid Q1 request fields",
+    )
     require(request.get("schema") == "jope.q1-request/v1", "unsupported Q1 request")
     require(
         request.get("mode") == "qualification",
@@ -62,6 +99,19 @@ def validate_receipt(receipt, request):
         and request["budget"] > 0
         and request.get("metric") == "rmse",
         "invalid request seed, budget or metric",
+    )
+    require(
+        sha(request.get("plan_sha256"))
+        and isinstance(request.get("source_commit"), str)
+        and len(request["source_commit"]) == 40
+        and all(char in "0123456789abcdef" for char in request["source_commit"]),
+        "invalid request source/plan identity",
+    )
+    require(
+        isinstance(request.get("pins"), dict)
+        and set(request["pins"]) == PIN_KEYS
+        and all(sha(value) for value in request["pins"].values()),
+        "invalid request pins",
     )
     expected_request_hash = request.get("request_sha256")
     unhashed_request = {
@@ -82,7 +132,24 @@ def validate_receipt(receipt, request):
         "receipt request mismatch",
     )
     dataset = request.get("dataset")
-    require(isinstance(dataset, dict), "dataset identity missing")
+    require(
+        isinstance(dataset, dict)
+        and set(dataset) == DATASET_KEYS
+        and isinstance(dataset.get("id"), str)
+        and len(dataset["id"]) == 16
+        and all(char in "0123456789abcdef" for char in dataset["id"])
+        and sha(dataset.get("dataset_sha256"))
+        and dataset["dataset_sha256"].startswith(dataset["id"])
+        and sha(dataset.get("cut_sha256"))
+        and dataset.get("task") == "regression"
+        and dataset.get("family_authoritative") is True
+        and dataset.get("holdout_group") == "sealed_meta_test"
+        and type(dataset.get("rows")) is int
+        and dataset["rows"] > 0
+        and type(dataset.get("features")) is int
+        and dataset["features"] > 0,
+        "dataset identity missing or invalid",
+    )
     identity = receipt.get("identity")
     require(isinstance(identity, dict), "receipt identity missing")
     require(
