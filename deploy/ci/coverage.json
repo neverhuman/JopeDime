@@ -7351,7 +7351,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -14308,6 +14308,16 @@
       ],
       "lanes": [],
       "scope": "H166 owner-directed C-Mixup label-similarity mixup r882 adapter continuation study; data-free target-similarity kernel, rank-aligned slate mixing, None-grad guard, and cross-fit selector controls. Research only; no product/sealed qualification."
+    },
+    "python:research/flywheel_selfplay/h168_selector_remedy/test_h168.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
     }
   },
   "lanes": {
