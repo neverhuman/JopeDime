@@ -70,16 +70,11 @@
     "completed_round_wall_seconds": "summary.wall_seconds; rates divide total completed rounds or strict program promotions by their summed wall time",
     "reported_best_round": "adapter_admission.best_round; a logged identity, not the first strict increase in utility"
   },
-  "code_references": [
-    "research/flywheel_selfplay/automatic_promotion.py:206-273",
-    "research/flywheel_selfplay/dev_incumbent.py:524-570",
-    "crates/jope-telemetry/src/hooks/flywheel.rs:316-338,362-365"
-  ],
   "interpretation_source_commit": "fea10d2c15ae8544cfc851ce4d79755041120473",
   "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
   "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
   "csv_sha256": "a4999500f97cb98c3ef3fd3bab0bb42aa4e91982997923c28d095f08691adabd",
-  "extraction_script_sha256": "d228427829cb8224d65e2205573fc94fe778c6b38c14672e86c6a845db373e16",
+  "extraction_script_sha256": "19aa25fc6bae13f774ad916bd484c64745da906b6ec55694b6d95aff045a6b04",
   "reproduce": "python3 figures/scripts/make_subsequent_window_figure.py --logs SNAPSHOT_DIR",
   "figure_sha256": "48991bdef87341dc6668078f0deddc9a9ccc2b48f211163db73d0c11ad7db8e7",
   "matplotlib_version": "3.10.8",

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Plot retained development logs; optionally extract with --logs SNAPSHOT_DIR."""
+"""Plot retained development logs; optionally extract with --logs SNAPSHOT_DIR.
+
+The default promotion plot is an archived window. The manuscript uses the
+live-development and live-admissions generators for its current main panels.
+Historical target modes require --source-dir with the retained input tables.
+"""
 import argparse
 import csv
 import hashlib
@@ -21,11 +26,9 @@ PROVENANCE = DATA.with_suffix(".provenance.json")
 FIELDS = ["round", "program_promotions", "candidate_validation_utility"]
 
 
-def target_progress():
+def target_progress(source):
     """Recompute historical development counts from the merged publication tables."""
-    root = FIGURES.parents[2]
-    source = root / "docs/internal/asm-manual/data/target-history"
-    names = ["target-quality-1000-comparisons.csv", "target-quality-1000-summary.csv",
+    names = ["comparisons.csv", "summary.csv",
              "carry-forward-audit.json"]
     inputs = {name: (source / name).read_bytes() for name in names}
     comparisons = list(csv.DictReader(inputs[names[0]].decode().splitlines()))
@@ -73,10 +76,10 @@ def target_progress():
     provenance = {
         "schema": "whitepaper.historical-target-progress/v1",
         "source_commit": "569324b7760a95be26e817ce843b2430e32095fb",
-        "inputs": {str((source / name).relative_to(root)): hashlib.sha256(data).hexdigest()
+        "inputs": {name: hashlib.sha256(data).hexdigest()
                    for name, data in inputs.items()},
         "selection": "All 159 merged comparison rows; first versus last retained generation per arm group",
-        "score": "best_validation_rmse; historical featmath_training_fold_normalized_v1 units; lower is better",
+        "score": "best_validation_rmse; historical normalized training-fold RMSE units; lower is better",
         "outcome_rule": "Exact parsed score comparisons (<, ==, >); no epsilon or added cumulative minimum",
         "completed_evaluations_per_search": 1000,
         "arm_groups": len(comparisons), "distinct_dataset_cuts": len(contexts),
@@ -89,7 +92,7 @@ def target_progress():
                         "Original score/seed payloads were not reopened; seed audit is retained metadata"],
         "csv_sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
         "generator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-        "reproduce": "python3 figures/scripts/make_promotions_figure.py --target-progress",
+        "reproduce": "python3 figures/scripts/make_promotions_figure.py --target-progress --source-dir INPUT_DIR",
     }
     output.with_suffix(".provenance.json").write_text(json.dumps(provenance, indent=2) + "\n")
     plt.rcParams.update({"font.family": "serif", "font.size": 8, "axes.labelsize": 8,
@@ -126,11 +129,9 @@ def target_progress():
           f"{sum(row['lower'] for row in rows)} lower groups on {len(improved_contexts)} dataset/cuts")
 
 
-def target_history():
+def target_history(source):
     """Plot every retained generation of the published post-hoc development example."""
-    root = FIGURES.parents[2]
-    source = root / "docs/internal/asm-manual/data/target-history"
-    names = ["target-quality-pine-chromium-cut1.csv", "target-quality-1000-comparisons.csv",
+    names = ["selected-historical-cut.csv", "comparisons.csv",
              "carry-forward-audit.json"]
     inputs = {name: (source / name).read_bytes() for name in names}
     history = list(csv.DictReader(inputs[names[0]].decode().splitlines()))
@@ -169,13 +170,13 @@ def target_history():
     provenance = {
         "schema": "whitepaper.historical-target-history/v1",
         "source_commit": "54f1023225364cefbb49ba7ee12ad967dddf3ce8",
-        "inputs": {str((source / name).relative_to(root)): hashlib.sha256(data).hexdigest()
+        "inputs": {name: hashlib.sha256(data).hexdigest()
                    for name, data in inputs.items()},
         "selection": "Post-hoc example: largest first-to-last relative reduction in the policy-seeded 1000-evaluation comparison subset",
         "rows": len(rows), "generations_per_arm": 71,
         "completed_evaluations_per_search": 1000,
         "comparison_identity_sha256": history[0]["comparison_identity_sha256"],
-        "score": "best_validation_rmse; historical featmath_training_fold_normalized_v1 units; lower is better",
+        "score": "best_validation_rmse; historical normalized training-fold RMSE units; lower is better",
         "transformation": "All raw reported scores retained; no cumulative minimum, smoothing or interpolation",
         "first_generation_reporting_final_value": first_final_generation,
         "scope": "Historical adaptive development validation only; no sealed or holdout inputs",
@@ -186,7 +187,7 @@ def target_history():
                         "Checkpoint exposure of improved targets to later optimizer batches remains unjoined"],
         "csv_sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
         "generator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-        "reproduce": "python3 figures/scripts/make_promotions_figure.py --target-history",
+        "reproduce": "python3 figures/scripts/make_promotions_figure.py --target-history --source-dir INPUT_DIR",
     }
     output.with_suffix(".provenance.json").write_text(json.dumps(provenance, indent=2) + "\n")
     plt.rcParams.update({"font.family": "serif", "font.size": 8, "axes.labelsize": 8,
@@ -249,7 +250,7 @@ def extract(logs):
         entry.pop("inode", None)
     provenance = {
         "schema": "whitepaper.development-program-promotions/v1",
-        "source_run": "run-20261030 (retained development run; host and path withheld)",
+        "source_run": "retained-development-run",
         "snapshot": snapshot,
         "input_sha256": {name: hashlib.sha256(data).hexdigest()
                          for name, data in inputs.items()},
@@ -261,8 +262,6 @@ def extract(logs):
         "promotion_CI_scope": dict(Counter(r["CI_scope"] for r in selected)),
         "evaluation_identities": sorted({r["evaluation_identity"] for r in summaries}),
         "metric_definition": "summary.val_reg = candidate_dev_utility.val_reg; larger logged utility is better",
-        "code_references": ["research/flywheel_selfplay/automatic_promotion.py:206",
-                            "crates/jope-telemetry/src/hooks/flywheel.rs:362"],
         "source_binding": "Inspected code explains fields; the installed run source/checkpoint binding remains required",
         "scope": "Development telemetry; no sealed data, final test or one-proposal comparison",
         "csv_sha256": hashlib.sha256(DATA.read_bytes()).hexdigest(),
@@ -278,12 +277,15 @@ selection.add_argument("--target-progress", action="store_true",
                        help="Plot historical GP target progress from the merged publication tables")
 selection.add_argument("--target-history", action="store_true",
                        help="Plot all generations of the merged historical GP target example")
+parser.add_argument("--source-dir", type=Path, help="Retained historical tables with neutral filenames")
 args = parser.parse_args()
+if (args.target_history or args.target_progress) and args.source_dir is None:
+    parser.error("historical target modes require --source-dir INPUT_DIR")
 if args.target_history:
-    target_history()
+    target_history(args.source_dir)
     raise SystemExit(0)
 if args.target_progress:
-    target_progress()
+    target_progress(args.source_dir)
     raise SystemExit(0)
 if args.logs:
     extract(args.logs)

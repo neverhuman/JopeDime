@@ -1,0 +1,280 @@
+{
+  "schema": "jope.rel07.gate-command-scaffold/v1",
+  "qualification_handoff": "NOT_EXECUTABLE",
+  "candidate_sha256": "${JOPE_REL07_ARTIFACT_SHA256}",
+  "source_policy": "Pin the exact clean origin/main SHA when materializing a run manifest.",
+  "input_owner": "dsc01 supplies and verifies the named A5, D1, M2, and M5 inputs.",
+  "gates": [
+    {
+      "id": "M1",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/m1.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "M2",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/m2.py",
+        "--golden-dir",
+        "${JOPE_GOLDEN_DIR}",
+        "--golden-index-sha256",
+        "${JOPE_GOLDEN_INDEX_SHA256}",
+        "--parity-bundle-dir",
+        "${JOPE_PARITY_BUNDLE_DIR}",
+        "--parity-report-dir",
+        "${JOPE_PARITY_REPORT_DIR}"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "M3",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/m3.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "M4",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/m4.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "M5",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/m5.py",
+        "--golden-dir",
+        "${JOPE_GOLDEN_DIR}",
+        "--bundle-dir",
+        "${JOPE_PARITY_BUNDLE_DIR}"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "S1",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/s1.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "S2",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/s2.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "S3",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/s3.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "S4",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/s4.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "R1",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/r1.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "R2",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/r2.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "R3",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/r3.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "R4",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/r4.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "A1",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/a1.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "A2",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/a2.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "A3",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/a3.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "A4",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/a4.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "A5",
+      "argv": [
+        "/usr/bin/env",
+        "JOPE_REL07_A5_MANIFEST=${JOPE_REL07_A5_MANIFEST}",
+        "JOPE_REL07_A5_MANIFEST_SHA256=${JOPE_REL07_A5_MANIFEST_SHA256}",
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/a5.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "E1",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/e1.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "E2",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/e2.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "E3",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/e3.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "U1",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/u1.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "U2",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/u2.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "T1",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/t1.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "T2",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/t2.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "T3",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/t3.py"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "D1",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/d1.py",
+        "--macos-receipt",
+        "${JOPE_REL07_D1_MACOS_RECEIPT}",
+        "--macos-receipt-sha256",
+        "${JOPE_REL07_D1_MACOS_RECEIPT_SHA256}"
+      ],
+      "timeout_seconds": 3600
+    },
+    {
+      "id": "D2",
+      "argv": [
+        "python3",
+        "-B",
+        "deploy/qualification/v1.0/providers/d2.py"
+      ],
+      "timeout_seconds": 3600
+    }
+  ]
+}

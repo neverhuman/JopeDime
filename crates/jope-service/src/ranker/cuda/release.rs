@@ -1,4 +1,4 @@
-//! Adapter for the owner-admitted r782 release's decoded assets and envelope.
+//! Adapters for the owner-admitted releases' decoded assets and envelopes.
 //! Tensor expectations are frozen release metadata, never inferred from weights.
 use crate::ranker::bundle::{
     load_bundle, read_hashed_asset, AssetIdentity, BundleDigest, BundleInput, BundleLimits,
@@ -11,7 +11,9 @@ use serde::Deserialize;
 use std::{collections::BTreeMap, fs::File, io::Read, path::Path};
 
 pub const R782: &str = "sha256:94fd9587675c7806bd0a0582b6e97540cd2fdc7ebbc51958411b905185cad85c";
+pub const R882: &str = "sha256:057e50a9a741d30d541ed8af8339cec84a5157af621100cb70857052ef14dacc";
 const CATALOG_SHA: &str = "d5a4b21e6167dbd637e940acd3a11d6357c147bb021ea2a8929f06c71951e34f";
+const R882_CATALOG_SHA: &str = "3af56a817bfae39b70f0b2f60668fe88fae178650ee596e1ba7a180acba1e0c6";
 
 #[derive(Deserialize)]
 struct ReleaseMetadata {
@@ -58,21 +60,49 @@ fn bounded(path: &Path, maximum: u64) -> Result<Vec<u8>> {
 /// the production loader independently rechecks the existing release signature,
 /// every selected decoded hash and the fixed complete tensor inventories.
 pub fn load_r782_release(root: &Path) -> Result<VerifiedBundle> {
+    load_release(
+        root,
+        240_292,
+        CATALOG_SHA,
+        "jope.r782-release-catalog/v1",
+        R782,
+    )
+}
+
+/// R1 t0140 admits these exact r882 bytes for explicit internal execution.
+/// Authentication does not grant a quality, default-guidance or Q1 gate.
+pub fn load_r882_release(root: &Path) -> Result<VerifiedBundle> {
+    load_release(
+        root,
+        48_885,
+        R882_CATALOG_SHA,
+        "jope.r882-release-catalog/v1",
+        R882,
+    )
+}
+
+fn load_release(
+    root: &Path,
+    catalog_bytes: u64,
+    catalog_sha: &str,
+    schema: &str,
+    bundle: &str,
+) -> Result<VerifiedBundle> {
     let limits = BundleLimits::default();
     let bytes = read_hashed_asset(
         File::open(root.join("release-catalog.json"))?,
         AssetIdentity {
-            bytes: 240_292,
-            sha256: digest(CATALOG_SHA)?,
+            bytes: catalog_bytes,
+            sha256: digest(catalog_sha)?,
         },
         limits,
     )?;
     let metadata: ReleaseMetadata = serde_json::from_slice(&bytes)?;
     ensure!(
-        metadata.schema == "jope.r782-release-catalog/v1"
-            && metadata.bundle_digest == R782
+        metadata.schema == schema
+            && metadata.bundle_digest == bundle
             && metadata.dope_logical_composite == FROZEN_DOPE_COMPOSITE,
-        "release is not the admitted frozen r782"
+        "release is not the admitted frozen bundle"
     );
     let catalog = ReleaseCatalog {
         bundle_digest: BundleDigest::parse(&metadata.bundle_digest)?,

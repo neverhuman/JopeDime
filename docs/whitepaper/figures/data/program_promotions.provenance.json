@@ -1,6 +1,6 @@
 {
   "schema": "whitepaper.development-program-promotions/v1",
-  "source_run": "run-20261030 (retained development run; host and path withheld)",
+  "source_run": "retained-development-run",
   "snapshot": {
     "at": "2026-10-31T06:23:19.717660+00:00",
     "kind": "read-only complete-line development-log prefixes; no dataset or weight files read",
@@ -46,10 +46,6 @@
     "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83"
   ],
   "metric_definition": "summary.val_reg = candidate_dev_utility.val_reg; larger logged utility is better",
-  "code_references": [
-    "research/flywheel_selfplay/automatic_promotion.py:206",
-    "crates/jope-telemetry/src/hooks/flywheel.rs:362"
-  ],
   "source_binding": "Inspected code explains fields; the installed run source/checkpoint binding remains required",
   "scope": "Development telemetry; no sealed data, final test or one-proposal comparison",
   "csv_sha256": "a5c6be48052332bfad27ad12145fc34ce07434759d71eb1e77cda7ef596d04b6",

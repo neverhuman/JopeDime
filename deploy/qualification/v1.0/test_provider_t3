@@ -32,10 +32,17 @@ class T3Tests(unittest.TestCase):
         self.repo.mkdir()
         self.artifact = self.root / "candidate"
         self.artifact.write_bytes(b"controlled provider fixture; not a release")
-        self.ctx = Context("T3", self.artifact, hashlib.sha256(self.artifact.read_bytes()).hexdigest(), "a" * 40, self.root / "result.json")
+        self.ctx = Context(
+            "T3",
+            self.artifact,
+            hashlib.sha256(self.artifact.read_bytes()).hexdigest(),
+            "a" * 40,
+            self.root / "result.json",
+        )
         self.calls, self.test_calls = [], 0
         self.source, self.dirty = self.ctx.source_sha, ""
         self.output_override, self.returncode = None, 0
+        self.output_override_test = None
         self.after_test = lambda: None
         self.addCleanup(patch.stopall)
         patch.object(t3, "ROOT", self.repo).start()
@@ -47,29 +54,56 @@ class T3Tests(unittest.TestCase):
         elif args[:2] == ["git", "status"]:
             output = self.dirty
         elif args[0] == "cargo" and args[1] == "run":
-            output = json.dumps({"manifest": {"profile": "full", "scope": "release", "source": {"sha40": self.ctx.source_sha}}}) if "inspect" in args else json.dumps({"schema": "jope.appliance-verify/v1", "ok": True})
+            output = (
+                json.dumps(
+                    {
+                        "manifest": {
+                            "profile": "full",
+                            "scope": "release",
+                            "source": {"sha40": self.ctx.source_sha},
+                        }
+                    }
+                )
+                if "inspect" in args
+                else json.dumps({"schema": "jope.appliance-verify/v1", "ok": True})
+            )
         else:
             self.test_calls += 1
             test = t3.TESTS[self.test_calls - 1]
             self.after_test()
-            output = self.output_override or (f"running 1 test\ntest {test} ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n")
+            if self.output_override is not None and self.output_override_test in (
+                None,
+                test,
+            ):
+                output = self.output_override
+            else:
+                output = f"running 1 test\ntest {test} ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n"
             return subprocess.CompletedProcess(args, self.returncode, output, "")
         return subprocess.CompletedProcess(args, 0, output, "")
 
     def invoke(self):
-        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
             return t3.qualify(self.ctx, run=self.run_child)
 
-    def test_four_exact_clauses_produce_candidate_bound_counts(self):
+    def test_three_exact_clauses_produce_candidate_bound_counts(self):
         self.assertEqual(self.invoke(), 0)
         result = json.loads(self.ctx.result.read_text())
         self.assertEqual(result["artifact_sha256"], self.ctx.artifact_sha256)
         self.assertEqual(result["source_sha"], self.ctx.source_sha)
-        self.assertEqual(result["counts"], {k: 4 * v for k, v in t3.SINGLE_PASS.items()})
-        self.assertEqual(self.test_calls, 4)
+        self.assertEqual(
+            result["counts"], {k: 3 * v for k, v in t3.SINGLE_PASS.items()}
+        )
+        self.assertEqual(self.test_calls, 3)
         for test in t3.TESTS:
             self.assertIn(t3.command(test), self.calls)
             self.assertIn("--exact", t3.command(test))
+        self.assertIn("--nocapture", t3.command(t3.TESTS[1]))
+        self.assertIn("--nocapture", t3.command(t3.TESTS[2]))
+        self.assertNotIn("--ignored", t3.command(t3.TESTS[1]))
+        self.assertIn("--ignored", t3.command(t3.TESTS[2]))
 
     def test_zero_ignored_and_multiple_cases_never_pass(self):
         for output in (
@@ -82,16 +116,44 @@ class T3Tests(unittest.TestCase):
                 self.invoke()
         self.assertFalse(self.ctx.result.exists())
 
+    def test_valid_interleaved_benchmark_output_is_accepted(self):
+        test = t3.TESTS[-1]
+        self.output_override_test = test
+        self.output_override = (
+            f"running 1 test\ntest {test} ... fixed work off 2.9s on 2.8s overhead -3.8%\n"
+            "ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n"
+        )
+        self.assertEqual(self.invoke(), 0)
+        self.assertEqual(self.test_calls, len(t3.TESTS))
+        result = json.loads(self.ctx.result.read_text())
+        self.assertEqual(result["status"], "PASS")
+
     def test_wrong_or_dirty_source_refuses_before_tests(self):
         for source, dirty in [("b" * 40, ""), (self.ctx.source_sha, " M file.rs")]:
             self.source, self.dirty = source, dirty
-            with self.subTest(source=source, dirty=dirty), self.assertRaises(ProviderError):
+            with (
+                self.subTest(source=source, dirty=dirty),
+                self.assertRaises(ProviderError),
+            ):
                 self.invoke()
         self.assertEqual(self.test_calls, 0)
 
     def test_artifact_drift_during_suite_refuses_receipt(self):
         self.after_test = lambda: self.artifact.write_bytes(b"changed")
         with self.assertRaisesRegex(ProviderError, "candidate bytes changed"):
+            self.invoke()
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_same_bytes_symlink_swap_refuses_receipt(self):
+        saved = self.root / "saved-candidate"
+        saved.write_bytes(self.artifact.read_bytes())
+
+        def swap():
+            self.artifact.unlink()
+            self.artifact.symlink_to(saved)
+
+        self.after_test = swap
+        with self.assertRaises(ProviderError):
             self.invoke()
         self.assertFalse(self.ctx.result.exists())
 

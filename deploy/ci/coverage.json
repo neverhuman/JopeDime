@@ -4269,6 +4269,16 @@
       "lanes": [],
       "scope": "Standalone pytest protocol/statistical fixtures for the Q1 qualification harness (QLT-01, #497): owner-signature refusal, sealed-holdout and smoke-scope guards, backend-failure accounting; no learned model or sealed payload executes. Not collected by a CI lane; owner-signed qualification runs are separate."
     },
+    "python:deploy/qualification/q1/harness/test_q1_cut.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Standalone unittest controls for the Q1 canonical cut hash (QLT-04, jope.q1-cut/v1): golden cross-language digest, key-order independence, field/order sensitivity and invalid-fold refusal; data-free, no learned model or sealed payload executes."
+    },
     "python:deploy/qualification/v1.0/test_cpu_gates.py": {
       "discovery": {
         "kind": "python-family"
@@ -4438,6 +4448,16 @@
       ],
       "lanes": [],
       "scope": "REL-07 PR1382 provider controls: candidate/source binding, exact test execution, drift/failure/overwrite refusals. Synthetic fixtures validate orchestration only; actual candidate release execution remains separate."
+    },
+    "python:deploy/qualification/v1.0/test_release_command_scaffold.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 PR1454 provider controls: candidate/source binding, exact test execution, drift/failure/overwrite refusals. Synthetic fixtures validate orchestration only; actual candidate release execution remains separate."
     },
     "python:ops/s3_shard_cache/test_s3_shard_cache.py": {
       "discovery": {
@@ -5474,6 +5494,16 @@
       "lanes": [],
       "scope": "H169 owner-directed optimizer-geometry continuation wave on the r882 adapter; data-free controls only, no checkpoint, corpus, sealed or holdout data in the fixture suite; offline research."
     },
+    "python:research/flywheel_selfplay/h170_onecycle/test_h170.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H170 data-free one-cycle LR/beta1 endpoints and applied native AdamW steps, mean-LR dose match, None-gradient and full-adapter drift, family cross-fit/strict best-only selector, shared-family median bootstrap/Holm/canonical Elo, exact prediction/adapter pseudoreplication disclosures, aggregate terminal resources and external launch binding. Offline real-S3 regression research only; no product, sealed, serving or speed qualification."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"
@@ -5903,6 +5933,16 @@
       ],
       "lanes": [],
       "scope": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract)."
+    },
+    "python:research/flywheel_selfplay/rnk10_r882_release/test_prepare_release.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "RNK-10 offline research exporter and verified-bytes substitution regression for the pinned r882 adapter bundle; research only, no product runtime, signing, or scientific qualification."
     },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
       "discovery": {
@@ -7391,7 +7431,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -14339,7 +14379,7 @@
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
     },
-    "python:research/flywheel_selfplay/h170_onecycle/test_h170.py": {
+    "python:research/flywheel_selfplay/h171_grad_accum/test_h171.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -14347,7 +14387,17 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H170 data-free one-cycle LR/beta1 endpoints and applied native AdamW steps, mean-LR dose match, None-gradient and full-adapter drift, family cross-fit/strict best-only selector, shared-family median bootstrap/Holm/canonical Elo, exact prediction/adapter pseudoreplication disclosures, aggregate terminal resources and external launch binding. Offline real-S3 regression research only; no product, sealed, serving or speed qualification."
+      "scope": "H171 owner-directed large effective batch via family-stratified gradient accumulation r882 continuation study (CTRL, ACC4, ACC16, CTRL_EX4); data-free family-stratified batch plan, None-as-zero 29,211-param gradient cosine diagnostic, strict selector and resource controls. Research only; no product or sealed qualification."
+    },
+    "python:research/h172/test_h172.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; data-free inner-CV selector, L-BFGS convergence, None-grad guard, and placebo leak controls. Research only; no product/sealed qualification."
     }
   },
   "lanes": {
@@ -15659,8 +15709,6 @@
     "lanes": [],
     "scope": "H163 data-free score direction, candidate ID alignment, stable argmin ties, z-normalization/rank ensemble, and strict paired family-bootstrap selector controls. Offline research only; no checkpoint, corpus, or live promotion in unit tests."
   },
-  "schema": "jope.coverage/v1",
-  "stage": "static",
   "python:research/flywheel_selfplay/h169_optimizer_geometry/test_h169.py": {
     "discovery": {
       "kind": "python-family"
@@ -15670,5 +15718,7 @@
     ],
     "lanes": [],
     "scope": "H169 data-free controls: family exclusion/assessment coverage, repeatable FIT-only minibatches, strict selection, drift calibration, exact optimizer pins, None-gradient materialization, bootstrap/Holm/Elo, and resource guards. No study data, checkpoint, model, or serving qualification."
-  }
+  },
+  "schema": "jope.coverage/v1",
+  "stage": "static"
 }

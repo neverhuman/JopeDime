@@ -4375,6 +4375,62 @@
         "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
       },
       "sha256": "b1d173305ac59c60f4d34b355df62479ebdfb5ac6103ac0646a6d6525c7ea2a3"
+    },
+    "python:research/flywheel_selfplay/h171_grad_accum/analysis.py": {
+      "bytes": 12151,
+      "sha256": "16640f1dd5f0f9375cbea3470e3a0199071488dfb47dcaa97b7abc71eb48fb75",
+      "classification": {
+        "role": "research",
+        "reason": "H171 owner-directed large effective batch via family-stratified gradient accumulation r882 continuation study (CTRL, ACC4, ACC16, CTRL_EX4); data-free family-stratified batch plan, None-as-zero 29,211-param gradient cosine diagnostic, strict selector and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h171_grad_accum/treatment.py": {
+      "bytes": 9404,
+      "sha256": "de8de6c4f0030893577641435c8894cc014b90f3a73438ddb9fe252299d3cdf1",
+      "classification": {
+        "role": "research",
+        "reason": "H171 owner-directed large effective batch via family-stratified gradient accumulation r882 continuation study (CTRL, ACC4, ACC16, CTRL_EX4); data-free family-stratified batch plan, None-as-zero 29,211-param gradient cosine diagnostic, strict selector and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h171_grad_accum/runner.py": {
+      "bytes": 53098,
+      "sha256": "3c07b93e5ad0c34cadfdab1a7e072275f00069202da46740799aee6469d68512",
+      "classification": {
+        "role": "research",
+        "reason": "H171 owner-directed large effective batch via family-stratified gradient accumulation r882 continuation study (CTRL, ACC4, ACC16, CTRL_EX4); data-free family-stratified batch plan, None-as-zero 29,211-param gradient cosine diagnostic, strict selector and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h171_grad_accum/monitor.py": {
+      "bytes": 4891,
+      "sha256": "1e99dd69ac8292ad18982e5f24c6e62633d5f83858a9ec5936af27dafab20596",
+      "classification": {
+        "role": "research",
+        "reason": "H171 owner-directed large effective batch via family-stratified gradient accumulation r882 continuation study (CTRL, ACC4, ACC16, CTRL_EX4); data-free family-stratified batch plan, None-as-zero 29,211-param gradient cosine diagnostic, strict selector and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/h172/analysis.py": {
+      "bytes": 19836,
+      "sha256": "9118315aab9920d93781fb270b67da88dcbda67f52be0bf1c5c7cdf3339e4253",
+      "classification": {
+        "role": "research",
+        "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; family cross-fit L-BFGS runner and bounded CPU supervisor. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/h172/monitor.py": {
+      "bytes": 4970,
+      "sha256": "90606ab114f1e3d394147be90d19facb117aba1a6807a9f880410ceec3d6c77f",
+      "classification": {
+        "role": "research",
+        "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; family cross-fit L-BFGS runner and bounded CPU supervisor. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/h172/run.py": {
+      "bytes": 61489,
+      "sha256": "33e81f10ef55f0c3f32993e24dd7df15d3fa2ac1d0d41d44e549ee9ec2d71601",
+      "classification": {
+        "role": "research",
+        "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; family cross-fit L-BFGS runner and bounded CPU supervisor. Research only; no product/sealed qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

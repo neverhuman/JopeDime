@@ -105,9 +105,6 @@ def extract(logs):
             "completed_round_wall_seconds": "summary.wall_seconds; rates divide total completed rounds or strict program promotions by their summed wall time",
             "reported_best_round": "adapter_admission.best_round; a logged identity, not the first strict increase in utility",
         },
-        "code_references": ["research/flywheel_selfplay/automatic_promotion.py:206-273",
-                            "research/flywheel_selfplay/dev_incumbent.py:524-570",
-                            "crates/jope-telemetry/src/hooks/flywheel.rs:316-338,362-365"],
         "interpretation_source_commit": ("a13afb4fe8f98b5f9b17fbd8c77650b4c8ba9343"
                                          if args.later_window else
                                          "b2c04a846194bda01310d762d646c8a2a91d26cf"),

@@ -3692,5 +3692,14 @@
   },
   "verdict": "NO_ADVANCE",
   "wall_seconds": 2760.134772193851,
-  "wave": "H166"
+  "wave": "H166",
+  "limitations": {
+    "raw_inner_B_panels_retained": false,
+    "inner_selector_bootstrap_ci_independently_recomputable": false,
+    "redteam_review": 5727305807,
+    "redteam_decision_check_scope": "eligibility/earliest-tie vs recorded candidate statistics only",
+    "primary_oof_replay": "PASS",
+    "causal_explanation": "hypothesis_not_isolated",
+    "r882_scope": "preregistered_hwave_reference"
+  }
 }

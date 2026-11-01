@@ -40,6 +40,22 @@ derived/unreviewed family key, suggested target, or caller default. Catalog
 excluded, and any BeyondArena-derived family is off-limits because the
 authoritative sealed roster is absent.
 
+### Canonical per-cut identity
+
+The pinned protocol defines `jope.q1-cut/v1`. Its SHA-256 input is UTF-8 JSON
+with recursively sorted object keys, compact separators, literal UTF-8 strings
+(`ensure_ascii=false`), and no non-finite numbers. The definition contains
+`dataset_sha256`, `train_blob_sha256`, `train_rows`, `target`, the ordered
+`feature_columns`, and ordered `folds`; each fold contains its `repeat`, ordered
+`train` row indexes, and ordered `validation` row indexes. Object key order is
+irrelevant; feature, fold, and row-index array order is significant. The digest
+field itself and the enclosing dataset-binding digest are excluded to avoid a
+circular hash. The evaluator recomputes this digest from the pinned manifest
+and loaded FIT object and refuses any mismatch. Golden control
+`0c87e715ccb1a01fe05d4bc4e8b81f62f978d8aed0126248d97b866686acf249` is tested
+in both Python and Rust. This is a deterministic source contract, not
+qualification or launch authority.
+
 The engine receives the original closed request unchanged. For a development
 request, dataset resolution is an engine-side operation under the pinned
 catalog and protocol, not additional caller fields that could escape `q1.py`'s
