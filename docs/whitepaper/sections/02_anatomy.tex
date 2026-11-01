@@ -23,7 +23,7 @@
     Engineering & Design target & Design and build & Test & Learn \\
     AlphaGo Zero & Win the game & Moves chosen with search & Game outcome & Network weights \\
     \midrule
-    \EZ{} & Problem encoding and metric & Program writer & Referee on hidden folds & Incumbent pool and weights \\
+    \EZ{} & Problem encoding and metric & Program writer & Referee on hidden folds & Incumbent pool; proposed writer updates \\
     \bottomrule
   \end{tabularx}
 \end{table*}
@@ -125,7 +125,7 @@ improves algorithm invention must be measured in the innovation game.
 
 \subsection{Where the pillars live}\label{sub:anatomy-where}
 
-Machines do not remove the pillars; they move them (\cref{tab:where}). The most ambitious swarm design fits the same anatomy. In an October 2026 essay drawn from his book, Socher rests the Eureka Machine on ``a living map of all human knowledge'', ``a unified model of physical reality'', ``high-fidelity digital twins'' and ``fully autonomous physical laboratories'' \citep{socher2026bookbite,socher2026eureka}. On top of them, millions of AI agents critique each other's ideas. In our terms, the map is retention; the model of reality, the twins and the laboratories are faster and better judgment; and the agents supply variation and critique.
+Machines do not remove the pillars; they move them (\cref{tab:where}). The most ambitious swarm design fits the same anatomy. In an October 2026 essay drawn from his book, Socher rests the Eureka Machine on ``a living map of all human knowledge'', ``a unified model of physical reality'', ``high-fidelity digital twins'' and ``fully autonomous physical laboratories'' \citep{socher2026bookbite,socher2026eureka}. On top of them, millions of AI agents critique each other's ideas. In our terms, that knowledge archive supplies retention; the model of reality, the twins and the laboratories supply judgment; and the agents supply variation and critique.
 
 Agent search can retain programs, revise its context or update its
 proposer. The label \emph{swarm} does not specify which it does. The
@@ -151,14 +151,14 @@ people still set the aim.}
     Aim & The researcher chooses & A person writes the goal & Problem encoding and metric, chosen by people for now \\
     Variation & The scientist's ideas & Agents propose and critique & One candidate per test problem \\
     Judgment & Experiments, peer review & Experiments, simulators, autonomous labs & The referee, on hidden folds \\
-    Retention & The literature & Logs, archives, a map of knowledge & Incumbent pool and the writer's weights \\
+    Retention & The literature & Logs, archives, a map of knowledge & Incumbent pool; proposed writer updates \\
     \addlinespace
-    Where taste lives & Years of training, in one head & Weights fixed; context can adapt & Training on referee feedback \\
+    Where taste lives & Years of training, in one head & Weights fixed; context can adapt & Writer training (proposed) \\
     Deployment budget & Varies by problem & Multiple adaptive attempts & One candidate; success measured \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
-The location of retention determines what feedback can change: a stored
-solution, candidate selection or the proposer itself. \Cref{sec:road}
-traces how earlier AI methods connect these roles.
+These examples separate retained solutions, task-specific selection and
+proposer updates. \Cref{sec:road} traces how earlier AI methods connect
+those roles to executable tests.
