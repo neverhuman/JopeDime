@@ -1,0 +1,49 @@
+{
+  "status": "RETENTION_COMPONENTS_VERIFIED_FULL_ORIGINAL_PANEL_UNQUALIFIED",
+  "rounds": [
+    1704,
+    2499
+  ],
+  "tree_objects": 796,
+  "first_attempt_completions": 31952,
+  "counts": {
+    "excluded_not_selected": 146480,
+    "completed_pass": 31451,
+    "quality_measured": 31952,
+    "passing_residual_measured": 31451,
+    "gate_measured": 31952,
+    "completed_gate_fail": 501,
+    "passing_residual_missing": 501,
+    "excluded_pool_duplicate": 6352,
+    "excluded_retry": 18992
+  },
+  "original_contexts": 1219,
+  "contexts_with_completions": 1213,
+  "families_with_completions": 205,
+  "contexts_with_training_support": 1176,
+  "no_attempt_contexts": [
+    "168a6103bddd0bfbf25ea64e356447232335e1806348560e2b509740a12dfb88",
+    "650ff1c3b66529bd9fb6f5aa8bdee4d08e9c2c8a5804ff517dfe1542bc250716",
+    "752b81677716665f129d37b143ef666ea0ede4a9bd9166b59ed38a81e14fcbd6",
+    "8171b4bfabf4abe496e1a208e6a2a2f8ff4589129e0235c6a4caa0908a776730",
+    "a28ae778013aacee98959bdbb4b3ed4d10871b8f44e43a9477feed8602f5e7ba",
+    "e48b514eb26c2d553638cc39be62cf6c932c9b541959b221c5fbd7664e05eeea"
+  ],
+  "original_pool_slots_unknown": 1404287,
+  "native_fits": 0,
+  "GPU_seconds": 0,
+  "optimizer_updates": 0,
+  "DOPE_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "preflight_status": "CPU_PREFLIGHT_PASS",
+  "code_sha256": {
+    "runner.py": "f650f456f4c6574238bee4a8bc5cf34e12eab91392d038a2bb6a4fdd8043ede0",
+    "w3_losses.py": "fd1630ea825283ecebf647f386db88f3b8f114fc25672e5f65857027d4ab7d04",
+    "dope_guard.py": "1ea57dc73c0595b65ca877acea0d1045fd682e9268d75d09115a3f9de19b766e",
+    "elo_tracker.py": "ce8949f85753e08ed5189de3604511cc563665101a12598c7d57d3cd2e1e9500",
+    "preflight_cpu.py": "455f49088f7510cbbf4e0b5e9c2c023ac58f143f2682674cee25664320fcb2ca",
+    "readout.py": "171766c00c7f8e1edf30726973fdd87566522e63593b650708e957554a2c9afe"
+  },
+  "zero_update_cases": 48,
+  "loss_gradient_parity_arms": 4,
+  "real_fit_only_gradient_arms": 6
+}
