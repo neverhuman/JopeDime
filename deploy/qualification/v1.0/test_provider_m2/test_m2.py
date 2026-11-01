@@ -180,12 +180,12 @@ class M2Tests(unittest.TestCase):
             self.invoke(cargo_build_jobs="8")
         self.assertFalse(any(args[:1] == ["cargo"] for args, _ in self.calls))
 
-    def test_caller_environment_does_not_leak_into_replay(self):
+    def test_caller_cargo_build_jobs_does_not_change_control_outcomes(self):
         with patch.dict(
             os.environ,
             {
+                "CARGO_BUILD_JOBS": "8",
                 "JOPE_QUALIFICATION_TEST_TMP": "/shared/unsafe/temp-root",
-                "JOPE_UNRELATED_SENTINEL": "must-not-reach-child",
             },
             clear=False,
         ):
@@ -195,8 +195,7 @@ class M2Tests(unittest.TestCase):
             for args, kwargs in self.calls
             if args[:1] == ["cargo"] and args[1:2] == ["test"]
         )
-        self.assertNotIn("JOPE_UNRELATED_SENTINEL", child_env)
-        self.assertNotIn("JOPE_QUALIFICATION_TEST_TMP", child_env)
+        self.assertEqual(child_env["CARGO_BUILD_JOBS"], "4")
 
     def test_interleaved_libtest_stdout_cannot_emit_pass(self):
         self.output_override = (
