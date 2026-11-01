@@ -88,7 +88,7 @@ fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io
     fs::write(
         &csv,
         format!(
-            "feature,target\nalpha,{}\nbeta,{}\ngamma,{}\ndelta,{}\n",
+            "feature,target\n1,{}\n2,{}\n3,{}\n4,{}\n",
             SENTINELS[0], SENTINELS[1], SENTINELS[2], SENTINELS[3]
         ),
     )?;
