@@ -188,7 +188,7 @@ def build_report(plan, rows):
                 ) / len(by_family)
                 curves.append(dict(round=round_number, task=task, arm=arm, value=mean))
         evaluations.append(dict(round=round_number, tasks=tasks))
-        verdict_inputs.append({task: tasks[task]["joint-balanced"] for task in TASKS})
+        verdict_inputs.append({task: tasks[task]["joint"] for task in TASKS})
     return dict(
         status="COMPLETE",
         verdict=decide(verdict_inputs),
@@ -212,7 +212,7 @@ def render(report, output):
     lines = [
         "# JRB-01",
         "",
-        report["verdict"],
+        report["verdict"] or "NO VERDICT",
         "",
         report["interpretation"],
         report.get("percentiles", "percentiles pending JRB-02"),
