@@ -36,6 +36,7 @@ class T3Tests(unittest.TestCase):
         self.calls, self.test_calls = [], 0
         self.source, self.dirty = self.ctx.source_sha, ""
         self.output_override, self.returncode = None, 0
+        self.output_override_test = None
         self.after_test = lambda: None
         self.addCleanup(patch.stopall)
         patch.object(t3, "ROOT", self.repo).start()
@@ -52,7 +53,10 @@ class T3Tests(unittest.TestCase):
             self.test_calls += 1
             test = t3.TESTS[self.test_calls - 1]
             self.after_test()
-            output = self.output_override or (f"running 1 test\ntest {test} ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n")
+            if self.output_override is not None and self.output_override_test in (None, test):
+                output = self.output_override
+            else:
+                output = f"running 1 test\ntest {test} ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n"
             return subprocess.CompletedProcess(args, self.returncode, output, "")
         return subprocess.CompletedProcess(args, 0, output, "")
 
@@ -81,6 +85,18 @@ class T3Tests(unittest.TestCase):
             with self.subTest(output=output), self.assertRaises(ProviderError):
                 self.invoke()
         self.assertFalse(self.ctx.result.exists())
+
+    def test_valid_interleaved_benchmark_output_is_accepted(self):
+        test = t3.TESTS[-1]
+        self.output_override_test = test
+        self.output_override = (
+            f"running 1 test\ntest {test} ... fixed work off 2.9s on 2.8s overhead -3.8%\n"
+            "ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n"
+        )
+        self.assertEqual(self.invoke(), 0)
+        self.assertEqual(self.test_calls, len(t3.TESTS))
+        result = json.loads(self.ctx.result.read_text())
+        self.assertEqual(result["status"], "PASS")
 
     def test_wrong_or_dirty_source_refuses_before_tests(self):
         for source, dirty in [("b" * 40, ""), (self.ctx.source_sha, " M file.rs")]:

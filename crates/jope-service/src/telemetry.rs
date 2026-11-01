@@ -1799,9 +1799,9 @@ mod tests {
         }
     }
 
-    /// Gate T3: sampling cost per tick is far below 2% of the 1 s interval.
+    /// Informational T3 measurement; owner direction forbids a speed verdict.
     #[test]
-    fn real_sensor_tick_cost_is_below_two_percent_of_the_interval() {
+    fn real_sensor_tick_cost_measurement() {
         let counters = Counters::default();
         counters.set_workers(&[std::process::id()]);
         let store = test_store();
@@ -1813,19 +1813,14 @@ mod tests {
             std::hint::black_box(telemetry.tick(Instant::now(), &mut sensors, &counters));
         }
         let per_tick = start.elapsed() / ticks;
-        let budget = DEFAULT_INTERVAL / 50;
-        println!("mean tick {per_tick:?}; budget {budget:?}");
-        assert!(
-            per_tick < budget,
-            "tick {per_tick:?} exceeds 2% of {DEFAULT_INTERVAL:?}"
-        );
+        println!("informational mean telemetry tick {per_tick:?}; interval {DEFAULT_INTERVAL:?}");
     }
 
-    /// Fixed-work wall-time benchmark for gate T3; run explicitly:
-    /// `cargo test -p jope-service --lib telemetry::tests::fixed_work_overhead -- --ignored --nocapture`.
+    /// Informational fixed-work wall-time measurement for T3; no speed verdict.
+    /// `cargo test -p jope-service --lib telemetry::tests::fixed_work_overhead_measurement -- --ignored --nocapture`.
     #[test]
     #[ignore]
-    fn fixed_work_overhead() {
+    fn fixed_work_overhead_measurement() {
         fn work() -> Duration {
             let start = Instant::now();
             let mut state = 0x9e3779b97f4a7c15u64;
@@ -1852,11 +1847,6 @@ mod tests {
         let overhead = on.as_secs_f64() / off.as_secs_f64() - 1.0;
         println!(
             "fixed work off {off:?} on {on:?} overhead {:.3}%",
-            overhead * 100.0
-        );
-        assert!(
-            overhead < 0.02,
-            "T3 fixed-work telemetry overhead {:.3}% exceeds 2%",
             overhead * 100.0
         );
     }

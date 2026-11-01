@@ -12,6 +12,7 @@ from common import (
     Context,
     ProviderError,
     context,
+    exact_case_passed,
     rust_counts,
     sha256,
     verify_candidate,
@@ -21,8 +22,8 @@ from common import (
 TESTS = (
     "telemetry::tests::reasoning_off_or_detailed_and_telemetry_modes_preserve_search",
     "telemetry::tests::telemetry_on_or_off_leaves_the_search_identical",
-    "telemetry::tests::real_sensor_tick_cost_is_below_two_percent_of_the_interval",
-    "telemetry::tests::fixed_work_overhead",
+    "telemetry::tests::real_sensor_tick_cost_measurement",
+    "telemetry::tests::fixed_work_overhead_measurement",
 )
 SINGLE_PASS = {
     "collected": 1,
@@ -36,7 +37,7 @@ SINGLE_PASS = {
 
 def command(test: str) -> list[str]:
     args = ["cargo", "test", "--locked", "-p", "jope-service", "--lib", test, "--"]
-    if test.endswith("fixed_work_overhead"):
+    if test.endswith("fixed_work_overhead_measurement"):
         args.extend(("--ignored", "--nocapture"))
     args.extend(("--exact", "--test-threads=1"))
     return args
@@ -75,7 +76,7 @@ def qualify(ctx: Context, run=None) -> int:
         if result.returncode != 0:
             return result.returncode
         counts = rust_counts(result.stdout)
-        if counts != SINGLE_PASS or f"test {test} ... ok" not in result.stdout:
+        if counts != SINGLE_PASS or not exact_case_passed(result.stdout, test):
             raise ProviderError(f"T3 requires exactly one passing case for {test}")
     check_binding(ctx, run)
     payload = {

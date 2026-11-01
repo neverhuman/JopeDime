@@ -1,15 +1,17 @@
 # REL-07 T3 provider: observer neutrality
 
-T3 proves that observer settings do not alter search output and that telemetry
-sampling stays within its fixed-work overhead budget. `providers/t3.py` binds
+T3 checks that observer settings do not alter search output. Telemetry timing
+tests report measurements only; current owner direction forbids speed verdicts.
+`providers/t3.py` binds
 each execution to the coordinator's candidate artifact and source SHA, verifies
 the complete release artifact, and refuses a dirty or differently pinned
 checkout. It runs four exact `jope-service` unit tests: reasoning off/detailed
 and telemetry on/off parity, the existing telemetry parity test, sensor-tick
-cost, and the fixed-work benchmark. The benchmark itself enforces overhead
-below 2 percent. Each required test must execute exactly once, pass, and not be
-ignored or measured before a candidate-bound result is written outside the
-checkout.
+measurement, and the fixed-work measurement. The benchmark uses `--nocapture`,
+so the provider validates libtest's interleaved case output with
+`common.exact_case_passed` alongside exact test counts. Each required test must
+execute exactly once, pass, and not be ignored or measured before a
+candidate-bound result is written outside the checkout.
 
 The provider is a release-gate adapter; its fixture tests use synthetic
 candidate bytes and mocked child commands and are not release qualification.
