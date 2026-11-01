@@ -41,7 +41,7 @@ from research.joint_regbin.protocol import (
 from research.joint_regbin.report import comparison, decide, elo, paired_records, render
 
 
-def test_family_key_pool_manifest_is_catalog_only_and_family_disjoint(monkeypatch):
+def test_family_key_pool_manifest_preserves_identity_but_withholds_roles(monkeypatch):
     from research.joint_regbin import admission
 
     rows = []
@@ -79,23 +79,15 @@ def test_family_key_pool_manifest_is_catalog_only_and_family_disjoint(monkeypatc
     assert manifest["payloads_opened"] == 0
     assert manifest["candidate_count_by_task"] == {"regression": 6, "binary": 6}
     assert manifest["family_by_dataset"]["r-0"] == manifest["family_by_dataset"]["b-0"]
-    assert (
-        manifest["fold_by_family"][manifest["family_by_dataset"]["r-0"]]
-        == manifest["fold_by_family"][manifest["family_by_dataset"]["b-0"]]
-    )
     assert manifest["family_keys_by_dataset"]["r-0"] == [["canonical_sha256", "f" * 64]]
-    for split in manifest["fold_splits"].values():
-        for task in ("regression", "binary"):
-            assert split["train"][task]
-            assert split["val"][task]
-            train_families = {
-                manifest["family_by_dataset"][dataset]
-                for dataset in split["train"][task]
-            }
-            val_families = {
-                manifest["family_by_dataset"][dataset] for dataset in split["val"][task]
-            }
-            assert train_families.isdisjoint(val_families)
+    assert manifest["fold_by_family"] == {}
+    assert manifest["fold_splits"] == {}
+    assert manifest["fold_seed"] == 136
+    eligibility = manifest["nonsealed_eligibility"]
+    assert eligibility["status"] == "UNVERIFIED_FROM_APPROVED_METADATA"
+    assert eligibility["verified_family_count"] == 0
+    assert eligibility["withheld_family_count"] == 11
+    assert eligibility["withheld_dataset_count"] == 12
 
 
 def test_family_key_pool_preflight_rederives_and_stays_non_admitted(
@@ -136,12 +128,66 @@ def test_family_key_pool_preflight_rederives_and_stays_non_admitted(
         json.loads(catalog_path.read_text()), catalog_sha
     )
     receipt = verify_family_key_pool_manifest(manifest, catalog_path)
-    assert receipt["status"] == "METADATA_SPLIT_VERIFIED"
+    assert receipt["status"] == "METADATA_ONLY_NONSEALED_STATUS_UNVERIFIED"
+    assert receipt["family_count"] == 40
+    assert receipt["fold_count"] == 0
     assert receipt["eligibility_verified"] is False
     assert receipt["payloads_opened"] == 0
-    manifest["fold_splits"]["0"]["train"]["binary"].pop()
+    manifest["fold_splits"] = {"0": {"train": {"binary": ["b-0"]}}}
     with pytest.raises(ValueError, match="differs from pinned catalog split"):
         verify_family_key_pool_manifest(manifest, catalog_path)
+
+
+@pytest.mark.parametrize("claimed_nonsealed", [None, False, True])
+def test_family_key_pools_withhold_unproven_families_and_transitive_members(
+    monkeypatch, claimed_nonsealed
+):
+    """Synthetic identity graph only; no protected roster or payload is an input."""
+    from research.joint_regbin import admission
+
+    rows = []
+    for task, prefix, start in (("regression", "r", 1), ("binary", "b", 101)):
+        for index in range(12):
+            rows.append(
+                {
+                    "id": f"{prefix}-{index}",
+                    "task": task,
+                    "canonical_sha256": f"{start + index:064x}",
+                    "s3_bucket": "veox-jopedime-datasets-use2",
+                    "train_rows": 12,
+                    "train_sha256": f"{start + index + 300:064x}",
+                    # A self-reported flag in catalog data is not owner evidence.
+                    "nonsealed": claimed_nonsealed,
+                }
+            )
+    by_id = {row["id"]: row for row in rows}
+    by_id["r-0"].update(canonical_sha256="a" * 64, dataset_hash="d" * 64)
+    by_id["b-0"].update(canonical_sha256="a" * 64, dataset_hash="e" * 64)
+    by_id["r-1"].update(dataset_hash="e" * 64)
+    catalog = {
+        "inventory": {
+            "source_catalog": "catalog/v246.jsonl (LATEST=v246)",
+            "usable_records": len(rows),
+        },
+        "datasets": rows,
+    }
+    monkeypatch.setattr(admission, "CATALOG_V246_SHA256", "a" * 64)
+    result = build_family_key_pool_manifest(catalog, "a" * 64)
+    family = result["family_by_dataset"]
+    assert family["r-0"] == family["b-0"] == family["r-1"]
+    assigned = {
+        dataset
+        for split in result["fold_splits"].values()
+        for role in ("train", "val")
+        for task in ("regression", "binary")
+        for dataset in split[role][task]
+    }
+    assert not assigned, "unproven family was assigned a train/validation role"
+    assert result["fold_by_family"] == {}
+    assert result["nonsealed_eligibility"]["withheld_family_count"] == 22
+    assert result["nonsealed_eligibility"]["withheld_dataset_count"] == 24
+    assert result["eligibility_verified"] is False
+    assert result["payloads_opened"] == 0
 
 
 @pytest.fixture
