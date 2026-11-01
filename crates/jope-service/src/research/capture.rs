@@ -123,6 +123,7 @@ pub struct CaptureContext {
 impl CaptureContext {
     /// Create an Engine capability only from the trusted service provider.
     /// There is intentionally no serialized or caller-selectable constructor.
+    #[allow(dead_code)] // Used by the qualified provider and trusted job loader.
     pub(crate) fn engine(
         binding: Binding,
         provider: Arc<dyn CaptureProvider>,

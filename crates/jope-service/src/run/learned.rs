@@ -82,6 +82,7 @@ pub(crate) struct LearnedAdmission {
 impl LearnedAdmission {
     /// Borrow the actual FIT-bound conditioning for research provenance.
     /// The Plan must exactly match the one used to fit these tokens.
+    #[allow(dead_code)] // Used by the qualified provider once it is admitted.
     pub(crate) fn research_conditioning<'a>(&'a self, plan: &Plan) -> Result<&'a TokenProjection> {
         ensure!(
             self.plan.as_ref() == Some(plan),

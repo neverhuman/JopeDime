@@ -4,6 +4,10 @@
 //! verifies the exact attempt, v2 full-TRAIN folds, evaluator source identity,
 //! and output invariants before decoding the separate gate. It does not run a
 //! model or create qualification evidence from a score shape.
+// The trusted admission/recording consumer is a separate reviewed task. Keep
+// these crate-private hooks available without treating this staged provider as
+// a production qualification path before that consumer is connected.
+#![allow(dead_code)]
 
 use super::{
     capture::{digest, Binding, CaptureConfig, CaptureContext, CaptureProvider, SlateObservation},
