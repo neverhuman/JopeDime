@@ -169,10 +169,14 @@ def snapshot_dependencies(
 def measurements(output: str, source: str) -> list[dict]:
     summaries = re.findall(
         r"(?m)^test result: (\w+)\. (\d+) passed; (\d+) failed; "
-        r"(\d+) ignored; (\d+) measured; (\d+) filtered out\s*$",
+        r"(\d+) ignored; (\d+) measured; (\d+) filtered out(?:; finished in [0-9.]+s)?[ \t]*$",
         output,
     )
-    if len(summaries) != 1 or summaries[0][:5] != ("ok", "1", "0", "0", "0"):
+    if (
+        len(re.findall(r"(?m)^test result: ", output)) != 1
+        or len(summaries) != 1
+        or summaries[0][:5] != ("ok", "1", "0", "0", "0")
+    ):
         raise ProviderError("R2 requires exactly one passing non-skipped native test")
     if f"test {TEST} ... " not in output or "running 1 test\n" not in output:
         raise ProviderError("R2 exact native selector did not execute")

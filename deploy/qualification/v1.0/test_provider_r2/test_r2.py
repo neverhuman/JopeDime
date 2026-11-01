@@ -78,7 +78,7 @@ class R2Tests(unittest.TestCase):
         return (
             f"running 1 test\ntest {r2.TEST} ... "
             + "\n".join("REL07_R2 " + json.dumps(row) for row in self.rows)
-            + "\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 499 filtered out\n"
+            + "\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 499 filtered out; finished in 1.25s\n"
         )
 
     def run_child(self, args, **kwargs):
@@ -247,9 +247,30 @@ class R2Tests(unittest.TestCase):
         self.after_test = replace
         self.refused()
 
-    def test_missing_or_ambiguous_library_refused(self):
+    def test_missing_library_refused(self):
         self.build_output = "{}"
         self.refused()
+
+    def test_ambiguous_service_library_artifacts_refused(self):
+        with self.assertRaises(r2.ProviderError):
+            r2.library(self.build_output + "\n" + self.build_output)
+
+    def test_wrong_gate_and_non_linux_host_refused_before_children(self):
+        wrong = r2.Context(
+            "T1",
+            self.ctx.artifact,
+            self.ctx.artifact_sha256,
+            self.ctx.source_sha,
+            self.ctx.result,
+        )
+        with self.assertRaises(r2.ProviderError):
+            r2.qualify(wrong, run=self.run_child)
+        with (
+            patch.object(r2.sys, "platform", "darwin"),
+            self.assertRaises(r2.ProviderError),
+        ):
+            self.invoke()
+        self.assertEqual(self.calls, [])
 
     def test_dependency_snapshot_detects_mutation(self):
         def replace():
@@ -271,7 +292,7 @@ class R2Tests(unittest.TestCase):
         self.test_code = 124
         self.refused()
 
-    def test_other_target_and_non_linux_host_refused(self):
+    def test_other_candidate_target_refused(self):
         self.target = "aarch64-apple-darwin"
         self.refused()
 
