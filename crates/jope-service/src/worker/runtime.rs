@@ -103,6 +103,7 @@ pub fn serve(
                 let value = Response {
                     attempt: request.attempt.clone(),
                     scores: scores.values,
+                    fold_scores: scores.fold_scores,
                     predictions_digest: scores.predictions_digest,
                     wall_ms,
                     failure: None,

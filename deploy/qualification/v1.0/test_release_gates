@@ -1,0 +1,261 @@
+#!/usr/bin/env python3
+"""Manual harness controls using real, harmless child processes; no signing."""
+
+import hashlib
+import importlib.machinery
+import importlib.util
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+loader = importlib.machinery.SourceFileLoader(
+    "release_gates", str(HERE / "release-gates")
+)
+spec = importlib.util.spec_from_loader(loader.name, loader)
+runner = importlib.util.module_from_spec(spec)
+loader.exec_module(runner)
+
+WORKER = """import json, os, sys, time
+from pathlib import Path
+gate = os.environ['JOPE_REL07_GATE_ID']
+mode = sys.argv[1] if gate == sys.argv[2] else 'pass'
+path = Path(os.environ['JOPE_REL07_RESULT'])
+if mode == 'timeout': time.sleep(3)
+if mode == 'exit': sys.exit(7)
+if mode == 'missing': sys.exit(0)
+counts = dict(collected=1, executed=1, passed=1, failed=0, skipped=0, excluded=0)
+if mode == 'zero': counts.update(collected=0, executed=0, passed=0)
+if mode == 'skipped': counts.update(collected=2, skipped=1)
+if mode == 'excluded': counts.update(excluded=1)
+if mode == 'bool': counts['passed'] = True
+value = dict(schema='jope.rel07.gate-execution/v1', id=gate, status='PASS',
+    source_sha=os.environ['JOPE_REL07_SOURCE_SHA'],
+    artifact_sha256=os.environ['JOPE_REL07_ARTIFACT_SHA256'], counts=counts)
+if mode == 'wrong-sha': value['artifact_sha256'] = '0' * 64
+if mode == 'wrong-source': value['source_sha'] = '0' * 40
+if mode == 'wrong-id': value['id'] = 'Q1'
+if mode == 'symlink':
+    target = path.with_name('other.json')
+    target.write_text(json.dumps(value)); path.symlink_to(target)
+else:
+    path.write_text('broken' if mode == 'malformed' else json.dumps(value))
+if mode in ['missing-log', 'symlink-log']:
+    log = path.with_name('command.log'); log.unlink()
+    if mode == 'symlink-log': log.symlink_to(path)
+if mode == 'artifact-drift': Path(os.environ['JOPE_REL07_ARTIFACT']).write_bytes(b'changed')
+if mode == 'source-drift': Path('unexpected-source').write_text('changed')
+"""
+
+
+class ReleaseGates(unittest.TestCase):
+    def setUp(self):
+        base = Path(
+            os.environ.get(
+                "JOPE_QUALIFICATION_TEST_TMP",
+                HERE.parents[2] / "target/release-gates-tests",
+            )
+        )
+        base.mkdir(parents=True, exist_ok=True)
+        temporary = tempfile.TemporaryDirectory(dir=base)
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.repo = self.root / "repo"
+        self.repo.mkdir()
+        self.worker = self.repo / "worker"
+        self.worker.write_text(WORKER)
+        for args in [
+            ["init", "-q"],
+            ["add", "worker"],
+            [
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-qm",
+                "fixture",
+            ],
+        ]:
+            subprocess.run(["git", "-C", str(self.repo), *args], check=True)
+        self.source = runner.cpu.git(self.repo, "rev-parse", "HEAD")
+        self.artifact = self.root / "fixture.bin"
+        self.artifact.write_bytes(b"synthetic harness fixture, not a signed release")
+        self.sha = hashlib.sha256(self.artifact.read_bytes()).hexdigest()
+        self.commands = self.root / "manifest.json"
+        self.counter = 0
+        self.addCleanup(mock.patch.stopall)
+        mock.patch.object(
+            runner.cpu, "admission", return_value={"fixture": True}
+        ).start()
+        original_sleep = runner.cpu.time.sleep
+        mock.patch.object(
+            runner.cpu.time, "sleep", side_effect=lambda n: original_sleep(min(n, 0.01))
+        ).start()
+
+    def manifest(self, mode="pass", at="M1"):
+        value = dict(
+            schema="jope.rel07.gate-commands/v1",
+            source_sha=self.source,
+            artifact_sha256=self.sha,
+            gates=[
+                dict(
+                    id=g,
+                    argv=[sys.executable, str(self.worker), mode, at],
+                    timeout_seconds=0.05 if mode == "timeout" and g == at else 30,
+                )
+                for g in runner.RELEASE_GATE_IDS
+            ],
+        )
+        self.commands.write_text(json.dumps(value))
+        return value
+
+    def execute(self, mode="pass", at="M1"):
+        self.manifest(mode, at)
+        self.counter += 1
+        out = self.root / f"output-{self.counter}"
+        receipt, code = runner.execute(self.repo, self.artifact, self.commands, out)
+        return receipt, code, json.loads((out / "execution.json").read_text()), out
+
+    def test_all_28_real_children_pass_and_match_watcher_contract(self):
+        receipt, code, run, out = self.execute()
+        self.assertEqual(code, 0)
+        wanted = set(
+            "A1 A2 A3 A4 A5 D1 D2 E1 E2 E3 M1 M2 M3 M4 M5 R1 R2 R3 R4 S1 S2 S3 S4 T1 T2 T3 U1 U2".split()
+        )
+        self.assertEqual(len(receipt["gates"]), 28)
+        self.assertEqual({g["id"] for g in receipt["gates"]}, wanted)
+        self.assertTrue(all(g["status"] == "PASS" for g in receipt["gates"]))
+        self.assertEqual(receipt["artifact_sha256"], self.sha)
+        self.assertTrue(all(g["artifact_sha256"] == self.sha for g in receipt["gates"]))
+        self.assertEqual(len(run["checks"]), 28)
+        self.assertTrue(
+            all(
+                g["exit_code"] == 0 and g["counts"]["executed"] == 1
+                for g in run["checks"]
+            )
+        )
+        self.assertFalse(run["release_qualified"])
+        self.assertEqual(run["manifest_sha256"], runner.cpu.digest(self.commands))
+        self.assertTrue((out / "gate_results.json").is_file())
+
+    def test_bad_child_evidence_never_becomes_pass_and_later_gates_run(self):
+        for mode in [
+            "missing",
+            "malformed",
+            "zero",
+            "skipped",
+            "excluded",
+            "bool",
+            "wrong-sha",
+            "wrong-source",
+            "wrong-id",
+            "symlink",
+            "missing-log",
+            "symlink-log",
+            "exit",
+        ]:
+            with self.subTest(mode=mode):
+                receipt, code, run, _ = self.execute(mode)
+                self.assertEqual(code, 1)
+                self.assertEqual(receipt["gates"][0]["status"], "FAIL")
+                self.assertEqual(len(run["checks"]), 28)
+                self.assertTrue(
+                    all(g["status"] == "PASS" for g in receipt["gates"][1:])
+                )
+                self.assertEqual(
+                    run["checks"][0]["exit_code"], 7 if mode == "exit" else 0
+                )
+
+    def test_timeout_is_retained_and_later_gates_run(self):
+        receipt, code, run, _ = self.execute("timeout")
+        self.assertEqual(code, 1)
+        self.assertEqual(receipt["gates"][0]["status"], "FAIL")
+        self.assertEqual(run["checks"][0]["exit_code"], 124)
+        self.assertTrue(run["checks"][0]["timed_out"])
+        self.assertEqual(len(run["checks"]), 28)
+
+    def test_source_or_artifact_drift_stops_next_gate(self):
+        for mode in ["source-drift", "artifact-drift"]:
+            with self.subTest(mode=mode):
+                receipt, code, run, _ = self.execute(mode)
+                self.assertEqual(code, 1)
+                self.assertEqual(len(run["checks"]), 1)
+                self.assertEqual(receipt["gates"][0]["status"], "FAIL")
+                self.assertTrue(
+                    all(g["status"] == "NOT_RUN" for g in receipt["gates"][1:])
+                )
+                (self.repo / "unexpected-source").unlink(missing_ok=True)
+                self.artifact.write_bytes(
+                    b"synthetic harness fixture, not a signed release"
+                )
+
+    def test_last_gate_drift_cannot_publish_28_pass(self):
+        receipt, code, run, _ = self.execute("artifact-drift", "D2")
+        self.assertEqual(code, 1)
+        self.assertEqual(len(run["checks"]), 28)
+        self.assertEqual(receipt["gates"][-1]["status"], "FAIL")
+
+    def test_inventory_and_timeout_refusals_precede_execution(self):
+        original = self.manifest()
+        for mode in ["missing", "duplicate", "Q1", "zero", "infinite", "boolean"]:
+            value = json.loads(json.dumps(original))
+            if mode == "missing":
+                value["gates"].pop()
+            if mode == "duplicate":
+                value["gates"][-1] = value["gates"][0]
+            if mode == "Q1":
+                value["gates"][-1]["id"] = "Q1"
+            if mode in ["zero", "infinite", "boolean"]:
+                value["gates"][0]["timeout_seconds"] = {
+                    "zero": 0,
+                    "infinite": float("inf"),
+                    "boolean": True,
+                }[mode]
+            self.commands.write_text(json.dumps(value))
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                runner.execute(
+                    self.repo, self.artifact, self.commands, self.root / "never-created"
+                )
+            self.assertFalse((self.root / "never-created").exists())
+
+    def test_wrong_artifact_clean_source_and_output_reuse_are_refused(self):
+        self.manifest()
+        self.artifact.write_bytes(b"wrong")
+        with self.assertRaisesRegex(ValueError, "artifact bytes"):
+            runner.execute(self.repo, self.artifact, self.commands, self.root / "out")
+        self.artifact.write_bytes(b"synthetic harness fixture, not a signed release")
+        (self.repo / "dirty").write_text("dirty")
+        with self.assertRaisesRegex(ValueError, "not clean"):
+            runner.execute(self.repo, self.artifact, self.commands, self.root / "out")
+        (self.repo / "dirty").unlink()
+        out = self.root / "exists"
+        out.mkdir()
+        with self.assertRaises(FileExistsError):
+            runner.execute(self.repo, self.artifact, self.commands, out)
+
+    def test_admission_refusal_retains_all_unexecuted_gates(self):
+        with mock.patch.object(runner.cpu, "admission", side_effect=ValueError("busy")):
+            receipt, code, run, _ = self.execute()
+        self.assertEqual(code, 1)
+        self.assertEqual(receipt["gates"][0]["status"], "BLOCKED")
+        self.assertTrue(all(g["status"] == "NOT_RUN" for g in receipt["gates"][1:]))
+        self.assertIsNone(run["checks"][0]["exit_code"])
+
+    def test_interruption_retains_failure_and_unstarted_gates(self):
+        with mock.patch.object(runner.cpu, "invoke", side_effect=KeyboardInterrupt):
+            receipt, code, run, _ = self.execute()
+        self.assertEqual(code, 130)
+        self.assertTrue(run["interrupted"])
+        self.assertEqual(receipt["gates"][0]["status"], "FAIL")
+        self.assertTrue(all(g["status"] == "NOT_RUN" for g in receipt["gates"][1:]))
+
+
+if __name__ == "__main__":
+    unittest.main()
