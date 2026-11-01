@@ -4069,19 +4069,13 @@ mod tests {
             .parent()
             .unwrap()
             .to_path_buf();
-        let mut libraries: Vec<_> = fs::read_dir(&deps)
-            .unwrap()
-            .filter_map(|p| p.ok())
-            .map(|p| p.path())
-            .filter(|p| {
-                p.file_name()
-                    .unwrap()
-                    .to_string_lossy()
-                    .starts_with("libjope_service-")
-                    && p.extension().is_some_and(|e| e == "rlib")
-            })
-            .collect();
-        libraries.sort_by_key(|p| std::cmp::Reverse(fs::metadata(p).unwrap().modified().unwrap()));
+        let library = std::env::var_os("JOPE_DSC_SERVICE_RLIB")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| deps.parent().unwrap().join("libjope_service.rlib"));
+        assert!(
+            library.is_file(),
+            "build the current service with cargo build -p jope-service --all-targets --locked"
+        );
         let source = directory.join("native-worker.rs");
         let binary = directory.join("native-worker");
         let pids = directory.join("worker-pids");
@@ -4092,24 +4086,44 @@ mod tests {
             ""=>"",_=>panic!("unknown owned fixture fault"),
         };
         fs::write(&source,format!("fn main() {{ std::fs::write(std::path::Path::new({:?}).join(std::process::id().to_string()), b\"native\").unwrap(); jope_service::worker::serve(1, |request,matrix| {{ {} jope_service::discover::r#loop::evaluate_native(request,matrix) }}).unwrap(); }}",pids,fault)).unwrap();
-        for library in libraries {
-            let output = Command::new("rustc")
-                .arg("--edition=2021")
-                .arg("--crate-name=dsc08_native_worker")
-                .arg(&source)
-                .arg("-L")
-                .arg(format!("dependency={}", deps.display()))
-                .arg("--extern")
-                .arg(format!("jope_service={}", library.display()))
-                .arg("-o")
-                .arg(&binary)
-                .output()
-                .unwrap();
-            if output.status.success() {
-                return binary;
-            }
+        let compiler = std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into());
+        let output = Command::new(&compiler)
+            .arg("--edition=2021")
+            .arg("--crate-name=dsc08_native_worker")
+            .arg(&source)
+            .arg("-L")
+            .arg(format!("dependency={}", deps.display()))
+            .arg("--extern")
+            .arg(format!("jope_service={}", library.display()))
+            .arg("-o")
+            .arg(&binary)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "exact current service artifact could not link native worker: {}\n{}",
+            library.display(),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        if let Some(receipt) = std::env::var_os("JOPE_DSC_RECEIPT_DIR") {
+            let compiler_version = Command::new(&compiler).arg("-vV").output().unwrap();
+            ensure_worker_receipt(&PathBuf::from(receipt), &library, &compiler_version.stdout);
         }
-        panic!("current jope-service library could not link native worker; build the library first with cargo build -p jope-service --locked");
+        binary
+    }
+
+    fn ensure_worker_receipt(receipt: &Path, library: &Path, compiler: &[u8]) {
+        fs::create_dir_all(receipt).unwrap();
+        fs::write(
+            receipt.join("native-worker-build.json"),
+            serde_json::to_vec_pretty(&json!({
+                "library": library, "sha256": digest(&fs::read(library).unwrap()),
+                "compiler": String::from_utf8_lossy(compiler),
+                "source": std::env::var("JOPE_BUILD_SOURCE_SHA").unwrap_or_default(),
+            }))
+            .unwrap(),
+        )
+        .unwrap();
     }
 
     fn pool(binary: &Path, workers: usize) -> ProcessExecutor {
@@ -4271,7 +4285,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "dedicated native process gate: first cargo build -p jope-service --locked, then run this exact test with --ignored"]
+    #[ignore = "dedicated native process gate: first cargo build -p jope-service --all-targets --locked, then run this exact test with --ignored"]
     fn real_native_workers_preserve_projection_across_capacity_pause_and_sigkill() {
         let directory = tempfile::tempdir().unwrap();
         let mut p = plan(directory.path(), 80, Effort::Medium, 25);
