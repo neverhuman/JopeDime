@@ -2,6 +2,20 @@
   "a6": {
     "amendment": "AMENDMENT_A6.md",
     "attempts_disclosed_through": 12,
+    "closeout": {
+      "attempt": 13,
+      "cells_completed": 0,
+      "custody_receipt_sha256": "f7afe8fad12b1ee9bad080250c2b723fa5a01d222644076dab55cf88a8fc9303",
+      "expected_family_utility_rounded": 1.1377942,
+      "host": "xbabe2",
+      "observed_family_utility_rounded": 1.1255361,
+      "optimizer_updates": 0,
+      "retry_authorized": false,
+      "run_manifest_sha256": "37aee7ef8fcf8a9b876e37ad304f91fc5ff45d25f37e4bc0bddf9e7141ddad9f",
+      "s3_custody_blocker": "AWS credentials unavailable",
+      "s3_custody_uploaded": false,
+      "status": "INCOMPLETE_BASELINE_UTILITY_MISMATCH"
+    },
     "launch_budget_seconds": 14400,
     "merge_receipt_schema": "jope.h133.a6.merge_receipt/v1",
     "owner_rulings": [
@@ -202,7 +216,7 @@
     "train_only_export_sha256": "ffe506f68d7aade13a7eef6f0cf55d6e79b200dd5e742f8f035dccd0ee27e3ff"
   },
   "source_base": "b140c2adc17786e73ca5c13e2fb589a0be0f6c55",
-  "status": "A6_AMENDED_PENDING_MERGE_NOT_RUN",
+  "status": "A6_ATTEMPT_013_INCOMPLETE_REGRESSION_MISMATCH_NO_TREATMENT",
   "train_only_export_sha256": "ffe506f68d7aade13a7eef6f0cf55d6e79b200dd5e742f8f035dccd0ee27e3ff",
   "wave": "H133"
 }
