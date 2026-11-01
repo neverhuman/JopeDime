@@ -232,20 +232,120 @@ def render_argv(argv: list[str], values: dict[str, str]) -> list[str]:
 
 
 def terminate_group(process: subprocess.Popen, grace_seconds: float = 5) -> int:
-    if process.poll() is not None:
-        return process.returncode
+    pgid = process.pid
     try:
-        os.killpg(process.pid, signal.SIGTERM)
+        os.killpg(pgid, signal.SIGTERM)
     except ProcessLookupError:
         pass
     try:
-        return process.wait(timeout=grace_seconds)
+        process.wait(timeout=grace_seconds)
     except subprocess.TimeoutExpired:
+        pass
+
+    def live_group_members() -> bool:
+        proc = Path("/proc")
+        if not proc.is_dir():
+            try:
+                os.killpg(pgid, 0)
+                return True
+            except ProcessLookupError:
+                return False
+        for entry in proc.iterdir():
+            if not entry.name.isdecimal():
+                continue
+            try:
+                stat = (entry / "stat").read_text(encoding="ascii")
+                fields = stat.rsplit(")", 1)[1].split()
+                state, member_pgid = fields[0], int(fields[2])
+            except (OSError, IndexError, ValueError):
+                continue
+            if member_pgid == pgid and state not in {"Z", "X"}:
+                return True
+        return False
+
+    deadline = time.monotonic() + max(0, grace_seconds)
+    while live_group_members() and time.monotonic() < deadline:
+        time.sleep(min(0.05, max(0, deadline - time.monotonic())))
+    if live_group_members():
         try:
-            os.killpg(process.pid, signal.SIGKILL)
+            os.killpg(pgid, signal.SIGKILL)
         except ProcessLookupError:
             pass
-        return process.wait()
+        kill_deadline = time.monotonic() + 2
+        while live_group_members() and time.monotonic() < kill_deadline:
+            time.sleep(0.02)
+        if live_group_members():
+            raise CaptureError(f"process group {pgid} survived SIGKILL")
+    return process.wait()
+
+
+def render_client_commands(
+    clients: dict[str, dict],
+    *,
+    candidate: Path,
+    output: Path,
+    engine_home: Path,
+    capture_stdio: Path,
+    dataset_id: str,
+    handoff_sha: str,
+    source_sha: str,
+    train_path: Path,
+) -> dict[str, list[str]]:
+    commands = {}
+    for key, row in clients.items():
+        values = {
+            "candidate": str(candidate),
+            "capture_dir": str(output / "clients" / key / "transport"),
+            "capture_stdio": str(capture_stdio),
+            "dataset_id": dataset_id,
+            "engine_home": str(engine_home / key),
+            "input_handoff_sha256": handoff_sha,
+            "source_sha": source_sha,
+            "train_path": str(train_path),
+        }
+        command = render_argv(row["argv"], values)
+        require(
+            Path(command[0]).is_absolute(),
+            f"client command must use an absolute executable: {key}",
+        )
+        commands[key] = command
+    return commands
+
+
+def stop_engine(
+    candidate: Path,
+    repo: Path,
+    environment: dict[str, str],
+    process: subprocess.Popen | None,
+) -> tuple[int | None, int | None]:
+    if process is None:
+        return None, None
+    stop_exit = None
+    pending_error = None
+    try:
+        stop = subprocess.run(
+            [str(candidate), "serve", "--stop"],
+            cwd=repo,
+            env=environment,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=15,
+            preexec_fn=lambda: os.nice(19),
+        )
+        stop_exit = stop.returncode
+    except BaseException as error:
+        pending_error = error
+    try:
+        try:
+            process.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            pass
+        engine_exit = terminate_group(process)
+    finally:
+        if pending_error is not None:
+            raise pending_error
+    return stop_exit, engine_exit
 
 
 def run_capture(args: argparse.Namespace) -> dict:
@@ -277,6 +377,13 @@ def run_capture(args: argparse.Namespace) -> dict:
     engine_home = external_path(args.engine_home, repo, "engine home")
     require(not output.exists(), "capture output already exists")
     require(not engine_home.exists(), "candidate engine home already exists")
+    capture_stdio = (
+        repo / "deploy/qualification/agents/transcripts/run-prep/capture_stdio.py"
+    )
+    require(
+        not capture_stdio.is_symlink() and capture_stdio.is_file(),
+        "capture_stdio.py must be a regular source file",
+    )
 
     for key, row in clients.items():
         executable = Path(row["executable"])
@@ -288,6 +395,17 @@ def run_capture(args: argparse.Namespace) -> dict:
             digest(executable) == row["executable_sha256"],
             f"client executable changed: {key}",
         )
+    commands = render_client_commands(
+        clients,
+        candidate=candidate,
+        output=output,
+        engine_home=engine_home,
+        capture_stdio=capture_stdio,
+        dataset_id=dataset_id,
+        handoff_sha=handoff_sha,
+        source_sha=args.source_sha,
+        train_path=train_path,
+    )
 
     if args.preflight_only:
         return {
@@ -296,6 +414,7 @@ def run_capture(args: argparse.Namespace) -> dict:
             "candidate_artifact_sha256": candidate_sha,
             "input_handoff_sha256": handoff_sha,
             "clients": sorted(clients),
+            "rendered_client_commands": commands,
             "a5_status": "NOT_QUALIFIED",
         }
     require(
@@ -333,195 +452,190 @@ def run_capture(args: argparse.Namespace) -> dict:
     sidecars.mkdir(mode=0o700)
     logs = output / "clients"
     logs.mkdir(mode=0o700)
-    base_env = selected_environment([], engine_home)
-    engine_stdout = output / "engine.stdout"
-    engine_stderr = output / "engine.stderr"
-    engine = None
-    engine_exit = None
-    engine_stop_exit = None
     rows = {}
+    engine_homes = {}
     started = datetime.now(timezone.utc).isoformat()
-    try:
-        with engine_stdout.open("xb") as stdout, engine_stderr.open("xb") as stderr:
-            engine = subprocess.Popen(
-                [str(candidate), "serve", "--idle-exit", "15m"],
-                cwd=repo,
-                env=base_env,
-                stdin=subprocess.DEVNULL,
-                stdout=stdout,
-                stderr=stderr,
-                start_new_session=True,
-                preexec_fn=lambda: os.nice(19),
-            )
-        ready = False
-        for _ in range(200):
-            if engine.poll() is not None:
-                break
-            status = subprocess.run(
-                [str(candidate), "serve", "--status"],
-                cwd=repo,
-                env=base_env,
-                capture_output=True,
-                text=True,
-                check=False,
-                timeout=3,
-                preexec_fn=lambda: os.nice(19),
-            )
-            if status.returncode == 0 and status.stdout.startswith("running"):
-                ready = True
-                break
-            time.sleep(0.1)
-        require(ready, "candidate engine did not become ready")
 
-        for key, (slug, _client_name) in CLIENTS.items():
-            row = clients[key]
-            case = logs / key
-            case.mkdir(mode=0o700)
-            capture_dir = case / "transport"
-            values = {
-                "candidate": str(candidate),
-                "capture_dir": str(capture_dir),
-                "capture_stdio": str(
-                    repo
-                    / "deploy/qualification/agents/transcripts/run-prep/capture_stdio.py"
-                ),
-                "dataset_id": dataset_id,
-                "engine_home": str(engine_home),
-                "input_handoff_sha256": handoff_sha,
-                "source_sha": args.source_sha,
-                "train_path": str(train_path),
-            }
-            command = render_argv(row["argv"], values)
-            if not Path(command[0]).is_absolute():
-                raise CaptureError(
-                    f"client command must use an absolute executable: {key}"
-                )
-            command_path = case / "command.json"
-            command_path.write_text(
-                json.dumps(command, indent=2) + "\n", encoding="utf-8"
-            )
-            os.chmod(command_path, 0o600)
-            stdout_path = case / "stdout.log"
-            stderr_path = case / "stderr.log"
-            timed_out = False
-            with stdout_path.open("xb") as stdout, stderr_path.open("xb") as stderr:
-                process = subprocess.Popen(
-                    command,
-                    cwd=case,
-                    env=selected_environment(
-                        row.get("environment_names", []), engine_home
-                    ),
+    for key, (slug, _client_name) in CLIENTS.items():
+        row = clients[key]
+        case = logs / key
+        case.mkdir(mode=0o700)
+        client_home = engine_home / key
+        client_home.mkdir(mode=0o700)
+        engine_homes[key] = str(client_home)
+        environment = selected_environment([], client_home)
+        engine = None
+        active_client = None
+        engine_stop_exit = None
+        engine_exit = None
+        client_exit = None
+        timed_out = False
+        capture_error = None
+        capture = None
+        capture_dir = case / "transport"
+        command = commands[key]
+        command_path = case / "command.json"
+        command_path.write_text(json.dumps(command, indent=2) + "\n", encoding="utf-8")
+        os.chmod(command_path, 0o600)
+
+        try:
+            with (
+                (case / "engine.stdout").open("xb") as stdout,
+                (case / "engine.stderr").open("xb") as stderr,
+            ):
+                engine = subprocess.Popen(
+                    [str(candidate), "serve", "--idle-exit", "15m"],
+                    cwd=repo,
+                    env=environment,
                     stdin=subprocess.DEVNULL,
                     stdout=stdout,
                     stderr=stderr,
                     start_new_session=True,
                     preexec_fn=lambda: os.nice(19),
                 )
+
+            ready = False
+            for _ in range(200):
+                if engine.poll() is not None:
+                    break
+                status = subprocess.run(
+                    [str(candidate), "serve", "--status"],
+                    cwd=repo,
+                    env=environment,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=3,
+                    preexec_fn=lambda: os.nice(19),
+                )
+                if status.returncode == 0 and status.stdout.startswith("running"):
+                    ready = True
+                    break
+                time.sleep(0.1)
+            require(ready, f"{key} candidate engine did not become ready")
+
+            with (
+                (case / "stdout.log").open("xb") as stdout,
+                (case / "stderr.log").open("xb") as stderr,
+            ):
                 try:
-                    client_exit = process.wait(timeout=row["timeout_seconds"])
-                except subprocess.TimeoutExpired:
-                    timed_out = True
-                    client_exit = terminate_group(process)
-            capture = None
-            capture_error = None
+                    active_client = subprocess.Popen(
+                        command,
+                        cwd=case,
+                        env=selected_environment(
+                            row.get("environment_names", []), client_home
+                        ),
+                        stdin=subprocess.DEVNULL,
+                        stdout=stdout,
+                        stderr=stderr,
+                        start_new_session=True,
+                        preexec_fn=lambda: os.nice(19),
+                    )
+                except OSError as error:
+                    capture_error = f"client launch failed: {error}"
+
+                if active_client is not None:
+                    try:
+                        client_exit = active_client.wait(timeout=row["timeout_seconds"])
+                    except subprocess.TimeoutExpired:
+                        timed_out = True
+                    finally:
+                        client_exit = terminate_group(active_client)
+
+            if active_client is not None:
+                try:
+                    require(
+                        not capture_dir.is_symlink() and capture_dir.is_dir(),
+                        f"{key} capture directory must be a regular directory",
+                    )
+                    capture, _ = read_object(
+                        capture_dir / "capture.json", f"{key} transport receipt"
+                    )
+                    wire_path = capture_dir / "wire.jsonl"
+                    require(
+                        not wire_path.is_symlink()
+                        and wire_path.is_file()
+                        and wire_path.stat().st_size > 0,
+                        f"{key} transport has no wire transcript",
+                    )
+                    require(
+                        capture.get("complete") is True,
+                        f"{key} transport capture is incomplete",
+                    )
+                    require(
+                        capture.get("argv") == [str(candidate), "mcp"],
+                        f"{key} transport launched a different candidate",
+                    )
+                    require(
+                        capture.get("executable_sha256") == candidate_sha,
+                        f"{key} transport candidate hash mismatch",
+                    )
+                    require(
+                        capture.get("server_exit_code") == 0
+                        and capture.get("relay_exit_code") == 0,
+                        f"{key} transport server or relay failed",
+                    )
+                    limits = capture.get("limits")
+                    require(
+                        isinstance(limits, dict)
+                        and limits.get("seconds", 0) <= 300
+                        and limits.get("stream_bytes", 0) <= 16_777_216
+                        and limits.get("frame_bytes") == 1_048_576,
+                        f"{key} transport limits exceed the reviewed bounds",
+                    )
+                    require(
+                        capture.get("extra_environment_names") == [],
+                        f"{key} transport passed extra environment values",
+                    )
+                    wire_copy = sidecars / f"{slug}.mcp.jsonl"
+                    wire_copy.write_bytes(wire_path.read_bytes())
+                    os.chmod(wire_copy, 0o600)
+                    capture_copy = sidecars / f"{slug}.capture.json"
+                    capture_copy.write_bytes(
+                        (capture_dir / "capture.json").read_bytes()
+                    )
+                    os.chmod(capture_copy, 0o600)
+                except (OSError, CaptureError) as error:
+                    capture_error = str(error)
+        finally:
             try:
-                require(
-                    not capture_dir.is_symlink() and capture_dir.is_dir(),
-                    f"{key} capture directory must be a regular directory",
+                if active_client is not None:
+                    terminate_group(active_client)
+            finally:
+                engine_stop_exit, engine_exit = stop_engine(
+                    candidate, repo, environment, engine
                 )
-                capture, _ = read_object(
-                    capture_dir / "capture.json", f"{key} transport receipt"
-                )
-                wire_path = capture_dir / "wire.jsonl"
-                require(
-                    not wire_path.is_symlink()
-                    and wire_path.is_file()
-                    and wire_path.stat().st_size > 0,
-                    f"{key} capture has no wire transcript",
-                )
-                require(
-                    capture.get("complete") is True,
-                    f"{key} transport capture is incomplete",
-                )
-                require(
-                    capture.get("argv") == [str(candidate), "mcp"],
-                    f"{key} transport launched a different candidate",
-                )
-                require(
-                    capture.get("executable_sha256") == candidate_sha,
-                    f"{key} transport candidate hash mismatch",
-                )
-                require(
-                    capture.get("server_exit_code") == 0
-                    and capture.get("relay_exit_code") == 0,
-                    f"{key} transport server or relay failed",
-                )
-                limits = capture.get("limits")
-                require(
-                    isinstance(limits, dict)
-                    and limits.get("seconds", 0) <= 300
-                    and limits.get("stream_bytes", 0) <= 16_777_216
-                    and limits.get("frame_bytes") == 1_048_576,
-                    f"{key} transport limits exceed the reviewed bounds",
-                )
-                require(
-                    capture.get("extra_environment_names") == [],
-                    f"{key} transport passed extra environment values",
-                )
-                wire_copy = sidecars / f"{slug}.mcp.jsonl"
-                wire_copy.write_bytes(wire_path.read_bytes())
-                os.chmod(wire_copy, 0o600)
-                capture_copy = sidecars / f"{slug}.capture.json"
-                capture_copy.write_bytes((capture_dir / "capture.json").read_bytes())
-                os.chmod(capture_copy, 0o600)
-            except (OSError, CaptureError) as error:
-                capture_error = str(error)
-            rows[key] = {
-                "version": row["version"],
-                "executable": row["executable"],
-                "executable_sha256": row["executable_sha256"],
-                "implementation": row["implementation"],
-                "client_exit": client_exit,
-                "timed_out": timed_out,
-                "capture_error": capture_error,
-                "capture_receipt_sha256": (
-                    digest(capture_dir / "capture.json")
-                    if (capture_dir / "capture.json").is_file()
-                    and not (capture_dir / "capture.json").is_symlink()
-                    else None
-                ),
-                "capture": capture,
-            }
-        stop = subprocess.run(
-            [str(candidate), "serve", "--stop"],
-            cwd=repo,
-            env=base_env,
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=15,
-            preexec_fn=lambda: os.nice(19),
-        )
-        engine_stop_exit = stop.returncode
-        try:
-            engine_exit = engine.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            engine_exit = terminate_group(engine)
-    except BaseException:
-        if engine is not None and engine.poll() is None:
-            terminate_group(engine)
-        raise
+
+        rows[key] = {
+            "version": row["version"],
+            "executable": row["executable"],
+            "executable_sha256": row["executable_sha256"],
+            "implementation": row["implementation"],
+            "client_exit": client_exit,
+            "timed_out": timed_out,
+            "capture_error": capture_error,
+            "capture_receipt_sha256": (
+                digest(capture_dir / "capture.json")
+                if (capture_dir / "capture.json").is_file()
+                and not (capture_dir / "capture.json").is_symlink()
+                else None
+            ),
+            "engine_home": str(client_home),
+            "engine_exit": engine_exit,
+            "engine_stop_exit": engine_stop_exit,
+            "capture": capture,
+        }
 
     complete = (
-        engine_stop_exit == 0
-        and engine_exit == 0
+        len(rows) == len(CLIENTS)
+        and all(row["engine_stop_exit"] == 0 for row in rows.values())
+        and all(row["engine_exit"] == 0 for row in rows.values())
         and all(
             row["client_exit"] == 0
             and not row["timed_out"]
             and row["capture_error"] is None
             for row in rows.values()
         )
-        and len(rows) == len(CLIENTS)
     )
     metadata = {
         key: {
@@ -552,8 +666,8 @@ def run_capture(args: argparse.Namespace) -> dict:
             ).hexdigest(),
             "exit_code": row["client_exit"],
             "client_exit": row["client_exit"],
-            "engine_exit": engine_exit,
-            "engine_stop_exit": engine_stop_exit,
+            "engine_exit": row["engine_exit"],
+            "engine_stop_exit": row["engine_stop_exit"],
             "server_exit": (
                 row["capture"].get("server_exit_code")
                 if isinstance(row["capture"], dict)
@@ -577,6 +691,8 @@ def run_capture(args: argparse.Namespace) -> dict:
         json.dumps(metadata, sort_keys=True, indent=2) + "\n", encoding="utf-8"
     )
     os.chmod(metadata_path, 0o600)
+    engine_exits = [row["engine_exit"] for row in rows.values()]
+    stop_exits = [row["engine_stop_exit"] for row in rows.values()]
     result = {
         "schema": "jopedime.a5-three-client-capture/v1",
         "status": "CAPTURES_COMPLETE_PENDING_SEMANTIC_REVIEW"
@@ -590,8 +706,13 @@ def run_capture(args: argparse.Namespace) -> dict:
         "input_split": "TRAIN",
         "dataset_id": dataset_id,
         "engine_home": str(engine_home),
-        "engine_exit": engine_exit,
-        "engine_stop_exit": engine_stop_exit,
+        "engine_homes": engine_homes,
+        "engine_exit": 0
+        if engine_exits and all(code == 0 for code in engine_exits)
+        else None,
+        "engine_stop_exit": 0
+        if stop_exits and all(code == 0 for code in stop_exits)
+        else None,
         "clients": rows,
         "sidecars": str(sidecars),
         "client_metadata": str(metadata_path),
