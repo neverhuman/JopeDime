@@ -1,0 +1,24 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "GOV04 records the intentional portable-pty jope-service test dependency introduced by PUB-06 #1249. Its Cargo.lock edge changed the ADR-0004 evaluator identity; later intentional lockfile changes in #1488, #1555, #1559 and #1610 accumulated before this single transition. No evaluator calculations or DSL ABI changed, and no shipped receipt supports a known-identity row.",
+  "plan_reference": "GOV04 T1210 ENG:watcher owner ruling; ADR-0004 identity transition after GOV-03",
+  "source_commit": "a4ccc3e4ba63309a023526d2458de845eabc2696",
+  "base_commit": "97ce7c95e9d573eb9b7c5518953b64bc9937e41c",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "7aece529823f8a5a3d9b7305a48bc68f7adc812f5d5b782220699c259cc636e1",
+      "after": "bd867599a0b725157338c016bb75f7fe59ed7ccf2c141f9b35fa181edcbcd9cd"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "056484830d7e6e968330480ed4f93829dd936fbbe583fd81edddc9d10c691f80",
+      "after": "f5a625df74792b2480d47f65617c0240f04a605c15c408ecf5f5fdf1f3884341"
+    }
+  ],
+  "before_identity_digest": "5fb6602a96b16e5abb2cddf8a82f1c188a579d65be67abefe772f277833a0a7f",
+  "after_identity_digest": "2d5c740d8cb55f65d76b4348bec3f71d0b7d8800d84de78a25088d9348853b18",
+  "before_implementation_sha256": "d8cc9c3e1e7e7a426e3c3e5fdfb2af74f74af5d4b2174f4019ef84d83faf188d",
+  "after_implementation_sha256": "e9540104996cee7b38ded1cbfec626eef45893a820e891619d4bfc2e92f4836d",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
