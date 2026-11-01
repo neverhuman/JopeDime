@@ -270,9 +270,13 @@ def traced_engine(home,label,extra):
     children.append(child)
     return child,logpath
 
+def daemon_ready(home,child):
+    try:return json.loads((home/'daemon.json').read_text())['pid']==child.pid
+    except (OSError,ValueError,KeyError):return False
+
 def wait_ready(home,child):
     deadline=time.monotonic()+15
-    while not (home/'daemon.json').exists():
+    while not daemon_ready(home,child):
         assert child.poll() is None,'traced engine exited before startup'
         assert time.monotonic()<deadline,'traced engine startup deadline'
         time.sleep(.01)
@@ -302,7 +306,7 @@ def engine_boundary_matrix():
                 text=logpath.read_text()
                 if f'JOPE_STORE_CRASH:{hook}' in text.splitlines():break
                 assert child.poll() is None,f'{label}: engine exited before selected boundary: {text}'
-                if request is None and (h/'daemon.json').exists():
+                if request is None and daemon_ready(h,child):
                     output=(out/(label+'-request.log')).open('w');files.append(output)
                     request=subprocess.Popen([args.binary,*spec_argv(d,'int02-boundary-run',2)],env={**base_env,'JOPEDIME_HOME':str(h)},stdout=output,stderr=output)
                     children.append(request)
