@@ -2,15 +2,22 @@
   "wave": "H196",
   "status": "INCOMPLETE",
   "verdict": null,
-  "scientific_attempts": 1,
+  "attempt": 2,
+  "scientific_attempts": 2,
+  "infra_rerun_authority": "/home/ubuntu/nudges/hwave_t1200_reattempt_h196.md",
+  "previous_attempt_status": "INCOMPLETE before treatment results",
+  "source_commit": "7fe61149b7ed5e07f93444765a85b136b8ee0317",
+  "next_attempt_authority": "/home/ubuntu/nudges/hw_t1338_h196_rdastra.md",
+  "next_attempt_wall_budget_seconds": 25200,
   "optimizer_updates": 0,
+  "backward_calls": 0,
   "monitor": {
     "status": "INCOMPLETE",
     "exit_code": 1,
     "reasons": [
-      "disk user-visible used>93.8%"
+      "sustained load>85%: three readings five seconds apart"
     ],
-    "elapsed_seconds": 614.4130817300174,
+    "elapsed_seconds": 7145.009678954026,
     "host_online_cores": 128,
     "load_limit": 108.8
   },
@@ -19,7 +26,7 @@
     "error": "RuntimeError('signal 15; no scientific retry')",
     "optimizer_updates": 0,
     "backward_calls": 0,
-    "elapsed_seconds": 611.4966229579877,
+    "elapsed_seconds": 7136.231984564103,
     "audit": {
       "opened_count": 1332,
       "refused": [],
@@ -125,18 +132,104 @@
       0.39140362965590164
     ]
   },
-  "completed_B_cells": 0,
+  "completed_B_cells": 9,
   "completed_A_cells": 0,
+  "b_locked": false,
+  "permutation_probes": {
+    "196101": {
+      "skip": false,
+      "comparisons": 1,
+      "first_mismatch": {
+        "context": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+        "draw": 0,
+        "max_abs_delta": 2.384185791015625e-07
+      }
+    },
+    "196102": {
+      "skip": false,
+      "comparisons": 1,
+      "first_mismatch": {
+        "context": "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d",
+        "draw": 0,
+        "max_abs_delta": 2.384185791015625e-07
+      }
+    },
+    "196103": {
+      "skip": false,
+      "comparisons": 1,
+      "first_mismatch": {
+        "context": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+        "draw": 0,
+        "max_abs_delta": 2.384185791015625e-07
+      }
+    }
+  },
+  "partial_replay": {
+    "status": "PASS",
+    "scope": "partial evidence only; scientific attempt INCOMPLETE",
+    "model_forwards": 0,
+    "optimizer_updates": 0,
+    "remote_objects_verified": 24,
+    "remote_array_members_verified": 5939,
+    "raw_pool_hashes_verified": 1310,
+    "remote_prefix_inventory_matches_receipts": true,
+    "native91_bitexact": true,
+    "permutation_probes": {
+      "196101": {
+        "skip": false,
+        "comparisons": 1,
+        "first_mismatch": {
+          "context": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+          "draw": 0,
+          "max_abs_delta": 2.384185791015625e-07
+        }
+      },
+      "196102": {
+        "skip": false,
+        "comparisons": 1,
+        "first_mismatch": {
+          "context": "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d",
+          "draw": 0,
+          "max_abs_delta": 2.384185791015625e-07
+        }
+      },
+      "196103": {
+        "skip": false,
+        "comparisons": 1,
+        "first_mismatch": {
+          "context": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+          "draw": 0,
+          "max_abs_delta": 2.384185791015625e-07
+        }
+      }
+    },
+    "completed_B_cells": 9,
+    "completed_A_cells": 0,
+    "b_locked": false,
+    "partial_lock_verified": false,
+    "scientific_verdict": null,
+    "missing_outcomes_not_zero_filled": true,
+    "source_commit": "7fe61149b7ed5e07f93444765a85b136b8ee0317"
+  },
   "per_seed_gains": null,
   "median_gain": null,
   "ci95": null,
   "holm_p": null,
   "harm_rate": null,
+  "exact_minus2_treatment_counts": null,
   "elo_lift": null,
   "adapter_sha_after": null,
   "serving_promotion": false,
-  "attempt": 1,
-  "attempt2_authority": "/home/ubuntu/nudges/hwave_t1200_reattempt_h196.md",
-  "treatment_result_observed": false,
-  "dope_sha256_after": null
+  "termination_cause": "sustained load>85%: three readings five seconds apart",
+  "resource_observations": {
+    "samples": 12545,
+    "max_rss": 3335430144,
+    "max_threads": 2,
+    "max_disk_used_fraction": 0.9356301153890917,
+    "max_output_bytes": 12816677,
+    "max_cpu": 80.1,
+    "max_load": 128.1865234375,
+    "min_available": 69530148864,
+    "min_free": 505700274176
+  }
 }
