@@ -1360,7 +1360,7 @@ impl Discovery {
             .checked_add(1)
             .context("session attempt counter exhausted")?;
         let plan = &self.checkpoint.plan;
-        Ok(Request {
+        let request = Request {
             attempt: Attempt {
                 run: plan.run_id.clone(),
                 round,
@@ -1376,7 +1376,18 @@ impl Discovery {
                 wall_ms: plan.evaluation_wall_ms,
                 rss_bytes: plan.evaluation_rss_bytes,
             },
-        })
+        };
+        #[cfg(feature = "research")]
+        let request = {
+            let mut request = request;
+            if rung == 0 {
+                if let Some(context) = &self.capture_context {
+                    context.provider.prepare_request(&mut request)?;
+                }
+            }
+            request
+        };
+        Ok(request)
     }
 
     fn commit_round(
@@ -1517,7 +1528,7 @@ impl Discovery {
                         .checked_add(1)
                         .context("label attempt counter exhausted")?;
                     let slot = 32 + *index as u32;
-                    let request = Request {
+                    let mut request = Request {
                         attempt: Attempt {
                             run: next.plan.run_id.clone(),
                             round: round.number,
@@ -1534,6 +1545,7 @@ impl Discovery {
                             rss_bytes: next.plan.evaluation_rss_bytes,
                         },
                     };
+                    context.provider.prepare_request(&mut request)?;
                     (None, request)
                 };
                 let capture = next.capture.as_mut().unwrap();
@@ -2553,6 +2565,19 @@ impl SearchSpace for NativeSpace {
         count: usize,
         rng: &mut ChaCha12Rng,
     ) -> Result<Vec<String>> {
+        self.propose_observed(parents, count, rng, |_, _| {})
+    }
+}
+
+impl NativeSpace {
+    /// Observe the actual generator arm without adding RNG draws or changing candidates.
+    pub(crate) fn propose_observed(
+        &self,
+        parents: &[String],
+        count: usize,
+        rng: &mut ChaCha12Rng,
+        mut observe: impl FnMut(&str, &'static str),
+    ) -> Result<Vec<String>> {
         use feat_math::evolve::{self, CanonicalMutationArm::*};
         ensure!(!parents.is_empty(), "no parents");
         let arms = [
@@ -2577,6 +2602,19 @@ impl SearchSpace for NativeSpace {
                 Ok(evolve::random_canonical_pipeline(seed, 6))
             };
             if let Ok(dsl) = proposed.and_then(|s| self.canonical(&s).map_err(|e| e.to_string())) {
+                observe(
+                    &dsl,
+                    [
+                        "native_parameter_jitter",
+                        "native_insert",
+                        "native_delete",
+                        "native_adjacent_swap",
+                        "native_head_replacement",
+                        "native_simplify",
+                        "native_crossover",
+                        "native_random",
+                    ][arm],
+                );
                 proposals.push(dsl);
                 if proposals.len() == count {
                     break;

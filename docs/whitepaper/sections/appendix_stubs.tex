@@ -17,9 +17,9 @@ game only when its referee is reliable and affordable (\cref{sub:game-boards}).
   \label{tab:referees}
   \centering
   \small
-  \setlength{\tabcolsep}{3pt}
+  \setlength{\tabcolsep}{4pt}
   \setlength{\extrarowheight}{2pt}% separates rows whose cells wrap
-  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.25\linewidth}>{\raggedright\arraybackslash}p{0.42\linewidth}>{\raggedright\arraybackslash}p{0.28\linewidth}@{}}
+  \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.27\linewidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{0.28\linewidth}@{}}
     \toprule
     Domain & Referee & Systems \\
     \midrule
@@ -35,7 +35,7 @@ game only when its referee is reliable and affordable (\cref{sub:game-boards}).
     \midrule
     Algorithm invention (this paper) & Hidden-fold scores against the incumbent; promotion on strict improvement & \EZ{} (\cref{sub:game-referee,sec:method}) \\
     \bottomrule
-  \end{tabular}
+  \end{tabularx}
 \end{table}
 
 \section{Incident Log and Audit Safeguards}\label{app:incidents}
@@ -186,7 +186,7 @@ windows and rates follow in
 admissions from program-promotion rates. These views reuse retained
 records and do not add independent evaluations.
 
-\subsection{Development Measurements over Completed-Round Time}\label{app:development-time}
+\subsection{Development measurements over completed-round time}\label{app:development-time}
 
 \Cref{fig:fw-completed-time} shows the same retained summaries as
 \cref{fig:fw-later-development}. The horizontal axis sums completed-round
@@ -208,3 +208,5 @@ records to an exact loop, adapter and checkpoint remains pending
 \input{sections/appendix_acceptance_over_rounds}
 
 \input{sections/appendix_promotions_per_hour}
+
+\input{sections/appendix_latest_admissions}

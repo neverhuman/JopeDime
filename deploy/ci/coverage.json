@@ -7431,7 +7431,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -14398,6 +14398,36 @@
       ],
       "lanes": [],
       "scope": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; data-free inner-CV selector, L-BFGS convergence, None-grad guard, and placebo leak controls. Research only; no product/sealed qualification."
+    },
+    "python:research/flywheel_selfplay/h174_swag/test_h174.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector, raw B cost/choice/utility lock replay, and fused adapter API keyword contract. Research only; no study data, checkpoint, product, sealed qualification or serving promotion."
+    },
+    "python:research/flywheel_selfplay/h173_hard_context_reweight/test_h173.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/test_h175.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H175 data-free family fold and role-local injection controls, scope poisoning, deterministic/nested context/family activations, native-reveal-preserving 24-slate identity, exact scalar paired family-bootstrap parity, eligibility ties, oracle/nonoracle semantics, equal-family utility/Elo, grid-censored MDE and reduced whole-pipeline B-lock/A-assessment reconstruction. Zero corpus/checkpoint/model training in controls. Explicit H162/H166 inner-B schema paths, poisoned outer OOF/Val rejection, and incomplete-history labels/threshold exclusion."
     }
   },
   "lanes": {
@@ -15720,5 +15750,15 @@
     "scope": "H169 data-free controls: family exclusion/assessment coverage, repeatable FIT-only minibatches, strict selection, drift calibration, exact optimizer pins, None-gradient materialization, bootstrap/Holm/Elo, and resource guards. No study data, checkpoint, model, or serving qualification."
   },
   "schema": "jope.coverage/v1",
-  "stage": "static"
+  "stage": "static",
+  "python:research/flywheel_selfplay/h174_swag/test_h174.py": {
+    "discovery": {
+      "kind": "python-family"
+    },
+    "dispositions": [
+      "research"
+    ],
+    "lanes": [],
+    "scope": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector, raw B cost/choice/utility lock replay, and fused adapter API keyword contract. Research only; no study data, checkpoint, product, sealed qualification or serving promotion."
+  }
 }

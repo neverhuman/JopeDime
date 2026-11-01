@@ -3,7 +3,7 @@
 //! response fields are unchanged. Version 1 keeps the native heuristic evaluator.
 use crate::{
     dataset::jmat::Matrix,
-    discover::r#loop::{numeric_rows, NativeModel},
+    discover::r#loop::numeric_rows,
     objective::regression::RegressionObjective,
     worker::{Request, Scores, WorkerFailure},
 };
@@ -77,10 +77,9 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
             "surrogate requires two complementary full-FIT folds"
         );
         let (x, y) = numeric_rows(matrix, &spec.target, &spec.features, &fold.train)?;
-        let fitted = NativeModel::fit(&spec.features, &request.dsl, &x, &y)?;
-        let mean = y.iter().map(|v| v / y.len() as f64).sum::<f64>();
+        let mean = y.iter().sum::<f64>() / y.len() as f64;
         let (vx, vy) = numeric_rows(matrix, &spec.target, &spec.features, &fold.validation)?;
-        let prediction = fitted.predict(&vx)?;
+        let prediction = predict_s1(&request.dsl, &x, &y, &vx)?;
         let rmse = objective.evaluate(&vy, &prediction)?.loss;
         let baseline = objective.evaluate(&vy, &vec![mean; vy.len()])?.loss;
         ensure!(
@@ -113,6 +112,54 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
         fold_scores: losses,
         predictions_digest: format!("{:x}", predicted.finalize()),
     })
+}
+
+// Frozen s1main::one_fit uses fold-fitted min/max without clipping. Reusing
+// generic NativeModel silently clipped validation extrapolation and replaced
+// positive target spans smaller than 1e-12, changing the trained surrogate.
+fn predict_s1(
+    dsl: &str,
+    x: &feat_math::Rows,
+    y: &[f64],
+    validation: &feat_math::Rows,
+) -> Result<Vec<f64>> {
+    ensure!(
+        !x.is_empty()
+            && x.len() == y.len()
+            && x.iter().chain(validation).flatten().all(|v| v.is_finite()),
+        "frozen S1 requires finite training and validation features"
+    );
+    let mut columns = Vec::with_capacity(x[0].len());
+    for j in 0..x[0].len() {
+        let lo = x.iter().map(|r| r[j]).fold(f64::INFINITY, f64::min);
+        let hi = x.iter().map(|r| r[j]).fold(f64::NEG_INFINITY, f64::max);
+        columns.push((lo, if hi - lo > 0.0 { hi - lo } else { 1.0 }));
+    }
+    let y_lo = y.iter().copied().fold(f64::INFINITY, f64::min);
+    let y_hi = y.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+    let y_span = if y_hi - y_lo > 0.0 { y_hi - y_lo } else { 1.0 };
+    let scale = |rows: &feat_math::Rows| -> feat_math::Rows {
+        rows.iter()
+            .map(|row| {
+                row.iter()
+                    .zip(&columns)
+                    .map(|(v, (lo, span))| (v - lo) / span)
+                    .collect()
+            })
+            .collect()
+    };
+    let scaled_y: Vec<_> = y.iter().map(|v| (v - y_lo) / y_span).collect();
+    let fitted = feat_math::fit(&feat_math::GenomeIr::parse(dsl)?, &scale(x), &scaled_y)?;
+    let prediction: Vec<_> = fitted
+        .predict(&scale(validation))?
+        .into_iter()
+        .map(|v| v * y_span + y_lo)
+        .collect();
+    ensure!(
+        prediction.iter().all(|v| v.is_finite()),
+        "invalid S1 prediction"
+    );
+    Ok(prediction)
 }
 
 pub(crate) fn fitness(dsl: &str, l0: f64, l1: f64, wins: usize) -> Result<(f64, bool)> {

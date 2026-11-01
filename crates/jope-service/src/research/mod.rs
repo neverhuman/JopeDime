@@ -13,6 +13,8 @@ mod job_resolver;
 pub use job_resolver::{AcceptedJobAdmission, TrustedJobResolver};
 mod run;
 pub use run::{record_run, RecordingBackend};
+mod job;
+pub use job::{record_catalog_job, RecordingReceipt};
 
 mod producer;
 pub use producer::RoundCapture;

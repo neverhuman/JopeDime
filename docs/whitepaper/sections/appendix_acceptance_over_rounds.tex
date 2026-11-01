@@ -1,4 +1,4 @@
-\subsection{Recorded-Best Trajectory and Cumulative Acceptance Rate}\label{app:acceptance-over-rounds}
+\subsection{Recorded-best trajectory and cumulative acceptance rate}\label{app:acceptance-over-rounds}
 
 \begin{figure*}[t]
   \centering
@@ -13,6 +13,17 @@
   subsequent \num{1781} rejected rounds. These are development admission
   aggregates, not independent first-proposal comparisons.}
   \label{fig:fw-acceptance-over-rounds}
+\end{figure*}
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig_fw_promotions_per_hour.pdf}
+  \caption{\textbf{Training-program promotions per hour and adapter validation trajectory.}
+  Left: logged rolling and per-round strict training-program promotions per hour.
+  Right: candidate and recorded-best adapter validation pool utility. Both panels
+  cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions
+  over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, with
+  zero adapter admissions).}
+  \label{fig:fw-promotions-per-hour}
 \end{figure*}
 
 \Cref{fig:fw-acceptance-over-rounds} provides a companion view of the

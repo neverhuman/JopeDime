@@ -4409,8 +4409,8 @@
       }
     },
     "python:research/h172/analysis.py": {
-      "bytes": 19836,
-      "sha256": "9118315aab9920d93781fb270b67da88dcbda67f52be0bf1c5c7cdf3339e4253",
+      "bytes": 19861,
+      "sha256": "0c5fbd4eb6fd7e31aad0b5bc773133aab24b608b2664bd386d621e2ff7afc610",
       "classification": {
         "role": "research",
         "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; family cross-fit L-BFGS runner and bounded CPU supervisor. Research only; no product/sealed qualification."
@@ -4425,11 +4425,107 @@
       }
     },
     "python:research/h172/run.py": {
-      "bytes": 61489,
-      "sha256": "33e81f10ef55f0c3f32993e24dd7df15d3fa2ac1d0d41d44e549ee9ec2d71601",
+      "bytes": 61496,
+      "sha256": "c019274392f744fd105d832f5765f40bcbe5bdb94aecb99c3bfbe482dbcb371b",
       "classification": {
         "role": "research",
         "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; family cross-fit L-BFGS runner and bounded CPU supervisor. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h174_swag/analysis.py": {
+      "bytes": 8046,
+      "classification": {
+        "role": "research",
+        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "5c49bd20a3865ca3bb3a2833c4701b95b66cb00d0e295640751b461a9c701c4c"
+    },
+    "python:research/flywheel_selfplay/h174_swag/treatment.py": {
+      "bytes": 6366,
+      "classification": {
+        "role": "research",
+        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "48ee6dce13cd8ccb608162b2a11d0d7cc6eef251dda5c5a7638953f64ae9374d"
+    },
+    "python:research/flywheel_selfplay/h174_swag/runner.py": {
+      "bytes": 39305,
+      "classification": {
+        "role": "research",
+        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "fb33e03e266c34ab16f72de16a92cb8d8a87cad78e5db720aa0cd3727d33bcd7"
+    },
+    "python:research/flywheel_selfplay/h174_swag/monitor.py": {
+      "bytes": 5480,
+      "classification": {
+        "role": "research",
+        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "6f8e7d28a730daaf6b59009e8168c19de2a2ab494cfbeded5efcc73964d1c4aa"
+    },
+    "python:research/flywheel_selfplay/h173_hard_context_reweight/monitor.py": {
+      "bytes": 5850,
+      "sha256": "52806f32db92dd98af7748b1961ccd10e28877cb2079e3f5b2ae187da4c1553d",
+      "classification": {
+        "role": "research",
+        "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h173_hard_context_reweight/runner.py": {
+      "bytes": 49831,
+      "sha256": "f5cefaa52c5a3bff7e8a4377ccc1c69104d1910d197ae624a545b5d7f2def6a8",
+      "classification": {
+        "role": "research",
+        "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h173_hard_context_reweight/runtime.py": {
+      "bytes": 10004,
+      "sha256": "4c4342bcb8de9a9c157dc400ba062e061742f90e2cac96a4a61546ec498be05e",
+      "classification": {
+        "role": "research",
+        "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h173_hard_context_reweight/science.py": {
+      "bytes": 20882,
+      "sha256": "ea469183ebf623ed19e7d859630b89c32c663eed5f68a69e49b1d0f07a84eb6a",
+      "classification": {
+        "role": "research",
+        "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/protocol.py": {
+      "bytes": 8547,
+      "sha256": "de98f5824f2750fa89e21205d70ffa80f226224e4093cff746eb3b26e9b47197",
+      "classification": {
+        "role": "research",
+        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/power.py": {
+      "bytes": 21152,
+      "sha256": "c5e73e8db8aa80a601500c9080c162562824889bf2e29e4a530e13fa89c41dfe",
+      "classification": {
+        "role": "research",
+        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/runner.py": {
+      "bytes": 10525,
+      "sha256": "276f0853e3e41452562aeae5c35a2a8f791ec085fc31a739a2ee7e0110749ff5",
+      "classification": {
+        "role": "research",
+        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/monitor.py": {
+      "bytes": 5212,
+      "sha256": "f9c057520bf6937ba36d8493a24bce156b04757d4e86f9903ba18fbbb5411a7d",
+      "classification": {
+        "role": "research",
+        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
       }
     }
   },
