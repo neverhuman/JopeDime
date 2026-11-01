@@ -18,7 +18,7 @@ use crate::{
     governor::{Governor, Requirements},
     idempotency::{CommandOutcome, RequestIdentity},
     run::service::{BackendExecutor, BackendPlan, BackendSpace},
-    store::{RecordKey, Store},
+    store::{Record, RecordKey, Store},
     telemetry::{Sensors, SystemSensors},
 };
 use axum::{
@@ -82,6 +82,94 @@ pub(crate) struct RunService {
     admission: Mutex<()>,
     // Worker jobs retain store ownership and the OS lease after a client drops.
     _lease: Arc<EngineLock>,
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct Continuation {
+    search: SearchPlan,
+    finalization: FinalizationRequest,
+    // Store the request and resolved placement, never the live graph or weights.
+    backend: ContinuationBackend,
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct ContinuationBackend {
+    spec: RunSpec,
+    placement: Placement,
+}
+
+impl ContinuationBackend {
+    fn restore(
+        &self,
+        store: &Store,
+        plan: &SearchPlan,
+        roots: &[crate::store::BlobRef],
+        admitted: Option<&crate::run::learned::AdmittedRanker>,
+    ) -> Result<BackendPlan> {
+        let mut backend = BackendPlan::resolve(&self.spec, admitted, plan.planned_workers)
+            .map_err(|error| {
+                issue(
+                    crate::run::service::error_code(&error),
+                    "The original run backend is unavailable.",
+                )
+            })?;
+        if backend.bundle_digest != plan.bundle_digest || backend.placement != self.placement {
+            return Err(unavailable(
+                "Continuation requires the original backend placement and bundle.",
+            ));
+        }
+        let fit = roots
+            .iter()
+            .find(|blob| {
+                blob.sha256
+                    .iter()
+                    .map(|byte| format!("{byte:02x}"))
+                    .collect::<String>()
+                    == plan.matrix_sha256
+            })
+            .ok_or_else(|| unavailable("Original FIT blob is unavailable."))?;
+        if store.verified_blob_path(fit).map_err(io)? != plan.matrix_path {
+            return Err(unavailable("Original FIT path changed."));
+        }
+        backend
+            .bind_fit(&store.read_blob(fit).map_err(io)?, plan)
+            .map_err(io)?;
+        Ok(backend)
+    }
+}
+
+fn run_language_filter(
+    languages: &[Language],
+) -> Result<feat_math::evolve::api::capability::LanguageFilter> {
+    use feat_math::evolve::api::capability::{self, Language as ExportLanguage};
+    if languages.is_empty() {
+        return Err(unavailable(
+            "At least one supported export language is required.",
+        ));
+    }
+    // Evaluation is always native Rust; requested portable exports add constraints.
+    let mut requested = vec![ExportLanguage::Rust];
+    for language in languages {
+        requested.push(match language {
+            Language::Rust => ExportLanguage::Rust,
+            Language::Python => ExportLanguage::Python,
+            _ => {
+                return Err(unavailable(
+                    "This run backend supports Rust and Python export languages.",
+                ))
+            }
+        });
+    }
+    capability::allowed_ops(&requested).map_err(|_| {
+        unavailable("Requested export languages have no supported native pipeline intersection.")
+    })
+}
+
+fn continuation_key(run: &jope_api::ids::RunId) -> RecordKey {
+    RecordKey::Command {
+        principal: "public-run-continuation.v1".into(),
+        idempotency_key: run.to_string(),
+    }
 }
 
 struct Prepared {
@@ -169,12 +257,19 @@ struct Q1Fold {
 /// Establish a bounded native baseline before considering expensive mutations.
 /// The existing research/native starter order remains unchanged.
 struct CpuRunSpace {
+    allowed: feat_math::evolve::api::capability::LanguageFilter,
     #[cfg(all(feature = "failpoints", debug_assertions))]
     pub06_values: Option<Pub06InternalValues>,
 }
 impl SearchSpace for CpuRunSpace {
     fn canonical(&self, dsl: &str) -> anyhow::Result<String> {
-        NativeSpace.canonical(dsl)
+        let canonical = NativeSpace.canonical(dsl)?;
+        anyhow::ensure!(
+            self.allowed
+                .accepts_seed(&feat_math::GenomeIr::parse(&canonical)?),
+            "pipeline is excluded by requested export languages"
+        );
+        Ok(canonical)
     }
     fn seeds(&self) -> anyhow::Result<Vec<String>> {
         #[cfg(all(feature = "failpoints", debug_assertions))]
@@ -204,7 +299,11 @@ impl SearchSpace for CpuRunSpace {
         {
             anyhow::bail!("PUB-06 test worker failure after internal-value injection");
         }
-        NativeSpace.propose(parents, count, rng)
+        Ok(NativeSpace
+            .propose(parents, count, rng)?
+            .into_iter()
+            .filter(|dsl| self.canonical(dsl).is_ok())
+            .collect())
     }
 }
 
@@ -1143,11 +1242,16 @@ impl RunService {
         if spec.task != Task::Regression {
             return Err(unavailable("This run backend requires task=regression."));
         }
+        if jope_runtime::backend::DeviceRequest::parse(&spec.device).is_none() {
+            return Err(invalid("Unknown device."));
+        }
         let mut backend =
             BackendPlan::resolve(spec, self.activity.admitted_ranker(), 1).map_err(|error| {
+                let code = crate::run::service::error_code(&error);
+                // Keep the public catalog code without exposing private backend diagnostics.
                 issue(
-                    crate::run::service::error_code(&error),
-                    "The requested run backend could not be prepared.",
+                    code,
+                    format!("{code}: The requested run backend could not be prepared."),
                 )
             })?;
         if !backend.learned() && spec.landmarks != LandmarkMode::None {
@@ -1162,11 +1266,7 @@ impl RunService {
                 "This run backend supports random FIT/internal assessment splits without a separate test dataset.",
             ));
         }
-        if spec.languages != [Language::Rust] {
-            return Err(unavailable(
-                "This run backend currently qualifies Rust operations only.",
-            ));
-        }
+        let language_filter = run_language_filter(&spec.languages)?;
         if spec.objective != ObjectiveSpec::Name("rmse".into()) {
             return Err(unavailable(
                 "This run backend currently qualifies the rmse regression objective.",
@@ -1350,7 +1450,7 @@ impl RunService {
             "rows":{"total":table.rows.len().to_string(),"fit":fit_count.to_string(),"holdout":holdout_ids.len().to_string(),"test":null},
             "effort":{"name":spec.effort,"evaluations":effort.evaluations.to_string(),"wall_seconds":effort.wall_seconds.to_string(),"cv_folds":effort.rung1_folds,"rounds_in_flight":1},
             "guidance":backend.guidance,"landmarks":{"mode":spec.landmarks,"sample_rows":0},
-            "languages":{"requested":spec.languages,"excluded_operations":[],"intersection_empty":false},
+            "languages":{"requested":spec.languages,"excluded_operations":language_filter.excluded_ops(),"intersection_empty":false},
             "placement":backend.placement,
             "limits":{"eval_timeout_s":timeout.div_ceil(1000),"worker_rss_bytes":WORKER_RAM.to_string()},"estimates":estimates,"warnings":backend.warnings})).map_err(io)?;
         let search = SearchPlan {
@@ -1461,22 +1561,84 @@ impl RunService {
                 rows: prepared.holdout_rows,
             },
             test: None,
-            refit: Refit::Fit,
+            // Publish both genuine models once; exports select their recorded fit mode.
+            refit: Refit::FitHoldout,
             model_root: self.home.join("models"),
             scratch_root: self.home.join("run-scratch"),
             max_input_bytes: self.config.limits.max_dataset_bytes.value,
             max_model_bytes: MODEL_LIMIT,
         };
+        // This context precedes the first run commit, so every visible run can
+        // resume from its original immutable plan and partition provenance.
+        let context = Continuation {
+            search: prepared.search.clone(),
+            finalization: request.clone(),
+            backend: ContinuationBackend {
+                spec,
+                placement: prepared.backend.placement.clone(),
+            },
+        };
+        let persisted = self.store.transaction(|tx| {
+            tx.put(
+                &continuation_key(&prepared.search.run_id),
+                &Record::metadata(
+                    serde_json::to_value(&context)?,
+                    vec![fit.clone(), holdout.clone()],
+                ),
+            )
+        });
+        if let Err(error) = persisted {
+            return response(&io(error));
+        }
+        let sender = match self.worker_sender(
+            _pub06_values,
+            false,
+            prepared.backend,
+            context.backend.spec.languages.clone(),
+        ) {
+            Ok(sender) => sender,
+            Err(error) => return response(&error),
+        };
+        let discovery = match Discovery::start_command(
+            Arc::clone(&self.store),
+            prepared.search,
+            Arc::clone(&self.journal),
+            identity.clone(),
+            vec![fit, holdout],
+            prepared.public.warnings,
+        ) {
+            Ok(value) => value,
+            Err(error) => return response(&io(error)),
+        };
+        if sender.send((discovery, request)).is_err() {
+            return response(&io("Run worker stopped before dispatch."));
+        }
+        match self.store.idempotent_receipt(&identity) {
+            Ok(Some(receipt)) => receipt.into_response(),
+            Ok(None) => response(&io("Committed run receipt missing.")),
+            Err(error) => error.into_response(),
+        }
+    }
+
+    fn worker_sender(
+        self: &Arc<Self>,
+        _pub06_values: Pub06Injection,
+        explicit_continue: bool,
+        backend: BackendPlan,
+        languages: Vec<Language>,
+    ) -> Result<mpsc::SyncSender<(Discovery, FinalizationRequest)>> {
         let (sender, receiver) = mpsc::sync_channel::<(Discovery, FinalizationRequest)>(1);
         let owner = Arc::clone(self);
+        let allowed = run_language_filter(&languages)?;
         #[cfg(all(feature = "failpoints", debug_assertions))]
         let run_space = CpuRunSpace {
+            allowed,
             pub06_values: _pub06_values,
         };
         #[cfg(not(all(feature = "failpoints", debug_assertions)))]
-        let run_space = CpuRunSpace {};
-        let learned = prepared.backend.learned();
-        let admission = prepared.backend.admission;
+        let run_space = CpuRunSpace { allowed };
+        let learned = backend.learned();
+        let admission = backend.admission;
         let run_space = BackendSpace {
             native: run_space,
             learned,
@@ -1500,11 +1662,15 @@ impl RunService {
                         while discovery.completed().is_none() {
                             discovery.advance(&run_space, &admission, &executor, 1, usize::MAX)?;
                         }
-                        Finalizer::with_journal(
+                        let finalizer = Finalizer::with_journal(
                             Arc::clone(&owner.store),
                             Arc::clone(&owner.journal),
-                        )
-                        .finalize(&request, &executor)?;
+                        );
+                        if explicit_continue {
+                            finalizer.finalize_after_explicit_continue(&request, &executor)?;
+                        } else {
+                            finalizer.finalize(&request, &executor)?;
+                        }
                         Ok(())
                     })();
                     if let Err(error) = result {
@@ -1513,25 +1679,93 @@ impl RunService {
                 }
             })
         {
-            return response(&io(error));
+            return Err(io(error));
         }
-        let discovery = match Discovery::start_command(
-            Arc::clone(&self.store),
-            prepared.search,
-            Arc::clone(&self.journal),
-            identity.clone(),
-            vec![fit, holdout],
-            prepared.public.warnings,
-        ) {
-            Ok(value) => value,
-            Err(error) => return response(&io(error)),
+        Ok(sender)
+    }
+
+    fn continue_run(
+        self: &Arc<Self>,
+        run: jope_api::ids::RunId,
+        expected_revision: Option<u64>,
+        identity: RequestIdentity,
+    ) -> Response {
+        let _guard = match self.admission.lock() {
+            Ok(guard) => guard,
+            Err(_) => return response(&io("Run admission lock is poisoned.")),
         };
-        if sender.send((discovery, request)).is_err() {
-            return response(&io("Run worker stopped before dispatch."));
+        match self.store.idempotent_receipt(&identity) {
+            Ok(Some(receipt)) => return receipt.into_response(),
+            Ok(None) => {}
+            Err(error) => return error.into_response(),
+        }
+        let attempt = (|| -> Result<()> {
+            let snapshot = self
+                .journal
+                .snapshot(&run)
+                .map_err(io)?
+                .ok_or_else(|| issue(ErrorCode::NotFound, "Run does not exist."))?;
+            if expected_revision.is_some_and(|revision| revision != snapshot.revision.0) {
+                return Err(issue(
+                    ErrorCode::RevisionConflict,
+                    "Re-read the snapshot and retry.",
+                ));
+            }
+            if snapshot.state != RunState::Paused || self.activity.active_runs() != 0 {
+                return Err(issue(
+                    ErrorCode::RevisionConflict,
+                    "Continue requires an idle backend and a paused run.",
+                ));
+            }
+            let stored_context = self
+                .store
+                .get(&continuation_key(&run))
+                .map_err(io)?
+                .ok_or_else(|| {
+                    unavailable("Original continuation context is unavailable for this run.")
+                })?;
+            let context: Continuation = serde_json::from_value(stored_context.data).map_err(io)?;
+            if context.search.run_id != run
+                || context.finalization.run_id != run
+                || context.search.binary_version != self.binary
+            {
+                return Err(unavailable(
+                    "Continuation requires the original binary and run identity.",
+                ));
+            }
+            // Rebuild only the original backend, retaining the checkpoint plan.
+            let backend = context.backend.restore(
+                &self.store,
+                &context.search,
+                &stored_context.blobs,
+                self.activity.admitted_ranker(),
+            )?;
+            #[cfg(all(feature = "failpoints", debug_assertions))]
+            let injection = None;
+            #[cfg(not(all(feature = "failpoints", debug_assertions)))]
+            let injection = ();
+            let sender = self.worker_sender(
+                injection,
+                true,
+                backend,
+                context.backend.spec.languages.clone(),
+            )?;
+            let discovery = Discovery::continue_command(
+                Arc::clone(&self.store),
+                context.search,
+                Arc::clone(&self.journal),
+                identity.clone(),
+            )
+            .map_err(io)?;
+            sender.send((discovery, context.finalization)).map_err(io)?;
+            Ok(())
+        })();
+        if let Err(error) = attempt {
+            return response(&error);
         }
         match self.store.idempotent_receipt(&identity) {
             Ok(Some(receipt)) => receipt.into_response(),
-            Ok(None) => response(&io("Committed run receipt missing.")),
+            Ok(None) => response(&io("Committed continue receipt missing.")),
             Err(error) => error.into_response(),
         }
     }
@@ -1667,6 +1901,99 @@ pub(super) async fn start(
         }
     }
     result
+}
+
+pub(super) async fn control(
+    Extension(service): Extension<Arc<RunService>>,
+    path: std::result::Result<axum::extract::Path<String>, axum::extract::rejection::PathRejection>,
+    request: Request<Body>,
+) -> Response {
+    let Ok(axum::extract::Path(run)) = path else {
+        return response(&invalid("Invalid run path."));
+    };
+    let Ok(run) = run.parse::<jope_api::ids::RunId>() else {
+        return response(&invalid("Invalid run id."));
+    };
+    let headers = request.headers().clone();
+    let target = request
+        .uri()
+        .path_and_query()
+        .map(|v| v.as_str().to_owned())
+        .unwrap_or_default();
+    let mut keys = headers.get_all("idempotency-key").iter();
+    let Some(key) = keys.next().and_then(|v| v.to_str().ok()) else {
+        return response(&invalid("Idempotency-Key is required."));
+    };
+    if keys.next().is_some() {
+        return response(&invalid("Idempotency-Key must occur once."));
+    }
+    let content_type = headers
+        .get(axum::http::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.split(';').next())
+        .map(|v| v.trim().to_ascii_lowercase());
+    if !content_type.as_deref().is_some_and(|v| {
+        v == "application/json" || (v.starts_with("application/") && v.ends_with("+json"))
+    }) {
+        return response(&invalid("Expected JSON content type."));
+    }
+    let bytes = match axum::body::to_bytes(request.into_body(), 1024 * 1024).await {
+        Ok(value) => value,
+        Err(_) => return response(&invalid("Invalid control body.")),
+    };
+    // Preserve explicit nulls in retry identity; reject duplicate JSON keys.
+    let value: Value = match jope_runtime::strict_json::decode(&bytes) {
+        Ok(value) => value,
+        Err(_) => return response(&invalid("Invalid control JSON.")),
+    };
+    let body: jope_api::registry::RunControlRequest = match serde_json::from_value(value.clone()) {
+        Ok(value) => value,
+        Err(_) => return response(&invalid("Expected a valid run control request.")),
+    };
+    let jope_api::registry::RunControlRequest::Continue { expected_revision } = body else {
+        return response(&unavailable(
+            "This bounded backend currently supports explicit continue only.",
+        ));
+    };
+    let mut preconditions = headers.get_all("if-match").iter();
+    let raw_if_match = preconditions.next();
+    if preconditions.next().is_some() {
+        return response(&invalid("If-Match must occur once."));
+    }
+    let if_match = match raw_if_match.map(|v| {
+        v.to_str()
+            .ok()
+            .and_then(|s| s.trim_matches('"').parse::<u64>().ok())
+    }) {
+        None => None,
+        Some(Some(value)) => Some(value),
+        Some(None) => return response(&invalid("Invalid If-Match revision.")),
+    };
+    if if_match
+        .zip(expected_revision)
+        .is_some_and(|(a, b)| a != b.0)
+    {
+        return response(&invalid("Revision preconditions disagree."));
+    }
+    let identity = match RequestIdentity::new(
+        "local-engine-owner",
+        key,
+        8,
+        &target,
+        raw_if_match.and_then(|v| v.to_str().ok()),
+        &value,
+    ) {
+        Ok(v) => v,
+        Err(e) => return e.into_response(),
+    };
+    match tokio::task::spawn_blocking(move || {
+        service.continue_run(run, if_match.or(expected_revision.map(|v| v.0)), identity)
+    })
+    .await
+    {
+        Ok(value) => value,
+        Err(error) => response(&io(error)),
+    }
 }
 
 /// Execute one Q1 request and return the same compact bytes durably retained by the engine.
@@ -1851,6 +2178,121 @@ mod tests {
             "objective":"rmse","effort":"fast","budget":{"evaluations":"4","wall_seconds":"30"},"landmarks":"none","guidance":"heuristic",
             "languages":["rust"],"require_all_languages":true,"device":"cpu","seed":"73","dry_run":true,"plan_digest":null})).unwrap();
         (directory, engine, spec)
+    }
+
+    fn continuation_backend_fixture() -> (
+        tempfile::TempDir,
+        InProcessEngine,
+        ContinuationBackend,
+        SearchPlan,
+        crate::store::BlobRef,
+    ) {
+        let (directory, engine, spec) = fixture();
+        let dataset: RegisteredDataset = serde_json::from_value(
+            engine
+                .store()
+                .get(&RecordKey::Dataset(spec.dataset.clone()))
+                .unwrap()
+                .unwrap()
+                .data,
+        )
+        .unwrap();
+        let fit = dataset.matrix;
+        let backend = BackendPlan::resolve(&spec, None, 1).unwrap();
+        let plan = SearchPlan {
+            run_id: "run_01ARZ3NDEKTSV4RRFFQ69G5FAV".parse().unwrap(),
+            dataset_id: spec.dataset.clone(),
+            problem_digest: "a".repeat(64),
+            bundle_digest: backend.bundle_digest,
+            binary_version: "continuation-guard-test".into(),
+            matrix_path: engine.store().verified_blob_path(&fit).unwrap(),
+            matrix_sha256: hash(&engine.store().read_blob(&fit).unwrap()),
+            target: spec.target.clone(),
+            features: (0..21).map(|i| format!("x{i}")).collect(),
+            objective: "rmse".into(),
+            seed: spec.seed.0,
+            planned_workers: 1,
+            effort: spec.effort,
+            evaluations: 4,
+            wall_seconds: 30,
+            evaluation_wall_ms: 1000,
+            evaluation_rss_bytes: WORKER_RAM,
+            groups: None,
+            times: None,
+            gap_rows: 0,
+        };
+        let context = ContinuationBackend {
+            spec,
+            placement: backend.placement,
+        };
+        (directory, engine, context, plan, fit)
+    }
+
+    #[test]
+    fn continuation_restores_native_backend_from_persisted_request_without_replanning() {
+        let (_directory, engine, context, plan, fit) = continuation_backend_fixture();
+        let context: ContinuationBackend =
+            serde_json::from_value(serde_json::to_value(context).unwrap()).unwrap();
+        let original = plan.clone();
+        let restored = context
+            .restore(engine.store(), &plan, &[fit], None)
+            .unwrap();
+        assert!(!restored.learned());
+        assert_eq!(restored.placement, context.placement);
+        assert_eq!(restored.bundle_digest, original.bundle_digest);
+        assert_eq!(plan, original);
+    }
+
+    #[test]
+    fn learned_continuation_without_admitted_capability_never_falls_back_to_native() {
+        let (_directory, engine, mut context, plan, fit) = continuation_backend_fixture();
+        context.spec.guidance = Guidance::Learned;
+        context.spec.landmarks = LandmarkMode::Full;
+        let error = context
+            .restore(engine.store(), &plan, &[fit], None)
+            .err()
+            .unwrap();
+        assert_eq!(error.code, ErrorCode::CapabilityUnavailable);
+    }
+
+    #[test]
+    fn continuation_refuses_changed_backend_identity_and_tampered_fit() {
+        let (_directory, engine, mut context, mut plan, fit) = continuation_backend_fixture();
+        context.placement.workers = 2;
+        assert_eq!(
+            context
+                .restore(engine.store(), &plan, std::slice::from_ref(&fit), None)
+                .err()
+                .unwrap()
+                .code,
+            ErrorCode::CapabilityUnavailable
+        );
+        context.placement.workers = 1;
+        let original = plan.clone();
+        plan.bundle_digest = "b".repeat(64);
+        assert_eq!(
+            context
+                .restore(engine.store(), &plan, std::slice::from_ref(&fit), None)
+                .err()
+                .unwrap()
+                .code,
+            ErrorCode::CapabilityUnavailable
+        );
+        plan = original;
+        plan.matrix_path = plan.matrix_path.with_extension("changed");
+        assert_eq!(
+            context
+                .restore(engine.store(), &plan, std::slice::from_ref(&fit), None)
+                .err()
+                .unwrap()
+                .code,
+            ErrorCode::CapabilityUnavailable
+        );
+        plan.matrix_path = engine.store().verified_blob_path(&fit).unwrap();
+        std::fs::write(&plan.matrix_path, b"corrupted owned TRAIN fixture").unwrap();
+        assert!(context
+            .restore(engine.store(), &plan, &[fit], None)
+            .is_err());
     }
 
     fn app(engine: &InProcessEngine) -> axum::Router {
@@ -2229,6 +2671,24 @@ mod tests {
         let listed = super::tests::app(&engine).oneshot(list).await.unwrap();
         assert_eq!(listed.status(), StatusCode::OK);
         assert_eq!(body(listed).await, json!({"runs":[],"next_after":null}));
+        for raw in [
+            r#"{"action":"continue","action":"continue"}"#,
+            r#"{"action":"continue","unexpected":true}"#,
+            r#"{"action":"continue","expected_revision":"-1"}"#,
+        ] {
+            let request = Request::builder()
+                .method("POST")
+                .uri("/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FAV/control")
+                .header(header::HOST, "127.0.0.1:31234")
+                .header(header::AUTHORIZATION, format!("Bearer {}", "ab".repeat(32)))
+                .header(header::CONTENT_TYPE, "application/json")
+                .header("idempotency-key", "bad-continue")
+                .body(Body::from(raw))
+                .unwrap();
+            let reply = super::tests::app(&engine).oneshot(request).await.unwrap();
+            assert_eq!(reply.status(), StatusCode::BAD_REQUEST);
+            assert_eq!(body(reply).await["code"], "INVALID_INPUT");
+        }
         assert!(!_directory.path().join("worker-scratch").exists());
     }
 
@@ -2305,5 +2765,50 @@ mod tests {
         let missing = app.oneshot(missing).await.unwrap();
         assert_eq!(missing.status(), StatusCode::NOT_FOUND);
         assert_eq!(body(missing).await["code"], "NOT_FOUND");
+    }
+    #[test]
+    fn requested_export_languages_filter_the_actual_native_seed_and_mutations() {
+        use rand_chacha::rand_core::SeedableRng;
+        let allowed = run_language_filter(&[Language::Rust, Language::Python]).unwrap();
+        let space = CpuRunSpace {
+            allowed: allowed.clone(),
+            #[cfg(all(feature = "failpoints", debug_assertions))]
+            pub06_values: None,
+        };
+        let seeds = space.seeds().unwrap();
+        assert_eq!(seeds.len(), 1);
+        let mut rng = rand_chacha::ChaCha12Rng::seed_from_u64(73);
+        let proposals = space.propose(&seeds, 16, &mut rng).unwrap();
+        assert!(!proposals.is_empty());
+        for dsl in seeds.iter().chain(&proposals) {
+            assert!(allowed.accepts_seed(&feat_math::GenomeIr::parse(dsl).unwrap()));
+        }
+        assert!(space.canonical("(sym affine \"c0\")").is_err());
+        for languages in [
+            vec![],
+            vec![Language::Javascript],
+            vec![Language::Typescript],
+        ] {
+            assert!(run_language_filter(&languages).is_err());
+        }
+    }
+
+    #[tokio::test]
+    async fn python_and_rust_plan_uses_the_declared_capability_intersection() {
+        let (directory, engine, mut spec) = fixture();
+        spec.languages = vec![Language::Rust, Language::Python];
+        let reply = app(&engine)
+            .oneshot(request(&spec, "portable-plan"))
+            .await
+            .unwrap();
+        assert_eq!(reply.status(), StatusCode::OK);
+        let plan: Plan = serde_json::from_value(body(reply).await).unwrap();
+        assert_eq!(plan.languages.requested, spec.languages);
+        assert_eq!(
+            plan.languages.excluded_operations,
+            run_language_filter(&spec.languages).unwrap().excluded_ops()
+        );
+        assert!(!plan.languages.intersection_empty);
+        assert!(!directory.path().join("worker-scratch").exists());
     }
 }
