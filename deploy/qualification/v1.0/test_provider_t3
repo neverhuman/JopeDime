@@ -88,22 +88,22 @@ class T3Tests(unittest.TestCase):
         ):
             return t3.qualify(self.ctx, run=self.run_child)
 
-    def test_four_exact_clauses_produce_candidate_bound_counts(self):
+    def test_three_exact_clauses_produce_candidate_bound_counts(self):
         self.assertEqual(self.invoke(), 0)
         result = json.loads(self.ctx.result.read_text())
         self.assertEqual(result["artifact_sha256"], self.ctx.artifact_sha256)
         self.assertEqual(result["source_sha"], self.ctx.source_sha)
         self.assertEqual(
-            result["counts"], {k: 4 * v for k, v in t3.SINGLE_PASS.items()}
+            result["counts"], {k: 3 * v for k, v in t3.SINGLE_PASS.items()}
         )
-        self.assertEqual(self.test_calls, 4)
+        self.assertEqual(self.test_calls, 3)
         for test in t3.TESTS:
             self.assertIn(t3.command(test), self.calls)
             self.assertIn("--exact", t3.command(test))
+        self.assertIn("--nocapture", t3.command(t3.TESTS[1]))
         self.assertIn("--nocapture", t3.command(t3.TESTS[2]))
-        self.assertIn("--nocapture", t3.command(t3.TESTS[3]))
-        self.assertNotIn("--ignored", t3.command(t3.TESTS[2]))
-        self.assertIn("--ignored", t3.command(t3.TESTS[3]))
+        self.assertNotIn("--ignored", t3.command(t3.TESTS[1]))
+        self.assertIn("--ignored", t3.command(t3.TESTS[2]))
 
     def test_zero_ignored_and_multiple_cases_never_pass(self):
         for output in (

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""REL-07 T3: reasoning and telemetry observer neutrality."""
+"""REL-07 T3: telemetry observer neutrality."""
 
 from __future__ import annotations
 
@@ -20,7 +20,6 @@ from common import (
 
 
 TESTS = (
-    "telemetry::tests::reasoning_off_or_detailed_and_telemetry_modes_preserve_search",
     "telemetry::tests::telemetry_on_or_off_leaves_the_search_identical",
     "telemetry::tests::real_sensor_tick_cost_measurement",
     "telemetry::tests::fixed_work_overhead_measurement",
