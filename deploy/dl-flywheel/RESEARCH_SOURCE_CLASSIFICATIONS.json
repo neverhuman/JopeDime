@@ -4743,6 +4743,46 @@
         "role": "research",
         "reason": "H182 reuses H179/H176 pinned adapter forward/loss support for fresh adapter-only CPU research; no product qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h181_covariate_selector/monitor.py": {
+      "bytes": 5215,
+      "sha256": "282aa760d26cc71500a013eaef421f3bc58d42946b46a105974d1e2fc2839ada",
+      "classification": {
+        "role": "research",
+        "reason": "H181 frozen real-S3 TRAIN-bank CUPED estimator development; no network updates or live rule change"
+      }
+    },
+    "python:research/flywheel_selfplay/h181_covariate_selector/posthoc.py": {
+      "bytes": 4050,
+      "sha256": "81b39df69e3f092dd78aa4ce8ac4518bcd705653423afec73e766fcb962bcfaf",
+      "classification": {
+        "role": "research",
+        "reason": "H181 frozen real-S3 TRAIN-bank CUPED estimator development; no network updates or live rule change"
+      }
+    },
+    "python:research/flywheel_selfplay/h181_covariate_selector/replay.py": {
+      "bytes": 17706,
+      "sha256": "ceb9ba2b8811482ef74ba510990b147ea12190178df1e1aa79e89a77a3b05fbe",
+      "classification": {
+        "role": "research",
+        "reason": "H181 frozen real-S3 TRAIN-bank CUPED estimator development; no network updates or live rule change"
+      }
+    },
+    "python:research/flywheel_selfplay/h181_covariate_selector/runner.py": {
+      "bytes": 9133,
+      "sha256": "4a7d47cb63b27b2007d3ba7ba748e53632f0e6fed83af5067251489b44e4461a",
+      "classification": {
+        "role": "research",
+        "reason": "H181 frozen real-S3 TRAIN-bank CUPED estimator development; no network updates or live rule change"
+      }
+    },
+    "python:research/flywheel_selfplay/h181_covariate_selector/science.py": {
+      "bytes": 8647,
+      "sha256": "519b069f438f38c4527488394a0565df2cea62b55fc24322056ae37ea049afaa",
+      "classification": {
+        "role": "research",
+        "reason": "H181 frozen real-S3 TRAIN-bank CUPED estimator development; no network updates or live rule change"
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
