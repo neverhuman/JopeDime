@@ -1,0 +1,140 @@
+[
+  {
+    "wave": "H160",
+    "path": "/home/ubuntu/jope-data/h175/inputs/historical/H160-metrics.json",
+    "absolute": true,
+    "sha256": "5ba56143ebed499dd9132ba375fa0ba432f86b0cdd6956bf0327cecfcbcf87cd",
+    "selection": "availability frozen at prereg; no mutable in-progress raw paths",
+    "original_path": "research/flywheel_selfplay/h160_trajectory_subspace/metrics.json",
+    "original_absolute": false,
+    "source_base": "a3da025d4b59a7b7ea28bbd606bff19c9a73e214"
+  },
+  {
+    "wave": "H161",
+    "path": "/home/ubuntu/jope-data/h175/inputs/historical/H161-metrics.json",
+    "absolute": true,
+    "sha256": "23c5d07d18537f9792f48c58fde36e14fac742c5ce949e240443be9514163645",
+    "selection": "availability frozen at prereg; no mutable in-progress raw paths",
+    "original_path": "research/flywheel_selfplay/h161_robust_fambal/metrics.json",
+    "original_absolute": false,
+    "source_base": "a3da025d4b59a7b7ea28bbd606bff19c9a73e214"
+  },
+  {
+    "wave": "H162",
+    "path": "/home/ubuntu/jope-data/h175/inputs/historical/H162-metrics.json",
+    "absolute": true,
+    "sha256": "487f36038b30258046c3ecfec78015bfb9f45db1b2a632d97adb93a085a39193",
+    "selection": "availability frozen at prereg; no mutable in-progress raw paths",
+    "original_path": "research/h162/metrics.json",
+    "original_absolute": false,
+    "source_base": "a3da025d4b59a7b7ea28bbd606bff19c9a73e214"
+  },
+  {
+    "wave": "H163",
+    "path": "/home/ubuntu/jope-data/h175/inputs/historical/H163-metrics.json",
+    "absolute": true,
+    "sha256": "184ab23ce80c1a544be53de34b0bf72aefb5eed601bcc04c3da2e00502822cb8",
+    "selection": "availability frozen at prereg; no mutable in-progress raw paths",
+    "original_path": "research/flywheel_selfplay/h163_prediction_ensemble/metrics.json",
+    "original_absolute": false,
+    "source_base": "a3da025d4b59a7b7ea28bbd606bff19c9a73e214"
+  },
+  {
+    "wave": "H164",
+    "path": "/home/ubuntu/jope-data/h175/inputs/historical/H164-metrics.json",
+    "absolute": true,
+    "sha256": "5e289027d512293a5e8a51fec5554655d5852d086535001931ea544d9a8656f5",
+    "selection": "availability frozen at prereg; no mutable in-progress raw paths",
+    "original_path": "research/flywheel_selfplay/h164_sam_retry/metrics.json",
+    "original_absolute": false,
+    "source_base": "a3da025d4b59a7b7ea28bbd606bff19c9a73e214"
+  },
+  {
+    "wave": "H165",
+    "path": "/home/ubuntu/jope-data/h175/inputs/historical/H165-metrics.json",
+    "absolute": true,
+    "sha256": "3dc169024deb7e8342412c258a9835cf18ec9c7e1e723080756e387dac87229e",
+    "selection": "availability frozen at prereg; no mutable in-progress raw paths",
+    "original_path": "/home/ubuntu/jope-data/h165/attempt-001-resume-A1/metrics.json",
+    "original_absolute": true,
+    "source_base": "a3da025d4b59a7b7ea28bbd606bff19c9a73e214"
+  },
+  {
+    "wave": "H166",
+    "path": "/home/ubuntu/jope-data/h175/inputs/historical/H166-metrics.json",
+    "absolute": true,
+    "sha256": "4602eb0105d875c1ca65a25f54d2070fba55eb1cc20fd19bcc31075a4c21d357",
+    "selection": "availability frozen at prereg; no mutable in-progress raw paths",
+    "original_path": "research/h166/metrics.json",
+    "original_absolute": false,
+    "source_base": "a3da025d4b59a7b7ea28bbd606bff19c9a73e214"
+  },
+  {
+    "wave": "H167",
+    "path": "/home/ubuntu/jope-data/h175/inputs/historical/H167-metrics.json",
+    "absolute": true,
+    "sha256": "3cefb221dfb25865017b3f833c966804de414fe93e860e6ac86afe018a836622",
+    "selection": "availability frozen at prereg; no mutable in-progress raw paths",
+    "original_path": "research/flywheel_selfplay/h167_input_noise/metrics.json",
+    "original_absolute": false,
+    "source_base": "a3da025d4b59a7b7ea28bbd606bff19c9a73e214"
+  },
+  {
+    "wave": "H168",
+    "path": "/home/ubuntu/jope-data/h175/inputs/historical/H168-metrics.json",
+    "absolute": true,
+    "sha256": "93d984456282e8cca982a58d7d50a1d96fe2af456a8892cee0fcc2688bdac9da",
+    "selection": "availability frozen at prereg; no mutable in-progress raw paths",
+    "original_path": "research/flywheel_selfplay/h168_selector_remedy/metrics.json",
+    "original_absolute": false,
+    "source_base": "a3da025d4b59a7b7ea28bbd606bff19c9a73e214"
+  },
+  {
+    "wave": "H169",
+    "path": "/home/ubuntu/jope-data/h175/inputs/historical/H169-metrics.json",
+    "absolute": true,
+    "sha256": "0b498bf786d8d694dd94ac687a60f91f76625abec7c261a2d1ed66381a5fb675",
+    "selection": "availability frozen at prereg; no mutable in-progress raw paths",
+    "original_path": "research/flywheel_selfplay/h169_optimizer_geometry/metrics.json",
+    "original_absolute": false,
+    "source_base": "a3da025d4b59a7b7ea28bbd606bff19c9a73e214"
+  },
+  {
+    "wave": "H170",
+    "path": "/home/ubuntu/jope-data/h175/inputs/historical/H170-metrics.json",
+    "absolute": true,
+    "sha256": "37dc9cbbe5453bfe3be21ad688ca2454fa54e990319cd6eba5a9337e396dbc5e",
+    "selection": "availability frozen at prereg; no mutable in-progress raw paths",
+    "original_path": "/home/ubuntu/jope-data/h170/attempt-001/metrics.json",
+    "original_absolute": true,
+    "source_base": "a3da025d4b59a7b7ea28bbd606bff19c9a73e214"
+  },
+  {
+    "wave": "H171",
+    "path": null,
+    "absolute": false,
+    "sha256": null,
+    "selection": "availability frozen at prereg; no mutable in-progress raw paths"
+  },
+  {
+    "wave": "H172",
+    "path": null,
+    "absolute": false,
+    "sha256": null,
+    "selection": "availability frozen at prereg; no mutable in-progress raw paths"
+  },
+  {
+    "wave": "H173",
+    "path": null,
+    "absolute": false,
+    "sha256": null,
+    "selection": "availability frozen at prereg; no mutable in-progress raw paths"
+  },
+  {
+    "wave": "H174",
+    "path": null,
+    "absolute": false,
+    "sha256": null,
+    "selection": "availability frozen at prereg; no mutable in-progress raw paths"
+  }
+]

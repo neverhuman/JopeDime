@@ -4495,6 +4495,70 @@
         "role": "research",
         "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/protocol.py": {
+      "bytes": 8547,
+      "sha256": "de98f5824f2750fa89e21205d70ffa80f226224e4093cff746eb3b26e9b47197",
+      "classification": {
+        "role": "research",
+        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/power.py": {
+      "bytes": 21152,
+      "sha256": "c5e73e8db8aa80a601500c9080c162562824889bf2e29e4a530e13fa89c41dfe",
+      "classification": {
+        "role": "research",
+        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/runner.py": {
+      "bytes": 10525,
+      "sha256": "276f0853e3e41452562aeae5c35a2a8f791ec085fc31a739a2ee7e0110749ff5",
+      "classification": {
+        "role": "research",
+        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/monitor.py": {
+      "bytes": 5212,
+      "sha256": "f9c057520bf6937ba36d8493a24bce156b04757d4e86f9903ba18fbbb5411a7d",
+      "classification": {
+        "role": "research",
+        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h177_pooled_selector/analysis.py": {
+      "bytes": 18067,
+      "sha256": "5e5b5d74f98fcc324989e28191e4d160de813d332aa264af557131f78fd0e94d",
+      "classification": {
+        "role": "research",
+        "reason": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h177_pooled_selector/treatment.py": {
+      "bytes": 11250,
+      "sha256": "754f9cbf9fbb118eac82bd8fd70bcb23e519b7561f7f311e42628a7cb01860a8",
+      "classification": {
+        "role": "research",
+        "reason": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h177_pooled_selector/runner.py": {
+      "bytes": 39016,
+      "sha256": "3d204c379e2334b9eb166ecd0b03ee932de8b7c49e85c2501a1df372cadecd4a",
+      "classification": {
+        "role": "research",
+        "reason": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h177_pooled_selector/monitor.py": {
+      "bytes": 4891,
+      "sha256": "276684ebfe140643d50a4c38106d9b7db0b6303272b1883ee891b2a6362badba",
+      "classification": {
+        "role": "research",
+        "reason": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
