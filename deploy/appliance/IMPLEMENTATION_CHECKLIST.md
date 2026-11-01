@@ -88,6 +88,11 @@ dependency audit, and unchanged historical behavior tests.
 
 ## P3 — Accepted model dependency closure
 
+The internal r882 successor has a production embedded-loader/Engine bridge:
+[R882_RUNTIME.md](R882_RUNTIME.md). The older step-60000 generative-policy items
+below remain open. Normal candidate packing is separate from qualification; this
+bridge closes neither P3 as a whole nor any release gate.
+
 - [ ] Add verified buffer/source loader seams to policy and encoders; retain strict
   original identities and load every required context projection and transform.
 - [ ] Implement deterministic dependency resolution, safetensors inventory, and
