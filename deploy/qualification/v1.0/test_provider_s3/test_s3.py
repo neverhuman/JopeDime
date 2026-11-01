@@ -1,0 +1,288 @@
+#!/usr/bin/env python3
+"""Data-free S3 provider controls; fixture children are not release results."""
+
+import contextlib
+from dataclasses import replace
+import importlib
+import io
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+
+HERE = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(HERE / "providers"))
+s3 = importlib.import_module("s3")
+common = importlib.import_module("common")
+Context, ProviderError = common.Context, common.ProviderError
+
+
+class S3Tests(unittest.TestCase):
+    def setUp(self):
+        root = Path(os.environ.get("JOPE_QUALIFICATION_TEST_TMP", HERE / "target"))
+        root.mkdir(parents=True, exist_ok=True)
+        self.tmp = tempfile.TemporaryDirectory(prefix="s3-", dir=root)
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name).resolve()
+        self.repo = self.root / "checkout"
+        self.repo.mkdir()
+        self.artifact = self.root / "candidate"
+        self.artifact.write_bytes(b"controlled S3 fixture; not a release")
+        self.ctx = Context(
+            "S3",
+            self.artifact,
+            common.sha256(self.artifact),
+            "a" * 40,
+            self.root / "result.json",
+        )
+        self.calls = []
+        self.tests = []
+        self.source = self.ctx.source_sha
+        self.dirty = ""
+        self.git_rc = 0
+        self.profile = "full"
+        self.scope = "release"
+        self.manifest_source = self.ctx.source_sha
+        self.verified = {"schema": "jope.appliance-verify/v1", "ok": True}
+        self.verify_rc = 0
+        self.returncode = 0
+        self.output_override = None
+        self.after_test = lambda: None
+        self.addCleanup(patch.stopall)
+        patch.object(s3, "ROOT", self.repo).start()
+        patch.object(common, "ROOT", self.repo).start()
+
+    @staticmethod
+    def passing(test):
+        return (
+            f"running 1 test\ntest {test} ... ok\n\n"
+            "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n"
+        )
+
+    def run_child(self, args, **kwargs):
+        self.calls.append((args, kwargs))
+        self.assertEqual(kwargs["cwd"], self.repo)
+        if args[:2] == ["git", "rev-parse"]:
+            return subprocess.CompletedProcess(args, self.git_rc, self.source, "")
+        if args[:2] == ["git", "status"]:
+            return subprocess.CompletedProcess(args, self.git_rc, self.dirty, "")
+        if args[:2] == ["cargo", "run"]:
+            if "inspect" in args:
+                output = {
+                    "manifest": {
+                        "profile": self.profile,
+                        "scope": self.scope,
+                        "source": {"sha40": self.manifest_source},
+                    }
+                }
+                rc = 0
+            else:
+                output, rc = self.verified, self.verify_rc
+            return subprocess.CompletedProcess(args, rc, json.dumps(output), "")
+        self.assertEqual(args[:2], ["cargo", "test"])
+        test = args[args.index("--lib") + 1]
+        self.tests.append(test)
+        self.assertEqual(kwargs["env"]["CARGO_INCREMENTAL"], "0")
+        self.assertEqual(kwargs["env"]["CARGO_PROFILE_DEV_DEBUG"], "line-tables-only")
+        self.after_test()
+        output = (
+            self.passing(test) if self.output_override is None else self.output_override
+        )
+        return subprocess.CompletedProcess(args, self.returncode, output, "")
+
+    def invoke(self, ctx=None):
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            return s3.qualify(ctx or self.ctx, run=self.run_child)
+
+    def refused(self, ctx=None):
+        with self.assertRaises((ProviderError, OSError, subprocess.TimeoutExpired)):
+            self.invoke(ctx)
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_success_requires_all_twelve_exact_product_cases(self):
+        self.assertEqual(self.invoke(), 0)
+        result = json.loads(self.ctx.result.read_text())
+        self.assertEqual(
+            result,
+            {
+                "schema": "jope.rel07.gate-execution/v1",
+                "id": "S3",
+                "status": "PASS",
+                "source_sha": self.ctx.source_sha,
+                "artifact_sha256": self.ctx.artifact_sha256,
+                "counts": {k: len(s3.TESTS) * v for k, v in s3.SINGLE_PASS.items()},
+            },
+        )
+        self.assertEqual(len(s3.TESTS), 12)
+        self.assertEqual(self.tests, list(s3.TESTS))
+        for test in s3.TESTS:
+            args = s3.command(test)
+            self.assertEqual(args[-3:], ["--", "--exact", "--test-threads=1"])
+            self.assertEqual(args[args.index("-j") + 1], "8")
+
+    def test_zero_missing_wrong_and_duplicate_cases_refuse(self):
+        for output in [
+            "",
+            "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n",
+            self.passing("other::case"),
+            self.passing(s3.TESTS[0]) * 2,
+            self.passing(s3.TESTS[0]) + "test other::case ... ok\n",
+        ]:
+            with self.subTest(output=output):
+                self.output_override = output
+                self.refused()
+
+    def test_ignored_measured_failed_and_extra_counts_refuse(self):
+        for counts in [(0, 0, 1, 0), (0, 0, 0, 1), (0, 1, 0, 0), (2, 0, 0, 0)]:
+            with self.subTest(counts=counts):
+                self.output_override = (
+                    f"test {s3.TESTS[0]} ... ok\n"
+                    f"test result: ok. {counts[0]} passed; {counts[1]} failed; "
+                    f"{counts[2]} ignored; {counts[3]} measured; 0 filtered out\n"
+                )
+                self.refused()
+
+    def test_failed_summary_cannot_report_success_even_with_one_pass(self):
+        self.output_override = self.passing(s3.TESTS[0]).replace(
+            "result: ok.", "result: FAILED."
+        )
+        self.refused()
+
+    def test_failure_stops_after_first_case_and_preserves_child_exit(self):
+        self.returncode = 42
+        self.assertEqual(self.invoke(), 42)
+        self.assertEqual(self.tests, [s3.TESTS[0]])
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_wrong_or_dirty_source_and_git_failure_stop_before_tests(self):
+        for field, value in [
+            ("source", "b" * 40),
+            ("dirty", " M owned.rs"),
+            ("git_rc", 1),
+        ]:
+            original = getattr(self, field)
+            with self.subTest(field=field):
+                setattr(self, field, value)
+                self.refused()
+                self.assertFalse(self.tests)
+                setattr(self, field, original)
+
+    def test_unverified_wrong_source_or_development_candidate_refuses(self):
+        for field, value in [
+            ("profile", "minimal"),
+            ("scope", "development"),
+            ("manifest_source", "b" * 40),
+            ("verify_rc", 1),
+            ("verified", {"schema": "jope.appliance-verify/v1", "ok": False}),
+            ("verified", {"schema": "other", "ok": True}),
+        ]:
+            original = getattr(self, field)
+            with self.subTest(field=field, value=value):
+                setattr(self, field, value)
+                self.refused()
+                self.assertFalse(self.tests)
+                setattr(self, field, original)
+
+    def test_source_drift_after_a_case_never_publishes(self):
+        self.after_test = lambda: setattr(self, "source", "b" * 40)
+        self.refused()
+        self.assertEqual(self.tests, [s3.TESTS[0]])
+
+    def test_dirty_source_after_last_case_never_publishes(self):
+        def drift():
+            if len(self.tests) == len(s3.TESTS):
+                self.dirty = "?? injected"
+
+        self.after_test = drift
+        self.refused()
+        self.assertEqual(len(self.tests), len(s3.TESTS))
+
+    def test_artifact_drift_before_or_during_tests_never_publishes(self):
+        self.artifact.write_bytes(b"changed")
+        self.refused()
+        self.assertFalse(self.tests)
+        self.artifact.write_bytes(b"controlled S3 fixture; not a release")
+        self.after_test = lambda: self.artifact.write_bytes(b"changed")
+        self.refused()
+        self.assertEqual(self.tests, [s3.TESTS[0]])
+
+    def test_wrong_gate_and_malformed_hashes_refuse(self):
+        for change in [
+            {"gate_id": "S2"},
+            {"source_sha": "abc"},
+            {"artifact_sha256": "A" * 64},
+        ]:
+            with self.subTest(change=change):
+                self.refused(replace(self.ctx, **change))
+                self.assertFalse(self.tests)
+
+    def test_missing_directory_and_fifo_candidates_refuse_before_read(self):
+        fifo = self.root / "fifo"
+        os.mkfifo(fifo)
+        for artifact in [self.root / "absent", self.root, fifo]:
+            with self.subTest(artifact=artifact):
+                self.refused(replace(self.ctx, artifact=artifact))
+                self.assertFalse(self.calls)
+
+    def test_symlink_candidate_and_parent_refuse(self):
+        link = self.root / "candidate-link"
+        link.symlink_to(self.artifact)
+        parent = self.root / "directory-link"
+        parent.symlink_to(self.root, target_is_directory=True)
+        for artifact in [link, parent / self.artifact.name]:
+            with self.subTest(artifact=artifact):
+                self.refused(replace(self.ctx, artifact=artifact))
+
+    def test_relative_paths_refuse(self):
+        for ctx in [
+            replace(self.ctx, artifact=Path("candidate")),
+            replace(self.ctx, result=Path("result")),
+        ]:
+            self.refused(ctx)
+
+    def test_result_inside_checkout_including_dotdot_refuses(self):
+        for result in [
+            self.repo / "receipt",
+            self.root / "unused" / ".." / "checkout" / "receipt",
+        ]:
+            self.refused(replace(self.ctx, result=result))
+        self.assertFalse(self.tests)
+
+    def test_existing_result_is_preserved(self):
+        self.ctx.result.write_text("predecessor evidence")
+        with self.assertRaises(ProviderError):
+            self.invoke()
+        self.assertEqual(self.ctx.result.read_text(), "predecessor evidence")
+        self.assertFalse(self.calls)
+
+    def test_symlink_results_and_parents_and_non_directory_parent_refuse(self):
+        link = self.root / "result-link"
+        link.symlink_to(self.root / "absent")
+        parent = self.root / "evidence-link"
+        parent.symlink_to(self.root, target_is_directory=True)
+        for result in [link, parent / "receipt", self.artifact / "receipt", self.repo]:
+            self.refused(replace(self.ctx, result=result))
+        self.assertFalse(self.calls)
+
+    def test_external_subdirectory_is_created_only_after_success(self):
+        result = self.root / "evidence" / "new" / "receipt.json"
+        self.assertEqual(self.invoke(replace(self.ctx, result=result)), 0)
+        self.assertEqual(json.loads(result.read_text())["status"], "PASS")
+
+    def test_timeout_refuses_without_a_receipt(self):
+        def timeout():
+            raise subprocess.TimeoutExpired("fixture cargo test", 3600)
+
+        self.after_test = timeout
+        self.refused()
+
+
+if __name__ == "__main__":
+    unittest.main()

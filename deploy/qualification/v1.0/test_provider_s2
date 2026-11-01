@@ -52,7 +52,10 @@ class S2ProviderTests(unittest.TestCase):
         self.child_envs = []
 
     @staticmethod
-    def summary_output(test=None, result="ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"):
+    def summary_output(
+        test=None,
+        result="ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out",
+    ):
         name = s2.TEST if test is None else test
         return f"running 1 test\ntest {name} ... ok\ntest result: {result}\n"
 
@@ -82,9 +85,7 @@ class S2ProviderTests(unittest.TestCase):
         elif args == s2.command():
             self.test_calls += 1
             output = self.test_output
-            return subprocess.CompletedProcess(
-                args, self.test_returncode, output, ""
-            )
+            return subprocess.CompletedProcess(args, self.test_returncode, output, "")
         else:
             self.fail(f"unexpected child command: {args!r}")
         return subprocess.CompletedProcess(args, 0, output, "")
@@ -149,7 +150,9 @@ class S2ProviderTests(unittest.TestCase):
     def test_zero_skipped_or_wrong_case_cannot_emit_pass(self):
         bad_outputs = (
             "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n",
-            self.summary_output(result="ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out"),
+            self.summary_output(
+                result="ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out"
+            ),
             self.summary_output(test="discover::other_test"),
         )
         for output in bad_outputs:

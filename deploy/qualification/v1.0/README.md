@@ -127,6 +127,15 @@ only formats and validates receipts; it never signs or requests a signature.
       --gate-results "$SIGNED_RUN_RESULTS" --artifact "$SIGNED_CANDIDATE" \
       --output "$NEW_GATES_RECEIPT"
 
+For a complete merged provider set, `release-gates --providers` discovers
+`providers/<gate>.py`, writes the exact 28-command manifest beside the evidence
+directory, and sends every child through the same `cpu_gates.py` admission and
+process controls. The runner refuses missing providers before execution and
+passes only a complete, candidate-bound result set to this receipt adapter. D2
+is not auto-discovered until its speed-gate policy is owner-defined. Until that
+and every other provider are available, supply an owner-reviewed complete
+manifest with `--manifest`; do not fill missing rows with placeholder commands.
+
 Signing, signed-byte gate reruns, native clean-host matrices, named client runs,
 reference-laptop measurements, Q1 and OWNER release approval remain future work.
 This PR does not claim that the complete CPU matrix has already run.
