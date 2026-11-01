@@ -36,3 +36,9 @@ The training source commit is identified by the full-run OPERATIONS record and t
 bound source hashes; an exact run_manifest_round882.json and Git metadata for the source snapshot
 are absent. The evaluator source is pinned separately to the repository commit recorded in the
 manifest. See evaluation_manifest.json and outcome_ledger.json for the full machine-readable pins.
+
+## Attempt 2 authorization and binding
+
+ENG:watcher ruling `~/nudges/lanes_t2210.md` authorizes exactly one disclosed attempt 2 after the t2140 attempt-1 harness failure. Attempt 2 retains the identical r882 checkpoint and pointer, evaluation identity, 91-context/19-family roster, source-manifest and selected-roster hashes, evaluator pins, gates, 800-outcome cap, CPU-only/nice-10/85%-CPU limits, and 07:00Z deadline. No reselection is performed. The manifest records attempt 1 as `FAILED_CONSUMED` (91 DL-Val pools opened, zero candidate terminal outcomes scored) and its exact preregistration-manifest and executed-runner hashes; the ledger retains that history and reserves one fresh attempt-2 read budget. Attempt 2 uses an isolated run directory so its receipt cannot overwrite attempt 1.
+
+The anchor-call fix was merged in PR #1303 at source commit `15bef0ac57f7f194da80f08d5d2b214976f655a0`; a focused fake-predictor test verifies multimodal inputs reach the guided adapter and are omitted from the frozen anchor call. This registration is not evidence of a passing outcome. The reused DL-Val development cohort remains exposed to prior checkpoint selection; no result can establish independent generalization or production qualification.
