@@ -63,6 +63,9 @@ PAIRED_PINS = {
     "r0_candidates": "e3d3b3bae8ef172a5029e6147439c9f5eb7f6a97b37735621122811efe744fd2",
     "r0_admission": "5d9d35fb4780ec5533ba7ccddf1a6404942f6084534f2ac2b2337febc0fb67b4",
 }
+SOURCE_CLOCK_PINS = {
+    key: PAIRED_PINS[key] for key in ("native_candidates", "native_admission")
+}
 
 
 def require(ok, reason):
@@ -145,6 +148,17 @@ def reference_pins(cfg):
         ),
         "accepted R5 proposer witness pins required",
     )
+
+    if "native_clock" in cfg:
+        current = cfg["native_clock"]
+        require(
+            set(current) == {"clock", *SOURCE_CLOCK_PINS}
+            and current["clock"] == PAIRED_CLOCK
+            and all(
+                current[key]["sha256"] == pin for key, pin in SOURCE_CLOCK_PINS.items()
+            ),
+            "identified current source-clock witness pins required",
+        )
 
     if "paired_r0" in cfg:
         pair = cfg["paired_r0"]
@@ -259,6 +273,15 @@ def load_inputs(path, pin, preflight):
         and len(admission["results"]) == 3072,
         "incomplete R5 proposer reconstruction",
     )
+    # Current measurements do not require a different R0 reference. Legacy-only
+    # manifests remain readable, but cannot qualify an incorrectly clocked run.
+    clock_spec = cfg.get("native_clock", cfg.get("paired_r0"))
+    current_proposer = None
+    if clock_spec is not None:
+        current_proposer = {
+            "native_candidates": jsonlines(pinned(clock_spec["native_candidates"])),
+            "native_admission": json.loads(pinned(clock_spec["native_admission"])),
+        }
     paired = None
     if "paired_r0" in cfg:
         pair = cfg["paired_r0"]
@@ -310,6 +333,7 @@ def load_inputs(path, pin, preflight):
         expected=expected,
         proposer=proposer,
         admission=admission,
+        current_proposer=current_proposer,
         paired=paired,
         compatibility=compatibility,
     )
@@ -550,35 +574,34 @@ def compare_proposer(generated, inputs):
     historical = inputs["proposer"]["cohort"]
     requests = inputs["proposer"]["requests"]
     pair = inputs.get("paired")
-    reference = (
-        inputs["proposer"]["native_reference"]
-        if pair is None
-        else pair["native_candidates"]
+    current = inputs.get("current_proposer")
+    require(
+        current is not None,
+        "correct source-clock native/admission witnesses required; legacy-only inputs cannot qualify",
     )
     require(
-        generated == reference,
+        generated == current["native_candidates"],
         "fresh native proposer differs from pinned same-forward oracle; new admission measurement required",
     )
     legacy = admitted(
         inputs["proposer"]["native_reference"], inputs["admission"], requests
     )
+    native = admitted(
+        generated, current["native_admission"], requests, paired_clock=True
+    )
     result = dict(
-        frequencies(historical, legacy), newly_generated=len(generated), admitted=10000
+        frequencies(historical, native),
+        newly_generated=len(generated),
+        admitted=10000,
+        clock=PAIRED_CLOCK,
+        native_witness_sha256=SOURCE_CLOCK_PINS,
+        legacy_comparison=frequencies(historical, legacy),
     )
     if pair is not None:
-        native = admitted(
-            generated, pair["native_admission"], requests, paired_clock=True
-        )
         r0 = admitted(
             pair["r0_candidates"], pair["r0_admission"], requests, paired_clock=True
         )
         # A new reference is evidence for review, not permission to replace the release criterion.
-        result = dict(
-            frequencies(historical, native),
-            newly_generated=len(generated),
-            admitted=10000,
-            legacy_comparison=frequencies(historical, legacy),
-        )
         result["paired_diagnostic"] = dict(
             frequencies(r0, native),
             reference_mode="source-paired/v1",
@@ -590,6 +613,10 @@ def compare_proposer(generated, inputs):
             r0_historical_self_control=frequencies(historical, r0),
         )
     return result
+
+
+def proposer_command(binary, staged, output):
+    return [str(binary), str(staged), str(output), "r0-clock"]
 
 
 def execute(args, *, env, timeout=1800):
@@ -810,9 +837,7 @@ def measure_full(source, path, pin, evidence, preflight, run=None):
         ("vectors", "raw-svd-all-train.jsonl"),
     ):
         (staged / filename).write_bytes(pinned(cfg["proposer"][name]))
-    proposer_args = [str(bins["m3_proposer"]), str(staged), str(out)]
-    if inputs["paired"] is not None:
-        proposer_args.append("r0-clock")
+    proposer_args = proposer_command(bins["m3_proposer"], staged, out)
     result = command("proposer", proposer_args)
     diagnostic = json.loads(result.stdout)
     require(
@@ -966,6 +991,11 @@ def gate_payload(ctx, report, input_pin):
     require(
         proposer.get("newly_generated") == 44544 and proposer.get("admitted") == 10000,
         "fresh comparable proposer population required",
+    )
+    require(
+        proposer.get("clock") == PAIRED_CLOCK
+        and proposer.get("native_witness_sha256") == SOURCE_CLOCK_PINS,
+        "correct source-clock measurement required independently of paired diagnostics",
     )
     diagnostic = proposer.get("paired_diagnostic")
     if diagnostic is not None:

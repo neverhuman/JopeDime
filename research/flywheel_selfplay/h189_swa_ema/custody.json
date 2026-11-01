@@ -1,0 +1,13 @@
+{
+  "bucket_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H189/H189_attempt1_20261101T1508Z/",
+  "local_bulk_policy": "retain until exact-version S3 readback verifies; then remove raw local bulk outputs and write cleanup receipt",
+  "required_members": [
+    "H189-evidence.zip",
+    "H189-manifest.json",
+    "pooled_b_selection_lock.json",
+    "run-metadata.json"
+  ],
+  "sealed_or_holdout_prefixes_access": "forbidden",
+  "status": "PENDING_RUN_AND_VERSIONED_S3_UPLOAD",
+  "wave": "H189"
+}

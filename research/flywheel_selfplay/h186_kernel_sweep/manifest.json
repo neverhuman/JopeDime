@@ -83,5 +83,16 @@
     "runner.py": "58ed3b3f2526318f4f968b447f277bf6453bfb00fbe4ab014893fbfff2f4ba61",
     "test_h186.py": "978a9839993981c7fd792280505cd5ae753d4a96825d6e42b191a28351abcac0",
     "treatment.py": "c98fb48bab25a98cb13b27627ef6a8b3859502fa4e86a87e1983088f8dd11e35"
+  },
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "source_commit": "e4f19dd61173b00d0d82c9aeb4d00ee2628246ff",
+  "custody_manifest": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H186/astra-t0730/manifest.json",
+    "version_id": "hLhK4I_SRKehPZoLOkUg6JAUpYJWJCOo",
+    "sha256": "d18f1f1ab44d606a9a230fdbfaf62e27b313b1401faa312f9e30e4d61611cc86",
+    "bytes": 664302,
+    "verified_utc": "2026-11-01T15:19:15.319498+00:00",
+    "readback": "exact-version full payload SHA256; synchronous client"
   }
 }

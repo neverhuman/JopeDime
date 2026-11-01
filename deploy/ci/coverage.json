@@ -14574,6 +14574,16 @@
       ],
       "lanes": [],
       "scope": "H187 FIT-only, identical paired inits, normalized Huber influence, exact equal-family sampling, timing budget, imported pooled-B rule/stage lock, seed-axis bootstrap and ADVANCE gates"
+    },
+    "python:research/flywheel_selfplay/h189_swa_ema/test_h189.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H189 data-free controls for the adapter weight-averaging (SWA/EMA) preregistration."
     }
   },
   "lanes": {
