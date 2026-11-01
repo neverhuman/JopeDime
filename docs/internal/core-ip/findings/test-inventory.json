@@ -1627,6 +1627,14 @@
       "reason": "REL-07 PR1372 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/v1.0/test_provider_u1/test_u1.py": {
+      "reason": "REL-07 PR1382 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
+      "role": "infrastructure"
+    },
+    "python:deploy/qualification/v1.0/test_provider_u2/test_u2.py": {
+      "reason": "REL-07 PR1382 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
+      "role": "infrastructure"
+    },
     "python:ops/s3_shard_cache/test_s3_shard_cache.py": {
       "reason": "Operational S3 shard-cache unit test against an in-memory fake client; not collected by any CI lane (coverage disposition: maintenance).",
       "role": "infrastructure"
