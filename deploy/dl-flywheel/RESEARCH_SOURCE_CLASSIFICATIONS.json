@@ -4784,6 +4784,46 @@
         "reason": "H181 frozen real-S3 TRAIN-bank CUPED estimator development; no network updates or live rule change"
       }
     },
+    "python:research/flywheel_selfplay/h183_ensemble_distill/parents.py": {
+      "bytes": 1151,
+      "sha256": "03c8fa1d332f998103f62896a375488ceaa96327a83f0940c81972dea0f041f8",
+      "classification": {
+        "role": "research",
+        "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h183_ensemble_distill/distill.py": {
+      "bytes": 1721,
+      "sha256": "984db24f24ed4eef2d55beea107f9dcee6592cf65c00035089e9040d2c7bcee2",
+      "classification": {
+        "role": "research",
+        "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h183_ensemble_distill/analysis.py": {
+      "bytes": 7701,
+      "sha256": "a2cc7f12ca18f31c39a346428426c3c101dd86f736368249dd51dc14a7ae0257",
+      "classification": {
+        "role": "research",
+        "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h183_ensemble_distill/monitor.py": {
+      "bytes": 5193,
+      "sha256": "f14b2684077c390d548101cf86771966b0642651143014103ba64836e0a0aeed",
+      "classification": {
+        "role": "research",
+        "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h183_ensemble_distill/runner.py": {
+      "bytes": 26337,
+      "sha256": "516619a3e230a39464d7b03c45ae638ca293195b58e008a0c03b142962cc4213",
+      "classification": {
+        "role": "research",
+        "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
+      }
+    },
     "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/analysis.py": {
       "bytes": 22527,
       "sha256": "6371dfd6f1b731f79f5e15c21acd3c7e4aa30432cc2f6b71d6521aaf3bff52db",
