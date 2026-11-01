@@ -58,7 +58,9 @@
   "executor_sha256": {
     "monitor.py": "e4ec63641ab3eef4e1fec6d7d98c05a4b60a1321e1d69d86ee0e88e978eb17f7",
     "runner.py": "88b25f0cd44b2e4907ea598bc30b93f7273092ae74dcfd316836591ccc612760",
-    "science.py": "3e38deb3a719403ac1a5c4fdf8ffe6a73d586697e57dd31db2f5a27d26eb6905"
+    "runtime.py": "2fb2a351de2d58da3ff985fab7870c6e56783c685d30800d4b625b8543d0456b",
+    "science.py": "3e38deb3a719403ac1a5c4fdf8ffe6a73d586697e57dd31db2f5a27d26eb6905",
+    "test_h151.py": "266f1924637bbd802f8c4e5bb5dde0d6ea1d19ef8b825f7c6839c34952d14be9"
   },
   "fold_manifest_sha256": "e1310c7c1925acc7f2c2a9c2a3558e7aa574835eb28df7ce0d558ddfe0fd7029",
   "fold_seed": 151140,
@@ -78,12 +80,28 @@
     "torch": "2.7.0"
   },
   "prereg_sha256": "07fc4b33a3a6beaa8663b00dd4154cbe6208f8cde64a3584acdd5d3e8e99fea5",
+  "prior_prereg_heads": [
+    "cda26589c1bdd932cfaca971a078b8b9bf29c2c9",
+    "00ab0b665bf87f74616d3a9eccb1d43735aa79c4"
+  ],
   "reference": "/home/ubuntu/jope-data/h151/inputs/best_dev_checkpoint.json",
   "seeds": [
     151101,
     151102,
     151103
   ],
+  "smoke_custody_receipts": {
+    "custody_dir": "/home/ubuntu/jope_plan/evidence/H151/smoke",
+    "files_sha256": {
+      "smoke-monitor.json": "8499be395bb5050b4f4f8428ae17d7786dc17d7c6077d78df8d0651698da4b10",
+      "smoke-resources.jsonl": "9494b7a6462a5459ac904fb38ef2d154a32711fc9e805adea86922d3a89b1196",
+      "smoke.started": "a01ef25cf82749f212dfb45cfa4b8f4045acde577dc34a79db13e6f8b30dc93c",
+      "smoke/audit.json": "35730adfa57c8261aa3b0b479d324e6e79f60a4edd3c5d338dad66555b4ee7f1",
+      "smoke/smoke.json": "8d3c2c0f52ec2db8c00559ab4da867d78825eae3436c94e33428a17f6bf97181"
+    },
+    "pid": 3279945,
+    "started_utc": "2026-11-01T03:28:36.030697+00:00"
+  },
   "smoke_sha256": "8d3c2c0f52ec2db8c00559ab4da867d78825eae3436c94e33428a17f6bf97181",
   "status": "PREREGISTERED_NOT_EXECUTED",
   "wave": "H151"
