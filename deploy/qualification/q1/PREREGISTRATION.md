@@ -146,3 +146,14 @@ For each candidate FIT object, materialize three deterministic CV folds over all
 The amended 153-row owner roster is now separately projected in [`rosters/ab434d145b8cec60399b35c35a1ce9551a881843e8136b1c757e9c93ae62bd9a.json`](rosters/ab434d145b8cec60399b35c35a1ce9551a881843e8136b1c757e9c93ae62bd9a.json), SHA-256 `ab434d145b8cec60399b35c35a1ce9551a881843e8136b1c757e9c93ae62bd9a`. It binds each roster dataset ID and dataset hash to `cut_sha256`, and each digest resolves to a canonical definition under [`cuts/`](cuts/). All 154 definitions (153 owner-roster entries plus the distinct R1 candidate) are derived from aggregate manifest SHA-256 `fdc243193d9436449cf74aa92b05ff7842c6c88bf4dce0b29ef7edf453b74987`; no dataset payload was read.
 
 This packet does not join the QLT-02 candidate cohort: its 2,489 dataset IDs have zero overlap with the 153 owner-roster IDs. It also records 36 owner-roster rows without an authoritative family key. No IDs or family keys are inferred to bridge either gap. The R1 wide candidate remains outside the official roster, so the wide minimum remains 4/5. The packet gives QLT-05 a concrete roster-to-cut source contract; it does not make the cohort signable or authorize a Q1 run.
+
+## Owner direction T1115 — 2026-11-01, before any Q1 outcome
+
+[PREREG-AMENDMENT-T1115.md](PREREG-AMENDMENT-T1115.md) supersedes the unexecuted
+R19 four-wide exception. Select one minimum-eligible-dataset-SHA representative
+per frozen owner family (153 candidates -> 97 representatives), preserving the
+original packet/cut identities. All subgroups require at least five distinct
+families. The selected wide subgroup has three, so qualification is INCOMPLETE.
+No override, family invention or duplicate count is authorized. All primary
+statistics, thresholds, r782/DOPE pins, seeds, per-policy budgets and single-use
+ledger rules above remain binding. No Q1 outcome has been observed.

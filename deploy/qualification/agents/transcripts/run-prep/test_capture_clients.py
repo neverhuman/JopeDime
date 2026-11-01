@@ -869,3 +869,88 @@ def test_candidate_drift_during_copy_cannot_publish(monkeypatch):
     monkeypatch.setattr(MODULE.shutil, "copyfile", tamper)
     with pytest.raises(MODULE.CapturePackageError, match="candidate"):
         MODULE.self_test()
+
+
+def _engine_cleanup_finally_lines():
+    """Line span of run_capture's engine cleanup `finally:`, found structurally.
+
+    The innermost try statement whose body launches the engine owns the
+    cleanup; the first line executed inside its `finally:` is the earliest
+    point an interrupt can reach the teardown.
+    """
+    source, start = inspect.getsourcelines(THREE_CLIENTS_MODULE.run_capture)
+    tree = ast.parse("".join(source))
+    owners = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Try)
+        and node.finalbody
+        and "--idle-exit" in "\n".join(ast.unparse(stmt) for stmt in node.body)
+    ]
+    assert owners, "run_capture has no engine cleanup finally"
+    owner = max(owners, key=lambda node: node.lineno)
+    return (
+        start - 1 + owner.finalbody[0].lineno,
+        start - 1 + owner.finalbody[-1].end_lineno,
+    )
+
+
+def test_run_capture_defers_traced_interrupt_at_teardown_entry(a5_tmp_path):
+    args, _plan, _candidate, _client = _runner_fixture(a5_tmp_path)
+    first, last = _engine_cleanup_finally_lines()
+    code = THREE_CLIENTS_MODULE.run_capture.__code__
+    state = {"sent": False}
+
+    def interrupt_at_teardown_line(frame, event, arg):
+        if event == "line" and first <= frame.f_lineno <= last and not state["sent"]:
+            state["sent"] = True
+            os.kill(os.getpid(), signal.SIGINT)
+        return interrupt_at_teardown_line
+
+    def trace_run_capture(frame, event, arg):
+        return interrupt_at_teardown_line if frame.f_code is code else None
+
+    try:
+        sys.settrace(trace_run_capture)
+        try:
+            with pytest.raises(KeyboardInterrupt):
+                THREE_CLIENTS_MODULE.run_capture(args)
+        finally:
+            sys.settrace(None)
+        assert state["sent"] is True
+        assert list(Path(args.engine_home).glob("*/stopped")), "engine stop skipped"
+        assert signal.getsignal(signal.SIGINT) is signal.default_int_handler
+        assert _processes_with_paths_under(a5_tmp_path) == []
+    finally:
+        _kill_fixture_processes(a5_tmp_path)
+
+
+def test_run_capture_honors_interrupt_deferred_during_engine_launch(
+    monkeypatch, a5_tmp_path
+):
+    args, _plan, _candidate, client = _runner_fixture(a5_tmp_path)
+    original_popen = subprocess.Popen
+    launched = {"engines": [], "clients": 0}
+
+    def interrupt_after_engine_fork(command, *positional, **kwargs):
+        process = original_popen(command, *positional, **kwargs)
+        if "--idle-exit" in command and not launched["engines"]:
+            launched["engines"].append(process)
+            # Arrives after the fork but before run_capture owns the handle.
+            os.kill(os.getpid(), signal.SIGINT)
+        elif command[0] == str(client):
+            launched["clients"] += 1
+        return process
+
+    monkeypatch.setattr(
+        THREE_CLIENTS_MODULE.subprocess, "Popen", interrupt_after_engine_fork
+    )
+    try:
+        with pytest.raises(KeyboardInterrupt):
+            THREE_CLIENTS_MODULE.run_capture(args)
+        assert launched["engines"] and launched["engines"][0].poll() is not None
+        assert launched["clients"] == 0, "deferred interrupt was not honored promptly"
+        assert signal.getsignal(signal.SIGINT) is signal.default_int_handler
+        assert _processes_with_paths_under(a5_tmp_path) == []
+    finally:
+        _kill_fixture_processes(a5_tmp_path)

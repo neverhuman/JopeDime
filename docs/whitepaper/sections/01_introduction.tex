@@ -13,6 +13,8 @@
 % ===========================================================================
 
 \section{Can Machines Invent?}\label{sec:intro}
+\makeatletter\widowpenalty=\@M\clubpenalty=\@M\@clubpenalty=\@M\makeatother
+\hyphenation{FunSearch Alpha-Geometry AlphaZero AlphaGo AlphaFold AlphaDev AlphaProof AlphaEvolve EurekaZero DreamCoder HumanEval ImageNet MotherNet KumoRFM TabPFN EURISKO MuZero AlphaStar intelligence scoring}
 
 We specify how to test whether feedback from execution improves the first
 algorithm a system proposes for a new problem. AlphaGo Zero supplies a
@@ -125,8 +127,8 @@ The reference design assigns each role in \cref{sec:anatomy} an inspectable
 component: a declared task and metric, a grammar-constrained writer, a
 referee and retained state (\cref{tab:pillars}). Program-incumbent
 promotion and proposed writer admission are distinct rules in that design.
-We call the design \emph{engineered intelligence}: its aim, judge and memory
-are specified for audit. Pretrained components still supply prior knowledge
+We call the design \emph{engineered intelligence}: its aim, proposer, referee
+and retained state are specified for audit. Pretrained components still supply prior knowledge
 (\cref{box:searchone}); execution feedback supplies the additional teacher.
 
 \begin{explainer}[label=box:searchone]{What ``search = 1'' means}
@@ -140,7 +142,7 @@ are specified for audit. Pretrained components still supply prior knowledge
     to training rows is allowed. Any internal model or hyperparameter
     selection must be disclosed and counted in its compute budget. One
     outer proposal does not establish the absence of internal search.
-    Training search is priced separately in \cref{sec:price}.
+    \mbox{Training} search is priced separately in \cref{sec:price}.
 \end{itemize}
 \textbf{A single candidate, with prior knowledge:} human-designed program
 primitives and pretrained encoding components supply prior knowledge. The

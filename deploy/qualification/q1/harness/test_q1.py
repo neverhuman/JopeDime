@@ -1,7 +1,6 @@
 """Protocol/statistical fixtures only; no learned model or sealed payload is executed."""
 
 import copy
-from contextlib import contextmanager
 from pathlib import Path
 import subprocess
 import tempfile
@@ -54,42 +53,6 @@ def qualification_plan():
         "timeout_seconds": 600,
         "ledger_root": "/qualification-test-ledger",
     }
-
-
-@contextmanager
-def r19_fixture():
-    """Entirely invented metadata; never bind unknown real family identities."""
-    plan = qualification_plan()
-    template = plan["datasets"]
-    plan["datasets"] = []
-    for i in range(153):
-        dataset = copy.deepcopy(template[i % len(template)])
-        dataset_id = f"{i + 1:016x}"
-        dataset.update(
-            id=dataset_id,
-            dataset_sha256=dataset_id + "a" * 48,
-            family=f"{i + 100:040x}",
-            features=30 if i < 4 else 10,
-        )
-        plan["datasets"].append(dataset)
-    plan["minimum_wide_families"] = 4
-    plan["pins"].update(bundle_sha256=q1.R19_BUNDLE, dope_sha256=q1.R19_DOPE)
-    records = [
-        {
-            "dataset_id": d["id"],
-            "family_key": d["family"],
-            **{k: d[k] for k in ("dataset_sha256", "cut_sha256", "rows", "features")},
-        }
-        for d in plan["datasets"]
-    ]
-    with tempfile.TemporaryDirectory() as tmp:
-        roster = Path(tmp) / "synthetic-roster.json"
-        roster.write_bytes(q1.canonical({"official_roster": records}))
-        with (
-            patch.object(q1, "R19_ROSTER", roster),
-            patch.object(q1, "R19_ROSTER_SHA256", q1.sha_file(roster)),
-        ):
-            yield plan
 
 
 def fixture_receipts(plan, learned=0.9):
@@ -169,65 +132,6 @@ class ProtocolTests(unittest.TestCase):
 
     def test_q1_plan_validator_accepts_bound_artifacts(self):
         q1.validate_plan(qualification_plan())
-        with r19_fixture() as plan:
-            q1.validate_plan(plan)
-            legacy = copy.deepcopy(plan)
-            legacy.pop("minimum_wide_families")
-            with self.assertRaisesRegex(ValueError, "subgroup wide"):
-                q1.validate_plan(legacy)
-            cases = []
-            for minimum in (3, 5, True, 4.0):
-                changed = copy.deepcopy(plan)
-                changed["minimum_wide_families"] = minimum
-                cases.append(changed)
-            for key in ("bundle_sha256", "dope_sha256"):
-                changed = copy.deepcopy(plan)
-                changed["pins"][key] = "e" * 64
-                cases.append(changed)
-            for key, value in (
-                ("cut_sha256", "f" * 64),
-                ("family", "e" * 40),
-                ("features", 10),
-            ):
-                changed = copy.deepcopy(plan)
-                changed["datasets"][0][key] = value
-                cases.append(changed)
-            changed = copy.deepcopy(plan)
-            changed["datasets"].pop()
-            cases.append(changed)
-            for key, value in (
-                ("budget", 23),
-                ("seeds", [0, 1]),
-                ("timeout_seconds", 599),
-            ):
-                changed = copy.deepcopy(plan)
-                changed[key] = value
-                cases.append(changed)
-            changed = copy.deepcopy(plan)
-            changed["datasets"][0]["family_authoritative"] = False
-            cases.append(changed)
-            for changed in cases:
-                with self.assertRaises(ValueError):
-                    q1.validate_plan(changed)
-            # Even a matching synthetic packet cannot waive any other subgroup floor.
-            for group in ("small", "large", "narrow", "wide"):
-                changed = copy.deepcopy(plan)
-                for i, dataset in enumerate(changed["datasets"]):
-                    if group in ("small", "large"):
-                        dataset["rows"] = (
-                            (500 if group == "large" else 2000)
-                            if i >= 4
-                            else (2000 if group == "large" else 500)
-                        )
-                    else:
-                        dataset["features"] = (
-                            (30 if group == "narrow" else 10)
-                            if i >= 3
-                            else (10 if group == "narrow" else 30)
-                        )
-                with patch.object(q1, "validate_r19"):
-                    with self.assertRaisesRegex(ValueError, "subgroup " + group):
-                        q1.validate_plan(changed)
 
     def test_q1_plan_validator_rejects_an_unbound_vocabulary(self):
         plan = qualification_plan()
@@ -696,49 +600,6 @@ class StatisticsTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             q1.analyze(smoke, rows)
 
-        with r19_fixture() as amended:
-            rows = fixture_receipts(amended, 0.5)
-            for row in rows:
-                if (
-                    row["event"] == "finished"
-                    and row["guidance"] == "learned"
-                    and row["dataset"]["features"] > 20
-                ):
-                    row["response"]["loss"] = 1.1
-            result = q1.analyze(amended, rows)
-            # Primary arithmetic and the three other subgroup intervals are unchanged.
-            effects = [
-                (-0.1 if d["features"] > 20 else 0.5) for d in amended["datasets"]
-            ]
-            expected_primary = q1.bootstrap(effects)
-            self.assertEqual(result["primary"], expected_primary)
-            self.assertEqual(result["decision"], "PASS")
-            self.assertEqual(result["amendment"], "R19")
-            for group in ("small", "large", "narrow"):
-                values = [
-                    (1.0 - 1.1 if d["features"] > 20 else 0.5)
-                    for d in amended["datasets"]
-                    if group in q1.memberships(d)
-                ]
-                seed = int.from_bytes(
-                    q1.hashlib.sha256((group + ":20261030").encode()).digest()[:8],
-                    "big",
-                )
-                self.assertEqual(
-                    result["subgroups"][group],
-                    {**q1.bootstrap(values, seed, 0.05 / 4), "datasets": len(values)},
-                )
-            wide = result["subgroups"]["wide"]
-            self.assertLess(wide["lower"], -0.02)
-            self.assertEqual(wide["report_label"], q1.R19_WIDE_LABEL)
-            self.assertTrue(wide["descriptive_only"])
-            self.assertIsNone(wide["verdict"])
-            self.assertEqual(wide["datasets"], 4)
-            # Other subgroup regressions still veto the amended overall decision.
-            self.assertEqual(
-                q1.analyze(amended, fixture_receipts(amended, 1.1))["decision"], "FAIL"
-            )
-
     def test_complete_panel_requires_program_and_adapter_identities(self):
         plan = qualification_plan()
         for field in ("champion_program", "adapter"):
@@ -817,6 +678,110 @@ class StatisticsTests(unittest.TestCase):
         del rows[1]["wall_seconds"]
         with self.assertRaises(ValueError):
             q1.analyze(plan, rows)
+
+
+class OwnerSelectionTests(unittest.TestCase):
+    def test_frozen_family_minimum_sha_selection(self):
+        import q1_dedup
+
+        amendment = q1.load(q1_dedup.AMENDMENT)
+        packet = q1_dedup.bound(amendment["source_roster"])
+        membership = q1_dedup.bound(amendment["membership"])
+        before = copy.deepcopy(packet)
+        selected, excluded = q1_dedup.select(packet, membership)
+        self.assertEqual(packet, before)
+        self.assertEqual((len(selected), len(excluded)), (97, 56))
+        self.assertEqual(len({d["family"] for d in selected}), 97)
+        reversed_packet = copy.deepcopy(packet)
+        reversed_packet["official_roster"].reverse()
+        self.assertEqual(
+            q1_dedup.select(reversed_packet, membership), (selected, excluded)
+        )
+        original = {d["dataset_id"]: d for d in packet["official_roster"]}
+        for family in membership["families"]:
+            expected = min(
+                (original[d] for d in family["dataset_ids"]),
+                key=lambda d: d["dataset_sha256"],
+            )
+            actual = next(d for d in selected if d["family"] == family["family_id"][4:])
+            self.assertEqual(
+                (actual["id"], actual["cut_sha256"]),
+                (expected["dataset_id"], expected["cut_sha256"]),
+            )
+        self.assertEqual(q1_dedup.load_selection(), selected)
+        self.assertEqual(
+            q1_dedup.subgroup_counts(selected),
+            {"small": 70, "large": 27, "narrow": 94, "wide": 3},
+        )
+
+    def test_invalid_or_ambiguous_owner_membership_is_refused(self):
+        import q1_dedup
+
+        amendment = q1.load(q1_dedup.AMENDMENT)
+        packet = q1_dedup.bound(amendment["source_roster"])
+        original = q1_dedup.bound(amendment["membership"])
+        cases = []
+        membership = copy.deepcopy(original)
+        membership["families"][0]["dataset_ids"].append(
+            membership["families"][1]["dataset_ids"][0]
+        )
+        cases.append(membership)
+        membership = copy.deepcopy(original)
+        membership["families"][0]["family_id"] = membership["families"][1]["family_id"]
+        cases.append(membership)
+        membership = copy.deepcopy(original)
+        membership["families"][0]["partition"] = "dl_holdout"
+        cases.append(membership)
+        membership = copy.deepcopy(original)
+        membership["families"][0]["dataset_ids"] = []
+        cases.append(membership)
+        membership = copy.deepcopy(original)
+        membership["families"][0]["family_id"] = "srcfile:unreviewed"
+        cases.append(membership)
+        for membership in cases:
+            with self.assertRaises(ValueError):
+                q1_dedup.select(packet, membership)
+
+    def test_bound_metadata_hash_and_scope_are_required(self):
+        import q1_dedup
+
+        reference = copy.deepcopy(q1.load(q1_dedup.AMENDMENT)["membership"])
+        reference["sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "hash mismatch"):
+            q1_dedup.bound(reference)
+        with self.assertRaisesRegex(ValueError, "outside Q1"):
+            q1_dedup.asset("Cargo.toml")
+
+    def test_regenerated_plan_preserves_fixed_execution_identity(self):
+        import q1_dedup
+
+        selected = q1_dedup.load_selection()
+        plan = q1_dedup.make_plan(selected, ["f" * 40], "a" * 40)
+        self.assertEqual(set(plan), q1.PLAN_KEYS)
+        self.assertEqual(
+            (plan["budget"], plan["seeds"], plan["timeout_seconds"]),
+            (24, [0, 1, 2], 600),
+        )
+        self.assertEqual(plan["pins"]["bundle_sha256"], q1_dedup.BUNDLE)
+        self.assertEqual(plan["pins"]["dope_sha256"], q1_dedup.DOPE)
+        self.assertIsNone(plan["pins"]["evaluator_sha256"])
+        self.assertEqual(plan["ledger_root"], q1_dedup.LEDGER)
+        self.assertNotIn("minimum_wide_families", plan)
+        self.assertEqual(selected, plan["datasets"])
+        with self.assertRaisesRegex(ValueError, "all qualification identities"):
+            q1.validate_plan(plan)
+
+    def test_five_distinct_wide_families_cannot_be_waived(self):
+        plan = qualification_plan()  # Entirely invented unsigned metadata.
+        for i, dataset in enumerate(plan["datasets"]):
+            dataset["features"] = 30 if i < 5 else 10
+        q1.validate_plan(plan)
+        plan["datasets"][4]["features"] = 10
+        with self.assertRaisesRegex(ValueError, "subgroup wide"):
+            q1.validate_plan(plan)
+        plan["minimum_wide_families"] = 4
+        with self.assertRaisesRegex(ValueError, "unsupported/missing plan field"):
+            q1.validate_plan(plan)
 
 
 if __name__ == "__main__":

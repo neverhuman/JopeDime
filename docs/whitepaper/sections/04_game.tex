@@ -23,8 +23,6 @@ incumbent is the opponent. The encoding supplies a shared interface;
 each task type still needs its own qualified encoding, language and
 evaluation protocol (\cref{sub:game-boards}).
 
-
-
 % ----------------------------------------------------------------------------
 \subsection{Why games came first}\label{sub:game-games}
 
@@ -45,7 +43,7 @@ question of cost (\cref{sec:price}).
 \subsection{The rules}\label{sub:game-rules}
 
 \Cref{tab:go-vs-innovation} sets the game beside Go. An illegal move is
-counted as a failed attempt. The reference writer reads the encoded problem.
+counted as a failed attempt. The reference writer $\writer$ reads the encoded problem.
 The referee keeps the incumbent as a separate comparison standard
 (\cref{sub:method-board}); its code and score must stay outside the writer's
 input.
@@ -62,17 +60,17 @@ input.
   \setlength{\extrarowheight}{2pt}% separates rows whose cells wrap
   \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.32\linewidth}>{\raggedright\arraybackslash}X@{}}
     \toprule
-                   & Go                              & The innovation game \\
+    Element        & Go                              & The innovation game \\
     \midrule
-    Board          & Stones on a $19\times19$ grid   & The encoded problem \\
-    Move           & Place one stone, or pass        & Write one complete program \\
+    Board          & Stones on a $19\times19$ grid   & The encoded problem $z_p = \encP(p)$ for $p \in \Prob$ \\
+    Move           & Place one stone, or pass        & Write one complete program $w \in \Sol$ \\
     Legal move     & Empty point; no suicide or forbidden repetition & Parses, type-checks, runs within limits \\
-    Illegal move   & Not allowed                     & Stillborn: an automatic loss \\
-    Referee        & The rules of Go                 & The verifier, on hidden folds \\
-    Win            & Higher final score             & Valid, and beats the incumbent \\
-    Opponent       & A past self                     & The incumbent, often a past self \\
+    Illegal move   & Not allowed                     & Stillborn ($\tilde{w}$): an automatic loss \\
+    Referee        & The rules of Go                 & The referee $\referee$, on hidden folds \\
+    Win            & Higher final score             & Valid move $w^+$ beating $\inc{p}$ under $\reward$ \\
+    Opponent       & A past self                     & The incumbent $\inc{p}$ from $\opp$, often a past self \\
     Rating         & Elo                             & Win rate and Elo across problems \\
-    Moves per game & About 150, each cheap           & One, costly to judge \\
+    Moves per game & About 150, each cheap           & One ($\budget$), costly to judge \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -111,11 +109,10 @@ summary of the training data, the objective and metric, and the constraints.
 Landmark scores from cheap learners \citep{pfahringer2000landmarking} and
 learned tabular summaries are possible encodings; \cref{sub:method-board}
 specifies the reference encoder and its cost limit.
-In the inspected implementation, that encoder consumes numeric training
+In the inspected implementation, that encoder consumes prepared numeric training
 rows and targets; the writer's engine and regression-task tokens are
 supplied separately. The objective, metric and budget are protocol
 settings, not additional fields in this encoder call.
-
 
 A useful board should preserve distinctions relevant to algorithm choice,
 remain stable under irrelevant reorderings, exclude final evaluation
@@ -162,8 +159,8 @@ These are reference rules, not a record of writer improvement. The later loop in
 \cref{sec:method-status} updates only a ranking adapter; its default
 admission gate can retain equal utility. That record does not establish
 retraining or admission of the neural writer.
-AlphaGo Zero likewise separated network admission from choosing a move
-during play \citep{silver2017mastering}.
+AlphaGo Zero likewise separated network admission from move
+selection \citep{silver2017mastering}.
 
 Subtracting the incumbent's score does not change which move is best.
 Promotion raises the bar, turns yesterday's winners

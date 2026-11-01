@@ -11,6 +11,7 @@ import torch
 
 import analysis
 import design
+import json_writer
 import source_pins
 import treatment
 
@@ -172,3 +173,209 @@ def test_no_ties_or_zero_effects_can_advance():
     assert report["contrasts"]["PCGC40_vs_R882"]["holm_p"] == 1.0
     assert report["harm_rate"]["rate"] == 0.0
     assert report["pcgc_strictly_beats_shuffled_placebo"] is False
+
+
+def test_every_arm_trace_and_cell_seed_record_round_trips_strict_json(tmp_path):
+    arms = design.ALL_ARMS
+    records = {}
+    for arm_index, arm in enumerate(arms):
+        clipped = arm in ("PCGC40", "PCGC_SHUF40")
+        trace = []
+        for step in range(1, 41):
+            permutation = (
+                np.arange(8, dtype=np.int64)[::-1]
+                if arm == "PCGC_SHUF40"
+                else np.arange(8)
+            )
+            trace.append(
+                {
+                    "step": step,
+                    "stream": 197100 + step,
+                    "loss": 0.5,
+                    "raw_or_clipped_batch_gradient_norm": 1.25,
+                    "learning_rate": 1e-4,
+                    "per_context_gradient_norms": [0.5] * 8 if clipped else None,
+                    "clip_factors": [0.8] * 8 if clipped else None,
+                    "assigned_clip_factors": [0.8] * 8 if clipped else None,
+                    "factor_permutation": treatment.permutation_to_json(permutation)
+                    if clipped
+                    else None,
+                    "fit_context_ids": [f"ctx-{i:03}" for i in range(8)],
+                    "candidate_indices": [list(range(24)) for _ in range(8)],
+                }
+            )
+        records[f"trace-{arm}"] = trace
+
+    fit_receipts = []
+    calibration_cells = []
+    for seed in design.SEEDS:
+        for outer in range(5):
+            calibration_cells.append(
+                {
+                    "seed": seed,
+                    "outer_fold": outer,
+                    "C": 0.75,
+                    "GCLIP_threshold": 0.5,
+                    "fit_families": 123,
+                    "step0_context_gradient_norms": [0.5] * 8,
+                    "dry_pcgc_averaged_batch_gradient_norms": [0.5] * 5,
+                    "dry_fit_batches": 5,
+                    "dry_context_backward_calls": 40,
+                }
+            )
+            for arm in design.ARMS:
+                fit_receipts.append(
+                    {
+                        "status": "FIT_COMPLETE",
+                        "seed": seed,
+                        "outer_fold": outer,
+                        "arm": arm,
+                        "updates": 40,
+                        "fit_context_count": 738,
+                        "fit_family_count": 123,
+                        "C": 0.75,
+                        "GCLIP_threshold": 0.5,
+                        "batch_plan_sha256": "a" * 64,
+                        "adapter_sha256": "b" * 64,
+                        "state_file_sha256": "c" * 64,
+                        "trace_sha256": "d" * 64,
+                    }
+                )
+    records["fit_receipts"] = fit_receipts
+    records["update-counters"] = {
+        "backward_started": 64,
+        "backward_completed": 64,
+        "step_started": 40,
+        "step_completed": 40,
+        "dry_context_backward_calls": 40,
+        "cell": "197101-fold0",
+        "arm": "PCGC_SHUF40",
+    }
+    records["calibration"] = {
+        "status": "PASS",
+        "cells": calibration_cells,
+        "C_definition": "median context norm",
+        "GCLIP_threshold_definition": "median dry aggregate norm",
+    }
+
+    lock = {
+        "wave": "H197",
+        "source_commit": "e" * 40,
+        "fold_manifest_sha256": "f" * 64,
+        "policy": "fixed candidate step 40; no B-based step selection",
+        "primary_arm": "PCGC40",
+        "arms": list(arms),
+        "pooled_b_families": 205,
+        "pooled_b_contexts": 1219,
+        "candidate_step": 40,
+        "b_panel_files": {f"B-{i}.npz": "a" * 64 for i in range(15)},
+        "fit_state_files": {
+            f"{s}-{o}-{a}": "b" * 64
+            for s in design.SEEDS
+            for o in range(5)
+            for a in design.ARMS
+        },
+        "A_scoring_authorized_after_lock": True,
+        "B_outcomes_are_selection_diagnostics_only": True,
+    }
+    records["b-lock"] = lock
+    records["b-lock-receipt"] = {
+        "sha256": "c" * 64,
+        "fsynced": True,
+        "candidate_step": 40,
+        "selection_rule": "no step selection",
+    }
+    records["launch-binding"] = {
+        "source_commit": "e" * 40,
+        "source_tree": "f" * 40,
+        "manifest_sha256": "a" * 64,
+        "launch_sha256": "b" * 64,
+        "initial_adapter_sha256": "c" * 64,
+        "dope_sha256": "d" * 64,
+        "fold_manifest_sha256": "e" * 64,
+    }
+    records["smoke"] = {
+        "status": "PASS",
+        "optimizer_updates": 0,
+        "trainable_parameters": 29211,
+        "protected_reads": 0,
+    }
+    records["baseline"] = {
+        "status": "PASS",
+        "contexts": 91,
+        "mean_utility": 1.1377941898164525,
+        "utility_bit_exact": True,
+        "cost_bytes_exact": True,
+        "TRAIN_outcome_pools_opened": 0,
+        "initial_adapter_sha256": "f" * 64,
+    }
+    records["catalog-join"] = {"status": "PASS", "datasets": 276, "synthetic": 0}
+    records["audit"] = {
+        "opened": ["/home/ubuntu/jope-data/fixture"],
+        "refused": [],
+        "protected_reads": 0,
+    }
+
+    rows = [
+        {"family_id": f"fam-{i:03}", "context_sha256": f"ctx-{i:03}"}
+        for i in range(205)
+    ]
+    panel = np.zeros((3, 205, len(arms)), dtype=np.float64)
+    summary = analysis.summarize(rows, panel)
+    records["A-metrics"] = summary
+    records["per-seed-summaries"] = [
+        {
+            "seed": seed,
+            "utility_family_equal": {
+                arm: summary["utility_family_equal"][arm][i] for arm in arms
+            },
+            "primary_gain": summary["contrasts"]["PCGC40_vs_R882"]["per_seed"][i],
+            "positive_primary": summary["contrasts"]["PCGC40_vs_R882"]["per_seed"][i]
+            > 0,
+        }
+        for i, seed in enumerate(design.SEEDS)
+    ]
+    records["DLVal-descriptive"] = {
+        "contexts": 91,
+        "families": 19,
+        "baseline_mean": 1.1377941898164525,
+        "per_seed_mean_utility": {arm: [1.0, 1.1, 1.2] for arm in arms},
+        "role": "descriptive only; no selection or advancement",
+    }
+    clip_stats = {
+        arm: {
+            "context_gradient_count": 8 * 15,
+            "clipped_fraction": 0.25,
+            "factor_quantiles": [0.2, 0.5, 0.8, 1.0, 1.0],
+        }
+        for arm in ("PCGC40", "PCGC_SHUF40")
+    }
+    records["clip-stats"] = clip_stats
+    records["metrics"] = {
+        **summary,
+        "per_context_clip_stats": clip_stats,
+        "baseline": {
+            "native_91_91_bit_exact": True,
+            "mean_utility": 1.1377941898164525,
+        },
+        "optimizer_updates": 2400,
+        "audit": {"opened": [], "refused": [], "protected_reads": 0},
+    }
+    records["preflight"] = {
+        "status": "PASS",
+        "loaded_train_and_dl_val_pools": 1310,
+        "optimizer_updates": 0,
+        "trainer_started": False,
+    }
+    records["failure"] = {
+        "status": "INCOMPLETE",
+        "error": "synthetic failure",
+        "counters": {"step_completed": 0, "arm": "PCGC_SHUF40"},
+        "audit": {"opened": [], "refused": [], "protected_reads": 0},
+        "elapsed_seconds": 0.5,
+    }
+
+    for name, value in records.items():
+        path = tmp_path / f"{name}.json"
+        json_writer.save(path, value)
+        assert json.loads(path.read_text()) == value
