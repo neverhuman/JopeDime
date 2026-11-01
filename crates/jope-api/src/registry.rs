@@ -1156,8 +1156,10 @@ mod exchange_proofs {
         );
     }
     #[test]
-    #[ignore = "explicit owning generator for the exchange proof snapshot"]
     fn regenerate_exchange_proofs() {
+        if std::env::var_os("JOPE_EXCHANGE_SNAPSHOT_OUTPUT").is_none() {
+            return;
+        }
         let path = exchange_snapshot_path();
         std::fs::write(
             path,
