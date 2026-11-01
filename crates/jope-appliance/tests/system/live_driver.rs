@@ -385,8 +385,9 @@ def engine_boundary_matrix():
     # Schema creation and recovery metadata use their own raw redb commits.
     # Exercise both sides with actual fresh/background engines, beyond the run trace.
     for phase in ['initialization','recovery']:
-        for hook in ['before_commit','after_commit']:
-            label=f'x-{phase[:1]}-{hook[:1]}'
+        for side in ['before','after']:
+            hook=side+('_schema_commit' if phase=='initialization' else '_recovery_commit')
+            label=f'x-{phase[:1]}-{side[:1]}'
             original_prefix=[];rid=None
             if phase=='initialization':
                 h=runtime/label;h.mkdir()
@@ -438,7 +439,8 @@ def engine_boundary_matrix():
             subprocess.run([args.binary,'serve','--stop'],env={**base_env,'JOPEDIME_HOME':str(h)},capture_output=True,text=True,timeout=10,check=True)
     assert len(cases)==normal_count+4
     report['r1_run_boundary_cases']=normal_count;report['r1_initialization_and_recovery_cases']=4
-    report['r1_engine_boundary_cases']=len(cases);report['r1_engine_boundary_hooks']=hooks
+    report['r1_engine_boundary_cases']=len(cases);report['r1_engine_boundary_hooks']=hooks+['before_schema_commit','after_schema_commit','before_recovery_commit','after_recovery_commit']
+    assert {case['hook'] for case in cases}==set(report['r1_engine_boundary_hooks'])
     report['r1_all_internal_background_cuts_qualified']=True
 
 try:

@@ -66,8 +66,8 @@ fn db(e: impl std::fmt::Display) -> StoreError {
 }
 
 #[cfg(feature = "failpoints")]
-static BOUNDARY_COUNTS: [std::sync::atomic::AtomicU64; 7] =
-    [const { std::sync::atomic::AtomicU64::new(0) }; 7];
+static BOUNDARY_COUNTS: [std::sync::atomic::AtomicU64; 11] =
+    [const { std::sync::atomic::AtomicU64::new(0) }; 11];
 
 #[cfg(feature = "failpoints")]
 fn boundary(name: &str) {
@@ -84,6 +84,10 @@ fn boundary(name: &str) {
         "after_directory_sync" => 4,
         "after_commit" => 5,
         "before_commit" => 6,
+        "before_schema_commit" => 7,
+        "after_schema_commit" => 8,
+        "before_recovery_commit" => 9,
+        "after_recovery_commit" => 10,
         _ => return,
     };
     let ordinal = BOUNDARY_COUNTS[index].fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
@@ -161,9 +165,9 @@ impl Store {
             for table in Table::ALL {
                 write.open_table(definition(table)).map_err(db)?;
             }
-            boundary("before_commit");
+            boundary("before_schema_commit");
             write.commit().map_err(db)?;
-            boundary("after_commit");
+            boundary("after_schema_commit");
             sync_dir(&home)?;
             store_id
         } else {
@@ -405,9 +409,9 @@ impl Store {
                         .map_err(db)?;
                 }
             }
-            boundary("before_commit");
+            boundary("before_recovery_commit");
             write.commit().map_err(db)?;
-            boundary("after_commit");
+            boundary("after_recovery_commit");
         }
         Ok(())
     }
