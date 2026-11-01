@@ -1,37 +1,31 @@
 {
   "wave": "H196",
+  "attempt": 3,
   "status": "INCOMPLETE",
   "verdict": null,
-  "attempt": 2,
-  "scientific_attempts": 2,
-  "infra_rerun_authority": "/home/ubuntu/nudges/hwave_t1200_reattempt_h196.md",
-  "previous_attempt_status": "INCOMPLETE before treatment results",
-  "source_commit": "7fe61149b7ed5e07f93444765a85b136b8ee0317",
-  "next_attempt_authority": "/home/ubuntu/nudges/hw_t1338_h196_rdastra.md",
-  "next_attempt_wall_budget_seconds": 25200,
-  "optimizer_updates": 0,
-  "backward_calls": 0,
+  "source_commit": "37126b5587712f443f2e02c09cba572da850da0b",
+  "scientific_source_commit": "7fe61149b7ed5e07f93444765a85b136b8ee0317",
+  "wall_budget_seconds": 25200,
   "monitor": {
     "status": "INCOMPLETE",
     "exit_code": 1,
     "reasons": [
-      "sustained load>85%: three readings five seconds apart"
+      "disk user-visible used>93.8%"
     ],
-    "elapsed_seconds": 7145.009678954026,
+    "elapsed_seconds": 4613.756627893075,
     "host_online_cores": 128,
     "load_limit": 108.8
   },
-  "failure": {
-    "status": "INCOMPLETE",
-    "error": "RuntimeError('signal 15; no scientific retry')",
-    "optimizer_updates": 0,
-    "backward_calls": 0,
-    "elapsed_seconds": 7136.231984564103,
-    "audit": {
-      "opened_count": 1332,
-      "refused": [],
-      "protected_reads": 0
-    }
+  "resource_observations": {
+    "max_rss": 3347161088,
+    "max_threads": 2,
+    "max_disk_used_fraction": 0.9380135079437933,
+    "max_output_bytes": 17825954,
+    "max_cpu": 63.2,
+    "max_load": 42.71875,
+    "min_available": 82651836416,
+    "min_free": 486975954944,
+    "samples": 8167
   },
   "baseline": {
     "status": "PASS",
@@ -132,36 +126,18 @@
       0.39140362965590164
     ]
   },
-  "completed_B_cells": 9,
+  "completed_B_cells": 6,
   "completed_A_cells": 0,
   "b_locked": false,
-  "permutation_probes": {
-    "196101": {
-      "skip": false,
-      "comparisons": 1,
-      "first_mismatch": {
-        "context": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
-        "draw": 0,
-        "max_abs_delta": 2.384185791015625e-07
-      }
-    },
-    "196102": {
-      "skip": false,
-      "comparisons": 1,
-      "first_mismatch": {
-        "context": "004aa15dce5500aa03e08802678ed60e41803913586945edd3966edda9527c4d",
-        "draw": 0,
-        "max_abs_delta": 2.384185791015625e-07
-      }
-    },
-    "196103": {
-      "skip": false,
-      "comparisons": 1,
-      "first_mismatch": {
-        "context": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
-        "draw": 0,
-        "max_abs_delta": 2.384185791015625e-07
-      }
+  "optimizer_updates": 0,
+  "backward_calls": 0,
+  "failure": {
+    "error": "RuntimeError('signal 15; no scientific retry')",
+    "elapsed_seconds": 4607.243601039052,
+    "audit": {
+      "opened_count": 1332,
+      "refused": [],
+      "protected_reads": 0
     }
   },
   "partial_replay": {
@@ -169,8 +145,8 @@
     "scope": "partial evidence only; scientific attempt INCOMPLETE",
     "model_forwards": 0,
     "optimizer_updates": 0,
-    "remote_objects_verified": 24,
-    "remote_array_members_verified": 5939,
+    "remote_objects_verified": 18,
+    "remote_array_members_verified": 4457,
     "raw_pool_hashes_verified": 1310,
     "remote_prefix_inventory_matches_receipts": true,
     "native91_bitexact": true,
@@ -203,13 +179,13 @@
         }
       }
     },
-    "completed_B_cells": 9,
+    "completed_B_cells": 6,
     "completed_A_cells": 0,
     "b_locked": false,
     "partial_lock_verified": false,
     "scientific_verdict": null,
     "missing_outcomes_not_zero_filled": true,
-    "source_commit": "7fe61149b7ed5e07f93444765a85b136b8ee0317"
+    "source_commit": "37126b5587712f443f2e02c09cba572da850da0b"
   },
   "per_seed_gains": null,
   "median_gain": null,
@@ -218,18 +194,11 @@
   "harm_rate": null,
   "exact_minus2_treatment_counts": null,
   "elo_lift": null,
-  "adapter_sha_after": null,
+  "adapter_sha256_after": null,
+  "dope_sha256_after": null,
   "serving_promotion": false,
-  "termination_cause": "sustained load>85%: three readings five seconds apart",
-  "resource_observations": {
-    "samples": 12545,
-    "max_rss": 3335430144,
-    "max_threads": 2,
-    "max_disk_used_fraction": 0.9356301153890917,
-    "max_output_bytes": 12816677,
-    "max_cpu": 80.1,
-    "max_load": 128.1865234375,
-    "min_available": 69530148864,
-    "min_free": 505700274176
-  }
+  "next_attempt_authority": "n1615_rd_astra.md; lanes_t1615.md",
+  "next_attempt_authorized": 4,
+  "prior_predictions_reusable": false,
+  "closeout_self_merge_authorized": false
 }
