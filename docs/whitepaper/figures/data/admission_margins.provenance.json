@@ -1,0 +1,50 @@
+{
+  "schema": "whitepaper.admission-margins-figure/v1",
+  "source_csv": "figures/data/latest_admissions.csv",
+  "source_csv_sha256": "a38d2eeb1ef95876b8b1b904202a94d69983b1a9a31d3bdab12b48cd94f8d82b",
+  "source_receipt_sha256": "6a5962e6e5bb53c642484b7dfd285a2f77e786065d54872664745c3d4335081f",
+  "generator_sha256": "a6906e2bc3c6958aa6531a2896d4a43967123bab07750b63cea49cbef35dd51c",
+  "figure_sha256": "8bee0ba6149fdf4da172cc990576f34f362b1e1ed41c196d9327cac37a263b20",
+  "round_window": [
+    775,
+    2837
+  ],
+  "rows": 2063,
+  "accepted_rows": 6,
+  "accepted_strict_gain_rounds": [
+    785,
+    859,
+    2750
+  ],
+  "accepted_strict_gains_ge_1e_3_rounds": [
+    785
+  ],
+  "accepted_strict_gains_sub_1e_3_rounds": [
+    859,
+    2750
+  ],
+  "accepted_exact_tie_rounds": [
+    782,
+    882,
+    2795
+  ],
+  "accepted_strict_gain_margins": {
+    "785": "0.0302180320058556",
+    "859": "0.0001988950680422",
+    "2750": "0.0005726212619803"
+  },
+  "rejected_rows": 2057,
+  "rejected_in_minus_1e_4_to_0": 26,
+  "rejected_in_minus_1e_3_to_minus_1e_4": 48,
+  "rejected_below_minus_1e_3": 1983,
+  "closest_rejected_round": 803,
+  "closest_rejected_margin": "-0.0000433838086485",
+  "min_rejected_round": 2784,
+  "min_rejected_margin": "-0.0084690348103498",
+  "median_rejected_margin": "-0.0033601045139468",
+  "definition": "Pre-decision validation margin Delta_r = candidate_val - previous_best_val in exact Decimal; accepted iff Delta_r >= 0 (strict gain > 0, exact tie == 0).",
+  "scope": "Development admission telemetry over rounds 775-2837 (2,063 records); not an independent first-proposal or deployment comparison.",
+  "source_binding": "Aggregate field interpretation only; exact installed source, adapter and evaluation population remain unjoined",
+  "matplotlib_version": "3.10.8",
+  "reproduce": "python3 figures/scripts/make_admission_margins_figure.py"
+}
