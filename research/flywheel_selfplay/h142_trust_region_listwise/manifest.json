@@ -1,44 +1,66 @@
 {
+ "actual_optimizer_updates": 480,
+ "admitted_arms": [],
  "arm_configs": {
   "CTRL": {
-   "description": "Exact H140 L0.1 live control recipe (lambda=0.1, all-candidate hinge + listwise KL, lr=1e-4)",
+   "batch_size": 16,
+   "description": "Exact H140 L0.1 live control recipe (smooth_l1_loss(pred, -u4) + 0.1 * listwise_kl_loss(pred, -u4, tau=0.2), 20x2 steps, batch_size=16, lr=1e-4)",
    "l2sp_beta": 0.0,
    "l2sp_gamma": 0.0,
-   "listwise_tau": 0.1,
+   "listwise_tau": 0.2,
    "listwise_weight": 0.1,
    "lr": 0.0001,
+   "observed_adapter_l2_drift_median": 0.442789,
+   "rounds": 20,
+   "slate_size": 192,
+   "steps_per_round": 2,
    "target_adapter_l2_drift_cap": null,
-   "valid_only_kl": false
+   "valid_only_kl_gate_flags": false
   },
   "TR_L2SP": {
-   "description": "Trust-region L1.0 via L2-SP anchor penalty to round-882.pt (lambda=1.0, lr=1e-4, l2sp_beta=50.0, l2sp_gamma=0.25 calibrated a priori from H140 grad norm 2.623 and step drift 0.0111)",
+   "batch_size": 16,
+   "description": "Trust-region L1.0 via L2-SP anchor penalty to round-882.pt (lambda=1.0, tau=0.2, lr=1e-4, l2sp_beta=50.0, l2sp_gamma=0.25 calibrated a priori from H140 grad norm 2.623 and step drift 0.0111)",
    "l2sp_beta": 50.0,
    "l2sp_gamma": 0.25,
-   "listwise_tau": 0.1,
+   "listwise_tau": 0.2,
    "listwise_weight": 1.0,
    "lr": 0.0001,
+   "observed_adapter_l2_drift_median": 0.007358,
+   "rounds": 20,
+   "slate_size": 192,
+   "steps_per_round": 2,
    "target_adapter_l2_drift_cap": 0.05,
-   "valid_only_kl": false
+   "valid_only_kl_gate_flags": false
   },
   "TR_LR": {
-   "description": "Trust-region L1.0 via 10x smaller step size (lambda=1.0, all-candidate hinge + listwise KL, lr=1e-5)",
+   "batch_size": 16,
+   "description": "Trust-region L1.0 via 10x smaller step size (lambda=1.0, tau=0.2, all-candidate smooth_l1 + listwise KL, lr=1e-5)",
    "l2sp_beta": 0.0,
    "l2sp_gamma": 0.0,
-   "listwise_tau": 0.1,
+   "listwise_tau": 0.2,
    "listwise_weight": 1.0,
    "lr": 1e-05,
+   "observed_adapter_l2_drift_median": 0.043353,
+   "rounds": 20,
+   "slate_size": 192,
+   "steps_per_round": 2,
    "target_adapter_l2_drift_cap": 0.05,
-   "valid_only_kl": false
+   "valid_only_kl_gate_flags": false
   },
   "TR_NOFAIL": {
-   "description": "Trust-region L1.0_nofail (lambda=1.0 valid-only u > -1.0 listwise KL + all-candidate hinge, lr=1e-5)",
+   "batch_size": 16,
+   "description": "Trust-region L1.0_nofail (lambda=1.0, tau=0.2, valid-only (a_ok==1)&(b_ok==1) listwise KL + all-candidate smooth_l1, lr=1e-5)",
    "l2sp_beta": 0.0,
    "l2sp_gamma": 0.0,
-   "listwise_tau": 0.1,
+   "listwise_tau": 0.2,
    "listwise_weight": 1.0,
    "lr": 1e-05,
+   "observed_adapter_l2_drift_median": 0.043277,
+   "rounds": 20,
+   "slate_size": 192,
+   "steps_per_round": 2,
    "target_adapter_l2_drift_cap": 0.05,
-   "valid_only_kl": true
+   "valid_only_kl_gate_flags": true
   }
  },
  "arms": [
@@ -48,6 +70,8 @@
   "TR_NOFAIL"
  ],
  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+ "executed_host": "xbabe2",
+ "executed_source_commit": "d428ca4bd683807c3f77cd9a1cc481048d5c9f3d",
  "fold_seed": 142140,
  "inputs": {
   "best_dev_checkpoint_json": {
@@ -55,8 +79,8 @@
    "sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
   },
   "cpu_exact_fused_py": {
-   "path": "/home/ubuntu/jope-rescue-20260921/h48-holdout-blend/inputs/cpu_exact_fused.py",
-   "sha256": "4c9fd1ae952ebefbd24d275da96fbeb56a3ac04b2ef5be163bb6a78ac5971f0e"
+   "path": "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py",
+   "sha256": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab"
   },
   "dope_backbone": {
    "sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
@@ -65,13 +89,13 @@
    "path": "research/flywheel_selfplay/h142_trust_region_listwise/fold_manifest_142140.json",
    "sha256": "3ffa1e8bfb95390435fde3f3dcb50462e1689e91eac3218946e44d2f237d9f68"
   },
-  "h121_run_wave_a_py": {
-   "path": "research/flywheel_selfplay/h121_7day_wave_a/run_wave_a.py",
-   "sha256": "e40ed007a5fb966dc23df1379291fd441fa1e0ef9a6b034717a26eb5ecdf7213"
+  "h121_runner_py": {
+   "path": "research/flywheel_selfplay/h121_target_smoothing/runner.py",
+   "sha256": "36ef51730ebe9db21a59455c99fcb15580252c92bf296f2618911c1dc1624aec"
   },
   "h58_context_features_npz": {
-   "path": "/home/ubuntu/jope-rescue-20260921/h58-context-prior/context_features_1310.npz",
-   "sha256": "7817f6e61a4533bf96342bb7e6fb621e0f20ff9282eb8bd6d1e811a209612661"
+   "path": "/home/ubuntu/jope-data/h58/cache/context_features.npz",
+   "sha256": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf"
   },
   "prereg_md": {
    "path": "research/flywheel_selfplay/h142_trust_region_listwise/PREREG.md",
@@ -84,6 +108,14 @@
   "run_h142_cpu_py": {
    "path": "/home/ubuntu/jope-rescue-20260921/h142-trust-region-listwise/run_h142_cpu.py",
    "sha256": "d5215234c2659d2a470ac95c0900827bfad79704b7fb5ac7fe952cdb633d4a8e"
+  },
+  "selected_json": {
+   "path": "/home/ubuntu/jope-data/h50/input/selected.json",
+   "sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1"
+  },
+  "source_manifest_json": {
+   "path": "/home/ubuntu/jope-data/h50/input/source_manifest.json",
+   "sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
   }
  },
  "non_control_arms": [
@@ -97,7 +129,8 @@
   142102,
   142103
  ],
- "status": "PREREGISTERED",
+ "status": "COMPLETE",
  "track": "F",
+ "verdict": "NO_ADMISSION",
  "wave": "H142"
 }
