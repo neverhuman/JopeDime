@@ -1,0 +1,2771 @@
+{
+  "wave": "H178",
+  "title": "Empirical Calibration of the H177 Pooled Cross-Fit Selector on the H175 Counterfactual Bank",
+  "status": "COMPLETE",
+  "null_and_harmful_admission_le_005": true,
+  "max_null_or_harmful_admission_rate": 0.0,
+  "replayed_four_arm_holm_m": 4,
+  "h177_analysis_sha256": "707c4903a77d48ffc8ae14c820a626df5c2858d3d24df35db3f9718d120bafc4",
+  "calibration_verdict": "CALIBRATED_PASS",
+  "power_verdict": "POWER_OK",
+  "verdict": "CALIBRATED_PASS_POWER_OK",
+  "verdict_summary": {
+    "wave": "H178",
+    "status": "COMPLETE",
+    "calibration_verdict": "CALIBRATED_PASS",
+    "power_verdict": "POWER_OK",
+    "verdict": "CALIBRATED_PASS_POWER_OK",
+    "null_and_harmful_admission_le_005": true,
+    "max_null_or_harmful_admission_rate": 0.0,
+    "replayed_four_arm_holm_m": 4,
+    "h177_analysis_sha256": "707c4903a77d48ffc8ae14c820a626df5c2858d3d24df35db3f9718d120bafc4",
+    "h178_receipt": {
+      "wave": "H178",
+      "status": "COMPLETE",
+      "null_and_harmful_admission_le_005": true,
+      "max_null_or_harmful_admission_rate": 0.0,
+      "replayed_four_arm_holm_m": 4,
+      "h177_analysis_sha256": "707c4903a77d48ffc8ae14c820a626df5c2858d3d24df35db3f9718d120bafc4"
+    },
+    "h177_resolve_verdict_if_candidate_admitted": {
+      "candidate_admitted": true,
+      "lift_qualified": true,
+      "h178_calibration_status": "PASS",
+      "verdict": "ADVANCE"
+    },
+    "h177_admit_counts_as_lift": true,
+    "max_null_admission": 0.0,
+    "max_harmful_admission": 0.0,
+    "max_null_cp95_one_sided_upper_200": 0.014867039231272083,
+    "max_harmful_cp95_one_sided_upper_200": 0.014867039231272083,
+    "max_null_cp95_one_sided_upper_50": 0.058155079116972264,
+    "max_harmful_cp95_one_sided_upper_50": 0.058155079116972264,
+    "family_mde80_24": 0.0030379838542648,
+    "family_mde80_full": 0.005056945204653771,
+    "violations": []
+  },
+  "imported_h177_rule_identity": true,
+  "seeds": [
+    178101,
+    178102,
+    178103
+  ],
+  "slate_seeds": [
+    175101,
+    175102,
+    175103
+  ],
+  "fold_seed": 178140,
+  "boot_seed": 178141,
+  "optimizer_updates": 0,
+  "model_trainable_parameters": 0,
+  "model_state_before_sha256": "6eb0e998896bd87553bbea815be06b534d5f3f1ae2a63cbf7ff4ec22e89c4f8a",
+  "model_state_after_sha256": "6eb0e998896bd87553bbea815be06b534d5f3f1ae2a63cbf7ff4ec22e89c4f8a",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "frozen_sha256": "8d1070faf574ee1cd2a4e630887e1662b43189b3f89b04982143ef2704818aae",
+  "baseline_mean": 1.1377941898164525,
+  "selector_cohorts_per_pooled_3seed_rule": 2800,
+  "selector_arm_decisions_per_pooled_3seed_rule": 11200,
+  "selector_decisions_per_single_seed_diagnostic": 33600,
+  "selector_decisions_per_single_fold_rule": 168000,
+  "source_commit": "4de98a453de4214116330bb4e387c786d07f9211",
+  "manifest_sha256": "2f1c03deea0845bd6e7385f9f237b515f9bb6d8b16809dbb0cb1c1350d0840df",
+  "audit": {
+    "opened": [
+      "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt",
+      "/home/ubuntu/JopeDimeMicro/assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt",
+      "/home/ubuntu/JopeDimeMicro/assets/models/h40b_round2_dope_self_contained_10tok.pt",
+      "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt",
+      "/home/ubuntu/JopeDimeMicro/python/__pycache__/model.cpython-312.pyc",
+      "/home/ubuntu/JopeDimeMicro/python/__pycache__/phase12_multimodal_model.cpython-312.pyc",
+      "/home/ubuntu/JopeDimeMicro/python/__pycache__/rank_prepare.cpython-312.pyc",
+      "/home/ubuntu/JopeDimeMicro/python/__pycache__/rust_evaluator.cpython-312.pyc",
+      "/home/ubuntu/JopeDimeMicro/python/rank_prepare.py",
+      "/home/ubuntu/JopeDimeMicro/python/research/__pycache__/__init__.cpython-312.pyc",
+      "/home/ubuntu/JopeDimeMicro/python/research/levels/__pycache__/__init__.cpython-312.pyc",
+      "/home/ubuntu/JopeDimeMicro/python/research/levels/__pycache__/budget_planner.cpython-312.pyc",
+      "/home/ubuntu/JopeDimeMicro/python/research/levels/__pycache__/building_block_landmarks.cpython-312.pyc",
+      "/home/ubuntu/JopeDimeMicro/python/research/levels/__pycache__/multiclass_head.cpython-312.pyc",
+      "/home/ubuntu/JopeDimeMicro/python/research/levels/__pycache__/multilevel_model.cpython-312.pyc",
+      "/home/ubuntu/JopeDimeMicro/python/research/levels/__pycache__/scaling.cpython-312.pyc",
+      "/home/ubuntu/jope-data/h170/attempt-001/baseline_costs.npz",
+      "/home/ubuntu/jope-data/h178/attempt-001/baseline.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-context-oracle-0.005.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-context-oracle-0.01.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-context-oracle-0.02.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-context-oracle-0.05.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-context-oracle-0.1.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-context-oracle-0.2.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-context-oracle-0.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-context-random_nonoracle-0.005.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-context-random_nonoracle-0.01.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-context-random_nonoracle-0.02.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-context-random_nonoracle-0.05.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-context-random_nonoracle-0.1.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-context-random_nonoracle-0.2.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-context-random_nonoracle-0.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-family-oracle-0.005.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-family-oracle-0.01.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-family-oracle-0.02.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-family-oracle-0.05.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-family-oracle-0.1.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-family-oracle-0.2.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-family-oracle-0.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-family-random_nonoracle-0.005.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-family-random_nonoracle-0.01.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-family-random_nonoracle-0.02.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-family-random_nonoracle-0.05.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-family-random_nonoracle-0.1.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-family-random_nonoracle-0.2.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-24-family-random_nonoracle-0.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-context-oracle-0.005.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-context-oracle-0.01.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-context-oracle-0.02.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-context-oracle-0.05.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-context-oracle-0.1.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-context-oracle-0.2.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-context-oracle-0.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-context-random_nonoracle-0.005.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-context-random_nonoracle-0.01.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-context-random_nonoracle-0.02.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-context-random_nonoracle-0.05.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-context-random_nonoracle-0.1.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-context-random_nonoracle-0.2.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-context-random_nonoracle-0.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-family-oracle-0.005.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-family-oracle-0.01.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-family-oracle-0.02.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-family-oracle-0.05.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-family-oracle-0.1.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-family-oracle-0.2.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-family-oracle-0.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-family-random_nonoracle-0.005.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-family-random_nonoracle-0.01.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-family-random_nonoracle-0.02.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-family-random_nonoracle-0.05.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-family-random_nonoracle-0.1.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-family-random_nonoracle-0.2.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/lock-pooled-b-full-family-random_nonoracle-0.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/panels.npz",
+      "/home/ubuntu/jope-data/h178/attempt-001/provenance.json",
+      "/home/ubuntu/jope-data/h178/attempt-001/real-catalog.jsonl",
+      "/home/ubuntu/jope-data/h178/attempt-001/simulation_metrics.json",
+      "/home/ubuntu/jope-data/h178/inputs/best_dev_checkpoint.json",
+      "/home/ubuntu/jope-data/h178/inputs/counterfactual_inputs.npz",
+      "/home/ubuntu/jope-data/h178/inputs/h175_simulation_metrics.json",
+      "/home/ubuntu/jope-data/h178/inputs/real-catalog.jsonl",
+      "/home/ubuntu/jope-data/h178/inputs/round-882.pt",
+      "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py",
+      "/home/ubuntu/jope-data/h50/input/pools/016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/064c9ff995a5405ae751cf1b7e3b20fbd4f52912a26b1d251e191bba08b35318.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/087f69944563f778a91d99894dbba6a9cdd339f5d0a93b4e58a4f0003765d920.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/0a05f8f58b55c4c7682550bfee8cc27fd4ee14fc5f8eeec1a04a8d3ea8ea0755.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/0cd637de21a92fef5b8f0ab923205bc19c60d1afaf84d22cdff9a7fc933d4826.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/0d316ab90ca1558fd69b22a01fce4821edafe8c13d51686aae5d71f19564f83e.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/0e49978b3ed4e2e2ea9d992f1cd33541cf063af5fd61293bd1ac8cd4b20c4e4c.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/0e52abc2b4490ec9cc12713b50c8e4bf93f84252ad7906aa5f7d91fe364ec281.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/17f77ac2b2f0cb3333d5d7a68355f7fb52f8ca1b52ff4a24f1efc98fbed0f2ce.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/1904558704af02ce447393649010660c2a6c608e0f1250484e1c21fd74dd1d59.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/1ad9d95cffce95734ff5b4b14d7f291da3cee9338f139596cecf593a86f6f39a.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/1b770a1e9840309a0b299379e96b17770a6068e85dcbd4ab6c29a7f4afb0a689.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/1cd86c6087f25f2044a29d25091d8e3fa6b8a6bffdb4f1e7815908b744759bb9.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/23e1d8c03439318820118549fef92fc4ee5d795a067a57573d1b312ffb7b3631.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/24c9ee141b718ef99ecf0a0a170f498c9051fc5d1ba8af2b38b7d8c1953df150.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/25aff0bcd9fb3ea4dd28c6a71463b1e02d8293401f40a2e48e56c2b5a3ab54d8.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/283fb463e021e3cef432a5e46ccf21d95731e25af46eb52be91099d1e248a6ae.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/293dd9add416aa1ea1b54ae5476780f1fbe84ebc2a95e949f1a29b1d93754b6b.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/2d7f56bce09d136473a7847a4672718e147e08b3b4c4db6dec40f481b293d421.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/2e8f7388b3d3ac447d8589803c8f53284db1ae43b718c3d11464b0c271afe9b6.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/2f8d9e662f5f5dd584a151bb4cca1d2935d866b0240c334bca389a9c35d52662.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/3abd4bab0e6b2454b393ac2c8e8f47badda291a0cd8edaa95e7b1985326c4a38.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/3e62bd2aea6725a8791da30ac1f26b5498e1f4605f942d099f9e307328fde1b1.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/42db82ea39dbc7a7def1af111b6fd0099aebf783c7ea01548b3f55883fd836e1.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/43022ae6a8bc83e9e25ea4a2882389152856226f5b2bdd4668db07f2f510ae91.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/4425fbe7fee2bd08ad54abfdfdbb2437681bd8e6a83e36cef7063144eaa4e1bd.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/498fc9a0b029cd79c0d02ef1eb97a8c44e66411c980aadfa29602f4f313f9c38.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/4c8751e8bd56a491d60a7279d62cce46ebb8c415c079745cea238a4a9c610375.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/4dbf3f3b88aca9f6b915e9cf6f494e956217c8c7447e8c1ae95a65924d27af4a.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/4ec0e23fdfb640c76a38f5a3d649ef24b871e5a6dad9338d77fa8582fc8cdc07.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/4f7d3f5391d70e8b069ee39bb59adc30b1c4a4050cdb86fdfea2eac35ef1f0d8.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/55a2d1b0fbc8ae57936d3a1301cf26d020186d46528ffd6e589c2c4fb62d46de.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/55de002335a4375843a826913f248b38c74b7b875b27726907fc9dc378939d99.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/5898d170c160a78afded189081bf82ea71d7b6e9a9c8c8b7145b7526a9f06ad1.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/59aae6f8f8fdedc6caae8e929b0882d99bc8a75d38205a3a99dad3ad95a5376a.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/5cff215fc5432a6f802dec3f1b64c58542ac03905a55a65af1afdde0189e3e37.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/6230069cacc7c6a7cee92a732cd29bab1f0e2ce6e356e148cfabf6571f92df08.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/640522f13fee887c7750667a6c1f4b0770941f96aac5a5e9ba5436997da61042.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/65cfbf5b12763b855fa54f54d1ef627123f33f59776b7602240ba3a509298a6f.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/65e0dcc10529cdd462c1220a80eaf2cd303bc741a81cfaecb193292f034d9f21.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/692dc11dc7fa81a5804a58a9a7bfbb578ce99d2eed858b75a2f7c7e88a553d22.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/6aed4a28263cda4af3b17d8f941b6216c69c30643b61448c8d40dc7913a66409.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/6ecbb7d5ec5384b3079e5faaa161bbe05b4ce9cf11a0b837e857a3965ed3aa61.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/767797b0cfdd57b0a6133c067403172d868d141a72378e6ea8124576805d698f.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/76e4c4045ab34d9485790c28f4ec26fa07c10d21000beeba1a6f59f3066b43ca.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/804456d521ee30419a541fc7d83329a6523a449a2c9eb60e017fd64ef4b90d0f.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/81b6226e1ab33c3a4b07d5dab1f7bffcd8324038cb563e154efd975264fbb70d.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/8208128119c70f4c872e4a870016d04a2b6d739bddac399459641b8332d0f2d9.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/8a13471f5d9ac1032ea6f7a2feec6c8c2c8887180673371c8862bc204eb42235.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/8c424963eef97edcc0520b61061f6c4c34e107e1b8c1f3ca0986a80c9b9bb114.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/8ce52a03cba8a51f8badf92c9d2360e2bdf9843bf4533794da77c9fc2ed37916.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/8eeca816e18117d6d2abd063fd2cf46055d736c3cb39207547742494f6891f47.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/90bfbd3079a5a8c32a9207ec764885d8c9aaa55f754ae262c9215e91a6362a0c.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/96eac9c1d1cd5d6c15b93aacb03f3abe9e80cbfbfab757cc8c20e85ba365c23c.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/983bb1e5e396d436d7347fc8ca1ebd116cfed99493c6e91f6026a7d167c19780.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/9a3bd46cd866ea55d3f99f9d713cbcc789e1fb8ea427b02aba6ee75e732f883f.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/9c22e2651db3b28da0963a6365612e70c82e0aceaa70336abff13a23aca77c6b.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/9df0bcb0f8cf6ce721786f461577a7fcdb752bca13319bd8cc0399c523d5cc99.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/9e52d08b1cb33a60d40f6968d29cdd77f9d9eaed1fe99a1ceae6515ca8c321ba.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/9edb5a73e0be7797ac823636470c30f9fb6eec0395b850cfed59dcf503d69704.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/a5f7054e2579b9621abced81485d180f84fba472bc81781851ff0d1373962f6f.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/ac07466e92de77e35088ea1849f7190b24c77b557431bd3a3e8ee63fa479b1e9.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/ae7517ee777c8424af919eb9c4c9c266f420920e8e30f533b0140e352abb1a74.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/b1c4f4fab9ea3b621e62b704c3898d22c4c14c5b8c8946ab7c0330313b3bc854.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/bad21c5c67d19f4bdec4daab97e2e990189082e1cf8dac3fb296fe6653e3899a.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/bb3ee96aded9f6f741afc354935eba4137c1d8721820b25e1179a38b18335411.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/c845917ca3b8f0b24a9e5e86156a696456195c3b170612a03a372e0882e4b3f7.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/cf33479433d1207ec6216811cfabb9437ee9f8c92b622edeac602c0148540cac.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/d1c6afdb520325a5eec929a0de17f9a8ca8adcce17ac18d65573f1ad1b9fbdec.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/d268b611456872363e0ca930c279e51245cebfba09d4c55efa4d207cfe8ec64c.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/d3256ae1379733db78cffa708665e2a969bb4462f220f7939f788af563c4a2b1.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/d77243cf0858886491d4009e8bf1731257f9f0cfd0759c924f75396d6a7dc62b.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/dbaf4dda74e91180243f917dc31bf3ba8d864a144d23c486bf7f12e72f98193f.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/e08aa019a5ed29d85716048f297b069afb2d85999f764a617f95a6df621a4911.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/e11f224d9011e7c8258479682f7956e13443cf8b0143fef3f1aa7f6ada9b8bcf.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/e45a09e4268091fe13cc0edb43644cc9df2c7d714cd7778b1dd0b888b468787d.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/e7bc043b55c6a460b6c80463e1818adbf57c90c089cd73f50489275849263ee2.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/e96c21d81d9e5a5aa82468a48c096751748816b62238511ae7b5d65d30c4f5d7.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/e9d0481cc6545966fa4dbadb785ab9c85198c1d237549eae009c42250434cdf8.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/ede9d2973b86e72742f16ea74f5e22535b08815aec354eaa02b3bedf210583f6.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/ef2a5b74b537b84846779a8980d058d1e54d89a3308ad5373f703f63a930c825.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/ef9eb57297cd8a960e3349140f1cd6b069913737f4bd4b7a04394d0596d90f87.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/f3daa4829e1936cd14c617ebc4decbc4e5cc0f6e3357827c0344416102f4dd17.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/f7736af9a19bd89aa476f452bb9d987faf0d438be9b9b853688435739e1d117a.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/f84cf79d872e75573689f53559944dca750d5e087206646364f7f28862b8b589.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/f9faf6b9e96f5cca3fc953f0f373e376bc221be103b293650615cfa869ae3434.npz",
+      "/home/ubuntu/jope-data/h50/input/pools/fcfd54c8f474349f7bd6a5003252fccec8ac1e83e902615a3c2416242cc1ada7.npz",
+      "/home/ubuntu/jope-data/h58/cache/context_features.npz"
+    ],
+    "refused": [],
+    "protected_reads": 0
+  },
+  "serving_promotion": false,
+  "limitations": [
+    "Counterfactual oracle injections use outcomes pointwise within B_outer and are not deployable learned policies.",
+    "Nonnegative oracle gains give optimistic power; they omit the mixed-sign per-family errors of real training.",
+    "Primary H177_POOLED consumes the exact returned decisions of h177_analysis.pooled_b_select (m=4 step-down Holm across CTRL, ACC4, ACC16, OC15 on 3-seed within-family averaged (3, 205) panels across 50 disjoint 4-arm cohorts / 200 marginal arm decisions per cell); cloned-4-arm tie and single-seed cloned sensitivities are reported as explicit diagnostics.",
+    "For the pointwise H175 policy bank, pooled A and pooled B contain the same 205 families and 1,219 contexts across rotated fold roles (correlated cross-fold candidate readout, not an independent new-family confirmation sample), and any policy with 3-seed finite-TRAIN gain <= 0 already fails the deterministic > 0.001 + 1e-12 mean gate.",
+    "Testing exact zero and random-nonoracle finite-bank policies does not certify external-population effects just below the +0.001 margin (e.g. an external normal population with mu=0.00099, family SD=0.001, N=205 crosses the observed +0.001 gate ~44.3% of the time).",
+    "Synthetic policies on real S3 TRAIN contexts; zero synthetic datasets; frozen historical r882 and reused TRAIN/DL-Val cannot establish external generalization."
+  ],
+  "headroom": {
+    "24": {
+      "TRAIN": {
+        "contexts": 1219,
+        "families": 205,
+        "equal_family_headroom": {
+          "per_seed": [
+            0.3201666770804776,
+            0.31582900887231286,
+            0.3253626794676648
+          ],
+          "median": 0.3201666770804776,
+          "ci95": [
+            0.2568728085443197,
+            0.3933241393700645
+          ]
+        },
+        "oracle_elo": {
+          "r882": 1500.0,
+          "per_seed": [
+            1988.7429291276048,
+            1940.1152962269653,
+            1958.531245137219
+          ],
+          "median": 1958.531245137219,
+          "ci95": [
+            1933.432766237145,
+            1988.1323112486477
+          ],
+          "interpretation": "expected family-weighted wins of randomized counterfactual policy, not Elo of mean utility"
+        },
+        "baseline_family_utility_by_seed": [
+          1.3732805423819339,
+          1.3683299052612965,
+          1.3688980685150476
+        ]
+      },
+      "DLVal": {
+        "contexts": 91,
+        "families": 19,
+        "equal_family_headroom": {
+          "per_seed": [
+            0.2929207240165971,
+            0.18216904166809547,
+            0.22149435419253902
+          ],
+          "median": 0.22149435419253902,
+          "ci95": [
+            0.11849463630260075,
+            0.352190097537304
+          ]
+        },
+        "oracle_elo": {
+          "r882": 1500.0,
+          "per_seed": [
+            1913.5891580341925,
+            1952.3789062137237,
+            1852.470175901744
+          ],
+          "median": 1913.5891580341925,
+          "ci95": [
+            1835.3410359506104,
+            2000.4769356147563
+          ],
+          "interpretation": "expected family-weighted wins of randomized counterfactual policy, not Elo of mean utility"
+        },
+        "baseline_family_utility_by_seed": [
+          1.0484129701128393,
+          1.151413785090603,
+          1.121141358738941
+        ]
+      },
+      "MDE80": {
+        "context": {
+          "H177_POOLED": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.01,
+            "gain": 0.0030493122265302037,
+            "headroom_percent": 0.9524139908425647,
+            "gain_ci95": [
+              0.0024612124387011374,
+              0.00376862339888357
+            ],
+            "headroom_percent_ci95": [
+              0.875026861098592,
+              1.0571356434436756
+            ],
+            "right_censored_bootstrap_fraction": 0.0,
+            "expected_sqrt5_from_h175_strict": 0.0076341034158856425,
+            "simple_div_sqrt5_from_h175_strict": 0.0070813170113856
+          },
+          "H177_POOLED_CLONED4_DIAGNOSTIC": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.01,
+            "gain": 0.0030493122265302037,
+            "headroom_percent": 0.9524139908425647,
+            "gain_ci95": [
+              0.0024612124387011374,
+              0.00376862339888357
+            ],
+            "headroom_percent_ci95": [
+              0.875026861098592,
+              1.0571356434436756
+            ],
+            "right_censored_bootstrap_fraction": 0.0,
+            "expected_sqrt5_from_h175_strict": 0.0076341034158856425,
+            "simple_div_sqrt5_from_h175_strict": 0.0070813170113856
+          },
+          "H177_POOLED_UNADJUSTED_M1_DIAGNOSTIC": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.01,
+            "gain": 0.0030493122265302037,
+            "headroom_percent": 0.9524139908425647,
+            "gain_ci95": [
+              0.0024612124387011374,
+              0.00376862339888357
+            ],
+            "headroom_percent_ci95": [
+              0.875026861098592,
+              1.0571356434436756
+            ],
+            "right_censored_bootstrap_fraction": 0.0
+          },
+          "H177_POOLED_SINGLE_SEED_DIAGNOSTIC": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.01,
+            "gain": 0.0030493122265302037,
+            "headroom_percent": 0.9524139908425647,
+            "gain_ci95": [
+              0.0024612124387011374,
+              0.00376862339888357
+            ],
+            "headroom_percent_ci95": [
+              0.875026861098592,
+              1.0571356434436756
+            ],
+            "right_censored_bootstrap_fraction": 0.0,
+            "expected_sqrt5_from_h175_strict": 0.0076341034158856425,
+            "simple_div_sqrt5_from_h175_strict": 0.0070813170113856
+          },
+          "STRICT": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.05,
+            "gain": 0.015834306207683856,
+            "headroom_percent": 4.945644672354119,
+            "gain_ci95": [
+              0.012769540634708958,
+              0.019565148936979807
+            ],
+            "headroom_percent_ci95": [
+              4.715496036418734,
+              5.29611634851501
+            ],
+            "right_censored_bootstrap_fraction": 0.0
+          },
+          "H168_NEW": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.05,
+            "gain": 0.015834306207683856,
+            "headroom_percent": 4.945644672354119,
+            "gain_ci95": [
+              0.012769540634708958,
+              0.019565148936979807
+            ],
+            "headroom_percent_ci95": [
+              4.715496036418734,
+              5.29611634851501
+            ],
+            "right_censored_bootstrap_fraction": 0.0
+          }
+        },
+        "family": {
+          "H177_POOLED": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.01,
+            "gain": 0.0030379838542648,
+            "headroom_percent": 0.9488757174754848,
+            "gain_ci95": [
+              0.0023781330477699245,
+              0.00391052799767302
+            ],
+            "headroom_percent_ci95": [
+              0.8514829590337923,
+              1.0912931014506277
+            ],
+            "right_censored_bootstrap_fraction": 0.0,
+            "expected_sqrt5_from_h175_strict": 0.02915524732123995,
+            "simple_div_sqrt5_from_h175_strict": 0.028602460916739906
+          },
+          "H177_POOLED_CLONED4_DIAGNOSTIC": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.02,
+            "gain": 0.006422679961260115,
+            "headroom_percent": 2.006042608752097,
+            "gain_ci95": [
+              0.0049485516238134035,
+              0.008204357954540416
+            ],
+            "headroom_percent_ci95": [
+              1.8104381086995252,
+              2.209666718578018
+            ],
+            "right_censored_bootstrap_fraction": 0.0,
+            "expected_sqrt5_from_h175_strict": 0.02915524732123995,
+            "simple_div_sqrt5_from_h175_strict": 0.028602460916739906
+          },
+          "H177_POOLED_UNADJUSTED_M1_DIAGNOSTIC": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.01,
+            "gain": 0.0030379838542648,
+            "headroom_percent": 0.9488757174754848,
+            "gain_ci95": [
+              0.0023781330477699245,
+              0.00391052799767302
+            ],
+            "headroom_percent_ci95": [
+              0.8514829590337923,
+              1.0912931014506277
+            ],
+            "right_censored_bootstrap_fraction": 0.0
+          },
+          "H177_POOLED_SINGLE_SEED_DIAGNOSTIC": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.05,
+            "gain": 0.016364437817484215,
+            "headroom_percent": 5.111224555505764,
+            "gain_ci95": [
+              0.01273674249271422,
+              0.020876387062791976
+            ],
+            "headroom_percent_ci95": [
+              4.757604835326003,
+              5.523895886851155
+            ],
+            "right_censored_bootstrap_fraction": 0.0,
+            "expected_sqrt5_from_h175_strict": 0.02915524732123995,
+            "simple_div_sqrt5_from_h175_strict": 0.028602460916739906
+          },
+          "STRICT": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.2,
+            "gain": 0.06395704693361139,
+            "headroom_percent": 19.976172260280244,
+            "gain_ci95": [
+              0.05041798621298304,
+              0.07868783488852873
+            ],
+            "headroom_percent_ci95": [
+              19.165684462932298,
+              20.606920331569807
+            ],
+            "right_censored_bootstrap_fraction": 0.0
+          },
+          "H168_NEW": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.05,
+            "gain": 0.016364437817484215,
+            "headroom_percent": 5.111224555505764,
+            "gain_ci95": [
+              0.01273674249271422,
+              0.020876387062791976
+            ],
+            "headroom_percent_ci95": [
+              4.757604835326003,
+              5.523895886851155
+            ],
+            "right_censored_bootstrap_fraction": 0.0
+          }
+        }
+      }
+    },
+    "full": {
+      "TRAIN": {
+        "contexts": 1219,
+        "families": 205,
+        "equal_family_headroom": {
+          "per_seed": [
+            0.4671873852282529,
+            0.4671873852282529,
+            0.4671873852282529
+          ],
+          "median": 0.4671873852282529,
+          "ci95": [
+            0.3604084791498247,
+            0.5967979884298824
+          ]
+        },
+        "oracle_elo": {
+          "r882": 1500.0,
+          "per_seed": [
+            2601.892187609501,
+            2601.892187609501,
+            2601.892187609501
+          ],
+          "median": 2601.892187609501,
+          "ci95": [
+            2471.747894116396,
+            2913.407144807248
+          ],
+          "interpretation": "expected family-weighted wins of randomized counterfactual policy, not Elo of mean utility"
+        },
+        "baseline_family_utility_by_seed": [
+          1.3853554329931828,
+          1.3853554329931828,
+          1.3853554329931828
+        ]
+      },
+      "DLVal": {
+        "contexts": 91,
+        "families": 19,
+        "equal_family_headroom": {
+          "per_seed": [
+            0.25098514159841545,
+            0.25098514159841545,
+            0.25098514159841545
+          ],
+          "median": 0.25098514159841545,
+          "ci95": [
+            0.1250158756413021,
+            0.41495491855875893
+          ]
+        },
+        "oracle_elo": {
+          "r882": 1500.0,
+          "per_seed": [
+            2394.119537474722,
+            2394.119537474722,
+            2394.119537474722
+          ],
+          "median": 2394.119537474722,
+          "ci95": [
+            2212.2848374662917,
+            2811.592846746177
+          ],
+          "interpretation": "expected family-weighted wins of randomized counterfactual policy, not Elo of mean utility"
+        },
+        "baseline_family_utility_by_seed": [
+          1.153615276991245,
+          1.153615276991245,
+          1.153615276991245
+        ]
+      },
+      "MDE80": {
+        "context": {
+          "H177_POOLED": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.005,
+            "gain": 0.002200698824016059,
+            "headroom_percent": 0.4710527068150326,
+            "gain_ci95": [
+              0.0017255068611266293,
+              0.002814456087780066
+            ],
+            "headroom_percent_ci95": [
+              0.4357986854266769,
+              0.5336157455750496
+            ],
+            "right_censored_bootstrap_fraction": 0.0,
+            "expected_sqrt5_from_h175_strict": 0.010750092817151616,
+            "simple_div_sqrt5_from_h175_strict": 0.010197306412651572
+          },
+          "H177_POOLED_CLONED4_DIAGNOSTIC": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.005,
+            "gain": 0.002200698824016059,
+            "headroom_percent": 0.4710527068150326,
+            "gain_ci95": [
+              0.0017255068611266293,
+              0.002814456087780066
+            ],
+            "headroom_percent_ci95": [
+              0.4357986854266769,
+              0.5336157455750496
+            ],
+            "right_censored_bootstrap_fraction": 0.0,
+            "expected_sqrt5_from_h175_strict": 0.010750092817151616,
+            "simple_div_sqrt5_from_h175_strict": 0.010197306412651572
+          },
+          "H177_POOLED_UNADJUSTED_M1_DIAGNOSTIC": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.005,
+            "gain": 0.002200698824016059,
+            "headroom_percent": 0.4710527068150326,
+            "gain_ci95": [
+              0.0017255068611266293,
+              0.002814456087780066
+            ],
+            "headroom_percent_ci95": [
+              0.4357986854266769,
+              0.5336157455750496
+            ],
+            "right_censored_bootstrap_fraction": 0.0
+          },
+          "H177_POOLED_SINGLE_SEED_DIAGNOSTIC": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.01,
+            "gain": 0.004460851706664135,
+            "headroom_percent": 0.9548313691057186,
+            "gain_ci95": [
+              0.0034409872923553885,
+              0.005860823323075467
+            ],
+            "headroom_percent_ci95": [
+              0.8939940058482839,
+              1.035113985015574
+            ],
+            "right_censored_bootstrap_fraction": 0.0,
+            "expected_sqrt5_from_h175_strict": 0.010750092817151616,
+            "simple_div_sqrt5_from_h175_strict": 0.010197306412651572
+          },
+          "STRICT": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.05,
+            "gain": 0.02280187032608344,
+            "headroom_percent": 4.880669094895011,
+            "gain_ci95": [
+              0.017594235292807528,
+              0.02917976555551321
+            ],
+            "headroom_percent_ci95": [
+              4.740369851078885,
+              5.063086374925769
+            ],
+            "right_censored_bootstrap_fraction": 0.0
+          },
+          "H168_NEW": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.02,
+            "gain": 0.009354894888994205,
+            "headroom_percent": 2.0023860199957455,
+            "gain_ci95": [
+              0.0071390076577832005,
+              0.011868063861923288
+            ],
+            "headroom_percent_ci95": [
+              1.9041785916713452,
+              2.07480554205719
+            ],
+            "right_censored_bootstrap_fraction": 0.0
+          }
+        },
+        "family": {
+          "H177_POOLED": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.01,
+            "gain": 0.005056945204653771,
+            "headroom_percent": 1.08242331975276,
+            "gain_ci95": [
+              0.0035755952318913065,
+              0.006494066543777686
+            ],
+            "headroom_percent_ci95": [
+              0.9252558405139809,
+              1.1666852626592332
+            ],
+            "right_censored_bootstrap_fraction": 0.0,
+            "expected_sqrt5_from_h175_strict": 0.042894034747497915,
+            "simple_div_sqrt5_from_h175_strict": 0.04234124834299788
+          },
+          "H177_POOLED_CLONED4_DIAGNOSTIC": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.02,
+            "gain": 0.009826053790712982,
+            "headroom_percent": 2.1032361106908493,
+            "gain_ci95": [
+              0.007115577066267585,
+              0.012700026673542524
+            ],
+            "headroom_percent_ci95": [
+              1.871424458304369,
+              2.24111210604363
+            ],
+            "right_censored_bootstrap_fraction": 0.0,
+            "expected_sqrt5_from_h175_strict": 0.042894034747497915,
+            "simple_div_sqrt5_from_h175_strict": 0.04234124834299788
+          },
+          "H177_POOLED_UNADJUSTED_M1_DIAGNOSTIC": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.01,
+            "gain": 0.005056945204653771,
+            "headroom_percent": 1.08242331975276,
+            "gain_ci95": [
+              0.0035755952318913065,
+              0.006494066543777686
+            ],
+            "headroom_percent_ci95": [
+              0.9252558405139809,
+              1.1666852626592332
+            ],
+            "right_censored_bootstrap_fraction": 0.0
+          },
+          "H177_POOLED_SINGLE_SEED_DIAGNOSTIC": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.05,
+            "gain": 0.024480203210851318,
+            "headroom_percent": 5.239911004637051,
+            "gain_ci95": [
+              0.018344751300344464,
+              0.03222562672563488
+            ],
+            "headroom_percent_ci95": [
+              4.858090442628148,
+              5.636212309145078
+            ],
+            "right_censored_bootstrap_fraction": 0.0,
+            "expected_sqrt5_from_h175_strict": 0.042894034747497915,
+            "simple_div_sqrt5_from_h175_strict": 0.04234124834299788
+          },
+          "STRICT": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.2,
+            "gain": 0.09467790954714358,
+            "headroom_percent": 20.265510700997837,
+            "gain_ci95": [
+              0.07215698043960249,
+              0.12118196267412272
+            ],
+            "headroom_percent_ci95": [
+              19.69759480324084,
+              20.73897803221744
+            ],
+            "right_censored_bootstrap_fraction": 0.0
+          },
+          "H168_NEW": {
+            "status": "GRID_DETECTED",
+            "fraction": 0.05,
+            "gain": 0.024480203210851318,
+            "headroom_percent": 5.239911004637051,
+            "gain_ci95": [
+              0.018344751300344464,
+              0.03222562672563488
+            ],
+            "headroom_percent_ci95": [
+              4.858090442628148,
+              5.636212309145078
+            ],
+            "right_censored_bootstrap_fraction": 0.0
+          }
+        }
+      }
+    }
+  },
+  "curves": [
+    {
+      "slate": "24",
+      "variant": "context",
+      "direction": "oracle",
+      "fraction": 0.0,
+      "injected_gain_median": 0.0,
+      "injected_elo_median": 1500.0,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.0,
+        "H168_NEW_false_admission_nonpositive": 0.0
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "context",
+      "direction": "oracle",
+      "fraction": 0.005,
+      "injected_gain_median": 0.001537,
+      "injected_elo_median": 1501.46,
+      "H177_POOLED": {
+        "admission_rate_200": 0.64,
+        "admitted_200": 128,
+        "cp95_1u_200": 0.696485,
+        "cp95_2s_200": [
+          0.569286,
+          0.706495
+        ],
+        "cohort_any_rate_50": 0.96,
+        "admitted_cohorts_50": 48,
+        "cp95_1u_50": 0.992846,
+        "cp95_2s_50": [
+          0.862862,
+          0.995119
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.001301,
+        "selected_elo_median": 1501.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.64,
+        "H177_POOLED_SINGLE_SEED_admission": 0.405,
+        "H175_STRICT_41fam_admission": 0.019,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 0.285,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "context",
+      "direction": "oracle",
+      "fraction": 0.01,
+      "injected_gain_median": 0.003049,
+      "injected_elo_median": 1502.92,
+      "H177_POOLED": {
+        "admission_rate_200": 0.985,
+        "admitted_200": 197,
+        "cp95_1u_200": 0.995899,
+        "cp95_2s_200": [
+          0.956792,
+          0.996896
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.00303,
+        "selected_elo_median": 1502.87
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.985,
+        "H177_POOLED_SINGLE_SEED_admission": 0.81,
+        "H175_STRICT_41fam_admission": 0.123,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 0.494,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "context",
+      "direction": "oracle",
+      "fraction": 0.02,
+      "injected_gain_median": 0.006466,
+      "injected_elo_median": 1505.91,
+      "H177_POOLED": {
+        "admission_rate_200": 1.0,
+        "admitted_200": 200,
+        "cp95_1u_200": 1.0,
+        "cp95_2s_200": [
+          0.981725,
+          1.0
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.006466,
+        "selected_elo_median": 1505.91
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 1.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.995,
+        "H175_STRICT_41fam_admission": 0.521,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 0.778,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "context",
+      "direction": "oracle",
+      "fraction": 0.05,
+      "injected_gain_median": 0.015834,
+      "injected_elo_median": 1514.91,
+      "H177_POOLED": {
+        "admission_rate_200": 1.0,
+        "admitted_200": 200,
+        "cp95_1u_200": 1.0,
+        "cp95_2s_200": [
+          0.981725,
+          1.0
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.015834,
+        "selected_elo_median": 1514.91
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 1.0,
+        "H177_POOLED_SINGLE_SEED_admission": 1.0,
+        "H175_STRICT_41fam_admission": 0.983,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 0.989,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "context",
+      "direction": "oracle",
+      "fraction": 0.1,
+      "injected_gain_median": 0.031888,
+      "injected_elo_median": 1529.82,
+      "H177_POOLED": {
+        "admission_rate_200": 1.0,
+        "admitted_200": 200,
+        "cp95_1u_200": 1.0,
+        "cp95_2s_200": [
+          0.981725,
+          1.0
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.031888,
+        "selected_elo_median": 1529.82
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 1.0,
+        "H177_POOLED_SINGLE_SEED_admission": 1.0,
+        "H175_STRICT_41fam_admission": 1.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 1.0,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "context",
+      "direction": "oracle",
+      "fraction": 0.2,
+      "injected_gain_median": 0.064411,
+      "injected_elo_median": 1560.55,
+      "H177_POOLED": {
+        "admission_rate_200": 1.0,
+        "admitted_200": 200,
+        "cp95_1u_200": 1.0,
+        "cp95_2s_200": [
+          0.981725,
+          1.0
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.064411,
+        "selected_elo_median": 1560.55
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 1.0,
+        "H177_POOLED_SINGLE_SEED_admission": 1.0,
+        "H175_STRICT_41fam_admission": 1.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 1.0,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "context",
+      "direction": "random_nonoracle",
+      "fraction": 0.0,
+      "injected_gain_median": 0.0,
+      "injected_elo_median": 1500.0,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.0,
+        "H168_NEW_false_admission_nonpositive": 0.0
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "context",
+      "direction": "random_nonoracle",
+      "fraction": 0.005,
+      "injected_gain_median": -0.003024,
+      "injected_elo_median": 1499.22,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.059,
+        "H168_NEW_false_admission_nonpositive": 0.046154
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "context",
+      "direction": "random_nonoracle",
+      "fraction": 0.01,
+      "injected_gain_median": -0.006074,
+      "injected_elo_median": 1498.35,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.002,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.002083,
+        "H168_NEW_admission": 0.074,
+        "H168_NEW_false_admission_nonpositive": 0.063542
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "context",
+      "direction": "random_nonoracle",
+      "fraction": 0.02,
+      "injected_gain_median": -0.011672,
+      "injected_elo_median": 1496.7,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.003,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.003093,
+        "H168_NEW_admission": 0.089,
+        "H168_NEW_false_admission_nonpositive": 0.081865
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "context",
+      "direction": "random_nonoracle",
+      "fraction": 0.05,
+      "injected_gain_median": -0.029466,
+      "injected_elo_median": 1491.67,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.001,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.001,
+        "H168_NEW_admission": 0.052,
+        "H168_NEW_false_admission_nonpositive": 0.052
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "context",
+      "direction": "random_nonoracle",
+      "fraction": 0.1,
+      "injected_gain_median": -0.058665,
+      "injected_elo_median": 1483.4,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.023,
+        "H168_NEW_false_admission_nonpositive": 0.023
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "context",
+      "direction": "random_nonoracle",
+      "fraction": 0.2,
+      "injected_gain_median": -0.119536,
+      "injected_elo_median": 1466.52,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.006,
+        "H168_NEW_false_admission_nonpositive": 0.006
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "family",
+      "direction": "oracle",
+      "fraction": 0.0,
+      "injected_gain_median": 0.0,
+      "injected_elo_median": 1500.0,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.0,
+        "H168_NEW_false_admission_nonpositive": 0.0
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "family",
+      "direction": "oracle",
+      "fraction": 0.005,
+      "injected_gain_median": 0.001533,
+      "injected_elo_median": 1501.52,
+      "H177_POOLED": {
+        "admission_rate_200": 0.195,
+        "admitted_200": 39,
+        "cp95_1u_200": 0.246871,
+        "cp95_2s_200": [
+          0.142492,
+          0.256786
+        ],
+        "cohort_any_rate_50": 0.5,
+        "admitted_cohorts_50": 25,
+        "cp95_1u_50": 0.623754,
+        "cp95_2s_50": [
+          0.355273,
+          0.644727
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.000611,
+        "selected_elo_median": 1500.52
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.16,
+        "H177_POOLED_SINGLE_SEED_admission": 0.005,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.152,
+        "H168_NEW_false_admission_nonpositive": 0.0
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "family",
+      "direction": "oracle",
+      "fraction": 0.01,
+      "injected_gain_median": 0.003038,
+      "injected_elo_median": 1503.07,
+      "H177_POOLED": {
+        "admission_rate_200": 0.8,
+        "admitted_200": 160,
+        "cp95_1u_200": 0.845449,
+        "cp95_2s_200": [
+          0.737774,
+          0.853106
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.0029,
+        "selected_elo_median": 1502.81
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.665,
+        "H177_POOLED_SINGLE_SEED_admission": 0.075,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.275,
+        "H168_NEW_false_admission_nonpositive": 0.0
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "family",
+      "direction": "oracle",
+      "fraction": 0.02,
+      "injected_gain_median": 0.006423,
+      "injected_elo_median": 1506.19,
+      "H177_POOLED": {
+        "admission_rate_200": 0.99,
+        "admitted_200": 198,
+        "cp95_1u_200": 0.99822,
+        "cp95_2s_200": [
+          0.964345,
+          0.998787
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.006417,
+        "selected_elo_median": 1506.17
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.99,
+        "H177_POOLED_SINGLE_SEED_admission": 0.465,
+        "H175_STRICT_41fam_admission": 0.008,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.478,
+        "H168_NEW_false_admission_nonpositive": 0.0
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "family",
+      "direction": "oracle",
+      "fraction": 0.05,
+      "injected_gain_median": 0.016364,
+      "injected_elo_median": 1515.3,
+      "H177_POOLED": {
+        "admission_rate_200": 1.0,
+        "admitted_200": 200,
+        "cp95_1u_200": 1.0,
+        "cp95_2s_200": [
+          0.981725,
+          1.0
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.016364,
+        "selected_elo_median": 1515.3
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 1.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.99,
+        "H175_STRICT_41fam_admission": 0.15,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 0.808,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "family",
+      "direction": "oracle",
+      "fraction": 0.1,
+      "injected_gain_median": 0.032799,
+      "injected_elo_median": 1530.7,
+      "H177_POOLED": {
+        "admission_rate_200": 1.0,
+        "admitted_200": 200,
+        "cp95_1u_200": 1.0,
+        "cp95_2s_200": [
+          0.981725,
+          1.0
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.032799,
+        "selected_elo_median": 1530.7
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 1.0,
+        "H177_POOLED_SINGLE_SEED_admission": 1.0,
+        "H175_STRICT_41fam_admission": 0.607,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 0.966,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "family",
+      "direction": "oracle",
+      "fraction": 0.2,
+      "injected_gain_median": 0.063957,
+      "injected_elo_median": 1560.71,
+      "H177_POOLED": {
+        "admission_rate_200": 1.0,
+        "admitted_200": 200,
+        "cp95_1u_200": 1.0,
+        "cp95_2s_200": [
+          0.981725,
+          1.0
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.063957,
+        "selected_elo_median": 1560.71
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 1.0,
+        "H177_POOLED_SINGLE_SEED_admission": 1.0,
+        "H175_STRICT_41fam_admission": 0.976,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 1.0,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "family",
+      "direction": "random_nonoracle",
+      "fraction": 0.0,
+      "injected_gain_median": 0.0,
+      "injected_elo_median": 1500.0,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.0,
+        "H168_NEW_false_admission_nonpositive": 0.0
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "family",
+      "direction": "random_nonoracle",
+      "fraction": 0.005,
+      "injected_gain_median": -0.002642,
+      "injected_elo_median": 1499.18,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.022,
+        "H168_NEW_false_admission_nonpositive": 0.007821
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "family",
+      "direction": "random_nonoracle",
+      "fraction": 0.01,
+      "injected_gain_median": -0.005801,
+      "injected_elo_median": 1498.37,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.026,
+        "H168_NEW_false_admission_nonpositive": 0.012973
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "family",
+      "direction": "random_nonoracle",
+      "fraction": 0.02,
+      "injected_gain_median": -0.011547,
+      "injected_elo_median": 1496.46,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.039,
+        "H168_NEW_false_admission_nonpositive": 0.030526
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "family",
+      "direction": "random_nonoracle",
+      "fraction": 0.05,
+      "injected_gain_median": -0.030981,
+      "injected_elo_median": 1491.32,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.055,
+        "H168_NEW_false_admission_nonpositive": 0.051777
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "family",
+      "direction": "random_nonoracle",
+      "fraction": 0.1,
+      "injected_gain_median": -0.062385,
+      "injected_elo_median": 1482.7,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.04,
+        "H168_NEW_false_admission_nonpositive": 0.04
+      }
+    },
+    {
+      "slate": "24",
+      "variant": "family",
+      "direction": "random_nonoracle",
+      "fraction": 0.2,
+      "injected_gain_median": -0.122951,
+      "injected_elo_median": 1465.95,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.02,
+        "H168_NEW_false_admission_nonpositive": 0.02
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "context",
+      "direction": "oracle",
+      "fraction": 0.0,
+      "injected_gain_median": 0.0,
+      "injected_elo_median": 1500.0,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.0,
+        "H168_NEW_false_admission_nonpositive": 0.0
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "context",
+      "direction": "oracle",
+      "fraction": 0.005,
+      "injected_gain_median": 0.002201,
+      "injected_elo_median": 1501.7,
+      "H177_POOLED": {
+        "admission_rate_200": 0.85,
+        "admitted_200": 170,
+        "cp95_1u_200": 0.889919,
+        "cp95_2s_200": [
+          0.792841,
+          0.89645
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.002078,
+        "selected_elo_median": 1501.5
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.85,
+        "H177_POOLED_SINGLE_SEED_admission": 0.56,
+        "H175_STRICT_41fam_admission": 0.023,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 0.323,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "context",
+      "direction": "oracle",
+      "fraction": 0.01,
+      "injected_gain_median": 0.004461,
+      "injected_elo_median": 1503.4,
+      "H177_POOLED": {
+        "admission_rate_200": 1.0,
+        "admitted_200": 200,
+        "cp95_1u_200": 1.0,
+        "cp95_2s_200": [
+          0.981725,
+          1.0
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.004461,
+        "selected_elo_median": 1503.4
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 1.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.92,
+        "H175_STRICT_41fam_admission": 0.176,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 0.581,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "context",
+      "direction": "oracle",
+      "fraction": 0.02,
+      "injected_gain_median": 0.009355,
+      "injected_elo_median": 1506.81,
+      "H177_POOLED": {
+        "admission_rate_200": 1.0,
+        "admitted_200": 200,
+        "cp95_1u_200": 1.0,
+        "cp95_2s_200": [
+          0.981725,
+          1.0
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.009355,
+        "selected_elo_median": 1506.81
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 1.0,
+        "H177_POOLED_SINGLE_SEED_admission": 1.0,
+        "H175_STRICT_41fam_admission": 0.657,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 0.874,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "context",
+      "direction": "oracle",
+      "fraction": 0.05,
+      "injected_gain_median": 0.022802,
+      "injected_elo_median": 1517.19,
+      "H177_POOLED": {
+        "admission_rate_200": 1.0,
+        "admitted_200": 200,
+        "cp95_1u_200": 1.0,
+        "cp95_2s_200": [
+          0.981725,
+          1.0
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.022802,
+        "selected_elo_median": 1517.19
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 1.0,
+        "H177_POOLED_SINGLE_SEED_admission": 1.0,
+        "H175_STRICT_41fam_admission": 0.996,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 0.999,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "context",
+      "direction": "oracle",
+      "fraction": 0.1,
+      "injected_gain_median": 0.045948,
+      "injected_elo_median": 1534.53,
+      "H177_POOLED": {
+        "admission_rate_200": 1.0,
+        "admitted_200": 200,
+        "cp95_1u_200": 1.0,
+        "cp95_2s_200": [
+          0.981725,
+          1.0
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.045948,
+        "selected_elo_median": 1534.53
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 1.0,
+        "H177_POOLED_SINGLE_SEED_admission": 1.0,
+        "H175_STRICT_41fam_admission": 1.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 1.0,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "context",
+      "direction": "oracle",
+      "fraction": 0.2,
+      "injected_gain_median": 0.093858,
+      "injected_elo_median": 1569.87,
+      "H177_POOLED": {
+        "admission_rate_200": 1.0,
+        "admitted_200": 200,
+        "cp95_1u_200": 1.0,
+        "cp95_2s_200": [
+          0.981725,
+          1.0
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.093858,
+        "selected_elo_median": 1569.87
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 1.0,
+        "H177_POOLED_SINGLE_SEED_admission": 1.0,
+        "H175_STRICT_41fam_admission": 1.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 1.0,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "context",
+      "direction": "random_nonoracle",
+      "fraction": 0.0,
+      "injected_gain_median": 0.0,
+      "injected_elo_median": 1500.0,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.0,
+        "H168_NEW_false_admission_nonpositive": 0.0
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "context",
+      "direction": "random_nonoracle",
+      "fraction": 0.005,
+      "injected_gain_median": -0.003,
+      "injected_elo_median": 1499.28,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.057,
+        "H168_NEW_false_admission_nonpositive": 0.038636
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "context",
+      "direction": "random_nonoracle",
+      "fraction": 0.01,
+      "injected_gain_median": -0.006013,
+      "injected_elo_median": 1498.55,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.001,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.001058,
+        "H168_NEW_admission": 0.075,
+        "H168_NEW_false_admission_nonpositive": 0.063542
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "context",
+      "direction": "random_nonoracle",
+      "fraction": 0.02,
+      "injected_gain_median": -0.011816,
+      "injected_elo_median": 1497.11,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.002,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.00202,
+        "H168_NEW_admission": 0.094,
+        "H168_NEW_false_admission_nonpositive": 0.083938
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "context",
+      "direction": "random_nonoracle",
+      "fraction": 0.05,
+      "injected_gain_median": -0.029602,
+      "injected_elo_median": 1492.85,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.057,
+        "H168_NEW_false_admission_nonpositive": 0.057
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "context",
+      "direction": "random_nonoracle",
+      "fraction": 0.1,
+      "injected_gain_median": -0.058207,
+      "injected_elo_median": 1485.63,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.02,
+        "H168_NEW_false_admission_nonpositive": 0.02
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "context",
+      "direction": "random_nonoracle",
+      "fraction": 0.2,
+      "injected_gain_median": -0.117602,
+      "injected_elo_median": 1471.68,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.004,
+        "H168_NEW_false_admission_nonpositive": 0.004
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "family",
+      "direction": "oracle",
+      "fraction": 0.0,
+      "injected_gain_median": 0.0,
+      "injected_elo_median": 1500.0,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.0,
+        "H168_NEW_false_admission_nonpositive": 0.0
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "family",
+      "direction": "oracle",
+      "fraction": 0.005,
+      "injected_gain_median": 0.002228,
+      "injected_elo_median": 1501.72,
+      "H177_POOLED": {
+        "admission_rate_200": 0.22,
+        "admitted_200": 44,
+        "cp95_1u_200": 0.273655,
+        "cp95_2s_200": [
+          0.164636,
+          0.283861
+        ],
+        "cohort_any_rate_50": 0.56,
+        "admitted_cohorts_50": 28,
+        "cp95_1u_50": 0.680174,
+        "cp95_2s_50": [
+          0.412544,
+          0.700093
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.001023,
+        "selected_elo_median": 1500.68
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.18,
+        "H177_POOLED_SINGLE_SEED_admission": 0.005,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.155,
+        "H168_NEW_false_admission_nonpositive": 0.0
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "family",
+      "direction": "oracle",
+      "fraction": 0.01,
+      "injected_gain_median": 0.005057,
+      "injected_elo_median": 1503.54,
+      "H177_POOLED": {
+        "admission_rate_200": 0.83,
+        "admitted_200": 166,
+        "cp95_1u_200": 0.872293,
+        "cp95_2s_200": [
+          0.770628,
+          0.879304
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.004806,
+        "selected_elo_median": 1503.29
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.675,
+        "H177_POOLED_SINGLE_SEED_admission": 0.075,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.309,
+        "H168_NEW_false_admission_nonpositive": 0.0
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "family",
+      "direction": "oracle",
+      "fraction": 0.02,
+      "injected_gain_median": 0.009826,
+      "injected_elo_median": 1507.07,
+      "H177_POOLED": {
+        "admission_rate_200": 0.995,
+        "admitted_200": 199,
+        "cp95_1u_200": 0.999744,
+        "cp95_2s_200": [
+          0.972458,
+          0.999873
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.009819,
+        "selected_elo_median": 1507.05
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.995,
+        "H177_POOLED_SINGLE_SEED_admission": 0.465,
+        "H175_STRICT_41fam_admission": 0.008,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.513,
+        "H168_NEW_false_admission_nonpositive": 0.0
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "family",
+      "direction": "oracle",
+      "fraction": 0.05,
+      "injected_gain_median": 0.02448,
+      "injected_elo_median": 1517.55,
+      "H177_POOLED": {
+        "admission_rate_200": 1.0,
+        "admitted_200": 200,
+        "cp95_1u_200": 1.0,
+        "cp95_2s_200": [
+          0.981725,
+          1.0
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.02448,
+        "selected_elo_median": 1517.55
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 1.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.99,
+        "H175_STRICT_41fam_admission": 0.15,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 0.833,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "family",
+      "direction": "oracle",
+      "fraction": 0.1,
+      "injected_gain_median": 0.048789,
+      "injected_elo_median": 1535.34,
+      "H177_POOLED": {
+        "admission_rate_200": 1.0,
+        "admitted_200": 200,
+        "cp95_1u_200": 1.0,
+        "cp95_2s_200": [
+          0.981725,
+          1.0
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.048789,
+        "selected_elo_median": 1535.34
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 1.0,
+        "H177_POOLED_SINGLE_SEED_admission": 1.0,
+        "H175_STRICT_41fam_admission": 0.609,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 0.975,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "family",
+      "direction": "oracle",
+      "fraction": 0.2,
+      "injected_gain_median": 0.094678,
+      "injected_elo_median": 1570.08,
+      "H177_POOLED": {
+        "admission_rate_200": 1.0,
+        "admitted_200": 200,
+        "cp95_1u_200": 1.0,
+        "cp95_2s_200": [
+          0.981725,
+          1.0
+        ],
+        "cohort_any_rate_50": 1.0,
+        "admitted_cohorts_50": 50,
+        "cp95_1u_50": 1.0,
+        "cp95_2s_50": [
+          0.928878,
+          1.0
+        ],
+        "false_admission_nonpositive": null,
+        "selected_gain_median": 0.094678,
+        "selected_elo_median": 1570.08
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 1.0,
+        "H177_POOLED_SINGLE_SEED_admission": 1.0,
+        "H175_STRICT_41fam_admission": 0.976,
+        "H175_STRICT_41fam_false_admission_nonpositive": null,
+        "H168_NEW_admission": 1.0,
+        "H168_NEW_false_admission_nonpositive": null
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "family",
+      "direction": "random_nonoracle",
+      "fraction": 0.0,
+      "injected_gain_median": 0.0,
+      "injected_elo_median": 1500.0,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.0,
+        "H168_NEW_false_admission_nonpositive": 0.0
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "family",
+      "direction": "random_nonoracle",
+      "fraction": 0.005,
+      "injected_gain_median": -0.002437,
+      "injected_elo_median": 1499.31,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.017,
+        "H168_NEW_false_admission_nonpositive": 0.003279
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "family",
+      "direction": "random_nonoracle",
+      "fraction": 0.01,
+      "injected_gain_median": -0.005714,
+      "injected_elo_median": 1498.65,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.03,
+        "H168_NEW_false_admission_nonpositive": 0.01236
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "family",
+      "direction": "random_nonoracle",
+      "fraction": 0.02,
+      "injected_gain_median": -0.011284,
+      "injected_elo_median": 1497.14,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.045,
+        "H168_NEW_false_admission_nonpositive": 0.037895
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "family",
+      "direction": "random_nonoracle",
+      "fraction": 0.05,
+      "injected_gain_median": -0.029371,
+      "injected_elo_median": 1493.02,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.06,
+        "H168_NEW_false_admission_nonpositive": 0.058586
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "family",
+      "direction": "random_nonoracle",
+      "fraction": 0.1,
+      "injected_gain_median": -0.060375,
+      "injected_elo_median": 1485.77,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.036,
+        "H168_NEW_false_admission_nonpositive": 0.036
+      }
+    },
+    {
+      "slate": "full",
+      "variant": "family",
+      "direction": "random_nonoracle",
+      "fraction": 0.2,
+      "injected_gain_median": -0.119085,
+      "injected_elo_median": 1471.94,
+      "H177_POOLED": {
+        "admission_rate_200": 0.0,
+        "admitted_200": 0,
+        "cp95_1u_200": 0.014867,
+        "cp95_2s_200": [
+          0.0,
+          0.018275
+        ],
+        "cohort_any_rate_50": 0.0,
+        "admitted_cohorts_50": 0,
+        "cp95_1u_50": 0.058155,
+        "cp95_2s_50": [
+          0.0,
+          0.071122
+        ],
+        "false_admission_nonpositive": 0.0,
+        "selected_gain_median": 0.0,
+        "selected_elo_median": 1500.0
+      },
+      "diagnostics_and_comparators": {
+        "H177_POOLED_CLONED4_admission": 0.0,
+        "H177_POOLED_SINGLE_SEED_admission": 0.0,
+        "H175_STRICT_41fam_admission": 0.0,
+        "H175_STRICT_41fam_false_admission_nonpositive": 0.0,
+        "H168_NEW_admission": 0.014,
+        "H168_NEW_false_admission_nonpositive": 0.014
+      }
+    }
+  ],
+  "s3_full_metrics_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/metrics.json",
+  "s3_simulation_metrics_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/simulation_metrics.json",
+  "s3_panels_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H178/gpu_tokbench_agy-h178-20261101/panels.npz"
+}

@@ -14459,6 +14459,16 @@
       "lanes": [],
       "scope": "H180 data-free controls: registered constants, five-fold family cross-fit with B unused, no-A-leak FIT batch plan, FRESH40 as a prefix of the FRESH160 trajectory, ZERO_ADAPTER equal to the anchor-only scorer of the live decomposition (and its refusals), axis=0 paired family bootstrap, adapter/dose verdict boundaries with the +0.001 tie, Holm advance gates, identical-arm Elo 1500, timing-only fold rule, choice agreement, launch review-or-waiver binding and supervisor guards. No checkpoint, corpus or model passes in the fixture suite; offline research only."
     },
+    "python:research/flywheel_selfplay/h184_adapter_components/test_h184.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H184 data-free controls: registered constants/arms, five-fold family cross-fit, bit-exact equality of the PRIOR+KERNEL+ATTN decomposition with the pinned live adapter delta on a synthetic adapter (skipped where the asset is absent), sum refusal and output-level ablation semantics, component init structure, attribution labels with Holm m=3 and lift shares, axis=0 paired family bootstrap, strict ADVANCE gates with the +0.001 tie, identical-arm Elo 1500, launch review binding and supervisor guards. No checkpoint, corpus or model passes in the fixture suite; offline research only."
+    },
     "python:research/flywheel_selfplay/h179_deep_ensemble/test_h179.py": {
       "discovery": {
         "kind": "python-family"
@@ -14488,6 +14498,26 @@
       ],
       "lanes": [],
       "scope": "H182 data-free controls for nested ENS5/ENS10/ENS20 member prefixes, all 60 fresh member seeds and synthetic init hashes, FIT/A/B isolation, score-before-argmin, axis=0 paired bootstrap, strict ENS20 verdict/Holm gates, timing-only four-hour fold rule, and resource guards. No study data or model checkpoint loaded."
+    },
+    "python:research/flywheel_selfplay/h181_covariate_selector/test_h181.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H181 data-free CUPED exclusion/axis/bootstrap/calibration/gate/zero-update tests"
+    },
+    "python:research/flywheel_selfplay/h183_ensemble_distill/test_h183.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H183 data-free controls: FIT/A/B isolation and poisoned outer targets, distinct initial member/student seeds, softmax of ten mean teacher costs, fixed detached KL T=.2 with .5/.5 weights, common 40/80 student prefix, axis=0 paired family bootstrap, strict DIST10 primary Holm m2 gate, RENS10 diagnostic, ragged native choices and resource/timing caps. No study data/checkpoint/optimizer updates."
     }
   },
   "lanes": {

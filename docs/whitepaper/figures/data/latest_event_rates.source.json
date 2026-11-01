@@ -1,0 +1,38 @@
+{
+  "schema": "whitepaper.latest-event-rates-source/v1",
+  "capture": {
+    "at": "2026-11-01T13:53:29.119276+00:00",
+    "selection": "Latest20 consecutive completed summary rounds also present in stable admission prefix, without outcome selection",
+    "round_window": [
+      2933,
+      2952
+    ],
+    "rows": 20,
+    "projection_sha256": "3dd4d16281e8d30457e5b85e10ad13c2c446e0a5d39ca80c6d52ee5f8d774cce",
+    "stable_prefix_rereads_verified": true,
+    "journal_verification": {
+      "at": "2026-11-01T14:02:22.427403+00:00",
+      "prefix_sha256": "2bb4b3954bb8c6c7a66e03f7cb5cd31e6e9576dd05fa530ec4c39e994be6d182",
+      "source_rows": 2773,
+      "window_program_events": 7,
+      "all20_summary_counts_matched": true
+    },
+    "source_prefixes": {
+      "completed_round_summaries": {
+        "prefix_bytes": 3358372,
+        "prefix_sha256": "a6c953d822b228a7f390b46bf8d04514d7005b0badd77f3a8b71f8505e7f6118",
+        "source_rows": 20,
+        "trailing_incomplete_bytes_omitted": 0
+      },
+      "adapter_admissions": {
+        "prefix_bytes": 1142901,
+        "prefix_sha256": "e196302e18bae36fdc560ba7d84482cf7dd53628dcd4b1b29f6c95d1dcf3e2b0",
+        "source_rows": 2179,
+        "trailing_incomplete_bytes_omitted": 0
+      }
+    }
+  },
+  "csv_sha256": "eef4905cb41729766f76d15e75b51a1e76db8d56f763499b215925015ffaad3c",
+  "source_binding": "Matched aggregate summary/admission fields only; installed source, adapter and population remain unjoined",
+  "scope": "Training-search operating observations; no independent first-proposal or deployment qualification"
+}

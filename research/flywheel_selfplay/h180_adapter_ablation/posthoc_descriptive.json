@@ -1,0 +1,41 @@
+{
+ "note": "POST-HOC DESCRIPTIVE (not preregistered): same paired family bootstrap (seed 180141, 10,000 draws, axis=0 median over seeds) on the run's family panels; no decision depends on these.",
+ "contrasts": {
+  "RAND0_minus_ZERO_ADAPTER": {
+   "per_seed": [
+    0.05989,
+    0.078,
+    0.05414
+   ],
+   "median": 0.05989,
+   "ci95": [
+    0.03548,
+    0.0917
+   ]
+  },
+  "FRESH40_minus_RAND0": {
+   "per_seed": [
+    0.00138,
+    -0.00471,
+    0.00704
+   ],
+   "median": 0.00138,
+   "ci95": [
+    -0.0058,
+    0.00836
+   ]
+  },
+  "FRESH160_minus_RAND0": {
+   "per_seed": [
+    -0.00215,
+    -0.01113,
+    0.01285
+   ],
+   "median": -0.00215,
+   "ci95": [
+    -0.01726,
+    0.01428
+   ]
+  }
+ }
+}

@@ -6,18 +6,15 @@ The full admission chronology and counts are reported once in
 \cref{sec:method-status}. This diagnostic uses the same retained prefix
 and classifies decisions from unrounded logged values.
 
-\Cref{fig:fw-admission-margins} decomposes the same \num{2063} development
+\Cref{fig:fw-admission-margins} decomposes the same \num{2164} development
 records by their unrounded pre-decision validation margin,
-$\Delta_r = u_{\mathrm{cand},r} - u_{\mathrm{prev},r}$, evaluated immediately
-before each round's retention update. Under the non-strict rule
-$\Delta_r \geq 0$, three of the six admissions are exact zero-margin ties
-(rounds 782, 882 and 2795), two are strict gains smaller than $10^{-3}$
-($+\num{1.99e-4}$ at round 859 and $+\num{5.73e-4}$ at round 2750), and only
-round 785 exceeds $10^{-3}$ ($+0.030218$). Among the \num{2057} rejected rounds
-($\Delta_r < 0$), 26 candidates ($1.26\%$) fall within $[-10^{-4}, 0)$ of a tie
-(closest $-\num{4.34e-5}$ at rounds 803 and 807), 48 fall in
-$[-10^{-3}, -10^{-4})$ (74 rejected rounds, or $3.60\%$, within $10^{-3}$ of
-zero), and \num{1983} ($96.40\%$) fall below $-10^{-3}$ (median rejected margin
-$-0.003360$; minimum $-0.008469$ at round 2784). These development margins add
-no new evaluations and do not constitute a Results claim; the source, adapter
-and evaluation-population binding remains pending in \cref{sec:method-status}.
+$\Delta_r = u_{\mathrm{cand},r} - u_{\mathrm{prev},r}$.
+The three strict gains and three exact ties are unchanged from the earlier
+prefix; the default rule accepts $\Delta_r \geq 0$.
+Among the \num{2158} rejected rounds, 26 (1.20\%) fall within
+$[-10^{-4},0)$ of a tie, 49 lie in $[-10^{-3},-10^{-4})$, and
+\num{2083} (96.52\%) fall below $-10^{-3}$.
+The closest rejected margin is $\num{-0.0000433838086485}$ at round
+803; the median is -0.003360.
+These margins reuse the admission record; exact source, adapter and
+population binding remains pending in \cref{sec:method-status}.

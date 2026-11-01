@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "wave": "H181",
+  "archive": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H181/codex-t0600/725fa13b44551d6f/H181-evidence.zip",
+    "version_id": "8PIdu5hnthVSZ5BSHKsnyZNtvu4kMGRX",
+    "sha256": "725fa13b44551d6f0df9b5e9392ec8136e1af396cf9e558c70e6fbc2018c01cb",
+    "bytes": 278760157,
+    "actual_versioned_byte_readback": true
+  },
+  "manifest": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H181/codex-t0600/725fa13b44551d6f/manifest.json",
+    "version_id": "8FrLhBbZT9LoOI45y.BJIlqA7xDogFh1",
+    "sha256": "b0ef8c662bc5c69634901d5c949b4a666d3abdd835cbc94167c888707c06c193",
+    "bytes": 48525,
+    "actual_versioned_byte_readback": true
+  },
+  "member_count": 248,
+  "fresh_exact_version_restore_all_member_hashes": true,
+  "restored_NPZ_files_decoded": 130,
+  "restored_arrays_decoded": 3709,
+  "optimizer_updates": 0,
+  "verdict": "NO_GAIN"
+}

@@ -22,5 +22,6 @@ figs:
 	python3 figures/scripts/make_acceptance_over_rounds_figure.py
 	python3 figures/scripts/make_promotions_per_hour_figure.py
 	python3 figures/scripts/make_latest_admissions_figure.py
+	python3 figures/scripts/make_latest_event_rates_figure.py
 clean:
 	latexmk -C

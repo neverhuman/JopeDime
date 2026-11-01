@@ -1,0 +1,169 @@
+{
+  "arms": [
+    "R882",
+    "FRESH1",
+    "RENS10",
+    "ENS10",
+    "DIST10",
+    "DIST10_80"
+  ],
+  "assets": {
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "/home/ubuntu/JopeDimeMicro/assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+    "/home/ubuntu/JopeDimeMicro/assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
+    "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
+    "/home/ubuntu/JopeDimeMicro/python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "/home/ubuntu/JopeDimeMicro/python/rank_prepare.py": "534169af0443122600853ef9e96d734d570cd9d77c2a3d21e7b6456b4b19ab40",
+    "/home/ubuntu/JopeDimeMicro/python/research/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/__init__.py": "4b6481f96986d33139cd5a078a3da50d0b41378b3aa109f5cf85af93d31fd8af",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/budget_planner.py": "ae76dd8c587c00d28e57cb152de6719f77cc516c660819d7990823c6a9ff1e4f",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/building_block_landmarks.py": "fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/scaling.py": "6d592197a5a74afc1a9eddc18e1ca894987de831e0b61ef1c8a9b65e9154ded3",
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900"
+  },
+  "authority": "/home/ubuntu/nudges/hwave_t0630_h183_fusedrt.md",
+  "boot_seed": 183141,
+  "checkpoint": "/home/ubuntu/jope-data/h183/inputs/round-882.pt",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "fold_seed": 183140,
+  "inputs": {
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.json": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
+    "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.md": "bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee",
+    "/home/ubuntu/jope-data/h183/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h183/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/jope-data/h170/attempt-001/baseline_costs.npz": "a5109aff14e9aed679752f9884059adf9ce580f1a2d266c2d0a88fe42194ee38"
+  },
+  "max_total_updates": 7800,
+  "max_trajectories": 180,
+  "max_trajectories_per_fold_seed": 12,
+  "max_updates_per_cell": 520,
+  "max_updates_per_member": 40,
+  "member_seeds": {
+    "183101": [
+      183201,
+      183202,
+      183203,
+      183204,
+      183205,
+      183206,
+      183207,
+      183208,
+      183209,
+      183210
+    ],
+    "183102": [
+      183301,
+      183302,
+      183303,
+      183304,
+      183305,
+      183306,
+      183307,
+      183308,
+      183309,
+      183310
+    ],
+    "183103": [
+      183401,
+      183402,
+      183403,
+      183404,
+      183405,
+      183406,
+      183407,
+      183408,
+      183409,
+      183410
+    ]
+  },
+  "packages": {
+    "numpy": "1.26.4",
+    "psutil": "7.1.0",
+    "torch": "2.7.0"
+  },
+  "parent_commit": "c859f11c4106d425ca0f8d0befc56532d5a227cc",
+  "parent_sources": {
+    "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4",
+    "research/flywheel_selfplay/h165_gradient_noise_dropout/analysis.py": "59352b84a3ef7f9764a6489ad3865e86925de6e2f3c80d23a5c2f9e5453ad1fd",
+    "research/flywheel_selfplay/h165_gradient_noise_dropout/monitor.py": "39c16a4cc75fda51ba370feb44013abd2fa3ca26894e4c87adfc28ff83947602",
+    "research/flywheel_selfplay/h165_gradient_noise_dropout/runner.py": "6430691737b88abbd4923976bf25f95bd4acdc3af1b14eff4653f91646b52d0a",
+    "research/flywheel_selfplay/h165_gradient_noise_dropout/treatment.py": "a532ca1b8a6eb8e0ebbb455a82662bf0a03088b768ada8e285e27222427e8e04",
+    "research/flywheel_selfplay/h170_onecycle/PREREG.md": "ac6cfd546007ff42239d97457115d2449ec941525423afe0640bffff8c56dfba",
+    "research/flywheel_selfplay/h170_onecycle/analysis.py": "d0cd7cf8bafe4903509e77d438242ef41b82ed75609674cf7357773f93f07694",
+    "research/flywheel_selfplay/h170_onecycle/fold_manifest.json": "e9ec27bdbc65bda9bf8002009dbb79ea3c00cddf4d310fe076c444fbadb708da",
+    "research/flywheel_selfplay/h170_onecycle/manifest.json": "0dfda77c392a4cd6677f6f80b5ee4972a28fa0b9644eb13051155a35d5533d71",
+    "research/flywheel_selfplay/h170_onecycle/monitor.py": "053f758e620b1b40847d9c0c7f5235a75029ad220d33bea7b42f5410dca3d8df",
+    "research/flywheel_selfplay/h170_onecycle/provenance.json": "dcdad7e43e7677da6ef5a4b68b2da234f5bbf326db72b273e08ed1be60958d9d",
+    "research/flywheel_selfplay/h170_onecycle/runner.py": "a76985f7e006005785885429c18582d9063f5e557b06b950cb6d023d91cb3bf8",
+    "research/flywheel_selfplay/h170_onecycle/treatment.py": "45fcb10302c3274482490bf444457993c0025185c4e05cf706d0611df9ae39de",
+    "research/flywheel_selfplay/h175_selector_power/README.md": "935d32773e1a5880cb724c4775b304b3870f9de1750cf39df86f3bd6f3bbffae",
+    "research/flywheel_selfplay/h175_selector_power/metrics.json": "1d884ada17dc0e6e9b943d19f11b59a7c2d36a3276677f0aaf76bf46e9b404df",
+    "research/flywheel_selfplay/h176_data_scaling/analysis.py": "4623f888133d15fc5f6653b61f394260145c98b5bd4b8b19161fac9c946fe67f",
+    "research/flywheel_selfplay/h176_data_scaling/runner.py": "c54bc8e72c1500db056743c499d8d959e09272db9d2d597e4035a4f223511795",
+    "research/flywheel_selfplay/h176_data_scaling/treatment.py": "336b759b6bbd81288425c4fcaf244d4f8160f8c69e0178c29106e77323b8f6fe",
+    "research/flywheel_selfplay/h182_ensemble_size_dose/analysis.py": "6c6c955f99a347629d2e4660589b3370472b3a8ceb8f186ad48bc3d2c9fa80b7",
+    "research/flywheel_selfplay/h182_ensemble_size_dose/monitor.py": "0aaf571f391f1be7bed8efec31fb219a5a466faf7fb6bb7f4333c02634feea33",
+    "research/flywheel_selfplay/h182_ensemble_size_dose/runner.py": "b837328d6835e12eb0f5514044600e976f774175e062ed110afa7499adcbc471",
+    "research/flywheel_selfplay/h182_ensemble_size_dose/treatment.py": "fe0156ad79db3b70849963f86d4d78615000f36ead201e82d95e1c9b61766407",
+    "research/h148/analysis.py": "912201520712f406252aec5129f4532748571d6911a526be89d1b3a01bcc205a",
+    "research/h156/analysis.py": "6a7b85de4c44448cff8f006be2ceb5ad950a26a3790aad97cbe19f55fc0f6dc0",
+    "research/h156/run.py": "0403256105a0bd6221bf39283b598d6d9ec8b4f7bed132bd885934eec7e0143c"
+  },
+  "pilot_reserve_seconds": 1200,
+  "reference": "/home/ubuntu/jope-data/h183/inputs/best_dev_checkpoint.json",
+  "required_baseline": {
+    "bit_exact": true,
+    "contexts": 91,
+    "families": 19,
+    "mean": 1.1377941898164525
+  },
+  "seeds": [
+    183101,
+    183102,
+    183103
+  ],
+  "source_sha256": {
+    "PREREG.md": "1325ee483d489f15eaf719fa8d020de029998451ed36930f789b002b40555fdc",
+    "analysis.py": "a2cc7f12ca18f31c39a346428426c3c101dd86f736368249dd51dc14a7ae0257",
+    "distill.py": "984db24f24ed4eef2d55beea107f9dcee6592cf65c00035089e9040d2c7bcee2",
+    "fold_manifest.json": "92c4ca7852db8a09072df7bcfec46ee08d7024aa6d4572f33f8eff90f590ff30",
+    "monitor.py": "f14b2684077c390d548101cf86771966b0642651143014103ba64836e0a0aeed",
+    "parents.py": "03c8fa1d332f998103f62896a375488ceaa96327a83f0940c81972dea0f041f8",
+    "provenance.json": "94baa31da32710f1cbba1cb725b48c6687ea8dd77bbddf77136bb4873ae71376",
+    "runner.py": "516619a3e230a39464d7b03c45ae638ca293195b58e008a0c03b142962cc4213",
+    "test_h183.py": "b740421685fa467de94bb5c6860d69262fceb073fba8011257fa528ba91f0fdd"
+  },
+  "trainable_adapter_parameters": 29211,
+  "training_cohort": {
+    "assessment_A_families_per_fold": 41,
+    "contexts": 1219,
+    "families": 205,
+    "fit_families_per_fold": 123,
+    "selector_B_families_reserved_unused": 41
+  },
+  "wall_budget_seconds": 14400,
+  "wave": "H183",
+  "baseline_cost_reference": "/home/ubuntu/jope-data/h170/attempt-001/baseline_costs.npz",
+  "addendum": "/home/ubuntu/nudges/hwave_t0640_h183_addendum.md",
+  "student_init_seeds": [
+    183501,
+    183502,
+    183503
+  ],
+  "nominal_total_arm_exposures": 8400,
+  "max_student_updates": 80,
+  "student40_is_prefix_of_student80": true,
+  "teacher_target": "softmax(-float32_mean(ten_teacher_costs)/0.2)",
+  "holm_primary_family": [
+    "DIST10",
+    "DIST10_80"
+  ]
+}
