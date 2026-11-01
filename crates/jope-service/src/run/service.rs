@@ -178,7 +178,12 @@ pub(crate) struct BackendExecutor<'a> {
 }
 impl Executor for BackendExecutor<'_> {
     fn evaluate(&self, request: &crate::worker::Request) -> crate::worker::Response {
-        if self.learned && request.attempt.slot < 65_536 {
+        // Finalization reuses slot zero and supplies its private refit handoff.
+        if self.learned
+            && request.attempt.slot < 65_536
+            && request.fold_spec.get("refit_output").is_none()
+            && request.fold_spec.get("refit_max_bytes").is_none()
+        {
             let mut request = request.clone();
             request.fold_spec["version"] = serde_json::json!(2);
             self.inner.evaluate(&request)
