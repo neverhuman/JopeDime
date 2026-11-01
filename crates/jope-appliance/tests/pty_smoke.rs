@@ -1,12 +1,7 @@
 #[path = "support/pty.rs"]
 mod pty;
 
-const SENTINELS: [&str; 4] = [
-    "T2_DSL_SENTINEL_8f27",
-    "T2_OPERATOR_SENTINEL_19ac",
-    "T2_LINEAGE_SENTINEL_43de",
-    "T2_ROUND_SENTINEL_71b0",
-];
+const SENTINELS: [&str; 4] = ["918273.125", "817263.25", "716254.375", "615245.5"];
 
 fn assert_no_internal_sentinels(output: &str) {
     for sentinel in SENTINELS {
