@@ -1,0 +1,52 @@
+{
+  "attempt1": {
+    "same_pins_retained": true,
+    "status": "FAILED_CONSUMED",
+    "terminal_outcomes_scored": 0,
+    "validation_pools_opened": 91
+  },
+  "attempt2": {
+    "maximum_unique_terminal_outcomes": 800,
+    "status": "CONSUMED",
+    "unique_terminal_outcomes": 555
+  },
+  "candidate": {
+    "checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+    "pointer_sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "round": 882
+  },
+  "command": "nice -n 10 env RNK10_RUN_DIR=/home/ubuntu/jope-data/RNK10-t2210-run-20261101 RNK10_SOURCE_ROOT=/home/ubuntu/jope-data/RNK10-t2210-run-20261101/source CUDA_VISIBLE_DEVICES= OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 /home/ubuntu/.venvs/flywheel-gp-fused/bin/python source/run_acceptance.py --research-eval",
+  "evaluation_id": "RNK10-T2210-R882-CPU-02",
+  "finished_utc": "2026-11-01T04:08:51.799941+00:00",
+  "gates": {
+    "family_bootstrap_97_5pct_lower_bound_gt_0": false,
+    "family_grouped_elo_gt_1500": true,
+    "max_conditional_base_kl_lte_0_35": true,
+    "median_family_mean_delta_gt_0": false
+  },
+  "host": "xbabe1",
+  "input": {
+    "contexts": 91,
+    "families": 19,
+    "selected_roster_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "source_manifest_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
+  },
+  "ledger_sha256": "ce302156e9e354f660b0a6bac269c40d06f6e4da397082e5856783b0a5dde555",
+  "preflight_available_memory_gib": 34.11,
+  "preflight_cpu_percent": 4.8,
+  "preflight_utc": "2026-11-01T04:08:22Z",
+  "qualification": "NOT_QUALIFIED; diagnostic only",
+  "resource_policy": {
+    "cpu_percent_max": 85,
+    "deadline_utc": "2026-11-01T07:00:00Z",
+    "device": "cpu",
+    "nice_at_least": 10,
+    "threads": 1
+  },
+  "result_sha256": "1d0fbeeef7ec5d63f5cecdebb37e6062188c9c8d8e368bb0a411db9d491dc83f",
+  "run_log_sha256": "b8d7d802489be7a85c6959ba038f9c4203e9d23f7d5823afa2c0b3cb7792e41e",
+  "schema": "jope.rnk10.t2210-attempt2-execution/v1",
+  "smoke_sha256": "98b9c1f213747bf7027634b7c523d3cc45650e0d80fce7d5389902fde146dd0f",
+  "started_utc": "2026-11-01T04:08:27.272796+00:00"
+}
