@@ -14693,7 +14693,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H197 data-free controls for per-context gradient clipping: independent TRAIN-family folds, frozen fit-only clip calibration, four matched arms, immutable B-stage lock, strict paired-family bootstrap/verdict, and CPU resource guards; no corpus/checkpoint reads or model passes in fixtures."
+      "scope": "H197 data-free controls for independent TRAIN-family folds, frozen FIT-only per-context clipping calibration, immutable B-before-A lock, exact-zero-update preflight acceptance (pinned sources, complete corpus, native 91/91 DL-Val replay), strict family bootstrap/verdict, and resource guards; no corpus/checkpoint reads or model passes in fixtures."
     }
   },
   "lanes": {

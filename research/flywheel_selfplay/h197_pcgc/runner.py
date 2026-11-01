@@ -42,6 +42,7 @@ finally:
     else:
         sys.modules["design"] = _previous_design
 tx = load_local_module("h197_treatment", HERE / "treatment.py")
+source_pins = load_local_module("h197_source_pins", HERE / "source_pins.py")
 
 
 def sha(path):
@@ -310,7 +311,10 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--launch", type=Path, required=True)
     parser.add_argument("--smoke", action="store_true")
+    parser.add_argument("--preflight", action="store_true")
     args = parser.parse_args()
+    if args.smoke and args.preflight:
+        raise RuntimeError("H197 smoke and preflight modes are mutually exclusive")
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
     torch.use_deterministic_algorithms(True)
@@ -335,7 +339,10 @@ def main():
         or pins.get("dry_fit_batches") != 5
     ):
         raise RuntimeError("H197 frozen bounds mismatch")
-    base.verify(pins)
+    shared_pins = dict(pins)
+    shared_pins["source_sha256"] = {}
+    base.verify(shared_pins)
+    source_pins.verify(HERE, pins["source_sha256"])
     head = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=HERE, text=True
     ).strip()
@@ -478,6 +485,37 @@ def main():
             output / "catalog_join.json",
             {"status": "PASS", "datasets": len(dataset_ids), "synthetic": 0},
         )
+
+        if args.preflight:
+            engine.load(train)
+            preflight = d.validate_preflight(
+                baseline_exact=True,
+                loaded_pool_count=len(engine.pools),
+                expected_pool_count=len(train) + len(val),
+                counters=counters,
+            )
+            preflight.update(
+                {
+                    "source_commit": head,
+                    "source_tree": subprocess.check_output(
+                        ["git", "rev-parse", "HEAD^{tree}"], cwd=HERE, text=True
+                    ).strip(),
+                    "manifest_sha256": sha(HERE / "manifest.json"),
+                    "source_pin_count": len(pins["source_sha256"]),
+                    "input_pin_count": len(pins["inputs"]),
+                    "asset_pin_count": len(pins["assets"]),
+                    "train_contexts": len(train),
+                    "train_families": len({r["family_id"] for r in train}),
+                    "dl_val_contexts": len(val),
+                    "trainer_started": False,
+                }
+            )
+            base.save(output / "preflight.json", preflight)
+            print(
+                "H197 PREFLIGHT PASS: full pinned corpus loaded; zero updates",
+                flush=True,
+            )
+            return
 
         positions = {r["context_sha256"]: i for i, r in enumerate(train)}
         panel_shape = (3, len(train))
