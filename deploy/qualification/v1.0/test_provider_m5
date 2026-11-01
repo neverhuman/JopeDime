@@ -178,6 +178,62 @@ class M5Tests(unittest.TestCase):
         self.assertEqual(result["causal"]["adapter_bundle_digest"], m5.R882_DIGEST)
         self.assertEqual(self.test_calls, 1)
         self.assertIn("--ignored", m5.command())
+
+    def default_off_receipt(self):
+        return {
+            "schema": "jope.rnk10.default-off/v1",
+            "source_sha": self.ctx.source_sha,
+            "status": "PASS",
+            "default_config": {
+                "track": "heuristic",
+                "learned_guidance_enabled": False,
+                "config_sha256": "5" * 64,
+                "bundle_sha256": "6" * 64,
+            },
+            "serving_admission": {
+                "ranker_absent_sha256": "1" * 64,
+                "ranker_present_disabled_sha256": "1" * 64,
+            },
+            "s2_determinism": {
+                "run_1_sha256": "2" * 64,
+                "run_2_sha256": "2" * 64,
+            },
+        }
+
+    def save_default_off(self, report=None):
+        path = self.root / "DEFAULT-OFF.json"
+        path.write_text(
+            json.dumps(self.default_off_receipt() if report is None else report)
+        )
+        return m5.DefaultOffInput(path, common.sha256(path))
+
+    def test_r21_default_off_receipt_proves_all_three_owner_requirements(self):
+        inputs = self.save_default_off()
+        report = m5.default_off_report(self.ctx, inputs)
+        self.assertEqual(report["schema"], "jope.rnk10.default-off/v1")
+
+    def test_r21_default_off_receipt_rejects_failed_or_mismatched_evidence(self):
+        mutations = [
+            ("status", "FAIL"),
+            ("source_sha", "b" * 40),
+        ]
+        for field, value in mutations:
+            with self.subTest(field=field):
+                receipt = self.default_off_receipt()
+                receipt[field] = value
+                with self.assertRaises(common.ProviderError):
+                    m5.default_off_report(self.ctx, self.save_default_off(receipt))
+        for section, field, value in [
+            ("default_config", "learned_guidance_enabled", True),
+            ("default_config", "bundle_sha256", "bad"),
+            ("serving_admission", "ranker_present_disabled_sha256", "3" * 64),
+            ("s2_determinism", "run_2_sha256", "4" * 64),
+        ]:
+            with self.subTest(section=section, field=field):
+                receipt = self.default_off_receipt()
+                receipt[section][field] = value
+                with self.assertRaises(common.ProviderError):
+                    m5.default_off_report(self.ctx, self.save_default_off(receipt))
         self.assertIn("--exact", m5.command())
         self.assertIn("--show-output", m5.command())
 
