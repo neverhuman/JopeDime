@@ -1,8 +1,425 @@
 {
   "wave": "H144",
-  "status": "PREREGISTERED_NOT_EXECUTED",
-  "optimizer_updates": 0,
-  "primary": null,
-  "secondary": null,
-  "verdict": null
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "primary": {
+    "CTRL": {
+      "context_mean_utility_by_seed": [
+        1.113746492619964,
+        1.1147065689073823,
+        1.0894092950586212
+      ],
+      "family_mean_utility_by_seed": [
+        1.130688658785788,
+        1.1316083108084731,
+        1.107376185332291
+      ],
+      "vs_r882": {
+        "families": 19,
+        "per_seed_gain": [
+          -0.022926618205456967,
+          -0.022006966182772054,
+          -0.046239091658954
+        ],
+        "median_gain": -0.022926618205456967,
+        "ci95": [
+          -0.054208100367566514,
+          -0.00214011163270466
+        ],
+        "p_one_sided": 0.9948005199480052,
+        "seeds_beating": 0,
+        "median_seed": 144101,
+        "top3_positive_share": 1.0,
+        "elo": 1386.5294715499087,
+        "elo_ci95": [
+          1241.8781274608878,
+          1500.0
+        ]
+      },
+      "vs_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p_one_sided": 1.0,
+        "seeds_beating": 0,
+        "median_seed": 144102,
+        "top3_positive_share": 1.0,
+        "elo": 1500.0,
+        "elo_ci95": [
+          1500.0,
+          1500.0
+        ]
+      },
+      "invalid_counts": [
+        0,
+        0,
+        1
+      ],
+      "drift": [
+        0.44308075308799744,
+        0.4447566270828247,
+        0.44271320104599
+      ]
+    },
+    "WD_1E2": {
+      "context_mean_utility_by_seed": [
+        1.113746492619964,
+        1.1147065689073823,
+        1.0894092950586212
+      ],
+      "family_mean_utility_by_seed": [
+        1.130688658785788,
+        1.1316083108084731,
+        1.107376185332291
+      ],
+      "vs_r882": {
+        "families": 19,
+        "per_seed_gain": [
+          -0.022926618205456967,
+          -0.022006966182772054,
+          -0.046239091658954
+        ],
+        "median_gain": -0.022926618205456967,
+        "ci95": [
+          -0.054208100367566514,
+          -0.00214011163270466
+        ],
+        "p_one_sided": 0.9948005199480052,
+        "seeds_beating": 0,
+        "median_seed": 144101,
+        "top3_positive_share": 1.0,
+        "elo": 1386.5294715499087,
+        "elo_ci95": [
+          1241.8781274608878,
+          1500.0
+        ]
+      },
+      "vs_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p_one_sided": 1.0,
+        "seeds_beating": 0,
+        "median_seed": 144102,
+        "top3_positive_share": 1.0,
+        "elo": 1500.0,
+        "elo_ci95": [
+          1500.0,
+          1500.0
+        ]
+      },
+      "invalid_counts": [
+        0,
+        0,
+        1
+      ],
+      "drift": [
+        0.4429088234901428,
+        0.44458243250846863,
+        0.44253790378570557
+      ]
+    },
+    "WD_1E1": {
+      "context_mean_utility_by_seed": [
+        1.113746492619964,
+        1.1147065689073823,
+        1.0894092950586212
+      ],
+      "family_mean_utility_by_seed": [
+        1.130688658785788,
+        1.1316083108084731,
+        1.107376185332291
+      ],
+      "vs_r882": {
+        "families": 19,
+        "per_seed_gain": [
+          -0.022926618205456967,
+          -0.022006966182772054,
+          -0.046239091658954
+        ],
+        "median_gain": -0.022926618205456967,
+        "ci95": [
+          -0.054208100367566514,
+          -0.00214011163270466
+        ],
+        "p_one_sided": 0.9948005199480052,
+        "seeds_beating": 0,
+        "median_seed": 144101,
+        "top3_positive_share": 1.0,
+        "elo": 1386.5294715499087,
+        "elo_ci95": [
+          1241.8781274608878,
+          1500.0
+        ]
+      },
+      "vs_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p_one_sided": 1.0,
+        "seeds_beating": 0,
+        "median_seed": 144102,
+        "top3_positive_share": 1.0,
+        "elo": 1500.0,
+        "elo_ci95": [
+          1500.0,
+          1500.0
+        ]
+      },
+      "invalid_counts": [
+        0,
+        0,
+        1
+      ],
+      "drift": [
+        0.4414384663105011,
+        0.4430907070636749,
+        0.4410373866558075
+      ]
+    }
+  },
+  "decision": {
+    "WD_1E1": {
+      "holm_adjusted_p": 1.0,
+      "gates": {
+        "margin": false,
+        "ci": false,
+        "two_seeds": false,
+        "concentration": false,
+        "holm": false
+      },
+      "advance": false
+    },
+    "WD_1E2": {
+      "holm_adjusted_p": 1.0,
+      "gates": {
+        "margin": false,
+        "ci": false,
+        "two_seeds": false,
+        "concentration": false,
+        "holm": false
+      },
+      "advance": false
+    }
+  },
+  "secondary_descriptive_only": {
+    "CTRL": {
+      "vs_r882": {
+        "families": 41,
+        "per_seed_gain": [
+          0.005425894480965922,
+          -0.024506565539547824,
+          -0.002177081652637785
+        ],
+        "median_gain": -0.002177081652637785,
+        "ci95": [
+          -0.05511192172819579,
+          0.05030707270483755
+        ],
+        "p_one_sided": 0.5325467453254674,
+        "seeds_beating": 1,
+        "median_seed": 144103,
+        "top3_positive_share": 0.787301198004958,
+        "elo": 1466.0123695009536,
+        "elo_ci95": [
+          1366.7856750952071,
+          1551.1865932165972
+        ]
+      },
+      "vs_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p_one_sided": 1.0,
+        "seeds_beating": 0,
+        "median_seed": 144102,
+        "top3_positive_share": 1.0,
+        "elo": 1500.0,
+        "elo_ci95": [
+          1500.0,
+          1500.0
+        ]
+      },
+      "invalid_counts": [
+        5,
+        7,
+        6
+      ]
+    },
+    "WD_1E2": {
+      "vs_r882": {
+        "families": 41,
+        "per_seed_gain": [
+          0.005425894480965922,
+          -0.024506565539547824,
+          -0.002177081652637785
+        ],
+        "median_gain": -0.002177081652637785,
+        "ci95": [
+          -0.05511192172819579,
+          0.05030707270483755
+        ],
+        "p_one_sided": 0.5325467453254674,
+        "seeds_beating": 1,
+        "median_seed": 144103,
+        "top3_positive_share": 0.787301198004958,
+        "elo": 1466.0123695009536,
+        "elo_ci95": [
+          1366.7856750952071,
+          1551.1865932165972
+        ]
+      },
+      "vs_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p_one_sided": 1.0,
+        "seeds_beating": 0,
+        "median_seed": 144102,
+        "top3_positive_share": 1.0,
+        "elo": 1500.0,
+        "elo_ci95": [
+          1500.0,
+          1500.0
+        ]
+      },
+      "invalid_counts": [
+        5,
+        7,
+        6
+      ]
+    },
+    "WD_1E1": {
+      "vs_r882": {
+        "families": 41,
+        "per_seed_gain": [
+          0.005495488943640937,
+          -0.024543751171019708,
+          -0.002177081652637785
+        ],
+        "median_gain": -0.002177081652637785,
+        "ci95": [
+          -0.05502511526271321,
+          0.05030743591302334
+        ],
+        "p_one_sided": 0.5321467853214679,
+        "seeds_beating": 1,
+        "median_seed": 144103,
+        "top3_positive_share": 0.787301198004958,
+        "elo": 1474.544829724838,
+        "elo_ci95": [
+          1376.4659034529388,
+          1559.8751385777832
+        ]
+      },
+      "vs_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          6.959446267501421e-05,
+          -3.7185631471885094e-05,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p_one_sided": 1.0,
+        "seeds_beating": 1,
+        "median_seed": 144103,
+        "top3_positive_share": 1.0,
+        "elo": 1500.0,
+        "elo_ci95": [
+          1500.0,
+          1500.0
+        ]
+      },
+      "invalid_counts": [
+        5,
+        7,
+        6
+      ]
+    }
+  },
+  "baseline": {
+    "matches": 91,
+    "max_context_error": 0.0,
+    "mean_error": 0.0,
+    "mean": 1.1377941898164525,
+    "status": "PASS"
+  },
+  "baseline_family_utility": 1.1536152769912449,
+  "baseline_invalid_primary": 0,
+  "baseline_invalid_secondary": 6,
+  "optimizer_updates": 360,
+  "identity": {
+    "source_commit": "aad54937c43ecd413ac2990d23ac5bff3e0dc27f",
+    "manifest_sha256": "729da0e37e573daeb40106ecb33a6fb5abe34d979e7d591ad24832e4f44fe96b",
+    "input_sha256": {
+      "/home/ubuntu/jope-data/h144/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+      "/home/ubuntu/jope-data/h144/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+      "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+      "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+      "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+      "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf"
+    },
+    "fold_sha256": "e0133c54ede334ace668c7d47975b239c71c6bc590b8aebc75b357a06e198f96"
+  },
+  "seeds": [
+    144101,
+    144102,
+    144103
+  ],
+  "arms": {
+    "CTRL": 0.0001,
+    "WD_1E2": 0.01,
+    "WD_1E1": 0.1
+  },
+  "dropped": [
+    "DROP_00",
+    "DROP_30"
+  ],
+  "inference_unit": "equal family mean within seed, median across three seeds; shared family-cluster bootstrap",
+  "serving_promotion": false,
+  "wall_seconds": 1183.079463328002
 }
