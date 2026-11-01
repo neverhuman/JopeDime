@@ -23,3 +23,21 @@ nice -n 10 env CARGO_BUILD_JOBS=8 CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=li
 ```
 
 M1/M4 runtime assertions are run only by the provider executables against an owner-approved candidate whose signed full-profile manifest pins the frozen source SHA. Local synthetic tests exercise contract handling only and are not gate execution evidence.
+
+
+## Exclusive result publication
+
+M1/M4 now apply the same new, external, absolute non-symlink result-path
+contract as the other gate providers. The shared suite helper checks the path
+before executing a child and again before publication, then opens the final
+result exclusively. A receipt created while the suite runs is preserved and
+causes refusal. The helper no longer writes or replaces a predictable `.new`
+file, so prior incomplete evidence at that path is also retained. A failed or
+interrupted write can leave a partial result; it cannot qualify because the
+coordinator requires successful child exit and valid complete JSON.
+
+This changes evidence publication only. Candidate checks, M1 exporter/freeze
+assertions, M4 integrity selectors, actual test counts and the six-field result
+schema are unchanged. Controls cover prior and concurrent receipts, a concurrent
+symlink, unsafe result locations, retained temporary evidence, successful M1/M4
+results and a failing child. Fixture results are not release qualification.

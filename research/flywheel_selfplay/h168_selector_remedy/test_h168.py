@@ -448,6 +448,38 @@ class H168Tests(unittest.TestCase):
             ("abort", "THREAD_LIMIT"),
         )
 
+    def test_predict_uncached_adapter_costs_uses_adapter_10tok(self):
+        fused = rt.load_fused()
+        net = fused.FusedJopeNetwork(device=torch.device("cpu"), adapter_variant="h40b")
+        net.eval()
+        self.assertFalse(hasattr(net, "predict_with_10tok_adapter"))
+        self.assertTrue(hasattr(net, "adapter_10tok"))
+        self.assertTrue(hasattr(net.adapter_10tok, "predict_costs"))
+        progs = np.zeros((2, 6, 412), dtype=np.float32)
+        proj = np.zeros((2, 6, 16), dtype=np.float32)
+        fit = np.zeros((2, 6), dtype=np.float64)
+        gate_arr = np.ones((2, 6), dtype=bool)
+        tok_arr = np.zeros((2, 10, 32), dtype=np.float32)
+        msk_arr = np.ones((2, 10), dtype=bool)
+        with torch.no_grad():
+            scores = rn.predict_uncached_adapter_costs(
+                net, progs, proj, fit, gate_arr, tok_arr, msk_arr
+            )
+        self.assertEqual(scores.shape, (2, 6))
+        self.assertTrue(np.isfinite(scores).all())
+        with self.assertRaises(TypeError):
+            net.adapter_10tok.predict_costs(
+                ctx_feat=torch.zeros((2, 584), dtype=torch.float32),
+                prog_412=torch.as_tensor(progs),
+                proj_16=torch.as_tensor(proj),
+                base_prior_cost=torch.zeros((2, 6), dtype=torch.float32),
+                scale=torch.full((2,), 0.4208, dtype=torch.float32),
+                sos_prior=torch.zeros((2, 6, 2), dtype=torch.float32),
+                mm_tokens_10x32=torch.as_tensor(tok_arr),
+                mm_mask_10=torch.as_tensor(msk_arr),
+                enable_prior_correction=True,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
