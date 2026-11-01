@@ -66,7 +66,7 @@
     "BMA10"
   ],
   "total_updates": 600,
-  "parent_commit": "d5665b898456723da43c7b73a243810da7a32bd0",
+  "parent_commit": "53cb5078e80eb6838a730853c9fe1c2b8da8327d",
   "inputs": {
     "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
     "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
