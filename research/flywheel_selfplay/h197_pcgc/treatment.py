@@ -101,6 +101,10 @@ def shuffle_factors(factors, seed):
     return factors[permutation], permutation
 
 
+def permutation_to_json(permutation):
+    return np.asarray(permutation, dtype=np.int64).tolist()
+
+
 def dry_thresholds(step0_norms, dry_pcgc_aggregate_norms):
     step0_norms = np.asarray(step0_norms, dtype=np.float64)
     dry_pcgc_aggregate_norms = np.asarray(dry_pcgc_aggregate_norms, dtype=np.float64)

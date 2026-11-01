@@ -1,0 +1,37 @@
+{
+  "wave": "H194",
+  "attempt": 1,
+  "status": "INCOMPLETE",
+  "verdict": "INCOMPLETE_INFRASTRUCTURE",
+  "scientific_result_available": false,
+  "advance_candidate": false,
+  "serving_promotion": false,
+  "reason": [
+    "disk user-visible used>=93.8%"
+  ],
+  "elapsed_seconds": 5321.271151375957,
+  "execution_accounting": {
+    "planned_optimizer_updates": 1800,
+    "backward_started": 1080,
+    "backward_completed": 1080,
+    "step_started": 1080,
+    "step_completed": 1080,
+    "completed_trajectories": 27,
+    "planned_trajectories": 45,
+    "completed_seed_fold_cells": 9,
+    "planned_seed_fold_cells": 15,
+    "candidate_A_contexts": 0,
+    "candidate_DLVal_contexts": 0,
+    "pooled_B_selection_exists": false
+  },
+  "native91_baseline": {
+    "utility_and_float32_cost_bytes_exact": true,
+    "before_TRAIN_pool_decoding": true
+  },
+  "protected_reads": 0,
+  "scientific_source": "9686429f7e89fb34da3e797afbb2855c93e02fb1",
+  "prereg_pr": 1601,
+  "owner_authorized_fresh_attempt2": true,
+  "partial_utility_CI_Holm_Elo": "Not computed for the registered complete design; no partial scientific metrics claimed",
+  "attempt2_scope": "Same #1601 source/seeds/folds/budgets, fresh from scratch, no attempt1 trajectories or B selections reused"
+}
