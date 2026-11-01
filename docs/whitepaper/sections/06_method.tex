@@ -41,7 +41,7 @@ into 2,048 numbers, $z_p=\encP(p)$, in three blocks.
 The first summarizes a pretrained row encoder's embeddings across rows,
 independent of row order (512 values). The second projects the hidden
 state of a pretrained third-party tabular regressor that reads the training
-rows and labels (1,024; Foundation, version \texttt{foundation\_enc.v1.tabpfn}; license: proprietary, available on request; redistribution prohibited). The third passes the
+rows and labels (1,024; Foundation, version \texttt{foundation\_enc.v1.tabpfn}; license: third-party provenance pending; restricted; redistribution prohibited). The third passes the
 scaled targets through two frozen windows (512).
 
 The reference encoder is pinned by hash and stays fixed during writer
@@ -58,15 +58,15 @@ separate representation study; \cref{sub:results-ablation} reserves that test.
 \subsection{Describing the move}\label{sub:method-move}
 
 A move is one program in the typed language of \cref{sec:game}, with a
-401-token vocabulary listing 31 transforms and 22 prediction heads.
+401-token training inventory listing 31 transforms and 22 prediction heads; the product runtime restricts executable heads.
 Up to six transforms feed a head; the native task mask permits only
 compatible tokens at each step, as in grammar-constrained generators
 \citep{kusner2017grammar,dai2018sdvae}. A finished draft enters the pool
 only after it decodes and parses. These grammar checks do not establish
-that the writer avoids programs that parse but crash or lose. A program's
-identity is the SHA-256 hash of its canonical form. A separate hash of
-predictions on fixed training probes flags matching observed outputs.
-Those matches do not establish equivalence on other inputs. Without probe
+that the writer avoids programs that parse but crash or lose. The proposal
+pool removes exact decoded-string duplicates and records their SHA-256.
+The executor also records canonical recipe hashes. Probe-based behavior
+matching is a separate audit, not part of pool deduplication. Without probe
 evidence, this behavior check reports novelty as unknown. Readable Python
 and Rust exports are a reference requirement. Legacy recipe emitters reject
 the synthesized input stage; the separate fitted-state path is allowlisted.
@@ -77,8 +77,8 @@ Reported winners still require the parity check in \cref{sub:method-referee}.
 
 \subsection{One map for problems and programs}\label{sub:method-map}
 
-The map reads a program as $z_w=\encS(w)$, the mean of learned token
-embeddings. Pooling discards token order, limiting the map's ability to
+The map reads a program as $z_w=\encS(w)$, the layer-normalized mean of
+non-padding token embeddings. Pooling discards token order, limiting its ability to
 distinguish compositions built from the same tokens. It combines $z_w$ with $z_p$ three ways: as is, gated by the problem,
 and as a distance from a projection of it. It averages four heads into a
 score $\mapv(z_p,z_w)$ with parameters $\psi$.
@@ -148,7 +148,7 @@ matched ablation (\cref{sub:results-ablation}).
 \end{algorithmic}
 \end{algorithm*}
 
-The historical reference uses expert iteration \citep{anthony2017expert}:
+The historical reference specifies expert iteration \citep{anthony2017expert}:
 the writer learns from verified search. Programs
 sampled from the scored lists $G_p$ are weighted by their referee rank in
 the combined objective (\cref{app:training}):
@@ -166,7 +166,7 @@ averages token losses within each program, and normalizes by the sum of
 program weights (\cref{app:training}).
 
 Here $\mathcal{L}_{\text{BT}}$ is a Bradley--Terry loss on the same lists,
-$\mathcal{L}_{\text{runtime}}$ a Huber loss for a head that estimates runtime cost, and
+$\mathcal{L}_{\text{runtime}}$ a Huber loss on logarithms of one plus predicted and measured seconds, and
 $\mathcal{L}_{\text{prog}}$ the Bradley--Terry loss of the program-only control head.
 A median-ranked program carries about a tenth of the top-ranked program's
 weight in the writer loss. Its referee score also contributes to the map's
@@ -194,9 +194,9 @@ September 2026, with a corpus of about 10.2 million scored programs from
 80 training datasets. This paper does not document the evidence on which
 the checkpoint was accepted; that record and a pinned runtime are required
 inputs to the evaluation contract (\cref{sub:results-protocol}). These specifications
-identify the historical reference; they do not describe the later adapter
-snapshot or establish its deployment performance. Details belong in
-\cref{app:training}. \Cref{alg:selfplay} summarizes the reference training loop.
+identify the historical reference. The CPU float32 port has unqualified native
+CUDA BF16 parity; its random stream and uniform-token fallback differ.
+\Cref{alg:selfplay} specifies the reference loop; details belong in \cref{app:training}.
 
 \subsection{Keeping the referee honest}\label{sub:method-referee}
 
