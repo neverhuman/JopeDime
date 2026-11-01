@@ -48,6 +48,13 @@ DATA_KEYS = {
     "holdout_group",
 }
 GROUPS = ("small", "large", "narrow", "wide")
+R19_ROSTER_SHA256 = "ab434d145b8cec60399b35c35a1ce9551a881843e8136b1c757e9c93ae62bd9a"
+R19_ROSTER = HERE.parent / "rosters" / (R19_ROSTER_SHA256 + ".json")
+R19_BUNDLE = "94fd9587675c7806bd0a0582b6e97540cd2fdc7ebbc51958411b905185cad85c"
+R19_DOPE = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+R19_WIDE_LABEL = (
+    "4/5 families, below preregistered minimum, descriptive only, no subgroup verdict"
+)
 
 
 def require(condition, message):
@@ -104,8 +111,47 @@ def memberships(dataset):
     )
 
 
+def validate_r19(plan):
+    """The signed exception applies only to the unchanged R19 roster and candidate."""
+    require(
+        plan["mode"] == "qualification"
+        and type(plan["minimum_wide_families"]) is int
+        and plan["minimum_wide_families"] == 4,
+        "R19 permits only minimum_wide_families=4 in qualification",
+    )
+    require(
+        plan["pins"]["bundle_sha256"] == R19_BUNDLE
+        and plan["pins"]["dope_sha256"] == R19_DOPE,
+        "R19 candidate/DOPE mismatch",
+    )
+    require(sha_file(R19_ROSTER) == R19_ROSTER_SHA256, "R19 roster hash mismatch")
+    roster = load(R19_ROSTER)["official_roster"]
+    expected = {r["dataset_id"]: r for r in roster}
+    require(
+        len(plan["datasets"]) == len(expected) == 153
+        and {d["id"] for d in plan["datasets"]} == set(expected),
+        "R19 requires the unchanged 153-cut roster",
+    )
+    for dataset in plan["datasets"]:
+        record = expected[dataset["id"]]
+        require(
+            all(
+                dataset[k] == record[k]
+                for k in ("dataset_sha256", "cut_sha256", "rows", "features")
+            )
+            and (
+                record["family_key"] is None
+                or dataset["family"] == record["family_key"]
+            ),
+            "R19 roster identity/cut/shape/family changed",
+        )
+
+
 def validate_plan(plan, preregistration=PREREGISTRATION):
-    require(set(plan) == PLAN_KEYS, "unsupported/missing plan field")
+    require(
+        set(plan) in (PLAN_KEYS, PLAN_KEYS | {"minimum_wide_families"}),
+        "unsupported/missing plan field",
+    )
     require(plan["schema"] == "jope.q1-plan/v1", "unsupported plan schema")
     require(
         plan["preregistration_sha256"] == sha_file(preregistration),
@@ -206,12 +252,16 @@ def validate_plan(plan, preregistration=PREREGISTRATION):
             all(d["holdout_group"] == "sealed_meta_test" for d in plan["datasets"]),
             "sealed meta-test is the ONLY qualification holdout",
         )
+        if "minimum_wide_families" in plan:
+            validate_r19(plan)
         for group in GROUPS:
+            minimum = plan.get("minimum_wide_families", 5) if group == "wide" else 5
             require(
-                sum(group in memberships(d) for d in plan["datasets"]) >= 5,
+                sum(group in memberships(d) for d in plan["datasets"]) >= minimum,
                 "too few datasets in preregistered subgroup " + group,
             )
     else:
+        require("minimum_wide_families" not in plan, "R19 is qualification only")
         require(
             plan["ledger_root"] is None, "smoke cannot consume a qualification ledger"
         )
@@ -1034,7 +1084,8 @@ def analyze(plan, receipts):
     subgroups = {}
     for group in GROUPS:
         values = [effects[d["id"]] for d in plan["datasets"] if group in memberships(d)]
-        require(len(values) >= 5, "insufficient subgroup")
+        minimum = plan.get("minimum_wide_families", 5) if group == "wide" else 5
+        require(len(values) >= minimum, "insufficient subgroup")
         seed = int.from_bytes(
             hashlib.sha256((group + ":20261030").encode()).digest()[:8], "big"
         )
@@ -1042,8 +1093,14 @@ def analyze(plan, receipts):
             **bootstrap(values, seed, 0.05 / len(GROUPS)),
             "datasets": len(values),
         }
+    if plan.get("minimum_wide_families") == 4:
+        subgroups["wide"].update(
+            report_label=R19_WIDE_LABEL, descriptive_only=True, verdict=None
+        )
     passed = primary["lower"] > 0 and all(
-        v["median"] >= -0.02 and v["lower"] >= -0.02 for v in subgroups.values()
+        v["median"] >= -0.02 and v["lower"] >= -0.02
+        for group, v in subgroups.items()
+        if not (group == "wide" and plan.get("minimum_wide_families") == 4)
     )
     return {
         "schema": "jope.q1-analysis/v1",
@@ -1053,6 +1110,7 @@ def analyze(plan, receipts):
         "primary": primary,
         "subgroups": subgroups,
         "decision": "PASS" if passed else "FAIL",
+        **({"amendment": "R19"} if plan.get("minimum_wide_families") == 4 else {}),
         "relative_regression_margin": 0.02,
     }
 
