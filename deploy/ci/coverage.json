@@ -4279,6 +4279,26 @@
       "lanes": [],
       "scope": "REL-07 signer-compatible gate-receipt adapter controls; exact 28-gate M1-D2 inventory, CPU-prestage NOT_RUN projection, artifact SHA256 binding, and missing/duplicate/malformed gate refusals."
     },
+    "python:deploy/qualification/v1.0/test_provider_e2/test_e2.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 E2 export-parity provider controls: candidate/source binding, pinned toolchains, harness/registry/fixture identities, retained-evidence inventory, exact cell/module/calibration/raw-contract census and refusals; synthetic reports only, no release execution."
+    },
+    "python:deploy/qualification/v1.0/test_provider_s3/test_s3.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 S3 leakage provider controls: candidate/source binding, exact single-pass selectors for FIT-row audit, fold constraints and finalization scope, path/hash refusals; synthetic child output only, no release execution."
+    },
     "python:ops/s3_shard_cache/test_s3_shard_cache.py": {
       "discovery": {
         "kind": "python-family"
@@ -5123,6 +5143,16 @@
       ],
       "lanes": [],
       "scope": "H146 data-free controls copied from H144 (equal-family median-over-seeds inference, gates, Holm, resource classification, input audit, raw-byte state guards, live-recipe loss, exact baseline gate) plus the Lookahead k=5/k=10 alpha=0.5 synchronization schedule and slow-weight update. No corpus, checkpoint or optimizer run in the fixture suite; offline research only."
+    },
+    "python:research/flywheel_selfplay/h147_reveal_alignment/test_h147.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H147 controls for matched-support reveal alignment (SUPPORT_CTRL, STORAGE_REVEAL, STORAGE_MASK): common 192-candidate support S, 5-fold family-disjoint CV on 1,219 DL-Train contexts, zero masked-anchor gradient and target renormalization, intersection Holm m=2 gates, pinned Bradley-Terry MM Elo, hard-stop supervisor/runtime guards, and squash-compatible source binding. Offline research only."
     },
     "python:research/flywheel_selfplay/h149_wd_dose/test_h149.py": {
       "discovery": {
