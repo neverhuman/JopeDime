@@ -96,13 +96,14 @@ proposals need not follow \cref{eq:taste}; independence alone does not say
 whether the approximation overstates or understates their cost. Empirical
 attempt curves are required for those systems.}
 
-The equation isolates the value of learning before deployment. It does not
-rank random generators, pretrained models and agent systems without measuring
-their proposal quality. In particular, \searchone{} fixes the number of
-candidates a system may submit; it does not require the probability of a win
-to approach certainty. A single-candidate system can fail, and every failure
-must remain in its reported results. \Cref{sec:price} uses the same idealization
-to relate evaluation cost to the cost of a verified improvement.
+The equation prices proposal quality, whether training, structural
+constraints or revealed outcomes provide it. Comparing random generators,
+pretrained models and agent systems therefore requires measured proposal
+quality. In particular, \searchone{} fixes the number of candidates a system
+may submit; it does not require the probability of a win to approach certainty.
+A single-candidate system can fail, and every failure must remain in its
+reported results. \Cref{sec:price} uses the same idealization to relate
+evaluation cost to the cost of a verified improvement.
 
 \begin{keyidea}
 Novelty is free. Judgment is the inventor.
@@ -158,5 +159,6 @@ people still set the aim.}
   \end{tabularx}
 \end{table}
 
-These roles let us ask which AI methods connect proposals to tests, and
-what their feedback changes. \Cref{sec:road} traces those mechanisms.
+The location of retention determines what feedback can change: a stored
+solution, candidate selection or the proposer itself. \Cref{sec:road}
+traces how earlier AI methods connect these roles.

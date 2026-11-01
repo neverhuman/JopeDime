@@ -13,11 +13,10 @@
 
 \section{The Road to Zero: Five Building Blocks}\label{sec:road}
 
-Five lines of AI research supply the building blocks for the four pillars
-of \cref{sec:anatomy}: deep learning, program search, reinforcement
-learning, games and the race for self-improvement.
-
-We trace how each links proposals to tests and carries feedback forward.\footnote{Each history keeps only the
+Five lines of AI research connect the four pillars of \cref{sec:anatomy}:
+deep learning, program search, reinforcement learning, games and the race
+for self-improvement. We trace what each proposes, how it is tested and
+what carries forward to the next attempt.\footnote{Each history keeps only the
 milestones the argument needs; \cref{app:history} collects the referees
 those milestones rely on.}
 
@@ -57,10 +56,10 @@ condition or screen the writer. Its ranks can influence training through
 search-parent selection (\cref{sub:method-map}). Ranking accuracy and
 first-proposal quality therefore need separate tests.
 
-\EZ{} draws on these three ingredients: representations that read a problem,
-models that write code and a separate ranking map. What remains is training a
-proposer directly on verified algorithm quality and testing transfer beyond its
-training tasks.
+Representations, code generation and ranking supply a proposer with an
+interface to the problem. Executable tests complete the loop: \EZ{} proposes
+training on verified algorithm quality, then testing whether that experience
+transfers beyond its training tasks.
 
 % ---------------------------------------------------------------------
 \subsection{Program search built the variation--judgment loop}\label{sub:road-programs}
@@ -102,7 +101,8 @@ useful a learned proposal is before additional task-specific search.
 % ---------------------------------------------------------------------
 \subsection{Reinforcement learning turned retention into taste}\label{sub:road-rl}
 
-Reinforcement learning turns a referee's verdicts into a better player.
+Program search retains solutions; policy updates change the proposer.
+Reinforcement learning uses the referee's verdicts for those updates.
 \citet{bellman1957dp} gave it an equation of value. Samuel's checkers
 program improved by playing a copy of itself \citep{samuel1959checkers},
 TD-Gammon reached near the best human backgammon players by self-play
@@ -121,10 +121,10 @@ Language models also learn from feedback: human preferences
 \citep{christiano2017preferences,ouyang2022instructgpt} and rule-based
 checks of answers, as in DeepSeek-R1 \citep{guo2025deepseekr1}.
 
-From this line of work, \EZ{} takes training on referee-scored play and the
-lesson from Go that a network can absorb search; the remaining challenge is
-defining a reward for relative algorithm quality and separating gains on
-training games from transfer to unseen families.
+This line of work motivates training on referee-scored play. For \EZ{},
+the next step is to define a game whose reward measures relative algorithm
+quality, then distinguish gains on training games from transfer to unseen
+families.
 
 \begin{figure}[tb]% floats so the text above can fill the column
 \begin{explainer}[label=box:selfplay]{Self-play in 90 seconds}
