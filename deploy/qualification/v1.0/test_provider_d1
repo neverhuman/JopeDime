@@ -212,6 +212,21 @@ class D1Tests(unittest.TestCase):
             self.invoke()
         self.assertFalse(self.result.exists())
 
+    def test_macos_exports_require_exact_json_true_values(self):
+        checks = json.loads(self.mac_receipt.read_text(encoding="utf-8"))["checks"]
+        invalid_exports = (
+            {"python": 1, "rust": 1, "javascript": 1},
+            {"python": True, "rust": True, "javascript": True, "extra": True},
+        )
+        for exports in invalid_exports:
+            with self.subTest(exports=exports):
+                self.write_macos_receipt(checks={**checks, "exports": exports})
+                self.mac_digest = d1.sha256(self.mac_receipt)
+                with self.assertRaisesRegex(ProviderError, "all three run exports"):
+                    self.invoke()
+                self.assertFalse(self.result.exists())
+                self.assertFalse(any(call[0] == "bash" for call in self.calls))
+
     def test_linux_driver_failure_never_emits_result(self):
         self.linux_exit = 1
         with self.assertRaisesRegex(ProviderError, "Linux clean-host leg failed"):

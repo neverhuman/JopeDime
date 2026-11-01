@@ -90,11 +90,12 @@ def verify_macos_receipt(
         checks.get(key) is not True for key in required
     ):
         raise ProviderError("D1 macOS receipt omits a required clean-host assertion")
-    if not isinstance(exports, dict) or exports != {
-        "python": True,
-        "rust": True,
-        "javascript": True,
-    }:
+    expected_exports = {"python", "rust", "javascript"}
+    if (
+        not isinstance(exports, dict)
+        or set(exports) != expected_exports
+        or any(exports[name] is not True for name in expected_exports)
+    ):
         raise ProviderError("D1 macOS receipt must pass all three run exports")
     return receipt, actual_sha256
 
