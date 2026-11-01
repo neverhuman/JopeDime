@@ -1,4 +1,6 @@
 {
+  "attempted_manifest_sha256": "f3ea7cfaeda35a3e768bfc21827a84debc48adb3791fd5e613471b28b1b7fdba",
+  "attempted_runner_sha256": "dae5663024bd0ae51ce8b4276d7ef623756ef5675e0c6c17815dab2fcf2226f0",
   "best_utility": 1.1377941898164525,
   "budget": {
     "calculation": "91 contexts * 4 selected guided + 4 selected anchor; repeated candidate selections deduplicated within each context",
@@ -12,6 +14,7 @@
     "run_count": 1,
     "threads": 1
   },
+  "closed_utc": "2026-11-01T03:49:30+00:00",
   "cohort": {
     "catalog_dataset_ids": 19,
     "checkpoint_contract_context_pool_table_match": true,
@@ -1032,7 +1035,8 @@
       "train_only_jtt1_sha256": "b66c6eece920ae66bba1f9b49a5dc878024aefc4753e58889f19edb82986a2ea"
     }
   ],
-  "created_utc": "2026-11-01T03:45:42.083830+00:00",
+  "corrected_runner_sha256": "a444c0fa35759c2dc48c7c014527c967245c84e62cfab2a93f2516209fc44dfd",
+  "created_utc": "2026-11-01T03:48:48.879114+00:00",
   "dataset_catalog_json_sha256": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
   "dataset_catalog_markdown_sha256": "bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee",
   "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
@@ -1092,7 +1096,13 @@
   },
   "research_only": true,
   "round": 882,
-  "runner_sha256": "2be16ac9f47e0161b07fb1e8536b5dd4558cf2e5f8aee6f84f819ab6e3b758d0",
+  "runner_sha256": "dae5663024bd0ae51ce8b4276d7ef623756ef5675e0c6c17815dab2fcf2226f0",
+  "runtime_source_files": {
+    "python/src/jope/north_star/dope_freeze_guard.py": "07de5bc34f181e8ef14c3e5cdc20716716b2cc7dd418792f82f3db1d0d576f9c",
+    "research/flywheel_selfplay/automatic_promotion.py": "261d2d1865c2f50e1c7388dfd2ac404e85f599df3a5b7aaaab69415cf250d8a0",
+    "research/flywheel_selfplay/dev_incumbent.py": "81ebdafa5fe1accb1da56a424bee669f0e381fee2bd5e23c751c17618079523f",
+    "research/flywheel_selfplay/device_pool_cache.py": "bb4426ead00f92436e4104155e3671336752c33833cabb7831baf6ff1939e29e"
+  },
   "schema": "jope.rnk10.r882-guided-acceptance-manifest/v1",
   "sealed_holdout_meta_test_payloads_opened": 0,
   "selected_roster_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
@@ -1102,7 +1112,7 @@
   "source_manifest_identity": "3eb4a62acea512f528500b043299a5968e1c9b1d1b1759bbf77a426b9fa1ecc3",
   "source_pointer_sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
   "source_run_manifest": "absent for round 882; full-run operations provenance retained in source_commit_basis",
-  "status": "PRE_REGISTERED_ONE_SHOT",
+  "status": "ONE_SHOT_FAILED_CONSUMED",
   "training_adapter_source_sha256": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
   "training_cpu_fused_source_sha256": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
   "training_model_source_sha256": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",

@@ -17,7 +17,7 @@ import numpy as np
 import torch
 from safetensors.torch import load_file
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(os.environ.get("RNK10_SOURCE_ROOT", Path(__file__).resolve().parents[3])).resolve()
 H49_DIR = ROOT / "research/flywheel_selfplay/h49"
 INPUT_DIR = Path("/home/ubuntu/jope-data/flywheel-full-20261030/input")
 CHECKPOINT_SHA256 = "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
@@ -51,6 +51,7 @@ DEADLINE_UTC = dt.datetime.fromisoformat("2026-11-01T07:00:00+00:00")
 MANIFEST = Path(__file__).with_name("evaluation_manifest.json")
 LEDGER = RUN_DIR / "outcome_ledger.json"
 OUTPUT = RUN_DIR / "acceptance-result.json"
+SMOKE_OUTPUT = RUN_DIR / "model-smoke.json"
 
 
 def sha256(path: Path) -> str:
@@ -121,8 +122,12 @@ def predict_pair(net, tokens, masks, pool: dict) -> tuple[np.ndarray, np.ndarray
     }
     with torch.no_grad():
         guided = net.adapter_10tok.predict_costs(**tensors)["total_cost"][0].float().cpu().numpy()
+        anchor_tensors = {
+            key: value for key, value in tensors.items()
+            if key not in ("mm_tokens_10x32", "mm_mask_10")
+        }
         anchor = net.adapter_10tok.anchor.predict_costs(
-            **tensors,
+            **anchor_tensors,
             enable_prior_correction=True,
             enable_struct_kernel=True,
             enable_cross_attn=True,
@@ -134,8 +139,9 @@ def predict_pair(net, tokens, masks, pool: dict) -> tuple[np.ndarray, np.ndarray
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--research-eval", action="store_true", help="required; blocks production use")
+    parser.add_argument("--smoke-only", action="store_true", help="load the pinned candidate without opening evaluation outcomes")
     args = parser.parse_args()
-    if not args.research_eval:
+    if not args.research_eval and not args.smoke_only:
         parser.error("refusing outcome access without explicit --research-eval")
     if os.getpriority(os.PRIO_PROCESS, 0) < 10:
         raise SystemExit("effective nice value must be at least 10")
@@ -143,15 +149,19 @@ def main() -> int:
         raise SystemExit("refusing when CUDA is visible")
     if OUTPUT.exists():
         raise SystemExit("refusing to repeat/overwrite the registered one-use evaluation")
+    if args.smoke_only and SMOKE_OUTPUT.exists():
+        raise SystemExit("refusing to repeat/overwrite the model smoke")
     manifest = json.loads(MANIFEST.read_text())
     ledger = json.loads(LEDGER.read_text())
     manifest_sha = sha256(MANIFEST)
     if manifest.get("source_checkpoint_sha256") != CHECKPOINT_SHA256:
         raise SystemExit("manifest candidate pin mismatch")
-    if manifest.get("source_manifest_sha256") != SOURCE_MANIFEST_SHA256 or manifest.get("selected_roster_sha256") != SELECTED_SHA256:
+    if manifest.get("source_manifest_file_sha256") != SOURCE_MANIFEST_SHA256 or manifest.get("selected_roster_sha256") != SELECTED_SHA256:
         raise SystemExit("manifest input pin mismatch")
     if manifest.get("runner_sha256") != sha256(Path(__file__)):
         raise SystemExit("runner source SHA differs from the preregistration")
+    if manifest.get("status") != "PRE_REGISTERED_ONE_SHOT":
+        raise SystemExit("registered evaluation is closed; refusing another run")
     if ledger.get("status") != "UNUSED" or ledger.get("manifest_sha256") != manifest_sha:
         raise SystemExit("ledger is not the unused ledger bound to this manifest")
     if dt.datetime.now(dt.timezone.utc) >= DEADLINE_UTC:
@@ -176,6 +186,12 @@ def main() -> int:
         raise SystemExit("pinned adapter source SHA mismatch")
     if manifest.get("model_support_files") != MODEL_SUPPORT_FILES:
         raise SystemExit("manifest model support inventory differs from runner pins")
+    for relative_path, expected in manifest.get("evaluator_sources", {}).items():
+        if sha256(ROOT / relative_path) != expected:
+            raise SystemExit(f"pinned evaluator source SHA mismatch: {relative_path}")
+    for relative_path, expected in manifest.get("runtime_source_files", {}).items():
+        if sha256(ROOT / relative_path) != expected:
+            raise SystemExit(f"pinned runtime source SHA mismatch: {relative_path}")
     for relative_path, expected in MODEL_SUPPORT_FILES.items():
         if sha256(MICRO_ROOT / relative_path) != expected:
             raise SystemExit(f"pinned model support SHA mismatch: {relative_path}")
@@ -203,25 +219,8 @@ def main() -> int:
     score = importlib.util.module_from_spec(score_spec)
     sys.modules[score_spec.name] = score
     score_spec.loader.exec_module(score)
-    import psutil
-
-    while psutil.cpu_percent(interval=1) > 85:
-        if dt.datetime.now(dt.timezone.utc) >= DEADLINE_UTC:
-            raise SystemExit("deadline expired while waiting for CPU <=85%")
-        print("host CPU above 85%; waiting", flush=True)
-        time.sleep(5)
-    ledger.update({"status": "RUNNING", "started_utc": dt.datetime.now(dt.timezone.utc).isoformat(), "manifest_sha256": manifest_sha})
-    temp_ledger = LEDGER.with_suffix(".json.new")
-    temp_ledger.write_text(json.dumps(ledger, sort_keys=True, indent=2) + "\n")
-    temp_ledger.replace(LEDGER)
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
-    dev_rows, pools, tables = score.load_validation_packet(INPUT_DIR)
-    if len(dev_rows) != 91 or len({row["family_id"] for row in dev_rows}) != 19:
-        raise SystemExit("DL-Val inventory changed")
-    if any(row.get("dl_split") != "DL-Val" for row in dev_rows):
-        raise SystemExit("non-DL-Val row entered the registered evaluation")
-
     h48 = score.h48
     device = torch.device("cpu")
     fused_spec = importlib.util.spec_from_file_location(
@@ -244,6 +243,43 @@ def main() -> int:
     if h48.h46.checkpoint_guard(guard, net, expected=DOPE_SHA256) != DOPE_SHA256:
         raise SystemExit("DOPE guard failed")
     net.eval()
+
+    if args.smoke_only:
+        smoke = {
+            "schema": "jope.rnk10.r882-model-smoke/v1",
+            "evaluation_id": manifest["evaluation_id"],
+            "manifest_sha256": manifest_sha,
+            "runner_sha256": sha256(Path(__file__)),
+            "source_checkpoint_sha256": CHECKPOINT_SHA256,
+            "imported_weights_sha256": receipt["imported_safetensors_sha256"],
+            "dope_sha256": DOPE_SHA256,
+            "model_loaded_strict": True,
+            "device": "cpu",
+            "threads": 1,
+            "optimizer_updates": 0,
+            "evaluation_payloads_opened": 0,
+            "four_gates": "NOT_RUN",
+        }
+        SMOKE_OUTPUT.write_text(json.dumps(smoke, sort_keys=True, indent=2) + "\n")
+        print(json.dumps({"smoke": str(SMOKE_OUTPUT), "evaluation_payloads_opened": 0}, sort_keys=True))
+        return 0
+
+    import psutil
+
+    while psutil.cpu_percent(interval=1) > 85:
+        if dt.datetime.now(dt.timezone.utc) >= DEADLINE_UTC:
+            raise SystemExit("deadline expired while waiting for CPU <=85%")
+        print("host CPU above 85%; waiting", flush=True)
+        time.sleep(5)
+    ledger.update({"status": "RUNNING", "started_utc": dt.datetime.now(dt.timezone.utc).isoformat(), "manifest_sha256": manifest_sha})
+    temp_ledger = LEDGER.with_suffix(".json.new")
+    temp_ledger.write_text(json.dumps(ledger, sort_keys=True, indent=2) + "\n")
+    temp_ledger.replace(LEDGER)
+    dev_rows, pools, tables = score.load_validation_packet(INPUT_DIR)
+    if len(dev_rows) != 91 or len({row["family_id"] for row in dev_rows}) != 19:
+        raise SystemExit("DL-Val inventory changed")
+    if any(row.get("dl_split") != "DL-Val" for row in dev_rows):
+        raise SystemExit("non-DL-Val row entered the registered evaluation")
     tokens, masks = h48.h46.make_tokens(net, tables, device)
 
     guided_context, anchor_context, context_kl = {}, {}, {}

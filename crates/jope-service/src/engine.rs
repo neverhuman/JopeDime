@@ -245,6 +245,21 @@ impl InProcessEngine {
         })
     }
 
+    /// Explicit trusted-host admission for qualification of the signed frozen
+    /// candidate. Ordinary engines and Auto guidance retain their quality gates.
+    pub fn open_with_ranker(
+        home: impl AsRef<Path>,
+        executable: impl AsRef<Path>,
+        ranker: crate::run::learned::AdmittedRanker,
+    ) -> Result<Self, EngineError> {
+        let mut engine = Self::open_with_worker(home, executable)?;
+        engine.activity = Arc::new(EngineActivity {
+            ranker: Some(Arc::new(ranker)),
+            ..EngineActivity::default()
+        });
+        Ok(engine)
+    }
+
     /// The same store-bound router serves embedded clients and loopback HTTP.
     pub fn router(&self, auth: LocalAuth) -> Result<Router, EngineError> {
         self.router_with_activity(auth, Arc::clone(&self.activity))
@@ -303,6 +318,7 @@ impl InProcessEngine {
 /// Tracks run lifetimes and accepted TCP clients for idle shutdown.
 pub struct EngineActivity {
     counts: Mutex<ActivityCounts>,
+    ranker: Option<Arc<crate::run::learned::AdmittedRanker>>,
 }
 
 struct ActivityCounts {
@@ -314,6 +330,7 @@ struct ActivityCounts {
 impl Default for EngineActivity {
     fn default() -> Self {
         Self {
+            ranker: None,
             counts: Mutex::new(ActivityCounts {
                 active_runs: 0,
                 connected_clients: 0,
@@ -324,6 +341,9 @@ impl Default for EngineActivity {
 }
 
 impl EngineActivity {
+    pub(crate) fn admitted_ranker(&self) -> Option<&crate::run::learned::AdmittedRanker> {
+        self.ranker.as_deref()
+    }
     pub(crate) fn active_runs(&self) -> usize {
         self.counts
             .lock()
