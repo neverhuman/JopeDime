@@ -1,17 +1,3 @@
-\begin{figure*}[!t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_latest_event_rates.pdf}
-  \caption{\textbf{Program-event rate and round duration across retained windows.}
-  Each row is a separate capture of 20 consecutive completed rounds.
-  Left: strict training-program incumbent events divided by total logged
-  round time, with event counts shown. Right: total logged time divided
-  by 20, including all within-round work and waits. The five windows are
-  displayed separately; gaps are neither filled nor connected.
-  Program events are distinct from adapter admissions.
-  Scope: \cref{sec:method-status}.}
-  \label{fig:fw-latest-event-rates}
-\end{figure*}
-
 \subsection{Program-event rate and round duration across windows}\label{app:latest-event-rates}
 
 \Cref{fig:fw-latest-event-rates} consolidates four retained windows with
@@ -19,7 +5,7 @@ raw event counts and wall durations and a fresh matched 20-round capture.
 Each rate divides that window's total events by its total completed-round
 wall time; each mean duration divides the same time by 20. Sources lacking
 raw duration, or lacking 20 consecutive rounds, are excluded rather than
-imputed. The newest window, rounds 3001--3020, records 12 program events
+imputed. The last of those five windows, rounds 3001--3020, records 12 program events
 over \num{1809.50}\,s and no adapter admissions. Its summary event counts
 also match the separate promotion journal.
 
@@ -27,4 +13,3 @@ These are separate adaptive training-search windows, with the source and
 evaluation binding limits in \cref{sec:method-status}. Their ordering does
 not establish a learning curve, an independent policy comparison or
 serving throughput.
-\FloatBarrier

@@ -45,6 +45,10 @@ This accounting does not require independent attempts. Adaptive search
 still needs empirical cost and attempt curves; a batch with no verified
 win has no finite observed cost per win.
 
+\Cref{fig:fw-latest-round-clock} pairs program-event counts with full round
+durations in a later capture. That clock includes all work and waits;
+turning it into a proposal price still requires the attempt ledger.
+
 Training and deployment need separate ledgers. Training pays for every
 attempt, including failures. The proposed deployment protocol pays for
 encoding, one proposal and its fit, with no repair. Fixed-weight agent
@@ -171,5 +175,5 @@ rate under a common task mix, incumbent and verification rule. Under
 \cref{eq:bill}'s fixed-probability model, doubling $\winprob$ halves expected
 cost per win only if mean attempt cost stays fixed.
 
-The learning tasks defined in \cref{sec:method} require separate cost
-and evidence ledgers.
+That accounting boundary applies separately to the writer and adapter
+tasks in \cref{sec:method}; their evidence and costs must remain distinct.
