@@ -160,6 +160,16 @@ speed or latency measurements may be reported as informational data, but never
 affect the verdict. An explicitly owner-supplied complete manifest remains
 supported through `--manifest`.
 
+In `--candidate` mode, the supplied full-Linux artifact remains the signed
+candidate identity for the complete 28-row run and aggregate receipt. D2 receives
+the `fused-cpu-linux-x86_64` artifact from that same RC2 candidate manifest,
+after the runner verifies its path, bytes, source SHA, seal receipt and passing
+signature receipt. The manifest SHA and fused artifact SHA/path are retained in
+the generated D2 command and execution record; the D2 child still verifies the
+fused package's embedded source against the clean checkout. If that exact variant
+is absent or invalid, D2 is recorded BLOCKED; the runner never falls back to the
+full-Linux artifact.
+
 The JSON manifest has schema `jope.rel07.gate-commands/v1`, a full 40-character
 `source_sha`, the exact file's `artifact_sha256`, and a `gates` array. Supply
 exactly one entry for every ID exported by `gates_receipt.RELEASE_GATE_IDS`;
