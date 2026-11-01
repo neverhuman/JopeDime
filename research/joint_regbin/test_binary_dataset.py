@@ -199,8 +199,8 @@ class TaskRoleCandidateManifestTests(unittest.TestCase):
     def _inputs(self):
         rows = []
         for task, count, prefix in (
-            ("regression", 6, "reg"),
-            ("binary", 5, "bin"),
+            ("regression", 8, "reg"),
+            ("binary", 10, "bin"),
         ):
             for index in range(count):
                 identity = len(rows) + 1
@@ -279,15 +279,15 @@ class TaskRoleCandidateManifestTests(unittest.TestCase):
 
         selected = {
             "protocol": "full-DL-Train1219-DL-Val91/v1",
-            "train": [roster_row(f"reg-{i}", "train", i) for i in range(5)],
-            "dev": [roster_row("reg-5", "dev", 5)],
+            "train": [roster_row(f"reg-{i}", "train", i) for i in range(6)],
+            "dev": [roster_row("reg-6", "dev", 6)],
         }
         selected_sha = "e" * 64
         flywheel_run = {
             "input_hashes": {"selected.json": selected_sha},
             "task_counts": {
                 "train_binary": 0,
-                "train_regression": 5,
+                "train_regression": 6,
                 "val_binary": 0,
                 "val_regression": 1,
             },
@@ -301,9 +301,11 @@ class TaskRoleCandidateManifestTests(unittest.TestCase):
             "stats": {"regression:selected": 1, "binary:selected": 1},
             "datasets": [
                 {
-                    "id": "reg-0",
+                    "id": "reg-7",
                     "task": "regression",
-                    "train_rows": rows[0]["train_rows"],
+                    "train_rows": next(
+                        row["train_rows"] for row in rows if row["id"] == "reg-7"
+                    ),
                 },
                 {
                     "id": "bin-0",
@@ -314,6 +316,27 @@ class TaskRoleCandidateManifestTests(unittest.TestCase):
                 },
             ],
         }
+        protected_manifest = {
+            "schema": "jope.h150.sealed-family-identity-manifest/v1",
+            "dataset_hashes": [],
+            "view_ids": [],
+            "catalog_sealed_ids": [],
+            "families": {
+                "fam-sealed-fixture": ["p3_holdout_sealed_excluded"],
+                "fam-holdout-fixture": ["p3_holdout_heldout"],
+            },
+            "counts": {
+                "dataset_hashes": 0,
+                "view_ids": 0,
+                "catalog_sealed_ids": 0,
+                "families_total": 2,
+            },
+        }
+        protected_sha = hashlib.sha256(
+            json.dumps(
+                protected_manifest, sort_keys=True, separators=(",", ":")
+            ).encode()
+        ).hexdigest()
         return (
             catalog,
             catalog_sha,
@@ -327,11 +350,20 @@ class TaskRoleCandidateManifestTests(unittest.TestCase):
             "1" * 64,
             panel,
             "2" * 64,
+            protected_manifest,
+            protected_sha,
         )
+
+    def _build(self, inputs):
+        with patch(
+            "research.joint_regbin.admission.PROTECTED_FAMILY_MANIFEST_SHA256",
+            inputs[-1],
+        ):
+            return build_task_role_candidate_manifest(*inputs)
 
     def test_role_candidates_build_task_roles_folds_and_panel_exclusions(self):
         inputs = self._inputs()
-        manifest = build_task_role_candidate_manifest(*inputs)
+        manifest = self._build(inputs)
 
         self.assertEqual(
             manifest["schema"], "jope.joint-regbin.task-role-candidates/v1"
@@ -341,13 +373,13 @@ class TaskRoleCandidateManifestTests(unittest.TestCase):
         self.assertEqual(
             manifest["role_counts"],
             {
-                "train": {"regression": 5, "binary": 5},
+                "train": {"regression": 6, "binary": 10},
                 "val": {"regression": 1, "binary": 0},
                 "panel": {"regression": 1, "binary": 1},
             },
         )
         self.assertEqual(
-            manifest["panel_train_exclusions"]["regression"]["family_count"], 1
+            manifest["panel_train_exclusions"]["regression"]["family_count"], 0
         )
         self.assertEqual(
             manifest["panel_train_exclusions"]["binary"]["family_count"], 1
@@ -367,13 +399,13 @@ class TaskRoleCandidateManifestTests(unittest.TestCase):
 
     def test_role_candidates_exclude_panel_rows_absent_from_catalog(self):
         inputs = list(self._inputs())
-        panel = inputs[-2]
+        panel = inputs[10]
         panel["stats"]["regression:selected"] = 2
         panel["datasets"].append(
             {"id": "missing-reg-panel", "task": "regression", "train_rows": 25}
         )
 
-        manifest = build_task_role_candidate_manifest(*inputs)
+        manifest = self._build(inputs)
 
         self.assertEqual(
             manifest["closure"]["panel_catalog_missing_by_task"]["regression"], 1
@@ -388,17 +420,98 @@ class TaskRoleCandidateManifestTests(unittest.TestCase):
         inputs = list(self._inputs())
         inputs[8]["input_hashes"]["selected.json"] = "0" * 64
         with self.assertRaisesRegex(ValueError, "flywheel train/dev"):
-            build_task_role_candidate_manifest(*inputs)
+            self._build(inputs)
 
         inputs = self._inputs()
         inputs[8]["train_contexts"][0] = "9" * 64
         with self.assertRaisesRegex(ValueError, "flywheel train/dev"):
-            build_task_role_candidate_manifest(*inputs)
+            self._build(inputs)
 
         inputs = self._inputs()
         inputs[6]["train"][0]["task"] = "binary"
         with self.assertRaisesRegex(ValueError, "not regression"):
-            build_task_role_candidate_manifest(*inputs)
+            self._build(inputs)
+
+    def test_role_candidates_exclude_recs_and_holdout_alias_families_everywhere(self):
+        inputs = list(self._inputs())
+        catalog, selected = inputs[0], inputs[6]
+        recs_id = "8d5f6d3120d2cbc2"
+        holdout_id = "a1b2c3d4e5f60718"
+        recs_url = "https://protected.example/recs2020/v7.csv"
+        holdout_url = "https://protected.example/dl-holdout/member.csv"
+
+        recs_seed = next(row for row in catalog["datasets"] if row["id"] == "reg-1")
+        recs_seed["id"] = recs_id
+        recs_seed["family_key"] = "3e82de5441dd180574e99eaab8dbf2f78f91ca0e"
+        recs_seed["source_url"] = recs_url
+        selected["train"][1]["dataset_id"] = recs_id
+        for candidate in inputs[4]["candidate_pools"]["regression"]:
+            if candidate["dataset"] == "reg-1":
+                candidate["dataset"] = recs_id
+        next(row for row in catalog["datasets"] if row["id"] == "reg-6")[
+            "source_url"
+        ] = recs_url
+        next(row for row in catalog["datasets"] if row["id"] == "reg-7")[
+            "source_url"
+        ] = recs_url
+
+        holdout_seed = next(row for row in catalog["datasets"] if row["id"] == "bin-1")
+        holdout_seed["id"] = holdout_id
+        holdout_seed["source_url"] = holdout_url
+        for candidate in inputs[4]["candidate_pools"]["binary"]:
+            if candidate["dataset"] == "bin-1":
+                candidate["dataset"] = holdout_id
+        next(row for row in catalog["datasets"] if row["id"] == "bin-0")[
+            "source_url"
+        ] = holdout_url
+
+        protected_manifest = {
+            "schema": "jope.h150.sealed-family-identity-manifest/v1",
+            "dataset_hashes": [recs_id, holdout_id],
+            "view_ids": [f"{recs_id}__r0__f0", f"{holdout_id}__r0__f0"],
+            "catalog_sealed_ids": [],
+            "families": {
+                "fam-recs": [
+                    "p3_holdout_sealed_excluded",
+                    "p3_registry_sealed",
+                    "sealed_production",
+                ],
+                "fam-dl-holdout": ["p3_holdout_heldout"],
+            },
+            "counts": {
+                "dataset_hashes": 2,
+                "view_ids": 2,
+                "catalog_sealed_ids": 0,
+                "families_total": 2,
+            },
+        }
+        protected_sha = hashlib.sha256(
+            json.dumps(
+                protected_manifest, sort_keys=True, separators=(",", ":")
+            ).encode()
+        ).hexdigest()
+        inputs[-2] = protected_manifest
+        inputs[-1] = protected_sha
+
+        manifest = self._build(inputs)
+
+        exclusions = manifest["protected_exclusion"]["excluded_role_counts"]
+        self.assertEqual(exclusions["train"]["regression"], 1)
+        self.assertEqual(exclusions["val"]["regression"], 1)
+        self.assertEqual(exclusions["train"]["binary"], 2)
+        self.assertEqual(exclusions["panel"]["regression"], 1)
+        self.assertEqual(exclusions["panel"]["binary"], 1)
+        self.assertEqual(
+            manifest["protected_exclusion"]["assigned_role_dataset_overlap"], 0
+        )
+        self.assertEqual(
+            manifest["protected_exclusion"]["assigned_role_family_overlap"], 0
+        )
+        all_assigned = [row for rows in manifest["records"].values() for row in rows]
+        self.assertNotIn(recs_id, {row["dataset"] for row in all_assigned})
+        self.assertNotIn(holdout_id, {row["dataset"] for row in all_assigned})
+        self.assertNotIn("reg-7", {row["dataset"] for row in all_assigned})
+        self.assertNotIn("bin-0", {row["dataset"] for row in all_assigned})
 
 
 # Catalog v246's explicit sealed-name-match exclusion IDs. This is the

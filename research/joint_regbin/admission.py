@@ -43,6 +43,10 @@ FLYWHEEL_RUN_MANIFEST_SHA256 = (
     "b638084435e4a2363098586b0f1a5f9e014b552c45e2a6b7bb6f2cc829f4171f"
 )
 ELO_PANEL_V1_SHA256 = "e0ce676f62b4df77e586d42b6fa1ebfe48c148a0dd87d17fdd0cb98a51e67ab9"
+PROTECTED_FAMILY_MANIFEST_SHA256 = (
+    "0314599fe06515d3f3e976c0d435cbe4e9fbe26738014bd89470f525702f983b"
+)
+PROTECTED_FAMILY_MANIFEST_SCHEMA = "jope.h150.sealed-family-identity-manifest/v1"
 
 
 def sha256_file(path: Path) -> str:
@@ -251,23 +255,21 @@ def review_catalog_families(records: list[dict]) -> dict:
     evidence_by_id: dict[str, list[list[str]]] = {}
     review_by_id: dict[str, dict] = {}
     for dataset_id, row in sorted(by_id.items()):
-        provenance = {
-            key: value
-            for key, value in {
-                "platform": row.get("platform"),
-                "url": row.get("source_url"),
-                "dedupe_fingerprint": row.get("family_key"),
-            }.items()
-            if value is not None
-        }
-        keys = set(
-            family_keys.derive(
-                {
-                    "canonical_sha256": row.get("canonical_sha256"),
-                    "provenance": provenance,
-                }
-            )[0]
+        attrs = family_keys.attrs_from_catalog_row(row)
+        provenance = dict(attrs.get("provenance", {}))
+        provenance.update(
+            {
+                key: value
+                for key, value in {
+                    "platform": row.get("platform"),
+                    "url": row.get("source_url"),
+                    "dedupe_fingerprint": row.get("family_key"),
+                }.items()
+                if value is not None
+            }
         )
+        attrs["provenance"] = provenance
+        keys = set(family_keys.derive(attrs)[0])
         srcfile = _srcfile_key(row)
         if srcfile:
             keys.add(("srcfile", srcfile))
@@ -539,6 +541,71 @@ def build_catalog_pool_manifest_from_files(
     )
 
 
+def _protected_catalog_member_ids(
+    manifest: dict, manifest_sha256: str
+) -> tuple[set[str], set[str]]:
+    """Return protected catalog member IDs and the complete protected identity set."""
+    if (
+        manifest.get("schema") != PROTECTED_FAMILY_MANIFEST_SCHEMA
+        or manifest_sha256 != PROTECTED_FAMILY_MANIFEST_SHA256
+        or not re.fullmatch(r"[0-9a-f]{64}", manifest_sha256 or "")
+    ):
+        raise ValueError("protected-family manifest is not the pinned identity receipt")
+
+    dataset_ids = manifest.get("dataset_hashes")
+    view_ids = manifest.get("view_ids")
+    catalog_ids = manifest.get("catalog_sealed_ids")
+    families = manifest.get("families")
+    counts = manifest.get("counts")
+    if (
+        not isinstance(dataset_ids, list)
+        or not isinstance(view_ids, list)
+        or not isinstance(catalog_ids, list)
+        or not isinstance(families, dict)
+        or not isinstance(counts, dict)
+        or any(not isinstance(value, str) or not value for value in dataset_ids)
+        or any(not isinstance(value, str) or not value for value in view_ids)
+        or any(not isinstance(value, str) or not value for value in catalog_ids)
+        or len(set(dataset_ids)) != len(dataset_ids)
+        or len(set(view_ids)) != len(view_ids)
+        or len(set(catalog_ids)) != len(catalog_ids)
+        or len(families) != len(set(families))
+    ):
+        raise ValueError("protected-family manifest identity inventory is malformed")
+    view_member_ids = set()
+    for view_id in view_ids:
+        member_id, separator, suffix = view_id.partition("__")
+        if not separator or not suffix:
+            raise ValueError("protected-family manifest has a malformed view identity")
+        view_member_ids.add(member_id)
+    if view_member_ids != set(dataset_ids):
+        raise ValueError("protected-family dataset and view identities disagree")
+
+    if any(
+        not isinstance(family_id, str)
+        or not family_id
+        or not isinstance(family_labels, list)
+        or any(not isinstance(label, str) or not label for label in family_labels)
+        for family_id, family_labels in families.items()
+    ):
+        raise ValueError("protected-family manifest family labels are malformed")
+    labels = {label for family_labels in families.values() for label in family_labels}
+    if not {"p3_holdout_sealed_excluded", "p3_holdout_heldout"} <= labels:
+        raise ValueError("protected-family manifest lacks sealed or DL-Holdout labels")
+    expected_counts = {
+        "dataset_hashes": len(dataset_ids),
+        "view_ids": len(view_ids),
+        "catalog_sealed_ids": len(catalog_ids),
+        "families_total": len(families),
+    }
+    if any(counts.get(name) != count for name, count in expected_counts.items()):
+        raise ValueError("protected-family manifest counts do not match its identities")
+
+    protected_dataset_ids = set(dataset_ids)
+    protected_member_ids = protected_dataset_ids | set(catalog_ids)
+    return protected_dataset_ids, protected_member_ids
+
+
 def build_task_role_candidate_manifest(
     catalog: dict,
     catalog_sha256: str,
@@ -552,6 +619,8 @@ def build_task_role_candidate_manifest(
     flywheel_run_sha256: str,
     panel: dict,
     panel_sha256: str,
+    protected_manifest: dict,
+    protected_manifest_sha256: str,
 ) -> dict:
     """Build role and five-fold candidates without asserting payload admission."""
     if (
@@ -606,6 +675,9 @@ def build_task_role_candidate_manifest(
         r"[0-9a-f]{64}", panel_sha256 or ""
     ):
         raise ValueError("task panel metadata schema or digest is invalid")
+    protected_dataset_ids, protected_member_ids = _protected_catalog_member_ids(
+        protected_manifest, protected_manifest_sha256
+    )
 
     catalog_rows = catalog.get("datasets", [])
     catalog_by_id = {row.get("id"): row for row in catalog_rows}
@@ -613,6 +685,31 @@ def build_task_role_candidate_manifest(
         raise ValueError("catalog has duplicate or missing dataset IDs")
     family_review = review_catalog_families(catalog_rows)
     family_by_id = family_review["family_by_dataset"]
+    if not protected_dataset_ids <= catalog_by_id.keys():
+        raise ValueError("pinned protected members do not join to curated catalog")
+    protected_catalog_ids = protected_member_ids & catalog_by_id.keys()
+    protected_families = {family_by_id[dataset] for dataset in protected_catalog_ids}
+    family_evidence_by_id = {
+        row["dataset"]: {tuple(key) for key in row["union_evidence"]}
+        for row in family_review["records"]
+    }
+    protected_union_keys = set().union(
+        *(family_evidence_by_id[dataset] for dataset in protected_dataset_ids)
+    )
+    protected_union_key_sha256 = canonical_json_sha(
+        [list(key) for key in sorted(protected_union_keys)]
+    )
+    role_exclusion_counts = {
+        "train": {task: 0 for task in protocol.TASKS},
+        "val": {task: 0 for task in protocol.TASKS},
+        "panel": {task: 0 for task in protocol.TASKS},
+    }
+
+    def is_protected(dataset: str) -> bool:
+        return (
+            dataset in protected_member_ids
+            or family_by_id[dataset] in protected_families
+        )
 
     pool_rows: dict[str, dict[str, dict]] = {}
     for task in protocol.TASKS:
@@ -648,6 +745,9 @@ def build_task_role_candidate_manifest(
                     raise ValueError(
                         "flywheel selected row lacks pinned context hashes"
                     )
+            if is_protected(dataset):
+                role_exclusion_counts[role]["regression"] += 1
+                continue
             result.append(
                 {
                     "context": row["view_id"],
@@ -674,6 +774,9 @@ def build_task_role_candidate_manifest(
             or candidate.get("train_sha256") != catalog_row.get("train_sha256")
         ):
             raise ValueError("binary candidate row differs from pinned catalog")
+        if is_protected(dataset):
+            role_exclusion_counts["train"]["binary"] += 1
+            continue
         binary_train.append(
             {
                 "dataset": dataset,
@@ -709,6 +812,9 @@ def build_task_role_candidate_manifest(
             "train_rows"
         ):
             raise ValueError("panel row differs from curated catalog task or size")
+        if is_protected(dataset):
+            role_exclusion_counts["panel"][task] += 1
+            continue
         panel_rows[task].append(
             {
                 "dataset": dataset,
@@ -751,6 +857,19 @@ def build_task_role_candidate_manifest(
             ),
         }
 
+    assigned_rows = [
+        *regression_train,
+        *regression_val,
+        *binary_train,
+        *panel_rows["regression"],
+        *panel_rows["binary"],
+    ]
+    if any(
+        row["dataset"] in protected_member_ids or row["family"] in protected_families
+        for row in assigned_rows
+    ):
+        raise ValueError("protected family remained in an assigned role")
+
     role_counts = {
         "train": {
             "regression": len(regression_train),
@@ -791,6 +910,23 @@ def build_task_role_candidate_manifest(
             "validation_context_counts_by_fold": fold_counts,
         },
         "panel_train_exclusions": panel_train_exclusions,
+        "protected_exclusion": {
+            "manifest_sha256": protected_manifest_sha256,
+            "manifest_schema": PROTECTED_FAMILY_MANIFEST_SCHEMA,
+            "protected_member_count": len(protected_member_ids),
+            "protected_catalog_dataset_count": len(protected_dataset_ids),
+            "catalog_alias_family_count": len(protected_families),
+            "catalog_alias_family_sha256": canonical_json_sha(
+                sorted(protected_families)
+            ),
+            "family_key_schema": family_review["dedupe_tool_schema"],
+            "family_key_policy_sha256": family_review["dedupe_tool_policy_sha256"],
+            "protected_derived_union_key_count": len(protected_union_keys),
+            "protected_derived_union_keys_sha256": protected_union_key_sha256,
+            "excluded_role_counts": role_exclusion_counts,
+            "assigned_role_dataset_overlap": 0,
+            "assigned_role_family_overlap": 0,
+        },
         "records": {
             "regression_train": regression_train,
             "regression_val": regression_val,
@@ -808,6 +944,7 @@ def build_task_role_candidate_manifest(
             "owner_alias_family_assigned_a_role": False,
             "panel_catalog_missing_by_task": panel_catalog_missing,
             "panel_train_family_overlap_excluded_during_panel_evaluation": True,
+            "p3_sealed_and_dl_holdout_roles_excluded_by_family_keys": True,
             "sealed_meta_test_and_dl_holdout_payloads_opened": 0,
         },
         "blockers": blockers,
@@ -821,8 +958,14 @@ def build_task_role_candidate_manifest_from_files(
     selected_path: Path,
     flywheel_run_path: Path,
     panel_path: Path,
+    protected_manifest_path: Path | None = None,
 ) -> dict:
     """Load exact approved role metadata and bind all source files by SHA-256."""
+    if protected_manifest_path is None:
+        protected_manifest_path = (
+            Path(__file__).resolve().parents[2]
+            / "research/flywheel_selfplay/h150_w5_provenance_unblock/sealed_family_manifest.json"
+        )
     paths = {
         "catalog": Path(catalog_path),
         "owner_alias": Path(owner_alias_path),
@@ -830,6 +973,7 @@ def build_task_role_candidate_manifest_from_files(
         "selected": Path(selected_path),
         "flywheel_run": Path(flywheel_run_path),
         "panel": Path(panel_path),
+        "protected_manifest": Path(protected_manifest_path),
     }
     expected = {
         "catalog": CATALOG_V246_SHA256,
@@ -838,6 +982,7 @@ def build_task_role_candidate_manifest_from_files(
         "selected": FLYWHEEL_SELECTED_SHA256,
         "flywheel_run": FLYWHEEL_RUN_MANIFEST_SHA256,
         "panel": ELO_PANEL_V1_SHA256,
+        "protected_manifest": PROTECTED_FAMILY_MANIFEST_SHA256,
     }
     raw = {name: path.read_bytes() for name, path in paths.items()}
     actual = {name: hashlib.sha256(data).hexdigest() for name, data in raw.items()}
@@ -859,6 +1004,8 @@ def build_task_role_candidate_manifest_from_files(
         actual["flywheel_run"],
         objects["panel"],
         actual["panel"],
+        objects["protected_manifest"],
+        actual["protected_manifest"],
     )
 
 
