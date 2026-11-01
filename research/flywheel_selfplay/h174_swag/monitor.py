@@ -83,11 +83,16 @@ def main():
         raise RuntimeError("prelaunch resource refusal: " + repr(violations(initial)))
     started = time.monotonic()
     if not args.smoke:
-        with Path("/home/ubuntu/jope_plan/ns/receipts/H174_attempt.claim").open(
-            "x"
-        ) as f:
+        launch_doc = json.loads(args.launch.read_text())
+        attempt = int(launch_doc.get("attempt", 1))
+        claim_name = (
+            "H174_attempt.claim" if attempt == 1 else f"H174_attempt{attempt}.claim"
+        )
+        claim_path = Path("/home/ubuntu/jope_plan/ns/receipts") / claim_name
+        with claim_path.open("x") as f:
             json.dump(
                 dict(
+                    attempt=attempt,
                     pid=os.getpid(),
                     utc=time.time(),
                     output=str(args.output.resolve()),

@@ -9,6 +9,7 @@ from pathlib import Path
 import analysis as stat
 from runner import locked_b_panel
 from treatment import (
+    adapter_forward,
     RANK,
     SAMPLES,
     SNAPSHOT_STEPS,
@@ -97,6 +98,62 @@ def test_locked_b_panel_retains_raw_costs_choices_and_utilities_by_context():
     assert locked["utilities"] == panel["values"]
     with pytest.raises(ValueError, match="context identity"):
         locked_b_panel(rows, {"wrong": np.zeros(24)}, panel)
+
+
+def test_adapter_forward_calls_synced_fused_model_keyword_api():
+    class Adapter:
+        def encode_multimodal_context_and_candidates(
+            self,
+            *,
+            mm_tokens_10x32,
+            mm_mask_10,
+            prog_412,
+            sos_prior,
+            active_modality_override_mask,
+        ):
+            assert mm_tokens_10x32.shape == (1, 10, 32)
+            assert mm_mask_10.shape == (1, 10)
+            assert prog_412.shape == (1, 24, 412)
+            assert sos_prior.shape == (1, 24, 2)
+            assert active_modality_override_mask is None
+            return (
+                torch.zeros((1, 32)),
+                torch.zeros((1, 24, 32)),
+                torch.zeros((1, 24, 24)),
+                torch.zeros((1, 24)),
+            )
+
+        def compute_adapter_delta_from_static_terms(
+            self,
+            *,
+            static_terms,
+            scale,
+            revealed_indices,
+            revealed_raw_f,
+            revealed_gate,
+        ):
+            assert static_terms["cand_q_norm"].shape == (1, 24, 32)
+            assert scale.shape == (1,)
+            assert revealed_indices.shape == revealed_raw_f.shape == revealed_gate.shape
+            return torch.zeros((1, 24))
+
+    class Net:
+        adapter_10tok = Adapter()
+
+    result = adapter_forward(
+        Net(),
+        torch.zeros((1, 24, 412)),
+        torch.zeros((1, 24, 2)),
+        torch.zeros((1, 10, 32)),
+        torch.ones((1, 10)),
+        torch.ones((1,)),
+        torch.zeros((1, 4), dtype=torch.long),
+        torch.zeros((1, 4)),
+        torch.ones((1, 4)),
+        torch.ones((1, 24)),
+        torch.ones((1, 24)),
+    )
+    assert torch.equal(result, torch.ones((1, 24)))
 
 
 def test_trajectory_scope_rejects_selector_assessment_and_val_families():
