@@ -85,6 +85,7 @@ fn spec(dataset: jope_api::ids::DatasetId) -> RunSpec {
     spec.guidance = jope_api::Guidance::Auto;
     spec.device = "auto".into();
     spec.seed = DecimalU64(73);
+    spec.languages = vec![jope_api::Language::Rust, jope_api::Language::Python];
     spec.budget.evaluations = Some(DecimalU64(1));
     spec.budget.wall_seconds = Some(DecimalU64(120));
     spec
@@ -157,7 +158,7 @@ fn batch_command(home: &Path, spec: &RunSpec) -> Command {
             "--guidance",
             "auto",
             "--language",
-            "rust",
+            "rust,python",
             "--require-all-languages",
             "--device",
             "auto",
@@ -177,7 +178,9 @@ fn snapshot(output: std::process::Output) -> Result<RunSnapshot> {
         "batch failed: {}",
         String::from_utf8_lossy(&output.stderr)
     );
-    let snapshot: RunSnapshot = serde_json::from_slice(&output.stdout)?;
+    let payload: Value = serde_json::from_slice(&output.stdout)?;
+    let snapshot: RunSnapshot =
+        serde_json::from_value(payload.get("run").unwrap_or(&payload).clone())?;
     ensure!(
         snapshot.state == jope_api::RunState::Completed,
         "batch did not complete: {:?}",
@@ -500,7 +503,7 @@ fn terminal(
     } else {
         String::new()
     };
-    let commands=format!("\\landmarks none\n\\lang rust\n\\target target --task regression\n\\effort fast --evals 1 --time 120s\n\\open {}\n\\run --seed 73 --idempotency-key {key}\n{attach}",csv.display());
+    let commands=format!("\\landmarks none\n\\lang rust,python\n\\target target --task regression\n\\effort fast --evals 1 --time 120s\n\\open {}\n\\run --seed 73 --idempotency-key {key}\n{attach}",csv.display());
     writer.write_all(commands.as_bytes())?;
     writer.flush()?;
     let deadline = Instant::now() + Duration::from_secs(40);
@@ -848,7 +851,30 @@ pub(super) fn batch_fallback() -> Result<()> {
     let bytes = input()?;
     let (engine, spec) = initialize(home.path(), &bytes)?;
     drop(engine);
-    let output = batch_command(home.path(), &spec).output()?;
+    let csv = home.path().join("original-label.csv");
+    fs::write(&csv, &bytes)?;
+    let template = batch_command(home.path(), &spec);
+    let mut args: Vec<_> = template.get_args().map(std::ffi::OsStr::to_owned).collect();
+    let at = args
+        .iter()
+        .position(|arg| arg == "--dataset")
+        .context("dataset argument missing")?;
+    args.drain(at..at + 2);
+    args.insert(1, csv.as_os_str().to_owned());
+    let out = home.path().join("csv-export");
+    let output = Command::new(home.path().join("jopedime"))
+        .env("JOPEDIME_HOME", home.path())
+        .env_remove("JOPEDIME_ENDPOINT")
+        .args(args)
+        .arg("--out")
+        .arg(&out)
+        .output()?;
+    ensure!(
+        out.join("src/python/predictor.py").is_file()
+            && out.join("src/rust/predictor.rs").is_file(),
+        "CSV batch did not export both requested languages"
+    );
+
     let engine = InProcessEngine::open_with_worker(home.path(), home.path().join("jopedime"))?;
     retain_execution(&engine, &output, "batch")?;
     let completed = snapshot(output)?;
