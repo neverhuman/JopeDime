@@ -22,7 +22,8 @@ Only real-S3-derived TRAIN rows from the pinned selected manifest may enter
 fit/inner-select. The identity-only known sealed-family deny-list from the
 H150 provenance record is applied before partitioning; the deny-list's
 limitations remain: no claim of globally complete alias exclusion. No sealed,
-holdout, meta-test, or live-loop inputs or outputs are read. Before training,
+holdout or meta-test payloads/outcomes, or live-loop inputs/outputs, are read;
+only the H150 identity-only sealed-family deny-list is consulted. Before training,
 DL-Val may be read only for the unchanged-r882 two-copy regression gate. No
 treatment candidate is evaluated on DL-Val until all candidate choices and
 their hashes are frozen. Historical r882
@@ -94,7 +95,8 @@ winner only when its observed median family gain is strictly greater than
 `+0.001` and the percentile 2.5% bootstrap bound is strictly greater than
 zero. Values within `1e-12` of `0.001` are ties and reject. If the BOK8
 winner fails, select r882. Persist selection scores,
-bootstrap summaries and chosen checkpoint hashes before any DL-Val read.
+bootstrap summaries and chosen checkpoint hashes before any treatment DL-Val
+read; the unchanged-r882 pre-training regression gate above is the sole exception.
 
 ## Endpoints and decision
 
@@ -133,7 +135,8 @@ before launch and continuously during updates. xbabe3 and xbabe0 are forbidden.
 No GPU and no `qualification.lock` use for H157.
 
 Estimated actual updates: 3 × 40 TR1 + 3 × 8 × 40 BOK8 = 1,080. After PR
-merge and the exact-head cross-review passes, place a launch receipt at
+merge and the exact-head cross-review passes, provision the empty external
+custody roots `/home/ubuntu/jope-data/h157` and `/home/ubuntu/jope_plan/evidence/H157`, then place a launch receipt at
 `/home/ubuntu/jope_plan/evidence/H157/launch.json` with `source_commit`, `manifest_sha256`, `merged_source_verified=true`,
 `cross_review_pass=true`, `reviewer="luna_v1_rnk11"`, `review_pr`,
 `reviewed_source_commit`, and `merged_pr`. From the repository root, run:
