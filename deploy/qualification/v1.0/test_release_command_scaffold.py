@@ -77,10 +77,10 @@ class ReleaseCommandScaffoldTests(unittest.TestCase):
             "${JOPE_PARITY_REPORT_DIR}",
         ]
         expected_argv["M5"] += [
-            "--golden-dir",
-            "${JOPE_GOLDEN_DIR}",
-            "--bundle-dir",
-            "${JOPE_PARITY_BUNDLE_DIR}",
+            "--default-off-receipt",
+            "${JOPE_REL07_M5_DEFAULT_OFF_RECEIPT}",
+            "--default-off-receipt-sha256",
+            "${JOPE_REL07_M5_DEFAULT_OFF_RECEIPT_SHA256}",
         ]
         self.assertEqual(actual_argv, expected_argv)
 
@@ -96,6 +96,8 @@ class ReleaseCommandScaffoldTests(unittest.TestCase):
             "JOPE_GOLDEN_INDEX_SHA256",
             "JOPE_PARITY_BUNDLE_DIR",
             "JOPE_PARITY_REPORT_DIR",
+            "JOPE_REL07_M5_DEFAULT_OFF_RECEIPT",
+            "JOPE_REL07_M5_DEFAULT_OFF_RECEIPT_SHA256",
         }
         refs = set(re.findall(r"\$\{([A-Z0-9_]+)\}", json.dumps(self.scaffold)))
         self.assertEqual(refs, allowed)
@@ -109,7 +111,7 @@ class ReleaseCommandScaffoldTests(unittest.TestCase):
         self.assertIn("JOPE_REL07_D1_MACOS_RECEIPT", per_gate["D1"])
         self.assertIn("JOPE_REL07_D1_MACOS_ARTIFACT_SHA256", per_gate["D1"])
         self.assertIn("JOPE_GOLDEN_INDEX_SHA256", per_gate["M2"])
-        self.assertIn("JOPE_GOLDEN_DIR", per_gate["M5"])
+        self.assertIn("JOPE_REL07_M5_DEFAULT_OFF_RECEIPT", per_gate["M5"])
 
     def test_unresolved_scaffold_fails_closed_in_release_runner(self):
         with self.assertRaisesRegex(ValueError, "unsupported gate-command schema"):

@@ -13,17 +13,26 @@ Initial real CPU probes at sources `0c6fb19ec27e8ef333cbfbb011dc8b35b4b9b138` an
 
 ## Discovery input binding
 
-The release runner discovers M5 as `python3 -B providers/m5.py` without extra
-arguments. M5 therefore accepts the existing `JOPE_GOLDEN_DIR` and
-`JOPE_PARITY_BUNDLE_DIR` environment bindings as defaults for `--golden-dir` and
-`--bundle-dir`. Explicit flags take precedence, and either source may supply
-each path. Missing bindings refuse before candidate verification or child
-execution. Absolute paths, non-symlink regular files and the exact TRAIN-index
-and frozen-weight hashes remain mandatory. No input is downloaded or selected
-automatically. The causal report predicates and result publication are unchanged;
-the observed 0/50 landmark-causality result remains unqualified.
+R21 supersedes the learned-guidance causal replay as the v1 M5 admission
+criterion. The owner waived M5/S4 learned-guidance behavior for v1 because the
+feature ships disabled after the one-shot RNK-10 A/B found no lift. The M5
+provider-input alternative is an external, SHA-256-pinned
+`jope.rnk10.default-off/v1` receipt. It must bind the exact tested source,
+SHA-256-pinned shipped config and bundle with a heuristic default and learned
+guidance disabled, byte-identical serving
+admission output with the ranker absent and present-but-disabled, and identical
+hashes from two S2 runs on the default path. The provider also verifies the
+full candidate and source identity before emitting the three-check M5 result.
+This receipt validates the R21 waiver conditions; it does not claim causal
+lift, model quality, or release qualification by itself.
 
-Data-free CLI controls reproduce the runner's bare invocation through the real
-context parser and M5 checks. They cover environment-only and mixed/explicit
-inputs, precedence, missing inputs and invalid paths. Synthetic child receipts
-prove orchestration, not model causality or a release-candidate PASS.
+The release runner binds M5 with `--default-off-receipt ABSOLUTE_JSON
+--default-off-receipt-sha256 FULL_HASH`. The earlier golden/bundle arguments
+remain accepted only for the historical causal replay path; they do not satisfy
+the R21 default-off receipt binding. No input is downloaded or selected
+automatically.
+
+Data-free tests cover receipt schema, source and file-hash pins, all three R21
+predicates, and command binding. The legacy causal-path tests remain historical
+controller coverage. Synthetic receipt checks do not constitute an RNK-10
+replay, a candidate gate execution, or release qualification.

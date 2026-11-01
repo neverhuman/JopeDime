@@ -3,7 +3,7 @@
   "qualification_handoff": "NOT_EXECUTABLE",
   "candidate_sha256": "${JOPE_REL07_ARTIFACT_SHA256}",
   "source_policy": "Pin the exact clean origin/main SHA when materializing a run manifest.",
-  "input_owner": "dsc01 supplies and verifies the named A5, D1, M2, and M5 inputs.",
+  "input_owner": "dsc01 supplies A5, D1, and M2; rnk11 supplies the R21 M5 default-off receipt.",
   "gates": [
     {
       "id": "M1",
@@ -55,10 +55,10 @@
         "python3",
         "-B",
         "deploy/qualification/v1.0/providers/m5.py",
-        "--golden-dir",
-        "${JOPE_GOLDEN_DIR}",
-        "--bundle-dir",
-        "${JOPE_PARITY_BUNDLE_DIR}"
+        "--default-off-receipt",
+        "${JOPE_REL07_M5_DEFAULT_OFF_RECEIPT}",
+        "--default-off-receipt-sha256",
+        "${JOPE_REL07_M5_DEFAULT_OFF_RECEIPT_SHA256}"
       ],
       "timeout_seconds": 3600
     },
