@@ -4,6 +4,9 @@
 //! they do not replace its preprocessing, fitting, or prediction procedure.
 
 #[rustfmt::skip]
+// This included submission is byte-pinned; preserve its source while allowing
+// only the two Clippy suggestions that would require changing those bytes.
+#[allow(clippy::unnecessary_map_or, clippy::needless_range_loop)]
 #[path = "GPT6p1_Sol_Max.rs"]
 mod submission;
 
