@@ -6,8 +6,8 @@ figs:
 	python3 figures/scripts/make_flywheel_figs.py
 	python3 figures/scripts/make_schematics.py
 	python3 figures/scripts/make_promotions_figure.py
-	python3 figures/scripts/make_promotions_figure.py --target-progress
-	python3 figures/scripts/make_promotions_figure.py --target-history
+	python3 figures/scripts/make_promotions_figure.py --target-progress --source-dir "$(HISTORICAL_TARGET_INPUTS)"
+	python3 figures/scripts/make_promotions_figure.py --target-history --source-dir "$(HISTORICAL_TARGET_INPUTS)"
 	python3 figures/scripts/make_recent_development_figure.py
 	python3 figures/scripts/make_recent_development_figure.py --follow-up
 	python3 figures/scripts/make_recent_development_figure.py --later-window

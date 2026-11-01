@@ -147,7 +147,9 @@ families, rather than treating every dataset as an independent observation.
 
 \subsection{Pricing evidence still required}\label{sub:price-run}
 
-Mixture-of-experts writers use compute on active parameters but need memory
+Turning the per-token scaling comparisons of \cref{sub:price-tax} into a
+hardware bill requires accounting for resident model memory alongside active
+compute. Mixture-of-experts writers use compute on active parameters but need memory
 for all parameters: Kimi~K2 has 32B active of 1T, while DeepSeek-V3 has 37B
 active of 671B \citep{kimiteam2025k2,deepseekv3}. Resident one-byte weights
 for 1T parameters alone require at least 13 H100 SXM GPUs with 80~GB each

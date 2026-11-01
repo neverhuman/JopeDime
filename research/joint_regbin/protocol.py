@@ -10,7 +10,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 TASKS = ("regression", "binary")
-ARMS = ("joint-balanced", "joint-natural", "reg-only", "bin-only")
+ARMS = ("joint", "reg-only", "bin-only")
 DOPE = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
 SCHEMA = "jope.joint-regbin/v1"
 EVALUATION_PROTOCOL = "cached-pool-jrb01/v1"
@@ -251,7 +251,7 @@ def make_plan(manifest, config=None):
                 selected = [
                     row
                     for row in fit
-                    if arm.startswith("joint")
+                    if arm == "joint"
                     or row["task"] == ("regression" if arm == "reg-only" else "binary")
                 ]
                 if not selected:
@@ -346,7 +346,7 @@ def batches(job, config):
     reg_count = len(queues["regression"])
     size = config["contexts"]
     for step in range(config["rounds"] * config["steps"]):
-        if job["arm"] == "joint-balanced":
+        if job["arm"] == "joint":
             nreg = size // 2
         else:
             nreg = (

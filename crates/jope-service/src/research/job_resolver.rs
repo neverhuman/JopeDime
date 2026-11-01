@@ -138,6 +138,36 @@ fn plan_sha256(plan: &Plan) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{
+        discover::r#loop::Plan,
+        research::{
+            capture::{Binding, CaptureConfig, CaptureProvider, SlateObservation},
+            CaptureContext, RecordEvidence, RecordIdentity, RecordTask, RecordedReveal,
+            Rung0Measurement, DOPE_SHA256,
+        },
+        worker::{Request, Response},
+    };
+    use std::sync::Arc;
+
+    struct ControlProvider;
+
+    impl CaptureProvider for ControlProvider {
+        fn validate_binding(&self, _: &Binding, _: &Plan) -> Result<()> {
+            Ok(())
+        }
+
+        fn observe(&self, _: u64, _: &[String], _: &[RecordedReveal]) -> Result<SlateObservation> {
+            anyhow::bail!("resolver tests do not execute capture")
+        }
+
+        fn measurement(&self, _: &Request, _: &Response) -> Result<Rung0Measurement> {
+            anyhow::bail!("resolver tests do not execute capture")
+        }
+
+        fn label_seed(&self, _: u64, _: usize) -> Result<u64> {
+            anyhow::bail!("resolver tests do not execute capture")
+        }
+    }
 
     #[test]
     fn job_ids_are_opaque_tokens_not_paths() {
@@ -153,6 +183,51 @@ mod tests {
         let resolver = TrustedJobResolver::new();
         assert!(!resolver.contains("known-later"));
         assert!(resolver.resolve("known-later", &test_plan()).is_err());
+    }
+
+    #[test]
+    fn resolver_rejects_path_like_ids_before_lookup() {
+        let resolver = TrustedJobResolver::new();
+        for id in ["../accepted-job", "file:///tmp/job.json", "jobs/accepted"] {
+            let error = resolver.resolve(id, &test_plan()).err().unwrap();
+            assert!(error.to_string().contains("invalid opaque research job ID"));
+        }
+    }
+
+    #[test]
+    fn accepted_admission_refuses_synthetic_capture_even_with_a_pinned_receipt() {
+        let (plan, context) = synthetic_context();
+        let error = AcceptedJobAdmission::from_verified_receipts(
+            "accepted-01",
+            &plan,
+            &"a".repeat(64),
+            context,
+        )
+        .err()
+        .unwrap();
+
+        assert!(error
+            .to_string()
+            .contains("synthetic control cannot be registered as an accepted job"));
+    }
+
+    #[test]
+    fn admission_rejects_unpinned_receipt_before_registering_any_job() {
+        let (plan, context) = synthetic_context();
+        let resolver = TrustedJobResolver::new();
+        let error = AcceptedJobAdmission::from_verified_receipts(
+            "accepted-01",
+            &plan,
+            "not-a-sha256",
+            context,
+        )
+        .err()
+        .unwrap();
+
+        assert!(error
+            .to_string()
+            .contains("accepted qualification receipt is not SHA-256 pinned"));
+        assert!(!resolver.contains("accepted-01"));
     }
 
     #[test]
@@ -190,5 +265,39 @@ mod tests {
             "gap_rows": 0
         }))
         .unwrap()
+    }
+
+    fn synthetic_context() -> (Plan, Arc<CaptureContext>) {
+        let plan = test_plan();
+        let binding = Binding {
+            config: CaptureConfig {
+                max_attempts: plan.evaluations,
+                max_rounds: 1,
+                max_bytes: 1024,
+                evaluate_all_proposals: false,
+                seed_protocol_sha256: "d".repeat(64),
+            },
+            identity: RecordIdentity {
+                run_id: plan.run_id.to_string(),
+                task: RecordTask::Regression,
+                evidence: RecordEvidence::SyntheticControl,
+                partition: "train".into(),
+                source_commit: "e".repeat(40),
+                corpus_manifest_sha256: "f".repeat(64),
+                dataset_sha256: plan.matrix_sha256.clone(),
+                family_sha256: "1".repeat(64),
+                problem_sha256: plan.problem_digest.clone(),
+                bundle_sha256: plan.bundle_digest.clone(),
+                conditioning_sha256: "2".repeat(64),
+                evaluator_sha256: "3".repeat(64),
+                dope_weights_sha256: DOPE_SHA256.into(),
+            },
+            seed: plan.seed,
+            tokens: vec![vec![0.25; 32]; 10],
+            mask: vec![true; 10],
+            matrix_sha256: plan.matrix_sha256.clone(),
+        };
+        let context = CaptureContext::control(binding, Arc::new(ControlProvider)).unwrap();
+        (plan, Arc::new(context))
     }
 }

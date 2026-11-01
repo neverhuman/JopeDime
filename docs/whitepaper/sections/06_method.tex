@@ -83,11 +83,16 @@ non-padding token embeddings, including \texttt{BOS}, the fixed engine and
 task header, and \texttt{EOS}. Pooling discards token order, limiting its
 ability to distinguish compositions built from the same tokens.
 
-It combines $z_w$ with $z_p$ three ways: as is, gated by the problem, and as a distance
-from a projection of it. Four two-layer heads receive this same interaction
-vector and their mean gives the score $\mapv(z_p,z_w)$ with parameters
-$\psi$. Native ranking losses supervise that mean jointly; the heads have
-no separate targets or bootstrap samples.
+The map's own two-layer context network projects the 2,048-value $z_p$
+to $r_z\in\mathbb{R}^{512}$. It joins three 512-value blocks: $z_w$
+as is, $z_w\odot\tanh(W_\gamma r_z+b_\gamma)$, and
+$|z_w-(W_{\mathrm{proj}}r_z+b_{\mathrm{proj}})|$.
+Four two-layer heads receive this same 1,536-value interaction vector;
+their mean gives $\mapv(z_p,z_w)$ with parameters $\psi$.
+Native ranking losses supervise that mean jointly, without separate
+targets or bootstrap samples. Training applies dropout of 0.05 in each
+ranking head. The runtime head instead reads $[r_z,z_w]$, while the
+program-only control reads $z_w$.
 
 Higher logits rank higher within a problem. The score is not a calibrated
 error estimate. Comparing its magnitude across problems or reading it as a
