@@ -63,8 +63,12 @@ PAIRED_PINS = {
     "r0_candidates": "e3d3b3bae8ef172a5029e6147439c9f5eb7f6a97b37735621122811efe744fd2",
     "r0_admission": "5d9d35fb4780ec5533ba7ccddf1a6404942f6084534f2ac2b2337febc0fb67b4",
 }
+# Fresh normal-Cargo and frozen-CPU witnesses for signed RC2 source
+# bc14b7f8cfcb6493482c8c2a0add927c7ca1e224 (the merged Delete RNG fix).
+# Keep the accepted R5 reference and optional paired diagnostic above unchanged.
 SOURCE_CLOCK_PINS = {
-    key: PAIRED_PINS[key] for key in ("native_candidates", "native_admission")
+    "native_candidates": "97e1dacb68420b311705cf8eb9b800025803ae8dc92daa8366c09b01fd82e27d",
+    "native_admission": "051058a1a919c9c64360aa6345d2c1d72b819362c22337f1e1705d2604e86767",
 }
 
 
