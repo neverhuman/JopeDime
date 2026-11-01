@@ -8262,22 +8262,6 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
-    "target:jope-appliance/test/resize_input_readiness": {
-      "discovery": {
-        "doctest": false,
-        "kind": "target",
-        "required_features": [],
-        "source": "crates/jope-appliance/tests/resize_input_readiness.rs",
-        "test": true
-      },
-      "dispositions": [],
-      "lanes": [
-        "rust-check",
-        "rust-test",
-        "full-default"
-      ],
-      "scope": "Linux real-PTY regression for simultaneous SIGWINCH and keyboard readiness in both event orders. The ignored child helper is explicitly executed by the parent cases. Static lane assignment only; no hosted-CI or signed-candidate qualification claim."
-    },
     "target:jope-appliance/test/single_file": {
       "discovery": {
         "doctest": false,
@@ -14614,6 +14598,32 @@
       ],
       "lanes": [],
       "scope": "H190 data-free controls for ENS10/RENS10 confirmation with independent family-fold partitions per outer seed (190141, 190142, 190143), imported H177/H178 selector, and stage-order lock."
+    },
+    "python:research/flywheel_selfplay/rnk10_m5_causal/test_objective.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Synthetic offline controls for trainer objective, authenticated DL-Train roster boundary, pinned batched M5 fixture shapes and full 50-context candidate-loop consumption, fitness-axis reversal, and deterministic descriptive 19-family dev-Elo bootstrap. No candidate/model/data outcome evaluation or qualification claim."
+    },
+    "target:jope-appliance/test/resize_input_readiness": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-appliance/tests/resize_input_readiness.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Linux real-PTY regression for simultaneous SIGWINCH and keyboard readiness in both event orders. The ignored child helper is explicitly executed by the parent cases. Static lane assignment only; no hosted-CI or signed-candidate qualification claim."
     },
     "python:research/flywheel_selfplay/h193_invalid_veto/test_h193.py": {
       "discovery": {

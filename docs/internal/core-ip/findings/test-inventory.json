@@ -5414,6 +5414,10 @@
       "role": "research",
       "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; data-free inner-CV selector, L-BFGS convergence, None-grad guard, and placebo leak controls. Research only; no product/sealed qualification."
     },
+    "python:research/flywheel_selfplay/rnk10_m5_causal/test_objective.py": {
+      "role": "research",
+      "reason": "Synthetic offline controls for the trainer objective and fail-closed roster authentication; pinned batched M5 fixture dimensions exercise the complete 50-context runner loop and fitness reversal axis; deterministic descriptive whole-family dev-Elo interval controls. No candidate/model/data outcome evaluation or qualification claim."
+    },
     "python:research/flywheel_selfplay/h174_swag/test_h174.py": {
       "reason": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector, raw B cost/choice/utility lock replay, and fused adapter API keyword contract. Research only; no study data, checkpoint, product, sealed qualification or serving promotion.",
       "role": "research"
@@ -5596,6 +5600,10 @@
         "W6"
       ]
     }
+  },
+  "python:research/flywheel_selfplay/rnk10_m5_causal/test_objective.py": {
+    "reason": "Synthetic offline controls for the trainer objective and fail-closed roster authentication; pinned batched M5 fixture dimensions exercise the complete 50-context runner loop and fitness reversal axis; deterministic descriptive whole-family dev-Elo interval controls. No candidate/model/data outcome evaluation or qualification claim.",
+    "role": "research"
   },
   "python:research/flywheel_selfplay/h174_swag/test_h174.py": {
     "reason": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector, raw B cost/choice/utility lock replay, and fused adapter API keyword contract. Research only; no study data, checkpoint, product, sealed qualification or serving promotion.",
