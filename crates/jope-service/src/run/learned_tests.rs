@@ -381,18 +381,40 @@ async fn signed_r882_in_loop_ab_and_replay() {
 }
 
 #[test]
+fn q1_threefold_fitness_includes_third_log_gate_tail_and_population_sd() {
+    // Independently calculated mean=-0.3, max=-0.1, population sd=sqrt(0.08/3).
+    let (f, gate) = surrogate::fitness("(pipe X (ridge))", &[-0.5, -0.3, -0.1], 3).unwrap();
+    assert!(gate);
+    let expected = -0.24 - 0.01 + 0.1 * (0.08_f64 / 3.0).sqrt() + 0.001;
+    assert!((f - expected).abs() < 1e-15);
+    let (flat, gate) = surrogate::fitness("(pipe X (ridge))", &[-0.3; 3], 3).unwrap();
+    assert!(gate && f > flat);
+    // Ignoring the final fold would incorrectly pass both controls.
+    let (f, gate) = surrogate::fitness("x", &[-0.5, -0.3, 0.9], 2).unwrap();
+    assert!(!gate && f >= 100.0);
+    let (f, gate) = surrogate::fitness("x", &[-0.5, -0.3, 0.9], 3).unwrap();
+    assert!(!gate && f >= 100.0); // geometric mean alone fails
+    let (f, gate) = surrogate::fitness("x", &[-0.5, -0.3, -0.1], 2).unwrap();
+    assert!(!gate && f >= 100.0); // every fold must beat its baseline
+    for logs in [vec![], vec![-0.3], vec![-0.3; 4], vec![-0.3, -0.2, f64::NAN]] {
+        assert!(surrogate::fitness("x", &logs, 0).is_err());
+    }
+    assert!(surrogate::fitness("x", &[-0.3; 3], 4).is_err());
+}
+
+#[test]
 fn frozen_surrogate_gate_and_fitness_ranges_match_reference() {
-    let (value, gate) = surrogate::fitness("(pipe X (ridge))", -0.4, -0.2, 2).unwrap();
+    let (value, gate) = surrogate::fitness("(pipe X (ridge))", &[-0.4, -0.2], 2).unwrap();
     assert!(gate);
     let expected = 0.8 * -0.3 + 0.1 * -0.2 + 0.1 * 0.1 + 0.0005 * 2.0;
     assert!((value - expected).abs() < 1e-15);
     for (a, b, wins) in [(0.1, -0.3, 1), (0.1, 0.3, 0), (-0.01, -0.01, 2)] {
-        let (f, g) = surrogate::fitness("(pipe X (ridge))", a, b, wins).unwrap();
+        let (f, g) = surrogate::fitness("(pipe X (ridge))", &[a, b], wins).unwrap();
         assert!(!g);
         assert!(f >= 100.0);
     }
-    assert!(surrogate::fitness("x", f64::NAN, 0.0, 0).is_err());
-    assert!(surrogate::fitness("x", 0.0, 0.0, 3).is_err());
+    assert!(surrogate::fitness("x", &[f64::NAN, 0.0], 0).is_err());
+    assert!(surrogate::fitness("x", &[0.0, 0.0], 3).is_err());
 }
 
 fn spec(dataset: &str, device: &str) -> RunSpec {

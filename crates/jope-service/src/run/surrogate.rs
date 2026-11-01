@@ -1,4 +1,5 @@
-//! Frozen r782 full-FIT two-fold recipe, inside the existing isolated worker.
+//! Full-FIT frozen S1 worker: Q1 uses three folds per ENG T0710.
+//! Historical non-Q1 two-fold calls retain their original numerical results.
 //! Version 2 is the private opaque fold_spec selector; WRK framing and request/
 //! response fields are unchanged. Version 1 keeps the native heuristic evaluator.
 use crate::{
@@ -43,7 +44,7 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
     let spec: FoldSpec = serde_json::from_value(request.fold_spec.clone())?;
     ensure!(
         spec.version == 2
-            && spec.folds.len() == 2
+            && matches!(spec.folds.len(), 2 | 3)
             && matrix.rows() <= 20_000
             && jope_runtime::sha256_hex(matrix.bytes()) == spec.matrix_sha256,
         "invalid admitted surrogate identity"
@@ -74,7 +75,7 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
                     .iter()
                     .all(|r| !train.contains(r) && validation_seen.insert(*r))
                 && train.len() + fold.validation.len() == matrix.rows(),
-            "surrogate requires two complementary full-FIT folds"
+            "surrogate requires disjoint full-FIT validation partitions"
         );
         let (x, y) = numeric_rows(matrix, &spec.target, &spec.features, &fold.train)?;
         let mean = y.iter().sum::<f64>() / y.len() as f64;
@@ -102,12 +103,12 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
         validation_seen.len() == matrix.rows(),
         "incomplete surrogate FIT coverage"
     );
-    let (fitness, _) = fitness(&request.dsl, logs[0], logs[1], wins)?;
+    let (fitness, _) = fitness(&request.dsl, &logs, wins)?;
     Ok(Scores {
         values: vec![
             fitness,
-            0.5 * (user_losses[0] + user_losses[1]),
-            0.5 * (user_values[0] + user_values[1]),
+            user_losses.iter().sum::<f64>() / user_losses.len() as f64,
+            user_values.iter().sum::<f64>() / user_values.len() as f64,
         ],
         fold_scores: losses,
         predictions_digest: format!("{:x}", predicted.finalize()),
@@ -162,15 +163,31 @@ fn predict_s1(
     Ok(prediction)
 }
 
-pub(crate) fn fitness(dsl: &str, l0: f64, l1: f64, wins: usize) -> Result<(f64, bool)> {
+pub(crate) fn fitness(dsl: &str, logs: &[f64], wins: usize) -> Result<(f64, bool)> {
     ensure!(
-        l0.is_finite() && l1.is_finite() && wins <= 2 && dsl.len() < 200_000,
+        matches!(logs.len(), 2 | 3)
+            && logs.iter().all(|value| value.is_finite())
+            && wins <= logs.len()
+            && dsl.len() < 200_000,
         "invalid trained surrogate summary"
     );
-    let mean = 0.5 * (l0 + l1);
-    let tail = l0.max(l1);
-    let sd = 0.5 * (l0 - l1).abs();
-    let gate = wins == 2 && mean.exp() <= 0.90;
+    // Keep the historical two-fold arithmetic bit-for-bit. Q1 admission
+    // requires three folds; its third log ratio affects every summary term.
+    let (mean, tail, sd) = if logs.len() == 2 {
+        (
+            0.5 * (logs[0] + logs[1]),
+            logs[0].max(logs[1]),
+            0.5 * (logs[0] - logs[1]).abs(),
+        )
+    } else {
+        let mean = logs.iter().sum::<f64>() / 3.0;
+        (
+            mean,
+            logs.iter().copied().fold(f64::NEG_INFINITY, f64::max),
+            (logs.iter().map(|value| (value - mean).powi(2)).sum::<f64>() / 3.0).sqrt(),
+        )
+    };
+    let gate = wins == logs.len() && mean.exp() <= 0.90;
     let value = if gate {
         0.8 * mean
             + 0.1 * tail

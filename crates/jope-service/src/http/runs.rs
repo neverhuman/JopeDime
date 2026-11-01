@@ -218,7 +218,7 @@ impl<E: crate::discover::r#loop::Executor> crate::discover::r#loop::Executor
         if result.attempt != pinned.attempt
             || !result.valid()
             || (result.failure.is_none()
-                && (result.scores.len() != 3 || result.fold_scores.len() < 2))
+                && (result.scores.len() != 3 || result.fold_scores.len() != 3))
         {
             result = Response::failed(pinned.attempt.clone(), WorkerFailure::Protocol, 0);
         }
@@ -611,20 +611,28 @@ fn validate_q1_binding(binding: &Q1DatasetBinding, dataset: &Q1DatasetIdentity) 
     Ok(())
 }
 
-#[cfg(test)]
-fn validate_q1_learned_folds(binding: &Q1DatasetBinding) -> Result<()> {
-    if binding.folds.len() != 2
-        || binding.folds.iter().any(|fold| fold.repeat != 0)
-        || binding
-            .folds
-            .iter()
-            .any(|fold| fold.train.len() + fold.validation.len() != binding.train_rows as usize)
-        || binding.folds[0].train != binding.folds[1].validation
-        || binding.folds[0].validation != binding.folds[1].train
-    {
-        return Err(invalid(
-            "Learned Q1 requires the pinned complementary two-fold FIT recipe.",
-        ));
+fn validate_q1_folds(binding: &Q1DatasetBinding) -> Result<()> {
+    use std::collections::BTreeSet;
+    let mut validation_seen = BTreeSet::new();
+    let valid = binding.folds.len() == 3
+        && binding.train_rows >= 6
+        && binding.folds.iter().all(|fold| {
+            let train: BTreeSet<_> = fold.train.iter().copied().collect();
+            fold.repeat == 0
+                && train.len() >= 2
+                && train.len() == fold.train.len()
+                && train.iter().all(|row| *row < binding.train_rows as usize)
+                && fold.validation.len() >= 2
+                && train.len() + fold.validation.len() == binding.train_rows as usize
+                && fold.validation.iter().all(|row| {
+                    *row < binding.train_rows as usize
+                        && !train.contains(row)
+                        && validation_seen.insert(*row)
+                })
+        })
+        && validation_seen.len() == binding.train_rows as usize;
+    if !valid {
+        return Err(invalid("Q1 requires three disjoint full-FIT validation partitions."));
     }
     Ok(())
 }
@@ -930,6 +938,7 @@ impl RunService {
             .get(&request.dataset.id)
             .ok_or_else(|| unavailable("Dataset is absent from the pinned protocol manifest."))?;
         validate_q1_binding(binding, &request.dataset)?;
+        validate_q1_folds(binding)?;
         if binding.train_blob_bytes > self.config.limits.max_dataset_bytes.value
             || binding.train_rows > self.config.limits.rung1_max_rows.value
         {
@@ -2743,18 +2752,13 @@ mod tests {
             train_rows: 6,
             train_blob_sha256: hash(train),
             train_blob_bytes: blob.bytes,
-            folds: vec![
-                Q1Fold {
+            folds: (0..3)
+                .map(|fold| Q1Fold {
                     repeat: 0,
-                    train: vec![0, 1, 2],
-                    validation: vec![3, 4, 5],
-                },
-                Q1Fold {
-                    repeat: 0,
-                    train: vec![3, 4, 5],
-                    validation: vec![0, 1, 2],
-                },
-            ],
+                    train: (0..6).filter(|row| row / 2 != fold).collect(),
+                    validation: (fold * 2..(fold + 1) * 2).collect(),
+                })
+                .collect(),
         };
         binding.cut_sha256 = q1_cut_sha256(&binding).unwrap();
         let mut binding_value = serde_json::to_value(&binding).unwrap();
@@ -2983,7 +2987,7 @@ mod tests {
         assert!(!completed.is_empty());
         assert!(completed
             .iter()
-            .all(|attempt| attempt.fold_scores.len() == 2
+            .all(|attempt| attempt.fold_scores.len() == 3
                 && attempt.loss.is_some()
                 && attempt.program_sha256.is_some()
                 && attempt.failure.is_none()));
@@ -3052,6 +3056,40 @@ mod tests {
     }
 
     #[test]
+    fn q1_threefold_binding_is_refused_before_executor_or_reservation() {
+        for case in 0..8 {
+            let (directory, service) = q1_service_fixture();
+            let mut raw = q1_request(directory.path(), &service.store);
+            let path = directory.path().join(format!("q1/protocols/{}.json", "a".repeat(64)));
+            let mut manifest: Q1ProtocolManifest = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+            let binding = manifest.datasets.get_mut("0123456789abcdef").unwrap();
+            match case {
+                0 => { binding.folds.pop(); }
+                1 => binding.folds[2].repeat = 1,
+                2 => binding.folds[2].validation = vec![0, 1],
+                3 => binding.folds[2].validation = vec![4, 6],
+                4 => binding.folds[2].train = vec![0, 0, 2, 3],
+                5 => binding.folds[2].validation = vec![4, 4],
+                6 => { binding.folds[2].train.pop(); }
+                _ => { binding.folds[2].validation.pop(); }
+            }
+            binding.cut_sha256 = q1_cut_sha256(binding).unwrap();
+            let mut value = serde_json::to_value(&*binding).unwrap();
+            value.as_object_mut().unwrap().remove("dataset_binding_sha256");
+            binding.dataset_binding_sha256 = hash(&serde_json::to_vec(&value).unwrap());
+            raw["dataset"]["cut_sha256"] = json!(binding.cut_sha256);
+            raw.as_object_mut().unwrap().remove("request_sha256");
+            let sha = canonical_sha256(&raw).unwrap();
+            raw["request_sha256"] = json!(sha);
+            std::fs::write(path, serde_json::to_vec(&manifest).unwrap()).unwrap();
+            assert!(service.q1_evaluate_using(raw, || -> anyhow::Result<InlineQ1Native> {
+                panic!("invalid fold recipe must not prepare an executor")
+            }).is_err(), "case {case}");
+            assert!(service.store.get(&q1_command_key(&sha)).unwrap().is_none(), "case {case}");
+        }
+    }
+
+    #[test]
     fn learned_q1_plan_and_folds_are_derived_from_the_pinned_manifest() {
         let (directory, engine, _) = fixture();
         let raw = q1_request(directory.path(), engine.store());
@@ -3068,7 +3106,7 @@ mod tests {
         assert_eq!(run_spec.guidance, Guidance::Learned);
         assert_eq!(run_spec.landmarks, LandmarkMode::Full);
         assert_eq!(run_spec.device, "cpu");
-        validate_q1_learned_folds(binding).unwrap();
+        validate_q1_folds(binding).unwrap();
 
         let fold_spec = q1_fold_spec(binding, &"a".repeat(64), true);
         assert_eq!(fold_spec["version"], 2);
