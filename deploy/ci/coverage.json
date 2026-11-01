@@ -14488,6 +14488,16 @@
       ],
       "lanes": [],
       "scope": "H182 data-free controls for nested ENS5/ENS10/ENS20 member prefixes, all 60 fresh member seeds and synthetic init hashes, FIT/A/B isolation, score-before-argmin, axis=0 paired bootstrap, strict ENS20 verdict/Holm gates, timing-only four-hour fold rule, and resource guards. No study data or model checkpoint loaded."
+    },
+    "python:research/flywheel_selfplay/h183_ensemble_distill/test_h183.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H183 data-free controls: FIT/A/B isolation and poisoned outer targets, distinct initial member/student seeds, softmax of ten mean teacher costs, fixed detached KL T=.2 with .5/.5 weights, common 40/80 student prefix, axis=0 paired family bootstrap, strict DIST10 primary Holm m2 gate, RENS10 diagnostic, ragged native choices and resource/timing caps. No study data/checkpoint/optimizer updates."
     }
   },
   "lanes": {
