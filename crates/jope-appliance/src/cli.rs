@@ -19,6 +19,18 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Command {
+    /// Connect this CLI to a VEOX account.
+    #[cfg(feature = "client")]
+    Auth {
+        #[command(subcommand)]
+        command: crate::cloud::AuthCommand,
+    },
+    /// Synchronize run metadata and explicitly transfer model objects.
+    #[cfg(feature = "client")]
+    Cloud {
+        #[command(subcommand)]
+        command: crate::cloud::CloudCommand,
+    },
     /// Internal research training-record tools.
     #[cfg(feature = "research")]
     Research(crate::research::ResearchArgs),

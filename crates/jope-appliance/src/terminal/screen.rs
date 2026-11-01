@@ -24,6 +24,8 @@ const LOGO: [&str; 5] = [
 
 #[derive(Default)]
 pub struct Screen {
+    pub browser: Option<super::runs::Browser>,
+    pub cloud_label: String,
     lines: VecDeque<String>,
     bytes: usize,
     wrapped: Vec<String>,
@@ -158,7 +160,9 @@ impl Screen {
         };
         self.reflow(body.width.max(1));
         self.page_height = usize::from(body.height);
-        if self.lines.is_empty() {
+        if let Some(browser) = &mut self.browser {
+            browser.draw(frame, body, accent);
+        } else if self.lines.is_empty() {
             landing(frame, body, accent, muted);
         } else {
             let max = self.wrapped.len().saturating_sub(self.page_height);
@@ -189,15 +193,27 @@ impl Screen {
         let input = block.inner(rows[4]);
         frame.render_widget(block, rows[4]);
         composer.draw(frame, input);
-        let footer = if self.top.is_some() {
+        let footer = if self.browser.is_some() {
+            " Up/Down choose · Enter attach/open · o cloud · d download · r refresh · Esc/right back · Ctrl-C exit".into()
+        } else if self.top.is_some() {
             format!(
                 " {} new lines · PgUp/PgDn scroll · End follows live · Ctrl-C exits",
                 self.unread
             )
         } else {
-            " PgUp/PgDn / wheel scroll · Ctrl-C exits · Local engine · Cloud not connected".into()
+            format!(
+                " Left: runs · PgUp/PgDn: scroll · Ctrl-C: exit · {}",
+                if self.cloud_label.is_empty() {
+                    "Cloud not connected · /login"
+                } else {
+                    &self.cloud_label
+                }
+            )
         };
-        frame.render_widget(Paragraph::new(footer).style(muted), rows[5]);
+        frame.render_widget(
+            Paragraph::new(sanitize_user_string(&footer)).style(muted),
+            rows[5],
+        );
     }
 }
 

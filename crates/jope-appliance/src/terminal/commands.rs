@@ -108,7 +108,7 @@ pub fn parse(input: &str) -> Result<ParsedCommand, ParseError> {
     })
 }
 
-fn tokenize(input: &str, objective_json: bool) -> Result<Vec<String>, ParseError> {
+pub(crate) fn tokenize(input: &str, objective_json: bool) -> Result<Vec<String>, ParseError> {
     let mut arguments = Vec::new();
     let mut word = String::new();
     let mut started = false;

@@ -28,6 +28,8 @@ signal-hook = "=0.3.18"
 serde.workspace = true
 serde_json.workspace = true
 ulid.workspace = true
+ureq = { version = "=3.5.0", default-features = false, features = ["rustls"] }
+zip = { version = "=9.1.3", default-features = false, features = ["deflate"] }
 
 [dev-dependencies]
 axum = { version = "=0.8.9", default-features = false, features = ["http1", "tokio"] }

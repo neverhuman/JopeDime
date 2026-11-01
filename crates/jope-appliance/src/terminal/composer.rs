@@ -22,7 +22,7 @@ const HISTORY_ENTRIES: usize = 1000;
 compile_error!("Linux history-file flags are only verified for x86_64 and aarch64");
 
 /// Client help/dispatch wiring belongs to TUI-09.
-pub const HISTORY_HELP: &str = "History keeps up to 1,000 entries in $JOPEDIME_HOME/history (0600). Inline JSON objectives over 1,024 bytes are omitted. To clear it, close the client and remove that history file.";
+pub const HISTORY_HELP: &str = "History keeps up to 1,000 entries in $JOPEDIME_HOME/history (0600). Login commands and inline JSON objectives over 1,024 bytes are omitted. To clear it, close the client and remove that history file.";
 static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Debug, PartialEq, Eq)]
@@ -758,6 +758,9 @@ fn remember(text: &str) -> bool {
     }
     let command = text.trim_start_matches(['\\', '/']);
     let name = command.split_whitespace().next().unwrap_or("");
+    if name.eq_ignore_ascii_case("login") {
+        return false;
+    }
     if name.eq_ignore_ascii_case("objective")
         || name.eq_ignore_ascii_case("fitness")
         || text.starts_with('{')
@@ -834,6 +837,12 @@ mod pty;
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn login_input_is_not_persisted_in_history() {
+        assert!(!super::remember("/login accidentally-pasted-credential"));
+        assert!(!super::remember("\\login https://example.test"));
+        assert!(super::remember("/open data.csv"));
+    }
     use super::*;
     use ratatui::crossterm::event::KeyEvent;
     #[cfg(target_os = "linux")]
