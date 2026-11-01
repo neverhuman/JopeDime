@@ -121,11 +121,18 @@ in \cref{sec:method-status}:
   the normalized rank-weighted mean over programs. The displayed aggregate
   coefficients match the native objective; the checkpoint's objective
   identity and configuration still belong in its evaluation record.
+  \item \textbf{Runtime supervision (\cref{eq:totalLoss}).}
+  The runtime term compares $\ln(1+s)$ with
+  $\ln(1+\operatorname{softplus}(h))$ by Huber loss with threshold~1,
+  for measured seconds $s\geq0$ and raw head output $h$.
   \item \textbf{Ranking targets (\cref{eq:mapLoss,eq:totalLoss}).}
   In \cref{eq:totalLoss}, $v_w=1/(1+\mathrm{RMSE}_w/m_p)$, where $m_p$ is
   the corpus list's median RMSE. Bradley--Terry weights use $|v_w-v_u|$,
   doubled when either member is at or above the 90th percentile, then
-  normalized by their sum over non-tied pairs.
+  reduced over all non-tied within-comparison pairs in the rank-local
+  microbatch. The implementation mean-scales their weights, casts them to
+  float32 and averages weighted pair losses. Listwise losses are computed
+  per eligible comparison group and averaged across groups.
   \item \textbf{Registered parameter inventory (\cref{sub:method-map}).}
   The network has \num{27796494} parameters in total (six
   decoder blocks, width \num{512}, four attention heads, prefix context token,
@@ -155,6 +162,14 @@ in \cref{sec:method-status}:
   parity receipts from the final evaluator belong to the same evaluation
   record.
 \end{itemize}
+
+The following diagnostics are grouped by question. Timing and event counts
+appear in \cref{app:development-time,app:event-counts}; later operating
+windows and rates follow in
+\cref{app:subsequent-window,app:subsequent-utility,app:subsequent-rates,app:round-throughput}.
+\Cref{app:acceptance-over-rounds,app:promotions-per-hour} distinguish adapter
+admissions from program-promotion rates. These views reuse retained
+records and do not add independent evaluations.
 
 \section{Development Measurements over Completed-Round Time}\label{app:development-time}
 

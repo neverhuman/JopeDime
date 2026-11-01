@@ -130,6 +130,14 @@ seeded-survivor parent selection by map rank. The bounded search driver
 instead cycles among up to four parents selected by measured loss. The map's
 influence on training therefore depends on the search route.
 
+Only the 64 neural or fallback seeds receive normalized rank weights;
+the 16 tail seeds enter unscored. Unscored survivors share the lowest
+scored survivor weight while scored survivors remain.
+
+Native assembly reserves ten tail slots for cut teachers or fallbacks
+and six for random exploration. Teacher-first execution prioritizes
+retained cut teachers. The reference layout is in \cref{alg:selfplay}.
+
 The writer's loss weights programs by referee rank. Ranking agreement with the referee
 and program-only control assesses ranking; better proposals require a
 matched ablation (\cref{sub:results-ablation}).
@@ -173,7 +181,9 @@ averages token losses within each program, and normalizes by the sum of
 program weights (\cref{app:training}).
 
 Here $\mathcal{L}_{\text{BT}}$ is a Bradley--Terry loss on the same lists,
-$\mathcal{L}_{\text{runtime}}$ a Huber loss on logarithms of one plus measured seconds and the head's nonnegative softplus prediction, and
+$\mathcal{L}_{\text{runtime}}$ a Huber loss between $\ln(1+s)$ and
+$\ln(1+\operatorname{softplus}(h))$, where $s$ is nonnegative measured
+seconds and $h$ is the raw runtime-head output, and
 $\mathcal{L}_{\text{prog}}$ the Bradley--Terry loss of the program-only control head.
 A median-ranked program carries about a tenth of the top-ranked program's
 weight in the writer loss. Its referee score also contributes to the map's

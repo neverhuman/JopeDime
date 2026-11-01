@@ -74,8 +74,8 @@ assigning a fixed penalty to failed gates.
 
 Candidate programs are evaluated on two training-side folds; the historical
 reference procedure specifies five. Evaluations are logged separately from
-training-pool admission: ordinary admission retains only programs that pass
-the gates and strictly improve the incumbent for their training context.
+training-pool admission: ordinary admission requires passing gates and a
+recorded score below the training context's incumbent by more than $10^{-6}$.
 Historical programs have a separate admission path.
 The adapter's default gate can accept equal utility; rejection restores
 model and optimizer states.
@@ -214,3 +214,4 @@ Program-incumbent gains, adapter admissions and historical target scores
 measure different outcomes. \Cref{sec:results} specifies the independent
 comparisons needed to test whether training improves the writer's first
 proposal on new families.
+\FloatBarrier
