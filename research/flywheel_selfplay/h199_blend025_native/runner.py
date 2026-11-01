@@ -44,7 +44,6 @@ BOUND_FILES = (
 )
 HOST_RULES = {
     "xbabe1": dict(min_free=40_000_000_000, max_used=None),
-    "xbabe2": dict(min_free=40_000_000_000, max_used=0.938),
 }
 MEM_MIN = 16 * 2**30
 SCRATCH_MAX = 500_000_000
@@ -88,7 +87,7 @@ def staged(path):
 
 
 def load_modules():
-    """Pinned H139/H124 bytes, pointed at the H199 staging layout so the run is host-portable (xbabe1 or xbabe2).
+    """Pinned H139/H124 bytes, pointed at the H199 staging layout (~/jope-data/h199/inputs on xbabe1, the only admitted host).
     Every staged file keeps its pinned SHA-256 (verified by the inherited loaders); only the directory changes."""
     h139 = load(H139_PATH, "h199_h139", H139_SHA)
     h124 = h139.load_h124()
@@ -106,12 +105,18 @@ def tree_bytes(path):
     return sum(p.stat().st_size for p in Path(path).rglob("*") if p.is_file())
 
 
-def guards(root):
-    """Host-specific disk rule (xbabe1: free >= 40 GB; xbabe2: used <= 93.8% and free >= 40 GB), MemAvailable >= 16
-    GiB, load1 <= 85% of cores, nice 19, own root < 500 MB. Checked before every fit and stage."""
+def admit_host():
+    """Preregistered host boundary: xbabe1 only, at nice 19. Called before any read, write or launch."""
     host = socket.gethostname().split(".")[0]
     if host not in HOST_RULES or os.getpriority(os.PRIO_PROCESS, 0) < 19:
-        raise RuntimeError("H199 runs on xbabe1/xbabe2 at nice 19 only")
+        raise RuntimeError(f"H199 runs on xbabe1 at nice 19 only (host {host!r})")
+    return host
+
+
+def guards(root):
+    """xbabe1 disk rule (free >= 40 GB), MemAvailable >= 16 GiB, load1 <= 85% of cores, nice 19, own root < 500 MB.
+    Checked before every fit and stage."""
+    host = admit_host()
     rule = HOST_RULES[host]
     usage = shutil.disk_usage(Path.home())
     used = usage.used / (usage.used + usage.free)
@@ -275,6 +280,7 @@ def verified_fit(root, tag, seed, excluded):
 
 
 def run(root, launch_path, resume=False):
+    admit_host()  # before any import, read, root creation or claim
     import torch
 
     torch.set_num_threads(1)

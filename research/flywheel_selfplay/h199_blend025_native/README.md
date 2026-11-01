@@ -14,4 +14,4 @@
 - **Report-only.** U4, the λ 0.15/0.35 dose, SHUF, −2.0 counts and the flywheel91 DL-Val comparison with H135.
 - **Code.**
   - [runner.py](runner.py), [analysis.py](analysis.py) and [monitor.py](monitor.py): copied from H195, minimal diff.
-  - [test_h199.py](test_h199.py): 12 data-free tests.
+  - [test_h199.py](test_h199.py): 20 data-free tests, including xbabe1-only host admission before any side effect.

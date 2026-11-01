@@ -4,7 +4,7 @@ scientific attempt and at most one preregistered resume.
 H199 differs from H192 in one guard: HistGBM needs OpenMP, whose runtimes start helper threads beyond the compute
 threads (measured: 7-8 OS threads at OMP_NUM_THREADS=2-3). The worker is given OMP_NUM_THREADS=4 (every other pool 1),
 and the guard caps the tree's measured CPU at 4.0 cores over a rolling 10 s window instead of the OS thread count,
-which is recorded in every sample."""
+which is recorded in every sample. H199 admits xbabe1 only (PREREG); xbabe2 is excluded."""
 
 import argparse
 from collections import deque
@@ -23,6 +23,9 @@ HERE = Path(__file__).resolve().parent
 HOST_CORES = os.sysconf("SC_NPROCESSORS_ONLN")
 LOAD_LIMIT = 0.85 * HOST_CORES
 CORE_LIMIT = 4.0
+ALLOWED_HOSTS = (
+    "xbabe1",
+)  # preregistered host boundary; checked before any output, claim or launch
 WINDOW = 10.0
 DEADLINE = 4 * 3600
 CLAIMS = (
@@ -30,7 +33,7 @@ CLAIMS = (
 )  # attempt claims live on the run host; mirrored to ns/receipts by the owner
 
 
-def violations(sample, host):
+def violations(sample):
     return [
         reason
         for bad, reason in [
@@ -38,10 +41,6 @@ def violations(sample, host):
             (sample["cpu"] > 85, "host CPU>85%"),
             (sample["available"] < 16 * 2**30, "MemAvailable<16GiB"),
             (sample["free"] < 40_000_000_000, "disk free<40GB"),
-            (
-                host == "xbabe2" and sample["disk_used_fraction"] >= 0.938,
-                "xbabe2 disk user-visible used>=93.8%",
-            ),
             (sample["rss"] >= 6_000_000_000, "aggregate RSS>=6GB"),
             (
                 sample["tree_cores"] > CORE_LIMIT,
@@ -108,8 +107,8 @@ def main():
     ap.add_argument("--resume", action="store_true")
     args = ap.parse_args()
     host = socket.gethostname().split(".")[0]
-    if host not in ("xbabe1", "xbabe2") or os.getpriority(os.PRIO_PROCESS, 0) != 19:
-        raise RuntimeError("CPU xbabe1/xbabe2 at nice 19 only")
+    if host not in ALLOWED_HOSTS or os.getpriority(os.PRIO_PROCESS, 0) != 19:
+        raise RuntimeError(f"H199 runs on xbabe1 at nice 19 only (host {host!r})")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     resources = args.output.with_suffix(".resources.jsonl")
     if resources.exists() or args.output.with_suffix(".stdout").exists():
@@ -117,10 +116,8 @@ def main():
     psutil.cpu_percent()
     time.sleep(1)
     initial = snapshot()
-    if violations(initial, host):
-        raise RuntimeError(
-            "prelaunch resource refusal: " + repr(violations(initial, host))
-        )
+    if violations(initial):
+        raise RuntimeError("prelaunch resource refusal: " + repr(violations(initial)))
     started = time.monotonic()
     CLAIMS.mkdir(parents=True, exist_ok=True)
     claim = CLAIMS / ("H199_resume.claim" if args.resume else "H199_attempt.claim")
@@ -182,7 +179,7 @@ def main():
             samples.flush()
             for k in peak:
                 peak[k] = max(peak[k], sample[k])
-            reasons = violations(sample, host)
+            reasons = violations(sample)
             if sample["elapsed"] > DEADLINE:
                 reasons.append("4h hard wall deadline")
             if reasons:

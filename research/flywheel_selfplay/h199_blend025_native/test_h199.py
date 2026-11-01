@@ -190,19 +190,95 @@ def ok_sample(**kw):
 
 def test_monitor_guards():
     assert (
-        monitor.violations(ok_sample(), "xbabe2") == []
+        monitor.violations(ok_sample()) == []
     )  # OpenMP helper threads alone are not a violation
     for kw in [
         dict(tree_cores=4.2),
         dict(available=15 * 2**30),
         dict(free=39_000_000_000),
-        dict(disk_used_fraction=0.938),
         dict(rss=6_000_000_000),
         dict(cpu=86.0),
         dict(load=monitor.LOAD_LIMIT + 1),
     ]:
-        assert len(monitor.violations(ok_sample(**kw), "xbabe2")) == 1
-    assert (
-        monitor.violations(ok_sample(disk_used_fraction=0.95), "xbabe1") == []
-    )  # xbabe1 rule: free >= 40 GB
+        assert len(monitor.violations(ok_sample(**kw))) == 1
+    # xbabe1's rule is free >= 40 GB; the xbabe2 used-fraction rule is gone because xbabe2 is not admitted.
+    assert monitor.violations(ok_sample(disk_used_fraction=0.95)) == []
     assert monitor.DEADLINE == 4 * 3600 and monitor.CORE_LIMIT == 4.0
+
+
+@pytest.mark.parametrize("host", ["xbabe2", "xbabe3", "xbabe0"])
+def test_monitor_rejects_excluded_hosts_before_any_side_effect(
+    host, tmp_path, monkeypatch
+):
+    assert monitor.ALLOWED_HOSTS == ("xbabe1",)
+    claims, out = tmp_path / "claims", tmp_path / "logs" / "run-x"
+    monkeypatch.setattr(monitor, "CLAIMS", claims)
+    monkeypatch.setattr(monitor.socket, "gethostname", lambda: host)
+    monkeypatch.setattr(monitor.os, "getpriority", lambda *a: 19)
+    launched = []
+    monkeypatch.setattr(monitor.subprocess, "Popen", lambda *a, **k: launched.append(a))
+    argv = [
+        "monitor.py",
+        "--output",
+        str(out),
+        "--root",
+        str(tmp_path / "run-x"),
+        "--launch",
+        str(tmp_path / "l.json"),
+    ]
+    monkeypatch.setattr(monitor.sys, "argv", argv)
+    with pytest.raises(RuntimeError, match="xbabe1"):
+        monitor.main()
+    assert not out.parent.exists() and not claims.exists() and not launched
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize("host", ["xbabe2", "xbabe3", "xbabe0"])
+def test_runner_rejects_excluded_hosts_before_any_read_or_root(host, monkeypatch):
+    import runner
+
+    assert set(runner.HOST_RULES) == {"xbabe1"}
+    monkeypatch.setattr(runner.socket, "gethostname", lambda: host)
+    monkeypatch.setattr(runner.os, "getpriority", lambda *a: 19)
+    root = runner.DATA / "run-h199-host-admission-test"
+    missing = runner.DATA / "no-such-launch.json"
+    with pytest.raises(RuntimeError, match="xbabe1"):
+        runner.run(
+            root, missing
+        )  # a missing launch file would raise differently if reached
+    with pytest.raises(RuntimeError, match="xbabe1"):
+        runner.guards(root)
+    assert not root.exists()
+
+
+def test_runner_admits_xbabe1_at_nice_19_only(monkeypatch):
+    import runner
+
+    monkeypatch.setattr(runner.socket, "gethostname", lambda: "xbabe1.local")
+    monkeypatch.setattr(runner.os, "getpriority", lambda *a: 19)
+    assert runner.admit_host() == "xbabe1"
+    monkeypatch.setattr(runner.os, "getpriority", lambda *a: 10)
+    with pytest.raises(RuntimeError):
+        runner.admit_host()
+
+
+def test_runner_guards_pass_on_xbabe1_with_healthy_resources(tmp_path, monkeypatch):
+    import collections
+
+    import runner
+
+    monkeypatch.setattr(runner.socket, "gethostname", lambda: "xbabe1")
+    monkeypatch.setattr(runner.os, "getpriority", lambda *a: 19)
+    monkeypatch.setattr(runner.os, "getloadavg", lambda: (1.0, 1.0, 1.0))
+    usage = collections.namedtuple("usage", "total used free")
+    monkeypatch.setattr(
+        runner.shutil, "disk_usage", lambda p: usage(10**12, 9 * 10**11, 10**11)
+    )
+    monkeypatch.setattr(runner, "MEM_MIN", 0)
+    g = runner.guards(tmp_path / "absent-root")
+    assert g["host"] == "xbabe1" and g["free"] == 10**11 and g["scratch"] == 0
+    monkeypatch.setattr(
+        runner.shutil, "disk_usage", lambda p: usage(10**12, 9.7 * 10**11, 3 * 10**10)
+    )
+    with pytest.raises(RuntimeError, match="disk guard"):
+        runner.guards(tmp_path / "absent-root")
