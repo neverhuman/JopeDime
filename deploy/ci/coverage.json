@@ -4279,6 +4279,16 @@
       "lanes": [],
       "scope": "REL-07 signer-compatible gate-receipt adapter controls; exact 28-gate M1-D2 inventory, CPU-prestage NOT_RUN projection, artifact SHA256 binding, and missing/duplicate/malformed gate refusals."
     },
+    "python:deploy/qualification/v1.0/test_provider_a1/test_a1.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 PR1396 provider controls: candidate/source binding, exact test execution, drift/failure/overwrite refusals. Synthetic fixtures validate orchestration only; actual candidate release execution remains separate."
+    },
     "python:deploy/qualification/v1.0/test_provider_a2/test_a2.py": {
       "discovery": {
         "kind": "python-family"
@@ -8687,6 +8697,20 @@
         "full-doctests"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-client/test/a1_lite": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-client/tests/a1_lite.rs",
+        "test": true
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 A1 no-engine client contract target. Its a1_lite_registry_and_candidate_background_contract case is explicitly ignored without verified candidate/source bindings; select with --no-default-features --test a1_lite -- --exact --ignored. Covers request vectors plus private candidate daemon system/invalid-registration controls; no release qualification from ordinary omission."
     },
     "target:jope-client/test/contract": {
       "discovery": {
