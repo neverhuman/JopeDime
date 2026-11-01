@@ -184,6 +184,40 @@ impl PtySession {
         }
     }
 
+    /// Wait until an exact byte sequence has been written to the PTY by the child.
+    pub fn wait_for_output_bytes(&mut self, needle: &[u8], timeout: Duration) -> io::Result<()> {
+        if needle.is_empty() {
+            return Ok(());
+        }
+        let deadline = Instant::now() + timeout;
+        loop {
+            let found = self
+                .output
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .windows(needle.len())
+                .any(|window| window == needle);
+            if found {
+                return Ok(());
+            }
+
+            if let Some(status) = self.child.try_wait().map_err(other)? {
+                self.join_reader();
+                return Err(io::Error::other(format!(
+                    "PTY child exited ({status}) before output contained {needle:?}"
+                )));
+            }
+
+            if Instant::now() >= deadline {
+                return Err(io::Error::new(
+                    io::ErrorKind::TimedOut,
+                    format!("timed out waiting for PTY output bytes {needle:?}"),
+                ));
+            }
+            thread::sleep(Duration::from_millis(10));
+        }
+    }
+
     fn join_reader(&mut self) {
         if let Some(reader_thread) = self.reader_thread.take() {
             let _ = reader_thread.join();
