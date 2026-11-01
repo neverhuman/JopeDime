@@ -1985,6 +1985,10 @@
       "reason": "Owner-requested H152 data-free controls for the zero-update checkpoint soup readout, resource guards and source binding; no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h154_trajectory_ema_swa/test_h154.py": {
+      "reason": "H154 owner-directed trajectory EMA/SWA weight averaging and train-only stat recalibration data-free unit suite; offline research only.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h155_rank_smoothing/test_h155.py": {
       "reason": "Owner-requested H152 data-free controls for the zero-update checkpoint soup readout, resource guards and source binding; no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
       "role": "research"
@@ -5243,6 +5247,10 @@
       "subsystems": [
         "encoders"
       ]
+    },
+    "python:research/h156/test_h156.py": {
+      "reason": "H156 data-free 5-fold family cross-fit early stopping and {0.5x, 1x, 2x} adapter capacity sweep scientific controls; offline research only.",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
