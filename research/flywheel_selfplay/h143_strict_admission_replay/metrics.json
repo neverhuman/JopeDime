@@ -1,6 +1,50 @@
 {
  "CUDA_initialized": false,
  "GPU_used": false,
+ "closeout_disclosures": {
+  "adoption": null,
+  "descriptive_only": {
+   "R774": {
+    "ci95": [
+     0.0024633981381049514,
+     0.02779067064535007
+    ],
+    "dl_train_gain": 0.01359693259163284,
+    "elo": 1502.44,
+    "val": 1.1073772627425549,
+    "val_invalid": 1
+   },
+   "R785": {
+    "elo": 1499.59,
+    "val": 1.1375952947484103,
+    "val_minus_r882": -0.0001988950680422
+   }
+  },
+  "host": "xbabe1 (launch record: free 138.0 GB, MemAvailable 36.5 GiB, load 13); the closeout note's 'xbabe2' does not match the evidence",
+  "non_adapter_byte_check": {
+   "R774": {
+    "differing": 0,
+    "non_adapter_tensors": 222
+   },
+   "R782_R859_R882": "verified in H139",
+   "R785": {
+    "differing": 0,
+    "non_adapter_tensors": 222
+   },
+   "dope_composite_before_after": "c51a56d0 for R774/R785/R882",
+   "post_run": true
+  },
+  "resource_caps": {
+   "dltrain_max_rss_kib": 978532,
+   "dltrain_rss_cap": "6 GiB (H124 watchdog), not decimal 6 GB",
+   "os_thread_total": "not measured (4 torch + watchdog + main)",
+   "replay_max_rss_kib": 80896
+  },
+  "review": "rd_astra #1255 review 5725835134 CHANGES NEEDED posted 01:10:53Z after replay launch 01:10:36Z (merge 01:10:11Z)",
+  "seeds_independent": false,
+  "seeds_note": "identical trajectories on all 3 seeds; verdict rests on one deterministic replay",
+  "unavailable_checkpoint_bug": "not triggered: all final incumbents available for 3/3 seeds"
+ },
  "dl_train_by_arm": {
   "R_STRICT/143101": {
    "available": true,

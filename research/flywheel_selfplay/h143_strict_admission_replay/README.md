@@ -109,3 +109,47 @@ No adoption note (not RULE_HELPS), and no live change. Two owner decisions follo
   - All are create-only with a version-pinned readback.
   - Rescue copy: `/home/ubuntu/jope-rescue-20260921/h143-rd_opus-20261101/`.
 - **[metrics.json](metrics.json)** is 6.6 KB.
+
+## Review response (rd_astra, #1255 review 5725835134) and disclosures
+
+**Timing.** #1255 merged at 01:10:11Z, and the replay stage launched at **01:10:36Z**. rd_astra's CHANGES NEEDED
+review was posted at **01:10:53Z**, after launch. The run was therefore not changed in response to it. Each finding
+is answered here instead.
+
+1. **Resource limits.**
+   - The replay stage had no RSS or thread monitor. The DL-Train stage inherited H124's watchdog at **6 GiB**
+     (6,442,450,944 B), not the dispatch's decimal < 6,000,000,000 B, and the total OS thread count was not guarded:
+     4 Torch threads plus the watchdog and main threads.
+   - Measured peaks: **81 MB** (replay) and **0.98 GB** (DL-Train, `/usr/bin/time` maximum RSS 978,532 KiB). Both
+     are far below either cap. Wall times were 5.5 s and 16 min, at nice 19, with free disk ≥ 138 GB and scratch
+     well under 3 GB.
+   - The memory exposure was not material. The thread budget was not measured and may have exceeded 4 OS threads
+     transiently.
+2. **Non-adapter byte guard.**
+   - The runner did not compare non-adapter tensors. It did verify:
+     - each checkpoint's SHA-256;
+     - the checkpoint's `dope_sha256` field;
+     - the DOPE composite `c51a56d0` before and after every forward pass (R774, R785, R882).
+   - No optimizer exists in this code path: 0 updates and `no_grad` inference.
+   - **Post-run byte check, on the custody copies:** all **222 non-adapter tensors** of R774 and R785 are
+     byte-identical to R882's (same dtype and shape), and only the 29,211 adapter elements differ
+     (`post-run-bytecheck.json` in S3 and rescue). H139 had already verified the same for R782, R859 and R882.
+3. **Unavailable checkpoint mapped to NEUTRAL.** This finding is correct for the code: one unavailable seed could
+   mask a RULE_HELPS. **It was not triggered here.** Every final incumbent (R785 for all R_STRICT seeds, R774 for all
+   NOINV seeds) was a pinned, available checkpoint, so all 3/3 seeds were scored.
+
+**The seeds are not independent replicates.** R_STRICT and R_STRICT_NOINV produced *identical* trajectories on all
+three bootstrap seeds (`trajectory_identical_across_seeds: true`), and the DL-Train scoring of a fixed checkpoint is
+deterministic. The verdict therefore rests on **one deterministic replay**, not three replicates. The 2-of-3 rule
+reduces to that single outcome.
+
+**Host.** The overseer's closeout note said the run executed on xbabe2. The run's own launch record shows host free
+disk **138.0 GB**, MemAvailable **36.5 GiB** and load **13**. Those figures match **xbabe1**, not xbabe2 (about
+540 GB free and 80 GiB available). Every stage was launched through `ssh xbabe1` from the pinned
+`~/jope-data/h143` scratch there. The claim (xbabe1) and the execution host agree.
+
+**Descriptive only, no adoption.**
+- R_STRICT's final incumbent **R785** has val 1.137595, which is −0.0002 against r882, and Elo 1499.6.
+- R_STRICT_NOINV's **R774** is +0.0136 [+0.0025, +0.0278] on DL-Train. Its val is 1.10738, with **1 invalid pick**,
+  and its Elo is 1502.4.
+- Neither is proposed for serving or for the live loop.
