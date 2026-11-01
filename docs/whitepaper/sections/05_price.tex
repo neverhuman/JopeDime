@@ -11,11 +11,11 @@
 % Exhibits: Equation 2 (eq:bill), Box 3. The pilot-cost figure (fig:price) lives in Results.
 % Unsupported supplied cost projections are omitted pending reproducible calculations.
 
-We relate attempt cost to the cost of a verified improvement. The ledger counts
-encoding, input tokens, generation, repairs, referee execution, updates and
-operating costs. A reproducible full-run price remains pending
-(\cref{sub:price-run}). We distinguish planning assumptions from the
-measurements required in \cref{sec:results}.
+The cost of a verified improvement includes the attempts that precede it.
+A complete ledger must count encoding, input tokens, generation, repairs,
+referee execution, updates and operating costs. A reproducible full-run
+price remains pending (\cref{sub:price-run}); \cref{sec:results} reserves
+the measurements needed to test the planning assumptions below.
 
 \subsection{The bill in one line}\label{sub:price-bill}
 
@@ -45,12 +45,12 @@ This accounting does not require independent attempts. Adaptive search
 still needs empirical cost and attempt curves; a batch with no verified
 win has no finite observed cost per win.
 
-The bill has two ledgers. Training pays for every attempted candidate,
-including failures; deployment pays for encoding, one proposal and its
-fitting procedure, with no repair. Fixed-weight agent loops instead buy
-evaluation during task-specific search; a trained proposer may amortize
-some of that work across later tasks. Whether the saving repays training
-requires a measured crossover, still pending in \cref{sec:results}.
+Training and deployment need separate ledgers. Training pays for every
+attempt, including failures. The proposed deployment protocol pays for
+encoding, one proposal and its fit, with no repair. Fixed-weight agent
+loops pay for evaluation during task-specific search. Training a proposer
+may shift some of that cost to earlier tasks; the crossover still needs
+measurement (\cref{sec:results}).
 
 \subsection{Wasted moves}\label{sub:price-waste}
 
