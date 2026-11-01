@@ -1957,10 +1957,6 @@
       "reason": "Owner-requested H139 synthetic CPU controls for the zero-update selection-rule audit readout and decision; no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/h152_ckpt_soup/test_h152.py": {
-      "reason": "Owner-requested H152 data-free controls for the zero-update checkpoint soup readout, resource guards and source binding; no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
-      "role": "research"
-    },
     "python:research/flywheel_selfplay/h143_strict_admission_replay/test_h143.py": {
       "reason": "Owner-requested H143 synthetic CPU controls for the zero-update strict-admission shadow replay and its verdict mapping; no receipt/checkpoint reads or model passes in the fixture suite; offline research only.",
       "role": "research"
@@ -1983,6 +1979,14 @@
     },
     "python:research/flywheel_selfplay/h151_lookahead_drift_control/test_h151.py": {
       "reason": "H151 owner-directed Lookahead vs drift-matched AdamW step-size control data-free unit suite; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h152_ckpt_soup/test_h152.py": {
+      "reason": "Owner-requested H152 data-free controls for the zero-update checkpoint soup readout, resource guards and source binding; no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h155_rank_smoothing/test_h155.py": {
+      "reason": "Owner-requested H152 data-free controls for the zero-update checkpoint soup readout, resource guards and source binding; no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
@@ -2191,6 +2195,10 @@
     },
     "python:research/h148/test_h148.py": {
       "reason": "H148 data-free checkpoint-selection scientific controls; no product/native/GPU qualification.",
+      "role": "research"
+    },
+    "python:research/joint_regbin/test_binary_dataset.py": {
+      "reason": "JRB-01 binary panel packet validation (schema, family coverage, sealed-id exclusion, deterministic rebuild); offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
     "python:research/joint_regbin/test_study.py": {
@@ -5235,10 +5243,6 @@
       "subsystems": [
         "encoders"
       ]
-    },
-    "python:research/joint_regbin/test_binary_dataset.py": {
-      "reason": "JRB-01 binary panel packet validation (schema, family coverage, sealed-id exclusion, deterministic rebuild); offline research analysis outside the reviewed product baseline.",
-      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

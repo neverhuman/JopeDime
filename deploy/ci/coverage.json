@@ -5094,16 +5094,6 @@
       "lanes": [],
       "scope": "H139 synthetic CPU controls for the selection-rule audit: fixed arm roster and degenerate-arm exclusion, native flywheel endpoint, equal-family gains, bootstrap CI/p, Holm, Spearman with ties, cross-fit argmax audit, decision rule and 91-context regression gate. No checkpoint, corpus or model passes in the fixture suite; offline research only."
     },
-    "python:research/flywheel_selfplay/h152_ckpt_soup/test_h152.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H152 data-free controls for zero-update checkpoint soups: fixed arms and weights, trainable-only blending with frozen tensors from R882, frozen-identity census, deterministic bootstrap readout, tie rejection, Holm decision, Elo interval, family-disjoint TRAIN folds, exact R882 regression, Torch thread cap, every disk/load/scratch/nice and supervisor stop guard, and squash-compatible source binding with mismatch rejection. No checkpoint, corpus or model passes in the fixture suite; offline research only."
-    },
     "python:research/flywheel_selfplay/h143_strict_admission_replay/test_h143.py": {
       "discovery": {
         "kind": "python-family"
@@ -5163,6 +5153,26 @@
       ],
       "lanes": [],
       "scope": "H151 owner-directed Lookahead drift-matched control suite: median-seed equal-family bootstrap, inclusive [0.85, 1.15] 15% drift-matching manipulation gate, three-seed r882 advancement and Holm-four gates across all executed arms, Lookahead k=5 alpha=0.5 schedule, input audit, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+    },
+    "python:research/flywheel_selfplay/h152_ckpt_soup/test_h152.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H152 data-free controls for zero-update checkpoint soups: fixed arms and weights, trainable-only blending with frozen tensors from R882, frozen-identity census, deterministic bootstrap readout, tie rejection, Holm decision, Elo interval, family-disjoint TRAIN folds, exact R882 regression, Torch thread cap, every disk/load/scratch/nice and supervisor stop guard, and squash-compatible source binding with mismatch rejection. No checkpoint, corpus or model passes in the fixture suite; offline research only."
+    },
+    "python:research/flywheel_selfplay/h155_rank_smoothing/test_h155.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H152 data-free controls for zero-update checkpoint soups: fixed arms and weights, trainable-only blending with frozen tensors from R882, frozen-identity census, deterministic bootstrap readout, tie rejection, Holm decision, Elo interval, family-disjoint TRAIN folds, exact R882 regression, Torch thread cap, every disk/load/scratch/nice and supervisor stop guard, and squash-compatible source binding with mismatch rejection. No checkpoint, corpus or model passes in the fixture suite; offline research only."
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
@@ -5683,6 +5693,16 @@
       ],
       "lanes": [],
       "scope": "H148 data-free nested family isolation, strict selection/bootstrap fallback, batch closure and anchored Elo controls. Scientific600-update experiment is separate, CPU only; no live promotion."
+    },
+    "python:research/joint_regbin/test_binary_dataset.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "JRB-01 binary panel packet validation (schema, family coverage, sealed-id exclusion, deterministic rebuild); offline research only."
     },
     "python:research/joint_regbin/test_study.py": {
       "discovery": {
@@ -7031,7 +7051,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -13964,16 +13984,6 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
-    },
-    "python:research/joint_regbin/test_binary_dataset.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "JRB-01 binary panel packet validation (schema, family coverage, sealed-id exclusion, deterministic rebuild); offline research only."
     }
   },
   "lanes": {
