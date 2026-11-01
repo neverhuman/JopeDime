@@ -105,14 +105,19 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
     );
     let (fitness, _) = fitness(&request.dsl, &logs, wins)?;
     Ok(Scores {
-        values: vec![
-            fitness,
-            user_losses.iter().sum::<f64>() / user_losses.len() as f64,
-            user_values.iter().sum::<f64>() / user_values.len() as f64,
-        ],
+        values: vec![fitness, mean_score(&user_losses), mean_score(&user_values)],
         fold_scores: losses,
         predictions_digest: format!("{:x}", predicted.finalize()),
     })
+}
+
+// Preserve historical two-fold objective arithmetic as well as F.
+fn mean_score(values: &[f64]) -> f64 {
+    if values.len() == 2 {
+        0.5 * (values[0] + values[1])
+    } else {
+        values.iter().sum::<f64>() / 3.0
+    }
 }
 
 // Frozen s1main::one_fit uses fold-fitted min/max without clipping. Reusing

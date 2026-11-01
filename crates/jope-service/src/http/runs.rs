@@ -3059,7 +3059,7 @@ mod tests {
 
     #[test]
     fn q1_threefold_binding_is_refused_before_executor_or_reservation() {
-        for case in 0..8 {
+        for case in 0..9 {
             let (directory, service) = q1_service_fixture();
             let mut raw = q1_request(directory.path(), &service.store);
             let path = directory
@@ -3074,17 +3074,26 @@ mod tests {
                     binding.folds.pop();
                 }
                 1 => binding.folds[2].repeat = 1,
-                2 => binding.folds[2].validation = vec![0, 1],
+                2 => binding.folds[2] = binding.folds[0].clone(),
                 3 => binding.folds[2].validation = vec![4, 6],
                 4 => binding.folds[2].train = vec![0, 0, 2, 3],
                 5 => binding.folds[2].validation = vec![4, 4],
                 6 => {
                     binding.folds[2].train.pop();
                 }
-                _ => {
+                7 => {
                     binding.folds[2].validation.pop();
                 }
+                _ => {
+                    // Every local split is complete, but rows 6 and 7 never
+                    // occur in validation anywhere in the three-fold recipe.
+                    binding.train_rows = 8;
+                    for fold in &mut binding.folds {
+                        fold.train.extend([6, 7]);
+                    }
+                }
             }
+            assert!(validate_q1_folds(&binding).is_err(), "case {case}");
             binding.cut_sha256 = q1_cut_sha256(&binding).unwrap();
             let mut value = serde_json::to_value(&binding).unwrap();
             value
