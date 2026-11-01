@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -32,6 +33,12 @@ class A5ProviderTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.checkout = self.root / "checkout"
         self.checkout.mkdir()
+        self.verifier_path = (
+            self.checkout
+            / "deploy/qualification/agents/transcripts/run-prep/verify_capture.py"
+        )
+        self.verifier_path.parent.mkdir(parents=True)
+        shutil.copyfile(a5._CAPTURE_PATH, self.verifier_path)
         self.evidence = self.root / "evidence"
         self.evidence.mkdir()
         self.artifact = self.root / "candidate.bin"
@@ -92,7 +99,7 @@ class A5ProviderTests(unittest.TestCase):
                     "timed_out": False,
                 }
             ).encode()
-            self.sidecars[f"{slug}.mcp.jsonl"] = b"synthetic paired wire capture\n"
+            self.sidecars[f"{slug}.mcp.jsonl"] = self.make_wire(key)
             receipt = {
                 "schema": "jope.mcp05-a5-client-review/v1",
                 "source": self.source_sha,
@@ -113,11 +120,7 @@ class A5ProviderTests(unittest.TestCase):
                 "run_retry_contract": {
                     "successful_attempts": 2,
                     "inventory_counts": [0, 1, 1],
-                    "run_id": {
-                        "claude_code": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
-                        "gemini_cli": "run_01ARZ3NDEKTSV4RRFFQ69G5FAW",
-                        "codex_cli": "run_01ARZ3NDEKTSV4RRFFQ69G5FAX",
-                    }[key],
+                    "run_id": self.run_id(key),
                 },
                 "plan_placement": {"evaluation": "cpu", "workers": 1, "dope": "none"},
                 "dataset_id": "ds-shared-train",
@@ -166,6 +169,135 @@ class A5ProviderTests(unittest.TestCase):
             "files": {},
         }
 
+    @staticmethod
+    def run_id(key):
+        return {
+            "claude_code": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+            "gemini_cli": "run_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+            "codex_cli": "run_01ARZ3NDEKTSV4RRFFQ69G5FAX",
+        }[key]
+
+    def make_wire(self, key, *, partial=False):
+        run_id = self.run_id(key)
+        dataset_id = "ds-shared-train"
+        plan_digest = "b" * 64
+        artifact_id = "art-verified-model"
+        running = {"run_id": run_id, "state": "running"}
+        completed = {
+            "run_id": run_id,
+            "state": "completed",
+            "best": {"model_artifact": artifact_id},
+            "budget_used": {"evaluations": "1"},
+            "event_watermark": "6",
+        }
+        inventory_before = {"runs": [], "next_after": None}
+        inventory_after = {"runs": [{"run_id": run_id}], "next_after": None}
+        start_args = {
+            "dataset": dataset_id,
+            "dry_run": False,
+            "plan_digest": plan_digest,
+            "idempotency_key": "start-run",
+            "device": "cpu",
+        }
+        events = [
+            {"sequence": str(i), "run_id": run_id, "kind": kind}
+            for i, kind in enumerate(
+                [
+                    "run.started",
+                    "experiment.started",
+                    "experiment.finished",
+                    "algorithm.accepted",
+                    "checkpoint.saved",
+                    "run.finished",
+                ],
+                start=1,
+            )
+        ]
+        calls = [
+            ("system_info", {}, {"health": "ok"}),
+            ("run_status", {}, inventory_before),
+            ("dataset_register", {}, {"dataset_id": dataset_id}),
+            ("dataset_register", {}, {"dataset_id": dataset_id}),
+            (
+                "dataset_inspect",
+                {"dataset_id": dataset_id},
+                {"dataset_id": dataset_id, "rows": "25"},
+            ),
+            (
+                "run_start",
+                {"dataset": dataset_id, "dry_run": True},
+                {
+                    "plan_digest": plan_digest,
+                    "placement": {"evaluation": "cpu", "workers": 1, "dope": "none"},
+                    "effort": {"evaluations": "1"},
+                },
+            ),
+            ("run_start", start_args, running),
+            ("run_status", {}, inventory_after),
+            ("run_start", start_args, running),
+            ("run_status", {}, inventory_after),
+            ("run_status", {"run_id": run_id}, completed),
+            ("run_status", {"run_id": run_id}, completed),
+            ("run_events", {"run_id": run_id}, {"events": events}),
+            (
+                "model_export",
+                {"run_id": run_id, "idempotency_key": "export-run"},
+                {
+                    "kind": "bundle",
+                    "artifact_id": artifact_id,
+                    "retains_training_data": False,
+                    "languages": [{"language": "rust", "status": "exported"}],
+                },
+            ),
+            (
+                "model_export",
+                {"run_id": run_id, "idempotency_key": "export-run"},
+                {
+                    "kind": "bundle",
+                    "artifact_id": artifact_id,
+                    "retains_training_data": False,
+                    "languages": [{"language": "rust", "status": "exported"}],
+                },
+            ),
+            (
+                "model_predict",
+                {"model": {"run_id": run_id}, "input": {"dataset_id": dataset_id}},
+                {"rows": "25", "sha256": "c" * 64},
+            ),
+        ]
+        if partial:
+            calls = [
+                ("run_status", {}, inventory_before),
+                ("run_start", start_args, running),
+                ("run_status", {}, inventory_after),
+                ("run_start", start_args, running),
+                ("run_status", {}, inventory_after),
+            ]
+        frames = []
+        for rpc_id, (name, arguments, data) in enumerate(calls):
+            frames.extend(
+                [
+                    {
+                        "direction": "client_to_server",
+                        "message": {
+                            "jsonrpc": "2.0",
+                            "id": rpc_id,
+                            "method": "tools/call",
+                            "params": {"name": name, "arguments": arguments},
+                        },
+                    },
+                    {
+                        "direction": "server_to_client",
+                        "message": {
+                            "jsonrpc": "2.0",
+                            "id": rpc_id,
+                            "result": {"isError": False, "structuredContent": data},
+                        },
+                    },
+                ]
+            )
+        return b"\n".join(json.dumps(frame).encode() for frame in frames) + b"\n"
+
     def run_child(self, args, **kwargs):
         self.calls.append((args, kwargs))
         if args[:2] == ["git", "rev-parse"]:
@@ -179,11 +311,13 @@ class A5ProviderTests(unittest.TestCase):
             and str(args[0]) == sys.executable
             and str(args[2]).endswith("verify_capture.py")
         ):
+            if self.verifier_code == 0 and self.verifier_output is None:
+                return subprocess.run(args, **kwargs)
             output = self.verifier_output or json.dumps(
                 {
                     "integrity": "PASS",
                     "sidecars_verified": len(self.payload["files"]),
-                    "a5_status": "UNVERIFIED:READY_FOR_REVIEW",
+                    "a5_status": "UNVERIFIED:missing",
                     "run_retry_contract": {
                         key: {
                             "run_id": json.loads(
@@ -272,6 +406,40 @@ class A5ProviderTests(unittest.TestCase):
         self.verifier_code = 0
         self.dirty = "?? stray"
         with self.assertRaisesRegex(common.ProviderError, "clean candidate-pinned"):
+            self.invoke()
+        self.assertFalse(self.result.exists())
+
+    def test_five_raw_retry_calls_cannot_use_positive_semantic_receipts(self):
+        for slug, _client_name in CLIENTS.values():
+            self.sidecars[f"{slug}.mcp.jsonl"] = self.make_wire(
+                next(key for key, value in CLIENTS.items() if value[0] == slug),
+                partial=True,
+            )
+        self.write_manifest()
+        manifest_sha = digest(self.manifest_path.read_bytes())
+        verifier = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                str(a5._CAPTURE_PATH),
+                str(self.manifest_path),
+                "--check-run-retry",
+                "--manifest-sha256",
+                manifest_sha,
+            ],
+            cwd=self.checkout,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(verifier.returncode, 0, verifier.stderr)
+        verifier_result = json.loads(verifier.stdout)
+        self.assertEqual(verifier_result["integrity"], "PASS")
+        self.assertEqual(verifier_result["a5_status"], "UNVERIFIED:missing")
+        self.assertEqual(
+            verifier_result["sidecars_verified"], len(self.payload["files"])
+        )
+        with self.assertRaisesRegex(common.ProviderError, "raw flow tool inventory"):
             self.invoke()
         self.assertFalse(self.result.exists())
 
