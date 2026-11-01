@@ -15,7 +15,8 @@ import psutil
 
 HERE = Path(__file__).resolve().parent
 DATA = Path("/home/ubuntu/jope-data/h156")
-QUAL_LOCK = Path("/home/ubuntu/jope_plan/qualification.lock")
+QUAL_LOCK = Path("/home/ubuntu/jope_plan/ns/qualification.lock")
+QUAL_LOCK_LEGACY = Path("/home/ubuntu/jope_plan/qualification.lock")
 MAX_RSS = int(6 * 10**9)
 MAX_THREADS = 8
 MIN_MEM = 16 * 1024**3
@@ -113,17 +114,24 @@ def main():
         )
         raise SystemExit(2)
 
-    lock_fd = None
+    lock_fds = []
     gpu_lock_held = False
     if not args.smoke and QUAL_LOCK.parent.exists():
         try:
-            lock_fd = open(QUAL_LOCK, "a+")
-            fcntl.flock(lock_fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-            gpu_lock_held = True
+            for lpath in (QUAL_LOCK, QUAL_LOCK_LEGACY):
+                if lpath.parent.exists():
+                    fd = open(lpath, "a+")
+                    lock_fds.append(fd)
+                    fcntl.flock(fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            gpu_lock_held = bool(lock_fds)
         except OSError:
-            if lock_fd is not None:
-                lock_fd.close()
-                lock_fd = None
+            for fd in lock_fds:
+                try:
+                    fcntl.flock(fd.fileno(), fcntl.LOCK_UN)
+                except OSError:
+                    pass
+                fd.close()
+            lock_fds = []
             gpu_lock_held = False
 
     env = dict(os.environ)
@@ -140,7 +148,16 @@ def main():
     if not gpu_lock_held:
         env["CUDA_VISIBLE_DEVICES"] = ""
 
-    cmd = ["nice", "-n", "19", sys.executable, "-B", str(HERE / "run.py"), "--output", str(out)]
+    cmd = [
+        "nice",
+        "-n",
+        "19",
+        sys.executable,
+        "-B",
+        str(HERE / "run.py"),
+        "--output",
+        str(out),
+    ]
     if args.smoke:
         cmd.append("--smoke")
     else:
@@ -182,12 +199,12 @@ def main():
                 time.sleep(INTERVAL)
             rc = child.wait()
     finally:
-        if lock_fd is not None:
+        for fd in lock_fds:
             try:
-                fcntl.flock(lock_fd.fileno(), fcntl.LOCK_UN)
+                fcntl.flock(fd.fileno(), fcntl.LOCK_UN)
             except OSError:
                 pass
-            lock_fd.close()
+            fd.close()
 
     summary = dict(
         status="PASS" if rc == 0 and not reason else (reason or "CHILD_FAILED"),
