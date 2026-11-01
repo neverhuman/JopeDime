@@ -28,6 +28,7 @@ use axum::{
     Json,
 };
 use jope_api::{
+    decimal::DecimalU64,
     error::{ErrorCode, Problem},
     *,
 };
