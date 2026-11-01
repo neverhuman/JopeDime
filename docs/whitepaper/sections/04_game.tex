@@ -60,7 +60,7 @@ input.
   \small
   \setlength{\tabcolsep}{4pt}
   \setlength{\extrarowheight}{2pt}% separates rows whose cells wrap
-  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.32\linewidth}>{\raggedright\arraybackslash}p{0.434\linewidth}@{}}
+  \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.32\linewidth}>{\raggedright\arraybackslash}X@{}}
     \toprule
                    & Go                              & The innovation game \\
     \midrule
@@ -74,7 +74,7 @@ input.
     Rating         & Elo                             & Win rate and Elo across problems \\
     Moves per game & About 150, each cheap           & One, costly to judge \\
     \bottomrule
-  \end{tabular}
+  \end{tabularx}
 \end{table}
 
 Formally, the game is a tuple of seven parts,

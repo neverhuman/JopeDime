@@ -1,7 +1,7 @@
 {
   "schema": "whitepaper.round-throughput.v1",
   "csv_sha256": "f2ccfb9e5dff3c29a8e188bc2ff4430bf7bef2e721daba3d870859db0146d002",
-  "generator_sha256": "84e7f77f91203060276dcdd6fcc7d1db87be60b2d0fb2f458c4c9122f5f8570f",
+  "generator_sha256": "08d8cf844a07637fb3a97ba4ec672d04392c0a0090d60576e341e53deabeb3f6",
   "source_snapshot": {
     "at": "2026-11-01T06:54:28.875479+00:00",
     "round_window": [
@@ -57,6 +57,6 @@
   },
   "scope": "Development operating observations; repeated contexts across rounds are not independent tasks. Runtime/checkpoint binding and independent first-proposal/deployment comparisons remain pending.",
   "reproduce": "python3 figures/scripts/make_round_throughput_figure.py",
-  "figure_sha256": "a8804d4db21105b68c2e1aa843448ccf61c6f18462757fb7ddf21b337ed88a5a",
+  "figure_sha256": "208110dc58d1782190c0a74a8e1d30e324c160ad4eeec7dbf45c8f878d2c20b9",
   "matplotlib_version": "3.10.8"
 }

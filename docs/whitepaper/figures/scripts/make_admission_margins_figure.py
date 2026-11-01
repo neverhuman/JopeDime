@@ -88,11 +88,12 @@ def main() -> None:
     plt.rcParams.update(
         {
             "font.family": "serif",
+            "mathtext.fontset": "dejavuserif",
             "font.size": 8,
             "axes.labelsize": 8,
             "xtick.labelsize": 7.2,
             "ytick.labelsize": 7.2,
-            "legend.fontsize": 7.0,
+            "legend.fontsize": 7.2,
             "axes.spines.top": False,
             "axes.spines.right": False,
             "pdf.fonttype": 42,

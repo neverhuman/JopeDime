@@ -24,12 +24,13 @@ args = parser.parse_args()
 
 plt.rcParams.update({
     "font.family": "serif",
+    "mathtext.fontset": "dejavuserif",
     "font.size": 8,
     "axes.labelsize": 8,
     "axes.titlesize": 8,
-    "xtick.labelsize": 7,
-    "ytick.labelsize": 7,
-    "legend.fontsize": 7.1,
+    "xtick.labelsize": 7.2,
+    "ytick.labelsize": 7.2,
+    "legend.fontsize": 7.2,
     "axes.spines.top": False,
     "axes.spines.right": False,
     "pdf.fonttype": 42,
@@ -233,7 +234,7 @@ axR.legend(frameon=True, facecolor="white", framealpha=0.85, edgecolor="none",
            loc="center right", bbox_to_anchor=(1.0, 0.35), handletextpad=0.3, borderpad=0.25)
 fig.supxlabel("round (25 retained summary rounds; 1346–1448 not retained)", fontsize=7.5, y=0.02)
 fig.subplots_adjust(left=0.16, right=0.98, bottom=0.20, top=0.96, wspace=0.08)
-fig.savefig(f"{FIGURES_DIR}/fig_fw_train_val.pdf")
+fig.savefig(f"{FIGURES_DIR}/fig_fw_train_val.pdf", metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
 
 # 3. Telemetry across the two summary windows and inter-admission intervals
@@ -263,9 +264,9 @@ def plot_compressed_series(ax, rows, key, color, ylabel, ylim):
     ax.set_ylabel(ylabel)
     ax.set_xlabel("round (compressed gap)")
     ax.legend(frameon=True, facecolor="white", framealpha=0.88, edgecolor="none",
-              loc="upper right", fontsize=7, handletextpad=0.3, borderpad=0.2)
+              loc="upper right", fontsize=7.2, handletextpad=0.3, borderpad=0.2)
 
-fig, axs = plt.subplots(1, 3, figsize=(7.0, 2.05))
+fig, axs = plt.subplots(1, 3, figsize=(6.8, 2.05))
 plot_compressed_series(axs[0], R, "datasets_per_s", "#0b5394", "training contexts / s", (12.5, 21.8))
 
 axs[1].scatter(*zip(*dt), s=3.5, alpha=0.55, lw=0, c="#2b8a3e", label="admission $\\Delta t$ (<600 s)")
@@ -275,11 +276,11 @@ axs[1].set_ylabel("seconds / round")
 axs[1].set_xlabel("round (775–1469)")
 axs[1].set_xlim(min(r) - 10, max(r) + 10)
 axs[1].legend(frameon=True, facecolor="white", framealpha=0.88, edgecolor="none",
-              loc="upper left", fontsize=7, handlelength=1.0, handletextpad=0.3, borderpad=0.2)
+              loc="upper left", fontsize=7.2, handlelength=1.0, handletextpad=0.3, borderpad=0.2)
 
 plot_compressed_series(axs[2], R, "promotions_per_hr", "#5f3dc4", "program promotions / hour", (56.5, 79.5))
 
 fig.tight_layout(pad=0.45)
-fig.savefig(f"{FIGURES_DIR}/fig_fw_telemetry.pdf")
+fig.savefig(f"{FIGURES_DIR}/fig_fw_telemetry.pdf", metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
 print("ok")

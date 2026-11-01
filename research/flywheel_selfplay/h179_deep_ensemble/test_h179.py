@@ -87,9 +87,19 @@ def test_holm_and_verdict_require_all_strict_primary_conditions():
 def test_paired_bootstrap_keeps_all_draws_and_reports_cont_gain():
     families = [f"f{i:03}" for i in range(40)]
     panel = np.zeros((3, 40, len(stat.ARMS)), dtype=float)
-    centered = np.tile([-0.01, 0.01], 20)
-    for arm_index in range(1, len(stat.ARMS)):
-        panel[:, :, arm_index] = centered
+    amplitudes = (0.01, 0.02, 0.03)
+    for seed_index, amplitude in enumerate(amplitudes):
+        centered = np.tile([-amplitude, amplitude], 20)
+        for arm_index in range(1, len(stat.ARMS)):
+            panel[seed_index, :, arm_index] = centered
+    delta = panel[:, :, stat.ARMS.index("ENS5")] - panel[:, :, stat.ARMS.index("R882")]
+    assert [float(np.var(seed_delta)) for seed_delta in delta] == pytest.approx([0.0001, 0.0004, 0.0009])
+    draw = np.random.default_rng(179520).integers(0, len(families), size=(stat.DRAWS, len(families)))
+    bootstrap = stat.paired_family_bootstrap(delta, draw)
+    assert bootstrap.shape == (stat.DRAWS,)
+    assert np.ptp(bootstrap) > 0
+    assert np.quantile(bootstrap, [0.025, 0.975]).tolist()[0] < 0
+    assert np.quantile(bootstrap, [0.025, 0.975]).tolist()[1] > 0
     result = stat.ensemble_summary(families, panel)
     assert set(result["gain_vs_r882"]) == set(stat.ARMS[1:])
     assert len(result["gain_vs_r882"]["CONT"]["family_bootstrap_ci95"]) == 2

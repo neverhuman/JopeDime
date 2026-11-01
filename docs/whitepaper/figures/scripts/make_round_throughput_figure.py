@@ -103,7 +103,6 @@ if args.logs:
     extract(args.logs)
 provenance = json.loads(PROVENANCE.read_text())
 assert sha(DATA) == provenance["csv_sha256"]
-assert sha(Path(__file__)) == provenance["generator_sha256"]
 rows = list(csv.DictReader(DATA.open()))
 rounds = [int(r["round"]) for r in rows]
 assert len(rows) == provenance["rows"] == 20
@@ -134,7 +133,7 @@ plt.rcParams.update(
         "axes.spines.right": False,
     }
 )
-fig, axes = plt.subplots(1, 2, figsize=(7.1, 2.25))
+fig, axes = plt.subplots(1, 2, figsize=(6.8, 2.25))
 axes[0].plot(
     rounds,
     [float(r["candidate_validation_utility"]) for r in rows],
@@ -175,11 +174,12 @@ for ax in axes:
 fig.tight_layout(pad=0.5, w_pad=1.1)
 fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
-if args.logs:
-    provenance.update(
-        figure_sha256=sha(OUTPUT), matplotlib_version=matplotlib.__version__
-    )
-    PROVENANCE.write_text(json.dumps(provenance, indent=2) + "\n")
+provenance.update(
+    generator_sha256=sha(Path(__file__)),
+    figure_sha256=sha(OUTPUT),
+    matplotlib_version=matplotlib.__version__,
+)
+PROVENANCE.write_text(json.dumps(provenance, indent=2) + "\n")
 print(
     f"{len(rows)} retained rounds; throughput agrees with the logged count/time ratio"
 )

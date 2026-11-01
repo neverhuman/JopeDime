@@ -9,7 +9,7 @@
   \centering
   \small\setlength{\extrarowheight}{2pt}% separates rows whose cells wrap
   \setlength{\tabcolsep}{4pt}
-  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.29\linewidth}>{\raggedright\arraybackslash}p{0.27\linewidth}>{\raggedright\arraybackslash}p{0.13\linewidth}>{\raggedright\arraybackslash}p{0.0765\linewidth}@{}}
+  \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.29\linewidth}>{\raggedright\arraybackslash}p{0.27\linewidth}>{\raggedright\arraybackslash}p{0.13\linewidth}>{\raggedright\arraybackslash}X@{}}
     \toprule
     Test & Question & Comparison or control & Reported in & Status \\
     \midrule
@@ -35,7 +35,7 @@
       & Terminal outcome classes; a rule-selected example
       & \Cref{tab:worked} & Pending \\
     \bottomrule
-  \end{tabular}
+  \end{tabularx}
 \end{table*}
 
 The independent tests below ask whether training improves the first
