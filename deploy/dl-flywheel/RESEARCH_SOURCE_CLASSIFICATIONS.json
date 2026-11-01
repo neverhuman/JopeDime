@@ -4407,6 +4407,30 @@
         "role": "research",
         "reason": "H171 owner-directed large effective batch via family-stratified gradient accumulation r882 continuation study (CTRL, ACC4, ACC16, CTRL_EX4); data-free family-stratified batch plan, None-as-zero 29,211-param gradient cosine diagnostic, strict selector and resource controls. Research only; no product or sealed qualification."
       }
+    },
+    "python:research/h172/analysis.py": {
+      "bytes": 19836,
+      "sha256": "b8d94446d3cfbeb7875dc2dbf9713e88cce2434bfbc5eb81aef20e44b58ff7b0",
+      "classification": {
+        "role": "research",
+        "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; family cross-fit L-BFGS runner and bounded CPU supervisor. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/h172/monitor.py": {
+      "bytes": 4970,
+      "sha256": "90606ab114f1e3d394147be90d19facb117aba1a6807a9f880410ceec3d6c77f",
+      "classification": {
+        "role": "research",
+        "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; family cross-fit L-BFGS runner and bounded CPU supervisor. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/h172/run.py": {
+      "bytes": 61314,
+      "sha256": "e2e94f397b7e8d50db32ba347ac56ad70bdb7701c59a6e5d2e4c58182ea8ac2a",
+      "classification": {
+        "role": "research",
+        "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; family cross-fit L-BFGS runner and bounded CPU supervisor. Research only; no product/sealed qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
