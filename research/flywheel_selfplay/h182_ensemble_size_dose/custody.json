@@ -1,0 +1,23 @@
+{
+  "archive": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H182/H182_attempt1_20261101T1318Z/H182-evidence.zip",
+    "version_id": "esDiSDGmFLPoJPZwI82KSMudXqtEEIob",
+    "bytes": 647769402,
+    "sha256": "c29931a4ad2096b9afcfafd02782c4a2abbbe7dfa5dc214fe3b0f7ecb9fe537c",
+    "actual_versioned_byte_readback": true
+  },
+  "manifest": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H182/H182_attempt1_20261101T1318Z/H182-manifest.json",
+    "version_id": "f13256Ja2cGNeubP2OPUywT.y3gRthva",
+    "bytes": 116972,
+    "sha256": "a857d12b803df58205e1f5dcc194f01edb839617b2761703dc51e2ad8dfd1b39",
+    "actual_versioned_byte_readback": true
+  },
+  "local_manifest": "/home/ubuntu/jope_plan/ns/custody/H182-manifest.json",
+  "run_id": "H182_attempt1_20261101T1318Z",
+  "member_count": 628,
+  "member_score_shards": 300,
+  "raw_member_scores_persisted": true,
+  "protected_reads": 0,
+  "verdict": "NO_ADVANCE"
+}
