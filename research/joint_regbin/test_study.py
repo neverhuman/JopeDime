@@ -105,7 +105,7 @@ def test_family_key_pool_preflight_rederives_and_stays_non_admitted(
 
     rows = []
     for task, prefix, start in (("regression", "r", 1), ("binary", "b", 101)):
-        for index in range(6):
+        for index in range(20):
             rows.append(
                 {
                     "id": f"{prefix}-{index}",
