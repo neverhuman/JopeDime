@@ -3,6 +3,7 @@
 import json
 import math
 from collections import Counter
+from pathlib import Path
 
 import pytest
 
@@ -632,6 +633,64 @@ def test_complete_collection_and_no_partial_inventory(plan, tmp_path):
     assert {row["task"] for row in rows} == {"regression", "binary"}
     with pytest.raises(ValueError, match="empty"):
         paired_records(rows, "binary", "panel", 49)
+
+
+def test_regression_score_store_wiring_is_idempotent_and_task_scoped(tmp_path):
+    """The study adapter emits the existing JRB-02 contract without touching history."""
+    module = Path(__file__).with_name("score_store.py")
+    store = tmp_path / "history.jsonl"
+    plan = {"sha256": "f" * 64}
+    row = {
+        "id": "fixture-regression-1",
+        "arm": "joint-balanced",
+        "seed": 73,
+        "fold": 2,
+        "job_id": "fixture-regression-job",
+        "task": "regression",
+        "family": "fixture-family",
+        "dataset": "fixture-dataset",
+        "role": "cv",
+        "metric": "rmse",
+        "value": 0.4,
+        "curve": 0.8,
+        "model_sha256": "a" * 64,
+        "round": 5,
+    }
+
+    assert driver.append_score_store(plan, [row], module, store) == 2
+    assert driver.append_score_store(plan, [row], module, store) == 0
+    assert store.with_name("history.jsonl.lock").exists()
+    stored = [json.loads(line) for line in store.read_text().splitlines()]
+    assert len(stored) == 2
+    assert {item["metric"] for item in stored} == {"rmse", "log_rmse_ratio"}
+    for item in stored:
+        assert set(item) == {
+            "schema",
+            "ts",
+            "model",
+            "model_sha",
+            "task",
+            "dataset",
+            "family",
+            "split",
+            "metric",
+            "value",
+            "higher_is_better",
+            "source",
+            "round",
+            "host",
+        }
+        assert item["schema"] == "jope.score-history/v1"
+        assert item["ts"].endswith("+00:00")
+        assert item["task"] == "regression"
+        assert item["dataset"] == "fixture-dataset"
+        assert item["family"] == "fixture-family"
+        assert item["split"] == "jrb01-cv"
+        assert item["higher_is_better"] is False
+        assert item["source"] == (
+            "jrb01:" + plan["sha256"] + ":fixture-regression-job:"
+            "fixture-regression-1:round5"
+        )
 
 
 def test_family_weighting_seed_pairing_and_elo_orientation():
