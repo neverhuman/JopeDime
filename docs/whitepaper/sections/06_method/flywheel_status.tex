@@ -59,10 +59,10 @@ reference procedure specifies five. Evaluations are logged separately from
 training-pool admission: ordinary admission requires passing gates and a
 recorded score below the training context's incumbent by more than $10^{-6}$.
 Historical programs have a separate admission path.
-The adapter's default gate can accept equal utility; rejection restores
-model and optimizer states.
-
-
+The adapter accepts ties by default. Optional strict admission requires
+utility above the retained best plus an explicit nonnegative margin.
+Rejection restores the retained model and optimizer states. GP search
+continues, and the completed-round clock includes rejected adapter work.
 
 
 
