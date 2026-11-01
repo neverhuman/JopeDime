@@ -1,0 +1,56 @@
+{
+  "actions": {
+    "acceptance_runner_started": false,
+    "alternate_evaluator_run": false,
+    "copies_staged": false,
+    "gpu_seconds": 0,
+    "ledger_reads_consumed": 0,
+    "ledger_state": "UNUSED",
+    "optimizer_updates": 0,
+    "s3_requests": 0,
+    "sealed_holdout_meta_test_reads": 0,
+    "terminal_outcome_reads": 0
+  },
+  "authorized_hosts": {
+    "xbabe3": {
+      "available_disk_gib": 68,
+      "available_memory_gib": 82,
+      "cpu_count": 102,
+      "load_average": [
+        9.69,
+        11.03,
+        12.4
+      ],
+      "numpy": "1.26.4",
+      "python3": "/usr/bin/python3",
+      "required_files_missing": [
+        "/home/ubuntu/jope-data/gov-03/res07-cpu-t0955/run-3/generation-1/index.json",
+        "/home/ubuntu/jope-data/res-06-f02/gb1841/candidate-fad792d982ac/jope.safetensors",
+        "/home/ubuntu/jope-data/h49/input/cpu_exact_fused.py"
+      ],
+      "torch": "2.7.0"
+    },
+    "xbabe4": {
+      "python3": "/opt/homebrew/bin/python3",
+      "required_files_missing": [
+        "/home/ubuntu/jope-data/gov-03/res07-cpu-t0955/run-3/generation-1/index.json",
+        "/home/ubuntu/jope-data/res-06-f02/gb1841/candidate-fad792d982ac/jope.safetensors",
+        "/home/ubuntu/jope-data/h49/input/cpu_exact_fused.py"
+      ],
+      "torch_import": "FAIL: ModuleNotFoundError"
+    }
+  },
+  "candidate_sha256": "ce39c75f37624e64dfbf89e6493adbf74811a5248f9355997161491e93a132ef",
+  "deadline_utc": "2026-11-01T02:30:00Z",
+  "disposition": "INCOMPLETE_NO_RUN",
+  "local_candidate_custody": "/home/ubuntu/jope-data/res-06-f02/gb1841/candidate-fad792d982ac/jope.safetensors (xbabe2 only)",
+  "local_fixture_custody": "/home/ubuntu/jope-data/gov-03/res07-cpu-t0955/run-3/generation-1 (xbabe2 only)",
+  "pr_number": 1260,
+  "prerequisite": "FAIL",
+  "reason": "Pinned CPU fixtures and candidate bytes are unavailable on either T2015-authorized remote CPU host; prior handoff requires reusing existing fixture closure without copies. No registered endpoint runner is available.",
+  "recorded_at_utc": "2026-11-01T02:16:25Z",
+  "registered_ledger_sha256": "80f336efa67e5d03422d52673558a5652db52896800c03654e97d40d9cda0924",
+  "registered_manifest_sha256": "b1a4306847e0b120f32828b6bb93fa823d71182fa7f0550074f722164365bdc5",
+  "runner": "No source-hash-bound endpoint runner is included in merged PR #1260 or present on authorized hosts.",
+  "schema": "jope.rnk10.t2015-run-attempt/v1"
+}
