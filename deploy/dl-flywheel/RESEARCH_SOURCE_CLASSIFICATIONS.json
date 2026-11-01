@@ -3943,6 +3943,38 @@
         "role": "research",
         "reason": "H138 owner-directed zero-update retained-trajectory averaging, native inference and bounded external CPU controls; not product qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h144_reg_sweep/runtime.py": {
+      "bytes": 6220,
+      "sha256": "24d4eac98da23791f706341fd6c7c3f54cc5f693b0b435852049b319dd996ecc",
+      "classification": {
+        "role": "research",
+        "reason": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h144_reg_sweep/science.py": {
+      "bytes": 5131,
+      "sha256": "5aa07f6b8a5e2b5502afa1d5680fe1bd6a29f3b5994bd8d0bb5305f03727918c",
+      "classification": {
+        "role": "research",
+        "reason": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h144_reg_sweep/monitor.py": {
+      "bytes": 6038,
+      "sha256": "b777fe680a0266617d646a2e29203234b165febc4049051d24e2f036b2e0b5f3",
+      "classification": {
+        "role": "research",
+        "reason": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h144_reg_sweep/runner.py": {
+      "bytes": 19035,
+      "sha256": "ec15b5a127c0aee5323d08798678ab930a0f968b4a02696853a429a4056fe7fd",
+      "classification": {
+        "role": "research",
+        "reason": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
