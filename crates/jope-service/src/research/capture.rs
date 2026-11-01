@@ -88,6 +88,10 @@ pub(crate) trait CaptureProvider: Send + Sync {
     /// Refuse unavailable corpus, conditioning, evaluator, gate or seed inputs
     /// before any reservation or execution. This is not an identity-only check.
     fn validate_binding(&self, binding: &Binding, plan: &Plan) -> Result<()>;
+    /// Prepare the actual request before it is journaled or dispatched.
+    fn prepare_request(&self, _request: &mut Request) -> Result<()> {
+        Ok(())
+    }
     fn observe(
         &self,
         round: u64,
