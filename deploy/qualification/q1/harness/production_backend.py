@@ -229,7 +229,7 @@ def validate_receipt(receipt, request):
         and sha(dataset.get("dataset_sha256"))
         and dataset["dataset_sha256"].startswith(dataset["id"])
         and isinstance(dataset.get("family"), str)
-        and len(dataset["family"]) == 40
+        and len(dataset["family"]) in (40, 64)
         and all(char in "0123456789abcdef" for char in dataset["family"])
         and sha(dataset.get("cut_sha256"))
         and dataset.get("task") == "regression"
