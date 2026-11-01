@@ -1,4 +1,4 @@
-% Snapshot description derived from figures/data/admissions.csv and rounds.csv.
+% Admission refresh: figures/data/live_admissions.csv; historical summaries: rounds.csv.
 % These tables report development observations, not sealed evaluation results.
 \subsection{Where training stands}\label{sec:method-status}
 % Figures 5--7 are defined before the text so that they are placed ahead of
@@ -7,10 +7,10 @@
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_validation.pdf}
-  \caption{\textbf{Adapter validation and admissions.} Grey: candidate
-  utility. Blue: recorded best. Stars: strict best increases; hollow
-  diamonds: accepted ties. The annotation counts rounds in this window.}
+  \includegraphics[width=\linewidth]{figures/fig_fw_live_validation.pdf}
+  \caption{\textbf{Adapter validation and admissions.} All 1,859 retained
+  rounds, 775--2633: grey candidate utility, blue recorded best. Stars mark
+  strict gains; hollow diamonds mark accepted ties.}
   \label{fig:fw-validation}
 \end{figure}
 
@@ -124,16 +124,14 @@ setting to select programs for exact evaluation. The referee still decides
 validity and improvement. Logging an evaluation does not itself add the
 program to the adapter's training pool.
 
-The admission log contains
-695 consecutive rounds. Four rows are marked accepted, but only two strictly
-increase the recorded best validation utility within this window. Its final
-recorded best-validation value is 1.1378, with no later increase in the
-retained interval (\cref{fig:fw-validation}). Acceptance flags and
-improvements in this value are therefore distinct counts. Comparing these
-utilities across harnesses requires matched data, normalization and scoring
+The admission prefix covers \num{1859} consecutive rounds, 775--2633.
+Four rows are marked accepted: two strict best increases and two ties.
+The recorded best remains 1.1378. After the accepted tie at round 882,
+all \num{1751} subsequent rounds are rejected (\cref{fig:fw-validation}).
+Comparisons across harnesses need matched data, normalization and scoring
 protocols.
 
-The more detailed summaries cover only 25 of those rounds. In that subset,
+The older detailed summaries cover only 25 of those rounds. In that subset,
 training utility exceeds validation utility by 0.282--0.290
 (\cref{fig:fw-trainval}). This is a difference between reported aggregates
 on separate training and validation contexts; it does not isolate a cause
@@ -141,8 +139,8 @@ or establish behavior in the missing summaries. The late validation plateau
 is evidence to explain, rather than proof of useful transfer. Encoder
 integrity and parameter updates require their own receipts; the plotted
 utility tables do not establish either.
-\Cref{fig:fw-telemetry} shows the loop's operating measurements from the same
-snapshot.
+\Cref{fig:fw-telemetry} shows the loop's operating measurements from the earlier
+retained window.
 
 A separate later log slice aligns journaled training-program promotions
 with candidate validation summaries in \cref{fig:fw-program-promotions}.
@@ -190,9 +188,9 @@ count independent tasks or distinct programs.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_admission_shortfall.pdf}
+  \includegraphics[width=\linewidth]{figures/fig_fw_live_shortfall.pdf}
   \caption{\textbf{Candidate gaps to the recorded best.} Cumulative share
-  of the same 695 admission rounds as \cref{fig:fw-validation}, against
+  of the same 1,859 admission rounds as \cref{fig:fw-validation}, against
   recorded best minus candidate validation utility. The best is logged
   after admission, so zero includes strict gains and ties. Repeated
   adaptive rounds are not independent trials.}

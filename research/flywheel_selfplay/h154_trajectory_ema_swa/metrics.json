@@ -1,0 +1,10 @@
+{
+  "wave": "H154",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "verdict": null,
+  "r882_verdict": null,
+  "trajectory_vs_ctrl_verdict": null,
+  "best_r882_arm": null,
+  "optimizer_updates": 0,
+  "serving_promotion": false
+}

@@ -5144,6 +5144,46 @@
       "lanes": [],
       "scope": "H150 synthetic controls for the identity-only sealed-family manifest (owner 293+470 definition enforcement, conservative union) and the three W5 provenance proofs (identity overlap and registry crosswalk, lineage/row-source census, no promotion of missing evidence). No sealed rows, outcomes or real identities in the fixture suite; offline research only."
     },
+    "python:research/flywheel_selfplay/h151_lookahead_drift_control/test_h151.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H151 owner-directed Lookahead drift-matched control suite: median-seed equal-family bootstrap, inclusive [0.85, 1.15] 15% drift-matching manipulation gate, three-seed r882 advancement and Holm-four gates across all executed arms, Lookahead k=5 alpha=0.5 schedule, input audit, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+    },
+    "python:research/flywheel_selfplay/h152_ckpt_soup/test_h152.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H152 data-free controls for zero-update checkpoint soups: fixed arms and weights, trainable-only blending with frozen tensors from R882, frozen-identity census, deterministic bootstrap readout, tie rejection, Holm decision, Elo interval, family-disjoint TRAIN folds, exact R882 regression, Torch thread cap, every disk/load/scratch/nice and supervisor stop guard, and squash-compatible source binding with mismatch rejection. No checkpoint, corpus or model passes in the fixture suite; offline research only."
+    },
+    "python:research/flywheel_selfplay/h154_trajectory_ema_swa/test_h154.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H154 data-free controls for trajectory EMA (0.99/0.995/0.999) and uniform SWA (K=5/10/20) weight averaging with in-fold DL-Train RMS stat recalibration: 40-step EMA/20-round SWA accumulators, [0.85, 1.15] output-head variance recalibration, dose check, unified 7-arm Holm vs r882 and 6-arm Holm vs CTRL, tie rejection, Elo interval, hard-stop supervisor/runtime guards, and squash-compatible source binding. Offline research only."
+    },
+    "python:research/flywheel_selfplay/h155_rank_smoothing/test_h155.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H152 data-free controls for zero-update checkpoint soups: fixed arms and weights, trainable-only blending with frozen tensors from R882, frozen-identity census, deterministic bootstrap readout, tie rejection, Holm decision, Elo interval, family-disjoint TRAIN folds, exact R882 regression, Torch thread cap, every disk/load/scratch/nice and supervisor stop guard, and squash-compatible source binding with mismatch rejection. No checkpoint, corpus or model passes in the fixture suite; offline research only."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"
@@ -5554,6 +5594,16 @@
       "lanes": [],
       "scope": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract)."
     },
+    "python:research/flywheel_selfplay/rnk10_r882_acceptance/test_run_acceptance.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract)."
+    },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
       "discovery": {
         "kind": "python-family"
@@ -5653,6 +5703,16 @@
       ],
       "lanes": [],
       "scope": "H148 data-free nested family isolation, strict selection/bootstrap fallback, batch closure and anchored Elo controls. Scientific600-update experiment is separate, CPU only; no live promotion."
+    },
+    "python:research/joint_regbin/test_binary_dataset.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "JRB-01 binary panel packet validation (schema, family coverage, sealed-id exclusion, deterministic rebuild); offline research only."
     },
     "python:research/joint_regbin/test_study.py": {
       "discovery": {
@@ -13935,7 +13995,7 @@
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
     },
-    "python:research/flywheel_selfplay/h151_lookahead_drift_control/test_h151.py": {
+    "python:research/h156/test_h156.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -13943,7 +14003,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H151 owner-directed Lookahead drift-matched control suite: median-seed equal-family bootstrap, inclusive [0.85, 1.15] 15% drift-matching manipulation gate, three-seed r882 advancement and Holm-four gates across all executed arms, Lookahead k=5 alpha=0.5 schedule, input audit, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      "scope": "H156 data-free nested 5-fold family cross-fit isolation, {0.5x, 1x, 2x} capacity-sweep selection, joint cross-fit selector, Holm-four step-down, and anchored Bradley-Terry Elo controls. Offline research only; no live promotion."
     }
   },
   "lanes": {

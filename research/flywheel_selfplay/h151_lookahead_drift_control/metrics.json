@@ -1,9 +1,887 @@
 {
   "wave": "H151",
-  "status": "PREREGISTERED_NOT_EXECUTED",
-  "verdict": null,
-  "mechanism_verdict": null,
-  "r882_verdict": null,
-  "optimizer_updates": 0,
-  "serving_promotion": false
+  "status": "COMPLETE",
+  "verdict": "STEP_SIZE_ONLY",
+  "mechanism_verdict": "STEP_SIZE_ONLY",
+  "r882_verdict": "NO_ADVANCE",
+  "drift_match": {
+    "matched_control_arm": "CTRL_HALF",
+    "la_median_drift": 0.21812871098518372,
+    "matched_control_median_drift": 0.21814577281475067,
+    "allowed_drift_band": [
+      0.18540940433740616,
+      0.2508480176329613
+    ],
+    "median_drift_by_arm": {
+      "CTRL": 0.4405081868171692,
+      "CTRL_HALF": 0.21814577281475067,
+      "CTRL_QTR": 0.10855028033256531,
+      "LA": 0.21812871098518372
+    },
+    "abs_gap_by_control": {
+      "CTRL_HALF": 1.7061829566955566e-05,
+      "CTRL_QTR": 0.10957843065261841,
+      "CTRL": 0.22237947583198547
+    },
+    "rel_gap_by_control": {
+      "CTRL_HALF": 7.821909133325636e-05,
+      "CTRL_QTR": 0.5023567514689136,
+      "CTRL": 1.0194874156070655
+    },
+    "relative_drift_gap": 7.821909133325636e-05,
+    "max_allowed_relative_gap": 0.15,
+    "drift_match_valid": true,
+    "status": "DRIFT_MATCH_VALID"
+  },
+  "primary_la_minus_matched_ctrl": {
+    "families": 19,
+    "per_seed_gain": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "median_gain": 0.0,
+    "ci95": [
+      0.0,
+      0.0
+    ],
+    "p_one_sided": 1.0,
+    "seeds_beating": 0,
+    "median_seed": 151102,
+    "top3_positive_share": 1.0,
+    "elo": 1500.0,
+    "elo_ci95": [
+      1500.0,
+      1500.0
+    ]
+  },
+  "primary": {
+    "CTRL": {
+      "context_mean_utility_by_seed": [
+        1.0854209187108348,
+        1.1239645215332559,
+        1.1003153647441914
+      ],
+      "family_mean_utility_by_seed": [
+        1.103555740620201,
+        1.1404764549027306,
+        1.117823052083732
+      ],
+      "vs_r882": {
+        "families": 19,
+        "per_seed_gain": [
+          -0.05005953637104396,
+          -0.01313882208851439,
+          -0.03579222490751294
+        ],
+        "median_gain": -0.03579222490751294,
+        "ci95": [
+          -0.09689944384478806,
+          -0.0007523339247746483
+        ],
+        "p_one_sided": 0.9835016498350165,
+        "seeds_beating": 0,
+        "median_seed": 151103,
+        "top3_positive_share": 1.0,
+        "elo": 1406.470004225501,
+        "elo_ci95": [
+          1270.7054721507648,
+          1536.6692623774618
+        ]
+      },
+      "vs_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p_one_sided": 1.0,
+        "seeds_beating": 0,
+        "median_seed": 151102,
+        "top3_positive_share": 1.0,
+        "elo": 1500.0,
+        "elo_ci95": [
+          1500.0,
+          1500.0
+        ]
+      },
+      "vs_matched_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          -0.015507835665375613,
+          -0.003465383518546792,
+          -0.027457441001125623
+        ],
+        "median_gain": -0.015507835665375613,
+        "ci95": [
+          -0.030168059727050386,
+          0.00025181599748284774
+        ],
+        "p_one_sided": 0.9565043495650435,
+        "seeds_beating": 0,
+        "median_seed": 151101,
+        "top3_positive_share": 0.9686032197645308,
+        "elo": 1444.7380788449943,
+        "elo_ci95": [
+          1344.1984999319018,
+          1536.6692623774618
+        ]
+      },
+      "invalid_counts": [
+        1,
+        0,
+        1
+      ],
+      "drift": [
+        0.45761215686798096,
+        0.43917766213417053,
+        0.4405081868171692
+      ]
+    },
+    "CTRL_HALF": {
+      "context_mean_utility_by_seed": [
+        1.1017237330358096,
+        1.1276955451554973,
+        1.1290930417823117
+      ],
+      "family_mean_utility_by_seed": [
+        1.1190635762855767,
+        1.1439418384212774,
+        1.1452804930848577
+      ],
+      "vs_r882": {
+        "families": 19,
+        "per_seed_gain": [
+          -0.034551700705668355,
+          -0.0096734385699676,
+          -0.008334783906387318
+        ],
+        "median_gain": -0.0096734385699676,
+        "ci95": [
+          -0.022765075914091243,
+          0.0006185025809860988
+        ],
+        "p_one_sided": 0.9635036496350365,
+        "seeds_beating": 0,
+        "median_seed": 151102,
+        "top3_positive_share": 1.0,
+        "elo": 1463.3307376225382,
+        "elo_ci95": [
+          1365.8388701764613,
+          1555.2619211550057
+        ]
+      },
+      "vs_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          0.015507835665375613,
+          0.003465383518546792,
+          0.027457441001125623
+        ],
+        "median_gain": 0.015507835665375613,
+        "ci95": [
+          -0.0002518159974828522,
+          0.03016805972705038
+        ],
+        "p_one_sided": 0.043995600439956005,
+        "seeds_beating": 3,
+        "median_seed": 151101,
+        "top3_positive_share": 0.9534447126880041,
+        "elo": 1555.2619211550057,
+        "elo_ci95": [
+          1463.3307376225382,
+          1655.8015000680982
+        ]
+      },
+      "vs_matched_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p_one_sided": 1.0,
+        "seeds_beating": 0,
+        "median_seed": 151102,
+        "top3_positive_share": 1.0,
+        "elo": 1500.0,
+        "elo_ci95": [
+          1500.0,
+          1500.0
+        ]
+      },
+      "invalid_counts": [
+        1,
+        0,
+        0
+      ],
+      "drift": [
+        0.22629332542419434,
+        0.21811248362064362,
+        0.21814577281475067
+      ]
+    },
+    "CTRL_QTR": {
+      "context_mean_utility_by_seed": [
+        1.1304962150563866,
+        1.1304962150563866,
+        1.1304962150563866
+      ],
+      "family_mean_utility_by_seed": [
+        1.1466245853789716,
+        1.1466245853789716,
+        1.1466245853789716
+      ],
+      "vs_r882": {
+        "families": 19,
+        "per_seed_gain": [
+          -0.006990691612273486,
+          -0.006990691612273486,
+          -0.006990691612273486
+        ],
+        "median_gain": -0.006990691612273486,
+        "ci95": [
+          -0.016904840789976717,
+          0.0009002769060644127
+        ],
+        "p_one_sided": 0.9556044395560443,
+        "seeds_beating": 0,
+        "median_seed": 151102,
+        "top3_positive_share": 1.0,
+        "elo": 1463.3307376225382,
+        "elo_ci95": [
+          1365.8388701764613,
+          1555.2619211550057
+        ]
+      },
+      "vs_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          0.04306884475877047,
+          0.006148130476240908,
+          0.028801533295239462
+        ],
+        "median_gain": 0.028801533295239462,
+        "ci95": [
+          -0.0002629620421272369,
+          0.08137581598713146
+        ],
+        "p_one_sided": 0.027597240275972403,
+        "seeds_beating": 3,
+        "median_seed": 151103,
+        "top3_positive_share": 0.9809490093716002,
+        "elo": 1593.529995774499,
+        "elo_ci95": [
+          1481.7162853998977,
+          1702.9963482239102
+        ]
+      },
+      "vs_matched_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          0.027561009093394866,
+          0.002682746957694115,
+          0.0013440922941138334
+        ],
+        "median_gain": 0.002682746957694115,
+        "ci95": [
+          -3.180139947741227e-05,
+          0.007880448573140238
+        ],
+        "p_one_sided": 0.0670932906709329,
+        "seeds_beating": 3,
+        "median_seed": 151102,
+        "top3_positive_share": 1.0,
+        "elo": 1518.2837146001023,
+        "elo_ci95": [
+          1444.7380788449943,
+          1593.529995774499
+        ]
+      },
+      "invalid_counts": [
+        0,
+        0,
+        0
+      ],
+      "drift": [
+        0.11235235631465912,
+        0.10855028033256531,
+        0.10836683958768845
+      ]
+    },
+    "LA": {
+      "context_mean_utility_by_seed": [
+        1.1017237330358096,
+        1.1276955451554973,
+        1.1290930417823117
+      ],
+      "family_mean_utility_by_seed": [
+        1.1190635762855767,
+        1.1439418384212774,
+        1.1452804930848577
+      ],
+      "vs_r882": {
+        "families": 19,
+        "per_seed_gain": [
+          -0.034551700705668355,
+          -0.0096734385699676,
+          -0.008334783906387318
+        ],
+        "median_gain": -0.0096734385699676,
+        "ci95": [
+          -0.022765075914091243,
+          0.0006185025809860988
+        ],
+        "p_one_sided": 0.9635036496350365,
+        "seeds_beating": 0,
+        "median_seed": 151102,
+        "top3_positive_share": 1.0,
+        "elo": 1463.3307376225382,
+        "elo_ci95": [
+          1365.8388701764613,
+          1555.2619211550057
+        ]
+      },
+      "vs_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          0.015507835665375613,
+          0.003465383518546792,
+          0.027457441001125623
+        ],
+        "median_gain": 0.015507835665375613,
+        "ci95": [
+          -0.0002518159974828522,
+          0.03016805972705038
+        ],
+        "p_one_sided": 0.043995600439956005,
+        "seeds_beating": 3,
+        "median_seed": 151101,
+        "top3_positive_share": 0.9534447126880041,
+        "elo": 1555.2619211550057,
+        "elo_ci95": [
+          1463.3307376225382,
+          1655.8015000680982
+        ]
+      },
+      "vs_matched_CTRL": {
+        "families": 19,
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p_one_sided": 1.0,
+        "seeds_beating": 0,
+        "median_seed": 151102,
+        "top3_positive_share": 1.0,
+        "elo": 1500.0,
+        "elo_ci95": [
+          1500.0,
+          1500.0
+        ]
+      },
+      "invalid_counts": [
+        1,
+        0,
+        0
+      ],
+      "drift": [
+        0.22633813321590424,
+        0.21811644732952118,
+        0.21812871098518372
+      ]
+    }
+  },
+  "decision": {
+    "CTRL_QTR": {
+      "holm_adjusted_p": 1.0,
+      "gates": {
+        "margin": false,
+        "ci": false,
+        "three_seeds": false,
+        "concentration": false,
+        "holm": false
+      },
+      "efficacy_only_advance": false,
+      "advance": false
+    },
+    "CTRL_HALF": {
+      "holm_adjusted_p": 1.0,
+      "gates": {
+        "margin": false,
+        "ci": false,
+        "three_seeds": false,
+        "concentration": false,
+        "holm": false
+      },
+      "efficacy_only_advance": false,
+      "advance": false
+    },
+    "LA": {
+      "holm_adjusted_p": 1.0,
+      "gates": {
+        "margin": false,
+        "ci": false,
+        "three_seeds": false,
+        "concentration": false,
+        "holm": false,
+        "drift_match": true
+      },
+      "efficacy_only_advance": false,
+      "advance": false
+    },
+    "CTRL": {
+      "holm_adjusted_p": 1.0,
+      "gates": {
+        "margin": false,
+        "ci": false,
+        "three_seeds": false,
+        "concentration": false,
+        "holm": false
+      },
+      "efficacy_only_advance": false,
+      "advance": false
+    }
+  },
+  "secondary_descriptive_only": {
+    "CTRL": {
+      "vs_r882": {
+        "families": 41,
+        "per_seed_gain": [
+          -0.009293432041426642,
+          -0.019454521678563413,
+          -0.02153894767550077
+        ],
+        "median_gain": -0.019454521678563413,
+        "ci95": [
+          -0.06625510366420541,
+          0.01611885064121837
+        ],
+        "p_one_sided": 0.8235176482351765,
+        "seeds_beating": 0,
+        "median_seed": 151102,
+        "top3_positive_share": 0.7746478879913711,
+        "elo": 1491.5284144921036,
+        "elo_ci95": [
+          1404.496136018959,
+          1577.4889439244812
+        ]
+      },
+      "vs_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p_one_sided": 1.0,
+        "seeds_beating": 0,
+        "median_seed": 151102,
+        "top3_positive_share": 1.0,
+        "elo": 1500.0,
+        "elo_ci95": [
+          1500.0,
+          1500.0
+        ]
+      },
+      "vs_matched_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          0.01151043869276257,
+          -0.015981337049294553,
+          -0.003852472549509248
+        ],
+        "median_gain": -0.003852472549509248,
+        "ci95": [
+          -0.01707437108605669,
+          0.010992983818413942
+        ],
+        "p_one_sided": 0.6577342265773423,
+        "seeds_beating": 1,
+        "median_seed": 151103,
+        "top3_positive_share": 0.8991390707581984,
+        "elo": 1466.0123695009536,
+        "elo_ci95": [
+          1395.303073881857,
+          1525.455170275162
+        ]
+      },
+      "invalid_counts": [
+        4,
+        5,
+        5
+      ]
+    },
+    "CTRL_HALF": {
+      "vs_r882": {
+        "families": 41,
+        "per_seed_gain": [
+          -0.020803870734189205,
+          -0.0034731846292688686,
+          -0.017686475125991512
+        ],
+        "median_gain": -0.017686475125991512,
+        "ci95": [
+          -0.06081260046634543,
+          0.013134261698227352
+        ],
+        "p_one_sided": 0.8479152084791521,
+        "seeds_beating": 0,
+        "median_seed": 151103,
+        "top3_positive_share": 0.8241243722803465,
+        "elo": 1508.4715855078964,
+        "elo_ci95": [
+          1431.3615048042864,
+          1586.4394643184742
+        ]
+      },
+      "vs_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          -0.01151043869276257,
+          0.015981337049294553,
+          0.003852472549509248
+        ],
+        "median_gain": 0.003852472549509248,
+        "ci95": [
+          -0.01099298381841395,
+          0.017074371086056687
+        ],
+        "p_one_sided": 0.34236576342365765,
+        "seeds_beating": 2,
+        "median_seed": 151103,
+        "top3_positive_share": 0.7643235620930935,
+        "elo": 1533.9876304990464,
+        "elo_ci95": [
+          1474.544829724838,
+          1604.696926118143
+        ]
+      },
+      "vs_matched_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p_one_sided": 1.0,
+        "seeds_beating": 0,
+        "median_seed": 151102,
+        "top3_positive_share": 1.0,
+        "elo": 1500.0,
+        "elo_ci95": [
+          1500.0,
+          1500.0
+        ]
+      },
+      "invalid_counts": [
+        5,
+        4,
+        5
+      ]
+    },
+    "CTRL_QTR": {
+      "vs_r882": {
+        "families": 41,
+        "per_seed_gain": [
+          0.0005395684469134354,
+          0.007429804614545833,
+          0.0073477924594798055
+        ],
+        "median_gain": 0.0073477924594798055,
+        "ci95": [
+          -0.0007554973860933672,
+          0.022075865601214485
+        ],
+        "p_one_sided": 0.10738926107389261,
+        "seeds_beating": 3,
+        "median_seed": 151103,
+        "top3_positive_share": 0.9428051779919779,
+        "elo": 1508.4715855078964,
+        "elo_ci95": [
+          1448.8134067834028,
+          1559.8751385777832
+        ]
+      },
+      "vs_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          0.009833000488340075,
+          0.02688432629310925,
+          0.028886740134980573
+        ],
+        "median_gain": 0.02688432629310925,
+        "ci95": [
+          -0.004210540980555633,
+          0.07045706539018577
+        ],
+        "p_one_sided": 0.060193980601939805,
+        "seeds_beating": 3,
+        "median_seed": 151102,
+        "top3_positive_share": 0.7784107161375046,
+        "elo": 1542.561162339644,
+        "elo_ci95": [
+          1466.0123695009536,
+          1623.5340965470612
+        ]
+      },
+      "vs_matched_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          0.021343439181102642,
+          0.010902989243814703,
+          0.02503426758547132
+        ],
+        "median_gain": 0.021343439181102642,
+        "ci95": [
+          -0.0015271042695097657,
+          0.06316950245138382
+        ],
+        "p_one_sided": 0.0486951304869513,
+        "seeds_beating": 3,
+        "median_seed": 151101,
+        "top3_positive_share": 0.8671184074457713,
+        "elo": 1508.4715855078964,
+        "elo_ci95": [
+          1440.1248614222168,
+          1568.6384951957136
+        ]
+      },
+      "invalid_counts": [
+        4,
+        4,
+        4
+      ]
+    },
+    "LA": {
+      "vs_r882": {
+        "families": 41,
+        "per_seed_gain": [
+          -0.020534233602341752,
+          -0.00360322002799159,
+          -0.017686475125991512
+        ],
+        "median_gain": -0.017686475125991512,
+        "ci95": [
+          -0.06081206922818481,
+          0.013151743147569098
+        ],
+        "p_one_sided": 0.8474152584741526,
+        "seeds_beating": 0,
+        "median_seed": 151103,
+        "top3_positive_share": 0.8241243722803465,
+        "elo": 1516.9532563971777,
+        "elo_ci95": [
+          1440.1248614222168,
+          1586.4394643184742
+        ]
+      },
+      "vs_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          -0.011240801560915116,
+          0.01585130165057183,
+          0.003852472549509248
+        ],
+        "median_gain": 0.003852472549509248,
+        "ci95": [
+          -0.01104822968271845,
+          0.017087501222586173
+        ],
+        "p_one_sided": 0.3438656134386561,
+        "seeds_beating": 2,
+        "median_seed": 151103,
+        "top3_positive_share": 0.7643235620930935,
+        "elo": 1533.9876304990464,
+        "elo_ci95": [
+          1474.544829724838,
+          1595.503863981041
+        ]
+      },
+      "vs_matched_CTRL": {
+        "families": 41,
+        "per_seed_gain": [
+          0.00026963713184745524,
+          -0.0001300353987227214,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p_one_sided": 1.0,
+        "seeds_beating": 1,
+        "median_seed": 151103,
+        "top3_positive_share": 1.0,
+        "elo": 1500.0,
+        "elo_ci95": [
+          1500.0,
+          1500.0
+        ]
+      },
+      "invalid_counts": [
+        5,
+        4,
+        5
+      ]
+    }
+  },
+  "seed_pseudoreplication": {
+    "CTRL": {
+      "identical_primary_utilities_across_seeds": false,
+      "identical_primary_choices_across_seeds": false,
+      "identical_adapters_across_seeds": false
+    },
+    "CTRL_HALF": {
+      "identical_primary_utilities_across_seeds": false,
+      "identical_primary_choices_across_seeds": false,
+      "identical_adapters_across_seeds": false
+    },
+    "CTRL_QTR": {
+      "identical_primary_utilities_across_seeds": true,
+      "identical_primary_choices_across_seeds": true,
+      "identical_adapters_across_seeds": false
+    },
+    "LA": {
+      "identical_primary_utilities_across_seeds": false,
+      "identical_primary_choices_across_seeds": false,
+      "identical_adapters_across_seeds": false
+    }
+  },
+  "cross_arm_argmin_pseudoreplication": {
+    "LA_vs_CTRL": {
+      "identical_primary_utilities_by_seed": [
+        false,
+        false,
+        false
+      ],
+      "identical_primary_choices_by_seed": [
+        false,
+        false,
+        false
+      ],
+      "choice_diffs_out_of_91_by_seed": [
+        10,
+        8,
+        9
+      ]
+    },
+    "LA_vs_CTRL_HALF": {
+      "identical_primary_utilities_by_seed": [
+        true,
+        true,
+        true
+      ],
+      "identical_primary_choices_by_seed": [
+        true,
+        true,
+        true
+      ],
+      "choice_diffs_out_of_91_by_seed": [
+        0,
+        0,
+        0
+      ]
+    },
+    "LA_vs_CTRL_QTR": {
+      "identical_primary_utilities_by_seed": [
+        false,
+        false,
+        false
+      ],
+      "identical_primary_choices_by_seed": [
+        false,
+        false,
+        false
+      ],
+      "choice_diffs_out_of_91_by_seed": [
+        8,
+        5,
+        6
+      ]
+    }
+  },
+  "baseline": {
+    "matches": 91,
+    "max_context_error": 0.0,
+    "mean_error": 0.0,
+    "mean": 1.1377941898164525,
+    "status": "PASS"
+  },
+  "baseline_family_utility": 1.1536152769912449,
+  "baseline_invalid_primary": 0,
+  "baseline_invalid_secondary": 4,
+  "optimizer_updates": 480,
+  "identity": {
+    "source_commit": "36ec1f60e41f3ed31fe4c018eda0571ed5596c07",
+    "manifest_sha256": "5d8daf3248ae068a2ea71b71a2afd5af4d619e1ec65e484846849b20e649eaec",
+    "input_sha256": {
+      "/home/ubuntu/jope-data/h151/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+      "/home/ubuntu/jope-data/h151/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+      "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+      "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+      "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+      "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf"
+    },
+    "fold_sha256": "e1310c7c1925acc7f2c2a9c2a3558e7aa574835eb28df7ce0d558ddfe0fd7029"
+  },
+  "seeds": [
+    151101,
+    151102,
+    151103
+  ],
+  "arms": {
+    "CTRL": {
+      "learning_rate": 0.0001,
+      "lookahead_k": null,
+      "weight_decay": 0.0001
+    },
+    "CTRL_HALF": {
+      "learning_rate": 5e-05,
+      "lookahead_k": null,
+      "weight_decay": 0.0001
+    },
+    "CTRL_QTR": {
+      "learning_rate": 2.5e-05,
+      "lookahead_k": null,
+      "weight_decay": 0.0001
+    },
+    "LA": {
+      "learning_rate": 0.0001,
+      "lookahead_k": 5,
+      "weight_decay": 0.0001
+    }
+  },
+  "lookahead_alpha": 0.5,
+  "inference_unit": "equal family mean within seed, median across three seeds; shared family-cluster bootstrap",
+  "serving_promotion": false,
+  "wall_seconds": 1446.6529961209744
 }
