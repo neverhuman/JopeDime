@@ -12,6 +12,8 @@ mod deterministic;
 mod forward;
 pub use forward::{FusedForward, StageOutput};
 #[cfg(test)]
+mod authenticated;
+#[cfg(test)]
 mod fixture;
 
 use super::{
