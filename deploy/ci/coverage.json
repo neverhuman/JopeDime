@@ -14684,6 +14684,16 @@
       ],
       "lanes": [],
       "scope": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+    },
+    "python:research/flywheel_selfplay/h197_pcgc/test_h197.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H197 data-free controls for per-context gradient clipping: independent TRAIN-family folds, frozen fit-only clip calibration, four matched arms, immutable B-stage lock, strict paired-family bootstrap/verdict, and CPU resource guards; no corpus/checkpoint reads or model passes in fixtures."
     }
   },
   "lanes": {
