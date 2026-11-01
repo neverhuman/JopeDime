@@ -4954,6 +4954,16 @@
       "lanes": [],
       "scope": "H117 W5 identity-only provenance fixtures: unique candidates across manifest revisions, zero overlap yields UNPROVED_BOUNDED never PASS with W5 HELD, any family/dataset/view/prefix/catalog overlap fails proof 1, the lineage census separates pool-level parent fields from per-child lineage, catalog sealed ids parsed from the exclusion sentence only, and the manifest hash pin enforced. Synthetic only; no data payloads; no experiment admission or release qualification."
     },
+    "python:research/flywheel_selfplay/h150_w5_provenance_unblock/test_w5_proofs.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H150 synthetic controls for the identity-only sealed-family manifest (owner 293+470 definition enforcement, conservative union) and the three W5 provenance proofs (identity overlap and registry crosswalk, lineage/row-source census, no promotion of missing evidence). No sealed rows, outcomes or real identities in the fixture suite; offline research only."
+    },
     "python:research/flywheel_selfplay/h119_gbm_ctx_confirm/test_h119.py": {
       "discovery": {
         "kind": "python-family"
