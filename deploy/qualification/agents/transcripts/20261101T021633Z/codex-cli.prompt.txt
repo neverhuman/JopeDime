@@ -1,0 +1,43 @@
+This is the owner-authorized MCP-05 actual named-client CPU acceptance attempt.
+Use ONLY the jopedime MCP server. No shell, file, web, plugins, other tools, config/auth
+changes, external test or sealed data, or source changes. No extra agents/sessions.
+Make these real calls in order, retaining real errors and returned identifiers:
+1. system_info {}; run_status {} to inventory the initially empty private store.
+2. dataset_register path '/home/ubuntu/jope-data/mcp05-a5-t1930/train.csv', name 'mcp05-catalog-TRAIN25',
+   idempotency_key 'mcp05-t1930-codex-register'. Retry EXACT same arguments once.
+3. dataset_inspect the returned dataset_id. Expect 25 TRAIN rows and 13 columns.
+4. run_start this precise spec, substituting ONLY the actual returned dataset_id:
+{"dataset": "REPLACE_WITH_RETURNED_DATASET_ID", "target": "target", "task": "regression", "ignore_columns": [], "test_dataset": null, "split": {"kind": "random", "holdout_fraction": 0.2, "group_column": null, "time_column": null}, "objective": "rmse", "effort": "fast", "budget": {"evaluations": "1", "wall_seconds": "5"}, "landmarks": "none", "guidance": "heuristic", "languages": ["rust"], "require_all_languages": true, "device": "cpu", "seed": "73", "dry_run": true, "plan_digest": null, "idempotency_key": "mcp05-t1930-codex-plan"}
+   Confirm plan placement is one CPU worker; otherwise STOP without creating a run.
+5. run_start with the SAME spec except dry_run:false, plan_digest:the returned digest,
+   idempotency_key:'mcp05-t1930-codex-run'. This permits ONE evaluation, five
+   nominal wall seconds, no learned guidance, no landmarks, no external test set.
+   After receiving the first create reply, call run_status {} WITHOUT run_id and wait
+   for its complete reply, requiring next_after:null and exactly one run. ONLY THEN
+   retry the identical full mutation body/key ONCE; verify same run_id/full outcome.
+   After receiving the retry reply, call run_status {} WITHOUT run_id again and wait
+   for its complete reply, requiring next_after:null and the SAME sole run ID.
+   These calls MUST be sequential, never parallel/batched; the inventory in between
+   the two run_start calls is REQUIRED. Do not omit it or move it after the retry.
+6. Poll run_status with actual run_id, wait_seconds:2 and after_event:'0' until terminal
+   (at most 12 polls). Then run_events with actual run_id, after:'0', limit:256.
+7. If completed, call model_export with actual run_id, kind:'bundle', languages:['rust'],
+   out_dir:'/home/ubuntu/jope-data/mcp05-a5-t1930/final/codex/exported',
+   idempotency_key:'mcp05-t1930-codex-export'. This must actually materialize
+   the model manifest/parts and Rust predictor into that private directory.
+   Force ONE export retry with EXACTLY the same full arguments, output directory and
+   idempotency key. Both must succeed, return the same archive/model identity and
+   preserve the existing byte-identical materialized directory without overwrite.
+   Do not invent an algorithm/artifact, change output directory, or set force.
+8. Even if export returns CAPABILITY_UNAVAILABLE, make ONE model_predict request using
+   model:{run_id:the actual completed run_id},
+   input:{dataset_id:the actual dataset_id}, out_path:'/home/ubuntu/jope-data/mcp05-a5-t1930/final/codex/predictions.csv',
+   idempotency_key:'mcp05-t1930-codex-predict'. This intentionally exercises
+   run-based algorithm_get/model resolution before prediction. Do not bypass a missing
+   route with an artifact ID, fabricate an ID, or substitute the export archive ID.
+   Preserve errors without inventing outputs or repeatedly probing them.
+9. Finally run_status {} to record the complete inventory count. STOP.
+If registration or planning/run creation fails, stop at that boundary; do not fabricate
+IDs, switch to legacy/batch/mock flows, increase budgets, or repeatedly probe errors.
+Finish with concise JSON: actual dataset/run IDs, call counts, retry equality,
+terminal state/events count, export/predict outcomes, unexecuted steps. Do not assert qualification; report observed results only.

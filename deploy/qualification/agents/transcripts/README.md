@@ -1,9 +1,14 @@
 # MCP-05 named-client evidence
 
-**Gate A5: NOT QUALIFIED.** Two installed clients reached a real local engine, then
-both stopped at dataset registration. Gemini CLI was unavailable. This evidence
-belongs in a draft PR until all three clients complete AG1, including a successful
-retried `run_start` and an observed single persisted run.
+The [2026-11-01 three-client replay](20261101T021633Z/README.md) records complete
+AG1 flows in Claude Code, owner-admitted Antigravity Gemini CLI and Codex CLI:
+48 successful calls, identical run retries with complete inventories `0 → 1 → 1`,
+exports and 25-row predictions. Its exact-source evidence is ready for review;
+ENG:watcher owns publication and merge. Model parity and learned guidance remain
+separate qualification gates.
+
+The historical baseline below remains **A5: NOT QUALIFIED**: two clients stopped
+at registration and Gemini was unavailable in that earlier host inventory.
 
 ## Design and scope
 
