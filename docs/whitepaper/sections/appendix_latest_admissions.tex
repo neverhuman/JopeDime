@@ -1,20 +1,34 @@
-\subsection{Latest retained admission trace and pre-decision margins}\label{app:latest-admissions}
+\subsection{Retained admission ledger and pre-decision margins}\label{app:latest-admissions}
 
+\begin{table}[!htbp]
+  \caption{\textbf{Canonical retained admission ledger.}
+  Every complete row in the captured prefix, without outcome selection.
+  Strict gains and exact ties use unrounded candidate minus prior-best
+  utility. Scope: \cref{sec:method-status}.}
+  \label{tab:admission-ledger}
+  \centering\small
+  \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.46\linewidth}>{\raggedright\arraybackslash}X@{}}
+    \toprule
+    Quantity & Recorded value \\
+    \midrule
+    Capture cutoff (UTC) & 2026-11-01 15:22 \\
+    Complete rounds & 775--3002 (\num{2228} records) \\
+    Admissions / rejections & 6 / \num{2222} \\
+    Strict-gain rounds & 785, 859, 2750 \\
+    Exact-tie rounds & 782, 882, 2795 \\
+    Final retained utility & \texttt{1.1383668110784328} \\
+    Recorded best-round identity & 2795 \\
+    New rows since prior capture & 64 (all rejected) \\
+    $[-10^{-4},0)$ rejected margins & 26 \\
+    $[-10^{-3},-10^{-4})$ rejected margins & 49 \\
+    Rejected margins below $-10^{-3}$ & \num{2147} \\
+    Closest rejected margin & \texttt{-0.0000433838086485} (round 803) \\
+    Median rejected margin & \texttt{-0.0033601045139468} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
 
-
-The full admission chronology and counts are reported once in
-\cref{sec:method-status}. This diagnostic uses the same retained prefix
-and classifies decisions from unrounded logged values.
-
-\Cref{fig:fw-admission-margins} decomposes the same \num{2164} development
-records by their unrounded pre-decision validation margin,
-$\Delta_r = u_{\mathrm{cand},r} - u_{\mathrm{prev},r}$.
-The three strict gains and three exact ties are unchanged from the earlier
-prefix; the default rule accepts $\Delta_r \geq 0$.
-Among the \num{2158} rejected rounds, 26 (1.20\%) fall within
-$[-10^{-4},0)$ of a tie, 49 lie in $[-10^{-3},-10^{-4})$, and
-\num{2083} (96.52\%) fall below $-10^{-3}$.
-The closest rejected margin is $\num{-0.0000433838086485}$ at round
-803; the median is -0.003360.
-These margins reuse the admission record; exact source, adapter and
-population binding remains pending in \cref{sec:method-status}.
+\Cref{fig:fw-admission-margins} plots the same record using
+$\Delta_r=u_{\mathrm{cand},r}-u_{\mathrm{prev},r}$.
+The default rule accepts $\Delta_r\geq0$; \cref{tab:admission-ledger}
+keeps its chronology, exact counts and margin summaries in one place.

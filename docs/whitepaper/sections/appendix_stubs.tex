@@ -157,12 +157,9 @@ This appendix supplies timing and event counts
 (\cref{app:subsequent-window,app:subsequent-utility,app:subsequent-rates,app:round-throughput}),
 and separate adapter-admission and program-promotion rates
 (\cref{app:acceptance-over-rounds,app:promotions-per-hour}).
-\Cref{app:latest-admissions} adds 275 captured rows through round 2938;
-earlier admission windows and historical GP comparisons appear in
-\cref{app:record-windows}. These views reuse retained records and add no
-independent evaluations. Binding the records to an exact loop, adapter and
-qualified runtime remains pending (\cref{sec:method-status});
-first-proposal comparisons belong to \cref{sec:results}.
+The canonical admission ledger is \cref{tab:admission-ledger};
+earlier windows and historical GP comparisons are in \cref{app:record-windows}.
+The scope statement in \cref{sec:method-status} applies throughout this appendix.
 
 \subsection{Development measurements over completed-round time}\label{app:development-time}
 
@@ -173,8 +170,7 @@ first-proposal comparisons belong to \cref{sec:results}.
   Top: candidate and recorded-best validation pool utility. Bottom:
   cumulative strict training-program incumbent events reported by round end.
   Both panels use all 20 consecutive summaries from rounds 2343--2362.
-  The summaries mark no adapter admission. These development observations
-  do not establish independent first-proposal improvement.}
+  The summaries mark no adapter admission. Scope: \cref{sec:method-status}.}
   \label{fig:fw-completed-time}
 \end{figure}
 
@@ -210,3 +206,4 @@ summary; the event count starts from zero for this window.
 \FloatBarrier
 \input{sections/appendix_record_windows}
 \input{sections/appendix_latest_event_rates}
+\FloatBarrier
