@@ -2124,6 +2124,16 @@
       "lanes": [],
       "scope": "Manual post-build regression for the sealed Dope GPU edition: fresh Rust CPU fast inference on all three tasks, cleared thread environment and sampled process thread bounds. Execution needs no GPU; building the packaged edition requires the CUDA feature toolchain. Static mapping is not execution or latency evidence."
     },
+    "python:deploy/appliance/test_d1_macos_dev.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Synthetic D1 Darwin development-package identity and receipt controls; native DEV-BUILD execution is separately recorded and never qualifies the signed release gate."
+    },
     "python:deploy/ci/cuda/test_evidence.py": {
       "discovery": {
         "kind": "python-family"
@@ -14744,6 +14754,16 @@
       ],
       "lanes": [],
       "scope": "H200 data-free protocol checks: exact unused seeds and 20-model-per-seed exclusion plan; strict nested lambda margin/ties; average-tie rank orientation; deterministic within-context shuffle; xbabe1-only host guard that refuses xbabe0/2/3 before input reads; native ties and CPU resource limits. No cohort, checkpoint, or outcome data opened."
+    },
+    "python:research/flywheel_selfplay/h201_strict_admission/test_h201.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H201 data-free host-before-input exclusion, paired family bootstrap and weighting, sequential SMA versus observed-incumbent screen, joint-null candidate dependence, family split exclusion, BT reference and strict verdict controls; no corpus/checkpoint reads, model passes or optimizer calls in fixtures."
     }
   },
   "lanes": {
