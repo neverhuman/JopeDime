@@ -2437,6 +2437,59 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires the authenticated signed r782 fixture and a source-bound native worker"]
+    async fn q1_admitted_r782_learned_request_executes_real_guidance() {
+        use crate::{ranker::cuda::release::load_r782_release, run::learned::AdmittedRanker};
+        use std::sync::atomic::Ordering;
+        let assets = PathBuf::from(std::env::var_os("JOPE_AUTHENTICATED_BUNDLE_DIR").unwrap());
+        let ranker = AdmittedRanker::r782(load_r782_release(&assets).unwrap()).unwrap();
+        let forwards = ranker.execution_counter();
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/q1-native");
+        std::fs::create_dir_all(&root).unwrap();
+        let directory = tempfile::tempdir_in(root).unwrap();
+        // The red control stops at the old guard, before any worker invocation.
+        let worker = std::env::var_os("JOPE_Q1_WORKER_BIN")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| std::env::current_exe().unwrap());
+        let engine = InProcessEngine::open_with_ranker(directory.path(), &worker, ranker).unwrap();
+        let mut request = q1_request(directory.path(), &engine);
+        request["guidance"] = json!("learned");
+        request["pins"]["bundle_sha256"] =
+            json!("94fd9587675c7806bd0a0582b6e97540cd2fdc7ebbc51958411b905185cad85c");
+        request["pins"]["dope_sha256"] =
+            json!("c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814");
+        let path = directory
+            .path()
+            .join("q1/protocols")
+            .join(format!("{}.json", "a".repeat(64)));
+        let mut manifest: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+        manifest["pins"] = request["pins"].clone();
+        std::fs::write(path, serde_json::to_vec(&manifest).unwrap()).unwrap();
+        request.as_object_mut().unwrap().remove("request_sha256");
+        request["request_sha256"] = json!(canonical_sha256(&request).unwrap());
+        let response = app(&engine)
+            .oneshot(q1_http_request(&request))
+            .await
+            .unwrap();
+        let status = response.status();
+        let bytes = to_bytes(response.into_body(), 1 << 20).await.unwrap();
+        assert_eq!(
+            status,
+            StatusCode::OK,
+            "{}",
+            String::from_utf8_lossy(&bytes)
+        );
+        let receipt: EvaluationReceipt = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(receipt.identity.guidance, "learned");
+        assert_eq!(receipt.charged, 24);
+        assert_eq!(receipt.attempts.len(), 24);
+        assert!(
+            forwards.load(Ordering::Relaxed) > 0,
+            "Q1 never used its admitted neural backend"
+        );
+    }
+
+    #[tokio::test]
     async fn q1_receipt_uses_real_fold_values_and_replays_identical_durable_bytes() {
         let (directory, engine, _) = fixture();
         let request_body = q1_request(directory.path(), &engine);
