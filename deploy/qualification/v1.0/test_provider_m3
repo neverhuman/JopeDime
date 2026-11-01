@@ -111,6 +111,15 @@ class M3Tests(unittest.TestCase):
         self.assertIn("full historical feat412 corpus", str(m3.INCOMPLETE))
         self.assertIn(m3.command(m3.TESTS[0]), self.calls)
 
+    def test_default_cli_retains_candidate_qualification_path(self):
+        with (
+            patch.object(m3, "context", return_value=self.ctx) as context_call,
+            patch.object(m3, "qualify", return_value=17) as qualify_call,
+        ):
+            self.assertEqual(m3.main([]), 17)
+        context_call.assert_called_once_with("M3")
+        qualify_call.assert_called_once_with(self.ctx)
+
     def test_zero_collected_tests_refuse_before_incomplete_result(self):
         self.output_override = "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 400 filtered out\n"
         with self.assertRaisesRegex(ProviderError, "exactly one passing case"):
@@ -209,6 +218,192 @@ class M3Tests(unittest.TestCase):
             self.invoke()
         self.assertEqual(self.test_calls, 0)
         self.assertFalse((self.repo / "result.json").exists())
+
+
+class M3InputTests(unittest.TestCase):
+    def setUp(self):
+        base = Path(os.environ.get("JOPE_QUALIFICATION_TEST_TMP", HERE / "target"))
+        base.mkdir(parents=True, exist_ok=True)
+        self.tmp = tempfile.TemporaryDirectory(prefix="m3-input-", dir=base)
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.store = self.root / "cas"
+        self.store.mkdir()
+        self.payload = b"synthetic integrity fixture, never a numerical oracle"
+        self.payload_pin = hashlib.sha256(self.payload).hexdigest()
+        (self.store / self.payload_pin).write_bytes(self.payload)
+        # Two logical files deliberately share one content-addressed object.
+        self.catalog = dict(
+            schema="jope.golden-custody/v1",
+            storage="sha256-custody",
+            authority="data-free control only",
+            historical_scope="synthetic declared scope",
+            historical_corpus_complete=True,
+            original_historical_state_recovered=False,
+            files={
+                name: dict(bytes=len(self.payload), sha256=self.payload_pin)
+                for name in ["dsl/one", "dsl/two"]
+            },
+            file_count=3,
+            payload_bytes=2 * len(self.payload),
+            unique_payload_bytes=len(self.payload),
+            dsl_coverage=dict(
+                delivered_unique_programs=3,
+                evaluated_source_records=2,
+                parent_source_records=1,
+                covered_historical_programs=3,
+                missing_historical_programs=0,
+                excluded_unlogged=9,
+            ),
+        )
+
+    def write_catalog(self, raw=None):
+        if raw is None:
+            # Byte totals include the catalog itself. Converge across decimal-width changes.
+            for _ in range(20):
+                raw = json.dumps(self.catalog, sort_keys=True).encode()
+                total = self.catalog["payload_bytes"] + len(raw)
+                unique = self.catalog["unique_payload_bytes"] + len(raw)
+                if (
+                    self.catalog.get("total_bytes"),
+                    self.catalog.get("unique_custody_bytes"),
+                ) == (total, unique):
+                    break
+                self.catalog.update(total_bytes=total, unique_custody_bytes=unique)
+            else:
+                self.fail("catalog totals did not converge")
+        pin = hashlib.sha256(raw).hexdigest()
+        (self.store / pin).write_bytes(raw)
+        return pin
+
+    def check(self, pin=None):
+        return m3.input_preflight(
+            self.store, self.write_catalog() if pin is None else pin
+        )
+
+    def test_complete_custody_is_input_integrity_only_and_deduplicates_hashes(self):
+        with patch.object(
+            m3.subprocess, "run", side_effect=AssertionError("no child allowed")
+        ):
+            report = self.check()
+        self.assertEqual(report["status"], "INPUTS_VERIFIED_NOT_QUALIFIED")
+        self.assertEqual(report["logical_files_verified"], 2)
+        self.assertEqual(report["unique_objects_verified"], 2)
+        self.assertTrue(report["reconstructed_corpus_complete"])
+        self.assertFalse(report["original_historical_state_recovered"])
+        self.assertFalse(report["release_qualified"])
+        self.assertEqual(report["tests_executed"], 0)
+        self.assertEqual(report["missing_scientific_comparisons"], list(m3.INCOMPLETE))
+
+    def test_preflight_cli_works_without_candidate_and_never_writes_gate_result(self):
+        pin = self.write_catalog()
+        result = self.root / "must-not-write.json"
+        output = io.StringIO()
+        with (
+            patch.object(
+                m3, "context", side_effect=AssertionError("no candidate allowed")
+            ),
+            patch.dict(os.environ, JOPE_REL07_RESULT=str(result)),
+            contextlib.redirect_stdout(output),
+        ):
+            self.assertEqual(
+                m3.main(
+                    [
+                        "--preflight-inputs",
+                        "--store",
+                        str(self.store),
+                        "--catalog-sha256",
+                        pin,
+                    ]
+                ),
+                0,
+            )
+        self.assertEqual(json.loads(output.getvalue())["release_qualified"], False)
+        self.assertFalse(result.exists())
+
+    def test_missing_and_changed_objects_are_refused(self):
+        pin = self.write_catalog()
+        payload = self.store / self.payload_pin
+        payload.unlink()
+        with self.assertRaises(OSError):
+            self.check(pin)
+        payload.write_bytes(b"x" * len(self.payload))
+        with self.assertRaisesRegex(ProviderError, "hash differs"):
+            self.check(pin)
+
+    def test_object_symlink_and_directory_refused(self):
+        pin = self.write_catalog()
+        path = self.store / self.payload_pin
+        path.unlink()
+        real = self.root / "same-bytes"
+        real.write_bytes(self.payload)
+        path.symlink_to(real)
+        with self.assertRaisesRegex(ProviderError, "regular non-symlink"):
+            self.check(pin)
+        path.unlink()
+        path.mkdir()
+        with self.assertRaisesRegex(ProviderError, "regular non-symlink"):
+            self.check(pin)
+
+    def test_symlink_parent_and_relative_store_refused(self):
+        pin = self.write_catalog()
+        link = self.root / "link"
+        link.symlink_to(self.store, target_is_directory=True)
+        for store in [Path("relative"), link]:
+            with self.subTest(store=store), self.assertRaises(ProviderError):
+                m3.input_preflight(store, pin)
+
+    def test_bad_catalog_pin_and_malformed_json_refused(self):
+        for pin in ["../outside", "A" * 64, "f" * 63]:
+            with self.subTest(pin=pin), self.assertRaises(ProviderError):
+                self.check(pin)
+        for raw in [b"{", b"[]", b'{"schema":"one","schema":"two"}']:
+            with self.subTest(raw=raw), self.assertRaises(ProviderError):
+                self.check(self.write_catalog(raw))
+
+    def test_unsafe_logical_names_refused(self):
+        spec = dict(bytes=len(self.payload), sha256=self.payload_pin)
+        for name in ["../outside", "/absolute", "a/../b", "a//b", "a/./b", "a\\b", ""]:
+            self.catalog["files"] = {name: spec}
+            with (
+                self.subTest(name=name),
+                self.assertRaisesRegex(ProviderError, "safe relative"),
+            ):
+                self.check()
+
+    def test_wrong_inventory_count_size_and_strict_boolean_fields_refused(self):
+        pin = self.write_catalog()
+        good = json.loads((self.store / pin).read_bytes())
+        for key, value in [
+            ("file_count", 2),
+            ("payload_bytes", 1),
+            ("unique_payload_bytes", 1),
+            ("file_count", True),
+            ("historical_corpus_complete", 1),
+            ("original_historical_state_recovered", 0),
+        ]:
+            self.catalog = dict(good)
+            self.catalog[key] = value
+            with self.subTest(key=key, value=value), self.assertRaises(ProviderError):
+                self.check()
+
+    def test_contradictory_duplicate_object_size_and_boolean_byte_counts_refused(self):
+        self.catalog["files"]["dsl/two"]["bytes"] += 1
+        with self.assertRaisesRegex(ProviderError, "contradictory lengths"):
+            self.check()
+        self.catalog["files"]["dsl/two"]["bytes"] = True
+        with self.assertRaisesRegex(ProviderError, "positive bounded"):
+            self.check()
+
+    def test_declared_coverage_requires_nonnegative_integers(self):
+        self.catalog["dsl_coverage"]["excluded_unlogged"] = False
+        with self.assertRaisesRegex(ProviderError, "invalid declared DSL count"):
+            self.check()
+
+    def test_cli_missing_or_misplaced_custody_arguments_refused(self):
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(m3.main(["--preflight-inputs"]), 2)
+            self.assertEqual(m3.main(["--store", str(self.store)]), 2)
 
 
 if __name__ == "__main__":
