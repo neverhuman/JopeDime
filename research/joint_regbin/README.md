@@ -1,20 +1,21 @@
 # JRB-01 CPU study driver
 
-This component prepares and audits an equal-budget study. It contains no trained
-model, binary candidate pools or learning results. The existing live flywheel is
+This component prepares and audits an equal-budget study. It contains no qualified
+learner or learning results. The existing live flywheel is
 regression-only. Its code and running process are outside this component's scope.
 
 ## Design and preregistration
 
 Freeze a metadata manifest and the [preregistration](preregistration.json) before
-learning. Four arms (joint balanced, joint natural, regression only, binary only)
-share three seeds and one five-fold family partition. Five held-family jobs plus
-one full-training job per arm/seed make72 jobs. Every job has50 rounds, two updates
-per round,32 contexts per update and10 conditioning slots per context. These slots
-include masked positions; they are not generated-code tokens or throughput.
-Joint natural uses the frozen training cohort's ratio; joint balanced uses1:1.
-Shuffled family blocks are cyclic and deterministic. Validation families never
-train; a panel family appearing in training uses its held-family fold model.
+learning. Three arms (joint, regression only, binary only) share three seeds and
+one five-fold family partition. Five held-family jobs plus one full-training job
+per arm/seed make 54 jobs. Every job has 50 rounds, two updates per round, 32
+contexts per update and 10 conditioning slots per context. These slots include
+masked positions; they are not generated-code tokens or throughput. The joint
+arm uses a fixed 1:1 regression/binary batch. Shuffled family blocks are cyclic
+and deterministic. Validation families never train; a panel family appearing in
+training uses its held-family fold model. The prior natural-ratio sensitivity arm
+is deferred by the T0218 three-arm owner scope.
 
 Training and evaluation run as separate processes. The training request contains
 only that fold/arm's training references and batch schedule. Evaluation receives
@@ -23,12 +24,11 @@ back into learning. No automatic live promotion, task split or mitigation launch
 exists. Three seeds remain paired through family bootstrap resampling.
 
 The report uses separate regression and binary Elo tables, with matching
-single-task arm anchored at1500 and ridge as a common contender. These study-local
+single-task arm anchored at 1500 and ridge as a common contender. These study-local
 ratings do not reproduce the published eight-method panel leaderboard. CV gets
-paired95% family bootstrap intervals; DL-Val gets task-specific loss curves;
-panel_v1 requires240 distinct datasets per task. `joint-balanced` is the declared
-decision arm; natural sampling is sensitivity evidence. The exact25-Elo and
-two-consecutive-evaluation rule is in the preregistration. Incomplete evidence
+paired 95% family bootstrap intervals; DL-Val gets task-specific loss curves;
+panel_v1 requires 240 distinct datasets per task. `joint` is the declared
+decision arm. The exact 25-Elo and two-consecutive-evaluation rule is in the preregistration. Incomplete evidence
 has no scientific verdict. An inconclusive result requires a separately frozen,
 single mitigation rerun, rather than selecting the best post-hoc result.
 
