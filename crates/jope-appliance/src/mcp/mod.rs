@@ -166,7 +166,8 @@ impl<T: Transport + Send + Sync + 'static> Adapter<T> {
                         }
                     }
                     let mut result = CallToolResult::structured(value);
-                    result.content = vec![ContentBlock::text(format!("{} completed", op.name))];
+                    // Keep the SDK JSON text fallback for clients that do not expose
+                    // structuredContent to their model. Both carry the same public value.
                     for (uri, mime, _) in links {
                         if context.protocol_version() == Some(ProtocolVersion::V_2024_11_05) {
                             result
