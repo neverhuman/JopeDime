@@ -459,9 +459,12 @@ fn learned_requires_explicit_admission_and_invalid_device_is_not_fallback() {
 
 #[test]
 fn default_auto_plan_is_byte_identical_with_ranker_absent_or_disabled() {
+    use crate::discover::r#loop::SearchSpace;
     use jope_api::Guidance;
-    use rand::{RngCore, SeedableRng};
-    use rand_chacha::ChaCha12Rng;
+    use rand_chacha::{
+        rand_core::{RngCore, SeedableRng},
+        ChaCha12Rng,
+    };
 
     let mut request = spec("ds_0123456789abcdef01234567", "cpu");
     request.guidance = Guidance::Auto;
