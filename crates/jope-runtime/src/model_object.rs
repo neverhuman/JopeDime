@@ -585,9 +585,7 @@ impl ModelObject {
                 "rust" => crate::fitted_rs::emit_pipeline(&pipeline)
                     .map(String::into_bytes)
                     .map_err(|error| Failure::backend(error.to_string())),
-                "python" => Err(Failure::backend(format!(
-                    "{language} export is not implemented for {MATH_PIPELINE}"
-                ))),
+                "python" => crate::fitted_py::emit_math_pipeline(&pipeline),
                 _ => Err(Failure::input(
                     "source language must be python, rust or javascript",
                 )),

@@ -1,8 +1,10 @@
-//! INT-02 PRE-STAGE: fixture reconnects and public store crash boundaries.
-//! These tests do not qualify live terminal/MCP, discovery determinism, or the
-//! internal CAS failpoint matrix required by release gates R4, S2, and R1.
+//! INT-02 reconnect, deterministic rerun and real engine crash suites.
+//! Full internal engine cuts require INT02_ENGINE_BOUNDARY_CUTS=1 and the
+//! non-default jope-service/failpoints feature; fixture cuts are separate.
 #![cfg(feature = "engine")]
 
+#[cfg(all(feature = "mcp", any(target_os = "linux", target_os = "macos")))]
+mod live_driver;
 mod r4_event_parity;
 
 use jope_api::{decimal::DecimalU64, EventBody, PublicEvent, RunSnapshot, RunState, RunStateBody};
@@ -801,9 +803,7 @@ fn r1_sigkill_at_public_blob_and_journal_boundaries_recovers_atomic_records_and_
 }
 
 #[test]
-#[ignore = "pending executable run handlers"]
+#[cfg(all(feature = "mcp", any(target_os = "linux", target_os = "macos")))]
 fn live_terminal_attach_and_mcp_reconnect_preserve_the_same_run_projection() {
-    panic!(
-        "PRE-STAGE: wire terminal/MCP observers to operational run handlers before qualification"
-    );
+    live_driver::run();
 }

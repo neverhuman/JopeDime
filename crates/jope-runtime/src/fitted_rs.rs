@@ -322,7 +322,26 @@ pub fn emit_pipeline(pipeline: &MathPipeline) -> Result<String> {
         "fitted Rust input task must be regression"
     );
     let genome = GenomeIr::parse(&pipeline.state.dsl)?;
-    let mut source = emit(&genome, &pipeline.state.model, input.selected.len())?;
+    // Every exported math-pipeline carries 64 engine-derived numeric self-checks.
+    let rows: Vec<Vec<f64>> = (0..64)
+        .map(|i| {
+            (0..input.selected.len())
+                .map(|j| ((i + 17 * j) % 64) as f64 / 63.0)
+                .collect()
+        })
+        .collect();
+    let expected = pipeline.state.model.predict(&rows)?;
+    let checks: Vec<CheckRow> = rows
+        .into_iter()
+        .zip(expected)
+        .map(|(inputs, expected)| CheckRow { inputs, expected })
+        .collect();
+    let mut source = emit_with_checks(
+        &genome,
+        &pipeline.state.model,
+        input.selected.len(),
+        &checks,
+    )?;
     let names: Vec<_> = input
         .columns
         .iter()
