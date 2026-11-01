@@ -1,0 +1,26 @@
+{
+  "status": "PASS_NUMERICAL_INPUT_CUSTODY",
+  "numerical_archive_members_joined_and_rehashed": 1319,
+  "all_numeric_inputs_and_pools_in_archive": true,
+  "nonarchived_runtime_source_count": 12,
+  "nonarchived_runtime_sources": [
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py",
+    "/home/ubuntu/JopeDimeMicro/python/rank_prepare.py",
+    "/home/ubuntu/JopeDimeMicro/python/model.py",
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py",
+    "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py",
+    "/home/ubuntu/JopeDimeMicro/python/research/__init__.py",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/__init__.py",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/scaling.py",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/budget_planner.py",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/building_block_landmarks.py",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multiclass_head.py",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py"
+  ],
+  "runtime_source_integrity": "pinned separately by executor manifest and immutable H153 Git sources; original H144 deliberately excluded code",
+  "all_dataset_ids_join_real_S3_catalog": 276,
+  "unjoined_dataset_ids": 0,
+  "family_overlap": 0,
+  "S3_metadata_rechecked": true,
+  "original_H50_H58_derivative_S3_versions": "not established"
+}
