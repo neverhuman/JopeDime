@@ -255,6 +255,10 @@ def run_candidate(candidate_value: str, output: str) -> dict:
         "JOPEDIME_HOME": str(home),
         "TMPDIR": str(tmp),
         "PATH": str(tool_path),
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "RAYON_NUM_THREADS": "1",
     }
 
     def app(*args: str, stdout_path: Path | None = None) -> None:
