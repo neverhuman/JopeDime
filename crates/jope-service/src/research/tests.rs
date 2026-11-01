@@ -758,6 +758,7 @@ fn auxiliary_journal_requires_readable_results_and_matching_attempts() {
     let response = Response {
         attempt: request.attempt.clone(),
         scores: vec![1.0, 1.0, 1.0],
+        fold_scores: vec![],
         predictions_digest: "4".repeat(64),
         wall_ms: 2,
         failure: None,

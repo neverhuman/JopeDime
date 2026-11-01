@@ -866,6 +866,7 @@ impl Discovery {
                     .map(|s| s.warnings.clone())
                     .unwrap_or_default(),
                 completion_reason: None,
+                evaluation_receipt: None,
             };
             (checkpoint, snapshot)
         };
@@ -2322,7 +2323,7 @@ fn record_result(
     id: &str,
     events: &mut Vec<EventBody>,
 ) -> Result<()> {
-    add_events(state, response, id, events)?;
+    add_events(state, candidate, response, id, events)?;
     if response.failure.is_none() {
         state.elites.insert(Elite {
             algorithm_id: candidate.algorithm_id.clone(),
@@ -2335,6 +2336,7 @@ fn record_result(
 
 fn add_events(
     state: &mut Checkpoint,
+    candidate: &Candidate,
     response: &Response,
     id: &str,
     events: &mut Vec<EventBody>,
@@ -2368,6 +2370,24 @@ fn add_events(
                 _ => jope_api::error::ErrorCode::NumericalFailure,
             },
             reason: public_failure(failure),
+        }),
+        attempt_receipt: Some(jope_api::EvaluationAttempt {
+            attempt: DecimalU64(response.attempt.attempt),
+            outcome: if response.failure.is_some() {
+                jope_api::EvaluationAttemptOutcome::Failed
+            } else {
+                jope_api::EvaluationAttemptOutcome::Completed
+            },
+            fold_scores: response.fold_scores.clone(),
+            loss: response.scores.get(1).copied().filter(|_| response.failure.is_none()),
+            program_sha256: response
+                .failure
+                .is_none()
+                .then(|| digest(candidate.dsl.as_bytes())),
+            failure: response.failure.map(|failure| jope_api::EvaluationFailure {
+                code: format!("{failure:?}").to_ascii_lowercase(),
+                reason: public_failure(failure),
+            }),
         }),
     }));
     Ok(())
@@ -2581,6 +2601,7 @@ fn native_scores<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Resul
     let mut losses = vec![];
     let mut values = vec![];
     let mut surrogate = vec![];
+    let mut fold_scores = vec![];
     for fold in spec.folds {
         let train: BTreeSet<_> = fold.train.iter().copied().collect();
         ensure!(
@@ -2607,6 +2628,7 @@ fn native_scores<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Resul
         losses.push(score.loss);
         values.push(score.value);
         surrogate.push(rmse.loss);
+        fold_scores.push(rmse.loss);
         targets.extend(vy);
         predictions.extend(prediction);
     }
@@ -2621,6 +2643,8 @@ fn native_scores<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Resul
     }
     Ok(worker::Scores {
         values: scores,
+        fold_scores,
+        fold_scores: vec![],
         predictions_digest: digest(&bytes),
     })
 }
@@ -2858,6 +2882,7 @@ fn native_refit<B: AsRef<[u8]>>(
     file.sync_all()?;
     Ok(worker::Scores {
         values: vec![surrogate.loss, score.loss, score.value],
+        fold_scores: vec![],
         predictions_digest,
     })
 }
@@ -3009,6 +3034,7 @@ mod tests {
             Response {
                 attempt: request.attempt.clone(),
                 scores: vec![surrogate, objective, objective],
+                fold_scores: vec![],
                 predictions_digest: digest(request.dsl.as_bytes()),
                 wall_ms: 0,
                 failure: None,
@@ -3274,6 +3300,7 @@ mod tests {
                 Response {
                     attempt: request.attempt.clone(),
                     scores: vec![surrogate, objective, objective],
+                    fold_scores: vec![],
                     predictions_digest: digest(request.dsl.as_bytes()),
                     wall_ms: 0,
                     failure: None,
@@ -3520,6 +3547,7 @@ mod tests {
             Response {
                 attempt: request.attempt.clone(),
                 scores: vec![loss, loss, loss],
+                fold_scores: vec![],
                 predictions_digest: digest(request.dsl.as_bytes()),
                 wall_ms: 0,
                 failure: None,
@@ -3858,6 +3886,7 @@ mod tests {
             Response {
                 attempt: request.attempt.clone(),
                 scores: vec![loss, loss, loss],
+                fold_scores: vec![],
                 predictions_digest: digest(request.dsl.as_bytes()),
                 wall_ms: 0,
                 failure: None,
@@ -4697,6 +4726,7 @@ mod tests {
                 Response {
                     attempt: request.attempt.clone(),
                     scores: vec![loss, loss, 777.0],
+                    fold_scores: vec![],
                     predictions_digest: digest(request.dsl.as_bytes()),
                     wall_ms: 7,
                     failure: None,
