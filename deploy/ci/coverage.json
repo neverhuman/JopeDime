@@ -4289,6 +4289,16 @@
       "lanes": [],
       "scope": "REL-07 E2 export-parity provider controls: candidate/source binding, pinned toolchains, harness/registry/fixture identities, retained-evidence inventory, exact cell/module/calibration/raw-contract census and refusals; synthetic reports only, no release execution."
     },
+    "python:deploy/qualification/v1.0/test_provider_r4/test_r4.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 R4 reconnect provider controls: candidate/source binding, maintained probe extraction, process-group timeout/cleanup, report identity, MCP/CLI/terminal event equality and champion-render assertions; synthetic evidence only, no live release execution."
+    },
     "python:deploy/qualification/v1.0/test_provider_s1/test_s1_provider.py": {
       "discovery": {
         "kind": "python-family"

@@ -1611,6 +1611,10 @@
       "reason": "REL-07 E2 export-parity provider controls (binding, census and refusal proofs over synthetic harness reports); no real harness, release or dataset job executes",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/v1.0/test_provider_r4/test_r4.py": {
+      "reason": "REL-07 R4 reconnect provider controls (binding, probe extraction, cleanup and assertion proofs over synthetic evidence); no live candidate, release or dataset job executes",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/v1.0/test_provider_s1/test_s1_provider.py": {
       "reason": "REL-07 PR1374 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
       "role": "infrastructure"
