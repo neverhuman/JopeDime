@@ -1,37 +1,109 @@
 {
   "wave": "H194",
-  "attempt": 1,
   "status": "INCOMPLETE",
   "verdict": "INCOMPLETE_INFRASTRUCTURE",
   "scientific_result_available": false,
   "advance_candidate": false,
   "serving_promotion": false,
-  "reason": [
-    "disk user-visible used>=93.8%"
-  ],
-  "elapsed_seconds": 5321.271151375957,
-  "execution_accounting": {
-    "planned_optimizer_updates": 1800,
-    "backward_started": 1080,
-    "backward_completed": 1080,
-    "step_started": 1080,
-    "step_completed": 1080,
-    "completed_trajectories": 27,
-    "planned_trajectories": 45,
-    "completed_seed_fold_cells": 9,
-    "planned_seed_fold_cells": 15,
-    "candidate_A_contexts": 0,
-    "candidate_DLVal_contexts": 0,
-    "pooled_B_selection_exists": false
-  },
-  "native91_baseline": {
-    "utility_and_float32_cost_bytes_exact": true,
-    "before_TRAIN_pool_decoding": true
-  },
-  "protected_reads": 0,
   "scientific_source": "9686429f7e89fb34da3e797afbb2855c93e02fb1",
   "prereg_pr": 1601,
-  "owner_authorized_fresh_attempt2": true,
-  "partial_utility_CI_Holm_Elo": "Not computed for the registered complete design; no partial scientific metrics claimed",
-  "attempt2_scope": "Same #1601 source/seeds/folds/budgets, fresh from scratch, no attempt1 trajectories or B selections reused"
+  "planned_per_attempt": {
+    "optimizer_updates": 1800,
+    "trajectories": 45,
+    "seed_fold_cells": 15,
+    "seeds": [
+      194101,
+      194102,
+      194103
+    ],
+    "independent_fold_seeds": [
+      194141,
+      194142,
+      194143
+    ],
+    "bootstrap_seed": 194150,
+    "primary": "IMH",
+    "holm_multiplicity": 1
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "status": "INCOMPLETE",
+      "reason": [
+        "disk user-visible used>=93.8%"
+      ],
+      "elapsed_seconds": 5321.271151375957,
+      "execution_counter": {
+        "backward_started": 1080,
+        "backward_completed": 1080,
+        "step_started": 1080,
+        "step_completed": 1080
+      },
+      "completed_40_update_trajectories": 27,
+      "completed_full_seed_fold_cells": 9,
+      "partial_trajectory_completed_updates": 0,
+      "candidate_A_contexts": 0,
+      "candidate_DLVal_contexts": 0,
+      "pooled_B_selection_exists": false,
+      "native91_utility_and_cost_bytes_exact": true,
+      "protected_reads": 0
+    },
+    {
+      "attempt": 2,
+      "status": "INCOMPLETE",
+      "reason": [
+        "load>85% for three independent5s windows"
+      ],
+      "elapsed_seconds": 6407.755392865976,
+      "execution_counter": {
+        "backward_started": 1247,
+        "backward_completed": 1246,
+        "step_started": 1246,
+        "step_completed": 1246
+      },
+      "completed_40_update_trajectories": 31,
+      "completed_full_seed_fold_cells": 10,
+      "partial_trajectory_completed_updates": 6,
+      "candidate_A_contexts": 0,
+      "candidate_DLVal_contexts": 0,
+      "pooled_B_selection_exists": false,
+      "native91_utility_and_cost_bytes_exact": true,
+      "protected_reads": 0
+    }
+  ],
+  "total_optimizer_started": 2326,
+  "total_optimizer_completed": 2326,
+  "total_backward_started": 2327,
+  "total_backward_completed": 2326,
+  "confirmatory_utility_gain": null,
+  "confidence_interval": null,
+  "Holm_p": null,
+  "Elo": null,
+  "missing_result_reason": "Neither attempt reached pooled B selection or candidate A/Val; no partial scientific effects claimed",
+  "attempt2_authority": "hwave_t1200_reattempt_h194.md",
+  "attempt2_fresh_from_original_r882": true,
+  "attempt1_trajectory_or_B_selection_reused": false,
+  "attempt2_pre_model_binding_fault": {
+    "model_constructions": 0,
+    "scored_contexts": 0,
+    "optimizer_updates": 0,
+    "preserved_receipt": "attempt-002/STARTUP_ABORTED.json"
+  },
+  "post_stop_persisted_adapter_checksum_closure": {
+    "status": "PASS",
+    "stored_trained_adapter_states": 31,
+    "adapter_tensors": 47,
+    "trainable_parameters": 29211,
+    "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "whole_reference_state_restored": true,
+    "forward_calls": 0,
+    "backward_calls": 0,
+    "optimizer_calls": 0
+  },
+  "attempt3_launched": false,
+  "attempt3_authorized": true,
+  "attempt3_final": true,
+  "attempt3_authority": "hwave_t1423_reattempt_h194_a3.md",
+  "attempt4_authorized": false
 }

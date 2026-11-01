@@ -1,29 +1,60 @@
 {
   "wave": "H194",
-  "attempt": 1,
   "status": "PASS",
-  "scientific_status": "INCOMPLETE",
-  "archive": {
-    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H194/gpu_fused_redteam_codex-20261101/bad6133de034bc04/evidence.tar.gz",
-    "version_id": "3iLZR6CRrtHSGb2KmpwHq3qn_Hdws2Zc",
-    "sha256": "bad6133de034bc04520eb98c6353f281d6f9f3236e5dd1935bd2732836fc944f",
-    "bytes": 86952103,
-    "archive_members": 185,
-    "manifest_sha256": "e500afdd886e05ae958e817f442d84d01f48fd3add9d1338ba5d740cf1504aad",
-    "all_members_actual_versioned_GET_hash_verified": true,
-    "restored_npz_decoded": 47,
-    "restored_torch_weights_only_decoded": 29
-  },
-  "source_restore": {
-    "status": "PASS",
-    "actual_versioned_S3_restored_bundle": true,
-    "source_commit": "9686429f7e89fb34da3e797afbb2855c93e02fb1",
-    "bundle_member_sha256": "00c19a7c0725b986a2456190baaffdd7e8d49c83a8847d5bc9e8f3e0ec7a5d89",
-    "source_and_parent_files_verified": 36,
-    "verification_bare": "/home/ubuntu/jope_plan/custody/verification/JopeDime.git",
-    "prerequisite_base": "c859f11c4106d425ca0f8d0befc56532d5a227cc",
-    "incremental_bundle": true,
-    "no_original_worktree_or_object_alternates": true
-  },
-  "scope": "Storage/source integrity of interrupted run; not scientific qualification or an effect-size claim"
+  "scope": "Artifact/source integrity only; both scientific attempts INCOMPLETE",
+  "attempts": [
+    {
+      "attempt": 1,
+      "scientific_status": "INCOMPLETE",
+      "archive": {
+        "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H194/gpu_fused_redteam_codex-20261101/bad6133de034bc04/evidence.tar.gz",
+        "version_id": "3iLZR6CRrtHSGb2KmpwHq3qn_Hdws2Zc",
+        "sha256": "bad6133de034bc04520eb98c6353f281d6f9f3236e5dd1935bd2732836fc944f",
+        "bytes": 86952103,
+        "archive_members": 185,
+        "manifest_sha256": "e500afdd886e05ae958e817f442d84d01f48fd3add9d1338ba5d740cf1504aad",
+        "all_members_actual_versioned_GET_hash_verified": true,
+        "restored_npz_decoded": 47,
+        "restored_torch_weights_only_decoded": 29
+      },
+      "source_restore": {
+        "status": "PASS",
+        "actual_versioned_S3_restored_bundle": true,
+        "source_commit": "9686429f7e89fb34da3e797afbb2855c93e02fb1",
+        "bundle_member_sha256": "00c19a7c0725b986a2456190baaffdd7e8d49c83a8847d5bc9e8f3e0ec7a5d89",
+        "source_and_parent_files_verified": 36,
+        "verification_bare": "/home/ubuntu/jope_plan/custody/verification/JopeDime.git",
+        "prerequisite_base": "c859f11c4106d425ca0f8d0befc56532d5a227cc",
+        "incremental_bundle": true,
+        "no_original_worktree_or_object_alternates": true
+      }
+    },
+    {
+      "attempt": 2,
+      "scientific_status": "INCOMPLETE",
+      "archive": {
+        "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H194/gpu_fused_redteam_codex-20261101/f61dc2c751b81e93/evidence.tar.gz",
+        "version_id": "p4OKPFq6f9Avy6DV5oL1NbwROIrRPmd2",
+        "sha256": "f61dc2c751b81e93041ebac6c6fcf7edd3adc46c2c10187ccd62e7453afac3d4",
+        "bytes": 97096257,
+        "archive_members": 194,
+        "manifest_sha256": "a665e9ceb0ffb0e12be9e0fe2867dfdc3f2addf85698af5325ff17112a2a6c20",
+        "all_members_actual_versioned_GET_hash_verified": true,
+        "restored_npz_decoded": 54,
+        "restored_torch_weights_only_decoded": 33
+      },
+      "source_restore": {
+        "status": "PASS",
+        "source_commit": "9686429f7e89fb34da3e797afbb2855c93e02fb1",
+        "actual_versioned_S3_restored_bundle": true,
+        "source_and_parent_files_verified": 36,
+        "bundle_sha256": "00c19a7c0725b986a2456190baaffdd7e8d49c83a8847d5bc9e8f3e0ec7a5d89",
+        "prerequisite_base": "c859f11c4106d425ca0f8d0befc56532d5a227cc",
+        "verification_bare": "/home/ubuntu/jope_plan/custody/verification/JopeDime.git",
+        "incremental_bundle": true,
+        "no_original_object_alternates": true
+      }
+    }
+  ],
+  "publication": "Final merged-source/history restoration is recorded in external H194 publication custody before owned-lane cleanup"
 }
