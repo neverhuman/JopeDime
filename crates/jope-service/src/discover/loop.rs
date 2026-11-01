@@ -982,6 +982,11 @@ impl Discovery {
     pub fn completed(&self) -> Option<CompletionReason> {
         self.checkpoint.completed
     }
+    /// True when an attempted durable commit may have succeeded despite an
+    /// error return. Callers must retain an unknown outcome in this case.
+    pub fn outcome_unknown(&self) -> bool {
+        self.poisoned
+    }
     pub fn admitted(&self) -> u64 {
         self.checkpoint.admitted
     }
