@@ -329,6 +329,10 @@ fn validate_q1_binding(binding: &Q1DatasetBinding, dataset: &Q1DatasetIdentity) 
         || binding.cut_sha256 != dataset.cut_sha256
         || binding.holdout_group != dataset.holdout_group
         || !binding.catalog_version.starts_with('v')
+        || binding.catalog_version[1..].is_empty()
+        || !binding.catalog_version[1..]
+            .bytes()
+            .all(|byte| byte.is_ascii_digit())
         || !valid_hex(&binding.catalog_record_sha256, 64)
         || !valid_hex(&binding.train_blob_sha256, 64)
         || !valid_hex(&binding.dataset_binding_sha256, 64)
@@ -344,6 +348,7 @@ fn validate_q1_binding(binding: &Q1DatasetBinding, dataset: &Q1DatasetIdentity) 
             != binding.feature_columns.len()
         || binding.feature_columns.contains(&binding.target)
         || binding.train_rows < 2
+        || usize::try_from(binding.train_rows).is_err()
         || binding.folds.len() < 2
         || binding.folds.iter().any(|fold| {
             fold.train.is_empty()
@@ -530,6 +535,26 @@ impl RunService {
             .get(&request.dataset.id)
             .ok_or_else(|| unavailable("Dataset is absent from the pinned protocol manifest."))?;
         validate_q1_binding(binding, &request.dataset)?;
+        if binding.train_blob_bytes > self.config.limits.max_dataset_bytes.value
+            || binding.train_rows > self.config.limits.rung1_max_rows.value
+        {
+            return Err(unavailable(
+                "Pinned Q1 training partition exceeds the local engine limits.",
+            ));
+        }
+        let available = SystemSensors::without_gpu(&self.home)
+            .mem_available()
+            .map_err(|_| unavailable("Memory admission sensor unavailable."))?;
+        if binding
+            .train_blob_bytes
+            .saturating_mul(4)
+            .saturating_add(WORKER_RAM)
+            > available
+        {
+            return Err(unavailable(
+                "Insufficient available memory for the pinned Q1 training partition.",
+            ));
+        }
 
         let train_sha = parse_digest(&binding.train_blob_sha256)
             .ok_or_else(|| invalid("Pinned training blob hash is malformed."))?;
@@ -639,6 +664,10 @@ impl RunService {
                     }
                 }
             };
+            attempt_events.push(EventBody::ExperimentStarted(ExperimentStartedBody {
+                experiment_id: format!("q1_{number}"),
+                hypothesis: "Pinned Q1 evaluation attempt".into(),
+            }));
             attempt_events.push(EventBody::ExperimentFinished(ExperimentFinishedBody {
                 experiment_id: format!("q1_{number}"),
                 outcome: if attempt.outcome == jope_api::EvaluationAttemptOutcome::Completed {
