@@ -99,7 +99,8 @@ class M5Tests(unittest.TestCase):
             self.assertEqual(environment["CUDA_VISIBLE_DEVICES"], "")
             self.assertEqual(environment["CARGO_INCREMENTAL"], "0")
             report = {
-                "consumer": "RNK-10-composition",
+                "schema": "jope.m5-causal/v1",
+                "consumer": "M5-causal",
                 "device": "cpu",
                 "passed": True,
                 "values": 1600,
@@ -116,6 +117,7 @@ class M5Tests(unittest.TestCase):
                         "fitness_changed_admission": 8,
                         "disconnected_heuristic_mismatches": 45,
                         "landmark_slots": [0, 1, 7, 9],
+                        "interventions": [-6.0, 0.0, 6.0],
                         "masks_and_dope_only_slots_preserved": True,
                     },
                 },
@@ -123,8 +125,7 @@ class M5Tests(unittest.TestCase):
             self.edit_report(report)
             if self.write_report:
                 (
-                    Path(environment["JOPE_PARITY_REPORT_DIR"])
-                    / "RNK-10-composition.json"
+                    Path(environment["JOPE_PARITY_REPORT_DIR"]) / "M5-causal.json"
                 ).write_text(json.dumps(report))
             self.after_test()
             output = (

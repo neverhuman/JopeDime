@@ -25,7 +25,7 @@ from common import (
     verify_candidate,
 )
 
-TEST = "ranker::adapter::real_cpu_parity::real_round_admission_composition"
+TEST = "ranker::adapter::real_cpu_parity::m5_serving_causal_measurements"
 INDEX_SHA256 = "27905f29703431bedacac90eed1bd54257fd0c59bdf24b56605d0b9416ae1393"
 WEIGHTS_SHA256 = "ce39c75f37624e64dfbf89e6493adbf74811a5248f9355997161491e93a132ef"
 SINGLE_PASS = dict(collected=1, executed=1, passed=1, failed=0, skipped=0, excluded=0)
@@ -109,7 +109,8 @@ def causal_report(path: Path) -> dict:
     regular(path)
     report = json.loads(path.read_text())
     if (
-        report["consumer"] != "RNK-10-composition"
+        report["schema"] != "jope.m5-causal/v1"
+        or report["consumer"] != "M5-causal"
         or report["device"] != "cpu"
         or report["passed"] is not True
         or report["values"] != 1600
@@ -128,6 +129,7 @@ def causal_report(path: Path) -> dict:
         or details["Q1_ready"] is not False
         or serving["slates"] != 50
         or serving["landmark_slots"] != [0, 1, 7, 9]
+        or serving["interventions"] != [-6.0, 0.0, 6.0]
         or serving["masks_and_dope_only_slots_preserved"] is not True
         or any(
             type(serving[key]) is not int or not 0 < serving[key] <= 50
@@ -139,7 +141,7 @@ def causal_report(path: Path) -> dict:
         )
     ):
         raise ProviderError(
-            "M5 requires positive causal controls on all 50 serving 4+8 slates"
+            "M5 requires 50 serving trials and a positive result for each causal control"
         )
     return report
 
@@ -198,7 +200,7 @@ def qualify(ctx: Context, inputs: Inputs, run=None) -> int:
         raise ProviderError(
             "M5 requires exactly one executed, passing real causal fixture test"
         )
-    native_path = folder / "RNK-10-composition.json"
+    native_path = folder / "M5-causal.json"
     report = causal_report(native_path)
     check_binding(ctx, inputs, run)
     payload = {
