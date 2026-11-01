@@ -38,6 +38,6 @@ fn in_process_transport_reads_a_dataset_from_its_owned_local_store() {
         .get(&RecordKey::Dataset(registered.id.clone()))
         .unwrap()
         .expect("dataset metadata must be durable in the same store");
-    assert_eq!(durable.data["dataset_id"], registered.id.to_string());
+    assert_eq!(durable.data["id"], registered.id.to_string());
     assert!(!durable.blobs.is_empty());
 }
