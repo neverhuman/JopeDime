@@ -20,9 +20,7 @@ Context, ProviderError = common.Context, common.ProviderError
 
 class M2Tests(unittest.TestCase):
     def setUp(self):
-        root = Path(
-            os.environ.get("JOPE_QUALIFICATION_TEST_TMP", HERE.parents[2] / "target")
-        )
+        root = HERE.parents[2] / "target"
         root.mkdir(parents=True, exist_ok=True)
         self.temp = tempfile.TemporaryDirectory(prefix="m2-", dir=root)
         self.addCleanup(self.temp.cleanup)
@@ -59,16 +57,23 @@ class M2Tests(unittest.TestCase):
         self.mutate_source = False
         self.mutate_artifact = False
         self.bad_candidate_source = False
-        self.addCleanup(patch.stopall)
-        patch.object(m2, "ROOT", self.repo).start()
-        patch.object(common, "ROOT", self.repo).start()
-        patch.object(
-            m2,
-            "sha256",
-            lambda path: (
-                m2.INDEX_SHA256 if path.name == "index.json" else common.sha256(path)
-            ),
-        ).start()
+        self._start_patch(patch.object(m2, "ROOT", self.repo))
+        self._start_patch(patch.object(common, "ROOT", self.repo))
+        self._start_patch(
+            patch.object(
+                m2,
+                "sha256",
+                lambda path: (
+                    m2.INDEX_SHA256
+                    if path.name == "index.json"
+                    else common.sha256(path)
+                ),
+            )
+        )
+
+    def _start_patch(self, patcher):
+        self.addCleanup(patcher.stop)
+        patcher.start()
 
     def good_report(self):
         stages = {
@@ -129,18 +134,22 @@ class M2Tests(unittest.TestCase):
         )
         return subprocess.CompletedProcess(args, self.returncode, output, "")
 
-    def invoke(self):
+    def invoke(self, *, cargo_build_jobs="4"):
         values = {
             "JOPE_GOLDEN_DIR": str(self.golden),
             "JOPE_GOLDEN_INDEX_SHA256": m2.INDEX_SHA256,
             "JOPE_PARITY_BUNDLE_DIR": str(self.bundle),
             "JOPE_PARITY_REPORT_DIR": str(self.report_dir),
+            "CARGO_BUILD_JOBS": cargo_build_jobs,
         }
-        with patch.dict(os.environ, values, clear=False):
+        with patch.dict(os.environ, values, clear=True):
             return m2.qualify(self.ctx, run=self.run_child)
 
     def test_success_records_only_exact_full_stage_cpu_evidence(self):
+        caller_cwd = os.getcwd()
         self.assertEqual(self.invoke(), 0)
+        self.assertEqual(os.getcwd(), caller_cwd)
+        self.assertTrue(self.root.is_relative_to(HERE.parents[2] / "target"))
         result = json.loads(self.ctx.result.read_text())
         self.assertEqual(result["id"], "M2")
         self.assertEqual(result["source_sha"], self.source)
@@ -164,12 +173,29 @@ class M2Tests(unittest.TestCase):
         self.assertEqual(child_env["CUDA_VISIBLE_DEVICES"], "")
         self.assertEqual(child_env["JOPE_SOURCE_SHA"], self.source)
         self.assertEqual(child_env["CARGO_BUILD_JOBS"], "4")
+        self.assertTrue(all(kwargs["cwd"] == self.repo for _, kwargs in self.calls))
 
     def test_rejects_build_job_override_above_runner_limit(self):
-        with patch.dict(os.environ, {"CARGO_BUILD_JOBS": "8"}, clear=False):
-            with self.assertRaisesRegex(ProviderError, "1..4"):
-                self.invoke()
+        with self.assertRaisesRegex(ProviderError, "1..4"):
+            self.invoke(cargo_build_jobs="8")
         self.assertFalse(any(args[:1] == ["cargo"] for args, _ in self.calls))
+
+    def test_caller_cargo_build_jobs_does_not_change_control_outcomes(self):
+        with patch.dict(
+            os.environ,
+            {
+                "CARGO_BUILD_JOBS": "8",
+                "JOPE_QUALIFICATION_TEST_TMP": "/shared/unsafe/temp-root",
+            },
+            clear=False,
+        ):
+            self.assertEqual(self.invoke(), 0)
+        child_env = next(
+            kwargs["env"]
+            for args, kwargs in self.calls
+            if args[:1] == ["cargo"] and args[1:2] == ["test"]
+        )
+        self.assertEqual(child_env["CARGO_BUILD_JOBS"], "4")
 
     def test_interleaved_libtest_stdout_cannot_emit_pass(self):
         self.output_override = (

@@ -4375,6 +4375,14 @@
         "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
       },
       "sha256": "b1d173305ac59c60f4d34b355df62479ebdfb5ac6103ac0646a6d6525c7ea2a3"
+    },
+    "python:research/flywheel_selfplay/rnk10_r882_release/prepare_release.py": {
+      "bytes": 12432,
+      "classification": {
+        "role": "research",
+        "reason": "RNK-10 offline research exporter and verified-bytes substitution regression for the pinned r882 adapter bundle; research only, no product runtime, signing, or scientific qualification."
+      },
+      "sha256": "0f9a2fa315904057f508444d6a7e58b167550d4895ead8cfc0e7b6fd5ccd75d0"
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
