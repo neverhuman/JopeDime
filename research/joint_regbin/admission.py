@@ -643,6 +643,7 @@ def verify_binary_train_admission(
 
 
 ROLE_SCHEMA = "jope.joint-regbin.role-admission/v1"
+DEFAULT_ROLE_CATALOG = Path.home() / "jope_plan/master/source/S3_DATASET_CATALOG.json"
 R882_CHECKPOINT_SHA256 = (
     "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
 )
@@ -853,15 +854,42 @@ def build_role_manifest(
     return manifest
 
 
-def make_worker_bound_plan(manifest: dict, config: dict | None = None) -> dict:
-    """Create the preregistered 3-arm plan only after all evidence is admitted."""
-    if manifest.get("admission_schema") != ROLE_SCHEMA:
-        raise ValueError("role admission receipt required")
-    if manifest.get("eligibility_verified") is not True or manifest.get("blockers"):
+def rederive_role_manifest(
+    manifest: dict, catalog_path: Path = DEFAULT_ROLE_CATALOG
+) -> dict:
+    """Rebuild every eligibility field from the pinned catalog and supplied proof."""
+    if (
+        not isinstance(manifest, dict)
+        or manifest.get("admission_schema") != ROLE_SCHEMA
+    ):
+        raise ValueError("worker-bound role admission receipt required")
+    try:
+        rebuilt = build_role_manifest(
+            catalog_path,
+            manifest["contexts"],
+            manifest["family_by_dataset"],
+            manifest["evidence"],
+        )
+    except (KeyError, TypeError, ValueError, OSError) as exc:
+        raise ValueError("could not rederive role admission from pinned proof") from exc
+    if rebuilt != manifest:
+        raise ValueError("manifest differs from rederived role admission proof")
+    if rebuilt["eligibility_verified"] is not True:
         raise ValueError("incomplete JRB inputs cannot produce a runnable plan")
-    worker = manifest["evidence"]["worker"]
-    release = manifest["evidence"]["release"]
-    if manifest["initial_checkpoint_sha256"] != R882_CHECKPOINT_SHA256:
+    return rebuilt
+
+
+def make_worker_bound_plan(
+    manifest: dict,
+    config: dict | None = None,
+    *,
+    catalog_path: Path = DEFAULT_ROLE_CATALOG,
+) -> dict:
+    """Create the preregistered 3-arm plan only after rederiving all evidence."""
+    admitted = rederive_role_manifest(manifest, catalog_path)
+    worker = admitted["evidence"]["worker"]
+    release = admitted["evidence"]["release"]
+    if admitted["initial_checkpoint_sha256"] != R882_CHECKPOINT_SHA256:
         raise ValueError(
             "initial learner checkpoint must be signed r882 custody 0084479a"
         )
@@ -870,15 +898,16 @@ def make_worker_bound_plan(manifest: dict, config: dict | None = None) -> dict:
         or release.get("message_sha256") != R882_MESSAGE_SHA256
     ):
         raise ValueError("signed r882 verification receipt is missing")
-    if worker.get("sha256") != manifest["learner_sha256"]:
+    if worker.get("sha256") != admitted["learner_sha256"]:
         raise ValueError("worker hash differs from the admitted manifest")
-    plan = protocol.make_plan(manifest, config)
+    plan = protocol.make_plan(admitted, config)
+    plan["role_admission"] = admitted
     plan["learner_start"] = {
         "release": "r882",
         "bundle_digest": R882_BUNDLE_DIGEST,
         "signing_message_sha256": R882_MESSAGE_SHA256,
         "checkpoint_sha256": R882_CHECKPOINT_SHA256,
-        "worker_sha256": manifest["learner_sha256"],
+        "worker_sha256": admitted["learner_sha256"],
         "worker_qualification_sha256": worker["qualification_sha256"],
     }
     plan["sha256"] = protocol.digest(
@@ -900,9 +929,17 @@ def verify_worker_binding(plan: dict) -> None:
         raise ValueError("worker-bound r882 plan identity mismatch")
 
 
-def verify_worker_bound_plan(plan: dict) -> None:
+def verify_worker_bound_plan(
+    plan: dict, *, catalog_path: Path = DEFAULT_ROLE_CATALOG
+) -> None:
     protocol.verify_plan(plan)
+    admission = plan.get("role_admission")
     verify_worker_binding(plan)
+    expected = make_worker_bound_plan(
+        admission, plan.get("config"), catalog_path=catalog_path
+    )
+    if expected != plan:
+        raise ValueError("plan differs from rederived role admission proof")
 
 
 def main(argv=None) -> int:
