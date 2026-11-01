@@ -111,6 +111,27 @@ pub fn write_csv_atomic(out: &Path, mut reader: impl Read) -> Result<u64> {
     Ok(bytes)
 }
 
+/// Materialize a model export without confusing its model identity with archive bytes.
+/// The authenticated immutable artifact endpoint supplies the archive SHA-256 header;
+/// the existing downloader still verifies every byte before opening the ZIP.
+pub fn download_export_artifact<T: Transport>(
+    transport: &T,
+    artifact: &ArtifactId,
+    out: &Path,
+    force: bool,
+) -> Result<()> {
+    let response = transport.artifact_download(artifact)?;
+    let digest = response
+        .headers
+        .get("x-jope-artifact-sha256")
+        .and_then(|v| v.to_str().ok())
+        .ok_or(FileError::InvalidDigest)?;
+    let digest = format!("sha256:{digest}");
+    parse_digest(&digest)?;
+    drop(response);
+    download_artifact(transport, artifact, &digest, out, force)
+}
+
 /// Download an artifact, verify the service-provided digest, and publish its ZIP contents.
 /// The archive is never opened until the digest over the raw HTTP bytes has matched.
 pub fn download_artifact<T: Transport>(

@@ -314,12 +314,6 @@ fn execute_inner<T: Transport>(
             Ok(serde_json::to_value(algorithm)?)
         }
         13 => {
-            // CLT-03 owns atomic local artifact download/extraction. Refuse before a mutation.
-            if args.get("out_dir").is_some() {
-                return Err(unavailable(
-                    "local export extraction requires an archive digest in the export contract",
-                ));
-            }
             let (run, alg) = run(args)?;
             let alg = match alg {
                 Some(alg) => alg,
@@ -332,6 +326,19 @@ fn execute_inner<T: Transport>(
                 client,
                 request(0, &[("id", &run)])?.json(&body)?,
             )?)?;
+            if let Some(output) = args.get("out_dir") {
+                let output = output
+                    .as_str()
+                    .filter(|v| !v.is_empty())
+                    .ok_or_else(|| invalid("out_dir must be a nonempty path"))?;
+                jope_client::files::download_export_artifact(
+                    client,
+                    &manifest.artifact_id,
+                    Path::new(output),
+                    false,
+                )
+                .map_err(|error| invalid(error.to_string()))?;
+            }
             resources
                 .put(
                     format!("jope://artifacts/{}/manifest", manifest.artifact_id),
