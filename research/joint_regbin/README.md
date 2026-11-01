@@ -116,23 +116,32 @@ appear in the usable catalog, and the task-specific worker qualification is
 still missing. It is a role-planning receipt for the worker lane, not a runnable
 study manifest or scientific result.
 
-### T1210 family-key pool split
+### T1210 family-key candidate inventory and role guard
 
-`admission.build_family_key_pool_manifest(...)` builds five deterministic,
-family-disjoint train/validation splits from catalog v246 metadata. It obtains
-identity only through the pinned `family_keys.attrs_from_catalog_row()` and
-`family_keys.derive()` calls, records the exact returned keys and catalog IDs,
-and assigns families with the preregistered seed 136. No source-file, URL-parent,
-owner-alias, or protected-roster inputs are added. The corresponding
-`verify_family_key_pool_manifest(...)` re-derives the split against the catalog
-and reports metadata-only preflight status.
+`admission.build_family_key_pool_manifest(...)` records catalog IDs and exactly
+those keys returned by the pinned `family_keys.attrs_from_catalog_row()` and
+`family_keys.derive()` calls. Family components preserve shared and transitive
+returned keys across both tasks. No source-file, URL-parent, owner-alias, or
+protected-roster inputs are added.
 
-This does not make a runnable learner packet. Catalog train hashes do not
-establish the 412-wide candidate programs and frozen 10-slot feature tensors
-consumed by the existing flywheel adapter. The full verifier therefore remains
-closed until a source-pinned train-row cache builder, two-task runtime binding,
-and worker/checkpoint qualification evidence are available. The split receipt
-keeps `eligibility_verified:false`; no payload is opened and no campaign starts.
+The frozen T1145/T1210 admission inputs require a family's nonsealed status to
+be established before assigning TRAIN or validation roles. The approved v246
+catalog supplies identities and TRAIN-file hashes, but no reviewed nonsealed
+eligibility evidence. Presence in the catalog, a task label, and self-reported
+flags cannot establish that permission. Every unverified family is therefore
+withheld: `fold_by_family` and `fold_splits` stay empty, while
+`nonsealed_eligibility` records the withheld family/dataset counts and ruling.
+The preflight re-derives this candidate inventory and reports
+`METADATA_ONLY_NONSEALED_STATUS_UNVERIFIED`, zero folds, and
+`eligibility_verified:false`. Forged role assignments are rejected.
+
+This withholds unknown eligibility; it does not classify P3 `heldout` or `dev`
+as forbidden. The t2035 holdout remains exactly `sealed_excluded` by family.
+Restoring five-fold assignments with fixed seed 136 requires approved,
+reviewed nonsealed-family evidence that respects the no-protected-roster input
+boundary. No role is inferred and no payload is opened in this metadata path.
+Catalog train hashes also do not provide the candidate tensors or qualified
+worker/checkpoint required for an executable learner packet. No campaign starts.
 
 ## Learner integration contract (qualification still required)
 

@@ -543,12 +543,12 @@ def build_catalog_pool_manifest_from_files(
 
 
 def build_family_key_pool_manifest(catalog: dict, catalog_sha256: str) -> dict:
-    """Build family-disjoint task train/validation folds from catalog metadata only.
+    """Inventory family keys without assigning unproven train/validation roles.
 
     Family identity is exactly the union of keys emitted by the pinned
     ``family_keys`` catalog projection. No local aliases or roster inputs are
-    consulted. The result is a candidate split manifest, never an executable
-    payload admission.
+    consulted. The approved catalog does not establish nonsealed eligibility, so every
+    candidate family is withheld from role assignment.
     """
     family_keys = _family_tool()
     if (
@@ -585,7 +585,6 @@ def build_family_key_pool_manifest(catalog: dict, catalog_sha256: str) -> dict:
 
     key_owner = {}
     keys_by_id = {}
-    rows_for_folds = []
     for dataset_id, row in sorted(by_id.items()):
         if (
             row.get("s3_bucket") != "veox-jopedime-datasets-use2"
@@ -615,31 +614,18 @@ def build_family_key_pool_manifest(catalog: dict, catalog_sha256: str) -> dict:
         family_by_id[dataset_id] = canonical_json_sha(
             [list(key) for key in component_keys]
         )
-        rows_for_folds.append(
-            {
-                "dataset": dataset_id,
-                "family": family_by_id[dataset_id],
-                "task": by_id[dataset_id]["task"],
-            }
-        )
-
-    fold_by_family = protocol.family_folds(rows_for_folds, seed=136)
-    for row in rows_for_folds:
-        row["fold"] = fold_by_family[row["family"]]
-    fold_splits = {}
-    for fold in range(5):
-        fold_splits[str(fold)] = {
-            role: {
-                task: [
-                    row["dataset"]
-                    for row in rows_for_folds
-                    if row["task"] == task
-                    and ((row["fold"] == fold) == (role == "val"))
-                ]
-                for task in protocol.TASKS
-            }
-            for role in ("train", "val")
-        }
+    # T1145/T1210 permits only the catalog and pinned family_keys inputs. The
+    # catalog supplies identity and TRAIN-file metadata, not reviewed nonsealed
+    # eligibility. Keep the inventory, but withhold every unverified family from
+    # train/validation roles without inspecting a protected roster or payload.
+    family_count = len(set(family_by_id.values()))
+    nonsealed_eligibility = {
+        "status": "UNVERIFIED_FROM_APPROVED_METADATA",
+        "ruling_reference": "ENG:watcher t2035; T1145 ADMISSION_INPUTS protected-data boundary",
+        "verified_family_count": 0,
+        "withheld_family_count": family_count,
+        "withheld_dataset_count": len(by_id),
+    }
     return {
         "schema": FAMILY_KEY_POOL_SCHEMA,
         "status": "FAMILY_KEY_SPLITS_NOT_ADMITTED",
@@ -654,13 +640,13 @@ def build_family_key_pool_manifest(catalog: dict, catalog_sha256: str) -> dict:
         "fold_seed": 136,
         "paired_campaign_seeds": [20261029, 20261030, 20261031],
         "candidate_count_by_task": {
-            task: sum(row["task"] == task for row in rows_for_folds)
+            task: sum(row["task"] == task for row in by_id.values())
             for task in protocol.TASKS
         },
         "family_by_dataset": dict(sorted(family_by_id.items())),
         "family_keys_by_dataset": dict(sorted(keys_by_id.items())),
-        "fold_by_family": dict(sorted(fold_by_family.items())),
-        "fold_splits": fold_splits,
+        "fold_by_family": {},
+        "fold_splits": {},
         "train_metadata_by_dataset": {
             dataset_id: {
                 "train_rows": by_id[dataset_id]["train_rows"],
@@ -669,8 +655,10 @@ def build_family_key_pool_manifest(catalog: dict, catalog_sha256: str) -> dict:
             }
             for dataset_id in sorted(by_id)
         },
+        "nonsealed_eligibility": nonsealed_eligibility,
         "payloads_opened": 0,
         "blockers": [
+            "approved catalog has no reviewed nonsealed-family eligibility; all families withheld from roles",
             "catalog train hashes do not provide learner-compatible cached candidate tensors",
             "qualified two-task worker and R882 checkpoint proof are not present in this manifest",
         ],
@@ -688,13 +676,14 @@ def verify_family_key_pool_manifest(manifest: dict, catalog_path: Path) -> dict:
         raise ValueError("family-key pool manifest differs from pinned catalog split")
     return {
         "schema": "jope.joint-regbin.family-key-pool-preflight/v1",
-        "status": "METADATA_SPLIT_VERIFIED",
+        "status": "METADATA_ONLY_NONSEALED_STATUS_UNVERIFIED",
         "eligibility_verified": False,
         "qualification_status": "NOT_QUALIFIED",
         "catalog_sha256": expected["catalog_sha256"],
         "family_key_policy_sha256": expected["family_key_policy_sha256"],
         "candidate_count_by_task": expected["candidate_count_by_task"],
-        "family_count": len(expected["fold_by_family"]),
+        "family_count": len(set(expected["family_by_dataset"].values())),
+        "nonsealed_eligibility": dict(expected["nonsealed_eligibility"]),
         "fold_count": len(expected["fold_splits"]),
         "payloads_opened": 0,
         "blockers": list(expected["blockers"]),
