@@ -42,7 +42,17 @@ use std::{
 
 const WORKER_RAM: u64 = 1024 * 1024 * 1024;
 const MODEL_LIMIT: u64 = 16 * 1024 * 1024;
+const Q1_WALL_BUDGET: std::time::Duration = std::time::Duration::from_secs(600);
+const Q1_ATTEMPT_WALL_CAP_MS: u64 = 600_000;
 type Result<T> = std::result::Result<T, Box<Problem>>;
+
+fn q1_remaining_wall_ms(elapsed: std::time::Duration) -> Option<u64> {
+    let remaining = Q1_WALL_BUDGET.saturating_sub(elapsed);
+    let remaining_ms = remaining
+        .as_millis()
+        .min(u128::from(Q1_ATTEMPT_WALL_CAP_MS)) as u64;
+    (remaining_ms > 0).then_some(remaining_ms)
+}
 
 #[cfg(all(feature = "failpoints", debug_assertions))]
 #[derive(Clone, Debug)]
@@ -588,8 +598,22 @@ impl RunService {
         let matrix_bytes = jmat::encode(&table)
             .map_err(|_| invalid("Pinned training partition cannot be encoded."))?;
         let matrix_sha = hash(&matrix_bytes);
-        let matrix = jmat::Matrix::open(matrix_bytes)
+        jmat::Matrix::open(matrix_bytes.clone())
             .map_err(|_| invalid("Pinned training matrix is invalid."))?;
+        let matrix_dir = tempfile::Builder::new()
+            .prefix("q1-")
+            .tempdir_in(&self.home)
+            .map_err(io)?;
+        let matrix_path = matrix_dir.path().join("train.jmat");
+        std::fs::write(&matrix_path, &matrix_bytes).map_err(io)?;
+        #[allow(unused_mut)]
+        let mut worker_config = crate::worker::PoolConfig::new(self.executable.clone(), 1);
+        #[cfg(test)]
+        {
+            worker_config.fixture = true;
+            worker_config.fixture_test = Some("http::runs::tests::q1_worker_helper");
+        }
+        let worker_pool = crate::worker::WorkerPool::new(worker_config).map_err(io)?;
         let fold_spec = json!({
             "version": 1,
             "matrix_sha256": matrix_sha,
@@ -611,24 +635,38 @@ impl RunService {
         let mut attempts = Vec::with_capacity(request.budget as usize);
         let mut attempt_events = Vec::with_capacity(request.budget as usize);
         for number in 0..request.budget {
-            let worker_request = crate::worker::Request {
-                attempt: crate::worker::Attempt {
-                    run: run_id.clone(),
-                    round: 0,
-                    slot: number as u32,
-                    attempt: number,
+            let evaluated = q1_remaining_wall_ms(started_at.elapsed()).map_or_else(
+                || Err(crate::worker::WorkerFailure::Timeout),
+                |wall_ms| {
+                    let worker_request = crate::worker::Request {
+                        attempt: crate::worker::Attempt {
+                            run: run_id.clone(),
+                            round: 0,
+                            slot: 0,
+                            attempt: number + 1,
+                        },
+                        matrix_path: matrix_path.clone(),
+                        fold_spec: fold_spec.clone(),
+                        dsl: program.to_owned(),
+                        objective: json!("rmse"),
+                        seed: request.seed.wrapping_add(number),
+                        limits: crate::worker::Limits {
+                            wall_ms,
+                            rss_bytes: WORKER_RAM,
+                        },
+                    };
+                    let response = worker_pool.evaluate(&worker_request);
+                    match response.failure {
+                        Some(failure) => Err(failure),
+                        None => Ok(crate::worker::Scores {
+                            values: response.scores,
+                            fold_scores: response.fold_scores,
+                            predictions_digest: response.predictions_digest,
+                        }),
+                    }
                 },
-                matrix_path: PathBuf::new(),
-                fold_spec: fold_spec.clone(),
-                dsl: program.to_owned(),
-                objective: json!("rmse"),
-                seed: request.seed.wrapping_add(number),
-                limits: crate::worker::Limits {
-                    wall_ms: 600_000,
-                    rss_bytes: WORKER_RAM,
-                },
-            };
-            let attempt = match crate::discover::r#loop::evaluate_native(&worker_request, &matrix) {
+            );
+            let attempt = match evaluated {
                 Ok(scores)
                     if scores.fold_scores.len() >= 2
                         && scores
@@ -1486,6 +1524,43 @@ pub(super) async fn list(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    #[ignore = "Q1 worker subprocess target; invoked by the worker process supervisor"]
+    fn q1_worker_helper() {
+        use std::io::Write as _;
+
+        assert_eq!(std::env::var("JOPE_WORKER_FIXTURE").unwrap(), "worker");
+        let mut stdout = std::io::stdout().lock();
+        writeln!(stdout, "WORKER_FIXTURE_READY").unwrap();
+        stdout.flush().unwrap();
+        drop(stdout);
+        crate::worker::serve(1, |request, matrix| {
+            crate::discover::r#loop::evaluate_native(request, matrix)
+        })
+        .unwrap();
+    }
+
+    #[test]
+    fn q1_attempt_timeout_is_bounded_by_one_total_wall_budget() {
+        assert_eq!(
+            q1_remaining_wall_ms(std::time::Duration::ZERO),
+            Some(600_000)
+        );
+        assert_eq!(
+            q1_remaining_wall_ms(std::time::Duration::from_millis(1250)),
+            Some(598_750)
+        );
+        assert_eq!(
+            q1_remaining_wall_ms(Q1_WALL_BUDGET - std::time::Duration::from_millis(1)),
+            Some(1)
+        );
+        assert_eq!(q1_remaining_wall_ms(Q1_WALL_BUDGET), None);
+        assert_eq!(
+            q1_remaining_wall_ms(Q1_WALL_BUDGET + std::time::Duration::from_secs(1)),
+            None
+        );
+    }
     use crate::{
         dataset::register,
         engine::InProcessEngine,
