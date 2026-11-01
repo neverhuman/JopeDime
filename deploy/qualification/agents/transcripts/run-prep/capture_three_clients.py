@@ -231,15 +231,27 @@ def render_argv(argv: list[str], values: dict[str, str]) -> list[str]:
     return rendered
 
 
-def _block_sigint() -> tuple[set[signal.Signals], BaseException | None]:
+def _current_sigmask() -> tuple[set[signal.Signals], BaseException | None]:
     pending_error = None
     while True:
         try:
-            previous_mask = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT})
-            return previous_mask, pending_error
+            return signal.pthread_sigmask(signal.SIG_BLOCK, ()), pending_error
         except KeyboardInterrupt as error:
             if pending_error is None:
                 pending_error = error
+
+
+def _block_sigint() -> tuple[set[signal.Signals], BaseException | None]:
+    # Read the mask before changing it: pthread_sigmask applies the new mask and
+    # only then runs pending handlers, so an interrupt raised by the blocking call
+    # must not be retried into a "previous" mask that already blocks SIGINT.
+    previous_mask, pending_error = _current_sigmask()
+    try:
+        signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT})
+    except KeyboardInterrupt as error:
+        if pending_error is None:
+            pending_error = error
+    return previous_mask, pending_error
 
 
 def _restore_sigint(previous_mask: set[signal.Signals]) -> BaseException | None:
@@ -569,6 +581,9 @@ def run_capture(args: argparse.Namespace) -> dict:
         command_path = case / "command.json"
         command_path.write_text(json.dumps(command, indent=2) + "\n", encoding="utf-8")
         os.chmod(command_path, 0o600)
+        run_mask, run_mask_error = _current_sigmask()
+        if run_mask_error is not None:
+            raise run_mask_error
 
         try:
             with (
@@ -690,13 +705,29 @@ def run_capture(args: argparse.Namespace) -> dict:
                 except (OSError, CaptureError) as error:
                     capture_error = str(error)
         finally:
+            # Block inline, before any Python call: a function entry is itself an
+            # interrupt point, and an interrupt there would skip the engine stop.
+            teardown_error = None
             try:
-                if active_client is not None:
-                    terminate_group(active_client)
-            finally:
-                engine_stop_exit, engine_exit = stop_engine(
-                    candidate, repo, environment, engine
-                )
+                signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT})
+            except KeyboardInterrupt as error:
+                teardown_error = error
+            try:
+                try:
+                    if active_client is not None:
+                        terminate_group(active_client)
+                finally:
+                    engine_stop_exit, engine_exit = stop_engine(
+                        candidate, repo, environment, engine
+                    )
+            except BaseException as error:
+                if teardown_error is None:
+                    teardown_error = error
+            restore_error = _restore_sigint(run_mask)
+            if teardown_error is None:
+                teardown_error = restore_error
+            if teardown_error is not None:
+                raise teardown_error
 
         rows[key] = {
             "version": row["version"],

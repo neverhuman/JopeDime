@@ -572,11 +572,13 @@ def test_stop_engine_finishes_teardown_when_cleanup_is_interrupted(
     original_killpg = os.killpg
     original_sleep = time.sleep
     original_path = THREE_CLIENTS_MODULE.Path
-    state = {"injected": False, "kill_requested": False}
+    state = {"injected": False, "kill_requested": False, "deferred": False}
 
     def inject_sigint():
         state["injected"] = True
         os.kill(os.getpid(), signal.SIGINT)
+        # Only reached when the teardown mask held the signal pending.
+        state["deferred"] = signal.SIGINT in signal.sigpending()
 
     class InterruptAtCleanupBoundary:
         def __init__(self, process):
@@ -672,11 +674,77 @@ def test_stop_engine_finishes_teardown_when_cleanup_is_interrupted(
                 InterruptAtCleanupBoundary(engine),
             )
         assert state["injected"] is True
+        assert state["deferred"] is True, f"SIGINT was not deferred at {boundary}"
         assert engine.poll() is not None, f"engine survived {boundary} interrupt"
         assert _processes_with_paths_under(tmp_path) == []
     finally:
         monkeypatch.undo()
         _cleanup_test_engine(engine)
+
+
+def _sigint_blocked():
+    return signal.SIGINT in signal.pthread_sigmask(signal.SIG_BLOCK, ())
+
+
+def test_block_sigint_restores_mask_when_blocking_surfaces_pending_interrupt(
+    monkeypatch, tmp_path
+):
+    engine = _start_sigterm_ignoring_engine(tmp_path)
+    real_sigmask = signal.pthread_sigmask
+    blocked_before = _sigint_blocked()
+    state = {"surfaced": False}
+
+    def apply_then_surface(how, mask):
+        previous = real_sigmask(how, mask)
+        if (
+            how == signal.SIG_BLOCK
+            and signal.SIGINT in set(mask)
+            and not state["surfaced"]
+        ):
+            state["surfaced"] = True
+            # CPython applies the new mask before it runs pending handlers.
+            raise KeyboardInterrupt("pending SIGINT surfaced by pthread_sigmask")
+        return previous
+
+    monkeypatch.setattr(
+        THREE_CLIENTS_MODULE.signal, "pthread_sigmask", apply_then_surface
+    )
+    try:
+        with pytest.raises(KeyboardInterrupt):
+            THREE_CLIENTS_MODULE.terminate_group(engine, grace_seconds=0.1)
+        monkeypatch.undo()
+        assert state["surfaced"] is True
+        assert engine.poll() is not None, "engine survived surfaced interrupt"
+        assert _sigint_blocked() is blocked_before, "SIGINT mask was not restored"
+    finally:
+        monkeypatch.undo()
+        if _sigint_blocked() and not blocked_before:
+            real_sigmask(signal.SIG_UNBLOCK, {signal.SIGINT})
+        _cleanup_test_engine(engine)
+
+
+def test_run_capture_defers_interrupt_at_engine_stop_entry(monkeypatch, a5_tmp_path):
+    args, _plan, _candidate, _client = _runner_fixture(a5_tmp_path)
+    original_stop = THREE_CLIENTS_MODULE.stop_engine
+    stopped = []
+    blocked_before = _sigint_blocked()
+
+    def interrupt_at_entry(candidate, repo, environment, process):
+        if not stopped:
+            os.kill(os.getpid(), signal.SIGINT)
+        stopped.append(process)
+        return original_stop(candidate, repo, environment, process)
+
+    monkeypatch.setattr(THREE_CLIENTS_MODULE, "stop_engine", interrupt_at_entry)
+    try:
+        with pytest.raises(KeyboardInterrupt):
+            THREE_CLIENTS_MODULE.run_capture(args)
+        assert len(stopped) == 1, "engine stop was skipped by the entry interrupt"
+        assert stopped[0] is not None and stopped[0].poll() is not None
+        assert _sigint_blocked() is blocked_before, "SIGINT mask was not restored"
+        assert _processes_with_paths_under(a5_tmp_path) == []
+    finally:
+        _kill_fixture_processes(a5_tmp_path)
 
 
 def test_stop_engine_preserves_stop_error_after_group_cleanup(monkeypatch, tmp_path):
