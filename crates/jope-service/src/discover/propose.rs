@@ -469,10 +469,38 @@ impl Proposer {
                         mutate_parameters(&mut head, &mut rng);
                         Some(assemble(parsed.stages, head))
                     }
-                    ProposalFamily::ReplaceHead => Some(assemble(
-                        parsed.stages,
-                        heads[index(&mut rng, heads.len())].clone(),
-                    )),
+                    ProposalFamily::ReplaceHead => {
+                        let first = index(&mut rng, heads.len());
+                        let before = batch.proposals.len();
+                        let first_dsl = assemble(parsed.stages.clone(), heads[first].clone());
+                        let first_key = memo_key(&first_dsl)?;
+                        let collision = batch.proposals.iter().any(|p| p.memo_key == first_key);
+                        let limit = if collision { heads.len() } else { 1 };
+                        // A repeated candidate should not consume this typed
+                        // mutation slot while a legal, novel head is available.
+                        // Keep the initial weighted draw and RNG position; the
+                        // finite pool scan has no new randomness or quota.
+                        for offset in 0..limit {
+                            if offset > 0 {
+                                *batch.attempts.entry(family).or_default() += 1;
+                            }
+                            self.offer(
+                                assemble(
+                                    parsed.stages.clone(),
+                                    heads[(first + offset) % heads.len()].clone(),
+                                ),
+                                family,
+                                provenance.clone(),
+                                memo,
+                                &mut seen,
+                                &mut batch,
+                            );
+                            if batch.proposals.len() > before {
+                                break;
+                            }
+                        }
+                        continue;
+                    }
                     ProposalFamily::Insert => {
                         let inserted = stages[index(&mut rng, stages.len())].clone();
                         let position = index(&mut rng, transforms.len() + 1);
@@ -608,6 +636,151 @@ mod tests {
             self.called.borrow_mut().push((*raw, family.into(), limit));
             Ok(self.records.iter().take(limit).cloned().collect())
         }
+    }
+
+    #[test]
+    fn repeated_head_draw_keeps_a_novel_head_slot_when_the_pool_has_an_alternative() {
+        // Original TRAIN request130: round775/context2. This is a row-free
+        // generator regression, not a model/fitness or release qualification.
+        let proposer = Proposer::new(&[Language::Rust]).unwrap();
+        let parents = [Program::from_dsl("(pipe X (poly_interact append=true) (cheb degree=4) (winsor_clip append=true q=0.15759416738534485) (sigmoid append=true) (ridge))")];
+        let lm = [
+            -7.822644233703613,
+            -3.335017681121826,
+            2.0916075706481934,
+            0.17733953893184662,
+            -0.23421242833137512,
+            -1.8542579412460327,
+            -0.39526352286338806,
+            1.5499933958053589,
+            0.3646467924118042,
+            -0.23557567596435547,
+            2.554443597793579,
+            -0.7511533498764038,
+            1.6888071298599243,
+            0.965538501739502,
+            -0.9864354729652405,
+            -1.153594970703125,
+            -1.8711278438568115,
+            -0.2296914905309677,
+            1.2335679531097412,
+            -0.15032795071601868,
+            1.465488314628601,
+            -1.6561437845230103,
+            -0.8125762939453125,
+            0.8135456442832947,
+            -0.35853514075279236,
+            -0.9137781858444214,
+            -0.4460272192955017,
+            0.6699191927909851,
+            0.8401845097541809,
+            0.07990206778049469,
+            -0.5336035490036011,
+            0.4456247091293335,
+            0.6210421323776245,
+            -0.6575910449028015,
+            -0.8605937361717224,
+            0.04108719900250435,
+            -0.318228542804718,
+            -1.1542876958847046,
+            0.020905081182718277,
+            -0.4025436341762543,
+            1.037981390953064,
+            0.8037648797035217,
+            0.1720881313085556,
+            -0.14072567224502563,
+            -0.21567422151565552,
+            0.2446334958076477,
+            -0.9094048738479614,
+            0.4294348657131195,
+        ];
+        let bank = Bank {
+            role: BankRole::Proposer,
+            records: vec![
+                    Retrieved {
+                        program: Program::from_dsl("(pipe X (cheb append=true degree=4) (winsor_clip q=0.12691538581586245) (histgbm depth=6 lr=0.14350417339409188 rounds=210))"),
+                        family_id: "other-0".into(),
+                        dl_train: true,
+                        distance_squared: 1.0,
+                    },
+                    Retrieved {
+                        program: Program::from_dsl("(pipe X (blom append=true) (sigmoid append=true) (pair_prod topk=13) (ridge_gcv))"),
+                        family_id: "other-1".into(),
+                        dl_train: true,
+                        distance_squared: 2.0,
+                    },
+            ],
+            called: RefCell::new(vec![]),
+        };
+        let req = Round {
+            seed: 20261031,
+            round: 775,
+            exploring: false,
+            target_family: "original-target",
+            raw_lm48: &lm,
+            parents: &parents,
+        };
+        let batch = proposer.propose(&req, &bank, &BTreeSet::new()).unwrap();
+        let heads: Vec<_> = batch
+            .proposals
+            .iter()
+            .filter(|p| p.family == ProposalFamily::ReplaceHead)
+            .collect();
+        assert_eq!(batch.proposals.len(), 8);
+        assert_eq!(
+            heads.len(),
+            2,
+            "a repeated head draw consumed a scheduled head slot"
+        );
+        assert_ne!(heads[0].memo_key, heads[1].memo_key);
+        assert_eq!(
+            heads[0].program.program_sha256,
+            "f5add21fc43bf261f379d1cda8de3500816025f6225458166871b03005baabdc"
+        );
+        assert!(batch.duplicates_or_memo > 0);
+        assert_eq!(
+            batch.attempts.values().sum::<usize>(),
+            batch.proposals.len() + batch.invalid_or_filtered + batch.duplicates_or_memo
+        );
+        assert_eq!(
+            batch,
+            proposer.propose(&req, &bank, &BTreeSet::new()).unwrap()
+        );
+
+        // A collision does not authorize an existing memo entry or an unbounded
+        // retry when every other preferred head has already been measured.
+        let mut transforms = proposer.pipeline(&parents[0]).unwrap().stages;
+        transforms.pop();
+        let (_, templates) = select_landmark_preferred_pools(&lm);
+        let mut memo = BTreeSet::new();
+        for template in templates {
+            let mut parsed = parse_canonical_pipeline(&format!("(pipe X {template})")).unwrap();
+            let dsl = assemble(transforms.clone(), parsed.stages.pop().unwrap());
+            let key = memo_key(&dsl).unwrap();
+            if key != heads[0].memo_key {
+                memo.insert(key);
+            }
+        }
+        let exhausted = proposer.propose(&req, &bank, &memo).unwrap();
+        assert_eq!(exhausted.proposals.len(), 8);
+        assert_eq!(
+            exhausted
+                .proposals
+                .iter()
+                .filter(|p| p.family == ProposalFamily::ReplaceHead)
+                .count(),
+            1
+        );
+        assert!(exhausted
+            .proposals
+            .iter()
+            .all(|p| !memo.contains(&p.memo_key)));
+        assert_eq!(
+            exhausted.attempts.values().sum::<usize>(),
+            exhausted.proposals.len()
+                + exhausted.invalid_or_filtered
+                + exhausted.duplicates_or_memo
+        );
     }
 
     #[test]
