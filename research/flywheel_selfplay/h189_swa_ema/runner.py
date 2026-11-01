@@ -124,8 +124,8 @@ def main():
     allowed |= {
         str(rt.INPUT / "pools" / (r["context_sha256"] + ".npz")) for r in train + val
     }
-    if args.resume:
-        allowed |= {str(path.resolve()) for path in output.rglob("*") if path.is_file()}
+    # Output checkpoints are outside the protected data roots; do not add them
+    # to Audit.allowed, which deliberately rejects writes to every allowlisted path.
     audit = rt.Audit(allowed, output)
     sys.addaudithook(audit.check)
     started, updates = time.monotonic(), 0
@@ -175,7 +175,12 @@ def main():
         ):
             raise RuntimeError("exact native 91-context DL-Val baseline failed")
         base.save(
-            output / "baseline.json",
+            output
+            / (
+                f"baseline-resume-{launch['resume_generation']:03}.json"
+                if args.resume
+                else "baseline.json"
+            ),
             dict(
                 status="PASS",
                 contexts=91,
@@ -577,7 +582,12 @@ def main():
         print("COMPLETE", verdicts, flush=True)
     except BaseException as exc:
         base.save(
-            output / "failure.json",
+            output
+            / (
+                f"failure-resume-{launch['resume_generation']:03}.json"
+                if args.resume
+                else "failure.json"
+            ),
             dict(
                 status="INCOMPLETE",
                 optimizer_updates=updates,

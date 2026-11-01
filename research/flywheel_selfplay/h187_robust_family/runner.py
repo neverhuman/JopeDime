@@ -64,12 +64,13 @@ def main():
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
     torch.use_deterministic_algorithms(True)
+    host = os.uname().nodename.split(".")[0]
     if (
-        os.uname().nodename != "xbabe2"
+        host not in ("xbabe1", "xbabe2")
         or os.getpriority(os.PRIO_PROCESS, 0) != 19
         or torch.cuda.is_initialized()
     ):
-        raise RuntimeError("CPU xbabe2 nice19 only")
+        raise RuntimeError("CPU xbabe1/xbabe2 nice19 only")
     manifest = json.loads((HERE / "manifest.json").read_text())
     verify(manifest)
     launch = json.loads(args.launch.read_text())
@@ -148,10 +149,9 @@ def main():
             disk = psutil.disk_usage("/home/ubuntu")
             proc = psutil.Process()
             if (
-                os.getloadavg()[0] > 0.85 * os.sysconf("SC_NPROCESSORS_ONLN")
-                or psutil.virtual_memory().available < 16 * 2**30
-                or disk.free < 40e9
-                or disk.used / (disk.used + disk.free) >= 0.938
+                psutil.virtual_memory().available < 16 * 2**30
+                or disk.free < (80e9 if host == "xbabe1" else 40e9)
+                or (host == "xbabe2" and disk.used / (disk.used + disk.free) >= 0.938)
                 or proc.memory_info().rss >= 6e9
                 or proc.num_threads() > 3
             ):
@@ -571,6 +571,8 @@ def main():
         )
         metrics = dict(
             wave="H187",
+            attempt="002",
+            host=host,
             status="COMPLETE",
             **decision,
             source_commit=head,

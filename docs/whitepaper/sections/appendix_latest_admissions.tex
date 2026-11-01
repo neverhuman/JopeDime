@@ -6,29 +6,30 @@
   Strict gains and exact ties use unrounded candidate minus prior-best
   utility. Scope: \cref{sec:method-status}.}
   \label{tab:admission-ledger}
-  \centering\small
+  \centering\footnotesize\renewcommand{\arraystretch}{0.92}
   \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.46\linewidth}>{\raggedright\arraybackslash}X@{}}
     \toprule
     Quantity & Recorded value \\
     \midrule
-    Capture cutoff (UTC) & 2026-11-01 15:22 \\
-    Complete rounds & 775--3002 (\num{2228} records) \\
-    Admissions / rejections & 6 / \num{2222} \\
+    Capture cutoff (UTC) & 2026-11-01 15:55 \\
+    Complete rounds & 775--3021 (\num{2247} records) \\
+    Admissions / rejections & 6 / \num{2241} \\
     Strict-gain rounds & 785, 859, 2750 \\
     Exact-tie rounds & 782, 882, 2795 \\
     Final retained utility & \texttt{1.1383668110784328} \\
     Recorded best-round identity & 2795 \\
-    New rows since prior capture & 64 (all rejected) \\
+    New rows since prior capture & 19 (all rejected) \\
     $[-10^{-4},0)$ rejected margins & 26 \\
     $[-10^{-3},-10^{-4})$ rejected margins & 49 \\
-    Rejected margins below $-10^{-3}$ & \num{2147} \\
+    Rejected margins below $-10^{-3}$ & \num{2166} \\
     Closest rejected margin & \texttt{-0.0000433838086485} (round 803) \\
     Median rejected margin & \texttt{-0.0033601045139468} \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
-\Cref{fig:fw-admission-margins} plots the same record using
+\Cref{fig:fw-admission-margins} summarizes complete trailing 50-round
+windows and cumulative near-tie rejections from the same record, using
 $\Delta_r=u_{\mathrm{cand},r}-u_{\mathrm{prev},r}$.
 The default rule accepts $\Delta_r\geq0$; \cref{tab:admission-ledger}
 keeps its chronology, exact counts and margin summaries in one place.

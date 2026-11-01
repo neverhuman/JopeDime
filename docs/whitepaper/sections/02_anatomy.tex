@@ -28,6 +28,13 @@
   \end{tabularx}
 \end{table*}
 
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig2_novelty_judgment.pdf}
+  \caption{\textbf{Novelty is free; judgment is the inventor.} Schematic. Horizontal: distance from what people have already done. Vertical: value as judged by the referee. A random generator travels far and finds little. Imitation, repeated search and a learned proposer illustrate different ways to select candidates; their positions are conceptual, not measured limits. The value of \EZ{}'s single proposal remains an empirical question for \cref{sec:results}.}
+  \label{fig:novelty-judgment}
+\end{figure}
+
 The learning question in \cref{sec:intro} requires separating four roles:
 aim, variation, judgment and retention. They connect what a system
 proposes, how it is evaluated and what the next attempt retains. We call
@@ -36,13 +43,6 @@ judgment learned before a try \emph{taste}.
 \subsection{Novelty is free}\label{sub:anatomy-novelty}
 
 Novelty is the cheapest part of invention. Borges imagined a library of every possible book of 410 pages \citep{borges1941babel}. Every algorithm short enough to fit in a volume is already on its shelves. Nothing in the library tells a reader which volume is true. A random string generator is the same library with a faster librarian: almost every string it emits is new, and almost none is worth running (\cref{fig:novelty-judgment}, lower right).
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig2_novelty_judgment.pdf}
-  \caption{\textbf{Novelty is free; judgment is the inventor.} Schematic. Horizontal: distance from what people have already done. Vertical: value as judged by the referee. A random generator travels far and finds little. Imitation, repeated search and a learned proposer illustrate different ways to select candidates; their positions are conceptual, not measured limits. The value of \EZ{}'s single proposal remains an empirical question for \cref{sec:results}.}
-  \label{fig:novelty-judgment}
-\end{figure}
 
 Language-model studies test this distinction. In a blinded study with 104 NLP researchers, ideas from a language model were rated more original than experts' ideas ($p < 0.05$) \citep{si2024ideas}. Once 43 experts had spent over 100 hours each carrying out ideas from both pools, the generated ideas lost significantly more ground on every metric \citep{si2025gap}.
 
