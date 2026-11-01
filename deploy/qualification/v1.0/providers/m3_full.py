@@ -58,8 +58,8 @@ PROPOSER_PINS = {
 R0_PROPOSER = "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900"
 PAIRED_CLOCK = "source-round-104729/v1"
 PAIRED_PINS = {
-    "native_candidates": "02a0f381f83fddb460be65187b5fce67a2269ab9a32b1a98875a790cc3b065d1",
-    "native_admission": "6e06c22f60b2db9cb89972d315e63eafa26c97d2a7d56b0342454049e61de5b0",
+    "native_candidates": "753fd5012fc477cf47e47b0f742f265bef16209885d204c58c7d7804ae5b1401",
+    "native_admission": "46984003421bbc227b367920adcc8fe43211e0be965550065cf2bbb84764230c",
     "r0_candidates": "e3d3b3bae8ef172a5029e6147439c9f5eb7f6a97b37735621122811efe744fd2",
     "r0_admission": "5d9d35fb4780ec5533ba7ccddf1a6404942f6084534f2ac2b2337febc0fb67b4",
 }

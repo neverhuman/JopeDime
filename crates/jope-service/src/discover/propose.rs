@@ -473,8 +473,8 @@ impl Proposer {
                         let first = index(&mut rng, heads.len());
                         let before = batch.proposals.len();
                         let first_dsl = assemble(parsed.stages.clone(), heads[first].clone());
-                        let first_key = memo_key(&first_dsl)?;
-                        let collision = batch.proposals.iter().any(|p| p.memo_key == first_key);
+                        let collision = memo_key(&first_dsl)
+                            .is_ok_and(|key| batch.proposals.iter().any(|p| p.memo_key == key));
                         let limit = if collision { heads.len() } else { 1 };
                         // A repeated candidate should not consume this typed
                         // mutation slot while a legal, novel head is available.
@@ -781,6 +781,40 @@ mod tests {
                 + exhausted.invalid_or_filtered
                 + exhausted.duplicates_or_memo
         );
+    }
+
+    #[test]
+    fn oversized_head_alternative_is_filtered_without_aborting_the_round() {
+        let proposer = Proposer::new(&[Language::Rust]).unwrap();
+        let mut dsl = String::from("(pipe X ");
+        while dsl.len() + "(sigmoid) ".len() + "(ridge))".len() <= MAX_DSL_BYTES {
+            dsl.push_str("(sigmoid) ");
+        }
+        dsl.push_str("(ridge))");
+        let parents = [Program::from_dsl(dsl)];
+        proposer.pipeline(&parents[0]).unwrap();
+        let bank = Bank {
+            role: BankRole::Proposer,
+            records: vec![],
+            called: RefCell::new(vec![]),
+        };
+        for seed in 0..4 {
+            let round = Round {
+                seed,
+                round: 0,
+                exploring: false,
+                target_family: "byte-limit-control",
+                raw_lm48: &[0.0; 48],
+                parents: &parents,
+            };
+            let batch = proposer.propose(&round, &bank, &BTreeSet::new()).unwrap();
+            assert_eq!(batch.proposals.len(), 8);
+            assert!(batch.invalid_or_filtered > 0);
+            assert!(batch
+                .proposals
+                .iter()
+                .all(|p| p.program.dsl.len() <= MAX_DSL_BYTES));
+        }
     }
 
     #[test]
