@@ -1,0 +1,30 @@
+{
+  "schema": "whitepaper.subsequent-rates-view/v1",
+  "source_csv": "data/subsequent_window.csv",
+  "source_csv_sha256": "a4999500f97cb98c3ef3fd3bab0bb42aa4e91982997923c28d095f08691adabd",
+  "parent_provenance_sha256": "c651ce3e690645a39d558ea2d09dab33eea17e6221d0705de7ca329ae3284974",
+  "snapshot_at": "2026-11-01T00:57:04.310789+00:00",
+  "round_window": [
+    2508,
+    2527
+  ],
+  "summary_rows": 20,
+  "strict_training_program_events": 15,
+  "adapter_admissions": 0,
+  "completed_round_wall_seconds": "1731.449021203",
+  "window_rounds_per_hour": 41.58366727423187,
+  "window_training_program_events_per_hour": 31.187750455673903,
+  "selection": "Every row of the committed subsequent-window CSV; no outcome selection or new observations",
+  "rate_definition": "Per-round bin averages: 3600 / wall_seconds and 3600 * strict training-program events / wall_seconds",
+  "bin_edges": "Cumulative completed-round wall seconds; widths equal the logged round durations",
+  "window_rate_definition": "Total completed rounds or strict program events divided by summed round wall time, times 3600; not the unweighted average of bin rates",
+  "time_scope": "Logged completed-round wall time includes qualification waits; gaps outside completed rounds are omitted",
+  "interpretation": "Development work/event rates, not deployment throughput, adapter admission rate or independent first-proposal performance",
+  "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
+  "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
+  "csv_sha256": "b2ed1ff83eb3da4acb71f285e2aec85c738814a82d913c86cf9a060e0e3c3d60",
+  "generator_sha256": "700efb9a8610467c4ae43d21abcba5c346e0c50757c68c205738e174167144db",
+  "figure_sha256": "f9c1a1507064ad4a8d3ecb036cfebdb2ed1810be61bbddf3d61f640988ad8fee",
+  "matplotlib_version": "3.10.8",
+  "reproduce": "python3 figures/scripts/make_subsequent_rates_figure.py"
+}
