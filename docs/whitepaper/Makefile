@@ -20,5 +20,6 @@ figs:
 	python3 figures/scripts/make_live_development_figure.py
 	python3 figures/scripts/make_round_throughput_figure.py
 	python3 figures/scripts/make_acceptance_over_rounds_figure.py
+	python3 figures/scripts/make_promotions_per_hour_figure.py
 clean:
 	latexmk -C
