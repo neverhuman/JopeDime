@@ -131,9 +131,18 @@ def evaluate(net, pools, tokens, masks, rows):
         for size, cids in sorted(groups.items()):
             for start in range(0, len(cids), 8):
                 batch = cids[start : start + 8]
-                scores = predict(
-                    net, pools, tokens, masks, batch, [np.arange(size) for _ in batch]
-                ).numpy()
+                net._eval_batch_key = tuple(batch)
+                try:
+                    scores = predict(
+                        net,
+                        pools,
+                        tokens,
+                        masks,
+                        batch,
+                        [np.arange(size) for _ in batch],
+                    ).numpy()
+                finally:
+                    net._eval_batch_key = None
                 if not np.isfinite(scores).all():
                     raise RuntimeError("nonfinite predictions")
                 for cid, cost in zip(batch, scores, strict=True):

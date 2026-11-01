@@ -100,48 +100,48 @@
     ],
     "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
     "launch_guard": {
-      "disk_used_fraction": 0.9113,
-      "disk_free_bytes": 703867695104,
-      "load1": 27.4580078125,
+      "disk_used_fraction": 0.9132,
+      "disk_free_bytes": 688948658176,
+      "load1": 30.38818359375,
       "scratch_bytes": 7532970
     },
     "end_guard": {
-      "disk_used_fraction": 0.9113,
-      "disk_free_bytes": 703789899776,
-      "load1": 27.4580078125,
-      "scratch_bytes": 7534293
+      "disk_used_fraction": 0.9132,
+      "disk_free_bytes": 688869969920,
+      "load1": 30.38818359375,
+      "scratch_bytes": 7534486
     }
   },
   "resources": {
-    "samples": 13,
+    "samples": 14,
     "max_os_threads": 2,
-    "max_rss_bytes": 932417536
+    "max_rss_bytes": 932327424
   },
   "tests": {
     "executed": 27,
     "failed": 0,
     "command": "python3 -B -m unittest discover -s research/flywheel_selfplay/h154_trajectory_ema_swa -p test_h154.py -v"
   },
-  "manifest_sha256": "2c21a07cb3915e73630216f69cd1e05f0bbc5afee35f722b4fb72d0349639665",
-  "prereg_sha256": "c4c8cb1d6132995ca4f9dbc7bdcaa3e3d192ab80565127d2f877e2ea14cb5981",
+  "manifest_sha256": "8fd49f1301cab83937a3ce8bb9ce0a17e2443a0c6d4e5cb1f51ae82840833aa3",
+  "prereg_sha256": "253d0c70ae1ec777635e365fa5084c8fdfbd6e16af64895ad1d8431a772ac137",
   "executor_sha256": {
     "monitor.py": "2ee2bb78a03da2b5e42b68e2ec4448bc331b365f89730482e3a4fb3941e91a33",
-    "runner.py": "d4ef45421e36d62347ed8cfff70c121f1c5b6401e3dc2416de0778c5437b9bc2",
-    "runtime.py": "39c6c6e2a662c623e800bbb8b578f0e722579bf2f52558352c84ea640d0b546a",
+    "runner.py": "9499ded88ef57cba575e973d64871b8ef99510ab253115c7ef6f3d1d6ff625a7",
+    "runtime.py": "ed7384ae4ef553fee1d148657e4248ee22687bd4921eacafbe19f058f73ae03f",
     "science.py": "bcc2dea8794a7d595c018443fed8a2792cc809ed569f54ae14be7244ec5827e6",
-    "test_h154.py": "b86ef5e1c06e3fb18b93f7aa8e294cc52629e0fb15c3613d92d3cc33ade4d332"
+    "test_h154.py": "d1d2eb1c780878f8b2ddf812cb3e0f7c8cb8a62d1f03d6e674be7ab720959a47"
   },
-  "smoke_sha256": "c2967bf2a857ed5efac0d9861d309e9d2279f430dc1e7d68b0f49ca4d6a5b844",
+  "smoke_sha256": "0c5279739b1e34ffbd6b239da14f9f6ae093bfda5439817ccb0ce4625ace3d2c",
   "smoke_custody_receipts": {
     "custody_dir": "/home/ubuntu/jope_plan/evidence/H154/smoke",
     "files_sha256": {
-      "smoke-monitor.json": "b55cdd772abdc892f448b88a03cc95a365a993f0377aeaf854d9577e6bfdd841",
-      "smoke-resources.jsonl": "e4b9e9a8a9c7b446fe370077fbf342f97e24b8581b4ca37e65c77b494b58cb89",
-      "smoke.started": "6c8aba07b6fbd730486d7072be6ed746b4533dde2fadb927b94fa8e087b78115",
-      "smoke/audit.json": "132dee4e2826a2d6605f0e73c2d1f4b49f049b5909e0f30da8e29bc148974cc1",
-      "smoke/smoke.json": "c2967bf2a857ed5efac0d9861d309e9d2279f430dc1e7d68b0f49ca4d6a5b844"
+      "smoke-monitor.json": "b1544cca661f443ffdba6c8016204e43ed3071385e048630e2f1ec7093b9181a",
+      "smoke-resources.jsonl": "725552d0fe7971cfbb80fe020698fc2476b53258611d9fe260e2f73b4b0ed0cf",
+      "smoke.started": "a423f2dba3aaaee5f2e710ba7abaaca6e2262260d19341ac943ab3151ed1b072",
+      "smoke/audit.json": "77a9bd7ea96712c6903e0069ae4b91ee59c5a7de0a8f014b945022bc6db4edb0",
+      "smoke/smoke.json": "0c5279739b1e34ffbd6b239da14f9f6ae093bfda5439817ccb0ce4625ace3d2c"
     },
-    "pid": 1194339,
-    "started_utc": "2026-11-01T04:35:14.188083+00:00"
+    "pid": 3653201,
+    "started_utc": "2026-11-01T04:59:31.796903+00:00"
   }
 }
