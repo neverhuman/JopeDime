@@ -69,8 +69,9 @@ python-check:
     python3 deploy/dl-flywheel/pipelines/rlfw/multiseed/run_multiseed_offline.py
 
 # ADR-0003: no absolute home paths in code or units (python/src is informational until WP6 lands)
+# These two immutable evidence records retain literal custody locations, not runtime roots.
 lint-paths:
-    ! git grep -nE '/home/[a-z]+/' -- crates/*/src crates/*/tests deploy/systemd .github
+    ! git grep -nE '/home/[a-z]+/' -- crates/*/src crates/*/tests deploy/systemd .github ':(exclude)crates/jope-appliance/tests/e2e/INT-01-ACCEPTANCE.md' ':(exclude)crates/jope-appliance/tests/system/artifact-stage-linux.json'
     @git grep -cE '/home/[a-z]+/' -- python/src | awk -F: '{n+=$2} END {if (n) print n " hits in python/src (informational until WP6 lands)"}' || true
 
 # render the unit templates into a directory (wraps crates/jope-paths' jope-units-render)
