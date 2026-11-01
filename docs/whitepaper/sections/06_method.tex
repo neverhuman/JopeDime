@@ -6,10 +6,10 @@
 % Supplied method notes in 06_method/sources/ give provenance and remaining implementation limits.
 \section{EurekaZero: Learning Taste}\label{sec:method}
 
-Verified search supplies scored programs for training the reference writer
-and its separate problem--program ranking map.
-The proposed deployment protocol permits one draw from the writer, with
-the map absent.
+The accepted native checkpoint route is limited to tabular regression.
+Verified search supplies scored programs for the reference writer and map.
+The proposed regression deployment protocol permits one writer draw,
+with the map absent.
 We describe the historical reference first, then the later
 adapter-ranking record in \cref{sec:method-status}. Ranking a pool and
 proposing a new program are different tasks. The writer's first-proposal
@@ -36,8 +36,8 @@ omits it, permitting only the writer's single draw under \searchone{}.
 
 \subsection{Reading the board}\label{sub:method-board}
 
-The reference checkpoint uses a frozen encoder to turn the board of
-\cref{sec:game} into 2,048 numbers, $z_p=\encP(p)$, in three blocks.
+The reference regression encoder turns the board of \cref{sec:game}
+into 2,048 numbers, $z_p=\encP(p)$, in three blocks.
 The first summarizes a pretrained row encoder's embeddings across rows,
 independent of row order (512 values). The second projects the hidden
 state of a pretrained third-party tabular regressor that reads the training
@@ -224,7 +224,7 @@ test-scored outcome from a ledger of 63,108 evaluations; we exclude it as test s
 \begin{algorithm}[tb]
 \caption{Proposed game-day protocol (\searchone).}\label{alg:gameday}
 \begin{algorithmic}[1]
-\Require new problem $p$ with training rows and metric; frozen $\encP$ and $\writer$
+\Require new regression problem $p$ with training rows and metric; frozen $\encP$ and $\writer$
 \State $z_p \gets \encP(p)$ \Comment{read the board}
 \State $w \sim \writer(\cdot \mid z_p)$, one draw at $T=1$ \Comment{one move; no retry}
 \State $f \gets \textsc{Fit}(w,\ \text{training rows})$ \Comment{as any algorithm is fit}
@@ -233,7 +233,7 @@ test-scored outcome from a ledger of 63,108 evaluations; we exclude it as test s
 \end{algorithmic}
 \end{algorithm}
 
-The proposed protocol in \cref{alg:gameday} permits one encoder pass and one
+The proposed regression protocol in \cref{alg:gameday} permits one encoder pass and one
 draw of at most 128 tokens at temperature 1 from a recorded seed. The
 program is lowered to code and fitted. The map stays absent, and no
 training exploration program is added. A draft that does not finish,
