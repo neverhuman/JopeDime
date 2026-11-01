@@ -5557,6 +5557,10 @@
     "python:research/flywheel_selfplay/h202_hard_negative/test_h202.py": {
       "role": "research",
       "reason": "H202 data-free host-before-read/resource, stable current-top5 logistic inversion/gradient sign, zero-inversion loss, within-context shuffle, DOPE/anchor gradient masking and optimizer exclusion, fresh FIT/B/A folds, family-balanced paired sampling, durable B lock, lossless XOR and strict median/verdict controls; no corpus or model-checkpoint reads in fixtures."
+    },
+    "python:research/flywheel_selfplay/h203_blend025_gated/test_h203.py": {
+      "reason": "Owner-requested H203 data-free controls for the outcome-free gated BLEND_025 (cells, minimal 45-fit plan, H124 folds per fold seed, fold manifest, fixed-lambda blend, zgap and disagreement gate statistics, tau grid, FIT-only tau selection with r882 fallback and conservative ties, gated arm costs, inf-safe JSON, LCB/p/harm verdict, Elo orientation, xbabe1-only host admission); no checkpoint/corpus reads or model passes in the fixtures",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

@@ -5421,6 +5421,30 @@
         "role": "research",
         "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
       }
+    },
+    "python:research/flywheel_selfplay/h203_blend025_gated/analysis.py": {
+      "bytes": 12399,
+      "sha256": "3b3377ef1b19b34bf58f85145f00043d94dc9f2a9d036d56795757a67cc18ec2",
+      "classification": {
+        "role": "research",
+        "reason": "H203 preregistered CPU-only diagnostic: BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882)) gated per context by an outcome-free cost signal (zgap; H129 disagreement report-only) with a FIT-only threshold (max FIT native gain s.t. FIT harm <= 5%, else fall back to r882), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit; stage-1 lock before A; m=1 CANDIDATE gate (LCB95>0, p<0.05, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h203_blend025_gated/monitor.py": {
+      "bytes": 7032,
+      "sha256": "268e7f9cf6b18c90520daf0a21bde4a07866b4eb0c874c18d5a09b19fa6c327e",
+      "classification": {
+        "role": "research",
+        "reason": "H203 preregistered CPU-only diagnostic: BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882)) gated per context by an outcome-free cost signal (zgap; H129 disagreement report-only) with a FIT-only threshold (max FIT native gain s.t. FIT harm <= 5%, else fall back to r882), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit; stage-1 lock before A; m=1 CANDIDATE gate (LCB95>0, p<0.05, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h203_blend025_gated/runner.py": {
+      "bytes": 30235,
+      "sha256": "1a247c331c8e2ff0fc98f5426372d2a708414cb9058022f986e955c3333afcc9",
+      "classification": {
+        "role": "research",
+        "reason": "H203 preregistered CPU-only diagnostic: BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882)) gated per context by an outcome-free cost signal (zgap; H129 disagreement report-only) with a FIT-only threshold (max FIT native gain s.t. FIT harm <= 5%, else fall back to r882), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit; stage-1 lock before A; m=1 CANDIDATE gate (LCB95>0, p<0.05, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
