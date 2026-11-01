@@ -2,7 +2,6 @@
   "schema": "whitepaper.live-development/v1",
   "snapshot": {
     "at": "2026-11-01T05:20:06.331608+00:00",
-    "host": "xbabe1",
     "selection": "Latest20 consecutive completed summary rounds also present in captured admissions; journal strict-promotion records in exactly that window; required aggregate fields only",
     "round_window": [
       2644,
@@ -15,8 +14,7 @@
         "selected_rows": 20,
         "source_prefix": {
           "name": "summary.jsonl",
-          "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/summary.jsonl",
-          "inode": 62570245,
+          "path": "summary.jsonl",
           "observed_bytes": 3526637,
           "prefix_bytes": 3526637,
           "prefix_sha256": "ca4196a00d75a9b9412e7ca479b87cddbf9a96112aa971b33ec24985c1c27983",
@@ -32,8 +30,7 @@
         "selected_rows": 21,
         "source_prefix": {
           "name": "promotions.jsonl",
-          "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/promotions.jsonl",
-          "inode": 62570216,
+          "path": "promotions.jsonl",
           "observed_bytes": 9388866,
           "prefix_bytes": 9388866,
           "prefix_sha256": "6308e589e3bbb36188ed1993de21e6a6cd3a38971ceb9380bb5f764964833f80",
@@ -67,7 +64,7 @@
   ],
   "csv_sha256": "a913ea6de13ed5c48b36c5499ecc5a2c72a38652bf4472835ace69ba95f56dfc",
   "admission_csv_sha256": "edd336c3b68e880040e8f41a6fe437617f643ed183d9b03d69554963ad54a6dd",
-  "generator_sha256": "e2b712c4818d64b872d0b7f10f3001c1cffe8f3d726ea0c0c5ee06a23f41f050",
+  "generator_sha256": "6b8dac8fb812d02152cdd8722ce0ca3e7546181a7293d33e480adf7e9a762049",
   "source_binding": "Aggregate field interpretation only; installed source/checkpoint qualification remains required",
   "scope": "Latest retained completed-round development telemetry; program events and adapter admissions are distinct, not independent first-proposal or deployment evidence",
   "reproduce": "python3 figures/scripts/make_live_development_figure.py",

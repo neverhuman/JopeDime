@@ -37,12 +37,19 @@ def sha(path):
 
 def extract(logs):
     snapshot = json.loads((logs / "snapshot.json").read_text())
+    snapshot.pop("host", None)
     inputs = {
         name: (logs / name).read_bytes()
         for name in ["summary.jsonl", "promotions.jsonl"]
     }
     for item in snapshot["files"]:
         assert hashlib.sha256(inputs[item["name"]]).hexdigest() == item["sha256"]
+        prefix = item.get("source_prefix")
+        if isinstance(prefix, dict):
+            prefix.pop("host", None)
+            prefix.pop("inode", None)
+            if "path" in prefix:
+                prefix["path"] = Path(prefix["path"]).name
     summaries, events = (
         [json.loads(line, parse_float=Decimal) for line in inputs[name].splitlines()]
         for name in ["summary.jsonl", "promotions.jsonl"]
