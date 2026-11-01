@@ -17,6 +17,7 @@ import numpy as np
 import psutil
 import torch
 import torch.nn.functional as F
+from resource_limits import disk_status
 
 HERE = Path(__file__).resolve().parent
 REPO = Path("/home/ubuntu/JopeDime")
@@ -151,10 +152,7 @@ def guard():
     """CPU-only worker: pause its own work for load, abort at disk hard stop."""
     for path in [HERE, Path("/home/ubuntu/jope-data/h155")]:
         v = os.statvfs(path)
-        if (
-            v.f_bavail * v.f_frsize < 40_000_000_000
-            or 1 - v.f_bfree / v.f_blocks >= 0.95
-        ):
+        if disk_status(v)[2]:
             raise RuntimeError("DISKGUARD")
     p = psutil.Process()
     if p.num_threads() > 4 or p.memory_info().rss >= 6_000_000_000:

@@ -9,6 +9,7 @@ import sys
 import time
 
 import psutil
+from resource_limits import disk_status
 
 HERE = Path(__file__).resolve().parent
 ROOT = Path("/home/ubuntu/jope-data/h155")
@@ -80,8 +81,7 @@ def main():
                     except psutil.NoSuchProcess:
                         pass
                 v = os.statvfs(root)
-                free = v.f_bavail * v.f_frsize
-                used = 100 * (1 - v.f_bfree / v.f_blocks)
+                free, used, disk_stop = disk_status(v)
                 sample = dict(
                     utc_unix=time.time(),
                     host_cpu_percent=cpu,
@@ -97,12 +97,7 @@ def main():
                 report["max_cpu_percent"] = max(report["max_cpu_percent"], cpu)
                 report["max_threads"] = max(report["max_threads"], threads)
                 report["max_rss"] = max(report["max_rss"], rss)
-                if (
-                    free < 40_000_000_000
-                    or used >= 95
-                    or threads > 4
-                    or rss >= 6_000_000_000
-                ):
+                if disk_stop or threads > 4 or rss >= 6_000_000_000:
                     raise RuntimeError("H155 hard resource limit")
                 pressure = cpu > 85 or psutil.virtual_memory().available < 16 * 1024**3
                 if pressure and not paused and worker.poll() is None:

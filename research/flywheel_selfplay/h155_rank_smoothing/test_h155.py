@@ -2,6 +2,9 @@
 
 import numpy as np
 import torch
+import pytest
+from types import SimpleNamespace
+from resource_limits import disk_status
 from runner import pairwise, fit_temperature, split_families, summarize, decisions, ARMS
 
 
@@ -64,3 +67,42 @@ def test_negative_r882_contrast_blocks_promising_despite_control_lift():
     negative = dict(positive, median_family_gain=-0.01, gain_ci95=[-0.02, -0.001])
     inner = {a: {"vs_CTRL": positive, "vs_r882": negative} for a in ARMS}
     assert not any(x["promising"] for x in decisions(inner).values())
+
+
+def test_reserved_blocks_reproduction_stops_at_user_visible_95_percent():
+    stat = SimpleNamespace(
+        f_blocks=1000, f_bfree=70, f_bavail=40, f_frsize=1_000_000_000
+    )
+    free, percent, stop = disk_status(stat)
+    assert free == 40_000_000_000
+    assert percent > 95 and stop
+
+
+def test_disk_free_and_usage_equality_boundaries():
+    safe = SimpleNamespace(
+        f_blocks=1000, f_bfree=100, f_bavail=50, f_frsize=1_000_000_000
+    )
+    exact95 = SimpleNamespace(
+        f_blocks=1050, f_bfree=100, f_bavail=50, f_frsize=1_000_000_000
+    )
+    exact40 = SimpleNamespace(
+        f_blocks=1000, f_bfree=900, f_bavail=40, f_frsize=1_000_000_000
+    )
+    below40 = SimpleNamespace(
+        f_blocks=1000, f_bfree=900, f_bavail=39, f_frsize=1_000_000_000
+    )
+    assert not disk_status(safe)[2]
+    assert disk_status(exact95)[1:] == (95.0, True)
+    assert not disk_status(exact40)[2]
+    assert disk_status(below40)[2]
+
+
+def test_actual_runner_guard_rejects_reserved_block_case(monkeypatch):
+    import runner
+
+    stat = SimpleNamespace(
+        f_blocks=1000, f_bfree=70, f_bavail=40, f_frsize=1_000_000_000
+    )
+    monkeypatch.setattr(runner.os, "statvfs", lambda _path: stat)
+    with pytest.raises(RuntimeError, match="DISKGUARD"):
+        runner.guard()
