@@ -4039,6 +4039,38 @@
         "role": "research",
         "reason": "H151 owner-directed Lookahead drift-matched control suite: median-seed equal-family bootstrap, inclusive [0.85, 1.15] 15% drift-matching manipulation gate, three-seed r882 advancement and Holm-four gates across all executed arms, Lookahead k=5 alpha=0.5 schedule, input audit, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py": {
+      "bytes": 14177,
+      "sha256": "39c6c6e2a662c623e800bbb8b578f0e722579bf2f52558352c84ea640d0b546a",
+      "classification": {
+        "role": "research",
+        "reason": "H154 owner-directed trajectory EMA (0.99/0.995/0.999) and uniform SWA (K=5/10/20) weight averaging with in-fold DL-Train RMS stat recalibration: median-seed equal-family bootstrap, [0.85, 1.15] output-scale recalibration, 7-arm Holm vs r882 and 6-arm Holm vs CTRL, dose manipulation gate, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h154_trajectory_ema_swa/science.py": {
+      "bytes": 10847,
+      "sha256": "bcc2dea8794a7d595c018443fed8a2792cc809ed569f54ae14be7244ec5827e6",
+      "classification": {
+        "role": "research",
+        "reason": "H154 owner-directed trajectory EMA (0.99/0.995/0.999) and uniform SWA (K=5/10/20) weight averaging with in-fold DL-Train RMS stat recalibration: median-seed equal-family bootstrap, [0.85, 1.15] output-scale recalibration, 7-arm Holm vs r882 and 6-arm Holm vs CTRL, dose manipulation gate, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h154_trajectory_ema_swa/monitor.py": {
+      "bytes": 5959,
+      "sha256": "2ee2bb78a03da2b5e42b68e2ec4448bc331b365f89730482e3a4fb3941e91a33",
+      "classification": {
+        "role": "research",
+        "reason": "H154 owner-directed trajectory EMA (0.99/0.995/0.999) and uniform SWA (K=5/10/20) weight averaging with in-fold DL-Train RMS stat recalibration: median-seed equal-family bootstrap, [0.85, 1.15] output-scale recalibration, 7-arm Holm vs r882 and 6-arm Holm vs CTRL, dose manipulation gate, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h154_trajectory_ema_swa/runner.py": {
+      "bytes": 27294,
+      "sha256": "d4ef45421e36d62347ed8cfff70c121f1c5b6401e3dc2416de0778c5437b9bc2",
+      "classification": {
+        "role": "research",
+        "reason": "H154 owner-directed trajectory EMA (0.99/0.995/0.999) and uniform SWA (K=5/10/20) weight averaging with in-fold DL-Train RMS stat recalibration: median-seed equal-family bootstrap, [0.85, 1.15] output-scale recalibration, 7-arm Holm vs r882 and 6-arm Holm vs CTRL, dose manipulation gate, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

@@ -5164,6 +5164,16 @@
       "lanes": [],
       "scope": "H152 data-free controls for zero-update checkpoint soups: fixed arms and weights, trainable-only blending with frozen tensors from R882, frozen-identity census, deterministic bootstrap readout, tie rejection, Holm decision, Elo interval, family-disjoint TRAIN folds, exact R882 regression, Torch thread cap, every disk/load/scratch/nice and supervisor stop guard, and squash-compatible source binding with mismatch rejection. No checkpoint, corpus or model passes in the fixture suite; offline research only."
     },
+    "python:research/flywheel_selfplay/h154_trajectory_ema_swa/test_h154.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H154 data-free controls for trajectory EMA (0.99/0.995/0.999) and uniform SWA (K=5/10/20) weight averaging with in-fold DL-Train RMS stat recalibration: 40-step EMA/20-round SWA accumulators, [0.85, 1.15] output-head variance recalibration, dose check, unified 7-arm Holm vs r882 and 6-arm Holm vs CTRL, tie rejection, Elo interval, hard-stop supervisor/runtime guards, and squash-compatible source binding. Offline research only."
+    },
     "python:research/flywheel_selfplay/h155_rank_smoothing/test_h155.py": {
       "discovery": {
         "kind": "python-family"
