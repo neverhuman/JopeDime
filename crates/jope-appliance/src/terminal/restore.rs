@@ -6,10 +6,10 @@ use std::sync::{Arc, Mutex, MutexGuard, Once, OnceLock, Weak};
 
 use ratatui::crossterm::{
     cursor::{Hide, Show},
-    event::{DisableBracketedPaste, EnableBracketedPaste},
+    event::{DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture},
     execute,
     style::ResetColor,
-    terminal::{disable_raw_mode, enable_raw_mode},
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
 static OWNER: Mutex<()> = Mutex::new(());
@@ -25,6 +25,7 @@ pub enum ExitSignal {
 
 struct RestoreState {
     inline: AtomicBool,
+    fullscreen: AtomicBool,
 }
 
 fn display_reset(writer: &mut impl Write) -> io::Result<()> {
@@ -38,8 +39,13 @@ impl RestoreState {
         }
         // Always attempt both operations, even when one fails (e.g. a closed output pipe).
         let raw = disable_raw_mode();
+        let screen = if self.fullscreen.swap(false, Ordering::SeqCst) {
+            execute!(io::stdout(), DisableMouseCapture, LeaveAlternateScreen)
+        } else {
+            Ok(())
+        };
         let display = display_reset(&mut io::stdout());
-        raw.and(display)
+        raw.and(screen).and(display)
     }
 }
 
@@ -63,6 +69,7 @@ impl TerminalGuard {
         };
         let state = Arc::new(RestoreState {
             inline: AtomicBool::new(false),
+            fullscreen: AtomicBool::new(false),
         });
         let mut guard = Self {
             state,
@@ -109,6 +116,14 @@ impl TerminalGuard {
             enable_raw_mode()?;
             execute!(io::stdout(), Hide, EnableBracketedPaste)?;
         }
+        Ok(guard)
+    }
+
+    /// Own the full terminal while retaining panic/signal and partial-startup cleanup.
+    pub fn acquire_fullscreen() -> io::Result<Self> {
+        let guard = Self::acquire(true)?;
+        guard.state.fullscreen.store(true, Ordering::SeqCst);
+        execute!(io::stdout(), EnterAlternateScreen, EnableMouseCapture)?;
         Ok(guard)
     }
 

@@ -1,0 +1,22 @@
+{
+  "kind": "running-terminal-state-recreation",
+  "terminal": {
+    "columns": 100,
+    "rows": 32,
+    "term": "xterm-256color",
+    "colorterm": "truecolor"
+  },
+  "method": "Captured actual client PTY bytes, interpreted with pyte 0.8.2 and rendered using Chromium with a fixed monospace cell grid. No invented model results; session uses a synthetic 240-row CSV.",
+  "source_blobs": {
+    "crates/jope-appliance/src/terminal/screen.rs": "56e29077eee7660ea1c6e86af32ef6b62f35a44e",
+    "crates/jope-appliance/src/terminal/session.rs": "58fd3df0e641ac47af6397b7625b761aac970d6a",
+    "crates/jope-appliance/src/terminal/restore.rs": "ddba271589e16d2ea35ada7095b12a0d4c4d8e5f",
+    "crates/jope-appliance/src/terminal/composer.rs": "0c9b78d1fb564a293ddf9e4ad6119272120b74d6",
+    "crates/jope-appliance/src/terminal/theme.rs": "98d9f04a96fa0e69464de9eacde2b216b9a69808"
+  },
+  "screenshots": {
+    "jain-cli-landing.png": "306ba370a3d95a247aea80382bbd97eaca7eee8d50eb99321e5ac12a36abbe95",
+    "jain-cli-session.png": "3b26b66938eb6e0e7f288d7ccf6be5dd4dc432765c9e0924dc17520bc376c4bb"
+  },
+  "status": "development UI; cloud account connection is not implemented"
+}

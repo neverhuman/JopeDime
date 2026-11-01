@@ -16,10 +16,7 @@ use ratatui::{
         event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
         terminal,
     },
-    layout::{Constraint, Layout},
-    text::Line,
-    widgets::{Paragraph, Widget},
-    Terminal, TerminalOptions, Viewport,
+    Terminal,
 };
 use std::{
     io::{self, IsTerminal},
@@ -97,6 +94,7 @@ struct Session {
     activity: String,
     message: Option<String>,
     exit_requested: bool,
+    screen: crate::terminal::screen::Screen,
 }
 
 impl Session {
@@ -121,45 +119,57 @@ impl Session {
             activity: "Type \\help for commands".into(),
             message: None,
             exit_requested: false,
+            screen: crate::terminal::screen::Screen::default(),
         })
     }
 
     fn run(&mut self) -> anyhow::Result<()> {
         let width = terminal::size().map(|size| size.0).unwrap_or(80);
-        let inline = !crate::terminal::line_mode::required(
+        let fullscreen = !crate::terminal::line_mode::required(
             false,
             std::env::var("TERM").ok().as_deref(),
-            std::env::var_os("NO_COLOR").is_some(),
+            false, // NO_COLOR controls styling; it does not disable the full-screen UI.
             width,
         );
-        let guard = crate::terminal::restore::TerminalGuard::acquire(inline)?;
-        if !inline {
+        let guard = if fullscreen {
+            crate::terminal::restore::TerminalGuard::acquire_fullscreen()?
+        } else {
+            crate::terminal::restore::TerminalGuard::acquire(false)?
+        };
+        if !fullscreen {
             return self.line_mode(&guard);
         }
-        let mut terminal = Terminal::with_options(
-            CrosstermBackend::new(io::stdout()),
-            TerminalOptions {
-                viewport: Viewport::Inline(8),
-            },
-        )?;
+        let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
         let mut last_draw = None;
         loop {
             if guard.signal().is_some() {
+                guard.leave_inline()?;
                 self.leave();
                 return Ok(());
             }
             let width = terminal::size().map(|size| size.0).unwrap_or(80);
-            if width < 40 {
+            if width < 40 || terminal::size().is_ok_and(|(_, rows)| rows < 12) {
                 terminal.clear()?;
                 drop(terminal);
                 guard.leave_inline()?;
+                let retained = self.screen_lines();
+                crate::terminal::line_mode::LineMode::new(io::stdout()).transcript(&retained)?;
                 return self.line_mode(&guard);
             }
             while let Ok(event) = self.events.try_recv() {
-                self.on_event(event, width, &mut terminal)?;
+                for line in self.handle_event(event, usize::from(width)) {
+                    self.screen.push(&line);
+                }
+                last_draw = None;
             }
             if event::poll(INPUT_LATENCY)? {
                 let input = event::read()?;
+                last_draw = None;
+                if self.screen.handle_scroll(&input) {
+                    self.draw(&mut terminal)?;
+                    last_draw = Some(Instant::now());
+                    continue;
+                }
                 let columns = self.draft.columns.clone();
                 let run_ids = self
                     .snapshot
@@ -176,17 +186,19 @@ impl Session {
                 };
                 match self.composer.handle(input, &completion)? {
                     crate::terminal::composer::ComposerAction::Submit(text) => {
+                        self.screen.follow();
+                        self.screen.push(&format!("> {text}"));
                         for line in self.execute(&text) {
-                            terminal.insert_before(1, |buffer| {
-                                Paragraph::new(crate::terminal::sanitize_user_string(&line))
-                                    .render(buffer.area, buffer);
-                            })?;
+                            self.screen.push(&line);
                         }
                         if self.exit_requested {
+                            guard.leave_inline()?;
+                            self.leave();
                             return Ok(());
                         }
                     }
                     crate::terminal::composer::ComposerAction::ExitRequested => {
+                        guard.leave_inline()?;
                         self.leave();
                         return Ok(());
                     }
@@ -239,7 +251,7 @@ impl Session {
             })?;
         let mut output = crate::terminal::line_mode::LineMode::new(io::stdout());
         output.transcript(&[format!(
-            "JopeDime {} · engine {}",
+            "JAIN by VEOX · Powered by JopeDime {} · engine {}",
             self.version, self.engine_mode
         )])?;
         let width = terminal::size().map(|size| size.0).unwrap_or(80);
@@ -272,31 +284,24 @@ impl Session {
                 }
             }
             if self.exit_requested {
+                self.leave();
                 return Ok(());
             }
         }
     }
 
     fn draw(&mut self, terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()> {
-        let header = format!("JopeDime {} · engine {}", self.version, self.engine_mode);
         let width = usize::from(terminal.size()?.width);
         let (status, activity) = self.status_lines(width);
         terminal.draw(|frame| {
-            let area = frame.area();
-            let rows = Layout::vertical([
-                Constraint::Length(1),
-                Constraint::Length(1),
-                Constraint::Length(1),
-                Constraint::Min(3),
-            ])
-            .split(area);
-            frame.render_widget(Paragraph::new(header), rows[0]);
-            frame.render_widget(Paragraph::new(status), rows[1]);
-            frame.render_widget(Paragraph::new(activity), rows[2]);
-            let input = rows[3];
-            self.composer.draw(frame, input);
+            self.screen
+                .draw(frame, &self.composer, &self.version, &status, &activity);
         })?;
         Ok(())
+    }
+
+    fn screen_lines(&self) -> Vec<String> {
+        self.screen.transcript()
     }
 
     fn status_lines(&self, width: usize) -> (String, String) {
@@ -329,7 +334,6 @@ impl Session {
                 if args.iter().any(|arg| arg == "--pause") {
                     self.control("pause")?;
                 }
-                self.leave();
                 self.exit_requested = true;
                 vec!["session closed; run continues in the background".into()]
             }
@@ -653,24 +657,6 @@ impl Session {
             crate::terminal::Theme::from_env(crate::terminal::ThemeMode::Auto),
             crate::terminal::symbols_from_env(),
         )
-    }
-
-    fn on_event(
-        &mut self,
-        event: PublicEvent,
-        width: u16,
-        terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
-    ) -> io::Result<()> {
-        let lines = self.handle_event(event, usize::from(width));
-        terminal.insert_before(lines.len().max(1) as u16, |buffer| {
-            let lines = if lines.is_empty() {
-                vec![Line::from("event")]
-            } else {
-                lines.into_iter().map(Line::from).collect()
-            };
-            Paragraph::new(lines).render(buffer.area, buffer);
-        })?;
-        Ok(())
     }
 
     fn leave(&self) {

@@ -173,7 +173,11 @@ fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io
 
     let mut terminal = pty::PtySession::spawn_jopedime_with_env(
         &[],
-        &[("JOPEDIME_HOME", home_text), ("NO_COLOR", "1")],
+        &[
+            ("JOPEDIME_HOME", home_text),
+            ("NO_COLOR", "1"),
+            ("TERM", "dumb"),
+        ],
     )?;
     let screen = terminal.wait_for_text("engine background", Duration::from_secs(10))?;
     assert_no_internal_sentinels(&screen);
@@ -295,12 +299,12 @@ mod interactive_exit {
                     ("JAIN_EXIT_BINARY", binary),
                 ],
             )?;
-            terminal.wait_for_output_bytes(b"\x1b[6n", Duration::from_secs(15))?;
-            // Emulate the terminal's cursor-position response for the inline viewport.
-            terminal.type_text("\x1b[1;1R")?;
-            terminal.wait_for_text("background", Duration::from_secs(10))?;
+            terminal.wait_for_output_bytes(b"\x1b[?1049h", Duration::from_secs(15))?;
+            terminal.wait_for_text("Powered by JopeDime", Duration::from_secs(10))?;
             terminal.type_text(keys)?;
             terminal.wait_for_text("JAIN_EXIT_RESTORED", Duration::from_secs(5))?;
+            terminal.wait_for_output_bytes(b"\x1b[?1049l", Duration::from_secs(5))?;
+            terminal.wait_for_output_bytes(b"\x1b[?1000l", Duration::from_secs(5))?;
             assert!(
                 engine.0.try_wait()?.is_none(),
                 "leaving killed the shared engine"
