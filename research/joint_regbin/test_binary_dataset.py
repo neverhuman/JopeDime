@@ -17,6 +17,11 @@ import unittest
 import zipfile
 from pathlib import Path, PurePosixPath
 
+from research.joint_regbin.admission import (
+    build_binary_train_admission,
+    verify_binary_train_admission,
+)
+
 
 DEFAULT_PACKET = Path.home() / "jope-data/jrb-01/panel-v1-binary-train"
 PACKET = Path(os.environ.get("JOPE_JRB01_BINARY_PACKET", DEFAULT_PACKET))
@@ -260,6 +265,53 @@ class BinaryTrainCandidatePacketTests(unittest.TestCase):
                 self.assertEqual(row["catalog_train_sha256"], row["train_file_sha256"])
                 self.assertEqual(sha256_file(cache_path), row["cache_sha256"])
                 self.assertEqual(rebuilt_npz_sha256(cache_path), row["cache_sha256"])
+
+    def test_conservative_binary_train_admission(self) -> None:
+        catalog = Path.home() / "jope_plan/master/source/S3_DATASET_CATALOG.json"
+        owner_alias = (
+            Path.home()
+            / "jope_plan/evidence/JRB-01/obj02-t2240/RAW-CATALOG-ALIAS-EXPANSION.json"
+        )
+        panel = Path.home() / "jope-data/jrb-01/panel-v1-binary-train/manifest.json"
+        if not all(path.is_file() for path in (catalog, owner_alias, panel)):
+            self.skipTest("pinned JRB admission evidence is unavailable")
+
+        admission = build_binary_train_admission(
+            self.packet, catalog, owner_alias, panel
+        )
+        verified = verify_binary_train_admission(
+            admission, self.packet, catalog, owner_alias, panel
+        )
+
+        self.assertEqual(admission, verified)
+        self.assertEqual(admission["admission_status"], "ADMITTED_BINARY_TRAIN_SUBSET")
+        self.assertTrue(admission["binary_train_admitted"])
+        self.assertFalse(admission["full_binary_pool_admitted"])
+        self.assertFalse(admission["full_joint_eligibility_verified"])
+        self.assertEqual(admission["counts"]["candidate_binary_records"], 843)
+        self.assertEqual(admission["counts"]["candidate_family_components"], 807)
+        self.assertEqual(admission["counts"]["admitted_train_records"], 5)
+        self.assertEqual(admission["counts"]["admitted_train_families"], 5)
+        self.assertEqual(
+            admission["counts"]["srcfile_dependent_candidate_records"], 836
+        )
+        self.assertEqual(
+            admission["counts"]["safe_panel_records_withheld_from_train"], 2
+        )
+        self.assertEqual({row["role"] for row in admission["records"]}, {"train"})
+        self.assertTrue(
+            all(
+                not any(key[0] == "srcfile" for key in row["family_union_evidence"])
+                for row in admission["records"]
+            )
+        )
+
+    def test_admission_payload_path_rejects_protected_and_escaping_paths(self) -> None:
+        from research.joint_regbin.admission import _packet_file
+
+        for path in ("../outside.csv", "sealed/item.npz", "outer-test/item.npz"):
+            with self.subTest(path=path), self.assertRaises(ValueError):
+                _packet_file(self.packet, path)
 
 
 if __name__ == "__main__":
