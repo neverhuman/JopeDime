@@ -20,6 +20,6 @@ Primary outcome: native argmin utility, paired SAM/ASAM versus CTRL across 91 DL
 
 ## Execution safeguards and flow
 
-CPU only on xbabe2, nice 19, at most four OS threads, RSS <6e9 bytes, scratch <3GB, free disk >=40GB, and filesystem use <95%; stop if load exceeds 85 or MemAvailable falls below 16GiB. Every threshold breach is terminal INCOMPLETE; never pause and resume a scored attempt. No GPU. Assert frozen DOPE SHA256 `c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814`. Input access is restricted to H149’s pinned manifest and owned outputs. No large Git objects.
+CPU only on xbabe2, nice 19, at most four OS threads, RSS <6e9 bytes, scratch <3GB, free disk >=40GB, and filesystem use <95%. Measure used fraction as `(blocks - bfree) / ((blocks - bfree) + bavail)` so reserved blocks do not understate use. Stop if load exceeds 85 or MemAvailable falls below 16GiB. Every threshold breach is terminal INCOMPLETE; never pause and resume a scored attempt. No GPU. Assert frozen DOPE SHA256 `c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814`. Input access is restricted to H149’s pinned manifest and owned outputs. No large Git objects.
 
 This preregistration and its tests/index row require self-review, read-only cross-review by @rd_argon or a free super_merge reviewer, and squash merge by a super_merger. Only then: zero-evaluation smoke, followed by one run. No retry or cached-cell reuse. Closeout will publish README, compact metrics, and index update in a small PR.

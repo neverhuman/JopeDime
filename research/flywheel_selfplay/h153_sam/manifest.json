@@ -40,14 +40,14 @@
   "dropped": [],
   "fold_seed": 153140,
   "holm_hypotheses": 2,
-  "prereg_sha256": "b7e4c0b1f60493ef94c1fec1de60a507487fd862e4d62764fb53a649ba47fcec",
+  "prereg_sha256": "f242168af0dc6d972bea9cf9001370844bfbc5026166d36063a817f36e55c58d",
   "fold_manifest_sha256": "ca87c885deea80761640c118c879270b0ffb49ef78baa446075b4052b0492c4f",
   "executor_sha256": {
     "runner.py": "dc66c87b3ae730dea917f30827ca1e8868aaefe227af50f9548c38c149782a84",
     "runtime.py": "2b223fb4fd520db3b41753b7e0633a8191a7b0fa597f050774d3cd3a41fc6a2a",
     "science.py": "31503475ad0f2f12c49f7e74741d37f540b53c026de04954cae338665eba822d",
-    "monitor.py": "ce5308a409b799a6333fb81ca9d0b0149d8f4181011434a869d10f8ec980ac12",
-    "test_h153.py": "7452779bbfdde56a40f09248a2577ea4d81b5c6dec459fd0ffbdf55046f7925f"
+    "monitor.py": "30adabab1f8a28ae20b04969e73135f63d65f068d87fe731cf8912fbbff57345",
+    "test_h153.py": "2812206b215d953f25ff3d38531bd79690256353d2d4b0779d8f021cd2e3c542"
   },
   "assets": {
     "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",

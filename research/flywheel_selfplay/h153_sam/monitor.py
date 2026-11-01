@@ -63,12 +63,16 @@ def sample(root, child=None):
     fs = os.statvfs(root)
     if fs.f_blocks <= 0:
         raise RuntimeError("filesystem reports no blocks")
+    used_blocks = fs.f_blocks - fs.f_bfree
+    used_with_user_available = used_blocks + fs.f_bavail
+    if used_blocks < 0 or used_with_user_available <= 0:
+        raise RuntimeError("filesystem reports invalid block accounting")
     return dict(
         utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         rss=rss,
         threads=threads,
         free=fs.f_bavail * fs.f_frsize,
-        disk_used=(fs.f_blocks - fs.f_bfree) / fs.f_blocks,
+        disk_used=used_blocks / used_with_user_available,
         scratch=sum(
             p.stat().st_size
             for tree in (Path("/home/ubuntu/jope-data/h153"),)

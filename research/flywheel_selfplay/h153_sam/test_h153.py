@@ -62,7 +62,12 @@ class H153Tests(unittest.TestCase):
             self.assertEqual(classify(values), ("abort", "HOST_PRESSURE"))
 
     def test_sample_measures_disk_used_fraction(self):
-        statvfs = SimpleNamespace(f_blocks=100, f_bfree=5, f_bavail=4, f_frsize=1000)
+        statvfs = SimpleNamespace(
+            f_blocks=1000,
+            f_bfree=70,
+            f_bavail=40,
+            f_frsize=1_000_000_000,
+        )
         process = SimpleNamespace(
             memory_info=lambda: SimpleNamespace(rss=123), num_threads=lambda: 2
         )
@@ -77,8 +82,9 @@ class H153Tests(unittest.TestCase):
             patch("monitor.Path.rglob", return_value=iter(())),
         ):
             current = sample(".")
-        self.assertEqual(current["free"], 4000)
-        self.assertEqual(current["disk_used"], 0.95)
+        self.assertEqual(current["free"], 40_000_000_000)
+        self.assertAlmostEqual(current["disk_used"], 930 / 970)
+        self.assertEqual(classify(current), ("abort", "DISK_USED"))
 
     def test_registered_inventory(self):
         self.assertEqual(SEEDS, (153101, 153102, 153103))
