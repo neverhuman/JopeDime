@@ -176,8 +176,7 @@ def qualify(ctx, run=None) -> int:
     sys.stdout.write(child.stdout)
     sys.stderr.write(child.stderr)
     report, passed, passed_count = parse_size_report(child.stdout)
-    if sha256(ctx.artifact) != ctx.artifact_sha256:
-        raise ProviderError("candidate bytes changed during D2 size measurement")
+    check_binding(ctx, run)
     if child.returncode not in (0, 1) or (child.returncode == 0) != report.get("ok"):
         raise ProviderError("size-report exit status disagrees with its report")
     passed = passed and child.returncode == 0

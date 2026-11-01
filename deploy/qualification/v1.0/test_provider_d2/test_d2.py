@@ -272,6 +272,43 @@ class D2ProviderTests(unittest.TestCase):
         self.assertEqual(payload["status"], "FAIL")
         self.assertEqual(payload["counts"]["failed"], 1)
 
+    def test_qualify_refuses_source_drift_after_size_command(self):
+        inspect = {
+            "manifest": {
+                "profile": "fused-cpu",
+                "scope": "release",
+                "source": {"sha40": SOURCE},
+            }
+        }
+        verify = {"schema": "jope.appliance-verify/v1", "ok": True}
+        status_reads = 0
+
+        def run(args, **kwargs):
+            nonlocal status_reads
+            if args[:3] == ["git", "rev-parse", "HEAD"]:
+                return SimpleNamespace(returncode=0, stdout=SOURCE + "\n", stderr="")
+            if args[:3] == ["git", "status", "--porcelain"]:
+                status_reads += 1
+                status = " M README.md\n" if status_reads == 3 else ""
+                return SimpleNamespace(returncode=0, stdout=status, stderr="")
+            if "inspect" in args:
+                return SimpleNamespace(
+                    returncode=0, stdout=json.dumps(inspect), stderr=""
+                )
+            if "verify" in args:
+                return SimpleNamespace(
+                    returncode=0, stdout=json.dumps(verify), stderr=""
+                )
+            if "size-report" in args:
+                return SimpleNamespace(
+                    returncode=0, stdout=json.dumps(size_report()), stderr=""
+                )
+            raise AssertionError(args)
+
+        with self.assertRaises(ProviderError):
+            d2.qualify(self.ctx, run)
+        self.assertFalse(self.result.exists())
+
 
 if __name__ == "__main__":
     unittest.main()
