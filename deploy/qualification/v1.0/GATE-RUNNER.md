@@ -46,9 +46,12 @@ This reports the exact source SHA, found provider IDs, missing provider IDs, and
 counts. It accepts no artifact or output path, executes no provider, and writes
 no gate evidence. A successful inventory report may still be incomplete.
 
-M5 also requires its explicit frozen TRAIN fixture and bundle directories. A5
-requires a candidate-bound named-client transcript manifest and its independently
-pinned SHA-256. Supply these through `--provider-inputs "$INPUT_BINDINGS"` with
+Four providers require explicit external inputs. M5 needs frozen TRAIN fixture
+and bundle directories; A5 needs a candidate-bound named-client transcript
+manifest and its independently pinned SHA-256. D1 needs the candidate-bound
+macOS receipt and its SHA-256. M2 needs its golden directory/index SHA-256,
+frozen bundle directory and a new external parity-report directory. Supply these
+through `--provider-inputs "$INPUT_BINDINGS"` with
 `--providers` (including `--dry-discovery`). The regular, non-symlink JSON file is:
 
 ```json
@@ -62,6 +65,16 @@ pinned SHA-256. Supply these through `--provider-inputs "$INPUT_BINDINGS"` with
     "A5": {
       "manifest": "/absolute/path/to/candidate/transcript-manifest.json",
       "manifest_sha256": "<replace with the independently pinned 64-character lowercase SHA-256>"
+    },
+    "D1": {
+      "macos_receipt": "/absolute/path/to/candidate/macos-receipt.json",
+      "macos_receipt_sha256": "<replace with the independently pinned macOS receipt SHA-256>"
+    },
+    "M2": {
+      "golden_dir": "/absolute/path/to/qualified/R5/packet",
+      "golden_index_sha256": "<replace with the owner-accepted full packet index SHA-256>",
+      "parity_bundle_dir": "/absolute/path/to/frozen/bundle",
+      "parity_report_dir": "/absolute/path/to/new/external/M2-report"
     }
   }
 }
@@ -70,13 +83,17 @@ pinned SHA-256. Supply these through `--provider-inputs "$INPUT_BINDINGS"` with
 Discovery reports `unbound_providers` and `unbound_provider_count` separately from
 missing modules. `complete` requires both inventories to be empty. Execution
 discovery refuses unbound providers before writing a runnable manifest. It adds
-M5's two required arguments and A5's two explicit environment bindings to each
-provider's argv, without a shell; the frozen command-manifest hash covers them.
-The restricted child environment still discards inherited A5 variables. Bindings
+M5's directory arguments, D1's receipt/pin arguments, M2's four input/report
+arguments and A5's two explicit environment bindings to each provider's argv,
+without a shell; the frozen command-manifest hash covers them. The restricted
+child environment still discards inherited provider-input variables. Bindings
 cannot replace commands, gate/source/artifact identities, resource settings or
 credentials. Unknown fields, relative paths and malformed SHA-256 pins refuse.
 Providers retain their full input, byte-hash and qualification checks; configuring
 paths does not establish that the evidence exists or passes.
+M2's report directory must not already exist; choose a fresh external path for
+each execution. A configuration containing only A5/M5 remains accepted as a
+partial configuration, but discovery stays incomplete until D1/M2 are bound too.
 
 The maintained runner already writes the watcher-format `gates_receipt.json`.
 The older external `bind-rel07.py` adapter consumes validated `gate_results.json`
