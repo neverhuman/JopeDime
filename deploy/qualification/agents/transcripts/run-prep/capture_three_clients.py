@@ -584,6 +584,24 @@ def run_capture(args: argparse.Namespace) -> dict:
         run_mask, run_mask_error = _current_sigmask()
         if run_mask_error is not None:
             raise run_mask_error
+        previous_sigint_handler = signal.getsignal(signal.SIGINT)
+        pending_sigint: list[KeyboardInterrupt] = []
+
+        def defer_sigint(_signum, _frame):
+            if previous_sigint_handler is signal.SIG_IGN:
+                return
+            if not pending_sigint:
+                pending_sigint.append(KeyboardInterrupt())
+
+        def raise_if_sigint_pending():
+            if pending_sigint:
+                raise pending_sigint[0]
+
+        # A handler installed before the owned engine exists closes the Python
+        # bytecode gap between leaving the try body and entering its finally.
+        # It records SIGINT without raising, so teardown cannot itself be cut
+        # short; the saved exception is raised after the owned group is reaped.
+        signal.signal(signal.SIGINT, defer_sigint)
 
         try:
             with (
@@ -601,8 +619,10 @@ def run_capture(args: argparse.Namespace) -> dict:
                     preexec_fn=lambda: os.nice(19),
                 )
 
+            raise_if_sigint_pending()
             ready = False
             for _ in range(200):
+                raise_if_sigint_pending()
                 if engine.poll() is not None:
                     break
                 status = subprocess.run(
@@ -615,6 +635,7 @@ def run_capture(args: argparse.Namespace) -> dict:
                     timeout=3,
                     preexec_fn=lambda: os.nice(19),
                 )
+                raise_if_sigint_pending()
                 if status.returncode == 0 and status.stdout.startswith("running"):
                     ready = True
                     break
@@ -638,14 +659,27 @@ def run_capture(args: argparse.Namespace) -> dict:
                         start_new_session=True,
                         preexec_fn=lambda: os.nice(19),
                     )
+                    raise_if_sigint_pending()
                 except OSError as error:
                     capture_error = f"client launch failed: {error}"
 
                 if active_client is not None:
                     try:
-                        client_exit = active_client.wait(timeout=row["timeout_seconds"])
-                    except subprocess.TimeoutExpired:
-                        timed_out = True
+                        client_deadline = time.monotonic() + row["timeout_seconds"]
+                        while True:
+                            raise_if_sigint_pending()
+                            remaining = client_deadline - time.monotonic()
+                            if remaining <= 0:
+                                timed_out = active_client.poll() is None
+                                client_exit = active_client.poll()
+                                break
+                            try:
+                                client_exit = active_client.wait(
+                                    timeout=min(0.1, remaining)
+                                )
+                                break
+                            except subprocess.TimeoutExpired:
+                                continue
                     finally:
                         client_exit = terminate_group(active_client)
 
@@ -722,10 +756,13 @@ def run_capture(args: argparse.Namespace) -> dict:
                     )
             except BaseException as error:
                 if teardown_error is None:
-                    teardown_error = error
+                    teardown_error = pending_sigint[0] if pending_sigint else error
             restore_error = _restore_sigint(run_mask)
             if teardown_error is None:
                 teardown_error = restore_error
+            signal.signal(signal.SIGINT, previous_sigint_handler)
+            if teardown_error is None and pending_sigint:
+                teardown_error = pending_sigint[0]
             if teardown_error is not None:
                 raise teardown_error
 

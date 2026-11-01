@@ -1,8 +1,10 @@
 """Data-free tests for the A5 custody packager."""
 
+import ast
 import importlib.util
 import argparse
 import hashlib
+import inspect
 import json
 import os
 from pathlib import Path
@@ -744,6 +746,61 @@ def test_run_capture_defers_interrupt_at_engine_stop_entry(monkeypatch, a5_tmp_p
         assert _sigint_blocked() is blocked_before, "SIGINT mask was not restored"
         assert _processes_with_paths_under(a5_tmp_path) == []
     finally:
+        _kill_fixture_processes(a5_tmp_path)
+
+
+def test_run_capture_defers_interrupt_at_outer_cleanup_entry(monkeypatch, a5_tmp_path):
+    args, _plan, _candidate, _client = _runner_fixture(a5_tmp_path)
+    original_stop = THREE_CLIENTS_MODULE.stop_engine
+    original_handler = signal.getsignal(signal.SIGINT)
+    stopped = []
+    injected = {"value": False}
+
+    source, first_line = inspect.getsourcelines(THREE_CLIENTS_MODULE.run_capture)
+    function = ast.parse("".join(source)).body[0]
+    cleanup_try = next(
+        node
+        for node in ast.walk(function)
+        if isinstance(node, ast.Try)
+        and node.finalbody
+        and any(
+            isinstance(call.func, ast.Name) and call.func.id == "stop_engine"
+            for statement in node.finalbody
+            for call in ast.walk(statement)
+            if isinstance(call, ast.Call)
+        )
+    )
+    cleanup_entry_line = first_line + cleanup_try.finalbody[0].lineno - 1
+
+    def track_stop(candidate, repo, environment, process):
+        stopped.append(process)
+        return original_stop(candidate, repo, environment, process)
+
+    def interrupt_at_finally_entry(frame, event, _arg):
+        if (
+            not injected["value"]
+            and frame.f_code is THREE_CLIENTS_MODULE.run_capture.__code__
+            and event == "line"
+            and frame.f_lineno == cleanup_entry_line
+        ):
+            injected["value"] = True
+            sys.settrace(None)
+            os.kill(os.getpid(), signal.SIGINT)
+            return None
+        return interrupt_at_finally_entry
+
+    monkeypatch.setattr(THREE_CLIENTS_MODULE, "stop_engine", track_stop)
+    try:
+        sys.settrace(interrupt_at_finally_entry)
+        with pytest.raises(KeyboardInterrupt):
+            THREE_CLIENTS_MODULE.run_capture(args)
+        assert injected["value"] is True, "SIGINT missed the outer cleanup entry"
+        assert len(stopped) == 1, "engine stop was skipped by outer-finally SIGINT"
+        assert stopped[0] is not None and stopped[0].poll() is not None
+        assert _processes_with_paths_under(a5_tmp_path) == []
+        assert signal.getsignal(signal.SIGINT) is original_handler
+    finally:
+        sys.settrace(None)
         _kill_fixture_processes(a5_tmp_path)
 
 
