@@ -1330,11 +1330,10 @@ impl RunService {
             ));
         }
         let language_filter = run_language_filter(&spec.languages)?;
-        if spec.objective != ObjectiveSpec::Name("rmse".into()) {
-            return Err(unavailable(
-                "This run backend currently qualifies the rmse regression objective.",
-            ));
-        }
+        let (objective, resolved_objective) = crate::run::service::run_objective(&spec.objective)
+            .map_err(|_| {
+            invalid("The objective is invalid or requires unsupported ordered/auxiliary inputs.")
+        })?;
         if !spec.split.holdout_fraction.is_finite()
             || !(0.0..1.0).contains(&spec.split.holdout_fraction)
             || spec.split.holdout_fraction == 0.0
@@ -1509,7 +1508,7 @@ impl RunService {
         }
         let mut public: Plan = serde_json::from_value(json!({"plan_digest":plan_digest,
             "task":{"value":"regression","inferred":false,"reason":"Explicit regression task."},
-            "objective":{"name":"rmse","digest":jope_runtime::fitness::Fitness::parse("rmse").map_err(io)?.identity().map_err(io)?,"direction":"minimize","fitting":"squared_error"},
+            "objective":resolved_objective,
             "rows":{"total":table.rows.len().to_string(),"fit":fit_count.to_string(),"holdout":holdout_ids.len().to_string(),"test":null},
             "effort":{"name":spec.effort,"evaluations":effort.evaluations.to_string(),"wall_seconds":effort.wall_seconds.to_string(),"cv_folds":effort.rung1_folds,"rounds_in_flight":1},
             "guidance":backend.guidance,"landmarks":{"mode":spec.landmarks,"sample_rows":0},
@@ -1527,7 +1526,7 @@ impl RunService {
             matrix_sha256: hash(&fit),
             target: spec.target.clone(),
             features,
-            objective: "rmse".into(),
+            objective,
             seed: spec.seed.0,
             planned_workers: 1,
             effort: spec.effort,

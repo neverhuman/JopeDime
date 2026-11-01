@@ -7,17 +7,57 @@ use crate::{
     discover::r#loop::{
         Executor, HeuristicAdmission, Plan, ProcessExecutor, RoundAdmission, RoundContext,
     },
-    ranker::{
-        admission::{resolve_unqualified, GuidanceUnavailableReason},
-        cuda::release::R782,
-    },
+    ranker::admission::{resolve_unqualified, GuidanceUnavailableReason},
 };
 use anyhow::{ensure, Result};
 use jope_api::{
     error::ErrorCode, Guidance, LandmarkMode, Placement, ResolvedGuidance, RunSpec, Task, Warning,
+    WarningState,
 };
 use jope_runtime::backend::DeviceRequest;
 use rand_chacha::ChaCha12Rng;
+
+/// Reuse the established runtime objective without changing the surrogate
+/// channel. This numeric random-split path has no ordered or auxiliary columns.
+pub(crate) fn run_objective(
+    spec: &jope_api::ObjectiveSpec,
+) -> Result<(String, jope_api::ResolvedObjective)> {
+    use jope_runtime::fitness::{Direction, Fitness};
+    let text = match spec {
+        jope_api::ObjectiveSpec::Name(name) => name.clone(),
+        jope_api::ObjectiveSpec::Specification(value) => serde_json::to_string(value)?,
+    };
+    let objective = Fitness::parse(&text)?;
+    ensure!(
+        !objective.requires_order(),
+        "objective requires an ordered split"
+    );
+    jope_runtime::fitness::require_no_columns(&objective, "numeric run")?;
+    let trained_loss = matches!(objective, Fitness::Rmse {});
+    let name = objective.name();
+    let public_name = if Fitness::catalog().iter().any(|entry| entry.name == name) {
+        name
+    } else {
+        "custom objective".into()
+    };
+    Ok((
+        text,
+        jope_api::ResolvedObjective {
+            name: public_name,
+            digest: objective.identity()?,
+            direction: match objective.direction() {
+                Direction::Minimize => jope_api::Direction::Minimize,
+                Direction::Maximize => jope_api::Direction::Maximize,
+            },
+            fitting: if trained_loss {
+                "squared_error"
+            } else {
+                "selection_only"
+            }
+            .into(),
+        },
+    ))
+}
 
 pub(crate) enum RunAdmission {
     Heuristic,
@@ -111,19 +151,31 @@ impl BackendPlan {
             })?;
             ensure!(
                 spec.task == Task::Regression && spec.landmarks == LandmarkMode::Full,
-                "{}: admitted r782 requires regression/full landmarks",
+                "{}: admitted learned guidance requires regression/full landmarks",
                 ErrorCode::CapabilityUnavailable
             );
+            let prior_only = !bundle.trains_objective(&spec.objective);
+            let warnings = if prior_only {
+                vec![crate::warnings::catalog("OBJECTIVE_SURROGATE_MISMATCH")
+                    .expect("warning is catalogued")
+                    .event(
+                        WarningState::Raised, None, None,
+                        "The objective is outside the model training set; only surrogate guidance is used.",
+                        "Use heuristic guidance to omit the surrogate prior.",
+                    )?]
+            } else {
+                vec![]
+            };
             let graph = bundle.instantiate(device, workers)?;
             Ok(Self {
                 guidance: ResolvedGuidance {
                     value: Guidance::Learned,
-                    prior_only: false,
+                    prior_only,
                     reason: "Learned guidance uses the configured regression model.".into(),
                 },
-                warnings: vec![],
+                warnings,
                 placement: graph.placement(),
-                bundle_digest: R782.trim_start_matches("sha256:").into(),
+                bundle_digest: bundle.digest().trim_start_matches("sha256:").into(),
                 landmark_rows: 0,
                 landmark_mode: spec.landmarks,
                 full_fit_landmarks: None,
