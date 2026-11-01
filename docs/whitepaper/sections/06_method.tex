@@ -38,8 +38,14 @@ into \num{2048} numbers, $z_p=\encP(p)$, in three blocks.
 The first summarizes a pretrained row encoder's embeddings across rows,
 independent of row order (512 values). The second projects the hidden
 state of a pretrained third-party tabular regressor that reads the training
-rows and labels (\num{1024}; third-party provenance pending; restricted; redistribution prohibited). The third passes the
-scaled targets through two frozen windows (512).
+rows and labels (\num{1024}; third-party provenance pending; restricted; redistribution prohibited). The third summarizes two 32-element windows of training targets scaled
+to $[0,1]$ (512 values; constant targets map to zero).
+
+Preparation caps the combined tabular splits at \num{50000} rows. Encoder
+inputs remain training-side only: the regressor block samples at most
+768 context rows and 256 query rows from those training rows. Frozen
+meta-training cohort moments standardize each component block before
+concatenation and elementwise clipping to $[-32,32]$.
 
 The reference encoder is pinned by hash and stays fixed during writer
 training. Encoding is bounded at 30 seconds per problem. A context with any non-finite value is refused
