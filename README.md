@@ -395,10 +395,10 @@ limits and client examples](docs/program-source-stream.md).
 | Rust tests | 6,135 listed in 35 packages, 84 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 209, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 14 jobs per pull request configured in `ci.yml` (export parity executes only on manual main) (automatic triggering paused; dispatch manually) (top-level declarations; 19 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
-| Coverage map | 1,005 items over 34 lanes <sup>7</sup> |
+| Coverage map | 1,006 items over 34 lanes <sup>7</sup> |
 | Capability matrix | 840 rows: 353 moved, 77 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
-| Python still tracked | 2,575 `.py` files, 175 of them under `python/` <sup>10</sup> |
+| Python still tracked | 2,577 `.py` files, 175 of them under `python/` <sup>10</sup> |
 | Architecture decision records | 6 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
