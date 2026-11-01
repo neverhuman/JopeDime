@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Plot candidate-minus-retained validation margins per round (accepted vs rejected) and near-zero tie breakdown."""
+"""Plot trailing candidate-margin quantiles and cumulative near-tie rejections."""
 
 import csv
 import hashlib
 import io
 import json
-from decimal import Decimal
+from decimal import Decimal, getcontext
 from pathlib import Path
 
 import matplotlib
@@ -13,6 +13,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
+
+getcontext().prec = 50
 
 FIGURES = Path(__file__).resolve().parent.parent
 DATA = FIGURES / "data/latest_admissions.csv"
@@ -30,7 +32,9 @@ def main() -> None:
     raw_source = SOURCE.read_bytes()
     source_meta = json.loads(raw_source)
     csv_digest = hashlib.sha256(raw_csv).hexdigest()
-    assert csv_digest == source_meta["csv_sha256"], "CSV sha256 mismatch with source receipt"
+    assert csv_digest == source_meta["csv_sha256"], (
+        "CSV sha256 mismatch with source receipt"
+    )
 
     rows = list(csv.DictReader(io.StringIO(raw_csv.decode("utf-8"))))
     rounds = [int(r["round"]) for r in rows]
@@ -49,7 +53,9 @@ def main() -> None:
 
     gains_idx, ties_idx, rej_idx = [], [], []
     for i, (m, acc, dec) in enumerate(zip(margins, accepted_flags, decisions)):
-        assert all(value.is_finite() for value in [candidates[i], previous[i], bests[i]])
+        assert all(
+            value.is_finite() for value in [candidates[i], previous[i], bests[i]]
+        )
         assert bests[i] == (candidates[i] if acc else previous[i])
         if i:
             assert previous[i] == bests[i - 1]
@@ -71,7 +77,9 @@ def main() -> None:
     assert rej_idx, "This diagnostic requires rejected candidates"
 
     gains_ge_1e3 = [i for i in gains_idx if margins[i] >= Decimal("0.001")]
-    gains_sub_1e3 = [i for i in gains_idx if Decimal("0") < margins[i] < Decimal("0.001")]
+    gains_sub_1e3 = [
+        i for i in gains_idx if Decimal("0") < margins[i] < Decimal("0.001")
+    ]
     rej_band_1e4 = [i for i in rej_idx if margins[i] >= Decimal("-0.0001")]
     rej_band_1e3 = [
         i for i in rej_idx if Decimal("-0.001") <= margins[i] < Decimal("-0.0001")
@@ -89,182 +97,122 @@ def main() -> None:
     min_rej_i = min(rej_idx, key=lambda i: margins[i])
     max_rej_i = max(rej_idx, key=lambda i: margins[i])
 
+    # Complete trailing windows only; all candidate margins are included.
+    def quantile(xs, p):
+        at = p * (len(xs) - 1)
+        lo = int(at)
+        hi = min(lo + 1, len(xs) - 1)
+        return xs[lo] + (xs[hi] - xs[lo]) * (at - lo)
+
+    cumulative4 = cumulative3 = 0
+    derived = []
+    for i, (round_id, margin, accepted) in enumerate(
+        zip(rounds, margins, accepted_flags)
+    ):
+        if not accepted:
+            cumulative4 += int(Decimal("-.0001") <= margin < 0)
+            cumulative3 += int(Decimal("-.001") <= margin < Decimal("-.0001"))
+        qs = (
+            [
+                str(quantile(sorted(margins[i - 49 : i + 1]), q))
+                for q in [Decimal(".25"), Decimal(".5"), Decimal(".75"), Decimal(".9")]
+            ]
+            if i >= 49
+            else [""] * 4
+        )
+        derived.append(
+            dict(
+                round=round_id,
+                q25=qs[0],
+                q50=qs[1],
+                q75=qs[2],
+                q90=qs[3],
+                near_1e4=cumulative4,
+                near_1e3_to_1e4=cumulative3,
+            )
+        )
+    rolling_path = DATA.with_name("rolling_margin_quantiles.csv")
+    with rolling_path.open("w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=list(derived[0]), lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(derived)
     plt.rcParams.update(
         {
             "font.family": "serif",
-            "mathtext.fontset": "dejavuserif",
             "font.size": 8,
-            "axes.labelsize": 8,
-            "xtick.labelsize": 7.2,
-            "ytick.labelsize": 7.2,
-            "legend.fontsize": 7.2,
             "axes.spines.top": False,
             "axes.spines.right": False,
             "pdf.fonttype": 42,
         }
     )
-
-    fig, axes = plt.subplots(
-        1, 2, figsize=(6.8, 2.2), gridspec_kw={"width_ratios": [1.38, 1.0]}
+    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(6.8, 2.35))
+    rr = rounds[49:]
+    dd = derived[49:]
+    ax0.fill_between(
+        rr,
+        [float(r["q25"]) for r in dd],
+        [float(r["q75"]) for r in dd],
+        color="#748ffc",
+        alpha=0.28,
+        label="50-round IQR",
     )
-
-    # Panel 1: Pre-decision margin (candidate - previous retained best) across rounds
-    ax0 = axes[0]
-    ax0.axhline(0.0, color="#212529", lw=0.85, ls="--", zorder=2, label="threshold (0)")
-    ax0.axhspan(-0.001, 0.001, color="#fff3bf", alpha=0.55, zorder=1, label=r"near-zero ($\pm 10^{-3}$)")
-
-    ax0.scatter(
-        [rounds[i] for i in rej_idx],
-        [float(margins[i]) for i in rej_idx],
-        s=4.5,
-        color="#7c858e",
-        alpha=0.45,
-        linewidths=0,
-        zorder=3,
-        label=f"rejected (< 0; n={len(rej_idx):,})",
+    ax0.plot(rr, [float(r["q50"]) for r in dd], color="#1c7ed6", lw=1, label="median")
+    ax0.plot(
+        rr,
+        [float(r["q90"]) for r in dd],
+        color="#e8590c",
+        lw=0.8,
+        ls="-.",
+        label="90th percentile",
     )
-    ax0.scatter(
-        [rounds[i] for i in gains_sub_1e3],
-        [float(margins[i]) for i in gains_sub_1e3],
-        s=34,
-        marker="*",
+    ax0.axhline(0, color="#495057", lw=0.7, ls="--")
+    for i in gains_idx:
+        ax0.axvline(rounds[i], color="#c92a2a", lw=0.5, alpha=0.45, ls=":")
+    ax0.set(
+        title="Trailing candidate-margin quantiles",
+        xlabel="round",
+        ylabel="candidate minus prior-best utility",
+    )
+    ax0.legend(fontsize=6, loc="lower left")
+    ax0.grid(axis="y", alpha=0.2)
+    ax1.step(
+        rounds,
+        [r["near_1e4"] for r in derived],
+        where="post",
+        lw=1,
         color="#c92a2a",
-        zorder=6,
-        label=f"strict gains ({len(gains_idx)})",
+        label=r"$[-10^{-4},0)$",
     )
-    ax0.scatter(
-        [rounds[i] for i in ties_idx],
-        [float(margins[i]) for i in ties_idx],
-        s=22,
-        marker="D",
-        facecolors="none",
-        edgecolors="#d9480f",
-        lw=1.0,
-        zorder=7,
-        label=f"exact ties ({len(ties_idx)})",
+    ax1.step(
+        rounds,
+        [r["near_1e3_to_1e4"] for r in derived],
+        where="post",
+        lw=1,
+        color="#495057",
+        ls="--",
+        label=r"$[-10^{-3},-10^{-4})$",
     )
-
-    span = rounds[-1] - rounds[0]
-    for j, i in enumerate(gains_ge_1e3):
-        ax0.annotate(
-            f"r{rounds[i]}: +{margins[i]:.4f} (off-scale)",
-            xy=(rounds[i], 0.00165),
-            xytext=(rounds[0] + span * 0.09, 0.00122 - j * 0.0004),
-            fontsize=6.6, color="#c92a2a", ha="left", va="center",
-            arrowprops=dict(arrowstyle="->", color="#c92a2a", lw=0.7),
-            bbox=dict(facecolor="white", edgecolor="none", alpha=0.88, pad=0.6),
-        )
-    for i in gains_sub_1e3:
-        left = rounds[i] < (rounds[0] + rounds[-1]) / 2
-        ax0.annotate(
-            f"r{rounds[i]} (+{margins[i]:.1e})",
-            xy=(rounds[i], float(margins[i])),
-            xytext=(rounds[i] + span * (0.1 if left else -0.1), -0.00095),
-            ha="left" if left else "right", va="center", fontsize=6.5,
-            color="#c92a2a",
-            arrowprops=dict(arrowstyle="->", color="#c92a2a", lw=0.6),
-        )
-
-    ax0.set_title("Candidate minus retained-best utility", loc="left", fontsize=8)
-    ax0.set_xlabel("round")
-    ax0.set_ylabel("pre-decision margin")
-    ax0.set_xlim(rounds[0] - 15, rounds[-1] + 15)
-    ax0.set_ylim(-0.0108, 0.00185)
-    ax0.xaxis.set_major_locator(MaxNLocator(nbins=6, integer=True))
-    ax0.grid(axis="y", alpha=0.22, lw=0.4)
-    ax0.legend(
-        loc="lower left",
-        bbox_to_anchor=(0.01, 0.02),
-        frameon=True,
-        facecolor="white",
-        framealpha=0.92,
-        edgecolor="#dee2e6",
-        ncol=2,
-        fontsize=6.2,
-        handlelength=1.4,
-        handletextpad=0.35,
-        columnspacing=0.7,
-        borderpad=0.3,
+    ax1.set(
+        title="Cumulative near-tie rejections", xlabel="round", ylabel="rejected rounds"
     )
-
-    # Panel 2: Margin regime breakdown (accepted ties/near-zero vs rejected bands)
-    ax1 = axes[1]
-    categories = [
-        r"Accepted gain $\geq 10^{-3}$",
-        r"Accepted gain $(0, 10^{-3})$",
-        r"Accepted exact tie ($0$)",
-        r"Rejected $[-10^{-4}, 0)$",
-        r"Rejected $[-10^{-3}, -10^{-4})$",
-        r"Rejected $< -10^{-3}$",
-    ]
-    counts = [
-        len(gains_ge_1e3),
-        len(gains_sub_1e3),
-        len(ties_idx),
-        len(rej_band_1e4),
-        len(rej_band_1e3),
-        len(rej_below_1e3),
-    ]
-    colors = ["#c92a2a", "#e03131", "#d9480f", "#495057", "#868e96", "#adb5bd"]
-    y_pos = list(range(len(categories)))[::-1]
-
-    bars = ax1.barh(y_pos, counts, color=colors, height=0.62, edgecolor="none")
-    ax1.set_xscale("symlog", linthresh=10)
-    ax1.set_xlim(0, max(6500, max(counts) * 2))
-    ax1.set_yticks(y_pos)
-    ax1.set_yticklabels(categories, fontsize=6.9)
-    ax1.axhline(2.5, color="#212529", lw=0.65, ls=":")
-    ax1.set_title("Margin regime round counts", loc="left", fontsize=8)
-    ax1.set_xlabel("rounds (symlog scale)")
-    ax1.grid(axis="x", alpha=0.22, lw=0.4)
-
-    def round_note(indices):
-        shown = ", r".join(str(rounds[i]) for i in indices[:3])
-        suffix = ", ..." if len(indices) > 3 else ""
-        return f"{len(indices):,} (r{shown}{suffix})" if indices else "0"
-
-    notes = [
-        round_note(gains_ge_1e3),
-        round_note(gains_sub_1e3),
-        round_note(ties_idx),
-        f"{len(rej_band_1e4):,} (max {margins[max_rej_i]:.1e})",
-        f"{len(rej_band_1e3):,} ({len(rej_band_1e4) + len(rej_band_1e3):,} in [-1e-3, 0))",
-        f"{len(rej_below_1e3):,} (med {median_rej:.4f})",
-    ]
-    for bar, note in zip(bars, notes):
-        w = bar.get_width()
-        y = bar.get_y() + bar.get_height() / 2.0
-        if w >= 500:
-            ax1.text(
-                w * 0.82,
-                y,
-                note,
-                va="center",
-                ha="right",
-                fontsize=6.4,
-                color="#212529",
-            )
-        else:
-            ax1.text(
-                w * 1.15 if w >= 10 else w + 0.55,
-                y,
-                note,
-                va="center",
-                ha="left",
-                fontsize=6.4,
-                color="#212529",
-            )
-
-    fig.tight_layout(pad=0.45, w_pad=1.5)
+    ax1.legend(fontsize=6, loc="upper left")
+    ax1.grid(axis="y", alpha=0.2)
+    for ax in (ax0, ax1):
+        ax.xaxis.set_major_locator(MaxNLocator(nbins=5, integer=True))
+    fig.tight_layout(pad=0.6, w_pad=1)
     fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
 
     provenance = {
-        "schema": "whitepaper.admission-margins-figure/v1",
+        "schema": "whitepaper.rolling-margin-quantiles-figure/v2",
         "source_csv": "figures/data/latest_admissions.csv",
         "source_csv_sha256": csv_digest,
         "source_receipt_sha256": hashlib.sha256(raw_source).hexdigest(),
         "generator_sha256": sha(Path(__file__)),
+        "rolling_csv_sha256": sha(rolling_path),
+        "quantile_window": 50,
+        "quantiles": "Linear interpolation at p*(n-1), all50 candidate margins, Decimal precision50; no partial windows",
+        "near_tie_counts": "Cumulative rejected rows in two exclusive bands; no acceptance trials inferred",
         "figure_sha256": sha(OUTPUT),
         "round_window": [rounds[0], rounds[-1]],
         "rows": len(rows),
@@ -292,15 +240,22 @@ def main() -> None:
         "reproduce": "python3 figures/scripts/make_admission_margins_figure.py",
     }
     PROVENANCE.write_text(json.dumps(provenance, indent=2) + "\n")
-    print(json.dumps({k: provenance[k] for k in [
-        "rows",
-        "round_window",
-        "accepted_strict_gain_rounds",
-        "accepted_exact_tie_rounds",
-        "rejected_in_minus_1e_4_to_0",
-        "rejected_in_minus_1e_3_to_minus_1e_4",
-        "rejected_below_minus_1e_3",
-    ]}))
+    print(
+        json.dumps(
+            {
+                k: provenance[k]
+                for k in [
+                    "rows",
+                    "round_window",
+                    "accepted_strict_gain_rounds",
+                    "accepted_exact_tie_rounds",
+                    "rejected_in_minus_1e_4_to_0",
+                    "rejected_in_minus_1e_3_to_minus_1e_4",
+                    "rejected_below_minus_1e_3",
+                ]
+            }
+        )
+    )
 
 
 if __name__ == "__main__":

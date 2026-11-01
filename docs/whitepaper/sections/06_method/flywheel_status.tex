@@ -1,4 +1,6 @@
 % Stage 2 owns these figures; the historical reference ends before this input.
+
+\FloatBarrier
 \subsection{A separate adapter admission record}\label{sec:method-status}
 
 This is the adapter record for the second learning task in \cref{sec:method}.
@@ -13,11 +15,10 @@ an exact loop source, adapter, evaluation population or normalization, so
 cross-model comparisons and transfer remain unqualified. Retained windows
 are separate; unobserved gaps are not filled or joined into a learning curve.
 Independent comparisons belong to \cref{sec:results}.
-
-\begin{figure*}[!tp]
+\begin{figure*}[!t]
   \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_latest_admissions.pdf}
-  \caption{\textbf{Retained adapter admission trajectory.}
+  \includegraphics[width=\linewidth,height=1.65in,keepaspectratio]{figures/fig_fw_latest_admissions.pdf}
+  \caption{\textbf{Separate adapter admission trajectory.}
   The captured prefix in \cref{tab:admission-ledger}: blue is post-decision
   retained best; grey marks rejected candidates, red stars strict gains
   and hollow diamonds exact ties. Decisions use unrounded logged values.
@@ -25,34 +26,33 @@ Independent comparisons belong to \cref{sec:results}.
   \label{fig:fw-latest-admissions}
 \end{figure*}
 
-\begin{figure*}[!tp]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_admission_margins.pdf}
-  \caption{\textbf{Pre-decision validation margins.}
-  Candidate minus prior retained-best utility,
-  $\Delta_r=u_{\mathrm{cand},r}-u_{\mathrm{prev},r}$, for the same prefix
-  as \cref{fig:fw-latest-admissions}. Left: margins near zero; the largest
-  gain is annotated off-scale. Right: margin-band counts on a symmetric
-  log scale. Exact counts and chronology: \cref{tab:admission-ledger}.
-  Scope: \cref{sec:method-status}.}
-  \label{fig:fw-admission-margins}
-\end{figure*}
+\input{sections/fig_rolling_margin_quantiles}
 
-In this implementation, only an adapter that ranks
-proposals by predicted cost is optimized; the encoder and other modules
-stay frozen. This loop has no neural program writer. Its pool-utility
-calculation uses the recorded scores and gate outcomes of
-the first four candidates as revealed history, then selects the candidate
-with the lowest predicted cost from the pool, including those entries.
-Training puts the lowest recorded scores first in its slates; utility
-evaluation uses stored pool order. The two calls can therefore reveal
-different examples.
 
-The inspected caller supplies modality tokens and a mask while zeroing
-separate context and prior inputs. Its objective combines regression to
-recorded costs and listwise matching, with a fixed target for
-failed gates. The reporting code averages the negative selected scores,
-assigning a fixed penalty to failed gates.
+
+
+
+
+
+
+
+
+
+\input{sections/adapter_update_scope}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Candidate programs are evaluated on two training-side folds; the historical
 reference procedure specifies five. Evaluations are logged separately from
@@ -83,16 +83,16 @@ model and optimizer states.
 \TBD{Bind the retained snapshot to the exact loop source, adapter, candidate
 pools, revealed-history inputs and utility normalization.}
 
-\begin{figure*}[!tp]
+\begin{figure*}[!t]
   \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_promotions_per_hour.pdf}
+  \includegraphics[width=\linewidth,height=1.60in,keepaspectratio]{figures/fig_fw_promotions_per_hour.pdf}
   \caption{\textbf{Training-program promotions per hour and adapter validation trajectory.} Left: logged rolling and per-round strict training-program promotions per hour. Right: candidate and recorded-best adapter validation pool utility. Both panels cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, with zero adapter admissions).}
   \label{fig:fw-promotions-per-hour}
 \end{figure*}
 
-\begin{figure*}[!tp]
+\begin{figure*}[!t]
   \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_round_throughput.pdf}
+  \includegraphics[width=\linewidth,height=1.60in,keepaspectratio]{figures/fig_fw_round_throughput.pdf}
   \caption{\textbf{Adapter utility and whole-round throughput in a later retained window.}
   Both panels cover the same 20 completed summaries, rounds 2696--2715.
   Left: candidate adapter validation utility and the recorded best.

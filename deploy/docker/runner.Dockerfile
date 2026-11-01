@@ -22,9 +22,10 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 TZ=UTC
 
 # Compilers and interpreters match the hosted ubuntu-24.04 runner and the xbabe2 host that made
 # the receipts: gcc 13.3, clang 18.1, python 3.12. libicu/krb5/lttng are the actions-runner
-# (.NET) runtime dependencies (bin/installdependencies.sh installs the same set).
+# (.NET) runtime dependencies (bin/installdependencies.sh installs the same set). iproute2 provides
+# `ip` for the Linux clean-host pre-stage's loopback-only namespace checks.
 RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
-        ca-certificates curl git git-lfs jq unzip xz-utils zstd \
+        ca-certificates curl git git-lfs iproute2 jq unzip xz-utils zstd \
         build-essential cmake g++-13 clang-18 libclang-rt-18-dev lld-18 pkg-config libssl-dev libsqlite3-dev \
         python3.12 python3.12-venv python3-pip shellcheck \
         libicu74 libkrb5-3 zlib1g liblttng-ust1t64 libssl3 \
