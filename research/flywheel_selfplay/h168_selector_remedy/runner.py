@@ -171,10 +171,6 @@ def predict_uncached_adapter_costs(net, progs, proj, fit, gate_arr, tok_arr, msk
             revealed_gate=torch.as_tensor(
                 gate_arr[:, : min(4, size)], dtype=torch.float32
             ),
-            enable_prior_correction=True,
-            enable_struct_kernel=True,
-            enable_cross_attn=True,
-            enable_ucb=False,
         )["total_cost"]
         .cpu()
         .numpy()
@@ -272,51 +268,28 @@ def main():
         rt.configure_adapter_width(net, initial, names, 1.0, sc.SEEDS[0])
         rt.check_frozen(net, guard, names, frozen)
 
-        if args.smoke:
-            save(
-                out / "smoke.json",
-                dict(
-                    wave="H168",
-                    status="PASS",
-                    optimizer_updates=0,
-                    scored_contexts=0,
-                    adapter_tensors=len(names),
-                    trainable_parameters=width_counts["W10"],
-                    width_parameter_counts=width_counts,
-                    census=census,
-                    frozen_sha256=frozen,
-                    dope_sha256=rt.DOPE,
-                    seeds=list(sc.SEEDS),
-                    fold_seed=sc.FOLD_SEED,
-                    boot_seed=sc.BOOT_SEED,
-                    primary_arms=list(sc.PRIMARY_ARMS),
-                    diagnostic_arms=list(sc.DIAGNOSTIC_ARMS),
-                    packages=pins["packages"],
-                ),
+        if not args.smoke:
+            head = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=HERE, text=True
+            ).strip()
+            manifest_sha = rt.sha(HERE / "manifest.json")
+            ext_launch = verify_external_launch_binding(
+                out.parent / "launch.json",
+                head,
+                manifest_sha,
+                pins["prereg_sha256"],
+                pins["fold_manifest_sha256"],
             )
-            return
-
-        head = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=HERE, text=True
-        ).strip()
-        manifest_sha = rt.sha(HERE / "manifest.json")
-        ext_launch = verify_external_launch_binding(
-            out.parent / "launch.json",
-            head,
-            manifest_sha,
-            pins["prereg_sha256"],
-            pins["fold_manifest_sha256"],
-        )
-        launch = dict(
-            wave="H168",
-            source_commit=head,
-            manifest_sha256=manifest_sha,
-            prereg_sha256=pins["prereg_sha256"],
-            fold_manifest_sha256=pins["fold_manifest_sha256"],
-            external_launch_binding=ext_launch,
-            started_utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        )
-        save(out / "launch.json", launch)
+            launch = dict(
+                wave="H168",
+                source_commit=head,
+                manifest_sha256=manifest_sha,
+                prereg_sha256=pins["prereg_sha256"],
+                fold_manifest_sha256=pins["fold_manifest_sha256"],
+                external_launch_binding=ext_launch,
+                started_utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            )
+            save(out / "launch.json", launch)
 
         ref = json.loads(Path(pins["reference"]).read_text())
         contract = ref["evaluation_contract"]
@@ -573,6 +546,35 @@ def main():
                 f"W20 step-0 DL-Val utility tolerance failed: max_diff={w20_step0_max_diff}"
             )
         rt.configure_adapter_width(net, initial, names, 1.0, sc.SEEDS[0])
+
+        if args.smoke:
+            save(
+                out / "smoke.json",
+                dict(
+                    wave="H168",
+                    status="PASS",
+                    optimizer_updates=0,
+                    scored_contexts=len(val),
+                    dl_train_pools_opened=0,
+                    baseline_sanity=sanity,
+                    w10_native_score_bit_identity=w10_score_bit_identity,
+                    w20_step0_val_utility_max_diff=w20_step0_max_diff,
+                    w20_step0_score_max_abs_diff=w20_step0_score_max_abs_diff,
+                    adapter_tensors=len(names),
+                    trainable_parameters=width_counts["W10"],
+                    width_parameter_counts=width_counts,
+                    census=census,
+                    frozen_sha256=frozen,
+                    dope_sha256=rt.DOPE,
+                    seeds=list(sc.SEEDS),
+                    fold_seed=sc.FOLD_SEED,
+                    boot_seed=sc.BOOT_SEED,
+                    primary_arms=list(sc.PRIMARY_ARMS),
+                    diagnostic_arms=list(sc.DIAGNOSTIC_ARMS),
+                    packages=pins["packages"],
+                ),
+            )
+            return
 
         save(
             out / "baseline.json",
