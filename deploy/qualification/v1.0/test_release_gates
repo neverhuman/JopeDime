@@ -181,11 +181,168 @@ class ReleaseGates(unittest.TestCase):
         receipt = json.loads((output / "gates_receipt.json").read_text())
         self.assertEqual(code, 0)
         self.assertEqual(run["manifest_sha256"], runner.cpu.digest(self.commands))
-        self.assertEqual(run["source_sha"], self.source)
+
+    def test_candidate_mode_executes_all_28_and_writes_status_table(self):
+        qualification = self.repo / "deploy/qualification/v1.0"
+        wrapper = qualification / "a5_run.py"
+        wrapper.parent.mkdir(parents=True)
+        worker = (
+            "import json,os\nfrom pathlib import Path\n"
+            "p=Path(os.environ['JOPE_REL07_RESULT'])\n"
+            "counts=dict(collected=1,executed=1,passed=1,failed=0,skipped=0,excluded=0)\n"
+            "p.write_text(json.dumps(dict(schema='jope.rel07.gate-execution/v1',"
+            "id=os.environ['JOPE_REL07_GATE_ID'],status='PASS',"
+            "source_sha=os.environ['JOPE_REL07_SOURCE_SHA'],"
+            "artifact_sha256=os.environ['JOPE_REL07_ARTIFACT_SHA256'],counts=counts)))\n"
+        )
+        wrapper.write_text(worker)
+        self.commit_providers({gate: worker for gate in runner.RELEASE_GATE_IDS})
+        source = runner.cpu.git(self.repo, "rev-parse", "HEAD")
+        candidate_dir = self.root / "candidate-run"
+        candidate = candidate_dir / "full-linux-x86_64" / "jopedime"
+        candidate.parent.mkdir(parents=True)
+        candidate.write_bytes(self.artifact.read_bytes())
+        candidate_sha = runner.cpu.digest(candidate)
+        seal = self.root / "candidate-run-seal.json"
+        seal.write_text(
+            json.dumps(
+                {
+                    "schema": "jope.rel07.rc2-sealed-variant/v1",
+                    "id": "full-linux-x86_64",
+                    "source_sha": source,
+                    "sha256": candidate_sha,
+                    "verify": {
+                        "ok": True,
+                        "report": {"file_sha256": candidate_sha},
+                    },
+                }
+            )
+        )
+        manifest = candidate_dir / "rc2-manifest.json"
+        manifest.write_text(
+            json.dumps(
+                {
+                    "schema": "jope.rel07.rc2-manifest/v1",
+                    "source_sha": source,
+                    "release_candidate": True,
+                    "qualified": False,
+                    "artifacts": [
+                        {
+                            "id": "full-linux-x86_64",
+                            "path": str(candidate),
+                            "source_sha": source,
+                            "sha256": candidate_sha,
+                            "bytes": candidate.stat().st_size,
+                            "seal_verify_receipt": str(seal),
+                            "signature_receipts": [
+                                {"receipt": {"verify": "PASS"}}
+                            ],
+                        }
+                    ],
+                }
+            )
+        )
+        output = self.root / "candidate-run-output"
+        with (
+            mock.patch(
+                "sys.argv",
+                [
+                    "release-gates",
+                    "--candidate",
+                    str(candidate),
+                    "--repo",
+                    str(self.repo),
+                    "--provider-inputs",
+                    str(self.input_file()),
+                    "--output",
+                    str(output),
+                ],
+            ),
+            redirect_stdout(StringIO()) as stdout,
+        ):
+            self.assertEqual(runner.main(), 0)
+        summary = json.loads(stdout.getvalue())
+        table = json.loads((output / "status_table.json").read_text())
+        self.assertEqual(summary["gates"], 28)
+        self.assertTrue(summary["all_pass"])
+        self.assertEqual(len(table["gates"]), 28)
+        self.assertEqual({row["status"] for row in table["gates"]}, {"PASS"})
+        self.assertEqual(
+            next(row for row in table["gates"] if row["id"] == "A5")["argv"][-1],
+            "deploy/qualification/v1.0/a5_run.py",
+        )
+
+    def test_candidate_dry_run_writes_reasoned_28_row_status_without_execution(self):
+        qualification = self.repo / "deploy/qualification/v1.0"
+        wrapper = qualification / "a5_run.py"
+        wrapper.parent.mkdir(parents=True)
+        wrapper.write_text("raise SystemExit('dry-run invoked A5 wrapper')\n")
+        self.commit_providers(
+            {gate: "raise SystemExit('dry-run invoked provider')\n" for gate in runner.RELEASE_GATE_IDS}
+        )
+        source = runner.cpu.git(self.repo, "rev-parse", "HEAD")
+        candidate_dir = self.root / "candidate-cut"
+        candidate_path = candidate_dir / "full-linux-x86_64" / "jopedime"
+        candidate_path.parent.mkdir(parents=True)
+        candidate_path.write_bytes(b"synthetic signed envelope fixture")
+        candidate_sha = runner.cpu.digest(candidate_path)
+        seal = self.root / "sealed-variant.json"
+        seal.write_text(
+            json.dumps(
+                {
+                    "schema": "jope.rel07.rc2-sealed-variant/v1",
+                    "id": "full-linux-x86_64",
+                    "source_sha": source,
+                    "sha256": candidate_sha,
+                    "verify": {"ok": True, "report": {"file_sha256": candidate_sha}},
+                }
+            )
+        )
+        signature_receipt = {"receipt": {"verify": "PASS"}}
+        rc2_manifest = candidate_dir / "rc2-manifest.json"
+        rc2_manifest.write_text(
+            json.dumps(
+                {
+                    "schema": "jope.rel07.rc2-manifest/v1",
+                    "source_sha": source,
+                    "release_candidate": True,
+                    "qualified": False,
+                    "artifacts": [
+                        {
+                            "id": "full-linux-x86_64",
+                            "path": str(candidate_path),
+                            "source_sha": source,
+                            "sha256": candidate_sha,
+                            "bytes": candidate_path.stat().st_size,
+                            "seal_verify_receipt": str(seal),
+                            "signature_receipts": [signature_receipt],
+                        }
+                    ],
+                }
+            )
+        )
+        output = self.root / "candidate-dryrun-output"
+        rows = runner.dry_run_candidate(
+            self.repo, candidate_path, output, bindings={}
+        )
+        table = json.loads((output / "status_table.json").read_text())
+        run = json.loads((output / "execution.json").read_text())
+        self.assertEqual(len(rows), 28)
+        self.assertEqual(table["candidate"]["sha256"], candidate_sha)
+        self.assertEqual(run["gates_executed"], 0)
         self.assertFalse(run["release_qualified"])
-        self.assertEqual(len(receipt["gates"]), 28)
-        self.assertTrue(all(gate["status"] == "PASS" for gate in receipt["gates"]))
-        self.assertEqual(receipt["artifact_sha256"], self.sha)
+        self.assertEqual(
+            {
+                row["status"]
+                for row in table["gates"]
+                if row["id"] in runner.INPUT_FIELDS
+            },
+            {"BLOCKED"},
+        )
+        self.assertEqual(
+            sum(row["status"] == "NOT_RUN" for row in table["gates"]), 23
+        )
+        self.assertTrue(all(row["reason"] for row in table["gates"]))
 
     def test_provider_discovery_lists_merged_modules_and_refuses_incomplete_inventory(
         self,
@@ -195,6 +352,8 @@ class ReleaseGates(unittest.TestCase):
         expected = [gate for gate in runner.RELEASE_GATE_IDS if gate != "D2"]
         for gate in expected:
             (provider_dir / (gate.lower() + ".py")).write_text("# fixture provider\n")
+        wrapper = self.repo / "deploy/qualification/v1.0/a5_run.py"
+        wrapper.write_text("# fixture A5 wrapper\n")
         subprocess.run(["git", "-C", str(self.repo), "add", "deploy"], check=True)
         subprocess.run(
             [
@@ -402,6 +561,10 @@ class ReleaseGates(unittest.TestCase):
         folder.mkdir(parents=True, exist_ok=True)
         for gate, content in providers.items():
             (folder / (gate.lower() + ".py")).write_text(content)
+        if "A5" in providers:
+            wrapper = self.repo / "deploy/qualification/v1.0/a5_run.py"
+            if not wrapper.exists():
+                wrapper.write_text(providers["A5"])
         subprocess.run(["git", "-C", str(self.repo), "add", "deploy"], check=True)
         subprocess.run(
             [

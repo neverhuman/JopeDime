@@ -35,6 +35,25 @@ nice -n 10 python3 -B deploy/qualification/v1.0/release-gates \
   --providers --provider-inputs "$INPUT_BINDINGS" --output "$NEW_EVIDENCE"
 ```
 
+The one-command RC2 path uses `--candidate` to discover all providers, generate
+the source/artifact-bound command manifest, execute the 28 rows, and retain a
+28-row status table:
+
+```sh
+nice -n 10 python3 -B deploy/qualification/v1.0/release-gates \
+  --candidate "$SIGNED_BYTES" --repo "$CLEAN_PINNED_CHECKOUT" \
+  --provider-inputs "$INPUT_BINDINGS" --output "$NEW_EVIDENCE"
+```
+
+A candidate rehearsal can use `--candidate ... --dry-run --repo ... --output ...`
+without provider input bindings. It verifies the RC2 manifest, sealed-variant
+receipt and candidate hash, discovers the 28 command rows, invokes zero gates,
+and writes `status_table.json` with a reason for every `BLOCKED` or `NOT_RUN`
+row plus `execution.json` with `release_qualified: false`. The command manifest
+uses `a5_run.py` for A5 (the bat02 wrapper), `providers/u1.py` for U1, and
+`providers/d1.py` for D1. D1's macOS-arm64 leg remains a separate svc08-produced
+receipt; its path and artifact hash bind through `--provider-inputs`.
+
 For candidate-free inventory checks after provider merges, use dry discovery:
 
 ```sh
