@@ -513,6 +513,44 @@ class TaskRoleCandidateManifestTests(unittest.TestCase):
         self.assertNotIn("reg-7", {row["dataset"] for row in all_assigned})
         self.assertNotIn("bin-0", {row["dataset"] for row in all_assigned})
 
+    def test_role_candidates_cover_catalog_only_sealed_family_keys(self):
+        inputs = list(self._inputs())
+        catalog, pool = inputs[0], inputs[4]
+        protected_id = "catalog-sealed-only"
+        family_key = "d" * 64
+
+        protected_row = next(row for row in catalog["datasets"] if row["id"] == "bin-2")
+        protected_row["id"] = protected_id
+        protected_row["family_key"] = family_key
+        for candidate in pool["candidate_pools"]["binary"]:
+            if candidate["dataset"] == "bin-2":
+                candidate["dataset"] = protected_id
+
+        panel_alias = next(row for row in catalog["datasets"] if row["id"] == "bin-0")
+        panel_alias["family_key"] = family_key
+        protected_manifest = inputs[-2]
+        protected_manifest["catalog_sealed_ids"] = [protected_id]
+        protected_manifest["counts"]["catalog_sealed_ids"] = 1
+        inputs[-1] = hashlib.sha256(
+            json.dumps(
+                protected_manifest, sort_keys=True, separators=(",", ":")
+            ).encode()
+        ).hexdigest()
+
+        self.assertNotIn(protected_id, protected_manifest["dataset_hashes"])
+        manifest = self._build(inputs)
+
+        exclusion = manifest["protected_exclusion"]
+        self.assertEqual(exclusion["protected_derived_union_key_count"], 2)
+        self.assertEqual(exclusion["protected_catalog_dataset_count"], 1)
+        self.assertEqual(exclusion["catalog_alias_family_count"], 1)
+        self.assertEqual(exclusion["excluded_role_counts"]["panel"]["binary"], 1)
+        self.assertEqual(exclusion["assigned_role_dataset_overlap"], 0)
+        self.assertEqual(exclusion["assigned_role_family_overlap"], 0)
+        all_assigned = [row for rows in manifest["records"].values() for row in rows]
+        self.assertNotIn(protected_id, {row["dataset"] for row in all_assigned})
+        self.assertNotIn("bin-0", {row["dataset"] for row in all_assigned})
+
 
 # Catalog v246's explicit sealed-name-match exclusion IDs. This is the
 # published catalog exclusion list, not a claim to possess the authoritative
