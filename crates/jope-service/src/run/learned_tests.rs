@@ -61,6 +61,8 @@ async fn post(app: axum::Router, request: &RunSpec, key: &str) -> (u16, Value) {
             Request::builder()
                 .method("POST")
                 .uri("/v1/runs")
+                .header("host", "127.0.0.1:31234")
+                .header("authorization", format!("Bearer {}", "ab".repeat(32)))
                 .header("content-type", "application/json")
                 .header("idempotency-key", key)
                 .body(Body::from(serde_json::to_vec(request).unwrap()))
@@ -132,6 +134,8 @@ async fn signed_r782_live_plan_and_admission_use_the_instantiated_backend() {
             .oneshot(
                 Request::builder()
                     .uri(format!("/v1/runs/{id}"))
+                    .header("host", "127.0.0.1:31234")
+                    .header("authorization", format!("Bearer {}", "ab".repeat(32)))
                     .body(Body::empty())
                     .unwrap(),
             )
