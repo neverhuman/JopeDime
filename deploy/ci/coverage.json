@@ -14624,6 +14624,16 @@
       ],
       "lanes": [],
       "scope": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+    },
+    "python:research/flywheel_selfplay/h194_invalid_margin/test_h194.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H194 invalid-margin hinge direction/empty groups/FIT-only calibration/valid-only count-matched placebo/independent folds/pooled-B stage lock/strict m1 and bootstrap seed axis"
     }
   },
   "lanes": {
