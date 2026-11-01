@@ -10,7 +10,7 @@ use anyhow::{bail, ensure, Context, Result};
 use feat_math::dsl::{DslExpr, ParamValue, Stage};
 use feat_math::evolve::api::{
     capability::{self, CapabilityKind, Language, LanguageFilter, Registry},
-    parse_canonical_pipeline,
+    mutate_canonical_pipeline_with_arm, parse_canonical_pipeline, CanonicalMutationArm,
 };
 use feat_math::GenomeIr;
 use rand_chacha::{
@@ -187,32 +187,6 @@ fn index(rng: &mut ChaCha12Rng, length: usize) -> usize {
             return (value % bound) as usize;
         }
     }
-}
-
-fn delete_stage(transforms: &mut Vec<Stage>, rng: &mut ChaCha12Rng) -> Option<usize> {
-    if transforms.len() < 2 {
-        return None;
-    }
-    let removed = index(rng, transforms.len());
-    transforms.remove(removed);
-    Some(removed)
-}
-
-// A cyclic successor would double its weight when the preceding head is
-// known. A uniform permutation preserves the preferred pool's conditional
-// weights. Give each typed slot a separate non-main stream; the shared RNG
-// position and first draw stay unchanged, without reusing future main bits.
-fn head_retry_order(first: usize, length: usize, step: usize, rng: &ChaCha12Rng) -> Vec<usize> {
-    let mut remaining: Vec<_> = (0..length).filter(|&i| i != first).collect();
-    let mut fork = rng.clone();
-    fork.set_stream(rng.get_stream().wrapping_add(step as u64 + 1));
-    for i in (1..remaining.len()).rev() {
-        let j = index(&mut fork, i + 1);
-        remaining.swap(i, j);
-    }
-    let mut order = vec![first];
-    order.extend(remaining);
-    order
 }
 
 fn uniform(rng: &mut ChaCha12Rng, low: f64, high: f64) -> f64 {
@@ -499,28 +473,22 @@ impl Proposer {
                         let first = index(&mut rng, heads.len());
                         let before = batch.proposals.len();
                         let first_dsl = assemble(parsed.stages.clone(), heads[first].clone());
-                        // An unchanged selected parent is a no-op, not a
-                        // changed head that collided with a known program.
-                        // Keep the frozen single rejected draw for that case.
-                        let parent_key = memo_key(&parent.dsl)?;
-                        let collision = memo_key(&first_dsl).is_ok_and(|key| {
-                            key != parent_key && (seen.contains(&key) || memo.contains(&key))
-                        });
-                        let order = if collision {
-                            head_retry_order(first, heads.len(), step, &rng)
-                        } else {
-                            vec![first]
-                        };
-                        // A genuine changed-head collision should not consume this typed
+                        let first_key = memo_key(&first_dsl)?;
+                        let collision = batch.proposals.iter().any(|p| p.memo_key == first_key);
+                        let limit = if collision { heads.len() } else { 1 };
+                        // A repeated candidate should not consume this typed
                         // mutation slot while a legal, novel head is available.
                         // Keep the initial weighted draw and RNG position; the
-                        // finite retry order preserves the pool's weights.
-                        for (offset, head_index) in order.into_iter().enumerate() {
+                        // finite pool scan has no new randomness or quota.
+                        for offset in 0..limit {
                             if offset > 0 {
                                 *batch.attempts.entry(family).or_default() += 1;
                             }
                             self.offer(
-                                assemble(parsed.stages.clone(), heads[head_index].clone()),
+                                assemble(
+                                    parsed.stages.clone(),
+                                    heads[(first + offset) % heads.len()].clone(),
+                                ),
                                 family,
                                 provenance.clone(),
                                 memo,
@@ -539,9 +507,16 @@ impl Proposer {
                         transforms.insert(position, inserted);
                         (transforms.len() <= 6).then(|| assemble(parsed.stages, head))
                     }
-                    ProposalFamily::Delete => {
-                        delete_stage(transforms, &mut rng).map(|_| assemble(parsed.stages, head))
-                    }
+                    ProposalFamily::Delete if transforms.len() >= 2 => Some(
+                        mutate_canonical_pipeline_with_arm(
+                            &parent.dsl,
+                            rng.next_u64(),
+                            6,
+                            false,
+                            CanonicalMutationArm::Delete,
+                        )
+                        .map_err(anyhow::Error::msg)?,
+                    ),
                     ProposalFamily::Crossover if parents.len() >= 2 => {
                         let other = &parents[(step + 1) % parents.len()];
                         let mut other_parsed = self.pipeline(other)?;
@@ -596,5 +571,853 @@ impl Proposer {
 }
 
 #[cfg(test)]
-#[cfg(test)]
-mod tests;
+mod tests {
+    use super::*;
+    use std::cell::RefCell;
+
+    fn parents() -> Vec<Program> {
+        vec![
+            Program::from_dsl("(pipe X (standardize) (cheb degree=3) (ridge lambda_frac=0.1))"),
+            Program::from_dsl(
+                "(pipe X (robust_scale) (winsor_clip q=0.05) (histgbm depth=3 lr=0.08 rounds=160))",
+            ),
+        ]
+    }
+
+    fn request<'a>(parents: &'a [Program], lm: &'a [f64; 48], exploring: bool) -> Round<'a> {
+        Round {
+            seed: 42,
+            round: 7,
+            exploring,
+            target_family: "target",
+            raw_lm48: lm,
+            parents,
+        }
+    }
+
+    struct Bank {
+        role: BankRole,
+        records: Vec<Retrieved>,
+        called: RefCell<Vec<([f64; 12], String, usize)>>,
+    }
+
+    impl Bank {
+        fn new() -> Self {
+            Self {
+                role: BankRole::Proposer,
+                records: vec![
+                    Retrieved {
+                        program: Program::from_dsl("(pipe X (quantile_bins bins=16) (ridge))"),
+                        family_id: "other-a".into(),
+                        dl_train: true,
+                        distance_squared: 1.0,
+                    },
+                    Retrieved {
+                        program: Program::from_dsl("(pipe X (winsor_clip q=0.1) (ridge))"),
+                        family_id: "other-b".into(),
+                        dl_train: true,
+                        distance_squared: 2.0,
+                    },
+                ],
+                called: RefCell::new(vec![]),
+            }
+        }
+    }
+
+    impl ChampionBank for Bank {
+        fn contract(&self) -> Option<BankContract> {
+            Some(BankContract {
+                role: self.role,
+                coordinate_space: RAW_COORDINATES.into(),
+                snapshot_sha256: "1".repeat(64),
+            })
+        }
+        fn nearest(&self, raw: &[f64; 12], family: &str, limit: usize) -> Result<Vec<Retrieved>> {
+            self.called.borrow_mut().push((*raw, family.into(), limit));
+            Ok(self.records.iter().take(limit).cloned().collect())
+        }
+    }
+
+    #[test]
+    fn repeated_head_draw_keeps_a_novel_head_slot_when_the_pool_has_an_alternative() {
+        // Original TRAIN request130: round775/context2. This is a row-free
+        // generator regression, not a model/fitness or release qualification.
+        let proposer = Proposer::new(&[Language::Rust]).unwrap();
+        let parents = [Program::from_dsl("(pipe X (poly_interact append=true) (cheb degree=4) (winsor_clip append=true q=0.15759416738534485) (sigmoid append=true) (ridge))")];
+        let lm = [
+            -7.822644233703613,
+            -3.335017681121826,
+            2.0916075706481934,
+            0.17733953893184662,
+            -0.23421242833137512,
+            -1.8542579412460327,
+            -0.39526352286338806,
+            1.5499933958053589,
+            0.3646467924118042,
+            -0.23557567596435547,
+            2.554443597793579,
+            -0.7511533498764038,
+            1.6888071298599243,
+            0.965538501739502,
+            -0.9864354729652405,
+            -1.153594970703125,
+            -1.8711278438568115,
+            -0.2296914905309677,
+            1.2335679531097412,
+            -0.15032795071601868,
+            1.465488314628601,
+            -1.6561437845230103,
+            -0.8125762939453125,
+            0.8135456442832947,
+            -0.35853514075279236,
+            -0.9137781858444214,
+            -0.4460272192955017,
+            0.6699191927909851,
+            0.8401845097541809,
+            0.07990206778049469,
+            -0.5336035490036011,
+            0.4456247091293335,
+            0.6210421323776245,
+            -0.6575910449028015,
+            -0.8605937361717224,
+            0.04108719900250435,
+            -0.318228542804718,
+            -1.1542876958847046,
+            0.020905081182718277,
+            -0.4025436341762543,
+            1.037981390953064,
+            0.8037648797035217,
+            0.1720881313085556,
+            -0.14072567224502563,
+            -0.21567422151565552,
+            0.2446334958076477,
+            -0.9094048738479614,
+            0.4294348657131195,
+        ];
+        let bank = Bank {
+            role: BankRole::Proposer,
+            records: vec![
+                    Retrieved {
+                        program: Program::from_dsl("(pipe X (cheb append=true degree=4) (winsor_clip q=0.12691538581586245) (histgbm depth=6 lr=0.14350417339409188 rounds=210))"),
+                        family_id: "other-0".into(),
+                        dl_train: true,
+                        distance_squared: 1.0,
+                    },
+                    Retrieved {
+                        program: Program::from_dsl("(pipe X (blom append=true) (sigmoid append=true) (pair_prod topk=13) (ridge_gcv))"),
+                        family_id: "other-1".into(),
+                        dl_train: true,
+                        distance_squared: 2.0,
+                    },
+            ],
+            called: RefCell::new(vec![]),
+        };
+        let req = Round {
+            seed: 20261031,
+            round: 775,
+            exploring: false,
+            target_family: "original-target",
+            raw_lm48: &lm,
+            parents: &parents,
+        };
+        let batch = proposer.propose(&req, &bank, &BTreeSet::new()).unwrap();
+        let heads: Vec<_> = batch
+            .proposals
+            .iter()
+            .filter(|p| p.family == ProposalFamily::ReplaceHead)
+            .collect();
+        assert_eq!(batch.proposals.len(), 8);
+        assert_eq!(
+            heads.len(),
+            2,
+            "a repeated head draw consumed a scheduled head slot"
+        );
+        assert_ne!(heads[0].memo_key, heads[1].memo_key);
+        assert_eq!(
+            heads[0].program.program_sha256,
+            "f5add21fc43bf261f379d1cda8de3500816025f6225458166871b03005baabdc"
+        );
+        assert!(batch.duplicates_or_memo > 0);
+        assert_eq!(
+            batch.attempts.values().sum::<usize>(),
+            batch.proposals.len() + batch.invalid_or_filtered + batch.duplicates_or_memo
+        );
+        assert_eq!(
+            batch,
+            proposer.propose(&req, &bank, &BTreeSet::new()).unwrap()
+        );
+
+        // A collision does not authorize an existing memo entry or an unbounded
+        // retry when every other preferred head has already been measured.
+        let mut transforms = proposer.pipeline(&parents[0]).unwrap().stages;
+        transforms.pop();
+        let (_, templates) = select_landmark_preferred_pools(&lm);
+        let mut memo = BTreeSet::new();
+        for template in templates {
+            let mut parsed = parse_canonical_pipeline(&format!("(pipe X {template})")).unwrap();
+            let dsl = assemble(transforms.clone(), parsed.stages.pop().unwrap());
+            let key = memo_key(&dsl).unwrap();
+            if key != heads[0].memo_key {
+                memo.insert(key);
+            }
+        }
+        let exhausted = proposer.propose(&req, &bank, &memo).unwrap();
+        assert_eq!(exhausted.proposals.len(), 8);
+        assert_eq!(
+            exhausted
+                .proposals
+                .iter()
+                .filter(|p| p.family == ProposalFamily::ReplaceHead)
+                .count(),
+            1
+        );
+        assert!(exhausted
+            .proposals
+            .iter()
+            .all(|p| !memo.contains(&p.memo_key)));
+        assert_eq!(
+            exhausted.attempts.values().sum::<usize>(),
+            exhausted.proposals.len()
+                + exhausted.invalid_or_filtered
+                + exhausted.duplicates_or_memo
+        );
+    }
+
+    #[test]
+    fn deterministic_rounds_are_independent_and_exploration_only_changes_width() {
+        let proposer = Proposer::new(&[Language::Rust]).unwrap();
+        let parents = parents();
+        let lm = [0.0; 48];
+        let a = proposer
+            .propose(&request(&parents, &lm, false), &NoBank, &BTreeSet::new())
+            .unwrap();
+        let b = proposer
+            .propose(&request(&parents, &lm, false), &NoBank, &BTreeSet::new())
+            .unwrap();
+        assert_eq!(a, b);
+        assert_eq!(a.proposals.len(), 8);
+        let wide = proposer
+            .propose(&request(&parents, &lm, true), &NoBank, &BTreeSet::new())
+            .unwrap();
+        assert_eq!(wide.proposals.len(), 16);
+        let mut other = request(&parents, &lm, false);
+        other.round += 1;
+        assert_ne!(
+            a.proposals,
+            proposer
+                .propose(&other, &NoBank, &BTreeSet::new())
+                .unwrap()
+                .proposals
+        );
+        assert!(!a.raw_bank_available);
+    }
+
+    #[test]
+    fn raw_bank_contract_family_order_and_source_identity_are_enforced() {
+        let proposer = Proposer::new(&[Language::Rust]).unwrap();
+        let lm = std::array::from_fn(|i| i as f64 / 4.0);
+        let bank = Bank::new();
+        let result = proposer
+            .propose(&request(&[], &lm, false), &bank, &BTreeSet::new())
+            .unwrap();
+        assert_eq!(result.proposals.len(), 8);
+        assert_eq!(result.proposals[0].program, bank.records[0].program);
+        assert_eq!(
+            bank.called.borrow()[0],
+            (
+                <[f64; 12]>::try_from(&lm[..12]).unwrap(),
+                "target".to_string(),
+                2
+            )
+        );
+        let mut bad = Bank::new();
+        bad.role = BankRole::ModelPrior;
+        assert!(proposer
+            .propose(&request(&[], &lm, false), &bad, &BTreeSet::new())
+            .is_err());
+        assert!(bad.called.borrow().is_empty());
+        for mutation in 0..4 {
+            let mut bad = Bank::new();
+            match mutation {
+                0 => bad.records[0].family_id = "target".into(),
+                1 => bad.records[0].dl_train = false,
+                2 => bad.records[0].distance_squared = f64::NAN,
+                _ => bad.records.reverse(),
+            }
+            assert!(proposer
+                .propose(&request(&[], &lm, false), &bad, &BTreeSet::new())
+                .is_err());
+        }
+    }
+
+    #[test]
+    fn memo_dedup_retains_parents_and_never_returns_known_identity() {
+        let proposer = Proposer::new(&[Language::Rust]).unwrap();
+        let parents = parents();
+        let before = parents.clone();
+        let lm = [0.0; 48];
+        let first = proposer
+            .propose(&request(&parents, &lm, true), &NoBank, &BTreeSet::new())
+            .unwrap();
+        let memo = first.proposals.iter().map(|p| p.memo_key.clone()).collect();
+        let second = proposer
+            .propose(&request(&parents, &lm, true), &NoBank, &memo)
+            .unwrap();
+        assert_eq!(parents, before);
+        assert!(second.proposals.iter().all(|p| !memo.contains(&p.memo_key)));
+        assert_eq!(
+            second
+                .proposals
+                .iter()
+                .map(|p| &p.memo_key)
+                .collect::<BTreeSet<_>>()
+                .len(),
+            second.proposals.len()
+        );
+        assert!(second.duplicates_or_memo > 0);
+    }
+
+    #[test]
+    fn actual_language_intersection_filters_every_generated_operation() {
+        let languages = [Language::Rust, Language::Python, Language::Javascript];
+        let proposer = Proposer::new(&languages).unwrap();
+        let lm = [0.0; 48];
+        let batch = proposer
+            .propose(&request(&[], &lm, true), &NoBank, &BTreeSet::new())
+            .unwrap();
+        assert_eq!(batch.proposals.len(), 16);
+        let filter = capability::allowed_ops(&languages).unwrap();
+        for proposal in batch.proposals {
+            let genome = GenomeIr::parse(&proposal.program.dsl).unwrap();
+            assert!(filter.accepts_seed(&genome));
+            let GenomeIr::Pipeline(pipeline) = genome else {
+                panic!("pipeline required")
+            };
+            assert!(pipeline
+                .stages
+                .iter()
+                .all(|s| !filter.excluded_ops().contains(&s.op.as_str())));
+        }
+        assert!(Proposer::new(&[Language::Typescript]).is_err());
+    }
+
+    #[test]
+    fn an_unexportable_retrieval_is_filtered_without_aborting_the_round() {
+        let proposer =
+            Proposer::new(&[Language::Rust, Language::Python, Language::Javascript]).unwrap();
+        let mut bank = Bank::new();
+        bank.records[0].program = Program::from_dsl("(pipe X (gpr))");
+        let lm = [0.0; 48];
+        let batch = proposer
+            .propose(&request(&[], &lm, false), &bank, &BTreeSet::new())
+            .unwrap();
+        assert_eq!(batch.proposals.len(), 8);
+        assert!(batch.invalid_or_filtered > 0);
+        assert!(batch
+            .proposals
+            .iter()
+            .all(|p| proposer.pipeline(&p.program).is_ok()));
+        assert!(batch
+            .proposals
+            .iter()
+            .all(|p| p.program != bank.records[0].program));
+    }
+
+    #[test]
+    fn round_key_matches_an_independent_little_endian_sha256_oracle() {
+        // Python hashlib over struct.pack("<QQ", 123, 7), retained in the source receipt.
+        let mut expected = ChaCha12Rng::from_seed([
+            4, 152, 66, 165, 136, 157, 146, 169, 112, 244, 157, 201, 69, 32, 60, 213, 154, 218, 19,
+            128, 81, 80, 181, 162, 170, 106, 147, 165, 229, 143, 224, 7,
+        ]);
+        let mut actual = round_rng(123, 7);
+        for _ in 0..8 {
+            assert_eq!(actual.next_u64(), expected.next_u64());
+        }
+    }
+
+    #[test]
+    fn typed_cycle_is_not_a_random_twenty_percent_sampler() {
+        let counts = (0..24).fold(BTreeMap::<ProposalFamily, usize>::new(), |mut m, step| {
+            *m.entry(ProposalFamily::edit(step)).or_default() += 1;
+            m
+        });
+        assert_eq!(
+            [
+                counts[&ProposalFamily::Parameter],
+                counts[&ProposalFamily::ReplaceHead],
+                counts[&ProposalFamily::Insert],
+                counts[&ProposalFamily::Delete],
+                counts[&ProposalFamily::Crossover]
+            ],
+            [5, 5, 5, 5, 4]
+        );
+        let source: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../../research/flywheel_selfplay/custody/proposer_frequencies.json"
+        ))
+        .unwrap();
+        assert_eq!(
+            source["population"]["kind"],
+            "evaluated GP proposal attempts"
+        );
+        assert_eq!(source["population"]["records"], 1024);
+        assert_eq!(
+            source["population"]["not_individually_operator_labelled"],
+            2688
+        );
+    }
+
+    #[test]
+    fn ten_thousand_proposals_have_real_filter_provenance_and_bounded_source_schedule() {
+        let proposer = Proposer::new(&[Language::Rust]).unwrap();
+        let parents = parents();
+        let lm = [0.0; 48];
+        let bank = Bank::new();
+        let mut counts = BTreeMap::<ProposalFamily, usize>::new();
+        for round in 0..1250 {
+            let mut req = request(&parents, &lm, false);
+            req.round = round;
+            let batch = proposer.propose(&req, &bank, &BTreeSet::new()).unwrap();
+            assert_eq!(batch.proposals.len(), 8);
+            assert!(!batch.synthesis_exhausted);
+            assert_eq!(
+                batch.attempts.values().sum::<usize>(),
+                batch.proposals.len() + batch.invalid_or_filtered + batch.duplicates_or_memo,
+            );
+            assert!(
+                batch
+                    .attempts
+                    .iter()
+                    .filter(|(f, _)| **f != ProposalFamily::Retrieval
+                        && **f != ProposalFamily::Synthesis)
+                    .map(|(_, n)| n)
+                    .sum::<usize>()
+                    <= 24
+            );
+            for proposal in batch.proposals {
+                *counts.entry(proposal.family).or_default() += 1;
+                assert_eq!(
+                    proposal.program.program_sha256,
+                    digest(proposal.program.dsl.as_bytes())
+                );
+                assert!(proposer.pipeline(&proposal.program).is_ok());
+            }
+        }
+        assert_eq!(counts.values().sum::<usize>(), 10_000);
+        assert_eq!(counts[&ProposalFamily::Retrieval], 2500);
+        println!("generated-only CPU fixture histogram (not matched evaluated-population M3): {counts:?}");
+    }
+
+    #[test]
+    fn ten_thousand_train_parent_outputs_report_m3_frequency_comparison() {
+        const N: usize = 10_000;
+        const MAX_ROUNDS: usize = 4_000;
+
+        let source: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../../research/flywheel_selfplay/custody/proposer_frequencies.json"
+        ))
+        .unwrap();
+        assert_eq!(source["schema"], "jope.proposer-frequencies/v1");
+        assert_eq!(
+            source["population"]["kind"],
+            "evaluated GP proposal attempts"
+        );
+        assert_eq!(source["population"]["records"], 1024);
+        assert_eq!(source["population"]["generated_in_round_receipts"], 3712);
+        assert_eq!(
+            source["population"]["not_individually_operator_labelled"],
+            2688
+        );
+        let target_sha256 = digest(
+            include_str!(
+                "../../../../research/flywheel_selfplay/custody/proposer_frequencies.json"
+            )
+            .as_bytes(),
+        );
+        let exploration_pattern: Vec<bool> = source["round_journals"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|round| round["exploration"].as_bool().unwrap())
+            .collect();
+        assert_eq!(exploration_pattern.len(), 16);
+
+        // This is the committed row-free TRAIN parent index already used by the
+        // real-parent determinism controls. No evaluation rows or labels are read.
+        let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../research/flywheel_selfplay/custody/files")
+            .join("home")
+            .join("ubuntu")
+            .join("jope-data/res-01/input/champions.json");
+        let bytes = std::fs::read(path).unwrap();
+        assert_eq!(
+            digest(&bytes),
+            "a444047ffb937dc8d69012cbdbf0891faf3e7d743b127e7cac3baed114cf141d"
+        );
+        let rows: Vec<serde_json::Value> = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(rows.len(), 1219);
+        let parents: Vec<Program> = rows
+            .iter()
+            .map(|row| {
+                assert_eq!(row["dl_split"], "DL-Train");
+                assert!(hash_valid(row["context_sha256"].as_str().unwrap()));
+                let parent = Program::from_dsl(row["dsl"].as_str().unwrap());
+                assert_eq!(
+                    parent.program_sha256,
+                    row["program_sha256"].as_str().unwrap()
+                );
+                parent
+            })
+            .collect();
+
+        // No raw proposer snapshot/evolving historical bank is supplied, so use
+        // NoBank and report this as a generated-only diagnostic, never M3 parity.
+        let proposer =
+            Proposer::new(&[Language::Rust, Language::Python, Language::Javascript]).unwrap();
+        let eligible_parent_indices: Vec<usize> = parents
+            .iter()
+            .enumerate()
+            .filter_map(|(index, parent)| proposer.pipeline(parent).ok().map(|_| index))
+            .collect();
+        assert!(!eligible_parent_indices.is_empty());
+        let lm = [0.0; 48];
+        let mut counts = BTreeMap::<ProposalFamily, usize>::new();
+        let mut generated = 0usize;
+        let mut round_index = 0usize;
+        while generated < N && round_index < MAX_ROUNDS {
+            let parent_index = eligible_parent_indices[round_index % eligible_parent_indices.len()];
+            let exploring = exploration_pattern[round_index % exploration_pattern.len()];
+            let round = Round {
+                seed: 0xd5c06 ^ round_index as u64,
+                round: 767 + round_index as u64,
+                exploring,
+                target_family: rows[parent_index]["family_id"].as_str().unwrap(),
+                raw_lm48: &lm,
+                parents: std::slice::from_ref(&parents[parent_index]),
+            };
+            let batch = proposer.propose(&round, &NoBank, &BTreeSet::new()).unwrap();
+            for proposal in batch.proposals {
+                if generated == N {
+                    break;
+                }
+                *counts.entry(proposal.family).or_default() += 1;
+                generated += 1;
+            }
+            round_index += 1;
+        }
+        assert_eq!(
+            generated, N,
+            "bounded schedule did not emit 10,000 proposals"
+        );
+
+        let comparisons: Vec<serde_json::Value> = source["operators"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|operator| {
+                let name = operator["operator"].as_str().unwrap();
+                let family = [
+                    ProposalFamily::Retrieval,
+                    ProposalFamily::Parameter,
+                    ProposalFamily::ReplaceHead,
+                    ProposalFamily::Insert,
+                    ProposalFamily::Delete,
+                    ProposalFamily::Crossover,
+                    ProposalFamily::Synthesis,
+                ]
+                .into_iter()
+                .find(|family| family.name() == name)
+                .unwrap_or_else(|| panic!("unknown reference family {name}"));
+                let count = counts.get(&family).copied().unwrap_or_default();
+                let observed = count as f64 / N as f64;
+                let reference = operator["fraction"].as_f64().unwrap();
+                serde_json::json!({
+                    "operator": name,
+                    "observed_count": count,
+                    "observed_fraction": observed,
+                    "reference_count": operator["count"],
+                    "reference_fraction": reference,
+                    "absolute_delta_percentage_points": (observed - reference).abs() * 100.0,
+                    "within_two_percentage_points": (observed - reference).abs() <= 0.02,
+                })
+            })
+            .collect();
+        let within_tolerance = comparisons
+            .iter()
+            .all(|row| row["within_two_percentage_points"] == true);
+        println!(
+            "DSC06_M3_FREQUENCY_REPORT={}",
+            serde_json::json!({
+                "schema": "jopedime.dsc06-generated-frequency-diagnostic/v1",
+                "reference_sha256": target_sha256,
+                "reference_population": source["population"],
+                "proposal_count": generated,
+                "parent_source_sha256": digest(&bytes),
+                "parent_count": parents.len(),
+                "eligible_parent_count": eligible_parent_indices.len(),
+                "parent_split": "DL-Train",
+                "parent_rotation": "round_index modulo eligible committed TRAIN parent order",
+                "bank": "NoBank; no exact evolving raw proposer snapshot supplied",
+                "exploration_pattern_rounds": exploration_pattern.len(),
+                "exploration_rounds_in_pattern": exploration_pattern.iter().filter(|&&x| x).count(),
+                "generated_distribution_within_two_pp": within_tolerance,
+                "population_comparable_to_reference": false,
+                "m3_qualified": false,
+                "comparisons": comparisons,
+            })
+        );
+    }
+
+    #[test]
+    fn every_proposer_attempt_has_an_outcome() {
+        let proposer = Proposer::new(&[Language::Rust]).unwrap();
+        let lm = [0.0; 48];
+        let cases = [
+            "(pipe X (ridge lambda_frac=0.1))",
+            "(pipe X (standardize) (ridge lambda_frac=0.1))",
+            "(pipe X (standardize) (standardize) (standardize) (standardize) (standardize) (standardize) (ridge lambda_frac=0.1))",
+        ];
+        let mut unaccounted = vec![];
+        let mut trace = Vec::new();
+        for (case, dsl) in cases.into_iter().enumerate() {
+            let parents = [Program::from_dsl(dsl)];
+            for exploring in [false, true] {
+                for round in 0..8 {
+                    let mut req = request(&parents, &lm, exploring);
+                    req.round = round;
+                    let batch = proposer.propose(&req, &NoBank, &BTreeSet::new()).unwrap();
+                    assert_eq!(batch.proposals.len(), if exploring { 16 } else { 8 });
+                    assert!(batch.attempts[&ProposalFamily::Crossover] > 0);
+                    let attempted: usize = batch.attempts.values().sum();
+                    let accounted = batch.proposals.len()
+                        + batch.invalid_or_filtered
+                        + batch.duplicates_or_memo;
+                    if attempted != accounted {
+                        unaccounted.push((case, exploring, round, attempted, accounted));
+                    }
+                    // Deliberately exclude the repaired outcome counter so the
+                    // before/after trace binds generation, order and provenance.
+                    trace.push(serde_json::json!({
+                        "case":case,"exploring":exploring,"round":round,
+                        "attempts":batch.attempts.iter().map(|(f,n)| (f.name(),n)).collect::<Vec<_>>(),
+                        "proposals":batch.proposals.iter().map(|p| serde_json::json!({
+                            "dsl":p.program.dsl,"program_sha256":p.program.program_sha256,
+                            "memo_key":p.memo_key,"family":p.family.name(),"parents":p.parents,
+                        })).collect::<Vec<_>>(),
+                    }));
+                }
+            }
+        }
+        println!(
+            "DSC06_GENERATION_TRACE_SHA256={}",
+            digest(&serde_json::to_vec(&trace).unwrap())
+        );
+        assert!(
+            unaccounted.is_empty(),
+            "missing attempt outcomes in {} rounds: {:?}",
+            unaccounted.len(),
+            &unaccounted[..unaccounted.len().min(3)]
+        );
+    }
+
+    #[test]
+    fn real_train_parents_preserve_round_determinism_and_language_exclusions() {
+        // Real row-free parents with controlled NoBank/zero landmarks; this is
+        // software acceptance, not matched evaluated-population M3 evidence.
+        let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../research/flywheel_selfplay/custody/files")
+            .join("home")
+            .join("ubuntu")
+            .join("jope-data/res-01/input/champions.json");
+        let bytes = std::fs::read(path).unwrap();
+        assert_eq!(
+            digest(&bytes),
+            "a444047ffb937dc8d69012cbdbf0891faf3e7d743b127e7cac3baed114cf141d"
+        );
+        let rows: Vec<serde_json::Value> = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(rows.len(), 1219);
+        let parents: Vec<_> = rows
+            .iter()
+            .map(|row| {
+                assert_eq!(row["dl_split"], "DL-Train");
+                assert!(hash_valid(row["context_sha256"].as_str().unwrap()));
+                assert!(!row["family_id"].as_str().unwrap().is_empty());
+                let parent = Program::from_dsl(row["dsl"].as_str().unwrap());
+                assert_eq!(
+                    parent.program_sha256,
+                    row["program_sha256"].as_str().unwrap()
+                );
+                parent
+            })
+            .collect();
+        let lm = [0.0; 48];
+        for languages in [
+            &[Language::Rust][..],
+            &[Language::Rust, Language::Python, Language::Javascript][..],
+        ] {
+            let original = Proposer::new(languages).unwrap();
+            let replay = Proposer::new(languages).unwrap();
+            let filter = capability::allowed_ops(languages).unwrap();
+            let run = |proposer: &Proposer, index: usize, exploring| {
+                proposer
+                    .propose(
+                        &Round {
+                            seed: 0xd5c06 ^ index as u64,
+                            round: index as u64 + 7,
+                            exploring,
+                            target_family: rows[index]["family_id"].as_str().unwrap(),
+                            raw_lm48: &lm,
+                            parents: std::slice::from_ref(&parents[index]),
+                        },
+                        &NoBank,
+                        &BTreeSet::new(),
+                    )
+                    .map_err(|error| format!("{error:#}"))
+            };
+            let expected: Vec<_> = (0..rows.len())
+                .flat_map(|index| [run(&original, index, false), run(&original, index, true)])
+                .collect();
+            let mut accepted = 0;
+            let mut refused = 0;
+            let mut generated = 0;
+            for index in (0..rows.len()).rev() {
+                for (mode, exploring) in [false, true].into_iter().enumerate() {
+                    let actual = run(&replay, index, exploring);
+                    assert_eq!(actual, expected[2 * index + mode], "record {index}");
+                    match actual {
+                        Ok(batch) => {
+                            accepted += 1;
+                            let width = if exploring { 16 } else { 8 };
+                            assert_eq!(batch.requested, width);
+                            assert!(batch.proposals.len() <= width);
+                            assert_eq!(batch.synthesis_exhausted, batch.proposals.len() < width);
+                            assert_eq!(
+                                batch.attempts.values().sum::<usize>(),
+                                batch.proposals.len()
+                                    + batch.invalid_or_filtered
+                                    + batch.duplicates_or_memo
+                            );
+                            let mut unique = BTreeSet::new();
+                            for proposal in batch.proposals {
+                                assert_eq!(
+                                    proposal.program.program_sha256,
+                                    digest(proposal.program.dsl.as_bytes())
+                                );
+                                assert!(unique.insert(proposal.memo_key.clone()));
+                                let GenomeIr::Pipeline(parsed) =
+                                    GenomeIr::parse(&proposal.program.dsl).unwrap()
+                                else {
+                                    panic!("proposer must return a pipeline")
+                                };
+                                for stage in parsed.stages {
+                                    assert!(filter.allowed_ops().contains(&stage.op.as_str()));
+                                    assert!(!filter.excluded_ops().contains(&stage.op.as_str()));
+                                }
+                                generated += 1;
+                            }
+                        }
+                        Err(reason) => {
+                            assert!(reason.starts_with("invalid parent:"), "{reason}");
+                            refused += 1;
+                        }
+                    }
+                }
+            }
+            assert_eq!(accepted + refused, 2 * rows.len());
+            assert!(
+                accepted > 0 && generated > 0,
+                "no eligible real parents exercised"
+            );
+            println!("DSC06 real TRAIN parent software controls: languages={languages:?}, records={}, replayed_requests={}, accepted={accepted}, refused={refused}, generated={generated}; reverse-order fresh-instance equality; M3_qualified=false", rows.len(), accepted + refused);
+        }
+    }
+
+    #[test]
+    fn numeric_mutation_preserves_seed_and_source_clamps() {
+        let mut parsed = parse_canonical_pipeline(
+            "(pipe X (winsor_clip q=0.5 seed=701) (histgbm depth=9 lr=0.9 rounds=999))",
+        )
+        .unwrap();
+        let mut rng = round_rng(11, 9);
+        for stage in &mut parsed.stages {
+            mutate_parameters(stage, &mut rng);
+        }
+        assert_eq!(parsed.stages[0].get_u64("seed", 0), 701);
+        assert!((0.01..=0.25).contains(&parsed.stages[0].get_f64("q", 0.0)));
+        assert!((2..=6).contains(&parsed.stages[1].get_u64("depth", 0)));
+        assert!((0.015..=0.30).contains(&parsed.stages[1].get_f64("lr", 0.0)));
+        assert!((40..=280).contains(&parsed.stages[1].get_u64("rounds", 0)));
+    }
+
+    #[test]
+    fn odd_length_crossover_uses_the_source_floor_half_and_other_head() {
+        let proposer = Proposer::new(&[Language::Rust]).unwrap();
+        let parents = vec![
+            Program::from_dsl("(pipe X (standardize) (cheb degree=3) (winsor_clip q=0.05) (ridge))"),
+            Program::from_dsl("(pipe X (robust_scale) (cheb degree=4) (quantile_bins bins=16) (row_stats) (histgbm))"),
+        ];
+        let lm = [0.0; 48];
+        let batch = proposer
+            .propose(&request(&parents, &lm, true), &NoBank, &BTreeSet::new())
+            .unwrap();
+        let cross = batch
+            .proposals
+            .iter()
+            .find(|p| p.family == ProposalFamily::Crossover)
+            .unwrap();
+        let parsed = parse_canonical_pipeline(&cross.program.dsl).unwrap();
+        assert_eq!(
+            parsed
+                .stages
+                .iter()
+                .map(|s| s.op.as_str())
+                .collect::<Vec<_>>(),
+            ["standardize", "quantile_bins", "row_stats", "histgbm"]
+        );
+        assert_eq!(
+            cross.parents,
+            parents
+                .iter()
+                .map(|p| p.program_sha256.clone())
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn empty_capability_intersection_cannot_spin_forever_in_synthesis() {
+        let mut proposer = Proposer::new(&[Language::Rust]).unwrap();
+        let mut registry = Registry::current();
+        for entry in &mut registry.entries {
+            for supported in entry.supported.values_mut() {
+                *supported = entry.kind == CapabilityKind::Head && entry.name == "ridge_gcv";
+            }
+        }
+        proposer.filter = registry.allowed_ops(&[Language::Rust]).unwrap();
+        let lm = [0.0; 48];
+        let batch = proposer
+            .propose(&request(&[], &lm, false), &NoBank, &BTreeSet::new())
+            .unwrap();
+        assert!(batch.synthesis_exhausted);
+        assert!(batch.proposals.is_empty());
+        assert_eq!(batch.attempts[&ProposalFamily::Synthesis], 64 * 8);
+        assert_eq!(batch.invalid_or_filtered, 64 * 8);
+    }
+
+    #[test]
+    fn invalid_parent_hash_or_landmarks_fail_before_bank_reads() {
+        let proposer = Proposer::new(&[Language::Rust]).unwrap();
+        let bank = Bank::new();
+        let mut parents = parents();
+        let lm = [0.0; 48];
+        parents[0].program_sha256 = "0".repeat(64);
+        assert!(proposer
+            .propose(&request(&parents, &lm, false), &bank, &BTreeSet::new())
+            .is_err());
+        let mut lm = lm;
+        lm[47] = f64::INFINITY;
+        assert!(proposer
+            .propose(&request(&[], &lm, false), &bank, &BTreeSet::new())
+            .is_err());
+        assert!(bank.called.borrow().is_empty());
+    }
+}
