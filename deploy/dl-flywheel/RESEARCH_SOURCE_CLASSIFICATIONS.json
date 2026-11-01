@@ -4560,7 +4560,39 @@
         "reason": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification."
       }
     }
-  },
+,
+    "python:research/flywheel_selfplay/h176_data_scaling/analysis.py": {
+      "bytes": 13501,
+      "sha256": "82d8e00737f0376827d9a7249f955157f0fde7a9e04ff80b88b879909b0c0a47",
+      "classification": {
+        "role": "research",
+        "reason": "H176 preregistered CPU-only diagnostic of the r882 zero-update generalization gap and nested FIT-family data-scaling curve; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h176_data_scaling/runner.py": {
+      "bytes": 27102,
+      "sha256": "c54bc8e72c1500db056743c499d8d959e09272db9d2d597e4035a4f223511795",
+      "classification": {
+        "role": "research",
+        "reason": "H176 preregistered CPU-only diagnostic of the r882 zero-update generalization gap and nested FIT-family data-scaling curve; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h176_data_scaling/treatment.py": {
+      "bytes": 2139,
+      "sha256": "336b759b6bbd81288425c4fcaf244d4f8160f8c69e0178c29106e77323b8f6fe",
+      "classification": {
+        "role": "research",
+        "reason": "H176 preregistered CPU-only diagnostic of the r882 zero-update generalization gap and nested FIT-family data-scaling curve; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h176_data_scaling/monitor.py": {
+      "bytes": 5200,
+      "sha256": "79079503077af4097423089e1b22d921049f047f2e641f7fb62fef30f1cfb100",
+      "classification": {
+        "role": "research",
+        "reason": "H176 preregistered CPU-only diagnostic of the r882 zero-update generalization gap and nested FIT-family data-scaling curve; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    }  },
   "schema": "jope.flywheel-research-source-classification/v1",
   "scope": "Non-test research source roles and exact source hashes. Native jope-records test inventory permits only test-bearing CI coverage families; these source records are not exclusions or claimed tests."
 }
