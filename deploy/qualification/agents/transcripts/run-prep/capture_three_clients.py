@@ -539,7 +539,6 @@ def run_capture(args: argparse.Namespace) -> dict:
                         client_exit = active_client.wait(timeout=row["timeout_seconds"])
                     except subprocess.TimeoutExpired:
                         timed_out = True
-                        client_exit = terminate_group(active_client)
                     finally:
                         client_exit = terminate_group(active_client)
 
@@ -599,11 +598,13 @@ def run_capture(args: argparse.Namespace) -> dict:
                 except (OSError, CaptureError) as error:
                     capture_error = str(error)
         finally:
-            if active_client is not None:
-                terminate_group(active_client)
-            engine_stop_exit, engine_exit = stop_engine(
-                candidate, repo, environment, engine
-            )
+            try:
+                if active_client is not None:
+                    terminate_group(active_client)
+            finally:
+                engine_stop_exit, engine_exit = stop_engine(
+                    candidate, repo, environment, engine
+                )
 
         rows[key] = {
             "version": row["version"],
