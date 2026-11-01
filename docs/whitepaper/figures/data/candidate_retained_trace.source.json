@@ -1,0 +1,72 @@
+{
+  "schema": "whitepaper.candidate-retained-source/v1",
+  "csv_sha256": "058a6cc3539de75fd4fe80ff1e8c4b696f399dc1cde2b47142068b3d2c057cd9",
+  "capture": {
+    "at": "2026-11-01T19:24:54.746869+00:00",
+    "selection": "Prior committed admission-ledger retained-best identity, inclusive, through last complete live admission also present in the retained summary prefix; no score/margin filtering",
+    "published_anchor": {
+      "anchor_round": 2795,
+      "published_capture_last_round": 3021,
+      "published_csv_sha256": "8593b87e632bd729ab41e6fecb63ce6cb8fe62b1ce4b9d74564dfef629c48e50",
+      "source_base": "208acd63772f4c07926027ee9d765cde80ef1198",
+      "selection": "Prior committed admission-ledger retained-best identity, inclusive, through last complete live admission also present in the retained summary prefix; no score/margin filtering"
+    },
+    "rows": 341,
+    "round_window": [
+      2795,
+      3135
+    ],
+    "accepted_rounds": [
+      2795,
+      3100
+    ],
+    "strict_gain_rounds": [],
+    "accepted_tie_rounds": [
+      2795,
+      3100
+    ],
+    "rejected_round_spans": [
+      [
+        2796,
+        3099
+      ],
+      [
+        3101,
+        3135
+      ]
+    ],
+    "last_accepted_round": 3100,
+    "trailing_rejected_rows": 35,
+    "reported_best_rounds": [
+      2795,
+      3100
+    ],
+    "evaluation_identity_sha256": "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6",
+    "stable_prefix_rereads_verified": true,
+    "summary_admission_join": {
+      "rows": 20,
+      "summary_round_window": [
+        3116,
+        3135
+      ],
+      "all_retained_summaries_match": true
+    },
+    "operational_records_omitted": 0
+  },
+  "source_prefixes": {
+    "admission": {
+      "prefix_bytes": 1241620,
+      "prefix_sha256": "4db27bbc65fac0132f0ce8e593b817a6c5971265cc531e65f30cbe190aa206ac",
+      "source_rows": 2362,
+      "trailing_incomplete_bytes_omitted": 0
+    },
+    "summary": {
+      "prefix_bytes": 3358349,
+      "prefix_sha256": "a1a3565fecf99fe31ba013df516e2622070f172a487844a4410db3290f0fd685",
+      "source_rows": 20,
+      "trailing_incomplete_bytes_omitted": 0
+    }
+  },
+  "source_binding": "Log-prefix bytes and projection only; installed loop source, checkpoint, full evaluation population and normalization remain separately unqualified.",
+  "scope": "Adaptive training-side adapter admission decisions and logged pool utility only; not GP program-incumbent events, neural writer training, independent first-proposal performance or deployment throughput. No gaps filled. Aggregate projection only; no per-context rows, labels, programs, weights or sealed payloads transferred."
+}
