@@ -6,8 +6,9 @@ from collections import Counter
 from pathlib import Path
 
 import pytest
+import torch
 
-from research.joint_regbin import driver
+from research.joint_regbin import driver, worker
 from research.joint_regbin.admission import (
     PARTIAL_SCHEMA,
     _load_csv,
@@ -910,3 +911,169 @@ def test_packet_root_guard(tmp_path, token, kind):
         root.symlink_to(clean, target_is_directory=True)
     with pytest.raises(ValueError, match="protected"):
         safe_path(root, "rows.npz")
+
+
+class SyntheticWorkerAdapter(torch.nn.Module):
+    """Synthetic stand-in preserving the pinned trainable parameter count."""
+
+    def __init__(self):
+        super().__init__()
+        self.weight = torch.nn.Parameter(torch.zeros(29211))
+
+    def predict_costs(self, candidates):
+        return {"total_cost": self.weight[0].expand_as(candidates)}
+
+
+def _worker_context(task="regression", **updates):
+    row = {
+        "id": "ctx-1",
+        "dataset": "dataset-1",
+        "family": "family-1",
+        "task": task,
+        "role": "train",
+        "source_split": "train",
+        "origin": "real",
+        "has_meta_test": False,
+        "payload": "packet/ctx-1.npz",
+        "payload_sha256": "a" * 64,
+    }
+    row.update(updates)
+    return row
+
+
+def test_worker_heads_use_explicit_label_and_linear_binary_mapping():
+    heads = worker.TwoTaskHeads()
+    values = torch.tensor([[1.25], [-0.5]])
+    assert torch.equal(heads("regression", values), values.squeeze(-1))
+    assert torch.equal(heads("binary", values), values.squeeze(-1))
+    with pytest.raises(ValueError, match="unknown task"):
+        heads("classification", values)
+
+
+def test_worker_losses_and_binary_labels_are_strict():
+    assert worker.task_loss("regression", torch.tensor([1.0]), torch.tensor([0.0])) > 0
+    assert worker.task_loss("binary", torch.tensor([0.0]), torch.tensor([1.0])) > 0
+    with pytest.raises(ValueError, match="zero/one"):
+        worker.task_loss("binary", torch.tensor([0.0]), torch.tensor([0.5]))
+    with pytest.raises(ValueError, match="nonfinite"):
+        worker.task_loss(
+            "regression", torch.tensor([float("nan")]), torch.tensor([0.0])
+        )
+
+
+def test_worker_validates_tel_rows_and_protected_inputs():
+    rows = [
+        _worker_context(),
+        _worker_context("binary", id="ctx-2", family="family-2"),
+    ]
+    worker.validate_context_rows(rows)
+    malformed = [dict(row) for row in rows]
+    malformed[0]["task"] = "multiclass"
+    with pytest.raises(ValueError, match="explicit regression/binary"):
+        worker.validate_context_rows(malformed)
+    protected = [dict(row) for row in rows]
+    protected[0]["has_meta_test"] = True
+    with pytest.raises(ValueError, match="sealed, or holdout"):
+        worker.validate_context_rows(protected)
+    escaped = [dict(row) for row in rows]
+    escaped[0]["payload"] = "../sealed/hidden.npz"
+    with pytest.raises(ValueError, match="payload path"):
+        worker.validate_context_rows(escaped)
+
+
+def test_worker_refuses_tel_metadata_candidates_before_payload_packing():
+    # TEL role candidates intentionally contain no admitted payload reference.
+    candidate = {
+        "context": "ctx-1",
+        "dataset": "dataset-1",
+        "family": "family-1",
+        "task": "binary",
+        "role": "train",
+        "source_split": "train",
+        "context_sha256": "a" * 64,
+        "pool_sha256": "b" * 64,
+        "train_only_jtt1_sha256": "c" * 64,
+    }
+    with pytest.raises(ValueError, match="role-manifest schema"):
+        worker.validate_context_rows([candidate])
+
+
+def test_worker_driver_request_checks_roles_and_batch_ids():
+    row = _worker_context()
+    request_value = {
+        "schema": "jope.joint-regbin/v1",
+        "phase": "train",
+        "contexts": [row],
+        "batches": [[row["id"]]],
+    }
+    worker.validate_request(request_value)
+    invalid = {**request_value, "batches": [["unknown-context"]]}
+    with pytest.raises(ValueError, match="unknown contexts"):
+        worker.validate_request(invalid)
+    invalid_rows = [dict(row, role="val")]
+    with pytest.raises(ValueError, match="non-training role"):
+        worker.validate_request({**request_value, "contexts": invalid_rows})
+
+
+def test_worker_binary_metrics_use_pinned_task_source():
+    module = worker.binary_metrics_module()
+    assert callable(module.fit_batched_platt_calibration_gpu)
+    result = worker.calibrated_binary_metrics(
+        torch.tensor([-2.0, -1.0, 1.0, 2.0]),
+        torch.tensor([0.0, 0.0, 1.0, 1.0]),
+        torch.tensor([-1.0, -0.5, 0.5, 1.0]),
+        torch.tensor([0.0, 0.0, 1.0, 1.0]),
+    )
+    assert result["log_loss"] >= 0
+    assert result["roc_auc"] == pytest.approx(1.0)
+
+
+def test_worker_updates_shared_adapter_for_regression_and_binary():
+    adapter = SyntheticWorkerAdapter()
+    heads = worker.TwoTaskHeads()
+    optimizer = torch.optim.SGD([*adapter.parameters(), *heads.parameters()], lr=0.1)
+    contexts = [
+        (
+            "reg-ctx",
+            "regression",
+            {"candidates": torch.tensor([1.0, 2.0])},
+            torch.tensor([1.0, 2.0]),
+        ),
+        (
+            "bin-ctx",
+            "binary",
+            {"candidates": torch.tensor([-1.0, 1.0])},
+            torch.tensor([1.0, 1.0]),
+        ),
+    ]
+    result = worker.train_context_batch(adapter, heads, optimizer, contexts)
+    assert result["optimizer_steps"] == 1
+    assert result["task_contexts"] == {"regression": 1, "binary": 1}
+    assert result["parameters_before"] != result["parameters_after"]
+    assert result["batch_sha256"] == worker.hash_batch_ids(["reg-ctx", "bin-ctx"])
+
+
+def test_worker_core_uses_injected_packer_for_synthetic_fixture():
+    adapter = SyntheticWorkerAdapter()
+    heads = worker.TwoTaskHeads()
+    optimizer = torch.optim.SGD([*adapter.parameters(), *heads.parameters()], lr=0.1)
+
+    def packer(_row):
+        return {"candidates": torch.tensor([1.0, 2.0])}, torch.tensor([1.0, 2.0])
+
+    core = worker.WorkerCore(adapter, heads, optimizer, packer)
+    row = _worker_context()
+    result = core.train_batch([row])
+    prediction, target = core.predict(row)
+    assert result["task_contexts"] == {"regression": 1, "binary": 0}
+    assert prediction.shape == target.shape
+
+
+def test_worker_regression_curve_is_log_rmse_over_ridge():
+    result = worker.regression_metrics(
+        torch.tensor([1.0, 3.0]), torch.tensor([1.0, 1.0]), ridge_rmse=2.0
+    )
+    assert result["rmse"] == pytest.approx(2**0.5)
+    assert result["log_rmse_ratio"] == pytest.approx(
+        torch.log(torch.tensor(2**0.5 / 2.0)).item()
+    )

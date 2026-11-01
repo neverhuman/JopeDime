@@ -40,3 +40,19 @@ summary shape before comparing task sets. Null/scalar/nested values, mappings,
 duplicates and unsupported tasks produce the existing worker-head blocker and
 cannot create a worker-bound plan. These consistency checks do not authenticate
 an issuer, qualify a real worker or authorize the study.
+
+## Two-task worker core (ENG:watcher R19, 2026-11-01)
+
+The worker core adds a regression identity head and a linear binary-logit head
+over the shared adapter output. It uses Smooth L1 for explicitly labelled
+regression contexts and BCE-with-logits for binary contexts; binary calibration
+and metrics load the owner-pinned `binary_clf_head_and_metrics.py` source. Both
+tasks receive packed inputs through the same injected flywheel candidate-pool
+packer.
+
+The worker accepts only admitted protocol context rows. TEL's role-candidate
+manifest is metadata-only, `ROLE_CANDIDATES_NOT_ADMITTED`, and has no payload
+references; it is intentionally rejected by the worker until a reviewed
+admission step supplies exact payload identities and the packer integration.
+Synthetic tests exercise the task heads, loss, update, metrics and refusal
+boundaries. They do not qualify a real worker or authorize campaign execution.
