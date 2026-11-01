@@ -14218,6 +14218,16 @@
       ],
       "lanes": [],
       "scope": "H165 data-free controls: family cross-fit exclusion and assessment cover, planted positive/tied selector reachability, paired fit batches, dimension-scaled annealed noise and independent streams, adapter-input dropout train/eval bit identity, family weighting/canonical Elo/Holm and terminal resource guards. No study data, checkpoint, model or serving qualification."
+    },
+    "python:research/flywheel_selfplay/h164_sam_retry/test_h164.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
     }
   },
   "lanes": {
