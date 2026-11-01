@@ -419,7 +419,7 @@ class RoleManifestAdmissionTests(unittest.TestCase):
                         {
                             "id": dataset,
                             "task": task,
-                            "origin": "real",
+                            "s3_bucket": "veox-jopedime-datasets-use2",
                             "family_key": family,
                         }
                     )
@@ -513,6 +513,15 @@ class RoleManifestAdmissionTests(unittest.TestCase):
                     },
                     {50, 2, 32, 10},
                 )
+
+    def test_role_manifest_rejects_noncanonical_catalog_bucket(self) -> None:
+        catalog_path, contexts, families, evidence = self._fixture()
+        catalog = json.loads(catalog_path.read_text())
+        catalog["datasets"][0]["s3_bucket"] = "veox-jopedime-learning-use2"
+        catalog_path.write_text(json.dumps(catalog))
+
+        with self.assertRaisesRegex(ValueError, "approved real S3 bucket"):
+            build_role_manifest(catalog_path, contexts, families, evidence)
 
     def test_plan_rederives_proof_instead_of_trusting_cached_eligibility(self) -> None:
         catalog_path, contexts, families, evidence = self._fixture()
