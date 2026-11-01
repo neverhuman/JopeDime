@@ -9,9 +9,9 @@ ea6347d5cc642cd0d7ae847c4e95f309471a5e72; no foreign working files are imported.
 the executor. [fold_manifest.json](fold_manifest.json) fixes disjoint TRAIN
 family fit/calibration/inner-evaluation sets.
 
-Validation: six CPU tests cover pairwise direction, effective smoothing,
+Validation: nine CPU tests cover pairwise direction, effective smoothing,
 ties, temperature fitting/argmin invariance, family isolation/equal weighting,
-and refusal to call a worse-than-r882 result promising. Ruff check/format pass.
+refusal to call a worse-than-r882 result promising, and reserved-block disk guards. Both runner and supervisor use the shared user-visible used/(used+bavail) accounting; 95% is a hard stop, with equality tests for 95% and40GB. Ruff check/format pass.
 Zero-evaluation smoke verifies 47 trainable tensors/29,211 adapter parameters
 and frozen DOPE c51a56d0, with zero CUDA initialization and no optimizer updates.
 The exact native91-context baseline is still a runtime prerequisite.

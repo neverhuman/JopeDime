@@ -35,11 +35,12 @@
     "science.py": "31503475ad0f2f12c49f7e74741d37f540b53c026de04954cae338665eba822d"
   },
   "executor_sha256": {
-    "runner.py": "4836905a638823d214d8504b51657fa8cfbc2cb7a898ccf863b55dba9f230a86",
-    "test_h155.py": "607dfdc81346a04a2c6d279db990c1996d49d1debcdf5921c4e8720cb3cd112a",
+    "runner.py": "e7f27e5420b9c8f06f11311241ef41e4f8a6f227ab7c58f67ab9f6f1638f57a5",
+    "test_h155.py": "008fec08b299a6d5dab534f69dd67960c3c645eb5c7b3db9ccc1f9e4a476c7d4",
     "fold_manifest.json": "a4b6efcacf83ca19ebdcc5b77d280c6db655622b92adf1880c1ead71279563ea",
-    "supervise.py": "58e354b132ea7e08b87649b0eb72fcb01b4752d3d0ff79426d05e385182fbbd3",
-    "input-provenance.json": "741915bb16586988dc05922778008d8da116cbbb185f214b8dbab215642ecce9"
+    "supervise.py": "bd8f8012d490878eb93afde51dcbc56bc16f9a5a5994e84f05bb3e6cdb2ee8f3",
+    "input-provenance.json": "741915bb16586988dc05922778008d8da116cbbb185f214b8dbab215642ecce9",
+    "resource_limits.py": "adbec46018c00353b242b8b9e5efb05adfa4e543917d12475fbefcebfa5859a0"
   },
   "seeds": [
     155101,
@@ -86,5 +87,6 @@
     "version_id": "GMtNnf1WCqpGkjctN9pDYqZ9uPdI6_cw",
     "sha256": "69ea279984fe981acfc3067f95f320c5514f78e30c7389602049975c0dcbe6d7",
     "original_H50_H58_derivative_versions": "not established; retained approved inputs with exact H144 archive custody"
-  }
+  },
+  "disk_used_definition": "100*(blocks-bfree)/(blocks-bfree+bavail); integer threshold; stop>=95%"
 }
