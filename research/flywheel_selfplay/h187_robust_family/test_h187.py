@@ -226,3 +226,30 @@ def test_committed_calibration_receipt_matches_imported_source():
         True, receipt, expected_analysis_sha256=sha
     )
     assert result["verdict"] == "ADVANCE" and result["lift_qualified"]
+
+
+def test_relaunch_sustained_load_and_xbabe1_resource_floors():
+    from monitor import next_load_streak
+
+    x = dict(
+        load=LOAD_LIMIT + 1,
+        cpu=36.5,
+        available=30 * 2**30,
+        free=100e9,
+        disk_used_fraction=0.95,
+        rss=1e9,
+        threads=3,
+        output_bytes=0,
+    )
+    streak = 0
+    for i in range(1, 4):
+        streak = next_load_streak(streak, x)
+        assert bool(
+            violations(dict(x, disk_used_fraction=0.9), streak, host="xbabe2")
+        ) == (i == 3)
+    assert next_load_streak(streak, dict(x, load=0)) == 0
+    healthy = dict(x, load=0)
+    assert not violations(healthy, 0, host="xbabe1")
+    assert violations(dict(healthy, free=79e9), 0, host="xbabe1")
+    assert violations(dict(healthy, output_bytes=1e9), 0, host="xbabe1")
+    assert violations(dict(healthy, cpu=85.1), 0, host="xbabe1")

@@ -68,12 +68,21 @@
   "trainable_adapter_parameters": 29211,
   "source_sha256": {
     "PREREG.md": "751dccc65d25b3cb2ea5a9c68f17864a04401b312ecc732eff0b39629e65344d",
+    "RELAUNCH.md": "476fd4b2903d02af4732436ba115ea53cf4d7835384e44022900ce17216eb151",
     "design.py": "5e4c8070aec47b5d28845b87c589a605a806788de3e0bc9b0ab4d32519554ec5",
     "fold_manifest.json": "adc88a74cf7ee244f2040d91f6fad9269a05ee40349e08f7037cd689748d761e",
-    "monitor.py": "827f6809ac42835e33b668731b4e13023259efe3f4bce800a5eac5070511d022",
+    "monitor.py": "97cdb5c0cdacacf1229d0317b69f98c029c4e684a381b5b7af1d894777999bfa",
     "objectives.py": "9cd6a8c93bc32f9cb32e362d6b792d543afb517a72477779f6bc410375ecd72f",
     "provenance.json": "425ccf59bb5b7d4fffaaad83d75c31faf3c619a3a9df02f7b40648a483e96109",
-    "runner.py": "7c296f5e8966cc3e5548f5411feac37ab2ed8314d26b8f0590a814b6de702168",
-    "test_h187.py": "43c613d2c3b277f81ef796db749825e9be5697db88a30e0c940f9291cf7dee36"
-  }
+    "runner.py": "150fe320963c433763a30705396eb78db78d70800f21af732f4b713773a1e5b1",
+    "test_h187.py": "149eaeda2d61ed2bc32e425a42fe8b60046f20a9c2e925f9702bedecd165e310"
+  },
+  "relaunch_authority": "/home/ubuntu/nudges/hwave_t0836_h187_relaunch.md",
+  "attempt": "002",
+  "permitted_hosts": [
+    "xbabe1",
+    "xbabe2"
+  ],
+  "xbabe1_free_floor_bytes": 80000000000,
+  "xbabe1_output_limit_bytes": 1000000000
 }
