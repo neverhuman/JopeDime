@@ -343,6 +343,22 @@ fn drain_queued_input(
     )
 }
 
+fn reconcile_width_and_drain(
+    screen: &mut Screen,
+    guard: &TerminalGuard,
+    width: &mut u16,
+    state: &mut State,
+    command: &mut impl FnMut(&str) -> io::Result<()>,
+) -> io::Result<Option<Exit>> {
+    let was_inline = matches!(screen, Screen::Inline(_));
+    screen.reconcile_width(guard, width)?;
+    if was_inline && matches!(screen, Screen::Plain(_)) {
+        drain_queued_input(screen, guard, width, state, command)
+    } else {
+        Ok(None)
+    }
+}
+
 fn drain_event_queue(
     mut next: impl FnMut() -> io::Result<Option<Event>>,
     mut handle: impl FnMut(Event) -> io::Result<Option<Exit>>,
@@ -476,17 +492,13 @@ pub fn run(
         if let Some(signal) = guard.signal() {
             return Ok(Exit::Signal(signal));
         }
-        let was_inline = matches!(screen, Screen::Inline(_));
-        screen.reconcile_width(&guard, &mut width)?;
+        if let Some(exit) =
+            reconcile_width_and_drain(&mut screen, &guard, &mut width, &mut state, &mut command)?
+        {
+            return Ok(exit);
+        }
         #[cfg(all(test, target_os = "linux"))]
         stop_before_event_poll_for_test()?;
-        if was_inline && matches!(screen, Screen::Plain(_)) {
-            if let Some(exit) =
-                drain_queued_input(&mut screen, &guard, &mut width, &mut state, &mut command)?
-            {
-                return Ok(exit);
-            }
-        }
         #[cfg(target_os = "linux")]
         if input && matches!(screen, Screen::Plain(_)) {
             if canonical_input.is_none() {
@@ -530,7 +542,15 @@ pub fn run(
             || recent_activity
                 .is_some_and(|last| now.duration_since(last) < Duration::from_secs(1));
         if clock.remaining(now, active).is_zero() {
-            screen.reconcile_width(&guard, &mut width)?;
+            if let Some(exit) = reconcile_width_and_drain(
+                &mut screen,
+                &guard,
+                &mut width,
+                &mut state,
+                &mut command,
+            )? {
+                return Ok(exit);
+            }
             screen.draw(&state)?;
             clock.drawn(Instant::now());
         }
@@ -979,6 +999,64 @@ mod tests {
             .unwrap();
         session
             .wait_for_text("COMMAND_EMPTY", Duration::from_secs(10))
+            .unwrap();
+        session.type_text("\\quit\r").unwrap();
+        session
+            .wait_for_text(
+                "PROBE_RESTORED raw=false termios=true",
+                Duration::from_secs(10),
+            )
+            .unwrap();
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn linux_redraw_downgrade_drains_buffered_key_burst_and_enter() {
+        let payload = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        let mut session = spawn_probe("resize", true);
+        session.type_text(&format!("arm\r{payload}")).unwrap();
+        let output = session
+            .wait_for_text("PROBE_BEFORE_POLL", Duration::from_secs(10))
+            .unwrap();
+        let pid = output
+            .split_whitespace()
+            .skip_while(|part| *part != "PROBE_BEFORE_POLL")
+            .nth(1)
+            .unwrap_or_else(|| panic!("stopped-child marker has no PID: {output:?}"))
+            .parse::<u32>()
+            .unwrap();
+        let deadline = Instant::now() + Duration::from_secs(10);
+        loop {
+            let status = std::fs::read_to_string(format!("/proc/{pid}/status")).unwrap();
+            if status
+                .lines()
+                .any(|line| line.starts_with("State:") && line.contains("T (stopped)"))
+            {
+                break;
+            }
+            assert!(
+                Instant::now() < deadline,
+                "PTY app did not stop before poll"
+            );
+            std::thread::yield_now();
+        }
+
+        // Resize and Enter while the same child is stopped. Let its redraw deadline expire so
+        // reconcile_width downgrades from the redraw path while parsed characters remain queued.
+        session.resize(39, 24).unwrap();
+        session.press_key(pty::Key::Enter).unwrap();
+        std::thread::sleep(Duration::from_millis(250));
+        assert!(std::process::Command::new("/bin/kill")
+            .args(["-CONT", &pid.to_string()])
+            .status()
+            .unwrap()
+            .success());
+
+        session
+            .wait_for_text("PROBE_FIRST_EVENT=key", Duration::from_secs(10))
+            .unwrap();
+        session
+            .wait_for_text(&format!("COMMAND {payload}"), Duration::from_secs(10))
             .unwrap();
         session.type_text("\\quit\r").unwrap();
         session
