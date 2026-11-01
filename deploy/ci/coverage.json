@@ -4319,6 +4319,16 @@
       "lanes": [],
       "scope": "REL-07 A5 named-client provider controls: candidate/source binding, transcript manifest and sidecar identities, per-client execution/semantic receipt checks, exact tool counts, distinct runs, CPU placement and export evidence; synthetic receipts only, no live client execution."
     },
+    "python:deploy/qualification/v1.0/test_provider_d2/test_d2.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 D2 size-only provider controls: candidate/source binding, fused-cpu profile and size-budget checks, 40 MB ceiling and refusal/result accounting. Synthetic reports only; no latency verdict or release execution."
+    },
     "python:deploy/qualification/v1.0/test_provider_e2/test_e2.py": {
       "discovery": {
         "kind": "python-family"
