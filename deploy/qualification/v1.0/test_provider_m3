@@ -740,7 +740,9 @@ class M3FullTests(unittest.TestCase):
 
 class M3FullFlowTests(unittest.TestCase):
     def setUp(self):
-        base = Path(os.environ.get("JOPE_QUALIFICATION_TEST_TMP", HERE / "target"))
+        base = Path(
+            os.environ.get("JOPE_QUALIFICATION_TEST_TMP", tempfile.gettempdir())
+        )
         base.mkdir(parents=True, exist_ok=True)
         self.tmp = tempfile.TemporaryDirectory(prefix="m3-full-control-", dir=base)
         self.addCleanup(self.tmp.cleanup)

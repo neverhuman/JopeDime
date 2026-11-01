@@ -103,7 +103,7 @@ def test_preflight_verifies_inputs_without_qualifying_study(preflight_inputs):
         status="INPUTS_VERIFIED",
         plan_sha256=frozen["sha256"],
         contexts=36,
-        jobs=72,
+        jobs=54,
         learner_sha256=frozen["learner_sha256"],
         initial_checkpoint_sha256=frozen["initial_checkpoint_sha256"],
         qualification_status="NOT_QUALIFIED",
@@ -331,10 +331,10 @@ def receipt_for(plan, job):
     )
 
 
-def test_plan_is_reproducible_and_all_72_jobs_have_equal_budgets(plan, manifest):
+def test_plan_is_reproducible_and_all_54_jobs_have_equal_budgets(plan, manifest):
     assert plan == make_plan(manifest)
-    assert len(plan["jobs"]) == 72
-    assert len({job["id"] for job in plan["jobs"]}) == 72
+    assert len(plan["jobs"]) == 54
+    assert len({job["id"] for job in plan["jobs"]}) == 54
     expected = expected_counts(plan["config"])
     for job in plan["jobs"]:
         orders = list(batches(job, plan["config"]))
@@ -347,7 +347,7 @@ def test_plan_is_reproducible_and_all_72_jobs_have_equal_budgets(plan, manifest)
         assert {value for order in orders for value in order} <= training
 
 
-def test_balanced_and_natural_sampling_are_prespecified(plan):
+def test_three_arm_sampling_is_prespecified(plan):
     config = plan["config"]
     for arm in ARMS:
         job = next(
@@ -357,30 +357,26 @@ def test_balanced_and_natural_sampling_are_prespecified(plan):
         counts = Counter(
             by_id[value] for order in batches(job, config) for value in order
         )
-        if arm.startswith("joint"):
+        if arm == "joint":
             assert counts == dict(regression=1600, binary=1600)
         else:
             assert counts == {"regression" if arm == "reg-only" else "binary": 3200}
 
 
-def test_natural_ratio_differs_from_balanced_without_changing_budget(manifest):
-    manifest["contexts"] = [
-        row
-        for row in manifest["contexts"]
-        if not (
-            row["role"] == "train"
-            and row["task"] == "binary"
-            and int(row["id"].rsplit("-", 1)[1]) >= 5
-        )
-    ]
-    plan = make_plan(manifest)
-    counts = {}
-    for arm in ("joint-natural", "joint-balanced"):
+def test_joint_arm_uses_balanced_sampling_at_the_same_declared_budget(plan):
+    assert set(ARMS) == {"joint", "reg-only", "bin-only"}
+    expected = expected_counts(plan["config"])
+    for arm in ARMS:
         job = next(j for j in plan["jobs"] if j["arm"] == arm and j["fold"] == "full")
-        types = {row["id"]: row["task"] for row in job["train"]}
-        counts[arm] = Counter(types[c] for b in batches(job, plan["config"]) for c in b)
-    assert counts["joint-natural"]["regression"] == 3200 * 8 // 13
-    assert counts["joint-balanced"]["regression"] == 1600
+        batches_for_job = list(batches(job, plan["config"]))
+        assert len(batches_for_job) == expected["optimizer_steps"]
+        assert sum(map(len, batches_for_job)) == expected["context_presentations"]
+        if arm == "joint":
+            tasks = {row["id"]: row["task"] for row in job["train"]}
+            counts = Counter(
+                tasks[context] for batch in batches_for_job for context in batch
+            )
+            assert counts == {"regression": 1600, "binary": 1600}
 
 
 @pytest.mark.parametrize(
@@ -424,7 +420,7 @@ def test_panel_family_overlap_is_evaluated_only_by_held_family_model(manifest):
         for job in plan["jobs"]
         if any(r["id"] == row["id"] for r in job["evaluation"])
     ]
-    assert len(jobs) == 12  # four arms × three seeds, exactly once each
+    assert len(jobs) == 9  # three arms × three seeds, exactly once each
     assert all(job["fold"] == plan["folds"][row["family"]] for job in jobs)
     assert all(row["family"] not in {r["family"] for r in job["train"]} for job in jobs)
 
@@ -648,7 +644,7 @@ def test_regression_score_store_wiring_is_idempotent_and_task_scoped(tmp_path):
     plan = {"sha256": "f" * 64}
     row = {
         "id": "fixture-regression-1",
-        "arm": "joint-balanced",
+        "arm": "joint",
         "seed": 73,
         "fold": 2,
         "job_id": "fixture-regression-job",
@@ -812,7 +808,7 @@ def test_paired_family_bootstrap_is_reproducible():
     ]
     first = comparison(records, "regression", 30, 136)
     assert first == comparison(records, "regression", 30, 136)
-    assert first["joint-balanced"]["delta"] == pytest.approx(0)
+    assert first["joint"]["delta"] == pytest.approx(0)
 
 
 def evaluation(reg, binary):
@@ -868,19 +864,20 @@ def test_report_produces_standalone_plot_from_explicit_synthetic_fixture(tmp_pat
     for task in tasks:
         tasks[task]["panel_elo"] = {arm: 1500 for arm in ARMS}
     report = dict(
-        verdict="JOINT_OK",
-        interpretation="SYNTHETIC FIXTURE ONLY",
+        verdict=None,
+        interpretation="TWO-ROUND SYNTHETIC FIXTURE ONLY; NO STUDY VERDICT",
         comparisons=[dict(tasks=tasks)],
         curves=[
             dict(task=task, arm=arm, round=r, value=0.1)
             for task in tasks
             for arm in ARMS
-            for r in (5, 50)
+            for r in (1, 2)
         ],
     )
     render(report, tmp_path)
     assert (tmp_path / "validation-curves.svg").stat().st_size > 1000
-    assert (tmp_path / "curves.jsonl").read_text().count("\n") == 16
+    assert "NO VERDICT" in (tmp_path / "report.md").read_text()
+    assert (tmp_path / "curves.jsonl").read_text().count("\n") == 12
 
 
 @pytest.mark.parametrize(
