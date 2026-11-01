@@ -105,7 +105,7 @@ impl AdmittedRanker {
             forwards: Arc::clone(&self.forwards),
         })
     }
-    #[cfg(any(test, feature = "research"))]
+    #[cfg(test)]
     pub(crate) fn execution_counter(&self) -> Arc<AtomicUsize> {
         Arc::clone(&self.forwards)
     }
