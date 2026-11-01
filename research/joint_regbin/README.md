@@ -143,6 +143,42 @@ boundary. No role is inferred and no payload is opened in this metadata path.
 Catalog train hashes also do not provide the candidate tensors or qualified
 worker/checkpoint required for an executable learner packet. No campaign starts.
 
+### Train-only candidate tensor builder (ENG:watcher R22)
+
+`candidate_builder.py` supplies the train-only cache construction seam. It
+rederives the zero-role family-key pool and requires an ADMITTED role manifest
+that passes `admission.rederive_role_manifest`. Metadata-only role candidates
+and provisional nonempty family folds are refused;
+the current approved catalog has no reviewed nonsealed-family evidence, so the
+family pool has no folds and cannot authorize payload reads. When a reviewed
+admission exists, the builder reads only
+`datasets/<id>/manifest.json` and the exact
+`blobs/sha256/<catalog-train-sha256>` object from the approved dataset bucket.
+It never lists a bucket or reads another split. CSV rows are numeric and finite;
+binary labels are explicitly mapped to zero/one from their two observed class
+values. A deterministic seed builds two inner folds, and the source-pinned
+Flywheel Landmark-V2 proposer, DSL featurizer and native S1 evaluator build 16
+candidate rows.
+
+Regression worker targets are the existing S1 constrained fitness. Binary
+worker targets are the existing two-fold `cv_gate_passed` labels, because the
+task head is BCE-with-logits; this does not infer task from target cardinality
+or introduce a new threshold. The R882/DOPE token tensors are supplied by the
+caller after its read-only pinned initialization. Worker inputs have no revealed
+candidate labels, so target values cannot leak through conditioning slots.
+`make_worker_packer(...)` implements the callable expected by `WorkerCore`.
+The synthetic suite checks that unverified family roles and metadata-only
+candidate receipts cannot authorize an S3 request. Building a tensor cache does
+not qualify a worker or admit a study packet.
+
+Every generated pool remains
+`CANDIDATE_TENSORS_NOT_ADMITTED` / `eligibility_verified:false`. This builder
+does not qualify a worker, admit role candidates, train, reserve the study lock,
+write checkpoints or mutate the score store. Use only role rows whose pinned
+metadata proves nonsealed TRAIN/VAL eligibility. Current owner evidence still
+does not provide an admitted complete role manifest or qualified two-task
+worker, so no real pool was built by this change.
+
 ## Learner integration contract (qualification still required)
 
 Supply a reviewed Python learner, pinned by its full file hash, accepting
