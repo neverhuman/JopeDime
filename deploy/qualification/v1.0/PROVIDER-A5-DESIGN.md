@@ -12,13 +12,19 @@ version and client executable hash. The three admitted identities are Claude
 Code, the owner-approved Antigravity Gemini client, and Codex CLI.
 
 The provider verifies the complete sidecar inventory, then runs the existing
-`verify_capture.py --check-run-retry` validator. It independently checks all
-three semantic receipts for complete 16-call AG1 flows, clean client/server
-exits, exact same-key run retry with inventory counts `0 -> 1 -> 1`, completed
-CPU evaluation, six contiguous events, export retry and prediction output. A
-single missing client, failed call, stale source/artifact, symlink, non-file,
-changed sidecar or incomplete receipt refuses a result. The result counts three
-client flows; it does not count tool calls as separate gate executions.
+`verify_capture.py --check-run-retry` validator for the paired wire and ordered
+run-inventory checks. That validator explicitly does not qualify the A5 full
+path, so its `a5_status` field is never treated as a PASS. The provider also
+replays each raw `.mcp.jsonl` stream with the verifier's JSON-RPC pairing parser
+and requires exactly 16 successful calls with the specified tool histogram.
+Those raw results must show the claimed TRAIN registration and inspection,
+plan/create/retry path, completed evaluation, six contiguous events, two
+completed-model bundle exports, and prediction matching the semantic receipt.
+Sidecar booleans and counts alone cannot establish a flow. A single missing
+client, failed call, incomplete raw flow, stale source/artifact, symlink,
+non-file, changed sidecar or inconsistent receipt refuses a result. The result
+counts three client flows; it does not count tool calls as separate gate
+executions.
 
 Before running the provider, capture all three actual named clients against the
 candidate executable and place their raw captures and verifier receipts beside
