@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build metadata-only Q1 drafts from the frozen owner-family selection (T1115)."""
+"""Build metadata-only Q1 drafts from the frozen owner-family selection (T1115/R20)."""
 
 import argparse
 import copy
@@ -160,6 +160,7 @@ def make_plan(datasets, training_families, source_commit, evaluator_sha256=None)
         "training_families": list(training_families),
         "timeout_seconds": 600,
         "ledger_root": LEDGER,
+        "wide_census_sha256": q1.R20_CENSUS_SHA256,
     }
 
 
@@ -189,7 +190,10 @@ def main():
         args.evaluator_sha256,
     )
     counts = subgroup_counts(selected)
-    deficits = {group: MINIMUM - n for group, n in counts.items() if n < MINIMUM}
+    minima = {group: q1.subgroup_minimum(plan, group) for group in q1.GROUPS}
+    deficits = {
+        group: minima[group] - n for group, n in counts.items() if n < minima[group]
+    }
     try:
         q1.validate_plan(plan)
         validator = "PASS"
@@ -207,7 +211,8 @@ def main():
         "datasets": len(selected),
         "distinct_families": len({d["family"] for d in selected}),
         "subgroups": counts,
-        "required_families_per_subgroup": MINIMUM,
+        "required_families_per_subgroup": minima,
+        "wide_census_sha256": q1.R20_CENSUS_SHA256,
         "family_deficits": deficits,
         "validator": validator,
         "metadata_only": True,

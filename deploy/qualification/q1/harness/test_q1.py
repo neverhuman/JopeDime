@@ -757,7 +757,7 @@ class OwnerSelectionTests(unittest.TestCase):
 
         selected = q1_dedup.load_selection()
         plan = q1_dedup.make_plan(selected, ["f" * 40], "a" * 40)
-        self.assertEqual(set(plan), q1.PLAN_KEYS)
+        self.assertEqual(set(plan), q1.PLAN_KEYS | {"wide_census_sha256"})
         self.assertEqual(
             (plan["budget"], plan["seeds"], plan["timeout_seconds"]),
             (24, [0, 1, 2], 600),
@@ -782,6 +782,60 @@ class OwnerSelectionTests(unittest.TestCase):
         plan["minimum_wide_families"] = 4
         with self.assertRaisesRegex(ValueError, "unsupported/missing plan field"):
             q1.validate_plan(plan)
+
+    def test_r20_requires_every_pinned_wide_family_and_exact_census(self):
+        import q1_dedup
+
+        plan = q1_dedup.make_plan(
+            q1_dedup.load_selection(), ["f" * 40], "a" * 40, "e" * 64
+        )
+        q1.validate_plan(plan)  # Unsigned metadata fixture, no evaluator execution.
+        self.assertEqual(q1.subgroup_minimum(plan, "wide"), 3)
+        self.assertEqual(q1.subgroup_minimum(plan, "small"), 5)
+        cases = []
+        changed = copy.deepcopy(plan)
+        changed["wide_census_sha256"] = "0" * 64
+        cases.append(changed)
+        changed = copy.deepcopy(plan)
+        changed["datasets"] = [
+            d for d in changed["datasets"] if d["id"] != "12fd2dc4af621833"
+        ]
+        cases.append(changed)
+        changed = copy.deepcopy(plan)
+        next(d for d in changed["datasets"] if d["features"] > 20)["family"] = "0" * 64
+        cases.append(changed)
+        changed = copy.deepcopy(plan)
+        next(d for d in changed["datasets"] if d["features"] > 20)["features"] = 20
+        cases.append(changed)
+        for changed in cases:
+            with self.subTest(changed=q1.digest(changed)):
+                with self.assertRaisesRegex(ValueError, "R20"):
+                    q1.validate_plan(changed)
+        del plan["wide_census_sha256"]
+        with self.assertRaisesRegex(ValueError, "subgroup wide"):
+            q1.validate_plan(plan)
+
+    def test_r20_three_family_statistics_still_enforce_wide_noninferiority(self):
+        import q1_dedup
+
+        plan = q1_dedup.make_plan(
+            q1_dedup.load_selection(), ["f" * 40], "a" * 40, "e" * 64
+        )
+        rows = fixture_receipts(plan, 0.5)
+        positive = q1.analyze(plan, rows)
+        self.assertEqual(positive["decision"], "PASS")
+        self.assertEqual(positive["subgroups"]["wide"]["datasets"], 3)
+        for row in rows:
+            if (
+                row["event"] == "finished"
+                and row["guidance"] == "learned"
+                and row["dataset"]["features"] > 20
+            ):
+                row["response"]["loss"] = 1.1
+        result = q1.analyze(plan, rows)
+        self.assertGreater(result["primary"]["lower"], 0)
+        self.assertEqual(result["decision"], "FAIL")
+        self.assertLess(result["subgroups"]["wide"]["lower"], -0.02)
 
 
 if __name__ == "__main__":

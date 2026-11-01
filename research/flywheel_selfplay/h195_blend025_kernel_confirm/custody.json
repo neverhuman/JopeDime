@@ -1,0 +1,63 @@
+{
+  "schema": "jope.h195.s3-custody/v1",
+  "wave": "H195",
+  "run_id": "run-20261101T1800Z",
+  "host": "xbabe1",
+  "prereg_pr": 1607,
+  "prereg_merge": "10ba7d5758d55d89b44a837b7ea66fe965f82b3e",
+  "reviewed_head": "08aa66418a9d568af7bb2e1a2452a8dfac099cce",
+  "optimizer_updates": 0,
+  "gpu_used": false,
+  "sealed_or_holdout_read": false,
+  "objects": [
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H195/run-20261101T1800Z/H195_attempt.claim",
+      "version_id": "o4I2EQHYoYHAWw3ZQgPARmKa80o1nq9K",
+      "sha256": "51dfe142fb7cf759f7616393042f0c22dea442de5758543005fbf1f9d5bb3207",
+      "bytes": 234
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H195/run-20261101T1800Z/execution-identity.json",
+      "version_id": "lpQdO5RPG4KUEBYW4e7i1LNEyielU5xX",
+      "sha256": "ebf023d9d60361a325882af175a810439a5bd23e437c3a529ae9cd8e1095fd52",
+      "bytes": 2433
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H195/run-20261101T1800Z/launch.json",
+      "version_id": "L3l1jFLjS991v12cMYCr0UmJEiwoHhsR",
+      "sha256": "417575a260d9fcbe39d058708b10833868564a6c6ecc9f5f6ec1a57f289dd05e",
+      "bytes": 916
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H195/run-20261101T1800Z/metrics.json",
+      "version_id": "XFCeG9IynyjXFbw4jeJuVV044gWkOgpo",
+      "sha256": "9aa9e167b13421dcc5725b319ebecf11f97140f8a0b2e799ac66965644388bb3",
+      "bytes": 9151
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H195/run-20261101T1800Z/run-20261101T1800Z.resource_summary.json",
+      "version_id": "CpIXtsn35CUrTXPV7qAJsiRmIPFr6xin",
+      "sha256": "df3a22f8b71cfc4c950547795daf5c108b4c0b8ab2ca9c12b08dc7121458497e",
+      "bytes": 285
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H195/run-20261101T1800Z/run-outputs.tar.gz",
+      "version_id": "qLdM0jGic2GtyTOh0HJUlN2h8zVIPrW5",
+      "sha256": "145bd5e764c25f8c47e8db1d6c3b4bc1f29a1f4eabffd4c3f7d07e5a4269b124",
+      "bytes": 159040319
+    },
+    {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H195/run-20261101T1800Z/stage1_lock.json",
+      "version_id": "dk2U831ALo_tfJkWH._gQdTHNehDPIbd",
+      "sha256": "4fc6ba336574d0bf349030ebbbfb9e8965e8957fb8e79696c0e0ec2b5de1dcb3",
+      "bytes": 12167
+    }
+  ],
+  "manifest_object": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H195/run-20261101T1800Z/s3_manifest.json",
+    "version_id": "XEYR28cuK2H2VT.VyhQtuSbXXiIhKHHw",
+    "sha256": "dd81454981dc2d1849c7771d6a2fa744f92a69b35e56160205bca1cc9c11c8a3",
+    "bytes": 2819,
+    "write": "create-only if-none-match"
+  }
+}
