@@ -22,7 +22,7 @@ from common import (
 )
 
 
-MAC_RECEIPT_SCHEMA = "jope.rel07.d1-platform-leg/v1"
+MAC_RECEIPT_SCHEMA = "jope.rel07.d1-platform-leg/v2"
 LINUX_DRIVER = ROOT / "deploy/appliance/test-clean-host-prestage.sh"
 SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 RUN_PASS_COUNTS = {
@@ -48,7 +48,7 @@ def read_regular_json(path: Path, label: str) -> dict:
 
 
 def verify_macos_receipt(
-    ctx: Context, path: Path, expected_sha256: str
+    ctx: Context, path: Path, expected_sha256: str, expected_artifact_sha256: str
 ) -> tuple[dict, str]:
     if not path.is_absolute() or path.is_symlink() or not path.is_file():
         raise ProviderError(
@@ -56,6 +56,8 @@ def verify_macos_receipt(
         )
     if not SHA256.fullmatch(expected_sha256):
         raise ProviderError("D1 macOS receipt SHA-256 must be lowercase full hex")
+    if not SHA256.fullmatch(expected_artifact_sha256):
+        raise ProviderError("D1 macOS artifact SHA-256 must be lowercase full hex")
     actual_sha256 = sha256(path)
     if actual_sha256 != expected_sha256:
         raise ProviderError("D1 macOS receipt SHA-256 differs from its binding")
@@ -72,10 +74,16 @@ def verify_macos_receipt(
         raise ProviderError(
             "D1 macOS receipt source SHA differs from the candidate source"
         )
-    if receipt.get("artifact_sha256") != ctx.artifact_sha256:
+    if receipt.get("artifact_sha256") != expected_artifact_sha256:
         raise ProviderError(
-            "D1 macOS receipt candidate SHA-256 differs from this candidate"
+            "D1 macOS receipt artifact SHA-256 differs from its manifest binding"
         )
+    if (
+        receipt.get("target_triple") != "aarch64-apple-darwin"
+        or receipt.get("profile") != "full"
+        or receipt.get("features") != ["embedded", "engine", "mcp", "client"]
+    ):
+        raise ProviderError("D1 macOS receipt is not the native full-profile build")
 
     checks = receipt.get("checks")
     exports = checks.get("exports") if isinstance(checks, dict) else None
@@ -199,6 +207,7 @@ def qualify(
     ctx: Context,
     macos_receipt_path: Path,
     macos_receipt_sha256: str,
+    macos_artifact_sha256: str,
     run=None,
 ) -> int:
     runner = subprocess.run if run is None else run
@@ -208,7 +217,10 @@ def qualify(
         raise ProviderError("D1 result must be outside the source checkout")
 
     macos_receipt, macos_sha = verify_macos_receipt(
-        ctx, macos_receipt_path, macos_receipt_sha256
+        ctx,
+        macos_receipt_path,
+        macos_receipt_sha256,
+        macos_artifact_sha256,
     )
     check_binding(ctx, runner)
     verify_candidate(ctx, run=runner)
@@ -226,6 +238,9 @@ def qualify(
         "platforms": {
             "linux-x86_64": {
                 "receipt": str(linux_receipt_path),
+                "source_sha": ctx.source_sha,
+                "artifact_sha256": ctx.artifact_sha256,
+                "target_triple": "x86_64-unknown-linux-gnu",
                 "checks": [
                     "network-disabled",
                     "no-python-rustc-node",
@@ -240,6 +255,7 @@ def qualify(
                 "receipt_sha256": macos_sha,
                 "source_sha": macos_receipt["source_sha"],
                 "artifact_sha256": macos_receipt["artifact_sha256"],
+                "target_triple": macos_receipt["target_triple"],
             },
         },
     }
@@ -260,17 +276,30 @@ def arguments() -> argparse.Namespace:
         "--macos-receipt-sha256",
         default=os.environ.get("JOPE_REL07_D1_MACOS_RECEIPT_SHA256"),
     )
+    parser.add_argument(
+        "--macos-artifact-sha256",
+        default=os.environ.get("JOPE_REL07_D1_MACOS_ARTIFACT_SHA256"),
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     try:
         args = arguments()
-        if args.macos_receipt is None or args.macos_receipt_sha256 is None:
+        if (
+            args.macos_receipt is None
+            or args.macos_receipt_sha256 is None
+            or args.macos_artifact_sha256 is None
+        ):
             raise ProviderError(
-                "D1 BLOCKED: macOS arm64 receipt path and SHA-256 binding are required"
+                "D1 BLOCKED: macOS receipt and platform-artifact SHA-256 bindings are required"
             )
-        return qualify(context("D1"), args.macos_receipt, args.macos_receipt_sha256)
+        return qualify(
+            context("D1"),
+            args.macos_receipt,
+            args.macos_receipt_sha256,
+            args.macos_artifact_sha256,
+        )
     except (OSError, subprocess.TimeoutExpired, ProviderError) as error:
         print(f"D1 provider refused: {error}", file=sys.stderr)
         return 2

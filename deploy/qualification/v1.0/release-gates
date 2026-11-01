@@ -18,7 +18,7 @@ from gates_receipt import RELEASE_GATE_IDS, from_cpu_prestage, from_gate_results
 COUNTS = "collected executed passed failed skipped excluded".split()
 INPUT_FIELDS = {
     "A5": {"manifest", "manifest_sha256"},
-    "D1": {"macos_receipt", "macos_receipt_sha256"},
+    "D1": {"macos_receipt", "macos_receipt_sha256", "macos_artifact_sha256"},
     "M2": {
         "golden_dir",
         "golden_index_sha256",
@@ -154,6 +154,8 @@ def provider_commands(repo, bindings=None):
                 bindings[gate]["macos_receipt"],
                 "--macos-receipt-sha256",
                 bindings[gate]["macos_receipt_sha256"],
+                "--macos-artifact-sha256",
+                bindings[gate]["macos_artifact_sha256"],
             ]
         if gate == "M2" and gate in bindings:
             argv += [

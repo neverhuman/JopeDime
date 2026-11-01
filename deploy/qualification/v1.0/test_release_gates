@@ -375,6 +375,7 @@ class ReleaseGates(unittest.TestCase):
             "D1": {
                 "macos_receipt": str(self.root / "macos receipt.json"),
                 "macos_receipt_sha256": "d" * 64,
+                "macos_artifact_sha256": "e" * 64,
             },
             "M2": {
                 "golden_dir": str(self.root / "M2 golden fixture"),
@@ -443,7 +444,7 @@ def observe(ctx,*args,**kwargs):
         if set(kwargs)!={{'full_inputs','full_inputs_sha256'}}:raise module.ProviderError('controlled missing M3 full inputs')
         fields=dict(full_inputs=str(kwargs['full_inputs']),full_inputs_sha256=kwargs['full_inputs_sha256'])
     elif ctx=='D1':
-        fields=dict(macos_receipt=str(args[0]),macos_receipt_sha256=args[1])
+        fields=dict(macos_receipt=str(args[0]),macos_receipt_sha256=args[1],macos_artifact_sha256=args[2])
     else:
         fields={{name:os.environ.get(variable) for name,variable in [
             ('golden_dir','JOPE_GOLDEN_DIR'),('golden_index_sha256','JOPE_GOLDEN_INDEX_SHA256'),
@@ -466,6 +467,7 @@ raise SystemExit(module.main())
             for name in [
                 "JOPE_REL07_D1_MACOS_RECEIPT",
                 "JOPE_REL07_D1_MACOS_RECEIPT_SHA256",
+                "JOPE_REL07_D1_MACOS_ARTIFACT_SHA256",
                 "JOPE_GOLDEN_DIR",
                 "JOPE_GOLDEN_INDEX_SHA256",
                 "JOPE_PARITY_BUNDLE_DIR",
@@ -538,6 +540,7 @@ raise SystemExit(module.main())
         for gate, field, value in [
             ("D1", "macos_receipt_sha256", "bad"),
             ("D1", "macos_receipt_sha256", "D" * 64),
+            ("D1", "macos_artifact_sha256", "E" * 64),
             ("D1", "macos_receipt", "relative.json"),
             ("D1", "JOPE_REL07_SOURCE_SHA", "b" * 40),
             ("M2", "golden_index_sha256", True),

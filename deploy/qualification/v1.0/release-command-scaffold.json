@@ -263,7 +263,9 @@
         "--macos-receipt",
         "${JOPE_REL07_D1_MACOS_RECEIPT}",
         "--macos-receipt-sha256",
-        "${JOPE_REL07_D1_MACOS_RECEIPT_SHA256}"
+        "${JOPE_REL07_D1_MACOS_RECEIPT_SHA256}",
+        "--macos-artifact-sha256",
+        "${JOPE_REL07_D1_MACOS_ARTIFACT_SHA256}"
       ],
       "timeout_seconds": 3600
     },
