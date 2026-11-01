@@ -1,0 +1,80 @@
+{
+  "wave": "H174",
+  "status": "INCOMPLETE",
+  "result_classification": "no_efficacy_result_partial_fit_only",
+  "source_commit": "813759c5fb187d0c6139426405b2f2a1c0563d46",
+  "prereg_source_commit": "a3da025d4b59a7b7ea28bbd606bff19c9a73e214",
+  "prereg_pr": 1479,
+  "preflight_fix_pr": 1483,
+  "redteam_review_ids": [
+    5727597218,
+    5727612515
+  ],
+  "attempts": [
+    {
+      "attempt": 1,
+      "status": "INCOMPLETE",
+      "failure_stage": "before_exact_baseline_completion",
+      "optimizer_updates": 0,
+      "train_pool_outcome_reads": 0,
+      "protected_reads": 0,
+      "error": "TypeError(\"FusedJopeNetwork._install_sync_free_mha_wrappers.<locals>._sync_free_encode_context_and_candidates() got an unexpected keyword argument 'mm_mask'\")",
+      "evidence_path": "/home/ubuntu/jope-data/h174/run/failure.json"
+    },
+    {
+      "attempt": 2,
+      "status": "INCOMPLETE",
+      "failure_stage": "first_fit_trajectory_after_baseline",
+      "baseline_gate": {
+        "status": "PASS",
+        "matches": 91,
+        "mean": 1.1377941898164525,
+        "eval_forward_bit_exact": true
+      },
+      "started_cells": 1,
+      "completed_cells": 0,
+      "optimizer_updates": 40,
+      "planned_updates": 600,
+      "fit_pool_files_opened": 870,
+      "protected_reads": 0,
+      "refused_reads": 0,
+      "snapshot_count": 16,
+      "all_snapshots_identical": true,
+      "b_selections_made": 0,
+      "assessment_candidate_evaluations": 0,
+      "error": "RuntimeError('unchanged trajectory')",
+      "evidence_path": "/home/ubuntu/jope-data/h174/run2/failure.json"
+    }
+  ],
+  "efficacy": {
+    "primary_median_equal_family_oof_gain": null,
+    "primary_family_bootstrap_ci95": null,
+    "elo_vs_r882": null,
+    "secondary_dl_val_treatment_utility": null,
+    "strict_selector_decisions": null,
+    "status": "NOT_ESTIMATED"
+  },
+  "attempt2_resource_compliance": {
+    "monitor_status": "INCOMPLETE",
+    "guard_reasons": [],
+    "peak_aggregate_rss_bytes": 2346528768,
+    "peak_aggregate_threads": 3,
+    "peak_load": 27.22802734375,
+    "min_mem_available_bytes": 69769089024,
+    "min_disk_free_bytes": 572661362688,
+    "max_disk_used_fraction": 0.9271067315567187
+  },
+  "dope_sha256_prefix": "c51a56d0",
+  "serving_promotion": false,
+  "restart_or_cell_reuse_authorized": false,
+  "custody": {
+    "status": "PASS",
+    "archive_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H174/luna_ns_hbaseline-t0253/1805690690605994/H174-attempts-incomplete.zip",
+    "archive_version": "9C_4tFfJtBKf1B81nyJRkc97X4Bq7TEF",
+    "manifest_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H174/luna_ns_hbaseline-t0253/1805690690605994/manifest.json",
+    "manifest_version": "cIvMs13nd_vHWki3iIeLrzRrkOy_HWIh",
+    "archive_sha256": "1805690690605994bcb2092c3ab55effe58a39273f276151af6987a270d5d259",
+    "manifest_sha256": "21794b50710b0ee8a51b85c86ac2a07047335e7c1c829b32d180edbfdc410707",
+    "members_readback_verified": 30
+  }
+}
