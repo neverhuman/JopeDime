@@ -13,7 +13,7 @@
 \setcounter{topnumber}{3}\setcounter{totalnumber}{4}% three top floats per column, so Tables 7-8 fit on their page ahead of the Section 8 barrier
 \renewcommand{\textfraction}{0.1}\renewcommand{\topfraction}{0.85}% let a column top hold a tall figure, so the Section 6.8 and 7 figures keep pace with their text
 \usepackage[numbers,sort&compress]{natbib}
-\usepackage[hidelinks]{hyperref}% black links for print (owner decision t0352; revisit per venue)
+\usepackage[hidelinks]{hyperref}% black links for print; revisit per venue
 \usepackage[capitalise,noabbrev]{cleveref}
 \usepackage[most]{tcolorbox}
 \usetikzlibrary{positioning}
@@ -43,6 +43,7 @@
 \appendix
 \input{sections/appendix_stubs}
 \input{sections/appendix_round_throughput}
+\input{sections/appendix_acceptance_over_rounds}
 \bibliographystyle{abbrvnat}
 \bibliography{refs}
 \end{document}
