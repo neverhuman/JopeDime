@@ -182,12 +182,18 @@ fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io
     )?;
     let screen = terminal.wait_for_text("engine background", Duration::from_secs(10))?;
     assert_no_internal_sentinels(&screen);
-    // The local run backend validates a bounded regression task when a dataset is
-    // opened. Set the target/task first so registration reaches its completion marker.
+    // The local run backend validates a bounded regression task with no landmarks
+    // when a dataset is opened. Configure that draft before registration.
+    terminal.type_text("\\landmarks none")?;
+    terminal.press_key(pty::Key::Enter)?;
     terminal.type_text("\\target target --task regression")?;
     terminal.press_key(pty::Key::Enter)?;
+    // This unique plan response is a barrier proving both earlier draft commands
+    // were processed before the dataset registration starts.
+    terminal.type_text("\\plan")?;
+    terminal.press_key(pty::Key::Enter)?;
     let screen = terminal.wait_for_text(
-        "draft updated; dataset and target are needed",
+        "draft needs a registered dataset and target before it can be validated",
         Duration::from_secs(10),
     )?;
     assert_no_internal_sentinels(&screen);
