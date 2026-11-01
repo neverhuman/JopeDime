@@ -1,0 +1,17 @@
+# REL-07 A5 named-client evidence provider
+
+`providers/a5.py` supplies the missing A5 command for the MCP-04/05 row in `gate-status.md`. It verifies the full non-development candidate and exact clean source through the existing five-variable binding protocol, then consumes a **reviewed, explicitly hash-pinned** `jopedime.named-client-transcripts/v1` packet. It does not start clients, use credentials, purchase inference, read datasets, sign, or create new fits. The packet is an attestation input: the coordinator must review its provenance and freeze its hash; self-declared `PASS` labels are ignored.
+
+Manifest argv:
+
+```text
+python3 -B deploy/qualification/v1.0/providers/a5.py --manifest /absolute/reviewed/manifest.json --manifest-sha256 FULL_SHA256
+```
+
+Use timeout 3600 seconds. Arguments carry gate-specific inputs without changing the coordinator's restricted environment or common helper. Missing inputs refuse. Manifest, all consumed sidecars and results must be regular non-symlink files (result must be new and outside the checkout). Limits are 256 sidecars, 16 MiB per file and 64 MiB total. The manifest must inventory and hash `source-and-input.json` and, for each `claude-code`, `gemini-cli`, `codex-cli` slug: `execution.json`, `capture.json`, `command.json`, `mcp.jsonl`, `client.raw`, `server.raw`, `server.stderr`. Raw stderr stays in external evidence, not Git.
+
+The existing strict capture verifier checks the reviewed manifest hash, every sidecar, RPC pairing and ordered run inventories. This provider additionally binds manifest/runtime/execution source and the recorder's **whole executable hash** to the actual full candidate SHA-256; binds each client version/launcher hash and lifecycle identity; requires complete zero-exit transport and engine cleanup; compares raw streams to frames; and validates registration/inspection, returned planning digest, successful identical run-create retry, actual completed evaluation, contiguous run events, bundle export and prediction on the same TRAIN identity/model. All three independent clients must have `0 -> 1 -> 1` inventories, distinct run IDs and distinct pinned client executables. Claude Code, Codex CLI and Gemini CLI are required; the existing owner-admitted Antigravity Gemini CLI identity is accepted, without equating its protocol-library version with its CLI version.
+
+PASS counts are three complete named-client assertions, not the number of tool calls. Rechecking the pinned inventory, source and artifact immediately before exclusive result publication prevents drift. Historical development binaries and old-source captures cannot qualify a new release, even if their source was merged or their author wrote `PASS`. Missing/stale packets remain refused, never skipped or fixture-qualified. Export parity and other language/runtime gates remain separate. No current signed candidate or new three-client release capture is claimed by this implementation.
+
+Controls: `nice -n 10 python3 -B deploy/qualification/v1.0/test_provider_a5 -v` or targeted pytest with `--import-mode=importlib` and the two explicit `test_provider_a*/__main__.py` files. These are manual provider controls, matching the existing standalone T1 pattern; no automatic CI collection is claimed. Fixtures are data-free synthetic packets and mock candidate-verification responses; they test validation only. Root README census increases for the four new Python files. gov04 owns manifest/coordinator integration; neither common helpers nor existing capture producers/verifiers change.
