@@ -1,6 +1,6 @@
 {
   "authoritative_sealed_roster": "not supplied; QLT-02-F02 filed",
-  "dataset_count": 2606,
+  "dataset_count": 2489,
   "datasets": [
     {
       "columns": 5,
@@ -874,22 +874,6 @@
       "sha256": "0d011c7f399c1c277ce0c3e4221ebc48ea91179bb12a713ead4cbe9cf0b9b29d"
     },
     {
-      "columns": 3,
-      "dataset_id": "9d1a7ba148e7da11",
-      "family_id": "fam-05b3ef508995478f13a653ea7edb0609a5b47b83ce3b8e389ce67a9efa48a90b",
-      "family_key": "98c2aff9d2b1cec01b9b119f9ceab18f0f01e186",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1000,
-      "s3_manifest_etag": "0832626bc6f659f33b56413c523aaa1a",
-      "s3_manifest_key": "datasets/9d1a7ba148e7da11/manifest.json",
-      "s3_manifest_sha256": "47f2c5376d5b5d3c7d8fc0be0b9a03e887da262970c218fe4884571054c51f12",
-      "sha256": "9d1a7ba148e7da113967c4581fbf40889dcd568afcee2653d0e07a5b60b7c950"
-    },
-    {
       "columns": 13,
       "dataset_id": "a9c697a221f7ff37",
       "family_id": "fam-05b99564187740d6f8369e1f6b21cd4c53fdfff062370e1c35a28d044b790b98",
@@ -1254,22 +1238,6 @@
       "s3_manifest_key": "datasets/6e8e53da1bf51d49/manifest.json",
       "s3_manifest_sha256": "43a17ca5dd2ed6079cfd6d70967605c06926ec1521d16023b224dc4114fcd8ce",
       "sha256": "6e8e53da1bf51d4942b148a0e2cb21db1d227b9205cd4927b1baa1a050167df2"
-    },
-    {
-      "columns": 4,
-      "dataset_id": "fada222407a1f4fa",
-      "family_id": "fam-0881922ce133a429250bcbb6b49ef2cf47b5c1181631cd2c3ff68b79b2166d58",
-      "family_key": "9516020a0bd597078da337600c05d5ef609bedb4",
-      "features": 3,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 240,
-      "s3_manifest_etag": "3e3491e79616628b9b76f9ac1557a9b8",
-      "s3_manifest_key": "datasets/fada222407a1f4fa/manifest.json",
-      "s3_manifest_sha256": "54924d12eb441dd653c537fdb55000a4455abb488bbe4db43f87dacb5b422e53",
-      "sha256": "fada222407a1f4fae33fc733720e29203da1edf1c1e9057aa5981ed013630ddd"
     },
     {
       "columns": 7,
@@ -2553,22 +2521,6 @@
       "sha256": "4e03d9ba9ea0662cfa14ea7f49a33084c77d6aedb9b086e9c65dbbf5eb823e87"
     },
     {
-      "columns": 7,
-      "dataset_id": "1c42a72376ec431b",
-      "family_id": "fam-0fcfcbd736d856f3bae4300c0a957b1e7b9bc1d5da405edfee8d720232f02011",
-      "family_key": "ed32bf5b98e74257a9dd5b8baf567bd68a8937dd",
-      "features": 6,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 270,
-      "s3_manifest_etag": "23da1e62223d0ce2725fe0f5beb3324b",
-      "s3_manifest_key": "datasets/1c42a72376ec431b/manifest.json",
-      "s3_manifest_sha256": "ae28bb0f269bf04c2816a43291a792bca2437b9486472a914a9c324fb2ad714b",
-      "sha256": "1c42a72376ec431b98d970f18e39bd45e63ca1520aea6761b742e84543516cd0"
-    },
-    {
       "columns": 4,
       "dataset_id": "3f781a51af45387e",
       "family_id": "fam-0ff1b29fddef95a9591311234140b8ba3734a92a733eb9fdc659b51353d944c8",
@@ -2615,22 +2567,6 @@
       "s3_manifest_key": "datasets/7ef9607c8cccc160/manifest.json",
       "s3_manifest_sha256": "c7a3c47f437ef105fea3ca8285573ff95babfac21734426680b6f82ede28be91",
       "sha256": "7ef9607c8cccc16084218f3060035ec2271aca234c1c02f55d24d9de26be8698"
-    },
-    {
-      "columns": 3,
-      "dataset_id": "7027ea6aeba3cccb",
-      "family_id": "fam-1036884f651f7ffb8bae032ba5856b5c55505de4af85461f07a6ea41c19d869c",
-      "family_key": "0c5f6eb88ca542e2907337e22f53a27d424f155b",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 384,
-      "s3_manifest_etag": "d7de9ab949405a3a969796e2dce05aaa",
-      "s3_manifest_key": "datasets/7027ea6aeba3cccb/manifest.json",
-      "s3_manifest_sha256": "02fc61883f09f2dc35a0aafc4d37b1e752386b1d53934e720bf0b40d06b0b1e3",
-      "sha256": "7027ea6aeba3cccb15b1c341be1a77406d7a1ab21fdbe9e492cd5efee6463060"
     },
     {
       "columns": 7,
@@ -2904,22 +2840,6 @@
       "sha256": "90c96df89359f7d885e9004293c62f88c1775a1d45b6a79ad9a66baad9754416"
     },
     {
-      "columns": 3,
-      "dataset_id": "93fd76aaa9d98bdc",
-      "family_id": "fam-122cb089270f6071db6369db04366d106912c1c2907c9c347d17771e16e3e5f0",
-      "family_key": "9e6ffbf03a816175d4b931151889d079bb52a24b",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "b8fd38006840526a6825aafad9354dd3",
-      "s3_manifest_key": "datasets/93fd76aaa9d98bdc/manifest.json",
-      "s3_manifest_sha256": "c89e4ffcacaadf48648dbe3e79a70449d8276d2431b910438f4b728aa94dd93c",
-      "sha256": "93fd76aaa9d98bdc4696d3b020857050d0b30645aa1806939b5ba65d5fff12f9"
-    },
-    {
       "columns": 11,
       "dataset_id": "0cdbfb8d7f374330",
       "family_id": "fam-12390b77ffb06f55bbce474d6ffcf6be3262c3f74ae1b7e5f6e2ff9016c756fc",
@@ -3189,22 +3109,6 @@
       "s3_manifest_key": "datasets/3cfda41ca8b8fda4/manifest.json",
       "s3_manifest_sha256": "27375e3d8b857ea459b0c67da3f57f66cb71d3a9fb8402bcb1781c18d0e34e44",
       "sha256": "3cfda41ca8b8fda4d697e997338e7543dcc8af317e41492723ff84d52ba7aa46"
-    },
-    {
-      "columns": 3,
-      "dataset_id": "fe3cc716a05d036f",
-      "family_id": "fam-13f3275a57da3d2e10e00ddf92bf0a5984356c58fc91dba4d2c487b95b528763",
-      "family_key": "bbfdcd36e45ed221c6c409cea64e1f042880c8ef",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 240,
-      "s3_manifest_etag": "740d829e5270276ab20a40df64d43384",
-      "s3_manifest_key": "datasets/fe3cc716a05d036f/manifest.json",
-      "s3_manifest_sha256": "6f34b3efa7d6cf1fbbda6fd75321e2a17ca0461466b592847ee97fc28f7d7215",
-      "sha256": "fe3cc716a05d036fe64b9642812d9deb8a8781b1122d68e80c53720906194e0a"
     },
     {
       "columns": 13,
@@ -3696,22 +3600,6 @@
       "sha256": "c9fe51784edd7b2b79d083f7e40c9e72d7f4eea2ef8909ecf7f22f99af45a460"
     },
     {
-      "columns": 6,
-      "dataset_id": "a2bc236f8ec6e8de",
-      "family_id": "fam-16720a2d80172faec074d5d9571233510e52b8ebc0e8f5c8a4a7b81231633ac7",
-      "family_key": "de2c26764ed326a8c13f8ec1f814744945b1b970",
-      "features": 5,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 289,
-      "s3_manifest_etag": "184abdabe101d578c4dbcd108bb0f2d7",
-      "s3_manifest_key": "datasets/a2bc236f8ec6e8de/manifest.json",
-      "s3_manifest_sha256": "6ec62fe5fbcc0726f8bc4cb2b9186340e375ce23120ecaaa6c3f6dcf0746fa41",
-      "sha256": "a2bc236f8ec6e8de96511f0dd48ea6d8a8a9bd0ac22f87737fa8f5825d9f7ee3"
-    },
-    {
       "columns": 16,
       "dataset_id": "54b0a7ac805de4dd",
       "family_id": "fam-1677bcf1ec1ae530f63f494a4be64f008b1da51c1dcac52ea790c0d9f0fccbb0",
@@ -3913,22 +3801,6 @@
       "s3_manifest_key": "datasets/853243d25e16a894/manifest.json",
       "s3_manifest_sha256": "d23b296d7a95524565d715426b7ba223d75407fa41bbaa112e2506da7dd88aa3",
       "sha256": "853243d25e16a894156974d8954b02a2dbc7d68d4f18312dd708b248c3d27283"
-    },
-    {
-      "columns": 6,
-      "dataset_id": "6003209a899e9c9f",
-      "family_id": "fam-176eac797f07a8cc47f4d893546f5a72b139dbca70937e9d3c23e15ee9a654ca",
-      "family_key": "790aeb577b0e46643c7d7c13abfa766c41206f12",
-      "features": 5,
-      "license": {
-        "note": "reported by discovery agent: Insee open-data reuse terms",
-        "status": "unknown"
-      },
-      "rows": 10000,
-      "s3_manifest_etag": "fedebdf623981061929c26e965753f08",
-      "s3_manifest_key": "datasets/6003209a899e9c9f/manifest.json",
-      "s3_manifest_sha256": "95714b309dcdadb29ff05c4ed1b14e8ca28fc9fe60bc5b79adba938f419f6045",
-      "sha256": "6003209a899e9c9f9035d4635c4ebb63e752f304db0e873fc9ab1e6cb43197cf"
     },
     {
       "columns": 127,
@@ -4183,22 +4055,6 @@
       "s3_manifest_key": "datasets/65a979d73e1ec018/manifest.json",
       "s3_manifest_sha256": "43473acbfc5074cd2ec91ac9f2c21cffe18c8aff2396f66c9b8f26e564f8e8af",
       "sha256": "65a979d73e1ec0188d9b61182e5c24f5593e5f594bc2e20c963b03d038082cd7"
-    },
-    {
-      "columns": 9,
-      "dataset_id": "dfa6149ed554607d",
-      "family_id": "fam-19eb6360dc23890654099dd704ec659eb57c31e90c726434cd369c8df872df4d",
-      "family_key": "1591ec290d2de607beab4629605762c40706db9a",
-      "features": 8,
-      "license": {
-        "note": "source_license: GPL (R package ISLR)",
-        "status": "unknown"
-      },
-      "rows": 1089,
-      "s3_manifest_etag": "07d14443818220e1bdd0793d4cd73221",
-      "s3_manifest_key": "datasets/dfa6149ed554607d/manifest.json",
-      "s3_manifest_sha256": "a4fde50afb3dc239e54df959ffbd5bdd753ee01cf3b2fb899e3336c026d841f1",
-      "sha256": "dfa6149ed554607dca319d48928ab760e131d1cf7a667585d2cce23c6aa78495"
     },
     {
       "columns": 5,
@@ -4487,38 +4343,6 @@
       "sha256": "3bee165a86fa233de9df10af493681105e17b12b0d21044b2368ce52fc6d967e"
     },
     {
-      "columns": 4,
-      "dataset_id": "df89d7fcaa058336",
-      "family_id": "fam-1b84d49fc7b6c8996afc07eccd8ad1282b7b556628f47d60032083fa57cfed3a",
-      "family_key": "57f9a9cbc0285887f570fb7b1964a0b8f6525f55",
-      "features": 3,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 144,
-      "s3_manifest_etag": "b2758f0cffe9f30610e4ce8208ffb215",
-      "s3_manifest_key": "datasets/df89d7fcaa058336/manifest.json",
-      "s3_manifest_sha256": "11a16f01c516746b1ab0bfc63f5e0e52b0ba85f4b3483be2f8a0aaeea2885e3a",
-      "sha256": "df89d7fcaa058336f7cec94df468503fb443da88b41444caa2f1115cf333f30f"
-    },
-    {
-      "columns": 14,
-      "dataset_id": "9735f484a1f0634b",
-      "family_id": "fam-1b8c2b90ff79ac4eea04214a0efa1c216e140e73dd8225bce6b3fe84bd52d9ac",
-      "family_key": "87d0e96a3c2f8f2bf5ce4662f903db10a66f1770",
-      "features": 13,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "1b136f9fcf0317fe94ad9a0fa4f3c236",
-      "s3_manifest_key": "datasets/9735f484a1f0634b/manifest.json",
-      "s3_manifest_sha256": "63ebb2f90f7d06f4c3554e657258885504d1638de0ad92c84937a8b48322c82e",
-      "sha256": "9735f484a1f0634b2e1df91b20841b3393ec5d6629db70fc284254f82fc4bc9d"
-    },
-    {
       "columns": 10,
       "dataset_id": "15821b1a0f46dd1a",
       "family_id": "fam-1b8f1b8cf86b0b0c3f4d6cf8ce1a1a91bf1c96676400aa2cd6200da21ed31de8",
@@ -4596,22 +4420,6 @@
       "s3_manifest_key": "datasets/af04c1e89266eb73/manifest.json",
       "s3_manifest_sha256": "452bc611ccb87004584eeabfa8b2a0782e5ea5e9571db2cab260dc07c06115ea",
       "sha256": "af04c1e89266eb73e670ef31078d84654651e78f6e2bb0424152b9c5b5364627"
-    },
-    {
-      "columns": 3,
-      "dataset_id": "0d5a1405c9fca75d",
-      "family_id": "fam-1c28774db66886254917175f3ce134d7dd0eab8ea62facee42736f780b837b8a",
-      "family_key": "6a4996e2e40624232a66a7c5fa161e79f2f0ea6c",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 416,
-      "s3_manifest_etag": "aecc3408e30291c4a3c9b67dfa1c4281",
-      "s3_manifest_key": "datasets/0d5a1405c9fca75d/manifest.json",
-      "s3_manifest_sha256": "8cdabfca307622cdb14ea77f8b4cd2971396b873d9fc04d90ecd27c7850c1101",
-      "sha256": "0d5a1405c9fca75daabd4bddea4808db182bc5ca03ab922cd8348b72a0e0efa1"
     },
     {
       "columns": 4,
@@ -4866,22 +4674,6 @@
       "s3_manifest_key": "datasets/c3f71b8c0facefa9/manifest.json",
       "s3_manifest_sha256": "0d0fdd762325cea034964a03b82df0c0ae07d8abf8d7020c4c05d78595afe9f3",
       "sha256": "c3f71b8c0facefa94082e2d3f5df6be3fc67a2d1079a42e983d2cb4f1233ff42"
-    },
-    {
-      "columns": 2,
-      "dataset_id": "ec797dbaf144c421",
-      "family_id": "fam-1d969500bb65ad0e6f4a8ba0a22e14e4510bf836813f783ea45bbe4c53c572d7",
-      "family_key": "61b76b0ae060ed89e6b28c201af17c986ca32df4",
-      "features": 1,
-      "license": {
-        "note": "source_license: GPL (R package datasets)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "f89d14a075e5588514dc2b0695612a5a",
-      "s3_manifest_key": "datasets/ec797dbaf144c421/manifest.json",
-      "s3_manifest_sha256": "5f0365f40de79a61e6a3d51f8ce6c7dbd78e513ca2c7127bc6af8fff5c1ed476",
-      "sha256": "ec797dbaf144c421b81a00edaec9c65a8215d79696ee7758f4d205ef3155e733"
     },
     {
       "columns": 9,
@@ -5230,22 +5022,6 @@
       "sha256": "54e3ad9a289ab7430c5a466041e2e2099664d9b4687f1f8b10a709b2d539f95a"
     },
     {
-      "columns": 3,
-      "dataset_id": "a3519c8f41bbca66",
-      "family_id": "fam-1f9527e1b69845fa8867d8e5c326e7ff0d9160892ab1dee2d1cefce4fd46dcdf",
-      "family_key": "a32ec7ca5bec4d64fd38bc9a91da392e9bfb7ad0",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 364,
-      "s3_manifest_etag": "676b0465ff9fda92f9b817c3990ff4ee",
-      "s3_manifest_key": "datasets/a3519c8f41bbca66/manifest.json",
-      "s3_manifest_sha256": "e3237eee1aaa5ec637d62c5773acb1d399865995310399e8778bb968cfc94ca2",
-      "sha256": "a3519c8f41bbca667cfab739cecfaa69fa1eabf0de6f5f820ba2c210b6bb0e5a"
-    },
-    {
       "columns": 11,
       "dataset_id": "fc4830ccddbc7b1a",
       "family_id": "fam-1fd03a7a7991c8cd47a69ada66a00a2594ae14206ddb6a97252d07b9dad71448",
@@ -5451,22 +5227,6 @@
       "s3_manifest_key": "datasets/d32a3e8c49197528/manifest.json",
       "s3_manifest_sha256": "71bb26ddb39104bc6570aaf2a4fe99a1e82a3cdddb6c25404f18ad40287a165b",
       "sha256": "d32a3e8c4919752899b3bd408c8c9823b08343f4e03c00023f4f1b1a66ee7630"
-    },
-    {
-      "columns": 8,
-      "dataset_id": "c86fad79005d7fc7",
-      "family_id": "fam-20c329b93c218916c9222db2e1bd26969eb1a224ea473f01dc9f7e39387835e2",
-      "family_key": "a5e9ca425df5280a0df24fd242af51fb06df22ba",
-      "features": 7,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 264,
-      "s3_manifest_etag": "f1f48177b87a7537ee1a66f05cf4de99",
-      "s3_manifest_key": "datasets/c86fad79005d7fc7/manifest.json",
-      "s3_manifest_sha256": "aefbf00b21a0b826bd060699c083f3837707b7a05e5b9709d9f0b5e1c309baa7",
-      "sha256": "c86fad79005d7fc71bfeae981a7b63815d40d6f689c0dfa2c886364270109b2d"
     },
     {
       "columns": 13,
@@ -5704,38 +5464,6 @@
       "s3_manifest_key": "datasets/f83c340e22d053c5/manifest.json",
       "s3_manifest_sha256": "8486fa35ff16a9969b1f6dee2610e08926e7581db65f48cd090575a9b807f243",
       "sha256": "f83c340e22d053c5ef7eabfbc5d2c9a316f93c819ea72253f30e86be00e814bd"
-    },
-    {
-      "columns": 3,
-      "dataset_id": "2b585598ab4471d3",
-      "family_id": "fam-2272ab2d7857a564593c5a2b607a5ee36accc8275cfc58a3fe1733671da4bc21",
-      "family_key": "cc4895e984e3a0cee473ccf2c55bb4572b5dccdf",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package fpp2)",
-        "status": "unknown"
-      },
-      "rows": 282,
-      "s3_manifest_etag": "9c258089ca5dd73aa662052403478e54",
-      "s3_manifest_key": "datasets/2b585598ab4471d3/manifest.json",
-      "s3_manifest_sha256": "20c8b43dd70887aa33640286d0d4f0d37b7ef109ed1dd5b2b1dd5637036f6ad6",
-      "sha256": "2b585598ab4471d3e0fbaa5c281a4ca4ad85d9dfb14f415d4a4c35dfdca3a29e"
-    },
-    {
-      "columns": 13,
-      "dataset_id": "c816a64d136395c0",
-      "family_id": "fam-2278a6137caa53c2ceda75e2bba7bf43b0a6df3149fb35c0b4d3393a55796239",
-      "family_key": "22cffbe0889fc39ff2f1104802cb6f4d653daff8",
-      "features": 12,
-      "license": {
-        "note": "source_license: GPL (R package AER)",
-        "status": "unknown"
-      },
-      "rows": 420,
-      "s3_manifest_etag": "0a4ff58db49e7b0b8b9151576e2535c2",
-      "s3_manifest_key": "datasets/c816a64d136395c0/manifest.json",
-      "s3_manifest_sha256": "cedd30d90c7a29552441f102302b938d71c83dab4686d0a80b2d260714283d6f",
-      "sha256": "c816a64d136395c009d5941d646bb0442016bc03287da5350c3ec475f12cfeda"
     },
     {
       "columns": 11,
@@ -6056,22 +5784,6 @@
       "sha256": "d10d441d5adbe89bfd4f3cec828d86465dc7ccc84a329526a7e98fce6a2670a0"
     },
     {
-      "columns": 3,
-      "dataset_id": "f57f5a1e3177c961",
-      "family_id": "fam-24a3e1302c91ef9f9b47181d32685d14fa29b2cff238fb7410be77b090937d75",
-      "family_key": "ae061b22798c0477b7fd9be7f31031e697a0db4a",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 180,
-      "s3_manifest_etag": "8541195127a6ce8c48853b7f367b6fde",
-      "s3_manifest_key": "datasets/f57f5a1e3177c961/manifest.json",
-      "s3_manifest_sha256": "f6e582e4c642e29856e53ab6cc8bfed29c6c3d30a1beb229a1499e701fa98c25",
-      "sha256": "f57f5a1e3177c96142f8a6ee4d48eb3ad212d68be3e5a2fba2c44474ed62c032"
-    },
-    {
       "columns": 5,
       "dataset_id": "b114ecdcadbd3471",
       "family_id": "fam-24ae1983e9ab036f79b91ed071c53a05cc352e1f60436683170ab6b59ce5b288",
@@ -6133,22 +5845,6 @@
       "s3_manifest_key": "datasets/6379d5608d04e768/manifest.json",
       "s3_manifest_sha256": "b25d5a8f79c90fc87c8bbb46785be897f85c58f33e92d5ef6b816b9d4fdb6924",
       "sha256": "6379d5608d04e7681c76452dc8257a5bcc460f37e8e78c376545afff7f65cf2d"
-    },
-    {
-      "columns": 3,
-      "dataset_id": "069f9c1cc30e117b",
-      "family_id": "fam-24ded878a1f572f6f7d42fab472232120717426a4f22e27f3a0c0356e7ef6382",
-      "family_key": "1b60ef9cc9dc01ed9201f0e8f7584ad07087c5eb",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1600,
-      "s3_manifest_etag": "f10db74c9cc73b8ec777b1cf823d95d5",
-      "s3_manifest_key": "datasets/069f9c1cc30e117b/manifest.json",
-      "s3_manifest_sha256": "8db8a75a6dc13a8329bfda0333359d95f4b80387350a5aba339eb3fa188187bb",
-      "sha256": "069f9c1cc30e117b4d18f2a957647fce8d8939a2489878b84f7b734a28e19928"
     },
     {
       "columns": 4,
@@ -6832,22 +6528,6 @@
       "sha256": "7f97228537b7eacbcf1293857736ef221c7dc711c0c9de14feeac9182920cab1"
     },
     {
-      "columns": 6,
-      "dataset_id": "30f579aeecdbf69f",
-      "family_id": "fam-291df1507f5f2e83429584777efd26e625ac4f7b4160488e61d479e07bfad7c5",
-      "family_key": "4c1f2a9442891daf5dad0cf0431b7cb8394def6b",
-      "features": 5,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1891,
-      "s3_manifest_etag": "374a93fa4488826c02f4b516aacfb73f",
-      "s3_manifest_key": "datasets/30f579aeecdbf69f/manifest.json",
-      "s3_manifest_sha256": "2cb8c38fd201049d5d5236472a15b5a5a152fcfa5fcc73bd391e0fccd114660b",
-      "sha256": "30f579aeecdbf69fe79622fecb3269fbfe033b5db21d57daf57621dcf0c68aa4"
-    },
-    {
       "columns": 8,
       "dataset_id": "fe45e30b473ce4f1",
       "family_id": "fam-291e7e41b6543d77ac9723a5c191910d459410c7333aafe5b000fb31995993fe",
@@ -6893,22 +6573,6 @@
       "s3_manifest_key": "datasets/f98dfba8524a06d9/manifest.json",
       "s3_manifest_sha256": "c4bd5571ae90a90530e589181c6c48e3fa244cda2d2e44715d05f889f702fe4e",
       "sha256": "f98dfba8524a06d9caab2aa6bebdbe20589508a503500e1d7f44f2284d061c2a"
-    },
-    {
-      "columns": 10,
-      "dataset_id": "dc476342be715f75",
-      "family_id": "fam-29705e21f90dbbd715b35375a03988026446253f79efe6a26795fa100eb85262",
-      "family_key": "02e27503bb27de2cd2ca5cad93b8ab0c90c5bcfd",
-      "features": 9,
-      "license": {
-        "note": "source_license: GPL (R package DAAG)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "e6fed014fa458683eb3bb598052dfd9e",
-      "s3_manifest_key": "datasets/dc476342be715f75/manifest.json",
-      "s3_manifest_sha256": "c460f8f17a4ea4ef0b9cd2564c3b74f9ff9f51a8f3e326b56e5d3f7d88d1b690",
-      "sha256": "dc476342be715f757efc24d207844d9c206bca63e2c72a20234123f8fc707998"
     },
     {
       "columns": 5,
@@ -7936,22 +7600,6 @@
       "sha256": "9d4eba7eddae35696bd713f9b1321900a138b51e9c764be6dd8cd3be5e307187"
     },
     {
-      "columns": 9,
-      "dataset_id": "6e01d1601b8c4808",
-      "family_id": "fam-307bcad5630cf26da8ffbfac0eb2e8cf02a2d2e39dc00ce6699bab36f4069cd0",
-      "family_key": "b5be43ca8046488898886cdf79dc9fc8e7d60146",
-      "features": 8,
-      "license": {
-        "note": "reported by discovery agent: CC0 1.0",
-        "status": "unknown"
-      },
-      "rows": 1434,
-      "s3_manifest_etag": "28e985860fb7be6ce3b00516cc85169e",
-      "s3_manifest_key": "datasets/6e01d1601b8c4808/manifest.json",
-      "s3_manifest_sha256": "916f89bbc29d53cba311bf701a722af4c8e39e5f6ff55b1004acc579002dc894",
-      "sha256": "6e01d1601b8c48086e4e0c6bd88088659931ecddc79515fb42ed3bb289c37a73"
-    },
-    {
       "columns": 15,
       "dataset_id": "135f94c378e5a5d9",
       "family_id": "fam-30a0bba4260b4c3c4e15a19985cc84b2e4e705ff96586adf4c4e47ecf9482b11",
@@ -8077,24 +7725,6 @@
       "s3_manifest_key": "datasets/38e1b916906a1639/manifest.json",
       "s3_manifest_sha256": "b8e195b2f8b0144c0e7f78a6393b63ab83329e7fcff5f5a7e335fbb37005dda2",
       "sha256": "38e1b916906a1639765317f24a8d5943ec2cb0e5d06ec8a7702d0667ab545875"
-    },
-    {
-      "columns": 16,
-      "dataset_id": "efd53e9c0f36d608",
-      "family_id": "fam-3116b401d5a346489896e5923c632b1935ec2d49bfbdb3dcb1b467f1ca57d3b1",
-      "family_key": "0490388416fadf6cef9aeddbec607cbc4e9087d6",
-      "features": 15,
-      "license": {
-        "evidence_url": "https://github.com/EpistasisLab/pmlb/blob/master/LICENSE",
-        "note": "source_license: MIT (PMLB)",
-        "spdx": "MIT",
-        "status": "recorded"
-      },
-      "rows": 159,
-      "s3_manifest_etag": "b6d5d7642aac0989e445effe4e516f81",
-      "s3_manifest_key": "datasets/efd53e9c0f36d608/manifest.json",
-      "s3_manifest_sha256": "7282c79012d69006af0e988dbd773982aa96e349a0f90e22b159784b1d22b402",
-      "sha256": "efd53e9c0f36d608912586c18ca1df2fe5e73bab5121e7c6801a7c502462f888"
     },
     {
       "columns": 15,
@@ -8366,22 +7996,6 @@
       "s3_manifest_key": "datasets/a81089bf8e6110b4/manifest.json",
       "s3_manifest_sha256": "81039bb7df4a4894ab224b9ea3e2b08fd76e2f6b5933ba40b0ae26240499d5cc",
       "sha256": "a81089bf8e6110b479e427ac123f8d9a1b7d47dff06dd04c995aaf2a5966cd97"
-    },
-    {
-      "columns": 9,
-      "dataset_id": "33a09cdb502e57d0",
-      "family_id": "fam-326a69b64fd2e466401cdec5aae35bbeddd05faa6c3fdf1a5a4b7ef9c7558a2b",
-      "family_key": "9f7f6ce3f75a640cc56c31cefb736ee07e87926a",
-      "features": 8,
-      "license": {
-        "note": "source_license: GPL (R package DAAG)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "52938e92cd9ec623068de302303d9c9e",
-      "s3_manifest_key": "datasets/33a09cdb502e57d0/manifest.json",
-      "s3_manifest_sha256": "c3542e960c99a2b68101a97b1c9c26e85832b81cf3e89a3da55e853d5eaf5c31",
-      "sha256": "33a09cdb502e57d0796b2f45535b07bf22abb45c9d70b6da9df5db0fed7d584b"
     },
     {
       "columns": 64,
@@ -8699,22 +8313,6 @@
       "s3_manifest_key": "datasets/fe6d7ac3fcd3129e/manifest.json",
       "s3_manifest_sha256": "2d02830e7844015f3993c19d310f1dbee7d852a57e6a7c42dfe148725a1f1521",
       "sha256": "fe6d7ac3fcd3129ef3473ac7ade32e52bb2048c23c4125cd8d141f4cce735fc1"
-    },
-    {
-      "columns": 3,
-      "dataset_id": "884f1a7e53c95cd6",
-      "family_id": "fam-348d7d4356c4edf782eb82625dcb3ef054a514cf2d6d11e65b01380142e5d845",
-      "family_key": "d69b9bbb511cfcaa2c62c8753e69de24573f6373",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 280,
-      "s3_manifest_etag": "cc69a3457537f2d06d9ad5750940a329",
-      "s3_manifest_key": "datasets/884f1a7e53c95cd6/manifest.json",
-      "s3_manifest_sha256": "25aada029098adb4d8cd9181fcb95160e2a7990e5b455ef85edf72b9c33e7683",
-      "sha256": "884f1a7e53c95cd6f0948b01106d7d8131e7ef981a2a8be0afa5c978c1357a88"
     },
     {
       "columns": 21,
@@ -9225,22 +8823,6 @@
       "sha256": "9485d218ab21bc22c031aaad15ae706d625b7fa54bf4858014fca948d4cc58b2"
     },
     {
-      "columns": 8,
-      "dataset_id": "78095e6a42b15a23",
-      "family_id": "fam-383d89b058ff41f91107cbb499ee2d661e99d29af18f669e040173478a5db191",
-      "family_key": "c2e4e3faab1b59b80ad292a304cd2711b6e930f9",
-      "features": 7,
-      "license": {
-        "note": "source_license: GPL (R package datasets)",
-        "status": "unknown"
-      },
-      "rows": 248,
-      "s3_manifest_etag": "2b377a761a31b8067c71facc70ab22cb",
-      "s3_manifest_key": "datasets/78095e6a42b15a23/manifest.json",
-      "s3_manifest_sha256": "046fb9265cb495849b5e6057dc12440c2dda842812698b7327652dbb53c71f4c",
-      "sha256": "78095e6a42b15a23154690cc638c5edd1ae8b2b830824ec786da5a80ddd7615b"
-    },
-    {
       "columns": 401,
       "dataset_id": "d30d30c5ed7b96fe",
       "family_id": "fam-3854cf8934be7508f43dd566fcd35e02cd683559ed1b8753587d859cbaab2e42",
@@ -9634,22 +9216,6 @@
       "sha256": "166a9c3eacfc129f3fc7f7847b47e3c218602b814a5bdacb75ba726f21b7cb0d"
     },
     {
-      "columns": 6,
-      "dataset_id": "9fa4114654b0249a",
-      "family_id": "fam-3b369eaffc9f1839c2d3deba5c3152dc813a9df80e840a3f2b17f455586bc8bf",
-      "family_key": "c4c75c8cebda7d9b432442480ef433c486a83b90",
-      "features": 5,
-      "license": {
-        "note": "reported by discovery agent: Eurostat reuse policy",
-        "status": "unknown"
-      },
-      "rows": 10000,
-      "s3_manifest_etag": "3b0d64f7c3773dcdb521cda4cb86a6f5",
-      "s3_manifest_key": "datasets/9fa4114654b0249a/manifest.json",
-      "s3_manifest_sha256": "85c7eb8a6975d959115dc22f958e3c5233d781a8f0037e093219e13eba163e06",
-      "sha256": "9fa4114654b0249aa8523f8a57720966b55f83c99f650ed5e5ab0730bd0862c9"
-    },
-    {
       "columns": 127,
       "dataset_id": "4094c797d34e0882",
       "family_id": "fam-3b3d6ecbe8a3047ee9668be0a38e204cbff4235ff9c7a7d30417785be4e59512",
@@ -9965,22 +9531,6 @@
       "s3_manifest_key": "datasets/4429899a33b39760/manifest.json",
       "s3_manifest_sha256": "ad5ca93d18df459e41aa6454385aa862cd9d1fdd8671fc5ddffb1e6a9a117ba1",
       "sha256": "4429899a33b39760eac0fb75a0ed67946924fdd5556afe1582cb6135c5695e0f"
-    },
-    {
-      "columns": 3,
-      "dataset_id": "614bd8698ac326ca",
-      "family_id": "fam-3d5ef59fe4a9ac5daba0253eb2bdf328a624c333b4a675e2f3f5a089dcea27fe",
-      "family_key": "660cad40d597c2960e190a191fc8a12da862c187",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package nlme)",
-        "status": "unknown"
-      },
-      "rows": 308,
-      "s3_manifest_etag": "eaf5eb72adad6a570c3b9798d369a85a",
-      "s3_manifest_key": "datasets/614bd8698ac326ca/manifest.json",
-      "s3_manifest_sha256": "2007ae8c74b544af61c6134f56219bbfe5c029af81a84b13a6bf376111ca6255",
-      "sha256": "614bd8698ac326ca0949dfe5ea869c4164b9446b704a05223942074cabba8fcc"
     },
     {
       "columns": 26,
@@ -10855,22 +10405,6 @@
       "sha256": "f060bc4f675acd58c5ac03d8b1d552954fb3f630aae5f8b70ee1737189da085a"
     },
     {
-      "columns": 8,
-      "dataset_id": "681efa9192737198",
-      "family_id": "fam-43e5f58a075791b7941a31bb6b9a2f194ba334728e5e48399a82d569b468d01c",
-      "family_key": "429ea4b8141046d9a165dd7102b64acd4ba1408c",
-      "features": 7,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 154,
-      "s3_manifest_etag": "63a9225b4e439a52d53ada82bd523d4d",
-      "s3_manifest_key": "datasets/681efa9192737198/manifest.json",
-      "s3_manifest_sha256": "9ac9228fd63d0f14cab7c4762c45ed14d2aeda59824895511cfbde383d92cfa1",
-      "sha256": "681efa91927371985f62d7a214b338d958d3ec06b683a7c4df183ca0af0b5210"
-    },
-    {
       "columns": 7,
       "dataset_id": "ef0cde29bff8501c",
       "family_id": "fam-44149d6604c30a4aa610999119181a130ff73fed6b7f8d2c2683d3ad35e6aa8b",
@@ -10963,22 +10497,6 @@
       "s3_manifest_key": "datasets/d3be2f8cdcb9b03b/manifest.json",
       "s3_manifest_sha256": "b01e4f72f649020d4092195ce6111e608db252e90b3fd1b7937173fb0ebf9b07",
       "sha256": "d3be2f8cdcb9b03bd1a0225c7571ddd312fc160247b350da8b717d50ccd2cc76"
-    },
-    {
-      "columns": 10,
-      "dataset_id": "b6ec19001ed76d56",
-      "family_id": "fam-445c097af82653f0f170b66287522cb87bebbf72d7a58d0d6e3c1f2beb341405",
-      "family_key": "2b11e629231301a815fc4f83eabd127510fba29c",
-      "features": 9,
-      "license": {
-        "note": "source_license: GPL (R package Ecdat)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "aa1893d716e8295377ec03cc95581c8f",
-      "s3_manifest_key": "datasets/b6ec19001ed76d56/manifest.json",
-      "s3_manifest_sha256": "9d091741135df7110aff95212e4d8218b2a0983b5bee0e696bdb358a682328e4",
-      "sha256": "b6ec19001ed76d569bf4206b085820a5dc167717b4a4cb8d0ac319922458a443"
     },
     {
       "columns": 18,
@@ -12690,22 +12208,6 @@
       "sha256": "8d444b67fd6efd24af2de925a02c231c7477bd03c9bc0eac46c8edd75fd122a9"
     },
     {
-      "columns": 4,
-      "dataset_id": "e7c38c954a3bd6a5",
-      "family_id": "fam-4e1d08bbb989e5e8561e45a5a6cf9c03544dc39c6ecd0883a370683dd144cb0b",
-      "family_key": "8fa640a6fa66abf681d4b9515760ccdcff151214",
-      "features": 3,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1024,
-      "s3_manifest_etag": "015dfa18f11d5ab4a3e7f5a5f586a2bf",
-      "s3_manifest_key": "datasets/e7c38c954a3bd6a5/manifest.json",
-      "s3_manifest_sha256": "88626387c71c9db0d3b8da74e5581e0c8dbcb8d8d61bf50a01c9570b8a01a11a",
-      "sha256": "e7c38c954a3bd6a5d26f1dc9a30e39aa78ba500800beb8cf87d48a2cfca0f84d"
-    },
-    {
       "columns": 29,
       "dataset_id": "fcabd669d54b160d",
       "family_id": "fam-4e20e05eb1ca813ebd04cd4b1ddff69d823d49cda05995eda87d3921b2ca62c7",
@@ -13542,22 +13044,6 @@
       "sha256": "44ea1ef702fee946e6336d3098973c0df10e58ad897eab38c28e10f8fd094b9c"
     },
     {
-      "columns": 7,
-      "dataset_id": "faaa420e922e4128",
-      "family_id": "fam-532d032bf71d4f4fc1bb6cee9f73925adb2ce33f0657c83aa327551081bf21b1",
-      "family_key": "749d7c51444ba49b2174153b0b637ae8404ce5cd",
-      "features": 6,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1300,
-      "s3_manifest_etag": "a771dcb56ad3884e228feefe4c8f0710",
-      "s3_manifest_key": "datasets/faaa420e922e4128/manifest.json",
-      "s3_manifest_sha256": "adc3735125ba503f691070c7fc60a08a14697dc35a2357bf850fa4000a4d0b4e",
-      "sha256": "faaa420e922e4128514fc163a05b8ee2e400db4514fbd002602e5b5dcbba0fbf"
-    },
-    {
       "columns": 12,
       "dataset_id": "078d593d06472ac3",
       "family_id": "fam-533b18030594c7cc44aaea22d291a70c9d0c593e5f3e4128f917136d4e9da608",
@@ -13651,22 +13137,6 @@
       "s3_manifest_key": "datasets/98b994ddc041b206/manifest.json",
       "s3_manifest_sha256": "b3592fbaa5eecc1b16cb3aeb78b778f6f75bb95e6661c9579f763a2aae4a0cb3",
       "sha256": "98b994ddc041b206ac23bd338e044d571964b1fe5f02e355f61bd25d7b30991b"
-    },
-    {
-      "columns": 3,
-      "dataset_id": "c8757d66cb3b9472",
-      "family_id": "fam-536efa4dc5c4846c7eb374401ff28c0bc282c79755abd8a700f2236bf0e8abab",
-      "family_key": "7c9c97e657f8a526f9e33787e33e77614a7c1818",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "62d109003a2df5524d5c49d5ded5634b",
-      "s3_manifest_key": "datasets/c8757d66cb3b9472/manifest.json",
-      "s3_manifest_sha256": "da7db2ac2742e192e8b7763454b6323bdd45af08ec4e5950cc4d9c24a79a9f2c",
-      "sha256": "c8757d66cb3b9472539b9821610602a0b7ca16244393ea845e46f33ebfdf3931"
     },
     {
       "columns": 218,
@@ -14384,22 +13854,6 @@
       "sha256": "71c749647546f7f97db86560bd70d389347771c7fbce682d2b9468a094302236"
     },
     {
-      "columns": 3,
-      "dataset_id": "38075d6a401bccf6",
-      "family_id": "fam-57f67354f62bb530272631aa3f9ed55868869d87e98160c2c89da3648327d085",
-      "family_key": "690da5fb69a07acd862c3bfe2a4c101cf9073e3a",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 240,
-      "s3_manifest_etag": "efadcb3475d4aacc3cfbd4a82d9c859f",
-      "s3_manifest_key": "datasets/38075d6a401bccf6/manifest.json",
-      "s3_manifest_sha256": "bf8b5ee5beb4401dd6156baadf34327a6fbae7efa01ecb0be017aba7d18b61e6",
-      "sha256": "38075d6a401bccf64dd4f1646f7e3196bb2df341ebb7c909e886f0c614907590"
-    },
-    {
       "columns": 17,
       "dataset_id": "102b025fe98abe0e",
       "family_id": "fam-5806690d5e833d282dd28d6be61c9c4595f7c92b10964fe3b6ddb1da5680f371",
@@ -14555,22 +14009,6 @@
       "s3_manifest_key": "datasets/0712e6c2641cad22/manifest.json",
       "s3_manifest_sha256": "cb83dd168019e68ee4772aec614a86960a4a42f27337bb5b7c7bfe4a12fe0488",
       "sha256": "0712e6c2641cad2294ee015b4e02855f1196846d834315b86d82f156d25988ef"
-    },
-    {
-      "columns": 23,
-      "dataset_id": "c895fb84de0f545a",
-      "family_id": "fam-58ed9099f64edf31d3921338c8ce35c1c97fafc59dd868d7eac4171afc7340a8",
-      "family_key": "d04859d2b75293c2bd7f71cb9ee408d5eb25f8b3",
-      "features": 22,
-      "license": {
-        "note": "source_license: GPL (R package gt)",
-        "status": "unknown"
-      },
-      "rows": 414,
-      "s3_manifest_etag": "a76b07cd9804dbbe60dfa2b3b143dce5",
-      "s3_manifest_key": "datasets/c895fb84de0f545a/manifest.json",
-      "s3_manifest_sha256": "3fad4fd3e63735a5447b8a9b8ef4eff5748196e2c0c7fee174b960fc84ae1709",
-      "sha256": "c895fb84de0f545a13c5fedd41b44cba94b218ca5d78ad0a5d1c4cfab397046e"
     },
     {
       "columns": 36,
@@ -15065,22 +14503,6 @@
       "sha256": "f5d22fc5ef771c4adde80587652219a67fcf1ef7433fe1e30d8bf6a6a11b8a8b"
     },
     {
-      "columns": 3,
-      "dataset_id": "aad067407f174cce",
-      "family_id": "fam-5ca7fefef6b259b784523088f20e81a5ad8b97539298cc351474b4fca66a8387",
-      "family_key": "803bb7ed85337ecd1c08f1c75ae7228151ea9cfd",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 288,
-      "s3_manifest_etag": "9a01574dffce39a71349d01e60730542",
-      "s3_manifest_key": "datasets/aad067407f174cce/manifest.json",
-      "s3_manifest_sha256": "7b10c5b14d0f5381e99d30fdeec0320d4a29c16157b609a2785c5ed045a43fda",
-      "sha256": "aad067407f174cce1adf303cff37e55f520e98e884ee2e36e68ec4d71aef13db"
-    },
-    {
       "columns": 10,
       "dataset_id": "f246e5ab3f887804",
       "family_id": "fam-5cafc1edb7dbab051c3bed8819ffa3fd957602484e7f57014418486a5b2cdd94",
@@ -15316,38 +14738,6 @@
       "s3_manifest_key": "datasets/80e0d64b41d4829c/manifest.json",
       "s3_manifest_sha256": "407ef09f0446246789b9deaeda1ca6698b80b97aef0a170e2f8eb38430b2c8c8",
       "sha256": "80e0d64b41d4829cd7b6302b97ad5b49c107965ab9a5d732a67cc8cb69b3102e"
-    },
-    {
-      "columns": 8,
-      "dataset_id": "59fa04012cb3c013",
-      "family_id": "fam-5df61df22e55f4a66f5d5ba572bfd8dfd8d367d98f88a3015f63c59173a1f853",
-      "family_key": "7c90eef703aa27c0212d85658d8faeeaf051ae86",
-      "features": 7,
-      "license": {
-        "note": "source_license: CC0 (seaborn-data)",
-        "status": "unknown"
-      },
-      "rows": 398,
-      "s3_manifest_etag": "f96a873d497a0d797414f1f8d2b28626",
-      "s3_manifest_key": "datasets/59fa04012cb3c013/manifest.json",
-      "s3_manifest_sha256": "e75b0807d12902742c5ef904177a30544ae587b681b2bd9f77679076a3f3f3c6",
-      "sha256": "59fa04012cb3c013a16fb91e309d00c6ca931d11ef4f919d8948f6e2a8f49305"
-    },
-    {
-      "columns": 11,
-      "dataset_id": "59604545d951ed2e",
-      "family_id": "fam-5e03de57465712389f666b31d94b8e8740ed2f561196f48fc5873ea997d76cf1",
-      "family_key": "89a7ddc353f77efbd1fef8c1bd1a5595bf2fff3e",
-      "features": 10,
-      "license": {
-        "note": "source_license: GPL (R package DAAG)",
-        "status": "unknown"
-      },
-      "rows": 252,
-      "s3_manifest_etag": "e0b57cc1169afeac4652098697d7a0e0",
-      "s3_manifest_key": "datasets/59604545d951ed2e/manifest.json",
-      "s3_manifest_sha256": "38ab83ae632a8424dc116354843d61d7ce85b6c564a654649be1bfa7c87625f1",
-      "sha256": "59604545d951ed2e1c136d687d9f45428c4fa27a06dfa6c7dfb42f24cb32fc91"
     },
     {
       "columns": 7,
@@ -15744,38 +15134,6 @@
       "s3_manifest_key": "datasets/0561d673cb73c27e/manifest.json",
       "s3_manifest_sha256": "904ae3c9d736f8aa4c03276cc91b8067d358be444d64e51e5f1bd36b8747b278",
       "sha256": "0561d673cb73c27e020c826db9184093fa09879cfe9818a78736f3871afc3b5d"
-    },
-    {
-      "columns": 5,
-      "dataset_id": "4e9ab20dc7413158",
-      "family_id": "fam-5fd540d2cd3222fbdee95a67a13ff55bc1a2af57c29f69c42dae5f655c344334",
-      "family_key": "8ddfde2636cac8418b56a2ac5813faf5d51771b4",
-      "features": 4,
-      "license": {
-        "note": "source_license: GPL (R package AER)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "3f50c57e0f3db385fed91eeecf50dc08",
-      "s3_manifest_key": "datasets/4e9ab20dc7413158/manifest.json",
-      "s3_manifest_sha256": "64bac3f0bbf239561d00da511869dcf6cf7ff6b68c7c73e0fa88daeb054e1a4d",
-      "sha256": "4e9ab20dc7413158315e5adecd9a9d181996936f5f180a65d84dfb92fa6ed3ea"
-    },
-    {
-      "columns": 6,
-      "dataset_id": "78a3471439bcc13a",
-      "family_id": "fam-5fdfe7d6203734222f6d7365bf1d85f165b627c27fc4b26ee92aa05ac1b18911",
-      "family_key": "27c354c35a52af01f5dc2fcddfeb6b38a154ef7f",
-      "features": 5,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1454,
-      "s3_manifest_etag": "2f9a3325590e4e6225ae57193825262b",
-      "s3_manifest_key": "datasets/78a3471439bcc13a/manifest.json",
-      "s3_manifest_sha256": "7b03f87ab18062228d3f569fc7ca7e5237078477c6a30c86123533840b5dd3c5",
-      "sha256": "78a3471439bcc13aeba49246edd0cc08d58c146869b37bca5fb7e30da62183a8"
     },
     {
       "columns": 15,
@@ -16636,22 +15994,6 @@
       "sha256": "1126bd47e3b25d2d9e1df5e368ba0fa1841276ce84a20be29992aad58c616de2"
     },
     {
-      "columns": 5,
-      "dataset_id": "ab4dec6c764056ac",
-      "family_id": "fam-65f0cd013bec0a5300d999a9cb65944f36e9fe4a7391caa6ad8802800081e3ba",
-      "family_key": "5fb080b231ba55b2d707e100b8ca8e55e7709517",
-      "features": 4,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 150,
-      "s3_manifest_etag": "0abdc0840c5ecf2458a422f1dd501999",
-      "s3_manifest_key": "datasets/ab4dec6c764056ac/manifest.json",
-      "s3_manifest_sha256": "c9ebdbbf0b4915e370139196196808bbecb2baeb437d11356f427d30bd39de8b",
-      "sha256": "ab4dec6c764056ac0988a57d3a293932fd461e15252b0d01ce5eea6b86974a02"
-    },
-    {
       "columns": 12,
       "dataset_id": "fa10708aa198033f",
       "family_id": "fam-660654e9c90c9c3b75cdacb733fd2f18acc3254f8c4b386e6af4aae4ab1c2b96",
@@ -16920,22 +16262,6 @@
       "s3_manifest_key": "datasets/e7ed7d85b48aa018/manifest.json",
       "s3_manifest_sha256": "eb38f3547ef254fccbf234a7cfdcf1dd480a5bd415c7e983d9a6df49a6674775",
       "sha256": "e7ed7d85b48aa018906f316d952ddab6fba8776eb1ab0e41d0c9b958f67ecc18"
-    },
-    {
-      "columns": 9,
-      "dataset_id": "4cd28bda863bafea",
-      "family_id": "fam-67366e1af8200f5fb8079e40597e82b94bc517aef987a7fc875afbff30070de5",
-      "family_key": "27bb2c9ed3fcca78dc8e10758a45342833cc4cf5",
-      "features": 8,
-      "license": {
-        "note": "source_license: GPL (R package DAAG)",
-        "status": "unknown"
-      },
-      "rows": 253,
-      "s3_manifest_etag": "3357eacc778b7a424e30f8790a0d5e13",
-      "s3_manifest_key": "datasets/4cd28bda863bafea/manifest.json",
-      "s3_manifest_sha256": "fb16ea1ab33cac39a1706a262203f666214429b0d43075664fafe80ba113644f",
-      "sha256": "4cd28bda863bafeaa2fa62ef8d7960c1111b8dda069fa90af5b0287d4a577f6e"
     },
     {
       "columns": 562,
@@ -17394,22 +16720,6 @@
       "sha256": "e9df9e2f8eeb6c91044b699f997a81ddf3530ea1efe353a93d0595f5ea1a5f44"
     },
     {
-      "columns": 3,
-      "dataset_id": "f7e6abfacdac77c4",
-      "family_id": "fam-6aae970856613640f573b7b64eb7045c3cd0afd15e484a5cc652a266077e36ad",
-      "family_key": "4bdb14a95fc7386b233c1755de5439db0858ff44",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 495,
-      "s3_manifest_etag": "68ce127a9649fd39f205d854c13d0fb6",
-      "s3_manifest_key": "datasets/f7e6abfacdac77c4/manifest.json",
-      "s3_manifest_sha256": "3b02ac07a780a10571049fa5fd3ee14cbcdcf2a0a25fd575b06897aa37ad8e99",
-      "sha256": "f7e6abfacdac77c4763f6226fb3d04da2fcd701b0f7534a35163b1bc7df9a187"
-    },
-    {
       "columns": 43,
       "dataset_id": "64ba587836b1e428",
       "family_id": "fam-6abf8e79c6a7c3bbc5d22d76e0f3650d4ce36e1937311bdc24801a9bdce0ee64",
@@ -17424,22 +16734,6 @@
       "s3_manifest_key": "datasets/64ba587836b1e428/manifest.json",
       "s3_manifest_sha256": "28f294a7b4f627c5b5662813e2e09b5ed8ffb6fbf2203e55c112028234449076",
       "sha256": "64ba587836b1e4289202d2bf7d80029d3bf0212460a7faf2eba4f350ca362ede"
-    },
-    {
-      "columns": 6,
-      "dataset_id": "61cc71b4f352f22a",
-      "family_id": "fam-6ac98e0965f57e950dae5530a0292591389ff68d2bae38503205ffc4a39ed5dd",
-      "family_key": "8076a0f5eb40cf7e4986e0a8e7ef5cf3397f0f88",
-      "features": 5,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1200,
-      "s3_manifest_etag": "fe628890d63de1e9fa5890cb1a050b97",
-      "s3_manifest_key": "datasets/61cc71b4f352f22a/manifest.json",
-      "s3_manifest_sha256": "f0306532541b61564ebb55510569c38c898725cdea4e7d8e0614c062d2bde7ae",
-      "sha256": "61cc71b4f352f22ab13db707d7052d1b645ca1c012bbe4193f4e8e15f28a775d"
     },
     {
       "columns": 26,
@@ -17631,22 +16925,6 @@
       "sha256": "2650d3dfbe4164aceaf303d4a4f95d2b85a4c0d2087f5e119bba0cde877f96fb"
     },
     {
-      "columns": 19,
-      "dataset_id": "c042a9090ccf4363",
-      "family_id": "fam-6c488eecb40ec4ada5c533b9847c6b2125f715d4029f70b51bad5043a8e61cfc",
-      "family_key": "a4a5c4661a2c56f8db15d453976b244f2a0207bd",
-      "features": 18,
-      "license": {
-        "note": "source_license: GPL (R package AER)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "1e13fb7a0ff39469f5776acb725dd45c",
-      "s3_manifest_key": "datasets/c042a9090ccf4363/manifest.json",
-      "s3_manifest_sha256": "705852a6687d6ff368cfb34dc013242c97ee94b220c8b5fdcaab24464aa7dc1d",
-      "sha256": "c042a9090ccf43632546c163e3a1f5a32a1bc8ba1e85b8ef0ef0f49790678014"
-    },
-    {
       "columns": 18,
       "dataset_id": "62017e68a6780f28",
       "family_id": "fam-6c48d09b360a14a9acb05f33647f37fe29c208dd168c1fbd9537dfa2a73d9afe",
@@ -17807,22 +17085,6 @@
       "sha256": "851358b6a277432b71b0282b11cf8d42426774e72905c542770afef127495ca5"
     },
     {
-      "columns": 10,
-      "dataset_id": "0b6f888d0129a9e6",
-      "family_id": "fam-6d022c2210fd89f42696ed4e4344b1d5438cdd561a9390c6790d142f2aa92a71",
-      "family_key": "0fc80964036728f8d1fe2a21bfdd0141e618124b",
-      "features": 9,
-      "license": {
-        "note": "source_license: GPL (R package DAAG)",
-        "status": "unknown"
-      },
-      "rows": 313,
-      "s3_manifest_etag": "70102fc4bc4ff0e0e13b7894ddc783d2",
-      "s3_manifest_key": "datasets/0b6f888d0129a9e6/manifest.json",
-      "s3_manifest_sha256": "62aa77143ab2d69def68d945194ec9ffecd5a0a7608dbc1b0177ad927e656718",
-      "sha256": "0b6f888d0129a9e69a2b3f09f531132d33af1bc1ac4b445e86dd3d98ae8934cc"
-    },
-    {
       "columns": 5,
       "dataset_id": "303d3229455f3a99",
       "family_id": "fam-6d0b337c8c9ca29e03caf548b402c096293cd80a3627df6fdf60f66feac8b711",
@@ -17883,22 +17145,6 @@
       "s3_manifest_key": "datasets/556dd55fd5b3f718/manifest.json",
       "s3_manifest_sha256": "3cca7a8a557883cc2bdded224b8fd1407e2280c33b49565e0c024338b46ec882",
       "sha256": "556dd55fd5b3f7180152959d3bbe1b87b9227d35b899742b5ab9e3f734c83024"
-    },
-    {
-      "columns": 9,
-      "dataset_id": "2c783ea8071b3ae9",
-      "family_id": "fam-6dea4817188ec3e1c4224097c310e904be8cc9f6306625fb391ca8b35769cf62",
-      "family_key": "97cffe8b6994d1ce050be98b952588d5921fe236",
-      "features": 8,
-      "license": {
-        "note": "source_license: GPL (R package DAAG)",
-        "status": "unknown"
-      },
-      "rows": 128,
-      "s3_manifest_etag": "d8f62f02986b6d6f25ed1fb809e06592",
-      "s3_manifest_key": "datasets/2c783ea8071b3ae9/manifest.json",
-      "s3_manifest_sha256": "782dcfca542ec12aecc1eb6e8e7d4642f0d08243b1d5eaf2231346e2e77e8dd2",
-      "sha256": "2c783ea8071b3ae9ff8df349958eef0191272d29c8f24b5fd755f952968cb354"
     },
     {
       "columns": 6,
@@ -18620,22 +17866,6 @@
       "sha256": "95d90f585aaf2ccca2f80286d715ba6d5040ca778cffe3330e3115d8035b2ceb"
     },
     {
-      "columns": 5,
-      "dataset_id": "b603824ee4b8fa27",
-      "family_id": "fam-72672077fce7e84428a276714be4faee1c0d481b8999df3b47520152f5e92ac8",
-      "family_key": "cd117c93eec165fb08c20d444609ed19f5e5775b",
-      "features": 4,
-      "license": {
-        "note": "source_license: GPL (R package carData)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "032fdfbcd3d4a6c5a1e9d5b99ade8f94",
-      "s3_manifest_key": "datasets/b603824ee4b8fa27/manifest.json",
-      "s3_manifest_sha256": "dca154476fc0a7c065037925f2033aec91388100489191575472a3b5c5b45c6e",
-      "sha256": "b603824ee4b8fa27006e41ae628ceead7daf075b87349e0536c041a57ef7248a"
-    },
-    {
       "columns": 2,
       "dataset_id": "b040fb29e24b5c7f",
       "family_id": "fam-7267aa3f96f6c8a023cc44d238ab81fcea2e72fbfb63bb622579b04684767bf6",
@@ -18999,22 +18229,6 @@
       "sha256": "138cfd0ecb6a26ec6474031e0bfc2dc2426b3567b7911e55e0ec72532b1d5a48"
     },
     {
-      "columns": 8,
-      "dataset_id": "8b2769d8e5ea56c6",
-      "family_id": "fam-751dd9cbff400556592d9fb2ff1f8636f2c3898d434cac12c80c29647d97927d",
-      "family_key": "e2959fd5a90071df30e6553c65e20ba9dea6d706",
-      "features": 7,
-      "license": {
-        "note": "source_license: GPL (R package plm)",
-        "status": "unknown"
-      },
-      "rows": 1768,
-      "s3_manifest_etag": "67c93aa2c4e4741308c92013304dc32d",
-      "s3_manifest_key": "datasets/8b2769d8e5ea56c6/manifest.json",
-      "s3_manifest_sha256": "56fa4fa791f72d6f57b148643d834c7f3ce645d14e7d5a1f7819ca80a2c6278d",
-      "sha256": "8b2769d8e5ea56c63b1deec36d7040c4d3016b504b3a9fe7406a9b9e4ead0066"
-    },
-    {
       "columns": 3,
       "dataset_id": "2c8d0985f3557d2b",
       "family_id": "fam-7528936496bf521052265eb0352eddaa4d16b9c5d4d3c717275aef96302c4976",
@@ -19078,22 +18292,6 @@
       "s3_manifest_key": "datasets/264b143fe5025435/manifest.json",
       "s3_manifest_sha256": "95b8c8c732cc6c5aa2865a3861ec6b56fbe08ef5c30bb8f0f46f2acd3cb82131",
       "sha256": "264b143fe5025435e90c1e6977160c69086f246387e7665ae285565cd4e96e05"
-    },
-    {
-      "columns": 4,
-      "dataset_id": "a6b32863b6cdf2c5",
-      "family_id": "fam-756c3e54232c48ba089d9ece914e695f76dd1eff24433e55f04c4f14a5673c2e",
-      "family_key": "5763334b8a153e7b827a6e6de71db1d0928e42d1",
-      "features": 3,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "c19961818f6d4bbc810761559dcfcdce",
-      "s3_manifest_key": "datasets/a6b32863b6cdf2c5/manifest.json",
-      "s3_manifest_sha256": "575fd788c0db3a63b9c882115ea722541ff2d16b1118e5b264bcecceaff1a701",
-      "sha256": "a6b32863b6cdf2c53fb72e7198da04a5599782e094f5508c18b963d46ec61854"
     },
     {
       "columns": 14,
@@ -19191,22 +18389,6 @@
       "sha256": "37f447706682e859dfbfe51b924eca00f911bab91551f8822b778c518fc51d8b"
     },
     {
-      "columns": 5,
-      "dataset_id": "38ab1b050e43fed6",
-      "family_id": "fam-75ffe2ff847e4774f33bf62d3a684f6d916cd91dfddc92890ee87bf23a4caf09",
-      "family_key": "3cb5eacb22fc3be6150a20d13dcc894aba35cb41",
-      "features": 4,
-      "license": {
-        "note": "reported by discovery agent: CSO Ireland open data reuse terms",
-        "status": "unknown"
-      },
-      "rows": 420,
-      "s3_manifest_etag": "e36654b60e65803abb81482b0e3655bf",
-      "s3_manifest_key": "datasets/38ab1b050e43fed6/manifest.json",
-      "s3_manifest_sha256": "abfea477a0ff44f689c43f81a0b654c759ef7f42ee3bffcc2de24336e7839f92",
-      "sha256": "38ab1b050e43fed6283385b1a48dd3844f45f315cb94fc4a8f6d2e3ab525c2a8"
-    },
-    {
       "columns": 26,
       "dataset_id": "4065e030957791f6",
       "family_id": "fam-76131760638eaee9cd347b376afec94d9ca694b2cb95362fbd7ca134c75f3296",
@@ -19252,38 +18434,6 @@
       "s3_manifest_key": "datasets/913252256c85544f/manifest.json",
       "s3_manifest_sha256": "157a0f38ca29d232fe975b68d492aae00d558e4fc1769394f62937c4819e3ff8",
       "sha256": "913252256c85544f49d1a7e348db71877a20402be609a723def9880dd272ef66"
-    },
-    {
-      "columns": 4,
-      "dataset_id": "4148de23c2a831f1",
-      "family_id": "fam-76eb84c4b8f1719e8d50abebf0472df46bb2ced94a5b55241f83b276abc3b475",
-      "family_key": "85fd8cd3175423a0ee36808a35d4709b221f3bdd",
-      "features": 3,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1728,
-      "s3_manifest_etag": "e3a5d962405b6f9d30f250284002330d",
-      "s3_manifest_key": "datasets/4148de23c2a831f1/manifest.json",
-      "s3_manifest_sha256": "7a948d75e0d6d68c1b5d93c70c6feb256bdfc229f2bef5529048ac5d6815d3cc",
-      "sha256": "4148de23c2a831f1c2a597e57478d60133e555b2b26de93d4701ed2d51f0a408"
-    },
-    {
-      "columns": 9,
-      "dataset_id": "21ee57033b3878c2",
-      "family_id": "fam-76fd1739bbe59f2110c5fd826742ec02cdfbbba307b8290d87738e401ef80ece",
-      "family_key": "e8fceb94caa5413b4e14dc11381424428913f25e",
-      "features": 8,
-      "license": {
-        "note": "reported by discovery agent: Creative Commons Attribution 4.0",
-        "status": "unknown"
-      },
-      "rows": 2268,
-      "s3_manifest_etag": "d96d700441d68a629427667fc5bf2a09",
-      "s3_manifest_key": "datasets/21ee57033b3878c2/manifest.json",
-      "s3_manifest_sha256": "a4a2d689c14812f26209169da7d43784414bd922148dd7b7b31cd8b5f1ad49e1",
-      "sha256": "21ee57033b3878c245fbd1db4f65e0cdd7667a0b6b3cd3c986db8c78e3545739"
     },
     {
       "columns": 11,
@@ -19505,22 +18655,6 @@
       "sha256": "353ae247c133a94a8216165c06d303b3a8565ba55ba857d2a6087479d2d3d37d"
     },
     {
-      "columns": 5,
-      "dataset_id": "87ed1db249a55154",
-      "family_id": "fam-78645988032f38bd6c0e1f878aeb4c6269ddcf575557808a57f733fa5971b13f",
-      "family_key": "7238bfa4a54b07d46ed9db741f2166ff7e3caca0",
-      "features": 4,
-      "license": {
-        "note": "reported by discovery agent: INE Spain reuse terms",
-        "status": "unknown"
-      },
-      "rows": 10000,
-      "s3_manifest_etag": "921ed8c99bd56c343b80191295a6c93a",
-      "s3_manifest_key": "datasets/87ed1db249a55154/manifest.json",
-      "s3_manifest_sha256": "6346b284bb9ac6823902d68a8d8a12cb51c8b5c34abdd27d1b839ed73bc3eb3a",
-      "sha256": "87ed1db249a551542382ebd010b165a1c5e52ac39bdc23f221a4571f1ffb2a24"
-    },
-    {
       "columns": 7,
       "dataset_id": "5f680c88a953dee0",
       "family_id": "fam-78eb3e8ed9dd6fb795834a0b8b86d5860bfc80ec81aaa7bf7d9e12de48fda72d",
@@ -19597,22 +18731,6 @@
       "s3_manifest_key": "datasets/95b5660335a5a4be/manifest.json",
       "s3_manifest_sha256": "0f566e25d2d2d235c45d35449d5ac723266cc542dd259119e7a3ce274ea52b0b",
       "sha256": "95b5660335a5a4be7f0b59feb96ef6775a8f2e9fe5fe745ba940ee7891cca15d"
-    },
-    {
-      "columns": 5,
-      "dataset_id": "3855748e719ad2a8",
-      "family_id": "fam-792a9ef67a35997e3694afa5a24ec3644f5611705020c0d89c8d62b942649eae",
-      "family_key": "593230ce31fb6b4a19c26f88ccbec4086ac046b6",
-      "features": 4,
-      "license": {
-        "note": "source_license: GPL (R package Ecdat)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "ff184de1036e79ff2ae670bf830f11c2",
-      "s3_manifest_key": "datasets/3855748e719ad2a8/manifest.json",
-      "s3_manifest_sha256": "5d6b295aad8a98b3190516496dc27486222f79ebd97add9ade8a0a16ac620614",
-      "sha256": "3855748e719ad2a8108f3ef968bb82bd0d51e880c47d0aa3fc36b9e9453a8b76"
     },
     {
       "columns": 9,
@@ -20077,22 +19195,6 @@
       "sha256": "26876b52c19bca964ec68c3c593f150fca83d27c2a966daf471f8d1d505152f1"
     },
     {
-      "columns": 3,
-      "dataset_id": "a8f9ee0080910b36",
-      "family_id": "fam-7bbf9f337d0b1f513e0cfd6b5bb9a9202a5e02deca6016ff2320db6e338660dc",
-      "family_key": "cb66125fb0c992cab85de431341d7d812787a5d8",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 434,
-      "s3_manifest_etag": "412b7302e30689644a8c368fc31e4701",
-      "s3_manifest_key": "datasets/a8f9ee0080910b36/manifest.json",
-      "s3_manifest_sha256": "b884304bfa41b7fc4c3db9c4046acf0b8f1d76e128f88079e9a03dc805209d0b",
-      "sha256": "a8f9ee0080910b367fd729a3179a656c3da3ffda416f8160df3cdae8a03a447b"
-    },
-    {
       "columns": 10,
       "dataset_id": "2f56285411f40460",
       "family_id": "fam-7bcdf37da3b04448b04a89bb795c3bdb3191d0182a26e7999d249689a3377f82",
@@ -20470,38 +19572,6 @@
       "s3_manifest_key": "datasets/3c81d7475323daff/manifest.json",
       "s3_manifest_sha256": "8aeadb39c237c3b4ca5c422797b00b73455eaaac30e17757e6ef80e731ad18cb",
       "sha256": "3c81d7475323daff8365b71ea38859e5a772b88fd3574cf35b0eeb0f1f34f32c"
-    },
-    {
-      "columns": 9,
-      "dataset_id": "53dac4986607860b",
-      "family_id": "fam-7e47ff32e2c65f464d8179efc095df73a12585374bfe8377d018c3768e891fdd",
-      "family_key": "14f31c86e872c12127819b4a60932ef87ad8e2fc",
-      "features": 8,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 225,
-      "s3_manifest_etag": "8cf011c272ec05042562762bdd60f18d",
-      "s3_manifest_key": "datasets/53dac4986607860b/manifest.json",
-      "s3_manifest_sha256": "b8ca649f18e4f6ec4845ff9d3c3cb8321a9d125da44f74ff38b6302384802be8",
-      "sha256": "53dac4986607860b629cb6533a00fd742d7048d338ed1f1a3ed34842fadd5ab4"
-    },
-    {
-      "columns": 401,
-      "dataset_id": "8d5f6d3120d2cbc2",
-      "family_id": "fam-7e65d7ed3b610ad284c41056286127d907350e6a1f10f5d78da186a9bd4510e6",
-      "family_key": "3e82de5441dd180574e99eaab8dbf2f78f91ca0e",
-      "features": 400,
-      "license": {
-        "note": "reported by discovery agent: Public domain — U.S. government data",
-        "status": "unknown"
-      },
-      "rows": 10000,
-      "s3_manifest_etag": "22ea2470bac5bb8fcd4554f01aca3174",
-      "s3_manifest_key": "datasets/8d5f6d3120d2cbc2/manifest.json",
-      "s3_manifest_sha256": "959c5cb82518da4d0eada923fc7a67f8d257da680bfcfc7606a46c1f4966a8d8",
-      "sha256": "8d5f6d3120d2cbc2535151c7d455e7a536ca9768f773e15edd45932ec38b3592"
     },
     {
       "columns": 25,
@@ -21537,22 +20607,6 @@
       "sha256": "9fb18f0ea9bce6ac0d3fdf302778e77aafcdbc4f7b073eddeb9a5964ff5c3e3b"
     },
     {
-      "columns": 6,
-      "dataset_id": "52d3452c98b67d7b",
-      "family_id": "fam-851a3bfb127fcf7ee1af22d3310f2467c651bdf1bc2a53f553a040706b6666cc",
-      "family_key": "05c4aab38f36c773556e9e889623b8b932b7ecba",
-      "features": 5,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 152,
-      "s3_manifest_etag": "75cf2189a78ef20a491f951096d6e4b9",
-      "s3_manifest_key": "datasets/52d3452c98b67d7b/manifest.json",
-      "s3_manifest_sha256": "b2afe5e6d505acdee8069074b7e784ec17e44d45d925bb7bb741faefaa1e2d42",
-      "sha256": "52d3452c98b67d7b5fb6ba4cd359659a1c047e8576f0871c4fc425472a8ad7db"
-    },
-    {
       "columns": 2,
       "dataset_id": "9465b142571cfc15",
       "family_id": "fam-8529e0046deec000184db9371e46ef6e957f51ef80ba7db7e4ea9821cff96dd3",
@@ -22448,22 +21502,6 @@
       "sha256": "702213de0a27864f583c25e5407d7b36da25a617246690547acfe268304431ed"
     },
     {
-      "columns": 5,
-      "dataset_id": "23acae59f5af65cf",
-      "family_id": "fam-8a14fe0091d0350800d380aa36cb5922ccc9bb894cc4618179446cd8625bca7e",
-      "family_key": "64e4042dab213c4539075d4379f68ab00f19b726",
-      "features": 4,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 260,
-      "s3_manifest_etag": "38d923675f0ed3d3c0c4d96d01c94fcf",
-      "s3_manifest_key": "datasets/23acae59f5af65cf/manifest.json",
-      "s3_manifest_sha256": "ab51f2d8f81edb08a3ff4ce3e7ad0311a8d200e7d4a29773f527f6be566d8faa",
-      "sha256": "23acae59f5af65cf13b6acd57fb96b03e65beef826768e235b51a4f8eeaf3f50"
-    },
-    {
       "columns": 40,
       "dataset_id": "496a0d6616986bfb",
       "family_id": "fam-8a2c62bcc1c1a458a52cd542f15fa70fb5ca035b9641820da0c4beb9caeb1e6d",
@@ -23173,22 +22211,6 @@
       "sha256": "3436f700c32cec1a9b6cad974004f21ff63b639828928174688c1fd0f2107c5c"
     },
     {
-      "columns": 5,
-      "dataset_id": "998273bb784c567f",
-      "family_id": "fam-8d94e73abfb5f1ee61809103f05647cc0487983f099af3c61896bffb4fd04ad2",
-      "family_key": "fa0d99688a792006e1fdba6b90a662aa0ee96599",
-      "features": 4,
-      "license": {
-        "note": "reported by discovery agent: CC BY 4.0",
-        "status": "unknown"
-      },
-      "rows": 10000,
-      "s3_manifest_etag": "7751d0b351ef41c05ce7406115ec9f98",
-      "s3_manifest_key": "datasets/998273bb784c567f/manifest.json",
-      "s3_manifest_sha256": "8aceebc9f9644a1b974e92b39aa4b0460a58eebf59a4fa0e52f17d31adf8abd1",
-      "sha256": "998273bb784c567f697bb60abcfcf1ca22c2a8555a2bceda9bb1d38d99c0fd75"
-    },
-    {
       "columns": 75,
       "dataset_id": "3847b2b782a94b66",
       "family_id": "fam-8dd2f547a287e79504c4621132f0170cdd3b106f91878496b76c9045dd63abf7",
@@ -23381,22 +22403,6 @@
       "sha256": "908c0c2ed6c3c64b085b3c8b1f18bdca08eb3f058cb29db89dd25b2f9af1ca69"
     },
     {
-      "columns": 4,
-      "dataset_id": "ddb7502aa2c8ecd8",
-      "family_id": "fam-8f771fcb0b2440928e441a6cf1a29802320405b89920df376ef41be549238eb9",
-      "family_key": "fc2cd36b0b9102cce7c51d5e9bb713821da28c89",
-      "features": 3,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 160,
-      "s3_manifest_etag": "1ef4495caadc6efda43bc8c2745aa45f",
-      "s3_manifest_key": "datasets/ddb7502aa2c8ecd8/manifest.json",
-      "s3_manifest_sha256": "edef19d115451c4e65a7203a2f83a64566d9109fe5a89daf42f37c6f5fbc2e8b",
-      "sha256": "ddb7502aa2c8ecd86e46c4fd95a93aecd5e495248f95c37b71226759e62ea5b8"
-    },
-    {
       "columns": 2,
       "dataset_id": "8005bf9ddfdd0304",
       "family_id": "fam-8f8cb66cca3a74214341c3fba73e5a8725767eaf1939a00a9e3e3b5994291990",
@@ -23554,22 +22560,6 @@
       "sha256": "082beced964c3c17a9890d5cdb7b2ebb0a4fcbe85f6ee3f70ef60b4dcb9b5a63"
     },
     {
-      "columns": 5,
-      "dataset_id": "ed8646edbc1f4980",
-      "family_id": "fam-9040c97715320c97a4044c6734edb9d2e29a39c0ba70ad18578919821b6410aa",
-      "family_key": "ddf671b2e5c33d64d706c23f2496cdf364c70fcb",
-      "features": 4,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 330,
-      "s3_manifest_etag": "96fb1b2d7671f2e41de79b10a3a412cc",
-      "s3_manifest_key": "datasets/ed8646edbc1f4980/manifest.json",
-      "s3_manifest_sha256": "e871f787e420453356a37605aa2c356fb9b4c2f66c7cbbee204ddc23675f3b3c",
-      "sha256": "ed8646edbc1f4980a31f147859b69494e57cbef169f22218994007c0c2d7ac78"
-    },
-    {
       "columns": 4,
       "dataset_id": "3fc3602a70471725",
       "family_id": "fam-90555fd2fa4fc4ad9cbddea2b6e54c101e94e8002e6f9a6917d98c77b0f5c9ea",
@@ -23681,22 +22671,6 @@
       "sha256": "889e45ab1b8f1662fea37b9202c839a7bec674b01124352f5e6ae67f0020d0a4"
     },
     {
-      "columns": 2,
-      "dataset_id": "7d0688370b3cd58f",
-      "family_id": "fam-916d018659b8d629838ab4dfb267683c2ea82ea4b3cc85343b6e06e785777a3a",
-      "family_key": "0ec58beb786a1b19fa5557b252401068b53d57ff",
-      "features": 1,
-      "license": {
-        "note": "source_license: GPL (R package datasets)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "214cf2dc3d844e36d80daaab0e52e6f7",
-      "s3_manifest_key": "datasets/7d0688370b3cd58f/manifest.json",
-      "s3_manifest_sha256": "0321804d2727cfbb32c5d4451d351bf9bd0d1eb16a7b6c245dcae81cae41dc18",
-      "sha256": "7d0688370b3cd58f4f52dd19edc77e414cef07ad5f10609de9aebc9f668fa2ac"
-    },
-    {
       "columns": 3,
       "dataset_id": "7d6b4bee92286753",
       "family_id": "fam-9176d113a66590927ab2c8ca260a7e7f1f31e889f42805c34817649433d714c5",
@@ -23806,22 +22780,6 @@
       "s3_manifest_key": "datasets/ed9b692587744160/manifest.json",
       "s3_manifest_sha256": "0406870662f5f64eeaa76631e5655b89c7b86d688efd02490168ff42a5d0f7cb",
       "sha256": "ed9b692587744160c0594f576b5032b66873ffc0533f49694f69b1aedb8dfd21"
-    },
-    {
-      "columns": 9,
-      "dataset_id": "b1ee03b1e7a8240f",
-      "family_id": "fam-922954f65268a3f78d954252ce2e855b7090805786ce7d7f5cf63e4f8a050cd7",
-      "family_key": "e43dd4daa4b43437d0b92c48713c6c761af03a89",
-      "features": 8,
-      "license": {
-        "note": "source_license: GPL (R package DAAG)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "b0b0f8cd793d1f5adea2280bc4faa235",
-      "s3_manifest_key": "datasets/b1ee03b1e7a8240f/manifest.json",
-      "s3_manifest_sha256": "04ab0e34cd410d21e9a9679ef3ed4e0cd538e6415e1a2ecb8241b511a6f33560",
-      "sha256": "b1ee03b1e7a8240f5a3a4cb1901f9ed4c5d42ae00a246165f7d299a5fb557ef3"
     },
     {
       "columns": 6,
@@ -23984,22 +22942,6 @@
       "sha256": "559985443ec1f0c91a48558566becc9c2470203479946253791b9421f38f01e8"
     },
     {
-      "columns": 4,
-      "dataset_id": "1847dff8d03e6b68",
-      "family_id": "fam-93232c20454471f1cfde31c171bc91a87eaaa929997e8368f4c60613c927d61e",
-      "family_key": "699300a0481ca954a7c35c1000984031722cf6ed",
-      "features": 3,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 399,
-      "s3_manifest_etag": "91800fa016664bd6362aeeb9c5bca7a4",
-      "s3_manifest_key": "datasets/1847dff8d03e6b68/manifest.json",
-      "s3_manifest_sha256": "d7659c7c3d3cf71fa0d2db8be7635fbdace2d25d4e09a7caa1d7252260c0653f",
-      "sha256": "1847dff8d03e6b6880b6808ea0ff990a8a3f7d9d1bede668165c1cfb664ebadf"
-    },
-    {
       "columns": 7,
       "dataset_id": "5fabcbae9276fedc",
       "family_id": "fam-934e6a04f3197cc48198aaad3c9efd76ea2db44e8d1eb27fb02916e4ae2796cc",
@@ -24125,22 +23067,6 @@
       "sha256": "95e6b420154160ea296c56ddf27bd917ecf0284cba9d46a2962acf1cca6ee663"
     },
     {
-      "columns": 6,
-      "dataset_id": "13de290cd60b2d1c",
-      "family_id": "fam-93d0b0f5d7cc63713e206c4097352169ddd20717b924c951a43e8207dfb05a6e",
-      "family_key": "e5d4e43e457ab22376ec2283ba681fcf88b5d099",
-      "features": 5,
-      "license": {
-        "note": "reported by discovery agent: Insee open-data reuse terms",
-        "status": "unknown"
-      },
-      "rows": 10000,
-      "s3_manifest_etag": "7364b9cc1f3916ce7da86de62de0648d",
-      "s3_manifest_key": "datasets/13de290cd60b2d1c/manifest.json",
-      "s3_manifest_sha256": "0c94247fec7daf947485b50c0998e63f62d7b7a62925aaaef555c47e64b0ddf5",
-      "sha256": "13de290cd60b2d1c75218266a2813b566681c3ce6359829f5ed1d964d5e91098"
-    },
-    {
       "columns": 14,
       "dataset_id": "6752633826892e66",
       "family_id": "fam-93da0f1a61498282ec071dc5daa593b0932467883e5eef5e252ec7a2f1838199",
@@ -24155,22 +23081,6 @@
       "s3_manifest_key": "datasets/6752633826892e66/manifest.json",
       "s3_manifest_sha256": "6606d289720439a82d50c7ca3361b121c5232810797462f6aea617948559f13c",
       "sha256": "6752633826892e6677c3f8aea95fe4bd0c02af61b92be7f05c28e33a3b8a00ae"
-    },
-    {
-      "columns": 8,
-      "dataset_id": "fc78ac2d0dd27a14",
-      "family_id": "fam-93db693408fda18cbfb1135a4a258c1ebf6b374c3b5b918ddf1e7b2819a53eb4",
-      "family_key": "6390149b8bbf0f72034ef42e8252fe5ae92e0815",
-      "features": 7,
-      "license": {
-        "note": "reported by discovery agent: New York State Open Data",
-        "status": "unknown"
-      },
-      "rows": 7036,
-      "s3_manifest_etag": "58d90824749a183de92f2c28d9f37fef",
-      "s3_manifest_key": "datasets/fc78ac2d0dd27a14/manifest.json",
-      "s3_manifest_sha256": "35c158cb5b6ce18a7f482f27a1e88afae996156a87158e489915f5e6c6a519ab",
-      "sha256": "fc78ac2d0dd27a147316cda7cb6b928f4fcb5072361990ef157564ee9d7b7824"
     },
     {
       "columns": 13,
@@ -24722,22 +23632,6 @@
       "sha256": "8b71bb6732f8bd3f8832a98e652da8d7d5c3a9fada3f162d2d5d6b7872258062"
     },
     {
-      "columns": 3,
-      "dataset_id": "dbba8dc17a01dd3d",
-      "family_id": "fam-9760c2f59083ec507250773c2c4582e85589ab041c627c4d8153c714f673bb7d",
-      "family_key": "84c58deb923e4cf4c0cd882cc0d07fc6a2a553af",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1948,
-      "s3_manifest_etag": "c8a1900e5d9d0bbd5c67b1947194e9b7",
-      "s3_manifest_key": "datasets/dbba8dc17a01dd3d/manifest.json",
-      "s3_manifest_sha256": "e41b60b64520ddeb55c32836b474b3eb2dc9c7ad49ec70e3ef2c4efcc12b0a23",
-      "sha256": "dbba8dc17a01dd3d4247e46fc4c31a6c969e6c951ed98ca99c890437297ee9d0"
-    },
-    {
       "columns": 2,
       "dataset_id": "caf3e57a90f1a316",
       "family_id": "fam-977758e895eac56292e0ed832547c1ec90b8436d177b2846b29e206f10d83729",
@@ -24768,22 +23662,6 @@
       "s3_manifest_key": "datasets/c599347521343e68/manifest.json",
       "s3_manifest_sha256": "ffd82f72b4c0dbb24301ec46426c274fb0069ba464945d18c573824d014d1c2d",
       "sha256": "c599347521343e686b498d2659823643ac98eee4f36fb71bed25ee09b041c35f"
-    },
-    {
-      "columns": 12,
-      "dataset_id": "c973316dbad91574",
-      "family_id": "fam-97b6cfd110d3a5bfa1dffa5a842c4b9f8939a926b133dcaf63b037f3f6974165",
-      "family_key": "143348fe7eb98f554ea42ddf1833d349593bb87c",
-      "features": 11,
-      "license": {
-        "note": "source_license: GPL (R package MedDataSets)",
-        "status": "unknown"
-      },
-      "rows": 279,
-      "s3_manifest_etag": "ac1e41d9ad2d660db952644ebac425ac",
-      "s3_manifest_key": "datasets/c973316dbad91574/manifest.json",
-      "s3_manifest_sha256": "85de7a028de3c0d5d8919ffe66962cefa6df82725ed105ad5f85847590326fab",
-      "sha256": "c973316dbad915743a60c402faa705d30ab5754146cb60b39d71687cd688400e"
     },
     {
       "columns": 27,
@@ -26581,22 +25459,6 @@
       "sha256": "6f7f48bcf18f23e696e14760c3983c60b71a888ab5bf7c23f0d49761da7cda9a"
     },
     {
-      "columns": 4,
-      "dataset_id": "79e600bc5fcd5da7",
-      "family_id": "fam-a1a2a409d366a96c6027ca86c1edbea67276d67074b6773546937704802e1289",
-      "family_key": "eea86a810ed36d530361c23bead80d6ec79bd835",
-      "features": 3,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 216,
-      "s3_manifest_etag": "4b38bcc9f7c12c0330a44c13470445f9",
-      "s3_manifest_key": "datasets/79e600bc5fcd5da7/manifest.json",
-      "s3_manifest_sha256": "8f413a42ab19ab0e5c7be9524a381f2cb0c9666d25c250e187977e8e16cac612",
-      "sha256": "79e600bc5fcd5da708a9de9040f59dc48d9f495a6505106712f6be2cc7928171"
-    },
-    {
       "columns": 19,
       "dataset_id": "faa80277ab5320ba",
       "family_id": "fam-a1ace4c3532823821466dcc3517dad22122ad3ae044ce13177b5eb481e2a811a",
@@ -26705,22 +25567,6 @@
       "s3_manifest_key": "datasets/45edcf82474828fd/manifest.json",
       "s3_manifest_sha256": "1bf7a1b89d122eb3d1d4369463ae9fda2679238474b25b1037b4afbcab7f6815",
       "sha256": "45edcf82474828fd5346ee39cc4b24eec6ac59d7477733b4aee35865c72fc289"
-    },
-    {
-      "columns": 3,
-      "dataset_id": "5a1b150cd4c07ba4",
-      "family_id": "fam-a21c10c7b00eb4dc854239454b40be3bb0953d97bb3d075a87fc1da7244fc296",
-      "family_key": "4c5356da175db8acfcab5d15044d0aa2cb801991",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 480,
-      "s3_manifest_etag": "abfa7a8a1787c136ed8b8323ddfdf998",
-      "s3_manifest_key": "datasets/5a1b150cd4c07ba4/manifest.json",
-      "s3_manifest_sha256": "0eae666c50294e8ff628bf0da04e2296debb0d67ab1a31d70890d3dd5838a84f",
-      "sha256": "5a1b150cd4c07ba4e57e28a0a8f54e08023a6420616cea8b9fb95508a1233eac"
     },
     {
       "columns": 10,
@@ -26884,22 +25730,6 @@
       "sha256": "297b7688a045c5838c4e093dc23489e79aac7047ed5c93577f818ebae54bb15a"
     },
     {
-      "columns": 4,
-      "dataset_id": "7832885427a6700d",
-      "family_id": "fam-a3501a63e5f9cdd49d2b5026e0cf41ce079b85d374198212e00294ed8834b202",
-      "family_key": "d9f40d1521ffddf77b9fbd1e0018318d5ae08907",
-      "features": 3,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 224,
-      "s3_manifest_etag": "5ef1e09c86fa4d49d3c9fb2609ebc1c5",
-      "s3_manifest_key": "datasets/7832885427a6700d/manifest.json",
-      "s3_manifest_sha256": "3e1541507bec29b643c25032f40552b55c4573985c3beb4d7d666031403a7872",
-      "sha256": "7832885427a6700d878a8ab2c2a0ae6e5f09f78ee7e2fcf3b93e3dcb810e431c"
-    },
-    {
       "columns": 6,
       "dataset_id": "fb753ac3eb281298",
       "family_id": "fam-a37743f11f46282307c9eaf35012d6a16479ddc4550fcd2029fc4dc9a561ccea",
@@ -27027,22 +25857,6 @@
       "s3_manifest_key": "datasets/3fb90424d35ddbc6/manifest.json",
       "s3_manifest_sha256": "6f51f4ad823f0ea9f4cb922961cab6e4a481f3260f67b5847ae0f03247d55522",
       "sha256": "3fb90424d35ddbc6e45f79a5fa208eacbdb182fbbfb9a43baced5876c3a604a2"
-    },
-    {
-      "columns": 7,
-      "dataset_id": "57cd9e98369ab12f",
-      "family_id": "fam-a3d58e7511c1be2fe234662f526d95b759028a80a8870c2f7605518267c1ac73",
-      "family_key": "265fa68d55b404a48b8d439947d724af14683ef9",
-      "features": 6,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "bd223a1c8f8a840f139d0e5d3a356619",
-      "s3_manifest_key": "datasets/57cd9e98369ab12f/manifest.json",
-      "s3_manifest_sha256": "871acd78d3f0f4c387b351fc6319e41b8ecd68caf66f582d8ed3e065b2058e32",
-      "sha256": "57cd9e98369ab12f74a17ffe1ce0034b179e3304495364f240c346d62e34d5b1"
     },
     {
       "columns": 7,
@@ -27271,22 +26085,6 @@
       "sha256": "e5f8d464955b843e340073166f1a3114e364af108983f4454647542662a14307"
     },
     {
-      "columns": 3,
-      "dataset_id": "73d859974a1a70d3",
-      "family_id": "fam-a58a859ee09ace55437271a689d9ac243312208a40e16ce6e630623917753a51",
-      "family_key": "8b4f9eed69c8c7ee862553514fd449a7e2a02a2a",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 144,
-      "s3_manifest_etag": "78b0e68fe57f1e3e441807ec7942075f",
-      "s3_manifest_key": "datasets/73d859974a1a70d3/manifest.json",
-      "s3_manifest_sha256": "4ab753e237fabbe01a27f76ab54ec8659d6ce042a486b0fecfe1c5897dc51e6b",
-      "sha256": "73d859974a1a70d3bae02cadba351d5da49aa19cf0ed8611bcdf80ffbe2bfcd2"
-    },
-    {
       "columns": 618,
       "dataset_id": "b71e94b70975c589",
       "family_id": "fam-a5931e0f534283ca64c3f47a7db9b83660caa9afd7fe31b916c8cc172e31f40c",
@@ -27410,24 +26208,6 @@
       "sha256": "f2e2c3af17a9e505997e12fe5791d71c44b2082de0fad5b2b2ced9402448e9b7"
     },
     {
-      "columns": 16,
-      "dataset_id": "9a10c15885022034",
-      "family_id": "fam-a6da699e7b64758f900132014cec81fc6924b444b3462d753a8f40a9c2d66d2f",
-      "family_key": "e413531093b7c3fd27156b80983fa4477b8ed621",
-      "features": 15,
-      "license": {
-        "evidence_url": "https://github.com/EpistasisLab/pmlb/blob/master/LICENSE",
-        "note": "source_license: MIT (PMLB)",
-        "spdx": "MIT",
-        "status": "recorded"
-      },
-      "rows": 159,
-      "s3_manifest_etag": "e03a1b42f7fe8c275bd35f81f743de7b",
-      "s3_manifest_key": "datasets/9a10c15885022034/manifest.json",
-      "s3_manifest_sha256": "dc54a332a26ce1ff5d9147150a11ad8a2b9aecf1ed220c73c57d9bcb5845b3b3",
-      "sha256": "9a10c158850220344c547880afa797ce65d6e249ef7567eef5bb1d1ea06b18dc"
-    },
-    {
       "columns": 27,
       "dataset_id": "a4f57347647d53e4",
       "family_id": "fam-a6f3800a85066e378f6fc6b075132d2f6f51342d467d3d418e2c74524bb36ba9",
@@ -27441,22 +26221,6 @@
       "s3_manifest_key": "datasets/a4f57347647d53e4/manifest.json",
       "s3_manifest_sha256": "4f54356a2449583bca1d205b9fa2ff41144ff08d066167ad7946a2e01bffd836",
       "sha256": "a4f57347647d53e4bee02dfbfcf61328d3fc6ef7ce2cc53e17eb0cffd16c8ea9"
-    },
-    {
-      "columns": 11,
-      "dataset_id": "b625c8a6b7fc62a8",
-      "family_id": "fam-a6f8b09532f9cb18dbd6daaa1b033878614ed088815c754e814f2bd69892562f",
-      "family_key": "32ab68f8885fc067907938e86d9130d1a6dc2245",
-      "features": 10,
-      "license": {
-        "note": "source_license: GPL (R package DAAG)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "da052172e83f2b7984295613d4557070",
-      "s3_manifest_key": "datasets/b625c8a6b7fc62a8/manifest.json",
-      "s3_manifest_sha256": "d721361264eaf7f64e4e45bad99c40ed0ff3fc0ebdcbba2d76b9a6dcec7f27a8",
-      "sha256": "b625c8a6b7fc62a8107126a029c8a9fc99d27c2da17cd65f14ee99a96b435406"
     },
     {
       "columns": 6,
@@ -27969,22 +26733,6 @@
       "sha256": "cbbb2ac3d06846c6a8163c1975c8e9180c8aa81a09aa7362bc515d59db3fcb4e"
     },
     {
-      "columns": 10,
-      "dataset_id": "8d6d38bb1ef1fbad",
-      "family_id": "fam-ab31dfb6d55e370b4beaccea70398259035eb9c44b033028c7f70c64e6090561",
-      "family_key": "95dfe0f5b44aa2fd67d530bcf45ddf6c21f8bcfb",
-      "features": 9,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 464,
-      "s3_manifest_etag": "7a6da9ef754d452dbf537d9d1755e6ee",
-      "s3_manifest_key": "datasets/8d6d38bb1ef1fbad/manifest.json",
-      "s3_manifest_sha256": "f8917a89ee136f79b15195f87254f08e3d07e6a76eac99321b7414d3fb483c07",
-      "sha256": "8d6d38bb1ef1fbad539f5461fb9895e924870cbdf6bf0cce96eff6d304fa4210"
-    },
-    {
       "columns": 27,
       "dataset_id": "745c7c6234771744",
       "family_id": "fam-ab34434b37fd7409d758892487130cb69b957c16b08370be4dec6226fd0afafb",
@@ -28271,22 +27019,6 @@
       "s3_manifest_key": "datasets/18249fbd8a9aeeee/manifest.json",
       "s3_manifest_sha256": "f656945fca7e39845690a0222ee2c979e4968ca71b72659b85815fe15a4d93c0",
       "sha256": "18249fbd8a9aeeeeb09639690dbc1d73744b508a460624ab84e6961ffb98a017"
-    },
-    {
-      "columns": 3,
-      "dataset_id": "65ccdea6b2e7f3e6",
-      "family_id": "fam-ad0a7b5b65f9a3d833785d628be104367dc65db0f89ee936fa066d9ab3941998",
-      "family_key": "9b7e113ca5855417d82565aa53c93160e05e94d2",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 144,
-      "s3_manifest_etag": "5f97a79a0341ec20ecf8902c29de0332",
-      "s3_manifest_key": "datasets/65ccdea6b2e7f3e6/manifest.json",
-      "s3_manifest_sha256": "b85cee4467e4d331a01cabdfc1f6dabad19684a6ae809f1fc310bb2f96870bbe",
-      "sha256": "65ccdea6b2e7f3e6215aba7628c8c56b646fc2ad4d5a5a4cdfda010c81a0c0d5"
     },
     {
       "columns": 3,
@@ -28594,22 +27326,6 @@
       "sha256": "6f49af5a5f5e538081f5b5636060171bcf74b9b240c40d01ec80880cc52624d1"
     },
     {
-      "columns": 3,
-      "dataset_id": "e45a347638c36e91",
-      "family_id": "fam-aed4e805f32a9ea91b6367ecd45562487d1abceb3a197bfb5f5ee2bf18aeffe8",
-      "family_key": "c4c72cf14e07672031df6745ea23e5939a93cef6",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1512,
-      "s3_manifest_etag": "0b3fa3bb011c074c773d5e0c80fb3a3d",
-      "s3_manifest_key": "datasets/e45a347638c36e91/manifest.json",
-      "s3_manifest_sha256": "47fef5d22b90032456a5ba56eb43b890fcceda1bbb83a1f5d7e1ae80db0f0c7d",
-      "sha256": "e45a347638c36e91c1d162b1d9e347ab2956b47b91d21ff8f2a90f68378c98c4"
-    },
-    {
       "columns": 10,
       "dataset_id": "55df39c311116a2d",
       "family_id": "fam-aef75e60c8abaeed3378178d3ea1a08f5e1d764fb5a144f2551264d68ab10b32",
@@ -28748,21 +27464,6 @@
       "s3_manifest_key": "datasets/13caf53435104a9a/manifest.json",
       "s3_manifest_sha256": "b03dd6fd67a221e85b272cf2d37a6fefbe4d15353db562cd6d8e1de95bcd3ee9",
       "sha256": "13caf53435104a9a860d0dd279679151ccba1b40f3138a1763ec37bd9aae1712"
-    },
-    {
-      "columns": 8,
-      "dataset_id": "f3f539ada2233eb2",
-      "family_id": "fam-afb1da6c256e7cf4498e6d86a27ef7321c42b897894f3369c22a65d718a36f24",
-      "family_key": "e2f7e4abd7fe1d32bce98c490ba773af20a034d8",
-      "features": 7,
-      "license": {
-        "status": "unknown"
-      },
-      "rows": 398,
-      "s3_manifest_etag": "df6108b48a24768d5fd003130ce8be69",
-      "s3_manifest_key": "datasets/f3f539ada2233eb2/manifest.json",
-      "s3_manifest_sha256": "3b98ddecfd3b6332d2488a56f83913f4989e93b520f503d946792418f59f018a",
-      "sha256": "f3f539ada2233eb2d9c3780a084dc7958a5a01d2fc99acc62df5856435b8e226"
     },
     {
       "columns": 77,
@@ -28959,22 +27660,6 @@
       "sha256": "189e0290f5c94ec4b67a65cb715e3282e44407f2fc78e09d666a75a622288b77"
     },
     {
-      "columns": 3,
-      "dataset_id": "9b7f3224d28a6c1b",
-      "family_id": "fam-b0b67a0295c90d0fb428ce01cca420aab5bd1e258fbdac040c4f79c108b314d9",
-      "family_key": "e62bc7b1de7eb2f10f527b788c33392fedaff509",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 160,
-      "s3_manifest_etag": "cfe3fd4dfd69f485fb4f0b5d8b6bdc8e",
-      "s3_manifest_key": "datasets/9b7f3224d28a6c1b/manifest.json",
-      "s3_manifest_sha256": "07df666924189549f8ad92478c1bd91e8df6774c475611ab6c90548a67e03d47",
-      "sha256": "9b7f3224d28a6c1be93632be869936e17fdbba6b4387e6cb252516b9a82ba38d"
-    },
-    {
       "columns": 10,
       "dataset_id": "accf690ce5e80bee",
       "family_id": "fam-b0e69871fe6db029ee97ea076f9e7795c0b775728a820c6a09e745359d3d787e",
@@ -29150,22 +27835,6 @@
       "s3_manifest_key": "datasets/113606d7d647d580/manifest.json",
       "s3_manifest_sha256": "005d16d9fd6c28389c09ebce0107008daa4ffce9ec24dfcbea842942dbd683f4",
       "sha256": "113606d7d647d580059ab0925fafb762015bc676e68b3b43c1b7cd39da1ac9f0"
-    },
-    {
-      "columns": 4,
-      "dataset_id": "63bcfc14ecc60c60",
-      "family_id": "fam-b244c65d2d75dcad9b35978b33f680c757b40883a12f6c6b4a4ac25d49e5fee3",
-      "family_key": "0e25e558a733d3f65f51f4e269a50a6ea067a139",
-      "features": 3,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 128,
-      "s3_manifest_etag": "8cae465e8bca402248012ca17a70cd1e",
-      "s3_manifest_key": "datasets/63bcfc14ecc60c60/manifest.json",
-      "s3_manifest_sha256": "e55375181ba96e87b629b28b63a1f8b8699e9023c78a168668030992cb8ad2b9",
-      "sha256": "63bcfc14ecc60c60f6001d2820656c18255b712528e4c59ce93f8f6c8a9a27d1"
     },
     {
       "columns": 10,
@@ -29420,22 +28089,6 @@
     },
     {
       "columns": 4,
-      "dataset_id": "80420ec01ae39221",
-      "family_id": "fam-b3abb44179ca2da1acd9ae99e3abf5e451a0c2d8985e736c0fd9e423e2c8316b",
-      "family_key": "0c02060af56bc4cc8873dd03146bc967ff645692",
-      "features": 3,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1280,
-      "s3_manifest_etag": "c55765b6b1863d20ee27b26ff105de9a",
-      "s3_manifest_key": "datasets/80420ec01ae39221/manifest.json",
-      "s3_manifest_sha256": "8195e5be9568ce4423aec1362d1037477a497183db8fd2ebc2f7ee887108e856",
-      "sha256": "80420ec01ae392217491139d3027469a32473189f5757360b0ecd64d403307fa"
-    },
-    {
-      "columns": 4,
       "dataset_id": "db5c0edafc109fa3",
       "family_id": "fam-b3da0dff67e7d678b5d6d73e2bd40807caa1a2782cce9f51ed0a8733ba4c2bac",
       "family_key": "abd4c8465ae16645c1ee7fa8e7e644b6c07f037e",
@@ -29670,22 +28323,6 @@
       "s3_manifest_key": "datasets/39e48dc101bd49de/manifest.json",
       "s3_manifest_sha256": "f4cc1d6abf4c2598d44fcfbf8f9c2c76dd373492efa50ec123182efa7f2e1766",
       "sha256": "39e48dc101bd49de5a1bcab33b65ae2a4df7eec19c79c27dd5ea36dd06ab6ba4"
-    },
-    {
-      "columns": 16,
-      "dataset_id": "a1e8f6c3ea2107ab",
-      "family_id": "fam-b4fcdba13ed7a8e159df09ec8171c8b2b45e46153ae8e2a2b8000708233e30cb",
-      "family_key": "15503cecf0921944bcf47a4beaa526470dfd7534",
-      "features": 15,
-      "license": {
-        "note": "source_license: GPL (R package Ecdat)",
-        "status": "unknown"
-      },
-      "rows": 420,
-      "s3_manifest_etag": "4b8066a6c03ff856132c6aba49b17a03",
-      "s3_manifest_key": "datasets/a1e8f6c3ea2107ab/manifest.json",
-      "s3_manifest_sha256": "7a660311026f7345b6a515850721e0423eb2f4467b641a8f509c797cd4dca0ed",
-      "sha256": "a1e8f6c3ea2107ab54543ccc7cc845a3fe97baf6d12f8a0e6df04d861ec772c3"
     },
     {
       "columns": 5,
@@ -30645,22 +29282,6 @@
       "sha256": "3b345fa0a0c2495aab40e313b5703c7e7c5d0688393a1759684b801179e6b529"
     },
     {
-      "columns": 2,
-      "dataset_id": "4e1313ed446b6bea",
-      "family_id": "fam-bb0a9265a368a5213decf35b75aaf45f80c5738090f8f20092758c207a5e1090",
-      "family_key": "fece69cc1988f82ec1cd9db30dc8113ade2c1399",
-      "features": 1,
-      "license": {
-        "note": "source_license: GPL (R package datasets)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "670cb6ba409fc9b0dcbe77ae40d6f3b8",
-      "s3_manifest_key": "datasets/4e1313ed446b6bea/manifest.json",
-      "s3_manifest_sha256": "17d321e7ae47bfb8a4f344ab551d8ccbe6003f3dd22468a4d169ec84da07d544",
-      "sha256": "4e1313ed446b6bea999f977d1f69749e6da5c865407afdee0ba613f55f751684"
-    },
-    {
       "columns": 14,
       "dataset_id": "78a4730b992528f5",
       "family_id": "fam-bb1434ea7579d453084932fd77033919fa9715c1ccd08e38cf263eab5592a32c",
@@ -30753,22 +29374,6 @@
       "s3_manifest_key": "datasets/850f1ca0847f6f1a/manifest.json",
       "s3_manifest_sha256": "798fb3379914db4cbd7ce4bda80c0181a01f515ec2fa38155d947c5c33b753a6",
       "sha256": "850f1ca0847f6f1a3274658034464806b4811184e7c67eeae274eb395a8a3770"
-    },
-    {
-      "columns": 4,
-      "dataset_id": "4eaaf679bedba038",
-      "family_id": "fam-bc290e09e988d436d0a291064308dbfb4a861fb82cde09b4606f496784e272d3",
-      "family_key": "84ba9b05cbcd232311c2bc2404e4eb33933b3343",
-      "features": 3,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 497,
-      "s3_manifest_etag": "e860cc180c6f9dbbea10b138a1554d11",
-      "s3_manifest_key": "datasets/4eaaf679bedba038/manifest.json",
-      "s3_manifest_sha256": "db2f536f3ada940ca297bd24c8ee2d40240abcdfc19750b212efe30e8fcc75fb",
-      "sha256": "4eaaf679bedba038032ec4f458f25aa41dd5a43c8eabfa3c8c1803160e55a364"
     },
     {
       "columns": 6,
@@ -30881,22 +29486,6 @@
       "sha256": "d8128272d2be278ce5695054d38e0a4600dde5206ff45a68ed6887682de25571"
     },
     {
-      "columns": 9,
-      "dataset_id": "488008a9c766ef04",
-      "family_id": "fam-bd4a22a559015b5c1d99bdf3a38cc7ee154937101712495531b3d3a1fbcdd36a",
-      "family_key": "14e0774f1255b96fe85be9182920359261b4ba20",
-      "features": 8,
-      "license": {
-        "note": "source_license: GPL (R package ISLR)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "ed65ef7448ae042f8b0fe649658cfe13",
-      "s3_manifest_key": "datasets/488008a9c766ef04/manifest.json",
-      "s3_manifest_sha256": "a505657969f2e90b39e259a9bcf6b36da454392e7252001c6807aaa0465f08c4",
-      "sha256": "488008a9c766ef04a9e99f90307ba8b71cbf368e23031dca1950cb997edf0928"
-    },
-    {
       "columns": 14,
       "dataset_id": "21494b236ca46df6",
       "family_id": "fam-bd634049c57ef54a2e6931d94fe996ae5358123229693538f0d66c9ed44f9e90",
@@ -30976,22 +29565,6 @@
       "sha256": "87678d03ff6afa5082ea1b361efc7647de1dd09536f0ec488bdbd93adfde98ec"
     },
     {
-      "columns": 3,
-      "dataset_id": "2d43b8795b71cda1",
-      "family_id": "fam-bde2af9fd125d4aac48ad1c123eec2f1f253831135b0fe27d3284cc0dd9aeafc",
-      "family_key": "3067872564626745623e918fd2d1138415063bd9",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1152,
-      "s3_manifest_etag": "eaa6b835f5b97e14f17e02190ffde799",
-      "s3_manifest_key": "datasets/2d43b8795b71cda1/manifest.json",
-      "s3_manifest_sha256": "5d6814ed7caf4c8ad9a8edd99023fe2b380ccd032182214b7aeba373594ed00f",
-      "sha256": "2d43b8795b71cda1f5f072d135b837ed4babb57ca3faac9397fd9f5a8b385f6a"
-    },
-    {
       "columns": 17,
       "dataset_id": "ab279eded3b3c52b",
       "family_id": "fam-be00f7c1e95e764f5979adf9fa2bd5d64169773a607788a8cb51a1748db70474",
@@ -31039,22 +29612,6 @@
       "s3_manifest_key": "datasets/ba8e1c567abb499c/manifest.json",
       "s3_manifest_sha256": "960ee484a58b84e8e730875911926d09be8416427fe59c9cd8eeedef00dfd558",
       "sha256": "ba8e1c567abb499c09af3387bdaaff946284df5661979cc3b7e114b5f3690312"
-    },
-    {
-      "columns": 401,
-      "dataset_id": "91263a72197a817e",
-      "family_id": "fam-be1a0ae535a53ef11e1a8738b5612a4efd8d16e07aedcd6dca86141066d12473",
-      "family_key": "ced10b47099a8d581ca09d50cfc93c13b71ee8ed",
-      "features": 400,
-      "license": {
-        "note": "reported by discovery agent: CC BY 4.0",
-        "status": "unknown"
-      },
-      "rows": 3663,
-      "s3_manifest_etag": "522f29db7f74b39fb89332ba9c8011d7",
-      "s3_manifest_key": "datasets/91263a72197a817e/manifest.json",
-      "s3_manifest_sha256": "b7e6916f2ac472a5710ddcb7094b8f5ed9584cc670af19099470e67f7e4aa905",
-      "sha256": "91263a72197a817ec38d48aa98f26fc114194a6ec5d5314c04592c37d42097f9"
     },
     {
       "columns": 25,
@@ -31640,22 +30197,6 @@
       "sha256": "8bb3aff6a08029e9ac657d7ef69fedec7486af8099c59dc40bf80f2b41e0b1f8"
     },
     {
-      "columns": 7,
-      "dataset_id": "666ff1d8b9dba495",
-      "family_id": "fam-c1b3a0680d78cf8d304c9a11e8a9386b9203a5306cfb32819d8653605a2c1b1a",
-      "family_key": "50d2574564a18b4cfd6f00aad76dd32046734a37",
-      "features": 6,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1152,
-      "s3_manifest_etag": "329c8bd5f7ab94086099864f52f2206b",
-      "s3_manifest_key": "datasets/666ff1d8b9dba495/manifest.json",
-      "s3_manifest_sha256": "91187896926e605881d0388ae9e8e9da628a09aa7d862c4637926b282f7f34a9",
-      "sha256": "666ff1d8b9dba495b0d4165ab82b352557734051b164c4b4ef3c0fc25591e597"
-    },
-    {
       "columns": 38,
       "dataset_id": "10e290880004f2d9",
       "family_id": "fam-c1bb8c8317c0c6e489beff8b534a6b8c70ee94f7c74dded8146d5c36ac340ff9",
@@ -31848,22 +30389,6 @@
       "sha256": "1aa3913391abcc64026869c686abcec4fc0f2d70bc7de3373b653875ae46b651"
     },
     {
-      "columns": 401,
-      "dataset_id": "12fd2dc4af621833",
-      "family_id": "fam-c2de5cc825b7fe5977ac58d946c1a5bbb6b7955c362717b45abcce4f13ba4254",
-      "family_key": "a93702a072c515ac47a3166a4e3a73d6ac5c2640",
-      "features": 400,
-      "license": {
-        "note": "reported by discovery agent: U.S. Government Public Domain",
-        "status": "unknown"
-      },
-      "rows": 5686,
-      "s3_manifest_etag": "308fea9bfed02335c573b7998a2f9e78",
-      "s3_manifest_key": "datasets/12fd2dc4af621833/manifest.json",
-      "s3_manifest_sha256": "5bdd49683f00ea713578b4716926b09fef5e30e6bf39b5c3440c0d15ae4a327a",
-      "sha256": "12fd2dc4af6218333aa6a3ca16676cfc8b5bdaa1353083776fc4b8046562e05c"
-    },
-    {
       "columns": 3,
       "dataset_id": "d06a584f07d0acd5",
       "family_id": "fam-c2e7955f1e753a91a9ee200864c514669a240d36115333d19a7dcfa0012951fc",
@@ -31996,22 +30521,6 @@
       "sha256": "47c581af5de1136b0261b44c5623f2980230d430aaa4e7cdcd23fb5270677147"
     },
     {
-      "columns": 3,
-      "dataset_id": "296090f74398b583",
-      "family_id": "fam-c40bee9186b11cdfe9f51a99f27be0846b04553e612fc5c69c3d77b92aaad8c2",
-      "family_key": "07c1185094a3db4117679cd588fab659e16db093",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 224,
-      "s3_manifest_etag": "7615c1fd26af1194c42aaefa983936c5",
-      "s3_manifest_key": "datasets/296090f74398b583/manifest.json",
-      "s3_manifest_sha256": "3c06b2254cc58a539dce7a9fa42d1985e4a9802d758adfe3646bbb9f35a57e01",
-      "sha256": "296090f74398b583b86a4f6ecabfbf280f7321668a7a9a311ce080da5e9ddb43"
-    },
-    {
       "columns": 11,
       "dataset_id": "02a45777900441ce",
       "family_id": "fam-c42583964c37162c221ee918a77ae8555aead970da52fc37fa79f7a77399bdcf",
@@ -32106,22 +30615,6 @@
       "sha256": "3349603d4d3500ca454a4802502994559ab217072e6d8c10017182d64b903811"
     },
     {
-      "columns": 9,
-      "dataset_id": "cad669158b9c7dc6",
-      "family_id": "fam-c5050f93381cd06ffa3cb31b41becabad2e0a2fbfffdad52ae38f3a2a4262bb5",
-      "family_key": "d0b6c70ba54b377e053bbaa0e0cba022dde4aaeb",
-      "features": 8,
-      "license": {
-        "note": "source_license: GPL (R package ISLR)",
-        "status": "unknown"
-      },
-      "rows": 1250,
-      "s3_manifest_etag": "a2264fb89e8ff42eb884d194d166b574",
-      "s3_manifest_key": "datasets/cad669158b9c7dc6/manifest.json",
-      "s3_manifest_sha256": "90b26024daee257ed6c8dcba95854ad41ce4db85b4713edd75f591c35dcbabba",
-      "sha256": "cad669158b9c7dc6115a4a6405bbd098ab6739823f420e44c3025484f4c92cbb"
-    },
-    {
       "columns": 21,
       "dataset_id": "24d662335a0672e2",
       "family_id": "fam-c50869c9fa3753a56eece638aaf7a5801f13e2c32f4e4867e19bd65d8183b785",
@@ -32136,22 +30629,6 @@
       "s3_manifest_key": "datasets/24d662335a0672e2/manifest.json",
       "s3_manifest_sha256": "e904833c8697056b317230df318a5af6b450f2e4224da7463a5197cff1c05e15",
       "sha256": "24d662335a0672e202b9a64af66286bf839f0cd87dbe6365c07a1fcc1ac84a5b"
-    },
-    {
-      "columns": 7,
-      "dataset_id": "b884eb26d0b3d965",
-      "family_id": "fam-c51878be689f3a56d159d6225a35a99a7b890c1ee2ff822b98e1b131df087a6c",
-      "family_key": "1961ebdc7a03914459f3eb8d997c5c5d5239f37f",
-      "features": 6,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 135,
-      "s3_manifest_etag": "b5b84733bce14e2c71a7183c7e3e7034",
-      "s3_manifest_key": "datasets/b884eb26d0b3d965/manifest.json",
-      "s3_manifest_sha256": "ca5e7260dd2515cc7a1043b6113407dfca4bee8b0ba63fbd5ce21a48fe1bab38",
-      "sha256": "b884eb26d0b3d96506b3bd3c262459f63b1644a40114c767c8f04403bc0243df"
     },
     {
       "columns": 479,
@@ -32720,22 +31197,6 @@
       "sha256": "9ad217de4c6255e36e7df84fea059598a5d8e789b4fedc463d33372deda2aa9a"
     },
     {
-      "columns": 9,
-      "dataset_id": "b99f3875de7f708c",
-      "family_id": "fam-c93bf029ab0f0ccaaa5653c06875d8d5bcc9109fc7ac0bd51e941adb97a34d1d",
-      "family_key": "9551ef62a177adee4546c5edc589d5054c33c9ae",
-      "features": 8,
-      "license": {
-        "note": "source_license: GPL (R package DAAG)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "550e6f5d5942a7ba69aaa86286ee0c3b",
-      "s3_manifest_key": "datasets/b99f3875de7f708c/manifest.json",
-      "s3_manifest_sha256": "2df2fb4864dcd4a52f931e0e2680a9f982f0d1899fafc15ec866f65e9ee8a179",
-      "sha256": "b99f3875de7f708c45e88fa1292bd927195fe7ac9613fc2a6d8663ff75015588"
-    },
-    {
       "columns": 27,
       "dataset_id": "d6a82f440addb7ad",
       "family_id": "fam-c93c6f1213113a6bfb44551c19226ac011ee554daf51814d99d0612edf6fa40c",
@@ -32970,22 +31431,6 @@
       "s3_manifest_key": "datasets/cfc5485b3079ab59/manifest.json",
       "s3_manifest_sha256": "6b78b0c62c920bcae2637a7865dbf362804e0d762df6275306dab06cacd99693",
       "sha256": "cfc5485b3079ab59817e3f943caebb3e21b7a12beb89b4ecebd60b8d9c3cb682"
-    },
-    {
-      "columns": 3,
-      "dataset_id": "edc4cca54999bbee",
-      "family_id": "fam-cae521952d6aaeb626a9c93641655dc9a0c7582687c2c3e0d198b07af33b18c7",
-      "family_key": "dcf1f812fc8fdd0c0bbf1bf118be7da951ef533d",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 240,
-      "s3_manifest_etag": "bff3cbc4e804eb93022e313e9fc33784",
-      "s3_manifest_key": "datasets/edc4cca54999bbee/manifest.json",
-      "s3_manifest_sha256": "1e14ac381bf7df4dee20bcc29698ed71ca17be820b9a1af85b3356affeeb34af",
-      "sha256": "edc4cca54999bbeef3114e587607be1f2a9b836f6b8e200277e192bb56061760"
     },
     {
       "columns": 14,
@@ -33338,22 +31783,6 @@
       "s3_manifest_key": "datasets/1a803b27c2400dc4/manifest.json",
       "s3_manifest_sha256": "dd25ba5f6bd18c2e9eb696cb560ae15066a07be6399ac9bdf917c31277a9986c",
       "sha256": "1a803b27c2400dc4972a2d84ffedfe3703406bdb7d1ab32d191cae1f3fc05924"
-    },
-    {
-      "columns": 5,
-      "dataset_id": "398a5b2c71f61d11",
-      "family_id": "fam-ccc267ef5808c9731ce473481c0a5a1298b8ad55044cb0f7caddeb8192c36fd6",
-      "family_key": "abdec330947d81bcb4c6a273562398c4564b2216",
-      "features": 4,
-      "license": {
-        "note": "reported by discovery agent: Eurostat reuse policy",
-        "status": "unknown"
-      },
-      "rows": 10000,
-      "s3_manifest_etag": "8c1160ab252d00daab2862e059a074e7",
-      "s3_manifest_key": "datasets/398a5b2c71f61d11/manifest.json",
-      "s3_manifest_sha256": "d5201eb36a78fba347a8d09e02bdc4be165f1c1f645f77e3e9c5a1277598ce0f",
-      "sha256": "398a5b2c71f61d11a657525df14897ee1982210bcaa3a314da266a440127d58b"
     },
     {
       "columns": 12,
@@ -33911,22 +32340,6 @@
       "sha256": "bd389a09c9adb77dd57a4bb74198dc1e602c82b9717f94393a26a7ba74f97ec9"
     },
     {
-      "columns": 5,
-      "dataset_id": "819e3d8f1e1b3458",
-      "family_id": "fam-cf629bc9ac9f8477e34cdca80b838508fa118eb88d3b041b4cab2f95ff8bda9e",
-      "family_key": "e497ac62051dd115621ce39f68d95662df51c10d",
-      "features": 4,
-      "license": {
-        "note": "reported by discovery agent: Open Government Licence v3.0",
-        "status": "unknown"
-      },
-      "rows": 457,
-      "s3_manifest_etag": "72d0c357cb59b6633c46f6ec99192ddb",
-      "s3_manifest_key": "datasets/819e3d8f1e1b3458/manifest.json",
-      "s3_manifest_sha256": "96e054521fc1d66bae47f9c720f665e39180624193879d1ad5564d2e14c4f925",
-      "sha256": "819e3d8f1e1b3458f34d86f1b77a7b1700f6c4a4b369d559513394ce5a3e4783"
-    },
-    {
       "columns": 6,
       "dataset_id": "1269281a6571a432",
       "family_id": "fam-cf65ce21fab7f1f3668ecf7749e3c5e74151da7eda317e1cc15d394f724e62cf",
@@ -33972,22 +32385,6 @@
       "s3_manifest_key": "datasets/d7994f3952e06fff/manifest.json",
       "s3_manifest_sha256": "b29929a93454cd0e0cccb96db611dc9888fa30058c7848f3f4f95aa56842fd66",
       "sha256": "d7994f3952e06fffe07870ebc28ef8ed34b4d5cf9bf3c4599c5bf615968bab98"
-    },
-    {
-      "columns": 10,
-      "dataset_id": "07b2b03db9bf0ab3",
-      "family_id": "fam-cf800197d285d2dca63108f88d7bf4427849ea7875553420c6a2aea3d63080b2",
-      "family_key": "2f0a0a732d0790849fbf02429dc80dc2cfe1c4b3",
-      "features": 9,
-      "license": {
-        "note": "source_license: GPL (R package causaldata)",
-        "status": "unknown"
-      },
-      "rows": 445,
-      "s3_manifest_etag": "9491cc8b86df3f2a49dc16062496c9bc",
-      "s3_manifest_key": "datasets/07b2b03db9bf0ab3/manifest.json",
-      "s3_manifest_sha256": "ae2c46a20a5d1facd5b140c3c4941b26d6069f44ec21a00753dfda911304c93b",
-      "sha256": "07b2b03db9bf0ab399d0abde98c2de5b1c2e37deabc46efcc0c0f22a49b5c94b"
     },
     {
       "columns": 9,
@@ -35339,38 +33736,6 @@
       "sha256": "490ff7fccae3db9b91ca2322df018e3c5e01c116e7e17937f99066e25bd7ed6c"
     },
     {
-      "columns": 4,
-      "dataset_id": "be4a6b5cc2d34f27",
-      "family_id": "fam-d93620698822732acae25f95b5e5614ec9e212929a46ed19db7c2417d5e55c1a",
-      "family_key": "a21ceea379fa2d45379f5cf001bcfa14210d759a",
-      "features": 3,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 135,
-      "s3_manifest_etag": "f373a71ad545932d4b39a3dadf4d4cf8",
-      "s3_manifest_key": "datasets/be4a6b5cc2d34f27/manifest.json",
-      "s3_manifest_sha256": "deefd0adb7e2754ecdd21ec5afe16715f13c0e96e8af70a71899ef177d2c0350",
-      "sha256": "be4a6b5cc2d34f272d578874388194ad71bb41ad13aeddb2ea841ed36363a6ae"
-    },
-    {
-      "columns": 4,
-      "dataset_id": "a1ca99e6319b1572",
-      "family_id": "fam-d9388a4b151c9b230e06bb6790b6b0fbf02e8f611e0f542960654f03f71cf0b9",
-      "family_key": "a3edb616479723b19ed30f46400f16e0592680bf",
-      "features": 3,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 150,
-      "s3_manifest_etag": "3933d0ee3c3b8b57aacc9b9696395eaa",
-      "s3_manifest_key": "datasets/a1ca99e6319b1572/manifest.json",
-      "s3_manifest_sha256": "f2799640b129f170289a69e3059d449bee680d55bbd083d8a8f81da1ad64ef2e",
-      "sha256": "a1ca99e6319b1572322c7ba181a90653e4fbf09c104f30e293b81f770a5538e0"
-    },
-    {
       "columns": 36,
       "dataset_id": "c4e37b7e25e3e967",
       "family_id": "fam-d97a1f0a7a4b0e9df92ce2c2912ddcf6c4c0e0300039aea1335bfd1cdfbf1b53",
@@ -35622,22 +33987,6 @@
       "s3_manifest_key": "datasets/e999500ea3b9cd27/manifest.json",
       "s3_manifest_sha256": "febfa4b73b4f539d41b72fb8915be4a5594a4459b344c65673a72bfd4759401f",
       "sha256": "e999500ea3b9cd2712147dcfd8aac2adf265a2afb5998b21519df396502cc430"
-    },
-    {
-      "columns": 4,
-      "dataset_id": "e3a6e35b68b8962a",
-      "family_id": "fam-dac0deeca38353357b4687be7d4e6299802a07fcf9b116e7c54d472e47671720",
-      "family_key": "802a95823c7b83654a9c737b6dd9b2e2cfbca6eb",
-      "features": 3,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 364,
-      "s3_manifest_etag": "ba76c1bfc01907524d38c38dd8b4d374",
-      "s3_manifest_key": "datasets/e3a6e35b68b8962a/manifest.json",
-      "s3_manifest_sha256": "6b1e418488f8f26bce7ea47b9d7b1c733fb63222e08e171daffecbc6975124a6",
-      "sha256": "e3a6e35b68b8962a04c950a082b9741fe7d10bc8d0ea84335ed468b42f3df96c"
     },
     {
       "columns": 5,
@@ -36019,22 +34368,6 @@
       "sha256": "22cdeb3920c92437b2f753c0350eecb45c6401f9a899fda1cdbbd3fb163ae59a"
     },
     {
-      "columns": 18,
-      "dataset_id": "e568ecb2d5fb0656",
-      "family_id": "fam-dd8217da6df8a0f0385c71fef522d093d71e3cd0e9cc53419ddbff89825ac737",
-      "family_key": "40b6f7b70866dbc85a49e33396b55dbb7915d06c",
-      "features": 17,
-      "license": {
-        "note": "source_license: GPL (R package camerondata)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "68d08dbef8477dc513c5389c76a67fe5",
-      "s3_manifest_key": "datasets/e568ecb2d5fb0656/manifest.json",
-      "s3_manifest_sha256": "5b7086bd5887c7a7ff67010525015ee507ee6faf2273bedde015c43e4f0cf3db",
-      "sha256": "e568ecb2d5fb0656eac6e77c67799a91d9e7e38129e4e162259b45ab8c59d395"
-    },
-    {
       "columns": 5,
       "dataset_id": "e6a4f31302a1c439",
       "family_id": "fam-dd8c9f69bb0c9353134b29f6e34d52d3351d4f2b7751c7b2fa48016bc75dcdba",
@@ -36049,38 +34382,6 @@
       "s3_manifest_key": "datasets/e6a4f31302a1c439/manifest.json",
       "s3_manifest_sha256": "613bb95a4a7988f92a93a99e7e944dfa8b220d1f55a36ff78d8f4ac8c6eac295",
       "sha256": "e6a4f31302a1c4395365139d450b4f5499b6911edefc67d21e91bfd203d8b646"
-    },
-    {
-      "columns": 5,
-      "dataset_id": "80de8b091b273122",
-      "family_id": "fam-dd90d13dc8db37d8160790906cf6e65c6a498b5a34f97461e191e9a3da69a809",
-      "family_key": "d0d980e95f31295e19f13357d7e85644bb7777e3",
-      "features": 4,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 136,
-      "s3_manifest_etag": "563472c6e428b34f3b7ac08a0dff8beb",
-      "s3_manifest_key": "datasets/80de8b091b273122/manifest.json",
-      "s3_manifest_sha256": "b5ae77eb46cff243243f660337050b044ed48fd08821ebd431638c2951175f93",
-      "sha256": "80de8b091b27312270fb5b0318646ff7e88f09c0dd37c01936ab30a7611cfa0a"
-    },
-    {
-      "columns": 9,
-      "dataset_id": "6edd9bb7fb7219dd",
-      "family_id": "fam-dda755c475e8245e483f1e69029930dd5408c92717f1847b81a90ac0a63009cb",
-      "family_key": "100dc568f44dea9e19d9a7cb784f8043caf85422",
-      "features": 8,
-      "license": {
-        "note": "source_license: GPL (R package DAAG)",
-        "status": "unknown"
-      },
-      "rows": 429,
-      "s3_manifest_etag": "2fdbc0664c49ab32393352b087bfe2ac",
-      "s3_manifest_key": "datasets/6edd9bb7fb7219dd/manifest.json",
-      "s3_manifest_sha256": "1bd139321d5d18dd4a92793afc60052e50f922d063f0f029add864393273ac22",
-      "sha256": "6edd9bb7fb7219dd635d4eb22ca713eab1b685386abf7cef1418bf36faebd917"
     },
     {
       "columns": 33,
@@ -36369,22 +34670,6 @@
       "sha256": "e12a64b5143f1bbeab5d295480a702bd422cf9a45f832defc7dfcfe77a3b1bae"
     },
     {
-      "columns": 5,
-      "dataset_id": "fae53f0e61da4a1d",
-      "family_id": "fam-e02db350d3c4f97af878f6c67e62779e54abce6bd01970994cfd698058c9784b",
-      "family_key": "efe939bb411491b90917f7b72b689c68cdd76b10",
-      "features": 4,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 1170,
-      "s3_manifest_etag": "a9e402863dc1dc04c2f4d48360c2b232",
-      "s3_manifest_key": "datasets/fae53f0e61da4a1d/manifest.json",
-      "s3_manifest_sha256": "77db5dc2f4021d73bd401ee602f6344650c655fc3d60da809877283f81ae3ec6",
-      "sha256": "fae53f0e61da4a1df4fa3d6dac3f69b36c710595603c16fe2e94c511b1bf29d9"
-    },
-    {
       "columns": 6,
       "dataset_id": "6d86da10c2cf255a",
       "family_id": "fam-e0323b3444040a60b249a8c282b718f76bd22ff519a7f18bc471751318790023",
@@ -36657,22 +34942,6 @@
       "sha256": "d44acad223a3631ee08948c688541751e91be6a82eebca8c1bb0540bb55dc696"
     },
     {
-      "columns": 3,
-      "dataset_id": "019de5d76a718163",
-      "family_id": "fam-e1f4747664de25deea04fa41f73d7d2074ea07866c61635c85273672052514c1",
-      "family_key": "ab11c63c925be1e7248b74d024f8fef0357874bf",
-      "features": 2,
-      "license": {
-        "note": "source_license: CC0 (seaborn-data)",
-        "status": "unknown"
-      },
-      "rows": 144,
-      "s3_manifest_etag": "b9c4ce54d16daa2bb9a764a98e87c15c",
-      "s3_manifest_key": "datasets/019de5d76a718163/manifest.json",
-      "s3_manifest_sha256": "c8ce9a46148ae3aa6d5441bc29c81095f18a4c0a304ddea122fc22bd3c76655f",
-      "sha256": "019de5d76a718163babc29e512211b9f419b6657f0e9074a585c19f23d7d95f0"
-    },
-    {
       "columns": 5,
       "dataset_id": "7118ee4994ea3c5f",
       "family_id": "fam-e200764bd75a7f5c932dce2b53b0871813dcb09e503143065b4a6c5b97a72f63",
@@ -36750,22 +35019,6 @@
       "s3_manifest_key": "datasets/217e07ce3890b29c/manifest.json",
       "s3_manifest_sha256": "0c6f9a29dab01c4be987a8e06e134dfc7991a4491315d8499a32aa370cd28652",
       "sha256": "217e07ce3890b29c3e6773b7a9712c3f1d1cdb2c56d697a790ebdf8ea455a052"
-    },
-    {
-      "columns": 19,
-      "dataset_id": "b7053462701dfdf4",
-      "family_id": "fam-e2713c2f2af34f8ac551a37cd4e2f09ef1ef0641ab1c2d0f4e2c51fa756cf033",
-      "family_key": "0bf702e7a9d2d6ef6891b0279f0c9da2e2929da0",
-      "features": 18,
-      "license": {
-        "note": "source_license: GPL (R package Ecdat)",
-        "status": "unknown"
-      },
-      "rows": 1999,
-      "s3_manifest_etag": "13cff1103738365df41f385186a37679",
-      "s3_manifest_key": "datasets/b7053462701dfdf4/manifest.json",
-      "s3_manifest_sha256": "b15ecd2c11f7acb62caab4051d380adccb458ade57cf252e5c4620a0a75948c9",
-      "sha256": "b7053462701dfdf4a9a603181323b8ab15714ccc1959f98a85ab66892e872ab1"
     },
     {
       "columns": 6,
@@ -37052,22 +35305,6 @@
       "s3_manifest_key": "datasets/7f3420ce132b63aa/manifest.json",
       "s3_manifest_sha256": "15d4451f40d8d8b13eddc753c18da63c5bdf4990bde21655570312d4799b22fb",
       "sha256": "7f3420ce132b63aa9d16be0740d3336e569e1e73ff561074b5d8a361a52da00c"
-    },
-    {
-      "columns": 3,
-      "dataset_id": "6a9aa037a5010929",
-      "family_id": "fam-e3987998cf6528f682e1ba2696f58654f04804919edf5863f721bd8dc61c2a0e",
-      "family_key": "90556b3775368b666b22c2a4c486083d2ddf7cf7",
-      "features": 2,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 215,
-      "s3_manifest_etag": "716894bae9b33f54005f663abfe71405",
-      "s3_manifest_key": "datasets/6a9aa037a5010929/manifest.json",
-      "s3_manifest_sha256": "8feb133ffe486c3fc1677b2e4ce7f105cdd5a66ef3e6406bab349917d6d4477b",
-      "sha256": "6a9aa037a501092931e8efbd253104afff41372e9cf8d14b5240432a6c27e8e9"
     },
     {
       "columns": 73,
@@ -38646,22 +36883,6 @@
       "sha256": "48178b7062a20bb440be903e5c3fb951bc2f1d7f13556e418ff01cbc6c899188"
     },
     {
-      "columns": 9,
-      "dataset_id": "43e15a4f682a4f1f",
-      "family_id": "fam-eec83c45e692173aaa28e3ef032430c24c76751128beb3c5e3cb41e0e6ee39b2",
-      "family_key": "3a1c33f7f3e1eaea1335f2f5d7a1757d0984d935",
-      "features": 8,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 160,
-      "s3_manifest_etag": "e605078b322ee6737ff0924dbe87b1fa",
-      "s3_manifest_key": "datasets/43e15a4f682a4f1f/manifest.json",
-      "s3_manifest_sha256": "3b5de3213961f3b0885d6f86436044fcca75c4cb083d2c3360bdb10896538298",
-      "sha256": "43e15a4f682a4f1f19026142fd3cf7f33d080a699bf9b52bb47622ad7b5a5c64"
-    },
-    {
       "columns": 8,
       "dataset_id": "f9be7aedfb23e287",
       "family_id": "fam-eee20e93dd22c68fb764991276dcfa696c3b40df9251bcabc74887cf04ccb7fd",
@@ -39442,22 +37663,6 @@
       "sha256": "8e6d7471b808f64c83a770afc75b56c511d03367f4f304a15e11446954f447ea"
     },
     {
-      "columns": 11,
-      "dataset_id": "e226eb40874c6c66",
-      "family_id": "fam-f39b2697615cd7a21ef889c3c9cf9541f9643428eb42a3fbc14517432c287072",
-      "family_key": "96fd2b2c421b21d0f0fa350db3ad19fcf4bf65d6",
-      "features": 10,
-      "license": {
-        "note": "source_license: GPL (R package DAAG)",
-        "status": "unknown"
-      },
-      "rows": 445,
-      "s3_manifest_etag": "6817ec30467640b36ad90326633d7abc",
-      "s3_manifest_key": "datasets/e226eb40874c6c66/manifest.json",
-      "s3_manifest_sha256": "9ca02aed19fbafc6f8e792af5cde5a1e5eb5b3a0d86dd58ceebfc802cbc4905c",
-      "sha256": "e226eb40874c6c668d108c7032622674fe42a4432f439f3b0196a56edb391c94"
-    },
-    {
       "columns": 9,
       "dataset_id": "2fc05294a7f8c449",
       "family_id": "fam-f3bbfbc3671437711b80f3f2af7f9d8ae4095eede66aa42931c697deca8d6899",
@@ -40011,22 +38216,6 @@
       "sha256": "d0a12e0e2048255dd98c332dbe790d6bd0c5e2462428cc2ba121b1a86d64c85b"
     },
     {
-      "columns": 2,
-      "dataset_id": "5fe25055344e2c1a",
-      "family_id": "fam-f79dfc779b91a26efd5a0a04474c3037e93efeb9327505d3eb302ae486d43172",
-      "family_key": "cdf9f040e46c09273447b553adda074e3c75bd75",
-      "features": 1,
-      "license": {
-        "note": "source_license: GPL (R package datasets)",
-        "status": "unknown"
-      },
-      "rows": 289,
-      "s3_manifest_etag": "0e77fa5dedde60d312da46efcb654686",
-      "s3_manifest_key": "datasets/5fe25055344e2c1a/manifest.json",
-      "s3_manifest_sha256": "1dfe73cb5b3f11f0780f4f2660e61b27fde0d279ec7934f6c144a27e607b1608",
-      "sha256": "5fe25055344e2c1a5c18fecd0cf36db80c0e6e41ccd6b8eb2ae5838243b4f80a"
-    },
-    {
       "columns": 51,
       "dataset_id": "d3ff071f76bec1fc",
       "family_id": "fam-f7cdfedadaf7df701954ba58f2b953fd7fc5256a66f4fe07fcb22c77d0c3e8d5",
@@ -40349,22 +38538,6 @@
       "sha256": "853d200e22e07ac46cea5366d029ab7c80bbfbb260ee08dfe1434b377449e20d"
     },
     {
-      "columns": 9,
-      "dataset_id": "12df0ba9c0540f2c",
-      "family_id": "fam-fa4869cb86849f49b8d0b90ee23e5297e5e6891897e18439bf4d8d942be4e9a4",
-      "family_key": "71b2658e79616499700b8a90a74bef01362648ea",
-      "features": 8,
-      "license": {
-        "note": "source_license: GPL (R package ISLR)",
-        "status": "unknown"
-      },
-      "rows": 392,
-      "s3_manifest_etag": "1f9443ecd069e765fbeed2f01e5eb661",
-      "s3_manifest_key": "datasets/12df0ba9c0540f2c/manifest.json",
-      "s3_manifest_sha256": "a11a568b69c675303211a5ccb31bb82af6be062bb44b5fdf3d0db9ecf13febad",
-      "sha256": "12df0ba9c0540f2c5fdad3cfd2f2f23109f06544a06004261b9dc8397b12688b"
-    },
-    {
       "columns": 8,
       "dataset_id": "bcadad6b124ac3b1",
       "family_id": "fam-fa51c08adddbc0d1fe940387f622777b9a0c3cc4639bdb1f786288e0957101a3",
@@ -40523,22 +38696,6 @@
       "s3_manifest_key": "datasets/6ce1759b1a18e332/manifest.json",
       "s3_manifest_sha256": "a66fb66ae4c0474220afc6dd36ddaca08e43cd1607731bb2b29aa0a87798e73d",
       "sha256": "6ce1759b1a18e3328421d5d75fadcb316c449fcd7cec32820c8dafda71986c9e"
-    },
-    {
-      "columns": 5,
-      "dataset_id": "31def8d1f83f0a39",
-      "family_id": "fam-fb986a5b7e57daa6ad683a704db869ecbc0e94b3ff76a1ed2b16a21a84d7bc1f",
-      "family_key": "03134768797cf29e4e83934913cbee7e6aa22806",
-      "features": 4,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 440,
-      "s3_manifest_etag": "6017b60229866719b7cf27bc8ceaff47",
-      "s3_manifest_key": "datasets/31def8d1f83f0a39/manifest.json",
-      "s3_manifest_sha256": "5f4880b5de5bb708f95e39fbbf9cca9938a36cd5a15e6e71af58f66d114be6ef",
-      "sha256": "31def8d1f83f0a39d5737089961fb866c2ee5b05f3c48b3196ccde80f8702dbe"
     },
     {
       "columns": 7,
@@ -40727,22 +38884,6 @@
       "s3_manifest_key": "datasets/cd3016d8769bd2c4/manifest.json",
       "s3_manifest_sha256": "876aa1188514dc33e9306c2dba8aa0e6435152e40132395f01777c16ad09d99f",
       "sha256": "cd3016d8769bd2c432398f55e554efb110d7e416f85614fe02775c49cb241026"
-    },
-    {
-      "columns": 5,
-      "dataset_id": "063f91bc78921226",
-      "family_id": "fam-fcf9cc97d7e2629975289129c83ff36a533586ed63a409fb0d3ce01038b97faa",
-      "family_key": "4fc9fab45348d6a1e3a963baf92d525409572957",
-      "features": 4,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 204,
-      "s3_manifest_etag": "e182ce4d9f7cc1e012548afffa938a77",
-      "s3_manifest_key": "datasets/063f91bc78921226/manifest.json",
-      "s3_manifest_sha256": "3c825e521e70f8424c5cd3b1b381d080785ef4b11cbba115cd4d83f7bf0e9925",
-      "sha256": "063f91bc78921226171513c61a5a44fab91bb849054d84d66853dcfc276cbf70"
     },
     {
       "columns": 12,
@@ -41124,22 +39265,6 @@
       "sha256": "107bb74eb68f0be11186d4e70fbd854a54fd15c4d983684568edabbd6d69dcc4"
     },
     {
-      "columns": 7,
-      "dataset_id": "f3378a06c458850f",
-      "family_id": "fam-fef5d4f41e133a330e7478dc964dcfd1b27b42bf7096e38bd704aa8866412ec7",
-      "family_key": "5c8f18d5de72c935f6dc23f25c8b15a2f0e9462b",
-      "features": 6,
-      "license": {
-        "note": "source_license: GPL (R package agridat)",
-        "status": "unknown"
-      },
-      "rows": 270,
-      "s3_manifest_etag": "055972dad5d97d30af17a60ef72de3a0",
-      "s3_manifest_key": "datasets/f3378a06c458850f/manifest.json",
-      "s3_manifest_sha256": "58ffd83a5265fad7ca8db8321f0c2d41b11f73fce68b0579795892a528f19e99",
-      "sha256": "f3378a06c458850f87193377ebf6a750a7a5309ca6fa96700a59ec6497b02e05"
-    },
-    {
       "columns": 11,
       "dataset_id": "ab21f46544e14786",
       "family_id": "fam-ff032ca1733b0a6f3790fdd290c6e64baf54c3cc340a203345892818960a1e9a",
@@ -41378,14 +39503,15 @@
   ],
   "exclusions": {
     "catalog_sealed_ids_present_in_records": 0,
-    "deny_families_in_holdout_metadata": 92,
-    "deny_members_in_holdout_metadata": 144,
+    "deny_families_in_holdout_metadata": 97,
+    "deny_members_in_holdout_metadata": 1209,
     "derived_family_records_skipped": 882,
-    "eligible_datasets": 2606,
-    "eligible_families": 2606,
+    "eligible_datasets": 2489,
+    "eligible_families": 2489,
     "excluded_beyondarena_groups": 0,
+    "excluded_groups_union": 117,
     "excluded_holdout_family_groups": 0,
-    "excluded_holdout_member_groups": 0,
+    "excluded_holdout_member_groups": 117,
     "excluded_sealed_bucket_or_key_groups": 0,
     "excluded_sealed_catalog_id_groups": 0,
     "excluded_srcfile_group_groups": 0,
@@ -41393,16 +39519,16 @@
     "regression_family_key_groups": 2606,
     "regression_unkeyed_records_skipped": 882,
     "sealed_name_catalog_ids": 14,
-    "srcfile_groups_denied": 0,
+    "srcfile_groups_denied": 36,
     "training_families_in_res01": 205
   },
-  "family_count": 2606,
+  "family_count": 2489,
   "schema": "jope.q1.held-out-cohort/v1",
   "sealed_exclusion": "conservative deny-list union (holdout.json sealed_excluded + catalog sealed-name matches + sealed bucket + all BeyondArena-derived)",
   "source": {
     "catalog": "S3 catalog v246",
     "catalog_sha256": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
-    "holdout_metadata_sha256": "5b2ecc63732319debc0aba8e17c7d6c17a7316290f811393079bb73851fa908d",
+    "holdout_metadata_sha256": "53b2a41cc913c3742d30f3eb46acf11dfc774109035897aa5df412fb4f4a43dc",
     "res01_manifest_sha256": "4ac42eec12599fbff46deec185b4d16bc838288876ca2e67af727e5891b2c94f",
     "s3_verification": "streamed each catalogued dataset manifest; checked object byte count, ETag, canonical_sha256, family key, shape, task and license status"
   }
