@@ -253,12 +253,12 @@ fn real_round_admission_composition() {
                 4 => {
                     result.pool_gates.pop();
                 }
-                5 => {
+                5..=7 => {
                     // These slots depend on landmarks; preserve DOPE-only slots
                     // and every mask bit so this is not a missing-input control.
                     for slot in [0, 1, 7, 9] {
                         for value in &mut result.conditioning.tokens[slot] {
-                            *value = -*value;
+                            *value = [-6.0, 0.0, 6.0][usize::from(self.mode.get() - 5)];
                         }
                     }
                 }
@@ -384,11 +384,16 @@ fn real_round_admission_composition() {
             if width == 12 {
                 serving_slates += 1;
                 serving_disconnected_changes += usize::from(actual.admitted != proposals[..4]);
-                mode.set(5);
-                let landmark_only = admission
-                    .evaluate_round(&context, &proposals, false, &mut rng.clone())
-                    .unwrap();
-                serving_landmark_changes += usize::from(landmark_only.admitted != actual.admitted);
+                for intervention in 5..=7 {
+                    mode.set(intervention);
+                    let landmark_only = admission
+                        .evaluate_round(&context, &proposals, false, &mut rng.clone())
+                        .unwrap();
+                    if landmark_only.admitted != actual.admitted {
+                        serving_landmark_changes += 1;
+                        break;
+                    }
+                }
             }
             mode.set(1);
             let changed = admission

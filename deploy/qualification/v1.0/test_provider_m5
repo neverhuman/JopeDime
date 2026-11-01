@@ -1,0 +1,346 @@
+#!/usr/bin/env python3
+"""Data-free M5 controller tests; synthetic children are not gate executions."""
+
+import contextlib
+from dataclasses import replace
+import importlib
+import io
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE / "providers"))
+m5 = importlib.import_module("m5")
+common = importlib.import_module("common")
+
+
+class M5Tests(unittest.TestCase):
+    def setUp(self):
+        root = Path(
+            os.environ.get(
+                "JOPE_QUALIFICATION_TEST_TMP",
+                Path.home() / ".cache/jope-qualification-tests",
+            )
+        )
+        root.mkdir(parents=True, exist_ok=True)
+        self.tmp = tempfile.TemporaryDirectory(prefix="m5-", dir=root)
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.repo = self.root / "checkout"
+        self.repo.mkdir()
+        self.artifact = self.root / "candidate"
+        self.artifact.write_bytes(b"synthetic candidate, not a release")
+        golden, bundle = self.root / "golden", self.root / "bundle"
+        golden.mkdir()
+        bundle.mkdir()
+        (golden / "index.json").write_text('{"synthetic":true}')
+        (bundle / "jope.safetensors").write_bytes(b"synthetic weights")
+        self.inputs = m5.Inputs(golden, bundle)
+        self.ctx = common.Context(
+            "M5",
+            self.artifact,
+            common.sha256(self.artifact),
+            "a" * 40,
+            self.root / "result.json",
+        )
+        self.addCleanup(patch.stopall)
+        patch.object(m5, "ROOT", self.repo).start()
+        patch.object(common, "ROOT", self.repo).start()
+        patch.object(m5, "INDEX_SHA256", common.sha256(golden / "index.json")).start()
+        patch.object(
+            m5, "WEIGHTS_SHA256", common.sha256(bundle / "jope.safetensors")
+        ).start()
+        patch.dict(os.environ, {"CARGO_BUILD_JOBS": "4"}).start()
+        self.calls = []
+        self.test_calls = 0
+        self.source, self.dirty = self.ctx.source_sha, ""
+        self.code, self.summary = 0, None
+        self.profile, self.scope, self.verified = "full", "release", True
+        self.manifest_source = self.ctx.source_sha
+        self.after_test = lambda: None
+        self.edit_report = lambda report: None
+        self.write_report = True
+
+    def run_child(self, args, **kwargs):
+        self.assertEqual(args[:3], ["nice", "-n", "10"])
+        self.assertEqual(kwargs["env"]["CARGO_BUILD_JOBS"], "4")
+        self.calls.append(args)
+        bare = args[3:]
+        if bare[:2] == ["git", "rev-parse"]:
+            output = self.source
+        elif bare[:2] == ["git", "status"]:
+            output = self.dirty
+        elif "inspect" in bare:
+            output = json.dumps(
+                {
+                    "manifest": {
+                        "profile": self.profile,
+                        "scope": self.scope,
+                        "source": {"sha40": self.manifest_source},
+                    }
+                }
+            )
+        elif "verify" in bare:
+            output = json.dumps(
+                {"schema": "jope.appliance-verify/v1", "ok": self.verified}
+            )
+        else:
+            self.test_calls += 1
+            self.assertEqual(bare, m5.command())
+            environment = kwargs["env"]
+            self.assertEqual(environment["JOPE_GOLDEN_DIR"], str(self.inputs.golden))
+            self.assertEqual(environment["JOPE_GOLDEN_INDEX_SHA256"], m5.INDEX_SHA256)
+            self.assertEqual(environment["CUDA_VISIBLE_DEVICES"], "")
+            self.assertEqual(environment["CARGO_INCREMENTAL"], "0")
+            report = {
+                "consumer": "RNK-10-composition",
+                "device": "cpu",
+                "passed": True,
+                "values": 1600,
+                "failed_values": 0,
+                "details": {
+                    "contexts": 50,
+                    "slates": 100,
+                    "admitted_order_mismatches": 0,
+                    "quality_gate_granted": False,
+                    "Q1_ready": False,
+                    "serving_4_plus_8": {
+                        "slates": 50,
+                        "landmark_only_changed_admission": 12,
+                        "fitness_changed_admission": 8,
+                        "disconnected_heuristic_mismatches": 45,
+                        "landmark_slots": [0, 1, 7, 9],
+                        "masks_and_dope_only_slots_preserved": True,
+                    },
+                },
+            }
+            self.edit_report(report)
+            if self.write_report:
+                (
+                    Path(environment["JOPE_PARITY_REPORT_DIR"])
+                    / "RNK-10-composition.json"
+                ).write_text(json.dumps(report))
+            self.after_test()
+            output = (
+                self.summary
+                if self.summary is not None
+                else f"running 1 test\ntest {m5.TEST} ... ok\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n"
+            )
+            return subprocess.CompletedProcess(args, self.code, output, "")
+        return subprocess.CompletedProcess(args, 0, output, "")
+
+    def invoke(self):
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            return m5.qualify(self.ctx, self.inputs, run=self.run_child)
+
+    def refuses(self):
+        with self.assertRaises(
+            (common.ProviderError, OSError, ValueError, KeyError, TypeError)
+        ):
+            self.invoke()
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_real_selector_and_native_report_are_both_required_for_bound_result(self):
+        self.assertEqual(self.invoke(), 0)
+        result = json.loads(self.ctx.result.read_text())
+        self.assertEqual(result["counts"], m5.SINGLE_PASS)
+        self.assertEqual(result["artifact_sha256"], self.ctx.artifact_sha256)
+        self.assertEqual(result["source_sha"], self.ctx.source_sha)
+        self.assertEqual(
+            result["causal"]["sha256"], common.sha256(Path(result["causal"]["report"]))
+        )
+        self.assertEqual(result["causal"]["fixture_index_sha256"], m5.INDEX_SHA256)
+        self.assertEqual(self.test_calls, 1)
+        self.assertIn("--ignored", m5.command())
+        self.assertIn("--exact", m5.command())
+        self.assertIn("--show-output", m5.command())
+
+    def test_zero_skipped_measured_wrong_or_duplicate_test_output_never_passes(self):
+        single = f"test {m5.TEST} ... ok\n"
+        good = "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n"
+        for output in [
+            "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n",
+            single
+            + "test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 500 filtered out\n",
+            single
+            + "test result: ok. 0 passed; 0 failed; 0 ignored; 1 measured; 500 filtered out\n",
+            "test wrong::selector ... ok\n" + good,
+            single + single + good,
+            single + good + good,
+            single
+            + "test result: FAILED. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n",
+        ]:
+            self.summary = output
+            with self.subTest(output=output):
+                self.refuses()
+
+    def test_failed_native_child_preserves_exit_and_does_not_emit_pass(self):
+        self.code = 101
+        self.assertEqual(self.invoke(), 101)
+        self.assertFalse(self.ctx.result.exists())
+        self.assertEqual(self.test_calls, 1)
+
+    def test_missing_or_failed_native_receipt_is_not_a_pass(self):
+        self.write_report = False
+        self.refuses()
+        self.write_report = True
+        for key, value in [
+            ("passed", False),
+            ("consumer", "other"),
+            ("device", "cuda"),
+            ("values", 0),
+            ("failed_values", 1),
+        ]:
+            self.edit_report = lambda r, key=key, value=value: r.update({key: value})
+            with self.subTest(key=key):
+                self.refuses()
+
+    def test_twenty_candidate_success_cannot_replace_missing_serving_causality(self):
+        for field, value in [
+            ("slates", 0),
+            ("slates", 49),
+            ("landmark_only_changed_admission", 0),
+            ("fitness_changed_admission", 0),
+            ("disconnected_heuristic_mismatches", 0),
+            ("landmark_only_changed_admission", True),
+            ("fitness_changed_admission", 51),
+            ("landmark_slots", [0, 2]),
+            ("masks_and_dope_only_slots_preserved", False),
+        ]:
+            self.edit_report = lambda r, field=field, value=value: r["details"][
+                "serving_4_plus_8"
+            ].update({field: value})
+            with self.subTest(field=field, value=value):
+                self.refuses()
+
+    def test_incomplete_or_mismatching_replay_cannot_grant_quality(self):
+        for field, value in [
+            ("contexts", 49),
+            ("slates", 99),
+            ("admitted_order_mismatches", 1),
+            ("quality_gate_granted", True),
+            ("Q1_ready", True),
+        ]:
+            self.edit_report = lambda r, field=field, value=value: r["details"].update(
+                {field: value}
+            )
+            with self.subTest(field=field):
+                self.refuses()
+
+    def test_candidate_must_verify_full_release_and_matching_source(self):
+        for field, value in [
+            ("profile", "lite"),
+            ("scope", "development"),
+            ("verified", False),
+            ("manifest_source", "b" * 40),
+        ]:
+            old = getattr(self, field)
+            setattr(self, field, value)
+            with self.subTest(field=field):
+                self.refuses()
+            setattr(self, field, old)
+        self.assertEqual(self.test_calls, 0)
+
+    def test_source_or_artifact_drift_refuses_before_receipt(self):
+        self.after_test = lambda: setattr(self, "source", "b" * 40)
+        self.refuses()
+        self.source = self.ctx.source_sha
+        self.after_test = lambda: self.artifact.write_bytes(b"changed")
+        self.refuses()
+
+    def test_wrong_head_and_dirty_checkout_refuse_before_native_execution(self):
+        for source, dirty in [
+            ("b" * 40, ""),
+            (self.ctx.source_sha, " M source.rs"),
+            (self.ctx.source_sha, "?? unexpected"),
+        ]:
+            self.source, self.dirty = source, dirty
+            with self.subTest(source=source, dirty=dirty):
+                self.refuses()
+        self.assertEqual(self.test_calls, 0)
+
+    def test_unpinned_missing_or_changed_fixtures_refuse(self):
+        for path in [
+            self.inputs.golden / "index.json",
+            self.inputs.bundle / "jope.safetensors",
+        ]:
+            original = path.read_bytes()
+            path.write_bytes(b"changed")
+            self.refuses()
+            path.write_bytes(original)
+        self.after_test = lambda: (self.inputs.golden / "index.json").write_bytes(
+            b"drift"
+        )
+        self.refuses()
+
+    def test_symlink_nonfile_and_unsafe_result_paths_refuse(self):
+        original = self.ctx
+        alias = self.root / "alias"
+        alias.symlink_to(self.artifact)
+        for path in [alias, self.repo]:
+            self.ctx = replace(original, artifact=path)
+            with self.subTest(path=path):
+                self.refuses()
+        self.ctx = original
+        for path in [
+            self.repo / "result",
+            self.root / ".." / self.root.name / "checkout" / "result",
+        ]:
+            self.ctx = replace(original, result=path)
+            with self.subTest(path=path):
+                self.refuses()
+        self.ctx = original
+        index = self.inputs.golden / "index.json"
+        original_bytes = index.read_bytes()
+        index.unlink()
+        index.symlink_to(self.artifact)
+        self.refuses()
+        index.unlink()
+        index.write_bytes(original_bytes)
+
+    def test_existing_and_racing_results_are_never_overwritten(self):
+        self.ctx.result.write_bytes(b"existing")
+        with self.assertRaises(common.ProviderError):
+            self.invoke()
+        self.assertEqual(self.ctx.result.read_bytes(), b"existing")
+        self.ctx.result.unlink()
+        self.after_test = lambda: self.ctx.result.write_bytes(b"racing")
+        with self.assertRaises(common.ProviderError):
+            self.invoke()
+        self.assertEqual(self.ctx.result.read_bytes(), b"racing")
+
+    def test_bad_job_budget_refuses_all_child_commands(self):
+        with patch.dict(os.environ, {"CARGO_BUILD_JOBS": "32"}):
+            self.refuses()
+        self.assertEqual(self.calls, [])
+
+    def test_main_catches_provider_refusals_as_exit_two(self):
+        args = [
+            "m5.py",
+            "--golden-dir",
+            str(self.inputs.golden),
+            "--bundle-dir",
+            str(self.inputs.bundle),
+        ]
+        with (
+            patch.object(sys, "argv", args),
+            patch.object(m5, "context", return_value=self.ctx),
+            patch.object(
+                m5, "qualify", side_effect=common.ProviderError("controlled refusal")
+            ),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            self.assertEqual(m5.main(), 2)
+
+
+if __name__ == "__main__":
+    unittest.main()
