@@ -1,33 +1,42 @@
 # M3 scheduled head collision repair
 
-A nonexploring request can lose a scheduled head replacement when its random
-head choice repeats a candidate already accepted in that batch. Call130 from
-the pinned TRAIN reconstruction demonstrates the loss: steps1and6 draw the same
-histgbm head; the duplicate is rejected and insertion fills slot8. The frozen
-Python source draws two distinct heads. ENG lanes_t1145 directs this fix-forward.
+A request can lose a scheduled head replacement when its random choice repeats
+a candidate already accepted in that batch. Pinned TRAIN call 130 demonstrates
+this: steps 1 and 6 draw the same histgbm head; duplicate rejection causes an
+insertion to fill slot 8. The frozen Python source draws two distinct heads.
+ENG's `lanes_t1145` ruling authorizes this fix-forward.
 
-Keep the first weighted head draw. Only when it collides with a previously
-accepted canonical candidate, scan the rest of the finite preferred-head pool
-in its existing cyclic order and accept the first legal, novel alternative.
-Every attempted alternative retains language/memo filtering and outcome
-accounting. Exhaustion falls through to the next scheduled arm. No extra random
-draw, seed offset, head quota, model or operator weight is introduced. The policy
-changes conditional collision handling; it is not a claim of byte-identical R0
-generation. Initial parent/memo-only or language rejection preserves old behavior.
+Keep the first weighted head draw. Only when it collides with an accepted
+canonical candidate, scan the remaining finite preferred-head pool in its
+existing cyclic order and accept the first legal, novel alternative. Count each
+attempt and preserve language, byte-limit, memo and novelty filtering. Exhaustion
+continues the existing schedule. Initial parent, memo-only and invalid-candidate
+rejections retain the single-attempt behavior. No new random draw, seed offset,
+head quota, operator weight or model change is introduced.
 
-The regression uses call130's row-free parent, landmarks, retrieved pair and
-seed/round. It must fail on unchanged main and pass with two distinct head
-outputs after repair. A second scenario excludes all other heads in the memo and
-requires bounded completion without bypassing the exclusion. Existing full
-proposer tests retain accounting, determinism, language and parent invariants.
+This changes conditional collision handling; it does not reproduce Python's RNG
+stream. The policy was recorded before measuring its frequency outcome. Admitting
+duplicates, unlimited retries, and choosing heads or seeds by observed costs were
+rejected. There is one measured policy, with no search over variants.
 
-Fresh native generation and same-forward admission measurements bind this policy;
-all original R0 historical reference pins and the exact +/-2percentage-point
-criterion stay unchanged. The four-clause full M3 replay remains authoritative.
-Local regression success alone cannot qualify M3 or RC2; any remaining numerical
-failure is recorded without sampler/seed/reference fitting. No GPU/training or
-signed-candidate qualification is claimed by source tests.
+The call-130 regression preserves the actual row-free parent, landmarks,
+retrieved pair and seed/round. It fails on unchanged source and passes with two
+distinct head outputs and an unchanged first head. Its memo-exhaustion control
+requires bounded completion without admitting measured candidates. A separate
+regression covers a valid parent near the DSL byte limit: an oversized replacement
+must be filtered rather than abort the round. Existing proposer tests retain
+determinism, accounting, parent and language invariants.
 
-Alternatives rejected: admitting duplicates breaks uniqueness; unrestricted
-retry risks nontermination; changing seeds/quotas or choosing fallback heads by
-observed costs would fit the measured target.
+Fresh locked-Cargo generation produces 44,544 candidates from 3,072 calls, with
+3,072 duplicate-call checks. Frozen CPU admission also passes 3,072 repeated
+forward checks. Comparing the first 10,000 admissions to the original 1,024
+historical attempts passes the unchanged +/-2 percentage-point criterion overall
+and in both exploration strata. Nonexploring head admissions are 446/1,920 versus
+45/192 historically (-0.208333 percentage points); the largest difference is
+exploring head replacement (+1.875 percentage points).
+
+Only current-source candidate/admission pins are refreshed. Historical reference
+pins, population, source-clock mapping and threshold remain unchanged. The full
+four-clause M3 replay and a newly signed candidate remain separate qualification
+requirements. No GPU, training, Elo measurement or signed-release qualification
+is claimed by these source and admission controls.
