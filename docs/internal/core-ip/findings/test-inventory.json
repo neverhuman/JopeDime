@@ -5455,6 +5455,10 @@
     "python:research/flywheel_selfplay/h183_ensemble_distill/test_h183.py": {
       "role": "research",
       "reason": "H183 data-free controls: FIT/A/B isolation and poisoned outer targets, distinct initial member/student seeds, softmax of ten mean teacher costs, fixed detached KL T=.2 with .5/.5 weights, common 40/80 student prefix, axis=0 paired family bootstrap, strict DIST10 primary Holm m2 gate, RENS10 diagnostic, ragged native choices and resource/timing caps. No study data/checkpoint/optimizer updates."
+    },
+    "python:research/flywheel_selfplay/h186_kernel_sweep/test_h186.py": {
+      "role": "research",
+      "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

@@ -127,3 +127,4 @@
 
 | H181 | gpu_tokbench_codex | Covariate-adjusted CUPED selector; zero-update frozen H175 TRAIN-bank replay | COMPLETE; NO_GAIN; no live rule change | [results](../../../../research/flywheel_selfplay/h181_covariate_selector/README.md) |
 | H183 | 2026-11-01 | Ensemble-to-single fresh adapter distillation with zero-update RENS10 control; 3 seeds, fresh family folds, frozen DOPE, CPU xbabe2 | PREREGISTERED — no outcomes yet | DIST10 primary40, DIST10_80 secondary; FIT-only targets, paired axis=0 family bootstrap, Holm m2; no serving adoption. | [prereg](../../../../research/flywheel_selfplay/h183_ensemble_distill/PREREG.md) |
+| H186 | 2026-11-01 | Zero-update r882 kernel dose/shape sweep (rd_astra) | PREREGISTERED; not executed | 7 single-constant arms; 3 fold reshuffles; imported H177 pooled B / Holm7; correlated A; 0 updates | [h186_kernel_sweep/](../../../../research/flywheel_selfplay/h186_kernel_sweep/README.md) |
