@@ -87,7 +87,7 @@ to $r_z\in\mathbb{R}^{512}$. It joins three 512-value blocks: $z_w$
 as is, $z_w\odot\tanh(W_\gamma r_z+b_\gamma)$, and
 $|z_w-(W_{\mathrm{proj}}r_z+b_{\mathrm{proj}})|$.
 Four two-layer heads receive this same \num{1536}-value interaction vector;
-their mean gives $\mapv(z_p,z_w)$ with parameters $\psi$.
+their mean gives the ranking logit $\mapv(z_p,z_w)$.
 Native ranking losses supervise that mean jointly, without separate
 targets or bootstrap samples. Training applies dropout of 0.05 in each
 ranking head. The runtime head instead reads $[r_z,z_w]$, while the

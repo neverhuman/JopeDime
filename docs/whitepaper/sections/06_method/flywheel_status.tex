@@ -137,20 +137,6 @@ journaled strict program promotions counted from zero for that window.
 The adapter panel separates candidate validation utility from the recorded
 best. Rounds 2082--2101 follow in \cref{fig:fw-followup-development} (\cref{app:flywheel-telemetry}).
 
-Historical GP target scores provide a separate view in
-\cref{fig:fw-target-progress}. The 159 repeated dataset/cut/arm groups cover
-55 distinct dataset/cut pairs; the 64 groups with lower final scores cover
-23 pairs. Shared incumbent and teacher seeds make the arms dependent.
-These retained development outcomes do not establish that learning improved
-the proposal policy.
-
-\Cref{fig:fw-target-history} follows one historical dataset/cut, chosen
-after inspection for the largest policy-seeded relative improvement in
-the preceding comparison set. Every reported generation is shown, without
-applying a cumulative minimum. All three arms finish at the same value;
-the policy-seeded arm first records it one generation after the controls.
-Shared seeds prevent treating their matching outcomes as independent discoveries.
-
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_target_history.pdf}
@@ -214,6 +200,20 @@ The later admission prefix through round 2837 appears in
 \cref{app:latest-admissions,fig:fw-latest-admissions}. It extends the earlier
 window without changing its observations; accepted ties remain distinct
 from strict increases in retained-best utility.
+
+Historical GP target scores provide a separate view in
+\cref{fig:fw-target-progress}. The 159 repeated dataset/cut/arm groups cover
+55 distinct dataset/cut pairs; the 64 groups with lower final scores cover
+23 pairs. Shared incumbent and teacher seeds make the arms dependent.
+These retained development outcomes do not establish that learning improved
+the proposal policy.
+
+\Cref{fig:fw-target-history} follows one historical dataset/cut, chosen
+after inspection for the largest policy-seeded relative improvement in
+the preceding comparison set. Every reported generation is shown, without
+applying a cumulative minimum. All three arms finish at the same value;
+the policy-seeded arm first records it one generation after the controls.
+Shared seeds prevent treating their matching outcomes as independent discoveries.
 
 Program-incumbent gains, adapter admissions and historical target scores
 measure different outcomes. \Cref{sec:results} specifies the independent
