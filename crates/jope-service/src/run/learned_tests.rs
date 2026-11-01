@@ -53,6 +53,51 @@ fn user_objectives_keep_runtime_identity_and_refuse_unavailable_inputs() {
 }
 
 #[test]
+fn frozen_s1_surrogate_extrapolates_beyond_each_training_fold_range() {
+    use crate::{dataset::jmat, worker};
+    // Data-free regression control: independent frozen S1 recipe, two disjoint
+    // ranges. Clipping validation covariates silently changes the trained F.
+    let mut csv = String::from("x,target\n");
+    for x in 0..50 {
+        csv.push_str(&format!("{x},{}\n", 3 * x + 2));
+    }
+    let table = jope_runtime::table::parse_csv(csv.as_bytes(), &Default::default()).unwrap();
+    let bytes = jmat::encode(&table).unwrap();
+    let matrix = jmat::Matrix::open(&bytes).unwrap();
+    let rows: Vec<usize> = (0..50).collect();
+    let request = worker::Request {
+        attempt: worker::Attempt {
+            run: "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0".parse().unwrap(),
+            round: 0,
+            slot: 0,
+            attempt: 0,
+        },
+        matrix_path: "unused-direct-callback.jmat".into(),
+        fold_spec: json!({"version":2,"matrix_sha256":jope_runtime::sha256_hex(&bytes),
+            "target":"target","features":["x"],"folds":[
+            {"repeat":0,"train":rows[..25],"validation":rows[25..]},
+            {"repeat":0,"train":rows[25..],"validation":rows[..25]}]}),
+        dsl: "(pipe X (ridge lambda_frac=0.01))".into(),
+        objective: json!("rmse"),
+        seed: 73,
+        limits: worker::Limits {
+            wall_ms: 30_000,
+            rss_bytes: 1_073_741_824,
+        },
+    };
+    let score = worker::evaluate::native(&request, &matrix).unwrap();
+    assert!(
+        (score.values[0] - -4.1526084651571455).abs() <= 1e-12,
+        "frozen S1 fitness changed: {:?}",
+        score.values
+    );
+    assert_eq!(score.fold_scores.len(), 2);
+    for rmse in score.fold_scores {
+        assert!((rmse - 0.7728482275994584).abs() <= 1e-12);
+    }
+}
+
+#[test]
 fn trained_surrogate_stays_frozen_while_actual_custom_loss_drives_selection() {
     use crate::{
         dataset::jmat,
@@ -228,7 +273,20 @@ async fn signed_r882_in_loop_ab_and_replay() {
             tokio::time::sleep(Duration::from_millis(50)).await;
         };
         assert_eq!(finished["state"], "completed", "{finished}");
-        assert_eq!(finished["budget_used"]["evaluations"], "12");
+        let used = finished["budget_used"]["evaluations"]
+            .as_str()
+            .and_then(|value| value.parse::<u64>().ok())
+            .expect("completed run must report actual evaluation use");
+        assert!(
+            used > 0 && used <= 12,
+            "run exceeded its 12-evaluation ceiling: {finished}"
+        );
+        let reason = finished["completion_reason"].as_str().unwrap_or_default();
+        assert!(
+            (used == 12 && reason == "budget_evaluations")
+                || (used < 12 && matches!(reason, "converged" | "effort_reduced")),
+            "actual use must agree with budget completion semantics: {finished}"
+        );
         let cost = finished["best"]["cv_value"].as_f64().unwrap();
         assert!(cost.is_finite());
         let count = forwards.map_or(0, |v| v.load(Ordering::Relaxed));
@@ -246,6 +304,7 @@ async fn signed_r882_in_loop_ab_and_replay() {
             }
         }
         let row = json!({"seed":seed,"policy":if learned {"r882"} else {"heuristic"},"repeat":repeated,
+            "actual_evaluations":used,"evaluation_ceiling":12,"completion_reason":reason,
             "plan":plan,"run":finished,"real_learned_forwards":count,
             "engine_home":home,"attempt_ledger_retained":true});
         fs::write(

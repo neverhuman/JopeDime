@@ -1,0 +1,27 @@
+\subsection{Latest Retained Admission Trace}\label{app:latest-admissions}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_latest_admissions.pdf}
+  \caption{\textbf{Retained development utility through round 2837.}
+  All 2,063 admission records from rounds 775--2837 are shown: blue is the
+  post-decision retained best; grey marks rejected candidates, red stars
+  accepted strict gains and hollow diamonds accepted exact ties.
+  The default rule accepts candidate utility $\geq$ the previous best,
+  without a margin. Acceptance can therefore change the recorded
+  best-round identity without raising utility. Ties are classified from
+  unrounded logged values. These adaptive development observations require
+  separate first-proposal and transfer evaluations.}
+  \label{fig:fw-latest-admissions}
+\end{figure*}
+
+The earlier window in \cref{fig:fw-validation} ends at round 2663.
+\Cref{fig:fw-latest-admissions} extends that exact prefix by 174 records,
+through round 2837. The full prefix contains six accepted candidates:
+three strict gains and three exact ties. Round 2750 raises recorded best
+utility from 1.1377941898164525 to 1.1383668110784328; round 2795 accepts
+that same value again. A visually small or rounded change alone does not
+establish a strict gain. The source, adapter and evaluation-population
+binding remains pending in \cref{sec:method-status}.
+
+\FloatBarrier

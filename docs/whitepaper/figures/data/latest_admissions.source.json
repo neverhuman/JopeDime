@@ -1,0 +1,22 @@
+{
+  "schema": "whitepaper.latest-admissions-source/v1",
+  "capture": {
+    "at": "2026-11-01T10:27:53.533749+00:00",
+    "observed_bytes": 1080327,
+    "prefix_bytes": 1080327,
+    "prefix_sha256": "441795eb9119b351383624aa4bef1b37887d2938044577f8426fe5f47f716562",
+    "trailing_incomplete_bytes_omitted": 0,
+    "source_rows": 2063,
+    "first_round": 775,
+    "last_round": 2837
+  },
+  "stable_prefix_reread_verified": true,
+  "evaluation_identity_sha256": [
+    "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6"
+  ],
+  "csv_sha256": "a38d2eeb1ef95876b8b1b904202a94d69983b1a9a31d3bdab12b48cd94f8d82b",
+  "selection": "Every complete admission row in stable prefix, in log order; no outcome selection or deduplication",
+  "field_mapping": "candidate/previous best/post-decision best utility, acceptance/action and best-round identity as logged",
+  "source_binding": "Aggregate field interpretation only; exact installed source, adapter and evaluation population remain unjoined",
+  "scope": "Adaptive development admissions; independent first-proposal and deployment evaluation remain required"
+}

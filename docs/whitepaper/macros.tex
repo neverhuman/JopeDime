@@ -19,7 +19,7 @@
 \setlength{\parskip}{0pt plus 3pt}
 % twocolumn implies \flushbottom, which stretches gaps around floats and headings.
 \raggedbottom
-\makeatletter\@secpenalty=0\makeatother% under \raggedbottom a short column has zero badness, so the default -300 ended columns before headings that fit; the club penalty still keeps two lines under each heading
+\makeatletter\@secpenalty=0 \@clubpenalty=10000\makeatother% under \raggedbottom a short column has zero badness, so the default -300 ended columns before headings that fit; setting \@clubpenalty keeps \clubpenalty=10000 after headings and lists
 \brokenpenalty=10000% never hyphenate across a column or page break
 \clubpenalty=10000 \widowpenalty=10000 \displaywidowpenalty=10000% no single first or last paragraph lines at a column break
 \doublehyphendemerits=100000% discourage hyphen ladders (consecutive lines ending in a hyphen)
@@ -74,9 +74,9 @@
 \let\EZincludegraphics\includegraphics
 \renewcommand{\includegraphics}[2][]{\IfFileExists{#2}{\EZincludegraphics[#1]{#2}}{\fbox{\parbox[c][1.2in][c]{0.9\linewidth}{\centering\small\textcolor{red}{Figure pending: \texttt{\detokenize{#2}}}}}}}
 % Hyphenation: break product names at their parts ("AlphaE-volve" became
-% "Alpha-Evolve"), and do not split the reference words Figure, Table and
-% Appendix that \cref prints before a number.
-\hyphenation{Alpha-Evolve Alpha-Geometry Alpha-Tensor Alpha-Proof Alpha-Fold Tensor-Game Eureka-Zero Figure Figures Table Tables Appendix}
+% "Alpha-Evolve"), and do not split the reference words Figure, Table, Section
+% and Appendix that \cref prints before a number.
+\hyphenation{Alpha-Dev Alpha-Evolve Alpha-Fold Alpha-Geometry Alpha-Go Alpha-Proof Alpha-Star Alpha-Tensor Alpha-Zero Assembly-Game Auto-ML Deep-Coder Deep-Seek Disco-RL Dream-Coder Eureka-Zero Evo-Tune Fun-Search Human-Eval Image-Net Jope-Dime Kumo-RFM ML-Evolve Mother-Net Mu-Zero Star-Craft Tab-PFN Tensor-Game Alex-Net AdamW EteRNA Netflix seccomp Landlock cgroup Figure Figures Table Tables Appendix Appendices Section Sections Equation Equations Algorithm Algorithms}
 % Keep a numeric citation on the line of the word before it: when \citep
 % follows an interword space, a break there costs penalty 500 ("text [12]").
 % A hard tie (\nobreak) also held three lines at badness 700-1005, one of

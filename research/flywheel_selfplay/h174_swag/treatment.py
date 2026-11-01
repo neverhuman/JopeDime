@@ -140,7 +140,7 @@ def adapter_forward(
     ad = net.adapter_10tok
     pooled, query, semantic, adjustment = ad.encode_multimodal_context_and_candidates(
         mm_tokens_10x32=tokens,
-        mm_mask=mask,
+        mm_mask_10=mask,
         prog_412=prog,
         sos_prior=sos,
         active_modality_override_mask=None,
