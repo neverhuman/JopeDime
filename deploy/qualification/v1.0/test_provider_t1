@@ -153,6 +153,17 @@ class T1Tests(unittest.TestCase):
         self.assertEqual(self.test_calls, 1)
         self.assertFalse(self.ctx.result.exists())
 
+    def test_evidence_path_cannot_enter_checkout_through_dotdot(self):
+        from dataclasses import replace
+
+        outside = self.root / "outside"
+        outside.mkdir()
+        self.ctx = replace(self.ctx, result=outside / ".." / "checkout" / "result.json")
+        with self.assertRaisesRegex(ProviderError, "outside the source checkout"):
+            self.invoke()
+        self.assertEqual(self.test_calls, 0)
+        self.assertFalse((self.repo / "result.json").exists())
+
     def test_existing_result_is_never_overwritten(self):
         self.ctx.result.write_bytes(b"prior receipt")
         with self.assertRaises(ProviderError):

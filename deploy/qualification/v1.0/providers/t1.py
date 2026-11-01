@@ -67,7 +67,7 @@ def qualify(ctx: Context, run=None) -> int:
     run = subprocess.run if run is None else run
     if ctx.result.exists() or ctx.result.is_symlink():
         raise ProviderError("T1 result must be a new regular file")
-    if ctx.result.is_relative_to(ROOT):
+    if ctx.result.resolve().is_relative_to(ROOT.resolve()):
         raise ProviderError("T1 evidence must be outside the source checkout")
     check_binding(ctx, run)
     verify_candidate(ctx, run=run)
