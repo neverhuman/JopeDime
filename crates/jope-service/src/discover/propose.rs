@@ -483,9 +483,9 @@ impl Proposer {
                         let before = batch.proposals.len();
                         let first_dsl = assemble(parsed.stages.clone(), heads[first].clone());
                         let collision = memo_key(&first_dsl)
-                            .is_ok_and(|key| batch.proposals.iter().any(|p| p.memo_key == key));
+                            .is_ok_and(|key| seen.contains(&key) || memo.contains(&key));
                         let limit = if collision { heads.len() } else { 1 };
-                        // A repeated candidate should not consume this typed
+                        // A repeated known key should not consume this typed
                         // mutation slot while a legal, novel head is available.
                         // Keep the initial weighted draw and RNG position; the
                         // finite pool scan has no new randomness or quota.
@@ -769,6 +769,31 @@ mod tests {
         assert_eq!(
             batch,
             proposer.propose(&req, &bank, &BTreeSet::new()).unwrap()
+        );
+
+        // The first preferred head is already measured, while other heads are
+        // novel. Preserve the scheduled head arms without admitting that key.
+        let measured = BTreeSet::from([heads[0].memo_key.clone()]);
+        let memo_collision = proposer.propose(&req, &bank, &measured).unwrap();
+        assert_eq!(memo_collision.proposals.len(), 8);
+        assert_eq!(
+            memo_collision
+                .proposals
+                .iter()
+                .filter(|p| p.family == ProposalFamily::ReplaceHead)
+                .count(),
+            2,
+            "a memoized first draw consumed a scheduled head slot"
+        );
+        assert!(memo_collision
+            .proposals
+            .iter()
+            .all(|p| !measured.contains(&p.memo_key)));
+        assert_eq!(
+            memo_collision.attempts.values().sum::<usize>(),
+            memo_collision.proposals.len()
+                + memo_collision.invalid_or_filtered
+                + memo_collision.duplicates_or_memo
         );
 
         // A collision does not authorize an existing memo entry or an unbounded
