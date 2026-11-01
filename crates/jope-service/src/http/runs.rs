@@ -43,6 +43,21 @@ const WORKER_RAM: u64 = 1024 * 1024 * 1024;
 const MODEL_LIMIT: u64 = 16 * 1024 * 1024;
 type Result<T> = std::result::Result<T, Box<Problem>>;
 
+#[cfg(all(feature = "failpoints", debug_assertions))]
+#[derive(Clone, Debug)]
+struct Pub06InternalValues {
+    dsl: String,
+    operator: String,
+    lineage: String,
+    round: String,
+    fail_after_seed: bool,
+}
+
+#[cfg(all(feature = "failpoints", debug_assertions))]
+type Pub06Injection = Option<Pub06InternalValues>;
+#[cfg(not(all(feature = "failpoints", debug_assertions)))]
+type Pub06Injection = ();
+
 pub(crate) struct RunService {
     store: Arc<Store>,
     pub(crate) journal: Arc<EventLog>,
@@ -67,12 +82,26 @@ struct Prepared {
 
 /// Establish a bounded native baseline before considering expensive mutations.
 /// The existing research/native starter order remains unchanged.
-struct CpuRunSpace;
+struct CpuRunSpace {
+    #[cfg(all(feature = "failpoints", debug_assertions))]
+    pub06_values: Option<Pub06InternalValues>,
+}
 impl SearchSpace for CpuRunSpace {
     fn canonical(&self, dsl: &str) -> anyhow::Result<String> {
         NativeSpace.canonical(dsl)
     }
     fn seeds(&self) -> anyhow::Result<Vec<String>> {
+        #[cfg(all(feature = "failpoints", debug_assertions))]
+        if let Some(values) = &self.pub06_values {
+            // The test-only values live on the real SearchSpace used by the worker.
+            // Touch each field during seed generation without changing the valid program.
+            std::hint::black_box((
+                values.dsl.as_str(),
+                values.operator.as_str(),
+                values.lineage.as_str(),
+                values.round.as_str(),
+            ));
+        }
         Ok(vec![self.canonical("(pipe X (standardize) (ridge))")?])
     }
     fn propose(
@@ -81,6 +110,14 @@ impl SearchSpace for CpuRunSpace {
         count: usize,
         rng: &mut rand_chacha::ChaCha12Rng,
     ) -> anyhow::Result<Vec<String>> {
+        #[cfg(all(feature = "failpoints", debug_assertions))]
+        if self
+            .pub06_values
+            .as_ref()
+            .is_some_and(|values| values.fail_after_seed)
+        {
+            anyhow::bail!("PUB-06 test worker failure after internal-value injection");
+        }
         NativeSpace.propose(parents, count, rng)
     }
 }
@@ -404,7 +441,12 @@ impl RunService {
         })
     }
 
-    fn start(self: &Arc<Self>, spec: RunSpec, identity: RequestIdentity) -> Response {
+    fn start(
+        self: &Arc<Self>,
+        spec: RunSpec,
+        identity: RequestIdentity,
+        _pub06_values: Pub06Injection,
+    ) -> Response {
         let _guard = match self.admission.lock() {
             Ok(guard) => guard,
             Err(_) => return response(&io("Run admission lock is poisoned.")),
@@ -469,6 +511,12 @@ impl RunService {
         };
         let (sender, receiver) = mpsc::sync_channel::<(Discovery, FinalizationRequest)>(1);
         let owner = Arc::clone(self);
+        #[cfg(all(feature = "failpoints", debug_assertions))]
+        let run_space = CpuRunSpace {
+            pub06_values: _pub06_values,
+        };
+        #[cfg(not(all(feature = "failpoints", debug_assertions)))]
+        let run_space = CpuRunSpace {};
         let activity = self.activity.begin_run();
         if let Err(error) = std::thread::Builder::new()
             .name("jope-run".into())
@@ -483,7 +531,7 @@ impl RunService {
                         )?;
                         while discovery.completed().is_none() {
                             discovery.advance(
-                                &CpuRunSpace,
+                                &run_space,
                                 &HeuristicAdmission,
                                 &executor,
                                 1,
@@ -559,7 +607,10 @@ impl RunService {
             )?;
             Ok(())
         })();
-        eprintln!("run {run} failed: {detail}; failure journal: {result:?}");
+        let diagnostic = format!("run {run} failed: {detail}; failure journal: {result:?}");
+        #[cfg(all(feature = "failpoints", debug_assertions))]
+        crate::pub06_test::record_log(diagnostic.clone());
+        eprintln!("{diagnostic}");
     }
 }
 
@@ -568,6 +619,37 @@ pub(super) async fn start(
     request: Request<Body>,
 ) -> Response {
     let headers = request.headers().clone();
+    #[cfg(all(feature = "failpoints", debug_assertions))]
+    let pub06_values = match (
+        headers.get("x-pub06-test-dsl"),
+        headers.get("x-pub06-test-operator"),
+        headers.get("x-pub06-test-lineage"),
+        headers.get("x-pub06-test-round"),
+    ) {
+        (None, None, None, None) => None,
+        (Some(dsl), Some(operator), Some(lineage), Some(round)) => {
+            let parse = |value: &axum::http::HeaderValue| value.to_str().ok().map(str::to_owned);
+            match (parse(dsl), parse(operator), parse(lineage), parse(round)) {
+                (Some(dsl), Some(operator), Some(lineage), Some(round)) => {
+                    Some(Pub06InternalValues {
+                        dsl,
+                        operator,
+                        lineage,
+                        round,
+                        fail_after_seed: headers
+                            .get("x-pub06-test-fail-after-seed")
+                            .is_some_and(|value| value == "1"),
+                    })
+                }
+                _ => return response(&invalid("Invalid PUB-06 test injection values.")),
+            }
+        }
+        _ => {
+            return response(&invalid(
+                "PUB-06 test injection values must be supplied together.",
+            ))
+        }
+    };
     // The in-process bridge uses an absolute URI; a listener receives origin
     // form. Authority is authenticated separately and is not command identity.
     let target = request
@@ -601,10 +683,28 @@ pub(super) async fn start(
         Ok(value) => value,
         Err(error) => return error.into_response(),
     };
-    match tokio::task::spawn_blocking(move || service.start(spec, identity)).await {
+    #[cfg(all(feature = "failpoints", debug_assertions))]
+    let leak_value = std::env::var_os("JOPE_PUB06_TEST_LEAK")
+        .and_then(|_| pub06_values.as_ref().map(|values| values.dsl.clone()));
+    #[cfg(not(all(feature = "failpoints", debug_assertions)))]
+    let pub06_values = ();
+    let result = match tokio::task::spawn_blocking(move || {
+        service.start(spec, identity, pub06_values)
+    })
+    .await
+    {
         Ok(value) => value,
         Err(error) => response(&io(error)),
+    };
+    #[cfg(all(feature = "failpoints", debug_assertions))]
+    if let Some(value) = leak_value {
+        if let Ok(value) = axum::http::HeaderValue::from_str(&value) {
+            let mut result = result;
+            result.headers_mut().insert("x-pub06-test-leak", value);
+            return result;
+        }
     }
+    result
 }
 
 #[derive(Default, serde::Deserialize)]

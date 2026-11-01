@@ -48,3 +48,28 @@ pub mod telemetry;
 pub mod warnings;
 /// Isolated worker protocol, pool management, and execution runtime.
 pub mod worker;
+
+/// Test-only capture points used by the PUB-06 leak acceptance harness.
+#[cfg(all(feature = "failpoints", debug_assertions))]
+pub mod pub06_test {
+    use std::sync::{Mutex, OnceLock};
+
+    static LOGS: OnceLock<Mutex<Vec<String>>> = OnceLock::new();
+
+    pub(crate) fn record_log(line: String) {
+        LOGS.get_or_init(Default::default)
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .push(line);
+    }
+
+    /// Drain run-service diagnostics emitted by the test-only worker path.
+    pub fn take_logs() -> Vec<String> {
+        std::mem::take(
+            &mut *LOGS
+                .get_or_init(Default::default)
+                .lock()
+                .unwrap_or_else(|error| error.into_inner()),
+        )
+    }
+}
