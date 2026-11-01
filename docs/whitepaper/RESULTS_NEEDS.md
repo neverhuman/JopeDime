@@ -24,9 +24,9 @@ Freeze the evaluation contract before opening final outcomes. Bind evidence to s
 | R10 | [07_results.tex:110](sections/07_results.tex#L110) | Leaderboard: supply the evaluated methods, paired outcomes, rating protocol and uncertainty. |
 | R11 | [07_results.tex:128](sections/07_results.tex#L128) | Supply attempt curves, matched budgets, repeated seeds and uncertainty. |
 | R12 | [07_results.tex:134](sections/07_results.tex#L134) | Search curve: performance versus attempts and compute, including failed attempts and unreached targets. |
-| R13 | [07_results.tex:147](sections/07_results.tex#L160) | Supply problem-similarity and program-only-control evaluations. |
-| R14 | [07_results.tex:151](sections/07_results.tex#L143) | Pilot cost measurements: supply per-stage failure shares and cost per verified win. |
-| R15 | [07_results.tex:157](sections/07_results.tex#L149) | Supply pilot data, seeds and family-level uncertainty; identify settings with no verified win without assigning a finite cost per win. |
+| R13 | [07_results.tex:160](sections/07_results.tex#L160) | Supply problem-similarity and program-only-control evaluations. |
+| R14 | [07_results.tex:143](sections/07_results.tex#L143) | Pilot cost measurements: supply per-stage failure shares and cost per verified win. |
+| R15 | [07_results.tex:149](sections/07_results.tex#L149) | Supply pilot data, seeds and family-level uncertainty; identify settings with no verified win without assigning a finite cost per win. |
 | R16 | [07_results.tex:172](sections/07_results.tex#L172) | held-out ranking study |
 | R17 | [07_results.tex:173](sections/07_results.tex#L173) | matched causal ablation |
 | R18 | [07_results.tex:174](sections/07_results.tex#L174) | failure-class comparison |
