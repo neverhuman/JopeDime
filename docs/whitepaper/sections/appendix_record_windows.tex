@@ -54,12 +54,10 @@ setting to select programs for exact evaluation. The referee still decides
 validity and improvement. Logging an evaluation does not itself add the
 program to the adapter's training pool.
 
-The admission prefix covers \num{1889} consecutive rounds, 775--2663.
-Four rows are marked accepted: two strict best increases and two ties.
-Within this 775--2663 window, the recorded best remains 1.1378. After the tie
-at round 882, all \num{1781} remaining rounds in that window are rejected (\cref{fig:fw-validation}; see \cref{app:acceptance-over-rounds} for the isolated recorded-best trajectory and cumulative acceptance rate).
-Comparisons across harnesses need matched data, normalization and scoring
-protocols.
+\Cref{fig:fw-validation} shows the earlier 775--2663 prefix of the unified
+ledger in \cref{sec:method-status}; \cref{app:acceptance-over-rounds}
+provides its acceptance-rate view. Comparisons across harnesses require
+matched data, normalization and scoring protocols.
 
 The older detailed summaries cover only 25 of those rounds. In that subset,
 training utility exceeds validation utility by 0.282--0.290
@@ -96,11 +94,19 @@ retained window.
   \label{fig:fw-followup-development}
 \end{figure*}
 
-The shorter retained windows give more detailed operating views. Rounds
-2005--2024 appear in \cref{fig:fw-recent-development}, with cumulative
-journaled strict program promotions counted from zero for that window.
-The adapter panel separates candidate validation utility from the recorded
-best. Rounds 2082--2101 follow in \cref{fig:fw-followup-development} (\cref{app:flywheel-telemetry}).
+\paragraph{Retained operating windows.}
+The five 20-round program-event slices contain 15 events in rounds
+2005--2024, 10 in 2082--2101, 22 in 2343--2362, 15 in 2508--2527 and 21
+in 2644--2663. Each records zero adapter admissions. The later 20-round
+throughput slice, 2696--2715, also records none; it reports contexts and
+wall time rather than a program-event total.
+\Cref{fig:fw-recent-development,fig:fw-followup-development,fig:fw-later-development,fig:fw-subsequent-window,fig:fw-program-promotions}
+show the event slices. Completed-time, event-distribution and rate
+summaries appear in
+\cref{app:development-time,app:event-counts,app:subsequent-rates,app:promotions-per-hour,app:round-throughput}.
+These are separate retained windows, not a matched learning curve;
+unobserved rounds are not filled. Program-event rates include the logged
+work and qualification waits and do not measure one-proposal deployment.
 
 \begin{figure}[t]
   \centering
@@ -131,19 +137,6 @@ count independent tasks or distinct programs.
   \label{fig:fw-later-development}
 \end{figure*}
 
-The retained window at rounds 2343--2362 appears in
-\cref{fig:fw-later-development} (\cref{app:flywheel-telemetry}). It records 22 strict training-program
-improvements and no adapter admission. The logged best remains 1.1378,
-labeled round 882 in these records. The 20 completed rounds total \num{1730.1}\,s of logged wall time: 41.6 rounds and 45.8 program promotions per
-hour, including qualification waits. These program-event rates apply to
-2343--2362, not all admission rounds through 2663 or one-proposal deployment.
-
-\Cref{app:development-time} plots rounds 2343--2362 against accumulated
-completed-round time. \Cref{app:event-counts} groups the three earlier
-retained windows by training-program event count. Rounds 2508--2527 and
-their work and event rates follow in
-\cref{app:subsequent-window,app:subsequent-rates}.
-
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_live_development.pdf}
@@ -154,18 +147,6 @@ their work and event rates follow in
   independent first-proposal comparisons remain required.}
   \label{fig:fw-program-promotions}
 \end{figure}
-
-The window at rounds 2644--2663 appears in
-\cref{fig:fw-program-promotions}, with a per-hour view in \cref{fig:fw-promotions-per-hour} (\cref{app:promotions-per-hour}). It records 21 strict program promotions
-and no adapter admission. The two panels align the program-event counts
-with candidate validation utility for each round; the journal supplies
-no confidence interval for those incumbent improvements.
-The later rounds 2696--2715 appear in \cref{app:round-throughput}.
-
-The main-text admission prefix through round 2837 appears in
-\cref{app:latest-admissions,fig:fw-latest-admissions}. It extends the earlier
-window without changing its observations; accepted ties remain distinct
-from strict increases in retained-best utility.
 
 \FloatBarrier
 \begin{figure}[t]

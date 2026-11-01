@@ -6,11 +6,15 @@
 % Historical source notes are archived outside the paper tree.
 \section{EurekaZero: Learning Taste}\label{sec:method}
 
-The tabular-regression reference pairs a program writer with a separate
-ranking map. Search supplies scored training programs; proposed deployment
-asks the writer for one new program. We follow those roles through the
-architecture and training rule, then distinguish the later adapter-ranking
-record in \cref{sec:method-status}.
+The method has two distinct development stages. First, the offline
+multi-dataset reference trains a neural program writer and a separate
+ranking map from search-scored lists. The architecture and training rule
+below describe that reference; proposed deployment asks its writer for
+one new program. Second, \cref{sec:method-status} examines a closed-loop
+admission ratchet whose inspected implementation uses heuristic edits,
+retrieval and grammar proposals with adapter-only updates. Its retained
+logs do not qualify the reference writer or establish transfer between
+the stages.
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
@@ -104,9 +108,14 @@ error estimate. Comparing its magnitude across problems or reading it as a
 probability of a verified win requires separate evidence. The referee
 still establishes validity and measures performance.
 
-The map learns from scored lists. For each problem $p$ with at least eight
-scored programs, $G_p$ holds them and $\rho_w\in[0,1]$ is a program's
-percentile, 1 for the best. The map's softmax over the list is trained toward a target concentrated on the best
+The map learns from scored lists $G_p$ for problem $p$;
+$\rho_w\in[0,1]$ is a program's percentile, 1 for the best.
+Native training requires at least eight scored programs in a source list
+and samples eight per comparison: its champion and seven
+quantile-stratified comparators. The lower-level listwise loss accepts
+groups of at least three with finite percentile targets
+(\cref{app:training}). The list-level form trains the map's softmax toward
+a target concentrated on the best
 \citep{cao2007listnet}:
 \begin{equation}
   \mathcal{L}_{\text{map}}(p)=-\sum_{w\in G_p}
@@ -164,7 +173,7 @@ a change in proposal quality requires the matched ablation in
 \Require training problems; serving writer $\writer$ and map $\mapv$; incumbents $\inc{p}$
 \For{each round}
   \For{each sampled training problem $p$}
-    \State $z_p \gets \encP(p)$; keep the first 64 distinct valid draws from $\writer(\cdot\mid z_p)$ \Comment{$T=1$; grammar-uniform fill if short}
+    \State $z_p \gets \encP(p)$; keep the first 64 distinct valid draws from $\writer(\cdot\mid z_p)$ \Comment{$T=1$; bounded fallback if short}
     \State verified search, seeded with the 64 drafts and 16 tail seeds (teachers/fallbacks and random exploration), proposes more programs \Comment{the teacher}
     \State $\referee$ fits and scores each distinct program on 5 inner folds \Comment{stillborn: no score}
     \State \textbf{if} a program strictly beats $\inc{p}$ \textbf{then} it becomes $\inc{p}$ \Comment{board ratchet}
@@ -175,6 +184,13 @@ a change in proposal quality requires the matched ablation in
 \EndFor
 \end{algorithmic}
 \end{algorithm*}
+
+The native proposal sampler seeks 64 distinct parseable programs at $T=1$,
+scheduling at most eight batches of 128 neural draws (\num{1024} total).
+To fill a shortfall, it tries up to \num{10000} seeded random canonical
+pipelines and projects them through the grammar. It refuses an incomplete
+pool. These are training-search budgets, separate from the one-draw
+protocol in \cref{sub:method-gameday}.
 
 The reference training rule is expert iteration
 \citep{anthony2017expert}: search-scored programs train the writer.
@@ -218,9 +234,14 @@ averages across cuts. Negative values favor the challenger. This admission
 comparison is separate from the single-program comparison in
 \cref{sub:results-learning}.
 
-\paragraph{The historical reference.} The writer is a decoder-only transformer (six blocks, width 512)
-that reads the context as a prefix token and writes at most 128 tokens; with the map, the network
-has 27.8 million parameters. The supplied source notes describe training on eight A100 GPUs in
+\paragraph{The historical reference.} The writer is a decoder-only
+transformer (six blocks, width 512, four attention heads). It reads the
+context as a prefix token and writes at most 128 tokens over 401 active
+grammar tokens. Its token table allocates 657 rows, including 256 unused
+reserved rows; the tied output projection uses only the grammar rows.
+With the map and registered auxiliary heads, the checkpoint contains
+\num{27796494} parameters (27.8 million). \Cref{app:training} distinguishes
+registered capacity from the token-generation path. The supplied source notes describe training on eight A100 GPUs in
 September 2026, with a corpus of about 10.2 million scored programs from
 80 training datasets. \Cref{alg:selfplay,app:training} give the reference
 specifications.

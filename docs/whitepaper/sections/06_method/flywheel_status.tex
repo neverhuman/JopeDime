@@ -84,13 +84,17 @@ model and optimizer states.
 pools, revealed-history inputs and utility normalization.}
 
 
-The four views separate admission decisions from operating activity.
-\Cref{fig:fw-latest-admissions} follows the retained-best utility over the
-full captured prefix, rounds 775--2837. Its six accepted candidates include
-three strict gains and three exact ties. \Cref{fig:fw-admission-margins}
-uses the pre-decision difference between candidate and prior retained best,
-so a zero-margin admission is visibly distinct from an improvement.
-A change in the recorded best-round identity alone is not a utility gain.
+\paragraph{One retained admission ledger.}
+\Cref{fig:fw-latest-admissions} covers all \num{2063} captured rounds,
+775--2837: six admissions and \num{2057} rejections. Strict gains occur at
+rounds 785, 859 and 2750; exact ties occur at 782, 882 and 2795.
+The first \num{1889} rows end at round 2663. The final 174 add the gain at
+2750 and tie at 2795. Round 2750 raises retained utility from 1.1378 to
+1.1384 (rounded), an increase of about $+\num{5.73e-4}$. A change in recorded best-round identity alone
+is not a utility gain. \Cref{fig:fw-admission-margins} separates those
+outcomes using candidate minus prior retained-best utility;
+\cref{app:latest-admissions} gives the margin distribution for this same
+ledger.
 
 Program-incumbent events count improvements to training programs, whereas
 adapter admissions concern the ranking adjustment.
