@@ -1,0 +1,71 @@
+{
+  "schema": "jopedime.mcp-stdio-capture/v1",
+  "started_at": "2026-11-01T02:16:34.339320+00:00",
+  "ended_at": "2026-11-01T02:18:41.766461+00:00",
+  "argv": [
+    "/home/ubuntu/jope-data/mcp05-a5-t1930/bin/21d65a949bbfc340981cfbcf224cacb9eb571e5c/jopedime",
+    "mcp"
+  ],
+  "producer_sha256": "9f75cf6adaf8c62c8d7acd8fe87de45275262d857c7da8bbfca7768ce9894149",
+  "verifier_sha256": "3c78520dfaec3c78a161eba12157d8dd69bde766ca67c87123b82a2272864c00",
+  "python_version": "3.12.3",
+  "platform": "linux",
+  "nice": 19,
+  "environment_names": [
+    "CUDA_VISIBLE_DEVICES",
+    "HOME",
+    "JOPEDIME_HOME",
+    "LANG",
+    "LC_ALL",
+    "LC_CTYPE",
+    "MKL_NUM_THREADS",
+    "OMP_NUM_THREADS",
+    "OPENBLAS_NUM_THREADS",
+    "PATH",
+    "RAYON_NUM_THREADS",
+    "TMPDIR",
+    "XDG_CACHE_HOME",
+    "XDG_CONFIG_HOME",
+    "XDG_DATA_HOME",
+    "XDG_STATE_HOME"
+  ],
+  "extra_environment_names": [],
+  "executable": "/home/ubuntu/jope-data/mcp05-a5-t1930/bin/21d65a949bbfc340981cfbcf224cacb9eb571e5c/jopedime",
+  "executable_sha256": "9c6bdd2146f81fade386d5528543bd20598ca5ad2d85f49da1a3522f1057dc16",
+  "server_pid": 2526332,
+  "elapsed_seconds": 127.42715317569673,
+  "server_exit_code": 0,
+  "relay_exit_code": 0,
+  "client_exit_code": null,
+  "complete": true,
+  "error": null,
+  "a5_status": "UNVERIFIED",
+  "limits": {
+    "seconds": 400.0,
+    "stream_bytes": 1048576,
+    "frame_bytes": 1048576
+  },
+  "frames": {
+    "client_to_server": 20,
+    "server_to_client": 18
+  },
+  "retained_stream_bytes": 473437,
+  "files": {
+    "wire.jsonl": {
+      "bytes": 244875,
+      "sha256": "378bc8611e6c81575ab66b46991f09fa4775507cdaeab249cfa54003665c24fd"
+    },
+    "client.raw": {
+      "bytes": 15267,
+      "sha256": "8a42353bf839d8f9e8aaa9ec45864c4c45a5d5a60e08f01767600b1540a884ac"
+    },
+    "server.raw": {
+      "bytes": 213295,
+      "sha256": "8272e164a36dce3dc53fcd333dae964f63ddc8c2f48edd96f43b02a832e5fe9a"
+    },
+    "server.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}

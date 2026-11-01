@@ -1,0 +1,58 @@
+{
+  "runtime_source": "21d65a949bbfc340981cfbcf224cacb9eb571e5c",
+  "binary_sha256": "9c6bdd2146f81fade386d5528543bd20598ca5ad2d85f49da1a3522f1057dc16",
+  "version": {
+    "features": {
+      "cuda": false,
+      "dev_keys": false,
+      "dope_cuda": false,
+      "embedded": false
+    },
+    "package": null,
+    "package_format": "jope.appliance-manifest/v1",
+    "product": "jopedime",
+    "runtime_abi": "jope.appliance-runtime/v1",
+    "source_sha40": "21d65a949bbfc340981cfbcf224cacb9eb571e5c",
+    "target": "x86_64-unknown-linux-musl",
+    "trusts_development_key": false,
+    "version": "0.4.1"
+  },
+  "base_main": "bee25676eaf7a40c46415f16286b2710c4a8acfa",
+  "input": {
+    "catalog_dataset": "b4c8807a75fc190f",
+    "native_train_sha256": "782acd17eed2bfc7acfa4438be076fb63026763e6578661cfc284c2f3f9a21e1",
+    "header_train_sha256": "153f24a64081035aaa97541e08bf0eb037a14dcb61eca355bafaa23ab62cbf7f",
+    "rows": 25,
+    "columns": 13,
+    "external_test_dataset": null,
+    "sealed_or_external_holdout_read": false,
+    "engine_internal_train_split": "20 fit / 5 validation, entirely within approved TRAIN25"
+  },
+  "runtime_host": "xbabe1",
+  "build_and_test_host": "xbabe4",
+  "cargo_target_directory": "/Users/agent/remote_tests/target",
+  "resource_limits": {
+    "nice": 19,
+    "client_cpu_affinity": [
+      0,
+      1
+    ],
+    "math_threads": 1,
+    "build_jobs": 4,
+    "disk_stop_percent": 93.8,
+    "host_cpu_ceiling_percent": 85
+  },
+  "recorder_sha256": "9f75cf6adaf8c62c8d7acd8fe87de45275262d857c7da8bbfca7768ce9894149",
+  "verifier_sha256": "3c78520dfaec3c78a161eba12157d8dd69bde766ca67c87123b82a2272864c00",
+  "launcher_sha256": "13c66e6a654ec9184ed260120204e507e1e0e8ca48d42cd115170437ef60e88b",
+  "runner_sha256": "1d2ca47dbe408752758e6ddb0bddd06e7ee945921fd79ff51cb58ae08745e89d",
+  "analyzer_sha256": "156d60be391398bf6aaccd774e0a6e388424b265d1435fd8c63cfc9a1614a70c",
+  "private_evidence": "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930",
+  "private_runtime": "/home/ubuntu/jope-data/mcp05-a5-t1930",
+  "auth": {
+    "existing_login_only": true,
+    "new_login_or_purchase": false,
+    "shared_configuration_changed": false,
+    "gemini_secret_delivery": "sealed memory-only fd removed after client exit; no secret bytes included"
+  }
+}

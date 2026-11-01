@@ -4954,6 +4954,16 @@
       "lanes": [],
       "scope": "H117 W5 identity-only provenance fixtures: unique candidates across manifest revisions, zero overlap yields UNPROVED_BOUNDED never PASS with W5 HELD, any family/dataset/view/prefix/catalog overlap fails proof 1, the lineage census separates pool-level parent fields from per-child lineage, catalog sealed ids parsed from the exclusion sentence only, and the manifest hash pin enforced. Synthetic only; no data payloads; no experiment admission or release qualification."
     },
+    "python:research/flywheel_selfplay/h150_w5_provenance_unblock/test_w5_proofs.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H150 synthetic controls for the identity-only sealed-family manifest (owner 293+470 definition enforcement, conservative union) and the three W5 provenance proofs (identity overlap and registry crosswalk, lineage/row-source census, no promotion of missing evidence). No sealed rows, outcomes or real identities in the fixture suite; offline research only."
+    },
     "python:research/flywheel_selfplay/h119_gbm_ctx_confirm/test_h119.py": {
       "discovery": {
         "kind": "python-family"
@@ -5113,6 +5123,16 @@
       ],
       "lanes": [],
       "scope": "H146 data-free controls copied from H144 (equal-family median-over-seeds inference, gates, Holm, resource classification, input audit, raw-byte state guards, live-recipe loss, exact baseline gate) plus the Lookahead k=5/k=10 alpha=0.5 synchronization schedule and slow-weight update. No corpus, checkpoint or optimizer run in the fixture suite; offline research only."
+    },
+    "python:research/flywheel_selfplay/h149_wd_dose/test_h149.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
@@ -5594,6 +5614,26 @@
       "lanes": [],
       "scope": "HWV-04 H09 CPU experiment safety, family-role separation, DSL-preserving residual features, paired CI and append-only phase receipt fixture tests; run explicitly with pytest research/h-followups/h09 -q."
     },
+    "python:research/h145/test_h145.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H145 data-free controls for disjoint family-fold selection/assessment, duplicate/nonfinite refusal, equal-family weighting, exact Elo ties, canonical Bradley-Terry bootstrap equivalence with repeated-family multiplicity, and lexical exclusion of DL-Val outcome subtrees. These controls do not train or qualify a model; offline research only."
+    },
+    "python:research/h148/test_h148.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H148 data-free nested family isolation, strict selection/bootstrap fallback, batch closure and anchored Elo controls. Scientific600-update experiment is separate, CPU only; no live promotion."
+    },
     "python:research/joint_regbin/test_study.py": {
       "discovery": {
         "kind": "python-family"
@@ -5603,6 +5643,16 @@
       ],
       "lanes": [],
       "scope": "Owner gb1841 CPU-only JRB01 preregistration, isolation/budget admission and family-paired reporting fixtures. Local pytest receipt required; no GPU/learning/split-or-stay qualification."
+    },
+    "python:test-support/qlt01/test_production_backend_acceptance.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "QLT-01 F01 production receipt adapter acceptance controls (malformed family identity and receipt champion consistency)."
     },
     "python:tools/ops/test_install_jope_diskd.py": {
       "discovery": {
@@ -6931,7 +6981,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -13864,26 +13914,6 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
-    },
-    "python:research/h145/test_h145.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H145 data-free controls for disjoint family-fold selection/assessment, duplicate/nonfinite refusal, equal-family weighting, exact Elo ties, canonical Bradley-Terry bootstrap equivalence with repeated-family multiplicity, and lexical exclusion of DL-Val outcome subtrees. These controls do not train or qualify a model; offline research only."
-    },
-    "python:research/h148/test_h148.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H148 data-free nested family isolation, strict selection/bootstrap fallback, batch closure and anchored Elo controls. Scientific600-update experiment is separate, CPU only; no live promotion."
     }
   },
   "lanes": {
