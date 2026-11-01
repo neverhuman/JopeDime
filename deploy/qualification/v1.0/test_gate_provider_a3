@@ -1,0 +1,262 @@
+#!/usr/bin/env python3
+"""Manual A3 provider controls; fixture processes are not release qualification."""
+
+import copy
+import hashlib
+import importlib.util
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+HERE = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location("rel07_a3", HERE / "providers/a3.py")
+a3 = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = a3
+spec.loader.exec_module(a3)
+
+FIXTURE = r"""#!/usr/bin/env python3
+import hashlib,json,os,sys
+from http.server import HTTPServer,BaseHTTPRequestHandler
+from pathlib import Path
+home=Path(os.environ['JOPEDIME_HOME']);mode=os.environ.get('A3_TEST_MODE','good')
+if mode=='dead':sys.exit(7)
+token=hashlib.sha256(str(os.getpid()).encode()).hexdigest()
+class Handler(BaseHTTPRequestHandler):
+ def log_message(self,*args):pass
+ def do_GET(self):
+  status=200;value={'ok':True};authority='127.0.0.1:'+str(self.server.server_port)
+  if self.headers.get('Origin') is not None and mode!='origin':status=400;value={'code':'INVALID_INPUT'}
+  elif self.headers.get('Host')!=authority and mode!='host':status=400;value={'code':'INVALID_INPUT'}
+  elif self.headers.get('Authorization')!='Bearer '+token and mode!='auth':status=401;value={'code':'UNAUTHORIZED'}
+  self.send_response(status);self.send_header('Content-Type','application/json' if status==200 else 'application/problem+json')
+  if mode=='cors':self.send_header('Access-Control-Allow-Origin','*')
+  self.end_headers();self.wfile.write(json.dumps(value).encode())
+server=HTTPServer(('127.0.0.1',0),Handler)
+record={'url':'http://127.0.0.1:'+str(server.server_port),'token':token,'pid':os.getpid()}
+if mode=='foreign':record['url']='http://attacker.invalid:12345'
+if mode=='pid':record['pid']=1
+Path(os.environ['A3_TEST_PID_FILE']).write_text(str(os.getpid()))
+path=home/'daemon.new';path.write_text(json.dumps(record));path.chmod(0o644 if mode=='permissions' else 0o600);path.replace(home/'daemon.json')
+server.serve_forever()
+"""
+
+
+class A3Provider(unittest.TestCase):
+    def setUp(self):
+        base = Path(
+            os.environ.get(
+                "JOPE_QUALIFICATION_TEST_TMP",
+                HERE.parents[2] / "target/a3-provider-tests",
+            )
+        )
+        base.mkdir(parents=True, exist_ok=True)
+        self.tmp = tempfile.TemporaryDirectory(dir=base)
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.app = self.root / "candidate"
+        self.app.write_text(FIXTURE)
+        self.app.chmod(0o755)
+        self.pid_file = self.root / "pid"
+        self.ctx = a3.Binding(
+            self.app, a3.digest(self.app), "1" * 40, self.root / "result.json"
+        )
+
+    def environment(self):
+        return dict(
+            JOPE_REL07_GATE_ID="A3",
+            JOPE_REL07_ARTIFACT=str(self.app),
+            JOPE_REL07_ARTIFACT_SHA256=self.ctx.digest,
+            JOPE_REL07_SOURCE_SHA=self.ctx.source,
+            JOPE_REL07_RESULT=str(self.ctx.result),
+        )
+
+    def version(self):
+        return dict(
+            source_sha40=self.ctx.source,
+            trusts_development_key=False,
+            features=dict(embedded=True, dev_keys=False, cuda=False, dope_cuda=False),
+            package=dict(
+                source_sha40=self.ctx.source,
+                profile="fused-cpu",
+                scope="internal",
+                signer_role="release",
+                methods=["rust.ridge"],
+            ),
+        )
+
+    def run_probe(self, mode):
+        with mock.patch.dict(
+            os.environ, dict(A3_TEST_MODE=mode, A3_TEST_PID_FILE=str(self.pid_file))
+        ):
+            return a3.probe(self.app, self.root / "scratch")
+
+    def test_all_six_checks_execute_and_owned_daemon_is_reaped(self):
+        rows = self.run_probe("good")
+        self.assertEqual([r["check"] for r in rows], list(a3.CHECKS))
+        self.assertTrue(all(r["passed"] for r in rows), rows)
+        self.assertNotRegex(json.dumps(rows), r"[0-9a-f]{64}")
+        with self.assertRaises(ProcessLookupError):
+            os.kill(int(self.pid_file.read_text()), 0)
+        self.assertEqual(a3.publish(self.ctx, rows), 0)
+        result = json.loads(self.ctx.result.read_text())
+        self.assertEqual(
+            result["counts"],
+            dict(collected=6, executed=6, passed=6, failed=0, skipped=0, excluded=0),
+        )
+        self.assertEqual(result["artifact_sha256"], self.ctx.digest)
+        self.assertEqual(result["source_sha"], self.ctx.source)
+
+    def test_each_security_regression_fails_its_actual_probe(self):
+        for mode, check in [
+            ("auth", "missing_token"),
+            ("host", "foreign_host"),
+            ("origin", "cross_origin"),
+            ("permissions", "daemon_owner_only"),
+            ("cors", "authenticated_health"),
+        ]:
+            with self.subTest(mode=mode):
+                rows = self.run_probe(mode)
+                self.assertFalse(
+                    next(r["passed"] for r in rows if r["check"] == check), rows
+                )
+                ctx = a3.Binding(
+                    self.app,
+                    self.ctx.digest,
+                    self.ctx.source,
+                    self.root / (mode + ".json"),
+                )
+                self.assertEqual(a3.publish(ctx, rows), 1)
+                self.assertEqual(json.loads(ctx.result.read_text())["status"], "FAIL")
+
+    def test_wrong_pid_or_nonloopback_url_never_qualifies_or_controls_that_pid(self):
+        for mode in ["pid", "foreign"]:
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                self.run_probe(mode)
+            with self.assertRaises(ProcessLookupError):
+                os.kill(int(self.pid_file.read_text()), 0)
+
+    def test_early_exit_emits_no_pass(self):
+        with self.assertRaises(ValueError):
+            self.run_probe("dead")
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_binding_rejects_missing_wrong_hash_symlink_and_existing_result(self):
+        with mock.patch.dict(os.environ, self.environment(), clear=True):
+            self.assertEqual(a3.binding(), self.ctx)
+            for key, value in [
+                ("JOPE_REL07_GATE_ID", "M1"),
+                ("JOPE_REL07_ARTIFACT_SHA256", "0" * 64),
+                ("JOPE_REL07_SOURCE_SHA", "short"),
+            ]:
+                with (
+                    self.subTest(key=key),
+                    mock.patch.dict(os.environ, {key: value}),
+                    self.assertRaises(ValueError),
+                ):
+                    a3.binding()
+            link = self.root / "linked"
+            link.symlink_to(self.app)
+            with (
+                mock.patch.dict(os.environ, JOPE_REL07_ARTIFACT=str(link)),
+                self.assertRaises(ValueError),
+            ):
+                a3.binding()
+            self.ctx.result.write_text("original")
+            with self.assertRaises(ValueError):
+                a3.binding()
+        with mock.patch.dict(os.environ, {}, clear=True), self.assertRaises(ValueError):
+            a3.binding()
+
+    def test_candidate_requires_independent_verification_and_exact_production_identity(
+        self,
+    ):
+        verified = subprocess.CompletedProcess(
+            [], 0, json.dumps(dict(schema="jope.appliance-verify/v1", ok=True)), ""
+        )
+        version = self.version()
+        with mock.patch.object(
+            a3.subprocess,
+            "run",
+            side_effect=[
+                verified,
+                subprocess.CompletedProcess([], 0, json.dumps(version), ""),
+            ],
+        ) as run:
+            a3.candidate(self.ctx)
+            self.assertEqual(
+                run.call_args_list[0].args[0][-4:],
+                ["--", "verify", "--file", str(self.app)],
+            )
+        changes = [
+            ("package", None),
+            ("source_sha40", "2" * 40),
+            ("trusts_development_key", True),
+            ("features", False),
+            ("features.dev_keys", True),
+            ("features.embedded", False),
+            ("features.cuda", True),
+            ("features.dope_cuda", True),
+            ("package.scope", "development"),
+            ("package.signer_role", "development"),
+            ("package.profile", "native-only"),
+            ("package.source_sha40", "2" * 40),
+            ("package.methods", []),
+        ]
+        for key, value in changes:
+            info = copy.deepcopy(version)
+            if "." in key:
+                section, name = key.split(".")
+                info[section][name] = value
+            else:
+                info[key] = value
+            with (
+                self.subTest(key=key),
+                mock.patch.object(
+                    a3.subprocess,
+                    "run",
+                    side_effect=[
+                        verified,
+                        subprocess.CompletedProcess([], 0, json.dumps(info), ""),
+                    ],
+                ),
+                self.assertRaises(ValueError),
+            ):
+                a3.candidate(self.ctx)
+        for proof in [
+            dict(ok=True),
+            dict(schema="wrong", ok=True),
+            dict(schema="jope.appliance-verify/v1", ok=False),
+        ]:
+            with (
+                mock.patch.object(
+                    a3.subprocess,
+                    "run",
+                    return_value=subprocess.CompletedProcess(
+                        [], 0, json.dumps(proof), ""
+                    ),
+                ),
+                self.assertRaises(ValueError),
+            ):
+                a3.candidate(self.ctx)
+
+    def test_partial_checks_drift_and_existing_results_cannot_be_passes(self):
+        rows = [dict(check=name, passed=True) for name in a3.CHECKS]
+        with self.assertRaises(ValueError):
+            a3.publish(self.ctx, rows[:-1])
+        self.ctx.result.write_text("original")
+        with self.assertRaises(FileExistsError):
+            a3.publish(self.ctx, rows)
+        self.assertEqual(self.ctx.result.read_text(), "original")
+        self.app.write_text("changed")
+        with self.assertRaises(ValueError):
+            a3.publish(self.ctx, rows)
+        self.assertEqual(self.ctx.result.read_text(), "original")
+
+
+if __name__ == "__main__":
+    unittest.main()
