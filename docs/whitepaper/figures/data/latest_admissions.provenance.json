@@ -1,37 +1,41 @@
 {
   "schema": "whitepaper.latest-admissions-figure/v1",
-  "source_receipt_sha256": "e5ffc16fee760a0e0c80a23a943eeb92f35684b9614dea5227128e8ae5ae96d2",
-  "csv_sha256": "8593b87e632bd729ab41e6fecb63ce6cb8fe62b1ce4b9d74564dfef629c48e50",
+  "source_receipt_sha256": "00efb299a509d911ccf4292e8bedf5cf30beb55f991ee5a63bdb083c6daa552d",
+  "csv_sha256": "aba6f21f5c9d0e0ab2b85c12081f05d2f6c6f558a64db90299af78f58c28a0b3",
   "generator_sha256": "34e4628fb96e776dd56b1266119b676c974eb73a52c8218bff1df85840fa10ff",
-  "figure_sha256": "ca3b34943976a5325c94bf7424b1f3f6c13c58a9c652b07defe090160184f48c",
+  "figure_sha256": "da1d0b02343868c965c6e6c9a62445f0574dcf9c44e5fe318f936bf4f2981f3e",
   "round_window": [
     775,
-    3021
+    3197
   ],
-  "rows": 2247,
+  "rows": 2423,
   "older_displayed_prefix_rows": 1889,
-  "additional_logged_rows": 358,
+  "additional_logged_rows": 534,
   "accepted_rounds": [
     782,
     785,
     859,
     882,
     2750,
-    2795
+    2795,
+    3100,
+    3175
   ],
   "strict_gain_rounds": [
     785,
     859,
-    2750
+    2750,
+    3175
   ],
   "accepted_tie_rounds": [
     782,
     882,
-    2795
+    2795,
+    3100
   ],
-  "rejected_rows": 2241,
-  "final_recorded_best": "1.1383668110784328",
-  "final_recorded_best_round": 2795,
+  "rejected_rows": 2415,
+  "final_recorded_best": "1.1389572403748425",
+  "final_recorded_best_round": 3175,
   "classification": "Exact Decimal comparison of logged candidate with previous best; no epsilon or rounded-value tie classification",
   "default_acceptance": "candidate >= previous best, without a margin; every captured flag agrees",
   "transformations": "All rows retained; no smoothing, clipping, downsampling or added cumulative maximum",
