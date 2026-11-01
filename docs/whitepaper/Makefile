@@ -23,5 +23,6 @@ figs:
 	python3 figures/scripts/make_promotions_per_hour_figure.py
 	python3 figures/scripts/make_latest_admissions_figure.py
 	python3 figures/scripts/make_latest_event_rates_figure.py
+	python3 figures/scripts/make_latest_event_rates_figure.py --round-clock-only
 clean:
 	latexmk -C

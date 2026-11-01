@@ -118,5 +118,86 @@ def main():
     print(json.dumps(facts))
 
 
+def make_round_clock():
+    """Show every completed round in a separately authenticated live capture."""
+    from matplotlib.ticker import MaxNLocator
+
+    data = FIGURES / "data/latest_round_clock.csv"
+    receipt = FIGURES / "data/latest_round_clock.source.json"
+    output = FIGURES / "fig_fw_latest_round_clock.pdf"
+    provenance = FIGURES / "data/latest_round_clock.provenance.json"
+    source = json.loads(receipt.read_text())
+    assert sha(data) == source["csv_sha256"], "Round-clock CSV hash mismatch"
+    with data.open() as stream:
+        rows = list(csv.DictReader(stream))
+    rounds = [int(row["round"]) for row in rows]
+    assert len(rows) == source["capture"]["rows"] == 20
+    assert rounds == list(range(rounds[0], rounds[0] + 20))
+    assert [rounds[0], rounds[-1]] == source["capture"]["round_window"]
+    walls = [Decimal(row["wall_seconds"]) for row in rows]
+    events = [int(row["program_events"]) for row in rows]
+    admissions = [int(row["adapter_accepted"]) for row in rows]
+    assert all(value.is_finite() and value > 0 for value in walls)
+    assert all(value >= 0 for value in events)
+    assert all(value in (0, 1) for value in admissions)
+    assert source["capture"]["journal_verification"]["all20_summary_counts_matched"]
+    total_wall = sum(walls)
+    total_events = sum(events)
+    plt.rcParams.update(
+        {
+            "font.family": "serif",
+            "font.size": 8,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "pdf.fonttype": 42,
+        }
+    )
+    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(6.8, 2.2))
+    ax0.bar(rounds, events, width=0.75, color="#4c6ef5")
+    ax0.set(title="Events per completed round", ylabel="strict program events")
+    ax0.yaxis.set_major_locator(MaxNLocator(integer=True, nbins=4))
+    ax0.set_ylim(0, max(events) + 0.5)
+    ax1.plot(rounds, [float(value) for value in walls], "o-", color="#495057", ms=2)
+    ax1.set(title="Full logged round time", ylabel="seconds per round")
+    ax1.set_ylim(0, float(max(walls)) * 1.12)
+    for ax in (ax0, ax1):
+        ax.set(xlabel="round", xlim=(rounds[0] - 0.75, rounds[-1] + 0.75))
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True, nbins=5))
+        ax.grid(axis="y", alpha=0.2)
+        ax.set_axisbelow(True)
+    fig.tight_layout(pad=0.6, w_pad=1.4)
+    fig.savefig(output, metadata={"CreationDate": None, "ModDate": None})
+    plt.close(fig)
+    facts = dict(
+        schema="whitepaper.latest-round-clock-figure/v1",
+        input_csv_sha256=sha(data),
+        source_receipt_sha256=sha(receipt),
+        generator_sha256=sha(Path(__file__)),
+        figure_sha256=sha(output),
+        rows=len(rows),
+        round_window=[rounds[0], rounds[-1]],
+        program_events=total_events,
+        logged_wall_seconds=str(total_wall),
+        events_per_logged_hour=str(Decimal(total_events) * 3600 / total_wall),
+        mean_round_seconds=str(total_wall / len(rows)),
+        zero_event_rounds=events.count(0),
+        adapter_admissions=sum(admissions),
+        definitions="Each bar counts strict program-incumbent events in one completed summary; each point is its full logged wall duration, including all work and waits.",
+        scope=source["scope"],
+        matplotlib_version=matplotlib.__version__,
+        reproduce="python3 figures/scripts/make_latest_event_rates_figure.py --round-clock-only",
+    )
+    provenance.write_text(json.dumps(facts, indent=2) + "\n")
+    print(json.dumps(facts))
+
+
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--round-clock-only", action="store_true")
+    args = parser.parse_args()
+    if args.round_clock_only:
+        make_round_clock()
+    else:
+        main()
