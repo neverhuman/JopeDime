@@ -7,15 +7,19 @@
 mod native_inputs;
 pub use native_inputs::NativeCaptureInputs;
 
+mod inventory;
+pub use inventory::{RecordCounts, RecordInventory};
 mod job_resolver;
 pub use job_resolver::{AcceptedJobAdmission, TrustedJobResolver};
+mod run;
+pub use run::{record_run, RecordingBackend};
 
 mod producer;
 pub use producer::RoundCapture;
 pub(crate) mod capture;
 pub(crate) mod outbox;
 pub use capture::{CaptureConfig, CaptureContext, ObservedSlate};
-pub use outbox::materialize_committed;
+pub use outbox::{materialize_committed, materialize_committed_with_inventory};
 
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
