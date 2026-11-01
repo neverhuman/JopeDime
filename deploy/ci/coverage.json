@@ -7431,7 +7431,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -14458,6 +14458,16 @@
       ],
       "lanes": [],
       "scope": "H180 data-free controls: registered constants, five-fold family cross-fit with B unused, no-A-leak FIT batch plan, FRESH40 as a prefix of the FRESH160 trajectory, ZERO_ADAPTER equal to the anchor-only scorer of the live decomposition (and its refusals), axis=0 paired family bootstrap, adapter/dose verdict boundaries with the +0.001 tie, Holm advance gates, identical-arm Elo 1500, timing-only fold rule, choice agreement, launch review-or-waiver binding and supervisor guards. No checkpoint, corpus or model passes in the fixture suite; offline research only."
+    },
+    "python:research/flywheel_selfplay/h184_adapter_components/test_h184.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H184 data-free controls: registered constants/arms, five-fold family cross-fit, bit-exact equality of the PRIOR+KERNEL+ATTN decomposition with the pinned live adapter delta on a synthetic adapter (skipped where the asset is absent), sum refusal and output-level ablation semantics, component init structure, attribution labels with Holm m=3 and lift shares, axis=0 paired family bootstrap, strict ADVANCE gates with the +0.001 tie, identical-arm Elo 1500, launch review binding and supervisor guards. No checkpoint, corpus or model passes in the fixture suite; offline research only."
     },
     "python:research/flywheel_selfplay/h179_deep_ensemble/test_h179.py": {
       "discovery": {
