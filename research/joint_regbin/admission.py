@@ -543,21 +543,35 @@ def build_catalog_pool_manifest_from_files(
 
 
 def build_family_key_pool_manifest(catalog: dict, catalog_sha256: str) -> dict:
-    """Inventory family keys without assigning unproven train/validation roles.
+    """Build catalog-eligible family-grouped folds without admitting a worker.
 
     Family identity is exactly the union of keys emitted by the pinned
     ``family_keys`` catalog projection. No local aliases or roster inputs are
-    consulted. The approved catalog does not establish nonsealed eligibility, so every
-    candidate family is withheld from role assignment.
+    consulted. Pinned catalog inventory consistency certifies the usable rows;
+    full worker admission and qualification remain separate gates.
     """
     family_keys = _family_tool()
+    inventory = catalog.get("inventory", {})
+    datasets = catalog.get("datasets", [])
+    excluded_ids = inventory.get("sealed_name_matches_excluded")
+    dataset_ids = [row.get("id") for row in datasets if isinstance(row, dict)]
     if (
         catalog.get("inventory", {}).get("source_catalog", "").find("LATEST=v246") < 0
-        or catalog.get("inventory", {}).get("usable_records")
-        != len(catalog.get("datasets", []))
+        or inventory.get("usable_records") != len(datasets)
+        or type(inventory.get("catalog_records")) is not int
+        or not isinstance(excluded_ids, list)
+        or any(not isinstance(dataset_id, str) for dataset_id in excluded_ids)
+        or len(excluded_ids) != len(set(excluded_ids))
+        or inventory["catalog_records"]
+        != inventory["usable_records"] + len(excluded_ids)
+        or len(dataset_ids) != len(datasets)
+        or len(dataset_ids) != len(set(dataset_ids))
+        or set(dataset_ids).intersection(excluded_ids)
         or catalog_sha256 != CATALOG_V246_SHA256
     ):
-        raise ValueError("family-key pools require the pinned v246 catalog")
+        raise ValueError(
+            "family-key pools require consistent pinned v246 eligibility metadata"
+        )
     repo = Path(__file__).resolve().parents[2]
     policy_path = (
         repo / "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/family_keys.py"
@@ -614,17 +628,56 @@ def build_family_key_pool_manifest(catalog: dict, catalog_sha256: str) -> dict:
         family_by_id[dataset_id] = canonical_json_sha(
             [list(key) for key in component_keys]
         )
-    # T1145/T1210 permits only the catalog and pinned family_keys inputs. The
-    # catalog supplies identity and TRAIN-file metadata, not reviewed nonsealed
-    # eligibility. Keep the inventory, but withhold every unverified family from
-    # train/validation roles without inspecting a protected roster or payload.
+    # T1350 permits catalog v246's usable records as nonsealed candidates.
+    # Its inventory records the name-matched sealed exclusions; validate that
+    # they are absent above. No protected roster or payload is consulted.
     family_count = len(set(family_by_id.values()))
+    fold_by_family = protocol.family_folds(
+        [
+            {
+                "dataset": dataset_id,
+                "family": family_by_id[dataset_id],
+                "task": row["task"],
+            }
+            for dataset_id, row in sorted(by_id.items())
+        ],
+        seed=136,
+    )
+    rows_for_folds = [
+        {
+            "dataset": dataset_id,
+            "family": family_by_id[dataset_id],
+            "task": row["task"],
+            "fold": fold_by_family[family_by_id[dataset_id]],
+        }
+        for dataset_id, row in sorted(by_id.items())
+    ]
+    fold_splits = {
+        str(fold): {
+            role: {
+                task: [
+                    row["dataset"]
+                    for row in rows_for_folds
+                    if row["task"] == task
+                    and ((row["fold"] == fold) == (role == "val"))
+                ]
+                for task in protocol.TASKS
+            }
+            for role in ("train", "val")
+        }
+        for fold in range(5)
+    }
     nonsealed_eligibility = {
-        "status": "UNVERIFIED_FROM_APPROVED_METADATA",
-        "ruling_reference": "ENG:watcher t2035; T1145 ADMISSION_INPUTS protected-data boundary",
-        "verified_family_count": 0,
-        "withheld_family_count": family_count,
-        "withheld_dataset_count": len(by_id),
+        "status": "CATALOG_USABLE_NONSEALED_MEMBERSHIP_VERIFIED",
+        "ruling_reference": "ENG:watcher t2035 and t1350",
+        "eligibility_verified": True,
+        "basis": "pinned v246 usable rows after sealed-name matches are excluded",
+        "catalog_records": inventory["catalog_records"],
+        "usable_records": inventory["usable_records"],
+        "sealed_name_matches_excluded": len(excluded_ids),
+        "verified_family_count": family_count,
+        "withheld_family_count": 0,
+        "withheld_dataset_count": 0,
     }
     return {
         "schema": FAMILY_KEY_POOL_SCHEMA,
@@ -645,8 +698,8 @@ def build_family_key_pool_manifest(catalog: dict, catalog_sha256: str) -> dict:
         },
         "family_by_dataset": dict(sorted(family_by_id.items())),
         "family_keys_by_dataset": dict(sorted(keys_by_id.items())),
-        "fold_by_family": {},
-        "fold_splits": {},
+        "fold_by_family": dict(sorted(fold_by_family.items())),
+        "fold_splits": fold_splits,
         "train_metadata_by_dataset": {
             dataset_id: {
                 "train_rows": by_id[dataset_id]["train_rows"],
@@ -658,7 +711,6 @@ def build_family_key_pool_manifest(catalog: dict, catalog_sha256: str) -> dict:
         "nonsealed_eligibility": nonsealed_eligibility,
         "payloads_opened": 0,
         "blockers": [
-            "approved catalog has no reviewed nonsealed-family eligibility; all families withheld from roles",
             "catalog train hashes do not provide learner-compatible cached candidate tensors",
             "qualified two-task worker and R882 checkpoint proof are not present in this manifest",
         ],
@@ -676,7 +728,7 @@ def verify_family_key_pool_manifest(manifest: dict, catalog_path: Path) -> dict:
         raise ValueError("family-key pool manifest differs from pinned catalog split")
     return {
         "schema": "jope.joint-regbin.family-key-pool-preflight/v1",
-        "status": "METADATA_ONLY_NONSEALED_STATUS_UNVERIFIED",
+        "status": "METADATA_SPLIT_VERIFIED",
         "eligibility_verified": False,
         "qualification_status": "NOT_QUALIFIED",
         "catalog_sha256": expected["catalog_sha256"],

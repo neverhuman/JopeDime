@@ -69,9 +69,9 @@ def validate_catalog_train_context(
 ) -> dict:
     """Bind a train-only context to rederived role admission and family identity.
 
-    Metadata-only pools intentionally withhold unverified families. They
-    provide family identity only; complete role admission is required before
-    a train blob can be fetched.
+    Catalog-certified family folds provide candidate roles only. A separately
+    rederived ADMITTED role manifest remains mandatory before a train blob can
+    be fetched.
     """
     _require(
         family_pools.get("schema") == admission.FAMILY_KEY_POOL_SCHEMA
@@ -84,13 +84,15 @@ def validate_catalog_train_context(
         "family-key pool catalog pin mismatch",
     )
     _require(
-        family_pools.get("fold_splits") == {}
-        and family_pools.get("fold_by_family") == {}
+        family_pools.get("fold_splits")
+        and family_pools.get("fold_by_family")
         and family_pools.get("nonsealed_eligibility", {}).get("status")
-        == "UNVERIFIED_FROM_APPROVED_METADATA"
+        == "CATALOG_USABLE_NONSEALED_MEMBERSHIP_VERIFIED"
+        and family_pools.get("nonsealed_eligibility", {}).get("eligibility_verified")
+        is True
         and family_pools.get("nonsealed_eligibility", {}).get("verified_family_count")
-        == 0,
-        "unverified family roles must remain withheld",
+        > 0,
+        "catalog-certified family folds required",
     )
     source_catalog = catalog_path or admission.DEFAULT_ROLE_CATALOG
     verified_pool = admission.verify_family_key_pool_manifest(
@@ -99,9 +101,11 @@ def validate_catalog_train_context(
     _require(
         verified_pool.get("catalog_sha256") == CATALOG_V246_SHA256
         and verified_pool.get("eligibility_verified") is False
-        and verified_pool.get("fold_count") == 0
+        and verified_pool.get("fold_count") == 5
+        and verified_pool.get("nonsealed_eligibility", {}).get("eligibility_verified")
+        is True
         and verified_pool.get("payloads_opened") == 0,
-        "family-key pool did not rederive as metadata-only with zero roles",
+        "family-key pool did not rederive as a metadata-only catalog split",
     )
     if catalog_path is None:
         admitted = admission.rederive_role_manifest(role_manifest)
@@ -176,6 +180,14 @@ def validate_catalog_train_context(
     _require(
         admitted.get("family_by_dataset", {}).get(dataset) == family,
         "admitted role family differs from pinned family identity",
+    )
+    _require(
+        any(
+            dataset in split.get(context["role"], {}).get(task, [])
+            and family_pools.get("fold_by_family", {}).get(family) is not None
+            for split in family_pools.get("fold_splits", {}).values()
+        ),
+        "context role is outside catalog-certified family folds",
     )
     _require(
         catalog_row.get("cols", 0) > 1, "catalog feature/target column count invalid"

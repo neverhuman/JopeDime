@@ -41,7 +41,9 @@ from research.joint_regbin.protocol import (
 from research.joint_regbin.report import comparison, decide, elo, paired_records, render
 
 
-def test_family_key_pool_manifest_preserves_identity_but_withholds_roles(monkeypatch):
+def test_family_key_pool_manifest_certifies_catalog_eligibility_and_assigns_roles(
+    monkeypatch,
+):
     from research.joint_regbin import admission
 
     rows = []
@@ -67,6 +69,8 @@ def test_family_key_pool_manifest_preserves_identity_but_withholds_roles(monkeyp
         "inventory": {
             "source_catalog": "catalog/v246.jsonl (LATEST=v246)",
             "usable_records": len(rows),
+            "catalog_records": len(rows),
+            "sealed_name_matches_excluded": [],
         },
         "datasets": rows,
     }
@@ -75,19 +79,28 @@ def test_family_key_pool_manifest_preserves_identity_but_withholds_roles(monkeyp
     manifest = build_family_key_pool_manifest(catalog, "a" * 64)
 
     assert manifest["schema"] == "jope.joint-regbin.family-key-pools/v1"
-    assert manifest["eligibility_verified"] is False
+    assert (
+        manifest["eligibility_verified"] is False
+    )  # full worker admission remains separate
     assert manifest["payloads_opened"] == 0
     assert manifest["candidate_count_by_task"] == {"regression": 6, "binary": 6}
     assert manifest["family_by_dataset"]["r-0"] == manifest["family_by_dataset"]["b-0"]
     assert manifest["family_keys_by_dataset"]["r-0"] == [["canonical_sha256", "f" * 64]]
-    assert manifest["fold_by_family"] == {}
-    assert manifest["fold_splits"] == {}
+    assert len(manifest["fold_by_family"]) == 11
+    assert len(manifest["fold_splits"]) == 5
+    assert any(
+        split[role][task]
+        for split in manifest["fold_splits"].values()
+        for role in ("train", "val")
+        for task in ("regression", "binary")
+    )
     assert manifest["fold_seed"] == 136
     eligibility = manifest["nonsealed_eligibility"]
-    assert eligibility["status"] == "UNVERIFIED_FROM_APPROVED_METADATA"
-    assert eligibility["verified_family_count"] == 0
-    assert eligibility["withheld_family_count"] == 11
-    assert eligibility["withheld_dataset_count"] == 12
+    assert eligibility["status"] == "CATALOG_USABLE_NONSEALED_MEMBERSHIP_VERIFIED"
+    assert eligibility["eligibility_verified"] is True
+    assert eligibility["verified_family_count"] == 11
+    assert eligibility["withheld_family_count"] == 0
+    assert eligibility["withheld_dataset_count"] == 0
 
 
 def test_family_key_pool_preflight_rederives_and_stays_non_admitted(
@@ -115,6 +128,8 @@ def test_family_key_pool_preflight_rederives_and_stays_non_admitted(
                 "inventory": {
                     "source_catalog": "catalog/v246.jsonl (LATEST=v246)",
                     "usable_records": len(rows),
+                    "catalog_records": len(rows),
+                    "sealed_name_matches_excluded": [],
                 },
                 "datasets": rows,
             }
@@ -128,9 +143,9 @@ def test_family_key_pool_preflight_rederives_and_stays_non_admitted(
         json.loads(catalog_path.read_text()), catalog_sha
     )
     receipt = verify_family_key_pool_manifest(manifest, catalog_path)
-    assert receipt["status"] == "METADATA_ONLY_NONSEALED_STATUS_UNVERIFIED"
+    assert receipt["status"] == "METADATA_SPLIT_VERIFIED"
     assert receipt["family_count"] == 40
-    assert receipt["fold_count"] == 0
+    assert receipt["fold_count"] == 5
     assert receipt["eligibility_verified"] is False
     assert receipt["payloads_opened"] == 0
     manifest["fold_splits"] = {"0": {"train": {"binary": ["b-0"]}}}
@@ -138,8 +153,34 @@ def test_family_key_pool_preflight_rederives_and_stays_non_admitted(
         verify_family_key_pool_manifest(manifest, catalog_path)
 
 
+def test_family_key_pool_rejects_reintroduced_sealed_name_exclusion(monkeypatch):
+    from research.joint_regbin import admission
+
+    catalog = {
+        "inventory": {
+            "source_catalog": "catalog/v246.jsonl (LATEST=v246)",
+            "catalog_records": 2,
+            "usable_records": 1,
+            "sealed_name_matches_excluded": ["d-0"],
+        },
+        "datasets": [
+            {
+                "id": "d-0",
+                "task": "regression",
+                "canonical_sha256": "a" * 64,
+                "s3_bucket": "veox-jopedime-datasets-use2",
+                "train_rows": 12,
+                "train_sha256": "b" * 64,
+            }
+        ],
+    }
+    monkeypatch.setattr(admission, "CATALOG_V246_SHA256", "a" * 64)
+    with pytest.raises(ValueError, match="consistent pinned v246 eligibility metadata"):
+        build_family_key_pool_manifest(catalog, "a" * 64)
+
+
 @pytest.mark.parametrize("claimed_nonsealed", [None, False, True])
-def test_family_key_pools_withhold_unproven_families_and_transitive_members(
+def test_family_key_pool_uses_owner_eligibility_not_self_reported_flags(
     monkeypatch, claimed_nonsealed
 ):
     """Synthetic identity graph only; no protected roster or payload is an input."""
@@ -168,6 +209,8 @@ def test_family_key_pools_withhold_unproven_families_and_transitive_members(
         "inventory": {
             "source_catalog": "catalog/v246.jsonl (LATEST=v246)",
             "usable_records": len(rows),
+            "catalog_records": len(rows),
+            "sealed_name_matches_excluded": [],
         },
         "datasets": rows,
     }
@@ -182,10 +225,10 @@ def test_family_key_pools_withhold_unproven_families_and_transitive_members(
         for task in ("regression", "binary")
         for dataset in split[role][task]
     }
-    assert not assigned, "unproven family was assigned a train/validation role"
-    assert result["fold_by_family"] == {}
-    assert result["nonsealed_eligibility"]["withheld_family_count"] == 22
-    assert result["nonsealed_eligibility"]["withheld_dataset_count"] == 24
+    assert assigned, "owner-approved usable catalog rows received no roles"
+    assert result["fold_by_family"]
+    assert result["nonsealed_eligibility"]["withheld_family_count"] == 0
+    assert result["nonsealed_eligibility"]["withheld_dataset_count"] == 0
     assert result["eligibility_verified"] is False
     assert result["payloads_opened"] == 0
 

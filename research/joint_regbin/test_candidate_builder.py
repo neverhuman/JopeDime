@@ -33,7 +33,8 @@ def rederive_synthetic_role_admission(monkeypatch):
         lambda manifest, _catalog: {
             "catalog_sha256": manifest["catalog_sha256"],
             "eligibility_verified": False,
-            "fold_count": 0,
+            "fold_count": 5,
+            "nonsealed_eligibility": {"eligibility_verified": True},
             "payloads_opened": 0,
         },
     )
@@ -52,11 +53,27 @@ def _inputs(task="regression", role="train"):
             dataset: {"train_sha256": train_sha, "train_rows": 50, "task": task}
         },
         "family_by_dataset": {dataset: family},
-        "fold_by_family": {},
-        "fold_splits": {},
+        "fold_by_family": {family: 0},
+        "fold_splits": {
+            str(fold): {
+                role_name: {
+                    task_name: (
+                        [dataset]
+                        if task_name == task
+                        and role_name == role
+                        and (fold == 0 or role == "train")
+                        else []
+                    )
+                    for task_name in builder.protocol.TASKS
+                }
+                for role_name in ("train", "val")
+            }
+            for fold in range(5)
+        },
         "nonsealed_eligibility": {
-            "status": "UNVERIFIED_FROM_APPROVED_METADATA",
-            "verified_family_count": 0,
+            "status": "CATALOG_USABLE_NONSEALED_MEMBERSHIP_VERIFIED",
+            "eligibility_verified": True,
+            "verified_family_count": 1,
         },
     }
     context = {
@@ -131,15 +148,14 @@ def test_train_context_binds_rederived_admission_and_source_split():
         builder.validate_catalog_train_context(pools, roles, context, catalog_row)
 
 
-def test_unverified_roles_and_family_folds_cannot_authorize_candidate_reads():
+def test_catalog_family_folds_still_require_complete_role_admission():
     pools, role_manifest, context, catalog_row = _inputs()
-    pools["fold_splits"] = {"0": {"train": {"regression": [context["dataset"]]}}}
-    with pytest.raises(ValueError, match="roles must remain withheld"):
+    assert (
         builder.validate_catalog_train_context(
             pools, role_manifest, context, catalog_row
-        )
-
-    pools["fold_splits"] = {}
+        )["task"]
+        == context["task"]
+    )
     role_manifest["admission_status"] = "BLOCKED_INCOMPLETE_EVIDENCE"
     role_manifest["eligibility_verified"] = False
     s3 = _S3(b"{}", b"")
