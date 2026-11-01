@@ -801,7 +801,7 @@ impl RunService {
         }
 
         let mut rng = rand_chacha::ChaCha12Rng::seed_from_u64(request.seed);
-        let mut parents = Vec::new();
+        let mut parents = Vec::<String>::new();
         let mut measured = Vec::<(String, f64)>::new();
         let mut seen = BTreeSet::new();
         let mut attempts = Vec::with_capacity(request.budget as usize);
