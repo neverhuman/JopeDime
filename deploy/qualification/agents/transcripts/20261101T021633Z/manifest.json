@@ -49,25 +49,13 @@
       "bytes": 381,
       "sha256": "ec7e082c076e4453db0f965e22b43562df4589d5347fe18dd82344f4560800d6"
     },
-    "checks-clippy-linux.stderr": {
-      "bytes": 15422,
-      "sha256": "716c725481a369c87a4017a3f56a50219264c979a2eb5132cd3ef11e94c042db"
-    },
     "checks-clippy-linux.stdout": {
-      "bytes": 0,
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    },
-    "checks-test-inventory.stderr": {
       "bytes": 0,
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "checks-test-inventory.stdout": {
       "bytes": 579,
       "sha256": "90720cc41c5845d38835278a21d3617f9a71611b395b9f8955567a94b66defff"
-    },
-    "checks-tests.stderr": {
-      "bytes": 9476,
-      "sha256": "fd58abd17e4739aec294f2071dbd6e96758576010fbfb4952db5f6817aa1bf66"
     },
     "checks-tests.stdout.json": {
       "bytes": 2299,
@@ -84,10 +72,6 @@
     "claude-code.client.raw": {
       "bytes": 12790,
       "sha256": "f6486e7ab445b2fa55fa67ee269f300370bab6ea07628e1a1dfe7616c4b4e043"
-    },
-    "claude-code.client.stderr": {
-      "bytes": 4872,
-      "sha256": "a9caf5a3786a37b76ef859b2b149647cbd0819dca20a9c0a7a01a8ed042d7be3"
     },
     "claude-code.command.json": {
       "bytes": 4865,
@@ -113,10 +97,6 @@
       "bytes": 213426,
       "sha256": "577507468e87ced60713871a7cf0ed4c5232ec5f24c93d33a7135a293058cb01"
     },
-    "claude-code.server.stderr": {
-      "bytes": 0,
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    },
     "claude-code.verification.json": {
       "bytes": 4203,
       "sha256": "0ea384f70de6ddf1f0e1dc8900d978b0b0aaaf18de2196bc9e515960d791e9b4"
@@ -132,10 +112,6 @@
     "codex-cli.client.raw": {
       "bytes": 16984,
       "sha256": "3249daf5889db226d1339addb13283d930fdacaf1cd171eee59ebc4a55d50843"
-    },
-    "codex-cli.client.stderr": {
-      "bytes": 39,
-      "sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721"
     },
     "codex-cli.command.json": {
       "bytes": 6673,
@@ -157,13 +133,13 @@
       "bytes": 212717,
       "sha256": "140a12768fc95f6c07c413d01a9b84bc7deb06554de48ef4699a831e2fa30440"
     },
-    "codex-cli.server.stderr": {
-      "bytes": 0,
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    },
     "codex-cli.verification.json": {
       "bytes": 3871,
       "sha256": "47159bda0930eef5d4d0a763b82406dda2957a749d7bf837b913634396020b58"
+    },
+    "diagnostics.json": {
+      "bytes": 3264,
+      "sha256": "84c2847776f461213d2ea865e8d5ac250e27e911828ebb293ba5eac10f4e9344"
     },
     "gemini-cli.capture.json": {
       "bytes": 2062,
@@ -176,10 +152,6 @@
     "gemini-cli.client.raw": {
       "bytes": 15267,
       "sha256": "8a42353bf839d8f9e8aaa9ec45864c4c45a5d5a60e08f01767600b1540a884ac"
-    },
-    "gemini-cli.client.stderr": {
-      "bytes": 130,
-      "sha256": "c699f34ec6d817e7b8bdebbf856499dcba7ade59e29c0b726c6762c1e651b502"
     },
     "gemini-cli.command.json": {
       "bytes": 4469,
@@ -204,10 +176,6 @@
     "gemini-cli.server.raw": {
       "bytes": 213295,
       "sha256": "8272e164a36dce3dc53fcd333dae964f63ddc8c2f48edd96f43b02a832e5fe9a"
-    },
-    "gemini-cli.server.stderr": {
-      "bytes": 0,
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "gemini-cli.verification.json": {
       "bytes": 3956,

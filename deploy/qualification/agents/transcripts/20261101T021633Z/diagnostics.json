@@ -1,0 +1,66 @@
+{
+  "schema": "jope.mcp05-diagnostic-custody/v1",
+  "reason": "Repository layout policy keeps raw stderr logs outside Git. Original bytes preserved and independently hash-compared before removing the duplicate tracked copies.",
+  "files": [
+    {
+      "name": "checks-clippy-linux.stderr",
+      "bytes": 15422,
+      "sha256": "716c725481a369c87a4017a3f56a50219264c979a2eb5132cd3ef11e94c042db",
+      "custody": "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930/diagnostic-custody/checks-clippy-linux.stderr"
+    },
+    {
+      "name": "checks-test-inventory.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "custody": "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930/diagnostic-custody/checks-test-inventory.stderr"
+    },
+    {
+      "name": "checks-tests.stderr",
+      "bytes": 9476,
+      "sha256": "fd58abd17e4739aec294f2071dbd6e96758576010fbfb4952db5f6817aa1bf66",
+      "custody": "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930/diagnostic-custody/checks-tests.stderr"
+    },
+    {
+      "name": "claude-code.client.stderr",
+      "bytes": 4872,
+      "sha256": "a9caf5a3786a37b76ef859b2b149647cbd0819dca20a9c0a7a01a8ed042d7be3",
+      "custody": "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930/diagnostic-custody/claude-code.client.stderr"
+    },
+    {
+      "name": "claude-code.server.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "custody": "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930/diagnostic-custody/claude-code.server.stderr"
+    },
+    {
+      "name": "codex-cli.client.stderr",
+      "bytes": 39,
+      "sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "custody": "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930/diagnostic-custody/codex-cli.client.stderr"
+    },
+    {
+      "name": "codex-cli.server.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "custody": "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930/diagnostic-custody/codex-cli.server.stderr"
+    },
+    {
+      "name": "gemini-cli.client.stderr",
+      "bytes": 130,
+      "sha256": "c699f34ec6d817e7b8bdebbf856499dcba7ade59e29c0b726c6762c1e651b502",
+      "custody": "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930/diagnostic-custody/gemini-cli.client.stderr"
+    },
+    {
+      "name": "gemini-cli.server.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "custody": "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930/diagnostic-custody/gemini-cli.server.stderr"
+    }
+  ],
+  "summary": {
+    "server_stderr": "All three empty, zero-byte SHA256 in capture receipts.",
+    "gemini_client_warning": "Terminal sandbox unavailable; CLI continued in default mode. All 16 calls were the approved MCP path.",
+    "native_clippy": "Eight existing non-MCP platform warnings caused failure; Linux-target Clippy passed without lint suppressions.",
+    "final_gates": "Tracked stderr packaging was caught by repo-layout and corrected; no allowlist/policy change."
+  }
+}
