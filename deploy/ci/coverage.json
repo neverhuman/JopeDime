@@ -4439,6 +4439,16 @@
       "lanes": [],
       "scope": "REL-07 PR1382 provider controls: candidate/source binding, exact test execution, drift/failure/overwrite refusals. Synthetic fixtures validate orchestration only; actual candidate release execution remains separate."
     },
+    "python:deploy/qualification/v1.0/test_release_command_scaffold.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 PR1454 provider controls: candidate/source binding, exact test execution, drift/failure/overwrite refusals. Synthetic fixtures validate orchestration only; actual candidate release execution remains separate."
+    },
     "python:ops/s3_shard_cache/test_s3_shard_cache.py": {
       "discovery": {
         "kind": "python-family"
@@ -15669,8 +15679,6 @@
     "lanes": [],
     "scope": "H163 data-free score direction, candidate ID alignment, stable argmin ties, z-normalization/rank ensemble, and strict paired family-bootstrap selector controls. Offline research only; no checkpoint, corpus, or live promotion in unit tests."
   },
-  "schema": "jope.coverage/v1",
-  "stage": "static",
   "python:research/flywheel_selfplay/h169_optimizer_geometry/test_h169.py": {
     "discovery": {
       "kind": "python-family"
@@ -15680,5 +15688,7 @@
     ],
     "lanes": [],
     "scope": "H169 data-free controls: family exclusion/assessment coverage, repeatable FIT-only minibatches, strict selection, drift calibration, exact optimizer pins, None-gradient materialization, bootstrap/Holm/Elo, and resource guards. No study data, checkpoint, model, or serving qualification."
-  }
+  },
+  "schema": "jope.coverage/v1",
+  "stage": "static"
 }
