@@ -729,6 +729,115 @@ class M3FullTests(unittest.TestCase):
         with self.assertRaises(ProviderError):
             full.reference_pins(cfg)
 
+    def paired_report(self):
+        report = mode_failure(full_report())
+        proposer = report["clauses"]["r0_proposer"]
+        historical = json.loads(
+            json.dumps(dict(passed=proposer["passed"], strata=proposer["strata"]))
+        )
+        diagnostic = full_report()["clauses"]["r0_proposer"]
+        for row in diagnostic["strata"]:
+            row["reference"] = row["native"]
+            row["reference_counts"] = dict(row["native_counts"])
+        diagnostic.update(
+            reference_mode="source-paired/v1",
+            source_sha256=full.R0_PROPOSER,
+            clock=full.PAIRED_CLOCK,
+            witness_sha256=full.PAIRED_PINS,
+            qualification=False,
+            historical_current_comparison=historical,
+            r0_historical_self_control=historical,
+        )
+        proposer.update(paired_diagnostic=diagnostic, legacy_comparison=historical)
+        return report
+
+    def test_paired_success_never_replaces_historical_failure(self):
+        report = self.paired_report()
+        self.assertTrue(report["clauses"]["r0_proposer"]["paired_diagnostic"]["passed"])
+        self.assertEqual(
+            full.gate_payload(self.ctx, report, self.pin)["status"], "FAIL"
+        )
+        report["clauses"]["r0_proposer"]["passed"] = True
+        with self.assertRaises(ProviderError):
+            full.gate_payload(self.ctx, report, self.pin)
+
+    def test_paired_diagnostic_cannot_hide_identity_population_or_count_drift(self):
+        changes = [
+            lambda p: p.update(source_sha256="0" * 64),
+            lambda p: p.update(clock="chosen-seed"),
+            lambda p: p.update(qualification=True),
+            lambda p: p.update(witness_sha256={}),
+            lambda p: p["strata"][0].update(reference=1024),
+            lambda p: p["strata"][1].update(passed=False),
+            lambda p: p["r0_historical_self_control"].update(passed=True),
+        ]
+        for change in changes:
+            report = self.paired_report()
+            change(report["clauses"]["r0_proposer"]["paired_diagnostic"])
+            with self.subTest(change=change), self.assertRaises(ProviderError):
+                full.gate_payload(self.ctx, report, self.pin)
+
+    def test_paired_witness_pins_cannot_replace_original_custody(self):
+        cfg = dict(
+            selected=dict(sha256=full.SELECTED_SHA),
+            proposer={
+                name: dict(sha256=pin) for name, pin in full.PROPOSER_PINS.items()
+            },
+            paired_r0=dict(
+                source_sha256=full.R0_PROPOSER,
+                clock=full.PAIRED_CLOCK,
+                **{name: dict(sha256=pin) for name, pin in full.PAIRED_PINS.items()},
+            ),
+        )
+        full.reference_pins(cfg)
+        for section, key in (("proposer", "admission"), ("paired_r0", "r0_candidates")):
+            bad = json.loads(json.dumps(cfg))
+            bad[section][key]["sha256"] = "0" * 64
+            with self.subTest(section=section), self.assertRaises(ProviderError):
+                full.reference_pins(bad)
+
+    def test_paired_current_historical_comparison_must_match_top_level(self):
+        for same_verdict in (False, True):
+            report = self.paired_report()
+            proposer = report["clauses"]["r0_proposer"]
+            if same_verdict:
+                current = json.loads(
+                    json.dumps(
+                        proposer["paired_diagnostic"]["historical_current_comparison"]
+                    )
+                )
+                for row in current["strata"][:2]:
+                    row["native_counts"]["champion_retrieval"] -= 1
+                    row["native_counts"]["edit_parameter"] += 1
+                proposer["paired_diagnostic"]["historical_current_comparison"] = current
+            else:
+                proposer.update(
+                    passed=True,
+                    strata=full_report()["clauses"]["r0_proposer"]["strata"],
+                )
+                report.update(status="NUMERICAL_PASS")
+                report["counts"].update(passed=4, failed=0)
+            with (
+                self.subTest(same_verdict=same_verdict),
+                self.assertRaises(ProviderError),
+            ):
+                full.gate_payload(self.ctx, report, self.pin)
+
+    def test_consistent_paired_historical_success_remains_accepted(self):
+        report = self.paired_report()
+        proposer = report["clauses"]["r0_proposer"]
+        proposer.update(
+            passed=True, strata=full_report()["clauses"]["r0_proposer"]["strata"]
+        )
+        proposer["paired_diagnostic"]["historical_current_comparison"] = dict(
+            passed=True, strata=json.loads(json.dumps(proposer["strata"]))
+        )
+        report.update(status="NUMERICAL_PASS")
+        report["counts"].update(passed=4, failed=0)
+        self.assertEqual(
+            full.gate_payload(self.ctx, report, self.pin)["status"], "PASS"
+        )
+
     def test_full_cli_requires_paired_arguments_and_separate_modes(self):
         with contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(m3.main(["--full-inputs", "/missing"]), 2)
