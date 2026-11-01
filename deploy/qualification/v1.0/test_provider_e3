@@ -1,0 +1,228 @@
+#!/usr/bin/env python3
+"""Data-free provider controls; mock candidates never establish release PASS."""
+
+import contextlib
+from dataclasses import replace
+import hashlib
+import importlib
+import io
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE / "providers"))
+e3 = importlib.import_module("e3")
+common = importlib.import_module("common")
+
+
+class E3Tests(unittest.TestCase):
+    def setUp(self):
+        root = Path(os.environ.get("JOPE_QUALIFICATION_TEST_TMP", HERE / "target"))
+        root.mkdir(parents=True, exist_ok=True)
+        self.tmp = tempfile.TemporaryDirectory(prefix="e3-", dir=root)
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.repo = self.root / "checkout"
+        self.repo.mkdir()
+        self.artifact = self.root / "candidate"
+        self.artifact.write_bytes(b"provider-control fixture, not release bytes")
+        self.ctx = common.Context(
+            "E3",
+            self.artifact,
+            hashlib.sha256(self.artifact.read_bytes()).hexdigest(),
+            "a" * 40,
+            self.root / "result.json",
+        )
+        self.source = self.ctx.source_sha
+        self.dirty = ""
+        self.profile = "full"
+        self.scope = "release"
+        self.verify_ok = True
+        self.test_calls = []
+        self.output_override = None
+        self.returncode = 0
+        self.after_test = lambda: None
+        self.addCleanup(patch.stopall)
+        patch.object(e3, "ROOT", self.repo).start()
+        patch.object(common, "ROOT", self.repo).start()
+
+    def run_child(self, args, **kwargs):
+        self.assertEqual(kwargs["cwd"], self.repo)
+        if args[:2] == ["git", "rev-parse"]:
+            output = self.source
+        elif args[:2] == ["git", "status"]:
+            output = self.dirty
+        elif args[:2] == ["cargo", "run"]:
+            if "inspect" in args:
+                output = json.dumps(
+                    {
+                        "manifest": {
+                            "profile": self.profile,
+                            "scope": self.scope,
+                            "source": {"sha40": self.ctx.source_sha},
+                        }
+                    }
+                )
+            else:
+                output = json.dumps(
+                    {"schema": "jope.appliance-verify/v1", "ok": self.verify_ok}
+                )
+        else:
+            self.test_calls.append(args)
+            test = args[6]
+            self.after_test()
+            output = (
+                self.output_override
+                if self.output_override is not None
+                else f"running 1 test\ntest {test} ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n"
+            )
+            return subprocess.CompletedProcess(args, self.returncode, output, "")
+        return subprocess.CompletedProcess(args, 0, output, "")
+
+    def invoke(self):
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            return e3.qualify(self.ctx, run=self.run_child)
+
+    def test_every_export_safety_clause_is_required_and_candidate_bound(self):
+        self.assertEqual(self.invoke(), 0)
+        result = json.loads(self.ctx.result.read_text())
+        self.assertEqual(result["id"], "E3")
+        self.assertEqual(result["artifact_sha256"], self.ctx.artifact_sha256)
+        self.assertEqual(result["source_sha"], self.ctx.source_sha)
+        self.assertEqual(
+            result["counts"], {k: len(e3.TESTS) * v for k, v in e3.SINGLE_PASS.items()}
+        )
+        self.assertEqual(self.test_calls, [e3.command(*case) for case in e3.TESTS])
+        self.assertTrue(all("--exact" in args for args in self.test_calls))
+
+    def test_zero_skipped_measured_failed_and_multiple_cases_never_pass(self):
+        for counts in [
+            (0, 0, 0, 0),
+            (0, 0, 1, 0),
+            (0, 0, 0, 1),
+            (0, 1, 0, 0),
+            (2, 0, 0, 0),
+        ]:
+            self.output_override = f"running 1 test\ntest {e3.TESTS[0][1]} ... ok\ntest result: ok. {counts[0]} passed; {counts[1]} failed; {counts[2]} ignored; {counts[3]} measured; 500 filtered out\n"
+            with self.subTest(counts=counts), self.assertRaises(common.ProviderError):
+                self.invoke()
+            self.assertFalse(self.ctx.result.exists())
+
+    def test_substitute_test_or_duplicate_summary_cannot_qualify(self):
+        test = e3.TESTS[0][1]
+        summary = "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n"
+        for output in [
+            f"running 1 test\ntest wrong::case ... ok\n{summary}",
+            f"running 1 test\ntest {test} ... ok\n{summary}{summary}",
+            f"running 1 test\ntest {test} ... ok\ntest extra::case ... ok\n{summary}",
+        ]:
+            self.output_override = output
+            with self.subTest(output=output), self.assertRaises(common.ProviderError):
+                self.invoke()
+            self.assertFalse(self.ctx.result.exists())
+
+    def test_child_failure_preserves_exit_and_stops_without_receipt(self):
+        self.returncode = 42
+        self.assertEqual(self.invoke(), 42)
+        self.assertEqual(len(self.test_calls), 1)
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_later_failure_does_not_publish_partial_success(self):
+        self.after_test = lambda: setattr(
+            self, "returncode", 9 if len(self.test_calls) == 3 else 0
+        )
+        self.assertEqual(self.invoke(), 9)
+        self.assertEqual(len(self.test_calls), 3)
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_artifact_drift_stops_before_next_clause(self):
+        self.after_test = lambda: self.artifact.write_bytes(b"mutated")
+        with self.assertRaisesRegex(common.ProviderError, "candidate bytes changed"):
+            self.invoke()
+        self.assertEqual(len(self.test_calls), 1)
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_source_mismatch_or_dirty_checkout_refuses_before_tests(self):
+        for source, dirty in [("b" * 40, ""), (self.ctx.source_sha, " M source.rs")]:
+            self.source, self.dirty = source, dirty
+            with (
+                self.subTest(source=source, dirty=dirty),
+                self.assertRaises(common.ProviderError),
+            ):
+                self.invoke()
+        self.assertEqual(self.test_calls, [])
+
+    def test_source_drift_after_test_refuses_receipt(self):
+        self.after_test = lambda: setattr(self, "source", "b" * 40)
+        with self.assertRaises(common.ProviderError):
+            self.invoke()
+        self.assertEqual(len(self.test_calls), 1)
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_nonfull_development_and_failed_verification_refuse_before_tests(self):
+        for profile, scope, ok in [
+            ("lite", "release", True),
+            ("full", "development", True),
+            ("full", "release", False),
+        ]:
+            self.profile, self.scope, self.verify_ok = profile, scope, ok
+            with (
+                self.subTest(profile=profile, scope=scope, ok=ok),
+                self.assertRaises(common.ProviderError),
+            ):
+                self.invoke()
+        self.assertEqual(self.test_calls, [])
+
+    def test_wrong_gate_id_is_refused(self):
+        self.ctx = replace(self.ctx, gate_id="M4")
+        with self.assertRaises(common.ProviderError):
+            self.invoke()
+        self.assertEqual(self.test_calls, [])
+
+    def test_existing_or_symlink_result_is_never_replaced(self):
+        prior = self.root / "prior"
+        prior.write_bytes(b"retained")
+        self.ctx.result.symlink_to(prior)
+        with self.assertRaises(common.ProviderError):
+            self.invoke()
+        self.assertEqual(prior.read_bytes(), b"retained")
+        self.assertTrue(self.ctx.result.is_symlink())
+        self.ctx.result.unlink()
+        self.ctx.result.write_bytes(b"original")
+        with self.assertRaises(common.ProviderError):
+            self.invoke()
+        self.assertEqual(self.ctx.result.read_bytes(), b"original")
+
+    def test_resolved_result_path_cannot_enter_source(self):
+        link = self.root / "link"
+        link.symlink_to(self.repo, target_is_directory=True)
+        self.ctx = replace(self.ctx, result=link / "result.json")
+        with self.assertRaisesRegex(
+            common.ProviderError, "outside the source checkout"
+        ):
+            self.invoke()
+        self.assertFalse((self.repo / "result.json").exists())
+        self.assertEqual(self.test_calls, [])
+
+    def test_result_creation_race_preserves_other_writer(self):
+        def race():
+            if len(self.test_calls) == len(e3.TESTS):
+                self.ctx.result.write_bytes(b"concurrent receipt")
+
+        self.after_test = race
+        with self.assertRaises(FileExistsError):
+            self.invoke()
+        self.assertEqual(self.ctx.result.read_bytes(), b"concurrent receipt")
+
+
+if __name__ == "__main__":
+    unittest.main()
