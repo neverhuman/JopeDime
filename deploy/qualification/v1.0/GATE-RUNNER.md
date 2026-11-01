@@ -74,7 +74,8 @@ Supply these through `--provider-inputs "$INPUT_BINDINGS"` with
     },
     "D1": {
       "macos_receipt": "/absolute/path/to/candidate/macos-receipt.json",
-      "macos_receipt_sha256": "<replace with the independently pinned macOS receipt SHA-256>"
+      "macos_receipt_sha256": "<replace with the independently pinned macOS receipt SHA-256>",
+      "macos_artifact_sha256": "<replace with the Darwin package SHA-256 from the signed release manifest>"
     },
     "M2": {
       "golden_dir": "/absolute/path/to/qualified/R5/packet",
@@ -89,10 +90,10 @@ Supply these through `--provider-inputs "$INPUT_BINDINGS"` with
 Discovery reports `unbound_providers` and `unbound_provider_count` separately from
 missing modules. `complete` requires both inventories to be empty. Execution
 discovery refuses unbound providers before writing a runnable manifest. It adds
-M5's directory arguments, D1's receipt/pin arguments, M2's four input/report
-arguments, M3's full-input manifest/pin arguments and A5's two explicit environment
-bindings to each provider's argv,
-without a shell; the frozen command-manifest hash covers them. The restricted
+M5's directory arguments; D1's receipt, receipt pin, and platform-artifact pin;
+M2's four input/report arguments; M3's full-input manifest/pin arguments; and A5's
+two explicit environment bindings to each provider's argv without a shell. The
+frozen command-manifest hash covers them. The restricted
 child environment still discards inherited provider-input variables. Bindings
 cannot replace commands, gate/source/artifact identities, resource settings or
 credentials. Unknown fields, relative paths and malformed SHA-256 pins refuse.
