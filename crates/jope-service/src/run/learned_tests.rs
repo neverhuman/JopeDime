@@ -159,20 +159,20 @@ async fn signed_r882_in_loop_ab_and_replay() {
         (157102, false, false),
         (73, true, true),
     ] {
-        let home = tempfile::Builder::new()
-            .prefix("engine-")
-            .tempdir_in(&report)
-            .unwrap();
+        // Retain the real store/attempt ledger for every cell. A TempDir would
+        // delete that evidence when this iteration drains its router.
+        let home = report.join(format!("engine-{seed}-{learned}-{repeated}"));
+        fs::create_dir(&home).unwrap();
         let (engine, forwards) = if learned {
             let admitted = AdmittedRanker::r882(load_r882_release(&root).unwrap()).unwrap();
             let count = admitted.execution_counter();
             (
-                InProcessEngine::open_with_ranker(home.path(), &worker, admitted).unwrap(),
+                InProcessEngine::open_with_ranker(&home, &worker, admitted).unwrap(),
                 Some(count),
             )
         } else {
             (
-                InProcessEngine::open_with_worker(home.path(), &worker).unwrap(),
+                InProcessEngine::open_with_worker(&home, &worker).unwrap(),
                 None,
             )
         };
@@ -246,7 +246,8 @@ async fn signed_r882_in_loop_ab_and_replay() {
             }
         }
         let row = json!({"seed":seed,"policy":if learned {"r882"} else {"heuristic"},"repeat":repeated,
-            "plan":plan,"run":finished,"real_learned_forwards":count});
+            "plan":plan,"run":finished,"real_learned_forwards":count,
+            "engine_home":home,"attempt_ledger_retained":true});
         fs::write(
             report.join(format!("cell-{seed}-{learned}-{repeated}.json")),
             serde_json::to_vec_pretty(&row).unwrap(),
