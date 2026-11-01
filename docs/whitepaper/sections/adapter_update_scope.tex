@@ -1,0 +1,19 @@
+Typed program edits, cross-family retrieval and grammar synthesis supply
+candidates in the inspected implementation.
+
+The inspected loop freezes every network parameter, then enables updates
+only for non-anchor parameters of the cost-ranking adapter. Its anchor,
+encoder and other modules stay frozen. This loop has no neural program
+writer. Its pool-utility calculation uses the recorded scores and gate
+outcomes of the first four candidates as revealed history, then selects
+the lowest predicted cost from the pool, including those entries.
+Training puts the lowest recorded scores first in its slates; utility
+evaluation uses stored pool order. The calls can therefore reveal different
+examples.
+
+The caller supplies modality tokens and a mask. It separately zeros the
+584-entry context feature vector and both prior inputs, and supplies a
+fixed scale of 0.4208; zero context features do not mean absent modality
+tokens. Its objective combines regression to recorded costs and listwise
+matching, with a fixed target for failed gates. The reporting code averages
+the negative selected scores, assigning a fixed penalty to failed gates.
