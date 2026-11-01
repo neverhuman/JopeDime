@@ -1,0 +1,46 @@
+{
+  "source": "72ed48163b5deb911e3b8e49ba9f860b793cf600",
+  "binary_sha256": "ff0aad38bdc953fc905f7826609d5459a0bda9e8937d93a901acaf7ca88184f7",
+  "actual_client": "codex-cli 0.166.0",
+  "started_utc": "2026-11-01T00:34:55.210941+00:00",
+  "elapsed_seconds": 19.681286938488483,
+  "original_run_id": "run_01M6A892CCY9KCHNJ5CWGK4KKW",
+  "same_private_store": true,
+  "additional_fits": 0,
+  "tool_calls": 4,
+  "successful_calls": 4,
+  "failed_calls": 0,
+  "frame_count": 13,
+  "raw_bytes_verified": 404511,
+  "inventories": [
+    1,
+    1
+  ],
+  "before_snapshot_precedes_all_supplement_requests": true,
+  "same_materialized_tree": true,
+  "two_additional_export_retries_identical_to_original": true,
+  "before_after_equal_except_observed_utc": true,
+  "transport_complete": true,
+  "all_process_exits_zero": true,
+  "verification": "PASS",
+  "capture_producer_sha256": "cddd5371dedea342a593b209c354c7321c46deeb2e7707528ac8cda3e7aaadf7",
+  "raw_capture": {
+    "wire.jsonl": {
+      "bytes": 208577,
+      "sha256": "91882828d629d9f409e548cae965cd760a596d3439e62b4c133efbfe00e4e9af"
+    },
+    "client.raw": {
+      "bytes": 4313,
+      "sha256": "d725bd7a3a2e00a441a85c9cd6ed55e1800305b4c74ccde4dba2ea8b13a31f90"
+    },
+    "server.raw": {
+      "bytes": 191621,
+      "sha256": "855275f258b7f01e083d50848ea79fbaa7c7542c23efcb70461cc25c1ba31632"
+    },
+    "server.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "source_evidence": "/home/ubuntu/jope_plan/evidence/MCP05-NAMED-sol_v1_mcp01-t1745/materialized-72ed48163b5d/codex-export-retry-supplement"
+}

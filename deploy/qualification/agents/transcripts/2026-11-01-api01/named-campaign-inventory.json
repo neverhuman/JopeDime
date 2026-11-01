@@ -1,0 +1,68 @@
+{
+  "scope": "actual named CLI invocations in current t1745/closeout campaign; fixture tests and older sessions outside this campaign are separate",
+  "invocations": [
+    {
+      "receipt": "/home/ubuntu/jope_plan/evidence/MCP05-NAMED-sol_v1_mcp01-t1745/claude/VERIFICATION.json",
+      "source": "991312553fa11f180e7283ed4006923104df2dbc",
+      "client": "claude",
+      "calls": 14,
+      "successes": 12,
+      "failures": 2,
+      "fits": 1,
+      "acceptance_role": "diagnostic retained"
+    },
+    {
+      "receipt": "/home/ubuntu/jope_plan/evidence/MCP05-NAMED-sol_v1_mcp01-t1745/final-8c57a6e11e70/claude/VERIFICATION.json",
+      "source": "8c57a6e11e704c871ab80cc94275e5f964282783",
+      "client": "claude",
+      "calls": 14,
+      "successes": 14,
+      "failures": 0,
+      "fits": 1,
+      "acceptance_role": "diagnostic retained"
+    },
+    {
+      "receipt": "/home/ubuntu/jope_plan/evidence/MCP05-NAMED-sol_v1_mcp01-t1745/final-8c57a6e11e70/codex/VERIFICATION.json",
+      "source": "8c57a6e11e704c871ab80cc94275e5f964282783",
+      "client": "codex",
+      "calls": 14,
+      "successes": 14,
+      "failures": 0,
+      "fits": 1,
+      "acceptance_role": "diagnostic retained"
+    },
+    {
+      "receipt": "/home/ubuntu/jope_plan/evidence/MCP05-NAMED-sol_v1_mcp01-t1745/materialized-72ed48163b5d/claude/VERIFICATION.json",
+      "source": "72ed48163b5deb911e3b8e49ba9f860b793cf600",
+      "client": "claude",
+      "calls": 15,
+      "successes": 15,
+      "failures": 0,
+      "fits": 1,
+      "acceptance_role": "final source functional"
+    },
+    {
+      "receipt": "/home/ubuntu/jope_plan/evidence/MCP05-NAMED-sol_v1_mcp01-t1745/materialized-72ed48163b5d/codex/VERIFICATION.json",
+      "source": "72ed48163b5deb911e3b8e49ba9f860b793cf600",
+      "client": "codex",
+      "calls": 15,
+      "successes": 15,
+      "failures": 0,
+      "fits": 1,
+      "acceptance_role": "final source functional"
+    },
+    {
+      "receipt": "/home/ubuntu/jope_plan/evidence/MCP05-NAMED-sol_v1_mcp01-t1745/materialized-72ed48163b5d/codex-export-retry-supplement/VERIFICATION.json",
+      "source": "72ed48163b5deb911e3b8e49ba9f860b793cf600",
+      "client": "codex-cli 0.166.0",
+      "calls": 4,
+      "successes": 4,
+      "failures": 0,
+      "fits": 0,
+      "acceptance_role": "supplemental zero-fit retry"
+    }
+  ],
+  "tool_calls": 76,
+  "fits": 5,
+  "no_deadline_reset": true
+}

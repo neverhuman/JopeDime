@@ -1,0 +1,59 @@
+{
+  "integration_source": "60b57a0487b10b0a3dc4acbf918a03b7506def90",
+  "main": "a9db8c417e1484e7f6d7f18718ef7077a2023554",
+  "runtime_source": "72ed48163b5deb911e3b8e49ba9f860b793cf600",
+  "runtime_binary_sha256": "ff0aad38bdc953fc905f7826609d5459a0bda9e8937d93a901acaf7ca88184f7",
+  "six_owned_source_blobs_identical_to_runtime": true,
+  "whole_product_source_identical_to_runtime": false,
+  "reason": "Current main PUB06 nondefault failpoints/debug-only seam and service dev dependency preserved; actor runs remain explicitly on runtime72, not whole-current-main binary qualification.",
+  "checks": [
+    {
+      "source": "60b57a0487b10b0a3dc4acbf918a03b7506def90",
+      "command": [
+        "nice",
+        "-n",
+        "10",
+        "/home/ubuntu/bin/remote_test.sh",
+        "xbabe2",
+        "60b57a0487b10b0a3dc4acbf918a03b7506def90",
+        "test",
+        "--locked",
+        "-p",
+        "jope-service",
+        "--lib",
+        "http::",
+        "--message-format=json"
+      ],
+      "start": "2026-11-01T00:38:25.775670+00:00",
+      "safe_target_gib": 44,
+      "test_scope": "new models plus existing HTTP auth/router/dataset/run/SSE regression tests; support partner has not ACKed",
+      "exit": 0,
+      "seconds": 62.234794366173446,
+      "finished": "2026-11-01T00:39:28.010500+00:00"
+    },
+    {
+      "source": "60b57a0487b10b0a3dc4acbf918a03b7506def90",
+      "command": [
+        "nice",
+        "-n",
+        "10",
+        "/home/ubuntu/bin/remote_test.sh",
+        "xbabe2",
+        "60b57a0487b10b0a3dc4acbf918a03b7506def90",
+        "check",
+        "--locked",
+        "-p",
+        "jope-appliance",
+        "--bin",
+        "jopedime",
+        "--message-format=json"
+      ],
+      "start": "2026-11-01T00:38:26.501898+00:00",
+      "safe_target_gib": 44,
+      "test_scope": "fresh-main locked appliance integration compilation, no named-client qualification claim",
+      "exit": 0,
+      "seconds": 78.0425130049698,
+      "finished": "2026-11-01T00:39:44.544463+00:00"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+ "actual_optimizer_updates": 0,
+ "arms": [
+  "CTRL",
+  "TR_LR",
+  "TR_L2SP",
+  "TR_NOFAIL"
+ ],
+ "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+ "fold_manifest_sha256": "3ffa1e8bfb95390435fde3f3dcb50462e1689e91eac3218946e44d2f237d9f68",
+ "fold_seed": 142140,
+ "owner": "rd_argon",
+ "prereg_sha256": "5efdb211e4e9162c4f79decb2f537564283e4a1db42a98396207e5e25c509348",
+ "seeds": [
+  142101,
+  142102,
+  142103
+ ],
+ "smoke_receipt": {
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "initial_adapter_sha256": "740174e9f0d29b69ea1b3dad2e4545e40eff541501e6bfdec1e79dbe96912183",
+  "mode": "synthetic_only",
+  "nice": 19,
+  "non_adapter_state_sha256": "bf37bcb9f65fffb40b61afb39b2fdec16239d1f234980d8e44e8e47b107324b4",
+  "non_adapter_tensors": 291,
+  "non_trainable_params": 1126777,
+  "optimizer_updates_real": 0,
+  "status": "PASS",
+  "synthetic_losses": {
+   "CTRL": 0.026757946237921715,
+   "TR_L2SP": 0.07070447504520416,
+   "TR_LR": 0.07070447504520416,
+   "TR_NOFAIL": 0.02810058183968067
+  }
+ },
+ "status": "PREREGISTERED",
+ "track": "F",
+ "wave": "H142"
+}

@@ -1,0 +1,18 @@
+{
+  "command": [
+    "nice",
+    "-n",
+    "10",
+    "python3",
+    "-B",
+    "/home/ubuntu/jope_plan/evidence/MCP05-NAMED-sol_v1_mcp01-t1745/harness/capture_stdio_live.py",
+    "--self-test"
+  ],
+  "exit_status": 0,
+  "source_sha256": "cddd5371dedea342a593b209c354c7321c46deeb2e7707528ac8cda3e7aaadf7",
+  "derivation": "Only os.fdopen buffering=0 added to tracked capture_stdio.py; protocol and limits unchanged",
+  "tests_are_mock_only": true,
+  "named_client_runs": 0,
+  "fit_runs": 0,
+  "completed_utc": "2026-11-01T00:27:48.254224+00:00"
+}

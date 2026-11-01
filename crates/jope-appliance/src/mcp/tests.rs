@@ -601,7 +601,7 @@ async fn invalid_arguments_side_effect_guards_notifications_and_version_exclusio
             wire.tool("unknown_tool", json!({})).await["error"]["code"],
             -32602
         );
-        let result=wire.tool("model_export",json!({"run_id":RUN,"kind":"bundle","languages":["rust"],"out_dir":"/must-not-be-written","idempotency_key":"blocked"})).await;
+        let result=wire.tool("model_export",json!({"run_id":RUN,"kind":"bundle","languages":["rust"],"out_dir":"/nonexistent-jope-parent/must-not-be-written","idempotency_key":"blocked"})).await;
         assert_eq!(result["result"]["isError"], true);
         assert_eq!(wire.backend.requests.lock().unwrap().len(), count);
         wire.finish("invalid").await;

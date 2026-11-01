@@ -84,6 +84,18 @@ fn build_router(
                 } else {
                     app.route(path, get(super::dataset_inspect::list))
                 }
+            } else if operation.name == "algorithm_get" && journal.is_some() {
+                if path.ends_with("{alg}") {
+                    app.route(path, get(super::models::get_algorithm))
+                } else {
+                    app.route(path, get(super::models::list_algorithms))
+                }
+            } else if operation.name == "model_export" && journal.is_some() {
+                app.route(path, axum::routing::post(super::models::export_model))
+            } else if operation.name == "model_predict" && journal.is_some() {
+                app.route(path, axum::routing::post(super::models::predict_model))
+            } else if operation.name == "artifact_download" && journal.is_some() {
+                app.route(path, get(super::models::download))
             } else if let ("run_start", Some(_)) = (operation.name, journal.as_ref()) {
                 app.route(path, axum::routing::post(super::runs::start))
             } else if let ("run_status", Some(log)) = (operation.name, journal.as_ref()) {

@@ -1,0 +1,11 @@
+--- /home/ubuntu/jope_plan/evidence/MCP05-NAMED-sol_v1_mcp01-t1745/harness/capture_stdio.py	2026-10-31 23:49:04.722423217 +0000
++++ /home/ubuntu/jope_plan/evidence/MCP05-NAMED-sol_v1_mcp01-t1745/harness/capture_stdio_live.py	2026-11-01 00:27:45.253156378 +0000
+@@ -88,7 +88,7 @@
+     }
+     streams = {
+         name: os.fdopen(
+-            os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "wb"
++            os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "wb", buffering=0
+         )
+         for name, path in paths.items()
+     }
