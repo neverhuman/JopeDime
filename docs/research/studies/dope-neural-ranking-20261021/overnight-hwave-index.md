@@ -133,3 +133,4 @@
 | H186 | 2026-11-01 | Zero-update r882 kernel dose/shape sweep (rd_astra) | COMPLETE / NO_ADVANCE | 0/7 pooled-B admissions; KX2.0 +0.012918 [-0.017470,+0.041843], Holm p=1; TOPK4/16 exact no-ops; A correlated, DL-Val descriptive; exact baseline and S3 recovery PASS | [h186_kernel_sweep/](../../../../research/flywheel_selfplay/h186_kernel_sweep/README.md) |
 
 | H187 | gpu_tokbench_codex | Paired robust per-context loss / equal-family fresh adapters, pooled imported H177 selector | PREREGISTERED; no outcomes | [prereg](../../../../research/flywheel_selfplay/h187_robust_family/PREREG.md) |
+| H191 | 2026-11-01 | Nested zero-update r882 kernel selection (rd_astra) | PREREGISTERED; not executed | 6 kernel coefficients; 15 B-only choices locked before A; sole KXSEL / Holm1; 0 updates | [h191_nested_kernel/](../../../../research/flywheel_selfplay/h191_nested_kernel/README.md) |
