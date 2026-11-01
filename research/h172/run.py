@@ -472,8 +472,10 @@ def main():
                     progs = np.asarray(z["program"], dtype=np.float32)
                     pools[c] = dict(
                         program=progs,
-                        proj16=(progs @ projection).astype(np.float32),
-                        fitness=np.asarray(z["fitness"], dtype=np.float32),
+                        proj16=(progs.astype(np.float64) @ projection).astype(
+                            np.float32
+                        ),
+                        fitness=np.asarray(z["fitness"], dtype=np.float64),
                         gate=np.asarray(z["gate"], dtype=bool),
                     )
 
@@ -667,11 +669,15 @@ def main():
             t0 = tokens[cid0].unsqueeze(0)
             m0 = masks[cid0].unsqueeze(0)
             r_idx0 = torch.arange(4).reshape(1, -1)
-            rf0 = torch.as_tensor(pools[cid0]["fitness"][:4]).unsqueeze(0)
+            rf0 = torch.as_tensor(
+                pools[cid0]["fitness"][:4], dtype=torch.float32
+            ).unsqueeze(0)
             rg0 = torch.as_tensor(
                 pools[cid0]["gate"][:4], dtype=torch.float32
             ).unsqueeze(0)
-            f0 = torch.as_tensor(pools[cid0]["fitness"][:24]).unsqueeze(0)
+            f0 = torch.as_tensor(
+                pools[cid0]["fitness"][:24], dtype=torch.float32
+            ).unsqueeze(0)
             g0 = torch.as_tensor(pools[cid0]["gate"][:24], dtype=torch.bool).unsqueeze(
                 0
             )
