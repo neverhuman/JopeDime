@@ -46,18 +46,24 @@ This reports the exact source SHA, found provider IDs, missing provider IDs, and
 counts. It accepts no artifact or output path, executes no provider, and writes
 no gate evidence. A successful inventory report may still be incomplete.
 
-Four providers require explicit external inputs. M5 needs frozen TRAIN fixture
+Five providers require explicit external inputs. M5 needs frozen TRAIN fixture
 and bundle directories; A5 needs a candidate-bound named-client transcript
 manifest and its independently pinned SHA-256. D1 needs the candidate-bound
 macOS receipt and its SHA-256. M2 needs its golden directory/index SHA-256,
-frozen bundle directory and a new external parity-report directory. Supply these
-through `--provider-inputs "$INPUT_BINDINGS"` with
+frozen bundle directory and a new external parity-report directory. M3 needs the
+complete full-input manifest and its independently pinned SHA-256;
+without it, the bounded source controls cannot qualify the complete M3 criterion.
+Supply these through `--provider-inputs "$INPUT_BINDINGS"` with
 `--providers` (including `--dry-discovery`). The regular, non-symlink JSON file is:
 
 ```json
 {
   "schema": "jope.rel07.provider-inputs/v1",
   "gates": {
+    "M3": {
+      "full_inputs": "/absolute/path/to/complete/M3-inputs.json",
+      "full_inputs_sha256": "<replace with the independently pinned full-input manifest SHA-256>"
+    },
     "M5": {
       "golden_dir": "/absolute/path/to/qualified/golden",
       "bundle_dir": "/absolute/path/to/frozen/bundle"
@@ -84,7 +90,8 @@ Discovery reports `unbound_providers` and `unbound_provider_count` separately fr
 missing modules. `complete` requires both inventories to be empty. Execution
 discovery refuses unbound providers before writing a runnable manifest. It adds
 M5's directory arguments, D1's receipt/pin arguments, M2's four input/report
-arguments and A5's two explicit environment bindings to each provider's argv,
+arguments, M3's full-input manifest/pin arguments and A5's two explicit environment
+bindings to each provider's argv,
 without a shell; the frozen command-manifest hash covers them. The restricted
 child environment still discards inherited provider-input variables. Bindings
 cannot replace commands, gate/source/artifact identities, resource settings or
@@ -93,7 +100,7 @@ Providers retain their full input, byte-hash and qualification checks; configuri
 paths does not establish that the evidence exists or passes.
 M2's report directory must not already exist; choose a fresh external path for
 each execution. A configuration containing only A5/M5 remains accepted as a
-partial configuration, but discovery stays incomplete until D1/M2 are bound too.
+partial configuration, but discovery stays incomplete until D1/M2/M3 are bound too.
 
 The maintained runner already writes the watcher-format `gates_receipt.json`.
 The older external `bind-rel07.py` adapter consumes validated `gate_results.json`
@@ -174,3 +181,11 @@ wrong-identity, malformed and timeout cases. It checks continuation, admission,
 interruption and first/last-gate drift. It is not the product gate campaign or
 automatically collected native/CI coverage. Fixtures use the lane's target or
 `JOPE_QUALIFICATION_TEST_TMP`, never `/tmp`.
+
+
+The tracked `common.py` and `m3_full.py` modules are explicitly registered helper
+modules, not extra gate IDs. Discovery requires regular non-symlink helpers and
+continues to reject unknown `.py` modules. All 28 gate IDs remain mandatory.
+See [PROVIDER-DISCOVERY-REPAIR.md](PROVIDER-DISCOVERY-REPAIR.md) for the reproduced
+prestage failure and regression scope. Binding M3 inputs never changes its
+comparison criterion, historical failures or candidate verification.
