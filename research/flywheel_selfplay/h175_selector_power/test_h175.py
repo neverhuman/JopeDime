@@ -199,3 +199,76 @@ def test_native_baseline_rejects_single_bit_mutation():
     bad.view(np.uint64)[0] = 1
     with pytest.raises(RuntimeError):
         baseline_gate(bad, values)
+
+
+def test_H162_schema_and_poisoned_outer_metrics():
+    from power import inner_B_records
+
+    obj = {
+        "cell_selection_summary": [
+            {"unconstrained_selected_gains": {"CTRL": 0.007, "OC": 0.02}}
+        ],
+        "posthoc_descriptive_diagnostics": {
+            "unconstrained_selector_diagnostic": {
+                "DLVal": {"delta": 999, "ci_low_95": 10},
+                "OOF": {"gain": 888, "best_step": 10, "family_means": [0, 888]},
+            }
+        },
+    }
+    r = inner_B_records(obj)
+    assert len(r) == 2 and max(x["gain"] for x in r) == 0.02
+    assert all(
+        x["json_path"].startswith("/cell_selection_summary/")
+        and x["cohort"] == "inner-B"
+        for x in r
+    )
+    obj["posthoc_descriptive_diagnostics"]["unconstrained_selector_diagnostic"]["OOF"][
+        "gain"
+    ] = -999
+    assert inner_B_records(obj) == r
+
+
+def test_H166_schema_and_unconstrained_outer_poison():
+    from power import inner_B_records
+
+    obj = {
+        "cells": [
+            {
+                "decisions": {
+                    "A": {"unconstrained_selected_gain": 0.013},
+                    "B": {"unconstrained_selected_gain": 0.025},
+                },
+                "assessment": {"gain": 999, "best_step": 10, "family_means": [0, 999]},
+            }
+        ],
+        "unconstrained_best_step_dl_val": {"delta": 555, "ci_low_95": 100},
+    }
+    r = inner_B_records(obj)
+    assert len(r) == 2 and max(x["gain"] for x in r) == 0.025
+    assert all("/decisions/" in x["json_path"] for x in r)
+    assert inner_B_records({"posthoc_descriptive_diagnostics": obj}) == []
+
+
+def test_history_marks_incomplete_and_keeps_gain_paths(tmp_path):
+    import json
+    from power import history
+
+    path = tmp_path / "toy.json"
+    path.write_text(
+        json.dumps(
+            {
+                "status": "INCOMPLETE",
+                "selections": [{"X": {"best_step": 10, "gain": 0.3}}],
+            }
+        )
+    )
+    r = history(
+        [{"wave": "H162", "path": str(path), "absolute": True, "sha256": "toy"}],
+        tmp_path,
+    )[0]
+    assert (
+        r["count"] == 1
+        and r["explicit_incomplete"]
+        and not r["verdict_threshold_eligible"]
+    )
+    assert r["records"][0]["json_path"] == "/selections/0/X/gain"

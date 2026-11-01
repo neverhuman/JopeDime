@@ -5418,7 +5418,7 @@
     },
     "python:research/flywheel_selfplay/h175_selector_power/test_h175.py": {
       "role": "research",
-      "reason": "H175 data-free controls for zero-update selector-power/headroom audit: role-local injections and no out-of-fold payload access, scalar bootstrap bit parity, ties, correct nonoracle interpretation, family weighting, grid MDE censoring, and reduced whole-pipeline replay. Offline research only; no native/GPU/product qualification."
+      "reason": "H175 data-free controls for zero-update selector-power/headroom audit: role-local injections and no out-of-fold payload access, scalar bootstrap bit parity, ties, correct nonoracle interpretation, family weighting, grid MDE censoring, and reduced whole-pipeline replay. Offline research only; no native/GPU/product qualification. Includes explicit historical-schema and poisoned outer-panel controls."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

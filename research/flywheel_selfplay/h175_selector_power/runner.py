@@ -223,7 +223,7 @@ def main():
     available = [
         r["max_unconstrained_inner_B_gain"]
         for r in historical
-        if r["status"] == "EXTRACTED" and not r.get("calibration_leak", False)
+        if r.get("verdict_threshold_eligible", False)
     ]
     typical = float(np.median(available)) if available else None
     md = headroom["full"]["MDE80"]["context"]["STRICT"]

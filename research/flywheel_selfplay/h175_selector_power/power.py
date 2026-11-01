@@ -10,6 +10,114 @@ def save(path, obj):
     Path(path).write_text(json.dumps(obj, indent=2, allow_nan=False) + "\n")
 
 
+def inner_B_records(obj):
+    """Explicit saved selector schemas only; never descend into outcome summaries."""
+    records = []
+
+    def add(path, value, kind="cell_best"):
+        if (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and np.isfinite(value)
+        ):
+            records.append(
+                dict(json_path=path, gain=float(value), cohort="inner-B", kind=kind)
+            )
+
+    def entries(value):
+        return (
+            value.items()
+            if isinstance(value, dict)
+            else enumerate(value)
+            if isinstance(value, list)
+            else []
+        )
+
+    # H162 publication: full cell-level B best gains, separate from posthoc OOF/Val.
+    for i, cell in entries(obj.get("cell_selection_summary", [])):
+        if isinstance(cell, dict):
+            for arm, gain in entries(cell.get("unconstrained_selected_gains", {})):
+                add(
+                    f"/cell_selection_summary/{i}/unconstrained_selected_gains/{arm}",
+                    gain,
+                )
+    if records:
+        return records
+    # H166 publication and H168 raw publication preserve cell decision dictionaries.
+    for container in ["cells", "cell_selections"]:
+        for i, cell in entries(obj.get(container, [])):
+            if not isinstance(cell, dict):
+                continue
+            for arm, decision in entries(cell.get("decisions", {})):
+                if not isinstance(decision, dict):
+                    continue
+                prefix = f"/{container}/{i}/decisions/{arm}"
+                if "unconstrained_selected_gain" in decision:
+                    add(
+                        prefix + "/unconstrained_selected_gain",
+                        decision["unconstrained_selected_gain"],
+                    )
+                elif (
+                    isinstance(decision.get("family_means"), list)
+                    and decision["family_means"]
+                ):
+                    means = decision["family_means"]
+                    add(
+                        prefix + "/family_means:max-minus-baseline",
+                        max(means) - means[0],
+                    )
+        if records:
+            return records
+    # H165/H167/H169/H170 raw best-only selector records. No selected-OOF contrast.
+    for i, cell in entries(obj.get("selections", [])):
+        if not isinstance(cell, dict):
+            continue
+        for arm, decision in cell.items():
+            if not isinstance(decision, dict):
+                continue
+            prefix = f"/selections/{i}/{arm}"
+            if "unconstrained_selected_gain" in decision:
+                add(
+                    prefix + "/unconstrained_selected_gain",
+                    decision["unconstrained_selected_gain"],
+                )
+            elif "best_step" in decision and isinstance(
+                decision.get("gain"), (float, int)
+            ):
+                add(prefix + "/gain", decision["gain"])
+            elif (
+                isinstance(decision.get("family_means"), list)
+                and decision["family_means"]
+            ):
+                means = decision["family_means"]
+                add(prefix + "/family_means:max-minus-baseline", max(means) - means[0])
+    if records:
+        return records
+    # H163 fixed ensemble comparison on B, no fitted checkpoint step.
+    for i, cell in entries(obj.get("decisions", [])):
+        if not isinstance(cell, dict):
+            continue
+        for arm, decision in entries(cell.get("arms", {})):
+            if isinstance(decision, dict) and isinstance(
+                decision.get("selector"), dict
+            ):
+                add(
+                    f"/decisions/{i}/arms/{arm}/selector/delta",
+                    decision["selector"].get("delta"),
+                )
+    if records:
+        return records
+    # H161 retains actual arm-wise maxima, not the individual B gains.
+    for arm, diagnostic in entries(obj.get("selector_fold_diagnostics", {})):
+        if isinstance(diagnostic, dict):
+            add(
+                f"/selector_fold_diagnostics/{arm}/max_best_step_gain",
+                diagnostic.get("max_best_step_gain"),
+                kind="arm_max_summary",
+            )
+    return records
+
+
 def history(paths, root):
     reports = []
     for row in paths:
@@ -19,49 +127,35 @@ def history(paths, root):
         obj = json.loads(
             (Path(row["path"]) if row["absolute"] else root / row["path"]).read_text()
         )
-        found = []
-
-        def walk(v, trace=""):
-            if isinstance(v, dict):
-                selector = any(
-                    k in trace.lower()
-                    for k in ["select", "decision", "candidate", "inner_b"]
-                )
-                if selector:
-                    if isinstance(v.get("family_means"), list) and v["family_means"]:
-                        a = np.asarray(v["family_means"], dtype=float)
-                        if a.ndim == 1:
-                            found.append(float(max(a) - a[0]))
-                    if isinstance(v.get("gain"), (float, int)) and any(
-                        k in v
-                        for k in ["best_step", "selected_step", "ci95", "ci_low_95"]
-                    ):
-                        found.append(float(v["gain"]))
-                    if isinstance(v.get("delta"), (float, int)) and any(
-                        k in v for k in ["ci95", "ci_low_95", "family_median"]
-                    ):
-                        found.append(float(v["delta"]))
-                for k, x in v.items():
-                    walk(x, trace + "/" + str(k))
-            elif isinstance(v, list):
-                for i, x in enumerate(v):
-                    walk(x, trace + "/" + str(i))
-
-        walk(obj)
-        finite = [x for x in found if np.isfinite(x)]
+        records = inner_B_records(obj)
+        gains = [r["gain"] for r in records]
+        source_status = str(obj.get("status", obj.get("run_status", "NOT_RECORDED")))
+        incomplete = any(
+            tag in source_status.upper()
+            for tag in [
+                "INCOMPLETE",
+                "NOT_RUN",
+                "PREREGISTERED",
+                "RUNNING",
+                "IN_PROGRESS",
+            ]
+        )
+        leak = row["wave"] == "H169" or obj.get("calibration_leak") is True
         reports.append(
             dict(
                 wave=row["wave"],
-                calibration_leak=(
-                    row["wave"] == "H169" or obj.get("calibration_leak") is True
-                ),
                 path=row["path"],
                 sha256=row["sha256"],
-                status="EXTRACTED" if finite else "NO_REPLAYABLE_INNER_B_GAINS",
-                count=len(finite),
-                max_unconstrained_inner_B_gain=max(finite) if finite else None,
-                median_extracted_gain=float(np.median(finite)) if finite else None,
-                interpretation="Matched selector/decision candidate records only; no OOF/Val maxima substituted. Historical recipes/cohorts differ; reused data, not independent replication.",
+                source_status=source_status,
+                explicit_incomplete=incomplete,
+                calibration_leak=leak,
+                status="EXTRACTED" if gains else "NO_REPLAYABLE_INNER_B_GAINS",
+                verdict_threshold_eligible=bool(gains and not incomplete and not leak),
+                count=len(records),
+                max_unconstrained_inner_B_gain=max(gains) if gains else None,
+                median_extracted_gain=float(np.median(gains)) if gains else None,
+                records=records,
+                interpretation="Explicit inner-B schemas only; arm-max summaries distinguished from cell records. OOF/Val never substituted. Incomplete/leaky studies diagnostic only; unknown completeness labeled, not fabricated. Historical reuse is not independent replication.",
             )
         )
     return reports

@@ -4505,16 +4505,16 @@
       }
     },
     "python:research/flywheel_selfplay/h175_selector_power/power.py": {
-      "bytes": 17473,
-      "sha256": "f795e32f1f8f13c884ca770f96c8e2442dbd956ee97931de6689984efd790917",
+      "bytes": 21152,
+      "sha256": "c5e73e8db8aa80a601500c9080c162562824889bf2e29e4a530e13fa89c41dfe",
       "classification": {
         "role": "research",
         "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
       }
     },
     "python:research/flywheel_selfplay/h175_selector_power/runner.py": {
-      "bytes": 10550,
-      "sha256": "d3b54b8921e6b94b2c770606c628711be2ec945bf83431c17f02d7d3f794c4b3",
+      "bytes": 10525,
+      "sha256": "276f0853e3e41452562aeae5c35a2a8f791ec085fc31a739a2ee7e0110749ff5",
       "classification": {
         "role": "research",
         "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
