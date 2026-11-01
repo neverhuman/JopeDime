@@ -1194,6 +1194,66 @@ def test_worker_core_uses_injected_packer_for_synthetic_fixture():
     assert prediction.shape == target.shape
 
 
+def test_equal_budget_runner_dispatches_each_arm_through_worker_packer(plan):
+    expected = expected_counts(plan["config"])
+    rows_by_id = {row["id"]: row for row in plan["contexts"]}
+    task_counts = {
+        "joint": {"regression": 16, "binary": 16},
+        "reg-only": {"regression": 32, "binary": 0},
+        "bin-only": {"regression": 0, "binary": 32},
+    }
+
+    for arm in ARMS:
+        job = next(
+            job for job in plan["jobs"] if job["arm"] == arm and job["fold"] == "full"
+        )
+        train_request = request(plan, job, "train")
+        worker.validate_request(train_request)
+        assert len(train_request["batches"]) == expected["optimizer_steps"] == 100
+        assert all(row["role"] == "train" for row in train_request["contexts"])
+
+        eval_request = request(
+            plan, job, "evaluate", previous={"synthetic": "training receipt"}
+        )
+        worker.validate_request(eval_request)
+        assert "training_receipt" in eval_request
+
+        adapter = SyntheticWorkerAdapter()
+        heads = worker.TwoTaskHeads()
+        optimizer = torch.optim.SGD(
+            [*adapter.parameters(), *heads.parameters()], lr=0.1
+        )
+        packed_ids = []
+
+        def packer(row):
+            packed_ids.append(row["id"])
+            candidates = torch.linspace(-1.0, 1.0, 16)
+            target = (
+                torch.tensor([0.0] * 4 + [1.0] * 12)
+                if row["task"] == "binary"
+                else torch.linspace(0.0, 1.0, 16)
+            )
+            return {"candidates": candidates}, target
+
+        core = worker.WorkerCore(adapter, heads, optimizer, packer)
+        total_steps = 0
+        total_contexts = {"regression": 0, "binary": 0}
+        for batch in train_request["batches"]:
+            contexts = [rows_by_id[context_id] for context_id in batch]
+            result = core.train_batch(contexts)
+            total_steps += result["optimizer_steps"]
+            assert result["task_contexts"] == task_counts[arm]
+            for task, count in result["task_contexts"].items():
+                total_contexts[task] += count
+
+        assert total_steps == expected["optimizer_steps"] == 100
+        assert total_contexts == {
+            task: count * expected["optimizer_steps"]
+            for task, count in task_counts[arm].items()
+        }
+        assert len(packed_ids) == expected["optimizer_steps"] * 32
+
+
 def test_worker_regression_curve_is_log_rmse_over_ridge():
     result = worker.regression_metrics(
         torch.tensor([1.0, 3.0]), torch.tensor([1.0, 1.0]), ridge_rmse=2.0
