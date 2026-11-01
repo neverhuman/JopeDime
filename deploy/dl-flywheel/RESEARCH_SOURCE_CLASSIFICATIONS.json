@@ -3975,6 +3975,38 @@
         "role": "research",
         "reason": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h149_wd_dose/runtime.py": {
+      "bytes": 6220,
+      "sha256": "ab50da32a19751d1f8b2d75e85b272eb77821c2d0ab3817a5ef6dcd8358e48d6",
+      "classification": {
+        "role": "research",
+        "reason": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h149_wd_dose/science.py": {
+      "bytes": 6139,
+      "sha256": "2c55bbdeeec3d1f31be25e0cef2896ac44196d9b73761ff1cca79e4cf940612e",
+      "classification": {
+        "role": "research",
+        "reason": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h149_wd_dose/monitor.py": {
+      "bytes": 5731,
+      "sha256": "71bcdb983c605cb1c4adfa4c39e62bd1fee2699a8a5f2f54581deabd24c01a51",
+      "classification": {
+        "role": "research",
+        "reason": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h149_wd_dose/runner.py": {
+      "bytes": 19385,
+      "sha256": "2a1b5108b24433f4d73077629a69ec4e1d71791b10cb9c374972a34f0c372a24",
+      "classification": {
+        "role": "research",
+        "reason": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

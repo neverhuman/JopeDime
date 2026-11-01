@@ -1,0 +1,133 @@
+{
+  "schema": "jope.mcp05-a5-client-review/v1",
+  "source": "21d65a949bbfc340981cfbcf224cacb9eb571e5c",
+  "binary_sha256": "9c6bdd2146f81fade386d5528543bd20598ca5ad2d85f49da1a3522f1057dc16",
+  "client": "gemini",
+  "client_version": "1.4.12",
+  "client_sha256": "1edfb30477447825f0aaa05fd9a91d82f9adf26686f41cd4f5c70b90abe383e8",
+  "lifecycle_identity": [
+    {
+      "_meta": {
+        "io.modelcontextprotocol/clientCapabilities": {
+          "elicitation": {
+            "form": {},
+            "url": {}
+          },
+          "roots": {
+            "listChanged": true
+          }
+        },
+        "io.modelcontextprotocol/clientInfo": {
+          "name": "antigravity-client",
+          "version": "v1.0.0"
+        },
+        "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+      }
+    }
+  ],
+  "started_utc": "2026-11-01T02:16:33.413618+00:00",
+  "elapsed_seconds": 129.01993676647544,
+  "tool_counts": {
+    "system_info": 1,
+    "run_status": 5,
+    "dataset_register": 2,
+    "dataset_inspect": 1,
+    "run_start": 3,
+    "run_events": 1,
+    "model_export": 2,
+    "model_predict": 1
+  },
+  "tool_calls": 16,
+  "successful_calls": 16,
+  "failed_calls": 0,
+  "raw_capture_hashes_verified": true,
+  "raw_messages_match_wire": true,
+  "all_rpc_requests_paired": true,
+  "text_matches_structured_results": true,
+  "transport_complete": true,
+  "client_exit": 0,
+  "engine_exit": 0,
+  "engine_stop_exit": 0,
+  "server_exit": 0,
+  "relay_exit": 0,
+  "dataset_id": "ds_153f24a64081035aaa97541e",
+  "dataset_rows": 25,
+  "dataset_columns": 13,
+  "run_retry_contract": {
+    "run_id": "run_01M6AEBH3H0NFPM2K879AQD3HP",
+    "successful_attempts": 2,
+    "inventory_counts": [
+      0,
+      1,
+      1
+    ]
+  },
+  "identical_run_retry_outcome": true,
+  "terminal_state": "completed",
+  "evaluations_used": "1",
+  "event_count": 6,
+  "events_contiguous": true,
+  "plan_placement": {
+    "dope": "none",
+    "evaluation": "cpu",
+    "ranker": "heuristic",
+    "workers": 1
+  },
+  "plan_digest": "f7fd6358c4c53f9f25917bf62d48874718d14d8582317694c010499a6e2b6630",
+  "identical_export_retry": true,
+  "export": {
+    "algorithm_id": "alg_00000000",
+    "artifact_id": "art_0ae08d12221dc6027bad1a30",
+    "emitter_version": "0.4.1",
+    "kind": "bundle",
+    "languages": [
+      {
+        "language": "rust",
+        "path": "src/rust/predictor.rs",
+        "status": "exported"
+      }
+    ],
+    "model_digest": "sha256-ab3d9522027fbe8233f1186f0908f1efcbbce2e836c571e7d42ccece8d3a247a",
+    "parity_receipt": null,
+    "parity_status": "unavailable",
+    "qualified_set_id": "not-qualified",
+    "refit": "fit",
+    "retains_training_data": false
+  },
+  "materialized_files": {
+    "export.json": {
+      "bytes": 111,
+      "sha256": "86add131a543e849fc8ceb85f4f8a2beb44b0c717dcbfbcb0ac100a588299b0e"
+    },
+    "manifest.json": {
+      "bytes": 587,
+      "sha256": "8aeed0b9c7f308f5c62ae1950992f96031f957b4ac361c6d736a6f1d7b678e05"
+    },
+    "model/input.json": {
+      "bytes": 910,
+      "sha256": "8d08d708fcd23d18b1b45b6bf65214a0b1eeaf370365a148b76f7c4d06670ed9"
+    },
+    "model/manifest.json": {
+      "bytes": 1213,
+      "sha256": "ab3d9522027fbe8233f1186f0908f1efcbbce2e836c571e7d42ccece8d3a247a"
+    },
+    "model/pipeline.json": {
+      "bytes": 1328,
+      "sha256": "efa10c5c136facaf7cd933b3b606f3b34555e76bc1d0b9a15dddb4ac8078352f"
+    },
+    "src/rust/predictor.rs": {
+      "bytes": 15657,
+      "sha256": "e89fa0f6dcecb6138e9ca8a58cf2d235437b224aaa264e8d6dd058ce7cc94a57"
+    }
+  },
+  "export_observation_limit": "Final bytes/hash graph verified; no claim of an interval filesystem observation.",
+  "predictions": {
+    "rows": 25,
+    "columns": [
+      "prediction"
+    ],
+    "sha256": "504063ac11b66972f872e4205b2021b1ff32e8c718f8c0b6656cc314df4d7045"
+  },
+  "ag1_named_client_flow_pass": true,
+  "qualification_scope": "CPU TRAIN25 named-client flow; model parity and learned guidance remain separately unqualified."
+}

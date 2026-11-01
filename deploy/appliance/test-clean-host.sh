@@ -64,7 +64,6 @@ expect() {
 
 # `env -i` clears PATH, so the harness tools are named by absolute path.
 isolation=none
-fit_prefix=()
 unshare_bin=$(command -v unshare || true)
 if [ -n "$sandbox_profile" ]; then
   isolation=macos-sandbox-exec-no-network
@@ -90,21 +89,29 @@ jq -e '[.methods[] | select(.kind == "native" and .executable)] | length == 26' 
 echo "== fit, predict, fit-predict (isolation: $isolation, trace: $trace)"
 fit=(fit --train train.csv --target y --output model.jope --candidates ridge,histgbm,extra_trees,pls --receipt fit.json)
 if [ "$trace" = strace ]; then
-  (cd "$work" && "${launcher[@]}" /usr/bin/env -i "${env_args[@]}" "${fit_prefix[@]}" "$strace_bin" -f -qq -e trace=execve,socket,connect -o strace.log ./jopedime "${fit[@]}")
+  if [ "$isolation" = no-network-namespace ]; then
+    (cd "$work" && "${launcher[@]}" /usr/bin/env -i "${env_args[@]}" "$unshare_bin" -rn "$strace_bin" -f -qq -e trace=execve,socket,connect -o strace.log ./jopedime "${fit[@]}")
+  else
+    (cd "$work" && "${launcher[@]}" /usr/bin/env -i "${env_args[@]}" "$strace_bin" -f -qq -e trace=execve,socket,connect -o strace.log ./jopedime "${fit[@]}")
+  fi
   execs=$(grep -c 'execve(' "$work/strace.log" || true)
   [ "$execs" = 1 ] || { echo "the fit started another program:" >&2; grep 'execve(' "$work/strace.log" >&2; exit 1; }
   if grep -E 'socket\(AF_INET|socket\(AF_INET6|connect\(' "$work/strace.log"; then
     echo "the fit opened a network socket" >&2; exit 1
   fi
 else
-  (cd "$work" && "${launcher[@]}" /usr/bin/env -i "${env_args[@]}" "${fit_prefix[@]}" ./jopedime "${fit[@]}")
+  if [ "$isolation" = no-network-namespace ]; then
+    (cd "$work" && "${launcher[@]}" /usr/bin/env -i "${env_args[@]}" "$unshare_bin" -rn ./jopedime "${fit[@]}")
+  else
+    (cd "$work" && "${launcher[@]}" /usr/bin/env -i "${env_args[@]}" ./jopedime "${fit[@]}")
+  fi
 fi
 jq -e '.outcome == "succeeded" and .device.selected == "cpu"' "$work/fit.json" > /dev/null
 method=$(jq -r .method.selected "$work/fit.json")
 run predict --model model.jope --input rows.csv --output predictions.csv
 run fit-predict --train train.csv --target y --input rows.csv --output again.csv --method "$method"
 cmp "$work/predictions.csv" "$work/again.csv"
-[ "$(wc -l < "$work/predictions.csv")" = 4 ]
+[ "$(awk 'END { print NR }' "$work/predictions.csv")" = 4 ]
 
 echo "== self-verification and notices"
 run verify-self --json > "$work/verify-self.json"
