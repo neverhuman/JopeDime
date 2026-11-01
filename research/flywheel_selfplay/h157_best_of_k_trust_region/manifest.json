@@ -77,9 +77,9 @@
   "source_sha256": {
     "PREREG.md": "5e784d1b70c88d91a528475ea2cdcc0a051b3412abbd9a86f9073f7177fee197",
     "fold_manifest.json": "6953ff44a1b8368a6254f8c31aa58305cda193c6adb253f3a4fbc5b0e6c15cf9",
-    "runner.py": "259ded930e22849d9ba0f444e1de093547fdebb3fb6f65d408bab5b19edd59cd",
+    "runner.py": "b8f705bc0c6972c9fda333bfe223d9d2491790787ede3e53b510f384198d2193",
     "science.py": "ce0f8dbf6410a200f98ea0a11628617a730392b0047e794b157d101d933c207a",
-    "test_h157.py": "cbe59322d78623ab096581ddeed66fffbc140fbda3601c27421e552b1dd6c342"
+    "test_h157.py": "a7696d6a46b15e939db0edc76f3c44fe2ded23b7c8bb85f47c76e1d7349390a0"
   },
   "status": "PREREGISTERED_NOT_EXECUTED",
   "trainable_parameters": 29211,
