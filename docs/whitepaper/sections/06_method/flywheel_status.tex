@@ -11,19 +11,19 @@
   \caption{\textbf{Training-program promotions per hour and adapter validation trajectory.} Left: logged rolling and per-round strict training-program promotions per hour. Right: candidate and recorded-best adapter validation pool utility. Both panels cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, with zero adapter admissions).}
   \label{fig:fw-promotions-per-hour}
 \end{figure*}
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_round_throughput.pdf}
+  \caption{\textbf{Adapter utility and whole-round throughput in a later retained window.}
+  Both panels cover the same 20 completed summaries, rounds 2696--2715.
+  Left: candidate adapter validation utility and the recorded best.
+  Right: distinct training contexts divided by the full wall time of each
+  completed round. The rates include all work and waits inside that interval.
+  These are development operating observations; independent first-proposal
+  and deployment comparisons remain required.}
+  \label{fig:fw-round-throughput}
+\end{figure*}
 % Source spacing retains the evidence checklist marker location.
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -108,21 +108,11 @@ and waits inside each round; it is neither deployment throughput nor a
 count of distinct tasks across rounds. The operating windows differ from
 the full admission prefix, so these panels do not form a matched learning curve.
 
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_round_throughput.pdf}
-  \caption{\textbf{Adapter utility and whole-round throughput in a later retained window.}
-  Both panels cover the same 20 completed summaries, rounds 2696--2715.
-  Left: candidate adapter validation utility and the recorded best.
-  Right: distinct training contexts divided by the full wall time of each
-  completed round. The rates include all work and waits inside that interval.
-  These are development operating observations; independent first-proposal
-  and deployment comparisons remain required.}
-  \label{fig:fw-round-throughput}
-\end{figure*}
+
 
 The remaining windows, alternative summaries and historical GP comparisons
 are collected in \cref{app:flywheel-telemetry,app:record-windows}.
 They document the retained record without adding independent evaluations.
 \Cref{sec:results} specifies the matched tests needed to establish whether
 training improves the writer's first proposal on new families.
+\FloatBarrier
