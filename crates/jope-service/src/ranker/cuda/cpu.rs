@@ -2,8 +2,8 @@
 //!
 //! The reference uses eight-lane Welford moments, explicit FMA boundaries,
 //! ordered f32 dense reductions and the SLEEF exp primitive. More precision
-//! throughout the graph changes its near-constant gates. CUDA retains Candle
-//! operations on its selected device and requires separate qualification.
+//! throughout the graph changes its near-constant gates. CUDA uses device kernels
+//! with the same reduction boundaries and is qualified independently.
 
 use anyhow::{ensure, Result};
 use candle_core_0_11_0::{Device, Tensor, D};
@@ -17,6 +17,10 @@ fn tensor(values: Vec<f32>, x: &Tensor) -> Result<Tensor> {
 }
 
 pub(super) fn linear(x: &Tensor, weight: &Tensor, bias: &Tensor) -> Result<Tensor> {
+    #[cfg(feature = "fused-cuda")]
+    if x.device().is_cuda() {
+        return super::deterministic::linear(x, weight, bias);
+    }
     let input = x.dim(D::Minus1)?;
     let (output, width) = weight.dims2()?;
     ensure!(
@@ -97,6 +101,10 @@ fn moments(row: &[f32]) -> (f32, f32) {
 }
 
 pub(super) fn norm(x: &Tensor, weight: &Tensor, bias: &Tensor) -> Result<Tensor> {
+    #[cfg(feature = "fused-cuda")]
+    if x.device().is_cuda() {
+        return super::deterministic::norm(x, weight, bias);
+    }
     if !x.device().is_cpu() {
         let centered = x.broadcast_sub(&x.mean_keepdim(D::Minus1)?)?;
         return Ok(centered
@@ -164,6 +172,10 @@ fn exp(x: f32) -> f32 {
 }
 
 pub(super) fn silu(x: &Tensor) -> Result<Tensor> {
+    #[cfg(feature = "fused-cuda")]
+    if x.device().is_cuda() {
+        return super::deterministic::unary(x, "frozen_silu");
+    }
     if !x.device().is_cpu() {
         return Ok(x.silu()?);
     }
@@ -174,6 +186,10 @@ pub(super) fn silu(x: &Tensor) -> Result<Tensor> {
 }
 
 pub(super) fn tanh(x: &Tensor) -> Result<Tensor> {
+    #[cfg(feature = "fused-cuda")]
+    if x.device().is_cuda() {
+        return super::deterministic::unary(x, "frozen_tanh");
+    }
     if !x.device().is_cpu() {
         return Ok(x.tanh()?);
     }
@@ -188,6 +204,10 @@ pub(super) fn tanh(x: &Tensor) -> Result<Tensor> {
 }
 
 pub(super) fn matmul(a: &Tensor, b: &Tensor) -> Result<Tensor> {
+    #[cfg(feature = "fused-cuda")]
+    if a.device().is_cuda() {
+        return super::deterministic::matmul(a, b);
+    }
     if !a.device().is_cpu() {
         // Q/K/V column slices retain the packed QKV row stride. CUDA matmul
         // requires compact operands; materialize them on the selected device.
@@ -218,6 +238,10 @@ pub(super) fn scale_attention(x: &Tensor) -> Result<Tensor> {
 }
 
 pub(super) fn softmax(x: &Tensor) -> Result<Tensor> {
+    #[cfg(feature = "fused-cuda")]
+    if x.device().is_cuda() {
+        return super::deterministic::unary(x, "frozen_softmax");
+    }
     if !x.device().is_cpu() {
         let exp = x.broadcast_sub(&x.max_keepdim(1)?)?.exp()?;
         return Ok(exp.broadcast_mul(&exp.sum_keepdim(1)?.recip()?)?);

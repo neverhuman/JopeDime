@@ -281,6 +281,8 @@ fn real_cuda_m2_fixture_replay() {
     let run = || {
         let device =
             Device::new_cuda(0).map_err(|e| anyhow::anyhow!("BACKEND_UNAVAILABLE: {e}"))?;
+        #[cfg(feature = "fused-cuda")]
+        super::deterministic::verify_frozen_primitives(&device)?;
         replay(device);
         Ok(())
     };
