@@ -29,6 +29,7 @@ def main():
     ap.add_argument("--output", type=Path, required=True)
     ap.add_argument("--launch", type=Path, required=True)
     ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--resume", action="store_true")
     args = ap.parse_args()
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
@@ -40,7 +41,7 @@ def main():
     ):
         raise RuntimeError("CPU xbabe2 nice19 only")
     output = args.output.resolve()
-    output.mkdir()
+    output.mkdir(exist_ok=args.resume)
     pins = json.loads((HERE / "manifest.json").read_text())
     if (
         pins.get("wave") != "H189"
@@ -73,6 +74,26 @@ def main():
     ):
         raise RuntimeError("pinned H178/H177 provenance receipt mismatch")
     launch = json.loads(args.launch.read_text())
+    if args.resume != bool(launch.get("resume", False)):
+        raise RuntimeError("H189 resume mode must match launch binding")
+    if args.resume:
+        generation = launch.get("resume_generation")
+        if type(generation) is not int or generation <= 0:
+            raise RuntimeError("H189 resume generation is not bound")
+        prior_binding = args.output / "launch_binding.json"
+        if base.sha(prior_binding) != launch.get("resume_from_sha256"):
+            raise RuntimeError("H189 resume source binding changed")
+        checkpoint_hashes = launch.get("resume_checkpoint_files")
+        if (
+            not isinstance(checkpoint_hashes, dict)
+            or not checkpoint_hashes
+            or any(Path(filename).name != filename for filename in checkpoint_hashes)
+        ):
+            raise RuntimeError("H189 resume checkpoints are not bound")
+        for filename, expected_sha in checkpoint_hashes.items():
+            path = args.output / filename
+            if not path.is_file() or base.sha(path) != expected_sha:
+                raise RuntimeError("H189 resume checkpoint hash mismatch")
     head = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=HERE, text=True
     ).strip()
@@ -103,6 +124,8 @@ def main():
     allowed |= {
         str(rt.INPUT / "pools" / (r["context_sha256"] + ".npz")) for r in train + val
     }
+    if args.resume:
+        allowed |= {str(path.resolve()) for path in output.rglob("*") if path.is_file()}
     audit = rt.Audit(allowed, output)
     sys.addaudithook(audit.check)
     started, updates = time.monotonic(), 0
@@ -166,7 +189,12 @@ def main():
         if rt.tensor_hash(base.adapter_state(net, names)) != initial_hash:
             raise RuntimeError("r882 adapter changed during baseline gate")
         base.save(
-            output / "launch_binding.json",
+            output
+            / (
+                f"resume_launch_binding-{launch['resume_generation']:03}.json"
+                if args.resume
+                else "launch_binding.json"
+            ),
             {
                 **launch,
                 "source_tree": source_tree,
@@ -183,6 +211,7 @@ def main():
         a_ctrl = np.full_like(b_base, np.nan)
         states = {}
         cell_receipts = []
+        resume_prefix = True
 
         # Train each cell on FIT. Do not open B or A outcome pools in this phase.
         for outer in range(5):
@@ -204,6 +233,43 @@ def main():
                 )
                 plan = stat.batch_plan(fit_ids, orders, batch_seed, updates=tx.UPDATES)
                 stat.validate_fit_plan(plan, fit_ids, b_ids + a_ids)
+                plan_hash = hashlib.sha256(
+                    json.dumps(
+                        [[s, c, [idx.tolist() for idx in ix]] for s, c, ix in plan],
+                        sort_keys=True,
+                    ).encode()
+                ).hexdigest()
+                tag = f"fold{outer}-seed{seed}"
+                state_path = output / f"candidate-states-{tag}.npz"
+                receipt_path = output / f"{tag}.json"
+                if args.resume and state_path.exists() and receipt_path.exists():
+                    if not resume_prefix:
+                        raise RuntimeError("H189 saved FIT cells are not a prefix")
+                    receipt = json.loads(receipt_path.read_text())
+                    if receipt.get("batch_plan_sha256") != plan_hash:
+                        raise RuntimeError("saved H189 FIT batch plan does not match")
+                    tx.validate_saved_cell(
+                        receipt, outer, seed, fit_ids, state_path, names
+                    )
+                    state_sha = base.sha(state_path)
+                    bound_hashes = launch.get("resume_checkpoint_files", {})
+                    if bound_hashes.get(state_path.name) != state_sha:
+                        raise RuntimeError(
+                            "H189 saved cell hash absent from resume launch"
+                        )
+                    states[(outer, seed)] = state_path
+                    receipt["candidate_states_sha256"] = state_sha
+                    cell_receipts.append(receipt)
+                    updates += tx.UPDATES
+                    del plan
+                    print("FIT REUSED", tag, flush=True)
+                    continue
+                if args.resume:
+                    if state_path.exists() or receipt_path.exists():
+                        raise RuntimeError(
+                            "H189 saved FIT cell is only partially persisted"
+                        )
+                    resume_prefix = False
                 snapshots, ema_state = {}, None
 
                 def capture(step, state):
@@ -223,7 +289,6 @@ def main():
                             for name, tensor in state.items()
                         }
 
-                tag = f"fold{outer}-seed{seed}"
                 fit = base.run_cell(
                     net,
                     rt,
@@ -266,7 +331,6 @@ def main():
                     or rt.tensor_hash(candidates["EMA"]) == initial_hash
                 ):
                     raise RuntimeError("H189 candidate state equals initial r882 state")
-                state_path = output / f"candidate-states-{tag}.npz"
                 np.savez_compressed(
                     state_path,
                     **{
@@ -284,20 +348,13 @@ def main():
                         fit_family_count=len(fit_fams),
                         updates=tx.UPDATES,
                         fit_context_ids=sorted(fit_ids),
-                        batch_plan_sha256=hashlib.sha256(
-                            json.dumps(
-                                [
-                                    [s, c, [idx.tolist() for idx in ix]]
-                                    for s, c, ix in plan
-                                ],
-                                sort_keys=True,
-                            ).encode()
-                        ).hexdigest(),
+                        batch_plan_sha256=plan_hash,
                         snapshot_steps=list(stat.SNAPSHOT_STEPS),
                         ema_decay=tx.EMA_DECAY,
                         trajectory_adapter_sha256=rt.tensor_hash(fit["state"]),
                         swa_adapter_sha256=rt.tensor_hash(candidates["SWA"]),
                         ema_adapter_sha256=rt.tensor_hash(candidates["EMA"]),
+                        candidate_states_sha256=base.sha(state_path),
                     )
                 )
                 base.save(output / f"{tag}.json", cell_receipts[-1])
