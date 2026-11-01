@@ -1901,6 +1901,10 @@
       "reason": "Owner-requested pytest proofs for the H117 W5 identity-only data-provenance re-check; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h150_w5_provenance_unblock/test_w5_proofs.py": {
+      "reason": "Owner-requested H150 W5 provenance-unblock controls for the identity-only manifest builder and proof checker; synthetic fixtures only, no sealed/holdout payloads; offline research only.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h119_gbm_ctx_confirm/test_h119.py": {
       "reason": "H119 GBM-vs-r882 prospective confirmation: synthetic CPU endpoint/fold/multiplicity/harm/tie/completeness/BT controls; no product qualification or hidden-data access.",
       "role": "research"

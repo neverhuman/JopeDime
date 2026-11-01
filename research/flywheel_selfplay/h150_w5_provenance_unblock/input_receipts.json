@@ -1,0 +1,80 @@
+{
+ "manifest": {
+  "custody": "/home/ubuntu/jope_plan/ns/h150/sealed_family_manifest.json",
+  "path": "research/flywheel_selfplay/h150_w5_provenance_unblock/sealed_family_manifest.json",
+  "s3": {
+   "bytes": 82708,
+   "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H150/opus-h150-20261101a/protected_family_identity_manifest.json",
+   "sha256": "0314599fe06515d3f3e976c0d435cbe4e9fbe26738014bd89470f525702f983b",
+   "version_id": "uzkqtZ0RCGaqrbqQUubs_cyfv.biu2NN",
+   "write": "create-only if-none-match"
+  },
+  "sha256": "0314599fe06515d3f3e976c0d435cbe4e9fbe26738014bd89470f525702f983b"
+ },
+ "manifest_source_s3_versions": {
+  "owner_ruling_t2300": "/home/ubuntu/nudges/owner_t2300.md (owner decision file)",
+  "p3_family_alias_registry": "local custody only; equals registry.alias_sources_sha256 f818efaf...",
+  "p3_family_registry": "local custody only (/home/ubuntu/scratch/jopedime-dl-training-v1); no S3 VersionId established",
+  "p3_holdout_assignment": "S3 commitment recorded inside the file: {\"bucket\": \"veox-jopedime-learning-use2\", \"bytes\": 1624, \"key\": \"experiments/gp-policy-dl/v1/bindings/gp-policy-dl-v1-e0/holdout-commitment.json\", \"sha256\": \"f0b3b40bd2ed53ba406a04104fa0037cbba6d15c2b0b8503a994b5e2ecb5e0dd\", \"version_id\": \"J0oStcc.BhConWIUfelLB9PI9nX0tubo\"}",
+  "rlfw_sealed_roster_proposal": "git: deploy/dl-flywheel/pipelines/rlfw/judge/SEALED_ROSTER_PROPOSAL.json @ a2f7e6ecd (no S3 copy; repo-pinned)",
+  "s3_dataset_catalog": "local copy of the S3 catalog (v246 inventory); no S3 VersionId established"
+ },
+ "manifest_sources": {
+  "owner_ruling_t2300": {
+   "bytes": 701,
+   "path": "/home/ubuntu/nudges/owner_t2300.md",
+   "sha256": "16aa3e2a5c9c7a2862d6f346ccb1b93307d0e82dc0f322174b5e09f0aa75901a"
+  },
+  "p3_family_alias_registry": {
+   "bytes": 3590781,
+   "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/families/g2/alias-sources.json",
+   "sha256": "f818efaf847a043a26c5a47c858e37f2b499ccc056f33afc166a6856b07671cd"
+  },
+  "p3_family_registry": {
+   "bytes": 4750007,
+   "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/families/g2/registry.json",
+   "sha256": "1a4f1d419d781452a37711210e9e80cf4cda1d8f2095ac6a4f0430a01bda93ca"
+  },
+  "p3_holdout_assignment": {
+   "bytes": 250196,
+   "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/holdout/holdout.json",
+   "s3_commitment": {
+    "bucket": "veox-jopedime-learning-use2",
+    "bytes": 1624,
+    "key": "experiments/gp-policy-dl/v1/bindings/gp-policy-dl-v1-e0/holdout-commitment.json",
+    "sha256": "f0b3b40bd2ed53ba406a04104fa0037cbba6d15c2b0b8503a994b5e2ecb5e0dd",
+    "version_id": "J0oStcc.BhConWIUfelLB9PI9nX0tubo"
+   },
+   "sha256": "5b2ecc63732319debc0aba8e17c7d6c17a7316290f811393079bb73851fa908d"
+  },
+  "rlfw_sealed_roster_proposal": {
+   "bytes": 189635,
+   "path": "/tmp/claude-1000/-home-ubuntu-JopeDime-rd/4bbd7c7c-e74a-46f7-811c-1c554809116c/scratchpad/h150/in/SEALED_ROSTER_PROPOSAL.json",
+   "sha256": "799d33eb305b64c0969aa0f4f2fc3e86d171fc58f1f295ded50944d561ab2efb"
+  },
+  "s3_dataset_catalog": {
+   "bytes": 7804577,
+   "path": "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.json",
+   "sha256": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba"
+  }
+ },
+ "proof_inputs": {
+  "w5_candidate_v3_manifest": {
+   "s3_uri": "s3://veox-jopedime-learning-use2/experiments/flywheel-selfplay-20261023/corpus_v3_wider_strict_train_256/corpus_v3_manifest.json",
+   "sha256": "701affc61e14950bc5c890b6399a9d765f10e7f7f720a2ba8f1a16d93e1a7640",
+   "version_id": "gd.JxegwvXXxSr7SNt7qJNbEij97pO7L"
+  },
+  "w5_source_prefix_listing": {
+   "latest_last_modified": "2026-10-24T19:07:29+00:00",
+   "listing_sha256": "7500f658194505d42ecf627b392fbec4d5318beb0dd06aa5e754e5862f3ae987",
+   "objects": 83,
+   "prefix": "s3://veox-jopedime-learning-use2/experiments/flywheel-selfplay-20261023/"
+  }
+ },
+ "schema": "jope.h150.input-receipts/v1",
+ "signing": {
+  "authority_receipt": null,
+  "decision": "REJECT label not authorized (signer_watch 2026-11-01 02:55:32 UTC)",
+  "request": "/home/ubuntu/jope_plan/signing/requests/rd_opus-w5-manifest-20261101T025504Z.json (moved to rejected/)"
+ }
+}
