@@ -852,11 +852,29 @@ pub(super) async fn control(
     if keys.next().is_some() {
         return response(&invalid("Idempotency-Key must occur once."));
     }
-    let Json(body) =
-        match Json::<jope_api::registry::RunControlRequest>::from_request(request, &()).await {
-            Ok(body) => body,
-            Err(_) => return response(&invalid("Expected a valid run control request.")),
-        };
+    let content_type = headers
+        .get(axum::http::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.split(';').next())
+        .map(|v| v.trim().to_ascii_lowercase());
+    if !content_type.as_deref().is_some_and(|v| {
+        v == "application/json" || (v.starts_with("application/") && v.ends_with("+json"))
+    }) {
+        return response(&invalid("Expected JSON content type."));
+    }
+    let bytes = match axum::body::to_bytes(request.into_body(), 1024 * 1024).await {
+        Ok(value) => value,
+        Err(_) => return response(&invalid("Invalid control body.")),
+    };
+    // Preserve explicit nulls in retry identity; reject duplicate JSON keys.
+    let value: Value = match jope_runtime::strict_json::decode(&bytes) {
+        Ok(value) => value,
+        Err(_) => return response(&invalid("Invalid control JSON.")),
+    };
+    let body: jope_api::registry::RunControlRequest = match serde_json::from_value(value.clone()) {
+        Ok(value) => value,
+        Err(_) => return response(&invalid("Expected a valid run control request.")),
+    };
     let jope_api::registry::RunControlRequest::Continue { expected_revision } = body else {
         return response(&unavailable(
             "This bounded backend currently supports explicit continue only.",
@@ -882,10 +900,6 @@ pub(super) async fn control(
     {
         return response(&invalid("Revision preconditions disagree."));
     }
-    let value = match serde_json::to_value(&body) {
-        Ok(v) => v,
-        Err(e) => return response(&io(e)),
-    };
     let identity = match RequestIdentity::new(
         "local-engine-owner",
         key,
@@ -1079,6 +1093,24 @@ mod tests {
         let listed = super::tests::app(&engine).oneshot(list).await.unwrap();
         assert_eq!(listed.status(), StatusCode::OK);
         assert_eq!(body(listed).await, json!({"runs":[],"next_after":null}));
+        for raw in [
+            r#"{"action":"continue","action":"continue"}"#,
+            r#"{"action":"continue","unexpected":true}"#,
+            r#"{"action":"continue","expected_revision":"-1"}"#,
+        ] {
+            let request = Request::builder()
+                .method("POST")
+                .uri("/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FAV/control")
+                .header(header::HOST, "127.0.0.1:31234")
+                .header(header::AUTHORIZATION, format!("Bearer {}", "ab".repeat(32)))
+                .header(header::CONTENT_TYPE, "application/json")
+                .header("idempotency-key", "bad-continue")
+                .body(Body::from(raw))
+                .unwrap();
+            let reply = super::tests::app(&engine).oneshot(request).await.unwrap();
+            assert_eq!(reply.status(), StatusCode::BAD_REQUEST);
+            assert_eq!(body(reply).await["code"], "INVALID_INPUT");
+        }
         assert!(!_directory.path().join("worker-scratch").exists());
     }
 

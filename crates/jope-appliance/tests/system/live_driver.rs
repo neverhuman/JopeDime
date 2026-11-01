@@ -363,6 +363,13 @@ def engine_boundary_matrix():
                     assert reply.status==409 and problem['code']=='IDEMPOTENCY_CONFLICT','changed Continue API request did not return its typed conflict'
                     save(label+'-conflict.json',{'status':reply.status,'problem':problem,'cli_exit':conflict.returncode})
                 finally:connection.close()
+                # A null is part of command identity even when its semantic default is absent.
+                connection=http.client.HTTPConnection('127.0.0.1',address.port,timeout=10)
+                try:
+                    connection.request('POST',f'/v1/runs/{rid}/control',body=json.dumps({'action':'continue','expected_revision':None}),headers={'Authorization':'Bearer '+record['token'],'Content-Type':'application/json','Idempotency-Key':'int02-boundary-continue'})
+                    reply=connection.getresponse();problem=json.loads(reply.read())
+                    assert reply.status==409 and problem['code']=='IDEMPOTENCY_CONFLICT','explicit null was lost from Continue identity'
+                finally:connection.close()
             completed=wait_terminal(h,rid)
             final_events=client.events(rid,0)['events']
             assert completed['state']=='completed' and completed['best']==snapshot['best'],(label,completed)
