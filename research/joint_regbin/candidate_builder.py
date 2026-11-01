@@ -844,4 +844,8 @@ def make_worker_packer(
             device=device,
         )
 
+    pack._jrb_source_pins = {
+        "checkpoint_sha256": checkpoint_sha256,
+        "dope_sha256": dope_sha256,
+    }
     return pack

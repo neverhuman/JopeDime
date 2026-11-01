@@ -7,8 +7,9 @@ This CPU orchestration/report component schedules the primary three-arm study:
 All arms use the same three seeds, five family-held-out folds plus one full-train
 job, 50 rounds, two updates per round, 32 contexts per update, and 10 conditioning
 slots per context. That is 54 jobs and 100 optimizer updates per job. The prior
-natural-ratio sensitivity arm is deferred by the T0218 owner scope. This source
-change does not alter the learner or authorize a study run.
+natural-ratio sensitivity arm is deferred by the T0218 owner scope. The
+source-pinned worker runtime loads the accepted R882 model and frozen DOPE
+closure, but does not choose optimizer hyperparameters or authorize a study.
 
 ## Measurements and decision
 
@@ -24,7 +25,9 @@ Otherwise the result is MITIGATE_AND_RERUN; an incomplete run has no verdict.
 ## Dry-run boundary
 
 The two-round CPU report smoke is a synthetic protocol fixture, not a dev-data
-run, learner qualification, CV estimate, or scientific result. The currently
+run, learner qualification, CV estimate, or scientific result. A separate
+source-pinned initialization check loads R882 and verifies frozen DOPE and the
+adapter surface without opening a context payload or applying an update. The currently
 available JRB binary packet is train-only and `PARTIAL_PANEL_ONLY`; no complete
 eligible joint role manifest or qualified task-correct learner/checkpoint is
 available. Do not adapt that packet into dev data or bypass the manifest checks.
@@ -62,6 +65,23 @@ shared-adapter parameter must have a gradient and every present optimizer
 gradient must be finite, including the binary head. Unused gradients may remain
 absent (the binary head is unused for regression). Refusals occur before any
 optimizer step or parameter change.
+
+The source-pinned initializer verifies the H141 R882 custody receipt and SHA,
+the H144 initialization runtime and manifest, the fused model source, declared
+model code and assets, and runtime versions. It loads the pinned checkpoint on
+CPU with the H144 weights-only loader, freezes every parameter except the 47
+non-anchor adapter tensors, and checks the exact 29,211-parameter surface.
+`build_core` requires an explicit optimizer whose parameter set is exactly the
+trainable adapter plus task heads. `make_candidate_packer` binds candidate
+pools, tokens, and masks through the shared candidate builder using this exact
+R882 and DOPE identity; `build_core` refuses unbound packers. Frozen model
+state and DOPE are checked before and after each worker call, including failed
+calls. No optimizer defaults are inferred from the arm budget.
+
+This supplies real, source-pinned R882 initialization and a guarded two-task
+core. It is not a standalone qualified learner receipt: complete admitted role
+metadata, prepared hash-pinned nonsealed candidate pools, and a preregistered
+optimizer configuration remain required before a training request.
 
 Regression metrics reject nonfinite inputs and computed RMSE. The reported RMSE
 remains exact, including zero for perfect predictions. The log-ratio curve uses

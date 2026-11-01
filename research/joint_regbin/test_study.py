@@ -1,5 +1,6 @@
 """Synthetic CPU protocol fixtures; no learner, GPU, dataset or score history."""
 
+import hashlib
 import json
 import math
 from collections import Counter
@@ -8,7 +9,7 @@ from pathlib import Path
 import pytest
 import torch
 
-from research.joint_regbin import driver, worker
+from research.joint_regbin import candidate_builder, driver, runtime, worker
 from research.joint_regbin.admission import (
     PARTIAL_SCHEMA,
     _load_csv,
@@ -1689,3 +1690,146 @@ def test_worker_regression_metric_nonfinite_computation_is_refused():
 def test_worker_regression_metric_bad_ridge_is_refused(ridge):
     with pytest.raises(ValueError, match="positive finite"):
         worker.regression_metrics(torch.ones(1), torch.zeros(1), ridge_rmse=ridge)
+
+
+def test_source_pinned_runtime_rejects_file_drift_and_symlink(tmp_path):
+    source = tmp_path / "runtime-source.py"
+    source.write_text("source pin fixture\n")
+    expected = hashlib.sha256(source.read_bytes()).hexdigest()
+    assert runtime.verify_file_pin(source, expected) == expected
+    with pytest.raises(runtime.SourcePinError, match="hash mismatch"):
+        runtime.verify_file_pin(source, "0" * 64)
+    alias = tmp_path / "runtime-alias.py"
+    alias.symlink_to(source)
+    with pytest.raises(runtime.SourcePinError, match="not regular"):
+        runtime.verify_file_pin(alias, expected)
+
+
+def test_h144_loader_refuses_hash_mismatch_before_execution(tmp_path, monkeypatch):
+    marker = tmp_path / "executed"
+    source = tmp_path / "h144-runtime.py"
+    source.write_text(f"from pathlib import Path\nPath({str(marker)!r}).touch()\n")
+    monkeypatch.setattr(runtime, "H144_RUNTIME", source)
+    monkeypatch.setattr(runtime, "H144_RUNTIME_SHA256", "0" * 64)
+
+    with pytest.raises(runtime.SourcePinError, match="hash mismatch"):
+        runtime._load_pinned_h144_runtime()
+
+    assert not marker.exists()
+
+
+def test_h144_loader_executes_the_exact_hashed_bytes(tmp_path, monkeypatch):
+    source = tmp_path / "h144-runtime.py"
+    source.write_text("VALUE = 'verified'\n")
+    expected = hashlib.sha256(source.read_bytes()).hexdigest()
+    monkeypatch.setattr(runtime, "H144_RUNTIME", source)
+    monkeypatch.setattr(runtime, "H144_RUNTIME_SHA256", expected)
+    original_read_bytes = Path.read_bytes
+    reads = 0
+
+    def read_then_replace(path):
+        nonlocal reads
+        contents = original_read_bytes(path)
+        if path == source:
+            reads += 1
+            source.write_text("VALUE = 'changed after verification'\n")
+        return contents
+
+    monkeypatch.setattr(Path, "read_bytes", read_then_replace)
+
+    loaded = runtime._load_pinned_h144_runtime()
+
+    assert reads == 1
+    assert loaded.VALUE == "verified"
+
+
+def test_worker_adapter_fingerprint_supports_scalar_parameters():
+    class ScalarAdapter(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.scalar = torch.nn.Parameter(torch.tensor(0.25))
+
+    adapter = ScalarAdapter()
+    original = worker.adapter_fingerprint(adapter)
+    with torch.no_grad():
+        adapter.scalar.add_(0.5)
+    assert worker.adapter_fingerprint(adapter) != original
+
+
+def test_source_pinned_runtime_reads_h144_constructor_version_pins(
+    tmp_path, monkeypatch
+):
+    preflight = tmp_path / "preflight.json"
+    preflight.write_text(
+        json.dumps(
+            {
+                "constructor": {
+                    "packages": {
+                        "numpy": runtime.EXPECTED_NUMPY,
+                        "torch": runtime.EXPECTED_TORCH,
+                    },
+                    "python": f"{runtime.EXPECTED_PYTHON} (pinned build)",
+                }
+            }
+        )
+    )
+    monkeypatch.setattr(runtime, "H144_PREFLIGHT", preflight)
+    monkeypatch.setattr(runtime, "verify_file_pin", lambda *_: "pinned")
+    versions = runtime._verify_runtime_versions()
+    assert versions == {
+        "python": runtime.EXPECTED_PYTHON,
+        "numpy": runtime.EXPECTED_NUMPY,
+        "torch": runtime.EXPECTED_TORCH,
+    }
+
+
+def test_source_pinned_runtime_optimizer_is_exactly_adapter_and_heads():
+    adapter = torch.nn.Parameter(torch.zeros(3))
+    head = torch.nn.Parameter(torch.zeros(1))
+    optimizer = torch.optim.SGD([adapter, head], lr=0.1)
+    runtime._verify_optimizer_parameters(optimizer, [adapter, head])
+    with pytest.raises(ValueError, match="exactly"):
+        runtime._verify_optimizer_parameters(
+            torch.optim.SGD([adapter], lr=0.1), [adapter, head]
+        )
+    extra = torch.nn.Parameter(torch.zeros(1))
+    with pytest.raises(ValueError, match="exactly"):
+        runtime._verify_optimizer_parameters(
+            torch.optim.SGD([adapter, head, extra], lr=0.1), [adapter, head]
+        )
+
+
+def test_source_pinned_runtime_requires_candidate_builder_packer():
+    source_pins = {
+        "checkpoint_sha256": runtime.R882_CHECKPOINT_SHA256,
+        "dope_sha256": runtime.DOPE_SHA256,
+    }
+    packer = candidate_builder.make_worker_packer(
+        {},
+        {},
+        {},
+        checkpoint_sha256=source_pins["checkpoint_sha256"],
+        dope_sha256=source_pins["dope_sha256"],
+    )
+    runtime._verify_candidate_packer(packer, source_pins)
+    with pytest.raises(ValueError, match="not bound"):
+        runtime._verify_candidate_packer(lambda _row: None, source_pins)
+
+
+def test_frozen_worker_core_checks_state_when_synthetic_core_raises():
+    class RuntimeGuard:
+        def __init__(self):
+            self.checks = 0
+
+        def verify_frozen_state(self):
+            self.checks += 1
+
+    class FailingCore:
+        def train_batch(self, _rows):
+            raise RuntimeError("synthetic worker failure")
+
+    guard = RuntimeGuard()
+    core = runtime.FrozenWorkerCore(guard, FailingCore())
+    with pytest.raises(RuntimeError, match="synthetic worker failure"):
+        core.train_batch([])
+    assert guard.checks == 2

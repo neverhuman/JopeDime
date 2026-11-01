@@ -159,7 +159,8 @@ Regression worker targets are the existing S1 constrained fitness. Binary
 worker targets are the existing two-fold `cv_gate_passed` labels, because the
 task head is BCE-with-logits; this does not infer task from target cardinality
 or introduce a new threshold. The R882/DOPE token tensors are supplied by the
-caller after its read-only pinned initialization. Worker inputs have no revealed
+caller after `runtime.initialize_r882_worker()` performs the read-only pinned
+initialization. Worker inputs have no revealed
 candidate labels, so target values cannot leak through conditioning slots.
 `make_worker_packer(...)` implements the callable expected by `WorkerCore`.
 The synthetic suite checks that catalog role candidates without a complete
@@ -174,11 +175,33 @@ metadata proves nonsealed TRAIN/VAL eligibility. Current owner evidence still
 does not provide an admitted complete role manifest or qualified two-task
 worker, so no real pool was built by this change.
 
+### Source-pinned R882 worker initialization
+
+`runtime.initialize_r882_worker()` verifies the H141 checkpoint custody receipt
+and R882 SHA, the pinned H144 initialization runtime/manifest, the fused model
+source, its declared model-code and asset closure, and Python/NumPy/PyTorch
+versions. It loads R882 read-only on CPU, verifies the frozen DOPE hash, and
+enables gradients only for the 47 non-anchor adapter tensors (29,211 parameters).
+`SourcePinnedWorker.make_candidate_packer()` binds the pool, token, and mask
+maps through the shared candidate builder to this checkpoint and DOPE identity.
+`build_core()` rejects packers without those pins and requires an explicit
+optimizer containing exactly the adapter and two-task head parameters. The
+guarded core rechecks frozen model state and DOPE around every train or predict
+call, including failed calls. It does not guess optimizer hyperparameters or
+start the driver.
+
+This is a real R882-backed initialization and source-pinned two-task core, not
+worker qualification or a study result. An admitted role manifest, prepared
+hash-pinned nonsealed candidate pools, and preregistered optimizer configuration
+remain prerequisites for any training request. The initializer opens no context
+payload.
+
 ## Learner integration contract (qualification still required)
 
 Supply a reviewed Python learner, pinned by its full file hash, accepting
 `--request FILE --response FILE --packet DIR --initial-checkpoint FILE`.
-This PR does **not** provide or qualify that two-task learner. It must use the
+The source-pinned initializer/core does not yet provide or qualify that complete
+request/response learner. It must use the
 frozen DOPE weights, train only the JopeDime adapter, enforce GPU memory≤90% and
 CPU≤85%, verify the inherited `JOPE_QUALIFICATION_LOCK_FD` identifies the real
 lock, and avoid shared/live bank or checkpoint writes. A regression-only worker
