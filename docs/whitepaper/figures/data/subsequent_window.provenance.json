@@ -1,0 +1,90 @@
+{
+  "schema": "whitepaper.subsequent-window/v1",
+  "snapshot": {
+    "at": "2026-11-01T00:57:04.310789+00:00",
+    "kind": "Read-only stable complete-line prefixes; retain latest20consecutive completed summary rows and matching strict training-program events; no dataset or weight files read",
+    "round_window": [
+      2508,
+      2527
+    ],
+    "files": [
+      {
+        "name": "summary.jsonl",
+        "observed_bytes": 3526666,
+        "prefix_bytes": 3526666,
+        "prefix_sha256": "add32daad1d2215155910460cafa10fe85f762e6ffe4357ea3f8c100229b2969",
+        "mtime_ns_before": 1793494612394412463,
+        "mtime_ns_after": 1793494612394412463,
+        "trailing_incomplete_bytes_omitted": 0,
+        "snapshot_bytes": 3358729,
+        "sha256": "836b81f1c12191b15f2000daf26c04eb847383ea70cf1a584cd146ae095ddc4e"
+      },
+      {
+        "name": "promotions.jsonl",
+        "observed_bytes": 9055425,
+        "prefix_bytes": 9055425,
+        "prefix_sha256": "69e7f1cf9539e8f0973959b22f15237b049e330fe734af4f6ce7bfd85a6a4abe",
+        "mtime_ns_before": 1793494446064877914,
+        "mtime_ns_after": 1793494446064877914,
+        "trailing_incomplete_bytes_omitted": 0,
+        "snapshot_bytes": 54545,
+        "sha256": "c6a3252ea8a9d87e689adc4f16e530bb43b84551340f4804537f6b5e5f5a5b92"
+      }
+    ],
+    "summary_source_line_range": [
+      2,
+      21
+    ],
+    "selection": "Latest20complete summary lines by log order, with matching journal promotions; no outcome-based selection"
+  },
+  "input_sha256": {
+    "summary.jsonl": "836b81f1c12191b15f2000daf26c04eb847383ea70cf1a584cd146ae095ddc4e",
+    "promotions.jsonl": "c6a3252ea8a9d87e689adc4f16e530bb43b84551340f4804537f6b5e5f5a5b92"
+  },
+  "selection": "All complete consecutive summary rounds; journal kind=promotion in that window",
+  "round_window": [
+    2508,
+    2527
+  ],
+  "summary_rows": 20,
+  "strict_program_promotions": 15,
+  "adapter_admissions": 0,
+  "reported_best_rounds": [
+    882
+  ],
+  "completed_round_wall_seconds": 1731.449021203,
+  "rounds_per_hour": 41.58366727423187,
+  "program_promotions_per_hour": 31.187750455673903,
+  "rate_scope": "Retained completed rounds; logged wall time includes qualification waits; not deployment throughput",
+  "promotion_CI_scope": {
+    "unavailable": 15
+  },
+  "evaluation_identities": [
+    "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83"
+  ],
+  "metric_definition": {
+    "program_promotions": "Strict training-program incumbent events, checked against summary counts",
+    "cumulative_program_promotions": "Running sum within this window only; starts from zero",
+    "candidate_validation_utility": "summary.val_reg = candidate_dev_utility.val_reg = adapter_admission.candidate_utility",
+    "recorded_best_validation_utility": "dev_utility.val_reg = adapter_admission.best_utility",
+    "completed_round_wall_seconds": "summary.wall_seconds; rates divide total completed rounds or strict program promotions by their summed wall time",
+    "reported_best_round": "adapter_admission.best_round; a logged identity, not the first strict increase in utility"
+  },
+  "code_references": [
+    "research/flywheel_selfplay/automatic_promotion.py:206-273",
+    "research/flywheel_selfplay/dev_incumbent.py:524-570",
+    "crates/jope-telemetry/src/hooks/flywheel.rs:316-338,362-365"
+  ],
+  "interpretation_source_commit": "fea10d2c15ae8544cfc851ce4d79755041120473",
+  "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
+  "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
+  "csv_sha256": "a4999500f97cb98c3ef3fd3bab0bb42aa4e91982997923c28d095f08691adabd",
+  "extraction_script_sha256": "d228427829cb8224d65e2205573fc94fe778c6b38c14672e86c6a845db373e16",
+  "reproduce": "python3 figures/scripts/make_subsequent_window_figure.py --logs SNAPSHOT_DIR",
+  "figure_sha256": "48991bdef87341dc6668078f0deddc9a9ccc2b48f211163db73d0c11ad7db8e7",
+  "matplotlib_version": "3.10.8",
+  "figure_definition": {
+    "top": "recorded best minus candidate validation pool utility, paired within each completed round; zero marks recorded best",
+    "bottom": "cumulative strict training-program incumbent events; reset to zero for this window"
+  }
+}
