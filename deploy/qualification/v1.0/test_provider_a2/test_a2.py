@@ -195,6 +195,20 @@ class A2Tests(unittest.TestCase):
             setattr(self, attribute, old)
         self.assertEqual(self.tests, [])
 
+    def test_same_byte_candidate_symlink_replacement_refuses_after_case(self):
+        saved = self.root / "same-bytes"
+        saved.write_bytes(self.artifact.read_bytes())
+
+        def substitute():
+            self.artifact.unlink()
+            self.artifact.symlink_to(saved)
+
+        self.after_test = substitute
+        with self.assertRaisesRegex(ProviderError, "no symlinks"):
+            self.invoke()
+        self.assertEqual(len(self.tests), 1)
+        self.assertFalse(self.ctx.result.exists())
+
     def test_initial_artifact_drift_is_refused(self):
         self.artifact.write_bytes(b"changed before gate")
         with self.assertRaises(ProviderError):

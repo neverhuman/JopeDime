@@ -94,7 +94,7 @@ in \cref{sec:method-status}:
   across training rows by mean, population standard deviation, and 10th and 90th
   percentiles; (ii)~\num{1024} values projected from a \num{2048}-value third-party tabular
   regressor state capped at \num{768} context rows and \num{256} query
-  rows (Foundation, version \texttt{foundation\_enc.v1.tabpfn}; license: proprietary, available on request; redistribution prohibited); and (iii)~\num{512} values from two
+  rows (Foundation, version \texttt{foundation\_enc.v1.tabpfn}; license: third-party provenance pending; restricted; redistribution prohibited); and (iii)~\num{512} values from two
   frozen seed-17 target-summary windows. Each block is normalized before
   concatenation and clipping to $\pm32$. Non-finite contexts are refused. Encoding records
   report wall-clock latency from 11.7\,s to 20.8\,s across eight reference
@@ -111,10 +111,10 @@ in \cref{sec:method-status}:
   normalized weighted mean over programs. The displayed aggregate
   coefficients match the native objective; the checkpoint's objective
   identity and configuration still belong in its evaluation record.
-  In the combined objective of \cref{eq:totalLoss}, the
-  pairwise Bradley--Terry term weights
-  pairs by their score gap, doubled when either program is at or above the
-  90th percentile. The network has \num{27796494} parameters in total (six
+  In \cref{eq:totalLoss}, $v_w=1/(1+\mathrm{RMSE}_w/m_p)$, where $m_p$ is
+  the corpus list's median RMSE. Bradley--Terry weights use $|v_w-v_u|$,
+  doubled when either member is at or above the 90th percentile, then
+  normalized by their sum over non-tied pairs. The network has \num{27796494} parameters in total (six
   decoder blocks, width \num{512}, four attention heads, prefix context token,
   and maximum length \num{128} tokens over the \num{401}-token grammar);
   approximately \num{6.90} million parameters lie outside the writer's token

@@ -4289,6 +4289,16 @@
       "lanes": [],
       "scope": "REL-07 A2 provider controls over synthetic child responses: candidate/source binding, exact API schema/error/decimal selectors, execution counts, path and drift refusals. No real release gate is executed."
     },
+    "python:deploy/qualification/v1.0/test_provider_a5/test_a5.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 A5 named-client provider controls: candidate/source binding, transcript manifest and sidecar identities, per-client execution/semantic receipt checks, exact tool counts, distinct runs, CPU placement and export evidence; synthetic receipts only, no live client execution."
+    },
     "python:deploy/qualification/v1.0/test_provider_e2/test_e2.py": {
       "discovery": {
         "kind": "python-family"
