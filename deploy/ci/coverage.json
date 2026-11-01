@@ -14469,6 +14469,16 @@
       "lanes": [],
       "scope": "H184 data-free controls: registered constants/arms, five-fold family cross-fit, bit-exact equality of the PRIOR+KERNEL+ATTN decomposition with the pinned live adapter delta on a synthetic adapter (skipped where the asset is absent), sum refusal and output-level ablation semantics, component init structure, attribution labels with Holm m=3 and lift shares, axis=0 paired family bootstrap, strict ADVANCE gates with the +0.001 tie, identical-arm Elo 1500, launch review binding and supervisor guards. No checkpoint, corpus or model passes in the fixture suite; offline research only."
     },
+    "python:research/flywheel_selfplay/h188_kernel_inputs/test_h188.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H188 data-free controls: registered constants/arms, per-seed reshuffled family folds covering every family once in B and once in A, bit-exact identity of the replayed kernel with the live KERNEL term (and with the pinned live delta where present), rank-normalized and Huber-winsorized residual semantics, kernel-only replacement and unit-norm anchor features, the H177-derived m=3 pooled-B selector with the +0.001 tie, B-admission plus A-confirmation verdict, axis=0 paired bootstrap, identical-arm Elo 1500, launch binding and supervisor guards. No checkpoint, corpus or model passes in the fixture suite; offline research only."
+    },
     "python:research/flywheel_selfplay/h179_deep_ensemble/test_h179.py": {
       "discovery": {
         "kind": "python-family"
