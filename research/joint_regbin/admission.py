@@ -694,7 +694,7 @@ def build_task_role_candidate_manifest(
         for row in family_review["records"]
     }
     protected_union_keys = set().union(
-        *(family_evidence_by_id[dataset] for dataset in protected_dataset_ids)
+        *(family_evidence_by_id[dataset] for dataset in protected_catalog_ids)
     )
     protected_union_key_sha256 = canonical_json_sha(
         [list(key) for key in sorted(protected_union_keys)]
@@ -914,7 +914,7 @@ def build_task_role_candidate_manifest(
             "manifest_sha256": protected_manifest_sha256,
             "manifest_schema": PROTECTED_FAMILY_MANIFEST_SCHEMA,
             "protected_member_count": len(protected_member_ids),
-            "protected_catalog_dataset_count": len(protected_dataset_ids),
+            "protected_catalog_dataset_count": len(protected_catalog_ids),
             "catalog_alias_family_count": len(protected_families),
             "catalog_alias_family_sha256": canonical_json_sha(
                 sorted(protected_families)
