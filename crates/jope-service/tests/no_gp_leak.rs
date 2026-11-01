@@ -1,7 +1,7 @@
 //! T2 pre-stage sentinel harness.
 //!
-//! These fixtures exercise the existing public projection and wire shapes with synthetic
-//! internal fields. They are not a full discovery run. The PTY case remains gated on TUI-09.
+//! PUB-06 tests scan a bounded real service run and its public outputs. The synthetic
+//! projection cases remain useful scanner unit controls, separate from the runtime proof.
 
 use axum::{
     body::{to_bytes, Body},
@@ -16,6 +16,7 @@ use jope_service::public::{
     phrase::{CatalogEntry, EventDetails, Template},
     project::{AdmittedProposal, EvaluationOrdinal, ProblemDigest, Projector},
 };
+#[cfg(all(feature = "failpoints", debug_assertions))]
 use std::{
     fs,
     io::Write,
@@ -355,6 +356,7 @@ async fn current_run_and_model_responses_do_not_echo_private_payloads() {
 // Build the same tiny real native worker used by the service's supervised-worker
 // tests. Keeping it here lets this integration test exercise a real bounded run
 // without depending on a separately built appliance binary.
+#[cfg(all(feature = "failpoints", debug_assertions))]
 fn native_worker(directory: &Path) -> PathBuf {
     let deps = std::env::current_exe()
         .unwrap()
@@ -412,6 +414,33 @@ fn native_worker(directory: &Path) -> PathBuf {
     panic!("could not link bounded native worker: {last_error}");
 }
 
+#[cfg(all(feature = "failpoints", debug_assertions))]
+async fn sse_through(response: axum::response::Response, terminal: &str) -> String {
+    use futures_util::StreamExt;
+
+    let headers = response
+        .headers()
+        .iter()
+        .map(|(name, value)| format!("{name}: {}", String::from_utf8_lossy(value.as_bytes())))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let mut stream = response.into_body().into_data_stream();
+    let mut output = headers;
+    for _ in 0..256 {
+        let frame = tokio::time::timeout(Duration::from_secs(10), stream.next())
+            .await
+            .expect("SSE stream timed out before its terminal event")
+            .expect("SSE stream closed before its terminal event")
+            .unwrap();
+        output.push_str(&String::from_utf8_lossy(&frame));
+        if output.contains(terminal) {
+            return output;
+        }
+    }
+    panic!("SSE stream exceeded frame bound before {terminal}");
+}
+
+#[cfg(all(feature = "failpoints", debug_assertions))]
 #[tokio::test]
 async fn bounded_real_run_http_status_and_sse_do_not_leak_internal_sentinels() {
     use jope_service::{
@@ -502,10 +531,10 @@ async fn bounded_real_run_http_status_and_sse_do_not_leak_internal_sentinels() {
         .header(header::AUTHORIZATION, format!("Bearer {}", daemon.token))
         .header(header::CONTENT_TYPE, "application/json")
         .header("idempotency-key", "pub06-bounded-run")
-        .header("x-internal-dsl", SENTINELS[0])
-        .header("x-internal-operator", SENTINELS[1])
-        .header("x-internal-lineage", SENTINELS[2])
-        .header("x-internal-round", SENTINELS[3])
+        .header("x-pub06-test-dsl", SENTINELS[0])
+        .header("x-pub06-test-operator", SENTINELS[1])
+        .header("x-pub06-test-lineage", SENTINELS[2])
+        .header("x-pub06-test-round", SENTINELS[3])
         .body(Body::from(serde_json::to_vec(&spec).unwrap()))
         .unwrap();
     let started = app.clone().oneshot(request).await.unwrap();
@@ -543,6 +572,37 @@ async fn bounded_real_run_http_status_and_sse_do_not_leak_internal_sentinels() {
     }
     assert_eq!(snapshot.state, jope_api::RunState::Completed);
     assert!(snapshot.event_watermark.0 > 0);
+    let artifact = snapshot
+        .best
+        .as_ref()
+        .and_then(|best| best.model_artifact.as_ref())
+        .expect("completed run has an exported model artifact");
+    let artifact_record = engine
+        .store()
+        .get(&jope_service::store::RecordKey::Artifact(artifact.clone()))
+        .unwrap()
+        .expect("finalized export record exists");
+    let manifest = artifact_record.data["manifest"].to_string();
+    scan_surfaces(&[(Surface::ExportManifest, manifest)]).unwrap();
+
+    let error = Request::builder()
+        .method(Method::GET)
+        .uri(format!(
+            "/v1/runs/{}/events?after={}",
+            snapshot.run_id, SENTINELS[3]
+        ))
+        .header(header::HOST, format!("127.0.0.1:{port}"))
+        .header(header::AUTHORIZATION, format!("Bearer {}", daemon.token))
+        .body(Body::empty())
+        .unwrap();
+    let error = app.clone().oneshot(error).await.unwrap();
+    assert!(!error.status().is_success());
+    let error_bytes = to_bytes(error.into_body(), 64 * 1024).await.unwrap();
+    scan_surfaces(&[(
+        Surface::Error,
+        String::from_utf8_lossy(&error_bytes).into_owned(),
+    )])
+    .unwrap();
 
     let events = Request::builder()
         .method(Method::GET)
@@ -559,31 +619,9 @@ async fn bounded_real_run_http_status_and_sse_do_not_leak_internal_sentinels() {
         .header("x-internal-round", SENTINELS[3])
         .body(Body::empty())
         .unwrap();
-    let response = app.oneshot(events).await.unwrap();
+    let response = app.clone().oneshot(events).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
-    let headers = response
-        .headers()
-        .iter()
-        .map(|(name, value)| format!("{name}: {}", String::from_utf8_lossy(value.as_bytes())))
-        .collect::<Vec<_>>()
-        .join("\n");
-    let mut stream = response.into_body().into_data_stream();
-    use futures_util::StreamExt;
-    let mut frames = Vec::new();
-    for _ in 0..snapshot.event_watermark.0 {
-        let Some(frame) = stream.next().await else {
-            break;
-        };
-        frames.push(frame.unwrap());
-    }
-    assert!(!frames.is_empty());
-    let output = format!(
-        "{headers}\n{}",
-        frames
-            .iter()
-            .map(|frame| String::from_utf8_lossy(frame.as_ref()))
-            .collect::<String>()
-    );
+    let output = sse_through(response, "event: run.finished").await;
     scan_surfaces(&[(Surface::Sse, output)]).unwrap();
 
     let cli_home = home.path().to_path_buf();
@@ -615,6 +653,132 @@ async fn bounded_real_run_http_status_and_sse_do_not_leak_internal_sentinels() {
         ),
     ])
     .unwrap();
+
+    let terminal_binary = target_dir.parent().unwrap().join("jopedime");
+    let terminal_home = home.path().to_path_buf();
+    let terminal_run = snapshot.run_id.to_string();
+    let transcript = tokio::task::spawn_blocking(move || {
+        use portable_pty::{native_pty_system, CommandBuilder, PtySize};
+        use std::io::Read;
+        use std::sync::mpsc;
+
+        let pair = native_pty_system()
+            .openpty(PtySize {
+                rows: 35,
+                cols: 120,
+                pixel_width: 0,
+                pixel_height: 0,
+            })
+            .unwrap();
+        let mut command = CommandBuilder::new(terminal_binary);
+        command.env("JOPEDIME_HOME", terminal_home);
+        command.env("TERM", "dumb");
+        command.env("NO_COLOR", "1");
+        let mut child = pair.slave.spawn_command(command).unwrap();
+        drop(pair.slave);
+        let mut reader = pair.master.try_clone_reader().unwrap();
+        let mut writer = pair.master.take_writer().unwrap();
+        let (send, receive) = mpsc::channel();
+        std::thread::spawn(move || {
+            let mut bytes = [0_u8; 4096];
+            while let Ok(count) = reader.read(&mut bytes) {
+                if count == 0 || send.send(bytes[..count].to_vec()).is_err() {
+                    break;
+                }
+            }
+        });
+        writeln!(writer, "\\attach {terminal_run}").unwrap();
+        writer.flush().unwrap();
+        let deadline = Instant::now() + Duration::from_secs(10);
+        let mut bytes = Vec::new();
+        let transcript = loop {
+            let remaining = deadline.saturating_duration_since(Instant::now());
+            let chunk = receive
+                .recv_timeout(remaining)
+                .expect("PTY transcript timed out");
+            bytes.extend(chunk);
+            assert!(bytes.len() < 1 << 20, "PTY transcript exceeds limit");
+            let text = String::from_utf8_lossy(&bytes);
+            if text.contains("Run finished") {
+                break text.into_owned();
+            }
+            assert!(!text.contains("error:"), "PTY run attach failed: {text}");
+        };
+        let _ = writer.write_all(b"\\quit\n");
+        let _ = writer.flush();
+        if child.try_wait().unwrap().is_none() {
+            let _ = child.kill();
+        }
+        let _ = child.wait();
+        transcript
+    })
+    .await
+    .unwrap();
+    scan_surfaces(&[(Surface::Terminal, transcript)]).unwrap();
+
+    // Drive the real worker failure path after the sentinel-bearing values have
+    // reached CpuRunSpace, then inspect its failed status, journal event and diagnostic.
+    let failure_request = Request::builder()
+        .method(Method::POST)
+        .uri("/v1/runs")
+        .header(header::HOST, format!("127.0.0.1:{port}"))
+        .header(header::AUTHORIZATION, format!("Bearer {}", daemon.token))
+        .header(header::CONTENT_TYPE, "application/json")
+        .header("idempotency-key", "pub06-bounded-run-failure")
+        .header("x-pub06-test-dsl", SENTINELS[0])
+        .header("x-pub06-test-operator", SENTINELS[1])
+        .header("x-pub06-test-lineage", SENTINELS[2])
+        .header("x-pub06-test-round", SENTINELS[3])
+        .header("x-pub06-test-fail-after-seed", "1")
+        .body(Body::from(serde_json::to_vec(&spec).unwrap()))
+        .unwrap();
+    let started = app.clone().oneshot(failure_request).await.unwrap();
+    assert_eq!(started.status(), StatusCode::CREATED);
+    let mut failed: jope_api::RunSnapshot =
+        serde_json::from_slice(&to_bytes(started.into_body(), 1 << 20).await.unwrap()).unwrap();
+    let fail_deadline = Instant::now() + Duration::from_secs(10);
+    while failed.state == jope_api::RunState::Running && Instant::now() < fail_deadline {
+        sleep(Duration::from_millis(25)).await;
+        let status = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(Method::GET)
+                    .uri(format!("/v1/runs/{}", failed.run_id))
+                    .header(header::HOST, format!("127.0.0.1:{port}"))
+                    .header(header::AUTHORIZATION, format!("Bearer {}", daemon.token))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        let bytes = to_bytes(status.into_body(), 1 << 20).await.unwrap();
+        scan_surfaces(&[(Surface::Http, String::from_utf8_lossy(&bytes).into_owned())]).unwrap();
+        failed = serde_json::from_slice(&bytes).unwrap();
+    }
+    assert_eq!(failed.state, jope_api::RunState::Failed);
+    let failed_events = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri(format!(
+                    "/v1/runs/{}/events?after=0&limit=256",
+                    failed.run_id
+                ))
+                .header(header::HOST, format!("127.0.0.1:{port}"))
+                .header(header::AUTHORIZATION, format!("Bearer {}", daemon.token))
+                .header(header::ACCEPT, "text/event-stream")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let failed_output = sse_through(failed_events, "failed").await;
+    scan_surfaces(&[(Surface::Sse, failed_output)]).unwrap();
+    let logs = jope_service::pub06_test::take_logs();
+    assert!(!logs.is_empty(), "run failure diagnostic was not captured");
+    scan_surfaces(&[(Surface::Log, logs.join("\n"))]).unwrap();
 
     let mcp_home = home.path().to_path_buf();
     let mcp_binary = appliance;
