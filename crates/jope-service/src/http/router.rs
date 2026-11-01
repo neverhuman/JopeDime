@@ -132,6 +132,12 @@ fn build_router(
             };
         }
     }
+    if journal.is_some() {
+        app = app.route(
+            "/v1/q1/evaluations",
+            axum::routing::post(super::runs::q1_evaluate),
+        );
+    }
     app = app.route("/v1/openapi.json", get(get_openapi));
     app.fallback(|| async {
         problem(

@@ -1160,8 +1160,190 @@
         ],
         "type": "string"
       },
+      "EvaluationAttempt": {
+        "properties": {
+          "attempt": {
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "failure": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/EvaluationFailure"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fold_scores": {
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "loss": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "outcome": {
+            "$ref": "#/$defs/EvaluationAttemptOutcome"
+          },
+          "program_sha256": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "attempt",
+          "outcome",
+          "fold_scores"
+        ],
+        "type": "object"
+      },
+      "EvaluationAttemptOutcome": {
+        "enum": [
+          "completed",
+          "failed"
+        ],
+        "type": "string"
+      },
+      "EvaluationFailure": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "EvaluationIdentity": {
+        "properties": {
+          "cut_sha256": {
+            "type": "string"
+          },
+          "dataset_binding_sha256": {
+            "type": "string"
+          },
+          "dataset_id": {
+            "type": "string"
+          },
+          "dataset_sha256": {
+            "type": "string"
+          },
+          "guidance": {
+            "type": "string"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "pins": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "plan_sha256": {
+            "type": "string"
+          },
+          "requested_budget": {
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "seed": {
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "source_commit": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_commit",
+          "plan_sha256",
+          "pins",
+          "dataset_id",
+          "dataset_sha256",
+          "cut_sha256",
+          "guidance",
+          "metric",
+          "seed",
+          "requested_budget",
+          "dataset_binding_sha256"
+        ],
+        "type": "object"
+      },
+      "EvaluationReceipt": {
+        "description": "Durable, request-bound result from one engine evaluation.",
+        "properties": {
+          "adapter": {
+            "type": "string"
+          },
+          "attempts": {
+            "items": {
+              "$ref": "#/$defs/EvaluationAttempt"
+            },
+            "type": "array"
+          },
+          "champion_program": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "charged": {
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "identity": {
+            "$ref": "#/$defs/EvaluationIdentity"
+          },
+          "request_sha256": {
+            "type": "string"
+          },
+          "schema": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema",
+          "request_sha256",
+          "identity",
+          "charged",
+          "attempts",
+          "adapter"
+        ],
+        "type": "object"
+      },
       "ExperimentFinishedBody": {
         "properties": {
+          "attempt_receipt": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/EvaluationAttempt"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Actual per-attempt details when the evaluator retained them."
+          },
           "experiment_id": {
             "type": "string"
           },
@@ -1713,6 +1895,17 @@
           "completion_reason": {
             "$ref": "#/$defs/CompletionReason"
           },
+          "evaluation_receipt": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/EvaluationReceipt"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Full Q1 request receipt, atomically committed with this terminal event."
+          },
           "nondeterminism": {
             "$ref": "#/$defs/Nondeterminism"
           },
@@ -2143,6 +2336,177 @@
         ],
         "type": "string"
       },
+      "EvaluationAttempt": {
+        "properties": {
+          "attempt": {
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "failure": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/EvaluationFailure"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fold_scores": {
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "loss": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "outcome": {
+            "$ref": "#/$defs/EvaluationAttemptOutcome"
+          },
+          "program_sha256": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "attempt",
+          "outcome",
+          "fold_scores"
+        ],
+        "type": "object"
+      },
+      "EvaluationAttemptOutcome": {
+        "enum": [
+          "completed",
+          "failed"
+        ],
+        "type": "string"
+      },
+      "EvaluationFailure": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "EvaluationIdentity": {
+        "properties": {
+          "cut_sha256": {
+            "type": "string"
+          },
+          "dataset_binding_sha256": {
+            "type": "string"
+          },
+          "dataset_id": {
+            "type": "string"
+          },
+          "dataset_sha256": {
+            "type": "string"
+          },
+          "guidance": {
+            "type": "string"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "pins": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "plan_sha256": {
+            "type": "string"
+          },
+          "requested_budget": {
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "seed": {
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "source_commit": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_commit",
+          "plan_sha256",
+          "pins",
+          "dataset_id",
+          "dataset_sha256",
+          "cut_sha256",
+          "guidance",
+          "metric",
+          "seed",
+          "requested_budget",
+          "dataset_binding_sha256"
+        ],
+        "type": "object"
+      },
+      "EvaluationReceipt": {
+        "description": "Durable, request-bound result from one engine evaluation.",
+        "properties": {
+          "adapter": {
+            "type": "string"
+          },
+          "attempts": {
+            "items": {
+              "$ref": "#/$defs/EvaluationAttempt"
+            },
+            "type": "array"
+          },
+          "champion_program": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "charged": {
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "identity": {
+            "$ref": "#/$defs/EvaluationIdentity"
+          },
+          "request_sha256": {
+            "type": "string"
+          },
+          "schema": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema",
+          "request_sha256",
+          "identity",
+          "charged",
+          "attempts",
+          "adapter"
+        ],
+        "type": "object"
+      },
       "RunPhase": {
         "enum": [
           "preparing",
@@ -2257,6 +2621,17 @@
       },
       "effort": {
         "$ref": "#/$defs/Effort"
+      },
+      "evaluation_receipt": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/EvaluationReceipt"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Present only for engine evaluations using the versioned Q1 receipt path."
       },
       "event_watermark": {
         "maxLength": 20,

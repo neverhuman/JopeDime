@@ -100,6 +100,33 @@ The added release-plan controls check all29 gate IDs, current path/hash metadata
 missing evidence, historical PASS non-promotion, gate-inventory drift, metadata
 root escapes, and concurrent status changes. These fixtures are not gate reruns.
 
+## Signer-compatible 28-gate receipt
+
+`gates_receipt.py` writes the minimal `{"gates":[{"id","status","evidence"}]}`
+shape read by `signer_watch.sh`. It emits exactly M1–D2 (28 release gates); Q1 is
+tracked separately. Projecting a `cpu_gates.py` CPU-prestage receipt always emits
+`NOT_RUN`, with the source and prep-receipt hash in each evidence string. Passing
+source checks do not become release-gate PASS results.
+
+For the later signed-byte run, provide a result manifest using schema
+`jope.rel07.gate-results/v1`, exactly 28 unique gate rows, a non-empty evidence
+string per row, and `signed_bytes_sha256`. Pass `--artifact` with the exact file
+whose bytes were tested; the runner verifies that digest and requires all 28
+statuses to be PASS before emitting a receipt with top-level `artifact_sha256`
+and the same `artifact_sha256` on every gate row. The previous
+`signed_bytes_sha256` field is retained for compatibility. These fields bind
+both the receipt and each gate to the exact artifact hash checked by
+`signer_watch.sh`.
+CPU-prestage output has no artifact binding and remains `NOT_RUN`. The helper
+only formats and validates receipts; it never signs or requests a signature.
+
+    python3 -B deploy/qualification/v1.0/gates_receipt.py \
+      --cpu-prestage "$CPU_RECEIPT" --output "$NEW_GATES_RECEIPT"
+
+    python3 -B deploy/qualification/v1.0/gates_receipt.py \
+      --gate-results "$SIGNED_RUN_RESULTS" --artifact "$SIGNED_CANDIDATE" \
+      --output "$NEW_GATES_RECEIPT"
+
 Signing, signed-byte gate reruns, native clean-host matrices, named client runs,
 reference-laptop measurements, Q1 and OWNER release approval remain future work.
 This PR does not claim that the complete CPU matrix has already run.

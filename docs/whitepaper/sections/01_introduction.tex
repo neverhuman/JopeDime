@@ -183,15 +183,15 @@ typed language of learning primitives.
 \end{enumerate}
 
 \paragraph{What is and is not established.}
-The paper separates three kinds of evidence. The game, the learner and the
-evaluation protocol are specified here. Retained admission and program-promotion
-logs from later adapter training describe development behavior
-(\cref{sec:method-status}). The inspected loop optimizes only a ranking
+The game, learner and evaluation protocol are specified here. Retained
+admission and program-promotion logs describe later adapter training
+(\cref{sec:method-status}). The inspected loop trains only a ranking
 adapter and has no neural program writer; binding that source to these
-records remains pending. These records do not measure first-proposal
-quality on unseen problem families. For deployment, \cref{sec:results}
-specifies the comparisons. Their outcomes are not yet reported; we claim no
-advantage until they are.
+records remains pending. The native proposal path builds a search pool.
+Neither establishes first-proposal quality on unseen problem families.
+Single-candidate deployment still requires qualification. For deployment,
+\cref{sec:results} specifies the comparisons. Their outcomes are not yet
+reported; we claim no advantage until they are.
 
 \Cref{sec:anatomy} separates innovation's roles. We trace their AI building
 blocks (\cref{sec:road}), then define the game and learner.

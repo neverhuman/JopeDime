@@ -1,0 +1,299 @@
+#!/usr/bin/env python3
+"""Execute the 28 declared REL-07 gate commands on one artifact; never sign."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import signal
+import socket
+import subprocess
+from pathlib import Path
+
+import cpu_gates as cpu
+from gates_receipt import RELEASE_GATE_IDS, from_cpu_prestage, from_gate_results
+
+COUNTS = "collected executed passed failed skipped excluded".split()
+
+
+def read_json(path):
+    if path.is_symlink() or not path.is_file():
+        raise ValueError(f"expected a regular, non-symlink JSON file: {path}")
+    value = json.loads(path.read_text())
+    if not isinstance(value, dict):
+        raise ValueError("JSON root must be an object")
+    return value
+
+
+def manifest(path):
+    if path.is_symlink() or not path.is_file():
+        raise ValueError("gate manifest must be a regular, non-symlink file")
+    raw = path.read_bytes()
+    value = json.loads(raw)
+    if not isinstance(value, dict):
+        raise ValueError("gate manifest must be an object")
+    if value.get("schema") != "jope.rel07.gate-commands/v1":
+        raise ValueError("unsupported gate-command schema")
+    for field, length in [("source_sha", 40), ("artifact_sha256", 64)]:
+        if not isinstance(value.get(field), str) or not re.fullmatch(
+            "[0-9a-f]{" + str(length) + "}", value[field]
+        ):
+            raise ValueError("invalid " + field)
+    rows = value.get("gates")
+    if not isinstance(rows, list) or len(rows) != 28:
+        raise ValueError("manifest requires exactly 28 release gates")
+    commands = {}
+    for row in rows:
+        if not isinstance(row, dict) or set(row) != {"id", "argv", "timeout_seconds"}:
+            raise ValueError("each command requires id, argv and timeout_seconds")
+        gate = row["id"]
+        if (
+            not isinstance(gate, str)
+            or gate not in RELEASE_GATE_IDS
+            or gate in commands
+        ):
+            raise ValueError("unknown or duplicate release gate")
+        argv = row["argv"]
+        if (
+            not isinstance(argv, list)
+            or not argv
+            or any(not isinstance(arg, str) or not arg or "\0" in arg for arg in argv)
+        ):
+            raise ValueError("argv must contain non-empty strings")
+        timeout = row["timeout_seconds"]
+        if type(timeout) not in (int, float):
+            raise ValueError("timeout_seconds must be a number")
+        cpu.validate_timeout(timeout)
+        commands[gate] = row
+    return value, commands, hashlib.sha256(raw).hexdigest()
+
+
+def verify_inputs(repo, artifact, source, digest):
+    if cpu.git(repo, "rev-parse", "HEAD") != source or cpu.git(
+        repo, "status", "--porcelain", "--untracked-files=all"
+    ):
+        raise ValueError("gate source changed or checkout is not clean")
+    if (
+        artifact.is_symlink()
+        or not artifact.is_file()
+        or cpu.digest(artifact) != digest
+    ):
+        raise ValueError("artifact bytes differ from the gate manifest")
+
+
+def verified_result(path, gate, source, digest):
+    result = read_json(path)
+    if (
+        result.get("schema") != "jope.rel07.gate-execution/v1"
+        or result.get("id") != gate
+        or result.get("source_sha") != source
+        or result.get("artifact_sha256") != digest
+    ):
+        raise ValueError(
+            "child result identity does not match this gate/source/artifact"
+        )
+    counts = result.get("counts")
+    if (
+        not isinstance(counts, dict)
+        or set(counts) != set(COUNTS)
+        or any(type(counts[key]) is not int or counts[key] < 0 for key in COUNTS)
+    ):
+        raise ValueError("child result requires all six nonnegative integer counts")
+    if (
+        result.get("status") != "PASS"
+        or not counts["collected"] == counts["executed"] == counts["passed"] > 0
+        or any(counts[key] for key in ["failed", "skipped", "excluded"])
+    ):
+        raise ValueError("gate did not PASS with positive, complete execution")
+    return result
+
+
+def execute(repo, artifact, commands_path, output):
+    spec, commands, manifest_sha = manifest(commands_path)
+    source, digest = spec["source_sha"], spec["artifact_sha256"]
+    verify_inputs(repo, artifact, source, digest)
+    if output.resolve().is_relative_to(repo):
+        raise ValueError("gate evidence must be outside the tested checkout")
+    output.mkdir(parents=True, exist_ok=False)
+    rows = {
+        gate: dict(
+            id=gate, status="NOT_RUN", evidence=f"not started; artifact={digest}"
+        )
+        for gate in RELEASE_GATE_IDS
+    }
+    run = dict(
+        schema="jope.rel07.gate-run/v1",
+        mode="execute",
+        source_sha=source,
+        artifact=str(artifact),
+        artifact_sha256=digest,
+        manifest_sha256=manifest_sha,
+        runner_sha256=cpu.digest(Path(__file__)),
+        machine=socket.gethostname(),
+        started_utc=cpu.utc(),
+        checks=[],
+        release_qualified=False,
+    )
+
+    def retain():
+        results_path = output / "gate_results.json"
+        cpu.write(
+            results_path,
+            dict(
+                schema="jope.rel07.gate-results/v1",
+                signed_bytes_sha256=digest,
+                gates=[rows[g] for g in RELEASE_GATE_IDS],
+            ),
+        )
+        receipt = dict(
+            artifact_sha256=digest,
+            gates=[dict(rows[g], artifact_sha256=digest) for g in RELEASE_GATE_IDS],
+        )
+        if all(row["status"] == "PASS" for row in rows.values()):
+            receipt = from_gate_results(results_path, artifact)
+            receipt["artifact_sha256"] = digest
+            for row in receipt["gates"]:
+                row["artifact_sha256"] = digest
+        cpu.write(output / "execution.json", run)
+        cpu.write(output / "gates_receipt.json", receipt)
+        return receipt
+
+    retain()
+    interrupted = False
+    for gate in RELEASE_GATE_IDS:
+        record = dict(commands[gate], started_utc=cpu.utc(), exit_code=None)
+        folder = output / gate
+        try:
+            verify_inputs(repo, artifact, source, digest)
+            record["admission"] = cpu.admission(repo)
+        except (OSError, ValueError) as error:
+            rows[gate].update(status="BLOCKED", evidence=f"{error}; artifact={digest}")
+            record["diagnostic"] = str(error)
+            run["checks"].append(record)
+            break
+        folder.mkdir()
+        (folder / "scratch").mkdir()
+        environment = cpu.child_environment(folder, repo / "target", 4, source)
+        environment.update(
+            JOPE_REL07_ARTIFACT=str(artifact),
+            JOPE_REL07_ARTIFACT_SHA256=digest,
+            JOPE_REL07_SOURCE_SHA=source,
+            JOPE_REL07_GATE_ID=gate,
+            JOPE_REL07_RESULT=str(folder / "result.json"),
+        )
+        try:
+            code, timed_out = cpu.invoke(
+                commands[gate]["argv"],
+                repo,
+                folder / "command.log",
+                environment,
+                commands[gate]["timeout_seconds"],
+            )
+            record.update(exit_code=code, timed_out=timed_out)
+            log = folder / "command.log"
+            if log.is_symlink() or not log.is_file():
+                raise ValueError("gate requires a retained regular command log")
+            record["log_sha256"] = cpu.digest(log)
+            verify_inputs(repo, artifact, source, digest)
+            if code != 0 or timed_out:
+                raise ValueError(
+                    f"gate command failed: exit={code}, timeout={timed_out}"
+                )
+            result = verified_result(folder / "result.json", gate, source, digest)
+            record.update(
+                counts=result["counts"],
+                result_sha256=cpu.digest(folder / "result.json"),
+            )
+            rows[gate].update(
+                status="PASS", evidence=f"{folder / 'result.json'}; artifact={digest}"
+            )
+        except (OSError, ValueError) as error:
+            record["diagnostic"] = str(error)
+            rows[gate].update(
+                status="FAIL", evidence=f"{folder}; {error}; artifact={digest}"
+            )
+        except KeyboardInterrupt:
+            interrupted = True
+            record["diagnostic"] = "interrupted; owned child group stopped"
+            rows[gate].update(
+                status="FAIL", evidence=f"interrupted; {folder}; artifact={digest}"
+            )
+        record["finished_utc"] = cpu.utc()
+        run["checks"].append(record)
+        # Recheck before publishing even the last PASS; source drift cannot emit 28 PASS.
+        try:
+            verify_inputs(repo, artifact, source, digest)
+        except (OSError, ValueError) as error:
+            rows[gate].update(status="FAIL", evidence=f"{error}; artifact={digest}")
+            run["diagnostic"] = str(error)
+            break
+        retain()
+        if interrupted:
+            break
+    run.update(finished_utc=cpu.utc(), interrupted=interrupted)
+    receipt = retain()
+    return receipt, 130 if interrupted else int(
+        any(row["status"] != "PASS" for row in receipt["gates"])
+    )
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    inputs = parser.add_mutually_exclusive_group(required=True)
+    inputs.add_argument("--manifest", type=Path)
+    inputs.add_argument("--cpu-prestage", type=Path)
+    parser.add_argument("--repo", type=Path)
+    parser.add_argument("--artifact", type=Path)
+    parser.add_argument("--output", required=True, type=Path)
+    args = parser.parse_args()
+    if args.manifest:
+
+        def interrupted(_signum, _frame):
+            raise KeyboardInterrupt
+
+        signal.signal(signal.SIGTERM, interrupted)
+    try:
+        if args.cpu_prestage:
+            if args.repo or args.artifact:
+                raise ValueError("CPU-prestage dry-run accepts no artifact or repo")
+            receipt = from_cpu_prestage(args.cpu_prestage)
+            args.output.mkdir(parents=True, exist_ok=False)
+            cpu.write(args.output / "gates_receipt.json", receipt)
+            cpu.write(
+                args.output / "execution.json",
+                dict(
+                    mode="dry-run",
+                    gates_executed=0,
+                    release_qualified=False,
+                    input_sha256=cpu.digest(args.cpu_prestage),
+                    finished_utc=cpu.utc(),
+                ),
+            )
+            code = 0
+        else:
+            if not args.repo or not args.artifact:
+                raise ValueError("execution requires --repo and --artifact")
+            receipt, code = execute(
+                args.repo.resolve(),
+                args.artifact.absolute(),
+                args.manifest,
+                args.output.absolute(),
+            )
+    except (OSError, ValueError, subprocess.CalledProcessError) as error:
+        parser.error(str(error))
+    print(
+        json.dumps(
+            dict(
+                gates=28,
+                all_pass=all(g["status"] == "PASS" for g in receipt["gates"]),
+                dry_run=bool(args.cpu_prestage),
+            )
+        )
+    )
+    return code
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

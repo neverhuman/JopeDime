@@ -714,6 +714,7 @@ mod resize_tests {
                     std::process::id() as f64,
                     matrix.bytes().as_ptr() as usize as f64,
                 ],
+                fold_scores: vec![],
                 predictions_digest: "0".repeat(64),
             })
         })

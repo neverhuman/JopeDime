@@ -843,6 +843,7 @@ mod tests {
                     metric: "RMSE".to_owned(),
                     value: Some(0.5),
                     failure: None,
+                    attempt_receipt: None,
                 }),
             ),
             test_event(
@@ -854,6 +855,7 @@ mod tests {
                     metric: "RMSE".to_owned(),
                     value: Some(0.51),
                     failure: None,
+                    attempt_receipt: None,
                 }),
             ),
         ];
@@ -881,6 +883,7 @@ mod tests {
                     count: DecimalU64(0),
                     experiment_ids: Vec::new(),
                 },
+                evaluation_receipt: None,
             }),
         ));
         events
@@ -942,6 +945,7 @@ mod tests {
                 metric: "RMSE".to_owned(),
                 value: Some(0.5),
                 failure: None,
+                attempt_receipt: None,
             }),
         };
         let events = [

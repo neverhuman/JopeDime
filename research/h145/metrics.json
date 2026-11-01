@@ -1,0 +1,382 @@
+{
+  "arms": {
+    "LATEST": {
+      "alias_of": "R882",
+      "elo": 1500.0,
+      "elo_ci95": [
+        1500.0,
+        1500.0
+      ],
+      "equal_family_mean_utility": 1.3853554329931834,
+      "first_probability": 0.0018,
+      "full_small_gain_se_ratio": null,
+      "gain_uncertainty": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "se": 0.0
+      },
+      "invalid_picks": 17,
+      "mean_bootstrap_rank": 3.1224,
+      "mean_gain_vs_R882": 0.0,
+      "pairwise_positive_probability": {
+        "R782": 0.0042,
+        "R785": 0.186,
+        "R859": 0.6844,
+        "R882": 0.0
+      },
+      "rank_ci95": [
+        2.0,
+        4.0
+      ],
+      "small_control_gain_uncertainty": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "se": 0.0
+      },
+      "utility_uncertainty": {
+        "ci95": [
+          1.1393900697195403,
+          1.6769375004214304
+        ],
+        "se": 0.1371702890000381
+      }
+    },
+    "R782": {
+      "elo": 1501.9056639306186,
+      "elo_ci95": [
+        1497.1322596189711,
+        1506.6581560813663
+      ],
+      "equal_family_mean_utility": 1.3986153914619401,
+      "first_probability": 0.9918,
+      "full_small_gain_se_ratio": 1.9069706894394636,
+      "gain_uncertainty": {
+        "ci95": [
+          0.0024851223303959894,
+          0.027479188908529004
+        ],
+        "se": 0.006434671938970251
+      },
+      "invalid_picks": 13,
+      "mean_bootstrap_rank": 1.0159,
+      "mean_gain_vs_R882": 0.013259958468756716,
+      "pairwise_positive_probability": {
+        "R782": 0.0,
+        "R785": 0.9921,
+        "R859": 0.9962,
+        "R882": 0.9958
+      },
+      "rank_ci95": [
+        1.0,
+        1.0
+      ],
+      "small_control_gain_uncertainty": {
+        "ci95": [
+          -0.007119391619017384,
+          0.0061217563595770295
+        ],
+        "se": 0.0033742899010480664
+      },
+      "utility_uncertainty": {
+        "ci95": [
+          1.153719146334276,
+          1.6900328895371455
+        ],
+        "se": 0.1366111586601564
+      }
+    },
+    "R785": {
+      "elo": 1499.6195325503993,
+      "elo_ci95": [
+        1497.099276322722,
+        1502.128375499081
+      ],
+      "equal_family_mean_utility": 1.3863733561907365,
+      "first_probability": 0.0061,
+      "full_small_gain_se_ratio": 0.39899992701324877,
+      "gain_uncertainty": {
+        "ci95": [
+          -0.0006573932030158658,
+          0.0035178905022923024
+        ],
+        "se": 0.0011011265739702529
+      },
+      "invalid_picks": 16,
+      "mean_bootstrap_rank": 2.3146,
+      "mean_gain_vs_R882": 0.0010179231975531167,
+      "pairwise_positive_probability": {
+        "R782": 0.0079,
+        "R785": 0.0,
+        "R859": 0.8635,
+        "R882": 0.814
+      },
+      "rank_ci95": [
+        2.0,
+        4.0
+      ],
+      "small_control_gain_uncertainty": {
+        "ci95": [
+          -0.004304787374006969,
+          0.007021006707250255
+        ],
+        "se": 0.0027597162290550746
+      },
+      "utility_uncertainty": {
+        "ci95": [
+          1.1406103244006645,
+          1.6775845299885332
+        ],
+        "se": 0.13710623922448892
+      }
+    },
+    "R859": {
+      "elo": 1500.084732761844,
+      "elo_ci95": [
+        1498.7289723744207,
+        1501.4404567666636
+      ],
+      "equal_family_mean_utility": 1.3852243134757252,
+      "first_probability": 0.0003,
+      "full_small_gain_se_ratio": 0.16742244311759177,
+      "gain_uncertainty": {
+        "ci95": [
+          -0.0006585749285906162,
+          0.00025414577180082887
+        ],
+        "se": 0.0002344218406533039
+      },
+      "invalid_picks": 17,
+      "mean_bootstrap_rank": 3.5471,
+      "mean_gain_vs_R882": -0.00013111951745825579,
+      "pairwise_positive_probability": {
+        "R782": 0.0038,
+        "R785": 0.1365,
+        "R859": 0.0,
+        "R882": 0.3096
+      },
+      "rank_ci95": [
+        2.0,
+        4.0
+      ],
+      "small_control_gain_uncertainty": {
+        "ci95": [
+          -0.004304787374007191,
+          0.0
+        ],
+        "se": 0.0014001816977945666
+      },
+      "utility_uncertainty": {
+        "ci95": [
+          1.1393435077884306,
+          1.676585913787594
+        ],
+        "se": 0.13715015694101026
+      }
+    },
+    "R882": {
+      "elo": 1500.0,
+      "elo_ci95": [
+        1500.0,
+        1500.0
+      ],
+      "equal_family_mean_utility": 1.3853554329931834,
+      "first_probability": 0.0018,
+      "full_small_gain_se_ratio": null,
+      "gain_uncertainty": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "se": 0.0
+      },
+      "invalid_picks": 17,
+      "mean_bootstrap_rank": 3.1224,
+      "mean_gain_vs_R882": 0.0,
+      "pairwise_positive_probability": {
+        "R782": 0.0042,
+        "R785": 0.186,
+        "R859": 0.6844,
+        "R882": 0.0
+      },
+      "rank_ci95": [
+        2.0,
+        4.0
+      ],
+      "small_control_gain_uncertainty": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "se": 0.0
+      },
+      "utility_uncertainty": {
+        "ci95": [
+          1.1393900697195403,
+          1.6769375004214304
+        ],
+        "se": 0.1371702890000381
+      }
+    }
+  },
+  "bootstrap_replicates": 10000,
+  "contexts": 1219,
+  "decision_gates": {
+    "complete_panel": true,
+    "crossfit_gain_gt_0_001": true,
+    "crossfit_lower_bound_gt_0": true,
+    "median_se_ratio_lte_0_75": true,
+    "selected_in_four_folds": true,
+    "top_probability_gte_0_80": true
+  },
+  "elo_bootstrap_replicates": 1000,
+  "execution": {
+    "CUDA_initialized": false,
+    "DLVal_outcome_subtrees_decoded": 0,
+    "DOPE_modified": false,
+    "aliases": {
+      "LATEST": "R882",
+      "R782": "R782",
+      "R785": "R785",
+      "R859": "R859",
+      "R882": "R882"
+    },
+    "cache_replayed": true,
+    "canonical_elo_point_check": "PASS",
+    "catalog_sha256": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
+    "checkpoint_parameters": {
+      "LATEST": {
+        "dope": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+        "non_adapter_tensors_equal": 222,
+        "state_sha256": "2265a22517c8825dc63f60c565d0713e913da28202b47721bd9f527735164997"
+      },
+      "R782": {
+        "dope": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+        "non_adapter_tensors_equal": 222,
+        "state_sha256": "72a189d6747bca4e514333c856b85a7cac1099dc6859da24a3a00e6b82a2ec61"
+      },
+      "R785": {
+        "dope": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+        "non_adapter_tensors_equal": 222,
+        "state_sha256": "05cfaf0409e7e980913197255d08324293d91e5f4b2085f4fe079f7b45413136"
+      },
+      "R859": {
+        "dope": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+        "non_adapter_tensors_equal": 222,
+        "state_sha256": "f7cd4023eb1969d85976a12778456314bae933dfb7012745f028961d46c5b109"
+      },
+      "R882": {
+        "dope": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+        "non_adapter_tensors_equal": 222,
+        "state_sha256": "2265a22517c8825dc63f60c565d0713e913da28202b47721bd9f527735164997"
+      }
+    },
+    "completed_at": "2026-11-01T01:58:16.562869+00:00",
+    "cpu_seconds": 4.586223409,
+    "hard_deadline": "2026-11-01T03:45:00Z",
+    "host": "xbabe2",
+    "math_threads": 1,
+    "max_rss_kib": 559752,
+    "new_model_forwards": 0,
+    "nice": 19,
+    "numpy": "1.26.4",
+    "optimizer_updates": 0,
+    "prereg_merge": "6fc5cd8c74736cc91d32a5fb9f5d36a72fc3f6e9",
+    "prereg_sha256": "b1bcf167847b0a36bf4b6e1d33ae29045315aa07c1a8c72b1adb17b42b736d7c",
+    "python": "3.12.3",
+    "runner_sha256": "03285be2058493183a15011801c00fe205a3de6e33f9902831236cb461a61bd6",
+    "sealed_holdout_payload_reads": 0,
+    "selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "source_commit": "7c6e4eecb4cf873b277a0272e6a72f109652f058",
+    "started_at": "2026-11-01T01:57:56.177673+00:00",
+    "started_epoch": 1793498276.1776679,
+    "statistics_sha256": "f3e7a7a57ef395ba7f0f15f7fa1c8141280e0fa9cb628af230bb73c5e5e3345f",
+    "torch": "2.7.0",
+    "wall_budget_seconds": 7200,
+    "wall_seconds": 20.385504484176636
+  },
+  "families": 205,
+  "historical_training_exposure": true,
+  "live_switch": false,
+  "median_full_small_se_ratio": 0.39899992701324877,
+  "proposal": "LARGER_PANEL_SHADOW_TRIAL",
+  "published_91_context_comparison": {
+    "R785_value_precision": "published rounded 1.137595; no raw DL-Val reads",
+    "aggregate_values": {
+      "LATEST": 1.1377941898164525,
+      "R782": 1.1073772627425547,
+      "R785": 1.137595,
+      "R859": 1.1377941898164525,
+      "R882": 1.1377941898164525
+    },
+    "ranking": [
+      "R859",
+      "R882",
+      "LATEST",
+      "R785",
+      "R782"
+    ],
+    "source": "merged H139/H143 published aggregate results; old context-weighted vs new equal-family estimands differ",
+    "spearman_unique_functions": -0.9486832980505139
+  },
+  "ranking": [
+    "R782",
+    "R785",
+    "R882",
+    "LATEST",
+    "R859"
+  ],
+  "selector_crossfit": {
+    "ci95": [
+      0.002485122330395856,
+      0.027479188908529826
+    ],
+    "folds": [
+      {
+        "assessment_gain": 0.01291033337553008,
+        "fit_mean": 1.485586060098188,
+        "fold": 0,
+        "selected": "R782"
+      },
+      {
+        "assessment_gain": 0.00809345906020579,
+        "fit_mean": 1.5061270815563594,
+        "fold": 1,
+        "selected": "R782"
+      },
+      {
+        "assessment_gain": -0.001458300864487321,
+        "fit_mean": 1.4154792542501136,
+        "fold": 2,
+        "selected": "R782"
+      },
+      {
+        "assessment_gain": -0.0035803124014551855,
+        "fit_mean": 1.4375126190395995,
+        "fold": 3,
+        "selected": "R782"
+      },
+      {
+        "assessment_gain": 0.050334613173993605,
+        "fit_mean": 1.14837194236544,
+        "fold": 4,
+        "selected": "R782"
+      }
+    ],
+    "mean_gain": 0.013259958468757393,
+    "se": 0.006434671938970254
+  },
+  "small_train_control": {
+    "contexts": 91,
+    "families": 75
+  },
+  "unique_functions": [
+    "R782",
+    "R785",
+    "R859",
+    "R882"
+  ]
+}

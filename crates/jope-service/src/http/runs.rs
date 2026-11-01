@@ -28,6 +28,7 @@ use axum::{
     Json,
 };
 use jope_api::{
+    decimal::DecimalU64,
     error::{ErrorCode, Problem},
     *,
 };
@@ -93,6 +94,78 @@ struct Prepared {
     holdout_rows: Vec<AuditRowId>,
 }
 
+#[derive(Clone, Debug, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Q1Request {
+    schema: String,
+    mode: String,
+    source_commit: String,
+    plan_sha256: String,
+    pins: std::collections::BTreeMap<String, String>,
+    metric: String,
+    dataset: Q1DatasetIdentity,
+    guidance: String,
+    seed: u64,
+    budget: u64,
+    request_sha256: String,
+}
+
+#[derive(Clone, Debug, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Q1DatasetIdentity {
+    id: String,
+    task: String,
+    dataset_sha256: String,
+    family: String,
+    family_authoritative: bool,
+    rows: u64,
+    features: u64,
+    cut_sha256: String,
+    holdout_group: String,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Q1ProtocolManifest {
+    schema: String,
+    protocol_sha256: String,
+    source_commit: String,
+    plan_sha256: String,
+    pins: std::collections::BTreeMap<String, String>,
+    datasets: std::collections::BTreeMap<String, Q1DatasetBinding>,
+}
+
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Q1DatasetBinding {
+    id: String,
+    task: String,
+    dataset_sha256: String,
+    family: String,
+    family_authoritative: bool,
+    rows: u64,
+    features: u64,
+    cut_sha256: String,
+    holdout_group: String,
+    catalog_version: String,
+    catalog_record_sha256: String,
+    dataset_binding_sha256: String,
+    target: String,
+    feature_columns: Vec<String>,
+    train_rows: u64,
+    train_blob_sha256: String,
+    train_blob_bytes: u64,
+    folds: Vec<Q1Fold>,
+}
+
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Q1Fold {
+    repeat: u8,
+    train: Vec<usize>,
+    validation: Vec<usize>,
+}
+
 /// Establish a bounded native baseline before considering expensive mutations.
 /// The existing research/native starter order remains unchanged.
 struct CpuRunSpace {
@@ -137,6 +210,266 @@ impl SearchSpace for CpuRunSpace {
 
 fn hash(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
+}
+
+fn parse_digest(value: &str) -> Option<[u8; 32]> {
+    if value.len() != 64
+        || !value
+            .bytes()
+            .all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase())
+    {
+        return None;
+    }
+    let mut bytes = [0; 32];
+    for (index, byte) in bytes.iter_mut().enumerate() {
+        *byte = u8::from_str_radix(&value[index * 2..index * 2 + 2], 16).ok()?;
+    }
+    Some(bytes)
+}
+
+fn canonical_sha256(value: &Value) -> Result<String> {
+    serde_json::to_vec(value)
+        .map(|bytes| hash(&bytes))
+        .map_err(io)
+}
+
+fn validate_q1_request(request: &Q1Request, raw: &Value) -> Result<()> {
+    if request.schema != "jope.q1-request/v1"
+        || request.mode != "qualification"
+        || request.metric != "rmse"
+        || request.guidance != "heuristic" && request.guidance != "learned"
+        || request.budget != 24
+        || request.seed > 2
+        || !valid_hex(&request.source_commit, 40)
+        || !valid_hex(&request.plan_sha256, 64)
+        || !valid_hex(&request.request_sha256, 64)
+    {
+        return Err(invalid(
+            "Q1 request schema, policy, metric, identity or budget is unsupported.",
+        ));
+    }
+    let expected_pins = [
+        "bundle_sha256",
+        "dope_sha256",
+        "evaluator_sha256",
+        "vocabulary_sha256",
+        "protocol_sha256",
+        "training_family_manifest_sha256",
+    ];
+    if request.pins.len() != expected_pins.len()
+        || expected_pins.iter().any(|key| {
+            request
+                .pins
+                .get(*key)
+                .is_none_or(|value| !valid_hex(value, 64))
+        })
+    {
+        return Err(invalid("Q1 request pins are incomplete or malformed."));
+    }
+    if !valid_hex(&request.dataset.id, 16)
+        || !valid_hex(&request.dataset.dataset_sha256, 64)
+        || !request
+            .dataset
+            .dataset_sha256
+            .starts_with(&request.dataset.id)
+        || !valid_hex(&request.dataset.cut_sha256, 64)
+        || !valid_hex(&request.dataset.family, request.dataset.family.len())
+        || ![40, 64].contains(&request.dataset.family.len())
+        || !request.dataset.family_authoritative
+        || request.dataset.task != "regression"
+        || request.dataset.holdout_group != "sealed_meta_test"
+        || request.dataset.rows == 0
+        || request.dataset.features == 0
+    {
+        return Err(invalid(
+            "Q1 dataset identity or holdout metadata is unsupported.",
+        ));
+    }
+    let mut canonical_request = raw.clone();
+    let object = canonical_request
+        .as_object_mut()
+        .ok_or_else(|| invalid("Q1 request must be a JSON object."))?;
+    object.remove("request_sha256");
+    if canonical_sha256(&canonical_request)? != request.request_sha256 {
+        return Err(invalid("Q1 canonical request digest mismatch."));
+    }
+    Ok(())
+}
+
+fn valid_hex(value: &str, length: usize) -> bool {
+    value.len() == length
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase())
+}
+
+fn load_q1_manifest(home: &std::path::Path, protocol_sha: &str) -> Result<Q1ProtocolManifest> {
+    let q1_dir = home.join("q1");
+    let protocols_dir = q1_dir.join("protocols");
+    for directory in [&q1_dir, &protocols_dir] {
+        let metadata = std::fs::symlink_metadata(directory)
+            .map_err(|_| unavailable("Pinned Q1 protocol manifest is not installed."))?;
+        if !metadata.file_type().is_dir() {
+            return Err(unavailable(
+                "Pinned Q1 protocol path is not a real directory.",
+            ));
+        }
+    }
+    let path = protocols_dir.join(format!("{protocol_sha}.json"));
+    let metadata = std::fs::symlink_metadata(&path)
+        .map_err(|_| unavailable("Pinned Q1 protocol manifest is not installed."))?;
+    if !metadata.file_type().is_file() || metadata.len() > 8 * 1024 * 1024 {
+        return Err(unavailable(
+            "Pinned Q1 protocol manifest is not a bounded regular file.",
+        ));
+    }
+    let bytes = std::fs::read(path).map_err(io)?;
+    serde_json::from_slice(&bytes).map_err(|_| invalid("Pinned Q1 protocol manifest is malformed."))
+}
+
+fn validate_q1_binding(binding: &Q1DatasetBinding, dataset: &Q1DatasetIdentity) -> Result<()> {
+    let mut value = serde_json::to_value(binding).map_err(io)?;
+    let object = value
+        .as_object_mut()
+        .ok_or_else(|| invalid("Q1 dataset binding is malformed."))?;
+    object.remove("dataset_binding_sha256");
+    if binding.id != dataset.id
+        || binding.task != dataset.task
+        || binding.dataset_sha256 != dataset.dataset_sha256
+        || binding.family != dataset.family
+        || binding.family_authoritative != dataset.family_authoritative
+        || binding.rows != dataset.rows
+        || binding.features != dataset.features
+        || binding.cut_sha256 != dataset.cut_sha256
+        || binding.holdout_group != dataset.holdout_group
+        || !binding.catalog_version.starts_with('v')
+        || binding.catalog_version[1..].is_empty()
+        || !binding.catalog_version[1..]
+            .bytes()
+            .all(|byte| byte.is_ascii_digit())
+        || !valid_hex(&binding.catalog_record_sha256, 64)
+        || !valid_hex(&binding.train_blob_sha256, 64)
+        || !valid_hex(&binding.dataset_binding_sha256, 64)
+        || hash(&serde_json::to_vec(&value).map_err(io)?) != binding.dataset_binding_sha256
+        || binding.target.is_empty()
+        || binding.feature_columns.len() as u64 != dataset.features
+        || binding.feature_columns.iter().any(String::is_empty)
+        || binding
+            .feature_columns
+            .iter()
+            .collect::<std::collections::BTreeSet<_>>()
+            .len()
+            != binding.feature_columns.len()
+        || binding.feature_columns.contains(&binding.target)
+        || binding.train_rows < 2
+        || usize::try_from(binding.train_rows).is_err()
+        || binding.folds.len() < 2
+        || binding.folds.iter().any(|fold| {
+            fold.train.is_empty()
+                || fold.validation.is_empty()
+                || fold
+                    .train
+                    .iter()
+                    .any(|row| *row >= binding.train_rows as usize)
+                || fold
+                    .validation
+                    .iter()
+                    .any(|row| *row >= binding.train_rows as usize)
+                || fold
+                    .train
+                    .iter()
+                    .collect::<std::collections::BTreeSet<_>>()
+                    .len()
+                    != fold.train.len()
+                || fold
+                    .validation
+                    .iter()
+                    .collect::<std::collections::BTreeSet<_>>()
+                    .len()
+                    != fold.validation.len()
+                || fold.train.iter().any(|row| fold.validation.contains(row))
+        })
+    {
+        return Err(invalid(
+            "Q1 dataset binding does not match its catalog/request identities.",
+        ));
+    }
+    Ok(())
+}
+
+fn q1_command_key(request_sha256: &str) -> RecordKey {
+    RecordKey::Command {
+        principal: "q1-evaluation".into(),
+        idempotency_key: request_sha256.into(),
+    }
+}
+
+fn q1_replay_or_unknown(data: Value) -> Result<Option<Vec<u8>>> {
+    if data["status"] == "completed" {
+        return data["receipt_bytes"]
+            .as_str()
+            .map(|bytes| Some(bytes.as_bytes().to_vec()))
+            .ok_or_else(|| io("Completed Q1 receipt bytes are missing."));
+    }
+    Err(unavailable(
+        "A prior Q1 request has an unknown or incomplete outcome; it was not replayed.",
+    ))
+}
+
+fn q1_running_snapshot(run_id: jope_api::ids::RunId, budget: u64) -> RunSnapshot {
+    RunSnapshot {
+        run_id,
+        revision: DecimalU64(1),
+        state: RunState::Running,
+        phase: RunPhase::Encoding,
+        pending: Some("pinned_training_evaluation".into()),
+        effort: Effort::Fast,
+        budget_used: BudgetUsed {
+            evaluations: DecimalU64(0),
+            wall_seconds: "0".into(),
+        },
+        budget_total: BudgetTotal {
+            evaluations: DecimalU64(budget),
+            wall_seconds: DecimalU64(600),
+        },
+        best: None,
+        event_watermark: DecimalU64(0),
+        warnings: vec![],
+        completion_reason: None,
+        evaluation_receipt: None,
+    }
+}
+
+fn q1_failure(failure: crate::worker::WorkerFailure) -> jope_api::EvaluationFailure {
+    let (code, reason) = match failure {
+        crate::worker::WorkerFailure::Timeout => ("timeout", "attempt reached its time limit"),
+        crate::worker::WorkerFailure::MemoryLimit => {
+            ("memory_limit", "attempt exceeded its memory limit")
+        }
+        crate::worker::WorkerFailure::NonFinite => {
+            ("non_finite", "attempt produced undefined fitness")
+        }
+        crate::worker::WorkerFailure::Unavailable => {
+            ("backend_unavailable", "native evaluator unavailable")
+        }
+        crate::worker::WorkerFailure::InvalidRequest => {
+            ("invalid_request", "native evaluator rejected the request")
+        }
+        other => (
+            "evaluation_failed",
+            match other {
+                crate::worker::WorkerFailure::Panicked => "native evaluator panicked",
+                crate::worker::WorkerFailure::ProcessExited => "worker process exited",
+                crate::worker::WorkerFailure::Protocol => "worker protocol failed",
+                crate::worker::WorkerFailure::StaleAttempt => "attempt fence was stale",
+                _ => "attempt failed",
+            },
+        ),
+    };
+    jope_api::EvaluationFailure {
+        code: code.into(),
+        reason: reason.into(),
+    }
 }
 fn issue(code: ErrorCode, detail: impl Into<String>) -> Box<Problem> {
     Box::new(Problem { r#type: "about:blank".into(), title: code.as_str().into(),
@@ -189,6 +522,371 @@ impl RunService {
             admission: Mutex::new(()),
             _lease: lease,
         })
+    }
+
+    fn q1_evaluate(&self, raw: Value) -> Result<Vec<u8>> {
+        let request: Q1Request = serde_json::from_value(raw.clone())
+            .map_err(|_| invalid("Expected a closed jope.q1-request/v1 object."))?;
+        validate_q1_request(&request, &raw)?;
+        if request.guidance != "heuristic" {
+            return Err(unavailable(
+                "This engine build has no verified learned Q1 evaluator binding.",
+            ));
+        }
+
+        let protocol_sha = &request.pins["protocol_sha256"];
+        let manifest = load_q1_manifest(&self.home, protocol_sha)?;
+        if manifest.schema != "jope.q1-protocol-manifest/v1"
+            || manifest.protocol_sha256 != *protocol_sha
+            || manifest.source_commit != request.source_commit
+            || manifest.plan_sha256 != request.plan_sha256
+            || manifest.pins != request.pins
+        {
+            return Err(invalid("Q1 protocol manifest identity mismatch."));
+        }
+        let binding = manifest
+            .datasets
+            .get(&request.dataset.id)
+            .ok_or_else(|| unavailable("Dataset is absent from the pinned protocol manifest."))?;
+        validate_q1_binding(binding, &request.dataset)?;
+        if binding.train_blob_bytes > self.config.limits.max_dataset_bytes.value
+            || binding.train_rows > self.config.limits.rung1_max_rows.value
+        {
+            return Err(unavailable(
+                "Pinned Q1 training partition exceeds the local engine limits.",
+            ));
+        }
+        let available = SystemSensors::without_gpu(&self.home)
+            .mem_available()
+            .map_err(|_| unavailable("Memory admission sensor unavailable."))?;
+        if binding
+            .train_blob_bytes
+            .saturating_mul(4)
+            .saturating_add(WORKER_RAM)
+            > available
+        {
+            return Err(unavailable(
+                "Insufficient available memory for the pinned Q1 training partition.",
+            ));
+        }
+
+        let train_sha = parse_digest(&binding.train_blob_sha256)
+            .ok_or_else(|| invalid("Pinned training blob hash is malformed."))?;
+        let train_blob = crate::store::BlobRef {
+            sha256: train_sha,
+            bytes: binding.train_blob_bytes,
+        };
+        let train_csv = self.store.read_blob(&train_blob).map_err(io)?;
+        let table = jope_runtime::table::parse_csv(
+            &train_csv,
+            &jope_runtime::limits::Limits {
+                max_input_bytes: binding.train_blob_bytes,
+                ..Default::default()
+            },
+        )
+        .map_err(|_| invalid("Pinned training partition is not a valid CSV."))?;
+        if table.rows.len() as u64 != binding.train_rows
+            || binding.feature_columns.len() as u64 != request.dataset.features
+            || table.headers.len() != binding.feature_columns.len() + 1
+            || !table.headers.contains(&binding.target)
+            || binding
+                .feature_columns
+                .iter()
+                .any(|column| !table.headers.contains(column))
+        {
+            return Err(invalid(
+                "Pinned training partition shape or columns mismatch.",
+            ));
+        }
+        let matrix_bytes = jmat::encode(&table)
+            .map_err(|_| invalid("Pinned training partition cannot be encoded."))?;
+        let matrix_sha = hash(&matrix_bytes);
+        let matrix = jmat::Matrix::open(matrix_bytes)
+            .map_err(|_| invalid("Pinned training matrix is invalid."))?;
+        let fold_spec = json!({
+            "version": 1,
+            "matrix_sha256": matrix_sha,
+            "target": binding.target.clone(),
+            "features": binding.feature_columns.clone(),
+            "folds": binding.folds.clone(),
+            "refit_output": null,
+            "refit_max_bytes": null
+        });
+        let run_id = jope_api::ids::RunId::new();
+        let started_at = std::time::Instant::now();
+        let started = self.reserve_q1_request(&request, &run_id)?;
+        if let Some(bytes) = started {
+            return Ok(bytes);
+        }
+
+        let program = "(pipe X (standardize) (ridge))";
+        let program_sha = hash(program.as_bytes());
+        let mut attempts = Vec::with_capacity(request.budget as usize);
+        let mut attempt_events = Vec::with_capacity(request.budget as usize);
+        for number in 0..request.budget {
+            let worker_request = crate::worker::Request {
+                attempt: crate::worker::Attempt {
+                    run: run_id.clone(),
+                    round: 0,
+                    slot: number as u32,
+                    attempt: number,
+                },
+                matrix_path: PathBuf::new(),
+                fold_spec: fold_spec.clone(),
+                dsl: program.to_owned(),
+                objective: json!("rmse"),
+                seed: request.seed.wrapping_add(number),
+                limits: crate::worker::Limits {
+                    wall_ms: 600_000,
+                    rss_bytes: WORKER_RAM,
+                },
+            };
+            let attempt = match crate::discover::r#loop::evaluate_native(&worker_request, &matrix) {
+                Ok(scores)
+                    if scores.fold_scores.len() >= 2
+                        && scores
+                            .fold_scores
+                            .iter()
+                            .all(|score| score.is_finite() && *score >= 0.0) =>
+                {
+                    let loss =
+                        scores.fold_scores.iter().sum::<f64>() / scores.fold_scores.len() as f64;
+                    jope_api::EvaluationAttempt {
+                        attempt: number,
+                        outcome: jope_api::EvaluationAttemptOutcome::Completed,
+                        fold_scores: scores.fold_scores,
+                        loss: Some(loss),
+                        program_sha256: Some(program_sha.clone()),
+                        failure: None,
+                    }
+                }
+                result => {
+                    let failure = match result {
+                        Err(failure) => q1_failure(failure),
+                        Ok(_) => jope_api::EvaluationFailure {
+                            code: "invalid_fold_scores".into(),
+                            reason: "Evaluator returned no finite per-fold RMSE inventory.".into(),
+                        },
+                    };
+                    jope_api::EvaluationAttempt {
+                        attempt: number,
+                        outcome: jope_api::EvaluationAttemptOutcome::Failed,
+                        fold_scores: vec![],
+                        loss: None,
+                        program_sha256: None,
+                        failure: Some(failure),
+                    }
+                }
+            };
+            attempt_events.push(EventBody::ExperimentStarted(ExperimentStartedBody {
+                experiment_id: format!("q1_{number}"),
+                hypothesis: "Pinned Q1 evaluation attempt".into(),
+            }));
+            attempt_events.push(EventBody::ExperimentFinished(ExperimentFinishedBody {
+                experiment_id: format!("q1_{number}"),
+                outcome: if attempt.outcome == jope_api::EvaluationAttemptOutcome::Completed {
+                    ExperimentOutcome::NotImproved
+                } else {
+                    ExperimentOutcome::Failed
+                },
+                metric: request.metric.clone(),
+                value: attempt.loss,
+                failure: attempt.failure.as_ref().map(|failure| PublicFailure {
+                    code: ErrorCode::NumericalFailure,
+                    reason: format!("{}: {}", failure.code, failure.reason),
+                }),
+                attempt_receipt: Some(Box::new(attempt.clone())),
+            }));
+            attempts.push(attempt);
+        }
+
+        let charged = attempts.len() as u64;
+        let champion = attempts
+            .iter()
+            .filter(|attempt| attempt.outcome == jope_api::EvaluationAttemptOutcome::Completed)
+            .min_by(|left, right| left.loss.unwrap().total_cmp(&right.loss.unwrap()));
+        let champion_program = champion.and_then(|attempt| attempt.program_sha256.clone());
+        let receipt = EvaluationReceipt {
+            schema: "jope.q1-evaluation-receipt/v1".into(),
+            request_sha256: request.request_sha256.clone(),
+            identity: EvaluationIdentity {
+                source_commit: request.source_commit.clone(),
+                plan_sha256: request.plan_sha256.clone(),
+                pins: request.pins.clone(),
+                dataset_id: request.dataset.id.clone(),
+                dataset_sha256: request.dataset.dataset_sha256.clone(),
+                cut_sha256: request.dataset.cut_sha256.clone(),
+                guidance: request.guidance.clone(),
+                metric: request.metric.clone(),
+                seed: request.seed,
+                requested_budget: request.budget,
+                dataset_binding_sha256: binding.dataset_binding_sha256.clone(),
+            },
+            charged,
+            attempts,
+            champion_program,
+            adapter: format!("jope-service/{}", self.binary),
+        };
+        let receipt_bytes = serde_json::to_vec(&receipt).map_err(io)?;
+        self.commit_q1_receipt(
+            &request,
+            &run_id,
+            receipt,
+            receipt_bytes.clone(),
+            attempt_events,
+            started_at.elapsed(),
+        )?;
+        Ok(receipt_bytes)
+    }
+
+    fn reserve_q1_request(
+        &self,
+        request: &Q1Request,
+        run_id: &jope_api::ids::RunId,
+    ) -> Result<Option<Vec<u8>>> {
+        let key = q1_command_key(&request.request_sha256);
+        if let Some(record) = self.store.get(&key).map_err(io)? {
+            return q1_replay_or_unknown(record.data);
+        }
+        let snapshot = q1_running_snapshot(run_id.clone(), request.budget);
+        let result = self.journal.commit(
+            RunUpdate {
+                expected_revision: None,
+                snapshot,
+                checkpoint: json!({"kind":"q1","request_sha256":request.request_sha256}),
+                blobs: vec![],
+            },
+            vec![EventBody::RunState(RunStateBody {
+                state: RunState::Running,
+                phase: RunPhase::Encoding,
+                pending: Some("pinned_training_evaluation".into()),
+                reason: None,
+            })],
+            |tx| {
+                if tx.get(&key)?.is_some() {
+                    return Err(crate::store::StoreError::Invalid("Q1 request already reserved"));
+                }
+                tx.put(
+                    &key,
+                    &crate::store::Record::metadata(
+                        json!({"status":"started_outcome_unknown","request_sha256":request.request_sha256,"run_id":run_id}),
+                        vec![],
+                    ),
+                )
+            },
+        );
+        match result {
+            Ok(_) => Ok(None),
+            Err(_) => match self.store.get(&key).map_err(io)? {
+                Some(record) => q1_replay_or_unknown(record.data),
+                None => Err(io("Could not durably reserve Q1 request.")),
+            },
+        }
+    }
+
+    fn commit_q1_receipt(
+        &self,
+        request: &Q1Request,
+        run_id: &jope_api::ids::RunId,
+        receipt: EvaluationReceipt,
+        receipt_bytes: Vec<u8>,
+        mut attempt_events: Vec<EventBody>,
+        elapsed: std::time::Duration,
+    ) -> Result<()> {
+        let mut snapshot = self
+            .journal
+            .snapshot(run_id)
+            .map_err(io)?
+            .ok_or_else(|| io("Q1 reservation disappeared."))?;
+        let expected_revision = snapshot.revision.0;
+        let completed = receipt
+            .attempts
+            .iter()
+            .filter(|attempt| attempt.outcome == jope_api::EvaluationAttemptOutcome::Completed)
+            .count();
+        let loss = receipt
+            .attempts
+            .iter()
+            .filter_map(|attempt| attempt.loss)
+            .min_by(f64::total_cmp);
+        snapshot.revision.0 = expected_revision
+            .checked_add(1)
+            .ok_or_else(|| io("Q1 receipt revision exhausted."))?;
+        snapshot.state = if completed == 0 {
+            RunState::Failed
+        } else {
+            RunState::Completed
+        };
+        snapshot.phase = RunPhase::Finalizing;
+        snapshot.pending = None;
+        snapshot.budget_used = BudgetUsed {
+            evaluations: DecimalU64(receipt.charged),
+            wall_seconds: format!("{:.3}", elapsed.as_secs_f64()),
+        };
+        snapshot.completion_reason = Some(CompletionReason::BudgetEvaluations);
+        snapshot.evaluation_receipt = Some(receipt.clone());
+        attempt_events.push(EventBody::RunFinished(RunFinishedBody {
+            completion_reason: CompletionReason::BudgetEvaluations,
+            champion: None,
+            scores: FinalScores {
+                cv: loss,
+                holdout: None,
+                test: None,
+            },
+            budget_used: snapshot.budget_used.clone(),
+            nondeterminism: Nondeterminism {
+                count: DecimalU64(0),
+                experiment_ids: vec![],
+            },
+            evaluation_receipt: Some(Box::new(receipt.clone())),
+        }));
+        let command_key = q1_command_key(&request.request_sha256);
+        let receipt_text = String::from_utf8(receipt_bytes.clone())
+            .map_err(|_| io("Serialized Q1 receipt was not UTF-8."))?;
+        self.journal.commit(
+            RunUpdate {
+                expected_revision: Some(expected_revision),
+                snapshot,
+                checkpoint: json!({"kind":"q1","request_sha256":request.request_sha256}),
+                blobs: vec![],
+            },
+            attempt_events,
+            |tx| {
+                let command = tx.get(&command_key)?
+                    .ok_or(crate::store::StoreError::Invalid("Q1 reservation missing"))?;
+                if command.data["status"] != "started_outcome_unknown" {
+                    return Err(crate::store::StoreError::Invalid("Q1 reservation state changed"));
+                }
+                tx.put(
+                    &RecordKey::Evaluation { run: run_id.clone(), number: 0 },
+                    &crate::store::Record::metadata(json!({
+                        "request_sha256":request.request_sha256,
+                        "receipt_bytes":receipt_text,
+                        "charged":receipt.charged,
+                        "completed":completed,
+                        "fold_scores_completed":receipt.attempts.iter()
+                            .filter(|attempt| attempt.outcome == jope_api::EvaluationAttemptOutcome::Completed)
+                            .map(|attempt| attempt.fold_scores.len()).sum::<usize>(),
+                    }), vec![]),
+                )?;
+                for attempt in &receipt.attempts {
+                    tx.put(
+                        &RecordKey::Evaluation { run: run_id.clone(), number: attempt.attempt + 1 },
+                        &crate::store::Record::metadata(serde_json::to_value(attempt)?, vec![]),
+                    )?;
+                }
+                tx.put(
+                    &command_key,
+                    &crate::store::Record::metadata(json!({
+                        "status":"completed",
+                        "request_sha256":request.request_sha256,
+                        "run_id":run_id,
+                        "receipt_bytes":receipt_text,
+                    }), vec![]),
+                )
+            },
+        ).map_err(io)?;
+        Ok(())
     }
 
     fn prepare(&self, spec: &RunSpec) -> Result<Prepared> {
@@ -921,6 +1619,26 @@ pub(super) async fn control(
     }
 }
 
+/// Execute one Q1 request and return the same compact bytes durably retained by the engine.
+pub(super) async fn q1_evaluate(
+    Extension(service): Extension<Arc<RunService>>,
+    request: Request<Body>,
+) -> Response {
+    let Json(body) = match Json::<Value>::from_request(request, &()).await {
+        Ok(value) => value,
+        Err(_) => return response(&invalid("Expected a valid JSON Q1 request.")),
+    };
+    match tokio::task::spawn_blocking(move || service.q1_evaluate(body)).await {
+        Ok(Ok(bytes)) => Response::builder()
+            .status(axum::http::StatusCode::OK)
+            .header(axum::http::header::CONTENT_TYPE, "application/json")
+            .body(Body::from(bytes))
+            .unwrap_or_else(|_| response(&io("Could not construct Q1 response."))),
+        Ok(Err(error)) => response(&error),
+        Err(error) => response(&io(error)),
+    }
+}
+
 #[derive(Default, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(super) struct ListQuery {
@@ -1040,6 +1758,184 @@ mod tests {
     }
     async fn body(response: Response) -> Value {
         serde_json::from_slice(&to_bytes(response.into_body(), 1 << 20).await.unwrap()).unwrap()
+    }
+
+    fn q1_request(directory: &std::path::Path, engine: &InProcessEngine) -> Value {
+        let train = b"x,target\n0,0\n1,1\n2,2\n3,3\n4,4\n5,5\n";
+        let blob = engine.store().publish_blob(train.as_slice()).unwrap();
+        let protocol_sha = "a".repeat(64);
+        let plan_sha = "b".repeat(64);
+        let source_commit = "c".repeat(40);
+        let pins = [
+            "bundle_sha256",
+            "dope_sha256",
+            "evaluator_sha256",
+            "vocabulary_sha256",
+            "protocol_sha256",
+            "training_family_manifest_sha256",
+        ]
+        .into_iter()
+        .map(|key| {
+            (
+                key.to_owned(),
+                if key == "protocol_sha256" {
+                    protocol_sha.clone()
+                } else {
+                    "d".repeat(64)
+                },
+            )
+        })
+        .collect::<std::collections::BTreeMap<_, _>>();
+        let mut binding = Q1DatasetBinding {
+            id: "0123456789abcdef".into(),
+            task: "regression".into(),
+            dataset_sha256: "0123456789abcdef".to_owned() + &"e".repeat(48),
+            family: "f".repeat(40),
+            family_authoritative: true,
+            rows: 10,
+            features: 1,
+            cut_sha256: "1".repeat(64),
+            holdout_group: "sealed_meta_test".into(),
+            catalog_version: "v246".into(),
+            catalog_record_sha256: "2".repeat(64),
+            dataset_binding_sha256: String::new(),
+            target: "target".into(),
+            feature_columns: vec!["x".into()],
+            train_rows: 6,
+            train_blob_sha256: hash(train),
+            train_blob_bytes: blob.bytes,
+            folds: vec![
+                Q1Fold {
+                    repeat: 0,
+                    train: vec![0, 1, 2, 3],
+                    validation: vec![4, 5],
+                },
+                Q1Fold {
+                    repeat: 0,
+                    train: vec![2, 3, 4, 5],
+                    validation: vec![0, 1],
+                },
+            ],
+        };
+        let mut binding_value = serde_json::to_value(&binding).unwrap();
+        binding_value
+            .as_object_mut()
+            .unwrap()
+            .remove("dataset_binding_sha256");
+        binding.dataset_binding_sha256 = hash(&serde_json::to_vec(&binding_value).unwrap());
+        let manifest = json!({
+            "schema":"jope.q1-protocol-manifest/v1",
+            "protocol_sha256":protocol_sha,
+            "source_commit":source_commit,
+            "plan_sha256":plan_sha,
+            "pins":pins,
+            "datasets":{"0123456789abcdef":binding}
+        });
+        let protocols = directory.join("q1/protocols");
+        std::fs::create_dir_all(&protocols).unwrap();
+        std::fs::write(
+            protocols.join(format!("{}.json", "a".repeat(64))),
+            serde_json::to_vec(&manifest).unwrap(),
+        )
+        .unwrap();
+        let mut request = json!({
+            "schema":"jope.q1-request/v1",
+            "mode":"qualification",
+            "source_commit":source_commit,
+            "plan_sha256":plan_sha,
+            "pins":pins,
+            "metric":"rmse",
+            "dataset":{
+                "id":"0123456789abcdef",
+                "task":"regression",
+                "dataset_sha256":"0123456789abcdefe".to_owned() + &"e".repeat(47),
+                "family":"f".repeat(40),
+                "family_authoritative":true,
+                "rows":10,
+                "features":1,
+                "cut_sha256":"1".repeat(64),
+                "holdout_group":"sealed_meta_test"
+            },
+            "guidance":"heuristic",
+            "seed":0,
+            "budget":24
+        });
+        // Match the catalog's full dataset identity; the test partition is never stored here.
+        request["dataset"]["dataset_sha256"] =
+            json!("0123456789abcdef".to_owned() + &"e".repeat(48));
+        let sha = canonical_sha256(&request).unwrap();
+        request["request_sha256"] = json!(sha);
+        request
+    }
+
+    fn q1_http_request(body: &Value) -> Request<Body> {
+        Request::builder()
+            .method("POST")
+            .uri("/v1/q1/evaluations")
+            .header(header::HOST, "127.0.0.1:31234")
+            .header(header::AUTHORIZATION, format!("Bearer {}", "ab".repeat(32)))
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(serde_json::to_vec(body).unwrap()))
+            .unwrap()
+    }
+
+    #[tokio::test]
+    async fn q1_receipt_uses_real_fold_values_and_replays_identical_durable_bytes() {
+        let (directory, engine, _) = fixture();
+        let request_body = q1_request(directory.path(), &engine);
+        let app = app(&engine);
+        let first = app
+            .clone()
+            .oneshot(q1_http_request(&request_body))
+            .await
+            .unwrap();
+        assert_eq!(first.status(), StatusCode::OK);
+        let first_bytes = to_bytes(first.into_body(), 1 << 20).await.unwrap();
+        let receipt: EvaluationReceipt = serde_json::from_slice(&first_bytes).unwrap();
+        assert_eq!(receipt.charged, 24);
+        assert_eq!(receipt.attempts.len(), 24);
+        assert!(receipt.attempts.iter().all(|attempt| {
+            attempt.outcome == EvaluationAttemptOutcome::Completed
+                && attempt.fold_scores.len() == 2
+                && attempt.loss.is_some()
+                && attempt.program_sha256.is_some()
+                && attempt.failure.is_none()
+        }));
+
+        let replay = app.oneshot(q1_http_request(&request_body)).await.unwrap();
+        assert_eq!(replay.status(), StatusCode::OK);
+        let replay_bytes = to_bytes(replay.into_body(), 1 << 20).await.unwrap();
+        assert_eq!(first_bytes, replay_bytes);
+
+        let stored = engine
+            .store()
+            .get(&q1_command_key(&receipt.request_sha256))
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            stored.data["receipt_bytes"],
+            String::from_utf8(first_bytes.to_vec()).unwrap()
+        );
+        let run: jope_api::ids::RunId = stored.data["run_id"].as_str().unwrap().parse().unwrap();
+        let receipt_row = engine
+            .store()
+            .get(&RecordKey::Evaluation {
+                run: run.clone(),
+                number: 0,
+            })
+            .unwrap()
+            .unwrap();
+        assert_eq!(receipt_row.data["request_sha256"], receipt.request_sha256);
+        for attempt in 0..24 {
+            assert!(engine
+                .store()
+                .get(&RecordKey::Evaluation {
+                    run: run.clone(),
+                    number: attempt + 1
+                })
+                .unwrap()
+                .is_some());
+        }
     }
 
     #[tokio::test]

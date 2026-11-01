@@ -505,6 +505,7 @@ impl Finalizer {
             scores: receipt.scores.clone(),
             budget_used: finished.budget_used.clone(),
             nondeterminism,
+            evaluation_receipt: finished.evaluation_receipt.clone().map(Box::new),
         });
         self.journal.commit(RunUpdate { expected_revision: Some(snapshot.revision.0), snapshot: finished, checkpoint, blobs }, vec![event], |tx| {
             let old = tx.get(key)?.ok_or(StoreError::Invalid("finalization claim missing"))?;
@@ -820,10 +821,12 @@ mod tests {
             match evaluate_native(request, &matrix) {
                 Ok(Scores {
                     values,
+                    fold_scores,
                     predictions_digest,
                 }) => Response {
                     attempt: request.attempt.clone(),
                     scores: values,
+                    fold_scores,
                     predictions_digest,
                     wall_ms: 0,
                     failure: None,
