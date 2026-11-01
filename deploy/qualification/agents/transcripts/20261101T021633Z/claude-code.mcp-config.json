@@ -1,0 +1,41 @@
+{
+  "mcpServers": {
+    "jopedime": {
+      "command": "/usr/bin/python3",
+      "args": [
+        "-B",
+        "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930/client_stdio.py",
+        "--receipt",
+        "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930/final/claude/launcher.json",
+        "--",
+        "/usr/bin/python3",
+        "-B",
+        "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930/harness/capture_stdio.py",
+        "--out-dir",
+        "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930/final/claude/capture",
+        "--seconds",
+        "400",
+        "--max-bytes",
+        "1048576",
+        "--",
+        "/home/ubuntu/jope-data/mcp05-a5-t1930/bin/21d65a949bbfc340981cfbcf224cacb9eb571e5c/jopedime",
+        "mcp"
+      ],
+      "env": {
+        "PATH": "/bin:/usr/bin",
+        "HOME": "/home/ubuntu/jope-data/mcp05-a5-t1930/final/claude/home",
+        "JOPEDIME_HOME": "/home/ubuntu/jope-data/mcp05-a5-t1930/final/claude/engine",
+        "TMPDIR": "/home/ubuntu/jope-data/mcp05-a5-t1930/final/claude/tmp",
+        "XDG_CONFIG_HOME": "/home/ubuntu/jope-data/mcp05-a5-t1930/final/claude/config",
+        "XDG_DATA_HOME": "/home/ubuntu/jope-data/mcp05-a5-t1930/final/claude/data",
+        "XDG_STATE_HOME": "/home/ubuntu/jope-data/mcp05-a5-t1930/final/claude/state",
+        "XDG_CACHE_HOME": "/home/ubuntu/jope-data/mcp05-a5-t1930/final/claude/cache",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "RAYON_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      }
+    }
+  }
+}

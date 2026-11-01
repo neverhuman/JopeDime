@@ -1,0 +1,207 @@
+warning: patch `tokenizers v0.22.2 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/vendor/security/tokenizers-0.22.2)` was not used in the crate graph
+help: Check that the patched package version and available features are compatible
+      with the dependency requirements. If the patch has a different version from
+      what is locked in the Cargo.lock file, run `cargo update` to use the new
+      version. This may also occur with an optional dependency that is not enabled.
+warning: unused import: `Context`
+ --> crates/feat-math/src/advanced_v3/fitted_runtime_image.rs:3:20
+  |
+3 | use anyhow::{bail, Context, Result};
+  |                    ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `feat-math` (lib) generated 1 warning (run `cargo fix --lib -p feat-math` to apply 1 suggestion)
+warning: unused import: `PathBuf`
+ --> crates/jope-telemetry/src/cpu_quota.rs:3:23
+  |
+3 | use std::path::{Path, PathBuf};
+  |                       ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `intersect_quota_with_affinity` is never used
+  --> crates/jope-telemetry/src/cpu_quota.rs:26:4
+   |
+26 | fn intersect_quota_with_affinity(quota: Option<f64>, affinity: usize) -> f64 {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `allowed_cpus_from_sources` is never used
+  --> crates/jope-telemetry/src/cpu_quota.rs:30:4
+   |
+30 | fn allowed_cpus_from_sources(quota: Option<f64>, affinity: Option<usize>, logical: usize) -> f64 {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `quota_v2` is never used
+   --> crates/jope-telemetry/src/cpu_quota.rs:106:4
+    |
+106 | fn quota_v2(path: &Path) -> Option<f64> {
+    |    ^^^^^^^^
+
+warning: function `parse_quota_v2` is never used
+   --> crates/jope-telemetry/src/cpu_quota.rs:111:4
+    |
+111 | fn parse_quota_v2(contents: &str) -> Option<f64> {
+    |    ^^^^^^^^^^^^^^
+
+warning: function `quota_v1` is never used
+   --> crates/jope-telemetry/src/cpu_quota.rs:122:4
+    |
+122 | fn quota_v1(quota_path: &Path, period_path: &Path) -> Option<f64> {
+    |    ^^^^^^^^
+
+warning: function `parse_quota_v1` is never used
+   --> crates/jope-telemetry/src/cpu_quota.rs:128:4
+    |
+128 | fn parse_quota_v1(quota: &str, period: &str) -> Option<f64> {
+    |    ^^^^^^^^^^^^^^
+
+warning: `jope-telemetry` (lib) generated 7 warnings (run `cargo fix --lib -p jope-telemetry` to apply 1 suggestion)
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/terminal/terminal.rs:171:22
+    |
+171 |     pub fn get_frame(&mut self) -> Frame {
+    |                      ^^^^^^^^^     ^^^^^ the same lifetime is hidden here
+    |                      |
+    |                      the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+    = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+help: use `'_` for type paths
+    |
+171 |     pub fn get_frame(&mut self) -> Frame<'_> {
+    |                                         ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/terminal/terminal.rs:304:20
+    |
+304 |     pub fn draw<F>(&mut self, render_callback: F) -> io::Result<CompletedFrame>
+    |                    ^^^^^^^^^ the lifetime is elided here        ^^^^^^^^^^^^^^ the same lifetime is hidden here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+304 |     pub fn draw<F>(&mut self, render_callback: F) -> io::Result<CompletedFrame<'_>>
+    |                                                                               ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/terminal/terminal.rs:379:27
+    |
+379 |     pub fn try_draw<F, E>(&mut self, render_callback: F) -> io::Result<CompletedFrame>
+    |                           ^^^^^^^^^ the lifetime is elided here        ^^^^^^^^^^^^^^ the same lifetime is hidden here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+379 |     pub fn try_draw<F, E>(&mut self, render_callback: F) -> io::Result<CompletedFrame<'_>>
+    |                                                                                      ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/text/line.rs:545:17
+    |
+545 |     pub fn iter(&self) -> std::slice::Iter<Span<'a>> {
+    |                 ^^^^^     ^^^^^^^^^^^^^^^^^^^^^^^^^^ the same lifetime is hidden here
+    |                 |
+    |                 the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+545 |     pub fn iter(&self) -> std::slice::Iter<'_, Span<'a>> {
+    |                                            +++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/text/line.rs:550:21
+    |
+550 |     pub fn iter_mut(&mut self) -> std::slice::IterMut<Span<'a>> {
+    |                     ^^^^^^^^^     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the same lifetime is hidden here
+    |                     |
+    |                     the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+550 |     pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, Span<'a>> {
+    |                                                       +++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/text/text.rs:519:17
+    |
+519 |     pub fn iter(&self) -> std::slice::Iter<Line<'a>> {
+    |                 ^^^^^     ^^^^^^^^^^^^^^^^^^^^^^^^^^ the same lifetime is hidden here
+    |                 |
+    |                 the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+519 |     pub fn iter(&self) -> std::slice::Iter<'_, Line<'a>> {
+    |                                            +++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/text/text.rs:524:21
+    |
+524 |     pub fn iter_mut(&mut self) -> std::slice::IterMut<Line<'a>> {
+    |                     ^^^^^^^^^     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the same lifetime is hidden here
+    |                     |
+    |                     the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+524 |     pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, Line<'a>> {
+    |                                                       +++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/text/text.rs:711:16
+    |
+711 |     fn to_text(&self) -> Text {
+    |                ^^^^^     ^^^^ the same lifetime is hidden here
+    |                |
+    |                the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+711 |     fn to_text(&self) -> Text<'_> {
+    |                              ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/widgets/block.rs:912:9
+    |
+912 |         &self,
+    |         ^^^^^ the lifetime is elided here
+...
+915 |     ) -> impl DoubleEndedIterator<Item = &Line> {
+    |                                          ^^^^^
+    |                                          ||
+    |                                          |the same lifetime is hidden here
+    |                                          the same lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+915 |     ) -> impl DoubleEndedIterator<Item = &Line<'_>> {
+    |                                               ++++
+
+   Compiling jope-appliance v0.4.1 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/crates/jope-appliance)
+warning: `ratatui` (lib) generated 9 warnings (run `cargo fix --lib -p ratatui` to apply 9 suggestions)
+warning: unused import: `engine::EngineError`
+   --> crates/jope-appliance/src/cmd/inproc.rs:182:9
+    |
+182 |         engine::EngineError,
+    |         ^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `Command` and `Stdio`
+   --> crates/jope-appliance/src/cmd/inproc.rs:189:26
+    |
+189 |         process::{Child, Command, Stdio},
+    |                          ^^^^^^^  ^^^^^
+
+warning: `jope-appliance` (bin "jopedime" test) generated 2 warnings (run `cargo fix --bin "jopedime" -p jope-appliance --tests` to apply 2 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.90s
+     Running unittests src/main.rs (/Users/agent/remote_tests/target/debug/deps/jopedime-6dc2d21f4c05d3cd)

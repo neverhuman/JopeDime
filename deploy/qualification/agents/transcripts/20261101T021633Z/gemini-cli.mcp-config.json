@@ -1,0 +1,41 @@
+{
+  "mcpServers": {
+    "jopedime": {
+      "command": "/usr/bin/python3",
+      "args": [
+        "-B",
+        "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930/client_stdio.py",
+        "--receipt",
+        "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930/final/gemini/launcher.json",
+        "--",
+        "/usr/bin/python3",
+        "-B",
+        "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930/harness/capture_stdio.py",
+        "--out-dir",
+        "/home/ubuntu/jope_plan/evidence/MCP05-A5-sol_v1_mcp01-t1930/final/gemini/capture",
+        "--seconds",
+        "400",
+        "--max-bytes",
+        "1048576",
+        "--",
+        "/home/ubuntu/jope-data/mcp05-a5-t1930/bin/21d65a949bbfc340981cfbcf224cacb9eb571e5c/jopedime",
+        "mcp"
+      ],
+      "env": {
+        "PATH": "/bin:/usr/bin",
+        "HOME": "/home/ubuntu/jope-data/mcp05-a5-t1930/final/gemini/home",
+        "JOPEDIME_HOME": "/home/ubuntu/jope-data/mcp05-a5-t1930/final/gemini/engine",
+        "TMPDIR": "/home/ubuntu/jope-data/mcp05-a5-t1930/final/gemini/tmp",
+        "XDG_CONFIG_HOME": "/home/ubuntu/jope-data/mcp05-a5-t1930/final/gemini/config",
+        "XDG_DATA_HOME": "/home/ubuntu/jope-data/mcp05-a5-t1930/final/gemini/data",
+        "XDG_STATE_HOME": "/home/ubuntu/jope-data/mcp05-a5-t1930/final/gemini/state",
+        "XDG_CACHE_HOME": "/home/ubuntu/jope-data/mcp05-a5-t1930/final/gemini/cache",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "RAYON_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      }
+    }
+  }
+}

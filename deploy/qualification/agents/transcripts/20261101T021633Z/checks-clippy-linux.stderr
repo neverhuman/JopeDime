@@ -1,0 +1,364 @@
+warning: patch `tokenizers v0.22.2 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/vendor/security/tokenizers-0.22.2)` was not used in the crate graph
+help: Check that the patched package version and available features are compatible
+      with the dependency requirements. If the patch has a different version from
+      what is locked in the Cargo.lock file, run `cargo update` to use the new
+      version. This may also occur with an optional dependency that is not enabled.
+    Checking cfg-if v1.0.4
+    Checking libc v0.2.189
+    Checking libm v0.2.16
+    Checking serde_core v1.0.229
+    Checking typenum v1.20.1
+    Checking num-traits v0.2.19
+    Checking itoa v1.0.18
+    Checking rand_core v0.10.1
+    Checking zeroize v1.9.0
+    Checking subtle v2.6.1
+    Checking getrandom v0.4.3
+    Checking memchr v2.8.3
+    Checking bitflags v2.13.1
+    Checking zerocopy v0.8.56
+    Checking getrandom v0.3.4
+    Checking rand_core v0.9.5
+    Checking crossbeam-utils v0.8.23
+    Checking hybrid-array v0.4.15
+    Checking serde v1.0.229
+    Checking log v0.4.34
+    Checking either v1.18.0
+    Checking crossbeam-epoch v0.9.21
+    Checking cmov v0.5.4
+    Checking const-oid v0.10.2
+    Checking crossbeam-deque v0.8.8
+    Checking bytemuck v1.25.2
+    Checking ctutils v0.4.5
+    Checking rayon-core v1.13.0
+    Checking bytes v1.12.1
+    Checking pin-project-lite v0.2.17
+    Checking once_cell v1.21.4
+    Checking rayon v1.12.0
+    Checking zmij v1.0.23
+    Checking crypto-common v0.2.2
+    Checking errno v0.3.14
+    Checking futures-core v0.3.34
+    Checking signal-hook-registry v1.4.8
+    Checking serde_json v1.0.151
+    Checking allocator-api2 v0.2.21
+    Checking equivalent v1.0.2
+    Checking foldhash v0.2.0
+    Checking block-buffer v0.12.1
+    Checking mio v1.2.3
+    Checking futures-sink v0.3.34
+    Checking base64ct v1.8.3
+    Checking digest v0.11.3
+    Checking generic-array v0.14.7
+    Checking ppv-lite86 v0.2.21
+    Checking num-complex v0.4.6
+    Checking pem-rfc7468 v1.0.0
+    Checking raw-cpuid v11.6.0
+    Checking rand_chacha v0.9.0
+    Checking reborrow v0.5.5
+    Checking pulp-wasm-simd-flag v0.1.1
+    Checking cpubits v0.1.1
+    Checking rand v0.9.5
+    Checking dyn-stack v0.13.2
+    Checking crypto-bigint v0.7.6
+    Checking der v0.8.2
+    Checking rand_distr v0.5.1
+    Checking half v2.7.1
+    Checking futures-channel v0.3.34
+    Checking pulp v0.22.3 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/vendor/security/pulp-0.22.3)
+    Checking hashbrown v0.17.1
+    Checking http v1.5.0
+    Checking ff v0.14.0
+    Checking crypto-common v0.1.7
+    Checking block-buffer v0.10.4
+    Checking socket2 v0.6.5
+    Checking smallvec v1.16.0
+    Checking digest v0.10.7
+    Checking group v0.14.0
+    Checking spki v0.8.1
+    Checking tokio v1.53.3
+    Checking futures-io v0.3.34
+    Checking slab v0.4.12
+    Checking futures-task v0.3.34
+    Checking utf8parse v0.2.2
+    Checking base16ct v1.0.0
+    Checking ryu v1.0.23
+    Checking cpufeatures v0.2.17
+    Checking sec1 v0.8.1
+    Checking sha2 v0.10.9
+    Checking anstyle-parse v1.0.0
+    Checking futures-util v0.3.34
+    Checking pkcs8 v0.11.0
+    Checking thiserror v2.0.20
+    Checking httparse v1.10.1
+    Checking http-body v1.1.0
+    Checking indexmap v2.14.2
+    Checking gemm-common v0.19.0 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/vendor/security/gemm-common-0.19.0)
+    Checking anstyle v1.0.14
+    Checking anstyle-query v1.1.5
+    Checking is_terminal_polyfill v1.70.2
+    Checking colorchoice v1.0.5
+    Checking elliptic-curve v0.14.1
+    Checking anstream v1.0.0
+    Checking anyhow v1.0.104
+    Checking primefield v0.14.0
+    Checking hmac v0.13.0
+   Compiling feat-math v0.4.1 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/crates/feat-math)
+    Checking strsim v0.11.1
+    Checking tower-service v0.3.3
+    Checking clap_lex v1.1.0
+    Checking static_assertions v1.1.0
+    Checking linux-raw-sys v0.12.1
+    Checking percent-encoding v2.3.2
+    Checking iana-time-zone v0.1.65
+    Checking chrono v0.4.45
+    Checking rustix v1.1.4
+    Checking clap_builder v4.6.7
+    Checking wnaf v0.14.1
+    Checking ref-cast v1.0.27
+    Checking rfc6979 v0.6.0
+    Checking crc32fast v1.5.2
+    Checking gemm-f32 v0.19.0 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/vendor/security/gemm-f32-0.19.0)
+    Checking signature v3.0.0
+    Checking libloading v0.8.9
+    Checking tower-layer v0.3.3
+    Checking dyn-clone v1.0.20
+    Checking httpdate v1.0.3
+    Checking fastrand v2.5.0
+    Checking bumpalo v3.20.3
+    Checking stable_deref_trait v1.2.1
+    Checking zlib-rs v0.6.8
+    Checking simd-adler32 v0.3.10
+    Checking cpufeatures v0.3.1
+    Checking sync_wrapper v1.0.2
+    Checking atomic-waker v1.1.2
+    Checking sha2 v0.11.1
+    Checking hyper v1.11.1
+    Checking zopfli v0.8.3
+    Checking tempfile v3.27.0
+    Checking gemm-f16 v0.19.0 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/vendor/security/gemm-f16-0.19.0)
+    Checking schemars v1.2.2
+    Checking nvml-wrapper-sys v0.9.1
+    Checking flate2 v1.1.10
+    Checking thiserror v1.0.69
+    Checking clap v4.6.7
+    Checking ecdsa v0.17.0
+    Checking zerofrom v0.1.8
+    Checking primeorder v0.14.0
+    Checking form_urlencoded v1.2.2
+    Checking gemm-f64 v0.19.0 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/vendor/security/gemm-f64-0.19.0)
+    Checking gemm-c64 v0.19.0 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/vendor/security/gemm-c64-0.19.0)
+    Checking gemm-c32 v0.19.0 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/vendor/security/gemm-c32-0.19.0)
+    Checking http-body-util v0.1.5
+    Checking ulid v1.2.1
+    Checking hashbrown v0.16.1
+    Checking toml_datetime v0.6.11
+    Checking serde_spanned v0.6.9
+    Checking csv-core v0.1.13
+    Checking mime v0.3.17
+    Checking hex v0.4.3
+    Checking toml_write v0.1.2
+    Checking winnow v0.7.15
+    Checking typed-path v0.12.3
+    Checking twox-hash v2.1.4
+    Checking scopeguard v1.2.0
+    Checking lock_api v0.4.14
+    Checking ruzstd v0.9.1
+    Checking zip v9.0.5
+    Checking safetensors v0.8.0
+    Checking axum-core v0.5.6
+    Checking toml_edit v0.22.27
+    Checking csv v1.4.0
+    Checking gemm v0.19.0 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/vendor/security/gemm-0.19.0)
+    Checking yoke v0.8.3
+    Checking serde_urlencoded v0.7.1
+    Checking p256 v0.14.0
+    Checking nvml-wrapper v0.12.1
+    Checking memoffset v0.9.1
+    Checking signal-hook v0.3.18
+    Checking parking_lot_core v0.9.12
+    Checking hyper-util v0.1.20
+    Checking tower v0.5.3
+    Checking memmap2 v0.9.11
+    Checking float8 v0.7.0
+    Checking serde_path_to_error v0.1.20
+    Checking serde_ignored v0.1.14
+    Checking num_cpus v1.17.0
+    Checking rand_core v0.6.4
+    Checking byteorder v1.5.0
+    Checking base64 v0.23.1
+    Checking jope-paths v0.4.1 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/crates/jope-paths)
+    Checking rtrb v0.4.1
+    Checking linux-raw-sys v0.4.15
+    Checking matchit v0.8.4
+    Checking jope-telemetry v0.4.1 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/crates/jope-telemetry)
+warning: dropping unsupported crate type `cdylib` for target `x86_64-unknown-linux-musl`
+
+    Checking rustix v0.38.44
+    Checking axum v0.8.9
+    Checking ureq-proto v0.6.4
+    Checking candle-core v0.11.0 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/vendor/security/candle-core-0.11.0)
+    Checking rand_chacha v0.3.1
+    Checking parking_lot v0.12.5
+warning: `jope-telemetry` (lib) generated 1 warning
+    Checking signal-hook-mio v0.2.5
+    Checking nix v0.29.0
+    Checking toml v0.8.23
+    Checking redb v2.6.3
+    Checking jope-api v0.4.1 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/crates/jope-api)
+    Checking castaway v0.2.4
+    Checking futures-executor v0.3.34
+    Checking tracing-core v0.1.36
+    Checking itertools v0.13.0
+    Checking unicode-width v0.1.14
+   Compiling jope-assets v0.4.1 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/crates/jope-assets)
+    Checking utf8-zero v0.8.1
+    Checking unicode-segmentation v1.13.3
+    Checking ureq v3.4.2
+    Checking unicode-truncate v1.1.0
+    Checking tracing v0.1.44
+    Checking futures v0.3.34
+    Checking strum v0.26.3
+    Checking compact_str v0.8.2
+    Checking crossterm v0.28.1
+    Checking tokio-util v0.7.19
+    Checking lru v0.18.4
+    Checking uuid v1.29.0
+    Checking unicode-width v0.2.0
+   Compiling jope-appliance v0.4.1 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/crates/jope-appliance)
+    Checking cassowary v0.3.0
+    Checking rmcp v3.8.0
+    Checking ratatui v0.29.0 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/vendor/security/ratatui-0.29.0)
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/terminal/terminal.rs:171:22
+    |
+171 |     pub fn get_frame(&mut self) -> Frame {
+    |                      ^^^^^^^^^     ^^^^^ the same lifetime is hidden here
+    |                      |
+    |                      the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+    = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+help: use `'_` for type paths
+    |
+171 |     pub fn get_frame(&mut self) -> Frame<'_> {
+    |                                         ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/terminal/terminal.rs:304:20
+    |
+304 |     pub fn draw<F>(&mut self, render_callback: F) -> io::Result<CompletedFrame>
+    |                    ^^^^^^^^^ the lifetime is elided here        ^^^^^^^^^^^^^^ the same lifetime is hidden here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+304 |     pub fn draw<F>(&mut self, render_callback: F) -> io::Result<CompletedFrame<'_>>
+    |                                                                               ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/terminal/terminal.rs:379:27
+    |
+379 |     pub fn try_draw<F, E>(&mut self, render_callback: F) -> io::Result<CompletedFrame>
+    |                           ^^^^^^^^^ the lifetime is elided here        ^^^^^^^^^^^^^^ the same lifetime is hidden here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+379 |     pub fn try_draw<F, E>(&mut self, render_callback: F) -> io::Result<CompletedFrame<'_>>
+    |                                                                                      ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/text/line.rs:545:17
+    |
+545 |     pub fn iter(&self) -> std::slice::Iter<Span<'a>> {
+    |                 ^^^^^     ^^^^^^^^^^^^^^^^^^^^^^^^^^ the same lifetime is hidden here
+    |                 |
+    |                 the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+545 |     pub fn iter(&self) -> std::slice::Iter<'_, Span<'a>> {
+    |                                            +++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/text/line.rs:550:21
+    |
+550 |     pub fn iter_mut(&mut self) -> std::slice::IterMut<Span<'a>> {
+    |                     ^^^^^^^^^     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the same lifetime is hidden here
+    |                     |
+    |                     the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+550 |     pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, Span<'a>> {
+    |                                                       +++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/text/text.rs:519:17
+    |
+519 |     pub fn iter(&self) -> std::slice::Iter<Line<'a>> {
+    |                 ^^^^^     ^^^^^^^^^^^^^^^^^^^^^^^^^^ the same lifetime is hidden here
+    |                 |
+    |                 the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+519 |     pub fn iter(&self) -> std::slice::Iter<'_, Line<'a>> {
+    |                                            +++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/text/text.rs:524:21
+    |
+524 |     pub fn iter_mut(&mut self) -> std::slice::IterMut<Line<'a>> {
+    |                     ^^^^^^^^^     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the same lifetime is hidden here
+    |                     |
+    |                     the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+524 |     pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, Line<'a>> {
+    |                                                       +++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/text/text.rs:711:16
+    |
+711 |     fn to_text(&self) -> Text {
+    |                ^^^^^     ^^^^ the same lifetime is hidden here
+    |                |
+    |                the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+711 |     fn to_text(&self) -> Text<'_> {
+    |                              ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor/security/ratatui-0.29.0/src/widgets/block.rs:912:9
+    |
+912 |         &self,
+    |         ^^^^^ the lifetime is elided here
+...
+915 |     ) -> impl DoubleEndedIterator<Item = &Line> {
+    |                                          ^^^^^
+    |                                          ||
+    |                                          |the same lifetime is hidden here
+    |                                          the same lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+915 |     ) -> impl DoubleEndedIterator<Item = &Line<'_>> {
+    |                                               ++++
+
+warning: `ratatui` (lib) generated 9 warnings (run `cargo clippy --fix --lib -p ratatui -- -D warnings` to apply 9 suggestions)
+    Checking jope-narrator v0.4.1 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/crates/jope-narrator)
+    Checking jope-runtime v0.4.1 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/crates/jope-runtime)
+    Checking jope-service v0.4.1 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/crates/jope-service)
+    Checking jope-client v0.4.1 (/Users/agent/JopeDime/.agent/worktrees/mcp05-a5-mcp01-t1930/crates/jope-client)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 19.24s

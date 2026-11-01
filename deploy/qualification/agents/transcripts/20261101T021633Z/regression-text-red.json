@@ -1,0 +1,21 @@
+{
+  "source": "9c6ecc89e32508d7340a24103e92c556b56fa148",
+  "command": [
+    "nice",
+    "-n",
+    "10",
+    "/Users/agent/.cargo/bin/cargo",
+    "test",
+    "--locked",
+    "-p",
+    "jope-appliance",
+    "--bin",
+    "jopedime",
+    "mcp::",
+    "-j",
+    "4"
+  ],
+  "started_utc": "2026-11-01T02:15:08.633413+00:00",
+  "elapsed_seconds": 8.587641417980194,
+  "exit_status": 101
+}

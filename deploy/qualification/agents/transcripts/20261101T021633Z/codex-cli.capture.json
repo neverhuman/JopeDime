@@ -1,0 +1,70 @@
+{
+  "schema": "jopedime.mcp-stdio-capture/v1",
+  "started_at": "2026-11-01T02:16:40.174991+00:00",
+  "ended_at": "2026-11-01T02:17:34.909744+00:00",
+  "argv": [
+    "/home/ubuntu/jope-data/mcp05-a5-t1930/bin/21d65a949bbfc340981cfbcf224cacb9eb571e5c/jopedime",
+    "mcp"
+  ],
+  "producer_sha256": "9f75cf6adaf8c62c8d7acd8fe87de45275262d857c7da8bbfca7768ce9894149",
+  "verifier_sha256": "3c78520dfaec3c78a161eba12157d8dd69bde766ca67c87123b82a2272864c00",
+  "python_version": "3.12.3",
+  "platform": "linux",
+  "nice": 19,
+  "environment_names": [
+    "CUDA_VISIBLE_DEVICES",
+    "HOME",
+    "JOPEDIME_HOME",
+    "LANG",
+    "LC_ALL",
+    "MKL_NUM_THREADS",
+    "OMP_NUM_THREADS",
+    "OPENBLAS_NUM_THREADS",
+    "PATH",
+    "RAYON_NUM_THREADS",
+    "TMPDIR",
+    "XDG_CACHE_HOME",
+    "XDG_CONFIG_HOME",
+    "XDG_DATA_HOME",
+    "XDG_STATE_HOME"
+  ],
+  "extra_environment_names": [],
+  "executable": "/home/ubuntu/jope-data/mcp05-a5-t1930/bin/21d65a949bbfc340981cfbcf224cacb9eb571e5c/jopedime",
+  "executable_sha256": "9c6bdd2146f81fade386d5528543bd20598ca5ad2d85f49da1a3522f1057dc16",
+  "server_pid": 2526922,
+  "elapsed_seconds": 54.734774412587285,
+  "server_exit_code": 0,
+  "relay_exit_code": 0,
+  "client_exit_code": null,
+  "complete": true,
+  "error": null,
+  "a5_status": "UNVERIFIED",
+  "limits": {
+    "seconds": 400.0,
+    "stream_bytes": 1048576,
+    "frame_bytes": 1048576
+  },
+  "frames": {
+    "client_to_server": 19,
+    "server_to_client": 18
+  },
+  "retained_stream_bytes": 475831,
+  "files": {
+    "wire.jsonl": {
+      "bytes": 246130,
+      "sha256": "c10a6b246431af46cfe1a2adc679f1366ab9f2e6c2224adffabcf1ede0212e6b"
+    },
+    "client.raw": {
+      "bytes": 16984,
+      "sha256": "3249daf5889db226d1339addb13283d930fdacaf1cd171eee59ebc4a55d50843"
+    },
+    "server.raw": {
+      "bytes": 212717,
+      "sha256": "140a12768fc95f6c07c413d01a9b84bc7deb06554de48ef4699a831e2fa30440"
+    },
+    "server.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}
