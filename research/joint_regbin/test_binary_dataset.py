@@ -23,6 +23,17 @@ from research.joint_regbin.admission import (
     build_binary_train_admission,
     verify_binary_train_admission,
 )
+from research.joint_regbin import protocol
+from research.joint_regbin import driver
+from research.joint_regbin.admission import (
+    R882_BUNDLE_DIGEST,
+    R882_CHECKPOINT_SHA256,
+    R882_MESSAGE_SHA256,
+    build_role_manifest,
+    canonical_sha256,
+    make_worker_bound_plan,
+    verify_worker_bound_plan,
+)
 
 
 DEFAULT_PACKET = Path.home() / "jope-data/jrb-01/panel-v1-binary-train"
@@ -384,6 +395,272 @@ class BinaryTrainCandidatePacketTests(unittest.TestCase):
         for path in ("../outside.csv", "sealed/item.npz", "outer-test/item.npz"):
             with self.subTest(path=path), self.assertRaises(ValueError):
                 _packet_file(self.packet, path)
+
+
+class RoleManifestAdmissionTests(unittest.TestCase):
+    def _fixture(self):
+        test_root = Path(__file__).resolve().parents[2] / "target"
+        test_root.mkdir(parents=True, exist_ok=True)
+        temp_dir = tempfile.TemporaryDirectory(dir=test_root)
+        root = Path(temp_dir.name)
+        self.addCleanup(temp_dir.cleanup)
+        catalog = {
+            "inventory": {"source_catalog": "catalog/v246.jsonl (LATEST=v246)"},
+            "datasets": [],
+        }
+        contexts = []
+        family_by_dataset = {}
+        for task in protocol.TASKS:
+            for role in ("train", "val", "panel"):
+                for index in range(5 if role == "train" else 1):
+                    dataset = f"{task}-{role}-{index}"
+                    family = f"family-{task}-{role}-{index}"
+                    catalog["datasets"].append(
+                        {
+                            "id": dataset,
+                            "task": task,
+                            "origin": "real",
+                            "family_key": family,
+                        }
+                    )
+                    family_by_dataset[dataset] = family
+                    contexts.append(
+                        {
+                            "id": hashlib.sha256(dataset.encode()).hexdigest(),
+                            "dataset": dataset,
+                            "family": family,
+                            "task": task,
+                            "role": role,
+                            "source_split": "train",
+                            "origin": "real",
+                            "has_meta_test": False,
+                            "payload": f"train/{dataset}.npz",
+                            "payload_sha256": hashlib.sha256(
+                                f"payload-{dataset}".encode()
+                            ).hexdigest(),
+                        }
+                    )
+        catalog_path = root / "catalog.json"
+        catalog_path.write_text(json.dumps(catalog))
+        roles = [
+            {key: row[key] for key in sorted(row)}
+            for row in sorted(contexts, key=lambda item: item["id"])
+        ]
+        payloads = [
+            {
+                "id": row["id"],
+                "payload": row["payload"],
+                "payload_sha256": row["payload_sha256"],
+            }
+            for row in sorted(contexts, key=lambda item: item["id"])
+        ]
+        evidence = {
+            "data": {
+                "role_assignment_reviewed": True,
+                "family_mapping_reviewed": True,
+                "payload_hashes_verified": True,
+                "sealed_exclusion_verified": True,
+                "binary_family_alias_closure_verified": True,
+                "role_review_sha256": canonical_sha256(roles),
+                "family_review_sha256": canonical_sha256(
+                    dict(sorted(family_by_dataset.items()))
+                ),
+                "payload_audit_sha256": canonical_sha256(payloads),
+                "sealed_exclusion_sha256": hashlib.sha256(
+                    b"sealed-exclusion-proof"
+                ).hexdigest(),
+            },
+            "release": {
+                "label": "r882",
+                "verify": "PASS",
+                "message_sha256": R882_MESSAGE_SHA256,
+                "bundle_digest": R882_BUNDLE_DIGEST,
+                "source_checkpoint_sha256": R882_CHECKPOINT_SHA256,
+            },
+            "worker": {
+                "sha256": hashlib.sha256(b"qualified-worker").hexdigest(),
+                "qualified": True,
+                "tasks": list(protocol.TASKS),
+                "actual_optimizer_updates": 12,
+                "parameters_changed": True,
+                "dope_sha256": protocol.DOPE,
+                "qualification_sha256": hashlib.sha256(b"qualification").hexdigest(),
+            },
+        }
+        return catalog_path, contexts, family_by_dataset, evidence
+
+    def test_complete_reviewed_roles_make_equal_budget_r882_bound_plan(self) -> None:
+        catalog_path, contexts, families, evidence = self._fixture()
+        manifest = build_role_manifest(catalog_path, contexts, families, evidence)
+        self.assertIs(manifest["eligibility_verified"], True)
+        self.assertEqual(manifest["blockers"], [])
+        plan = make_worker_bound_plan(manifest, catalog_path=catalog_path)
+        verify_worker_bound_plan(plan, catalog_path=catalog_path)
+        self.assertEqual(plan["initial_checkpoint_sha256"], R882_CHECKPOINT_SHA256)
+        self.assertEqual(plan["learner_start"]["worker_sha256"], plan["learner_sha256"])
+        self.assertEqual(len(plan["jobs"]), 54)
+        for seed in protocol.DEFAULTS["seeds"]:
+            for fold in (0, 1, 2, 3, 4, "full"):
+                jobs = [
+                    j for j in plan["jobs"] if j["seed"] == seed and j["fold"] == fold
+                ]
+                self.assertEqual({j["arm"] for j in jobs}, set(protocol.ARMS))
+                self.assertEqual(len({j["id"] for j in jobs}), 3)
+                self.assertEqual(
+                    {
+                        plan["config"][key]
+                        for key in ("rounds", "steps", "contexts", "tokens")
+                    },
+                    {50, 2, 32, 10},
+                )
+
+    def test_plan_rederives_proof_instead_of_trusting_cached_eligibility(self) -> None:
+        catalog_path, contexts, families, evidence = self._fixture()
+        evidence["worker"]["qualified"] = False
+        manifest = build_role_manifest(catalog_path, contexts, families, evidence)
+        self.assertIs(manifest["eligibility_verified"], False)
+        self.assertEqual(manifest["admission_status"], "BLOCKED_INCOMPLETE_EVIDENCE")
+        manifest["eligibility_verified"] = True
+        manifest["blockers"] = []
+
+        with self.assertRaisesRegex(ValueError, "rederived role admission"):
+            make_worker_bound_plan(manifest, catalog_path=catalog_path)
+
+    def test_admission_code_drift_invalidates_frozen_plan(self) -> None:
+        catalog_path, contexts, families, evidence = self._fixture()
+        manifest = build_role_manifest(catalog_path, contexts, families, evidence)
+        plan = make_worker_bound_plan(manifest, catalog_path=catalog_path)
+        original_file_sha = protocol.file_sha
+
+        def changed_admission_hash(path):
+            if Path(path).name == "admission.py":
+                return "0" * 64
+            return original_file_sha(path)
+
+        with patch(
+            "research.joint_regbin.protocol.file_sha",
+            side_effect=changed_admission_hash,
+        ):
+            with self.assertRaisesRegex(
+                ValueError, "study implementation changed after preregistration"
+            ):
+                verify_worker_bound_plan(plan, catalog_path=catalog_path)
+
+    def test_preflight_rederives_embedded_admission_before_opening_inputs(self) -> None:
+        catalog_path, contexts, families, evidence = self._fixture()
+        manifest = build_role_manifest(catalog_path, contexts, families, evidence)
+        plan = make_worker_bound_plan(manifest, catalog_path=catalog_path)
+        plan["role_admission"]["evidence"]["worker"]["qualified"] = False
+        plan["sha256"] = protocol.digest(
+            {key: value for key, value in plan.items() if key != "sha256"}
+        )
+
+        with self.assertRaisesRegex(ValueError, "rederived role admission"):
+            driver.preflight(
+                plan,
+                Path("/missing/packet"),
+                Path("/missing/worker"),
+                Path("/missing/checkpoint"),
+                catalog_path=catalog_path,
+            )
+
+    def test_plan_cli_rejects_eligible_flag_without_role_admission(self) -> None:
+        catalog_path, contexts, families, evidence = self._fixture()
+        manifest = build_role_manifest(catalog_path, contexts, families, evidence)
+        for key in (
+            "admission_schema",
+            "admission_status",
+            "evidence",
+            "family_by_dataset",
+        ):
+            manifest.pop(key)
+        test_root = Path(__file__).resolve().parents[2] / "target"
+        manifest_path = test_root / "jrb01-forged-eligible-manifest.json"
+        out_path = test_root / "jrb01-forged-eligible-plan.json"
+        manifest_path.write_text(json.dumps(manifest))
+        try:
+            with (
+                patch(
+                    "sys.argv",
+                    [
+                        "driver",
+                        "plan",
+                        str(manifest_path),
+                        "--catalog",
+                        str(catalog_path),
+                        "--out",
+                        str(out_path),
+                    ],
+                ),
+                self.assertRaises(SystemExit) as stopped,
+            ):
+                driver.main()
+            self.assertEqual(stopped.exception.code, 2)
+            self.assertFalse(out_path.exists())
+        finally:
+            manifest_path.unlink(missing_ok=True)
+            out_path.unlink(missing_ok=True)
+
+    def test_missing_dev_or_worker_proof_never_enables_eligibility(self) -> None:
+        catalog, contexts, families, evidence = self._fixture()
+        contexts = [
+            row
+            for row in contexts
+            if not (row["task"] == "binary" and row["role"] == "val")
+        ]
+        evidence["worker"]["qualified"] = False
+        evidence["worker"]["actual_optimizer_updates"] = True
+        manifest = build_role_manifest(catalog, contexts, families, evidence)
+        self.assertIs(manifest["eligibility_verified"], False)
+        self.assertTrue(
+            any("missing val binary" in item for item in manifest["blockers"])
+        )
+        self.assertTrue(
+            any("worker qualification" in item for item in manifest["blockers"])
+        )
+        self.assertTrue(
+            any("positive optimizer updates" in item for item in manifest["blockers"])
+        )
+        with self.assertRaisesRegex(ValueError, "cannot produce a runnable plan"):
+            make_worker_bound_plan(manifest, catalog_path=catalog)
+
+    def test_family_overlap_and_plan_binding_drift_are_refused(self) -> None:
+        catalog, contexts, families, evidence = self._fixture()
+        train = next(
+            row
+            for row in contexts
+            if row["task"] == "binary" and row["role"] == "train"
+        )
+        val = next(
+            row for row in contexts if row["task"] == "binary" and row["role"] == "val"
+        )
+        val["family"] = train["family"]
+        families[val["dataset"]] = train["family"]
+        roles = [
+            {key: row[key] for key in sorted(row)}
+            for row in sorted(contexts, key=lambda item: item["id"])
+        ]
+        evidence["data"]["family_review_sha256"] = canonical_sha256(
+            dict(sorted(families.items()))
+        )
+        evidence["data"]["role_review_sha256"] = canonical_sha256(roles)
+        manifest = build_role_manifest(catalog, contexts, families, evidence)
+        self.assertIs(manifest["eligibility_verified"], False)
+        self.assertTrue(
+            any("family occurs in both" in item for item in manifest["blockers"])
+        )
+
+        catalog_path, contexts, families, evidence = self._fixture()
+        valid_manifest = build_role_manifest(catalog_path, contexts, families, evidence)
+        plan = make_worker_bound_plan(valid_manifest, catalog_path=catalog_path)
+        plan["learner_start"]["checkpoint_sha256"] = "f" * 64
+        plan["sha256"] = protocol.digest(
+            {key: value for key, value in plan.items() if key != "sha256"}
+        )
+        with self.assertRaisesRegex(
+            ValueError, "worker-bound r882 plan identity mismatch"
+        ):
+            verify_worker_bound_plan(plan, catalog_path=catalog_path)
 
 
 if __name__ == "__main__":
