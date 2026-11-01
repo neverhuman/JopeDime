@@ -855,8 +855,6 @@ impl RunService {
         let request: Q1Request = serde_json::from_value(raw.clone())
             .map_err(|_| invalid("Expected a closed jope.q1-request/v1 object."))?;
         validate_q1_request(&request, &raw)?;
-<<<<<<< HEAD
-=======
         let admission = self
             .admission
             .lock()
@@ -924,7 +922,6 @@ impl RunService {
                 "Q1 bundle/DOPE pins differ from the admitted evaluator.",
             ));
         }
->>>>>>> 8720443fd (fix(q1): evaluate both policies through pinned admitted discovery)
 
         let protocol_sha = &request.pins["protocol_sha256"];
         let manifest = load_q1_manifest(&self.home, protocol_sha)?;
@@ -1016,59 +1013,6 @@ impl RunService {
         let matrix_sha = hash(&matrix_bytes);
         let matrix = jmat::Matrix::open(matrix_bytes)
             .map_err(|_| invalid("Pinned training matrix is invalid."))?;
-<<<<<<< HEAD
-        let matrix_dir = tempfile::Builder::new()
-            .prefix("q1-")
-            .tempdir_in(&self.home)
-            .map_err(io)?;
-        let matrix_path = matrix_dir.path().join("train.jmat");
-        std::fs::write(&matrix_path, &matrix_bytes).map_err(io)?;
-        let search_plan = q1_search_plan(
-            &request,
-            binding,
-            &matrix_path,
-            &matrix_sha,
-            &backend.bundle_digest,
-            &self.binary,
-        )?;
-        backend.bind_fit(&matrix_bytes, &search_plan).map_err(|_| {
-            unavailable("Pinned Q1 training FIT cannot bind the admitted evaluator.")
-        })?;
-        let learned = backend.learned();
-        let search_space = BackendSpace {
-            native: NativeSpace,
-            learned,
-        };
-        // Resolve the deterministic seed inventory before reserving the
-        // idempotency key. Once reserved, the loop below must always reach a
-        // durable receipt, even when every evaluator attempt fails.
-        let learned_seeds = if learned {
-            Some(
-                search_space
-                    .seeds()
-                    .map_err(|_| unavailable("The admitted Q1 search has no seed candidates."))?,
-            )
-        } else {
-            None
-        };
-        if learned_seeds.as_ref().is_some_and(Vec::is_empty) {
-            return Err(unavailable(
-                "The admitted Q1 search has no seed candidates.",
-            ));
-        }
-        #[allow(unused_mut)]
-        let mut worker_config = crate::worker::PoolConfig::new(self.executable.clone(), 1);
-        #[cfg(test)]
-        {
-            worker_config.fixture = true;
-            worker_config.fixture_test = Some("http::runs::tests::q1_worker_helper");
-        }
-        let worker_pool = crate::worker::WorkerPool::new(worker_config).map_err(io)?;
-        // These evaluator-owned fields are taken only from the hash-bound protocol entry.
-        // In particular, Q1Request has no caller-controlled target or fold fields.
-        let fold_spec = q1_fold_spec(binding, &matrix_sha, backend.learned());
-=======
->>>>>>> 8720443fd (fix(q1): evaluate both policies through pinned admitted discovery)
         let run_id = jope_api::ids::RunId::new();
         let matrix_blob = self.store.publish_blob(matrix.bytes()).map_err(io)?;
         // High patience cannot stop a 24-admission policy early; evaluations
@@ -1126,136 +1070,6 @@ impl RunService {
             return Ok(bytes);
         }
 
-<<<<<<< HEAD
-        let mut rng = rand_chacha::ChaCha12Rng::seed_from_u64(request.seed);
-        let mut parents = Vec::<String>::new();
-        let mut measured = Vec::<(String, f64)>::new();
-        let mut seen = BTreeSet::new();
-        let mut attempts = Vec::with_capacity(request.budget as usize);
-        let mut attempt_events = Vec::with_capacity(request.budget as usize);
-        for number in 0..request.budget {
-            let program = if !learned {
-                "(pipe X (standardize) (ridge))".to_owned()
-            } else if measured.len() < 4 {
-                let seeds = learned_seeds.as_deref().expect("learned seeds prepared");
-                // LearnedAdmission needs four successful measurements. Keep
-                // dispatching real seed candidates until that slate exists;
-                // cycling is intentional so an all-failed evaluator still
-                // consumes the declared budget and commits its failed receipt.
-                q1_learned_seed(seeds, number, &measured).to_owned()
-            } else {
-                // An inference/proposal/admission error cannot strand the
-                // durable reservation. Retry an already measured parent as a
-                // real evaluator attempt; this is still learned guidance and
-                // never falls back to the heuristic pipeline.
-                let fallback = parents[number as usize % parents.len()].clone();
-                let selected = (|| {
-                    let proposals = search_space.propose(&parents, 8, &mut rng).ok()?;
-                    let proposals = proposals
-                        .into_iter()
-                        .filter(|program| !seen.contains(&hash(program.as_bytes())))
-                        .collect::<Vec<_>>();
-                    let round_measurements = measured
-                        .iter()
-                        .map(|(dsl, fitness)| RoundMeasurement {
-                            algorithm_id: dsl,
-                            dsl,
-                            surrogate_fitness: *fitness,
-                        })
-                        .collect::<Vec<_>>();
-                    let context = RoundContext {
-                        plan: &search_plan,
-                        round: number,
-                        measured: round_measurements,
-                    };
-                    backend
-                        .admission
-                        .admit_round(&context, proposals, false, &mut rng)
-                        .ok()?
-                        .into_iter()
-                        .next()
-                })();
-                selected.unwrap_or(fallback)
-            };
-            seen.insert(hash(program.as_bytes()));
-            let evaluated = q1_remaining_wall_ms(started_at.elapsed()).map_or_else(
-                || Err(crate::worker::WorkerFailure::Timeout),
-                |wall_ms| {
-                    let worker_request = crate::worker::Request {
-                        attempt: crate::worker::Attempt {
-                            run: run_id.clone(),
-                            round: 0,
-                            slot: 0,
-                            attempt: number + 1,
-                        },
-                        matrix_path: matrix_path.clone(),
-                        fold_spec: fold_spec.clone(),
-                        dsl: program.clone(),
-                        objective: json!("rmse"),
-                        seed: request.seed.wrapping_add(number),
-                        limits: crate::worker::Limits {
-                            wall_ms,
-                            rss_bytes: WORKER_RAM,
-                        },
-                    };
-                    let response = worker_pool.evaluate(&worker_request);
-                    match response.failure {
-                        Some(failure) => Err(failure),
-                        None => Ok(crate::worker::Scores {
-                            values: response.scores,
-                            fold_scores: response.fold_scores,
-                            predictions_digest: response.predictions_digest,
-                        }),
-                    }
-                },
-            );
-            if let Ok(scores) = &evaluated {
-                if let Some(fitness) = scores.values.first().copied().filter(|v| v.is_finite()) {
-                    if !measured.iter().any(|(dsl, _)| dsl == &program) {
-                        measured.push((program.clone(), fitness));
-                        parents.push(program.clone());
-                    }
-                }
-            }
-            let program_sha = hash(program.as_bytes());
-            let attempt = match evaluated {
-                Ok(scores)
-                    if scores.fold_scores.len() >= 2
-                        && scores
-                            .fold_scores
-                            .iter()
-                            .all(|score| score.is_finite() && *score >= 0.0) =>
-                {
-                    let loss =
-                        scores.fold_scores.iter().sum::<f64>() / scores.fold_scores.len() as f64;
-                    jope_api::EvaluationAttempt {
-                        attempt: number,
-                        outcome: jope_api::EvaluationAttemptOutcome::Completed,
-                        fold_scores: scores.fold_scores,
-                        loss: Some(loss),
-                        program_sha256: Some(program_sha.clone()),
-                        failure: None,
-                    }
-                }
-                result => {
-                    let failure = match result {
-                        Err(failure) => q1_failure(failure),
-                        Ok(_) => jope_api::EvaluationFailure {
-                            code: "invalid_fold_scores".into(),
-                            reason: "Evaluator returned no finite per-fold RMSE inventory.".into(),
-                        },
-                    };
-                    jope_api::EvaluationAttempt {
-                        attempt: number,
-                        outcome: jope_api::EvaluationAttemptOutcome::Failed,
-                        fold_scores: vec![],
-                        loss: None,
-                        program_sha256: None,
-                        failure: Some(failure),
-                    }
-                }
-            };
-=======
         let _activity = self.activity.begin_run();
         drop(admission);
         let executor = Q1PinnedExecutor {
@@ -1290,7 +1104,6 @@ impl RunService {
         }
         let mut attempt_events = Vec::with_capacity(attempts.len() * 2);
         for attempt in &attempts {
->>>>>>> 8720443fd (fix(q1): evaluate both policies through pinned admitted discovery)
             attempt_events.push(EventBody::ExperimentStarted(ExperimentStartedBody {
                 experiment_id: format!("q1_{}", attempt.attempt),
                 hypothesis: "Pinned Q1 evaluation attempt".into(),
