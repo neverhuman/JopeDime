@@ -14548,6 +14548,46 @@
       ],
       "lanes": [],
       "scope": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+    },
+    "python:research/flywheel_selfplay/h187_robust_family/test_h187.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H187 FIT-only, identical paired inits, normalized Huber influence, exact equal-family sampling, timing budget, imported pooled-B rule/stage lock, seed-axis bootstrap and ADVANCE gates"
+    },
+    "python:research/flywheel_selfplay/h189_swa_ema/test_h189.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H189 data-free controls for the adapter weight-averaging (SWA/EMA) preregistration."
+    },
+    "python:research/flywheel_selfplay/h191_nested_kernel/test_h191.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+    },
+    "python:research/flywheel_selfplay/h190_ens10_indep_folds/test_h190.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H190 data-free controls for ENS10/RENS10 confirmation with independent family-fold partitions per outer seed (190141, 190142, 190143), imported H177/H178 selector, and stage-order lock."
     }
   },
   "lanes": {

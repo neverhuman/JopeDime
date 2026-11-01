@@ -1,15 +1,19 @@
 {
-  "schema": "whitepaper.admission-margins-figure/v1",
+  "schema": "whitepaper.rolling-margin-quantiles-figure/v2",
   "source_csv": "figures/data/latest_admissions.csv",
-  "source_csv_sha256": "b76aac16867a777c98294165271c8d5a131061a14a1eab43c01c8a9702e99885",
-  "source_receipt_sha256": "a6c978eaf08e0c645fa5d1c685804aa18e48c48589fecfed1163f6d695d7c26f",
-  "generator_sha256": "6b5010501ed469fe253221f338a7446b9e3af4d15b73cf682b9f760981fc2e0d",
-  "figure_sha256": "c9c5c2c18181cb7b27d4808ff20aa963a00e5ee7a8c387306d797e4c811ee3f2",
+  "source_csv_sha256": "8593b87e632bd729ab41e6fecb63ce6cb8fe62b1ce4b9d74564dfef629c48e50",
+  "source_receipt_sha256": "e5ffc16fee760a0e0c80a23a943eeb92f35684b9614dea5227128e8ae5ae96d2",
+  "generator_sha256": "6af19064eaea2a600d2ed46ac694473bad411e5d5e8cfab769cf293aec95c304",
+  "rolling_csv_sha256": "c3b22ab67aa36d2954d938ea636a25f54f250705d917dd9438fb670c81018e17",
+  "quantile_window": 50,
+  "quantiles": "Linear interpolation at p*(n-1), all50 candidate margins, Decimal precision50; no partial windows",
+  "near_tie_counts": "Cumulative rejected rows in two exclusive bands; no acceptance trials inferred",
+  "figure_sha256": "f02d1849e22524bed1d0fd4edfda95658e9cf6771e9bb6abfb7154624be5d926",
   "round_window": [
     775,
-    2938
+    3021
   ],
-  "rows": 2164,
+  "rows": 2247,
   "accepted_rows": 6,
   "accepted_strict_gain_rounds": [
     785,
@@ -33,17 +37,17 @@
     "859": "0.0001988950680422",
     "2750": "0.0005726212619803"
   },
-  "rejected_rows": 2158,
+  "rejected_rows": 2241,
   "rejected_in_minus_1e_4_to_0": 26,
   "rejected_in_minus_1e_3_to_minus_1e_4": 49,
-  "rejected_below_minus_1e_3": 2083,
+  "rejected_below_minus_1e_3": 2166,
   "closest_rejected_round": 803,
   "closest_rejected_margin": "-0.0000433838086485",
   "min_rejected_round": 2784,
   "min_rejected_margin": "-0.0084690348103498",
   "median_rejected_margin": "-0.0033601045139468",
   "definition": "Pre-decision validation margin Delta_r = candidate_val - previous_best_val in exact Decimal; accepted iff Delta_r >= 0 (strict gain > 0, exact tie == 0).",
-  "scope": "Development admission telemetry over rounds 775-2938 (2,164 records); not an independent first-proposal or deployment comparison.",
+  "scope": "Development admission telemetry over rounds 775-3021 (2,247 records); not an independent first-proposal or deployment comparison.",
   "source_binding": "Aggregate field interpretation only; exact installed source, adapter and evaluation population remain unjoined",
   "matplotlib_version": "3.10.8",
   "reproduce": "python3 figures/scripts/make_admission_margins_figure.py"
