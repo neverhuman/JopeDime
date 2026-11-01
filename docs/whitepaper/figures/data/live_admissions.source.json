@@ -1,0 +1,34 @@
+{
+  "schema": "whitepaper.live-admission-prefix/v1",
+  "snapshot": {
+    "at": "2026-11-01T04:22:37.513756+00:00",
+    "host": "xbabe1",
+    "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/adapter_admissions.jsonl",
+    "inode": 62570224,
+    "observed_bytes": 970513,
+    "prefix_bytes": 970513,
+    "prefix_sha256": "c0ef2c4c2258962e536b3d9677cc7c9c3af9ff975bb7ef94c58793faf42c89ed",
+    "mtime_ns_before": 1793506914642461344,
+    "mtime_ns_after": 1793506914642461344,
+    "trailing_incomplete_bytes_omitted": 0,
+    "source_rows": 1859,
+    "first_round": 775,
+    "last_round": 2633,
+    "selection": "All complete-line records in the stable observed prefix; no outcome selection",
+    "scope": "Read-only adapter admission aggregates only; no dataset, model-weight or final-evaluation payloads"
+  },
+  "evaluation_identities": [
+    "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83"
+  ],
+  "selection": "Every complete admission record in the captured stable prefix, in log order; no deduplication or outcome selection",
+  "field_mapping": {
+    "candidate_val": "candidate_utility",
+    "best_val": "best_utility (post-decision recorded best)",
+    "best_round": "best_round (logged checkpoint identity, not first strict gain)",
+    "utility_shortfall": "Decimal(best_utility) - Decimal(candidate_utility)"
+  },
+  "csv_sha256": "fd7eb3248be25b5d7fc08794cf11b0bbf7154ecff3a8e7f10073370ed126ead1",
+  "historical_reference_csv_sha256": "fd64a540f48127f4475b9eda8adeba6ecdcc767757cfdbba118ede332995bf9e",
+  "source_binding": "Aggregate field interpretation only; installed loop/adapter/checkpoint qualification remains required",
+  "scope": "Adaptive development admission aggregates; no independent first-proposal or deployment evidence"
+}

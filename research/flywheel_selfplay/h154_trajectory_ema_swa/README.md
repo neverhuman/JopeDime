@@ -1,0 +1,3 @@
+# H154 — Trajectory EMA and Uniform SWA Weight Averaging with Train-Only Stat Recalibration on the r882 Continuation
+
+**Status:** `PREREGISTERED_NOT_EXECUTED` (`0` optimizer updates, `0` scored contexts). See [PREREG.md](PREREG.md) for the hypothesis, non-overlap with `H152`, fixed 7-arm (`CTRL`, `EMA_099`, `EMA_0995`, `EMA_0999`, `SWA_K5`, `SWA_K10`, `SWA_K20`) $\times$ 3-seed (`154101, 154102, 154103`) shared 40-step trajectory design (`120` total updates on `xbabe2` CPU), zero-gradient in-fold `DL-Train` activation-stat recalibration, primary 91-ctx `DL-Val` and secondary 1,219-ctx `H145` `DL-Train` / 254-ctx `Fold 0` Elo vs `r882` readouts, and unified 7-arm Holm advancement criteria.
