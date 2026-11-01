@@ -516,13 +516,35 @@ class RoleManifestAdmissionTests(unittest.TestCase):
 
     def test_plan_rederives_proof_instead_of_trusting_cached_eligibility(self) -> None:
         catalog_path, contexts, families, evidence = self._fixture()
+        evidence["worker"]["qualified"] = False
         manifest = build_role_manifest(catalog_path, contexts, families, evidence)
-        manifest["evidence"]["data"]["role_review_sha256"] = "0" * 64
+        self.assertIs(manifest["eligibility_verified"], False)
+        self.assertEqual(manifest["admission_status"], "BLOCKED_INCOMPLETE_EVIDENCE")
         manifest["eligibility_verified"] = True
         manifest["blockers"] = []
 
         with self.assertRaisesRegex(ValueError, "rederived role admission"):
             make_worker_bound_plan(manifest, catalog_path=catalog_path)
+
+    def test_admission_code_drift_invalidates_frozen_plan(self) -> None:
+        catalog_path, contexts, families, evidence = self._fixture()
+        manifest = build_role_manifest(catalog_path, contexts, families, evidence)
+        plan = make_worker_bound_plan(manifest, catalog_path=catalog_path)
+        original_file_sha = protocol.file_sha
+
+        def changed_admission_hash(path):
+            if Path(path).name == "admission.py":
+                return "0" * 64
+            return original_file_sha(path)
+
+        with patch(
+            "research.joint_regbin.protocol.file_sha",
+            side_effect=changed_admission_hash,
+        ):
+            with self.assertRaisesRegex(
+                ValueError, "study implementation changed after preregistration"
+            ):
+                verify_worker_bound_plan(plan, catalog_path=catalog_path)
 
     def test_preflight_rederives_embedded_admission_before_opening_inputs(self) -> None:
         catalog_path, contexts, families, evidence = self._fixture()
