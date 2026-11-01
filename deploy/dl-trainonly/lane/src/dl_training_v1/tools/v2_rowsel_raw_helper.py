@@ -127,7 +127,7 @@ def publish(rec: dict, staging_shard: Path, owner_shard: Path) -> dict:
     out = {"dataset_hash": h, "already_done": [], "published": [], "lost_race": None}
     markers = staging_shard / "_markers"
     markers.mkdir(parents=True, exist_ok=True)
-    todo = []
+    pending_contexts = []
     for c in rec["contexts"]:
         t, s = owner_shard / c["view_id"], staging_shard / c["view_id"]
         if (t / ".done").exists():
@@ -139,8 +139,8 @@ def publish(rec: dict, staging_shard: Path, owner_shard: Path) -> dict:
             out["lost_race"] = f"{c['view_id']}: the owner is writing it"
             return out
         else:
-            todo.append((c["view_id"], s, t))
-    for v, s, t in todo:
+            pending_contexts.append((c["view_id"], s, t))
+    for v, s, t in pending_contexts:
         if (s / ".done").exists():
             os.rename(s / ".done", markers / f"{v}.done")
         try:
@@ -149,7 +149,7 @@ def publish(rec: dict, staging_shard: Path, owner_shard: Path) -> dict:
             out["lost_race"] = f"{v}: rename refused ({type(err).__name__})"
             return out
         out["published"].append(v)
-    for v, _, t in todo:                                      # .done last, after every context of the dataset is in place
+    for v, _, t in pending_contexts:                                      # .done last, after every context of the dataset is in place
         os.rename(markers / f"{v}.done", t / ".done")
     (owner_shard / "_datasets").mkdir(parents=True, exist_ok=True)
     out["record_written"] = create_only(owner_shard / "_datasets" / f"{h}.json",

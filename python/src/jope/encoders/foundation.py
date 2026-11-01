@@ -112,15 +112,15 @@ def encode_many(
 ) -> dict:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    todo = [h for h in hashes if not (out_dir / f"{h}.npy").exists()]
-    log(f"[foundation] {len(hashes)} requested, {len(todo)} to encode")
-    if not todo:
+    pending_hashes = [h for h in hashes if not (out_dir / f"{h}.npy").exists()]
+    log(f"[foundation] {len(hashes)} requested, {len(pending_hashes)} to encode")
+    if not pending_hashes:
         return {"encoded": 0, "skipped": len(hashes), "failed": 0}
     expert = load_expert(device)
     ok = failed = 0
     t0 = time.time()
     with open(out_dir / "encode_log.jsonl", "a") as fh:
-        for i, h in enumerate(todo):
+        for i, h in enumerate(pending_hashes):
             t = time.time()
             try:
                 vec = encode_dataset(expert, Path(root) / h)
@@ -143,5 +143,5 @@ def encode_many(
                 fh.flush()
             if (i + 1) % 25 == 0:
                 rate = (i + 1) / (time.time() - t0)
-                log(f"[foundation] {i + 1}/{len(todo)} ({rate:.2f} ds/s, {failed} failed)")
-    return {"encoded": ok, "skipped": len(hashes) - len(todo), "failed": failed}
+                log(f"[foundation] {i + 1}/{len(pending_hashes)} ({rate:.2f} ds/s, {failed} failed)")
+    return {"encoded": ok, "skipped": len(hashes) - len(pending_hashes), "failed": failed}

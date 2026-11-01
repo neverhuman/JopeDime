@@ -75,11 +75,11 @@ def main():
         b = get(v["key"], v["vid"])
         if sha256b(b) != v["sha"]: raise RuntimeError(f"evidence sha256 mismatch {v['key']}")
         d = json.loads(b); d["_evidence_sha256"] = v["sha"]; return d
-    todo = [v for v in V if v["context_sha256"] not in ev]
+    pending_views = [v for v in V if v["context_sha256"] not in ev]
     with cf.ThreadPoolExecutor(a.threads) as ex, open(a.evidence_cache, "a") as fo:
-        for i, d in enumerate(ex.map(get_ev, todo)):
+        for i, d in enumerate(ex.map(get_ev, pending_views)):
             fo.write(json.dumps(d) + "\n"); ev[d["context_sha256"]] = d
-            if i % 2000 == 0: log("evidence", i, len(todo))
+            if i % 2000 == 0: log("evidence", i, len(pending_views))
     keep, why = [], Co.Counter()
     for v in V:
         d = ev[v["context_sha256"]]; fam = (d.get("family") or {}).get("family_id") or ("ds-" + d["dataset_hash"])
