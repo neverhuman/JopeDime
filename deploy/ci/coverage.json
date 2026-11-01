@@ -13994,6 +13994,16 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
+    },
+    "python:research/h156/test_h156.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H156 data-free nested 5-fold family cross-fit isolation, {0.5x, 1x, 2x} capacity-sweep selection, joint cross-fit selector, Holm-four step-down, and anchored Bradley-Terry Elo controls. Offline research only; no live promotion."
     }
   },
   "lanes": {
