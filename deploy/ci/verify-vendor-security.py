@@ -21,7 +21,7 @@ MAX_FILE_BYTES = 5 * 1024 * 1024
 PREFIX = "vendor/security/"
 PROVENANCE = "PROVENANCE.json"
 EXPECTED_CRATES = frozenset(
-    [("candle-core", "0.11.0"), ("pulp", "0.22.3"),
+    [("candle-core", "0.11.0"), ("crossterm", "0.28.1"), ("pulp", "0.22.3"),
      ("ratatui", "0.29.0"), ("tokenizers", "0.22.2"),
      ("tch", "0.26.0"), ("torch-sys", "0.26.0")]
     + [(name, version) for name in
@@ -157,7 +157,7 @@ def verify(root):
         require(data.get("schema") == "jope.dependency-source-patch/v1", "unknown provenance schema")
         digest(data.get("input_lock_sha256"), "original lock checksum")
         crates = data.get("crates")
-        require(isinstance(crates, list) and len(crates) == 20, "expected all 20 crates")
+        require(isinstance(crates, list) and len(crates) == 21, "expected all 21 crates")
         crate_dirs, identities = {}, set()
         for crate in crates:
             require(isinstance(crate, dict), "invalid crate record")

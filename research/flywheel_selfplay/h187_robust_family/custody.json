@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "wave": "H187",
+  "archive": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H187/codex-t0730/e1259695e732c5cf/H187-evidence.zip",
+    "version_id": "QUew2tC7_HoHCj5MwIjvvA_9mjFu_0wb",
+    "sha256": "e1259695e732c5cf82f780b737604c6b348931196c8f9ea3d9f25d86a9f28ace",
+    "bytes": 389569948,
+    "actual_versioned_byte_readback": true
+  },
+  "manifest": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H187/codex-t0730/e1259695e732c5cf/manifest.json",
+    "version_id": "RZfUfQ.0eebsxduMlAtGYfTtDvpMzQgk",
+    "sha256": "9123a8367eb2db37bf265494921c7fb9c843a208a5be9d85af1aeac42b28f50a",
+    "bytes": 376765,
+    "actual_versioned_byte_readback": true
+  },
+  "member_count": 1804,
+  "actual_exact_version_restore_all_member_payload_hashes": true,
+  "restored_NPZ_files_decoded": 1453,
+  "restored_arrays_decoded": 40867,
+  "restored_adapter_states_decoded": 60,
+  "source_pools_restored": 1310,
+  "optimizer_updates": 7200,
+  "verdict": "NO_ADVANCE"
+}
