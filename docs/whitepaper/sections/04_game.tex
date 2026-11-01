@@ -16,13 +16,13 @@
   \label{fig:game-loop}
 \end{figure*}
 
-We define one attempt at algorithm invention as a game: the encoded
-problem is the board, a program is the move, the referee checks and
-scores it, and a declared incumbent is the opponent.
+To make the comparison in \cref{sec:road} precise, we define one attempt
+at algorithm invention as a game: the encoded problem is the board, a
+program is the move, the referee checks and scores it, and a declared
+incumbent is the opponent. The encoding supplies a shared interface;
+each task type still needs its own qualified encoding, language and
+evaluation protocol (\cref{sub:game-boards}).
 
-Encoding the problem
-provides a shared interface; each task type still needs its own qualified
-encoding, language and evaluation protocol (\cref{sub:game-boards}).
 
 
 % ----------------------------------------------------------------------------
@@ -222,5 +222,6 @@ frontier-designed regressors, with paired outcomes beside Elo summaries
 \citep{elo1978rating}. Non-transitive comparisons are one reason not to
 reduce the evidence to a single rating \citep{balduzzi2018reevaluating}.
 
-Those rules define an attempt. Pricing a verified improvement must also
-count attempts that fail or lose (\cref{sec:price}).
+The referee decides whether an attempt is valid and better. The cost of a
+verified improvement also includes attempts that fail or lose; \cref{sec:price}
+accounts for that full budget.
