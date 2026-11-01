@@ -945,6 +945,8 @@ mod platform {
     // mach_port_deallocate declaration. Keep this narrow FFI next to the Mach sensor.
     #[link(name = "System")]
     unsafe extern "C" {
+        fn mach_host_self() -> libc::mach_port_t;
+        fn mach_task_self() -> libc::mach_port_t;
         fn mach_port_deallocate(task: libc::task_t, name: libc::mach_port_t)
             -> libc::kern_return_t;
     }
@@ -962,7 +964,7 @@ mod platform {
     /// Conservative available memory from free, inactive and speculative VM pages.
     /// Failures stay unavailable; admission never substitutes total RAM for availability.
     pub(super) fn mem_available() -> Result<u64, String> {
-        let host = unsafe { libc::mach_host_self() };
+        let host = unsafe { mach_host_self() };
         if host == 0 {
             return Err("mach_host_unavailable".to_owned());
         }
@@ -976,14 +978,18 @@ mod platform {
                 &mut count,
             )
         };
-        let released = unsafe { mach_port_deallocate(libc::mach_task_self(), host) };
+        let released = unsafe { mach_port_deallocate(mach_task_self(), host) };
         if status != libc::KERN_SUCCESS {
             return Err("host_statistics_unavailable".to_owned());
         }
         if released != libc::KERN_SUCCESS {
             return Err("host_port_release_failed".to_owned());
         }
-        if count < libc::HOST_VM_INFO64_COUNT {
+        let required_count = (std::mem::offset_of!(libc::vm_statistics64, speculative_count)
+            + std::mem::size_of::<libc::natural_t>())
+        .div_ceil(std::mem::size_of::<libc::integer_t>())
+            as libc::mach_msg_type_number_t;
+        if count < required_count {
             return Err("host_statistics_truncated".to_owned());
         }
         let pages = u64::from(stats.free_count)
