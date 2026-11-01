@@ -1032,7 +1032,7 @@
       "train_only_jtt1_sha256": "b66c6eece920ae66bba1f9b49a5dc878024aefc4753e58889f19edb82986a2ea"
     }
   ],
-  "created_utc": "2026-11-01T03:40:56.512694+00:00",
+  "created_utc": "2026-11-01T03:43:31.697693+00:00",
   "dataset_catalog_json_sha256": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
   "dataset_catalog_markdown_sha256": "bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee",
   "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
@@ -1076,9 +1076,22 @@
     "This single reused development-cohort diagnostic cannot establish independent generalization or close RNK-10 M5/S4/S2/Q1 or production qualification.",
     "The scorer loads each pinned DL-Val pool file; only the pre-revealed inputs and selected top-four guided/anchor utilities contribute to the registered gate metrics."
   ],
+  "model_support_files": {
+    "assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+    "assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
+    "assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
+    "python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "python/research/levels/budget_planner.py": "ae76dd8c587c00d28e57cb152de6719f77cc516c660819d7990823c6a9ff1e4f",
+    "python/research/levels/building_block_landmarks.py": "fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186",
+    "python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
+    "python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6",
+    "python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900"
+  },
   "research_only": true,
   "round": 882,
-  "runner_sha256": "12d03a84d2ed63dd7356588c32fe8285d1bdc8377b9a40484ba75c88b20a41c5",
+  "runner_sha256": "2be16ac9f47e0161b07fb1e8536b5dd4558cf2e5f8aee6f84f819ab6e3b758d0",
   "schema": "jope.rnk10.r882-guided-acceptance-manifest/v1",
   "sealed_holdout_meta_test_payloads_opened": 0,
   "selected_roster_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",

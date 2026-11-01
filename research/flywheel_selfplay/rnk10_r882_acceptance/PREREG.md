@@ -24,6 +24,10 @@ scorer loads only the catalog-selected DL-Val pools and records selected termina
 training, optimizer update, GPU, signing, qualification lock, or live-loop write is used. CPU
 execution is one math thread at nice >=10, host CPU <=85%, deadline 2026-11-01T07:00Z.
 
+The manifest also hashes the exact fused model source, model and adapter code, its support modules,
+and the three base model files plus frozen projection asset loaded by the evaluator. It refuses the
+unregistered optional bank and distilled-bridge sidecars; both are absent from the pinned input.
+
 This cohort is the checkpoint's development contract and has prior checkpoint-selection exposure.
 The result is a one-shot diagnostic, not independent generalization evidence and not RNK-10
 qualification. M5, S4, S2, Q1, and production qualification remain separate.

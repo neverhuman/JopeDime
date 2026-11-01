@@ -31,6 +31,19 @@ CPU_FUSED_SHA256 = "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4
 MODEL_SOURCE_SHA256 = "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a"
 ADAPTER_SOURCE_SHA256 = "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a"
 MICRO_ROOT = Path("/home/ubuntu/JopeDimeMicro")
+MODEL_SUPPORT_FILES = {
+    "assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+    "assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
+    "assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
+    "python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6",
+    "python/research/levels/budget_planner.py": "ae76dd8c587c00d28e57cb152de6719f77cc516c660819d7990823c6a9ff1e4f",
+    "python/research/levels/building_block_landmarks.py": "fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186",
+    "python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
+    "python/model.py": MODEL_SOURCE_SHA256,
+    "python/phase12_multimodal_model.py": ADAPTER_SOURCE_SHA256,
+    "python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
+}
 SCALE = 0.4208
 BOOTSTRAP_DRAWS = 10_000
 BOOTSTRAP_SEED = 214_001
@@ -161,6 +174,14 @@ def main() -> int:
         raise SystemExit("pinned Flywheel model source SHA mismatch")
     if sha256(MICRO_ROOT / "python/phase12_multimodal_model.py") != ADAPTER_SOURCE_SHA256:
         raise SystemExit("pinned adapter source SHA mismatch")
+    if manifest.get("model_support_files") != MODEL_SUPPORT_FILES:
+        raise SystemExit("manifest model support inventory differs from runner pins")
+    for relative_path, expected in MODEL_SUPPORT_FILES.items():
+        if sha256(MICRO_ROOT / relative_path) != expected:
+            raise SystemExit(f"pinned model support SHA mismatch: {relative_path}")
+    for optional_path in ("expanded_gpu_bank_1766.pt", "distilled_stage1a_bridge_real_s3.pt"):
+        if (INPUT_DIR / optional_path).exists():
+            raise SystemExit(f"unregistered model sidecar is present: {optional_path}")
     selected_rows = json.loads((INPUT_DIR / "selected.json").read_text()).get("dev", [])
     manifest_rows = manifest.get("contexts", [])
     by_cid = {row.get("context_sha256"): row for row in manifest_rows}
