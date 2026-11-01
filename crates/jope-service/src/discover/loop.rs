@@ -967,8 +967,8 @@ impl Discovery {
         }
     }
 
-    /// Search events only contain deterministic values. Elapsed wall usage is
-    /// available in the snapshot/receipt; DSC-09 owns run.finished/finalization.
+    /// Canonical event projection under owner ruling rulings_t1900 R2 (§5.6).
+    /// Operational envelopes and receipts retain run identity and elapsed usage.
     pub fn projection(&self) -> Result<Value> {
         let mut after = 0;
         let mut values = vec![];
@@ -980,10 +980,23 @@ impl Discovery {
             after = page.next_after.0;
             for event in page.events {
                 let mut value = serde_json::to_value(event)?;
-                value
-                    .as_object_mut()
-                    .context("event is not an object")?
-                    .remove("time");
+                let envelope = value.as_object_mut().context("event is not an object")?;
+                envelope.remove("run_id");
+                envelope.remove("time");
+                if let Some(warnings) = value
+                    .get_mut("body")
+                    .and_then(|body| body.get_mut("warnings"))
+                    .and_then(Value::as_array_mut)
+                {
+                    warnings.retain(|warning| warning.get("host") != Some(&Value::Bool(true)));
+                }
+                if let Some(budget) = value
+                    .get_mut("body")
+                    .and_then(|body| body.get_mut("budget_used"))
+                    .and_then(Value::as_object_mut)
+                {
+                    budget.remove("wall_seconds");
+                }
                 if value
                     .get("body")
                     .and_then(|b| b.get("host"))

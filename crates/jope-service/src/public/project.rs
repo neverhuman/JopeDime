@@ -135,21 +135,20 @@ impl From<BannedWordError> for ProjectionError {
 /// Projects one run's internal evidence into public event bodies.
 #[derive(Clone, Debug)]
 pub struct Projector {
-    run: RunId,
     problem: ProblemDigest,
 }
 
 impl Projector {
-    pub fn new(run: RunId, problem: ProblemDigest) -> Self {
-        Self { run, problem }
+    pub fn new(_run: RunId, problem: ProblemDigest) -> Self {
+        Self { problem }
     }
 
-    /// Deterministic opaque ID: a one-way digest of the run and ordinal, so it never
-    /// encodes lineage, round, slot or parents (§8.1 rule 2).
+    /// Run-independent opaque ID from the problem and ordinal (owner R2, §5.6).
+    /// The one-way digest never encodes lineage, round, slot or parents (§8.1).
     pub fn experiment_id(&self, ordinal: EvaluationOrdinal) -> String {
         let mut hash = Sha256::new();
         hash.update(b"jope.public-experiment/v1\0");
-        hash.update(self.run.to_string().as_bytes());
+        hash.update(self.problem.0);
         hash.update([0]);
         hash.update(ordinal.0.to_be_bytes());
         let digest = hash.finalize();
@@ -625,6 +624,7 @@ mod tests {
     fn experiment_ids_are_opaque_deterministic_and_unique() {
         let p = projector();
         let other = Projector::new("run_01JBD8Q6N4V2T5Y8K3M7P9R1S1".parse().unwrap(), PROBLEM);
+        let other_problem = Projector::new(RUN.parse().unwrap(), ProblemDigest([8; 32]));
         let mut seen = BTreeSet::new();
         for ordinal in 0..10_000 {
             let id = p.experiment_id(EvaluationOrdinal(ordinal));
@@ -635,7 +635,8 @@ mod tests {
                 .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()));
             assert_ne!(id[4..], format!("{ordinal:016x}"));
             assert_eq!(id, p.experiment_id(EvaluationOrdinal(ordinal)));
-            assert_ne!(id, other.experiment_id(EvaluationOrdinal(ordinal)));
+            assert_eq!(id, other.experiment_id(EvaluationOrdinal(ordinal)));
+            assert_ne!(id, other_problem.experiment_id(EvaluationOrdinal(ordinal)));
             assert!(seen.insert(id));
         }
         match p.experiment_started(&proposal(9)).unwrap() {

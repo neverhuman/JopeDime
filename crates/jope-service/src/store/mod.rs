@@ -66,9 +66,44 @@ fn db(e: impl std::fmt::Display) -> StoreError {
 }
 
 #[cfg(feature = "failpoints")]
+static BOUNDARY_COUNTS: [std::sync::atomic::AtomicU64; 7] =
+    [const { std::sync::atomic::AtomicU64::new(0) }; 7];
+
+#[cfg(feature = "failpoints")]
 fn boundary(name: &str) {
-    if std::env::var("JOPE_STORE_FAILPOINT").as_deref() == Ok(name) {
+    let selected = std::env::var("JOPE_STORE_FAILPOINT").as_deref() == Ok(name);
+    let trace = std::env::var("JOPE_STORE_TRACE_BOUNDARIES").as_deref() == Ok("1");
+    if !selected && !trace {
+        return;
+    }
+    let index = match name {
+        "after_write" => 0,
+        "after_file_sync" => 1,
+        "after_hash_verify" => 2,
+        "after_rename" => 3,
+        "after_directory_sync" => 4,
+        "after_commit" => 5,
+        "before_commit" => 6,
+        _ => return,
+    };
+    let ordinal = BOUNDARY_COUNTS[index].fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
+    if trace {
+        eprintln!("JOPE_STORE_BOUNDARY:{name}:{ordinal}");
+    }
+    let requested = std::env::var("JOPE_STORE_FAILPOINT_OCCURRENCE")
+        .map(|value| value.parse::<u64>().expect("positive failpoint occurrence"))
+        .unwrap_or(1);
+    assert!(requested > 0, "positive failpoint occurrence");
+    if selected && ordinal == requested {
         eprintln!("JOPE_STORE_CRASH:{name}");
+        // Qualification alone may stop this writer at the real boundary while
+        // its supervisor sends SIGKILL to the actual background engine. Normal
+        // failpoint behavior remains abort; ordinary release builds omit it.
+        if std::env::var("JOPE_STORE_FAILPOINT_PARK").as_deref() == Ok("1") {
+            loop {
+                std::thread::park();
+            }
+        }
         std::process::abort();
     }
 }
@@ -245,6 +280,7 @@ impl Store {
             cas: &self.cas,
         };
         let result = action(&mut write)?;
+        boundary("before_commit");
         write.inner.commit().map_err(db)?;
         boundary("after_commit");
         Ok(result)
