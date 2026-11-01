@@ -108,7 +108,7 @@ reason = "Axum HTTP1 engine server; existing loopback/auth boundary remains requ
 
 [[package_exceptions]]
 name = "ureq"
-version = "3.4.2"
+version = "3.5.0"
 feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
 allowed_features = []
 reason = "Featureless local HTTP client; defaults, TLS and remote-fetch dependencies stay disabled and denied."
