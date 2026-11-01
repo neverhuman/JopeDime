@@ -34,27 +34,20 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Prepare pinned compilers in task-local storage
         run: |
-          set -euo pipefail
-          test "$(node --version)" = "v${{ matrix.node }}"
-          bash deploy/ci/typescript/compiler-tools.sh
-          npm ci --prefix deploy/ci/typescript --ignore-scripts --no-audit --no-fund
+          NODE_VERSION='${{ matrix.node }}' bash ops/ci/typescript.sh prepare
       - name: Formatting and complete source checks
-        run: |
-          set -euo pipefail
-          git diff --check
-          cargo fmt --all --check
-          cargo check --locked -p feat-math -p jope-cli -p jope-pipeline --no-default-features --all-targets
+        run: bash ops/ci/typescript.sh source-check
       - name: Complete census, golden parity, 100 percent facade coverage and publication contracts
-        run: bash deploy/ci/typescript/qualify.sh
+        run: bash ops/ci/typescript.sh qualify
       - name: Every census fixture in Chromium, Firefox, WebKit and module workers
         if: matrix.node == '26.1.0'
         env:
           JOPE_TS_BROWSERS: chromium,firefox,webkit
-        run: bash deploy/ci/typescript/browser-tools.sh
+        run: bash ops/ci/typescript.sh browser
       - name: Require complete exact-source qualification evidence
         env:
           JOPE_TS_EXPECTED_NODE: ${{ matrix.node }}
-        run: node deploy/ci/typescript/evidence.mjs create target/typescript-evidence
+        run: bash ops/ci/typescript.sh evidence target/typescript-evidence
       - name: Retain qualification logs and source-bound receipt
         if: always()
         uses: ./.github/actions/upload-ci-evidence

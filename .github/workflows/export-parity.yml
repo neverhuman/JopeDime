@@ -32,10 +32,8 @@ jobs:
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version: '26.1.0'
-      - name: Pinned Rust
-        run: rustup toolchain install 1.97.1 --profile minimal
       - name: Execute real emitted predictors
-        run: bash deploy/ci/export-parity.sh "target/export-parity/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+        run: bash ops/ci/export-parity.sh "target/export-parity/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
       - name: Retain source-bound parity report and generated predictors
         if: always()
         env:
