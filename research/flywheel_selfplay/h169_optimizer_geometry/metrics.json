@@ -1,0 +1,412 @@
+{
+  "wave": "H169",
+  "status": "COMPLETE_DIAGNOSTIC_LEAK_BIASED",
+  "calibration_leak": true,
+  "verdict": "NO_ADVANCE (leak-biased diagnostic)",
+  "advance": false,
+  "owner_disposition": "Current attempt completed without interruption. Because all 60 strict selections were step 0, no A1 rerun is authorized or required; report the result as a leak-biased null. Any apparent ADVANCE would have been invalid.",
+  "preregistration": {
+    "pr": 1446,
+    "merge_commit": "f878453f7ad114352ab6cf15a239a5f13fb0ecc4",
+    "runner_source_commit": "f878453f7ad114352ab6cf15a239a5f13fb0ecc4",
+    "manifest_sha256": "a880eb5655243cfbc696e23c87df731af4a8581aca95abe6a51324e04ac33b40"
+  },
+  "protocol": {
+    "arms": [
+      "CTRL",
+      "SGDM",
+      "SGDM_NEST",
+      "ADAM_EPS"
+    ],
+    "seeds": [
+      169101,
+      169102,
+      169103
+    ],
+    "outer_folds": 5,
+    "crossfit_cells": 15,
+    "planned_and_completed_updates": 2560,
+    "calibration_updates": 160,
+    "crossfit_updates": 2400,
+    "sgdm_lr_chosen": 0.003,
+    "sgdm_calibration": "single global seed169101 outer-fold0 FIT-only drift choice",
+    "calibration_drifts": {
+      "ctrl_step40": 0.3867367397745982,
+      "sgdm_candidates": {
+        "0.001": 0.14209763283980262,
+        "0.003": 0.4630137814025699,
+        "0.01": 1.0378683314061223
+      },
+      "chosen_sgdm_lr": 0.003
+    }
+  },
+  "leak": {
+    "review": "BLOCK; https://github.com/neverhuman/JopeDime/pull/1446#pullrequestreview-5727236083",
+    "receipt": "/home/ubuntu/jope_plan/evidence/redteam-t0120/PR1446-49f77ee92dbf/independent-checks.json",
+    "finding": "The global SGDM rate was calibrated on fold-0 FIT labels. Those same families overlap other outer-fold selectors and assessments, so this attempt is not a clean cross-fit estimate.",
+    "overlap_families": {
+      "outer0": {
+        "selector": 0,
+        "assessment": 0
+      },
+      "outer1": {
+        "selector": 41,
+        "assessment": 0
+      },
+      "outer2": {
+        "selector": 41,
+        "assessment": 41
+      },
+      "outer3": {
+        "selector": 41,
+        "assessment": 41
+      },
+      "outer4": {
+        "selector": 0,
+        "assessment": 41
+      }
+    },
+    "owner_ruling": "Treat current output as diagnostic/leak-biased. Under the owner ruling, a null result remains a valid null under this leakage; any positive/advance result would be invalid."
+  },
+  "baseline": {
+    "status": "PASS",
+    "contexts": 91,
+    "mean_utility": 1.1377941898164525,
+    "native_eval_forward_bit_exact": true
+  },
+  "crossfit": {
+    "train_contexts": 1219,
+    "families": 205,
+    "assessment": "each context once per seed",
+    "selection": "strict; step 0 on all 60 arm-cell decisions",
+    "nonzero_strict_picks": 0
+  },
+  "primary_equal_family_oof_vs_r882": {
+    "per_seed_context_utility": [
+      [
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298
+      ],
+      [
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298
+      ],
+      [
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298
+      ]
+    ],
+    "per_seed_equal_family_utility": [
+      [
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834
+      ],
+      [
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834
+      ],
+      [
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834
+      ]
+    ],
+    "elo_median": [
+      1500.0,
+      1500.0,
+      1500.0,
+      1500.0,
+      1500.0
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ]
+    ],
+    "treatments": {
+      "SGDM": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "holm_p": 1.0,
+        "advance": false,
+        "one_sided_p": 1.0
+      },
+      "SGDM_NEST": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "holm_p": 1.0,
+        "advance": false,
+        "one_sided_p": 1.0
+      },
+      "ADAM_EPS": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "holm_p": 1.0,
+        "advance": false,
+        "one_sided_p": 1.0
+      }
+    }
+  },
+  "secondary_dl_val_descriptive": {
+    "per_seed_context_utility": [
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525
+      ],
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525
+      ],
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525
+      ]
+    ],
+    "median_elo": [
+      1500.0,
+      1500.0,
+      1500.0,
+      1500.0,
+      1500.0
+    ],
+    "treatment_gains": {
+      "SGDM": {
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "SGDM_NEST": {
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "ADAM_EPS": {
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    }
+  },
+  "unconstrained_inner_selector_best_step_descriptive": {
+    "CTRL": {
+      "per_seed_gain": [
+        -0.001153984720545536,
+        -0.006892957382982545,
+        0.0027203876502735484
+      ],
+      "median_gain": -0.001153984720545536,
+      "ci95": [
+        -0.012536496091313375,
+        0.01299105260531463
+      ]
+    },
+    "SGDM": {
+      "per_seed_gain": [
+        -0.002603421193842366,
+        0.0,
+        -0.0024828343496092527
+      ],
+      "median_gain": -0.0024828343496092527,
+      "ci95": [
+        -0.005042761485995205,
+        0.0
+      ]
+    },
+    "SGDM_NEST": {
+      "per_seed_gain": [
+        0.0,
+        0.0,
+        -0.0061797027151019295
+      ],
+      "median_gain": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ]
+    },
+    "ADAM_EPS": {
+      "per_seed_gain": [
+        -0.0026799754189479204,
+        0.004615121294068221,
+        -0.0023875921612821344
+      ],
+      "median_gain": -0.0023875921612821344,
+      "ci95": [
+        -0.00555537424034979,
+        0.004985095761693588
+      ]
+    }
+  },
+  "step40_descriptive": {
+    "CTRL": {
+      "per_seed_gain": [
+        -0.02904068258117047,
+        -0.028493902767124588,
+        -0.03338815998379198
+      ],
+      "median_gain": -0.02904068258117047,
+      "ci95": [
+        -0.05898312161090642,
+        -0.005159068714361033
+      ],
+      "adapter_l2_drift_median": 0.37680136272417203,
+      "adapter_l2_drift_range": [
+        0.3602292543123457,
+        0.3933254535735632
+      ]
+    },
+    "SGDM": {
+      "per_seed_gain": [
+        -0.10386611771836506,
+        -0.10146181857775786,
+        -0.13195872046548707
+      ],
+      "median_gain": -0.10386611771836506,
+      "ci95": [
+        -0.1510927934245824,
+        -0.06265143100726372
+      ],
+      "adapter_l2_drift_median": 0.4617427525919828,
+      "adapter_l2_drift_range": [
+        0.4257115867915563,
+        0.49822943754909227
+      ]
+    },
+    "SGDM_NEST": {
+      "per_seed_gain": [
+        -0.1099991123078347,
+        -0.1070263548398076,
+        -0.1473023316536896
+      ],
+      "median_gain": -0.1099991123078347,
+      "ci95": [
+        -0.15823045031744512,
+        -0.06929478840109699
+      ],
+      "adapter_l2_drift_median": 0.47846907691206836,
+      "adapter_l2_drift_range": [
+        0.44141214690478775,
+        0.5150105892010721
+      ]
+    },
+    "ADAM_EPS": {
+      "per_seed_gain": [
+        -0.024101927034582592,
+        -0.016884875027253565,
+        -0.026599069076997148
+      ],
+      "median_gain": -0.024101927034582592,
+      "ci95": [
+        -0.04511305780144687,
+        -0.0025794405656835687
+      ],
+      "adapter_l2_drift_median": 0.11166131412944001,
+      "adapter_l2_drift_range": [
+        0.10642555896455963,
+        0.11741312766846632
+      ]
+    }
+  },
+  "independent_recount": {
+    "status": "PASS",
+    "selection_locks": 15,
+    "strict_decisions": 60,
+    "primary_panel_matches_runner_bitwise": true,
+    "nonzero_strict_picks": [],
+    "receipt": "recount.json"
+  },
+  "audit": {
+    "protected_reads": 0,
+    "cuda_used": false,
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "trainable_parameters": 29211,
+    "frozen_sha256": "8d1070faf574ee1cd2a4e630887e1662b43189b3f89b04982143ef2704818aae"
+  },
+  "resource_guard": {
+    "monitor_status": "COMPLETE",
+    "exit_code": 0,
+    "stop_reasons": [],
+    "peak_rss_bytes": 3498385408,
+    "peak_threads": 3,
+    "peak_load1": 45.26806640625,
+    "peak_host_cpu_percent": 44.8,
+    "peak_disk_used_fraction": 0.9205421801001734,
+    "min_mem_available_bytes": 70925729792,
+    "min_free_disk_bytes": 624233545728,
+    "elapsed_seconds": 2367.8656053689774
+  },
+  "custody_manifest_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H169/luna_ns_hbaseline-t0157/custody.json"
+}

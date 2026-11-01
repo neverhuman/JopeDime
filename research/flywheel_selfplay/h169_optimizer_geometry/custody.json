@@ -1,0 +1,47 @@
+{
+  "schema": "jope.hwave-evidence-custody/v1",
+  "wave": "H169",
+  "status": "COMPLETE_DIAGNOSTIC_LEAK_BIASED",
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H169/luna_ns_hbaseline-t0157/",
+  "versioned_storage": true,
+  "run_source_commit": "f878453f7ad114352ab6cf15a239a5f13fb0ecc4",
+  "objects": [
+    {
+      "key": "experiments/rd_breakthrough_20261030/H169/luna_ns_hbaseline-t0157/launch.json",
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H169/luna_ns_hbaseline-t0157/launch.json",
+      "version_id": "Z2DHXAH8oU4WeXJZo5dyozpaojEX4O.A",
+      "bytes": 189,
+      "sha256": "d506102e812c1c8832d847449b134173dcfaa521c414e061ea1414ccbc571efb",
+      "exact_version_readback_verified": true
+    },
+    {
+      "key": "experiments/rd_breakthrough_20261030/H169/luna_ns_hbaseline-t0157/H169-evidence-closeout.zip",
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H169/luna_ns_hbaseline-t0157/H169-evidence-closeout.zip",
+      "version_id": "ZSg0RxcDPJhvDGs_6t4.vln9tdpAT9su",
+      "bytes": 33536459,
+      "sha256": "d6fd0f0e1eac630e7746bb52617a02f7323c99d0ee098f3659e39db2984d2295",
+      "exact_version_readback_verified": true,
+      "member_manifest_sha256": "98c8047a1da221e8da138c17c08aeda8d96467cc7846702b6f43ca49752b2d44",
+      "members": 298
+    }
+  ],
+  "independent_recount": "evidence/recount.json in H169-evidence.zip",
+  "redteam_leak_review": "review/independent-checks.json in H169-evidence.zip; formal review #5727236083",
+  "protected_reads": 0,
+  "includes_raw_outputs_outside_git": true,
+  "superseded_objects": [
+    {
+      "key": "experiments/rd_breakthrough_20261030/H169/luna_ns_hbaseline-t0157/H169-evidence.zip",
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H169/luna_ns_hbaseline-t0157/H169-evidence.zip",
+      "version_id": "VxugDJf4cBlkGdaxsliaKcbS5K7V8wsc",
+      "bytes": 33536350,
+      "sha256": "7fd06889bd476c0659c490d6dd55063b01646111b127cbcccff7124c776bb1c7",
+      "exact_version_readback_verified": true,
+      "member_manifest_sha256": "c5599545c212210ed3d01b1c71ce4f94d52e9028e6defd2706393aabcf3b0325",
+      "members": 298,
+      "status": "superseded-by-final-closeout-archive"
+    }
+  ],
+  "final_metrics_sha256": "0b498bf786d8d694dd94ac687a60f91f76625abec7c261a2d1ed66381a5fb675",
+  "final_readme_sha256": "e9521bfe1321da2562d7f0ee1ffe7998a162ddcefd21e6ccd15c9a1a9116d0d2"
+}

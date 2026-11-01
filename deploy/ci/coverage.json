@@ -4269,6 +4269,16 @@
       "lanes": [],
       "scope": "Standalone pytest protocol/statistical fixtures for the Q1 qualification harness (QLT-01, #497): owner-signature refusal, sealed-holdout and smoke-scope guards, backend-failure accounting; no learned model or sealed payload executes. Not collected by a CI lane; owner-signed qualification runs are separate."
     },
+    "python:deploy/qualification/q1/harness/test_q1_cut.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Standalone unittest controls for the Q1 canonical cut hash (QLT-04, jope.q1-cut/v1): golden cross-language digest, key-order independence, field/order sensitivity and invalid-fold refusal; data-free, no learned model or sealed payload executes."
+    },
     "python:deploy/qualification/v1.0/test_cpu_gates.py": {
       "discovery": {
         "kind": "python-family"

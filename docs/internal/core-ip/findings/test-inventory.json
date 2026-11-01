@@ -1603,6 +1603,10 @@
       "reason": "Q1 qualification harness protocol/statistical fixtures (QLT-01): owner-signature refusal, holdout guards and failure accounting; no learned model or sealed payload executes",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/q1/harness/test_q1_cut.py": {
+      "reason": "Standalone unittest controls for the Q1 canonical cut hash (QLT-04, jope.q1-cut/v1): golden cross-language digest, key-order independence, field/order sensitivity and invalid-fold refusal; data-free, no learned model or sealed payload executes.",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/v1.0/test_cpu_gates.py": {
       "reason": "REL-07 v1.0 CPU qualification controller proofs (gate inventory, receipts and refusals); no Rust build, GPU, release or dataset job executes",
       "role": "infrastructure"
