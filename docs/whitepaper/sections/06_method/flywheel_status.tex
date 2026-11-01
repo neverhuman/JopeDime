@@ -1,67 +1,49 @@
-% Four main-text views; detailed diagnostics are in Appendix D.
-\begin{figure*}[!t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_admission_margins.pdf}
-  \caption{\textbf{Pre-decision validation margins across rounds 775--2938.} Left: candidate minus prior retained-best validation utility ($\Delta_r = u_{\mathrm{cand},r} - u_{\mathrm{prev},r}$) across all \num{2164} retained admission records in rounds 775--2938, zoomed around the $\Delta_r = 0$ admission threshold (round 785's $+0.0302$ gain is annotated off-scale). Right: round counts by pre-decision margin band on a symmetric log scale. Half of all six accepted rounds are exact ties ($\Delta_r = 0$ at rounds 782, 882 and 2795), two are sub-$10^{-3}$ gains ($+\num{1.99e-4}$ at round 859 and $+\num{5.73e-4}$ at round 2750), and 26 of the \num{2158} rejected candidates lie within $[-10^{-4}, 0)$ of a tie. This is development telemetry from the same retained window as \cref{fig:fw-latest-admissions}, not a Results claim or an independent first-proposal evaluation.}
-  \label{fig:fw-admission-margins}
-\end{figure*}
-% Source spacing retains the evidence checklist marker location.
-
-
-
-
-
-
-
-
-
-
-
-
-
+% Stage 2 owns these figures; the historical reference ends before this input.
 \subsection{A separate adapter admission record}\label{sec:method-status}
 
+This is the adapter record for the second learning task in \cref{sec:method}.
+Utility is the logged scalar score, with larger values treated as better.
 
-The retained CSVs summarize a later regression admission record (\cref{fig:fw-latest-admissions}), separate
-from the historical reference above. An adapter is the trainable
-adjustment evaluated by this admission loop. Utility is the logged
-scalar score, with larger values treated as better.
-The admission CSV records rounds, candidate and best validation
-utilities, acceptance flags and timestamps. The tables omit the
-adapter architecture, score normalization and evaluation population,
-so they do not support comparisons with other models.
-The source inspection that follows describes the loop implementation.
-It does not yet bind that source or the adapter's identity to the
-recorded run. Logged utilities alone do not identify the snapshot's
-relationship to the historical writer or map.
+\paragraph{Scope of the telemetry.}
+All records here and in \cref{app:flywheel-telemetry} are adaptive
+training-side observations. Program-incumbent events and adapter admissions
+have different denominators; neither establishes independent first-proposal
+improvement or deployment throughput. The aggregate records do not yet bind
+an exact loop source, adapter, evaluation population or normalization, so
+cross-model comparisons and transfer remain unqualified. Retained windows
+are separate; unobserved gaps are not filled or joined into a learning curve.
+Independent comparisons belong to \cref{sec:results}.
 
-\begin{figure*}[!t]
+\begin{figure*}[!tp]
   \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_promotions_per_hour.pdf}
-  \caption{\textbf{Training-program promotions per hour and adapter validation trajectory.} Left: logged rolling and per-round strict training-program promotions per hour. Right: candidate and recorded-best adapter validation pool utility. Both panels cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, with zero adapter admissions).}
-  \label{fig:fw-promotions-per-hour}
+  \includegraphics[width=\linewidth]{figures/fig_fw_latest_admissions.pdf}
+  \caption{\textbf{Retained adapter admission trajectory.}
+  The captured prefix in \cref{tab:admission-ledger}: blue is post-decision
+  retained best; grey marks rejected candidates, red stars strict gains
+  and hollow diamonds exact ties. Decisions use unrounded logged values.
+  Scope: \cref{sec:method-status}.}
+  \label{fig:fw-latest-admissions}
 \end{figure*}
-\begin{figure*}[!t]
+
+\begin{figure*}[!tp]
   \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_round_throughput.pdf}
-  \caption{\textbf{Adapter utility and whole-round throughput in a later retained window.}
-  Both panels cover the same 20 completed summaries, rounds 2696--2715.
-  Left: candidate adapter validation utility and the recorded best.
-  Right: distinct training contexts divided by the full wall time of each
-  completed round. The rates include all work and waits inside that interval.
-  These are development operating observations; independent first-proposal
-  and deployment comparisons remain required.}
-  \label{fig:fw-round-throughput}
+  \includegraphics[width=\linewidth]{figures/fig_fw_admission_margins.pdf}
+  \caption{\textbf{Pre-decision validation margins.}
+  Candidate minus prior retained-best utility,
+  $\Delta_r=u_{\mathrm{cand},r}-u_{\mathrm{prev},r}$, for the same prefix
+  as \cref{fig:fw-latest-admissions}. Left: margins near zero; the largest
+  gain is annotated off-scale. Right: margin-band counts on a symmetric
+  log scale. Exact counts and chronology: \cref{tab:admission-ledger}.
+  Scope: \cref{sec:method-status}.}
+  \label{fig:fw-admission-margins}
 \end{figure*}
-In the inspected loop implementation, heuristic program edits, retrieval
-and grammar sampling supply candidate programs. Only an adapter that ranks
+
+In this implementation, only an adapter that ranks
 proposals by predicted cost is optimized; the encoder and other modules
 stay frozen. This loop has no neural program writer. Its pool-utility
 calculation uses the recorded scores and gate outcomes of
 the first four candidates as revealed history, then selects the candidate
 with the lowest predicted cost from the pool, including those entries.
-This is a conditional ranking task, separate from a single new program drawn by the
-historical writer.
 Training puts the lowest recorded scores first in its slates; utility
 evaluation uses stored pool order. The two calls can therefore reveal
 different examples.
@@ -80,43 +62,59 @@ Historical programs have a separate admission path.
 The adapter's default gate can accept equal utility; rejection restores
 model and optimizer states.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 \TBD{Bind the retained snapshot to the exact loop source, adapter, candidate
 pools, revealed-history inputs and utility normalization.}
 
+\begin{figure*}[!tp]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_promotions_per_hour.pdf}
+  \caption{\textbf{Training-program promotions per hour and adapter validation trajectory.} Left: logged rolling and per-round strict training-program promotions per hour. Right: candidate and recorded-best adapter validation pool utility. Both panels cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, with zero adapter admissions).}
+  \label{fig:fw-promotions-per-hour}
+\end{figure*}
 
-\paragraph{One retained admission ledger.}
-\Cref{fig:fw-latest-admissions} covers all \num{2164} captured rounds,
-775--2938: six admissions and \num{2158} rejections. Strict gains occur at
-rounds 785, 859 and 2750; exact ties occur at 782, 882 and 2795.
-The first \num{1889} rows end at round 2663. The final 275 add the gain at
-2750 and tie at 2795. Round 2750 raises retained utility from 1.1378 to
-1.1384 (rounded), an increase of about $+\num{5.73e-4}$. A change in recorded best-round identity alone
-is not a utility gain. \Cref{fig:fw-admission-margins} separates those
-outcomes using candidate minus prior retained-best utility;
-\cref{app:latest-admissions} gives the margin distribution for this same
-ledger. The 101 records added after round 2837 are all rejections;
-the retained-best utility is unchanged through round 2938.
+\begin{figure*}[!tp]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_round_throughput.pdf}
+  \caption{\textbf{Adapter utility and whole-round throughput in a later retained window.}
+  Both panels cover the same 20 completed summaries, rounds 2696--2715.
+  Left: candidate adapter validation utility and the recorded best.
+  Right: distinct training contexts divided by the full wall time of each
+  completed round. The rates include all work and waits inside that interval.
+  Scope: \cref{sec:method-status}.}
+  \label{fig:fw-round-throughput}
+\end{figure*}
 
-Program-incumbent events count improvements to training programs, whereas
-adapter admissions concern the ranking adjustment.
-\Cref{fig:fw-promotions-per-hour} puts the former on a time scale for
-rounds 2644--2663; its paired utility panel records no adapter admission.
-These outcomes need separate denominators and cannot stand in for one another.
+\paragraph{The retained admission ledger.}
+\Cref{tab:admission-ledger} is the canonical chronology and count table.
+\Cref{fig:fw-latest-admissions,fig:fw-admission-margins} show its trajectory
+and pre-decision margins. A recorded best-round identity can change on a
+tie without raising utility.
 
-\Cref{fig:fw-round-throughput} measures distinct training contexts divided
-by full completed-round wall time in rounds 2696--2715. It includes work
-and waits inside each round; it is neither deployment throughput nor a
-count of distinct tasks across rounds. The operating windows differ from
-the full admission prefix, so these panels do not form a matched learning curve.
+\Cref{fig:fw-promotions-per-hour} puts training-program incumbent events on
+a completed-round clock; \cref{fig:fw-round-throughput} divides distinct
+within-round training contexts by full round time. Their retained windows
+and denominators differ from the admission prefix.
 
-
-
-The remaining windows, alternative summaries and historical GP comparisons
-are collected in \cref{app:flywheel-telemetry,app:record-windows}.
-A later operating window in \cref{app:latest-event-rates,fig:fw-latest-event-rates}
-puts reported program-event counts and rates on their logged elapsed-time
-axis. These measure search activity during training. \Cref{sec:results}
-asks a different question: whether a frozen writer's first proposal
-improves under a matched comparison. Admission and event rates do not
-answer that test.
+The remaining windows and historical comparisons are in
+\cref{app:flywheel-telemetry,app:record-windows,app:latest-event-rates}.
+Their scope is the statement above; the matched first-proposal test is in
+\cref{sub:results-learning}.
 \FloatBarrier

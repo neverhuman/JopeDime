@@ -174,18 +174,10 @@ reference whose moves are typed programs of learning primitives.
     program-only control (\cref{sec:results}).
 \end{enumerate}
 
-\paragraph{Two stages of development.}
-The offline multi-dataset reference pairs a neural program writer with a
-problem--program ranking map. Search-scored lists train both; native
-neural proposals seed further search. A second stage studies a closed-loop
-admission ratchet. Its inspected implementation proposes programs through
-heuristic edits, retrieval and grammar sampling, and updates only a ranking
-adapter (\cref{sec:method-status}). The retained admission and program-event
-logs concern this second task; binding them to that source remains pending.
-They do not establish a handoff from the offline writer and map.
-First-proposal quality on unseen families and single-candidate deployment
-remain unqualified. \Cref{sec:results} specifies the independent comparisons
-required before claiming an advantage.
+\paragraph{Evidence scope.}
+The learning tasks and their separate evidence are defined in
+\cref{sec:method}. First-proposal comparisons remain the evaluation
+contract in \cref{sec:results}.
 
 We first separate innovation's roles (\cref{sec:anatomy}), then trace the
 AI methods that connect them (\cref{sec:road}). The game and learner make
