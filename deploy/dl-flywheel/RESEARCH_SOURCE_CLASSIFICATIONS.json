@@ -4311,6 +4311,38 @@
         "role": "research",
         "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h170_onecycle/analysis.py": {
+      "bytes": 9598,
+      "sha256": "d0cd7cf8bafe4903509e77d438242ef41b82ed75609674cf7357773f93f07694",
+      "classification": {
+        "role": "research",
+        "reason": "H170 preregistered one-cycle LR/inverse-momentum continuation on a read-only r882 copy. Offline research source only; no product, protected-data, speed or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h170_onecycle/treatment.py": {
+      "bytes": 3477,
+      "sha256": "45fcb10302c3274482490bf444457993c0025185c4e05cf706d0611df9ae39de",
+      "classification": {
+        "role": "research",
+        "reason": "H170 preregistered one-cycle LR/inverse-momentum continuation on a read-only r882 copy. Offline research source only; no product, protected-data, speed or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h170_onecycle/runner.py": {
+      "bytes": 28560,
+      "sha256": "a76985f7e006005785885429c18582d9063f5e557b06b950cb6d023d91cb3bf8",
+      "classification": {
+        "role": "research",
+        "reason": "H170 preregistered one-cycle LR/inverse-momentum continuation on a read-only r882 copy. Offline research source only; no product, protected-data, speed or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h170_onecycle/monitor.py": {
+      "bytes": 5212,
+      "sha256": "053f758e620b1b40847d9c0c7f5235a75029ad220d33bea7b42f5410dca3d8df",
+      "classification": {
+        "role": "research",
+        "reason": "H170 preregistered one-cycle LR/inverse-momentum continuation on a read-only r882 copy. Offline research source only; no product, protected-data, speed or serving qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
