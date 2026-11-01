@@ -8262,6 +8262,22 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-appliance/test/resize_input_readiness": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-appliance/tests/resize_input_readiness.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Linux real-PTY regression for simultaneous SIGWINCH and keyboard readiness in both event orders. The ignored child helper is explicitly executed by the parent cases. Static lane assignment only; no hosted-CI or signed-candidate qualification claim."
+    },
     "target:jope-appliance/test/single_file": {
       "discovery": {
         "doctest": false,
