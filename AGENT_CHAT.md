@@ -2200,3 +2200,6 @@ EOF'
 ## H179 local gates — 2026-11-01T12:12:06.984522+00:00
 - Passed: focused H179 pytest (7), Ruff, Python compile, diff check, and `jope-records verify-findings`, `verify-dispositions`, `verify-claims`, `verify-test-inventory`, `verify-source-inventory`; `jope-records paper-trace` also passes.
 - `nice -n 19 ... just ci-pr` stopped in hygiene before `test-pr`/clippy. Main-red findings unchanged from `origin/main` at `07a4d8282ef02ea4c44fb585e81fdedef40ba435`: four tracked custody files exceed 5 MiB and `models/bundles/r882.json` is unlisted in `models/manifest.json`. No H179 result or training run started.
+
+## H179 base refresh — 2026-11-01T12:13:01.446295+00:00
+`origin/main` advanced to `0f1cd933db9c2c6cdd4305209c555380deeaa5e6` (H176 closeout #1505) during preregistration. Rebased the H179 branch onto it, preserved H179 source classifications, and refreshed the H179 parent commit pin. The previous focused gates remain applicable; rerunning them on the rebased tree before review.
