@@ -105,8 +105,9 @@ in \cref{sec:method-status}:
   percentile $\rho_w = 1 - \mathrm{rank}/\allowbreak{(|G_p|-1)}$ and writer sequence weight
   $0.05 + \rho_w^4$. The native trainer gives problem families equal mass and forms
   each training comparison from one list: its best program plus one
-  program drawn from each of seven equal rank bands of the rest. Every
-  objective term is computed on these eight-program comparisons. The Python
+  program drawn from each of seven equal rank bands of the rest. Ranking
+  pairs stay within these comparisons; reduction across them is described
+  below. The Python
   ranking helpers group by dataset identifier. Native ranking groups by corpus context and the eight-row comparison index;
   separate comparisons from the same context do not pair with each other.
   Pairwise ranking omits non-finite targets and exactly equal values,

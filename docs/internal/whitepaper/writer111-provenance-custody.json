@@ -1,0 +1,389 @@
+{
+  "base": "b362b1762350df99989618d51ac9d136a0343948",
+  "original_metadata": {
+    "target_history": {
+      "schema": "whitepaper.historical-target-history/v1",
+      "source_commit": "54f1023225364cefbb49ba7ee12ad967dddf3ce8",
+      "inputs": {
+        "selected-historical-cut.csv": "1cb4393428d78ecfbea1d36aa1b33ea2acd5028aa1f760662d09dc994fd611b9",
+        "comparisons.csv": "1a3e32526308ce26b4808b0a1a34a651a503f5419ba2343a06751e7bbec87ad9",
+        "carry-forward-audit.json": "3408b07474073fab456019a901afdc6d2e82cca96d711540b00dd28beb81e401"
+      },
+      "selection": "Post-hoc example: largest first-to-last relative reduction in the policy-seeded 1000-evaluation comparison subset",
+      "rows": 213,
+      "generations_per_arm": 71,
+      "completed_evaluations_per_search": 1000,
+      "comparison_identity_sha256": "8281e9021455842eafdf2bb00b2d54598408bb9ec9a2dda366cb69bda9ac4c03",
+      "score": "best_validation_rmse; historical normalized training-fold RMSE units; lower is better",
+      "transformation": "All raw reported scores retained; no cumulative minimum, smoothing or interpolation",
+      "first_generation_reporting_final_value": {
+        "Policy-seeded": 43,
+        "Generic": 42,
+        "Shuffled": 42
+      },
+      "scope": "Historical adaptive development validation only; no sealed or holdout inputs",
+      "limitations": [
+        "Example selected after inspection; not a representative random sample",
+        "Shared incumbent/teacher seeds make arms dependent; RNG and elapsed time vary",
+        "Matching final scores does not establish independent discovery or learned-policy gain",
+        "Seed audit is retained metadata; original score/seed payloads were not reopened",
+        "Checkpoint exposure of improved targets to later optimizer batches remains unjoined"
+      ],
+      "csv_sha256": "e87d9de6aadbdd0e5e2bd0fd3a289dbbaa26ac0dd948e349a07368b33844e72d",
+      "generator_sha256": "c7fd13d6e8709aaa28f448a29d5c040b2e3522f165e0260d4eb09d69b859d32e",
+      "reproduce": "python3 figures/scripts/make_promotions_figure.py --target-history --source-dir INPUT_DIR"
+    },
+    "target_progress": {
+      "schema": "whitepaper.historical-target-progress/v1",
+      "source_commit": "569324b7760a95be26e817ce843b2430e32095fb",
+      "inputs": {
+        "comparisons.csv": "1a3e32526308ce26b4808b0a1a34a651a503f5419ba2343a06751e7bbec87ad9",
+        "summary.csv": "df0445e3f3b29a7aeac4fb54b5fa056fc5a7362c687be4617c6f73dd9f3b6d1d",
+        "carry-forward-audit.json": "3408b07474073fab456019a901afdc6d2e82cca96d711540b00dd28beb81e401"
+      },
+      "selection": "All 159 merged comparison rows; first versus last retained generation per arm group",
+      "score": "best_validation_rmse; historical normalized training-fold RMSE units; lower is better",
+      "outcome_rule": "Exact parsed score comparisons (<, ==, >); no epsilon or added cumulative minimum",
+      "completed_evaluations_per_search": 1000,
+      "arm_groups": 159,
+      "distinct_dataset_cuts": 55,
+      "lower_arm_groups": 64,
+      "distinct_improved_dataset_cuts": 23,
+      "scope": "Historical adaptive development validation only; no sealed or holdout inputs",
+      "limitations": [
+        "Shared incumbent/teacher seeds make arms dependent",
+        "RNG and elapsed wall time vary; equal consumed compute is not established",
+        "Lower retained scores do not establish neural-policy causality or transfer",
+        "Original score/seed payloads were not reopened; seed audit is retained metadata"
+      ],
+      "csv_sha256": "339fc00f3a17cc7ebf2ee49d5c2899e3aa5ddf8b7e570fd4a7bae0a107084ee6",
+      "generator_sha256": "c7fd13d6e8709aaa28f448a29d5c040b2e3522f165e0260d4eb09d69b859d32e",
+      "reproduce": "python3 figures/scripts/make_promotions_figure.py --target-progress --source-dir INPUT_DIR"
+    },
+    "program_promotions": {
+      "schema": "whitepaper.development-program-promotions/v1",
+      "source_run": "retained-development-run",
+      "snapshot": {
+        "at": "2026-10-31T06:23:19.717660+00:00",
+        "kind": "read-only complete-line development-log prefixes; no dataset or weight files read",
+        "files": [
+          {
+            "name": "promotions.jsonl",
+            "observed_bytes": 7015835,
+            "snapshot_bytes": 7015835,
+            "trailing_incomplete_bytes_omitted": 0,
+            "mtime_ns_before": 1793427786902487081,
+            "bytes_after": 7015835,
+            "mtime_ns_after": 1793427786902487081,
+            "sha256": "7d98f4292381854a6b8d38614ae2803ba407e7c3215fabc5b67793f222880334"
+          },
+          {
+            "name": "summary.jsonl",
+            "observed_bytes": 3358733,
+            "snapshot_bytes": 3358733,
+            "trailing_incomplete_bytes_omitted": 0,
+            "mtime_ns_before": 1793427728820542767,
+            "bytes_after": 3358733,
+            "mtime_ns_after": 1793427728820542767,
+            "sha256": "fb3d680d6cbdaeddf0036f800705981abcd9c75495076bdb0bde58fc69c452bb"
+          }
+        ]
+      },
+      "input_sha256": {
+        "promotions.jsonl": "7d98f4292381854a6b8d38614ae2803ba407e7c3215fabc5b67793f222880334",
+        "summary.jsonl": "fb3d680d6cbdaeddf0036f800705981abcd9c75495076bdb0bde58fc69c452bb"
+      },
+      "selection": "All consecutive retained summary rounds; journal kind=promotion in that window",
+      "round_window": [
+        1838,
+        1857
+      ],
+      "summary_rows": 20,
+      "program_promotions": 22,
+      "distinct_training_contexts_promoted": 20,
+      "promotion_CI_scope": {
+        "unavailable": 22
+      },
+      "evaluation_identities": [
+        "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83"
+      ],
+      "metric_definition": "summary.val_reg = candidate_dev_utility.val_reg; larger logged utility is better",
+      "source_binding": "Inspected code explains fields; the installed run source/checkpoint binding remains required",
+      "scope": "Development telemetry; no sealed data, final test or one-proposal comparison",
+      "csv_sha256": "a5c6be48052332bfad27ad12145fc34ce07434759d71eb1e77cda7ef596d04b6",
+      "reproduce": "python3 figures/scripts/make_promotions_figure.py --logs SNAPSHOT_DIR"
+    },
+    "recent_development": {
+      "schema": "whitepaper.recent-development/v1",
+      "snapshot": {
+        "at": "2026-10-31T10:53:44.770292+00:00",
+        "kind": "Read-only stable complete-line development-log prefixes; no dataset or weight files read",
+        "files": [
+          {
+            "name": "summary.jsonl",
+            "observed_bytes": 3358806,
+            "snapshot_bytes": 3358806,
+            "trailing_incomplete_bytes_omitted": 0,
+            "mtime_ns_before": 1793443978891923184,
+            "mtime_ns_after": 1793443978891923184,
+            "sha256": "e875f05cc72c9ab2355aec03bdf79b53c53a394477c102eccd470a6652469a59"
+          },
+          {
+            "name": "promotions.jsonl",
+            "observed_bytes": 7566914,
+            "snapshot_bytes": 7566914,
+            "trailing_incomplete_bytes_omitted": 0,
+            "mtime_ns_before": 1793443920926023703,
+            "mtime_ns_after": 1793443920926023703,
+            "sha256": "9dd1b0be63d142f84c2d06ef29c983c71224eeaea5d92bdc40921f69515118c1"
+          }
+        ]
+      },
+      "input_sha256": {
+        "summary.jsonl": "e875f05cc72c9ab2355aec03bdf79b53c53a394477c102eccd470a6652469a59",
+        "promotions.jsonl": "9dd1b0be63d142f84c2d06ef29c983c71224eeaea5d92bdc40921f69515118c1"
+      },
+      "selection": "All complete consecutive summary rounds; journal kind=promotion in that window",
+      "round_window": [
+        2005,
+        2024
+      ],
+      "summary_rows": 20,
+      "strict_program_promotions": 15,
+      "promotion_CI_scope": {
+        "unavailable": 15
+      },
+      "evaluation_identities": [
+        "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83"
+      ],
+      "metric_definition": {
+        "program_promotions": "Strict training-program incumbent events, checked against summary counts",
+        "cumulative_program_promotions": "Running sum within this window only; starts from zero",
+        "candidate_validation_utility": "summary.val_reg = candidate_dev_utility.val_reg = adapter_admission.candidate_utility",
+        "recorded_best_validation_utility": "dev_utility.val_reg = adapter_admission.best_utility"
+      },
+      "interpretation_source_commit": "b2c04a846194bda01310d762d646c8a2a91d26cf",
+      "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
+      "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
+      "csv_sha256": "86330546dae0f686132c422a4066f74ace1404287a372548e85f9b4609b2839a",
+      "extraction_script_sha256": "8d01960d5e99e755966775b0b347f7cf0e4d6e00a586996192b4696621b89a31",
+      "reproduce": "python3 figures/scripts/make_recent_development_figure.py --logs SNAPSHOT_DIR"
+    },
+    "followup_development": {
+      "schema": "whitepaper.recent-development/v1",
+      "snapshot": {
+        "at": "2026-10-31T12:57:56.148152+00:00",
+        "kind": "Read-only stable complete-line development-log prefixes; no dataset or weight files read",
+        "files": [
+          {
+            "name": "summary.jsonl",
+            "observed_bytes": 3358853,
+            "snapshot_bytes": 3358853,
+            "trailing_incomplete_bytes_omitted": 0,
+            "mtime_ns_before": 1793451467559256759,
+            "mtime_ns_after": 1793451467559256759,
+            "sha256": "60f4f23531a65f6b2f0002e74a2857b98af4063ff05be87ac70e136938ec8431"
+          },
+          {
+            "name": "promotions.jsonl",
+            "observed_bytes": 7800540,
+            "snapshot_bytes": 7800540,
+            "trailing_incomplete_bytes_omitted": 0,
+            "mtime_ns_before": 1793451441503858094,
+            "mtime_ns_after": 1793451441503858094,
+            "sha256": "e71b0f12363f75a3062c747d6b84076553a936458a94702c92811a9d4907efec"
+          }
+        ]
+      },
+      "input_sha256": {
+        "summary.jsonl": "60f4f23531a65f6b2f0002e74a2857b98af4063ff05be87ac70e136938ec8431",
+        "promotions.jsonl": "e71b0f12363f75a3062c747d6b84076553a936458a94702c92811a9d4907efec"
+      },
+      "selection": "All complete consecutive summary rounds; journal kind=promotion in that window",
+      "round_window": [
+        2082,
+        2101
+      ],
+      "summary_rows": 20,
+      "strict_program_promotions": 10,
+      "promotion_CI_scope": {
+        "unavailable": 10
+      },
+      "evaluation_identities": [
+        "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83"
+      ],
+      "metric_definition": {
+        "program_promotions": "Strict training-program incumbent events, checked against summary counts",
+        "cumulative_program_promotions": "Running sum within this window only; starts from zero",
+        "candidate_validation_utility": "summary.val_reg = candidate_dev_utility.val_reg = adapter_admission.candidate_utility",
+        "recorded_best_validation_utility": "dev_utility.val_reg = adapter_admission.best_utility"
+      },
+      "interpretation_source_commit": "b2c04a846194bda01310d762d646c8a2a91d26cf",
+      "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
+      "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
+      "csv_sha256": "a5e5fbc19ac048b851b8b17640e50e59bfc5456234c706823b8df530f373bed1",
+      "extraction_script_sha256": "8d01960d5e99e755966775b0b347f7cf0e4d6e00a586996192b4696621b89a31",
+      "reproduce": "python3 figures/scripts/make_recent_development_figure.py --follow-up --logs SNAPSHOT_DIR"
+    },
+    "later_development": {
+      "schema": "whitepaper.recent-development/v1",
+      "snapshot": {
+        "at": "2026-10-31T20:19:04.541686+00:00",
+        "kind": "Read-only stable complete-line development-log prefixes; no dataset or weight files read",
+        "files": [
+          {
+            "name": "summary.jsonl",
+            "observed_bytes": 3358751,
+            "snapshot_bytes": 3358751,
+            "trailing_incomplete_bytes_omitted": 0,
+            "mtime_ns_before": 1793477879159641952,
+            "mtime_ns_after": 1793477879159641952,
+            "sha256": "912d2bfbee7105e076e4f6aaacacb4ccacef8bbf90b79a1fdaae12602d7e7881"
+          },
+          {
+            "name": "promotions.jsonl",
+            "observed_bytes": 8630599,
+            "snapshot_bytes": 8630599,
+            "trailing_incomplete_bytes_omitted": 0,
+            "mtime_ns_before": 1793477838687989009,
+            "mtime_ns_after": 1793477838687989009,
+            "sha256": "e21938254723ee9366e58c6580a5ba4f2a296918b476ab3000a258b48e72fc53"
+          }
+        ]
+      },
+      "input_sha256": {
+        "summary.jsonl": "912d2bfbee7105e076e4f6aaacacb4ccacef8bbf90b79a1fdaae12602d7e7881",
+        "promotions.jsonl": "e21938254723ee9366e58c6580a5ba4f2a296918b476ab3000a258b48e72fc53"
+      },
+      "selection": "All complete consecutive summary rounds; journal kind=promotion in that window",
+      "round_window": [
+        2343,
+        2362
+      ],
+      "summary_rows": 20,
+      "strict_program_promotions": 22,
+      "adapter_admissions": 0,
+      "reported_best_rounds": [
+        882
+      ],
+      "completed_round_wall_seconds": 1730.129982604,
+      "rounds_per_hour": 41.61537036173061,
+      "program_promotions_per_hour": 45.77690739790368,
+      "rate_scope": "Retained completed rounds; logged wall time includes qualification waits; not deployment throughput",
+      "promotion_CI_scope": {
+        "unavailable": 22
+      },
+      "evaluation_identities": [
+        "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83"
+      ],
+      "metric_definition": {
+        "program_promotions": "Strict training-program incumbent events, checked against summary counts",
+        "cumulative_program_promotions": "Running sum within this window only; starts from zero",
+        "candidate_validation_utility": "summary.val_reg = candidate_dev_utility.val_reg = adapter_admission.candidate_utility",
+        "recorded_best_validation_utility": "dev_utility.val_reg = adapter_admission.best_utility",
+        "completed_round_wall_seconds": "summary.wall_seconds; rates divide total completed rounds or strict program promotions by their summed wall time",
+        "reported_best_round": "adapter_admission.best_round; a logged identity, not the first strict increase in utility"
+      },
+      "interpretation_source_commit": "a13afb4fe8f98b5f9b17fbd8c77650b4c8ba9343",
+      "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
+      "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
+      "csv_sha256": "1b4600aaf84769efb6f3b4c24db4a5d68d281480731d2f2a8d37d5459fae909f",
+      "extraction_script_sha256": "8d01960d5e99e755966775b0b347f7cf0e4d6e00a586996192b4696621b89a31",
+      "reproduce": "python3 figures/scripts/make_recent_development_figure.py --later-window --logs SNAPSHOT_DIR",
+      "figure_sha256": "0e7eb24a1eea488cc530ed3f75f56f4a33d4530365902b44bb7befe57e4ed95a",
+      "matplotlib_version": "3.10.8"
+    },
+    "subsequent_window": {
+      "schema": "whitepaper.subsequent-window/v1",
+      "snapshot": {
+        "at": "2026-11-01T00:57:04.310789+00:00",
+        "kind": "Read-only stable complete-line prefixes; retain latest20consecutive completed summary rows and matching strict training-program events; no dataset or weight files read",
+        "round_window": [
+          2508,
+          2527
+        ],
+        "files": [
+          {
+            "name": "summary.jsonl",
+            "observed_bytes": 3526666,
+            "prefix_bytes": 3526666,
+            "prefix_sha256": "add32daad1d2215155910460cafa10fe85f762e6ffe4357ea3f8c100229b2969",
+            "mtime_ns_before": 1793494612394412463,
+            "mtime_ns_after": 1793494612394412463,
+            "trailing_incomplete_bytes_omitted": 0,
+            "snapshot_bytes": 3358729,
+            "sha256": "836b81f1c12191b15f2000daf26c04eb847383ea70cf1a584cd146ae095ddc4e"
+          },
+          {
+            "name": "promotions.jsonl",
+            "observed_bytes": 9055425,
+            "prefix_bytes": 9055425,
+            "prefix_sha256": "69e7f1cf9539e8f0973959b22f15237b049e330fe734af4f6ce7bfd85a6a4abe",
+            "mtime_ns_before": 1793494446064877914,
+            "mtime_ns_after": 1793494446064877914,
+            "trailing_incomplete_bytes_omitted": 0,
+            "snapshot_bytes": 54545,
+            "sha256": "c6a3252ea8a9d87e689adc4f16e530bb43b84551340f4804537f6b5e5f5a5b92"
+          }
+        ],
+        "summary_source_line_range": [
+          2,
+          21
+        ],
+        "selection": "Latest20complete summary lines by log order, with matching journal promotions; no outcome-based selection"
+      },
+      "input_sha256": {
+        "summary.jsonl": "836b81f1c12191b15f2000daf26c04eb847383ea70cf1a584cd146ae095ddc4e",
+        "promotions.jsonl": "c6a3252ea8a9d87e689adc4f16e530bb43b84551340f4804537f6b5e5f5a5b92"
+      },
+      "selection": "All complete consecutive summary rounds; journal kind=promotion in that window",
+      "round_window": [
+        2508,
+        2527
+      ],
+      "summary_rows": 20,
+      "strict_program_promotions": 15,
+      "adapter_admissions": 0,
+      "reported_best_rounds": [
+        882
+      ],
+      "completed_round_wall_seconds": 1731.449021203,
+      "rounds_per_hour": 41.58366727423187,
+      "program_promotions_per_hour": 31.187750455673903,
+      "rate_scope": "Retained completed rounds; logged wall time includes qualification waits; not deployment throughput",
+      "promotion_CI_scope": {
+        "unavailable": 15
+      },
+      "evaluation_identities": [
+        "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83"
+      ],
+      "metric_definition": {
+        "program_promotions": "Strict training-program incumbent events, checked against summary counts",
+        "cumulative_program_promotions": "Running sum within this window only; starts from zero",
+        "candidate_validation_utility": "summary.val_reg = candidate_dev_utility.val_reg = adapter_admission.candidate_utility",
+        "recorded_best_validation_utility": "dev_utility.val_reg = adapter_admission.best_utility",
+        "completed_round_wall_seconds": "summary.wall_seconds; rates divide total completed rounds or strict program promotions by their summed wall time",
+        "reported_best_round": "adapter_admission.best_round; a logged identity, not the first strict increase in utility"
+      },
+      "interpretation_source_commit": "fea10d2c15ae8544cfc851ce4d79755041120473",
+      "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
+      "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
+      "csv_sha256": "a4999500f97cb98c3ef3fd3bab0bb42aa4e91982997923c28d095f08691adabd",
+      "extraction_script_sha256": "19aa25fc6bae13f774ad916bd484c64745da906b6ec55694b6d95aff045a6b04",
+      "reproduce": "python3 figures/scripts/make_subsequent_window_figure.py --logs SNAPSHOT_DIR",
+      "figure_sha256": "48991bdef87341dc6668078f0deddc9a9ccc2b48f211163db73d0c11ad7db8e7",
+      "matplotlib_version": "3.10.8",
+      "figure_definition": {
+        "top": "recorded best minus candidate validation pool utility, paired within each completed round; zero marks recorded best",
+        "bottom": "cumulative strict training-program incumbent events; reset to zero for this window"
+      }
+    }
+  },
+  "private_to_neutral_filename": {
+    "target-quality-pine-chromium-cut1.csv": "selected-historical-cut.csv",
+    "target-quality-1000-comparisons.csv": "comparisons.csv",
+    "target-quality-1000-summary.csv": "summary.csv",
+    "carry-forward-audit.json": "carry-forward-audit.json"
+  },
+  "scope": "Metadata-only publication scrub; prior input hashes retained, no scientific values or score semantics changed."
+}
