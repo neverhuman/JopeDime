@@ -7431,7 +7431,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -14398,6 +14398,16 @@
       ],
       "lanes": [],
       "scope": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; data-free inner-CV selector, L-BFGS convergence, None-grad guard, and placebo leak controls. Research only; no product/sealed qualification."
+    },
+    "python:research/flywheel_selfplay/h174_swag/test_h174.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector and raw B cost/choice/utility lock replay. Research only; no study data, checkpoint, product, sealed qualification or serving promotion."
     }
   },
   "lanes": {
@@ -15720,5 +15730,15 @@
     "scope": "H169 data-free controls: family exclusion/assessment coverage, repeatable FIT-only minibatches, strict selection, drift calibration, exact optimizer pins, None-gradient materialization, bootstrap/Holm/Elo, and resource guards. No study data, checkpoint, model, or serving qualification."
   },
   "schema": "jope.coverage/v1",
-  "stage": "static"
+  "stage": "static",
+  "python:research/flywheel_selfplay/h174_swag/test_h174.py": {
+    "discovery": {
+      "kind": "python-family"
+    },
+    "dispositions": [
+      "research"
+    ],
+    "lanes": [],
+    "scope": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector and raw B cost/choice/utility lock replay. Research only; no study data, checkpoint, product, sealed qualification or serving promotion."
+  }
 }
