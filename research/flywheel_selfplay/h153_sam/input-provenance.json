@@ -1,0 +1,49 @@
+{
+  "schema": "jope.h153.input-provenance/v1",
+  "source_commit": "aad54937c43ecd413ac2990d23ac5bff3e0dc27f",
+  "recovery_archive": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H144/astra-t1940/exact-inputs.npz",
+    "version_id": "GMtNnf1WCqpGkjctN9pDYqZ9uPdI6_cw",
+    "sha256": "69ea279984fe981acfc3067f95f320c5514f78e30c7389602049975c0dcbe6d7",
+    "bytes": 241247730,
+    "verified_utc": "2026-11-01T02:09:48.713125+00:00"
+  },
+  "source_custody_manifest": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H144/astra-t1940/manifest.json",
+    "version_id": "YwQTSS7KJjcW6WitREj5sxK6qLZkeDIT",
+    "sha256": "6e2bfe8b3add39daa83f0bb86ea8c817b0f3bd954b06f7b3a6173e3c946bf807",
+    "bytes": 500731,
+    "verified_utc": "2026-11-01T02:09:52.545138+00:00"
+  },
+  "restore_receipt": {
+    "status": "PASS",
+    "source": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H144/astra-t1940/exact-inputs.npz",
+      "version_id": "GMtNnf1WCqpGkjctN9pDYqZ9uPdI6_cw",
+      "sha256": "69ea279984fe981acfc3067f95f320c5514f78e30c7389602049975c0dcbe6d7",
+      "bytes": 241247730,
+      "verified_utc": "2026-11-01T02:09:48.713125+00:00"
+    },
+    "restored": [
+      {
+        "path": "/home/ubuntu/jope-data/h149/inputs/round-882.pt",
+        "member": "jope-data/h144/inputs/round-882.pt",
+        "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+        "bytes": 7493476
+      },
+      {
+        "path": "/home/ubuntu/jope-data/h149/inputs/best_dev_checkpoint.json",
+        "member": "jope-data/h144/inputs/best_dev_checkpoint.json",
+        "sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+        "bytes": 38703
+      }
+    ],
+    "utc": "2026-11-01T02:50:41.567896+00:00",
+    "live_reads": 0
+  },
+  "original_h50_h58_derived_s3_versions": "not established; retained approved real-S3-derived inputs; exact used numerical closure preserved by H144 archive",
+  "catalog_path": "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.md",
+  "catalog_sha256": "bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee",
+  "live_reads": 0,
+  "wave": "H153"
+}
