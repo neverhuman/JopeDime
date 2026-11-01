@@ -198,7 +198,7 @@ fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io
     terminal.press_key(pty::Key::Enter)?;
     // Wait for this command's unique completion marker before sending the next line. PTY
     // input and output are asynchronous; back-to-back commands can otherwise race the reader.
-    let screen = terminal.wait_for_text("registered safe-name as", Duration::from_secs(10))?;
+    let screen = terminal.wait_for_text("registered safe-name.csv as", Duration::from_secs(10))?;
     assert_no_internal_sentinels(&screen);
     terminal.type_text("\\help")?;
     terminal.press_key(pty::Key::Enter)?;
