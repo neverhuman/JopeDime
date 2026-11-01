@@ -7,6 +7,9 @@
 mod native_inputs;
 pub use native_inputs::NativeCaptureInputs;
 
+mod job_resolver;
+pub use job_resolver::{AcceptedJobAdmission, TrustedJobResolver};
+
 mod producer;
 pub use producer::RoundCapture;
 pub(crate) mod capture;
