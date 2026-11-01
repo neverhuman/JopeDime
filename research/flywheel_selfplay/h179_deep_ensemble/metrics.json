@@ -1,0 +1,32 @@
+{
+  "wave": "H179",
+  "source_commit": "3776e5b50ac461afd625a841267f0f1d58495624",
+  "prereg_pr": 1506,
+  "amendment_pr": 1509,
+  "review_id": 5727994416,
+  "baseline": {"bit_exact": true, "contexts": 91, "families": 19, "mean": 1.1377941898164525},
+  "design": {"outer_folds": 5, "updates_per_member": 40, "trajectories": 90, "optimizer_updates": 3600, "assessed_families": 205, "seeds": [179101, 179102, 179103]},
+  "family_bootstrap_draws": 10000,
+  "arms": {
+    "R882": {"median_utility": 1.3853554329931834},
+    "CONT": {"median_utility": 1.3577710398220502, "gain": -0.027584393171132843, "ci95": [-0.05383609988809513, -0.0026303098659292774], "elo": 1484.561371395068},
+    "FRESH1": {"median_utility": 1.381818205376554, "gain": -0.0035372276166295465, "ci95": [-0.03716701758065406, 0.036049505285804], "holm_p_m3": 0.7381261873812619, "elo": 1507.96962044479},
+    "ENS3": {"median_utility": 1.3908242840035958, "gain": 0.005468851010413164, "ci95": [-0.027151690889777844, 0.04143161512862325], "holm_p_m3": 0.7381261873812619, "elo": 1507.651948542904},
+    "ENS5": {"median_utility": 1.3990491814642827, "gain": 0.013693748471100244, "seed_gains": [0.012351821460144723, 0.013693748471100244, 0.015638769583799603], "ci95": [-0.01645135211399067, 0.047647310278100825], "raw_p": 0.202979702029797, "holm_p_m3": 0.6089391060893911, "elo": 1509.45745978876, "elo_ci95": [1495.984488743524, 1524.9959271607604]}
+  },
+  "verdict": "NO_ADVANCE",
+  "underpowered_null_per_H175_MDE80": true,
+  "H175_MDE80_is_measured_H179_power": false,
+  "diagnostic_only": true,
+  "serving_promotion": false,
+  "member_pairwise_choice_disagreement_rate": 0.339595296691277,
+  "member_pairwise_disagreement_independently_reproducible": false,
+  "minus2_context_count_by_seed_arm": {
+    "179101": {"R882": 17, "CONT": 23, "FRESH1": 19, "ENS3": 17, "ENS5": 18},
+    "179102": {"R882": 17, "CONT": 25, "FRESH1": 21, "ENS3": 18, "ENS5": 18},
+    "179103": {"R882": 17, "CONT": 20, "FRESH1": 17, "ENS3": 21, "ENS5": 18}
+  },
+  "run_elapsed_seconds": 1460.609,
+  "protected_reads": 0,
+  "resource_violations": 0
+}
