@@ -208,9 +208,10 @@ pub struct FullReport {
 
 impl Package {
     /// The running executable, checked against this build's trusted keys. `Ok(None)` for an
-    /// unpackaged build. `/proc/self/exe` stays readable even if the path was replaced on disk.
+    /// unpackaged build. `current_exe` resolves the executable path on supported platforms.
     pub fn open_self() -> Result<Option<Self>, AssetError> {
-        Self::open_with_keys(Path::new("/proc/self/exe"), &verify::trusted_keys())
+        let executable = std::env::current_exe()?;
+        Self::open_with_keys(&executable, &verify::trusted_keys())
     }
 
     /// Any package, checked against this build's trusted keys.
