@@ -5231,6 +5231,10 @@
       "subsystems": [
         "encoders"
       ]
+    },
+    "python:research/joint_regbin/test_binary_dataset.py": {
+      "reason": "JRB-01 binary panel packet validation (schema, family coverage, sealed-id exclusion, deterministic rebuild); offline research analysis outside the reviewed product baseline.",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
