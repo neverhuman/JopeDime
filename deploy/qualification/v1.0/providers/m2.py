@@ -42,7 +42,6 @@ def command() -> list[str]:
         "-p",
         "jope-service",
         "--lib",
-        "-j8",
         TEST,
         "--",
         "--ignored",
@@ -165,6 +164,9 @@ def validate_parity_report(path: Path, source_sha: str, index_sha: str) -> dict:
 
 def qualify(ctx: Context, run=None) -> int:
     run = subprocess.run if run is None else run
+    raw_jobs = os.environ.get("CARGO_BUILD_JOBS", "4")
+    if raw_jobs not in {str(value) for value in range(1, 5)}:
+        raise ProviderError("M2 CPU replay requires 1..4 inherited Cargo build jobs")
     golden, bundle, report_dir = check_binding(ctx, run)
     verify_candidate(ctx, run=run)
     check_binding(ctx, run, require_fresh_report=False)
@@ -181,7 +183,7 @@ def qualify(ctx: Context, run=None) -> int:
             "OPENBLAS_NUM_THREADS": "1",
             "MKL_NUM_THREADS": "1",
             "RAYON_NUM_THREADS": "1",
-            "CARGO_BUILD_JOBS": "8",
+            "CARGO_BUILD_JOBS": raw_jobs,
             "CARGO_INCREMENTAL": "0",
             "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
         }

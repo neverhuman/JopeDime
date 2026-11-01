@@ -153,6 +153,7 @@ class M2Tests(unittest.TestCase):
         )
         self.assertIn("--ignored", cargo)
         self.assertIn("--exact", cargo)
+        self.assertNotIn("-j8", cargo)
         self.assertNotIn("fused-cuda", cargo)
         child_env = next(
             kwargs["env"]
@@ -161,6 +162,13 @@ class M2Tests(unittest.TestCase):
         )
         self.assertEqual(child_env["CUDA_VISIBLE_DEVICES"], "")
         self.assertEqual(child_env["JOPE_SOURCE_SHA"], self.source)
+        self.assertEqual(child_env["CARGO_BUILD_JOBS"], "4")
+
+    def test_rejects_build_job_override_above_runner_limit(self):
+        with patch.dict(os.environ, {"CARGO_BUILD_JOBS": "8"}, clear=False):
+            with self.assertRaisesRegex(ProviderError, "1..4"):
+                self.invoke()
+        self.assertFalse(any(args[:1] == ["cargo"] for args, _ in self.calls))
 
     def test_missing_stage_bad_coverage_or_admission_mismatch_refuse(self):
         for change in (
