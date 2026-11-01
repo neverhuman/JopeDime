@@ -68,3 +68,39 @@ executor and request/seed/fold protocol, OD13 decision and trusted resolver rema
 required. Synthetic controls retain their explicit tag and existing behavior.
 The boundary control constructs no exported Engine record; passing it is software
 evidence rather than a qualified corpus capture.
+
+## Executing an admitted recording job and checking its inventory
+
+`record_run` accepts an already resolved opaque `CaptureContext`, its exact Plan,
+and the qualified executor/search/admission objects. It checks a fresh canonical
+output destination and the admitted worker bound before opening a research run.
+It drives the existing durable Discovery capture and materializes only the complete
+committed outbox. Provider construction, job admission, policy selection, retries
+and partial-stream export remain outside this coordinator. The public entry point
+refuses SyntheticControl before any run reservation or worker call. The trusted
+job resolver and actual provider qualification remain prerequisites for CLI use.
+
+`materialize_committed_with_inventory` returns `RecordInventory` in addition to
+publishing the same JSONL as `materialize_committed`. It binds the exact stream
+SHA256, full RecordIdentity, evaluate-all mode, and eight separate actual counts:
+rounds, proposals, admissions, dispatches, outcomes, successes, failures and
+incomplete_rounds. It is an integrity/readback receipt, not a qualification or
+corpus-admission capability. Existing materialize callers keep their round-count
+return value and publication/recovery behavior.
+
+The standalone Python reader can check that receipt while hashing the same bytes
+it validates:
+
+```sh
+python3 python/src/jope/north_star/record_reader.py /private/records.jsonl \
+  --expected-inventory /private/inventory.json --detailed-counts
+```
+
+Identity, mode, byte or count mismatch refuses before any success summary. The
+comparison distinguishes bool/int and int/float values, rejects extra fields,
+and bounds the expected inventory to the same 2 MiB maximum as a record line.
+`--require-evaluate-all` still requires a complete all-proposal stream; synthetic
+inspection still needs explicit `--allow-synthetic`. Hashing does not reread a
+possibly changed file. The Rust/Python controls run both modes with one/eight live
+workers, a known failure, and mutated inventories; they stay SyntheticControl and
+do not qualify a real corpus run or activate the missing trusted job resolver.
