@@ -1,0 +1,29 @@
+{
+  "schema": "jope.q1-evaluator-pin/v1",
+  "decision": "ENG:watcher T1440 D5 (2026-11-01)",
+  "status": "BUILD_IDENTITY_ONLY_NOT_RUNTIME_QUALIFICATION",
+  "sha256": "76721923b663dd2ad2f9fe82c787791e2b97ec32426efa5eab8ec81f146ab0a6",
+  "bytes": 107739816,
+  "source_commit": "2317d4d168b9dc6390916d4874cbe69db734c4c8",
+  "source_tree": "ba4595e6b8cf6c0b40c7b469986508e6f0447dab",
+  "target": "aarch64-apple-darwin",
+  "recipe": {
+    "path": "evaluator-repro/RECIPE.json",
+    "sha256": "8f45c77de8f1181a548e6d5e9b5bb07016ca2494e25363f8330ac922bcc66362"
+  },
+  "reproductions": [
+    {
+      "owner": "luna_v1_res03",
+      "path": "evaluator-repro/res03-REPRO.json",
+      "sha256": "a60d7790ef9efe381e65adc5dd010f4af0b020dd6696dd8f7c1c948754abfc5b"
+    },
+    {
+      "owner": "sol_v1_mcp01",
+      "path": "evaluator-repro/mcp01-REPRO.json",
+      "sha256": "d1f6b96f1c2121e8def0a0e02b9fa6d3a58da46f26ae375b1cb26f0a749eda41"
+    }
+  ],
+  "supersedes_evaluator_sha256": "40bc4318abdfcc8a178039dcada4328f7144456061b3ae09a77e3583d136260e",
+  "runtime_qualification": "REQUIRED_ON_NEW_BYTES; OLD_RUNTIME_NOT_INHERITED",
+  "Q1": "NOT_RUN"
+}

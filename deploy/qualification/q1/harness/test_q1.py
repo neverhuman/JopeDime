@@ -49,6 +49,7 @@ def qualification_plan():
                 )
             },
             **q1_bindings.expected_pins(),
+            "evaluator_sha256": "76721923b663dd2ad2f9fe82c787791e2b97ec32426efa5eab8ec81f146ab0a6",
         },
         "timeout_seconds": 600,
         "ledger_root": "/qualification-test-ledger",
@@ -132,6 +133,44 @@ class ProtocolTests(unittest.TestCase):
 
     def test_q1_plan_validator_accepts_bound_artifacts(self):
         q1.validate_plan(qualification_plan())
+
+    def test_d5_rejects_wrong_and_superseded_evaluator_hashes(self):
+        import q1_dedup
+
+        for wrong in (
+            "0" * 64,
+            "40bc4318abdfcc8a178039dcada4328f7144456061b3ae09a77e3583d136260e",
+        ):
+            plan = qualification_plan()
+            plan["pins"]["evaluator_sha256"] = wrong
+            with self.subTest(wrong=wrong, consumer="validator"):
+                with self.assertRaisesRegex(ValueError, "evaluator_sha256"):
+                    q1.validate_plan(plan)
+            with self.subTest(wrong=wrong, consumer="builder"):
+                with self.assertRaisesRegex(ValueError, "evaluator_sha256"):
+                    q1_dedup.make_plan([], ["f" * 40], "a" * 40, wrong)
+
+    def test_d5_rejects_tampered_reproduction_or_recipe_bytes(self):
+        pin = q1.load(q1_bindings.EVALUATOR_PIN)
+        for reference in (pin["recipe"], *pin["reproductions"]):
+            with (
+                self.subTest(path=reference["path"]),
+                tempfile.TemporaryDirectory() as tmp,
+            ):
+                root = Path(tmp)
+                copied_pin = root / "evaluator-pin.json"
+                copied_pin.write_bytes(q1_bindings.EVALUATOR_PIN.read_bytes())
+                for item in (pin["recipe"], *pin["reproductions"]):
+                    target = root / item["path"]
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_bytes(
+                        (q1_bindings.EVALUATOR_PIN.parent / item["path"]).read_bytes()
+                    )
+                target = root / reference["path"]
+                target.write_bytes(target.read_bytes() + b" ")
+                with patch.object(q1_bindings, "EVALUATOR_PIN", copied_pin):
+                    with self.assertRaisesRegex(ValueError, "reproduction/recipe hash"):
+                        q1.validate_plan(qualification_plan())
 
     def test_q1_plan_validator_rejects_an_unbound_vocabulary(self):
         plan = qualification_plan()
@@ -787,7 +826,10 @@ class OwnerSelectionTests(unittest.TestCase):
         import q1_dedup
 
         plan = q1_dedup.make_plan(
-            q1_dedup.load_selection(), ["f" * 40], "a" * 40, "e" * 64
+            q1_dedup.load_selection(),
+            ["f" * 40],
+            "a" * 40,
+            qualification_plan()["pins"]["evaluator_sha256"],
         )
         q1.validate_plan(plan)  # Unsigned metadata fixture, no evaluator execution.
         self.assertEqual(q1.subgroup_minimum(plan, "wide"), 3)
@@ -819,7 +861,10 @@ class OwnerSelectionTests(unittest.TestCase):
         import q1_dedup
 
         plan = q1_dedup.make_plan(
-            q1_dedup.load_selection(), ["f" * 40], "a" * 40, "e" * 64
+            q1_dedup.load_selection(),
+            ["f" * 40],
+            "a" * 40,
+            qualification_plan()["pins"]["evaluator_sha256"],
         )
         rows = fixture_receipts(plan, 0.5)
         positive = q1.analyze(plan, rows)

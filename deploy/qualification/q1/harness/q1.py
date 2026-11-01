@@ -220,6 +220,7 @@ def validate_plan(plan, preregistration=PREREGISTRATION):
             "all qualification identities must be pinned",
         )
         q1_bindings.validate_pins(plan["pins"])
+        q1_bindings.validate_evaluator_pin(plan["pins"]["evaluator_sha256"])
         require(
             isinstance(plan["training_families"], list)
             and plan["training_families"]
