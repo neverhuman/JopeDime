@@ -1,6 +1,6 @@
 % Section 6.8 development-window figures (Appendix D), defined early in
 % the appendices so the full-width floats print before the references
-% (LAYOUT_REDTEAM.md, pass 55).
+% while preserving the established appendix order.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_followup_development.pdf}
@@ -94,7 +94,7 @@ in \cref{sec:method-status}:
   across training rows by mean, population standard deviation, and 10th and 90th
   percentiles; (ii)~\num{1024} values projected from a \num{2048}-value third-party tabular
   regressor state capped at \num{768} context rows and \num{256} query
-  rows (Foundation, version \texttt{foundation\_enc.v1.tabpfn}; license: third-party provenance pending; restricted; redistribution prohibited); and (iii)~\num{512} values from two
+  rows (third-party provenance pending; restricted; redistribution prohibited); and (iii)~\num{512} values from two
   frozen seed-17 target-summary windows. Each block is normalized before
   concatenation and clipping to $\pm32$. Non-finite contexts are refused. Encoding records
   report wall-clock latency from 11.7\,s to 20.8\,s across eight reference
@@ -106,9 +106,13 @@ in \cref{sec:method-status}:
   each training comparison from one list: its best program plus one
   program drawn from each of seven equal rank bands of the rest. Every
   objective term is computed on these eight-program comparisons.
-  Thus \cref{eq:writerLoss,eq:mapLoss} show the list-level form. The native sequence term applies label smoothing over
-  legal tokens and averages each program's token loss before taking the
-  normalized weighted mean over programs. The displayed aggregate
+  Thus \cref{eq:writerLoss,eq:mapLoss} show the list-level form. The native decoder
+  prepends the projected context token before \texttt{BOS}. The sequence
+  loss leaves \texttt{BOS} unsupervised but includes the following non-padding
+  tokens, including the engine and regression-task header and \texttt{EOS}.
+  That header is fixed during inference. Label smoothing of 0.05 applies
+  over legal tokens; token losses are averaged within each program before
+  the normalized rank-weighted mean over programs. The displayed aggregate
   coefficients match the native objective; the checkpoint's objective
   identity and configuration still belong in its evaluation record.
   In \cref{eq:totalLoss}, $v_w=1/(1+\mathrm{RMSE}_w/m_p)$, where $m_p$ is
