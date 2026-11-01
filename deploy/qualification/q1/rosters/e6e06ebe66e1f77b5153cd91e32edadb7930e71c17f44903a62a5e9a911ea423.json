@@ -1,0 +1,54 @@
+{
+  "schema": "jope.q1-r20-wide-census/v1",
+  "owner_ruling": "R20, ENG:watcher 2026-11-01 19:35Z, pre-outcome",
+  "owner_instruction_sha256": "575a5612b00a38235a2154c0133d64e50c7ae95f45bf81e4095936207a0610f8",
+  "owner_decisions_snapshot_sha256": "b49ef1449272dca9537e6f9314e17bf6bd39524a43c4fde4e719d4657136249c",
+  "rule": "all eligible distinct wide families under the pinned census",
+  "wide_definition": "features > 20",
+  "minimum": 3,
+  "wide_datasets": [
+    {
+      "cut_sha256": "705a178a5f7422cf6ebc9c469dc86f159741e0e907d9bd3333108770eef3215f",
+      "dataset_sha256": "12fd2dc4af6218333aa6a3ca16676cfc8b5bdaa1353083776fc4b8046562e05c",
+      "family": "66943d2aa93bc6881f66b3f351afa5f67e4cbfcd0eafd99633e852c4fc31e4eb",
+      "family_authoritative": true,
+      "features": 400,
+      "holdout_group": "sealed_meta_test",
+      "id": "12fd2dc4af621833",
+      "rows": 5686,
+      "task": "regression"
+    },
+    {
+      "cut_sha256": "2fdeb0b4ef8327b94816020d6f99ee33477713a0e2cfb70337fbb7b58c5dd6f6",
+      "dataset_sha256": "91263a72197a817ec38d48aa98f26fc114194a6ec5d5314c04592c37d42097f9",
+      "family": "5872982fa1f7ed03647ecc4e3ee6cde7f98017560500af3c5f04a5a101c66102",
+      "family_authoritative": true,
+      "features": 400,
+      "holdout_group": "sealed_meta_test",
+      "id": "91263a72197a817e",
+      "rows": 3663,
+      "task": "regression"
+    },
+    {
+      "cut_sha256": "85cc88e32cc93f418513e9e8a0c7c40b9a55681eeb509bb4c2877c0c85aedbee",
+      "dataset_sha256": "c895fb84de0f545a13c5fedd41b44cba94b218ca5d78ad0a5d1c4cfab397046e",
+      "family": "df66239e242be21f48e4d350a86e291cf48228c6b1fd92f1745f90196358dfe5",
+      "family_authoritative": true,
+      "features": 22,
+      "holdout_group": "sealed_meta_test",
+      "id": "c895fb84de0f545a",
+      "rows": 414,
+      "task": "regression"
+    }
+  ],
+  "selection_sha256": "ed9d27ede248679fe2a651a5f37e37babca4efd07a2db600e0dbf35121c56c21",
+  "membership_sha256": "7774fbde0707e927f8001f5c90d88184e612d20896d0becba12b87a617abfa3b",
+  "wide_gap_sha256": "b02191e36aba19145373d771750ca8ece3d57799dc41dbb34614f4c615b75115",
+  "catalog_sha256": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
+  "family_keys_sha256": "9b688e9b8a36a32485524243dc1adea7d30ee7404df4027d2b4d17bd6a900f7e",
+  "training_closure_sha256": "8e786b2dcb153a5c1c4f43dbcb773b53df6f0dd7d325c94f8d7ec2f73352d3e8",
+  "R18_audit_sha256": "f0fd94ed3848dc7af06ee0e25e08f41ea73828b2cf3387484c53a34c8dc2f242",
+  "R18_verification_sha256": "234a47d271a3728ac3f92904098ef97d9e7d13ac281aac587e61584e38075f0d",
+  "Q1_outcomes_observed": false,
+  "all_other_subgroup_minima": 5
+}

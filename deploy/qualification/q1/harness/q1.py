@@ -48,6 +48,7 @@ DATA_KEYS = {
     "holdout_group",
 }
 GROUPS = ("small", "large", "narrow", "wide")
+R20_CENSUS_SHA256 = "e6e06ebe66e1f77b5153cd91e32edadb7930e71c17f44903a62a5e9a911ea423"
 
 
 def require(condition, message):
@@ -104,8 +105,31 @@ def memberships(dataset):
     )
 
 
+def subgroup_minimum(plan, group):
+    """R20 admits the entire source-pinned wide census, never an arbitrary floor."""
+    if group != "wide" or "wide_census_sha256" not in plan:
+        return 5
+    require(plan["mode"] == "qualification", "R20 is qualification-only")
+    require(plan["wide_census_sha256"] == R20_CENSUS_SHA256, "R20 census pin mismatch")
+    path = HERE.parent / "rosters" / (R20_CENSUS_SHA256 + ".json")
+    require(sha_file(path) == R20_CENSUS_SHA256, "R20 census bytes mismatch")
+    census = load(path)
+    wide = sorted(
+        (d for d in plan["datasets"] if d["features"] > 20),
+        key=lambda d: d["dataset_sha256"],
+    )
+    require(
+        wide == census["wide_datasets"], "R20 requires the complete pinned wide census"
+    )
+    require(census["minimum"] == len(wide) == 3, "R20 distinct wide-family count")
+    return census["minimum"]
+
+
 def validate_plan(plan, preregistration=PREREGISTRATION):
-    require(set(plan) == PLAN_KEYS, "unsupported/missing plan field")
+    require(
+        set(plan) in (PLAN_KEYS, PLAN_KEYS | {"wide_census_sha256"}),
+        "unsupported/missing plan field",
+    )
     require(plan["schema"] == "jope.q1-plan/v1", "unsupported plan schema")
     require(
         plan["preregistration_sha256"] == sha_file(preregistration),
@@ -117,6 +141,10 @@ def validate_plan(plan, preregistration=PREREGISTRATION):
         "source commit required",
     )
     require(plan["mode"] in ("heuristic_smoke", "qualification"), "invalid mode")
+    require(
+        plan["mode"] == "qualification" or "wide_census_sha256" not in plan,
+        "R20 is qualification-only",
+    )
     require(
         isinstance(plan["seeds"], list)
         and plan["seeds"]
@@ -208,7 +236,8 @@ def validate_plan(plan, preregistration=PREREGISTRATION):
         )
         for group in GROUPS:
             require(
-                sum(group in memberships(d) for d in plan["datasets"]) >= 5,
+                sum(group in memberships(d) for d in plan["datasets"])
+                >= subgroup_minimum(plan, group),
                 "too few datasets in preregistered subgroup " + group,
             )
     else:
@@ -1034,7 +1063,7 @@ def analyze(plan, receipts):
     subgroups = {}
     for group in GROUPS:
         values = [effects[d["id"]] for d in plan["datasets"] if group in memberships(d)]
-        require(len(values) >= 5, "insufficient subgroup")
+        require(len(values) >= subgroup_minimum(plan, group), "insufficient subgroup")
         seed = int.from_bytes(
             hashlib.sha256((group + ":20261030").encode()).digest()[:8], "big"
         )

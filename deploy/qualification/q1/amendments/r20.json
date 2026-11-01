@@ -1,0 +1,28 @@
+{
+  "schema": "jope.q1-prereg-amendment/v1",
+  "ruling": "R20",
+  "pre_outcome": true,
+  "owner_instruction_sha256": "575a5612b00a38235a2154c0133d64e50c7ae95f45bf81e4095936207a0610f8",
+  "wide_census": {
+    "path": "deploy/qualification/q1/rosters/e6e06ebe66e1f77b5153cd91e32edadb7930e71c17f44903a62a5e9a911ea423.json",
+    "sha256": "e6e06ebe66e1f77b5153cd91e32edadb7930e71c17f44903a62a5e9a911ea423"
+  },
+  "wide_gap": {
+    "path": "deploy/qualification/q1/WIDE-GAP-R20.md",
+    "sha256": "2817fee292761c84d9af83a5f135ae24c650f04a9056418ad510f13b2e6cc991",
+    "original_receipt_sha256": "b02191e36aba19145373d771750ca8ece3d57799dc41dbb34614f4c615b75115"
+  },
+  "required_families": {
+    "small": 5,
+    "large": 5,
+    "narrow": 5,
+    "wide": 3
+  },
+  "wide_rule": "all eligible distinct wide families under the pinned census",
+  "supersedes": "T1115 five-wide requirement for this fixed census only",
+  "selection_sha256": "ed9d27ede248679fe2a651a5f37e37babca4efd07a2db600e0dbf35121c56c21",
+  "all_four_subgroup_verdicts_retained": true,
+  "bootstrap_quantile": "0.05 / 4",
+  "relative_regression_margin": 0.02,
+  "budgets_seeds_execution_pins_unchanged": true
+}
