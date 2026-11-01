@@ -1,4 +1,16 @@
-\section{Completed-Round Rates}\label{app:subsequent-rates}
+\subsection{Completed-Round Rates}\label{app:subsequent-rates}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_subsequent_rates.pdf}
+  \caption{\textbf{Work and training-program event rates in the subsequent window.}
+  Left: completed rounds per hour. Right: strict training-program incumbent
+  events per hour. Each step is an average over one completed round's logged
+  wall time; dashed lines are rates from whole-window totals. Both panels
+  use the same 20 summaries as \cref{fig:fw-subsequent-window}, with no new
+  observations. Program events do not count adapter admissions.}
+  \label{fig:fw-subsequent-rates}
+\end{figure*}
 
 \Cref{fig:fw-subsequent-rates} reuses the 20 summaries from rounds
 2508--2527 in \cref{app:subsequent-window}. Each step divides one completed
@@ -12,16 +24,3 @@ rounds. These rates describe development activity, not deployment
 throughput. None of these summaries records an adapter admission, and
 binding the records to a qualified runtime remains pending
 (\cref{sec:method-status}).
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_subsequent_rates.pdf}
-  \caption{\textbf{Work and training-program event rates in the subsequent window.}
-  Left: completed rounds per hour. Right: strict training-program incumbent
-  events per hour. Each step is an average over one completed round's logged
-  wall time; dashed lines are rates from whole-window totals. Both panels
-  use the same 20 summaries as \cref{fig:fw-subsequent-window}, with no new
-  observations. Program events do not count adapter admissions.}
-  \label{fig:fw-subsequent-rates}
-\end{figure*}
-\FloatBarrier

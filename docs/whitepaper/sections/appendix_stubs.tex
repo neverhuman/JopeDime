@@ -163,24 +163,9 @@ in \cref{sec:method-status}:
   record.
 \end{itemize}
 
-The following diagnostics are grouped by question. Timing and event counts
-appear in \cref{app:development-time,app:event-counts}; later operating
-windows and rates follow in
-\cref{app:subsequent-window,app:subsequent-utility,app:subsequent-rates,app:round-throughput}.
-\Cref{app:acceptance-over-rounds,app:promotions-per-hour} distinguish adapter
-admissions from program-promotion rates. These views reuse retained
-records and do not add independent evaluations.
+\section{Flywheel Telemetry}\label{app:flywheel-telemetry}
 
-\section{Development Measurements over Completed-Round Time}\label{app:development-time}
-
-\Cref{fig:fw-completed-time} shows the same retained summaries as
-\cref{fig:fw-later-development}. The horizontal axis sums completed-round
-wall time, including qualification waits. Each point is an end-of-round
-summary; the event count starts from zero for this window. Binding these
-records to an exact loop, adapter and checkpoint remains pending
-(\cref{sec:method-status}).
-
-\begin{figure}[ht]
+\begin{figure}[htb]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_completed_time.pdf}
   \caption{\textbf{Training-program events and logged validation utility over time.}
@@ -192,6 +177,23 @@ records to an exact loop, adapter and checkpoint remains pending
   \label{fig:fw-completed-time}
 \end{figure}
 
+The following diagnostics are grouped by question. Timing and event counts
+appear in \cref{app:development-time,app:event-counts}; later operating
+windows and rates follow in
+\cref{app:subsequent-window,app:subsequent-utility,app:subsequent-rates,app:round-throughput}.
+\Cref{app:acceptance-over-rounds,app:promotions-per-hour} distinguish adapter
+admissions from program-promotion rates. These views reuse retained
+records and do not add independent evaluations.
+
+\subsection{Development Measurements over Completed-Round Time}\label{app:development-time}
+
+\Cref{fig:fw-completed-time} shows the same retained summaries as
+\cref{fig:fw-later-development}. The horizontal axis sums completed-round
+wall time, including qualification waits. Each point is an end-of-round
+summary; the event count starts from zero for this window. Binding these
+records to an exact loop, adapter and checkpoint remains pending
+(\cref{sec:method-status}).
+
 \input{sections/appendix_event_counts}
 
 \input{sections/appendix_subsequent_window}
@@ -199,3 +201,9 @@ records to an exact loop, adapter and checkpoint remains pending
 \input{sections/appendix_subsequent_utility}
 
 \input{sections/appendix_subsequent_rates}
+
+\input{sections/appendix_round_throughput}
+
+\input{sections/appendix_acceptance_over_rounds}
+
+\input{sections/appendix_promotions_per_hour}
