@@ -1434,7 +1434,7 @@ mod tests {
         );
         assert_eq!(primary.data["refit"], json!(Refit::FitHoldout));
         let fit_object = ModelObject::read(
-            f.request.model_root.join(&receipt.holdout_model_digest),
+            &f.request.model_root.join(&receipt.holdout_model_digest),
             HANDOFF_MAX,
         )
         .unwrap();
