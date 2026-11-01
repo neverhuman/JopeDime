@@ -51,8 +51,26 @@
   "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
   "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
   "csv_sha256": "86330546dae0f686132c422a4066f74ace1404287a372548e85f9b4609b2839a",
-  "extraction_script_sha256": "810a4bbb0f9b05ce100a8a33fab8944823c53d9c3b7f087496234b71a3b0f53a",
+  "extraction_script_sha256": "58971778295df3ff6be7f61b74b595c625fcb1e486befc333e3709f073053f2f",
   "reproduce": "python3 figures/scripts/make_recent_development_figure.py --logs SNAPSHOT_DIR",
-  "figure_sha256": "1f9a7943d5214785085beed44fb4c46167cc758bcd1def1b985d239400f65409",
-  "matplotlib_version": "3.10.8"
+  "figure_sha256": "ad5ebccaa63b6ccc4923593da5250c6f1dccddca730e22018b7fb4f2ea20933f",
+  "matplotlib_version": "3.10.8",
+  "figure_input_sha256": {
+    "recent_development.csv": "86330546dae0f686132c422a4066f74ace1404287a372548e85f9b4609b2839a",
+    "followup_development.csv": "a5e5fbc19ac048b851b8b17640e50e59bfc5456234c706823b8df530f373bed1",
+    "later_development.csv": "1b4600aaf84769efb6f3b4c24db4a5d68d281480731d2f2a8d37d5459fae909f",
+    "subsequent_window.csv": "a4999500f97cb98c3ef3fd3bab0bb42aa4e91982997923c28d095f08691adabd"
+  },
+  "figure_definition": {
+    "columns": [
+      "Rounds 2005\u20132024",
+      "Rounds 2082\u20132101",
+      "Rounds 2343\u20132362",
+      "Rounds 2508\u20132527"
+    ],
+    "top": "Strict training-program incumbent events per completed round",
+    "bottom": "Candidate and recorded-best adapter validation pool utility",
+    "selection": "Four separate complete 20-round windows; no interpolation across gaps",
+    "omitted_duplicate": "Rounds 2644\u20132663 are shown only in the main-text rate/utility figure"
+  }
 }

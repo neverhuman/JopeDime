@@ -5509,6 +5509,22 @@
     "python:research/flywheel_selfplay/h195_blend025_kernel_confirm/test_h195.py": {
       "reason": "Owner-requested H195 data-free controls for the BLEND_025 prospective confirmation (cells, minimal fit plan, H124 fold algorithm per fold seed, fold manifest, within-family SHUF permutation, H129 blend, contrast/harm/margin gate, Elo orientation, monitor guards); no checkpoint/corpus reads or model passes in the fixtures",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h196_tta/test_custody.py": {
+      "role": "research",
+      "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+    },
+    "python:research/flywheel_selfplay/h196_tta/test_h196.py": {
+      "role": "research",
+      "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+    },
+    "python:research/flywheel_selfplay/h196_tta/test_protocol.py": {
+      "role": "research",
+      "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+    },
+    "python:research/flywheel_selfplay/h197_pcgc/test_h197.py": {
+      "role": "research",
+      "reason": "H197 data-free controls for per-context gradient clipping: independent TRAIN-family folds, frozen fit-only clip calibration, four matched arms, immutable B-stage lock, strict paired-family bootstrap/verdict, and CPU resource guards; no corpus/checkpoint reads or model passes in fixtures."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

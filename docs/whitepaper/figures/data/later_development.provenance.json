@@ -61,7 +61,7 @@
   "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
   "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
   "csv_sha256": "1b4600aaf84769efb6f3b4c24db4a5d68d281480731d2f2a8d37d5459fae909f",
-  "extraction_script_sha256": "810a4bbb0f9b05ce100a8a33fab8944823c53d9c3b7f087496234b71a3b0f53a",
+  "extraction_script_sha256": "58971778295df3ff6be7f61b74b595c625fcb1e486befc333e3709f073053f2f",
   "reproduce": "python3 figures/scripts/make_recent_development_figure.py --later-window --logs SNAPSHOT_DIR",
   "figure_sha256": "4480fe667b59935947fd0dd1204434681ca4ca69b2825ab1e0c8e3f774fbace2",
   "matplotlib_version": "3.10.8"
