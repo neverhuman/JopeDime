@@ -145,6 +145,35 @@ class ReleaseGates(unittest.TestCase):
         self.assertEqual(run["manifest_sha256"], runner.cpu.digest(self.commands))
         self.assertTrue((out / "gate_results.json").is_file())
 
+    def test_cli_consumes_manifest_path_and_writes_watcher_receipt(self):
+        self.manifest()
+        output = self.root / "cli-output"
+        with mock.patch(
+            "sys.argv",
+            [
+                "release-gates",
+                "--repo",
+                str(self.repo),
+                "--artifact",
+                str(self.artifact),
+                "--manifest",
+                str(self.commands),
+                "--output",
+                str(output),
+            ],
+        ):
+            code = runner.main()
+
+        run = json.loads((output / "execution.json").read_text())
+        receipt = json.loads((output / "gates_receipt.json").read_text())
+        self.assertEqual(code, 0)
+        self.assertEqual(run["manifest_sha256"], runner.cpu.digest(self.commands))
+        self.assertEqual(run["source_sha"], self.source)
+        self.assertFalse(run["release_qualified"])
+        self.assertEqual(len(receipt["gates"]), 28)
+        self.assertTrue(all(gate["status"] == "PASS" for gate in receipt["gates"]))
+        self.assertEqual(receipt["artifact_sha256"], self.sha)
+
     def test_bad_child_evidence_never_becomes_pass_and_later_gates_run(self):
         for mode in [
             "missing",

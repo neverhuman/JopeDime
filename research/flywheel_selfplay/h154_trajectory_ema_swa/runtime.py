@@ -150,7 +150,10 @@ class Audit:
         if (
             protected
             or (data and s not in self.allowed and not p.is_relative_to(self.output))
-            or (write and not p.is_relative_to(self.output))
+            or (
+                write
+                and (s in self.allowed or (data and not p.is_relative_to(self.output)))
+            )
         ):
             self.refused.append(s)
             raise RuntimeError("input/output boundary refusal: " + s)
@@ -210,6 +213,35 @@ def build(checkpoint):
     if guard.snapshot_dope_weights(net).composite_sha256 != DOPE:
         raise RuntimeError("DOPE mismatch")
     frozen = tensor_hash({n: t for n, t in net.state_dict().items() if n not in names})
+    net._eval_batch_key = None
+    anchor_cache = {}
+    sem_cache = {}
+    orig_anchor = net.adapter_10tok.anchor.predict_costs
+    orig_sem24 = fused.compute_semantic_struct_sig_24d_torch
+
+    def cached_anchor(**kw):
+        key = getattr(net, "_eval_batch_key", None)
+        if key is None:
+            return orig_anchor(**kw)
+        if key not in anchor_cache:
+            out = orig_anchor(**kw)
+            anchor_cache[key] = {
+                "total_cost": out["total_cost"].detach().float(),
+                "eff_prior": out["eff_prior"].detach().float(),
+                "fail_logit": out["fail_logit"].detach().float(),
+            }
+        return anchor_cache[key]
+
+    def cached_sem24(prog_412):
+        key = getattr(net, "_eval_batch_key", None)
+        if key is None:
+            return orig_sem24(prog_412)
+        if key not in sem_cache:
+            sem_cache[key] = orig_sem24(prog_412).detach()
+        return sem_cache[key]
+
+    net.adapter_10tok.anchor.predict_costs = cached_anchor
+    fused.compute_semantic_struct_sig_24d_torch = cached_sem24
     return net, guard, names, frozen, fused
 
 
