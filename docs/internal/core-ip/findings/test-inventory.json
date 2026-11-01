@@ -5251,6 +5251,10 @@
     "python:research/h156/test_h156.py": {
       "reason": "H156 data-free 5-fold family cross-fit early stopping and {0.5x, 1x, 2x} adapter capacity sweep scientific controls; offline research only.",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h153_sam/test_h153.py": {
+      "reason": "Owner-requested H153 SAM/ASAM data-free registration, manipulation and resource-stop controls; offline research only.",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

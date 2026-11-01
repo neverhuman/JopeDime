@@ -1,0 +1,16 @@
+{
+  "wave": "H153",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "optimizer_updates": 0,
+  "scored_contexts": 0,
+  "seeds": [
+    153101,
+    153102,
+    153103
+  ],
+  "arms": [
+    "CTRL",
+    "SAM",
+    "ASAM"
+  ]
+}
