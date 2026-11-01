@@ -5271,12 +5271,12 @@
       "sha256": "eb60e02e0291f7cba75d3f5b7302555ae7f8ed1707e7afad68d1b56ef85424fb"
     },
     "python:research/flywheel_selfplay/h197_pcgc/runner.py": {
-      "bytes": 29551,
+      "bytes": 30249,
       "classification": {
         "role": "research",
         "reason": "H197 data-free controls for per-context gradient clipping: independent TRAIN-family folds, frozen fit-only clip calibration, four matched arms, immutable B-stage lock, strict paired-family bootstrap/verdict, and CPU resource guards; no corpus/checkpoint reads or model passes in fixtures."
       },
-      "sha256": "64be23667c3101cee6a7bc9c7713a2f15c18a096d3ece630908cc77441159f3d"
+      "sha256": "3f4aadea63d73086a7489b86d2adca1f1ea23b2de48059e6a9f1919130f10d22"
     },
     "python:research/flywheel_selfplay/h197_pcgc/treatment.py": {
       "bytes": 5506,

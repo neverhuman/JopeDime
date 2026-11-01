@@ -2,6 +2,7 @@
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -13,15 +14,34 @@ import time
 import numpy as np
 import torch
 
-import analysis as stat
-import design as d
-import treatment as tx
-
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[3]
+REPO = HERE.parents[2]
 H189_DIR = REPO / "research/flywheel_selfplay/h189_swa_ema"
 sys.path.insert(0, str(H189_DIR))
 import h182_base as base  # noqa: E402
+
+
+def load_local_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load H197 module: {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+d = load_local_module("h197_design", HERE / "design.py")
+_previous_design = sys.modules.get("design")
+sys.modules["design"] = d
+try:
+    stat = load_local_module("h197_analysis", HERE / "analysis.py")
+finally:
+    if _previous_design is None:
+        del sys.modules["design"]
+    else:
+        sys.modules["design"] = _previous_design
+tx = load_local_module("h197_treatment", HERE / "treatment.py")
 
 
 def sha(path):
