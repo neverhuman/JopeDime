@@ -341,10 +341,16 @@ def stop_engine(
             process.wait(timeout=10)
         except subprocess.TimeoutExpired:
             pass
+    except BaseException as error:
+        if pending_error is None:
+            pending_error = error
+    try:
         engine_exit = terminate_group(process)
-    finally:
-        if pending_error is not None:
-            raise pending_error
+    except BaseException as error:
+        if pending_error is None:
+            pending_error = error
+    if pending_error is not None:
+        raise pending_error
     return stop_exit, engine_exit
 
 

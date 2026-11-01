@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import signal
 import subprocess
+import sys
 import tempfile
 import textwrap
 import time
@@ -475,6 +476,102 @@ def test_engine_cleanup_runs_after_client_cleanup_failure(
         assert _processes_with_paths_under(a5_tmp_path) == []
     finally:
         _kill_fixture_processes(a5_tmp_path)
+
+
+def _start_sigterm_ignoring_engine(tmp_path):
+    ready = tmp_path / "engine-ready.txt"
+    code = (
+        "import signal,time; from pathlib import Path; "
+        "signal.signal(signal.SIGTERM, signal.SIG_IGN); "
+        f"Path({str(ready)!r}).write_text('ready'); "
+        "print('READY', flush=True); time.sleep(60)"
+    )
+    process = subprocess.Popen(
+        [sys.executable, "-u", "-c", code],
+        cwd=tmp_path,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        start_new_session=True,
+    )
+    assert process.stdout.readline().strip() == "READY"
+    return process
+
+
+def _cleanup_test_engine(process):
+    if process.poll() is None:
+        assert os.getpgid(process.pid) == process.pid
+        os.killpg(process.pid, signal.SIGKILL)
+        process.wait(timeout=3)
+    for stream in (process.stdout, process.stderr):
+        if stream is not None:
+            stream.close()
+
+
+@pytest.mark.parametrize(
+    "wait_error", ["sigint", "oserror"], ids=["actual-sigint", "wait-error"]
+)
+def test_stop_engine_reaps_group_when_wait_raises(wait_error, tmp_path):
+    engine = _start_sigterm_ignoring_engine(tmp_path)
+
+    class InterruptWaitOnce:
+        def __init__(self, process):
+            self.process = process
+            self.injected = False
+
+        def __getattr__(self, name):
+            return getattr(self.process, name)
+
+        def wait(self, *positional, **kwargs):
+            if kwargs.get("timeout") == 10 and not self.injected:
+                self.injected = True
+                if wait_error == "sigint":
+                    os.kill(os.getpid(), signal.SIGINT)
+                raise OSError("injected engine wait failure")
+            return self.process.wait(*positional, **kwargs)
+
+    try:
+        with pytest.raises(KeyboardInterrupt if wait_error == "sigint" else OSError):
+            THREE_CLIENTS_MODULE.stop_engine(
+                Path("/usr/bin/false"),
+                tmp_path,
+                os.environ.copy(),
+                InterruptWaitOnce(engine),
+            )
+        assert engine.poll() is not None, "engine survived interrupted wait cleanup"
+    finally:
+        _cleanup_test_engine(engine)
+
+
+def test_stop_engine_preserves_stop_error_after_group_cleanup(monkeypatch, tmp_path):
+    engine = _start_sigterm_ignoring_engine(tmp_path)
+    original_wait = engine.wait
+    first_wait = True
+
+    def fail_stop(*args, **kwargs):
+        raise FileNotFoundError("synthetic stop command failure")
+
+    def timeout_initial_wait(*args, **kwargs):
+        nonlocal first_wait
+        if first_wait and kwargs.get("timeout") == 10:
+            first_wait = False
+            raise subprocess.TimeoutExpired("engine", 10)
+        return original_wait(*args, **kwargs)
+
+    monkeypatch.setattr(THREE_CLIENTS_MODULE.subprocess, "run", fail_stop)
+    monkeypatch.setattr(engine, "wait", timeout_initial_wait)
+    try:
+        with pytest.raises(FileNotFoundError, match="synthetic stop command failure"):
+            THREE_CLIENTS_MODULE.stop_engine(
+                Path("/missing/inert-candidate"),
+                tmp_path,
+                os.environ.copy(),
+                engine,
+            )
+        assert engine.poll() is not None, "engine survived stop-command failure cleanup"
+    finally:
+        _cleanup_test_engine(engine)
 
 
 def test_roster_names_are_exact():
