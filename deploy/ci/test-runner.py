@@ -1042,6 +1042,26 @@ class LocalRetentionTests(unittest.TestCase):
             self.assertNotIn('retained at', result.stdout)
             self.assertFalse(destination.exists())
 
+    def test_default_root_falls_back_when_shared_volume_is_unwritable(self):
+        import os
+        scratch = ROOT/'target'/'tmp'
+        scratch.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='retention-fallback-', dir=scratch) as name:
+            base = Path(name)
+            source = base/'source'
+            source.mkdir()
+            (source/'receipt.json').write_text('{"probe":"fallback"}\n')
+            env = {k: v for k, v in os.environ.items() if k != 'JOPE_LOCAL_EVIDENCE_ROOT'}
+            env.update(CARGO_TARGET_DIR=str(base/'lane-target'), HOME=str(base/'home'),
+                       GITHUB_REPOSITORY='neverhuman/JopeDime', JOPE_EVIDENCE_S3_URI='',
+                       GITHUB_STEP_SUMMARY=str(base/'summary.md'), TMPDIR=str(base))
+            result = subprocess.run(
+                ['bash', str(ROOT/'deploy/ci/retain-local-evidence.sh'), 'fixture', str(source)],
+                cwd=ROOT, env=env, capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn('retained at', result.stdout)
+            self.assertIn('receipt.json: OK', result.stdout)
+
     def test_local_retention_success_has_verified_recoverable_bytes(self):
         scratch = ROOT/'target'/'tmp'
         scratch.mkdir(parents=True, exist_ok=True)
