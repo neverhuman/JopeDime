@@ -1184,7 +1184,7 @@ impl Discovery {
                 let response = &outcomes[offset + slot];
                 let id = experiment(&next.plan, round.number, slot, 0)?;
                 record_result(&mut next, candidate, response, &id, &mut events)?;
-                records.push(json!({"round":round.number,"slot":slot,"rung":0,"candidate":candidate,
+                records.push(json!({"round":round.number,"slot":slot,"rung":0,"candidate":candidate,"worker_attempt":response.attempt,
                     "scores":response.scores,"predictions_digest":response.predictions_digest,"failure":response.failure}));
             }
             let best = round
@@ -1258,7 +1258,7 @@ impl Discovery {
                 response.fold_scores = cv_response.fold_scores.clone();
                 let id = experiment(&next.plan, round.number, 0, 1)?;
                 add_events(&mut next, candidate, &response, &id, &mut events)?;
-                records.push(json!({"round":round.number,"slot":0,"rung":1,"candidate":candidate,
+                records.push(json!({"round":round.number,"slot":0,"rung":1,"candidate":candidate,"worker_attempt":response.attempt,
                     "scores":cv_response.scores,"predictions_digest":cv_response.predictions_digest,
                     "failure":response.failure,"cv_failure":cv_response.failure,"refit_failure":refit_failure}));
                 if let Some(bytes) = bytes {
@@ -2001,11 +2001,16 @@ fn experiment(plan: &Plan, round: u64, slot: usize, rung: u8) -> Result<String> 
         slot < 65536 && rung < 4,
         "evaluation ordinal is out of range"
     );
-    let ordinal = round
-        .checked_mul(262144)
-        .and_then(|n| n.checked_add(u64::from(rung) * 65536 + slot as u64))
-        .context("evaluation ordinal exhausted")?;
+    let ordinal = evaluation_ordinal(round, u32::from(rung) * 65536 + slot as u32)?;
     Ok(projector(plan)?.experiment_id(project::EvaluationOrdinal(ordinal)))
+}
+
+fn evaluation_ordinal(round: u64, encoded_slot: u32) -> Result<u64> {
+    ensure!(encoded_slot < 262144, "evaluation ordinal is out of range");
+    round
+        .checked_mul(262144)
+        .and_then(|n| n.checked_add(u64::from(encoded_slot)))
+        .context("evaluation ordinal exhausted")
 }
 
 fn projected_summary(plan: &Plan, claim: project::Claim<'_>) -> Result<String> {
@@ -2421,7 +2426,9 @@ fn add_events(
             reason: public_failure(failure),
         }),
         attempt_receipt: Some(Box::new(jope_api::EvaluationAttempt {
-            attempt: response.attempt.attempt,
+            // The public receipt identifies the logical evaluation, just like its
+            // experiment ID. Worker restart epochs remain in private run records.
+            attempt: evaluation_ordinal(response.attempt.round, response.attempt.slot)?,
             outcome: if response.failure.is_some() {
                 jope_api::EvaluationAttemptOutcome::Failed
             } else {
