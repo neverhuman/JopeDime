@@ -176,13 +176,17 @@ typed language of learning primitives.
     program-only control (\cref{sec:results}).
 \end{enumerate}
 
-\paragraph{What is and is not established.}
-The game, learner and evaluation protocol are specified here. The retained
-admission and program-promotion logs concern a separate ranking-adapter
-loop (\cref{sec:method-status}), whose inspected implementation has no
-neural program writer; binding it to those records remains pending.
-Native neural proposals seed a search pool. First-proposal quality on unseen
-families and single-candidate deployment remain unqualified. \Cref{sec:results} specifies the independent comparisons
+\paragraph{Two stages of development.}
+The offline multi-dataset reference pairs a neural program writer with a
+problem--program ranking map. Search-scored lists train both; native
+neural proposals seed further search. A second stage studies a closed-loop
+admission ratchet. Its inspected implementation proposes programs through
+heuristic edits, retrieval and grammar sampling, and updates only a ranking
+adapter (\cref{sec:method-status}). The retained admission and program-event
+logs concern this second task; binding them to that source remains pending.
+They do not establish a handoff from the offline writer and map.
+First-proposal quality on unseen families and single-candidate deployment
+remain unqualified. \Cref{sec:results} specifies the independent comparisons
 required before claiming an advantage.
 
 \Cref{sec:anatomy} separates innovation's roles. We trace their AI building
