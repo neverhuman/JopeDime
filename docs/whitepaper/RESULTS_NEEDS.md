@@ -1,8 +1,8 @@
 # Manuscript source still needed
 
-The manuscript has **40 `\TBD` markers**. Jepson must supply the source for the abstract, empirical Results, Discussion and Conclusion. Archived prose and repository notes do not fill these placeholders. This inventory supersedes older marker counts in historical layout logs.
+The manuscript has **37 `\TBD` markers**. Jepson must supply the remaining source for the abstract, independent empirical Results, Discussion and Conclusion. Closed-out development diagnostics fill only R28--R30 below; archived prose and repository notes do not fill the remaining placeholders. This inventory supersedes older marker counts in historical layout logs.
 
-The Results section retains its evaluation protocol and planned exhibits. Comparator identities, outcomes and historical empirical diagnostics remain placeholders. All Discussion/Conclusion prose and the abstract remain placeholders. The provenance item in Section6.8 also remains pending.
+The Results section retains its evaluation protocol and planned exhibits. Comparator identities and independent first-proposal outcomes remain placeholders. The earlier-development diagnostics now report the merged, closed-out adapter studies authorized by the owner. All Discussion/Conclusion prose and the abstract remain placeholders. The provenance item in Section6.8 also remains pending.
 
 Freeze the evaluation contract before opening final outcomes. Bind evidence to source, inputs, artifact hashes, commands and protocol; report every draw, failures, ties and unknown outcomes. Use paired family-level outcomes and uncertainty. Keep development diagnostics separate from independent final comparisons.
 
@@ -39,9 +39,6 @@ Freeze the evaluation contract before opening final outcomes. Bind evidence to s
 | R25 | [07_results.tex:224](sections/07_results.tex#L224) | outcomes and time |
 | R26 | [07_results.tex:225](sections/07_results.tex#L225) | score |
 | R27 | [07_results.tex:226](sections/07_results.tex#L226) | score |
-| R28 | [07_results.tex:234](sections/07_results.tex#L234) | Supply Jepson's source-bound search and ranking diagnostics, including original inventories, comparison conditions, overlap checks and uncertainty. Keep their scope separate from the final first-proposal comparisons. |
-| R29 | [07_results.tex:238](sections/07_results.tex#L238) | Pin the inventories, checkpoints and seeding, timing and ranking protocols, separately from the final comparisons above. |
-| R30 | [07_results.tex:241](sections/07_results.tex#L241) | Supply the interpretation and limits of these comparisons in the referenced section or exhibit once Jepson provides the source. |
 | D1 | [08_meaning.tex:3](sections/08_meaning.tex#L3) | Supply a source-grounded discussion of the completed evaluation from Jepson. Reconcile every conclusion below with those outcomes and their uncertainty. |
 | D2 | [08_meaning.tex:8](sections/08_meaning.tex#L8) | Use Jepson's supplied output and archive comparisons, with program behavior checks, to distinguish selection from useful new composition. |
 | D3 | [08_meaning.tex:13](sections/08_meaning.tex#L13) | Interpret transfer of first-proposal quality across problems using the matched conditions and paired family-level uncertainty supplied by Jepson. |
@@ -52,3 +49,7 @@ Freeze the evaluation contract before opening final outcomes. Bind evidence to s
 | P1 | [flywheel_status.tex:83](sections/06_method/flywheel_status.tex#L83) | Bind the retained snapshot to the exact loop source, adapter, candidate pools, revealed-history inputs and utility normalization. |
 
 The marker table follows the current source lines. Update it whenever a placeholder is added, moved, filled or removed; keep the compiled count and source inventory consistent.
+
+## Filled development diagnostics
+
+R28 (outcomes and uncertainty), R29 (conditions and source pins), and R30 (scoped interpretation and limits) are filled from the merged H195, H197, H198 and H201 reports. The [source inventory](development_results.sources.json) pins every report, protocol, compact metrics and cohort record by full source commit, Git blob and SHA-256. H195 is a candidate, not adopted; H197 is NO_ADVANCE; H198 is NO_ADVANCE (inert treatment); H201 is formally INCONCLUSIVE with its primary attempt INCOMPLETE. H199 remains excluded until #1682 merges. None fills an independent first-proposal, throughput, abstract or Discussion/Conclusion marker.
