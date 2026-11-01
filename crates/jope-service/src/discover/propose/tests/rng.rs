@@ -93,3 +93,18 @@ fn retry_head_order_preserves_uniform_weights_and_the_shared_rng() {
         head_retry_order(0, 13, 6, &rng)
     );
 }
+
+#[test]
+fn retry_stream_starts_at_zero_independently_of_the_main_word_position() {
+    let initial = round_rng(42, 0);
+    let mut advanced = initial.clone();
+    advanced.set_word_pos(197);
+    for step in [1, 6, 11] {
+        assert_eq!(
+            head_retry_order(0, 13, step, &initial),
+            head_retry_order(0, 13, step, &advanced)
+        );
+    }
+    assert_eq!(initial.get_word_pos(), 0);
+    assert_eq!(advanced.get_word_pos(), 197);
+}
