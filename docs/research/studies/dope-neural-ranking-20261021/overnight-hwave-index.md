@@ -151,3 +151,5 @@
 | H200 | 2026-11-01 | Nested family-grouped lambda choice (`NEST_L` primary), rank-space blend (`RANK025`), FIX025 and within-context shuffled-score placebo vs native r882; 205-family pooled cross-fit, seeds 200101–200103 / fold seeds 200141–200143, 60 fits; xbabe1 CPU (luna_ns_hbaseline) | PREREGISTERED; no science run | NEST_L and RANK025 Holm m=2; NEST_L candidate only if bootstrap CI lower >0, adjusted p<0.05 and family harm ≤10%; no adoption | [h200_nested_blend/PREREG.md](../../../../research/flywheel_selfplay/h200_nested_blend/PREREG.md) |
 
 | H201 | gpu_tokbench_codex | Strict admission / r3175 selection-noise audit; zero updates | CLOSED; INCONCLUSIVE; native parity FAIL, sole attempt INCOMPLETE; descriptive SMA H2 true | [results](../../../../research/flywheel_selfplay/h201_strict_admission/README.md) |
+
+| H202 | gpu_tokbench_codex | Current-top5 inverted-pair adapter fine-tune; family-balanced paired CTRL/SHUF | PREREGISTERED; one guarded CPU attempt pending | [prereg](../../../../research/flywheel_selfplay/h202_hard_negative/PREREG.md) |
