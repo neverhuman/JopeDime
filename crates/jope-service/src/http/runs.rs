@@ -1751,7 +1751,7 @@ pub(super) async fn list(
 mod tests {
     use super::*;
 
-    const Q1_FAIL_ALL_TEST_SEED: u64 = 0xa11f_a11f;
+    const Q1_FAIL_ALL_TEST_SEED: u64 = 2;
 
     #[test]
     #[ignore = "Q1 worker subprocess target; invoked by the worker process supervisor"]
@@ -1764,7 +1764,10 @@ mod tests {
         stdout.flush().unwrap();
         drop(stdout);
         crate::worker::serve(1, |request, matrix| {
-            if (Q1_FAIL_ALL_TEST_SEED..Q1_FAIL_ALL_TEST_SEED + 24).contains(&request.seed) {
+            let request_seed = request
+                .seed
+                .wrapping_sub(request.attempt.attempt.saturating_sub(1));
+            if request_seed == Q1_FAIL_ALL_TEST_SEED {
                 Err(crate::worker::WorkerFailure::InvalidRequest)
             } else {
                 crate::discover::r#loop::evaluate_native(request, matrix)
