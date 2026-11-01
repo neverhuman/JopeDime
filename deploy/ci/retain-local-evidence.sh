@@ -9,7 +9,22 @@ set -euo pipefail
 name=${1:?name required}; src=${2:?evidence dir required}
 [[ $name =~ ^[A-Za-z0-9._-]+$ ]] || { echo "invalid evidence name: $name" >&2; exit 1; }
 [ -d "$src" ] || { echo "no evidence directory: $src" >&2; exit 1; }
-root=${JOPE_LOCAL_EVIDENCE_ROOT:-/var/cache/jope/target/ci-evidence-retained}
+if [ -n "${JOPE_LOCAL_EVIDENCE_ROOT:-}" ]; then
+  # An explicitly configured root is a custody contract: failure to use it stays fatal below.
+  root=$JOPE_LOCAL_EVIDENCE_ROOT
+else
+  # Default root: the shared persistent target volume. Some runner images mount its parent
+  # unwritable for the job user, so fall back to the lane's own target dir, then to the
+  # runner home cache. The chosen root is printed and the copy is still sha256-verified.
+  root=""
+  for cand in /var/cache/jope/target/ci-evidence-retained \
+              ${CARGO_TARGET_DIR:+"$CARGO_TARGET_DIR/ci-evidence-retained"} \
+              "${HOME:-/tmp}/.cache/jope/ci-evidence-retained"; do
+    if mkdir -p "$cand" 2>/dev/null && [ -w "$cand" ]; then root=$cand; break; fi
+    echo "evidence root not writable, trying next: $cand" >&2
+  done
+  [ -n "$root" ] || { echo "no writable local evidence root" >&2; exit 1; }
+fi
 repo=${GITHUB_REPOSITORY:-local}; dest="$root/${repo//\//_}/$name"
 manifest=$(mktemp)
 trap 'rm -f "$manifest"' EXIT

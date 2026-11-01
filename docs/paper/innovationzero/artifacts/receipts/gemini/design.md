@@ -3,7 +3,7 @@
 The owner supplied this as a standalone Rust file on 2026-10-22, with no design notes. This page
 summarises what the source does, as read during integration. It is not the author's own
 description. The source is included byte-for-byte as
-[`src/Gemini4_argon_high.rs`](../../sources/Gemini4_argon_high.rs) (SHA-256
+[`src/Gemini4_argon_high.rs`](../../src/Gemini4_argon_high.rs) (SHA-256
 `d5cd85fcf5e2bea8513d7c8665ba9f17b5fc4b70cd1570fdcedd569c376053d3`, 2,931 lines). It uses only
 the standard library and forbids `unsafe`.
 
@@ -35,7 +35,7 @@ row-local: a row's prediction does not depend on the other rows in the batch.
 ## Expected strengths and limitations
 
 - **Strengths.** Broad coverage. It is the second-ranked entrant of four in the AutoML Elo
-  ([`assets/automl-elo/v1`](../../../../../../assets/automl-elo/v1/SOURCES.md)), with Elo 1561 and 95%
+  ([`assets/automl-elo/v1`](../../../../assets/automl-elo/v1/SOURCES.md)), with Elo 1561 and 95%
   CI 1519–1607.
 - **Cost.** It is the slowest of the four to fit on that panel: 1,986 s across 576 fits, at most
   56 s each.

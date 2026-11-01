@@ -51,11 +51,14 @@ done
                 with self.subTest(lane=lane):
                     output.write_text('')
                     result = subprocess.run(['bash', '-ec', script], cwd=ROOT,
-                        env=os.environ | {'JOPE_RUNNER_LANE': lane, 'GITHUB_ENV': str(output)},
+                        env=os.environ | {'JOPE_RUNNER_LANE': lane, 'GITHUB_ENV': str(output),
+                                          'HOME': str(Path(name)/'home')},
                         capture_output=True, text=True)
                     self.assertEqual(0, result.returncode, result.stderr)
-                    self.assertEqual(f'CARGO_TARGET_DIR=/var/cache/jope/target/{lane}\n',
-                                     output.read_text())
+                    # Persistent lane volume, or the runner-home fallback when it is unwritable.
+                    self.assertIn(output.read_text(), {
+                        f'CARGO_TARGET_DIR=/var/cache/jope/target/{lane}\n',
+                        f'CARGO_TARGET_DIR={Path(name)}/home/.cache/jope/target/{lane}\n'})
             for lane in ('guard', 'gpu', 'ci13', '../full', '', 'ci\nINJECTED=1'):
                 with self.subTest(rejected_lane=lane):
                     output.write_text('')
@@ -1010,6 +1013,10 @@ class PublicationStatusTests(unittest.TestCase):
             for _, path in saved + restored:
                 self.assertTrue(path.startswith('target/'), (name, path))
             lanes = {n: p for n, p in saved}
+            # Evidence saved by reusable workflows this file calls (e.g. export-parity.yml).
+            for called in re.findall(r'uses: \./\.github/workflows/([\w.-]+\.ya?ml)', text):
+                called_text = (ROOT/'.github/workflows'/called).read_text()
+                lanes.update(re.findall(r'uses: \./\.github/actions/upload-ci-evidence\n\s+with:\n\s+name: (.+)\n\s+path: (.+)', called_text))
             for n, p in restored:
                 generic = re.sub(r'(cpu-\d|rust-test-\d|[a-z0-9-]+)/$', '', p)
                 self.assertTrue(any(sp.startswith(generic) for sp in lanes.values()), (name, p))
@@ -1041,6 +1048,26 @@ class LocalRetentionTests(unittest.TestCase):
             self.assertNotEqual(0, result.returncode, result.stdout)
             self.assertNotIn('retained at', result.stdout)
             self.assertFalse(destination.exists())
+
+    def test_default_root_falls_back_when_shared_volume_is_unwritable(self):
+        import os
+        scratch = ROOT/'target'/'tmp'
+        scratch.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='retention-fallback-', dir=scratch) as name:
+            base = Path(name)
+            source = base/'source'
+            source.mkdir()
+            (source/'receipt.json').write_text('{"probe":"fallback"}\n')
+            env = {k: v for k, v in os.environ.items() if k != 'JOPE_LOCAL_EVIDENCE_ROOT'}
+            env.update(CARGO_TARGET_DIR=str(base/'lane-target'), HOME=str(base/'home'),
+                       GITHUB_REPOSITORY='neverhuman/JopeDime', JOPE_EVIDENCE_S3_URI='',
+                       GITHUB_STEP_SUMMARY=str(base/'summary.md'), TMPDIR=str(base))
+            result = subprocess.run(
+                ['bash', str(ROOT/'deploy/ci/retain-local-evidence.sh'), 'fixture', str(source)],
+                cwd=ROOT, env=env, capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn('retained at', result.stdout)
+            self.assertIn('receipt.json: OK', result.stdout)
 
     def test_local_retention_success_has_verified_recoverable_bytes(self):
         scratch = ROOT/'target'/'tmp'
