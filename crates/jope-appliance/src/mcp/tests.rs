@@ -343,7 +343,45 @@ async fn roots_change_without_discovery_does_not_open_a_session() {
         .await
         .expect("invalid bootstrap must finish")
         .unwrap();
-    assert!(result.is_err());
+    assert!(result.unwrap_err().to_string().contains("RootsListChanged"));
+    assert!(wire.backend.requests.lock().unwrap().is_empty());
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn invalid_discovery_metadata_does_not_allow_a_roots_hint() {
+    let mut wire = Wire::connect("2026-07-28").await;
+    wire.writer
+        .write_all(b"{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"server/discover\",\"params\":{}}\n{\"jsonrpc\":\"2.0\",\"method\":\"notifications/roots/list_changed\",\"params\":{}}\n")
+        .await
+        .unwrap();
+    wire.writer.flush().await.unwrap();
+    wire.writer.shutdown().await.unwrap();
+    let result = tokio::time::timeout(Duration::from_secs(3), wire.server)
+        .await
+        .expect("invalid discovery must finish")
+        .unwrap();
+    assert!(result.unwrap_err().to_string().contains("RootsListChanged"));
+    assert!(wire.backend.requests.lock().unwrap().is_empty());
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn discovery_does_not_allow_other_premature_notifications() {
+    let mut wire = Wire::connect("2026-07-28").await;
+    wire.send("server/discover", json!({}), Some(json!(1)))
+        .await;
+    wire.writer
+        .write_all(
+            b"{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\",\"params\":{}}\n",
+        )
+        .await
+        .unwrap();
+    wire.writer.flush().await.unwrap();
+    wire.writer.shutdown().await.unwrap();
+    let result = tokio::time::timeout(Duration::from_secs(3), wire.server)
+        .await
+        .expect("unexpected notification must finish")
+        .unwrap();
+    assert!(result.unwrap_err().to_string().contains("Initialized"));
     assert!(wire.backend.requests.lock().unwrap().is_empty());
 }
 
