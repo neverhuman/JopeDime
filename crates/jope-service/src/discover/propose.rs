@@ -206,6 +206,7 @@ fn head_retry_order(first: usize, length: usize, step: usize, rng: &ChaCha12Rng)
     let mut remaining: Vec<_> = (0..length).filter(|&i| i != first).collect();
     let mut fork = rng.clone();
     fork.set_stream(rng.get_stream().wrapping_add(step as u64 + 1));
+    fork.set_word_pos(0);
     for i in (1..remaining.len()).rev() {
         let j = index(&mut fork, i + 1);
         remaining.swap(i, j);

@@ -44,3 +44,12 @@ the original frozen Python oracle supplies 3,072 doubled CPU forwards. This is a
 recorded qualification failure, not permission to select an earlier passing
 policy, alter the reference or change seeds/weights/thresholds. Source tests and
 conditional-weight correctness are separate from scientific qualification.
+
+T1620 preregisters one CPU-only tie-break experiment: start each per-typed-slot
+fallback stream at word zero, preserving its round key and typed-slot stream ID.
+The new explicit counter-invariance control compares different main-stream word
+positions without changing either shared state. F's existing conditional weights
+were already unbiased; this is a stability experiment, not a claim of prior bias.
+First draws, pools, weights, source/admission seeds, clock, models, frozen reference
+and +/-2pp criterion remain unchanged. Test one candidate only; retain any failed
+result and propose an owner ruling rather than search offsets or fit weights.
