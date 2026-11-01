@@ -21,7 +21,7 @@
   "source_binding": "CSV field interpretation only; installed source/adapter/checkpoint qualification remains required",
   "matplotlib_version": "3.10.8",
   "csv_sha256": "ae68b108f55a57552f395e2035ab69b7f4cdda05f362605ab06f0869e3f940db",
-  "figure_sha256": "c59565f1e4973e69fb007fe52100ba8e942926795bf18adbb47e399099b803f4",
-  "generator_sha256": "cb14fcd2f4571475c879bdf1398dda2e26fde4dcac7e58a0f6dab36884b1f281",
+  "figure_sha256": "f45374114e0432b3fc0ff3cdec4255e00e2c136ddc1ef07dee24bf0a82aca15e",
+  "generator_sha256": "83ad450a14d4226319c6111f7d68c10acd61dae75c16b22f42d9bd9717f8960f",
   "reproduce": "python3 figures/scripts/make_flywheel_figs.py --admission-shortfall"
 }

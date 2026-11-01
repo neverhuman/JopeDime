@@ -3,8 +3,8 @@
   "source_csv": "figures/data/latest_admissions.csv",
   "source_csv_sha256": "a38d2eeb1ef95876b8b1b904202a94d69983b1a9a31d3bdab12b48cd94f8d82b",
   "source_receipt_sha256": "6a5962e6e5bb53c642484b7dfd285a2f77e786065d54872664745c3d4335081f",
-  "generator_sha256": "a6906e2bc3c6958aa6531a2896d4a43967123bab07750b63cea49cbef35dd51c",
-  "figure_sha256": "8bee0ba6149fdf4da172cc990576f34f362b1e1ed41c196d9327cac37a263b20",
+  "generator_sha256": "6d0d52aa3f800ab340df5f46169a2aae2c5991379233da71181a2b9b388eeac1",
+  "figure_sha256": "a8fa97b223166083d23e8222df0f79898e7c44fc41754498733eba4ce1897bbb",
   "round_window": [
     775,
     2837

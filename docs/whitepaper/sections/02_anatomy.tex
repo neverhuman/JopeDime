@@ -11,7 +11,7 @@
   \centering
   \small\setlength{\extrarowheight}{2pt}% separates rows whose cells wrap
   \setlength{\tabcolsep}{4pt}
-  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.19\linewidth}>{\raggedright\arraybackslash}p{0.19\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.2165\linewidth}@{}}
+  \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.19\linewidth}>{\raggedright\arraybackslash}p{0.19\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}X@{}}
     \toprule
     Tradition & Aim & Variation & Judgment & Retention \\
     \midrule
@@ -25,7 +25,7 @@
     \midrule
     \EZ{} & Problem encoding and metric & Program writer & Referee on hidden folds & Incumbent pool and weights \\
     \bottomrule
-  \end{tabular}
+  \end{tabularx}
 \end{table*}
 
 We organize innovation into four roles: aim, variation, judgment and
@@ -143,7 +143,7 @@ people still set the aim.}
   \footnotesize
   \setlength{\tabcolsep}{3.5pt}
   \setlength{\extrarowheight}{2pt}% separates rows whose cells wrap
-  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.16\linewidth}>{\raggedright\arraybackslash}p{0.21\linewidth}>{\raggedright\arraybackslash}p{0.265\linewidth}>{\raggedright\arraybackslash}p{0.2785\linewidth}@{}}
+  \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.16\linewidth}>{\raggedright\arraybackslash}p{0.21\linewidth}>{\raggedright\arraybackslash}p{0.265\linewidth}>{\raggedright\arraybackslash}X@{}}
     \toprule
      & Human science & Agent search & \EZ{} \\
     \midrule
@@ -155,7 +155,7 @@ people still set the aim.}
     Where taste lives & Years of training, in one head & Weights fixed; context can adapt & Training on referee feedback \\
     Deployment budget & Varies by problem & Multiple adaptive attempts & One candidate; success measured \\
     \bottomrule
-  \end{tabular}
+  \end{tabularx}
 \end{table}
 
 The next section traces the methods that connect these four roles (\cref{sec:road}).

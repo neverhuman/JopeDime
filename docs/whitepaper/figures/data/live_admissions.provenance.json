@@ -2,10 +2,10 @@
   "schema": "whitepaper.live-admission-figures/v1",
   "source_receipt_sha256": "d04fd2e70229630b75b53e3832f0e53627fcb9307fea0d9520228f54279b199f",
   "csv_sha256": "edd336c3b68e880040e8f41a6fe437617f643ed183d9b03d69554963ad54a6dd",
-  "generator_sha256": "ca150f5f8c3c036004199dd5a39401cb57d90c23ffce6d668385cf3ca3a1bf11",
+  "generator_sha256": "5774dd476bd2781de09d4495efbc0cc501d02790f789bcf47ad42a3254b9c82e",
   "figure_sha256": {
-    "fig_fw_live_validation.pdf": "89c78a92ef5c87e2a700bcdea9ce337f7994751676cb0d51fc2163a33365065a",
-    "fig_fw_live_shortfall.pdf": "10f48feca48070a82b72ac11d9b4820b9e1436d78942af3aa2d00873623a2a15"
+    "fig_fw_live_validation.pdf": "c8639d36fb21917eb737126f599d2e5004729465bc9c8bca3909e48f2845a4ee",
+    "fig_fw_live_shortfall.pdf": "27a1f80fa5791c0ab9f2781dddc0c3ce133f3b03a1f523798f3e1bee7069de92"
   },
   "round_window": [
     775,

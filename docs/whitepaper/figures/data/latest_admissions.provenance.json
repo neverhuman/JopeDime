@@ -2,8 +2,8 @@
   "schema": "whitepaper.latest-admissions-figure/v1",
   "source_receipt_sha256": "6a5962e6e5bb53c642484b7dfd285a2f77e786065d54872664745c3d4335081f",
   "csv_sha256": "a38d2eeb1ef95876b8b1b904202a94d69983b1a9a31d3bdab12b48cd94f8d82b",
-  "generator_sha256": "0ec3aba45c2d7aa2350251d70a8296acd4ccacdff782853f7a583114d2263daf",
-  "figure_sha256": "64ba7a6a9c8812f8851bb9fa6487e0a2d1dbf56579d7ebb51856970b4c488f5e",
+  "generator_sha256": "34e4628fb96e776dd56b1266119b676c974eb73a52c8218bff1df85840fa10ff",
+  "figure_sha256": "2d542141ca8a8057dffdd40b7ee15f697c724999e75cf3e0d589383bf2615446",
   "round_window": [
     775,
     2837
