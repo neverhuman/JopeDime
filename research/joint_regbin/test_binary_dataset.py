@@ -22,6 +22,7 @@ from unittest.mock import patch
 
 from research.joint_regbin.admission import (
     build_catalog_pool_manifest,
+    build_task_role_candidate_manifest,
     build_binary_train_admission,
     review_catalog_families,
     verify_binary_train_admission,
@@ -192,6 +193,212 @@ class CatalogPoolManifestTests(unittest.TestCase):
             build_catalog_pool_manifest(
                 catalog, catalog_sha, owner_alias, owner_alias_sha
             )
+
+
+class TaskRoleCandidateManifestTests(unittest.TestCase):
+    def _inputs(self):
+        rows = []
+        for task, count, prefix in (
+            ("regression", 6, "reg"),
+            ("binary", 5, "bin"),
+        ):
+            for index in range(count):
+                identity = len(rows) + 1
+                rows.append(
+                    {
+                        "id": f"{prefix}-{index}",
+                        "task": task,
+                        "canonical_sha256": f"{identity:064x}",
+                        "family_key": f"{identity + 100:064x}",
+                        "family_key_source": "provenance.dedupe_fingerprint",
+                        "family_key_derived": None,
+                        "source_file": None,
+                        "source_url": None,
+                        "platform": "pmlb",
+                        "s3_bucket": "veox-jopedime-datasets-use2",
+                        "train_rows": 10 + identity,
+                        "train_sha256": f"{identity + 200:064x}",
+                    }
+                )
+        catalog_sha = "a" * 64
+        catalog = {
+            "inventory": {
+                "source_catalog": "catalog/v246.jsonl (LATEST=v246)",
+                "usable_records": len(rows),
+            },
+            "datasets": rows,
+        }
+        owner_alias_sha = "b" * 64
+        owner_alias = {
+            "schema": "jope.jrb01.raw-catalog-alias-expansion/v1",
+            "curated_catalog_sha256": catalog_sha,
+            "owner_identity_manifest_sha256": "c" * 64,
+            "owner_identities": 167,
+            "previously_missing_now_joined": 14,
+            "source_file_metadata_for_previous_missing_ids": 0,
+            "all_raw_catalog_transitive_unions_checked": True,
+            "no_p3_roster_or_plaintext_sealed_aliases_published": True,
+            "payloads_opened": 0,
+        }
+        review = review_catalog_families(rows)
+        candidate_pools = {task: [] for task in protocol.TASKS}
+        for row in rows:
+            family = review["family_by_dataset"][row["id"]]
+            candidate_pools[row["task"]].append(
+                {
+                    "dataset": row["id"],
+                    "task": row["task"],
+                    "family": family,
+                    "family_aliases": [["dedupe_fingerprint", row["family_key"]]],
+                    "train_rows": row["train_rows"],
+                    "train_sha256": row["train_sha256"],
+                }
+            )
+        pool_sha = "d" * 64
+        pool = {
+            "schema": "jope.joint-regbin.catalog-pools/v1",
+            "catalog_sha256": catalog_sha,
+            "owner_alias_expansion_sha256": owner_alias_sha,
+            "eligibility_verified": False,
+            "qualification_status": "NOT_QUALIFIED",
+            "candidate_pools": candidate_pools,
+        }
+
+        def roster_row(dataset, role, ordinal):
+            return {
+                "dataset_id": dataset,
+                "task": "regression",
+                "family_id": f"legacy-family-{dataset}",
+                "view_id": f"view-{role}-{ordinal}",
+                "dl_split": "DL-Train" if role == "train" else "DL-Val",
+                "source_split": "train" if role == "train" else "inner",
+                "context_sha256": f"{ordinal + 300:064x}",
+                "pool_sha256": f"{ordinal + 400:064x}",
+                "train_only_jtt1_sha256": f"{ordinal + 500:064x}",
+            }
+
+        selected = {
+            "protocol": "full-DL-Train1219-DL-Val91/v1",
+            "train": [roster_row(f"reg-{i}", "train", i) for i in range(5)],
+            "dev": [roster_row("reg-5", "dev", 5)],
+        }
+        selected_sha = "e" * 64
+        flywheel_run = {
+            "input_hashes": {"selected.json": selected_sha},
+            "task_counts": {
+                "train_binary": 0,
+                "train_regression": 5,
+                "val_binary": 0,
+                "val_regression": 1,
+            },
+            "train_contexts": [row["context_sha256"] for row in selected["train"]],
+            "dev_contexts": [row["context_sha256"] for row in selected["dev"]],
+            "dope_sha256": protocol.DOPE,
+            "source_sha": "f" * 40,
+        }
+        panel = {
+            "schema": "jope.elo-panel/v1",
+            "stats": {"regression:selected": 1, "binary:selected": 1},
+            "datasets": [
+                {
+                    "id": "reg-0",
+                    "task": "regression",
+                    "train_rows": rows[0]["train_rows"],
+                },
+                {
+                    "id": "bin-0",
+                    "task": "binary",
+                    "train_rows": next(
+                        r["train_rows"] for r in rows if r["id"] == "bin-0"
+                    ),
+                },
+            ],
+        }
+        return (
+            catalog,
+            catalog_sha,
+            owner_alias,
+            owner_alias_sha,
+            pool,
+            pool_sha,
+            selected,
+            selected_sha,
+            flywheel_run,
+            "1" * 64,
+            panel,
+            "2" * 64,
+        )
+
+    def test_role_candidates_build_task_roles_folds_and_panel_exclusions(self):
+        inputs = self._inputs()
+        manifest = build_task_role_candidate_manifest(*inputs)
+
+        self.assertEqual(
+            manifest["schema"], "jope.joint-regbin.task-role-candidates/v1"
+        )
+        self.assertEqual(manifest["admission_status"], "ROLE_CANDIDATES_NOT_ADMITTED")
+        self.assertFalse(manifest["eligibility_verified"])
+        self.assertEqual(
+            manifest["role_counts"],
+            {
+                "train": {"regression": 5, "binary": 5},
+                "val": {"regression": 1, "binary": 0},
+                "panel": {"regression": 1, "binary": 1},
+            },
+        )
+        self.assertEqual(
+            manifest["panel_train_exclusions"]["regression"]["family_count"], 1
+        )
+        self.assertEqual(
+            manifest["panel_train_exclusions"]["binary"]["family_count"], 1
+        )
+        self.assertEqual(
+            manifest["closure"][
+                "unresolved_owner_aliases_collapsed_to_one_excluded_family"
+            ],
+            14,
+        )
+        self.assertFalse(manifest["closure"]["owner_alias_family_assigned_a_role"])
+        fold_by_family = manifest["cv"]["family_by_fold"]
+        for rows in manifest["records"].values():
+            for row in rows:
+                if row["role"] in {"train", "val"}:
+                    self.assertEqual(row["cv_fold"], fold_by_family[row["family"]])
+
+    def test_role_candidates_exclude_panel_rows_absent_from_catalog(self):
+        inputs = list(self._inputs())
+        panel = inputs[-2]
+        panel["stats"]["regression:selected"] = 2
+        panel["datasets"].append(
+            {"id": "missing-reg-panel", "task": "regression", "train_rows": 25}
+        )
+
+        manifest = build_task_role_candidate_manifest(*inputs)
+
+        self.assertEqual(
+            manifest["closure"]["panel_catalog_missing_by_task"]["regression"], 1
+        )
+        self.assertEqual(len(manifest["records"]["regression_panel"]), 1)
+        self.assertIn(
+            "1 regression panel identities are absent",
+            " ".join(manifest["blockers"]),
+        )
+
+    def test_role_candidates_refuse_flywheel_hash_or_task_drift(self):
+        inputs = list(self._inputs())
+        inputs[8]["input_hashes"]["selected.json"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "flywheel train/dev"):
+            build_task_role_candidate_manifest(*inputs)
+
+        inputs = self._inputs()
+        inputs[8]["train_contexts"][0] = "9" * 64
+        with self.assertRaisesRegex(ValueError, "flywheel train/dev"):
+            build_task_role_candidate_manifest(*inputs)
+
+        inputs = self._inputs()
+        inputs[6]["train"][0]["task"] = "binary"
+        with self.assertRaisesRegex(ValueError, "not regression"):
+            build_task_role_candidate_manifest(*inputs)
 
 
 # Catalog v246's explicit sealed-name-match exclusion IDs. This is the
