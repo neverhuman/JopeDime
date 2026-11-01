@@ -11,6 +11,9 @@
   - `W20` (`2.0x`, `46,595` trainable adapter parameters)
   - `XFIT_JOINT` (joint `(width, step)` cross-fit selector over `{W05, W10, W20} × {0, 10, 20, 30, 40}`)
 
+- **Adoption scope**: `W05` (`20,807` params) and `W20` (`46,595` params) are **research-only** arms. Only the `29,211`-parameter `W10` shape is flywheel-compatible; `W05`/`W20` must never be adopted, promoted, or loaded into the live flywheel or serving path. No arm is authorized for adoption (`serving_promotion = false`).
+- **Independent recount (luna_ns_hbaseline, 2026-11-01 05:29Z)**: rebuilt the primary panel from the 15 raw cell files; byte-for-byte equal to `panels.npz:primary`. The `W05_XFIT` sign mismatch (equal-family delta `+0.005647`, CI `[-0.017770, +0.032931]`, vs Elo `1492.62` / `-7.38`) is reproduced exactly and is a real difference between magnitude-sensitive mean utility and pairwise Elo (context W/T/L `83/1030/106`; `55` selected `-2` outcomes), not a metric-direction bug. Verdict remains `NULL`. DOPE `c51a56d0...` on all 15 cells; `protected_reads = 0`.
+
 ---
 
 ## 1. Attempt History & Baseline Parity Gate
