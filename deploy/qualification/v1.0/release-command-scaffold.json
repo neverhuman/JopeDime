@@ -3,7 +3,7 @@
   "qualification_handoff": "NOT_EXECUTABLE",
   "candidate_sha256": "${JOPE_REL07_ARTIFACT_SHA256}",
   "source_policy": "Pin the exact clean origin/main SHA when materializing a run manifest.",
-  "input_owner": "dsc01 supplies A5, D1, and M2; rnk11 supplies the R21 M5 default-off receipt.",
+  "input_owner": "bat02 supplies the A5 transcript; svc08 supplies the D1 macOS receipt; dsc01 supplies M2; rnk11 supplies the R21 M5 default-off receipt.",
   "gates": [
     {
       "id": "M1",
@@ -178,7 +178,7 @@
         "JOPE_REL07_A5_MANIFEST_SHA256=${JOPE_REL07_A5_MANIFEST_SHA256}",
         "python3",
         "-B",
-        "deploy/qualification/v1.0/providers/a5.py"
+        "deploy/qualification/v1.0/a5_run.py"
       ],
       "timeout_seconds": 3600
     },
