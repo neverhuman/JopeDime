@@ -327,6 +327,15 @@ impl CpuAdapter {
         )
     }
     fn norm(&self, x: &Tensor, name: &str) -> Result<Tensor> {
+        let output_dtype = x.dtype();
+        // CPU f32 reductions lose the small variance of wide offset rows.
+        // Keep normalization arithmetic in f64 and round at the model boundary.
+        let compute_dtype = if x.device().is_cpu() {
+            DType::F64
+        } else {
+            output_dtype
+        };
+        let x = x.to_dtype(compute_dtype)?;
         let centered = x.broadcast_sub(&x.mean_keepdim(D::Minus1)?)?;
         let denom = centered
             .sqr()?
@@ -335,8 +344,9 @@ impl CpuAdapter {
             .sqrt()?;
         Ok(centered
             .broadcast_div(&denom)?
-            .broadcast_mul(self.p(&format!("{name}.weight")))?
-            .broadcast_add(self.p(&format!("{name}.bias")))?)
+            .broadcast_mul(&self.p(&format!("{name}.weight")).to_dtype(compute_dtype)?)?
+            .broadcast_add(&self.p(&format!("{name}.bias")).to_dtype(compute_dtype)?)?
+            .to_dtype(output_dtype)?)
     }
     fn residual(&self, x: &Tensor, name: &str) -> Result<Tensor> {
         let h = self.norm(x, &format!("{name}.norm"))?;
@@ -1223,6 +1233,41 @@ mod tests {
         bytes.extend(header);
         bytes.extend(data);
         bytes
+    }
+
+    #[test]
+    fn cpu_norm_preserves_translation_of_wide_offset_rows() {
+        let device = Device::Cpu;
+        let width = 558;
+        let adapter = CpuAdapter {
+            parameters: BTreeMap::from([
+                (
+                    "wide.weight".into(),
+                    Tensor::new(vec![1.25f32; width], &device).unwrap(),
+                ),
+                (
+                    "wide.bias".into(),
+                    Tensor::new(vec![-0.5f32; width], &device).unwrap(),
+                ),
+            ]),
+            device: device.clone(),
+        };
+        // Quarter increments remain exactly representable after this offset.
+        let row: Vec<f32> = (0..width).map(|i| (i % 17) as f32 * 0.25).collect();
+        let shifted: Vec<f32> = row.iter().map(|x| x + 1_048_576.).collect();
+        let input = Tensor::from_vec([row, shifted].concat(), (2, width), &device).unwrap();
+        let output = flat(&adapter.norm(&input, "wide").unwrap()).unwrap();
+        for (a, b) in output[..width].iter().zip(&output[width..]) {
+            assert!(
+                (a - b).abs() <= 1e-6,
+                "LayerNorm changed under an exact translation: {a} vs {b}"
+            );
+        }
+        let constant = Tensor::new(vec![1_048_576f32; width], &device).unwrap();
+        assert!(flat(&adapter.norm(&constant, "wide").unwrap())
+            .unwrap()
+            .iter()
+            .all(|x| *x == -0.5));
     }
 
     fn synthetic_adapter() -> CpuAdapter {
