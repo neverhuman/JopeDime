@@ -2477,6 +2477,59 @@ mod tests {
         assert!(attempts[0].1.loss.is_none() && attempts[0].1.fold_scores.is_empty());
     }
 
+    struct Q1AllFailed;
+    impl crate::discover::r#loop::Executor for Q1AllFailed {
+        fn evaluate(&self, request: &crate::worker::Request) -> crate::worker::Response {
+            crate::worker::Response::failed(
+                request.attempt.clone(),
+                crate::worker::WorkerFailure::NonFinite,
+                0,
+            )
+        }
+        fn fitted_model(&self, _: &crate::worker::Request) -> anyhow::Result<Vec<u8>> {
+            panic!("failed candidates cannot be refitted")
+        }
+    }
+
+    #[test]
+    fn q1_all_failed_attempts_commit_terminal_replayable_actual_counts() {
+        let (directory, service) = q1_service_fixture();
+        let request = q1_request(directory.path(), &service.store);
+        let bytes = service
+            .q1_evaluate_using(request.clone(), || Ok(Q1AllFailed))
+            .unwrap();
+        let receipt: EvaluationReceipt = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(receipt.charged, 24);
+        assert_eq!(receipt.attempts.len(), 24);
+        assert!(receipt.champion_program.is_none());
+        assert!(receipt
+            .attempts
+            .iter()
+            .enumerate()
+            .all(|(number, a)| a.attempt == number as u64
+                && a.outcome == EvaluationAttemptOutcome::Failed
+                && a.failure.is_some()
+                && a.loss.is_none()
+                && a.fold_scores.is_empty()));
+        let command = service
+            .store
+            .get(&q1_command_key(&receipt.request_sha256))
+            .unwrap()
+            .unwrap();
+        assert_eq!(command.data["status"], "completed");
+        let run: jope_api::ids::RunId = command.data["run_id"].as_str().unwrap().parse().unwrap();
+        let snapshot = service.journal.snapshot(&run).unwrap().unwrap();
+        assert_eq!(snapshot.state, RunState::Failed);
+        assert!(snapshot.pending.is_none());
+        assert_eq!(snapshot.budget_used.evaluations.0, 24);
+        let replay = service
+            .q1_evaluate_using(request, || -> anyhow::Result<Q1AllFailed> {
+                panic!("terminal replay must never invoke an executor factory")
+            })
+            .unwrap();
+        assert_eq!(bytes, replay);
+    }
+
     fn q1_service_fixture() -> (tempfile::TempDir, RunService) {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/q1-native");
         std::fs::create_dir_all(&root).unwrap();
