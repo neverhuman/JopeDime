@@ -248,39 +248,64 @@ def x_comp(rd):
 comp_ticks = [1343.5, 1449 - GAP_SHIFT, 1455 - GAP_SHIFT, 1462 - GAP_SHIFT, 1469 - GAP_SHIFT]
 comp_labels = ["1342–45", "1449", "1455", "1462", "1469"]
 
-def plot_compressed_series(ax, rows, key, color, ylabel, ylim):
+def plot_compressed_series(ax, rows, key, color, ylabel, ylim, title=None):
     r_early = [x for x in rows if int(x["round"]) <= 1345]
     r_late = [x for x in rows if int(x["round"]) >= 1449]
     for idx, seg in enumerate((r_early, r_late)):
         sx = [x_comp(int(x["round"])) for x in seg]
         sy = [f(x[key]) for x in seg]
-        ax.plot(sx, sy, "o-", ms=2.5, lw=0.9, c=color,
+        ax.plot(sx, sy, "o-", ms=2.2, lw=0.85, c=color,
                 label="logged summary (n=25)" if idx == 0 else None)
-    ax.axvspan(1345.3, x_comp(1449) - 0.3, color="0.88", alpha=0.65, lw=0, label="1346–1448 not retained")
+    ax.axvspan(1345.3, x_comp(1449) - 0.3, color="0.88", alpha=0.65, lw=0, label="1346–1448 gap")
     ax.set_xlim(1341.2, x_comp(1469) + 0.8)
     ax.set_ylim(*ylim)
     ax.set_xticks(comp_ticks)
     ax.set_xticklabels(comp_labels)
     ax.set_ylabel(ylabel)
     ax.set_xlabel("round (compressed gap)")
+    if title:
+        ax.set_title(title, fontsize=7.6, loc="left", pad=2.5)
     ax.legend(frameon=True, facecolor="white", framealpha=0.88, edgecolor="none",
-              loc="upper right", fontsize=7.2, handletextpad=0.3, borderpad=0.2)
+              loc="upper right", fontsize=6.4, handletextpad=0.25, borderpad=0.2)
 
-fig, axs = plt.subplots(1, 3, figsize=(6.8, 2.05))
-plot_compressed_series(axs[0], R, "datasets_per_s", "#0b5394", "training contexts / s", (12.5, 21.8))
+fig, axs = plt.subplots(1, 4, figsize=(6.8, 1.95))
+for idx, seg in enumerate((r1, r2)):
+    sx = [x_comp(int(x["round"])) for x in seg]
+    ts_y = [f(x["train"]) for x in seg]
+    vs_y = [f(x["val"]) for x in seg]
+    axs[0].plot(sx, ts_y, "o-", ms=2.2, lw=0.85, c="#d95f02",
+                label="train pool" if idx == 0 else None)
+    axs[0].plot(sx, vs_y, "s-", ms=2.2, lw=0.85, c="#0b5394",
+                label="val pool" if idx == 0 else None)
+    axs[0].fill_between(sx, vs_y, ts_y, color="#d95f02", alpha=0.12, lw=0)
+axs[0].axvspan(1345.3, x_comp(1449) - 0.3, color="0.88", alpha=0.65, lw=0)
+axs[0].set_xlim(1341.2, x_comp(1469) + 0.8)
+axs[0].set_ylim(1.10, 1.46)
+axs[0].set_xticks(comp_ticks)
+axs[0].set_xticklabels(comp_labels)
+axs[0].set_ylabel("pool utility")
+axs[0].set_xlabel("round (compressed gap)")
+axs[0].set_title(f"Train vs. val ({min(gaps):.3f}–{max(gaps):.3f})", fontsize=7.6, loc="left", pad=2.5)
+axs[0].legend(frameon=True, facecolor="white", framealpha=0.88, edgecolor="none",
+              loc="center right", fontsize=6.4, handletextpad=0.25, borderpad=0.2)
 
-axs[1].scatter(*zip(*dt), s=3.5, alpha=0.55, lw=0, c="#2b8a3e", label="admission $\\Delta t$ (<600 s)")
+plot_compressed_series(axs[1], R, "datasets_per_s", "#0b5394", "training contexts / s", (12.5, 21.8),
+                       title="Training throughput")
+
+axs[2].scatter(*zip(*dt), s=3.0, alpha=0.55, lw=0, c="#2b8a3e", label="admission $\\Delta t$ (<600 s)")
 if wall_pts:
-    axs[1].scatter(*zip(*wall_pts), s=10, marker="s", c="#0b5394", zorder=4, label="logged round wall time\n(n=25)")
-axs[1].set_ylabel("seconds / round")
-axs[1].set_xlabel("round (775–1469)")
-axs[1].set_xlim(min(r) - 10, max(r) + 10)
-axs[1].legend(frameon=True, facecolor="white", framealpha=0.88, edgecolor="none",
-              loc="upper left", fontsize=7.2, handlelength=1.0, handletextpad=0.3, borderpad=0.2)
+    axs[2].scatter(*zip(*wall_pts), s=9, marker="s", c="#0b5394", zorder=4, label="round wall (n=25)")
+axs[2].set_ylabel("seconds / round")
+axs[2].set_xlabel("round (776–1469)")
+axs[2].set_xlim(min(r) - 10, max(r) + 10)
+axs[2].set_title("Round & admission timing", fontsize=7.6, loc="left", pad=2.5)
+axs[2].legend(frameon=True, facecolor="white", framealpha=0.88, edgecolor="none",
+              loc="upper left", fontsize=6.4, handlelength=0.9, handletextpad=0.25, borderpad=0.2)
 
-plot_compressed_series(axs[2], R, "promotions_per_hr", "#5f3dc4", "program promotions / hour", (56.5, 79.5))
+plot_compressed_series(axs[3], R, "promotions_per_hr", "#5f3dc4", "promotions / hour", (56.5, 79.5),
+                       title="Promotion rate")
 
-fig.tight_layout(pad=0.45)
+fig.tight_layout(pad=0.35, w_pad=0.45)
 fig.savefig(f"{FIGURES_DIR}/fig_fw_telemetry.pdf", metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
 print("ok")

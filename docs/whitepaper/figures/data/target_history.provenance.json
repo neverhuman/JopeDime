@@ -27,6 +27,6 @@
     "Checkpoint exposure of improved targets to later optimizer batches remains unjoined"
   ],
   "csv_sha256": "e87d9de6aadbdd0e5e2bd0fd3a289dbbaa26ac0dd948e349a07368b33844e72d",
-  "generator_sha256": "c7fd13d6e8709aaa28f448a29d5c040b2e3522f165e0260d4eb09d69b859d32e",
+  "generator_sha256": "0bf8cd13e0710428462ecfee022eda86ccdeb6a1901898999111509a3587d620",
   "reproduce": "python3 figures/scripts/make_promotions_figure.py --target-history --source-dir INPUT_DIR"
 }
