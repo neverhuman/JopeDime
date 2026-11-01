@@ -5232,7 +5232,7 @@
     },
     "python:research/flywheel_selfplay/h196_tta/monitor.py": {
       "bytes": 6157,
-      "sha256": "6d44503031df1f7a8684d8e13de3f86f7038880b423d8bcfee4bfbaf4c79e5c9",
+      "sha256": "d43990fb7b3482db34eb867eb04fede3455a666450e6b18f9b6b1e21f04303b2",
       "classification": {
         "role": "research",
         "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
