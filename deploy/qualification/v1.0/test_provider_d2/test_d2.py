@@ -110,6 +110,12 @@ class D2ProviderTests(unittest.TestCase):
             with self.subTest(checks=checks), self.assertRaises(ProviderError):
                 d2.parse_size_report(json.dumps(size_report(checks=checks)))
 
+    def test_report_rejects_ok_false_when_both_budget_rows_pass(self):
+        report = size_report()
+        report["ok"] = False
+        with self.assertRaisesRegex(ProviderError, "contradicts"):
+            d2.parse_size_report(json.dumps(report))
+
     def test_report_rejects_wrong_profile_schema_and_bad_size(self):
         report = size_report()
         report["profile"] = "full"
@@ -271,6 +277,41 @@ class D2ProviderTests(unittest.TestCase):
         payload = json.loads(self.result.read_text())
         self.assertEqual(payload["status"], "FAIL")
         self.assertEqual(payload["counts"]["failed"], 1)
+
+    def test_qualify_refuses_contradictory_budget_report_without_receipt(self):
+        inspect = {
+            "manifest": {
+                "profile": "fused-cpu",
+                "scope": "release",
+                "source": {"sha40": SOURCE},
+            }
+        }
+        verify = {"schema": "jope.appliance-verify/v1", "ok": True}
+        report = size_report()
+        report["ok"] = False
+
+        def run(args, **kwargs):
+            if args[:3] == ["git", "rev-parse", "HEAD"]:
+                return SimpleNamespace(returncode=0, stdout=SOURCE + "\n", stderr="")
+            if args[:3] == ["git", "status", "--porcelain"]:
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+            if "inspect" in args:
+                return SimpleNamespace(
+                    returncode=0, stdout=json.dumps(inspect), stderr=""
+                )
+            if "verify" in args:
+                return SimpleNamespace(
+                    returncode=0, stdout=json.dumps(verify), stderr=""
+                )
+            if "size-report" in args:
+                return SimpleNamespace(
+                    returncode=1, stdout=json.dumps(report), stderr="contradictory"
+                )
+            raise AssertionError(args)
+
+        with self.assertRaisesRegex(ProviderError, "contradicts"):
+            d2.qualify(self.ctx, run)
+        self.assertFalse(self.result.exists())
 
     def test_qualify_refuses_source_drift_after_size_command(self):
         inspect = {

@@ -148,8 +148,11 @@ def parse_size_report(output: str) -> tuple[dict, bool, int]:
         by_name[row["what"]] = row["pass"]
     if set(by_name) != CHECK_NAMES:
         raise ProviderError("size report omitted an executable budget check")
+    budgets_pass = all(by_name.values())
+    if report["ok"] is not budgets_pass:
+        raise ProviderError("size-report budget status contradicts its check rows")
     passed_count = sum(by_name.values()) + int(final_bytes <= MAX_FINAL_BYTES)
-    verdict = passed_count == 3 and report["ok"]
+    verdict = budgets_pass and final_bytes <= MAX_FINAL_BYTES
     return report, verdict, passed_count
 
 
