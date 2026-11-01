@@ -353,19 +353,22 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
             .file_name()
             .and_then(|name| name.to_str())
             .ok_or_else(|| anyhow::anyhow!("CSV path must have a UTF-8 file name"))?;
-        let file = std::fs::File::open(&path).map_err(|error| {
+        // Both local HTTP and socket-free transports support JSON path registration.
+        let absolute = std::fs::canonicalize(&path).map_err(|error| {
             jope_runtime::Failure::input(format!("open CSV {}: {error}", path.display()))
         })?;
         let registration_key = format!("csv_{}", jope_runtime::sha256_hex(key.as_bytes()));
-        let profile: jope_api::DatasetProfile =
-            jope_client::files::upload_csv(transport, name, file, &registration_key)?.json()?;
+        let request = jope_api::registry::DatasetRegistration::Path {
+            path: absolute
+                .to_str()
+                .ok_or_else(|| anyhow::anyhow!("CSV path must be UTF-8"))?
+                .into(),
+            name: Some(name.into()),
+        };
+        let profile = transport.dataset_register(&request, Some(&registration_key))?;
         if args.task == "auto" {
-            if let Some(suggestion) = profile
-                .target_suggestions
-                .iter()
-                .find(|suggestion| suggestion.column == args.target)
-            {
-                args.task = serde_json::to_value(suggestion.task)?
+            if let Some(task) = crate::draft::inferred_tasks(&profile).get(&args.target) {
+                args.task = serde_json::to_value(task)?
                     .as_str()
                     .ok_or_else(|| anyhow::anyhow!("task did not encode as a name"))?
                     .to_owned();

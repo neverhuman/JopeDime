@@ -57,30 +57,40 @@ impl Default for Draft {
     }
 }
 
+/// Apply the runtime's existing Auto policy to the registered public column profile.
+pub(crate) fn inferred_tasks(profile: &DatasetProfile) -> BTreeMap<String, Task> {
+    let mut tasks: BTreeMap<_, _> = profile
+        .columns
+        .iter()
+        .filter_map(|column| {
+            if column.distinct.0 == 0 {
+                return None;
+            }
+            let task = if column.distinct.0 == 2 {
+                Task::Binary
+            } else if matches!(column.data_type.as_str(), "numeric" | "number") {
+                Task::Regression
+            } else {
+                Task::Multiclass
+            };
+            Some((column.name.clone(), task))
+        })
+        .collect();
+    for suggestion in &profile.target_suggestions {
+        if suggestion.task != Task::Auto {
+            tasks.insert(suggestion.column.clone(), suggestion.task);
+        }
+    }
+    tasks
+}
+
 impl Draft {
     pub fn set_seed(&mut self, seed: DecimalU64) {
         self.seed = seed;
     }
 
     pub fn set_dataset(&mut self, profile: DatasetProfile) {
-        // Match the existing table::training Auto policy using the server's profile.
-        self.suggested_tasks = profile
-            .columns
-            .iter()
-            .filter_map(|column| {
-                if column.distinct.0 == 0 {
-                    return None;
-                }
-                let task = if column.distinct.0 == 2 {
-                    Task::Binary
-                } else if matches!(column.data_type.as_str(), "numeric" | "number") {
-                    Task::Regression
-                } else {
-                    Task::Multiclass
-                };
-                Some((column.name.clone(), task))
-            })
-            .collect();
+        self.suggested_tasks = inferred_tasks(&profile);
         self.dataset = Some(profile.dataset_id);
         self.columns = profile
             .columns
@@ -92,12 +102,6 @@ impl Draft {
                 .target_suggestions
                 .first()
                 .map(|suggestion| suggestion.column.clone());
-        }
-        for suggestion in profile.target_suggestions {
-            if suggestion.task != Task::Auto {
-                self.suggested_tasks
-                    .insert(suggestion.column, suggestion.task);
-            }
         }
     }
 
