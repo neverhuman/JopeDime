@@ -1013,6 +1013,10 @@ class PublicationStatusTests(unittest.TestCase):
             for _, path in saved + restored:
                 self.assertTrue(path.startswith('target/'), (name, path))
             lanes = {n: p for n, p in saved}
+            # Evidence saved by reusable workflows this file calls (e.g. export-parity.yml).
+            for called in re.findall(r'uses: \./\.github/workflows/([\w.-]+\.ya?ml)', text):
+                called_text = (ROOT/'.github/workflows'/called).read_text()
+                lanes.update(re.findall(r'uses: \./\.github/actions/upload-ci-evidence\n\s+with:\n\s+name: (.+)\n\s+path: (.+)', called_text))
             for n, p in restored:
                 generic = re.sub(r'(cpu-\d|rust-test-\d|[a-z0-9-]+)/$', '', p)
                 self.assertTrue(any(sp.startswith(generic) for sp in lanes.values()), (name, p))
