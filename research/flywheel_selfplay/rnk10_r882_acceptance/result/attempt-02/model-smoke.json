@@ -1,0 +1,15 @@
+{
+  "device": "cpu",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "evaluation_id": "RNK10-T2210-R882-CPU-02",
+  "evaluation_payloads_opened": 0,
+  "four_gates": "NOT_RUN",
+  "imported_weights_sha256": "d6f3a783eca2ea50bfd7a70dc8336847282fd13b6e306dd44318a279964055e6",
+  "manifest_sha256": "1736ac3a7f8b547b83e0a5792cdacfa117200c9c223ab4964bb13967ead24063",
+  "model_loaded_strict": true,
+  "optimizer_updates": 0,
+  "runner_sha256": "a735302c4b810756c94fc4d9dce94ecb960d691e7eae97dec47c021b6fa45710",
+  "schema": "jope.rnk10.r882-model-smoke/v1",
+  "source_checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "threads": 1
+}

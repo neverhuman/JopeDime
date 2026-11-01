@@ -1,0 +1,30 @@
+{
+  "cohort": {
+    "contexts": 91,
+    "families": 19,
+    "split": "DL-Val"
+  },
+  "evaluation_id": "RNK10-T2210-R882-CPU-02",
+  "family_bootstrap_97_5pct_ci": [
+    -0.01649862718134037,
+    0.0042379181109845785
+  ],
+  "family_grouped_elo": 1503.66,
+  "gates": {
+    "family_bootstrap_97_5pct_lower_bound_gt_0": false,
+    "family_grouped_elo_gt_1500": true,
+    "max_conditional_base_kl_lte_0_35": true,
+    "median_family_mean_delta_gt_0": false
+  },
+  "manifest_sha256": "1736ac3a7f8b547b83e0a5792cdacfa117200c9c223ab4964bb13967ead24063",
+  "max_conditional_base_kl": 0.23211336445310576,
+  "median_family_mean_delta": 0.0,
+  "qualified_for_rnk10_acceptance": false,
+  "runner_sha256": "a735302c4b810756c94fc4d9dce94ecb960d691e7eae97dec47c021b6fa45710",
+  "scope_note": "Known reused DL-Val development cohort; r882 has prior validation exposure. This one-shot result is not independent generalization evidence and does not close M5, S4, S2, Q1, or production qualification.",
+  "sealed_holdout_meta_test_payloads_opened": 0,
+  "selected_roster_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+  "source_checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "source_pointer_sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+  "terminal_unique_candidate_outcomes": 555
+}

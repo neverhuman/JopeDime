@@ -21,7 +21,7 @@ ROOT = Path(os.environ.get("RNK10_SOURCE_ROOT", Path(__file__).resolve().parents
 H49_DIR = ROOT / "research/flywheel_selfplay/h49"
 INPUT_DIR = Path("/home/ubuntu/jope-data/flywheel-full-20261030/input")
 CHECKPOINT_SHA256 = "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
-RUN_DIR = Path("/home/ubuntu/jope-data/RNK10-t2115-run-20261101")
+RUN_DIR = Path(os.environ.get("RNK10_RUN_DIR", "/home/ubuntu/jope-data/RNK10-t2115-run-20261101")).resolve()
 WEIGHTS = RUN_DIR / "round-882-state.safetensors"
 IMPORT_RECEIPT = RUN_DIR / "round-882-import.json"
 SOURCE_MANIFEST_SHA256 = "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
@@ -162,8 +162,26 @@ def main() -> int:
         raise SystemExit("runner source SHA differs from the preregistration")
     if manifest.get("status") != "PRE_REGISTERED_ONE_SHOT":
         raise SystemExit("registered evaluation is closed; refusing another run")
+    if manifest.get("attempt_index") != 2 or manifest.get("evaluation_id") != "RNK10-T2210-R882-CPU-02":
+        raise SystemExit("runner is restricted to the owner-authorized t2210 attempt 2")
     if ledger.get("status") != "UNUSED" or ledger.get("manifest_sha256") != manifest_sha:
         raise SystemExit("ledger is not the unused ledger bound to this manifest")
+    attempts = ledger.get("attempts", [])
+    prior_attempts = manifest.get("prior_attempts", [])
+    if (
+        len(attempts) != 2
+        or len(prior_attempts) != 1
+        or attempts[0].get("status") != "FAILED_CONSUMED"
+        or attempts[0].get("terminal_outcomes_scored") != 0
+        or attempts[1].get("attempt_index") != 2
+        or attempts[1].get("status") != "UNUSED"
+        or attempts[0].get("manifest_sha256") != prior_attempts[0].get("manifest_sha256")
+        or attempts[0].get("runner_sha256") != prior_attempts[0].get("runner_sha256")
+        or prior_attempts[0].get("source_checkpoint_sha256") != CHECKPOINT_SHA256
+        or prior_attempts[0].get("source_pointer_sha256") != manifest.get("source_pointer_sha256")
+        or prior_attempts[0].get("selected_roster_sha256") != SELECTED_SHA256
+    ):
+        raise SystemExit("ledger does not contain the authorized attempt-1 failure and unused attempt 2")
     if dt.datetime.now(dt.timezone.utc) >= DEADLINE_UTC:
         raise SystemExit("owner-authorized one-shot deadline has expired")
     receipt = json.loads(IMPORT_RECEIPT.read_text())
@@ -271,7 +289,9 @@ def main() -> int:
             raise SystemExit("deadline expired while waiting for CPU <=85%")
         print("host CPU above 85%; waiting", flush=True)
         time.sleep(5)
-    ledger.update({"status": "RUNNING", "started_utc": dt.datetime.now(dt.timezone.utc).isoformat(), "manifest_sha256": manifest_sha})
+    started_utc = dt.datetime.now(dt.timezone.utc).isoformat()
+    ledger.update({"status": "RUNNING", "run_count": 2, "active_attempt": 2, "started_utc": started_utc, "manifest_sha256": manifest_sha})
+    ledger["attempts"][1].update({"status": "RUNNING", "started_utc": started_utc})
     temp_ledger = LEDGER.with_suffix(".json.new")
     temp_ledger.write_text(json.dumps(ledger, sort_keys=True, indent=2) + "\n")
     temp_ledger.replace(LEDGER)
@@ -346,6 +366,8 @@ def main() -> int:
         raise SystemExit("terminal outcome ledger budget exceeded")
     result = {
         "schema": "jope.rnk10.r882-guided-acceptance/v1",
+        "evaluation_id": manifest["evaluation_id"],
+        "attempt_index": manifest["attempt_index"],
         "research_only": True,
         "source_checkpoint_sha256": CHECKPOINT_SHA256,
         "imported_weights_sha256": receipt["imported_safetensors_sha256"],
@@ -378,10 +400,19 @@ def main() -> int:
         "threads": 1,
     }
     OUTPUT.write_text(json.dumps(result, sort_keys=True, indent=2, allow_nan=False) + "\n")
+    finished_utc = dt.datetime.now(dt.timezone.utc).isoformat()
+    ledger["attempts"][1].update({
+        "status": "CONSUMED",
+        "finished_utc": finished_utc,
+        "result_sha256": sha256(OUTPUT),
+        "terminal_outcomes_scored": len(terminal_outcomes),
+        "four_gates": gates,
+    })
     ledger.update({
         "status": "CONSUMED",
-        "run_count": 1,
-        "finished_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
+        "run_count": 2,
+        "active_attempt": None,
+        "finished_utc": finished_utc,
         "result_sha256": sha256(OUTPUT),
         "unique_terminal_outcomes_read": len(terminal_outcomes),
         "four_gates": gates,
