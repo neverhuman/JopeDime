@@ -585,6 +585,16 @@ fn q1_failure(failure: crate::worker::WorkerFailure) -> jope_api::EvaluationFail
         reason: reason.into(),
     }
 }
+
+fn q1_learned_seed<'a>(seeds: &'a [String], attempt: u64, measured: &[(String, f64)]) -> &'a str {
+    let start = attempt as usize % seeds.len();
+    seeds[start..]
+        .iter()
+        .chain(&seeds[..start])
+        .find(|seed| !measured.iter().any(|(dsl, _)| dsl == *seed))
+        .or_else(|| Some(&seeds[start]))
+        .expect("nonempty seed inventory")
+}
 fn issue(code: ErrorCode, detail: impl Into<String>) -> Box<Problem> {
     Box::new(Problem { r#type: "about:blank".into(), title: code.as_str().into(),
         status: code.http_status().unwrap_or(500), detail: detail.into(), instance: None,
@@ -750,6 +760,28 @@ impl RunService {
         backend.bind_fit(&matrix_bytes, &search_plan).map_err(|_| {
             unavailable("Pinned Q1 training FIT cannot bind the admitted evaluator.")
         })?;
+        let learned = backend.learned();
+        let search_space = BackendSpace {
+            native: NativeSpace,
+            learned,
+        };
+        // Resolve the deterministic seed inventory before reserving the
+        // idempotency key. Once reserved, the loop below must always reach a
+        // durable receipt, even when every evaluator attempt fails.
+        let learned_seeds = if learned {
+            Some(
+                search_space
+                    .seeds()
+                    .map_err(|_| unavailable("The admitted Q1 search has no seed candidates."))?,
+            )
+        } else {
+            None
+        };
+        if learned_seeds.as_ref().is_some_and(Vec::is_empty) {
+            return Err(unavailable(
+                "The admitted Q1 search has no seed candidates.",
+            ));
+        }
         #[allow(unused_mut)]
         let mut worker_config = crate::worker::PoolConfig::new(self.executable.clone(), 1);
         #[cfg(test)]
@@ -768,11 +800,6 @@ impl RunService {
             return Ok(bytes);
         }
 
-        let learned = backend.learned();
-        let search_space = BackendSpace {
-            native: NativeSpace,
-            learned,
-        };
         let mut rng = rand_chacha::ChaCha12Rng::seed_from_u64(request.seed);
         let mut parents = Vec::new();
         let mut measured = Vec::<(String, f64)>::new();
@@ -782,45 +809,46 @@ impl RunService {
         for number in 0..request.budget {
             let program = if !learned {
                 "(pipe X (standardize) (ridge))".to_owned()
-            } else if number == 0 || measured.is_empty() {
-                search_space
-                    .seeds()
-                    .map_err(|_| unavailable("The admitted Q1 search has no seed candidates."))?
-                    .into_iter()
-                    .find(|program| seen.insert(hash(program.as_bytes())))
-                    .ok_or_else(|| unavailable("The admitted Q1 search has no fresh seed."))?
+            } else if measured.len() < 4 {
+                let seeds = learned_seeds.as_deref().expect("learned seeds prepared");
+                // LearnedAdmission needs four successful measurements. Keep
+                // dispatching real seed candidates until that slate exists;
+                // cycling is intentional so an all-failed evaluator still
+                // consumes the declared budget and commits its failed receipt.
+                q1_learned_seed(seeds, number, &measured).to_owned()
             } else {
-                let proposals = search_space.propose(&parents, 8, &mut rng).map_err(|_| {
-                    unavailable("The admitted Q1 search could not propose candidates.")
-                })?;
-                let proposals = proposals
-                    .into_iter()
-                    .filter(|program| !seen.contains(&hash(program.as_bytes())))
-                    .collect::<Vec<_>>();
-                let round_measurements = measured
-                    .iter()
-                    .map(|(dsl, fitness)| RoundMeasurement {
-                        algorithm_id: dsl,
-                        dsl,
-                        surrogate_fitness: *fitness,
-                    })
-                    .collect::<Vec<_>>();
-                let context = RoundContext {
-                    plan: &search_plan,
-                    round: number,
-                    measured: round_measurements,
-                };
-                backend
-                    .admission
-                    .admit_round(&context, proposals, false, &mut rng)
-                    .map_err(|_| {
-                        unavailable("The admitted Q1 ranker could not select a candidate.")
-                    })?
-                    .into_iter()
-                    .next()
-                    .ok_or_else(|| {
-                        unavailable("The admitted Q1 evaluator selected no candidate.")
-                    })?
+                // An inference/proposal/admission error cannot strand the
+                // durable reservation. Retry an already measured parent as a
+                // real evaluator attempt; this is still learned guidance and
+                // never falls back to the heuristic pipeline.
+                let fallback = parents[number as usize % parents.len()].clone();
+                let selected = (|| {
+                    let proposals = search_space.propose(&parents, 8, &mut rng).ok()?;
+                    let proposals = proposals
+                        .into_iter()
+                        .filter(|program| !seen.contains(&hash(program.as_bytes())))
+                        .collect::<Vec<_>>();
+                    let round_measurements = measured
+                        .iter()
+                        .map(|(dsl, fitness)| RoundMeasurement {
+                            algorithm_id: dsl,
+                            dsl,
+                            surrogate_fitness: *fitness,
+                        })
+                        .collect::<Vec<_>>();
+                    let context = RoundContext {
+                        plan: &search_plan,
+                        round: number,
+                        measured: round_measurements,
+                    };
+                    backend
+                        .admission
+                        .admit_round(&context, proposals, false, &mut rng)
+                        .ok()?
+                        .into_iter()
+                        .next()
+                })();
+                selected.unwrap_or(fallback)
             };
             seen.insert(hash(program.as_bytes()));
             let evaluated = q1_remaining_wall_ms(started_at.elapsed()).map_or_else(
@@ -856,8 +884,10 @@ impl RunService {
             );
             if let Ok(scores) = &evaluated {
                 if let Some(fitness) = scores.values.first().copied().filter(|v| v.is_finite()) {
-                    measured.push((program.clone(), fitness));
-                    parents.push(program.clone());
+                    if !measured.iter().any(|(dsl, _)| dsl == &program) {
+                        measured.push((program.clone(), fitness));
+                        parents.push(program.clone());
+                    }
                 }
             }
             let program_sha = hash(program.as_bytes());
@@ -1721,6 +1751,8 @@ pub(super) async fn list(
 mod tests {
     use super::*;
 
+    const Q1_FAIL_ALL_TEST_SEED: u64 = 0xa11f_a11f_0000_0000;
+
     #[test]
     #[ignore = "Q1 worker subprocess target; invoked by the worker process supervisor"]
     fn q1_worker_helper() {
@@ -1732,9 +1764,32 @@ mod tests {
         stdout.flush().unwrap();
         drop(stdout);
         crate::worker::serve(1, |request, matrix| {
-            crate::discover::r#loop::evaluate_native(request, matrix)
+            if (Q1_FAIL_ALL_TEST_SEED..Q1_FAIL_ALL_TEST_SEED + 24).contains(&request.seed) {
+                Err(crate::worker::WorkerFailure::InvalidRequest)
+            } else {
+                crate::discover::r#loop::evaluate_native(request, matrix)
+            }
         })
         .unwrap();
+    }
+
+    #[test]
+    fn learned_seed_schedule_cycles_until_successful_measurements_exist() {
+        let seeds = vec![
+            "seed-a".to_owned(),
+            "seed-b".to_owned(),
+            "seed-c".to_owned(),
+        ];
+        let scheduled = (0..24)
+            .map(|attempt| q1_learned_seed(&seeds, attempt, &[]))
+            .collect::<Vec<_>>();
+        assert_eq!(scheduled.len(), 24);
+        assert!(scheduled
+            .iter()
+            .enumerate()
+            .all(|(attempt, seed)| *seed == seeds[attempt % seeds.len()]));
+        let measured = vec![("seed-b".to_owned(), 1.0)];
+        assert_eq!(q1_learned_seed(&seeds, 1, &measured), "seed-c");
     }
 
     #[test]
@@ -1993,6 +2048,65 @@ mod tests {
                 .unwrap()
                 .is_some());
         }
+    }
+
+    #[tokio::test]
+    async fn q1_all_evaluator_failures_commit_a_terminal_replayable_receipt() {
+        let (directory, engine, _) = fixture();
+        let mut request_body = q1_request(directory.path(), &engine);
+        request_body["seed"] = json!(Q1_FAIL_ALL_TEST_SEED);
+        request_body
+            .as_object_mut()
+            .unwrap()
+            .remove("request_sha256");
+        let request_sha = canonical_sha256(&request_body).unwrap();
+        request_body["request_sha256"] = json!(request_sha);
+
+        let app = app(&engine);
+        let first = app
+            .clone()
+            .oneshot(q1_http_request(&request_body))
+            .await
+            .unwrap();
+        assert_eq!(first.status(), StatusCode::OK);
+        let first_bytes = to_bytes(first.into_body(), 1 << 20).await.unwrap();
+        let receipt: EvaluationReceipt = serde_json::from_slice(&first_bytes).unwrap();
+        assert_eq!(receipt.charged, 24);
+        assert_eq!(receipt.attempts.len(), 24);
+        assert!(receipt.attempts.iter().all(|attempt| {
+            attempt.outcome == EvaluationAttemptOutcome::Failed
+                && attempt
+                    .failure
+                    .as_ref()
+                    .is_some_and(|failure| failure.code == "invalid_request")
+        }));
+
+        let command = engine
+            .store()
+            .get(&q1_command_key(&receipt.request_sha256))
+            .unwrap()
+            .unwrap();
+        assert_eq!(command.data["status"], "completed");
+        assert_eq!(
+            command.data["receipt_bytes"],
+            String::from_utf8(first_bytes.to_vec()).unwrap()
+        );
+        let run_id: jope_api::ids::RunId =
+            command.data["run_id"].as_str().unwrap().parse().unwrap();
+        let snapshot = crate::events::EventLog::new(engine.store_handle())
+            .snapshot(&run_id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(snapshot.state, RunState::Failed);
+        assert_eq!(snapshot.budget_used.evaluations.0, 24);
+        assert_eq!(snapshot.evaluation_receipt.unwrap(), receipt);
+
+        let replay = app.oneshot(q1_http_request(&request_body)).await.unwrap();
+        assert_eq!(replay.status(), StatusCode::OK);
+        assert_eq!(
+            to_bytes(replay.into_body(), 1 << 20).await.unwrap(),
+            first_bytes
+        );
     }
 
     #[test]
