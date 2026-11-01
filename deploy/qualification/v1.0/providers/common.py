@@ -165,6 +165,29 @@ def rust_counts(output: str) -> dict[str, int]:
     }
 
 
+def exact_case_passed(output: str, test: str) -> bool:
+    """Whether libtest reported exactly one passing ``test`` case.
+
+    Under ``--nocapture`` a case's own stdout sits between ``test NAME ... ``
+    and its final status, so a literal ``test NAME ... ok`` is not reliable.
+    The case block runs until the libtest summary; callers still require
+    ``rust_counts`` to report exactly one pass.
+    """
+    marker = f"test {test} ... "
+    start = output.find(marker)
+    if start < 0 or output.find(marker, start + len(marker)) >= 0:
+        return False
+    end = output.find("\ntest result:", start)
+    block = output[start : end if end >= 0 else len(output)]
+    lines = [line.rstrip() for line in block.splitlines() if line.strip()]
+    return (
+        bool(lines)
+        and lines[-1].endswith("ok")
+        and "FAILED" not in block
+        and "panicked" not in block
+    )
+
+
 def run_suite(
     ctx: Context,
     command: list[str],

@@ -85,7 +85,12 @@ class M3Tests(unittest.TestCase):
                         "population_comparable_to_reference": False,
                         "m3_qualified": False,
                     }
-                    output += f"{m3.DIAGNOSTIC_PREFIX}{json.dumps(report)}\n"
+                    # The real --nocapture shape: the diagnostic interrupts the case line.
+                    output = (
+                        f"running 1 test\ntest {test} ... "
+                        f"{m3.DIAGNOSTIC_PREFIX}{json.dumps(report)}\nok\n\n"
+                        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 400 filtered out\n"
+                    )
             return subprocess.CompletedProcess(args, self.returncode, output, "")
         return subprocess.CompletedProcess(args, 0, output, "")
 
@@ -141,6 +146,22 @@ class M3Tests(unittest.TestCase):
             self.invoke()
         self.assertEqual(self.test_calls, 1)
         self.assertFalse(self.ctx.result.exists())
+
+    def test_interleaved_nocapture_case_block_is_one_pass_but_failed_is_not(self):
+        name = m3.FREQUENCY_DIAGNOSTIC
+        real = f"running 1 test\ntest {name} ... {m3.DIAGNOSTIC_PREFIX}{{}}\nok\n\ntest result: ok. 1 passed"
+        self.assertTrue(m3.exact_case_passed(real, name))
+        self.assertFalse(
+            m3.exact_case_passed(real.replace("\nok\n", "\nFAILED\n"), name)
+        )
+        self.assertFalse(m3.exact_case_passed(real + f"\ntest {name} ... ok\n", name))
+        report = {
+            "schema": "jopedime.dsc06-generated-frequency-diagnostic/v1",
+            "population_comparable_to_reference": False,
+            "m3_qualified": False,
+        }
+        parsed = m3._frequency_report(real.replace("{}", json.dumps(report)))
+        self.assertEqual(parsed["schema"], report["schema"])
 
     def test_frequency_diagnostic_cannot_claim_comparable_m3_population(self):
         report = json.dumps(

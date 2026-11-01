@@ -1,0 +1,43 @@
+# H164 — SAM/ASAM continuation with family cross-fitting
+
+Owner rd_astra [ASTRA]. Authority: `hwave_t0058_h164_rd_astra.md`, 2026-11-01. Fresh wave and one attempt; H153 failed before baseline with zero updates and provides no efficacy evidence. No H164 scored inference or optimizer updates preceded this protocol.
+
+Hypothesis: sharpness-aware adapter updates reduce the continuation overfitting seen on exposed r882 panels. This tests a fixed SAM/ASAM recipe, not a direct measurement of landscape sharpness. Historical TRAIN exposure remains; out-of-fold means held from this continuation only. DL-Val is repeatedly exposed exploratory evidence, never sealed qualification.
+
+## Fixed treatment and inputs
+
+Four arms: CTRL AdamW, SAM01 rho=.01, SAM05 rho=.05, ASAM05 rho=.5 and eta=.01. Seeds164101–164103, fold164140, bootstrap164141. Five outer folds × three seeds × four arms =60 cells, each40 updates from byte-identical r882: **2400 optimizer updates,4200 training forward/backward passes**. No dose changes, adaptive retries or early efficacy stops. AdamW lr1e-4, weight_decay1e-4, clip norm1, batch16, slate192. Only47 adapter tensors/29211 parameters optimize. DOPE c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814 and all non-adapter parameters/buffers must stay byte-identical after every update and scoring call. Eval mode, no effective dropout.
+
+CTRL applies one live-loss backward/clip/AdamW step. SAM first computes/clips the base gradient, perturbs parameters by rho*g/||g||, then computes the second gradient at perturbed weights using the identical batch and RNG stream. ASAM uses scale=abs(w)+.01, norm=||scale*g|| and delta=rho*scale^2*g/norm. Originals are cloned and restored byte-for-byte in a finally block before clipping the second gradient and making exactly one AdamW update. Nonfinite/zero perturbation norm aborts. AdamW decay acts on restored original weights.
+
+Live loss is per-context SmoothL1(beta1) averaged over192 candidates plus.1*KL(softmax(-target/.2)||softmax(-prediction/.2)); valid target=clamp(raw fitness,-4,2), failed gate target=2. Batch recipe inherits H148/H153:20 rounds, consume8 draws per round, retain first2. Sixteen sampled fit contexts with replacement; first48 fitness-sorted candidates plus144 remainder draws. Arms share ordered candidate indexes and streams within seed/fold. The first4 candidates are revealed in training and full-pool inference. Native full-pool argmin, first-index ties, utility=-fitness for gate-valid picks and-2 otherwise. No candidate relabeling/filtering or pool change.
+
+[manifest.json](manifest.json) pins source, packages, checkpoint, reference and runtime assets. [input-provenance.json](input-provenance.json) gives exact-version recovery routes; owned checkpoint copies are0444 and live loop/serving paths are forbidden. H50/H58 original derived-object versions are unknown; exact numerical closure is hash-pinned and archived. Only1219 TRAIN regression contexts/205 families plus91 DL-Val/19 families, with original train/inner metadata, no meta-test, disjoint TRAIN/Val families. Validate all1310 pool hashes and exact feature-cache ID closure before scoring. Catalog: `/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.md`; no sealed/holdout/outer-test payload reads.
+
+## Baseline, folds and selection
+
+The **first scored operation** must reproduce all91 r882 DL-Val utilities exactly, including context mean1.1377941898164525 and pinned evaluation identity. Any mismatch is INCOMPLETE. Then score r882 TRAIN once and reuse immutable step-zero subpanels. Constructor smoke performs zero forwards/updates/scored contexts; it reads the same in-output launch.json under the same installed audit hook as the run, then builds the model and AdamW lazy-import path. This directly covers H153's custody-parent launch failure.
+
+Sort205 families, permute NumPy default_rng(164140), split five41-family folds. [fold_manifest.json](fold_manifest.json) records actual roster/counts. Outer fold A assesses; next cyclic fold B selects; remaining123 families fit. Each context is assessed once per seed/arm. B and A are excluded from all updates in their cell. Other cells may train on these families; the bootstrap is conditional on these fixed overlapping policies, not independent-refit generalization evidence.
+
+Save adapter snapshots and B panels at steps0,10,20,30,40. Equal context weights within family, equal family weights. Earliest step within1e-12 of maximal B mean is the unconstrained best. Accept only if its paired B gain is strictly>.001+1e-12 and its10000-draw family bootstrap ordinary95% lower bound>0; otherwise select step0. Selector draw seed=164141+100*outer+10*seed_index, shared across arms. No assessment or DL-Val outcomes enter either selector. Persist the selection decision before scoring A or DL-Val.
+
+Also lock the earliest **best nonzero** B step among10/20/30/40 before assessment. Report both unconstrained (including0) and best-nonzero diagnostic OOF/DL-Val gains. These descriptive panels explain a step-zero null without choosing checkpoints using assessment outcomes. Only the union of registered selected/diagnostic steps is scored; no assessed-step oracle or posthoc selection.
+
+## Primary inference and decision
+
+Assemble complete [3seeds,1219contexts,5policies] OOF panels (r882 and four arms). Equal context mean within each of205 families, equal-family mean within each seed; primary effect is median of three paired arm-minus-r882 seed gains. Draw10000 shared family bootstrap samples with seed164141, preserving all three seed panels and reporting percentile95% CI, per-seed effects, positive-seed counts and invalid picks. Missing/nonfinite cells are INCOMPLETE, never dropped or imputed.
+
+Holm family contains **all four trained arms**, including CTRL. One-sided bootstrap p=(1+#draws<=0)/10001. Sort ascending p then arm name; adjusted p at rank r is the running maximum of min(1,(5-r)*p). ADVANCE requires median gain>.001+1e-12, ordinary95% CI lower bound>0 and Holm-adjusted p<.05. Overall ADVANCE iff any arm passes; otherwise completed run NO_ADVANCE. H153's dose/concentration/additional two-seed gates are not inherited. No result authorizes serving promotion.
+
+Descriptive Elo: H148 canonical400-iteration Bradley–Terry MM, five-policy family-averaged pairwise context wins, utility tie margin1e-4, prior.01, r882 anchored1500. Report each seed, median and1000 paired-family bootstrap95% CI using seed164142. CTRL contrasts are descriptive; the four r882 contrasts alone define multiplicity.
+
+Secondary: each seed's91 DL-Val utilities are the equal mixture of five independently selected fold policies (average utilities, not ensemble scores). Bootstrap19 families, not455 pseudo-independent contexts. Invalid counts report all5×91 policy evaluations per seed, denominator455. Same gain/Elo readout; secondary and both diagnostic panels cannot override primary. Repeated exposure and conditional bootstrap limit external inference.
+
+## Execution and custody
+
+CPU xbabe2 only, nice19, numerical threads1, at most4 total OS threads including supervisor/descendants, aggregate RSS<6e9B. Terminal abort on load1>85, MemAvailable<16GiB, diskfree<40e9B, user-visible used/(used+available)>=95%, owned scratch>=3e9B, or run wall>43200s (12h); smoke wall600s. No pause/resume or scientific retry. No xbabe0/xbabe3, GPU, live flywheel or qualification lock. Python audit refuses protected paths, unlisted jope-data reads and writes to known inputs. Framework temporary JIT stubs are allowed; this is application evidence, not OS-wide sandboxing or proof against unknown path aliases.
+
+The monitor exclusively creates one started ledger and a fresh output containing only launch.json. Smoke and run validate manifest identity/mode; run also requires reviewed merged source at current exact Git HEAD. Preserve300 adapter snapshots,60 cell panels/decisions,2400 update-journal entries, losses, drift, paired batch identities, selection-lock hashes, exact baseline, audit, resource traces and six aggregate panels. Small metrics.json<100kB. Independent scalar replay and changed-parameter/frozen-state verification follow the run.
+
+Prereg PR, gpu_fused_redteam_codex exact-head cross-review (wait at most15min; explicit recorded self-review if unavailable), targeted local controls, author guarded squash/admin merge as authorized. Exact merged bytes verified before one launch. No hosted CI or product qualification claim. Create-only S3 under experiments/rd_breakthrough_20261030/H164/; record exact VersionIds and verify downloaded payload/member hashes. Closeout PR/merge precede deletion of only owned archived bulk, preserving shared inputs and other agents' work.
