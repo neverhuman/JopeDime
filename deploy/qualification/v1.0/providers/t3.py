@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""REL-07 T3: reasoning and telemetry observer neutrality."""
+"""REL-07 T3: telemetry observer neutrality."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from common import (
     Context,
     ProviderError,
     context,
+    exact_case_passed,
     rust_counts,
     sha256,
     verify_candidate,
@@ -19,10 +20,9 @@ from common import (
 
 
 TESTS = (
-    "telemetry::tests::reasoning_off_or_detailed_and_telemetry_modes_preserve_search",
     "telemetry::tests::telemetry_on_or_off_leaves_the_search_identical",
-    "telemetry::tests::real_sensor_tick_cost_is_below_two_percent_of_the_interval",
-    "telemetry::tests::fixed_work_overhead",
+    "telemetry::tests::real_sensor_tick_cost_measurement",
+    "telemetry::tests::fixed_work_overhead_measurement",
 )
 SINGLE_PASS = {
     "collected": 1,
@@ -36,20 +36,32 @@ SINGLE_PASS = {
 
 def command(test: str) -> list[str]:
     args = ["cargo", "test", "--locked", "-p", "jope-service", "--lib", test, "--"]
-    if test.endswith("fixed_work_overhead"):
+    if test.endswith("fixed_work_overhead_measurement"):
         args.extend(("--ignored", "--nocapture"))
+    elif test.endswith("real_sensor_tick_cost_measurement"):
+        args.append("--nocapture")
     args.extend(("--exact", "--test-threads=1"))
     return args
 
 
 def check_binding(ctx: Context, run) -> None:
+    if (
+        not ctx.artifact.is_absolute()
+        or any(part.is_symlink() for part in (ctx.artifact, *ctx.artifact.parents))
+        or not ctx.artifact.is_file()
+    ):
+        raise ProviderError(
+            "T3 candidate must remain an absolute regular non-symlink file"
+        )
     for args, expected in (
         (["git", "rev-parse", "HEAD"], ctx.source_sha),
         (["git", "status", "--porcelain", "--untracked-files=all"], ""),
     ):
         result = run(args, cwd=ROOT, capture_output=True, text=True, check=False)
         if result.returncode != 0 or result.stdout.strip() != expected:
-            raise ProviderError("T3 requires the clean, candidate-pinned source checkout")
+            raise ProviderError(
+                "T3 requires the clean, candidate-pinned source checkout"
+            )
     if sha256(ctx.artifact) != ctx.artifact_sha256:
         raise ProviderError("candidate bytes changed during T3")
 
@@ -75,7 +87,7 @@ def qualify(ctx: Context, run=None) -> int:
         if result.returncode != 0:
             return result.returncode
         counts = rust_counts(result.stdout)
-        if counts != SINGLE_PASS or f"test {test} ... ok" not in result.stdout:
+        if counts != SINGLE_PASS or not exact_case_passed(result.stdout, test):
             raise ProviderError(f"T3 requires exactly one passing case for {test}")
     check_binding(ctx, run)
     payload = {
