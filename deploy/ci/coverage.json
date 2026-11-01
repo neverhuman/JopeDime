@@ -5104,6 +5104,16 @@
       "lanes": [],
       "scope": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
     },
+    "python:research/flywheel_selfplay/h146_lookahead_exec/test_h146.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H146 data-free controls copied from H144 (equal-family median-over-seeds inference, gates, Holm, resource classification, input audit, raw-byte state guards, live-recipe loss, exact baseline gate) plus the Lookahead k=5/k=10 alpha=0.5 synchronization schedule and slow-weight update. No corpus, checkpoint or optimizer run in the fixture suite; offline research only."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"
@@ -6921,7 +6931,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
