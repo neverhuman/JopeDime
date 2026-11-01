@@ -8,8 +8,9 @@
   (rounds 1346--1448 were not retained), showing train versus validation pool utility (gap 0.282--0.290),
   distinct training contexts per completed-round second, and strict training-program promotions per hour
   over up to 20 completed rounds including qualification waits. Third panel: consecutive admission-timestamp
-  intervals under 600\,s across the 694 timestamped rows (rounds 776--1469) of the 695-row earlier
-  admission table (green), alongside the 25 logged round wall times (blue squares).
+  intervals: all 695 admission rows (775--1469) carry timestamps, giving 694 consecutive pairs.
+  The panel plots the 692 positive differences below 600\,s (green), excluding two longer pauses,
+  alongside the 25 measured round wall times (blue squares).
   Scope: \cref{sec:method-status}.}
   \label{fig:fw-telemetry}
   \label{fig:fw-trainval}
