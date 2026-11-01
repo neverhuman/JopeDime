@@ -43,6 +43,7 @@ jope-paths = { path = "../jope-paths", optional = true }
 
 [dev-dependencies]
 proptest.workspace = true
+tempfile.workspace = true
 
 [[test]]
 name = "dope_encoding"
