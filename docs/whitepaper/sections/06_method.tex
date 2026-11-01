@@ -6,19 +6,17 @@
 % Historical source notes are archived outside the paper tree.
 \section{EurekaZero: Learning Taste}\label{sec:method}
 
-The accepted native checkpoint route is limited to tabular regression.
-The reference learning loop trains a writer and map on search-scored programs.
-The native training entry point is held at its grant gate.
-Proposed regression deployment permits one writer draw, with the map absent.
-We describe the historical reference first, then the later
-adapter-ranking record in \cref{sec:method-status}. Ranking a pool and
-proposing a new program are different tasks. The writer's first-proposal
-behavior requires the matched comparison in \cref{sub:results-learning}.
+The reference architecture for tabular regression pairs a program writer
+with a separate ranking map. Verified search supplies their training
+targets; the proposed deployment protocol asks for one new program.
+We describe that reference first, then distinguish the later
+adapter-ranking record in \cref{sec:method-status}.
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
-\Cref{fig:network} separates the roles: a frozen encoder reads the board and
-the program writer $\writer$ writes one complete program, as AlphaGo's policy
+\Cref{fig:network} connects training to the single-candidate contract in
+\cref{box:searchone}. A frozen encoder reads the board and the program
+writer $\writer$ writes one complete program, as AlphaGo's policy
 network proposed a move \citep{silver2016mastering}. The problem--program map
 $\mapv$ supplies a separate ranking score. In the native implementation it
 neither conditions nor screens the writer. The proposed game-day protocol
@@ -77,21 +75,20 @@ evidence, this behavior check reports novelty as unknown. Readable Python
 and Rust exports are a reference requirement. Legacy recipe emitters reject
 the synthesized input stage; the separate fitted-state path is allowlisted.
 Reported winners still require the parity check in \cref{sub:method-referee}.
-% Source trace (implementation, not retained-checkpoint qualification):
-% crates/jope-policy/src/decode.rs:4--12,580--584 (legal tokens; decode/parse gate);
-% crates/jope-policy/src/model.rs:9--16,558--600 (separate writer/ranking paths).
 
 \subsection{One map for problems and programs}\label{sub:method-map}
 
 The map reads a program as $z_w=\encS(w)$, the layer-normalized mean of
 non-padding token embeddings, including \texttt{BOS}, the fixed engine and
 task header, and \texttt{EOS}. Pooling discards token order, limiting its
-ability to distinguish compositions built from the same tokens. It combines
-$z_w$ with $z_p$ three ways: as is, gated by the problem, and as a distance
+ability to distinguish compositions built from the same tokens.
+
+It combines $z_w$ with $z_p$ three ways: as is, gated by the problem, and as a distance
 from a projection of it. Four two-layer heads receive this same interaction
 vector and their mean gives the score $\mapv(z_p,z_w)$ with parameters
 $\psi$. Native ranking losses supervise that mean jointly; the heads have
 no separate targets or bootstrap samples.
+
 Higher logits rank higher within a problem. The score is not a calibrated
 error estimate. Comparing its magnitude across problems or reading it as a
 probability of a verified win requires separate evidence. The referee
@@ -126,16 +123,16 @@ tests what the writer has learned.
 
 In the native implementation, the writer and map use separate context
 networks and token embeddings. The map ranks the draft pool without
-dropping drafts or screening the writer. One native GP route weights
+dropping drafts or screening the writer.
+
+One native GP route weights
 seeded-survivor parent selection by map rank. The bounded search driver
 instead cycles among up to four parents selected by measured loss. The map's
-influence on training therefore depends on the search route. The writer's
-loss weights programs by referee rank. Ranking agreement with the referee
+influence on training therefore depends on the search route.
+
+The writer's loss weights programs by referee rank. Ranking agreement with the referee
 and program-only control assesses ranking; better proposals require a
 matched ablation (\cref{sub:results-ablation}).
-% Source trace: crates/jope-policy/src/seeds.rs (assemble_population attaches
-% rank_log_weight); crates/jope-engine/src/gp.rs (policy_weighted_parent picks
-% the left parent for mutation and crossover).
 
 \subsection{The self-play loop}\label{sub:method-selfplay}
 % Algorithm 1 is defined at the start of the subsection so that the full-width
@@ -158,10 +155,10 @@ matched ablation (\cref{sub:results-ablation}).
 \end{algorithmic}
 \end{algorithm*}
 
-The historical reference specifies expert iteration \citep{anthony2017expert}:
-the writer learns from verified search. Programs
-sampled from the scored lists $G_p$ are weighted by their referee rank in
-the combined objective (\cref{app:training}):
+The historical reference uses expert iteration \citep{anthony2017expert}:
+verified search supplies the writer's training programs. Programs sampled
+from the scored lists $G_p$ are weighted by referee rank in the combined
+objective (\cref{app:training}):
 \begin{align}
   \mathcal{L}_{\text{writer}}(p) &= -\sum_{w\in G_p}\bigl(0.05+\rho_w^{4}\bigr)\log\writer(w\mid z_p),
   \label{eq:writerLoss}\\
@@ -201,20 +198,26 @@ comparison is separate from the single-program comparison in
 that reads the context as a prefix token and writes at most 128 tokens; with the map, the network
 has 27.8 million parameters. The supplied source notes describe training on eight A100 GPUs in
 September 2026, with a corpus of about 10.2 million scored programs from
-80 training datasets. This paper does not document the evidence on which
-the checkpoint was accepted; that record and a pinned runtime are required
-inputs to the evaluation contract (\cref{sub:results-protocol}). These specifications
-identify the historical reference. Numerical parity of the CPU float32 Candle
-port with the native CUDA BF16 tch runtime remains unqualified; random streams
-and uniform-token fallback differ. \Cref{alg:selfplay,app:training} give the reference details.
+80 training datasets. \Cref{alg:selfplay,app:training} give the reference
+specifications.
+
+These specifications do not supply the checkpoint's acceptance evidence or
+qualify its runtime. Both records remain inputs to the evaluation contract
+(\cref{sub:results-protocol}). The accepted native checkpoint route is
+limited to tabular regression, and the native training entry point remains
+held at its grant gate. Numerical parity of the CPU float32 Candle port
+with the native CUDA BF16 tch runtime remains unqualified; random streams
+and uniform-token fallback differ.
 
 \subsection{Keeping the referee honest}\label{sub:method-referee}
 
+Search supplies training targets only as reliably as its referee.
 A learner rewarded by a referee can exploit its flaws. In February 2025 Sakana AI walked back
 claims after its AI CUDA Engineer exploited the evaluation code \citep{sakana2025walkback}. In June
 2025 METR reported frontier models patching their scorers \citep{metr2025rewardhacking}, and 16\% of
-1,968 agent-benchmark tasks can be passed without being solved \citep{zhong2026hackerfixer}. The
-evaluation protocol must withstand such attacks. Selection,
+1,968 agent-benchmark tasks can be passed without being solved \citep{zhong2026hackerfixer}.
+
+The evaluation protocol must withstand such attacks. Selection,
 promotion and final scoring must use separate data (inner folds, held-out
 cuts, a final fold scored once), with sealed meta-test families outside the
 learner's inputs.
@@ -243,20 +246,16 @@ test-scored outcome from a ledger of 63,108 evaluations; we exclude it as test s
 \end{algorithmic}
 \end{algorithm}
 
-The proposed regression protocol in \cref{alg:gameday} permits one encoder pass and one
-draw of at most 128 tokens at temperature 1 from a recorded seed. The
-program is lowered to code and fitted. The map stays absent, and no
-training exploration program is added. A draft that does not finish,
-crashes or times out is stillborn and scores as a loss; it is not replaced.
-Costs must include the encoder, writer and fit.
+\Cref{alg:gameday} instantiates the contract in \cref{box:searchone} for
+regression, with a recorded seed and frozen components. That contract
+fixes the candidate budget, failure handling and full cost boundary.
 
 Report later search
 separately, as \citet{silver2017mastering} reported
 AlphaGo Zero's raw network apart from its search (\cref{sec:results}).
 
-The deployment budget is a protocol constraint. Whether training improves
-the quality of that single proposal is a separate empirical question for
-the matched comparison in \cref{sub:results-learning}; before specifying
-that evaluation, \cref{sec:method-status} summarizes the development
-records available so far.
+The deployment budget is a protocol constraint; improvement in the first
+proposal requires the matched comparison in \cref{sub:results-learning}.
+The development record in \cref{sec:method-status} concerns an adapter that
+ranks a pool, a different task from proposing a new program.
 \input{sections/06_method/flywheel_status}
