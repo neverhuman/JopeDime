@@ -84,6 +84,13 @@ When the inner-fold unconstrained best step (`unconstrained_selected_step`) or b
 
 ## 4. Verdict & Next Step
 
-- **Verdict**: `COMPLETE — RULE_NEUTRAL (NO_ADVANCE)`. No serving promotion; `r882` remains the undefeated serving baseline.
-- **Why C-Mixup did not advance**: While C-Mixup (`MIX02`, `MIX04`) and uniform partner mixup (`RANDMIX02`) reduced step-40 adapter L2 drift by `8–11%` and softened step-40 inner-fold degradation (`-0.0287` to `-0.0349` vs `-0.0478` `CTRL`), convexly interpolating projected program features (`progs`) and context tokens (`tok`) across distinct dataset contexts creates synthetic intermediate slate representations that do not correspond to realizable symbolic programs on unseen dataset families. Consequently, positive inner-fold unconstrained steps (`9/15` cells) failed to generalize to out-of-fold assessment families (`-0.0055` to `-0.0083` vs `r882`).
+- **Verdict**: `COMPLETE — RULE_NEUTRAL (NO_ADVANCE)`. No serving promotion; `r882` remains the preregistered H-wave reference (this study does not itself verify the live-serving incumbent).
+- **Why C-Mixup did not advance (hypothesis, not isolated by this design)**: While C-Mixup (`MIX02`, `MIX04`) and uniform partner mixup (`RANDMIX02`) reduced step-40 adapter L2 drift by `8–11%` and softened step-40 inner-fold degradation (`-0.0287` to `-0.0349` vs `-0.0478` `CTRL`), convexly interpolating projected program features (`progs`) and context tokens (`tok`) across distinct dataset contexts creates synthetic intermediate slate representations that do not correspond to realizable symbolic programs on unseen dataset families. A plausible but untested explanation is therefore that positive inner-fold unconstrained steps (`9/15` cells) failed to generalize to out-of-fold assessment families (`-0.0055` to `-0.0083` vs `r882`).
 - **Next Step**: Close the cross-context input/target interpolation direction (`C-Mixup` / `Mixup`) on `adapter_10tok`; prioritize within-context candidate-ranking invariance or non-continuation structural bottlenecks where candidate program identity is preserved.
+
+## 5. Limitations (red-team review 5727305807, PR #1456)
+
+- **Raw inner-`B` panels not retained.** The H166 artifacts keep per-candidate inner-`B` summary statistics (gain, `ci_low_95`) and decision locks, but **not** the raw inner-`B` context-utility panels. The inner selector's 1,000-draw family-bootstrap CIs therefore cannot be independently recomputed; the red-team 60-decision check verified eligibility and earliest-tie logic only against the recorded candidate statistics. The primary out-of-fold numbers (12 contrasts, median-seed 10k-draw CI, Holm) were independently replayed and PASS.
+- The causal explanation in Section 4 is a hypothesis; the design did not isolate why held-out gains differ from inner-fold gains.
+- `r882` is the preregistered H-wave reference, not a verified live-serving incumbent claim. The review claims no fresh native/weight replay or full 340-object S3 audit.
+- No new run or recipe change is required; verdict NO_ADVANCE is unchanged.
