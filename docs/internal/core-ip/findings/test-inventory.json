@@ -2001,6 +2001,14 @@
       "reason": "H157 data-free best-of-K trust-region candidate generation and strict inner-fold family selection controls; offline research only.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h158_distillation/test_h158.py": {
+      "reason": "H158 owner-directed fit-only frozen-teacher KL distillation, full-context gate veto, KD-three Holm family, strict ties/completeness, frozen state and bounded offline CPU resources. Research only; no product/sealed qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h159_fail_logit_veto/test_h159.py": {
+      "reason": "H159 data-free fail-logit gate-veto continuation and family bootstrap controls; offline research only.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
       "role": "research"
@@ -2161,16 +2169,16 @@
       "reason": "Synthetic metadata controls for the W5 provenance verifier; none admits data or qualifies W5; offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/rnk10_hwave_packet/test_prepare.py": {
+      "reason": "RNK-10 metadata-only H-wave packet scaffold tests; synthetic metadata only, no training/evaluation data, outcome reads or launch authorization.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/rnk10_r882_acceptance/test_import_checkpoint.py": {
       "reason": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract).",
       "role": "research"
     },
     "python:research/flywheel_selfplay/rnk10_r882_acceptance/test_run_acceptance.py": {
       "reason": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract).",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/rnk10_hwave_packet/test_prepare.py": {
-      "reason": "RNK-10 metadata-only H-wave packet scaffold tests; synthetic metadata only, no training/evaluation data, outcome reads or launch authorization.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {

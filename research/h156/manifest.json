@@ -55,11 +55,12 @@
   },
   "source_sha256": {
     "fold_manifest.json": "220271f333aadd1b6b684d8bfb3ec6d0190e17fd60a278791a7c584b94978761",
-    "run.py": "211cdcde726f2c309ca81a0ad2e3661fb16ba2539eaa2da298b59a0d2fa20faa",
-    "analysis.py": "916146656723f48d6fe619d893a576dc9b2059e086555d3148b7f78220bad3f6",
-    "monitor.py": "7b98c0dfd8ad7eaeb69ec7c47b623ebad88e018efb3c01d2738157c4d0b9e55a",
-    "test_h156.py": "4b20bd32e080da707b9bec59c6710a2b07f7c3a6fac44c2eaee7a21efc31830b",
-    "PREREG.md": "4ff3919939a5ec0c427a03766c5deefc699c6286c5fc7cdb8aabadc685a54b3b"
+    "run.py": "0403256105a0bd6221bf39283b598d6d9ec8b4f7bed132bd885934eec7e0143c",
+    "analysis.py": "6a7b85de4c44448cff8f006be2ceb5ad950a26a3790aad97cbe19f55fc0f6dc0",
+    "monitor.py": "d8827c49ade455e69a85decadd1c85c445790da177ecaf2e50593538808f2880",
+    "test_h156.py": "17a73f1ad5d16881693c161a932429d24ce6f8352c2245ec4b84eb46a69d5551",
+    "PREREG.md": "4ff3919939a5ec0c427a03766c5deefc699c6286c5fc7cdb8aabadc685a54b3b",
+    "PREREG_AMENDMENT_A1.md": "a3b46f7b47e19c5fa80d621c1f6e55f47ed93479dbc36dc21b3e0697745af629"
   },
   "packages": {
     "numpy": "1.26.4",

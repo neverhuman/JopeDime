@@ -13,6 +13,7 @@
 
 mod controller;
 mod evaluator;
+pub(crate) mod landmarks;
 pub mod learned;
 pub(crate) mod service;
 pub(crate) mod surrogate;

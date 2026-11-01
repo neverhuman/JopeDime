@@ -2,11 +2,11 @@
 //! Executors must call a hook at each actual data-access boundary. Constructing
 //! folds alone records no access and does not qualify an uninstrumented engine.
 use jope_api::ids::DatasetId;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
 /// Matrix ordinals are dataset-local; TEST row 0 is not training row 0.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct AuditRowId {
     pub dataset: DatasetId,
     pub row: u64,

@@ -1,0 +1,104 @@
+{
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "inputs": {
+    "/home/ubuntu/jope-data/h158/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h158/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope-data/h158/inputs/round-782.pt": "427b0d4608e94f60f5f97d79b5c1c4ce9a7efd59d17e7853f714e901f3a4af0c"
+  },
+  "assets": {
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "/home/ubuntu/JopeDimeMicro/assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+    "/home/ubuntu/JopeDimeMicro/assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
+    "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
+    "/home/ubuntu/JopeDimeMicro/python/rank_prepare.py": "534169af0443122600853ef9e96d734d570cd9d77c2a3d21e7b6456b4b19ab40",
+    "/home/ubuntu/JopeDimeMicro/python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
+    "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "/home/ubuntu/JopeDimeMicro/python/research/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/__init__.py": "4b6481f96986d33139cd5a078a3da50d0b41378b3aa109f5cf85af93d31fd8af",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/scaling.py": "6d592197a5a74afc1a9eddc18e1ca894987de831e0b61ef1c8a9b65e9154ded3",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/budget_planner.py": "ae76dd8c587c00d28e57cb152de6719f77cc516c660819d7990823c6a9ff1e4f",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/building_block_landmarks.py": "fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6"
+  },
+  "packages": {
+    "numpy": "1.26.4",
+    "torch": "2.7.0",
+    "psutil": "7.1.0"
+  },
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "dropout_census": {
+    "adapter_dropout_modules": [],
+    "adapter_attention_dropout": [
+      {
+        "name": "mm_cross_attn",
+        "p": 0.0
+      },
+      {
+        "name": "traj_cross_attn",
+        "p": 0.0
+      }
+    ],
+    "modality_dropout_attribute": 0.1,
+    "effective_encoder": "_sync_free_encode_context_and_candidates",
+    "adapter_training": false,
+    "dope_training": false
+  },
+  "wave": "H158",
+  "checkpoint": "/home/ubuntu/jope-data/h158/inputs/round-882.pt",
+  "teacher": "/home/ubuntu/jope-data/h158/inputs/round-782.pt",
+  "reference": "/home/ubuntu/jope-data/h158/inputs/best_dev_checkpoint.json",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "seeds": [
+    158101,
+    158102,
+    158103
+  ],
+  "arms": {
+    "CTRL": [
+      0.0,
+      false
+    ],
+    "KD03": [
+      0.3,
+      true
+    ],
+    "KD07": [
+      0.7,
+      true
+    ],
+    "KD07_NOVETO": [
+      0.7,
+      false
+    ]
+  },
+  "fold_seed": 158140,
+  "bootstrap_seed": 158141,
+  "holm_hypotheses": 3,
+  "planned_optimizer_updates": 480,
+  "learning_rate": 1e-05,
+  "wall_limit_seconds": 9000,
+  "prereg_sha256": "5b03189e0efc15c9278c93681904c1c54d7858696025d9ec6c994199ab38a426",
+  "fold_manifest_sha256": "188572d5086e62bd66bca7cfcd34e25b04978884058f85d00189f8d4143f905d",
+  "input_provenance_sha256": "07ebc2448c808a0d5296400fe0fcece520ab0570c39dfe5f3f5b8c90b7f48306",
+  "executor_sha256": {
+    "runtime.py": "7399d1f62e6ee11a00dda435d6048222c5bb4f29cb401fe66ed1082c326022b4",
+    "science.py": "fb26f152ff7cf735835be887ee3bde0365007045f6d3a7c312781b39ae81ff19",
+    "test_h158.py": "72a821b833d119e4cd0384bfd8d428705c3f59cc17652d932e18490554bd9715",
+    "monitor.py": "c9394a63f1cbdb23878302596aa51c922741d43c092cca8cff242c8018a6b9e1",
+    "runner.py": "9e7babd00b0df66ab4c60d474ee04ef59341f879c1f6ad901881993f1459fc74"
+  },
+  "parent_source_commit": "a327af9ae49f14b61d1b7fcac851b0af3da13666",
+  "smoke_sha256": "c1cc47317e567e35263b704e23126906fc63cdd59d8386cba92603ea52b8d7a4",
+  "smoke_summary": {
+    "optimizer_constructed": true,
+    "optimizer_updates": 0,
+    "scored_contexts": 0,
+    "teacher_frozen": true
+  }
+}

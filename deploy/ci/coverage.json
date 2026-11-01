@@ -5204,6 +5204,26 @@
       "lanes": [],
       "scope": "H157 data-free controls for 205-family partition, strict +0.001 median/LCB candidate selection gate, H142 40-update fit-only batch plan, paired family-bootstrap Holm step-down, and launch receipt validation. Offline research only; no live promotion."
     },
+    "python:research/flywheel_selfplay/h158_distillation/test_h158.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H158 owner-directed fit-only frozen-teacher KL distillation, full-context gate veto, KD-three Holm family, strict ties/completeness, frozen state and bounded offline CPU resources. Research only; no product/sealed qualification."
+    },
+    "python:research/flywheel_selfplay/h159_fail_logit_veto/test_h159.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H159 data-free controls for fail-logit gate veto, family partition, paired bootstrap/Holm step-down, and CPU resource guards. Offline research only; no live promotion."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"
@@ -5604,6 +5624,16 @@
       "lanes": [],
       "scope": "Owner-requested W5 provenance-preflight synthetic metadata controls: body reads refused before any S3 call, counter hashes over bytes, unknown counts kept null, and refusal of pair and row-closure shortcuts (strat300 nq=0, siblings, wrong cut or alias, sentinels, AST similarity, missing operator or evaluator provenance). None admits data or qualifies W5."
     },
+    "python:research/flywheel_selfplay/rnk10_hwave_packet/test_prepare.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "RNK-10 metadata-only H-wave candidate packet scaffold controls: require complete audited zero-retry candidate, frozen DOPE, DL-Train-inner selection and family-grouped Elo strictly above r882; no speed gates, payload reads, ledger consumption or launch authorization."
+    },
     "python:research/flywheel_selfplay/rnk10_r882_acceptance/test_import_checkpoint.py": {
       "discovery": {
         "kind": "python-family"
@@ -5623,16 +5653,6 @@
       ],
       "lanes": [],
       "scope": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract)."
-    },
-    "python:research/flywheel_selfplay/rnk10_hwave_packet/test_prepare.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "RNK-10 metadata-only H-wave candidate packet scaffold controls: require complete audited zero-retry candidate, frozen DOPE, DL-Train-inner selection and family-grouped Elo strictly above r882; no speed gates, payload reads, ledger consumption or launch authorization."
     },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
       "discovery": {
