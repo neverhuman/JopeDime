@@ -2,7 +2,7 @@
   "schema": "whitepaper.completed-round-time/v1",
   "source_csv": "docs/whitepaper/figures/data/later_development.csv",
   "source_csv_sha256": "1b4600aaf84769efb6f3b4c24db4a5d68d281480731d2f2a8d37d5459fae909f",
-  "parent_provenance_sha256": "cadea609f346d4d285e61408b7386f10a9b295637c12833d9828a09b41b67817",
+  "parent_provenance_sha256": "464ea3447cf58e848ed23afa29008ceebcedf32f26acee902d018481809cbeb8",
   "snapshot_at": "2026-10-31T20:19:04.541686+00:00",
   "round_window": [
     2343,

@@ -1,19 +1,19 @@
 % Four main-text views; detailed diagnostics are in Appendix D.
 \begin{figure*}[!t]
   \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_latest_admissions.pdf}
-  \caption{\textbf{Retained development utility through round 2837.}
-  All \num{2063} admission records from rounds 775--2837 are shown: blue is the
-  post-decision retained best; grey marks rejected candidates, red stars
-  accepted strict gains and hollow diamonds accepted exact ties.
-  The default rule accepts candidate utility $\geq$ the previous best,
-  without a margin. Acceptance can therefore change the recorded
-  best-round identity without raising utility. Ties are classified from
-  unrounded logged values. These adaptive development observations require
-  separate first-proposal and transfer evaluations.}
-  \label{fig:fw-latest-admissions}
+  \includegraphics[width=\linewidth]{figures/fig_fw_admission_margins.pdf}
+  \caption{\textbf{Pre-decision validation margins across rounds 775--2837.} Left: candidate minus prior retained-best validation utility ($\Delta_r = u_{\mathrm{cand},r} - u_{\mathrm{prev},r}$) across all \num{2063} retained admission records in rounds 775--2837, zoomed around the $\Delta_r = 0$ admission threshold (round 785's $+0.0302$ gain is annotated off-scale). Right: round counts by pre-decision margin band on a symmetric log scale. Half of all six accepted rounds are exact ties ($\Delta_r = 0$ at rounds 782, 882 and 2795), two are sub-$10^{-3}$ gains ($+\num{1.99e-4}$ at round 859 and $+\num{5.73e-4}$ at round 2750), and 26 of the \num{2057} rejected candidates lie within $[-10^{-4}, 0)$ of a tie. This is development telemetry from the same retained window as \cref{fig:fw-latest-admissions}, not a Results claim or an independent first-proposal evaluation.}
+  \label{fig:fw-admission-margins}
+\end{figure*}
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_promotions_per_hour.pdf}
+  \caption{\textbf{Training-program promotions per hour and adapter validation trajectory.} Left: logged rolling and per-round strict training-program promotions per hour. Right: candidate and recorded-best adapter validation pool utility. Both panels cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, with zero adapter admissions).}
+  \label{fig:fw-promotions-per-hour}
 \end{figure*}
 % Source spacing retains the evidence checklist marker location.
+
+
 
 
 
@@ -92,41 +92,11 @@ uses the pre-decision difference between candidate and prior retained best,
 so a zero-margin admission is visibly distinct from an improvement.
 A change in the recorded best-round identity alone is not a utility gain.
 
-\begin{figure*}[!t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_admission_margins.pdf}
-  \caption{\textbf{Pre-decision validation margins across rounds 775--2837.}
-  Left: candidate minus prior retained-best validation utility
-  ($\Delta_r = u_{\mathrm{cand},r} - u_{\mathrm{prev},r}$) across all
-  \num{2063} retained admission records in rounds 775--2837, zoomed around the
-  $\Delta_r = 0$ admission threshold (round 785's $+0.0302$ gain is annotated
-  off-scale). Right: round counts by pre-decision margin band on a symmetric log
-  scale. Half of all six accepted rounds are exact ties ($\Delta_r = 0$ at
-  rounds 782, 882 and 2795), two are sub-$10^{-3}$ gains ($+\num{1.99e-4}$ at
-  round 859 and $+\num{5.73e-4}$ at round 2750), and 26 of the \num{2057}
-  rejected candidates lie within $[-10^{-4}, 0)$ of a tie. This is development
-  telemetry from the same retained window as \cref{fig:fw-latest-admissions},
-  not a Results claim or an independent first-proposal evaluation.}
-  \label{fig:fw-admission-margins}
-\end{figure*}
-
 Program-incumbent events count improvements to training programs, whereas
 adapter admissions concern the ranking adjustment.
 \Cref{fig:fw-promotions-per-hour} puts the former on a time scale for
 rounds 2644--2663; its paired utility panel records no adapter admission.
 These outcomes need separate denominators and cannot stand in for one another.
-
-\begin{figure*}[!t]
-  \centering
-  \includegraphics[width=\textwidth]{figures/fig_fw_promotions_per_hour.pdf}
-  \caption{\textbf{Training-program promotions per hour and adapter validation trajectory.}
-  Left: logged rolling and per-round strict training-program promotions per hour.
-  Right: candidate and recorded-best adapter validation pool utility. Both panels
-  cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions
-  over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, with
-  zero adapter admissions).}
-  \label{fig:fw-promotions-per-hour}
-\end{figure*}
 
 \Cref{fig:fw-round-throughput} measures distinct training contexts divided
 by full completed-round wall time in rounds 2696--2715. It includes work
@@ -136,7 +106,7 @@ the full admission prefix, so these panels do not form a matched learning curve.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/fig_fw_round_throughput.pdf}
+  \includegraphics[width=\linewidth]{figures/fig_fw_round_throughput.pdf}
   \caption{\textbf{Adapter utility and whole-round throughput in a later retained window.}
   Both panels cover the same 20 completed summaries, rounds 2696--2715.
   Left: candidate adapter validation utility and the recorded best.
@@ -152,4 +122,3 @@ are collected in \cref{app:flywheel-telemetry,app:record-windows}.
 They document the retained record without adding independent evaluations.
 \Cref{sec:results} specifies the matched tests needed to establish whether
 training improves the writer's first proposal on new families.
-\FloatBarrier

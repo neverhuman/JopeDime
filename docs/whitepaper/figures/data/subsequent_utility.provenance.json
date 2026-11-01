@@ -2,7 +2,7 @@
   "schema": "whitepaper.subsequent-utility-view/v1",
   "source_csv": "data/subsequent_window.csv",
   "csv_sha256": "a4999500f97cb98c3ef3fd3bab0bb42aa4e91982997923c28d095f08691adabd",
-  "parent_provenance_sha256": "c651ce3e690645a39d558ea2d09dab33eea17e6221d0705de7ca329ae3284974",
+  "parent_provenance_sha256": "da6d44346b370ee2d66e3fcb8ebf8a4b1b1d338f7958d8b8b12e8d904c7ceed3",
   "snapshot_at": "2026-11-01T00:57:04.310789+00:00",
   "round_window": [
     2508,

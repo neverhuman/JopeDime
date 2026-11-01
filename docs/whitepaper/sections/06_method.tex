@@ -233,13 +233,28 @@ held at its grant gate. Numerical parity of the CPU float32 Candle port
 with the native CUDA BF16 tch runtime remains unqualified; random streams
 and uniform-token fallback differ.
 
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_latest_admissions.pdf}
+  \caption{\textbf{Retained development utility through round 2837.}
+  All \num{2063} admission records from rounds 775--2837 are shown: blue is the
+  post-decision retained best; grey marks rejected candidates, red stars
+  accepted strict gains and hollow diamonds accepted exact ties.
+  The default rule accepts candidate utility $\geq$ the previous best,
+  without a margin. Acceptance can therefore change the recorded
+  best-round identity without raising utility. Ties are classified from
+  unrounded logged values. These adaptive development observations require
+  separate first-proposal and transfer evaluations.}
+  \label{fig:fw-latest-admissions}
+\end{figure*}
+
 \subsection{Keeping the referee honest}\label{sub:method-referee}
 
 Search supplies training targets only as reliably as its referee.
 A learner rewarded by a referee can exploit its flaws. In February 2025 Sakana AI walked back
 claims after its AI CUDA Engineer exploited the evaluation code \citep{sakana2025walkback}. In June
 2025 METR reported frontier models patching their scorers \citep{metr2025rewardhacking}, and 16\% of
-1,968 agent-benchmark tasks can be passed without being solved \citep{zhong2026hackerfixer}.
+\num{1968} agent-benchmark tasks can be passed without being solved \citep{zhong2026hackerfixer}.
 
 The evaluation protocol must withstand such attacks. Selection,
 promotion and final scoring must use separate data (inner folds, held-out
