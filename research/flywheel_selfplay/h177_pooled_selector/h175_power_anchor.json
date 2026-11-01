@@ -1,0 +1,16 @@
+{
+  "wave": "H177",
+  "status": "PENDING_H175_CLOSEOUT",
+  "h175_prereg_pr": 1490,
+  "h175_prereg_reviewed_head": "1cb289d545912561f09ac332a0e8344948ac3e67",
+  "h175_redteam_review_id": "PRR_kwDOUgaGXM8AAAABVWX1aw",
+  "h175_closeout_commit": "PINNED_PLACEHOLDER_UPDATE_BEFORE_LAUNCH",
+  "h175_verdict": "PINNED_PLACEHOLDER_UPDATE_BEFORE_LAUNCH",
+  "h175_mde80_41fam": null,
+  "single_fold_b_families": 41,
+  "pooled_b_families": 205,
+  "family_count_ratio": 5.0,
+  "expected_mde80_205fam_se_scale": 0.4472135954999579,
+  "expected_mde80_205fam": null,
+  "launch_rule": "Update this file with H175 closeout commit, verdict in {SELECTOR_UNDERPOWERED, MIXED}, and measured MDE80 before running H177; if H175 returns CEILING_LIKELY, close H177 as NOT_RUN."
+}
