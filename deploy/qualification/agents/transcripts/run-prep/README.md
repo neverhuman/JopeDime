@@ -28,11 +28,11 @@ verifier deliberately keeps integrity and qualification as separate results.
 `capture_clients.py` packages already captured, fresh sidecars for exactly
 `claude_code`, `gemini_cli` and `codex_cli`. It does not start clients, an engine,
 or inspect dataset contents. The caller supplies a clean checkout SHA, the exact
-candidate file and SHA-256, a DSC01 handoff JSON, client identity metadata, and a
+candidate file and SHA-256, a DSC01 handoff JSON and its independently supplied
+expected SHA-256, client identity metadata, and a
 directory containing each client's `.execution.json`, `.verification.json` and
-`.mcp.jsonl` files. The handoff is content-pinned and must identify `TRAIN` (the
-`split` field may be omitted only when the handoff itself is the approved TRAIN
-identity). The output directory must be new.
+`.mcp.jsonl` files. The handoff is content-pinned and must explicitly contain
+`"split":"TRAIN"` and a nonblank `dataset_id`. The output directory must be new.
 
 ```sh
 nice -n 10 python3 -B deploy/qualification/agents/transcripts/run-prep/capture_clients.py \

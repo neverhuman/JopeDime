@@ -73,10 +73,15 @@ def prepare(args) -> dict:
     fail_if(args.candidate_sha256 != candidate_sha, "candidate SHA-256 mismatch")
 
     handoff, handoff_raw = load_object(args.input_handoff, "DSC01 input handoff")
-    fail_if(handoff.get("split", "TRAIN") != "TRAIN", "input handoff must identify TRAIN only")
+    fail_if(handoff.get("split") != "TRAIN", "input handoff must explicitly identify TRAIN")
+    fail_if(not isinstance(handoff.get("dataset_id"), str)
+            or not handoff["dataset_id"].strip(),
+            "input handoff must contain a nonblank dataset_id")
     handoff_sha = digest(handoff_raw)
-    if args.input_handoff_sha256:
-        fail_if(args.input_handoff_sha256 != handoff_sha, "input handoff SHA-256 mismatch")
+    fail_if(not isinstance(args.input_handoff_sha256, str)
+            or SHA.fullmatch(args.input_handoff_sha256) is None,
+            "an expected input handoff SHA-256 is required")
+    fail_if(args.input_handoff_sha256 != handoff_sha, "input handoff SHA-256 mismatch")
 
     metadata, _ = load_object(args.client_metadata, "client metadata")
     fail_if(set(metadata) != set(CLIENTS), "metadata must name exactly the three required clients")
@@ -218,6 +223,13 @@ def self_test() -> None:
             pass
         else:
             raise AssertionError("source-mismatched capture was accepted")
+        handoff.write_text('{"dataset_id":"fixture-only"}\n', encoding="utf-8")
+        try:
+            prepare(argparse.Namespace(**{**vars(parser), "out_dir": root / "bad-train"}))
+        except CapturePackageError:
+            pass
+        else:
+            raise AssertionError("handoff without explicit TRAIN split was accepted")
 
 
 def main() -> int:
