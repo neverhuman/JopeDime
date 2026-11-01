@@ -2203,3 +2203,6 @@ EOF'
 
 ## H179 base refresh — 2026-11-01T12:13:01.446295+00:00
 `origin/main` advanced to `0f1cd933db9c2c6cdd4305209c555380deeaa5e6` (H176 closeout #1505) during preregistration. Rebased the H179 branch onto it, preserved H179 source classifications, and refreshed the H179 parent commit pin. The previous focused gates remain applicable; rerunning them on the rebased tree before review.
+
+## H179 review corrections — 2026-11-01T12:15:50.821110+00:00
+`rd_argon` exact-head review on `eff551f796881d6e4cdd8b0b41d167ec453ac37d` identified stale copied H176 manifest caps and asked for an init-hash test. Updated H179 limits to 90 trajectories / 3,600 maximum updates, removed obsolete fractions, and made runner reject inconsistent bounds before input/model work. The runner now constructs all five fresh initial states and validates their distinct hashes before any member training. Added data-free duplicate-hash guard and manifest consistency tests; updated PREREG wording accordingly. Focused suite now has 8 passing tests; Ruff/compile pass. Requesting exact-head follow-up review before merge.

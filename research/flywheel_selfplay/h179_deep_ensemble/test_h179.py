@@ -1,5 +1,9 @@
 """H179 statistical and leakage controls; fixtures are synthetic and data-free."""
 
+import hashlib
+import json
+from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -26,6 +30,18 @@ def test_member_seeds_are_distinct_per_outer_seed_and_ens3_is_nested():
     fit = {f"fit-{i}" for i in range(123)}
     ensembles = stat.family_fresh_subsets(fit)
     assert ensembles["FRESH1"] == ensembles["ENS3"] == ensembles["ENS5"] == fit
+
+
+def test_distinct_init_hash_guard_and_manifest_bounds():
+    hashes = tuple(hashlib.sha256(f"synthetic-init-{seed}".encode()).hexdigest() for seed in stat.fresh_member_seeds(179101))
+    assert stat.validate_member_init_hashes(hashes) == hashes
+    with pytest.raises(ValueError):
+        stat.validate_member_init_hashes([hashes[0]] * 5)
+    manifest = json.loads((Path(__file__).parent / "manifest.json").read_text())
+    assert manifest["max_trajectories"] == 90
+    assert manifest["max_total_updates"] == 3600
+    assert manifest["max_updates_per_member"] == 40
+    assert "fractions" not in manifest
 
 
 def test_score_averaging_precedes_argmin_and_ens3_is_member_subset():

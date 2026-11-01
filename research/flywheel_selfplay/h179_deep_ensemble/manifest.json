@@ -29,23 +29,6 @@
   "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
   "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
   "fold_seed": 179140,
-  "fractions": [
-    {
-      "denominator": 123,
-      "family_count": 31,
-      "label": "25%"
-    },
-    {
-      "denominator": 123,
-      "family_count": 62,
-      "label": "50%"
-    },
-    {
-      "denominator": 123,
-      "family_count": 123,
-      "label": "100%"
-    }
-  ],
   "inputs": {
     "/home/ubuntu/jope-data/h170/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
     "/home/ubuntu/jope-data/h170/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
@@ -56,8 +39,8 @@
     "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.json": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
     "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.md": "bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee"
   },
-  "max_total_updates": 2400,
-  "max_trajectories": 60,
+  "max_total_updates": 3600,
+  "max_trajectories": 90,
   "max_trajectories_per_fold_seed": 6,
   "max_updates_per_cell": 40,
   "max_updates_per_member": 40,
@@ -127,13 +110,13 @@
     179103
   ],
   "source_sha256": {
-    "PREREG.md": "494824f7b9ce82252c38f34d63a814a7d6940742fc67f2255238510f52eaaf68",
-    "analysis.py": "9c811082b01c8305fa9c989e0134789692cd8a0acb5e47746803fa918ce3b790",
+    "PREREG.md": "407c764079c69a33ece3853fd3fbaa53d93396f4333003db9bbc75222c5ade6a",
+    "analysis.py": "01608aca1e5fed456182601b34b91f879378638083fe8467f3abdfcebf169e94",
     "fold_manifest.json": "3e617cd868b907457996ea45278577f4dc0651ec56d9dcfb136551362ba212db",
     "monitor.py": "6d1c29e0f46ff91d157ec6bc8356f00c88ba969113549df6d7073b1b90579b4e",
     "provenance.json": "66045b0cd54a2fbbff3c235a5d25d9500da37126d132038176d449ece8e40632",
-    "runner.py": "8ec6c8d83079d60699c277db065a96cd2754465b0ffe5b454a394d4422175a77",
-    "test_h179.py": "d54ad62e4a889cfce11aa12fcc4d625f859bfb8c2513da943f5c849f6d80c865",
+    "runner.py": "3869448c9f0abee36a7573fff481bbbf64bd5f0dff88ba7c10ddf84127c19764",
+    "test_h179.py": "4e5d21f38b02a8a2305d2ba8653855fa0876c375c2622d826b4e34e62130952c",
     "treatment.py": "336b759b6bbd81288425c4fcaf244d4f8160f8c69e0178c29106e77323b8f6fe"
   },
   "trainable_adapter_parameters": 29211,

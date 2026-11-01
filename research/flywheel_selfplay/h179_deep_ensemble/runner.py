@@ -309,6 +309,15 @@ def main():
     output = args.output.resolve()
     output.mkdir()
     pins = json.loads((HERE / "manifest.json").read_text())
+    expected_trajectories = 5 * len(stat.SEEDS) * 6
+    expected_updates = expected_trajectories * 40
+    if (
+        pins.get("max_trajectories") != expected_trajectories
+        or pins.get("max_total_updates") != expected_updates
+        or pins.get("max_updates_per_member") != 40
+        or "fractions" in pins
+    ):
+        raise RuntimeError("H179 manifest execution bounds do not match the six-trajectory design")
     verify(pins)
     launch = json.loads(args.launch.read_text())
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=HERE, text=True).strip()
@@ -389,14 +398,22 @@ def main():
             for seed in stat.SEEDS:
                 fit_context_ids = [r["context_sha256"] for r in fit_rows_full]
                 orders = {cid: np.argsort(engine.pools[cid]["fitness"]) for cid in fit_context_ids}
-                member_raw, fresh_initial_hashes, fresh_final_hashes = [], [], []
+                member_raw, fresh_final_hashes = [], []
                 # CONT is the 40-update live-recipe anchor; all five fresh trajectories
                 # have distinct constructor seeds and independent batch streams.
                 member_trajectory = [(f"MEMBER{i}", s) for i, s in enumerate(stat.fresh_member_seeds(seed), 1)]
+                fresh_initial_states = {
+                    member_seed: random_adapter_state(net, names, member_seed)
+                    for _, member_seed in member_trajectory
+                }
+                stat.validate_member_init_hashes(
+                    rt.tensor_hash(fresh_initial_states[member_seed])
+                    for _, member_seed in member_trajectory
+                )
                 trajectories = [member_trajectory[0], ("CONT", None), *member_trajectory[1:]]
                 for label, init_seed in trajectories:
                     fresh = init_seed is not None
-                    start_state = random_adapter_state(net, names, init_seed) if fresh else initial
+                    start_state = fresh_initial_states[init_seed] if fresh else initial
                     batch_seed = stat.stream_seed(seed, outer, label, "h179-h156-batches-v1")
                     batch_plan = stat.batch_plan(fit_context_ids, orders, batch_seed, updates=40)
                     tag = f"A{outer}-seed{seed}-{label}"
@@ -429,7 +446,6 @@ def main():
                     if final_hash == rt.tensor_hash(start_state) or drift == 0:
                         raise RuntimeError("unchanged adapter trajectory")
                     if fresh:
-                        fresh_initial_hashes.append(rt.tensor_hash(start_state))
                         fresh_final_hashes.append(final_hash)
                     restore(net, names, cell["state"])
                     _, raw = engine.evaluate(a_rows)
@@ -452,8 +468,6 @@ def main():
                 for k, arm in ((1, "FRESH1"), (3, "ENS3"), (5, "ENS5")):
                     averaged = {row["context_sha256"]: np.mean([member_raw[m][row["context_sha256"]] for m in range(k)], axis=0) for row in a_rows}
                     policy_results[seed][arm].update(utility_from_scores(engine, a_rows, averaged))
-                if len(set(fresh_initial_hashes)) != 5:
-                    raise RuntimeError("fresh member initializations are not independent")
                 if len(set(fresh_final_hashes)) != 5:
                     raise RuntimeError("fresh member final states unexpectedly identical")
                 if outer >= fold_count:

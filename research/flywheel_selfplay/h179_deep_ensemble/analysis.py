@@ -68,6 +68,14 @@ def fresh_member_seeds(outer_seed):
     return tuple(179100 + offset + i for i in range(1, 6))
 
 
+def validate_member_init_hashes(hashes):
+    """Require five distinct constructor-produced adapter hashes before training."""
+    values = tuple(hashes)
+    if len(values) != 5 or any(not isinstance(value, str) or not value for value in values) or len(set(values)) != 5:
+        raise ValueError("five distinct fresh-member initialization hashes required")
+    return values
+
+
 def score_ensemble(member_scores, k):
     """Average per-candidate score tensors before argmin; k=3 is nested in k=5."""
     scores = np.asarray(member_scores, dtype=np.float64)
