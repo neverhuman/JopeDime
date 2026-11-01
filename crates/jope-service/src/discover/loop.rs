@@ -2625,7 +2625,7 @@ fn native_scores<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Resul
     })
 }
 
-fn numeric_rows<B: AsRef<[u8]>>(
+pub(crate) fn numeric_rows<B: AsRef<[u8]>>(
     matrix: &Matrix<B>,
     target: &str,
     features: &[String],
@@ -2675,7 +2675,7 @@ fn numeric_rows<B: AsRef<[u8]>>(
 /// Internal CAS fit, deliberately separate from the frozen exported bundle
 /// format. Every preprocessing parameter is fitted inside the training fold.
 #[derive(Serialize, Deserialize)]
-struct NativeModel {
+pub(crate) struct NativeModel {
     version: u32,
     features: Vec<String>,
     dsl: String,
@@ -2687,7 +2687,12 @@ struct NativeModel {
     model: feat_math::Model,
 }
 impl NativeModel {
-    fn fit(features: &[String], dsl: &str, x: &feat_math::Rows, y: &[f64]) -> Result<Self> {
+    pub(crate) fn fit(
+        features: &[String],
+        dsl: &str,
+        x: &feat_math::Rows,
+        y: &[f64],
+    ) -> Result<Self> {
         ensure!(
             !x.is_empty() && x.len() == y.len() && y.iter().all(|y| y.is_finite()),
             "invalid training rows"
@@ -2754,7 +2759,7 @@ impl NativeModel {
             model,
         })
     }
-    fn predict(&self, x: &feat_math::Rows) -> Result<Vec<f64>> {
+    pub(crate) fn predict(&self, x: &feat_math::Rows) -> Result<Vec<f64>> {
         ensure!(
             x.iter().all(|r| r.len() == self.features.len()),
             "prediction width mismatch"

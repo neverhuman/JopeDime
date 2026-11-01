@@ -10,6 +10,7 @@ mod cpu;
 #[cfg(feature = "fused-cuda")]
 mod deterministic;
 mod forward;
+pub mod release;
 pub use forward::{FusedForward, StageOutput};
 #[cfg(test)]
 mod authenticated;
