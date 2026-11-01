@@ -1751,7 +1751,7 @@ pub(super) async fn list(
 mod tests {
     use super::*;
 
-    const Q1_FAIL_ALL_TEST_SEED: u64 = 0xa11f_a11f_0000_0000;
+    const Q1_FAIL_ALL_TEST_SEED: u64 = 0xa11f_a11f;
 
     #[test]
     #[ignore = "Q1 worker subprocess target; invoked by the worker process supervisor"]
