@@ -1635,6 +1635,10 @@
       "reason": "REL-07 S3 leakage provider controls (binding, exact-selector and refusal proofs over synthetic child output); no real candidate, release or dataset job executes",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/v1.0/test_provider_s4/test_s4.py": {
+      "reason": "REL-07 S4 orchestration controls with synthetic candidates/child output; actual custom-objective discovery and ranker-input assertions execute separately in the product.",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/v1.0/test_provider_t2/test_provider_t2.py": {
       "reason": "REL-07 PR1372 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
       "role": "infrastructure"
@@ -2059,6 +2063,18 @@
     },
     "python:research/flywheel_selfplay/h161_robust_fambal/test_h161.py": {
       "reason": "H161 robust per-context normalized/Huber loss + family-balanced sampling unit tests",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h163_prediction_ensemble/test_h163.py": {
+      "reason": "H163 data-free controls for cost-vs-utility direction, candidate ordering and stable argmin ties, fixed family folds, shared-family median-seed bootstrap, strict selector admission, and canonical H145 Elo dominance; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h164_sam_retry/test_h164.py": {
+      "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h165_gradient_noise_dropout/test_h165.py": {
+      "reason": "H165 owner-directed gradient-noise/dropout continuation study; data-free selector, bootstrap and frozen-state controls. Research only; no product or sealed qualification. Restores classification omitted by prereg PR #1410.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
@@ -5331,18 +5347,6 @@
       "subsystems": [
         "encoders"
       ]
-    },
-    "python:research/flywheel_selfplay/h164_sam_retry/test_h164.py": {
-      "role": "research",
-      "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
-    },
-    "python:research/flywheel_selfplay/h165_gradient_noise_dropout/test_h165.py": {
-      "role": "research",
-      "reason": "H165 owner-directed gradient-noise/dropout continuation study; data-free selector, bootstrap and frozen-state controls. Research only; no product or sealed qualification. Restores classification omitted by prereg PR #1410."
-    },
-    "python:research/flywheel_selfplay/h163_prediction_ensemble/test_h163.py": {
-      "reason": "H163 data-free controls for cost-vs-utility direction, candidate ordering and stable argmin ties, fixed family folds, shared-family median-seed bootstrap, strict selector admission, and canonical H145 Elo dominance; offline research only.",
-      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
