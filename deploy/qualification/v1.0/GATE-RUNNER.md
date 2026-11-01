@@ -42,8 +42,17 @@ the source/artifact-bound command manifest, execute the 28 rows, and retain a
 ```sh
 nice -n 10 python3 -B deploy/qualification/v1.0/release-gates \
   --candidate "$SIGNED_BYTES" --repo "$CLEAN_PINNED_CHECKOUT" \
-  --provider-inputs "$INPUT_BINDINGS" --output "$NEW_EVIDENCE"
+  --inputs "$CANDIDATE_INPUTS" --inputs-sha256 "$CANDIDATE_INPUTS_SHA256" \
+  --output "$NEW_EVIDENCE"
 ```
+
+`--inputs` is the established `jope.rel07.provider-inputs/v1` JSON file with
+`gates` bindings for whichever of A5, D1, M2, M3 and M5 have candidate-bound
+evidence. Pass its full lowercase SHA-256 separately. A missing binding marks
+that gate `BLOCKED` with its required fields; available gates can still execute.
+The source checkout must be clean, its HEAD must equal the candidate source SHA,
+and that commit must be an ancestor of `origin/main`. This permits an older
+candidate source after main advances while rejecting unrelated history.
 
 A candidate rehearsal can use `--candidate ... --dry-run --repo ... --output ...`
 without provider input bindings. It verifies the RC2 manifest, sealed-variant
