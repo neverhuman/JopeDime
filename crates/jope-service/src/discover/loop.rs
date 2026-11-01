@@ -4353,7 +4353,7 @@ mod tests {
             fn evaluate(&self, request: &Request) -> Response {
                 let start = Instant::now();
                 let response = self.inner.evaluate(request);
-                if let Some(failure) = response.failure.clone() {
+                if let Some(failure) = response.failure {
                     self.failures
                         .lock()
                         .unwrap()
