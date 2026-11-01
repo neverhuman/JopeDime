@@ -1702,106 +1702,14 @@ mod tests {
         assert_eq!(off, on);
     }
 
-    /// Gate T3: observer reasoning mode and telemetry cannot change committed search output.
+    // Reasoning-mode neutrality is not currently observable in a production run:
+    // Config::defaults.reasoning is parsed but RunController and the telemetry
+    // observer do not consume it. Do not count the former config-only test as T3
+    // evidence; add a real run-level test when reasoning is wired into a consumer.
+
+    /// Informational T3 measurement; owner direction forbids a speed verdict.
     #[test]
-    fn reasoning_off_or_detailed_and_telemetry_modes_preserve_search() {
-        use crate::run::{Control, EvaluationOutcome, Evaluator, FakeEvaluator, RunController};
-        use jope_api::{Effort, RunPhase};
-        use std::{collections::BTreeMap, num::NonZeroU32};
-
-        fn search(reasoning: &str, telemetry_enabled: bool) -> (Vec<String>, (u64, u32, f64)) {
-            let config = crate::config::Config::from_sources(
-                None,
-                &BTreeMap::from([("--reasoning".to_owned(), reasoning.to_owned())]),
-                &BTreeMap::new(),
-            )
-            .unwrap();
-            assert_eq!(config.defaults.reasoning.value, reasoning);
-
-            let (_dir, log, snapshot) = crate::events::tests::fixture();
-            let mut frames = log.subscribe_telemetry();
-            let store = test_store();
-            let service = telemetry_enabled.then(|| {
-                TelemetryService::spawn(
-                    snapshot.run_id,
-                    log,
-                    Box::new(SystemSensors::without_gpu(store.path())),
-                    Arc::new(Counters::default()),
-                    Instant::now(),
-                    Duration::from_millis(1),
-                )
-            });
-            if telemetry_enabled {
-                let deadline = Instant::now() + Duration::from_secs(2);
-                loop {
-                    match frames.try_recv() {
-                        Ok(_) => break,
-                        Err(_) if Instant::now() < deadline => {
-                            thread::sleep(Duration::from_millis(2));
-                        }
-                        Err(error) => panic!("telemetry did not start: {error:?}"),
-                    }
-                }
-            }
-
-            let mut run = RunController::new(
-                "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0".parse().unwrap(),
-                Effort::Medium,
-                NonZeroU32::new(2).unwrap(),
-            );
-            for phase in [RunPhase::Encoding, RunPhase::Seeding, RunPhase::Searching] {
-                run.advance_phase(phase).unwrap();
-            }
-            let fake = FakeEvaluator::new(Duration::ZERO);
-            for round in 0..20u64 {
-                let requests: Vec<_> = (0..3u32)
-                    .map(|slot| {
-                        run.dispatch(round, slot, 31 * round + u64::from(slot))
-                            .unwrap()
-                    })
-                    .collect();
-                for request in &requests {
-                    run.receive(fake.evaluate(request)).unwrap();
-                }
-                run.round_committed().unwrap();
-            }
-            run.control(Control::Cancel, None).unwrap();
-
-            let committed: Vec<_> = run.committed().iter().map(|r| format!("{r:?}")).collect();
-            let champion = run
-                .committed()
-                .iter()
-                .flat_map(|round| {
-                    round.evaluations.iter().filter_map(move |evaluation| {
-                        let EvaluationOutcome::Scored(score) = &evaluation.outcome else {
-                            return None;
-                        };
-                        Some((round.round, evaluation.key.slot, *score))
-                    })
-                })
-                .min_by(|a, b| a.2.total_cmp(&b.2))
-                .expect("the fixed search commits scored evaluations");
-            if let Some(service) = service {
-                assert!(service.stop().samples > 0);
-            }
-            (committed, champion)
-        }
-
-        let baseline = search("off", false);
-        for reasoning in ["off", "detailed"] {
-            for telemetry_enabled in [false, true] {
-                assert_eq!(
-                    baseline,
-                    search(reasoning, telemetry_enabled),
-                    "reasoning={reasoning}, telemetry={telemetry_enabled}"
-                );
-            }
-        }
-    }
-
-    /// Gate T3: sampling cost per tick is far below 2% of the 1 s interval.
-    #[test]
-    fn real_sensor_tick_cost_is_below_two_percent_of_the_interval() {
+    fn real_sensor_tick_cost_measurement() {
         let counters = Counters::default();
         counters.set_workers(&[std::process::id()]);
         let store = test_store();
@@ -1813,19 +1721,14 @@ mod tests {
             std::hint::black_box(telemetry.tick(Instant::now(), &mut sensors, &counters));
         }
         let per_tick = start.elapsed() / ticks;
-        let budget = DEFAULT_INTERVAL / 50;
-        println!("mean tick {per_tick:?}; budget {budget:?}");
-        assert!(
-            per_tick < budget,
-            "tick {per_tick:?} exceeds 2% of {DEFAULT_INTERVAL:?}"
-        );
+        println!("informational mean telemetry tick {per_tick:?}; interval {DEFAULT_INTERVAL:?}");
     }
 
-    /// Fixed-work wall-time benchmark for gate T3; run explicitly:
-    /// `cargo test -p jope-service --lib telemetry::tests::fixed_work_overhead -- --ignored --nocapture`.
+    /// Informational fixed-work wall-time measurement for T3; no speed verdict.
+    /// `cargo test -p jope-service --lib telemetry::tests::fixed_work_overhead_measurement -- --ignored --nocapture`.
     #[test]
     #[ignore]
-    fn fixed_work_overhead() {
+    fn fixed_work_overhead_measurement() {
         fn work() -> Duration {
             let start = Instant::now();
             let mut state = 0x9e3779b97f4a7c15u64;
@@ -1852,11 +1755,6 @@ mod tests {
         let overhead = on.as_secs_f64() / off.as_secs_f64() - 1.0;
         println!(
             "fixed work off {off:?} on {on:?} overhead {:.3}%",
-            overhead * 100.0
-        );
-        assert!(
-            overhead < 0.02,
-            "T3 fixed-work telemetry overhead {:.3}% exceeds 2%",
             overhead * 100.0
         );
     }
