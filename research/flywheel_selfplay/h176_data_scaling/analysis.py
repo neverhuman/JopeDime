@@ -204,7 +204,7 @@ def learning_curve_summary(family_ids, family_panels, seed_ids=SEEDS, boot_seed=
     differences = {}
     for label, left, right in [("25_to_50", 1, 2), ("50_to_100", 2, 3), ("25_to_100", 1, 3)]:
         delta = panels[:, :, right] - panels[:, :, left]
-        boot = np.median(delta[:, draw].mean(axis=2), axis=1)
+        boot = np.median(delta[:, draw].mean(axis=2), axis=0)
         differences[label] = dict(
             per_seed_equal_family_gain=delta.mean(axis=1).tolist(),
             median_over_seeds=float(np.median(delta.mean(axis=1))),
