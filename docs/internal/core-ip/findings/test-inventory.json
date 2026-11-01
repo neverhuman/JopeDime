@@ -5196,6 +5196,10 @@
     "python:research/h148/test_h148.py": {
       "reason": "H148 data-free checkpoint-selection scientific controls; no product/native/GPU qualification.",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h149_wd_dose/test_h149.py": {
+      "role": "research",
+      "reason": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

@@ -13868,6 +13868,16 @@
       ],
       "lanes": [],
       "scope": "H148 data-free nested family isolation, strict selection/bootstrap fallback, batch closure and anchored Elo controls. Scientific600-update experiment is separate, CPU only; no live promotion."
+    },
+    "python:research/flywheel_selfplay/h149_wd_dose/test_h149.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
     }
   },
   "lanes": {
