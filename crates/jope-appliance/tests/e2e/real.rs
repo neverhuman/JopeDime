@@ -1,5 +1,7 @@
 //! Real native runs through all five transports: same-run retries retain raw
 //! values, and five distinct runs are compared under the accepted R2 field map.
+#[path = "golden_mcp.rs"]
+mod golden_mcp;
 use super::*;
 use anyhow::{bail, ensure, Context, Result};
 use jope_client::{Http, InProcess, RunResult, Transport};
@@ -832,8 +834,12 @@ pub(super) fn shared_run_surfaces() -> Result<()> {
             .any(|e| matches!(e.event, EventBody::ExperimentFinished(_))),
         "no native evaluations recorded"
     );
-    if let Some(root) = std::env::var_os("JOPE_INT01_RECEIPTS") {
-        let root = PathBuf::from(root);
+    {
+        let root = std::env::var_os("JOPE_INT01_RECEIPTS")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| {
+                PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/int01-receipts")
+            });
         fs::create_dir_all(&root)?;
         fs::write(
             root.join("shared-snapshot.json"),
@@ -844,7 +850,29 @@ pub(super) fn shared_run_surfaces() -> Result<()> {
             serde_json::to_vec_pretty(&captures[0].projection.events)?,
         )?;
         fs::write(root.join("terminal.txt"), transcript)?;
-        fs::write(root.join("input.csv"), bytes)?;
+        fs::write(root.join("input.csv"), &bytes)?;
+        let runtime = directory()?;
+        let runtime_name = runtime
+            .path()
+            .file_name()
+            .context("AG1 runtime name")?
+            .to_string_lossy();
+        let evidence = root.join(format!("golden-mcp-{runtime_name}"));
+        let app = server.home.path().join("jopedime");
+        let version: Value = serde_json::from_slice(
+            &Command::new(&app)
+                .args(["--version", "--json"])
+                .output()?
+                .stdout,
+        )?;
+        golden_mcp::run(
+            &app,
+            version["source_sha40"].as_str().context("source missing")?,
+            &csv,
+            &jope_runtime::sha256_hex(&bytes),
+            &evidence,
+            &runtime.path().join("ag1-home"),
+        )?;
     }
     Ok(())
 }

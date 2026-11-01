@@ -402,8 +402,18 @@ mod real;
     feature = "mcp",
     any(target_os = "linux", target_os = "macos")
 ))]
+mod qualification;
+
+#[cfg(all(
+    feature = "engine",
+    feature = "mcp",
+    any(target_os = "linux", target_os = "macos")
+))]
 #[test]
 fn all_product_surfaces_share_the_bounded_run_projection() -> anyhow::Result<()> {
+    if let Some(home) = std::env::var_os("JOPE_INT01_QUALIFY_HOME") {
+        return qualification::from_env(std::path::Path::new(&home));
+    }
     real::shared_run_surfaces()
 }
 
