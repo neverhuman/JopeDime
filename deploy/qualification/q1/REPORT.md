@@ -186,3 +186,15 @@ The full pinned4750-row catalog census supplies no additional wide member bound
 to these97 owner families. No row is duplicated or family reclassified to fill
 the gap. Primary estimates/intervals/subgroup verdicts, failures and study compute
 remain unknown. Actual evaluator/runtime/closure/signature gates still apply.
+
+## R20 pre-outcome census update (2026-11-01 19:35 UTC)
+
+Q1 remains **NOT_RUN** while the exact source-bound evaluator/runtime and exposure
+qualification are prepared. R20 admits all **3 eligible distinct wide families**,
+bound to the exhaustive [QLT02 audit](WIDE-GAP-R20.md) and
+[pre-outcome amendment](PREREG-AMENDMENT-R20.md). Full selection: 97 unique owner
+families (small70/large27/narrow94/wide3), 56 same-family variants excluded before
+outcomes. No new dataset/family/cut or training reassignment. All four subgroup
+checks retain the -0.02 margin and 0.05/4 lower quantile. Wide has only three
+families, limiting precision and coverage; this is not the original five-family
+design. No scientific PASS/FAIL, signed approval or execution is claimed here.
