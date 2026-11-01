@@ -2,7 +2,7 @@
 //! the existing Engine discovery, native refit, persisted model and prediction.
 //! This capability does not implement or alias the historical step-60000 policy.
 use crate::{ranker::cuda::release::load_r882_embedded, run::learned::AdmittedRanker};
-use anyhow::{Result, ensure};
+use anyhow::{ensure, Result};
 use jope_assets::{Package, Scope};
 use jope_runtime::methods::MethodRecord;
 use serde::Deserialize;
@@ -104,16 +104,12 @@ mod tests {
         let record = record(None).unwrap();
         assert!(record.compiled);
         assert!(!record.executable && !record.assets_present && !record.rights_authorized);
-        assert!(
-            record
-                .required_assets
-                .contains(&"model/r882/dope.safetensors".into())
-        );
-        assert!(
-            record
-                .required_assets
-                .contains(&"model/r882/release-catalog.json".into())
-        );
+        assert!(record
+            .required_assets
+            .contains(&"model/r882/dope.safetensors".into()));
+        assert!(record
+            .required_assets
+            .contains(&"model/r882/release-catalog.json".into()));
         let blocked = uncompiled(&[METHOD.into(), "proposal.step60000.regression".into()]).unwrap();
         assert_eq!(blocked.len(), 1);
         assert_eq!(blocked[0].0, "proposal.step60000.regression");

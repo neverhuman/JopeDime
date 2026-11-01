@@ -49,7 +49,7 @@ use jope_runtime::receipt::{
 use jope_runtime::table;
 use jope_runtime::task::{self, TaskChoice};
 use jope_runtime::{Failure, FailureKind, RUNTIME_ABI};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use std::path::Path;
 use std::process::ExitCode;
 use std::time::{Duration, Instant};
@@ -871,10 +871,10 @@ fn run_predict_remote(
     output: &Path,
 ) -> anyhow::Result<()> {
     use jope_api::{
-        PredictRequest, RunSnapshot,
         ids::{AlgorithmId, RunId},
+        PredictRequest, RunSnapshot,
     };
-    use jope_client::{Transport, files};
+    use jope_client::{files, Transport};
     use std::{io::Read, str::FromStr};
     let client = cmd::dataset::resolve_client()?;
     let run_id = RunId::from_str(run).map_err(|_| anyhow::anyhow!("invalid run id"))?;
@@ -937,7 +937,7 @@ enum ObjectRoute {
 
 fn object_route(object_dir: &Path) -> anyhow::Result<ObjectRoute> {
     use jope_runtime::model_object::{
-        MANIFEST, MATH_PIPELINE, MAX_MANIFEST_BYTES, calibration_platt, read_bounded,
+        calibration_platt, read_bounded, MANIFEST, MATH_PIPELINE, MAX_MANIFEST_BYTES,
     };
     #[derive(serde::Deserialize)]
     struct Format {

@@ -1,7 +1,7 @@
 //! The committed lock is the derivation of the committed profiles (SPECIFICATION.md §5.3–5.4):
 //! rights the scope does not admit, missing acknowledgements, unlicensed weights and promised
 //! methods this build cannot run block a profile; structural mistakes are errors.
-use jope_dist::profile::{Profile, derive_lock, lock_profile};
+use jope_dist::profile::{derive_lock, lock_profile, Profile};
 use std::path::{Path, PathBuf};
 
 fn repo() -> PathBuf {
@@ -42,11 +42,10 @@ fn the_committed_lock_is_current() {
     let full = &lock.profiles["full"];
     assert_eq!(full.status, "ready");
     assert!(full.blockers.is_empty());
-    assert!(
-        full.methods
-            .iter()
-            .any(|id| id == jope_service::proposal::METHOD)
-    );
+    assert!(full
+        .methods
+        .iter()
+        .any(|id| id == jope_service::proposal::METHOD));
     assert!(!full.blockers.iter().any(|b| {
         b.contains("starlight_core_regressor") && b.contains("owner acknowledgement")
     }));
@@ -83,12 +82,10 @@ fn the_committed_lock_is_current() {
         r882_manifest["export"]["bundle_digest"],
         "sha256:057e50a9a741d30d541ed8af8339cec84a5157af621100cb70857052ef14dacc"
     );
-    assert!(
-        !full
-            .components
-            .iter()
-            .any(|component| component.bundle_id == "policy-step-60000")
-    );
+    assert!(!full
+        .components
+        .iter()
+        .any(|component| component.bundle_id == "policy-step-60000"));
 
     // Three encoder tensors plus the pinned r882 safetensors adapter remain in the closure.
     let tensors: u64 = full
@@ -147,12 +144,10 @@ files = {}
         .files
         .retain(|file| file != "dope.safetensors");
     let blocked = lock_profile(&missing, &sha, &repo()).unwrap();
-    assert!(
-        blocked
-            .blockers
-            .iter()
-            .any(|why| why.contains("model/r882/dope.safetensors"))
-    );
+    assert!(blocked
+        .blockers
+        .iter()
+        .any(|why| why.contains("model/r882/dope.safetensors")));
     let mut alias = profile.clone();
     alias.components[0].id = "wrong-logical-id".into();
     assert_eq!(
@@ -161,13 +156,11 @@ files = {}
     );
     let mut public = profile.clone();
     public.scope = "public".into();
-    assert!(
-        lock_profile(&public, &sha, &repo())
-            .unwrap()
-            .blockers
-            .iter()
-            .any(|why| why.contains("internal-only"))
-    );
+    assert!(lock_profile(&public, &sha, &repo())
+        .unwrap()
+        .blockers
+        .iter()
+        .any(|why| why.contains("internal-only")));
     // A descriptor with a different hash must not become a runnable method merely
     // because its file names and loader architecture are recognized.
     let mut descriptor: serde_json::Value =
@@ -181,13 +174,11 @@ files = {}
     .unwrap();
     let mut drift = profile;
     drift.bundles = ".".into();
-    assert!(
-        lock_profile(&drift, &sha, dir.path())
-            .unwrap()
-            .blockers
-            .iter()
-            .any(|why| why.contains("missing or different asset"))
-    );
+    assert!(lock_profile(&drift, &sha, dir.path())
+        .unwrap()
+        .blockers
+        .iter()
+        .any(|why| why.contains("missing or different asset")));
 }
 
 const HEADER: &str = r#"schema = "jope.appliance-profile/v1"
@@ -230,12 +221,10 @@ fn rights_outside_the_scope_block_and_never_pass() {
     );
     let (profile, sha) = Profile::load(&public).unwrap();
     let locked = lock_profile(&profile, &sha, &repo()).unwrap();
-    assert!(
-        locked
-            .blockers
-            .iter()
-            .any(|b| b.contains("`internal` is not admitted by scope public"))
-    );
+    assert!(locked
+        .blockers
+        .iter()
+        .any(|b| b.contains("`internal` is not admitted by scope public")));
 
     // A public profile may not even claim to admit internal files.
     let wide = write_profile(

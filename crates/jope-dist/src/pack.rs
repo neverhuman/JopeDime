@@ -6,8 +6,8 @@
 //! root-held cosign step signs; `seal` then checks that signature against the release key, joins
 //! executable, payload, signature and footer, and re-verifies every byte of the result.
 
-use crate::profile::{Lock, Profile, lock_profile};
-use anyhow::{Context, Result, bail, ensure};
+use crate::profile::{lock_profile, Lock, Profile};
+use anyhow::{bail, ensure, Context, Result};
 use jope_assets::verify::{self, TrustedKey};
 use jope_assets::writer::{self, EntryInput, StageOptions, Staged};
 use jope_assets::{Codec, Footer, License, Manifest, Package, Scope, SourceIdentity};

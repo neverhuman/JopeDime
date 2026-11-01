@@ -23,9 +23,8 @@
 //! `signed_prefix_len + 64 + 128` bytes.
 
 use crate::{
-    ALGORITHM_P256_SHA256, AssetError, Entry, FOOTER_LEN, FORMAT_VERSION, KeyId, MAGIC,
-    SIGNATURE_LEN, TrustedKey, align_up, decode, limits, manifest::Manifest, source::VerifiedBytes,
-    verify,
+    align_up, decode, limits, manifest::Manifest, source::VerifiedBytes, verify, AssetError, Entry,
+    KeyId, TrustedKey, ALGORITHM_P256_SHA256, FOOTER_LEN, FORMAT_VERSION, MAGIC, SIGNATURE_LEN,
 };
 use std::fs::File;
 use std::os::unix::fs::FileExt;

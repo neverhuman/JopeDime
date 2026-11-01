@@ -10,7 +10,7 @@
 //! build cannot execute. A blocked profile locks fine (the lock is a faithful derivation, checked
 //! in CI without weights) but `jope-dist pack` refuses it.
 
-use anyhow::{Context, Result, bail, ensure};
+use anyhow::{bail, ensure, Context, Result};
 use jope_assets::Scope;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};

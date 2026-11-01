@@ -1,10 +1,11 @@
 //! Adapters for the owner-admitted releases' decoded assets and envelopes.
 //! Tensor expectations are frozen release metadata, never inferred from weights.
 use crate::ranker::bundle::{
-    AssetIdentity, BundleDigest, BundleInput, BundleLimits, FROZEN_DOPE_COMPOSITE, ReleaseAsset,
-    ReleaseCatalog, SignedAssetContext, TensorSpec, VerifiedBundle, load_bundle, read_hashed_asset,
+    load_bundle, read_hashed_asset, AssetIdentity, BundleDigest, BundleInput, BundleLimits,
+    ReleaseAsset, ReleaseCatalog, SignedAssetContext, TensorSpec, VerifiedBundle,
+    FROZEN_DOPE_COMPOSITE,
 };
-use anyhow::{Result, ensure};
+use anyhow::{ensure, Result};
 use safetensors::Dtype;
 use serde::Deserialize;
 use std::{collections::BTreeMap, fs::File, io::Read, path::Path};
