@@ -32,7 +32,7 @@ it consumes above:
 ```sh
 nice -n 10 python3 -B deploy/qualification/v1.0/release-gates \
   --repo "$CLEAN_PINNED_CHECKOUT" --artifact "$SIGNED_BYTES" \
-  --providers --output "$NEW_EVIDENCE"
+  --providers --provider-inputs "$INPUT_BINDINGS" --output "$NEW_EVIDENCE"
 ```
 
 For candidate-free inventory checks after provider merges, use dry discovery:
@@ -45,6 +45,45 @@ nice -n 10 python3 -B deploy/qualification/v1.0/release-gates \
 This reports the exact source SHA, found provider IDs, missing provider IDs, and
 counts. It accepts no artifact or output path, executes no provider, and writes
 no gate evidence. A successful inventory report may still be incomplete.
+
+M5 also requires its explicit frozen TRAIN fixture and bundle directories. A5
+requires a candidate-bound named-client transcript manifest and its independently
+pinned SHA-256. Supply these through `--provider-inputs "$INPUT_BINDINGS"` with
+`--providers` (including `--dry-discovery`). The regular, non-symlink JSON file is:
+
+```json
+{
+  "schema": "jope.rel07.provider-inputs/v1",
+  "gates": {
+    "M5": {
+      "golden_dir": "/absolute/path/to/qualified/golden",
+      "bundle_dir": "/absolute/path/to/frozen/bundle"
+    },
+    "A5": {
+      "manifest": "/absolute/path/to/candidate/transcript-manifest.json",
+      "manifest_sha256": "<replace with the independently pinned 64-character lowercase SHA-256>"
+    }
+  }
+}
+```
+
+Discovery reports `unbound_providers` and `unbound_provider_count` separately from
+missing modules. `complete` requires both inventories to be empty. Execution
+discovery refuses unbound providers before writing a runnable manifest. It adds
+M5's two required arguments and A5's two explicit environment bindings to each
+provider's argv, without a shell; the frozen command-manifest hash covers them.
+The restricted child environment still discards inherited A5 variables. Bindings
+cannot replace commands, gate/source/artifact identities, resource settings or
+credentials. Unknown fields, relative paths and malformed SHA-256 pins refuse.
+Providers retain their full input, byte-hash and qualification checks; configuring
+paths does not establish that the evidence exists or passes.
+
+The maintained runner already writes the watcher-format `gates_receipt.json`.
+The older external `bind-rel07.py` adapter consumes validated `gate_results.json`
+with its `signed_bytes_sha256` field; it is not a gate executor. A partial or
+failed synthetic receipt must be rejected by that adapter. Keep controller
+dry-run artifacts and receipts outside signing request directories: synthetic
+refusal tests do not authorize signing or qualify a candidate.
 
 Execution discovery requires a clean checkout at `origin/main`, a regular
 non-symlink candidate, and one regular `providers/<gate>.py` file for each
