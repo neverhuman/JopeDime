@@ -1,0 +1,94 @@
+{
+  "wave": "H195",
+  "authority": "/home/ubuntu/nudges/hwave_t1025_h195_rdopus.md",
+  "claim": "/home/ubuntu/jope_plan/ns/receipts/H195_claim.txt",
+  "arms": [
+    "R882",
+    "BLEND_025",
+    "BLEND_025_NOKERNEL",
+    "BLEND_025_SHUF",
+    "R882_NOKERNEL"
+  ],
+  "primary": "BLEND_025",
+  "holm_m": 1,
+  "lambda": 0.25,
+  "endpoint": "H119 Track-2 U4 (h124.endpoints u4)",
+  "seeds": [
+    195101,
+    195102,
+    195103
+  ],
+  "fold_seeds": {
+    "195101": 195141,
+    "195102": 195142,
+    "195103": 195143
+  },
+  "sample_seed": 195140,
+  "shuf_seed": 195160,
+  "shuf_seeds": [
+    195101
+  ],
+  "boot_seed": 195150,
+  "elo_boot_seed": 195151,
+  "bootstrap_draws": 10000,
+  "elo_draws": 1000,
+  "fits": {
+    "BLEND": 45,
+    "SHUF": 15,
+    "total": 60,
+    "per_seed_type": "5 outer exclude {A,B} + 10 inner exclude {A,B,j}"
+  },
+  "gbm": {
+    "class": "sklearn HistGradientBoostingRegressor",
+    "max_iter": 300,
+    "learning_rate": 0.08,
+    "max_leaf_nodes": 63,
+    "l2_regularization": 1.0,
+    "random_state": "seed",
+    "features": 1089,
+    "rows_per_context": 192
+  },
+  "decision": "CANDIDATE iff LCB95>0 AND p(vs +0.001)<0.05 AND harm<=10%; else NO_ADVANCE",
+  "regression": {
+    "dl_val_contexts": 91,
+    "r882_native_mean": 1.1377941898164525,
+    "reference": "best_dev_checkpoint.json 30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+  },
+  "inputs": {
+    "staging": "~/jope-data/h195/inputs (pinned H124 FILES under the same relative paths)",
+    "r882": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "selected_json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "dope": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+  },
+  "pinned_modules": {
+    "h124_runner": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+    "h129_runner_reference": "e34d4a3f7ecb82971fa303f05cca665bb1108509abb90021d1a54717fe02cb6c",
+    "h139_runner": "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686",
+    "h184_treatment": "64ff420beaf466e444192b5bdf5bbd9714900b17e19abbe3a2eea484b001582e"
+  },
+  "hosts": {
+    "preferred": "xbabe1 (guard free>=40GB)",
+    "fallback": "xbabe2 (guard used<93.8% and free>=40GB)"
+  },
+  "resources": {
+    "nice": 19,
+    "omp_threads": 4,
+    "worker_tree_cores_max": 4.0,
+    "rss_max_bytes": 6000000000,
+    "mem_available_min_gib": 16,
+    "load_and_cpu_max_pct": 85,
+    "output_root_max_bytes": 500000000,
+    "deadline_hours": 4,
+    "resume": "one, after a resource-guard stop only"
+  },
+  "custody": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H195/<run_id>/ (create-only)",
+  "never": [
+    "sealed",
+    "holdout",
+    "meta-test",
+    "live flywheel",
+    "xbabe0",
+    "xbabe3",
+    "GPU"
+  ]
+}

@@ -5111,6 +5111,30 @@
         "role": "research",
         "reason": "H194 registered CPU invalid-candidate hinge continuation; frozen DOPE, independent TRAIN family folds, B-before-A selection, no live changes"
       }
+    },
+    "python:research/flywheel_selfplay/h195_blend025_kernel_confirm/analysis.py": {
+      "bytes": 8760,
+      "sha256": "4904da8ba7f997ddcf9a2ab8d2dad9801be95f2e82e972f221013b1220fac721",
+      "classification": {
+        "role": "research",
+        "reason": "H195 preregistered CPU-only diagnostic: prospective confirmation of H129 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed) on fresh per-seed family folds; GBM and calibration from FIT folds only, stage-1 lock before pooled-A U4 scoring, m=1 CANDIDATE gate (LCB95>0, p vs +0.001 <0.05, harm<=10%); NOKERNEL/SHUF descriptive; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h195_blend025_kernel_confirm/monitor.py": {
+      "bytes": 7064,
+      "sha256": "808459b28206cb82f705cf66c8aab47263c07cd95c3ad0e78146e4e8fc1dab87",
+      "classification": {
+        "role": "research",
+        "reason": "H195 preregistered CPU-only diagnostic: prospective confirmation of H129 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed) on fresh per-seed family folds; GBM and calibration from FIT folds only, stage-1 lock before pooled-A U4 scoring, m=1 CANDIDATE gate (LCB95>0, p vs +0.001 <0.05, harm<=10%); NOKERNEL/SHUF descriptive; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h195_blend025_kernel_confirm/runner.py": {
+      "bytes": 29433,
+      "sha256": "cd23328e73fef9a343ccd1a46b79d0568692411175f54c4a30fb0086a96491a5",
+      "classification": {
+        "role": "research",
+        "reason": "H195 preregistered CPU-only diagnostic: prospective confirmation of H129 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed) on fresh per-seed family folds; GBM and calibration from FIT folds only, stage-1 lock before pooled-A U4 scoring, m=1 CANDIDATE gate (LCB95>0, p vs +0.001 <0.05, harm<=10%); NOKERNEL/SHUF descriptive; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
