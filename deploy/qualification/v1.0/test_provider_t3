@@ -144,6 +144,19 @@ class T3Tests(unittest.TestCase):
             self.invoke()
         self.assertFalse(self.ctx.result.exists())
 
+    def test_same_bytes_symlink_swap_refuses_receipt(self):
+        saved = self.root / "saved-candidate"
+        saved.write_bytes(self.artifact.read_bytes())
+
+        def swap():
+            self.artifact.unlink()
+            self.artifact.symlink_to(saved)
+
+        self.after_test = swap
+        with self.assertRaises(ProviderError):
+            self.invoke()
+        self.assertFalse(self.ctx.result.exists())
+
     def test_existing_receipt_is_never_overwritten(self):
         self.ctx.result.write_bytes(b"prior")
         with self.assertRaises(ProviderError):

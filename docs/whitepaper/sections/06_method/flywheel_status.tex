@@ -74,8 +74,8 @@ assigning a fixed penalty to failed gates.
 
 Candidate programs are evaluated on two training-side folds; the historical
 reference procedure specifies five. Evaluations are logged separately from
-training-pool admission: ordinary admission retains only programs that pass
-the gates and strictly improve the incumbent for their training context.
+training-pool admission: ordinary admission requires passing gates and a
+recorded score below the training context's incumbent by more than $10^{-6}$.
 Historical programs have a separate admission path.
 The adapter's default gate can accept equal utility; rejection restores
 model and optimizer states.
@@ -142,19 +142,11 @@ utility tables do not establish either.
 \Cref{fig:fw-telemetry} shows the loop's operating measurements from the earlier
 retained window.
 
-The main-text 20-round window, 2644--2663, appears in \cref{fig:fw-program-promotions}. A later operating window appears in \cref{app:round-throughput}.
-They record 21 strict program promotions and no adapter admission.
-These events record numerical improvements to training-program incumbents;
-the journal supplies no confidence interval for them. Program promotions
-and neural adapter admissions remain distinct events. The two panels
-align the event counts with candidate validation utility for each round.
-
-An earlier window at rounds 2005--2024 appears in \cref{fig:fw-recent-development}.
-The cumulative count starts from zero for this window and includes only
-journaled strict program promotions. The adapter panel separates candidate
-validation utility from the recorded best; progress in the program pool
-and admission of a new adapter are different events.
-\Cref{fig:fw-followup-development} in the appendix shows a separate retained window at rounds 2082--2101.
+The shorter retained windows give more detailed operating views. Rounds
+2005--2024 appear in \cref{fig:fw-recent-development}, with cumulative
+journaled strict program promotions counted from zero for that window.
+The adapter panel separates candidate validation utility from the recorded
+best. Rounds 2082--2101 follow in \cref{fig:fw-followup-development}.
 
 Historical GP target scores provide a separate view in
 \cref{fig:fw-target-progress}. The 159 repeated dataset/cut/arm groups cover
@@ -205,13 +197,21 @@ seconds of logged wall time: 41.6 rounds and 45.8 program promotions per
 hour, including qualification waits. These program-event rates apply to
 2343--2362, not all admission rounds through 2663 or one-proposal deployment.
 
-\Cref{app:development-time} plots the retained window at 2343--2362 against
-accumulated completed-round time, \cref{app:event-counts} groups the three
-retained windows by training-program event count, and
-\cref{app:subsequent-window,app:subsequent-rates} show rounds 2508--2527
-and their work and event rates.
+\Cref{app:development-time} plots rounds 2343--2362 against accumulated
+completed-round time. \Cref{app:event-counts} groups the three earlier
+retained windows by training-program event count. Rounds 2508--2527 and
+their work and event rates follow in
+\cref{app:subsequent-window,app:subsequent-rates}.
+
+The main-text window at rounds 2644--2663 appears in
+\cref{fig:fw-program-promotions}, with a per-hour view in \cref{fig:fw-promotions-per-hour} (\cref{app:promotions-per-hour}). It records 21 strict program promotions
+and no adapter admission. The two panels align the program-event counts
+with candidate validation utility for each round; the journal supplies
+no confidence interval for those incumbent improvements.
+The later rounds 2696--2715 appear in \cref{app:round-throughput}.
 
 Program-incumbent gains, adapter admissions and historical target scores
 measure different outcomes. \Cref{sec:results} specifies the independent
 comparisons needed to test whether training improves the writer's first
 proposal on new families.
+\FloatBarrier

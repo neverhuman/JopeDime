@@ -45,6 +45,14 @@ def command(test: str) -> list[str]:
 
 
 def check_binding(ctx: Context, run) -> None:
+    if (
+        not ctx.artifact.is_absolute()
+        or any(part.is_symlink() for part in (ctx.artifact, *ctx.artifact.parents))
+        or not ctx.artifact.is_file()
+    ):
+        raise ProviderError(
+            "T3 candidate must remain an absolute regular non-symlink file"
+        )
     for args, expected in (
         (["git", "rev-parse", "HEAD"], ctx.source_sha),
         (["git", "status", "--porcelain", "--untracked-files=all"], ""),

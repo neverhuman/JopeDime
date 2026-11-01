@@ -4269,6 +4269,16 @@
       "lanes": [],
       "scope": "Standalone pytest protocol/statistical fixtures for the Q1 qualification harness (QLT-01, #497): owner-signature refusal, sealed-holdout and smoke-scope guards, backend-failure accounting; no learned model or sealed payload executes. Not collected by a CI lane; owner-signed qualification runs are separate."
     },
+    "python:deploy/qualification/q1/harness/test_q1_cut.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Standalone unittest controls for the Q1 canonical cut hash (QLT-04, jope.q1-cut/v1): golden cross-language digest, key-order independence, field/order sensitivity and invalid-fold refusal; data-free, no learned model or sealed payload executes."
+    },
     "python:deploy/qualification/v1.0/test_cpu_gates.py": {
       "discovery": {
         "kind": "python-family"
@@ -4438,6 +4448,16 @@
       ],
       "lanes": [],
       "scope": "REL-07 PR1382 provider controls: candidate/source binding, exact test execution, drift/failure/overwrite refusals. Synthetic fixtures validate orchestration only; actual candidate release execution remains separate."
+    },
+    "python:deploy/qualification/v1.0/test_release_command_scaffold.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 PR1454 provider controls: candidate/source binding, exact test execution, drift/failure/overwrite refusals. Synthetic fixtures validate orchestration only; actual candidate release execution remains separate."
     },
     "python:ops/s3_shard_cache/test_s3_shard_cache.py": {
       "discovery": {
@@ -5474,6 +5494,16 @@
       "lanes": [],
       "scope": "H169 owner-directed optimizer-geometry continuation wave on the r882 adapter; data-free controls only, no checkpoint, corpus, sealed or holdout data in the fixture suite; offline research."
     },
+    "python:research/flywheel_selfplay/h170_onecycle/test_h170.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H170 data-free one-cycle LR/beta1 endpoints and applied native AdamW steps, mean-LR dose match, None-gradient and full-adapter drift, family cross-fit/strict best-only selector, shared-family median bootstrap/Holm/canonical Elo, exact prediction/adapter pseudoreplication disclosures, aggregate terminal resources and external launch binding. Offline real-S3 regression research only; no product, sealed, serving or speed qualification."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"
@@ -5903,6 +5933,16 @@
       ],
       "lanes": [],
       "scope": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract)."
+    },
+    "python:research/flywheel_selfplay/rnk10_r882_release/test_prepare_release.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "RNK-10 offline research exporter and verified-bytes substitution regression for the pinned r882 adapter bundle; research only, no product runtime, signing, or scientific qualification."
     },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
       "discovery": {
@@ -15649,8 +15689,6 @@
     "lanes": [],
     "scope": "H163 data-free score direction, candidate ID alignment, stable argmin ties, z-normalization/rank ensemble, and strict paired family-bootstrap selector controls. Offline research only; no checkpoint, corpus, or live promotion in unit tests."
   },
-  "schema": "jope.coverage/v1",
-  "stage": "static",
   "python:research/flywheel_selfplay/h169_optimizer_geometry/test_h169.py": {
     "discovery": {
       "kind": "python-family"
@@ -15660,5 +15698,7 @@
     ],
     "lanes": [],
     "scope": "H169 data-free controls: family exclusion/assessment coverage, repeatable FIT-only minibatches, strict selection, drift calibration, exact optimizer pins, None-gradient materialization, bootstrap/Holm/Elo, and resource guards. No study data, checkpoint, model, or serving qualification."
-  }
+  },
+  "schema": "jope.coverage/v1",
+  "stage": "static"
 }
