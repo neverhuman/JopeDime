@@ -3,7 +3,7 @@ use jope_api::{
     ids::{AlgorithmId, RunId},
     ExportKind, ExportRequest, Language, Refit, RunSnapshot,
 };
-use jope_client::Transport;
+use jope_client::{files, Transport};
 use serde_json::Value;
 use std::str::FromStr;
 
@@ -64,15 +64,13 @@ pub(crate) fn run(options: Options<'_>) -> anyhow::Result<()> {
         refit: Refit::Fit,
     };
     let manifest = client.model_export(&run_id, &request, Some(&key))?;
-    materialize(&client, &manifest, out, force)?;
+    files::download_export_artifact(&client, &manifest.artifact_id, out, force)?;
     let mut value: Value = serde_json::to_value(manifest)?;
     if let Some(object) = value.as_object_mut() {
         super::common::add_idempotency_key(object, &key);
     }
     super::dataset::emit(&value, json_out)
 }
-
-pub(crate) use crate::common::materialize_export as materialize;
 
 #[cfg(test)]
 mod tests {

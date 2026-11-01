@@ -518,7 +518,12 @@ fn export_best<T: Transport>(
     };
     let key = crate::common::resolve_idempotency_key(None);
     let manifest = transport.model_export(&snapshot.run_id, &request, Some(&key))?;
-    super::export::materialize(transport, &manifest, directory, false)?;
+    jope_client::files::download_export_artifact(
+        transport,
+        &manifest.artifact_id,
+        directory,
+        false,
+    )?;
     Ok(serde_json::to_value(manifest)?)
 }
 

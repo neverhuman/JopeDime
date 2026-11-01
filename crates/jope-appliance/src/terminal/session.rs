@@ -518,7 +518,12 @@ impl Session {
         let out = out.ok_or_else(|| anyhow::anyhow!("export requires --out DIR"))?;
         let key = format!("tui_export_{}", ulid::Ulid::new());
         let manifest = self.client.model_export(&run, &request, Some(&key))?;
-        crate::common::materialize_export(&self.client, &manifest, &out, force)?;
+        jope_client::files::download_export_artifact(
+            &self.client,
+            &manifest.artifact_id,
+            &out,
+            force,
+        )?;
         Ok(vec![format!(
             "Export {} · {} · parity {:?}",
             manifest.artifact_id,
