@@ -4114,11 +4114,15 @@ mod tests {
         native_worker_fault(directory, "")
     }
     fn native_worker_fault(directory: &Path, fault: &str) -> PathBuf {
-        let deps = std::env::current_exe()
-            .unwrap()
-            .parent()
-            .unwrap()
-            .to_path_buf();
+        let deps = std::env::var_os("JOPE_DSC_DEPENDENCY_DIR")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| {
+                std::env::current_exe()
+                    .unwrap()
+                    .parent()
+                    .unwrap()
+                    .to_path_buf()
+            });
         let library = std::env::var_os("JOPE_DSC_SERVICE_RLIB")
             .map(PathBuf::from)
             .unwrap_or_else(|| deps.parent().unwrap().join("libjope_service.rlib"));
