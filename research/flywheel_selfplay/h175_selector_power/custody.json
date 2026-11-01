@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "archive": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H175/codex-t0330/005b086b35ac1d4c/H175-evidence.zip",
+    "version_id": "AN7B0QZ8W7jN14c40ThkmcuPIUidWbD9",
+    "sha256": "005b086b35ac1d4c17ec2629469709382aeead26918929645957bd120d63c366",
+    "bytes": 116124698,
+    "actual_versioned_byte_readback": true
+  },
+  "manifest": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H175/codex-t0330/005b086b35ac1d4c/manifest.json",
+    "version_id": "cGaJmNsjCXYikZkjK7r4m3MCd04WE.Kt",
+    "sha256": "b182577b8a6c480c469407c55b312b3aa401c6e2b082c65efc6bedd8baf41c01",
+    "bytes": 190443,
+    "actual_versioned_byte_readback": true
+  },
+  "member_count": 1018,
+  "fresh_exact_version_restore_all_member_hashes": true,
+  "optimizer_updates": 0,
+  "verdict": "MIXED"
+}
