@@ -66,10 +66,18 @@ note = "provisional: replace with the first measured internal-restricted build"
 base_executable_bytes = 19258792
 final_executable_bytes = 20792951
 note = "measured GPU edition dist-ci; 1,782,874 model/license bytes and selected dependency notices; no bundled CUDA runtime"
-[profile.fused-cpu]
+# Historical synthetic profile, preserved under its explicit fixture name (A19).
+[profile.fixture-fused-cpu]
 base_executable_bytes = 7856768
 final_executable_bytes = 7902400
-note = "REL-03 measured fused-cpu dist-ci embedded,dev-keys package on Linux x86_64 (2026-10-30, source e1b402af89bbe7ef7af03062d7bba9a0b6a89eb6); base 7,856,768 B and final 7,902,400 B; 5% tolerance applies. macOS/Windows reports pending platform builders."
+note = "REL-03 development fixture measurement, dist-ci embedded,dev-keys on Linux x86_64 (2026-10-30, source e1b402af89bbe7ef7af03062d7bba9a0b6a89eb6); retained unchanged after renaming the synthetic profile."
+
+# Measured unsigned release stage, Rust 1.97.1, Linux x86_64, dist fat LTO (A19).
+# Final length includes the fixed 64-byte signature and 128-byte footer; signing is pending.
+[profile.fused-cpu]
+base_executable_bytes = 18871032
+final_executable_bytes = 25737975
+note = "A19: real 56-file R882 internal runtime, embedded,engine,mcp,client; source 5ed99c59599369eba6dfd85ebc993e6ef2fc4b9d (2026-11-01). Unsigned-stage length baseline, not a signed-package qualification. The 5% tolerance and separate REL-07 40,000,000-byte ceiling both apply. Native macOS/Windows size measurements remain pending."
 [profile.fused-cuda]
 base_executable_bytes = 20292112
 final_executable_bytes = 20343345

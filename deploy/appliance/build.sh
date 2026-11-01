@@ -38,8 +38,8 @@ if [ "$rehearsal" = true ] && { [ "$profile" != full ] || [ "$scope" != internal
 fi
 features=embedded
 [ "$scope" = development ] && features=embedded,dev-keys
-# The full v1 product needs the ordinary defaults despite --no-default-features below.
-[ "$profile" = full ] && features=$features,engine,mcp,client
+# Both R882 runtime editions need the ordinary defaults despite --no-default-features below.
+case $profile in full | fused-cpu) features=$features,engine,mcp,client ;; esac
 case $profile in dope-gpu | fused-cuda) features=$features,dope-cuda ;; esac
 mkdir -p "$out"
 
@@ -62,8 +62,8 @@ code=$(JOPE_BUILD_SOURCE_SHA=$source_sha cargo run -q --locked -p jope-ci -- car
   --package jope-appliance --bin jopedime --profile "$cargo_profile" --no-default-features --features "$features")
 cp -- "$code" "$out/code"
 
-if [ "$profile" = full ]; then
-  echo "== verify full v1 compiled features and source"
+if [ "$profile" = full ] || [ "$profile" = fused-cpu ]; then
+  echo "== verify $profile v1 compiled features and source"
   "$out/code" --version --json > "$out/version.json"
   jq -e --arg source "$source_sha" '
     .source_sha40 == $source and
@@ -74,7 +74,7 @@ if [ "$profile" = full ]; then
     .features.dev_keys == false and
     .trusts_development_key == false
   ' "$out/version.json" > /dev/null || {
-    echo "$0: full requires engine,mcp,client,embedded, release trust and the declared source" >&2
+    echo "$0: $profile requires engine,mcp,client,embedded, release trust and the declared source" >&2
     exit 1
   }
 fi
