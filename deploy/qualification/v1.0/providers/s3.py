@@ -8,6 +8,7 @@ import os
 import re
 import subprocess
 import sys
+from functools import partial
 
 from common import (
     ARTIFACT_SHA256,
@@ -99,11 +100,11 @@ def check_binding(ctx: Context, run) -> None:
 
 
 def qualify(ctx: Context, run=None) -> int:
-    run = subprocess.run if run is None else run
-    check_binding(ctx, run)
-    verify_candidate(ctx, run=run)
     env = os.environ.copy()
     env.update(CARGO_INCREMENTAL="0", CARGO_PROFILE_DEV_DEBUG="line-tables-only")
+    run = partial(subprocess.run if run is None else run, env=env)
+    check_binding(ctx, run)
+    verify_candidate(ctx, run=run)
     for test in TESTS:
         check_binding(ctx, run)
         args = command(test)
@@ -115,7 +116,6 @@ def qualify(ctx: Context, run=None) -> int:
             text=True,
             check=False,
             timeout=3600,
-            env=env,
         )
         sys.stdout.write(result.stdout)
         sys.stderr.write(result.stderr)

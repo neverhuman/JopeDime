@@ -35,8 +35,8 @@ thread, reusing the lane's target. The controller retains stdout/stderr, command
 execution times and receipt hashes. Evidence corresponds to the existing S3
 `gate-status.md` sources: DSC-02, DSC-03, SVC-11 and DSC-09.
 
-Acceptance controls: `python3 -B deploy/qualification/v1.0/test_provider_s3 -v`.
-This follows the extensionless M1/M4/T1 harness pattern and uses only synthetic
+Acceptance controls: `python3 -B -m pytest -q deploy/qualification/v1.0/test_provider_s3/`.
+The controls use only synthetic
 candidate bytes and mocked child results. Those controls are **not S3 release
 qualification**. The selected Rust tests use generated fixture data, never sealed
 corpus payloads, GPU work or signing. They qualify these source assertions against
@@ -46,7 +46,7 @@ requires the complete provider invocation against the supplied full candidate.
 Historical status entries alone do not supply that result. Runner wiring,
 28-gate receipt assembly and signing remain with their existing owners.
 
-No common helper, product implementation, public API, test inventory, dependency,
+No common helper, product implementation, public API, dependency,
 model weight or gate-status verdict changes are included. A generic successful
 command wrapper was rejected because it could accept zero tests or a different
 case; a new splitter implementation would test the gate rather than the product.

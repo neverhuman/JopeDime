@@ -14,7 +14,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-HERE = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(HERE / "providers"))
 s3 = importlib.import_module("s3")
 common = importlib.import_module("common")
