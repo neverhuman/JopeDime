@@ -112,7 +112,7 @@ in \cref{sec:method-status}:
   encoding jobs, within the 30\,s cap.
   \item \textbf{Comparison construction (\cref{sub:method-map,sub:method-selfplay}).}
   Lists $G_p$ require at least eight valid scored programs per problem, with
-  percentile $\rho_w = 1 - \mathrm{rank}/\allowbreak{(|G_p|-1)}$ and writer sequence weight
+  percentile $\rho_w = 1 - \mathrm{rank}/\allowbreak{(|G_p|-1)}$ and writer $\writer$ sequence weight
   $0.05 + \rho_w^4$. The native trainer gives problem families equal mass and forms
   each training comparison from one list: its best program plus one
   program drawn from each of seven equal rank bands of the rest. Ranking
@@ -142,13 +142,13 @@ in \cref{sec:method-status}:
   doubled when either member is at or above the 90th percentile, then
   reduced over all non-tied within-comparison pairs in the rank-local
   microbatch. The implementation mean-scales their weights, casts them to
-  float32 and averages weighted pair losses. Listwise losses are computed
+  \texttt{float32} and averages weighted pair losses. Listwise losses are computed
   per eligible comparison group and averaged across groups.
   \item \textbf{Registered parameter inventory (\cref{sub:method-map}).}
   The network has \num{27796494} parameters in total (six
   decoder blocks, width \num{512}, four attention heads, prefix context token,
   and maximum length \num{128} tokens over the \num{401}-token grammar).
-  Each of the writer and ranking token tables allocates \num{657} rows:
+  Each of the writer $\writer$ and ranking-map $\mapv$ token tables allocates \num{657} rows:
   \num{401} grammar rows plus \num{256} reserved rows. The reserved rows
   are never indexed as valid input or output tokens; the tied writer
   projection is restricted to the grammar rows. The registered total also
@@ -156,11 +156,6 @@ in \cref{sec:method-status}:
   measure learned or exercised capacity. Approximately \num{6.90} million parameters lie outside the writer's token
   generation path. Decoding bypasses them, but the native checkpoint loader
   still requires them.
-
-
-
-
-
   \item \textbf{Optimization notes (\cref{sub:method-selfplay}).}
   The records describe AdamW training (learning rate $10^{-4}$,
   weight decay $0.01$, gradient-norm clip $1.0$, global batch size \num{2048})
@@ -172,8 +167,8 @@ in \cref{sec:method-status}:
   held-out promotion receipt remain required inputs to the evaluation contract
   (\cref{sub:results-protocol}).
   \item \textbf{Execution sandbox and parity (\cref{sub:method-referee}).}
-  The final evaluation protocol requires candidate isolation with seccomp
-  and Landlock, cgroup memory limits with swap disabled, and native versus
+  The final evaluation protocol requires candidate isolation with \texttt{seccomp}
+  and Landlock, \texttt{cgroup} memory limits with swap disabled, and native versus
   emitted-code agreement within $10^{-9}\max(1, |\hat{y}|)$. Isolation and
   parity receipts from the final evaluator belong to the same evaluation
   record.
