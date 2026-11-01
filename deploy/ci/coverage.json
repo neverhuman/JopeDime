@@ -7431,7 +7431,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -14508,6 +14508,16 @@
       ],
       "lanes": [],
       "scope": "H181 data-free CUPED exclusion/axis/bootstrap/calibration/gate/zero-update tests"
+    },
+    "python:research/flywheel_selfplay/h183_ensemble_distill/test_h183.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H183 data-free controls: FIT/A/B isolation and poisoned outer targets, distinct initial member/student seeds, softmax of ten mean teacher costs, fixed detached KL T=.2 with .5/.5 weights, common 40/80 student prefix, axis=0 paired family bootstrap, strict DIST10 primary Holm m2 gate, RENS10 diagnostic, ragged native choices and resource/timing caps. No study data/checkpoint/optimizer updates."
     }
   },
   "lanes": {
