@@ -5415,6 +5415,10 @@
     "python:research/flywheel_selfplay/h173_hard_context_reweight/test_h173.py": {
       "role": "research",
       "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/test_h175.py": {
+      "role": "research",
+      "reason": "H175 data-free controls for zero-update selector-power/headroom audit: role-local injections and no out-of-fold payload access, scalar bootstrap bit parity, ties, correct nonoracle interpretation, family weighting, grid MDE censoring, and reduced whole-pipeline replay. Offline research only; no native/GPU/product qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
