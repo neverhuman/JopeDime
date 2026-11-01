@@ -17,7 +17,7 @@ import shutil
 import subprocess
 
 import torch
-from safetensors import safe_open
+from safetensors.torch import load as load_safetensors
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
@@ -48,6 +48,11 @@ def pinned(path: Path, expected: str, size: int | None = None) -> bytes:
     if digest(data) != expected or (size is not None and len(data) != size):
         raise ValueError(f"custody hash/length mismatch: {path}")
     return data
+
+
+def pinned_safetensors(path: Path, expected: str, size: int) -> dict[str, torch.Tensor]:
+    """Deserialize only the exact bytes whose custody hash was verified."""
+    return load_safetensors(pinned(path, expected, size))
 
 
 def exporter():
@@ -103,13 +108,13 @@ def prepare(checkpoint: Path, output: Path, packer: Path) -> dict:
     }
     unchanged = 0
     for filename in ("dope.safetensors", "jope.safetensors"):
-        base_asset(filename)
-        with safe_open(BASE / filename, framework="pt") as source:
-            for name in source.keys():
-                if name not in trainable:
-                    if not torch.equal(source.get_tensor(name), state[name]):
-                        raise ValueError(f"frozen non-adapter state changed: {name}")
-                    unchanged += 1
+        row = entries[base_catalog["assets"][filename]["signed_asset_id"]]
+        source = pinned_safetensors(BASE / filename, row["sha256"], row["bytes"])
+        for name, tensor in source.items():
+            if name not in trainable:
+                if not torch.equal(tensor, state[name]):
+                    raise ValueError(f"frozen non-adapter state changed: {name}")
+                unchanged += 1
     if len(trainable) != 47 or sum(state[name].numel() for name in trainable) != 29_211:
         raise ValueError("r882 adapter inventory differs")
 
