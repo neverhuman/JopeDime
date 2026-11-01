@@ -1,16 +1,31 @@
 \subsection{Event counts in retained development windows}\label{app:event-counts}
 
-\begin{figure}[htb]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_event_distribution.pdf}
-  \caption{\textbf{Rounds grouped by training-program incumbent events.}
-  Every bar contains 20 completed-round summaries. Colored segments count
-  rounds with 0, 1, 2 or 3+ strict training-program incumbent events;
-  parentheses report total events in each window. These descriptive counts
-  are not a matched comparison or evidence of independent first-proposal
-  improvement.}
-  \label{fig:fw-event-distribution}
-\end{figure}
+  \includegraphics[width=\textwidth]{figures/fig_fw_round_throughput.pdf}
+  \caption{\textbf{Adapter utility and whole-round throughput in a later retained window.}
+  Both panels cover the same 20 completed summaries, rounds 2696--2715.
+  Left: candidate adapter validation utility and the recorded best.
+  Right: distinct training contexts divided by the full wall time of each
+  completed round. The rates include all work and waits inside that interval.
+  These are development operating observations; independent first-proposal
+  and deployment comparisons remain required.}
+  \label{fig:fw-round-throughput}
+\end{figure*}
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig_fw_acceptance_over_rounds.pdf}
+  \caption{\textbf{Recorded-best validation utility and cumulative adapter acceptance rate over rounds.}
+  Both panels use the same \num{1889} consecutive admission rounds, 775--2663, as
+  \cref{fig:fw-validation}, adding no observations. Left: post-decision
+  recorded-best validation pool utility, with stars at strict gains (rounds
+  785 and 859) and hollow diamonds at accepted ties (rounds 782 and 882).
+  Right: cumulative accepted share of elapsed rounds (\%), which peaks at
+  18.18\% at round 785 and falls to 0.21\% ($4/\num{1889}$) across the
+  subsequent \num{1781} rejected rounds. These are development admission
+  aggregates, not independent first-proposal comparisons.}
+  \label{fig:fw-acceptance-over-rounds}
+\end{figure*}
 
 \Cref{fig:fw-event-distribution} summarizes the training-program counts
 underlying \cref{fig:fw-recent-development,fig:fw-followup-development,fig:fw-later-development}.
