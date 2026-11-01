@@ -178,7 +178,7 @@
           "id": "r882",
           "role": "model",
           "bundle_id": "r882",
-          "bundle_manifest_sha256": "68c7b6eb868d2826a51a311a746c33a09106bdcaeeaea151243ccdacae3ba6b8",
+          "bundle_manifest_sha256": "a2451337346cc3fb71d7199c71db7e567c7045c9d5b811dbd6bd1c0166d71f77",
           "backends": [
             "cpu"
           ],

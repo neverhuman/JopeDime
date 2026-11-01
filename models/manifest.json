@@ -54,6 +54,17 @@
       "licenses": [
         "LicenseRef-Jain-Internal-Model"
       ]
+    },
+    {
+      "bundle_id": "r882",
+      "manifest": "models/bundles/r882.json",
+      "manifest_sha256": "a2451337346cc3fb71d7199c71db7e567c7045c9d5b811dbd6bd1c0166d71f77",
+      "s3_key": "bundles/r882/manifest.json",
+      "files": 56,
+      "bytes": 10538398,
+      "licenses": [
+        "LicenseRef-Jain-Internal-Model"
+      ]
     }
   ]
 }

@@ -4616,6 +4616,38 @@
         "reason": "H180 preregistered CPU-only diagnostic: adapter-contribution ablation (anchor-only ZERO_ADAPTER, fresh RAND0) and fresh-init update-budget dose (FRESH40 prefix of FRESH160) against r882 on the H176 family-grouped harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
       }
     },
+    "python:research/flywheel_selfplay/h184_adapter_components/analysis.py": {
+      "bytes": 14238,
+      "sha256": "08a7af01e725c68e041ac1a522ca097e4d81c1c58d46f319559a332263a1390e",
+      "classification": {
+        "role": "research",
+        "reason": "H184 preregistered CPU-only diagnostic: adapter-structure component ablation (PRIOR/KERNEL/ATTN output terms, proved bit-exact against the live adapter delta) under 0-update random weights against r882 on the H180/H176 family harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h184_adapter_components/monitor.py": {
+      "bytes": 5240,
+      "sha256": "9afc0055f458b056bae49b37b756a154051b29c0a945ce3fd76ef0309cea6356",
+      "classification": {
+        "role": "research",
+        "reason": "H184 preregistered CPU-only diagnostic: adapter-structure component ablation (PRIOR/KERNEL/ATTN output terms, proved bit-exact against the live adapter delta) under 0-update random weights against r882 on the H180/H176 family harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h184_adapter_components/runner.py": {
+      "bytes": 32752,
+      "sha256": "0fdf87d9091ca24af361ef8190c57b8881993f51fc5e18dbc446a42af43928a6",
+      "classification": {
+        "role": "research",
+        "reason": "H184 preregistered CPU-only diagnostic: adapter-structure component ablation (PRIOR/KERNEL/ATTN output terms, proved bit-exact against the live adapter delta) under 0-update random weights against r882 on the H180/H176 family harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h184_adapter_components/treatment.py": {
+      "bytes": 8723,
+      "sha256": "64ff420beaf466e444192b5bdf5bbd9714900b17e19abbe3a2eea484b001582e",
+      "classification": {
+        "role": "research",
+        "reason": "H184 preregistered CPU-only diagnostic: adapter-structure component ablation (PRIOR/KERNEL/ATTN output terms, proved bit-exact against the live adapter delta) under 0-update random weights against r882 on the H180/H176 family harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
     "python:research/flywheel_selfplay/h176_data_scaling/monitor.py": {
       "bytes": 5200,
       "sha256": "79079503077af4097423089e1b22d921049f047f2e641f7fb62fef30f1cfb100",
