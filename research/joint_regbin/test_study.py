@@ -41,7 +41,30 @@ from research.joint_regbin.protocol import (
 from research.joint_regbin.report import comparison, decide, elo, paired_records, render
 
 
+def _write_family_exclusion(
+    tmp_path, *, catalog_sha, keys=(), ids=(), monkeypatch=None
+):
+    from research.joint_regbin import admission
+
+    artifact = {
+        "schema": "jope.jrb01.sealed-family-exclusion/v1",
+        "identity_manifest_sha256": admission.PROTECTED_FAMILY_MANIFEST_SHA256,
+        "catalog_sha256": catalog_sha,
+        "family_keys": [{"kind": kind, "value": value} for kind, value in sorted(keys)],
+        "unkeyed_catalog_ids": sorted(ids),
+    }
+    path = tmp_path / "sealed-family-exclusion.json"
+    path.write_text(json.dumps(artifact, sort_keys=True, separators=(",", ":")) + "\n")
+    import hashlib
+
+    artifact_sha = hashlib.sha256(path.read_bytes()).hexdigest()
+    if monkeypatch is not None:
+        monkeypatch.setattr(admission, "FAMILY_EXCLUSION_SHA256", artifact_sha)
+    return path, artifact_sha
+
+
 def test_family_key_pool_manifest_certifies_catalog_eligibility_and_assigns_roles(
+    tmp_path,
     monkeypatch,
 ):
     from research.joint_regbin import admission
@@ -60,9 +83,6 @@ def test_family_key_pool_manifest_certifies_catalog_eligibility_and_assigns_role
                     "s3_bucket": "veox-jopedime-datasets-use2",
                     "train_rows": 12,
                     "train_sha256": f"{start + index + 300:064x}",
-                    # These are intentionally not family_keys inputs.
-                    "family_key_derived": "srcfile:must-not-be-used",
-                    "source_file": "must-not-be-used.csv",
                 }
             )
     catalog = {
@@ -76,7 +96,15 @@ def test_family_key_pool_manifest_certifies_catalog_eligibility_and_assigns_role
     }
 
     monkeypatch.setattr(admission, "CATALOG_V246_SHA256", "a" * 64)
-    manifest = build_family_key_pool_manifest(catalog, "a" * 64)
+    exclusion_path, exclusion_sha = _write_family_exclusion(
+        tmp_path, catalog_sha="a" * 64, monkeypatch=monkeypatch
+    )
+    manifest = build_family_key_pool_manifest(
+        catalog,
+        "a" * 64,
+        family_exclusion_path=exclusion_path,
+        family_exclusion_sha256=exclusion_sha,
+    )
 
     assert manifest["schema"] == "jope.joint-regbin.family-key-pools/v1"
     assert (
@@ -99,8 +127,8 @@ def test_family_key_pool_manifest_certifies_catalog_eligibility_and_assigns_role
     assert eligibility["status"] == "CATALOG_USABLE_NONSEALED_MEMBERSHIP_VERIFIED"
     assert eligibility["eligibility_verified"] is True
     assert eligibility["verified_family_count"] == 11
-    assert eligibility["withheld_family_count"] == 0
-    assert eligibility["withheld_dataset_count"] == 0
+    assert eligibility["excluded_family_count"] == 0
+    assert eligibility["excluded_dataset_count"] == 0
 
 
 def test_family_key_pool_preflight_rederives_and_stays_non_admitted(
@@ -139,10 +167,21 @@ def test_family_key_pool_preflight_rederives_and_stays_non_admitted(
 
     catalog_sha = sha256_file(catalog_path)
     monkeypatch.setattr(admission, "CATALOG_V246_SHA256", catalog_sha)
-    manifest = build_family_key_pool_manifest(
-        json.loads(catalog_path.read_text()), catalog_sha
+    exclusion_path, exclusion_sha = _write_family_exclusion(
+        tmp_path, catalog_sha=catalog_sha, monkeypatch=monkeypatch
     )
-    receipt = verify_family_key_pool_manifest(manifest, catalog_path)
+    manifest = build_family_key_pool_manifest(
+        json.loads(catalog_path.read_text()),
+        catalog_sha,
+        family_exclusion_path=exclusion_path,
+        family_exclusion_sha256=exclusion_sha,
+    )
+    receipt = verify_family_key_pool_manifest(
+        manifest,
+        catalog_path,
+        family_exclusion_path=exclusion_path,
+        family_exclusion_sha256=exclusion_sha,
+    )
     assert receipt["status"] == "METADATA_SPLIT_VERIFIED"
     assert receipt["family_count"] == 40
     assert receipt["fold_count"] == 5
@@ -150,7 +189,12 @@ def test_family_key_pool_preflight_rederives_and_stays_non_admitted(
     assert receipt["payloads_opened"] == 0
     manifest["fold_splits"] = {"0": {"train": {"binary": ["b-0"]}}}
     with pytest.raises(ValueError, match="differs from pinned catalog split"):
-        verify_family_key_pool_manifest(manifest, catalog_path)
+        verify_family_key_pool_manifest(
+            manifest,
+            catalog_path,
+            family_exclusion_path=exclusion_path,
+            family_exclusion_sha256=exclusion_sha,
+        )
 
 
 def test_family_key_pool_rejects_reintroduced_sealed_name_exclusion(monkeypatch):
@@ -179,9 +223,141 @@ def test_family_key_pool_rejects_reintroduced_sealed_name_exclusion(monkeypatch)
         build_family_key_pool_manifest(catalog, "a" * 64)
 
 
+def test_family_exclusion_artifact_is_pinned_and_closes_union_find_components(
+    tmp_path, monkeypatch
+):
+    from research.joint_regbin import admission
+
+    rows = []
+    specifications = [
+        ("r-sealed", "regression", "r", "sealed-fp", None, None),
+        ("r-bridge", "regression", "r", "sealed-fp", "srcfile:sealed", None),
+        ("r-linked", "regression", "r", None, "srcfile:sealed", None),
+        ("r-heldout", "regression", "r", "heldout-fp", None, "heldout"),
+        ("r-dev", "regression", "r", "dev-fp", None, "dev"),
+        ("r-eligible-3", "regression", "r", "reg-fp-3", None, None),
+        ("r-eligible-4", "regression", "r", "reg-fp-4", None, None),
+        ("r-eligible-5", "regression", "r", "reg-fp-5", None, None),
+        ("r-eligible-6", "regression", "r", "reg-fp-6", None, None),
+        ("b" * 16, "binary", "b", None, None, None),
+        ("b-allowed", "binary", "b", "allowed-fp", None, None),
+        ("b-allowed-3", "binary", "b", "bin-fp-3", None, None),
+        ("b-allowed-4", "binary", "b", "bin-fp-4", None, None),
+        ("b-allowed-5", "binary", "b", "bin-fp-5", None, None),
+        ("b-allowed-6", "binary", "b", "bin-fp-6", None, None),
+    ]
+    for index, (dataset_id, task, _prefix, key, derived, p3_status) in enumerate(
+        specifications
+    ):
+        row = {
+            "id": dataset_id,
+            "task": task,
+            "canonical_sha256": f"{index + 1:064x}",
+            "s3_bucket": "veox-jopedime-datasets-use2",
+            "train_rows": 12,
+            "train_sha256": f"{index + 100:064x}",
+        }
+        if key:
+            row.update(
+                family_key=key, family_key_source="provenance.dedupe_fingerprint"
+            )
+        if derived:
+            row.update(family_key_derived=derived)
+        if p3_status:
+            row["p3_status_fixture_only"] = p3_status
+        rows.append(row)
+    catalog = {
+        "inventory": {
+            "source_catalog": "catalog/v246.jsonl (LATEST=v246)",
+            "usable_records": len(rows),
+            "catalog_records": len(rows),
+            "sealed_name_matches_excluded": [],
+        },
+        "datasets": rows,
+    }
+    catalog_path = tmp_path / "catalog.json"
+    catalog_path.write_text(json.dumps(catalog))
+    import hashlib
+
+    catalog_sha = hashlib.sha256(catalog_path.read_bytes()).hexdigest()
+    monkeypatch.setattr(admission, "CATALOG_V246_SHA256", catalog_sha)
+    exclusion_path, exclusion_sha = _write_family_exclusion(
+        tmp_path,
+        catalog_sha=catalog_sha,
+        keys=[("dedupe_fingerprint", "sealed-fp")],
+        ids=["b" * 16],
+        monkeypatch=monkeypatch,
+    )
+    manifest = build_family_key_pool_manifest(
+        catalog,
+        catalog_sha,
+        family_exclusion_path=exclusion_path,
+        family_exclusion_sha256=exclusion_sha,
+    )
+    eligible = set(manifest["family_by_dataset"])
+    assert {"r-heldout", "r-dev", "b-allowed"} <= eligible
+    assert not eligible.intersection({"r-sealed", "r-bridge", "r-linked", "b" * 16})
+    role_ids = {
+        dataset_id
+        for split in manifest["fold_splits"].values()
+        for role in ("train", "val")
+        for task in admission.protocol.TASKS
+        for dataset_id in split[role][task]
+    }
+    assert {"r-heldout", "r-dev", "b-allowed"} <= role_ids
+    assert manifest["nonsealed_eligibility"]["excluded_dataset_count"] == 4
+    assert manifest["nonsealed_eligibility"]["excluded_family_count"] == 2
+
+
+def test_family_exclusion_artifact_missing_or_hash_mismatched_fails_closed(
+    tmp_path, monkeypatch
+):
+    from research.joint_regbin import admission
+
+    rows = [
+        {
+            "id": "r-0",
+            "task": "regression",
+            "canonical_sha256": "a" * 64,
+            "s3_bucket": "veox-jopedime-datasets-use2",
+            "train_rows": 12,
+            "train_sha256": "b" * 64,
+        }
+    ]
+    catalog = {
+        "inventory": {
+            "source_catalog": "catalog/v246.jsonl (LATEST=v246)",
+            "usable_records": 1,
+            "catalog_records": 1,
+            "sealed_name_matches_excluded": [],
+        },
+        "datasets": rows,
+    }
+    catalog_sha = "a" * 64
+    monkeypatch.setattr(admission, "CATALOG_V246_SHA256", catalog_sha)
+    path, actual_sha = _write_family_exclusion(
+        tmp_path, catalog_sha=catalog_sha, monkeypatch=monkeypatch
+    )
+    with pytest.raises(ValueError, match="exclusion artifact"):
+        build_family_key_pool_manifest(
+            catalog,
+            catalog_sha,
+            family_exclusion_path=tmp_path / "missing.json",
+            family_exclusion_sha256=actual_sha,
+        )
+    path.write_text(path.read_text() + " ")
+    with pytest.raises(ValueError, match="exclusion artifact"):
+        build_family_key_pool_manifest(
+            catalog,
+            catalog_sha,
+            family_exclusion_path=path,
+            family_exclusion_sha256=actual_sha,
+        )
+
+
 @pytest.mark.parametrize("claimed_nonsealed", [None, False, True])
 def test_family_key_pool_uses_owner_eligibility_not_self_reported_flags(
-    monkeypatch, claimed_nonsealed
+    tmp_path, monkeypatch, claimed_nonsealed
 ):
     """Synthetic identity graph only; no protected roster or payload is an input."""
     from research.joint_regbin import admission
@@ -215,7 +391,15 @@ def test_family_key_pool_uses_owner_eligibility_not_self_reported_flags(
         "datasets": rows,
     }
     monkeypatch.setattr(admission, "CATALOG_V246_SHA256", "a" * 64)
-    result = build_family_key_pool_manifest(catalog, "a" * 64)
+    exclusion_path, exclusion_sha = _write_family_exclusion(
+        tmp_path, catalog_sha="a" * 64, monkeypatch=monkeypatch
+    )
+    result = build_family_key_pool_manifest(
+        catalog,
+        "a" * 64,
+        family_exclusion_path=exclusion_path,
+        family_exclusion_sha256=exclusion_sha,
+    )
     family = result["family_by_dataset"]
     assert family["r-0"] == family["b-0"] == family["r-1"]
     assigned = {
@@ -227,8 +411,8 @@ def test_family_key_pool_uses_owner_eligibility_not_self_reported_flags(
     }
     assert assigned, "owner-approved usable catalog rows received no roles"
     assert result["fold_by_family"]
-    assert result["nonsealed_eligibility"]["withheld_family_count"] == 0
-    assert result["nonsealed_eligibility"]["withheld_dataset_count"] == 0
+    assert result["nonsealed_eligibility"]["excluded_family_count"] == 0
+    assert result["nonsealed_eligibility"]["excluded_dataset_count"] == 0
     assert result["eligibility_verified"] is False
     assert result["payloads_opened"] == 0
 

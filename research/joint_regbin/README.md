@@ -118,29 +118,32 @@ study manifest or scientific result.
 
 ### T1350 catalog-eligible family folds and role guard
 
-`admission.build_family_key_pool_manifest(...)` records catalog IDs and exactly
-those keys returned by the pinned `family_keys.attrs_from_catalog_row()` and
-`family_keys.derive()` calls. Family components preserve shared and transitive
-returned keys across both tasks. No source-file, URL-parent, owner-alias, or
-protected-roster inputs are added.
+`admission.build_family_key_pool_manifest(...)` builds family components from
+the pinned `family_keys` projection and catalog-recorded dedupe/source-file
+keys. Shared and transitive keys are unioned across regression and binary rows.
+The only protected input is an owner-pinned identity-only exclusion artifact;
+no roster columns or payloads are read.
 
-ENG:watcher t2035 and t1350 authorize the pinned v246 catalog's usable rows as
-nonsealed TRAIN/validation candidates. Its inventory records 14 sealed-name
-matches excluded from the usable rows; the builder checks that the exclusion
-count reconciles with `catalog_records` and that none of those IDs appears in
-`datasets`. `nonsealed_eligibility` records this metadata-only basis and the
-verified family/dataset counts. The pool assigns family-grouped five-fold
-splits with seed 136 and re-derives them from the pinned catalog. No protected
-roster or payload is read. This is eligibility for role planning, not worker
-admission or qualification: the pool remains `eligibility_verified:false`,
-and the catalog's train hashes do not provide candidate tensors or the
-qualified worker/checkpoint required for an executable study. No campaign
-starts.
+ENG:watcher t2035/t1350/t1410 D4 authorizes the pinned v246 usable catalog after
+excluding every family component named by
+`JRB01_SEALED_FAMILY_EXCLUSION.json` (SHA-256
+`ca0eff866a87548803feb03e50f8e7e99b74993b2e1d0b8ce56e3ec1b184a651`). The
+artifact contains family keys and catalog IDs of unkeyed sealed-family members
+only. The builder fails closed if it is absent, unreadable, or does not match
+the code-pinned hash, then re-derives family closure across the catalog. P3
+heldout/dev families remain eligible. The analysis-only overlap receipt reports
+153 excluded dataset IDs, zero protected IDs or keys in the eligible pool,
+3,335 regression and 843 binary candidates, and five family-grouped folds.
+No protected roster columns or payloads are read. This is role planning, not
+worker admission or qualification: the pool remains
+`eligibility_verified:false`, and the catalog's train hashes do not provide
+candidate tensors or the qualified worker/checkpoint required for an
+executable study. No campaign starts.
 
 ### Train-only candidate tensor builder (ENG:watcher R22)
 
 `candidate_builder.py` supplies the train-only cache construction seam. It
-re-derives the catalog-eligible family folds and requires a separate ADMITTED
+re-derives the artifact-pinned family folds and requires a separate ADMITTED
 role manifest that passes `admission.rederive_role_manifest`. Catalog folds
 alone cannot authorize payload reads. When a reviewed role admission exists,
 the builder reads only

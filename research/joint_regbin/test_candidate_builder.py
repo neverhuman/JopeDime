@@ -30,8 +30,9 @@ def rederive_synthetic_role_admission(monkeypatch):
     monkeypatch.setattr(
         builder.admission,
         "verify_family_key_pool_manifest",
-        lambda manifest, _catalog: {
+        lambda manifest, _catalog, **_kwargs: {
             "catalog_sha256": manifest["catalog_sha256"],
+            "family_exclusion_sha256": builder.admission.FAMILY_EXCLUSION_SHA256,
             "eligibility_verified": False,
             "fold_count": 5,
             "nonsealed_eligibility": {"eligibility_verified": True},
@@ -49,6 +50,7 @@ def _inputs(task="regression", role="train"):
         "status": "FAMILY_KEY_SPLITS_NOT_ADMITTED",
         "eligibility_verified": False,
         "catalog_sha256": builder.CATALOG_V246_SHA256,
+        "family_exclusion_sha256": builder.admission.FAMILY_EXCLUSION_SHA256,
         "train_metadata_by_dataset": {
             dataset: {"train_sha256": train_sha, "train_rows": 50, "task": task}
         },
@@ -156,6 +158,12 @@ def test_catalog_family_folds_still_require_complete_role_admission():
         )["task"]
         == context["task"]
     )
+    pools["family_exclusion_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="exclusion artifact pin mismatch"):
+        builder.validate_catalog_train_context(
+            pools, role_manifest, context, catalog_row
+        )
+    pools["family_exclusion_sha256"] = builder.admission.FAMILY_EXCLUSION_SHA256
     role_manifest["admission_status"] = "BLOCKED_INCOMPLETE_EVIDENCE"
     role_manifest["eligibility_verified"] = False
     s3 = _S3(b"{}", b"")

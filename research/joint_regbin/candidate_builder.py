@@ -66,6 +66,8 @@ def validate_catalog_train_context(
     catalog_row: dict,
     *,
     catalog_path: Path | None = None,
+    family_exclusion_path: Path | None = None,
+    family_exclusion_sha256: str | None = None,
 ) -> dict:
     """Bind a train-only context to rederived role admission and family identity.
 
@@ -83,6 +85,14 @@ def validate_catalog_train_context(
         family_pools.get("catalog_sha256") == CATALOG_V246_SHA256,
         "family-key pool catalog pin mismatch",
     )
+    expected_exclusion_sha = (
+        family_exclusion_sha256 or admission.FAMILY_EXCLUSION_SHA256
+    )
+    _require(
+        family_pools.get("family_exclusion_sha256") == expected_exclusion_sha
+        and expected_exclusion_sha == admission.FAMILY_EXCLUSION_SHA256,
+        "family-key pool exclusion artifact pin mismatch",
+    )
     _require(
         family_pools.get("fold_splits")
         and family_pools.get("fold_by_family")
@@ -96,11 +106,15 @@ def validate_catalog_train_context(
     )
     source_catalog = catalog_path or admission.DEFAULT_ROLE_CATALOG
     verified_pool = admission.verify_family_key_pool_manifest(
-        family_pools, source_catalog
+        family_pools,
+        source_catalog,
+        family_exclusion_path=family_exclusion_path,
+        family_exclusion_sha256=expected_exclusion_sha,
     )
     _require(
         verified_pool.get("catalog_sha256") == CATALOG_V246_SHA256
         and verified_pool.get("eligibility_verified") is False
+        and verified_pool.get("family_exclusion_sha256") == expected_exclusion_sha
         and verified_pool.get("fold_count") == 5
         and verified_pool.get("nonsealed_eligibility", {}).get("eligibility_verified")
         is True
@@ -219,6 +233,8 @@ def validate_catalog_train_context(
         "_catalog_row": catalog_row,
         "_family_pools": family_pools,
         "_catalog_path": catalog_path,
+        "_family_exclusion_path": family_exclusion_path,
+        "_family_exclusion_sha256": expected_exclusion_sha,
     }
 
 
@@ -246,6 +262,8 @@ def fetch_train_csv(
         context_identity["_context"],
         context_identity["_catalog_row"],
         catalog_path=context_identity["_catalog_path"],
+        family_exclusion_path=context_identity["_family_exclusion_path"],
+        family_exclusion_sha256=context_identity["_family_exclusion_sha256"],
     )
     _require(
         rechecked.get("role_admission_sha256")
