@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 from common import (
+    exact_case_passed,
     ROOT,
     Context,
     ProviderError,
@@ -142,7 +143,7 @@ def qualify(ctx: Context, run=None) -> int:
         return result.returncode
 
     counts = rust_counts(result.stdout)
-    if counts != EXPECTED_COUNTS or f"test {TEST} ... ok" not in result.stdout:
+    if counts != EXPECTED_COUNTS or not exact_case_passed(result.stdout, TEST):
         raise ProviderError("S2 requires exactly one passing native determinism case")
 
     payload = {
