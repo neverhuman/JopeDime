@@ -15,6 +15,7 @@ from pathlib import Path
 import platform
 import re
 import shutil
+import socket
 import subprocess
 import sys
 
@@ -211,6 +212,48 @@ def run_candidate(candidate_value: str, output: str) -> dict:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.mkdir()
 
+    work, home, tmp, tool_path = (
+        out / name for name in ("work", "home", "tmp", "no-toolchain")
+    )
+    for directory in (work, home, tmp, tool_path):
+        directory.mkdir()
+    if not toolchain_path_is_empty(tool_path):
+        raise D1DevError("clean-host toolchain PATH is not an empty directory")
+    profile = out / "no-network.sb"
+    profile.write_text(
+        "(version 1)\n(allow default)\n(deny network*)\n", encoding="utf-8"
+    )
+
+    network_log = out / "network-probe.log"
+    with socket.socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        listener.listen(1)
+        port = listener.getsockname()[1]
+        probe = subprocess.run(
+            [
+                "sandbox-exec",
+                "-f",
+                str(profile),
+                "/usr/bin/curl",
+                "-v",
+                "--connect-timeout",
+                "1",
+                "--max-time",
+                "2",
+                "-sS",
+                "-o",
+                "/dev/null",
+                f"http://127.0.0.1:{port}/",
+            ],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    network_output = probe.stdout + probe.stderr
+    network_log.write_text(network_output, encoding="utf-8")
+    if probe.returncode == 0 or "Operation not permitted" not in network_output:
+        raise D1DevError("macOS sandbox did not deny a live loopback connection")
+
     link_log = out / "link-audit.txt"
     audit = subprocess.run(
         ["bash", str(ROOT / "deploy/ci/link-audit.sh"), str(executable), "fused-cpu"],
@@ -222,34 +265,12 @@ def run_candidate(candidate_value: str, output: str) -> dict:
     if audit.returncode:
         raise D1DevError("Darwin OS-library link audit failed")
 
-    clean_log = out / "clean-host-driver.log"
-    driver = subprocess.run(
-        [
-            "bash",
-            str(ROOT / "deploy/appliance/test-clean-host-macos.sh"),
-            str(executable),
-        ],
-        text=True,
-        capture_output=True,
-        check=False,
+    toolchain_absent = toolchain_path_is_empty(tool_path) and all(
+        shutil.which(name, path=str(tool_path)) is None
+        for name in ("python", "python3", "rustc", "node")
     )
-    clean_log.write_text(driver.stdout + driver.stderr, encoding="utf-8")
-    if driver.returncode:
-        raise D1DevError("native macOS clean-host discovery/prediction run failed")
-    try:
-        generic_receipt = json.JSONDecoder().raw_decode(
-            driver.stdout[driver.stdout.rfind("{") :]
-        )[0]
-    except (ValueError, json.JSONDecodeError) as error:
-        raise D1DevError("macOS clean-host driver receipt was not readable") from error
-    work = Path(generic_receipt["work"])
-    home = Path(generic_receipt["home"])
-    tmp = Path(generic_receipt["tmp"])
-    profile = work.parent / "no-network.sb"
-    tool_path = work.parent / "no-toolchain"
-    toolchain_absent = toolchain_path_is_empty(tool_path)
     if not toolchain_absent:
-        raise D1DevError("clean-host toolchain PATH is not an empty directory")
+        raise D1DevError("toolchain executable is visible in the clean-host PATH")
     app_env = {
         "HOME": str(home),
         "JOPEDIME_HOME": str(home),
@@ -261,41 +282,68 @@ def run_candidate(candidate_value: str, output: str) -> dict:
         "RAYON_NUM_THREADS": "1",
     }
 
-    def app(*args: str, stdout_path: Path | None = None) -> None:
-        output_stream = (
-            stdout_path.open("w", encoding="utf-8")
-            if stdout_path
-            else subprocess.DEVNULL
+    def app(*args: str) -> subprocess.CompletedProcess[str]:
+        result = subprocess.run(
+            [
+                "sandbox-exec",
+                "-f",
+                str(profile),
+                "/usr/bin/env",
+                "-i",
+                *(f"{key}={value}" for key, value in app_env.items()),
+                str(executable),
+                *args,
+            ],
+            cwd=work,
+            text=True,
+            capture_output=True,
+            check=False,
         )
-        try:
-            result = subprocess.run(
-                [
-                    "sandbox-exec",
-                    "-f",
-                    str(profile),
-                    "/usr/bin/env",
-                    "-i",
-                    *(f"{key}={value}" for key, value in app_env.items()),
-                    str(executable),
-                    *args,
-                ],
-                cwd=work,
-                text=True,
-                stderr=subprocess.PIPE,
-                check=False,
-                stdout=output_stream,
-            )
-        finally:
-            if stdout_path:
-                output_stream.close()
         if result.returncode:
             raise D1DevError(
                 f"native D1 command failed ({args[0]}): {result.stderr[-1500:]}"
             )
+        return result
+
+    version = app("--version", "--json")
+    version_path = out / "version.json"
+    version_path.write_text(version.stdout, encoding="utf-8")
+    try:
+        identity = json.loads(version.stdout)
+    except json.JSONDecodeError as error:
+        raise D1DevError("native D1 version output is not JSON") from error
+    if (
+        identity.get("source_sha40") != source_sha
+        or identity.get("target") != "aarch64-apple-darwin"
+        or identity.get("features", {}).get("dev_keys") is not False
+        or identity.get("trusts_development_key") is not False
+    ):
+        raise D1DevError(
+            "native D1 executable identity differs from the pinned DEV-BUILD"
+        )
+
+    methods = app("methods", "--task", "regression", "--json")
+    (out / "methods.json").write_text(methods.stdout, encoding="utf-8")
+    try:
+        method_inventory = json.loads(methods.stdout)
+    except json.JSONDecodeError as error:
+        raise D1DevError("native method discovery output is not JSON") from error
+    discovered = any(
+        item.get("kind") == "native" and item.get("executable") is True
+        for item in method_inventory.get("methods", [])
+    )
+    if not discovered:
+        raise D1DevError("native method discovery returned no executable method")
 
     train = work / "train.csv"
+    train.write_text(
+        "x,y\n" + "".join(f"{index},{2 * index + 1}\n" for index in range(48)),
+        encoding="utf-8",
+    )
+    rows = work / "rows.csv"
+    rows.write_text("x\n3\n17\n31\n", encoding="utf-8")
     model_root = work / "models"
-    app(
+    fit = app(
         "fit",
         "--train",
         str(train),
@@ -314,15 +362,35 @@ def run_candidate(candidate_value: str, output: str) -> dict:
         "--threads",
         "1",
         "--json",
-        stdout_path=out / "fit.json",
     )
+    (out / "fit.json").write_text(fit.stdout, encoding="utf-8")
     models = sorted(model_root.glob("sha256-*"))
     if len(models) != 1 or not models[0].is_dir():
         raise D1DevError("native D1 synthetic fit did not produce exactly one model")
+
+    predict = app(
+        "predict",
+        "--model",
+        str(models[0]),
+        "--input",
+        str(rows),
+        "--output",
+        str(out / "predictions.csv"),
+        "--device",
+        "cpu",
+        "--threads",
+        "1",
+        "--json",
+    )
+    (out / "predict.json").write_text(predict.stdout, encoding="utf-8")
+    predictions = out / "predictions.csv"
+    if not predictions.is_file() or len(predictions.read_text().splitlines()) != 4:
+        raise D1DevError("native D1 prediction did not return all synthetic rows")
+
     exports: dict[str, bool] = {}
     for language in ("python", "rust", "javascript"):
         target = out / f"export-{language}.bin"
-        app(
+        export = app(
             "model",
             "export",
             "--model",
@@ -331,8 +399,8 @@ def run_candidate(candidate_value: str, output: str) -> dict:
             language,
             "--output",
             str(target),
-            stdout_path=out / f"export-{language}.json",
         )
+        (out / f"export-{language}.json").write_text(export.stdout, encoding="utf-8")
         exports[language] = target.is_file() and target.stat().st_size > 0
         if not exports[language]:
             raise D1DevError(f"native D1 {language} export is empty")
@@ -350,16 +418,19 @@ def run_candidate(candidate_value: str, output: str) -> dict:
         "profile": "full",
         "features": FEATURES,
         "checks": {
-            "network_disabled": generic_receipt.get("network_probe") == "passed",
+            "network_disabled": True,
             "toolchain_absent": toolchain_absent,
-            "discovery": True,
-            "prediction": True,
+            "discovery": discovered,
+            "prediction": predictions.is_file(),
             "link_audit_os_libraries_only": True,
             "exports": exports,
         },
         "dev_build_package_sha256": digest(candidate / "DEV-BUILD.json"),
         "evidence": {
-            "network_discovery_prediction": str(clean_log),
+            "network_probe": str(network_log),
+            "version": str(version_path),
+            "method_discovery": str(out / "methods.json"),
+            "prediction": str(predictions),
             "link_audit": str(link_log),
             "exports": {name: str(out / f"export-{name}.bin") for name in exports},
         },

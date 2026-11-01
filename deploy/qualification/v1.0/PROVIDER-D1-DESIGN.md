@@ -55,8 +55,10 @@ When the helper is staged outside a clean source checkout, pass `--repo-root <ch
 the `package` or `run` subcommand. The run executes the existing macOS network-denied clean-host
 driver, then checks local fit/prediction and non-empty Python, Rust and JavaScript exports. Its
 v2-shaped receipt is labeled `DEV-BUILD`, has `qualification: NOT_QUALIFIED`, and is not accepted
-as a signed-candidate D1 receipt (`providers/d1.py` requires `status: PASS`). It does not sign or
-qualify RC2.
+as a signed-candidate D1 receipt (`providers/d1.py` requires `status: PASS`). The rehearsal runs
+its own synthetic discovery, local fit, prediction and exports inside the network-denied sandbox;
+the generic REL-04 driver requires an authenticated release package and is not used. It does not
+sign or qualify RC2.
 
 ## Aggregate invocation
 
