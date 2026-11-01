@@ -29,8 +29,19 @@ def expected_pins():
         "schema": "jope.q1-cut/v1",
         "hash": "sha256(UTF-8 canonical JSON)",
         "canonical_json": "recursively sorted object keys, compact separators, ensure_ascii=false; arrays retain order",
-        "fields": ["dataset_sha256", "train_blob_sha256", "train_rows", "target", "feature_columns", "folds"],
-        "fold_shape": {"repeat": "u8", "train": "ordered zero-based FIT row indexes", "validation": "ordered zero-based FIT row indexes"},
+        "fields": [
+            "dataset_sha256",
+            "train_blob_sha256",
+            "train_rows",
+            "target",
+            "feature_columns",
+            "folds",
+        ],
+        "fold_shape": {
+            "repeat": "u8",
+            "train": "ordered zero-based FIT row indexes",
+            "validation": "ordered zero-based FIT row indexes",
+        },
         "qualification_boundary": "source-binding-only-not-qualification",
     }
     if protocol.get("cut") != expected_cut:
