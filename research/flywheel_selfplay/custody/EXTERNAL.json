@@ -1,0 +1,37 @@
+{
+  "schema": "jope.external-custody/v1",
+  "recovery_repository": "https://github.com/neverhuman/JopeDime",
+  "recovery_commit": "ab31d7ec4c5c75aec9c52c9dc83937f5b7b34b88",
+  "cache_layout": "sha256/<original manifest SHA-256>",
+  "reason": "Historical RES-02 bulk binaries exceed the unchanged 5 MiB tracked-file cap; pins and original MANIFEST.json remain unchanged.",
+  "files": [
+    {
+      "path": "/home/ubuntu/.local/lib/python3.12/site-packages/numpy/core/_multiarray_umath.cpython-312-x86_64-linux-gnu.so",
+      "sha256": "6a650810a8735cbdb988f74729973740a337645dd1585fef696e73e2dbc65beb",
+      "bytes": 7463681,
+      "git_path": "research/flywheel_selfplay/custody/files/home/ubuntu/.local/lib/python3.12/site-packages/numpy/core/_multiarray_umath.cpython-312-x86_64-linux-gnu.so",
+      "git_object_id": "96fceb4f47336c6ac3b292b9f6fb58b07a66600e"
+    },
+    {
+      "path": "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt",
+      "sha256": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
+      "bytes": 101734579,
+      "git_path": "research/flywheel_selfplay/custody/files/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt",
+      "git_object_id": "c81a249bee5361e1255a402dae903f0680549fea"
+    },
+    {
+      "path": "/home/ubuntu/jope-data/gov-03/custody/round-782.pt",
+      "sha256": "427b0d4608e94f60f5f97d79b5c1c4ce9a7efd59d17e7853f714e901f3a4af0c",
+      "bytes": 7493476,
+      "git_path": "research/flywheel_selfplay/custody/files/home/ubuntu/jope-data/gov-03/custody/round-782.pt",
+      "git_object_id": "bf545f8bf930267e8a8f6373ce8771db73929b01"
+    },
+    {
+      "path": "/home/ubuntu/jope_plan/evidence/RES-01/frozen-source/python/src/jope/_telemetry.cpython-312-x86_64-linux-gnu.so",
+      "sha256": "93acd3087e04b5b26d6ff74a47752d463bd7104b3ad1c32b5642e992676bc76f",
+      "bytes": 66754912,
+      "git_path": "research/flywheel_selfplay/custody/files/home/ubuntu/jope_plan/evidence/RES-01/frozen-source/python/src/jope/_telemetry.cpython-312-x86_64-linux-gnu.so",
+      "git_object_id": "bdf7b1af1f494402e942e89755351e1fd1acb9d4"
+    }
+  ]
+}

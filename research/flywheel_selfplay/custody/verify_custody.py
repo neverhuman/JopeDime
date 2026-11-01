@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
 """Verify every vendored file listed by the RES-01 custody manifest."""
 
+import argparse
+import contextlib
 import hashlib
+import io
 import json
 import os
 import posixpath
 import stat
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 CUSTODY_DIR = Path(__file__).resolve().parent
 MANIFEST_PATH = CUSTODY_DIR / "MANIFEST.json"
 FILES_DIR = CUSTODY_DIR / "files"
+EXTERNAL_PATH = CUSTODY_DIR / "EXTERNAL.json"
+REPO_ROOT = CUSTODY_DIR.parents[2]
 CHUNK_SIZE = 1024 * 1024
 FILE_COLLECTIONS = ("import_files", "assets", "evaluator.compiled_source_inputs")
 
@@ -142,21 +149,110 @@ def _actual_files(root: Path) -> set[Path]:
     return actual
 
 
-def main() -> int:
+def _external_entries(document: dict, expected: dict) -> dict[Path, dict]:
+    if (
+        not isinstance(document, dict)
+        or document.get("schema") != "jope.external-custody/v1"
+    ):
+        raise ValueError("unknown external custody schema")
+    commit = document.get("recovery_commit", "")
+    if len(commit) != 40 or any(c not in "0123456789abcdef" for c in commit):
+        raise ValueError("external custody needs an immutable full Git commit")
+    rows = document.get("files")
+    if not isinstance(rows, list) or not rows:
+        raise ValueError("external custody files must be a non-empty list")
+    external = {}
+    for row in rows:
+        relative = Path(row["path"].lstrip("/"))
+        if row["path"] != "/" + relative.as_posix() or relative not in expected:
+            raise ValueError(
+                "external file is absent from the original custody manifest"
+            )
+        if relative in external or (row["sha256"], row["bytes"]) != expected[relative]:
+            raise ValueError("external pin differs from the original custody manifest")
+        if row["git_path"] != "research/flywheel_selfplay/custody/files/" + str(
+            relative
+        ):
+            raise ValueError(
+                "external recovery path differs from the original custody path"
+            )
+        object_id = row.get("git_object_id", "")
+        if len(object_id) != 40 or any(c not in "0123456789abcdef" for c in object_id):
+            raise ValueError("invalid external Git object identity")
+        external[relative] = dict(row, recovery_commit=commit)
+    return external
+
+
+@contextlib.contextmanager
+def _open_external(row: dict, root: Path | None):
+    if root is not None:
+        target = root / "sha256" / row["sha256"]
+        if not root.is_absolute() or any(
+            p.is_symlink() for p in (target, *target.parents)
+        ):
+            raise ValueError("external cache must use absolute, non-symlink paths")
+        if not stat.S_ISREG(target.lstat().st_mode):
+            raise ValueError("external cache payload is not a regular file")
+        with target.open("rb") as stream:
+            yield stream
+        return
+    # Existing immutable history is a recovery route, not permission to put payloads back in HEAD.
+    git = ["git", "-C", str(REPO_ROOT)]
+    try:
+        object_id = subprocess.check_output(
+            git
+            + ["rev-parse", "--verify", row["recovery_commit"] + ":" + row["git_path"]],
+            stderr=subprocess.PIPE,
+            text=True,
+        ).strip()
+    except subprocess.CalledProcessError as error:
+        raise ValueError(
+            "pinned Git recovery unavailable; supply --external-root CACHE"
+        ) from error
+    if object_id != row["git_object_id"]:
+        raise ValueError("external Git recovery object identity differs")
+    with subprocess.Popen(
+        git + ["cat-file", "blob", object_id],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    ) as process:
+        try:
+            yield process.stdout
+        finally:
+            process.stdout.close()
+            error = process.stderr.read().decode(errors="replace")
+            if process.wait() != 0:
+                raise ValueError(
+                    "cannot read pinned Git recovery blob: " + error.strip()
+                )
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--external-root", type=Path, help="cache containing sha256/<digest> files"
+    )
+    parser.add_argument("--self-test", action="store_true")
+    args = parser.parse_args(argv)
+    if args.self_test:
+        self_test()
+        return 0
     try:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
         expected, references = _manifest_entries(manifest)
+        external = _external_entries(json.loads(EXTERNAL_PATH.read_text()), expected)
         files_root = FILES_DIR.resolve(strict=True)
         files_root.relative_to(CUSTODY_DIR.resolve(strict=True))
         if FILES_DIR.is_symlink() or not files_root.is_dir():
             raise ValueError("custody files path must be a real directory")
         actual = _actual_files(files_root)
-    except (OSError, json.JSONDecodeError, ValueError) as exc:
+    except (OSError, KeyError, TypeError, json.JSONDecodeError, ValueError) as exc:
         _fail(str(exc))
         return 1
 
-    missing = sorted(set(expected) - actual)
-    extra = sorted(actual - set(expected))
+    vendored = set(expected) - set(external)
+    missing = sorted(vendored - actual)
+    extra = sorted(actual - vendored)
     if missing or extra:
         for path in missing[:10]:
             _fail(f"missing vendored file: {path}")
@@ -169,14 +265,21 @@ def main() -> int:
     for relative, (expected_hash, expected_size) in expected.items():
         target = FILES_DIR / relative
         try:
-            resolved = target.resolve(strict=True)
-            resolved.relative_to(files_root)
-            if target.is_symlink() or not resolved.is_file():
-                raise ValueError("not a regular file inside the custody directory")
-
             digest = hashlib.sha256()
             size = 0
-            with resolved.open("rb") as file:
+            with contextlib.ExitStack() as stack:
+                if relative in external:
+                    file = stack.enter_context(
+                        _open_external(external[relative], args.external_root)
+                    )
+                else:
+                    resolved = target.resolve(strict=True)
+                    resolved.relative_to(files_root)
+                    if target.is_symlink() or not resolved.is_file():
+                        raise ValueError(
+                            "not a regular file inside the custody directory"
+                        )
+                    file = stack.enter_context(resolved.open("rb"))
                 while chunk := file.read(CHUNK_SIZE):
                     digest.update(chunk)
                     size += len(chunk)
@@ -203,9 +306,133 @@ def main() -> int:
 
     print(
         f"verified {len(expected)} unique custody files from {references} manifest entries "
-        f"across {', '.join(FILE_COLLECTIONS)}"
+        f"across {', '.join(FILE_COLLECTIONS)}; "
+        f"{len(vendored)} vendored and {len(external)} external (all bytes checked)"
     )
     return 0
+
+
+def self_test() -> None:
+    # End-to-end controls exercise all three manifest collections without opening model payloads.
+    with tempfile.TemporaryDirectory(prefix="custody-controls-") as directory:
+        root = Path(directory)
+        files = root / "files"
+        files.mkdir()
+        cache = root / "cache"
+        (cache / "sha256").mkdir(parents=True)
+        content = b"frozen binary input"
+        digest = hashlib.sha256(content).hexdigest()
+        pinned = {"path": "/binary", "sha256": digest, "bytes": len(content)}
+        source = b"source"
+        source_hash = hashlib.sha256(source).hexdigest()
+        (files / "asset").write_bytes(source)
+        (files / "src").mkdir()
+        (files / "src/input.rs").write_bytes(source)
+        manifest = {
+            "import_files": [pinned],
+            "assets": [{"path": "/asset", "sha256": source_hash, "bytes": len(source)}],
+            "evaluator": {
+                "source_root": "/src",
+                "compiled_source_inputs": [
+                    {
+                        "path": "/src/input.rs",
+                        "repo_path": "input.rs",
+                        "actual_sha256": source_hash,
+                        "revision_sha256": source_hash,
+                        "matches_revision": True,
+                    }
+                ],
+            },
+        }
+        external = {
+            "schema": "jope.external-custody/v1",
+            "recovery_commit": "a" * 40,
+            "files": [
+                dict(
+                    pinned,
+                    git_object_id="b" * 40,
+                    git_path="research/flywheel_selfplay/custody/files/binary",
+                )
+            ],
+        }
+        manifest_path = root / "MANIFEST.json"
+        external_path = root / "EXTERNAL.json"
+        manifest_path.write_text(json.dumps(manifest))
+        external_path.write_text(json.dumps(external))
+        payload = cache / "sha256" / digest
+        payload.write_bytes(content)
+        names = {
+            "CUSTODY_DIR": root,
+            "FILES_DIR": files,
+            "MANIFEST_PATH": manifest_path,
+            "EXTERNAL_PATH": external_path,
+        }
+        previous = {key: globals()[key] for key in names}
+        globals().update(names)
+        count = 0
+
+        def check(expected_code):
+            nonlocal count
+            with (
+                contextlib.redirect_stdout(io.StringIO()),
+                contextlib.redirect_stderr(io.StringIO()),
+            ):
+                assert main(["--external-root", str(cache)]) == expected_code
+            count += 1
+
+        try:
+            check(0)
+            payload.write_bytes(b"x" * len(content))
+            check(1)  # same-size corruption
+            payload.write_bytes(content[:-1])
+            check(1)  # truncation
+            payload.unlink()
+            check(1)  # unavailable is not PASS
+            payload.symlink_to(files / "asset")
+            check(1)
+            payload.unlink()
+            payload.write_bytes(content)
+            (files / "extra").write_bytes(b"extra")
+            check(1)
+            (files / "extra").unlink()
+            external["files"][0]["bytes"] += 1
+            external_path.write_text(json.dumps(external))
+            check(1)
+            external["files"][0]["bytes"] -= 1
+            external["files"].append(dict(external["files"][0]))
+            external_path.write_text(json.dumps(external))
+            check(1)
+            external["files"].pop()
+            original_git_path = external["files"][0]["git_path"]
+            external["files"][0]["git_path"] = "wrong/path"
+            external_path.write_text(json.dumps(external))
+            check(1)
+            external["files"][0]["git_path"] = original_git_path
+            external_path.write_text(json.dumps(external))
+            hashes = cache / "sha256"
+            saved = cache / "saved"
+            hashes.rename(saved)
+            hashes.symlink_to(saved, target_is_directory=True)
+            check(1)
+            hashes.unlink()
+            saved.rename(hashes)
+            from unittest.mock import patch
+
+            for result in (subprocess.CalledProcessError(128, "git"), "c" * 40):
+                with patch(
+                    "subprocess.check_output",
+                    side_effect=result if isinstance(result, Exception) else None,
+                    return_value=result if isinstance(result, str) else None,
+                ):
+                    with (
+                        contextlib.redirect_stdout(io.StringIO()),
+                        contextlib.redirect_stderr(io.StringIO()),
+                    ):
+                        assert main([]) == 1
+                    count += 1
+        finally:
+            globals().update(previous)
+    print(f"external custody verifier controls: {count} passed")
 
 
 if __name__ == "__main__":
