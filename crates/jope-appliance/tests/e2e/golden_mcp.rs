@@ -83,19 +83,31 @@ a = p.parse_args()
 out = Path(a.out); out.mkdir(parents=True, exist_ok=False)
 home = Path(a.home); home.mkdir(parents=True, mode=0o700, exist_ok=False)
 assert '/tmp/' not in str(home.resolve())
-host_cpus = len(os.sched_getaffinity(0))
+host_cpus = int(os.environ.get('JOPE_INT01_HOST_CPUS', os.cpu_count() or 1))
+assert 0 < host_cpus <= (os.cpu_count() or 1)
 assert os.getpriority(os.PRIO_PROCESS, 0) >= 10
 assert os.getloadavg()[0] < .85 * host_cpus
 assert shutil.disk_usage(home).free >= 100 * 2**30
-os.sched_setaffinity(0, sorted(os.sched_getaffinity(0))[:4])
+if hasattr(os, 'sched_setaffinity'):
+    os.sched_setaffinity(0, sorted(os.sched_getaffinity(0))[:4])
 pin = json.loads(Path(a.pin_manifest).read_text()) if a.pin_manifest else {'source': a.source, 'pin': a.binary}
 assert pin['source'] == a.source
 binary_file = open(pin['pin'], 'rb')
-actual_binary_sha256 = hashlib.file_digest(binary_file, 'sha256').hexdigest()
+binary_hash = hashlib.sha256()
+for chunk in iter(lambda: binary_file.read(1024 * 1024), b''):
+    binary_hash.update(chunk)
+actual_binary_sha256 = binary_hash.hexdigest()
 if 'sha256' in pin:
     assert actual_binary_sha256 == pin['sha256']
 pin['sha256'] = actual_binary_sha256
-binary = f'/proc/{os.getpid()}/fd/{binary_file.fileno()}'
+binary = f'/proc/{os.getpid()}/fd/{binary_file.fileno()}' if Path('/proc/self/fd').is_dir() else pin['pin']
+def binary_signature(stat):
+    return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+binary_identity = binary_signature(os.fstat(binary_file.fileno()))
+def check_binary():
+    assert binary_signature(os.fstat(binary_file.fileno())) == binary_identity, 'opened binary changed'
+    assert binary_signature(os.stat(pin['pin'])) == binary_identity, 'binary path changed'
+check_binary()
 raw = Path(a.csv).read_bytes()
 assert hashlib.sha256(raw).hexdigest() == a.csv_sha256
 table = list(csv.reader(io.StringIO(raw.decode())))
@@ -115,7 +127,8 @@ report = {'source': a.source, 'binary_sha256': pin['sha256'], 'binary_original':
           'input_sha256': a.csv_sha256, 'input_rows': 960, 'input_scope': 'approved TRAIN only',
           'started': datetime.datetime.now(datetime.timezone.utc).isoformat(),
           'nice': os.getpriority(os.PRIO_PROCESS, 0), 'host_cpus': host_cpus,
-          'affinity': sorted(os.sched_getaffinity(0)), 'load_before': os.getloadavg()[0],
+          'affinity': sorted(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else None,
+          'host_capacity_source': 'JOPE_INT01_HOST_CPUS launcher pin or online logical CPUs', 'load_before': os.getloadavg()[0],
           'checks': {}, 'full_AG1_qualified': False}
 frames = []; children = []; client = None; daemon = None
 
@@ -126,6 +139,7 @@ def check(name, condition):
     report['checks'][name] = bool(condition)
 
 def command(argv, timeout=20):
+    check_binary()
     result = subprocess.run([binary, *argv], env=env, capture_output=True,
                             text=True, timeout=timeout)
     assert result.returncode == 0, (argv[0], result.returncode, result.stderr)
@@ -133,6 +147,7 @@ def command(argv, timeout=20):
 
 class Rpc:
     def __init__(self):
+        check_binary()
         with (out / f'mcp-{len(children)}.stderr').open('wb') as log:
             self.p = subprocess.Popen([binary, 'mcp'], env=env, stdin=subprocess.PIPE,
                                       stdout=subprocess.PIPE, stderr=log, bufsize=0)
@@ -145,6 +160,7 @@ class Rpc:
         self.p.stdin.write((json.dumps(value) + '\n').encode()); self.p.stdin.flush()
 
     def call(self, method, params):
+        check_binary()
         self.next += 1; request = {'jsonrpc': '2.0', 'id': self.next,
                                   'method': method, 'params': params}
         frames.append({'direction': 'request', 'message': request}); self.send(request)
@@ -281,6 +297,7 @@ try:
     check('finite_predictions', all(math.isfinite(float(row[0])) for row in predicted_rows[1:]))
     save('predictions.json', predictions); (out / 'predictions.csv').write_text(text)
     check('prediction_did_not_mutate_run', client.tool('run_status', {'run_id': rid}) == snapshot)
+    check_binary()
     report['full_AG1_qualified'] = all(report['checks'].values())
 except Exception as error:
     report['error'] = str(error); report['traceback'] = traceback.format_exc()
