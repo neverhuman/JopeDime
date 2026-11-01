@@ -1631,6 +1631,10 @@
       "reason": "REL-07 M2 CPU provider controls for candidate/source and RES-07 fixture binding, exact replay/report validation, and refusal cases; synthetic inputs only, not actual M2 parity or release qualification.",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/v1.0/test_provider_r2/test_r2.py": {
+      "reason": "REL-07 R2 worker-isolation provider controls (binding, snapshot and measurement refusal proofs over synthetic output); no real candidate, release or dataset job executes",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/v1.0/test_provider_r4/test_r4.py": {
       "reason": "REL-07 R4 reconnect provider controls (binding, probe extraction, cleanup and assertion proofs over synthetic evidence); no live candidate, release or dataset job executes",
       "role": "infrastructure"
@@ -2084,6 +2088,10 @@
     "python:research/flywheel_selfplay/h165_gradient_noise_dropout/test_h165.py": {
       "reason": "H165 owner-directed gradient-noise/dropout continuation study; data-free selector, bootstrap and frozen-state controls. Research only; no product or sealed qualification. Restores classification omitted by prereg PR #1410.",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h167_input_noise/test_h167.py": {
+      "role": "research",
+      "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
@@ -5355,10 +5363,6 @@
       "subsystems": [
         "encoders"
       ]
-    },
-    "python:research/flywheel_selfplay/h167_input_noise/test_h167.py": {
-      "role": "research",
-      "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
