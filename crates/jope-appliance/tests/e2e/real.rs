@@ -1,5 +1,7 @@
-//! Real native runs and actual transports. The five-surface case shares one
-//! idempotent run; it does not claim determinism of independently created runs.
+//! Real native runs through all five transports: same-run retries retain raw
+//! values, and five distinct runs are compared under the accepted R2 field map.
+#[path = "golden_mcp.rs"]
+mod golden_mcp;
 use super::*;
 use anyhow::{bail, ensure, Context, Result};
 use jope_client::{Http, InProcess, RunResult, Transport};
@@ -85,17 +87,22 @@ fn spec(dataset: jope_api::ids::DatasetId) -> RunSpec {
     spec.guidance = jope_api::Guidance::Auto;
     spec.device = "auto".into();
     spec.seed = DecimalU64(73);
-    spec.budget.wall_seconds = Some(DecimalU64(30));
+    spec.languages = vec![jope_api::Language::Rust, jope_api::Language::Python];
+    spec.budget.evaluations = Some(DecimalU64(1));
+    spec.budget.wall_seconds = Some(DecimalU64(120));
     spec
 }
 fn initialize(home: &Path, bytes: &[u8]) -> Result<(Arc<InProcessEngine>, RunSpec)> {
     // Other Cargo jobs share a build cache. Pin this executable before starting
     // a long-lived engine or spawning workers from it.
     let pinned = home.join("jopedime");
-    fs::copy(BIN, &pinned)?;
+    let executable = std::env::var_os("JOPE_INT01_EXECUTABLE_PIN")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(BIN));
+    fs::copy(&executable, &pinned)?;
     let digest = jope_runtime::sha256_hex(&fs::read(&pinned)?);
     ensure!(
-        digest == jope_runtime::sha256_hex(&fs::read(BIN)?),
+        digest == jope_runtime::sha256_hex(&fs::read(&executable)?),
         "appliance changed while being pinned"
     );
     let version = Command::new(&pinned)
@@ -147,13 +154,13 @@ fn batch_command(home: &Path, spec: &RunSpec) -> Command {
             "--effort",
             "fast",
             "--budget",
-            r#"{"evaluations":"4","wall_seconds":"30"}"#,
+            r#"{"evaluations":"1","wall_seconds":"120"}"#,
             "--landmarks",
             "none",
             "--guidance",
             "auto",
             "--language",
-            "rust",
+            "rust,python",
             "--require-all-languages",
             "--device",
             "auto",
@@ -173,7 +180,9 @@ fn snapshot(output: std::process::Output) -> Result<RunSnapshot> {
         "batch failed: {}",
         String::from_utf8_lossy(&output.stderr)
     );
-    let snapshot: RunSnapshot = serde_json::from_slice(&output.stdout)?;
+    let payload: Value = serde_json::from_slice(&output.stdout)?;
+    let snapshot: RunSnapshot =
+        serde_json::from_value(payload.get("run").unwrap_or(&payload).clone())?;
     ensure!(
         snapshot.state == jope_api::RunState::Completed,
         "batch did not complete: {:?}",
@@ -201,8 +210,11 @@ fn retain_execution(
     fs::create_dir_all(&root)?;
     fs::write(root.join(format!("{label}-stdout.json")), &output.stdout)?;
     fs::write(root.join(format!("{label}-stderr.txt")), &output.stderr)?;
-    let id = serde_json::from_slice::<RunSnapshot>(&output.stdout)
+    let id = serde_json::from_slice::<Value>(&output.stdout)
         .ok()
+        .and_then(|value| {
+            serde_json::from_value::<RunSnapshot>(value.get("run").unwrap_or(&value).clone()).ok()
+        })
         .map(|s| s.run_id)
         .or_else(|| {
             String::from_utf8_lossy(&output.stderr)
@@ -442,6 +454,7 @@ fn terminal(
     csv: &Path,
     id: &jope_api::ids::RunId,
     projection: &Projection,
+    key: &str,
 ) -> Result<String> {
     // Read expectations from the committed journal, independently of the renderer.
     // Public transcript scores use three decimal places (§6.2).
@@ -490,11 +503,20 @@ fn terminal(
             }
         }
     });
-    let commands=format!("\\landmarks none\n\\lang rust\n\\target target --task regression\n\\effort fast --evals 4 --time 30s\n\\open {}\n\\run --seed 73 --idempotency-key {KEY}\n\\attach {id}\n",csv.display());
+    let attach = if key == KEY {
+        format!("\\attach {id}\n")
+    } else {
+        String::new()
+    };
+    let commands=format!("\\landmarks none\n\\lang rust,python\n\\target target --task regression\n\\effort fast --evals 1 --time 120s\n\\open {}\n\\run --seed 73 --idempotency-key {key}\n{attach}",csv.display());
     writer.write_all(commands.as_bytes())?;
     writer.flush()?;
     let deadline = Instant::now() + Duration::from_secs(40);
-    let marker = format!("run {id} started");
+    let marker = if key == KEY {
+        format!("run {id} started")
+    } else {
+        " started".into()
+    };
     let mut bytes = vec![];
     let result = (|| -> Result<String> {
         loop {
@@ -612,6 +634,35 @@ fn ndjson_receipt(
     Ok(())
 }
 
+fn wait_complete<T: Transport>(client: &T, run: &jope_api::ids::RunId) -> Result<()> {
+    let deadline = Instant::now() + Duration::from_secs(150);
+    loop {
+        let snapshot = client.run_status(run)?;
+        if snapshot.state == jope_api::RunState::Completed {
+            return Ok(());
+        }
+        ensure!(
+            snapshot.state != jope_api::RunState::Failed,
+            "independent run failed"
+        );
+        ensure!(Instant::now() < deadline, "independent run timed out");
+        thread::sleep(Duration::from_millis(25));
+    }
+}
+
+fn start_independent<T: Transport>(
+    client: &T,
+    spec: &RunSpec,
+    key: &str,
+    surface: Surface,
+) -> Result<SurfaceCapture> {
+    let RunResult::Started(snapshot) = client.run_start(spec, Some(key))? else {
+        bail!("independent run returned a dry plan")
+    };
+    wait_complete(client, &snapshot.run_id)?;
+    capture(client, surface, &snapshot.run_id)
+}
+
 pub(super) fn shared_run_surfaces() -> Result<()> {
     let bytes = input()?;
     let (server, spec) = Server::start(&bytes)?;
@@ -619,6 +670,33 @@ pub(super) fn shared_run_surfaces() -> Result<()> {
     retain_execution(&server.engine, &output, "shared")?;
     let completed = snapshot(output)?;
     let id = &completed.run_id;
+    let manifest = server.client.model_export(
+        id,
+        &jope_api::ExportRequest {
+            algorithm_id: completed
+                .best
+                .as_ref()
+                .context("missing champion")?
+                .algorithm_id
+                .clone(),
+            kind: jope_api::ExportKind::Bundle,
+            languages: vec![jope_api::Language::Python, jope_api::Language::Rust],
+            require_all_languages: true,
+            refit: jope_api::Refit::FitHoldout,
+        },
+        Some("int01-normal-fh-export"),
+    )?;
+    ensure!(
+        manifest.refit == jope_api::Refit::FitHoldout && manifest.languages.len() == 2,
+        "normal run did not finalize requested FitHoldout model"
+    );
+    if let Some(root) = std::env::var_os("JOPE_INT01_RECEIPTS") {
+        fs::create_dir_all(&root)?;
+        fs::write(
+            PathBuf::from(root).join("normal-fit-holdout-export.json"),
+            serde_json::to_vec_pretty(&manifest)?,
+        )?;
+    }
     ndjson_receipt(server.home.path(), &spec, &completed, None)?;
     ndjson_receipt(
         server.home.path(),
@@ -659,7 +737,7 @@ pub(super) fn shared_run_surfaces() -> Result<()> {
     );
     let csv = server.home.path().join("original-label.csv");
     fs::write(&csv, &bytes)?;
-    let transcript = terminal(server.home.path(), &csv, id, &captures[0].projection)?;
+    let transcript = terminal(server.home.path(), &csv, id, &captures[0].projection, KEY)?;
     ensure!(
         transcript.contains(&format!("run {id} started")),
         "PTY omitted actual run result"
@@ -673,6 +751,81 @@ pub(super) fn shared_run_surfaces() -> Result<()> {
         "surface retries created duplicate runs"
     );
     assert_equivalent(&captures).map_err(anyhow::Error::msg)?;
+    let mut independent = vec![captures[0].clone()];
+    independent.push(start_independent(
+        &server.client,
+        &spec,
+        "int01-independent-http",
+        Surface::LoopbackHttp,
+    )?);
+    independent.push(start_independent(
+        &inproc,
+        &spec,
+        "int01-independent-inproc",
+        Surface::InProcess,
+    )?);
+    let mut args = serde_json::to_value(&spec)?;
+    args["idempotency_key"] = json!("int01-independent-mcp");
+    let started: RunSnapshot = serde_json::from_value(rpc.tool("run_start", args)?)?;
+    wait_complete(&server.client, &started.run_id)?;
+    let snapshot =
+        serde_json::from_value(rpc.tool("run_status", json!({"run_id":started.run_id}))?)?;
+    let page = rpc.tool(
+        "run_events",
+        json!({"run_id":started.run_id,"after":"0","limit":256}),
+    )?;
+    independent.push(
+        SurfaceCapture::from_observation(
+            Surface::Mcp,
+            snapshot,
+            serde_json::from_value(page["events"].clone())?,
+        )
+        .map_err(anyhow::Error::msg)?,
+    );
+    let first_run_terminal = terminal(
+        server.home.path(),
+        &csv,
+        id,
+        &captures[0].projection,
+        "int01-independent-terminal",
+    )?;
+    let inventory = server.client.runs()?;
+    let existing: Vec<_> = independent
+        .iter()
+        .map(|c| &c.projection.events[0].run_id)
+        .collect();
+    let new_runs: Vec<_> = inventory
+        .runs
+        .iter()
+        .filter(|r| !existing.contains(&&r.run_id))
+        .collect();
+    ensure!(
+        new_runs.len() == 1 && inventory.runs.len() == 5 && inventory.next_after.is_none(),
+        "independent surfaces did not create exactly five runs"
+    );
+    let terminal_id = &new_runs[0].run_id;
+    ensure!(
+        first_run_terminal.contains(&format!("run {terminal_id} started")),
+        "terminal did not initiate its independent run"
+    );
+    independent.push(capture(&server.client, Surface::Terminal, terminal_id)?);
+    for capture in &independent {
+        let value = serde_json::to_value(capture.projection.events.last().unwrap())?;
+        ensure!(
+            value["body"]["nondeterminism"]["count"] == "0",
+            "independent S1 run hit a limit exception"
+        );
+    }
+    assert_independent_equivalent(&independent).map_err(anyhow::Error::msg)?;
+    if let Some(root) = std::env::var_os("JOPE_INT01_RECEIPTS") {
+        let root = PathBuf::from(root);
+        fs::write(root.join("independent-terminal.txt"), first_run_terminal)?;
+        let raw: Vec<_> = independent.iter().map(|c| json!({"surface":c.surface.name(),"champion":c.projection.champion,"scores":c.projection.scores,"events":c.projection.events,"r2_projection":canonical_events(&c.projection.events)})).collect();
+        fs::write(
+            root.join("independent-five-surfaces.json"),
+            serde_json::to_vec_pretty(&raw)?,
+        )?;
+    }
     ensure!(
         captures[0]
             .projection
@@ -681,8 +834,12 @@ pub(super) fn shared_run_surfaces() -> Result<()> {
             .any(|e| matches!(e.event, EventBody::ExperimentFinished(_))),
         "no native evaluations recorded"
     );
-    if let Some(root) = std::env::var_os("JOPE_INT01_RECEIPTS") {
-        let root = PathBuf::from(root);
+    {
+        let root = std::env::var_os("JOPE_INT01_RECEIPTS")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| {
+                PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/int01-receipts")
+            });
         fs::create_dir_all(&root)?;
         fs::write(
             root.join("shared-snapshot.json"),
@@ -693,7 +850,29 @@ pub(super) fn shared_run_surfaces() -> Result<()> {
             serde_json::to_vec_pretty(&captures[0].projection.events)?,
         )?;
         fs::write(root.join("terminal.txt"), transcript)?;
-        fs::write(root.join("input.csv"), bytes)?;
+        fs::write(root.join("input.csv"), &bytes)?;
+        let runtime = directory()?;
+        let runtime_name = runtime
+            .path()
+            .file_name()
+            .context("AG1 runtime name")?
+            .to_string_lossy();
+        let evidence = root.join(format!("golden-mcp-{runtime_name}"));
+        let app = server.home.path().join("jopedime");
+        let version: Value = serde_json::from_slice(
+            &Command::new(&app)
+                .args(["--version", "--json"])
+                .output()?
+                .stdout,
+        )?;
+        golden_mcp::run(
+            &app,
+            version["source_sha40"].as_str().context("source missing")?,
+            &csv,
+            &jope_runtime::sha256_hex(&bytes),
+            &evidence,
+            &runtime.path().join("ag1-home"),
+        )?;
     }
     Ok(())
 }
@@ -703,9 +882,32 @@ pub(super) fn batch_fallback() -> Result<()> {
     let bytes = input()?;
     let (engine, spec) = initialize(home.path(), &bytes)?;
     drop(engine);
-    let output = batch_command(home.path(), &spec).output()?;
+    let csv = home.path().join("original-label.csv");
+    fs::write(&csv, &bytes)?;
+    let template = batch_command(home.path(), &spec);
+    let mut args: Vec<_> = template.get_args().map(std::ffi::OsStr::to_owned).collect();
+    let at = args
+        .iter()
+        .position(|arg| arg == "--dataset")
+        .context("dataset argument missing")?;
+    args.drain(at..at + 2);
+    args.insert(1, csv.as_os_str().to_owned());
+    let out = home.path().join("csv-export");
+    let output = Command::new(home.path().join("jopedime"))
+        .env("JOPEDIME_HOME", home.path())
+        .env_remove("JOPEDIME_ENDPOINT")
+        .args(args)
+        .arg("--out")
+        .arg(&out)
+        .output()?;
     let engine = InProcessEngine::open_with_worker(home.path(), home.path().join("jopedime"))?;
     retain_execution(&engine, &output, "batch")?;
+    ensure!(
+        out.join("src/python/predictor.py").is_file()
+            && out.join("src/rust/predictor.rs").is_file(),
+        "CSV batch did not export both requested languages"
+    );
+
     let completed = snapshot(output)?;
     ensure!(
         !home.path().join("daemon.json").exists(),

@@ -21,6 +21,7 @@ REPO = HERE.parents[2]
 
 BOUND_FILES = (
     "research/flywheel_selfplay/h154_trajectory_ema_swa/PREREG.md",
+    "research/flywheel_selfplay/h154_trajectory_ema_swa/PREREG_AMENDMENT_A1.md",
     "research/flywheel_selfplay/h154_trajectory_ema_swa/runner.py",
     "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py",
     "research/flywheel_selfplay/h154_trajectory_ema_swa/science.py",
@@ -147,10 +148,21 @@ class Audit:
             ]
         )
         data = p.is_relative_to(Path("/home/ubuntu/jope-data"))
+        jopedime = p.is_relative_to(Path("/home/ubuntu/JopeDime"))
+        jope_plan = p.is_relative_to(Path("/home/ubuntu/jope_plan"))
+        in_output = p.is_relative_to(self.output)
+        in_tmp = p.is_relative_to(Path("/tmp"))
+        write_refused = write and (
+            s in self.allowed
+            or jopedime
+            or (jope_plan and not in_output)
+            or (data and not in_output)
+            or not (in_output or in_tmp)
+        )
         if (
             protected
-            or (data and s not in self.allowed and not p.is_relative_to(self.output))
-            or (write and not p.is_relative_to(self.output))
+            or (data and s not in self.allowed and not in_output)
+            or write_refused
         ):
             self.refused.append(s)
             raise RuntimeError("input/output boundary refusal: " + s)
@@ -168,6 +180,74 @@ def load_fused():
     sys.modules[m.__name__] = m
     exec(compile(p.read_bytes(), str(p), "exec"), m.__dict__)
     return m
+
+
+def assert_frozen_anchor(net, names, anchor_sha=None):
+    """Assert that adapter_10tok.anchor is a frozen non-adapter module with zero trainable parameters or state drift."""
+    anchor = getattr(net.adapter_10tok, "anchor", None)
+    if anchor is None:
+        raise RuntimeError("missing adapter_10tok.anchor module")
+    if anchor.training:
+        raise RuntimeError("anchor module must be in eval mode")
+    if any(p.requires_grad for p in anchor.parameters()):
+        raise RuntimeError("anchor parameters must be frozen (requires_grad=False)")
+    name_set = set(names)
+    if any(n.startswith("adapter_10tok.anchor.") for n in name_set) or any(
+        f"adapter_10tok.anchor.{k}" in name_set for k in anchor.state_dict()
+    ):
+        raise RuntimeError(
+            "anchor tensors must be excluded from trainable adapter names"
+        )
+    cur_sha = tensor_hash(anchor.state_dict())
+    if anchor_sha is not None and cur_sha != anchor_sha:
+        raise RuntimeError("anchor state_dict bitwise drift")
+    return cur_sha
+
+
+def eval_batch_cache_key(split_name, cids, indexes, pools):
+    """Build evaluation cache key from (split_name, tuple(context_ids), candidate_set_sha256)."""
+    import numpy as np
+
+    if not isinstance(split_name, str) or not split_name.strip():
+        raise ValueError("split_name must be a non-empty string")
+    cids_tuple = tuple(str(c) for c in cids)
+    if not cids_tuple or len(cids_tuple) != len(indexes):
+        raise ValueError("cids and indexes must be non-empty and equal length")
+    h = hashlib.sha256()
+    h.update(split_name.encode("utf-8"))
+    h.update(b"\x00")
+    for cid, ix in zip(cids_tuple, indexes, strict=True):
+        ix_arr = np.ascontiguousarray(np.asarray(ix, dtype=np.int64))
+        p = pools[cid]
+        prog = np.ascontiguousarray(p["program"][ix_arr])
+        rev_k = min(4, len(ix_arr))
+        rev_fit = np.ascontiguousarray(p["fitness"][ix_arr[:rev_k]])
+        rev_gate = np.ascontiguousarray(p["gate"][ix_arr[:rev_k]])
+        h.update(cid.encode("utf-8"))
+        h.update(ix_arr.view(np.uint8).tobytes())
+        h.update(prog.view(np.uint8).tobytes())
+        h.update(rev_fit.view(np.uint8).tobytes())
+        h.update(rev_gate.view(np.uint8).tobytes())
+    return (split_name, cids_tuple, h.hexdigest())
+
+
+def validate_eval_cache_key(key):
+    """Require cache key to be (split_name, tuple(context_ids), 64-hex candidate_set_sha256)."""
+    if (
+        not isinstance(key, tuple)
+        or len(key) != 3
+        or not isinstance(key[0], str)
+        or not key[0].strip()
+        or not isinstance(key[1], tuple)
+        or not key[1]
+        or not all(isinstance(c, str) and c for c in key[1])
+        or not isinstance(key[2], str)
+        or len(key[2]) != 64
+    ):
+        raise RuntimeError(
+            "eval cache key must be (split_name, tuple(context_ids), candidate_set_sha256)"
+        )
+    return key
 
 
 def build(checkpoint):
@@ -209,7 +289,46 @@ def build(checkpoint):
     net.eval()
     if guard.snapshot_dope_weights(net).composite_sha256 != DOPE:
         raise RuntimeError("DOPE mismatch")
+    anchor_sha = assert_frozen_anchor(net, names)
+    net._anchor_sha256 = anchor_sha
     frozen = tensor_hash({n: t for n, t in net.state_dict().items() if n not in names})
+    net._eval_batch_key = None
+    anchor_cache = {}
+    sem_cache = {}
+    orig_anchor = net.adapter_10tok.anchor.predict_costs
+    orig_sem24 = fused.compute_semantic_struct_sig_24d_torch
+    net._anchor_cache = anchor_cache
+    net._sem24_cache = sem_cache
+
+    def cached_anchor(**kw):
+        if net.adapter_10tok.anchor.training or any(
+            p.requires_grad for p in net.adapter_10tok.anchor.parameters()
+        ):
+            raise RuntimeError("anchor must remain a frozen eval-mode module")
+        key = getattr(net, "_eval_batch_key", None)
+        if key is None:
+            return orig_anchor(**kw)
+        validate_eval_cache_key(key)
+        if key not in anchor_cache:
+            out = orig_anchor(**kw)
+            anchor_cache[key] = {
+                "total_cost": out["total_cost"].detach().float(),
+                "eff_prior": out["eff_prior"].detach().float(),
+                "fail_logit": out["fail_logit"].detach().float(),
+            }
+        return anchor_cache[key]
+
+    def cached_sem24(prog_412):
+        key = getattr(net, "_eval_batch_key", None)
+        if key is None:
+            return orig_sem24(prog_412)
+        validate_eval_cache_key(key)
+        if key not in sem_cache:
+            sem_cache[key] = orig_sem24(prog_412).detach()
+        return sem_cache[key]
+
+    net.adapter_10tok.anchor.predict_costs = cached_anchor
+    fused.compute_semantic_struct_sig_24d_torch = cached_sem24
     return net, guard, names, frozen, fused
 
 
@@ -379,6 +498,7 @@ def dropout_census(net):
 
 
 def check_frozen(net, guard, names, frozen):
+    assert_frozen_anchor(net, names, getattr(net, "_anchor_sha256", None))
     if (
         tensor_hash({n: t for n, t in net.state_dict().items() if n not in names})
         != frozen

@@ -36,14 +36,14 @@ const HANDOFF_MAX: u64 = 16 * 1024 * 1024;
 
 /// Every file contains exactly these dataset-local source rows in this order.
 /// The split preparer supplies the provenance roster; no payload is read here.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Partition {
     pub path: PathBuf,
     pub sha256: String,
     pub rows: Vec<AuditRowId>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FinalizationRequest {
     pub run_id: RunId,
     pub fit: Partition,
@@ -106,6 +106,25 @@ impl Finalizer {
         request: &FinalizationRequest,
         executor: &impl Executor,
     ) -> Result<FinalizationReceipt> {
+        self.finalize_inner(request, executor, false)
+    }
+
+    /// Only an explicit public Continue dispatch may retry an interrupted claim.
+    /// Preserve its unknown prior outcome; automatic replay still refuses it.
+    pub(crate) fn finalize_after_explicit_continue(
+        &self,
+        request: &FinalizationRequest,
+        executor: &impl Executor,
+    ) -> Result<FinalizationReceipt> {
+        self.finalize_inner(request, executor, true)
+    }
+
+    fn finalize_inner(
+        &self,
+        request: &FinalizationRequest,
+        executor: &impl Executor,
+        explicit_continue: bool,
+    ) -> Result<FinalizationReceipt> {
         let record = self
             .store
             .get(&RecordKey::Run(request.run_id.clone()))?
@@ -119,24 +138,27 @@ impl Finalizer {
             principal: "discover.finalization.v1".into(),
             idempotency_key: request.run_id.to_string(),
         };
-        if let Some(record) = self.store.get(&key)? {
+        let prior = self.store.get(&key)?;
+        if let Some(record) = &prior {
             ensure!(
                 record.data["identity"] == identity,
                 "finalization request changed"
             );
+            if record.data["state"] == "completed" {
+                let receipt: FinalizationReceipt =
+                    serde_json::from_value(record.data["receipt"].clone())?;
+                let object = ModelObject::read(&receipt.model_path, request.max_model_bytes)?;
+                ensure!(
+                    object.id() == receipt.model_digest,
+                    "finalized object identity changed"
+                );
+                object.verify_executable()?;
+                return Ok(receipt);
+            }
             ensure!(
-                record.data["state"] == "completed",
-                "finalization outcome failed or unknown; protected rows will not be reread"
+                explicit_continue && record.data["state"] == "started",
+                "finalization outcome failed or unknown; automatic protected-row reread refused"
             );
-            let receipt: FinalizationReceipt =
-                serde_json::from_value(record.data["receipt"].clone())?;
-            let object = ModelObject::read(&receipt.model_path, request.max_model_bytes)?;
-            ensure!(
-                object.id() == receipt.model_digest,
-                "finalized object identity changed"
-            );
-            object.verify_executable()?;
-            return Ok(receipt);
         }
         let snapshot = self
             .journal
@@ -216,8 +238,8 @@ impl Finalizer {
             request.test.as_ref().map(ids).unwrap_or_default(),
         )?;
         self.store.transaction(|tx| {
-            if tx.get(&key)?.is_some() {
-                return Err(StoreError::Invalid("finalization already claimed"));
+            if tx.get(&key)? != prior {
+                return Err(StoreError::Invalid("finalization claim changed"));
             }
             let current = tx
                 .get(&RecordKey::Run(request.run_id.clone()))?
@@ -230,9 +252,21 @@ impl Finalizer {
             {
                 return Err(StoreError::Invalid("run changed before finalization"));
             }
+            if let Some(prior) = &prior {
+                let history = RecordKey::Command {
+                    principal: "discover.finalization.interrupted.v1".into(),
+                    idempotency_key: format!("{}:{}", request.run_id, snapshot.revision.0),
+                };
+                if tx.get(&history)?.is_some() {
+                    return Err(StoreError::Integrity("interrupted finalization history already exists"));
+                }
+                tx.put(&history, &Record::metadata(json!({
+                    "outcome":"unknown", "explicit_continue":true, "prior":prior
+                }), prior.blobs.clone()))?;
+            }
             tx.put(
                 &key,
-                &Record::metadata(json!({"identity":identity,"state":"started"}), vec![]),
+                &Record::metadata(json!({"identity":identity,"state":"started", "attempt":prior.as_ref().and_then(|r|r.data["attempt"].as_u64()).unwrap_or(0).checked_add(1).ok_or(StoreError::Invalid("finalization attempts exhausted"))?}), vec![]),
             )
         })?;
         audit.begin_finalization();
@@ -448,7 +482,7 @@ impl Finalizer {
         };
         let mut blobs = vec![champion.model.clone()];
         let fit_refs = publish(&self.store, &fit_object)?;
-        blobs.extend(fit_refs);
+        blobs.extend(fit_refs.clone());
         let object_refs = publish(&self.store, exported)?;
         blobs.extend(object_refs.clone());
         let mut finished = snapshot.clone();
@@ -476,12 +510,38 @@ impl Finalizer {
         self.journal.commit(RunUpdate { expected_revision: Some(snapshot.revision.0), snapshot: finished, checkpoint, blobs }, vec![event], |tx| {
             let old = tx.get(key)?.ok_or(StoreError::Invalid("finalization claim missing"))?;
             if old.data["state"] != "started" || old.data["identity"] != identity { return Err(StoreError::Invalid("finalization claim changed")); }
-            let artifact_key = RecordKey::Artifact(artifact);
+            // The assessment score belongs to this genuine FIT-only model. Publish
+            // it atomically with the final champion so an explicit FIT export never
+            // refits or labels FIT+HOLDOUT weights as FIT.
+            let fit_artifact: ArtifactId = format!("art_{}", &fit_object.id()[7..31]).parse().map_err(|_| StoreError::Invalid("invalid FIT model identity"))?;
+            let fit_record = Record::metadata(json!({"kind":"finalized_model","model_digest":fit_object.id(),"refit":Refit::Fit,"manifest":fit_object.manifest()}), fit_refs.clone());
+            put_frozen_model(tx, RecordKey::Artifact(fit_artifact), fit_record)?;
             let record = Record::metadata(json!({"kind":"finalized_model","model_digest":exported.id(),"refit":request.refit,"manifest":exported.manifest()}), object_refs.clone());
-            if let Some(old) = tx.get(&artifact_key)? { if old != record { return Err(StoreError::Integrity("finalized artifact collision")); } } else { tx.put(&artifact_key, &record)?; }
+            put_frozen_model(tx, RecordKey::Artifact(artifact), record)?;
             tx.put(key, &Record::metadata(json!({"identity":identity,"state":"completed","receipt":receipt}), object_refs))
         })?;
         Ok(receipt)
+    }
+}
+
+// Qualification may attach a measured receipt after completion. Repeating an
+// identical native model in another run preserves that attachment; every frozen
+// field and blob must still match exactly.
+fn put_frozen_model(
+    tx: &mut crate::store::Write<'_>,
+    key: RecordKey,
+    record: Record,
+) -> crate::store::Result<()> {
+    if let Some(mut old) = tx.get(&key)? {
+        if let Some(data) = old.data.as_object_mut() {
+            data.remove("parity_receipt");
+        }
+        if old != record {
+            return Err(StoreError::Integrity("finalized artifact collision"));
+        }
+        Ok(())
+    } else {
+        tx.put(&key, &record)
     }
 }
 
@@ -666,6 +726,8 @@ fn refit(
         ),
         (INPUT_PART.into(), serde_json::to_vec(&input)?),
     ]);
+    // Run provenance stays in FinalizationReceipt. Canonical predictor metadata
+    // must be independent of the run identifier (the §5.6 ModelDigest contract).
     let object = ModelObject::new(
         Manifest {
             schema: SCHEMA.into(),
@@ -678,7 +740,7 @@ fn refit(
                 .iter()
                 .map(|(path, data)| Part::new(path, "application/json", data))
                 .collect(),
-            metadata: json!({"refit":kind,"run_id":plan.run_id,"algorithm_id":champion.candidate.algorithm_id,"problem_digest":plan.problem_digest,"binary_version":plan.binary_version,"fitting":"selection_only","fit_stage":"champion_refit","prediction_version":2,"holdout_score_scope":"fit_only_model","training_rows":table.rows.len(),"missing_input_policy":"registered math-pipeline decoder: scaled minimum"}),
+            metadata: json!({"refit":kind,"algorithm_id":champion.candidate.algorithm_id,"problem_digest":plan.problem_digest,"binary_version":plan.binary_version,"fitting":"selection_only","fit_stage":"champion_refit","prediction_version":2,"holdout_score_scope":"fit_only_model","training_rows":table.rows.len(),"missing_input_policy":"registered math-pipeline decoder: scaled minimum"}),
         },
         parts,
         max_model,
@@ -1041,6 +1103,21 @@ mod tests {
         changed.refit = Refit::Fit;
         assert!(finalizer.finalize(&changed, &native).is_err());
         assert_eq!(calls, native.calls.lock().unwrap().len());
+
+        // Run provenance belongs to the run-scoped receipt, not the canonical
+        // predictor identity: the same problem and fit must have one digest.
+        let other = fixture(false);
+        let other_native = Native::default();
+        search(&other, &other_native);
+        let independent = Finalizer::new(Arc::clone(&other.store))
+            .finalize(&other.request, &other_native)
+            .unwrap();
+        assert_ne!(first.run_id, independent.run_id);
+        assert_eq!(first.run_id, f.request.run_id);
+        assert_eq!(independent.run_id, other.request.run_id);
+        assert_eq!(first.model_digest, independent.model_digest);
+        assert_eq!(first.model_artifact, independent.model_artifact);
+        assert_eq!(first.holdout_model_digest, independent.holdout_model_digest);
     }
 
     #[test]
@@ -1144,6 +1221,39 @@ mod tests {
             .to_string()
             .contains("unknown"));
         assert_eq!(before, native.calls.lock().unwrap().len());
+        // An operator's explicit Continue is a new authorized attempt, while the
+        // interrupted attempt remains durably unknown rather than a zero score.
+        let revision = Finalizer::new(Arc::clone(&f.store))
+            .journal()
+            .snapshot(&f.plan.run_id)
+            .unwrap()
+            .unwrap()
+            .revision
+            .0;
+        let finalizer = Finalizer::new(Arc::clone(&f.store));
+        let resumed = finalizer
+            .finalize_after_explicit_continue(&f.request, &native)
+            .unwrap();
+        assert!(resumed.scores.holdout.unwrap().is_finite());
+        let history = f
+            .store
+            .get(&RecordKey::Command {
+                principal: "discover.finalization.interrupted.v1".into(),
+                idempotency_key: format!("{}:{revision}", f.plan.run_id),
+            })
+            .unwrap()
+            .unwrap();
+        assert_eq!(history.data["outcome"], "unknown");
+        assert_eq!(history.data["prior"]["data"]["state"], "started");
+        let calls = native.calls.lock().unwrap().len();
+        assert_eq!(
+            finalizer
+                .finalize(&f.request, &native)
+                .unwrap()
+                .model_digest,
+            resumed.model_digest
+        );
+        assert_eq!(calls, native.calls.lock().unwrap().len());
     }
 
     #[test]
@@ -1301,5 +1411,70 @@ mod tests {
             )
             .unwrap();
         }
+    }
+    #[test]
+    fn fit_holdout_publication_keeps_the_genuine_fit_model_and_replay_does_not_refit() {
+        let f = fixture(false);
+        let native = Native::default();
+        search(&f, &native);
+        let finalizer = Finalizer::new(Arc::clone(&f.store));
+        let receipt = finalizer.finalize(&f.request, &native).unwrap();
+        assert_eq!(receipt.refit, Refit::FitHoldout);
+        let fit_id: ArtifactId = format!("art_{}", &receipt.holdout_model_digest[7..31])
+            .parse()
+            .unwrap();
+        assert_ne!(fit_id, receipt.model_artifact);
+        let fit_record = f.store.get(&RecordKey::Artifact(fit_id)).unwrap().unwrap();
+        let primary = f
+            .store
+            .get(&RecordKey::Artifact(receipt.model_artifact.clone()))
+            .unwrap()
+            .unwrap();
+        assert_eq!(fit_record.data["refit"], json!(Refit::Fit));
+        assert_eq!(
+            fit_record.data["model_digest"],
+            receipt.holdout_model_digest
+        );
+        assert_eq!(primary.data["refit"], json!(Refit::FitHoldout));
+        let fit_object = ModelObject::read(
+            &f.request.model_root.join(&receipt.holdout_model_digest),
+            HANDOFF_MAX,
+        )
+        .unwrap();
+        assert_eq!(
+            f.store.read_blob(&fit_record.blobs[0]).unwrap(),
+            fit_object.manifest_bytes()
+        );
+        let before = native.calls.lock().unwrap().len();
+        let replay = finalizer.finalize(&f.request, &native).unwrap();
+        assert_eq!(receipt.model_digest, replay.model_digest);
+        assert_eq!(native.calls.lock().unwrap().len(), before);
+    }
+
+    #[test]
+    fn repeated_frozen_model_preserves_measured_parity_and_refuses_other_drift() {
+        let f = fixture(false);
+        let key = RecordKey::Artifact("art_00112233445566778899aabb".parse().unwrap());
+        let frozen = Record::metadata(
+            json!({"kind":"finalized_model","model_digest":"frozen","refit":"fit","manifest":{}}),
+            vec![],
+        );
+        f.store
+            .transaction(|tx| put_frozen_model(tx, key.clone(), frozen.clone()))
+            .unwrap();
+        let mut measured = frozen.clone();
+        measured.data["parity_receipt"] = json!("art_aabbccddeeff001122334455");
+        f.store.transaction(|tx| tx.put(&key, &measured)).unwrap();
+        f.store
+            .transaction(|tx| put_frozen_model(tx, key.clone(), frozen.clone()))
+            .unwrap();
+        assert_eq!(f.store.get(&key).unwrap().unwrap(), measured);
+        let mut changed = frozen;
+        changed.data["refit"] = json!("fit_holdout");
+        assert!(f
+            .store
+            .transaction(|tx| put_frozen_model(tx, key.clone(), changed))
+            .is_err());
+        assert_eq!(f.store.get(&key).unwrap().unwrap(), measured);
     }
 }

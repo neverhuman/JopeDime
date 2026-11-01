@@ -1,147 +1,109 @@
 {
-  "kind": "constructor-only smoke (0 updates, 0 scored contexts, 0 candidate arms scored)",
-  "host": "xbabe2",
-  "monitor_status": "COMPLETE",
-  "nice": 19,
-  "smoke": {
-    "status": "PASS",
-    "optimizer_updates": 0,
-    "scored_contexts": 0,
-    "candidate_arms_scored": 0,
-    "census": {
-      "adapter_dropout_modules": [],
-      "adapter_attention_dropout": [
-        {
-          "name": "mm_cross_attn",
-          "p": 0.0
-        },
-        {
-          "name": "traj_cross_attn",
-          "p": 0.0
-        }
-      ],
-      "modality_dropout_attribute": 0.1,
-      "effective_encoder": "_sync_free_encode_context_and_candidates",
-      "adapter_training": false,
-      "dope_training": false
-    },
-    "assets": {
-      "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
-      "/home/ubuntu/JopeDimeMicro/assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
-      "/home/ubuntu/JopeDimeMicro/assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
-      "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
-      "/home/ubuntu/JopeDimeMicro/python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
-      "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
-      "/home/ubuntu/JopeDimeMicro/python/rank_prepare.py": "534169af0443122600853ef9e96d734d570cd9d77c2a3d21e7b6456b4b19ab40",
-      "/home/ubuntu/JopeDimeMicro/python/research/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "/home/ubuntu/JopeDimeMicro/python/research/levels/__init__.py": "4b6481f96986d33139cd5a078a3da50d0b41378b3aa109f5cf85af93d31fd8af",
-      "/home/ubuntu/JopeDimeMicro/python/research/levels/budget_planner.py": "ae76dd8c587c00d28e57cb152de6719f77cc516c660819d7990823c6a9ff1e4f",
-      "/home/ubuntu/JopeDimeMicro/python/research/levels/building_block_landmarks.py": "fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186",
-      "/home/ubuntu/JopeDimeMicro/python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
-      "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6",
-      "/home/ubuntu/JopeDimeMicro/python/research/levels/scaling.py": "6d592197a5a74afc1a9eddc18e1ca894987de831e0b61ef1c8a9b65e9154ded3",
-      "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900"
-    },
-    "packages": {
-      "numpy": "1.26.4",
-      "torch": "2.7.0",
-      "psutil": "7.1.0"
-    },
-    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
-    "frozen_sha256": "8d1070faf574ee1cd2a4e630887e1662b43189b3f89b04982143ef2704818aae",
-    "adapter_names": [
-      "adapter_10tok.modality_type_emb",
-      "adapter_10tok.modality_gate_logits",
-      "adapter_10tok.mm_prior_scale",
-      "adapter_10tok.null_kernel_w0_raw",
-      "adapter_10tok.sem_kernel_scale_raw",
-      "adapter_10tok.emb_kernel_scale_raw",
-      "adapter_10tok.traj_kernel_blend",
-      "adapter_10tok.null_hist_token",
-      "adapter_10tok.traj_attn_scale",
-      "adapter_10tok.modality_norm.weight",
-      "adapter_10tok.modality_norm.bias",
-      "adapter_10tok.prog_412_bottleneck.0.weight",
-      "adapter_10tok.prog_412_bottleneck.0.bias",
-      "adapter_10tok.prog_412_bottleneck.1.weight",
-      "adapter_10tok.prog_412_bottleneck.1.bias",
-      "adapter_10tok.cand_query_proj.0.weight",
-      "adapter_10tok.cand_query_proj.0.bias",
-      "adapter_10tok.cand_query_proj.1.weight",
-      "adapter_10tok.cand_query_proj.1.bias",
-      "adapter_10tok.mm_cross_attn.in_proj_weight",
-      "adapter_10tok.mm_cross_attn.in_proj_bias",
-      "adapter_10tok.mm_cross_attn.out_proj.weight",
-      "adapter_10tok.mm_cross_attn.out_proj.bias",
-      "adapter_10tok.ctx_bilinear_u.weight",
-      "adapter_10tok.prog_bilinear_v.weight",
-      "adapter_10tok.mm_prior_out.0.weight",
-      "adapter_10tok.mm_prior_out.0.bias",
-      "adapter_10tok.mm_prior_out.2.weight",
-      "adapter_10tok.mm_prior_out.2.bias",
-      "adapter_10tok.hist_token_proj.0.weight",
-      "adapter_10tok.hist_token_proj.0.bias",
-      "adapter_10tok.hist_token_proj.1.weight",
-      "adapter_10tok.hist_token_proj.1.bias",
-      "adapter_10tok.traj_cross_attn.in_proj_weight",
-      "adapter_10tok.traj_cross_attn.in_proj_bias",
-      "adapter_10tok.traj_cross_attn.out_proj.weight",
-      "adapter_10tok.traj_cross_attn.out_proj.bias",
-      "adapter_10tok.traj_delta_head.0.weight",
-      "adapter_10tok.traj_delta_head.0.bias",
-      "adapter_10tok.traj_delta_head.2.weight",
-      "adapter_10tok.traj_delta_head.2.bias",
-      "adapter_10tok.parent_delta_net.0.weight",
-      "adapter_10tok.parent_delta_net.0.bias",
-      "adapter_10tok.parent_delta_net.1.weight",
-      "adapter_10tok.parent_delta_net.1.bias",
-      "adapter_10tok.parent_delta_net.3.weight",
-      "adapter_10tok.parent_delta_net.3.bias"
+  "status": "PASS",
+  "optimizer_updates": 0,
+  "scored_contexts": 0,
+  "candidate_arms_scored": 0,
+  "census": {
+    "adapter_dropout_modules": [],
+    "adapter_attention_dropout": [
+      {
+        "name": "mm_cross_attn",
+        "p": 0.0
+      },
+      {
+        "name": "traj_cross_attn",
+        "p": 0.0
+      }
     ],
-    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
-    "launch_guard": {
-      "disk_used_fraction": 0.9113,
-      "disk_free_bytes": 703867695104,
-      "load1": 27.4580078125,
-      "scratch_bytes": 7532970
-    },
-    "end_guard": {
-      "disk_used_fraction": 0.9113,
-      "disk_free_bytes": 703789899776,
-      "load1": 27.4580078125,
-      "scratch_bytes": 7534293
-    }
+    "modality_dropout_attribute": 0.1,
+    "effective_encoder": "_sync_free_encode_context_and_candidates",
+    "adapter_training": false,
+    "dope_training": false
   },
-  "resources": {
-    "samples": 13,
-    "max_os_threads": 2,
-    "max_rss_bytes": 932417536
+  "assets": {
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "/home/ubuntu/JopeDimeMicro/assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+    "/home/ubuntu/JopeDimeMicro/assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
+    "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
+    "/home/ubuntu/JopeDimeMicro/python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "/home/ubuntu/JopeDimeMicro/python/rank_prepare.py": "534169af0443122600853ef9e96d734d570cd9d77c2a3d21e7b6456b4b19ab40",
+    "/home/ubuntu/JopeDimeMicro/python/research/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/__init__.py": "4b6481f96986d33139cd5a078a3da50d0b41378b3aa109f5cf85af93d31fd8af",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/budget_planner.py": "ae76dd8c587c00d28e57cb152de6719f77cc516c660819d7990823c6a9ff1e4f",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/building_block_landmarks.py": "fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/scaling.py": "6d592197a5a74afc1a9eddc18e1ca894987de831e0b61ef1c8a9b65e9154ded3",
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900"
   },
-  "tests": {
-    "executed": 27,
-    "failed": 0,
-    "command": "python3 -B -m unittest discover -s research/flywheel_selfplay/h154_trajectory_ema_swa -p test_h154.py -v"
+  "packages": {
+    "numpy": "1.26.4",
+    "torch": "2.7.0",
+    "psutil": "7.1.0"
   },
-  "manifest_sha256": "2c21a07cb3915e73630216f69cd1e05f0bbc5afee35f722b4fb72d0349639665",
-  "prereg_sha256": "c4c8cb1d6132995ca4f9dbc7bdcaa3e3d192ab80565127d2f877e2ea14cb5981",
-  "executor_sha256": {
-    "monitor.py": "2ee2bb78a03da2b5e42b68e2ec4448bc331b365f89730482e3a4fb3941e91a33",
-    "runner.py": "d4ef45421e36d62347ed8cfff70c121f1c5b6401e3dc2416de0778c5437b9bc2",
-    "runtime.py": "39c6c6e2a662c623e800bbb8b578f0e722579bf2f52558352c84ea640d0b546a",
-    "science.py": "bcc2dea8794a7d595c018443fed8a2792cc809ed569f54ae14be7244ec5827e6",
-    "test_h154.py": "b86ef5e1c06e3fb18b93f7aa8e294cc52629e0fb15c3613d92d3cc33ade4d332"
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "frozen_sha256": "8d1070faf574ee1cd2a4e630887e1662b43189b3f89b04982143ef2704818aae",
+  "adapter_names": [
+    "adapter_10tok.modality_type_emb",
+    "adapter_10tok.modality_gate_logits",
+    "adapter_10tok.mm_prior_scale",
+    "adapter_10tok.null_kernel_w0_raw",
+    "adapter_10tok.sem_kernel_scale_raw",
+    "adapter_10tok.emb_kernel_scale_raw",
+    "adapter_10tok.traj_kernel_blend",
+    "adapter_10tok.null_hist_token",
+    "adapter_10tok.traj_attn_scale",
+    "adapter_10tok.modality_norm.weight",
+    "adapter_10tok.modality_norm.bias",
+    "adapter_10tok.prog_412_bottleneck.0.weight",
+    "adapter_10tok.prog_412_bottleneck.0.bias",
+    "adapter_10tok.prog_412_bottleneck.1.weight",
+    "adapter_10tok.prog_412_bottleneck.1.bias",
+    "adapter_10tok.cand_query_proj.0.weight",
+    "adapter_10tok.cand_query_proj.0.bias",
+    "adapter_10tok.cand_query_proj.1.weight",
+    "adapter_10tok.cand_query_proj.1.bias",
+    "adapter_10tok.mm_cross_attn.in_proj_weight",
+    "adapter_10tok.mm_cross_attn.in_proj_bias",
+    "adapter_10tok.mm_cross_attn.out_proj.weight",
+    "adapter_10tok.mm_cross_attn.out_proj.bias",
+    "adapter_10tok.ctx_bilinear_u.weight",
+    "adapter_10tok.prog_bilinear_v.weight",
+    "adapter_10tok.mm_prior_out.0.weight",
+    "adapter_10tok.mm_prior_out.0.bias",
+    "adapter_10tok.mm_prior_out.2.weight",
+    "adapter_10tok.mm_prior_out.2.bias",
+    "adapter_10tok.hist_token_proj.0.weight",
+    "adapter_10tok.hist_token_proj.0.bias",
+    "adapter_10tok.hist_token_proj.1.weight",
+    "adapter_10tok.hist_token_proj.1.bias",
+    "adapter_10tok.traj_cross_attn.in_proj_weight",
+    "adapter_10tok.traj_cross_attn.in_proj_bias",
+    "adapter_10tok.traj_cross_attn.out_proj.weight",
+    "adapter_10tok.traj_cross_attn.out_proj.bias",
+    "adapter_10tok.traj_delta_head.0.weight",
+    "adapter_10tok.traj_delta_head.0.bias",
+    "adapter_10tok.traj_delta_head.2.weight",
+    "adapter_10tok.traj_delta_head.2.bias",
+    "adapter_10tok.parent_delta_net.0.weight",
+    "adapter_10tok.parent_delta_net.0.bias",
+    "adapter_10tok.parent_delta_net.1.weight",
+    "adapter_10tok.parent_delta_net.1.bias",
+    "adapter_10tok.parent_delta_net.3.weight",
+    "adapter_10tok.parent_delta_net.3.bias"
+  ],
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "launch_guard": {
+    "disk_used_fraction": 0.9134,
+    "disk_free_bytes": 687622959104,
+    "load1": 35.7412109375,
+    "scratch_bytes": 8085962
   },
-  "smoke_sha256": "c2967bf2a857ed5efac0d9861d309e9d2279f430dc1e7d68b0f49ca4d6a5b844",
-  "smoke_custody_receipts": {
-    "custody_dir": "/home/ubuntu/jope_plan/evidence/H154/smoke",
-    "files_sha256": {
-      "smoke-monitor.json": "b55cdd772abdc892f448b88a03cc95a365a993f0377aeaf854d9577e6bfdd841",
-      "smoke-resources.jsonl": "e4b9e9a8a9c7b446fe370077fbf342f97e24b8581b4ca37e65c77b494b58cb89",
-      "smoke.started": "6c8aba07b6fbd730486d7072be6ed746b4533dde2fadb927b94fa8e087b78115",
-      "smoke/audit.json": "132dee4e2826a2d6605f0e73c2d1f4b49f049b5909e0f30da8e29bc148974cc1",
-      "smoke/smoke.json": "c2967bf2a857ed5efac0d9861d309e9d2279f430dc1e7d68b0f49ca4d6a5b844"
-    },
-    "pid": 1194339,
-    "started_utc": "2026-11-01T04:35:14.188083+00:00"
+  "end_guard": {
+    "disk_used_fraction": 0.9134,
+    "disk_free_bytes": 687579951104,
+    "load1": 35.92236328125,
+    "scratch_bytes": 8087292
   }
 }

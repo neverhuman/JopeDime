@@ -136,6 +136,67 @@ fn champion(
     Ok((snapshot, model, record))
 }
 
+// Select only an already-fitted model whose role is bound by this run's completed
+// finalization receipt. Export cannot open partition rows or start another fit.
+fn export_champion(
+    state: &DatasetState,
+    run: &RunId,
+    algorithm: &AlgorithmId,
+    refit: Refit,
+) -> Result<(ModelObject, Record)> {
+    let (snapshot, model, record) = champion(state, run, Some(algorithm))?;
+    let completed_refit = record.data.get("refit").cloned().unwrap_or(json!("fit"));
+    if completed_refit == json!(refit) {
+        return Ok((model, record));
+    }
+    if refit != Refit::Fit || completed_refit != json!(Refit::FitHoldout) {
+        return Err(unavailable());
+    }
+    let key = RecordKey::Command {
+        principal: "discover.finalization.v1".into(),
+        idempotency_key: run.to_string(),
+    };
+    let completed = state
+        .store
+        .get(&key)
+        .map_err(|_| integrity())?
+        .ok_or_else(unavailable)?;
+    if completed.data["state"] != "completed" {
+        return Err(integrity());
+    }
+    let receipt: crate::discover::finalize::FinalizationReceipt =
+        serde_json::from_value(completed.data["receipt"].clone()).map_err(|_| integrity())?;
+    let best = snapshot.best.as_ref().ok_or_else(integrity)?;
+    if receipt.run_id != *run
+        || receipt.algorithm_id != *algorithm
+        || receipt.refit != Refit::FitHoldout
+        || Some(&receipt.model_artifact) != best.model_artifact.as_ref()
+        || receipt.model_digest != model.id()
+    {
+        return Err(integrity());
+    }
+    let digest = receipt
+        .holdout_model_digest
+        .strip_prefix("sha256-")
+        .ok_or_else(integrity)?;
+    hex_digest(digest)?;
+    let fit_id: ArtifactId = format!("art_{}", &digest[..24])
+        .parse()
+        .map_err(|_| integrity())?;
+    let (fit, fit_record) = object(state, &fit_id)?;
+    if fit.id() != receipt.holdout_model_digest
+        || fit_record.data["refit"] != json!(Refit::Fit)
+        || fit
+            .manifest()
+            .metadata
+            .get("run_id")
+            .is_some_and(|v| v != &json!(run))
+    {
+        return Err(integrity());
+    }
+    Ok((fit, fit_record))
+}
+
 #[derive(Default, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(super) struct AlgorithmQuery {
@@ -271,10 +332,7 @@ fn export(
         Ok(None) => {}
     }
     let result = (|| -> Result<(ArtifactId, Record, ExportManifest)> {
-        if request.refit != Refit::Fit {
-            return Err(unavailable());
-        }
-        let (_, model, original) = champion(state, &run, Some(&request.algorithm_id))?;
+        let (model, original) = export_champion(state, &run, &request.algorithm_id, request.refit)?;
         let mut entries = BTreeMap::new();
         let mut languages = vec![];
         if request.kind != ExportKind::Source {
@@ -325,8 +383,34 @@ fn export(
         if entries.values().map(|v| v.len() as u64).sum::<u64>() > ARCHIVE_BYTES {
             return Err(bad());
         }
+        let measured =
+            bundle::verified_model_parity(&state.store, &original, &model, &request.languages)
+                .map_err(|_| integrity())?;
+        if let Some((_, _, bytes)) = &measured {
+            entries.insert("parity_receipt.json".into(), bytes.clone());
+        }
         let pipeline = model.math_pipeline().map_err(|_| unavailable())?;
         let retains = bundle::retains_training_data(&pipeline.state.model);
+        for language in &languages {
+            let LanguageExport::Exported { language, .. } = language else {
+                continue;
+            };
+            let name = language_name(*language);
+            let usage = match language {
+                Language::Python => "Run `python3 predictor.py --self-check` to verify the embedded checks. Import `predict_rows` for prediction batches.",
+                Language::Rust => "Run `rustc --edition=2021 --test predictor.rs -o predictor-self-check` and `./predictor-self-check` to verify the embedded checks. Include the source as a module and call `predict_cells` for prediction batches.",
+                _ => "Import the fitted predictor module using the prediction input contract for the bundled model.",
+            };
+            let privacy = if retains {
+                "\nPrivacy notice: this fitted model retains training rows in its learned state. Treat the bundle as containing training data.\n"
+            } else {
+                ""
+            };
+            entries.insert(
+                format!("src/{name}/README.md"),
+                format!("# {name} fitted predictor\n\n{usage}\n\nPass raw feature cells in the bundled input-schema order; do not include the target column. The predictor applies its fitted preprocessing. Model identity: {}. Refit mode: {}.\n{privacy}", model.id(), serde_json::to_string(&request.refit).map_err(|_| integrity())?).into_bytes(),
+            );
+        }
         let archive_manifest = BundleManifest {
             schema_version: bundle::BUNDLE_SCHEMA_VERSION,
             model_object_digest: hash(model.manifest_bytes()),
@@ -363,12 +447,18 @@ fn export(
             kind: request.kind,
             model_digest: model.id().into(),
             emitter_version: env!("CARGO_PKG_VERSION").into(),
-            qualified_set_id: "not-qualified".into(),
+            qualified_set_id: measured
+                .as_ref()
+                .map_or_else(|| "not-qualified".into(), |(_, id, _)| id.clone()),
             refit: request.refit,
             retains_training_data: retains,
             languages,
-            parity_status: ParityStatus::Unavailable,
-            parity_receipt: None,
+            parity_status: if measured.is_some() {
+                ParityStatus::Passed
+            } else {
+                ParityStatus::Unavailable
+            },
+            parity_receipt: measured.map(|(id, _, _)| id),
         };
         let mut refs = original.blobs;
         refs.push(archive.clone());
@@ -522,7 +612,10 @@ pub(super) async fn download(
             .get(&RecordKey::Artifact(id))
             .map_err(|_| integrity())?
             .ok_or_else(missing)?;
-        if record.data["kind"] != "model_export" {
+        if !matches!(
+            record.data["kind"].as_str(),
+            Some("model_export" | "model_parity")
+        ) {
             return Err(missing());
         }
         let blob: BlobRef =
@@ -855,7 +948,7 @@ mod tests {
             200
         );
         let mut unsupported = body;
-        unsupported.languages = vec![Language::Python];
+        unsupported.languages = vec![Language::Typescript];
         assert_eq!(
             export(
                 &state,
@@ -924,5 +1017,200 @@ mod tests {
             .body(Body::from("{}"))
             .unwrap();
         assert!(command::<PredictRequest>(req, 15).await.is_err());
+    }
+    #[tokio::test]
+    async fn measured_export_parity_rechecks_model_sources_mode_and_all_rows() {
+        let (_dir, state, run, id, _) = fixture();
+        let (model, original) = object(&state, &id).unwrap();
+        let pipeline = model.math_pipeline().unwrap();
+        let rows: Vec<Vec<Option<String>>> = (0..64)
+            .map(|i| {
+                pipeline
+                    .input
+                    .columns
+                    .iter()
+                    .map(|c| Some((c.min + (c.max - c.min) * (i as f64 / 63.0)).to_string()))
+                    .collect()
+            })
+            .collect();
+        let borrowed = rows
+            .iter()
+            .map(|r| r.iter().map(Option::as_deref).collect())
+            .collect::<Vec<_>>();
+        let engine = pipeline.predict_cells(&borrowed).unwrap();
+        // Controlled observations exercise receipt validation only. Actual toolchain
+        // executions belong to the external qualification receipt, not this unit test.
+        let receipt = bundle::MeasuredModelParity {
+            schema: "jope.measured-model-parity/v1".into(),
+            model_digest: model.id().into(),
+            emitter_version: env!("CARGO_PKG_VERSION").into(),
+            refit: Refit::Fit,
+            source_sha256: BTreeMap::from([
+                (
+                    "python".into(),
+                    hash(&model.export_source("python").unwrap()),
+                ),
+                ("rust".into(), hash(&model.export_source("rust").unwrap())),
+            ]),
+            toolchains: BTreeMap::from([
+                ("python".into(), "controlled validator fixture".into()),
+                ("rust".into(), "controlled validator fixture".into()),
+            ]),
+            rows,
+            engine: engine.clone(),
+            observed: BTreeMap::from([("python".into(), engine.clone()), ("rust".into(), engine)]),
+        };
+        for case in 0..5 {
+            let mut bad = receipt.clone();
+            match case {
+                0 => bad.source_sha256.insert("python".into(), "0".repeat(64)),
+                1 => {
+                    bad.observed.get_mut("rust").unwrap()[0] += 1.;
+                    None
+                }
+                2 => {
+                    bad.rows.pop();
+                    None
+                }
+                3 => {
+                    bad.refit = Refit::FitHoldout;
+                    None
+                }
+                _ => {
+                    bad.model_digest = "different-model".into();
+                    None
+                }
+            };
+            assert!(bundle::record_model_parity(&state.store, &id, &model, &bad).is_err());
+            assert_eq!(
+                state
+                    .store
+                    .get(&RecordKey::Artifact(id.clone()))
+                    .unwrap()
+                    .unwrap(),
+                original
+            );
+        }
+        let parity_id = bundle::record_model_parity(&state.store, &id, &model, &receipt).unwrap();
+        let mut body = export_request();
+        body.languages = vec![Language::Python, Language::Rust];
+        let target = format!("/v1/runs/{run}/exports");
+        let response = export(
+            &state,
+            run,
+            body.clone(),
+            identity("measured-export", 13, &target, &body),
+        );
+        assert_eq!(response.status(), 200);
+        let manifest: ExportManifest = serde_json::from_slice(&bytes(response).await).unwrap();
+        assert_eq!(manifest.parity_status, ParityStatus::Passed);
+        assert_eq!(manifest.parity_receipt, Some(parity_id.clone()));
+        assert!(manifest.qualified_set_id.starts_with("measured-model:"));
+        let downloaded = download(
+            Extension(state.clone()),
+            Ok(Path(manifest.artifact_id.to_string())),
+        )
+        .await;
+        let mut archive =
+            zip::ZipArchive::new(std::io::Cursor::new(bytes(downloaded).await)).unwrap();
+        assert!(archive.by_name("parity_receipt.json").is_ok());
+        assert!(archive.by_name("src/python/predictor.py").is_ok());
+        let proof = download(Extension(state), Ok(Path(parity_id.to_string()))).await;
+        assert_eq!(proof.status(), 200);
+    }
+    #[tokio::test]
+    async fn export_refit_matches_the_completed_model_without_fitting_again() {
+        let (_dir, state, run, id, _) = fixture();
+        let mut body = export_request();
+        body.refit = Refit::FitHoldout;
+        let target = format!("/v1/runs/{run}/exports");
+        assert_eq!(
+            export(
+                &state,
+                run.clone(),
+                body.clone(),
+                identity("wrong-mode", 13, &target, &body)
+            )
+            .status(),
+            422
+        );
+        state
+            .store
+            .transaction(|tx| {
+                let key = RecordKey::Artifact(id.clone());
+                let mut r = tx.get(&key)?.unwrap();
+                r.data["refit"] = json!("fit_holdout");
+                tx.put(&key, &r)
+            })
+            .unwrap();
+        let response = export(
+            &state,
+            run,
+            body.clone(),
+            identity("completed-mode", 13, &target, &body),
+        );
+        assert_eq!(response.status(), 200);
+        let manifest: ExportManifest = serde_json::from_slice(&bytes(response).await).unwrap();
+        assert_eq!(manifest.refit, Refit::FitHoldout);
+        assert_eq!(manifest.parity_status, ParityStatus::Unavailable);
+    }
+    #[test]
+    fn explicit_fit_uses_only_the_model_bound_by_the_completed_run_receipt() {
+        let (_dir, state, run, fit_id, _) = fixture();
+        let (fit, _) = object(&state, &fit_id).unwrap();
+        // Controlled selector fixture; operational proof uses real native fits.
+        let mut manifest = fit.manifest().clone();
+        manifest.metadata["refit"] = json!("fit_holdout");
+        let full = ModelObject::new(manifest, fit.parts().clone(), MODEL_BYTES).unwrap();
+        let full_id: ArtifactId = format!("art_{}", &full.id()[7..31]).parse().unwrap();
+        let refs = std::iter::once(full.manifest_bytes())
+            .chain(full.parts().values().map(Vec::as_slice))
+            .map(|b| state.store.publish_blob(b).unwrap())
+            .collect();
+        let completed = json!({"run_id":run,"algorithm_id":"alg_0001","model_artifact":full_id,"model_digest":full.id(),"model_path":"unused","refit":"fit_holdout","scores":{"cv":0.25,"holdout":0.2,"test":null},"completion_reason":"budget_evaluations","budget_bound_by":"evaluations","budget_used":{"evaluations":"1","wall_seconds":"0.1"},"nondeterminism":{"count":"0","experiment_ids":[]},"holdout_model_digest":fit.id(),"holdout_scope":"holdout_scored_with_fit_only_model","test_scope":null,"fit_rows":4,"holdout_rows":1,"test_rows":0,"audit":null});
+        let _: crate::discover::finalize::FinalizationReceipt =
+            serde_json::from_value(completed.clone()).unwrap();
+        let command = RecordKey::Command {
+            principal: "discover.finalization.v1".into(),
+            idempotency_key: run.to_string(),
+        };
+        state.store.transaction(|tx|{
+            let fit_key=RecordKey::Artifact(fit_id.clone());
+            let mut fit_record=tx.get(&fit_key)?.unwrap();
+            fit_record.data["refit"]=json!(Refit::Fit);
+            tx.put(&fit_key,&fit_record)?;
+            tx.put(&RecordKey::Artifact(full_id.clone()),&Record::metadata(json!({"kind":"finalized_model","model_digest":full.id(),"refit":"fit_holdout"}),refs))?;
+            let key=RecordKey::Run(run.clone());let mut record=tx.get(&key)?.unwrap();record.data["snapshot"]["best"]["model_artifact"]=json!(full_id);tx.put(&key,&record)?;
+            tx.put(&command,&Record::metadata(json!({"state":"completed","receipt":completed}),vec![]))
+        }).unwrap();
+        let alg = "alg_0001".parse().unwrap();
+        assert_eq!(
+            export_champion(&state, &run, &alg, Refit::Fit)
+                .unwrap()
+                .0
+                .id(),
+            fit.id()
+        );
+        assert_eq!(
+            export_champion(&state, &run, &alg, Refit::FitHoldout)
+                .unwrap()
+                .0
+                .id(),
+            full.id()
+        );
+        state
+            .store
+            .transaction(|tx| {
+                let mut record = tx.get(&command)?.unwrap();
+                record.data["receipt"]["run_id"] = json!(RunId::new());
+                tx.put(&command, &record)
+            })
+            .unwrap();
+        assert_eq!(
+            export_champion(&state, &run, &alg, Refit::Fit)
+                .unwrap_err()
+                .code,
+            ErrorCode::ModelIntegrityFailed
+        );
     }
 }

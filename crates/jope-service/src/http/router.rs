@@ -98,6 +98,8 @@ fn build_router(
                 app.route(path, get(super::models::download))
             } else if let ("run_start", Some(_)) = (operation.name, journal.as_ref()) {
                 app.route(path, axum::routing::post(super::runs::start))
+            } else if let ("run_control", Some(_)) = (operation.name, journal.as_ref()) {
+                app.route(path, axum::routing::post(super::runs::control))
             } else if let ("run_status", Some(log)) = (operation.name, journal.as_ref()) {
                 if path.ends_with("{id}") {
                     app.route(

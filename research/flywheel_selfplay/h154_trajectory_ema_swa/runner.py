@@ -19,11 +19,13 @@ from runtime import (
     TrajectoryEMAState,
     TrajectorySWAState,
     apply_stat_recalibration,
+    assert_frozen_anchor,
     bind_source,
     build,
     check_frozen,
     compute_recal_rms,
     dropout_census,
+    eval_batch_cache_key,
     guards,
     loss,
     save,
@@ -120,9 +122,22 @@ def calibration_rms(net, pools, tokens, masks, cal_batches):
     return compute_recal_rms(mm_list, traj_list)
 
 
-def evaluate(net, pools, tokens, masks, rows):
+def evaluate(
+    net,
+    pools,
+    tokens,
+    masks,
+    rows,
+    split_name=None,
+    use_cache=True,
+    return_scores=False,
+):
+    if split_name is None:
+        splits = {r.get("dl_split", "UNKNOWN") for r in rows}
+        split_name = splits.pop() if len(splits) == 1 else "MIXED"
     groups = {}
     result = {}
+    raw_scores = {}
     for r in rows:
         groups.setdefault(len(pools[r["context_sha256"]]["fitness"]), []).append(
             r["context_sha256"]
@@ -131,26 +146,45 @@ def evaluate(net, pools, tokens, masks, rows):
         for size, cids in sorted(groups.items()):
             for start in range(0, len(cids), 8):
                 batch = cids[start : start + 8]
-                scores = predict(
-                    net, pools, tokens, masks, batch, [np.arange(size) for _ in batch]
-                ).numpy()
+                ixs = [np.arange(size) for _ in batch]
+                net._eval_batch_key = (
+                    eval_batch_cache_key(split_name, batch, ixs, pools)
+                    if use_cache
+                    else None
+                )
+                try:
+                    scores = predict(
+                        net,
+                        pools,
+                        tokens,
+                        masks,
+                        batch,
+                        ixs,
+                    ).numpy()
+                finally:
+                    net._eval_batch_key = None
                 if not np.isfinite(scores).all():
                     raise RuntimeError("nonfinite predictions")
                 for cid, cost in zip(batch, scores, strict=True):
                     i = int(np.argmin(cost))
                     p = pools[cid]
                     valid = bool(p["gate"][i])
+                    if return_scores:
+                        raw_scores[cid] = cost.copy()
                     result[cid] = dict(
                         choice=i,
                         utility=float(-p["fitness"][i] if valid else -2.0),
                         invalid=not valid,
                     )
-    return dict(
+    out = dict(
         values=[result[r["context_sha256"]]["utility"] for r in rows],
         choices=[result[r["context_sha256"]]["choice"] for r in rows],
         invalid=[result[r["context_sha256"]]["invalid"] for r in rows],
         context_ids=[r["context_sha256"] for r in rows],
     )
+    if return_scores:
+        out["scores"] = [raw_scores[r["context_sha256"]] for r in rows]
+    return out
 
 
 def subset_eval(full_eval, sub_rows):
@@ -234,6 +268,7 @@ def main():
             raise RuntimeError("CUDA initialization forbidden")
         checkpoint = Path(pins["checkpoint"])
         net, guard, names, frozen, fused = build(checkpoint)
+        assert_frozen_anchor(net, names, net._anchor_sha256)
         census = dropout_census(net)
         if census["adapter_dropout_modules"] or any(
             m["p"] != 0 for m in census["adapter_attention_dropout"]
@@ -344,12 +379,14 @@ def main():
                 c: torch.as_tensor(mask[i], dtype=torch.bool) for i, c in enumerate(ids)
             }
 
-        baseline = evaluate(net, pools, tokens, masks, val)
+        baseline = evaluate(net, pools, tokens, masks, val, split_name="DL-Val")
         sanity = baseline_gate(baseline["values"], ref)
         save(out / "baseline.json", dict(**baseline, sanity=sanity))
         print("BASELINE PASS", sanity, flush=True)
 
-        baseline_train = evaluate(net, pools, tokens, masks, train)
+        baseline_train = evaluate(
+            net, pools, tokens, masks, train, split_name="DL-Train"
+        )
         baseline_fold0 = subset_eval(baseline_train, fold0)
         save(out / "baseline_train.json", baseline_train)
         save(out / "baseline_fold0.json", baseline_fold0)
@@ -469,8 +506,12 @@ def main():
                 if not drift > 0:
                     raise RuntimeError(f"no parameter update for {arm} seed {seed}")
 
-                val_result = evaluate(net, pools, tokens, masks, val)
-                train_result = evaluate(net, pools, tokens, masks, train)
+                val_result = evaluate(
+                    net, pools, tokens, masks, val, split_name="DL-Val"
+                )
+                train_result = evaluate(
+                    net, pools, tokens, masks, train, split_name="DL-Train"
+                )
                 fold0_result = subset_eval(train_result, fold0)
                 check_frozen(net, guard, names, frozen)
 

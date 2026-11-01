@@ -45,35 +45,44 @@ pub struct RunArgs {
     /// Reuse the original key when retrying the same run request.
     #[arg(long)]
     pub idempotency_key: Option<String>,
-    #[arg(long)]
-    pub dataset: String,
+    #[arg(
+        value_name = "CSV",
+        required_unless_present = "dataset",
+        conflicts_with = "dataset"
+    )]
+    pub input: Option<PathBuf>,
+    #[arg(long, required_unless_present = "input", conflicts_with = "input")]
+    pub dataset: Option<String>,
     #[arg(long)]
     pub target: String,
-    #[arg(long)]
+    #[arg(long, default_value = "auto")]
     pub task: String,
     #[arg(long = "ignore-column")]
     pub ignore_columns: Vec<String>,
     #[arg(long)]
     pub test_dataset: Option<String>,
-    #[arg(long)]
+    #[arg(
+        long,
+        default_value = "{\"kind\":\"random\",\"holdout_fraction\":0.2,\"group_column\":null,\"time_column\":null}"
+    )]
     pub split: String,
-    #[arg(long)]
+    #[arg(long, default_value = "rmse")]
     pub objective: String,
-    #[arg(long)]
+    #[arg(long, default_value = "medium")]
     pub effort: String,
-    #[arg(long)]
+    #[arg(long, default_value = "{\"evaluations\":null,\"wall_seconds\":null}")]
     pub budget: String,
-    #[arg(long)]
+    #[arg(long, default_value = "full")]
     pub landmarks: String,
-    #[arg(long)]
+    #[arg(long, default_value = "auto")]
     pub guidance: String,
-    #[arg(long = "language")]
+    #[arg(long = "language", alias = "lang", value_delimiter = ',')]
     pub languages: Vec<String>,
     #[arg(long)]
     pub require_all_languages: bool,
-    #[arg(long)]
+    #[arg(long, default_value = "auto")]
     pub device: String,
-    #[arg(long)]
+    #[arg(long, default_value = "0")]
     pub seed: String,
     #[arg(long, conflicts_with_all = ["detach", "out", "events"])]
     pub dry_run: bool,
@@ -83,6 +92,8 @@ pub struct RunArgs {
     pub detach: bool,
     #[arg(long)]
     pub out: Option<PathBuf>,
+    #[arg(long, default_value = "fit_holdout", value_parser = ["fit", "fit_holdout"])]
+    pub refit: String,
     #[arg(long)]
     pub json: bool,
     #[arg(long, value_parser = ["ndjson"])]
@@ -103,8 +114,10 @@ pub struct RunArgs {
 
 impl RunArgs {
     pub fn run_spec(&self) -> anyhow::Result<RunSpec> {
-        let dataset = DatasetId::from_str(&self.dataset)
-            .map_err(|_| anyhow::anyhow!("invalid dataset identifier"))?;
+        let dataset = DatasetId::from_str(self.dataset.as_deref().ok_or_else(|| {
+            anyhow::anyhow!("CSV must be registered before constructing RunSpec")
+        })?)
+        .map_err(|_| anyhow::anyhow!("invalid dataset identifier"))?;
         let test_dataset = self
             .test_dataset
             .as_deref()
@@ -335,9 +348,41 @@ fn validate_m1_spec(
     Ok(())
 }
 
-pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
-    let spec = args.run_spec()?;
+pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()> {
+    let export_refit: Refit = parse_value(&args.refit)?;
     let key = crate::common::resolve_idempotency_key(args.idempotency_key.as_deref());
+    if let Some(path) = args.input.take() {
+        let name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .ok_or_else(|| anyhow::anyhow!("CSV path must have a UTF-8 file name"))?;
+        // Both local HTTP and socket-free transports support JSON path registration.
+        let absolute = std::fs::canonicalize(&path).map_err(|error| {
+            jope_runtime::Failure::input(format!("open CSV {}: {error}", path.display()))
+        })?;
+        let registration_key = format!("csv_{}", jope_runtime::sha256_hex(key.as_bytes()));
+        let request = jope_api::registry::DatasetRegistration::Path {
+            path: absolute
+                .to_str()
+                .ok_or_else(|| anyhow::anyhow!("CSV path must be UTF-8"))?
+                .into(),
+            name: Some(name.into()),
+        };
+        let profile = transport.dataset_register(&request, Some(&registration_key))?;
+        if args.task == "auto" {
+            if let Some(task) = crate::draft::inferred_tasks(&profile).get(&args.target) {
+                args.task = serde_json::to_value(task)?
+                    .as_str()
+                    .ok_or_else(|| anyhow::anyhow!("task did not encode as a name"))?
+                    .to_owned();
+            }
+        }
+        if args.languages.is_empty() {
+            args.languages = vec!["rust".into(), "python".into()];
+        }
+        args.dataset = Some(profile.dataset_id.to_string());
+    }
+    let spec = args.run_spec()?;
     let response = transport.run_start(&spec, Some(&key))?;
     match response {
         RunResult::Plan(plan) => write_json(&*plan),
@@ -443,7 +488,7 @@ pub fn run<T: Transport>(args: RunArgs, transport: &T) -> anyhow::Result<()> {
             let manifest = args
                 .out
                 .as_deref()
-                .map(|directory| export_best(transport, &current, &spec, directory))
+                .map(|directory| export_best(transport, &current, &spec, directory, export_refit))
                 .transpose()?;
             finish_interrupt(
                 transport,
@@ -465,8 +510,8 @@ fn export_best<T: Transport>(
     snapshot: &RunSnapshot,
     spec: &RunSpec,
     directory: &std::path::Path,
+    refit: Refit,
 ) -> anyhow::Result<Value> {
-    use std::fs;
     let best = snapshot
         .best
         .as_ref()
@@ -476,19 +521,16 @@ fn export_best<T: Transport>(
         kind: ExportKind::Bundle,
         languages: spec.languages.clone(),
         require_all_languages: spec.require_all_languages,
-        refit: Refit::Fit,
+        refit,
     };
     let key = crate::common::resolve_idempotency_key(None);
     let manifest = transport.model_export(&snapshot.run_id, &request, Some(&key))?;
-    fs::create_dir_all(directory)?;
-    let path = directory.join(manifest.artifact_id.to_string());
-    let mut file = fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(path)?;
-    let mut response = transport.artifact_download(&manifest.artifact_id)?;
-    std::io::copy(&mut response.body, &mut file)?;
-    file.sync_all()?;
+    jope_client::files::download_export_artifact(
+        transport,
+        &manifest.artifact_id,
+        directory,
+        false,
+    )?;
     Ok(serde_json::to_value(manifest)?)
 }
 
@@ -1014,6 +1056,30 @@ mod tests {
 
     #[test]
     fn noninteractive_modes_parse_without_prompting() {
+        let csv = Args::try_parse_from([
+            "jopedime",
+            "run",
+            "data/train.csv",
+            "--target",
+            "target",
+            "--effort",
+            "high",
+            "--lang",
+            "rust,python",
+            "--out",
+            "model",
+            "--json",
+        ])
+        .unwrap();
+        let crate::cli::Command::Run(csv) = csv.command else {
+            panic!("expected run command")
+        };
+        assert_eq!(
+            csv.input.as_deref(),
+            Some(std::path::Path::new("data/train.csv"))
+        );
+        assert_eq!(csv.languages, ["rust", "python"]);
+        assert!(csv.dataset.is_none());
         let required = [
             "--dataset",
             "ds_0123456789abcdef01234567",

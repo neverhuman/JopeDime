@@ -11,6 +11,7 @@ pub struct Draft {
     dataset: Option<DatasetId>,
     target: Option<String>,
     task: Task,
+    suggested_tasks: BTreeMap<String, Task>,
     ignore_columns: Vec<String>,
     split: SplitSpec,
     objective: ObjectiveSpec,
@@ -31,6 +32,7 @@ impl Default for Draft {
             dataset: None,
             target: None,
             task: Task::Auto,
+            suggested_tasks: BTreeMap::new(),
             ignore_columns: Vec::new(),
             split: SplitSpec {
                 kind: SplitKind::Random,
@@ -55,12 +57,40 @@ impl Default for Draft {
     }
 }
 
+/// Apply the runtime's existing Auto policy to the registered public column profile.
+pub(crate) fn inferred_tasks(profile: &DatasetProfile) -> BTreeMap<String, Task> {
+    let mut tasks: BTreeMap<_, _> = profile
+        .columns
+        .iter()
+        .filter_map(|column| {
+            if column.distinct.0 == 0 {
+                return None;
+            }
+            let task = if column.distinct.0 == 2 {
+                Task::Binary
+            } else if matches!(column.data_type.as_str(), "numeric" | "number") {
+                Task::Regression
+            } else {
+                Task::Multiclass
+            };
+            Some((column.name.clone(), task))
+        })
+        .collect();
+    for suggestion in &profile.target_suggestions {
+        if suggestion.task != Task::Auto {
+            tasks.insert(suggestion.column.clone(), suggestion.task);
+        }
+    }
+    tasks
+}
+
 impl Draft {
     pub fn set_seed(&mut self, seed: DecimalU64) {
         self.seed = seed;
     }
 
     pub fn set_dataset(&mut self, profile: DatasetProfile) {
+        self.suggested_tasks = inferred_tasks(&profile);
         self.dataset = Some(profile.dataset_id);
         self.columns = profile
             .columns
@@ -73,6 +103,10 @@ impl Draft {
                 .first()
                 .map(|suggestion| suggestion.column.clone());
         }
+    }
+
+    pub fn languages(&self) -> Vec<Language> {
+        self.languages.clone()
     }
 
     pub fn apply(&mut self, input: &str) -> Result<(), String> {
@@ -180,7 +214,14 @@ impl Draft {
         Some(RunSpec {
             dataset: self.dataset.clone()?,
             target: self.target.clone()?,
-            task: self.task,
+            task: if self.task == Task::Auto {
+                self.suggested_tasks
+                    .get(self.target.as_ref()?)
+                    .copied()
+                    .unwrap_or(Task::Auto)
+            } else {
+                self.task
+            },
             ignore_columns: self.ignore_columns.clone(),
             test_dataset: None,
             split: self.split.clone(),
@@ -284,13 +325,14 @@ mod tests {
                 {"name": "group", "data_type": "string", "missing": "0", "distinct": "3"}
             ],
             "target_suggestions": [
-                {"column": "target", "task": "regression", "reason": "numeric"}
+                {"column": "target", "task": "auto", "reason": "non-binding target hint"}
             ],
             "warnings": []
         }))
         .unwrap();
         let mut draft = Draft::default();
         draft.set_dataset(profile);
+        assert_eq!(draft.run_spec(true).unwrap().task, Task::Regression);
         draft
             .apply(r"\target target --task regression --ignore group --group group")
             .unwrap();

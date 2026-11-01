@@ -14,18 +14,26 @@ os.environ["MKL_NUM_THREADS"] = "1"
 
 import numpy as np
 from monitor import classify, environment
-from runner import baseline_gate
+from runner import baseline_gate, evaluate, selected
 from runtime import (
     BOUND_FILES,
+    CACHE,
+    HERE,
+    INPUT,
     Audit,
     TrajectoryEMAState,
     TrajectorySWAState,
     apply_stat_recalibration,
+    assert_frozen_anchor,
     bind_source,
+    build,
+    check_frozen,
     compute_recal_rms,
+    eval_batch_cache_key,
     guards,
     loss,
     tensor_hash,
+    validate_eval_cache_key,
 )
 from science import (
     ARMS,
@@ -566,19 +574,266 @@ class H154Tests(unittest.TestCase):
         self.assertEqual(environment()["OMP_NUM_THREADS"], "1")
 
     def test_read_audit(self):
+        out_dir = Path("/home/ubuntu/jope_plan/evidence/H154/attempt_unit_test")
         a = Audit(
-            ["/home/ubuntu/jope-data/h50/input/selected.json"],
-            Path("/home/ubuntu/jope-data/h154/test"),
+            [
+                "/home/ubuntu/jope-data/h50/input/selected.json",
+                "/home/ubuntu/jope-data/h154/inputs/round-882.pt",
+            ],
+            out_dir,
         )
+        # Allowed read and allowed output/tmp writes
         a.check("open", ("/home/ubuntu/jope-data/h50/input/selected.json", "r", 0))
+        a.check("open", (str(out_dir / "metrics.json"), "w", 0))
+        a.check("open", ("/tmp/_remote_module_non_scriptable.py", "w", 0))
+
+        # Refused reads and writes across /home/ubuntu/JopeDime, ~/jope_plan (outside output),
+        # ~/jope-data (except output), and every sealed/holdout/meta-test path
         for path, mode in [
             ("/home/ubuntu/jope-data/holdout/data", "r"),
+            ("/home/ubuntu/jope-data/sealed/panel.json", "r"),
+            ("/home/ubuntu/jope-data/meta-test/eval.json", "r"),
+            ("/home/ubuntu/jope-data/meta_test/eval.json", "r"),
+            ("/home/ubuntu/jope-data/qualification.lock", "r"),
+            ("/home/ubuntu/JopeDime/data/flywheel_selfplay/live", "r"),
             ("/home/ubuntu/jope-data/h50/input/pools/unknown.npz", "r"),
+            ("/home/ubuntu/JopeDime/README.md", "w"),
+            (
+                "/home/ubuntu/JopeDime/.agent/worktrees/h154-agy/research/flywheel_selfplay/h154_trajectory_ema_swa/runner.py",
+                "w",
+            ),
             ("/home/ubuntu/JopeDime/data/flywheel_selfplay/live", "w"),
+            ("/home/ubuntu/jope_plan/AGENT_CHAT.md", "w"),
+            ("/home/ubuntu/jope_plan/evidence/H154/launch.json", "w"),
+            ("/home/ubuntu/jope_plan/evidence/H154/other_attempt/metrics.json", "w"),
             ("/home/ubuntu/jope-data/h50/input/selected.json", "w"),
+            ("/home/ubuntu/jope-data/h154/inputs/round-882.pt", "w"),
+            ("/home/ubuntu/jope-data/h154/other/file.json", "w"),
+            ("/tmp/sealed/leak.json", "w"),
+            ("/tmp/holdout/leak.json", "w"),
+            ("/tmp/meta-test/leak.json", "w"),
+            ("/tmp/meta_test/leak.json", "w"),
+            ("/tmp/qualification.lock", "w"),
+            (str(out_dir / "sealed" / "leak.json"), "w"),
+            (str(out_dir / "holdout" / "leak.json"), "w"),
+        ]:
+            with self.assertRaises(
+                RuntimeError, msg=f"expected refusal for {path} ({mode})"
+            ):
+                a.check("open", (path, mode, 0))
+
+    def test_eval_cache_key_structure_and_validation(self):
+        fake_pools = {
+            "cid_a": dict(
+                program=np.ones((8, 412), dtype=np.float32),
+                fitness=np.linspace(-1.0, 1.0, 8, dtype=np.float64),
+                gate=np.ones(8, dtype=bool),
+            ),
+            "cid_b": dict(
+                program=np.full((8, 412), 2.0, dtype=np.float32),
+                fitness=np.linspace(-0.5, 0.5, 8, dtype=np.float64),
+                gate=np.ones(8, dtype=bool),
+            ),
+        }
+        k1 = eval_batch_cache_key(
+            "DL-Val", ["cid_a", "cid_b"], [np.arange(8), np.arange(8)], fake_pools
+        )
+        self.assertEqual(validate_eval_cache_key(k1), k1)
+        self.assertEqual(k1[0], "DL-Val")
+        self.assertEqual(k1[1], ("cid_a", "cid_b"))
+        self.assertEqual(len(k1[2]), 64)
+
+        # Split change must change key
+        k_split = eval_batch_cache_key(
+            "Fold-0", ["cid_a", "cid_b"], [np.arange(8), np.arange(8)], fake_pools
+        )
+        self.assertNotEqual(k1, k_split)
+
+        # Context ID order change must change key
+        k_cids = eval_batch_cache_key(
+            "DL-Val", ["cid_b", "cid_a"], [np.arange(8), np.arange(8)], fake_pools
+        )
+        self.assertNotEqual(k1, k_cids)
+
+        # Candidate subset/index change must change key
+        k_ix = eval_batch_cache_key(
+            "DL-Val", ["cid_a", "cid_b"], [np.arange(4), np.arange(4)], fake_pools
+        )
+        self.assertNotEqual(k1[2], k_ix[2])
+
+        # Mutating candidate program features must change candidate_set_sha256
+        fake_pools["cid_a"]["program"][0, 0] = 99.0
+        k_prog = eval_batch_cache_key(
+            "DL-Val", ["cid_a", "cid_b"], [np.arange(8), np.arange(8)], fake_pools
+        )
+        self.assertNotEqual(k1[2], k_prog[2])
+
+        # Bare batch index or bare context tuple must be rejected by validate_eval_cache_key
+        for bad_key in [
+            0,
+            ("cid_a", "cid_b"),
+            ("", ("cid_a",), "a" * 64),
+            ("DL-Val", (), "a" * 64),
+            ("DL-Val", ("cid_a",), "short"),
         ]:
             with self.assertRaises(RuntimeError):
-                a.check("open", (path, mode, 0))
+                validate_eval_cache_key(bad_key)
+
+    def test_anchor_frozen_and_cache_bitwise_parity_dl_val_and_fold0(self):
+        import json
+        import torch
+
+        torch.set_num_threads(1)
+        pins = json.loads((HERE / "manifest.json").read_text())
+        net, guard, names, frozen, fused = build(Path(pins["checkpoint"]))
+
+        # 1. Assert anchor is a frozen non-adapter module and tampering is caught
+        anchor_sha = assert_frozen_anchor(net, names, net._anchor_sha256)
+        self.assertEqual(anchor_sha, net._anchor_sha256)
+        with self.assertRaises(RuntimeError):
+            assert_frozen_anchor(net, (*names, "adapter_10tok.anchor.leak"))
+        first_anchor_param = next(net.adapter_10tok.anchor.parameters())
+        first_anchor_param.requires_grad_(True)
+        try:
+            with self.assertRaises(RuntimeError):
+                assert_frozen_anchor(net, names, net._anchor_sha256)
+        finally:
+            first_anchor_param.requires_grad_(False)
+
+        # Bare batch index on net._eval_batch_key must be refused by cached_anchor/cached_sem24
+        net._eval_batch_key = 0
+        try:
+            with self.assertRaises(RuntimeError):
+                fused.compute_semantic_struct_sig_24d_torch(torch.zeros((1, 4, 412)))
+        finally:
+            net._eval_batch_key = None
+
+        # 2. Load DL-Val (all 91 contexts) and Fold 0 (all 254 contexts)
+        train, val = selected()
+        groups = folds(train)
+        fold0 = [r for r in train if r["family_id"] in groups[0]]
+        self.assertEqual(len(val), 91)
+        self.assertEqual(len(fold0), 254)
+
+        pools = {}
+        projection = fused.get_w1_sign_matrix() / np.sqrt(412.0)
+        # Keep full 3000 candidates on first batch (8 contexts) of DL-Val and Fold 0,
+        # and 64 candidates across all remaining 91 DL-Val and 254 Fold 0 contexts.
+        full_cids = {r["context_sha256"] for r in val[:8] + fold0[:8]}
+        for r in val + fold0:
+            cid = r["context_sha256"]
+            p = INPUT / "pools" / f"{cid}.npz"
+            with np.load(p, allow_pickle=False) as z:
+                cap = None if cid in full_cids else 64
+                program = z["program"][:cap].astype(np.float32)
+                pools[cid] = dict(
+                    program=program,
+                    proj16=(program.astype(np.float64) @ projection).astype(np.float32),
+                    fitness=z["fitness"][:cap].astype(np.float64),
+                    gate=z["gate"][:cap].astype(bool),
+                )
+        with np.load(CACHE, allow_pickle=False) as z:
+            ids = list(map(str, z["cids"]))
+            tok = z["tokens_10x32"]
+            mask = z["mask_10"]
+            tokens = {
+                c: torch.as_tensor(tok[i], dtype=torch.float32)
+                for i, c in enumerate(ids)
+                if c in pools
+            }
+            masks = {
+                c: torch.as_tensor(mask[i], dtype=torch.bool)
+                for i, c in enumerate(ids)
+                if c in pools
+            }
+
+        state_a = {k: v.detach().clone() for k, v in net.state_dict().items()}
+        gen = torch.Generator(device="cpu").manual_seed(154999)
+        state_b = {k: v.detach().clone() for k, v in state_a.items()}
+        for n in names:
+            noise = torch.randn(
+                state_b[n].shape, generator=gen, dtype=torch.float32
+            ).to(dtype=state_b[n].dtype)
+            state_b[n] = (state_b[n] + 0.08 * noise).clone()
+
+        results_by_state = {}
+        for label, sd in [("state_a", state_a), ("state_b", state_b)]:
+            net.load_state_dict(sd, strict=True)
+            check_frozen(net, guard, names, frozen)
+            val_uncached = evaluate(
+                net,
+                pools,
+                tokens,
+                masks,
+                val,
+                split_name="DL-Val",
+                use_cache=False,
+                return_scores=True,
+            )
+            val_cached = evaluate(
+                net,
+                pools,
+                tokens,
+                masks,
+                val,
+                split_name="DL-Val",
+                use_cache=True,
+                return_scores=True,
+            )
+            fold0_uncached = evaluate(
+                net,
+                pools,
+                tokens,
+                masks,
+                fold0,
+                split_name="Fold-0",
+                use_cache=False,
+                return_scores=True,
+            )
+            fold0_cached = evaluate(
+                net,
+                pools,
+                tokens,
+                masks,
+                fold0,
+                split_name="Fold-0",
+                use_cache=True,
+                return_scores=True,
+            )
+            for u, c in [(val_uncached, val_cached), (fold0_uncached, fold0_cached)]:
+                self.assertEqual(u["values"], c["values"])
+                self.assertEqual(u["choices"], c["choices"])
+                self.assertEqual(u["invalid"], c["invalid"])
+                self.assertEqual(u["context_ids"], c["context_ids"])
+                for s_u, s_c in zip(u["scores"], c["scores"], strict=True):
+                    self.assertTrue(np.array_equal(s_u, s_c))
+            check_frozen(net, guard, names, frozen)
+            results_by_state[label] = (val_cached, fold0_cached)
+
+        # Confirm the two adapter states produce genuinely different score vectors on both splits
+        self.assertFalse(
+            all(
+                np.array_equal(a, b)
+                for a, b in zip(
+                    results_by_state["state_a"][0]["scores"],
+                    results_by_state["state_b"][0]["scores"],
+                    strict=True,
+                )
+            )
+        )
+        self.assertFalse(
+            all(
+                np.array_equal(a, b)
+                for a, b in zip(
+                    results_by_state["state_a"][1]["scores"],
+                    results_by_state["state_b"][1]["scores"],
+                    strict=True,
+                )
+            )
+        )
+        # Confirm cache keys stored in net._anchor_cache include both "DL-Val" and "Fold-0" splits
+        cached_splits = {k[0] for k in net._anchor_cache}
+        self.assertEqual(cached_splits, {"DL-Val", "Fold-0"})
 
     def test_signed_zero_byte_guard(self):
         import torch

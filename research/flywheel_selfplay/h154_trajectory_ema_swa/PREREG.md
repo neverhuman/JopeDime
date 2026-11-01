@@ -78,3 +78,5 @@ For each arm $a \in \text{ARMS}$, let $D_a = \text{median}_{s \in \text{SEEDS}} 
   - `MemAvailable < 16 GiB` (`16 * 1024**3` B) $\rightarrow$ `abort` (`MEMORY`)
   - Process `nice < 19` $\rightarrow$ `RuntimeError`
 - **Squash-compatible source binding (`runtime.bind_source`):** Before running any trajectory step, `runner.py` verifies `launch.json` (`merged_source_verified == True`, `manifest_sha256` match) and checks via `git show` that all 6 `BOUND_FILES` (`PREREG.md`, `runner.py`, `runtime.py`, `science.py`, `monitor.py`, `dope_freeze_guard.py`) are byte-identical to both `reviewed_head` and the squash-merged `source_commit` on `main`.
+- **Pre-scoring Amendment A1:** See [PREREG_AMENDMENT_A1.md](PREREG_AMENDMENT_A1.md).
+

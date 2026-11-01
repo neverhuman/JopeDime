@@ -1985,12 +1985,20 @@
       "reason": "Owner-requested H152 data-free controls for the zero-update checkpoint soup readout, resource guards and source binding; no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h153_sam/test_h153.py": {
+      "reason": "Owner-requested H153 SAM/ASAM data-free registration, manipulation and resource-stop controls; offline research only.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h154_trajectory_ema_swa/test_h154.py": {
       "reason": "H154 owner-directed trajectory EMA/SWA weight averaging and train-only stat recalibration data-free unit suite; offline research only.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h155_rank_smoothing/test_h155.py": {
       "reason": "Owner-requested H152 data-free controls for the zero-update checkpoint soup readout, resource guards and source binding; no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h157_best_of_k_trust_region/test_h157.py": {
+      "reason": "H157 data-free best-of-K trust-region candidate generation and strict inner-fold family selection controls; offline research only.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
@@ -2161,6 +2169,10 @@
       "reason": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract).",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/rnk10_hwave_packet/test_prepare.py": {
+      "reason": "RNK-10 metadata-only H-wave packet scaffold tests; synthetic metadata only, no training/evaluation data, outcome reads or launch authorization.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/test_automatic_promotion.py": {
       "reason": "Owner-requested pytest proof for flywheel automatic promotion, next-round targets, replay, and training-only parser adaptation; research flywheel outside the reviewed product baseline.",
       "role": "research"
@@ -2199,6 +2211,10 @@
     },
     "python:research/h148/test_h148.py": {
       "reason": "H148 data-free checkpoint-selection scientific controls; no product/native/GPU qualification.",
+      "role": "research"
+    },
+    "python:research/h156/test_h156.py": {
+      "reason": "H156 data-free 5-fold family cross-fit early stopping and {0.5x, 1x, 2x} adapter capacity sweep scientific controls; offline research only.",
       "role": "research"
     },
     "python:research/joint_regbin/test_binary_dataset.py": {
@@ -5248,13 +5264,9 @@
         "encoders"
       ]
     },
-    "python:research/h156/test_h156.py": {
-      "reason": "H156 data-free 5-fold family cross-fit early stopping and {0.5x, 1x, 2x} adapter capacity sweep scientific controls; offline research only.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h153_sam/test_h153.py": {
-      "reason": "Owner-requested H153 SAM/ASAM data-free registration, manipulation and resource-stop controls; offline research only.",
-      "role": "research"
+    "python:research/flywheel_selfplay/h158_distillation/test_h158.py": {
+      "role": "research",
+      "reason": "H158 owner-directed fit-only frozen-teacher KL distillation, full-context gate veto, KD-three Holm family, strict ties/completeness, frozen state and bounded offline CPU resources. Research only; no product/sealed qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
