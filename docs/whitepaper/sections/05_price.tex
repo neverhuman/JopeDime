@@ -171,7 +171,8 @@ rate under a common task mix, incumbent and verification rule. Under
 \cref{eq:bill}'s fixed-probability model, doubling $\winprob$ halves expected
 cost per win only if mean attempt cost stays fixed.
 
-\Cref{sec:method} turns from these planning ratios to the reference
-network and its training. Its measured costs require their own ledger;
-whether training improves the first proposal remains the single-candidate
-test in \cref{sub:results-learning}.
+\Cref{sec:method} separates the offline writer-and-map reference from the
+later adapter admission loop. Their measured costs require separate
+ledgers: adaptive admission rates do not supply the writer's first-proposal
+win rate. That comparison remains the single-candidate test in
+\cref{sub:results-learning}.
