@@ -719,7 +719,11 @@ mod tests {
             .wait_for_text("draft", Duration::from_secs(10))
             .unwrap();
         session.resize(39, 24).unwrap();
-        // The old live viewport is removed, then canonical line input continues the same draft.
+        // Resize delivery is asynchronous. Wait for raw-mode restoration before sending Enter,
+        // so this checks draft submission after fallback instead of racing the PTY resize signal.
+        session
+            .wait_for_output_bytes(b"\x1b[?2004l", Duration::from_secs(10))
+            .unwrap();
         session.press_key(pty::Key::Enter).unwrap();
         session
             .wait_for_text("COMMAND draft", Duration::from_secs(10))
