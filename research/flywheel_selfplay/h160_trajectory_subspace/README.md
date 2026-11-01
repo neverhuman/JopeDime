@@ -1,6 +1,6 @@
 # H160 — trajectory-subspace projected continuation of r882
 
-**Status: preregistered; not yet run.** See [PREREG.md](PREREG.md).
+**Status: attempt 1 INCOMPLETE** (a projection bug stopped it at the first PROJ_K2 update after 15/15 CTRL cells, all keeping step 0). Attempt 2 runs under [Amendment A1](PREREG.md#amendment-a1-2026-11-01-after-attempt-1-was-incomplete) after review and merge. See [PREREG.md](PREREG.md).
 
 - **Basis.** The top-k principal directions of the deltas along the accepted adapter chain R95 → … → R256 →
   R782 → R785 → R859 → R882. k = 2 holds 92.6% of the delta energy and k = 4 holds 98.5%.
@@ -17,5 +17,5 @@
   - [run.py](run.py) reuses the pinned H146 executor, as H148 does.
   - [analysis.py](analysis.py) holds the basis, projection, H148 harness and decision.
   - [monitor.py](monitor.py) is the hard-stop supervisor.
-  - [test_h160.py](test_h160.py) has 11 data-free tests.
+  - [test_h160.py](test_h160.py) has 12 data-free tests.
   - [preflight.json](preflight.json) is the zero-forward smoke.

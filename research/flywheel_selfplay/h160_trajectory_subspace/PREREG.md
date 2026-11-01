@@ -185,3 +185,37 @@ with no retry.
 **Where outputs go.** Snapshots, panels and receipts stay outside Git in `~/jope-data/h160` and
 `~/jope_plan/evidence/H160`, with a create-only S3 archive and a manifest. Git holds only this protocol, code,
 small manifests and the final small metrics.
+
+## Amendment A1 (2026-11-01, after attempt 1 was INCOMPLETE)
+
+**What happened.**
+- Attempt 1 ran from the merged `53395e52`, started at 05:57Z as the user service `h160-run`, and stopped at the
+  **first PROJ_K2 optimizer update**.
+- `run.py` projected the gradient with `p.grad.double()` and assumed all 47 trainable adapter tensors receive a
+  gradient on every step. At least one adapter tensor had `grad is None` on that step, so the worker raised
+  `AttributeError` and exited.
+- The arms before PROJ_K2 were unaffected, because AdamW and gradient clipping skip parameters without a
+  gradient.
+
+**What was observed before the stop.**
+- The exact 91/91 r882 baseline: PASS.
+- **All 15 CTRL cells, 600 updates.** Every CTRL cell selected step 0, so CTRL's assessment and DL-Val
+  panels equal r882's. CTRL's median drift was about 0.44.
+- **No PROJ_K2, PROJ_K4 or CTRL_DRIFT outcome was observed.**
+- Resources: 3 threads, 3.34 GB RSS and 90 MB scratch at peak; 0 refused reads; no CUDA.
+
+Per this protocol the attempt is consumed and recorded as `INCOMPLETE`. It is not silently retried.
+
+**The fix.** `project_grads()` projects the **full** adapter gradient vector. A tensor without a gradient on a
+given step contributes zeros and still receives its projected component, which is the correct projection of
+the full gradient onto span(U_k). Each cell records the names of tensors that had no gradient. There is a
+data-free test for this. Nothing else changes: protocol, arms, basis, seeds, harness, selection, gates and
+resources are all the same.
+
+**Attempt 2.**
+- After this amendment is reviewed and merged, one fresh attempt runs under the supervisor label `run-a2`, with
+  new output and custody directories. It reruns all 60 cells, CTRL included.
+- **Determinism check:** attempt 2's CTRL decisions and drifts should reproduce attempt 1's 15 CTRL cells. Any
+  difference will be reported.
+- Attempt 1's receipts are kept in `~/jope-data/h160/run` and `~/jope_plan/evidence/H160/run`.
+- If attempt 2 also fails, H160 closes as `INCOMPLETE` without another amendment.
