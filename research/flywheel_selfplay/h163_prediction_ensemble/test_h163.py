@@ -47,6 +47,14 @@ class H163Tests(unittest.TestCase):
         self.assertAlmostEqual(result["ci_low_95"], .002)
         self.assertAlmostEqual(result["ci_high_95"], .002)
 
+    def test_fixed_family_folds_are_balanced_and_deterministic(self):
+        rows = [{"family_id": f"fam-{i:03d}"} for i in range(205)]
+        a = analysis.folds(rows)
+        b = analysis.folds(list(reversed(rows)))
+        self.assertEqual(a, b)
+        self.assertEqual([len(g) for g in a], [41] * 5)
+        self.assertEqual(len(set().union(*(set(g) for g in a))), 205)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -128,8 +128,11 @@ def main():
         torch.set_num_interop_threads(1)
     except RuntimeError:
         pass
+    if torch.cuda.is_initialized() or torch.cuda.is_available():
+        raise RuntimeError("CUDA is forbidden for H163")
     train, val = parent.selected()
-    if len(train) != 1219 or len({r["family_id"] for r in train}) != 205 or len(val) != 91:
+    if (len(train) != 1219 or len({r["family_id"] for r in train}) != 205
+            or len(val) != 91 or len({r["family_id"] for r in val}) != 19):
         raise RuntimeError("cohort inventory mismatch")
     expected_families = json.loads((HERE / "fold_manifest.json").read_text())["families"]
     if stat.folds(train) != expected_families:
