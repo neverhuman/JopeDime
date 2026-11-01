@@ -87,6 +87,7 @@ class ProductionBackendTests(unittest.TestCase):
                     "program_sha256": "8" * 64,
                 },
             ],
+            "champion_program": "8" * 64,
             "adapter": "production-engine/v1",
         }
 

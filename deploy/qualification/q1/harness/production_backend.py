@@ -228,6 +228,9 @@ def validate_receipt(receipt, request):
         and all(char in "0123456789abcdef" for char in dataset["id"])
         and sha(dataset.get("dataset_sha256"))
         and dataset["dataset_sha256"].startswith(dataset["id"])
+        and isinstance(dataset.get("family"), str)
+        and len(dataset["family"]) == 40
+        and all(char in "0123456789abcdef" for char in dataset["family"])
         and sha(dataset.get("cut_sha256"))
         and dataset.get("task") == "regression"
         and dataset.get("family_authoritative") is True
@@ -316,6 +319,11 @@ def validate_receipt(receipt, request):
         else:
             raise ValueError("unknown or nonterminal attempt outcome")
     champion = min(completed, key=lambda item: item["loss"]) if completed else None
+    require(
+        receipt.get("champion_program")
+        == (champion["program_sha256"] if champion else None),
+        "receipt champion does not match the lowest-loss completed attempt",
+    )
     adapter = receipt.get("adapter")
     require(
         isinstance(adapter, str) and adapter.strip(), "engine adapter identity missing"
