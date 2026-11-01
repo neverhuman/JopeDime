@@ -5440,7 +5440,7 @@
     },
     "python:research/flywheel_selfplay/h203_blend025_gated/runner.py": {
       "bytes": 30235,
-      "sha256": "1a247c331c8e2ff0fc98f5426372d2a708414cb9058022f986e955c3333afcc9",
+      "sha256": "bdeb44b6e54cc5096d6d288c68f3cbda568aac5c83bc0e55799339976a855cb3",
       "classification": {
         "role": "research",
         "reason": "H203 preregistered CPU-only diagnostic: BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882)) gated per context by an outcome-free cost signal (zgap; H129 disagreement report-only) with a FIT-only threshold (max FIT native gain s.t. FIT harm <= 5%, else fall back to r882), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit; stage-1 lock before A; m=1 CANDIDATE gate (LCB95>0, p<0.05, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."

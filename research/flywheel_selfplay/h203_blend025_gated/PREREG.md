@@ -12,7 +12,8 @@ owner. **This prereg merges before anything runs**, and rd_opus does not merge i
 
 H199 found that **BLEND_025 = r882 + 0.25·(GBM_cal − r882)** raises mean native first-argmin utility over r882:
 +0.0434 [+0.0097, +0.0903], 3/3 seeds, Elo 1514.0. But it **harms 24.9% of families**, against a 10% cap. The blend
-changes the pick in about 32% of contexts:
+changes the native utility in 31.6% of seed-context outcomes (1,155/3,657; 584/1,219 = 47.9% of contexts in at least
+one seed). These are utility changes; H199 recorded no candidate IDs:
 - 71 families win by more than 0.01 (mean +0.195);
 - 51 families lose by more than 0.01 (mean −0.099).
 
