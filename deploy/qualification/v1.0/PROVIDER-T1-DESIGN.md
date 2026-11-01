@@ -1,0 +1,11 @@
+# REL-07 T1 CPU accounting provider
+
+The missing T1 command prevents the release controller from checking CPU accounting against its candidate. The provider verifies a full non-development candidate and its embedded source identity using the shared provider helper, independently requires that exact clean checkout, and runs three exact existing `jope-service` telemetry tests: one core on eight logical CPUs is 12.5%, live worker CPU is included without charging pre-registration history, and unavailable sensors emit null with a reason. These implement spec §14 T1 and §9.1 CPU accounting; they require no dataset or GPU.
+
+Each case must collect and pass exactly once. Wrong selectors, zero tests, ignored/measured cases, source or artifact drift, command failures and existing result files refuse PASS. Successful counts are three collected/executed/passed assertions. Other crate tests filtered by the exact selectors are outside this gate's coverage. The outer controller retains command output and result hashes.
+
+Run through `release-gates` with provider argv `python3 -B deploy/qualification/v1.0/providers/t1.py`; use the five standard `JOPE_REL07_*` bindings described in `GATE-RUNNER.md`. The provider relies on the common helper shared with M1/M4; it neither implements signing nor chooses release bytes. Direct invocation applies the same source and artifact binding checks.
+
+Provider controls run with `python3 -B deploy/qualification/v1.0/test_provider_t1 -v`. Their synthetic candidate and child responses test the controller only; they are not actual T1 release qualification. The actual selected Rust assertions are also run locally at the source under review. A real gate result requires running the provider against the supplied full release candidate.
+
+A generic successful-command wrapper was rejected because it can pass zero cases or the wrong selector. Rebuilding a standalone telemetry implementation was rejected because the gate must exercise the product's actual CPU calculations. No public API, bundle format, worker protocol, frozen weights or release schema changes are needed. Risk: source lib-test compilation failures correctly fail the gate until the source owner repairs them; no substituted fixture PASS is produced.
