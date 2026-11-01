@@ -19,5 +19,6 @@ figs:
 	python3 figures/scripts/make_live_admissions_figures.py
 	python3 figures/scripts/make_live_development_figure.py
 	python3 figures/scripts/make_round_throughput_figure.py
+	python3 figures/scripts/make_acceptance_over_rounds_figure.py
 clean:
 	latexmk -C

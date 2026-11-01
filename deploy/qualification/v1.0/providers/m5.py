@@ -226,10 +226,25 @@ def qualify(ctx: Context, inputs: Inputs, run=None) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--golden-dir", required=True, type=Path)
-    parser.add_argument("--bundle-dir", required=True, type=Path)
+    parser.add_argument(
+        "--golden-dir",
+        type=Path,
+        default=os.environ.get("JOPE_GOLDEN_DIR") or None,
+        help="Pinned TRAIN fixtures (default: JOPE_GOLDEN_DIR)",
+    )
+    parser.add_argument(
+        "--bundle-dir",
+        type=Path,
+        default=os.environ.get("JOPE_PARITY_BUNDLE_DIR") or None,
+        help="Frozen adapter (default: JOPE_PARITY_BUNDLE_DIR)",
+    )
     args = parser.parse_args()
     try:
+        if args.golden_dir is None or args.bundle_dir is None:
+            raise ProviderError(
+                "M5 requires --golden-dir/JOPE_GOLDEN_DIR and "
+                "--bundle-dir/JOPE_PARITY_BUNDLE_DIR"
+            )
         return qualify(context("M5"), Inputs(args.golden_dir, args.bundle_dir))
     except (
         OSError,
