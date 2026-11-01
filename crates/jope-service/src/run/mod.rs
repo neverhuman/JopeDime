@@ -13,9 +13,14 @@
 
 mod controller;
 mod evaluator;
+pub mod learned;
+pub(crate) mod service;
+pub(crate) mod surrogate;
 
 pub use controller::*;
 pub use evaluator::*;
 
+#[cfg(test)]
+mod learned_tests;
 #[cfg(test)]
 mod tests;
