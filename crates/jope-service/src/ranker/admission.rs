@@ -11,9 +11,9 @@ use super::{
 };
 use crate::discover::r#loop::{Plan, RoundAdmission, RoundContext};
 use crate::{discover::elites::ELITE_CAPACITY, warnings};
-use anyhow::{Result, ensure};
-use jope_api::{Guidance, LandmarkMode, ResolvedGuidance, Warning, WarningState, error::ErrorCode};
-use rand_chacha::{ChaCha12Rng, rand_core::RngCore};
+use anyhow::{ensure, Result};
+use jope_api::{error::ErrorCode, Guidance, LandmarkMode, ResolvedGuidance, Warning, WarningState};
+use rand_chacha::{rand_core::RngCore, ChaCha12Rng};
 use std::{collections::BTreeSet, fmt};
 
 #[cfg(feature = "research")]
@@ -660,18 +660,16 @@ pub fn resolve_unqualified(
     let mut warnings = if explicit {
         vec![]
     } else {
-        vec![
-            warnings::catalog("GUIDANCE_HEURISTIC")
-                .expect("warning is catalogued")
-                .event(
-                    WarningState::Raised,
-                    None,
-                    None,
-                    message,
-                    "Use heuristic guidance while learned guidance is unavailable.",
-                )
-                .expect("the warning has no numeric fields"),
-        ]
+        vec![warnings::catalog("GUIDANCE_HEURISTIC")
+            .expect("warning is catalogued")
+            .event(
+                WarningState::Raised,
+                None,
+                None,
+                message,
+                "Use heuristic guidance while learned guidance is unavailable.",
+            )
+            .expect("the warning has no numeric fields")]
     };
     if !explicit && reason == GuidanceUnavailableReason::Integrity {
         warnings.push(
@@ -1191,14 +1189,12 @@ mod tests {
             assert_eq!(inputs.revealed_fitness, [0., 1., 2., 3.]);
             assert_eq!(inputs.revealed_gates, [0., 1., 0., 1.]);
             assert_eq!(inputs.scale.to_bits(), adapter::SCALE.to_bits());
-            assert!(
-                inputs
-                    .ctx_feat
-                    .iter()
-                    .chain(inputs.base_prior_cost)
-                    .chain(inputs.sos_prior)
-                    .all(|&v| v == 0.)
-            );
+            assert!(inputs
+                .ctx_feat
+                .iter()
+                .chain(inputs.base_prior_cost)
+                .chain(inputs.sos_prior)
+                .all(|&v| v == 0.));
             for (row, source) in [5, 4, 3, 2]
                 .into_iter()
                 .chain(6..if explore { 22 } else { 14 })
