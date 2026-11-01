@@ -31,11 +31,12 @@ failures. A repair that emits a revised candidate is another
 attempt; charge its work once. $\winprob$ is the probability that an
 attempt beats the incumbent.
 
-It factors as $\winprob = q_{\text{run}}\,q_{\text{beat}}$,
-the share of moves that run times the share of those that win. Valid losses
-still cost money, so divide by $\winprob$, not by the survival
-rate. The factorization separates validity from winning among valid
-programs; it attributes neither factor to learning (\cref{sub:results-ablation}).
+It factors as $\winprob = q_{\text{run}}\,q_{\text{beat}}$:
+$q_{\text{run}}$ is the share of attempts valid under the protocol, and
+$q_{\text{beat}}$ is the win rate among those valid attempts. Valid losses
+still cost money. Report both rates alongside the overall win rate, leaving
+$q_{\text{beat}}$ undefined if no attempt is valid. None of these rates alone
+attributes a difference to learning (\cref{sub:results-ablation}).
 
 Generating a token costs about 2~FLOPs per active parameter, and
 training on one about~6 \citep{kaplan2020scaling}. Cost projections require reproducible inputs and calculations (\cref{sub:price-run}).
@@ -73,8 +74,8 @@ model requires ten attempts per improvement in expectation. A typed language
 can exclude invalid structures before fitting (\cref{sec:game}). Runtime,
 resource and output failures may consume part or all of the fit, and their
 incurred cost must be counted. The pilot must measure whether also-rans
-dominate. To isolate the writer's contribution, compare it under a common
-search budget and incumbent; changes to either can alter the win rate.
+dominate. The matched writer comparison in \cref{sub:results-learning}
+holds the budget, incumbent and referee fixed.
 
 \subsection{The correction tax and the reasoning dial}\label{sub:price-tax}
 
@@ -171,10 +172,10 @@ cost projection remains a measurement task.
   and the probability that it wins.
 \end{keyidea}
 
-A fixed attempt budget becomes a cost per win only after measuring the win
-rate under a common task mix, incumbent and verification rule. Under
-\cref{eq:bill}'s fixed-probability model, doubling $\winprob$ halves expected
-cost per win only if mean attempt cost stays fixed.
+Under \cref{eq:bill}'s fixed-probability model, doubling $\winprob$ halves
+expected cost per win only if mean attempt cost stays fixed. Measuring that
+tradeoff requires a common task mix, incumbent and verification rule.
 
-That accounting boundary applies separately to the writer and adapter
-tasks in \cref{sec:method}; their evidence and costs must remain distinct.
+\Cref{sec:method} specifies which component proposes programs and which
+learns from their scores, so that writer and adapter costs can be counted
+separately.
