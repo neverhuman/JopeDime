@@ -16,6 +16,7 @@ use crate::{
         r#loop::Plan,
     },
     ranker::bundle::VerifiedBundle,
+    ranker::stage1b::TokenProjection,
     run::learned::LearnedAdmission,
     worker::{Request, Response},
 };
