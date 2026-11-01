@@ -54,6 +54,10 @@ def validate_state_dtypes(state: dict[str, torch.Tensor]) -> None:
             raise ValueError(f"invalid dtype or shape for {name}")
 
 
+def independent_state_for_export(state: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+    return {name: value.detach().contiguous().clone() for name, value in state.items()}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -86,7 +90,7 @@ def main() -> int:
     except ValueError as error:
         raise SystemExit(str(error)) from error
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    save_file({name: value.contiguous() for name, value in state.items()}, str(OUTPUT_WEIGHTS))
+    save_file(independent_state_for_export(state), str(OUTPUT_WEIGHTS))
     receipt = {
         "schema": "jope.rnk10.research-import/v1",
         "research_only": True,

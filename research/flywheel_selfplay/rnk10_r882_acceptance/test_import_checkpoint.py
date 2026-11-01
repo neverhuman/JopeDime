@@ -52,3 +52,11 @@ def test_state_dtype_contract_allows_only_int64_grid_indices() -> None:
     state["grid_idx_13"] = torch.arange(13, dtype=torch.int32)
     with pytest.raises(ValueError, match="grid_idx_13"):
         module.validate_state_dtypes(state)
+
+
+def test_export_state_breaks_shared_storage_without_changing_values() -> None:
+    shared = torch.arange(8, dtype=torch.float32)
+    exported = module.independent_state_for_export({"a": shared, "b": shared})
+    assert torch.equal(exported["a"], shared)
+    assert torch.equal(exported["b"], shared)
+    assert exported["a"].data_ptr() != exported["b"].data_ptr()
