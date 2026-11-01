@@ -51,7 +51,7 @@
   "wave": "H164",
   "checkpoint": "/home/ubuntu/jope-data/h164/inputs/round-882.pt",
   "reference": "/home/ubuntu/jope-data/h164/inputs/best_dev_checkpoint.json",
-  "status": "PREREGISTERED_NOT_EXECUTED",
+  "status": "COMPLETE",
   "seeds": [
     164101,
     164102,
@@ -92,5 +92,26 @@
     "science.py": "5debc7d42a5745649627da5b7084a876bef2b1964d844eb975b55d3a666bee0f",
     "test_h164.py": "3afc26559dd4e84f56b687d30be41a79eab5bcfbe31bf24e41b414633d20a5ed"
   },
-  "parent_source_commit": "da171a0a7827910406e61148037c1c9840dc6c72"
+  "parent_source_commit": "da171a0a7827910406e61148037c1c9840dc6c72",
+  "verdict": "NO_ADVANCE",
+  "source_commit": "93c8ce017ffa114f6c60b2b81b1e4be5a81ca75f",
+  "optimizer_updates": 2400,
+  "confirmed_optimizer_updates": null,
+  "custody_manifest": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H164/astra-t0058/manifest.json",
+    "version_id": "_Z5xN4x4ftykxrxf4jioq33gCQBGC7.d",
+    "sha256": "ae4e2b72ed60f15665837ab31bc6db16349aebd28c89c8598bfcd19b222dc41a",
+    "bytes": 697014,
+    "verified_utc": "2026-11-01T14:00:51.548832+00:00",
+    "readback": "exact-version streaming SHA256; synchronous boto3"
+  },
+  "closeout_interpretation": {
+    "strict_baseline_fallback_cells": 60,
+    "total_cells": 60,
+    "identical_selected_vectors": "shared r882 outcomes, not independent confirmations",
+    "trained_checkpoint_effects": "see unconstrained and best-nonzero descriptive panels",
+    "postprocessing_initial_failure": "TOTAL_THREADS=6 during credential subprocess; science already COMPLETE",
+    "postprocessing_recovery": "synchronous S3 exact-version streaming SHA256 PASS; sampled max 2 threads; credential bootstrap outside sampled guard",
+    "scientific_retry": false
+  }
 }
