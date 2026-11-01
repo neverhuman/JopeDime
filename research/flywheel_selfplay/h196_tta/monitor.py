@@ -161,8 +161,8 @@ def main():
                 reasons.append("sustained load>85%: three readings five seconds apart")
             if sample["output_bytes"] >= 300_000_000:
                 reasons.append("owned output root >=300MB")
-            if sample["elapsed"] > 10800:
-                reasons.append("3h hard wall deadline")
+            if sample["elapsed"] > 25200:
+                reasons.append("7h hard wall deadline")
             if reasons:
                 os.killpg(child.pid, signal.SIGTERM)
                 try:
