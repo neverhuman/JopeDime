@@ -1,29 +1,3 @@
-% Section 6.8 development-window figures (Appendix D), defined early in
-% the appendices so the full-width floats print before the references
-% while preserving the established appendix order.
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_followup_development.pdf}
-  \caption{\textbf{Program events and adapter validation in a follow-up window.}
-  Left: journaled strict training-program incumbent improvements per round.
-  Right: candidate adapter validation pool utility and the recorded best.
-  Both panels cover the same 20 consecutive summary rounds. The summaries
-  mark no adapter admission. Independent first-proposal and transfer tests
-  remain required.}
-  \label{fig:fw-followup-development}
-\end{figure*}
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_later_development.pdf}
-  \caption{\textbf{Continued program events and adapter validation.}
-  Left: journaled strict training-program incumbent improvements per round.
-  Right: candidate adapter validation pool utility and the recorded best.
-  Both panels cover all 20 consecutive rounds in this retained summary
-  window. The summaries mark no adapter admission. Independent
-  first-proposal comparisons remain required.}
-  \label{fig:fw-later-development}
-\end{figure*}
-
 \section{Referee Inventory}\label{app:history}
 
 \Cref{sec:road} traces the four pillars of \cref{sec:anatomy} through the
@@ -36,7 +10,7 @@ task-conditioned amortization across tabular problems
 systems depends on a referee. \Cref{tab:referees} collects the main text's referees by domain. A domain enters the innovation
 game only when its referee is reliable and affordable (\cref{sub:game-boards}).
 
-\begin{table}[ht]
+\begin{table}[htb]
   \caption{\textbf{Referees by domain.} Each row restates a referee described
   in \cref{sec:road,sec:game}; the last row states the reference referee for
   algorithm invention.}
@@ -84,6 +58,32 @@ Artifacts that violate held-out isolation belong in the audit record:
 \end{itemize}
 
 \section{Training Details}\label{app:training}
+
+% Section 6.8 development-window figures (Appendix D), defined in Appendix C
+% so Table 9 stays adjacent to Appendix A on p. 19 while the full-width
+% telemetry floats land on p. 20 at the start of Appendix D.
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_followup_development.pdf}
+  \caption{\textbf{Program events and adapter validation in a follow-up window.}
+  Left: journaled strict training-program incumbent improvements per round.
+  Right: candidate adapter validation pool utility and the recorded best.
+  Both panels cover the same 20 consecutive summary rounds, 2082--2101. The summaries
+  mark no adapter admission. Independent first-proposal and transfer tests
+  remain required.}
+  \label{fig:fw-followup-development}
+\end{figure*}
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_later_development.pdf}
+  \caption{\textbf{Continued program events and adapter validation.}
+  Left: journaled strict training-program incumbent improvements per round.
+  Right: candidate adapter validation pool utility and the recorded best.
+  Both panels cover all 20 consecutive rounds, 2343--2362, in this retained summary
+  window. The summaries mark no adapter admission. Independent
+  first-proposal comparisons remain required.}
+  \label{fig:fw-later-development}
+\end{figure*}
 
 These implementation specifications describe the historical reference
 checkpoint in \cref{sec:method}, separate from the later adapter snapshot
