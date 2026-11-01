@@ -26,7 +26,7 @@
   publisher={American Association for the Advancement of Science}
 }
 
-@article{schrittwieser2020mastering,
+@article{schrittwieser2020muzero,
   title={Mastering {Atari}, {Go}, chess and shogi by planning with a learned model},
   author={Schrittwieser, Julian and Antonoglou, Ioannis and Hubert, Thomas and Simonyan, Karen and Sifre, Laurent and Schmitt, Simon and Guez, Arthur and Lockhart, Edward and Hassabis, Demis and Graepel, Thore and others},
   journal={Nature},
@@ -37,7 +37,7 @@
   publisher={Nature Publishing Group}
 }
 
-@article{fawzi2022discovering,
+@article{fawzi2022alphatensor,
   title={Discovering faster matrix multiplication algorithms with reinforcement learning},
   author={Fawzi, Alhussein and Balog, Matej and Huang, Aja and Hubert, Thomas and Romera-Paredes, Bernardino and Barekatain, Mohammadamin and Novikov, Alexander and R.~Ruiz, Francisco J. and Schrittwieser, Julian and Swirszcz, Grzegorz and others},
   journal={Nature},
@@ -48,7 +48,7 @@
   publisher={Nature Publishing Group}
 }
 
-@article{mankowitz2023faster,
+@article{mankowitz2023alphadev,
   title={Faster sorting algorithms discovered using deep reinforcement learning},
   author={Mankowitz, Daniel J. and Michi, Andrea and Zhernov, Anton and Gelmi, Marco and Selvi, Marco and Paduraru, Cosmin and Leurent, Edouard and Iqbal, Shariq and Lespiau, Jean-Baptiste and Ahern, Alex and others},
   journal={Nature},
@@ -59,7 +59,7 @@
   publisher={Nature Publishing Group}
 }
 
-@article{romera2024mathematical,
+@article{romeraparedes2024funsearch,
   title={Mathematical discoveries from program search with large language models},
   author={Romera-Paredes, Bernardino and Barekatain, Mohammadamin and Novikov, Alexander and Balog, Matej and Kumar, M.~Pawan and Dupont, Emilien and Ruiz, Francisco J.~R. and Ellenberg, Jordan S. and Wang, Pengming and Fawzi, Omar and others},
   journal={Nature},
@@ -74,7 +74,8 @@
   title={{AlphaEvolve}: A coding agent for scientific and algorithmic discovery},
   author={Novikov, Alexander and Vu, Ngân and Eisenberger, Marvin and Dupont, Emilien and Huang, Po-Sen and Wagner, Adam Zsolt and Shirobokov, Sergey and Kozlovskii, Borislav and Ruiz, Francisco J.~R. and Mehrabian, Abbas and others},
   journal={DeepMind Technical Report},
-  year={2025}
+  year={2025},
+  doi   = {10.48550/arXiv.2506.13131}
 }
 
 @article{ma2024eureka,
@@ -85,7 +86,7 @@
   year={2024}
 }
 
-@article{deepseek2025r1,
+@article{guo2025deepseekr1,
   title={{DeepSeek-R1}: Incentivizing reasoning capability in {LLMs} via reinforcement learning},
   author={Guo, Daya and Yang, Dejian and Zhang, Haowei and Song, Junxiao and Zhang, Ruoyu and Xu, Runxin and Zhu, Qihao and Ma, Shirong and Wang, Peiyi and Bi, Xiao and others},
   journal={arXiv preprint arXiv:2501.12948},
@@ -113,11 +114,12 @@
   year={2024}
 }
 
-@article{chen2021evaluating,
+@article{chen2021codex,
   title={Evaluating large language models trained on code},
   author={Chen, Mark and Tworek, Jerry and Jun, Heewoo and Yuan, Qiming and Pinto, Henrique Ponde de Oliveira and Kaplan, Jared and Edwards, Harri and Burda, Yuri and Joseph, Nicholas and Brockman, Greg and others},
   journal={arXiv preprint arXiv:2107.03374},
-  year={2021}
+  year={2021},
+  doi   = {10.48550/arXiv.2107.03374}
 }
 
 @article{li2022competition,
@@ -165,13 +167,14 @@
   year={2024}
 }
 
-@inproceedings{ouyang2022training,
+@inproceedings{ouyang2022instructgpt,
   title={Training language models to follow instructions with human feedback},
   author={Ouyang, Long and Wu, Jeffrey and Jiang, Xu and Almeida, Diogo and Wainwright, Carroll and Mishkin, Pamela and Zhang, Chong and Agarwal, Sandhini and Slama, Katarina and Ray, Alex and others},
   booktitle={Advances in Neural Information Processing Systems (NeurIPS)},
   volume={35},
   pages={27730--27744},
-  year={2022}
+  year={2022},
+  doi   = {10.48550/arXiv.2203.02155}
 }
 
 @inproceedings{tirumala2022memorization,
