@@ -186,6 +186,8 @@ fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io
     // when a dataset is opened. Configure that draft before registration.
     terminal.type_text("\\landmarks none")?;
     terminal.press_key(pty::Key::Enter)?;
+    terminal.type_text("\\lang rust")?;
+    terminal.press_key(pty::Key::Enter)?;
     terminal.type_text("\\target target --task regression")?;
     terminal.press_key(pty::Key::Enter)?;
     // This unique plan response is a barrier proving both earlier draft commands
