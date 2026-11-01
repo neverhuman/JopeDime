@@ -448,6 +448,35 @@ class H168Tests(unittest.TestCase):
             ("abort", "THREAD_LIMIT"),
         )
 
+    def test_predict_uncached_adapter_costs_uses_adapter_10tok(self):
+        class FakeAdapter:
+            def __init__(self):
+                self.called = False
+
+            def predict_costs(self, **kwargs):
+                self.called = True
+                b, k = kwargs["prog_412"].shape[:2]
+                return {"total_cost": torch.ones((b, k), dtype=torch.float32) * -0.5}
+
+        class FakeFusedNet:
+            def __init__(self):
+                self.adapter_10tok = FakeAdapter()
+
+        net = FakeFusedNet()
+        self.assertFalse(hasattr(net, "predict_with_10tok_adapter"))
+        progs = np.zeros((2, 6, 412), dtype=np.float32)
+        proj = np.zeros((2, 6, 16), dtype=np.float32)
+        fit = np.zeros((2, 6), dtype=np.float64)
+        gate_arr = np.ones((2, 6), dtype=bool)
+        tok_arr = np.zeros((2, 10, 32), dtype=np.float32)
+        msk_arr = np.ones((2, 10), dtype=bool)
+        scores = rn.predict_uncached_adapter_costs(
+            net, progs, proj, fit, gate_arr, tok_arr, msk_arr
+        )
+        self.assertTrue(net.adapter_10tok.called)
+        self.assertEqual(scores.shape, (2, 6))
+        np.testing.assert_allclose(scores, -0.5)
+
 
 if __name__ == "__main__":
     unittest.main()
