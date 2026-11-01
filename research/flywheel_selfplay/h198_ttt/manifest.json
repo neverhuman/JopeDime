@@ -95,5 +95,16 @@
     "s3_arrays.py": "80e4807a9ac502aa6dff35adc70eaf88364d48084c07d15abbe02b765d95d204",
     "test_h198.py": "ec0d767a8939858aaa95fc5ee0ee9982c39955937c5965069a13e2b09b64e3a2",
     "treatment.py": "f81eca2d57760fe620758ef14e6f6331dd150d350568090e3ea5d88ea9ff08bf"
+  },
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "source_commit": "208acd63772f4c07926027ee9d765cde80ef1198",
+  "custody_manifest": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H198/rd_argon-t1205/manifest.json",
+    "version_id": "I72ncJz3jVSw3iiczzU.ZedxshwRPGWY",
+    "sha256": "ed47ffe6ebb4dd8d295cea68b4d987fbe7b8da5eb17cf82b1378c40485a15c10",
+    "bytes": 2622,
+    "verified_utc": "2026-11-01T19:58:53.192743+00:00",
+    "readback": "exact-version full payload SHA256; synchronous client"
   }
 }
