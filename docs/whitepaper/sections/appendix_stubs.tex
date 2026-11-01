@@ -90,8 +90,8 @@ in \cref{sec:method-status}:
   below. The Python
   ranking helpers group by dataset identifier. Native ranking groups by corpus context and the eight-row comparison index;
   separate comparisons from the same context do not pair with each other.
-  Pairwise ranking omits non-finite targets and exactly equal values,
-  $q_w=q_u$, leaving only strict finite orderings.
+  Native pairwise ranking skips non-finite targets and exact ties, $q_w=q_u$,
+  without an exclusion margin or logit rescaling.
   \Cref{eq:writerLoss,eq:mapLoss} show the list-level form.
   \item \textbf{Sequence supervision (\cref{eq:writerLoss}).} The native decoder
   prepends the projected context token before \texttt{BOS}. The sequence
@@ -135,11 +135,11 @@ in \cref{sec:method-status}:
   The records describe AdamW training (learning rate $10^{-4}$,
   weight decay $0.01$, gradient-norm clip $1.0$, global batch size \num{2048})
   on eight A100 GPUs in September 2026 over \num{10214332} scored programs from
-  80 training datasets (\num{7877} lists; \num{8894} contexts). These
+  80 training datasets (\num{7877} lists; \num{8894} contexts). Global batch size
+  alone does not establish per-GPU microbatch or accumulation settings. These
   historical reference specifications are separate from the later adapter
-  snapshot in \cref{sec:method-status}. This paper does not document the
-  evidence on which the checkpoint was accepted; that record and a
-  held-out promotion receipt are required inputs to the evaluation contract
+  snapshot in \cref{sec:method-status}. Checkpoint acceptance evidence and a
+  held-out promotion receipt remain required inputs to the evaluation contract
   (\cref{sub:results-protocol}).
   \item \textbf{Execution sandbox and parity (\cref{sub:method-referee}).}
   The final evaluation protocol requires candidate isolation with seccomp
