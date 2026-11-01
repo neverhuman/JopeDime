@@ -70,7 +70,10 @@ def from_gate_results(results_path: Path, artifact: Path | None) -> dict:
         raise ValueError("signed-byte receipt requires all 28 gates to PASS")
     return {
         "signed_bytes_sha256": artifact_sha,
-        "gates": [rows[gate] for gate in RELEASE_GATE_IDS],
+        "artifact_sha256": artifact_sha,
+        "gates": [
+            {**rows[gate], "artifact_sha256": artifact_sha} for gate in RELEASE_GATE_IDS
+        ],
     }
 
 
