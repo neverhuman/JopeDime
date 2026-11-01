@@ -2,7 +2,10 @@
 
 Owner `rulings_t1900.md R5` accepts closure on the complete reconstructed
 r767–782 evaluated TRAIN cohort. It contains **1,024 ordered records, 895 unique
-exact DSLs and 132 TRAIN contexts** across separate legacy16/full1219 strata.
+evaluated DSLs and 132 TRAIN contexts** across separate legacy16/full1219 strata.
+The 405 authenticated parent payloads add242 parent-only DSLs, making the
+complete definition corpus **1,137 unique programs**. The 937 replay-bank
+context/program pairs are a separate count.
 **Exactly 2,688 generated but unlogged items are excluded.** The original evolving
 pre-proposal bank and the larger cached program history have not been restored.
 This qualification applies to the accepted reconstruction, not those populations.
@@ -13,6 +16,9 @@ roster and every complete training-only JTT1 table. No raw journal, protected te
 metric, checkpoint pickle, evaluator fit, optimizer update or CUDA is needed.
 The source projection retains ordered DSL/context/operator/parent/protocol joins;
 `source-rows.jsonl` preserves duplicate occurrences and source-record identities.
+`parent-source-rows.jsonl` retains all405 parent payloads and provenance; their
+exact set must match the cohort's parent references. Evaluated serving-slate order
+is preserved when the242 parent-only definitions extend program coverage.
 Protected metrics are excluded before the golden worker's input closure.
 
 The frozen native workspace processes all actual TRAIN rows, with its original
@@ -24,7 +30,7 @@ context and refuses differing bytes. The original50-context packet remains a
 separate compatibility proof; its former 1,024-row admission limit does not
 truncate the R5 tables. Neither route reads outer-query rows.
 
-All 895 DSLs are freshly featurized in frozen name order. `feat412` is F32 and
+All 1,137 evaluated/parent DSLs are freshly featurized in frozen name order. `feat412` is F32 and
 `proj16` is the frozen caller's F64 projection of that F32 vector. Four original
 completed, finite TRAIN-CV evaluations provide each serving slate's revealed
 values and gates. The first eligible group per context and first 50 sorted
@@ -51,6 +57,7 @@ CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS
  --plan "$PLAN" --plan-sha256 "$PLAN_SHA" \
  --reconstruction "$RECONSTRUCTION" --reconstruction-sha256 "$RECONSTRUCTION_SHA" \
  --cohort "$COHORT" --cohort-sha256 "$COHORT_SHA" \
+ --parents "$PARENTS" --parents-sha256 "$PARENTS_SHA" \
  --cv "$TRAIN_CV" --cv-sha256 "$TRAIN_CV_SHA" \
  --tables "$TRAIN_TABLES" --store "$HASH_STORE" --output "$NEW_OUTPUT"
 ```
@@ -63,14 +70,14 @@ S1 fit ledger and deadline are not restarted because this route performs no S1
 calls. It records feature extraction separately from estimator fits.
 
 The published R5 catalog is
-`55a27a487d09e5302d8e00d6529e4f53ce7a7effc92db2b99eb1a6adf6b334bb`.
-Its complete set is **399 files / 23,432,213 bytes**, including the catalog.
+`06b1867d2e91bc9e394146accd4bca297ded7fb7fc1438687b6942f1d5ad9f57`.
+Its complete set is **400 files / 24,611,659 bytes**, including the catalog.
 The packet index is
-`cf03214ac1087917b27a7d5d841f1bcd2345281d7990421def5e4b7094699a84`.
+`ddaa6cfc558f0a7e56fe73f657266d00d6c821739a602afc701f87fa1c4f5af1`.
 Two fresh generations and every payload/index byte match. Although below the
 50,000,000-byte threshold, all objects are retained by SHA256 outside Git at
 `/home/ubuntu/jope-data/dsc08/res07-r5-t1900/sha256`; xbabe1 has a verified
-347-object replica at
+348-object replica at
 `/home/ubuntu/lane_work/sol_v1_dsc08/fixtures/res07-r5-t1900/sha256`.
 The canonical source receipt and external gate logs are under
 `/home/ubuntu/jope_plan/evidence/RES07-R5-closeout-t1900-dsc08`.
@@ -78,7 +85,7 @@ The canonical source receipt and external gate logs are under
 `generate.materialize_custody(store, catalog_sha256, new_output)` verifies the
 independent catalog SHA, canonical paths, accounting, every object SHA and byte
 length, then atomically publishes a new directory. Tests fetch this exact catalog;
-a missing/corrupt/escaping object refuses. Set `JOPE_GOLDEN_DIR=<fetched>/packet`
+a missing/corrupt/escaping object refuses. Set `JOPE_GOLDEN_DIR=<fetched-complete>/packet`
 and `JOPE_GOLDEN_INDEX_SHA256` to the packet index pin above. No source/model
 copies or shared build cleanup are part of fetch.
 
@@ -87,8 +94,8 @@ copies or shared build cleanup are part of fetch.
 | Consumer | Fixture relative to fetched root | Check |
 |---|---|---|
 | RNK-01 | Original RES06 bundle digest94fd9587 | Frozen manifest, four payload hashes, weight/shape and DOPE c51a56d0 validation; no new bundle format |
-| RNK-02 | `dsl/programs-00000.safetensors:proj16` | All895 F64[16] vectors; native `proj16.rs`, absolute error<=1e-12 |
-| RNK-03 / RNK-04 | `dsl/programs.jsonl`, `dsl/programs-00000.safetensors:feat412` | Native composed featurizer, all895×412 coordinates, including all parameter coordinates |
+| RNK-02 | `dsl/programs-00000.safetensors:proj16` | All1137 F64[16] vectors; native `proj16.rs`, absolute error<=1e-12 |
+| RNK-03 / RNK-04 | `dsl/programs.jsonl`, `dsl/programs-00000.safetensors:feat412` | Native composed featurizer, all1137×412 coordinates, including all parameter coordinates |
 | RNK-05 | `packet/landmarks/<context>.safetensors` | Actual input.X/input.y/input.row_ids, native v256/col_full/caller col; owning port's qualification remains separate |
 | RNK-06 | `packet/contexts/<context>.safetensors:lm48,lm48_z` | Raw and standardized coordinates; native frozen projection, 50 contexts |
 | RNK-07 | `packet/contexts/*:tokens,mask`, `packet/rnk07/stage1b-parameters.safetensors` | Native `stage1b.rs`, all50×320 tokens and masks; deterministic32-tensor sidecar |
