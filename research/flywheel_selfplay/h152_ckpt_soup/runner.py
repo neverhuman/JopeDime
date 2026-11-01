@@ -31,7 +31,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
 H139_PATH = HERE.parent / "h139_selection_audit" / "runner.py"
 H139_SHA = "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686"
-H152_PREREG_COMMIT = "__PREREG_COMMIT__"
+H152_PREREG_COMMIT = "e9367a0f43dfe5c3c90797b258872d44969b3f89"
 INPUTS = Path("/home/ubuntu/jope-data/h152/inputs")
 SOURCES = {  # round: (file, sha256) — one-time read-only copies from xbabe1 run-20261030 at 2026-11-01T03:24:28Z
     782: (
