@@ -3,10 +3,10 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import math
 import os
-import argparse
 import subprocess
 import sys
 from pathlib import Path
@@ -47,7 +47,6 @@ def command() -> list[str]:
         "--",
         "--ignored",
         "--exact",
-        "--nocapture",
         "--color=never",
         "--test-threads=1",
     ]
@@ -114,10 +113,10 @@ def check_binding(
         tensor_file = bundle / name
         if tensor_file.is_symlink() or not tensor_file.is_file():
             raise ProviderError(f"M2 frozen bundle requires a regular {name} file")
-    if require_fresh_report and (
-        (report / "RNK-12.json").exists() or (report / "RNK-12.json").is_symlink()
-    ):
-        raise ProviderError("M2 parity report already exists")
+    if require_fresh_report and report.exists():
+        raise ProviderError("M2 report directory must not already exist")
+    if not require_fresh_report and not report.is_dir():
+        raise ProviderError("M2 report directory is missing after creation")
     return golden, bundle, report
 
 
@@ -170,7 +169,8 @@ def qualify(ctx: Context, run=None) -> int:
         raise ProviderError("M2 CPU replay requires 1..4 inherited Cargo build jobs")
     golden, bundle, report_dir = check_binding(ctx, run)
     verify_candidate(ctx, run=run)
-    check_binding(ctx, run, require_fresh_report=False)
+    check_binding(ctx, run)
+    report_dir.mkdir(mode=0o700)
     child_env = os.environ.copy()
     child_env.update(
         {

@@ -153,6 +153,7 @@ class M2Tests(unittest.TestCase):
         )
         self.assertIn("--ignored", cargo)
         self.assertIn("--exact", cargo)
+        self.assertNotIn("--nocapture", cargo)
         self.assertNotIn("-j8", cargo)
         self.assertNotIn("fused-cuda", cargo)
         child_env = next(
@@ -168,6 +169,24 @@ class M2Tests(unittest.TestCase):
         with patch.dict(os.environ, {"CARGO_BUILD_JOBS": "8"}, clear=False):
             with self.assertRaisesRegex(ProviderError, "1..4"):
                 self.invoke()
+        self.assertFalse(any(args[:1] == ["cargo"] for args, _ in self.calls))
+
+    def test_interleaved_libtest_stdout_cannot_emit_pass(self):
+        self.output_override = (
+            f"test {m2.TEST} ... {{replay receipt}}\nok\n"
+            "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n"
+        )
+        with self.assertRaisesRegex(ProviderError, "exactly its one ignored"):
+            self.invoke()
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_existing_report_directory_preserves_old_files_and_refuses(self):
+        self.report_dir.mkdir()
+        old_stage = self.report_dir / "stages-existing.json"
+        old_stage.write_text("previous evidence", encoding="utf-8")
+        with self.assertRaisesRegex(ProviderError, "must not already exist"):
+            self.invoke()
+        self.assertEqual(old_stage.read_text(encoding="utf-8"), "previous evidence")
         self.assertFalse(any(args[:1] == ["cargo"] for args, _ in self.calls))
 
     def test_manifest_arguments_bind_parity_inputs_for_current_child(self):
