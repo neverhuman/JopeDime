@@ -11,6 +11,12 @@ pub struct ResearchArgs {
 
 #[derive(Subcommand)]
 enum ResearchCommand {
+    /// Serve the explicitly admitted frozen r782 Q1 evaluator; not study authority.
+    ServeQ1 {
+        /// Existing release-authenticated r782 extraction (all signatures rechecked).
+        #[arg(long)]
+        bundle_dir: PathBuf,
+    },
     /// Record per-round training observations from the discovery producer.
     Record {
         /// Opaque, source-approved job ID (not a path or JSON plan).
@@ -29,6 +35,19 @@ pub fn run(args: ResearchArgs) -> anyhow::Result<()> {
     // Authenticate before any producer input or output can be accessed.
     let _package = crate::bootstrap::open()?;
     match args.command {
+        ResearchCommand::ServeQ1 { bundle_dir } => {
+            let forwards = jope_service::engine::serve_q1_qualification(&bundle_dir)?;
+            println!(
+                "{}",
+                serde_json::json!({
+                    "schema": "jope.q1-evaluator-activity/v1",
+                    "source_commit": crate::bootstrap::source_sha40(),
+                    "learned_forward_count": forwards,
+                    "qualification_granted": false,
+                })
+            );
+            Ok(())
+        }
         ResearchCommand::Record {
             job,
             out,
@@ -85,12 +104,39 @@ mod tests {
                 job,
                 out,
                 evaluate_all_proposals,
-            } = args.command;
+            } = args.command
+            else {
+                panic!("record dispatch expected");
+            };
             assert_eq!(job, "qlt03-slump85-v1");
             assert_eq!(out, PathBuf::from("records.jsonl"));
             assert_eq!(evaluate_all_proposals, all);
         }
         assert!(Cli::try_parse_from(["jopedime", "research", "record"]).is_err());
+    }
+
+    #[test]
+    fn q1_entry_requires_explicit_bundle_and_refuses_untrusted_assets() {
+        assert!(Cli::try_parse_from(["jopedime", "research", "serve-q1"]).is_err());
+        let directory = tempfile::tempdir().unwrap();
+        let release = directory.path().join("missing-release");
+        let Command::Research(args) = Cli::try_parse_from([
+            "jopedime",
+            "research",
+            "serve-q1",
+            "--bundle-dir",
+            release.to_str().unwrap(),
+        ])
+        .unwrap()
+        .command
+        else {
+            panic!("research dispatch expected");
+        };
+        assert!(
+            matches!(&args.command, ResearchCommand::ServeQ1 { bundle_dir } if bundle_dir == &release)
+        );
+        assert!(run(args).is_err());
+        assert!(!release.exists());
     }
 
     #[test]

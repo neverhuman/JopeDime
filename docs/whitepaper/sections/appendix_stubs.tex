@@ -38,6 +38,12 @@ game only when its referee is reliable and affordable (\cref{sub:game-boards}).
   \end{tabularx}
 \end{table}
 
+Family allocation is separate from the within-dataset referee. In the native
+audit path, approved datasets are grouped by source identity, declared family
+or identical training bytes before seeded family ordering assigns the
+meta-training, meta-validation and meta-test partitions. This code path does
+not establish that a particular corpus or checkpoint satisfies the split.
+
 \section{Incident Log and Audit Safeguards}\label{app:incidents}
 
 The reliability requirements in \cref{sub:method-referee} distinguish a
