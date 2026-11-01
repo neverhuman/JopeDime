@@ -1,0 +1,22 @@
+{
+  "schema": "whitepaper.latest-round-clock-figure/v1",
+  "input_csv_sha256": "14a5f7a8a6bace9d18c7bad132fe563cd0737ddd0a82b6e38f6cb26178168f64",
+  "source_receipt_sha256": "845b5f092fefa03d30757a41cd9baa2988890a712bf9b9a9e2c506c32f2dbf88",
+  "generator_sha256": "61ca5f68df614f299acbed3ef36d28bf7f7038cb09a220a0d7d4f3e7d204a710",
+  "figure_sha256": "c040aff4e93ee3369621f1a7afb3b949ded7c1017c7180a597db85799bf8256b",
+  "rows": 20,
+  "round_window": [
+    3033,
+    3052
+  ],
+  "program_events": 8,
+  "logged_wall_seconds": "1831.315931965",
+  "events_per_logged_hour": "15.726396247259003188016858858180124247418115264155",
+  "mean_round_seconds": "91.56579659825",
+  "zero_event_rounds": 12,
+  "adapter_admissions": 0,
+  "definitions": "Each bar counts strict program-incumbent events in one completed summary; each point is its full logged wall duration, including all work and waits.",
+  "scope": "A separate adaptive training-search window. Program-incumbent events are distinct from adapter admissions; completed-round wall time is not per-program or serving throughput. No independent first-proposal claim.",
+  "matplotlib_version": "3.10.8",
+  "reproduce": "python3 figures/scripts/make_latest_event_rates_figure.py --round-clock-only"
+}

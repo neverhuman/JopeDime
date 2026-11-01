@@ -1,0 +1,23 @@
+\subsection{A later program-event window}\label{app:latest-round-clock}
+
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_latest_round_clock.pdf}
+  \caption{\textbf{Program-event yield and full round time in a later capture.}
+  Every completed summary in rounds 3033--3052, including zero-event rounds.
+  Left: strict training-program incumbent events per round. Right: each
+  round's full logged wall time, including work and waits. The window
+  records 8 events over \num{1831.32}\,s (15.73 events per logged hour)
+  and no adapter admissions. These are distinct event and time measures;
+  scope: \cref{sec:method-status}.}
+  \label{fig:fw-latest-round-clock}
+\end{figure*}
+
+\Cref{fig:fw-latest-round-clock} pairs event counts with durations rather
+than treating every round as equal time. This separate capture was taken
+at 16:51 UTC on 1 November 2026; all 20 summary event counts match the
+promotion journal and the summaries match their admission records.
+It does not extend the earlier admission prefix in \cref{tab:admission-ledger}
+or join the gaps between retained windows. Pricing a proposal still needs
+the attempt ledger in \cref{sub:price-run}.
+\FloatBarrier
