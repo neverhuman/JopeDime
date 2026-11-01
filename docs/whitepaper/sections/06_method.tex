@@ -166,7 +166,7 @@ averages token losses within each program, and normalizes by the sum of
 program weights (\cref{app:training}).
 
 Here $\mathcal{L}_{\text{BT}}$ is a Bradley--Terry loss on the same lists,
-$\mathcal{L}_{\text{runtime}}$ a Huber loss on logarithms of one plus predicted and measured seconds, and
+$\mathcal{L}_{\text{runtime}}$ a Huber loss on logarithms of one plus measured seconds and the head's nonnegative softplus prediction, and
 $\mathcal{L}_{\text{prog}}$ the Bradley--Terry loss of the program-only control head.
 A median-ranked program carries about a tenth of the top-ranked program's
 weight in the writer loss. Its referee score also contributes to the map's
@@ -194,9 +194,9 @@ September 2026, with a corpus of about 10.2 million scored programs from
 80 training datasets. This paper does not document the evidence on which
 the checkpoint was accepted; that record and a pinned runtime are required
 inputs to the evaluation contract (\cref{sub:results-protocol}). These specifications
-identify the historical reference. The CPU float32 port has unqualified native
-CUDA BF16 parity; its random stream and uniform-token fallback differ.
-\Cref{alg:selfplay} specifies the reference loop; details belong in \cref{app:training}.
+identify the historical reference. Numerical parity of the CPU float32 Candle
+port with the native CUDA BF16 tch runtime remains unqualified; random streams
+and uniform-token fallback differ. \Cref{alg:selfplay,app:training} give the reference details.
 
 \subsection{Keeping the referee honest}\label{sub:method-referee}
 
