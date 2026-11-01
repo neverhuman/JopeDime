@@ -2086,7 +2086,7 @@ fn round_rng(seed: u64, round: u64) -> ChaCha12Rng {
     hash.update(round.to_le_bytes());
     ChaCha12Rng::from_seed(hash.finalize().into())
 }
-fn evaluation_seed(seed: u64, round: u64, slot: u32, rung: u8) -> u64 {
+pub(crate) fn evaluation_seed(seed: u64, round: u64, slot: u32, rung: u8) -> u64 {
     let mut hash = Sha256::new();
     hash.update(seed.to_le_bytes());
     hash.update(round.to_le_bytes());

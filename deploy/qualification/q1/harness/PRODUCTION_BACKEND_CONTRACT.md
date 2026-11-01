@@ -25,9 +25,12 @@ constraints. Resolve `dataset.id` only in the pinned catalog, then require
 exact equality for `canonical_sha256`, task, authoritative `family_key`, rows
 and features (the catalog's `cols` includes the target). The catalog record's
 `s3_objects.manifest.json` key resolves the immutable dataset manifest; its
-`native_split_registry_key` resolves the split registry entry. The pinned Q1
-protocol binds the exact target/ignored-column mapping and deterministic
-FIT-fold construction from those manifests, and its cut SHA must match the
+`native_split_registry_key` resolves the split registry entry. The plan,
+native endpoint and adapter accept authoritative family identities as
+40- or 64-character lowercase hexadecimal strings. Preserve the entire family
+identity in the request digest; neither width is a lookup prefix.
+The pinned Q1 protocol binds the exact target/ignored-column mapping and
+deterministic FIT-fold construction from those manifests, and its cut SHA must match the
 resulting cut definition. The engine MUST verify all request metadata against
 those pinned entries and the loaded training object before evaluation. Prefix
 IDs are lookup hints only; they never replace full SHA-256 checks. No target,

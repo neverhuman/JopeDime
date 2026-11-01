@@ -11,15 +11,29 @@ use std::fs;
 /// Materialize a complete, known committed run without clobbering an output.
 /// Identity attestations still do not establish external corpus/model qualification.
 pub fn materialize_committed(store: &Store, run: &RunId, output: &Path) -> Result<usize> {
+    Ok(materialize(store, run, output, false)?.counts.rounds as usize)
+}
+
+/// Return all observed counts and the exact published JSONL identity.
+pub fn materialize_committed_with_inventory(
+    store: &Store,
+    run: &RunId,
+    output: &Path,
+) -> Result<RecordInventory> {
     materialize(store, run, output, false)
 }
 
 #[cfg(test)]
 pub(crate) fn materialize_controls(store: &Store, run: &RunId, output: &Path) -> Result<usize> {
-    materialize(store, run, output, true)
+    Ok(materialize(store, run, output, true)?.counts.rounds as usize)
 }
 
-fn materialize(store: &Store, run: &RunId, output: &Path, allow_synthetic: bool) -> Result<usize> {
+pub(super) fn materialize(
+    store: &Store,
+    run: &RunId,
+    output: &Path,
+    allow_synthetic: bool,
+) -> Result<RecordInventory> {
     let stored = store
         .get(&RecordKey::Run(run.clone()))?
         .context("capture run missing")?;
@@ -92,14 +106,7 @@ fn materialize(store: &Store, run: &RunId, output: &Path, allow_synthetic: bool)
         expected_bytes.push(b'\n');
         records.push(record);
     }
-    ensure!(output.is_absolute(), "capture destination must be absolute");
-    let parent = output
-        .parent()
-        .context("capture destination has no parent")?;
-    ensure!(
-        fs::symlink_metadata(parent)?.is_dir() && fs::canonicalize(parent)? == parent,
-        "capture destination parent must be a canonical real directory"
-    );
+    let parent = output_parent(output)?;
     let staging = parent.join(format!(".jope-research-{}.jsonl", ulid::Ulid::new()));
     let mut writer = RecordWriter::create(&staging)?;
     for record in &records {
@@ -112,11 +119,34 @@ fn materialize(store: &Store, run: &RunId, output: &Path, allow_synthetic: bool)
         fs::read(&staging)? == expected_bytes,
         "outbox encoding changed during materialization"
     );
+    let inventory = RecordInventory::committed(&records, &expected_bytes)?;
     // hard_link is atomic and refuses an existing destination. The staging
     // evidence is deliberately retained, including after uncertain publication.
     fs::hard_link(&staging, output)?;
     #[cfg(test)]
     capture::boundary("after_file_publish");
     File::open(parent)?.sync_all()?;
-    Ok(records.len())
+    Ok(inventory)
+}
+
+fn output_parent(output: &Path) -> Result<&Path> {
+    ensure!(output.is_absolute(), "capture destination must be absolute");
+    let parent = output
+        .parent()
+        .context("capture destination has no parent")?;
+    ensure!(
+        fs::symlink_metadata(parent)?.is_dir() && fs::canonicalize(parent)? == parent,
+        "capture destination parent must be a canonical real directory"
+    );
+    Ok(parent)
+}
+
+/// Refuse an unusable destination before reserving or evaluating a run.
+pub(super) fn validate_destination(output: &Path) -> Result<()> {
+    output_parent(output)?;
+    match fs::symlink_metadata(output) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error.into()),
+        Ok(_) => anyhow::bail!("capture destination already exists"),
+    }
 }

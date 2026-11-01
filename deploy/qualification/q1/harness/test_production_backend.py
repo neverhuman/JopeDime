@@ -1,9 +1,11 @@
 import copy
+import io
 import json
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -102,6 +104,52 @@ class ProductionBackendTests(unittest.TestCase):
             response["candidate_failures"],
             [{"attempt": 1, "reason": "EVAL_ERROR: fixture failure"}],
         )
+
+    def test_entrypoint_accepts_both_supported_family_hash_widths(self):
+        for width in (40, 64):
+            with self.subTest(width=width):
+                request = copy.deepcopy(self.request)
+                request["dataset"]["family"] = "4" * width
+                request["request_sha256"] = backend.digest(
+                    {k: v for k, v in request.items() if k != "request_sha256"}
+                )
+                receipt = copy.deepcopy(self.receipt)
+                receipt["request_sha256"] = request["request_sha256"]
+                output = io.BytesIO()
+                errors = io.StringIO()
+                with (
+                    patch.object(
+                        backend.sys,
+                        "stdin",
+                        SimpleNamespace(buffer=io.BytesIO(backend.canonical(request))),
+                    ),
+                    patch.object(backend.sys, "stdout", SimpleNamespace(buffer=output)),
+                    patch.object(backend.sys, "stderr", errors),
+                    patch.dict(
+                        "os.environ", {"JOPE_Q1_ENGINE_URL": "http://127.0.0.1:8765"}
+                    ),
+                    patch.object(
+                        backend, "call_engine", return_value=receipt
+                    ) as engine,
+                ):
+                    self.assertEqual(backend.main(), 0, errors.getvalue())
+                engine.assert_called_once_with(request, "http://127.0.0.1:8765")
+                response = backend.decode(output.getvalue())
+                self.assertEqual(q1_harness.response_valid(response, request), response)
+                self.assertEqual((response["charged"], response["completed"]), (3, 2))
+
+    def test_refuses_unsupported_family_hash_widths_and_nonhex_values(self):
+        for family in ("4" * 39, "4" * 41, "4" * 63, "4" * 65, "g" * 64, "F" * 64):
+            with self.subTest(family=family):
+                request = copy.deepcopy(self.request)
+                request["dataset"]["family"] = family
+                request["request_sha256"] = backend.digest(
+                    {k: v for k, v in request.items() if k != "request_sha256"}
+                )
+                receipt = copy.deepcopy(self.receipt)
+                receipt["request_sha256"] = request["request_sha256"]
+                with self.assertRaisesRegex(ValueError, "dataset identity"):
+                    backend.validate_receipt(receipt, request)
 
     def test_refuses_wrong_request_identity(self):
         receipt = copy.deepcopy(self.receipt)
