@@ -665,6 +665,8 @@ fn refit(
         ),
         (INPUT_PART.into(), serde_json::to_vec(&input)?),
     ]);
+    // Run provenance stays in FinalizationReceipt. Canonical predictor metadata
+    // must be independent of the run identifier (the §5.6 ModelDigest contract).
     let object = ModelObject::new(
         Manifest {
             schema: SCHEMA.into(),
@@ -677,7 +679,7 @@ fn refit(
                 .iter()
                 .map(|(path, data)| Part::new(path, "application/json", data))
                 .collect(),
-            metadata: json!({"refit":kind,"run_id":plan.run_id,"algorithm_id":champion.candidate.algorithm_id,"problem_digest":plan.problem_digest,"binary_version":plan.binary_version,"fitting":"selection_only","fit_stage":"champion_refit","prediction_version":2,"holdout_score_scope":"fit_only_model","training_rows":table.rows.len(),"missing_input_policy":"registered math-pipeline decoder: scaled minimum"}),
+            metadata: json!({"refit":kind,"algorithm_id":champion.candidate.algorithm_id,"problem_digest":plan.problem_digest,"binary_version":plan.binary_version,"fitting":"selection_only","fit_stage":"champion_refit","prediction_version":2,"holdout_score_scope":"fit_only_model","training_rows":table.rows.len(),"missing_input_policy":"registered math-pipeline decoder: scaled minimum"}),
         },
         parts,
         max_model,
@@ -1038,6 +1040,21 @@ mod tests {
         changed.refit = Refit::Fit;
         assert!(finalizer.finalize(&changed, &native).is_err());
         assert_eq!(calls, native.calls.lock().unwrap().len());
+
+        // Run provenance belongs to the run-scoped receipt, not the canonical
+        // predictor identity: the same problem and fit must have one digest.
+        let other = fixture(false);
+        let other_native = Native::default();
+        search(&other, &other_native);
+        let independent = Finalizer::new(Arc::clone(&other.store))
+            .finalize(&other.request, &other_native)
+            .unwrap();
+        assert_ne!(first.run_id, independent.run_id);
+        assert_eq!(first.run_id, f.request.run_id);
+        assert_eq!(independent.run_id, other.request.run_id);
+        assert_eq!(first.model_digest, independent.model_digest);
+        assert_eq!(first.model_artifact, independent.model_artifact);
+        assert_eq!(first.holdout_model_digest, independent.holdout_model_digest);
     }
 
     #[test]
