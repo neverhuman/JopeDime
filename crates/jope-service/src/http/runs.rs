@@ -1015,11 +1015,16 @@ impl RunService {
         if spec.task != Task::Regression {
             return Err(unavailable("This run backend requires task=regression."));
         }
+        if jope_runtime::backend::DeviceRequest::parse(&spec.device).is_none() {
+            return Err(invalid("Unknown device."));
+        }
         let mut backend =
             BackendPlan::resolve(spec, self.activity.admitted_ranker(), 1).map_err(|error| {
+                let code = crate::run::service::error_code(&error);
+                // Keep the public catalog code without exposing private backend diagnostics.
                 issue(
-                    crate::run::service::error_code(&error),
-                    "The requested run backend could not be prepared.",
+                    code,
+                    format!("{code}: The requested run backend could not be prepared."),
                 )
             })?;
         if !backend.learned() && spec.landmarks != LandmarkMode::None {
