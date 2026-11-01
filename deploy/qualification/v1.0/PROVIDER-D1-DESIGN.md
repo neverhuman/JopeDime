@@ -32,6 +32,32 @@ package must then run through the macOS clean-host leg to produce a
 `jope.rel07.d1-platform-leg/v2` receipt before D1 can pass. This recipe does not sign, stage, or
 qualify an RC.
 
+## Native DEV-BUILD rehearsal
+
+To exercise the Darwin binary and D1 clean-host checks before an RC2 exists, build and wrap the
+base executable as an explicitly unsigned development package. Run both commands from a clean,
+native arm64 checkout at the exact source SHA, with evidence directories outside the checkout:
+
+```bash
+nice -n 19 bash deploy/qualification/v1.0/build-d1-darwin-arm64.sh \
+  <40-lowercase-hex-source-sha> /absolute/evidence/REL-07/D1-darwin-build
+nice -n 19 python3 -B deploy/appliance/d1_macos_dev.py package \
+  --source-sha <40-lowercase-hex-source-sha> \
+  --base-executable /absolute/evidence/REL-07/D1-darwin-build/jopedime-darwin-arm64-code \
+  --build-record /absolute/evidence/REL-07/D1-darwin-build/darwin-build.json \
+  --out /absolute/evidence/REL-07/D1-dev-package
+nice -n 19 python3 -B deploy/appliance/d1_macos_dev.py run \
+  --candidate /absolute/evidence/REL-07/D1-dev-package \
+  --out /absolute/evidence/REL-07/D1-dev-run
+```
+
+When the helper is staged outside a clean source checkout, pass `--repo-root <checkout>` before
+the `package` or `run` subcommand. The run executes the existing macOS network-denied clean-host
+driver, then checks local fit/prediction and non-empty Python, Rust and JavaScript exports. Its
+v2-shaped receipt is labeled `DEV-BUILD`, has `qualification: NOT_QUALIFIED`, and is not accepted
+as a signed-candidate D1 receipt (`providers/d1.py` requires `status: PASS`). It does not sign or
+qualify RC2.
+
 ## Aggregate invocation
 
 Pass the external Mac receipt and both independent bindings in the release gate command manifest:
