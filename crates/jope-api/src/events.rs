@@ -91,7 +91,7 @@ pub struct ExperimentFinishedBody {
     pub failure: Option<PublicFailure>,
     /// Actual per-attempt details when the evaluator retained them.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub attempt_receipt: Option<EvaluationAttempt>,
+    pub attempt_receipt: Option<Box<EvaluationAttempt>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -153,7 +153,7 @@ pub struct RunFinishedBody {
     pub nondeterminism: Nondeterminism,
     /// Full Q1 request receipt, atomically committed with this terminal event.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub evaluation_receipt: Option<EvaluationReceipt>,
+    pub evaluation_receipt: Option<Box<EvaluationReceipt>>,
 }
 
 /// Ephemeral SSE frame: deliberately lacks `sequence` and therefore no SSE id.

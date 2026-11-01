@@ -682,7 +682,7 @@ impl RunService {
                     code: ErrorCode::NumericalFailure,
                     reason: format!("{}: {}", failure.code, failure.reason),
                 }),
-                attempt_receipt: Some(attempt.clone()),
+                attempt_receipt: Some(Box::new(attempt.clone())),
             }));
             attempts.push(attempt);
         }
@@ -825,7 +825,7 @@ impl RunService {
                 count: DecimalU64(0),
                 experiment_ids: vec![],
             },
-            evaluation_receipt: Some(receipt.clone()),
+            evaluation_receipt: Some(Box::new(receipt.clone())),
         }));
         let command_key = q1_command_key(&request.request_sha256);
         let receipt_text = String::from_utf8(receipt_bytes.clone())

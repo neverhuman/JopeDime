@@ -2372,7 +2372,7 @@ fn add_events(
             },
             reason: public_failure(failure),
         }),
-        attempt_receipt: Some(jope_api::EvaluationAttempt {
+        attempt_receipt: Some(Box::new(jope_api::EvaluationAttempt {
             attempt: response.attempt.attempt,
             outcome: if response.failure.is_some() {
                 jope_api::EvaluationAttemptOutcome::Failed
@@ -2380,7 +2380,11 @@ fn add_events(
                 jope_api::EvaluationAttemptOutcome::Completed
             },
             fold_scores: response.fold_scores.clone(),
-            loss: response.scores.get(1).copied().filter(|_| response.failure.is_none()),
+            loss: response
+                .scores
+                .get(1)
+                .copied()
+                .filter(|_| response.failure.is_none()),
             program_sha256: response
                 .failure
                 .is_none()
@@ -2389,7 +2393,7 @@ fn add_events(
                 code: format!("{failure:?}").to_ascii_lowercase(),
                 reason: public_failure(failure),
             }),
-        }),
+        })),
     }));
     Ok(())
 }
