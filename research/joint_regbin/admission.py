@@ -28,6 +28,7 @@ from . import protocol
 SCHEMA = "jope.joint-regbin/v1"
 PARTIAL_SCHEMA = "jope.joint-regbin.binary-panel-packet/v1"
 CATALOG_POOL_SCHEMA = "jope.joint-regbin.catalog-pools/v1"
+FAMILY_KEY_POOL_SCHEMA = "jope.joint-regbin.family-key-pools/v1"
 ROLE_CANDIDATE_SCHEMA = "jope.joint-regbin.task-role-candidates/v1"
 CATALOG_V246_SHA256 = "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba"
 OWNER_ALIAS_RECEIPT_SHA256 = (
@@ -539,6 +540,165 @@ def build_catalog_pool_manifest_from_files(
         owner_alias,
         owner_alias_sha,
     )
+
+
+def build_family_key_pool_manifest(catalog: dict, catalog_sha256: str) -> dict:
+    """Build family-disjoint task train/validation folds from catalog metadata only.
+
+    Family identity is exactly the union of keys emitted by the pinned
+    ``family_keys`` catalog projection. No local aliases or roster inputs are
+    consulted. The result is a candidate split manifest, never an executable
+    payload admission.
+    """
+    family_keys = _family_tool()
+    if (
+        catalog.get("inventory", {}).get("source_catalog", "").find("LATEST=v246") < 0
+        or catalog.get("inventory", {}).get("usable_records")
+        != len(catalog.get("datasets", []))
+        or catalog_sha256 != CATALOG_V246_SHA256
+    ):
+        raise ValueError("family-key pools require the pinned v246 catalog")
+    repo = Path(__file__).resolve().parents[2]
+    policy_path = (
+        repo / "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/family_keys.py"
+    )
+    policy_sha = sha256_file(policy_path)
+    if policy_sha != "9b688e9b8a36a32485524243dc1adea7d30ee7404df4027d2b4d17bd6a900f7e":
+        raise ValueError("pinned family_keys source changed")
+
+    selected = [row for row in catalog["datasets"] if row.get("task") in protocol.TASKS]
+    by_id = {row.get("id"): row for row in selected}
+    if None in by_id or len(by_id) != len(selected):
+        raise ValueError("catalog task rows have duplicate or missing IDs")
+    parent = {dataset_id: dataset_id for dataset_id in by_id}
+
+    def find(dataset_id):
+        while parent[dataset_id] != dataset_id:
+            parent[dataset_id] = parent[parent[dataset_id]]
+            dataset_id = parent[dataset_id]
+        return dataset_id
+
+    def union(left, right):
+        left_root, right_root = find(left), find(right)
+        if left_root != right_root:
+            parent[max(left_root, right_root)] = min(left_root, right_root)
+
+    key_owner = {}
+    keys_by_id = {}
+    rows_for_folds = []
+    for dataset_id, row in sorted(by_id.items()):
+        if (
+            row.get("s3_bucket") != "veox-jopedime-datasets-use2"
+            or type(row.get("train_rows")) is not int
+            or row["train_rows"] <= 0
+            or not re.fullmatch(r"[0-9a-f]{64}", row.get("train_sha256", ""))
+        ):
+            raise ValueError(f"catalog train metadata is invalid: {dataset_id}")
+        keys, _triggers = family_keys.derive(family_keys.attrs_from_catalog_row(row))
+        if not keys:
+            raise ValueError(f"catalog row has no pinned family key: {dataset_id}")
+        keys_by_id[dataset_id] = [list(key) for key in keys]
+        for key in keys:
+            if key in key_owner:
+                union(dataset_id, key_owner[key])
+            else:
+                key_owner[key] = dataset_id
+
+    keys_by_root = defaultdict(set)
+    for dataset_id in sorted(by_id):
+        root = find(dataset_id)
+        keys_by_root[root].update(tuple(key) for key in keys_by_id[dataset_id])
+    family_by_id = {}
+    for dataset_id in sorted(by_id):
+        component = find(dataset_id)
+        component_keys = sorted(keys_by_root[component])
+        family_by_id[dataset_id] = canonical_json_sha(
+            [list(key) for key in component_keys]
+        )
+        rows_for_folds.append(
+            {
+                "dataset": dataset_id,
+                "family": family_by_id[dataset_id],
+                "task": by_id[dataset_id]["task"],
+            }
+        )
+
+    fold_by_family = protocol.family_folds(rows_for_folds, seed=136)
+    for row in rows_for_folds:
+        row["fold"] = fold_by_family[row["family"]]
+    fold_splits = {}
+    for fold in range(5):
+        fold_splits[str(fold)] = {
+            role: {
+                task: [
+                    row["dataset"]
+                    for row in rows_for_folds
+                    if row["task"] == task
+                    and ((row["fold"] == fold) == (role == "val"))
+                ]
+                for task in protocol.TASKS
+            }
+            for role in ("train", "val")
+        }
+    return {
+        "schema": FAMILY_KEY_POOL_SCHEMA,
+        "status": "FAMILY_KEY_SPLITS_NOT_ADMITTED",
+        "eligibility_verified": False,
+        "qualification_status": "NOT_QUALIFIED",
+        "catalog_version": "v246",
+        "catalog_sha256": catalog_sha256,
+        "family_key_policy": family_keys.SCHEMA,
+        "family_key_policy_sha256": family_keys.KEYS_POLICY_SHA256,
+        "family_key_source_sha256": policy_sha,
+        "split_protocol": "family-grouped-5-fold/v1",
+        "fold_seed": 136,
+        "paired_campaign_seeds": [20261029, 20261030, 20261031],
+        "candidate_count_by_task": {
+            task: sum(row["task"] == task for row in rows_for_folds)
+            for task in protocol.TASKS
+        },
+        "family_by_dataset": dict(sorted(family_by_id.items())),
+        "family_keys_by_dataset": dict(sorted(keys_by_id.items())),
+        "fold_by_family": dict(sorted(fold_by_family.items())),
+        "fold_splits": fold_splits,
+        "train_metadata_by_dataset": {
+            dataset_id: {
+                "train_rows": by_id[dataset_id]["train_rows"],
+                "train_sha256": by_id[dataset_id]["train_sha256"],
+                "task": by_id[dataset_id]["task"],
+            }
+            for dataset_id in sorted(by_id)
+        },
+        "payloads_opened": 0,
+        "blockers": [
+            "catalog train hashes do not provide learner-compatible cached candidate tensors",
+            "qualified two-task worker and R882 checkpoint proof are not present in this manifest",
+        ],
+    }
+
+
+def verify_family_key_pool_manifest(manifest: dict, catalog_path: Path) -> dict:
+    """Re-derive the metadata split from the pinned catalog without opening payloads."""
+    catalog_path = Path(catalog_path)
+    catalog_bytes = catalog_path.read_bytes()
+    expected = build_family_key_pool_manifest(
+        json.loads(catalog_bytes), hashlib.sha256(catalog_bytes).hexdigest()
+    )
+    if manifest != expected:
+        raise ValueError("family-key pool manifest differs from pinned catalog split")
+    return {
+        "schema": "jope.joint-regbin.family-key-pool-preflight/v1",
+        "status": "METADATA_SPLIT_VERIFIED",
+        "eligibility_verified": False,
+        "qualification_status": "NOT_QUALIFIED",
+        "catalog_sha256": expected["catalog_sha256"],
+        "family_key_policy_sha256": expected["family_key_policy_sha256"],
+        "candidate_count_by_task": expected["candidate_count_by_task"],
+        "family_count": len(expected["fold_by_family"]),
+        "fold_count": len(expected["fold_splits"]),
+        "payloads_opened": 0,
+        "blockers": list(expected["blockers"]),
+    }
 
 
 def _protected_catalog_member_ids(

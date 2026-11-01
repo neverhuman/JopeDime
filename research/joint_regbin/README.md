@@ -116,6 +116,24 @@ appear in the usable catalog, and the task-specific worker qualification is
 still missing. It is a role-planning receipt for the worker lane, not a runnable
 study manifest or scientific result.
 
+### T1210 family-key pool split
+
+`admission.build_family_key_pool_manifest(...)` builds five deterministic,
+family-disjoint train/validation splits from catalog v246 metadata. It obtains
+identity only through the pinned `family_keys.attrs_from_catalog_row()` and
+`family_keys.derive()` calls, records the exact returned keys and catalog IDs,
+and assigns families with the preregistered seed 136. No source-file, URL-parent,
+owner-alias, or protected-roster inputs are added. The corresponding
+`verify_family_key_pool_manifest(...)` re-derives the split against the catalog
+and reports metadata-only preflight status.
+
+This does not make a runnable learner packet. Catalog train hashes do not
+establish the 412-wide candidate programs and frozen 10-slot feature tensors
+consumed by the existing flywheel adapter. The full verifier therefore remains
+closed until a source-pinned train-row cache builder, two-task runtime binding,
+and worker/checkpoint qualification evidence are available. The split receipt
+keeps `eligibility_verified:false`; no payload is opened and no campaign starts.
+
 ## Learner integration contract (qualification still required)
 
 Supply a reviewed Python learner, pinned by its full file hash, accepting
