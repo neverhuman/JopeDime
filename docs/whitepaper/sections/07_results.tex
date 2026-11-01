@@ -59,11 +59,11 @@ Report known training and pretraining exposure for the writer, encoders
 and learned comparators, with unresolved provenance marked explicitly.
 Bound unseen-family claims to the exclusions actually established.
 
-Each \EZ{} submission follows \cref{alg:gameday}; failed generations and
-executions remain in the denominator. Report paired results and uncertainty
-at the family level, alongside encoding, generation, fitting and prediction
-costs. Disclose internal model or hyperparameter selection within the emitted
-procedure, even when the writer submits only one outer candidate.
+Each \EZ{} submission follows \cref{alg:gameday}, counting failed generations
+and executions in the overall win rate. Also report validity and wins among
+valid attempts; neither rate alone establishes learning. Pair outcomes
+and uncertainty by family, with encoding, generation, fitting and prediction
+costs. Disclose internal model or hyperparameter selection within the emitted procedure.
 \TBD{Document the final problem inventory, dataset identities, row splits,
 family assignments and exclusions, component provenance, evaluator,
 checkpoint, seeds, task metrics and failure accounting.}
@@ -73,8 +73,8 @@ checkpoint, seeds, task metrics and failure accounting.}
 Use a frozen reference writer as the control.
 Predeclare its checkpoint and the evaluated training intervention before
 opening final outcomes. Hold the encoder, program grammar and output
-support, permitted task inputs, decoding rules, fitting protocol, referee
-and resource budgets constant; vary the writer checkpoint. Changes to the
+support, permitted task inputs, decoding rules and fitting protocol,
+referee, incumbent and resource budgets constant; vary the writer checkpoint. Changes to the
 support, encoder or evaluator belong in separate conditions.
 
 Pair the first draws under predeclared seeds and report all of them, with
@@ -176,15 +176,15 @@ distinguished from reading the problem.
   \end{tabularx}
 \end{table}
 
-A ranking head can agree with a referee without improving the writer (\cref{tab:ablation}).
-In the checkpoint described in \cref{sub:method-map}, the map neither
-conditions nor screens the writer's draw. Its ranking accuracy therefore
-cannot establish a reduction in wasted proposals.
+Agreement with the referee tests ranking, not improvement of the writer
+(\cref{tab:ablation}). The reference map neither conditions nor screens a
+writer draw (\cref{sub:method-map}); its accuracy on valid scored lists
+cannot establish a reduction in invalid proposals or an overall win-rate gain.
 
-In one native GP route, the map's ranks weight parent selection.
-A causal ablation must bind this route to the evaluated checkpoint and
-vary the map's influence with the writer, training budget and deployment
-protocol otherwise matched.
+For a causal test, bind the parent-selection route and evaluated checkpoint.
+Vary the map's influence while holding the initial writer, candidate-generation
+rules, training budget and deployment protocol fixed. Measure the resulting
+writers' paired first proposals, including validity, wins and incurred costs.
 \TBD{Identify an implemented influence path or limit the study to ranking.}
 
 \subsection{Failure cases and a worked example}\label{sub:results-failures}
@@ -230,7 +230,7 @@ without updating the writer.
 \end{table}
 
 \subsection{Earlier development diagnostics}\label{sub:results-diagnostics}
-Separate historical search and ranking diagnostics from the pre-registered first-proposal evaluation above.
+Use the contract above to bound the discussion: historical search and ranking diagnostics cannot substitute for its first-proposal comparisons.
 \TBD{Supply Jepson's source-bound search and ranking diagnostics, including
 original inventories, comparison conditions, overlap checks and uncertainty.
 Keep their scope separate from the final first-proposal comparisons.}
