@@ -961,15 +961,18 @@ mod platform {
         logical_cpus()
     }
 
-    /// Conservative available memory from free, inactive and speculative VM pages.
+    /// Conservative available memory from free and inactive VM pages.
     /// Failures stay unavailable; admission never substitutes total RAM for availability.
     pub(super) fn mem_available() -> Result<u64, String> {
+        // SAFETY: obtains this process's send right; it is released below on every path.
         let host = unsafe { mach_host_self() };
         if host == 0 {
             return Err("mach_host_unavailable".to_owned());
         }
+        // SAFETY: this C statistics struct consists of integer fields and accepts zeroes.
         let mut stats: libc::vm_statistics64 = unsafe { std::mem::zeroed() };
         let mut count = libc::HOST_VM_INFO64_COUNT;
+        // SAFETY: stats has room for HOST_VM_INFO64_COUNT integer words; count is writable.
         let status = unsafe {
             libc::host_statistics64(
                 host,
@@ -978,6 +981,7 @@ mod platform {
                 &mut count,
             )
         };
+        // SAFETY: release the send right obtained by mach_host_self, in our own task.
         let released = unsafe { mach_port_deallocate(mach_task_self(), host) };
         if status != libc::KERN_SUCCESS {
             return Err("host_statistics_unavailable".to_owned());
@@ -985,17 +989,19 @@ mod platform {
         if released != libc::KERN_SUCCESS {
             return Err("host_port_release_failed".to_owned());
         }
-        let required_count = (std::mem::offset_of!(libc::vm_statistics64, speculative_count)
+        let required_count = (std::mem::offset_of!(libc::vm_statistics64, inactive_count)
             + std::mem::size_of::<libc::natural_t>())
         .div_ceil(std::mem::size_of::<libc::integer_t>())
             as libc::mach_msg_type_number_t;
         if count < required_count {
             return Err("host_statistics_truncated".to_owned());
         }
+        // XNU mach/vm_statistics.h documents speculative_count as already included
+        // in free_count. Adding it again would overstate admission headroom.
         let pages = u64::from(stats.free_count)
             .checked_add(u64::from(stats.inactive_count))
-            .and_then(|pages| pages.checked_add(u64::from(stats.speculative_count)))
             .ok_or_else(|| "memory_pages_overflow".to_owned())?;
+        // SAFETY: libSystem initializes this immutable VM page-size value before main.
         let page_size = unsafe { libc::vm_page_size } as u64;
         if page_size == 0 {
             return Err("page_size_unavailable".to_owned());
@@ -1007,7 +1013,9 @@ mod platform {
 
     pub(super) fn disk_free(path: &Path) -> Result<u64, String> {
         let path = CString::new(path.as_os_str().as_bytes()).map_err(|_| "invalid_store_path")?;
+        // SAFETY: an all-zero statvfs is valid output storage for statvfs below.
         let mut stats: libc::statvfs = unsafe { std::mem::zeroed() };
+        // SAFETY: path is NUL-terminated; stats is valid writable output storage.
         if unsafe { libc::statvfs(path.as_ptr(), &mut stats) } != 0 {
             return Err("statvfs_failed".to_owned());
         }
