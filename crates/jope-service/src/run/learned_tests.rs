@@ -153,16 +153,16 @@ async fn signed_r782_live_plan_and_admission_use_the_instantiated_backend() {
         );
         tokio::time::sleep(Duration::from_millis(50)).await;
     };
-    assert_eq!(finished["state"], "completed", "{finished}");
-    assert!(
-        forwards.load(Ordering::Relaxed) > 0,
-        "live engine never used its learned backend"
-    );
-    assert_eq!(finished["budget_used"]["evaluations"], "12");
     println!(
         "{}",
         json!({"consumer":"RNK-12/live-RunService","plan":plan,"run":finished,
         "real_learned_forward_calls":forwards.load(Ordering::Relaxed),"source":env::var("JOPE_SOURCE_SHA").unwrap(),
         "worker":worker,"original_bundle":"94fd9587675c7806bd0a0582b6e97540cd2fdc7ebbc51958411b905185cad85c","default_or_Q1_promotion":false})
     );
+    assert_eq!(finished["state"], "completed", "{finished}");
+    assert!(
+        forwards.load(Ordering::Relaxed) > 0,
+        "live engine never used its learned backend"
+    );
+    assert_eq!(finished["budget_used"]["evaluations"], "12");
 }
