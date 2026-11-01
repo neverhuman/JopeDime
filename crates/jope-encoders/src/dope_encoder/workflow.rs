@@ -52,6 +52,8 @@ pub fn write_events(session: EncodingSession, path: &Path) -> Result<EncodingRun
     collect(session, |s| write_snapshot(&mut file, s))
 }
 
+/// Emit ordered snapshots and a final outcome at the last embedding version.
+/// `receipts` retains the observation snapshots; the terminal event adds no new encoding.
 pub fn collect(
     session: EncodingSession,
     mut emit: impl FnMut(&EncodingSnapshot) -> Result<()>,
@@ -69,6 +71,7 @@ pub fn collect(
         .as_ref()
         .map(super::DopeConsumedEncoding::to_vec)
         .transpose()?;
+    emit(&last)?;
     Ok(EncodingRun {
         final_snapshot: last,
         receipts,
