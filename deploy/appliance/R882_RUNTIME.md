@@ -23,6 +23,8 @@ without changing its hashes or internal rights. The six legacy foundation assets
 and their restricted-rights acknowledgement stay in the full profile.
 
 Profile locking refuses absent or differently bound required assets. Normal full
+startup checks every required decoded size/hash before allocating model assets.
+Normal full
 packing also probes the supplied executable: it must report an embedded Engine,
 no development-key trust, and the requested exact source. This probe requires a
 host capable of executing the target binary. Inspection packing is unchanged.

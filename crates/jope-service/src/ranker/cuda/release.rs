@@ -5,7 +5,7 @@ use crate::ranker::bundle::{
     ReleaseAsset, ReleaseCatalog, SignedAssetContext, TensorSpec, VerifiedBundle,
     FROZEN_DOPE_COMPOSITE,
 };
-use anyhow::{ensure, Result};
+use anyhow::{ensure, Context, Result};
 use safetensors::Dtype;
 use serde::Deserialize;
 use std::{collections::BTreeMap, fs::File, io::Read, path::Path};
@@ -164,6 +164,17 @@ fn catalog(bytes: &[u8], schema: &str, bundle: &str) -> Result<ReleaseCatalog> {
 pub fn load_r882_embedded(package: &jope_assets::Package) -> Result<VerifiedBundle> {
     use crate::ranker::bundle::EmbeddedAsset;
     let limits = BundleLimits::default();
+    // Refuse a different closure before decoding even the first asset. The
+    // generic container's allocation limits are much wider than this release.
+    for (id, sha, bytes) in crate::proposal::required_assets()? {
+        let entry = package
+            .entry(&id)
+            .with_context(|| format!("missing r882 asset {id}"))?;
+        ensure!(
+            entry.bytes == bytes && entry.sha256 == sha,
+            "embedded r882 asset identity differs: {id}"
+        );
+    }
     let bytes = package.read_entry("model/r882/release-catalog.json")?;
     ensure!(
         bytes.bytes().len() == 48_885 && bytes.sha256() == R882_CATALOG_SHA,
