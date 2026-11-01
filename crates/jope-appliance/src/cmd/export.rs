@@ -61,7 +61,7 @@ pub(crate) fn run(options: Options<'_>) -> anyhow::Result<()> {
         kind,
         languages: vec![language],
         require_all_languages: true,
-        refit: Refit::Fit,
+        refit: Refit::FitHoldout,
     };
     let manifest = client.model_export(&run_id, &request, Some(&key))?;
     files::download_export_artifact(&client, &manifest.artifact_id, out, force)?;

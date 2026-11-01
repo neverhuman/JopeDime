@@ -93,10 +93,13 @@ fn initialize(home: &Path, bytes: &[u8]) -> Result<(Arc<InProcessEngine>, RunSpe
     // Other Cargo jobs share a build cache. Pin this executable before starting
     // a long-lived engine or spawning workers from it.
     let pinned = home.join("jopedime");
-    fs::copy(BIN, &pinned)?;
+    let executable = std::env::var_os("JOPE_INT01_EXECUTABLE_PIN")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(BIN));
+    fs::copy(&executable, &pinned)?;
     let digest = jope_runtime::sha256_hex(&fs::read(&pinned)?);
     ensure!(
-        digest == jope_runtime::sha256_hex(&fs::read(BIN)?),
+        digest == jope_runtime::sha256_hex(&fs::read(&executable)?),
         "appliance changed while being pinned"
     );
     let version = Command::new(&pinned)
@@ -659,6 +662,33 @@ pub(super) fn shared_run_surfaces() -> Result<()> {
     retain_execution(&server.engine, &output, "shared")?;
     let completed = snapshot(output)?;
     let id = &completed.run_id;
+    let manifest = server.client.model_export(
+        id,
+        &jope_api::ExportRequest {
+            algorithm_id: completed
+                .best
+                .as_ref()
+                .context("missing champion")?
+                .algorithm_id
+                .clone(),
+            kind: jope_api::ExportKind::Bundle,
+            languages: vec![jope_api::Language::Python, jope_api::Language::Rust],
+            require_all_languages: true,
+            refit: jope_api::Refit::FitHoldout,
+        },
+        Some("int01-normal-fh-export"),
+    )?;
+    ensure!(
+        manifest.refit == jope_api::Refit::FitHoldout && manifest.languages.len() == 2,
+        "normal run did not finalize requested FitHoldout model"
+    );
+    if let Some(root) = std::env::var_os("JOPE_INT01_RECEIPTS") {
+        fs::create_dir_all(&root)?;
+        fs::write(
+            PathBuf::from(root).join("normal-fit-holdout-export.json"),
+            serde_json::to_vec_pretty(&manifest)?,
+        )?;
+    }
     ndjson_receipt(server.home.path(), &spec, &completed, None)?;
     ndjson_receipt(
         server.home.path(),

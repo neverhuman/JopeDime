@@ -318,7 +318,7 @@ fn synthetic_surface_capture_harness_accepts_equal_projections_and_rejects_drift
             for event in &mut capture.projection.events {
                 event.run_id = run.clone();
                 if let EventBody::RunFinished(finished) = &mut event.event {
-                    finished.budget_used.wall_seconds = (i + 2).to_string().parse().unwrap();
+                    finished.budget_used.wall_seconds = (i + 2).to_string();
                 }
             }
             capture

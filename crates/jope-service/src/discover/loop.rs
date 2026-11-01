@@ -898,6 +898,7 @@ impl Discovery {
                     .map(|s| s.warnings.clone())
                     .unwrap_or_default(),
                 completion_reason: None,
+                evaluation_receipt: None,
             };
             (checkpoint, snapshot)
         };
@@ -1183,7 +1184,7 @@ impl Discovery {
                 let response = &outcomes[offset + slot];
                 let id = experiment(&next.plan, round.number, slot, 0)?;
                 record_result(&mut next, candidate, response, &id, &mut events)?;
-                records.push(json!({"round":round.number,"slot":slot,"rung":0,"candidate":candidate,
+                records.push(json!({"round":round.number,"slot":slot,"rung":0,"candidate":candidate,"worker_attempt":response.attempt,
                     "scores":response.scores,"predictions_digest":response.predictions_digest,"failure":response.failure}));
             }
             let best = round
@@ -1254,9 +1255,10 @@ impl Discovery {
                 } else {
                     None
                 };
+                response.fold_scores = cv_response.fold_scores.clone();
                 let id = experiment(&next.plan, round.number, 0, 1)?;
-                add_events(&mut next, &response, &id, &mut events)?;
-                records.push(json!({"round":round.number,"slot":0,"rung":1,"candidate":candidate,
+                add_events(&mut next, candidate, &response, &id, &mut events)?;
+                records.push(json!({"round":round.number,"slot":0,"rung":1,"candidate":candidate,"worker_attempt":response.attempt,
                     "scores":cv_response.scores,"predictions_digest":cv_response.predictions_digest,
                     "failure":response.failure,"cv_failure":cv_response.failure,"refit_failure":refit_failure}));
                 if let Some(bytes) = bytes {
@@ -1999,11 +2001,16 @@ fn experiment(plan: &Plan, round: u64, slot: usize, rung: u8) -> Result<String> 
         slot < 65536 && rung < 4,
         "evaluation ordinal is out of range"
     );
-    let ordinal = round
-        .checked_mul(262144)
-        .and_then(|n| n.checked_add(u64::from(rung) * 65536 + slot as u64))
-        .context("evaluation ordinal exhausted")?;
+    let ordinal = evaluation_ordinal(round, u32::from(rung) * 65536 + slot as u32)?;
     Ok(projector(plan)?.experiment_id(project::EvaluationOrdinal(ordinal)))
+}
+
+fn evaluation_ordinal(round: u64, encoded_slot: u32) -> Result<u64> {
+    ensure!(encoded_slot < 262144, "evaluation ordinal is out of range");
+    round
+        .checked_mul(262144)
+        .and_then(|n| n.checked_add(u64::from(encoded_slot)))
+        .context("evaluation ordinal exhausted")
 }
 
 fn projected_summary(plan: &Plan, claim: project::Claim<'_>) -> Result<String> {
@@ -2370,7 +2377,7 @@ fn record_result(
     id: &str,
     events: &mut Vec<EventBody>,
 ) -> Result<()> {
-    add_events(state, response, id, events)?;
+    add_events(state, candidate, response, id, events)?;
     if response.failure.is_none() {
         state.elites.insert(Elite {
             algorithm_id: candidate.algorithm_id.clone(),
@@ -2383,6 +2390,7 @@ fn record_result(
 
 fn add_events(
     state: &mut Checkpoint,
+    candidate: &Candidate,
     response: &Response,
     id: &str,
     events: &mut Vec<EventBody>,
@@ -2417,6 +2425,30 @@ fn add_events(
             },
             reason: public_failure(failure),
         }),
+        attempt_receipt: Some(Box::new(jope_api::EvaluationAttempt {
+            // The public receipt identifies the logical evaluation, just like its
+            // experiment ID. Worker restart epochs remain in private run records.
+            attempt: evaluation_ordinal(response.attempt.round, response.attempt.slot)?,
+            outcome: if response.failure.is_some() {
+                jope_api::EvaluationAttemptOutcome::Failed
+            } else {
+                jope_api::EvaluationAttemptOutcome::Completed
+            },
+            fold_scores: response.fold_scores.clone(),
+            loss: response
+                .scores
+                .get(1)
+                .copied()
+                .filter(|_| response.failure.is_none()),
+            program_sha256: response
+                .failure
+                .is_none()
+                .then(|| digest(candidate.dsl.as_bytes())),
+            failure: response.failure.map(|failure| jope_api::EvaluationFailure {
+                code: format!("{failure:?}").to_ascii_lowercase(),
+                reason: public_failure(failure),
+            }),
+        })),
     }));
     Ok(())
 }
@@ -2474,7 +2506,7 @@ fn discard_pending(
             let response = index.and_then(|i| responses.get(i)).cloned();
             if let Some(response) = &response {
                 let id = experiment(&state.plan, pending.number, slot, 0)?;
-                add_events(state, response, &id, events)?;
+                add_events(state, &candidate, response, &id, events)?;
             }
             state.discarded.push(DiscardedEvaluation {
                 round: pending.number,
@@ -2629,6 +2661,7 @@ fn native_scores<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Resul
     let mut losses = vec![];
     let mut values = vec![];
     let mut surrogate = vec![];
+    let mut fold_scores = vec![];
     for fold in spec.folds {
         let train: BTreeSet<_> = fold.train.iter().copied().collect();
         ensure!(
@@ -2655,6 +2688,7 @@ fn native_scores<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Resul
         losses.push(score.loss);
         values.push(score.value);
         surrogate.push(rmse.loss);
+        fold_scores.push(rmse.loss);
         targets.extend(vy);
         predictions.extend(prediction);
     }
@@ -2669,6 +2703,7 @@ fn native_scores<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Resul
     }
     Ok(worker::Scores {
         values: scores,
+        fold_scores,
         predictions_digest: digest(&bytes),
     })
 }
@@ -2906,6 +2941,7 @@ fn native_refit<B: AsRef<[u8]>>(
     file.sync_all()?;
     Ok(worker::Scores {
         values: vec![surrogate.loss, score.loss, score.value],
+        fold_scores: vec![],
         predictions_digest,
     })
 }
@@ -3057,6 +3093,7 @@ mod tests {
             Response {
                 attempt: request.attempt.clone(),
                 scores: vec![surrogate, objective, objective],
+                fold_scores: vec![],
                 predictions_digest: digest(request.dsl.as_bytes()),
                 wall_ms: 0,
                 failure: None,
@@ -3322,6 +3359,7 @@ mod tests {
                 Response {
                     attempt: request.attempt.clone(),
                     scores: vec![surrogate, objective, objective],
+                    fold_scores: vec![],
                     predictions_digest: digest(request.dsl.as_bytes()),
                     wall_ms: 0,
                     failure: None,
@@ -3568,6 +3606,7 @@ mod tests {
             Response {
                 attempt: request.attempt.clone(),
                 scores: vec![loss, loss, loss],
+                fold_scores: vec![],
                 predictions_digest: digest(request.dsl.as_bytes()),
                 wall_ms: 0,
                 failure: None,
@@ -3906,6 +3945,7 @@ mod tests {
             Response {
                 attempt: request.attempt.clone(),
                 scores: vec![loss, loss, loss],
+                fold_scores: vec![],
                 predictions_digest: digest(request.dsl.as_bytes()),
                 wall_ms: 0,
                 failure: None,
@@ -4126,6 +4166,24 @@ mod tests {
         .unwrap();
     }
 
+    #[cfg(unix)]
+    fn live_native_workers(directory: &Path) -> usize {
+        fs::read_dir(directory)
+            .unwrap()
+            .filter_map(|entry| entry.ok())
+            .filter_map(|entry| entry.file_name().to_string_lossy().parse::<u32>().ok())
+            .filter(|pid| {
+                let status = Command::new("/bin/kill")
+                    .args(["-0", &pid.to_string()])
+                    .stdin(Stdio::null())
+                    .stdout(Stdio::null())
+                    .stderr(Stdio::null())
+                    .status();
+                status.is_ok_and(|status| status.success())
+            })
+            .count()
+    }
+
     fn pool(binary: &Path, workers: usize) -> ProcessExecutor {
         ProcessExecutor::new(
             binary,
@@ -4139,6 +4197,12 @@ mod tests {
         let mut d = Discovery::open(store, p.clone()).unwrap();
         let pool = pool(binary, workers);
         finish(&mut d, &NativeSpace, &pool, workers);
+        #[cfg(unix)]
+        assert_eq!(
+            live_native_workers(&binary.parent().unwrap().join("worker-pids")),
+            workers,
+            "native worker process count while the pool is still alive"
+        );
         assert_eq!(d.nondeterminism().count.0, 0);
         let projection = d.projection().unwrap();
         assert!(
@@ -4294,24 +4358,10 @@ mod tests {
         assert_eq!(p.rounds_in_flight(), 2);
         let binary = native_worker(directory.path());
         let baseline = run_store(&directory.path().join("one"), &p, &binary, 1);
-        assert_eq!(
-            fs::read_dir(directory.path().join("worker-pids"))
-                .unwrap()
-                .count(),
-            1,
-            "one live native worker observed"
-        );
         same(
             "eight",
             &baseline,
             &run_store(&directory.path().join("eight"), &p, &binary, 8),
-        );
-        assert_eq!(
-            fs::read_dir(directory.path().join("worker-pids"))
-                .unwrap()
-                .count(),
-            9,
-            "eight additional live native workers observed"
         );
         let pause_home = directory.path().join("pause");
         {
@@ -4759,6 +4809,7 @@ mod tests {
                 Response {
                     attempt: request.attempt.clone(),
                     scores: vec![loss, loss, 777.0],
+                    fold_scores: vec![],
                     predictions_digest: digest(request.dsl.as_bytes()),
                     wall_ms: 7,
                     failure: None,
