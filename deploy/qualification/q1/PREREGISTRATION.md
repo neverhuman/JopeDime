@@ -157,3 +157,13 @@ families. The selected wide subgroup has three, so qualification is INCOMPLETE.
 No override, family invention or duplicate count is authorized. All primary
 statistics, thresholds, r782/DOPE pins, seeds, per-policy budgets and single-use
 ledger rules above remain binding. No Q1 outcome has been observed.
+
+## R20 pre-outcome wide census amendment
+
+Owner ruling R20 supersedes the T1115 five-wide floor for this fixed census.
+[PREREG-AMENDMENT-R20.md](PREREG-AMENDMENT-R20.md) and
+[amendments/r20.json](amendments/r20.json) bind all three eligible distinct wide
+families; all must appear with exact pinned identities. Other subgroups retain
+five; every subgroup retains its existing non-inferiority check, margin and
+0.05/4 correction. The 97-family selection, frozen pins/budgets and all runtime,
+exposure, signing and single-use requirements remain unchanged.
