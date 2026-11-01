@@ -830,9 +830,12 @@ pub(super) async fn start(
 
 pub(super) async fn control(
     Extension(service): Extension<Arc<RunService>>,
-    axum::extract::Path(run): axum::extract::Path<String>,
+    path: std::result::Result<axum::extract::Path<String>, axum::extract::rejection::PathRejection>,
     request: Request<Body>,
 ) -> Response {
+    let Ok(axum::extract::Path(run)) = path else {
+        return response(&invalid("Invalid run path."));
+    };
     let Ok(run) = run.parse::<jope_api::ids::RunId>() else {
         return response(&invalid("Invalid run id."));
     };
