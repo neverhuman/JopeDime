@@ -1,0 +1,38 @@
+{
+  "schema": "jope.q1-prereg-amendment/v1",
+  "amendment_id": "QLT-04-T0610-R1-R2",
+  "authority": "ENG:watcher lanes_t0610.md; R1/R2 final owner rulings",
+  "status": "pre-outcome amendment; candidate metadata only; not signable or qualified",
+  "base_preregistration_sha256": "f2a234dda18171623053e233a1e6a486df5215ea977097ea3f9d6b81a6f219b5",
+  "fold_manifest_path": "deploy/qualification/q1/cut_manifests/fdc243193d9436449cf74aa92b05ff7842c6c88bf4dce0b29ef7edf453b74987.json",
+  "fold_manifest_sha256": "fdc243193d9436449cf74aa92b05ff7842c6c88bf4dce0b29ef7edf453b74987",
+  "record_count": 154,
+  "existing_owner_roster_count": 153,
+  "r1": {
+    "wide_threshold": "features > 20",
+    "minimum": 5,
+    "candidate_dataset_id": "c4b1f6dfb2a8605f",
+    "selection_basis": "first catalog-order >20-feature regression in exact pinned H150 catalog_sealed_ids not already in the 153-member owner roster",
+    "sealed_catalog_id_membership_verified": true,
+    "q1_family_binding": "UNRESOLVED: source family key is legacy/non-hex and no authoritative 40/64-hex family join was found",
+    "official_wide_count": 4,
+    "official_minimum_met": false
+  },
+  "r2": {
+    "fold_count": 3,
+    "fold_seed": 0,
+    "seed_source": "first preregistered Q1 seed in [0,1,2]",
+    "row_order": "FIT object physical row order, zero-based",
+    "grouping": "singleton group per FIT row index; no target/feature-derived grouping",
+    "algorithm": "jope-service/src/discover/splits.rs::k_fold; seed label dsc03/rung0/groups; validation partitions shuffled round-robin and sorted; training is the ascending complement",
+    "repeat": 0,
+    "payloads_read": 0
+  },
+  "qualification": {
+    "Q1": "NOT_RUN",
+    "cut_hashes_derived": 154,
+    "cuts_qualified": 0,
+    "signing_request_filed": false,
+    "launch_authorized_by_this_amendment": false
+  }
+}
