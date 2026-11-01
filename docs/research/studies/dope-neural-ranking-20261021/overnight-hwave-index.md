@@ -152,4 +152,4 @@
 
 | H201 | gpu_tokbench_codex | Strict admission / r3175 selection-noise audit; zero updates | CLOSED; INCONCLUSIVE; native parity FAIL, sole attempt INCOMPLETE; descriptive SMA H2 true | [results](../../../../research/flywheel_selfplay/h201_strict_admission/README.md) |
 
-| H202 | gpu_tokbench_codex | Current-top5 inverted-pair adapter fine-tune; family-balanced paired CTRL/SHUF | PREREGISTERED; one guarded CPU attempt pending | [prereg](../../../../research/flywheel_selfplay/h202_hard_negative/PREREG.md) |
+| H202 | gpu_tokbench_codex | Current-top5 hard-negative pairwise fine-tuning; adapter-only, paired family-balanced CTRL/shuffle | CLOSED; COMPLETE; NO_ADVANCE; 1800updates/7200backwards | [results](../../../../research/flywheel_selfplay/h202_hard_negative/README.md) |
