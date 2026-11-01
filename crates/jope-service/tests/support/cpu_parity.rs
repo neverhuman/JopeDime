@@ -193,6 +193,18 @@ impl Stats {
 #[test]
 #[ignore = "requires hash-pinned RES-07 CPU packets and frozen RES06 weights"]
 fn real_round_admission_composition() {
+    round_admission_fixture(false);
+}
+
+// Measurement execution is separate from the M5 verdict. The release provider
+// requires positive 4+8 controls from this report, even when this case succeeds.
+#[test]
+#[ignore = "requires hash-pinned RES-07 CPU packets and frozen RES06 weights"]
+fn m5_serving_causal_measurements() {
+    round_admission_fixture(true);
+}
+
+fn round_admission_fixture(causal_measurements_only: bool) {
     use crate::discover::r#loop::{Plan, RoundAdmission, RoundContext, RoundMeasurement};
     use crate::ranker::admission::{
         select_costs, CpuRoundAdmission, RevealedRule, RoundInputProvider, RoundInputs,
@@ -253,6 +265,15 @@ fn real_round_admission_composition() {
                 4 => {
                     result.pool_gates.pop();
                 }
+                5..=7 => {
+                    // These slots depend on landmarks; preserve DOPE-only slots
+                    // and every mask bit so this is not a missing-input control.
+                    for slot in [0, 1, 7, 9] {
+                        for value in &mut result.conditioning.tokens[slot] {
+                            *value = [-6.0, 0.0, 6.0][usize::from(self.mode.get() - 5)];
+                        }
+                    }
+                }
                 _ => {}
             }
             Ok(result)
@@ -303,6 +324,12 @@ fn real_round_admission_composition() {
     let (mut recorded_slates, mut recording_refusals) = (0, 0);
     let (mut decisive, mut ties, mut mismatches) = (0, 0, 0);
     let (mut landmark_changes, mut fitness_changes, mut disconnected_changes) = (0, 0, 0);
+    let (
+        mut serving_slates,
+        mut serving_landmark_changes,
+        mut serving_fitness_changes,
+        mut serving_disconnected_changes,
+    ) = (0, 0, 0, 0);
     let mut max_kl = 0.0_f64;
     let weights = fixtures.weights();
     for cid in &fixtures.contexts {
@@ -366,6 +393,20 @@ fn real_round_admission_composition() {
                 ties += 1;
             }
             disconnected_changes += usize::from(actual.admitted != proposals[..4]);
+            if width == 12 {
+                serving_slates += 1;
+                serving_disconnected_changes += usize::from(actual.admitted != proposals[..4]);
+                for intervention in 5..=7 {
+                    mode.set(intervention);
+                    let landmark_only = admission
+                        .evaluate_round(&context, &proposals, false, &mut rng.clone())
+                        .unwrap();
+                    if landmark_only.admitted != actual.admitted {
+                        serving_landmark_changes += 1;
+                        break;
+                    }
+                }
+            }
             mode.set(1);
             let changed = admission
                 .evaluate_round(&context, &proposals, width == 20, &mut rng.clone())
@@ -379,6 +420,9 @@ fn real_round_admission_composition() {
                 .evaluate_round(&context, &proposals, width == 20, &mut rng.clone())
                 .unwrap();
             fitness_changes += usize::from(changed.admitted != actual.admitted);
+            if width == 12 {
+                serving_fitness_changes += usize::from(changed.admitted != actual.admitted);
+            }
             for (i, m) in context.measured.iter_mut().enumerate() {
                 m.surrogate_fitness = f64::from(fitness[i]);
             }
@@ -551,6 +595,39 @@ fn real_round_admission_composition() {
             }
         }
     }
+    if causal_measurements_only {
+        use std::io::Write;
+        assert_eq!(serving_slates, 50, "M5 requires every serving 4+8 fixture");
+        assert_eq!(stats.values, 1600, "M5 requires both complete slate widths");
+        let passed = serving_landmark_changes > 0
+            && serving_fitness_changes > 0
+            && serving_disconnected_changes > 0;
+        let report = json!({
+            "schema":"jope.m5-causal/v1","consumer":"M5-causal","device":"cpu",
+            "passed":passed,"values":stats.values,"failed_values":stats.failures,
+            "details":{"contexts":50,"slates":100,"admitted_order_mismatches":mismatches,
+                "quality_gate_granted":false,"Q1_ready":false,
+                "serving_4_plus_8":{"slates":serving_slates,
+                    "landmark_only_changed_admission":serving_landmark_changes,
+                    "fitness_changed_admission":serving_fitness_changes,
+                    "disconnected_heuristic_mismatches":serving_disconnected_changes,
+                    "landmark_slots":[0,1,7,9],"interventions":[-6.0,0.0,6.0],
+                    "masks_and_dope_only_slots_preserved":true}}
+        });
+        let root = PathBuf::from(
+            env::var_os("JOPE_PARITY_REPORT_DIR").expect("M5 report directory required"),
+        );
+        fs::create_dir_all(&root).unwrap();
+        fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(root.join("M5-causal.json"))
+            .unwrap()
+            .write_all(&serde_json::to_vec_pretty(&report).unwrap())
+            .unwrap();
+        println!("{report}");
+        return;
+    }
     assert!(decisive > 0, "no decisive reference admission comparisons");
     assert!(landmark_changes > 0, "disconnected landmark control");
     assert!(fitness_changes > 0, "disconnected measured-fitness control");
@@ -567,6 +644,9 @@ fn real_round_admission_composition() {
         "contexts":50,"slates":100,"recorded_admission":recorded_summary,"decisive_admission_slates":decisive,"tie_band_slates":ties,
         "admitted_order_mismatches":mismatches,"landmark_perturbation_changed_admission":landmark_changes,
         "fitness_perturbation_changed_admission":fitness_changes,"disconnected_heuristic_mismatches":disconnected_changes,
+        "serving_4_plus_8":{"slates":serving_slates,"landmark_only_changed_admission":serving_landmark_changes,
+            "fitness_changed_admission":serving_fitness_changes,"disconnected_heuristic_mismatches":serving_disconnected_changes,
+            "landmark_slots":[0,1,7,9],"masks_and_dope_only_slots_preserved":true},
         "max_proposal_KL":max_kl,"quality_gate_granted":false,"Q1_ready":false,
         "reveal_rule":"explicit StorageOrder matching captured first four; not an OD13 grant",
         "identity_scope":"packet and weights hash-pinned; dummy Plan used only to exercise binding refusals"

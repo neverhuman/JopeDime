@@ -53,7 +53,7 @@
   "checkpoint": "/home/ubuntu/jope-data/h158/inputs/round-882.pt",
   "teacher": "/home/ubuntu/jope-data/h158/inputs/round-782.pt",
   "reference": "/home/ubuntu/jope-data/h158/inputs/best_dev_checkpoint.json",
-  "status": "PREREGISTERED_NOT_EXECUTED",
+  "status": "COMPLETE",
   "seeds": [
     158101,
     158102,
@@ -100,5 +100,15 @@
     "optimizer_updates": 0,
     "scored_contexts": 0,
     "teacher_frozen": true
+  },
+  "executed_source_commit": "25b15c794ba4c84442bdff2a753f69e9ac90e8cc",
+  "verdict": "NO_ADVANCE",
+  "optimizer_updates": 480,
+  "custody_manifest": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H158/astra-t2300/manifest.json",
+    "version_id": "HmAfLWjk6cxArOvoBItZEuSBJfwmDBnz",
+    "sha256": "e2d0c68e67cac7821fbd60baf6105b25b1efc0ff30fd8342fdb58688eef48ff9",
+    "bytes": 547633,
+    "verified_utc": "2026-11-01T06:43:49.001711+00:00"
   }
 }

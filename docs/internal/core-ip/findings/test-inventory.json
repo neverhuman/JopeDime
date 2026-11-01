@@ -1607,6 +1607,54 @@
       "reason": "REL-07 signer-compatible gate-receipt adapter proofs (exact 28-gate M1-D2 inventory, CPU-prestage NOT_RUN projection, and artifact SHA256 binding); no Rust build, GPU, release or dataset job executes",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/v1.0/test_provider_a1/test_a1.py": {
+      "reason": "REL-07 PR1396 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
+      "role": "infrastructure"
+    },
+    "python:deploy/qualification/v1.0/test_provider_a2/test_a2.py": {
+      "reason": "REL-07 A2 provider orchestration controls; synthetic candidate/children only, no live release or scientific data execution",
+      "role": "infrastructure"
+    },
+    "python:deploy/qualification/v1.0/test_provider_a4/test_a4.py": {
+      "reason": "REL-07 PR1406 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
+      "role": "infrastructure"
+    },
+    "python:deploy/qualification/v1.0/test_provider_a5/test_a5.py": {
+      "reason": "REL-07 A5 named-client provider controls (manifest, sidecar and receipt refusal proofs over synthetic evidence); no live client, release or dataset job executes",
+      "role": "infrastructure"
+    },
+    "python:deploy/qualification/v1.0/test_provider_e2/test_e2.py": {
+      "reason": "REL-07 E2 export-parity provider controls (binding, census and refusal proofs over synthetic harness reports); no real harness, release or dataset job executes",
+      "role": "infrastructure"
+    },
+    "python:deploy/qualification/v1.0/test_provider_r4/test_r4.py": {
+      "reason": "REL-07 R4 reconnect provider controls (binding, probe extraction, cleanup and assertion proofs over synthetic evidence); no live candidate, release or dataset job executes",
+      "role": "infrastructure"
+    },
+    "python:deploy/qualification/v1.0/test_provider_s1/test_s1_provider.py": {
+      "reason": "REL-07 PR1374 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
+      "role": "infrastructure"
+    },
+    "python:deploy/qualification/v1.0/test_provider_s3/test_s3.py": {
+      "reason": "REL-07 S3 leakage provider controls (binding, exact-selector and refusal proofs over synthetic child output); no real candidate, release or dataset job executes",
+      "role": "infrastructure"
+    },
+    "python:deploy/qualification/v1.0/test_provider_s4/test_s4.py": {
+      "reason": "REL-07 S4 orchestration controls with synthetic candidates/child output; actual custom-objective discovery and ranker-input assertions execute separately in the product.",
+      "role": "infrastructure"
+    },
+    "python:deploy/qualification/v1.0/test_provider_t2/test_provider_t2.py": {
+      "reason": "REL-07 PR1372 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
+      "role": "infrastructure"
+    },
+    "python:deploy/qualification/v1.0/test_provider_u1/test_u1.py": {
+      "reason": "REL-07 PR1382 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
+      "role": "infrastructure"
+    },
+    "python:deploy/qualification/v1.0/test_provider_u2/test_u2.py": {
+      "reason": "REL-07 PR1382 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
+      "role": "infrastructure"
+    },
     "python:ops/s3_shard_cache/test_s3_shard_cache.py": {
       "reason": "Operational S3 shard-cache unit test against an in-memory fake client; not collected by any CI lane (coverage disposition: maintenance).",
       "role": "infrastructure"
@@ -1969,6 +2017,10 @@
       "reason": "Owner-requested H146 data-free controls for the Lookahead adapter-continuation executor and its readout; no corpus/checkpoint reads or optimizer updates in the fixture suite; offline research only.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h147_reveal_alignment/test_h147.py": {
+      "reason": "H147 owner-directed matched-support reveal alignment and 5-fold CV control unit suite; offline research only.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h149_wd_dose/test_h149.py": {
       "reason": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification.",
       "role": "research"
@@ -1983,10 +2035,6 @@
     },
     "python:research/flywheel_selfplay/h152_ckpt_soup/test_h152.py": {
       "reason": "Owner-requested H152 data-free controls for the zero-update checkpoint soup readout, resource guards and source binding; no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h160_trajectory_subspace/test_h160.py": {
-      "reason": "Owner-requested H160 data-free controls for trajectory-subspace projected continuation (basis, projection, drift match, strict selection, decision, supervisor); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h153_sam/test_h153.py": {
@@ -2011,6 +2059,26 @@
     },
     "python:research/flywheel_selfplay/h159_fail_logit_veto/test_h159.py": {
       "reason": "H159 data-free fail-logit gate-veto continuation and family bootstrap controls; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h160_trajectory_subspace/test_h160.py": {
+      "reason": "Owner-requested H160 data-free controls for trajectory-subspace projected continuation (basis, projection, drift match, strict selection, decision, supervisor); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h161_robust_fambal/test_h161.py": {
+      "reason": "H161 robust per-context normalized/Huber loss + family-balanced sampling unit tests",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h163_prediction_ensemble/test_h163.py": {
+      "reason": "H163 data-free controls for cost-vs-utility direction, candidate ordering and stable argmin ties, fixed family folds, shared-family median-seed bootstrap, strict selector admission, and canonical H145 Elo dominance; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h164_sam_retry/test_h164.py": {
+      "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h165_gradient_noise_dropout/test_h165.py": {
+      "reason": "H165 owner-directed gradient-noise/dropout continuation study; data-free selector, bootstrap and frozen-state controls. Research only; no product or sealed qualification. Restores classification omitted by prereg PR #1410.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
@@ -2227,6 +2295,10 @@
     },
     "python:research/h156/test_h156.py": {
       "reason": "H156 data-free 5-fold family cross-fit early stopping and {0.5x, 1x, 2x} adapter capacity sweep scientific controls; offline research only.",
+      "role": "research"
+    },
+    "python:research/h162/test_h162.py": {
+      "reason": "H162 cosine warm-restart LR schedule with snapshot selection vs LR-matched control unit tests",
       "role": "research"
     },
     "python:research/joint_regbin/test_binary_dataset.py": {
@@ -3273,6 +3345,10 @@
     },
     "target:jope-client/lib/jope_client": {
       "reason": "Empty skeleton crate registered by API-06; no behaviour or tests yet",
+      "role": "infrastructure"
+    },
+    "target:jope-client/test/a1_lite": {
+      "reason": "REL-07 A1 explicitly ignored no-engine background-candidate contract test; requires external verified candidate/source bindings and manual CPU execution, not a default-suite or release qualification claim.",
       "role": "infrastructure"
     },
     "target:jope-client/test/contract": {
@@ -5275,6 +5351,10 @@
       "subsystems": [
         "encoders"
       ]
+    },
+    "python:research/flywheel_selfplay/h167_input_noise/test_h167.py": {
+      "role": "research",
+      "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

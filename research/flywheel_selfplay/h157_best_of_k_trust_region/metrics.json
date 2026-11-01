@@ -1,0 +1,114 @@
+{
+  "wave": "H157",
+  "status": "COMPLETE",
+  "verdict": "RULE_NEUTRAL",
+  "attempt": "attempt-001",
+  "source_commit": "2f37146e2d415513007154c1a37c8514da54a95e",
+  "source_tree": "43ddeda85f59193bec000afa37156914a78578d2",
+  "launch_authority": "owner ruling t2330",
+  "seeds": [
+    157101,
+    157102,
+    157103
+  ],
+  "optimizer_updates": 1080,
+  "baseline": {
+    "status": "PASS",
+    "exact_contexts": 91,
+    "families": 19,
+    "mean": 1.1377941898164525,
+    "reference_max_abs_diff": 0.0,
+    "two_copy_max_abs_diff": 0.0,
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+  },
+  "primary_vs_R882": {
+    "BOK8": {
+      "per_seed_gain": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gain": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "holm_adjusted_p": 1.0
+    },
+    "TR1": {
+      "per_seed_gain": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gain": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "holm_adjusted_p": 1.0
+    }
+  },
+  "descriptive_best_of_8_inner_gain": {
+    "per_seed_max_median_gain": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "median": 0.0,
+    "interpretation": "all eight candidates tied at 0.0 for each seed; strict gate retained R882"
+  },
+  "selected_arms": [
+    {
+      "seed": 157101,
+      "TR1": "R882",
+      "BOK8": "R882"
+    },
+    {
+      "seed": 157102,
+      "TR1": "R882",
+      "BOK8": "R882"
+    },
+    {
+      "seed": 157103,
+      "TR1": "R882",
+      "BOK8": "R882"
+    }
+  ],
+  "elo_vs_R882": {
+    "median_by_arm": {
+      "R882": 1500.0,
+      "TR1": 1500.0,
+      "BOK8": 1500.0
+    },
+    "ci95_by_arm": {
+      "R882": [
+        1500.0,
+        1500.0
+      ],
+      "TR1": [
+        1500.0,
+        1500.0
+      ],
+      "BOK8": [
+        1500.0,
+        1500.0
+      ]
+    }
+  },
+  "audit": {
+    "protected_reads": 0,
+    "refused_reads": 0,
+    "cuda_initialized": false,
+    "elapsed_seconds": 4934.336181815015,
+    "peak_rss_bytes": 3611168768,
+    "threads": 2
+  },
+  "npz_custody": {
+    "s3_prefix": "s3://veox-jopedime-learning-use2/staging/hwave/H157/attempt-001/",
+    "files_verified": 27,
+    "bytes_verified": 3250077,
+    "checksum": "S3 SHA256 checksums match local SHA256 for every object",
+    "receipt_sha256": "abb5b99dff062aab47aa88cc47b7477611740d8f6efe38f2a6b77033583c36d2"
+  }
+}

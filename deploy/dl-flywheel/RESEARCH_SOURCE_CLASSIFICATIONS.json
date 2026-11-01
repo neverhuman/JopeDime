@@ -3840,6 +3840,38 @@
       },
       "sha256": "5aa07f6b8a5e2b5502afa1d5680fe1bd6a29f3b5994bd8d0bb5305f03727918c"
     },
+    "python:research/flywheel_selfplay/h147_reveal_alignment/monitor.py": {
+      "bytes": 5539,
+      "classification": {
+        "reason": "H147 owner-directed matched-support reveal alignment 5-fold CV executor: SUPPORT_CTRL, STORAGE_REVEAL, and STORAGE_MASK over common 192-candidate support S across 205 DL-Train families (1,219 contexts), intersection Holm m=2 gates vs SUPPORT_CTRL and r882, pinned Bradley-Terry MM Elo, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification.",
+        "role": "research"
+      },
+      "sha256": "95bd01afe60832e408c1a8606b36d819f99dd6638805415ff0b294b3580b56f9"
+    },
+    "python:research/flywheel_selfplay/h147_reveal_alignment/runner.py": {
+      "bytes": 47621,
+      "classification": {
+        "reason": "H147 owner-directed matched-support reveal alignment 5-fold CV executor: SUPPORT_CTRL, STORAGE_REVEAL, and STORAGE_MASK over common 192-candidate support S across 205 DL-Train families (1,219 contexts), intersection Holm m=2 gates vs SUPPORT_CTRL and r882, pinned Bradley-Terry MM Elo, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification.",
+        "role": "research"
+      },
+      "sha256": "72f88b0b59021913b94f048a4063da90167bbb7cc45cfc478cd622fcb0b6bfac"
+    },
+    "python:research/flywheel_selfplay/h147_reveal_alignment/runtime.py": {
+      "bytes": 19145,
+      "classification": {
+        "reason": "H147 owner-directed matched-support reveal alignment 5-fold CV executor: SUPPORT_CTRL, STORAGE_REVEAL, and STORAGE_MASK over common 192-candidate support S across 205 DL-Train families (1,219 contexts), intersection Holm m=2 gates vs SUPPORT_CTRL and r882, pinned Bradley-Terry MM Elo, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification.",
+        "role": "research"
+      },
+      "sha256": "aae23339e4c01c5f628356eabc95df989aae7f1114fe34f7f860d3a757b61836"
+    },
+    "python:research/flywheel_selfplay/h147_reveal_alignment/science.py": {
+      "bytes": 17445,
+      "classification": {
+        "reason": "H147 owner-directed matched-support reveal alignment 5-fold CV executor: SUPPORT_CTRL, STORAGE_REVEAL, and STORAGE_MASK over common 192-candidate support S across 205 DL-Train families (1,219 contexts), intersection Holm m=2 gates vs SUPPORT_CTRL and r882, pinned Bradley-Terry MM Elo, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification.",
+        "role": "research"
+      },
+      "sha256": "adceb742fd6848239acc7824154e1fc8de5b78190c9bf9453719937d710f1477"
+    },
     "python:research/flywheel_selfplay/h149_wd_dose/monitor.py": {
       "bytes": 5731,
       "classification": {
@@ -4127,6 +4159,102 @@
         "role": "research"
       },
       "sha256": "0403256105a0bd6221bf39283b598d6d9ec8b4f7bed132bd885934eec7e0143c"
+    },
+    "python:research/flywheel_selfplay/h164_sam_retry/runtime.py": {
+      "bytes": 6220,
+      "sha256": "e621d7918d5d8d1ad856daaef48b39dcb67342a58003884cbd645574e8c417a7",
+      "classification": {
+        "role": "research",
+        "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h164_sam_retry/science.py": {
+      "bytes": 8270,
+      "sha256": "5debc7d42a5745649627da5b7084a876bef2b1964d844eb975b55d3a666bee0f",
+      "classification": {
+        "role": "research",
+        "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h164_sam_retry/monitor.py": {
+      "bytes": 6048,
+      "sha256": "e28621ac02345227619e1aef6401395a95044640dac75950eaf11329e787909f",
+      "classification": {
+        "role": "research",
+        "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h164_sam_retry/runner.py": {
+      "bytes": 27478,
+      "sha256": "767e785158f44c7581a7a67b52e9105e4ebdcf5293007594e44c4463661e11db",
+      "classification": {
+        "role": "research",
+        "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h164_sam_retry/launch.py": {
+      "bytes": 1390,
+      "sha256": "3b83896fea04603de0879f5ed4e564e419e1bcc1d5b620de62c93738f92b482b",
+      "classification": {
+        "role": "research",
+        "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h163_prediction_ensemble/analysis.py": {
+      "bytes": 7623,
+      "classification": {
+        "reason": "H163 owner-directed prediction-level accepted-adapter ensemble preregistration, inference and bounded CPU attempt controls. Research only; no product runtime, protected-data qualification, or serving promotion.",
+        "role": "research"
+      },
+      "sha256": "7461ef085d22587a48838067c13a09e8691a38e38eacb18d08a028fbec9e1569"
+    },
+    "python:research/flywheel_selfplay/h163_prediction_ensemble/run.py": {
+      "bytes": 20112,
+      "classification": {
+        "reason": "H163 owner-directed prediction-level accepted-adapter ensemble preregistration, inference and bounded CPU attempt controls. Research only; no product runtime, protected-data qualification, or serving promotion.",
+        "role": "research"
+      },
+      "sha256": "a344a7aff13401a46e7be1851a14ce3dff984fe5296b9dd4cdd90a70839cf584"
+    },
+    "python:research/flywheel_selfplay/h163_prediction_ensemble/monitor.py": {
+      "bytes": 4521,
+      "classification": {
+        "reason": "H163 owner-directed prediction-level accepted-adapter ensemble preregistration, inference and bounded CPU attempt controls. Research only; no product runtime, protected-data qualification, or serving promotion.",
+        "role": "research"
+      },
+      "sha256": "5ef2442c1f56996464488651e0b9674efa9447c0c93c1e32583732c31c7857b7"
+    },
+    "python:research/flywheel_selfplay/h167_input_noise/analysis.py": {
+      "bytes": 6581,
+      "sha256": "e5e3138ac7487edbff956012f0ba4dba86fc5198a3c1f79c99ead6d353857086",
+      "classification": {
+        "role": "research",
+        "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h167_input_noise/treatment.py": {
+      "bytes": 6747,
+      "sha256": "e1d2f89934523c369667345b474db8395dd35b17bfa210dcc1bb028ef9a7c501",
+      "classification": {
+        "role": "research",
+        "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h167_input_noise/runner.py": {
+      "bytes": 32574,
+      "sha256": "52697b71220c57bef2e7b718a27a5ea451570512e0da921211019ffd374f7f6f",
+      "classification": {
+        "role": "research",
+        "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h167_input_noise/monitor.py": {
+      "bytes": 4891,
+      "sha256": "71f0a2882f80e53dea484b29921fd45a57a101d16c0a06280de8dd247213535a",
+      "classification": {
+        "role": "research",
+        "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

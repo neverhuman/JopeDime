@@ -146,8 +146,9 @@ checks it without weights, and `pack` refuses a blocked profile. Each scope also
 ceiling that a profile cannot widen: `development` and `public` admit only `permitted` files
 (development packages run on untrusted CI runners), `internal` adds `internal` and
 `conditional`, and only `internal-restricted` may add `prohibited`, which also requires an
-`owner_ack`. Today `fixture` and `native-only` are ready and `full` is blocked by the
-`prohibited` Starlight foundation regressor and the uncompiled proposal adapter. The full
+`owner_ack`. Today `fixture` and `native-only` are ready. T0115 D3 supplies a scoped
+acknowledgement for Starlight in internal qualification/rehearsal candidates; public use remains
+excluded. `full` remains blocked by the uncompiled proposal adapter. The full
 profile's five accepted tensor files total exactly the 438,062,296 bytes of §5.1 (asserted).
 
 ## A8 — Commands implemented, and what is not yet

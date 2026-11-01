@@ -143,11 +143,10 @@
       "total_bytes": 103220
     },
     "full": {
-      "profile_sha256": "fb48836c5d9e1d90c8a9fbdde49373fd7098109345ce435f447d73362729b561",
+      "profile_sha256": "417a6975c6dab09adbb3743f673386dcf82d78b7aac709906556ad2e113c11a7",
       "scope": "internal-restricted",
       "status": "blocked",
       "blockers": [
-        "jope-prime-gen31-v2/starforge/starlight_core_regressor.safetensors: `prohibited` needs the owner acknowledgement deploy/appliance/acknowledgements/full-internal-restricted.md, which does not exist",
         "method proposal.step60000.regression: neural adapters are not compiled into this build (IMPLEMENTATION_CHECKLIST.md P3-P4)"
       ],
       "methods": [

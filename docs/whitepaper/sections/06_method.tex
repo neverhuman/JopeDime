@@ -7,9 +7,9 @@
 \section{EurekaZero: Learning Taste}\label{sec:method}
 
 The accepted native checkpoint route is limited to tabular regression.
-Verified search supplies scored programs for the reference writer and map.
-The proposed regression deployment protocol permits one writer draw,
-with the map absent.
+The reference learning loop trains a writer and map on search-scored programs.
+The native training entry point is held at its grant gate.
+Proposed regression deployment permits one writer draw, with the map absent.
 We describe the historical reference first, then the later
 adapter-ranking record in \cref{sec:method-status}. Ranking a pool and
 proposing a new program are different tasks. The writer's first-proposal
@@ -41,7 +41,7 @@ into 2,048 numbers, $z_p=\encP(p)$, in three blocks.
 The first summarizes a pretrained row encoder's embeddings across rows,
 independent of row order (512 values). The second projects the hidden
 state of a pretrained third-party tabular regressor that reads the training
-rows and labels (1,024; Foundation, version \texttt{foundation\_enc.v1.tabpfn}; license: proprietary, available on request; redistribution prohibited). The third passes the
+rows and labels (1,024; Foundation, version \texttt{foundation\_enc.v1.tabpfn}; license: third-party provenance pending; restricted; redistribution prohibited). The third passes the
 scaled targets through two frozen windows (512).
 
 The reference encoder is pinned by hash and stays fixed during writer
@@ -49,8 +49,8 @@ training. Encoding is bounded at 30 seconds per problem. A context with any non-
 rather than imputed (\cref{app:training}). The input contract permits
 training-side task evidence only; final held-out labels and their derived
 statistics must stay outside the input closure. A context's recorded
-declaration that no final target was used is part of the audit trail,
-not a substitute for checking that closure.
+declaration that no final target was used establishes neither input closure
+nor numerical qualification. CPU contexts require native replay and bounded-execution receipts before accepted-policy use.
 
 Whether problems with similar best programs sit together requires a
 separate representation study; \cref{sub:results-ablation} reserves that test.
@@ -58,27 +58,27 @@ separate representation study; \cref{sub:results-ablation} reserves that test.
 \subsection{Describing the move}\label{sub:method-move}
 
 A move is one program in the typed language of \cref{sec:game}, with a
-401-token vocabulary listing 31 transforms and 22 prediction heads.
+401-token training inventory listing 31 transforms and 22 prediction heads; the product runtime restricts executable heads.
 Up to six transforms feed a head; the native task mask permits only
 compatible tokens at each step, as in grammar-constrained generators
 \citep{kusner2017grammar,dai2018sdvae}. A finished draft enters the pool
 only after it decodes and parses. These grammar checks do not establish
-that the writer avoids programs that parse but crash or lose. A program's
-identity is the SHA-256 hash of its canonical form. A separate hash of
-predictions on fixed training probes flags matching observed outputs.
-Those matches do not establish equivalence on other inputs. Without probe
-evidence, this behavior check reports novelty as unknown. The reference
-procedure calls for readable Python and Rust recipe exports that fit on
-the task's training rows. Reported winners also require the native--emitted
-parity check in \cref{sub:method-referee}.
+that the writer avoids programs that parse but crash or lose. The proposal
+pool removes exact decoded-string duplicates and records their SHA-256.
+The executor also records canonical recipe hashes. Probe-based behavior
+matching is a separate audit, not part of pool deduplication. Without probe
+evidence, this behavior check reports novelty as unknown. Readable Python
+and Rust exports are a reference requirement. Legacy recipe emitters reject
+the synthesized input stage; the separate fitted-state path is allowlisted.
+Reported winners still require the parity check in \cref{sub:method-referee}.
 % Source trace (implementation, not retained-checkpoint qualification):
 % crates/jope-policy/src/decode.rs:4--12,580--584 (legal tokens; decode/parse gate);
 % crates/jope-policy/src/model.rs:9--16,558--600 (separate writer/ranking paths).
 
 \subsection{One map for problems and programs}\label{sub:method-map}
 
-The map reads a program as $z_w=\encS(w)$, the mean of learned token
-embeddings. Pooling discards token order, limiting the map's ability to
+The map reads a program as $z_w=\encS(w)$, the layer-normalized mean of
+non-padding token embeddings. Pooling discards token order, limiting its ability to
 distinguish compositions built from the same tokens. It combines $z_w$ with $z_p$ three ways: as is, gated by the problem,
 and as a distance from a projection of it. It averages four heads into a
 score $\mapv(z_p,z_w)$ with parameters $\psi$.
@@ -115,14 +115,14 @@ tests what the writer has learned.
 \end{keyidea}
 
 In the native implementation, the writer and map use separate context
-networks and token embeddings. The map ranks the draft pool; it drops no draft and does
-not condition or screen the writer's draw. In the native search, however,
-those ranks weight which seeded survivors are chosen as parents, so the map
-can shape the programs that reach the writer's training lists. The writer's
-loss still weights programs by referee rank. Ranking agreement, including
-comparison with the program-only control, assesses the map's ranking;
-attributing better proposals to the map would require a matched ablation
-(\cref{sub:results-ablation}).
+networks and token embeddings. The map ranks the draft pool without
+dropping drafts or screening the writer. One native GP route weights
+seeded-survivor parent selection by map rank. The bounded search driver
+instead cycles among up to four parents selected by measured loss. The map's
+influence on training therefore depends on the search route. The writer's
+loss weights programs by referee rank. Ranking agreement with the referee
+and program-only control assesses ranking; better proposals require a
+matched ablation (\cref{sub:results-ablation}).
 % Source trace: crates/jope-policy/src/seeds.rs (assemble_population attaches
 % rank_log_weight); crates/jope-engine/src/gp.rs (policy_weighted_parent picks
 % the left parent for mutation and crossover).
@@ -148,7 +148,7 @@ attributing better proposals to the map would require a matched ablation
 \end{algorithmic}
 \end{algorithm*}
 
-The historical reference uses expert iteration \citep{anthony2017expert}:
+The historical reference specifies expert iteration \citep{anthony2017expert}:
 the writer learns from verified search. Programs
 sampled from the scored lists $G_p$ are weighted by their referee rank in
 the combined objective (\cref{app:training}):
@@ -166,7 +166,7 @@ averages token losses within each program, and normalizes by the sum of
 program weights (\cref{app:training}).
 
 Here $\mathcal{L}_{\text{BT}}$ is a Bradley--Terry loss on the same lists,
-$\mathcal{L}_{\text{runtime}}$ a Huber loss for a head that estimates runtime cost, and
+$\mathcal{L}_{\text{runtime}}$ a Huber loss on logarithms of one plus measured seconds and the head's nonnegative softplus prediction, and
 $\mathcal{L}_{\text{prog}}$ the Bradley--Terry loss of the program-only control head.
 A median-ranked program carries about a tenth of the top-ranked program's
 weight in the writer loss. Its referee score also contributes to the map's
@@ -194,9 +194,9 @@ September 2026, with a corpus of about 10.2 million scored programs from
 80 training datasets. This paper does not document the evidence on which
 the checkpoint was accepted; that record and a pinned runtime are required
 inputs to the evaluation contract (\cref{sub:results-protocol}). These specifications
-identify the historical reference; they do not describe the later adapter
-snapshot or establish its deployment performance. Details belong in
-\cref{app:training}. \Cref{alg:selfplay} summarizes the reference training loop.
+identify the historical reference. Numerical parity of the CPU float32 Candle
+port with the native CUDA BF16 tch runtime remains unqualified; random streams
+and uniform-token fallback differ. \Cref{alg:selfplay,app:training} give the reference details.
 
 \subsection{Keeping the referee honest}\label{sub:method-referee}
 
@@ -246,5 +246,7 @@ AlphaGo Zero's raw network apart from its search (\cref{sec:results}).
 
 The deployment budget is a protocol constraint. Whether training improves
 the quality of that single proposal is a separate empirical question for
-the matched comparison in \cref{sub:results-learning}.
+the matched comparison in \cref{sub:results-learning}; before specifying
+that evaluation, \cref{sec:method-status} summarizes the development
+records available so far.
 \input{sections/06_method/flywheel_status}

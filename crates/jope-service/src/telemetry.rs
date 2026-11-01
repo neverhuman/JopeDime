@@ -1702,6 +1702,103 @@ mod tests {
         assert_eq!(off, on);
     }
 
+    /// Gate T3: observer reasoning mode and telemetry cannot change committed search output.
+    #[test]
+    fn reasoning_off_or_detailed_and_telemetry_modes_preserve_search() {
+        use crate::run::{Control, EvaluationOutcome, Evaluator, FakeEvaluator, RunController};
+        use jope_api::{Effort, RunPhase};
+        use std::{collections::BTreeMap, num::NonZeroU32};
+
+        fn search(reasoning: &str, telemetry_enabled: bool) -> (Vec<String>, (u64, u32, f64)) {
+            let config = crate::config::Config::from_sources(
+                None,
+                &BTreeMap::from([("--reasoning".to_owned(), reasoning.to_owned())]),
+                &BTreeMap::new(),
+            )
+            .unwrap();
+            assert_eq!(config.defaults.reasoning.value, reasoning);
+
+            let (_dir, log, snapshot) = crate::events::tests::fixture();
+            let mut frames = log.subscribe_telemetry();
+            let store = test_store();
+            let service = telemetry_enabled.then(|| {
+                TelemetryService::spawn(
+                    snapshot.run_id,
+                    log,
+                    Box::new(SystemSensors::without_gpu(store.path())),
+                    Arc::new(Counters::default()),
+                    Instant::now(),
+                    Duration::from_millis(1),
+                )
+            });
+            if telemetry_enabled {
+                let deadline = Instant::now() + Duration::from_secs(2);
+                loop {
+                    match frames.try_recv() {
+                        Ok(_) => break,
+                        Err(_) if Instant::now() < deadline => {
+                            thread::sleep(Duration::from_millis(2));
+                        }
+                        Err(error) => panic!("telemetry did not start: {error:?}"),
+                    }
+                }
+            }
+
+            let mut run = RunController::new(
+                "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0".parse().unwrap(),
+                Effort::Medium,
+                NonZeroU32::new(2).unwrap(),
+            );
+            for phase in [RunPhase::Encoding, RunPhase::Seeding, RunPhase::Searching] {
+                run.advance_phase(phase).unwrap();
+            }
+            let fake = FakeEvaluator::new(Duration::ZERO);
+            for round in 0..20u64 {
+                let requests: Vec<_> = (0..3u32)
+                    .map(|slot| {
+                        run.dispatch(round, slot, 31 * round + u64::from(slot))
+                            .unwrap()
+                    })
+                    .collect();
+                for request in &requests {
+                    run.receive(fake.evaluate(request)).unwrap();
+                }
+                run.round_committed().unwrap();
+            }
+            run.control(Control::Cancel, None).unwrap();
+
+            let committed: Vec<_> = run.committed().iter().map(|r| format!("{r:?}")).collect();
+            let champion = run
+                .committed()
+                .iter()
+                .flat_map(|round| {
+                    round.evaluations.iter().filter_map(move |evaluation| {
+                        let EvaluationOutcome::Scored(score) = &evaluation.outcome else {
+                            return None;
+                        };
+                        Some((round.round, evaluation.key.slot, *score))
+                    })
+                })
+                .min_by(|a, b| a.2.total_cmp(&b.2))
+                .expect("the fixed search commits scored evaluations");
+            if let Some(service) = service {
+                assert!(service.stop().samples > 0);
+            }
+            (committed, champion)
+        }
+
+        let baseline = search("off", false);
+        for reasoning in ["off", "detailed"] {
+            for telemetry_enabled in [false, true] {
+                assert_eq!(
+                    baseline,
+                    search(reasoning, telemetry_enabled),
+                    "reasoning={reasoning}, telemetry={telemetry_enabled}"
+                );
+            }
+        }
+    }
+
     /// Gate T3: sampling cost per tick is far below 2% of the 1 s interval.
     #[test]
     fn real_sensor_tick_cost_is_below_two_percent_of_the_interval() {
@@ -1755,6 +1852,11 @@ mod tests {
         let overhead = on.as_secs_f64() / off.as_secs_f64() - 1.0;
         println!(
             "fixed work off {off:?} on {on:?} overhead {:.3}%",
+            overhead * 100.0
+        );
+        assert!(
+            overhead < 0.02,
+            "T3 fixed-work telemetry overhead {:.3}% exceeds 2%",
             overhead * 100.0
         );
     }

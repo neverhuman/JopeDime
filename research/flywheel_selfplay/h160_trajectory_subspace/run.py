@@ -53,6 +53,26 @@ def parent_executor():
     return module, sys.modules["runtime"]
 
 
+def project_grads(torch, plist, sizes, u):
+    """Amendment A1: project the full adapter gradient onto span(u). A tensor that received no gradient this step
+    (grad None) contributes zeros, and still receives its projected component. Returns indices that had no grad."""
+    missing = [i for i, p in enumerate(plist) if p.grad is None]
+    g = torch.cat(
+        [
+            (torch.zeros_like(p) if p.grad is None else p.grad).double().reshape(-1)
+            for p in plist
+        ]
+    )
+    gp = u @ (u.T @ g)
+    for p, chunk in zip(plist, torch.split(gp, sizes), strict=True):
+        value = chunk.reshape(p.shape).to(p.dtype)
+        if p.grad is None:
+            p.grad = value.clone()
+        else:
+            p.grad.copy_(value)
+    return missing
+
+
 def chain_basis(torch, names, initial):
     """Adapter vectors of the accepted chain (pinned owned copies), checked frozen-identical to r882 outside the adapter."""
     vectors = []
@@ -303,6 +323,7 @@ def main():
                         plist, lr=lr_by_arm[arm], weight_decay=stat.WEIGHT_DECAY
                     )
                     snapshots, selector_scores, losses, batches = {}, [], [], []
+                    none_grad = set()
                     cellname = f"{arm}-A{outer}-{seed}"
 
                     def snapshot(step):
@@ -349,12 +370,8 @@ def main():
                             raise RuntimeError("nonfinite objective")
                         objective.backward()
                         if u is not None:  # gradient projected onto span(U_k)
-                            g = torch.cat([p.grad.double().reshape(-1) for p in plist])
-                            gp = u @ (u.T @ g)
-                            for p, chunk in zip(
-                                plist, torch.split(gp, sizes), strict=True
-                            ):
-                                p.grad.copy_(chunk.reshape(p.shape).to(p.grad.dtype))
+                            missing = project_grads(torch, plist, sizes, u)
+                            none_grad.update(names[i] for i in missing)
                         torch.nn.utils.clip_grad_norm_(
                             plist, 1.0, error_if_nonfinite=True
                         )
@@ -421,6 +438,7 @@ def main():
                         batches=batches,
                         adapter_l2_drift=drift,
                         out_of_span=out_of_span[arm][-1] if u is not None else None,
+                        none_grad_tensors=sorted(none_grad),
                         snapshot_sha256={
                             str(s): hashlib.sha256(v.numpy().tobytes()).hexdigest()
                             for s, v in snapshots.items()
@@ -442,6 +460,7 @@ def main():
                             seed=seed,
                             selected_step=step,
                             drift=drift,
+                            none_grad=sorted(none_grad),
                         )
                     )
                     print(

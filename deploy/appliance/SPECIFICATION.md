@@ -267,7 +267,7 @@ The committed catalog currently marks:
 | --- | --- | --- |
 | Accepted policy and context transforms | `internal` | Resolve authorized release audience before shipping outside that scope. |
 | Separate Hyperion v7 weights | `internal` | Same; it is also not part of the accepted encoder closure. |
-| Starlight foundation regressor | `prohibited`, provenance pending | Public full-model release is blocked until provenance and distribution authority are resolved, or a separately trained/qualified replacement is selected. |
+| Starlight foundation regressor | `prohibited`, provenance pending | T0115 D3 acknowledges use in internal-restricted qualification and rehearsal candidates only. Public full-model distribution remains blocked until public rights are resolved or a separately trained/qualified replacement is selected. |
 | Some TabICL originals | `prohibited` | Apply the same block for alternatives needing these files. |
 | Shuffled TabICL regressor entry | No license object in its top-level entry | Resolve transitive provenance. Reordering weights does not supply rights. |
 | Several internal/fused assets | `permitted` in their records | Still validate transitive expert dependencies and required notices. |

@@ -3,8 +3,8 @@
 # when their adapters land (P4).
 #
 # It is BLOCKED, and `jope-dist lock` records why (deploy/appliance/models.lock.json):
-#   * the Starlight foundation regressor is `prohibited` (provenance pending) and needs a recorded
-#     owner acknowledgement before even an internal-restricted package;
+#   * the Starlight foundation regressor remains `prohibited`; its explicit owner acknowledgement
+#     permits internal qualification/rehearsal candidates only, never public distribution;
 #   * the proposal method's runtime adapter is not compiled yet (P3).
 # Rights are never edited to unblock it: resolve them at their source records.
 schema = "jope.appliance-profile/v1"

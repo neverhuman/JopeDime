@@ -99,11 +99,18 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--custody", type=Path, required=True)
     p.add_argument("--smoke", action="store_true")
+    p.add_argument(
+        "--label",
+        default="run",
+        help="output label for a full attempt (Amendment A1: run-a2)",
+    )
     args = p.parse_args()
     os.setpriority(os.PRIO_PROCESS, 0, 19)
     c = args.custody.resolve()
     c.mkdir(parents=True, exist_ok=True)
-    label = "smoke" if args.smoke else "run"
+    label = "smoke" if args.smoke else args.label
+    if not args.smoke and label not in ("run", "run-a2"):
+        raise RuntimeError("registered attempt labels: run, run-a2")
     if (Path("/home/ubuntu/jope-data/h160") / label).exists():
         raise RuntimeError("attempt already exists")
     # Exclusive started ledger: failed attempt consumes it and cannot silently resume.

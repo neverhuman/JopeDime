@@ -694,7 +694,8 @@ mod tests {
         let plan = plan();
         let seed = "(pipe X (ridge))".to_string();
         let mut provenance =
-            AdmittedOperatorProvenance::from_seed_roster(&plan, &[seed.clone()]).unwrap();
+            AdmittedOperatorProvenance::from_seed_roster(&plan, std::slice::from_ref(&seed))
+                .unwrap();
         assert_eq!(
             provenance.origin(0, &digest(seed.as_bytes())).unwrap(),
             OperatorOrigin::Seed

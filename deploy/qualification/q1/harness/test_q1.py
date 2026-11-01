@@ -8,6 +8,7 @@ import unittest
 from unittest.mock import patch
 
 import q1
+import q1_bindings
 
 
 def qualification_plan():
@@ -38,15 +39,16 @@ def qualification_plan():
         "datasets": datasets,
         "training_families": ["f" * 40],
         "pins": {
-            k: "d" * 64
-            for k in (
-                "bundle_sha256",
-                "dope_sha256",
-                "evaluator_sha256",
-                "vocabulary_sha256",
-                "protocol_sha256",
-                "training_family_manifest_sha256",
-            )
+            **{
+                k: "d" * 64
+                for k in (
+                    "bundle_sha256",
+                    "dope_sha256",
+                    "evaluator_sha256",
+                    "training_family_manifest_sha256",
+                )
+            },
+            **q1_bindings.expected_pins(),
         },
         "timeout_seconds": 600,
         "ledger_root": "/qualification-test-ledger",
@@ -114,6 +116,29 @@ def fixture_receipts(plan, learned=0.9):
 
 
 class ProtocolTests(unittest.TestCase):
+    def test_source_vocabulary_and_protocol_are_exactly_pinned(self):
+        pins = q1_bindings.expected_pins()
+        self.assertEqual(set(pins), {"vocabulary_sha256", "protocol_sha256"})
+        self.assertTrue(all(len(value) == 64 for value in pins.values()))
+        q1_bindings.validate_pins(pins)
+
+    def test_source_binding_rejects_substituted_vocabulary_or_protocol(self):
+        for pin_name in ("vocabulary_sha256", "protocol_sha256"):
+            with self.subTest(pin_name=pin_name):
+                pins = q1_bindings.expected_pins()
+                pins[pin_name] = "0" * 64
+                with self.assertRaisesRegex(ValueError, pin_name):
+                    q1_bindings.validate_pins(pins)
+
+    def test_q1_plan_validator_accepts_bound_artifacts(self):
+        q1.validate_plan(qualification_plan())
+
+    def test_q1_plan_validator_rejects_an_unbound_vocabulary(self):
+        plan = qualification_plan()
+        plan["pins"]["vocabulary_sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "vocabulary_sha256"):
+            q1.validate_plan(plan)
+
     def test_strict_json_and_preregistration_binding(self):
         for invalid in ('{"a":1,"a":2}', '{"x":NaN}', '{"x":Infinity}'):
             with self.assertRaises(ValueError):

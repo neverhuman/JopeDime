@@ -258,6 +258,13 @@ mod tests {
     use super::*;
 
     #[test]
+    fn generated_document_matches_committed_openapi() {
+        let generated = serde_json::to_vec_pretty(&generate().unwrap()).unwrap();
+        let committed = include_bytes!("../../../../schemas/jope.api.v1.openapi.json");
+        assert_eq!(generated.as_slice(), committed.as_slice());
+    }
+
+    #[test]
     fn generated_document_covers_registry_without_pending_exchanges() {
         let document = generate().expect("all registered exchange schemas are materialized");
         assert!(document.get("x-jope-pending-exchanges").is_none());

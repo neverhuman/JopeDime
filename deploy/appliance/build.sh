@@ -34,6 +34,8 @@ case $out in /tmp | /tmp/*) echo "$0: never build under /tmp (AGENTS.md)" >&2; e
 scope=$(sed -n 's/^scope = "\(.*\)"$/\1/p' "$profile_file")
 features=embedded
 [ "$scope" = development ] && features=embedded,dev-keys
+# The full v1 product needs the ordinary defaults despite --no-default-features below.
+[ "$profile" = full ] && features=$features,engine,mcp,client
 case $profile in dope-gpu | fused-cuda) features=$features,dope-cuda ;; esac
 mkdir -p "$out"
 
@@ -55,6 +57,23 @@ echo "== build jopedime ($cargo_profile, features $features, source $source_sha)
 code=$(JOPE_BUILD_SOURCE_SHA=$source_sha cargo run -q --locked -p jope-ci -- cargo-artifact build \
   --package jope-appliance --bin jopedime --profile "$cargo_profile" --no-default-features --features "$features")
 cp -- "$code" "$out/code"
+
+if [ "$profile" = full ]; then
+  echo "== verify full v1 compiled features and source"
+  "$out/code" --version --json > "$out/version.json"
+  jq -e --arg source "$source_sha" '
+    .source_sha40 == $source and
+    .features.embedded == true and
+    .features.engine == true and
+    .features.mcp == true and
+    .features.client == true and
+    .features.dev_keys == false and
+    .trusts_development_key == false
+  ' "$out/version.json" > /dev/null || {
+    echo "$0: full requires engine,mcp,client,embedded, release trust and the declared source" >&2
+    exit 1
+  }
+fi
 
 echo "== dynamic dependencies: the C runtime only, no CUDA or other shared libraries"
 needed=$(readelf -d "$out/code" | sed -n 's/.*(NEEDED).*\[\(.*\)\]/\1/p' | sort)

@@ -25,6 +25,39 @@ nice -n 10 python3 -B deploy/qualification/v1.0/release-gates \
   --manifest "$GATE_COMMANDS" --output "$NEW_EVIDENCE"
 ```
 
+When every assigned provider has merged into the pinned source checkout, the
+runner can discover the provider modules and build the same 28-command manifest
+it consumes above:
+
+```sh
+nice -n 10 python3 -B deploy/qualification/v1.0/release-gates \
+  --repo "$CLEAN_PINNED_CHECKOUT" --artifact "$SIGNED_BYTES" \
+  --providers --output "$NEW_EVIDENCE"
+```
+
+For candidate-free inventory checks after provider merges, use dry discovery:
+
+```sh
+nice -n 10 python3 -B deploy/qualification/v1.0/release-gates \
+  --repo "$CLEAN_SOURCE_CHECKOUT" --providers --dry-discovery
+```
+
+This reports the exact source SHA, found provider IDs, missing provider IDs, and
+counts. It accepts no artifact or output path, executes no provider, and writes
+no gate evidence. A successful inventory report may still be incomplete.
+
+Execution discovery requires a clean checkout at `origin/main`, a regular
+non-symlink candidate, and one regular `providers/<gate>.py` file for each
+release gate.
+The generated manifest is retained at
+`$NEW_EVIDENCE.gate-commands.json`; its exact bytes are hashed into
+`execution.json`. Missing providers refuse before creating gate evidence, so a
+partial inventory cannot become a runnable 28-gate manifest. D2 discovery uses
+the owner's size-budget policy: artifact size determines its PASS/FAIL status;
+speed or latency measurements may be reported as informational data, but never
+affect the verdict. An explicitly owner-supplied complete manifest remains
+supported through `--manifest`.
+
 The JSON manifest has schema `jope.rel07.gate-commands/v1`, a full 40-character
 `source_sha`, the exact file's `artifact_sha256`, and a `gates` array. Supply
 exactly one entry for every ID exported by `gates_receipt.RELEASE_GATE_IDS`;

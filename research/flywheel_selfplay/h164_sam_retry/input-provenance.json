@@ -1,0 +1,23 @@
+{
+  "wave": "H164",
+  "method": "owned read-only copies of exact SHA-verified H153 numerical inputs",
+  "inputs": {
+    "/home/ubuntu/jope-data/h164/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h164/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+  },
+  "exact_input_archive": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H158/astra-t2300/exact-inputs.npz",
+    "version_id": "QGR7WrSbPstdB5t8rqikmfXj.2_6h8OO",
+    "sha256": "4b6d745020da71e661ffdb063ab2505fc280002a0f685230c586ac19e5a10b38",
+    "members": [
+      "jope-data/h158/inputs/round-882.pt",
+      "jope-data/h158/inputs/best_dev_checkpoint.json"
+    ]
+  },
+  "checkpoint_direct_version": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H139/opus-h139-inputs-20261031/R882.pt",
+    "version_id": "uH2u3yAQ6hxLFLKmDg9jxeTq.aDomrN2"
+  },
+  "derived_H50_H58_original_versions": "unknown; hash-pinned exact numerical closure will be archived",
+  "catalog": "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.md"
+}

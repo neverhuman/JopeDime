@@ -1,0 +1,7 @@
+# REL-07 E1 language constraint provider
+
+E1 checks that requested languages constrain capability selection and proposal generation, that an empty or impossible language intersection fails with the stable `LANGUAGE_INTERSECTION_EMPTY` error, and that declared capability coverage matches the real emitters. The provider runs six exact existing tests spanning the registry, the actual proposer filter, the request plan and the emitted plan's requested languages.
+
+Every invocation uses the shared REL-07 context and candidate verifier, requires the exact clean source SHA embedded in a full non-development candidate, and checks candidate bytes and source binding before and after each assertion. Each selector must run exactly once with no skipped, failed, measured or zero-test result. A new external result file is written only after all six assertions pass; an existing result is never overwritten. The provider reads no datasets and uses no GPU or sealed inputs.
+
+Run with `python3 -B deploy/qualification/v1.0/providers/e1.py` and the five `JOPE_REL07_*` bindings documented in `GATE-RUNNER.md`. The data-free controls run with `python3 -B deploy/qualification/v1.0/test_provider_e1 -v`; their synthetic child responses test provider refusal and binding logic, not E1 release qualification. A real E1 result requires the exact supplied candidate and source. This provider does not implement export safety E3.
