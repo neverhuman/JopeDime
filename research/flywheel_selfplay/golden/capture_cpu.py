@@ -1178,7 +1178,7 @@ def stage1b_bytes(bundle):
     return struct.pack("<Q",len(encoded))+encoded+b"".join(parts)
 
 
-def build(plan, reconstruction, cohort, cv, tables, output, store, parents):
+def build(plan, reconstruction, cohort, cv, tables, output, store, parents, rnk05_packet, rnk05_pin):
     g.require(not output.exists() and not output.is_symlink(), "output must be new")
     g.require(os.environ.get("CUDA_VISIBLE_DEVICES")=="" and not torch.cuda.is_initialized(),
               "CPU reconstruction requires hidden CUDA")
@@ -1364,9 +1364,20 @@ def build(plan, reconstruction, cohort, cv, tables, output, store, parents):
         if index["total_bytes"]==size:break
         index["total_bytes"]=size
     files["packet/index.json"]=data
+    # RNK05's production test admits at most1024 FIT rows. Preserve its original
+    # approved complete50-context packet as a separate, explicitly pinned fixture.
+    compat_raw=pinned(rnk05_packet/"index.json",rnk05_pin)
+    compat=g.read_json(compat_raw)
+    g.require(compat["schema"]=="jope.golden-fixtures/v1" and compat["contexts"]==50
+              and compat["bundle_digest"]==plan["bundle_digest"], "RNK05 compatibility identity differs")
+    for name,spec in compat["files"].items():
+        data=g.captured(rnk05_packet,dict(path=name,sha256=spec["sha256"]))
+        g.require(len(data)==spec["bytes"],"RNK05 compatibility length differs")
+        files["rnk05-compat/"+name]=data
+    files["rnk05-compat/index.json"]=compat_raw
     specs={name:g.custody_blob(store,data) for name,data in sorted(files.items())}
     metadata=dict(authority="rulings_t1900.md R5",bundle_digest=plan["bundle_digest"],contexts=50,
-        reconstructed_contexts=132,historical_program_rows=1024,historical_unique_program_hashes=len(keys),
+        rnk05_compatibility_index_sha256=rnk05_pin,reconstructed_contexts=132,historical_program_rows=1024,historical_unique_program_hashes=len(keys),
         historical_scope="complete owner-accepted R5 evaluated reconstruction; 2688 unlogged generated excluded",
         historical_corpus_complete=True,original_historical_state_recovered=False,excluded_unlogged=2688,
         features_regenerated_from_dsl=True,reference_source_sha256=reference.source_hashes,
@@ -1392,10 +1403,12 @@ def reconstruction_main(argv=None):
         p.add_argument("--"+name+"-sha256",required=True)
     for name in ("tables","output","store"):
         p.add_argument("--"+name,type=Path,required=True)
+    p.add_argument("--rnk05-packet",type=Path,required=True)
+    p.add_argument("--rnk05-index-sha256",required=True)
     a=p.parse_args(argv)
     docs={n:pinned(getattr(a,n),getattr(a,n+"_sha256")) for n in ("plan","reconstruction","cohort","parents","cv")}
     report=build(g.read_json(docs["plan"]),g.read_json(docs["reconstruction"]),docs["cohort"],
-                 g.read_json(docs["cv"]),a.tables,a.output,a.store,docs["parents"])
+                 g.read_json(docs["cv"]),a.tables,a.output,a.store,docs["parents"],a.rnk05_packet,a.rnk05_index_sha256)
     print(json.dumps(report,sort_keys=True),flush=True)
     return 0
 
