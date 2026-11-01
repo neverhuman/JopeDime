@@ -5,6 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 import production_backend as backend
+import q1 as q1_harness
 
 
 class ProductionBackendTests(unittest.TestCase):
@@ -88,6 +89,7 @@ class ProductionBackendTests(unittest.TestCase):
 
     def test_projects_counts_and_scores_from_actual_attempt_receipts(self):
         response = backend.validate_receipt(self.receipt, self.request)
+        self.assertEqual(q1_harness.response_valid(response, self.request), response)
         self.assertEqual((response["charged"], response["completed"]), (3, 2))
         self.assertEqual(response["fold_scores_completed"], 5)
         self.assertEqual(response["loss"], 1.0)
