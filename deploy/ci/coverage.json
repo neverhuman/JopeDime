@@ -14004,6 +14004,16 @@
       ],
       "lanes": [],
       "scope": "H156 data-free nested 5-fold family cross-fit isolation, {0.5x, 1x, 2x} capacity-sweep selection, joint cross-fit selector, Holm-four step-down, and anchored Bradley-Terry Elo controls. Offline research only; no live promotion."
+    },
+    "python:research/flywheel_selfplay/h153_sam/test_h153.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H153 data-free controls for SAM/ASAM registration, drift/utility manipulation checks, deterministic TRAIN folds and batches, and CPU hard-stop resource guards. Offline research only; no dataset/checkpoint, outcome or product qualification."
     }
   },
   "lanes": {
