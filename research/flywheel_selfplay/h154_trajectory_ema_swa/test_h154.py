@@ -571,11 +571,13 @@ class H154Tests(unittest.TestCase):
             Path("/home/ubuntu/jope-data/h154/test"),
         )
         a.check("open", ("/home/ubuntu/jope-data/h50/input/selected.json", "r", 0))
+        a.check("open", ("/tmp/_remote_module_non_scriptable.py", "w", 0))
         for path, mode in [
             ("/home/ubuntu/jope-data/holdout/data", "r"),
             ("/home/ubuntu/jope-data/h50/input/pools/unknown.npz", "r"),
             ("/home/ubuntu/JopeDime/data/flywheel_selfplay/live", "w"),
             ("/home/ubuntu/jope-data/h50/input/selected.json", "w"),
+            ("/home/ubuntu/jope-data/h154/other/file.json", "w"),
         ]:
             with self.assertRaises(RuntimeError):
                 a.check("open", (path, mode, 0))

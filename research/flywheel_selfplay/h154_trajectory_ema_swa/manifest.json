@@ -84,10 +84,10 @@
   "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
   "executor_sha256": {
     "monitor.py": "2ee2bb78a03da2b5e42b68e2ec4448bc331b365f89730482e3a4fb3941e91a33",
-    "runner.py": "d4ef45421e36d62347ed8cfff70c121f1c5b6401e3dc2416de0778c5437b9bc2",
-    "runtime.py": "39c6c6e2a662c623e800bbb8b578f0e722579bf2f52558352c84ea640d0b546a",
+    "runner.py": "9499ded88ef57cba575e973d64871b8ef99510ab253115c7ef6f3d1d6ff625a7",
+    "runtime.py": "ed7384ae4ef553fee1d148657e4248ee22687bd4921eacafbe19f058f73ae03f",
     "science.py": "bcc2dea8794a7d595c018443fed8a2792cc809ed569f54ae14be7244ec5827e6",
-    "test_h154.py": "b86ef5e1c06e3fb18b93f7aa8e294cc52629e0fb15c3613d92d3cc33ade4d332"
+    "test_h154.py": "d1d2eb1c780878f8b2ddf812cb3e0f7c8cb8a62d1f03d6e674be7ab720959a47"
   },
   "fold_manifest_sha256": "c69c186ffee98eaa1f3c975417d9dcc5ae4fd3b0ebf9d913c7812817a864daf3",
   "fold_seed": 154140,
@@ -106,9 +106,12 @@
     "psutil": "7.1.0",
     "torch": "2.7.0"
   },
-  "prereg_sha256": "c4c8cb1d6132995ca4f9dbc7bdcaa3e3d192ab80565127d2f877e2ea14cb5981",
+  "prereg_sha256": "253d0c70ae1ec777635e365fa5084c8fdfbd6e16af64895ad1d8431a772ac137",
   "prior_prereg_heads": [
-    "81441ac1e68572eba93b4f5d8ec1c0efeb20618a"
+    "81441ac1e68572eba93b4f5d8ec1c0efeb20618a",
+    "b9098cf517d07fabf0093ad158a9a20602424ceb",
+    "9e14db979d0f6a3a615428f3f8bbef3257888a10",
+    "8874ef4fb216969d43d0c41a9f99faf472de659e"
   ],
   "recal_bounds": [
     0.85,
@@ -124,16 +127,16 @@
   "smoke_custody_receipts": {
     "custody_dir": "/home/ubuntu/jope_plan/evidence/H154/smoke",
     "files_sha256": {
-      "smoke-monitor.json": "b55cdd772abdc892f448b88a03cc95a365a993f0377aeaf854d9577e6bfdd841",
-      "smoke-resources.jsonl": "e4b9e9a8a9c7b446fe370077fbf342f97e24b8581b4ca37e65c77b494b58cb89",
-      "smoke.started": "6c8aba07b6fbd730486d7072be6ed746b4533dde2fadb927b94fa8e087b78115",
-      "smoke/audit.json": "132dee4e2826a2d6605f0e73c2d1f4b49f049b5909e0f30da8e29bc148974cc1",
-      "smoke/smoke.json": "c2967bf2a857ed5efac0d9861d309e9d2279f430dc1e7d68b0f49ca4d6a5b844"
+      "smoke-monitor.json": "b1544cca661f443ffdba6c8016204e43ed3071385e048630e2f1ec7093b9181a",
+      "smoke-resources.jsonl": "725552d0fe7971cfbb80fe020698fc2476b53258611d9fe260e2f73b4b0ed0cf",
+      "smoke.started": "a423f2dba3aaaee5f2e710ba7abaaca6e2262260d19341ac943ab3151ed1b072",
+      "smoke/audit.json": "77a9bd7ea96712c6903e0069ae4b91ee59c5a7de0a8f014b945022bc6db4edb0",
+      "smoke/smoke.json": "0c5279739b1e34ffbd6b239da14f9f6ae093bfda5439817ccb0ce4625ace3d2c"
     },
-    "pid": 1194339,
-    "started_utc": "2026-11-01T04:35:14.188083+00:00"
+    "pid": 3653201,
+    "started_utc": "2026-11-01T04:59:31.796903+00:00"
   },
-  "smoke_sha256": "c2967bf2a857ed5efac0d9861d309e9d2279f430dc1e7d68b0f49ca4d6a5b844",
+  "smoke_sha256": "0c5279739b1e34ffbd6b239da14f9f6ae093bfda5439817ccb0ce4625ace3d2c",
   "status": "PREREGISTERED_NOT_EXECUTED",
   "swa_windows": {
     "SWA_K10": 10,
