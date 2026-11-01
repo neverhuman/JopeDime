@@ -4927,6 +4927,38 @@
         "role": "research",
         "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h187_robust_family/design.py": {
+      "bytes": 7634,
+      "sha256": "5e4c8070aec47b5d28845b87c589a605a806788de3e0bc9b0ab4d32519554ec5",
+      "classification": {
+        "role": "research",
+        "reason": "H187 registered CPU fresh-adapter loss normalization/family-balancing experiment; frozen DOPE, TRAIN-only, imported pooled selector, no live changes"
+      }
+    },
+    "python:research/flywheel_selfplay/h187_robust_family/monitor.py": {
+      "bytes": 5208,
+      "sha256": "827f6809ac42835e33b668731b4e13023259efe3f4bce800a5eac5070511d022",
+      "classification": {
+        "role": "research",
+        "reason": "H187 registered CPU fresh-adapter loss normalization/family-balancing experiment; frozen DOPE, TRAIN-only, imported pooled selector, no live changes"
+      }
+    },
+    "python:research/flywheel_selfplay/h187_robust_family/objectives.py": {
+      "bytes": 1221,
+      "sha256": "9cd6a8c93bc32f9cb32e362d6b792d543afb517a72477779f6bc410375ecd72f",
+      "classification": {
+        "role": "research",
+        "reason": "H187 registered CPU fresh-adapter loss normalization/family-balancing experiment; frozen DOPE, TRAIN-only, imported pooled selector, no live changes"
+      }
+    },
+    "python:research/flywheel_selfplay/h187_robust_family/runner.py": {
+      "bytes": 25534,
+      "sha256": "7c296f5e8966cc3e5548f5411feac37ab2ed8314d26b8f0590a814b6de702168",
+      "classification": {
+        "role": "research",
+        "reason": "H187 registered CPU fresh-adapter loss normalization/family-balancing experiment; frozen DOPE, TRAIN-only, imported pooled selector, no live changes"
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
