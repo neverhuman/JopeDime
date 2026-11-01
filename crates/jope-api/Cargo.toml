@@ -11,7 +11,7 @@ description = "Shared JopeDime v1 wire contract and JSON schemas"
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
-schemars = "=1.2.2"
+schemars = "=1.2.3"
 ulid = { workspace = true }
 
 [dev-dependencies]

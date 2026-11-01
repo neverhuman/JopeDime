@@ -30,7 +30,7 @@ Independent comparisons belong to \cref{sec:results}.
   \centering
   \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_promotions_per_hour.pdf}
   \caption{\textbf{Training-program promotions per hour and adapter validation trajectory.} Left: logged rolling and per-round strict training-program promotions per hour. Right: candidate and recorded-best adapter validation pool utility. Both panels cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, with zero adapter admissions).}
-  \label{fig:fw-promotions-per-hour}
+  \label{fig:fw-promotions-per-hour}\label{fig:fw-program-promotions}
 \end{figure*}
 
 \begin{figure*}[!t]
@@ -95,7 +95,7 @@ within-round training contexts by full round time. Their retained windows
 and denominators differ from the admission prefix.
 
 The remaining windows and historical comparisons are in
-\cref{app:flywheel-telemetry,app:record-windows,app:latest-event-rates}.
+\cref{app:flywheel-telemetry,app:record-windows,app:latest-event-rates,app:latest-round-clock}.
 Their scope is the statement above; the matched first-proposal test is in
 \cref{sub:results-learning}.
 \FloatBarrier

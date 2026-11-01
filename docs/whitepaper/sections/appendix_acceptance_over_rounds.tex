@@ -1,25 +1,44 @@
 \subsection{Recorded-best trajectory and cumulative acceptance rate}\label{app:acceptance-over-rounds}
 
-\begin{figure}[!htbp]
+\begin{figure*}[!t]
   \centering
-  \includegraphics[width=\linewidth,height=1.10in,keepaspectratio]{figures/fig_fw_live_validation.pdf}
-  \caption{\textbf{Adapter validation and admissions.} The \num{1889}-round window,
-  775--2663: grey candidate utility, blue recorded best; stars mark strict gains,
-  hollow diamonds accepted ties. The full prefix is in \cref{tab:admission-ledger}.}
-  \label{fig:fw-validation}
-\end{figure}
+  \includegraphics[width=\linewidth,height=1.55in,keepaspectratio]{figures/fig_fw_telemetry.pdf}
+  \caption{\textbf{Train--validation aggregates and operating measurements from earlier retained windows.}
+  First, second, and fourth panels: 25 retained summaries spanning rounds 1342--1345 and 1449--1469
+  (rounds 1346--1448 were not retained), showing train versus validation pool utility (gap 0.282--0.290),
+  distinct training contexts per completed-round second, and strict training-program promotions per hour
+  over up to 20 completed rounds including qualification waits. Third panel: consecutive admission-timestamp
+  intervals: all 695 admission rows (775--1469) carry timestamps, giving 694 consecutive pairs.
+  The panel plots the 692 positive differences below 600\,s (green), excluding two longer pauses,
+  alongside the 25 measured round wall times (blue squares).
+  Scope: \cref{sec:method-status}.}
+  \label{fig:fw-telemetry}
+  \label{fig:fw-trainval}
+\end{figure*}
 
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\linewidth,height=1.55in,keepaspectratio]{figures/fig_fw_target_history.pdf}
+  \caption{\textbf{Historical GP target progress and post-hoc 71-generation trajectories.}
+  First panel: first-to-last reported best development RMSE across all 159 repeated comparison
+  groups (55 distinct dataset/cut pairs) at \num{1000} evaluations per search, grouped by search arm.
+  Second through fourth panels: all 71 generations per arm for one historical dataset/cut selected
+  post hoc for the largest policy-seeded relative improvement. RMSE is in historical evaluator units
+  (lower is better). The arms shared incumbent and teacher seeds, and elapsed time varied; these
+  development records do not establish independent discoveries or a learned-policy advantage.}
+  \label{fig:fw-target-progress}
+  \label{fig:fw-target-history}
+\end{figure*}
 
-
-
-\Cref{fig:fw-acceptance-over-rounds} provides a companion view of the
-\num{1889} consecutive admission rounds, 775--2663, plotted in
-\cref{fig:fw-validation}. It adds no new observations. The left panel
-isolates the post-decision recorded-best validation pool utility step
-curve across the two strict improvements (rounds 785 and 859, reaching
-1.1376 and 1.1378 from the initial 1.1074) and the two accepted ties
-(rounds 782 and 882). The right panel tracks the cumulative share of
-elapsed rounds accepted up to each round: the cumulative rate reaches
-18.18\% at round 785 ($2/11$ rounds), stands at 3.70\% at the last
-accepted tie ($4/108$ at round 882), and declines across the \num{1781}
-subsequent rejected rounds to 0.21\% ($4/\num{1889}$) by round 2663.
+\Cref{fig:fw-acceptance-over-rounds} combines the \num{1889} consecutive
+admission evaluations across rounds 775--2663 (\cref{fig:fw-validation})
+with their cumulative acceptance rate and candidate utility-shortfall
+distribution. The left panel tracks candidate proposals against the
+post-decision recorded-best validation pool utility across the two strict
+improvements (rounds 785 and 859, reaching 1.1376 and 1.1378 from the
+initial 1.1074) and the two accepted ties (rounds 782 and 882). The center
+panel tracks the cumulative share of elapsed rounds accepted up to each
+round: the cumulative rate reaches 18.18\% at round 785 ($2/11$ rounds),
+stands at 3.70\% at the last accepted tie ($4/108$ at round 882), and
+declines across the \num{1781} subsequent rejected rounds to 0.21\%
+($4/\num{1889}$) by round 2663.

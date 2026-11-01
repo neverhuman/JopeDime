@@ -22,6 +22,6 @@
     "Original score/seed payloads were not reopened; seed audit is retained metadata"
   ],
   "csv_sha256": "339fc00f3a17cc7ebf2ee49d5c2899e3aa5ddf8b7e570fd4a7bae0a107084ee6",
-  "generator_sha256": "c7fd13d6e8709aaa28f448a29d5c040b2e3522f165e0260d4eb09d69b859d32e",
+  "generator_sha256": "0bf8cd13e0710428462ecfee022eda86ccdeb6a1901898999111509a3587d620",
   "reproduce": "python3 figures/scripts/make_promotions_figure.py --target-progress --source-dir INPUT_DIR"
 }

@@ -2,7 +2,7 @@
   "schema": "whitepaper.latest-round-clock-figure/v1",
   "input_csv_sha256": "14a5f7a8a6bace9d18c7bad132fe563cd0737ddd0a82b6e38f6cb26178168f64",
   "source_receipt_sha256": "845b5f092fefa03d30757a41cd9baa2988890a712bf9b9a9e2c506c32f2dbf88",
-  "generator_sha256": "61ca5f68df614f299acbed3ef36d28bf7f7038cb09a220a0d7d4f3e7d204a710",
+  "generator_sha256": "d26561326f13f3983508010ba8de52635f4e22765ba9d1c2a2e7bb33ff9542fd",
   "figure_sha256": "c040aff4e93ee3369621f1a7afb3b949ded7c1017c7180a597db85799bf8256b",
   "rows": 20,
   "round_window": [

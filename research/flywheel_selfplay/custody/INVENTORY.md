@@ -34,3 +34,41 @@ nice -n 10 cargo +1.97.1 build --offline --locked --release \
 MANIFEST.json attaches all205 training-family IDs (1219contexts) and the separate19 development-family IDs (91contexts), with no overlap. These supply the exclusion list for this training cohort to QLT-02. All prepared tables are train-only (`nq=0`), and original outer-query/holdout/sealed tables were not delivered. RES-02 can vendor/pin the relevant custody bytes; unknown Git origins are recorded honestly rather than guessed.
 
 Evidence: `~/jope_plan/evidence/RES-01`, with receipt paths and SHA256 values in the manifest. Bulk inputs/runtime and dry-run outputs live outside Git under `~/jope-data/res-01`. No training service, global package installation or foreign checkout was changed.
+
+
+## Bulk custody relocation (2026-11-01, REL-07 T1045)
+
+RES-02 PR #641 placed four bulk binaries in the tracked custody tree: NumPy's native
+extension (7,463,681 B), the frozen telemetry extension (66,754,912 B), the frozen
+projection (101,734,579 B), and r782 checkpoint (7,493,476 B). Their total is
+183,446,648 B. These existing payloads violate the repository's 5 MiB tracked-file
+cap; the newer custody-addition guard correctly checks new additions but cannot
+remove historical payloads. Neither cap is raised or exempted.
+
+The four original hash/length pins stay in **unchanged MANIFEST.json**. EXTERNAL.json
+identifies their existing immutable Git recovery commit, paths and object IDs.
+All other vendored files and scientific records remain. Default verification streams
+the four original Git blobs and checks every SHA-256 and length without restoring
+bulk bytes into the working tree. Missing recovery history fails explicitly; there
+is no network fetch or missing-input PASS. An explicit external cache supports
+shallow/offline source copies:
+
+```sh
+python3 research/flywheel_selfplay/custody/verify_custody.py
+python3 research/flywheel_selfplay/custody/verify_custody.py --external-root "$CUSTODY_CACHE"
+```
+
+The cache layout is `sha256/<original digest>` under the supplied absolute root.
+Symlinks, missing payloads, hash/length changes, duplicate/changed external pins,
+and unlisted vendored files are rejected. External input verification is part of
+the original complete closure count; it is never a skipped subset. Existing Git
+history is retained, not rewritten. To recover a payload, use the exact
+`recovery_commit:git_path` in EXTERNAL.json with `git show`, write it only under
+external custody, and verify its SHA-256 and length before use.
+
+Before removal from the current tree, every payload was copied to
+`xbabe1:/home/ubuntu/jope-data/custody/res08-t1045/sha256/`, independently restored
+and checked under `/home/ubuntu/jope_plan/custody/res08-t1045/sha256/`, and compared
+byte-for-byte by digest/length with its original immutable Git object. The recovery
+receipt is `/home/ubuntu/jope_plan/evidence/REL-07/res08-t1045/INDEPENDENT-RECOVERY.json`.
+These are custody operations, not model loading, training or qualification.

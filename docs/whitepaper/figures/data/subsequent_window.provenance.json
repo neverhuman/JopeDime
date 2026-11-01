@@ -74,12 +74,14 @@
   "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
   "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
   "csv_sha256": "a4999500f97cb98c3ef3fd3bab0bb42aa4e91982997923c28d095f08691adabd",
-  "extraction_script_sha256": "19aa25fc6bae13f774ad916bd484c64745da906b6ec55694b6d95aff045a6b04",
+  "extraction_script_sha256": "8c7f564aa9aa688d77c0fb171bf0e6ca394be7b67bde39d16bd4012dc62ba8ff",
   "reproduce": "python3 figures/scripts/make_subsequent_window_figure.py --logs SNAPSHOT_DIR",
-  "figure_sha256": "48991bdef87341dc6668078f0deddc9a9ccc2b48f211163db73d0c11ad7db8e7",
+  "figure_sha256": "bbd44c135ddc68e23d91779e72b0ee1d7196b2f00a6a9ad323a0cf0cfcb39af1",
   "matplotlib_version": "3.10.8",
   "figure_definition": {
-    "top": "recorded best minus candidate validation pool utility, paired within each completed round; zero marks recorded best",
-    "bottom": "cumulative strict training-program incumbent events; reset to zero for this window"
+    "a": "logged candidate and recorded-best validation pool utility (best labeled round 882) with paired utility shortfall shaded",
+    "b": "per-round and cumulative strict training-program incumbent events (15 total; reset to zero for this window)",
+    "c": "completed rounds per hour over accumulated completed-round wall time (41.58/hr whole-window rate)",
+    "d": "strict training-program incumbent events per hour over accumulated completed-round wall time (31.19/hr whole-window rate)"
   }
 }

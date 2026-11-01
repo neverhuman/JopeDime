@@ -60,42 +60,86 @@ def main():
     plt.rcParams.update(
         {
             "font.family": "serif",
-            "font.size": 8,
+            "font.size": 7.6,
             "axes.spines.top": False,
             "axes.spines.right": False,
             "pdf.fonttype": 42,
         }
     )
-    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(6.8, 2.55), sharey=True)
+    fig, (ax_bins, ax0, ax1) = plt.subplots(1, 3, figsize=(6.8, 2.35), sharey=True)
     yy = list(range(len(facts)))
     labels = [f"{r['round_window'][0]}–{r['round_window'][1]}" for r in facts]
+    window_events = [
+        [int(r["program_events"]) for r in sorted(groups[tuple(f["round_window"])], key=lambda x: int(x["round"]))]
+        for f in facts
+    ]
+    left = [0] * len(facts)
+    bin_specs = [
+        ("0", lambda c: c == 0, "#ced4da", "#212529"),
+        ("1", lambda c: c == 1, "#74c0fc", "#212529"),
+        ("2", lambda c: c == 2, "#339af0", "white"),
+        ("3+", lambda c: c >= 3, "#1864ab", "white"),
+    ]
+    for b_label, pred, b_color, t_color in bin_specs:
+        vals = [sum(1 for c in evs if pred(c)) for evs in window_events]
+        bars = ax_bins.barh(yy, vals, left=left, height=0.55, color=b_color, label=b_label)
+        for bar, v in zip(bars, vals):
+            if v >= 2:
+                ax_bins.text(
+                    bar.get_x() + v / 2,
+                    bar.get_y() + bar.get_height() / 2,
+                    str(v),
+                    ha="center",
+                    va="center",
+                    fontsize=6.5,
+                    color=t_color,
+                )
+        left = [a + b for a, b in zip(left, vals)]
+    ax_bins.set_yticks(yy, labels)
+    ax_bins.invert_yaxis()
+    ax_bins.set_xlim(0, 20)
+    ax_bins.set_xticks([0, 5, 10, 15, 20])
+    ax_bins.set(
+        title="Rounds by events / round",
+        xlabel="completed rounds (of 20)",
+        ylabel="separate retained windows",
+    )
+    ax_bins.legend(
+        title="events",
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.13),
+        ncol=4,
+        frameon=False,
+        fontsize=6.4,
+        title_fontsize=6.4,
+        handlelength=0.8,
+        handletextpad=0.25,
+        columnspacing=0.55,
+    )
     ax0.barh(
         yy, [float(r["events_per_hour"]) for r in facts], color="#4c6ef5", height=0.55
     )
     ax1.barh(
         yy, [float(r["mean_wall_seconds"]) for r in facts], color="#e8590c", height=0.55
     )
-    ax0.set_yticks(yy, labels)
-    ax0.invert_yaxis()
     ax0.set(
         title="Strict program-event rate",
         xlabel="events / logged hour",
-        ylabel="separate retained rounds",
     )
-    ax1.set(title="Mean completed-round duration", xlabel="logged seconds / round")
-    for ax in (ax0, ax1):
+    ax1.set(title="Mean round duration", xlabel="logged seconds / round")
+    for ax in (ax_bins, ax0, ax1):
         ax.grid(axis="x", alpha=0.2)
         ax.set_axisbelow(True)
     for y, r in zip(yy, facts):
         ax0.text(
             float(r["events_per_hour"]) + 0.3,
             y,
-            f"{r['events']} events",
+            f"{r['events']} ev.",
             va="center",
-            fontsize=6,
+            fontsize=6.2,
         )
     ax0.set_xlim(0, max(float(r["events_per_hour"]) for r in facts) * 1.35)
-    fig.tight_layout(pad=0.6, w_pad=1.5)
+    fig.tight_layout(pad=0.45, w_pad=0.8)
     fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
     PROVENANCE.write_text(

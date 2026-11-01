@@ -1,0 +1,20 @@
+{
+  "kind": "outcome-free wiring smoke (0 utilities, endpoints or GBM fits computed)",
+  "host": "xbabe2",
+  "nice": 19,
+  "status": "PASS",
+  "checks": {
+    "decomposition": "anchor_total + PRIOR + KERNEL + ATTN == H124 baseline r882 cost, bit-exact, on 3 TRAIN contexts (1152-candidate pools); KERNEL-removed costs differ (max |diff| 0.50-0.98)",
+    "staged_layout": "h124.load_data through ~/jope-data/h195/inputs: 1219 TRAIN rows, 1219 samples, 0 DL-Val cache rows decoded; all pinned FILES verified",
+    "thread_census": "HistGBM OpenMP starts helper threads: 2 OS threads at OMP=1, 7 at OMP=2, 8 at OMP=3 (torch 1 thread); the guard caps worker-tree CPU cores, not OS threads"
+  },
+  "staged_inputs": {
+    "files": 2628,
+    "sha_list_sha256_xbabe1": "2f7a364221e809d86abca30d14c3b80f5be1e2ba36db5b45ca1fe09ba82792e8",
+    "sha_list_sha256_xbabe2_excluding_pycache": "2f7a364221e809d86abca30d14c3b80f5be1e2ba36db5b45ca1fe09ba82792e8",
+    "identical_across_hosts": true
+  },
+  "model_assets_identical_across_hosts": true,
+  "optimizer_updates": 0,
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+}

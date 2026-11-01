@@ -1,53 +1,27 @@
-\begin{figure*}[!t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_telemetry.pdf}
-  \caption{\textbf{Operating measurements from earlier retained windows.}
-  Left/right: 25 summaries spanning rounds 1342--1469. Middle: intervals
-  between logged admission timestamps within 775--1469. Green: positive
-  intervals under 600\,s. Blue squares: 25 logged round wall times. Left:
-  distinct training contexts divided by completed-round wall time. Right:
-  strict improvements to training-program incumbents per hour, using accumulated
-  wall time over up to twenty completed rounds in the reporting process,
-  including qualification waits. Program events and adapter admissions count
-  different outcomes. These are earlier operating windows within
-  \cref{fig:fw-validation}, subject to the scope in \cref{sec:method-status}.}
-  \label{fig:fw-telemetry}
-\end{figure*}
-
-\begin{figure}[!t]
-  \centering
-  \includegraphics[width=\linewidth,height=1.65in,keepaspectratio]{figures/fig_fw_train_val.pdf}
-  \caption{\textbf{Train and validation aggregates on retained summaries.}
-  The 25 summaries span rounds 1342--1469; a broken axis separates the
-  observed blocks. Intervening summaries are not retained; the utility
-  gap covers only these 25 summaries.}
-  \label{fig:fw-trainval}
-\end{figure}
-
-\begin{figure}[!t]
-  \centering
-  \includegraphics[width=\linewidth,height=1.75in,keepaspectratio]{figures/fig_fw_recent_development.pdf}
-  \caption{\textbf{Program promotions and adapter utility in an additional window.}
-  Top: cumulative logged strict improvements to training-program incumbents,
-  reset to zero at the start of this window. Bottom: candidate adapter
-  validation utility and the recorded best. Both panels use the same 20
-  summaries from rounds 2005--2024. Scope: \cref{sec:method-status}.}
-  \label{fig:fw-recent-development}
-\end{figure}
-
 \subsection{Earlier admission windows and historical search}\label{app:record-windows}
 
+\begin{figure*}[!t]
+  \setlength{\abovecaptionskip}{4pt}
+  \centering
+  \includegraphics[width=\linewidth,height=1.55in,keepaspectratio]{figures/fig_fw_latest_round_clock.pdf}
+  \caption{\textbf{Program-event yield and full round time in a later capture.}
+  Every completed summary in rounds 3033--3052, including zero-event rounds.
+  Left: strict training-program incumbent events per round. Right: each
+  round's full logged wall time, including work and waits. The window
+  records 8 events over \num{1831.32}\,s (15.73 events per logged hour)
+  and no adapter admissions. These are distinct event and time measures;
+  scope: \cref{sec:method-status}.}
+  \label{fig:fw-latest-round-clock}
+\end{figure*}
+
 The main text selects four views of admission decisions and operating
-activity. The additional figures here retain the earlier windows and
-alternative summaries. Their observations are unchanged.
-\Cref{fig:fw-validation} covers the earlier admission prefix;
-\cref{fig:fw-trainval,fig:fw-telemetry} resolve a smaller set of retained
-summaries. Gaps between windows are not filled or treated as observations.
-
-
-
-
-
+activity. Its 2644--2663 window appears only in
+\cref{fig:fw-program-promotions}. The appendix grid pairs the other four
+retained development windows. Consolidation changes no underlying observation.
+\Cref{fig:fw-validation} covers the 775--2663 admission prefix, while
+\cref{fig:fw-telemetry} (with train--validation aggregates in
+\cref{fig:fw-trainval}) resolves the 25 retained detailed summaries.
+Gaps between windows are not filled or treated as observations.
 
 Lower predicted cost is preferred. Logged utility averages the selected
 programs' recorded outcomes; it is not the adapter's cost prediction.
@@ -72,124 +46,35 @@ utility tables do not establish either.
 \Cref{fig:fw-telemetry} shows the loop's operating measurements from the earlier
 retained window.
 
-\renewcommand{\textfraction}{0.05}
-\renewcommand{\topfraction}{0.95}
-\renewcommand{\dbltopfraction}{0.95}
-\setlength{\textfloatsep}{20pt plus 14pt minus 4pt}
-
-\begin{figure*}[!t]
-  \centering
-  \includegraphics[width=\linewidth,height=1.63in,keepaspectratio]{figures/fig_fw_followup_development.pdf}
-  \caption{\textbf{Program events and adapter validation in a follow-up window.}
-  Left: journaled strict training-program incumbent improvements per round.
-  Right: candidate adapter validation pool utility and the recorded best.
-  Both panels cover the same 20 consecutive summary rounds, 2082--2101. The summaries
-  mark no adapter admission. Scope: \cref{sec:method-status}.}
-  \label{fig:fw-followup-development}
-\end{figure*}
-
-\begin{figure*}[!t]
-  \centering
-  \includegraphics[width=\linewidth,height=1.63in,keepaspectratio]{figures/fig_fw_later_development.pdf}
-  \caption{\textbf{Continued program events and adapter validation.}
-  Left: journaled strict training-program incumbent improvements per round.
-  Right: candidate adapter validation pool utility and the recorded best.
-  Both panels cover all 20 consecutive rounds, 2343--2362, in this retained summary
-  window. The summaries mark no adapter admission. Scope: \cref{sec:method-status}.}
-  \label{fig:fw-later-development}
-\end{figure*}
-
-\begin{figure}[!t]
-  \centering
-  \includegraphics[width=\linewidth,height=2.20in,keepaspectratio]{figures/fig_fw_live_development.pdf}
-  \caption{\textbf{Program-incumbent events and validation summaries.}
-  Top: logged strict improvements to training-program incumbents per round.
-  Bottom: candidate adapter validation pool utility. Both panels cover the
-  same 20 consecutive rounds, 2644--2663. These are development measurements;
-  Scope: \cref{sec:method-status}.}
-  \label{fig:fw-program-promotions}
-\end{figure}
-
-\begin{figure}[!t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_live_shortfall.pdf}
-  \caption{\textbf{Candidate gaps to the recorded best.} Cumulative share
-  of the same \num{1889} admission rounds as \cref{fig:fw-validation}, against
-  recorded best minus candidate validation utility. The best is logged
-  after admission, so zero includes strict gains and ties. Repeated
-  adaptive rounds are not independent trials.}
-  \label{fig:fw-admission-shortfall}
-\end{figure}
-
-\begin{figure*}[!t]
-  \setlength{\abovecaptionskip}{4pt}
-  \centering
-  \includegraphics[width=\linewidth,height=0.88in,keepaspectratio]{figures/fig_fw_target_history.pdf}
-  \caption{\textbf{Post-hoc GP target trajectory.} All 71 generations per
-  arm for one historical dataset/cut, at \num{1000} evaluations per search.
-  RMSE is in historical evaluator units; lower is better. The arms shared
-  incumbent and teacher seeds, and elapsed time varied. This selected
-  development example does not establish a learned-policy advantage.}
-  \label{fig:fw-target-history}
-\end{figure*}
-
-\begin{figure}[!t]
-  \setlength{\abovecaptionskip}{4pt}
-  \centering
-  \includegraphics[width=\linewidth,height=0.90in,keepaspectratio]{figures/fig_fw_target_progress.pdf}
-  \caption{\textbf{Historical GP target progress.} First-to-last reported
-  best development RMSE at \num{1000} evaluations per search, grouped by search
-  arm. Lower is better; unchanged scores are included. The arms shared
-  incumbent and teacher seeds, and elapsed time varied. These counts do
-  not measure independent discoveries or a learned-policy advantage.}
-  \label{fig:fw-target-progress}
-\end{figure}
-
-\begin{figure*}[!t]
-  \setlength{\abovecaptionskip}{4pt}
-  \centering
-  \includegraphics[width=\linewidth,height=0.88in,keepaspectratio]{figures/fig_fw_latest_event_rates.pdf}
-  \caption{\textbf{Program-event rate and round duration across retained windows.}
-  Each row is a separate capture of 20 consecutive completed rounds.
-  Left: strict training-program incumbent events divided by total logged
-  round time, with event counts shown. Right: total logged time divided
-  by 20, including all within-round work and waits. The five windows are
-  displayed separately; gaps are neither filled nor connected.
-  Program events are distinct from adapter admissions.
-  Scope: \cref{sec:method-status}.}
-  \label{fig:fw-latest-event-rates}
-\end{figure*}
-
 \paragraph{Retained operating windows.}
-The five 20-round program-event slices contain 15 events in rounds
-2005--2024, 10 in 2082--2101, 22 in 2343--2362, 15 in 2508--2527 and 21
-in 2644--2663. Each records zero adapter admissions. The later 20-round
-throughput slice, 2696--2715, also records none; it reports contexts and
-wall time rather than a program-event total.
-\Cref{fig:fw-recent-development,fig:fw-followup-development,fig:fw-later-development,fig:fw-subsequent-window,fig:fw-program-promotions}
-show the event slices. Completed-time, event-distribution and rate
-summaries appear in
+Across the five 20-round program-event slices, rounds 2005--2024 contain 15
+events (\cref{fig:fw-recent-development}), 2082--2101 contain 10
+(\cref{fig:fw-followup-development}), 2343--2362 contain 22
+(\cref{fig:fw-later-development}), 2508--2527 contain 15
+(\cref{fig:fw-subsequent-window}), and 2644--2663 contain 21
+(\cref{fig:fw-program-promotions}). Each records zero adapter admissions.
+The later 20-round throughput slice, 2696--2715, also records none; it
+reports contexts and wall time rather than a program-event total.
+Completed-time, event-distribution and rate summaries appear in
 \cref{app:development-time,app:event-counts,app:subsequent-rates,app:promotions-per-hour,app:round-throughput}.
 The window separation and scope follow \cref{sec:method-status}; logged
 round time includes work and qualification waits.
 
-For the adapter record in \cref{fig:fw-validation},
+For the adapter record in \cref{fig:fw-validation}, the right panel of
 \cref{fig:fw-admission-shortfall} summarizes candidate gaps to each round's
 recorded best. Each retained round contributes once; the curve does not
 count independent tasks or distinct programs.
 
-Historical GP target scores provide a separate view in
+Historical GP target scores provide a separate view in the first panel of
 \cref{fig:fw-target-progress}. The 159 repeated dataset/cut/arm groups cover
 55 distinct dataset/cut pairs; the 64 groups with lower final scores cover
 23 pairs. Shared incumbent and teacher seeds make the arms dependent.
 Scope: \cref{sec:method-status}.
 
-\Cref{fig:fw-target-history} follows one historical dataset/cut, chosen
-after inspection for the largest policy-seeded relative improvement in
-the preceding comparison set. Every reported generation is shown, without
-applying a cumulative minimum. All three arms finish at the same value;
-the policy-seeded arm first records it one generation after the controls.
-Shared seeds prevent treating their matching outcomes as independent discoveries.
-\setlength{\dblfloatsep}{6pt plus 6pt minus 2pt}
-\setlength{\dbltextfloatsep}{8pt plus 12pt minus 2pt}
-\setlength{\textfloatsep}{8pt plus 18pt minus 2pt}
+The remaining three panels of \cref{fig:fw-target-history} follow one
+historical dataset/cut, chosen after inspection for the largest
+policy-seeded relative improvement in the preceding comparison set. Every
+reported generation is shown, without applying a cumulative minimum. All
+three arms finish at the same value; the policy-seeded arm first records it
+one generation after the controls. Shared seeds prevent treating their
+matching outcomes as independent discoveries.
