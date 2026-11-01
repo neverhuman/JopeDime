@@ -5,8 +5,11 @@
 Apply the accepted OD13 rule inside `CaptureContext`: for rounds after zero,
 rank the actual measured admitted pool by ascending surrogate F and select the
 first four. Keep source order for equal F values. Round zero has no reveals.
-The provider supplies program observations only; it cannot substitute a
-different reveal rule. Validate finite measurements before ordering.
+For Engine evidence, the capture boundary verifies the provider's selected
+indices against this rule, then copies the corresponding measured entries.
+Explicit SyntheticControl fixtures retain their existing index behavior and
+cannot be exported as Engine evidence. Validate finite measurements before
+ordering.
 
 ## Alternatives rejected
 

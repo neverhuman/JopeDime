@@ -914,6 +914,7 @@ fn engine_provider_requires_native_inputs() {
                         proj16: vec![0.0; 16],
                     })
                     .collect(),
+                revealed_indices: vec![],
             })
         }
         fn measurement(&self, _: &Request, _: &Response) -> Result<Rung0Measurement> {

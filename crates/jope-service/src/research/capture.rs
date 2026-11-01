@@ -9,7 +9,11 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::{collections::BTreeMap, io::Cursor, sync::Arc};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    io::Cursor,
+    sync::Arc,
+};
 
 pub(crate) const CHECKPOINT_VERSION: u32 = 3;
 const ENVELOPE_VERSION: u32 = 1;
@@ -65,6 +69,7 @@ impl CaptureConfig {
 /// Actual aligned program inputs and indices into the measured admitted pool.
 pub struct SlateObservation {
     pub programs: Vec<RecordedProgram>,
+    pub revealed_indices: Vec<usize>,
 }
 
 /// A same-invocation admission input; values are not manufactured by the loop.
@@ -210,7 +215,29 @@ impl CaptureContext {
                 "program provenance mismatch"
             );
         }
-        let revealed = select_od13_reveals(round, measured)?;
+        let revealed_indices = if self.binding.identity.evidence == RecordEvidence::Engine {
+            let expected = select_od13_indices(round, measured)?;
+            ensure!(
+                observation.revealed_indices == expected,
+                "provider reveal selection differs from accepted OD13 rule"
+            );
+            expected
+        } else {
+            ensure!(
+                observation.revealed_indices.len() == if round == 0 { 0 } else { 4 },
+                "missing actual reveal context"
+            );
+            let mut seen = BTreeSet::new();
+            for index in &observation.revealed_indices {
+                ensure!(seen.insert(*index), "duplicate revealed index");
+                ensure!(measured.get(*index).is_some(), "unknown revealed index");
+            }
+            observation.revealed_indices
+        };
+        let revealed = revealed_indices
+            .into_iter()
+            .map(|index| measured[index].clone())
+            .collect();
         Ok(ObservedSlate {
             programs: observation.programs,
             revealed,
@@ -220,7 +247,7 @@ impl CaptureContext {
 
 /// Apply the owner-accepted OD13 rule to the actual measured admitted pool.
 /// The ranker selector keeps input order on equal F values.
-fn select_od13_reveals(round: u64, measured: &[RecordedReveal]) -> Result<Vec<RecordedReveal>> {
+fn select_od13_indices(round: u64, measured: &[RecordedReveal]) -> Result<Vec<usize>> {
     if round == 0 {
         ensure!(
             measured.is_empty(),
@@ -238,10 +265,7 @@ fn select_od13_reveals(round: u64, measured: &[RecordedReveal]) -> Result<Vec<Re
         .collect();
     let selected = select_revealed(&candidates, RevealedRule::SurrogateFitness)
         .context("OD13 could not select four measured reveals")?;
-    Ok(selected
-        .into_iter()
-        .map(|index| measured[index].clone())
-        .collect())
+    Ok(selected.into_iter().collect())
 }
 
 pub(crate) fn digest(bytes: &[u8]) -> String {
@@ -276,27 +300,22 @@ mod od13_tests {
             reveal(5, 3.0),
         ];
 
-        let selected = select_od13_reveals(1, &measured).unwrap();
+        let selected = select_od13_indices(1, &measured).unwrap();
 
-        assert_eq!(
-            selected
-                .iter()
-                .map(|entry| entry.program.program_sha256.clone())
-                .collect::<Vec<_>>(),
-            [4, 1, 3, 2].map(|index| format!("{index:064x}"))
-        );
-        assert_eq!(selected[0].gate, measured[4].gate);
-        assert_eq!(selected[1].gate, measured[1].gate);
+        assert_eq!(selected, [4, 1, 3, 2]);
+        assert_eq!(measured[selected[0]].gate, measured[4].gate);
+        assert_eq!(measured[selected[1]].gate, measured[1].gate);
     }
 
     #[test]
     fn od13_refuses_short_or_nonfinite_measured_pools_and_round_zero_reveals() {
-        assert!(select_od13_reveals(1, &[reveal(0, 1.0); 3]).is_err());
+        let short = (0..3).map(|index| reveal(index, 1.0)).collect::<Vec<_>>();
+        assert!(select_od13_indices(1, &short).is_err());
         let mut nonfinite = vec![reveal(0, 1.0); 4];
         nonfinite[2].surrogate = f64::NAN;
-        assert!(select_od13_reveals(1, &nonfinite).is_err());
-        assert!(select_od13_reveals(0, &[reveal(0, 1.0)]).is_err());
-        assert!(select_od13_reveals(0, &[]).unwrap().is_empty());
+        assert!(select_od13_indices(1, &nonfinite).is_err());
+        assert!(select_od13_indices(0, &[reveal(0, 1.0)]).is_err());
+        assert!(select_od13_indices(0, &[]).unwrap().is_empty());
     }
 }
 
