@@ -2988,6 +2988,13 @@
         "fitting"
       ]
     },
+    "target:jope-appliance/test/store_transport": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration",
+        "storage"
+      ]
+    },
     "target:jope-appliance/test/system": {
       "role": "regression",
       "subsystems": [
