@@ -5,16 +5,16 @@
       "schema": "whitepaper.historical-target-history/v1",
       "source_commit": "54f1023225364cefbb49ba7ee12ad967dddf3ce8",
       "inputs": {
-        "selected-historical-cut.csv": "1cb4393428d78ecfbea1d36aa1b33ea2acd5028aa1f760662d09dc994fd611b9",
-        "comparisons.csv": "1a3e32526308ce26b4808b0a1a34a651a503f5419ba2343a06751e7bbec87ad9",
-        "carry-forward-audit.json": "3408b07474073fab456019a901afdc6d2e82cca96d711540b00dd28beb81e401"
+        "docs/internal/asm-manual/data/target-history/target-quality-pine-chromium-cut1.csv": "1cb4393428d78ecfbea1d36aa1b33ea2acd5028aa1f760662d09dc994fd611b9",
+        "docs/internal/asm-manual/data/target-history/target-quality-1000-comparisons.csv": "1a3e32526308ce26b4808b0a1a34a651a503f5419ba2343a06751e7bbec87ad9",
+        "docs/internal/asm-manual/data/target-history/carry-forward-audit.json": "3408b07474073fab456019a901afdc6d2e82cca96d711540b00dd28beb81e401"
       },
       "selection": "Post-hoc example: largest first-to-last relative reduction in the policy-seeded 1000-evaluation comparison subset",
       "rows": 213,
       "generations_per_arm": 71,
       "completed_evaluations_per_search": 1000,
       "comparison_identity_sha256": "8281e9021455842eafdf2bb00b2d54598408bb9ec9a2dda366cb69bda9ac4c03",
-      "score": "best_validation_rmse; historical normalized training-fold RMSE units; lower is better",
+      "score": "best_validation_rmse; historical featmath_training_fold_normalized_v1 units; lower is better",
       "transformation": "All raw reported scores retained; no cumulative minimum, smoothing or interpolation",
       "first_generation_reporting_final_value": {
         "Policy-seeded": 43,
@@ -30,19 +30,19 @@
         "Checkpoint exposure of improved targets to later optimizer batches remains unjoined"
       ],
       "csv_sha256": "e87d9de6aadbdd0e5e2bd0fd3a289dbbaa26ac0dd948e349a07368b33844e72d",
-      "generator_sha256": "c7fd13d6e8709aaa28f448a29d5c040b2e3522f165e0260d4eb09d69b859d32e",
-      "reproduce": "python3 figures/scripts/make_promotions_figure.py --target-history --source-dir INPUT_DIR"
+      "generator_sha256": "de7cd7032cf0beb312d7c353fb582081b3669ae540872e23045d8dfbc7db2663",
+      "reproduce": "python3 figures/scripts/make_promotions_figure.py --target-history"
     },
     "target_progress": {
       "schema": "whitepaper.historical-target-progress/v1",
       "source_commit": "569324b7760a95be26e817ce843b2430e32095fb",
       "inputs": {
-        "comparisons.csv": "1a3e32526308ce26b4808b0a1a34a651a503f5419ba2343a06751e7bbec87ad9",
-        "summary.csv": "df0445e3f3b29a7aeac4fb54b5fa056fc5a7362c687be4617c6f73dd9f3b6d1d",
-        "carry-forward-audit.json": "3408b07474073fab456019a901afdc6d2e82cca96d711540b00dd28beb81e401"
+        "docs/internal/asm-manual/data/target-history/target-quality-1000-comparisons.csv": "1a3e32526308ce26b4808b0a1a34a651a503f5419ba2343a06751e7bbec87ad9",
+        "docs/internal/asm-manual/data/target-history/target-quality-1000-summary.csv": "df0445e3f3b29a7aeac4fb54b5fa056fc5a7362c687be4617c6f73dd9f3b6d1d",
+        "docs/internal/asm-manual/data/target-history/carry-forward-audit.json": "3408b07474073fab456019a901afdc6d2e82cca96d711540b00dd28beb81e401"
       },
       "selection": "All 159 merged comparison rows; first versus last retained generation per arm group",
-      "score": "best_validation_rmse; historical normalized training-fold RMSE units; lower is better",
+      "score": "best_validation_rmse; historical featmath_training_fold_normalized_v1 units; lower is better",
       "outcome_rule": "Exact parsed score comparisons (<, ==, >); no epsilon or added cumulative minimum",
       "completed_evaluations_per_search": 1000,
       "arm_groups": 159,
@@ -57,12 +57,12 @@
         "Original score/seed payloads were not reopened; seed audit is retained metadata"
       ],
       "csv_sha256": "339fc00f3a17cc7ebf2ee49d5c2899e3aa5ddf8b7e570fd4a7bae0a107084ee6",
-      "generator_sha256": "c7fd13d6e8709aaa28f448a29d5c040b2e3522f165e0260d4eb09d69b859d32e",
-      "reproduce": "python3 figures/scripts/make_promotions_figure.py --target-progress --source-dir INPUT_DIR"
+      "generator_sha256": "de7cd7032cf0beb312d7c353fb582081b3669ae540872e23045d8dfbc7db2663",
+      "reproduce": "python3 figures/scripts/make_promotions_figure.py --target-progress"
     },
     "program_promotions": {
       "schema": "whitepaper.development-program-promotions/v1",
-      "source_run": "retained-development-run",
+      "source_run": "run-20261030 (retained development run; host and path withheld)",
       "snapshot": {
         "at": "2026-10-31T06:23:19.717660+00:00",
         "kind": "read-only complete-line development-log prefixes; no dataset or weight files read",
@@ -108,6 +108,10 @@
         "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83"
       ],
       "metric_definition": "summary.val_reg = candidate_dev_utility.val_reg; larger logged utility is better",
+      "code_references": [
+        "research/flywheel_selfplay/automatic_promotion.py:206",
+        "crates/jope-telemetry/src/hooks/flywheel.rs:362"
+      ],
       "source_binding": "Inspected code explains fields; the installed run source/checkpoint binding remains required",
       "scope": "Development telemetry; no sealed data, final test or one-proposal comparison",
       "csv_sha256": "a5c6be48052332bfad27ad12145fc34ce07434759d71eb1e77cda7ef596d04b6",
@@ -162,11 +166,16 @@
         "candidate_validation_utility": "summary.val_reg = candidate_dev_utility.val_reg = adapter_admission.candidate_utility",
         "recorded_best_validation_utility": "dev_utility.val_reg = adapter_admission.best_utility"
       },
+      "code_references": [
+        "research/flywheel_selfplay/automatic_promotion.py:206-273",
+        "research/flywheel_selfplay/dev_incumbent.py:524-570",
+        "crates/jope-telemetry/src/hooks/flywheel.rs:362-365"
+      ],
       "interpretation_source_commit": "b2c04a846194bda01310d762d646c8a2a91d26cf",
       "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
       "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
       "csv_sha256": "86330546dae0f686132c422a4066f74ace1404287a372548e85f9b4609b2839a",
-      "extraction_script_sha256": "8d01960d5e99e755966775b0b347f7cf0e4d6e00a586996192b4696621b89a31",
+      "extraction_script_sha256": "c319ec407fb06b0f839a1270239dda41beb50c77b76c119e852a45c36bbb88ec",
       "reproduce": "python3 figures/scripts/make_recent_development_figure.py --logs SNAPSHOT_DIR"
     },
     "followup_development": {
@@ -218,11 +227,16 @@
         "candidate_validation_utility": "summary.val_reg = candidate_dev_utility.val_reg = adapter_admission.candidate_utility",
         "recorded_best_validation_utility": "dev_utility.val_reg = adapter_admission.best_utility"
       },
+      "code_references": [
+        "research/flywheel_selfplay/automatic_promotion.py:206-273",
+        "research/flywheel_selfplay/dev_incumbent.py:524-570",
+        "crates/jope-telemetry/src/hooks/flywheel.rs:362-365"
+      ],
       "interpretation_source_commit": "b2c04a846194bda01310d762d646c8a2a91d26cf",
       "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
       "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
       "csv_sha256": "a5e5fbc19ac048b851b8b17640e50e59bfc5456234c706823b8df530f373bed1",
-      "extraction_script_sha256": "8d01960d5e99e755966775b0b347f7cf0e4d6e00a586996192b4696621b89a31",
+      "extraction_script_sha256": "c319ec407fb06b0f839a1270239dda41beb50c77b76c119e852a45c36bbb88ec",
       "reproduce": "python3 figures/scripts/make_recent_development_figure.py --follow-up --logs SNAPSHOT_DIR"
     },
     "later_development": {
@@ -284,11 +298,16 @@
         "completed_round_wall_seconds": "summary.wall_seconds; rates divide total completed rounds or strict program promotions by their summed wall time",
         "reported_best_round": "adapter_admission.best_round; a logged identity, not the first strict increase in utility"
       },
+      "code_references": [
+        "research/flywheel_selfplay/automatic_promotion.py:206-273",
+        "research/flywheel_selfplay/dev_incumbent.py:524-570",
+        "crates/jope-telemetry/src/hooks/flywheel.rs:316-338,362-365"
+      ],
       "interpretation_source_commit": "a13afb4fe8f98b5f9b17fbd8c77650b4c8ba9343",
       "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
       "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
       "csv_sha256": "1b4600aaf84769efb6f3b4c24db4a5d68d281480731d2f2a8d37d5459fae909f",
-      "extraction_script_sha256": "8d01960d5e99e755966775b0b347f7cf0e4d6e00a586996192b4696621b89a31",
+      "extraction_script_sha256": "7df1b7c9f1351defec4c6643c10056568d3e20c6c46c868b0ac12e2c2d6eeeb6",
       "reproduce": "python3 figures/scripts/make_recent_development_figure.py --later-window --logs SNAPSHOT_DIR",
       "figure_sha256": "0e7eb24a1eea488cc530ed3f75f56f4a33d4530365902b44bb7befe57e4ed95a",
       "matplotlib_version": "3.10.8"
@@ -365,11 +384,16 @@
         "completed_round_wall_seconds": "summary.wall_seconds; rates divide total completed rounds or strict program promotions by their summed wall time",
         "reported_best_round": "adapter_admission.best_round; a logged identity, not the first strict increase in utility"
       },
+      "code_references": [
+        "research/flywheel_selfplay/automatic_promotion.py:206-273",
+        "research/flywheel_selfplay/dev_incumbent.py:524-570",
+        "crates/jope-telemetry/src/hooks/flywheel.rs:316-338,362-365"
+      ],
       "interpretation_source_commit": "fea10d2c15ae8544cfc851ce4d79755041120473",
       "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
       "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
       "csv_sha256": "a4999500f97cb98c3ef3fd3bab0bb42aa4e91982997923c28d095f08691adabd",
-      "extraction_script_sha256": "19aa25fc6bae13f774ad916bd484c64745da906b6ec55694b6d95aff045a6b04",
+      "extraction_script_sha256": "d228427829cb8224d65e2205573fc94fe778c6b38c14672e86c6a845db373e16",
       "reproduce": "python3 figures/scripts/make_subsequent_window_figure.py --logs SNAPSHOT_DIR",
       "figure_sha256": "48991bdef87341dc6668078f0deddc9a9ccc2b48f211163db73d0c11ad7db8e7",
       "matplotlib_version": "3.10.8",
