@@ -233,9 +233,11 @@ without updating the writer.
 Closed-out development studies evaluate a frozen reference adapter and its
 modifications, rather than the writer's independent first proposals.
 The first three studies use 1,219 development-training contexts from
-205 families, three seeds with different five-way family partitions,
-and fitting restricted to folds disjoint from evaluation and selection
-panels. Fits or settings were locked before outer-fold evaluation.
+205 families and three seeds with different five-way family partitions.
+Prior fitting and gradient-clipping continuations exclude evaluation and
+selection families. Test-time adaptation uses only the four revealed
+candidates in each context and resets its weights after scoring.
+Fits or settings were locked before outer-fold evaluation.
 Contexts are averaged within families; families receive equal weight.
 Utility-gain intervals use 10,000 paired-family bootstrap draws shared
 across seeds and summarize the median seed gain. Reported intervals are
