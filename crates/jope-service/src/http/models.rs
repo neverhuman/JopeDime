@@ -184,7 +184,14 @@ fn export_champion(
         .parse()
         .map_err(|_| integrity())?;
     let (fit, fit_record) = object(state, &fit_id)?;
-    if fit.id() != receipt.holdout_model_digest || fit_record.data["refit"] != json!(Refit::Fit) {
+    if fit.id() != receipt.holdout_model_digest
+        || fit_record.data["refit"] != json!(Refit::Fit)
+        || fit
+            .manifest()
+            .metadata
+            .get("run_id")
+            .is_some_and(|v| v != &json!(run))
+    {
         return Err(integrity());
     }
     Ok((fit, fit_record))
@@ -1140,11 +1147,17 @@ mod tests {
             .map(|b| state.store.publish_blob(b).unwrap())
             .collect();
         let completed = json!({"run_id":run,"algorithm_id":"alg_0001","model_artifact":full_id,"model_digest":full.id(),"model_path":"unused","refit":"fit_holdout","scores":{"cv":0.25,"holdout":0.2,"test":null},"completion_reason":"budget_evaluations","budget_bound_by":"evaluations","budget_used":{"evaluations":"1","wall_seconds":"0.1"},"nondeterminism":{"count":"0","experiment_ids":[]},"holdout_model_digest":fit.id(),"holdout_scope":"holdout_scored_with_fit_only_model","test_scope":null,"fit_rows":4,"holdout_rows":1,"test_rows":0,"audit":null});
+        let _: crate::discover::finalize::FinalizationReceipt =
+            serde_json::from_value(completed.clone()).unwrap();
         let command = RecordKey::Command {
             principal: "discover.finalization.v1".into(),
             idempotency_key: run.to_string(),
         };
         state.store.transaction(|tx|{
+            let fit_key=RecordKey::Artifact(fit_id.clone());
+            let mut fit_record=tx.get(&fit_key)?.unwrap();
+            fit_record.data["refit"]=json!(Refit::Fit);
+            tx.put(&fit_key,&fit_record)?;
             tx.put(&RecordKey::Artifact(full_id.clone()),&Record::metadata(json!({"kind":"finalized_model","model_digest":full.id(),"refit":"fit_holdout"}),refs))?;
             let key=RecordKey::Run(run.clone());let mut record=tx.get(&key)?.unwrap();record.data["snapshot"]["best"]["model_artifact"]=json!(full_id);tx.put(&key,&record)?;
             tx.put(&command,&Record::metadata(json!({"state":"completed","receipt":completed}),vec![]))
