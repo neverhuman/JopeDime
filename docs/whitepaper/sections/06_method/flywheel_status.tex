@@ -59,7 +59,7 @@ proposals by predicted cost is optimized; the encoder and other modules
 stay frozen. This loop has no neural program writer. Its pool-utility
 calculation uses the recorded scores and gate outcomes of
 the first four candidates as revealed history, then selects the candidate
-with the lowest predicted score from the pool, including those entries.
+with the lowest predicted cost from the pool, including those entries.
 This is a conditional ranking task, separate from a single new program drawn by the
 historical writer.
 Training puts the lowest recorded scores first in its slates; utility
@@ -210,7 +210,8 @@ not one-proposal deployment; the program events concern training incumbents.
 \Cref{app:development-time} plots the earlier retained window against
 accumulated completed-round time, \cref{app:event-counts} groups the three
 retained windows by training-program event count, and
-\cref{app:subsequent-window} retains a separate subsequent window.
+\cref{app:subsequent-window,app:subsequent-rates} show a subsequent window
+and its work and event rates.
 
 Program-incumbent gains, adapter admissions and historical target scores
 measure different outcomes. \Cref{sec:results} specifies the independent
