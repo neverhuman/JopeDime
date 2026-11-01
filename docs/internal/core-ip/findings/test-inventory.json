@@ -1615,6 +1615,10 @@
       "reason": "REL-07 A2 provider orchestration controls; synthetic candidate/children only, no live release or scientific data execution",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/v1.0/test_provider_a4/test_a4.py": {
+      "reason": "REL-07 PR1406 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/v1.0/test_provider_a5/test_a5.py": {
       "reason": "REL-07 A5 named-client provider controls (manifest, sidecar and receipt refusal proofs over synthetic evidence); no live client, release or dataset job executes",
       "role": "infrastructure"
