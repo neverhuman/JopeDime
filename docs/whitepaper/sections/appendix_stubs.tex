@@ -89,14 +89,14 @@ checkpoint in \cref{sec:method}, separate from the later adapter snapshot
 in \cref{sec:method-status}:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Board encoder blocks (\cref{sub:method-board}).} The frozen
-  \num{2048}-value context $z_p = \encP(p)$ concatenates three blocks:
-  (i)~\num{512} values pooling a \num{128}-dimensional pretrained row encoder
-  across training rows by mean, standard deviation, and 10th and 90th
-  percentiles; (ii)~\num{1024} values from a projected third-party tabular
-  regressor hidden state capped at \num{768} context rows and \num{256} query
+  \num{2048}-value context $z_p = \encP(p)$ joins three blocks:
+  (i)~\num{512} pooled values from a pretrained row encoder of width \num{128}
+  across training rows by mean, population standard deviation, and 10th and 90th
+  percentiles; (ii)~\num{1024} values projected from a \num{2048}-value third-party tabular
+  regressor state capped at \num{768} context rows and \num{256} query
   rows (Foundation, version \texttt{foundation\_enc.v1.tabpfn}; license: proprietary, available on request; redistribution prohibited); and (iii)~\num{512} values from two
-  frozen target-summary windows initialized with fixed seed~17. Any context
-  with a non-finite entry is refused rather than imputed. Encoding records
+  frozen seed-17 target-summary windows. Each block is normalized before
+  concatenation and clipping to $\pm32$. Non-finite contexts are refused. Encoding records
   report wall-clock latency from 11.7\,s to 20.8\,s across eight reference
   encoding jobs, within the 30\,s cap.
   \item \textbf{Objective terms and parameter split (\cref{sub:method-map,sub:method-selfplay}).}
@@ -117,8 +117,8 @@ in \cref{sec:method-status}:
   90th percentile. The network has \num{27796494} parameters in total (six
   decoder blocks, width \num{512}, four attention heads, prefix context token,
   and maximum length \num{128} tokens over the \num{401}-token grammar);
-  approximately \num{1.05} million parameters belong to ranking and control
-  heads. Token decoding bypasses them, but the native checkpoint loader
+  approximately \num{6.90} million parameters lie outside the writer's token
+  generation path. Decoding bypasses them, but the native checkpoint loader
   still requires them.
   \item \textbf{Optimization notes (\cref{sub:method-selfplay}).}
   The records describe AdamW training (learning rate $10^{-4}$,

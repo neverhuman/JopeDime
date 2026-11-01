@@ -54,7 +54,11 @@ class U2Tests(unittest.TestCase):
     def run_child(self, args, **kwargs):
         self.calls.append(args)
         if args[:2] == ["git", "rev-parse"]:
-            output = "b" * 40 if self.mutate_source_after_test and self.tests else self.source
+            output = (
+                "b" * 40
+                if self.mutate_source_after_test and self.tests
+                else self.source
+            )
             return subprocess.CompletedProcess(args, 0, output, "")
         if args[:2] == ["git", "status"]:
             return subprocess.CompletedProcess(args, 0, self.dirty, "")
@@ -71,9 +75,7 @@ class U2Tests(unittest.TestCase):
                     }
                 )
             else:
-                output = json.dumps(
-                    {"schema": "jope.appliance-verify/v1", "ok": True}
-                )
+                output = json.dumps({"schema": "jope.appliance-verify/v1", "ok": True})
             return subprocess.CompletedProcess(args, 0, output, "")
         test = next(value for value in u2.TESTS if value in args)
         self.tests.append(test)
@@ -116,7 +118,7 @@ class U2Tests(unittest.TestCase):
     def test_zero_wrong_skipped_measured_or_multiple_cases_refuse(self):
         outputs = (
             "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n",
-            f"test other::case ... ok\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n",
+            "test other::case ... ok\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n",
             f"test {u2.TESTS[0]} ... ignored\ntest result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 500 filtered out\n",
             f"test {u2.TESTS[0]} ... ok\ntest result: ok. 1 passed; 0 failed; 0 ignored; 1 measured; 500 filtered out\n",
             f"test {u2.TESTS[0]} ... ok\ntest {u2.TESTS[0]} ... ok\ntest result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n",

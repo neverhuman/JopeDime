@@ -7,9 +7,9 @@
 \section{EurekaZero: Learning Taste}\label{sec:method}
 
 The accepted native checkpoint route is limited to tabular regression.
-Verified search supplies scored programs for the reference writer and map.
-The proposed regression deployment protocol permits one writer draw,
-with the map absent.
+The reference learning loop trains a writer and map on search-scored programs.
+The native training entry point is held at its grant gate.
+Proposed regression deployment permits one writer draw, with the map absent.
 We describe the historical reference first, then the later
 adapter-ranking record in \cref{sec:method-status}. Ranking a pool and
 proposing a new program are different tasks. The writer's first-proposal
@@ -49,8 +49,8 @@ training. Encoding is bounded at 30 seconds per problem. A context with any non-
 rather than imputed (\cref{app:training}). The input contract permits
 training-side task evidence only; final held-out labels and their derived
 statistics must stay outside the input closure. A context's recorded
-declaration that no final target was used is part of the audit trail,
-not a substitute for checking that closure.
+declaration that no final target was used establishes neither input closure
+nor numerical qualification. CPU contexts require native replay and bounded-execution receipts before accepted-policy use.
 
 Whether problems with similar best programs sit together requires a
 separate representation study; \cref{sub:results-ablation} reserves that test.
@@ -67,10 +67,10 @@ that the writer avoids programs that parse but crash or lose. A program's
 identity is the SHA-256 hash of its canonical form. A separate hash of
 predictions on fixed training probes flags matching observed outputs.
 Those matches do not establish equivalence on other inputs. Without probe
-evidence, this behavior check reports novelty as unknown. The reference
-procedure calls for readable Python and Rust recipe exports that fit on
-the task's training rows. Reported winners also require the native--emitted
-parity check in \cref{sub:method-referee}.
+evidence, this behavior check reports novelty as unknown. Readable Python
+and Rust exports are a reference requirement. Legacy recipe emitters reject
+the synthesized input stage; the separate fitted-state path is allowlisted.
+Reported winners still require the parity check in \cref{sub:method-referee}.
 % Source trace (implementation, not retained-checkpoint qualification):
 % crates/jope-policy/src/decode.rs:4--12,580--584 (legal tokens; decode/parse gate);
 % crates/jope-policy/src/model.rs:9--16,558--600 (separate writer/ranking paths).
@@ -115,14 +115,14 @@ tests what the writer has learned.
 \end{keyidea}
 
 In the native implementation, the writer and map use separate context
-networks and token embeddings. The map ranks the draft pool; it drops no draft and does
-not condition or screen the writer's draw. In the native search, however,
-those ranks weight which seeded survivors are chosen as parents, so the map
-can shape the programs that reach the writer's training lists. The writer's
-loss still weights programs by referee rank. Ranking agreement, including
-comparison with the program-only control, assesses the map's ranking;
-attributing better proposals to the map would require a matched ablation
-(\cref{sub:results-ablation}).
+networks and token embeddings. The map ranks the draft pool without
+dropping drafts or screening the writer. One native GP route weights
+seeded-survivor parent selection by map rank. The bounded search driver
+instead cycles among up to four parents selected by measured loss. The map's
+influence on training therefore depends on the search route. The writer's
+loss weights programs by referee rank. Ranking agreement with the referee
+and program-only control assesses ranking; better proposals require a
+matched ablation (\cref{sub:results-ablation}).
 % Source trace: crates/jope-policy/src/seeds.rs (assemble_population attaches
 % rank_log_weight); crates/jope-engine/src/gp.rs (policy_weighted_parent picks
 % the left parent for mutation and crossover).

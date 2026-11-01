@@ -10,7 +10,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-from common import Context, ProviderError, context, rust_counts, sha256, verify_candidate
+from common import (
+    Context,
+    ProviderError,
+    context,
+    rust_counts,
+    sha256,
+    verify_candidate,
+)
 
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -76,7 +83,9 @@ def check_binding(ctx: Context, run) -> None:
     ):
         result = run(args, cwd=ROOT, capture_output=True, text=True, check=False)
         if result.returncode != 0 or result.stdout.strip() != expected:
-            raise ProviderError("U2 requires the clean candidate-pinned source checkout")
+            raise ProviderError(
+                "U2 requires the clean candidate-pinned source checkout"
+            )
 
 
 def case_counts(output: str, test: str) -> dict[str, int]:
@@ -92,7 +101,9 @@ def qualify(ctx: Context, run=None, system: str | None = None) -> int:
     run = subprocess.run if run is None else run
     system = platform.system() if system is None else system
     if system != "Linux":
-        raise ProviderError("U2 currently has exact terminal restoration acceptance tests only on Linux")
+        raise ProviderError(
+            "U2 currently has exact terminal restoration acceptance tests only on Linux"
+        )
 
     check_binding(ctx, run)
     verify_candidate(ctx, run=run)

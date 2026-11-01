@@ -18,6 +18,8 @@ import subprocess
 import tempfile
 import time
 
+import q1_bindings
+
 HERE = Path(__file__).resolve().parent
 PREREGISTRATION = HERE.parent / "PREREGISTRATION.md"
 PLAN_KEYS = {
@@ -189,6 +191,7 @@ def validate_plan(plan, preregistration=PREREGISTRATION):
             and all(sha(v) for v in plan["pins"].values()),
             "all qualification identities must be pinned",
         )
+        q1_bindings.validate_pins(plan["pins"])
         require(
             isinstance(plan["training_families"], list)
             and plan["training_families"]

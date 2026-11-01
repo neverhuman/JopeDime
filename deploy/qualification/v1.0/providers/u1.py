@@ -10,7 +10,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-from common import Context, ProviderError, context, rust_counts, sha256, verify_candidate
+from common import (
+    Context,
+    ProviderError,
+    context,
+    rust_counts,
+    sha256,
+    verify_candidate,
+)
 
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -72,7 +79,9 @@ def check_binding(ctx: Context, run) -> None:
     ):
         result = run(args, cwd=ROOT, capture_output=True, text=True, check=False)
         if result.returncode != 0 or result.stdout.strip() != expected:
-            raise ProviderError("U1 requires the clean candidate-pinned source checkout")
+            raise ProviderError(
+                "U1 requires the clean candidate-pinned source checkout"
+            )
 
 
 def case_counts(output: str, test: str) -> dict[str, int]:
