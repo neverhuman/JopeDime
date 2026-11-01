@@ -1985,10 +1985,6 @@
       "reason": "Owner-requested H152 data-free controls for the zero-update checkpoint soup readout, resource guards and source binding; no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
       "role": "research"
     },
-    "python:research/flywheel_selfplay/h160_trajectory_subspace/test_h160.py": {
-      "reason": "Owner-requested H160 data-free controls for trajectory-subspace projected continuation (basis, projection, drift match, strict selection, decision, supervisor); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
-      "role": "research"
-    },
     "python:research/flywheel_selfplay/h153_sam/test_h153.py": {
       "reason": "Owner-requested H153 SAM/ASAM data-free registration, manipulation and resource-stop controls; offline research only.",
       "role": "research"
@@ -2011,6 +2007,10 @@
     },
     "python:research/flywheel_selfplay/h159_fail_logit_veto/test_h159.py": {
       "reason": "H159 data-free fail-logit gate-veto continuation and family bootstrap controls; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h160_trajectory_subspace/test_h160.py": {
+      "reason": "Owner-requested H160 data-free controls for trajectory-subspace projected continuation (basis, projection, drift match, strict selection, decision, supervisor); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
@@ -2227,6 +2227,10 @@
     },
     "python:research/h156/test_h156.py": {
       "reason": "H156 data-free 5-fold family cross-fit early stopping and {0.5x, 1x, 2x} adapter capacity sweep scientific controls; offline research only.",
+      "role": "research"
+    },
+    "python:research/h162/test_h162.py": {
+      "reason": "H162 cosine warm-restart LR schedule with snapshot selection vs LR-matched control unit tests",
       "role": "research"
     },
     "python:research/joint_regbin/test_binary_dataset.py": {
