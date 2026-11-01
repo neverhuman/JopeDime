@@ -4095,6 +4095,38 @@
         "role": "research",
         "reason": "H156 owner-directed 5-fold family cross-fit early stopping and {0.5x, 1x, 2x} capacity sweep continuation from r882: nested family isolation, durable selection lock before outer assessment, dual 1219-ctx H145 train-only and 91-ctx DL-Val Elo/bootstrap reporting, bytewise frozen DOPE/anchor state, and bounded resources. Research only; no product or sealed-test qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h158_distillation/runtime.py": {
+      "bytes": 7515,
+      "sha256": "7399d1f62e6ee11a00dda435d6048222c5bb4f29cb401fe66ed1082c326022b4",
+      "classification": {
+        "role": "research",
+        "reason": "H158 owner-directed fit-only frozen-teacher KL distillation, full-context gate veto, KD-three Holm family, strict ties/completeness, frozen state and bounded offline CPU resources. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h158_distillation/science.py": {
+      "bytes": 5680,
+      "sha256": "fb26f152ff7cf735835be887ee3bde0365007045f6d3a7c312781b39ae81ff19",
+      "classification": {
+        "role": "research",
+        "reason": "H158 owner-directed fit-only frozen-teacher KL distillation, full-context gate veto, KD-three Holm family, strict ties/completeness, frozen state and bounded offline CPU resources. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h158_distillation/monitor.py": {
+      "bytes": 5354,
+      "sha256": "c9394a63f1cbdb23878302596aa51c922741d43c092cca8cff242c8018a6b9e1",
+      "classification": {
+        "role": "research",
+        "reason": "H158 owner-directed fit-only frozen-teacher KL distillation, full-context gate veto, KD-three Holm family, strict ties/completeness, frozen state and bounded offline CPU resources. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h158_distillation/runner.py": {
+      "bytes": 24601,
+      "sha256": "9e7babd00b0df66ab4c60d474ee04ef59341f879c1f6ad901881993f1459fc74",
+      "classification": {
+        "role": "research",
+        "reason": "H158 owner-directed fit-only frozen-teacher KL distillation, full-context gate veto, KD-three Holm family, strict ties/completeness, frozen state and bounded offline CPU resources. Research only; no product/sealed qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
