@@ -87,7 +87,7 @@ def test_candidate_fixed_before_b_read_and_snapshot_search_forbidden(tmp_path):
     r882 = np.zeros(len(rows), dtype=np.float64)
     multi_step = np.zeros((3, len(rows), 4), dtype=np.float64)
     with pytest.raises(ValueError, match="snapshot search forbidden"):
-        stat.pooled_b_select(rows, r882, {"ACC4": multi_step})
+        stat.pooled_b_select(rows, r882, {arm: multi_step for arm in stat.ARMS})
 
     # Writing a valid pooled_b_selection_lock.json unlocks Stage 2 A confirmation.
     single_step = {arm: np.zeros((3, len(rows)), dtype=np.float64) for arm in stat.ARMS}
@@ -240,21 +240,91 @@ def test_h175_power_anchor_gate_mde80_scaling_and_h178_reusable_decision_object(
     )
     validate_h175_power_anchor(ready, smoke=False)
 
-    # Verify H177_DECISION_RULE is importable as one object and reusable unchanged by H178 on single or custom panels.
+    # Verify H177_DECISION_RULE requires exact 4-arm multiplicity (m=4 Holm) and rejects single-panel m=1 shortcuts.
     rows = _synthetic_1219_rows()
     rng = np.random.default_rng(177909)
     r882 = rng.normal(1.15, 0.25, size=len(rows))
     null_panel = np.broadcast_to(r882[None, :], (3, len(rows))).copy()
-    plus_panel = np.stack([r882 + 0.015 for _ in range(3)])
-    single_null = stat.H177_DECISION_RULE(rows, r882, null_panel)
-    assert single_null["admitted"] is False and single_null["selected_step"] == 0
-    single_plus = stat.H177_DECISION_RULE.decide_single_panel(rows, r882, plus_panel)
-    assert single_plus["admitted"] is True and single_plus["selected_step"] == 40
-    custom_bank = stat.H177_DECISION_RULE.select(
-        rows, r882, {"H175_NULL": null_panel, "H175_ORACLE_005": plus_panel}
+    with pytest.raises(ValueError, match="exact 4-arm H177 multiplicity required"):
+        stat.H177_DECISION_RULE(rows, r882, null_panel)
+    with pytest.raises(ValueError, match="exact 4-arm H177 multiplicity required"):
+        stat.H177_DECISION_RULE(rows, r882, {"CANDIDATE": null_panel})
+
+    # Red-team regression control: 4 of 205 families gain +0.06 (mean +0.00117073, LCB +0.00029268, p=0.016098).
+    # Unadjusted m=1 would admit (unadjusted_admitted == True), whereas 4-arm Holm (m=4, holm_p = 0.064394 >= 0.05) rejects all 4 arms!
+    fams_sorted = sorted({r["family_id"] for r in rows})
+    active_4_fams = set(fams_sorted[:4])
+    sparse_4fam_panel = np.broadcast_to(r882[None, :], (3, len(rows))).copy()
+    for idx, r in enumerate(rows):
+        if r["family_id"] in active_4_fams:
+            sparse_4fam_panel[:, idx] += 0.06
+    sparse_4arm_decisions = stat.H177_DECISION_RULE(
+        rows,
+        r882,
+        {arm: sparse_4fam_panel.copy() for arm in stat.ARMS},
+        seed=stat.BOOT_SEED,
     )
-    assert custom_bank["H175_NULL"]["admitted"] is False
-    assert custom_bank["H175_ORACLE_005"]["admitted"] is True
+    for arm in stat.ARMS:
+        d = sparse_4arm_decisions[arm]
+        assert math.isclose(d["mean_gain"], 4.0 * 0.06 / 205.0, rel_tol=1e-12)
+        assert math.isclose(d["ci95"][0], 0.06 / 205.0, rel_tol=1e-12)
+        assert d["p_one_sided"] < 0.05
+        assert d["unadjusted_admitted"] is True
+        assert d["holm_multiplicity"] == 4
+        assert d["holm_p"] > 0.05
+        assert d["admitted"] is False
+        assert d["selected_step"] == 0
+
+    # Verify programmatic separation of candidate_admitted vs lift_qualified via resolve_h177_verdict.
+    v_no = stat.resolve_h177_verdict(False, h178_receipt=None)
+    assert v_no["verdict"] == "NO_ADVANCE" and v_no["lift_qualified"] is False
+    v_pend = stat.resolve_h177_verdict(True, h178_receipt=None)
+    assert (
+        v_pend["verdict"] == "DIAGNOSTIC_PENDING_H178"
+        and v_pend["lift_qualified"] is False
+    )
+    v_fail_rate = stat.resolve_h177_verdict(
+        True,
+        h178_receipt={
+            "wave": "H178",
+            "status": "COMPLETE",
+            "null_and_harmful_admission_le_005": False,
+            "max_null_or_harmful_admission_rate": 0.0839,
+            "replayed_four_arm_holm_m": 4,
+            "h177_analysis_sha256": "abc",
+        },
+        expected_analysis_sha256="abc",
+    )
+    assert (
+        v_fail_rate["verdict"] == "DIAGNOSTIC"
+        and v_fail_rate["lift_qualified"] is False
+    )
+    v_fail_m1 = stat.resolve_h177_verdict(
+        True,
+        h178_receipt={
+            "wave": "H178",
+            "status": "COMPLETE",
+            "null_and_harmful_admission_le_005": True,
+            "max_null_or_harmful_admission_rate": 0.01,
+            "replayed_four_arm_holm_m": 1,
+            "h177_analysis_sha256": "abc",
+        },
+        expected_analysis_sha256="abc",
+    )
+    assert v_fail_m1["verdict"] == "DIAGNOSTIC" and v_fail_m1["lift_qualified"] is False
+    v_pass = stat.resolve_h177_verdict(
+        True,
+        h178_receipt={
+            "wave": "H178",
+            "status": "COMPLETE",
+            "null_and_harmful_admission_le_005": True,
+            "max_null_or_harmful_admission_rate": 0.005,
+            "replayed_four_arm_holm_m": 4,
+            "h177_analysis_sha256": "abc",
+        },
+        expected_analysis_sha256="abc",
+    )
+    assert v_pass["verdict"] == "ADVANCE" and v_pass["lift_qualified"] is True
 
 
 def test_recipe_arms_family_stratified_batches_oc15_and_none_grad_handling():

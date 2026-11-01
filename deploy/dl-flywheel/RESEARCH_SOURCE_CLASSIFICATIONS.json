@@ -4529,8 +4529,8 @@
       }
     },
     "python:research/flywheel_selfplay/h177_pooled_selector/analysis.py": {
-      "bytes": 19690,
-      "sha256": "e54c61e8c7215e77ec4435a2d3294e6eb07651dbb6d7a0cad1de939fdba8ad13",
+      "bytes": 22246,
+      "sha256": "707c4903a77d48ffc8ae14c820a626df5c2858d3d24df35db3f9718d120bafc4",
       "classification": {
         "role": "research",
         "reason": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification."
@@ -4545,8 +4545,8 @@
       }
     },
     "python:research/flywheel_selfplay/h177_pooled_selector/runner.py": {
-      "bytes": 39144,
-      "sha256": "b6abcdb7f2100b02ca3cfeee2d95542812d7372ccc61b273ac8c6fff896895d5",
+      "bytes": 39544,
+      "sha256": "214f0fe82d3e81a5a30b380b7057555792a50437ccf82637c3fcfb4c6019a182",
       "classification": {
         "role": "research",
         "reason": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification."

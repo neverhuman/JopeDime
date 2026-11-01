@@ -866,12 +866,17 @@ def main():
             cuda_initialized=torch.cuda.is_initialized(),
         )
         save(out / "audit.json", audit_summary)
-        advance_any = any(
+        candidate_admitted = any(
             d["admitted"]
             and confirm_a_selected_summary["contrasts"][arm + "_minus_r882"]["ci95"][0]
             > 0.0
             for arm, d in pooled_b_decisions.items()
             if arm != "CTRL"
+        )
+        verdict_info = stat.resolve_h177_verdict(
+            candidate_admitted,
+            h178_receipt=launch.get("h178_receipt"),
+            expected_analysis_sha256=sha(HERE / "analysis.py"),
         )
         metrics = dict(
             wave="H177",
@@ -916,7 +921,10 @@ def main():
             serving_promotion=False,
             audit=audit_summary,
             elapsed_seconds=time.monotonic() - started,
-            verdict="ADVANCE" if advance_any else "NO_ADVANCE",
+            candidate_admitted=verdict_info["candidate_admitted"],
+            lift_qualified=verdict_info["lift_qualified"],
+            h178_calibration_status=verdict_info["h178_calibration_status"],
+            verdict=verdict_info["verdict"],
         )
         save(out / "metrics.json", metrics)
         print("H177 COMPLETE verdict=" + metrics["verdict"], flush=True)
