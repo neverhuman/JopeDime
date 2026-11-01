@@ -5,24 +5,6 @@
   \caption{\textbf{Pre-decision validation margins across rounds 775--2938.} Left: candidate minus prior retained-best validation utility ($\Delta_r = u_{\mathrm{cand},r} - u_{\mathrm{prev},r}$) across all \num{2164} retained admission records in rounds 775--2938, zoomed around the $\Delta_r = 0$ admission threshold (round 785's $+0.0302$ gain is annotated off-scale). Right: round counts by pre-decision margin band on a symmetric log scale. Half of all six accepted rounds are exact ties ($\Delta_r = 0$ at rounds 782, 882 and 2795), two are sub-$10^{-3}$ gains ($+\num{1.99e-4}$ at round 859 and $+\num{5.73e-4}$ at round 2750), and 26 of the \num{2158} rejected candidates lie within $[-10^{-4}, 0)$ of a tie. This is development telemetry from the same retained window as \cref{fig:fw-latest-admissions}, not a Results claim or an independent first-proposal evaluation.}
   \label{fig:fw-admission-margins}
 \end{figure*}
-\begin{figure*}[!t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_promotions_per_hour.pdf}
-  \caption{\textbf{Training-program promotions per hour and adapter validation trajectory.} Left: logged rolling and per-round strict training-program promotions per hour. Right: candidate and recorded-best adapter validation pool utility. Both panels cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, with zero adapter admissions).}
-  \label{fig:fw-promotions-per-hour}
-\end{figure*}
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_round_throughput.pdf}
-  \caption{\textbf{Adapter utility and whole-round throughput in a later retained window.}
-  Both panels cover the same 20 completed summaries, rounds 2696--2715.
-  Left: candidate adapter validation utility and the recorded best.
-  Right: distinct training contexts divided by the full wall time of each
-  completed round. The rates include all work and waits inside that interval.
-  These are development operating observations; independent first-proposal
-  and deployment comparisons remain required.}
-  \label{fig:fw-round-throughput}
-\end{figure*}
 % Source spacing retains the evidence checklist marker location.
 
 
@@ -53,6 +35,24 @@ It does not yet bind that source or the adapter's identity to the
 recorded run. Logged utilities alone do not identify the snapshot's
 relationship to the historical writer or map.
 
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_promotions_per_hour.pdf}
+  \caption{\textbf{Training-program promotions per hour and adapter validation trajectory.} Left: logged rolling and per-round strict training-program promotions per hour. Right: candidate and recorded-best adapter validation pool utility. Both panels cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, with zero adapter admissions).}
+  \label{fig:fw-promotions-per-hour}
+\end{figure*}
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_round_throughput.pdf}
+  \caption{\textbf{Adapter utility and whole-round throughput in a later retained window.}
+  Both panels cover the same 20 completed summaries, rounds 2696--2715.
+  Left: candidate adapter validation utility and the recorded best.
+  Right: distinct training contexts divided by the full wall time of each
+  completed round. The rates include all work and waits inside that interval.
+  These are development operating observations; independent first-proposal
+  and deployment comparisons remain required.}
+  \label{fig:fw-round-throughput}
+\end{figure*}
 In the inspected loop implementation, heuristic program edits, retrieval
 and grammar sampling supply candidate programs. Only an adapter that ranks
 proposals by predicted cost is optimized; the encoder and other modules
