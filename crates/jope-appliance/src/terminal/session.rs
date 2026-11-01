@@ -501,6 +501,7 @@ impl Session {
                 "--out" => out = Some(PathBuf::from(value)),
                 "--alg" => request.algorithm_id = value.parse()?,
                 "--kind" => request.kind = serde_json::from_value(serde_json::json!(value))?,
+                "--refit" => request.refit = serde_json::from_value(serde_json::json!(value))?,
                 "--lang" => {
                     request.languages = value
                         .split(',')

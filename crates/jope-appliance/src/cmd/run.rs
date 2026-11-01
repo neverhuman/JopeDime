@@ -92,6 +92,8 @@ pub struct RunArgs {
     pub detach: bool,
     #[arg(long)]
     pub out: Option<PathBuf>,
+    #[arg(long, default_value = "fit_holdout", value_parser = ["fit", "fit_holdout"])]
+    pub refit: String,
     #[arg(long)]
     pub json: bool,
     #[arg(long, value_parser = ["ndjson"])]
@@ -347,6 +349,7 @@ fn validate_m1_spec(
 }
 
 pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()> {
+    let export_refit: Refit = parse_value(&args.refit)?;
     let key = crate::common::resolve_idempotency_key(args.idempotency_key.as_deref());
     if let Some(path) = args.input.take() {
         let name = path
@@ -485,7 +488,7 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
             let manifest = args
                 .out
                 .as_deref()
-                .map(|directory| export_best(transport, &current, &spec, directory))
+                .map(|directory| export_best(transport, &current, &spec, directory, export_refit))
                 .transpose()?;
             finish_interrupt(
                 transport,
@@ -507,6 +510,7 @@ fn export_best<T: Transport>(
     snapshot: &RunSnapshot,
     spec: &RunSpec,
     directory: &std::path::Path,
+    refit: Refit,
 ) -> anyhow::Result<Value> {
     let best = snapshot
         .best
@@ -517,7 +521,7 @@ fn export_best<T: Transport>(
         kind: ExportKind::Bundle,
         languages: spec.languages.clone(),
         require_all_languages: spec.require_all_languages,
-        refit: Refit::FitHoldout,
+        refit,
     };
     let key = crate::common::resolve_idempotency_key(None);
     let manifest = transport.model_export(&snapshot.run_id, &request, Some(&key))?;
