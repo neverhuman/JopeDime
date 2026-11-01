@@ -208,8 +208,12 @@ pub struct FullReport {
 
 impl Package {
     /// The running executable, checked against this build's trusted keys. `Ok(None)` for an
-    /// unpackaged build. `current_exe` resolves the executable path on supported platforms.
+    /// unpackaged build. Linux uses procfs so an unlinked running executable remains readable;
+    /// other supported platforms use their standard executable-path API.
     pub fn open_self() -> Result<Option<Self>, AssetError> {
+        #[cfg(target_os = "linux")]
+        let executable = PathBuf::from("/proc/self/exe");
+        #[cfg(not(target_os = "linux"))]
         let executable = std::env::current_exe()?;
         Self::open_with_keys(&executable, &verify::trusted_keys())
     }
