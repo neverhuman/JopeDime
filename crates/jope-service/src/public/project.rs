@@ -686,6 +686,7 @@ mod tests {
             "rounds_in_flight",
             "attempt",
             "attempts",
+            "attempt_receipt",
             "program_sha256",
             "champion_program",
         ];
