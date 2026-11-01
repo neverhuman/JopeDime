@@ -198,12 +198,30 @@ class CatalogPoolManifestTests(unittest.TestCase):
         from research.joint_regbin import admission
 
         catalog, catalog_sha, owner_alias, owner_alias_sha = self._inputs()
+        unkeyed_id = "b" * 16
+        catalog["datasets"].append(
+            {
+                "id": unkeyed_id,
+                "task": "binary",
+                "canonical_sha256": "e" * 64,
+                "source_file": None,
+                "source_url": None,
+                "platform": "pmlb",
+                "s3_bucket": "veox-jopedime-datasets-use2",
+                "train_rows": 13,
+                "train_sha256": "5" * 64,
+            }
+        )
+        catalog["inventory"]["catalog_records"] += 1
+        catalog["inventory"]["usable_records"] += 1
+        catalog["inventory"]["by_task"]["binary"] += 1
+        owner_alias["curated_catalog_sha256"] = catalog_sha
         artifact = {
             "schema": admission.FAMILY_EXCLUSION_SCHEMA,
             "identity_manifest_sha256": admission.PROTECTED_FAMILY_MANIFEST_SHA256,
             "catalog_sha256": catalog_sha,
-            "family_keys": [{"kind": "dedupe_fingerprint", "value": "owner-fp"}],
-            "unkeyed_catalog_ids": [],
+            "family_keys": [],
+            "unkeyed_catalog_ids": [unkeyed_id],
         }
         with tempfile.TemporaryDirectory() as directory:
             artifact_path = Path(directory) / "exclusion.json"
@@ -226,8 +244,13 @@ class CatalogPoolManifestTests(unittest.TestCase):
         self.assertEqual(manifest["closure"]["family_exclusion_sha256"], artifact_sha)
         self.assertEqual(manifest["candidate_counts"], {"binary": 0, "regression": 2})
         self.assertEqual(
-            manifest["closure"]["sourcefile_dependent_candidate_exclusions"]["binary"],
+            manifest["closure"]["candidate_exclusions"]["binary"][
+                "sourcefile_dependent"
+            ],
             1,
+        )
+        self.assertEqual(
+            manifest["closure"]["candidate_exclusions"]["binary"]["d4_family"], 1
         )
         self.assertNotIn(
             "owner source-file alias closure is incomplete", manifest["blockers"]

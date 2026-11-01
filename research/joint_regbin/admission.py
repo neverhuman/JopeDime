@@ -528,9 +528,51 @@ def build_catalog_pool_manifest(
     )
     family_review = review_catalog_families(task_rows)
     review_by_id = {row["dataset"]: row for row in family_review["records"]}
+    d4_excluded_ids: set[str] = set()
+    if family_exclusion is not None:
+        exclusion_keys = {
+            (item["kind"], item["value"]) for item in family_exclusion["family_keys"]
+        }
+        keys_by_id = {
+            row["dataset"]: {tuple(key) for key in row["union_evidence"]}
+            for row in family_review["records"]
+        }
+        catalog_ids = set(keys_by_id)
+        joined_keys = set().union(*keys_by_id.values())
+        if not exclusion_keys <= joined_keys:
+            raise ValueError("D4 family exclusion key is absent from reviewed catalog")
+        if not set(family_exclusion["unkeyed_catalog_ids"]) <= catalog_ids:
+            raise ValueError(
+                "D4 unkeyed catalog identity is absent from reviewed catalog"
+            )
+        catalog_by_id = {row["id"]: row for row in task_rows}
+        if any(
+            catalog_by_id[dataset_id].get("family_key")
+            for dataset_id in family_exclusion["unkeyed_catalog_ids"]
+        ):
+            raise ValueError("D4 exclusion marks a keyed catalog identity unkeyed")
+        excluded_families = {
+            family_review["family_by_dataset"][dataset_id]
+            for dataset_id, keys in keys_by_id.items()
+            if keys & exclusion_keys
+        }
+        excluded_families.update(
+            family_review["family_by_dataset"][dataset_id]
+            for dataset_id in family_exclusion["unkeyed_catalog_ids"]
+        )
+        d4_excluded_ids = {
+            dataset_id
+            for dataset_id, family in family_review["family_by_dataset"].items()
+            if family in excluded_families
+        }
     candidate_pools = {task: [] for task in protocol.TASKS}
-    sourcefile_exclusions = {task: 0 for task in protocol.TASKS}
+    candidate_exclusions = {
+        task: {"d4_family": 0, "sourcefile_dependent": 0} for task in protocol.TASKS
+    }
     for row in sorted(task_rows, key=lambda item: (item["task"], item["id"])):
+        if row["id"] in d4_excluded_ids:
+            candidate_exclusions[row["task"]]["d4_family"] += 1
+            continue
         # R15 leaves these aliases unresolved at the source-file layer. Keep
         # source-file-dependent binary records out of the role candidates;
         # the pinned D4 identity artifact closes the remaining family union.
@@ -539,7 +581,7 @@ def build_catalog_pool_manifest(
             and row["task"] == "binary"
             and _srcfile_key(row) is not None
         ):
-            sourcefile_exclusions["binary"] += 1
+            candidate_exclusions["binary"]["sourcefile_dependent"] += 1
             continue
         reviewed = review_by_id[row["id"]]
         candidate_pools[row["task"]].append(
@@ -615,7 +657,8 @@ def build_catalog_pool_manifest(
                 if owner_aliases_closed
                 else "owner source-file alias receipt only"
             ),
-            "sourcefile_dependent_candidate_exclusions": sourcefile_exclusions,
+            "candidate_exclusions": candidate_exclusions,
+            "d4_excluded_catalog_ids": sorted(d4_excluded_ids),
             "family_exclusion_sha256": (
                 FAMILY_EXCLUSION_SHA256 if d4_closes_owner_aliases else None
             ),
@@ -1063,6 +1106,11 @@ def build_task_role_candidate_manifest(
         and catalog_pool.get("closure", {}).get("family_exclusion_sha256")
         == FAMILY_EXCLUSION_SHA256
     )
+    d4_excluded_ids = set(
+        catalog_pool.get("closure", {}).get("d4_excluded_catalog_ids", [])
+        if d4_alias_closure
+        else []
+    )
 
     catalog_rows = catalog.get("datasets", [])
     catalog_by_id = {row.get("id"): row for row in catalog_rows}
@@ -1111,6 +1159,7 @@ def build_task_role_candidate_manifest(
             row["id"]
             for row in catalog_rows
             if row.get("task") == task
+            and row["id"] not in d4_excluded_ids
             and not (
                 d4_alias_closure and task == "binary" and _srcfile_key(row) is not None
             )
@@ -1335,6 +1384,10 @@ def build_task_role_candidate_manifest(
             "catalog_p2_srcfile_url_aliases_closed": True,
             "owner_r15_d4_exclusion_verified": d4_alias_closure,
             "sourcefile_dependent_binary_rows_excluded": d4_alias_closure,
+            "d4_excluded_catalog_id_count": len(d4_excluded_ids),
+            "d4_excluded_catalog_ids_sha256": canonical_json_sha(
+                sorted(d4_excluded_ids)
+            ),
             "unresolved_owner_aliases_collapsed_to_one_excluded_family": 14,
             "owner_alias_family_id": "owner-aliases:conservative-single-family",
             "owner_alias_family_source_sha256": owner_alias[
