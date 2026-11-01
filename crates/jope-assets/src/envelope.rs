@@ -208,9 +208,10 @@ pub struct FullReport {
 
 impl Package {
     /// The running executable, checked against this build's trusted keys. `Ok(None)` for an
-    /// unpackaged build. `/proc/self/exe` stays readable even if the path was replaced on disk.
+    /// unpackaged build. `current_exe` works on supported platforms without requiring procfs.
     pub fn open_self() -> Result<Option<Self>, AssetError> {
-        Self::open_with_keys(Path::new("/proc/self/exe"), &verify::trusted_keys())
+        let path = std::env::current_exe()?;
+        Self::open_with_keys(&path, &verify::trusted_keys())
     }
 
     /// Any package, checked against this build's trusted keys.
@@ -444,6 +445,13 @@ mod tests {
     #[test]
     fn missing_magic_means_unpackaged() {
         assert_eq!(Footer::decode(&[0u8; 128], 128).unwrap(), None);
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn open_self_on_macos_uses_the_current_executable() {
+        // Cargo's test executable is not a signed appliance package.
+        assert!(Package::open_self().unwrap().is_none());
     }
 
     #[test]
