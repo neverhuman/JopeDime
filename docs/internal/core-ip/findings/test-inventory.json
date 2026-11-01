@@ -1627,6 +1627,10 @@
       "reason": "REL-07 E2 export-parity provider controls (binding, census and refusal proofs over synthetic harness reports); no real harness, release or dataset job executes",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/v1.0/test_provider_m2/test_m2.py": {
+      "reason": "REL-07 M2 CPU provider controls for candidate/source and RES-07 fixture binding, exact replay/report validation, and refusal cases; synthetic inputs only, not actual M2 parity or release qualification.",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/v1.0/test_provider_r2/test_r2.py": {
       "reason": "REL-07 R2 worker-isolation provider controls (binding, snapshot and measurement refusal proofs over synthetic output); no real candidate, release or dataset job executes",
       "role": "infrastructure"
