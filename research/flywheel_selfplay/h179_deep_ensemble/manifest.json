@@ -72,7 +72,7 @@
     "psutil": "7.1.0",
     "torch": "2.7.0"
   },
-  "parent_commit": "0f1cd933db9c2c6cdd4305209c555380deeaa5e6",
+  "parent_commit": "21cb3c10938a8dda86ad8493188ebdafb4ac1971",
   "parent_sources": {
     "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4",
     "research/flywheel_selfplay/h165_gradient_noise_dropout/analysis.py": "59352b84a3ef7f9764a6489ad3865e86925de6e2f3c80d23a5c2f9e5453ad1fd",
@@ -111,12 +111,12 @@
   ],
   "source_sha256": {
     "PREREG.md": "407c764079c69a33ece3853fd3fbaa53d93396f4333003db9bbc75222c5ade6a",
-    "analysis.py": "01608aca1e5fed456182601b34b91f879378638083fe8467f3abdfcebf169e94",
+    "analysis.py": "d1ef44db0f78689a8ebb9848240a79485e5f2a5e657a15a0eee37ac2fc3f5d03",
     "fold_manifest.json": "3e617cd868b907457996ea45278577f4dc0651ec56d9dcfb136551362ba212db",
     "monitor.py": "6d1c29e0f46ff91d157ec6bc8356f00c88ba969113549df6d7073b1b90579b4e",
     "provenance.json": "66045b0cd54a2fbbff3c235a5d25d9500da37126d132038176d449ece8e40632",
     "runner.py": "3869448c9f0abee36a7573fff481bbbf64bd5f0dff88ba7c10ddf84127c19764",
-    "test_h179.py": "4e5d21f38b02a8a2305d2ba8653855fa0876c375c2622d826b4e34e62130952c",
+    "test_h179.py": "dd1f4ebdb7fb52e8379857d7e1fff56f6a684a964ff11f1fdfd6650c1041968f",
     "treatment.py": "336b759b6bbd81288425c4fcaf244d4f8160f8c69e0178c29106e77323b8f6fe"
   },
   "trainable_adapter_parameters": 29211,

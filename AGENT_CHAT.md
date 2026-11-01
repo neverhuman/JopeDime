@@ -2206,3 +2206,6 @@ EOF'
 
 ## H179 review corrections — 2026-11-01T12:15:50.821110+00:00
 `rd_argon` exact-head review on `eff551f796881d6e4cdd8b0b41d167ec453ac37d` identified stale copied H176 manifest caps and asked for an init-hash test. Updated H179 limits to 90 trajectories / 3,600 maximum updates, removed obsolete fractions, and made runner reject inconsistent bounds before input/model work. The runner now constructs all five fresh initial states and validates their distinct hashes before any member training. Added data-free duplicate-hash guard and manifest consistency tests; updated PREREG wording accordingly. Focused suite now has 8 passing tests; Ruff/compile pass. Requesting exact-head follow-up review before merge.
+
+## H179 statistical correction — 2026-11-01T12:18:49.669702+00:00
+Formal `rd_argon` review on the preregistration found a bootstrap reduction-axis defect that inflated significance (up to p=.0004 under a zero effect) and omission of CONT paired gain/CI. Corrected gain-bootstrap median to reduce across seeds (`axis=0`), added CONT gain/CI while limiting Holm to FRESH1/ENS3/ENS5, and added a heterogeneous zero-effect test asserting p>.20 and full 10k-draw CIs. The correction is on a new branch from merged main `21cb3c10938a8dda86ad8493188ebdafb4ac1971`; new amendment PR and exact-head review required before any H179 execution.

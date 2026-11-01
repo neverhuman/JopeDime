@@ -165,15 +165,15 @@ def ensemble_summary(family_ids, family_panel, seed_ids=SEEDS, boot_seed=BOOT_SE
         med = np.median(bs, axis=0)
         out["arms"][arm] = {"per_seed_equal_family_utility": means[:, j].tolist(), "median_over_seeds": float(np.median(means[:, j])), "family_bootstrap_ci95": _ci(med)}
     gains, tests = {}, {}
-    for arm in FRESH_ARMS:
+    for arm in ARMS[1:]:
         j = ARMS.index(arm)
         delta = panel[:, :, j] - panel[:, :, 0]
         point = np.median(delta.mean(axis=1))
-        boot = np.median(delta[:, draw].mean(axis=2), axis=1)
-        # Center paired family bootstrap under the point null; upper tail is prespecified.
-        p = (1 + int(np.count_nonzero(boot - point >= point))) / (DRAWS + 1)
+        boot = np.median(delta[:, draw].mean(axis=2), axis=0)
         gains[arm] = {"per_seed": delta.mean(axis=1).tolist(), "median_over_seeds": float(point), "family_bootstrap_ci95": _ci(boot)}
-        tests[arm] = float(p)
+        if arm in FRESH_ARMS:
+            # Center paired family bootstrap under the point null; upper tail is prespecified.
+            tests[arm] = float((1 + int(np.count_nonzero(boot - point >= point))) / (DRAWS + 1))
     adjusted = holm_adjust([tests[a] for a in FRESH_ARMS])
     for i, arm in enumerate(FRESH_ARMS):
         gains[arm]["one_sided_centered_bootstrap_p"] = tests[arm]
