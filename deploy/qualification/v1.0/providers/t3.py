@@ -50,7 +50,9 @@ def check_binding(ctx: Context, run) -> None:
     ):
         result = run(args, cwd=ROOT, capture_output=True, text=True, check=False)
         if result.returncode != 0 or result.stdout.strip() != expected:
-            raise ProviderError("T3 requires the clean, candidate-pinned source checkout")
+            raise ProviderError(
+                "T3 requires the clean, candidate-pinned source checkout"
+            )
     if sha256(ctx.artifact) != ctx.artifact_sha256:
         raise ProviderError("candidate bytes changed during T3")
 
