@@ -194,6 +194,46 @@ class CatalogPoolManifestTests(unittest.TestCase):
                 catalog, catalog_sha, owner_alias, owner_alias_sha
             )
 
+    def test_r15_d4_closes_alias_scope_and_withholds_srcfile_binary_rows(self) -> None:
+        from research.joint_regbin import admission
+
+        catalog, catalog_sha, owner_alias, owner_alias_sha = self._inputs()
+        artifact = {
+            "schema": admission.FAMILY_EXCLUSION_SCHEMA,
+            "identity_manifest_sha256": admission.PROTECTED_FAMILY_MANIFEST_SHA256,
+            "catalog_sha256": catalog_sha,
+            "family_keys": [{"kind": "dedupe_fingerprint", "value": "owner-fp"}],
+            "unkeyed_catalog_ids": [],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            artifact_path = Path(directory) / "exclusion.json"
+            artifact_bytes = json.dumps(
+                artifact, sort_keys=True, separators=(",", ":")
+            ).encode()
+            artifact_path.write_bytes(artifact_bytes)
+            artifact_sha = hashlib.sha256(artifact_bytes).hexdigest()
+            with patch.object(admission, "FAMILY_EXCLUSION_SHA256", artifact_sha):
+                manifest = build_catalog_pool_manifest(
+                    catalog,
+                    catalog_sha,
+                    owner_alias,
+                    owner_alias_sha,
+                    family_exclusion_path=artifact_path,
+                )
+
+        self.assertTrue(manifest["closure"]["owner_aliases_fully_closed"])
+        self.assertEqual(manifest["closure"]["unresolved_owner_sourcefile_aliases"], 0)
+        self.assertEqual(manifest["closure"]["family_exclusion_sha256"], artifact_sha)
+        self.assertEqual(manifest["candidate_counts"], {"binary": 0, "regression": 2})
+        self.assertEqual(
+            manifest["closure"]["sourcefile_dependent_candidate_exclusions"]["binary"],
+            1,
+        )
+        self.assertNotIn(
+            "owner source-file alias closure is incomplete", manifest["blockers"]
+        )
+        self.assertFalse(manifest["eligibility_verified"])
+
 
 class TaskRoleCandidateManifestTests(unittest.TestCase):
     def _inputs(self):
@@ -415,6 +455,37 @@ class TaskRoleCandidateManifestTests(unittest.TestCase):
             "1 regression panel identities are absent",
             " ".join(manifest["blockers"]),
         )
+
+    def test_role_candidates_reject_srcfile_binary_rows_under_r15_d4(self):
+        inputs = list(self._inputs())
+        catalog, catalog_pool = inputs[0], inputs[4]
+        sourcefile_row = next(
+            row for row in catalog["datasets"] if row["task"] == "binary"
+        )
+        sourcefile_row["family_key_derived"] = "srcfile:conservative-alias"
+        sourcefile_row["source_file"] = "binary/conservative-alias.csv"
+        catalog_pool["closure"] = {
+            "owner_aliases_fully_closed": True,
+            "family_exclusion_sha256": "ca0eff866a87548803feb03e50f8e7e99b74993b2e1d0b8ce56e3ec1b184a651",
+        }
+        catalog_pool["candidate_pools"]["binary"] = [
+            row
+            for row in catalog_pool["candidate_pools"]["binary"]
+            if row["dataset"] != sourcefile_row["id"]
+        ]
+
+        manifest = self._build(inputs)
+
+        self.assertEqual(manifest["role_counts"]["train"]["binary"], 9)
+        self.assertTrue(manifest["closure"]["owner_r15_d4_exclusion_verified"])
+        self.assertTrue(
+            manifest["closure"]["sourcefile_dependent_binary_rows_excluded"]
+        )
+        self.assertNotIn(
+            sourcefile_row["id"],
+            {row["dataset"] for row in manifest["records"]["binary_train"]},
+        )
+        self.assertFalse(manifest["eligibility_verified"])
 
     def test_role_candidates_refuse_flywheel_hash_or_task_drift(self):
         inputs = list(self._inputs())
