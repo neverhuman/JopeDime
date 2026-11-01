@@ -16,6 +16,8 @@ pub use forward::{FusedForward, StageOutput};
 mod authenticated;
 #[cfg(test)]
 mod fixture;
+#[cfg(all(test, unix))]
+pub(crate) use fixture::inherited_lease;
 
 use super::{
     admission,

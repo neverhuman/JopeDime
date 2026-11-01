@@ -228,7 +228,7 @@ fn authenticated_real_full_forward_cpu_fixture_replay() {
 }
 
 #[cfg(unix)]
-fn inherited_lease<T>(
+pub(crate) fn inherited_lease<T>(
     lease: fs::File,
     lock: &std::path::Path,
     run: impl FnOnce() -> anyhow::Result<T>,

@@ -107,6 +107,24 @@ async fn signed_r782_live_plan_and_admission_use_the_instantiated_backend() {
         .router(LocalAuth::new(BearerToken::from_hex(&"ab".repeat(32)).unwrap(), 31234).unwrap())
         .unwrap();
     let device = env::var("JOPE_RNK12_LIVE_DEVICE").unwrap_or_else(|_| "cpu".into());
+    // CUDA qualification retains the validated inherited exclusive lease across
+    // both async HTTP requests and the worker's completed finalization.
+    #[cfg(unix)]
+    let _gpu_lease = if device.starts_with("cuda:") {
+        use std::os::fd::AsFd;
+        assert_eq!(env::var("JOPE_GPU_LEASE_STDIN").as_deref(), Ok("1"));
+        let path = PathBuf::from(env::var_os("JOPE_QUALIFICATION_LOCK").unwrap());
+        let lease = std::fs::File::from(std::io::stdin().as_fd().try_clone_to_owned().unwrap());
+        let retained = lease.try_clone().unwrap();
+        Some(crate::ranker::cuda::inherited_lease(lease, &path, || Ok(retained)).unwrap())
+    } else {
+        None
+    };
+    #[cfg(not(unix))]
+    assert!(
+        !device.starts_with("cuda:"),
+        "CUDA qualification needs a Unix lease"
+    );
     let mut request = spec(&data.id.to_string(), &device);
     let (status, plan) = post(app.clone(), &request, "rnk12-live-plan").await;
     assert_eq!(status, 200, "{plan}");
