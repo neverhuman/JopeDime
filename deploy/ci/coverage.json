@@ -5124,6 +5124,16 @@
       "lanes": [],
       "scope": "H146 data-free controls copied from H144 (equal-family median-over-seeds inference, gates, Holm, resource classification, input audit, raw-byte state guards, live-recipe loss, exact baseline gate) plus the Lookahead k=5/k=10 alpha=0.5 synchronization schedule and slow-weight update. No corpus, checkpoint or optimizer run in the fixture suite; offline research only."
     },
+    "python:research/flywheel_selfplay/h147_reveal_alignment/test_h147.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H147 controls for matched-support reveal alignment (SUPPORT_CTRL, STORAGE_REVEAL, STORAGE_MASK): common 192-candidate support S, 5-fold family-disjoint CV on 1,219 DL-Train contexts, zero masked-anchor gradient and target renormalization, intersection Holm m=2 gates, pinned Bradley-Terry MM Elo, hard-stop supervisor/runtime guards, and squash-compatible source binding. Offline research only."
+    },
     "python:research/flywheel_selfplay/h149_wd_dose/test_h149.py": {
       "discovery": {
         "kind": "python-family"
