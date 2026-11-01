@@ -242,7 +242,7 @@ impl CaptureContext {
 
 /// Apply the owner-accepted OD13 rule to the actual measured admitted pool.
 /// The ranker selector keeps input order on equal F values.
-fn select_od13_indices(round: u64, measured: &[RecordedReveal]) -> Result<Vec<usize>> {
+pub(super) fn select_od13_indices(round: u64, measured: &[RecordedReveal]) -> Result<Vec<usize>> {
     if round == 0 {
         return Ok(Vec::new());
     }

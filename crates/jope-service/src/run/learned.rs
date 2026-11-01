@@ -80,6 +80,18 @@ pub(crate) struct LearnedAdmission {
     forwards: Arc<AtomicUsize>,
 }
 impl LearnedAdmission {
+    /// Borrow the actual FIT-bound conditioning for research provenance.
+    /// The Plan must exactly match the one used to fit these tokens.
+    pub(crate) fn research_conditioning<'a>(&'a self, plan: &Plan) -> Result<&'a TokenProjection> {
+        ensure!(
+            self.plan.as_ref() == Some(plan),
+            "FIT conditioning Plan differs"
+        );
+        self.conditioning
+            .as_ref()
+            .context("FIT conditioning is not bound")
+    }
+
     pub(crate) fn placement(&self) -> Placement {
         self.graph.placement().clone()
     }
