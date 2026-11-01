@@ -5,6 +5,7 @@ import hashlib
 
 import numpy as np
 import pytest
+import torch
 
 import analysis as stat
 import treatment
@@ -24,6 +25,15 @@ def test_swa_is_uniform_mean_of_fixed_adapter_only_snapshots():
     result = treatment.uniform_swa(snapshots)
     assert result["adapter.weight"].dtype == np.float32
     assert result["adapter.weight"].tolist() == [60.0, 60.0]
+
+
+def test_state_array_preserves_scalar_adapter_tensors_as_zero_dim_arrays():
+    result = treatment.state_array(np.float32(1.25))
+    assert isinstance(result, np.ndarray)
+    assert result.shape == ()
+    assert result.dtype == np.float32
+    assert result.item() == pytest.approx(1.25)
+    assert torch.from_numpy(result).item() == pytest.approx(1.25)
 
 
 def test_swa_rejects_missing_or_nonfinite_snapshot():

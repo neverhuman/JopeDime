@@ -253,11 +253,11 @@ def main():
                 candidates = {
                     "CTRL80": fit["state"],
                     "SWA": {
-                        name: torch.from_numpy(value.copy())
+                        name: torch.from_numpy(tx.state_array(value))
                         for name, value in sw.items()
                     },
                     "EMA": {
-                        name: torch.from_numpy(value.copy())
+                        name: torch.from_numpy(tx.state_array(value))
                         for name, value in ema_state.items()
                     },
                 }

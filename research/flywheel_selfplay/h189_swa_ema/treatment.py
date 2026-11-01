@@ -117,6 +117,14 @@ def uniform_swa(snapshots):
     return out
 
 
+def state_array(value):
+    """Return a copied float32 ndarray, including for scalar adapter tensors."""
+    array = np.asarray(value)
+    if array.dtype != np.float32 or not np.isfinite(array).all():
+        raise ValueError("adapter state values must be finite float32")
+    return array.copy()
+
+
 def ema_step(ema_state, current_state, decay=EMA_DECAY):
     if not 0.0 < decay < 1.0 or set(ema_state) != set(current_state):
         raise ValueError("EMA decay or tensor inventory")

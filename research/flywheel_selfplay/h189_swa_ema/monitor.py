@@ -1,4 +1,4 @@
-"""H189 terminal CPU guard with df-byte disk ratio and one exclusive attempt."""
+"""H189 terminal CPU guard with df-byte disk ratio and numbered attempts."""
 
 import argparse
 import json
@@ -74,6 +74,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--output", type=Path, required=True)
     ap.add_argument("--launch", type=Path, required=True)
+    ap.add_argument("--attempt", type=int, default=1)
     ap.add_argument("--smoke", action="store_true")
     args = ap.parse_args()
     if (
@@ -81,6 +82,12 @@ def main():
         or os.getpriority(os.PRIO_PROCESS, 0) != 19
     ):
         raise RuntimeError("CPU xbabe2/nice19 only")
+    if not 1 <= args.attempt <= 2:
+        raise RuntimeError("H189 permits at most two numbered attempts")
+    if not args.smoke:
+        launch = json.loads(args.launch.read_text())
+        if launch.get("attempt") != args.attempt:
+            raise RuntimeError("H189 launch attempt binding mismatch")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     resources = args.output.with_suffix(".resources.jsonl")
     if resources.exists() or args.output.exists():
@@ -92,15 +99,16 @@ def main():
         raise RuntimeError("prelaunch resource refusal: " + repr(violations(initial)))
     started = time.monotonic()
     if not args.smoke:
-        with Path("/home/ubuntu/jope_plan/ns/receipts/H189_attempt1.claim").open(
-            "x"
-        ) as f:
+        with Path(
+            f"/home/ubuntu/jope_plan/ns/receipts/H189_attempt{args.attempt}.claim"
+        ).open("x") as f:
             json.dump(
                 dict(
                     pid=os.getpid(),
                     utc=time.time(),
                     output=str(args.output.resolve()),
                     launch=str(args.launch.resolve()),
+                    attempt=args.attempt,
                 ),
                 f,
             )
