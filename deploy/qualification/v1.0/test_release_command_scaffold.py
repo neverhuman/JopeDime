@@ -63,6 +63,8 @@ class ReleaseCommandScaffoldTests(unittest.TestCase):
             "${JOPE_REL07_D1_MACOS_RECEIPT}",
             "--macos-receipt-sha256",
             "${JOPE_REL07_D1_MACOS_RECEIPT_SHA256}",
+            "--macos-artifact-sha256",
+            "${JOPE_REL07_D1_MACOS_ARTIFACT_SHA256}",
         ]
         expected_argv["M2"] += [
             "--golden-dir",
@@ -89,6 +91,7 @@ class ReleaseCommandScaffoldTests(unittest.TestCase):
             "JOPE_REL07_A5_MANIFEST_SHA256",
             "JOPE_REL07_D1_MACOS_RECEIPT",
             "JOPE_REL07_D1_MACOS_RECEIPT_SHA256",
+            "JOPE_REL07_D1_MACOS_ARTIFACT_SHA256",
             "JOPE_GOLDEN_DIR",
             "JOPE_GOLDEN_INDEX_SHA256",
             "JOPE_PARITY_BUNDLE_DIR",
@@ -104,6 +107,7 @@ class ReleaseCommandScaffoldTests(unittest.TestCase):
         }
         self.assertIn("JOPE_REL07_A5_MANIFEST", per_gate["A5"])
         self.assertIn("JOPE_REL07_D1_MACOS_RECEIPT", per_gate["D1"])
+        self.assertIn("JOPE_REL07_D1_MACOS_ARTIFACT_SHA256", per_gate["D1"])
         self.assertIn("JOPE_GOLDEN_INDEX_SHA256", per_gate["M2"])
         self.assertIn("JOPE_GOLDEN_DIR", per_gate["M5"])
 
