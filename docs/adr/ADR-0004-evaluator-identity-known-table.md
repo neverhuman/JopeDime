@@ -87,3 +87,23 @@ lock edge is `jope-appliance -> axum`, with no new package, version or feature. 
 `5fb6602a96b16e5abb2cddf8a82f1c188a579d65be67abefe772f277833a0a7f`. Evaluator calculations
 and DSL ABI are unchanged. No known-identity row is added because this task supplies no shipped
 receipt. The transition is registered in `gov03_axum_dev_lockfile_identity_rebaseline.v1.json`.
+
+## Current identity transition: portable PTY test dependency (2026-11-01)
+
+The first stale-identity commit is PUB-06 #1249 (`4b51c5528129c3fc4c170f2c4074a1a176c25eb3`),
+which adds the intentional `portable-pty = "=0.9.0"` `jope-service` test dependency for its PTY
+coverage. The dependency adds a `jope-service -> portable-pty` edge to the workspace lockfile; it
+does not change evaluator calculations. The identity regression test passes at the preceding
+fixture baseline `3df2979abf861502f69f3fa70e7871952bbf0c06` and fails immediately at #1249. Later
+intentional lockfile changes in #1488, #1555, #1559 and #1610 accumulated before this repair, so
+this records one source-bound transition from that baseline to main `97ce7c95e9d573eb9b7c5518953b64bc9937e41c`.
+
+Implementation hash `d8cc9c3e1e7e7a426e3c3e5fdfb2af74f74af5d4b2174f4019ef84d83faf188d` advances to
+`e9540104996cee7b38ded1cbfec626eef45893a820e891619d4bfc2e92f4836d`; Cargo.lock hash
+`da8e834b1b30bbdd93d692caa1a7b09b35c31bb0ac84096cb1fe3f3cb0cf9b93` advances to
+`96a5734beed7151cfebd89651fdc4611b4b79b822010a0ce16af683a4a72236b`; and identity digest
+`5fb6602a96b16e5abb2cddf8a82f1c188a579d65be67abefe772f277833a0a7f` advances to
+`2d5c740d8cb55f65d76b4348bec3f71d0b7d8800d84de78a25088d9348853b18`. The DSL ABI and evaluator
+calculations are unchanged. The identity and lineage source pins are regenerated at the
+transition commit. The append-only known-identity table is unchanged because this work has no
+shipped receipt proving that the new identity existed.

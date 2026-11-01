@@ -105,7 +105,8 @@ in \cref{sec:method-status}:
   across training rows by mean, population standard deviation, and 10th and 90th
   percentiles; (ii)~\num{1024} values projected from a \num{2048}-value third-party tabular
   regressor state capped at \num{768} context rows and \num{256} query
-  rows (third-party provenance pending; restricted; redistribution prohibited); and (iii)~\num{512} values from two
+  rows (the external CPU path first subsamples to at most \num{1000} training
+  rows; third-party provenance pending; restricted; redistribution prohibited); and (iii)~\num{512} values from two
   frozen seed-17 target-summary windows. Each block is normalized before
   concatenation and clipping to $\pm32$. Non-finite contexts are refused. Encoding records
   report wall-clock latency from 11.7\,s to 20.8\,s across eight reference
