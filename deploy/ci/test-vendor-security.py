@@ -56,7 +56,7 @@ class VendorCustodyTests(unittest.TestCase):
                   for p in self.base.rglob("*") if p.is_file()}
         first = GUARD.verify(self.root)
         self.assertEqual(first, GUARD.verify(self.root))
-        self.assertEqual((first["crates"], first["files"]), (20, 20))
+        self.assertEqual((first["crates"], first["files"]), (21, 21))
         after = {p.relative_to(self.base).as_posix(): (p.read_bytes(), p.stat().st_mtime_ns)
                  for p in self.base.rglob("*") if p.is_file()}
         self.assertEqual(before, after)
@@ -165,10 +165,10 @@ class VendorCustodyTests(unittest.TestCase):
         self.write()
         self.reject("duplicate crate identity")
 
-    def test_missing_one_of_twenty_crates(self):
+    def test_missing_one_of_reviewed_crates(self):
         self.data["crates"].pop()
         self.write()
-        self.reject("all 20")
+        self.reject("all 21")
 
     def test_substituted_identity(self):
         crate = self.data["crates"][0]
