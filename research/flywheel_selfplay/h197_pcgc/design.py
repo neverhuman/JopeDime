@@ -85,6 +85,23 @@ def validate_fit_plan(plan, fit_ids, b_ids, a_ids):
     return True
 
 
+def validate_preflight(
+    baseline_exact, loaded_pool_count, expected_pool_count, counters
+):
+    if not baseline_exact:
+        raise ValueError("H197 preflight requires exact native DL-Val baseline")
+    if loaded_pool_count != expected_pool_count:
+        raise ValueError("H197 preflight did not load the full TRAIN/DL-Val corpus")
+    if any(counters.values()):
+        raise ValueError("H197 preflight must perform zero optimizer updates")
+    return {
+        "status": "PASS",
+        "native_r882_dl_val_91_91_bit_exact": True,
+        "loaded_train_and_dl_val_pools": loaded_pool_count,
+        "optimizer_updates": 0,
+    }
+
+
 def fold_manifest(family_ids, source_selected_sha256=None):
     family_ids = sorted(set(family_ids))
     reps = {

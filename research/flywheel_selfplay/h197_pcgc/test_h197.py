@@ -28,6 +28,25 @@ def test_local_source_pins_resolve_from_study_root(tmp_path):
         source_pins.verify(tmp_path, {"../outside": digest})
 
 
+def test_preflight_requires_exact_baseline_full_corpus_and_zero_updates():
+    counters = {
+        "backward_started": 0,
+        "backward_completed": 0,
+        "step_started": 0,
+        "step_completed": 0,
+        "dry_context_backward_calls": 0,
+    }
+    result = design.validate_preflight(True, 1310, 1310, counters)
+    assert result["status"] == "PASS"
+    assert result["optimizer_updates"] == 0
+    with pytest.raises(ValueError, match="exact native DL-Val"):
+        design.validate_preflight(False, 1310, 1310, counters)
+    with pytest.raises(ValueError, match="full TRAIN/DL-Val corpus"):
+        design.validate_preflight(True, 1309, 1310, counters)
+    with pytest.raises(ValueError, match="zero optimizer updates"):
+        design.validate_preflight(True, 1310, 1310, {**counters, "step_started": 1})
+
+
 def test_independent_family_folds_are_closed_and_reproducible():
     ids = [f"f{i:03}" for i in range(205)]
     left = design.family_folds(ids, 197141)
