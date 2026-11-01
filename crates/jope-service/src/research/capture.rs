@@ -244,10 +244,6 @@ impl CaptureContext {
 /// The ranker selector keeps input order on equal F values.
 fn select_od13_indices(round: u64, measured: &[RecordedReveal]) -> Result<Vec<usize>> {
     if round == 0 {
-        ensure!(
-            measured.is_empty(),
-            "round zero cannot have revealed context"
-        );
         return Ok(Vec::new());
     }
     let candidates: Vec<_> = measured
@@ -327,7 +323,10 @@ mod od13_tests {
         let mut nonfinite = vec![reveal(0, 1.0); 4];
         nonfinite[2].surrogate = f64::NAN;
         assert!(select_od13_indices(1, &nonfinite).is_err());
-        assert!(select_od13_indices(0, &[reveal(0, 1.0)]).is_err());
+        assert!(select_od13_indices(0, &[reveal(0, 1.0)])
+            .unwrap()
+            .is_empty());
+        assert!(validate_od13_provider_indices(0, &[reveal(0, 1.0)], &[0]).is_err());
         assert!(select_od13_indices(0, &[]).unwrap().is_empty());
     }
 }
