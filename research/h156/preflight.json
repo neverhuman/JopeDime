@@ -1,0 +1,68 @@
+{
+  "status": "PASS",
+  "constructor_only": true,
+  "optimizer_updates": 0,
+  "scored_contexts": 0,
+  "tests": {
+    "host": "xbabe2",
+    "executed": 8,
+    "failed": 0,
+    "command": "python3 -B research/h156/test_h156.py -v"
+  },
+  "smoke": {
+    "status": "PASS",
+    "optimizer_updates": 0,
+    "scored_contexts": 0,
+    "adapter_tensors": 47,
+    "trainable_parameters": 29211,
+    "width_parameter_counts": {
+      "W05": 20807,
+      "W10": 29211,
+      "W20": 46595
+    },
+    "census": {
+      "adapter_dropout_modules": [],
+      "adapter_attention_dropout": [
+        {
+          "name": "mm_cross_attn",
+          "p": 0.0
+        },
+        {
+          "name": "traj_cross_attn",
+          "p": 0.0
+        }
+      ],
+      "modality_dropout_attribute": 0.1,
+      "effective_encoder": "_sync_free_encode_context_and_candidates",
+      "adapter_training": false,
+      "dope_training": false
+    },
+    "frozen_sha256": "8d1070faf574ee1cd2a4e630887e1662b43189b3f89b04982143ef2704818aae",
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "packages": {
+      "numpy": "1.26.4",
+      "torch": "2.7.0",
+      "psutil": "7.1.0"
+    }
+  },
+  "resource_summary": {
+    "peak_aggregate_rss_bytes": 638246912,
+    "peak_total_threads": 1,
+    "min_free_bytes": 701779279872,
+    "max_used_disk_pct": 90.14891252356153
+  },
+  "audit": {
+    "protected_reads": 0,
+    "refused": []
+  },
+  "evidence": "/home/ubuntu/jope_plan/evidence/H156/attempt/",
+  "hashes": {
+    "/home/ubuntu/jope_plan/evidence/H156/attempt/smoke-monitor.json": "85855a2d475908f2c75e0db168428bba2e34976267ea796df0340f6e6da1a3c8",
+    "/home/ubuntu/jope-data/h156/smoke/smoke.json": "2f81e4453bdcfc02640751c038e5ca2140279f6435d1c3b28c16b8b2f3b92632"
+  },
+  "constructor_source_sha256": {
+    "run.py": "211cdcde726f2c309ca81a0ad2e3661fb16ba2539eaa2da298b59a0d2fa20faa",
+    "monitor.py": "9937f10228b6e988156bf95bb0e2526b492957a821055ba2317fe87ffe78b8cc",
+    "analysis.py": "916146656723f48d6fe619d893a576dc9b2059e086555d3148b7f78220bad3f6"
+  }
+}
