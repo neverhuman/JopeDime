@@ -1,0 +1,341 @@
+{
+ "CUDA_initialized": false,
+ "GPU_used": false,
+ "closeout_disclosures": {
+  "adoption": null,
+  "descriptive_only": {
+   "R774": {
+    "ci95": [
+     0.0024633981381049514,
+     0.02779067064535007
+    ],
+    "dl_train_gain": 0.01359693259163284,
+    "elo": 1502.44,
+    "val": 1.1073772627425549,
+    "val_invalid": 1
+   },
+   "R785": {
+    "elo": 1499.59,
+    "val": 1.1375952947484103,
+    "val_minus_r882": -0.0001988950680422
+   }
+  },
+  "host": "xbabe1 (launch record: free 138.0 GB, MemAvailable 36.5 GiB, load 13); the closeout note's 'xbabe2' does not match the evidence",
+  "non_adapter_byte_check": {
+   "R774": {
+    "differing": 0,
+    "non_adapter_tensors": 222
+   },
+   "R782_R859_R882": "verified in H139",
+   "R785": {
+    "differing": 0,
+    "non_adapter_tensors": 222
+   },
+   "dope_composite_before_after": "c51a56d0 for R774/R785/R882",
+   "post_run": true
+  },
+  "resource_caps": {
+   "dltrain_max_rss_kib": 978532,
+   "dltrain_rss_cap": "6 GiB (H124 watchdog), not decimal 6 GB",
+   "os_thread_total": "not measured (4 torch + watchdog + main)",
+   "replay_max_rss_kib": 80896
+  },
+  "review": "rd_astra #1255 review 5725835134 CHANGES NEEDED posted 01:10:53Z after replay launch 01:10:36Z (merge 01:10:11Z)",
+  "seeds_independent": false,
+  "seeds_note": "identical trajectories on all 3 seeds; verdict rests on one deterministic replay",
+  "unavailable_checkpoint_bug": "not triggered: all final incumbents available for 3/3 seeds"
+ },
+ "dl_train_by_arm": {
+  "R_STRICT/143101": {
+   "available": true,
+   "ci95": [
+    -0.0006334277092101538,
+    0.003626087961924811
+   ],
+   "dl_train_mean_gain": 0.001017923197553044,
+   "final_round": 785
+  },
+  "R_STRICT/143102": {
+   "available": true,
+   "ci95": [
+    -0.0006334277092101538,
+    0.003626087961924811
+   ],
+   "dl_train_mean_gain": 0.001017923197553044,
+   "final_round": 785
+  },
+  "R_STRICT/143103": {
+   "available": true,
+   "ci95": [
+    -0.0006334277092101538,
+    0.003626087961924811
+   ],
+   "dl_train_mean_gain": 0.001017923197553044,
+   "final_round": 785
+  },
+  "R_STRICT_NOINV/143101": {
+   "available": true,
+   "ci95": [
+    0.0024633981381049514,
+    0.02779067064535007
+   ],
+   "dl_train_mean_gain": 0.01359693259163284,
+   "final_round": 774
+  },
+  "R_STRICT_NOINV/143102": {
+   "available": true,
+   "ci95": [
+    0.0024633981381049514,
+    0.02779067064535007
+   ],
+   "dl_train_mean_gain": 0.01359693259163284,
+   "final_round": 774
+  },
+  "R_STRICT_NOINV/143103": {
+   "available": true,
+   "ci95": [
+    0.0024633981381049514,
+    0.02779067064535007
+   ],
+   "dl_train_mean_gain": 0.01359693259163284,
+   "final_round": 774
+  }
+ },
+ "dl_train_by_incumbent": {
+  "774": {
+   "ci95": [
+    0.0024633981381049514,
+    0.02779067064535007
+   ],
+   "dl_train_invalid_picks": 13,
+   "dl_train_mean_gain": 0.01359693259163284,
+   "families_win_tie_loss": [
+    42,
+    127,
+    36
+   ],
+   "u4_mean_gain_descriptive": -0.0009055462862680795,
+   "val_mean_rescored": 1.1073772627425549
+  },
+  "785": {
+   "ci95": [
+    -0.0006334277092101538,
+    0.003626087961924811
+   ],
+   "dl_train_invalid_picks": 16,
+   "dl_train_mean_gain": 0.001017923197553044,
+   "families_win_tie_loss": [
+    13,
+    180,
+    12
+   ],
+   "u4_mean_gain_descriptive": -0.0014277287802426594,
+   "val_mean_rescored": 1.1375952947484103
+  },
+  "882": {
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "dl_train_invalid_picks": 17,
+   "dl_train_mean_gain": 0.0,
+   "families_win_tie_loss": [
+    0,
+    205,
+    0
+   ],
+   "u4_mean_gain_descriptive": 0.0,
+   "val_mean_rescored": 1.1377941898164525
+  }
+ },
+ "dope": {
+  "774": {
+   "after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+   "before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+  },
+  "785": {
+   "after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+   "before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+  },
+  "882": {
+   "after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+   "before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+  }
+ },
+ "elo": {
+  "ci95": {
+   "R774": [
+    1497.5694999999998,
+    1507.4105000000002
+   ],
+   "R785": [
+    1496.8694999999998,
+    1502.04
+   ],
+   "R882": [
+    1500.0,
+    1500.0
+   ]
+  },
+  "ratings": {
+   "R774": 1502.44,
+   "R785": 1499.59,
+   "R882": 1500.0
+  }
+ },
+ "h124_module_sha256": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+ "optimizer_updates": 0,
+ "per_incumbent_sha256": "c444a67d6fcd8a06d5f02f46be988cf84a7b847586a1cd6dd8a8698b19c8eec1",
+ "prereg_commit": "245f59f97bed67e98e1f88bc9d0c6952540aa30a",
+ "prereg_sha256": "d56762ed3e35a31b26420304ca5cec531607b1ad0d31a531a5f68bcae72dccc3",
+ "read_boundary": {
+  "dl_train_contexts": 1219,
+  "dl_val_flywheel_contract_contexts": 91,
+  "holdout_payloads_opened": 0,
+  "live_dir_writes": 0,
+  "meta_test_payloads_opened": 0,
+  "sealed_payloads_opened": 0
+ },
+ "regression_s_live": {
+  "admissions": [
+   782,
+   785,
+   859,
+   882
+  ],
+  "final_matches_reference_91": 91,
+  "final_mean": 1.1377941898164525,
+  "final_round": 882,
+  "logged_action_mismatches": []
+ },
+ "replay_arms": {
+  "R_STRICT/143101": {
+   "admissions": [
+    785
+   ],
+   "cliff_driven_admissions": [
+    785
+   ],
+   "final_round": 785,
+   "final_val_invalid": 0,
+   "final_val_mean": 1.1375952947484103,
+   "max_median_gain": 0.02857435975188224,
+   "n_admissions": 1
+  },
+  "R_STRICT/143102": {
+   "admissions": [
+    785
+   ],
+   "cliff_driven_admissions": [
+    785
+   ],
+   "final_round": 785,
+   "final_val_invalid": 0,
+   "final_val_mean": 1.1375952947484103,
+   "max_median_gain": 0.0288225781428795,
+   "n_admissions": 1
+  },
+  "R_STRICT/143103": {
+   "admissions": [
+    785
+   ],
+   "cliff_driven_admissions": [
+    785
+   ],
+   "final_round": 785,
+   "final_val_invalid": 0,
+   "final_val_mean": 1.1375952947484103,
+   "max_median_gain": 0.028641963925123668,
+   "n_admissions": 1
+  },
+  "R_STRICT_NOINV/143101": {
+   "admissions": [],
+   "cliff_driven_admissions": [],
+   "final_round": 774,
+   "final_val_invalid": 1,
+   "final_val_mean": 1.1073772627425549,
+   "max_median_gain": 1.1686558153949016e-17,
+   "n_admissions": 0
+  },
+  "R_STRICT_NOINV/143102": {
+   "admissions": [],
+   "cliff_driven_admissions": [],
+   "final_round": 774,
+   "final_val_invalid": 1,
+   "final_val_mean": 1.1073772627425549,
+   "max_median_gain": 1.197872210779774e-17,
+   "n_admissions": 0
+  },
+  "R_STRICT_NOINV/143103": {
+   "admissions": [],
+   "cliff_driven_admissions": [],
+   "final_round": 774,
+   "final_val_invalid": 1,
+   "final_val_mean": 1.1073772627425549,
+   "max_median_gain": 1.1686558153949016e-17,
+   "n_admissions": 0
+  }
+ },
+ "rounds": 1756,
+ "runner_sha256": "09d5a3e5b65fd47a7dc3eec1f24beec5a98f3557510f520966a4ab6a3673bfca",
+ "runtime": {
+  "launch": {
+   "disk_free_bytes": 138016231424,
+   "filesystem_free_bytes": 138016231424,
+   "load1": 13.02197265625,
+   "mem_available_kib": 36498808,
+   "nice": 19,
+   "process_max_rss_kib": 39936,
+   "scratch_cap_bytes": 2000000000,
+   "threads": {
+    "MKL_NUM_THREADS": 4,
+    "OMP_NUM_THREADS": 4,
+    "OPENBLAS_NUM_THREADS": 4
+   }
+  },
+  "max_rss_kib": 978532,
+  "process_cpu_seconds": 2085.8153643150004,
+  "rss_watchdog": {
+   "limit_kib": 6291456,
+   "peak_seen_kib": 983128,
+   "sample_seconds": 0.25,
+   "samples": 3854
+  },
+  "wall_seconds": 972.9038121830672
+ },
+ "s_live": {
+  "admissions": [
+   782,
+   785,
+   859,
+   882
+  ],
+  "cliff_driven_admissions": [
+   782,
+   785,
+   859,
+   882
+  ],
+  "final_round": 882,
+  "final_val_invalid": 0,
+  "final_val_mean": 1.1377941898164525
+ },
+ "schema": "jope.h143.strict-admission-replay/v1",
+ "source_commit": "77446bbcef958bacc6c907d0265f48c31b2a8dd9",
+ "status": "COMPLETE",
+ "trajectory_identical_across_seeds": {
+  "R_STRICT": true,
+  "R_STRICT_NOINV": true
+ },
+ "verdict": "RULE_NEUTRAL",
+ "versions": {
+  "numpy": "1.26.4",
+  "python": "3.12.3",
+  "scikit_learn": "1.7.2",
+  "torch": "2.7.0"
+ },
+ "window": [
+  775,
+  2530
+ ]
+}
