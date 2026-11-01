@@ -1,0 +1,58 @@
+{
+ "candidate_counts": {
+  "contexts": 254,
+  "datasets": 127,
+  "families": 123,
+  "views": 254
+ },
+ "inputs": {
+  "listing_sha256": "7500f658194505d42ecf627b392fbec4d5318beb0dd06aa5e754e5862f3ae987",
+  "manifest_sha256": "0314599fe06515d3f3e976c0d435cbe4e9fbe26738014bd89470f525702f983b",
+  "receipt": "/home/ubuntu/jope_plan/ns/h150/nonexistent-receipt.json",
+  "v3_manifest_sha256": "701affc61e14950bc5c890b6399a9d765f10e7f7f720a2ba8f1a16d93e1a7640"
+ },
+ "payloads_read": {
+  "feature_bodies": 0,
+  "outcomes": 0,
+  "pool_arrays": 0,
+  "sealed_rows": 0
+ },
+ "proof1_global_sealed_absence": {
+  "authority_receipt": false,
+  "crosswalk": {
+   "candidate_families_absent_from_registry": [],
+   "candidate_families_holdout_protected": [],
+   "candidate_families_registry_sealed": []
+  },
+  "overlap": {
+   "context_ids": [],
+   "dataset_hashes": [],
+   "families": [],
+   "view_dataset_prefixes": [],
+   "view_ids": []
+  },
+  "status": "PASS_PENDING_AUTHORITY_RECEIPT"
+ },
+ "proof2_parent_child": {
+  "per_child_lineage_fields": [],
+  "source_prefix_lineage_artifacts": [],
+  "source_prefix_objects": 83,
+  "status": "UNPROVED"
+ },
+ "proof3_original_row_source": {
+  "per_row_source_fields": [],
+  "source_prefix_objects": 83,
+  "source_prefix_row_artifacts": [],
+  "status": "UNPROVED"
+ },
+ "schema": "jope.h150.w5-proofs/v1",
+ "verdict": {
+  "all_three_pass": false,
+  "failing": [
+   "proof1",
+   "proof2",
+   "proof3"
+  ],
+  "w5": "HELD"
+ }
+}
