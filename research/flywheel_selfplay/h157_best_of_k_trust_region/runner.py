@@ -89,13 +89,25 @@ def guard_resources(output):
 
 
 def import_parent():
+    previous_modules = {name: sys.modules.get(name) for name in ("science", "runtime", "h157_parent_runner")}
     sys.path.insert(0, str(PARENT))
     try:
+        for name in ("science", "runtime"):
+            spec = importlib.util.spec_from_file_location(name, PARENT / f"{name}.py")
+            imported = importlib.util.module_from_spec(spec)
+            sys.modules[name] = imported
+            spec.loader.exec_module(imported)
+        runtime = sys.modules["runtime"]
         spec = importlib.util.spec_from_file_location("h157_parent_runner", PARENT / "runner.py")
         module = importlib.util.module_from_spec(spec)
+        sys.modules["h157_parent_runner"] = module
         spec.loader.exec_module(module)
-        runtime = sys.modules["runtime"]
     finally:
+        for name, previous in previous_modules.items():
+            if previous is None:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = previous
         sys.path.pop(0)
     return module, runtime
 
