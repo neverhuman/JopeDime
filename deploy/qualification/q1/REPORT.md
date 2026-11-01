@@ -168,10 +168,14 @@ training-family closure, and null evaluator, vocabulary, and protocol pins. The
 published cohort remains explicitly non-qualification-eligible and lacks
 per-dataset cut hashes. Submitting this candidate would request a signature over
 an invalid plan, not the final plan required by the owner signing rules. The
-admitted QLT-03 resolver and merged Q1 service route do not supply those
-identities or the production-qualified evaluator/M2/M3 receipts. No replacement
-qualified backend, frozen cohort/cut manifest, or final plan was present in the
-checked inputs.
+QLT-03 qualified measurement provider (#1358) and API01 record/readback
+coordinator (#1355) have since merged on current main. The provider source-binds
+the r782-v2 evaluator and seed protocol implementation, and the coordinator has
+synthetic record/readback controls; neither is evidence of an admitted production
+evaluator or real Engine-to-Python qualification run. The final Q1 vocabulary pin,
+authoritative sealed roster with cut hashes, exact training-family closure, and
+admitted M2/M3 receipts are still absent. No final plan can be assembled from the
+available inputs.
 
 The pinned execution lock was held by H157 (PIDs 2486281 and 2486322) at the
 readiness check. This lane did not wait on, alter, or interrupt H157. Since no
@@ -182,3 +186,12 @@ remain unknown. Next admissible action is to finalize and validate the exact pla
 from the qualified backend and authoritative cohort/cut/family inputs, submit
 that final artifact through `signer_watch`, then queue only the signed plan via
 the pinned evaluator when `qualification.lock` is available.
+
+Validation evidence: on the initial T2345 candidate source, `python3 -B
+deploy/qualification/q1/harness/q1.py --plan
+/home/ubuntu/jope_plan/evidence/QLT-04/res03-t2345/plan.json --backend
+deploy/qualification/q1/harness/production_backend.py approval-payload` exited 1
+at `validate_plan` with `ValueError: datasets required`, before signer, ledger,
+or evaluator activity. The candidate was created against source `248b9622`; after
+current main advanced through #1355/#1358/#1359, it was not considered a final
+plan or submitted for signing.
