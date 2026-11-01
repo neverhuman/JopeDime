@@ -14693,7 +14693,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H197 data-free controls for independent TRAIN folds, fixed-step matched clipping arms, B-before-A lock, strict family bootstrap/verdict, pin path confinement, zero-update full-corpus/native-DL-Val preflight, and JSON-safe placebo trace serialization; no outcome data/checkpoint reads or model passes in fixtures."
+      "scope": "H197 data-free checks for independent TRAIN folds, matched clipping arms, local pin and zero-update preflight guards, plus strict JSON round-trips of 40-step traces for all arms, 60 FIT receipts, 15 cell calibrations, three per-seed summaries, aggregate A/Elo metrics, DL-Val, B lock, counters, audit and failure records through the production writer; no corpus/checkpoint reads or model passes in fixtures."
     }
   },
   "lanes": {

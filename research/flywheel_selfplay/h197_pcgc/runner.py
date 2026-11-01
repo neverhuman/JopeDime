@@ -43,6 +43,7 @@ finally:
         sys.modules["design"] = _previous_design
 tx = load_local_module("h197_treatment", HERE / "treatment.py")
 source_pins = load_local_module("h197_source_pins", HERE / "source_pins.py")
+json_writer = load_local_module("h197_json_writer", HERE / "json_writer.py")
 
 
 def sha(path):
@@ -54,7 +55,7 @@ def sha(path):
 
 
 def save(path, value):
-    base.save(path, value)
+    json_writer.save(path, value)
 
 
 def fsync_dir(path):
@@ -409,7 +410,7 @@ def main():
         ):
             raise RuntimeError("H197 requires the live eval/dropout-off mode")
         rt.check_frozen(net, guard, names, frozen)
-        base.save(
+        save(
             output / "launch_binding.json",
             {
                 "source_commit": head,
@@ -424,7 +425,7 @@ def main():
             },
         )
         if args.smoke:
-            base.save(
+            save(
                 output / "smoke.json",
                 {
                     "status": "PASS",
@@ -462,7 +463,7 @@ def main():
                 for c in baseline_costs
             ):
                 raise RuntimeError("native r882 baseline cost bytes mismatch")
-        base.save(
+        save(
             output / "baseline.json",
             {
                 "status": "PASS",
@@ -483,7 +484,7 @@ def main():
             catalog[k].get("origin") != "real" for k in dataset_ids
         ):
             raise RuntimeError("real S3 catalog provenance check failed")
-        base.save(
+        save(
             output / "catalog_join.json",
             {"status": "PASS", "datasets": len(dataset_ids), "synthetic": 0},
         )
@@ -512,7 +513,7 @@ def main():
                     "trainer_started": False,
                 }
             )
-            base.save(output / "preflight.json", preflight)
+            save(output / "preflight.json", preflight)
             print(
                 "H197 PREFLIGHT PASS: full pinned corpus loaded; zero updates",
                 flush=True,
@@ -678,7 +679,7 @@ def main():
         save(lock_path, lock)
         fsync_dir(output)
         locked_sha = tx.validate_b_lock(lock_path, [p.name for p in b_files])
-        base.save(
+        save(
             output / "pooled_b_lock_receipt.json",
             {
                 "sha256": locked_sha,
