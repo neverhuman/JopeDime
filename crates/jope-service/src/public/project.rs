@@ -678,8 +678,17 @@ mod tests {
             "island",
             "offspring",
         ];
-        // The planned pipeline depth R in `Plan`: a count, not a round index.
-        const ALLOWED: &[&str] = &["rounds_in_flight"];
+        // Planned pipeline depth is a count, not a round index. The Q1 receipt
+        // contract also exposes only a hashed candidate identity and its actual
+        // charged-attempt index/count; it does not expose source programs or
+        // search positions from discovery.
+        const ALLOWED: &[&str] = &[
+            "rounds_in_flight",
+            "attempt",
+            "attempts",
+            "program_sha256",
+            "champion_program",
+        ];
         fn collect(value: &serde_json::Value, names: &mut BTreeSet<String>) {
             match value {
                 serde_json::Value::Object(map) => {
