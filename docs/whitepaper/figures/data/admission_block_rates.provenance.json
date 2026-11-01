@@ -2,7 +2,7 @@
   "schema": "whitepaper.admission-block-rates-figure/v1",
   "input_csv_sha256": "42f913c81aa4ab32a48cefcd54882d98c5d280cafdcb18e4bba6db0054da1e9d",
   "source_receipt_sha256": "ad6638b13a617f4d78545e82b80329d1aafbc934688f881d8a3928fcd08f0d5a",
-  "generator_sha256": "f7d52269d8c157cc4e7454aff5a1017abb0eb8a55f13100c8235ebe7fe849b8a",
+  "generator_sha256": "054d9180b02955430aea9f29941f43c5b26b4fbca60a5ba264bc0d86a9680d24",
   "figure_sha256": "547ecc4a2c005c45445a927071f3086795b8607ac617acfbd703e08c85478ecf",
   "rows": 2391,
   "round_window": [
