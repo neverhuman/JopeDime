@@ -25,11 +25,11 @@
   "prereg_sha256": "049be5140088d8746d45efa12c8a3351e76984ac565029df3f0686df5b62212f",
   "fold_manifest_sha256": "33149d40da39cfdbacfbacba31a44693cdbd494e5fdc9325df9a345898118894",
   "executor_sha256": {
-    "runner.py": "404f0ba1ddd84591469571b001216a8dddaefacbb57f866a8fe7cd6d09fceba2",
+    "runner.py": "10b2eb509e05033348826e21536fc3d729f45bba9581abed7c164ccfd004ae72",
     "runtime.py": "b281cbdc2912d734aba956346d1ec2c40eeed2736af22c738e65023ac092496b",
     "science.py": "80a8855d140280c89a376166d6d71220ecb4b3b67fb42124fb97f8dca3948e38",
     "monitor.py": "a60013550a117e0cc1374c9063db491c3cd1aaca5d3761f1f061413819695da6",
-    "test_h161.py": "4e9b034583a317c48f9c3f4c092269117de5a48ebd99931c138367e1a52d38e4"
+    "test_h161.py": "66bbc2e93e00b18d0bf894720868a0d20ced07671b4bbc57407826fe6078118c"
   },
   "inputs": {
     "/home/ubuntu/jope-data/h161/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
@@ -63,8 +63,8 @@
   "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
   "smoke_custody_receipts": {
     "smoke/smoke.json": "7ec5113c96247c5ca7d74936e478ada2f2aa31015d6cb0c2323ad62b46e5952b",
-    "smoke/audit.json": "6b6193e45e2c8739e67dd971b15945355b8bc299f4b5ae5280a627dc82435694",
-    "smoke-monitor.json": "f2f62e0c263c598fff8f5eacb1e13e33175c0a1b579abcff1bce395de625e82a",
-    "smoke-resources.jsonl": "a3b5cf5a253454bf1414895dd995cdb21bbffa2990b75ade4fe39cfd1b87f927"
+    "smoke/audit.json": "332a93fef98bc2086b04e2c3bc89c01e8c0eeca2dfb7fa582748ee722e6d1303",
+    "smoke-monitor.json": "7b85ae6f277d94f8131dc70f7d4f4ff01f4747f683cfb3824b88c8a4341c3ab6",
+    "smoke-resources.jsonl": "8a953468fda7cf163821c40b7531ed8aa765a1eaf8c59ddc81341e5935876e5d"
   }
 }

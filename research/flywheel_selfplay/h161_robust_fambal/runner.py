@@ -310,6 +310,7 @@ def main():
     out.mkdir()
     pins = json.loads((HERE / "manifest.json").read_text())
     allowed = set(pins["inputs"])
+    allowed.add(str((out.parent / "launch.json").resolve()))
     if sha(INPUT / "selected.json") != pins["inputs"][str(INPUT / "selected.json")]:
         raise RuntimeError("selected mismatch")
     train, val = selected()
