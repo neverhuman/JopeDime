@@ -640,6 +640,7 @@ mod tests {
             event_watermark: DecimalU64(0),
             warnings: vec![],
             completion_reason: Some(CompletionReason::BudgetEvaluations),
+            evaluation_receipt: None,
         };
         state
             .store

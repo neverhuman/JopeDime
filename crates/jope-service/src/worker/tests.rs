@@ -144,6 +144,7 @@ fn child_helper() {
             "nan" => {
                 return Ok(Scores {
                     values: vec![f64::NAN],
+                    fold_scores: vec![],
                     predictions_digest: "0".repeat(64),
                 })
             }
@@ -156,6 +157,7 @@ fn child_helper() {
                 count as f64,
                 bytes.bytes().as_ptr() as usize as f64,
             ],
+            fold_scores: vec![],
             predictions_digest: "0".repeat(64),
         })
     })
