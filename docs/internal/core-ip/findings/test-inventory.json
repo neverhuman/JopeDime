@@ -5541,6 +5541,10 @@
     "python:research/flywheel_selfplay/h199_blend025_native/test_h199.py": {
       "reason": "Owner-requested H199 data-free controls for BLEND_025 on the flywheel native protocol (cells, minimal fit plan, H124 fold algorithm per fold seed, fold manifest, within-family SHUF, registered lambda dose, native gates incl. 3/3 seeds and exact ties as zero, harm gate, Elo orientation, monitor guards); no checkpoint/corpus reads or model passes in the fixtures",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h200_nested_blend/test_h200.py": {
+      "role": "research",
+      "reason": "H200 data-free protocol checks: exact unused seeds and 20-model-per-seed exclusion plan; strict nested lambda margin/ties; average-tie rank orientation; deterministic within-context shuffle; xbabe1-only host guard that refuses xbabe0/2/3 before input reads; native ties and CPU resource limits. No cohort, checkpoint, or outcome data opened."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
