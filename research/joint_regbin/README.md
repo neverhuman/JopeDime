@@ -119,25 +119,29 @@ study manifest or scientific result.
 ### T1210 family-key candidate inventory and role guard
 
 `admission.build_family_key_pool_manifest(...)` records catalog IDs and exactly
-the keys returned by the pinned `family_keys.attrs_from_catalog_row()` and
+those keys returned by the pinned `family_keys.attrs_from_catalog_row()` and
 `family_keys.derive()` calls. Family components preserve shared and transitive
-returned keys across both tasks. It adds no source-file, URL-parent, owner-alias,
-or protected-roster inputs.
+returned keys across both tasks. No source-file, URL-parent, owner-alias, or
+protected-roster inputs are added.
 
-The admission inputs require a family's nonsealed status to be established
-before assigning TRAIN or validation roles. The approved v246 catalog supplies
-identities and TRAIN-file hashes, but no reviewed nonsealed eligibility
-evidence. Every unverified family is therefore withheld: the fail-closed pool
-receipt has empty `fold_by_family` and `fold_splits` maps and records withheld
-family and dataset counts. Metadata-only preflight reports
+The frozen T1145/T1210 admission inputs require a family's nonsealed status to
+be established before assigning TRAIN or validation roles. The approved v246
+catalog supplies identities and TRAIN-file hashes, but no reviewed nonsealed
+eligibility evidence. Presence in the catalog, a task label, and self-reported
+flags cannot establish that permission. Every unverified family is therefore
+withheld: `fold_by_family` and `fold_splits` stay empty, while
+`nonsealed_eligibility` records the withheld family/dataset counts and ruling.
+The preflight re-derives this candidate inventory and reports
 `METADATA_ONLY_NONSEALED_STATUS_UNVERIFIED`, zero folds, and
-`eligibility_verified:false`. Presence in the catalog does not establish
-permission. No role is inferred and no payload is opened.
+`eligibility_verified:false`. Forged role assignments are rejected.
 
-Restoring role assignments requires reviewed nonsealed-family evidence that
-respects the no-protected-roster input boundary. Candidate tensors also require
-a separately rederived `ADMITTED` role manifest and a qualified worker before a
-study can run.
+This withholds unknown eligibility; it does not classify P3 `heldout` or `dev`
+as forbidden. The t2035 holdout remains exactly `sealed_excluded` by family.
+Restoring five-fold assignments with fixed seed 136 requires approved,
+reviewed nonsealed-family evidence that respects the no-protected-roster input
+boundary. No role is inferred and no payload is opened in this metadata path.
+Catalog train hashes also do not provide the candidate tensors or qualified
+worker/checkpoint required for an executable learner packet. No campaign starts.
 
 ### Train-only candidate tensor builder (ENG:watcher R22)
 
