@@ -1,6 +1,8 @@
 """H189 terminal CPU guard with df-byte disk ratio and numbered attempts."""
 
 import argparse
+import fcntl
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -75,6 +77,7 @@ def main():
     ap.add_argument("--output", type=Path, required=True)
     ap.add_argument("--launch", type=Path, required=True)
     ap.add_argument("--attempt", type=int, default=1)
+    ap.add_argument("--resume", action="store_true")
     ap.add_argument("--smoke", action="store_true")
     args = ap.parse_args()
     if (
@@ -88,20 +91,109 @@ def main():
         launch = json.loads(args.launch.read_text())
         if launch.get("attempt") != args.attempt:
             raise RuntimeError("H189 launch attempt binding mismatch")
+        if bool(launch.get("resume", False)) != args.resume:
+            raise RuntimeError("H189 resume flag does not match launch binding")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     resources = args.output.with_suffix(".resources.jsonl")
-    if resources.exists() or args.output.exists():
+    stdout_path = args.output.with_suffix(".stdout")
+    attempt_claim = Path(
+        f"/home/ubuntu/jope_plan/ns/receipts/H189_attempt{args.attempt}.claim"
+    )
+    elapsed_base = 0.0
+    resume_lock = None
+    resume_log = Path(
+        f"/home/ubuntu/jope_plan/ns/receipts/H189_attempt{args.attempt}_resume.jsonl"
+    )
+    if args.resume:
+        resume_lock_path = Path(
+            f"/home/ubuntu/jope_plan/ns/receipts/H189_attempt{args.attempt}.resume.lock"
+        )
+        resume_lock = resume_lock_path.open("a")
+        try:
+            fcntl.flock(resume_lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise RuntimeError("H189 resume already has an active monitor") from exc
+        if (
+            not args.output.is_dir()
+            or not resources.is_file()
+            or not stdout_path.is_file()
+        ):
+            raise RuntimeError("H189 resume requires the existing attempt outputs")
+        prior = json.loads(attempt_claim.read_text())
+        if prior.get("attempt") != args.attempt or prior.get("output") != str(
+            args.output.resolve()
+        ):
+            raise RuntimeError("H189 resume does not match the original attempt claim")
+        try:
+            process = psutil.Process(int(prior["pid"]))
+            if "monitor.py" in " ".join(process.cmdline()) and str(
+                args.output
+            ) in " ".join(process.cmdline()):
+                raise RuntimeError("H189 original monitor is still active")
+        except psutil.NoSuchProcess:
+            pass
+        lines = resources.read_text().splitlines()
+        if not lines:
+            raise RuntimeError("H189 resume has no prior resource samples")
+        elapsed_base = float(json.loads(lines[-1])["elapsed"])
+        prior_summary = args.output.with_suffix(".resource_summary.json")
+        if prior_summary.is_file():
+            elapsed_base = max(
+                elapsed_base,
+                float(json.loads(prior_summary.read_text())["elapsed_seconds"]),
+            )
+        resume_count = (
+            len(resume_log.read_text().splitlines()) if resume_log.exists() else 0
+        )
+        if launch.get("resume_generation") != resume_count + 1:
+            raise RuntimeError("H189 resume generation is stale or out of order")
+        if elapsed_base >= 4 * 3600:
+            raise RuntimeError("H189 cumulative four-hour wall limit already reached")
+        if (
+            launch.get("resume_from_sha256")
+            != hashlib.sha256(
+                (args.output / "launch_binding.json").read_bytes()
+            ).hexdigest()
+        ):
+            raise RuntimeError("H189 resume launch does not bind the original launch")
+        checkpoint_hashes = launch.get("resume_checkpoint_files")
+        if (
+            not isinstance(checkpoint_hashes, dict)
+            or any(Path(name).name != name for name in checkpoint_hashes)
+            or any(
+                not (args.output / name).is_file()
+                or hashlib.sha256((args.output / name).read_bytes()).hexdigest()
+                != digest
+                for name, digest in checkpoint_hashes.items()
+            )
+        ):
+            raise RuntimeError("H189 resume checkpoint hashes do not match")
+    elif resources.exists() or args.output.exists():
         raise RuntimeError("exclusive fresh output required")
     psutil.cpu_percent()
     time.sleep(1)
     initial = snapshot()
     if violations(initial):
         raise RuntimeError("prelaunch resource refusal: " + repr(violations(initial)))
-    started = time.monotonic()
-    if not args.smoke:
-        with Path(
-            f"/home/ubuntu/jope_plan/ns/receipts/H189_attempt{args.attempt}.claim"
-        ).open("x") as f:
+    if args.resume:
+        with resume_log.open("a") as f:
+            json.dump(
+                dict(
+                    attempt=args.attempt,
+                    generation=launch["resume_generation"],
+                    pid=os.getpid(),
+                    utc=time.time(),
+                    output=str(args.output.resolve()),
+                    launch=str(args.launch.resolve()),
+                    elapsed_before_resume=elapsed_base,
+                ),
+                f,
+            )
+            f.flush()
+            os.fsync(f.fileno())
+    started = time.monotonic() - elapsed_base
+    if not args.smoke and not args.resume:
+        with attempt_claim.open("x") as f:
             json.dump(
                 dict(
                     pid=os.getpid(),
@@ -136,13 +228,15 @@ def main():
     ]
     if args.smoke:
         command.append("--smoke")
+    if args.resume:
+        command.append("--resume")
     reasons = []
     with (
-        args.output.with_suffix(".stdout").open("x") as log,
-        resources.open("x") as samples,
+        stdout_path.open("a" if args.resume else "x") as log,
+        resources.open("a" if args.resume else "x") as samples,
     ):
-        initial["elapsed"] = 0.0
-        initial["stage"] = "prelaunch"
+        initial["elapsed"] = elapsed_base
+        initial["stage"] = "resume_prelaunch" if args.resume else "prelaunch"
         samples.write(json.dumps(initial) + "\n")
         samples.flush()
         child = subprocess.Popen(
