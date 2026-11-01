@@ -268,6 +268,18 @@ def test_dev_elo_family_bootstrap_interval_is_pinned_and_deterministic():
     assert first["interval_is_descriptive_only"] is True
 
 
+def test_dev_elo_bootstrap_matches_canonical_solver_at_extreme_boundary():
+    records = [
+        SimpleNamespace(
+            family_id=f"family-{family:02d}",
+            scores_by_contender={"candidate": 1.0, "r882": 0.0},
+        )
+        for family in range(19)
+    ]
+    interval = family_bootstrap_elo_interval(records)
+    assert interval["interval95_candidate_elo"] == [6300.0, 6300.0]
+
+
 def test_candidate_source_closure_binds_model_preprocessing_and_fused_hashes():
     source_pins = {
         "/pinned/python/model.py": "a" * 64,

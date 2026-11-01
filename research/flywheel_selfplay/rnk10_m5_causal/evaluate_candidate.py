@@ -156,14 +156,21 @@ def family_bootstrap_elo_interval(
     )
     wins = family_win_rates[indices].sum(axis=1)
     losses = len(families) - wins
-    strength = np.clip(wins / np.maximum(losses, 1e-12), 1e-6, 1e6)
-    ratings = 1500.0 + 400.0 * np.log10(strength)
+    gamma_candidate = np.ones(draws, dtype=np.float64)
+    gamma_r882 = np.ones(draws, dtype=np.float64)
+    for _ in range(400):
+        inverse = 1.0 / np.maximum(gamma_candidate + gamma_r882, 1e-12)
+        new_candidate = np.clip(wins * (1.0 / (len(families) * inverse)), 1e-6, 1e6)
+        new_r882 = np.clip(losses * (1.0 / (len(families) * inverse)), 1e-6, 1e6)
+        gamma_candidate = new_candidate / np.maximum(new_r882, 1e-12)
+        gamma_r882 = np.ones(draws, dtype=np.float64)
+    ratings = 1500.0 + 400.0 * np.log10(np.maximum(gamma_candidate, 1e-9))
     index_bytes = indices.astype("<i4", copy=False).tobytes()
     family_bytes = json.dumps(families, separators=(",", ":")).encode()
     interval = np.quantile(ratings, [0.025, 0.975], method="linear").tolist()
     return {
         "status": "COMPLETE_DESCRIPTIVE_FAMILY_BOOTSTRAP",
-        "algorithm": "two-contender stationary Bradley-Terry Elo; family-weighted mean win/tie/loss; fixed R882 anchor Elo 1500",
+        "algorithm": "canonical two-contender 400-iteration Bradley-Terry MM Elo; family-weighted mean win/tie/loss; fixed R882 anchor Elo 1500",
         "unit": "whole DL-Val family, sampled with replacement; contexts averaged within family",
         "draws": draws,
         "seed": seed,
