@@ -516,7 +516,9 @@ impl RunService {
                 rows: prepared.holdout_rows,
             },
             test: None,
-            refit: Refit::Fit,
+            // Finalize both models once: default exports use FIT+HOLDOUT, while
+            // explicit FIT exports retain the model used to score HOLDOUT.
+            refit: Refit::FitHoldout,
             model_root: self.home.join("models"),
             scratch_root: self.home.join("run-scratch"),
             max_input_bytes: self.config.limits.max_dataset_bytes.value,

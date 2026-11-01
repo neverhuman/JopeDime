@@ -482,7 +482,7 @@ impl Finalizer {
         };
         let mut blobs = vec![champion.model.clone()];
         let fit_refs = publish(&self.store, &fit_object)?;
-        blobs.extend(fit_refs);
+        blobs.extend(fit_refs.clone());
         let object_refs = publish(&self.store, exported)?;
         blobs.extend(object_refs.clone());
         let mut finished = snapshot.clone();
@@ -509,12 +509,38 @@ impl Finalizer {
         self.journal.commit(RunUpdate { expected_revision: Some(snapshot.revision.0), snapshot: finished, checkpoint, blobs }, vec![event], |tx| {
             let old = tx.get(key)?.ok_or(StoreError::Invalid("finalization claim missing"))?;
             if old.data["state"] != "started" || old.data["identity"] != identity { return Err(StoreError::Invalid("finalization claim changed")); }
-            let artifact_key = RecordKey::Artifact(artifact);
+            // The assessment score belongs to this genuine FIT-only model. Publish
+            // it atomically with the final champion so an explicit FIT export never
+            // refits or labels FIT+HOLDOUT weights as FIT.
+            let fit_artifact: ArtifactId = format!("art_{}", &fit_object.id()[7..31]).parse().map_err(|_| StoreError::Invalid("invalid FIT model identity"))?;
+            let fit_record = Record::metadata(json!({"kind":"finalized_model","model_digest":fit_object.id(),"refit":Refit::Fit,"manifest":fit_object.manifest()}), fit_refs.clone());
+            put_frozen_model(tx, RecordKey::Artifact(fit_artifact), fit_record)?;
             let record = Record::metadata(json!({"kind":"finalized_model","model_digest":exported.id(),"refit":request.refit,"manifest":exported.manifest()}), object_refs.clone());
-            if let Some(old) = tx.get(&artifact_key)? { if old != record { return Err(StoreError::Integrity("finalized artifact collision")); } } else { tx.put(&artifact_key, &record)?; }
+            put_frozen_model(tx, RecordKey::Artifact(artifact), record)?;
             tx.put(key, &Record::metadata(json!({"identity":identity,"state":"completed","receipt":receipt}), object_refs))
         })?;
         Ok(receipt)
+    }
+}
+
+// Qualification may attach a measured receipt after completion. Repeating an
+// identical native model in another run preserves that attachment; every frozen
+// field and blob must still match exactly.
+fn put_frozen_model(
+    tx: &mut crate::store::Write<'_>,
+    key: RecordKey,
+    record: Record,
+) -> crate::store::Result<()> {
+    if let Some(mut old) = tx.get(&key)? {
+        if let Some(data) = old.data.as_object_mut() {
+            data.remove("parity_receipt");
+        }
+        if old != record {
+            return Err(StoreError::Integrity("finalized artifact collision"));
+        }
+        Ok(())
+    } else {
+        tx.put(&key, &record)
     }
 }
 
@@ -1382,5 +1408,70 @@ mod tests {
             )
             .unwrap();
         }
+    }
+    #[test]
+    fn fit_holdout_publication_keeps_the_genuine_fit_model_and_replay_does_not_refit() {
+        let f = fixture(false);
+        let native = Native::default();
+        search(&f, &native);
+        let finalizer = Finalizer::new(Arc::clone(&f.store));
+        let receipt = finalizer.finalize(&f.request, &native).unwrap();
+        assert_eq!(receipt.refit, Refit::FitHoldout);
+        let fit_id: ArtifactId = format!("art_{}", &receipt.holdout_model_digest[7..31])
+            .parse()
+            .unwrap();
+        assert_ne!(fit_id, receipt.model_artifact);
+        let fit_record = f.store.get(&RecordKey::Artifact(fit_id)).unwrap().unwrap();
+        let primary = f
+            .store
+            .get(&RecordKey::Artifact(receipt.model_artifact.clone()))
+            .unwrap()
+            .unwrap();
+        assert_eq!(fit_record.data["refit"], json!(Refit::Fit));
+        assert_eq!(
+            fit_record.data["model_digest"],
+            receipt.holdout_model_digest
+        );
+        assert_eq!(primary.data["refit"], json!(Refit::FitHoldout));
+        let fit_object = ModelObject::read(
+            f.request.model_root.join(&receipt.holdout_model_digest),
+            HANDOFF_MAX,
+        )
+        .unwrap();
+        assert_eq!(
+            f.store.read_blob(&fit_record.blobs[0]).unwrap(),
+            fit_object.manifest_bytes()
+        );
+        let before = native.calls.lock().unwrap().len();
+        let replay = finalizer.finalize(&f.request, &native).unwrap();
+        assert_eq!(receipt.model_digest, replay.model_digest);
+        assert_eq!(native.calls.lock().unwrap().len(), before);
+    }
+
+    #[test]
+    fn repeated_frozen_model_preserves_measured_parity_and_refuses_other_drift() {
+        let f = fixture(false);
+        let key = RecordKey::Artifact("art_00112233445566778899aabb".parse().unwrap());
+        let frozen = Record::metadata(
+            json!({"kind":"finalized_model","model_digest":"frozen","refit":"fit","manifest":{}}),
+            vec![],
+        );
+        f.store
+            .transaction(|tx| put_frozen_model(tx, key.clone(), frozen.clone()))
+            .unwrap();
+        let mut measured = frozen.clone();
+        measured.data["parity_receipt"] = json!("art_aabbccddeeff001122334455");
+        f.store.transaction(|tx| tx.put(&key, &measured)).unwrap();
+        f.store
+            .transaction(|tx| put_frozen_model(tx, key.clone(), frozen.clone()))
+            .unwrap();
+        assert_eq!(f.store.get(&key).unwrap().unwrap(), measured);
+        let mut changed = frozen;
+        changed.data["refit"] = json!("fit_holdout");
+        assert!(f
+            .store
+            .transaction(|tx| put_frozen_model(tx, key.clone(), changed))
+            .is_err());
+        assert_eq!(f.store.get(&key).unwrap().unwrap(), measured);
     }
 }

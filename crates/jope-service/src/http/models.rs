@@ -136,6 +136,60 @@ fn champion(
     Ok((snapshot, model, record))
 }
 
+// Select only an already-fitted model whose role is bound by this run's completed
+// finalization receipt. Export cannot open partition rows or start another fit.
+fn export_champion(
+    state: &DatasetState,
+    run: &RunId,
+    algorithm: &AlgorithmId,
+    refit: Refit,
+) -> Result<(ModelObject, Record)> {
+    let (snapshot, model, record) = champion(state, run, Some(algorithm))?;
+    let completed_refit = record.data.get("refit").cloned().unwrap_or(json!("fit"));
+    if completed_refit == json!(refit) {
+        return Ok((model, record));
+    }
+    if refit != Refit::Fit || completed_refit != json!(Refit::FitHoldout) {
+        return Err(unavailable());
+    }
+    let key = RecordKey::Command {
+        principal: "discover.finalization.v1".into(),
+        idempotency_key: run.to_string(),
+    };
+    let completed = state
+        .store
+        .get(&key)
+        .map_err(|_| integrity())?
+        .ok_or_else(unavailable)?;
+    if completed.data["state"] != "completed" {
+        return Err(integrity());
+    }
+    let receipt: crate::discover::finalize::FinalizationReceipt =
+        serde_json::from_value(completed.data["receipt"].clone()).map_err(|_| integrity())?;
+    let best = snapshot.best.as_ref().ok_or_else(integrity)?;
+    if receipt.run_id != *run
+        || receipt.algorithm_id != *algorithm
+        || receipt.refit != Refit::FitHoldout
+        || Some(&receipt.model_artifact) != best.model_artifact.as_ref()
+        || receipt.model_digest != model.id()
+    {
+        return Err(integrity());
+    }
+    let digest = receipt
+        .holdout_model_digest
+        .strip_prefix("sha256-")
+        .ok_or_else(integrity)?;
+    hex_digest(digest)?;
+    let fit_id: ArtifactId = format!("art_{}", &digest[..24])
+        .parse()
+        .map_err(|_| integrity())?;
+    let (fit, fit_record) = object(state, &fit_id)?;
+    if fit.id() != receipt.holdout_model_digest || fit_record.data["refit"] != json!(Refit::Fit) {
+        return Err(integrity());
+    }
+    Ok((fit, fit_record))
+}
+
 #[derive(Default, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(super) struct AlgorithmQuery {
@@ -271,13 +325,7 @@ fn export(
         Ok(None) => {}
     }
     let result = (|| -> Result<(ArtifactId, Record, ExportManifest)> {
-        let (_, model, original) = champion(state, &run, Some(&request.algorithm_id))?;
-        // Export is prediction-only: the requested mode must be the completed finalization mode.
-        // Legacy records predate the mode field and contain the FIT-only model.
-        let completed_refit = original.data.get("refit").cloned().unwrap_or(json!("fit"));
-        if completed_refit != json!(request.refit) {
-            return Err(unavailable());
-        }
+        let (model, original) = export_champion(state, &run, &request.algorithm_id, request.refit)?;
         let mut entries = BTreeMap::new();
         let mut languages = vec![];
         if request.kind != ExportKind::Source {
@@ -1077,5 +1125,58 @@ mod tests {
         let manifest: ExportManifest = serde_json::from_slice(&bytes(response).await).unwrap();
         assert_eq!(manifest.refit, Refit::FitHoldout);
         assert_eq!(manifest.parity_status, ParityStatus::Unavailable);
+    }
+    #[test]
+    fn explicit_fit_uses_only_the_model_bound_by_the_completed_run_receipt() {
+        let (_dir, state, run, fit_id, _) = fixture();
+        let (fit, _) = object(&state, &fit_id).unwrap();
+        // Controlled selector fixture; operational proof uses real native fits.
+        let mut manifest = fit.manifest().clone();
+        manifest.metadata["refit"] = json!("fit_holdout");
+        let full = ModelObject::new(manifest, fit.parts().clone(), MODEL_BYTES).unwrap();
+        let full_id: ArtifactId = format!("art_{}", &full.id()[7..31]).parse().unwrap();
+        let refs = std::iter::once(full.manifest_bytes())
+            .chain(full.parts().values().map(Vec::as_slice))
+            .map(|b| state.store.publish_blob(b).unwrap())
+            .collect();
+        let completed = json!({"run_id":run,"algorithm_id":"alg_0001","model_artifact":full_id,"model_digest":full.id(),"model_path":"unused","refit":"fit_holdout","scores":{"cv":0.25,"holdout":0.2,"test":null},"completion_reason":"budget_evaluations","budget_bound_by":"evaluations","budget_used":{"evaluations":"1","wall_seconds":"0.1"},"nondeterminism":{"count":"0","experiment_ids":[]},"holdout_model_digest":fit.id(),"holdout_scope":"holdout_scored_with_fit_only_model","test_scope":null,"fit_rows":4,"holdout_rows":1,"test_rows":0,"audit":null});
+        let command = RecordKey::Command {
+            principal: "discover.finalization.v1".into(),
+            idempotency_key: run.to_string(),
+        };
+        state.store.transaction(|tx|{
+            tx.put(&RecordKey::Artifact(full_id.clone()),&Record::metadata(json!({"kind":"finalized_model","model_digest":full.id(),"refit":"fit_holdout"}),refs))?;
+            let key=RecordKey::Run(run.clone());let mut record=tx.get(&key)?.unwrap();record.data["snapshot"]["best"]["model_artifact"]=json!(full_id);tx.put(&key,&record)?;
+            tx.put(&command,&Record::metadata(json!({"state":"completed","receipt":completed}),vec![]))
+        }).unwrap();
+        let alg = "alg_0001".parse().unwrap();
+        assert_eq!(
+            export_champion(&state, &run, &alg, Refit::Fit)
+                .unwrap()
+                .0
+                .id(),
+            fit.id()
+        );
+        assert_eq!(
+            export_champion(&state, &run, &alg, Refit::FitHoldout)
+                .unwrap()
+                .0
+                .id(),
+            full.id()
+        );
+        state
+            .store
+            .transaction(|tx| {
+                let mut record = tx.get(&command)?.unwrap();
+                record.data["receipt"]["run_id"] = json!(RunId::new());
+                tx.put(&command, &record)
+            })
+            .unwrap();
+        assert_eq!(
+            export_champion(&state, &run, &alg, Refit::Fit)
+                .unwrap_err()
+                .code,
+            ErrorCode::ModelIntegrityFailed
+        );
     }
 }
