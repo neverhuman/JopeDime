@@ -1,0 +1,49 @@
+{
+  "schema": "jope.h153.attempt/v1",
+  "wave": "H153",
+  "attempt_number": 1,
+  "status": "INCOMPLETE",
+  "verdict": "INCOMPLETE",
+  "host": "xbabe2",
+  "device": "CPU",
+  "nice": 19,
+  "prereg_pr": 1305,
+  "prereg_head": "985495946abf0b4121c100941cca77c7ae3b7e25",
+  "merge_commit": "adc7bbe2c575ff62a30b39674a15e31b028c9034",
+  "manifest_sha256": "684e70e1c082c85c860f44374a02ab82090d352e0bc53ce106fdcb1255116ea5",
+  "runner_sha256": "dc66c87b3ae730dea917f30827ca1e8868aaefe227af50f9548c38c149782a84",
+  "smoke": {
+    "status": "PASS",
+    "optimizer_updates": 0,
+    "scored_contexts": 0
+  },
+  "run": {
+    "monitor_status": "INCOMPLETE",
+    "exit_status": 1,
+    "optimizer_updates": 0,
+    "scored_contexts": 0,
+    "baseline": "NOT_REACHED",
+    "protected_reads": 0,
+    "cuda_initialized": false,
+    "wall_seconds": 4.856005116,
+    "peak_rss_bytes": 913190912
+  },
+  "terminal_reason": "runtime Audit refused the custody-parent launch.json read before the first baseline evaluation; the Audit allowlist only admitted the run output directory and registered inputs.",
+  "retry_eligible": false,
+  "retry_performed": false,
+  "custody_path": "/home/ubuntu/jope-data/h153/luna-ns-hbaseline-t2155",
+  "evidence_sha256": {
+    "run-monitor.json": "b476c35a9b722cc508ef24cd4c62c569dcea4eb84ca4fb6a146217d30b5c4104",
+    "run/audit.json": "f827419cc44d8b36892078d981ada206f49784a4b81f5957f4dfdcd1769e5676",
+    "run.log": "fa17cab8c94411cd5ce54a7bfb4a50ae7fb6af73b6c62b08308705808d2a8aab",
+    "run-resources.jsonl": "094c0a2826651c0270f6cc3594f1853233984c764b19468dc3dda065cc0ce423",
+    "run.started": "a29c08226f1e8defe37c44f75e87ea36a8d8a643cd4eaafe225fda46d1ebdc67",
+    "launch.json": "b27ef781c3e19c1d3c05535b3bd7848d11a4a72f0c1d8a3edae5ee67c2426a09",
+    "smoke-monitor.json": "8c2bd306aa9bc7f094078adbc7785dc2ea3d733fae9cb6337e7379a42e6b1029",
+    "smoke/smoke.json": "8d3c2c0f52ec2db8c00559ab4da867d78825eae3436c94e33428a17f6bf97181",
+    "smoke/audit.json": "dc7f2db111fcc0b84418b5b6e1c900b98c67de27f22c0572a371354c32c1ea3d",
+    "smoke-resources.jsonl": "ff0a7a470c84b517a75fdfb9877a214091ca5cb9f0683cf996511a441a6698f0",
+    "smoke.started": "cf7947ce8fb8221028de60ab4aa9d66c37a273dd326626f86fe41de170723151"
+  },
+  "archive_status": "NOT_UPLOADED_NO_AWS_CREDENTIALS"
+}
