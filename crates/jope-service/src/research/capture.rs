@@ -121,6 +121,23 @@ pub struct CaptureContext {
 }
 
 impl CaptureContext {
+    /// Create an Engine capability only from the trusted service provider.
+    /// There is intentionally no serialized or caller-selectable constructor.
+    #[allow(dead_code)] // Used by the qualified provider and trusted job loader.
+    pub(crate) fn engine(
+        binding: Binding,
+        provider: Arc<dyn CaptureProvider>,
+        plan: &Plan,
+    ) -> Result<Self> {
+        ensure!(
+            binding.identity.evidence == RecordEvidence::Engine,
+            "Engine context requires Engine evidence"
+        );
+        let context = Self { binding, provider };
+        context.validate(plan)?;
+        Ok(context)
+    }
+
     #[cfg(test)]
     pub(crate) fn control(binding: Binding, provider: Arc<dyn CaptureProvider>) -> Result<Self> {
         ensure!(
@@ -242,7 +259,7 @@ impl CaptureContext {
 
 /// Apply the owner-accepted OD13 rule to the actual measured admitted pool.
 /// The ranker selector keeps input order on equal F values.
-fn select_od13_indices(round: u64, measured: &[RecordedReveal]) -> Result<Vec<usize>> {
+pub(super) fn select_od13_indices(round: u64, measured: &[RecordedReveal]) -> Result<Vec<usize>> {
     if round == 0 {
         return Ok(Vec::new());
     }
