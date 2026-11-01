@@ -253,6 +253,15 @@ fn real_round_admission_composition() {
                 4 => {
                     result.pool_gates.pop();
                 }
+                5 => {
+                    // These slots depend on landmarks; preserve DOPE-only slots
+                    // and every mask bit so this is not a missing-input control.
+                    for slot in [0, 1, 7, 9] {
+                        for value in &mut result.conditioning.tokens[slot] {
+                            *value = -*value;
+                        }
+                    }
+                }
                 _ => {}
             }
             Ok(result)
@@ -303,6 +312,12 @@ fn real_round_admission_composition() {
     let (mut recorded_slates, mut recording_refusals) = (0, 0);
     let (mut decisive, mut ties, mut mismatches) = (0, 0, 0);
     let (mut landmark_changes, mut fitness_changes, mut disconnected_changes) = (0, 0, 0);
+    let (
+        mut serving_slates,
+        mut serving_landmark_changes,
+        mut serving_fitness_changes,
+        mut serving_disconnected_changes,
+    ) = (0, 0, 0, 0);
     let mut max_kl = 0.0_f64;
     let weights = fixtures.weights();
     for cid in &fixtures.contexts {
@@ -366,6 +381,15 @@ fn real_round_admission_composition() {
                 ties += 1;
             }
             disconnected_changes += usize::from(actual.admitted != proposals[..4]);
+            if width == 12 {
+                serving_slates += 1;
+                serving_disconnected_changes += usize::from(actual.admitted != proposals[..4]);
+                mode.set(5);
+                let landmark_only = admission
+                    .evaluate_round(&context, &proposals, false, &mut rng.clone())
+                    .unwrap();
+                serving_landmark_changes += usize::from(landmark_only.admitted != actual.admitted);
+            }
             mode.set(1);
             let changed = admission
                 .evaluate_round(&context, &proposals, width == 20, &mut rng.clone())
@@ -379,6 +403,9 @@ fn real_round_admission_composition() {
                 .evaluate_round(&context, &proposals, width == 20, &mut rng.clone())
                 .unwrap();
             fitness_changes += usize::from(changed.admitted != actual.admitted);
+            if width == 12 {
+                serving_fitness_changes += usize::from(changed.admitted != actual.admitted);
+            }
             for (i, m) in context.measured.iter_mut().enumerate() {
                 m.surrogate_fitness = f64::from(fitness[i]);
             }
@@ -552,6 +579,19 @@ fn real_round_admission_composition() {
         }
     }
     assert!(decisive > 0, "no decisive reference admission comparisons");
+    assert_eq!(serving_slates, 50, "M5 requires every serving 4+8 fixture");
+    assert!(
+        serving_landmark_changes > 0,
+        "M5 serving 4+8 landmark inputs disconnected"
+    );
+    assert!(
+        serving_fitness_changes > 0,
+        "M5 serving 4+8 revealed fitness disconnected"
+    );
+    assert!(
+        serving_disconnected_changes > 0,
+        "M5 serving 4+8 ranker output disconnected"
+    );
     assert!(landmark_changes > 0, "disconnected landmark control");
     assert!(fitness_changes > 0, "disconnected measured-fitness control");
     assert!(
@@ -567,6 +607,9 @@ fn real_round_admission_composition() {
         "contexts":50,"slates":100,"recorded_admission":recorded_summary,"decisive_admission_slates":decisive,"tie_band_slates":ties,
         "admitted_order_mismatches":mismatches,"landmark_perturbation_changed_admission":landmark_changes,
         "fitness_perturbation_changed_admission":fitness_changes,"disconnected_heuristic_mismatches":disconnected_changes,
+        "serving_4_plus_8":{"slates":serving_slates,"landmark_only_changed_admission":serving_landmark_changes,
+            "fitness_changed_admission":serving_fitness_changes,"disconnected_heuristic_mismatches":serving_disconnected_changes,
+            "landmark_slots":[0,1,7,9],"masks_and_dope_only_slots_preserved":true},
         "max_proposal_KL":max_kl,"quality_gate_granted":false,"Q1_ready":false,
         "reveal_rule":"explicit StorageOrder matching captured first four; not an OD13 grant",
         "identity_scope":"packet and weights hash-pinned; dummy Plan used only to exercise binding refusals"
